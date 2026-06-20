@@ -279,7 +279,8 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
         for (const auto &match : result->matches) {
           results.emplace_back(IndexerFileResult{.path = std::filesystem::path(match.path),
                                                  .rank = match.rank,
-                                                 .category = toFileCategory(match.category)});
+                                                 .category = toFileCategory(match.category),
+                                                 .mimeType = match.mime_type});
         }
 
         return results;

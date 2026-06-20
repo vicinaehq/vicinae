@@ -5,6 +5,7 @@
 #include <qtmetamacros.h>
 #include <filesystem>
 #include <optional>
+#include <string>
 #include <vector>
 
 /**
@@ -27,6 +28,7 @@ struct IndexerFileResult {
   std::filesystem::path path;
   double rank;
   vicinae::FileCategory category = vicinae::FileCategory::Other;
+  std::optional<std::string> mimeType;
 };
 
 struct IndexerQueryParams {

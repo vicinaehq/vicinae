@@ -22,7 +22,9 @@ public:
         .then(
             [](std::vector<IndexerFileResult> results) -> tsapi::Result<std::vector<tsapi::FileInfo>>::Type {
               const auto toFileInfo = [](auto &&result) {
-                return tsapi::FileInfo{.path = result.path, .category = mapCategory(result.category)};
+                return tsapi::FileInfo{.path = result.path,
+                                       .category = mapCategory(result.category),
+                                       .mimeType = result.mimeType};
               };
               return results | std::views::transform(toFileInfo) | std::ranges::to<std::vector>();
             });

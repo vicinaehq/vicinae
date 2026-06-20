@@ -1,6 +1,7 @@
 #pragma once
 #include "file-indexer/file-indexer-db.hpp"
 #include <filesystem>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -10,6 +11,7 @@ struct IndexerFileResult {
   std::filesystem::path path;
   double rank;
   IndexedFileCategory category = IndexedFileCategory::Other;
+  std::optional<std::string> mimeType;
 };
 
 namespace file_indexer::query {

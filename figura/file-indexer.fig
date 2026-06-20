@@ -26,6 +26,7 @@ struct FileMatch {
   path: string;
   rank: double;
   category: FileCategory;
+  mime_type?: string;
 };
 
 struct QueryResponse {

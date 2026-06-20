@@ -89,8 +89,11 @@ public:
   }
 
   std::expected<std::vector<ipc::FileResult>, std::string> fsQuery(std::string_view query, int limit = 100,
-                                                                   std::optional<std::string> type = {}) {
-    ipc::FsQueryParams params{.limit = limit, .type = std::move(type)};
+                                                                   std::optional<std::string> category = {}) {
+    ipc::FsQueryParams params{
+        .limit = limit,
+        .category = std::move(category),
+    };
 
     return call<std::vector<ipc::FileResult>>(
         [&](auto cb) { m_client.ipc().fsQuery(std::string{query}, params, std::move(cb)); });

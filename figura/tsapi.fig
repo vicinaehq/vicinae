@@ -221,6 +221,7 @@ enum FileSearchCategory {
 struct FileInfo {
   path: string;
   category: FileSearchCategory;
+  mimeType?: string;
 };
 
 struct FileSearchFilters {

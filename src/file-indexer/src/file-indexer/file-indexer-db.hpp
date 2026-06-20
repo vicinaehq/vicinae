@@ -42,6 +42,7 @@ public:
   struct SearchCandidate {
     std::filesystem::path path;
     IndexedFileCategory category = IndexedFileCategory::Other;
+    std::optional<std::string> mimeType;
   };
 
   struct SearchOptions {

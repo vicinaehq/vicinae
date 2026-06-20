@@ -338,9 +338,10 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit, c
   if (searchQuery.empty() || limit <= 0) return {};
 
   std::string sql = R"(
-    SELECT f.path, f.category
+    SELECT f.path, f.category, mt.name
     FROM indexed_file f
     JOIN unicode_idx ON unicode_idx.rowid = f.id
+    LEFT JOIN mime_type mt ON mt.id = f.mime_type_id
     WHERE unicode_idx MATCH :search
   )";
 
@@ -358,8 +359,10 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit, c
   results.reserve(limit);
 
   while (stmt.step()) {
-    results.emplace_back(SearchCandidate{.path = stmt.columnText(0),
-                                         .category = static_cast<IndexedFileCategory>(stmt.columnInt(1))});
+    results.emplace_back(SearchCandidate{
+        .path = stmt.columnText(0),
+        .category = static_cast<IndexedFileCategory>(stmt.columnInt(1)),
+        .mimeType = stmt.isNull(2) ? std::nullopt : std::optional<std::string>{stmt.columnText(2)}});
   }
 
   return results;
@@ -371,9 +374,10 @@ FileIndexerDatabase::searchSkeletonCandidates(std::string_view searchQuery, int 
   if (searchQuery.empty() || limit <= 0) return {};
 
   std::string sql = R"(
-    SELECT f.path, f.category
+    SELECT f.path, f.category, mt.name
     FROM indexed_file f
     JOIN skeleton_idx ON skeleton_idx.rowid = f.id
+    LEFT JOIN mime_type mt ON mt.id = f.mime_type_id
     WHERE skeleton_idx MATCH :search
   )";
 
@@ -394,8 +398,10 @@ FileIndexerDatabase::searchSkeletonCandidates(std::string_view searchQuery, int 
   results.reserve(limit);
 
   while (stmt.step()) {
-    results.emplace_back(SearchCandidate{.path = stmt.columnText(0),
-                                         .category = static_cast<IndexedFileCategory>(stmt.columnInt(1))});
+    results.emplace_back(SearchCandidate{
+        .path = stmt.columnText(0),
+        .category = static_cast<IndexedFileCategory>(stmt.columnInt(1)),
+        .mimeType = stmt.isNull(2) ? std::nullopt : std::optional<std::string>{stmt.columnText(2)}});
   }
 
   return results;

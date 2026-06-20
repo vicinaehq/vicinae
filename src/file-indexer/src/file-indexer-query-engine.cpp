@@ -284,7 +284,8 @@ std::vector<IndexerFileResult> resultsFromRankedCandidates(const std::vector<Sco
     if (fs::exists(scored.data->path, ec)) {
       results.emplace_back(IndexerFileResult{.path = std::move(scored.data->path),
                                              .rank = static_cast<double>(scored.score),
-                                             .category = scored.data->category});
+                                             .category = scored.data->category,
+                                             .mimeType = scored.data->mimeType});
       if (results.size() == static_cast<size_t>(limit)) break;
     }
   }

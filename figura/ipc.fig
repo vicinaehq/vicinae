@@ -76,12 +76,13 @@ struct CloseTabRequest {
 struct FileResult {
   path: string;
   score: uint;
-  type: string;
+  category: string;
+  mimeType?: string;
 };
 
 struct FsQueryParams {
   limit: int;
-  type?: string;
+  category?: string;
 };
 
 service Ipc {

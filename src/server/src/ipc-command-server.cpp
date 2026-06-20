@@ -70,9 +70,9 @@ static constexpr FileCategoryDefinition FILE_CATEGORIES[] = {
     {.name = "application", .category = vicinae::FileCategory::Application},
 };
 
-std::optional<vicinae::FileCategory> fileCategoryFromString(std::string_view type) {
+std::optional<vicinae::FileCategory> fileCategoryFromString(std::string_view category) {
   for (const auto &definition : FILE_CATEGORIES) {
-    if (definition.name == type) return definition.category;
+    if (definition.name == category) return definition.category;
   }
   return std::nullopt;
 }
@@ -114,10 +114,11 @@ ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future IpcService::fsQuery(st
   auto files = m_ctx.services->fileService();
   IndexerQueryParams queryParams{.limit = params.limit};
 
-  if (params.type) {
-    auto category = fileCategoryFromString(*params.type);
+  if (params.category) {
+    auto category = fileCategoryFromString(*params.category);
     if (!category) {
-      return ipc_gen::Result<std::vector<ipc_gen::FileResult>>::fail("Unknown file type: " + *params.type);
+      return ipc_gen::Result<std::vector<ipc_gen::FileResult>>::fail("Unknown file category: " +
+                                                                     *params.category);
     }
     queryParams.category = *category;
   }
@@ -127,7 +128,8 @@ ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future IpcService::fsQuery(st
         results | std::views::transform([](const IndexerFileResult &result) {
           return ipc_gen::FileResult{.path = result.path,
                                      .score = static_cast<std::uint32_t>(result.rank),
-                                     .type = std::string{fileCategoryToString(result.category)}};
+                                     .category = std::string{fileCategoryToString(result.category)},
+                                     .mimeType = result.mimeType};
         }) |
         std::ranges::to<std::vector>();
 

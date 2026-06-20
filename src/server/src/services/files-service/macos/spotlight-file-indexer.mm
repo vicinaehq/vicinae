@@ -1,4 +1,5 @@
 #include <CoreServices/CoreServices.h>
+#include <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #include <QtConcurrent/QtConcurrentRun>
 #include <algorithm>
 #include <climits>
@@ -75,6 +76,19 @@ std::optional<std::string> categoryPredicate(vicinae::FileCategory category) {
   }
 
   return std::nullopt;
+}
+
+std::optional<std::string> mimeTypeForItem(MDItemRef item) {
+  auto contentTypeRef = (CFStringRef)MDItemCopyAttribute(item, kMDItemContentType);
+  if (!contentTypeRef) return std::nullopt;
+
+  NSString *identifier = (__bridge_transfer NSString *)contentTypeRef;
+  UTType *type = [UTType typeWithIdentifier:identifier];
+  NSString *mimeType = type.preferredMIMEType;
+
+  if (!mimeType) return std::nullopt;
+
+  return std::string{mimeType.UTF8String};
 }
 
 /**
@@ -158,6 +172,7 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
     std::filesystem::path path;
     int score = 0;
     vicinae::FileCategory category = vicinae::FileCategory::Other;
+    std::optional<std::string> mimeType;
   };
 
   CFIndex const count = MDQueryGetResultCount(mdQuery);
@@ -189,7 +204,10 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
       int const fuzzyScore = matcher.fuzzy_match_v2_score_query(path.filename().string(), query);
 
       if (fuzzyScore > 0) {
-        scored.emplace_back(Scored{.path = std::move(path), .score = fuzzyScore, .category = category});
+        scored.emplace_back(Scored{.path = std::move(path),
+                                   .score = fuzzyScore,
+                                   .category = category,
+                                   .mimeType = mimeTypeForItem(item)});
       }
     }
 
@@ -211,7 +229,8 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
   for (size_t i = 0; i < end; ++i) {
     results.emplace_back(IndexerFileResult{.path = std::move(scored[i].path),
                                            .rank = static_cast<double>(scored[i].score),
-                                           .category = scored[i].category});
+                                           .category = scored[i].category,
+                                           .mimeType = std::move(scored[i].mimeType)});
   }
 
   return results;

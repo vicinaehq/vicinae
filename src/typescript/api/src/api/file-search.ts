@@ -20,10 +20,6 @@ import type * as api from "./proto/api";
  * @public
  */
 export namespace FileSearch {
-	/**
-	 * For now we provide no options, but in the future we will implement mime type and file type filtering.
-	 * */
-
 	export type FileInfo = api.FileInfo;
 
 	export interface FileSearchOptions {

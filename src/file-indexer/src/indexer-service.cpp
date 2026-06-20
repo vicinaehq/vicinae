@@ -135,6 +135,7 @@ void IndexerService::query(
                               .path = result.path.string(),
                               .rank = result.rank,
                               .category = toFileCategory(result.category),
+                              .mime_type = result.mimeType,
                           });
                         }
                         reply(response);

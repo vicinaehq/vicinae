@@ -210,6 +210,7 @@ export type ClipboardOptions = {
 export type FileInfo = {
 	path: string;
 	category: FileSearchCategory;
+	mimeType?: string;
 };
 
 export type FileSearchFilters = {
