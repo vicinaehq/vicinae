@@ -1,6 +1,7 @@
 #include "file-indexer.hpp"
 #include <cstdint>
 #include <QDateTime>
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QProcessEnvironment>
 #include <QTimer>
@@ -235,18 +236,20 @@ void FileIndexer::rebuildIndex() {
 }
 
 void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
-  auto splitField = [&](const char *key) {
+  auto arrayField = [&](const char *key) {
     std::vector<std::string> out;
-    const auto parts = preferences.value(key).toString().split(';', Qt::SkipEmptyParts);
-    out.reserve(parts.size());
-    for (const auto &part : parts) {
-      out.emplace_back(part.toStdString());
+    const auto paths = preferences.value(key).toArray();
+
+    out.reserve(paths.size());
+    for (const auto &path : paths) {
+      if (path.isString()) { out.emplace_back(path.toString().toStdString()); }
     }
+
     return out;
   };
 
-  m_config.paths = splitField("paths");
-  m_config.excluded_paths = splitField("excludedPaths");
+  m_config.paths = arrayField("indexingPaths");
+  m_config.excluded_paths = arrayField("excludedIndexingPaths");
 
   if (preferences.value("autoIndexing").toBool()) {
     if (isRunning()) {

@@ -63,8 +63,7 @@ class FileExtension : public BuiltinCommandRepository {
 public:
   void initialized(const QJsonObject &preferences) const override {
 #ifdef Q_OS_LINUX
-    auto files = ServiceRegistry::instance()->fileService();
-    if (preferences.value("autoIndexing").toBool()) { files->indexer()->start(); }
+    ServiceRegistry::instance()->fileService()->preferenceValuesChanged(preferences);
 #endif
   }
 
@@ -85,14 +84,14 @@ public:
         "stopped entirely and file search becomes unavailable until it is turned back on.");
     indexing.setDefaultValue(true);
 
-    auto paths = Preference::directories("paths");
+    auto paths = Preference::directories("indexingPaths");
     paths.setTitle("Search paths");
-    paths.setDescription("Semicolon-separated list of paths that vicinae will search");
+    paths.setDescription("Directories that Vicinae will search");
     paths.setDefaultValue(QJsonArray{homeDir().c_str()});
 
-    auto excludedPaths = Preference::directories("excludedPaths");
+    auto excludedPaths = Preference::directories("excludedIndexingPaths");
     excludedPaths.setTitle("Excluded search paths");
-    excludedPaths.setDescription("Semicolon-separated list of paths to exclude from file indexing");
+    excludedPaths.setDescription("Directories to exclude from file indexing");
     excludedPaths.setDefaultValue(QJsonArray{});
 
     return {indexing, paths, excludedPaths};

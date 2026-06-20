@@ -35,6 +35,7 @@ public:
   std::unique_ptr<HomeDirectoryWatcher> m_homeWatcher;
 
   void startHomeWatcher();
+  void stopHomeWatcher();
 
   // rebuilds scan the entire index: don't redo it for every watcher-triggered scan
   static constexpr std::chrono::minutes VOCAB_REBUILD_MIN_INTERVAL{10};
@@ -53,6 +54,8 @@ public:
   }
   void rebuildIndex();
   void setConfig(std::vector<std::filesystem::path> paths, std::vector<std::filesystem::path> excludedPaths);
+  void applyConfig(std::vector<std::filesystem::path> paths,
+                   std::vector<std::filesystem::path> excludedPaths);
   std::vector<IndexerFileResult> query(std::string_view view, int limit,
                                        const FileIndexerQueryEngine::QueryOptions &options = {});
   void start();

@@ -90,8 +90,12 @@ void DbWriter::indexFiles(std::vector<std::filesystem::path> paths) {
   submit([paths = std::move(paths)](FileIndexerDatabase &db) { db.indexFiles(paths); }, true);
 }
 
-void DbWriter::deleteIndexedFiles(std::vector<std::filesystem::path> paths) {
-  submit([paths = std::move(paths)](FileIndexerDatabase &db) { db.deleteIndexedFiles(paths); });
+void DbWriter::deleteIndexedFiles(std::vector<std::filesystem::path> paths,
+                                  std::function<void()> onComplete) {
+  submit([paths = std::move(paths), onComplete = std::move(onComplete)](FileIndexerDatabase &db) {
+    db.deleteIndexedFiles(paths);
+    if (onComplete) { onComplete(); }
+  });
 }
 
 void DbWriter::deleteAllIndexedFiles(std::function<void()> onComplete) {

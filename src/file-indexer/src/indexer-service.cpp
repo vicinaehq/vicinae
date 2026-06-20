@@ -102,11 +102,12 @@ static std::vector<fs::path> toPaths(const std::vector<std::string> &values) {
 }
 
 std::expected<void, std::string> IndexerService::configure(file_indexer_gen::IndexerConfig config) {
-  m_indexer.setConfig(toPaths(config.paths), toPaths(config.excluded_paths));
-
   if (!m_started) {
+    m_indexer.setConfig(toPaths(config.paths), toPaths(config.excluded_paths));
     m_started = true;
     m_indexer.start();
+  } else {
+    m_indexer.applyConfig(toPaths(config.paths), toPaths(config.excluded_paths));
   }
 
   return {};
