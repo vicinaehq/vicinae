@@ -155,6 +155,7 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer)
 
         it->second.scanner->join();
         m_scannerMap.erase(it);
+        m_idleCv.notify_all();
       }
     }
   });
@@ -179,6 +180,16 @@ void ScanDispatcher::interruptAll() {
       element.scanner->interrupt();
     }
   }
+}
+
+void ScanDispatcher::clearPending() {
+  std::scoped_lock const l(m_pendingMtx);
+  m_pending.clear();
+}
+
+void ScanDispatcher::waitUntilIdle() {
+  std::unique_lock lock(m_scannerMapMtx);
+  m_idleCv.wait(lock, [this] { return m_scannerMap.empty(); });
 }
 
 std::vector<std::pair<int, Scan>> ScanDispatcher::scans() {

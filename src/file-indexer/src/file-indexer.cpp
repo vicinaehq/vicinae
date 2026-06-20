@@ -7,7 +7,9 @@
 namespace fs = std::filesystem;
 
 void FileIndexer::startFullScan() {
+  m_dispatcher.clearPending();
   m_dispatcher.interruptAll();
+  m_dispatcher.waitUntilIdle();
 
   // Prevent starting the full scan and watchers before deletion is done
   std::thread([this]() {

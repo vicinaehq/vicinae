@@ -38,6 +38,7 @@ private:
 
   std::mutex m_scannerMapMtx;
   std::map<int, Element> m_scannerMap;
+  std::condition_variable m_idleCv;
 
   std::mutex m_collectorQueueMtx;
   std::queue<int> m_collectorQueue;
@@ -68,6 +69,8 @@ public:
 
   bool interrupt(int id);
   void interruptAll();
+  void clearPending();
+  void waitUntilIdle();
 
   // A vector instead of a lazy range because m_scannerMap is very mutable
   std::vector<std::pair<int, Scan>> scans();
