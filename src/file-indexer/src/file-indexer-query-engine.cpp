@@ -33,11 +33,37 @@ constexpr const auto CANDIDATE_LIMIT = 10000;
 constexpr const auto SUGGESTION_FETCH_COUNT = 20;
 constexpr const auto MAX_CORRECTIONS_PER_WORD = 3;
 constexpr const auto MIN_CORRECTABLE_WORD_LENGTH = 3;
+constexpr const double SKELETON_CONFIDENCE_THRESHOLD = 0.5;
 
 enum class SubstringMatch { None, Inner, TokenStart };
 
+struct SkeletonMergeDecision {
+  bool shouldMerge = true;
+  std::string_view reason = "no-strict-candidates";
+  fs::path bestPath;
+  int bestScore = 0;
+  int idealScore = 0;
+  double confidence = 0;
+};
+
 bool isSingleTokenQuery(std::string_view query) {
   return !query.empty() && std::ranges::none_of(query, [](unsigned char c) { return std::isspace(c); });
+}
+
+bool isAbbreviationLikeWord(std::string_view word) {
+  if (word.size() < 3 || word.size() > 5) return false;
+
+  auto const vowelCount = std::ranges::count_if(word, [](unsigned char c) {
+    c = static_cast<unsigned char>(std::tolower(c));
+    return file_indexer::vocab::isSkeletonVowel(c);
+  });
+
+  return vowelCount <= 1;
+}
+
+bool isAbbreviationLikeQuery(std::string_view query) {
+  auto words = splitQueryWords(query);
+  return !words.empty() && std::ranges::any_of(words, isAbbreviationLikeWord);
 }
 
 SubstringMatch substringMatch(std::string_view text, std::string_view query) {
@@ -245,8 +271,8 @@ std::vector<ScoredRef<SC>> scoreCandidates(std::span<const SC> candidates, const
   return scoreCandidatesParallel(candidates, scorer);
 }
 
-std::vector<IndexerFileResult> rankCandidates(std::vector<SC> candidates, const Scorer &scorer, int limit) {
-  const auto ranked = scoreCandidates(std::span<const SC>{candidates}, scorer);
+std::vector<IndexerFileResult> resultsFromRankedCandidates(const std::vector<ScoredRef<SC>> &ranked,
+                                                           int limit) {
   std::error_code ec;
   std::vector<IndexerFileResult> results;
 
@@ -262,6 +288,43 @@ std::vector<IndexerFileResult> rankCandidates(std::vector<SC> candidates, const 
   }
 
   return results;
+}
+
+std::vector<IndexerFileResult> rankCandidates(std::vector<SC> candidates, const Scorer &scorer, int limit) {
+  const auto ranked = scoreCandidates(std::span<const SC>{candidates}, scorer);
+
+  return resultsFromRankedCandidates(ranked, limit);
+}
+
+int idealScoreForQuery(std::string_view query) {
+  return fzf::threadLocalMatcher().fuzzy_match_v2_score_query(query, query);
+}
+
+SkeletonMergeDecision skeletonMergeDecision(const std::vector<ScoredRef<SC>> &ranked, std::string_view query,
+                                            int limit) {
+  if (ranked.empty()) return {};
+
+  SkeletonMergeDecision decision{.shouldMerge = false,
+                                 .reason = "strict-confident",
+                                 .bestPath = ranked.front().data->path,
+                                 .bestScore = ranked.front().score};
+
+  int const idealScore = idealScoreForQuery(query);
+  decision.idealScore = idealScore;
+
+  if (idealScore <= 0) return decision;
+
+  decision.confidence = static_cast<double>(decision.bestScore) / idealScore;
+
+  if (decision.confidence < SKELETON_CONFIDENCE_THRESHOLD) {
+    decision.shouldMerge = true;
+    decision.reason = "low-strict-confidence";
+  } else if (ranked.size() < static_cast<size_t>(limit) && isAbbreviationLikeQuery(query)) {
+    decision.shouldMerge = true;
+    decision.reason = "sparse-abbreviation-query";
+  }
+
+  return decision;
 }
 
 std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std::string_view q, int limit,
@@ -310,7 +373,6 @@ std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std
 
 std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q, int limit,
                                                              const QueryOptions &options) {
-  constexpr auto SKELETON_THRESHOLD = 10; // below n, also query skeleton index to increase recall
   FileIndexerDatabase &db = m_db;
   if (!db.isOpen()) return {};
 
@@ -324,16 +386,32 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
 
   flog::debug() << "got " << candidates.size() << " candidates\n";
 
-  // skeleton matches merge into the candidate set and the reranker arbitrates;
-  // skipped when the strict query already saturated the cap
-  if (candidates.size() < static_cast<size_t>(SKELETON_THRESHOLD)) {
+  SkeletonMergeDecision skeletonDecision;
+
+  if (!candidates.empty()) {
+    auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, q); };
+    auto ranked = scoreCandidates(std::span<const SC>{candidates}, scorer);
+    skeletonDecision = skeletonMergeDecision(ranked, q, limit);
+
+    if (!skeletonDecision.shouldMerge) {
+      if (auto results = resultsFromRankedCandidates(ranked, limit); !results.empty()) { return results; }
+      skeletonDecision.shouldMerge = true;
+      skeletonDecision.reason = "strict-results-stale";
+    }
+  }
+
+  // skeleton matches merge into the candidate set and the reranker arbitrates.
+  if (candidates.size() < static_cast<size_t>(CANDIDATE_LIMIT)) {
     auto seen = candidates |
                 std::views::transform([](const SC &candidate) { return candidate.path.native(); }) |
                 std::ranges::to<std::unordered_set>();
 
     auto skeletonCandidates = db.searchSkeletonCandidates(dbQuery, CANDIDATE_LIMIT, options);
 
-    flog::debug() << "skeleton merge: '" << q << "' -> " << skeletonCandidates.size() << " candidates\n";
+    flog::debug() << "skeleton merge: '" << q << "' reason=" << skeletonDecision.reason << " best='"
+                  << skeletonDecision.bestPath.c_str() << "' score=" << skeletonDecision.bestScore
+                  << " ideal=" << skeletonDecision.idealScore << " confidence=" << skeletonDecision.confidence
+                  << " -> " << skeletonCandidates.size() << " candidates\n";
 
     for (auto &candidate : skeletonCandidates) {
       if (!seen.contains(candidate.path.native())) { candidates.emplace_back(std::move(candidate)); }
