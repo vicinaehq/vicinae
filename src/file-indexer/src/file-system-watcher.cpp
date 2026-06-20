@@ -1,35 +1,31 @@
-#include "file-indexer/home-directory-watcher.hpp"
+#include "file-indexer/file-system-watcher.hpp"
 #include "file-indexer/log.hpp"
-#include "file-indexer/util.hpp"
 #include "file-indexer/scan.hpp"
 #include <chrono>
 
 namespace fs = std::filesystem;
 
-void HomeDirectoryWatcher::handleEvent(const ImportantDirectoryWatcher::Event &ev) {
+void FileSystemWatcher::handleEvent(const ImportantDirectoryWatcher::Event &ev) {
   using Kind = ImportantDirectoryWatcher::Event::Kind;
 
   switch (ev.kind) {
   case Kind::DirectoryChanged:
-    m_dispatcher.enqueueDebounced({.path = ev.dir, .data = IncrementalScan{.mode = ScanMode::Pruned}});
+    m_dispatcher.enqueueDebounced({.path = ev.dir, .data = incrementalScan(ScanMode::Pruned)});
     break;
   case Kind::Degraded:
     flog::warn() << "Directory watcher degraded, rescanning all watched roots";
     for (const auto &dir : m_watcher->rootDirectories()) {
-      m_dispatcher.enqueueDebounced({.path = dir, .data = IncrementalScan{.mode = ScanMode::Pruned}});
+      m_dispatcher.enqueueDebounced({.path = dir, .data = incrementalScan(ScanMode::Pruned)});
     }
     break;
   }
 }
 
-std::vector<std::filesystem::path> HomeDirectoryWatcher::getImportantDirectories() {
-  // the home root's children are each swept individually, and deeper
-  auto dirs = m_watcher->rootDirectories();
-  std::erase(dirs, file_indexer::homeDir());
-  return dirs;
+IncrementalScan FileSystemWatcher::incrementalScan(ScanMode mode) const {
+  return {.mode = mode, .excludedFilenames = m_excludedFilenames, .excludedPaths = m_excludedPaths};
 }
 
-void HomeDirectoryWatcher::timerLoop() {
+void FileSystemWatcher::timerLoop() {
   using namespace std::chrono_literals;
   using namespace std::chrono;
 
@@ -50,9 +46,11 @@ void HomeDirectoryWatcher::timerLoop() {
 
     if (now - lastSweep >= BACKGROUND_UPDATE_INTERVAL) {
       lastSweep = now;
-      for (const auto &dir : getImportantDirectories()) {
-        if (fs::is_directory(dir, ec)) {
-          m_dispatcher.enqueue({.path = dir, .data = IncrementalScan{.maxDepth = BACKGROUND_UPDATE_DEPTH}});
+      for (const auto &entrypoint : m_entrypoints) {
+        if (fs::is_directory(entrypoint, ec)) {
+          auto scan = incrementalScan();
+          scan.maxDepth = BACKGROUND_UPDATE_DEPTH;
+          m_dispatcher.enqueue({.path = entrypoint, .data = std::move(scan)});
         }
       }
 
@@ -61,11 +59,15 @@ void HomeDirectoryWatcher::timerLoop() {
   }
 }
 
-void HomeDirectoryWatcher::refreshDynamicWatches() {
+void FileSystemWatcher::refreshDynamicWatches() {
   m_watcher->setDynamicDirectories(m_readDb->listRecentDirectories(DYNAMIC_WATCH_COUNT));
 }
 
-HomeDirectoryWatcher::HomeDirectoryWatcher(ScanDispatcher &dispatcher) : m_dispatcher(dispatcher) {
+FileSystemWatcher::FileSystemWatcher(ScanDispatcher &dispatcher, std::vector<fs::path> entrypoints,
+                                     std::vector<fs::path> excludedPaths,
+                                     std::vector<std::string> excludedFilenames)
+    : m_dispatcher(dispatcher), m_entrypoints(std::move(entrypoints)),
+      m_excludedPaths(std::move(excludedPaths)), m_excludedFilenames(std::move(excludedFilenames)) {
   m_readDb = std::make_unique<FileIndexerDatabase>();
   m_watcher = ImportantDirectoryWatcher::create(
       [this](const ImportantDirectoryWatcher::Event &ev) { handleEvent(ev); });
@@ -73,7 +75,7 @@ HomeDirectoryWatcher::HomeDirectoryWatcher(ScanDispatcher &dispatcher) : m_dispa
   m_timerThread = std::thread([this] { timerLoop(); });
 }
 
-HomeDirectoryWatcher::~HomeDirectoryWatcher() {
+FileSystemWatcher::~FileSystemWatcher() {
   m_alive = false;
   m_cv.notify_all();
   if (m_timerThread.joinable()) m_timerThread.join();

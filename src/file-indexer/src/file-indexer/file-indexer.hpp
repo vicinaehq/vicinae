@@ -1,6 +1,6 @@
 #pragma once
 #include "file-indexer/file-indexer-query-engine.hpp"
-#include "file-indexer/home-directory-watcher.hpp"
+#include "file-indexer/file-system-watcher.hpp"
 #include "file-indexer/file-indexer-db.hpp"
 #include "file-indexer/scan-dispatcher.hpp"
 #include <chrono>
@@ -31,16 +31,17 @@ public:
   ScanDispatcher m_dispatcher;
   ScanDispatcher::EventCallback m_scanEventCallback;
 
-  std::mutex m_homeWatcherMtx;
-  std::unique_ptr<HomeDirectoryWatcher> m_homeWatcher;
+  std::mutex m_fileSystemWatcherMtx;
+  std::unique_ptr<FileSystemWatcher> m_fileSystemWatcher;
 
   std::mutex m_pendingFullScanRootsMtx;
   std::vector<std::filesystem::path> m_pendingFullScanRoots;
 
-  void startHomeWatcher();
-  void stopHomeWatcher();
+  void startFileSystemWatcher();
+  void stopFileSystemWatcher();
   void markFullScanRootsPending(const std::vector<std::filesystem::path> &roots);
   void markFullScanSucceeded(const std::filesystem::path &root);
+  bool hasPendingFullScanRoots();
   void prunePendingFullScans(const std::vector<std::filesystem::path> &roots,
                              const std::vector<std::filesystem::path> &exclusions);
   std::vector<std::filesystem::path>

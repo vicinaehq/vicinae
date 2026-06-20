@@ -45,7 +45,7 @@ add_library(${FILE_INDEXER_CORE} STATIC
 	src/filesystem-walker.cpp
 	src/entry-filter.cpp
 	src/io-pacer.cpp
-	src/home-directory-watcher.cpp
+	src/file-system-watcher.cpp
 	${PLATFORM_SRCS}
 	${VENDOR_DIR}/fuzzy-trigram/register.c
 	${VENDOR_DIR}/spellfix/register.c

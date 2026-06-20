@@ -107,7 +107,7 @@ ReconcilePlan buildReconcilePlan(const std::vector<fs::path> &oldRoots,
 } // namespace
 
 void FileIndexer::startFullScan() {
-  stopHomeWatcher();
+  stopFileSystemWatcher();
   m_dispatcher.clearPending();
   m_dispatcher.interruptAll();
   m_dispatcher.waitUntilIdle();
@@ -204,17 +204,20 @@ void FileIndexer::start() {
   }
 
   // otherwise the event callback starts the watcher once the full scan succeeds
-  if (!needsFullScan) { startHomeWatcher(); }
+  if (!needsFullScan) { startFileSystemWatcher(); }
 }
 
-void FileIndexer::startHomeWatcher() {
-  std::scoped_lock const l(m_homeWatcherMtx);
-  if (!m_homeWatcher) { m_homeWatcher = std::make_unique<HomeDirectoryWatcher>(m_dispatcher); }
+void FileIndexer::startFileSystemWatcher() {
+  std::scoped_lock const l(m_fileSystemWatcherMtx);
+  if (!m_fileSystemWatcher) {
+    m_fileSystemWatcher = std::make_unique<FileSystemWatcher>(m_dispatcher, m_entrypoints, m_excludedPaths,
+                                                              m_excludedFilenames);
+  }
 }
 
-void FileIndexer::stopHomeWatcher() {
-  std::scoped_lock const l(m_homeWatcherMtx);
-  m_homeWatcher.reset();
+void FileIndexer::stopFileSystemWatcher() {
+  std::scoped_lock const l(m_fileSystemWatcherMtx);
+  m_fileSystemWatcher.reset();
 }
 
 void FileIndexer::markFullScanRootsPending(const std::vector<fs::path> &roots) {
@@ -235,6 +238,11 @@ void FileIndexer::markFullScanSucceeded(const fs::path &root) {
   std::erase_if(m_pendingFullScanRoots, [&](const fs::path &pendingRoot) {
     return isSameOrDescendantOf(pendingRoot, normalizedRoot);
   });
+}
+
+bool FileIndexer::hasPendingFullScanRoots() {
+  std::scoped_lock const l(m_pendingFullScanRootsMtx);
+  return !m_pendingFullScanRoots.empty();
 }
 
 void FileIndexer::prunePendingFullScans(const std::vector<fs::path> &roots,
@@ -294,13 +302,14 @@ void FileIndexer::applyConfig(std::vector<fs::path> paths, std::vector<fs::path>
   flog::info() << "Applying file indexer configuration change: deleting " << plan.deleteSubtrees.size()
                << " subtrees and scanning " << plan.scanRoots.size() << " roots";
 
-  stopHomeWatcher();
+  stopFileSystemWatcher();
   m_dispatcher.clearPending();
   m_dispatcher.interruptAll();
   m_dispatcher.waitUntilIdle();
 
   if (!plan.deleteSubtrees.empty()) {
-    auto onComplete = plan.scanRoots.empty() ? [this]() { startHomeWatcher(); } : std::function<void()>{};
+    auto onComplete =
+        plan.scanRoots.empty() ? [this]() { startFileSystemWatcher(); } : std::function<void()>{};
     m_writer->deleteIndexedFiles(std::move(plan.deleteSubtrees), std::move(onComplete));
   }
 
@@ -309,7 +318,7 @@ void FileIndexer::applyConfig(std::vector<fs::path> paths, std::vector<fs::path>
     m_dispatcher.enqueue({.path = root, .data = FullScan{.excludedPaths = m_excludedPaths}, .notify = true});
   }
 
-  if (plan.deleteSubtrees.empty() && plan.scanRoots.empty()) { startHomeWatcher(); }
+  if (plan.deleteSubtrees.empty() && plan.scanRoots.empty()) { startFileSystemWatcher(); }
 }
 
 std::vector<IndexerFileResult> FileIndexer::query(std::string_view view, int limit,
@@ -340,7 +349,9 @@ FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatche
     if (event.status == ScanStatus::Succeeded && shouldRebuildVocabulary()) {
       m_writer->rebuildSpellfixVocabulary();
     }
-    if (event.status == ScanStatus::Succeeded && event.type == ScanType::Full) { startHomeWatcher(); }
+    if (event.status == ScanStatus::Succeeded && event.type == ScanType::Full && !hasPendingFullScanRoots()) {
+      startFileSystemWatcher();
+    }
     if (m_scanEventCallback) { m_scanEventCallback(event); }
   });
 }
