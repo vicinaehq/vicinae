@@ -308,12 +308,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
         if (current && current != toast) return;
 
+        QString const title =
+            QString("Indexing %1").arg(QString::fromStdString(compressPath(status.entrypoint).string()));
         QString const message =
             status.processedFileCount > 0
-                ? QString("%1 files processed").arg(formatCount(static_cast<int>(status.processedFileCount)))
+                ? QString("%1 files").arg(formatCount(static_cast<int>(status.processedFileCount)))
                 : QString();
 
-        toasts->dynamic("Indexing files", message);
+        toasts->dynamic(title, message);
         toast = toasts->currentToast();
       });
 
