@@ -1,16 +1,20 @@
 #pragma once
 #include "xdgpp/env/env.hpp"
+#include <LayerShellQt/shell.h>
 #include <QString>
 #include <QGuiApplication>
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QStandardPaths>
 #include <algorithm>
-#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <qtenvironmentvariables.h>
+
+#ifdef Q_OS_LINUX
+#include "internal/wayland/globals.hpp"
+#endif
 
 namespace Environment {
 
@@ -55,7 +59,7 @@ inline bool isLayerShellSupported() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
 #endif
-  return isWaylandSession() && !isCosmicDesktop() && !isGnomeEnvironment();
+  return Wayland::Globals::layerShell() && !isCosmicDesktop();
 }
 
 inline bool isHudDisabled() { return !isLayerShellSupported(); }
