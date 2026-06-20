@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -22,8 +23,10 @@ enum class IndexedFileCategory {
 
 class FileIndexerDatabase {
   db::Database m_db;
+  std::unordered_map<std::string, int64_t> m_mimeTypeIds;
 
   std::optional<int64_t> retrieveFileId(const std::filesystem::path &path) const;
+  std::optional<int64_t> mimeTypeIdFor(std::string_view name);
 
 public:
   struct ScanRecord {

@@ -7,6 +7,7 @@ set(FILE_INDEXER_BIN vicinae-file-indexer)
 set(FILE_INDEXER_CORE ${FILE_INDEXER_BIN}-core)
 
 find_package(glaze)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 include("Figura")
 
@@ -59,6 +60,7 @@ target_include_directories(${FILE_INDEXER_CORE} PUBLIC
 target_compile_features(${FILE_INDEXER_CORE} PUBLIC cxx_std_23)
 
 target_link_libraries(${FILE_INDEXER_CORE} PUBLIC
+	Qt6::Core
 	sqlcipher
 	vicinae::fuzzy
 	vicinae::xdgpp

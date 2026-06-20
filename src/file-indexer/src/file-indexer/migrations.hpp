@@ -3,7 +3,7 @@
 
 namespace file_indexer {
 
-inline constexpr int SCHEMA_VERSION = 12;
+inline constexpr int SCHEMA_VERSION = 13;
 
 inline constexpr std::string_view INIT_SQL = R"sql(
 CREATE TABLE IF NOT EXISTS scan_history (
@@ -26,7 +26,13 @@ CREATE TABLE IF NOT EXISTS indexed_file (
 	indexed_at INT NOT NULL DEFAULT (unixepoch()),
 	type INT NOT NULL DEFAULT 0, -- 0 file, 1 directory
 	category INT NOT NULL DEFAULT 0,
-	size_bytes INT
+	size_bytes INT,
+	mime_type_id INT
+);
+
+CREATE TABLE IF NOT EXISTS mime_type (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	name TEXT UNIQUE NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS indexed_file_parent_id_idx ON indexed_file(parent_id);
@@ -36,6 +42,7 @@ CREATE INDEX IF NOT EXISTS indexed_file_dir_mtime_idx
 	ON indexed_file(last_modified_at DESC) WHERE type = 1;
 
 CREATE INDEX IF NOT EXISTS indexed_file_category_idx ON indexed_file(category);
+CREATE INDEX IF NOT EXISTS indexed_file_mime_type_idx ON indexed_file(mime_type_id);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS unicode_idx USING fts5(
 	path, content=indexed_file, tokenize='fuzzy_trigram remove_diacritics 2'

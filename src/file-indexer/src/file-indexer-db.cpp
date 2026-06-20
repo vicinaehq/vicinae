@@ -4,6 +4,8 @@
 #include "file-indexer/util.hpp"
 #include "file-indexer/vocabulary.hpp"
 #include "file-indexer/log.hpp"
+#include <QMimeDatabase>
+#include <QString>
 #include <common/file-category.hpp>
 #include <cctype>
 #include <chrono>
@@ -51,6 +53,15 @@ IndexedFileCategory toIndexedFileCategory(vicinae::FileCategory category) {
 
 IndexedFileCategory indexedFileCategoryFor(const fs::path &path, bool isDirectory) {
   return toIndexedFileCategory(vicinae::fileCategoryFor(path, isDirectory));
+}
+
+std::string mimeTypeNameFor(const fs::path &path, bool isDirectory) {
+  if (isDirectory) return {};
+
+  static thread_local QMimeDatabase db;
+  auto mime = db.mimeTypeForFile(QString::fromStdString(path.string()), QMimeDatabase::MatchExtension);
+
+  return mime.isValid() ? mime.name().toStdString() : std::string{};
 }
 
 // [p + '/', p + ('/' + 1)) covers exactly the byte range of p's descendants
@@ -484,6 +495,26 @@ bool FileIndexerDatabase::hasSpellfixVocabulary() {
   return static_cast<bool>(stmt) && stmt.step();
 }
 
+std::optional<int64_t> FileIndexerDatabase::mimeTypeIdFor(std::string_view name) {
+  if (name.empty()) return std::nullopt;
+
+  if (auto it = m_mimeTypeIds.find(std::string{name}); it != m_mimeTypeIds.end()) { return it->second; }
+
+  auto stmt = m_db.prepare("INSERT INTO mime_type(name) VALUES (:name) "
+                           "ON CONFLICT(name) DO UPDATE SET name = excluded.name "
+                           "RETURNING id");
+  stmt.bind(":name", name);
+
+  if (!stmt.step()) {
+    flog::warn() << "Failed to resolve MIME type id for" << std::string{name} << stmt.lastError();
+    return std::nullopt;
+  }
+
+  auto id = stmt.columnInt64(0);
+  m_mimeTypeIds.emplace(name, id);
+  return id;
+}
+
 std::vector<FileIndexerDatabase::SpellfixSuggestion>
 FileIndexerDatabase::spellfixSuggestions(std::string_view word, int top, bool prefix) {
   if (word.empty() || top <= 0) return {};
@@ -525,12 +556,13 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 
   auto modifyStmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes, mime_type_id)
     VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes)
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes, :mime_type_id)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
       skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
-      category = excluded.category, size_bytes = excluded.size_bytes, indexed_at = unixepoch()
+      category = excluded.category, size_bytes = excluded.size_bytes, mime_type_id = excluded.mime_type_id,
+      indexed_at = unixepoch()
   )");
 
   auto deleteStmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
@@ -561,6 +593,7 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
       modifyStmt.bind(":type", event.isDirectory ? 1 : 0);
       modifyStmt.bind(":category", static_cast<int>(indexedFileCategoryFor(event.path, event.isDirectory)));
       modifyStmt.bind(":size_bytes", event.sizeBytes);
+      modifyStmt.bind(":mime_type_id", mimeTypeIdFor(mimeTypeNameFor(event.path, event.isDirectory)));
       ok = modifyStmt.exec();
       break;
     }
@@ -593,12 +626,13 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes, mime_type_id)
     VALUES
-      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes)
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes, :mime_type_id)
     ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
       skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
-      category = excluded.category, size_bytes = excluded.size_bytes, indexed_at = unixepoch()
+      category = excluded.category, size_bytes = excluded.size_bytes, mime_type_id = excluded.mime_type_id,
+      indexed_at = unixepoch()
   )");
 
   std::error_code ec;
@@ -631,6 +665,7 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
     stmt.bind(":type", isDirectory ? 1 : 0);
     stmt.bind(":category", static_cast<int>(indexedFileCategoryFor(path, isDirectory)));
     stmt.bind(":size_bytes", file_indexer::fileSizeBytesFor(path, isDirectory));
+    stmt.bind(":mime_type_id", mimeTypeIdFor(mimeTypeNameFor(path, isDirectory)));
 
     if (!stmt.exec()) {
       flog::error() << "Failed to insert file in index" << path.string() << stmt.lastError();
