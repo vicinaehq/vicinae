@@ -30,32 +30,9 @@ bool isExplicitPathQuery(QStringView text) {
   return false;
 }
 
-IndexerFileCategory toIndexerFileCategory(vicinae::FileCategory category) {
-  switch (category) {
-  case vicinae::FileCategory::Other:
-    return IndexerFileCategory::Other;
-  case vicinae::FileCategory::Directory:
-    return IndexerFileCategory::Directory;
-  case vicinae::FileCategory::Image:
-    return IndexerFileCategory::Image;
-  case vicinae::FileCategory::Video:
-    return IndexerFileCategory::Video;
-  case vicinae::FileCategory::Audio:
-    return IndexerFileCategory::Audio;
-  case vicinae::FileCategory::Document:
-    return IndexerFileCategory::Document;
-  case vicinae::FileCategory::Archive:
-    return IndexerFileCategory::Archive;
-  case vicinae::FileCategory::Application:
-    return IndexerFileCategory::Application;
-  }
-
-  return IndexerFileCategory::Other;
-}
-
-IndexerFileCategory categoryForPath(const fs::path &path) {
+vicinae::FileCategory categoryForPath(const fs::path &path) {
   std::error_code ec;
-  return toIndexerFileCategory(vicinae::fileCategoryFor(path, fs::is_directory(path, ec)));
+  return vicinae::fileCategoryFor(path, fs::is_directory(path, ec));
 }
 
 } // namespace
@@ -223,24 +200,24 @@ void SearchFilesViewHost::restoreCategoryFilter() {
   if (index > 0) setCategoryFilter(index);
 }
 
-std::optional<IndexerFileCategory> SearchFilesViewHost::selectedCategory() const {
+std::optional<vicinae::FileCategory> SearchFilesViewHost::selectedCategory() const {
   switch (m_currentCategoryFilter) {
   case 1:
-    return IndexerFileCategory::Other;
+    return vicinae::FileCategory::Other;
   case 2:
-    return IndexerFileCategory::Directory;
+    return vicinae::FileCategory::Directory;
   case 3:
-    return IndexerFileCategory::Image;
+    return vicinae::FileCategory::Image;
   case 4:
-    return IndexerFileCategory::Video;
+    return vicinae::FileCategory::Video;
   case 5:
-    return IndexerFileCategory::Audio;
+    return vicinae::FileCategory::Audio;
   case 6:
-    return IndexerFileCategory::Document;
+    return vicinae::FileCategory::Document;
   case 7:
-    return IndexerFileCategory::Archive;
+    return vicinae::FileCategory::Archive;
   case 8:
-    return IndexerFileCategory::Application;
+    return vicinae::FileCategory::Application;
   default:
     return std::nullopt;
   }

@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QProcessEnvironment>
 #include <QTimer>
+#include <common/file-category.hpp>
 #include <filesystem>
 #include <utility>
 #include "common/common.hpp"
@@ -65,48 +66,48 @@ static AbstractFileIndexer::ScanState toScanState(file_indexer_gen::ScanState st
   return AbstractFileIndexer::ScanState::Failed;
 }
 
-static file_indexer_gen::FileCategory toFileCategory(IndexerFileCategory category) {
+static file_indexer_gen::FileCategory toFileCategory(vicinae::FileCategory category) {
   switch (category) {
-  case IndexerFileCategory::Other:
+  case vicinae::FileCategory::Other:
     return file_indexer_gen::FileCategory::Other;
-  case IndexerFileCategory::Directory:
+  case vicinae::FileCategory::Directory:
     return file_indexer_gen::FileCategory::Directory;
-  case IndexerFileCategory::Image:
+  case vicinae::FileCategory::Image:
     return file_indexer_gen::FileCategory::Image;
-  case IndexerFileCategory::Video:
+  case vicinae::FileCategory::Video:
     return file_indexer_gen::FileCategory::Video;
-  case IndexerFileCategory::Audio:
+  case vicinae::FileCategory::Audio:
     return file_indexer_gen::FileCategory::Audio;
-  case IndexerFileCategory::Document:
+  case vicinae::FileCategory::Document:
     return file_indexer_gen::FileCategory::Document;
-  case IndexerFileCategory::Archive:
+  case vicinae::FileCategory::Archive:
     return file_indexer_gen::FileCategory::Archive;
-  case IndexerFileCategory::Application:
+  case vicinae::FileCategory::Application:
     return file_indexer_gen::FileCategory::Application;
   }
   return file_indexer_gen::FileCategory::Other;
 }
 
-static IndexerFileCategory toIndexerFileCategory(file_indexer_gen::FileCategory category) {
+static vicinae::FileCategory toFileCategory(file_indexer_gen::FileCategory category) {
   switch (category) {
   case file_indexer_gen::FileCategory::Other:
-    return IndexerFileCategory::Other;
+    return vicinae::FileCategory::Other;
   case file_indexer_gen::FileCategory::Directory:
-    return IndexerFileCategory::Directory;
+    return vicinae::FileCategory::Directory;
   case file_indexer_gen::FileCategory::Image:
-    return IndexerFileCategory::Image;
+    return vicinae::FileCategory::Image;
   case file_indexer_gen::FileCategory::Video:
-    return IndexerFileCategory::Video;
+    return vicinae::FileCategory::Video;
   case file_indexer_gen::FileCategory::Audio:
-    return IndexerFileCategory::Audio;
+    return vicinae::FileCategory::Audio;
   case file_indexer_gen::FileCategory::Document:
-    return IndexerFileCategory::Document;
+    return vicinae::FileCategory::Document;
   case file_indexer_gen::FileCategory::Archive:
-    return IndexerFileCategory::Archive;
+    return vicinae::FileCategory::Archive;
   case file_indexer_gen::FileCategory::Application:
-    return IndexerFileCategory::Application;
+    return vicinae::FileCategory::Application;
   }
-  return IndexerFileCategory::Other;
+  return vicinae::FileCategory::Other;
 }
 
 FileIndexer::FileIndexer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
@@ -275,7 +276,7 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
         for (const auto &match : result->matches) {
           results.emplace_back(IndexerFileResult{.path = std::filesystem::path(match.path),
                                                  .rank = match.rank,
-                                                 .category = toIndexerFileCategory(match.category)});
+                                                 .category = toFileCategory(match.category)});
         }
 
         return results;

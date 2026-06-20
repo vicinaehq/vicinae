@@ -56,28 +56,28 @@ namespace {
 
 struct FileCategoryDefinition {
   std::string_view name;
-  IndexerFileCategory category;
+  vicinae::FileCategory category;
 };
 
 static constexpr FileCategoryDefinition FILE_CATEGORIES[] = {
-    {.name = "other", .category = IndexerFileCategory::Other},
-    {.name = "directory", .category = IndexerFileCategory::Directory},
-    {.name = "image", .category = IndexerFileCategory::Image},
-    {.name = "video", .category = IndexerFileCategory::Video},
-    {.name = "audio", .category = IndexerFileCategory::Audio},
-    {.name = "document", .category = IndexerFileCategory::Document},
-    {.name = "archive", .category = IndexerFileCategory::Archive},
-    {.name = "application", .category = IndexerFileCategory::Application},
+    {.name = "other", .category = vicinae::FileCategory::Other},
+    {.name = "directory", .category = vicinae::FileCategory::Directory},
+    {.name = "image", .category = vicinae::FileCategory::Image},
+    {.name = "video", .category = vicinae::FileCategory::Video},
+    {.name = "audio", .category = vicinae::FileCategory::Audio},
+    {.name = "document", .category = vicinae::FileCategory::Document},
+    {.name = "archive", .category = vicinae::FileCategory::Archive},
+    {.name = "application", .category = vicinae::FileCategory::Application},
 };
 
-std::optional<IndexerFileCategory> fileCategoryFromString(std::string_view type) {
+std::optional<vicinae::FileCategory> fileCategoryFromString(std::string_view type) {
   for (const auto &definition : FILE_CATEGORIES) {
     if (definition.name == type) return definition.category;
   }
   return std::nullopt;
 }
 
-std::string_view fileCategoryToString(IndexerFileCategory category) {
+std::string_view fileCategoryToString(vicinae::FileCategory category) {
   for (const auto &definition : FILE_CATEGORIES) {
     if (definition.category == category) return definition.name;
   }

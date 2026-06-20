@@ -1,4 +1,5 @@
 #pragma once
+#include <common/file-category.hpp>
 #include <qfuture.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
@@ -22,26 +23,15 @@
  * environments.
  */
 
-enum class IndexerFileCategory {
-  Other,
-  Directory,
-  Image,
-  Video,
-  Audio,
-  Document,
-  Archive,
-  Application,
-};
-
 struct IndexerFileResult {
   std::filesystem::path path;
   double rank;
-  IndexerFileCategory category = IndexerFileCategory::Other;
+  vicinae::FileCategory category = vicinae::FileCategory::Other;
 };
 
 struct IndexerQueryParams {
   int limit = 100;
-  std::optional<IndexerFileCategory> category;
+  std::optional<vicinae::FileCategory> category;
 };
 
 struct IndexerAsyncQuery : public QObject {

@@ -50,7 +50,7 @@ private:
   void loadDetail(const std::filesystem::path &path);
   void clearDetail();
   void restoreCategoryFilter();
-  std::optional<IndexerFileCategory> selectedCategory() const;
+  std::optional<vicinae::FileCategory> selectedCategory() const;
 
   enum class ResultMode { Recent, DirectPath, IndexedSearch };
 

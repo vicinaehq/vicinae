@@ -29,9 +29,9 @@ public:
   }
 
 private:
-  static IndexerFileCategory mapCategory(tsapi::FileSearchCategory category) {
+  static vicinae::FileCategory mapCategory(tsapi::FileSearchCategory category) {
     using In = tsapi::FileSearchCategory;
-    using Out = IndexerFileCategory;
+    using Out = vicinae::FileCategory;
 
     switch (category) {
     case In::Other:
@@ -55,8 +55,8 @@ private:
     std::unreachable();
   }
 
-  static tsapi::FileSearchCategory mapCategory(IndexerFileCategory category) {
-    using In = IndexerFileCategory;
+  static tsapi::FileSearchCategory mapCategory(vicinae::FileCategory category) {
+    using In = vicinae::FileCategory;
     using Out = tsapi::FileSearchCategory;
 
     switch (category) {
