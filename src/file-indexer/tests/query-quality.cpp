@@ -1,5 +1,4 @@
 #include <catch2/catch_test_macros.hpp>
-#include <sqlcipher/sqlite3.h>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -13,22 +12,9 @@
 #include "file-indexer/file-indexer-db.hpp"
 #include "file-indexer/file-indexer-query-engine.hpp"
 
-extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
-extern "C" int vicinaeSpellfixInit(sqlite3 *, char **, const void *);
-
 namespace fs = std::filesystem;
 
 namespace {
-
-// registered before any test can open a connection, so test order can't matter
-struct ExtensionRegistrar {
-  ExtensionRegistrar() {
-    sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeFuzzyTrigramInit));
-    sqlite3_auto_extension(reinterpret_cast<void (*)()>(vicinaeSpellfixInit));
-  }
-};
-
-ExtensionRegistrar const g_extensionRegistrar;
 
 // every path is created as a real empty file: result ranking stats paths and
 // silently drops entries that don't exist

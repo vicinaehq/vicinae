@@ -33,7 +33,10 @@ constexpr const auto CANDIDATE_LIMIT = 10000;
 constexpr const auto SUGGESTION_FETCH_COUNT = 20;
 constexpr const auto MAX_CORRECTIONS_PER_WORD = 3;
 constexpr const auto MIN_CORRECTABLE_WORD_LENGTH = 3;
+constexpr const auto MAX_CORRECTION_PLANS = 4;
 constexpr const double SKELETON_CONFIDENCE_THRESHOLD = 0.5;
+constexpr const double CORRECTION_CONFIDENCE_THRESHOLD = 0.7;
+constexpr const double CORRECTION_FULL_PAGE_CONFIDENCE_THRESHOLD = 0.5;
 
 enum class SubstringMatch { None, Inner, TokenStart };
 
@@ -151,13 +154,7 @@ int scoreCandidate(const SC &candidate, std::string_view query) {
          computeSubstringMatchMultiplier(candidate, query);
 }
 
-/**
- * Same scoring as the strict path, except every query word can match through any of
- * its corrections. Scoring against the original query alone would discard good results:
- * fzf is subsequence-based, so a transposition ('budgte') scores 0 against the file
- * it was corrected to ('budget') and a single zero word nukes the whole candidate.
- */
-int scoreCandidate(const SC &candidate, std::span<const QueryWord> words) {
+int scoreCandidate(const SC &candidate, const CorrectionPlan &plan) {
   const auto &ranker = fzf::threadLocalMatcher();
   std::string const filename = candidate.path.filename().string();
   std::string_view const fullPath{candidate.path.c_str()};
@@ -171,13 +168,8 @@ int scoreCandidate(const SC &candidate, std::span<const QueryWord> words) {
   int total = 0;
   int count = 0;
 
-  for (const auto &queryWord : words) {
-    int best = wordScore(queryWord.word);
-
-    for (const auto &correction : queryWord.corrections) {
-      best = std::max(best,
-                      static_cast<int>(wordScore(correction.word) * correctionWeight(correction.distance)));
-    }
+  for (const auto &choice : plan.choices) {
+    int const best = static_cast<int>(static_cast<double>(wordScore(choice.term)) * choice.weight);
 
     if (best <= 0) return 0;
 
@@ -303,6 +295,41 @@ int idealScoreForQuery(std::string_view query) {
   return fzf::threadLocalMatcher().fuzzy_match_v2_score_query(query, query);
 }
 
+double idealScoreForCorrectionPlan(const CorrectionPlan &plan) {
+  double total = 0;
+  int count = 0;
+
+  for (const auto &choice : plan.choices) {
+    int const ideal = idealScoreForQuery(choice.term);
+
+    if (ideal <= 0) return 0;
+
+    total += static_cast<double>(ideal) * choice.weight;
+    ++count;
+  }
+
+  return count != 0 ? total / count : 0;
+}
+
+double correctionConfidence(const std::vector<ScoredRef<SC>> &ranked, const CorrectionPlan &plan) {
+  if (ranked.empty()) return 0;
+
+  double const idealScore = idealScoreForCorrectionPlan(plan);
+
+  if (idealScore <= 0) return 0;
+
+  return static_cast<double>(ranked.front().score) / idealScore;
+}
+
+bool acceptsCorrectionResults(const std::vector<ScoredRef<SC>> &ranked, const CorrectionPlan &plan,
+                              int limit) {
+  double const confidence = correctionConfidence(ranked, plan);
+
+  return confidence >= CORRECTION_CONFIDENCE_THRESHOLD ||
+         (limit > 0 && ranked.size() >= static_cast<size_t>(limit) &&
+          confidence >= CORRECTION_FULL_PAGE_CONFIDENCE_THRESHOLD);
+}
+
 SkeletonMergeDecision skeletonMergeDecision(const std::vector<ScoredRef<SC>> &ranked, std::string_view query,
                                             int limit) {
   if (ranked.empty()) return {};
@@ -358,18 +385,43 @@ std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std
 
   if (!hasCorrections) return {};
 
-  auto relaxedQuery = prepareRelaxedSearchQuery(words);
+  auto plans = buildCorrectionPlans(words, MAX_CORRECTION_PLANS);
+  std::vector<IndexerFileResult> bestResults;
+  double bestConfidence = 0;
 
-  if (relaxedQuery.empty()) return {};
+  if (plans.empty()) return {};
 
-  auto candidates = db.searchCandidates(relaxedQuery, CANDIDATE_LIMIT, options);
+  for (const auto &plan : plans) {
+    auto correctionQuery = prepareCorrectionSearchQuery(plan);
 
-  flog::debug() << "spellfix fallback: '" << q << "' -> " << relaxedQuery << " (" << candidates.size()
-                << " candidates)\n";
+    if (correctionQuery.empty()) continue;
 
-  auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, words); };
+    auto candidates = db.searchCandidates(correctionQuery, CANDIDATE_LIMIT, options);
 
-  return rankCandidates(std::move(candidates), scorer, limit);
+    flog::debug() << "spellfix fallback: '" << q << "' -> " << correctionQuery << " (" << candidates.size()
+                  << " candidates)\n";
+
+    auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, plan); };
+    auto ranked = scoreCandidates(std::span<const SC>{candidates}, scorer);
+    auto results = resultsFromRankedCandidates(ranked, limit);
+
+    if (results.empty()) continue;
+
+    double const confidence = correctionConfidence(ranked, plan);
+
+    flog::debug() << "spellfix confidence: '" << q << "' -> " << correctionQuery
+                  << " confidence=" << confidence << " results=" << results.size() << "\n";
+
+    if (confidence > bestConfidence) {
+      bestConfidence = confidence;
+      bestResults = std::move(results);
+    }
+
+    if (acceptsCorrectionResults(ranked, plan, limit)) { return bestResults; }
+  }
+
+  return bestConfidence >= CORRECTION_FULL_PAGE_CONFIDENCE_THRESHOLD ? bestResults
+                                                                     : std::vector<IndexerFileResult>{};
 }
 
 } // namespace
@@ -388,6 +440,21 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
   auto candidates = db.searchCandidates(dbQuery, CANDIDATE_LIMIT, options);
 
   flog::debug() << "got " << candidates.size() << " candidates\n";
+
+  auto tryCorrections = [&] {
+    if (auto results = queryWithCorrections(db, q, limit, options, true); !results.empty()) {
+      return results;
+    }
+
+    return queryWithCorrections(db, q, limit, options, false);
+  };
+
+  bool triedCorrections = false;
+
+  if (candidates.empty()) {
+    triedCorrections = true;
+    if (auto results = tryCorrections(); !results.empty()) { return results; }
+  }
 
   SkeletonMergeDecision skeletonDecision;
 
@@ -430,8 +497,7 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
     }
   }
 
-  // attempt spellfix, trusting vocab words
-  if (auto results = queryWithCorrections(db, q, limit, options, true); !results.empty()) { return results; }
+  if (triedCorrections) return {};
 
-  return queryWithCorrections(db, q, limit, options, false);
+  return tryCorrections();
 }

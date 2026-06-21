@@ -1,3 +1,4 @@
+#include "common/enumerate.hpp"
 #include "file-indexer/file-indexer-query-engine.hpp"
 #include <algorithm>
 #include <cctype>
@@ -37,32 +38,20 @@ std::string prepareCandidateSearchQuery(std::string_view query) {
          std::ranges::to<std::string>();
 }
 
-std::string prepareRelaxedSearchQuery(std::span<const QueryWord> words) {
+std::string prepareCorrectionSearchQuery(const CorrectionPlan &plan) {
   std::vector<std::string> parts;
 
-  parts.reserve(words.size());
+  parts.reserve(plan.choices.size());
 
-  for (const auto &queryWord : words) {
-    const auto &word = queryWord.word;
+  for (const auto &choice : plan.choices) {
+    const auto &word = choice.term;
 
     if (word.size() <= 2) continue;
 
-    if (queryWord.corrections.empty()) {
-      parts.emplace_back(std::format("\"{}\"", word));
-      continue;
-    }
-
-    std::string group = std::format("(\"{}\"", word);
-
-    for (const auto &correction : queryWord.corrections) {
-      group += std::format(" OR \"{}\"", correction.word);
-    }
-
-    group += ")";
-    parts.emplace_back(std::move(group));
+    parts.emplace_back(std::format("\"{}\"", word));
   }
 
-  return parts | std::views::join_with(std::string_view{" AND "}) | std::ranges::to<std::string>();
+  return parts | std::views::join_with(std::string_view{" "}) | std::ranges::to<std::string>();
 }
 
 double adjustedSuggestionScore(const FileIndexerDatabase::SpellfixSuggestion &suggestion) {
@@ -126,6 +115,67 @@ pickCorrections(std::span<const FileIndexerDatabase::SpellfixSuggestion> suggest
   }
 
   return picked;
+}
+
+std::vector<CorrectionPlan> buildCorrectionPlans(std::span<const QueryWord> words, size_t maxPlans) {
+  std::vector<CorrectionPlan> plans;
+
+  if (words.empty() || maxPlans == 0) return plans;
+
+  const auto makeChoice = [](const QueryWord &word, size_t correctionIndex) {
+    if (correctionIndex >= word.corrections.size()) {
+      return CorrectionChoice{.original = word.word, .term = word.word};
+    }
+
+    const auto &correction = word.corrections[correctionIndex];
+    return CorrectionChoice{.original = word.word,
+                            .term = correction.word,
+                            .weight = correctionWeight(correction.distance),
+                            .corrected = true};
+  };
+
+  const auto hasCorrection = [](const CorrectionPlan &plan) {
+    return std::ranges::any_of(plan.choices, &CorrectionChoice::corrected);
+  };
+
+  const auto planKey = [](const CorrectionPlan &plan) {
+    return plan.choices | std::views::transform([](const CorrectionChoice &choice) {
+             return std::string_view{choice.term};
+           }) |
+           std::views::join_with(std::string_view{"\n"}) | std::ranges::to<std::string>();
+  };
+
+  const auto addPlan = [&](CorrectionPlan plan) {
+    if (!hasCorrection(plan)) return;
+
+    const auto key = planKey(plan);
+    bool const duplicate =
+        std::ranges::any_of(plans, [&](const CorrectionPlan &existing) { return planKey(existing) == key; });
+
+    if (!duplicate && plans.size() < maxPlans) { plans.emplace_back(std::move(plan)); }
+  };
+
+  CorrectionPlan bestPlan;
+
+  bestPlan.choices.reserve(words.size());
+
+  for (const auto &word : words) {
+    bestPlan.choices.emplace_back(makeChoice(word, 0));
+  }
+
+  addPlan(bestPlan);
+
+  for (const auto &[wordIndex, word] : vicinae::enumerate(words)) {
+    for (size_t correctionIndex = 1; correctionIndex < word.corrections.size(); ++correctionIndex) {
+      if (plans.size() >= maxPlans) return plans;
+
+      CorrectionPlan plan = bestPlan;
+      plan.choices[static_cast<size_t>(wordIndex)] = makeChoice(word, correctionIndex);
+      addPlan(std::move(plan));
+    }
+  }
+
+  return plans;
 }
 
 } // namespace file_indexer::query

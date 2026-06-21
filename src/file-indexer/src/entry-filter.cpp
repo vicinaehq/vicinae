@@ -15,8 +15,6 @@ namespace fs = std::filesystem;
 /*
  * Absolute paths to never follow during indexing: pseudo filesystems such as /run or /proc,
  * plus well-known locations under the user's home that only ever hold machine-managed data
- * (package caches, toolchains, container/image layers, game libraries...).
- * Contextual exclusions (using gitignore-like semantics) are handled separately.
  */
 static const std::unordered_set<std::string> &excludedPaths() {
   static const std::unordered_set<std::string> paths = [] {

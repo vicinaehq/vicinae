@@ -162,18 +162,21 @@ TEST_CASE("pickCorrections trusts frequent vocabulary words and corrects rare on
   CHECK(correctionWords(pickCorrections(rare, "budgte", 3)) == std::vector<std::string>{"budget"});
 }
 
-TEST_CASE("prepareRelaxedSearchQuery expands corrected words into OR groups") {
+TEST_CASE("buildCorrectionPlans picks one correction plan at a time") {
   std::vector<QueryWord> const words = {
       {.word = "hello", .corrections = {}},
       {.word = "budgte", .corrections = {{.word = "budget"}, {.word = "budgie"}}},
       {.word = "vrs", .corrections = {{.word = "vers"}}},
   };
 
-  CHECK(prepareRelaxedSearchQuery(words) ==
-        R"("hello" AND ("budgte" OR "budget" OR "budgie") AND ("vrs" OR "vers"))");
+  auto plans = buildCorrectionPlans(words, 4);
+
+  REQUIRE(plans.size() == 2);
+  CHECK(prepareCorrectionSearchQuery(plans[0]) == R"("hello" "budget" "vers")");
+  CHECK(prepareCorrectionSearchQuery(plans[1]) == R"("hello" "budgie" "vers")");
 }
 
-TEST_CASE("prepareRelaxedSearchQuery drops bigrams entirely") {
+TEST_CASE("prepareCorrectionSearchQuery drops bigrams entirely") {
   std::vector<QueryWord> const words = {
       {.word = "budgte", .corrections = {{.word = "budget"}}},
       {.word = "yo", .corrections = {}},
@@ -182,7 +185,10 @@ TEST_CASE("prepareRelaxedSearchQuery drops bigrams entirely") {
 
   // sub-3-char words are uncorrectable: as hard filters they only flood or nullify,
   // so they are enforced by the reranker instead
-  CHECK(prepareRelaxedSearchQuery(words) == R"(("budgte" OR "budget"))");
+  auto plans = buildCorrectionPlans(words, 4);
+
+  REQUIRE(plans.size() == 1);
+  CHECK(prepareCorrectionSearchQuery(plans[0]) == R"("budget")");
 }
 
 TEST_CASE("correctionWeight decays with spelling distance") {

@@ -21,6 +21,17 @@ struct QueryWord {
   std::vector<FileIndexerDatabase::SpellfixSuggestion> corrections;
 };
 
+struct CorrectionChoice {
+  std::string original;
+  std::string term;
+  double weight = 1.0;
+  bool corrected = false;
+};
+
+struct CorrectionPlan {
+  std::vector<CorrectionChoice> choices;
+};
+
 inline constexpr double CORRECTION_PENALTY = 0.85;
 inline constexpr int MAX_CORRECTION_DISTANCE = 120;
 
@@ -28,12 +39,7 @@ std::vector<std::string_view> splitQueryWords(std::string_view query);
 
 std::string prepareCandidateSearchQuery(std::string_view query);
 
-/**
- * This query runs under the assumption that the original input contains errors, so
- * uncorrectable bigrams don't get to act as hard filters: they either flood the
- * candidate set or, if typo'd, nullify it. The reranker still enforces them.
- */
-std::string prepareRelaxedSearchQuery(std::span<const QueryWord> words);
+std::string prepareCorrectionSearchQuery(const CorrectionPlan &plan);
 
 /**
  * Typos are far more likely to be of a common word than a rare one, and spellfix's own
@@ -61,6 +67,8 @@ double correctionWeight(int distance);
 std::vector<FileIndexerDatabase::SpellfixSuggestion>
 pickCorrections(std::span<const FileIndexerDatabase::SpellfixSuggestion> suggestions,
                 std::string_view original, size_t maxCount, bool trustKnownWords = true);
+
+std::vector<CorrectionPlan> buildCorrectionPlans(std::span<const QueryWord> words, size_t maxPlans);
 
 } // namespace file_indexer::query
 
