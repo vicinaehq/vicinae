@@ -41,7 +41,9 @@ const std::array<DatetimeFormatSpec, 3> DATETIME_FORMATS{{
 
 bool isValidIsoDatetime(const std::string &str, DatetimeFormat format) {
   std::string_view trimmed = str;
-  if (trimmed.front() == '"' && trimmed.back() == '"') { trimmed = trimmed.substr(1, trimmed.length() - 2); }
+  if (trimmed.size() >= 2 && trimmed.front() == '"' && trimmed.back() == '"') {
+    trimmed = trimmed.substr(1, trimmed.length() - 2);
+  }
 
   const auto &spec = DATETIME_FORMATS[static_cast<std::size_t>(format)];
   return std::regex_match(trimmed.begin(), trimmed.end(), spec.pattern);
@@ -75,7 +77,7 @@ TEST_CASE("supports basic unit conversion") {
   assertComputationResult("100mm to m", "0.1 m");
 }
 
-TEST_CASE("handles datetime operations and convertions") {
+TEST_CASE("handles datetime operations and conversions") {
   assertIsValidDatetime("now", DatetimeFormat::Local);
   assertIsValidDatetime("now + 1d", DatetimeFormat::Local);
   assertIsValidDatetime("now to utc", DatetimeFormat::UtcWithZ);

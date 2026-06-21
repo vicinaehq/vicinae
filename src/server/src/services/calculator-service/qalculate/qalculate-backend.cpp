@@ -1,7 +1,9 @@
 #include "services/calculator-service/qalculate/qalculate-backend.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include <QRegularExpression>
+#include <QTime>
 #include <QTimeZone>
+#include <cctype>
 #include <format>
 #include <libqalculate/MathStructure.h>
 #include <libqalculate/QalculateDateTime.h>
@@ -16,6 +18,20 @@
 
 using CalculatorResult = QalculateBackend::CalculatorResult;
 using CalculatorError = QalculateBackend::CalculatorError;
+
+namespace {
+
+// Lowercased, with underscores treated as spaces, so "New_York" matches "new york".
+std::string normalizeCityKey(std::string_view city) {
+  std::string key;
+  key.reserve(city.size());
+  for (char c : city) {
+    key.push_back(c == '_' ? ' ' : static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+  }
+  return key;
+}
+
+} // namespace
 
 QalculateBackend::QalculateBackend() = default;
 
@@ -33,64 +49,37 @@ bool QalculateBackend::start() {
 void QalculateBackend::populateTzOffset() {
   if (!m_cityToTzMinuteOffset.empty()) { return; }
 
+  const QDateTime now = QDateTime::currentDateTimeUtc();
+
   for (const auto &tz : QTimeZone::availableTimeZoneIds()) {
-    std::string tzcode(tz.constData(), tz.length());
+    const std::string tzcode(tz.constData(), tz.length());
 
-    // Extract city name from tzcode (remove continent part if present)
-    size_t slashPos = tzcode.find('/');
-    std::string cityName = tzcode;
-    if (slashPos != std::string::npos) { cityName = tzcode.substr(slashPos + 1); }
+    // Last path segment, so "America/Argentina/Buenos_Aires" -> "Buenos_Aires".
+    const size_t slashPos = tzcode.rfind('/');
+    const std::string cityName = slashPos != std::string::npos ? tzcode.substr(slashPos + 1) : tzcode;
 
-    // Get the timezone offset
-    QTimeZone qtz(tz);
-    int offsetSeconds = qtz.offsetFromUtc(QDateTime::currentDateTimeUtc());
-    int offsetMinutes = offsetSeconds / 60;
-    m_cityToTzMinuteOffset[cityName] = offsetMinutes;
+    const int offsetMinutes = QTimeZone(tz).offsetFromUtc(now) / 60;
+    m_cityToTzMinuteOffset[normalizeCityKey(cityName)] = offsetMinutes;
   }
 }
 
 std::optional<int> QalculateBackend::getTimezoneOffset(const std::string &tzName) {
-
-  // Try to parse as custom offset format: +HH:MM or -HH:MM
-  if (tzName.size() >= 6 && (tzName[0] == '+' || tzName[0] == '-')) {
-    try {
-      unsigned int hours = 0, minutes = 0;
-      int sign = (tzName[0] == '+') ? 1 : -1;
-      if (sscanf(tzName.c_str() + 1, "%2u:%2u", &hours, &minutes) == 2) {
-        return sign * static_cast<int>(hours * 60 + minutes);
-      }
-    } catch (...) { return std::nullopt; }
+  // Custom offset format: +HH:MM or -HH:MM
+  if (tzName.size() >= 6 && (tzName.front() == '+' || tzName.front() == '-')) {
+    const int sign = tzName.front() == '+' ? 1 : -1;
+    const QTime offset = QTime::fromString(QString::fromStdString(tzName.substr(1)), "HH:mm");
+    if (offset.isValid()) { return sign * (offset.hour() * 60 + offset.minute()); }
+    return std::nullopt;
   }
 
   this->populateTzOffset();
 
-  // Try to interpret tzName as a city name
-  std::string normalizedCity = tzName;
-  // Normalize: uppercase initials, replace spaces with underscores
-  bool capitalizeNext = true;
-  for (size_t i = 0; i < normalizedCity.size(); ++i) {
-    if (normalizedCity[i] == ' ') {
-      normalizedCity[i] = '_';
-      capitalizeNext = true;
-    } else if (capitalizeNext) {
-      normalizedCity[i] = std::toupper(static_cast<unsigned char>(normalizedCity[i]));
-      capitalizeNext = false;
-    } else {
-      normalizedCity[i] = std::tolower(static_cast<unsigned char>(normalizedCity[i]));
-    }
+  if (auto it = m_cityToTzMinuteOffset.find(normalizeCityKey(tzName)); it != m_cityToTzMinuteOffset.end()) {
+    return it->second;
   }
 
-  auto it = m_cityToTzMinuteOffset.find(normalizedCity);
-  if (it != m_cityToTzMinuteOffset.end()) { return it->second; }
-
-  // Try to look up timezone in IANA database
-  QString tzQStr = QString::fromStdString(tzName);
-  QTimeZone tz(tzQStr.toUtf8());
-
-  if (tz.isValid()) {
-    // Get offset in seconds and convert to minutes
-    int offsetSeconds = tz.offsetFromUtc(QDateTime::currentDateTimeUtc());
-    return offsetSeconds / 60; // Convert to minutes
+  if (QTimeZone tz(QString::fromStdString(tzName).toUtf8()); tz.isValid()) {
+    return tz.offsetFromUtc(QDateTime::currentDateTimeUtc()) / 60;
   }
 
   return std::nullopt;
@@ -104,11 +93,7 @@ std::pair<std::string, PrintOptions> QalculateBackend::handleToExpression(const 
 
   if (CALCULATOR->separateToExpression(calcExpression, toExpression, m_evalOpts, true)) {
     if (!toExpression.empty()) {
-      std::string toStr = toExpression;
-      // Remove leading/trailing whitespace
-      size_t start = toStr.find_first_not_of(" \t\n\r");
-      size_t end = toStr.find_last_not_of(" \t\n\r");
-      if (start != std::string::npos) { toStr = toStr.substr(start, end - start + 1); }
+      const std::string toStr = QString::fromStdString(toExpression).trimmed().toStdString();
 
       if (toStr == "hex" || toStr == "hexadecimal") {
         resultPrintOpts.base = BASE_HEXADECIMAL;
@@ -362,15 +347,11 @@ std::optional<std::string> QalculateBackend::getUnitDisplayName(const MathStruct
                                                                 std::string_view prefix) {
   if (prefix.empty() && s.prefix()) {
     std::string_view const prefix = s.prefix()->preferredDisplayName().name;
-
     if (!prefix.empty()) { return getUnitDisplayName(s, prefix); }
   }
 
   if (auto unit = s.unit()) {
-    std::string displayName =
-        std::format("{}{}", prefix, unit->preferredDisplayName(false, false, true, false).name);
-
-    return displayName;
+    return std::format("{}{}", prefix, unit->preferredDisplayName(false, false, true, false).name);
   }
 
   for (size_t i = 0; i != s.size(); ++i) {
