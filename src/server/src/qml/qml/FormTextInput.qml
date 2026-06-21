@@ -12,6 +12,7 @@ Item {
     property string placeholder: ""
     property bool readOnly: false
     property bool hasError: false
+    property bool filled: false
     property bool releaseFocusOnAccept: false
     property alias echoMode: input.echoMode
     readonly property bool editing: input.activeFocus
@@ -29,6 +30,13 @@ Item {
     onActiveFocusChanged: {
         if (activeFocus && !readOnly)
             input.forceActiveFocus();
+    }
+
+    FormInputBackground {
+        anchors.fill: parent
+        radius: 8
+        filled: root.filled
+        opacity: root.readOnly ? 0.5 : 1.0
     }
 
     Rectangle {

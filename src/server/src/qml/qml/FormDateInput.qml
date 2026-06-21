@@ -13,6 +13,7 @@ Item {
     property string maxDate: ""
 
     property bool hasError: false
+    property bool filled: false
 
     signal textEdited
 
@@ -25,6 +26,12 @@ Item {
     onActiveFocusChanged: {
         if (activeFocus)
             input.forceActiveFocus();
+    }
+
+    FormInputBackground {
+        anchors.fill: parent
+        radius: 8
+        filled: root.filled
     }
 
     Rectangle {

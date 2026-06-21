@@ -12,6 +12,7 @@ Item {
     property int minRows: 3
     property int maxRows: 10
     property bool hasError: false
+    property bool filled: false
 
     // [{iconSource, title, value}]
     property var completions: []
@@ -44,6 +45,12 @@ Item {
     FontMetrics {
         id: fontMetrics
         font: edit.font
+    }
+
+    FormInputBackground {
+        anchors.fill: parent
+        radius: 8
+        filled: root.filled
     }
 
     Rectangle {
