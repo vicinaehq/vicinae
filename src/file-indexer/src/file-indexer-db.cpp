@@ -342,9 +342,9 @@ FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit, c
   std::string sql = R"(
     SELECT f.path, f.category, mt.name
     FROM indexed_file f
-    JOIN unicode_idx ON unicode_idx.rowid = f.id
+    JOIN path_idx ON path_idx.rowid = f.id
     LEFT JOIN mime_type mt ON mt.id = f.mime_type_id
-    WHERE unicode_idx MATCH :search
+    WHERE path_idx MATCH :search
   )";
 
   sql += searchFiltersSql();
