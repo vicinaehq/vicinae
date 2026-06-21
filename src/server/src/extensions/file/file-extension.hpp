@@ -69,9 +69,10 @@ public:
 
   FileExtension() {
     registerCommand<SearchFilesCommand>();
-#ifdef Q_OS_LINUX
-    registerCommand<RebuildFileIndexCommand>();
-#endif
+
+    // XXX - we don't really need this anymore, as the indexer now executes full sweeps at a given interval
+    // This behavior can be easily replicated by simply removing the `.cache/vicinae/file-indexer` directory.
+    // registerCommand<RebuildFileIndexCommand>();
   }
 
   std::vector<Preference> preferences() const override {
