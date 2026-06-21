@@ -835,6 +835,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/AlertDialog.qml
 	src/qml/qml/FormView.qml
 	src/qml/qml/FormField.qml
+	src/qml/qml/FormInputBackground.qml
 	src/qml/qml/FormTextInput.qml
 	src/qml/qml/FormTextArea.qml
 	src/qml/qml/FormCheckbox.qml

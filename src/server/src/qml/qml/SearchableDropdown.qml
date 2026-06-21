@@ -19,6 +19,7 @@ Item {
     property string placeholder: ""
     property bool readOnly: false
     property bool hasError: false
+    property bool filled: false
 
     width: compact ? Math.max(triggerButton.implicitWidth, minimumWidth) : implicitWidth
 
@@ -45,6 +46,13 @@ Item {
             open();
     }
 
+    FormInputBackground {
+        anchors.fill: triggerButton
+        radius: triggerButton.radius
+        filled: root.filled || root.compact
+        opacity: root.readOnly ? 0.5 : 1.0
+    }
+
     Rectangle {
         id: triggerButton
         opacity: root.readOnly ? 0.5 : 1.0
@@ -53,7 +61,7 @@ Item {
         width: compact ? root.width : implicitWidth
         height: compact ? 28 : implicitHeight
         radius: compact ? 6 : 8
-        color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg : "transparent"
+        color: "transparent"
         border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder)), Config.windowOpacity)
         border.width: 1
 
@@ -82,6 +90,7 @@ Item {
 
             ViciImage {
                 source: completionPopup.visible ? Img.builtin("chevron-up") : Img.builtin("chevron-down")
+                opacity: completionPopup.visible || (buttonMouseArea.containsMouse && !root.readOnly) ? 1.0 : 0.5
                 Layout.preferredWidth: 10
                 Layout.preferredHeight: 10
             }

@@ -8,6 +8,7 @@ ColumnLayout {
 
     property var model: []
     property var sections: []
+    property bool filled: false
 
     signal changed(var apps)
 
@@ -55,7 +56,7 @@ ColumnLayout {
     Repeater {
         model: root.model
 
-        Rectangle {
+        Item {
             required property int index
             required property var modelData
 
@@ -63,10 +64,20 @@ ColumnLayout {
 
             Layout.fillWidth: true
             implicitHeight: 32
-            radius: 6
-            color: "transparent"
-            border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
-            border.width: 1
+
+            FormInputBackground {
+                anchors.fill: parent
+                radius: 6
+                filled: root.filled
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 6
+                color: "transparent"
+                border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
+                border.width: 1
+            }
 
             RowLayout {
                 anchors.fill: parent
@@ -109,6 +120,7 @@ ColumnLayout {
         placeholder: "+ Restrict to app…"
         items: root.sections
         currentItem: null
+        filled: root.filled
         onActivated: item => root.add(item.id)
     }
 }
