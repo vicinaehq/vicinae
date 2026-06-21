@@ -28,7 +28,11 @@ private:
   void initializeCalculator();
   static QString preprocessQuestion(const QString &question);
   static QString stripTrailingOperators(QString expr);
+  std::pair<std::string, PrintOptions> handleToExpression(const std::string &expression);
+  std::optional<int> getTimezoneOffset(const std::string &tzName);
+  void populateTzOffset();
 
+  std::unordered_map<std::string, int> m_cityToTzMinuteOffset;
   Calculator m_calc;
   bool m_initialized = false;
   EvaluationOptions m_evalOpts;
