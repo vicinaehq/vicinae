@@ -20,7 +20,7 @@ SelectableDelegate {
 
     Component.onCompleted: {
         if (_isDraggable) {
-            console.debug("[DRAG] ListItemDelegate created: filePath=" + root.filePath + " fileUrl=" + root.fileUrl);
+            //console.debug("[DRAG] ListItemDelegate created: filePath=" + root.filePath + " fileUrl=" + root.fileUrl);
         }
     }
 
@@ -36,8 +36,7 @@ SelectableDelegate {
         id: dragHandler
         enabled: root._isDraggable
         onActiveChanged: {
-            if (active)
-                console.debug("[DRAG] DragHandler ACTIVATED! filePath=" + root.filePath);
+            //console.debug("[DRAG] DragHandler ACTIVATED! filePath=" + root.filePath);
         }
     }
 
