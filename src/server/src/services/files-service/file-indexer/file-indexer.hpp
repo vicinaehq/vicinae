@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QProcess>
 #include <qlogging.h>
-#include "common/common.hpp"
+#include <unordered_map>
 #include "generated/file-indexer-client.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 
@@ -39,15 +39,19 @@ public:
   void rebuildIndex() override;
   void preferenceValuesChanged(const QJsonObject &preferences) override;
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
-                                                     const QueryParams &params = {}) override;
+                                                     const IndexerQueryParams &params = {}) override;
 
   bool isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
+
+  const std::unordered_map<int, ScanStatus> &activeScans() const { return m_activeScans; }
 
 private:
   void startProcess();
   void stopProcess();
   void handleCrash();
   void handleStderr();
+  void handleScanStatus(const file_indexer_gen::ScanStatusEvent &event);
+  void interruptActiveScans();
   void sendConfigure();
 
   QProcess m_process;
@@ -55,6 +59,7 @@ private:
   file_indexer_gen::RpcTransport m_rpc;
   file_indexer_gen::Client m_client;
   file_indexer_gen::IndexerConfig m_config;
+  std::unordered_map<int, ScanStatus> m_activeScans;
   QByteArray m_stderrBuf;
   int m_crashCount = 0;
   bool m_wantRunning = false;

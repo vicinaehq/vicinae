@@ -38,7 +38,7 @@ Item {
                     value: root.host.detailName
                 },
                 {
-                    label: "Where",
+                    label: "Path",
                     value: root.host.detailPath
                 },
                 {

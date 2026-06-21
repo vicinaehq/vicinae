@@ -1,12 +1,16 @@
 #include "file-indexer.hpp"
 #include <cstdint>
+#include <cstring>
 #include <QDateTime>
+#include <QJsonArray>
 #include <QJsonObject>
+#include <QProcessEnvironment>
 #include <QTimer>
+#include <common/file-category.hpp>
 #include <filesystem>
+#include <utility>
+#include "common/common.hpp"
 #include "rang/rang.hpp"
-
-// FileIndexerBus
 
 void FileIndexerBus::send(std::string_view data) {
   uint32_t size = data.size();
@@ -20,7 +24,8 @@ void FileIndexerBus::readyRead() {
     m_message.data.append(read);
 
     while (std::cmp_greater_equal(m_message.data.size(), sizeof(uint32_t))) {
-      uint32_t const length = *reinterpret_cast<uint32_t *>(m_message.data.data());
+      uint32_t length = 0;
+      std::memcpy(&length, m_message.data.constData(), sizeof(length));
       bool const isComplete = m_message.data.size() - sizeof(uint32_t) >= length;
 
       if (!isComplete) break;
@@ -36,7 +41,73 @@ FileIndexerBus::FileIndexerBus(QIODevice *device) : m_device(device) {
   connect(device, &QIODevice::readyRead, this, &FileIndexerBus::readyRead);
 }
 
-// FileIndexer
+static AbstractFileIndexer::ScanKind toScanKind(file_indexer_gen::ScanKind kind) {
+  switch (kind) {
+  case file_indexer_gen::ScanKind::Full:
+    return AbstractFileIndexer::ScanKind::Full;
+  case file_indexer_gen::ScanKind::Incremental:
+    return AbstractFileIndexer::ScanKind::Incremental;
+  }
+  return AbstractFileIndexer::ScanKind::Full;
+}
+
+static AbstractFileIndexer::ScanState toScanState(file_indexer_gen::ScanState state) {
+  switch (state) {
+  case file_indexer_gen::ScanState::Started:
+    return AbstractFileIndexer::ScanState::Started;
+  case file_indexer_gen::ScanState::Succeeded:
+    return AbstractFileIndexer::ScanState::Succeeded;
+  case file_indexer_gen::ScanState::Failed:
+    return AbstractFileIndexer::ScanState::Failed;
+  case file_indexer_gen::ScanState::Interrupted:
+    return AbstractFileIndexer::ScanState::Interrupted;
+  }
+  return AbstractFileIndexer::ScanState::Failed;
+}
+
+static file_indexer_gen::FileCategory toFileCategory(vicinae::FileCategory category) {
+  switch (category) {
+  case vicinae::FileCategory::Other:
+    return file_indexer_gen::FileCategory::Other;
+  case vicinae::FileCategory::Directory:
+    return file_indexer_gen::FileCategory::Directory;
+  case vicinae::FileCategory::Image:
+    return file_indexer_gen::FileCategory::Image;
+  case vicinae::FileCategory::Video:
+    return file_indexer_gen::FileCategory::Video;
+  case vicinae::FileCategory::Audio:
+    return file_indexer_gen::FileCategory::Audio;
+  case vicinae::FileCategory::Document:
+    return file_indexer_gen::FileCategory::Document;
+  case vicinae::FileCategory::Archive:
+    return file_indexer_gen::FileCategory::Archive;
+  case vicinae::FileCategory::Application:
+    return file_indexer_gen::FileCategory::Application;
+  }
+  return file_indexer_gen::FileCategory::Other;
+}
+
+static vicinae::FileCategory toFileCategory(file_indexer_gen::FileCategory category) {
+  switch (category) {
+  case file_indexer_gen::FileCategory::Other:
+    return vicinae::FileCategory::Other;
+  case file_indexer_gen::FileCategory::Directory:
+    return vicinae::FileCategory::Directory;
+  case file_indexer_gen::FileCategory::Image:
+    return vicinae::FileCategory::Image;
+  case file_indexer_gen::FileCategory::Video:
+    return vicinae::FileCategory::Video;
+  case file_indexer_gen::FileCategory::Audio:
+    return vicinae::FileCategory::Audio;
+  case file_indexer_gen::FileCategory::Document:
+    return vicinae::FileCategory::Document;
+  case file_indexer_gen::FileCategory::Archive:
+    return vicinae::FileCategory::Archive;
+  case file_indexer_gen::FileCategory::Application:
+    return vicinae::FileCategory::Application;
+  }
+  return vicinae::FileCategory::Other;
+}
 
 FileIndexer::FileIndexer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
   connect(&m_process, &QProcess::readyReadStandardError, this, &FileIndexer::handleStderr);
@@ -45,6 +116,8 @@ FileIndexer::FileIndexer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
   });
 
   connect(&m_process, &QProcess::finished, this, [this](int exitCode, QProcess::ExitStatus status) {
+    interruptActiveScans();
+
     if (status == QProcess::CrashExit || exitCode != 0) {
       qWarning() << "file indexer crashed with code" << exitCode;
       handleCrash();
@@ -52,6 +125,9 @@ FileIndexer::FileIndexer() : m_bus(&m_process), m_rpc(m_bus), m_client(m_rpc) {
       qInfo() << "file indexer exited with code" << exitCode;
     }
   });
+
+  connect(m_client.fileindexer(), &file_indexer_gen::FileIndexerService::scanStatusChanged, this,
+          [this](const file_indexer_gen::ScanStatusEvent &event) { handleScanStatus(event); });
 
   connect(&m_bus, &FileIndexerBus::messageReceived, this, [this](const QByteArray &msg) {
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
@@ -82,6 +158,15 @@ void FileIndexer::startProcess() {
   }
 
   m_process.setProgram(path->c_str());
+
+#if defined(DEBUG)
+  auto env = QProcessEnvironment::systemEnvironment();
+  if (!env.contains(QStringLiteral("VICINAE_FILE_INDEXER_LOG"))) {
+    env.insert(QStringLiteral("VICINAE_FILE_INDEXER_LOG"), QStringLiteral("debug"));
+  }
+  m_process.setProcessEnvironment(env);
+#endif
+
   m_process.start();
 
   if (!m_process.waitForStarted()) {
@@ -91,6 +176,34 @@ void FileIndexer::startProcess() {
 
   m_crashCount = 0;
   sendConfigure();
+}
+
+void FileIndexer::handleScanStatus(const file_indexer_gen::ScanStatusEvent &event) {
+  qDebug() << "scan status" << event.scan_id << "kind" << static_cast<int>(event.kind) << "state"
+           << static_cast<int>(event.state) << "processed" << event.processed_file_count << "entrypoint"
+           << event.entrypoint.c_str();
+  ScanStatus const status{.scanId = event.scan_id,
+                          .kind = toScanKind(event.kind),
+                          .state = toScanState(event.state),
+                          .entrypoint = std::filesystem::path(event.entrypoint),
+                          .processedFileCount = event.processed_file_count};
+
+  if (status.isTerminal()) {
+    m_activeScans.erase(status.scanId);
+  } else {
+    m_activeScans[status.scanId] = status;
+  }
+
+  emit scanStatusChanged(status);
+}
+
+void FileIndexer::interruptActiveScans() {
+  auto scans = std::exchange(m_activeScans, {});
+
+  for (auto &[id, status] : scans) {
+    status.state = ScanState::Interrupted;
+    emit scanStatusChanged(status);
+  }
 }
 
 void FileIndexer::sendConfigure() {
@@ -121,19 +234,20 @@ void FileIndexer::rebuildIndex() {
 }
 
 void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
-  auto splitField = [&](const char *key) {
+  auto arrayField = [&](const char *key) {
     std::vector<std::string> out;
-    const auto parts = preferences.value(key).toString().split(';', Qt::SkipEmptyParts);
-    out.reserve(parts.size());
-    for (const auto &part : parts) {
-      out.emplace_back(part.toStdString());
+    const auto paths = preferences.value(key).toArray();
+
+    out.reserve(paths.size());
+    for (const auto &path : paths) {
+      if (path.isString()) { out.emplace_back(path.toString().toStdString()); }
     }
+
     return out;
   };
 
-  m_config.paths = splitField("paths");
-  m_config.excluded_paths = splitField("excludedPaths");
-  m_config.watcher_paths = splitField("watcherPaths");
+  m_config.paths = arrayField("indexingPaths");
+  m_config.excluded_paths = arrayField("excludedIndexingPaths");
 
   if (preferences.value("autoIndexing").toBool()) {
     if (isRunning()) {
@@ -147,12 +261,11 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
-                                                                const QueryParams &params) {
+                                                                const IndexerQueryParams &params) {
   if (!isRunning()) { return QtFuture::makeReadyValueFuture(std::vector<IndexerFileResult>{}); }
 
-  file_indexer_gen::QueryRequest req{
-      .text = std::string(view),
-      .pagination = {.offset = params.pagination.offset, .limit = params.pagination.limit}};
+  file_indexer_gen::QueryRequest req{.text = std::string{view}, .limit = params.limit};
+  if (params.category) { req.category = toFileCategory(*params.category); }
 
   return m_client.fileindexer()->query(req).then(
       [](std::expected<file_indexer_gen::QueryResponse, std::string> result) {
@@ -160,10 +273,14 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
         if (!result) { return results; }
 
         results.reserve(result->matches.size());
+
         for (const auto &match : result->matches) {
-          results.emplace_back(
-              IndexerFileResult{.path = std::filesystem::path(match.path), .rank = match.rank});
+          results.emplace_back(IndexerFileResult{.path = std::filesystem::path(match.path),
+                                                 .rank = match.rank,
+                                                 .category = toFileCategory(match.category),
+                                                 .mimeType = match.mime_type});
         }
+
         return results;
       });
 }
@@ -187,7 +304,9 @@ void FileIndexer::handleStderr() {
     }
 
     rang::fg color = rang::fg::reset;
-    if (level == "debug") {
+    if (level == "trace") {
+      color = rang::fg::gray;
+    } else if (level == "debug") {
       color = rang::fg::cyan;
     } else if (level == "info") {
       color = rang::fg::green;

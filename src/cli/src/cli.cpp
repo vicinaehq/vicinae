@@ -1,5 +1,6 @@
 #include "cli.hpp"
 #include "config.hpp"
+#include "fs.hpp"
 #include "rang/rang.hpp"
 #include "script.hpp"
 #include "common/common.hpp"
@@ -385,6 +386,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();
   app.registerCommand<ThemeCommand>();
+  app.registerCommand<FileSearchCommand>();
   app.registerCommand<AppCommand>();
   app.registerCommand<ConfigCommand>();
   app.registerCommand<ScriptCommand>();

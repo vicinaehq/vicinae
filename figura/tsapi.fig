@@ -207,15 +207,35 @@ service Storage {
 
 // FileSearch
 
+enum FileSearchCategory {
+  Other,
+  Directory,
+  Image,
+  Video,
+  Audio,
+  Document,
+  Archive,
+  Application
+};
+
 struct FileInfo {
   path: string;
-  mimeType: string;
+  category: FileSearchCategory;
+  mimeType?: string;
+};
+
+struct FileSearchFilters {
+  category?: FileSearchCategory;
+};
+
+struct FileSearchOptions {
+  filters: FileSearchFilters;
+  limit: uint;
 };
 
 service FileSearch {
-  fn search(q: string) => FileInfo[];
+  fn search(q: string, opts: FileSearchOptions) => FileInfo[];
 };
-
 
 // Command
 

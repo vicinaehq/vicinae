@@ -1,12 +1,22 @@
 #include "file-indexer/file-indexer-db.hpp"
 #include "file-indexer/scan.hpp"
-#include "file-indexer/relevancy-scorer.hpp"
 #include "file-indexer/migrations.hpp"
 #include "file-indexer/util.hpp"
+#include "file-indexer/vocabulary.hpp"
 #include "file-indexer/log.hpp"
+#include <QMimeDatabase>
+#include <QString>
+#include <common/file-category.hpp>
+#include <cctype>
 #include <chrono>
-#include <map>
+#include <filesystem>
+#include <format>
+#include <ranges>
+#include <span>
 #include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
 
 static constexpr const char *SQLITE_PRAGMAS[] = {
     "PRAGMA journal_mode = WAL",
@@ -16,7 +26,93 @@ static constexpr const char *SQLITE_PRAGMAS[] = {
 
 namespace fs = std::filesystem;
 
+namespace {
+
+IndexedFileCategory toIndexedFileCategory(vicinae::FileCategory category) {
+  switch (category) {
+  case vicinae::FileCategory::Other:
+    return IndexedFileCategory::Other;
+  case vicinae::FileCategory::Directory:
+    return IndexedFileCategory::Directory;
+  case vicinae::FileCategory::Image:
+    return IndexedFileCategory::Image;
+  case vicinae::FileCategory::Video:
+    return IndexedFileCategory::Video;
+  case vicinae::FileCategory::Audio:
+    return IndexedFileCategory::Audio;
+  case vicinae::FileCategory::Document:
+    return IndexedFileCategory::Document;
+  case vicinae::FileCategory::Archive:
+    return IndexedFileCategory::Archive;
+  case vicinae::FileCategory::Application:
+    return IndexedFileCategory::Application;
+  }
+
+  return IndexedFileCategory::Other;
+}
+
+IndexedFileCategory indexedFileCategoryFor(const fs::path &path, bool isDirectory) {
+  return toIndexedFileCategory(vicinae::fileCategoryFor(path, isDirectory));
+}
+
+std::string mimeTypeNameFor(const fs::path &path, bool isDirectory) {
+  if (isDirectory) return {};
+
+  static thread_local QMimeDatabase db;
+  auto mime = db.mimeTypeForFile(QString::fromStdString(path.string()), QMimeDatabase::MatchExtension);
+
+  return mime.isValid() ? mime.name().toStdString() : std::string{};
+}
+
+std::pair<std::string, std::string> subtreeRange(const fs::path &path) {
+  std::string lower = path.native() + '/';
+  std::string upper = path.native() + static_cast<char>('/' + 1);
+  return {std::move(lower), std::move(upper)};
+}
+
+std::string skeletonDocument(const fs::path &path) {
+  auto tokens = file_indexer::vocab::tokenizeFilename(path.native());
+  std::string document;
+
+  document.reserve(path.native().size());
+
+  for (const auto &token : tokens) {
+    auto skeleton = file_indexer::vocab::skeletonizeToken(token);
+    if (skeleton.empty()) continue;
+
+    if (!document.empty()) { document.push_back(' '); }
+    document += skeleton;
+  }
+
+  return document;
+}
+
+void bindSearchOptions(db::Statement &stmt, const FileIndexerDatabase::SearchOptions &options) {
+  if (options.category) {
+    stmt.bind(":category", static_cast<int>(*options.category));
+  } else {
+    stmt.bindNull(":category");
+  }
+}
+
+std::string searchFiltersSql() {
+  return R"(
+    AND (:category IS NULL OR f.category = :category)
+  )";
+}
+
+} // namespace
+
 fs::path FileIndexerDatabase::getDatabasePath() { return file_indexer::databasePath(); }
+
+std::optional<int64_t> FileIndexerDatabase::retrieveFileId(const std::filesystem::path &path) const {
+  auto stmt = m_db.prepare("SELECT id FROM indexed_file WHERE path = :path");
+  stmt.bind(":path", path.c_str());
+
+  if (!stmt.step()) { return std::nullopt; }
+
+  return stmt.columnInt64(0);
+}
 
 std::optional<int64_t>
 FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &path) const {
@@ -24,49 +120,92 @@ FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &pa
   stmt.bind(":path", path.c_str());
 
   if (!stmt.step()) { return std::nullopt; }
+  if (stmt.isNull(0)) { return std::nullopt; }
 
   return static_cast<int64_t>(stmt.columnUInt64(0));
 }
 
-std::vector<std::filesystem::path>
-FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path) const {
-  auto stmt = m_db.prepare("SELECT path, last_modified_at FROM indexed_file WHERE parent_path = :path");
+std::optional<int64_t>
+FileIndexerDatabase::retrieveIndexedSizeBytes(const std::filesystem::path &path) const {
+  auto stmt = m_db.prepare("SELECT size_bytes FROM indexed_file WHERE path = :path");
   stmt.bind(":path", path.c_str());
 
-  std::vector<fs::path> paths;
+  if (!stmt.step() || stmt.isNull(0)) { return std::nullopt; }
+
+  return stmt.columnInt64(0);
+}
+
+std::optional<int64_t> FileIndexerDatabase::retrieveIndexedAt(const std::filesystem::path &path) const {
+  auto stmt = m_db.prepare("SELECT indexed_at FROM indexed_file WHERE path = :path");
+  stmt.bind(":path", path.c_str());
+
+  if (!stmt.step() || stmt.isNull(0)) { return std::nullopt; }
+
+  return stmt.columnInt64(0);
+}
+
+std::unordered_set<std::filesystem::path>
+FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path) const {
+  auto dirId = retrieveFileId(path);
+  if (!dirId) { return {}; }
+
+  auto stmt = m_db.prepare("SELECT path FROM indexed_file WHERE parent_id = :parent_id");
+  stmt.bind(":parent_id", *dirId);
+
+  std::unordered_set<fs::path> paths;
 
   while (stmt.step()) {
-    paths.emplace_back(stmt.columnText(0));
+    paths.emplace(stmt.columnText(0));
   }
 
   return paths;
 }
 
-void FileIndexerDatabase::runMigrations() {
-  int version = 0;
-  {
-    auto stmt = m_db.prepare("PRAGMA user_version");
-    if (stmt.step()) { version = stmt.columnInt(0); }
-  }
+bool FileIndexerDatabase::tracksFile(const std::filesystem::path &path) const {
+  auto stmt = m_db.prepare("SELECT COUNT(*) FROM indexed_file WHERE path = :path");
+  stmt.bind(":path", path.c_str());
+  if (stmt.step()) { return stmt.columnInt(0) != 0; }
+  return false;
+}
 
-  if (version >= file_indexer::SCHEMA_VERSION) { return; }
+void FileIndexerDatabase::init() {
+  if (!m_db.isOpen()) {
+    flog::error() << "Cannot initialize file-indexer database: database is not open";
+    return;
+  }
 
   if (!m_db.exec(std::string(file_indexer::INIT_SQL))) {
     flog::error() << "Failed to run file-indexer migrations" << m_db.lastError();
     return;
   }
 
-  m_db.exec("PRAGMA user_version = " + std::to_string(file_indexer::SCHEMA_VERSION));
+  setUserVersion(file_indexer::SCHEMA_VERSION);
 }
 
 bool FileIndexerDatabase::setScanError(int scanId, const std::string &error) {
-  auto stmt = m_db.prepare("UPDATE scan_history SET status = :status, error = :error WHERE id = :id");
+  auto stmt = m_db.prepare("UPDATE scan_history SET status = :status, error = :error, "
+                           "finished_at = unixepoch() WHERE id = :id");
   stmt.bind(":id", scanId);
   stmt.bind(":status", static_cast<int>(ScanStatus::Failed));
   stmt.bind(":error", error);
 
   if (!stmt.exec()) {
     flog::warn() << "Failed to update scan status" << stmt.lastError();
+    return false;
+  }
+
+  return true;
+}
+
+bool FileIndexerDatabase::finalizeScan(int scanId, ScanStatus status, int64_t indexedFileCount) {
+  auto stmt = m_db.prepare("UPDATE scan_history SET status = :status, finished_at = unixepoch(), "
+                           "indexed_file_count = :count WHERE id = :id");
+  stmt.bind(":id", scanId);
+  stmt.bind(":status", static_cast<int>(status));
+  stmt.bind(":count", indexedFileCount);
+
+  if (!stmt.exec()) {
+    flog::warn() << "Failed to finalize scan" << stmt.lastError();
     return false;
   }
 
@@ -117,13 +256,15 @@ FileIndexerDatabase::ScanRecord FileIndexerDatabase::mapScan(const db::Statement
   record.createdAt = static_cast<int64_t>(stmt.columnUInt64(2));
   record.path = stmt.columnText(3);
   record.type = static_cast<ScanType>(stmt.columnInt(4));
+  record.finishedAt = stmt.columnInt64(5); // NULL reads as 0: still running
+  record.indexedFileCount = stmt.columnInt64(6);
 
   return record;
 }
 
 std::optional<FileIndexerDatabase::ScanRecord>
 FileIndexerDatabase::getLastSuccessfulScan(const std::filesystem::path &path) const {
-  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type "
+  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type, finished_at, indexed_file_count "
                            "FROM scan_history "
                            "WHERE type in (:type1, :type2) "
                            "AND status = :status "
@@ -143,7 +284,7 @@ FileIndexerDatabase::getLastSuccessfulScan(const std::filesystem::path &path) co
 
 std::optional<FileIndexerDatabase::ScanRecord>
 FileIndexerDatabase::getLastScan(const std::filesystem::path &path, ScanType scanType) const {
-  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type "
+  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type, finished_at, indexed_file_count "
                            "FROM scan_history "
                            "WHERE type = :type "
                            "AND entrypoint = :entrypoint "
@@ -159,7 +300,8 @@ FileIndexerDatabase::getLastScan(const std::filesystem::path &path, ScanType sca
 }
 
 std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans() {
-  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type FROM scan_history");
+  auto stmt = m_db.prepare(
+      "SELECT id, status, created_at, entrypoint, type, finished_at, indexed_file_count FROM scan_history");
 
   std::vector<ScanRecord> records;
   records.reserve(0xF);
@@ -173,9 +315,9 @@ std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans() {
 
 std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans(ScanType scanType,
                                                                             ScanStatus scanStatus) {
-  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type "
+  auto stmt = m_db.prepare("SELECT id, status, created_at, entrypoint, type, finished_at, indexed_file_count "
                            "FROM scan_history WHERE status = :status and type = :type");
-  stmt.bind(":status", static_cast<int>(ScanStatus::Started));
+  stmt.bind(":status", static_cast<int>(scanStatus));
   stmt.bind(":type", static_cast<int>(scanType));
 
   std::vector<ScanRecord> records;
@@ -190,50 +332,95 @@ std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans(Scan
 
 db::Database &FileIndexerDatabase::database() { return m_db; }
 
+bool FileIndexerDatabase::isOpen() const { return m_db.isOpen(); }
+
 std::vector<FileIndexerDatabase::SearchCandidate>
-FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit) {
+FileIndexerDatabase::searchCandidates(std::string_view searchQuery, int limit, const SearchOptions &options) {
   if (searchQuery.empty() || limit <= 0) return {};
 
-  auto stmt = m_db.prepare(R"(
-    SELECT f.path, f.name, f.relevancy_score, unicode_idx.rank
+  std::string sql = R"(
+    SELECT f.path, f.category, mt.name
     FROM indexed_file f
-    JOIN unicode_idx ON unicode_idx.rowid = f.id
-    WHERE unicode_idx MATCH :search
-    ORDER BY unicode_idx.rank, f.relevancy_score DESC, f.path
-    LIMIT :limit
-  )");
+    JOIN path_idx ON path_idx.rowid = f.id
+    LEFT JOIN mime_type mt ON mt.id = f.mime_type_id
+    WHERE path_idx MATCH :search
+  )";
+
+  sql += searchFiltersSql();
+
+  sql += "LIMIT :limit";
+
+  auto stmt = m_db.prepare(sql);
   stmt.bind(":search", searchQuery);
   stmt.bind(":limit", limit);
+  bindSearchOptions(stmt, options);
 
   std::vector<SearchCandidate> results;
-  std::error_code ec;
 
   results.reserve(limit);
 
   while (stmt.step()) {
-    SearchCandidate candidate;
-
-    candidate.path = stmt.columnText(0);
-    if (!fs::exists(candidate.path, ec)) { continue; }
-
-    candidate.name = stmt.columnText(1);
-    candidate.relevancyScore = stmt.columnDouble(2);
-    candidate.indexRank = stmt.columnDouble(3);
-    results.emplace_back(std::move(candidate));
+    results.emplace_back(SearchCandidate{
+        .path = stmt.columnText(0),
+        .category = static_cast<IndexedFileCategory>(stmt.columnInt(1)),
+        .mimeType = stmt.isNull(2) ? std::nullopt : std::optional<std::string>{stmt.columnText(2)}});
   }
 
   return results;
 }
 
+std::vector<FileIndexerDatabase::SearchCandidate>
+FileIndexerDatabase::searchSkeletonCandidates(std::string_view searchQuery, int limit,
+                                              const SearchOptions &options) {
+  if (searchQuery.empty() || limit <= 0) return {};
+
+  std::string sql = R"(
+    SELECT f.path, f.category, mt.name
+    FROM indexed_file f
+    JOIN skeleton_idx ON skeleton_idx.rowid = f.id
+    LEFT JOIN mime_type mt ON mt.id = f.mime_type_id
+    WHERE skeleton_idx MATCH :search
+  )";
+
+  sql += searchFiltersSql();
+  sql += R"(
+    ORDER BY skeleton_idx.rank
+    )";
+
+  sql += "LIMIT :limit";
+
+  auto stmt = m_db.prepare(sql);
+  stmt.bind(":search", searchQuery);
+  stmt.bind(":limit", limit);
+  bindSearchOptions(stmt, options);
+
+  std::vector<SearchCandidate> results;
+
+  results.reserve(limit);
+
+  while (stmt.step()) {
+    results.emplace_back(SearchCandidate{
+        .path = stmt.columnText(0),
+        .category = static_cast<IndexedFileCategory>(stmt.columnInt(1)),
+        .mimeType = stmt.isNull(2) ? std::nullopt : std::optional<std::string>{stmt.columnText(2)}});
+  }
+
+  return results;
+}
 void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths) {
   auto tx = m_db.transaction();
 
   auto stmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
+  auto subtreeStmt = m_db.prepare("DELETE FROM indexed_file WHERE path >= :lower AND path < :upper");
 
   for (const auto &path : paths) {
-    stmt.bind(":path", path.c_str());
+    auto [lower, upper] = subtreeRange(path);
 
-    if (!stmt.exec()) {
+    stmt.bind(":path", path.c_str());
+    subtreeStmt.bind(":lower", lower);
+    subtreeStmt.bind(":upper", upper);
+
+    if (!stmt.exec() || !subtreeStmt.exec()) {
       flog::error() << "Failed to delete indexed file" << path.c_str();
       tx.rollback();
       return;
@@ -260,22 +447,143 @@ void FileIndexerDatabase::compact() {
   }
 }
 
+void FileIndexerDatabase::rebuildSpellfixVocabulary() {
+  using namespace std::chrono;
+
+  auto const start = steady_clock::now();
+  std::unordered_map<std::string, int64_t> counts;
+
+  {
+    auto stmt = m_db.prepare("SELECT path FROM indexed_file");
+
+    while (stmt.step()) {
+      auto const path = stmt.columnText(0);
+
+      for (auto &token : file_indexer::vocab::tokenizeFilename(file_indexer::vocab::basenameView(path))) {
+        ++counts[std::move(token)];
+      }
+    }
+  }
+
+  auto tx = m_db.transaction();
+
+  if (!m_db.exec("DROP TABLE IF EXISTS spellfix_vocab") ||
+      !m_db.exec("CREATE VIRTUAL TABLE spellfix_vocab USING spellfix1")) {
+    flog::error() << "Failed to recreate spellfix_vocab" << m_db.lastError();
+    return;
+  }
+
+  auto insert = m_db.prepare("INSERT INTO spellfix_vocab(word, rank) VALUES (:word, :rank)");
+
+  for (const auto &[word, count] : counts) {
+    insert.bind(":word", word);
+    insert.bind(":rank", count);
+
+    if (!insert.exec()) {
+      flog::error() << "Failed to insert vocabulary word" << m_db.lastError();
+      return;
+    }
+  }
+
+  if (!tx.commit()) {
+    flog::error() << "Failed to commit vocabulary rebuild" << m_db.lastError();
+    return;
+  }
+
+  auto const elapsed = duration_cast<milliseconds>(steady_clock::now() - start);
+  flog::debug() << "Rebuilt spellfix vocabulary: " << counts.size() << " words in " << elapsed.count()
+                << "ms\n";
+}
+
+bool FileIndexerDatabase::hasSpellfixVocabulary() {
+  auto stmt = m_db.prepare("SELECT 1 FROM spellfix_vocab_vocab LIMIT 1");
+  return static_cast<bool>(stmt) && stmt.step();
+}
+
+std::optional<int64_t> FileIndexerDatabase::mimeTypeIdFor(std::string_view name) {
+  if (name.empty()) return std::nullopt;
+
+  if (auto it = m_mimeTypeIds.find(std::string{name}); it != m_mimeTypeIds.end()) { return it->second; }
+
+  auto stmt = m_db.prepare("INSERT INTO mime_type(name) VALUES (:name) "
+                           "ON CONFLICT(name) DO UPDATE SET name = excluded.name "
+                           "RETURNING id");
+  stmt.bind(":name", name);
+
+  if (!stmt.step()) {
+    flog::warn() << "Failed to resolve MIME type id for" << std::string{name} << stmt.lastError();
+    return std::nullopt;
+  }
+
+  auto id = stmt.columnInt64(0);
+  m_mimeTypeIds.emplace(name, id);
+  return id;
+}
+
+std::vector<FileIndexerDatabase::SpellfixSuggestion>
+FileIndexerDatabase::spellfixSuggestions(std::string_view word, int top, bool prefix) {
+  if (word.empty() || top <= 0) return {};
+
+  auto stmt = m_db.prepare(R"(
+    SELECT word, distance, score, rank
+    FROM spellfix_vocab
+    WHERE word MATCH :pattern AND top = :top
+  )");
+
+  std::string pattern;
+  pattern.reserve(word.size() + 1);
+  for (char const c : word) {
+    pattern.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+  }
+  if (prefix) { pattern.push_back('*'); }
+
+  stmt.bind(":pattern", pattern);
+  stmt.bind(":top", top);
+
+  std::vector<SpellfixSuggestion> results;
+
+  results.reserve(top);
+
+  while (stmt.step()) {
+    results.emplace_back(SpellfixSuggestion{.word = stmt.columnText(0),
+                                            .distance = stmt.columnInt(1),
+                                            .score = stmt.columnInt(2),
+                                            .rank = stmt.columnInt64(3)});
+  }
+
+  return results;
+}
+
 void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
   auto tx = m_db.transaction();
 
   auto modifyStmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_path, name, last_modified_at, relevancy_score)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes, mime_type_id)
     VALUES
-      (:path, :parent_path, :name, :last_modified_at, :relevancy_score)
-    ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes, :mime_type_id)
+    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
+      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
+      category = excluded.category, size_bytes = excluded.size_bytes, mime_type_id = excluded.mime_type_id,
+      indexed_at = unixepoch()
   )");
 
   auto deleteStmt = m_db.prepare("DELETE FROM indexed_file WHERE path = :path");
+  auto deleteSubtreeStmt = m_db.prepare("DELETE FROM indexed_file WHERE path >= :lower AND path < :upper");
 
-  db::Statement *activeStmt = nullptr;
+  std::unordered_map<std::string, std::optional<int64_t>> parentIds;
+
+  auto resolveParent = [&](const fs::path &path) -> std::optional<int64_t> {
+    auto parent = path.parent_path();
+    if (parent.empty() || parent == path) { return std::nullopt; }
+    auto [it, inserted] = parentIds.try_emplace(parent.native());
+    if (inserted) { it->second = retrieveFileId(parent); }
+    return it->second;
+  };
 
   for (const auto &event : events) {
+    bool ok = false;
+
     switch (event.type) {
     case FileEventType::Modify: {
       using namespace std::chrono;
@@ -283,28 +591,30 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
           static_cast<int64_t>(duration_cast<seconds>(event.eventTime.time_since_epoch()).count());
       modifyStmt.bind(":last_modified_at", secondsSinceEpoch);
       modifyStmt.bind(":path", event.path.c_str());
-      modifyStmt.bind(":parent_path", event.path.parent_path().c_str());
-      modifyStmt.bind(":name", event.path.filename().c_str());
-
-      RelevancyScorer scorer;
-      modifyStmt.bind(":relevancy_score", scorer.computeScore(event.path, event.eventTime));
-
-      activeStmt = &modifyStmt;
+      modifyStmt.bind(":skeleton_path", skeletonDocument(event.path));
+      modifyStmt.bind(":parent_id", resolveParent(event.path));
+      modifyStmt.bind(":type", event.isDirectory ? 1 : 0);
+      modifyStmt.bind(":category", static_cast<int>(indexedFileCategoryFor(event.path, event.isDirectory)));
+      modifyStmt.bind(":size_bytes", event.sizeBytes);
+      modifyStmt.bind(":mime_type_id", mimeTypeIdFor(mimeTypeNameFor(event.path, event.isDirectory)));
+      ok = modifyStmt.exec();
       break;
     }
 
     case FileEventType::Delete: {
+      auto [lower, upper] = subtreeRange(event.path);
+
       deleteStmt.bind(":path", event.path.c_str());
-      activeStmt = &deleteStmt;
+      deleteSubtreeStmt.bind(":lower", lower);
+      deleteSubtreeStmt.bind(":upper", upper);
+
+      ok = deleteStmt.exec() && deleteSubtreeStmt.exec();
       break;
     }
     }
 
-    if (!activeStmt->exec()) {
-      static std::map<FileEventType, std::string> verbMap = {{FileEventType::Delete, "deleted"},
-                                                             {FileEventType::Modify, "modified"}};
-      flog::error() << "Failed to index" << verbMap[event.type] << "file" << event.path.string()
-                    << activeStmt->lastError();
+    if (!ok) {
+      flog::error() << "Failed to index event for" << event.path.string() << m_db.lastError();
       tx.rollback();
       return;
     }
@@ -318,15 +628,26 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 
   auto stmt = m_db.prepare(R"(
     INSERT INTO
-      indexed_file (path, parent_path, name, last_modified_at, relevancy_score)
+      indexed_file (path, skeleton_path, parent_id, last_modified_at, type, category, size_bytes, mime_type_id)
     VALUES
-      (:path, :parent_path, :name, :last_modified_at, :relevancy_score)
-    ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
+      (:path, :skeleton_path, :parent_id, :last_modified_at, :type, :category, :size_bytes, :mime_type_id)
+    ON CONFLICT (path) DO UPDATE SET last_modified_at = excluded.last_modified_at,
+      skeleton_path = excluded.skeleton_path, parent_id = excluded.parent_id, type = excluded.type,
+      category = excluded.category, size_bytes = excluded.size_bytes, mime_type_id = excluded.mime_type_id,
+      indexed_at = unixepoch()
   )");
 
   std::error_code ec;
-  RelevancyScorer scorer;
   double score = 1.0;
+  std::unordered_map<std::string, std::optional<int64_t>> parentIds;
+
+  auto resolveParent = [&](const fs::path &path) -> std::optional<int64_t> {
+    auto parent = path.parent_path();
+    if (parent.empty() || parent == path) { return std::nullopt; }
+    auto [it, inserted] = parentIds.try_emplace(parent.native());
+    if (inserted) { it->second = retrieveFileId(parent); }
+    return it->second;
+  };
 
   for (const auto &path : paths) {
     if (auto lastModified = fs::last_write_time(path, ec); !ec) {
@@ -335,16 +656,18 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
       auto const epoch = static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count());
 
       stmt.bind(":last_modified_at", epoch);
-      score = scorer.computeScore(path, lastModified);
     } else {
       stmt.bindNull(":last_modified_at");
-      score = scorer.computeScore(path, std::nullopt);
     }
 
     stmt.bind(":path", path.c_str());
-    stmt.bind(":parent_path", path.parent_path().c_str());
-    stmt.bind(":name", path.filename().c_str());
-    stmt.bind(":relevancy_score", score);
+    stmt.bind(":skeleton_path", skeletonDocument(path));
+    stmt.bind(":parent_id", resolveParent(path));
+    bool const isDirectory = fs::is_directory(path, ec);
+    stmt.bind(":type", isDirectory ? 1 : 0);
+    stmt.bind(":category", static_cast<int>(indexedFileCategoryFor(path, isDirectory)));
+    stmt.bind(":size_bytes", file_indexer::fileSizeBytesFor(path, isDirectory));
+    stmt.bind(":mime_type_id", mimeTypeIdFor(mimeTypeNameFor(path, isDirectory)));
 
     if (!stmt.exec()) {
       flog::error() << "Failed to insert file in index" << path.string() << stmt.lastError();
@@ -356,17 +679,55 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
   if (!tx.commit()) { flog::error() << "Failed to commit batchIndex" << m_db.lastError(); }
 }
 
+std::vector<fs::path> FileIndexerDatabase::listRecentDirectories(int limit) const {
+  auto stmt = m_db.prepare("SELECT path FROM indexed_file WHERE type = 1 "
+                           "ORDER BY last_modified_at DESC LIMIT :limit");
+  stmt.bind(":limit", limit);
+
+  std::vector<fs::path> dirs;
+
+  dirs.reserve(limit);
+
+  while (stmt.step()) {
+    dirs.emplace_back(stmt.columnText(0));
+  }
+
+  return dirs;
+}
+
+int FileIndexerDatabase::userVersion() {
+  auto stmt = m_db.prepare("PRAGMA user_version;");
+  if (!stmt.step()) return 0;
+  return stmt.columnInt(0);
+}
+
+void FileIndexerDatabase::setUserVersion(int version) {
+  if (!m_db.exec(std::format("PRAGMA user_version = {};", version))) {
+    flog::warn() << "Failed to set user version to " << version << ": " << m_db.lastError() << "\n";
+  }
+}
+
 FileIndexerDatabase::FileIndexerDatabase() {
+  std::error_code ec;
+  fs::create_directories(file_indexer::cacheDir(), ec);
+  if (ec) {
+    flog::error() << "Failed to create file-indexer cache directory" << file_indexer::cacheDir().c_str()
+                  << ec.message().c_str();
+    return;
+  }
+
   auto result = db::Database::open(getDatabasePath());
 
   if (!result) {
-    flog::error() << "Failed to open database at" << getDatabasePath().c_str();
+    flog::error() << result.error();
     return;
   }
 
   m_db = std::move(*result);
 
   for (const auto &pragma : SQLITE_PRAGMAS) {
-    if (!m_db.exec(pragma)) { flog::error() << "Failed to run file-indexer pragma" << pragma; }
+    if (!m_db.exec(pragma)) {
+      flog::error() << "Failed to run file-indexer pragma" << pragma << m_db.lastError();
+    }
   }
 }

@@ -67,6 +67,7 @@
 #include "vicinae.hpp"
 #include <filesystem>
 #include <QGuiApplication>
+#include <QPointer>
 #include <QQuickWindow>
 #include <QString>
 #include <qlockfile.h>
@@ -292,6 +293,31 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   IpcCommandServer commandServer(&ctx);
 
   commandServer.start(Omnicast::commandSocketPath());
+
+  QObject::connect(
+      ctx.services->fileService()->indexer(), &AbstractFileIndexer::scanStatusChanged,
+      ctx.services->toastService(),
+      [toasts = ctx.services->toastService(),
+       toast = QPointer<Toast>()](const AbstractFileIndexer::ScanStatus &status) mutable {
+        auto *current = toasts->currentToast();
+
+        if (status.isTerminal()) {
+          if (toast && toast == current) toast->close();
+          return;
+        }
+
+        if (current && current != toast) return;
+
+        QString const title =
+            QString("Indexing %1").arg(QString::fromStdString(compressPath(status.entrypoint).string()));
+        QString const message =
+            status.processedFileCount > 0
+                ? QString("%1 files").arg(formatCount(static_cast<int>(status.processedFileCount)))
+                : QString();
+
+        toasts->dynamic(title, message);
+        toast = toasts->currentToast();
+      });
 
   ExtensionIntervalScheduler intervalScheduler(ctx);
   intervalScheduler.rebuild();

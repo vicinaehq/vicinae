@@ -1,10 +1,36 @@
 #include <cstdint>
+#include <filesystem>
 #include <iostream>
 #include <mutex>
 #include <unistd.h>
+#include "file-indexer/file-indexer-db.hpp"
 #include "file-indexer/indexer-service.hpp"
+#include "file-indexer/log.hpp"
+#include "file-indexer/migrations.hpp"
+#include "file-indexer/util.hpp"
 
-// Locked so concurrent query replies don't interleave mid-frame.
+namespace {
+
+bool shouldPurgeDatabase() {
+  std::error_code ec;
+  if (!std::filesystem::exists(file_indexer::databasePath(), ec)) return false;
+
+  FileIndexerDatabase startupDb;
+  if (!startupDb.isOpen()) {
+    flog::warn() << "Existing file indexer database could not be opened, starting over";
+    return true;
+  }
+
+  int const userVersion = startupDb.userVersion();
+  if (userVersion == file_indexer::SCHEMA_VERSION) return false;
+
+  flog::info() << "Breaking change detected (current rev=" << file_indexer::SCHEMA_VERSION
+               << ", user version=" << userVersion << "), starting over... \n";
+  return true;
+}
+
+} // namespace
+
 class StdoutTransport : public file_indexer_gen::AbstractTransport {
   std::mutex m_mtx;
 
@@ -18,6 +44,10 @@ class StdoutTransport : public file_indexer_gen::AbstractTransport {
 };
 
 int main(int, char **) {
+  file_indexer::removeLegacyDbFiles();
+
+  if (shouldPurgeDatabase()) { file_indexer::purgeDbFiles(); }
+
   StdoutTransport transport;
   file_indexer_gen::RpcTransport rpc{transport};
   file_indexer::IndexerService service{rpc};

@@ -36,8 +36,8 @@ std::filesystem::path expandPath(const std::filesystem::path &path) {
   auto homeStr = homeDir().string();
   auto str = path.string();
 
-  if (str.starts_with("~")) { return homeStr + str.substr(1); }
-  if (str.starts_with("~/")) { return homeStr + str.substr(2); }
+  if (str == "~") return homeStr;
+  if (str.starts_with("~/")) { return homeStr + str.substr(1); }
 
   return path;
 }
@@ -185,6 +185,7 @@ QString formatSize(size_t bytes) {
 }
 
 QString formatCount(int count) {
+  if (count > 1'000'000) { return QString("%1M").arg(std::ceil((count / 1'000'000.f) * 10) / 10.f); }
   if (count > 1000) { return QString("%1K").arg(std::ceil((count / 1000.f) * 10) / 10.f); }
 
   return QString::number(count);

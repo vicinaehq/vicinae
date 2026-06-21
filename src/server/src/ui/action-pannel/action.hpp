@@ -30,6 +30,13 @@ class AbstractAction : public NonCopyable {
 public:
   enum class Style { Normal, Danger };
 
+  // simple wrapper that wraps the constructed action in a shared pointer.
+  // the addAction overload that takes a raw pointer eventually converts them
+  // to shared pointers.
+  template <typename T, typename... Args> static std::shared_ptr<T> make(Args &&...args) {
+    return std::make_shared<T>(std::forward<Args>(args)...);
+  }
+
   AbstractAction() = default;
   AbstractAction(const QString &title, const std::optional<ImageURL> &icon) : m_title(title), m_icon(icon) {}
   virtual ~AbstractAction() = default;
