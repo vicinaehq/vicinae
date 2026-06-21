@@ -18,8 +18,6 @@ public:
   using Work = std::function<void(FileIndexerDatabase &)>;
 
 private:
-  // Backpressure cap on in-flight bulk writes (indexEvents/indexFiles). Producers
-  // block once this many are queued so the file walk cannot outrun the writer thread.
   static constexpr size_t MAX_PENDING_BULK_WRITES = 8;
 
   struct QueuedWork {
@@ -39,7 +37,6 @@ private:
 
   std::unique_ptr<FileIndexerDatabase> m_db;
 
-  // pausing the writer propagates to every producer through the bounded queue
   file_indexer::IoPacer m_pacer{"/proc/pressure/io", 1};
 
   std::thread m_workerThread;
@@ -50,11 +47,8 @@ public:
   DbWriter();
   ~DbWriter();
 
-  // Use with std::move to avoid copies. Pass bounded=true for high-volume writes so
-  // the call blocks under backpressure; control-plane submits must stay unbounded.
   void submit(Work work, bool bounded = false);
 
-  // Utility functions
   void updateScanStatus(int scanId, ScanStatus status);
   void finalizeScan(int scanId, ScanStatus status, int64_t indexedFileCount);
 
@@ -62,15 +56,12 @@ public:
   std::expected<FileIndexerDatabase::ScanRecord, std::string> createScan(const std::filesystem::path &path,
                                                                          ScanType type);
 
-  // Receive by value because `paths` could mutate while the work is waiting in queue
   void indexFiles(std::vector<std::filesystem::path> paths);
   void deleteIndexedFiles(std::vector<std::filesystem::path> paths,
                           std::function<void()> onComplete = nullptr);
   void deleteAllIndexedFiles(std::function<void()> onComplete = nullptr);
   void compact(std::function<void()> onComplete = nullptr);
 
-  // Coalescing: scheduling while a rebuild is already queued is a no-op, so a
-  // burst of scan completions results in a single rebuild.
   void rebuildSpellfixVocabulary();
 
   void indexEvents(std::vector<FileEvent> events);

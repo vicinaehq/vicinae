@@ -52,17 +52,9 @@ IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<
   std::error_code ec;
   FileSystemWalker walker;
 
-  /**
-   * We could have used the max last modified time of indexed files under this path
-   * but in the event that a file was missed for whatever reason, it would never be picked up again.
-   * Since it is assumed that incremental and full scans are more reliable than watchers, we simply use the
-   * last successful scan time (full or incremental).
-   */
-
   scannableDirs.emplace_back(path);
   auto lastSuccessfulScan = m_read_db->getLastSuccessfulScan(path);
 
-  // This should not happen as we would have run a full scan before coming here
   if (!lastSuccessfulScan.has_value()) {
     flog::error() << "No previous successful scan found for incremental scan at" << path.c_str();
     return scannableDirs;
@@ -89,11 +81,9 @@ bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry, in
     auto const lastModifiedSeconds =
         static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count());
 
-    // Only process if directory was modified after the cutoff or equal (to be safe)
     return lastModifiedSeconds >= cutOffSeconds || !m_read_db->tracksFile(entry.path());
   }
 
-  // If we can't get mtime, process anyway to be safe
   return true;
 }
 
@@ -112,8 +102,6 @@ void IncrementalScanner::exhaustiveScan(const fs::path &path, const IncrementalS
     processDirectory(dir, collectNewDirs);
   }
 
-  // new directories are fully descended past the depth cap: timestamp-preserving
-  // extractions (tar -xp, rsync -a) are only ever reached through this
   while (!newDirs.empty() && !isInterrupted()) {
     auto dir = std::move(newDirs.front());
     newDirs.pop_front();
@@ -124,8 +112,6 @@ void IncrementalScanner::exhaustiveScan(const fs::path &path, const IncrementalS
 }
 
 void IncrementalScanner::prunedScan(const fs::path &scanPath, const IncrementalScan &scan) {
-  // a successful ancestor scan covered this subtree, so its timestamp is a valid
-  // cutoff; without it first contact would descend everything
   int64_t cutOffSeconds = 0;
 
   for (fs::path path = scanPath;; path = path.parent_path()) {

@@ -9,19 +9,6 @@
 #include <memory>
 
 class AbstractScanner {
-  /*
-   * Runs a scanner in its own thread, calls `statusCallback` with `Started` when the scan
-   * begins and for throttled progress ticks, then exactly once with a terminal status.
-   *
-   * `start()` creates a new record in the DB and sets its status, it should be called in the new thread.
-   * `finish()` and `fail()` are internal functions that update the DB and call `statusCallback`.
-   * `setInterruptFlag()` makes `finish()` write `Interrupted` instead of `Finished`.
-   *
-   * `interrupt()` signals the scanner to stop prematurely.
-   * `join()` joins any threads and sets the scanner up for deconstruction.
-   * This waits until the scan is finished - call `interrupt()` to stop faster.
-   */
-
 public:
   using StatusCallback = std::function<void(ScanStatus, size_t processedCount)>;
 
@@ -44,7 +31,6 @@ protected:
     if (!result.has_value()) {
       flog::warn() << "Not scanning" << scan.path.native() << "because scan record creation failed with error"
                    << result.error();
-      // TODO: Signal that the scan failed to start
       m_statusCallback(ScanStatus::Failed, m_processedCount);
       return;
     }

@@ -64,7 +64,6 @@ std::string mimeTypeNameFor(const fs::path &path, bool isDirectory) {
   return mime.isValid() ? mime.name().toStdString() : std::string{};
 }
 
-// [p + '/', p + ('/' + 1)) covers exactly the byte range of p's descendants
 std::pair<std::string, std::string> subtreeRange(const fs::path &path) {
   std::string lower = path.native() + '/';
   std::string upper = path.native() + static_cast<char>('/' + 1);
@@ -468,8 +467,6 @@ void FileIndexerDatabase::rebuildSpellfixVocabulary() {
 
   auto tx = m_db.transaction();
 
-  // drop and recreate: the spellfix1 virtual table has no upsert and mass DELETE
-  // through a vtab is much slower
   if (!m_db.exec("DROP TABLE IF EXISTS spellfix_vocab") ||
       !m_db.exec("CREATE VIRTUAL TABLE spellfix_vocab USING spellfix1")) {
     flog::error() << "Failed to recreate spellfix_vocab" << m_db.lastError();
@@ -533,8 +530,6 @@ FileIndexerDatabase::spellfixSuggestions(std::string_view word, int top, bool pr
     WHERE word MATCH :pattern AND top = :top
   )");
 
-  // a trailing '*' makes spellfix match against vocabulary word prefixes, which fits
-  // incomplete launcher queries; both modes are worth querying as they rank differently
   std::string pattern;
   pattern.reserve(word.size() + 1);
   for (char const c : word) {
@@ -629,7 +624,6 @@ void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
 }
 
 void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &paths) {
-  // flog::info() << "Indexing " << paths.size() << " files\n";
   auto tx = m_db.transaction();
 
   auto stmt = m_db.prepare(R"(

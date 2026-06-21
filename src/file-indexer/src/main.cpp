@@ -31,7 +31,6 @@ bool shouldPurgeDatabase() {
 
 } // namespace
 
-// Locked so concurrent query replies don't interleave mid-frame.
 class StdoutTransport : public file_indexer_gen::AbstractTransport {
   std::mutex m_mtx;
 
@@ -45,12 +44,8 @@ class StdoutTransport : public file_indexer_gen::AbstractTransport {
 };
 
 int main(int, char **) {
-  // TODO: remove this at some point
   file_indexer::removeLegacyDbFiles();
 
-  // We made breaking changes that require fully rebuilding the index. Instead
-  // of methodically updating the DB, we remove existing outdated DBs and let the
-  // service create a fresh one. On first boot there is no DB to inspect yet.
   if (shouldPurgeDatabase()) { file_indexer::purgeDbFiles(); }
 
   StdoutTransport transport;

@@ -26,7 +26,6 @@ void QueryPool::submit(Job job) {
     Job stale = std::move(m_queue.front());
     m_queue.pop_front();
     lock.unlock();
-    // we still need to reply to evicted job
     stale.onResult({});
     lock.lock();
   }

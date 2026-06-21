@@ -75,41 +75,23 @@ static const unsigned char sqlite3Utf8Trans1[] = {
   }
 
 static const int CJK[8][2] = {
-    {0x3000, 0x30FF},   // CJK Symbols, Hiragana, Katakana
-    {0x3400, 0x4DBF},   // CJK Unified Ideographs Extension A
-    {0x4E00, 0x9FFF},   // CJK Unified Ideographs
-    {0xF900, 0xFAFF},   // CJK Compatibility Ideographs
-    {0xFF00, 0xFFEF},   // Halfwidth and Fullwidth Forms (incl. Halfwidth Katakana)
-    {0x20000, 0x2EBEF}, // CJK Unified Ideographs Extension B/C/D/E/F
-    {0x2F800, 0x2FA1F}, // CJK Compatibility Ideographs Supplement
-    {0x30000, 0x3134F}  // CJK Unified Ideographs Extension G
+    {0x3000, 0x30FF}, {0x3400, 0x4DBF},   {0x4E00, 0x9FFF},
+    {0xF900, 0xFAFF}, {0xFF00, 0xFFEF},   {0x20000, 0x2EBEF},
+    {0x2F800, 0x2FA1F}, {0x30000, 0x3134F}
 };
-
-// https://jrgraphix.net/research/unicode_blocks.php
-// https://en.wikipedia.org/wiki/CJK_Unified_Ideographs
-// 3000 — 30FF    CJK Symbols and Punctuation, Hiragana, Katakana
-// 3400 — 4DBF    CJK Unified Ideographs Extension A
-// 4E00 — 9FFF    CJK Unified Ideographs
-// F900 — FAFF    CJK Compatibility Ideographs
-// FF00 — FFEF    Halfwidth and Fullwidth Forms
-// 20000 — 2EBEF  CJK Unified Ideographs Extension B/C/D/E/F 
-// 2F800 — 2FA1F  CJK Compatibility Ideographs Supplement
-// 30000 — 3134F  CJK Unified Ideographs Extension G
 
 static inline int isCJK(int iCode) {
   for (int i = 0; i < 8; i++) {
-    if (iCode < CJK[i][0]) { // smaller
+    if (iCode < CJK[i][0]) {
       break;
     }
-    if (iCode <= CJK[i][1]) { // in range
+    if (iCode <= CJK[i][1]) {
       return 1;
     }
-    // bigger than range
   }
   return 0;
 }
 
-/* Function to optionally fold case and remove diacritics */
 static inline int customFold(int iCode, int foldCase, int removeDiacritics) {
   if (iCode == 0)
     return iCode;
@@ -122,53 +104,33 @@ static inline int customFold(int iCode, int foldCase, int removeDiacritics) {
 ** Trigram tokenizer with word bridging and optional fault-tolerance modes.
 **
 ** The text is decoded into a single codepoint stream with every separator
-** (any ASCII non-alphanumeric: space, -, _, ., /, ...) REMOVED: "la belle
-** data" is windowed as "labelledata", "sf-pro" as "sfpro". Trigram phrases
-** therefore match across word boundaries regardless of how either side
-** spells the separators: 'screenshot' finds "Screen Shot ...", 'sfpro' and
-** 'sf pro' both find "sf-pro". Punctuation stops discriminating at retrieval;
-** the fzf rerank against the original query restores it in the ordering.
-** Word boundaries still matter for two things: short (1-2 char) words are
-** additionally emitted as whole tokens so bigram prefix queries keep working,
-** and skeleton mode keeps its first-character rule per word.
+** removed, so trigrams can bridge words ("la belle data" -> "labelledata").
+** Short words are also emitted whole, and skeleton mode keeps word boundaries.
 **
-** Skeleton mode collapses each word to its abbreviation skeleton before
-** windowing: the first character is kept, later vowels are dropped and
-** consecutive duplicates are collapsed ('downloads' -> 'dwnlds'). Applied to
-** both documents and queries, it makes devowelized abbreviations match
-** through plain trigram search.
+** Skeleton mode collapses words to abbreviation skeletons before windowing.
 **
 ** Skip-gram mode (documents only) emits every contiguous trigram as usual
-** plus, colocated at the same position, the two skip-one trigrams that drop
-** the second or third of the four characters starting there:
+** plus colocated skip-one trigrams:
 **
 **   c0 c1 c2 c3  ->  c0c1c2 (advances position), c0c1c3, c0c2c3 (colocated)
-**
-** Colocation preserves position arithmetic, so multi-trigram phrase queries
-** built from contiguous trigrams still require adjacency and can match through
-** the skip variants ('dwld' -> dwl@p, wld@p+1 inside 'dwnlds').
 */
 
 #ifndef FTS5_TOKEN_COLOCATED
 #define FTS5_TOKEN_COLOCATED 0x0001
 #endif
 
-/* Longest buffered stream; longer texts are flushed and continued. */
 #define STREAM_CAP 1024
-/* Short words recorded per stream flush; extras are simply not emitted. */
 #define SHORT_WORD_CAP 64
 
 typedef struct {
-  int aCode[STREAM_CAP]; /* folded codepoints, separators removed */
-  int aOff[STREAM_CAP];  /* source byte offset of each kept codepoint */
+  int aCode[STREAM_CAP];
+  int aOff[STREAM_CAP];
   int n;
-  int aShortStart[SHORT_WORD_CAP]; /* 1-2 char words, emitted standalone */
+  int aShortStart[SHORT_WORD_CAP];
   int aShortLen[SHORT_WORD_CAP];
   int nShort;
 } TokenStream;
 
-/* non-ascii codepoints are word characters: case folding already normalizes
-** the letters we care about, and CJK is handled separately */
 static int isWordChar(int iCode) {
   if (iCode >= 0x80)
     return 1;
@@ -181,8 +143,6 @@ static int isSkeletonVowel(int iCode) {
          iCode == 'u';
 }
 
-/* In-place abbreviation-skeleton transform; returns the new length.
-** Codepoints are already case-folded at this point. */
 static int skeletonizeWord(int *aCode, int *aOff, int nChar) {
   int nOut = 0;
   int last = 0;
@@ -239,7 +199,7 @@ static int emitStream(const TokenStream *s, int iEndOff, int bSkipgrams,
       return 1;
 
     for (k = 0; k < s->nShort; k++) {
-      if (s->aShortLen[k] == nChar) /* identical to the whole stream */
+      if (s->aShortLen[k] == nChar)
         continue;
       if (emitToken(s->aCode + s->aShortStart[k], s->aShortLen[k],
                     FTS5_TOKEN_COLOCATED, s->aOff[s->aShortStart[k]],
@@ -272,8 +232,6 @@ static int emitStream(const TokenStream *s, int iEndOff, int bSkipgrams,
     }
   }
 
-  /* standalone short words ride colocated on the last trigram: only prefix
-  ** and equality lookups ever target them, so their position is irrelevant */
   for (k = 0; k < s->nShort; k++) {
     if (emitToken(s->aCode + s->aShortStart[k], s->aShortLen[k],
                   FTS5_TOKEN_COLOCATED, s->aOff[s->aShortStart[k]],
@@ -300,8 +258,6 @@ static void tokenizeBuffered(const char *pText, int nText, int foldCase,
   s.n = 0;
   s.nShort = 0;
 
-/* closes the current word: applies the skeleton transform in place and
-** records 1-2 char words for standalone emission */
 #define FINISH_WORD()                                                         \
   {                                                                           \
     int wordLen = s.n - wordStart;                                            \
@@ -334,7 +290,7 @@ static void tokenizeBuffered(const char *pText, int nText, int foldCase,
     if (iCode == 0)
       break;
 
-    if (!isWordChar(iCode)) { /* separators close the word, not the window */
+    if (!isWordChar(iCode)) {
       FINISH_WORD();
       continue;
     }

@@ -12,13 +12,9 @@ public:
   using WalkCallback = std::function<void(const std::filesystem::directory_entry &path)>;
   using DirectoryFilter = std::function<bool(const std::filesystem::directory_entry &dir)>;
 
-  // See `EntryFilter::setIgnoreFiles`
   void setIgnoreFiles(const std::vector<std::string> &files);
   void setMaxDepth(std::optional<size_t> maxDepth);
 
-  /**
-   * Do not walk into files and directories that have a leading '.'.
-   */
   void setIgnoreHiddenPaths(bool value);
   void setVerbose(bool value = true);
   void setRecursive(bool value);

@@ -80,9 +80,6 @@ pickCorrections(std::span<const FileIndexerDatabase::SpellfixSuggestion> suggest
     return a.starts_with(b) || b.starts_with(a) || stem(a) == stem(b);
   };
 
-  // the word exists in the vocabulary with real frequency: it's not a typo, the
-  // strict query starved because of some other word. One-off vocab entries are not
-  // trusted as they may well be a typo'd filename themselves.
   bool const knownWord = trustKnownWords && std::ranges::any_of(suggestions, [&](const auto &suggestion) {
                            return suggestion.distance == 0 && suggestion.word == lowered &&
                                   suggestion.rank >= TRUSTED_WORD_MIN_RANK;
@@ -94,8 +91,6 @@ pickCorrections(std::span<const FileIndexerDatabase::SpellfixSuggestion> suggest
 
   picked.reserve(maxCount);
 
-  // no early break on maxCount: later suggestions can still replace a picked
-  // family member with a broader prefix (e.g. vers arriving after version)
   for (const auto &suggestion : suggestions) {
     if (suggestion.distance > MAX_CORRECTION_DISTANCE) continue;
 

@@ -10,10 +10,6 @@
 #include <thread>
 #include <vector>
 
-/**
- * Watches important directories to quickly detect changes made to them.
- * Configured index roots are also updated at a fixed interval.
- */
 class FileSystemWatcher {
   ScanDispatcher &m_dispatcher;
   std::unique_ptr<ImportantDirectoryWatcher> m_watcher;

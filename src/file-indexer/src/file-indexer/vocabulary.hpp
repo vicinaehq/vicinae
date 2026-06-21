@@ -11,8 +11,6 @@ inline constexpr size_t MIN_TOKEN_LENGTH = 3;
 inline constexpr size_t MAX_TOKEN_LENGTH = 24;
 inline constexpr size_t MIN_HEX_JUNK_LENGTH = 12;
 
-// machine-generated tokens (hashes, ids...) make poor correction targets;
-// expects an already-lowercased token
 inline bool isJunkToken(std::string_view token) {
   if (token.size() > MAX_TOKEN_LENGTH) return true;
 
@@ -61,12 +59,6 @@ inline std::string_view dirnameView(std::string_view path) {
   return path;
 }
 
-/**
- * Splits a filename into vocabulary words: non-alphanumeric characters and camelCase
- * boundaries delimit tokens, which are then lowercased. Tokens shorter than
- * MIN_TOKEN_LENGTH, made of digits only, or junk (see isJunkToken) are dropped, as
- * they make poor spellfix correction targets.
- */
 inline std::vector<std::string> tokenizeFilename(std::string_view name) {
   std::vector<std::string> tokens;
   std::string current;

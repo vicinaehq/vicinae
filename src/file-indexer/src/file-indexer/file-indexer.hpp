@@ -12,13 +12,6 @@
 #include <string_view>
 #include <vector>
 
-/**
- * Generic file indexer that should be usable in most linux environments.
- * SQLite FTS5 is used as a backend, making it technically possible to index the entire
- * filesystem if necessary.
- * Queries usually remain very fast (<100ms), although not fast enough to perform them in the UI thread
- * without introducing slowdowns.
- */
 class FileIndexer {
 public:
   std::shared_ptr<DbWriter> m_writer;
@@ -48,7 +41,6 @@ public:
   pendingFullScanRootsFor(const std::vector<std::filesystem::path> &roots,
                           const std::vector<std::filesystem::path> &exclusions);
 
-  // rebuilds scan the entire index: don't redo it for every watcher-triggered scan
   static constexpr std::chrono::minutes VOCAB_REBUILD_MIN_INTERVAL{10};
   std::mutex m_vocabRebuildMtx;
   std::chrono::steady_clock::time_point m_lastVocabRebuild{};

@@ -113,27 +113,15 @@ double computeSubstringMatchMultiplier(const SC &candidate, std::string_view que
   return 1.0;
 }
 
-// for now, we don't try to be too smart about how we prioritize files
-// depending on their types, because it is very easy to introduce
-// undesirable behavior doing so.
-// There are, however, a lot of junk files that really deserve to score lower,
-// so we do some amount of work here.
 double computeFileRelevanceMultiplier(const SC &candidate) {
   auto pcstr = std::string_view{candidate.path.c_str()};
   auto ext = file_indexer::vocab::fileExtensionView(candidate.path.c_str());
 
-  // FIXME: maybe we want some logic to avoid discriminating against a file extension that
-  // is explicitly in the query.
-
-  // emacs junk
   if (pcstr.starts_with("#") && pcstr.ends_with("#")) { return 0.1; }
   if (ext.starts_with("#")) return 0.1;
 
-  // we rarely want object files as a first match
   if (ext == "o") { return 0.5; }
 
-  // swap file stuff, not sure if it can conflict with legitimate extensions so
-  // keeping the malus medium.
   if (pcstr.ends_with("~")) return 0.3;
   if (ext == "swp") return 0.5;
   if (ext == "swo") return 0.5;
@@ -237,14 +225,12 @@ std::vector<ScoredRef<SC>> scoreCandidatesParallel(std::span<const SC> candidate
   auto cutCount = std::ranges::fold_left(cutCounts, 0, std::plus{});
 
   sortCandidates(ranked);
-  ranked.resize(ranked.size() - cutCount); // everything to the right of the offset is below the score
-                                           // threshold so we can just resize to nuke it
+  ranked.resize(ranked.size() - cutCount);
 
   return ranked;
 }
 
 std::vector<ScoredRef<SC>> scoreCandidates(std::span<const SC> candidates, const Scorer &scorer) {
-  // if number of candidates is small, don't bother with multithreading
   if (candidates.size() < SCORING_BATCH_SIZE) {
     std::vector<ScoredRef<SC>> ranked;
 
@@ -369,8 +355,6 @@ std::vector<IndexerFileResult> queryWithCorrections(FileIndexerDatabase &db, std
   for (auto &queryWord : words) {
     if (queryWord.word.size() < MIN_CORRECTABLE_WORD_LENGTH) continue;
 
-    // prefix and exact mode rank differently (a dropped vowel can push the right
-    // word out of the prefix-mode top entirely), so merge both
     auto suggestions = db.spellfixSuggestions(queryWord.word, SUGGESTION_FETCH_COUNT, true);
     auto exact = db.spellfixSuggestions(queryWord.word, SUGGESTION_FETCH_COUNT, false);
 
@@ -470,7 +454,6 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
     }
   }
 
-  // skeleton matches merge into the candidate set and the reranker arbitrates.
   if (candidates.size() < static_cast<size_t>(CANDIDATE_LIMIT)) {
     auto seen = candidates |
                 std::views::transform([](const SC &candidate) { return candidate.path.native(); }) |
@@ -491,7 +474,6 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
   if (!candidates.empty()) {
     auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, q); };
 
-    // an empty ranking means the candidates were noise: keep falling back
     if (auto results = rankCandidates(std::move(candidates), scorer, limit); !results.empty()) {
       return results;
     }

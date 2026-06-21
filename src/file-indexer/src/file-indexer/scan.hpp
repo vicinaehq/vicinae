@@ -8,12 +8,7 @@
 
 enum ScanType { Full, Incremental };
 
-enum class ScanMode {
-  Exhaustive,
-  // only descends into new or modified-since-last-scan directories: misses
-  // changes deep under unchanged ancestors
-  Pruned
-};
+enum class ScanMode { Exhaustive, Pruned };
 
 enum ScanStatus {
   Pending,
@@ -49,10 +44,7 @@ struct Scan {
     return std::holds_alternative<FullScan>(data) ? ScanType::Full : ScanType::Incremental;
   }
 
-  bool operator<(const Scan &other) const {
-    // TODO: Find a proper way to suppport std::set
-    return path < other.path;
-  }
+  bool operator<(const Scan &other) const { return path < other.path; }
 };
 
 struct ScanEvent {

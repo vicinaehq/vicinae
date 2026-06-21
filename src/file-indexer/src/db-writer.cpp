@@ -75,9 +75,6 @@ void DbWriter::updateScanStatus(int scanId, ScanStatus status) {
 
 std::expected<FileIndexerDatabase::ScanRecord, std::string>
 DbWriter::createScan(const std::filesystem::path &path, ScanType type) {
-  // TODO: Fragile lifetime issues
-  // TODO: Proritize record creation over normal writes
-
   std::promise<std::expected<FileIndexerDatabase::ScanRecord, std::string>> result;
   auto future = result.get_future();
 

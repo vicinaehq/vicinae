@@ -41,29 +41,10 @@ std::string prepareCandidateSearchQuery(std::string_view query);
 
 std::string prepareCorrectionSearchQuery(const CorrectionPlan &plan);
 
-/**
- * Typos are far more likely to be of a common word than a rare one, and spellfix's own
- * frequency weighting is too weak to surface e.g. 'config' over one-off junk tokens.
- */
 double adjustedSuggestionScore(const FileIndexerDatabase::SpellfixSuggestion &suggestion);
 
-/**
- * How much a match through this correction is worth relative to a match through the
- * word the user actually typed. Decays with spelling distance: otherwise a far
- * correction with a longer word wins on raw fzf match length alone (frstwire ->
- * firstperson beating frostwire).
- */
 double correctionWeight(int distance);
 
-/**
- * Suggestions come back score-ascending. Three coverage rules keep the few correction
- * slots useful (candidate matching is substring-based, so a word always covers every
- * path covered by its extensions):
- * - extensions of the original word add nothing: those paths already match it
- * - numbered variant families (sercom0, sercom3, ...) collapse into one slot, else
- *   ties between them hog every slot and push real corrections out
- * - a suggestion that is a prefix of an already picked one replaces it (broader)
- */
 std::vector<FileIndexerDatabase::SpellfixSuggestion>
 pickCorrections(std::span<const FileIndexerDatabase::SpellfixSuggestion> suggestions,
                 std::string_view original, size_t maxCount, bool trustKnownWords = true);

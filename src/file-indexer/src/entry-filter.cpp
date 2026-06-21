@@ -12,10 +12,6 @@
 
 namespace fs = std::filesystem;
 
-/*
- * Absolute paths to never follow during indexing: pseudo filesystems such as /run or /proc,
- * plus well-known locations under the user's home that only ever hold machine-managed data
- */
 static const std::unordered_set<std::string> &excludedPaths() {
   static const std::unordered_set<std::string> paths = [] {
     std::unordered_set<std::string> set = {"/sys", "/run", "/proc", "/tmp", "/var/tmp", "/efi", "/dev"};
@@ -62,14 +58,6 @@ static const std::unordered_set<std::string> &excludedPaths() {
   return paths;
 }
 
-/**
- * Filenames that can always be ignored. If any file names are to be added here, it's important to make sure
- * they have a specific enough name so that it doesn't generate false positives and prevent indexing actually
- * meaningful content. If you are not sure, it's better to not add it.
- *
- * The indexer is pretty fast and can index millions of files without issue, so indexing some garbage
- * is forgivable.
- */
 static constexpr auto EXCLUDED_FILENAMES = std::array{
     ".git",
     ".hg",

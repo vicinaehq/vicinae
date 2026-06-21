@@ -65,8 +65,6 @@ public:
 
   int enqueue(const Scan &scan);
 
-  // coalesces identical requests: starts after DEBOUNCE_QUIET of silence, at
-  // most DEBOUNCE_MAX_DELAY after the first request
   void enqueueDebounced(const Scan &scan);
 
   bool interrupt(int id);
@@ -74,6 +72,5 @@ public:
   void clearPending();
   void waitUntilIdle();
 
-  // A vector instead of a lazy range because m_scannerMap is very mutable
   std::vector<std::pair<int, Scan>> scans();
 };

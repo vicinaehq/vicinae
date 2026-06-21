@@ -12,8 +12,6 @@
 #include "common/common.hpp"
 #include "rang/rang.hpp"
 
-// FileIndexerBus
-
 void FileIndexerBus::send(std::string_view data) {
   uint32_t size = data.size();
   m_device->write(reinterpret_cast<const char *>(&size), sizeof(size));
@@ -42,8 +40,6 @@ void FileIndexerBus::readyRead() {
 FileIndexerBus::FileIndexerBus(QIODevice *device) : m_device(device) {
   connect(device, &QIODevice::readyRead, this, &FileIndexerBus::readyRead);
 }
-
-// FileIndexer
 
 static AbstractFileIndexer::ScanKind toScanKind(file_indexer_gen::ScanKind kind) {
   switch (kind) {

@@ -8,22 +8,6 @@
 #include <string>
 #include <vector>
 
-/**
- * A file indexer capable of indexing a LOT of files (technically, a whole filesystem, if the user wants so)
- *
- * On MacOS, the indexer essentially calls into the Spotlight API and does not handle any indexing by itself.
- *
- * On Windows, no specialized API seem to be available.
- *
- * On Linux, there is no standard desktop environment (DE) agnostic way to handle file indexing. So we can:
- * - Detect the DE in use and use a specialized file indexer that calls into the DE search API (assuming it's
- * exposed)
- * - Provide an in-house file indexing solution for environments without a file indexing solution.
- *
- * For the time being we will focus on the in-house solution that will successfully cover all Linux
- * environments.
- */
-
 struct IndexerFileResult {
   std::filesystem::path path;
   double rank;

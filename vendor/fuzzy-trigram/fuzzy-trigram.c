@@ -33,13 +33,13 @@ static fts5_api *fts5_api_from_db(sqlite3 *db) {
   sqlite3_stmt *pStmt = 0;
 
   int version = sqlite3_libversion_number();
-  if (version >= 3020000) { // current api
+  if (version >= 3020000) {
     if (SQLITE_OK == sqlite3_prepare(db, "SELECT fts5(?1)", -1, &pStmt, 0)) {
       sqlite3_bind_pointer(pStmt, 1, (void *)&pRet, "fts5_api_ptr", NULL);
       sqlite3_step(pStmt);
     }
     sqlite3_finalize(pStmt);
-  } else { // before 3.20
+  } else {
     int rc = sqlite3_prepare(db, "SELECT fts5()", -1, &pStmt, 0);
     if (rc == SQLITE_OK) {
       if (SQLITE_ROW == sqlite3_step(pStmt) &&
@@ -52,18 +52,15 @@ static fts5_api *fts5_api_from_db(sqlite3 *db) {
   return pRet;
 }
 
-/* Tokenizer structure */
 typedef struct {
-  int bFold;      /* Fold case if 1 */
-  int iFoldParam; /* Diacritic removal parameter */
-  int bSkipgrams; /* Also index skip-one trigrams (documents only) if 1 */
-  int bSkeleton;  /* Tokenize abbreviation skeletons instead of raw words if 1 */
+  int bFold;
+  int iFoldParam;
+  int bSkipgrams;
+  int bSkeleton;
 } FuzzyTrigramTokenizer;
 
-/* Free the tokenizer */
 static void fts5FuzzyTrigramDelete(Fts5Tokenizer *p) { sqlite3_free(p); }
 
-/* Create the tokenizer */
 static int fts5FuzzyTrigramCreate(void *pUnused, const char **azArg, int nArg,
                                    Fts5Tokenizer **ppOut) {
   FuzzyTrigramTokenizer *p =
@@ -73,12 +70,11 @@ static int fts5FuzzyTrigramCreate(void *pUnused, const char **azArg, int nArg,
     return SQLITE_NOMEM;
 
   int rc = SQLITE_OK;
-  p->bFold = 1;       /* Default case folding enabled */
-  p->iFoldParam = 0;  /* Default diacritic removal disabled */
-  p->bSkipgrams = 0;  /* Default skip-gram indexing disabled */
-  p->bSkeleton = 0;   /* Default skeleton transform disabled */
+  p->bFold = 1;
+  p->iFoldParam = 0;
+  p->bSkipgrams = 0;
+  p->bSkeleton = 0;
 
-  /* Parse options */
   for (int i = 0; rc == SQLITE_OK && i < nArg; i += 2) {
     const char *zArg = azArg[i + 1];
     if (0 == sqlite3_stricmp(azArg[i], "case_sensitive")) {
@@ -130,7 +126,6 @@ static int fts5FuzzyTrigramTokenize(Fts5Tokenizer *pTokenizer, void *pCtx,
   FuzzyTrigramTokenizer *p = (FuzzyTrigramTokenizer *)pTokenizer;
   int isQuery = (flags & FTS5_TOKENIZE_QUERY) != 0;
 
-  /* skeleton applies to documents AND queries; skip-grams are document-only */
   tokenizeBuffered(pText, nText, p->bFold, p->iFoldParam, p->bSkeleton,
                    p->bSkipgrams && !isQuery, pCtx, xToken);
   return SQLITE_OK;
@@ -149,7 +144,6 @@ static int fts5FuzzyTrigramInit(sqlite3 *db) {
                              &tokenizer, NULL);
     return SQLITE_OK;
   } else {
-    // *error = sqlite3_mprintf("Can't find fts5 extension");
     return SQLITE_ERROR;
   }
 }

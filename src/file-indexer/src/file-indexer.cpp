@@ -88,19 +88,14 @@ void FileIndexer::startFullScan() {
   m_dispatcher.waitUntilIdle();
   markFullScanRootsPending(m_entrypoints);
 
-  // Prevent starting the full scan and watchers before deletion is done
   std::thread([this]() {
     flog::info() << "Starting full scan, clearing existing index...";
 
-    // no VACUUM here: the freed pages are about to be reused by the rescan
     m_writer->deleteAllIndexedFiles([this]() {
       flog::info() << "Existing index cleared, enqueuing full scan tasks...";
 
       for (const auto &entrypoint : m_entrypoints) {
         flog::info() << "Enqueuing full scan for" << entrypoint.c_str();
-        // For now we don't exclude filenames during full scans, though this might change in the future.
-        // The reason being that we still want to know where the db file is (current use case), just not
-        // watch it. May want to split the list in two later (scan vs watch).
         m_dispatcher.enqueue(
             {.path = entrypoint, .data = FullScan{.excludedPaths = m_excludedPaths}, .notify = true});
       }
@@ -151,7 +146,6 @@ void FileIndexer::start() {
   for (const auto &entrypoint : m_entrypoints) {
     auto lastScan = m_db.getLastScan(entrypoint, ScanType::Full);
 
-    // we have never had a full scan or it failed
     if (!lastScan) {
       flog::info() << "This is our first startup for entrypoint" << entrypoint.c_str()
                    << ", starting full scan";
@@ -160,8 +154,6 @@ void FileIndexer::start() {
       continue;
     }
 
-    // Scans marked as started when we call start() (that is, at the beginning of the program)
-    // are considered failed because they were not able to finish.
     if (lastScan->status != ScanStatus::Succeeded) {
       flog::info() << "Last full scan for entrypoint" << entrypoint.c_str()
                    << "did not complete successfully, marking as interrupted and starting a new full scan";
@@ -178,7 +170,6 @@ void FileIndexer::start() {
     startSingleScan(entrypoint, ScanType::Incremental);
   }
 
-  // otherwise the event callback starts the watcher once the full scan succeeds
   if (!needsFullScan) { startFileSystemWatcher(); }
 }
 
@@ -322,7 +313,6 @@ FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatche
       markFullScanSucceeded(event.entrypoint);
     }
 
-    // keep the typo-correction vocabulary loosely in sync with the index
     if (event.status == ScanStatus::Succeeded && shouldRebuildVocabulary()) {
       m_writer->rebuildSpellfixVocabulary();
     }
