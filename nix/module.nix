@@ -22,7 +22,7 @@ in {
       description = "The vicinae package to use";
     };
 
-    useFirefoxMessagingHost = lib.mkOption {
+    enableFirefoxIntegration = lib.mkOption {
       default = true;
       description = ''
         Whether to install the messaging host so that the firefox extension <https://addons.mozilla.org/en-US/firefox/addon/vicinae/> works.
@@ -224,7 +224,7 @@ in {
           // themeFiles;
       };
 
-      programs.firefox.nativeMessagingHosts = lib.mkIf (cfg.useFirefoxMessagingHost && cfg.package != null) [
+      programs.firefox.nativeMessagingHosts = lib.mkIf (cfg.enableFirefoxIntegration && cfg.package != null) [
         (pkgs.writeTextDir "lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json" (
           builtins.toJSON {
             name = "com.vicinae.vicinae";
