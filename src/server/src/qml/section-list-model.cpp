@@ -80,6 +80,9 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
       return QString();
     case Accessory:
       return {};
+    case FilePath:
+    case FileUrl:
+      return QString();
     default: {
       auto it = m_customRoleDefaults.find(role);
       return it != m_customRoleDefaults.end() ? it.value() : QVariant{};
@@ -118,7 +121,8 @@ QHash<int, QByteArray> SectionListModel::roleNames() const {
       {IsSection, "isSection"},     {IsSelectable, "isSelectable"},
       {SectionName, "sectionName"}, {Title, "title"},
       {Subtitle, "subtitle"},       {IconSource, "iconSource"},
-      {Accessory, "itemAccessory"},
+      {Accessory, "itemAccessory"}, {FilePath, "filePath"},
+      {FileUrl, "fileUrl"},
   };
   for (auto *source : m_sources)
     roles.insert(source->customRoleNames());
