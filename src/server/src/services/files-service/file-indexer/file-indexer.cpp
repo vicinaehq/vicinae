@@ -1,5 +1,6 @@
 #include "file-indexer.hpp"
 #include <cstdint>
+#include <cstring>
 #include <QDateTime>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -25,7 +26,8 @@ void FileIndexerBus::readyRead() {
     m_message.data.append(read);
 
     while (std::cmp_greater_equal(m_message.data.size(), sizeof(uint32_t))) {
-      uint32_t const length = *reinterpret_cast<uint32_t *>(m_message.data.data());
+      uint32_t length = 0;
+      std::memcpy(&length, m_message.data.constData(), sizeof(length));
       bool const isComplete = m_message.data.size() - sizeof(uint32_t) >= length;
 
       if (!isComplete) break;
