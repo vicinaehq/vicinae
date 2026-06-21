@@ -20,23 +20,24 @@ SelectableDelegate {
 
     Component.onCompleted: {
         if (_isDraggable) {
-            console.debug("[DRAG] ListItemDelegate created: filePath=" + root.filePath + " fileUrl=" + root.fileUrl)
+            console.debug("[DRAG] ListItemDelegate created: filePath=" + root.filePath + " fileUrl=" + root.fileUrl);
         }
     }
 
     Drag.dragType: root._isDraggable ? Drag.Automatic : Drag.None
     Drag.active: root._isDraggable ? dragHandler.active : false
     Drag.mimeData: root._isDraggable ? ({
-        "text/uri-list": root.fileUrl,
-        "text/plain": root.filePath
-    }) : ({})
+            "text/uri-list": root.fileUrl,
+            "text/plain": root.filePath
+        }) : ({})
     Drag.supportedActions: Qt.CopyAction
 
     DragHandler {
         id: dragHandler
         enabled: root._isDraggable
         onActiveChanged: {
-            if (active) console.debug("[DRAG] DragHandler ACTIVATED! filePath=" + root.filePath)
+            if (active)
+                console.debug("[DRAG] DragHandler ACTIVATED! filePath=" + root.filePath);
         }
     }
 

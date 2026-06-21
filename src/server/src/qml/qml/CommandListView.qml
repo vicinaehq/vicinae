@@ -30,7 +30,7 @@ GenericListView {
 
         Component.onCompleted: {
             if (!isSection && filePath !== "") {
-                console.debug("[DRAG] CommandListView delegate: title=" + title + " filePath=" + filePath + " fileUrl=" + fileUrl)
+                console.debug("[DRAG] CommandListView delegate: title=" + title + " filePath=" + filePath + " fileUrl=" + fileUrl);
             }
         }
 
