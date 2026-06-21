@@ -210,7 +210,9 @@ std::vector<std::pair<int, Scan>> ScanDispatcher::scans() {
 }
 
 ScanDispatcher::~ScanDispatcher() {
+  clearPending();
   interruptAll();
+  waitUntilIdle();
 
   m_running = false;
   m_pendingCv.notify_one();
