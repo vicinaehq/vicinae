@@ -29,9 +29,6 @@ GenericListView {
         required property string fileUrl
 
         Component.onCompleted: {
-            if (!isSection && filePath !== "") {
-                console.debug("[DRAG] CommandListView delegate: title=" + title + " filePath=" + filePath + " fileUrl=" + fileUrl);
-            }
         }
 
         sourceComponent: isSection ? sectionComponent : itemComponent
