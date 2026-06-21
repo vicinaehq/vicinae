@@ -49,9 +49,10 @@ bool isValidIsoDatetime(const std::string &str, DatetimeFormat format) {
   return std::regex_match(trimmed.begin(), trimmed.end(), spec.pattern);
 }
 
-void assertIsValidDatetime(const QString &question, DatetimeFormat format) {
+void assertIsValidDatetime(const QString &question, DatetimeFormat format,
+                           ComputeMode mode = ComputeMode::Full) {
   auto backend = makeBackend();
-  auto r = backend.compute(question, {.mode = ComputeMode::Full});
+  auto r = backend.compute(question, {.mode = mode});
   REQUIRE(r);
   REQUIRE(isValidIsoDatetime(r->answer.text.toStdString(), format));
 }
@@ -83,6 +84,19 @@ TEST_CASE("handles datetime operations and conversions") {
   assertIsValidDatetime("now to utc", DatetimeFormat::UtcWithZ);
   assertIsValidDatetime("now + 1   week to utc", DatetimeFormat::UtcWithZ);
   assertIsValidDatetime("now in havana", DatetimeFormat::WithOffset);
+}
+
+TEST_CASE("resolves timezones by city, casing and custom offset") {
+  assertIsValidDatetime("now in buenos aires", DatetimeFormat::WithOffset);
+  assertIsValidDatetime("now in NEW YORK", DatetimeFormat::WithOffset);
+  assertIsValidDatetime("now in new_york", DatetimeFormat::WithOffset);
+  assertIsValidDatetime("now to +05:30", DatetimeFormat::WithOffset);
+  assertIsValidDatetime("now to -08:00", DatetimeFormat::WithOffset);
+}
+
+TEST_CASE("computes timezone conversions in mixed search mode") {
+  assertIsValidDatetime("now in havana", DatetimeFormat::WithOffset, ComputeMode::MixedSearch);
+  assertIsValidDatetime("now in utc", DatetimeFormat::UtcWithZ, ComputeMode::MixedSearch);
 }
 
 TEST_CASE("rejects non expressions in mixed search mode") {

@@ -236,6 +236,8 @@ bool QalculateBackend::isExpression(const std::string &query) const {
   std::string const localized = CALCULATOR->unlocalizeExpression(stdExpr);
   MathStructure parsed = CALCULATOR->parse(localized, m_evalOpts.parse_options);
 
+  CALCULATOR->clearMessages();
+
   bool hasDigit = std::ranges::any_of(stdExpr, [](unsigned char c) { return std::isdigit(c); });
   if (hasDigit && parsed.containsType(STRUCT_UNIT) && parsed.containsType(STRUCT_NUMBER)) return true;
 
