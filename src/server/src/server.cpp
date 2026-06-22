@@ -52,6 +52,8 @@
 #ifdef Q_OS_LINUX
 #include "services/input-server/linux-input-server.hpp"
 #include "services/snippet/linux-snippet-server.hpp"
+#elif defined(Q_OS_MACOS)
+#include "services/snippet/macos-snippet-server.hpp"
 #else
 #include "services/snippet/null-snippet-server.hpp"
 #endif
@@ -155,7 +157,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto platformPaste =
         std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*inputServer));
 #elif defined(Q_OS_MACOS)
-    auto snippetServer = std::make_unique<NullSnippetServer>();
+    auto snippetServer = std::make_unique<MacosSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<MacosPasteService>());
 #else
     auto snippetServer = std::make_unique<NullSnippetServer>();

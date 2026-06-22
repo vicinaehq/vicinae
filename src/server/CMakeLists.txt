@@ -612,6 +612,8 @@ if (APPLE)
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.hpp
 		src/services/paste/macos-paste-service.mm
+		src/services/snippet/macos-snippet-server.hpp
+		src/services/snippet/macos-snippet-server.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -622,6 +624,7 @@ if (APPLE)
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.mm
+		src/services/snippet/macos-snippet-server.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
