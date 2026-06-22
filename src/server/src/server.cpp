@@ -61,6 +61,9 @@
 #ifdef Q_OS_LINUX
 #include "services/paste/linux-paste-service.hpp"
 #endif
+#ifdef Q_OS_MACOS
+#include "services/paste/macos-paste-service.hpp"
+#endif
 #include "settings-controller/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "qml/launcher-window.hpp"
@@ -147,6 +150,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto snippetServer = std::make_unique<LinuxSnippetServer>(*inputServer);
     auto platformPaste =
         std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*inputServer));
+#elif defined(Q_OS_MACOS)
+    auto snippetServer = std::make_unique<NullSnippetServer>();
+    auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<MacosPasteService>());
 #else
     auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());
