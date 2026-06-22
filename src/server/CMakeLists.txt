@@ -608,6 +608,8 @@ if (APPLE)
 		src/services/global-shortcuts/macos-global-shortcut-backend.cpp
 		src/services/files-service/macos/spotlight-file-indexer.hpp
 		src/services/files-service/macos/spotlight-file-indexer.mm
+		src/services/tray/macos/tray-service-macos.hpp
+		src/services/tray/macos/tray-service-macos.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -616,6 +618,7 @@ if (APPLE)
 		src/services/app-runtime/macos/mac-app-runtime.mm
 		src/root-search/macos-settings/macos-settings-root-provider.mm
 		src/services/files-service/macos/spotlight-file-indexer.mm
+		src/services/tray/macos/tray-service-macos.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
@@ -628,6 +631,11 @@ list(APPEND SRCS
 	src/services/app-runtime/abstract-app-runtime.hpp
 	src/services/app-runtime/app-runtime.hpp
 	src/services/app-runtime/app-runtime.cpp
+)
+
+list(APPEND SRCS
+	src/services/tray/tray-service.hpp
+	src/services/tray/tray-service.cpp
 )
 
 list(APPEND SRCS
