@@ -65,9 +65,11 @@
 #include "services/paste/macos-paste-service.hpp"
 #endif
 #include "settings-controller/settings-controller.hpp"
+#include "services/tray/tray-service.hpp"
 #include "qml/launcher-window.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
+#include "generated/version.h"
 #include <filesystem>
 #include <QGuiApplication>
 #include <QPointer>
@@ -432,6 +434,21 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   if (!builtinFont.isEmpty()) QGuiApplication::setFont(QFont(builtinFont));
 
   configChanged(cfgService->value(), {});
+
+  auto tray = createTrayService();
+  if (tray) {
+    tray->setVersion(QStringLiteral(VICINAE_GIT_TAG " [" VICINAE_GIT_COMMIT_HASH "]"));
+    QObject::connect(tray.get(), &TrayService::toggleRequested, [&ctx]() { ctx.navigation->toggleWindow(); });
+    QObject::connect(tray.get(), &TrayService::openSettingsRequested, [&ctx](const QString &tab) {
+      if (tab.isEmpty()) {
+        ctx.settings->openWindow();
+      } else {
+        ctx.settings->openTab(tab);
+      }
+    });
+    QObject::connect(tray.get(), &TrayService::quitRequested, []() { QCoreApplication::quit(); });
+    tray->show();
+  }
 
   LauncherWindow const qmlWindow(ctx);
 
