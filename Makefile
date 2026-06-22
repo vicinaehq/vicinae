@@ -55,8 +55,10 @@ strip:
 test:
 	./$(BIN_DIR)/vicinae-glyph-tests
 	./$(BIN_DIR)/vicinae-fuzzy-tests
+	./$(BIN_DIR)/vicinae-server-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
+	./$(BIN_DIR)/vicinae-file-indexer-tests
 .PHONY: test
 
 static:
@@ -134,11 +136,6 @@ bump-minor:
 bump-major:
 	./scripts/bump_version.sh major
 .PHONY: bump-major
-
-# Regenerate the manifest in place from the latest existing tag (does not bump).
-update-manifest:
-	./scripts/update-manifest.sh ./manifest.yaml
-.PHONY: update-manifest
 
 # if we need to manually create a release
 gh-release:

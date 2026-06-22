@@ -16,6 +16,7 @@ struct ActionPanelSectionState {
   QString name() const { return m_name; };
   void setName(const QString &text) { m_name = text; }
   void addAction(AbstractAction *action) { m_actions.emplace_back(action); }
+  void addAction(std::shared_ptr<AbstractAction> action) { m_actions.emplace_back(std::move(action)); }
 };
 
 class ActionPanelState : public NonCopyable {

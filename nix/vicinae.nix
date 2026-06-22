@@ -71,6 +71,7 @@ in
       nodejs
       qt6.qtbase
       qt6.qtdeclarative
+      qt6.qtimageformats
       qt6.qtsvg
       qt6.qtwayland
       wayland

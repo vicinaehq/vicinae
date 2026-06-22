@@ -461,6 +461,71 @@ std::shared_ptr<AbstractWindowManager::AbstractWorkspace> X11WindowManager::getA
   return std::make_shared<X11Workspace>(*current, name);
 }
 
+bool X11WindowManager::setSticky(const AbstractWindow &window, bool sticky) const {
+  auto *conn = getConnection();
+  auto root = getRootWindow();
+  if (!conn || root == XCB_WINDOW_NONE) return false;
+
+  const auto &x11_window =
+      static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  xcb_window_t const win = x11_window.windowId();
+
+  xcb_atom_t const net_wm_state = internAtom("_NET_WM_STATE");
+  xcb_atom_t const net_wm_state_sticky = internAtom("_NET_WM_STATE_STICKY");
+
+  if (net_wm_state == XCB_ATOM_NONE || net_wm_state_sticky == XCB_ATOM_NONE) return false;
+
+  xcb_client_message_event_t event;
+  memset(&event, 0, sizeof(event));
+  event.response_type = XCB_CLIENT_MESSAGE;
+  event.window = win;
+  event.format = 32;
+  event.type = net_wm_state;
+  event.data.data32[0] = sticky ? 1 : 0;
+  event.data.data32[1] = net_wm_state_sticky;
+  event.data.data32[2] = 0;
+
+  xcb_send_event(conn, 0, root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+                 reinterpret_cast<const char *>(&event));
+  xcb_flush(conn);
+
+  emit const_cast<X11WindowManager *>(this)->windowsChanged();
+  return true;
+}
+
+bool X11WindowManager::moveToWorkspace(const AbstractWindow &window, const QString &workspaceId) const {
+  auto *conn = getConnection();
+  auto root = getRootWindow();
+  if (!conn || root == XCB_WINDOW_NONE) return false;
+
+  const auto &x11_window =
+      static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  xcb_window_t const win = x11_window.windowId();
+
+  bool ok = false;
+  uint32_t const desktop = workspaceId.toUInt(&ok);
+  if (!ok) return false;
+
+  xcb_atom_t const net_wm_desktop = internAtom("_NET_WM_DESKTOP");
+  if (net_wm_desktop == XCB_ATOM_NONE) return false;
+
+  xcb_client_message_event_t event;
+  memset(&event, 0, sizeof(event));
+  event.response_type = XCB_CLIENT_MESSAGE;
+  event.window = win;
+  event.format = 32;
+  event.type = net_wm_desktop;
+  event.data.data32[0] = desktop;
+  event.data.data32[1] = 2;
+
+  xcb_send_event(conn, 0, root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+                 reinterpret_cast<const char *>(&event));
+  xcb_flush(conn);
+
+  emit const_cast<X11WindowManager *>(this)->windowsChanged();
+  return true;
+}
+
 bool X11WindowManager::ping() const {
   auto *conn = getConnection();
   if (!conn) { return false; }

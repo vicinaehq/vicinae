@@ -46,6 +46,8 @@
           pkgs.qt6.qtdeclarative
           pkgs.qt6.qtwayland
           pkgs.qt6.qtsvg
+          pkgs.qt6.qtimageformats
+          pkgs.kdePackages.layer-shell-qt
         ];
       in {
         default = pkgs.mkShell {

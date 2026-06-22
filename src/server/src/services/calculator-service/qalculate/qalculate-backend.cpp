@@ -1,7 +1,9 @@
 #include "services/calculator-service/qalculate/qalculate-backend.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
-#include <QDebug>
 #include <QRegularExpression>
+#include <QTime>
+#include <QTimeZone>
+#include <cctype>
 #include <format>
 #include <libqalculate/MathStructure.h>
 #include <libqalculate/QalculateDateTime.h>
@@ -17,6 +19,20 @@
 using CalculatorResult = QalculateBackend::CalculatorResult;
 using CalculatorError = QalculateBackend::CalculatorError;
 
+namespace {
+
+// Lowercased, with underscores treated as spaces, so "New_York" matches "new york".
+std::string normalizeCityKey(std::string_view city) {
+  std::string key;
+  key.reserve(city.size());
+  for (char c : city) {
+    key.push_back(c == '_' ? ' ' : static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+  }
+  return key;
+}
+
+} // namespace
+
 QalculateBackend::QalculateBackend() = default;
 
 bool QalculateBackend::isActivatable() const { return true; }
@@ -30,7 +46,122 @@ bool QalculateBackend::start() {
   return true;
 }
 
-std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) {
+void QalculateBackend::populateTzOffset() {
+  if (!m_cityToTzMinuteOffset.empty()) { return; }
+
+  const QDateTime now = QDateTime::currentDateTimeUtc();
+
+  for (const auto &tz : QTimeZone::availableTimeZoneIds()) {
+    const std::string tzcode(tz.constData(), tz.length());
+
+    // Last path segment, so "America/Argentina/Buenos_Aires" -> "Buenos_Aires".
+    const size_t slashPos = tzcode.rfind('/');
+    const std::string cityName = slashPos != std::string::npos ? tzcode.substr(slashPos + 1) : tzcode;
+
+    const int offsetMinutes = QTimeZone(tz).offsetFromUtc(now) / 60;
+    m_cityToTzMinuteOffset[normalizeCityKey(cityName)] = offsetMinutes;
+  }
+}
+
+std::optional<int> QalculateBackend::getTimezoneOffset(const std::string &tzName) {
+  // Custom offset format: +HH:MM or -HH:MM
+  if (tzName.size() >= 6 && (tzName.front() == '+' || tzName.front() == '-')) {
+    const int sign = tzName.front() == '+' ? 1 : -1;
+    const QTime offset = QTime::fromString(QString::fromStdString(tzName.substr(1)), "HH:mm");
+    if (offset.isValid()) { return sign * (offset.hour() * 60 + offset.minute()); }
+    return std::nullopt;
+  }
+
+  this->populateTzOffset();
+
+  if (auto it = m_cityToTzMinuteOffset.find(normalizeCityKey(tzName)); it != m_cityToTzMinuteOffset.end()) {
+    return it->second;
+  }
+
+  if (QTimeZone tz(QString::fromStdString(tzName).toUtf8()); tz.isValid()) {
+    return tz.offsetFromUtc(QDateTime::currentDateTimeUtc()) / 60;
+  }
+
+  return std::nullopt;
+}
+
+std::pair<std::string, PrintOptions> QalculateBackend::handleToExpression(const std::string &expression) {
+  PrintOptions resultPrintOpts = m_printOpts;
+
+  std::string toExpression;
+  std::string calcExpression = expression;
+
+  if (CALCULATOR->separateToExpression(calcExpression, toExpression, m_evalOpts, true)) {
+    if (!toExpression.empty()) {
+      const std::string toStr = QString::fromStdString(toExpression).trimmed().toStdString();
+
+      if (toStr == "hex" || toStr == "hexadecimal") {
+        resultPrintOpts.base = BASE_HEXADECIMAL;
+      } else if (toStr == "bin" || toStr == "binary") {
+        resultPrintOpts.base = BASE_BINARY;
+      } else if (toStr == "dec" || toStr == "decimal") {
+        resultPrintOpts.base = BASE_DECIMAL;
+        resultPrintOpts.min_exp = EXP_NONE;
+      } else if (toStr == "oct" || toStr == "octal") {
+        resultPrintOpts.base = BASE_OCTAL;
+      } else if (toStr == "roman") {
+        resultPrintOpts.base = BASE_ROMAN_NUMERALS;
+      } else if (toStr == "time") {
+        resultPrintOpts.base = BASE_TIME;
+      } else if (toStr == "unicode") {
+        resultPrintOpts.base = BASE_UNICODE;
+      } else if (toStr == "sci" || toStr == "scientific") {
+        resultPrintOpts.sort_options.minus_last = false;
+        resultPrintOpts.min_exp = EXP_PURE;
+        resultPrintOpts.show_ending_zeroes = true;
+        resultPrintOpts.use_unit_prefixes = false;
+        resultPrintOpts.negative_exponents = true;
+      } else if (toStr == "eng" || toStr == "engineering") {
+        resultPrintOpts.sort_options.minus_last = false;
+        resultPrintOpts.min_exp = EXP_BASE_3;
+        resultPrintOpts.show_ending_zeroes = true;
+        resultPrintOpts.use_unit_prefixes = false;
+        resultPrintOpts.negative_exponents = false;
+      } else if (toStr == "simple") {
+        resultPrintOpts.sort_options.minus_last = true;
+        resultPrintOpts.min_exp = EXP_NONE;
+        resultPrintOpts.show_ending_zeroes = false;
+        resultPrintOpts.use_unit_prefixes = true;
+        resultPrintOpts.negative_exponents = false;
+      } else if (toStr == "utc" || toStr == "gmt") {
+        resultPrintOpts.time_zone = TIME_ZONE_UTC;
+      } else {
+        // Try to look up as timezone offset or IANA timezone name
+        if (auto offset = getTimezoneOffset(toStr)) {
+          resultPrintOpts.time_zone = TIME_ZONE_CUSTOM;
+          resultPrintOpts.custom_time_zone = *offset;
+        } else {
+          // Not a display format or timezone - it's a unit conversion, restore the full expression
+          calcExpression = expression;
+        }
+      }
+    }
+  }
+
+  return {calcExpression, resultPrintOpts};
+}
+
+std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question,
+                                                                           const ComputeOptions &opts) {
+
+  const auto fail = [](auto &&reason) { return std::unexpected(CalculatorError(reason)); };
+
+  if (opts.mode == ComputeMode::MixedSearch) {
+    const auto isAllowedLeadingChar = [](QChar c) {
+      return c == '-' || c == '(' || c == ')' || c.isLetterOrNumber() ||
+             c.category() == QChar::Symbol_Currency;
+    };
+    bool const isMixedSearchComputable =
+        question.size() > 1 && isAllowedLeadingChar(question.at(0)) && isExpression(question.toStdString());
+
+    if (!isMixedSearchComputable) { return fail("Not a valid expression"); }
+  }
+
   QString expression = preprocessQuestion(question);
   expression = stripTrailingOperators(expression);
   if (expression.isEmpty()) return std::unexpected(CalculatorError("Empty expression"));
@@ -38,9 +169,12 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
   auto stdExpr = expression.toStdString();
   std::string const localizedExpression = CALCULATOR->unlocalizeExpression(stdExpr);
 
-  MathStructure in = CALCULATOR->parse(localizedExpression);
+  // Handle "to" expressions and get the calculation expression + display options
+  auto [calcExpression, resultPrintOpts] = handleToExpression(localizedExpression);
+
+  MathStructure in = CALCULATOR->parse(calcExpression);
   MathStructure result;
-  CALCULATOR->calculate(&result, localizedExpression, 10000, m_evalOpts, &in);
+  CALCULATOR->calculate(&result, calcExpression, 10000, m_evalOpts, &in);
 
   if (CALCULATOR->aborted()) return std::unexpected(CalculatorError("Computation aborted"));
 
@@ -54,14 +188,16 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
 
   if (error) return std::unexpected(CalculatorError("Calculation error"));
 
+  // Format question with original print options (no base conversion)
   in.format(m_printOpts);
 
   PrintOptions parsedPrintOpts = m_printOpts;
   parsedPrintOpts.excessive_parenthesis = true;
   std::string parsedExprText = in.print(parsedPrintOpts);
 
-  result.format(m_printOpts);
-  std::string res = result.print(m_printOpts);
+  // Format result with potentially modified print options (with base conversion)
+  result.format(resultPrintOpts);
+  std::string res = result.print(resultPrintOpts);
 
   CalculatorResult calcRes;
   if (result.containsType(STRUCT_UNIT)) {
@@ -99,6 +235,8 @@ bool QalculateBackend::isExpression(const std::string &query) const {
   auto stdExpr = expression.toStdString();
   std::string const localized = CALCULATOR->unlocalizeExpression(stdExpr);
   MathStructure parsed = CALCULATOR->parse(localized, m_evalOpts.parse_options);
+
+  CALCULATOR->clearMessages();
 
   bool hasDigit = std::ranges::any_of(stdExpr, [](unsigned char c) { return std::isdigit(c); });
   if (hasDigit && parsed.containsType(STRUCT_UNIT) && parsed.containsType(STRUCT_NUMBER)) return true;
@@ -149,8 +287,9 @@ QString QalculateBackend::preprocessQuestion(const QString &query) {
   return q;
 }
 
-QFuture<QalculateBackend::ComputeResult> QalculateBackend::asyncCompute(const QString &question) {
-  return QtConcurrent::run([this, question]() -> ComputeResult { return compute(question); });
+QFuture<QalculateBackend::ComputeResult> QalculateBackend::asyncCompute(const QString &question,
+                                                                        const ComputeOptions &opts) {
+  return QtConcurrent::run([this, question, opts]() -> ComputeResult { return compute(question, opts); });
 }
 
 void QalculateBackend::abort() { CALCULATOR->abort(); }

@@ -4,7 +4,7 @@ self: {
   lib,
   ...
 }: let
-  cfg = config.services.vicinae;
+  cfg = config.programs.vicinae;
 
   inherit (pkgs.stdenv.hostPlatform) system;
   vicinaePkg = self.packages.${system}.default;
@@ -12,7 +12,31 @@ self: {
   jsonFormat = pkgs.formats.json {};
   tomlFormat = pkgs.formats.toml {};
 in {
-  options.services.vicinae = {
+  disabledModules = ["programs/vicinae"];
+
+  # backwards compatibility: services.vicinae -> programs.vicinae
+  imports = lib.flatten [
+    (
+      map (x: lib.mkRenamedOptionModule ["services" "vicinae" x] ["programs" "vicinae" x]) [
+        "enable"
+        "package"
+        "enableFirefoxIntegration"
+        "extensions"
+        "themes"
+        "settingOverrides"
+        "settings"
+      ]
+    )
+    (
+      map (x: lib.mkRenamedOptionModule ["services" "vicinae" "systemd" x] ["programs" "vicinae" "systemd" x]) [
+        "enable"
+        "autoStart"
+        "target"
+      ]
+    )
+  ];
+
+  options.programs.vicinae = {
     enable = lib.mkEnableOption "vicinae launcher daemon";
 
     package = lib.mkOption {
@@ -20,6 +44,13 @@ in {
       default = vicinaePkg;
       defaultText = lib.literalExpression "vicinae";
       description = "The vicinae package to use";
+    };
+
+    enableFirefoxIntegration = lib.mkOption {
+      default = true;
+      description = ''
+        Whether to install the messaging host so that the firefox extension <https://addons.mozilla.org/en-US/firefox/addon/vicinae/> works.
+      '';
     };
 
     systemd = {
@@ -216,6 +247,18 @@ in {
           )
           // themeFiles;
       };
+
+      programs.firefox.nativeMessagingHosts = lib.mkIf (cfg.enableFirefoxIntegration && cfg.package != null) [
+        (pkgs.writeTextDir "lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json" (
+          builtins.toJSON {
+            name = "com.vicinae.vicinae";
+            description = "Vicinae Native Messaging Host";
+            path = "${cfg.package}/libexec/vicinae/vicinae-browser-link";
+            type = "stdio";
+            allowed_extensions = ["firefox@vicinae.com"];
+          }
+        ))
+      ];
 
       systemd.user.services.vicinae = lib.mkIf (cfg.systemd.enable) {
         Unit = {

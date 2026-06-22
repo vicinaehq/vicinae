@@ -13,6 +13,32 @@ SelectableDelegate {
     required property bool itemIsActive
     property var itemAccessory: []
     property string itemAccessoryColor: ""
+    property string filePath: ""
+    property string fileUrl: ""
+
+    readonly property bool _isDraggable: root.filePath !== ""
+
+    Component.onCompleted: {
+        if (_isDraggable) {
+            //console.debug("[DRAG] ListItemDelegate created: filePath=" + root.filePath + " fileUrl=" + root.fileUrl);
+        }
+    }
+
+    Drag.dragType: root._isDraggable ? Drag.Automatic : Drag.None
+    Drag.active: root._isDraggable ? dragHandler.active : false
+    Drag.mimeData: root._isDraggable ? ({
+            "text/uri-list": root.fileUrl,
+            "text/plain": root.filePath
+        }) : ({})
+    Drag.supportedActions: Qt.CopyAction
+
+    DragHandler {
+        id: dragHandler
+        enabled: root._isDraggable
+        onActiveChanged: {
+            //console.debug("[DRAG] DragHandler ACTIVATED! filePath=" + root.filePath);
+        }
+    }
 
     RowLayout {
         anchors.fill: parent

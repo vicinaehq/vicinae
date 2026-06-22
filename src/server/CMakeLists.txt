@@ -608,6 +608,10 @@ if (APPLE)
 		src/services/global-shortcuts/macos-global-shortcut-backend.cpp
 		src/services/files-service/macos/spotlight-file-indexer.hpp
 		src/services/files-service/macos/spotlight-file-indexer.mm
+		src/services/tray/macos/tray-service-macos.hpp
+		src/services/tray/macos/tray-service-macos.mm
+		src/services/paste/macos-paste-service.hpp
+		src/services/paste/macos-paste-service.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -616,6 +620,8 @@ if (APPLE)
 		src/services/app-runtime/macos/mac-app-runtime.mm
 		src/root-search/macos-settings/macos-settings-root-provider.mm
 		src/services/files-service/macos/spotlight-file-indexer.mm
+		src/services/tray/macos/tray-service-macos.mm
+		src/services/paste/macos-paste-service.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
@@ -631,6 +637,11 @@ list(APPEND SRCS
 )
 
 list(APPEND SRCS
+	src/services/tray/tray-service.hpp
+	src/services/tray/tray-service.cpp
+)
+
+list(APPEND SRCS
 	src/services/global-shortcuts/abstract-global-shortcut-backend.hpp
 	src/services/global-shortcuts/dummy-global-shortcut-backend.hpp
 	src/services/global-shortcuts/global-shortcut-backend-factory.hpp
@@ -639,14 +650,11 @@ list(APPEND SRCS
 	src/services/global-shortcuts/global-shortcut-service.cpp
 )
 
-if (LIBQALCULATE_BACKEND)
-	list(APPEND LIBS qalculate)
-	add_compile_definitions(HAS_QALCULATE=1)
-	list(APPEND SRCS
-		src/services/calculator-service/qalculate/qalculate-backend.hpp
-		src/services/calculator-service/qalculate/qalculate-backend.cpp
-	)
-endif()
+list(APPEND LIBS qalculate)
+list(APPEND SRCS
+	src/services/calculator-service/qalculate/qalculate-backend.hpp
+	src/services/calculator-service/qalculate/qalculate-backend.cpp
+)
 
 if (TYPESCRIPT_EXTENSIONS)
 	list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources.qrc)
@@ -703,6 +711,8 @@ if (UNIX AND NOT APPLE)
 	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
 	wayland_generate_protocol("keyboard-shortcuts-inhibit-unstable-v1")
+	wayland_generate_protocol("wlr-layer-shell-unstable-v1")
+	wayland_generate_protocol("xdg-shell")
 	wayland_generate_protocol("vicinae-hotkey-v1")
 
 	list(APPEND LIBS xkbcommon)
@@ -836,6 +846,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/AlertDialog.qml
 	src/qml/qml/FormView.qml
 	src/qml/qml/FormField.qml
+	src/qml/qml/FormInputBackground.qml
 	src/qml/qml/FormTextInput.qml
 	src/qml/qml/FormTextArea.qml
 	src/qml/qml/FormCheckbox.qml
@@ -937,6 +948,8 @@ set(VICINAE_QML_SOURCES
 	src/qml/markdown/text-selection-controller.hpp
 	src/qml/background-effect-attached.hpp
 	src/qml/background-effect-attached.cpp
+	src/qml/popup-placement-attached.hpp
+	src/qml/popup-placement-attached.cpp
 	src/qml/shortcut-inhibitor-attached.hpp
 	src/qml/shortcut-inhibitor-attached.cpp
 )
@@ -976,7 +989,7 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices")
 endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 
@@ -1010,6 +1023,11 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/internal/keyboard/keyboard.cpp
 		src/internal/keyboard/keybind-manager.cpp
 	)
+	target_sources(${TEST_TARGET} PRIVATE
+		src/services/calculator-service/qalculate/qalculate-backend.cpp
+		tests/calculator/qalculate-backend.cpp
+	)
+	target_link_libraries(${TEST_TARGET} PRIVATE qalculate Qt6::Concurrent)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()

@@ -1,24 +1,94 @@
-#include "spotlight-file-indexer.hpp"
-#include "fuzzy/fzf.hpp"
 #include <CoreServices/CoreServices.h>
+#include <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #include <QtConcurrent/QtConcurrentRun>
 #include <algorithm>
 #include <climits>
+#include <filesystem>
+#include <initializer_list>
+#include <optional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <vector>
+#include <common/file-category.hpp>
+#include "fuzzy/fzf.hpp"
+#include "spotlight-file-indexer.hpp"
 
 namespace {
 
 constexpr int MIN_CANDIDATE_LIMIT = 250;
 constexpr int CANDIDATE_LIMIT_MULTIPLIER = 20;
 
-int candidateLimitFor(const Pagination &pagination) {
-  int const total = std::max(0, pagination.offset) + std::max(0, pagination.limit);
+int candidateLimitFor(int limit) {
+  if (limit <= 0) { return 0; }
+  return std::max(MIN_CANDIDATE_LIMIT, limit * CANDIDATE_LIMIT_MULTIPLIER);
+}
 
-  if (total == 0) { return 0; }
+vicinae::FileCategory categoryForPath(const std::filesystem::path &path) {
+  if (vicinae::normalizedExtension(path) == "app") { return vicinae::FileCategory::Application; }
 
-  return std::max(MIN_CANDIDATE_LIMIT, total * CANDIDATE_LIMIT_MULTIPLIER);
+  std::error_code ec;
+  return vicinae::fileCategoryFor(path, std::filesystem::is_directory(path, ec));
+}
+
+std::string anyOf(std::initializer_list<std::string_view> predicates) {
+  auto predicate = predicates | std::views::join_with(std::string_view{" || "}) | std::ranges::to<std::string>();
+
+  return "(" + predicate + ")";
+}
+
+std::optional<std::string> categoryPredicate(vicinae::FileCategory category) {
+  switch (category) {
+  case vicinae::FileCategory::Directory:
+    return R"(kMDItemContentTypeTree == "public.folder")";
+  case vicinae::FileCategory::Image:
+    return R"(kMDItemContentTypeTree == "public.image")";
+  case vicinae::FileCategory::Video:
+    return R"(kMDItemContentTypeTree == "public.movie")";
+  case vicinae::FileCategory::Audio:
+    return R"(kMDItemContentTypeTree == "public.audio")";
+  case vicinae::FileCategory::Document:
+    return anyOf({R"(kMDItemContentTypeTree == "public.text")", R"(kMDItemContentTypeTree == "public.rtf")",
+                  R"(kMDItemContentTypeTree == "com.adobe.pdf")",
+                  R"(kMDItemContentTypeTree == "public.presentation")",
+                  R"(kMDItemContentTypeTree == "public.spreadsheet")",
+                  R"(kMDItemContentTypeTree == "public.comma-separated-values-text")",
+                  R"(kMDItemContentTypeTree == "com.microsoft.word.doc")",
+                  R"(kMDItemContentTypeTree == "com.microsoft.excel.xls")",
+                  R"(kMDItemContentTypeTree == "com.microsoft.powerpoint.ppt")",
+                  R"(kMDItemContentTypeTree == "org.openxmlformats.wordprocessingml.document")",
+                  R"(kMDItemContentTypeTree == "org.openxmlformats.spreadsheetml.sheet")",
+                  R"(kMDItemContentTypeTree == "org.openxmlformats.presentationml.presentation")",
+                  R"(kMDItemContentTypeTree == "org.oasis-open.opendocument.text")",
+                  R"(kMDItemContentTypeTree == "org.oasis-open.opendocument.spreadsheet")",
+                  R"(kMDItemContentTypeTree == "org.oasis-open.opendocument.presentation")",
+                  R"(kMDItemContentTypeTree == "com.apple.iwork.pages.pages")",
+                  R"(kMDItemContentTypeTree == "com.apple.iwork.numbers.numbers")",
+                  R"(kMDItemContentTypeTree == "com.apple.iwork.keynote.key")",
+                  R"(kMDItemContentTypeTree == "org.idpf.epub-container")"});
+  case vicinae::FileCategory::Archive:
+    return R"(kMDItemContentTypeTree == "public.archive")";
+  case vicinae::FileCategory::Application:
+    return anyOf({R"(kMDItemContentTypeTree == "com.apple.application")",
+                  R"(kMDItemContentTypeTree == "com.apple.application-bundle")"});
+  case vicinae::FileCategory::Other:
+    return std::nullopt;
+  }
+
+  return std::nullopt;
+}
+
+std::optional<std::string> mimeTypeForItem(MDItemRef item) {
+  auto contentTypeRef = (CFStringRef)MDItemCopyAttribute(item, kMDItemContentType);
+  if (!contentTypeRef) return std::nullopt;
+
+  NSString *identifier = (__bridge_transfer NSString *)contentTypeRef;
+  UTType *type = [UTType typeWithIdentifier:identifier];
+  NSString *mimeType = type.preferredMIMEType;
+
+  if (!mimeType) return std::nullopt;
+
+  return std::string{mimeType.UTF8String};
 }
 
 /**
@@ -60,14 +130,24 @@ std::string buildPredicate(std::string_view query) {
   return predicate;
 }
 
-std::vector<IndexerFileResult> runQuery(const std::string &query,
-                                        const AbstractFileIndexer::QueryParams &params) {
+std::string buildPredicate(std::string_view query, const IndexerQueryParams &params) {
+  std::string predicate = buildPredicate(query);
+
+  if (predicate.empty() || !params.category) { return predicate; }
+
+  auto categoryFilter = categoryPredicate(*params.category);
+  if (!categoryFilter) { return predicate; }
+
+  return "(" + predicate + ") && (" + *categoryFilter + ")";
+}
+
+std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQueryParams &params) {
   std::vector<IndexerFileResult> results;
-  int const candidateLimit = candidateLimitFor(params.pagination);
+  int const candidateLimit = candidateLimitFor(params.limit);
 
   if (candidateLimit == 0) { return results; }
 
-  std::string const predicate = buildPredicate(query);
+  std::string const predicate = buildPredicate(query, params);
 
   if (predicate.empty()) { return results; }
 
@@ -91,6 +171,8 @@ std::vector<IndexerFileResult> runQuery(const std::string &query,
   struct Scored {
     std::filesystem::path path;
     int score = 0;
+    vicinae::FileCategory category = vicinae::FileCategory::Other;
+    std::optional<std::string> mimeType;
   };
 
   CFIndex const count = MDQueryGetResultCount(mdQuery);
@@ -112,9 +194,21 @@ std::vector<IndexerFileResult> runQuery(const std::string &query,
 
     if (CFStringGetCString(pathRef, buf, sizeof(buf), kCFStringEncodingUTF8)) {
       std::filesystem::path path(buf);
+      auto category = categoryForPath(path);
+
+      if (params.category && *params.category != category) {
+        CFRelease(pathRef);
+        continue;
+      }
+
       int const fuzzyScore = matcher.fuzzy_match_v2_score_query(path.filename().string(), query);
 
-      if (fuzzyScore > 0) { scored.emplace_back(Scored{.path = std::move(path), .score = fuzzyScore}); }
+      if (fuzzyScore > 0) {
+        scored.emplace_back(Scored{.path = std::move(path),
+                                   .score = fuzzyScore,
+                                   .category = category,
+                                   .mimeType = mimeTypeForItem(item)});
+      }
     }
 
     CFRelease(pathRef);
@@ -127,16 +221,16 @@ std::vector<IndexerFileResult> runQuery(const std::string &query,
     return a.path < b.path;
   });
 
-  int const offset = std::max(0, params.pagination.offset);
-  int const limit = std::max(0, params.pagination.limit);
-  size_t const begin = std::min(static_cast<size_t>(offset), scored.size());
-  size_t const end = std::min(begin + static_cast<size_t>(limit), scored.size());
+  int const limit = std::max(0, params.limit);
+  size_t const end = std::min(static_cast<size_t>(limit), scored.size());
 
-  results.reserve(end - begin);
+  results.reserve(end);
 
-  for (size_t i = begin; i < end; ++i) {
-    results.emplace_back(
-        IndexerFileResult{.path = std::move(scored[i].path), .rank = static_cast<double>(scored[i].score)});
+  for (size_t i = 0; i < end; ++i) {
+    results.emplace_back(IndexerFileResult{.path = std::move(scored[i].path),
+                                           .rank = static_cast<double>(scored[i].score),
+                                           .category = scored[i].category,
+                                           .mimeType = std::move(scored[i].mimeType)});
   }
 
   return results;
@@ -145,7 +239,7 @@ std::vector<IndexerFileResult> runQuery(const std::string &query,
 } // namespace
 
 QFuture<std::vector<IndexerFileResult>> SpotlightFileIndexer::queryAsync(std::string_view query,
-                                                                         const QueryParams &params) {
+                                                                         const IndexerQueryParams &params) {
   return QtConcurrent::run([params, q = std::string(query)]() {
     @autoreleasepool {
       return runQuery(q, params);

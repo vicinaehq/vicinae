@@ -25,6 +25,7 @@ public:
   std::optional<QString> workspace() const override { return m_workspace; }
   std::optional<AbstractWindowManager::WindowBounds> bounds() const override { return m_bounds; }
   bool canClose() const override { return m_canClose; }
+  bool sticky() const override { return m_sticky; }
 
   /**
    * Get the underlying X11 window ID
@@ -67,6 +68,8 @@ private:
    */
   bool queryCanClose(xcb_connection_t *connection);
 
+  bool querySticky(xcb_connection_t *connection);
+
   xcb_window_t m_window;
   QString m_id;
   QString m_title;
@@ -75,4 +78,5 @@ private:
   std::optional<QString> m_workspace;
   std::optional<AbstractWindowManager::WindowBounds> m_bounds;
   bool m_canClose;
+  bool m_sticky = false;
 };

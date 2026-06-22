@@ -11,6 +11,7 @@ ColumnLayout {
     property string info: ""
     property bool topAlignLabel: false
     property real topAlignLabelTopPadding: 8
+    property bool filled: true
     default property alias contentData: contentSlot.data
 
     RowLayout {
@@ -34,13 +35,18 @@ ColumnLayout {
             Layout.preferredWidth: 5
             Layout.fillWidth: true
             implicitHeight: children.length > 0 ? children[0].implicitHeight : 0
-            onChildrenChanged: _bindChildrenWidth()
-            onWidthChanged: _bindChildrenWidth()
-            function _bindChildrenWidth() {
-                for (var i = 0; i < children.length; i++)
+            onChildrenChanged: _applyChildProps()
+            onWidthChanged: _applyChildProps()
+            function _applyChildProps() {
+                for (var i = 0; i < children.length; i++) {
                     children[i].width = Qt.binding(function () {
                         return contentSlot.width;
                     });
+                    if (children[i].filled !== undefined)
+                        children[i].filled = Qt.binding(function () {
+                            return root.filled;
+                        });
+                }
             }
         }
 

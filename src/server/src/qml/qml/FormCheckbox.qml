@@ -11,6 +11,7 @@ Item {
     property string label: ""
     property bool readOnly: false
     property bool hasError: false
+    property bool filled: false
 
     signal toggled
 
@@ -28,6 +29,16 @@ Item {
         anchors.fill: parent
         cursorShape: root.readOnly ? Qt.ArrowCursor : Qt.PointingHandCursor
         onClicked: root.toggle()
+    }
+
+    FormInputBackground {
+        width: 16
+        height: 16
+        radius: 4
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        filled: root.filled && !root.checked
+        opacity: root.readOnly ? 0.5 : 1.0
     }
 
     RowLayout {

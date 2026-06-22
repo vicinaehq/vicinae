@@ -4,8 +4,10 @@ project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(FILE_INDEXER_BIN vicinae-file-indexer)
+set(FILE_INDEXER_CORE ${FILE_INDEXER_BIN}-core)
 
 find_package(glaze)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 include("Figura")
 
@@ -19,35 +21,73 @@ figura_compile(
 	OUTPUT file-indexer-server.hpp
 )
 
-add_executable(${FILE_INDEXER_BIN}
-	src/main.cpp
-	src/indexer-service.cpp
+
+set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	set(PLATFORM_SRCS
+		src/important-dir-watcher-linux.cpp
+		src/background-thread-linux.cpp
+	)
+endif()
+
+# core library used by the file indexer binary and the tests
+add_library(${FILE_INDEXER_CORE} STATIC
 	src/file-indexer.cpp
 	src/file-indexer-db.cpp
+	src/file-indexer-query-engine.cpp
+	src/file-indexer-query-policy.cpp
+	src/query-pool.cpp
 	src/db-writer.cpp
-	src/writer-worker.cpp
 	src/scan-dispatcher.cpp
 	src/indexer-scanner.cpp
 	src/incremental-scanner.cpp
-	src/watcher-scanner.cpp
 	src/filesystem-walker.cpp
-	src/relevancy-scorer.cpp
-	src/home-directory-watcher.cpp
-	${SRCS}
+	src/entry-filter.cpp
+	src/io-pacer.cpp
+	src/file-system-watcher.cpp
+	${PLATFORM_SRCS}
+	${VENDOR_DIR}/fuzzy-trigram/register.c
+	${VENDOR_DIR}/spellfix/register.c
 )
-target_include_directories(${FILE_INDEXER_BIN} PRIVATE
-	${CMAKE_CURRENT_SOURCE_DIR}/include
-	${GENOUT}
-	${CMAKE_SOURCE_DIR}/vendor
+
+target_include_directories(${FILE_INDEXER_CORE} PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}/src
+	${VENDOR_DIR}
+	${VENDOR_DIR}/sqlcipher
 )
-target_compile_features(${FILE_INDEXER_BIN} PRIVATE cxx_std_23)
-target_link_libraries(${FILE_INDEXER_BIN} PRIVATE
-	glaze::glaze
+
+target_compile_features(${FILE_INDEXER_CORE} PUBLIC cxx_std_23)
+
+target_link_libraries(${FILE_INDEXER_CORE} PUBLIC
+	Qt6::Core
 	sqlcipher
 	vicinae::fuzzy
 	vicinae::xdgpp
+	vicinae::common
+)
+
+add_executable(${FILE_INDEXER_BIN}
+	src/main.cpp
+	src/indexer-service.cpp
+	${SRCS}
+)
+target_include_directories(${FILE_INDEXER_BIN} PRIVATE ${GENOUT})
+target_link_libraries(${FILE_INDEXER_BIN} PRIVATE
+	${FILE_INDEXER_CORE}
+	glaze::glaze
 )
 
 install(TARGETS ${FILE_INDEXER_BIN}
 	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 )
+
+if (BUILD_TESTS)
+	set(TEST_TARGET ${FILE_INDEXER_BIN}-tests)
+	find_package(Catch2 3 REQUIRED)
+	add_executable(${TEST_TARGET}
+		tests/main.cpp
+		tests/query-quality.cpp
+	)
+	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain ${FILE_INDEXER_CORE})
+endif()

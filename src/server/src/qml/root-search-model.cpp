@@ -1,5 +1,6 @@
 #include "root-search-model.hpp"
 #include "config/config.hpp"
+#include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "ui/action-pannel/action-panel-view.hpp"
 #include "ui/views/base-view.hpp"
 #include "service-registry.hpp"
@@ -228,19 +229,13 @@ void RootSearchModel::startCalculator() {
 
   auto expression = QString::fromStdString(m_query);
   if (expression.startsWith("=") && expression.size() > 1) {
-    m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(expression.mid(1)));
+    m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(
+        expression.mid(1), {.mode = AbstractCalculatorBackend::ComputeMode::Full}));
     return;
   }
 
-  const auto isAllowedLeadingChar = [](QChar c) {
-    return c == '-' || c == '(' || c == ')' || c.isLetterOrNumber() || c.category() == QChar::Symbol_Currency;
-  };
-
-  bool const isComputable = expression.size() > 1 && isAllowedLeadingChar(expression.at(0)) &&
-                            m_calculator->backend()->isExpression(m_query);
-  if (!isComputable) return;
-
-  m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(expression));
+  m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(
+      expression, {.mode = AbstractCalculatorBackend::ComputeMode::MixedSearch}));
 }
 
 void RootSearchModel::handleCalculatorFinished() {

@@ -5,6 +5,9 @@ ToolTip {
     id: root
     delay: 500
     popupType: Popup.Window
+    // Centered above the hovered item; Qt's native ToolTip placement would
+    // put it at the item's bottom-right corner instead.
+    PopupPlacement.alignment: Qt.AlignHCenter | Qt.AlignTop
 
     contentItem: Text {
         text: root.text

@@ -61,12 +61,18 @@
 #ifdef Q_OS_LINUX
 #include "services/paste/linux-paste-service.hpp"
 #endif
+#ifdef Q_OS_MACOS
+#include "services/paste/macos-paste-service.hpp"
+#endif
 #include "settings-controller/settings-controller.hpp"
+#include "services/tray/tray-service.hpp"
 #include "qml/launcher-window.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
+#include "generated/version.h"
 #include <filesystem>
 #include <QGuiApplication>
+#include <QPointer>
 #include <QQuickWindow>
 #include <QString>
 #include <qlockfile.h>
@@ -115,6 +121,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QGuiApplication::setApplicationName("vicinae");
   QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
 
+  // macOS defaults to cycling Tab focus between text controls only, skipping form fields whose root
+  // is a plain Item delegating focus inward.
+  QGuiApplication::styleHints()->setTabFocusBehavior(Qt::TabFocusAllControls);
+
 #ifdef Q_OS_MACOS
   macosSetAccessoryActivationPolicy();
 #endif
@@ -144,6 +154,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto snippetServer = std::make_unique<LinuxSnippetServer>(*inputServer);
     auto platformPaste =
         std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*inputServer));
+#elif defined(Q_OS_MACOS)
+    auto snippetServer = std::make_unique<NullSnippetServer>();
+    auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<MacosPasteService>());
 #else
     auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());
@@ -293,6 +306,31 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   commandServer.start(Omnicast::commandSocketPath());
 
+  QObject::connect(
+      ctx.services->fileService()->indexer(), &AbstractFileIndexer::scanStatusChanged,
+      ctx.services->toastService(),
+      [toasts = ctx.services->toastService(),
+       toast = QPointer<Toast>()](const AbstractFileIndexer::ScanStatus &status) mutable {
+        auto *current = toasts->currentToast();
+
+        if (status.isTerminal()) {
+          if (toast && toast == current) toast->close();
+          return;
+        }
+
+        if (current && current != toast) return;
+
+        QString const title =
+            QString("Indexing %1").arg(QString::fromStdString(compressPath(status.entrypoint).string()));
+        QString const message =
+            status.processedFileCount > 0
+                ? QString("%1 files").arg(formatCount(static_cast<int>(status.processedFileCount)))
+                : QString();
+
+        toasts->dynamic(title, message);
+        toast = toasts->currentToast();
+      });
+
   ExtensionIntervalScheduler intervalScheduler(ctx);
   intervalScheduler.rebuild();
 
@@ -402,6 +440,21 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   if (!builtinFont.isEmpty()) QGuiApplication::setFont(QFont(builtinFont));
 
   configChanged(cfgService->value(), {});
+
+  auto tray = createTrayService();
+  if (tray) {
+    tray->setVersion(QStringLiteral(VICINAE_GIT_TAG " [" VICINAE_GIT_COMMIT_HASH "]"));
+    QObject::connect(tray.get(), &TrayService::toggleRequested, [&ctx]() { ctx.navigation->toggleWindow(); });
+    QObject::connect(tray.get(), &TrayService::openSettingsRequested, [&ctx](const QString &tab) {
+      if (tab.isEmpty()) {
+        ctx.settings->openWindow();
+      } else {
+        ctx.settings->openTab(tab);
+      }
+    });
+    QObject::connect(tray.get(), &TrayService::quitRequested, []() { QCoreApplication::quit(); });
+    tray->show();
+  }
 
   LauncherWindow const qmlWindow(ctx);
 

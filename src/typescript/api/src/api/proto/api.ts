@@ -89,6 +89,16 @@ export type ConfirmAlertActionStyle = "Default" | "Destructive" | "Cancel";
 
 export type NotificationUrgency = "Low" | "Normal" | "High";
 
+export type FileSearchCategory =
+	| "Other"
+	| "Directory"
+	| "Image"
+	| "Video"
+	| "Audio"
+	| "Document"
+	| "Archive"
+	| "Application";
+
 export type Application = {
 	id: string;
 	name: string;
@@ -199,7 +209,17 @@ export type ClipboardOptions = {
 
 export type FileInfo = {
 	path: string;
-	mimeType: string;
+	category: FileSearchCategory;
+	mimeType?: string;
+};
+
+export type FileSearchFilters = {
+	category?: FileSearchCategory;
+};
+
+export type FileSearchOptions = {
+	filters: FileSearchFilters;
+	limit: number;
 };
 
 export type UpdateCommandMetadataPayload = {
@@ -439,8 +459,8 @@ class StorageService {
 class FileSearchService {
 	constructor(private readonly transport: RpcTransport) {}
 
-	search(q: string): Promise<FileInfo[]> {
-		return this.transport.request("FileSearch/search", { q });
+	search(q: string, opts: FileSearchOptions): Promise<FileInfo[]> {
+		return this.transport.request("FileSearch/search", { q, opts });
 	}
 }
 

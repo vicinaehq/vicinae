@@ -34,3 +34,6 @@ heaptrack*
 /tmp
 
 /internal-docs
+
+
+.worktrees

@@ -63,16 +63,16 @@ class FileExtension : public BuiltinCommandRepository {
 public:
   void initialized(const QJsonObject &preferences) const override {
 #ifdef Q_OS_LINUX
-    auto files = ServiceRegistry::instance()->fileService();
-    if (preferences.value("autoIndexing").toBool()) { files->indexer()->start(); }
+    ServiceRegistry::instance()->fileService()->preferenceValuesChanged(preferences);
 #endif
   }
 
   FileExtension() {
     registerCommand<SearchFilesCommand>();
-#ifdef Q_OS_LINUX
-    registerCommand<RebuildFileIndexCommand>();
-#endif
+
+    // XXX - we don't really need this anymore, as the indexer now executes full sweeps at a given interval
+    // This behavior can be easily replicated by simply removing the `.cache/vicinae/file-indexer` directory.
+    // registerCommand<RebuildFileIndexCommand>();
   }
 
   std::vector<Preference> preferences() const override {
@@ -85,22 +85,17 @@ public:
         "stopped entirely and file search becomes unavailable until it is turned back on.");
     indexing.setDefaultValue(true);
 
-    auto paths = Preference::makeText("paths");
+    auto paths = Preference::directories("indexingPaths");
     paths.setTitle("Search paths");
-    paths.setDescription("Semicolon-separated list of paths that vicinae will search");
-    paths.setDefaultValue(homeDir().c_str());
+    paths.setDescription("Directories that Vicinae will search");
+    paths.setDefaultValue(QJsonArray{homeDir().c_str()});
 
-    auto excludedPaths = Preference::makeText("excludedPaths");
+    auto excludedPaths = Preference::directories("excludedIndexingPaths");
     excludedPaths.setTitle("Excluded search paths");
-    excludedPaths.setDescription("Semicolon-separated list of paths to exclude from file indexing");
-    excludedPaths.setDefaultValue("");
+    excludedPaths.setDescription("Directories to exclude from file indexing");
+    excludedPaths.setDefaultValue(QJsonArray{});
 
-    auto watcherPaths = Preference::makeText("watcherPaths");
-    watcherPaths.setTitle("Watcher paths");
-    watcherPaths.setDescription("Semicolon-separated list of paths watched by experimental watcher");
-    watcherPaths.setDefaultValue("");
-
-    return {indexing, paths, excludedPaths, watcherPaths};
+    return {indexing, paths, excludedPaths};
 #else
     return {};
 #endif

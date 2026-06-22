@@ -53,6 +53,14 @@ Rectangle {
             horizontalAlignment: TextInput.AlignHCenter
             verticalAlignment: TextInput.AlignVCenter
             clip: true
+            selectionColor: Theme.textSelectionBg
+            selectedTextColor: Theme.textSelectionFg
+
+            Keys.onEscapePressed: event => {
+                event.accepted = true;
+                root.committed(text);
+                root._editing = false;
+            }
 
             Component.onCompleted: {
                 forceActiveFocus();

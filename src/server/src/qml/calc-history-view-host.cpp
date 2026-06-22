@@ -138,14 +138,15 @@ void CalcHistoryViewHost::startCalculator() {
 
   if (!m_calc->backend() || m_query.isEmpty()) return;
 
+  using Calc = AbstractCalculatorBackend;
+
   if (m_query.startsWith('=') && m_query.size() > 1) {
-    m_calcWatcher.setFuture(m_calc->backend()->asyncCompute(m_query.mid(1)));
+    m_calcWatcher.setFuture(
+        m_calc->backend()->asyncCompute(m_query.mid(1), {.mode = Calc::ComputeMode::Full}));
     return;
   }
 
-  if (!m_calc->backend()->isExpression(m_query.toStdString())) return;
-
-  m_calcWatcher.setFuture(m_calc->backend()->asyncCompute(m_query));
+  m_calcWatcher.setFuture(m_calc->backend()->asyncCompute(m_query, {.mode = Calc::ComputeMode::MixedSearch}));
 }
 
 void CalcHistoryViewHost::handleCalculatorFinished() {

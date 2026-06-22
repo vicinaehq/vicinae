@@ -59,7 +59,15 @@ public:
   void failure(const QString &title, const QString &message = "") {
     setToast(title, ToastStyle::Danger, message);
   }
-  void dynamic(const QString &title) { setToast(title, ToastStyle::Dynamic); }
+  void dynamic(const QString &title, const QString &message = "") {
+    if (auto *current = currentToast(); current && current->priority() == ToastStyle::Dynamic) {
+      current->setTitle(title);
+      current->setMessage(message);
+      return;
+    }
+
+    setToast(title, ToastStyle::Dynamic, message);
+  }
 
   void clear() {
     m_queue.clear();
