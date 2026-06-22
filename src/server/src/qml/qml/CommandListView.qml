@@ -28,8 +28,7 @@ GenericListView {
         required property string filePath
         required property string fileUrl
 
-        Component.onCompleted: {
-        }
+        Component.onCompleted: {}
 
         sourceComponent: isSection ? sectionComponent : itemComponent
 

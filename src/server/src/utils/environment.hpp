@@ -1,6 +1,5 @@
 #pragma once
 #include "xdgpp/env/env.hpp"
-#include <LayerShellQt/shell.h>
 #include <QString>
 #include <QGuiApplication>
 #include <QProcess>
@@ -58,8 +57,11 @@ inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop()
 inline bool isLayerShellSupported() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
-#endif
+#elif Q_OS_LINUX
   return Wayland::Globals::layerShell() && !isCosmicDesktop();
+#else
+  return false;
+#endif
 }
 
 inline bool isHudDisabled() { return !isLayerShellSupported(); }
