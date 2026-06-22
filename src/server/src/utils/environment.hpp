@@ -57,7 +57,7 @@ inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop()
 inline bool isLayerShellSupported() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
-#elif Q_OS_LINUX
+#elifdef Q_OS_LINUX
   return Wayland::Globals::layerShell() && !isCosmicDesktop();
 #else
   return false;
