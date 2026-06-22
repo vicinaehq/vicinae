@@ -634,6 +634,8 @@ if (APPLE)
 		src/services/window-manager/macos/macos-window-manager.mm
 		src/services/wallpaper/macos/mac-wallpaper-backend.hpp
 		src/services/wallpaper/macos/mac-wallpaper-backend.mm
+		src/services/snippet/macos-snippet-server.hpp
+		src/services/snippet/macos-snippet-server.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -649,6 +651,7 @@ if (APPLE)
 		src/services/power-manager/macos/macos-power-manager.mm
 		src/services/window-manager/macos/macos-window.mm
 		src/services/window-manager/macos/macos-window-manager.mm
+		src/services/snippet/macos-snippet-server.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
