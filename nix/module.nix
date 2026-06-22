@@ -4,7 +4,7 @@ self: {
   lib,
   ...
 }: let
-  cfg = config.services.vicinae;
+  cfg = config.programs.vicinae;
 
   inherit (pkgs.stdenv.hostPlatform) system;
   vicinaePkg = self.packages.${system}.default;
@@ -12,7 +12,31 @@ self: {
   jsonFormat = pkgs.formats.json {};
   tomlFormat = pkgs.formats.toml {};
 in {
-  options.services.vicinae = {
+  disabledModules = ["programs/vicinae"];
+
+  # backwards compatibility: services.vicinae -> programs.vicinae
+  imports = lib.flatten [
+    (
+      map (x: lib.mkRenamedOptionModule ["services" "vicinae" x] ["programs" "vicinae" x]) [
+        "enable"
+        "package"
+        "enableFirefoxIntegration"
+        "extensions"
+        "themes"
+        "settingOverrides"
+        "settings"
+      ]
+    )
+    (
+      map (x: lib.mkRenamedOptionModule ["services" "vicinae" "systemd" x] ["programs" "vicinae" "systemd" x]) [
+        "enable"
+        "autoStart"
+        "target"
+      ]
+    )
+  ];
+
+  options.programs.vicinae = {
     enable = lib.mkEnableOption "vicinae launcher daemon";
 
     package = lib.mkOption {
