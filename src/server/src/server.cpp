@@ -119,6 +119,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QGuiApplication::setApplicationName("vicinae");
   QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
 
+  // macOS defaults to cycling Tab focus between text controls only, skipping form fields whose root
+  // is a plain Item delegating focus inward.
+  QGuiApplication::styleHints()->setTabFocusBehavior(Qt::TabFocusAllControls);
+
 #ifdef Q_OS_MACOS
   macosSetAccessoryActivationPolicy();
 #endif
