@@ -65,6 +65,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   auto mainSection = panel->createSection();
   auto utils = panel->createSection();
+  auto lifecycleSection = panel->createSection();
   auto itemSection = panel->createSection();
   auto appActions = m_app->actions();
 
@@ -110,6 +111,11 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   utils->addAction(copyId);
   utils->addAction(copyLocation);
+
+  if (ctx->services->appRuntime()->isRunning(*m_app)) {
+    lifecycleSection->addAction(new QuitAppAction(m_app));
+    lifecycleSection->addAction(new ForceQuitAppAction(m_app));
+  }
 
   for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
     itemSection->addAction(action);

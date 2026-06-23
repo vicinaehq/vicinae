@@ -161,3 +161,4 @@ public:
 
 void macosSetAccessoryActivationPolicy();
 void macosActivateApp();
+void macosReleaseMenuShortcuts();

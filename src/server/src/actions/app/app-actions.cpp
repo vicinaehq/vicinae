@@ -3,8 +3,10 @@
 #include "service-registry.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include "ui/image/url.hpp"
 
 void OpenInTerminalAction::execute(ApplicationContext *ctx) {
   auto appDb = ctx->services->appDb();
@@ -57,6 +59,39 @@ void OpenRawProgramAction::execute(ApplicationContext *ctx) {
 }
 
 OpenRawProgramAction::OpenRawProgramAction(const std::vector<QString> &args) : m_args(args) {}
+
+QuitAppAction::QuitAppAction(const std::shared_ptr<AbstractApplication> &app)
+    : AbstractAction("Quit Application", BuiltinIcon::XMarkCircle), m_app(app) {
+  setAutoClose();
+  setShortcut(QString("ctrl+q"));
+}
+
+void QuitAppAction::execute(ApplicationContext *ctx) {
+  auto toast = ctx->services->toastService();
+
+  if (!ctx->services->appRuntime()->quit(*m_app)) {
+    toast->failure(QString("Failed to quit %1").arg(m_app->displayName()));
+    return;
+  }
+
+  ctx->navigation->showHud(QString("Quit %1").arg(m_app->displayName()));
+}
+
+ForceQuitAppAction::ForceQuitAppAction(const std::shared_ptr<AbstractApplication> &app)
+    : AbstractAction("Force Quit Application", BuiltinIcon::XMarkCircle), m_app(app) {
+  setAutoClose();
+}
+
+void ForceQuitAppAction::execute(ApplicationContext *ctx) {
+  auto toast = ctx->services->toastService();
+
+  if (!ctx->services->appRuntime()->forceQuit(*m_app)) {
+    toast->failure(QString("Failed to force quit %1").arg(m_app->displayName()));
+    return;
+  }
+
+  ctx->navigation->showHud(QString("Force quit %1").arg(m_app->displayName()));
+}
 
 void OpenInBrowserAction::execute(ApplicationContext *ctx) {
   const auto toast = ctx->services->toastService();

@@ -127,6 +127,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
 #ifdef Q_OS_MACOS
   macosSetAccessoryActivationPolicy();
+  macosReleaseMenuShortcuts();
 #endif
 
   auto m_config = launchOpts.config.empty() ? Omnicast::configDir() / "settings.json"

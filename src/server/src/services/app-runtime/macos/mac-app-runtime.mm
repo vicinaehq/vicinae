@@ -96,6 +96,34 @@ bool MacAppRuntime::activate(const AbstractApplication &app) const {
   }
 }
 
+bool MacAppRuntime::quit(const AbstractApplication &app) const {
+  @autoreleasepool {
+    NSString *bundleId = app.id().toNSString();
+    if (bundleId.length == 0) return false;
+    NSArray<NSRunningApplication *> *matches =
+        [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleId];
+    bool requested = false;
+    for (NSRunningApplication *a in matches) {
+      if ([a terminate]) requested = true;
+    }
+    return requested;
+  }
+}
+
+bool MacAppRuntime::forceQuit(const AbstractApplication &app) const {
+  @autoreleasepool {
+    NSString *bundleId = app.id().toNSString();
+    if (bundleId.length == 0) return false;
+    NSArray<NSRunningApplication *> *matches =
+        [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleId];
+    bool killed = false;
+    for (NSRunningApplication *a in matches) {
+      if ([a forceTerminate]) killed = true;
+    }
+    return killed;
+  }
+}
+
 std::shared_ptr<AbstractApplication> MacAppRuntime::frontmostApp() const {
   QString bundleId;
   @autoreleasepool {
