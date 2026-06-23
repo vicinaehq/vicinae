@@ -27,8 +27,9 @@ public:
 
   bool isRunning() const override;
 
-  // Invoked from the CGEventTap thread for every observed key/flags event.
-  void onKey(bool flagsChanged, int keycode, const std::string &utf8, bool blockingMods);
+  // called from the CGEventTap thread
+  void onKey(int keycode, const std::string &utf8, bool blockingMods);
+  void reenableTap();
 
 private:
   struct Snippet {
@@ -37,12 +38,10 @@ private:
   };
 
   void runTap();
-  void emitExpansionLocked(const Snippet &snippet, bool blockingMods);
-  void flushPendingLocked();
+  void emitExpansionLocked(const Snippet &snippet);
 
   std::vector<Snippet> m_snippets;
   std::string m_text;
-  std::optional<Snippet> m_pendingExpansion;
   std::optional<std::string> m_undoTrigger;
   std::mutex m_mutex;
 

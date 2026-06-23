@@ -55,22 +55,15 @@ CGEventRef tapCallback(CGEventTapProxy, CGEventType type, CGEventRef event, void
   auto *self = static_cast<MacosSnippetServer *>(refcon);
 
   if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
+    self->reenableTap();
     return event;
   }
 
-  // Ignore events we injected ourselves to avoid feedback loops.
+  // skip events we injected ourselves to avoid feedback loops
   if (CGEventGetIntegerValueField(event, kCGEventSourceUserData) == VICINAE_EVENT_TAG) { return event; }
 
-  const CGEventFlags flags = CGEventGetFlags(event);
-  const bool blocking = (flags & BLOCKING_MODS) != 0;
-
-  if (type == kCGEventFlagsChanged) {
-    self->onKey(true, 0, {}, blocking);
-    return event;
-  }
-
-  const auto keycode =
-      static_cast<int>(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
+  const bool blocking = (CGEventGetFlags(event) & BLOCKING_MODS) != 0;
+  const auto keycode = static_cast<int>(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
 
   UniChar chars[8];
   UniCharCount len = 0;
@@ -78,7 +71,7 @@ CGEventRef tapCallback(CGEventTapProxy, CGEventType type, CGEventRef event, void
   const std::string utf8 =
       QString::fromUtf16(reinterpret_cast<const char16_t *>(chars), static_cast<int>(len)).toStdString();
 
-  self->onKey(false, keycode, utf8, blocking);
+  self->onKey(keycode, utf8, blocking);
   return event;
 }
 
@@ -98,7 +91,7 @@ MacosSnippetServer::~MacosSnippetServer() {
 }
 
 void MacosSnippetServer::runTap() {
-  const CGEventMask mask = CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventFlagsChanged);
+  const CGEventMask mask = CGEventMaskBit(kCGEventKeyDown);
 
   CFMachPortRef tap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionListenOnly,
                                        mask, tapCallback, this);
@@ -148,7 +141,6 @@ void MacosSnippetServer::setKeymap(snippet_gen::LayoutInfo) {
 void MacosSnippetServer::resetContext() {
   std::lock_guard lock(m_mutex);
   m_text.clear();
-  m_pendingExpansion.reset();
   m_undoTrigger.reset();
 }
 
@@ -189,17 +181,15 @@ bool MacosSnippetServer::supportsKeyInjection() const { return AXIsProcessTruste
 
 bool MacosSnippetServer::isRunning() const { return m_running.load(); }
 
-void MacosSnippetServer::onKey(bool flagsChanged, int keycode, const std::string &utf8, bool blockingMods) {
-  std::lock_guard lock(m_mutex);
+void MacosSnippetServer::reenableTap() {
+  if (m_tap) { CGEventTapEnable(static_cast<CFMachPortRef>(m_tap), true); }
+}
 
-  if (flagsChanged) {
-    if (!blockingMods) { flushPendingLocked(); }
-    return;
-  }
+void MacosSnippetServer::onKey(int keycode, const std::string &utf8, bool blockingMods) {
+  std::lock_guard lock(m_mutex);
 
   if (m_undoTrigger) {
     if (keycode == VK_DELETE) {
-      flushPendingLocked();
       const std::string trigger = *m_undoTrigger;
       m_undoTrigger.reset();
       QMetaObject::invokeMethod(
@@ -222,38 +212,24 @@ void MacosSnippetServer::onKey(bool flagsChanged, int keycode, const std::string
     if (snippet.mode == snippet_gen::ExpansionMode::Keydown) {
       if (snippet.trigger.size() > m_text.size()) { continue; }
       if (m_text.ends_with(snippet.trigger)) {
-        emitExpansionLocked(snippet, blockingMods);
+        emitExpansionLocked(snippet);
         break;
       }
     } else if (wordSep) {
       if (snippet.trigger.size() + 1 > m_text.size()) { continue; }
       if (std::string_view(m_text).substr(0, m_text.size() - 1).ends_with(snippet.trigger)) {
-        emitExpansionLocked(snippet, blockingMods);
+        emitExpansionLocked(snippet);
         break;
       }
     }
   }
 }
 
-void MacosSnippetServer::emitExpansionLocked(const Snippet &snippet, bool blockingMods) {
+void MacosSnippetServer::emitExpansionLocked(const Snippet &snippet) {
   m_text.clear();
-
-  if (blockingMods) {
-    m_pendingExpansion = snippet;
-    return;
-  }
 
   const std::string trigger = snippet.trigger;
   QMetaObject::invokeMethod(
       this, [this, trigger]() { emit keywordTriggered(trigger); }, Qt::QueuedConnection);
   m_undoTrigger = trigger;
-}
-
-void MacosSnippetServer::flushPendingLocked() {
-  if (!m_pendingExpansion) { return; }
-  const std::string trigger = m_pendingExpansion->trigger;
-  QMetaObject::invokeMethod(
-      this, [this, trigger]() { emit keywordTriggered(trigger); }, Qt::QueuedConnection);
-  m_undoTrigger = trigger;
-  m_pendingExpansion.reset();
 }

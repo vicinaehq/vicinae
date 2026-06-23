@@ -12,7 +12,7 @@ void SnippetExtension::preferenceValuesChanged(const QJsonObject &value) const {
   snippet->setExpansionEnabled(value.value("enabled").toBool(true));
   snippet->setUndoEnabled(value.value("undo").toBool(true));
 
-  #ifdef Q_OS_LINUX
+#ifdef Q_OS_LINUX
   snippet->setPrePasteDelay(
       std::clamp(value.value("prePasteDelay")
                      .toString(QString::number(SnippetService::DEFAULT_PRE_PASTE_DELAY_MS))
@@ -25,7 +25,7 @@ void SnippetExtension::preferenceValuesChanged(const QJsonObject &value) const {
                        1000);
 
   if (value.contains("layout")) { snippet->setLayout(value.value("layout").toString().toStdString()); }
-  #endif
+#endif
 }
 
 std::vector<Preference> SnippetExtension::preferences() const {
@@ -49,8 +49,8 @@ std::vector<Preference> SnippetExtension::preferences() const {
     prefs.emplace_back(undo);
   }
 
-  // all of these knobs are not really useful on macOS, the default delays work well
-  #ifdef Q_OS_LINUX
+// all of these knobs are not really useful on macOS, the default delays work well
+#ifdef Q_OS_LINUX
   {
     auto layout = Preference::makeText("layout");
     layout.setTitle("Keyboard layout");
@@ -82,7 +82,7 @@ std::vector<Preference> SnippetExtension::preferences() const {
     keyDelay.setDefaultValue(QString::number(SnippetService::DEFAULT_KEY_DELAY_US / 1000));
     prefs.emplace_back(keyDelay);
   }
-  #endif
+#endif
 
   return prefs;
 }
