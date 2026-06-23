@@ -85,6 +85,9 @@ CGEventRef tapCallback(CGEventTapProxy, CGEventType type, CGEventRef event, void
 } // namespace
 
 MacosSnippetServer::MacosSnippetServer() {
+  // we run a separate event loop for the tap instead of using the QT event loop directly
+  // because macOS can disable the tap if our main thread times out, which would force us to
+  // handle retrying and all that annoying stuff.
   m_thread = std::thread([this]() { runTap(); });
   QTimer::singleShot(0, this, [this]() { emit ready(); });
 }
@@ -138,7 +141,8 @@ void MacosSnippetServer::unregisterSnippet(std::string_view keyword) {
 }
 
 void MacosSnippetServer::setKeymap(snippet_gen::LayoutInfo) {
-  // macOS resolves the active layout natively through the event tap, no keymap plumbing needed.
+  // TODO: the tap is automatically using the right keymap, this is mostly a Linux problem
+  // Maybe we want to remove this from the abstract interface
 }
 
 void MacosSnippetServer::resetContext() {
