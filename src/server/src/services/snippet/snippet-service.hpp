@@ -1,4 +1,5 @@
 #pragma once
+#include "services/app-runtime/app-runtime.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/snippet/snippet-expander.hpp"
@@ -22,8 +23,8 @@ signals:
 
 public:
   SnippetService(const std::filesystem::path &path, AbstractSnippetServer &snippetServer, WindowManager &wm,
-                 const AppService &appDb, ClipboardService &clipboard)
-      : m_server(snippetServer), m_db(path), m_wm(wm), m_appDb(appDb), m_clipboard(clipboard) {
+                 AppRuntime &appRuntime, ClipboardService &clipboard)
+      : m_server(snippetServer), m_db(path), m_wm(wm), m_appRuntime(appRuntime), m_clipboard(clipboard) {
     connect(&m_server, &AbstractSnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
     connect(&m_server, &AbstractSnippetServer::undoTriggered, this, &SnippetService::handleUndo);
     connect(&m_server, &AbstractSnippetServer::ready, this, &SnippetService::syncServerState);
@@ -148,34 +149,22 @@ private:
     // focused window is the vicinae one. The only problem with this is that app filtering won't work on the
     // vicinae window itself. We probably can fix this by just checking whether we are a layer here, but
     // requires pulling config...
-    AbstractWindowManager::WindowPtr focusedWindow = nullptr;
+    std::shared_ptr<AbstractApplication> frontmost = nullptr;
 
-    {
-      if (QGuiApplication::focusWindow() && !m_wm.provider()->focusNullsOnLayerGrab()) {
-        focusedWindow = nullptr;
-      } else {
-        focusedWindow = m_wm.getFocusedWindow();
-      }
+    if (!(QGuiApplication::focusWindow() && !m_wm.provider()->focusNullsOnLayerGrab())) {
+      frontmost = m_appRuntime.frontmostApp();
     }
 
-    if (focusedWindow) {
-      if (const auto app = m_appDb.findByClass(focusedWindow->wmClass())) {
-        terminal = app->isTerminalEmulator() || app->isTerminalApp();
-      }
-    }
+    if (frontmost) { terminal = frontmost->isTerminalEmulator() || frontmost->isTerminalApp(); }
 
     const auto &apps = snippet->expansion->apps;
+
     if (!apps.empty()) {
-      if (!focusedWindow) return;
-      const auto app = m_appDb.findByClass(focusedWindow->wmClass());
-      if (!app) return;
-      const auto appId = app->id().toStdString();
-      if (std::ranges::find(apps, appId) == apps.end()) return;
+      if (!frontmost || !std::ranges::contains(apps, frontmost->id().toStdString())) return;
     }
 
     qInfo().nospace() << "Snippet expansion: keyword=\"" << keyword
-                      << "\" window=" << (focusedWindow ? focusedWindow->wmClass() : "<unknown>")
-                      << " terminal=" << terminal;
+                      << "\" app=" << (frontmost ? frontmost->id() : "<unknown>") << " terminal=" << terminal;
 
     const int charsToDelete = static_cast<int>(keyword.size()) + (snippet->expansion->word ? 1 : 0);
 
@@ -211,7 +200,7 @@ private:
   AbstractSnippetServer &m_server;
   SnippetDatabase m_db;
   WindowManager &m_wm;
-  const AppService &m_appDb;
+  AppRuntime &m_appRuntime;
   ClipboardService &m_clipboard;
   bool m_enabled = true;
   bool m_undoEnabled = true;
