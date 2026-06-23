@@ -179,7 +179,9 @@ private:
 
     if (snippet->expansion->word) { expanded.append(' '); }
 
-    m_clipboard.copyText(expanded, {.concealed = true});
+    const bool usesClipboard = m_server.usesClipboard();
+
+    if (usesClipboard) { m_clipboard.copyText(expanded, {.concealed = true}); }
 
     if (!result.cursorPos) {
       m_undoRecord = UndoRecord{.trigger = keyword, .expandedText = expanded};
@@ -193,8 +195,12 @@ private:
       if (moves > 0) { cursorLeftMoves = moves; }
     }
 
-    m_server.injectExpand(charsToDelete, m_prePasteDelay * 1000, terminal, cursorLeftMoves);
-    QTimer::singleShot(0, this, [this]() { m_clipboard.scheduleClipboardRestore(); });
+    m_server.injectExpand(expanded.toStdString(), charsToDelete, m_prePasteDelay * 1000, terminal,
+                          cursorLeftMoves);
+
+    if (usesClipboard) {
+      QTimer::singleShot(0, this, [this]() { m_clipboard.scheduleClipboardRestore(); });
+    }
   }
 
   AbstractSnippetServer &m_server;

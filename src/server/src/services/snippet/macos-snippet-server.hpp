@@ -19,11 +19,12 @@ public:
   void setKeymap(snippet_gen::LayoutInfo info) override;
   void resetContext() override;
 
-  void injectExpand(unsigned charsToDelete, unsigned prePasteDelayUs, bool terminal,
+  void injectExpand(const std::string &text, unsigned charsToDelete, unsigned prePasteDelayUs, bool terminal,
                     unsigned cursorLeftMoves) override;
   void injectUndo(unsigned backspaceCount, const std::string &trigger) override;
   void setKeyDelay(int us) override;
   bool supportsKeyInjection() const override;
+  bool usesClipboard() const override { return false; }
 
   bool isRunning() const override;
 
@@ -50,5 +51,5 @@ private:
   void *m_tap = nullptr;
   void *m_source = nullptr;
   std::atomic_bool m_running{false};
-  std::atomic_int m_keyDelayUs{2000};
+  std::atomic_int m_keyDelayUs{5000};
 };
