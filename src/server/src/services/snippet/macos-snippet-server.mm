@@ -13,7 +13,6 @@ constexpr size_t MAX_BUFFER_SIZE = 32;
 // Virtual keycodes (Carbon HIToolbox).
 constexpr CGKeyCode VK_DELETE = 0x33;
 constexpr CGKeyCode VK_LEFT_ARROW = 0x7B;
-constexpr CGKeyCode VK_ANSI_V = 0x09;
 
 // Tag stamped on synthetic events so the tap can skip its own injection.
 constexpr int64_t VICINAE_EVENT_TAG = 0x7669636e; // 'vicn'
@@ -37,17 +36,25 @@ void postKey(CGKeyCode key, bool down, CGEventFlags flags, int delayUs) {
 
 void injectText(std::string_view text, int delayUs) {
   const QString qtext = QString::fromUtf8(text.data(), static_cast<int>(text.size()));
-  for (const QChar ch : qtext) {
-    const UniChar unit = ch.unicode();
+  const auto *units = reinterpret_cast<const UniChar *>(qtext.utf16());
+  const int total = static_cast<int>(qtext.size());
+  constexpr int CHUNK = 20;
+
+  for (int off = 0; off < total;) {
+    int count = total - off < CHUNK ? total - off : CHUNK;
+    // never end a chunk on a high surrogate whose low half follows, or we split the code point in two
+    if (off + count < total && QChar::isHighSurrogate(units[off + count - 1])) { --count; }
+
     for (const bool down : {true, false}) {
       CGEventRef event = CGEventCreateKeyboardEvent(nullptr, 0, down);
       if (!event) { continue; }
-      CGEventKeyboardSetUnicodeString(event, 1, &unit);
+      CGEventKeyboardSetUnicodeString(event, static_cast<UniCharCount>(count), units + off);
       CGEventSetIntegerValueField(event, kCGEventSourceUserData, VICINAE_EVENT_TAG);
       CGEventPost(kCGHIDEventTap, event);
       CFRelease(event);
     }
     if (delayUs > 0) { usleep(delayUs); }
+    off += count;
   }
 }
 
@@ -144,19 +151,19 @@ void MacosSnippetServer::resetContext() {
   m_undoTrigger.reset();
 }
 
-void MacosSnippetServer::injectExpand(unsigned charsToDelete, unsigned prePasteDelayUs, bool,
+void MacosSnippetServer::injectExpand(const std::string &text, unsigned charsToDelete, unsigned, bool,
                                       unsigned cursorLeftMoves) {
   const int delay = m_keyDelayUs.load();
 
+  // delete the trigger with backspaces, then type the expansion as unicode key events. typing avoids
+  // the clipboard entirely and behaves consistently across terminals and editors (unlike paste +
+  // shift-select, which breaks in terminals)
   for (unsigned i = 0; i < charsToDelete; ++i) {
     postKey(VK_DELETE, true, 0, 0);
     postKey(VK_DELETE, false, 0, delay);
   }
 
-  if (prePasteDelayUs > 0) { usleep(prePasteDelayUs); }
-
-  postKey(VK_ANSI_V, true, kCGEventFlagMaskCommand, 0);
-  postKey(VK_ANSI_V, false, kCGEventFlagMaskCommand, delay);
+  injectText(text, delay);
 
   for (unsigned i = 0; i < cursorLeftMoves; ++i) {
     postKey(VK_LEFT_ARROW, true, 0, 0);
