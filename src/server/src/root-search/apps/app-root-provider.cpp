@@ -113,7 +113,9 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   utils->addAction(copyLocation);
 
   if (ctx->services->appRuntime()->isRunning(*m_app)) {
-    lifecycleSection->addAction(new QuitAppAction(m_app));
+    auto quit = new QuitAppAction(m_app);
+    quit->setShortcut(QString("ctrl+q"));
+    lifecycleSection->addAction(quit);
     lifecycleSection->addAction(new ForceQuitAppAction(m_app));
   }
 

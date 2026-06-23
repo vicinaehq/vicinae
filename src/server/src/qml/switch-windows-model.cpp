@@ -1,4 +1,5 @@
 #include "switch-windows-model.hpp"
+#include "actions/app/app-actions.hpp"
 #include "actions/wm/window-actions.hpp"
 
 QString SwitchWindowsSection::displayTitle(const WindowEntry &e) const { return e.window->title(); }
@@ -35,6 +36,12 @@ std::unique_ptr<ActionPanelState> SwitchWindowsSection::buildActionPanel(const W
   auto closeAction = new CloseWindowAction(e.window);
   closeAction->setShortcut(Keyboard::Shortcut(Qt::Key_Q, Qt::ControlModifier));
   section->addAction(closeAction);
+
+  if (e.app) {
+    auto appSection = panel->createSection();
+    appSection->addAction(new QuitAppAction(e.app));
+    appSection->addAction(new ForceQuitAppAction(e.app));
+  }
 
   return panel;
 }

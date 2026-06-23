@@ -63,7 +63,6 @@ OpenRawProgramAction::OpenRawProgramAction(const std::vector<QString> &args) : m
 QuitAppAction::QuitAppAction(const std::shared_ptr<AbstractApplication> &app)
     : AbstractAction("Quit Application", BuiltinIcon::XMarkCircle), m_app(app) {
   setAutoClose();
-  setShortcut(QString("ctrl+q"));
 }
 
 void QuitAppAction::execute(ApplicationContext *ctx) {
