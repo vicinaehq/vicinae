@@ -15,6 +15,46 @@ constexpr auto FILE_SEARCH_DEBOUNCE = 100ms;
 
 namespace {
 
+QString storageKeyForCommand(QStringView commandId) {
+  return QStringLiteral("fileCategory:%1").arg(commandId);
+}
+
+QString legacyStorageKey() { return QStringLiteral("fileCategory"); }
+
+std::optional<vicinae::FileCategory> defaultCategoryForCommandId(QStringView commandId) {
+  if (commandId == u"search-directories") return vicinae::FileCategory::Directory;
+  if (commandId == u"search-images") return vicinae::FileCategory::Image;
+  if (commandId == u"search-videos") return vicinae::FileCategory::Video;
+  if (commandId == u"search-audio") return vicinae::FileCategory::Audio;
+  if (commandId == u"search-documents") return vicinae::FileCategory::Document;
+  if (commandId == u"search-archives") return vicinae::FileCategory::Archive;
+  if (commandId == u"search-applications") return vicinae::FileCategory::Application;
+  return std::nullopt;
+}
+
+int categoryIndexFor(vicinae::FileCategory category) {
+  switch (category) {
+  case vicinae::FileCategory::Other:
+    return 1;
+  case vicinae::FileCategory::Directory:
+    return 2;
+  case vicinae::FileCategory::Image:
+    return 3;
+  case vicinae::FileCategory::Video:
+    return 4;
+  case vicinae::FileCategory::Audio:
+    return 5;
+  case vicinae::FileCategory::Document:
+    return 6;
+  case vicinae::FileCategory::Archive:
+    return 7;
+  case vicinae::FileCategory::Application:
+    return 8;
+  default:
+    return 0;
+  }
+}
+
 bool isExplicitPathQuery(QStringView text) {
   if (text.isEmpty()) return false;
 
@@ -58,6 +98,13 @@ void SearchFilesViewHost::initialize() {
 
   setSearchPlaceholderText("Search for files...");
   restoreCategoryFilter();
+
+  if (m_currentCategoryFilter == 0) {
+    if (auto category = defaultCategoryForCommandId(command()->info().commandId())) {
+      m_currentCategoryFilter = categoryIndexFor(*category);
+      emit currentCategoryFilterChanged();
+    }
+  }
 
   m_debounce.setSingleShot(true);
   m_debounce.setInterval(FILE_SEARCH_DEBOUNCE);
@@ -183,7 +230,12 @@ void SearchFilesViewHost::setCategoryFilter(int index) {
   m_currentCategoryFilter = index;
   emit currentCategoryFilterChanged();
 
-  command()->storage().setItem("fileCategory", categoryFilterOptions().value(index));
+  auto storage = command()->storage();
+  auto const value = categoryFilterOptions().value(index);
+  storage.setItem(storageKeyForCommand(command()->info().commandId()), value);
+  if (command()->info().commandId() == QStringLiteral("search")) {
+    storage.setItem(legacyStorageKey(), value);
+  }
 
   if (searchText().isEmpty()) {
     renderRecentFiles();
@@ -193,7 +245,13 @@ void SearchFilesViewHost::setCategoryFilter(int index) {
 }
 
 void SearchFilesViewHost::restoreCategoryFilter() {
-  const auto saved = command()->storage().getItem("fileCategory");
+  auto storage = command()->storage();
+  auto saved = storage.getItem(storageKeyForCommand(command()->info().commandId()));
+
+  if ((saved.isUndefined() || saved.isNull()) && command()->info().commandId() == QStringLiteral("search")) {
+    saved = storage.getItem(legacyStorageKey());
+  }
+
   if (saved.isUndefined() || saved.isNull()) return;
 
   const int index = categoryFilterOptions().indexOf(saved.toString());
