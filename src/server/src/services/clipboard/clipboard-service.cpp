@@ -539,9 +539,32 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
   }
 
   QMimeData *mimeData = new QMimeData;
+  bool const hasUriList = std::ranges::any_of(selection.offers, [](const auto &offer) {
+    return offer.mimeType == "text/uri-list";
+  });
 
   for (const auto &offer : selection.offers) {
     if (offer.mimeType == "application/x-qt-image") continue; // we handle that ourselves
+
+    if (hasUriList && offer.mimeType.startsWith("text/") && offer.mimeType != "text/uri-list") continue;
+
+    if (offer.mimeType == "text/uri-list") {
+      auto const uriList = QString::fromUtf8(offer.data).replace("\r\n", ";");
+      QList<QUrl> urls;
+
+      for (const auto &part : uriList.split(';', Qt::SkipEmptyParts)) {
+        QUrl url(part.trimmed());
+        if (url.isValid()) urls.emplace_back(std::move(url));
+      }
+
+      if (!urls.isEmpty()) {
+        mimeData->setUrls(urls);
+      }
+
+      mimeData->setData(offer.mimeType, offer.data);
+      continue;
+    }
+
     if (offer.mimeType.startsWith("image/") && !mimeData->hasImage()) {
       auto img = QImage::fromData(offer.data);
 
