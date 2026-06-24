@@ -52,6 +52,8 @@ ClassifiedTarget classifyTarget(const QString &target) {
   std::error_code ec;
   if (fs::exists(target.toStdString(), ec)) return {TargetKind::Path, target};
 
+  if (target.contains('/')) return {TargetKind::Uti, target};
+
   if (target.contains('.') && !target.contains(' ')) return {TargetKind::Uti, target};
 
   return {};
@@ -265,7 +267,11 @@ NSArray<NSURL *> *appURLsForTarget(NSWorkspace *ws, const ClassifiedTarget &t) {
     return url ? [ws URLsForApplicationsToOpenURL:url] : nil;
   }
   case TargetKind::Uti: {
-    UTType *ut = [UTType typeWithIdentifier:toNSString(t.normalized)];
+    NSString *identifier = toNSString(t.normalized);
+    UTType *ut = [UTType typeWithIdentifier:identifier];
+    if (!ut && [identifier containsString:@"/"]) {
+      ut = [UTType typeWithMIMEType:identifier];
+    }
     return ut ? [ws URLsForApplicationsToOpenContentType:ut] : nil;
   }
   case TargetKind::Unknown:
@@ -285,7 +291,11 @@ NSURL *defaultAppURLForTarget(NSWorkspace *ws, const ClassifiedTarget &t) {
     return url ? [ws URLForApplicationToOpenURL:url] : nil;
   }
   case TargetKind::Uti: {
-    UTType *ut = [UTType typeWithIdentifier:toNSString(t.normalized)];
+    NSString *identifier = toNSString(t.normalized);
+    UTType *ut = [UTType typeWithIdentifier:identifier];
+    if (!ut && [identifier containsString:@"/"]) {
+      ut = [UTType typeWithMIMEType:identifier];
+    }
     return ut ? [ws URLForApplicationToOpenContentType:ut] : nil;
   }
   case TargetKind::Unknown:
