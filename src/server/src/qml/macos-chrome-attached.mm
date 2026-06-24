@@ -487,6 +487,27 @@ void macosSetAccessoryActivationPolicy() {
 
 void macosActivateApp() { [NSApp activateIgnoringOtherApps:YES]; }
 
+static void macosClearMenuShortcuts(NSMenu *menu) {
+  if (!menu) return;
+  NSMenu *servicesMenu = [NSApp servicesMenu];
+  for (NSMenuItem *topItem in menu.itemArray) {
+    NSMenu *submenu = topItem.submenu;
+    if (!submenu) continue;
+    for (NSMenuItem *item in submenu.itemArray) {
+      if (item.submenu == servicesMenu) continue;
+      item.keyEquivalent = @"";
+      item.keyEquivalentModifierMask = 0;
+    }
+  }
+}
+
+void macosReleaseMenuShortcuts() {
+  macosClearMenuShortcuts([NSApp mainMenu]);
+  dispatch_async(dispatch_get_main_queue(), ^{
+    macosClearMenuShortcuts([NSApp mainMenu]);
+  });
+}
+
 void MacOSPanelAttached::beginShow(qreal yFraction) {
   if (!m_window) return;
   m_window->setOpacity(0.0);
