@@ -50,7 +50,7 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   auto mime = mimeDb.mimeTypeForFile(path.c_str());
   auto appDb = ctx->services->appDb();
   auto pasteService = ctx->services->pasteService();
-  auto openers = appDb->findCuratedOpeners(mime.name());
+  auto openers = appDb->findCuratedOpeners(QString::fromStdString(path.string()));
   auto fileBrowser = appDb->fileBrowser();
 
   if (!openers.empty()) {
