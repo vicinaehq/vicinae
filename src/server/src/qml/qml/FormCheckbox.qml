@@ -11,6 +11,7 @@ Item {
     property string label: ""
     property bool readOnly: false
     property bool hasError: false
+    property bool filled: false
 
     signal toggled
 
@@ -30,6 +31,16 @@ Item {
         onClicked: root.toggle()
     }
 
+    FormInputBackground {
+        width: 16
+        height: 16
+        radius: 4
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        filled: root.filled && !root.checked
+        opacity: root.readOnly ? 0.5 : 1.0
+    }
+
     RowLayout {
         anchors.fill: parent
         spacing: 8
@@ -42,7 +53,7 @@ Item {
             radius: 4
             Layout.alignment: Qt.AlignVCenter
             color: root.checked ? Theme.accent : "transparent"
-            border.color: root.hasError ? Theme.inputBorderError : root.activeFocus ? Theme.inputBorderFocus : root.checked ? Theme.accent : Theme.inputBorder
+            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : root.activeFocus ? Theme.inputBorderFocus : root.checked ? Theme.accent : Theme.inputBorder, Config.windowOpacity)
             border.width: 1
 
             Text {

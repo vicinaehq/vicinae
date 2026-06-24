@@ -1,7 +1,7 @@
 #pragma once
 #include "environment.hpp"
 #include "generated/version.h"
-#include "lib/os-release.hpp"
+#include "internal/os-release.hpp"
 #include "vicinae.hpp"
 #include <QGuiApplication>
 #include <QUrlQuery>

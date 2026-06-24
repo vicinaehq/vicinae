@@ -52,10 +52,11 @@ struct ColorLike {
 };
 
 struct Image {
-  source: ImageSource;
+  source?: ImageSource;
   fallback?: ImageSource;
   mask?: ImageMask;
   tintColor?: ColorLike;
+  fileIcon?: string;
 };
 
 // UI Service
@@ -94,6 +95,19 @@ struct ConfirmAlertPayload {
   icon?: Image;
 };
 
+enum NotificationUrgency {
+  Low,
+  Normal,
+  High
+};
+
+struct DesktopNotificationPayload {
+  title: string;
+  body: string;
+  icon?: Image;
+  urgency: NotificationUrgency;
+};
+
 service UI {
   fn render(json: string) => void;
   fn showToast(id: string, title: string, message: string, style: ToastStyle) => void;
@@ -110,6 +124,8 @@ service UI {
 
   fn setSearchText(text: string) => void;
   fn getSelectedText() => string;
+
+  fn sendDesktopNotification(data: DesktopNotificationPayload) => void;
 
   event viewPoped();
   event viewPushed();
@@ -191,15 +207,35 @@ service Storage {
 
 // FileSearch
 
+enum FileSearchCategory {
+  Other,
+  Directory,
+  Image,
+  Video,
+  Audio,
+  Document,
+  Archive,
+  Application
+};
+
 struct FileInfo {
   path: string;
-  mimeType: string;
+  category: FileSearchCategory;
+  mimeType?: string;
+};
+
+struct FileSearchFilters {
+  category?: FileSearchCategory;
+};
+
+struct FileSearchOptions {
+  filters: FileSearchFilters;
+  limit: uint;
 };
 
 service FileSearch {
-  fn search(q: string) => FileInfo[];
+  fn search(q: string, opts: FileSearchOptions) => FileInfo[];
 };
-
 
 // Command
 

@@ -20,7 +20,6 @@ Item {
                 text: root.host.alias
                 hasError: aliasField.error !== ""
                 onTextEdited: root.host.alias = text
-                onAccepted: launcher.handleReturn()
             }
         }
     }

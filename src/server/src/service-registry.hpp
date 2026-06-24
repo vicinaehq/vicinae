@@ -13,7 +13,7 @@ class RootItemManager;
 class ConfigService;
 class ShortcutService;
 class ToastService;
-class EmojiService;
+class GlyphService;
 class CalculatorService;
 class FileService;
 class RaycastStoreService;
@@ -23,15 +23,21 @@ class OAuthService;
 class WindowManager;
 class PowerManager;
 class ScriptCommandService;
+class AbstractSnippetServer;
+#ifdef Q_OS_LINUX
+class LinuxInputServer;
+#endif
 class SnippetService;
 class BrowserExtensionService;
 class BackgroundEffectManager;
+class ShortcutInhibitManager;
 class FileChooserService;
 class NewsService;
 class PasteService;
 class TelemetryService;
 class AudioControlService;
 class AppRuntime;
+class GlobalShortcutService;
 
 namespace config {
 class Manager;
@@ -40,13 +46,14 @@ class Manager;
 class ServiceRegistry : public QObject {
 
 public:
+  ~ServiceRegistry() override;
   static ServiceRegistry *instance();
   RootItemManager *rootItemManager() const;
   config::Manager *config() const;
   OmniDatabase *omniDb() const;
   CalculatorService *calculatorService() const;
   WindowManager *windowManager() const;
-  EmojiService *emojiService() const;
+  GlyphService *glyphService() const;
   FontService *fontService() const;
   LocalStorageService *localStorage() const;
   ExtensionManager *extensionManager() const;
@@ -62,14 +69,19 @@ public:
   PowerManager *powerManager() const;
   ScriptCommandService *scriptDb() const;
   BrowserExtensionService *browserExtension() const;
+#ifdef Q_OS_LINUX
+  LinuxInputServer *inputServer() const;
+#endif
   SnippetService *snippetService() const;
   PasteService *pasteService() const;
   FileChooserService *fileChooserService() const;
   NewsService *newsService() const;
   BackgroundEffectManager *backgroundEffectManager() const;
+  ShortcutInhibitManager *shortcutInhibitManager() const;
   TelemetryService *telemetry() const;
   AudioControlService *audioControl() const;
   AppRuntime *appRuntime() const;
+  GlobalShortcutService *globalShortcuts() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
@@ -83,7 +95,7 @@ public:
   void setCalculatorService(std::unique_ptr<CalculatorService> service);
   void setExtensionRegistry(std::unique_ptr<ExtensionRegistry> service);
   void setFileService(std::unique_ptr<FileService> service);
-  void setEmojiService(std::unique_ptr<EmojiService> service);
+  void setGlyphService(std::unique_ptr<GlyphService> service);
   void setToastService(std::unique_ptr<ToastService> service);
   void setFontService(std::unique_ptr<FontService> font);
   void setOmniDb(std::unique_ptr<OmniDatabase> service);
@@ -93,14 +105,20 @@ public:
   void setClipman(std::unique_ptr<ClipboardService> service);
   void setAppDb(std::unique_ptr<AppService> service);
   void setBrowserExtension(std::unique_ptr<BrowserExtensionService> service);
+#ifdef Q_OS_LINUX
+  void setInputServer(std::unique_ptr<LinuxInputServer> server);
+#endif
+  void setSnippetServerBackend(std::unique_ptr<AbstractSnippetServer> backend);
   void setSnippetService(std::unique_ptr<SnippetService> service);
   void setPasteService(std::unique_ptr<PasteService> service);
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
   void setNewsService(std::unique_ptr<NewsService> service);
   void setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> manager);
+  void setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitManager> manager);
   void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
   void setAudioControl(std::unique_ptr<AudioControlService> service);
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
+  void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
@@ -114,7 +132,7 @@ private:
   std::unique_ptr<config::Manager> m_config;
   std::unique_ptr<ShortcutService> m_shortcutService;
   std::unique_ptr<ToastService> m_toastService;
-  std::unique_ptr<EmojiService> m_emojiService;
+  std::unique_ptr<GlyphService> m_glyphService;
   std::unique_ptr<CalculatorService> m_calculatorService;
   std::unique_ptr<FileService> m_fileService;
   std::unique_ptr<RaycastStoreService> m_raycastStoreService;
@@ -124,12 +142,18 @@ private:
   std::unique_ptr<PowerManager> m_powerManager;
   std::unique_ptr<ScriptCommandService> m_scriptCommandService;
   std::unique_ptr<BrowserExtensionService> m_browserExtensionService;
+#ifdef Q_OS_LINUX
+  std::unique_ptr<LinuxInputServer> m_inputServer;
+#endif
+  std::unique_ptr<AbstractSnippetServer> m_snippetServerBackend;
   std::unique_ptr<SnippetService> m_snippetService;
   std::unique_ptr<PasteService> m_pasteService;
   std::unique_ptr<FileChooserService> m_fileChooserService;
   std::unique_ptr<NewsService> m_newsService;
   std::unique_ptr<BackgroundEffectManager> m_backgroundEffectManager;
+  std::unique_ptr<ShortcutInhibitManager> m_shortcutInhibitManager;
   std::unique_ptr<TelemetryService> m_telemetry;
   std::unique_ptr<AudioControlService> m_audioControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
+  std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
 };

@@ -25,6 +25,7 @@ SNAKE_CASIFY(config::SystemThemeConfig);
 SNAKE_CASIFY(config::ThemeConfig);
 SNAKE_CASIFY(config::TelemetryConfig);
 SNAKE_CASIFY(config::WindowCSD);
+SNAKE_CASIFY(config::GlobalShortcuts);
 
 struct ConfigTransformer : glz::snake_case {
   static constexpr std::string rename_key(const std::string_view key) {
@@ -183,7 +184,9 @@ bool Manager::writeUser(const Partial<ConfigValue> &cfg) {
     ofs << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
   }
 
-  reloadConfig();
+  // XXX - we needed this at some point, maybe I'm breaking something
+  // The idea is that the watcher should take care of this already, we don't want double firing
+  // reloadConfig();
 
   return true;
 }
@@ -317,8 +320,9 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
           }
 
           if (vi.alias && vi.alias->empty()) { vi.alias.reset(); }
+          if (vi.shortcut && vi.shortcut->empty()) { vi.shortcut.reset(); }
           if (!vi.enabled.has_value() && vi.preferences.value_or(glz::generic::object_t{}).empty() &&
-              !vi.alias) {
+              !vi.alias && !vi.shortcut) {
             entrypoints.erase(currentIt);
           }
         }

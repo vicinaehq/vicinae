@@ -72,6 +72,7 @@ public:
 
     virtual bool canClose() const { return true; }
     virtual bool canFullScreen() const { return true; }
+    virtual bool sticky() const { return false; }
   };
 
   class AbstractWorkspace {
@@ -181,6 +182,12 @@ public:
    * This is a common operation that should be supported by all window managers.
    */
   virtual bool closeWindow(const AbstractWindow &window) const { return false; }
+
+  virtual bool setSticky(const AbstractWindow &window, bool sticky) const { return false; }
+
+  virtual bool moveToWorkspace(const AbstractWindow &window, const QString &workspaceId) const {
+    return false;
+  }
 
   /**
    * To make sure the window manager IPC link is healthy.

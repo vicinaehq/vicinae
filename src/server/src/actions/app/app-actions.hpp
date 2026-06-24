@@ -57,6 +57,26 @@ private:
   bool m_clearSearch = false;
 };
 
+class QuitAppAction : public AbstractAction {
+public:
+  QuitAppAction(const std::shared_ptr<AbstractApplication> &app);
+
+  void execute(ApplicationContext *ctx) override;
+
+private:
+  std::shared_ptr<AbstractApplication> m_app;
+};
+
+class ForceQuitAppAction : public AbstractAction {
+public:
+  ForceQuitAppAction(const std::shared_ptr<AbstractApplication> &app);
+
+  void execute(ApplicationContext *ctx) override;
+
+private:
+  std::shared_ptr<AbstractApplication> m_app;
+};
+
 class OpenInBrowserAction : public AbstractAction {
 public:
   OpenInBrowserAction(QUrl url, const QString &title = "Open in browser") : m_url(url), m_title(title) {}

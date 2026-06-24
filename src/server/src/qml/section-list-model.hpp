@@ -28,6 +28,8 @@ public:
     Subtitle,
     IconSource,
     Accessory,
+    FilePath,
+    FileUrl,
   };
 
   explicit SectionListModel(QObject *parent = nullptr);

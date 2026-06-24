@@ -59,7 +59,14 @@ public:
 
   Q_INVOKABLE bool tryShortcut(int key, int modifiers);
 
-  bool executePrimaryAction();
+  /**
+   * Activate the action the key event is bound to, if any: submenus are opened,
+   * regular actions are executed. Enter/return uniformization is handled as part
+   * of the shortcut matching.
+   */
+  bool activateBoundAction(const QKeyEvent *event);
+
+  Q_INVOKABLE bool executePrimaryAction();
   void executeAction(AbstractAction *action);
   void openSubmenu(SubmenuAction *action);
 

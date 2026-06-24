@@ -2,6 +2,7 @@
 #include "list-view-host.hpp"
 #include "search-files-model.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
+#include <QStringList>
 #include <QTimer>
 #include <qfuturewatcher.h>
 #include <qmimedatabase.h>
@@ -15,12 +16,16 @@ class SearchFilesViewHost : public ListViewHost {
   Q_PROPERTY(QString detailLastModified READ detailLastModified NOTIFY detailChanged)
   Q_PROPERTY(QString detailImageSource READ detailImageSource NOTIFY detailChanged)
   Q_PROPERTY(QString detailTextContent READ detailTextContent NOTIFY detailChanged)
+  Q_PROPERTY(QStringList categoryFilterOptions READ categoryFilterOptions CONSTANT)
+  Q_PROPERTY(int currentCategoryFilter READ currentCategoryFilter NOTIFY currentCategoryFilterChanged)
 
 signals:
   void detailChanged();
+  void currentCategoryFilterChanged();
 
 public:
   QUrl qmlComponentUrl() const override;
+  QUrl qmlSearchAccessoryUrl() const override;
   QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
@@ -33,6 +38,10 @@ public:
   QString detailLastModified() const { return m_detailLastModified; }
   QString detailImageSource() const { return m_detailImageSource; }
   QString detailTextContent() const { return m_detailTextContent; }
+  QStringList categoryFilterOptions() const;
+  int currentCategoryFilter() const { return m_currentCategoryFilter; }
+
+  Q_INVOKABLE void setCategoryFilter(int index);
 
 private:
   void renderRecentFiles();
@@ -40,6 +49,10 @@ private:
   void handleSearchResults();
   void loadDetail(const std::filesystem::path &path);
   void clearDetail();
+  void restoreCategoryFilter();
+  std::optional<vicinae::FileCategory> selectedCategory() const;
+
+  enum class ResultMode { Recent, DirectPath, IndexedSearch };
 
   using Watcher = QFutureWatcher<std::vector<IndexerFileResult>>;
 
@@ -48,6 +61,7 @@ private:
   Watcher m_pendingResults;
   QString m_lastSearchText;
   QMimeDatabase m_mimeDb;
+  ResultMode m_resultMode = ResultMode::Recent;
 
   bool m_hasDetail = false;
   QString m_detailName;
@@ -56,4 +70,5 @@ private:
   QString m_detailLastModified;
   QString m_detailImageSource;
   QString m_detailTextContent;
+  int m_currentCategoryFilter = 0;
 };

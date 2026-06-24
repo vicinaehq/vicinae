@@ -1,5 +1,5 @@
 #pragma once
-#include "emoji/emoji.hpp"
+#include "glyph/emoji.hpp"
 #include "preference.hpp"
 #include "qml/emoji-grid-view-host.hpp"
 #include "ui/image/url.hpp"
@@ -9,11 +9,8 @@
 
 class SearchEmojiCommand : public BuiltinViewCommand<EmojiGridViewHost> {
   QString id() const override { return "search-emojis"; }
-  QString name() const override { return "Search Emojis"; }
-  QString description() const override {
-    return "Search for any emoji to copy it into the clipboard. Also offers pinning, usage "
-           "tracking, and custom keyword indexing.";
-  }
+  QString name() const override { return "Search Emojis & Symbols"; }
+  QString description() const override { return "Search for any emoji or symbol"; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("emoji").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -42,8 +39,8 @@ class SearchEmojiCommand : public BuiltinViewCommand<EmojiGridViewHost> {
     {
       std::vector<Preference::DropdownData::Option> opts;
 
-      opts.reserve(1 + emoji::skinTones().size());
-      opts.emplace_back(Opt("👍 Default", "default"));
+      opts.reserve(emoji::skinTones().size());
+      // opts.emplace_back(Opt("👍 Default", "default"));
 
       for (const auto &info : emoji::skinTones()) {
         auto dp = QString("%1 %2")

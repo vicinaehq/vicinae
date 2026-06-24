@@ -6,7 +6,7 @@ Item {
 
     property string title: "No results"
     property string description: ""
-    property string icon: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
+    property var icon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 
     ColumnLayout {
         anchors.centerIn: parent
@@ -14,7 +14,7 @@ Item {
         spacing: 10
 
         ViciImage {
-            visible: root.icon !== ""
+            visible: root.icon?.valid ?? false
             source: root.icon
             Layout.preferredWidth: 48
             Layout.preferredHeight: 48

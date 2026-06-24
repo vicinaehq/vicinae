@@ -21,7 +21,7 @@ Item {
 
     property int columns: 8
     property real aspectRatio: 1.0
-    property real cellSpacing: 14
+    property real cellSpacing: 10
     property real horizontalPadding: 20
     property real cellInset: 0.10  // ratio of cell size (None≈0.05, Small=0.10, Medium=0.15, Large=0.25)
 
@@ -33,7 +33,7 @@ Item {
 
     property string emptyTitle: "No results"
     property string emptyDescription: ""
-    property string emptyIcon: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
+    property var emptyIcon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
     property Component emptyViewComponent: null
 
     property bool suppressEmpty: false
@@ -43,14 +43,20 @@ Item {
 
     readonly property real cellSize: Math.floor((root.width - horizontalPadding * 2 - cellSpacing * (columns - 1)) / columns)
 
+    HoverResetOnModelChange {
+        target: root.cmdModel
+    }
+
     // Hidden TextMetrics to measure actual line heights from the font
     TextMetrics {
         id: _titleMetrics
         font.pointSize: Theme.smallerFontSize
+        text: "Ag"
     }
     TextMetrics {
         id: _subtitleMetrics
         font.pointSize: Theme.smallerFontSize - 1
+        text: "Ag"
     }
 
     readonly property real _textGap: 6
@@ -59,9 +65,9 @@ Item {
             return 0;
         var h = _textGap;
         if (showCellTitle)
-            h += _titleMetrics.font.pixelSize;
+            h += _titleMetrics.height;
         if (showCellSubtitle)
-            h += _subtitleMetrics.font.pixelSize;
+            h += _subtitleMetrics.height;
         return h;
     }
     readonly property real rowHeight: cellSize + cellTextHeight
@@ -165,14 +171,36 @@ Item {
                     readonly property real cellWidth: Math.floor((root.width - root.horizontalPadding * 2 - root.cellSpacing * (effectiveCols - 1)) / effectiveCols)
                     readonly property real cellHeight: Math.floor(cellWidth / effectiveAspectRatio)
 
+                    readonly property bool rowHasTitle: {
+                        if (!root.showCellTitle || !root.cmdModel || typeof root.cmdModel.cellTitle !== "function")
+                            return false;
+                        var _rev = root.cmdModel.dataRevision;
+                        for (var i = 0; i < delegateLoader.rowItemCount; i++) {
+                            if (root.cmdModel.cellTitle(delegateLoader.rowSectionIdx, delegateLoader.rowStartItem + i) !== "")
+                                return true;
+                        }
+                        return false;
+                    }
+
+                    readonly property bool rowHasSubtitle: {
+                        if (!root.showCellSubtitle || !root.cmdModel || typeof root.cmdModel.cellSubtitle !== "function")
+                            return false;
+                        var _rev = root.cmdModel.dataRevision;
+                        for (var i = 0; i < delegateLoader.rowItemCount; i++) {
+                            if (root.cmdModel.cellSubtitle(delegateLoader.rowSectionIdx, delegateLoader.rowStartItem + i) !== "")
+                                return true;
+                        }
+                        return false;
+                    }
+
                     readonly property real cellTextHeight: {
-                        if (!root.showCellTitle && !root.showCellSubtitle)
+                        if (!rowHasTitle && !rowHasSubtitle)
                             return 0;
                         var h = root._textGap;
-                        if (root.showCellTitle)
-                            h += _titleMetrics.font.pixelSize;
-                        if (root.showCellSubtitle)
-                            h += _subtitleMetrics.font.pixelSize;
+                        if (rowHasTitle)
+                            h += _titleMetrics.height;
+                        if (rowHasSubtitle)
+                            h += _subtitleMetrics.height;
                         return h;
                     }
 
@@ -193,6 +221,7 @@ Item {
                                 readonly property int cellSection: delegateLoader.rowSectionIdx
                                 readonly property int cellItem: delegateLoader.rowStartItem + index
                                 readonly property bool cellSelected: root.cmdModel && root.cmdModel.selectedSection === cellSection && root.cmdModel.selectedItem === cellItem
+                                readonly property bool cellHovered: cellMouseArea.containsMouse && HoverActivation.active
 
                                 width: rowItem.cellWidth
                                 height: rowItem.cellHeight + rowItem.cellTextHeight
@@ -221,7 +250,7 @@ Item {
                                     property int cellSection: cellWrapper.cellSection
                                     property int cellItem: cellWrapper.cellItem
                                     property bool cellSelected: cellWrapper.cellSelected
-                                    property bool cellHovered: cellMouseArea.containsMouse
+                                    property bool cellHovered: cellWrapper.cellHovered
                                     property real cellSize: rowItem.cellWidth
                                     property real cellWidth: rowItem.cellWidth
                                     property real cellHeight: rowItem.cellHeight
@@ -241,22 +270,19 @@ Item {
                                 }
 
                                 SourceBlendRect {
-                                    readonly property real pad: 3
-                                    x: -pad
-                                    y: -pad
-                                    width: rowItem.cellWidth + pad * 2
-                                    height: rowItem.cellHeight + pad * 2
-                                    radius: 11
+                                    width: rowItem.cellWidth
+                                    height: rowItem.cellHeight
+                                    radius: 10
                                     overlay: true
-                                    borderWidth: (cellWrapper.cellSelected || cellMouseArea.containsMouse) ? 2 : 0
+                                    borderWidth: (cellWrapper.cellSelected || cellWrapper.cellHovered) ? 2 : 0
                                     borderColor: cellWrapper.cellSelected ? Theme.gridItemSelectionOutline : Theme.gridItemHoverOutline
                                 }
 
                                 Text {
-                                    visible: root.showCellTitle
+                                    visible: rowItem.rowHasTitle
                                     y: rowItem.cellHeight + root._textGap
                                     width: rowItem.cellWidth
-                                    height: _titleMetrics.font.pixelSize
+                                    height: _titleMetrics.height
                                     text: {
                                         var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
                                         return (root.cmdModel && typeof root.cmdModel.cellTitle === "function") ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
@@ -269,10 +295,10 @@ Item {
                                 }
 
                                 Text {
-                                    visible: root.showCellSubtitle
-                                    y: rowItem.cellHeight + root._textGap + (root.showCellTitle ? _titleMetrics.font.pixelSize + root._textGap : 0)
+                                    visible: rowItem.rowHasSubtitle
+                                    y: rowItem.cellHeight + root._textGap + (rowItem.rowHasTitle ? _titleMetrics.height + root._textGap : 0)
                                     width: rowItem.cellWidth
-                                    height: _subtitleMetrics.font.pixelSize
+                                    height: _subtitleMetrics.height
                                     text: {
                                         var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
                                         return (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function") ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
@@ -306,7 +332,7 @@ Item {
 
                                 ViciToolTip {
                                     readonly property string tooltipText: root.cmdModel ? root.cmdModel.cellTooltip(cellWrapper.cellSection, cellWrapper.cellItem) : ""
-                                    visible: cellMouseArea.containsMouse && tooltipText !== ""
+                                    visible: cellWrapper.cellHovered && tooltipText !== ""
                                     text: tooltipText
                                 }
                             }

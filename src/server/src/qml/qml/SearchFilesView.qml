@@ -7,16 +7,16 @@ Item {
     required property var host
 
     function moveUp() {
-        listView.moveUp();
+        return listView.moveUp();
     }
     function moveDown() {
-        listView.moveDown();
+        return listView.moveDown();
     }
     function moveSectionUp() {
-        listView.moveSectionUp();
+        return listView.moveSectionUp();
     }
     function moveSectionDown() {
-        listView.moveSectionDown();
+        return listView.moveSectionDown();
     }
 
     CommandListView {
@@ -38,7 +38,7 @@ Item {
                     value: root.host.detailName
                 },
                 {
-                    label: "Where",
+                    label: "Path",
                     value: root.host.detailPath
                 },
                 {

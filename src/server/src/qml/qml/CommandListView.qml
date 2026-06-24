@@ -11,11 +11,7 @@ GenericListView {
 
     emptyTitle: cmdModel && cmdModel.emptyTitle || "No results"
     emptyDescription: (cmdModel && cmdModel.emptyDescription) || ""
-    emptyIcon: {
-        var _ = Theme.foreground;
-        var icon = cmdModel ? (cmdModel.emptyIcon || "") : "";
-        return icon !== "" ? icon : "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground;
-    }
+    emptyIcon: cmdModel?.emptyIcon?.valid ? cmdModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 
     delegate: Loader {
         id: delegateLoader
@@ -29,6 +25,10 @@ GenericListView {
         required property string subtitle
         required property string iconSource
         required property var itemAccessory
+        required property string filePath
+        required property string fileUrl
+
+        Component.onCompleted: {}
 
         sourceComponent: isSection ? sectionComponent : itemComponent
 
@@ -53,6 +53,8 @@ GenericListView {
                 selected: commandListView.currentIndex === delegateLoader.index
                 onClicked: commandListView.currentIndex = delegateLoader.index
                 onActivated: commandListView.itemActivated(delegateLoader.index)
+                filePath: delegateLoader.filePath
+                fileUrl: delegateLoader.fileUrl
             }
         }
     }

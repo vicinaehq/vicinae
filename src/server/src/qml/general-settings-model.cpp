@@ -1,5 +1,5 @@
 #include "general-settings-model.hpp"
-#include "image-url.hpp"
+#include "config/config.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -7,9 +7,8 @@
 #include "favicon/favicon-service.hpp"
 #include "font-service.hpp"
 #ifdef Q_OS_LINUX
-#include "lib/icon-theme-db/icon-theme-db.hpp"
+#include "internal/icon-theme-db/icon-theme-db.hpp"
 #endif
-#include "services/keybinding/keybinding-service.hpp"
 #include <QGuiApplication>
 #include <QIcon>
 
@@ -34,6 +33,11 @@ void GeneralSettingsModel::setCloseOnFocusLoss(bool v) {
   cfgManager().mergeWithUser({.closeOnFocusLoss = v});
 }
 
+bool GeneralSettingsModel::closeOnEscape() const { return cfg().escapeKeyBehavior == "close_window"; }
+void GeneralSettingsModel::setCloseOnEscape(bool v) {
+  cfgManager().mergeWithUser({.escapeKeyBehavior = v ? std::string{"close_window"} : std::string{}});
+}
+
 bool GeneralSettingsModel::considerPreedit() const { return cfg().considerPreedit; }
 void GeneralSettingsModel::setConsiderPreedit(bool v) { cfgManager().mergeWithUser({.considerPreedit = v}); }
 
@@ -55,6 +59,12 @@ void GeneralSettingsModel::setTelemetrySystemInfo(bool v) {
   cfgManager().mergeWithUser({.telemetry = config::Partial<config::TelemetryConfig>{.systemInfo = v}});
 }
 
+bool GeneralSettingsModel::layerShellEnabled() const { return cfg().launcherWindow.layerShell.enabled; }
+void GeneralSettingsModel::setLayerShellEnabled(bool v) {
+  cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
+                                  .layerShell = config::Partial<config::LayerShellConfig>{.enabled = v}}});
+}
+
 bool GeneralSettingsModel::clientSideDecorations() const {
   return cfg().launcherWindow.clientSideDecorations.enabled;
 }
@@ -62,6 +72,54 @@ void GeneralSettingsModel::setClientSideDecorations(bool v) {
   cfgManager().mergeWithUser(
       {.launcherWindow = config::Partial<config::WindowConfig>{
            .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = v}}});
+}
+
+QString GeneralSettingsModel::csdRounding() const {
+  return QString::number(cfg().launcherWindow.clientSideDecorations.rounding);
+}
+void GeneralSettingsModel::setCsdRounding(const QString &v) {
+  bool ok = false;
+  int val = v.toInt(&ok);
+  if (ok)
+    cfgManager().mergeWithUser(
+        {.launcherWindow = config::Partial<config::WindowConfig>{
+             .clientSideDecorations = config::Partial<config::WindowCSD>{.rounding = val}}});
+}
+
+QString GeneralSettingsModel::csdBorderWidth() const {
+  return QString::number(cfg().launcherWindow.clientSideDecorations.borderWidth);
+}
+void GeneralSettingsModel::setCsdBorderWidth(const QString &v) {
+  bool ok = false;
+  int val = v.toInt(&ok);
+  if (ok)
+    cfgManager().mergeWithUser(
+        {.launcherWindow = config::Partial<config::WindowConfig>{
+             .clientSideDecorations = config::Partial<config::WindowCSD>{.borderWidth = val}}});
+}
+
+QString GeneralSettingsModel::csdShadowSize() const {
+  return QString::number(cfg().launcherWindow.clientSideDecorations.shadowSize);
+}
+void GeneralSettingsModel::setCsdShadowSize(const QString &v) {
+  bool ok = false;
+  int val = v.toInt(&ok);
+  if (ok)
+    cfgManager().mergeWithUser(
+        {.launcherWindow = config::Partial<config::WindowConfig>{
+             .clientSideDecorations = config::Partial<config::WindowCSD>{.shadowSize = val}}});
+}
+
+bool GeneralSettingsModel::compactMode() const { return cfg().launcherWindow.compactMode.enabled; }
+void GeneralSettingsModel::setCompactMode(bool v) {
+  cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
+                                  .compactMode = config::Partial<config::WindowCompactMode>{.enabled = v}}});
+}
+
+bool GeneralSettingsModel::inputServerEnabled() const { return cfg().inputServer.enabled; }
+
+void GeneralSettingsModel::setInputServerEnabled(bool v) {
+  cfgManager().mergeWithUser({.inputServer = config::Partial<config::InputServer>{.enabled = v}});
 }
 
 QString GeneralSettingsModel::windowOpacity() const { return QString::number(cfg().launcherWindow.opacity); }
@@ -120,11 +178,14 @@ QVariant GeneralSettingsModel::currentTheme() const {
 }
 
 QVariantList GeneralSettingsModel::fontItems() const {
-  QVariantList items;
-  for (const auto &family : ServiceRegistry::instance()->fontService()->families()) {
-    items.append(makeDropdownItem(family, family));
+  if (m_fontItems.isEmpty()) {
+    QVariantList items;
+    for (const auto &family : ServiceRegistry::instance()->fontService()->families()) {
+      items.append(makeDropdownItem(family, family));
+    }
+    m_fontItems = wrapSection(QStringLiteral("Fonts"), items);
   }
-  return wrapSection(QStringLiteral("Fonts"), items);
+  return m_fontItems;
 }
 
 QVariant GeneralSettingsModel::currentFont() const {
@@ -199,4 +260,13 @@ void GeneralSettingsModel::selectFaviconService(const QString &id) {
 
 void GeneralSettingsModel::selectKeybindingScheme(const QString &id) {
   cfgManager().mergeWithUser({.keybinding = id.toStdString()});
+}
+
+QString GeneralSettingsModel::toggleShortcut() const {
+  return QString::fromStdString(cfg().globalShortcuts.toggle.value_or(""));
+}
+
+void GeneralSettingsModel::setToggleShortcut(const QString &shortcut) {
+  cfgManager().mergeWithUser(
+      {.globalShortcuts = config::Partial<config::GlobalShortcuts>{.toggle = shortcut.toStdString()}});
 }

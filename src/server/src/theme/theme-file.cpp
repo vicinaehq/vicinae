@@ -3,7 +3,6 @@
 #include <expected>
 #include "theme.hpp"
 #include "theme/colors.hpp"
-#include "theme/theme-parser.hpp"
 #include "utils.hpp"
 #include <filesystem>
 #include <qfont.h>
@@ -52,8 +51,6 @@ QColor ThemeFile::resolve(SemanticColor color) const {
 }
 
 QString ThemeFile::resolveAsString(SemanticColor color) const { return Utils::rgbaFromColor(resolve(color)); }
-
-std::string ThemeFile::toToml() const { return ThemeSerializer().toToml(*this); }
 
 ThemeFile ThemeFile::vicinaeDark() {
   InitData data;
@@ -240,10 +237,6 @@ QColor ThemeFile::withAlphaF(const QColor &color, float alpha) {
   QColor col = color;
   col.setAlphaF(alpha);
   return col;
-}
-
-std::expected<ThemeFile, std::string> ThemeFile::fromFile(const fs::path &path) {
-  return ThemeParser().parse(path);
 }
 
 std::optional<std::filesystem::path> ThemeFile::path() const { return m_data.path; }

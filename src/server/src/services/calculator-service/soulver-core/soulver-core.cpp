@@ -2,7 +2,6 @@
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "xdgpp/env/env.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
-#include <cstdlib>
 #include <dlfcn.h>
 #include <filesystem>
 #include <QDebug>
@@ -57,11 +56,17 @@ std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
 }
 
 std::expected<AbstractCalculatorBackend::CalculatorResult, AbstractCalculatorBackend::CalculatorError>
-SoulverCoreCalculator::compute(const QString &question) {
+SoulverCoreCalculator::compute(const QString &question, const ComputeOptions &opts) {
+  const auto fail = [](auto &&reason) { return std::unexpected(CalculatorError{reason}); };
+
+  if (opts.mode == ComputeMode::MixedSearch && !isExpression(question.toStdString())) {
+    return fail("Invalid expression");
+  }
+
   auto soulverRes = calculate(question);
 
-  if (!soulverRes) { return std::unexpected(CalculatorError(soulverRes.error())); }
-  if (soulverRes.value().type == "none") return std::unexpected(CalculatorError("Result type is none"));
+  if (!soulverRes) return fail(soulverRes.error());
+  if (soulverRes.value().type == "none") return fail("Result type is none");
 
   CalculatorResult result;
 
@@ -72,9 +77,10 @@ SoulverCoreCalculator::compute(const QString &question) {
   return result;
 };
 
-QFuture<SoulverCoreCalculator::ComputeResult> SoulverCoreCalculator::asyncCompute(const QString &question) {
+QFuture<SoulverCoreCalculator::ComputeResult>
+SoulverCoreCalculator::asyncCompute(const QString &question, const ComputeOptions &opts) {
   QPromise<ComputeResult> promise;
-  promise.addResult(compute(question));
+  promise.addResult(compute(question, opts));
   promise.finish();
   return promise.future();
 }

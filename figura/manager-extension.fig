@@ -12,6 +12,11 @@ enum CommandEnv {
   Production
 };
 
+enum LaunchType {
+  User,
+  Background
+};
+
 struct LaunchEventData {
   extension_name: string;
   command_name: string;
@@ -23,6 +28,7 @@ struct LaunchEventData {
   argumentValues: any;
   is_raycast: bool;
   owner_or_author_name: string;
+  launch_type: LaunchType;
 };
 
 service Lifecycle {
@@ -30,4 +36,7 @@ service Lifecycle {
   fn shutdown() => bool;
   fn send_message(msg: string) => bool;
   event extension_message(msg: string);
+  
+  // worker can explicitly request to be unloaded. only applies to `no-view` commands which have a predictable termination point.
+  event unload_requested();
 }

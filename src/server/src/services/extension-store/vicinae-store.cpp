@@ -1,5 +1,5 @@
 #include "vicinae-store.hpp"
-#include "lib/glaze-qt.hpp"
+#include "internal/glaze-qt.hpp"
 #include "generated/version.h"
 #include "environment.hpp"
 #include "theme.hpp"

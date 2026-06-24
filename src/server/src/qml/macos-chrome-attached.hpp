@@ -52,6 +52,7 @@ private:
     bool opaque = true;
     void *backgroundColor = nullptr;
     bool hasShadow = true;
+    long animationBehavior = 0;
   };
 
   void apply();
@@ -107,6 +108,11 @@ public:
   int windowLevel() const { return m_windowLevel; }
   void setWindowLevel(int value);
 
+  // Show the launcher panel placed on the cursor's screen without AppKit's reveal-time slide:
+  // beginShow() hides and positions it before it is shown, finishShow() reveals it once settled.
+  Q_INVOKABLE void beginShow(qreal yFraction);
+  Q_INVOKABLE void finishShow(qreal yFraction);
+
 private:
   struct Snapshot {
     bool valid = false;
@@ -146,8 +152,13 @@ class MacOSPanel : public QObject {
   QML_ATTACHED(MacOSPanelAttached)
 
 public:
+  // Mirrors AppKit's NSWindowLevel constants.
+  enum WindowLevel { Normal = 0, Floating = 3, Status = 25, PopUpMenu = 101 };
+  Q_ENUM(WindowLevel)
+
   static MacOSPanelAttached *qmlAttachedProperties(QObject *object) { return new MacOSPanelAttached(object); }
 };
 
 void macosSetAccessoryActivationPolicy();
 void macosActivateApp();
+void macosReleaseMenuShortcuts();

@@ -6,7 +6,7 @@ name = "elementary OS Light"
 description = "Warm, soft elementary OS inspired light theme"
 variant = "light"
 inherits = "vicinae-light"
-icon = "icons/elementary@light.svg"
+icon = "icons/elementary.svg"
 
 [colors.core]
 accent = "#3689E6"
@@ -36,7 +36,6 @@ purple = "#7E57C2"
 [colors.list.item.selection]
 background = "#E7F2FD"
 secondary_background = "#D5E9FA"
-outline = "#3689E6" 
 
 [colors.scrollbars]
 background = "#CFCFCF"

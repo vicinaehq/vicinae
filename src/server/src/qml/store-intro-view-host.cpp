@@ -22,7 +22,7 @@ QVariantMap StoreIntroViewHost::qmlProperties() {
 void StoreIntroViewHost::initialize() {
   BaseView::initialize();
 
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
   auto action = new StaticAction(m_actionLabel, m_icon, m_continueAction);
   action->setPrimary(true);

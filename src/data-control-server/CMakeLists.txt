@@ -26,12 +26,12 @@ add_executable(${DATA_CONTROL_SERVER_BIN}
 target_include_directories(${DATA_CONTROL_SERVER_BIN} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_SOURCE_DIR}/src/common
 )
 
 target_link_libraries(${DATA_CONTROL_SERVER_BIN} PRIVATE
   glaze::glaze
   wayland-client
+  vicinae::common
 )
 
 install(TARGETS ${DATA_CONTROL_SERVER_BIN}

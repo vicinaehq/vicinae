@@ -1,10 +1,56 @@
 #include "qt-clipboard-server.hpp"
+#include <QBuffer>
+#include <QImage>
+#include <QPixmap>
 #include <qlogging.h>
 #include <ranges>
 
 namespace {
 constexpr const char *CONCEALED_MARKER = "vicinae/concealed";
 constexpr const char *PASSWORD_MARKER = "x-kde-passwordManagerHint";
+
+std::optional<ClipboardDataOffer> imageOfferFromMimeData(const QMimeData *mimeData) {
+  auto formats = mimeData->formats();
+  QString selectedFormat;
+
+  if (formats.contains("image/png")) {
+    selectedFormat = "image/png";
+  } else if (formats.contains("image/jpeg")) {
+    selectedFormat = "image/jpeg";
+  } else if (formats.contains("image/jpg")) {
+    selectedFormat = "image/jpg";
+  } else if (formats.contains("image/svg+xml")) {
+    selectedFormat = "image/svg+xml";
+  } else {
+    for (const auto &format : formats) {
+      if (format.startsWith("image/")) {
+        selectedFormat = format;
+        break;
+      }
+    }
+  }
+
+  if (!selectedFormat.isEmpty()) {
+    return ClipboardDataOffer{.mimeType = selectedFormat, .data = mimeData->data(selectedFormat)};
+  }
+
+  QVariant imageData = mimeData->imageData();
+  QImage image = qvariant_cast<QImage>(imageData);
+  if (image.isNull()) {
+    auto pixmap = qvariant_cast<QPixmap>(imageData);
+    if (!pixmap.isNull()) { image = pixmap.toImage(); }
+  }
+
+  if (image.isNull()) return std::nullopt;
+
+  QByteArray encodedImage;
+  QBuffer buffer(&encodedImage);
+  if (!buffer.open(QIODevice::WriteOnly)) return std::nullopt;
+
+  if (!image.save(&buffer, "PNG")) return std::nullopt;
+
+  return ClipboardDataOffer{.mimeType = "image/png", .data = std::move(encodedImage)};
+}
 } // namespace
 
 bool AbstractQtClipboardServer::start() {
@@ -36,33 +82,8 @@ AbstractQtClipboardServer::selectionFromMimeData(const QMimeData *mimeData) {
   selection.isPassword = mimeData->hasFormat(PASSWORD_MARKER);
 
   if (mimeData->hasImage()) {
-    // Prefer image formats in order: PNG > JPEG/JPG > SVG > anything else
-    auto formats = mimeData->formats();
-    QString selectedFormat;
-
-    if (formats.contains("image/png")) {
-      selectedFormat = "image/png";
-    } else if (formats.contains("image/jpeg")) {
-      selectedFormat = "image/jpeg";
-    } else if (formats.contains("image/jpg")) {
-      selectedFormat = "image/jpg";
-    } else if (formats.contains("image/svg+xml")) {
-      selectedFormat = "image/svg+xml";
-    } else {
-      // Find any other image format
-      for (const auto &format : formats) {
-        if (format.startsWith("image/")) {
-          selectedFormat = format;
-          break;
-        }
-      }
-    }
-
-    if (!selectedFormat.isEmpty()) {
-      ClipboardDataOffer offer;
-      offer.mimeType = selectedFormat;
-      offer.data = mimeData->data(selectedFormat);
-      selection.offers.emplace_back(offer);
+    if (auto imageOffer = imageOfferFromMimeData(mimeData)) {
+      selection.offers.emplace_back(std::move(*imageOffer));
     }
   }
 

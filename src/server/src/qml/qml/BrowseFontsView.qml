@@ -1,82 +1,24 @@
 import QtQuick
-import QtQuick.Layouts
 import Vicinae
 
-Item {
-    id: root
-    required property var host
+GenericGridView {
+    columns: 6
+    cellInset: 0.18
+    showCellTitle: true
 
-    function moveUp() {
-        listView.moveUp();
-    }
-    function moveDown() {
-        listView.moveDown();
-    }
-    function moveSectionUp() {
-        listView.moveSectionUp();
-    }
-    function moveSectionDown() {
-        listView.moveSectionDown();
-    }
+    cellDelegate: Component {
+        Item {
+            id: cellRoot
+            readonly property var model: parent ? parent.cmdModel : null
+            readonly property int sec: parent ? parent.cellSection : 0
+            readonly property int item: parent ? parent.cellItem : 0
 
-    GenericListView {
-        id: listView
-        anchors.fill: parent
-
-        listModel: root.host.listModel
-        model: root.host.listModel
-        autoWireModel: true
-        detailComponent: detailPanel
-        detailVisible: root.host.selectedFont !== ""
-
-        delegate: Loader {
-            id: delegateLoader
-            width: ListView.view.width
-
-            required property int index
-            required property bool isSection
-            required property bool isSelectable
-            required property string sectionName
-            required property string title
-            required property string subtitle
-            required property string iconSource
-            required property var itemAccessory
-
-            sourceComponent: isSection ? sectionComponent : itemComponent
-
-            Component {
-                id: sectionComponent
-                SectionHeader {
-                    width: delegateLoader.width
-                    text: delegateLoader.sectionName
-                }
+            ViciImage {
+                anchors.fill: parent
+                source: cellRoot.model ? cellRoot.model.fontIcon(cellRoot.sec, cellRoot.item) : ""
+                fillMode: Image.PreserveAspectFit
+                sourceSize: Qt.size(96, 96)
             }
-
-            Component {
-                id: itemComponent
-                ListItemDelegate {
-                    width: delegateLoader.width
-                    itemTitle: delegateLoader.title
-                    itemSubtitle: delegateLoader.subtitle
-                    itemIconSource: delegateLoader.iconSource
-                    itemAlias: ""
-                    itemIsActive: false
-                    itemAccessory: delegateLoader.itemAccessory
-                    selected: listView.currentIndex === delegateLoader.index
-                    onClicked: listView.currentIndex = delegateLoader.index
-                    onActivated: listView.itemActivated(delegateLoader.index)
-                }
-            }
-        }
-    }
-
-    Component {
-        id: detailPanel
-
-        MarkdownText {
-            anchors.fill: parent
-            markdown: root.host.showcaseMarkdown
-            fontFamily: root.host.selectedFont
         }
     }
 }

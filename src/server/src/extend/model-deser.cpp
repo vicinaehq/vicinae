@@ -25,7 +25,7 @@
 #include "extend/root-detail-model.hpp"
 #include "extend/tag-model.hpp"
 #include "glaze-qt.hpp"
-#include "lib/keyboard/keyboard.hpp"
+#include "internal/keyboard/keyboard.hpp"
 #include "theme.hpp"
 #include "ui/image/url.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
@@ -66,7 +66,7 @@ struct ImageObjectWire {
   std::optional<ImageSourceVariant> source;
   std::optional<ImageSourceVariant> fallback;
   std::optional<ColorLikeWire> tintColor;
-  std::optional<std::string> mask;
+  std::optional<OmniPainter::ImageMaskType> mask;
   std::optional<std::string> fileIcon;
 };
 
@@ -99,7 +99,7 @@ struct GridContentObjWire {
   std::optional<ImageSourceVariant> source;
   std::optional<ImageSourceVariant> fallback;
   std::optional<ColorLikeWire> tintColor;
-  std::optional<std::string> mask;
+  std::optional<OmniPainter::ImageMaskType> mask;
   std::optional<std::string> fileIcon;
 };
 
@@ -110,7 +110,7 @@ struct ImageWrappedObjWire {
   std::optional<ImageSourceVariant> source;
   std::optional<ImageSourceVariant> fallback;
   std::optional<ColorLikeWire> tintColor;
-  std::optional<std::string> mask;
+  std::optional<OmniPainter::ImageMaskType> mask;
   std::optional<std::string> fileIcon;
 };
 
@@ -130,7 +130,7 @@ template <> struct glz::meta<GridInset> {
 template <> struct glz::meta<OmniPainter::ImageMaskType> {
   using enum OmniPainter::ImageMaskType;
   static constexpr auto value =
-      glz::enumerate("circle", CircleMask, "roundedRectangle", RoundedRectangleMask);
+      glz::enumerate("None", NoMask, "Circle", CircleMask, "RoundedRectangle", RoundedRectangleMask);
 };
 
 struct ShortcutObjWire {
@@ -440,7 +440,7 @@ static ImageLikeModel toImageLike(ImageLikeWire v) {
           model.source = toImageSource(std::move(*w.source));
           if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
           if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
-          if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+          if (w.mask) model.mask = *w.mask;
           return model;
         }
         if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
@@ -468,7 +468,7 @@ static ImageLikeModel toImageWrapped(ImageWrappedWire v) {
           model.source = toImageSource(std::move(*w.source));
           if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
           if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
-          if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+          if (w.mask) model.mask = *w.mask;
           return model;
         }
         if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
@@ -489,7 +489,7 @@ static GridItemViewModel::Content toGridContent(GridContentWire v, std::optional
           model.source = toImageSource(std::move(*w.source));
           if (w.fallback) model.fallback = toImageSource(std::move(*w.fallback));
           if (w.tintColor) model.tintColor = toColorLike(std::move(*w.tintColor));
-          if (w.mask) model.mask = OmniPainter::maskForName(toQStr(*w.mask));
+          if (w.mask) model.mask = *w.mask;
           return model;
         }
         if (w.fileIcon) return ExtensionFileIconModel{.file = *w.fileIcon};
@@ -1144,6 +1144,7 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
 
   thread_local RenderPayload payload;
   payload.views.clear();
+
   if (auto err = glz::read<PARSE_OPTS>(payload, json)) {
     qWarning() << "parseRenderPayload: failed:" << QString::fromStdString(glz::format_error(err, json));
     return {};
@@ -1185,9 +1186,9 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
   auto t2 = std::chrono::steady_clock::now();
   auto parseMs = std::chrono::duration<double, std::milli>(t1 - t0).count();
   auto convertMs = std::chrono::duration<double, std::milli>(t2 - t1).count();
-  qWarning().nospace() << "[PERF] parseRenderPayload: glaze=" << parseMs << "ms, convert=" << convertMs
-                       << "ms, total=" << (parseMs + convertMs)
-                       << "ms, json=" << (json.size() / 1024.0 / 1024.0) << "MB";
+  qDebug().nospace() << "[PERF] parseRenderPayload: glaze=" << parseMs << "ms, convert=" << convertMs
+                     << "ms, total=" << (parseMs + convertMs)
+                     << "ms, json=" << (json.size() / 1024.0 / 1024.0) << "MB";
 
   return result;
 }

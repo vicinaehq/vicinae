@@ -20,7 +20,7 @@ SearchableDropdown {
     currentItem: {
         var idx = launcher.commandViewHost ? launcher.commandViewHost.currentKindFilter : 0;
         return {
-            id: idx.toString(),
+            id: idx?.toString() ?? 'unknown',
             displayName: _options[idx]
         };
     }

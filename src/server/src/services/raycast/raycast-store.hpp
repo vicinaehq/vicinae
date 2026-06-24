@@ -9,7 +9,7 @@
 #include <expected>
 #include <unordered_map>
 #include <vector>
-#include "lib/http-client.hpp"
+#include "internal/http-client.hpp"
 
 namespace Raycast {
 

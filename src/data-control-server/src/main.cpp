@@ -5,7 +5,7 @@
 #include <glaze/glaze.hpp>
 #include "ext-data-control-v1-client-protocol.h"
 #include "ext/clipman.hpp"
-#include "clipboard-protocol.hpp"
+#include "common/clipboard-protocol.hpp"
 
 static void writeSelection(const clipboard_proto::Selection &selection) {
   std::string buf;

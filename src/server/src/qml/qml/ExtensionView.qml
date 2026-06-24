@@ -95,11 +95,7 @@ Item {
 
                 emptyTitle: root.host.contentModel.emptyTitle || "No results"
                 emptyDescription: root.host.contentModel.emptyDescription || ""
-                emptyIcon: {
-                    var _ = Theme.foreground;
-                    var icon = root.host.contentModel.emptyIcon || "";
-                    return icon !== "" ? icon : "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground;
-                }
+                emptyIcon: root.host.contentModel.emptyIcon?.valid ? root.host.contentModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 
                 detailComponent: detailPanel
                 detailVisible: root.host.contentModel.isShowingDetail && root.host.contentModel.hasDetail

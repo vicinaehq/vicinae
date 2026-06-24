@@ -1,6 +1,7 @@
 #include "keybind-settings-model.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
+#include "shortcut-conflict.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include <algorithm>
 #include <utility>
@@ -76,13 +77,13 @@ void KeybindSettingsModel::moveDown() {
 
 static QVariantList shortcutTokens(const Keyboard::Shortcut &shortcut) { return shortcut.toDisplayTokens(); }
 
-QString KeybindSettingsModel::validateShortcut(int key, int modifiers) const {
+QString KeybindSettingsModel::validateShortcut(int row, int key, int modifiers) const {
   Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key), static_cast<Qt::KeyboardModifiers>(modifiers));
-  if (!shortcut.hasMods() && !shortcut.isFunctionKey()) return QStringLiteral("Modifier required");
-  if (auto existing = KeybindManager::instance()->findBoundInfo(shortcut)) {
-    return QStringLiteral("Already bound to \"%1\"").arg(existing->name);
+  QString excludeId;
+  if (row >= 0 && std::cmp_less(row, m_entries.size())) {
+    excludeId = KeybindManager::instance()->idFor(static_cast<Keybind>(m_entries[row].keybindId));
   }
-  return {};
+  return shortcut_conflict::validate(shortcut, excludeId);
 }
 
 void KeybindSettingsModel::setShortcut(int row, int key, int modifiers) {

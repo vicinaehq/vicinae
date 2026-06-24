@@ -6,12 +6,25 @@ Item {
     id: root
     readonly property var extModel: settings.extensionModel
     readonly property string providerId: settings.currentPage
-    readonly property real contentWidth: Math.min(width, 680)
+    readonly property real contentWidth: Math.min(width, 720)
     readonly property real sideMargin: (width - contentWidth) / 2
+    property string expandedCommandId: ""
+    property string _focusedCommandId: ""
+
+    Timer {
+        id: focusFlash
+        interval: 2000
+        onTriggered: root._focusedCommandId = ""
+    }
+
     Component.onCompleted: {
         root.extModel.commandModel.setFilter("");
         root.extModel.selectProviderById(root.providerId);
         _handlePendingCommand();
+    }
+
+    HoverResetOnModelChange {
+        target: root.extModel ? root.extModel.commandModel : null
     }
 
     function _handlePendingCommand() {
@@ -23,6 +36,8 @@ Item {
             return;
         settings.pendingCommandId = "";
         root.expandedCommandId = pending;
+        root._focusedCommandId = pending;
+        focusFlash.restart();
         root.extModel.loadCommandPreferences(pending);
         Qt.callLater(() => {
             if (cmdFlickable)
@@ -37,22 +52,21 @@ Item {
         }
     }
 
-    property string expandedCommandId: ""
-
     Flickable {
         id: cmdFlickable
         anchors.fill: parent
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        property real _minContentHeight: 0
-        contentHeight: Math.max(contentColumn.implicitHeight, _minContentHeight)
+        contentHeight: contentColumn.implicitHeight
         contentWidth: width
 
         function scrollToIndex(row) {
             const item = cmdRepeater.itemAt(row);
             if (!item)
                 return;
-            contentY = Math.max(0, Math.min(item.y - (height - item.height) / 2, contentHeight - height));
+            // Map into the Flickable content so the header above the list counts.
+            const y = item.mapToItem(cmdFlickable.contentItem, 0, 0).y;
+            contentY = Math.max(0, Math.min(y - 24, contentHeight - height));
         }
 
         ScrollBar.vertical: ViciScrollBar {
@@ -69,15 +83,12 @@ Item {
                 Layout.fillWidth: true
                 Layout.leftMargin: root.sideMargin + 20
                 Layout.rightMargin: root.sideMargin + 20
-                Layout.topMargin: 16
+                Layout.topMargin: 24
                 spacing: 0
 
-                Text {
+                SettingsSectionLabel {
                     text: "Description"
-                    color: Theme.foreground
-                    font.pointSize: Theme.regularFontSize
-                    font.bold: true
-                    Layout.bottomMargin: 8
+                    Layout.bottomMargin: 10
                 }
 
                 Text {
@@ -87,16 +98,6 @@ Item {
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
                 }
-
-                Item {
-                    implicitHeight: 16
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: Theme.divider
-                }
             }
 
             // Provider preferences
@@ -105,300 +106,217 @@ Item {
                 Layout.fillWidth: true
                 Layout.leftMargin: root.sideMargin + 20
                 Layout.rightMargin: root.sideMargin + 20
-                Layout.topMargin: 16
+                Layout.topMargin: 24
                 spacing: 0
 
-                Text {
+                SettingsSectionLabel {
                     text: "Preferences"
-                    color: Theme.foreground
-                    font.pointSize: Theme.regularFontSize
-                    font.bold: true
-                    Layout.bottomMargin: 12
+                    Layout.bottomMargin: 10
                 }
 
-                SettingsPreferenceForm {
-                    Layout.fillWidth: true
-                    prefModel: root.extModel.preferenceModel
-                }
-
-                Item {
-                    implicitHeight: 16
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: Theme.divider
+                SettingsGroup {
+                    SettingsPreferenceForm {
+                        Layout.fillWidth: true
+                        prefModel: root.extModel.preferenceModel
+                    }
                 }
             }
 
-            // Commands section title + search
-            RowLayout {
+            SettingsSectionLabel {
                 visible: root.extModel.commandModel.totalCount > 0
+                text: "Commands"
                 Layout.fillWidth: true
                 Layout.leftMargin: root.sideMargin + 20
                 Layout.rightMargin: root.sideMargin + 20
-                Layout.topMargin: 16
-                Layout.bottomMargin: 8
-                spacing: 8
-
-                Text {
-                    text: "Commands"
-                    color: Theme.foreground
-                    font.pointSize: Theme.regularFontSize
-                    font.bold: true
-                    Layout.fillWidth: true
-                }
-
-                Rectangle {
-                    Layout.preferredWidth: 160
-                    height: 24
-                    radius: 4
-                    color: "transparent"
-                    border.color: cmdSearchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
-                    border.width: 1
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 6
-                        anchors.rightMargin: 6
-                        spacing: 4
-
-                        Image {
-                            source: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.textMuted
-                            sourceSize.width: 10
-                            sourceSize.height: 10
-                            Layout.preferredWidth: 10
-                            Layout.preferredHeight: 10
-                        }
-
-                        TextField {
-                            id: cmdSearchField
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            verticalAlignment: TextInput.AlignVCenter
-                            font.pointSize: Theme.smallerFontSize
-                            color: Theme.foreground
-                            placeholderText: "Filter..."
-                            placeholderTextColor: Theme.textPlaceholder
-                            background: null
-                            padding: 0
-                            activeFocusOnTab: true
-
-                            Timer {
-                                id: cmdFilterDebounce
-                                interval: 16
-                                onTriggered: root.extModel.commandModel.setFilter(cmdSearchField.text)
-                            }
-
-                            onTextChanged: {
-                                cmdFlickable._minContentHeight = cmdFlickable.contentHeight;
-                                cmdFilterDebounce.restart();
-                            }
-                            onActiveFocusChanged: {
-                                if (!activeFocus)
-                                    cmdFlickable._minContentHeight = 0;
-                            }
-                            Keys.onPressed: event => {
-                                if (event.key === Qt.Key_Escape && text !== "") {
-                                    text = "";
-                                    event.accepted = true;
-                                }
-                            }
-                        }
-                    }
-                }
+                Layout.topMargin: 24
+                Layout.bottomMargin: 10
             }
 
             // Command list
-            Repeater {
-                id: cmdRepeater
-                model: root.extModel.commandModel
+            SettingsGroup {
+                visible: root.extModel.commandModel.totalCount > 0
+                Layout.leftMargin: root.sideMargin + 20
+                Layout.rightMargin: root.sideMargin + 20
 
-                delegate: Column {
-                    id: cmdDelegate
-                    Layout.fillWidth: true
+                Repeater {
+                    id: cmdRepeater
+                    model: root.extModel.commandModel
 
-                    required property int index
-                    required property string name
-                    required property string type
-                    required property string iconSource
-                    required property string description
-                    required property bool enabled
-                    required property string alias
-                    required property string entrypointId
-                    required property bool hasPreferences
+                    delegate: Column {
+                        id: cmdDelegate
+                        Layout.fillWidth: true
 
-                    readonly property bool isExpanded: root.expandedCommandId === entrypointId
+                        required property int index
+                        required property string name
+                        required property string type
+                        required property string iconSource
+                        required property string description
+                        required property bool enabled
+                        required property string alias
+                        required property string entrypointId
+                        required property bool hasPreferences
+                        required property string shortcut
 
-                    SourceBlendRect {
-                        width: parent.width
-                        height: cmdRow.implicitHeight + 16
-                        backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-                        color: cmdHover.hovered ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                        readonly property bool isExpanded: root.expandedCommandId === entrypointId
 
-                        HoverHandler {
-                            id: cmdHover
-                        }
-                        TapHandler {
-                            onTapped: {
-                                if (cmdDelegate.isExpanded) {
-                                    root.expandedCommandId = "";
-                                } else {
-                                    root.expandedCommandId = cmdDelegate.entrypointId;
-                                    if (cmdDelegate.hasPreferences)
+                        Item {
+                            width: parent.width
+                            height: cmdRow.implicitHeight + 16
+
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+                                anchors.topMargin: 2
+                                anchors.bottomMargin: 2
+                                radius: 8
+                                color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.1)
+                                opacity: cmdDelegate.entrypointId === root._focusedCommandId ? 1 : 0
+                                visible: opacity > 0
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: 150
+                                    }
+                                }
+                            }
+
+                            TapHandler {
+                                enabled: cmdDelegate.hasPreferences
+                                onTapped: {
+                                    if (cmdDelegate.isExpanded) {
+                                        root.expandedCommandId = "";
+                                    } else {
+                                        root.expandedCommandId = cmdDelegate.entrypointId;
                                         root.extModel.loadCommandPreferences(cmdDelegate.entrypointId);
+                                    }
                                 }
                             }
-                        }
 
-                        RowLayout {
-                            id: cmdRow
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: root.sideMargin + 20
-                            anchors.rightMargin: root.sideMargin + 20
-                            spacing: 10
+                            RowLayout {
+                                id: cmdRow
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
+                                spacing: 10
 
-                            ViciImage {
-                                source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small").withFillColor(Theme.textMuted)
-                                opacity: cmdDelegate.hasPreferences ? 1.0 : 0.25
-                                Layout.preferredWidth: 16
-                                Layout.preferredHeight: 16
-                            }
-
-                            ViciImage {
-                                source: cmdDelegate.iconSource
-                                Layout.preferredWidth: 24
-                                Layout.preferredHeight: 24
-                            }
-
-                            Text {
-                                text: cmdDelegate.name
-                                color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
-                                font.pointSize: Theme.regularFontSize
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-
-                            TextField {
-                                id: cmdAliasInput
-                                Layout.preferredWidth: 120
-                                implicitHeight: 24
-                                font.pointSize: Theme.smallerFontSize
-                                color: Theme.foreground
-                                horizontalAlignment: TextInput.AlignHCenter
-                                placeholderText: "Add Alias"
-                                placeholderTextColor: Theme.textPlaceholder
-                                activeFocusOnTab: false
-                                padding: 0
-                                leftPadding: 6
-                                rightPadding: 6
-                                text: cmdDelegate.alias
-
-                                background: Rectangle {
-                                    radius: 4
-                                    color: "transparent"
-                                    border.color: cmdAliasInput.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
-                                    border.width: cmdAliasInput.activeFocus || cmdAliasInput.hovered ? 1 : 0
+                                ViciImage {
+                                    source: cmdDelegate.iconSource
+                                    Layout.preferredWidth: 22
+                                    Layout.preferredHeight: 22
                                 }
-
-                                HoverHandler {
-                                    id: aliasHover
-                                }
-
-                                onActiveFocusChanged: {
-                                    if (!activeFocus)
-                                        root.extModel.setAliasByEntrypointId(cmdDelegate.entrypointId, text);
-                                }
-                                onAccepted: root.extModel.setAliasByEntrypointId(cmdDelegate.entrypointId, text)
-                            }
-
-                            Rectangle {
-                                Layout.preferredWidth: 20
-                                Layout.preferredHeight: 20
-                                radius: 4
-                                color: cmdDelegate.enabled ? Theme.accent : "transparent"
-                                border.color: cmdDelegate.enabled ? Theme.accent : Theme.inputBorder
-                                border.width: 1
 
                                 Text {
-                                    anchors.centerIn: parent
-                                    text: "\u2713"
-                                    color: "#ffffff"
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                    visible: cmdDelegate.enabled
+                                    text: cmdDelegate.name
+                                    color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
+                                    font.pointSize: Theme.regularFontSize
+                                    elide: Text.ElideRight
+                                    Layout.maximumWidth: cmdRow.width * 0.55
                                 }
 
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.extModel.setEnabledByEntrypointId(cmdDelegate.entrypointId, !cmdDelegate.enabled)
-                                }
-                            }
-                        }
-                    }
-
-                    // Expanded section (lazy)
-                    Loader {
-                        active: cmdDelegate.isExpanded
-                        visible: active
-                        width: parent.width
-
-                        sourceComponent: Rectangle {
-                            implicitHeight: expandedContent.implicitHeight + 24
-                            color: "transparent"
-
-                            Rectangle {
-                                anchors.top: parent.top
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.leftMargin: root.sideMargin + 20
-                                anchors.rightMargin: root.sideMargin + 20
-                                height: 1
-                                color: Theme.divider
-                            }
-
-                            ColumnLayout {
-                                id: expandedContent
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                anchors.leftMargin: root.sideMargin + 52
-                                anchors.rightMargin: root.sideMargin + 20
-                                anchors.topMargin: 12
-                                spacing: 8
-
-                                SettingsPreferenceForm {
+                                ViciImage {
                                     visible: cmdDelegate.hasPreferences
-                                    Layout.fillWidth: true
-                                    prefModel: root.extModel.commandPreferenceModel
+                                    source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small").withFillColor(Theme.textMuted)
+                                    Layout.preferredWidth: 16
+                                    Layout.preferredHeight: 16
                                 }
 
-                                Text {
-                                    visible: !cmdDelegate.hasPreferences
-                                    text: "No configurable preferences for this command."
-                                    color: Theme.textMuted
-                                    font.pointSize: Theme.smallerFontSize
+                                Item {
+                                    Layout.fillWidth: true
+                                }
+
+                                ShortcutField {
+                                    visible: settings.globalShortcutsSupported
+                                    bordered: false
+                                    placeholder: "Shortcut"
+                                    shortcutId: cmdDelegate.entrypointId
+                                    shortcut: cmdDelegate.shortcut
+                                    onAccepted: shortcut => root.extModel.setShortcutByEntrypointId(cmdDelegate.entrypointId, shortcut)
+                                    onCleared: root.extModel.clearShortcutByEntrypointId(cmdDelegate.entrypointId)
+                                }
+
+                                InlineEditableText {
+                                    Layout.preferredWidth: 120
+                                    Layout.preferredHeight: 24
+                                    text: cmdDelegate.alias
+                                    placeholder: "Add Alias"
+                                    onCommitted: value => root.extModel.setAliasByEntrypointId(cmdDelegate.entrypointId, value)
+                                }
+
+                                Rectangle {
+                                    Layout.preferredWidth: 20
+                                    Layout.preferredHeight: 20
+                                    radius: 4
+                                    color: cmdDelegate.enabled ? Theme.accent : "transparent"
+                                    border.color: Config.withAlpha(cmdDelegate.enabled ? Theme.accent : Theme.inputBorder, Config.windowOpacity)
+                                    border.width: 1
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "✓"
+                                        color: "#ffffff"
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        visible: cmdDelegate.enabled
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.extModel.setEnabledByEntrypointId(cmdDelegate.entrypointId, !cmdDelegate.enabled)
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    // Row separator
-                    Rectangle {
-                        visible: cmdDelegate.index < root.extModel.commandModel.count - 1
-                        width: parent.width
-                        height: 1
-                        color: Theme.divider
+                        // Expanded preferences (lazy)
+                        Loader {
+                            active: cmdDelegate.isExpanded && cmdDelegate.hasPreferences
+                            visible: active
+                            width: parent.width
+
+                            sourceComponent: Rectangle {
+                                implicitHeight: expandedContent.implicitHeight + 24
+                                color: "transparent"
+
+                                ViciDivider {
+                                    anchors.top: parent.top
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.leftMargin: 16
+                                    anchors.rightMargin: 16
+                                }
+
+                                ColumnLayout {
+                                    id: expandedContent
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.leftMargin: 34
+                                    anchors.rightMargin: 16
+                                    anchors.topMargin: 12
+                                    spacing: 8
+
+                                    SettingsPreferenceForm {
+                                        Layout.fillWidth: true
+                                        prefModel: root.extModel.commandPreferenceModel
+                                    }
+                                }
+                            }
+                        }
+
+                        ViciDivider {
+                            visible: cmdDelegate.index < root.extModel.commandModel.count - 1
+                            x: 16
+                            width: parent.width - 32
+                        }
                     }
                 }
             }
 
             Item {
-                implicitHeight: 4
+                Layout.preferredHeight: 24
             }
         }
     }

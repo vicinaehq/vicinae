@@ -44,7 +44,7 @@ public:
 
 class OpenItemPreferencesAction : public AbstractAction {
 public:
-  OpenItemPreferencesAction(const EntrypointId &id) : m_id(id) { setShortcut(Keybind::OpenSettings); }
+  OpenItemPreferencesAction(const EntrypointId &id) : m_id(id) {}
 
   void execute(ApplicationContext *context) override;
   QString title() const override { return "Open Preferences"; }

@@ -8,7 +8,9 @@ class GeneralSettingsModel : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(bool searchFilesInRoot READ searchFilesInRoot WRITE setSearchFilesInRoot NOTIFY configChanged)
+  Q_PROPERTY(bool inputServerEnabled READ inputServerEnabled WRITE setInputServerEnabled NOTIFY configChanged)
   Q_PROPERTY(bool closeOnFocusLoss READ closeOnFocusLoss WRITE setCloseOnFocusLoss NOTIFY configChanged)
+  Q_PROPERTY(bool closeOnEscape READ closeOnEscape WRITE setCloseOnEscape NOTIFY configChanged)
   Q_PROPERTY(bool considerPreedit READ considerPreedit WRITE setConsiderPreedit NOTIFY configChanged)
   Q_PROPERTY(bool popToRootOnClose READ popToRootOnClose WRITE setPopToRootOnClose NOTIFY configChanged)
   Q_PROPERTY(bool popOnBackspace READ popOnBackspace WRITE setPopOnBackspace NOTIFY configChanged)
@@ -16,14 +18,19 @@ class GeneralSettingsModel : public QObject {
                  configChanged)
   Q_PROPERTY(
       bool telemetrySystemInfo READ telemetrySystemInfo WRITE setTelemetrySystemInfo NOTIFY configChanged)
+  Q_PROPERTY(bool layerShellEnabled READ layerShellEnabled WRITE setLayerShellEnabled NOTIFY configChanged)
   Q_PROPERTY(bool clientSideDecorations READ clientSideDecorations WRITE setClientSideDecorations NOTIFY
                  configChanged)
+  Q_PROPERTY(QString csdRounding READ csdRounding WRITE setCsdRounding NOTIFY configChanged)
+  Q_PROPERTY(QString csdBorderWidth READ csdBorderWidth WRITE setCsdBorderWidth NOTIFY configChanged)
+  Q_PROPERTY(QString csdShadowSize READ csdShadowSize WRITE setCsdShadowSize NOTIFY configChanged)
+  Q_PROPERTY(bool compactMode READ compactMode WRITE setCompactMode NOTIFY configChanged)
   Q_PROPERTY(QString windowOpacity READ windowOpacity WRITE setWindowOpacity NOTIFY configChanged)
   Q_PROPERTY(
       bool nativeTextRendering READ nativeTextRendering WRITE setNativeTextRendering NOTIFY configChanged)
   Q_PROPERTY(QString fontSize READ fontSize WRITE setFontSize NOTIFY configChanged)
   Q_PROPERTY(QVariantList themeItems READ themeItems NOTIFY configChanged)
-  Q_PROPERTY(QVariantList fontItems READ fontItems NOTIFY configChanged)
+  Q_PROPERTY(QVariantList fontItems READ fontItems CONSTANT)
   Q_PROPERTY(QVariantList iconThemeItems READ iconThemeItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList faviconServiceItems READ faviconServiceItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList keybindingSchemeItems READ keybindingSchemeItems NOTIFY configChanged)
@@ -32,6 +39,7 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(QVariant currentIconTheme READ currentIconTheme NOTIFY configChanged)
   Q_PROPERTY(QVariant currentFaviconService READ currentFaviconService NOTIFY configChanged)
   Q_PROPERTY(QVariant currentKeybindingScheme READ currentKeybindingScheme NOTIFY configChanged)
+  Q_PROPERTY(QString toggleShortcut READ toggleShortcut WRITE setToggleShortcut NOTIFY configChanged)
 
 signals:
   void configChanged();
@@ -43,6 +51,8 @@ public:
   void setSearchFilesInRoot(bool v);
   bool closeOnFocusLoss() const;
   void setCloseOnFocusLoss(bool v);
+  bool closeOnEscape() const;
+  void setCloseOnEscape(bool v);
   bool considerPreedit() const;
   void setConsiderPreedit(bool v);
   bool popToRootOnClose() const;
@@ -53,12 +63,24 @@ public:
   void setActivateOnSingleClick(bool v);
   bool telemetrySystemInfo() const;
   void setTelemetrySystemInfo(bool v);
+  bool layerShellEnabled() const;
+  void setLayerShellEnabled(bool v);
   bool clientSideDecorations() const;
   void setClientSideDecorations(bool v);
+  QString csdRounding() const;
+  void setCsdRounding(const QString &v);
+  QString csdBorderWidth() const;
+  void setCsdBorderWidth(const QString &v);
+  QString csdShadowSize() const;
+  void setCsdShadowSize(const QString &v);
+  bool compactMode() const;
+  void setCompactMode(bool v);
   QString windowOpacity() const;
   void setWindowOpacity(const QString &v);
   bool nativeTextRendering() const;
   void setNativeTextRendering(bool v);
+  bool inputServerEnabled() const;
+  void setInputServerEnabled(bool v);
   QString fontSize() const;
   void setFontSize(const QString &v);
 
@@ -79,7 +101,12 @@ public:
   Q_INVOKABLE void selectFaviconService(const QString &id);
   Q_INVOKABLE void selectKeybindingScheme(const QString &id);
 
+  QString toggleShortcut() const;
+  void setToggleShortcut(const QString &shortcut);
+
 private:
   const config::ConfigValue &cfg() const;
   config::Manager &cfgManager() const;
+
+  mutable QVariantList m_fontItems;
 };

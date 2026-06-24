@@ -208,7 +208,7 @@ void RaycastStoreDetailHost::openUrl(const QString &url) {
 QString RaycastStoreDetailHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
 
 void RaycastStoreDetailHost::createActions() {
-  auto panel = std::make_unique<FormActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto main = panel->createSection();
 
   if (!m_isInstalled) {

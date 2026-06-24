@@ -1,5 +1,6 @@
 #pragma once
 #include "extend/list-model.hpp"
+#include "image-url.hpp"
 #include "extension/extension-action-panel-builder.hpp"
 #include "fuzzy/scored.hpp"
 #include "section-list-model.hpp"
@@ -48,7 +49,7 @@ class ExtensionListModel : public SectionListModel {
   Q_OBJECT
   Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
   Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
-  Q_PROPERTY(QString emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
+  Q_PROPERTY(ImageUrl emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
   Q_PROPERTY(bool isShowingDetail READ isShowingDetail NOTIFY detailChanged)
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(QString detailMarkdown READ detailMarkdown NOTIFY detailChanged)
@@ -66,7 +67,7 @@ public:
 
   QString emptyTitle() const;
   QString emptyDescription() const;
-  QString emptyIcon() const;
+  ImageUrl emptyIcon() const;
 
   bool isShowingDetail() const;
   bool hasDetail() const;

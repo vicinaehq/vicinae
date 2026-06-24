@@ -1,7 +1,7 @@
 #include "vicinae-store-model.hpp"
 #include "actions/extension/extension-actions.hpp"
 #include "vicinae-store-detail-host.hpp"
-#include "lib/keyboard/keybind.hpp"
+#include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"

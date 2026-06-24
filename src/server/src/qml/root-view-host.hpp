@@ -1,11 +1,26 @@
 #pragma once
 #include "bridge-view.hpp"
 
-/// Minimal view host for the root navigation frame.
-/// The actual root search UI is provided by RootSearchModel inside the QML launcher.
-/// This host only exists so that the navigation stack has a valid BaseView at the bottom.
+class RootSearchModel;
+
 class RootViewHost : public ViewHostBase {
+  Q_OBJECT
+  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
+
 public:
-  QUrl qmlComponentUrl() const override { return {}; }
+  QUrl qmlComponentUrl() const override;
+  QVariantMap qmlProperties() override;
   QString initialSearchPlaceholderText() const override { return QStringLiteral("Search for anything..."); }
+  bool showBackButton() const override { return false; }
+
+  void initialize() override;
+  void textChanged(const QString &text) override;
+  void onReactivated() override;
+  void beforePop() override;
+
+  QObject *listModel() const;
+  Q_INVOKABLE bool tryAliasFastTrack();
+
+private:
+  RootSearchModel *m_model = nullptr;
 };

@@ -7,12 +7,12 @@ APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 FIGURA_CC						:= $(BIN_DIR)/figura
 
 release:
-	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: release
 
 host-optimized:
-	CXXFLAGS="${CXXFLAGS} -march=native" cmake -DLTO=ON -G Ninja -B build
+	CXXFLAGS="${CXXFLAGS} -march=native" cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B build
 	cmake --build $(BUILD_DIR)
 .PHONY: optimized
 
@@ -31,7 +31,7 @@ mac-bundle:
 .PHONY: mac-bundle
 
 mac-deps:
-	./scripts/macos-setup.sh
+	@./scripts/macos-setup.sh
 .PHONY: mac-deps
 
 debug-tidy:
@@ -53,10 +53,12 @@ strip:
 .PHONY: strip
 
 test:
-	./$(BIN_DIR)/vicinae-emoji-tests
+	./$(BIN_DIR)/vicinae-glyph-tests
 	./$(BIN_DIR)/vicinae-fuzzy-tests
+	./$(BIN_DIR)/vicinae-server-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
+	./$(BIN_DIR)/vicinae-file-indexer-tests
 .PHONY: test
 
 static:
@@ -125,17 +127,15 @@ check-format:
 
 bump-patch:
 	./scripts/bump_version.sh patch
-	make update-manifest
 .PHONY: bump-patch
 
 bump-minor:
 	./scripts/bump_version.sh minor
-	make update-manifest
 .PHONY: bump-minor
 
-update-manifest:
-	./scripts/update-manifest.sh ./manifest.yaml
-.PHONY: update-manifest
+bump-major:
+	./scripts/bump_version.sh major
+.PHONY: bump-major
 
 # if we need to manually create a release
 gh-release:

@@ -87,6 +87,18 @@ export type PopToRootType = "Default" | "Immediate" | "Suspended";
 
 export type ConfirmAlertActionStyle = "Default" | "Destructive" | "Cancel";
 
+export type NotificationUrgency = "Low" | "Normal" | "High";
+
+export type FileSearchCategory =
+	| "Other"
+	| "Directory"
+	| "Image"
+	| "Video"
+	| "Audio"
+	| "Document"
+	| "Archive"
+	| "Application";
+
 export type Application = {
 	id: string;
 	name: string;
@@ -124,10 +136,11 @@ export type ColorLike = {
 };
 
 export type Image = {
-	source: ImageSource;
+	source?: ImageSource;
 	fallback?: ImageSource;
 	mask?: ImageMask;
 	tintColor?: ColorLike;
+	fileIcon?: string;
 };
 
 export type ConfirmAlertAction = {
@@ -142,6 +155,13 @@ export type ConfirmAlertPayload = {
 	dismissAction: ConfirmAlertAction;
 	rememberUserChoice: boolean;
 	icon?: Image;
+};
+
+export type DesktopNotificationPayload = {
+	title: string;
+	body: string;
+	icon?: Image;
+	urgency: NotificationUrgency;
 };
 
 export type Rect = {
@@ -189,7 +209,17 @@ export type ClipboardOptions = {
 
 export type FileInfo = {
 	path: string;
-	mimeType: string;
+	category: FileSearchCategory;
+	mimeType?: string;
+};
+
+export type FileSearchFilters = {
+	category?: FileSearchCategory;
+};
+
+export type FileSearchOptions = {
+	filters: FileSearchFilters;
+	limit: number;
 };
 
 export type UpdateCommandMetadataPayload = {
@@ -333,6 +363,10 @@ class UIService {
 		return this.transport.request("UI/getSelectedText", {});
 	}
 
+	sendDesktopNotification(data: DesktopNotificationPayload): Promise<void> {
+		return this.transport.request("UI/sendDesktopNotification", { data });
+	}
+
 	viewPoped(handler: () => void): EventSubscription {
 		return this.transport.subscribe("UI/viewPoped", (msg) => handler());
 	}
@@ -425,8 +459,8 @@ class StorageService {
 class FileSearchService {
 	constructor(private readonly transport: RpcTransport) {}
 
-	search(q: string): Promise<FileInfo[]> {
-		return this.transport.request("FileSearch/search", { q });
+	search(q: string, opts: FileSearchOptions): Promise<FileInfo[]> {
+		return this.transport.request("FileSearch/search", { q, opts });
 	}
 }
 

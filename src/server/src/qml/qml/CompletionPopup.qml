@@ -26,6 +26,10 @@ Popup {
     padding: 4
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
+    HoverResetOnShow {
+        target: root
+    }
+
     onItemsChanged: if (items.length > 0)
         completionModel.setItems(items)
     onSectionsChanged: if (sections.length > 0)
@@ -88,10 +92,14 @@ Popup {
         }
     }
 
+    HoverResetOnModelChange {
+        target: completionModel
+    }
+
     background: Rectangle {
         radius: 8
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.95)
-        border.color: Theme.divider
+        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
         border.width: 1
     }
 
@@ -110,8 +118,8 @@ Popup {
                 anchors.rightMargin: 8
                 spacing: 6
 
-                Image {
-                    source: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.textMuted
+                ViciImage {
+                    source: Img.builtin("magnifying-glass").withFillColor(Theme.textMuted)
                     sourceSize.width: 12
                     sourceSize.height: 12
                     Layout.preferredWidth: 12
@@ -215,7 +223,7 @@ Popup {
                         anchors.leftMargin: 2
                         anchors.rightMargin: 2
                         radius: 6
-                        color: del._isHighlighted ? Theme.listItemSelectionBg : itemHover.hovered ? Theme.listItemHoverBg : "transparent"
+                        color: del._isHighlighted ? Theme.listItemSelectionBg : (itemHover.hovered && HoverActivation.active) ? Theme.listItemHoverBg : "transparent"
                     }
 
                     RowLayout {

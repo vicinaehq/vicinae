@@ -13,6 +13,8 @@ public:
   virtual bool isRunning(const AbstractApplication &app) const = 0;
   virtual std::shared_ptr<AbstractApplication> frontmostApp() const = 0;
   virtual bool activate(const AbstractApplication &app) const = 0;
+  virtual bool quit(const AbstractApplication &app) const = 0;
+  virtual bool forceQuit(const AbstractApplication &app) const = 0;
 
 signals:
   void runningAppsChanged();

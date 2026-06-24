@@ -32,6 +32,12 @@
 			"mode": "view"
 		},
 		{
+			"name": "icon-transforms",
+			"title": "Icon Transforms",
+			"description": "Apply every transform (tint, mask, fallback) to every icon source type",
+			"mode": "view"
+		},
+		{
 			"name": "controlled-list",
 			"title": "Controlled List",
 			"description": "A list where search is controlled by state",
@@ -62,6 +68,12 @@
 			"mode": "view"
 		},
 		{
+			"name": "image-search",
+			"title": "Image Search",
+			"description": "Image search",
+			"mode": "view"
+		},
+		{
 			"name": "window-switcher",
 			"title": "Window Switcher",
 			"description": "Test window management APIs",
@@ -84,6 +96,14 @@
 			"title": "Action Panel Stress Test",
 			"description": "Test action panel reconciliation, deep submenus, dynamic content, and filter preservation",
 			"mode": "view"
+		},
+		{
+			"name": "desktop-notif-interval",
+			"title": "Desktop Notification Interval",
+			"description": "Desktop Notification Interval",
+			"mode": "no-view",
+			"interval": "30s",
+			"disabledByDefault": true
 		}
 	],
 	"preferences": [],

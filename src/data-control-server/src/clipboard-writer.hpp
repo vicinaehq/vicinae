@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <vector>
 #include "ext-data-control-v1-client-protocol.h"
-#include "clipboard-protocol.hpp"
+#include "common/clipboard-protocol.hpp"
 
 struct ActiveSource {
   std::unordered_map<std::string, std::vector<uint8_t>> offers;

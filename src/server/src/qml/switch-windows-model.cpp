@@ -1,6 +1,6 @@
 #include "switch-windows-model.hpp"
+#include "actions/app/app-actions.hpp"
 #include "actions/wm/window-actions.hpp"
-#include "navigation-controller.hpp"
 
 QString SwitchWindowsSection::displayTitle(const WindowEntry &e) const { return e.window->title(); }
 
@@ -25,9 +25,23 @@ std::unique_ptr<ActionPanelState> SwitchWindowsSection::buildActionPanel(const W
   auto section = panel->createSection("Window Actions");
   section->addAction(new FocusWindowAction(e.window));
 
+  if (scope().services()->windowManager()->provider()->id() == "x11") {
+    auto pinAction = new PinWindowAction(e.window);
+    section->addAction(pinAction);
+
+    auto bringAction = new BringToWorkspaceAction(e.window);
+    section->addAction(bringAction);
+  }
+
   auto closeAction = new CloseWindowAction(e.window);
   closeAction->setShortcut(Keyboard::Shortcut(Qt::Key_Q, Qt::ControlModifier));
   section->addAction(closeAction);
+
+  if (e.app) {
+    auto appSection = panel->createSection();
+    appSection->addAction(new QuitAppAction(e.app));
+    appSection->addAction(new ForceQuitAppAction(e.app));
+  }
 
   return panel;
 }

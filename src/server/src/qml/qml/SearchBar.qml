@@ -17,27 +17,14 @@ Item {
         anchors.rightMargin: 16
         spacing: launcher.hasCompleter ? 4 : 12
 
-        SourceBlendRect {
+        ViciImage {
             id: backButton
-            visible: !launcher.isRootSearch && launcher.showBackButton
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
+            visible: launcher.showBackButton
+            Layout.preferredWidth: 22
+            Layout.preferredHeight: 22
             Layout.alignment: Qt.AlignVCenter
-            radius: 6
-            backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-            color: {
-                const base = backHover.hovered ? Theme.listItemHoverBg : Theme.secondaryBackground;
-                return Qt.rgba(base.r, base.g, base.b, Config.windowOpacity);
-            }
-            borderWidth: 1
-            borderColor: Theme.inputBorder
-
-            ViciImage {
-                anchors.centerIn: parent
-                source: Img.builtin("chevron-left")
-                width: 14
-                height: 14
-            }
+            source: Img.builtin("chevron-left").withFillColor(Theme.textMuted)
+            opacity: backHover.hovered ? 0.6 : 1.0
 
             HoverHandler {
                 id: backHover
@@ -65,7 +52,7 @@ Item {
                 anchors.fill: parent
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Theme.fontFamily
-                font.pointSize: Theme.regularFontSize * 1.1
+                font.pointSize: Theme.regularFontSize * 1.15
                 color: Theme.foreground
                 selectionColor: Theme.textSelectionBg
                 selectedTextColor: Theme.textSelectionFg
@@ -126,8 +113,6 @@ Item {
                 function _syncSearchText() {
                     const value = Config.considerPreedit ? searchInput.displayText : searchInput.text;
                     launcher.forwardSearchText(value);
-                    if (launcher.isRootSearch)
-                        searchModel.setFilter(value);
                 }
 
                 function _handleEmacsEditing(event) {
@@ -289,18 +274,6 @@ Item {
                         event.accepted = launcher.forwardKey(event.key, event.modifiers);
                     }
                 }
-                Keys.onReturnPressed: event => {
-                    if (launcher.compacted) {
-                        launcher.expand();
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.modifiers !== Qt.NoModifier) {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers);
-                    } else {
-                        launcher.handleReturn();
-                    }
-                }
                 Keys.onBacktabPressed: event => {
                     event.accepted = false;
                 }
@@ -309,13 +282,11 @@ Item {
                         event.accepted = true;
                     } else if (_handleNavigation(event)) {
                         event.accepted = true;
-                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && !launcher.isRootSearch && launcher.showBackButton && launcher.popOnBackspace) {
+                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && launcher.showBackButton && launcher.popOnBackspace) {
                         launcher.goBack();
                         event.accepted = true;
-                    } else if (event.key === Qt.Key_Space && launcher.isRootSearch && event.modifiers === Qt.NoModifier) {
-                        if (launcher.tryAliasFastTrack()) {
-                            event.accepted = true;
-                        }
+                    } else if (event.key === Qt.Key_Space && event.modifiers === Qt.NoModifier && searchInput.text.length > 0 && launcher.commandViewHost?.tryAliasFastTrack()) {
+                        event.accepted = true;
                     } else if (launcher.forwardKey(event.key, event.modifiers)) {
                         if (launcher.compacted)
                             launcher.expand();
@@ -378,12 +349,8 @@ Item {
                 searchInput.forceActiveFocus();
         }
         function onSearchTextUpdated(text) {
-            if (searchInput.text !== text) {
+            if (searchInput.text !== text)
                 searchInput.text = text;
-                if (launcher.isRootSearch) {
-                    searchModel.setFilter(text);
-                }
-            }
         }
         function onViewNavigatedBack() {
             root.focusInput();

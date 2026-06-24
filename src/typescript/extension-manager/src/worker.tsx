@@ -10,14 +10,6 @@ import * as extensionServer from "./proto/extension-manager";
 import * as api from "./proto/api";
 import { callbackManager } from "./callback";
 
-const loaders: Record<
-	extensionServer.CommandMode,
-	(data: extensionServer.LaunchEventData) => Promise<void>
-> = {
-	View: loadView,
-	NoView: loadNoView,
-};
-
 class Lifecycle extends extensionServer.LifecycleService {
 	async launch(data: extensionServer.LaunchEventData): Promise<boolean> {
 		const { environment } = workerData as { environment: EnvironmentType };
@@ -26,14 +18,22 @@ class Lifecycle extends extensionServer.LifecycleService {
 		loadEnviron(environment, data);
 		(process as any).noDeprecation = environment === "production";
 
-		loaders[data.mode](data);
+		if (data.mode === "View") {
+			await loadView(data);
+		} else {
+			await loadNoView(data);
+			// for no-view commands, we can request unload right away
+			server.Lifecycle.emit_unload_requested();
+		}
+
 		return true;
 	}
 
 	async shutdown(): Promise<boolean> {
-		globalState.renderer?.flushSync(() => {
-			callbackManager.activateHandler("shutdown", []);
-		});
+		if (globalState.renderer) {
+			globalState.renderer.unmount();
+		}
+
 		return true;
 	}
 
@@ -53,7 +53,6 @@ const server = new extensionServer.Server(serverRpc, new Lifecycle(serverRpc));
 
 const clientRpc = new api.RpcTransport({
 	send: (msg: string) => {
-		//server.Lifecycle.emit_extension_message(msg);
 		parentPort?.postMessage(msg);
 	},
 });
@@ -81,7 +80,10 @@ const loadEnviron = (
 		supportPath: data.support_path,
 		assetsPath: data.asset_path,
 		raycastVersion: "1.0.0", // provided for compatibility only, not meaningful
-		launchType: LaunchType.UserInitiated,
+		launchType:
+			data.launch_type === "User"
+				? LaunchType.UserInitiated
+				: LaunchType.Background,
 		extensionName: data.extension_name,
 		ownerOrAuthorName: data.owner_or_author_name,
 		vicinaeVersion: {

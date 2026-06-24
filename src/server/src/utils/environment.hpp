@@ -6,11 +6,14 @@
 #include <QProcessEnvironment>
 #include <QStandardPaths>
 #include <algorithm>
-#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <qtenvironmentvariables.h>
+
+#ifdef Q_OS_LINUX
+#include "internal/wayland/globals.hpp"
+#endif
 
 namespace Environment {
 
@@ -21,6 +24,8 @@ inline bool isGnomeEnvironment() {
 }
 
 inline bool isWaylandSession() { return QGuiApplication::platformName() == "wayland"; }
+
+inline bool isX11() { return QGuiApplication::platformName() == "xcb"; }
 
 inline bool supportsArbitraryWindowPlacement() { return !isWaylandSession(); }
 
@@ -52,8 +57,11 @@ inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop()
 inline bool isLayerShellSupported() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
+#elifdef Q_OS_LINUX
+  return Wayland::Globals::layerShell() && !isCosmicDesktop();
+#else
+  return false;
 #endif
-  return isWaylandSession() && !isCosmicDesktop() && !isGnomeEnvironment();
 }
 
 inline bool isHudDisabled() { return !isLayerShellSupported(); }
