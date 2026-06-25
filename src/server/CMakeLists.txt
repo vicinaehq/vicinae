@@ -914,6 +914,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/SettingsPreferenceForm.qml
 	src/qml/qml/MissingPreferenceView.qml
 	src/qml/qml/OAuthOverlayView.qml
+	src/qml/qml/HudWindow.qml
 )
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
@@ -923,7 +924,7 @@ endif()
 if(WAYLAND_LAYER_SHELL)
 	list(APPEND VICINAE_QML_FILES
 		src/qml/qml/LauncherWindowLayerShell.qml
-		src/qml/qml/HudWindow.qml
+		src/qml/qml/HudWindowLayerShell.qml
 	)
 endif()
 

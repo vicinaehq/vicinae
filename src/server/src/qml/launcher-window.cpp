@@ -93,7 +93,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 #ifdef Q_OS_MACOS
         QStringLiteral("qrc:/Vicinae/HudWindowMacOS.qml")
 #else
-        QStringLiteral("qrc:/Vicinae/HudWindow.qml")
+        QStringLiteral("qrc:/Vicinae/HudWindowLayerShell.qml")
 #endif
             ));
   }
