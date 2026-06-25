@@ -100,7 +100,7 @@ Flickable {
             }
 
             SettingsRow {
-                visible: settings.layerShellSupported
+                visible: Platform.supports("layerShell")
                 label: "Use layer shell"
                 description: "Anchor the launcher as a Wayland layer surface (wlr-layer-shell) instead of a regular window. May require reopening Vicinae to fully apply."
                 SettingsToggle {

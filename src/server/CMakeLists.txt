@@ -302,6 +302,8 @@ set(SRCS
 
 
 	src/utils/utils.cpp
+	src/utils/capabilities.hpp
+	src/utils/capabilities.cpp
 
 	src/services/file-chooser/abstract-file-chooser.hpp
 	src/services/file-chooser/file-chooser.hpp
@@ -515,6 +517,7 @@ set(SRCS
 	src/qml/theme-bridge.hpp
 	src/qml/keyboard-bridge.hpp
 	src/qml/global-shortcut-bridge.hpp
+	src/qml/platform-bridge.hpp
 	src/qml/shortcut-conflict.hpp
 	src/qml/shortcut-conflict.cpp
 	src/qml/create-extension-view-host.hpp
