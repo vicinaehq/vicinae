@@ -64,7 +64,17 @@ inline bool isLayerShellSupported() {
 #endif
 }
 
-inline bool isHudDisabled() { return !isLayerShellSupported(); }
+// macOS shows the HUD through a non-activating NSPanel, so it doesn't need
+// layer shell. Elsewhere we still require layer shell to avoid stealing focus.
+inline bool isHudSupported() {
+#ifdef Q_OS_MACOS
+  return true;
+#else
+  return isLayerShellSupported();
+#endif
+}
+
+inline bool isHudDisabled() { return !isHudSupported(); }
 
 /**
  * App image directory if we are running in an appimage.
