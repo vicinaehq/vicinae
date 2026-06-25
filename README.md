@@ -45,6 +45,24 @@ Everything you need to know to get started with Vicinae is at [vicinae.com](http
 
 ## Sponsors
 
+### Gold sponsors
+
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://depot.dev/?utm_source=vicinae&utm_medium=readme" target="_blank">
+          <picture>
+            <source media="(prefers-color-scheme: light)" srcset="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-light@3x.png" />
+            <source media="(prefers-color-scheme: dark)" srcset="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-dark@3x.png" />
+            <img src="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-light@3x.png" width="450" alt="Depot logo" />
+          </picture>
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
 ### Silver Sponsors
 
 <table>
