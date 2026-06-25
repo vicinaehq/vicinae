@@ -64,7 +64,17 @@ inline bool isLayerShellSupported() {
 #endif
 }
 
-inline bool isHudDisabled() { return !isLayerShellSupported(); }
+inline bool isHudSupported() {
+#ifdef Q_OS_MACOS
+  return true;
+#else
+  // if layer shell is not supported, there doesn't seem to be an easy way for us to create
+  // a window that doesn't steal focus.
+  return isLayerShellSupported();
+#endif
+}
+
+inline bool isHudDisabled() { return !isHudSupported(); }
 
 /**
  * App image directory if we are running in an appimage.
