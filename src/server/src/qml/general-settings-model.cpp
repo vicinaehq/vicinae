@@ -74,16 +74,14 @@ void GeneralSettingsModel::setClientSideDecorations(bool v) {
            .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = v}}});
 }
 
-QString GeneralSettingsModel::csdRounding() const {
-  return QString::number(cfg().launcherWindow.clientSideDecorations.rounding);
+QString GeneralSettingsModel::rounding() const {
+  return QString::number(cfg().launcherWindow.effectiveRounding());
 }
-void GeneralSettingsModel::setCsdRounding(const QString &v) {
+void GeneralSettingsModel::setRounding(const QString &v) {
   bool ok = false;
   int val = v.toInt(&ok);
   if (ok)
-    cfgManager().mergeWithUser(
-        {.launcherWindow = config::Partial<config::WindowConfig>{
-             .clientSideDecorations = config::Partial<config::WindowCSD>{.rounding = val}}});
+    cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.rounding = val}});
 }
 
 QString GeneralSettingsModel::csdBorderWidth() const {

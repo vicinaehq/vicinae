@@ -29,7 +29,7 @@ Flickable {
 
         SettingsGroup {
             SettingsRow {
-                visible: settings.globalShortcutsSupported
+                visible: Platform.supports("globalShortcuts")
                 label: "Launcher hotkey"
                 description: "Global shortcut to toggle the Vicinae launcher."
                 ShortcutField {
