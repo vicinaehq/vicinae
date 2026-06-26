@@ -266,9 +266,11 @@ RUN apt-get update \
         libxext6 \
         libxfixes3 \
         libxcb1 \
+        libxcb1-dev \
         libxcb-cursor0 \
         libxcb-glx0 \
         libxcb-keysyms1 \
+        libxcb-keysyms1-dev \
         libxcb-image0 \
         libxcb-shm0 \
         libxcb-icccm4 \
