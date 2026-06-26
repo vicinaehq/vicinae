@@ -103,22 +103,16 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     mainSection->addAction(openAction);
   }
 
-#ifdef Q_OS_MACOS
-  if (!m_app->path().empty()) {
-    auto openLocation = new StaticAction("Open Location", ImageURL::builtin("folder"),
-                                         [path = m_app->path()](ApplicationContext *ctx) {
-                                           ctx->services->appDb()->showInFileBrowser(path, true);
-                                         });
+  if (auto opener = appDb->provider()->locationOpener(*m_app)) {
+    auto openLocation =
+        new StaticAction("Open Location", opener->iconUrl(), [app = m_app](ApplicationContext *ctx) {
+          ctx->services->appDb()->openLocation(*app);
+          ctx->navigation->closeWindow();
+        });
+
     openLocation->setShortcut(Keybind::OpenAction);
     utils->addAction(openLocation);
   }
-#else
-  if (auto opener = appDb->findDefaultOpener(m_app->path().c_str())) {
-    auto openLocation = new OpenAppAction(opener, "Open Location", {m_app->path().c_str()});
-    openLocation->setShortcut(Keybind::OpenAction);
-    utils->addAction(openLocation);
-  }
-#endif
 
   utils->addAction(copyId);
   utils->addAction(copyLocation);
