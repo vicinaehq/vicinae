@@ -13,10 +13,11 @@ concurrency:
 
 jobs:
   build:
-    runs-on: [self-hosted, Linux, X64, prod]
+    runs-on: depot-ubuntu-24.04-16
+    container: archlinux:latest
 
     strategy:
-      max-parallel: 1
+      fail-fast: false
       matrix:
         compiler:
           - name: GCC
@@ -29,12 +30,35 @@ jobs:
     name: Build (${{ matrix.compiler.name }})
 
     steps:
+      # Runs before checkout so git + node exist for the JS-based actions.
+      - name: Install dependencies
+        run: |
+          pacman -Syu --needed --noconfirm \
+            curl jq git base-devel gcc clang cmake ninja mold ccache \
+            nodejs npm \
+            qt6-base qt6-svg qt6-declarative \
+            qtkeychain-qt6 layer-shell-qt syntax-highlighting extra-cmake-modules \
+            libqalculate \
+            catch2 wayland-protocols
+
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: build-${{ matrix.compiler.name }}
+
       - name: Configure CMake
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH=$Qt6_DIR -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }}
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=ON \
+            -DUSE_SYSTEM_CMARK_GFM=OFF \
+            -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build build --parallel $(nproc)

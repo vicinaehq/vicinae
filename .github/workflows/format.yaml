@@ -12,19 +12,19 @@ concurrency:
 
 jobs:
   format:
-    runs-on: [self-hosted, Linux, X64, prod]
+    runs-on: depot-ubuntu-24.04
+    container: archlinux:latest
 
     steps:
+      # Runs before checkout so git + node exist for the JS-based actions.
+      - name: Install dependencies
+        run: pacman -Syu --needed --noconfirm git make clang nodejs npm
+
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Check C++ formatting
         run: make check-format
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
 
       - name: Check TypeScript formatting
         working-directory: src/typescript
