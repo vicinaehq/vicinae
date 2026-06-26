@@ -1,4 +1,5 @@
 #include "mac-app-database.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
@@ -394,3 +395,10 @@ bool MacAppDatabase::showInFileBrowser(const fs::path &path, bool select) const 
   return true;
 }
 
+bool MacAppDatabase::openLocation(const AbstractApplication &app) const {
+  return showInFileBrowser(app.path(), true);
+}
+
+AbstractAppDatabase::AppPtr MacAppDatabase::locationOpener(const AbstractApplication &app) const {
+  return fileBrowser();
+}

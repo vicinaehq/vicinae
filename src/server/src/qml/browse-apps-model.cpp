@@ -45,8 +45,8 @@ std::unique_ptr<ActionPanelState> BrowseAppsSection::buildActionPanel(const AppP
     mainSection->addAction(action);
   }
 
-  if (auto opener = appDb->findDefaultOpener(app->path().c_str())) {
-    auto *openLocation = new OpenAppAction(opener, "Open Location", {app->path().c_str()});
+  if (auto opener = appDb->provider()->locationOpener(*app)) {
+    auto *openLocation = new OpenAppLocationAction(app, opener);
     openLocation->setShortcut(Keybind::OpenAction);
     utils->addAction(openLocation);
   }

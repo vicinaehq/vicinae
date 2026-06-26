@@ -18,6 +18,17 @@ private:
   bool m_clearSearch = false;
 };
 
+class OpenAppLocationAction : public AbstractAction {
+public:
+  OpenAppLocationAction(const std::shared_ptr<AbstractApplication> &app,
+                        const std::shared_ptr<AbstractApplication> &opener);
+
+  void execute(ApplicationContext *ctx) override;
+
+private:
+  std::shared_ptr<AbstractApplication> m_app;
+};
+
 class OpenInTerminalAction : public AbstractAction {
 public:
   void setClearSearch(bool value) { m_clearSearch = value; }

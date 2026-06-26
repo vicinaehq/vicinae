@@ -284,6 +284,19 @@ bool XdgAppDatabase::showInFileBrowser(const fs::path &path, bool select) const 
   return launch(*browser, {target->c_str()});
 }
 
+bool XdgAppDatabase::openLocation(const AbstractApplication &app) const {
+  auto path = QString::fromStdString(app.path());
+  const auto opener = findDefaultOpener(path);
+
+  if (!opener) return false;
+
+  return launch(*opener, {std::move(path)});
+}
+
+AppPtr XdgAppDatabase::locationOpener(const AbstractApplication &app) const {
+  return findDefaultOpener(QString::fromStdString(app.path()));
+}
+
 std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const { return xdgpp::appDirs(); }
 
 AppPtr XdgAppDatabase::findById(const QString &id) const {
