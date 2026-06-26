@@ -726,8 +726,8 @@ if (UNIX AND NOT APPLE)
 		src/internal/wayland/display.cpp
 		src/internal/wayland/registry.cpp
 		src/internal/wayland/seat.cpp
-		src/services/background-effect/ext-background-effect-v1-manager.cpp
-		src/services/background-effect/kde-background-effect-manager.cpp
+		src/services/window-material/ext-background-effect-v1-manager.cpp
+		src/services/window-material/kde-background-effect-manager.cpp
 		src/services/shortcut-inhibit/wayland-shortcut-inhibit-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
@@ -936,6 +936,7 @@ if(APPLE)
 		src/qml/qml/LauncherWindowMacOS.qml
 		src/qml/qml/SettingsWindowMacOS.qml
 		src/qml/qml/HudWindowMacOS.qml
+		src/qml/qml/CompletionPanelMacOS.qml
 	)
 endif()
 
@@ -953,8 +954,8 @@ set(VICINAE_QML_SOURCES
 	src/qml/completion-model.hpp
 	src/qml/markdown/markdown-model.hpp
 	src/qml/markdown/text-selection-controller.hpp
-	src/qml/background-effect-attached.hpp
-	src/qml/background-effect-attached.cpp
+	src/qml/window-material-attached.hpp
+	src/qml/window-material-attached.cpp
 	src/qml/popup-placement-attached.hpp
 	src/qml/popup-placement-attached.cpp
 	src/qml/shortcut-inhibitor-attached.hpp

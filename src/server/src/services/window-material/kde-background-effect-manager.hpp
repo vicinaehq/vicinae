@@ -3,21 +3,21 @@
 #include <qwindow.h>
 #include <unordered_map>
 #include "kde-blur-client-protocol.h"
-#include "services/background-effect/abstract-background-effect-manager.hpp"
+#include "services/window-material/window-material-backend.hpp"
 
 namespace KDE {
-class BackgroundEffectManager : public AbstractBackgroundEffectManager {
+class BackgroundEffectManager : public WindowMaterialBackend {
 public:
   explicit BackgroundEffectManager(org_kde_kwin_blur_manager *manager);
 
-  bool supportsBlur() const override;
-  bool setBlur(QWindow *win, const BlurConfig &cfg) override;
-  bool removeBlur(QWindow *win) override;
+  bool isSupported() const override;
+  bool apply(QWindow *win, const Params &params) override;
+  bool clear(QWindow *win) override;
 
 private:
   struct BlurState {
     org_kde_kwin_blur *blur;
-    BlurConfig cfg;
+    Params cfg;
 
     ~BlurState() { org_kde_kwin_blur_release(blur); }
   };

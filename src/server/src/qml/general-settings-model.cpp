@@ -156,6 +156,24 @@ static QVariantList wrapSection(const QString &title, const QVariantList &items)
   return {section};
 }
 
+QVariantList GeneralSettingsModel::windowStyleItems() const {
+  QVariantList items;
+  items.append(makeDropdownItem(QStringLiteral("blurred"), QStringLiteral("Blurred")));
+  items.append(makeDropdownItem(QStringLiteral("liquid_glass"), QStringLiteral("Liquid Glass")));
+  return wrapSection(QStringLiteral("Window style"), items);
+}
+
+QVariant GeneralSettingsModel::currentWindowStyle() const {
+  auto id = QString::fromStdString(cfg().launcherWindow.style);
+  auto name = id == "liquid_glass" ? QStringLiteral("Liquid Glass") : QStringLiteral("Blurred");
+  return makeDropdownItem(id, name);
+}
+
+void GeneralSettingsModel::selectWindowStyle(const QString &id) {
+  cfgManager().mergeWithUser(
+      {.launcherWindow = config::Partial<config::WindowConfig>{.style = id.toStdString()}});
+}
+
 QVariantList GeneralSettingsModel::themeItems() const {
   QVariantList items;
   for (const auto &theme : ThemeService::instance().themes()) {

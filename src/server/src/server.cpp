@@ -23,8 +23,8 @@
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
 #endif
 #include "service-registry.hpp"
-#include "services/background-effect/background-effect-manager.hpp"
-#include "qml/background-effect-attached.hpp"
+#include "services/window-material/window-material-manager.hpp"
+#include "qml/window-material-attached.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "qml/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
@@ -228,8 +228,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
-    registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
-    BackgroundEffect::setManager(registry->backgroundEffectManager());
+    registry->setWindowMaterialManager(std::make_unique<WindowMaterialManager>());
+    WindowMaterial::setManager(registry->windowMaterialManager());
     registry->setShortcutInhibitManager(std::make_unique<ShortcutInhibitManager>());
     ShortcutInhibitor::setManager(registry->shortcutInhibitManager());
     registry->setFileChooserService(std::make_unique<FileChooserService>());

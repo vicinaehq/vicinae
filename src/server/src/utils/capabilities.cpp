@@ -5,14 +5,20 @@
 #include <array>
 #include <utility>
 
+#ifdef Q_OS_MACOS
+bool macosLiquidGlassAvailable();
+#endif
+
 namespace platform {
 
-static constexpr std::array<std::pair<std::string_view, Capability>, 5> CAPABILITY_NAMES{{
+static constexpr std::array<std::pair<std::string_view, Capability>, 7> CAPABILITY_NAMES{{
     {"layerShell", Capability::LayerShell},
     {"globalShortcuts", Capability::GlobalShortcuts},
     {"inputServer", Capability::InputServer},
     {"iconThemeSelection", Capability::IconThemeSelection},
     {"clientSideDecorations", Capability::ClientSideDecorations},
+    {"liquidGlass", Capability::LiquidGlass},
+    {"nativePanels", Capability::NativePanels},
 }};
 
 bool supports(Capability cap) {
@@ -35,6 +41,18 @@ bool supports(Capability cap) {
     return false;
 #else
     return true;
+#endif
+  case Capability::LiquidGlass:
+#ifdef Q_OS_MACOS
+    return macosLiquidGlassAvailable();
+#else
+    return false;
+#endif
+  case Capability::NativePanels:
+#ifdef Q_OS_MACOS
+    return true;
+#else
+    return false;
 #endif
   }
 

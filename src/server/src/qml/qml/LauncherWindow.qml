@@ -31,9 +31,9 @@ Window {
     color: "transparent"
     visible: false
 
-    BackgroundEffect.enabled: root.blurEnabled && !root.nativeChrome
-    BackgroundEffect.radius: root.cornerRadius
-    BackgroundEffect.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? _contentH : _h)
+    WindowMaterial.enabled: root.blurEnabled && !root.nativeChrome
+    WindowMaterial.radius: root.cornerRadius
+    WindowMaterial.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? _contentH : _h)
 
     Item {
         id: shadowMask

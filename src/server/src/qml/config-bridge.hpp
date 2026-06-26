@@ -18,6 +18,7 @@ class ConfigBridge : public QObject {
   Q_PROPERTY(bool considerPreedit READ considerPreedit NOTIFY changed)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick NOTIFY changed)
   Q_PROPERTY(bool blurEnabled READ blurEnabled NOTIFY changed)
+  Q_PROPERTY(QString windowStyle READ windowStyle NOTIFY changed)
 
 signals:
   void changed();
@@ -54,6 +55,7 @@ public:
   bool considerPreedit() const { return cfg().considerPreedit; }
   bool activateOnSingleClick() const { return cfg().activateOnSingleClick; }
   bool blurEnabled() const { return cfg().launcherWindow.blur.enabled; }
+  QString windowStyle() const { return QString::fromStdString(cfg().launcherWindow.style); }
 
   Q_INVOKABLE static QColor withAlpha(const QColor &c, qreal alpha) {
     return QColor::fromRgbF(c.redF(), c.greenF(), c.blueF(), alpha);

@@ -29,7 +29,7 @@ class LinuxInputServer;
 #endif
 class SnippetService;
 class BrowserExtensionService;
-class BackgroundEffectManager;
+class WindowMaterialManager;
 class ShortcutInhibitManager;
 class FileChooserService;
 class NewsService;
@@ -76,7 +76,7 @@ public:
   PasteService *pasteService() const;
   FileChooserService *fileChooserService() const;
   NewsService *newsService() const;
-  BackgroundEffectManager *backgroundEffectManager() const;
+  WindowMaterialManager *windowMaterialManager() const;
   ShortcutInhibitManager *shortcutInhibitManager() const;
   TelemetryService *telemetry() const;
   AudioControlService *audioControl() const;
@@ -113,7 +113,7 @@ public:
   void setPasteService(std::unique_ptr<PasteService> service);
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
   void setNewsService(std::unique_ptr<NewsService> service);
-  void setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> manager);
+  void setWindowMaterialManager(std::unique_ptr<WindowMaterialManager> manager);
   void setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitManager> manager);
   void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
   void setAudioControl(std::unique_ptr<AudioControlService> service);
@@ -150,7 +150,7 @@ private:
   std::unique_ptr<PasteService> m_pasteService;
   std::unique_ptr<FileChooserService> m_fileChooserService;
   std::unique_ptr<NewsService> m_newsService;
-  std::unique_ptr<BackgroundEffectManager> m_backgroundEffectManager;
+  std::unique_ptr<WindowMaterialManager> m_windowMaterialManager;
   std::unique_ptr<ShortcutInhibitManager> m_shortcutInhibitManager;
   std::unique_ptr<TelemetryService> m_telemetry;
   std::unique_ptr<AudioControlService> m_audioControl;

@@ -18,16 +18,16 @@ ExtBackgroundEffectV1Manager::ExtBackgroundEffectV1Manager(ext_background_effect
   wl_display_roundtrip(wayland->display());
 }
 
-bool ExtBackgroundEffectV1Manager::supportsBlur() const { return m_supportsBlur; }
+bool ExtBackgroundEffectV1Manager::isSupported() const { return m_supportsBlur; }
 
-bool ExtBackgroundEffectV1Manager::setBlur(QWindow *win, const BlurConfig &cfg) {
+bool ExtBackgroundEffectV1Manager::apply(QWindow *win, const Params &params) {
   if (!m_supportsBlur) { return false; }
 
   if (auto it = m_state.find(win); it != m_state.end()) {
     auto &state = it->second;
 
-    if (state->cfg != cfg) {
-      state->cfg = cfg;
+    if (state->cfg != params) {
+      state->cfg = params;
       applyBlur(win, *state);
     }
 
@@ -50,7 +50,7 @@ bool ExtBackgroundEffectV1Manager::setBlur(QWindow *win, const BlurConfig &cfg) 
     return false;
   }
 
-  auto state = std::make_unique<BlurState>(effect, cfg);
+  auto state = std::make_unique<BlurState>(effect, params);
 
   applyBlur(win, *state);
   m_state[win] = std::move(state);
@@ -58,7 +58,7 @@ bool ExtBackgroundEffectV1Manager::setBlur(QWindow *win, const BlurConfig &cfg) 
   return true;
 }
 
-bool ExtBackgroundEffectV1Manager::removeBlur(QWindow *win) {
+bool ExtBackgroundEffectV1Manager::clear(QWindow *win) {
   if (auto it = m_state.find(win); it != m_state.end()) {
     win->removeEventFilter(this);
     m_state.erase(it);

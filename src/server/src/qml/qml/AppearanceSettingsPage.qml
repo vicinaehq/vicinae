@@ -87,6 +87,18 @@ Flickable {
 
         SettingsGroup {
             SettingsRow {
+                visible: Platform.supports("liquidGlass")
+                label: "Window style"
+                description: "Material used for the launcher window background. Liquid Glass uses the macOS 26 (Tahoe) glass material; Blurred uses the classic vibrancy material."
+                SearchableDropdown {
+                    width: parent.width
+                    items: root.model.windowStyleItems
+                    currentItem: root.model.currentWindowStyle
+                    onActivated: item => root.model.selectWindowStyle(item.id)
+                }
+            }
+
+            SettingsRow {
                 label: "Window opacity"
                 FormTextInput {
                     width: parent.width

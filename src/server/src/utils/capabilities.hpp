@@ -14,6 +14,8 @@ enum class Capability {
   InputServer,
   IconThemeSelection,
   ClientSideDecorations,
+  LiquidGlass,
+  NativePanels,
 };
 
 bool supports(Capability cap);
