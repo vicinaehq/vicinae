@@ -110,10 +110,16 @@
 			"enabled": true
 		},
 
-		// You can turn client side decorations off if you want to let your compositor draw the rounded
-		// borders and such. This usually gives better results, but is more complicated to setup, if at all possible.
+		// Corner radius of the launcher window, in pixels.
+		"rounding": 10,
+
+		// Client-side decorations are Linux-only: vicinae draws its own border and shadow instead of
+		// letting the compositor decorate the window. You can turn them off to let your compositor draw
+		// the rounded borders and such. This usually gives better results, but is more complicated to
+		// setup, if at all possible.
 		"client_side_decorations": {
 			"enabled": true,
+			// @Deprecated: prefer the top-level launcher_window.rounding.
 			"rounding": 10,
 			"border_width": 1,
 

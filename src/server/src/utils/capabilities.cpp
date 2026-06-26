@@ -7,9 +7,12 @@
 
 namespace platform {
 
-static constexpr std::array<std::pair<std::string_view, Capability>, 2> CAPABILITY_NAMES{{
+static constexpr std::array<std::pair<std::string_view, Capability>, 5> CAPABILITY_NAMES{{
     {"layerShell", Capability::LayerShell},
     {"globalShortcuts", Capability::GlobalShortcuts},
+    {"inputServer", Capability::InputServer},
+    {"iconThemeSelection", Capability::IconThemeSelection},
+    {"clientSideDecorations", Capability::ClientSideDecorations},
 }};
 
 bool supports(Capability cap) {
@@ -20,6 +23,19 @@ bool supports(Capability cap) {
     auto *service = ServiceRegistry::instance()->globalShortcuts();
     return service && service->isSupported();
   }
+  case Capability::InputServer:
+  case Capability::IconThemeSelection:
+#ifdef Q_OS_LINUX
+    return true;
+#else
+    return false;
+#endif
+  case Capability::ClientSideDecorations:
+#ifdef Q_OS_MACOS
+    return false;
+#else
+    return true;
+#endif
   }
 
   return false;

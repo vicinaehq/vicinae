@@ -111,12 +111,17 @@ template <> struct Partial<WindowCompactMode> {
 
 struct WindowConfig {
   float opacity;
+  std::optional<int> rounding;
   WindowCSD clientSideDecorations;
   Size size;
   std::string screen;
   BlurConfig blur;
   WindowCompactMode compactMode;
   LayerShellConfig layerShell;
+
+  // Corner radius is a window-level property, but historically lived under client_side_decorations.
+  // Fall back to that value when the flat key is unset to keep older configs working.
+  int effectiveRounding() const { return rounding.value_or(clientSideDecorations.rounding); }
 };
 
 template <> struct Partial<WindowConfig> {

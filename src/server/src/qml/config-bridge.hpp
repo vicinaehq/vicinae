@@ -1,4 +1,5 @@
 #pragma once
+#include "capabilities.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include <QColor>
@@ -35,8 +36,11 @@ public:
   }
 
   int borderRounding() const {
-    auto &csd = cfg().launcherWindow.clientSideDecorations;
-    return csd.enabled ? csd.rounding : 0;
+    const auto &window = cfg().launcherWindow;
+    if (platform::supports(platform::Capability::ClientSideDecorations)) {
+      return window.clientSideDecorations.enabled ? window.effectiveRounding() : 0;
+    }
+    return window.effectiveRounding();
   }
 
   int shadowSize() const {

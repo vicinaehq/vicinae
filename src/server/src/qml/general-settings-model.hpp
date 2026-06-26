@@ -21,7 +21,7 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool layerShellEnabled READ layerShellEnabled WRITE setLayerShellEnabled NOTIFY configChanged)
   Q_PROPERTY(bool clientSideDecorations READ clientSideDecorations WRITE setClientSideDecorations NOTIFY
                  configChanged)
-  Q_PROPERTY(QString csdRounding READ csdRounding WRITE setCsdRounding NOTIFY configChanged)
+  Q_PROPERTY(QString rounding READ rounding WRITE setRounding NOTIFY configChanged)
   Q_PROPERTY(QString csdBorderWidth READ csdBorderWidth WRITE setCsdBorderWidth NOTIFY configChanged)
   Q_PROPERTY(QString csdShadowSize READ csdShadowSize WRITE setCsdShadowSize NOTIFY configChanged)
   Q_PROPERTY(bool compactMode READ compactMode WRITE setCompactMode NOTIFY configChanged)
@@ -67,8 +67,8 @@ public:
   void setLayerShellEnabled(bool v);
   bool clientSideDecorations() const;
   void setClientSideDecorations(bool v);
-  QString csdRounding() const;
-  void setCsdRounding(const QString &v);
+  QString rounding() const;
+  void setRounding(const QString &v);
   QString csdBorderWidth() const;
   void setCsdBorderWidth(const QString &v);
   QString csdShadowSize() const;

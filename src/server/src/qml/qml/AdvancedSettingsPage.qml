@@ -99,11 +99,13 @@ Flickable {
 
         SettingsSectionLabel {
             text: "System"
+            visible: Platform.supports("inputServer")
             Layout.topMargin: 24
             Layout.bottomMargin: 10
         }
 
         SettingsGroup {
+            visible: Platform.supports("inputServer")
             SettingsRow {
                 label: "Input server"
                 description: "Whether to spawn the input server at startup. This needs to be enabled in order to support snippets, paste to active window, and other features that require input monitoring or injection."

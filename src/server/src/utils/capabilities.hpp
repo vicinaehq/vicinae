@@ -11,6 +11,9 @@ namespace platform {
 enum class Capability {
   LayerShell,
   GlobalShortcuts,
+  InputServer,
+  IconThemeSelection,
+  ClientSideDecorations,
 };
 
 bool supports(Capability cap);
