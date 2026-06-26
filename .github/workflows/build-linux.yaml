@@ -14,7 +14,7 @@ concurrency:
 jobs:
   build:
     runs-on: depot-ubuntu-24.04-16
-    container: archlinux:latest
+    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:arch-latest
 
     strategy:
       fail-fast: false
@@ -30,17 +30,6 @@ jobs:
     name: Build (${{ matrix.compiler.name }})
 
     steps:
-      # Runs before checkout so git + node exist for the JS-based actions.
-      - name: Install dependencies
-        run: |
-          pacman -Syu --needed --noconfirm \
-            curl jq git base-devel gcc clang cmake ninja mold ccache \
-            nodejs npm \
-            qt6-base qt6-svg qt6-declarative qt6-shadertools \
-            qtkeychain-qt6 layer-shell-qt syntax-highlighting extra-cmake-modules \
-            libqalculate \
-            catch2 wayland-protocols
-
       - name: Checkout code
         uses: actions/checkout@v4
 

@@ -1,0 +1,38 @@
+name: Build Arch build-env image
+
+on:
+  schedule:
+    # Weekly refresh: keeps the image fresh (rolling Arch) and within Depot
+    # Registry retention so the :latest tag never ages out.
+    - cron: "0 4 * * 1"
+  push:
+    branches: [main]
+    paths:
+      - scripts/runners/arch/base.Dockerfile
+      - .github/workflows/build-arch-image.yaml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: depot-ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Depot
+        uses: depot/setup-action@v1
+
+      # Builds on Depot's remote BuildKit and saves to the Depot Registry.
+      # On a Depot runner this is pre-authenticated (no DEPOT_TOKEN needed).
+      - name: Build and push to Depot Registry
+        uses: depot/build-push-action@v1
+        with:
+          project: ${{ vars.DEPOT_PROJECT_ID }}
+          context: scripts/runners/arch
+          file: scripts/runners/arch/base.Dockerfile
+          save: true
+          save-tags: arch-latest
