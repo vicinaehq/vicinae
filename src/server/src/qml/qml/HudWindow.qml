@@ -1,32 +1,34 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
-import org.kde.layershell as LayerShell
 
 Window {
-    id: hudRoot
+    id: root
+
+    property color pillColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.9)
+    property color pillBorderColor: Config.withAlpha(Theme.divider, Config.windowOpacity)
+    property int pillBorderWidth: 1
+
+    signal shown
+
     width: pill.width
     height: pill.height
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.ToolTip
     color: "transparent"
     visible: false
 
-    LayerShell.Window.layer: LayerShell.Window.LayerTop
-    LayerShell.Window.scope: "vicinae-hud"
-    LayerShell.Window.anchors: LayerShell.Window.AnchorNone
-    LayerShell.Window.wantsToBeOnActiveScreen: true
-    LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
+    onVisibleChanged: if (visible) shown()
 
-    Component.onCompleted: hud.registerWindow(hudRoot)
+    Component.onCompleted: hud.registerWindow(root)
 
     Rectangle {
         id: pill
         width: row.width + 30
         height: row.height + 20
         radius: height / 2
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.9)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
+        color: root.pillColor
+        border.color: root.pillBorderColor
+        border.width: root.pillBorderWidth
 
         RowLayout {
             id: row

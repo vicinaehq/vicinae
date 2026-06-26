@@ -112,6 +112,7 @@ public:
   // beginShow() hides and positions it before it is shown, finishShow() reveals it once settled.
   Q_INVOKABLE void beginShow(qreal yFraction);
   Q_INVOKABLE void finishShow(qreal yFraction);
+  Q_INVOKABLE void placeBottomCenter(qreal bottomMargin);
 
 private:
   struct Snapshot {
