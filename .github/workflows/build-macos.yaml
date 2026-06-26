@@ -1,0 +1,68 @@
+name: Build (macOS)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Tahoe ships AppleClang 17
+    runs-on: depot-macos-26
+
+    name: Build (macOS)
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Homebrew downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/Homebrew
+          key: brew-${{ runner.os }}-${{ hashFiles('scripts/macos-setup.sh') }}
+          restore-keys: |
+            brew-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: make mac-deps
+
+      - name: Install test framework
+        run: brew install catch2
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-macos-${{ github.sha }}
+          restore-keys: |
+            ccache-macos-
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel $(sysctl -n hw.ncpu)
+
+      - name: ccache stats
+        if: always()
+        run: ccache --show-stats
+
+      - name: Run tests
+        run: |
+          ./build/bin/vicinae-glyph-tests
+          ./build/bin/vicinae-fuzzy-tests
+          ./build/bin/xdgpp-tests
+          ./build/bin/scriptcommand-tests

@@ -31,6 +31,7 @@ in {
       map (x: lib.mkRenamedOptionModule ["services" "vicinae" "systemd" x] ["programs" "vicinae" "systemd" x]) [
         "enable"
         "autoStart"
+        "environment"
         "target"
       ]
     )
