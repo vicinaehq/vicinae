@@ -122,6 +122,14 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
   }
 }
 
+NSScreen *cursorScreen() {
+  NSPoint mouse = [NSEvent mouseLocation];
+  for (NSScreen *candidate in [NSScreen screens]) {
+    if (NSPointInRect(mouse, candidate.frame)) return candidate;
+  }
+  return [NSScreen mainScreen];
+}
+
 void placeWindowOnCursorScreen(QWindow *window, qreal yFraction) {
   if (!window) return;
   NSView *view = nsViewFromWinId(window->winId());
@@ -129,15 +137,7 @@ void placeWindowOnCursorScreen(QWindow *window, qreal yFraction) {
   NSWindow *nswin = view.window;
   if (!nswin) return;
 
-  NSPoint mouse = [NSEvent mouseLocation];
-  NSScreen *screen = nil;
-  for (NSScreen *candidate in [NSScreen screens]) {
-    if (NSPointInRect(mouse, candidate.frame)) {
-      screen = candidate;
-      break;
-    }
-  }
-  if (!screen) screen = [NSScreen mainScreen];
+  NSScreen *screen = cursorScreen();
   if (!screen) return;
 
   NSRect const vf = screen.visibleFrame;
@@ -522,4 +522,21 @@ void MacOSPanelAttached::finishShow(qreal yFraction) {
     placeWindowOnCursorScreen(self->m_window, yFraction);
     self->m_window->setOpacity(1.0);
   });
+}
+
+void MacOSPanelAttached::placeBottomCenter(qreal bottomMargin) {
+  if (!m_window) return;
+  NSView *view = nsViewFromWinId(m_window->winId());
+  if (!view) return;
+  NSWindow *nswin = view.window;
+  if (!nswin) return;
+
+  NSScreen *screen = cursorScreen();
+  if (!screen) return;
+
+  NSRect const vf = screen.visibleFrame;
+  NSSize const size = nswin.frame.size;
+  CGFloat const x = vf.origin.x + (vf.size.width - size.width) / 2.0;
+  CGFloat const y = vf.origin.y + bottomMargin;
+  [nswin setFrameOrigin:NSMakePoint(x, y)];
 }

@@ -89,7 +89,13 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   if (!Environment::isHudDisabled()) {
     m_hudBridge = new HudBridge(this);
     rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
-    m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/HudWindow.qml")));
+    m_engine.load(QUrl(
+#ifdef Q_OS_MACOS
+        QStringLiteral("qrc:/Vicinae/HudWindowMacOS.qml")
+#else
+        QStringLiteral("qrc:/Vicinae/HudWindowLayerShell.qml")
+#endif
+            ));
   }
 
   auto *nav = ctx.navigation.get();

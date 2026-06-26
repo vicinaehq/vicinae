@@ -922,13 +922,17 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
 endif()
 
 if(WAYLAND_LAYER_SHELL)
-	list(APPEND VICINAE_QML_FILES src/qml/qml/LauncherWindowLayerShell.qml)
+	list(APPEND VICINAE_QML_FILES
+		src/qml/qml/LauncherWindowLayerShell.qml
+		src/qml/qml/HudWindowLayerShell.qml
+	)
 endif()
 
 if(APPLE)
 	list(APPEND VICINAE_QML_FILES
 		src/qml/qml/LauncherWindowMacOS.qml
 		src/qml/qml/SettingsWindowMacOS.qml
+		src/qml/qml/HudWindowMacOS.qml
 	)
 endif()
 

@@ -13,6 +13,8 @@ Item {
     property bool readOnly: false
     property bool hasError: false
     property bool filled: false
+    // if set to true, pressing escape or enter/return will defocus the input field
+    // we usually want that on in settings window but not in form commands
     property bool releaseFocusOnAccept: false
     property alias echoMode: input.echoMode
     readonly property bool editing: input.activeFocus
@@ -72,10 +74,18 @@ Item {
         }
 
         onTextEdited: root.textEdited()
+
+        Keys.onEscapePressed: ev => {
+            if (root.releaseFocusOnAccept) {
+                input.focus = false;
+                ev.accepted = true;
+            }
+        }
+        
         onAccepted: {
             root.accepted();
             if (root.releaseFocusOnAccept)
-                focus = false;
+                input.focus = false;
         }
     }
 }
