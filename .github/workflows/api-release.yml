@@ -16,12 +16,18 @@ concurrency:
 
 jobs:
   publish:
-    runs-on: [self-hosted, Linux, X64, prod]
+    runs-on: depot-ubuntu-24.04
     defaults:
       run:
         working-directory: ./src/typescript/api
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
 
       - name: Set version from tag
         run: |
