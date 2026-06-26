@@ -23,4 +23,8 @@ function(setup_vendored_cmark)
 			)
 		endif()
 	endforeach()
+
+	if (TARGET libcmark-gfm-extensions_static AND TARGET libcmark-gfm_static)
+		target_link_libraries(libcmark-gfm-extensions_static INTERFACE libcmark-gfm_static)
+	endif()
 endfunction()
