@@ -13,9 +13,12 @@ concurrency:
 
 jobs:
   build:
-    runs-on: [self-hosted, Linux, X64, appimage]
+    runs-on: depot-ubuntu-24.04-16
+    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:appimage-amd64-latest
     env:
       INSTALL_DIR: ${{ github.workspace }}/install
+      # linuxdeploy runs AppImages; the container has no FUSE, so extract-and-run.
+      APPIMAGE_EXTRACT_AND_RUN: "1"
 
     steps:
       - name: Checkout code
@@ -24,7 +27,7 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: self-hosted-prod
+          key: appimage-amd64
           max-size: 0
 
       - name: Configure CMake
@@ -34,7 +37,7 @@ jobs:
           -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"
 
       - name: Build
-        run: cmake --build build --parallel ${nproc}
+        run: cmake --build build --parallel $(nproc)
 
       - name: Install
         run: cmake --install build
