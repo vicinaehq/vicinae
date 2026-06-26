@@ -24,6 +24,7 @@ QVariantList BrowseAppsSection::displayAccessories(const AppPtr &app) const {
 
 std::unique_ptr<ActionPanelState> BrowseAppsSection::buildActionPanel(const AppPtr &app) const {
   auto panel = std::make_unique<ListActionPanelState>();
+  auto appDb = scope().services()->appDb();
 
   panel->setTitle(app->displayName());
 
@@ -54,7 +55,7 @@ std::unique_ptr<ActionPanelState> BrowseAppsSection::buildActionPanel(const AppP
     utils->addAction(openLocation);
   }
 #else
-  if (auto opener = scope().services()->appDb()->findDefaultOpener(app->path().c_str())) {
+  if (auto opener = appDb->findDefaultOpener(app->path().c_str())) {
     auto *openLocation = new OpenAppAction(opener, "Open Location", {app->path().c_str()});
     openLocation->setShortcut(Keybind::OpenAction);
     utils->addAction(openLocation);

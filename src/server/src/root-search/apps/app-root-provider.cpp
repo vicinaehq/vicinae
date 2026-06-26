@@ -56,6 +56,7 @@ ImageURL AppRootItem::iconUrl() const { return m_app->iconUrl(); }
 std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext *ctx,
                                                               const RootItemMetadata &metadata) const {
   auto panel = std::make_unique<ListActionPanelState>();
+  auto appDb = ctx->services->appDb();
   auto open = new OpenAppAction(m_app, "Open Application", {});
   auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), "Copy App ID");
   auto copyLocation = new CopyToClipboardAction(Clipboard::Text(m_app->path().c_str()), "Copy App Location");
@@ -112,7 +113,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     utils->addAction(openLocation);
   }
 #else
-  if (auto opener = ctx->services->appDb()->findDefaultOpener(m_app->path().c_str())) {
+  if (auto opener = appDb->findDefaultOpener(m_app->path().c_str())) {
     auto openLocation = new OpenAppAction(opener, "Open Location", {m_app->path().c_str()});
     openLocation->setShortcut(Keybind::OpenAction);
     utils->addAction(openLocation);
