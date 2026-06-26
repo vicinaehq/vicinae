@@ -24,7 +24,6 @@ QVariantList BrowseAppsSection::displayAccessories(const AppPtr &app) const {
 
 std::unique_ptr<ActionPanelState> BrowseAppsSection::buildActionPanel(const AppPtr &app) const {
   auto panel = std::make_unique<ListActionPanelState>();
-  auto appDb = scope().services()->appDb();
 
   panel->setTitle(app->displayName());
 
@@ -45,11 +44,22 @@ std::unique_ptr<ActionPanelState> BrowseAppsSection::buildActionPanel(const AppP
     mainSection->addAction(action);
   }
 
-  if (auto opener = appDb->findDefaultOpener(app->path().c_str())) {
+#ifdef Q_OS_MACOS
+  if (!app->path().empty()) {
+    auto *openLocation = new StaticAction("Open Location", ImageURL::builtin("folder"),
+                                          [path = app->path()](ApplicationContext *ctx) {
+                                            ctx->services->appDb()->showInFileBrowser(path, true);
+                                          });
+    openLocation->setShortcut(Keybind::OpenAction);
+    utils->addAction(openLocation);
+  }
+#else
+  if (auto opener = scope().services()->appDb()->findDefaultOpener(app->path().c_str())) {
     auto *openLocation = new OpenAppAction(opener, "Open Location", {app->path().c_str()});
     openLocation->setShortcut(Keybind::OpenAction);
     utils->addAction(openLocation);
   }
+#endif
 
   auto *copyId = new CopyToClipboardAction(Clipboard::Text(app->id()), "Copy App ID");
   utils->addAction(copyId);
