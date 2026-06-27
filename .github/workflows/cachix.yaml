@@ -13,6 +13,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v25
+    - name: Cache Nix Evaluation
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/nix
+        key: nix-eval-${{ hashFiles('flake.lock') }}
     - uses: cachix/cachix-action@v14
       with:
         name: vicinae
