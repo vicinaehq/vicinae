@@ -36,6 +36,16 @@ endif()
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(EXTRA_PATH ${CMAKE_SOURCE_DIR}/extra)
+
+# The default body/mono fonts are only bundled on Linux, where there is no
+# guaranteed system UI font. macOS and Windows fall back to the native font.
+if (UNIX AND NOT APPLE)
+	set(DEFAULT_FONT_RESOURCES
+"  	<file alias=\"Outfit-Variable.ttf\">${ASSET_PATH}/fonts/Outfit-Variable.ttf</file>
+  	<file alias=\"GeistMono-Variable.ttf\">${ASSET_PATH}/fonts/GeistMono-Variable.ttf</file>
+")
+endif()
+
 configure_file(resources.qrc.in resources.qrc)
 
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
