@@ -110,6 +110,7 @@ Popup {
         borderWidth: Platform.supports("clientSideDecorations") ? 1 : 0
         WindowMaterial.enabled: Config.blurEnabled && root.popupType === Popup.Window
         WindowMaterial.radius: Math.min(Config.borderRounding, 15)
+        WindowMaterial.material: Config.windowMaterial === "liquid_glass" ? "liquidGlass" : "hud"
 
         Loader {
             active: root.nativePanel && Platform.supports("nativePanels")

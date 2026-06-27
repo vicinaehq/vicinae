@@ -92,8 +92,6 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   }
 }
 
-// Main UI text reads a little light at the system default weight, so we lift the
-// application baseline a notch. Text that needs a specific weight still sets its own.
 static constexpr QFont::Weight UI_FONT_WEIGHT = QFont::Medium;
 
 static QFont resolveAppFont(const config::FontConfig &fontConfig) {

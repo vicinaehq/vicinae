@@ -48,8 +48,6 @@ FontService::FontService() {
   m_emojiFont = findEmojiFont();
 
 #ifdef Q_OS_LINUX
-  // Linux has no guaranteed system UI font, so we ship a known body and mono
-  // family. macOS and Windows leave these empty and resolve to the native font.
   int const bodyId = QFontDatabase::addApplicationFont(":/fonts/Outfit-Variable.ttf");
   if (bodyId != -1) {
     auto families = QFontDatabase::applicationFontFamilies(bodyId);
