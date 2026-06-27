@@ -16,6 +16,7 @@ enum class Capability {
   ClientSideDecorations,
   LiquidGlass,
   NativePanels,
+  WindowMaterial,
 };
 
 bool supports(Capability cap);

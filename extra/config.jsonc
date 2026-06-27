@@ -103,21 +103,17 @@
 		// [0;1]
 		"opacity": 1.0,
 		
-		// Blur the window background.
-		// Supported on wayland compositors that implement ext-background-effect
-		// Make sure the window opacity above is < 1
+		// @Deprecated: use "material". "enabled": false maps to material "none".
 		"blur": {
 			"enabled": true
 		},
 
+		// "none", "blur", "liquid_glass", or "auto" (liquid_glass when available, else blur).
+		// Needs window opacity < 1 to be visible.
+		"material": "auto",
+
 		// Corner radius of the launcher window, in pixels.
 		"rounding": 10,
-
-		// macOS only: window chrome material.
-		// "blurred" uses the classic vibrancy/HUD material.
-		// "liquid_glass" uses the macOS 26 (Tahoe) Liquid Glass material, falling
-		// back to "blurred" on older systems.
-		"style": "blurred",
 
 		// Client-side decorations are Linux-only: vicinae draws its own border and shadow instead of
 		// letting the compositor decorate the window. You can turn them off to let your compositor draw

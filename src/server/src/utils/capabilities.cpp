@@ -2,6 +2,7 @@
 #include "environment.hpp"
 #include "service-registry.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
+#include "services/window-material/window-material-manager.hpp"
 #include <array>
 #include <utility>
 
@@ -11,7 +12,7 @@ bool macosLiquidGlassAvailable();
 
 namespace platform {
 
-static constexpr std::array<std::pair<std::string_view, Capability>, 7> CAPABILITY_NAMES{{
+static constexpr std::array<std::pair<std::string_view, Capability>, 8> CAPABILITY_NAMES{{
     {"layerShell", Capability::LayerShell},
     {"globalShortcuts", Capability::GlobalShortcuts},
     {"inputServer", Capability::InputServer},
@@ -19,6 +20,7 @@ static constexpr std::array<std::pair<std::string_view, Capability>, 7> CAPABILI
     {"clientSideDecorations", Capability::ClientSideDecorations},
     {"liquidGlass", Capability::LiquidGlass},
     {"nativePanels", Capability::NativePanels},
+    {"windowMaterial", Capability::WindowMaterial},
 }};
 
 bool supports(Capability cap) {
@@ -54,6 +56,10 @@ bool supports(Capability cap) {
 #else
     return false;
 #endif
+  case Capability::WindowMaterial: {
+    auto *mgr = ServiceRegistry::instance()->windowMaterialManager();
+    return mgr && mgr->isSupported();
+  }
   }
 
   return false;
