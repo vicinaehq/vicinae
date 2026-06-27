@@ -74,16 +74,14 @@ void GeneralSettingsModel::setClientSideDecorations(bool v) {
            .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = v}}});
 }
 
-QString GeneralSettingsModel::csdRounding() const {
-  return QString::number(cfg().launcherWindow.clientSideDecorations.rounding);
+QString GeneralSettingsModel::rounding() const {
+  return QString::number(cfg().launcherWindow.effectiveRounding());
 }
-void GeneralSettingsModel::setCsdRounding(const QString &v) {
+void GeneralSettingsModel::setRounding(const QString &v) {
   bool ok = false;
   int val = v.toInt(&ok);
   if (ok)
-    cfgManager().mergeWithUser(
-        {.launcherWindow = config::Partial<config::WindowConfig>{
-             .clientSideDecorations = config::Partial<config::WindowCSD>{.rounding = val}}});
+    cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.rounding = val}});
 }
 
 QString GeneralSettingsModel::csdBorderWidth() const {
@@ -156,6 +154,24 @@ static QVariantList wrapSection(const QString &title, const QVariantList &items)
   section[QStringLiteral("title")] = title;
   section[QStringLiteral("items")] = items;
   return {section};
+}
+
+QVariantList GeneralSettingsModel::windowStyleItems() const {
+  QVariantList items;
+  items.append(makeDropdownItem(QStringLiteral("blurred"), QStringLiteral("Blurred")));
+  items.append(makeDropdownItem(QStringLiteral("liquid_glass"), QStringLiteral("Liquid Glass")));
+  return wrapSection(QStringLiteral("Window style"), items);
+}
+
+QVariant GeneralSettingsModel::currentWindowStyle() const {
+  auto id = QString::fromStdString(cfg().launcherWindow.style);
+  auto name = id == "liquid_glass" ? QStringLiteral("Liquid Glass") : QStringLiteral("Blurred");
+  return makeDropdownItem(id, name);
+}
+
+void GeneralSettingsModel::selectWindowStyle(const QString &id) {
+  cfgManager().mergeWithUser(
+      {.launcherWindow = config::Partial<config::WindowConfig>{.style = id.toStdString()}});
 }
 
 QVariantList GeneralSettingsModel::themeItems() const {

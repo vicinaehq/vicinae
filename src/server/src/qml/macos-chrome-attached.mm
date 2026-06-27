@@ -99,12 +99,11 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
     [parent addSubview:existing positioned:NSWindowBelow relativeTo:contentView];
   }
 
-  // Round the parent (NSThemeFrame) when using glass so its rectangular layer
-  // doesn't bleed through the glass's rounded corners. The visual-effect path
-  // masks the parent on its own.
+  // Round the parent (NSThemeFrame) so the OS clips content to the rounded
+  // corners server-side, for both the glass and visual-effect paths.
   parent.wantsLayer = YES;
-  parent.layer.cornerRadius = useGlass ? cornerRadius : 0;
-  parent.layer.masksToBounds = useGlass && cornerRadius > 0;
+  parent.layer.cornerRadius = cornerRadius;
+  parent.layer.masksToBounds = cornerRadius > 0;
 
   if (useGlass) {
     SEL setCR = sel_registerName("setCornerRadius:");
@@ -481,6 +480,8 @@ bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
   return QObject::eventFilter(obj, event);
 }
 
+bool macosLiquidGlassAvailable() { return liquidGlassClass() != nil; }
+
 void macosSetAccessoryActivationPolicy() {
   [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
 }
@@ -506,6 +507,27 @@ void macosReleaseMenuShortcuts() {
   dispatch_async(dispatch_get_main_queue(), ^{
     macosClearMenuShortcuts([NSApp mainMenu]);
   });
+}
+
+void macosApplyWindowVibrancy(QWindow *window, bool enabled, int cornerRadius) {
+  if (!window) return;
+  NSView *view = nsViewFromWinId(window->winId());
+  if (!view) return;
+  NSWindow *nswin = view.window;
+  if (!nswin) return;
+
+  if (enabled) {
+    nswin.opaque = NO;
+    nswin.backgroundColor = NSColor.clearColor;
+    nswin.hasShadow = YES;
+    installEffectView(nswin, /*enabled=*/true, /*wantLiquidGlass=*/false, NSVisualEffectMaterialMenu,
+                      cornerRadius, QColor(), 0);
+  } else {
+    installEffectView(nswin, /*enabled=*/false, /*wantLiquidGlass=*/false, NSVisualEffectMaterialMenu, 0,
+                      QColor(), 0);
+    nswin.opaque = YES;
+    nswin.backgroundColor = NSColor.windowBackgroundColor;
+  }
 }
 
 void MacOSPanelAttached::beginShow(qreal yFraction) {

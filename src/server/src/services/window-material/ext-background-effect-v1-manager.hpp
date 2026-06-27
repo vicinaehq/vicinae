@@ -4,15 +4,15 @@
 #include <qwindow.h>
 #include <unordered_map>
 #include "ext-background-effect-v1-client-protocol.h"
-#include "services/background-effect/abstract-background-effect-manager.hpp"
+#include "services/window-material/window-material-backend.hpp"
 
-class ExtBackgroundEffectV1Manager : public AbstractBackgroundEffectManager {
+class ExtBackgroundEffectV1Manager : public WindowMaterialBackend {
 public:
   explicit ExtBackgroundEffectV1Manager(ext_background_effect_manager_v1 *manager);
 
-  bool supportsBlur() const override;
-  bool setBlur(QWindow *win, const BlurConfig &cfg) override;
-  bool removeBlur(QWindow *win) override;
+  bool isSupported() const override;
+  bool apply(QWindow *win, const Params &params) override;
+  bool clear(QWindow *win) override;
 
 protected:
   bool eventFilter(QObject *sender, QEvent *event) override;
@@ -20,7 +20,7 @@ protected:
 private:
   struct BlurState {
     ext_background_effect_surface_v1 *effect;
-    BlurConfig cfg;
+    Params cfg;
 
     ~BlurState() {
       if (effect) ext_background_effect_surface_v1_destroy(effect);

@@ -13,6 +13,7 @@ class ConfigBridge;
 class HudBridge;
 class ImageSource;
 class KeybindBridge;
+class PlatformBridge;
 class ThemeBridge;
 class ViewHostBase;
 class QQuickWindow;
@@ -145,6 +146,7 @@ private:
   ConfigBridge *m_configBridge;
   ImageSource *m_imgSource;
   KeybindBridge *m_keybindProxy;
+  PlatformBridge *m_platformBridge;
   ThemeBridge *m_themeBridge;
 
   QQmlApplicationEngine m_engine;

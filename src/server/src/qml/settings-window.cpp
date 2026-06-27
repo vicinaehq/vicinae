@@ -1,12 +1,12 @@
 #include "settings-window.hpp"
 #include "common/entrypoint.hpp"
 #include "config-bridge.hpp"
-#include "environment.hpp"
 #include "extension-settings-model.hpp"
 #include "general-settings-model.hpp"
 #include "image-source.hpp"
 #include "keyboard-bridge.hpp"
 #include "global-shortcut-bridge.hpp"
+#include "platform-bridge.hpp"
 #include "keybind-settings-model.hpp"
 #include "settings-sidebar-model.hpp"
 #include "theme-bridge.hpp"
@@ -40,6 +40,7 @@ void SettingsWindow::ensureInitialized() {
   m_imgSource = new ImageSource(this);
   m_keyboardBridge = new KeyboardBridge(this);
   m_globalShortcutBridge = new GlobalShortcutBridge(this);
+  m_platformBridge = new PlatformBridge(this);
   m_generalModel = new GeneralSettingsModel(this);
   m_keybindModel = new KeybindSettingsModel(this);
   m_extensionModel = new ExtensionSettingsModel(this);
@@ -51,6 +52,7 @@ void SettingsWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
   rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
   rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
+  rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
   rootCtx->setContextProperty(QStringLiteral("settings"), this);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"),
                               ServiceRegistry::instance()->fileChooserService());
@@ -91,13 +93,6 @@ QString SettingsWindow::version() const { return QStringLiteral(VICINAE_GIT_TAG)
 QString SettingsWindow::commitHash() const { return QStringLiteral(VICINAE_GIT_COMMIT_HASH); }
 QString SettingsWindow::buildInfo() const { return QStringLiteral(BUILD_INFO); }
 QString SettingsWindow::headline() const { return Omnicast::HEADLINE; }
-
-bool SettingsWindow::globalShortcutsSupported() const {
-  auto *service = ServiceRegistry::instance()->globalShortcuts();
-  return service && service->isSupported();
-}
-
-bool SettingsWindow::layerShellSupported() const { return Environment::isLayerShellSupported(); }
 
 void SettingsWindow::openUrl(const QString &url) { m_ctx.services->appDb()->openTarget(url); }
 

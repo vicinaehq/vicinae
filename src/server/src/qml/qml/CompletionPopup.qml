@@ -11,6 +11,12 @@ Popup {
     property string filterPlaceholder: "Filter..."
     property string currentItemId: ""
 
+    // When true, show as a non-activating native window (so the field driving the
+    // completion keeps focus) where the platform supports it; in-scene otherwise.
+    property bool nativePanel: false
+
+    popupType: nativePanel && Platform.supports("nativePanels") ? Popup.Window : Popup.Item
+
     readonly property int count: completionModel.count
     readonly property bool hasSelection: _highlightedIndex >= 0
 
@@ -96,11 +102,19 @@ Popup {
         target: completionModel
     }
 
-    background: Rectangle {
-        radius: 8
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.95)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
+    background: SourceBlendRect {
+        radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
+        backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+        color: Config.withAlpha(Theme.background, Config.windowOpacity)
+        borderColor: Config.withAlpha(Theme.divider, Config.windowOpacity)
+        borderWidth: Platform.supports("clientSideDecorations") ? 1 : 0
+        WindowMaterial.enabled: Config.blurEnabled && root.popupType === Popup.Window
+        WindowMaterial.radius: Math.min(Config.borderRounding, 15)
+
+        Loader {
+            active: root.nativePanel && Platform.supports("nativePanels")
+            source: "qrc:/Vicinae/CompletionPanelMacOS.qml"
+        }
     }
 
     contentItem: ColumnLayout {

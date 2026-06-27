@@ -10,11 +10,11 @@ namespace KDE {
 
 BackgroundEffectManager::BackgroundEffectManager(org_kde_kwin_blur_manager *manager) : m_manager(manager) {}
 
-bool BackgroundEffectManager::supportsBlur() const { return true; }
+bool BackgroundEffectManager::isSupported() const { return true; }
 
-bool BackgroundEffectManager::setBlur(QWindow *win, const BlurConfig &cfg) {
+bool BackgroundEffectManager::apply(QWindow *win, const Params &params) {
   if (auto it = m_state.find(win); it != m_state.end()) {
-    if (it->second->cfg == cfg) return true;
+    if (it->second->cfg == params) return true;
 
     // region updating doesn't seem to work on kwin if the window is already
     // on screen, so we destroy and recreate the blur object every update
@@ -37,7 +37,7 @@ bool BackgroundEffectManager::setBlur(QWindow *win, const BlurConfig &cfg) {
     return false;
   }
 
-  auto state = std::make_unique<BlurState>(blur, cfg);
+  auto state = std::make_unique<BlurState>(blur, params);
 
   applyBlur(win, *state);
   m_state[win] = std::move(state);
@@ -45,7 +45,7 @@ bool BackgroundEffectManager::setBlur(QWindow *win, const BlurConfig &cfg) {
   return true;
 }
 
-bool BackgroundEffectManager::removeBlur(QWindow *win) {
+bool BackgroundEffectManager::clear(QWindow *win) {
   if (auto it = m_state.find(win); it != m_state.end()) {
     win->removeEventFilter(this);
     m_state.erase(it);

@@ -227,7 +227,7 @@ Item {
                                 }
 
                                 ShortcutField {
-                                    visible: settings.globalShortcutsSupported
+                                    visible: Platform.supports("globalShortcuts")
                                     bordered: false
                                     placeholder: "Shortcut"
                                     shortcutId: cmdDelegate.entrypointId

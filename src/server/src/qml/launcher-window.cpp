@@ -10,6 +10,7 @@
 #include "image-source.hpp"
 #include "image-url.hpp"
 #include "config-bridge.hpp"
+#include "platform-bridge.hpp"
 #include "theme-bridge.hpp"
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
@@ -48,7 +49,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
       m_footerPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
-      m_themeBridge(new ThemeBridge(this)) {
+      m_platformBridge(new PlatformBridge(this)), m_themeBridge(new ThemeBridge(this)) {
 
 #ifndef Q_OS_MACOS
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
@@ -61,6 +62,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
+  rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
 
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);

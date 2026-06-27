@@ -8,6 +8,19 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/image/url.hpp"
 
+OpenAppLocationAction::OpenAppLocationAction(const std::shared_ptr<AbstractApplication> &app,
+                                             const std::shared_ptr<AbstractApplication> &opener)
+    : AbstractAction("Open Location", opener->iconUrl()), m_app(app) {}
+
+void OpenAppLocationAction::execute(ApplicationContext *ctx) {
+  if (!ctx->services->appDb()->openLocation(*m_app)) {
+    ctx->services->toastService()->failure("Failed to open app location");
+    return;
+  }
+
+  ctx->navigation->closeWindow();
+}
+
 void OpenInTerminalAction::execute(ApplicationContext *ctx) {
   auto appDb = ctx->services->appDb();
   auto toast = ctx->services->toastService();

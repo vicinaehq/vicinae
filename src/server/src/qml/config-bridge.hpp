@@ -1,4 +1,5 @@
 #pragma once
+#include "capabilities.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include <QColor>
@@ -17,6 +18,7 @@ class ConfigBridge : public QObject {
   Q_PROPERTY(bool considerPreedit READ considerPreedit NOTIFY changed)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick NOTIFY changed)
   Q_PROPERTY(bool blurEnabled READ blurEnabled NOTIFY changed)
+  Q_PROPERTY(QString windowStyle READ windowStyle NOTIFY changed)
 
 signals:
   void changed();
@@ -35,8 +37,11 @@ public:
   }
 
   int borderRounding() const {
-    auto &csd = cfg().launcherWindow.clientSideDecorations;
-    return csd.enabled ? csd.rounding : 0;
+    const auto &window = cfg().launcherWindow;
+    if (platform::supports(platform::Capability::ClientSideDecorations)) {
+      return window.clientSideDecorations.enabled ? window.effectiveRounding() : 0;
+    }
+    return window.effectiveRounding();
   }
 
   int shadowSize() const {
@@ -50,6 +55,7 @@ public:
   bool considerPreedit() const { return cfg().considerPreedit; }
   bool activateOnSingleClick() const { return cfg().activateOnSingleClick; }
   bool blurEnabled() const { return cfg().launcherWindow.blur.enabled; }
+  QString windowStyle() const { return QString::fromStdString(cfg().launcherWindow.style); }
 
   Q_INVOKABLE static QColor withAlpha(const QColor &c, qreal alpha) {
     return QColor::fromRgbF(c.redF(), c.greenF(), c.blueF(), alpha);

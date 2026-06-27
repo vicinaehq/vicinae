@@ -49,8 +49,8 @@ Window {
     flags: Qt.Window
     title: "Vicinae Settings"
 
-    BackgroundEffect.enabled: Config.blurEnabled
-    BackgroundEffect.radius: 10
+    WindowMaterial.enabled: Config.blurEnabled
+    WindowMaterial.radius: 10
 
     Rectangle {
         id: background
