@@ -17,6 +17,9 @@ concurrency:
 jobs:
   build:
     runs-on: depot-ubuntu-24.04
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
