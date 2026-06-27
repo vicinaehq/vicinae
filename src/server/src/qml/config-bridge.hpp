@@ -18,7 +18,7 @@ class ConfigBridge : public QObject {
   Q_PROPERTY(bool considerPreedit READ considerPreedit NOTIFY changed)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick NOTIFY changed)
   Q_PROPERTY(bool blurEnabled READ blurEnabled NOTIFY changed)
-  Q_PROPERTY(QString windowStyle READ windowStyle NOTIFY changed)
+  Q_PROPERTY(QString windowMaterial READ windowMaterial NOTIFY changed)
 
 signals:
   void changed();
@@ -54,8 +54,11 @@ public:
   bool emacsMode() const { return cfg().keybinding == "emacs"; }
   bool considerPreedit() const { return cfg().considerPreedit; }
   bool activateOnSingleClick() const { return cfg().activateOnSingleClick; }
-  bool blurEnabled() const { return cfg().launcherWindow.blur.enabled; }
-  QString windowStyle() const { return QString::fromStdString(cfg().launcherWindow.style); }
+  QString windowMaterial() const {
+    return QString::fromStdString(
+        cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass)));
+  }
+  bool blurEnabled() const { return windowMaterial() != QStringLiteral("none"); }
 
   Q_INVOKABLE static QColor withAlpha(const QColor &c, qreal alpha) {
     return QColor::fromRgbF(c.redF(), c.greenF(), c.blueF(), alpha);

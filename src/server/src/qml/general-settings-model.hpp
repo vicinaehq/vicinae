@@ -31,8 +31,8 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(
       bool nativeTextRendering READ nativeTextRendering WRITE setNativeTextRendering NOTIFY configChanged)
   Q_PROPERTY(QString fontSize READ fontSize WRITE setFontSize NOTIFY configChanged)
-  Q_PROPERTY(QVariantList windowStyleItems READ windowStyleItems CONSTANT)
-  Q_PROPERTY(QVariant currentWindowStyle READ currentWindowStyle NOTIFY configChanged)
+  Q_PROPERTY(QVariantList windowMaterialItems READ windowMaterialItems CONSTANT)
+  Q_PROPERTY(QVariant currentWindowMaterial READ currentWindowMaterial NOTIFY configChanged)
   Q_PROPERTY(QVariantList themeItems READ themeItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList fontItems READ fontItems CONSTANT)
   Q_PROPERTY(QVariantList iconThemeItems READ iconThemeItems NOTIFY configChanged)
@@ -92,9 +92,9 @@ public:
   QString fontSize() const;
   void setFontSize(const QString &v);
 
-  QVariantList windowStyleItems() const;
-  QVariant currentWindowStyle() const;
-  Q_INVOKABLE void selectWindowStyle(const QString &id);
+  QVariantList windowMaterialItems() const;
+  QVariant currentWindowMaterial() const;
+  Q_INVOKABLE void selectWindowMaterial(const QString &id);
 
   QVariantList themeItems() const;
   QVariantList fontItems() const;

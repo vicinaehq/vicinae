@@ -119,13 +119,17 @@ struct WindowConfig {
   WindowCompactMode compactMode;
   LayerShellConfig layerShell;
 
-  // macOS-only window chrome material: "blurred" (classic vibrancy/HUD) or
-  // "liquid_glass" (the macOS 26 Tahoe Liquid Glass material). Ignored elsewhere.
-  std::string style = "blurred";
+  std::string material = "auto";
 
   // Corner radius is a window-level property, but historically lived under client_side_decorations.
   // Fall back to that value when the flat key is unset to keep older configs working.
   int effectiveRounding() const { return rounding.value_or(clientSideDecorations.rounding); }
+
+  std::string resolvedMaterial(bool liquidGlassAvailable) const {
+    if (material != "auto") return material;
+    if (!blur.enabled) return "none";
+    return liquidGlassAvailable ? "liquid_glass" : "blur";
+  }
 };
 
 template <> struct Partial<WindowConfig> {
@@ -136,7 +140,7 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<BlurConfig>> blur;
   std::optional<Partial<WindowCompactMode>> compactMode;
   std::optional<Partial<LayerShellConfig>> layerShell;
-  std::optional<std::string> style;
+  std::optional<std::string> material;
 };
 
 struct FontConfig {
