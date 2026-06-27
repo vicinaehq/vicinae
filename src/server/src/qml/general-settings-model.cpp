@@ -1,4 +1,5 @@
 #include "general-settings-model.hpp"
+#include "capabilities.hpp"
 #include "config/config.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
@@ -156,22 +157,27 @@ static QVariantList wrapSection(const QString &title, const QVariantList &items)
   return {section};
 }
 
-QVariantList GeneralSettingsModel::windowStyleItems() const {
+QVariantList GeneralSettingsModel::windowMaterialItems() const {
   QVariantList items;
-  items.append(makeDropdownItem(QStringLiteral("blurred"), QStringLiteral("Blurred")));
-  items.append(makeDropdownItem(QStringLiteral("liquid_glass"), QStringLiteral("Liquid Glass")));
-  return wrapSection(QStringLiteral("Window style"), items);
+  items.append(makeDropdownItem(QStringLiteral("none"), QStringLiteral("None")));
+  items.append(makeDropdownItem(QStringLiteral("blur"), QStringLiteral("Blurred")));
+  if (platform::supports(platform::Capability::LiquidGlass))
+    items.append(makeDropdownItem(QStringLiteral("liquid_glass"), QStringLiteral("Liquid Glass")));
+  return wrapSection(QStringLiteral("Window material"), items);
 }
 
-QVariant GeneralSettingsModel::currentWindowStyle() const {
-  auto id = QString::fromStdString(cfg().launcherWindow.style);
-  auto name = id == "liquid_glass" ? QStringLiteral("Liquid Glass") : QStringLiteral("Blurred");
+QVariant GeneralSettingsModel::currentWindowMaterial() const {
+  auto id = QString::fromStdString(
+      cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass)));
+  QString name = id == "liquid_glass" ? QStringLiteral("Liquid Glass")
+                 : id == "none"       ? QStringLiteral("None")
+                                      : QStringLiteral("Blurred");
   return makeDropdownItem(id, name);
 }
 
-void GeneralSettingsModel::selectWindowStyle(const QString &id) {
+void GeneralSettingsModel::selectWindowMaterial(const QString &id) {
   cfgManager().mergeWithUser(
-      {.launcherWindow = config::Partial<config::WindowConfig>{.style = id.toStdString()}});
+      {.launcherWindow = config::Partial<config::WindowConfig>{.material = id.toStdString()}});
 }
 
 QVariantList GeneralSettingsModel::themeItems() const {
