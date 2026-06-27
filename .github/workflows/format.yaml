@@ -13,12 +13,9 @@ concurrency:
 jobs:
   format:
     runs-on: depot-ubuntu-24.04
-    container: archlinux:latest
+    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:arch-latest
 
     steps:
-      - name: Install dependencies
-        run: pacman -Syu --needed --noconfirm git make clang nodejs npm
-
       - name: Checkout code
         uses: actions/checkout@v4
 

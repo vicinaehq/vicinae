@@ -102,10 +102,21 @@ jobs:
 
   build-appimage:
     needs: build-binary
-    runs-on: depot-ubuntu-24.04-16
-    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:appimage-amd64-latest
+    runs-on: ${{ matrix.target.runner }}
+    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:${{ matrix.target.tag }}
     permissions:
       contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - arch: amd64
+            runner: depot-ubuntu-24.04-16
+            tag: appimage-amd64-latest
+          - arch: arm64
+            runner: depot-ubuntu-24.04-arm-16
+            tag: appimage-arm64-latest
+    name: build-appimage (${{ matrix.target.arch }})
     env:
       BUILD_TYPE: Release
       INSTALL_DIR: ${{ github.workspace }}/install
