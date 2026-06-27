@@ -81,7 +81,7 @@ Item {
                 ev.accepted = true;
             }
         }
-        
+
         onAccepted: {
             root.accepted();
             if (root.releaseFocusOnAccept)
