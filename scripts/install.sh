@@ -173,11 +173,21 @@ get_latest_release_info() {
 		exit 1
 	fi
 
+	local arch
+	case "$(uname -m)" in
+	x86_64 | amd64) arch="x86_64" ;;
+	aarch64 | arm64) arch="aarch64" ;;
+	*)
+		echo "Error: unsupported architecture: $(uname -m)" >&2
+		exit 1
+		;;
+	esac
+
 	local appimage_name
-	appimage_name=$(echo "$response" | jq -r '.assets[] | select(.name | contains("AppImage")) | .name')
+	appimage_name=$(echo "$response" | jq -r --arg arch "$arch" '.assets[] | select(.name | endswith(".AppImage")) | select(.name | contains($arch)) | .name' | head -1)
 
 	if [[ "$appimage_name" == "null" || -z "$appimage_name" ]]; then
-		echo "Error: Failed to find AppImage asset in latest release" >&2
+		echo "Error: Failed to find $arch AppImage asset in latest release" >&2
 		exit 1
 	fi
 
@@ -647,6 +657,12 @@ self_download() {
 }
 
 main() {
+	if [[ "$(uname -s)" == "Darwin" ]]; then
+		echo "Error: this installer exclusively supports linux based systems." >&2
+		echo "See https://docs.vicinae.com for macOS instructions." >&2
+		exit 1
+	fi
+
 	renderIcon
 
 	# Save original arguments for potential re-execution with sudo/doas

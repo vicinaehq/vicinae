@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm]
+        os: [depot-ubuntu-24.04, depot-ubuntu-24.04-arm]
     steps:
     - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v25

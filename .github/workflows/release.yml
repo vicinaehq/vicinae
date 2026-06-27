@@ -16,7 +16,8 @@ concurrency:
 
 jobs:
   build-binary:
-    runs-on: [self-hosted, Linux, X64, prod]
+    runs-on: depot-ubuntu-24.04-16
+    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:arch-latest
     permissions:
       contents: write
     outputs:
@@ -70,7 +71,6 @@ jobs:
             -DVICINAE_PROVENANCE=binary_release \
             -DLTO=ON \
             -DUSE_SYSTEM_CMARK_GFM=OFF \
-            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
             -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"
 
       - name: Build
@@ -90,42 +90,6 @@ jobs:
           cd "${INSTALL_DIR}"
           tar -czvf "${{ github.workspace }}/${{ steps.meta.outputs.artifact }}" .
 
-      - name: Fetch sponsors
-        id: sponsors
-        env:
-          GH_TOKEN: ${{ secrets.SPONSORS_TOKEN || github.token }}
-        run: |
-          set -euo pipefail
-          logins=$(gh api graphql -f query='
-            query {
-              organization(login: "vicinaehq") {
-                sponsors(first: 100) {
-                  nodes {
-                    ... on User { login }
-                    ... on Organization { login }
-                  }
-                }
-              }
-            }
-          ' --jq '.data.organization.sponsors.nodes[].login' 2>/dev/null || true)
-
-          if [[ -z "$logins" ]]; then
-            echo "body=" >> "$GITHUB_OUTPUT"
-          else
-            {
-              echo 'body<<SPONSORS_EOF'
-              echo ""
-              echo "## Sponsors"
-              echo ""
-              echo "Thanks to our sponsors for supporting vicinae!"
-              echo ""
-              while IFS= read -r login; do
-                echo "- [@${login}](https://github.com/${login})"
-              done <<< "$logins"
-              echo 'SPONSORS_EOF'
-            } >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Create GitHub Release and upload asset
         uses: softprops/action-gh-release@v2
         with:
@@ -135,24 +99,29 @@ jobs:
           files: |
             ${{ steps.meta.outputs.artifact }}
 
-      - name: Append sponsors to release notes
-        if: steps.sponsors.outputs.body != ''
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.meta.outputs.tag }}
-          append_body: true
-          body: ${{ steps.sponsors.outputs.body }}
-
 
   build-appimage:
     needs: build-binary
-    runs-on: [self-hosted, Linux, X64, appimage]
+    runs-on: ${{ matrix.target.runner }}
+    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:${{ matrix.target.tag }}
     permissions:
       contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - arch: amd64
+            runner: depot-ubuntu-24.04-16
+            tag: appimage-amd64-latest
+          - arch: arm64
+            runner: depot-ubuntu-24.04-arm-16
+            tag: appimage-arm64-latest
+    name: build-appimage (${{ matrix.target.arch }})
     env:
       BUILD_TYPE: Release
       INSTALL_DIR: ${{ github.workspace }}/install
       APP_DIR: ${{ github.workspace }}/appdir
+      APPIMAGE_EXTRACT_AND_RUN: "1"
 
     steps:
       - name: Checkout

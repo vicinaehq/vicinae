@@ -12,7 +12,8 @@ concurrency:
 
 jobs:
   format:
-    runs-on: [self-hosted, Linux, X64, prod]
+    runs-on: depot-ubuntu-24.04
+    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:arch-latest
 
     steps:
       - name: Checkout code
@@ -20,11 +21,6 @@ jobs:
 
       - name: Check C++ formatting
         run: make check-format
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
 
       - name: Check TypeScript formatting
         working-directory: src/typescript
