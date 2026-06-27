@@ -57,8 +57,12 @@ bool supports(Capability cap) {
     return false;
 #endif
   case Capability::WindowMaterial: {
+#ifdef Q_OS_MACOS
+    return true;
+#else
     auto *mgr = ServiceRegistry::instance()->windowMaterialManager();
     return mgr && mgr->isSupported();
+#endif
   }
   }
 

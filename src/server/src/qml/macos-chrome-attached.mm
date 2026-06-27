@@ -509,27 +509,6 @@ void macosReleaseMenuShortcuts() {
   });
 }
 
-void macosApplyWindowVibrancy(QWindow *window, bool enabled, int cornerRadius) {
-  if (!window) return;
-  NSView *view = nsViewFromWinId(window->winId());
-  if (!view) return;
-  NSWindow *nswin = view.window;
-  if (!nswin) return;
-
-  if (enabled) {
-    nswin.opaque = NO;
-    nswin.backgroundColor = NSColor.clearColor;
-    nswin.hasShadow = YES;
-    installEffectView(nswin, /*enabled=*/true, /*wantLiquidGlass=*/false, NSVisualEffectMaterialMenu,
-                      cornerRadius, QColor(), 0);
-  } else {
-    installEffectView(nswin, /*enabled=*/false, /*wantLiquidGlass=*/false, NSVisualEffectMaterialMenu, 0,
-                      QColor(), 0);
-    nswin.opaque = YES;
-    nswin.backgroundColor = NSColor.windowBackgroundColor;
-  }
-}
-
 void MacOSPanelAttached::beginShow(qreal yFraction) {
   if (!m_window) return;
   m_window->setOpacity(0.0);

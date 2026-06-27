@@ -21,7 +21,6 @@ ToolTip {
         color: Config.withAlpha(Theme.secondaryBackground, Config.windowOpacity)
         borderColor: Config.withAlpha(Theme.divider, Config.windowOpacity)
         borderWidth: Platform.supports("clientSideDecorations") ? 1 : 0
-        WindowMaterial.enabled: Config.blurEnabled
-        WindowMaterial.radius: Math.min(Config.borderRounding, 15)
+        PopupMaterial {}
     }
 }

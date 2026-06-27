@@ -813,6 +813,7 @@ endif()
 
 set(VICINAE_QML_FILES
 	src/qml/qml/LauncherWindow.qml
+	src/qml/qml/PopupMaterial.qml
 	src/qml/qml/SearchBar.qml
 	src/qml/qml/GenericListView.qml
 	src/qml/qml/HoverResetOnModelChange.qml
@@ -945,6 +946,7 @@ if(APPLE)
 		src/qml/qml/SettingsWindowMacOS.qml
 		src/qml/qml/HudWindowMacOS.qml
 		src/qml/qml/CompletionPanelMacOS.qml
+		src/qml/qml/PopupMaterialMacOS.qml
 	)
 endif()
 
