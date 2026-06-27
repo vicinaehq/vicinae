@@ -11,7 +11,7 @@ Item {
     WindowMaterial.radius: _radius
 
     Loader {
-        active: root.active && Platform.supports("nativePanels")
+        active: root.active && Qt.platform.os === "osx"
         source: "qrc:/Vicinae/PopupMaterialMacOS.qml"
     }
 }
