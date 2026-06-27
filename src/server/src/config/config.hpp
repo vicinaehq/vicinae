@@ -222,6 +222,8 @@ struct ConfigValue {
   std::string schema = SCHEMA;
   std::vector<std::string> imports;
   bool searchFilesInRoot = false;
+  bool rollingKnowledge = false;
+  bool keywordLatching = false;
   bool closeOnFocusLoss = false;
   bool considerPreedit = false;
   bool popToRootOnClose = false;
@@ -284,6 +286,8 @@ template <> struct Partial<ConfigValue> {
   std::optional<std::string> keybinding;
   std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
+  std::optional<bool> rollingKnowledge;
+  std::optional<bool> keywordLatching;
   std::optional<Partial<InputServer>> inputServer;
   std::optional<Partial<GlobalShortcuts>> globalShortcuts;
 

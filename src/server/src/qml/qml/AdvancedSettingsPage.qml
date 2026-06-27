@@ -85,6 +85,24 @@ Flickable {
             }
 
             SettingsRow {
+                label: "Rolling knowledge"
+                description: "Remember selections over the last 4 weeks and use them to bias default result ordering."
+                SettingsToggle {
+                    checked: root.model.rollingKnowledge
+                    onToggled: root.model.rollingKnowledge = checked
+                }
+            }
+
+            SettingsRow {
+                label: "Keyword latching"
+                description: "Learn the exact query string you typed and promote the item you select for that query."
+                SettingsToggle {
+                    checked: root.model.keywordLatching
+                    onToggled: root.model.keywordLatching = checked
+                }
+            }
+
+            SettingsRow {
                 label: "Favicon Fetching"
                 description: "The favicon provider used to load favicons where needed. Select 'None' to turn off favicon loading."
                 showSeparator: false

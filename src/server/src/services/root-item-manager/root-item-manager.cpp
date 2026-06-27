@@ -138,28 +138,7 @@ float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) 
   float const score =
       pattern.empty() ? 1 : fzf::threadLocalMatcher().fuzzy_match_v2_score_query(ss, kws, pattern);
 
-  if (score == 0) return 0;
-
-  constexpr double FRECENCY_BOOST_CAP = 25.0;
-  constexpr double FRECENCY_FREQ_SCALE = 5.0;
-  constexpr double FRECENCY_RECENCY_PEAK = 10.0;
-  constexpr double FRECENCY_RECENCY_HALF_LIFE_DAYS = 30.0;
-  constexpr double SECONDS_PER_DAY = 86400.0;
-
-  double const frequencyTerm = FRECENCY_FREQ_SCALE * std::log(1 + meta->visitCount * 0.1);
-
-  double recencyTerm = 0.0;
-  if (meta->lastVisitedAt) {
-    double const daysSince =
-        (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*meta->lastVisitedAt)) /
-        SECONDS_PER_DAY;
-    recencyTerm =
-        FRECENCY_RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / FRECENCY_RECENCY_HALF_LIFE_DAYS);
-  }
-
-  double const boost = std::min(FRECENCY_BOOST_CAP, frequencyTerm + recencyTerm);
-
-  return score + boost;
+  return score;
 }
 
 std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
@@ -185,7 +164,67 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
 
     if (!fuzzyScore) { continue; }
 
-    results.emplace_back(ScoredItem{.meta = item.meta, .score = fuzzyScore, .item = item.item});
+    double score = fuzzyScore;
+    if (auto const &cfg = m_cfg.value(); cfg.rollingKnowledge) {
+      auto usage = m_visitTracker.getRollingUsage(item.meta->item->uniqueId());
+      constexpr double ROLLING_BOOST_CAP = 25.0;
+      constexpr double ROLLING_FREQ_SCALE = 5.0;
+      constexpr double ROLLING_RECENCY_PEAK = 10.0;
+      constexpr double ROLLING_RECENCY_HALF_LIFE_DAYS = 14.0;
+      constexpr double SECONDS_PER_DAY = 86400.0;
+
+      double const frequencyTerm = ROLLING_FREQ_SCALE * std::log(1 + usage.visitCount * 0.1);
+      double recencyTerm = 0.0;
+      if (usage.lastVisitedAt) {
+        double const daysSince =
+            (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*usage.lastVisitedAt)) /
+            SECONDS_PER_DAY;
+        recencyTerm = ROLLING_RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / ROLLING_RECENCY_HALF_LIFE_DAYS);
+      }
+
+      score += std::min(ROLLING_BOOST_CAP, frequencyTerm + recencyTerm);
+    } else {
+      constexpr double FRECENCY_BOOST_CAP = 25.0;
+      constexpr double FRECENCY_FREQ_SCALE = 5.0;
+      constexpr double FRECENCY_RECENCY_PEAK = 10.0;
+      constexpr double FRECENCY_RECENCY_HALF_LIFE_DAYS = 30.0;
+      constexpr double SECONDS_PER_DAY = 86400.0;
+
+      double const frequencyTerm = FRECENCY_FREQ_SCALE * std::log(1 + item.meta->visitCount * 0.1);
+      double recencyTerm = 0.0;
+      if (item.meta->lastVisitedAt) {
+        double const daysSince =
+            (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*item.meta->lastVisitedAt)) /
+            SECONDS_PER_DAY;
+        recencyTerm =
+            FRECENCY_RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / FRECENCY_RECENCY_HALF_LIFE_DAYS);
+      }
+
+      score += std::min(FRECENCY_BOOST_CAP, frequencyTerm + recencyTerm);
+    }
+
+    if (m_cfg.value().keywordLatching) {
+      auto queryUsage = m_visitTracker.getQueryUsage(pattern, item.meta->item->uniqueId());
+      constexpr double LATCH_BOOST_CAP = 30.0;
+      constexpr double LATCH_FREQ_SCALE = 8.0;
+      constexpr double LATCH_RECENCY_PEAK = 12.0;
+      constexpr double LATCH_RECENCY_HALF_LIFE_DAYS = 14.0;
+      constexpr double SECONDS_PER_DAY = 86400.0;
+
+      double const frequencyTerm = LATCH_FREQ_SCALE * std::log(1 + queryUsage.visitCount * 0.1);
+      double recencyTerm = 0.0;
+      if (queryUsage.lastVisitedAt) {
+        double const daysSince =
+            (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*queryUsage.lastVisitedAt)) /
+            SECONDS_PER_DAY;
+        recencyTerm =
+            LATCH_RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / LATCH_RECENCY_HALF_LIFE_DAYS);
+      }
+
+      score += std::min(LATCH_BOOST_CAP, frequencyTerm + recencyTerm);
+    }
+
+    results.emplace_back(ScoredItem{.meta = item.meta, .score = score, .item = item.item});
   }
 
   // we need stable sort to avoid flickering when updating quickly
@@ -513,10 +552,10 @@ bool RootItemManager::resetRanking(const EntrypointId &id) {
   return true;
 }
 
-bool RootItemManager::registerVisit(const EntrypointId &id) {
+bool RootItemManager::registerVisit(const EntrypointId &id, std::string_view query) {
   ++m_metadata[id].visitCount;
   m_metadata[id].lastVisitedAt = QDateTime::currentSecsSinceEpoch();
-  m_visitTracker.registerVisit(id);
+  m_visitTracker.registerVisit(id, query);
   return true;
 }
 

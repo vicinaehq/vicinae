@@ -28,6 +28,16 @@ void GeneralSettingsModel::setSearchFilesInRoot(bool v) {
   cfgManager().mergeWithUser({.searchFilesInRoot = v});
 }
 
+bool GeneralSettingsModel::rollingKnowledge() const { return cfg().rollingKnowledge; }
+void GeneralSettingsModel::setRollingKnowledge(bool v) {
+  cfgManager().mergeWithUser({.rollingKnowledge = v});
+}
+
+bool GeneralSettingsModel::keywordLatching() const { return cfg().keywordLatching; }
+void GeneralSettingsModel::setKeywordLatching(bool v) {
+  cfgManager().mergeWithUser({.keywordLatching = v});
+}
+
 bool GeneralSettingsModel::closeOnFocusLoss() const { return cfg().closeOnFocusLoss; }
 void GeneralSettingsModel::setCloseOnFocusLoss(bool v) {
   cfgManager().mergeWithUser({.closeOnFocusLoss = v});

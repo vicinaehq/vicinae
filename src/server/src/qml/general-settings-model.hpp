@@ -8,6 +8,8 @@ class GeneralSettingsModel : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(bool searchFilesInRoot READ searchFilesInRoot WRITE setSearchFilesInRoot NOTIFY configChanged)
+  Q_PROPERTY(bool rollingKnowledge READ rollingKnowledge WRITE setRollingKnowledge NOTIFY configChanged)
+  Q_PROPERTY(bool keywordLatching READ keywordLatching WRITE setKeywordLatching NOTIFY configChanged)
   Q_PROPERTY(bool inputServerEnabled READ inputServerEnabled WRITE setInputServerEnabled NOTIFY configChanged)
   Q_PROPERTY(bool closeOnFocusLoss READ closeOnFocusLoss WRITE setCloseOnFocusLoss NOTIFY configChanged)
   Q_PROPERTY(bool closeOnEscape READ closeOnEscape WRITE setCloseOnEscape NOTIFY configChanged)
@@ -51,6 +53,10 @@ public:
 
   bool searchFilesInRoot() const;
   void setSearchFilesInRoot(bool v);
+  bool rollingKnowledge() const;
+  void setRollingKnowledge(bool v);
+  bool keywordLatching() const;
+  void setKeywordLatching(bool v);
   bool closeOnFocusLoss() const;
   void setCloseOnFocusLoss(bool v);
   bool closeOnEscape() const;

@@ -7,7 +7,9 @@ class OpenFileAction : public OpenAppAction {
 public:
   void execute(ApplicationContext *ctx) override {
     auto files = ctx->services->fileService();
+    auto query = ctx->navigation->searchText().toStdString();
 
+    files->saveQuerySelection(query, m_path);
     OpenAppAction::execute(ctx);
     files->saveAccess(m_path);
   }
@@ -25,7 +27,9 @@ class OpenFileInAppAction : public OpenAppAction {
 public:
   void execute(ApplicationContext *ctx) override {
     auto files = ctx->services->fileService();
+    auto query = ctx->navigation->searchText().toStdString();
 
+    files->saveQuerySelection(query, m_path);
     OpenAppAction::execute(ctx);
     files->saveAccess(m_path);
   }
