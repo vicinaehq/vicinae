@@ -110,7 +110,6 @@ jobs:
       BUILD_TYPE: Release
       INSTALL_DIR: ${{ github.workspace }}/install
       APP_DIR: ${{ github.workspace }}/appdir
-      # linuxdeploy runs AppImages; the container has no FUSE, so extract-and-run.
       APPIMAGE_EXTRACT_AND_RUN: "1"
 
     steps:

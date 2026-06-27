@@ -16,7 +16,6 @@ jobs:
     container: archlinux:latest
 
     steps:
-      # Runs before checkout so git + node exist for the JS-based actions.
       - name: Install dependencies
         run: pacman -Syu --needed --noconfirm git make clang nodejs npm
 

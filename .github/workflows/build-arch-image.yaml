@@ -2,8 +2,6 @@ name: Build Arch build-env image
 
 on:
   schedule:
-    # Weekly refresh: keeps the image fresh (rolling Arch) and within Depot
-    # Registry retention so the :latest tag never ages out.
     - cron: "0 4 * * 1"
   push:
     branches: [main]
@@ -26,8 +24,6 @@ jobs:
       - name: Set up Depot
         uses: depot/setup-action@v1
 
-      # Builds on Depot's remote BuildKit and saves to the Depot Registry.
-      # On a Depot runner this is pre-authenticated (no DEPOT_TOKEN needed).
       - name: Build and push to Depot Registry
         uses: depot/build-push-action@v1
         with:

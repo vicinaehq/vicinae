@@ -1,0 +1,46 @@
+name: Build AppImage build-env image
+
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  push:
+    branches: [main]
+    paths:
+      - scripts/runners/appimage/AppImageBuilder.Dockerfile
+      - .github/workflows/build-appimage-image.yaml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: depot-ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - platform: linux/amd64
+            tag: appimage-amd64-latest
+          - platform: linux/arm64
+            tag: appimage-arm64-latest
+
+    name: Build AppImage image (${{ matrix.target.platform }})
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Depot
+        uses: depot/setup-action@v1
+
+      - name: Build and push to Depot Registry
+        uses: depot/build-push-action@v1
+        with:
+          project: ${{ vars.DEPOT_PROJECT_ID }}
+          platforms: ${{ matrix.target.platform }}
+          context: scripts/runners/appimage
+          file: scripts/runners/appimage/AppImageBuilder.Dockerfile
+          save: true
+          save-tags: ${{ matrix.target.tag }}

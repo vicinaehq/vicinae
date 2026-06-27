@@ -21,7 +21,7 @@ cp extra/vicinae.png ${APPDIR}
 cp extra/vicinae.desktop ${APPDIR}
 
 # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57
-cp /usr/lib/x86_64-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
+cp /usr/lib/$(uname -m)-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
 
 export QML_SOURCES_PATHS=$PWD/src/server/src/qml/qml
 export EXTRA_PLATFORM_PLUGINS=libqwayland.so
