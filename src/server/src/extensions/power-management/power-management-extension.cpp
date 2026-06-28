@@ -12,7 +12,13 @@
 class PowerManagementCommand : public BuiltinCallbackCommand {
 public:
   virtual bool requiresDefaultConfirmation() const { return true; }
-  virtual bool supportsCustomProgram() const { return true; }
+  virtual bool supportsCustomProgram() const {
+#ifdef Q_OS_MACOS
+    return false;
+#else
+    return true;
+#endif
+  }
 
   std::vector<Preference> preferences() const override {
     std::vector<Preference> preferences;
@@ -269,7 +275,6 @@ class LogOutCommand : public PowerManagementCommand {
     return "Terminate the current user session. If you simply want to lock your session you should use 'Lock "
            "Session' instead.";
   }
-  bool supportsCustomProgram() const override { return true; }
 
   std::vector<QString> keywords() const override { return {"logout"}; }
 
@@ -293,12 +298,14 @@ class LogOutCommand : public PowerManagementCommand {
 };
 
 PowerManagementExtension::PowerManagementExtension() {
-  registerCommand<SuspendCommand>();
   registerCommand<PowerOffCommand>();
-  registerCommand<HibernateCommand>();
   registerCommand<RebootCommand>();
-  registerCommand<SoftRebootCommand>();
   registerCommand<SleepCommand>();
   registerCommand<LockCommand>();
   registerCommand<LogOutCommand>();
+#ifndef Q_OS_MACOS
+  registerCommand<SuspendCommand>();
+  registerCommand<HibernateCommand>();
+  registerCommand<SoftRebootCommand>();
+#endif
 }

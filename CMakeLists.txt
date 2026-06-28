@@ -36,11 +36,19 @@ option(
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
-option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of the vendored copy under vendor/cmark-gfm" ON)
+
+# Default for the USE_SYSTEM_* options below: Linux distros ship these as system
+# packages, macOS does not, so it flips per platform.
+set(USE_SYSTEM_DEFAULT ON)
+if (APPLE)
+	set(USE_SYSTEM_DEFAULT OFF)
+endif()
+
+option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of the vendored copy under vendor/cmark-gfm" ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
-option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ON)
+option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
-option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
+option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ${USE_SYSTEM_DEFAULT})
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
@@ -63,7 +71,7 @@ if (NOT USE_SYSTEM_GLAZE)
 	import_glaze()
 endif()
 
-if (NOT USE_SYSTEM_KF6 OR APPLE)
+if (NOT USE_SYSTEM_KF6)
 	include(KF6)
 	import_kf6()
 endif()
@@ -95,8 +103,6 @@ if (APPLE)
 
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
-	set(USE_SYSTEM_CMARK_GFM OFF)
-	set(USE_SYSTEM_QT_KEYCHAIN OFF)
 endif()
 
 set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)

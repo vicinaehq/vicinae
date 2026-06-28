@@ -42,19 +42,21 @@
     });
     devShells = forEachPkgs (
       pkgs: let
-        qtEnv = pkgs.qt6.env "qt-custom-${pkgs.qt6.qtbase.version}" [
-          pkgs.qt6.qtdeclarative
-          pkgs.qt6.qtwayland
-          pkgs.qt6.qtsvg
-          pkgs.qt6.qtimageformats
-          pkgs.kdePackages.layer-shell-qt
-        ];
+        inherit (pkgs.stdenv.hostPlatform) isLinux;
+        qtEnv = pkgs.qt6.env "qt-custom-${pkgs.qt6.qtbase.version}" ([
+            pkgs.qt6.qtdeclarative
+            pkgs.qt6.qtsvg
+            pkgs.qt6.qtimageformats
+          ]
+          ++ pkgs.lib.optionals isLinux [
+            pkgs.qt6.qtwayland
+            pkgs.kdePackages.layer-shell-qt
+          ]);
+        package = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
       in {
-        default = pkgs.mkShell {
-          stdenv = pkgs.gcc15Stdenv;
-
+        default = pkgs.mkShell.override {stdenv = package.stdenv;} {
           # automatically pulls nativeBuildInputs + buildInputs
-          inputsFrom = [(pkgs.callPackage ./nix/vicinae.nix {gcc15Stdenv = pkgs.gcc15Stdenv;})];
+          inputsFrom = [package];
 
           packages = with pkgs; [
             ccache
@@ -63,7 +65,7 @@
             clang-tools
           ];
 
-          shellHook = ''
+          shellHook = pkgs.lib.optionalString isLinux ''
             export CC=${pkgs.gcc15}/bin/gcc
             export CXX=${pkgs.gcc15}/bin/g++
             export CMAKE_C_COMPILER=$CC

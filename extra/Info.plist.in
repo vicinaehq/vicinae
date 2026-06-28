@@ -34,6 +34,8 @@
 	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Vicinae uses Apple Events to perform system power actions such as restart, shut down, and log out.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © Vicinae contributors. Licensed under GPL-3.0.</string>
 </dict>

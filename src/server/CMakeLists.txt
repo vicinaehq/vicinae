@@ -6,7 +6,7 @@ set(TARGET vicinae-server)
 find_package(Qt6 REQUIRED COMPONENTS Core Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
 find_package(OpenSSL REQUIRED)
 
-if (USE_SYSTEM_KF6 AND NOT APPLE)
+if (USE_SYSTEM_KF6)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
@@ -623,6 +623,8 @@ if (APPLE)
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.hpp
 		src/services/paste/macos-paste-service.mm
+		src/services/power-manager/macos/macos-power-manager.hpp
+		src/services/power-manager/macos/macos-power-manager.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -633,6 +635,7 @@ if (APPLE)
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.mm
+		src/services/power-manager/macos/macos-power-manager.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
@@ -1006,7 +1009,7 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-F/System/Library/PrivateFrameworks" "-framework login")
 endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 

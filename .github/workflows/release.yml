@@ -17,7 +17,7 @@ concurrency:
 jobs:
   build-binary:
     runs-on: depot-ubuntu-24.04-16
-    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:arch-latest
+    container: registry.depot.dev/dwd5s9sq7d:arch-latest
     permissions:
       contents: write
     outputs:
@@ -103,7 +103,7 @@ jobs:
   build-appimage:
     needs: build-binary
     runs-on: ${{ matrix.target.runner }}
-    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:${{ matrix.target.tag }}
+    container: registry.depot.dev/dwd5s9sq7d:${{ matrix.target.tag }}
     permissions:
       contents: write
     strategy:

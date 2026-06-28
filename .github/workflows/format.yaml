@@ -13,7 +13,7 @@ concurrency:
 jobs:
   format:
     runs-on: depot-ubuntu-24.04
-    container: registry.depot.dev/${{ vars.DEPOT_PROJECT_ID }}:arch-latest
+    container: registry.depot.dev/dwd5s9sq7d:arch-latest
 
     steps:
       - name: Checkout code
