@@ -52,8 +52,7 @@ void PopupPlacementAttached::apply() {
   if (!m_window) return;
 
   // The anchor is the point on the trigger item the popup attaches to, the
-  // gravity the direction it grows in. A missing edge on an axis means centered
-  // on that axis, so AlignCenter against the trigger rect centers the popup.
+  // gravity the direction it grows in. No edge on an axis means centered on it.
   Qt::Edges anchor;
   Qt::Edges gravity;
   if (!m_alignment.testFlag(Qt::AlignVCenter)) {

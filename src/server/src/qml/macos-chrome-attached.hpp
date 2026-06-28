@@ -46,9 +46,6 @@ public:
   int borderWidth() const { return m_borderWidth; }
   void setBorderWidth(int value);
 
-  // Animate the whole native window (transform + alpha, glass included) rather than
-  // the QML content inside it. animateIn may be called before the surface exists; it
-  // is deferred until the window is shown.
   Q_INVOKABLE void animateIn(qreal anchorX = 0.5, qreal anchorY = 0.5);
   Q_INVOKABLE void animateOut(qreal anchorX = 0.5, qreal anchorY = 0.5);
 
