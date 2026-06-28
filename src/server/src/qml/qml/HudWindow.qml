@@ -17,7 +17,8 @@ Window {
     color: "transparent"
     visible: false
 
-    onVisibleChanged: if (visible) shown()
+    onVisibleChanged: if (visible)
+        shown()
 
     Component.onCompleted: hud.registerWindow(root)
 
