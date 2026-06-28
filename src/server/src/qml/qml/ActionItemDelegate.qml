@@ -3,7 +3,7 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    height: 36
+    height: 32
 
     property bool selected: false
     readonly property bool hovered: mouseArea.containsMouse && HoverActivation.active
