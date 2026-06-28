@@ -7,4 +7,11 @@ Item {
     MacOSWindow.material: Config.windowMaterial === "liquid_glass" ? "liquidGlass" : "hud"
     MacOSWindow.borderColor: Theme.divider
     MacOSWindow.borderWidth: Config.borderWidth
+
+    function animateIn(ax, ay) {
+        MacOSWindow.animateIn(ax === undefined ? 0.5 : ax, ay === undefined ? 0.5 : ay);
+    }
+    function animateOut(ax, ay) {
+        MacOSWindow.animateOut(ax === undefined ? 0.5 : ax, ay === undefined ? 0.5 : ay);
+    }
 }

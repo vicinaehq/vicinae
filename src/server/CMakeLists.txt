@@ -845,7 +845,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ExtensionView.qml
 	src/qml/qml/MarkdownDetailView.qml
 	src/qml/qml/ExtensionGridView.qml
-	src/qml/qml/FocusRestoringScope.qml
 	src/qml/qml/ActionPanelPopover.qml
 	src/qml/qml/ActionListPanel.qml
 	src/qml/qml/ActionItemDelegate.qml
@@ -1007,7 +1006,7 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices")
 endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 

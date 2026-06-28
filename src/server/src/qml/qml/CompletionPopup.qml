@@ -104,9 +104,9 @@ Popup {
 
     background: SourceBlendRect {
         radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
-        backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-        color: Config.withAlpha(Theme.background, Config.windowOpacity)
-        borderColor: Config.withAlpha(Theme.divider, Config.windowOpacity)
+        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
+        color: Config.withAlpha(Theme.popoverBackground, Config.windowOpacity)
+        borderColor: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
         borderWidth: Platform.supports("clientSideDecorations") ? 1 : 0
         Loader {
             active: root.nativePanel && Platform.supports("nativePanels")
@@ -233,12 +233,24 @@ Popup {
                     anchors.right: parent.right
                     height: visible ? 30 : 0
 
-                    Rectangle {
+                    SourceBlendRect {
                         anchors.fill: parent
                         anchors.leftMargin: 2
                         anchors.rightMargin: 2
                         radius: 6
-                        color: del._isHighlighted ? Theme.listItemSelectionBg : (itemHover.hovered && HoverActivation.active) ? Theme.listItemHoverBg : "transparent"
+                        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
+                        color: {
+                            if (del._isHighlighted) {
+                                var c = Theme.listItemSelectionBg;
+                                return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
+                            }
+                            if (itemHover.hovered && HoverActivation.active) {
+                                var h = Theme.listItemHoverBg;
+                                return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
+                            }
+                            var bg = Theme.popoverBackground;
+                            return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
+                        }
                     }
 
                     RowLayout {

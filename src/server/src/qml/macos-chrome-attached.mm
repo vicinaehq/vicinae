@@ -8,6 +8,7 @@
 #include <qlogging.h>
 
 #import <AppKit/AppKit.h>
+#import <QuartzCore/QuartzCore.h>
 #import <objc/message.h>
 
 namespace {
@@ -285,11 +286,77 @@ bool MacOSWindowAttached::eventFilter(QObject *obj, QEvent *event) {
     if (se->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated) {
       m_surfaceReady = true;
       apply();
+      if (m_pendingAnimateIn) {
+        m_pendingAnimateIn = false;
+        runAnimate(true, m_pendingAnchorX, m_pendingAnchorY);
+      }
     } else if (se->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
       m_surfaceReady = false;
     }
   }
   return QObject::eventFilter(obj, event);
+}
+
+void MacOSWindowAttached::animateIn(qreal anchorX, qreal anchorY) {
+  if (m_surfaceReady && m_window && m_window->handle()) {
+    runAnimate(true, anchorX, anchorY);
+  } else {
+    m_pendingAnimateIn = true;
+    m_pendingAnchorX = anchorX;
+    m_pendingAnchorY = anchorY;
+  }
+}
+
+void MacOSWindowAttached::animateOut(qreal anchorX, qreal anchorY) {
+  if (m_surfaceReady && m_window && m_window->handle()) runAnimate(false, anchorX, anchorY);
+}
+
+void MacOSWindowAttached::runAnimate(bool appearing, qreal anchorX, qreal anchorY) {
+  if (!m_window) return;
+  NSView *nsview = nsViewFromWinId(m_window->winId());
+  if (!nsview) return;
+  NSWindow *nswin = nsview.window;
+  NSView *content = nswin.contentView;
+  NSView *parent = content.superview;
+  if (!parent || !parent.layer) return;
+  CALayer *layer = parent.layer;
+
+  const CGFloat w = layer.bounds.size.width;
+  const CGFloat h = layer.bounds.size.height;
+  const CGFloat px = anchorX * w;
+  const CGFloat py = anchorY * h;
+  auto scaleAboutAnchor = [&](CGFloat s) {
+    CATransform3D t = CATransform3DMakeTranslation(px, py, 0);
+    t = CATransform3DScale(t, s, s, 1);
+    return CATransform3DTranslate(t, -px, -py, 0);
+  };
+
+  constexpr CGFloat START_SCALE = 0.95;
+  const CGFloat from = appearing ? START_SCALE : 1.0;
+  const CGFloat to = appearing ? 1.0 : START_SCALE;
+  const CFTimeInterval duration = appearing ? 0.15 : 0.10;
+
+  if (appearing) {
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    layer.transform = scaleAboutAnchor(START_SCALE);
+    [CATransaction commit];
+    nswin.alphaValue = 0.0;
+  }
+
+  CABasicAnimation *anim = [CABasicAnimation animationWithKeyPath:@"transform"];
+  anim.fromValue = [NSValue valueWithCATransform3D:scaleAboutAnchor(from)];
+  anim.toValue = [NSValue valueWithCATransform3D:scaleAboutAnchor(to)];
+  anim.duration = duration;
+  anim.timingFunction = [CAMediaTimingFunction functionWithName:appearing ? kCAMediaTimingFunctionEaseOut
+                                                                          : kCAMediaTimingFunctionEaseIn];
+  layer.transform = scaleAboutAnchor(to);
+  [layer addAnimation:anim forKey:@"vicinae-window-transition"];
+
+  [NSAnimationContext runAnimationGroup:^(NSAnimationContext *ctx) {
+    ctx.duration = duration;
+    nswin.animator.alphaValue = appearing ? 1.0 : 0.0;
+  }];
 }
 
 MacOSPanelAttached::MacOSPanelAttached(QObject *parent) : QObject(parent) {

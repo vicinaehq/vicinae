@@ -157,7 +157,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return resolve(SemanticColor::ScrollBarBackground);
 
   case SemanticColor::PopoverBackground:
-    return resolve(SemanticColor::SecondaryBackground);
+    return resolve(SemanticColor::Background);
   case SemanticColor::PopoverBorder:
     return resolve(SemanticColor::MainWindowBorder);
 

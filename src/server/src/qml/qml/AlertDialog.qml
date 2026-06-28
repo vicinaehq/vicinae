@@ -4,19 +4,29 @@ import QtQuick.Layouts
 
 Popup {
     id: root
-    anchors.centerIn: parent
+    popupType: Popup.Window
+    x: Math.round((parent.width - width) / 2)
+    y: Math.round((parent.height - height) / 2)
     width: 400
+    contentWidth: availableWidth
     padding: 20
     focus: true
-    modal: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    PopupPlacement.alignment: Qt.AlignCenter
 
     property bool _confirmed: false
+    property Item _focusedButton: null
+
+    readonly property bool _nativeAnim: Qt.platform.os === "osx" && popupMaterial.macImpl !== null
 
     onAboutToShow: {
         _confirmed = false;
         Qt.callLater(cancelBtn.forceActiveFocus);
+        if (popupMaterial.macImpl)
+            popupMaterial.macImpl.animateIn();
     }
+    onAboutToHide: if (popupMaterial.macImpl)
+        popupMaterial.macImpl.animateOut()
     onClosed: {
         if (!_confirmed)
             launcher.alertModel.cancel();
@@ -26,7 +36,10 @@ Popup {
             close();
     }
 
-    enter: Transition {
+    enter: root._nativeAnim ? null : _itemEnter
+    exit: root._nativeAnim ? _holdExit : _itemExit
+
+    property Transition _itemEnter: Transition {
         ParallelAnimation {
             NumberAnimation {
                 property: "opacity"
@@ -45,7 +58,7 @@ Popup {
         }
     }
 
-    exit: Transition {
+    property Transition _itemExit: Transition {
         ParallelAnimation {
             NumberAnimation {
                 property: "opacity"
@@ -64,15 +77,21 @@ Popup {
         }
     }
 
-    background: Rectangle {
-        radius: 6
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.95)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
+    property Transition _holdExit: Transition {
+        PauseAnimation {
+            duration: 110
+        }
     }
 
-    Overlay.modal: Rectangle {
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
+    background: Rectangle {
+        radius: Math.min(Config.borderRounding, 15)
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
+        border.width: 1
+
+        PopupMaterial {
+            id: popupMaterial
+        }
     }
 
     contentItem: ColumnLayout {
@@ -121,6 +140,9 @@ Popup {
                 foreground: launcher.alertModel.cancelColor
                 focus: true
                 activeFocusOnTab: true
+                showFocus: root._focusedButton === cancelBtn
+                onActiveFocusChanged: if (activeFocus)
+                    root._focusedButton = cancelBtn
                 onClicked: root.close()
                 Keys.onRightPressed: confirmBtn.forceActiveFocus()
                 Keys.onPressed: event => {
@@ -142,6 +164,9 @@ Popup {
                 text: launcher.alertModel.confirmText
                 foreground: launcher.alertModel.confirmColor
                 activeFocusOnTab: true
+                showFocus: root._focusedButton === confirmBtn
+                onActiveFocusChanged: if (activeFocus)
+                    root._focusedButton = confirmBtn
                 onClicked: {
                     root._confirmed = true;
                     launcher.alertModel.confirm();

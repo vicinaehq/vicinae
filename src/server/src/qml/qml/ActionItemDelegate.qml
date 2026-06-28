@@ -23,17 +23,23 @@ Item {
         onClicked: root.clicked()
     }
 
-    Rectangle {
+    SourceBlendRect {
         anchors.fill: parent
         anchors.leftMargin: 6
         anchors.rightMargin: 6
         radius: 10
+        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
         color: {
-            if (root.selected)
-                return Theme.listItemSelectionBg;
-            if (root.hovered)
-                return Theme.listItemHoverBg;
-            return "transparent";
+            if (root.selected) {
+                var c = Theme.listItemSelectionBg;
+                return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
+            }
+            if (root.hovered) {
+                var h = Theme.listItemHoverBg;
+                return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
+            }
+            var bg = Theme.popoverBackground;
+            return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
         }
     }
 

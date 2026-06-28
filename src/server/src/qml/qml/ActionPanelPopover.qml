@@ -1,118 +1,168 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Effects
 
-FocusRestoringScope {
+Popup {
     id: root
 
     required property var controller
     property bool alignLeft: false
+    property int maxHeight: 400
 
-    active: root.controller.open
-    visible: root.controller.open || panel.opacity > 0
-    enabled: root.controller.open
+    popupType: Popup.Window
+    focus: true
+    padding: 1
+    closePolicy: Popup.CloseOnPressOutside
 
-    onVisibleChanged: {
-        if (!visible)
-            stack.clear(StackView.Immediate);
-    }
+    width: 400
+    height: Math.min(stack.currentItem ? stack.currentItem.implicitHeight + 2 * padding : 300, root.maxHeight)
+
+    x: root.alignLeft ? 0 : (parent ? parent.width - width : 0)
+    y: -height - 6
+    PopupPlacement.alignment: Qt.AlignTop | (root.alignLeft ? Qt.AlignLeft : Qt.AlignRight)
+
+    readonly property bool _nativeAnim: Qt.platform.os === "osx" && popupMaterial.macImpl !== null
+    readonly property real _animAnchorX: root.alignLeft ? 0.0 : 1.0
+
+    onAboutToShow: if (popupMaterial.macImpl)
+        popupMaterial.macImpl.animateIn(root._animAnchorX, 0.0)
+    onAboutToHide: if (popupMaterial.macImpl)
+        popupMaterial.macImpl.animateOut(root._animAnchorX, 0.0)
+
     onActiveFocusChanged: {
         if (!activeFocus && root.controller.open)
             root.controller.close();
     }
-
-    MouseArea {
-        anchors.fill: parent
-        onClicked: root.controller.close()
+    onClosed: {
+        stack.clear(StackView.Immediate);
+        if (root.controller.open)
+            root.controller.close();
     }
 
-    Item {
-        id: panel
-        x: root.alignLeft ? 10 : parent.width - width - 10
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
-        width: 400
-        height: Math.min(stack.currentItem ? stack.currentItem.implicitHeight + 2 : 300, root.height * 0.6)
+    enter: root._nativeAnim ? null : _itemEnter
+    exit: root._nativeAnim ? _holdExit : _itemExit
 
-        opacity: 0
-        scale: 0.95
-        transformOrigin: root.alignLeft ? Item.BottomLeft : Item.BottomRight
-
-        states: State {
-            name: "open"
-            when: root.controller.open
-            PropertyChanges {
-                target: panel
-                opacity: 1
-                scale: 1.0
-            }
-        }
-        transitions: Transition {
-            to: "open"
+    property Transition _itemEnter: Transition {
+        ParallelAnimation {
             NumberAnimation {
-                properties: "opacity,scale"
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: 150
+                easing.type: Easing.OutCubic
+            }
+            NumberAnimation {
+                property: "scale"
+                from: 0.95
+                to: 1
                 duration: 150
                 easing.type: Easing.OutCubic
             }
         }
+    }
 
-        Rectangle {
-            id: panelShadow
-            anchors.fill: parent
-            radius: Config.borderRounding
-            color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
-
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                autoPaddingEnabled: true
-                shadowEnabled: true
-                shadowBlur: 0.4
-                shadowColor: Qt.rgba(0, 0, 0, 0.25)
-                shadowVerticalOffset: 4
+    property Transition _itemExit: Transition {
+        ParallelAnimation {
+            NumberAnimation {
+                property: "opacity"
+                from: 1
+                to: 0
+                duration: 100
+                easing.type: Easing.InCubic
             }
-        }
-
-        Rectangle {
-            id: panelContent
-            anchors.fill: parent
-            radius: Config.borderRounding
-            color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
-            border.color: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
-            border.width: 1
-
-            MouseArea {
-                anchors.fill: parent
-                anchors.margins: 1
-                acceptedButtons: Qt.NoButton
-                onWheel: function (wheel) {
-                    wheel.accepted = true;
-                }
-
-                StackView {
-                    id: stack
-                    anchors.fill: parent
-                    clip: true
-                    pushEnter: null
-                    pushExit: null
-                    popEnter: null
-                    popExit: null
-                    replaceEnter: null
-                    replaceExit: null
-                }
+            NumberAnimation {
+                property: "scale"
+                from: 1
+                to: 0.95
+                duration: 100
+                easing.type: Easing.InCubic
             }
         }
     }
 
-    Connections {
-        target: stack.currentItem
-        ignoreUnknownSignals: true
-        function onNavigateBack() {
-            root.controller.pop();
+    property Transition _holdExit: Transition {
+        PauseAnimation {
+            duration: 110
+        }
+    }
+
+    background: Rectangle {
+        radius: Math.min(Config.borderRounding, 15)
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
+        border.width: 1
+
+        PopupMaterial {
+            id: popupMaterial
+        }
+    }
+
+    contentItem: FocusScope {
+        focus: true
+
+        Keys.onPressed: event => {
+            const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+            if (event.key === Qt.Key_Escape) {
+                root.controller.pop();
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Left || nav === 3) {
+                if (root.controller.depth > 1) {
+                    root.controller.pop();
+                    event.accepted = true;
+                }
+            } else if (event.key === Qt.Key_Up || nav === 1) {
+                if (stack.currentItem) {
+                    const ctrl = (event.modifiers & Qt.ControlModifier);
+                    if (ctrl && typeof stack.currentItem.moveSectionUp === "function")
+                        stack.currentItem.moveSectionUp();
+                    else if (typeof stack.currentItem.moveUp === "function")
+                        stack.currentItem.moveUp();
+                }
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Down || nav === 2) {
+                if (stack.currentItem) {
+                    const ctrl = (event.modifiers & Qt.ControlModifier);
+                    if (ctrl && typeof stack.currentItem.moveSectionDown === "function")
+                        stack.currentItem.moveSectionDown();
+                    else if (typeof stack.currentItem.moveDown === "function")
+                        stack.currentItem.moveDown();
+                }
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                if (stack.currentItem && typeof stack.currentItem.activateCurrent === "function")
+                    stack.currentItem.activateCurrent();
+                event.accepted = true;
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            onWheel: function (wheel) {
+                wheel.accepted = true;
+            }
+
+            StackView {
+                id: stack
+                anchors.fill: parent
+                clip: true
+                pushEnter: null
+                pushExit: null
+                popEnter: null
+                popExit: null
+                replaceEnter: null
+                replaceExit: null
+            }
         }
     }
 
     Connections {
         target: root.controller
+        function onOpenChanged() {
+            if (root.controller.open)
+                root.open();
+            else
+                root.close();
+        }
         function onPanelPushRequested(componentUrl, properties) {
             stack.push(componentUrl, properties, StackView.Immediate);
             stack.currentItem.controller = root.controller;
@@ -131,38 +181,11 @@ FocusRestoringScope {
         }
     }
 
-    Keys.onPressed: event => {
-        const nav = launcher.matchNavigationKey(event.key, event.modifiers);
-        if (event.key === Qt.Key_Escape) {
+    Connections {
+        target: stack.currentItem
+        ignoreUnknownSignals: true
+        function onNavigateBack() {
             root.controller.pop();
-            event.accepted = true;
-        } else if (event.key === Qt.Key_Left || nav === 3) {
-            if (root.controller.depth > 1) {
-                root.controller.pop();
-                event.accepted = true;
-            }
-        } else if (event.key === Qt.Key_Up || nav === 1) {
-            if (stack.currentItem) {
-                const ctrl = (event.modifiers & Qt.ControlModifier);
-                if (ctrl && typeof stack.currentItem.moveSectionUp === "function")
-                    stack.currentItem.moveSectionUp();
-                else if (typeof stack.currentItem.moveUp === "function")
-                    stack.currentItem.moveUp();
-            }
-            event.accepted = true;
-        } else if (event.key === Qt.Key_Down || nav === 2) {
-            if (stack.currentItem) {
-                const ctrl = (event.modifiers & Qt.ControlModifier);
-                if (ctrl && typeof stack.currentItem.moveSectionDown === "function")
-                    stack.currentItem.moveSectionDown();
-                else if (typeof stack.currentItem.moveDown === "function")
-                    stack.currentItem.moveDown();
-            }
-            event.accepted = true;
-        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            if (stack.currentItem && typeof stack.currentItem.activateCurrent === "function")
-                stack.currentItem.activateCurrent();
-            event.accepted = true;
         }
     }
 }

@@ -11,6 +11,7 @@ Rectangle {
     property color foreground: root.variant === "accent" ? Theme.listItemSelectionFg : Theme.foreground
     property real iconSize: 16
     property real horizontalPadding: 12
+    property bool showFocus: activeFocus
 
     signal clicked
 
@@ -36,9 +37,9 @@ Rectangle {
         }
     }
 
-    border.width: root.bordered || root.activeFocus ? 1 : 0
+    border.width: root.bordered || root.showFocus ? 1 : 0
     border.color: {
-        if (root.activeFocus)
+        if (root.showFocus)
             return Config.withAlpha(root.variant === "accent" ? Theme.listItemSelectionFg : Theme.accent, Config.windowOpacity);
         if (!root.bordered)
             return "transparent";
