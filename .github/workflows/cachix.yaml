@@ -1,11 +1,18 @@
-name: "Push to Cachix"
+name: "Nix build"
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  push_to_cachix:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -21,7 +28,7 @@ jobs:
     - uses: cachix/cachix-action@v14
       with:
         name: vicinae
-        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+        authToken: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
     - name: Build Flake
       run: nix build -L
     - name: Run Test Shell
