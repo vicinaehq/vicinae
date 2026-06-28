@@ -15,6 +15,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [depot-ubuntu-24.04-16, depot-ubuntu-24.04-arm-16, depot-macos-26]
     steps:
