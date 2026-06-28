@@ -168,8 +168,6 @@ Popup {
 
                     onTextEdited: filterDebounce.restart()
 
-                    Keys.onUpPressed: root.moveUp()
-                    Keys.onDownPressed: root.moveDown()
                     Keys.onReturnPressed: root.acceptHighlighted()
                     Keys.onEscapePressed: root.close()
                     Keys.onTabPressed: event => {
@@ -177,6 +175,17 @@ Popup {
                     }
                     Keys.onBacktabPressed: event => {
                         event.accepted = true;
+                    }
+
+                    Keys.onPressed: function (event) {
+                        const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                        if (event.key === Qt.Key_Up || nav === 1) {
+                            root.moveUp();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down || nav === 2) {
+                            root.moveDown();
+                            event.accepted = true;
+                        }
                     }
                 }
             }
