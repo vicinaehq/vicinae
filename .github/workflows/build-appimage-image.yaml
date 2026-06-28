@@ -41,7 +41,7 @@ jobs:
       - name: Build and push to Depot Registry
         uses: depot/build-push-action@v1
         with:
-          project: ${{ vars.DEPOT_PROJECT_ID }}
+          project: dwd5s9sq7d
           platforms: ${{ matrix.target.platform }}
           context: scripts/runners/appimage
           file: scripts/runners/appimage/AppImageBuilder.Dockerfile
