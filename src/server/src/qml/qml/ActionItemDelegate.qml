@@ -16,9 +16,6 @@ Item {
 
     signal clicked
 
-    // Source-blending only works against a real blurred window backdrop, i.e.
-    // when the panel is its own popup window. In-scene over the opaque popover
-    // it would sample the wrong backdrop, so fall back to solid fills.
     readonly property var _win: root.Window.window
     readonly property bool _nativeWindow: _win !== null && (_win.flags & Qt.Popup) === Qt.Popup
     readonly property real _opacity: root._nativeWindow ? Config.windowOpacity : 1

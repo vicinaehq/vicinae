@@ -13,6 +13,8 @@ Popup {
     focus: true
     padding: 1
     closePolicy: Popup.CloseOnPressOutside
+    modal: true
+    dim: false
 
     readonly property int _gap: 6
 
@@ -178,9 +180,6 @@ Popup {
             root.controller.onPanelPopped(stack.currentItem);
             if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
                 stack.currentItem.focusFilter();
-        }
-        function onStackClearRequested() {
-            stack.clear(StackView.Immediate);
         }
     }
 
