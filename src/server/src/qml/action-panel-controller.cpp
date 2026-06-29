@@ -9,6 +9,10 @@
 #include "ui/views/base-view.hpp"
 #include <QKeyEvent>
 
+namespace {
+constexpr qint64 REOPEN_GUARD_MS = 300;
+} // namespace
+
 ActionPanelController::ActionPanelController(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx) {}
 
@@ -90,6 +94,7 @@ void ActionPanelController::toggle() {
 void ActionPanelController::open() {
   if (m_open) return;
   if (!hasActions()) return;
+  if (m_closedTimer.isValid() && m_closedTimer.elapsed() < REOPEN_GUARD_MS) return;
 
   m_open = true;
   emit openChanged();
@@ -102,6 +107,7 @@ void ActionPanelController::close() {
   auto *root = activeRoot();
 
   m_open = false;
+  m_closedTimer.restart();
   emit openChanged();
   emit stackClearRequested();
   m_currentPanel = nullptr;

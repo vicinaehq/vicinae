@@ -1,5 +1,6 @@
 #pragma once
 #include "common/context.hpp"
+#include <QElapsedTimer>
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
@@ -85,4 +86,5 @@ private:
   BaseView *m_activeView = nullptr;
   std::unique_ptr<ActionListView> m_ownedRoot;
   std::vector<ActionPanelView *> m_submenuStack;
+  QElapsedTimer m_closedTimer;
 };
