@@ -55,6 +55,7 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 10
         anchors.rightMargin: 10
+        opacity: root.readOnly ? 0.5 : 1.0
         verticalAlignment: TextInput.AlignVCenter
         font.pointSize: Theme.regularFontSize
         color: Theme.foreground
