@@ -1,4 +1,8 @@
 #include "launcher-window.hpp"
+#include "actions/extension/extension-actions.hpp"
+#include "actions/root-search/root-search-actions.hpp"
+#include "clipboard-actions.hpp"
+#include "extension/extension-command.hpp"
 #include "hud-bridge.hpp"
 #include "keybind-bridge.hpp"
 #include "view-utils.hpp"
@@ -15,7 +19,10 @@
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "extensions/vicinae/bug-report-url.hpp"
+#include "qml/raycast-store-detail-host.hpp"
+#include "qml/vicinae-store-detail-host.hpp"
 #include "qml/vicinae-store-view-host.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "services/toast/toast-service.hpp"
@@ -200,6 +207,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(nav, &NavigationController::viewPushed, this, [this](const BaseView *) {
     m_actionPanel->close();
     m_footerPanel->close();
+    emit footerStatusChanged();
   });
 
   connect(m_footerPanel, &ActionPanelController::openChanged, this, [this]() {
@@ -399,6 +407,7 @@ void LauncherWindow::handleCurrentViewChanged() {
   if (m_atRoot != isRoot) {
     m_atRoot = isRoot;
     emit atRootChanged();
+    emit footerStatusChanged();
   }
 
   if (m_overrideWidth != 0 || m_overrideHeight != 0) {
@@ -543,7 +552,77 @@ void LauncherWindow::positionOnCursorScreen() {
   m_window->setY(g.y() + (g.height() - m_window->height()) / 3);
 }
 
-void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(); }
+bool LauncherWindow::footerStatusClickable() const {
+  auto *command = m_ctx.navigation->activeCommand();
+
+  return m_atRoot || command;
+}
+
+void LauncherWindow::openFooterMenu() {
+  if (m_footerPanel->isOpen()) {
+    m_footerPanel->close();
+    return;
+  }
+
+  if (m_atRoot) {
+    buildFooterMenu();
+  } else if (!buildCommandFooterMenu()) {
+    return;
+  }
+
+  m_footerPanel->toggle();
+}
+
+bool LauncherWindow::buildCommandFooterMenu() {
+  auto *active = m_ctx.navigation->activeCommand();
+  if (!active) return false;
+
+  auto id = active->uniqueId();
+  auto *manager = m_ctx.services->rootItemManager();
+
+  auto state = std::make_unique<ActionPanelState>();
+  state->setAutoSelectPrimary(false);
+  state->setTitle(active->repositoryDisplayName());
+  state->setId(QStringLiteral("command-footer-menu-%1").arg(active->extensionId()));
+
+  auto *commandSection = state->createSection(QStringLiteral("Command"));
+  auto metadata = manager->itemMetadata(id);
+  commandSection->addAction(new OpenItemPreferencesAction(id));
+  commandSection->addAction(new SetRootItemAliasAction(id));
+  commandSection->addAction(new ToggleItemAsFavorite(id, metadata.favorite));
+  commandSection->addAction(new CopyItemDeeplink(id));
+
+  auto *cmd = dynamic_cast<const ExtensionCommand *>(active);
+  if (!cmd) {
+    m_footerPanel->setActions(std::move(state));
+    return true;
+  }
+
+  auto *extensionSection = state->createSection(QStringLiteral("Extension"));
+
+  if (cmd->isVicinae()) {
+    extensionSection->addAction(
+        new StaticAction(QStringLiteral("View in Store"), ImageURL::builtin("cart"),
+                         [author = cmd->author(), name = cmd->repositoryName()](ApplicationContext *ctx) {
+                           ctx->navigation->pushView(new VicinaeStoreDetailHost(author, name));
+                         }));
+  } else if (cmd->isRaycast()) {
+    extensionSection->addAction(
+        new StaticAction(QStringLiteral("View in Store"), ImageURL::builtin("cart"),
+                         [author = cmd->author(), name = cmd->repositoryName()](ApplicationContext *ctx) {
+                           ctx->navigation->pushView(new RaycastStoreDetailHost(author, name));
+                         }));
+  }
+
+  extensionSection->addAction(
+      new CopyToClipboardAction(Clipboard::Text(cmd->path().c_str()), QStringLiteral("Copy Extension Path")));
+
+  auto *dangerSection = state->createSection();
+  dangerSection->addAction(new UninstallExtensionAction(cmd->extensionId()));
+
+  m_footerPanel->setActions(std::move(state));
+  return true;
+}
 
 void LauncherWindow::buildFooterMenu() {
   auto state = std::make_unique<ActionPanelState>();

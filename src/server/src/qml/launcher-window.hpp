@@ -29,6 +29,7 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(QObject *commandViewHost READ commandViewHost NOTIFY commandViewHostChanged)
   Q_PROPERTY(QString navigationTitle READ navigationTitle NOTIFY navigationStatusChanged)
   Q_PROPERTY(ImageUrl navigationIcon READ navigationIcon NOTIFY navigationStatusChanged)
+  Q_PROPERTY(bool footerStatusClickable READ footerStatusClickable NOTIFY footerStatusChanged)
   Q_PROPERTY(bool toastActive READ toastActive NOTIFY toastActiveChanged)
   Q_PROPERTY(QString toastTitle READ toastTitle NOTIFY toastChanged)
   Q_PROPERTY(QString toastMessage READ toastMessage NOTIFY toastChanged)
@@ -64,6 +65,7 @@ public:
 
   QString navigationTitle() const { return m_navigationTitle; }
   ImageUrl navigationIcon() const { return m_navigationIcon; }
+  bool footerStatusClickable() const;
   bool toastActive() const { return m_toastActive; }
   QString toastTitle() const { return m_toastTitle; }
   QString toastMessage() const { return m_toastMessage; }
@@ -113,6 +115,7 @@ signals:
   void commandViewReplaced(const QUrl &componentUrl, const QVariantMap &properties);
   void commandViewPopped();
   void navigationStatusChanged();
+  void footerStatusChanged();
   void toastActiveChanged();
   void toastChanged();
   void isLoadingChanged();
@@ -138,6 +141,7 @@ private:
   void setExclusiveFocus(bool exclusive);
   void updateLayerShellProps();
   void buildFooterMenu();
+  bool buildCommandFooterMenu();
 
   ApplicationContext &m_ctx;
   ActionPanelController *m_actionPanel;
