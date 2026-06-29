@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 Popup {
     id: root
-    popupType: Popup.Window
+    popupType: Qt.platform.os === "linux" ? Popup.Item : Popup.Window
     x: Math.round((parent.width - width) / 2)
     y: Math.round((parent.height - height) / 2)
     width: 400
@@ -17,6 +17,7 @@ Popup {
     property bool _confirmed: false
     property Item _focusedButton: null
 
+    readonly property bool _nativeWindow: popupType === Popup.Window
     readonly property bool _nativeAnim: Qt.platform.os === "osx" && popupMaterial.macImpl !== null
 
     onAboutToShow: {
@@ -85,12 +86,13 @@ Popup {
 
     background: Rectangle {
         radius: Math.min(Config.borderRounding, 15)
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
-        border.color: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
+        color: Theme.popoverBackground
+        border.color: Theme.popoverBorder
         border.width: 1
 
         PopupMaterial {
             id: popupMaterial
+            active: root._nativeWindow
         }
     }
 
