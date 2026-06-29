@@ -543,7 +543,7 @@ void LauncherWindow::positionOnCursorScreen() {
   m_window->setY(g.y() + (g.height() - m_window->height()) / 3);
 }
 
-void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(); }
+void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(true); }
 
 void LauncherWindow::buildFooterMenu() {
   auto state = std::make_unique<ActionPanelState>();

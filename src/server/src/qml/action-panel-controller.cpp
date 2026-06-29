@@ -83,18 +83,20 @@ void ActionPanelController::syncToView(BaseView *view) {
   refreshSubmenus();
 }
 
-void ActionPanelController::toggle() {
+void ActionPanelController::toggle(bool fromClick) {
   if (m_open) {
     close();
-  } else {
-    open();
+    return;
   }
+
+  if (fromClick && m_closedTimer.isValid() && m_closedTimer.elapsed() < REOPEN_GUARD_MS) return;
+
+  open();
 }
 
 void ActionPanelController::open() {
   if (m_open) return;
   if (!hasActions()) return;
-  if (m_closedTimer.isValid() && m_closedTimer.elapsed() < REOPEN_GUARD_MS) return;
 
   m_open = true;
   emit openChanged();

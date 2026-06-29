@@ -61,7 +61,7 @@ Item {
             shortcutTokens: Keybinds.toggleActionPanelTokens
             highlighted: actionPanel.open
             backgrounded: actionPanel.open
-            onClicked: actionPanel.toggle()
+            onClicked: actionPanel.toggle(true)
         }
     }
 }
