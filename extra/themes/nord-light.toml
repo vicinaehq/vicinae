@@ -12,7 +12,7 @@ icon = "icons/nord.svg"
 background = "#ECEFF4"        # nord6 (Snow Storm)
 foreground = "#2E3440"        # nord0 (Polar Night for text)
 secondary_background = "#E5E9F0"  # nord5 (slightly darker surface)
-border = "#C4CDD8"            # Between nord3 and nord4 (more visible)
+border = "#78797C"            # Between nord3 and nord4 (more visible)
 accent = "#5E81AC"            # nord10 (darker blue for light theme)
 
 [colors.accents]

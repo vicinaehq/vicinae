@@ -12,7 +12,7 @@ icon = "icons/gruvbox.png"
 background = "#282828"        # bg0_h (hard contrast bg)
 foreground = "#EBDBB2"        # fg1
 secondary_background = "#1D2021"  # bg0_h (darker bg for surfaces)
-border = "#504945"            # bg2 (subtle border)
+border = "#525252"            # bg2 (subtle border)
 accent = "#458588"            # blue (neutral)
 
 [colors.accents]

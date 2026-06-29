@@ -14,14 +14,14 @@ accent_foreground = "#FFFFFF"
 background = "#FAFAFA"
 foreground = "#333333"
 secondary_background = "#F0F0F0"
-border = "#D4D4D4"
+border = "#848484"
 
 [colors.main_window]
-border = "#C9C9C9"
+border = "#848484"
 footer = { background = "#ECECEC" }
 
 [colors.settings_window]
-border = "#C9C9C9"
+border = "#848484"
 
 [colors.accents]
 blue = "#3689E6"

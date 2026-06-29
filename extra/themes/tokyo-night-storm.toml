@@ -12,7 +12,7 @@ icon = "icons/tokyo-night.png"
 background = "#24283B"        # bg (storm variant)
 foreground = "#A9B1D6"        # fg
 secondary_background = "#1F2335"  # bg_dark
-border = "#414868"            # fg_dark (subtle border)
+border = "#464D72"            # fg_dark (subtle border)
 accent = "#7AA2F7"            # blue
 
 [colors.accents]
