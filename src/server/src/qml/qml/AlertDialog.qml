@@ -12,12 +12,10 @@ Popup {
     padding: 20
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-    PopupPlacement.alignment: Qt.AlignCenter
 
     property bool _confirmed: false
     property Item _focusedButton: null
 
-    readonly property bool _nativeWindow: popupType === Popup.Window
     readonly property bool _nativeAnim: Qt.platform.os === "osx" && popupMaterial.macImpl !== null
 
     onAboutToShow: {
@@ -92,7 +90,6 @@ Popup {
 
         PopupMaterial {
             id: popupMaterial
-            active: root._nativeWindow
         }
     }
 

@@ -16,6 +16,13 @@ Item {
 
     signal clicked
 
+    // Source-blending only works against a real blurred window backdrop, i.e.
+    // when the panel is its own popup window. In-scene over the opaque popover
+    // it would sample the wrong backdrop, so fall back to solid fills.
+    readonly property var _win: root.Window.window
+    readonly property bool _nativeWindow: _win !== null && (_win.flags & Qt.Popup) === Qt.Popup
+    readonly property real _opacity: root._nativeWindow ? Config.windowOpacity : 1
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
@@ -28,18 +35,18 @@ Item {
         anchors.leftMargin: 6
         anchors.rightMargin: 6
         radius: 10
-        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
+        backgroundColor: root._nativeWindow ? Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity) : "transparent"
         color: {
             if (root.selected) {
                 var c = Theme.listItemSelectionBg;
-                return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
+                return Qt.rgba(c.r, c.g, c.b, root._opacity);
             }
             if (root.hovered) {
                 var h = Theme.listItemHoverBg;
-                return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
+                return Qt.rgba(h.r, h.g, h.b, root._opacity);
             }
             var bg = Theme.popoverBackground;
-            return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
+            return Qt.rgba(bg.r, bg.g, bg.b, root._opacity);
         }
     }
 

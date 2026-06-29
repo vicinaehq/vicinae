@@ -102,20 +102,17 @@ Popup {
         target: completionModel
     }
 
-    background: SourceBlendRect {
+    background: Rectangle {
         radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
-        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
-        color: Config.withAlpha(Theme.popoverBackground, Config.windowOpacity)
-        borderColor: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
-        borderWidth: Platform.supports("clientSideDecorations") ? 1 : 0
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
+        border.width: Platform.supports("clientSideDecorations") ? 1 : 0
         Loader {
             active: root.nativePanel && Platform.supports("nativePanels")
             source: "qrc:/Vicinae/CompletionPanelMacOS.qml"
         }
 
-        PopupMaterial {
-            active: root.popupType === Popup.Window
-        }
+        PopupMaterial {}
     }
 
     contentItem: ColumnLayout {

@@ -8,17 +8,19 @@ Popup {
     property bool alignLeft: false
     property int maxHeight: 400
 
-    popupType: Popup.Window
+    popupType: Qt.platform.os === "linux" ? Popup.Item : Popup.Window
+    readonly property bool _nativeWindow: popupType === Popup.Window
     focus: true
     padding: 1
     closePolicy: Popup.CloseOnPressOutside
 
+    readonly property int _gap: 6
+
     width: 400
     height: Math.min(stack.currentItem ? stack.currentItem.implicitHeight + 2 * padding : 300, root.maxHeight)
 
-    x: root.alignLeft ? 0 : (parent ? parent.width - width : 0)
-    y: -height - 6
-    PopupPlacement.alignment: Qt.AlignTop | (root.alignLeft ? Qt.AlignLeft : Qt.AlignRight)
+    x: root.alignLeft ? root._gap : (parent ? parent.width - width - root._gap : 0)
+    y: -height - root._gap
 
     readonly property bool _nativeAnim: Qt.platform.os === "osx" && popupMaterial.macImpl !== null
     readonly property real _animAnchorX: root.alignLeft ? 0.0 : 1.0
@@ -38,8 +40,8 @@ Popup {
             root.controller.close();
     }
 
-    enter: root._nativeAnim ? null : _itemEnter
-    exit: root._nativeAnim ? _holdExit : _itemExit
+    enter: root._nativeWindow ? null : _itemEnter
+    exit: root._nativeAnim ? _holdExit : (root._nativeWindow ? null : _itemExit)
 
     property Transition _itemEnter: Transition {
         ParallelAnimation {
@@ -87,8 +89,9 @@ Popup {
 
     background: Rectangle {
         radius: Math.min(Config.borderRounding, 15)
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
-        border.color: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
+        readonly property real _opacity: root._nativeWindow ? Config.windowOpacity : 1
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, _opacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, _opacity)
         border.width: 1
 
         PopupMaterial {
