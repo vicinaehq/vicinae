@@ -1,17 +1,14 @@
 import QtQuick
 import QtQuick.Controls
 
-Popup {
+ViciPopover {
     id: root
 
     required property var controller
     property bool alignLeft: false
     property int maxHeight: 400
 
-    popupType: Qt.platform.os === "linux" ? Popup.Item : Popup.Window
-    readonly property bool _nativeWindow: popupType === Popup.Window
     focus: true
-    padding: 1
     closePolicy: Popup.CloseOnPressOutside
     modal: true
     dim: false
@@ -24,13 +21,9 @@ Popup {
     x: root.alignLeft ? root._gap : (parent ? parent.width - width - root._gap : 0)
     y: -height - root._gap
 
-    readonly property bool _nativeAnim: Qt.platform.os === "osx" && popupMaterial.macImpl !== null
     readonly property real _animAnchorX: root.alignLeft ? 0.0 : 1.0
-
-    onAboutToShow: if (popupMaterial.macImpl)
-        popupMaterial.macImpl.animateIn(root._animAnchorX, 0.0)
-    onAboutToHide: if (popupMaterial.macImpl)
-        popupMaterial.macImpl.animateOut(root._animAnchorX, 0.0)
+    animationAnchorX: root._animAnchorX
+    animationAnchorY: 0.0
 
     onActiveFocusChanged: {
         if (!activeFocus && root.controller.open)
@@ -40,65 +33,6 @@ Popup {
         stack.clear(StackView.Immediate);
         if (root.controller.open)
             root.controller.close();
-    }
-
-    enter: root._nativeWindow ? null : _itemEnter
-    exit: root._nativeAnim ? _holdExit : (root._nativeWindow ? null : _itemExit)
-
-    property Transition _itemEnter: Transition {
-        ParallelAnimation {
-            NumberAnimation {
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-            NumberAnimation {
-                property: "scale"
-                from: 0.95
-                to: 1
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-        }
-    }
-
-    property Transition _itemExit: Transition {
-        ParallelAnimation {
-            NumberAnimation {
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: 100
-                easing.type: Easing.InCubic
-            }
-            NumberAnimation {
-                property: "scale"
-                from: 1
-                to: 0.95
-                duration: 100
-                easing.type: Easing.InCubic
-            }
-        }
-    }
-
-    property Transition _holdExit: Transition {
-        PauseAnimation {
-            duration: 110
-        }
-    }
-
-    background: Rectangle {
-        radius: Math.min(Config.borderRounding, 15)
-        readonly property real _opacity: root._nativeWindow ? Config.windowOpacity : 1
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, _opacity)
-        border.color: Config.withAlpha(Theme.popoverBorder, _opacity)
-        border.width: 1
-
-        PopupMaterial {
-            id: popupMaterial
-        }
     }
 
     contentItem: FocusScope {

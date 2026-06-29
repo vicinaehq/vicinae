@@ -77,4 +77,13 @@ bool supports(std::string_view name) {
   return false;
 }
 
+bool preferItemPopup(std::string_view surface) {
+#ifdef Q_OS_LINUX
+  return surface == "popover";
+#else
+  (void)surface;
+  return false;
+#endif
+}
+
 } // namespace platform

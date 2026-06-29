@@ -2,9 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Popup {
+ViciPopover {
     id: root
-    popupType: Qt.platform.os === "linux" ? Popup.Item : Popup.Window
     x: Math.round((parent.width - width) / 2)
     y: Math.round((parent.height - height) / 2)
     width: 400
@@ -12,20 +11,15 @@ Popup {
     padding: 20
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    backgroundOpacity: 1
 
     property bool _confirmed: false
     property Item _focusedButton: null
 
-    readonly property bool _nativeAnim: Qt.platform.os === "osx" && popupMaterial.macImpl !== null
-
     onAboutToShow: {
         _confirmed = false;
         Qt.callLater(cancelBtn.forceActiveFocus);
-        if (popupMaterial.macImpl)
-            popupMaterial.macImpl.animateIn();
     }
-    onAboutToHide: if (popupMaterial.macImpl)
-        popupMaterial.macImpl.animateOut()
     onClosed: {
         if (!_confirmed)
             launcher.alertModel.cancel();
@@ -33,64 +27,6 @@ Popup {
     onActiveFocusChanged: {
         if (!activeFocus && opened)
             close();
-    }
-
-    enter: root._nativeAnim ? null : _itemEnter
-    exit: root._nativeAnim ? _holdExit : _itemExit
-
-    property Transition _itemEnter: Transition {
-        ParallelAnimation {
-            NumberAnimation {
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-            NumberAnimation {
-                property: "scale"
-                from: 0.95
-                to: 1
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-        }
-    }
-
-    property Transition _itemExit: Transition {
-        ParallelAnimation {
-            NumberAnimation {
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: 100
-                easing.type: Easing.InCubic
-            }
-            NumberAnimation {
-                property: "scale"
-                from: 1
-                to: 0.95
-                duration: 100
-                easing.type: Easing.InCubic
-            }
-        }
-    }
-
-    property Transition _holdExit: Transition {
-        PauseAnimation {
-            duration: 110
-        }
-    }
-
-    background: Rectangle {
-        radius: Math.min(Config.borderRounding, 15)
-        color: Theme.popoverBackground
-        border.color: Theme.popoverBorder
-        border.width: 1
-
-        PopupMaterial {
-            id: popupMaterial
-        }
     }
 
     contentItem: ColumnLayout {
