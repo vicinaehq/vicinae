@@ -79,6 +79,8 @@
 		"normal": {
 			"family": "auto"
 			// The point size of the font (unlike pixel size, the point size scales with resolution)
+			// NOTE: if unspecified, Vicinae will pick the best point size for the current platform (there is no one size fits all)
+			// Therefore, it is recommended to leave this unset unless you really want a custom font size.
 			// "size": 10.5
 		}
 	},
@@ -166,14 +168,15 @@
 			"layer": "top" 
 		}
 	},
-
+	
 	// Keybinds are serialized using a custom format.
 	// It is recommended to edit them through the settings GUI, which will write them to this file.
+	// NOTE: here, "control" remaps to the "command" (⌘) key on macOS.
 	"keybinds": {
 		// common shortcuts
 		"open-search-filter": "control+P",
 		"open-settings": "control+,",
-		"toggle-action-panel": "control+B",
+		"toggle-action-panel": "control+K",
 
 		// used to assign shortcuts to generic actions
 		// if an extension provides a specific kind of action, it is encouraged to use shortcuts as defined here.
