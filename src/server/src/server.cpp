@@ -31,6 +31,7 @@
 #include "services/browser-extension-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "db/database-key.hpp"
 #include "services/glyph-service/glyph-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
@@ -160,13 +161,23 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   {
     auto registry = ServiceRegistry::instance();
-    auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "vicinae.db");
+
+    auto configService = std::make_unique<config::Manager>(m_config);
+    auto currentConfig = configService->value();
+
+    const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
+    const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
+    auto dbKey =
+        db::prepareDatabaseEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});
+
+    auto omniDb = std::make_unique<OmniDatabase>(vicinaeDbPath, dbKey);
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto appRuntime = std::make_unique<AppRuntime>(*windowManager, *appService);
-    auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
+    auto clipboardManager = std::make_unique<ClipboardService>(clipboardDbPath, dbKey);
+    clipboardManager->setEncryption(currentConfig.encryptSensitiveData);
 #ifdef Q_OS_LINUX
     auto inputServer = std::make_unique<LinuxInputServer>();
     auto snippetServer = std::make_unique<LinuxSnippetServer>(*inputServer);
@@ -185,14 +196,12 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto pasteService = std::make_unique<PasteService>(*clipboardManager, *windowManager, *appService,
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
-    auto configService = std::make_unique<config::Manager>(m_config);
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
     auto globalShortcutService = std::make_unique<GlobalShortcutService>(*configService, *rootItemManager,
                                                                          createGlobalShortcutBackend());
     auto shortcutService =
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
     auto toastService = std::make_unique<ToastService>();
-    auto currentConfig = configService->value();
     auto glyphService =
         std::make_unique<GlyphService>(Omnicast::dataDir() / "emojis" / "emojis.json", omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());

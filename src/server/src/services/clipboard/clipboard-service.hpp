@@ -66,7 +66,7 @@ public:
     DecryptionFailed,
   };
 
-  ClipboardService(const std::filesystem::path &path);
+  ClipboardService(const std::filesystem::path &path, std::optional<db::EncryptionKey> key = std::nullopt);
 
   static QString readText();
   static Clipboard::ReadContent readContent();
@@ -113,10 +113,13 @@ public:
   bool isEncryptionReady() const;
 
 private:
+  ClipboardDatabase openDatabase() const { return ClipboardDatabase(m_dbKey); }
+
   std::unique_ptr<ClipboardEncrypter> m_encrypter;
 
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;
+  std::optional<db::EncryptionKey> m_dbKey;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
 
   static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);

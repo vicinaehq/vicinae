@@ -1,7 +1,9 @@
 #pragma once
 #include <sqlcipher/sqlite3.h>
 
+#include "key.hpp"
 #include <QString>
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <filesystem>
@@ -227,6 +229,34 @@ public:
     }
     sqlite3_busy_timeout(handle, BUSY_TIMEOUT_MS);
     return Database(handle);
+  }
+
+  // Must be applied before any other statement on the connection (SQLCipher requirement).
+  std::expected<void, std::string> setKey(KeyView key) {
+    static constexpr char hex[] = "0123456789abcdef";
+    std::string pragma = "PRAGMA key = \"x'";
+    pragma.reserve(pragma.size() + key.size() * 2 + 4);
+    for (std::byte b : key) {
+      auto v = std::to_integer<unsigned char>(b);
+      pragma.push_back(hex[v >> 4]);
+      pragma.push_back(hex[v & 0x0F]);
+    }
+    pragma += "'\";";
+
+    char *errmsg = nullptr;
+    if (sqlite3_exec(m_handle, pragma.c_str(), nullptr, nullptr, &errmsg) != SQLITE_OK) {
+      std::string err = errmsg ? errmsg : "failed to set database key";
+      sqlite3_free(errmsg);
+      return std::unexpected(std::move(err));
+    }
+    // Touch the schema so an invalid key surfaces here rather than on first query.
+    if (sqlite3_exec(m_handle, "SELECT count(*) FROM sqlite_master;", nullptr, nullptr, &errmsg) !=
+        SQLITE_OK) {
+      std::string err = errmsg ? errmsg : "invalid database key";
+      sqlite3_free(errmsg);
+      return std::unexpected(std::move(err));
+    }
+    return {};
   }
 
   Statement prepare(std::string_view sql) const {

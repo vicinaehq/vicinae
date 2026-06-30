@@ -117,6 +117,24 @@ Flickable {
             }
         }
 
+        SettingsSectionLabel {
+            text: "Security"
+            Layout.topMargin: 24
+            Layout.bottomMargin: 10
+        }
+
+        SettingsGroup {
+            SettingsRow {
+                label: "Encrypt sensitive data"
+                description: "Encrypt sensitive data at rest — clipboard history and internal databases (OAuth tokens, extension local storage, API keys). Requires a restart to apply."
+                showSeparator: false
+                SettingsToggle {
+                    checked: root.model.encryptSensitiveData
+                    onToggled: root.model.encryptSensitiveData = checked
+                }
+            }
+        }
+
         Item {
             Layout.preferredHeight: 24
         }
