@@ -11,7 +11,6 @@ brew install \
   pkg-config \
   clang-format \
   qt \
-  icu4c \
   openssl@3 \
   qtkeychain \
   libqalculate \

@@ -1,10 +1,9 @@
 #include "glyph/emoji.hpp"
+#include "emoji-properties.hpp"
 #include <array>
 #include <cstdint>
 #include <string>
 #include <string_view>
-#include <unicode/uchar.h>
-#include <unicode/utf8.h>
 
 typedef const char *emoji_text_iter_t;
 
@@ -54,15 +53,66 @@ static std::string stripVariationSelectors(std::string_view str) {
   return result;
 }
 
+static constexpr char32_t kInvalidCodepoint = 0xFFFFFFFF;
+
+static int decodeUtf8(std::string_view str, size_t pos, char32_t &cp) {
+  if (pos >= str.size()) {
+    cp = kInvalidCodepoint;
+    return 0;
+  }
+
+  auto byte = [&](size_t i) { return static_cast<unsigned char>(str[i]); };
+  unsigned char const lead = byte(pos);
+
+  if (lead < 0x80) {
+    cp = lead;
+    return 1;
+  }
+
+  int len = 0;
+  char32_t min = 0;
+  if ((lead & 0xE0) == 0xC0) {
+    cp = lead & 0x1F;
+    len = 2;
+    min = 0x80;
+  } else if ((lead & 0xF0) == 0xE0) {
+    cp = lead & 0x0F;
+    len = 3;
+    min = 0x800;
+  } else if ((lead & 0xF8) == 0xF0) {
+    cp = lead & 0x07;
+    len = 4;
+    min = 0x10000;
+  } else {
+    cp = kInvalidCodepoint;
+    return 1;
+  }
+
+  if (pos + len > str.size()) {
+    cp = kInvalidCodepoint;
+    return 1;
+  }
+
+  for (int k = 1; k < len; ++k) {
+    unsigned char const cont = byte(pos + k);
+    if ((cont & 0xC0) != 0x80) {
+      cp = kInvalidCodepoint;
+      return 1;
+    }
+    cp = (cp << 6) | (cont & 0x3F);
+  }
+
+  if (cp < min || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) { cp = kInvalidCodepoint; }
+
+  return len;
+}
+
 std::string applySkinTone(std::string_view emoji, SkinTone tone) {
   const auto info = skinToneInfo(tone);
-  int32_t i = 0;
-  int32_t const length = static_cast<int32_t>(emoji.size());
-  UChar32 c;
+  char32_t c = 0;
+  size_t const i = decodeUtf8(emoji, 0, c);
 
-  U8_NEXT(emoji, i, length, c); // NOLINT(bugprone-inc-dec-in-conditions)
-
-  if (c < 0) { return std::string(emoji); }
+  if (c == kInvalidCodepoint) { return std::string(emoji); }
 
   std::string result;
 
@@ -85,10 +135,10 @@ static constexpr char kMaxEmojiScannerCategory = 16;
 
 namespace Character {
 static inline bool isEmojiModifierBase(char32_t cp) {
-  return u_hasBinaryProperty(cp, UCHAR_EMOJI_MODIFIER_BASE);
+  return (lookupProperties(cp) & EmojiModifierBase) != 0;
 }
 
-static inline bool isModifier(char32_t cp) { return u_hasBinaryProperty(cp, UCHAR_EMOJI_MODIFIER); }
+static inline bool isModifier(char32_t cp) { return (lookupProperties(cp) & EmojiModifier) != 0; }
 
 static inline bool isRegionalIndicator(char32_t cp) { return cp >= 0x1F1E6 && cp <= 0x1F1FF; }
 
@@ -97,14 +147,15 @@ static inline bool isEmojiKeycapBase(char32_t cp) {
 }
 
 static inline bool isEmojiEmojiDefault(char32_t cp) {
-  return u_hasBinaryProperty(cp, UCHAR_EMOJI_PRESENTATION);
+  return (lookupProperties(cp) & EmojiPresentation) != 0;
 }
 
 static inline bool isEmojiTextDefault(char32_t cp) {
-  return u_hasBinaryProperty(cp, UCHAR_EMOJI) && !u_hasBinaryProperty(cp, UCHAR_EMOJI_PRESENTATION);
+  std::uint8_t const p = lookupProperties(cp);
+  return (p & Emoji) && !(p & EmojiPresentation);
 }
 
-static inline bool isEmoji(char32_t cp) { return u_hasBinaryProperty(cp, UCHAR_EMOJI); }
+static inline bool isEmoji(char32_t cp) { return (lookupProperties(cp) & Emoji) != 0; }
 } // namespace Character
 
 enum class EmojiCategory : std::uint8_t {
@@ -155,14 +206,12 @@ static std::string segment(std::string_view str) {
   std::string result;
   result.reserve(str.size());
 
-  int32_t i = 0;
-  int32_t const length = static_cast<int32_t>(str.size());
+  size_t i = 0;
+  while (i < str.size()) {
+    char32_t c = 0;
+    i += decodeUtf8(str, i, c);
 
-  while (i < length) {
-    UChar32 c;
-    U8_NEXT(str, i, length, c); // NOLINT(bugprone-inc-dec-in-conditions)
-
-    if (c < 0) { continue; }
+    if (c == kInvalidCodepoint) { continue; }
 
     result.push_back(emojiSegmentationCategory(c));
   }
