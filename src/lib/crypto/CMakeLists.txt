@@ -7,6 +7,8 @@ project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 option(BUILD_TESTS "Build the test suite" OFF)
 
 if (APPLE)
@@ -31,6 +33,9 @@ if (APPLE)
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		"$<$<COMPILE_LANGUAGE:Swift>:SHELL:-target ${SWIFT_TARGET_ARCH}-apple-macosx${CMAKE_OSX_DEPLOYMENT_TARGET}>")
 	target_link_libraries(${PROJECT_NAME} PUBLIC "-framework CryptoKit" "-framework Foundation")
+
+	include(SwiftRuntime)
+	link_swift_runtime(${PROJECT_NAME})
 else()
 	find_package(OpenSSL REQUIRED)
 	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto)
