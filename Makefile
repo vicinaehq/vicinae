@@ -60,6 +60,7 @@ test:
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
 	./$(BIN_DIR)/vicinae-file-indexer-tests
+	./$(BIN_DIR)/vicinae-crypto-tests
 .PHONY: test
 
 static:
