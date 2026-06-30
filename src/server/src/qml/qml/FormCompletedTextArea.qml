@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Item {
+FocusScope {
     id: root
     Layout.fillWidth: true
     activeFocusOnTab: true
