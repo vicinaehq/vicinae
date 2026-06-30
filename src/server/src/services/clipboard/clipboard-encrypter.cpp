@@ -2,9 +2,19 @@
 #include <qstringview.h>
 #include <qt6keychain/keychain.h>
 #include "vicinae.hpp"
-#include "crypto.hpp"
+#include "crypto/aes-gcm.hpp"
+#include <cstddef>
+#include <span>
 
 static const QString KEYCHAIN_ENCRYPTION_KEY_NAME = "clipboard-data-key";
+
+static std::span<const std::byte> asBytes(const QByteArray &b) {
+  return {reinterpret_cast<const std::byte *>(b.constData()), static_cast<size_t>(b.size())};
+}
+
+static QByteArray toQByteArray(std::span<const std::byte> b) {
+  return {reinterpret_cast<const char *>(b.data()), static_cast<qsizetype>(b.size())};
+}
 
 void ClipboardEncrypter::loadKey() {
   using namespace QKeychain;
@@ -21,7 +31,8 @@ void ClipboardEncrypter::loadKey() {
     }
 
     auto writeJob = new QKeychain::WritePasswordJob(Omnicast::APP_ID);
-    auto keyData = Crypto::AES256GCM::generateKey();
+    auto generated = Crypto::AES256GCM::generateKey();
+    QByteArray keyData(reinterpret_cast<const char *>(generated.data()), generated.size());
 
     writeJob->setKey(KEYCHAIN_ENCRYPTION_KEY_NAME);
     writeJob->setBinaryData(keyData);
@@ -42,15 +53,15 @@ void ClipboardEncrypter::loadKey() {
 ClipboardEncrypter::EncryptResult ClipboardEncrypter::encrypt(const QByteArray &plain) const {
   if (!m_keychainError.isEmpty()) return std::unexpected(m_keychainError);
 
-  auto encrypted = Crypto::AES256GCM::encrypt(plain, m_key);
+  auto encrypted = Crypto::AES256GCM::encrypt(asBytes(plain), asBytes(m_key));
   if (!encrypted) return std::unexpected("Encryption failed");
-  return encrypted.value();
+  return toQByteArray(*encrypted);
 }
 
 ClipboardEncrypter::DecryptResult ClipboardEncrypter::decrypt(const QByteArray &encrypted) const {
   if (!m_keychainError.isEmpty()) return std::unexpected(m_keychainError);
 
-  auto decrypted = Crypto::AES256GCM::decrypt(encrypted, m_key);
+  auto decrypted = Crypto::AES256GCM::decrypt(asBytes(encrypted), asBytes(m_key));
   if (!decrypted) return std::unexpected("Decryption failed");
-  return decrypted.value();
+  return toQByteArray(*decrypted);
 }

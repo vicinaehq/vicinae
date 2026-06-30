@@ -119,6 +119,7 @@ add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/glyph)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/fuzzy)
+add_subdirectory(${LIB_DIR}/crypto)
 
 # statically linked vendored libs.
 # Most of the other vendored libs are header only so no need for a CMakeLists.txt
