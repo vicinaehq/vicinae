@@ -15,7 +15,6 @@ brew install \
   qtkeychain \
   libqalculate \
   minizip \
-  dbus \
   dylibbundler \
   ccache	\
   extra-cmake-modules
