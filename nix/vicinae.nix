@@ -15,6 +15,8 @@
   gcc15Stdenv,
   wayland,
   glaze,
+  swift ? null,
+  apple-sdk ? null,
 }: let
   inherit (stdenv.hostPlatform) isLinux isDarwin;
 
@@ -77,13 +79,17 @@ in
 
     strictDeps = true;
 
-    nativeBuildInputs = [
-      cmake
-      ninja
-      nodejs
-      pkg-config
-      qt6.wrapQtAppsHook
-    ];
+    nativeBuildInputs =
+      [
+        cmake
+        ninja
+        nodejs
+        pkg-config
+        qt6.wrapQtAppsHook
+      ]
+      ++ lib.optionals isDarwin [
+        swift
+      ];
 
     buildInputs =
       [
@@ -103,6 +109,9 @@ in
         kdePackages.layer-shell-qt
         qt6.qtwayland
         wayland
+      ]
+      ++ lib.optionals isDarwin [
+        apple-sdk
       ];
 
     postPatch = ''
