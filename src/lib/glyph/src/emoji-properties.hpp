@@ -3,7 +3,6 @@
 
 namespace emoji {
 
-// Bit values must match EMOJI_PROP in the unicode generator's emoji-properties.ts.
 enum EmojiProp : std::uint8_t {
   Emoji = 1,
   EmojiPresentation = 2,
