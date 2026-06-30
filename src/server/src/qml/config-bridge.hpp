@@ -29,7 +29,10 @@ public:
             [this] { emit changed(); });
   }
 
-  qreal windowOpacity() const { return cfg().launcherWindow.opacity; }
+  qreal windowOpacity() const {
+    return cfg().launcherWindow.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),
+                                                platform::supports(platform::Capability::WindowMaterial));
+  }
 
   int borderWidth() const {
     auto &csd = cfg().launcherWindow.clientSideDecorations;
@@ -56,7 +59,8 @@ public:
   bool activateOnSingleClick() const { return cfg().activateOnSingleClick; }
   QString windowMaterial() const {
     return QString::fromStdString(
-        cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass)));
+        cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass),
+                                              platform::supports(platform::Capability::WindowMaterial)));
   }
   bool blurEnabled() const { return windowMaterial() != QStringLiteral("none"); }
 

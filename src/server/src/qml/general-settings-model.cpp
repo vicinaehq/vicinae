@@ -121,7 +121,11 @@ void GeneralSettingsModel::setInputServerEnabled(bool v) {
   cfgManager().mergeWithUser({.inputServer = config::Partial<config::InputServer>{.enabled = v}});
 }
 
-QString GeneralSettingsModel::windowOpacity() const { return QString::number(cfg().launcherWindow.opacity); }
+QString GeneralSettingsModel::windowOpacity() const {
+  return QString::number(
+      cfg().launcherWindow.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),
+                                           platform::supports(platform::Capability::WindowMaterial)));
+}
 void GeneralSettingsModel::setWindowOpacity(const QString &v) {
   bool ok = false;
   float val = v.toFloat(&ok);
@@ -168,7 +172,8 @@ QVariantList GeneralSettingsModel::windowMaterialItems() const {
 
 QVariant GeneralSettingsModel::currentWindowMaterial() const {
   auto id = QString::fromStdString(
-      cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass)));
+      cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass),
+                                            platform::supports(platform::Capability::WindowMaterial)));
   QString name = id == "liquid_glass" ? QStringLiteral("Liquid Glass")
                  : id == "none"       ? QStringLiteral("None")
                                       : QStringLiteral("Blurred");

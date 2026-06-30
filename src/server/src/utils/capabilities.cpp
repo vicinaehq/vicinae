@@ -57,8 +57,12 @@ bool supports(Capability cap) {
     return false;
 #endif
   case Capability::WindowMaterial: {
+#ifdef Q_OS_MACOS
+    return true;
+#else
     auto *mgr = ServiceRegistry::instance()->windowMaterialManager();
     return mgr && mgr->isSupported();
+#endif
   }
   }
 
@@ -71,6 +75,15 @@ bool supports(std::string_view name) {
   }
 
   return false;
+}
+
+bool preferItemPopup(std::string_view surface) {
+#ifdef Q_OS_LINUX
+  return surface == "popover";
+#else
+  (void)surface;
+  return false;
+#endif
 }
 
 } // namespace platform

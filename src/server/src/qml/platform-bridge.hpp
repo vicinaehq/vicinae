@@ -16,4 +16,8 @@ public:
   Q_INVOKABLE bool supports(const QString &capability) const {
     return platform::supports(capability.toStdString());
   }
+
+  Q_INVOKABLE bool preferItemPopup(const QString &surface) const {
+    return platform::preferItemPopup(surface.toStdString());
+  }
 };

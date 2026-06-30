@@ -46,7 +46,11 @@ public:
   int borderWidth() const { return m_borderWidth; }
   void setBorderWidth(int value);
 
+  Q_INVOKABLE void animateIn(qreal anchorX = 0.5, qreal anchorY = 0.5);
+  Q_INVOKABLE void animateOut(qreal anchorX = 0.5, qreal anchorY = 0.5);
+
 private:
+  void runAnimate(bool appearing, qreal anchorX, qreal anchorY);
   struct Snapshot {
     bool valid = false;
     bool opaque = true;
@@ -70,6 +74,9 @@ private:
   QColor m_borderColor;
   int m_borderWidth = 0;
   bool m_surfaceReady = false;
+  bool m_pendingAnimateIn = false;
+  qreal m_pendingAnchorX = 0.5;
+  qreal m_pendingAnchorY = 0.5;
   Snapshot m_snapshot;
 };
 

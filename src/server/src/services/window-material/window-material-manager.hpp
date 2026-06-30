@@ -8,9 +8,6 @@
 #include "services/window-material/ext-background-effect-v1-manager.hpp"
 #include "services/window-material/kde-background-effect-manager.hpp"
 #endif
-#ifdef Q_OS_MACOS
-#include "services/window-material/macos-window-material-backend.hpp"
-#endif
 
 class WindowMaterialManager : NonCopyable {
 public:
@@ -37,11 +34,7 @@ private:
       return std::make_unique<KDE::BackgroundEffectManager>(blur);
     }
 #endif
-#ifdef Q_OS_MACOS
-    return std::make_unique<MacOSWindowMaterialBackend>();
-#else
     return std::make_unique<NullWindowMaterialBackend>();
-#endif
   }
 
   std::unique_ptr<WindowMaterialBackend> m_backend;

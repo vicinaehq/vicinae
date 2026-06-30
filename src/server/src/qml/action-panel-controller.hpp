@@ -1,5 +1,6 @@
 #pragma once
 #include "common/context.hpp"
+#include <QElapsedTimer>
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
@@ -47,7 +48,7 @@ public:
   void syncToView(BaseView *view);
   void setActions(std::unique_ptr<ActionPanelState> actions);
 
-  Q_INVOKABLE void toggle();
+  Q_INVOKABLE void toggle(bool fromClick = false);
   Q_INVOKABLE void open();
   Q_INVOKABLE void close();
 
@@ -85,4 +86,5 @@ private:
   BaseView *m_activeView = nullptr;
   std::unique_ptr<ActionListView> m_ownedRoot;
   std::vector<ActionPanelView *> m_submenuStack;
+  QElapsedTimer m_closedTimer;
 };

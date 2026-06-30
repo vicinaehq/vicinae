@@ -26,7 +26,7 @@ accent_foreground = "colors.accents.blue"
 background = "#222226"
 foreground = "#ffffff"
 secondary_background = "#2e2e32"
-border = "#383838"
+border = "#4A4A53"
 
 [colors.main_window]
 border = "colors.core.border"

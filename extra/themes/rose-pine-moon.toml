@@ -12,7 +12,7 @@ icon = "icons/rose-pine.png"
 background = "#232136"        # base
 foreground = "#E0DEF4"        # text
 secondary_background = "#2A273F"  # surface
-border = "#393552"            # overlay (subtle border)
+border = "#47436E"            # overlay (subtle border)
 accent = "#3E8FB0"            # pine
 
 [colors.accents]

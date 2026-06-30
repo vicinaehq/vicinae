@@ -26,4 +26,11 @@ bool supports(Capability cap);
  */
 bool supports(std::string_view name);
 
+/**
+ * Some surfaces can be represented either as native popup windows or in-scene
+ * popup items. Keep the platform policy centralized so QML components do not
+ * need to encode OS checks.
+ */
+bool preferItemPopup(std::string_view surface);
+
 } // namespace platform

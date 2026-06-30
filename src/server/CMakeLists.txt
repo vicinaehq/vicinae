@@ -36,6 +36,14 @@ endif()
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(EXTRA_PATH ${CMAKE_SOURCE_DIR}/extra)
+
+if (UNIX AND NOT APPLE)
+	set(DEFAULT_FONT_RESOURCES
+"  	<file alias=\"Outfit-Variable.ttf\">${ASSET_PATH}/fonts/Outfit-Variable.ttf</file>
+  	<file alias=\"GeistMono-Variable.ttf\">${ASSET_PATH}/fonts/GeistMono-Variable.ttf</file>
+")
+endif()
+
 configure_file(resources.qrc.in resources.qrc)
 
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
@@ -808,6 +816,8 @@ endif()
 
 set(VICINAE_QML_FILES
 	src/qml/qml/LauncherWindow.qml
+	src/qml/qml/PopupMaterial.qml
+	src/qml/qml/ViciPopover.qml
 	src/qml/qml/SearchBar.qml
 	src/qml/qml/GenericListView.qml
 	src/qml/qml/HoverResetOnModelChange.qml
@@ -839,7 +849,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ExtensionView.qml
 	src/qml/qml/MarkdownDetailView.qml
 	src/qml/qml/ExtensionGridView.qml
-	src/qml/qml/FocusRestoringScope.qml
 	src/qml/qml/ActionPanelPopover.qml
 	src/qml/qml/ActionListPanel.qml
 	src/qml/qml/ActionItemDelegate.qml
@@ -940,6 +949,7 @@ if(APPLE)
 		src/qml/qml/SettingsWindowMacOS.qml
 		src/qml/qml/HudWindowMacOS.qml
 		src/qml/qml/CompletionPanelMacOS.qml
+		src/qml/qml/PopupMaterialMacOS.qml
 	)
 endif()
 
@@ -1000,7 +1010,7 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-F/System/Library/PrivateFrameworks" "-framework login")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-F/System/Library/PrivateFrameworks" "-framework login")
 endif()
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 

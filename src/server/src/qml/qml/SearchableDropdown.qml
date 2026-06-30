@@ -120,14 +120,12 @@ Item {
         showFilter: true
         currentItemId: root.currentItem ? root.currentItem.id : ""
 
-        background: SourceBlendRect {
+        background: Rectangle {
             radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
-            backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-            color: Config.withAlpha(Theme.background, Config.windowOpacity)
-            borderColor: Config.withAlpha(Theme.divider, Config.windowOpacity)
-            borderWidth: Platform.supports("clientSideDecorations") ? 1 : 0
-            WindowMaterial.enabled: Config.blurEnabled
-            WindowMaterial.radius: Math.min(Config.borderRounding, 15)
+            color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
+            border.color: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
+            border.width: Platform.supports("clientSideDecorations") ? 1 : 0
+            PopupMaterial {}
         }
 
         onClosed: {
