@@ -409,6 +409,11 @@ set(SRCS
 	src/internal/program-db/program-db.hpp
 	src/internal/program-db/program-db.cpp
 
+	src/internal/db/db-encryption.hpp
+	src/internal/db/db-encryption.cpp
+	src/internal/db/database-key.hpp
+	src/internal/db/database-key.cpp
+
 	src/services/power-manager/dummy-power-manager.hpp
 
 	src/services/desktop-notification/dummy-desktop-notification-client.hpp

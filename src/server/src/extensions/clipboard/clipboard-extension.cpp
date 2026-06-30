@@ -68,12 +68,10 @@ void ClipboardExtension::preferenceValuesChanged(const QJsonObject &value) const
   auto clipman = ServiceRegistry::instance()->clipman();
   clipman->setRecordAllOffers(value.value("store-all-offerings").toBool());
   clipman->setMonitoring(value.value("monitoring").toBool());
-  clipman->setEncryption(value.value("encryption").toBool());
   clipman->setIgnorePasswords(value.value("ignorePasswords").toBool());
 }
 
 std::vector<Preference> ClipboardExtension::preferences() const {
-  auto encryption = Preference::makeCheckbox("encryption");
   auto monitoring = Preference::makeCheckbox("monitoring");
   auto eraseOnStartup = Preference::makeCheckbox("eraseOnStartup");
   auto ignorePasswords = Preference::makeCheckbox("ignorePasswords");
@@ -89,16 +87,10 @@ std::vector<Preference> ClipboardExtension::preferences() const {
       "explicit hint that the selection is a password. While most password managers and private browser "
       "windows do, some might not implement this properly.");
 
-  encryption.setTitle("Disk encryption");
-  encryption.setDescription("Whether to encrypt the clipboard data on disk. The "
-                            "encryption key is stored and retrieved from the system keychain. Enabling "
-                            "this might trigger your keychain's unlock dialog.");
-  encryption.setDefaultValue(false);
-
   monitoring.setTitle("Clipboard monitoring");
   monitoring.setDescription("Whether clipboard activity is recorded in the history. Every clipboard action "
                             "performed while this is turned off will not be recorded.");
   monitoring.setDefaultValue(true);
 
-  return {monitoring, ignorePasswords, eraseOnStartup, encryption};
+  return {monitoring, ignorePasswords, eraseOnStartup};
 }
