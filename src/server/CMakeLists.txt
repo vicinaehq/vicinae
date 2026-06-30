@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
 find_package(OpenSSL REQUIRED)
 
 if (USE_SYSTEM_KF6)
@@ -11,7 +11,7 @@ if (USE_SYSTEM_KF6)
 endif()
 
 list(APPEND LIBS
-	Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
+	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
@@ -30,7 +30,8 @@ list(APPEND LIBS
 )
 
 if (UNIX AND NOT APPLE)
-	list(APPEND LIBS wayland-client)
+	find_package(Qt6 REQUIRED COMPONENTS DBus)
+	list(APPEND LIBS wayland-client Qt6::DBus)
 endif()
 
 
@@ -164,8 +165,6 @@ set(SRCS
 	src/services/clipboard/clipboard-service.hpp
 	src/services/clipboard/clipboard-encrypter.cpp
 	src/services/clipboard/clipboard-service.cpp
-	src/services/clipboard/gnome/gnome-clipboard-server.hpp
-	src/services/clipboard/gnome/gnome-clipboard-server.cpp
 
 	src/services/local-storage/local-storage-service.hpp
 	src/services/local-storage/local-storage.cpp
@@ -178,9 +177,6 @@ set(SRCS
 	src/services/toast/toast-service.hpp
 
 	# begin app-database
-	src/services/app-service/xdg/xdg-app-database.hpp
-	src/services/app-service/xdg/xdg-app-database.cpp
-	src/services/app-service/xdg/xdg-app.cpp
 	src/services/app-service/abstract-app-db.hpp
 	src/services/app-service/dummy-app-database.hpp
 
@@ -318,8 +314,6 @@ set(SRCS
 	src/services/file-chooser/file-chooser.cpp
 	src/services/file-chooser/file-chooser-service.hpp
 	src/services/file-chooser/file-chooser-service.cpp
-	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
-	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 	src/services/root-item-manager/root-item-manager.hpp
 	src/services/root-item-manager/root-item-manager.cpp
 	src/services/root-item-manager/visit-tracker.cpp
@@ -415,10 +409,8 @@ set(SRCS
 	src/internal/program-db/program-db.hpp
 	src/internal/program-db/program-db.cpp
 
-	src/services/power-manager/systemd/systemd-power-manager.cpp
 	src/services/power-manager/dummy-power-manager.hpp
 
-	src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
 	src/services/desktop-notification/dummy-desktop-notification-client.hpp
 
 	src/services/audio-control/pactl/pactl-audio-control.cpp
@@ -676,6 +668,16 @@ endif()
 
 if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
+		src/services/clipboard/gnome/gnome-clipboard-server.hpp
+		src/services/clipboard/gnome/gnome-clipboard-server.cpp
+		src/services/app-service/xdg/xdg-app-database.hpp
+		src/services/app-service/xdg/xdg-app-database.cpp
+		src/services/app-service/xdg/xdg-app.cpp
+		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
+		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
+		src/services/power-manager/systemd/systemd-power-manager.cpp
+		src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
+
 		src/services/paste/linux-paste-service.cpp
 
 		src/services/input-server/linux-input-server.hpp

@@ -22,9 +22,9 @@
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
-#include "services/clipboard/gnome/gnome-clipboard-server.hpp"
 #include "utils.hpp"
 #ifdef Q_OS_LINUX
+#include "services/clipboard/gnome/gnome-clipboard-server.hpp"
 #include "data-control/data-control-clipboard-server.hpp"
 #endif
 
@@ -634,8 +634,8 @@ ClipboardService::ClipboardService(const std::filesystem::path &path) {
   {
     ClipboardServerFactory factory;
 
-    factory.registerServer<GnomeClipboardServer>();
 #ifdef Q_OS_LINUX
+    factory.registerServer<GnomeClipboardServer>();
     factory.registerServer<DataControlClipboardServer>();
     factory.registerServer<X11ClipboardServer>();
 #endif
