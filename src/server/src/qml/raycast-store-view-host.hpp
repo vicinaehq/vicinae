@@ -42,5 +42,5 @@ private:
   QString m_lastQueryText;
   QTimer m_debounce;
   std::optional<Raycast::ListResponse> m_pendingPage;
-  bool m_compatReady = false;
+  bool m_compatReady = !Raycast::hasCompatSheet();
 };

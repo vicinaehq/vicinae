@@ -4,6 +4,8 @@
 #include "environment.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
+#include "utils/capabilities.hpp"
+#include <algorithm>
 
 namespace VicinaeStore {
 
@@ -19,12 +21,18 @@ std::optional<ImageURL> Command::themedIcon() const { return icons.themedIcon();
 
 ImageURL Extension::themedIcon() const {
   if (auto icon = icons.themedIcon()) return *icon;
-  return ImageURL::builtin("puzzle-piece");
+  return ImageURL::builtin("plug");
 }
 
 } // namespace VicinaeStore
 
+static bool availableOnCurrentPlatform(const VicinaeStore::Extension &ext) {
+  return ext.platforms.empty() || std::ranges::contains(ext.platforms, platform::extensionPlatform(),
+                                                        [](const QString &p) { return p.toLower(); });
+}
+
 static void postProcess(VicinaeStore::ListResponse &response) {
+  std::erase_if(response.extensions, [](const auto &ext) { return !availableOnCurrentPlatform(ext); });
   for (auto &ext : response.extensions) {
     ext.id = QString("store.vicinae.%1").arg(ext.name);
   }
