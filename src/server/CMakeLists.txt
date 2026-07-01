@@ -617,6 +617,8 @@ if (APPLE)
 		src/services/paste/macos-paste-service.mm
 		src/services/power-manager/macos/macos-power-manager.hpp
 		src/services/power-manager/macos/macos-power-manager.mm
+		src/services/audio-control/macos/coreaudio-audio-control.hpp
+		src/services/audio-control/macos/coreaudio-audio-control.cpp
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -1012,7 +1014,7 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-F/System/Library/PrivateFrameworks" "-framework login")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-F/System/Library/PrivateFrameworks" "-framework login")
 endif()
 
 if(APPLE AND DEFINED ENV{VICINAE_CODESIGN_IDENTITY})
