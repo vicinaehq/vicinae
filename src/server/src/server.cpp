@@ -23,8 +23,8 @@
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
 #endif
 #include "service-registry.hpp"
-#include "services/background-effect/background-effect-manager.hpp"
-#include "qml/background-effect-attached.hpp"
+#include "services/window-material/window-material-manager.hpp"
+#include "qml/window-material-attached.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "qml/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
@@ -94,6 +94,22 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   }
 }
 
+static constexpr QFont::Weight UI_FONT_WEIGHT = QFont::Medium;
+
+static QFont resolveAppFont(const config::FontConfig &fontConfig) {
+  QFont font;
+  const auto &family = fontConfig.normal.family;
+  if (family == "auto") {
+    auto builtin = ServiceRegistry::instance()->fontService()->builtinFontFamily();
+    if (!builtin.isEmpty()) font.setFamily(builtin);
+  } else if (family != "system") {
+    font.setFamily(QString::fromStdString(family));
+  }
+  font.setPointSizeF(fontConfig.normal.size);
+  font.setWeight(UI_FONT_WEIGHT);
+  return font;
+}
+
 int startServer(const ServerLaunchOptions &launchOpts) {
   qInstallMessageHandler(coloredMessageHandler);
 
@@ -129,6 +145,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
 #ifdef Q_OS_MACOS
   macosSetAccessoryActivationPolicy();
+  macosReleaseMenuShortcuts();
 #endif
 
   auto m_config = launchOpts.config.empty() ? Omnicast::configDir() / "settings.json"
@@ -229,8 +246,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
-    registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
-    BackgroundEffect::setManager(registry->backgroundEffectManager());
+    registry->setWindowMaterialManager(std::make_unique<WindowMaterialManager>());
+    WindowMaterial::setManager(registry->windowMaterialManager());
     registry->setShortcutInhibitManager(std::make_unique<ShortcutInhibitManager>());
     ShortcutInhibitor::setManager(registry->shortcutInhibitManager());
     registry->setFileChooserService(std::make_unique<FileChooserService>());
@@ -349,18 +366,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     bool const fontChanged =
         next.font.normal.size != prev.font.normal.size || next.font.normal.family != prev.font.normal.family;
 
-    if (fontChanged) {
-      auto &family = next.font.normal.family;
-      QFont font;
-      if (family == "auto") {
-        auto builtin = ServiceRegistry::instance()->fontService()->builtinFontFamily();
-        if (!builtin.isEmpty()) font.setFamily(builtin);
-      } else if (family != "system") {
-        font.setFamily(QString::fromStdString(family));
-      }
-      font.setPointSizeF(next.font.normal.size);
-      QGuiApplication::setFont(font);
-    }
+    if (fontChanged) { QGuiApplication::setFont(resolveAppFont(next.font)); }
 
     if (themeChangeRequired) {
       theme.setTheme(nextTheme.name.c_str());
@@ -432,8 +438,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
-  auto builtinFont = ServiceRegistry::instance()->fontService()->builtinFontFamily();
-  if (!builtinFont.isEmpty()) QGuiApplication::setFont(QFont(builtinFont));
+  QGuiApplication::setFont(resolveAppFont(cfgService->value().font));
 
   configChanged(cfgService->value(), {});
 

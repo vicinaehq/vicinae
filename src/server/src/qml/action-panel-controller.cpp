@@ -9,6 +9,10 @@
 #include "ui/views/base-view.hpp"
 #include <QKeyEvent>
 
+namespace {
+constexpr qint64 REOPEN_GUARD_MS = 300;
+} // namespace
+
 ActionPanelController::ActionPanelController(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx) {}
 
@@ -79,12 +83,15 @@ void ActionPanelController::syncToView(BaseView *view) {
   refreshSubmenus();
 }
 
-void ActionPanelController::toggle() {
+void ActionPanelController::toggle(bool fromClick) {
   if (m_open) {
     close();
-  } else {
-    open();
+    return;
   }
+
+  if (fromClick && m_closedTimer.isValid() && m_closedTimer.elapsed() < REOPEN_GUARD_MS) return;
+
+  open();
 }
 
 void ActionPanelController::open() {
@@ -102,6 +109,7 @@ void ActionPanelController::close() {
   auto *root = activeRoot();
 
   m_open = false;
+  m_closedTimer.restart();
   emit openChanged();
   emit stackClearRequested();
   m_currentPanel = nullptr;

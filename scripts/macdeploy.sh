@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Assemble Vicinae.app from build outputs. macdeployqt handles Qt frameworks
 # and QML modules; dylibbundler handles the remaining non-Qt third-party
-# dylibs (ICU, glib, harfbuzz, ...) and rewrites their install names.
+# dylibs (glib, harfbuzz, ...) and rewrites their install names.
 # Set VICINAE_CODESIGN_IDENTITY to use a real Developer ID identity.
 #
 # Usage: macdeploy.sh [build-dir]

@@ -47,6 +47,7 @@ QFont FontService::findEmojiFont() {
 FontService::FontService() {
   m_emojiFont = findEmojiFont();
 
+#ifdef Q_OS_LINUX
   int const bodyId = QFontDatabase::addApplicationFont(":/fonts/Outfit-Variable.ttf");
   if (bodyId != -1) {
     auto families = QFontDatabase::applicationFontFamilies(bodyId);
@@ -61,6 +62,11 @@ FontService::FontService() {
     if (!families.isEmpty()) m_builtinMonoFamily = families.first();
   } else {
     qWarning() << "Failed to load bundled Geist Mono font";
+  }
+#endif
+
+  if (m_builtinMonoFamily.isEmpty()) {
+    m_builtinMonoFamily = QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
   }
 
   for (const auto *path : {":/fonts/NotoSansMath-Regular.ttf", ":/fonts/NotoSansSymbols2-Regular.ttf",

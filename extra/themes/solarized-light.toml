@@ -12,7 +12,7 @@ icon = "icons/solarized.png"
 [colors.core]
 accent = "#268BD2"
 background = "#FDF6E3"
-border = "#839496"
+border = "#827E74"
 foreground = "#657B83"
 secondary_background = "#EEE8D5"
 

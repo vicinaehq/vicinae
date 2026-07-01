@@ -89,7 +89,11 @@ template <> struct Partial<Size> {
 
 struct WindowCSD {
   bool enabled = true;
+#ifdef Q_OS_MACOS
+  int rounding = 30;
+#else
   int rounding = 10;
+#endif
   int borderWidth = 3;
   int shadowSize = 12;
 };
@@ -110,13 +114,37 @@ template <> struct Partial<WindowCompactMode> {
 };
 
 struct WindowConfig {
-  float opacity;
+  static constexpr float OPAQUE_OPACITY = 1.0F;
+  static constexpr float TRANSLUCENT_OPACITY = 0.6F;
+
+  std::optional<float> opacity;
+  std::optional<int> rounding;
   WindowCSD clientSideDecorations;
   Size size;
   std::string screen;
   BlurConfig blur;
   WindowCompactMode compactMode;
   LayerShellConfig layerShell;
+
+  std::string material = "auto";
+
+  // Corner radius is a window-level property, but historically lived under client_side_decorations.
+  // Fall back to that value when the flat key is unset to keep older configs working.
+  int effectiveRounding() const { return rounding.value_or(clientSideDecorations.rounding); }
+
+  std::string resolvedMaterial(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
+    if (material != "auto") return material;
+    if (!blur.enabled) return "none";
+    if (liquidGlassAvailable) return "liquid_glass";
+    return windowMaterialAvailable ? "blur" : "none";
+  }
+
+  float resolvedOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
+    if (opacity) return *opacity;
+    return resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass"
+               ? TRANSLUCENT_OPACITY
+               : OPAQUE_OPACITY;
+  }
 };
 
 template <> struct Partial<WindowConfig> {
@@ -127,6 +155,7 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<BlurConfig>> blur;
   std::optional<Partial<WindowCompactMode>> compactMode;
   std::optional<Partial<LayerShellConfig>> layerShell;
+  std::optional<std::string> material;
 };
 
 struct FontConfig {
@@ -134,7 +163,11 @@ struct FontConfig {
 
   struct {
     std::string family = "auto";
+#ifdef Q_OS_MACOS
+    float size = 13;
+#else
     float size = 10.5;
+#endif
   } normal;
 };
 

@@ -77,9 +77,11 @@
 		// "system": uses the system/platform default font
 		// Or specify any font family name (e.g. "Fira Sans")
 		"normal": {
-			"family": "auto",
+			"family": "auto"
 			// The point size of the font (unlike pixel size, the point size scales with resolution)
-			"size": 10.5
+			// NOTE: if unspecified, Vicinae will pick the best point size for the current platform (there is no one size fits all)
+			// Therefore, it is recommended to leave this unset unless you really want a custom font size.
+			// "size": 10.5
 		}
 	},
 
@@ -101,20 +103,28 @@
 		// Control the opacity of the main window.
 		// Opacity for other surfaces are controlled by the active theme.
 		// [0;1]
-		"opacity": 1.0,
-		
-		// Blur the window background.
-		// Supported on wayland compositors that implement ext-background-effect
-		// Make sure the window opacity above is < 1
+		// "opacity": 0.6,
+
+		// @Deprecated: use "material". "enabled": false maps to material "none".
 		"blur": {
 			"enabled": true
 		},
 
-		// You can turn client side decorations off if you want to let your compositor draw the rounded
-		// borders and such. This usually gives better results, but is more complicated to setup, if at all possible.
+		// "none", "blur", "liquid_glass", or "auto" (liquid_glass when available, else blur).
+		// Needs window opacity < 1 to be visible.
+		"material": "auto",
+
+		// Corner radius of the launcher window, in pixels.
+		// "rounding": 10,
+
+		// Client-side decorations are Linux-only: vicinae draws its own border and shadow instead of
+		// letting the compositor decorate the window. You can turn them off to let your compositor draw
+		// the rounded borders and such. This usually gives better results, but is more complicated to
+		// setup, if at all possible.
 		"client_side_decorations": {
 			"enabled": true,
-			"rounding": 10,
+			// @Deprecated: prefer the top-level launcher_window.rounding.
+			// "rounding": 10,
 			"border_width": 1,
 
 			// Draws drop shadows on the client side, ONLY if we are a layer surface.
@@ -158,14 +168,15 @@
 			"layer": "top" 
 		}
 	},
-
+	
 	// Keybinds are serialized using a custom format.
 	// It is recommended to edit them through the settings GUI, which will write them to this file.
+	// NOTE: here, "control" remaps to the "command" (⌘) key on macOS.
 	"keybinds": {
 		// common shortcuts
 		"open-search-filter": "control+P",
 		"open-settings": "control+,",
-		"toggle-action-panel": "control+B",
+		"toggle-action-panel": "control+K",
 
 		// used to assign shortcuts to generic actions
 		// if an extension provides a specific kind of action, it is encouraged to use shortcuts as defined here.

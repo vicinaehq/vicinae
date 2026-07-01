@@ -13,7 +13,7 @@ icon = "icons/elementary.svg"
 background = "#2D2D2D"
 foreground = "#F5F5F5"
 secondary_background = "#383838"
-border = "#4A4A4A"
+border = "#575757"
 
 accent = "#3689E6"
 accent_foreground = "#FFFFFF"

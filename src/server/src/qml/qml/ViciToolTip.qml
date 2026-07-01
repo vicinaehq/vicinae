@@ -16,11 +16,10 @@ ToolTip {
     }
 
     background: Rectangle {
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.95)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
-        radius: 4
-        BackgroundEffect.enabled: Config.blurEnabled
-        BackgroundEffect.radius: 4
+        radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
+        border.width: Platform.supports("clientSideDecorations") ? 1 : 0
+        PopupMaterial {}
     }
 }

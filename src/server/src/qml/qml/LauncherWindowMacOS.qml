@@ -13,7 +13,7 @@ LauncherWindow {
     MacOSWindow.enabled: true
     MacOSWindow.cornerRadius: cornerRadius
     MacOSWindow.blurEnabled: blurEnabled
-    MacOSWindow.material: "hud"
+    MacOSWindow.material: Config.windowMaterial === "liquid_glass" ? "liquidGlass" : "hud"
     MacOSWindow.borderColor: Theme.mainWindowBorder
     MacOSWindow.borderWidth: Config.borderWidth
 

@@ -7,7 +7,7 @@
 #include "font-service.hpp"
 #include "omni-database.hpp"
 #include "services/app-service/app-service.hpp"
-#include "services/background-effect/background-effect-manager.hpp"
+#include "services/window-material/window-material-manager.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/power-manager/power-manager.hpp"
@@ -73,8 +73,8 @@ FileChooserService *ServiceRegistry::fileChooserService() const { return m_fileC
 
 NewsService *ServiceRegistry::newsService() const { return m_newsService.get(); }
 
-BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
-  return m_backgroundEffectManager.get();
+WindowMaterialManager *ServiceRegistry::windowMaterialManager() const {
+  return m_windowMaterialManager.get();
 }
 
 ShortcutInhibitManager *ServiceRegistry::shortcutInhibitManager() const {
@@ -175,8 +175,8 @@ void ServiceRegistry::setNewsService(std::unique_ptr<NewsService> service) {
   m_newsService = std::move(service);
 }
 
-void ServiceRegistry::setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> service) {
-  m_backgroundEffectManager = std::move(service);
+void ServiceRegistry::setWindowMaterialManager(std::unique_ptr<WindowMaterialManager> service) {
+  m_windowMaterialManager = std::move(service);
 }
 
 void ServiceRegistry::setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitManager> service) {

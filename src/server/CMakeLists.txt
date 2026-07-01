@@ -3,15 +3,15 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network Svg DBus Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
 find_package(OpenSSL REQUIRED)
 
-if (USE_SYSTEM_KF6 AND NOT APPLE)
+if (USE_SYSTEM_KF6)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
 list(APPEND LIBS
-	Qt6::Network Qt6::Svg Qt6::DBus Qt6::Concurrent Qt6::Quick Qt6::Qml
+	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
@@ -30,12 +30,21 @@ list(APPEND LIBS
 )
 
 if (UNIX AND NOT APPLE)
-	list(APPEND LIBS wayland-client)
+	find_package(Qt6 REQUIRED COMPONENTS DBus)
+	list(APPEND LIBS wayland-client Qt6::DBus)
 endif()
 
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(EXTRA_PATH ${CMAKE_SOURCE_DIR}/extra)
+
+if (UNIX AND NOT APPLE)
+	set(DEFAULT_FONT_RESOURCES
+"  	<file alias=\"Outfit-Variable.ttf\">${ASSET_PATH}/fonts/Outfit-Variable.ttf</file>
+  	<file alias=\"GeistMono-Variable.ttf\">${ASSET_PATH}/fonts/GeistMono-Variable.ttf</file>
+")
+endif()
+
 configure_file(resources.qrc.in resources.qrc)
 
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
@@ -156,8 +165,6 @@ set(SRCS
 	src/services/clipboard/clipboard-service.hpp
 	src/services/clipboard/clipboard-encrypter.cpp
 	src/services/clipboard/clipboard-service.cpp
-	src/services/clipboard/gnome/gnome-clipboard-server.hpp
-	src/services/clipboard/gnome/gnome-clipboard-server.cpp
 
 	src/services/local-storage/local-storage-service.hpp
 	src/services/local-storage/local-storage.cpp
@@ -170,9 +177,6 @@ set(SRCS
 	src/services/toast/toast-service.hpp
 
 	# begin app-database
-	src/services/app-service/xdg/xdg-app-database.hpp
-	src/services/app-service/xdg/xdg-app-database.cpp
-	src/services/app-service/xdg/xdg-app.cpp
 	src/services/app-service/abstract-app-db.hpp
 	src/services/app-service/dummy-app-database.hpp
 
@@ -302,14 +306,14 @@ set(SRCS
 
 
 	src/utils/utils.cpp
+	src/utils/capabilities.hpp
+	src/utils/capabilities.cpp
 
 	src/services/file-chooser/abstract-file-chooser.hpp
 	src/services/file-chooser/file-chooser.hpp
 	src/services/file-chooser/file-chooser.cpp
 	src/services/file-chooser/file-chooser-service.hpp
 	src/services/file-chooser/file-chooser-service.cpp
-	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
-	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 	src/services/root-item-manager/root-item-manager.hpp
 	src/services/root-item-manager/root-item-manager.cpp
 	src/services/root-item-manager/visit-tracker.cpp
@@ -405,10 +409,8 @@ set(SRCS
 	src/internal/program-db/program-db.hpp
 	src/internal/program-db/program-db.cpp
 
-	src/services/power-manager/systemd/systemd-power-manager.cpp
 	src/services/power-manager/dummy-power-manager.hpp
 
-	src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
 	src/services/desktop-notification/dummy-desktop-notification-client.hpp
 
 	src/services/audio-control/pactl/pactl-audio-control.cpp
@@ -515,6 +517,7 @@ set(SRCS
 	src/qml/theme-bridge.hpp
 	src/qml/keyboard-bridge.hpp
 	src/qml/global-shortcut-bridge.hpp
+	src/qml/platform-bridge.hpp
 	src/qml/shortcut-conflict.hpp
 	src/qml/shortcut-conflict.cpp
 	src/qml/create-extension-view-host.hpp
@@ -614,6 +617,14 @@ if (APPLE)
 		src/services/paste/macos-paste-service.mm
 		src/services/snippet/macos-snippet-server.hpp
 		src/services/snippet/macos-snippet-server.mm
+		src/services/power-manager/macos/macos-power-manager.hpp
+		src/services/power-manager/macos/macos-power-manager.mm
+		src/services/audio-control/macos/coreaudio-audio-control.hpp
+		src/services/audio-control/macos/coreaudio-audio-control.cpp
+		src/services/window-manager/macos/macos-window.hpp
+		src/services/window-manager/macos/macos-window.mm
+		src/services/window-manager/macos/macos-window-manager.hpp
+		src/services/window-manager/macos/macos-window-manager.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -625,6 +636,9 @@ if (APPLE)
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.mm
 		src/services/snippet/macos-snippet-server.mm
+		src/services/power-manager/macos/macos-power-manager.mm
+		src/services/window-manager/macos/macos-window.mm
+		src/services/window-manager/macos/macos-window-manager.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
@@ -665,6 +679,16 @@ endif()
 
 if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
+		src/services/clipboard/gnome/gnome-clipboard-server.hpp
+		src/services/clipboard/gnome/gnome-clipboard-server.cpp
+		src/services/app-service/xdg/xdg-app-database.hpp
+		src/services/app-service/xdg/xdg-app-database.cpp
+		src/services/app-service/xdg/xdg-app.cpp
+		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
+		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
+		src/services/power-manager/systemd/systemd-power-manager.cpp
+		src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
+
 		src/services/paste/linux-paste-service.cpp
 
 		src/services/input-server/linux-input-server.hpp
@@ -726,8 +750,8 @@ if (UNIX AND NOT APPLE)
 		src/internal/wayland/display.cpp
 		src/internal/wayland/registry.cpp
 		src/internal/wayland/seat.cpp
-		src/services/background-effect/ext-background-effect-v1-manager.cpp
-		src/services/background-effect/kde-background-effect-manager.cpp
+		src/services/window-material/ext-background-effect-v1-manager.cpp
+		src/services/window-material/kde-background-effect-manager.cpp
 		src/services/shortcut-inhibit/wayland-shortcut-inhibit-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
@@ -805,6 +829,8 @@ endif()
 
 set(VICINAE_QML_FILES
 	src/qml/qml/LauncherWindow.qml
+	src/qml/qml/PopupMaterial.qml
+	src/qml/qml/ViciPopover.qml
 	src/qml/qml/SearchBar.qml
 	src/qml/qml/GenericListView.qml
 	src/qml/qml/HoverResetOnModelChange.qml
@@ -836,7 +862,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ExtensionView.qml
 	src/qml/qml/MarkdownDetailView.qml
 	src/qml/qml/ExtensionGridView.qml
-	src/qml/qml/FocusRestoringScope.qml
 	src/qml/qml/ActionPanelPopover.qml
 	src/qml/qml/ActionListPanel.qml
 	src/qml/qml/ActionItemDelegate.qml
@@ -925,13 +950,19 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
 endif()
 
 if(WAYLAND_LAYER_SHELL)
-	list(APPEND VICINAE_QML_FILES src/qml/qml/LauncherWindowLayerShell.qml)
+	list(APPEND VICINAE_QML_FILES
+		src/qml/qml/LauncherWindowLayerShell.qml
+		src/qml/qml/HudWindowLayerShell.qml
+	)
 endif()
 
 if(APPLE)
 	list(APPEND VICINAE_QML_FILES
 		src/qml/qml/LauncherWindowMacOS.qml
 		src/qml/qml/SettingsWindowMacOS.qml
+		src/qml/qml/HudWindowMacOS.qml
+		src/qml/qml/CompletionPanelMacOS.qml
+		src/qml/qml/PopupMaterialMacOS.qml
 	)
 endif()
 
@@ -949,8 +980,8 @@ set(VICINAE_QML_SOURCES
 	src/qml/completion-model.hpp
 	src/qml/markdown/markdown-model.hpp
 	src/qml/markdown/text-selection-controller.hpp
-	src/qml/background-effect-attached.hpp
-	src/qml/background-effect-attached.cpp
+	src/qml/window-material-attached.hpp
+	src/qml/window-material-attached.cpp
 	src/qml/popup-placement-attached.hpp
 	src/qml/popup-placement-attached.cpp
 	src/qml/shortcut-inhibitor-attached.hpp
@@ -992,8 +1023,17 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-F/System/Library/PrivateFrameworks" "-framework login")
 endif()
+
+if(APPLE AND DEFINED ENV{VICINAE_CODESIGN_IDENTITY})
+	add_custom_command(TARGET ${TARGET} POST_BUILD
+		COMMAND codesign --force --identifier ${VICINAE_BUNDLE_ID}
+			--sign "$ENV{VICINAE_CODESIGN_IDENTITY}" $<TARGET_FILE:${TARGET}>
+		VERBATIM
+		COMMENT "codesign ${TARGET} ($ENV{VICINAE_CODESIGN_IDENTITY})")
+endif()
+
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 
 # Workaround: libc++ pre-C++26 has unconstrained std::variant relational operators,

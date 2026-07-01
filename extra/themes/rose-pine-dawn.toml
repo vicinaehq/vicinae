@@ -12,7 +12,7 @@ icon = "icons/rose-pine.png"
 background = "#FAF4ED"        # base
 foreground = "#575279"        # text
 secondary_background = "#F2E9E1"  # overlay (fixed: was lighter than bg)
-border = "#CECACD"            # highlight_high (more visible)
+border = "#817E7A"            # highlight_high (more visible)
 accent = "#286983"            # pine
 
 [colors.accents]

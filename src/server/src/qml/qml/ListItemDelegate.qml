@@ -3,7 +3,7 @@ import QtQuick.Layouts
 
 SelectableDelegate {
     id: root
-    height: 41
+    height: 38
 
     required property string itemTitle
     required property string itemSubtitle
@@ -42,14 +42,14 @@ SelectableDelegate {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
         spacing: 10
 
         Item {
             visible: root.itemIconSource !== ""
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
+            Layout.preferredWidth: 26
+            Layout.preferredHeight: 26
             Layout.alignment: Qt.AlignVCenter
 
             ViciImage {

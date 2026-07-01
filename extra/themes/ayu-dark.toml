@@ -12,7 +12,7 @@ icon = "icons/ayu.png"
 background = "#0B0E14"        # UI background (darker than editor)
 foreground = "#BFBDB6"        # Main text
 secondary_background = "#0F131A"  # Editor background (elevated)
-border = "#1A1F29"            # Line color
+border = "#2A354C"            # Line color
 accent = "#59C2FF"            # Tag color
 
 [colors.accents]

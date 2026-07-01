@@ -12,7 +12,7 @@ icon = "icons/one-dark.png"
 background = "#282C34"        # Main background
 foreground = "#ABB2BF"        # Main text
 secondary_background = "#21252B"  # Sidebar/panel background
-border = "#434957"            # Borders
+border = "#4D5564"            # Borders
 accent = "#61AFEF"            # Blue accent
 
 [colors.accents]

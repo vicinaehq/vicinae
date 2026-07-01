@@ -21,6 +21,8 @@ public:
   bool isRunning(const AbstractApplication &app) const;
   std::shared_ptr<AbstractApplication> frontmostApp() const;
   bool activate(const AbstractApplication &app) const;
+  bool quit(const AbstractApplication &app) const;
+  bool forceQuit(const AbstractApplication &app) const;
 
 private:
   static std::unique_ptr<AbstractAppRuntime> createProvider(WindowManager &wm, AppService &appService);

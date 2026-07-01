@@ -173,7 +173,7 @@ service WindowManagement {
   fn getWindows(workspaceId?: string) => Window[];
   fn getScreens() => Screen[];
   fn getWorkspaces() => Workspace[];
-  fn setWindowBounds(winId: string, bounds: Rect) => bool;
+  fn setWindowBounds(winId: string, bounds: Rect) => void;
 };
 
 // Clipboard
