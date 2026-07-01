@@ -1,16 +1,16 @@
 #pragma once
-#include <QtGlobal>
+#include <QStringView>
 #include <string_view>
 
 namespace platform {
 
-constexpr std::string_view extensionPlatform() {
+constexpr QStringView extensionPlatform() {
 #if defined(Q_OS_MACOS)
-  return "macOS";
+  return u"macos";
 #elif defined(Q_OS_WIN)
-  return "Windows";
+  return u"windows";
 #else
-  return "linux";
+  return u"linux";
 #endif
 }
 

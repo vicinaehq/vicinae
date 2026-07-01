@@ -27,13 +27,8 @@ ImageURL Extension::themedIcon() const {
 } // namespace VicinaeStore
 
 static bool availableOnCurrentPlatform(const VicinaeStore::Extension &ext) {
-  if (ext.platforms.empty()) return true;
-
-  constexpr std::string_view name = platform::extensionPlatform();
-  const QLatin1StringView current(name.data(), static_cast<qsizetype>(name.size()));
-  return std::ranges::any_of(ext.platforms, [&](const QString &p) {
-    return QStringView(p).trimmed().compare(current, Qt::CaseInsensitive) == 0;
-  });
+  return ext.platforms.empty() || std::ranges::contains(ext.platforms, platform::extensionPlatform(),
+                                                        [](const QString &p) { return p.toLower(); });
 }
 
 static void postProcess(VicinaeStore::ListResponse &response) {

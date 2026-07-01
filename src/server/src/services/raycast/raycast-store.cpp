@@ -7,13 +7,10 @@
 static bool availableOnCurrentPlatform(const Raycast::Extension &ext) {
   if constexpr (!Raycast::isNativePlatform()) return true;
 
-  if (!ext.platforms) return platform::extensionPlatform() == "macOS";
+  if (!ext.platforms) return platform::extensionPlatform() == u"macos";
 
-  constexpr std::string_view name = platform::extensionPlatform();
-  const QLatin1StringView current(name.data(), static_cast<qsizetype>(name.size()));
-  return std::ranges::any_of(*ext.platforms, [&](const QString &p) {
-    return QStringView(p).trimmed().compare(current, Qt::CaseInsensitive) == 0;
-  });
+  return std::ranges::contains(*ext.platforms, platform::extensionPlatform(),
+                               [](const QString &p) { return p.toLower(); });
 }
 
 RaycastStoreService::RaycastStoreService() {
