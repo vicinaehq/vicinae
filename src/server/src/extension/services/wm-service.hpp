@@ -117,16 +117,16 @@ public:
     return tsapi::Result<std::vector<tsapi::Workspace>>::ok(std::move(result));
   }
 
-  tsapi::Result<bool>::Future setWindowBounds(std::string winId, tsapi::Rect bounds) override {
+  Void::Future setWindowBounds(std::string winId, tsapi::Rect bounds) override {
     auto win = m_wm.findWindowById(QString::fromStdString(winId));
-    if (!win) return tsapi::Result<bool>::ok(false);
+    if (!win) return Void::fail("No window with the given id");
 
-    AbstractWindowManager::WindowBounds wmBounds{.x = static_cast<uint32_t>(bounds.x),
-                                                 .y = static_cast<uint32_t>(bounds.y),
-                                                 .width = static_cast<uint32_t>(bounds.width),
-                                                 .height = static_cast<uint32_t>(bounds.height)};
+    AbstractWindowManager::WindowBounds wmBounds{
+        .x = bounds.x, .y = bounds.y, .width = bounds.width, .height = bounds.height};
 
-    return tsapi::Result<bool>::ok(m_wm.provider()->setWindowBounds(*win, wmBounds));
+    if (!m_wm.provider()->setWindowBounds(*win, wmBounds)) return Void::fail("Failed to set window bounds");
+
+    return Void::ok();
   }
 
 private:
@@ -138,10 +138,7 @@ private:
     result.fullscreen = win.fullScreen();
 
     if (auto b = win.bounds()) {
-      result.bounds = {.x = static_cast<int>(b->x),
-                       .y = static_cast<int>(b->y),
-                       .width = static_cast<int>(b->width),
-                       .height = static_cast<int>(b->height)};
+      result.bounds = {.x = b->x, .y = b->y, .width = b->width, .height = b->height};
     }
 
     return result;

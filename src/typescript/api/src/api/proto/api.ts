@@ -370,7 +370,7 @@ class WindowManagementService {
 		return this.transport.request("WindowManagement/getWorkspaces", { });	
 	}
 
-	setWindowBounds(winId: string, bounds: Rect): Promise<boolean> {
+	setWindowBounds(winId: string, bounds: Rect): Promise<void> {
 		return this.transport.request("WindowManagement/setWindowBounds", { winId, bounds});	
 	}
 

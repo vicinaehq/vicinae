@@ -124,19 +124,20 @@ std::optional<AbstractWindowManager::WindowBounds> axCopyBounds(AXUIElementRef e
 
   if (!hasPosition || !hasSize) return std::nullopt;
 
-  return AbstractWindowManager::WindowBounds{.x = static_cast<uint32_t>(position.x),
-                                             .y = static_cast<uint32_t>(position.y),
-                                             .width = static_cast<uint32_t>(size.width),
-                                             .height = static_cast<uint32_t>(size.height)};
+  return AbstractWindowManager::WindowBounds{.x = static_cast<int32_t>(position.x),
+                                             .y = static_cast<int32_t>(position.y),
+                                             .width = static_cast<int32_t>(size.width),
+                                             .height = static_cast<int32_t>(size.height)};
 }
 
-bool isStandardWindow(AXUIElementRef element) {
+bool isWindowLike(AXUIElementRef element) {
   QString subrole = axCopyString(element, kAXSubroleAttribute);
   if (subrole.isEmpty()) return true;
-  return subrole == QString::fromCFString(kAXStandardWindowSubrole);
+  return subrole == QString::fromCFString(kAXStandardWindowSubrole) ||
+         subrole == QString::fromCFString(kAXDialogSubrole);
 }
 
-// Stricter than isStandardWindow: brute-forced element ids resolve to all kinds of UI elements (buttons, menus,
+// Stricter than isWindowLike: brute-forced element ids resolve to all kinds of UI elements (buttons, menus,
 // ...), so here we require an explicit window subrole and reject anything without one.
 bool hasWindowSubrole(AXUIElementRef element) {
   QString subrole = axCopyString(element, kAXSubroleAttribute);
@@ -146,7 +147,7 @@ bool hasWindowSubrole(AXUIElementRef element) {
 
 AbstractWindowManager::WindowPtr buildWindow(AXUIElementRef element, pid_t pid, const QString &bundleId,
                                              const QString &appName) {
-  if (!isStandardWindow(element)) return nullptr;
+  if (!isWindowLike(element)) return nullptr;
 
   QString title = axCopyString(element, kAXTitleAttribute);
   if (title.isEmpty()) title = appName;
@@ -156,7 +157,7 @@ AbstractWindowManager::WindowPtr buildWindow(AXUIElementRef element, pid_t pid, 
   if (_AXUIElementGetWindow(element, &windowId) == kAXErrorSuccess && windowId != 0) {
     id = QString::number(windowId);
   } else {
-    id = QString("%1:%2").arg(bundleId).arg(reinterpret_cast<quintptr>(element));
+    id = QString("%1:%2").arg(bundleId, title);
   }
 
   bool canClose = axHasAttribute(element, kAXCloseButtonAttribute);
@@ -417,16 +418,21 @@ bool MacosWindowManager::setWindowBounds(const AbstractWindow &window, const Win
 
   AXValueRef positionValue = AXValueCreate(kAXValueTypeCGPoint, &position);
   AXValueRef sizeValue = AXValueCreate(kAXValueTypeCGSize, &size);
+  if (!positionValue || !sizeValue) {
+    if (positionValue) CFRelease(positionValue);
+    if (sizeValue) CFRelease(sizeValue);
+    return false;
+  }
 
-  AXError posErr = AXUIElementSetAttributeValue(element, kAXPositionAttribute, positionValue);
-  AXError sizeErr = AXUIElementSetAttributeValue(element, kAXSizeAttribute, sizeValue);
+  bool posOk = AXUIElementSetAttributeValue(element, kAXPositionAttribute, positionValue) == kAXErrorSuccess;
+  bool sizeOk = AXUIElementSetAttributeValue(element, kAXSizeAttribute, sizeValue) == kAXErrorSuccess;
 
   CFRelease(positionValue);
   CFRelease(sizeValue);
 
-  if (posErr == kAXErrorSuccess || sizeErr == kAXErrorSuccess) scheduleRebuild();
+  if (posOk || sizeOk) scheduleRebuild();
 
-  return posErr == kAXErrorSuccess && sizeErr == kAXErrorSuccess;
+  return posOk && sizeOk;
 }
 
 void MacosWindowManager::notifyWindowsChanged() { scheduleRebuild(); }
