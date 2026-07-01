@@ -130,7 +130,7 @@ NSScreen *cursorScreen() {
   return [NSScreen mainScreen];
 }
 
-void placeWindowOnCursorScreen(QWindow *window, qreal yFraction) {
+void placeWindowOnCursorScreen(QWindow *window, qreal yFraction, qreal referenceHeight) {
   if (!window) return;
   NSView *view = nsViewFromWinId(window->winId());
   if (!view) return;
@@ -142,9 +142,10 @@ void placeWindowOnCursorScreen(QWindow *window, qreal yFraction) {
 
   NSRect const vf = screen.visibleFrame;
   NSSize const size = nswin.frame.size;
+  CGFloat const refHeight = referenceHeight > 0 ? referenceHeight : size.height;
   CGFloat const x = vf.origin.x + (vf.size.width - size.width) / 2.0;
   CGFloat const visibleTop = vf.origin.y + vf.size.height;
-  CGFloat const windowTop = visibleTop - (vf.size.height - size.height) * yFraction;
+  CGFloat const windowTop = visibleTop - (vf.size.height - refHeight) * yFraction;
   [nswin setFrameOrigin:NSMakePoint(x, windowTop - size.height)];
 }
 
@@ -576,18 +577,18 @@ void macosReleaseMenuShortcuts() {
   });
 }
 
-void MacOSPanelAttached::beginShow(qreal yFraction) {
+void MacOSPanelAttached::beginShow(qreal yFraction, qreal referenceHeight) {
   if (!m_window) return;
   m_window->setOpacity(0.0);
-  placeWindowOnCursorScreen(m_window, yFraction);
+  placeWindowOnCursorScreen(m_window, yFraction, referenceHeight);
 }
 
-void MacOSPanelAttached::finishShow(qreal yFraction) {
+void MacOSPanelAttached::finishShow(qreal yFraction, qreal referenceHeight) {
   if (!m_window) return;
   QPointer<MacOSPanelAttached> self(this);
-  QTimer::singleShot(0, this, [self, yFraction]() {
+  QTimer::singleShot(0, this, [self, yFraction, referenceHeight]() {
     if (!self || !self->m_window) return;
-    placeWindowOnCursorScreen(self->m_window, yFraction);
+    placeWindowOnCursorScreen(self->m_window, yFraction, referenceHeight);
     self->m_window->setOpacity(1.0);
   });
 }
