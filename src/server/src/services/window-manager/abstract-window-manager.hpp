@@ -68,7 +68,7 @@ public:
 
     virtual std::optional<QString> workspace() const { return std::nullopt; }
     virtual std::optional<WindowBounds> bounds() const { return std::nullopt; }
-    bool fullScreen() const { return false; }
+    virtual bool fullScreen() const { return false; }
 
     virtual bool canClose() const { return true; }
     virtual bool canFullScreen() const { return true; }

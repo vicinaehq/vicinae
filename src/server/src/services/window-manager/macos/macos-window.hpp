@@ -14,7 +14,8 @@
 class MacosWindow : public AbstractWindowManager::AbstractWindow {
 public:
   MacosWindow(AXUIElementRef element, QString id, QString title, QString wmClass, int pid,
-              std::optional<AbstractWindowManager::WindowBounds> bounds, bool canClose);
+              std::optional<AbstractWindowManager::WindowBounds> bounds, bool canClose, bool fullScreen,
+              bool canFullScreen);
   ~MacosWindow() override;
 
   MacosWindow(const MacosWindow &) = delete;
@@ -26,6 +27,8 @@ public:
   std::optional<int> pid() const override { return m_pid; }
   std::optional<AbstractWindowManager::WindowBounds> bounds() const override { return m_bounds; }
   bool canClose() const override { return m_canClose; }
+  bool fullScreen() const override { return m_fullScreen; }
+  bool canFullScreen() const override { return m_canFullScreen; }
 
   AXUIElementRef element() const { return m_element; }
 
@@ -37,4 +40,6 @@ private:
   int m_pid;
   std::optional<AbstractWindowManager::WindowBounds> m_bounds;
   bool m_canClose;
+  bool m_fullScreen;
+  bool m_canFullScreen;
 };

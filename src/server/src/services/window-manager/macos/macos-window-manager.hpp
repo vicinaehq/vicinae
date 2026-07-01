@@ -50,7 +50,6 @@ private:
   MacosWindowObserver *m_observer = nullptr;
   QTimer *m_rebuildTimer = nullptr;
   mutable WindowList m_cache;
-  mutable bool m_didPromptTrust = false;
   bool m_rebuilding = false;
   bool m_rebuildPending = false;
 };

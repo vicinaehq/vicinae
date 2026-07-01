@@ -90,6 +90,22 @@ bool axHasAttribute(AXUIElementRef element, CFStringRef attribute) {
   return true;
 }
 
+bool axCopyBool(AXUIElementRef element, CFStringRef attribute) {
+  CFTypeRef value = nullptr;
+  if (AXUIElementCopyAttributeValue(element, attribute, &value) != kAXErrorSuccess || !value) return false;
+  bool result = CFGetTypeID(value) == CFBooleanGetTypeID() &&
+                CFBooleanGetValue(static_cast<CFBooleanRef>(value));
+  CFRelease(value);
+  return result;
+}
+
+bool axIsSettable(AXUIElementRef element, CFStringRef attribute) {
+  Boolean settable = false;
+  return AXUIElementIsAttributeSettable(element, attribute, &settable) == kAXErrorSuccess && settable;
+}
+
+CFStringRef const kAXFullScreenAttributeName = CFSTR("AXFullScreen");
+
 std::optional<AbstractWindowManager::WindowBounds> axCopyBounds(AXUIElementRef element) {
   CFTypeRef positionValue = nullptr;
   CFTypeRef sizeValue = nullptr;
@@ -144,9 +160,11 @@ AbstractWindowManager::WindowPtr buildWindow(AXUIElementRef element, pid_t pid, 
   }
 
   bool canClose = axHasAttribute(element, kAXCloseButtonAttribute);
+  bool fullScreen = axCopyBool(element, kAXFullScreenAttributeName);
+  bool canFullScreen = axIsSettable(element, kAXFullScreenAttributeName);
 
   return std::make_shared<MacosWindow>(element, std::move(id), std::move(title), bundleId, pid,
-                                       axCopyBounds(element), canClose);
+                                       axCopyBounds(element), canClose, fullScreen, canFullScreen);
 }
 
 const MacosWindow *asMacosWindow(const AbstractWindowManager::AbstractWindow &window) {
@@ -280,15 +298,7 @@ void MacosWindowManager::start() {
   rebuildCache();
 }
 
-void MacosWindowManager::requestWindowAccess() const {
-  scheduleRebuild();
-
-  if (m_didPromptTrust || AXIsProcessTrusted()) return;
-
-  m_didPromptTrust = true;
-  NSDictionary *options = @{(__bridge NSString *)kAXTrustedCheckOptionPrompt : @YES};
-  AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)options);
-}
+void MacosWindowManager::requestWindowAccess() const { scheduleRebuild(); }
 
 void MacosWindowManager::scheduleRebuild() const {
   if (m_rebuildTimer) m_rebuildTimer->start();
