@@ -114,6 +114,15 @@ Flickable {
             }
 
             SettingsRow {
+                label: "Compact mode"
+                description: "Show only the search bar at root; expand when a query is entered."
+                SettingsToggle {
+                    checked: root.model.compactMode
+                    onToggled: root.model.compactMode = checked
+                }
+            }
+
+            SettingsRow {
                 visible: Platform.supports("layerShell")
                 label: "Use layer shell"
                 description: "Anchor the launcher as a Wayland layer surface (wlr-layer-shell) instead of a regular window. May require reopening Vicinae to fully apply."

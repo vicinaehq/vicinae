@@ -135,7 +135,7 @@
 		},
 
 		// In compact mode, vicinae only shows a search bar in the root search if no query is entered, only expanding to its full size when searching.
-		// WARNING: compact mode works best when vicinae is rendered as a layer surface (the default if available), as opposed to a regular floating window.
+		// WARNING: on Linux, compact mode works best when vicinae is rendered as a layer surface (the default if available), as opposed to a regular floating window.
 		"compact_mode": {
 			"enabled": false
 		},

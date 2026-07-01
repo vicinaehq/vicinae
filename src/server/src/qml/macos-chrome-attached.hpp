@@ -117,8 +117,8 @@ public:
 
   // Show the launcher panel placed on the cursor's screen without AppKit's reveal-time slide:
   // beginShow() hides and positions it before it is shown, finishShow() reveals it once settled.
-  Q_INVOKABLE void beginShow(qreal yFraction);
-  Q_INVOKABLE void finishShow(qreal yFraction);
+  Q_INVOKABLE void beginShow(qreal yFraction, qreal referenceHeight = 0);
+  Q_INVOKABLE void finishShow(qreal yFraction, qreal referenceHeight = 0);
   Q_INVOKABLE void placeBottomCenter(qreal bottomMargin);
 
 private:
