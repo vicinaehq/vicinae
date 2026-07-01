@@ -3,10 +3,11 @@
 
 namespace Crypto {
 
-std::array<std::byte, SUBKEY_SIZE> deriveKey(std::span<const std::byte> master, std::string_view label) {
+std::optional<std::array<std::byte, SUBKEY_SIZE>> deriveKey(std::span<const std::byte> master,
+                                                            std::string_view label) {
   std::array<std::byte, SUBKEY_SIZE> out{};
   auto info = std::as_bytes(std::span<const char>(label.data(), label.size()));
-  detail::deriveKey(master, {}, info, out);
+  if (!detail::deriveKey(master, {}, info, out)) return std::nullopt;
   return out;
 }
 

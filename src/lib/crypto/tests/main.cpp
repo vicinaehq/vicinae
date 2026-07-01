@@ -141,7 +141,10 @@ TEST_CASE("deriveKey is deterministic and domain-separated") {
   auto db2 = Crypto::deriveKey(master, "vicinae-db");
   auto clip = Crypto::deriveKey(master, "vicinae-clipboard");
 
-  REQUIRE(db1 == db2);
-  REQUIRE(db1 != clip);
-  REQUIRE(db1.size() == 32);
+  REQUIRE(db1.has_value());
+  REQUIRE(db2.has_value());
+  REQUIRE(clip.has_value());
+  REQUIRE(*db1 == *db2);
+  REQUIRE(*db1 != *clip);
+  REQUIRE(db1->size() == 32);
 }
