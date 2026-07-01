@@ -15,7 +15,6 @@
 #include <qmimedatabase.h>
 #include <qstringview.h>
 #include <QTimer>
-#include <qt6keychain/keychain.h>
 
 namespace Clipboard {
 [[maybe_unused]] static const char *CONCEALED_MIME_TYPE = "vicinae/concealed";
@@ -114,7 +113,7 @@ public:
   bool supportsMonitoring() const;
   bool monitoring() const;
   void setMonitoring(bool value);
-  void setEncryption(bool value);
+  void setEncryptionKey(std::optional<db::EncryptionKey> key);
   void setIgnorePasswords(bool value);
   bool isEncryptionReady() const;
 

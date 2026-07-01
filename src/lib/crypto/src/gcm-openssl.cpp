@@ -1,11 +1,34 @@
 #include "gcm-backend.hpp"
 #include <openssl/evp.h>
+#include <openssl/kdf.h>
 #include <openssl/rand.h>
 
 namespace Crypto::detail {
 
 bool randomBytes(std::span<std::byte> out) {
   return RAND_bytes(reinterpret_cast<unsigned char *>(out.data()), static_cast<int>(out.size())) == 1;
+}
+
+bool deriveKey(std::span<const std::byte> ikm, std::span<const std::byte> salt,
+               std::span<const std::byte> info, std::span<std::byte> out) {
+  EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, nullptr);
+  if (!ctx) return false;
+
+  auto u8 = [](auto p) { return reinterpret_cast<const unsigned char *>(p); };
+
+  bool ok = EVP_PKEY_derive_init(ctx) == 1 && EVP_PKEY_CTX_set_hkdf_md(ctx, EVP_sha256()) == 1 &&
+            EVP_PKEY_CTX_set1_hkdf_key(ctx, u8(ikm.data()), static_cast<int>(ikm.size())) == 1;
+  if (ok && !salt.empty())
+    ok = EVP_PKEY_CTX_set1_hkdf_salt(ctx, u8(salt.data()), static_cast<int>(salt.size())) == 1;
+  if (ok && !info.empty())
+    ok = EVP_PKEY_CTX_add1_hkdf_info(ctx, u8(info.data()), static_cast<int>(info.size())) == 1;
+
+  size_t outlen = out.size();
+  ok = ok && EVP_PKEY_derive(ctx, reinterpret_cast<unsigned char *>(out.data()), &outlen) == 1 &&
+       outlen == out.size();
+
+  EVP_PKEY_CTX_free(ctx);
+  return ok;
 }
 
 bool gcmEncrypt(std::span<const std::byte> key, std::span<const std::byte> iv,

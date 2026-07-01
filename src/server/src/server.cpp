@@ -166,17 +166,16 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
     const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
-    auto dbKey =
-        db::prepareDatabaseEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});
+    auto keys = db::prepareEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});
 
-    auto omniDb = std::make_unique<OmniDatabase>(vicinaeDbPath, dbKey);
+    auto omniDb = std::make_unique<OmniDatabase>(vicinaeDbPath, keys.database);
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto appRuntime = std::make_unique<AppRuntime>(*windowManager, *appService);
-    auto clipboardManager = std::make_unique<ClipboardService>(clipboardDbPath, dbKey);
-    clipboardManager->setEncryption(currentConfig.encryptSensitiveData);
+    auto clipboardManager = std::make_unique<ClipboardService>(clipboardDbPath, keys.database);
+    clipboardManager->setEncryptionKey(keys.clipboard);
 #ifdef Q_OS_LINUX
     auto inputServer = std::make_unique<LinuxInputServer>();
     auto snippetServer = std::make_unique<LinuxSnippetServer>(*inputServer);

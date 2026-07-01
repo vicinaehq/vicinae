@@ -18,7 +18,7 @@ else()
 	set(CRYPTO_BACKEND src/gcm-openssl.cpp)
 endif()
 
-add_library(${PROJECT_NAME} STATIC src/aes-gcm.cpp ${CRYPTO_BACKEND})
+add_library(${PROJECT_NAME} STATIC src/aes-gcm.cpp src/kdf.cpp ${CRYPTO_BACKEND})
 add_library(vicinae::crypto ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)

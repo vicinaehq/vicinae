@@ -3,6 +3,8 @@
 
 extern "C" {
 bool vicinae_random_bytes(std::uint8_t *out, std::size_t len);
+bool vicinae_hkdf(const std::uint8_t *key, std::size_t keyLen, const std::uint8_t *salt, std::size_t saltLen,
+                  const std::uint8_t *info, std::size_t infoLen, std::uint8_t *out, std::size_t outLen);
 bool vicinae_gcm_encrypt(const std::uint8_t *key, std::size_t keyLen, const std::uint8_t *iv,
                          std::size_t ivLen, const std::uint8_t *pt, std::size_t ptLen, std::uint8_t *ctOut,
                          std::uint8_t *tagOut, std::size_t tagLen);
@@ -15,6 +17,14 @@ namespace Crypto::detail {
 
 bool randomBytes(std::span<std::byte> out) {
   return vicinae_random_bytes(reinterpret_cast<std::uint8_t *>(out.data()), out.size());
+}
+
+bool deriveKey(std::span<const std::byte> ikm, std::span<const std::byte> salt,
+               std::span<const std::byte> info, std::span<std::byte> out) {
+  return vicinae_hkdf(reinterpret_cast<const std::uint8_t *>(ikm.data()), ikm.size(),
+                      reinterpret_cast<const std::uint8_t *>(salt.data()), salt.size(),
+                      reinterpret_cast<const std::uint8_t *>(info.data()), info.size(),
+                      reinterpret_cast<std::uint8_t *>(out.data()), out.size());
 }
 
 bool gcmEncrypt(std::span<const std::byte> key, std::span<const std::byte> iv,

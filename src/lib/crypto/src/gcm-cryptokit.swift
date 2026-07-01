@@ -11,6 +11,23 @@ func vicinae_random_bytes(_ out: UnsafeMutablePointer<UInt8>, _ len: Int) -> Boo
   return true
 }
 
+@_cdecl("vicinae_hkdf")
+func vicinae_hkdf(
+  _ keyPtr: UnsafePointer<UInt8>, _ keyLen: Int,
+  _ saltPtr: UnsafePointer<UInt8>?, _ saltLen: Int,
+  _ infoPtr: UnsafePointer<UInt8>?, _ infoLen: Int,
+  _ out: UnsafeMutablePointer<UInt8>, _ outLen: Int
+) -> Bool {
+  let ikm = SymmetricKey(data: Data(bytes: keyPtr, count: keyLen))
+  let salt = saltLen > 0 ? Data(bytes: saltPtr!, count: saltLen) : Data()
+  let info = infoLen > 0 ? Data(bytes: infoPtr!, count: infoLen) : Data()
+  let derived = HKDF<SHA256>.deriveKey(inputKeyMaterial: ikm, salt: salt, info: info, outputByteCount: outLen)
+  derived.withUnsafeBytes { raw in
+    out.update(from: raw.bindMemory(to: UInt8.self).baseAddress!, count: outLen)
+  }
+  return true
+}
+
 @_cdecl("vicinae_gcm_encrypt")
 func vicinae_gcm_encrypt(
   _ keyPtr: UnsafePointer<UInt8>, _ keyLen: Int,
