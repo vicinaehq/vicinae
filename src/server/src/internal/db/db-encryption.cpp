@@ -42,6 +42,17 @@ void removeSidecars(const fs::path &path) {
   fs::remove(fs::path(path) += "-shm", ec);
 }
 
+std::string quoteSqlString(const std::string &value) {
+  char *quoted = sqlite3_mprintf("%Q", value.c_str());
+
+  if (!quoted) return "''";
+
+  std::string out = quoted;
+  sqlite3_free(quoted);
+
+  return out;
+}
+
 } // namespace
 
 std::optional<CipherState> detectCipherState(const fs::path &path) {
@@ -108,7 +119,8 @@ std::expected<void, std::string> ensureCipherState(const fs::path &path, bool en
 
   const auto attachKey = encrypted ? std::format("\"x'{}'\"", hex) : std::string("''");
 
-  if (auto err = run(src, std::format("ATTACH DATABASE '{}' AS migrate KEY {};", tmp.string(), attachKey))) {
+  if (auto err = run(src, std::format("ATTACH DATABASE {} AS migrate KEY {};", quoteSqlString(tmp.string()),
+                                      attachKey))) {
     return fail(std::format("attach: {}", *err));
   }
 

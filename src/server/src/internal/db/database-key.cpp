@@ -1,17 +1,17 @@
 #include "database-key.hpp"
+#include "crypto/aes-gcm.hpp"
+#include "crypto/kdf.hpp"
 #include "db-encryption.hpp"
 #include "vicinae.hpp"
 #include <QByteArray>
 #include <QEventLoop>
-#include <QRandomGenerator>
-#include <array>
 #include <cstring>
 #include <expected>
 #include <qt6keychain/keychain.h>
 
 namespace {
 
-constexpr auto KEY_NAME = "vicinae-db-key";
+constexpr auto KEY_NAME = "vicinae-master-key";
 
 // The key is needed synchronously before any DB opens, so drive the async job to completion.
 template <typename Job> void runJob(Job &job) {
@@ -39,11 +39,7 @@ std::expected<std::optional<db::EncryptionKey>, QString> readKey() {
 }
 
 std::expected<db::EncryptionKey, QString> createKey() {
-  std::array<quint32, db::KEY_SIZE / sizeof(quint32)> words;
-  QRandomGenerator::system()->fillRange(words.data(), words.size());
-
-  db::EncryptionKey key;
-  std::memcpy(key.data(), words.data(), db::KEY_SIZE);
+  db::EncryptionKey key = Crypto::AES256GCM::generateKey();
 
   QKeychain::WritePasswordJob job(Omnicast::APP_ID);
   job.setAutoDelete(false);
@@ -59,40 +55,39 @@ std::expected<db::EncryptionKey, QString> createKey() {
 
 namespace db {
 
-std::optional<EncryptionKey>
-prepareDatabaseEncryption(bool enabled, std::initializer_list<std::filesystem::path> databases) {
+EncryptionKeys prepareEncryption(bool enabled, std::initializer_list<std::filesystem::path> databases) {
   bool anyEncrypted = false;
   for (const auto &path : databases)
     if (detectCipherState(path) == CipherState::Encrypted) anyEncrypted = true;
 
-  // Avoid the keychain entirely when off and nothing is encrypted, so the default path
-  // works on systems without a keychain daemon.
-  if (!enabled && !anyEncrypted) return std::nullopt;
+  if (!enabled && !anyEncrypted) return {};
 
   auto stored = readKey();
   if (!stored) qFatal("Database keychain unavailable: %s", qPrintable(stored.error()));
 
-  std::optional<EncryptionKey> key = *stored;
-
-  if (enabled && !key && !anyEncrypted) {
+  std::optional<EncryptionKey> master = *stored;
+  if (enabled && !master && !anyEncrypted) {
     auto created = createKey();
-    if (!created) qFatal("Failed to store database key in keychain: %s", qPrintable(created.error()));
-    key = *created;
+    if (!created) qFatal("Failed to store master key in keychain: %s", qPrintable(created.error()));
+    master = *created;
   }
-  if (!key)
+  if (!master)
     qFatal("A database is encrypted but its key is missing from the keychain. If your keyring is locked "
            "or its daemon is not running, unlock/start it and retry; otherwise the affected database "
            "files must be deleted to reset.");
+
+  const EncryptionKey databaseKey = Crypto::deriveKey(*master, "vicinae-db");
 
   for (const auto &path : databases) {
     auto state = detectCipherState(path);
     if (!state) continue;
     if ((*state == CipherState::Encrypted) == enabled) continue;
-    if (auto migrated = ensureCipherState(path, enabled, *key); !migrated)
+    if (auto migrated = ensureCipherState(path, enabled, databaseKey); !migrated)
       qFatal("Failed to migrate database '%s': %s", path.string().c_str(), migrated.error().c_str());
   }
 
-  return enabled ? key : std::nullopt;
+  if (!enabled) return {};
+  return {databaseKey, Crypto::deriveKey(*master, "vicinae-clipboard")};
 }
 
 } // namespace db

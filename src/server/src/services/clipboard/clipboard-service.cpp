@@ -11,7 +11,6 @@
 #include <qmimedata.h>
 #include <qnamespace.h>
 #include <qstringview.h>
-#include <qt6keychain/keychain.h>
 #include <QtConcurrent/QtConcurrent>
 #include <QFutureWatcher>
 #include <QBuffer>
@@ -86,12 +85,12 @@ bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboa
 
 void ClipboardService::setRecordAllOffers(bool value) { m_recordAllOffers = value; }
 
-void ClipboardService::setEncryption(bool value) {
-  m_encrypter.reset();
-
-  if (value) {
-    m_encrypter = std::make_unique<ClipboardEncrypter>();
-    m_encrypter->loadKey();
+void ClipboardService::setEncryptionKey(std::optional<db::EncryptionKey> key) {
+  if (key) {
+    m_encrypter = std::make_unique<ClipboardEncrypter>(
+        QByteArray(reinterpret_cast<const char *>(key->data()), key->size()));
+  } else {
+    m_encrypter.reset();
   }
 }
 

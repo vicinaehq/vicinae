@@ -15,7 +15,6 @@
 #include <qmimedatabase.h>
 #include <qstringview.h>
 #include <QTimer>
-#include <qt6keychain/keychain.h>
 
 namespace Clipboard {
 using NoData = std::monostate;
@@ -108,7 +107,7 @@ public:
   bool supportsMonitoring() const;
   bool monitoring() const;
   void setMonitoring(bool value);
-  void setEncryption(bool value);
+  void setEncryptionKey(std::optional<db::EncryptionKey> key);
   void setIgnorePasswords(bool value);
   bool isEncryptionReady() const;
 
