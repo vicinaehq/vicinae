@@ -76,18 +76,20 @@ EncryptionKeys prepareEncryption(bool enabled, std::initializer_list<std::filesy
            "or its daemon is not running, unlock/start it and retry; otherwise the affected database "
            "files must be deleted to reset.");
 
-  const EncryptionKey databaseKey = Crypto::deriveKey(*master, "vicinae-db");
+  auto databaseKey = Crypto::deriveKey(*master, "vicinae-db");
+  auto clipboardKey = Crypto::deriveKey(*master, "vicinae-clipboard");
+  if (!databaseKey || !clipboardKey) qFatal("Failed to derive encryption keys from the master key");
 
   for (const auto &path : databases) {
     auto state = detectCipherState(path);
     if (!state) continue;
     if ((*state == CipherState::Encrypted) == enabled) continue;
-    if (auto migrated = ensureCipherState(path, enabled, databaseKey); !migrated)
+    if (auto migrated = ensureCipherState(path, enabled, *databaseKey); !migrated)
       qFatal("Failed to migrate database '%s': %s", path.string().c_str(), migrated.error().c_str());
   }
 
   if (!enabled) return {};
-  return {databaseKey, Crypto::deriveKey(*master, "vicinae-clipboard")};
+  return {*databaseKey, *clipboardKey};
 }
 
 } // namespace db

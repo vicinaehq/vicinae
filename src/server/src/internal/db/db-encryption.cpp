@@ -71,7 +71,9 @@ std::optional<CipherState> detectCipherState(const fs::path &path) {
 
   sqlite3_close_v2(handle);
 
-  return rc == SQLITE_OK ? CipherState::Plaintext : CipherState::Encrypted;
+  if (rc == SQLITE_OK) return CipherState::Plaintext;
+  if (rc == SQLITE_NOTADB) return CipherState::Encrypted;
+  return std::nullopt;
 }
 
 std::expected<void, std::string> ensureCipherState(const fs::path &path, bool encrypted, KeyView key) {
