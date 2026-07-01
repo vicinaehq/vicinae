@@ -1014,6 +1014,15 @@ target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
 	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-F/System/Library/PrivateFrameworks" "-framework login")
 endif()
+
+if(APPLE AND DEFINED ENV{VICINAE_CODESIGN_IDENTITY})
+	add_custom_command(TARGET ${TARGET} POST_BUILD
+		COMMAND codesign --force --identifier ${VICINAE_BUNDLE_ID}
+			--sign "$ENV{VICINAE_CODESIGN_IDENTITY}" $<TARGET_FILE:${TARGET}>
+		VERBATIM
+		COMMENT "codesign ${TARGET} ($ENV{VICINAE_CODESIGN_IDENTITY})")
+endif()
+
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 
 # Workaround: libc++ pre-C++26 has unconstrained std::variant relational operators,

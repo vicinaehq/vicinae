@@ -53,6 +53,8 @@ option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
 
+set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "macOS app bundle identifier")
+
 if (ENABLE_CLANG_TIDY)
 	set(CMAKE_CXX_CLANG_TIDY clang-tidy)
 endif()
