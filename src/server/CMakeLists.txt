@@ -619,6 +619,10 @@ if (APPLE)
 		src/services/power-manager/macos/macos-power-manager.mm
 		src/services/audio-control/macos/coreaudio-audio-control.hpp
 		src/services/audio-control/macos/coreaudio-audio-control.cpp
+		src/services/window-manager/macos/macos-window.hpp
+		src/services/window-manager/macos/macos-window.mm
+		src/services/window-manager/macos/macos-window-manager.hpp
+		src/services/window-manager/macos/macos-window-manager.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -630,6 +634,8 @@ if (APPLE)
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.mm
 		src/services/power-manager/macos/macos-power-manager.mm
+		src/services/window-manager/macos/macos-window.mm
+		src/services/window-manager/macos/macos-window-manager.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
