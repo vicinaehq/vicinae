@@ -193,6 +193,10 @@ public:
 
   virtual bool setSticky(const AbstractWindow &window, bool sticky) const { return false; }
 
+  virtual bool setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const {
+    return false;
+  }
+
   virtual bool moveToWorkspace(const AbstractWindow &window, const QString &workspaceId) const {
     return false;
   }

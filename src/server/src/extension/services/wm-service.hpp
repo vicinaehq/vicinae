@@ -118,7 +118,15 @@ public:
   }
 
   tsapi::Result<bool>::Future setWindowBounds(std::string winId, tsapi::Rect bounds) override {
-    return tsapi::Result<bool>::fail("Not implemented");
+    auto win = m_wm.findWindowById(QString::fromStdString(winId));
+    if (!win) return tsapi::Result<bool>::ok(false);
+
+    AbstractWindowManager::WindowBounds wmBounds{.x = static_cast<uint32_t>(bounds.x),
+                                                 .y = static_cast<uint32_t>(bounds.y),
+                                                 .width = static_cast<uint32_t>(bounds.width),
+                                                 .height = static_cast<uint32_t>(bounds.height)};
+
+    return tsapi::Result<bool>::ok(m_wm.provider()->setWindowBounds(*win, wmBounds));
   }
 
 private:

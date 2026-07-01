@@ -406,6 +406,29 @@ bool MacosWindowManager::closeWindow(const AbstractWindow &window) const {
   return err == kAXErrorSuccess;
 }
 
+bool MacosWindowManager::setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const {
+  const MacosWindow *macWindow = asMacosWindow(window);
+  if (!macWindow) return false;
+
+  AXUIElementRef element = macWindow->element();
+
+  CGPoint position{.x = static_cast<CGFloat>(bounds.x), .y = static_cast<CGFloat>(bounds.y)};
+  CGSize size{.width = static_cast<CGFloat>(bounds.width), .height = static_cast<CGFloat>(bounds.height)};
+
+  AXValueRef positionValue = AXValueCreate(kAXValueTypeCGPoint, &position);
+  AXValueRef sizeValue = AXValueCreate(kAXValueTypeCGSize, &size);
+
+  AXError posErr = AXUIElementSetAttributeValue(element, kAXPositionAttribute, positionValue);
+  AXError sizeErr = AXUIElementSetAttributeValue(element, kAXSizeAttribute, sizeValue);
+
+  CFRelease(positionValue);
+  CFRelease(sizeValue);
+
+  if (posErr == kAXErrorSuccess || sizeErr == kAXErrorSuccess) scheduleRebuild();
+
+  return posErr == kAXErrorSuccess && sizeErr == kAXErrorSuccess;
+}
+
 void MacosWindowManager::notifyWindowsChanged() { scheduleRebuild(); }
 
 void MacosWindowManager::notifyFocusChanged() { emit focusChanged(); }
