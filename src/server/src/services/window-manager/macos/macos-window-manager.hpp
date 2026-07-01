@@ -34,7 +34,7 @@ public:
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
   bool setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const override;
-  void requestWindowAccess() const override;
+  void refresh() const override;
 
   bool ping() const override { return true; }
   bool isActivatable() const override;

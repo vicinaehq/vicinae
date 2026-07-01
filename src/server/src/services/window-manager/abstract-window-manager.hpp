@@ -149,12 +149,10 @@ public:
   virtual void focusWindowSync(const AbstractWindow &window) const {}
 
   /**
-   * Some platforms gate window enumeration and control behind a user-granted permission
-   * (Accessibility on macOS). Views dealing with windows should call this when they become active so the
-   * implementation can prompt for that permission at a contextually relevant moment, rather than at startup.
-   * No-op by default.
+   * Refresh the window list. No-op by default; poll-based implementations re-scan, event-driven ones that
+   * stay current on their own can ignore it.
    */
-  virtual void requestWindowAccess() const {}
+  virtual void refresh() const {}
 
   /**
    * If this returns true, make sure to implement `workspaces` correctly and also

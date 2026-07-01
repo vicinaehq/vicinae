@@ -304,7 +304,7 @@ void MacosWindowManager::start() {
   rebuildCache();
 }
 
-void MacosWindowManager::requestWindowAccess() const { scheduleRebuild(); }
+void MacosWindowManager::refresh() const { scheduleRebuild(); }
 
 void MacosWindowManager::scheduleRebuild() const {
   if (m_rebuildTimer) m_rebuildTimer->start();

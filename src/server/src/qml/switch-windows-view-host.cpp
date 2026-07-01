@@ -12,7 +12,7 @@ void SwitchWindowsViewHost::initialize() {
   setSearchPlaceholderText("Search open window...");
 
   auto wm = context()->services->windowManager();
-  wm->provider()->requestWindowAccess();
+  wm->provider()->refresh();
   connect(wm, &WindowManager::windowsChanged, this, &SwitchWindowsViewHost::refreshWindows);
 }
 
