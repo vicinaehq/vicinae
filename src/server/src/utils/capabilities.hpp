@@ -1,7 +1,18 @@
 #pragma once
+#include <QtGlobal>
 #include <string_view>
 
 namespace platform {
+
+constexpr std::string_view extensionPlatform() {
+#if defined(Q_OS_MACOS)
+  return "macOS";
+#elif defined(Q_OS_WIN)
+  return "Windows";
+#else
+  return "linux";
+#endif
+}
 
 /**
  * A runtime fact about what the current install can do, as opposed to which OS

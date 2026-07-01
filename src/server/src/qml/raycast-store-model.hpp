@@ -16,7 +16,7 @@ public:
   struct Entry {
     Raycast::Extension extension;
     bool installed = false;
-    Raycast::CompatTier compatTier = Raycast::CompatTier::Unknown;
+    std::optional<Raycast::CompatTier> compatTier;
   };
 
   void setEntries(const std::vector<Raycast::Extension> &extensions, ExtensionRegistry *registry,
