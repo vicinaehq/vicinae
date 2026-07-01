@@ -46,10 +46,12 @@ public:
 
 private:
   void scheduleRebuild() const;
+  void scheduleCoalescedRebuild() const;
   void rebuildCache();
 
   MacosWindowObserver *m_observer = nullptr;
   QTimer *m_rebuildTimer = nullptr;
+  QTimer *m_coalesceTimer = nullptr;
   mutable WindowList m_cache;
   bool m_rebuilding = false;
   bool m_rebuildPending = false;

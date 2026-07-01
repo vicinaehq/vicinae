@@ -1,5 +1,4 @@
 #include "macos-window-manager.hpp"
-#include "macos-window.hpp"
 
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
@@ -13,6 +12,8 @@
 #include <cstring>
 #include <unistd.h>
 #include <unordered_set>
+
+#include "macos-window.hpp"
 
 // Private but stable HIServices APIs used by virtually every macOS window switcher (AltTab, HyperSwitch, ...).
 // _AXUIElementGetWindow maps an AX window element to its CoreGraphics window id, giving us a stable identity.
@@ -203,22 +204,21 @@ void collectCurrentSpaceWindows(pid_t pid, const QString &bundleId, const QStrin
 }
 
 constexpr uint64_t BRUTE_FORCE_MAX_ID = 1000;
-constexpr int BRUTE_FORCE_BUDGET_MS = 100;
+constexpr int BRUTE_FORCE_TOTAL_BUDGET_MS = 500;
 constexpr int32_t REMOTE_TOKEN_MAGIC = 0x636f636f;
 constexpr int REBUILD_DEBOUNCE_MS = 150;
+constexpr int COALESCE_DEBOUNCE_MS = 2500;
 
-// Windows living on other Spaces, recovered by synthesizing AX elements from (pid, element id) remote tokens.
-// We cap iteration and wall-clock time per app since element ids are sparse and each probe is a cross-process
-// AX call. Synthesized elements are owned by us (+1), so unkept ones are released here.
 void collectOtherSpaceWindows(pid_t pid, const QString &bundleId, const QString &appName,
-                              AbstractWindowManager::WindowList &out,
-                              std::unordered_set<CGWindowID> &seen) {
+                              AbstractWindowManager::WindowList &out, std::unordered_set<CGWindowID> &seen,
+                              std::chrono::steady_clock::time_point deadline) {
   std::array<uint8_t, 20> token{};
   std::memcpy(token.data(), &pid, sizeof(pid));
   std::memcpy(token.data() + 8, &REMOTE_TOKEN_MAGIC, sizeof(REMOTE_TOKEN_MAGIC));
 
-  auto start = std::chrono::steady_clock::now();
   for (uint64_t id = 0; id < BRUTE_FORCE_MAX_ID; ++id) {
+    if (std::chrono::steady_clock::now() >= deadline) break;
+
     std::memcpy(token.data() + 12, &id, sizeof(id));
     CFDataRef data = CFDataCreate(kCFAllocatorDefault, token.data(), token.size());
     AXUIElementRef element = _AXUIElementCreateWithRemoteToken(data);
@@ -227,8 +227,6 @@ void collectOtherSpaceWindows(pid_t pid, const QString &bundleId, const QString 
 
     if (hasWindowSubrole(element)) { appendWindowDeduped(element, pid, bundleId, appName, out, seen); }
     CFRelease(element);
-
-    if (std::chrono::steady_clock::now() - start > std::chrono::milliseconds(BRUTE_FORCE_BUDGET_MS)) break;
   }
 }
 
@@ -267,10 +265,12 @@ AbstractWindowManager::WindowList scanWindows(const std::vector<AppDescriptor> &
   AbstractWindowManager::WindowList windows;
   std::unordered_set<CGWindowID> seen;
 
+  auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(BRUTE_FORCE_TOTAL_BUDGET_MS);
+
   @autoreleasepool {
     for (const auto &app : apps) {
       collectCurrentSpaceWindows(app.pid, app.bundleId, app.appName, windows, seen);
-      collectOtherSpaceWindows(app.pid, app.bundleId, app.appName, windows, seen);
+      collectOtherSpaceWindows(app.pid, app.bundleId, app.appName, windows, seen, deadline);
     }
   }
 
@@ -296,6 +296,11 @@ void MacosWindowManager::start() {
   m_rebuildTimer->setInterval(REBUILD_DEBOUNCE_MS);
   connect(m_rebuildTimer, &QTimer::timeout, this, &MacosWindowManager::rebuildCache);
 
+  m_coalesceTimer = new QTimer(this);
+  m_coalesceTimer->setSingleShot(true);
+  m_coalesceTimer->setInterval(COALESCE_DEBOUNCE_MS);
+  connect(m_coalesceTimer, &QTimer::timeout, this, &MacosWindowManager::rebuildCache);
+
   rebuildCache();
 }
 
@@ -303,6 +308,10 @@ void MacosWindowManager::requestWindowAccess() const { scheduleRebuild(); }
 
 void MacosWindowManager::scheduleRebuild() const {
   if (m_rebuildTimer) m_rebuildTimer->start();
+}
+
+void MacosWindowManager::scheduleCoalescedRebuild() const {
+  if (m_coalesceTimer) m_coalesceTimer->start();
 }
 
 // The full AX scan is expensive (the per-app brute-force needed for other-Space windows is cross-process and
@@ -320,6 +329,7 @@ void MacosWindowManager::rebuildCache() {
     return;
   }
   m_rebuilding = true;
+  if (m_coalesceTimer) m_coalesceTimer->stop();
 
   auto apps = runningRegularApps();
   auto *watcher = new QFutureWatcher<WindowList>(this);
@@ -435,6 +445,6 @@ bool MacosWindowManager::setWindowBounds(const AbstractWindow &window, const Win
   return posOk && sizeOk;
 }
 
-void MacosWindowManager::notifyWindowsChanged() { scheduleRebuild(); }
+void MacosWindowManager::notifyWindowsChanged() { scheduleCoalescedRebuild(); }
 
 void MacosWindowManager::notifyFocusChanged() { emit focusChanged(); }

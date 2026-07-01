@@ -23,15 +23,15 @@ void SwitchWindowsViewHost::textChanged(const QString &text) { model()->setFilte
 void SwitchWindowsViewHost::refreshWindows() {
   auto wm = ServiceRegistry::instance()->windowManager();
   auto appDb = ServiceRegistry::instance()->appDb();
-  auto windows = wm->listWindows();
+  const auto &windows = wm->listWindows();
 
   std::vector<WindowEntry> entries;
   entries.reserve(windows.size());
 
-  for (auto &win : windows) {
+  for (const auto &win : windows) {
     auto app = appDb->findByClass(win->wmClass());
     if (!app) app = appDb->findById(win->wmClass());
-    entries.push_back({.window = std::move(win), .app = std::move(app)});
+    entries.push_back({.window = win, .app = std::move(app)});
   }
 
   m_section.setItems(std::move(entries));

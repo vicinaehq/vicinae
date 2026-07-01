@@ -1,8 +1,8 @@
 #pragma once
 #include <ApplicationServices/ApplicationServices.h>
-#include "services/window-manager/abstract-window-manager.hpp"
 #include <QString>
 #include <optional>
+#include "services/window-manager/abstract-window-manager.hpp"
 
 /**
  * A window owned by a regular macOS application, backed by an Accessibility (AX) element.

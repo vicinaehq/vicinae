@@ -63,7 +63,7 @@ const AbstractWindowManager::AbstractWindow *WindowManager::findWindowById(const
   return nullptr;
 }
 
-AbstractWindowManager::WindowList WindowManager::listWindows() const { return m_windows; }
+const AbstractWindowManager::WindowList &WindowManager::listWindows() const { return m_windows; }
 
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
   return m_windows | std::views::filter([&](auto &&win) {
