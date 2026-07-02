@@ -2,6 +2,7 @@
 #include <QDateTime>
 #include <QFuture>
 #include <QObject>
+#include "glaze-qt.hpp"
 #include <QString>
 #include <expected>
 #include <optional>

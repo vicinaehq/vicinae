@@ -9,6 +9,7 @@
 #include <expected>
 #include <unordered_map>
 #include <vector>
+#include "glaze-qt.hpp"
 #include "internal/http-client.hpp"
 
 namespace Raycast {
@@ -68,7 +69,7 @@ struct Command {
   ImageURL themedIcon() const {
     if (auto icon = icons.themedIcon()) return *icon;
     if (auto icon = extensionIcons.themedIcon()) return *icon;
-    return ImageURL::builtin("puzzle-piece");
+    return ImageURL::builtin("plug");
   }
 };
 
@@ -106,7 +107,7 @@ struct Extension {
 
   ImageURL themedIcon() const {
     if (auto icon = icons.themedIcon()) return *icon;
-    return ImageURL::builtin("puzzle-piece");
+    return ImageURL::builtin("plug");
   }
 
   QDateTime createdAtDateTime() const { return QDateTime::fromSecsSinceEpoch(created_at); }
@@ -140,6 +141,22 @@ struct ListPaginationOptions {
   int page = 1;
   int perPage = 50;
 };
+
+constexpr bool isNativePlatform() {
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
+  return true;
+#else
+  return false;
+#endif
+}
+
+constexpr bool hasCompatSheet() {
+#ifdef Q_OS_LINUX
+  return true;
+#else
+  return false;
+#endif
+}
 
 struct CompatInfo {
   std::string status;

@@ -11,7 +11,7 @@
 	<key>CFBundleIconFile</key>
 	<string>vicinae</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.vicinaehq.Vicinae</string>
+	<string>@VICINAE_BUNDLE_ID@</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

@@ -88,6 +88,8 @@ void RaycastStoreDetailHost::hydrate(const Raycast::Extension &extension) {
 }
 
 void RaycastStoreDetailHost::buildAlert() {
+  if constexpr (!Raycast::hasCompatSheet()) return;
+
   const auto &compat = context()->services->raycastStore()->compatMap();
   if (auto it = compat.find(m_ext.name.toStdString()); it != compat.end()) {
     auto tier = Raycast::compatTierFromInfo(it->second);

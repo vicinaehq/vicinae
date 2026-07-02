@@ -1,7 +1,18 @@
 #pragma once
+#include <QStringView>
 #include <string_view>
 
 namespace platform {
+
+constexpr QStringView extensionPlatform() {
+#if defined(Q_OS_MACOS)
+  return u"macos";
+#elif defined(Q_OS_WIN)
+  return u"windows";
+#else
+  return u"linux";
+#endif
+}
 
 /**
  * A runtime fact about what the current install can do, as opposed to which OS
