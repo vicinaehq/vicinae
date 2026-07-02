@@ -15,15 +15,19 @@ public:
   bool isActivatable() const override;
   bool isAlive() const override;
   QString id() const override;
-  bool setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options = {}) override;
 
 private:
   static constexpr int POLL_INTERVAL_MS = 500;
 
+  struct PasteboardInfo {
+    bool drop = false;
+    std::optional<QString> sourceApp;
+  };
+
+  bool writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) override;
   void poll();
   long long currentChangeCount() const;
-  bool shouldDropCurrentSelection() const;
-  std::optional<QString> pasteboardSourceApp() const;
+  PasteboardInfo inspectPasteboard() const;
   std::optional<QString> frontmostBundleId() const;
   void beginAppNapActivity();
   void endAppNapActivity();

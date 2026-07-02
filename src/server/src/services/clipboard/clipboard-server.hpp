@@ -6,6 +6,7 @@
 #include <QClipboard>
 #include <QGuiApplication>
 #include <vector>
+#include "common/clipboard-formats.hpp"
 
 namespace Clipboard {
 struct CopyOptions {
@@ -79,16 +80,24 @@ public:
 
   /**
    * Set clipboard content synchronously.
-   * Default implementation uses Qt's clipboard.
    */
-  virtual bool setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options = {}) {
-    Q_UNUSED(options);
-    QGuiApplication::clipboard()->setMimeData(data);
-    return true;
+  bool setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options = {}) {
+    if (options.concealed || options.transient) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
+    return writeClipboard(data, options);
   }
 
   AbstractClipboardServer() {}
 
 signals:
   void selectionAdded(const ClipboardSelection &selection);
+
+protected:
+  /**
+   * Platform write. Default implementation uses Qt's clipboard.
+   */
+  virtual bool writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) {
+    Q_UNUSED(options);
+    QGuiApplication::clipboard()->setMimeData(data);
+    return true;
+  }
 };

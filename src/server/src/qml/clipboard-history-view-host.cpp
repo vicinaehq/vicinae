@@ -20,9 +20,11 @@ static QString kindLabel(ClipboardOfferKind kind) {
     return QStringLiteral("Image");
   case ClipboardOfferKind::File:
     return QStringLiteral("File");
-  default:
-    return QStringLiteral("Unknown");
+  case ClipboardOfferKind::Unknown:
+  case ClipboardOfferKind::Count:
+    break;
   }
+  return QStringLiteral("Unknown");
 }
 
 static std::optional<ClipboardOfferKind> kindFromFilterIndex(int index) {

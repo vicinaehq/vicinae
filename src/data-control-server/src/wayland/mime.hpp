@@ -1,7 +1,7 @@
 #pragma once
-#include "common/clipboard-formats.hpp"
 #include <string_view>
 #include <unordered_set>
+#include "common/clipboard-formats.hpp"
 
 // clang-format off
 static const std::unordered_set<std::string_view> flagMimes = {

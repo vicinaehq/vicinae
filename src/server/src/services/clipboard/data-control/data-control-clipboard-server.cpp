@@ -108,7 +108,7 @@ void DataControlClipboardServer::handleRead() {
                 cs.isPassword = true;
                 continue;
               }
-              cs.offers.push_back({
+              cs.offers.emplace_back(ClipboardDataOffer{
                   QString::fromStdString(offer.mime_type),
                   QByteArray(reinterpret_cast<const char *>(offer.data.data()), offer.data.size()),
               });
@@ -126,9 +126,7 @@ void DataControlClipboardServer::handleRead() {
   }
 }
 
-bool DataControlClipboardServer::setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options) {
-  if (options.concealed || options.transient) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
-
+bool DataControlClipboardServer::writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) {
   if (!QGuiApplication::focusWindow() && m_process.state() == QProcess::Running) {
     clipboard_proto::Selection selection;
     for (const auto &format : data->formats()) {
@@ -154,7 +152,7 @@ bool DataControlClipboardServer::setClipboardContent(QMimeData *data, const Clip
     return true;
   }
 
-  return AbstractClipboardServer::setClipboardContent(data, options);
+  return AbstractClipboardServer::writeClipboard(data, options);
 }
 
 DataControlClipboardServer::DataControlClipboardServer() {

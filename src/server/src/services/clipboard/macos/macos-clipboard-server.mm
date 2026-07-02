@@ -1,5 +1,4 @@
 #include "macos-clipboard-server.hpp"
-#include "services/clipboard/qt/qt-clipboard-server.hpp"
 
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
@@ -8,6 +7,8 @@
 #include <QGuiApplication>
 #include <QMimeData>
 #include <qlogging.h>
+
+#include "services/clipboard/clipboard-mime.hpp"
 
 namespace {
 NSString *const CONCEALED_UTI = @"org.nspasteboard.ConcealedType";
@@ -61,29 +62,25 @@ long long MacosClipboardServer::currentChangeCount() const {
   return static_cast<long long>([[NSPasteboard generalPasteboard] changeCount]);
 }
 
-bool MacosClipboardServer::shouldDropCurrentSelection() const {
+MacosClipboardServer::PasteboardInfo MacosClipboardServer::inspectPasteboard() const {
   @autoreleasepool {
+    PasteboardInfo info;
     NSPasteboard *pb = [NSPasteboard generalPasteboard];
+
     for (NSPasteboardItem *item in pb.pasteboardItems) {
       for (NSString *type in item.types) {
         if ([type isEqualToString:CONCEALED_UTI] || [type isEqualToString:TRANSIENT_UTI] ||
             [type isEqualToString:AUTO_GENERATED_UTI]) {
-          return true;
+          info.drop = true;
+          return info;
         }
       }
+      if (!info.sourceApp) {
+        NSString *src = [item stringForType:SOURCE_UTI];
+        if (src.length > 0) info.sourceApp = QString::fromNSString(src);
+      }
     }
-    return false;
-  }
-}
-
-std::optional<QString> MacosClipboardServer::pasteboardSourceApp() const {
-  @autoreleasepool {
-    NSPasteboard *pb = [NSPasteboard generalPasteboard];
-    for (NSPasteboardItem *item in pb.pasteboardItems) {
-      NSString *src = [item stringForType:SOURCE_UTI];
-      if (src.length > 0) return QString::fromNSString(src);
-    }
-    return std::nullopt;
+    return info;
   }
 }
 
@@ -100,46 +97,39 @@ void MacosClipboardServer::poll() {
   if (cc == m_lastChangeCount) return;
   m_lastChangeCount = cc;
 
-  if (shouldDropCurrentSelection()) {
+  auto info = inspectPasteboard();
+  if (info.drop) {
     qInfo() << "macOS: dropping concealed/transient/auto-generated selection";
     return;
   }
 
-  auto selection =
-      AbstractQtClipboardServer::selectionFromMimeData(QGuiApplication::clipboard()->mimeData());
+  auto selection = Clipboard::selectionFromMimeData(QGuiApplication::clipboard()->mimeData());
   if (!selection) return;
+  // The pasteboard changed while we were reading it, let the next tick handle it
+  if (currentChangeCount() != cc) return;
 
-  selection->sourceApp = pasteboardSourceApp();
-  if (!selection->sourceApp) selection->sourceApp = frontmostBundleId();
+  selection->sourceApp = info.sourceApp ? info.sourceApp : frontmostBundleId();
   emit selectionAdded(*selection);
 }
 
-bool MacosClipboardServer::setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options) {
-  bool const ok = AbstractClipboardServer::setClipboardContent(data, options);
+bool MacosClipboardServer::writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) {
+  bool const ok = AbstractClipboardServer::writeClipboard(data, options);
   if (!ok) return false;
 
   @autoreleasepool {
     NSPasteboard *pb = [NSPasteboard generalPasteboard];
+    auto stamp = [pb](NSString *uti, NSString *value) {
+      [pb addTypes:@[ uti ] owner:nil];
+      [pb setString:value forType:uti];
+    };
 
-    if (options.concealed) {
-      [pb addTypes:@[CONCEALED_UTI] owner:nil];
-      [pb setData:[NSData data] forType:CONCEALED_UTI];
-    }
-    if (options.transient) {
-      [pb addTypes:@[TRANSIENT_UTI] owner:nil];
-      [pb setData:[NSData data] forType:TRANSIENT_UTI];
-    }
+    if (options.concealed) stamp(CONCEALED_UTI, @"");
+    if (options.transient) stamp(TRANSIENT_UTI, @"");
 
-    NSString *sourceBundleId = nil;
-    if (options.sourceApp && !options.sourceApp->isEmpty()) {
-      sourceBundleId = options.sourceApp->toNSString();
-    } else {
-      sourceBundleId = [[NSBundle mainBundle] bundleIdentifier];
-    }
-    if (sourceBundleId.length > 0) {
-      [pb addTypes:@[SOURCE_UTI] owner:nil];
-      [pb setString:sourceBundleId forType:SOURCE_UTI];
-    }
+    NSString *sourceBundleId = options.sourceApp && !options.sourceApp->isEmpty()
+                                   ? options.sourceApp->toNSString()
+                                   : [[NSBundle mainBundle] bundleIdentifier];
+    if (sourceBundleId.length > 0) stamp(SOURCE_UTI, sourceBundleId);
   }
   return ok;
 }

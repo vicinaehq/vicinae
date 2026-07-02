@@ -14,11 +14,6 @@ public:
   virtual bool isActivatable() const override = 0;
   bool isAlive() const override { return true; }
 
-  bool setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options = {}) override;
-
-  static std::optional<ClipboardSelection> selectionFromMimeData(const QMimeData *mimeData);
-
 private:
-  static bool isLegacyContentType(const QString &str);
   void dataChanged();
 };
