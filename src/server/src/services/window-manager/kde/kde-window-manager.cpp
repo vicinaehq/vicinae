@@ -11,6 +11,7 @@
 #include <quuid.h>
 #include <string_view>
 #include "kde-window-manager.hpp"
+#include "utils/dbus.hpp"
 
 namespace KDE {
 
@@ -131,9 +132,7 @@ WindowManager::~WindowManager() {
   if (m_serviceOwned) unloadScriptByName(TRACKER_PLUGIN);
 }
 
-bool WindowManager::ping() const {
-  return QDBusConnection::sessionBus().interface()->isServiceRegistered(KWIN_SERVICE);
-}
+bool WindowManager::ping() const { return dbus::isServiceRegistered(KWIN_SERVICE); }
 
 void WindowManager::start() {
   m_tracker = std::make_unique<WindowTracker>(this);

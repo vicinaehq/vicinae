@@ -36,15 +36,24 @@ option(
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
-option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
+
+# Default for the USE_SYSTEM_* options below: Linux distros ship these as system
+# packages, macOS does not, so it flips per platform.
+set(USE_SYSTEM_DEFAULT ON)
+if (APPLE)
+	set(USE_SYSTEM_DEFAULT OFF)
+endif()
+
+option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of the vendored copy under vendor/cmark-gfm" ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
-option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ON)
+option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
-option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
-option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
+option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ${USE_SYSTEM_DEFAULT})
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
+
+set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "macOS app bundle identifier")
 
 if (ENABLE_CLANG_TIDY)
 	set(CMAKE_CXX_CLANG_TIDY clang-tidy)
@@ -64,7 +73,7 @@ if (NOT USE_SYSTEM_GLAZE)
 	import_glaze()
 endif()
 
-if (NOT USE_SYSTEM_KF6 OR APPLE)
+if (NOT USE_SYSTEM_KF6)
 	include(KF6)
 	import_kf6()
 endif()
@@ -88,15 +97,11 @@ if (APPLE)
 		if (NOT QT_DIR AND EXISTS "${HOMEBREW_PREFIX}/opt/qt/lib/cmake/Qt6")
 			list(PREPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/qt")
 		endif()
-		if (NOT DEFINED ENV{ICU_ROOT} AND EXISTS "${HOMEBREW_PREFIX}/opt/icu4c")
-			set(ENV{ICU_ROOT} "${HOMEBREW_PREFIX}/opt/icu4c")
-		endif()
 		link_directories(${HOMEBREW_PREFIX}/lib)
 	endif()
 
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
-	set(USE_SYSTEM_CMARK_GFM OFF)
 endif()
 
 set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
@@ -111,7 +116,7 @@ find_package(glaze)
 add_subdirectory(src/browser-extension)
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
-add_subdirectory(${LIB_DIR}/emoji)
+add_subdirectory(${LIB_DIR}/glyph)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/fuzzy)
 
@@ -124,6 +129,7 @@ add_subdirectory(${VENDOR_DIR}/zip)
 if (UNIX AND NOT APPLE)
 	add_subdirectory(${LIB_DIR}/linux-utils)
 	add_subdirectory(src/snippet)
+	add_subdirectory(src/file-indexer)
 endif()
 add_subdirectory(${LIB_DIR}/figura)
 
@@ -138,7 +144,6 @@ if (PREFER_STATIC_LIBS)
 	set(USE_SYSTEM_CMARK_GFM OFF)
 	set(USE_SYSTEM_LAYER_SHELL OFF)
 	set(USE_SYSTEM_QT_KEYCHAIN OFF)
-	set(LIBQALCULATE_BACKEND OFF)
 endif()
 
 
@@ -183,7 +188,7 @@ endif()
 
 if (NOT USE_SYSTEM_CMARK_GFM)
 	include(CMark)
-	checkout_cmark()
+	setup_vendored_cmark()
   set(CMARK_LIBRARY "libcmark-gfm_static")
   set(CMARK_EXT_LIBRARY "libcmark-gfm-extensions_static")
 endif()
@@ -223,10 +228,6 @@ else()
 endif()
 
 set(BUILD_INFO "${CXX_COMPILER_NAME} ${CMAKE_CXX_COMPILER_VERSION} - ${CMAKE_BUILD_TYPE}")
-
-if (LIBQALCULATE_BACKEND)
-	message(STATUS "libqalculate! calculator backend is enabled")
-endif()
 
 find_program(CCACHE ccache)
 

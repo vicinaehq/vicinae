@@ -1,22 +1,35 @@
-name: "Push to Cachix"
+name: "Nix build"
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  push_to_cachix:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm]
+        os: [depot-ubuntu-24.04-16, depot-ubuntu-24.04-arm-16, depot-macos-26]
     steps:
     - uses: actions/checkout@v4
-    - uses: cachix/install-nix-action@v25
+    - uses: cachix/install-nix-action@v31
+    - name: Cache Nix Evaluation
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/nix
+        key: nix-eval-${{ hashFiles('flake.lock') }}
     - uses: cachix/cachix-action@v14
       with:
         name: vicinae
-        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+        authToken: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
     - name: Build Flake
       run: nix build -L
     - name: Run Test Shell

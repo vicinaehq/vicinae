@@ -28,6 +28,8 @@ QVariant ProviderCommandModel::data(const QModelIndex &index, int role) const {
     return cmd.description;
   case HasPreferencesRole:
     return cmd.hasPreferences;
+  case ShortcutRole:
+    return cmd.shortcut;
   default:
     return {};
   }
@@ -41,7 +43,8 @@ QHash<int, QByteArray> ProviderCommandModel::roleNames() const {
           {AliasRole, "alias"},
           {EntrypointIdRole, "entrypointId"},
           {DescriptionRole, "description"},
-          {HasPreferencesRole, "hasPreferences"}};
+          {HasPreferencesRole, "hasPreferences"},
+          {ShortcutRole, "shortcut"}};
 }
 
 void ProviderCommandModel::load(std::vector<Command> commands) {
@@ -120,6 +123,20 @@ bool ProviderCommandModel::setAlias(const QString &entrypointId, const QString &
     if (row >= 0) {
       auto idx = index(row);
       emit dataChanged(idx, idx, {AliasRole});
+    }
+    return true;
+  }
+  return false;
+}
+
+bool ProviderCommandModel::setShortcut(const QString &entrypointId, const QString &shortcut) {
+  for (int i = 0; std::cmp_less(i, m_allCommands.size()); ++i) {
+    if (m_allCommands[i].entrypointId != entrypointId) continue;
+    m_allCommands[i].shortcut = shortcut;
+    int const row = visibleRowFor(i);
+    if (row >= 0) {
+      auto idx = index(row);
+      emit dataChanged(idx, idx, {ShortcutRole});
     }
     return true;
   }

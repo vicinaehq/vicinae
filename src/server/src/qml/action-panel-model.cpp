@@ -171,7 +171,9 @@ void ActionPanelModel::activate(int index) {
   const auto &item = m_flat[index];
   if (item.kind != FlatItem::ActionItem) return;
 
-  const auto &action = m_sections[item.sectionIdx].actions[item.actionIdx];
+  // NOTE: we need to increment the reference counter by copying the shared ptr here,
+  // as the action itself may trigger side effects that replace the current panel.
+  auto action = m_sections[item.sectionIdx].actions[item.actionIdx];
 
   if (action->isSubmenu()) {
     auto *submenuAction = dynamic_cast<SubmenuAction *>(action.get());

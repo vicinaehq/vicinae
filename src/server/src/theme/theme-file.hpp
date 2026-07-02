@@ -21,6 +21,8 @@ public:
   using MappedColor = std::variant<QColor, ColorRef>;
   using Semantics = std::unordered_map<SemanticColor, MappedColor>;
   using Icon = std::optional<std::filesystem::path>;
+  using DiagnosticList = std::vector<std::string>;
+
   struct InitData {
     QString id;
     QString name;
@@ -32,7 +34,9 @@ public:
     Semantics semantics;
   };
 
-  static std::expected<ThemeFile, std::string> fromFile(const std::filesystem::path &path);
+  struct ParseResult;
+
+  static std::expected<ParseResult, std::string> fromFile(const std::filesystem::path &path);
   explicit ThemeFile(const InitData &data) : m_data(data) {}
   ThemeFile(const ThemeFile &file) = default;
 
@@ -74,7 +78,7 @@ public:
 
 private:
   static QColor withAlphaF(const QColor &color, float alpha = 1.0f);
-  // QColor recursiveResolve(SemanticColor color) const;
+  static QColor mix(const QColor &a, const QColor &b, float t);
 
   /**
    * Derive semantic color from base16 palette
@@ -84,4 +88,9 @@ private:
 
   std::shared_ptr<ThemeFile> m_parent;
   InitData m_data;
+};
+
+struct ThemeFile::ParseResult {
+  ThemeFile file;
+  DiagnosticList diagnostics;
 };

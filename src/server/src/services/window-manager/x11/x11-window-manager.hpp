@@ -32,6 +32,8 @@ public:
   bool supportsFocusTracking() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
+  bool setSticky(const AbstractWindow &window, bool sticky) const override;
+  bool moveToWorkspace(const AbstractWindow &window, const QString &workspaceId) const override;
 
   bool hasWorkspaces() const override;
   WorkspaceList listWorkspaces() const override;

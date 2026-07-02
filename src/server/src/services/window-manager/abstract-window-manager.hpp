@@ -31,10 +31,10 @@ signals:
 
 public:
   struct WindowBounds {
-    uint32_t x = 0;
-    uint32_t y = 0;
-    uint32_t width = 0;
-    uint32_t height = 0;
+    int32_t x = 0;
+    int32_t y = 0;
+    int32_t width = 0;
+    int32_t height = 0;
   };
 
   struct Screen {
@@ -68,10 +68,11 @@ public:
 
     virtual std::optional<QString> workspace() const { return std::nullopt; }
     virtual std::optional<WindowBounds> bounds() const { return std::nullopt; }
-    bool fullScreen() const { return false; }
+    virtual bool fullScreen() const { return false; }
 
     virtual bool canClose() const { return true; }
     virtual bool canFullScreen() const { return true; }
+    virtual bool sticky() const { return false; }
   };
 
   class AbstractWorkspace {
@@ -148,6 +149,12 @@ public:
   virtual void focusWindowSync(const AbstractWindow &window) const {}
 
   /**
+   * Refresh the window list. No-op by default; poll-based implementations re-scan, event-driven ones that
+   * stay current on their own can ignore it.
+   */
+  virtual void refresh() const {}
+
+  /**
    * If this returns true, make sure to implement `workspaces` correctly and also
    * have every window return a correct workspace ID.
    */
@@ -181,6 +188,16 @@ public:
    * This is a common operation that should be supported by all window managers.
    */
   virtual bool closeWindow(const AbstractWindow &window) const { return false; }
+
+  virtual bool setSticky(const AbstractWindow &window, bool sticky) const { return false; }
+
+  virtual bool setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const {
+    return false;
+  }
+
+  virtual bool moveToWorkspace(const AbstractWindow &window, const QString &workspaceId) const {
+    return false;
+  }
 
   /**
    * To make sure the window manager IPC link is healthy.

@@ -3,6 +3,7 @@
 #include "preference-form-model.hpp"
 #include "provider-command-model.hpp"
 #include <QAbstractListModel>
+#include <QVariantList>
 #include <set>
 
 class RootProvider;
@@ -79,6 +80,8 @@ public:
   Q_INVOKABLE void selectProviderById(const QString &providerId);
   Q_INVOKABLE void setEnabledByEntrypointId(const QString &id, bool value);
   Q_INVOKABLE void setAliasByEntrypointId(const QString &id, const QString &alias);
+  Q_INVOKABLE void setShortcutByEntrypointId(const QString &id, const QString &shortcut);
+  Q_INVOKABLE void clearShortcutByEntrypointId(const QString &id);
   Q_INVOKABLE void loadCommandPreferences(const QString &entrypointId);
 
 private:
@@ -90,6 +93,7 @@ private:
     bool isProvider;
     bool enabled;
     QString alias;
+    QString shortcut;
     EntrypointId entrypointId;
     QString providerId;
     int indent;

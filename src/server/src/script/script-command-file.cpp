@@ -1,6 +1,6 @@
 #include <ranges>
 #include "script/script-command-file.hpp"
-#include "emoji/emoji.hpp"
+#include "glyph/emoji.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "service-registry.hpp"
 #include "ui/image/url.hpp"

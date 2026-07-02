@@ -18,6 +18,10 @@ std::shared_ptr<AbstractApplication> AppRuntime::frontmostApp() const { return m
 
 bool AppRuntime::activate(const AbstractApplication &app) const { return m_provider->activate(app); }
 
+bool AppRuntime::quit(const AbstractApplication &app) const { return m_provider->quit(app); }
+
+bool AppRuntime::forceQuit(const AbstractApplication &app) const { return m_provider->forceQuit(app); }
+
 std::unique_ptr<AbstractAppRuntime> AppRuntime::createProvider(WindowManager &wm, AppService &appService) {
 #ifdef Q_OS_MACOS
   (void)wm;

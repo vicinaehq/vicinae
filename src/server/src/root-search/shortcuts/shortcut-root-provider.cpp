@@ -47,7 +47,7 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
 
 std::unique_ptr<ActionPanelState>
 RootShortcutItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMetadata &metadata) const {
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto main = panel->createSection();
 
   auto open = new OpenShortcutFromSearchText(m_link);

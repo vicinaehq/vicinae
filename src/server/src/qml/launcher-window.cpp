@@ -3,15 +3,14 @@
 #include "keybind-bridge.hpp"
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/image/image-renderer.hpp"
 #include "services/news/news-service.hpp"
 #include "alert-model.hpp"
-#include "async-image-provider.hpp"
 #include "bridge-view.hpp"
 #include "image-source.hpp"
 #include "image-url.hpp"
-#include "root-search-model.hpp"
 #include "config-bridge.hpp"
+#include "platform-bridge.hpp"
 #include "theme-bridge.hpp"
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
@@ -27,7 +26,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
 #include "vicinae.hpp"
-#include "lib/keyboard/keyboard.hpp"
+#include "internal/keyboard/keyboard.hpp"
 #include "ui/views/base-view.hpp"
 #include "ui/action-pannel/action-panel-state.hpp"
 #include <QCursor>
@@ -50,24 +49,20 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
       m_footerPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
-      m_themeBridge(new ThemeBridge(this)) {
+      m_platformBridge(new PlatformBridge(this)), m_themeBridge(new ThemeBridge(this)) {
 
 #ifndef Q_OS_MACOS
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
   QGuiApplication::setDesktopFileName(QStringLiteral("vicinae"));
 #endif
 
-  m_searchModel = new RootSearchModel(ViewScope(&ctx, ctx.navigation->topState()->sender), this);
-
   qRegisterMetaType<ImageUrl>("ImageUrl");
-
-  m_engine.addImageProvider(QStringLiteral("vicinae"), new AsyncImageProvider());
 
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
-  rootCtx->setContextProperty(QStringLiteral("searchModel"), m_searchModel);
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
+  rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
 
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
@@ -96,7 +91,13 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   if (!Environment::isHudDisabled()) {
     m_hudBridge = new HudBridge(this);
     rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
-    m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/HudWindow.qml")));
+    m_engine.load(QUrl(
+#ifdef Q_OS_MACOS
+        QStringLiteral("qrc:/Vicinae/HudWindowMacOS.qml")
+#else
+        QStringLiteral("qrc:/Vicinae/HudWindowLayerShell.qml")
+#endif
+            ));
   }
 
   auto *nav = ctx.navigation.get();
@@ -120,6 +121,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(&m_cacheEvictionTimer, &QTimer::timeout, this, [this]() {
     if (m_window) m_window->releaseResources();
     m_engine.trimComponentCache();
+    ImageRendering::clearCache();
 #ifdef __GLIBC__
     malloc_trim(0);
 #endif
@@ -339,7 +341,12 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
     if (ke->modifiers().testFlag(Qt::KeypadModifier)) {
       ke->setModifiers(ke->modifiers() & ~Qt::KeypadModifier);
     }
-    if (forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) { return true; }
+    // unmodified keys (return included) belong to the focused component: forwarding
+    // them globally would steal text input or returns meant for local widgets such as
+    // text areas, overlays or the opened action panel.
+    if (ke->modifiers() != Qt::NoModifier && forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) {
+      return true;
+    }
   }
 
   // only works on some compositors.
@@ -382,39 +389,23 @@ void LauncherWindow::handleCurrentViewChanged() {
   m_viewWasPopped = false;
   m_viewWasReplaced = false;
 
-  if (nav->viewStackSize() == 1) {
-    disconnect(m_searchAccessoryConnection);
-    if (!m_searchAccessoryUrl.isEmpty()) {
-      m_searchAccessoryUrl.clear();
-      emit searchAccessoryChanged();
-    }
-    if (m_commandViewHost) {
-      m_commandViewHost = nullptr;
-      emit commandViewHostChanged();
-    }
-    if (!m_isRootSearch) {
-      m_isRootSearch = true;
-      emit isRootSearchChanged();
-    }
-    if (!m_showBackButton) {
-      m_showBackButton = true;
-      emit showBackButtonChanged();
-    }
-    if (m_overrideWidth != 0 || m_overrideHeight != 0) {
-      m_overrideWidth = 0;
-      m_overrideHeight = 0;
-      emit windowSizeOverrideChanged();
-    }
-    emit commandStackCleared();
-    tryCompaction();
-    return;
-  }
-
   auto *state = nav->topState();
   if (!state || !state->sender) return;
 
   auto *bridge = dynamic_cast<ViewHostBase *>(state->sender);
   if (!bridge) return;
+
+  bool const isRoot = nav->viewStackSize() == 1;
+  if (m_atRoot != isRoot) {
+    m_atRoot = isRoot;
+    emit atRootChanged();
+  }
+
+  if (m_overrideWidth != 0 || m_overrideHeight != 0) {
+    m_overrideWidth = 0;
+    m_overrideHeight = 0;
+    emit windowSizeOverrideChanged();
+  }
 
   disconnect(m_searchAccessoryConnection);
   m_searchAccessoryConnection =
@@ -446,11 +437,6 @@ void LauncherWindow::handleCurrentViewChanged() {
   } else {
     bridge->onReactivated();
   }
-
-  if (m_isRootSearch) {
-    m_isRootSearch = false;
-    emit isRootSearchChanged();
-  }
   tryCompaction();
 }
 
@@ -459,18 +445,19 @@ void LauncherWindow::forwardSearchText(const QString &text) {
   tryCompaction();
 }
 
-void LauncherWindow::handleReturn() {
-  if (!m_isRootSearch) {
-    m_actionPanel->executePrimaryAction();
-  } else {
-    m_searchModel->activateSelected();
-  }
-}
-
 bool LauncherWindow::forwardKey(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
+  const bool isReturn = key == Qt::Key_Return || key == Qt::Key_Enter;
+  const bool unmodified = (mods & ~Qt::KeypadModifier) == Qt::NoModifier;
 
-  if (mods == Qt::NoModifier) return false;
+  // unmodified keys are regular text input, except return which the action panel
+  // knows how to handle
+  if (unmodified && !isReturn) return false;
+
+  if (unmodified && m_compacted) {
+    expand();
+    return true;
+  }
 
   switch (key) {
   case Qt::Key_Shift:
@@ -497,15 +484,7 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
 
   QKeyEvent const event(QEvent::KeyPress, key, mods);
 
-  if (auto *action = m_ctx.navigation->findBoundAction(&event)) {
-    if (auto *submenu = dynamic_cast<SubmenuAction *>(action)) {
-      m_actionPanel->openSubmenu(submenu);
-    } else {
-      m_ctx.navigation->executeAction(action);
-      m_actionPanel->close();
-    }
-    return true;
-  }
+  if (m_actionPanel->activateBoundAction(&event)) return true;
 
   if (Keyboard::Shortcut(Keybind::OpenSettings) == &event) {
     m_ctx.navigation->closeWindow();
@@ -537,8 +516,6 @@ void LauncherWindow::popToRoot() {
 
 bool LauncherWindow::popOnBackspace() { return m_ctx.services->config()->value().popOnBackspace; }
 
-bool LauncherWindow::tryAliasFastTrack() { return m_searchModel->tryAliasFastTrack(); }
-
 int LauncherWindow::matchNavigationKey(int key, int modifiers) {
   return KeyBindingService::matchNavigation(key, modifiers, m_ctx.services->config()->value().keybinding);
 }
@@ -557,7 +534,16 @@ QRect LauncherWindow::cursorScreenGeometry() const {
   return screen ? screen->geometry() : QRect();
 }
 
-void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(); }
+bool LauncherWindow::canPositionWindow() { return Environment::supportsArbitraryWindowPlacement(); }
+
+void LauncherWindow::positionOnCursorScreen() {
+  if (!m_window || !canPositionWindow()) return;
+  const QRect g = cursorScreenGeometry();
+  m_window->setX(g.x() + (g.width() - m_window->width()) / 2);
+  m_window->setY(g.y() + (g.height() - m_window->height()) / 3);
+}
+
+void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(true); }
 
 void LauncherWindow::buildFooterMenu() {
   auto state = std::make_unique<ActionPanelState>();

@@ -117,6 +117,8 @@ bool AppService::showInFileBrowser(const std::filesystem::path &path, bool selec
   return m_provider->showInFileBrowser(path, select);
 }
 
+bool AppService::openLocation(const AbstractApplication &app) const { return m_provider->openLocation(app); }
+
 void AppService::handleDirectoryChanged(const QString &path) {
   (void)path;
   m_rescanDebounce->start();

@@ -1,7 +1,7 @@
 #include "raycast-store-model.hpp"
 #include "actions/extension/extension-actions.hpp"
 #include "raycast-store-detail-host.hpp"
-#include "lib/keyboard/keybind.hpp"
+#include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
@@ -13,9 +13,12 @@ void RaycastStoreSection::setEntries(const std::vector<Raycast::Extension> &exte
   m_entries.clear();
   m_entries.reserve(extensions.size());
   for (const auto &ext : extensions) {
-    auto tier = Raycast::CompatTier::Unknown;
-    if (auto it = compat.find(ext.name.toStdString()); it != compat.end()) {
-      tier = Raycast::compatTierFromInfo(it->second);
+    std::optional<Raycast::CompatTier> tier;
+    if constexpr (Raycast::hasCompatSheet()) {
+      tier = Raycast::CompatTier::Unknown;
+      if (auto it = compat.find(ext.name.toStdString()); it != compat.end()) {
+        tier = Raycast::compatTierFromInfo(it->second);
+      }
     }
     m_entries.push_back({.extension = ext, .installed = registry->isInstalled(ext.id), .compatTier = tier});
   }
@@ -63,7 +66,7 @@ QVariant RaycastStoreSection::customData(int i, int role) const {
   case IsInstalled:
     return entry.installed;
   case CompatTierRole:
-    return static_cast<int>(entry.compatTier);
+    return entry.compatTier ? static_cast<int>(*entry.compatTier) : -1;
   default:
     return {};
   }

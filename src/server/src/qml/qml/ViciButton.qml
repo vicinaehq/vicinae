@@ -11,6 +11,7 @@ Rectangle {
     property color foreground: root.variant === "accent" ? Theme.listItemSelectionFg : Theme.foreground
     property real iconSize: 16
     property real horizontalPadding: 12
+    property bool showFocus: activeFocus
 
     signal clicked
 
@@ -36,15 +37,15 @@ Rectangle {
         }
     }
 
-    border.width: root.bordered || root.activeFocus ? 1 : 0
+    border.width: root.bordered || root.showFocus ? 1 : 0
     border.color: {
-        if (root.activeFocus)
-            return root.variant === "accent" ? Theme.listItemSelectionFg : Theme.accent;
+        if (root.showFocus)
+            return Config.withAlpha(root.variant === "accent" ? Theme.listItemSelectionFg : Theme.accent, Config.windowOpacity);
         if (!root.bordered)
             return "transparent";
         if (root.variant === "secondary")
-            return Theme.inputBorder;
-        return Theme.divider;
+            return Config.withAlpha(Theme.inputBorder, Config.windowOpacity);
+        return Config.withAlpha(Theme.divider, Config.windowOpacity);
     }
 
     Row {

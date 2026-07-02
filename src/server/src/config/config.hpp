@@ -19,6 +19,7 @@ namespace config {
 struct ProviderItemData {
   std::optional<std::string> alias;
   std::optional<bool> enabled;
+  std::optional<std::string> shortcut;
   std::optional<glz::generic::object_t> preferences;
 };
 
@@ -88,7 +89,11 @@ template <> struct Partial<Size> {
 
 struct WindowCSD {
   bool enabled = true;
+#ifdef Q_OS_MACOS
+  int rounding = 30;
+#else
   int rounding = 10;
+#endif
   int borderWidth = 3;
   int shadowSize = 12;
 };
@@ -109,13 +114,37 @@ template <> struct Partial<WindowCompactMode> {
 };
 
 struct WindowConfig {
-  float opacity;
+  static constexpr float OPAQUE_OPACITY = 1.0F;
+  static constexpr float TRANSLUCENT_OPACITY = 0.6F;
+
+  std::optional<float> opacity;
+  std::optional<int> rounding;
   WindowCSD clientSideDecorations;
   Size size;
   std::string screen;
   BlurConfig blur;
   WindowCompactMode compactMode;
   LayerShellConfig layerShell;
+
+  std::string material = "auto";
+
+  // Corner radius is a window-level property, but historically lived under client_side_decorations.
+  // Fall back to that value when the flat key is unset to keep older configs working.
+  int effectiveRounding() const { return rounding.value_or(clientSideDecorations.rounding); }
+
+  std::string resolvedMaterial(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
+    if (material != "auto") return material;
+    if (!blur.enabled) return "none";
+    if (liquidGlassAvailable) return "liquid_glass";
+    return windowMaterialAvailable ? "blur" : "none";
+  }
+
+  float resolvedOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
+    if (opacity) return *opacity;
+    return resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass"
+               ? TRANSLUCENT_OPACITY
+               : OPAQUE_OPACITY;
+  }
 };
 
 template <> struct Partial<WindowConfig> {
@@ -126,6 +155,7 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<BlurConfig>> blur;
   std::optional<Partial<WindowCompactMode>> compactMode;
   std::optional<Partial<LayerShellConfig>> layerShell;
+  std::optional<std::string> material;
 };
 
 struct FontConfig {
@@ -133,7 +163,11 @@ struct FontConfig {
 
   struct {
     std::string family = "auto";
+#ifdef Q_OS_MACOS
+    float size = 13;
+#else
     float size = 10.5;
+#endif
   } normal;
 };
 
@@ -187,6 +221,26 @@ using ProviderMap = std::map<std::string, ProviderData>;
 
 static constexpr const char *SCHEMA = "https://vicinae.com/schemas/config.json";
 
+struct InputServer {
+  bool enabled = true;
+};
+
+template <> struct Partial<InputServer> {
+  std::optional<bool> enabled;
+};
+
+struct GlobalShortcuts {
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
+  std::optional<std::string> toggle = "alt+space";
+#else
+  std::optional<std::string> toggle = "super+control+space";
+#endif
+};
+
+template <> struct Partial<GlobalShortcuts> {
+  std::optional<std::string> toggle;
+};
+
 struct ConfigValue {
   std::string schema = SCHEMA;
   std::vector<std::string> imports;
@@ -200,6 +254,9 @@ struct ConfigValue {
   std::string faviconService = "twenty";
   std::string keybinding = "default";
   int pixmapCacheMb = 50;
+
+  InputServer inputServer;
+  GlobalShortcuts globalShortcuts;
 
   FontConfig font;
   ThemeConfig theme;
@@ -250,6 +307,8 @@ template <> struct Partial<ConfigValue> {
   std::optional<std::string> keybinding;
   std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
+  std::optional<Partial<InputServer>> inputServer;
+  std::optional<Partial<GlobalShortcuts>> globalShortcuts;
 
   std::optional<Partial<FontConfig>> font;
   std::optional<Partial<ThemeConfig>> theme;

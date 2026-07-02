@@ -1,11 +1,19 @@
 #include "ipc-command-server.hpp"
+#include "generated/ipc-server.hpp"
 #include "ipc-command-handler.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
+#include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-service.hpp"
 #include "qml/dmenu-view-host.hpp"
 #include "utils.hpp"
+#include <cstdint>
+#include <optional>
+#include <qfuture.h>
 #include <qlogging.h>
+#include <ranges>
+#include <string_view>
 #include <utility>
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -44,6 +52,40 @@ void IpcCommandServer::IpcTransport::forgetConn(QLocalSocket *dead) {
 IpcService::IpcService(ipc_gen::RpcTransport &transport, ApplicationContext &ctx)
     : ipc_gen::AbstractIpc(transport), m_ctx(ctx) {}
 
+namespace {
+
+struct FileCategoryDefinition {
+  std::string_view name;
+  vicinae::FileCategory category;
+};
+
+static constexpr FileCategoryDefinition FILE_CATEGORIES[] = {
+    {.name = "other", .category = vicinae::FileCategory::Other},
+    {.name = "directory", .category = vicinae::FileCategory::Directory},
+    {.name = "image", .category = vicinae::FileCategory::Image},
+    {.name = "video", .category = vicinae::FileCategory::Video},
+    {.name = "audio", .category = vicinae::FileCategory::Audio},
+    {.name = "document", .category = vicinae::FileCategory::Document},
+    {.name = "archive", .category = vicinae::FileCategory::Archive},
+    {.name = "application", .category = vicinae::FileCategory::Application},
+};
+
+std::optional<vicinae::FileCategory> fileCategoryFromString(std::string_view category) {
+  for (const auto &definition : FILE_CATEGORIES) {
+    if (definition.name == category) return definition.category;
+  }
+  return std::nullopt;
+}
+
+std::string_view fileCategoryToString(vicinae::FileCategory category) {
+  for (const auto &definition : FILE_CATEGORIES) {
+    if (definition.category == category) return definition.name;
+  }
+  return "other";
+}
+
+} // namespace
+
 ipc_gen::Result<ipc_gen::PingResponse>::Future IpcService::ping() {
   return ipc_gen::Result<ipc_gen::PingResponse>::ok(
       {.version = VICINAE_GIT_TAG, .pid = static_cast<int>(QCoreApplication::applicationPid())});
@@ -65,6 +107,34 @@ ipc_gen::Result<ipc_gen::DescribeResponse>::Future IpcService::describe() {
   return ipc_gen::Result<ipc_gen::DescribeResponse>::ok(
       {.open = m_ctx.navigation->isWindowOpened(),
        .entrypoint = m_ctx.navigation->activeCommand()->uniqueId()});
+}
+
+ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future IpcService::fsQuery(std::string q,
+                                                                              ipc_gen::FsQueryParams params) {
+  auto files = m_ctx.services->fileService();
+  IndexerQueryParams queryParams{.limit = params.limit};
+
+  if (params.category) {
+    auto category = fileCategoryFromString(*params.category);
+    if (!category) {
+      return ipc_gen::Result<std::vector<ipc_gen::FileResult>>::fail("Unknown file category: " +
+                                                                     *params.category);
+    }
+    queryParams.category = *category;
+  }
+
+  return files->queryAsync(q, queryParams).then([](const std::vector<IndexerFileResult> &results) {
+    auto fileResults =
+        results | std::views::transform([](const IndexerFileResult &result) {
+          return ipc_gen::FileResult{.path = result.path,
+                                     .score = static_cast<std::uint32_t>(result.rank),
+                                     .category = std::string{fileCategoryToString(result.category)},
+                                     .mimeType = result.mimeType};
+        }) |
+        std::ranges::to<std::vector>();
+
+    return std::expected<std::vector<ipc_gen::FileResult>, std::string>{std::move(fileResults)};
+  });
 }
 
 ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future IpcService::launchApp(ipc_gen::LaunchAppRequest req) {

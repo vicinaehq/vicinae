@@ -34,3 +34,7 @@ heaptrack*
 /tmp
 
 /internal-docs
+
+
+.worktrees
+.envrc.local

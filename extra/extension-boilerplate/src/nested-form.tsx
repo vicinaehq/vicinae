@@ -12,7 +12,9 @@ import {
 
 function SubmitResult({ values }: { values: Record<string, unknown> }) {
 	const json = JSON.stringify(values, null, 2);
-	return <Detail markdown={`# Submitted values\n\n\`\`\`json\n${json}\n\`\`\``} />;
+	return (
+		<Detail markdown={`# Submitted values\n\n\`\`\`json\n${json}\n\`\`\``} />
+	);
 }
 
 function NestedForm({ item }: { item: string }) {

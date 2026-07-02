@@ -1,6 +1,18 @@
 #include "raycast-store.hpp"
 #include "environment.hpp"
-#include "lib/glaze-qt.hpp"
+#include "utils/capabilities.hpp"
+#include <algorithm>
+
+static bool availableOnCurrentPlatform(const Raycast::Extension &ext) {
+  // Raycast won't advertise linux compatibility, but we still want them on Linux (best-effort support)
+  if constexpr (!Raycast::isNativePlatform()) return true;
+
+  // no platforms means every platform
+  if (!ext.platforms) return true;
+
+  return std::ranges::contains(*ext.platforms, platform::extensionPlatform(),
+                               [](const QString &p) { return p.toLower(); });
+}
 
 RaycastStoreService::RaycastStoreService() {
   m_client.setBaseUrl(QStringLiteral("https://backend.raycast.com/api/v1"));
@@ -21,6 +33,7 @@ void RaycastStoreService::postProcess(Raycast::Extension &ext) {
 }
 
 void RaycastStoreService::postProcess(std::vector<Raycast::Extension> &extensions) {
+  std::erase_if(extensions, [](const auto &ext) { return !availableOnCurrentPlatform(ext); });
   for (auto &ext : extensions) {
     postProcess(ext);
   }
@@ -59,7 +72,9 @@ QFuture<Raycast::DownloadExtensionResult> RaycastStoreService::downloadExtension
 }
 
 QFuture<Raycast::CompatResult> RaycastStoreService::fetchCompat() {
-  if (m_compatFetched) { return QtFuture::makeReadyValueFuture<Raycast::CompatResult>(m_compat); }
+  if (!Raycast::hasCompatSheet() || m_compatFetched) {
+    return QtFuture::makeReadyValueFuture<Raycast::CompatResult>(m_compat);
+  }
 
   return m_vicinaeClient.get<Raycast::CompatMap>(QStringLiteral("/raycast/get-compat"))
       .then([this](http::Client::Result<Raycast::CompatMap> result) -> Raycast::CompatResult {

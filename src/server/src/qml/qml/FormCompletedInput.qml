@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Item {
+FocusScope {
     id: root
     implicitHeight: 36
     Layout.fillWidth: true
@@ -12,6 +12,7 @@ Item {
     property string placeholder: ""
     property bool readOnly: false
     property bool hasError: false
+    property bool filled: false
     readonly property bool editing: innerInput.editing
 
     // [{iconSource, title, value}]
@@ -40,6 +41,7 @@ Item {
         placeholder: root.placeholder
         readOnly: root.readOnly
         hasError: root.hasError
+        filled: root.filled
 
         onTextEdited: {
             root.textEdited();

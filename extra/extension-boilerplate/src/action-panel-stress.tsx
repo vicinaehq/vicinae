@@ -46,7 +46,10 @@ function ReconciliationTest() {
 									title={`Primary — render #${tick}`}
 									icon={Icon.Star}
 									onAction={() =>
-										showToast(Toast.Style.Success, `${item.id} at render ${tick}`)
+										showToast(
+											Toast.Style.Success,
+											`${item.id} at render ${tick}`,
+										)
 									}
 								/>
 								<Action
@@ -215,7 +218,11 @@ function DynamicSubmenuTest() {
 							onOpen={handleSubmenuOpen}
 						>
 							{loadedItems.length === 0 ? (
-								<Action title="Loading..." icon={Icon.Clock} onAction={() => {}} />
+								<Action
+									title="Loading..."
+									icon={Icon.Clock}
+									onAction={() => {}}
+								/>
 							) : (
 								loadedItems.map((item, i) => (
 									<Action
@@ -276,10 +283,7 @@ function LargeActionPanelTest() {
 										title={`${cat} Action ${i + 1}`}
 										icon={Icon.Dot}
 										onAction={() =>
-											showToast(
-												Toast.Style.Success,
-												`${cat} #${i + 1}`,
-											)
+											showToast(Toast.Style.Success, `${cat} #${i + 1}`)
 										}
 									/>
 								))}
@@ -364,9 +368,7 @@ function StressTest() {
 												key={a.title}
 												title={`${a.title} — tick ${tick}`}
 												icon={a.icon}
-												onAction={() =>
-													showToast(Toast.Style.Success, a.title)
-												}
+												onAction={() => showToast(Toast.Style.Success, a.title)}
 											/>
 										))}
 									</ActionPanel.Section>
@@ -386,7 +388,10 @@ function StressTest() {
 									)}
 								</>
 							)}
-							<ActionPanel.Submenu title={`Submenu (phase ${phase})`} icon={Icon.List}>
+							<ActionPanel.Submenu
+								title={`Submenu (phase ${phase})`}
+								icon={Icon.List}
+							>
 								{actions.map((a) => (
 									<Action
 										key={a.title}

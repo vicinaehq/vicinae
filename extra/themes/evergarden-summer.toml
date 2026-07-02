@@ -12,7 +12,7 @@ icon = "icons/evergarden.png"
 background = "#d7e1eb"
 foreground = "#171c1f"
 secondary_background = "#c8d5e1"
-border = "#879da4"
+border = "#666B70"
 accent = "#91ac75"
 
 [colors.accents]

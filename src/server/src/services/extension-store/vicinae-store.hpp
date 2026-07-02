@@ -2,11 +2,12 @@
 #include <QDateTime>
 #include <QFuture>
 #include <QObject>
+#include "glaze-qt.hpp"
 #include <QString>
 #include <expected>
 #include <optional>
 #include <vector>
-#include "lib/http-client.hpp"
+#include "internal/http-client.hpp"
 #include "ui/image/url.hpp"
 
 namespace VicinaeStore {

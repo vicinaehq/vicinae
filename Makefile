@@ -5,14 +5,15 @@ TAG 							:= $(shell git describe --tags --abbrev=0)
 APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
 APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 FIGURA_CC						:= $(BIN_DIR)/figura
+SHELL							:= /bin/sh
 
 release:
-	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: release
 
 host-optimized:
-	CXXFLAGS="${CXXFLAGS} -march=native" cmake -DLTO=ON -G Ninja -B build
+	CXXFLAGS="${CXXFLAGS} -march=native" cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B build
 	cmake --build $(BUILD_DIR)
 .PHONY: optimized
 
@@ -31,7 +32,7 @@ mac-bundle:
 .PHONY: mac-bundle
 
 mac-deps:
-	./scripts/macos-setup.sh
+	@./scripts/macos-setup.sh
 .PHONY: mac-deps
 
 debug-tidy:
@@ -53,10 +54,12 @@ strip:
 .PHONY: strip
 
 test:
-	./$(BIN_DIR)/vicinae-emoji-tests
+	./$(BIN_DIR)/vicinae-glyph-tests
 	./$(BIN_DIR)/vicinae-fuzzy-tests
+	./$(BIN_DIR)/vicinae-server-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
+	./$(BIN_DIR)/vicinae-file-indexer-tests
 .PHONY: test
 
 static:
@@ -101,6 +104,18 @@ appimage-build-env-push:
 	docker push $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
 .PHONY: appimage-build-env-push
 
+depot-push-arch:
+	depot build --save --save-tag arch-latest --platform linux/amd64 -f scripts/runners/arch/base.Dockerfile scripts/runners/arch
+.PHONY: depot-push-arch
+
+depot-push-appimage-amd64:
+	depot build --save --save-tag appimage-amd64-latest --platform linux/amd64 -f scripts/runners/appimage/AppImageBuilder.Dockerfile scripts/runners/appimage
+.PHONY: depot-push-appimage-amd64
+
+depot-push-appimage-arm64:
+	depot build --save --save-tag appimage-arm64-latest --platform linux/arm64 -f scripts/runners/appimage/AppImageBuilder.Dockerfile scripts/runners/appimage
+.PHONY: depot-push-appimage-arm64
+
 NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 CLANG_FORMAT := $(shell command -v clang-format 2>/dev/null || echo /opt/homebrew/opt/llvm/bin/clang-format)
 
@@ -125,17 +140,23 @@ check-format:
 
 bump-patch:
 	./scripts/bump_version.sh patch
-	make update-manifest
 .PHONY: bump-patch
 
 bump-minor:
 	./scripts/bump_version.sh minor
-	make update-manifest
 .PHONY: bump-minor
 
-update-manifest:
-	./scripts/update-manifest.sh ./manifest.yaml
-.PHONY: update-manifest
+bump-major:
+	./scripts/bump_version.sh major
+.PHONY: bump-major
+
+nix-hash:
+	$(SHELL) scripts/update-nix-npm-hashes.sh
+.PHONY: nix-hashes
+
+nix-hash-check:
+	$(SHELL) scripts/update-nix-npm-hashes.sh --check
+.PHONY: nix-hash-check
 
 # if we need to manually create a release
 gh-release:
@@ -161,7 +182,6 @@ clean:
 	$(RM) -rf ./scripts/.tmp
 	$(RM) -rf ./src/lib/*/build
 .PHONY: clean
-
 
 figen:
 	$(FIGURA_CC) compile ./figura/tsapi.fig --client typescript --output ./src/typescript/api/src/api/proto/api.ts

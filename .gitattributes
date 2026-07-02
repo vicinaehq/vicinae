@@ -1,1 +1,4 @@
 vendor/** linguist-vendored
+
+# this will probably be moved out of the repo eventually
+extra/extension-boilerplate/** linguist-vendored

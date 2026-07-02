@@ -1,0 +1,38 @@
+name: Build Arch build-env image
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  push:
+    branches: [main]
+    paths:
+      - scripts/runners/arch/base.Dockerfile
+      - .github/workflows/build-arch-image.yaml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: depot-ubuntu-24.04
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Depot
+        uses: depot/setup-action@v1
+
+      - name: Build and push to Depot Registry
+        uses: depot/build-push-action@v1
+        with:
+          project: dwd5s9sq7d
+          platforms: linux/amd64
+          context: scripts/runners/arch
+          file: scripts/runners/arch/base.Dockerfile
+          save: true
+          save-tags: arch-latest

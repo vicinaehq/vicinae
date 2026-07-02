@@ -1,5 +1,5 @@
 #pragma once
-#include "section-source.hpp"
+#include "section-list-model.hpp"
 #include <filesystem>
 #include <functional>
 
@@ -21,6 +21,10 @@ public:
   }
 
   QString itemId(int i) const override;
+
+  QVariant customData(int i, int role) const override;
+  QHash<int, QByteArray> customRoleNames() const override;
+  QHash<int, QVariant> customRoleDefaults() const override;
 
 protected:
   QString itemTitle(int i) const override;

@@ -1,5 +1,6 @@
 #include "xdg-app-database.hpp"
 #include "environment.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
 #include "utils.hpp"
 #include "xdgpp/desktop-entry/entry.hpp"
@@ -283,6 +284,19 @@ bool XdgAppDatabase::showInFileBrowser(const fs::path &path, bool select) const 
   return launch(*browser, {target->c_str()});
 }
 
+bool XdgAppDatabase::openLocation(const AbstractApplication &app) const {
+  auto path = QString::fromStdString(app.path());
+  const auto opener = findDefaultOpener(path);
+
+  if (!opener) return false;
+
+  return launch(*opener, {std::move(path)});
+}
+
+AppPtr XdgAppDatabase::locationOpener(const AbstractApplication &app) const {
+  return findDefaultOpener(QString::fromStdString(app.path()));
+}
+
 std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const { return xdgpp::appDirs(); }
 
 AppPtr XdgAppDatabase::findById(const QString &id) const {
@@ -379,7 +393,7 @@ xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::inferTermExec(const XdgApplica
         .hold = "--hold",
     };
   }
-  if (app.program() == "foot") {
+  if (app.program() == "foot" || app.program() == "footclient") {
     return {
         .exec = "-e",
         .appId = "--app-id",
@@ -474,7 +488,18 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
     return launch(*opener, {*url});
   }
 
-  if (xdgApp.isTerminalApp()) return launchTerminalCommand(xdgApp.parseExec(args), {});
+  if (xdgApp.isTerminalApp()) {
+    auto wd = xdgApp.data().workingDirectory().transform(QString::fromStdString);
+    // we pass a proper appId if the terminal allows it (according to xdg-terminal-exec spec)
+    // so that we can identify the terminal app from its own wm class and not the one of the terminal
+    // emulator. We don't alter title because it is usually dynamic and useful
+    auto opts = LaunchTerminalCommandOptions{
+        .appId = xdgApp.windowClass().value_or(xdgApp.id()),
+        .workingDirectory = std::move(wd),
+    };
+
+    return launchTerminalCommand(xdgApp.parseExec(args), std::move(opts));
+  }
 
   auto exec = xdgApp.parseExec(args, m_launchPrefix);
 

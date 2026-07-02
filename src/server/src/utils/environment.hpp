@@ -6,11 +6,14 @@
 #include <QProcessEnvironment>
 #include <QStandardPaths>
 #include <algorithm>
-#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <qtenvironmentvariables.h>
+
+#ifdef Q_OS_LINUX
+#include "internal/wayland/globals.hpp"
+#endif
 
 namespace Environment {
 
@@ -21,6 +24,8 @@ inline bool isGnomeEnvironment() {
 }
 
 inline bool isWaylandSession() { return QGuiApplication::platformName() == "wayland"; }
+
+inline bool isX11() { return QGuiApplication::platformName() == "xcb"; }
 
 inline bool supportsArbitraryWindowPlacement() { return !isWaylandSession(); }
 
@@ -47,16 +52,36 @@ inline bool isHyprlandCompositor() { return containsIgnoreCase(xdgpp::currentDes
 inline bool isPlasmaDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "kde"); }
 inline bool isWaylandPlasmaDesktop() { return isWaylandSession() && isPlasmaDesktop(); }
 inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "gnome"); }
+inline bool isCinnamonDesktop() {
+  // "X-Cinnamon" is the pre-spec value (used by Linux Mint); "Cinnamon" is the registered one.
+  return containsIgnoreCase(xdgpp::currentDesktop(), "x-cinnamon") ||
+         containsIgnoreCase(xdgpp::currentDesktop(), "cinnamon");
+}
+inline bool isMateDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "mate"); }
+inline bool isXfceDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "xfce"); }
 
 // used mostly to exclude cosmic which's implementation is currently broken
 inline bool isLayerShellSupported() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
+#elifdef Q_OS_LINUX
+  return Wayland::Globals::layerShell() && !isCosmicDesktop();
+#else
+  return false;
 #endif
-  return isWaylandSession() && !isCosmicDesktop() && !isGnomeEnvironment();
 }
 
-inline bool isHudDisabled() { return !isLayerShellSupported(); }
+inline bool isHudSupported() {
+#ifdef Q_OS_MACOS
+  return true;
+#else
+  // if layer shell is not supported, there doesn't seem to be an easy way for us to create
+  // a window that doesn't steal focus.
+  return isLayerShellSupported();
+#endif
+}
+
+inline bool isHudDisabled() { return !isHudSupported(); }
 
 /**
  * App image directory if we are running in an appimage.

@@ -82,7 +82,7 @@ RowLayout {
                     radius: 4
                     color: "transparent"
                     border.width: 1
-                    border.color: textDel.showError ? "#e53935" : textField.activeFocus ? Theme.accent : Theme.divider
+                    border.color: Config.withAlpha(textDel.showError ? "#e53935" : textField.activeFocus ? Theme.accent : Theme.divider, Config.windowOpacity)
 
                     function forceActiveFocus() {
                         textField.forceActiveFocus();
@@ -131,13 +131,6 @@ RowLayout {
                         }
                         Keys.onDownPressed: {
                             commandStack.currentItem.moveDown();
-                        }
-                        Keys.onReturnPressed: event => {
-                            if (event.modifiers !== Qt.NoModifier) {
-                                event.accepted = launcher.forwardKey(event.key, event.modifiers);
-                            } else {
-                                launcher.handleReturn();
-                            }
                         }
                         Keys.onTabPressed: event => {
                             if (argLoader.isLast) {
@@ -226,13 +219,6 @@ RowLayout {
                             root.valueChanged(argLoader.index, item.id);
                         }
 
-                        Keys.onReturnPressed: event => {
-                            if (event.modifiers !== Qt.NoModifier) {
-                                event.accepted = launcher.forwardKey(event.key, event.modifiers);
-                            } else {
-                                launcher.handleReturn();
-                            }
-                        }
                         Keys.onTabPressed: event => {
                             if (argLoader.isLast) {
                                 root.focusSearchInput();
@@ -240,6 +226,9 @@ RowLayout {
                             } else {
                                 event.accepted = false;
                             }
+                        }
+                        Keys.onPressed: event => {
+                            event.accepted = launcher.forwardKey(event.key, event.modifiers);
                         }
                     }
                 }

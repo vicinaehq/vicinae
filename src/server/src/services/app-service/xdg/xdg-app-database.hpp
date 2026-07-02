@@ -33,6 +33,8 @@ public:
   AppPtr genericTextEditor() const override;
   AppPtr webBrowser() const override;
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const override;
+  bool openLocation(const AbstractApplication &app) const override;
+  AppPtr locationOpener(const AbstractApplication &app) const override;
 
   XdgAppDatabase();
 

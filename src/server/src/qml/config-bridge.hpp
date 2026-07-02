@@ -1,6 +1,8 @@
 #pragma once
+#include "capabilities.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
+#include <QColor>
 #include <QObject>
 
 class ConfigBridge : public QObject {
@@ -16,6 +18,7 @@ class ConfigBridge : public QObject {
   Q_PROPERTY(bool considerPreedit READ considerPreedit NOTIFY changed)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick NOTIFY changed)
   Q_PROPERTY(bool blurEnabled READ blurEnabled NOTIFY changed)
+  Q_PROPERTY(QString windowMaterial READ windowMaterial NOTIFY changed)
 
 signals:
   void changed();
@@ -26,7 +29,10 @@ public:
             [this] { emit changed(); });
   }
 
-  qreal windowOpacity() const { return cfg().launcherWindow.opacity; }
+  qreal windowOpacity() const {
+    return cfg().launcherWindow.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),
+                                                platform::supports(platform::Capability::WindowMaterial));
+  }
 
   int borderWidth() const {
     auto &csd = cfg().launcherWindow.clientSideDecorations;
@@ -34,8 +40,11 @@ public:
   }
 
   int borderRounding() const {
-    auto &csd = cfg().launcherWindow.clientSideDecorations;
-    return csd.enabled ? csd.rounding : 0;
+    const auto &window = cfg().launcherWindow;
+    if (platform::supports(platform::Capability::ClientSideDecorations)) {
+      return window.clientSideDecorations.enabled ? window.effectiveRounding() : 0;
+    }
+    return window.effectiveRounding();
   }
 
   int shadowSize() const {
@@ -48,7 +57,16 @@ public:
   bool emacsMode() const { return cfg().keybinding == "emacs"; }
   bool considerPreedit() const { return cfg().considerPreedit; }
   bool activateOnSingleClick() const { return cfg().activateOnSingleClick; }
-  bool blurEnabled() const { return cfg().launcherWindow.blur.enabled; }
+  QString windowMaterial() const {
+    return QString::fromStdString(
+        cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass),
+                                              platform::supports(platform::Capability::WindowMaterial)));
+  }
+  bool blurEnabled() const { return windowMaterial() != QStringLiteral("none"); }
+
+  Q_INVOKABLE static QColor withAlpha(const QColor &c, qreal alpha) {
+    return QColor::fromRgbF(c.redF(), c.greenF(), c.blueF(), alpha);
+  }
 
 private:
   static const config::ConfigValue &cfg() { return ServiceRegistry::instance()->config()->value(); }

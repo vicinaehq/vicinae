@@ -20,13 +20,27 @@ enum ImageURLType : std::uint8_t {
   Https,
   Local,
   Emoji,
+  Symbol,
   DataURI,
-  MacBundle
+  MacBundle,
+  FileIcon,
+  FontPreview
 };
 
 static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
-    {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System},    {"http", Http},
-    {"https", Http},      {"local", Local},      {"bundle", MacBundle},
+    {"favicon", Favicon},
+    {"omnicast", Builtin},
+    {"builtin", Builtin},
+    {"system", System},
+    {"http", Http},
+    {"https", Http},
+    {"local", Local},
+    {"bundle", MacBundle},
+    {"file-icon", FileIcon},
+    {"emoji", Emoji},
+    {"symbol", Symbol},
+    {"datauri", DataURI},
+    {"font-preview", FontPreview},
 };
 
 static std::vector<std::pair<QString, SemanticColor>> colorTints = {
@@ -37,14 +51,13 @@ static std::vector<std::pair<QString, SemanticColor>> colorTints = {
     {"orange", SemanticColor::Orange},
     {"red", SemanticColor::Red},
     {"yellow", SemanticColor::Yellow},
+    {"cyan", SemanticColor::Cyan},
     {"accent", SemanticColor::Accent},
     {"primary-text", SemanticColor::Foreground},
     {"secondary-text", SemanticColor::TextMuted}};
 
 class ImageURL {
 public:
-  static Qt::AspectRatioMode fitToAspectRatio(ObjectFit fit);
-
   ImageURL &circle() {
     setMask(OmniPainter::CircleMask);
     return *this;
@@ -94,30 +107,23 @@ public:
 
   QUrl url() const;
 
-  ImageURL &param(const QString &name, const QString &value);
-  std::optional<QString> param(const QString &name) const;
-
   ImageURLType type() const;
   const QString &name() const;
-  std::optional<SemanticColor> foregroundTint() const;
-  std::optional<SemanticColor> backgroundTint() const;
+  std::optional<ColorLike> backgroundTint() const;
   const std::optional<ColorLike> &fillColor() const;
   OmniPainter::ImageMaskType mask() const;
-  std::optional<ObjectFit> fit() const { return m_fit; }
-  QString cacheKey() const { return m_cacheKey.value_or(toString()); }
-  void setCacheKey(const QString &key) { m_cacheKey = key; }
-  bool cachable() const { return m_cache; }
-  void setCachable(bool value) { m_cache = value; }
 
-  void setFit(ObjectFit fit) { m_fit = fit; }
   void setType(ImageURLType type);
   void setName(const QString &name);
-  void setSize(QSize size);
 
   ImageURL &setFill(const std::optional<ColorLike> &color);
   ImageURL &setMask(OmniPainter::ImageMaskType mask);
-  ImageURL &setForegroundTint(SemanticColor tint);
-  ImageURL &setBackgroundTint(SemanticColor tint);
+  ImageURL &setBackgroundTint(const ColorLike &tint);
+
+  // Returns a copy with colors resolved against the current theme (SemanticColor/DynamicColor
+  // become QColor; Builtin without fill gets Foreground) and local paths substituted with their
+  // @light/@dark sibling when present on disk.
+  ImageURL resolved() const;
 
   ImageURL();
   ImageURL(const QString &s) noexcept;
@@ -125,7 +131,6 @@ public:
   ImageURL(const ImageLikeModel &imageLike);
   ImageURL(const QUrl &url);
 
-  bool operator==(const ImageURL &rhs) const;
   operator QString() const { return toString(); }
 
   static ImageURL builtin(const QString &name);
@@ -137,6 +142,8 @@ public:
   static ImageURL macBundle(const std::filesystem::path &bundlePath);
   static ImageURL http(const QUrl &httpUrl);
   static ImageURL emoji(const QString &emoji);
+  static ImageURL symbol(const QString &symbol);
+  static ImageURL fontPreview(const QString &family, const QString &glyph);
   static ImageURL rawData(const QByteArray &data, const QString &mimeType);
   static ImageURL fileIcon(const std::filesystem::path &path);
 
@@ -144,15 +151,8 @@ private:
   ImageURLType _type = ImageURLType::Invalid;
   bool _isValid = false;
   QString _name;
-  bool m_cache = true;
-  std::optional<SemanticColor> _bgTint;
-  std::optional<SemanticColor> _fgTint;
+  std::optional<ColorLike> _bgTint;
   OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
   std::optional<QString> _fallback;
   std::optional<ColorLike> _fillColor = std::nullopt;
-  std::optional<ObjectFit> m_fit;
-  std::optional<QString> m_cacheKey;
-
-  // url dependant custom params
-  std::map<QString, QString> m_params;
 };

@@ -35,10 +35,58 @@ Out of the box, Vicinae can be your:
 
 When you need more, Vicinae can be extended in several ways:
 
-- [React/Typescript extensions](https://docs.vicinae.com/extensions), compatible with the Raycast ecosystem. In-app integration with the [Vicinae store](https://www.vicinae.com/extensions) and the [Raycast store](https://www.raycast.com/store).
+- [React/Typescript extensions](https://docs.vicinae.com/extensions/introduction), compatible with the Raycast ecosystem. In-app integration with the [Vicinae store](https://www.vicinae.com/extensions) and the [Raycast store](https://www.raycast.com/store).
 - [Script commands](https://docs.vicinae.com/scripts/getting-started), also compatible with the Raycast feature of the same name, with special Vicinae additions.
 - [dmenu style menu creation](https://docs.vicinae.com/dmenu), the linux minimalist way!
 
 ## Documentation
 
 Everything you need to know to get started with Vicinae is at [vicinae.com](https://vicinae.com). If you have any question, please feel free to come ask it on [discord](https://discord.gg/rP4ecD42p7)!
+
+## Sponsors
+
+### Gold sponsors
+
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://depot.dev/?utm_source=vicinae&utm_medium=readme" target="_blank">
+          <picture>
+            <source media="(prefers-color-scheme: light)" srcset="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-light@3x.png" />
+            <source media="(prefers-color-scheme: dark)" srcset="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-dark@3x.png" />
+            <img src="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-light@3x.png" width="450" alt="Depot logo" />
+          </picture>
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### Silver Sponsors
+
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://coderabbit.link/vicinaehq" target="_blank"><img src="https://avatars.githubusercontent.com/u/132028505?s=200&v=4" height="100" alt="CodeRabbit logo"></a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### Supporter sponsors
+
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/jaredallard" target="_blank"><img src="https://avatars.githubusercontent.com/u/2391349?v=4" height="60" alt="Jared Allard's pp"></a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+[And all our other amazing sponsors!](https://github.com/sponsors/vicinaehq#sponsors)

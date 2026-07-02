@@ -2,8 +2,11 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "keyboard/keybind.hpp"
-#include "misc/file-list-item.hpp"
+#include "keyboard/keyboard.hpp"
+#include "utils/file-list-item.hpp"
 #include "navigation-controller.hpp"
+#include "service-registry.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/news/news-service.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
@@ -16,6 +19,7 @@ const QHash<int, QByteArray> &customRoleNames() {
   static const QHash<int, QByteArray> roles = {
       {ItemType, "itemType"},
       {Alias, "alias"},
+      {ShortcutTokens, "shortcutTokens"},
       {IsActive, "isActive"},
       {AccessoryText, "accessoryText"},
       {AccessoryColor, "accessoryColor"},
@@ -31,17 +35,10 @@ const QHash<int, QByteArray> &customRoleNames() {
 
 const QHash<int, QVariant> &customRoleDefaults() {
   static const QHash<int, QVariant> defaults = {
-      {ItemType, QString()},
-      {Alias, QString()},
-      {IsActive, false},
-      {AccessoryText, QString()},
-      {AccessoryColor, QString()},
-      {IsCalculator, false},
-      {CalcQuestion, QString()},
-      {CalcQuestionUnit, QString()},
-      {CalcAnswer, QString()},
-      {CalcAnswerUnit, QString()},
-      {IsFile, false},
+      {ItemType, QString()},   {Alias, QString()},          {ShortcutTokens, QVariantList()},
+      {IsActive, false},       {AccessoryText, QString()},  {AccessoryColor, QString()},
+      {IsCalculator, false},   {CalcQuestion, QString()},   {CalcQuestionUnit, QString()},
+      {CalcAnswer, QString()}, {CalcAnswerUnit, QString()}, {IsFile, false},
   };
   return defaults;
 }
@@ -80,6 +77,13 @@ QVariant rootItemAccessoryData(const RootItem *item, int role) {
   return {};
 }
 
+QVariantList shortcutTokensFor(const RootItemMetadata &meta) {
+  if (!meta.shortcut || meta.shortcut->empty()) return {};
+  auto *service = ServiceRegistry::instance()->globalShortcuts();
+  if (!service || !service->isSupported()) return {};
+  return Keyboard::Shortcut::fromString(QString::fromStdString(*meta.shortcut)).toDisplayTokens();
+}
+
 } // namespace
 
 QString RootLinkSection::itemId(int) const { return m_link ? m_link->url : QString(); }
@@ -100,7 +104,7 @@ QHash<int, QVariant> RootLinkSection::customRoleDefaults() const { return root_s
 
 std::unique_ptr<ActionPanelState> RootLinkSection::actionPanel(int) const {
   if (!m_link) return nullptr;
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
   auto *open =
       new OpenAppAction(m_link->app, QString("Open in %1").arg(m_link->app->displayName()), {m_link->url});
@@ -226,6 +230,8 @@ QVariant RootFavoritesSection::customData(int i, int role) const {
     auto meta = m_manager->itemMetadata(m_items[i]->uniqueId());
     return QString::fromStdString(meta.alias.value_or(""));
   }
+  case ShortcutTokens:
+    return shortcutTokensFor(m_manager->itemMetadata(m_items[i]->uniqueId()));
   case IsActive:
     return m_items[i]->isActive();
   case AccessoryText:
@@ -284,6 +290,8 @@ QVariant RootResultsSection::customData(int i, int role) const {
   switch (role) {
   case Alias:
     return QString::fromStdString(m_items[i].meta.alias.value_or(""));
+  case ShortcutTokens:
+    return shortcutTokensFor(m_items[i].meta);
   case IsActive:
     return m_items[i].item->isActive();
   case AccessoryText:
@@ -342,7 +350,7 @@ QHash<int, QVariant> RootFilesSection::customRoleDefaults() const {
 
 std::unique_ptr<ActionPanelState> RootFilesSection::actionPanel(int i) const {
   if (std::cmp_greater_equal(i, m_files.size())) return nullptr;
-  return FileActions::actionPanel(m_files[i].path, m_appDb);
+  return FileActions::actionPanel(m_files[i].path, scope().appContext());
 }
 
 QString RootFallbackSection::sectionName() const {

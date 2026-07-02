@@ -234,7 +234,9 @@ void ShortcutFormViewHost::submit() {
 
   if (appId == QStringLiteral("default")) {
     auto appDb = context()->services->appDb();
-    if (auto browser = appDb->webBrowser()) { appId = browser->id(); }
+    auto opener = appDb->findDefaultOpener(m_link);
+    if (!opener) { opener = appDb->webBrowser(); }
+    if (opener) { appId = opener->id(); }
   }
 
   if (iconId == QStringLiteral("default")) { iconId = m_resolvedDefaultIcon; }
@@ -307,10 +309,12 @@ void ShortcutFormViewHost::selectApp(const QVariantMap &item) {
     auto appId = item[QStringLiteral("id")].toString();
     auto appDb = context()->services->appDb();
     std::shared_ptr<AbstractApplication> resolvedApp;
-    if (appId == QStringLiteral("default"))
-      resolvedApp = appDb->webBrowser();
-    else
+    if (appId == QStringLiteral("default")) {
+      resolvedApp = appDb->findDefaultOpener(m_link);
+      if (!resolvedApp) resolvedApp = appDb->webBrowser();
+    } else {
       resolvedApp = appDb->findById(appId);
+    }
 
     if (resolvedApp) m_resolvedDefaultIcon = resolvedApp->iconUrl().toString();
 

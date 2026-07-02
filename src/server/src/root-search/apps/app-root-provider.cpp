@@ -65,6 +65,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   auto mainSection = panel->createSection();
   auto utils = panel->createSection();
+  auto lifecycleSection = panel->createSection();
   auto itemSection = panel->createSection();
   auto appActions = m_app->actions();
 
@@ -82,6 +83,12 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
       mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
       mainSection->addAction(focus);
     }
+
+    if (ctx->services->windowManager()->provider()->id() == "x11") {
+      mainSection->addAction(new PinWindowAction(activeWindows.front()));
+      mainSection->addAction(new BringToWorkspaceAction(activeWindows.front()));
+      mainSection->addAction(new CloseWindowAction(activeWindows.front()));
+    }
   } else {
     mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
   }
@@ -96,14 +103,21 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     mainSection->addAction(openAction);
   }
 
-  if (auto opener = appDb->findDefaultOpener(m_app->path().c_str())) {
-    auto openLocation = new OpenAppAction(opener, "Open Location", {m_app->path().c_str()});
+  if (auto opener = appDb->provider()->locationOpener(*m_app)) {
+    auto openLocation = new OpenAppLocationAction(m_app, opener);
     openLocation->setShortcut(Keybind::OpenAction);
     utils->addAction(openLocation);
   }
 
   utils->addAction(copyId);
   utils->addAction(copyLocation);
+
+  if (ctx->services->appRuntime()->isRunning(*m_app)) {
+    auto quit = new QuitAppAction(m_app);
+    quit->setShortcut(QString("ctrl+q"));
+    lifecycleSection->addAction(quit);
+    lifecycleSection->addAction(new ForceQuitAppAction(m_app));
+  }
 
   for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
     itemSection->addAction(action);

@@ -1,5 +1,6 @@
 #pragma once
 #include "extend/grid-model.hpp"
+#include "image-url.hpp"
 #include "extension/extension-action-panel-builder.hpp"
 #include "fuzzy/scored.hpp"
 #include "grid-source.hpp"
@@ -48,7 +49,7 @@ class ExtensionGridModel : public SectionGridModel {
   Q_OBJECT
   Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
   Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
-  Q_PROPERTY(QString emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
+  Q_PROPERTY(ImageUrl emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
   Q_PROPERTY(int fit READ fit NOTIFY fitChanged)
   Q_PROPERTY(double inset READ inset NOTIFY insetChanged)
   Q_PROPERTY(int dataRevision READ dataRevision NOTIFY dataRevisionChanged)
@@ -71,7 +72,7 @@ public:
 
   QString emptyTitle() const;
   QString emptyDescription() const;
-  QString emptyIcon() const;
+  ImageUrl emptyIcon() const;
   int fit() const { return static_cast<int>(m_fit); }
   double inset() const { return m_inset; }
   int dataRevision() const { return m_dataRevision; }

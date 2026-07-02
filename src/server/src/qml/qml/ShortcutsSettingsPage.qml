@@ -5,234 +5,144 @@ import QtQuick.Layouts
 Item {
     id: root
     readonly property var model: settings.keybindModel
+    readonly property real contentWidth: Math.min(width, 720)
+    readonly property real sideMargin: (width - contentWidth) / 2
 
     property int _recordingRow: -1
-    property var _recordingTokens: []
-    property string _recordingStatus: ""
-    property color _recordingStatusColor: Theme.textMuted
 
-    function _startRecording(row) {
-        _recordingRow = row;
-        _recordingTokens = [];
-        _recordingStatus = "Press a shortcut...";
-        _recordingStatusColor = Theme.textMuted;
-        root.forceActiveFocus();
+    Component.onCompleted: root.model.setFilter("")
+
+    HoverResetOnModelChange {
+        target: root.model
     }
 
-    function _cancelRecording() {
-        _recordingRow = -1;
-        _recordingTokens = [];
-        _recordingStatus = "";
+    ShortcutRecorderField {
+        id: recorder
+        shortcutDisplayProvider: (key, mods) => root.model.shortcutDisplayTokens(key, mods)
+        validateShortcut: (key, mods) => root.model.validateShortcut(root._recordingRow, key, mods)
+        onShortcutCaptured: (key, modifiers) => root.model.setShortcut(root._recordingRow, key, modifiers)
     }
 
-    onActiveFocusChanged: {
-        if (!activeFocus && _recordingRow >= 0)
-            _cancelRecording();
-    }
-
-    Keys.onPressed: event => {
-        if (root._recordingRow < 0)
-            return;
-        event.accepted = true;
-
-        const key = event.key;
-        const mods = event.modifiers;
-
-        const isModKey = key === Qt.Key_Shift || key === Qt.Key_Control || key === Qt.Key_Alt || key === Qt.Key_Meta;
-        const isCloseKey = key === Qt.Key_Escape || key === Qt.Key_Backspace;
-
-        if (!isModKey && isCloseKey && mods === Qt.NoModifier) {
-            root._cancelRecording();
-            return;
+    Connections {
+        target: recorder
+        function onClosed() {
+            root._recordingRow = -1;
         }
-
-        root._recordingTokens = root.model.shortcutDisplayTokens(key, mods);
-
-        if (isModKey) {
-            root._recordingStatus = "Press a key...";
-            root._recordingStatusColor = Theme.textMuted;
-            return;
-        }
-
-        const error = root.model.validateShortcut(key, mods);
-        if (error !== "") {
-            root._recordingStatus = error;
-            root._recordingStatusColor = Theme.danger;
-            return;
-        }
-
-        root.model.setShortcut(root._recordingRow, key, mods);
-        root._cancelRecording();
     }
 
-    ColumnLayout {
+    Flickable {
         anchors.fill: parent
-        spacing: 0
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        contentHeight: contentColumn.implicitHeight
+        contentWidth: width
 
-        // Header with title and search field
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin: 20
-            Layout.rightMargin: 20
-            Layout.topMargin: 12
-            Layout.bottomMargin: 8
-            spacing: 8
+        ScrollBar.vertical: ViciScrollBar {
+            policy: ScrollBar.AsNeeded
+        }
 
-            Text {
+        ColumnLayout {
+            id: contentColumn
+            width: parent.width
+            spacing: 0
+
+            SettingsSectionLabel {
                 text: "Keybindings"
-                color: Theme.foreground
-                font.pointSize: Theme.regularFontSize
-                font.bold: true
                 Layout.fillWidth: true
+                Layout.leftMargin: root.sideMargin + 20
+                Layout.rightMargin: root.sideMargin + 20
+                Layout.topMargin: 24
+                Layout.bottomMargin: 10
             }
 
-            Rectangle {
-                Layout.preferredWidth: 160
-                height: 24
-                radius: 4
-                color: "transparent"
-                border.color: searchField.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
-                border.width: 1
+            SettingsGroup {
+                Layout.leftMargin: root.sideMargin + 20
+                Layout.rightMargin: root.sideMargin + 20
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
-                    spacing: 4
+                Repeater {
+                    id: keybindRepeater
+                    model: root.model
 
-                    Image {
-                        source: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.textMuted
-                        sourceSize.width: 10
-                        sourceSize.height: 10
-                        Layout.preferredWidth: 10
-                        Layout.preferredHeight: 10
-                    }
-
-                    TextField {
-                        id: searchField
+                    delegate: Column {
+                        id: rowItem
                         Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        verticalAlignment: TextInput.AlignVCenter
-                        font.pointSize: Theme.smallerFontSize
-                        color: Theme.foreground
-                        placeholderText: "Filter..."
-                        placeholderTextColor: Theme.textPlaceholder
-                        background: null
-                        padding: 0
-                        activeFocusOnTab: true
 
-                        Timer {
-                            id: filterDebounce
-                            interval: 16
-                            onTriggered: root.model.setFilter(searchField.text)
-                        }
+                        required property int index
+                        required property string name
+                        required property string icon
+                        required property var shortcutTokens
 
-                        onTextChanged: filterDebounce.restart()
-                        Keys.onPressed: event => {
-                            if (event.key === Qt.Key_Escape && text !== "") {
-                                text = "";
-                                event.accepted = true;
+                        readonly property bool isRecording: index === root._recordingRow
+
+                        Item {
+                            width: parent.width
+                            height: kbRow.implicitHeight + 16
+
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.topMargin: 1
+                                anchors.bottomMargin: 1
+                                visible: rowItem.isRecording
+                                color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.08)
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    if (recorder.show(rowItem, true))
+                                        root._recordingRow = rowItem.index;
+                                }
+                            }
+
+                            RowLayout {
+                                id: kbRow
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
+                                spacing: 12
+
+                                ViciImage {
+                                    source: rowItem.icon ? Img.builtin(rowItem.icon).withBackgroundTint("accent") : ""
+                                    Layout.preferredWidth: 22
+                                    Layout.preferredHeight: 22
+                                    visible: rowItem.icon !== ""
+                                }
+
+                                Text {
+                                    text: rowItem.name
+                                    color: Theme.foreground
+                                    font.pointSize: Theme.regularFontSize
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+
+                                ShortcutBadge {
+                                    visible: rowItem.shortcutTokens.length > 0
+                                    tokens: rowItem.shortcutTokens
+                                }
+
+                                Text {
+                                    visible: !rowItem.isRecording && rowItem.shortcutTokens.length === 0
+                                    text: "Record Shortcut"
+                                    color: Theme.textPlaceholder
+                                    font.pointSize: Theme.smallerFontSize
+                                }
                             }
                         }
+
+                        ViciDivider {
+                            visible: rowItem.index < keybindRepeater.count - 1
+                            x: 16
+                            width: parent.width - 32
+                        }
                     }
                 }
             }
-        }
 
-        Rectangle {
-            Layout.fillWidth: true
-            height: 1
-            color: Theme.divider
-        }
-
-        ListView {
-            id: keybindList
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            clip: true
-            model: root.model
-            boundsBehavior: Flickable.StopAtBounds
-
-            ScrollBar.vertical: ViciScrollBar {
-                policy: keybindList.contentHeight > keybindList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
-            }
-
-            delegate: Item {
-                id: rowItem
-                width: keybindList.width
-                height: 45
-
-                required property int index
-                required property string name
-                required property string icon
-                required property var shortcutTokens
-
-                readonly property bool isRecording: index === root._recordingRow
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.bottomMargin: 1
-                    color: rowItem.isRecording ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.08) : rowHover.hovered ? Theme.listItemHoverBg : "transparent"
-                }
-
-                HoverHandler {
-                    id: rowHover
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: root._startRecording(rowItem.index)
-                }
-
-                RowLayout {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.leftMargin: 20
-                    anchors.rightMargin: 20
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 12
-
-                    ViciImage {
-                        source: rowItem.icon ? Img.builtin(rowItem.icon).withBackgroundTint("accent") : ""
-                        Layout.preferredWidth: 20
-                        Layout.preferredHeight: 20
-                        visible: rowItem.icon !== ""
-                    }
-
-                    Text {
-                        text: rowItem.name
-                        color: Theme.foreground
-                        font.pointSize: Theme.regularFontSize
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
-
-                    ShortcutBadge {
-                        visible: rowItem.isRecording ? root._recordingTokens.length > 0 : rowItem.shortcutTokens.length > 0
-                        tokens: rowItem.isRecording ? root._recordingTokens : rowItem.shortcutTokens
-                    }
-
-                    Text {
-                        visible: rowItem.isRecording
-                        text: root._recordingStatus
-                        color: root._recordingStatusColor
-                        font.pointSize: Theme.smallerFontSize
-                    }
-
-                    Text {
-                        visible: !rowItem.isRecording && rowItem.shortcutTokens.length === 0 && rowHover.hovered
-                        text: "Record Shortcut"
-                        color: Theme.textMuted
-                        font.pointSize: Theme.smallerFontSize
-                    }
-                }
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    height: 1
-                    color: Theme.divider
-                }
+            Item {
+                Layout.preferredHeight: 24
             }
         }
     }

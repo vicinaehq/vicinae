@@ -17,8 +17,17 @@ import { useState, useEffect } from "react";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const COLORS = [Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Orange, Color.Purple, Color.Magenta];
-const colorAt = (i: number) => COLORS[((i % COLORS.length) + COLORS.length) % COLORS.length];
+const COLORS = [
+	Color.Red,
+	Color.Blue,
+	Color.Green,
+	Color.Yellow,
+	Color.Orange,
+	Color.Purple,
+	Color.Magenta,
+];
+const colorAt = (i: number) =>
+	COLORS[((i % COLORS.length) + COLORS.length) % COLORS.length];
 
 function useTick(ms: number) {
 	const [tick, setTick] = useState(0);
@@ -45,7 +54,9 @@ function ViewTypeSwapper() {
 	const tick = useTick(500);
 
 	const cycle = () =>
-		setKind((prev) => VIEW_ORDER[(VIEW_ORDER.indexOf(prev) + 1) % VIEW_ORDER.length]);
+		setKind(
+			(prev) => VIEW_ORDER[(VIEW_ORDER.indexOf(prev) + 1) % VIEW_ORDER.length],
+		);
 
 	useEffect(() => {
 		if (!autoCycle) return;
@@ -55,7 +66,11 @@ function ViewTypeSwapper() {
 
 	const actions = (
 		<ActionPanel>
-			<Action title="Cycle View Type" icon={Icon.ArrowClockwise} onAction={cycle} />
+			<Action
+				title="Cycle View Type"
+				icon={Icon.ArrowClockwise}
+				onAction={cycle}
+			/>
 			<Action
 				title={autoCycle ? "Stop Auto-Cycle" : "Start Auto-Cycle (2 s)"}
 				icon={Icon.Clock}
@@ -68,7 +83,10 @@ function ViewTypeSwapper() {
 	switch (kind) {
 		case "list":
 			return (
-				<List navigationTitle={`Hot-Swap: List (t${tick})`} searchBarPlaceholder="List mode...">
+				<List
+					navigationTitle={`Hot-Swap: List (t${tick})`}
+					searchBarPlaceholder="List mode..."
+				>
 					<List.Section title="View Type Swapper">
 						<List.Item
 							title="Current: List"
@@ -81,7 +99,9 @@ function ViewTypeSwapper() {
 							<List.Item
 								key={`pad-${i}`}
 								title={`Filler ${i} (tick ${tick})`}
-								accessories={[{ tag: { color: colorAt(tick + i), value: `${tick}` } }]}
+								accessories={[
+									{ tag: { color: colorAt(tick + i), value: `${tick}` } },
+								]}
 								actions={actions}
 							/>
 						))}
@@ -90,7 +110,11 @@ function ViewTypeSwapper() {
 			);
 		case "grid":
 			return (
-				<Grid navigationTitle={`Hot-Swap: Grid (t${tick})`} columns={4} searchBarPlaceholder="Grid mode...">
+				<Grid
+					navigationTitle={`Hot-Swap: Grid (t${tick})`}
+					columns={4}
+					searchBarPlaceholder="Grid mode..."
+				>
 					<Grid.Section title="View Type Swapper">
 						{Array.from({ length: 8 }, (_, i) => (
 							<Grid.Item
@@ -122,9 +146,21 @@ function ViewTypeSwapper() {
 		case "form":
 			return (
 				<Form navigationTitle={`Hot-Swap: Form (t${tick})`} actions={actions}>
-					<Form.Description title="View Type Swapper" text={`Tick ${tick} — press Enter to cycle back to List.`} />
-					<Form.TextField id="f1" title="Auto-updating" value={`Value at tick ${tick}`} />
-					<Form.Checkbox id="c1" title="Toggle" label={`Tick is even: ${tick % 2 === 0}`} value={tick % 2 === 0} />
+					<Form.Description
+						title="View Type Swapper"
+						text={`Tick ${tick} — press Enter to cycle back to List.`}
+					/>
+					<Form.TextField
+						id="f1"
+						title="Auto-updating"
+						value={`Value at tick ${tick}`}
+					/>
+					<Form.Checkbox
+						id="c1"
+						title="Toggle"
+						label={`Tick is even: ${tick % 2 === 0}`}
+						value={tick % 2 === 0}
+					/>
 					<Form.Dropdown id="d1" title="Color" defaultValue="red">
 						{COLORS.map((c) => (
 							<Form.Dropdown.Item key={c} value={c} title={c} />
@@ -157,7 +193,12 @@ function DynamicReactivity() {
 			subtitle: `Phase ${phase}`,
 			accessories: [
 				{ tag: { color: colorAt(tick + i), value: `T${tick}` } },
-				{ text: { color: colorAt(tick + i + 3), value: `#${(tick * (i + 1)) % 100}` } },
+				{
+					text: {
+						color: colorAt(tick + i + 3),
+						value: `#${(tick * (i + 1)) % 100}`,
+					},
+				},
 			] as List.Item.Accessory[],
 		};
 	});
@@ -185,7 +226,11 @@ function DynamicReactivity() {
 						}
 						actions={
 							<ActionPanel>
-								<Action title="Add Item" icon={Icon.Plus} onAction={() => setItemCount((c) => c + 1)} />
+								<Action
+									title="Add Item"
+									icon={Icon.Plus}
+									onAction={() => setItemCount((c) => c + 1)}
+								/>
 								<Action
 									title="Remove Item"
 									icon={Icon.Minus}
@@ -199,7 +244,11 @@ function DynamicReactivity() {
 
 			{tick % 6 < 3 && (
 				<List.Section title={`Bonus Section (appears/disappears)`}>
-					<List.Item title="I come and go" subtitle={`tick ${tick}`} icon={Icon.Eye} />
+					<List.Item
+						title="I come and go"
+						subtitle={`tick ${tick}`}
+						icon={Icon.Eye}
+					/>
 				</List.Section>
 			)}
 		</List>
@@ -241,12 +290,19 @@ function MutatingChild({ label, depth }: { label: string; depth: number }) {
 							<Action
 								title={`Push Deeper (depth ${depth + 1})`}
 								icon={Icon.ArrowRight}
-								onAction={() => push(<MutatingChild label={`Child`} depth={depth + 1} />)}
+								onAction={() =>
+									push(<MutatingChild label={`Child`} depth={depth + 1} />)
+								}
 							/>
 							<Action
 								title="Toast from here"
 								icon={Icon.Bubble}
-								onAction={() => showToast(Toast.Style.Success, `From ${label} D${depth} T${tick}`)}
+								onAction={() =>
+									showToast(
+										Toast.Style.Success,
+										`From ${label} D${depth} T${tick}`,
+									)
+								}
 							/>
 						</ActionPanel>
 					}
@@ -255,7 +311,9 @@ function MutatingChild({ label, depth }: { label: string; depth: number }) {
 					<List.Item
 						key={`f-${i}`}
 						title={`Filler ${i} (t${tick})`}
-						accessories={[{ tag: { color: colorAt(tick + i), value: `D${depth}` } }]}
+						accessories={[
+							{ tag: { color: colorAt(tick + i), value: `D${depth}` } },
+						]}
 					/>
 				))}
 			</List.Section>
@@ -270,7 +328,10 @@ function BackgroundMutation() {
 
 	// swap root view type every 5 seconds
 	useEffect(() => {
-		const id = setInterval(() => setRootKind((v) => (v === "list" ? "grid" : "list")), 5000);
+		const id = setInterval(
+			() => setRootKind((v) => (v === "list" ? "grid" : "list")),
+			5000,
+		);
 		return () => clearInterval(id);
 	}, []);
 
@@ -280,7 +341,11 @@ function BackgroundMutation() {
 
 	const actions = (
 		<ActionPanel>
-			<Action title="Push Mutating Child" icon={Icon.ArrowRight} onAction={pushStack} />
+			<Action
+				title="Push Mutating Child"
+				icon={Icon.ArrowRight}
+				onAction={pushStack}
+			/>
 		</ActionPanel>
 	);
 
@@ -324,7 +389,9 @@ function BackgroundMutation() {
 					<List.Item
 						key={`rl-${i}`}
 						title={`Root filler ${i} (t${tick})`}
-						accessories={[{ tag: { color: colorAt(tick + i + 1), value: `${tick}` } }]}
+						accessories={[
+							{ tag: { color: colorAt(tick + i + 1), value: `${tick}` } },
+						]}
 					/>
 				))}
 			</List.Section>
@@ -348,7 +415,11 @@ function ChaosChild({ depth }: { depth: number }) {
 	// swap view type every 3 s
 	useEffect(() => {
 		const id = setInterval(
-			() => setKind((prev) => VIEW_ORDER[(VIEW_ORDER.indexOf(prev) + 1) % VIEW_ORDER.length]),
+			() =>
+				setKind(
+					(prev) =>
+						VIEW_ORDER[(VIEW_ORDER.indexOf(prev) + 1) % VIEW_ORDER.length],
+				),
 			3000 + depth * 500,
 		);
 		return () => clearInterval(id);
@@ -371,7 +442,10 @@ function ChaosChild({ depth }: { depth: number }) {
 				title="Force Cycle View"
 				icon={Icon.ArrowClockwise}
 				onAction={() =>
-					setKind((prev) => VIEW_ORDER[(VIEW_ORDER.indexOf(prev) + 1) % VIEW_ORDER.length])
+					setKind(
+						(prev) =>
+							VIEW_ORDER[(VIEW_ORDER.indexOf(prev) + 1) % VIEW_ORDER.length],
+					)
 				}
 			/>
 		</ActionPanel>
@@ -382,13 +456,19 @@ function ChaosChild({ depth }: { depth: number }) {
 	switch (kind) {
 		case "list":
 			return (
-				<List navigationTitle={navTitle} searchBarPlaceholder={`Chaos list D${depth} t${tick}`} isLoading={loading}>
+				<List
+					navigationTitle={navTitle}
+					searchBarPlaceholder={`Chaos list D${depth} t${tick}`}
+					isLoading={loading}
+				>
 					<List.Section title={`Chaos D${depth} List (t${tick})`}>
 						{Array.from({ length: 4 }, (_, i) => (
 							<List.Item
 								key={`cl-${i}`}
 								title={`D${depth} Item ${i} [t${tick}]`}
-								accessories={[{ tag: { color: colorAt(tick + i), value: kind } }]}
+								accessories={[
+									{ tag: { color: colorAt(tick + i), value: kind } },
+								]}
 								actions={actions}
 							/>
 						))}
@@ -397,7 +477,12 @@ function ChaosChild({ depth }: { depth: number }) {
 			);
 		case "grid":
 			return (
-				<Grid navigationTitle={navTitle} columns={3} searchBarPlaceholder={`Chaos grid D${depth}`} isLoading={loading}>
+				<Grid
+					navigationTitle={navTitle}
+					columns={3}
+					searchBarPlaceholder={`Chaos grid D${depth}`}
+					isLoading={loading}
+				>
 					<Grid.Section title={`Chaos D${depth} Grid (t${tick})`}>
 						{Array.from({ length: 6 }, (_, i) => (
 							<Grid.Item
@@ -421,8 +506,15 @@ function ChaosChild({ depth }: { depth: number }) {
 		case "form":
 			return (
 				<Form navigationTitle={navTitle} isLoading={loading} actions={actions}>
-					<Form.Description title={`Chaos D${depth}`} text={`Tick ${tick}, swapping in ${3 - (tick % 3)} s`} />
-					<Form.TextField id="chaos" title="Field" value={`D${depth} T${tick}`} />
+					<Form.Description
+						title={`Chaos D${depth}`}
+						text={`Tick ${tick}, swapping in ${3 - (tick % 3)} s`}
+					/>
+					<Form.TextField
+						id="chaos"
+						title="Field"
+						value={`D${depth} T${tick}`}
+					/>
 				</Form>
 			);
 	}
@@ -435,7 +527,11 @@ function CombinedChaos() {
 
 	useEffect(() => {
 		const id = setInterval(
-			() => setKind((prev) => VIEW_ORDER[(VIEW_ORDER.indexOf(prev) + 1) % VIEW_ORDER.length]),
+			() =>
+				setKind(
+					(prev) =>
+						VIEW_ORDER[(VIEW_ORDER.indexOf(prev) + 1) % VIEW_ORDER.length],
+				),
 			4000,
 		);
 		return () => clearInterval(id);
@@ -456,7 +552,11 @@ function CombinedChaos() {
 	switch (kind) {
 		case "list":
 			return (
-				<List navigationTitle={navTitle} searchBarPlaceholder={`Root list chaos t${tick}`} isLoading={tick % 8 < 2}>
+				<List
+					navigationTitle={navTitle}
+					searchBarPlaceholder={`Root list chaos t${tick}`}
+					isLoading={tick % 8 < 2}
+				>
 					<List.Section title={`Chaos Root (t${tick})`}>
 						<List.Item
 							title="Push to start chaos stack"
@@ -469,7 +569,12 @@ function CombinedChaos() {
 			);
 		case "grid":
 			return (
-				<Grid navigationTitle={navTitle} columns={4} searchBarPlaceholder={`Root grid chaos`} isLoading={tick % 8 < 2}>
+				<Grid
+					navigationTitle={navTitle}
+					columns={4}
+					searchBarPlaceholder={`Root grid chaos`}
+					isLoading={tick % 8 < 2}
+				>
 					<Grid.Section title={`Chaos Root Grid (t${tick})`}>
 						{Array.from({ length: 4 }, (_, i) => (
 							<Grid.Item
@@ -492,8 +597,15 @@ function CombinedChaos() {
 			);
 		case "form":
 			return (
-				<Form navigationTitle={navTitle} isLoading={tick % 8 < 2} actions={actions}>
-					<Form.Description title="Chaos Root" text={`Tick ${tick}. Push to start chaos stack.`} />
+				<Form
+					navigationTitle={navTitle}
+					isLoading={tick % 8 < 2}
+					actions={actions}
+				>
+					<Form.Description
+						title="Chaos Root"
+						text={`Tick ${tick}. Push to start chaos stack.`}
+					/>
 				</Form>
 			);
 	}
@@ -505,7 +617,10 @@ function CombinedChaos() {
 
 export default function Torture() {
 	return (
-		<List searchBarPlaceholder="Pick a torture test..." navigationTitle="Torture Tests">
+		<List
+			searchBarPlaceholder="Pick a torture test..."
+			navigationTitle="Torture Tests"
+		>
 			<List.Section title="Edge Case Tests">
 				<List.Item
 					title="View Type Hot-Swap"

@@ -19,6 +19,14 @@
 		"system_info": true
 	},
 
+	// Input monitoring/injection binary required to handle "paste to active window" actions and snippet expansion.
+	// If disabled, Vicinae will automatically fallback on copy instead of paste, and keyword expansion for snippets will no longer work.
+	// Note that conceptually, the input server is not uniquely related to snippets, so disabling snippets will not shutdown the input server process:
+	// only this key can.
+	"input_server": {
+		"enabled": true
+	},
+
 	// Whether root search should also search files directly.
 	// File search is performed asynchrounously: files may take an instant to appear after a query is entered.
 	// Turning this on results in an increase in CPU usage when searching.
@@ -69,9 +77,11 @@
 		// "system": uses the system/platform default font
 		// Or specify any font family name (e.g. "Fira Sans")
 		"normal": {
-			"family": "auto",
+			"family": "auto"
 			// The point size of the font (unlike pixel size, the point size scales with resolution)
-			"size": 10.5
+			// NOTE: if unspecified, Vicinae will pick the best point size for the current platform (there is no one size fits all)
+			// Therefore, it is recommended to leave this unset unless you really want a custom font size.
+			// "size": 10.5
 		}
 	},
 
@@ -93,20 +103,28 @@
 		// Control the opacity of the main window.
 		// Opacity for other surfaces are controlled by the active theme.
 		// [0;1]
-		"opacity": 1.0,
-		
-		// Blur the window background.
-		// Supported on wayland compositors that implement ext-background-effect
-		// Make sure the window opacity above is < 1
+		// "opacity": 0.6,
+
+		// @Deprecated: use "material". "enabled": false maps to material "none".
 		"blur": {
 			"enabled": true
 		},
 
-		// You can turn client side decorations off if you want to let your compositor draw the rounded
-		// borders and such. This usually gives better results, but is more complicated to setup, if at all possible.
+		// "none", "blur", "liquid_glass", or "auto" (liquid_glass when available, else blur).
+		// Needs window opacity < 1 to be visible.
+		"material": "auto",
+
+		// Corner radius of the launcher window, in pixels.
+		// "rounding": 10,
+
+		// Client-side decorations are Linux-only: vicinae draws its own border and shadow instead of
+		// letting the compositor decorate the window. You can turn them off to let your compositor draw
+		// the rounded borders and such. This usually gives better results, but is more complicated to
+		// setup, if at all possible.
 		"client_side_decorations": {
 			"enabled": true,
-			"rounding": 10,
+			// @Deprecated: prefer the top-level launcher_window.rounding.
+			// "rounding": 10,
 			"border_width": 1,
 
 			// Draws drop shadows on the client side, ONLY if we are a layer surface.
@@ -117,7 +135,7 @@
 		},
 
 		// In compact mode, vicinae only shows a search bar in the root search if no query is entered, only expanding to its full size when searching.
-		// WARNING: compact mode works best when vicinae is rendered as a layer surface (the default if available), as opposed to a regular floating window.
+		// WARNING: on Linux, compact mode works best when vicinae is rendered as a layer surface (the default if available), as opposed to a regular floating window.
 		"compact_mode": {
 			"enabled": false
 		},
@@ -150,18 +168,15 @@
 			"layer": "top" 
 		}
 	},
-
-	// How much memory (in MB) can be used to cache small image assets in memory directly
-	// The higher this value is the more memory vicinae will use. In exchange for this, you get lower cpu usage.
-	"pixmap_cache_mb": 50,
-
+	
 	// Keybinds are serialized using a custom format.
 	// It is recommended to edit them through the settings GUI, which will write them to this file.
+	// NOTE: here, "control" remaps to the "command" (⌘) key on macOS.
 	"keybinds": {
 		// common shortcuts
 		"open-search-filter": "control+P",
 		"open-settings": "control+,",
-		"toggle-action-panel": "control+B",
+		"toggle-action-panel": "control+K",
 
 		// used to assign shortcuts to generic actions
 		// if an extension provides a specific kind of action, it is encouraged to use shortcuts as defined here.

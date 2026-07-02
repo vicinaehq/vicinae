@@ -14,6 +14,17 @@ public:
     CONVERSION // unit/currency conversion
   };
 
+  enum class ComputeMode {
+    MixedSearch, // compute should expect to be fed regular search queries that aren't necessarily
+                 // computable expressions. each backend should apply its own logic to decide what
+                 // it should attempt to process or not.
+    Full,        // expression can be passed to the calculator backend raw
+  };
+
+  struct ComputeOptions {
+    ComputeMode mode = ComputeMode::Full;
+  };
+
   struct Unit {
     QString displayName;
   };
@@ -45,8 +56,8 @@ public:
   virtual QString id() const = 0;
   virtual QString displayName() const { return id(); }
 
-  virtual ComputeResult compute(const QString &question) = 0;
-  virtual QFuture<ComputeResult> asyncCompute(const QString &question) = 0;
+  virtual ComputeResult compute(const QString &question, const ComputeOptions &opts) = 0;
+  virtual QFuture<ComputeResult> asyncCompute(const QString &question, const ComputeOptions &opts) = 0;
 
   virtual void abort() {}
 

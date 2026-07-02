@@ -1,4 +1,11 @@
-import { Action, ActionPanel, Icon, List, showToast, Toast } from "@vicinae/api";
+import {
+	Action,
+	ActionPanel,
+	Icon,
+	List,
+	showToast,
+	Toast,
+} from "@vicinae/api";
 
 export default function SimpleList() {
 	return (
@@ -16,15 +23,19 @@ export default function SimpleList() {
 									title="Copy emoji"
 									content={fruit.emoji}
 								/>
-								<Action 
-									title="test toast" 
-									onAction={async () => {
-										const toast = await showToast(Toast.Style.Success, 'title', 'selected successfully');
-										setTimeout(() => toast.hide(), 500);
-									}
-								} />
 								<Action
-									shortcut={{key: 'arrowUp', modifiers: ['shift']}}
+									title="test toast"
+									onAction={async () => {
+										const toast = await showToast(
+											Toast.Style.Success,
+											"title",
+											"selected successfully",
+										);
+										setTimeout(() => toast.hide(), 500);
+									}}
+								/>
+								<Action
+									shortcut={{ key: "arrowUp", modifiers: ["shift"] }}
 									title="Custom action"
 									icon={Icon.Cog}
 									onAction={() =>

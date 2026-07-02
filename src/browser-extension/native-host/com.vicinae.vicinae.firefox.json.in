@@ -4,6 +4,6 @@
   "path": "@NATIVE_HOST_BIN@",
   "type": "stdio",
   "allowed_extensions": [
-    "vicinae@vicinae.com"
+    "firefox@vicinae.com"
   ]
 }

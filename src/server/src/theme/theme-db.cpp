@@ -1,6 +1,5 @@
 #include "theme/theme-db.hpp"
 #include "theme/theme-file.hpp"
-#include "theme/theme-parser.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
 #include <qfilesystemwatcher.h>
@@ -32,7 +31,6 @@ void ThemeDatabase::scan() {
   std::unordered_map<QString, std::shared_ptr<ThemeFile>> mapping;
   auto defaultDark = std::make_shared<ThemeFile>(ThemeFile::vicinaeDark());
   auto defaultLight = std::make_shared<ThemeFile>(ThemeFile::vicinaeLight());
-  ThemeParser parser;
 
   themes.emplace_back(defaultDark);
   mapping[defaultDark->id()] = defaultDark;
@@ -43,20 +41,20 @@ void ThemeDatabase::scan() {
     for (const auto &entry : std::filesystem::directory_iterator(path, ec)) {
       if (entry.is_directory()) continue;
       if (entry.path().extension() != ".toml") continue;
-      auto res = parser.parse(entry.path());
+      auto res = ThemeFile::fromFile(entry.path());
 
       if (!res) {
         qCritical() << "Failed to parse theme file at" << entry.path().c_str() << res.error();
         continue;
       }
 
-      if (mapping.contains(res.value().id())) { continue; }
+      if (mapping.contains(res->file.id())) { continue; }
 
-      for (const auto &diagnostic : parser.diagnostics()) {
-        qWarning() << "Warning for theme" << res->id() << ":" << diagnostic.c_str();
+      for (const auto &diagnostic : res->diagnostics) {
+        qWarning() << "Warning for theme" << res->file.id() << ":" << diagnostic.c_str();
       }
 
-      auto file = std::make_shared<ThemeFile>(res.value());
+      auto file = std::make_shared<ThemeFile>(std::move(res->file));
       themes.emplace_back(file);
       mapping[file->id()] = file;
     }

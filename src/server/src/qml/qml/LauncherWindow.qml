@@ -12,6 +12,9 @@ Window {
     property bool blurEnabled: Config.blurEnabled
     property bool shadowEnabled: shadowPadding > 0
     property bool nativeChrome: false
+    property bool autoPlaceOnShow: true
+    signal aboutToShow
+    signal shown
 
     readonly property int _w: launcher.overrideWidth || Config.windowWidth
     readonly property int _h: launcher.overrideHeight || Config.windowHeight
@@ -28,9 +31,9 @@ Window {
     color: "transparent"
     visible: false
 
-    BackgroundEffect.enabled: root.blurEnabled && !root.nativeChrome
-    BackgroundEffect.radius: root.cornerRadius
-    BackgroundEffect.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? 60 : _h)
+    WindowMaterial.enabled: root.blurEnabled && !root.nativeChrome
+    WindowMaterial.radius: root.cornerRadius
+    WindowMaterial.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? _contentH : _h)
 
     Item {
         id: shadowMask
@@ -89,8 +92,16 @@ Window {
             height: 60 + 2 * Config.borderWidth
             radius: root.cornerRadius
             color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-            border.color: Theme.mainWindowBorder
-            border.width: Config.borderWidth
+        }
+
+        SourceBlendRect {
+            visible: launcher.compacted && !root.nativeChrome
+            width: _w
+            height: 60 + 2 * Config.borderWidth
+            radius: root.cornerRadius
+            overlay: true
+            borderColor: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
+            borderWidth: Config.borderWidth
         }
 
         Item {
@@ -124,13 +135,13 @@ Window {
             }
         }
 
-        Rectangle {
+        SourceBlendRect {
             visible: !launcher.compacted && !root.nativeChrome
             anchors.fill: parent
             radius: root.cornerRadius
-            color: "transparent"
-            border.color: Theme.mainWindowBorder
-            border.width: Config.borderWidth
+            overlay: true
+            borderColor: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
+            borderWidth: Config.borderWidth
         }
 
         ColumnLayout {
@@ -164,15 +175,12 @@ Window {
                     id: commandStack
                     anchors.fill: parent
                     visible: !launcher.compacted
-                    initialItem: RootSearchList {}
                 }
             }
 
-            Rectangle {
+            ViciDivider {
                 visible: !launcher.compacted && launcher.statusBarVisible
                 Layout.fillWidth: true
-                implicitHeight: 1
-                color: Theme.divider
             }
 
             Footer {
@@ -195,33 +203,53 @@ Window {
 
         ActionPanelPopover {
             id: actionPanelPopover
-            z: 100
+            parent: footer
             controller: actionPanel
-            anchors.fill: parent
-            anchors.bottomMargin: footer.height + 1 + Config.borderWidth
+            maxHeight: Math.round(root.height * 0.6)
         }
 
         ActionPanelPopover {
             id: footerMenuPopover
-            z: 100
+            parent: footer
             controller: footerPanel
             alignLeft: true
+            maxHeight: Math.round(root.height * 0.6)
+        }
+
+        MouseArea {
+            id: modalScrim
             anchors.fill: parent
-            anchors.bottomMargin: footer.height + 1 + Config.borderWidth
+            z: 200
+            enabled: launcher.alertModel.visible
+            visible: dim.opacity > 0
+            hoverEnabled: true
+            acceptedButtons: Qt.AllButtons
+            onClicked: alertDialog.close()
+            onWheel: function (wheel) {
+                wheel.accepted = true;
+            }
+
+            Rectangle {
+                id: dim
+                x: root.shadowPadding
+                y: root.shadowPadding
+                width: parent.width - 2 * root.shadowPadding
+                height: parent.height - 2 * root.shadowPadding
+                radius: root.shadowPadding > 0 ? Config.borderRounding : 0
+                color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
+                opacity: launcher.alertModel.visible ? 1 : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 150
+                        easing.type: Easing.OutCubic
+                    }
+                }
+            }
         }
 
         AlertDialog {
             id: alertDialog
-            Overlay.modal: Item {
-                Rectangle {
-                    x: root.shadowPadding
-                    y: root.shadowPadding
-                    width: parent.width - 2 * root.shadowPadding
-                    height: parent.height - 2 * root.shadowPadding
-                    radius: root.shadowPadding > 0 ? Config.borderRounding : 0
-                    color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
-                }
-            }
         }
     }
 
@@ -250,10 +278,6 @@ Window {
             if (commandStack.depth > 1)
                 commandStack.pop(StackView.Immediate);
         }
-        function onCommandStackCleared() {
-            if (commandStack.depth > 1)
-                commandStack.pop(null, StackView.Immediate);
-        }
         function onOverlayChanged() {
             if (launcher.hasOverlay) {
                 overlayLoader.setSource(launcher.overlayUrl, {
@@ -266,21 +290,18 @@ Window {
         }
     }
 
-    function _centerOnCursorScreen() {
-        const g = launcher.cursorScreenGeometry();
-        root.x = g.x + (g.width - root.width) / 2;
-        root.y = g.y + (g.height - root.height) / 3;
-    }
-
     Connections {
         target: Nav
         function onWindowVisiblityChanged(visible) {
             if (visible) {
-                root._centerOnCursorScreen();
+                root.aboutToShow();
+                if (root.autoPlaceOnShow)
+                    launcher.positionOnCursorScreen();
                 root.visible = true;
                 root.raise();
                 root.requestActivate();
                 searchBar.focusInput();
+                root.shown();
             } else {
                 root.visible = false;
             }
@@ -309,12 +330,20 @@ Window {
         }
     }
 
-    onWidthChanged: root.x = Screen.virtualX + (Screen.width - root.width) / 2
-    onHeightChanged: root.y = Screen.virtualY + (Screen.height - root.height) / 3
+    onWidthChanged: {
+        if (launcher.canPositionWindow && root.autoPlaceOnShow)
+            root.x = Screen.virtualX + (Screen.width - root.width) / 2;
+    }
+    onHeightChanged: {
+        if (launcher.canPositionWindow && root.autoPlaceOnShow)
+            root.y = Screen.virtualY + (Screen.height - root.height) / 3;
+    }
 
     Component.onCompleted: {
-        root.x = Screen.virtualX + (Screen.width - root.width) / 2;
-        root.y = Screen.virtualY + (Screen.height - root.height) / 3;
-        _centerOnCursorScreen();
+        if (launcher.canPositionWindow && root.autoPlaceOnShow) {
+            root.x = Screen.virtualX + (Screen.width - root.width) / 2;
+            root.y = Screen.virtualY + (Screen.height - root.height) / 3;
+            launcher.positionOnCursorScreen();
+        }
     }
 }

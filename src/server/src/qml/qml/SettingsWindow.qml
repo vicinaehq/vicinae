@@ -4,64 +4,59 @@ import QtQuick.Layouts
 Window {
     id: root
     readonly property var extModel: settings.extensionModel
-    readonly property bool isExtensionPage: settings.currentPage !== "general" && settings.currentPage !== "keybindings" && settings.currentPage !== "advanced" && settings.currentPage !== "about"
-    readonly property string topbarTitle: {
-        if (root.isExtensionPage)
-            return root.extModel.selectedTitle;
+    // Single source of truth for the built-in (non-extension) pages.
+    readonly property var corePages: ({
+            "general": {
+                "title": "General",
+                "icon": "cog",
+                "page": generalPage
+            },
+            "appearance": {
+                "title": "Appearance",
+                "icon": "swatch",
+                "page": appearancePage
+            },
+            "keybindings": {
+                "title": "Keybindings",
+                "icon": "keyboard",
+                "page": shortcutsPage
+            },
+            "advanced": {
+                "title": "Advanced",
+                "icon": "wrench-screwdriver",
+                "page": advancedPage
+            },
+            "about": {
+                "title": "About",
+                "icon": "vicinae",
+                "page": aboutPage
+            }
+        })
+    readonly property var coreMeta: root.corePages[settings.currentPage] ?? null
+    readonly property bool isExtensionPage: root.coreMeta === null
+    readonly property string topbarTitle: root.isExtensionPage ? root.extModel.selectedTitle : root.coreMeta.title
+    readonly property var topbarIconSource: root.isExtensionPage ? root.extModel.selectedIconSource : Img.builtin(root.coreMeta.icon).withFillColor(Theme.foreground)
 
-        switch (settings.currentPage) {
-        case "general":
-            return "General";
-        case "keybindings":
-            return "Keybindings";
-        case "advanced":
-            return "Advanced";
-        case "about":
-            return "About";
-        default:
-            return "";
-        }
-    }
-    readonly property var topbarIconSource: {
-        if (root.isExtensionPage)
-            return root.extModel.selectedIconSource;
-
-        switch (settings.currentPage) {
-        case "general":
-            return Img.builtin("cog").withFillColor(Theme.foreground);
-        case "keybindings":
-            return Img.builtin("keyboard").withFillColor(Theme.foreground);
-        case "advanced":
-            return Img.builtin("wrench-screwdriver").withFillColor(Theme.foreground);
-        case "about":
-            return Img.builtin("vicinae").withFillColor(Theme.foreground);
-        default:
-            return "";
-        }
-    }
-
-    width: 860
-    height: 540
-    minimumWidth: 860
-    minimumHeight: 540
-    maximumWidth: 860
-    maximumHeight: 540
+    width: 980
+    height: 680
+    minimumWidth: 980
+    minimumHeight: 680
+    maximumWidth: 980
+    maximumHeight: 680
     visible: true
     color: "transparent"
-    flags: Qt.FramelessWindowHint | Qt.Window
+    // Server-side decorations: the compositor / OS owns the frame.
+    flags: Qt.Window
     title: "Vicinae Settings"
 
-    BackgroundEffect.enabled: Config.blurEnabled
-    BackgroundEffect.radius: 10
+    WindowMaterial.enabled: Config.blurEnabled
+    WindowMaterial.radius: 10
 
     Rectangle {
         id: background
         anchors.fill: parent
-        radius: 10
         Keys.onEscapePressed: settings.close()
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-        border.color: Theme.divider
-        border.width: 1
         clip: true
 
         RowLayout {
@@ -73,10 +68,9 @@ Window {
                 Layout.preferredWidth: 220
             }
 
-            Rectangle {
+            ViciDivider {
+                vertical: true
                 Layout.fillHeight: true
-                width: 1
-                color: Theme.divider
             }
 
             ColumnLayout {
@@ -84,28 +78,21 @@ Window {
                 Layout.fillHeight: true
                 spacing: 0
 
-                // Header with page metadata and close button
                 Item {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 40
-
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton
-                        onPressed: root.startSystemMove()
-                    }
+                    Layout.preferredHeight: 44
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 20
-                        anchors.rightMargin: 12
-                        spacing: 10
+                        anchors.leftMargin: 24
+                        anchors.rightMargin: 16
+                        spacing: 12
 
                         ViciImage {
                             visible: root.topbarIconSource !== ""
                             source: root.topbarIconSource
-                            Layout.preferredWidth: 20
-                            Layout.preferredHeight: 20
+                            Layout.preferredWidth: 22
+                            Layout.preferredHeight: 22
                             Layout.alignment: Qt.AlignVCenter
                         }
 
@@ -113,11 +100,50 @@ Window {
                             visible: root.topbarTitle !== ""
                             text: root.topbarTitle
                             color: Theme.foreground
-                            font.pointSize: Theme.regularFontSize
+                            font.pointSize: Theme.regularFontSize + 1
                             font.bold: true
                             elide: Text.ElideRight
-                            Layout.fillWidth: true
+                            Layout.maximumWidth: root.width * 0.5
                             Layout.alignment: Qt.AlignVCenter
+                        }
+
+                        ViciImage {
+                            id: provenanceIcon
+                            visible: {
+                                const p = root.extModel.selectedProvenance;
+                                return root.isExtensionPage && (p === "Raycast" || p === "Vicinae" || p === "Local");
+                            }
+                            source: {
+                                const p = root.extModel.selectedProvenance;
+                                if (p === "Raycast")
+                                    return Img.builtin("raycast").withFillColor(Theme.toastDanger);
+                                if (p === "Vicinae")
+                                    return Img.builtin("vicinae").withFillColor(Theme.toastWarning);
+                                if (p === "Local")
+                                    return Img.builtin("box").withFillColor(Theme.toastInfo);
+                                return "";
+                            }
+                            Layout.preferredWidth: 16
+                            Layout.preferredHeight: 16
+                            Layout.alignment: Qt.AlignVCenter
+
+                            HoverHandler {
+                                id: provenanceHover
+                            }
+
+                            ViciToolTip {
+                                text: {
+                                    const p = root.extModel.selectedProvenance;
+                                    if (p === "Raycast")
+                                        return "Imported from Raycast";
+                                    if (p === "Vicinae")
+                                        return "From the Vicinae store";
+                                    if (p === "Local")
+                                        return "Locally installed extension";
+                                    return "";
+                                }
+                                visible: provenanceHover.hovered && text !== ""
+                            }
                         }
 
                         Item {
@@ -137,36 +163,11 @@ Window {
                                 onToggled: root.extModel.setEnabled(root.extModel.selectedRow, checked)
                             }
                         }
-
-                        Rectangle {
-                            id: closeBtn
-                            Layout.alignment: Qt.AlignVCenter
-                            width: 24
-                            height: 24
-                            radius: 12
-                            color: closeHover.hovered ? Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity) : "transparent"
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "\u2715"
-                                color: closeHover.hovered ? Theme.foreground : Theme.textMuted
-                                font.pixelSize: 12
-                            }
-
-                            HoverHandler {
-                                id: closeHover
-                            }
-                            TapHandler {
-                                onTapped: settings.close()
-                            }
-                        }
                     }
                 }
 
-                Rectangle {
+                ViciDivider {
                     Layout.fillWidth: true
-                    height: 1
-                    color: Theme.divider
                 }
 
                 Loader {
@@ -178,32 +179,17 @@ Window {
 
                     function _loadPage(page) {
                         active = false;
-                        if (page !== "general" && page !== "keybindings" && page !== "advanced" && page !== "about") {
+                        const meta = root.corePages[page] ?? null;
+                        if (!meta)
                             settings.extensionModel.selectProviderById(page);
-                        }
-                        switch (page) {
-                        case "general":
-                            sourceComponent = generalPage;
-                            break;
-                        case "keybindings":
-                            sourceComponent = shortcutsPage;
-                            break;
-                        case "advanced":
-                            sourceComponent = advancedPage;
-                            break;
-                        case "about":
-                            sourceComponent = aboutPage;
-                            break;
-                        default:
-                            sourceComponent = extensionPage;
-                            break;
-                        }
+                        sourceComponent = meta ? meta.page : extensionPage;
                         active = true;
                     }
 
                     Connections {
                         target: settings
                         function onCurrentPageChanged() {
+                            HoverActivation.reset();
                             pageLoader._loadPage(settings.currentPage);
                         }
                     }
@@ -215,6 +201,11 @@ Window {
     Component {
         id: generalPage
         GeneralSettingsPage {}
+    }
+
+    Component {
+        id: appearancePage
+        AppearanceSettingsPage {}
     }
 
     Component {

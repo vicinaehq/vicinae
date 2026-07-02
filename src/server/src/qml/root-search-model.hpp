@@ -17,13 +17,6 @@ class Manager;
 
 class RootSearchModel : public SectionListModel {
   Q_OBJECT
-  Q_PROPERTY(QString primaryActionTitle READ primaryActionTitle NOTIFY primaryActionChanged)
-  Q_PROPERTY(QString primaryActionIcon READ primaryActionIcon NOTIFY primaryActionChanged)
-  Q_PROPERTY(
-      QVariantList primaryActionShortcutTokens READ primaryActionShortcutTokens NOTIFY primaryActionChanged)
-
-signals:
-  void primaryActionChanged();
 
 public:
   using CalculatorWatcher = QFutureWatcher<AbstractCalculatorBackend::ComputeResult>;
@@ -34,10 +27,6 @@ public:
   Q_INVOKABLE void setFilter(const QString &text);
   void setSelectedIndex(int index) override;
   Q_INVOKABLE bool tryAliasFastTrack();
-
-  QString primaryActionTitle() const;
-  QString primaryActionIcon() const;
-  QVariantList primaryActionShortcutTokens() const;
 
 private:
   void refresh();

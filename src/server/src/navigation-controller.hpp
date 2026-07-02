@@ -36,6 +36,11 @@ struct PopToRootOptions {
 
 using ArgumentValues = std::vector<std::pair<QString, QString>>;
 
+struct ActivateEntrypointOptions {
+  ArgumentValues arguments;
+  QString fallbackText;
+};
+
 struct CompleterState {
   ArgumentList args;
   ArgumentValues values;
@@ -159,8 +164,6 @@ public:
   QString navigationTitle(const BaseView *caller = nullptr) const;
   void searchPlaceholderText(const QString &text);
 
-  AbstractAction *findBoundAction(const QKeyEvent *event) const;
-
   void setDialog(DialogContentWidget *dialog);
   void confirmAlert(const QString &title, const QString &description, const std::function<void()> &onConfirm);
 
@@ -204,7 +207,7 @@ public:
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
-  void launch(const EntrypointId &id);
+  bool activateEntrypoint(const EntrypointId &id, const ActivateEntrypointOptions &options = {});
 
   const AbstractCmd *activeCommand() const;
   CommandFrame *activeFrame() const { return m_frames.back().get(); }

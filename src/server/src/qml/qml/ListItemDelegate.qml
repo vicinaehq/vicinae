@@ -3,31 +3,59 @@ import QtQuick.Layouts
 
 SelectableDelegate {
     id: root
-    height: 41
+    height: 38
 
     required property string itemTitle
     required property string itemSubtitle
     required property string itemIconSource
     required property string itemAlias
+    property var itemShortcutTokens: []
     required property bool itemIsActive
     property var itemAccessory: []
     property string itemAccessoryColor: ""
+    property string filePath: ""
+    property string fileUrl: ""
+
+    readonly property bool _isDraggable: root.filePath !== ""
+
+    Component.onCompleted: {
+        if (_isDraggable) {
+            //console.debug("[DRAG] ListItemDelegate created: filePath=" + root.filePath + " fileUrl=" + root.fileUrl);
+        }
+    }
+
+    Drag.dragType: root._isDraggable ? Drag.Automatic : Drag.None
+    Drag.active: root._isDraggable ? dragHandler.active : false
+    Drag.mimeData: root._isDraggable ? ({
+            "text/uri-list": root.fileUrl,
+            "text/plain": root.filePath
+        }) : ({})
+    Drag.supportedActions: Qt.CopyAction
+
+    DragHandler {
+        id: dragHandler
+        enabled: root._isDraggable
+        onActiveChanged: {
+            //console.debug("[DRAG] DragHandler ACTIVATED! filePath=" + root.filePath);
+        }
+    }
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
         spacing: 10
 
         Item {
             visible: root.itemIconSource !== ""
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
+            Layout.preferredWidth: 26
+            Layout.preferredHeight: 26
             Layout.alignment: Qt.AlignVCenter
 
             ViciImage {
                 anchors.fill: parent
                 source: root.itemIconSource
+                safetyMargins: true
             }
 
             Rectangle {
@@ -49,7 +77,8 @@ SelectableDelegate {
             implicitHeight: titleText.implicitHeight
 
             readonly property real spacing: 6
-            readonly property real aliasSpace: aliasBadge.visible ? aliasBadge.width + spacing : 0
+            readonly property real shortcutLeadingSpace: 8
+            readonly property real aliasSpace: (aliasBadge.visible ? aliasBadge.width + spacing : 0) + (shortcutBadge.visible ? shortcutBadge.width + spacing + shortcutLeadingSpace : 0)
             readonly property real availableForText: width - aliasSpace
             readonly property real subtitleReserved: subtitleText.visible ? Math.min(subtitleText.implicitWidth + spacing, availableForText * 0.5) : 0
 
@@ -86,6 +115,15 @@ SelectableDelegate {
                 anchors.leftMargin: visible ? textRow.spacing : 0
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.itemAlias
+            }
+
+            ShortcutBadge {
+                id: shortcutBadge
+                visible: root.itemShortcutTokens.length > 0
+                anchors.left: aliasBadge.visible ? aliasBadge.right : (subtitleText.visible ? subtitleText.right : titleText.right)
+                anchors.leftMargin: visible ? textRow.spacing + textRow.shortcutLeadingSpace : 0
+                anchors.verticalCenter: parent.verticalCenter
+                tokens: root.itemShortcutTokens
             }
         }
 

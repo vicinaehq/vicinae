@@ -237,9 +237,6 @@ Item {
 
     Component {
         id: separatorComponent
-        Rectangle {
-            implicitHeight: 1
-            color: Theme.divider
-        }
+        ViciDivider {}
     }
 }

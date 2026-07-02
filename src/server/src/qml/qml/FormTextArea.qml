@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Item {
+FocusScope {
     id: root
     Layout.fillWidth: true
     activeFocusOnTab: true
@@ -13,6 +13,7 @@ Item {
     property int maxRows: 10
 
     property bool hasError: false
+    property bool filled: false
 
     signal textEdited
 
@@ -40,12 +41,18 @@ Item {
         font: edit.font
     }
 
+    FormInputBackground {
+        anchors.fill: parent
+        radius: 8
+        filled: root.filled
+    }
+
     Rectangle {
         id: border
         anchors.fill: parent
         radius: 8
         color: "transparent"
-        border.color: root.hasError ? Theme.inputBorderError : edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
         border.width: 1
 
         MouseArea {

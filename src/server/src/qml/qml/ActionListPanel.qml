@@ -95,6 +95,14 @@ Item {
 
     implicitHeight: (_empty ? emptyLabel.implicitHeight + 2 * emptyPadding : listView.contentHeight + listView.topMargin + listView.bottomMargin) + filterBar.height + divider.height
 
+    HoverResetOnModelChange {
+        target: root.model
+    }
+
+    HoverResetOnShow {
+        target: root
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -209,8 +217,8 @@ Item {
                 anchors.rightMargin: 12
                 spacing: 8
 
-                Image {
-                    source: "image://vicinae/builtin:magnifying-glass?fg=" + Theme.foreground
+                ViciImage {
+                    source: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
                     sourceSize.width: 14
                     sourceSize.height: 14
                     Layout.preferredWidth: 14
@@ -270,6 +278,7 @@ Item {
                         (event.modifiers & Qt.ControlModifier) ? root.moveSectionDown() : root.moveDown();
                     }
                     Keys.onReturnPressed: root.activateCurrent()
+                    Keys.onEnterPressed: root.activateCurrent()
                 }
             }
         }

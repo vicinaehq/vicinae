@@ -67,6 +67,7 @@ void X11Window::queryProperties(xcb_connection_t *connection) {
   m_workspace = queryWorkspace(connection);
   m_bounds = queryBounds(connection);
   m_canClose = queryCanClose(connection);
+  m_sticky = querySticky(connection);
 }
 
 QString X11Window::queryTitle(xcb_connection_t *connection) {
@@ -150,4 +151,13 @@ bool X11Window::queryCanClose(xcb_connection_t *connection) {
   if (wm_protocols == XCB_ATOM_NONE || wm_delete_window == XCB_ATOM_NONE) { return false; }
 
   return hasAtomInList(connection, m_window, wm_protocols, wm_delete_window);
+}
+
+bool X11Window::querySticky(xcb_connection_t *connection) {
+  xcb_atom_t const net_wm_state = internAtom(connection, "_NET_WM_STATE");
+  xcb_atom_t const net_wm_state_sticky = internAtom(connection, "_NET_WM_STATE_STICKY");
+
+  if (net_wm_state == XCB_ATOM_NONE || net_wm_state_sticky == XCB_ATOM_NONE) return false;
+
+  return hasAtomInList(connection, m_window, net_wm_state, net_wm_state_sticky);
 }

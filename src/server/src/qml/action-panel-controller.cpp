@@ -1,12 +1,17 @@
 #include "action-panel-controller.hpp"
 #include "action-panel-model.hpp"
-#include "lib/keyboard/keyboard.hpp"
+#include "internal/keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/action-list-view.hpp"
 #include "ui/action-pannel/action-panel-state.hpp"
 #include "ui/action-pannel/action-panel-view.hpp"
 #include "ui/views/base-view.hpp"
 #include <QKeyEvent>
+
+namespace {
+constexpr qint64 REOPEN_GUARD_MS = 300;
+} // namespace
 
 ActionPanelController::ActionPanelController(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx) {}
@@ -78,12 +83,15 @@ void ActionPanelController::syncToView(BaseView *view) {
   refreshSubmenus();
 }
 
-void ActionPanelController::toggle() {
+void ActionPanelController::toggle(bool fromClick) {
   if (m_open) {
     close();
-  } else {
-    open();
+    return;
   }
+
+  if (fromClick && m_closedTimer.isValid() && m_closedTimer.elapsed() < REOPEN_GUARD_MS) return;
+
+  open();
 }
 
 void ActionPanelController::open() {
@@ -101,6 +109,7 @@ void ActionPanelController::close() {
   auto *root = activeRoot();
 
   m_open = false;
+  m_closedTimer.restart();
   emit openChanged();
   emit stackClearRequested();
   m_currentPanel = nullptr;
@@ -171,6 +180,22 @@ bool ActionPanelController::tryShortcut(int key, int modifiers) {
   if (!model) return false;
 
   return model->activateByShortcut(key, modifiers);
+}
+
+bool ActionPanelController::activateBoundAction(const QKeyEvent *event) {
+  auto *root = activeRoot();
+  if (!root) return false;
+
+  auto *action = root->findBoundAction(event);
+  if (!action) return false;
+
+  if (auto *submenu = dynamic_cast<SubmenuAction *>(action)) {
+    openSubmenu(submenu);
+  } else {
+    executeAction(action);
+  }
+
+  return true;
 }
 
 bool ActionPanelController::executePrimaryAction() {

@@ -73,6 +73,18 @@ struct CloseTabRequest {
   tabId: int;
 };
 
+struct FileResult {
+  path: string;
+  score: uint;
+  category: string;
+  mimeType?: string;
+};
+
+struct FsQueryParams {
+  limit: int;
+  category?: string;
+};
+
 service Ipc {
   fn ping() => PingResponse;
   fn deeplink(req: DeeplinkRequest) => DeeplinkResponse;
@@ -81,6 +93,9 @@ service Ipc {
   fn dmenu(req: DMenuRequest) => DMenuResponse;
   fn browserInit(req: BrowserInitRequest) => void;
   fn browserTabsChanged(tabs: BrowserTabInfo[]) => void;
+
+  // filesystem
+  fn fsQuery(q: string, params: FsQueryParams) => FileResult[];
 
   event focusTab(req: FocusTabRequest);
   event closeTab(req: CloseTabRequest);

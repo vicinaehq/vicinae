@@ -12,7 +12,7 @@ icon = "icons/catppuccin.png"
 background = "#303446"        # Base
 foreground = "#C6D0F5"        # Text
 secondary_background = "#292C3C"  # Mantle
-border = "#414559"            # Surface0
+border = "#545B7A"            # Surface0
 accent = "#8CAAEE"            # Blue
 
 [colors.accents]
