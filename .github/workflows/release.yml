@@ -87,8 +87,7 @@ jobs:
 
       - name: Package (tar install dir)
         run: |
-          cd "${INSTALL_DIR}"
-          tar -czvf "${{ github.workspace }}/${{ steps.meta.outputs.artifact }}" .
+          tar -czvf "${{ steps.meta.outputs.artifact }}" -C "${INSTALL_DIR}" .
 
       - name: Create GitHub Release and upload asset
         uses: softprops/action-gh-release@v2
