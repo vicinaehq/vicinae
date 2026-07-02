@@ -10,6 +10,23 @@
 #include <QStandardPaths>
 #include <QUrl>
 
+static QString kindLabel(ClipboardOfferKind kind) {
+  switch (kind) {
+  case ClipboardOfferKind::Text:
+    return QStringLiteral("Text");
+  case ClipboardOfferKind::Link:
+    return QStringLiteral("Link");
+  case ClipboardOfferKind::Image:
+    return QStringLiteral("Image");
+  case ClipboardOfferKind::File:
+    return QStringLiteral("File");
+  case ClipboardOfferKind::Unknown:
+  case ClipboardOfferKind::Count:
+    break;
+  }
+  return QStringLiteral("Unknown");
+}
+
 static std::optional<ClipboardOfferKind> kindFromFilterIndex(int index) {
   switch (index) {
   case 1:
@@ -171,7 +188,7 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   m_detailErrorTitle.clear();
   m_detailErrorDescription.clear();
 
-  m_detailMimeType = entry.mimeType;
+  m_detailType = kindLabel(entry.kind);
   m_detailSize = formatSize(entry.size);
   m_detailCopiedAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt).toString();
   m_detailMd5 = entry.md5sum;
@@ -262,7 +279,7 @@ void ClipboardHistoryViewHost::clearDetail() {
   m_hasDetailError = false;
   m_detailTextContent.clear();
   m_detailImageSource.clear();
-  m_detailMimeType.clear();
+  m_detailType.clear();
   m_detailSize.clear();
   m_detailCopiedAt.clear();
   m_detailMd5.clear();

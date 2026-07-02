@@ -153,6 +153,8 @@ set(SRCS
 	src/color-formatter.cpp
 
 	src/services/clipboard/clipboard-server.hpp
+	src/services/clipboard/clipboard-mime.hpp
+	src/services/clipboard/clipboard-mime.cpp
 	src/services/clipboard/clipboard-db.hpp
 	src/services/clipboard/clipboard-db.cpp
 	src/services/clipboard/qt/qt-clipboard-server.hpp
@@ -608,6 +610,8 @@ if (APPLE)
 		src/services/app-service/macos/mac-app-database.mm
 		src/services/app-runtime/macos/mac-app-runtime.hpp
 		src/services/app-runtime/macos/mac-app-runtime.mm
+		src/services/clipboard/macos/macos-clipboard-server.hpp
+		src/services/clipboard/macos/macos-clipboard-server.mm
 		src/root-search/macos-settings/macos-settings-root-provider.hpp
 		src/root-search/macos-settings/macos-settings-root-provider.mm
 		src/services/global-shortcuts/macos-global-shortcut-backend.hpp
@@ -635,6 +639,7 @@ if (APPLE)
 		src/services/app-service/macos/mac-app.mm
 		src/services/app-service/macos/mac-app-database.mm
 		src/services/app-runtime/macos/mac-app-runtime.mm
+		src/services/clipboard/macos/macos-clipboard-server.mm
 		src/root-search/macos-settings/macos-settings-root-provider.mm
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/tray/macos/tray-service-macos.mm

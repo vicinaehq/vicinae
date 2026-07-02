@@ -69,25 +69,19 @@ void ClipboardExtension::preferenceValuesChanged(const QJsonObject &value) const
   clipman->setRecordAllOffers(value.value("store-all-offerings").toBool());
   clipman->setMonitoring(value.value("monitoring").toBool());
   clipman->setEncryption(value.value("encryption").toBool());
+#ifndef Q_OS_MACOS
   clipman->setIgnorePasswords(value.value("ignorePasswords").toBool());
+#endif
 }
 
 std::vector<Preference> ClipboardExtension::preferences() const {
   auto encryption = Preference::makeCheckbox("encryption");
   auto monitoring = Preference::makeCheckbox("monitoring");
   auto eraseOnStartup = Preference::makeCheckbox("eraseOnStartup");
-  auto ignorePasswords = Preference::makeCheckbox("ignorePasswords");
 
   eraseOnStartup.setTitle("Erase on startup");
   eraseOnStartup.setDescription("Erase clipboard history every time the vicinae server is started");
   eraseOnStartup.setDefaultValue(false);
-
-  ignorePasswords.setDefaultValue(true);
-  ignorePasswords.setTitle("Ignore Passwords");
-  ignorePasswords.setDescription(
-      "Ignore selections that can be identified as a password. This relies on the application providing an "
-      "explicit hint that the selection is a password. While most password managers and private browser "
-      "windows do, some might not implement this properly.");
 
   encryption.setTitle("Disk encryption");
   encryption.setDescription("Whether to encrypt the clipboard data on disk. The "
@@ -100,5 +94,17 @@ std::vector<Preference> ClipboardExtension::preferences() const {
                             "performed while this is turned off will not be recorded.");
   monitoring.setDefaultValue(true);
 
+#ifdef Q_OS_MACOS
+  return {monitoring, eraseOnStartup, encryption};
+#else
+  auto ignorePasswords = Preference::makeCheckbox("ignorePasswords");
+  ignorePasswords.setDefaultValue(true);
+  ignorePasswords.setTitle("Ignore Passwords");
+  ignorePasswords.setDescription(
+      "Ignore selections that can be identified as a password. This relies on the application providing an "
+      "explicit hint that the selection is a password. While most password managers and private browser "
+      "windows do, some might not implement this properly.");
+
   return {monitoring, ignorePasswords, eraseOnStartup, encryption};
+#endif
 }

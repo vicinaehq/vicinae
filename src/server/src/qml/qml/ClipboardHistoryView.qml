@@ -184,8 +184,8 @@ Item {
         DetailPanel {
             metadata: [
                 {
-                    label: "Mime",
-                    value: root.host.detailMimeType,
+                    label: "Type",
+                    value: root.host.detailType,
                     icon: root.host.detailEncryptionIcon
                 },
                 {
@@ -244,7 +244,7 @@ Item {
                 active: !root.host.hasDetailError && root.host.detailImageSource === "" && root.host.detailTextContent === ""
                 visible: active
                 sourceComponent: EmptyView {
-                    title: root.host.detailMimeType
+                    title: root.host.detailType
                     description: "Preview not available for this content type"
                 }
             }
