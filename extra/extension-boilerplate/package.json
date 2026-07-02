@@ -80,6 +80,12 @@
 			"mode": "view"
 		},
 		{
+			"name": "wallpaper",
+			"title": "Wallpaper Picker",
+			"description": "Browse ~/Pictures and set the desktop wallpaper",
+			"mode": "view"
+		},
+		{
 			"name": "torture",
 			"title": "Torture Test",
 			"description": "Stress-test view hot-swaps, dynamic reactivity, and background mutations",

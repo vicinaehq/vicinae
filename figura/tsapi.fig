@@ -296,6 +296,23 @@ service OAuth {
   fn removeTokens(id?: string) => void;
 }
 
+enum WallpaperFit {
+  Cover,
+  Contain, 
+  Stretch,
+  Center,
+  Tile
+};
+
+struct SetWallpaperOptions {
+  fit?: WallpaperFit;
+  screen?: string;
+};
+
+service Wallpaper {
+  fn set(path: string, options: SetWallpaperOptions) => void;
+};
+
 // EventCore - used for loosely typed callbacks, required for component event handlers
 
 service EventCore {

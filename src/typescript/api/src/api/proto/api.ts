@@ -99,6 +99,8 @@ export type FileSearchCategory =
 	| "Archive"
 	| "Application";
 
+export type WallpaperFit = "Cover" | "Contain" | "Stretch" | "Center" | "Tile";
+
 export type Application = {
 	id: string;
 	name: string;
@@ -262,6 +264,11 @@ export type SetTokensRequest = {
 
 export type TokenSetResponse = {
 	set?: TokenSet;
+};
+
+export type SetWallpaperOptions = {
+	fit?: WallpaperFit;
+	screen?: string;
 };
 
 class ApplicationService {
@@ -500,6 +507,14 @@ class OAuthService {
 	}
 }
 
+class WallpaperService {
+	constructor(private readonly transport: RpcTransport) {}
+
+	set(path: string, options: SetWallpaperOptions): Promise<void> {
+		return this.transport.request("Wallpaper/set", { path, options });
+	}
+}
+
 class EventCoreService {
 	constructor(private readonly transport: RpcTransport) {}
 
@@ -522,6 +537,7 @@ export class Client {
 		this.FileSearch = new FileSearchService(this.transport);
 		this.Command = new CommandService(this.transport);
 		this.OAuth = new OAuthService(this.transport);
+		this.Wallpaper = new WallpaperService(this.transport);
 		this.EventCore = new EventCoreService(this.transport);
 	}
 
@@ -536,5 +552,6 @@ export class Client {
 	FileSearch: FileSearchService;
 	Command: CommandService;
 	OAuth: OAuthService;
+	Wallpaper: WallpaperService;
 	EventCore: EventCoreService;
 }

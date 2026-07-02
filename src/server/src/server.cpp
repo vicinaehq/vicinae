@@ -45,6 +45,7 @@
 #include "services/telemetry/telemetry-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/wallpaper/wallpaper-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
@@ -251,6 +252,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
+    registry->setWallpaperManager(std::make_unique<WallpaperManager>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
