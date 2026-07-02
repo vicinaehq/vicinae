@@ -56,7 +56,7 @@ in
 
     extensionManagerDeps = fetchNpmDeps {
       src = "${finalAttrs.src}/src/typescript/extension-manager";
-      hash = "sha256-6Kz7I8cGm1lnGPOI/gju3t5/imnbBFlDEKzWar5O770=";
+      hash = "sha256-nVLcJmkNRMXjK/ufVWkad/eRGMTGQrW9e4pTRNCbI34=";
     };
 
     cmakeFlags = lib.mapAttrsToList lib.cmakeFeature {
