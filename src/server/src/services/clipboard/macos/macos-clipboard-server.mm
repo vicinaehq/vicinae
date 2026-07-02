@@ -45,8 +45,9 @@ bool MacosClipboardServer::stop() {
 
 void MacosClipboardServer::beginAppNapActivity() {
   if (m_appNapActivity) return;
+  // NSActivityUserInitiated would also prevent idle system sleep
   m_appNapActivity = (__bridge_retained void *)[[NSProcessInfo processInfo]
-      beginActivityWithOptions:NSActivityUserInitiated
+      beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep
                         reason:@"Clipboard monitoring"];
 }
 
@@ -108,7 +109,6 @@ void MacosClipboardServer::poll() {
       AbstractQtClipboardServer::selectionFromMimeData(QGuiApplication::clipboard()->mimeData());
   if (!selection) return;
 
-  // Prefer the explicit source UTI when the source app set it; fall back to frontmost.
   selection->sourceApp = pasteboardSourceApp();
   if (!selection->sourceApp) selection->sourceApp = frontmostBundleId();
   emit selectionAdded(*selection);
@@ -122,15 +122,14 @@ bool MacosClipboardServer::setClipboardContent(QMimeData *data, const Clipboard:
     NSPasteboard *pb = [NSPasteboard generalPasteboard];
 
     if (options.concealed) {
-      // Standard concealed marker — vicinae itself drops this on the next poll, and other
-      // macOS clipboard managers (Maccy, Alfred, Paste, ...) also respect it.
       [pb addTypes:@[CONCEALED_UTI] owner:nil];
       [pb setData:[NSData data] forType:CONCEALED_UTI];
     }
+    if (options.transient) {
+      [pb addTypes:@[TRANSIENT_UTI] owner:nil];
+      [pb setData:[NSData data] forType:TRANSIENT_UTI];
+    }
 
-    // When we're restoring or echoing content that originated elsewhere, set the source UTI
-    // to the original app. Otherwise stamp our own bundle ID so other clipboard managers
-    // attribute the copy to us.
     NSString *sourceBundleId = nil;
     if (options.sourceApp && !options.sourceApp->isEmpty()) {
       sourceBundleId = options.sourceApp->toNSString();

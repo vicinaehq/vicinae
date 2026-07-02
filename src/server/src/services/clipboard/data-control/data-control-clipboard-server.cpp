@@ -13,10 +13,9 @@
 #include "common/common.hpp"
 #include "wayland/globals.hpp"
 #include "common/clipboard-protocol.hpp"
+#include "common/clipboard-formats.hpp"
 
 static constexpr const char *HELPER_PROGRAM = "vicinae-data-control-server";
-static constexpr const char *CONCEALED_MARKER = "vicinae/concealed";
-static constexpr const char *PASSWORD_MARKER = "x-kde-passwordManagerHint";
 
 bool DataControlClipboardServer::isAlive() const { return m_process.isOpen(); }
 
@@ -93,7 +92,7 @@ void DataControlClipboardServer::handleRead() {
         } else {
           bool concealed = false;
           for (const auto &offer : selection.offers) {
-            if (offer.mime_type == CONCEALED_MARKER) {
+            if (offer.mime_type == Clipboard::CONCEALED_MIME_TYPE) {
               concealed = true;
               break;
             }
@@ -105,7 +104,7 @@ void DataControlClipboardServer::handleRead() {
             cs.offers.reserve(selection.offers.size());
 
             for (const auto &offer : selection.offers) {
-              if (offer.mime_type == PASSWORD_MARKER) {
+              if (offer.mime_type == Clipboard::PASSWORD_HINT_MIME_TYPE) {
                 cs.isPassword = true;
                 continue;
               }
@@ -128,7 +127,7 @@ void DataControlClipboardServer::handleRead() {
 }
 
 bool DataControlClipboardServer::setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options) {
-  if (options.concealed) { data->setData(CONCEALED_MARKER, "1"); }
+  if (options.concealed || options.transient) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
 
   if (!QGuiApplication::focusWindow() && m_process.state() == QProcess::Running) {
     clipboard_proto::Selection selection;

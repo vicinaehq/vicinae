@@ -79,8 +79,6 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
 bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboard::CopyOptions &options) {
   QMimeData *data = new QMimeData;
 
-  // setUrls writes a properly-encoded text/uri-list and lets Qt's platform converters
-  // map it to the native format (public.file-url on macOS, CF_HDROP on Windows).
   data->setUrls({QUrl::fromLocalFile(QString::fromStdString(path.string()))});
 
   return copyQMimeData(data, options);
@@ -499,8 +497,8 @@ void ClipboardService::restoreClipboard() {
     data->setData(offer.mimeType, offer.data);
   }
 
-  // Restore is concealed so we don't re-index a selection that was already on the clipboard.
-  m_clipboardServer->setClipboardContent(data, {.concealed = true, .sourceApp = m_lastSelection->sourceApp});
+  // Restore is transient so we don't re-index a selection that was already on the clipboard.
+  m_clipboardServer->setClipboardContent(data, {.transient = true, .sourceApp = m_lastSelection->sourceApp});
   m_lastSelection.reset();
 }
 
@@ -536,8 +534,6 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
     }
   }
 
-  // Propagate the original source so platform servers (e.g. macOS) can set the
-  // standard source UTI to the originating app rather than to vicinae itself.
   auto enrichedOptions = options;
   if (!enrichedOptions.sourceApp) enrichedOptions.sourceApp = selection.sourceApp;
   return copyQMimeData(mimeData, enrichedOptions);

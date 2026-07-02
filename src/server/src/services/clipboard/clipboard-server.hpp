@@ -10,11 +10,7 @@
 namespace Clipboard {
 struct CopyOptions {
   bool concealed = false;
-  /**
-   * Bundle identifier (or platform-equivalent) of the application this content originally
-   * came from. Used by macOS to set org.nspasteboard.source. If unset, the platform server
-   * defaults to its own identity (we wrote it).
-   */
+  bool transient = false;
   std::optional<QString> sourceApp;
 };
 } // namespace Clipboard
@@ -42,12 +38,6 @@ struct ClipboardSelection {
    * Some servers can't know this for security reasons.
    */
   std::optional<QString> sourceApp;
-  /**
-   * True if the platform detected a password-manager marker on this selection.
-   * Service applies the user's "ignore passwords" preference based on this.
-   * Selections marked as concealed/transient/auto-generated are silently dropped
-   * by the platform server and never reach this point.
-   */
   bool isPassword = false;
 };
 
@@ -88,11 +78,8 @@ public:
   virtual bool stop() { return true; }
 
   /**
-   * Write the given QMimeData to the clipboard. When options.concealed is set, the platform
-   * server is responsible for attaching the platform-native concealment marker so the write
-   * is filtered on the next read (by us and ideally by other clipboard managers).
-   * Default implementation uses Qt's clipboard and ignores options (suitable only for platforms
-   * that don't need an out-of-process write path).
+   * Set clipboard content synchronously.
+   * Default implementation uses Qt's clipboard.
    */
   virtual bool setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options = {}) {
     Q_UNUSED(options);

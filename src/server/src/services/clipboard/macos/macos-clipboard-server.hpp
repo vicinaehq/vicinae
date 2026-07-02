@@ -30,6 +30,5 @@ private:
 
   QTimer m_timer;
   long long m_lastChangeCount = -1;
-  // Retained id<NSObject> for the App Nap suppression token. Bridged in/out in .mm.
   void *m_appNapActivity = nullptr;
 };

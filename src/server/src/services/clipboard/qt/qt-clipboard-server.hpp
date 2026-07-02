@@ -16,14 +16,6 @@ public:
 
   bool setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options = {}) override;
 
-  /**
-   * Builds a normalized ClipboardSelection from a QMimeData. Picks a single preferred
-   * image format, uses structured access for text/html/urls to avoid redundant offers,
-   * and filters Qt-internal (application/x-qt-image) and X11 legacy target types.
-   *
-   * Returns std::nullopt when the selection carries a self-write / concealed marker
-   * (vicinae/concealed) and should be silently dropped.
-   */
   static std::optional<ClipboardSelection> selectionFromMimeData(const QMimeData *mimeData);
 
 private:

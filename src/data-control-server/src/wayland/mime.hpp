@@ -1,11 +1,12 @@
 #pragma once
+#include "common/clipboard-formats.hpp"
 #include <string_view>
 #include <unordered_set>
 
 // clang-format off
 static const std::unordered_set<std::string_view> flagMimes = {
-	"x-kde-passwordManagerHint",
-	"vicinae/concealed",
+	Clipboard::PASSWORD_HINT_MIME_TYPE,
+	Clipboard::CONCEALED_MIME_TYPE,
 };
 
 static const std::unordered_set<std::string_view> dataMimes = {

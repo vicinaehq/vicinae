@@ -1,11 +1,7 @@
 #include "qt-clipboard-server.hpp"
+#include "common/clipboard-formats.hpp"
 #include <qlogging.h>
 #include <ranges>
-
-namespace {
-constexpr const char *CONCEALED_MARKER = "vicinae/concealed";
-constexpr const char *PASSWORD_MARKER = "x-kde-passwordManagerHint";
-} // namespace
 
 bool AbstractQtClipboardServer::start() {
   auto clip = QGuiApplication::clipboard();
@@ -19,21 +15,21 @@ bool AbstractQtClipboardServer::stop() {
 }
 
 bool AbstractQtClipboardServer::setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options) {
-  if (options.concealed) { data->setData(CONCEALED_MARKER, "1"); }
+  if (options.concealed || options.transient) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
   return AbstractClipboardServer::setClipboardContent(data, options);
 }
 
 std::optional<ClipboardSelection>
 AbstractQtClipboardServer::selectionFromMimeData(const QMimeData *mimeData) {
-  if (!mimeData) return ClipboardSelection{};
+  if (!mimeData) return std::nullopt;
 
-  if (mimeData->hasFormat(CONCEALED_MARKER)) {
+  if (mimeData->hasFormat(Clipboard::CONCEALED_MIME_TYPE)) {
     qInfo() << "Qt clipboard: dropping concealed selection";
     return std::nullopt;
   }
 
   ClipboardSelection selection;
-  selection.isPassword = mimeData->hasFormat(PASSWORD_MARKER);
+  selection.isPassword = mimeData->hasFormat(Clipboard::PASSWORD_HINT_MIME_TYPE);
 
   if (mimeData->hasImage()) {
     // Prefer image formats in order: PNG > JPEG/JPG > SVG > anything else
@@ -90,7 +86,7 @@ AbstractQtClipboardServer::selectionFromMimeData(const QMimeData *mimeData) {
 
   auto isIndexableFormat = [](const QString &fmt) {
     return !isLegacyContentType(fmt) && !fmt.startsWith("text/") && !fmt.startsWith("image/") &&
-           fmt != PASSWORD_MARKER;
+           fmt != Clipboard::PASSWORD_HINT_MIME_TYPE;
   };
 
   for (const auto &format : mimeData->formats() | std::views::filter(isIndexableFormat)) {

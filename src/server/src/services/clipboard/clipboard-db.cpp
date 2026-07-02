@@ -8,23 +8,29 @@ static constexpr const char *CLIPBOARD_PRAGMAS[] = {
     "PRAGMA foreign_keys = ON"};
 
 std::optional<ClipboardSelectionRecord> ClipboardDatabase::findSelection(const QString &id) {
-  ClipboardSelectionRecord selection;
-
-  auto stmt = m_db.prepare("SELECT id, mime_type, encryption_type from data_offer where selection_id = :id");
+  auto stmt = m_db.prepare(R"(
+    SELECT s.source, o.id, o.mime_type, o.encryption_type
+    FROM selection s
+    LEFT JOIN data_offer o ON o.selection_id = s.id
+    WHERE s.id = :id
+  )");
   stmt.bind(":id", id);
 
+  std::optional<ClipboardSelectionRecord> selection;
+
   while (stmt.step()) {
+    if (!selection) {
+      selection.emplace();
+      if (!stmt.isNull(0)) { selection->source = stmt.columnQString(0); }
+    }
+    if (stmt.isNull(1)) continue;
+
     ClipboardSelectionOfferRecord record;
-
-    record.id = stmt.columnQString(0);
-    record.mimeType = stmt.columnQString(1);
-    record.encryption = static_cast<ClipboardEncryptionType>(stmt.columnInt(2));
-    selection.offers.emplace_back(record);
+    record.id = stmt.columnQString(1);
+    record.mimeType = stmt.columnQString(2);
+    record.encryption = static_cast<ClipboardEncryptionType>(stmt.columnInt(3));
+    selection->offers.emplace_back(record);
   }
-
-  auto srcStmt = m_db.prepare("SELECT source FROM selection WHERE id = :id");
-  srcStmt.bind(":id", id);
-  if (srcStmt.step() && !srcStmt.isNull(0)) { selection.source = srcStmt.columnQString(0); }
 
   return selection;
 }

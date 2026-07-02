@@ -1,6 +1,7 @@
 #include <thread>
 
 #include "gnome-clipboard-server.hpp"
+#include "common/clipboard-formats.hpp"
 #include "utils/environment.hpp"
 #include <QGuiApplication>
 #include <QDBusConnection>
@@ -165,7 +166,7 @@ void GnomeClipboardServer::handleClipboardChanged(const QByteArray &content, con
   qDebug() << "GnomeClipboardServer: Received clipboard change from" << sourceApp << "with mime type"
            << mimeType << "and size" << content.size() << "bytes";
 
-  if (mimeType == "vicinae/concealed") {
+  if (mimeType == Clipboard::CONCEALED_MIME_TYPE) {
     qInfo() << "GnomeClipboardServer: dropping concealed selection";
     return;
   }
@@ -219,7 +220,7 @@ void GnomeClipboardServer::attemptReconnection() {
 }
 
 bool GnomeClipboardServer::setClipboardContent(QMimeData *data, const Clipboard::CopyOptions &options) {
-  if (options.concealed) { data->setData("vicinae/concealed", "1"); }
+  if (options.concealed || options.transient) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
 
   if (!m_interface || !m_interface->isValid()) {
     qWarning() << "GnomeClipboardServer: D-Bus interface not available";
