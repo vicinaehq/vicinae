@@ -226,16 +226,17 @@ QVariantList GeneralSettingsModel::iconThemeItems() const {
 #ifdef Q_OS_LINUX
   IconThemeDatabase const db;
   for (const auto &theme : db.themes()) {
-    items.append(makeDropdownItem(theme.name, theme.name));
+    items.append(makeDropdownItem(theme.id, theme.name));
   }
 #endif
   return wrapSection(QStringLiteral("Icon Themes"), items);
 }
 
 QVariant GeneralSettingsModel::currentIconTheme() const {
+  IconThemeDatabase const db;
   auto &ith = cfg().systemTheme().iconTheme;
-  auto name = ith == "auto" ? QIcon::themeName() : QString::fromStdString(ith);
-  return makeDropdownItem(name, name);
+  QString id = ith == "auto" ? QIcon::themeName() : db.resolveThemeId(QString::fromStdString(ith));
+  return makeDropdownItem(id, db.displayName(id));
 }
 
 QVariantList GeneralSettingsModel::faviconServiceItems() const {

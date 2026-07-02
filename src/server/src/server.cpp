@@ -381,14 +381,17 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     KeybindManager::instance()->mergeBinds({next.keybinds.begin(), next.keybinds.end()});
     FaviconService::instance()->setService(next.faviconService.c_str());
 
-    if (nextTheme.iconTheme != "auto") {
-      QIcon::setThemeName(nextTheme.iconTheme.c_str());
-    }
 #ifdef Q_OS_LINUX
-    else if (QIcon::themeName() == "hicolor") {
+    {
       IconThemeDatabase const iconThemeDb;
-      QIcon::setThemeName(iconThemeDb.guessBestTheme());
+      if (nextTheme.iconTheme != "auto") {
+        QIcon::setThemeName(iconThemeDb.resolveThemeId(QString::fromStdString(nextTheme.iconTheme)));
+      } else {
+        QIcon::setThemeName(iconThemeDb.guessBestTheme());
+      }
     }
+#else
+    if (nextTheme.iconTheme != "auto") { QIcon::setThemeName(nextTheme.iconTheme.c_str()); }
 #endif
 
     ServiceRegistry::instance()->telemetry()->setEnabled(next.telemetry.systemInfo);
@@ -404,14 +407,17 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto &value = cfgService->value();
     auto &theme = value.systemTheme();
 
-    if (theme.iconTheme != "auto") {
-      QIcon::setThemeName(theme.iconTheme.c_str());
-    }
 #ifdef Q_OS_LINUX
-    else if (QIcon::themeName() == "hicolor") {
+    {
       IconThemeDatabase const iconThemeDb;
-      QIcon::setThemeName(iconThemeDb.guessBestTheme());
+      if (theme.iconTheme != "auto") {
+        QIcon::setThemeName(iconThemeDb.resolveThemeId(QString::fromStdString(theme.iconTheme)));
+      } else {
+        QIcon::setThemeName(iconThemeDb.guessBestTheme());
+      }
     }
+#else
+    if (theme.iconTheme != "auto") { QIcon::setThemeName(theme.iconTheme.c_str()); }
 #endif
 
     ThemeService::instance().setTheme(theme.name.c_str());
