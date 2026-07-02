@@ -27,19 +27,18 @@
 	},
 	"main": "dist/index.js",
 	"dependencies": {
+		"@types/react": "19.1.17",
 		"chokidar": "^4.0.3",
 		"esbuild": "^0.25.2",
-		"react": "^19.0.0",
+		"react": "19.1.1",
 		"zod": "^4.0.17"
 	},
 	"peerDependencies": {
-		"@types/node": ">=18",
-		"@types/react": "19.0.10"
+		"@types/node": ">=18"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.2",
 		"@types/node": "24.3.0",
-		"@types/react": "19.0.10",
 		"typedoc": "0.28.13",
 		"typedoc-github-theme": "0.3.1",
 		"typedoc-plugin-markdown": "4.8.1",
