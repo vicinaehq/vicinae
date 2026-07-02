@@ -19,11 +19,15 @@ public:
   virtual void setKeymap(snippet_gen::LayoutInfo info) = 0;
   virtual void resetContext() = 0;
 
-  virtual void injectExpand(unsigned charsToDelete, unsigned prePasteDelayUs, bool terminal,
-                            unsigned cursorLeftMoves) = 0;
+  virtual void injectExpand(const std::string &text, unsigned charsToDelete, unsigned prePasteDelayUs,
+                            bool terminal, unsigned cursorLeftMoves) = 0;
   virtual void injectUndo(unsigned backspaceCount, const std::string &trigger) = 0;
   virtual void setKeyDelay(int us) = 0;
   virtual bool supportsKeyInjection() const = 0;
+
+  // whether expansion is delivered via the clipboard (paste). when false, the backend types the text
+  // directly and the service skips clipboard staging/restore.
+  virtual bool usesClipboard() const = 0;
 
   virtual bool isRunning() const = 0;
 };

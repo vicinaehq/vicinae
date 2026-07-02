@@ -615,6 +615,8 @@ if (APPLE)
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.hpp
 		src/services/paste/macos-paste-service.mm
+		src/services/snippet/macos-snippet-server.hpp
+		src/services/snippet/macos-snippet-server.mm
 		src/services/power-manager/macos/macos-power-manager.hpp
 		src/services/power-manager/macos/macos-power-manager.mm
 		src/services/audio-control/macos/coreaudio-audio-control.hpp
@@ -633,6 +635,7 @@ if (APPLE)
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.mm
+		src/services/snippet/macos-snippet-server.mm
 		src/services/power-manager/macos/macos-power-manager.mm
 		src/services/window-manager/macos/macos-window.mm
 		src/services/window-manager/macos/macos-window-manager.mm
