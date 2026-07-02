@@ -51,12 +51,12 @@ in
 
     apiDeps = fetchNpmDeps {
       src = "${finalAttrs.src}/src/typescript/api";
-      hash = "sha256-y4yr99TWB3gm0PTYsegcIok9DXR3YBFdTo5u6ZqOuKc=";
+      hash = "sha256-Im8fSG9sbaSynrN5gLsWVaPgH5g4Zp+x+FUPIBXrKjg=";
     };
 
     extensionManagerDeps = fetchNpmDeps {
       src = "${finalAttrs.src}/src/typescript/extension-manager";
-      hash = "sha256-32djl/lSat7o+sHubaUjx2/+O7Y39MYRTcYeF6o+Z78=";
+      hash = "sha256-pEgqFgvdz7Bcc+LznCI+KlD1XEfUuWFWjS24MJ7sx3k=";
     };
 
     cmakeFlags = lib.mapAttrsToList lib.cmakeFeature {

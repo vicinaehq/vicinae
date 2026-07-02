@@ -6,7 +6,6 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "tsc --outDir dist",
 		"pack": "npm run build && npm pack",
-		"docgen": "typedoc",
 		"format": "biome format --write"
 	},
 	"bin": {
@@ -39,9 +38,6 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.3.2",
 		"@types/node": "24.3.0",
-		"typedoc": "0.28.13",
-		"typedoc-github-theme": "0.3.1",
-		"typedoc-plugin-markdown": "4.8.1",
 		"typescript": "5.9.2"
 	},
 	"repository": "vicinaehq/vicinae"
