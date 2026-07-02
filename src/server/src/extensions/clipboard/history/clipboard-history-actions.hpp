@@ -5,6 +5,7 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/alert/alert.hpp"
+#include "extensions/clipboard/clipboard-extension.hpp"
 
 class PasteClipboardSelection : public PasteToFocusedWindowAction {
   QString m_id;
@@ -99,7 +100,8 @@ class RemoveAllSelectionsAction : public AbstractAction {
     alert->setConfirmCallback([ctx]() {
       auto toast = ctx->services->toastService();
       auto clipman = ctx->services->clipman();
-      if (clipman->removeAllSelections()) {
+      bool preservePinned = ClipboardExtension::preservePinnedOnClear;
+      if (clipman->removeAllSelections(preservePinned)) {
         toast->success("All selections were removed");
       } else {
         toast->failure("Failed to remove all selections");

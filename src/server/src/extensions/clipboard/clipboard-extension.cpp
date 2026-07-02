@@ -6,6 +6,8 @@
 #include "extensions/clipboard/clipboard-history-command.hpp"
 #include "service-registry.hpp"
 
+bool ClipboardExtension::preservePinnedOnClear = false;
+
 class ClipboardClearCommand : public BuiltinCallbackCommand {
   QString id() const override { return "clear"; }
   QString name() const override { return "Clear Current Clipboard Data"; }
@@ -38,10 +40,11 @@ class ClearClipboardHistoryCommand : public BuiltinCallbackCommand {
     auto ctx = ctrl->context();
     auto clipman = ctx->services->clipman();
     auto toast = ctx->services->toastService();
+    bool preservePinned = ClipboardExtension::preservePinnedOnClear;
 
     ctx->navigation->confirmAlert("Are you sure?", "Your clipboard history will be gone forever :(",
-                                  [clipman, toast]() {
-                                    if (!clipman->removeAllSelections()) {
+                                  [clipman, toast, preservePinned]() {
+                                    if (!clipman->removeAllSelections(preservePinned)) {
                                       toast->failure("Failed to clear clipboard history");
                                       return;
                                     }
@@ -60,8 +63,9 @@ ClipboardExtension::ClipboardExtension() {
 void ClipboardExtension::initialized(const QJsonObject &preferences) const {
   auto clipman = ServiceRegistry::instance()->clipman();
   bool const eraseOnStartup = preferences.value("eraseOnStartup").toBool();
+  preservePinnedOnClear = preferences.value("preservePinnedOnClear").toBool(false);
 
-  if (eraseOnStartup) { clipman->removeAllSelections(); }
+  if (eraseOnStartup) { clipman->removeAllSelections(preservePinnedOnClear); }
 }
 
 void ClipboardExtension::preferenceValuesChanged(const QJsonObject &value) const {
@@ -70,6 +74,7 @@ void ClipboardExtension::preferenceValuesChanged(const QJsonObject &value) const
   clipman->setMonitoring(value.value("monitoring").toBool());
   clipman->setEncryption(value.value("encryption").toBool());
   clipman->setIgnorePasswords(value.value("ignorePasswords").toBool());
+  preservePinnedOnClear = value.value("preservePinnedOnClear").toBool();
 }
 
 std::vector<Preference> ClipboardExtension::preferences() const {
@@ -77,6 +82,7 @@ std::vector<Preference> ClipboardExtension::preferences() const {
   auto monitoring = Preference::makeCheckbox("monitoring");
   auto eraseOnStartup = Preference::makeCheckbox("eraseOnStartup");
   auto ignorePasswords = Preference::makeCheckbox("ignorePasswords");
+  auto preservePinnedOnClear = Preference::makeCheckbox("preservePinnedOnClear");
 
   eraseOnStartup.setTitle("Erase on startup");
   eraseOnStartup.setDescription("Erase clipboard history every time the vicinae server is started");
@@ -100,5 +106,9 @@ std::vector<Preference> ClipboardExtension::preferences() const {
                             "performed while this is turned off will not be recorded.");
   monitoring.setDefaultValue(true);
 
-  return {monitoring, ignorePasswords, eraseOnStartup, encryption};
+  preservePinnedOnClear.setTitle("Preserve pinned on clear");
+  preservePinnedOnClear.setDescription("Keep pinned items when clearing clipboard history");
+  preservePinnedOnClear.setDefaultValue(false);
+
+  return {monitoring, ignorePasswords, eraseOnStartup, encryption, preservePinnedOnClear};
 }
