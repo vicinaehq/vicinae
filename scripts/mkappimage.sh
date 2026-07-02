@@ -18,7 +18,6 @@ cp -r $1/* $APPDIR/usr
 
 cp $(which node) ${APPDIR}/usr/bin/node
 cp extra/vicinae.png ${APPDIR}
-cp extra/vicinae.desktop ${APPDIR}
 
 # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57
 cp /usr/lib/$(uname -m)-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
@@ -33,4 +32,6 @@ for bin in $APPDIR/usr/libexec/vicinae/*; do
 	EXECUTABLE_ARGS+=(--executable $bin)
 done
 
-linuxdeploy --appdir $APPDIR "${EXECUTABLE_ARGS[@]}" --plugin qt --output appimage
+linuxdeploy --appdir $APPDIR "${EXECUTABLE_ARGS[@]}" \
+	--desktop-file $APPDIR/usr/share/applications/vicinae.desktop \
+	--plugin qt --output appimage
