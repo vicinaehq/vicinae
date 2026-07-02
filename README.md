@@ -35,7 +35,7 @@ Out of the box, Vicinae can be your:
 
 When you need more, Vicinae can be extended in several ways:
 
-- [React/Typescript extensions](https://docs.vicinae.com/extensions), compatible with the Raycast ecosystem. In-app integration with the [Vicinae store](https://www.vicinae.com/extensions) and the [Raycast store](https://www.raycast.com/store).
+- [React/Typescript extensions](https://docs.vicinae.com/extensions/introduction), compatible with the Raycast ecosystem. In-app integration with the [Vicinae store](https://www.vicinae.com/extensions) and the [Raycast store](https://www.raycast.com/store).
 - [Script commands](https://docs.vicinae.com/scripts/getting-started), also compatible with the Raycast feature of the same name, with special Vicinae additions.
 - [dmenu style menu creation](https://docs.vicinae.com/dmenu), the linux minimalist way!
 
