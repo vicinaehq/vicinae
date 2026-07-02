@@ -5,23 +5,18 @@
 #include <string>
 #include <vector>
 
-namespace config {
-class Manager;
-}
-
 // Try to set the wallpaper using the currently available backend.
 class WallpaperManager {
 public:
-  explicit WallpaperManager(config::Manager &config) : m_config(config) {}
-
   QFuture<std::expected<void, std::string>> setWallpaper(const WallpaperRequest &request);
 
+  bool canSetWallpaper();
+
 private:
-  static std::vector<std::unique_ptr<AbstractWallpaperBackend>>
-  createCandidates(const std::string &customCommand);
-  static std::unique_ptr<AbstractWallpaperBackend> resolveBackend(const std::string &customCommand);
+  static std::vector<std::unique_ptr<AbstractWallpaperBackend>> createCandidates();
 
-  std::string customCommand() const;
+  AbstractWallpaperBackend *backend();
 
-  config::Manager &m_config;
+  bool m_resolved = false;
+  std::unique_ptr<AbstractWallpaperBackend> m_backend;
 };

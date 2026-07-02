@@ -26,7 +26,6 @@ SNAKE_CASIFY(config::ThemeConfig);
 SNAKE_CASIFY(config::TelemetryConfig);
 SNAKE_CASIFY(config::WindowCSD);
 SNAKE_CASIFY(config::GlobalShortcuts);
-SNAKE_CASIFY(config::WallpaperConfig);
 
 struct ConfigTransformer : glz::snake_case {
   static constexpr std::string rename_key(const std::string_view key) {

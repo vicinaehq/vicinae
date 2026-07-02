@@ -241,16 +241,6 @@ template <> struct Partial<GlobalShortcuts> {
   std::optional<std::string> toggle;
 };
 
-struct WallpaperConfig {
-  // Custom command to set the wallpaper, overriding the built-in backends when set.
-  // Supports {path}, {screen} and {fit} placeholders.
-  std::string command;
-};
-
-template <> struct Partial<WallpaperConfig> {
-  std::optional<std::string> command;
-};
-
 struct ConfigValue {
   std::string schema = SCHEMA;
   std::vector<std::string> imports;
@@ -275,7 +265,6 @@ struct ConfigValue {
   WindowConfig launcherWindow;
   Header header;
   Footer footer;
-  WallpaperConfig wallpaper;
 
   // we use maps to keep serialized output predictable
   KeybindMap keybinds;
@@ -328,7 +317,6 @@ template <> struct Partial<ConfigValue> {
   std::optional<Partial<WindowConfig>> launcherWindow;
   std::optional<Partial<Header>> header;
   std::optional<Partial<Footer>> footer;
-  std::optional<Partial<WallpaperConfig>> wallpaper;
 
   std::optional<KeybindMap> keybinds;
 

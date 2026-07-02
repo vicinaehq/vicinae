@@ -86,7 +86,9 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
 
   if (fileBrowser) { section->addAction(new RevealFileInFolderAction(path)); }
 
-  if (mime.name().startsWith("image/")) { section->addAction(new SetWallpaperAction(path)); }
+  if (mime.name().startsWith("image/") && ctx->services->wallpaperManager()->canSetWallpaper()) {
+    section->addAction(new SetWallpaperAction(path));
+  }
 
   auto suggested = panel->createSection("Suggested apps");
 

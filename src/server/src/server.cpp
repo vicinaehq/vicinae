@@ -252,7 +252,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
-    registry->setWallpaperManager(std::make_unique<WallpaperManager>(*registry->config()));
+    registry->setWallpaperManager(std::make_unique<WallpaperManager>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
