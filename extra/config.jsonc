@@ -60,13 +60,6 @@
 	// If this is set to 'none', favicon loading is disabled and a placeholder icon will be used when a favicon is expected.
 	"favicon_service": "twenty",
 
-	// command to use when Vicinae wants to set the wallpaper
-	// you ONLY need to override this if the default behavior
-	// is not doing what you want.
-	"wallpaper": {
-		// command: "swww img {path} --outputs {screen}"
-	},
-
 	// EXPERIMENTAL!
 	// Enable specific editing motions in the main search bar and during navigation.
 	// This will probably be changed in future updates.
