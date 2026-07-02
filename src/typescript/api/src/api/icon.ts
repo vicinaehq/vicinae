@@ -90,6 +90,7 @@ export enum Icon {
 	Binoculars = "binoculars",
 	Bird = "bird",
 	Bitbucket = "bitbucket",
+	Blank = "blank",
 	BlankDocument = "blank-document",
 	Blazor = "blazor",
 	Blender = "blender",
