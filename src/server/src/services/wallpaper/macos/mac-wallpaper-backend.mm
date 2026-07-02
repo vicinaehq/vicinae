@@ -30,7 +30,6 @@ std::expected<void, std::string> apply(const WallpaperRequest &request) {
 
     NSArray<NSScreen *> *targets = [NSScreen screens];
 
-    // request.screen -> NSScreen.localizedName
     if (request.screen) {
       NSString *wanted = [NSString stringWithUTF8String:request.screen->c_str()];
       NSMutableArray<NSScreen *> *matched = [NSMutableArray array];

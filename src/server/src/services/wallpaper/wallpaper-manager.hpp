@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-// Try to set the wallpaper using the currently available backend.
 class WallpaperManager {
 public:
   QFuture<std::expected<void, std::string>> setWallpaper(const WallpaperRequest &request);
