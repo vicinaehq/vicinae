@@ -591,7 +591,7 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 
   // FIXME: we need a unified interface for this
   if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) {
-    launch(ext->command(), options.arguments);
+    launch(ext->command(), {.arguments = options.arguments, .launchContext = options.launchContext});
   } else {
     auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
     panel->finalize();
@@ -617,10 +617,14 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
-  launch(cmd, completionValues());
+  launch(cmd, LaunchProps{.arguments = completionValues()});
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments) {
+  launch(cmd, LaunchProps{.arguments = arguments});
+}
+
+void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const LaunchProps &props) {
   // unload stalled no-view command
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
 
@@ -630,9 +634,6 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
   }
 
   bool const shouldCheckPreferences = cmd->type() == CommandType::CommandTypeExtension;
-  LaunchProps props;
-
-  props.arguments = arguments;
 
   if (shouldCheckPreferences) {
     auto itemId = cmd->uniqueId();

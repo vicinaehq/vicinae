@@ -172,8 +172,21 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       }
     }
 
-    if (!m_ctx.navigation->activateEntrypoint(
-            id, {.arguments = std::move(arguments), .fallbackText = query.queryItemValue("fallbackText")})) {
+    std::optional<LaunchContext> launchContext;
+    if (query.hasQueryItem("launchContext")) {
+      QString const launchContextText = query.queryItemValue("launchContext");
+      QJsonParseError parseError;
+      QJsonDocument const doc = QJsonDocument::fromJson(launchContextText.toUtf8(), &parseError);
+      if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
+        launchContext = doc.object();
+      } else {
+        qWarning() << "Failed to parse launchContext JSON:" << parseError.errorString();
+      }
+    }
+
+    if (!m_ctx.navigation->activateEntrypoint(id, {.arguments = std::move(arguments),
+                                                   .fallbackText = query.queryItemValue("fallbackText"),
+                                                   .launchContext = std::move(launchContext)})) {
       return std::unexpected("No primary action for this root item");
     }
 

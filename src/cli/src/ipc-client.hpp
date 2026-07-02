@@ -1,5 +1,6 @@
 #pragma once
 #include <common/enumerate.hpp>
+#include <cctype>
 #include <cstring>
 #include <expected>
 #include <filesystem>
@@ -12,6 +13,22 @@
 #include "generated/ipc-client.hpp"
 
 namespace cli {
+
+inline std::string percentEncode(std::string_view value) {
+  std::string encoded;
+  encoded.reserve(value.size() * 3);
+
+  for (unsigned char ch : value) {
+    if (std::isalnum(ch) || ch == '-' || ch == '_' || ch == '.' || ch == '~') {
+      encoded.push_back(static_cast<char>(ch));
+      continue;
+    }
+
+    encoded.append(std::format("%{:02X}", static_cast<int>(ch)));
+  }
+
+  return encoded;
+}
 
 inline std::filesystem::path socketPath() {
   std::filesystem::path base;
@@ -74,8 +91,10 @@ public:
   static std::expected<ipc::DeeplinkResponse, std::string>
   sendDeeplink(std::string_view url, const std::vector<std::pair<std::string, std::string>> &query = {}) {
     std::string fullUrl{url};
+    bool const hasArguments = fullUrl.contains('?');
     for (const auto &[idx, arg] : query | vicinae::enumerate) {
-      fullUrl.append(std::format("{}{}={}", idx == 0 ? "?" : "&", arg.first, arg.second));
+      char const separator = idx == 0 ? (hasArguments ? '&' : '?') : '&';
+      fullUrl.append(std::format("{}{}={}", separator, percentEncode(arg.first), percentEncode(arg.second)));
     }
     return connect().and_then([&](IpcClient client) { return client.deeplink({.url = std::move(fullUrl)}); });
   }
