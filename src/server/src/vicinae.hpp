@@ -42,6 +42,7 @@ std::filesystem::path pidFile();
 std::filesystem::path dataDir();
 std::filesystem::path stateDir();
 std::filesystem::path configDir();
+std::filesystem::path cacheDir();
 
 // Read-only resources shipped with the application. On macOS this is
 // Vicinae.app/Contents/Resources; on other platforms it is the install-prefix

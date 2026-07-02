@@ -4,10 +4,10 @@
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "utils/utils.hpp"
+#include "vicinae.hpp"
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
-#include <QStandardPaths>
 #include <QUrl>
 
 static std::optional<ClipboardOfferKind> kindFromFilterIndex(int index) {
@@ -230,7 +230,7 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   }
 
   if (mime.startsWith("image/")) {
-    auto const cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    auto const cacheDir = QString::fromStdString(Omnicast::cacheDir().string());
     QDir().mkpath(cacheDir);
     QString const path = cacheDir + QStringLiteral("/clipboard-") + entry.md5sum;
     QFile f(path);

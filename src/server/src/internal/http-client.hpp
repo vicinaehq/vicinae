@@ -2,9 +2,9 @@
 #include <algorithm>
 #include <expected>
 #include "common/types.hpp"
+#include "vicinae.hpp"
 #include <glaze/core/reflect.hpp>
 #include <QNetworkDiskCache>
-#include <QStandardPaths>
 #include <qdir.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
@@ -23,7 +23,7 @@ inline QNetworkAccessManager *networkManager() {
   static auto *mgr = [] {
     auto *m = new QNetworkAccessManager;
     auto *cache = new QNetworkDiskCache(m);
-    const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/http";
+    const QString cacheDir = QString::fromStdString((Omnicast::cacheDir() / "http").string());
     QDir().mkpath(cacheDir);
     cache->setCacheDirectory(cacheDir);
     m->setCache(cache);
