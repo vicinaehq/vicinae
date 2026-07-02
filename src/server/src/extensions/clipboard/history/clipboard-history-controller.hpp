@@ -1,6 +1,7 @@
 #pragma once
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include <QTimer>
 #include <qfuturewatcher.h>
 #include <qobject.h>
 #include <optional>
@@ -28,9 +29,12 @@ private slots:
   void handleClipboardChanged();
 
 private:
+  void runQuery();
+
   ClipboardService *m_clipboard = nullptr;
 
   QueryWatcher m_watcher;
+  QTimer m_debounce;
   QString m_query;
   std::optional<ClipboardOfferKind> m_kind;
 };

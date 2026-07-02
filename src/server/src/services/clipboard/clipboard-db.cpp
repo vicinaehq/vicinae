@@ -306,7 +306,7 @@ bool ClipboardDatabase::insertOffer(const InsertClipboardOfferPayload &payload) 
   return true;
 }
 
-ClipboardDatabase::ClipboardDatabase() {
+ClipboardDatabase::ClipboardDatabase(std::optional<db::EncryptionKey> key) {
   auto result = db::Database::open(Omnicast::dataDir() / "clipboard.db");
 
   if (!result) {
@@ -315,6 +315,12 @@ ClipboardDatabase::ClipboardDatabase() {
   }
 
   m_db = std::move(*result);
+
+  if (key) {
+    if (auto keyed = m_db.setKey(*key); !keyed) {
+      qFatal("Failed to unlock clipboard database: %s", keyed.error().c_str());
+    }
+  }
 
   for (const auto &pragma : CLIPBOARD_PRAGMAS) {
     if (!m_db.exec(pragma)) { qCritical() << "Failed to execute pragma" << pragma; }

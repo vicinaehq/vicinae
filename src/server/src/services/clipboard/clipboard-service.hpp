@@ -15,7 +15,6 @@
 #include <qmimedatabase.h>
 #include <qstringview.h>
 #include <QTimer>
-#include <qt6keychain/keychain.h>
 
 namespace Clipboard {
 [[maybe_unused]] static const char *CONCEALED_MIME_TYPE = "vicinae/concealed";
@@ -72,7 +71,7 @@ public:
     DecryptionFailed,
   };
 
-  ClipboardService(const std::filesystem::path &path);
+  ClipboardService(const std::filesystem::path &path, std::optional<db::EncryptionKey> key = std::nullopt);
 
   static QString readText();
   static Clipboard::ReadContent readContent();
@@ -114,15 +113,18 @@ public:
   bool supportsMonitoring() const;
   bool monitoring() const;
   void setMonitoring(bool value);
-  void setEncryption(bool value);
+  void setEncryptionKey(std::optional<db::EncryptionKey> key);
   void setIgnorePasswords(bool value);
   bool isEncryptionReady() const;
 
 private:
+  ClipboardDatabase openDatabase() const { return ClipboardDatabase(m_dbKey); }
+
   std::unique_ptr<ClipboardEncrypter> m_encrypter;
 
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;
+  std::optional<db::EncryptionKey> m_dbKey;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
 
   static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
