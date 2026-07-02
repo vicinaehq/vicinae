@@ -1,13 +1,14 @@
 #include "raycast-store.hpp"
 #include "environment.hpp"
-#include "internal/glaze-qt.hpp"
 #include "utils/capabilities.hpp"
 #include <algorithm>
 
 static bool availableOnCurrentPlatform(const Raycast::Extension &ext) {
+  // Raycast won't advertise linux compatibility, but we still want them on Linux (best-effort support)
   if constexpr (!Raycast::isNativePlatform()) return true;
 
-  if (!ext.platforms) return platform::extensionPlatform() == u"macos";
+  // no platforms means every platform
+  if (!ext.platforms) return true;
 
   return std::ranges::contains(*ext.platforms, platform::extensionPlatform(),
                                [](const QString &p) { return p.toLower(); });

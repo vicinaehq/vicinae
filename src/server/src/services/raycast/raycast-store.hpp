@@ -9,6 +9,7 @@
 #include <expected>
 #include <unordered_map>
 #include <vector>
+#include "glaze-qt.hpp"
 #include "internal/http-client.hpp"
 
 namespace Raycast {
