@@ -4,6 +4,7 @@
 #include "utils/environment.hpp"
 #include <QStandardPaths>
 #include <QUrl>
+#include <QtConcurrent>
 
 namespace {
 
@@ -15,20 +16,23 @@ bool GnomeWallpaperBackend::isActivatable() const {
   return Environment::isGnomeEnvironment() && !QStandardPaths::findExecutable("gsettings").isEmpty();
 }
 
-std::expected<void, std::string> GnomeWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
-  const QString uri = QUrl::fromLocalFile(QString::fromStdString(request.path)).toString();
-  const QString schema = QString::fromUtf8(SCHEMA.data(), SCHEMA.size());
+QFuture<std::expected<void, std::string>>
+GnomeWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
+  return QtConcurrent::run([request]() -> std::expected<void, std::string> {
+    const QString uri = QUrl::fromLocalFile(QString::fromStdString(request.path)).toString();
+    const QString schema = QString::fromUtf8(SCHEMA.data(), SCHEMA.size());
 
-  if (auto res = wallpaper::runCommand("gsettings", {"set", schema, "picture-uri", uri}); !res) {
-    return std::unexpected(res.error());
-  }
+    if (auto res = wallpaper::runCommand("gsettings", {"set", schema, "picture-uri", uri}); !res) {
+      return std::unexpected(res.error());
+    }
 
-  // picture-uri-dark only exists since GNOME 42; ignore failure on older versions.
-  (void)wallpaper::runCommand("gsettings", {"set", schema, "picture-uri-dark", uri});
+    // picture-uri-dark only exists since GNOME 42; ignore failure on older versions.
+    (void)wallpaper::runCommand("gsettings", {"set", schema, "picture-uri-dark", uri});
 
-  auto res = wallpaper::runCommand(
-      "gsettings", {"set", schema, "picture-options", wallpaper::gsettingsPictureOption(request.fit)});
-  if (!res) return std::unexpected(res.error());
+    auto res = wallpaper::runCommand(
+        "gsettings", {"set", schema, "picture-options", wallpaper::gsettingsPictureOption(request.fit)});
+    if (!res) return std::unexpected(res.error());
 
-  return {};
+    return {};
+  });
 }

@@ -20,8 +20,6 @@ private:
   static std::vector<std::unique_ptr<AbstractWallpaperBackend>>
   createCandidates(const std::string &customCommand);
   static std::unique_ptr<AbstractWallpaperBackend> resolveBackend(const std::string &customCommand);
-  static std::expected<void, std::string> apply(const WallpaperRequest &request,
-                                                const std::string &customCommand);
 
   std::string customCommand() const;
 

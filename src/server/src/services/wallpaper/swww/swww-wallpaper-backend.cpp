@@ -1,6 +1,7 @@
 #include "swww-wallpaper-backend.hpp"
 #include "services/wallpaper/wallpaper-command.hpp"
 #include <QStandardPaths>
+#include <QtConcurrent>
 
 namespace {
 
@@ -34,17 +35,20 @@ bool SwwwWallpaperBackend::isActivatable() const {
   return bin && wallpaper::runCommand(*bin, {"query"}).has_value();
 }
 
-std::expected<void, std::string> SwwwWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
-  auto bin = binary();
-  if (!bin) return std::unexpected("neither awww nor swww is installed");
+QFuture<std::expected<void, std::string>>
+SwwwWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
+  return QtConcurrent::run([request]() -> std::expected<void, std::string> {
+    auto bin = binary();
+    if (!bin) return std::unexpected("neither awww nor swww is installed");
 
-  // swww defaults to a fade transition; set instantly to match the other backends.
-  QStringList args{"img", "--transition-type", "none", "--resize", resizeMode(request.fit)};
-  if (request.screen) { args << "--outputs" << QString::fromStdString(*request.screen); }
-  args << QString::fromStdString(request.path);
+    // swww defaults to a fade transition; set instantly to match the other backends.
+    QStringList args{"img", "--transition-type", "none", "--resize", resizeMode(request.fit)};
+    if (request.screen) { args << "--outputs" << QString::fromStdString(*request.screen); }
+    args << QString::fromStdString(request.path);
 
-  auto res = wallpaper::runCommand(*bin, args);
-  if (!res) return std::unexpected(res.error());
+    auto res = wallpaper::runCommand(*bin, args);
+    if (!res) return std::unexpected(res.error());
 
-  return {};
+    return {};
+  });
 }

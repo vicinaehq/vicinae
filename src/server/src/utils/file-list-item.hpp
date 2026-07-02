@@ -9,6 +9,7 @@
 #include "services/app-service/app-service.hpp"
 #include "internal/keyboard/keyboard.hpp"
 #include "services/toast/toast-service.hpp"
+#include "services/wallpaper/wallpaper-manager.hpp"
 #include <qmimedatabase.h>
 #include <filesystem>
 #include <memory>
@@ -42,6 +43,31 @@ private:
   std::filesystem::path m_path;
 };
 
+class SetWallpaperAction : public AbstractAction {
+public:
+  SetWallpaperAction(std::filesystem::path path)
+      : AbstractAction("Set as wallpaper", ImageURL::builtin("image")), m_path(std::move(path)) {
+    setShortcut(Keyboard::Shortcut(Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier));
+  }
+
+  void execute(ApplicationContext *ctx) override {
+    auto const toast = ctx->services->toastService();
+    auto const wallpaper = ctx->services->wallpaperManager();
+
+    wallpaper->setWallpaper({.path = m_path.string()})
+        .then(toast, [ctx, toast](const std::expected<void, std::string> &result) {
+          if (result) {
+            ctx->navigation->showHud("Wallpaper set", ImageURL::builtin("image"));
+          } else {
+            toast->failure("Failed to set wallpaper", QString::fromStdString(result.error()));
+          }
+        });
+  }
+
+private:
+  std::filesystem::path m_path;
+};
+
 inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path &path,
                                                      const ApplicationContext *ctx) {
   QMimeDatabase mimeDb;
@@ -59,6 +85,8 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   }
 
   if (fileBrowser) { section->addAction(new RevealFileInFolderAction(path)); }
+
+  if (mime.name().startsWith("image/")) { section->addAction(new SetWallpaperAction(path)); }
 
   auto suggested = panel->createSection("Suggested apps");
 

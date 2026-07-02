@@ -1,7 +1,6 @@
 #include "wallpaper-manager.hpp"
 #include "config/config.hpp"
 #include "dummy-wallpaper-backend.hpp"
-#include <QtConcurrent>
 #include <QtGlobal>
 #include <filesystem>
 #include "custom/custom-wallpaper-backend.hpp"
@@ -49,18 +48,14 @@ std::unique_ptr<AbstractWallpaperBackend> WallpaperManager::resolveBackend(const
   return std::make_unique<DummyWallpaperBackend>();
 }
 
-std::expected<void, std::string> WallpaperManager::apply(const WallpaperRequest &request,
-                                                         const std::string &customCommand) {
-  std::error_code ec;
-  if (!std::filesystem::is_regular_file(request.path, ec)) {
-    return std::unexpected("No such file: " + request.path);
-  }
-
-  return resolveBackend(customCommand)->setWallpaper(request);
-}
-
 std::string WallpaperManager::customCommand() const { return m_config.value().wallpaper.command; }
 
 QFuture<std::expected<void, std::string>> WallpaperManager::setWallpaper(const WallpaperRequest &request) {
-  return QtConcurrent::run([request, command = customCommand()] { return apply(request, command); });
+  std::error_code ec;
+  if (!std::filesystem::is_regular_file(request.path, ec)) {
+    return QtFuture::makeReadyValueFuture<std::expected<void, std::string>>(
+        std::unexpected("No such file: " + request.path));
+  }
+
+  return resolveBackend(customCommand())->setWallpaper(request);
 }

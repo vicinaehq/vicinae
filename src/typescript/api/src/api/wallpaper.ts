@@ -23,6 +23,9 @@ export namespace Wallpaper {
 	 * Set the desktop wallpaper to the image at `path`, using whichever backend fits the current
 	 * desktop environment or running wallpaper daemon.
 	 *
+	 * On macOS this only affects the currently active space, as there is no public API to target
+	 * other spaces.
+	 *
 	 * @throws if no backend is available to serve the request
 	 */
 	export async function set(

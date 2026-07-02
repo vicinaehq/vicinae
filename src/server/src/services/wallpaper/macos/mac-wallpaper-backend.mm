@@ -17,9 +17,7 @@ NSImageScaling scalingForFit(WallpaperFit fit) {
   return NSImageScaleProportionallyUpOrDown;
 }
 
-} // namespace
-
-std::expected<void, std::string> MacWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
+std::expected<void, std::string> apply(const WallpaperRequest &request) {
   @autoreleasepool {
     NSString *path = [NSString stringWithUTF8String:request.path.c_str()];
     NSURL *url = path ? [NSURL fileURLWithPath:path] : nil;
@@ -32,7 +30,7 @@ std::expected<void, std::string> MacWallpaperBackend::setWallpaper(const Wallpap
 
     NSArray<NSScreen *> *targets = [NSScreen screens];
 
-	// request.screen -> NSScreen.localizedName
+    // request.screen -> NSScreen.localizedName
     if (request.screen) {
       NSString *wanted = [NSString stringWithUTF8String:request.screen->c_str()];
       NSMutableArray<NSScreen *> *matched = [NSMutableArray array];
@@ -54,4 +52,11 @@ std::expected<void, std::string> MacWallpaperBackend::setWallpaper(const Wallpap
 
     return {};
   }
+}
+
+} // namespace
+
+QFuture<std::expected<void, std::string>>
+MacWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
+  return QtFuture::makeReadyValueFuture(apply(request));
 }

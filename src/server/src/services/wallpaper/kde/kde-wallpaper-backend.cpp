@@ -1,6 +1,7 @@
 #include "kde-wallpaper-backend.hpp"
 #include "utils/dbus.hpp"
 #include <QUrl>
+#include <QtConcurrent>
 
 namespace {
 
@@ -29,10 +30,11 @@ int fillMode(WallpaperFit fit) {
 
 bool KdeWallpaperBackend::isActivatable() const { return dbus::isServiceRegistered(PLASMA_SERVICE); }
 
-std::expected<void, std::string> KdeWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
-  const QString uri = QUrl::fromLocalFile(QString::fromStdString(request.path)).toString();
+QFuture<std::expected<void, std::string>> KdeWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
+  return QtConcurrent::run([request]() -> std::expected<void, std::string> {
+    const QString uri = QUrl::fromLocalFile(QString::fromStdString(request.path)).toString();
 
-  const QString script = QString(R"JS(
+    const QString script = QString(R"JS(
     var ds = desktops();
     for (var i = 0; i < ds.length; i++) {
       var d = ds[i];
@@ -42,11 +44,12 @@ std::expected<void, std::string> KdeWallpaperBackend::setWallpaper(const Wallpap
       d.writeConfig("FillMode", %2);
     }
   )JS")
-                             .arg(uri)
-                             .arg(fillMode(request.fit));
+                               .arg(uri)
+                               .arg(fillMode(request.fit));
 
-  auto res = dbus::call(PLASMA_SERVICE, PLASMA_PATH, PLASMA_IFACE, "evaluateScript", {script});
-  if (!res) return std::unexpected(res.error().toStdString());
+    auto res = dbus::call(PLASMA_SERVICE, PLASMA_PATH, PLASMA_IFACE, "evaluateScript", {script});
+    if (!res) return std::unexpected(res.error().toStdString());
 
-  return {};
+    return {};
+  });
 }

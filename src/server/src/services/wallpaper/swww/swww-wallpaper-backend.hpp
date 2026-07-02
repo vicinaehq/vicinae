@@ -10,7 +10,7 @@ public:
   std::string id() const override { return "swww"; }
   bool isActivatable() const override;
   bool supportsPerScreen() const override { return true; }
-  std::expected<void, std::string> setWallpaper(const WallpaperRequest &request) override;
+  QFuture<std::expected<void, std::string>> setWallpaper(const WallpaperRequest &request) override;
 
 private:
   static std::optional<QString> binary();

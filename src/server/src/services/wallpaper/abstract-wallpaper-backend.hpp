@@ -1,4 +1,5 @@
 #pragma once
+#include <QFuture>
 #include <expected>
 #include <optional>
 #include <string>
@@ -25,5 +26,5 @@ public:
 
   virtual bool supportsPerScreen() const { return false; }
 
-  virtual std::expected<void, std::string> setWallpaper(const WallpaperRequest &request) = 0;
+  virtual QFuture<std::expected<void, std::string>> setWallpaper(const WallpaperRequest &request) = 0;
 };

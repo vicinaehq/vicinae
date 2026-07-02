@@ -11,7 +11,7 @@ public:
   std::string id() const override { return "custom"; }
   bool isActivatable() const override { return !m_command.empty(); }
   bool supportsPerScreen() const override { return m_command.contains("{screen}"); }
-  std::expected<void, std::string> setWallpaper(const WallpaperRequest &request) override;
+  QFuture<std::expected<void, std::string>> setWallpaper(const WallpaperRequest &request) override;
 
 private:
   std::string m_command;
