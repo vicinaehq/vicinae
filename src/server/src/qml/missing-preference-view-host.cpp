@@ -1,5 +1,7 @@
 #include "missing-preference-view-host.hpp"
 
+#include <QJsonArray>
+#include <common/enumerate.hpp>
 #include <utility>
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
@@ -143,6 +145,11 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
     f.options = dropdownOptions(pref);
     applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
+    if (f.type == QStringLiteral("checkbox")) {
+      f.value = false;
+      m_values[f.id] = false;
+    }
+
     m_fields.push_back(std::move(f));
   }
   endResetModel();
@@ -156,11 +163,16 @@ void MissingPreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   emit dataChanged(idx, idx, {ValueRole});
 }
 
+static bool isEmptyPreferenceValue(const QJsonValue &v) {
+  if (v.isNull() || v.isUndefined()) return true;
+  if (v.isString()) return v.toString().isEmpty();
+  if (v.isArray()) return v.toArray().isEmpty();
+  return false;
+}
+
 MissingPreferenceFormModel::ValidateResult MissingPreferenceFormModel::validate() const {
-  for (int i = 0; std::cmp_less(i, m_fields.size()); ++i) {
-    const auto &f = m_fields[i];
-    auto jsonVal = m_values.value(f.id);
-    if (jsonVal.isNull() || jsonVal.isUndefined() || jsonVal.toString().isEmpty()) return {false, i};
+  for (const auto &[i, f] : m_fields | vicinae::enumerate) {
+    if (isEmptyPreferenceValue(m_values.value(f.id))) return {false, static_cast<int>(i)};
   }
   return {true, -1};
 }
