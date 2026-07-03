@@ -199,11 +199,13 @@ class WheelHandler : public QObject
 
     /*!
      * This property holds whether an inertia animation continues scrolling after a touchpad
-     * gesture ends. Disabled by default: the upstream implementation clamps the animation
-     * against bounds captured when the gesture ends, which leaves views that estimate their
-     * content geometry (ListView with mixed delegate heights) stuck past the real edge
-     * (https://bugs.kde.org/show_bug.cgi?id=508229). Platforms with system momentum (macOS)
-     * do not need it either way.
+     * gesture ends. The default value is true. Only relevant on platforms without system
+     * momentum events (macOS delivers its own).
+     *
+     * Unlike upstream, the animation is re-clamped against the target's live bounds on every
+     * tick; the upstream implementation only bounds it once when the gesture ends, which
+     * leaves views that estimate their content geometry (ListView with mixed delegate
+     * heights) stuck past the real edge (https://bugs.kde.org/show_bug.cgi?id=508229).
      */
     Q_PROPERTY(bool inertiaScroll MEMBER m_inertiaScroll NOTIFY inertiaScrollChanged FINAL)
 
@@ -284,6 +286,7 @@ private Q_SLOTS:
 private:
     void setScrolling(bool scrolling);
     void startInertiaScrolling();
+    void clampInertiaAnimation(QPropertyAnimation &animation, bool vertical);
     bool scrollFlickable(QPointF pixelDelta, QPointF angleDelta = {}, Qt::KeyboardModifiers modifiers = Qt::NoModifier);
 
     QPointer<QQuickItem> m_flickable;
@@ -308,7 +311,7 @@ private:
     bool m_blockTargetWheel = true;
     bool m_scrollFlickableTarget = true;
     bool m_smoothScroll = true;
-    bool m_inertiaScroll = false;
+    bool m_inertiaScroll = true;
     // Same as QXcbWindow.
     constexpr static Qt::KeyboardModifiers m_defaultHorizontalScrollModifiers = Qt::AltModifier;
     // Same as QScrollBar/QAbstractSlider.

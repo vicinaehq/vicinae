@@ -109,6 +109,18 @@ WheelHandler::WheelHandler(QObject *parent)
     m_xInertiaScrollAnimation.setEasingCurve(QEasingCurve::OutQuad);
     m_yInertiaScrollAnimation.setEasingCurve(QEasingCurve::OutQuad);
 
+    // The inertia end value is bounded once in startInertiaScrolling(), but views that
+    // estimate their content geometry (ListView with mixed delegate heights) move those
+    // bounds while the animation runs, leaving the content stuck past the real edge
+    // (https://bugs.kde.org/show_bug.cgi?id=508229). Re-clamp against live bounds on
+    // every tick and stop at the edge instead.
+    connect(&m_xInertiaScrollAnimation, &QVariantAnimation::valueChanged, this, [this]() {
+        clampInertiaAnimation(m_xInertiaScrollAnimation, false);
+    });
+    connect(&m_yInertiaScrollAnimation, &QVariantAnimation::valueChanged, this, [this]() {
+        clampInertiaAnimation(m_yInertiaScrollAnimation, true);
+    });
+
     connect(QGuiApplication::styleHints(), &QStyleHints::wheelScrollLinesChanged, this, [this](int scrollLines) {
         m_defaultPixelStepSize = 20 * scrollLines;
         if (!m_explicitVStepSize && m_verticalStepSize != m_defaultPixelStepSize) {
@@ -499,6 +511,30 @@ void WheelHandler::startInertiaScrolling()
         m_yInertiaScrollAnimation.setEndValue(boundedEndValue.y());
         m_yInertiaScrollAnimation.setDuration(realTime.y());
         m_yInertiaScrollAnimation.start(QAbstractAnimation::KeepWhenStopped);
+    }
+}
+
+void WheelHandler::clampInertiaAnimation(QPropertyAnimation &animation, bool vertical)
+{
+    if (!m_flickable || animation.state() != QAbstractAnimation::Running) {
+        return;
+    }
+
+    const qreal size = vertical ? m_flickable->height() : m_flickable->width();
+    const qreal contentSize = m_flickable->property(vertical ? "contentHeight" : "contentWidth").toReal();
+    const qreal leadingMargin = m_flickable->property(vertical ? "topMargin" : "leftMargin").toReal();
+    const qreal trailingMargin = m_flickable->property(vertical ? "bottomMargin" : "rightMargin").toReal();
+    const qreal originPos = m_flickable->property(vertical ? "originY" : "originX").toReal();
+    const char *contentProperty = vertical ? "contentY" : "contentX";
+    const qreal contentPos = m_flickable->property(contentProperty).toReal();
+
+    // Same bounds as getPosition() in scrollFlickable(), recomputed from live geometry
+    const qreal minPos = originPos - leadingMargin;
+    const qreal maxPos = std::max(minPos, contentSize + trailingMargin + originPos - size);
+    const qreal boundedPos = std::max(minPos, std::min(contentPos, maxPos));
+    if (boundedPos != contentPos) {
+        animation.stop();
+        m_flickable->setProperty(contentProperty, boundedPos);
     }
 }
 
