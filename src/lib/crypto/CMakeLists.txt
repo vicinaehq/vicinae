@@ -1,5 +1,6 @@
 # native crypto primitives we can use when we need to encrypt something that is outside sqlcipher.
 # One example is the clipboard history data, stored as files on the filesystem.
+# This always uses the platform's native crypto backend (openssl on linux) so that we can benefit from system security updates to these critical libraries.
 
 cmake_minimum_required(VERSION 3.16)
 set(PROJECT_NAME vicinae-crypto)
