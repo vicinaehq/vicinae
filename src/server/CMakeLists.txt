@@ -1006,6 +1006,8 @@ set(VICINAE_QML_SOURCES
 	src/qml/popup-placement-attached.cpp
 	src/qml/shortcut-inhibitor-attached.hpp
 	src/qml/shortcut-inhibitor-attached.cpp
+	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler/wheelhandler.h
+	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler/wheelhandler.cpp
 )
 
 if(APPLE)
@@ -1040,7 +1042,7 @@ if(Qt6_FOUND)
     )
 endif()
 
-target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown)
+target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
 	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-F/System/Library/PrivateFrameworks" "-framework login")

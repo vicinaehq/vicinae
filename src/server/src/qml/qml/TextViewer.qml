@@ -10,6 +10,8 @@ ScrollView {
     clip: true
     contentWidth: availableWidth
 
+    Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
+
     TextEdit {
         width: root.availableWidth
         text: root.text
