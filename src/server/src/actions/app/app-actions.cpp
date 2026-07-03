@@ -7,6 +7,7 @@
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/image/url.hpp"
+#include <ranges>
 
 OpenAppLocationAction::OpenAppLocationAction(const std::shared_ptr<AbstractApplication> &app,
                                              const std::shared_ptr<AbstractApplication> &opener)
@@ -114,4 +115,21 @@ void OpenInBrowserAction::execute(ApplicationContext *ctx) {
   }
 
   ctx->navigation->showHud("Opened in browser");
+}
+
+OpenWithAction::OpenWithAction(QString target, const AppService &db)
+    : ListSubmenuAction("Open with...", BuiltinIcon::ArrowUp), m_db(db), m_target(std::move(target)) {
+  setShortcut(Keybind::OpenAction);
+}
+
+std::unique_ptr<ActionPanelState> OpenWithAction::buildState() const {
+  auto panel = std::make_unique<ActionPanelState>();
+  auto section = panel->createSection();
+
+  for (const auto &opener : m_db.findOpeners(m_target)) {
+    auto action = new OpenAppAction(opener, opener->displayName(), {m_target});
+    section->addAction(action);
+  }
+
+  return panel;
 }

@@ -1,5 +1,6 @@
 #include "action-panel-controller.hpp"
 #include "action-panel-model.hpp"
+#include "extension/extension-action-list-view.hpp"
 #include "internal/keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -246,6 +247,8 @@ void ActionPanelController::clearSubmenuStack() {
   m_submenuStack.clear();
 }
 
+// Reconciliation of open submenus is exclusive to extension re-renders,
+// hence the explicit cast: other submenu types are not rebuildable while open.
 void ActionPanelController::refreshSubmenus() {
   if (m_submenuStack.empty()) return;
 
@@ -258,10 +261,10 @@ void ActionPanelController::refreshSubmenus() {
     auto viewId = view->id();
     if (viewId.isEmpty()) break;
 
-    auto *submenuAction = parentState->findSubmenuAction(viewId);
+    auto *submenuAction = dynamic_cast<ExtensionSubmenuAction *>(parentState->findSubmenuAction(viewId));
     if (!submenuAction) break;
 
-    auto submenuState = submenuAction->createSubmenuStateStealthily();
+    auto submenuState = submenuAction->buildState();
     if (!submenuState) break;
 
     parentState = submenuState.get();
