@@ -215,7 +215,7 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
       m_detailErrorDescription = QStringLiteral(
           "Data for this selection was previously encrypted but the clipboard is not currently "
           "configured to use encryption. You should be able to fix this by enabling it in the "
-          "clipboard extension settings.");
+          "settings.");
       break;
     }
     m_hasDetail = true;
