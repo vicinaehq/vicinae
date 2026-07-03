@@ -133,6 +133,10 @@ Item {
             highlightMoveDuration: 0
             model: root.model
 
+            ViciWheelHandler {
+                target: listView
+            }
+
             delegate: Loader {
                 id: delegateLoader
                 width: listView.width

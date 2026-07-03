@@ -182,6 +182,10 @@ Item {
             topMargin: 4
             bottomMargin: 4
 
+            ViciWheelHandler {
+                target: listView
+            }
+
             onCurrentIndexChanged: root.itemSelected(currentIndex)
             onCountChanged: {
                 if (root.autoWireModel && root.listModel && currentIndex < 0 && count > 0) {

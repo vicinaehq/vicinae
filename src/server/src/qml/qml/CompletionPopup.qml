@@ -197,6 +197,10 @@ Popup {
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
+            ViciWheelHandler {
+                target: completionList
+            }
+
             ScrollBar.vertical: ViciScrollBar {
                 policy: completionList.contentHeight > completionList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }
