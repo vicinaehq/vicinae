@@ -27,19 +27,11 @@
 #include "services/clipboard/gnome/gnome-clipboard-server.hpp"
 #include "data-control/data-control-clipboard-server.hpp"
 #endif
+#ifdef Q_OS_MACOS
+#include "macos/macos-clipboard-server.hpp"
+#endif
 
 namespace fs = std::filesystem;
-
-/**
- * If any of these is found in a selection, we ignore the entire selection.
- */
-static const std::set<QString> IGNORED_MIME_TYPES = {
-    Clipboard::CONCEALED_MIME_TYPE,
-};
-
-static const std::set<QString> PASSWORD_MIME_TYPES = {
-    "x-kde-passwordManagerHint",
-};
 
 bool ClipboardService::setPinned(const QString &id, bool pinned) {
   if (!ClipboardDatabase().setPinned(id, pinned)) { return false; }
@@ -87,10 +79,7 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
 bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboard::CopyOptions &options) {
   QMimeData *data = new QMimeData;
 
-  // copying files should normally copy a link to the file, not the file itself
-  // This is what text/uri-list is used for. On Windows or other systems we might have
-  // to do something else, I'm not sure.
-  data->setData("text/uri-list", QString("file://%1").arg(path.c_str()).toUtf8());
+  data->setUrls({QUrl::fromLocalFile(QString::fromStdString(path.string()))});
 
   return copyQMimeData(data, options);
 }
@@ -150,8 +139,6 @@ bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOption
 
   mimeData->setData("text/plain", text.toUtf8());
   mimeData->setData("text/plain;charset=utf-8", text.toUtf8());
-
-  if (options.concealed) mimeData->setData(Clipboard::CONCEALED_MIME_TYPE, "1");
 
   return copyQMimeData(mimeData, options);
 }
@@ -320,16 +307,6 @@ bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
   return ClipboardDatabase().setKeywords(id, keywords);
 }
 
-bool ClipboardService::isConcealedSelection(const ClipboardSelection &selection) {
-  return std::ranges::any_of(selection.offers,
-                             [](auto &&offer) { return IGNORED_MIME_TYPES.contains(offer.mimeType); });
-}
-
-bool ClipboardService::isPasswordSelection(const ClipboardSelection &selection) {
-  return std::ranges::any_of(selection.offers,
-                             [](auto &&offer) { return PASSWORD_MIME_TYPES.contains(offer.mimeType); });
-}
-
 ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &selection) {
   std::ranges::sort(selection.offers, [](auto &&a, auto &&b) {
     return std::ranges::lexicographical_compare(a.mimeType, b.mimeType);
@@ -349,19 +326,14 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
   if (!m_monitoring) return;
 
-  qInfo() << "Received new clipboard selection with" << selection.offers.size() << "offers";
+  qInfo() << "Received new clipboard selection with" << selection.offers.size()
+          << "offers (password=" << selection.isPassword << ")";
 
   for (const auto &offer : selection.offers) {
-    qInfo().nospace() << offer.mimeType << " (size=" << formatSize(offer.data.size())
-                      << ", password=" << PASSWORD_MIME_TYPES.contains(offer.mimeType) << ")";
+    qInfo().nospace() << offer.mimeType << " (size=" << formatSize(offer.data.size()) << ")";
   }
 
-  if (isConcealedSelection(selection)) {
-    qInfo() << "Ignoring concealed selection";
-    return;
-  }
-
-  if (m_ignorePasswords && isPasswordSelection(selection)) {
+  if (m_ignorePasswords && selection.isPassword) {
     qInfo() << "Ignored password clipboard selection";
     return;
   }
@@ -509,13 +481,12 @@ std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const 
     populatedSelection.offers.emplace_back(populatedOffer);
   }
 
+  populatedSelection.sourceApp = selection->source;
   return populatedSelection;
 }
 
 bool ClipboardService::copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options) {
-  if (options.concealed) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
-
-  return m_clipboardServer->setClipboardContent(data);
+  return m_clipboardServer->setClipboardContent(data, options);
 }
 
 void ClipboardService::restoreClipboard() {
@@ -526,8 +497,8 @@ void ClipboardService::restoreClipboard() {
     data->setData(offer.mimeType, offer.data);
   }
 
-  data->setData(Clipboard::CONCEALED_MIME_TYPE, {});
-  m_clipboardServer->setClipboardContent(data);
+  // Restore is transient so we don't re-index a selection that was already on the clipboard.
+  m_clipboardServer->setClipboardContent(data, {.transient = true, .sourceApp = m_lastSelection->sourceApp});
   m_lastSelection.reset();
 }
 
@@ -563,7 +534,9 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
     }
   }
 
-  return copyQMimeData(mimeData, options);
+  auto enrichedOptions = options;
+  if (!enrichedOptions.sourceApp) enrichedOptions.sourceApp = selection.sourceApp;
+  return copyQMimeData(mimeData, enrichedOptions);
 }
 
 bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::CopyOptions &options) {
@@ -638,6 +611,9 @@ ClipboardService::ClipboardService(const std::filesystem::path &path) {
     factory.registerServer<GnomeClipboardServer>();
     factory.registerServer<DataControlClipboardServer>();
     factory.registerServer<X11ClipboardServer>();
+#endif
+#ifdef Q_OS_MACOS
+    factory.registerServer<MacosClipboardServer>();
 #endif
     m_clipboardServer = factory.createFirstActivatable();
     qInfo() << "Activated clipboard server" << m_clipboardServer->id();
