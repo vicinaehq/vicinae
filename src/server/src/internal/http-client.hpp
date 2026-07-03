@@ -1,9 +1,12 @@
 #pragma once
 #include <algorithm>
 #include <expected>
+#include <filesystem>
+#include <functional>
 #include "common/types.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/reflect.hpp>
+#include <QFile>
 #include <QNetworkDiskCache>
 #include <qdir.h>
 #include <qfuture.h>
@@ -37,6 +40,19 @@ struct RequestOptions {
   bool allowHttp2 = true;
   std::optional<QString> userAgent;
   std::optional<QString> contentType;
+};
+
+// self-deletes after `finished` or `failed`
+class Download : public QObject {
+  Q_OBJECT
+
+signals:
+  void progress(qint64 received, qint64 total);
+  void finished(const std::filesystem::path &path);
+  void failed(const QString &error);
+
+public:
+  using QObject::QObject;
 };
 
 /**
@@ -95,6 +111,53 @@ public:
     auto req = createRequest(url, opts);
     qInfo() << "[GET raw]" << req.url();
     return waitForReply(networkManager()->get(req));
+  }
+
+  Download *download(const QString &url, const std::filesystem::path &dest, const RequestOptions &opts = {}) {
+    auto *download = new Download();
+    auto file = std::make_shared<QFile>(QString::fromStdString(dest.string()));
+
+    if (!file->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+      // queued so the caller gets a chance to connect before the failure is reported
+      QMetaObject::invokeMethod(
+          download,
+          [download, dest]() {
+            emit download->failed(QString("Failed to open %1 for writing").arg(dest.c_str()));
+            download->deleteLater();
+          },
+          Qt::QueuedConnection);
+      return download;
+    }
+
+    auto req = createRequest(url, opts);
+    qInfo() << "[GET download]" << req.url();
+
+    auto *reply = networkManager()->get(req);
+
+    QObject::connect(reply, &QNetworkReply::readyRead, download,
+                     [reply, file]() { file->write(reply->readAll()); });
+    QObject::connect(reply, &QNetworkReply::downloadProgress, download, &Download::progress);
+    QObject::connect(reply, &QNetworkReply::finished, download, [download, reply, file, dest]() {
+      file->write(reply->readAll());
+
+      const bool writeFailed = file->error() != QFileDevice::NoError;
+      file->close();
+
+      if (reply->error() != QNetworkReply::NoError) {
+        file->remove();
+        emit download->failed(reply->errorString());
+      } else if (writeFailed) {
+        file->remove();
+        emit download->failed(QString("Failed to write %1 (disk full?)").arg(file->fileName()));
+      } else {
+        emit download->finished(dest);
+      }
+
+      reply->deleteLater();
+      download->deleteLater();
+    });
+
+    return download;
   }
 
   template <glz::has_reflect T> QFuture<Result<T>> post(const QString &url, FormData *data) {

@@ -24,6 +24,7 @@
 #include "services/extension-store/vicinae-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/telemetry/telemetry-service.hpp"
+#include "services/update/update-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/wallpaper/wallpaper-manager.hpp"
@@ -84,6 +85,8 @@ ShortcutInhibitManager *ServiceRegistry::shortcutInhibitManager() const {
 }
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
+
+UpdateService *ServiceRegistry::updateService() const { return m_updateService.get(); }
 
 AudioControlService *ServiceRegistry::audioControl() const { return m_audioControl.get(); }
 
@@ -191,6 +194,10 @@ void ServiceRegistry::setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitM
 
 void ServiceRegistry::setTelemetry(std::unique_ptr<TelemetryService> telemetry) {
   m_telemetry = std::move(telemetry);
+}
+
+void ServiceRegistry::setUpdateService(std::unique_ptr<UpdateService> service) {
+  m_updateService = std::move(service);
 }
 
 void ServiceRegistry::setAudioControl(std::unique_ptr<AudioControlService> service) {

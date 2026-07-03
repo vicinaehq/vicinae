@@ -126,6 +126,16 @@ inline QString vicinaeApiBaseUrl() {
   return "https://api.vicinae.com/v1";
 }
 
+inline QString updateFeedUrl() {
+  if (const char *url = getenv("VICINAE_UPDATE_FEED_URL")) { return url; }
+  return "https://api.github.com/repos/vicinaehq/vicinae/releases/latest";
+}
+
+inline std::optional<std::string> updateVersionOverride() {
+  if (const char *version = getenv("VICINAE_UPDATE_FORCE_VERSION")) { return version; }
+  return std::nullopt;
+}
+
 /**
  * Gets human-readable environment description
  */

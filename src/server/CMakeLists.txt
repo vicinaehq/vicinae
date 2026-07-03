@@ -97,6 +97,7 @@ set(SRCS
 
 	src/internal/template-engine/template-engine.cpp
 	src/internal/glaze-qt.cpp
+	src/internal/http-client.hpp
 
 	src/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
@@ -442,6 +443,13 @@ set(SRCS
 	src/services/telemetry/telemetry-service.hpp
 	src/services/telemetry/telemetry-service.cpp
 
+	src/services/update/semver.hpp
+	src/services/update/github-release.hpp
+	src/services/update/abstract-update-installer.hpp
+	src/services/update/null-update-installer.hpp
+	src/services/update/update-service.hpp
+	src/services/update/update-service.cpp
+
 	src/services/snippet/snippet-service.hpp
 	src/services/snippet/abstract-snippet-server.hpp
 	src/services/snippet/null-snippet-server.hpp
@@ -636,6 +644,8 @@ if (APPLE)
 		src/services/wallpaper/macos/mac-wallpaper-backend.mm
 		src/services/snippet/macos-snippet-server.hpp
 		src/services/snippet/macos-snippet-server.mm
+		src/services/update/macos-update-installer.hpp
+		src/services/update/macos-update-installer.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -652,6 +662,7 @@ if (APPLE)
 		src/services/window-manager/macos/macos-window.mm
 		src/services/window-manager/macos/macos-window-manager.mm
 		src/services/snippet/macos-snippet-server.mm
+		src/services/update/macos-update-installer.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 else()
 	list(APPEND SRCS
@@ -1045,7 +1056,7 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-F/System/Library/PrivateFrameworks" "-framework login")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-framework Security" "-F/System/Library/PrivateFrameworks" "-framework login")
 endif()
 
 if(APPLE AND DEFINED ENV{VICINAE_CODESIGN_IDENTITY})

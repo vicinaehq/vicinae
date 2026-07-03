@@ -30,6 +30,8 @@ class SettingsWindow : public QObject {
   Q_PROPERTY(QString commitHash READ commitHash CONSTANT)
   Q_PROPERTY(QString buildInfo READ buildInfo CONSTANT)
   Q_PROPERTY(QString headline READ headline CONSTANT)
+  Q_PROPERTY(QString updateStatus READ updateStatus NOTIFY updateStatusChanged)
+  Q_PROPERTY(bool updateChecksSupported READ updateChecksSupported CONSTANT)
   Q_PROPERTY(GeneralSettingsModel *generalModel READ generalModel CONSTANT)
   Q_PROPERTY(KeybindSettingsModel *keybindModel READ keybindModel CONSTANT)
   Q_PROPERTY(ExtensionSettingsModel *extensionModel READ extensionModel CONSTANT)
@@ -49,6 +51,9 @@ public:
   QString commitHash() const;
   QString buildInfo() const;
   QString headline() const;
+  QString updateStatus() const;
+  bool updateChecksSupported() const;
+  Q_INVOKABLE void checkForUpdates();
 
   GeneralSettingsModel *generalModel() const { return m_generalModel; }
   KeybindSettingsModel *keybindModel() const { return m_keybindModel; }
@@ -68,6 +73,7 @@ signals:
   void currentPageChanged();
   void pendingCommandIdChanged();
   void defaultFocusRequested();
+  void updateStatusChanged();
 
 private:
   void ensureInitialized();

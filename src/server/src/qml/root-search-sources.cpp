@@ -1,6 +1,8 @@
 #include "root-search-sources.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
+#include "builtin_icon.hpp"
+#include "theme/colors.hpp"
 #include "keyboard/keybind.hpp"
 #include "keyboard/keyboard.hpp"
 #include "utils/file-list-item.hpp"
@@ -160,6 +162,75 @@ std::unique_ptr<ActionPanelState> RootCalculatorSection::actionPanel(int) const 
   section->addAction(new CopyCalculatorQuestionAndAnswerAction(*m_result));
   section->addAction(new PutCalculatorAnswerInSearchBar(*m_result));
   section->addAction(new OpenCalculatorHistoryAction());
+  return panel;
+}
+
+QString RootUpdateSection::itemId(int) const {
+  return m_update ? QStringLiteral("update:") + m_update->tag : QString();
+}
+
+QString RootUpdateSection::itemTitle(int) const {
+  if (!m_update) return {};
+  auto *updates = ServiceRegistry::instance()->updateService();
+  if (updates->status() == UpdateService::Status::Installed) {
+    return QString("Restart to finish updating to Vicinae %1").arg(m_update->tag);
+  }
+  return QString("Vicinae %1 is available").arg(m_update->tag);
+}
+
+QString RootUpdateSection::itemSubtitle(int) const {
+  if (!m_update) return {};
+  auto *updates = ServiceRegistry::instance()->updateService();
+  if (updates->status() == UpdateService::Status::Installed) return {};
+  return QString("You are running %1").arg(updates->currentVersionTag());
+}
+
+QString RootUpdateSection::itemIconSource(int) const {
+  return imageSourceFor(ImageURL{BuiltinIcon::Download}.setBackgroundTint(SemanticColor::Blue));
+}
+
+QVariant RootUpdateSection::customData(int, int role) const {
+  if (role == ItemType) return QStringLiteral("update");
+  if (role == AccessoryText) return QStringLiteral("Update");
+  return {};
+}
+
+QHash<int, QByteArray> RootUpdateSection::customRoleNames() const { return root_search::customRoleNames(); }
+QHash<int, QVariant> RootUpdateSection::customRoleDefaults() const {
+  return root_search::customRoleDefaults();
+}
+
+std::unique_ptr<ActionPanelState> RootUpdateSection::actionPanel(int) const {
+  if (!m_update) return nullptr;
+
+  auto *updates = ServiceRegistry::instance()->updateService();
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto *section = panel->createSection();
+
+  if (updates->status() == UpdateService::Status::Installed) {
+    auto *restart =
+        new StaticAction("Restart Now", ImageURL::builtin("arrow-clockwise"),
+                         [](ApplicationContext *ctx) { ctx->services->updateService()->relaunch(); });
+    restart->setPrimary(true);
+    section->addAction(restart);
+    return panel;
+  }
+
+  if (updates->canSelfInstall()) {
+    auto *install = new InstallUpdateAction();
+    install->setPrimary(true);
+    section->addAction(install);
+    section->addAction(new OpenInBrowserAction(QUrl(m_update->releaseUrl), "View Release Notes"));
+  } else {
+    auto *open = new OpenInBrowserAction(QUrl(m_update->releaseUrl), "Open Release Page");
+    open->setPrimary(true);
+    section->addAction(open);
+  }
+
+  auto *skip = new SkipUpdateVersionAction();
+  skip->setShortcut(Keybind::RemoveAction);
+  section->addAction(skip);
+
   return panel;
 }
 

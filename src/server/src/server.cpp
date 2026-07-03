@@ -44,6 +44,11 @@
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/news/news-service.hpp"
 #include "services/telemetry/telemetry-service.hpp"
+#include "services/update/update-service.hpp"
+#include "services/update/null-update-installer.hpp"
+#ifdef Q_OS_MACOS
+#include "services/update/macos-update-installer.hpp"
+#endif
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/wallpaper/wallpaper-manager.hpp"
@@ -259,6 +264,13 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
+    auto updateInstaller = std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<NullUpdateInstaller>());
+#ifdef Q_OS_MACOS
+    if (!MacosUpdateInstaller::isHomebrewInstall()) {
+      updateInstaller = std::make_unique<MacosUpdateInstaller>();
+    }
+#endif
+    registry->setUpdateService(std::make_unique<UpdateService>(std::move(updateInstaller)));
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
 
     auto root = registry->rootItemManager();

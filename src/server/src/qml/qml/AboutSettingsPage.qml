@@ -57,8 +57,29 @@ Item {
                 Layout.fillWidth: true
             }
 
+            Text {
+                visible: text.length > 0
+                text: settings.updateStatus
+                color: Theme.textMuted
+                font.pointSize: Theme.smallerFontSize
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+
             Item {
                 implicitHeight: 10
+            }
+
+            ViciButton {
+                visible: settings.updateChecksSupported
+                icon: "download"
+                text: "Check for Updates"
+                variant: "secondary"
+                radius: 8
+                implicitWidth: 200
+                onClicked: settings.checkForUpdates()
+                Layout.alignment: Qt.AlignHCenter
             }
 
             ViciButton {
