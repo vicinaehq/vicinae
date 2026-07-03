@@ -1,6 +1,7 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "services/app-service/abstract-app-db.hpp"
+#include "services/app-service/app-service.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class OpenAppAction : public AbstractAction {
@@ -101,4 +102,15 @@ public:
 private:
   QUrl m_url;
   QString m_title;
+};
+
+class OpenWithAction : public ListSubmenuAction {
+public:
+  OpenWithAction(QString target, const AppService &db);
+
+  std::unique_ptr<ActionPanelState> buildState() const override;
+
+private:
+  const AppService &m_db;
+  QString m_target;
 };

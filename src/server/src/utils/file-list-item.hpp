@@ -1,4 +1,5 @@
 #pragma once
+#include "actions/app/app-actions.hpp"
 #include "actions/files/file-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "common/context.hpp"
@@ -86,17 +87,10 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
 
   if (fileBrowser) { section->addAction(new RevealFileInFolderAction(path)); }
 
+  section->addAction(new OpenWithAction(QString::fromStdString(path.string()), *appDb));
+
   if (mime.name().startsWith("image/") && ctx->services->wallpaperManager()->canSetWallpaper()) {
     section->addAction(new SetWallpaperAction(path));
-  }
-
-  auto suggested = panel->createSection("Suggested apps");
-
-  for (size_t i = 1; i < openers.size(); ++i) {
-    auto &opener = openers[i];
-    if (fileBrowser && fileBrowser->id() == opener->id()) continue;
-    auto open = new OpenFileAction(path, opener);
-    suggested->addAction(open);
   }
 
   auto utils = panel->createSection();
