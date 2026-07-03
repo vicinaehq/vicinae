@@ -17,6 +17,8 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick WRITE setActivateOnSingleClick NOTIFY
                  configChanged)
   Q_PROPERTY(
+      bool encryptSensitiveData READ encryptSensitiveData WRITE setEncryptSensitiveData NOTIFY configChanged)
+  Q_PROPERTY(
       bool telemetrySystemInfo READ telemetrySystemInfo WRITE setTelemetrySystemInfo NOTIFY configChanged)
   Q_PROPERTY(bool layerShellEnabled READ layerShellEnabled WRITE setLayerShellEnabled NOTIFY configChanged)
   Q_PROPERTY(bool clientSideDecorations READ clientSideDecorations WRITE setClientSideDecorations NOTIFY
@@ -63,6 +65,8 @@ public:
   void setPopOnBackspace(bool v);
   bool activateOnSingleClick() const;
   void setActivateOnSingleClick(bool v);
+  bool encryptSensitiveData() const;
+  void setEncryptSensitiveData(bool v);
   bool telemetrySystemInfo() const;
   void setTelemetrySystemInfo(bool v);
   bool layerShellEnabled() const;

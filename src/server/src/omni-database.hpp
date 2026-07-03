@@ -1,6 +1,7 @@
 #pragma once
 #include "db/database.hpp"
 #include "utils/migration-manager/migration-manager.hpp"
+#include <optional>
 #include <qlogging.h>
 #include <filesystem>
 
@@ -12,7 +13,7 @@ class OmniDatabase {
 public:
   db::Database &db() { return _db; }
 
-  OmniDatabase(const std::filesystem::path &path) {
+  OmniDatabase(const std::filesystem::path &path, std::optional<db::EncryptionKey> key = std::nullopt) {
     auto result = db::Database::open(path);
 
     if (!result) {
@@ -21,6 +22,11 @@ public:
     }
 
     _db = std::move(*result);
+
+    if (key) {
+      if (auto unlocked = _db.setKey(*key); !unlocked)
+        qFatal("Could not unlock encrypted database: %s", unlocked.error().c_str());
+    }
 
     for (const auto &pragma : OMNI_PRAGMAS) {
       _db.exec(pragma);

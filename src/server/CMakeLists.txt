@@ -4,7 +4,6 @@ set(LIBS)
 set(TARGET vicinae-server)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
-find_package(OpenSSL REQUIRED)
 
 if (USE_SYSTEM_KF6)
 	find_package(KF6SyntaxHighlighting REQUIRED)
@@ -16,7 +15,6 @@ list(APPEND LIBS
 	Qt6::QuickDialogs2 Qt6::QuickControls2
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
 	zip
-	OpenSSL::Crypto
 	qt6keychain
 	pugixml
 	KF6::SyntaxHighlighting
@@ -26,6 +24,7 @@ list(APPEND LIBS
 	vicinae::glyph
 	vicinae::common
 	vicinae::fuzzy
+	vicinae::crypto
 	sqlcipher
 )
 
@@ -190,8 +189,6 @@ set(SRCS
 	src/ui/action-pannel/action-panel-view.hpp
 	src/ui/action-pannel/action-list-view.hpp
 	src/ui/action-pannel/action-list-view.cpp
-
-	src/internal/crypto.cpp
 
 	
 	src/extension/extension-command.hpp
@@ -413,6 +410,11 @@ set(SRCS
 
 	src/internal/program-db/program-db.hpp
 	src/internal/program-db/program-db.cpp
+
+	src/internal/db/db-encryption.hpp
+	src/internal/db/db-encryption.cpp
+	src/internal/db/database-key.hpp
+	src/internal/db/database-key.cpp
 
 	src/services/power-manager/dummy-power-manager.hpp
 

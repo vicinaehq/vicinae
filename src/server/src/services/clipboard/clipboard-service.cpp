@@ -11,7 +11,6 @@
 #include <qmimedata.h>
 #include <qnamespace.h>
 #include <qstringview.h>
-#include <qt6keychain/keychain.h>
 #include <QtConcurrent/QtConcurrent>
 #include <QFutureWatcher>
 #include <QBuffer>
@@ -34,7 +33,7 @@
 namespace fs = std::filesystem;
 
 bool ClipboardService::setPinned(const QString &id, bool pinned) {
-  if (!ClipboardDatabase().setPinned(id, pinned)) { return false; }
+  if (!openDatabase().setPinned(id, pinned)) { return false; }
 
   emit selectionPinStatusChanged(id, pinned);
 
@@ -86,12 +85,12 @@ bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboa
 
 void ClipboardService::setRecordAllOffers(bool value) { m_recordAllOffers = value; }
 
-void ClipboardService::setEncryption(bool value) {
-  m_encrypter.reset();
-
-  if (value) {
-    m_encrypter = std::make_unique<ClipboardEncrypter>();
-    m_encrypter->loadKey();
+void ClipboardService::setEncryptionKey(std::optional<db::EncryptionKey> key) {
+  if (key) {
+    m_encrypter = std::make_unique<ClipboardEncrypter>(
+        QByteArray(reinterpret_cast<const char *>(key->data()), key->size()));
+  } else {
+    m_encrypter.reset();
   }
 }
 
@@ -156,8 +155,9 @@ void ClipboardService::scheduleClipboardRestore(int delayMs) {
 
 QFuture<PaginatedResponse<ClipboardHistoryEntry>>
 ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &opts) const {
+  auto key = m_dbKey;
   return QtConcurrent::run(
-      [opts, limit, offset]() { return ClipboardDatabase().query(limit, offset, opts); });
+      [opts, limit, offset, key]() { return ClipboardDatabase(key).query(limit, offset, opts); });
 }
 
 ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
@@ -215,7 +215,7 @@ QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection
 }
 
 bool ClipboardService::removeSelection(const QString &selectionId) {
-  ClipboardDatabase cdb;
+  auto cdb = openDatabase();
 
   for (const auto &offer : cdb.removeSelection(selectionId)) {
     fs::remove(m_dataDir / offer.toStdString());
@@ -242,13 +242,13 @@ ClipboardService::decryptOffer(const QByteArray &data, ClipboardEncryptionType t
 
 std::expected<QByteArray, ClipboardService::OfferDecryptionError>
 ClipboardService::getMainOfferData(const QString &selectionId) const {
-  ClipboardDatabase cdb;
+  auto cdb = openDatabase();
 
   auto offer = cdb.findPreferredOffer(selectionId);
 
   if (!offer) {
     qWarning() << "Can't find preferred offer for selection" << selectionId;
-    return {};
+    return std::unexpected(OfferDecryptionError::DataUnavailable);
   };
 
   fs::path const path = m_dataDir / offer->id.toStdString();
@@ -257,7 +257,7 @@ ClipboardService::getMainOfferData(const QString &selectionId) const {
 
   if (!file.open(QIODevice::ReadOnly)) {
     qWarning() << "Failed to open file at" << path;
-    return {};
+    return std::unexpected(OfferDecryptionError::DataUnavailable);
   }
 
   return decryptOffer(file.readAll(), offer->encryption);
@@ -300,11 +300,11 @@ QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
 }
 
 std::optional<QString> ClipboardService::retrieveKeywords(const QString &id) {
-  return ClipboardDatabase().retrieveKeywords(id);
+  return openDatabase().retrieveKeywords(id);
 }
 
 bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
-  return ClipboardDatabase().setKeywords(id, keywords);
+  return openDatabase().setKeywords(id, keywords);
 }
 
 ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &selection) {
@@ -345,7 +345,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
   QString preferredMimeType = getSelectionPreferredMimeType(selection);
   ClipboardHistoryEntry insertedEntry;
-  ClipboardDatabase cdb;
+  auto cdb = openDatabase();
   auto preferredOfferIt =
       std::ranges::find_if(selection.offers, [&](auto &&o) { return o.mimeType == preferredMimeType; });
 
@@ -459,7 +459,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 }
 
 std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const QString &id) {
-  ClipboardDatabase cdb;
+  auto cdb = openDatabase();
   ClipboardSelection populatedSelection;
   const auto selection = cdb.findSelection(id);
 
@@ -547,7 +547,7 @@ bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::C
     return false;
   }
 
-  ClipboardDatabase db;
+  auto db = openDatabase();
 
   if (!db.tryBubbleUpSelection(id)) {
     qWarning() << "Failed to bubble up selection with id" << id;
@@ -584,7 +584,7 @@ Clipboard::ReadContent ClipboardService::readContent() {
 }
 
 bool ClipboardService::removeAllSelections() {
-  ClipboardDatabase db;
+  auto db = openDatabase();
 
   if (!db.removeAll()) {
     qWarning() << "Failed to remove all clipboard selections";
@@ -601,7 +601,8 @@ bool ClipboardService::removeAllSelections() {
 
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
 
-ClipboardService::ClipboardService(const std::filesystem::path &path) {
+ClipboardService::ClipboardService(const std::filesystem::path &path, std::optional<db::EncryptionKey> key)
+    : m_dbKey(key) {
   m_dataDir = path.parent_path() / "clipboard-data";
 
   {
@@ -620,7 +621,7 @@ ClipboardService::ClipboardService(const std::filesystem::path &path) {
   }
 
   fs::create_directories(m_dataDir);
-  ClipboardDatabase().runMigrations();
+  openDatabase().runMigrations();
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);
