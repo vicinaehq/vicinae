@@ -216,8 +216,15 @@ void ActionPanelController::executeAction(AbstractAction *action) {
 void ActionPanelController::openSubmenu(SubmenuAction *action) {
   open();
 
-  auto *root = dynamic_cast<ActionListView *>(activeRoot());
-  if (root) root->activateSubmenu(action);
+  action->onOpen(&m_ctx);
+
+  auto *child = action->createView(&m_ctx, this);
+  if (!child) return;
+
+  m_submenuStack.push_back(child);
+  child->onMount();
+  connectView(child);
+  emit panelPushRequested(child->componentUrl(), child->componentProps());
 }
 
 void ActionPanelController::connectView(ActionPanelView *view) {
@@ -228,15 +235,8 @@ void ActionPanelController::connectView(ActionPanelView *view) {
 
   connect(view, &ActionPanelView::closeRequested, m_connectionGuard, [this]() { close(); });
 
-  connect(view, &ActionPanelView::pushViewRequested, m_connectionGuard, [this](ActionPanelView *child) {
-    child->setParent(this);
-    m_submenuStack.push_back(child);
-    child->onMount();
-    connectView(child);
-    auto url = child->componentUrl();
-    auto props = child->componentProps();
-    emit panelPushRequested(url, props);
-  });
+  connect(view, &ActionPanelView::submenuActivated, m_connectionGuard,
+          [this](SubmenuAction *action) { openSubmenu(action); });
 }
 
 void ActionPanelController::clearSubmenuStack() {
@@ -264,7 +264,7 @@ void ActionPanelController::refreshSubmenus() {
     auto *submenuAction = dynamic_cast<ExtensionSubmenuAction *>(parentState->findSubmenuAction(viewId));
     if (!submenuAction) break;
 
-    auto submenuState = submenuAction->buildState();
+    auto submenuState = submenuAction->buildState(&m_ctx);
     if (!submenuState) break;
 
     parentState = submenuState.get();

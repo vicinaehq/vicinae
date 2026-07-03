@@ -170,8 +170,8 @@ public:
 
   bool isSubmenu() const final { return true; }
 
-  virtual void onOpen() {}
-  virtual ActionPanelView *createView(QObject *parent) = 0;
+  virtual void onOpen(ApplicationContext *) {}
+  virtual ActionPanelView *createView(ApplicationContext *ctx, QObject *parent) = 0;
 };
 
 /**
@@ -182,7 +182,7 @@ class ListSubmenuAction : public SubmenuAction {
 public:
   using SubmenuAction::SubmenuAction;
 
-  virtual std::unique_ptr<ActionPanelState> buildState() const = 0;
+  virtual std::unique_ptr<ActionPanelState> buildState(ApplicationContext *ctx) const = 0;
 
-  ActionPanelView *createView(QObject *parent) override;
+  ActionPanelView *createView(ApplicationContext *ctx, QObject *parent) override;
 };

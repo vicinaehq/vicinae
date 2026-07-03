@@ -25,9 +25,9 @@ public:
   ExtensionSubmenuAction(ActionPannelSubmenuPtr model, ExtensionActionPanelBuilder::NotifyFn notify,
                          ExtensionActionPanelBuilder::SubmitFn submit);
 
-  void onOpen() override;
-  std::unique_ptr<ActionPanelState> buildState() const override;
-  ActionPanelView *createView(QObject *parent) override;
+  void onOpen(ApplicationContext *ctx) override;
+  std::unique_ptr<ActionPanelState> buildState(ApplicationContext *ctx) const override;
+  ActionPanelView *createView(ApplicationContext *ctx, QObject *parent) override;
 
 private:
   ActionPannelSubmenuPtr m_model;

@@ -23,16 +23,16 @@ ExtensionSubmenuAction::ExtensionSubmenuAction(ActionPannelSubmenuPtr model,
   if (m_model->shortcut) { addShortcut(*m_model->shortcut); }
 }
 
-void ExtensionSubmenuAction::onOpen() {
+void ExtensionSubmenuAction::onOpen(ApplicationContext *) {
   if (!m_model->onOpen.empty()) { m_notify(QString::fromStdString(m_model->onOpen), {}); }
 }
 
-std::unique_ptr<ActionPanelState> ExtensionSubmenuAction::buildState() const {
+std::unique_ptr<ActionPanelState> ExtensionSubmenuAction::buildState(ApplicationContext *) const {
   return ExtensionActionPanelBuilder::buildSubmenuState(m_model, m_notify, m_submit);
 }
 
-ActionPanelView *ExtensionSubmenuAction::createView(QObject *parent) {
-  auto state = buildState();
+ActionPanelView *ExtensionSubmenuAction::createView(ApplicationContext *ctx, QObject *parent) {
+  auto state = buildState(ctx);
   if (!state) return nullptr;
 
   auto *view =

@@ -87,7 +87,7 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
 
   if (fileBrowser) { section->addAction(new RevealFileInFolderAction(path)); }
 
-  section->addAction(new OpenWithAction(QString::fromStdString(path.string()), *appDb));
+  section->addAction(new OpenWithAction(QString::fromStdString(path.string())));
 
   if (mime.name().startsWith("image/") && ctx->services->wallpaperManager()->canSetWallpaper()) {
     section->addAction(new SetWallpaperAction(path));

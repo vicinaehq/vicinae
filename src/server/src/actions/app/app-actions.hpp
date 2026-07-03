@@ -106,11 +106,13 @@ private:
 
 class OpenWithAction : public ListSubmenuAction {
 public:
-  OpenWithAction(QString target, const AppService &db);
+  OpenWithAction(QString target);
 
-  std::unique_ptr<ActionPanelState> buildState() const override;
+  std::unique_ptr<ActionPanelState> buildState(ApplicationContext *ctx) const override;
+
+  void setTypeFiltering(bool filter = true);
 
 private:
-  const AppService &m_db;
+  bool m_typeFiltered = true;
   QString m_target;
 };

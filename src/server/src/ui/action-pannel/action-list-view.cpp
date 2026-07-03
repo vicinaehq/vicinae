@@ -9,17 +9,10 @@ ActionListView::ActionListView(QObject *parent)
       m_model(new ActionPanelModel(m_state.get(), this)) {
   connect(m_model, &ActionPanelModel::actionExecuted, this, &ActionListView::actionExecuted);
   connect(m_model, &ActionPanelModel::closeRequested, this, &ActionListView::closeRequested);
-  connect(m_model, &ActionPanelModel::submenuActivated, this, &ActionListView::activateSubmenu);
+  connect(m_model, &ActionPanelModel::submenuActivated, this, &ActionPanelView::submenuActivated);
 }
 
 ActionListView::~ActionListView() = default;
-
-void ActionListView::activateSubmenu(SubmenuAction *action) {
-  action->onOpen();
-
-  auto *child = action->createView(this);
-  if (child) emit pushViewRequested(child);
-}
 
 void ActionListView::adoptState(std::unique_ptr<ActionPanelState> state) {
   if (!state) {

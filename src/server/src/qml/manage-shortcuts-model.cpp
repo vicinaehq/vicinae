@@ -19,6 +19,8 @@ ManageShortcutsSection::buildActionPanel(const std::shared_ptr<Shortcut> &item) 
   auto dangerSection = panel->createSection();
 
   auto open = new OpenCompletedShortcutAction(item);
+  auto openWith = new OpenCompletedShortcutWithAction(item);
+  auto copy = new CopyShortcutAction(item);
   auto edit = new EditShortcutAction(item);
   auto duplicate = new DuplicateShortcutAction(item);
   auto remove = new RemoveShortcutAction(item);
@@ -29,6 +31,8 @@ ManageShortcutsSection::buildActionPanel(const std::shared_ptr<Shortcut> &item) 
 
   panel->setTitle(item->name());
   mainSection->addAction(open);
+  mainSection->addAction(openWith);
+  mainSection->addAction(copy);
   manageSection->addAction(edit);
   manageSection->addAction(duplicate);
   dangerSection->addAction(remove);

@@ -7,6 +7,7 @@
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/image/url.hpp"
+#include <iterator>
 #include <ranges>
 
 OpenAppLocationAction::OpenAppLocationAction(const std::shared_ptr<AbstractApplication> &app,
@@ -117,16 +118,24 @@ void OpenInBrowserAction::execute(ApplicationContext *ctx) {
   ctx->navigation->showHud("Opened in browser");
 }
 
-OpenWithAction::OpenWithAction(QString target, const AppService &db)
-    : ListSubmenuAction("Open with...", BuiltinIcon::ArrowUp), m_db(db), m_target(std::move(target)) {
+OpenWithAction::OpenWithAction(QString target)
+    : ListSubmenuAction("Open with...", BuiltinIcon::ArrowUp), m_target(std::move(target)) {
   setShortcut(Keybind::OpenAction);
 }
 
-std::unique_ptr<ActionPanelState> OpenWithAction::buildState() const {
+void OpenWithAction::setTypeFiltering(bool filter) { m_typeFiltered = filter; }
+
+std::unique_ptr<ActionPanelState> OpenWithAction::buildState(ApplicationContext *ctx) const {
   auto panel = std::make_unique<ActionPanelState>();
   auto section = panel->createSection();
+  const auto db = ctx->services->appDb();
+  const auto getOpeners = [&]() {
+    if (m_typeFiltered) return db->findOpeners(m_target);
+    return db->list() | std::views::filter([](auto &&app) { return app->isOpener(); }) |
+           std::ranges::to<std::vector>();
+  };
 
-  for (const auto &opener : m_db.findOpeners(m_target)) {
+  for (const auto &opener : getOpeners()) {
     auto action = new OpenAppAction(opener, opener->displayName(), {m_target});
     section->addAction(action);
   }
