@@ -1,13 +1,13 @@
 #include "database-key.hpp"
-#include "crypto/aes-gcm.hpp"
-#include "crypto/kdf.hpp"
-#include "db-encryption.hpp"
-#include "vicinae.hpp"
 #include <QByteArray>
 #include <QEventLoop>
 #include <cstring>
 #include <expected>
 #include <qt6keychain/keychain.h>
+#include "crypto/aes-gcm.hpp"
+#include "crypto/kdf.hpp"
+#include "db-encryption.hpp"
+#include "vicinae.hpp"
 
 namespace {
 

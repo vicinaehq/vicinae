@@ -128,7 +128,10 @@ void ClipboardHistoryViewHost::initialize() {
   }
 }
 
-void ClipboardHistoryViewHost::loadInitialData() { m_controller->setFilter(searchText()); }
+void ClipboardHistoryViewHost::loadInitialData() {
+  m_controller->setFilter(searchText());
+  m_controller->reloadSearch();
+}
 
 void ClipboardHistoryViewHost::textChanged(const QString &text) {
   m_model.setSelectFirstOnReset(true);
@@ -206,9 +209,13 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
     case ClipboardService::OfferDecryptionError::DecryptionFailed:
       m_detailErrorTitle = QStringLiteral("Decryption failed");
       m_detailErrorDescription = QStringLiteral(
-          "Vicinae could not decrypt the data for this selection. This is most likely caused by a "
-          "keychain software change. To fix this disable encryption in the clipboard extension "
-          "settings.");
+          "Vicinae could not decrypt the data for this selection. It was most likely encrypted "
+          "with a different key and cannot be recovered. You can remove this entry from the "
+          "history.");
+      break;
+    case ClipboardService::OfferDecryptionError::DataUnavailable:
+      m_detailErrorTitle = QStringLiteral("Data unavailable");
+      m_detailErrorDescription = QStringLiteral("The data for this selection could not be found on disk.");
       break;
     case ClipboardService::OfferDecryptionError::DecryptionRequired:
       m_detailErrorTitle = QStringLiteral("Data is encrypted");

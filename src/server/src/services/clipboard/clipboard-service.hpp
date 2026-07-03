@@ -63,6 +63,7 @@ public:
   enum class OfferDecryptionError {
     DecryptionRequired, // if encryption is disabled and data was previous encrypted
     DecryptionFailed,
+    DataUnavailable,
   };
 
   ClipboardService(const std::filesystem::path &path, std::optional<db::EncryptionKey> key = std::nullopt);

@@ -32,10 +32,13 @@ void ClipboardHistoryController::runQuery() {
 
 void ClipboardHistoryController::setKindFilter(std::optional<ClipboardOfferKind> kind) {
   m_kind = kind;
-  setFilter(m_query);
+  reloadSearch();
 }
 
-void ClipboardHistoryController::reloadSearch() { setFilter(m_query); }
+void ClipboardHistoryController::reloadSearch() {
+  m_debounce.stop();
+  runQuery();
+}
 
 void ClipboardHistoryController::handleResults() {
   if (!m_watcher.isFinished()) return;

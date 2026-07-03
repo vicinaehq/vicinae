@@ -233,13 +233,13 @@ public:
 
   // Must be applied before any other statement on the connection (SQLCipher requirement).
   std::expected<void, std::string> setKey(KeyView key) {
-    static constexpr char hex[] = "0123456789abcdef";
+    static constexpr char HEX_DIGITS[] = "0123456789abcdef";
     std::string pragma = "PRAGMA key = \"x'";
     pragma.reserve(pragma.size() + key.size() * 2 + 4);
     for (std::byte b : key) {
       auto v = std::to_integer<unsigned char>(b);
-      pragma.push_back(hex[v >> 4]);
-      pragma.push_back(hex[v & 0x0F]);
+      pragma.push_back(HEX_DIGITS[v >> 4]);
+      pragma.push_back(HEX_DIGITS[v & 0x0F]);
     }
     pragma += "'\";";
 

@@ -17,12 +17,13 @@ static std::vector<std::byte> bytes(std::string_view s) {
 }
 
 static std::string hex(std::span<const std::byte> b) {
-  static constexpr char d[] = "0123456789abcdef";
+  static constexpr char HEX_DIGITS[] = "0123456789abcdef";
   std::string out;
+  out.reserve(b.size() * 2);
   for (std::byte x : b) {
     auto v = std::to_integer<unsigned char>(x);
-    out.push_back(d[v >> 4]);
-    out.push_back(d[v & 0x0F]);
+    out.push_back(HEX_DIGITS[v >> 4]);
+    out.push_back(HEX_DIGITS[v & 0x0F]);
   }
   return out;
 }
@@ -30,8 +31,9 @@ static std::string hex(std::span<const std::byte> b) {
 static std::vector<std::byte> fromHex(std::string_view h) {
   auto nib = [](char c) -> int { return c <= '9' ? c - '0' : (c | 0x20) - 'a' + 10; };
   std::vector<std::byte> v;
+  v.reserve(h.size() / 2);
   for (size_t i = 0; i + 1 < h.size(); i += 2)
-    v.push_back(static_cast<std::byte>((nib(h[i]) << 4) | nib(h[i + 1])));
+    v.emplace_back(static_cast<std::byte>((nib(h[i]) << 4) | nib(h[i + 1])));
   return v;
 }
 

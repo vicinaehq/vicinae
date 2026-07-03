@@ -1,7 +1,7 @@
 #include "services/clipboard/clipboard-encrypter.hpp"
-#include "crypto/aes-gcm.hpp"
 #include <cstddef>
 #include <span>
+#include "crypto/aes-gcm.hpp"
 
 static std::span<const std::byte> asBytes(const QByteArray &b) {
   return {reinterpret_cast<const std::byte *>(b.constData()), static_cast<size_t>(b.size())};

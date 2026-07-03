@@ -248,7 +248,7 @@ ClipboardService::getMainOfferData(const QString &selectionId) const {
 
   if (!offer) {
     qWarning() << "Can't find preferred offer for selection" << selectionId;
-    return {};
+    return std::unexpected(OfferDecryptionError::DataUnavailable);
   };
 
   fs::path const path = m_dataDir / offer->id.toStdString();
@@ -257,7 +257,7 @@ ClipboardService::getMainOfferData(const QString &selectionId) const {
 
   if (!file.open(QIODevice::ReadOnly)) {
     qWarning() << "Failed to open file at" << path;
-    return {};
+    return std::unexpected(OfferDecryptionError::DataUnavailable);
   }
 
   return decryptOffer(file.readAll(), offer->encryption);

@@ -10,15 +10,15 @@ namespace db {
 namespace {
 
 std::string toHex(KeyView key) {
-  static constexpr char digits[] = "0123456789abcdef";
+  static constexpr char HEX_DIGITS[] = "0123456789abcdef";
   std::string out;
 
   out.reserve(key.size() * 2);
 
   for (std::byte b : key) {
     auto v = std::to_integer<unsigned char>(b);
-    out.push_back(digits[v >> 4]);
-    out.push_back(digits[v & 0x0F]);
+    out.push_back(HEX_DIGITS[v >> 4]);
+    out.push_back(HEX_DIGITS[v & 0x0F]);
   }
 
   return out;

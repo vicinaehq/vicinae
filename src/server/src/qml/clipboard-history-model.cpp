@@ -54,7 +54,7 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
 
   if (!isCopyable) {
     mainSection->addAction(new StaticAction("Open Settings", BuiltinIcon::Cog, [](ApplicationContext *ctx) {
-      ctx->settings->openWindow();
+      ctx->settings->openTab(QStringLiteral("advanced"));
       ctx->navigation->closeWindow();
     }));
   }
