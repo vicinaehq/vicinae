@@ -170,19 +170,12 @@ QString RootUpdateSection::itemId(int) const {
 }
 
 QString RootUpdateSection::itemTitle(int) const {
-  if (!m_update) return {};
-  auto *updates = ServiceRegistry::instance()->updateService();
-  if (updates->status() == UpdateService::Status::Installed) {
-    return QString("Restart to finish updating to Vicinae %1").arg(m_update->tag);
-  }
-  return QString("Vicinae %1 is available").arg(m_update->tag);
+  return m_update ? QString("Vicinae %1 is available").arg(m_update->tag) : QString();
 }
 
 QString RootUpdateSection::itemSubtitle(int) const {
   if (!m_update) return {};
-  auto *updates = ServiceRegistry::instance()->updateService();
-  if (updates->status() == UpdateService::Status::Installed) return {};
-  return QString("You are running %1").arg(updates->currentVersionTag());
+  return QString("You are running %1").arg(m_updates->currentVersionTag());
 }
 
 QString RootUpdateSection::itemIconSource(int) const {
@@ -203,20 +196,10 @@ QHash<int, QVariant> RootUpdateSection::customRoleDefaults() const {
 std::unique_ptr<ActionPanelState> RootUpdateSection::actionPanel(int) const {
   if (!m_update) return nullptr;
 
-  auto *updates = ServiceRegistry::instance()->updateService();
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
 
-  if (updates->status() == UpdateService::Status::Installed) {
-    auto *restart =
-        new StaticAction("Restart Now", ImageURL::builtin("arrow-clockwise"),
-                         [](ApplicationContext *ctx) { ctx->services->updateService()->relaunch(); });
-    restart->setPrimary(true);
-    section->addAction(restart);
-    return panel;
-  }
-
-  if (updates->canSelfInstall()) {
+  if (m_updates->canSelfInstall()) {
     auto *install = new InstallUpdateAction();
     install->setPrimary(true);
     section->addAction(install);

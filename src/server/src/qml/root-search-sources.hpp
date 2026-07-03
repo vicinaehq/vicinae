@@ -87,6 +87,8 @@ private:
 
 class RootUpdateSection : public SectionSource {
 public:
+  explicit RootUpdateSection(UpdateService *updates) : m_updates(updates) {}
+
   QString sectionName() const override { return QStringLiteral("Update"); }
   int count() const override { return m_update ? 1 : 0; }
   QString itemId(int) const override;
@@ -101,6 +103,7 @@ public:
   void setUpdate(std::optional<UpdateService::AvailableUpdate> update) { m_update = std::move(update); }
 
 private:
+  UpdateService *m_updates;
   std::optional<UpdateService::AvailableUpdate> m_update;
 };
 

@@ -13,15 +13,13 @@
 #include <optional>
 #include <string>
 
+class ToastService;
+
 class UpdateService : public QObject, NonCopyable {
   Q_OBJECT
 
 signals:
   void updateChanged();
-  void downloadProgress(qint64 received, qint64 total);
-  void installStageChanged(const QString &stage);
-  void installCompleted();
-  void installFailed(const QString &error);
 
 public:
   enum class Status { Idle, Checking, UpdateAvailable, Downloading, Installing, Installed, Failed };
@@ -30,28 +28,25 @@ public:
     QString tag;
     QString version;
     QString releaseUrl;
-    QString releaseNotes;
     std::optional<QString> assetUrl;
   };
 
-  explicit UpdateService(std::unique_ptr<AbstractUpdateInstaller> installer);
+  UpdateService(ToastService &toast, std::unique_ptr<AbstractUpdateInstaller> installer);
 
   void checkNow();
 
   const std::optional<AvailableUpdate> &available() const { return m_available; }
   Status status() const { return m_status; }
-  const QString &lastError() const { return m_lastError; }
   QString currentVersionTag() const;
   bool checksSupported() const { return m_currentVersion.has_value() && m_installer->supported(); }
-  const std::optional<std::uint64_t> &lastCheckedAt() const { return m_state.lastCheckedAt; }
 
   bool canSelfInstall() const;
 
   void downloadAndInstall();
   void skipAvailableVersion();
-  void relaunch();
 
 private:
+  void relaunch();
   struct State {
     std::optional<std::string> skippedVersion;
     std::optional<std::uint64_t> lastCheckedAt;
@@ -65,6 +60,7 @@ private:
   void loadState();
   void saveState();
 
+  ToastService &m_toast;
   std::unique_ptr<AbstractUpdateInstaller> m_installer;
   http::Client m_client;
   QTimer m_timer;
@@ -74,7 +70,6 @@ private:
   std::optional<vicinae::Semver> m_currentVersion;
   std::optional<AvailableUpdate> m_available;
   Status m_status = Status::Idle;
-  QString m_lastError;
 };
 
 class InstallUpdateAction : public AbstractAction {

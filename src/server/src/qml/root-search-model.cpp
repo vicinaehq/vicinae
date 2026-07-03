@@ -47,7 +47,7 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
     if (rowCount() > 0) emit dataChanged(index(0), index(rowCount() - 1), {IconSource, AccessoryColor});
   });
 
-  m_updateSource = new RootUpdateSection;
+  m_updateSource = new RootUpdateSection(m_updateService);
   m_linkSource = new RootLinkSection;
   m_calcSource = new RootCalculatorSection;
   m_newsSource = new RootNewsSection;

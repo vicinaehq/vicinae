@@ -19,7 +19,6 @@
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "services/update/update-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "vicinae.hpp"
 #include "generated/version.h"
@@ -30,10 +29,7 @@
 #include "macos-chrome-attached.hpp"
 #endif
 
-SettingsWindow::SettingsWindow(ApplicationContext &ctx, QObject *parent) : QObject(parent), m_ctx(ctx) {
-  connect(ctx.services->updateService(), &UpdateService::updateChanged, this,
-          &SettingsWindow::updateStatusChanged);
-}
+SettingsWindow::SettingsWindow(ApplicationContext &ctx, QObject *parent) : QObject(parent), m_ctx(ctx) {}
 
 void SettingsWindow::ensureInitialized() {
   if (m_initialized) return;
@@ -97,35 +93,6 @@ QString SettingsWindow::version() const { return QStringLiteral(VICINAE_GIT_TAG)
 QString SettingsWindow::commitHash() const { return QStringLiteral(VICINAE_GIT_COMMIT_HASH); }
 QString SettingsWindow::buildInfo() const { return QStringLiteral(BUILD_INFO); }
 QString SettingsWindow::headline() const { return Omnicast::HEADLINE; }
-
-QString SettingsWindow::updateStatus() const {
-  auto *updates = m_ctx.services->updateService();
-
-  switch (updates->status()) {
-  case UpdateService::Status::Checking:
-    return "Checking for updates…";
-  case UpdateService::Status::UpdateAvailable:
-    return QString("Vicinae %1 is available").arg(updates->available()->tag);
-  case UpdateService::Status::Downloading:
-    return "Downloading update…";
-  case UpdateService::Status::Installing:
-    return "Installing update…";
-  case UpdateService::Status::Installed:
-    return "Update installed, restarting…";
-  case UpdateService::Status::Failed:
-    return QString("Update failed: %1").arg(updates->lastError());
-  case UpdateService::Status::Idle:
-    return updates->lastCheckedAt() ? "You are up to date" : QString();
-  }
-
-  return {};
-}
-
-bool SettingsWindow::updateChecksSupported() const {
-  return m_ctx.services->updateService()->checksSupported();
-}
-
-void SettingsWindow::checkForUpdates() { m_ctx.services->updateService()->checkNow(); }
 
 void SettingsWindow::openUrl(const QString &url) { m_ctx.services->appDb()->openTarget(url); }
 

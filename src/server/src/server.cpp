@@ -45,9 +45,10 @@
 #include "services/news/news-service.hpp"
 #include "services/telemetry/telemetry-service.hpp"
 #include "services/update/update-service.hpp"
-#include "services/update/null-update-installer.hpp"
 #ifdef Q_OS_MACOS
 #include "services/update/macos-update-installer.hpp"
+#else
+#include "services/update/null-update-installer.hpp"
 #endif
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -264,13 +265,13 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
-    auto updateInstaller = std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<NullUpdateInstaller>());
 #ifdef Q_OS_MACOS
-    if (!MacosUpdateInstaller::isHomebrewInstall()) {
-      updateInstaller = std::make_unique<MacosUpdateInstaller>();
-    }
+    auto updateInstaller = std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<MacosUpdateInstaller>());
+#else
+    auto updateInstaller = std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<NullUpdateInstaller>());
 #endif
-    registry->setUpdateService(std::make_unique<UpdateService>(std::move(updateInstaller)));
+    registry->setUpdateService(
+        std::make_unique<UpdateService>(*registry->toastService(), std::move(updateInstaller)));
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
 
     auto root = registry->rootItemManager();
@@ -472,6 +473,23 @@ int startServer(const ServerLaunchOptions &launchOpts) {
         ctx.settings->openTab(tab);
       }
     });
+    auto *updates = ServiceRegistry::instance()->updateService();
+
+    QObject::connect(tray.get(), &TrayService::checkForUpdatesRequested, [&ctx, updates]() {
+      if (updates->available()) {
+        ctx.navigation->popToRoot();
+        ctx.navigation->showWindow();
+      } else {
+        updates->checkNow();
+      }
+    });
+
+    auto syncTrayUpdate = [tray = tray.get(), updates]() {
+      tray->setAvailableUpdate(updates->available() ? updates->available()->tag : QString());
+    };
+    QObject::connect(updates, &UpdateService::updateChanged, tray.get(), syncTrayUpdate);
+    syncTrayUpdate();
+    tray->setCheckForUpdatesVisible(updates->checksSupported());
     QObject::connect(tray.get(), &TrayService::quitRequested, []() { QCoreApplication::quit(); });
     tray->show();
   }

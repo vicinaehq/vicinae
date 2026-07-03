@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <expected>
 #include <filesystem>
-#include <functional>
 #include "common/types.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/reflect.hpp>

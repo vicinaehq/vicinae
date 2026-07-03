@@ -12,7 +12,6 @@ struct ReleaseAsset {
 struct Release {
   std::string tag_name;
   std::string html_url;
-  std::string body;
   bool draft = false;
   bool prerelease = false;
   std::vector<ReleaseAsset> assets;

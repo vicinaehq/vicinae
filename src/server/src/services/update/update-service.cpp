@@ -18,8 +18,8 @@ namespace fs = std::filesystem;
 static constexpr std::uint64_t CHECK_INTERVAL_SECS = 6 * 3600;
 static constexpr std::chrono::milliseconds RELAUNCH_DELAY{800};
 
-UpdateService::UpdateService(std::unique_ptr<AbstractUpdateInstaller> installer)
-    : m_installer(std::move(installer)) {
+UpdateService::UpdateService(ToastService &toast, std::unique_ptr<AbstractUpdateInstaller> installer)
+    : m_toast(toast), m_installer(std::move(installer)) {
   using namespace std::chrono_literals;
 
   m_client.setUserAgent(QString("vicinae/%1").arg(VICINAE_GIT_TAG));
@@ -37,14 +37,11 @@ UpdateService::UpdateService(std::unique_ptr<AbstractUpdateInstaller> installer)
   connect(&m_timer, &QTimer::timeout, this, &UpdateService::performCheck);
   m_timer.setInterval(6h);
 
-  connect(m_installer.get(), &AbstractUpdateInstaller::stageChanged, this, [this](const QString &stage) {
-    emit installStageChanged(stage);
-    ServiceRegistry::instance()->toastService()->dynamic(stage);
-  });
+  connect(m_installer.get(), &AbstractUpdateInstaller::stageChanged, this,
+          [this](const QString &stage) { m_toast.dynamic(stage); });
   connect(m_installer.get(), &AbstractUpdateInstaller::finished, this, [this]() {
     setStatus(Status::Installed);
-    emit installCompleted();
-    ServiceRegistry::instance()->toastService()->success("Update installed", "Restarting…");
+    m_toast.success("Update installed", "Restarting…");
     QTimer::singleShot(RELAUNCH_DELAY, this, [this]() { relaunch(); });
   });
   connect(m_installer.get(), &AbstractUpdateInstaller::failed, this, &UpdateService::failInstall);
@@ -104,7 +101,6 @@ void UpdateService::handleRelease(const github::Release &release) {
   update.tag = QString::fromStdString(release.tag_name);
   update.version = update.tag.startsWith('v') ? update.tag.mid(1) : update.tag;
   update.releaseUrl = QString::fromStdString(release.html_url);
-  update.releaseNotes = QString::fromStdString(release.body);
 
   const QString assetName = m_installer->assetName();
   auto const matchesAsset = [&](const github::ReleaseAsset &asset) {
@@ -139,26 +135,23 @@ void UpdateService::downloadAndInstall() {
 
   setStatus(Status::Downloading);
 
-  auto toast = ServiceRegistry::instance()->toastService();
   const QString tag = m_available->tag;
   const QString version = m_available->version;
 
-  toast->dynamic(QString("Downloading Vicinae %1…").arg(tag));
+  m_toast.dynamic(QString("Downloading Vicinae %1…").arg(tag));
 
   auto *download = m_client.download(*m_available->assetUrl, archivePath);
 
-  connect(download, &http::Download::progress, this, [this, toast, tag](qint64 received, qint64 total) {
-    emit downloadProgress(received, total);
+  connect(download, &http::Download::progress, this, [this, tag](qint64 received, qint64 total) {
     if (total > 0) {
       int const pct = static_cast<int>(received * 100 / total);
-      toast->dynamic(QString("Downloading Vicinae %1… %2%").arg(tag).arg(pct));
+      m_toast.dynamic(QString("Downloading Vicinae %1… %2%").arg(tag).arg(pct));
     }
   });
   connect(download, &http::Download::failed, this, &UpdateService::failInstall);
   connect(download, &http::Download::finished, this, [this, version](const fs::path &path) {
     setStatus(Status::Installing);
-    emit installStageChanged("Installing update…");
-    ServiceRegistry::instance()->toastService()->dynamic("Installing update…");
+    m_toast.dynamic("Installing update…");
     m_installer->install(path, version);
   });
 }
@@ -181,10 +174,8 @@ void UpdateService::setStatus(Status status) {
 
 void UpdateService::failInstall(const QString &error) {
   qWarning() << "Update failed:" << error;
-  m_lastError = error;
   setStatus(Status::Failed);
-  emit installFailed(error);
-  ServiceRegistry::instance()->toastService()->failure("Update failed", error);
+  m_toast.failure("Update failed", error);
 }
 
 void UpdateService::saveState() {

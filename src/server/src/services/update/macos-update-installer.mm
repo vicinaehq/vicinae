@@ -20,6 +20,18 @@ constexpr const char *STAGED_PREFIX = ".Vicinae.staged.";
 constexpr const char *OLD_PREFIX = ".Vicinae.old.";
 constexpr int MOUNT_TIMEOUT_MS = 60000;
 
+// brew owns updates for cask installs; swapping the bundle behind its back
+// would leave its bookkeeping stale
+bool isHomebrewInstall() {
+  std::error_code ec;
+
+  for (const char *caskroom : {"/opt/homebrew/Caskroom/vicinae", "/usr/local/Caskroom/vicinae"}) {
+    if (fs::exists(caskroom, ec)) return true;
+  }
+
+  return false;
+}
+
 void trashOrRemove(const fs::path &path) {
   @autoreleasepool {
     NSFileManager *fm = [NSFileManager defaultManager];
@@ -157,7 +169,9 @@ std::optional<QString> verifyBundleVersion(const fs::path &appPath, const QStrin
 MacosUpdateInstaller::MacosUpdateInstaller() {
   const QString appDir = QCoreApplication::applicationDirPath();
 
-  if (!appDir.endsWith(QStringLiteral(".app/Contents/MacOS"))) return;
+  m_supported = appDir.endsWith(QStringLiteral(".app/Contents/MacOS")) && !isHomebrewInstall();
+
+  if (!m_supported) return;
   if (appDir.contains(QStringLiteral("/AppTranslocation/"))) return;
 
   const fs::path bundlePath = fs::path(appDir.toStdString()).parent_path().parent_path();
