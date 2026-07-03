@@ -741,7 +741,7 @@ bool WheelHandler::eventFilter(QObject *watched, QEvent *event)
             m_wheelEvents.dequeue();
             m_timestamps.dequeue();
         }
-        if (m_wheelEvents.count() > 2 && wheelEvent->isEndEvent()) {
+        if (m_inertiaScroll && m_wheelEvents.count() > 2 && wheelEvent->isEndEvent()) {
             startInertiaScrolling();
         } else {
             m_wheelEvents.enqueue(wheelEvent->pixelDelta());

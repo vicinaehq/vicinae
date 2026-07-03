@@ -197,6 +197,16 @@ class WheelHandler : public QObject
      */
     Q_PROPERTY(bool smoothScroll MEMBER m_smoothScroll NOTIFY smoothScrollChanged FINAL)
 
+    /*!
+     * This property holds whether an inertia animation continues scrolling after a touchpad
+     * gesture ends. Disabled by default: the upstream implementation clamps the animation
+     * against bounds captured when the gesture ends, which leaves views that estimate their
+     * content geometry (ListView with mixed delegate heights) stuck past the real edge
+     * (https://bugs.kde.org/show_bug.cgi?id=508229). Platforms with system momentum (macOS)
+     * do not need it either way.
+     */
+    Q_PROPERTY(bool inertiaScroll MEMBER m_inertiaScroll NOTIFY inertiaScrollChanged FINAL)
+
 public:
     explicit WheelHandler(QObject *parent = nullptr);
     ~WheelHandler() override;
@@ -256,6 +266,7 @@ Q_SIGNALS:
     void blockTargetWheelChanged();
     void scrollFlickableTargetChanged();
     void smoothScrollChanged();
+    void inertiaScrollChanged();
 
     /*!
      * This signal is emitted when a wheel event reaches the event filter, just before scrolling
@@ -297,6 +308,7 @@ private:
     bool m_blockTargetWheel = true;
     bool m_scrollFlickableTarget = true;
     bool m_smoothScroll = true;
+    bool m_inertiaScroll = false;
     // Same as QXcbWindow.
     constexpr static Qt::KeyboardModifiers m_defaultHorizontalScrollModifiers = Qt::AltModifier;
     // Same as QScrollBar/QAbstractSlider.

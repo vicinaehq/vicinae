@@ -7,3 +7,5 @@
 Adapted to be standalone: the Kirigami Units/Settings singletons were replaced
 with a constant animation duration and a `smoothScroll` property, and the QML
 type names were prefixed to avoid clashing with QtQuick's own WheelHandler.
+The touchpad inertia animation is gated behind an `inertiaScroll` property,
+disabled by default because of https://bugs.kde.org/show_bug.cgi?id=508229.
