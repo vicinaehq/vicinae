@@ -59,10 +59,10 @@ static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChoos
   }
 }
 
-static QString resolveLabel(const Preference &p) {
+static QString checkboxLabel(const Preference &p) {
   auto d = p.data();
-  if (auto *cb = std::get_if<Preference::CheckboxData>(&d)) return cb->label.value_or(p.title());
-  return p.title();
+  if (auto *cb = std::get_if<Preference::CheckboxData>(&d)) return cb->label.value_or(QString());
+  return {};
 }
 
 MissingPreferenceFormModel::MissingPreferenceFormModel(QObject *parent) : QAbstractListModel(parent) {}
@@ -81,6 +81,8 @@ QVariant MissingPreferenceFormModel::data(const QModelIndex &index, int role) co
     return f.id;
   case LabelRole:
     return f.label;
+  case CheckboxLabelRole:
+    return f.checkboxLabel;
   case DescriptionRole:
     return f.description;
   case PlaceholderRole:
@@ -106,6 +108,7 @@ QHash<int, QByteArray> MissingPreferenceFormModel::roleNames() const {
   return {{TypeRole, "type"},
           {FieldIdRole, "fieldId"},
           {LabelRole, "label"},
+          {CheckboxLabelRole, "checkboxLabel"},
           {DescriptionRole, "description"},
           {PlaceholderRole, "placeholder"},
           {ValueRole, "value"},
@@ -133,7 +136,8 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
     Field f;
     f.type = preferenceType(pref);
     f.id = pref.name();
-    f.label = resolveLabel(pref);
+    f.label = pref.title();
+    f.checkboxLabel = checkboxLabel(pref);
     f.description = pref.description();
     f.placeholder = pref.placeholder();
     f.options = dropdownOptions(pref);

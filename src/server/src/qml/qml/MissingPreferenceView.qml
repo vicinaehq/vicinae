@@ -55,6 +55,7 @@ Item {
                 required property string type
                 required property string fieldId
                 required property string label
+                required property string checkboxLabel
                 required property string description
                 required property string placeholder
                 required property var value
@@ -122,9 +123,9 @@ Item {
         FormField {
             id: field
             label: parent.label
-            info: parent.description
             FormCheckbox {
                 checked: field.parent.value === true
+                label: field.parent.checkboxLabel
                 onToggled: root.host.prefModel.setFieldValue(field.parent.index, checked)
             }
         }
