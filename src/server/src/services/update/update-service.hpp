@@ -28,7 +28,7 @@ public:
     QString tag;
     QString version;
     QString releaseUrl;
-    std::optional<QString> assetUrl;
+    QString assetUrl;
   };
 
   UpdateService(ToastService &toast, std::unique_ptr<AbstractUpdateInstaller> installer);
@@ -39,8 +39,6 @@ public:
   Status status() const { return m_status; }
   QString currentVersionTag() const;
   bool checksSupported() const { return m_currentVersion.has_value() && m_installer->supported(); }
-
-  bool canSelfInstall() const;
 
   void downloadAndInstall();
   void skipAvailableVersion();

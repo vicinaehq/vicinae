@@ -6,7 +6,6 @@ public:
   using AbstractUpdateInstaller::AbstractUpdateInstaller;
 
   bool supported() const override { return false; }
-  bool canSelfInstall() const override { return false; }
   QString assetName() const override { return {}; }
 
   void install(const std::filesystem::path &, const QString &) override {

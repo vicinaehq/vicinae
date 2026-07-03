@@ -169,10 +169,9 @@ std::optional<QString> verifyBundleVersion(const fs::path &appPath, const QStrin
 MacosUpdateInstaller::MacosUpdateInstaller() {
   const QString appDir = QCoreApplication::applicationDirPath();
 
-  m_supported = appDir.endsWith(QStringLiteral(".app/Contents/MacOS")) && !isHomebrewInstall();
-
-  if (!m_supported) return;
+  if (!appDir.endsWith(QStringLiteral(".app/Contents/MacOS"))) return;
   if (appDir.contains(QStringLiteral("/AppTranslocation/"))) return;
+  if (isHomebrewInstall()) return;
 
   const fs::path bundlePath = fs::path(appDir.toStdString()).parent_path().parent_path();
 

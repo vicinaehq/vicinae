@@ -96,20 +96,25 @@ void UpdateService::handleRelease(const github::Release &release) {
     return;
   }
 
+  const QString assetName = m_installer->assetName();
+  auto const matchesAsset = [&](const github::ReleaseAsset &asset) {
+    return QString::fromStdString(asset.name) == assetName;
+  };
+  auto const asset = std::ranges::find_if(release.assets, matchesAsset);
+
+  if (asset == release.assets.end()) {
+    qInfo() << "Release" << release.tag_name.c_str() << "has no" << assetName << "asset, ignoring";
+    m_available.reset();
+    setStatus(Status::Idle);
+    return;
+  }
+
   AvailableUpdate update;
 
   update.tag = QString::fromStdString(release.tag_name);
   update.version = update.tag.startsWith('v') ? update.tag.mid(1) : update.tag;
   update.releaseUrl = QString::fromStdString(release.html_url);
-
-  const QString assetName = m_installer->assetName();
-  auto const matchesAsset = [&](const github::ReleaseAsset &asset) {
-    return !assetName.isEmpty() && QString::fromStdString(asset.name) == assetName;
-  };
-
-  if (auto it = std::ranges::find_if(release.assets, matchesAsset); it != release.assets.end()) {
-    update.assetUrl = QString::fromStdString(it->browser_download_url);
-  }
+  update.assetUrl = QString::fromStdString(asset->browser_download_url);
 
   qInfo() << "Update available:" << update.tag;
 
@@ -117,12 +122,8 @@ void UpdateService::handleRelease(const github::Release &release) {
   setStatus(Status::UpdateAvailable);
 }
 
-bool UpdateService::canSelfInstall() const {
-  return m_installer->canSelfInstall() && m_available && m_available->assetUrl.has_value();
-}
-
 void UpdateService::downloadAndInstall() {
-  if (!canSelfInstall()) return;
+  if (!m_available) return;
   if (m_status == Status::Downloading || m_status == Status::Installing || m_status == Status::Installed)
     return;
 
@@ -140,7 +141,7 @@ void UpdateService::downloadAndInstall() {
 
   m_toast.dynamic(QString("Downloading Vicinae %1…").arg(tag));
 
-  auto *download = m_client.download(*m_available->assetUrl, archivePath);
+  auto *download = m_client.download(m_available->assetUrl, archivePath);
 
   connect(download, &http::Download::progress, this, [this, tag](qint64 received, qint64 total) {
     if (total > 0) {

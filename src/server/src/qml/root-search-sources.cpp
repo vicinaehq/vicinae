@@ -199,16 +199,10 @@ std::unique_ptr<ActionPanelState> RootUpdateSection::actionPanel(int) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
 
-  if (m_updates->canSelfInstall()) {
-    auto *install = new InstallUpdateAction();
-    install->setPrimary(true);
-    section->addAction(install);
-    section->addAction(new OpenInBrowserAction(QUrl(m_update->releaseUrl), "View Release Notes"));
-  } else {
-    auto *open = new OpenInBrowserAction(QUrl(m_update->releaseUrl), "Open Release Page");
-    open->setPrimary(true);
-    section->addAction(open);
-  }
+  auto *install = new InstallUpdateAction();
+  install->setPrimary(true);
+  section->addAction(install);
+  section->addAction(new OpenInBrowserAction(QUrl(m_update->releaseUrl), "View Release Notes"));
 
   auto *skip = new SkipUpdateVersionAction();
   skip->setShortcut(Keybind::RemoveAction);

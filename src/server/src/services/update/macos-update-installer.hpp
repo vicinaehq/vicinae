@@ -7,8 +7,7 @@ class MacosUpdateInstaller : public AbstractUpdateInstaller {
 public:
   MacosUpdateInstaller();
 
-  bool supported() const override { return m_supported; }
-  bool canSelfInstall() const override { return m_self.has_value(); }
+  bool supported() const override { return m_self.has_value(); }
   QString assetName() const override { return QStringLiteral("Vicinae.dmg"); }
   void install(const std::filesystem::path &archive, const QString &expectedVersion) override;
   void relaunch() override;
@@ -24,5 +23,4 @@ private:
   static void detach(const std::filesystem::path &mountPoint);
 
   std::optional<SelfInfo> m_self;
-  bool m_supported = false;
 };
