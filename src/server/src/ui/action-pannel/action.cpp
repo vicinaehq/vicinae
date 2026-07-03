@@ -1,12 +1,12 @@
 #include "ui/action-pannel/action.hpp"
-#include "navigation-controller.hpp"
+#include "ui/action-pannel/action-list-view.hpp"
+#include "ui/action-pannel/action-panel-state.hpp"
 
-std::unique_ptr<ActionPanelState> SubmenuAction::createSubmenuState() const {
-  if (m_onOpen) { m_onOpen(); }
-  return createSubmenuStateStealthily();
-}
+ActionPanelView *ListSubmenuAction::createView(QObject *parent) {
+  auto state = buildState();
+  if (!state) return nullptr;
 
-std::unique_ptr<ActionPanelState> SubmenuAction::createSubmenuStateStealthily() const {
-  if (m_stateFactory) { return m_stateFactory(); }
-  return nullptr;
+  auto *view = new ActionListView(parent);
+  view->adoptState(std::move(state));
+  return view;
 }

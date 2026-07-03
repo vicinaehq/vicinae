@@ -1,5 +1,6 @@
 #pragma once
 #include "extension/extension-action-panel-builder.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/action-list-view.hpp"
 
 class ExtensionActionListView : public ActionListView {
@@ -9,10 +10,27 @@ public:
   ExtensionActionListView(ExtensionActionPanelBuilder::NotifyFn notify,
                           const QString &onSearchTextChangeHandler, QObject *parent = nullptr);
 
-protected:
-  ActionListView *createSubmenuChild(SubmenuAction *action) override;
-
 private:
   ExtensionActionPanelBuilder::NotifyFn m_notify;
   QString m_onSearchTextChangeHandler;
+};
+
+/**
+ * Submenu backed by an extension-provided model. The state is rebuilt from the
+ * model on demand, which `ActionPanelController::refreshSubmenus` relies on to
+ * reconcile open submenus when the extension re-renders.
+ */
+class ExtensionSubmenuAction : public ListSubmenuAction {
+public:
+  ExtensionSubmenuAction(ActionPannelSubmenuPtr model, ExtensionActionPanelBuilder::NotifyFn notify,
+                         ExtensionActionPanelBuilder::SubmitFn submit);
+
+  void onOpen() override;
+  std::unique_ptr<ActionPanelState> buildState() const override;
+  ActionPanelView *createView(QObject *parent) override;
+
+private:
+  ActionPannelSubmenuPtr m_model;
+  ExtensionActionPanelBuilder::NotifyFn m_notify;
+  ExtensionActionPanelBuilder::SubmitFn m_submit;
 };

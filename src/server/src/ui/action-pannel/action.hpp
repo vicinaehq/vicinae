@@ -154,31 +154,35 @@ public:
 };
 
 class ActionPanelState;
+class ActionPanelView;
 
+/**
+ * An action that opens a nested panel when activated instead of executing logic.
+ *
+ * Subclasses implement `createView` to produce the panel pushed onto the action
+ * panel stack. `onOpen` is invoked every time the submenu is opened by the user.
+ */
 class SubmenuAction : public AbstractAction {
-  std::function<void()> m_onOpen;
-
 public:
-  using SubmenuStateFactory = std::function<std::unique_ptr<ActionPanelState>()>;
-
-  SubmenuAction(const QString &title, const std::optional<ImageURL> &icon,
-                std::function<void()> onOpen = nullptr)
-      : AbstractAction(title, icon), m_onOpen(onOpen) {
+  SubmenuAction(const QString &title, const std::optional<ImageURL> &icon) : AbstractAction(title, icon) {
     setAutoClose(false);
   }
 
-  bool isSubmenu() const override { return true; }
+  bool isSubmenu() const final { return true; }
 
-  void setSubmenuStateFactory(SubmenuStateFactory fn) { m_stateFactory = std::move(fn); }
+  virtual void onOpen() {}
+  virtual ActionPanelView *createView(QObject *parent) = 0;
+};
 
-  void setOnSearchTextChangeHandler(const QString &handler) { m_onSearchTextChangeHandler = handler; }
-  QString onSearchTextChangeHandler() const { return m_onSearchTextChangeHandler; }
+/**
+ * Convenience submenu whose panel is a plain action list described by an
+ * `ActionPanelState`. Subclasses only implement `buildState`.
+ */
+class ListSubmenuAction : public SubmenuAction {
+public:
+  using SubmenuAction::SubmenuAction;
 
-  // Defined out-of-line because ActionPanelState is incomplete here
-  std::unique_ptr<ActionPanelState> createSubmenuState() const;
-  std::unique_ptr<ActionPanelState> createSubmenuStateStealthily() const;
+  virtual std::unique_ptr<ActionPanelState> buildState() const = 0;
 
-private:
-  SubmenuStateFactory m_stateFactory;
-  QString m_onSearchTextChangeHandler;
+  ActionPanelView *createView(QObject *parent) override;
 };
