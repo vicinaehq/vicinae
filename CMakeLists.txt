@@ -194,6 +194,8 @@ set(VICINAE_NODE_RUNTIME_SHA256 "${_node_runtime_sha256}" CACHE STRING "sha256 o
 set(VICINAE_NODE_RUNTIME_URL
 	"https://nodejs.org/dist/${VICINAE_NODE_RUNTIME_VERSION}/node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}.tar.gz"
 	CACHE STRING "URL of the node runtime archive")
+set(VICINAE_NODE_RUNTIME_TAR_MEMBER
+	"node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}/bin/node")
 
 # self-distributed builds (dmg, appimage) always download the pinned runtime so
 # the node version never depends on what the host has installed; package manager

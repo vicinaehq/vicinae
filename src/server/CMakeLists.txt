@@ -33,11 +33,6 @@ if (UNIX AND NOT APPLE)
 	list(APPEND LIBS wayland-client Qt6::DBus)
 endif()
 
-if (VICINAE_NODE_RUNTIME_DOWNLOAD)
-	find_package(ZLIB REQUIRED)
-	list(APPEND LIBS ZLIB::ZLIB)
-endif()
-
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(EXTRA_PATH ${CMAKE_SOURCE_DIR}/extra)
