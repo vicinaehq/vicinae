@@ -100,19 +100,10 @@ std::optional<fs::path> ExtensionManager::nodeExecutable() {
   }
 
 #if VICINAE_NODE_RUNTIME_DOWNLOAD
-  // self-distributed builds always run the pinned managed runtime so the node
-  // version does not depend on what the host has installed
-  const fs::path managed = Omnicast::dataDir() / "node" / VICINAE_NODE_RUNTIME_VERSION / "node";
+  fs::path managed = Omnicast::dataDir() / "node" / VICINAE_NODE_RUNTIME_VERSION / "node";
   if (std::error_code ec; fs::is_regular_file(managed, ec)) { return managed; }
 #else
   if (auto path = QStandardPaths::findExecutable("node"); !path.isEmpty()) { return path.toStdString(); }
-
-#ifdef Q_OS_MACOS
-  // GUI apps get a minimal PATH; probe the usual homes directly
-  for (const char *path : {"/opt/homebrew/bin/node", "/usr/local/bin/node"}) {
-    if (std::error_code ec; fs::is_regular_file(path, ec)) { return fs::path(path); }
-  }
-#endif
 #endif
 
   return {};
@@ -200,8 +191,7 @@ bool ExtensionManager::start() {
   if (!node) {
 #if VICINAE_NODE_RUNTIME_DOWNLOAD
     if (!m_nodeDownloadStarted) {
-      // start() is called again once the runtime is installed
-      downloadNodeRuntime();
+      downloadNodeRuntime(); // calls start() once the runtime is available
       return true;
     }
 #endif
