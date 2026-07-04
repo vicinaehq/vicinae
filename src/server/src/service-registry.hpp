@@ -36,6 +36,7 @@ class FileChooserService;
 class NewsService;
 class PasteService;
 class TelemetryService;
+class UpdateService;
 class AudioControlService;
 class AppRuntime;
 class GlobalShortcutService;
@@ -81,6 +82,7 @@ public:
   WindowMaterialManager *windowMaterialManager() const;
   ShortcutInhibitManager *shortcutInhibitManager() const;
   TelemetryService *telemetry() const;
+  UpdateService *updateService() const;
   AudioControlService *audioControl() const;
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
@@ -119,6 +121,7 @@ public:
   void setWindowMaterialManager(std::unique_ptr<WindowMaterialManager> manager);
   void setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitManager> manager);
   void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
+  void setUpdateService(std::unique_ptr<UpdateService> service);
   void setAudioControl(std::unique_ptr<AudioControlService> service);
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
@@ -157,6 +160,7 @@ private:
   std::unique_ptr<WindowMaterialManager> m_windowMaterialManager;
   std::unique_ptr<ShortcutInhibitManager> m_shortcutInhibitManager;
   std::unique_ptr<TelemetryService> m_telemetry;
+  std::unique_ptr<UpdateService> m_updateService;
   std::unique_ptr<AudioControlService> m_audioControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;

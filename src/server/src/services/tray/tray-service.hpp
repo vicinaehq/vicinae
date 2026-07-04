@@ -9,6 +9,7 @@ class TrayService : public QObject {
 signals:
   void toggleRequested();
   void openSettingsRequested(const QString &tab);
+  void checkForUpdatesRequested();
   void quitRequested();
 
 public:
@@ -16,6 +17,8 @@ public:
   ~TrayService() override = default;
 
   virtual void setVersion(const QString &version) = 0;
+  virtual void setCheckForUpdatesVisible(bool visible) = 0;
+  virtual void setAvailableUpdate(const QString &tag) = 0;
   virtual void show() = 0;
   virtual void hide() = 0;
 };

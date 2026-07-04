@@ -53,6 +53,9 @@ NSImage *renderTrayImage() {
 - (void)openPreferences:(id)sender {
   if (self.owner) self.owner->emitOpenSettings(QString());
 }
+- (void)checkForUpdates:(id)sender {
+  if (self.owner) self.owner->emitCheckForUpdates();
+}
 - (void)quit:(id)sender {
   if (self.owner) self.owner->emitQuit();
 }
@@ -61,6 +64,7 @@ NSImage *renderTrayImage() {
 struct TrayServiceMacOS::Impl {
   NSStatusItem *statusItem = nil;
   NSMenuItem *versionItem = nil;
+  NSMenuItem *checkForUpdatesItem = nil;
   VicinaeTrayTarget *target = nil;
 };
 
@@ -91,6 +95,13 @@ TrayServiceMacOS::TrayServiceMacOS(QObject *parent) : TrayService(parent), m_imp
   aboutItem.target = m_impl->target;
   [menu addItem:aboutItem];
 
+  m_impl->checkForUpdatesItem = [[NSMenuItem alloc] initWithTitle:@"Check for Updates…"
+                                                           action:@selector(checkForUpdates:)
+                                                    keyEquivalent:@""];
+  m_impl->checkForUpdatesItem.target = m_impl->target;
+  m_impl->checkForUpdatesItem.hidden = YES;
+  [menu addItem:m_impl->checkForUpdatesItem];
+
   NSMenuItem *prefsItem = [[NSMenuItem alloc] initWithTitle:@"Preferences…"
                                                      action:@selector(openPreferences:)
                                               keyEquivalent:@","];
@@ -118,6 +129,22 @@ void TrayServiceMacOS::setVersion(const QString &version) {
   m_impl->versionItem.title = [NSString stringWithFormat:@"Vicinae %@", version.toNSString()];
 }
 
+void TrayServiceMacOS::setCheckForUpdatesVisible(bool visible) {
+  if (!m_impl->checkForUpdatesItem) return;
+  m_impl->checkForUpdatesItem.hidden = !visible;
+}
+
+void TrayServiceMacOS::setAvailableUpdate(const QString &tag) {
+  if (!m_impl->checkForUpdatesItem) return;
+
+  if (tag.isEmpty()) {
+    m_impl->checkForUpdatesItem.title = @"Check for Updates…";
+  } else {
+    m_impl->checkForUpdatesItem.title =
+        [NSString stringWithFormat:@"Update Available: %@", tag.toNSString()];
+  }
+}
+
 void TrayServiceMacOS::show() { m_impl->statusItem.visible = YES; }
 
 void TrayServiceMacOS::hide() { m_impl->statusItem.visible = NO; }
@@ -125,5 +152,7 @@ void TrayServiceMacOS::hide() { m_impl->statusItem.visible = NO; }
 void TrayServiceMacOS::emitToggle() { emit toggleRequested(); }
 
 void TrayServiceMacOS::emitOpenSettings(const QString &tab) { emit openSettingsRequested(tab); }
+
+void TrayServiceMacOS::emitCheckForUpdates() { emit checkForUpdatesRequested(); }
 
 void TrayServiceMacOS::emitQuit() { emit quitRequested(); }
