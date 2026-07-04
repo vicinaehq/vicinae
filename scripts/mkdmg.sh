@@ -33,7 +33,7 @@ ditto "$BUNDLE" "$STAGING/Vicinae.app"
 ln -s /Applications "$STAGING/Applications"
 
 echo "==> creating $DMG"
-hdiutil create -volname Vicinae -srcfolder "$STAGING" -ov -format UDZO "$DMG"
+hdiutil create -volname Vicinae -srcfolder "$STAGING" -ov -format ULMO "$DMG"
 rm -rf "$STAGING"
 
 if [[ -n "${VICINAE_CODESIGN_IDENTITY:-}" && "${VICINAE_CODESIGN_IDENTITY}" != "-" ]]; then

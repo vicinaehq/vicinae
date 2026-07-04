@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # Assemble Vicinae.app from build outputs. macdeployqt handles Qt frameworks
 # and QML modules; dylibbundler handles the remaining non-Qt third-party
-# dylibs (glib, harfbuzz, ...) and rewrites their install names.
+# dylibs.
 # Set VICINAE_CODESIGN_IDENTITY to use a real Developer ID identity.
 #
 # Usage: macdeploy.sh [build-dir]
-#   build-dir defaults to ./build
 set -euo pipefail
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
@@ -59,13 +58,60 @@ chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli"
 echo "==> macdeployqt"
 macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/qml" -verbose=2
 
-# the sql drivers link libs we don't ship and hang dylibbundler; without the
-# openssl TLS plugin Qt always uses the native SecureTransport backend
+# we prune all the frameworks and modules we don't need
+# in particular, we prune the default openssl-backed tls backend because we want to force QT to use SecureTransport
+PRUNE_FRAMEWORKS=(
+  QtSql QtWidgets QtLabsFolderListModel QtQmlLocalStorage QtQmlXmlListModel
+  QtQuickParticles QtQuickShapes QtQuickShapesDesignHelpers
+  QtQuickVectorImage QtQuickVectorImageGenerator QtQuickVectorImageHelpers
+  QtQuickControls2Fusion QtQuickControls2FusionStyleImpl
+  QtQuickControls2Imagine QtQuickControls2ImagineStyleImpl
+  QtQuickControls2Material QtQuickControls2MaterialStyleImpl
+  QtQuickControls2Universal QtQuickControls2UniversalStyleImpl
+  QtQuickControls2MacOSStyleImpl QtQuickControls2IOSStyleImpl
+  QtQuickControls2FluentWinUI3StyleImpl
+)
+for fw in "${PRUNE_FRAMEWORKS[@]}"; do
+  rm -rf "$BUNDLE/Contents/Frameworks/$fw.framework"
+done
+
+for style in fusion imagine material universal macos ios fluentwinui3 native; do
+  rm -f "$BUNDLE/Contents/PlugIns/quick/libqtquickcontrols2${style}styleplugin.dylib" \
+        "$BUNDLE/Contents/PlugIns/quick/libqtquickcontrols2${style}styleimplplugin.dylib"
+done
+
 rm -rf "$BUNDLE/Contents/PlugIns/sqldrivers" \
-       "$BUNDLE/Contents/Frameworks/QtSql.framework" \
+       "$BUNDLE/Contents/PlugIns/styles" \
+       "$BUNDLE/Contents/PlugIns/tls/libqopensslbackend.dylib" \
+       "$BUNDLE/Contents/PlugIns/quick/libparticlesplugin.dylib" \
+       "$BUNDLE/Contents/PlugIns/quick/libqmlshapesplugin.dylib" \
+       "$BUNDLE/Contents/PlugIns/quick/libqmlfolderlistmodelplugin.dylib" \
+       "$BUNDLE/Contents/PlugIns/quick/libqmlxmllistmodelplugin.dylib" \
        "$BUNDLE/Contents/PlugIns/quick/libqmllocalstorageplugin.dylib" \
+       "$BUNDLE/Contents/PlugIns/quick/libqquickvectorimageplugin.dylib" \
+       "$BUNDLE/Contents/PlugIns/quick/libqquickvectorimagehelpersplugin.dylib" \
+       "$BUNDLE/Contents/Resources/qml/Qt" \
+       "$BUNDLE/Contents/Resources/qml/QtQml/XmlListModel" \
        "$BUNDLE/Contents/Resources/qml/QtQuick/LocalStorage" \
-       "$BUNDLE/Contents/PlugIns/tls/libqopensslbackend.dylib"
+       "$BUNDLE/Contents/Resources/qml/QtQuick/Particles" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/Shapes" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/VectorImage" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/NativeStyle" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/designer" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/Fusion" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/Imagine" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/Material" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/Universal" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/macOS" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/iOS" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/FluentWinUI3"
+
+# official Qt ships universal binaries; we only target Apple Silicon
+echo "==> thin to arm64"
+while IFS= read -r -d '' bin; do
+  lipo -archs "$bin" 2>/dev/null | grep -q x86_64 || continue
+  lipo -thin arm64 "$bin" -output "$bin.thin" && mv "$bin.thin" "$bin"
+done < <(find "$BUNDLE/Contents" -type f -print0)
 
 echo "==> dylibbundler"
 dyl_args=(-of -b -cd
@@ -74,15 +120,12 @@ dyl_args=(-of -b -cd
   -s "$BUNDLE/Contents/Frameworks"
   -x "$BUNDLE/Contents/MacOS/Vicinae"
   -x "$BUNDLE/Contents/MacOS/vicinae-cli")
+# loose Frameworks/ dylibs included so dylibbundler rewrites any absolute
+# LC_ID_DYLIB macdeployqt left in place
 while IFS= read -r -d '' p; do
   dyl_args+=(-x "$p")
-done < <(find "$BUNDLE/Contents/PlugIns" -name "*.dylib" -print0)
-# Also feed loose dylibs in Frameworks/ so dylibbundler rewrites any
-# absolute LC_ID_DYLIB macdeployqt left in place (e.g. brotlicommon
-# pulled in transitively via @rpath).
-while IFS= read -r -d '' p; do
-  dyl_args+=(-x "$p")
-done < <(find "$BUNDLE/Contents/Frameworks" -maxdepth 1 -name "*.dylib" -print0)
+done < <(find "$BUNDLE/Contents/PlugIns" "$BUNDLE/Contents/Frameworks" \
+              -name "*.dylib" -not -path "*.framework/*" -print0)
 # dylibbundler prompts on stdin for unresolvable libraries; answer 'quit' so it
 # fails instead of hanging forever
 { yes quit 2>/dev/null || true; } | dylibbundler "${dyl_args[@]}"
@@ -98,12 +141,16 @@ while IFS= read -r -d '' bin; do
   install_name_tool -add_rpath "$FRAMEWORKS_RPATH" "$bin"
 done < <(find "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Frameworks" "$BUNDLE/Contents/PlugIns" -type f -print0)
 
+echo "==> strip"
+strip -x "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli"
+
 echo "==> signing bundle"
 sign_args=(--force --deep --sign "$SIGN_IDENTITY")
-# required for notarization, unsupported by ad-hoc signing
+
 if [[ "$SIGN_IDENTITY" != "-" ]]; then
   sign_args+=(--options runtime --timestamp)
 fi
+
 codesign "${sign_args[@]}" "$BUNDLE" 2>&1 | tail -3
 
 echo "==> audit"
