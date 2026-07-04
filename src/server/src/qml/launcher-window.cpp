@@ -39,6 +39,7 @@
 #include <qcoreevent.h>
 #include <qlogging.h>
 #include <memory>
+#include <sys/ucontext.h>
 
 #ifdef __GLIBC__
 #include <malloc.h>
@@ -275,6 +276,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     m_toastTitle = t->title();
     m_toastMessage = t->message();
     m_toastStyle = static_cast<int>(t->priority());
+    tryCompaction(); // we don't want to compact if there is a toast to show
     emit toastChanged();
     emit toastActiveChanged();
   });
@@ -599,8 +601,10 @@ void LauncherWindow::setCompacted(bool value) {
 
 void LauncherWindow::tryCompaction() {
   auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
+
   setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled &&
-               m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1);
+               m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1 &&
+               !m_toastActive);
 }
 
 bool LauncherWindow::isLayerShellActive() const {
