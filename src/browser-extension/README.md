@@ -15,21 +15,16 @@ If you can't install the extension from the official stores, you can install the
 
 The browser extension uses [Native messaging](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging) to communicate with the vicinae daemon.
 
-You need to install the corresponding native host manifest at one of the expected locations.
+The vicinae server installs per-user native host manifests automatically at startup, for every supported browser it detects on the system. Manifests are rewritten whenever their content is stale, so moving or updating vicinae self-heals on the next launch. There is nothing to do for a regular install.
 
-Installing the manifests in system directories is **strongly recommended** because it makes them automatically discoverable by any chromium/firefox based browser.
+The manifests are written to the standard per-user locations, for example:
 
-### Using CMake
+- chromium family (Linux): `~/.config/<browser>/NativeMessagingHosts/com.vicinae.vicinae.json`
+- chromium family (macOS): `~/Library/Application Support/<browser>/NativeMessagingHosts/com.vicinae.vicinae.json`
+- firefox family (Linux): `~/.mozilla/native-messaging-hosts/com.vicinae.vicinae.json`
+- firefox family (macOS): `~/Library/Application Support/Mozilla/NativeMessagingHosts/com.vicinae.vicinae.json`
 
-The recommended way of installing the manifests is to use the provided CMake install rule to install vicinae. This rule will automatically install both manifests in the correct system locations (root access required).
-
-### Manual native host manifest install
-
-Copy the right manifest template from `./native-host/` and change the placeholder values.
-
-For firefox, you only need to replace `@NATIVE_HOST_BIN` with the absolute path to the `vicinae-browser-link` executable (e.g: `/usr/local/libexec/vicinae/vicinae-browser-link`). Then copy the manifest at `/usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json`.
-
-For chromium you will also need to change the allowed origins, more on that below. The manifest needs to be copied at `/etc/chromium/native-messaging-hosts/com.vicinae.vicinae.json`.
+Packagers can disable this behavior with the `AUTO_INSTALL_BROWSER_MANIFESTS` CMake option and provision manifests themselves (the expected JSON is shown below).
 
 ## Load the browser extension
 
@@ -37,7 +32,9 @@ For chromium you will also need to change the allowed origins, more on that belo
 
 You can load the `./chrome/` directory as any unpacked extension. 
 
-Then modify the native host manifest (likely at `/etc/chromium/native-messaging-hosts/com.vicinae.vicinae.json`) and change the origin in the `allowed_origins` array to use the local extension ID that was automatically generated upon loading the unpacked extension.
+Then modify the native host manifest (e.g at `~/.config/chromium/NativeMessagingHosts/com.vicinae.vicinae.json`) and change the origin in the `allowed_origins` array to use the local extension ID that was automatically generated upon loading the unpacked extension.
+
+Note that the vicinae server rewrites manifests it does not recognize at startup, so make the file read-only (`chmod -w`) to keep your custom extension ID during development.
 
 Once that is done, reloading the extension should automatically establish a connection with vicinae if the vicinae server is running.
 
@@ -50,10 +47,6 @@ Once that is done, reloading the extension should automatically establish a conn
   * install and configure general prerequisites like git and make
 
 #### Instructions
-
-Copy the right manifest template from `./native-host/` and change the placeholder values.
-
-For firefox, you only need to replace `@NATIVE_HOST_BIN` with the absolute path to the `vicinae-browser-link` executable (e.g: `/usr/local/libexec/vicinae/vicinae-browser-link` or `/usr/libexec/vicinae/vicinae-browser-link`). Then copy the manifest at `/usr/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json`.
 
 The following shell script demonstrates how to build and sign the app starting with cloning the repo, just update the variables at the beginning with your api secrets and the email address associated with them.
 

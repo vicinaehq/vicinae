@@ -29,6 +29,9 @@
 #include "qml/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/browser-extension-service.hpp"
+#ifdef AUTO_INSTALL_BROWSER_MANIFESTS
+#include "services/browser-extension/native-host-installer.hpp"
+#endif
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "db/database-key.hpp"
@@ -163,6 +166,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QQuickStyle::setStyle(QStringLiteral("Basic"));
 
   Omnicast::ensureDirectories();
+
+#ifdef AUTO_INSTALL_BROWSER_MANIFESTS
+  vicinae::browser::installNativeHostManifests();
+#endif
 
   {
     auto registry = ServiceRegistry::instance();

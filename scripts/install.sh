@@ -369,55 +369,6 @@ install_icons() {
 	fi
 }
 
-install_browser_manifests() {
-    echo "Installing browser native messaging manifests..." >&2
-
-    local templates_dir="$INSTALL_DIR/usr/share/vicinae/native-messaging-hosts"
-    local native_host_bin="$INSTALL_DIR/usr/libexec/vicinae/vicinae-browser-link"
-    local chrome_extension_id="com.vicinae.vicinae"
-
-    if [[ ! -d "$templates_dir" ]]; then
-        echo "Note: No browser manifest templates found" >&2
-        return
-    fi
-
-    if [[ $EUID -ne 0 ]]; then
-        warn "Note: Skipping browser native messaging manifest installation (not root)"
-        echo "  See $DOCS_URL for manual setup instructions." >&2
-        return
-    fi
-
-	# Chromium
-    local chromium_dest="/etc/chromium/native-messaging-hosts"
-    local chromium_template="$templates_dir/com.vicinae.vicinae.chromium.json.in"
-    if [[ -f "$chromium_template" ]]; then
-        if ! mkdir -p "$chromium_dest" 2>/tmp/vic.err; then
-            warn "Chromium: cannot create $chromium_dest"
-        elif ! sed -e "s|@NATIVE_HOST_BIN@|$native_host_bin|g" \
-                   -e "s|@CHROME_EXTENSION_ID@|$chrome_extension_id|g" \
-                   "$chromium_template" > "$chromium_dest/com.vicinae.vicinae.json" 2>/tmp/vic.err; then
-            warn "Chromium: failed to write manifest"
-        else
-            ok "Chromium native messaging manifest installed to $chromium_dest"
-        fi
-    fi
-
-	# Firefox
-    local firefox_dest="/usr/lib/mozilla/native-messaging-hosts"
-    local firefox_template="$templates_dir/com.vicinae.vicinae.firefox.json.in"
-    if [[ -f "$firefox_template" ]]; then
-        if ! mkdir -p "$firefox_dest" 2>/tmp/vic.err; then
-            warn "Firefox: cannot create $firefox_dest"
-        elif ! sed -e "s|@NATIVE_HOST_BIN@|$native_host_bin|g" \
-                   "$firefox_template" > "$firefox_dest/com.vicinae.vicinae.json" 2>/tmp/vic.err; then
-            warn "Firefox: failed to write manifest"
-			echo
-        else
-            ok "Firefox native messaging manifest installed"
-        fi
-    fi
-}
-
 install_input_server_capabilities() {
 	echo "Setting input server capabilities (for keyboard monitoring and injection)..." >&2
 
@@ -534,7 +485,6 @@ install_vicinae() {
 		install_desktop_files
 		install_icons
 		install_systemd_service
-		install_browser_manifests
 		install_modules_load
 		install_input_server_capabilities
 	else
