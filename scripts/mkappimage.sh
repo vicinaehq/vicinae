@@ -16,7 +16,6 @@ rm -rf $APPDIR
 mkdir -p $APPDIR/usr
 cp -r $1/* $APPDIR/usr
 
-cp $(which node) ${APPDIR}/usr/bin/node
 cp extra/vicinae.png ${APPDIR}
 
 # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57

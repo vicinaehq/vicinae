@@ -464,7 +464,8 @@ install_vicinae() {
 
 		ln -sf "$binary_path" "$BIN_DIR/$BINARY_NAME"
 
-		# Symlink node binary if it exists (to avoid conflicts with system node)
+		# Older releases bundle node in the AppImage; keep symlinking it so this
+		# script can still install them
 		local node_path="$INSTALL_DIR/usr/bin/node"
 		if [[ -f "$node_path" ]]; then
 			ln -sf "$node_path" "$BIN_DIR/vicinae-node"

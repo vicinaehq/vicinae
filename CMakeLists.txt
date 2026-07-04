@@ -182,6 +182,37 @@ endif()
 message(STATUS "Vicinae version: ${VICINAE_GIT_TAG}")
 message(STATUS "Vicinae commit hash: ${VICINAE_GIT_COMMIT_HASH}")
 
+set(VICINAE_NODE_RUNTIME_VERSION "v22.23.1" CACHE STRING "Pinned node runtime used to run extensions")
+
+if (APPLE)
+	# we only support apple silicon macs
+	set(_node_runtime_platform "darwin-arm64")
+	set(_node_runtime_sha256 "ef28d8fab2c0e4314522d4bb1b7173270aa3937e93b92cb7de79c112ac1fa953")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+	set(_node_runtime_platform "linux-arm64")
+	set(_node_runtime_sha256 "543fa39e57d4c07855939459a323f4deb9a79dd1bb45e6e99458b0f2de10db8d")
+else()
+	set(_node_runtime_platform "linux-x64")
+	set(_node_runtime_sha256 "7a8cb04b4a1df4eaf432125324b81b29a088e73570a23259a8de1c65d07fc129")
+endif()
+set(VICINAE_NODE_RUNTIME_SHA256 "${_node_runtime_sha256}" CACHE STRING "sha256 of the node runtime archive")
+set(VICINAE_NODE_RUNTIME_URL
+	"https://nodejs.org/dist/${VICINAE_NODE_RUNTIME_VERSION}/node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}.tar.gz"
+	CACHE STRING "URL of the node runtime archive")
+set(VICINAE_NODE_RUNTIME_TAR_MEMBER
+	"node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}/bin/node")
+
+# self-distributed builds (dmg, appimage) always download the pinned runtime so
+# the node version never depends on what the host has installed; package manager
+# builds use the system node unless this is explicitly turned on
+if (APPLE OR VICINAE_PROVENANCE STREQUAL "appimage")
+	set(_node_runtime_download_default ON)
+else()
+	set(_node_runtime_download_default OFF)
+endif()
+option(VICINAE_NODE_RUNTIME_DOWNLOAD "Run extensions with the pinned downloaded node runtime"
+	${_node_runtime_download_default})
+
 get_cxx_compiler_name(CXX_COMPILER_NAME)
 
 # Generate version header from template
