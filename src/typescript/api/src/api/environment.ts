@@ -1,6 +1,7 @@
 import { Form } from "./components";
 
 export interface LaunchContext {
+	cwd: string;
 	[item: string]: any;
 }
 
