@@ -84,16 +84,6 @@ inline bool isHudSupported() {
 inline bool isHudDisabled() { return !isHudSupported(); }
 
 /**
- * App image directory if we are running in an appimage.
- * We typically use this in order to find the bundled
- * node binary, instead of trying to launch the system one.
- */
-inline std::optional<std::filesystem::path> appImageDir() {
-  if (auto appdir = getenv("APPDIR")) return appdir;
-  return std::nullopt;
-}
-
-/**
  * Optional override of the `node` executable to use to spawn the
  * extension manager.
  */
@@ -101,8 +91,6 @@ inline std::optional<std::filesystem::path> nodeBinaryOverride() {
   if (auto bin = getenv("VICINAE_NODE_BIN")) return bin;
   return std::nullopt;
 }
-
-inline bool isAppImage() { return appImageDir().has_value(); }
 
 inline QStringList fallbackIconSearchPaths() {
   QStringList list;
