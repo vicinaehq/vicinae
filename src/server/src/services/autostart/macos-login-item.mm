@@ -9,7 +9,7 @@
 namespace vicinae::macos {
 
 // we only set it once, otherwise we would end up overriding the user preference
-// evert single time
+// every single time
 void registerLoginItemOnce() {
   if (!NSBundle.mainBundle.bundleIdentifier) return;
 
