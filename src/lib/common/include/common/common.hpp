@@ -14,4 +14,7 @@ std::vector<std::filesystem::path> helperProgramCandidates(std::string_view prog
 std::string slurp(std::istream &ifs);
 
 std::optional<std::filesystem::path> findServerBinary();
+
+std::filesystem::path runtimeDir();
+std::filesystem::path serverSocketPath();
 }; // namespace vicinae

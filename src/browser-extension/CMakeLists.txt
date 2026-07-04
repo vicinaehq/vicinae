@@ -18,7 +18,7 @@ add_executable(${TARGET} src/browser.cpp ${SRCS})
 target_include_directories(${TARGET} PRIVATE ${GENOUT})
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 target_compile_definitions(${TARGET} PUBLIC NATIVE_MESSAGING_HOST="${NATIVE_MESSAGING_HOST}")
-target_link_libraries(${TARGET} PUBLIC glaze::glaze)
+target_link_libraries(${TARGET} PUBLIC glaze::glaze vicinae::common)
 
 install(TARGETS ${TARGET}
 	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}

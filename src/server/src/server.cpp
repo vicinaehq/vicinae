@@ -124,6 +124,11 @@ static QFont resolveAppFont(const config::FontConfig &fontConfig) {
 int startServer(const ServerLaunchOptions &launchOpts) {
   qInstallMessageHandler(coloredMessageHandler);
 
+#ifdef AUTO_INSTALL_BROWSER_MANIFESTS
+  // always refresh manifests
+  vicinae::browser::installNativeHostManifests();
+#endif
+
   // Cheap single-instance probe before building any Qt state. macOS spawns
   // a fresh process on every `open` of the .app; without this guard, each
   // launch would proceed and steal focus.
@@ -166,10 +171,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QQuickStyle::setStyle(QStringLiteral("Basic"));
 
   Omnicast::ensureDirectories();
-
-#ifdef AUTO_INSTALL_BROWSER_MANIFESTS
-  vicinae::browser::installNativeHostManifests();
-#endif
 
   {
     auto registry = ServiceRegistry::instance();
