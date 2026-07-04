@@ -7,7 +7,6 @@
 #include "ui/action-pannel/action.hpp"
 #include <QObject>
 #include <QTimer>
-#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -47,10 +46,8 @@ private:
   void relaunch();
   struct State {
     std::optional<std::string> skippedVersion;
-    std::optional<std::uint64_t> lastCheckedAt;
   };
 
-  void checkIfStale();
   void performCheck();
   void handleRelease(const github::Release &release);
   void setStatus(Status status);

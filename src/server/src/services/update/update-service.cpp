@@ -5,7 +5,6 @@
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
 #include "vicinae.hpp"
-#include <QDateTime>
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
@@ -15,7 +14,6 @@
 
 namespace fs = std::filesystem;
 
-static constexpr std::uint64_t CHECK_INTERVAL_SECS = 6 * 3600;
 static constexpr std::chrono::milliseconds RELAUNCH_DELAY{800};
 
 UpdateService::UpdateService(ToastService &toast, std::unique_ptr<AbstractUpdateInstaller> installer)
@@ -48,19 +46,11 @@ UpdateService::UpdateService(ToastService &toast, std::unique_ptr<AbstractUpdate
 
   if (checksSupported()) {
     m_timer.start();
-    checkIfStale();
+    performCheck();
   }
 }
 
 QString UpdateService::currentVersionTag() const { return VICINAE_GIT_TAG; }
-
-void UpdateService::checkIfStale() {
-  auto const now = static_cast<std::uint64_t>(QDateTime::currentSecsSinceEpoch());
-  bool const stale =
-      !m_state.lastCheckedAt.has_value() || (now - m_state.lastCheckedAt.value()) >= CHECK_INTERVAL_SECS;
-
-  if (stale) performCheck();
-}
 
 void UpdateService::checkNow() { performCheck(); }
 
@@ -79,8 +69,6 @@ void UpdateService::performCheck() {
           return;
         }
 
-        m_state.lastCheckedAt = QDateTime::currentSecsSinceEpoch();
-        saveState();
         handleRelease(res.value());
       });
 }
