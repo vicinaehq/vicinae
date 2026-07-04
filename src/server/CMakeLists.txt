@@ -664,6 +664,17 @@ if (APPLE)
 		src/services/snippet/macos-snippet-server.mm
 		src/services/update/macos-update-installer.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+
+	if (AUTO_ENABLE_AUTOSTART)
+		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
+		list(APPEND SRCS
+			src/services/autostart/macos-login-item.hpp
+			src/services/autostart/macos-login-item.mm
+		)
+		set_source_files_properties(src/services/autostart/macos-login-item.mm
+			PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+		list(APPEND LIBS "-framework ServiceManagement")
+	endif()
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp

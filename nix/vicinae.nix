@@ -75,6 +75,7 @@ in
       "CMAKE_INSTALL_BINDIR" = "bin";
       "CMAKE_INSTALL_LIBDIR" = "lib";
       "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
+      "AUTO_ENABLE_AUTOSTART" = "OFF";
     };
 
     strictDeps = true;
