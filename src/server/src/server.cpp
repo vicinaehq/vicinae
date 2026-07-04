@@ -29,6 +29,9 @@
 #include "qml/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/browser-extension-service.hpp"
+#ifdef AUTO_INSTALL_BROWSER_MANIFESTS
+#include "services/browser-extension/native-host-installer.hpp"
+#endif
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "db/database-key.hpp"
@@ -120,6 +123,11 @@ static QFont resolveAppFont(const config::FontConfig &fontConfig) {
 
 int startServer(const ServerLaunchOptions &launchOpts) {
   qInstallMessageHandler(coloredMessageHandler);
+
+#ifdef AUTO_INSTALL_BROWSER_MANIFESTS
+  // always refresh manifests
+  vicinae::browser::installNativeHostManifests();
+#endif
 
   // Cheap single-instance probe before building any Qt state. macOS spawns
   // a fresh process on every `open` of the .app; without this guard, each

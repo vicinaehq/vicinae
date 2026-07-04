@@ -701,6 +701,19 @@ if (TYPESCRIPT_EXTENSIONS)
 	list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources.qrc)
 endif()
 
+if (AUTO_INSTALL_BROWSER_MANIFESTS)
+	add_compile_definitions(
+		AUTO_INSTALL_BROWSER_MANIFESTS
+		NATIVE_MESSAGING_HOST="${NATIVE_MESSAGING_HOST}"
+		CHROME_EXTENSION_ID="${CHROME_EXTENSION_ID}"
+		FIREFOX_EXTENSION_ID="${FIREFOX_EXTENSION_ID}"
+	)
+	list(APPEND SRCS
+		src/services/browser-extension/native-host-installer.hpp
+		src/services/browser-extension/native-host-installer.cpp
+	)
+endif()
+
 if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
 		src/services/clipboard/gnome/gnome-clipboard-server.hpp

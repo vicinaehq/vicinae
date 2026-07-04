@@ -1,4 +1,5 @@
 #include "common/common.hpp"
+#include <cstdlib>
 #include <filesystem>
 #include <sstream>
 #include <string>
@@ -58,6 +59,18 @@ std::optional<fs::path> findHelperProgram(std::string_view program) {
 
   return {};
 }
+
+fs::path runtimeDir() {
+#ifdef __APPLE__
+  if (const char *t = std::getenv("TMPDIR")) return fs::path(t) / "vicinae";
+  return "/tmp/vicinae";
+#else
+  if (const char *r = std::getenv("XDG_RUNTIME_DIR")) return fs::path(r) / "vicinae";
+  return "/tmp/vicinae";
+#endif
+}
+
+fs::path serverSocketPath() { return runtimeDir() / "vicinae.sock"; }
 
 std::optional<fs::path> findServerBinary() {
 #ifdef __APPLE__

@@ -24,9 +24,10 @@ SIGN_IDENTITY="${VICINAE_CODESIGN_IDENTITY:--}"
 
 SERVER_BIN="$BUILD_DIR/bin/vicinae-server"
 CLI_BIN="$BUILD_DIR/bin/vicinae"
+BROWSER_LINK_BIN="$BUILD_DIR/bin/vicinae-browser-link"
 INFO_PLIST="$BUILD_DIR/Info.plist"
 
-for f in "$SERVER_BIN" "$CLI_BIN" "$INFO_PLIST"; do
+for f in "$SERVER_BIN" "$CLI_BIN" "$BROWSER_LINK_BIN" "$INFO_PLIST"; do
   if [[ ! -f "$f" ]]; then
     echo "macdeploy.sh: missing $f (build first)" >&2
     exit 1
@@ -53,7 +54,9 @@ cp "$SRC_DIR/extra/vicinae.icns" "$BUNDLE/Contents/Resources/vicinae.icns"
 cp -R "$SRC_DIR/extra/themes" "$BUNDLE/Contents/Resources/themes"
 cp "$SERVER_BIN" "$BUNDLE/Contents/MacOS/Vicinae"
 cp "$CLI_BIN" "$BUNDLE/Contents/MacOS/vicinae-cli"
-chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli"
+cp "$BROWSER_LINK_BIN" "$BUNDLE/Contents/MacOS/vicinae-browser-link"
+chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli" \
+         "$BUNDLE/Contents/MacOS/vicinae-browser-link"
 
 echo "==> macdeployqt"
 macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/qml" -verbose=2
@@ -119,7 +122,8 @@ dyl_args=(-of -b -cd
   -p "@executable_path/../Frameworks/"
   -s "$BUNDLE/Contents/Frameworks"
   -x "$BUNDLE/Contents/MacOS/Vicinae"
-  -x "$BUNDLE/Contents/MacOS/vicinae-cli")
+  -x "$BUNDLE/Contents/MacOS/vicinae-cli"
+  -x "$BUNDLE/Contents/MacOS/vicinae-browser-link")
 # loose Frameworks/ dylibs included so dylibbundler rewrites any absolute
 # LC_ID_DYLIB macdeployqt left in place
 while IFS= read -r -d '' p; do
@@ -142,7 +146,8 @@ while IFS= read -r -d '' bin; do
 done < <(find "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Frameworks" "$BUNDLE/Contents/PlugIns" -type f -print0)
 
 echo "==> strip"
-strip -x "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli"
+strip -x "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli" \
+      "$BUNDLE/Contents/MacOS/vicinae-browser-link"
 
 echo "==> signing bundle"
 sign_args=(--force --deep --sign "$SIGN_IDENTITY")

@@ -74,7 +74,7 @@ in
       "CMAKE_INSTALL_DATAROOTDIR" = "share";
       "CMAKE_INSTALL_BINDIR" = "bin";
       "CMAKE_INSTALL_LIBDIR" = "lib";
-      "INSTALL_BROWSER_NATIVE_HOST" = "OFF";
+      "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
     };
 
     strictDeps = true;
