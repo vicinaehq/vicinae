@@ -34,9 +34,14 @@ for f in "$SERVER_BIN" "$CLI_BIN" "$INFO_PLIST"; do
   fi
 done
 
+QT6_CMAKE_DIR="$(sed -n 's/^Qt6_DIR:PATH=//p' "$BUILD_DIR/CMakeCache.txt" 2>/dev/null | head -1)"
+if [[ -n "$QT6_CMAKE_DIR" && -d "$QT6_CMAKE_DIR/../../../bin" ]]; then
+  PATH="$(cd "$QT6_CMAKE_DIR/../../../bin" && pwd):$PATH"
+fi
+
 for tool in macdeployqt dylibbundler; do
   if ! command -v "$tool" >/dev/null 2>&1; then
-    echo "macdeploy.sh: $tool not on PATH (brew install qt dylibbundler)" >&2
+    echo "macdeploy.sh: $tool not on PATH (run 'make mac-deps')" >&2
     exit 1
   fi
 done
@@ -54,6 +59,14 @@ chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli"
 echo "==> macdeployqt"
 macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/qml" -verbose=2
 
+# the sql drivers link libs we don't ship and hang dylibbundler; without the
+# openssl TLS plugin Qt always uses the native SecureTransport backend
+rm -rf "$BUNDLE/Contents/PlugIns/sqldrivers" \
+       "$BUNDLE/Contents/Frameworks/QtSql.framework" \
+       "$BUNDLE/Contents/PlugIns/quick/libqmllocalstorageplugin.dylib" \
+       "$BUNDLE/Contents/Resources/qml/QtQuick/LocalStorage" \
+       "$BUNDLE/Contents/PlugIns/tls/libqopensslbackend.dylib"
+
 echo "==> dylibbundler"
 dyl_args=(-of -b -cd
   -d "$BUNDLE/Contents/Frameworks"
@@ -70,10 +83,28 @@ done < <(find "$BUNDLE/Contents/PlugIns" -name "*.dylib" -print0)
 while IFS= read -r -d '' p; do
   dyl_args+=(-x "$p")
 done < <(find "$BUNDLE/Contents/Frameworks" -maxdepth 1 -name "*.dylib" -print0)
-dylibbundler "${dyl_args[@]}"
+# dylibbundler prompts on stdin for unresolvable libraries; answer 'quit' so it
+# fails instead of hanging forever
+{ yes quit 2>/dev/null || true; } | dylibbundler "${dyl_args[@]}"
+
+# macdeployqt leaves duplicate LC_RPATH entries, which dyld refuses to load
+echo "==> dedupe rpaths"
+FRAMEWORKS_RPATH="@executable_path/../Frameworks/"
+while IFS= read -r -d '' bin; do
+  count="$(otool -l "$bin" 2>/dev/null | grep -cF "path $FRAMEWORKS_RPATH " || true)"
+  [[ "$count" -gt 1 ]] || continue
+  echo "  deduping rpath in ${bin#"$BUNDLE"/}"
+  while install_name_tool -delete_rpath "$FRAMEWORKS_RPATH" "$bin" 2>/dev/null; do :; done
+  install_name_tool -add_rpath "$FRAMEWORKS_RPATH" "$bin"
+done < <(find "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Frameworks" "$BUNDLE/Contents/PlugIns" -type f -print0)
 
 echo "==> signing bundle"
-codesign --force --deep --sign "$SIGN_IDENTITY" "$BUNDLE" 2>&1 | tail -3
+sign_args=(--force --deep --sign "$SIGN_IDENTITY")
+# required for notarization, unsupported by ad-hoc signing
+if [[ "$SIGN_IDENTITY" != "-" ]]; then
+  sign_args+=(--options runtime --timestamp)
+fi
+codesign "${sign_args[@]}" "$BUNDLE" 2>&1 | tail -3
 
 echo "==> audit"
 fail=0
