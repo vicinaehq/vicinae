@@ -22,6 +22,21 @@
 	<string>@VICINAE_BUNDLE_SHORT_VERSION@</string>
 	<key>CFBundleVersion</key>
 	<string>@VICINAE_BUNDLE_VERSION@</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>@VICINAE_BUNDLE_ID@.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>vicinae</string>
+				<string>raycast</string>
+				<string>com.raycast</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.4</string>
 	<key>LSApplicationCategoryType</key>
