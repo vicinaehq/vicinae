@@ -99,7 +99,7 @@
 #include <QFileOpenEvent>
 #endif
 
-#ifdef AUTO_REGISTER_LOGIN_ITEM
+#ifdef AUTO_ENABLE_AUTOSTART
 #include "services/autostart/macos-login-item.hpp"
 #endif
 
@@ -203,7 +203,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   Omnicast::ensureDirectories();
 
-#ifdef AUTO_REGISTER_LOGIN_ITEM
+#ifdef AUTO_ENABLE_AUTOSTART
   vicinae::macos::registerLoginItemOnce();
 #endif
 

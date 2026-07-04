@@ -665,8 +665,8 @@ if (APPLE)
 		src/services/update/macos-update-installer.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 
-	if (AUTO_REGISTER_LOGIN_ITEM)
-		add_compile_definitions(AUTO_REGISTER_LOGIN_ITEM)
+	if (AUTO_ENABLE_AUTOSTART)
+		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
 		list(APPEND SRCS
 			src/services/autostart/macos-login-item.hpp
 			src/services/autostart/macos-login-item.mm
