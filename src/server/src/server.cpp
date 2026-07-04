@@ -99,6 +99,10 @@
 #include <QFileOpenEvent>
 #endif
 
+#ifdef AUTO_REGISTER_LOGIN_ITEM
+#include "services/autostart/macos-login-item.hpp"
+#endif
+
 #ifdef Q_OS_MACOS
 class UrlSchemeOpenFilter : public QObject {
 public:
@@ -198,6 +202,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QQuickStyle::setStyle(QStringLiteral("Basic"));
 
   Omnicast::ensureDirectories();
+
+#ifdef AUTO_REGISTER_LOGIN_ITEM
+  vicinae::macos::registerLoginItemOnce();
+#endif
 
   {
     auto registry = ServiceRegistry::instance();
