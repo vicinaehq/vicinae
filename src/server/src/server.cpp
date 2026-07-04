@@ -94,7 +94,34 @@
 #include "server.hpp"
 
 #ifdef Q_OS_MACOS
+#include "ipc-command-handler.hpp"
 #include "qml/macos-chrome-attached.hpp"
+#include <QFileOpenEvent>
+#endif
+
+#ifdef Q_OS_MACOS
+class UrlSchemeOpenFilter : public QObject {
+public:
+  UrlSchemeOpenFilter(ApplicationContext &ctx) : m_ctx(ctx) {}
+
+protected:
+  bool eventFilter(QObject *watched, QEvent *event) override {
+    if (event->type() == QEvent::FileOpen) {
+      const QUrl url = static_cast<QFileOpenEvent *>(event)->url();
+      if (Omnicast::APP_SCHEMES.contains(url.scheme())) {
+        IpcCommandHandler handler(m_ctx);
+        if (auto res = handler.handleUrl(url); !res) {
+          qWarning() << "Failed to handle deeplink" << url.toString() << ":" << res.error();
+        }
+        return true;
+      }
+    }
+    return QObject::eventFilter(watched, event);
+  }
+
+private:
+  ApplicationContext &m_ctx;
+};
 #endif
 
 static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
@@ -352,6 +379,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   IpcCommandServer commandServer(&ctx);
 
   commandServer.start(Omnicast::commandSocketPath());
+
+#ifdef Q_OS_MACOS
+  UrlSchemeOpenFilter urlSchemeOpenFilter(ctx);
+  qApp->installEventFilter(&urlSchemeOpenFilter);
+#endif
 
   QObject::connect(
       ctx.services->fileService()->indexer(), &AbstractFileIndexer::scanStatusChanged,
