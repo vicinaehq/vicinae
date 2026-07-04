@@ -31,6 +31,10 @@ mac-bundle:
 	./scripts/macdeploy.sh $(BUILD_DIR)
 .PHONY: mac-bundle
 
+dmg: mac-bundle
+	./scripts/mkdmg.sh $(BUILD_DIR)
+.PHONY: dmg
+
 mac-deps:
 	@./scripts/macos-setup.sh
 .PHONY: mac-deps

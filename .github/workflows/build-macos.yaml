@@ -20,6 +20,7 @@ jobs:
 
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
+      QT_VERSION: 6.11.1
 
     steps:
       - name: Checkout code
@@ -32,6 +33,12 @@ jobs:
           key: brew-${{ runner.os }}-${{ hashFiles('scripts/macos-setup.sh') }}
           restore-keys: |
             brew-${{ runner.os }}-
+
+      - name: Cache Qt
+        uses: actions/cache@v4
+        with:
+          path: ~/Qt
+          key: qt-macos-${{ env.QT_VERSION }}
 
       - name: Install dependencies
         run: make mac-deps
@@ -51,7 +58,8 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTS=ON
+            -DBUILD_TESTS=ON \
+            -DQT_DIR=$HOME/Qt/$QT_VERSION/macos
 
       - name: Build
         run: cmake --build build --parallel $(sysctl -n hw.ncpu)
