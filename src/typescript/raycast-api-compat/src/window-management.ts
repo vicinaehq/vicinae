@@ -1,5 +1,5 @@
-import { RaycastApplication, transformApp } from "./system";
 import * as vicinae from "@vicinae/api";
+import { type RaycastApplication, transformApp } from "./system";
 
 type RaycastWindow = {
 	active: boolean;

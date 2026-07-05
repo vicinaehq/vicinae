@@ -27,12 +27,26 @@ export const patchRequire = (env: EnvironmentType) => {
 	const apiCompat = require("@vicinae/raycast-api-compat");
 	delete process.env.NODE_ENV;
 
+	// resolved on module namespaces by bundler/promise interop; must stay undefined
+	const MODULE_INTEROP_KEYS = new Set(["__esModule", "default", "then"]);
+
+	// unknown symbols resolve to a throwing stub instead of undefined, so
+	// extensions using @raycast/api features we don't know about fail loudly
+	const raycastApi = new Proxy(apiCompat, {
+		get: (target, prop, receiver) => {
+			if (typeof prop === "symbol" || prop in target)
+				return Reflect.get(target, prop, receiver);
+			if (MODULE_INTEROP_KEYS.has(prop)) return undefined;
+			return apiCompat.unsupported(prop);
+		},
+	});
+
 	const requireOverrides: Record<string, any> = {
 		react: () => react,
 		"react/jsx-runtime": () => jsxRuntime,
 		"react-reconciler": () => reconciler,
 		"@vicinae/api": () => api,
-		"@raycast/api": () => apiCompat,
+		"@raycast/api": () => raycastApi,
 	};
 	const originalRequire = Module.prototype.require;
 

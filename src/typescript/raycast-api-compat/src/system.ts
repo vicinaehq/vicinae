@@ -1,5 +1,5 @@
-import { PathLike } from "fs";
 import * as vicinae from "@vicinae/api";
+import type { PathLike } from "fs";
 
 export type RaycastApplication = {
 	name: string;

@@ -1,21 +1,22 @@
 import "./globals";
-import { globalState } from "./globals";
-import type { EnvironmentType } from "./types";
 import { parentPort, workerData } from "node:worker_threads";
 import { LaunchType } from "@vicinae/api";
-import { patchRequire } from "./patch-require";
-import loadView from "./loaders/load-view-command";
-import loadNoView from "./loaders/load-no-view-command";
-import * as extensionServer from "./proto/extension-manager";
-import * as api from "./proto/api";
 import { callbackManager } from "./callback";
+import { globalState } from "./globals";
+import loadNoView from "./loaders/load-no-view-command";
+import loadView from "./loaders/load-view-command";
+import { patchRequire } from "./patch-require";
+import * as api from "./proto/api";
+import * as extensionServer from "./proto/extension-manager";
+import type { EnvironmentType } from "./types";
 
 class Lifecycle extends extensionServer.LifecycleService {
 	async launch(data: extensionServer.LaunchEventData): Promise<boolean> {
 		const { environment } = workerData as { environment: EnvironmentType };
 
-		patchRequire(environment);
+		// raycast compat captures preference values at load time: keep before patchRequire
 		loadEnviron(environment, data);
+		patchRequire(environment);
 		(process as any).noDeprecation = environment === "production";
 
 		if (data.mode === "View") {

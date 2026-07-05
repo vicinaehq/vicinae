@@ -6,53 +6,60 @@
  */
 
 export {
-	useNavigation,
-	Toast,
-	showToast,
-	ImageLike,
-	Image,
-	Keyboard,
-	KeyModifier,
-	Icon,
-	environment,
-	Environment,
+	Action,
+	AI,
+	Alert,
 	Cache,
 	Color,
 	ColorLike,
-	getPreferenceValues,
-	confirmAlert,
-	Alert,
-	open,
-	showInFileBrowser,
-	closeMainWindow,
-	showHUD,
 	clearSearchBar,
+	closeMainWindow,
+	confirmAlert,
+	Detail,
+	Environment,
+	environment,
+	Form,
+	Grid,
+	getPreferenceValues,
 	getSelectedText,
-	popToRoot,
-	PopToRootType,
-	updateCommandMetadata,
+	Icon,
+	Image,
+	ImageLike,
+	Keyboard,
+	KeyModifier,
+	LaunchType,
+	List,
+	LocalStorage,
+	OAuth,
+	open,
 	openCommandPreferences,
 	openExtensionPreferences,
-	LaunchType,
-	AI,
-	OAuth,
-	List,
-	Grid,
-	Form,
-	Detail,
-	Action,
+	PopToRootType,
+	popToRoot,
+	showHUD,
+	showInFileBrowser,
+	showToast,
+	Toast,
+	trash,
+	updateCommandMetadata,
+	useNavigation,
 } from "@vicinae/api";
-
-export {
-	getFrontmostApplication,
-	getApplications,
-	getDefaultApplication,
-	showInFinder,
-	captureException,
-} from "./system.js";
-
 export { Clipboard } from "./clipboard.js";
 export { ActionPanel } from "./components/action-panel.js";
+export * from "./legacy.js";
+export {
+	captureException,
+	getApplications,
+	getDefaultApplication,
+	getFrontmostApplication,
+	getSelectedFinderItems,
+	showInFinder,
+} from "./system.js";
+export {
+	BrowserExtension,
+	launchCommand,
+	MenuBarExtra,
+	unsupported,
+} from "./unsupported.js";
 export { randomId } from "./utils.js";
-export * from "./local-storage.js";
 export { WindowManagement } from "./window-management.js";
