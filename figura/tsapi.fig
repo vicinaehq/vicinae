@@ -313,6 +313,19 @@ service Wallpaper {
   fn set(path: string, options: SetWallpaperOptions) => void;
 };
 
+struct BrowserTab {
+  id: int;
+  title?: string;
+  url: string;
+  active: boolean;
+  browserId: string;
+};
+
+service BrowserExtension {
+  fn getTabs() => BrowserTab[];
+  fn focusTab(browserId: string, tabId: int) => void;
+};
+
 // EventCore - used for loosely typed callbacks, required for component event handlers
 
 service EventCore {

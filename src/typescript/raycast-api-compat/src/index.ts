@@ -45,6 +45,7 @@ export {
 	useNavigation,
 } from "@vicinae/api";
 export { Clipboard } from "./clipboard.js";
+export { BrowserExtension } from "./browser.js";
 export { ActionPanel } from "./components/action-panel.js";
 export * from "./legacy.js";
 export {
@@ -56,7 +57,6 @@ export {
 	showInFinder,
 } from "./system.js";
 export {
-	BrowserExtension,
 	launchCommand,
 	MenuBarExtra,
 	unsupported,

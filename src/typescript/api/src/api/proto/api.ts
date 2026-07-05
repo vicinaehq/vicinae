@@ -262,6 +262,14 @@ export type SetWallpaperOptions = {
 	screen?: string;
 }
 
+export type BrowserTab = {
+	id: number;
+	title?: string;
+	url: string;
+	active: boolean;
+	browserId: string;
+}
+
 class ApplicationService {
 	constructor(private readonly transport: RpcTransport) {}
 
@@ -485,6 +493,19 @@ class WallpaperService {
 
 }
 
+class BrowserExtensionService {
+	constructor(private readonly transport: RpcTransport) {}
+
+	getTabs(): Promise<BrowserTab[]> {
+		return this.transport.request("BrowserExtension/getTabs", { });	
+	}
+
+	focusTab(browserId: string, tabId: number): Promise<void> {
+		return this.transport.request("BrowserExtension/focusTab", { browserId, tabId});	
+	}
+
+}
+
 class EventCoreService {
 	constructor(private readonly transport: RpcTransport) {}
 
@@ -504,6 +525,7 @@ export class Client {
 		this.Command = new CommandService(this.transport);
 		this.OAuth = new OAuthService(this.transport);
 		this.Wallpaper = new WallpaperService(this.transport);
+		this.BrowserExtension = new BrowserExtensionService(this.transport);
 		this.EventCore = new EventCoreService(this.transport);
 	}
 
@@ -517,6 +539,7 @@ export class Client {
 	Command: CommandService;
 	OAuth: OAuthService;
 	Wallpaper: WallpaperService;
+	BrowserExtension: BrowserExtensionService;
 	EventCore: EventCoreService;
 
 }
