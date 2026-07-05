@@ -22,6 +22,7 @@ jobs:
       contents: write
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
+      commit: ${{ steps.commit.outputs.commit }}
       artifact: ${{ steps.meta.outputs.artifact }}
     env:
       BUILD_TYPE: Release
@@ -58,6 +59,12 @@ jobs:
           fetch-depth: 0
           ref: ${{ steps.meta.outputs.tag }}
 
+      - name: Resolve commit
+        id: commit
+        run: |
+          git config --global --add safe.directory "$(pwd)"
+          echo "commit=$(git rev-parse --short=9 HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Prepare dirs
         run: mkdir -p build install
 
@@ -69,6 +76,8 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5  \
             -DBUILD_TESTS=ON  \
             -DVICINAE_PROVENANCE=binary_release \
+            -DVICINAE_GIT_TAG="${{ steps.meta.outputs.tag }}" \
+            -DVICINAE_GIT_COMMIT_HASH="${{ steps.commit.outputs.commit }}" \
             -DLTO=ON \
             -DUSE_SYSTEM_CMARK_GFM=OFF \
             -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"
@@ -140,6 +149,8 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5        \
             -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"   \
             -DVICINAE_PROVENANCE=appimage             \
+            -DVICINAE_GIT_TAG="${{ needs.build-binary.outputs.tag }}" \
+            -DVICINAE_GIT_COMMIT_HASH="${{ needs.build-binary.outputs.commit }}" \
             -DLTO=ON
 
       - name: Build
