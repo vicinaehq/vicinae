@@ -14,6 +14,7 @@ class MacOSWindowAttached : public QObject {
   Q_PROPERTY(int cornerRadius READ cornerRadius WRITE setCornerRadius NOTIFY cornerRadiusChanged)
   Q_PROPERTY(bool blurEnabled READ blurEnabled WRITE setBlurEnabled NOTIFY blurEnabledChanged)
   Q_PROPERTY(QString material READ material WRITE setMaterial NOTIFY materialChanged)
+  Q_PROPERTY(QString appearance READ appearance WRITE setAppearance NOTIFY appearanceChanged)
   Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY borderColorChanged)
   Q_PROPERTY(int borderWidth READ borderWidth WRITE setBorderWidth NOTIFY borderWidthChanged)
 
@@ -22,6 +23,7 @@ signals:
   void cornerRadiusChanged();
   void blurEnabledChanged();
   void materialChanged();
+  void appearanceChanged();
   void borderColorChanged();
   void borderWidthChanged();
 
@@ -39,6 +41,10 @@ public:
 
   QString material() const { return m_material; }
   void setMaterial(const QString &value);
+
+  // "dark" / "light" pin the effect view's NSAppearance; empty follows the system.
+  QString appearance() const { return m_appearance; }
+  void setAppearance(const QString &value);
 
   QColor borderColor() const { return m_borderColor; }
   void setBorderColor(const QColor &value);
@@ -71,6 +77,7 @@ private:
   int m_cornerRadius = 0;
   bool m_blurEnabled = false;
   QString m_material;
+  QString m_appearance;
   QColor m_borderColor;
   int m_borderWidth = 0;
   bool m_surfaceReady = false;

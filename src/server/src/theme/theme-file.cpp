@@ -92,10 +92,10 @@ ThemeFile ThemeFile::vicinaeLight() {
   data.semantics = {
       {SemanticColor::Background, QColor("#faf8f4")},
       {SemanticColor::SecondaryBackground, QColor("#f0ece5")},
-      {SemanticColor::ListItemSelectionBackground, QColor("#d4ccba")},
+      {SemanticColor::ListItemSelectionBackground, QColor("#cac0aa")},
       {SemanticColor::Foreground, QColor("#1c1917")},
       {SemanticColor::BackgroundBorder, QColor("#82807a")},
-      {SemanticColor::GridItemBackground, QColor("#e3ddcf")},
+      {SemanticColor::GridItemBackground, QColor("#e6e1d5")},
       {SemanticColor::Accent, QColor("#8a6d35")},
       {SemanticColor::AccentForeground, QColor("#faf8f4")},
       {SemanticColor::LinkDefault, QColor("#7a6132")},
@@ -141,7 +141,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::ListItemSecondaryHoverBackground:
     return isDark() ? resolve(SemanticColor::ListItemSecondarySelectionBackground).darker(110)
                     : mix(resolve(SemanticColor::ListItemSecondarySelectionBackground),
-                          resolve(SemanticColor::Background), 0.4f);
+                          resolve(SemanticColor::Background), 0.25f);
 
   case ButtonPrimaryBackground:
     return withAlphaF(resolve(SemanticColor::ListItemSelectionBackground), 0.7);
@@ -178,7 +178,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::ListItemHoverBackground:
     return isDark() ? resolve(SemanticColor::ListItemSelectionBackground).darker(110)
                     : mix(resolve(SemanticColor::ListItemSelectionBackground),
-                          resolve(SemanticColor::Background), 0.4f);
+                          resolve(SemanticColor::Background), 0.25f);
   case SemanticColor::ListItemHoverForegroud:
     return resolve(SemanticColor::Foreground);
 

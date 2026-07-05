@@ -34,7 +34,7 @@ cyan = "#28BCA3"
 purple = "#7E57C2"
 
 [colors.list.item.selection]
-background = "#9ccaf7"
+background = "#84bdf5"
 secondary_background = "#D5E9FA"
 
 [colors.scrollbars]
@@ -45,4 +45,4 @@ bar = "#3689E6"
 spinner = "#666666"
 
 [colors.grid.item]
-background = "#dbdbdb"
+background = "#e0e0e0"

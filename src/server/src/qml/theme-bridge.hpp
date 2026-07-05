@@ -11,6 +11,7 @@
 class ThemeBridge : public QObject {
   Q_OBJECT
 
+  Q_PROPERTY(bool isDark READ isDark NOTIFY changed)
   Q_PROPERTY(QColor background READ background NOTIFY changed)
   Q_PROPERTY(QColor foreground READ foreground NOTIFY changed)
   Q_PROPERTY(QColor textMuted READ textMuted NOTIFY changed)
@@ -63,6 +64,7 @@ public:
     qApp->installEventFilter(this);
   }
 
+  bool isDark() const { return ThemeService::instance().theme().isDark(); }
   QColor background() const { return resolve(SemanticColor::Background); }
   QColor foreground() const { return resolve(SemanticColor::Foreground); }
   QColor textMuted() const { return resolve(SemanticColor::TextMuted); }

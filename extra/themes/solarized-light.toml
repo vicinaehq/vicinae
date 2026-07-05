@@ -28,10 +28,10 @@ yellow = "#B58900"
 
 
 [colors.list.item.hover]
-background = { name = "colors.core.border", opacity = 0.28 }
+background = { name = "colors.core.border", opacity = 0.39 }
 
 [colors.list.item.selection]
-background = { name = "colors.core.border", opacity = 0.41 }
+background = { name = "colors.core.border", opacity = 0.52 }
 
 [colors.grid.item]
-background = { name = "colors.core.border", opacity = 0.26 }
+background = { name = "colors.core.border", opacity = 0.22 }

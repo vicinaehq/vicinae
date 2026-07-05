@@ -30,6 +30,12 @@ NSVisualEffectMaterial materialFromString(const QString &name) {
   return NSVisualEffectMaterialHUDWindow;
 }
 
+NSAppearance *appearanceFromString(const QString &name) {
+  if (name == QStringLiteral("dark")) return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+  if (name == QStringLiteral("light")) return [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+  return nil;
+}
+
 NSView *findEffectView(NSView *root) {
   Class glassCls = liquidGlassClass();
   for (NSView *sub in root.subviews) {
@@ -49,8 +55,8 @@ CGColorRef cgColorFromQColor(const QColor &c) {
 }
 
 void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
-                       NSVisualEffectMaterial fallbackMaterial, int cornerRadius,
-                       const QColor &borderColor, int borderWidth) {
+                       NSVisualEffectMaterial fallbackMaterial, const QString &appearance,
+                       int cornerRadius, const QColor &borderColor, int borderWidth) {
   NSView *contentView = nswin.contentView;
   if (!contentView) return;
 
@@ -99,6 +105,10 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
     existing.wantsLayer = YES;
     [parent addSubview:existing positioned:NSWindowBelow relativeTo:contentView];
   }
+
+  // The material renders per NSAppearance, which follows the system by default;
+  // pin it to the active theme's variant so a light theme never sits on dark glass.
+  existing.appearance = appearanceFromString(appearance);
 
   // Round the parent (NSThemeFrame) so the OS clips content to the rounded
   // corners server-side, for both the glass and visual-effect paths.
@@ -196,6 +206,13 @@ void MacOSWindowAttached::setMaterial(const QString &value) {
   apply();
 }
 
+void MacOSWindowAttached::setAppearance(const QString &value) {
+  if (m_appearance == value) return;
+  m_appearance = value;
+  emit appearanceChanged();
+  apply();
+}
+
 void MacOSWindowAttached::setBorderColor(const QColor &value) {
   if (m_borderColor == value) return;
   m_borderColor = value;
@@ -255,7 +272,8 @@ void MacOSWindowAttached::apply() {
   nswin.animationBehavior = NSWindowAnimationBehaviorNone;
 
   installEffectView(nswin, m_blurEnabled, m_material == QStringLiteral("liquidGlass"),
-                    materialFromString(m_material), m_cornerRadius, m_borderColor, m_borderWidth);
+                    materialFromString(m_material), m_appearance, m_cornerRadius, m_borderColor,
+                    m_borderWidth);
 }
 
 void MacOSWindowAttached::revert() {
@@ -266,7 +284,7 @@ void MacOSWindowAttached::revert() {
   if (!nswin) return;
 
   installEffectView(nswin, /*enabled=*/false, /*wantLiquidGlass=*/false, NSVisualEffectMaterialHUDWindow,
-                    0, QColor(), 0);
+                    QString(), 0, QColor(), 0);
 
   if (m_snapshot.valid) {
     nswin.opaque = m_snapshot.opaque;
