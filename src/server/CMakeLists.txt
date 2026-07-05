@@ -44,7 +44,8 @@ if (UNIX AND NOT APPLE)
 ")
 endif()
 
-configure_file(resources.qrc.in resources.qrc)
+configure_file(resources-core.qrc.in resources-core.qrc)
+configure_file(resources-extensions.qrc.in resources-extensions.qrc)
 
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
 	add_compile_definitions(LOCAL_THEME_DIR="${THEME_DIR}")
@@ -708,8 +709,9 @@ list(APPEND SRCS
 	src/services/calculator-service/qalculate/qalculate-backend.cpp
 )
 
+list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources-core.qrc)
 if (TYPESCRIPT_EXTENSIONS)
-	list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources.qrc)
+    list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources-extensions.qrc)
 endif()
 
 if (AUTO_INSTALL_BROWSER_MANIFESTS)
