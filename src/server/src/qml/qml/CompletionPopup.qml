@@ -104,8 +104,8 @@ Popup {
 
     background: Rectangle {
         radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
-        border.color: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, Config.popupOpacity)
         border.width: Platform.supports("clientSideDecorations") ? 1 : 0
         Loader {
             active: root.nativePanel && Platform.supports("nativePanels")
@@ -248,18 +248,18 @@ Popup {
                         anchors.leftMargin: 2
                         anchors.rightMargin: 2
                         radius: 6
-                        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
+                        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity)
                         color: {
                             if (del._isHighlighted) {
                                 var c = Theme.listItemSelectionBg;
-                                return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
+                                return Qt.rgba(c.r, c.g, c.b, Config.popupSurfaceOpacity);
                             }
                             if (itemHover.hovered && HoverActivation.active) {
                                 var h = Theme.listItemHoverBg;
-                                return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
+                                return Qt.rgba(h.r, h.g, h.b, Config.popupSurfaceOpacity);
                             }
                             var bg = Theme.popoverBackground;
-                            return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
+                            return Qt.rgba(bg.r, bg.g, bg.b, Config.popupOpacity);
                         }
                     }
 

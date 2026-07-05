@@ -18,7 +18,8 @@ Item {
 
     readonly property var _win: root.Window.window
     readonly property bool _nativeWindow: _win !== null && (_win.flags & Qt.Popup) === Qt.Popup
-    readonly property real _opacity: root._nativeWindow ? Config.windowOpacity : 1
+    readonly property real _opacity: root._nativeWindow ? Config.popupOpacity : 1
+    readonly property real _fillOpacity: root._nativeWindow ? Config.popupSurfaceOpacity : 1
 
     MouseArea {
         id: mouseArea
@@ -32,15 +33,15 @@ Item {
         anchors.leftMargin: 6
         anchors.rightMargin: 6
         radius: 10
-        backgroundColor: root._nativeWindow ? Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity) : "transparent"
+        backgroundColor: root._nativeWindow ? Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity) : "transparent"
         color: {
             if (root.selected) {
                 var c = Theme.listItemSelectionBg;
-                return Qt.rgba(c.r, c.g, c.b, root._opacity);
+                return Qt.rgba(c.r, c.g, c.b, root._fillOpacity);
             }
             if (root.hovered) {
                 var h = Theme.listItemHoverBg;
-                return Qt.rgba(h.r, h.g, h.b, root._opacity);
+                return Qt.rgba(h.r, h.g, h.b, root._fillOpacity);
             }
             var bg = Theme.popoverBackground;
             return Qt.rgba(bg.r, bg.g, bg.b, root._opacity);

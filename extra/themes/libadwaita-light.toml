@@ -66,13 +66,13 @@ foreground = "#333338"
 secondary_foreground = "#5e5c64"
 
 [colors.list.item.selection]
-background = "#DFDFE1"
+background = "#c8c8cc"
 foreground = "#333338"
 secondary_background = "colors.core.accent"
 secondary_foreground = "#5e5c64"
 
 [colors.grid.item]
-background = "#ebebed"
+background = "#dadade"
 hover = { outline = "colors.core.accent" }
 selection = { outline = "colors.core.accent" }
 

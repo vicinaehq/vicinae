@@ -68,6 +68,7 @@ enum SemanticColor : std::uint8_t {
   TextSelectionForeground,
 
   // input
+  InputBackground,
   InputBorder,
   InputBorderFocus,
   InputBorderError,

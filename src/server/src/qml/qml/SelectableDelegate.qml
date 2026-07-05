@@ -38,11 +38,11 @@ Item {
         color: {
             if (root.selected) {
                 var c = Theme.listItemSelectionBg;
-                return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
+                return Qt.rgba(c.r, c.g, c.b, Config.surfaceOpacity);
             }
             if (root.hovered) {
                 var h = Theme.listItemHoverBg;
-                return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
+                return Qt.rgba(h.r, h.g, h.b, Config.surfaceOpacity);
             }
             var bg = Theme.background;
             return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);

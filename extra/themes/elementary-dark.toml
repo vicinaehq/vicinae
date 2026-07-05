@@ -36,5 +36,8 @@ cyan = "#28BCA3"
 purple = "#7E57C2"
 
 [colors.list.item.selection]
-background = "#4A4A4A"
+background = "#565656"
 secondary_background = "#555555"
+
+[colors.grid.item]
+background = "#4e4e4e"

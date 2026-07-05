@@ -9,6 +9,9 @@ class ConfigBridge : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(qreal windowOpacity READ windowOpacity NOTIFY changed)
+  Q_PROPERTY(qreal popupOpacity READ popupOpacity NOTIFY changed)
+  Q_PROPERTY(qreal surfaceOpacity READ surfaceOpacity NOTIFY changed)
+  Q_PROPERTY(qreal popupSurfaceOpacity READ popupSurfaceOpacity NOTIFY changed)
   Q_PROPERTY(int borderWidth READ borderWidth NOTIFY changed)
   Q_PROPERTY(int borderRounding READ borderRounding NOTIFY changed)
   Q_PROPERTY(int shadowSize READ shadowSize NOTIFY changed)
@@ -32,6 +35,24 @@ public:
   qreal windowOpacity() const {
     return cfg().launcherWindow.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),
                                                 platform::supports(platform::Capability::WindowMaterial));
+  }
+
+  qreal popupOpacity() const {
+    return cfg().launcherWindow.resolvedPopupOpacity(
+        platform::supports(platform::Capability::LiquidGlass),
+        platform::supports(platform::Capability::WindowMaterial));
+  }
+
+  qreal surfaceOpacity() const {
+    return cfg().launcherWindow.resolvedSurfaceOpacity(
+        platform::supports(platform::Capability::LiquidGlass),
+        platform::supports(platform::Capability::WindowMaterial));
+  }
+
+  qreal popupSurfaceOpacity() const {
+    return cfg().launcherWindow.resolvedPopupSurfaceOpacity(
+        platform::supports(platform::Capability::LiquidGlass),
+        platform::supports(platform::Capability::WindowMaterial));
   }
 
   int borderWidth() const {

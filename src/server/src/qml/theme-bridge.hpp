@@ -20,6 +20,7 @@ class ThemeBridge : public QObject {
   Q_PROPERTY(QColor accent READ accent NOTIFY changed)
   Q_PROPERTY(QColor statusBarBackground READ statusBarBackground NOTIFY changed)
   Q_PROPERTY(QColor mainWindowBorder READ mainWindowBorder NOTIFY changed)
+  Q_PROPERTY(QColor inputBackground READ inputBackground NOTIFY changed)
   Q_PROPERTY(QColor inputBorder READ inputBorder NOTIFY changed)
   Q_PROPERTY(QColor inputBorderFocus READ inputBorderFocus NOTIFY changed)
   Q_PROPERTY(QColor inputBorderError READ inputBorderError NOTIFY changed)
@@ -77,6 +78,7 @@ public:
   QColor accent() const { return resolve(SemanticColor::Accent); }
   QColor statusBarBackground() const { return resolve(SemanticColor::StatusBarBackground); }
   QColor mainWindowBorder() const { return resolve(SemanticColor::MainWindowBorder); }
+  QColor inputBackground() const { return resolve(SemanticColor::InputBackground); }
   QColor inputBorder() const { return resolve(SemanticColor::InputBorder); }
   QColor inputBorderFocus() const { return resolve(SemanticColor::InputBorderFocus); }
   QColor inputBorderError() const { return resolve(SemanticColor::InputBorderError); }

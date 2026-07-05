@@ -26,6 +26,9 @@ yellow = "#F6C177"            # gold
 cyan = "#9CCFD8"              # foam
 
 [colors.list.item.selection]
-background = "#21202E"
+background = "#3b3a53"
 secondary_background = "#403D52"
 
+
+[colors.grid.item]
+background = "#35314c"

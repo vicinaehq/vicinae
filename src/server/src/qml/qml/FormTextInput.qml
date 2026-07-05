@@ -45,7 +45,7 @@ FocusScope {
         anchors.fill: parent
         radius: 8
         color: "transparent"
-        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus && !root.readOnly ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus && !root.readOnly ? Theme.inputBorderFocus : Theme.inputBorder, Config.surfaceOpacity)
         border.width: 1
         opacity: root.readOnly ? 0.5 : 1.0
     }

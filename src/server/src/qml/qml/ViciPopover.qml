@@ -9,7 +9,7 @@ Popup {
     property bool nativeAnimationEnabled: true
     property real animationAnchorX: 0.5
     property real animationAnchorY: 0.5
-    property real backgroundOpacity: isNativeWindow ? Config.windowOpacity : 1
+    property real backgroundOpacity: isNativeWindow ? Config.popupOpacity : 1
 
     readonly property alias popupMaterial: materialImpl
     readonly property bool isNativeWindow: popupType === Popup.Window
