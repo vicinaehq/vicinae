@@ -1,10 +1,7 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
-  <qresource prefix="/bin">
-  	<file alias="extension-manager">@CMAKE_BINARY_DIR@/extension-runtime.js</file>
-  </qresource>
   <qresource>
-  	<file alias="config.jsonc">@EXTRA_DIR@/config.jsonc</file>
+  	<file alias="config.jsonc">@EXTRA_PATH@/config.jsonc</file>
   </qresource>
   <qresource prefix="/fonts">
 @DEFAULT_FONT_RESOURCES@  	<file alias="NotoSansMath-Regular.ttf">@ASSET_PATH@/fonts/NotoSansMath-Regular.ttf</file>
