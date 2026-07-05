@@ -39,7 +39,7 @@ RowLayout {
         color: "transparent"
         // Borderless fields (dense list rows) still reveal a border on hover.
         border.width: hover.hovered || (field.bordered && field._tokens.length > 0) ? 1 : 0
-        border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
+        border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
 
         HoverHandler {
             id: hover

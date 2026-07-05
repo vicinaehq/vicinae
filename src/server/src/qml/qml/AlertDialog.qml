@@ -11,7 +11,6 @@ ViciPopover {
     padding: 20
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-    backgroundOpacity: 1
 
     property bool _confirmed: false
     property Item _focusedButton: null

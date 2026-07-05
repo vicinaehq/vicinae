@@ -241,7 +241,7 @@ Item {
                                     }
                                     color: {
                                         var bg = Theme.gridItemBackground;
-                                        return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
+                                        return Qt.rgba(bg.r, bg.g, bg.b, Config.surfaceOpacity);
                                     }
                                 }
 

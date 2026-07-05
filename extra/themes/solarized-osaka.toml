@@ -26,5 +26,8 @@ red = "#DB302D"
 yellow = "#B28500"
 
 [colors.list.item.selection]
-background = { name = "colors.core.accent", opacity = 0.12 }
-secondary_background = { name = "colors.core.accent", opacity = 0.20 }
+background = { name = "colors.core.accent", opacity = 0.36 }
+secondary_background = { name = "colors.core.accent", opacity = 0.45 }
+
+[colors.grid.item]
+background = "#00495b"

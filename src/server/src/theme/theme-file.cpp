@@ -62,7 +62,8 @@ ThemeFile ThemeFile::vicinaeDark() {
   data.semantics = {
       {SemanticColor::Background, QColor("#0f1014")},
       {SemanticColor::SecondaryBackground, QColor("#15161b")},
-      {SemanticColor::ListItemSelectionBackground, QColor("#1c1d23")},
+      {SemanticColor::ListItemSelectionBackground, QColor("#343641")},
+      {SemanticColor::GridItemBackground, QColor("#2c2e38")},
       {SemanticColor::Foreground, QColor("#e7e5e4")},
       {SemanticColor::BackgroundBorder, QColor("#373842")},
       {SemanticColor::Accent, QColor("#b8944e")},
@@ -91,10 +92,10 @@ ThemeFile ThemeFile::vicinaeLight() {
   data.semantics = {
       {SemanticColor::Background, QColor("#faf8f4")},
       {SemanticColor::SecondaryBackground, QColor("#f0ece5")},
-      {SemanticColor::ListItemSelectionBackground, QColor("#e6e1d8")},
+      {SemanticColor::ListItemSelectionBackground, QColor("#cac0aa")},
       {SemanticColor::Foreground, QColor("#1c1917")},
       {SemanticColor::BackgroundBorder, QColor("#82807a")},
-      {SemanticColor::GridItemBackground, QColor("#ebe7df")},
+      {SemanticColor::GridItemBackground, QColor("#e6e1d5")},
       {SemanticColor::Accent, QColor("#8a6d35")},
       {SemanticColor::AccentForeground, QColor("#faf8f4")},
       {SemanticColor::LinkDefault, QColor("#7a6132")},
@@ -140,7 +141,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::ListItemSecondaryHoverBackground:
     return isDark() ? resolve(SemanticColor::ListItemSecondarySelectionBackground).darker(110)
                     : mix(resolve(SemanticColor::ListItemSecondarySelectionBackground),
-                          resolve(SemanticColor::Background), 0.4f);
+                          resolve(SemanticColor::Background), 0.25f);
 
   case ButtonPrimaryBackground:
     return withAlphaF(resolve(SemanticColor::ListItemSelectionBackground), 0.7);
@@ -177,7 +178,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::ListItemHoverBackground:
     return isDark() ? resolve(SemanticColor::ListItemSelectionBackground).darker(110)
                     : mix(resolve(SemanticColor::ListItemSelectionBackground),
-                          resolve(SemanticColor::Background), 0.4f);
+                          resolve(SemanticColor::Background), 0.25f);
   case SemanticColor::ListItemHoverForegroud:
     return resolve(SemanticColor::Foreground);
 
@@ -196,6 +197,8 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::TextSelectionForeground:
     return resolve(SemanticColor::AccentForeground);
 
+  case SemanticColor::InputBackground:
+    return resolve(SemanticColor::GridItemBackground);
   case SemanticColor::InputBorder:
     return resolve(SemanticColor::BackgroundBorder);
   case SemanticColor::InputBorderFocus:

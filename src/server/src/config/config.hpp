@@ -116,6 +116,8 @@ template <> struct Partial<WindowCompactMode> {
 struct WindowConfig {
   static constexpr float OPAQUE_OPACITY = 1.0F;
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
+  static constexpr float GLASS_POPUP_OPACITY = 0.2F;
+  static constexpr float SURFACE_OPACITY_LIFT = 0.65F;
 
   std::optional<float> opacity;
   std::optional<int> rounding;
@@ -144,6 +146,30 @@ struct WindowConfig {
     return resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass"
                ? TRANSLUCENT_OPACITY
                : OPAQUE_OPACITY;
+  }
+
+  // Popups draw their own material layer; on liquid glass a fixed low tint keeps the
+  // glass legible regardless of the configured window opacity.
+  float resolvedPopupOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
+    if (resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass") {
+      return GLASS_POPUP_OPACITY;
+    }
+    return resolvedOpacity(liquidGlassAvailable, windowMaterialAvailable);
+  }
+
+  // Fills that carry meaning (selection, hover, grid tiles) fade toward invisibility if they
+  // share the background's alpha, so they get a floor above the window opacity. The quadratic
+  // falloff concentrates the lift on very transparent surfaces and vanishes near opaque.
+  static constexpr float liftedOpacity(float base) {
+    return base + (1.0F - base) * (1.0F - base) * SURFACE_OPACITY_LIFT;
+  }
+
+  float resolvedSurfaceOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
+    return liftedOpacity(resolvedOpacity(liquidGlassAvailable, windowMaterialAvailable));
+  }
+
+  float resolvedPopupSurfaceOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
+    return liftedOpacity(resolvedPopupOpacity(liquidGlassAvailable, windowMaterialAvailable));
   }
 };
 

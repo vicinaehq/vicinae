@@ -73,8 +73,8 @@ Popup {
 
     background: Rectangle {
         radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
-        border.color: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, Config.popupOpacity)
         border.width: Platform.supports("clientSideDecorations") ? 1 : 0
         PopupMaterial {}
     }

@@ -62,7 +62,7 @@ Item {
         height: compact ? 28 : implicitHeight
         radius: compact ? 6 : 8
         color: "transparent"
-        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder)), Config.windowOpacity)
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder)), Config.surfaceOpacity)
         border.width: 1
 
         RowLayout {
@@ -122,8 +122,8 @@ Item {
 
         background: Rectangle {
             radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
-            color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.windowOpacity)
-            border.color: Config.withAlpha(Theme.popoverBorder, Config.windowOpacity)
+            color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity)
+            border.color: Config.withAlpha(Theme.popoverBorder, Config.popupOpacity)
             border.width: Platform.supports("clientSideDecorations") ? 1 : 0
             PopupMaterial {}
         }
