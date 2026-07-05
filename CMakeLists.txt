@@ -32,6 +32,12 @@ option(
 	but they are still required build the project."
 	ON
 )
+option(
+    INSTALL_SHARED_FILES
+    "Create directories in CMAKE_INSTALL_PREFIX and install shared files (themes, .desktop files,
+    systemd unit, kernel module configuration)."
+    ON
+)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
@@ -302,32 +308,34 @@ if (UNIX AND NOT APPLE)
 	add_subdirectory(src/data-control-server)
 endif()
 
-set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)
-set(INSTALL_MODULES ${CMAKE_INSTALL_PREFIX}/lib/modules-load.d)
-set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
-set(VICINAE_THEME_DIR ${VICINAE_INSTALL_SHARE}/themes)
+if (INSTALL_SHARED_FILES)
+    set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)
+    set(INSTALL_MODULES ${CMAKE_INSTALL_PREFIX}/lib/modules-load.d)
+    set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
+    set(VICINAE_THEME_DIR ${VICINAE_INSTALL_SHARE}/themes)
 
-if(NOT APPLE)
-	make_directory(${VICINAE_INSTALL_SHARE})
-	file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
-	install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
-endif()
+    if(NOT APPLE)
+        make_directory(${VICINAE_INSTALL_SHARE})
+        file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
+        install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
+    endif()
 
-if (UNIX AND NOT APPLE)
-	if (INSTALL_MODULES_LOAD_CONFIG)
-		install(DIRECTORY ${EXTRA_DIR}/modules-load.d/ DESTINATION ${INSTALL_MODULES})
-	endif()
+    if (UNIX AND NOT APPLE)
+        if (INSTALL_MODULES_LOAD_CONFIG)
+            install(DIRECTORY ${EXTRA_DIR}/modules-load.d/ DESTINATION ${INSTALL_MODULES})
+        endif()
 
-	set(APP_DIR ${INSTALL_SHARE}/applications)
-	make_directory(${APP_DIR})
-	install(FILES ./extra/vicinae.desktop DESTINATION ${APP_DIR})
-	install(FILES ./extra/vicinae-url-handler.desktop DESTINATION ${APP_DIR})
+        set(APP_DIR ${INSTALL_SHARE}/applications)
+        make_directory(${APP_DIR})
+        install(FILES ./extra/vicinae.desktop DESTINATION ${APP_DIR})
+        install(FILES ./extra/vicinae-url-handler.desktop DESTINATION ${APP_DIR})
 
-	set(ICON_DIR ${INSTALL_SHARE}/icons/hicolor/512x512/apps)
-	make_directory(${ICON_DIR})
-	install(FILES ./extra/vicinae.png DESTINATION ${ICON_DIR})
+        set(ICON_DIR ${INSTALL_SHARE}/icons/hicolor/512x512/apps)
+        make_directory(${ICON_DIR})
+        install(FILES ./extra/vicinae.png DESTINATION ${ICON_DIR})
 
-	set(SYSTEMD_USER_DIR ${CMAKE_INSTALL_PREFIX}/lib/systemd/user)
-	make_directory(${SYSTEMD_USER_DIR})
-	install(FILES ./extra/vicinae.service DESTINATION ${SYSTEMD_USER_DIR})
+        set(SYSTEMD_USER_DIR ${CMAKE_INSTALL_PREFIX}/lib/systemd/user)
+        make_directory(${SYSTEMD_USER_DIR})
+        install(FILES ./extra/vicinae.service DESTINATION ${SYSTEMD_USER_DIR})
+    endif()
 endif()
