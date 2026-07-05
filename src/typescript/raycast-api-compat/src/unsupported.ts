@@ -28,5 +28,4 @@ export const unsupported = (symbol: string): any => {
 };
 
 export const launchCommand = unsupported("launchCommand");
-export const BrowserExtension = unsupported("BrowserExtension");
 export const MenuBarExtra = unsupported("MenuBarExtra"); // we don't support menu bar commands for now, we may in the future :)

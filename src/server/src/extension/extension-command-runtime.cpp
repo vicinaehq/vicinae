@@ -3,6 +3,7 @@
 #include "common/context.hpp"
 #include "extension-error-view-host.hpp"
 #include "extension/services/application-service.hpp"
+#include "extension/services/browser-extension-service.hpp"
 #include "extension/services/clipboard-service.hpp"
 #include "extension/services/command-service.hpp"
 #include "extension/services/event-core-service.hpp"
@@ -55,9 +56,10 @@ void ExtensionCommandRuntime::initialize() {
   auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings);
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
   auto wallpaper = new ExtWallpaperService(*m_transport, *services->wallpaperManager());
+  auto browserExtension = new ExtBrowserExtensionService(*m_transport, *services->browserExtension());
 
   m_server = new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth,
-                               wallpaper, eventCore);
+                               wallpaper, browserExtension, eventCore);
   m_server->setLogger(m_logger.get());
   m_server->setParent(this);
 }

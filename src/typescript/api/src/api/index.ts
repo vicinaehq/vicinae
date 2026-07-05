@@ -19,3 +19,4 @@ export * from "./file-search.js";
 export * from "./window-management.js";
 export * from "./command.js";
 export * from "./wallpaper.js";
+export * from "./browser.js";
