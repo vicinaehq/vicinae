@@ -121,12 +121,6 @@ void OnboardingWindow::ensureInitialized() {
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
-
-  if (m_window) {
-    connect(m_window, &QQuickWindow::visibleChanged, this, [this](bool visible) {
-      if (!visible) markCompleted();
-    });
-  }
 }
 
 void OnboardingWindow::markCompleted() {
