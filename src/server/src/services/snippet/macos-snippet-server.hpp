@@ -1,5 +1,6 @@
 #pragma once
 #include "abstract-snippet-server.hpp"
+#include <QTimer>
 #include <atomic>
 #include <mutex>
 #include <optional>
@@ -28,6 +29,8 @@ public:
 
   bool isRunning() const override;
 
+  void ensureTapRunning();
+
   // called from the CGEventTap thread
   void onKey(int keycode, const std::string &utf8, bool blockingMods);
   void reenableTap();
@@ -38,6 +41,7 @@ private:
     snippet_gen::ExpansionMode mode;
   };
 
+  void startTapThread();
   void runTap();
   void emitExpansionLocked(const Snippet &snippet);
 
@@ -46,8 +50,10 @@ private:
   std::optional<std::string> m_undoTrigger;
   std::mutex m_mutex;
 
+  QTimer m_permissionRetryTimer;
   std::thread m_thread;
   std::atomic<void *> m_runLoop{nullptr};
+  std::atomic_bool m_tapThreadDone{false};
   void *m_tap = nullptr;
   void *m_source = nullptr;
   std::atomic_bool m_running{false};

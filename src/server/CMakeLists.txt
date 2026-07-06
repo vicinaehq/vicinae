@@ -685,6 +685,10 @@ else()
 	)
 endif()
 
+if (ENABLE_ONBOARDING)
+	add_compile_definitions(ENABLE_ONBOARDING)
+endif()
+
 list(APPEND SRCS
 	src/services/app-runtime/abstract-app-runtime.hpp
 	src/services/app-runtime/app-runtime.hpp

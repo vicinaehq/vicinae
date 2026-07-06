@@ -41,7 +41,7 @@ int completedVersion() {
 OnboardingWindow::OnboardingWindow(ApplicationContext &ctx, QObject *parent) : QObject(parent), m_ctx(ctx) {}
 
 bool OnboardingWindow::shouldShow() {
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS) && defined(ENABLE_ONBOARDING)
   return completedVersion() < ONBOARDING_VERSION;
 #else
   return false;
