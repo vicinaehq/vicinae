@@ -588,6 +588,8 @@ set(SRCS
 
 	src/qml/settings-window.hpp
 	src/qml/settings-window.cpp
+	src/qml/onboarding-window.hpp
+	src/qml/onboarding-window.cpp
 	src/qml/general-settings-model.hpp
 	src/qml/general-settings-model.cpp
 	src/qml/keybind-settings-model.hpp
@@ -647,6 +649,10 @@ if (APPLE)
 		src/services/snippet/macos-snippet-server.mm
 		src/services/update/macos-update-installer.hpp
 		src/services/update/macos-update-installer.mm
+		src/services/permissions/macos-permission-service.hpp
+		src/services/permissions/macos-permission-service.mm
+		src/services/autostart/macos-login-item.hpp
+		src/services/autostart/macos-login-item.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -664,23 +670,23 @@ if (APPLE)
 		src/services/window-manager/macos/macos-window-manager.mm
 		src/services/snippet/macos-snippet-server.mm
 		src/services/update/macos-update-installer.mm
+		src/services/permissions/macos-permission-service.mm
+		src/services/autostart/macos-login-item.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+	list(APPEND LIBS "-framework ServiceManagement")
 
 	if (AUTO_ENABLE_AUTOSTART)
 		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
-		list(APPEND SRCS
-			src/services/autostart/macos-login-item.hpp
-			src/services/autostart/macos-login-item.mm
-		)
-		set_source_files_properties(src/services/autostart/macos-login-item.mm
-			PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
-		list(APPEND LIBS "-framework ServiceManagement")
 	endif()
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp
 		src/services/app-runtime/linux/linux-app-runtime.cpp
 	)
+endif()
+
+if (ENABLE_ONBOARDING)
+	add_compile_definitions(ENABLE_ONBOARDING)
 endif()
 
 list(APPEND SRCS
@@ -1000,6 +1006,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/MissingPreferenceView.qml
 	src/qml/qml/OAuthOverlayView.qml
 	src/qml/qml/HudWindow.qml
+	src/qml/qml/OnboardingWindow.qml
 )
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
@@ -1017,6 +1024,7 @@ if(APPLE)
 	list(APPEND VICINAE_QML_FILES
 		src/qml/qml/LauncherWindowMacOS.qml
 		src/qml/qml/SettingsWindowMacOS.qml
+		src/qml/qml/OnboardingWindowMacOS.qml
 		src/qml/qml/HudWindowMacOS.qml
 		src/qml/qml/CompletionPanelMacOS.qml
 		src/qml/qml/PopupMaterialMacOS.qml

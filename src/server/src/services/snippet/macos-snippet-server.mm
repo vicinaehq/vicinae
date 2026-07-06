@@ -85,11 +85,36 @@ CGEventRef tapCallback(CGEventTapProxy, CGEventType type, CGEventRef event, void
 } // namespace
 
 MacosSnippetServer::MacosSnippetServer() {
-  // we run a separate event loop for the tap instead of using the QT event loop directly
-  // because macOS can disable the tap if our main thread times out, which would force us to
-  // handle retrying and all that annoying stuff.
-  m_thread = std::thread([this]() { runTap(); });
+  startTapThread();
+
+  if (!AXIsProcessTrusted()) {
+    m_permissionRetryTimer.setInterval(2000);
+    connect(&m_permissionRetryTimer, &QTimer::timeout, this, [this]() {
+      if (!AXIsProcessTrusted()) return;
+      m_permissionRetryTimer.stop();
+      ensureTapRunning();
+    });
+    m_permissionRetryTimer.start();
+  }
+
   QTimer::singleShot(0, this, [this]() { emit ready(); });
+}
+
+// we run a separate event loop for the tap instead of using the QT event loop directly
+// because macOS can disable the tap if our main thread times out, which would force us to
+// handle retrying and all that annoying stuff.
+void MacosSnippetServer::startTapThread() {
+  m_tapThreadDone = false;
+  m_thread = std::thread([this]() {
+    runTap();
+    m_tapThreadDone = true;
+  });
+}
+
+void MacosSnippetServer::ensureTapRunning() {
+  if (!m_tapThreadDone) return;
+  if (m_thread.joinable()) m_thread.join();
+  startTapThread();
 }
 
 MacosSnippetServer::~MacosSnippetServer() {

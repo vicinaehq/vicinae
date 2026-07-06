@@ -80,6 +80,7 @@
 #include "settings-controller/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "qml/launcher-window.hpp"
+#include "qml/onboarding-window.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include "generated/version.h"
@@ -545,6 +546,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   LauncherWindow const qmlWindow(ctx);
 
   ctx.navigation->launch(std::make_shared<RootCommand>());
+
+  OnboardingWindow onboardingWindow(ctx);
+  if (OnboardingWindow::shouldShow()) { onboardingWindow.show(); }
 
   if (launchOpts.open) {
     ctx.navigation->showWindow();
