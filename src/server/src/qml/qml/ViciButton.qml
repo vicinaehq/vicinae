@@ -28,12 +28,12 @@ Rectangle {
         case "primary":
             return root.hovered ? Theme.buttonPrimaryHoverBg : Theme.buttonPrimaryBg;
         case "secondary":
-            return Config.withAlpha(root.hovered ? Theme.listItemHoverBg : Theme.secondaryBackground, Config.windowOpacity);
+            return Config.withAlpha(Theme.foreground, root.hovered ? 0.12 : 0.07);
         case "accent":
-            return root.hovered ? Qt.lighter(Theme.accent, 1.15) : Theme.accent;
+            return root.hovered ? Qt.lighter(Theme.accent, 1.08) : Theme.accent;
         case "ghost":
         default:
-            return root.hovered ? Config.withAlpha(Theme.listItemHoverBg, Config.windowOpacity) : "transparent";
+            return root.hovered ? Config.withAlpha(Theme.foreground, 0.08) : "transparent";
         }
     }
 
