@@ -2,56 +2,86 @@
 
 #import <AppKit/AppKit.h>
 
+namespace {
+
+QImage renderNSImage(NSImage *image, const QSize &size) {
+  if (!image || !size.isValid() || size.isEmpty()) return {};
+
+  NSInteger const width = size.width();
+  NSInteger const height = size.height();
+  NSInteger const bytesPerRow = width * 4;
+
+  NSBitmapImageRep *target =
+      [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+                                              pixelsWide:width
+                                              pixelsHigh:height
+                                           bitsPerSample:8
+                                         samplesPerPixel:4
+                                                hasAlpha:YES
+                                                isPlanar:NO
+                                          colorSpaceName:NSCalibratedRGBColorSpace
+                                             bytesPerRow:bytesPerRow
+                                            bitsPerPixel:32];
+  if (!target) return {};
+
+  NSGraphicsContext *ctx = [NSGraphicsContext graphicsContextWithBitmapImageRep:target];
+  if (!ctx) return {};
+
+  NSSize const natural = image.size;
+  if (natural.width <= 0 || natural.height <= 0) return {};
+
+  CGFloat const scale = MIN(width / natural.width, height / natural.height);
+  CGFloat const drawWidth = natural.width * scale;
+  CGFloat const drawHeight = natural.height * scale;
+  NSRect const drawRect =
+      NSMakeRect((width - drawWidth) / 2.0, (height - drawHeight) / 2.0, drawWidth, drawHeight);
+
+  [NSGraphicsContext saveGraphicsState];
+  [NSGraphicsContext setCurrentContext:ctx];
+  [ctx setImageInterpolation:NSImageInterpolationHigh];
+  [[NSColor clearColor] setFill];
+  NSRectFillUsingOperation(NSMakeRect(0, 0, width, height), NSCompositingOperationCopy);
+  [image drawInRect:drawRect
+           fromRect:NSZeroRect
+          operation:NSCompositingOperationSourceOver
+           fraction:1.0
+     respectFlipped:YES
+              hints:nil];
+  [NSGraphicsContext restoreGraphicsState];
+
+  QImage view(target.bitmapData, static_cast<int>(width), static_cast<int>(height),
+              static_cast<int>(bytesPerRow), QImage::Format_RGBA8888_Premultiplied);
+  return view.copy();
+}
+
+} // namespace
+
 QImage renderMacFileIcon(const QString &path, const QSize &size) {
-  if (path.isEmpty() || !size.isValid() || size.isEmpty()) return {};
+  if (path.isEmpty()) return {};
 
   @autoreleasepool {
     NSString *nsPath = [NSString stringWithUTF8String:path.toUtf8().constData()];
     if (!nsPath) return {};
 
-    NSImage *icon = [[NSWorkspace sharedWorkspace] iconForFile:nsPath];
-    if (!icon) return {};
+    return renderNSImage([[NSWorkspace sharedWorkspace] iconForFile:nsPath], size);
+  }
+}
 
-    NSInteger const width = size.width();
-    NSInteger const height = size.height();
-    NSInteger const bytesPerRow = width * 4;
+QImage renderMacSymbolIcon(const QString &name, const QSize &size) {
+  if (name.isEmpty()) return {};
 
-    NSBitmapImageRep *target =
-        [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
-                                                pixelsWide:width
-                                                pixelsHigh:height
-                                             bitsPerSample:8
-                                           samplesPerPixel:4
-                                                  hasAlpha:YES
-                                                  isPlanar:NO
-                                            colorSpaceName:NSCalibratedRGBColorSpace
-                                               bytesPerRow:bytesPerRow
-                                              bitsPerPixel:32];
-    if (!target) return {};
+  @autoreleasepool {
+    NSString *nsName = [NSString stringWithUTF8String:name.toUtf8().constData()];
+    if (!nsName) return {};
 
-    NSGraphicsContext *ctx = [NSGraphicsContext graphicsContextWithBitmapImageRep:target];
-    if (!ctx) return {};
+    NSImage *symbol = [NSImage imageWithSystemSymbolName:nsName accessibilityDescription:nil];
+    if (!symbol) return {};
 
-    // file icons are always square: if the size is not a square, we center the icon
-    // in it and make sure we preserve the correct aspect ratio.
-    NSInteger const side = MIN(width, height);
-    NSRect const drawRect = NSMakeRect((width - side) / 2.0, (height - side) / 2.0, side, side);
+    NSInteger const side = MIN(size.width(), size.height());
+    NSImageSymbolConfiguration *config =
+        [NSImageSymbolConfiguration configurationWithPointSize:side * 0.8 weight:NSFontWeightRegular];
+    if (NSImage *configured = [symbol imageWithSymbolConfiguration:config]) symbol = configured;
 
-    [NSGraphicsContext saveGraphicsState];
-    [NSGraphicsContext setCurrentContext:ctx];
-    [ctx setImageInterpolation:NSImageInterpolationHigh];
-    [[NSColor clearColor] setFill];
-    NSRectFillUsingOperation(NSMakeRect(0, 0, width, height), NSCompositingOperationCopy);
-    [icon drawInRect:drawRect
-            fromRect:NSZeroRect
-           operation:NSCompositingOperationSourceOver
-            fraction:1.0
-      respectFlipped:YES
-               hints:nil];
-    [NSGraphicsContext restoreGraphicsState];
-
-    QImage view(target.bitmapData, static_cast<int>(width), static_cast<int>(height),
-                static_cast<int>(bytesPerRow), QImage::Format_RGBA8888_Premultiplied);
-    return view.copy();
+    return renderNSImage(symbol, size);
   }
 }

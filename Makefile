@@ -6,6 +6,7 @@ APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
 APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 FIGURA_CC						:= $(BIN_DIR)/figura
 SHELL							:= /bin/sh
+APPLE_BUNDLE_ID						:= com.vicinaehq.Vicinae
 
 release:
 	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B $(BUILD_DIR)
@@ -162,6 +163,11 @@ nix-hash:
 nix-hash-check:
 	$(SHELL) scripts/update-nix-npm-hashes.sh --check
 .PHONY: nix-hash-check
+
+# reset all macOS permission grants
+tcc-reset:
+	tccutil reset All $(APPLE_BUNDLE_ID)
+.PHONY: tcc-reset
 
 # if we need to manually create a release
 gh-release:
