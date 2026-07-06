@@ -46,14 +46,13 @@ MacosPermissionService::MacosPermissionService(QObject *parent) : QObject(parent
 }
 
 void MacosPermissionService::setWatching(bool value) {
-  if (value == watching()) return;
+  if (value == m_pollTimer.isActive()) return;
   if (value) {
     refresh();
     m_pollTimer.start();
   } else {
     m_pollTimer.stop();
   }
-  emit watchingChanged();
 }
 
 void MacosPermissionService::requestAccessibility() {

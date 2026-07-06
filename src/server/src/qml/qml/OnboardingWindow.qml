@@ -73,12 +73,6 @@ Window {
     WindowMaterial.enabled: Config.blurEnabled
     WindowMaterial.radius: 10
 
-    Binding {
-        target: Permissions
-        property: "watching"
-        value: root.visible && root.onPermissionStep
-    }
-
     Rectangle {
         id: background
         anchors.fill: parent

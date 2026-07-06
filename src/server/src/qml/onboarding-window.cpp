@@ -9,12 +9,10 @@
 #include "vicinae.hpp"
 #include <QDateTime>
 #include <QDebug>
-#include <QFile>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QQmlContext>
 #include <QQuickWindow>
 #include <filesystem>
+#include <glaze/glaze.hpp>
 
 #ifdef Q_OS_MACOS
 #include "macos-chrome-attached.hpp"
@@ -22,18 +20,22 @@
 #include "services/permissions/macos-permission-service.hpp"
 #endif
 
+struct OnboardingState {
+  int version = 0;
+  std::string completedAt;
+};
+
 namespace {
 
 constexpr int ONBOARDING_VERSION = 1;
 
-QString stateFilePath() {
-  return QString::fromStdString((Omnicast::stateDir() / "onboarding.json").string());
-}
+std::filesystem::path stateFilePath() { return Omnicast::stateDir() / "onboarding.json"; }
 
 int completedVersion() {
-  QFile file(stateFilePath());
-  if (!file.open(QIODevice::ReadOnly)) return 0;
-  return QJsonDocument::fromJson(file.readAll()).object().value("version").toInt(0);
+  OnboardingState state;
+  std::string buf;
+  if (glz::read_file_json(state, stateFilePath().c_str(), buf)) return 0;
+  return state.version;
 }
 
 } // namespace
@@ -108,7 +110,8 @@ void OnboardingWindow::ensureInitialized() {
 
 #ifdef Q_OS_MACOS
   m_loginItemEnabled = vicinae::macos::isLoginItemEnabled();
-  rootCtx->setContextProperty(QStringLiteral("Permissions"), new MacosPermissionService(this));
+  m_permissions = new MacosPermissionService(this);
+  rootCtx->setContextProperty(QStringLiteral("Permissions"), m_permissions);
 #endif
 
   m_engine.load(QUrl(
@@ -121,21 +124,27 @@ void OnboardingWindow::ensureInitialized() {
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
+
+#ifdef Q_OS_MACOS
+  if (m_window) {
+    connect(m_window, &QQuickWindow::visibleChanged, m_permissions,
+            [this](bool visible) { m_permissions->setWatching(visible); });
+    m_permissions->setWatching(m_window->isVisible());
+  }
+#endif
 }
 
 void OnboardingWindow::markCompleted() {
   if (m_completed) return;
   m_completed = true;
 
-  QFile file(stateFilePath());
-  if (!file.open(QIODevice::WriteOnly)) {
-    qWarning() << "Failed to write onboarding state file" << file.fileName();
-    return;
-  }
-
-  const QJsonObject state{
-      {QStringLiteral("version"), ONBOARDING_VERSION},
-      {QStringLiteral("completedAt"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate)},
+  const OnboardingState state{
+      .version = ONBOARDING_VERSION,
+      .completedAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toStdString(),
   };
-  file.write(QJsonDocument(state).toJson(QJsonDocument::Compact));
+
+  std::string buf;
+  if (auto const error = glz::write_file_json(state, stateFilePath().c_str(), buf)) {
+    qWarning() << "Failed to write onboarding state file" << stateFilePath().c_str();
+  }
 }

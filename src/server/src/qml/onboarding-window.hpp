@@ -52,6 +52,7 @@ private:
   KeyboardBridge *m_keyboardBridge = nullptr;
   GlobalShortcutBridge *m_globalShortcutBridge = nullptr;
   GeneralSettingsModel *m_generalModel = nullptr;
+  MacosPermissionService *m_permissions = nullptr;
   QQuickWindow *m_window = nullptr;
   bool m_loginItemEnabled = false;
   bool m_initialized = false;
