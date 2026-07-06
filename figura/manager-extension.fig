@@ -17,6 +17,13 @@ enum LaunchType {
   Background
 };
 
+struct Capabilities {
+  browserExtension: bool;
+  windowManagement: bool;
+  wallpaper: bool;
+  fileSearch: bool;
+};
+
 struct LaunchEventData {
   extension_name: string;
   command_name: string;
@@ -29,6 +36,7 @@ struct LaunchEventData {
   is_raycast: bool;
   owner_or_author_name: string;
   launch_type: LaunchType;
+  capabilities: Capabilities;
 };
 
 service Lifecycle {

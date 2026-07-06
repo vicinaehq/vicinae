@@ -1,4 +1,9 @@
-import { Form } from "./components";
+import type { AI } from "./ai";
+import type { BrowserExtension } from "./browser";
+import type { Form } from "./components";
+import type { FileSearch } from "./file-search";
+import type { Wallpaper } from "./wallpaper";
+import type { WindowManagement } from "./window-management";
 
 export interface LaunchContext {
 	[item: string]: any;
@@ -52,6 +57,14 @@ export enum LaunchType {
 	 */
 	Background = "background",
 }
+
+// every API we can check availability for using environment.canAccess
+type AccessCheckable =
+	| typeof FileSearch
+	| typeof BrowserExtension
+	| typeof Wallpaper
+	| typeof AI
+	| typeof WindowManagement;
 
 export interface Environment {
 	/**
@@ -111,20 +124,16 @@ export interface Environment {
 	 *
 	 *  @example
 	 * ```typescript
-	 * import { unstableAI, environment } from "@raycast/api";
+	 * import { BrowserExtension, environment } from "@vicinae/api";
 	 *
-	 * export default function Command() {
-	 *   if (environment.canAccess(unstableAI)) {
-	 *     // use unstableAI
+	 * export default async function Command() {
+	 *   if (environment.canAccess(BrowserExtension)) {
+	 *   	const tabs = await BrowserExtension.getTabs();
 	 *   }
 	 * }
 	 * ```
 	 */
-	canAccess(api: unknown): boolean;
-	/**
-	 * @deprecated Use the top-level prop `launchContext` instead.
-	 */
-	launchContext?: LaunchContext;
+	canAccess(api: AccessCheckable): boolean;
 
 	/**
 	 * The Vicinae version. Vicinae extensions should rely on this and ignore `raycastVersion`.

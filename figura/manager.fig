@@ -19,6 +19,13 @@ enum LaunchType {
   Background
 };
 
+struct Capabilities {
+  browserExtension: bool;
+  windowManagement: bool;
+  wallpaper: bool;
+  fileSearch: bool;
+};
+
 struct LoadOptions {
   mode: CommandMode;
   env: CommandEnv;
@@ -32,6 +39,7 @@ struct LoadOptions {
   arguments: any;
   preferences: any;
   launch_type: LaunchType;
+  capabilities: Capabilities;
 };
 
 struct LoadResponse {

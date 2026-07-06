@@ -110,6 +110,12 @@
 			"mode": "view"
 		},
 		{
+			"name": "capabilities",
+			"title": "Capabilities",
+			"description": "Check capabilities of install",
+			"mode": "view"
+		},
+		{
 			"name": "desktop-notif-interval",
 			"title": "Desktop Notification Interval",
 			"description": "Desktop Notification Interval",

@@ -103,6 +103,11 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
                    }) |
                    std::ranges::to<std::unordered_map<std::string, std::string>>();
 
+  opts.capabilities.browserExtension = !context()->services->browserExtension()->browsers().empty();
+  opts.capabilities.windowManagement = context()->services->windowManager()->isCapable();
+  opts.capabilities.wallpaper = context()->services->wallpaperManager()->canSetWallpaper();
+  opts.capabilities.fileSearch = context()->services->fileService()->isAvailable();
+
   if (m_headless) {
     opts.launch_type = manager::LaunchType::Background;
   } else {
