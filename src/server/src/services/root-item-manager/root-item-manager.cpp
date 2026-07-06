@@ -65,9 +65,11 @@ bool RootItemManager::enableFallback(const EntrypointId &id) {
 
 bool RootItemManager::disableFallback(const EntrypointId &id) {
   auto fbs = m_cfg.value().fallbacks;
-  std::string const sid = id;
+  auto it = std::ranges::find(fbs, std::string{id});
 
-  fbs.erase(std::ranges::find(fbs, sid));
+  if (it == fbs.end()) return false;
+
+  fbs.erase(it);
   m_cfg.mergeWithUser({.fallbacks = fbs});
   emit fallbackDisabled(id);
   emit metadataChanged();

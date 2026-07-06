@@ -29,9 +29,9 @@ public:
 
   void setFallbackOrder(std::vector<RootItemPtr> fallbacks) { m_fallbacks = std::move(fallbacks); }
 
-  void setFilter(std::string_view query) override;
-
 protected:
+  void sortFiltered() override;
+
   QString displayTitle(const RootItemPtr &item) const override;
   QString displaySubtitle(const RootItemPtr &item) const override;
   QString displayIconSource(const RootItemPtr &item) const override;

@@ -184,9 +184,7 @@ bool Manager::writeUser(const Partial<ConfigValue> &cfg) {
     ofs << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
   }
 
-  // XXX - we needed this at some point, maybe I'm breaking something
-  // The idea is that the watcher should take care of this already, we don't want double firing
-  // reloadConfig();
+  reloadConfig();
 
   return true;
 }
@@ -211,6 +209,12 @@ void Manager::reloadConfig() {
 
   ConfigValue const prev = std::move(m_user);
   m_user = std::move(res.value());
+
+  std::string prevJson;
+  std::string nextJson;
+  bool const comparable = !glz::write_json(prev, prevJson) && !glz::write_json(m_user, nextJson);
+  if (comparable && prevJson == nextJson) return;
+
   emit configChanged(m_user, prev);
 }
 
