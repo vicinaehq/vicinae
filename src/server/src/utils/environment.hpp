@@ -128,6 +128,9 @@ inline std::optional<std::string> updateVersionOverride() {
  * Gets human-readable environment description
  */
 inline QString getEnvironmentDescription() {
+#ifdef Q_OS_MACOS
+  return QStringLiteral("Aqua");
+#else
   QString desc;
   const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
 
@@ -146,6 +149,7 @@ inline QString getEnvironmentDescription() {
   }
 
   return desc;
+#endif
 }
 
 inline std::string chassisType() {

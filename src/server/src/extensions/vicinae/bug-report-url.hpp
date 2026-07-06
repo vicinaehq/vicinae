@@ -4,6 +4,7 @@
 #include "internal/os-release.hpp"
 #include "vicinae.hpp"
 #include <QGuiApplication>
+#include <QSysInfo>
 #include <QUrlQuery>
 
 static const QString ISSUE_TEMPLATE = R"(**System information**
@@ -38,7 +39,9 @@ Add any other context about the problem here.
 
 inline QUrl makeVicinaeBugReportUrl(const QString &title = {}) {
   OsRelease os;
-  QString osString = os.isValid() ? QString("%1 - %2").arg(os.prettyName()).arg(os.version()) : "Unknown OS";
+  QString osString = os.isValid() ? QString("%1 - %2").arg(os.prettyName()).arg(os.version())
+                                  : QString("%1 (%2)").arg(QSysInfo::prettyProductName(),
+                                                           QSysInfo::currentCpuArchitecture());
 
   QString content = ISSUE_TEMPLATE.arg(VICINAE_GIT_TAG)
                         .arg(VICINAE_GIT_COMMIT_HASH)
