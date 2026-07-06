@@ -77,6 +77,7 @@ in
       "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
       "AUTO_ENABLE_AUTOSTART" = "OFF";
       "ENABLE_ONBOARDING" = "OFF";
+      "BUNDLE_SOULVER_CORE" = "OFF";
     };
 
     strictDeps = true;

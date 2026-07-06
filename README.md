@@ -90,3 +90,7 @@ Everything you need to know to get started with Vicinae is at [vicinae.com](http
 ---
 
 [And all our other amazing sponsors!](https://github.com/sponsors/vicinaehq#sponsors)
+
+## Acknowledgments
+
+Special thanks to the [Soulver](https://soulver.app) team for allowing us to ship SoulverCore as the default calculator backend on macOS.

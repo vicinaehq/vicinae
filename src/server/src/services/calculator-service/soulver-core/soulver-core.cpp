@@ -1,15 +1,45 @@
 #include "soulver-core.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
-#include "xdgpp/env/env.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
-#include <dlfcn.h>
 #include <filesystem>
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include "common/c-ptr.hpp"
 
+#ifndef Q_OS_MACOS
+#include "xdgpp/env/env.hpp"
+#include <dlfcn.h>
+#endif
+
 namespace fs = std::filesystem;
+
+#ifdef Q_OS_MACOS
+
+extern "C" {
+bool soulver_initialize(const char *resourcesPath);
+bool soulver_is_initialized(void);
+char *soulver_evaluate(const char *expression);
+}
+
+SoulverCoreCalculator::SoulverCoreCalculator() {
+  m_abi.soulver_initialize = &::soulver_initialize;
+  m_abi.soulver_is_initialized = &::soulver_is_initialized;
+  m_abi.soulver_evaluate = &::soulver_evaluate;
+}
+
+bool SoulverCoreCalculator::isActivatable() const { return true; };
+
+bool SoulverCoreCalculator::start() {
+  m_abi.soulver_initialize("");
+
+  auto test = calculate("2+2");
+  bool const canCompute = test.has_value() && test.value().result == "4";
+
+  return canCompute;
+}
+
+#else
 
 constexpr const char *SHARED_LIB = "libSoulverWrapper.so";
 
@@ -55,13 +85,11 @@ std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
   return paths;
 }
 
+#endif
+
 std::expected<AbstractCalculatorBackend::CalculatorResult, AbstractCalculatorBackend::CalculatorError>
 SoulverCoreCalculator::compute(const QString &question, const ComputeOptions &opts) {
   const auto fail = [](auto &&reason) { return std::unexpected(CalculatorError{reason}); };
-
-  if (opts.mode == ComputeMode::MixedSearch && !isExpression(question.toStdString())) {
-    return fail("Invalid expression");
-  }
 
   auto soulverRes = calculate(question);
 

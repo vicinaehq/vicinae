@@ -56,6 +56,17 @@ option(AUTO_INSTALL_BROWSER_MANIFESTS "Install per-user browser native messaging
 option(AUTO_ENABLE_AUTOSTART "Register the app to start at login on first launch (currently macOS only)" ON)
 option(ENABLE_ONBOARDING "Show the onboarding window on first launch (macOS only)" ON)
 
+set(BUNDLE_SOULVER_CORE_DEFAULT OFF)
+if (APPLE)
+	set(BUNDLE_SOULVER_CORE_DEFAULT ON)
+endif()
+
+option(
+	BUNDLE_SOULVER_CORE
+	"Download the SoulverCore framework and bundle it with the app, making it the default calculator backend (macOS only)"
+	${BUNDLE_SOULVER_CORE_DEFAULT}
+)
+
 set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "macOS app bundle identifier")
 
 set(NATIVE_MESSAGING_HOST "com.vicinae.vicinae")
@@ -139,6 +150,10 @@ add_subdirectory(${LIB_DIR}/glyph)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/fuzzy)
 add_subdirectory(${LIB_DIR}/crypto)
+
+if (APPLE AND BUNDLE_SOULVER_CORE)
+	add_subdirectory(${LIB_DIR}/soulver)
+endif()
 
 # statically linked vendored libs.
 # Most of the other vendored libs are header only so no need for a CMakeLists.txt
