@@ -75,6 +75,8 @@ AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractAp
 
 void WindowManager::updateWindowCache() { m_windows = m_provider->listWindowsSync(); }
 
+bool WindowManager::isCapable() const { return m_provider->id() != "dummy"; }
+
 WindowManager::WindowManager() {
   m_provider = createProvider();
   updateWindowCache();

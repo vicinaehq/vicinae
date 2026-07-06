@@ -10,6 +10,8 @@ signals:
   void focusChanged() const;
 
 public:
+  bool isCapable() const;
+
   AbstractWindowManager *provider() const;
   AbstractWindowManager::WindowList listWindowsSync();
   AbstractWindowManager::WindowPtr getFocusedWindow();

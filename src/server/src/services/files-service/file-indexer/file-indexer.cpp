@@ -233,6 +233,8 @@ void FileIndexer::rebuildIndex() {
   m_client.fileindexer()->rebuildIndex();
 }
 
+bool FileIndexer::isAvailable() const { return isRunning(); }
+
 void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
   auto arrayField = [&](const char *key) {
     std::vector<std::string> out;
@@ -248,8 +250,9 @@ void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
 
   m_config.paths = arrayField("indexingPaths");
   m_config.excluded_paths = arrayField("excludedIndexingPaths");
+  m_wantRunning = preferences.value("autoIndexing").toBool();
 
-  if (preferences.value("autoIndexing").toBool()) {
+  if (m_wantRunning) {
     if (isRunning()) {
       sendConfigure();
     } else {

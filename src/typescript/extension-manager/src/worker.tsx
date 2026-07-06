@@ -1,6 +1,13 @@
 import "./globals";
 import { parentPort, workerData } from "node:worker_threads";
-import { LaunchType } from "@vicinae/api";
+import {
+	AI,
+	BrowserExtension,
+	FileSearch,
+	LaunchType,
+	Wallpaper,
+	WindowManagement,
+} from "@vicinae/api";
 import { callbackManager } from "./callback";
 import { globalState } from "./globals";
 import loadNoView from "./loaders/load-no-view-command";
@@ -74,7 +81,15 @@ const loadEnviron = (
 		theme: "dark",
 		textSize: "medium",
 		appearance: "dark",
-		canAccess: (_: unknown) => false,
+		canAccess: (api: unknown) => {
+			if (api === WindowManagement) return data.capabilities.windowManagement;
+			if (api === BrowserExtension) return data.capabilities.browserExtension;
+			if (api === Wallpaper) return data.capabilities.wallpaper;
+			if (api === FileSearch) return data.capabilities.fileSearch;
+			if (api === AI) return false; // not supported yet
+
+			return false;
+		},
 		isDevelopment: environment === "development",
 		commandName: data.command_name,
 		commandMode: data.mode === "View" ? "view" : "no-view",

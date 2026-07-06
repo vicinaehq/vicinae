@@ -102,6 +102,7 @@ class ExtensionManager extends manager.ManagerService {
 				owner_or_author_name: load.owner_or_author_name,
 				command_name: load.command_name,
 				launch_type: load.launch_type,
+				capabilities: load.capabilities,
 			},
 		};
 
