@@ -176,7 +176,7 @@ bool MacAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
         QUrl const q(arg);
         NSURL *u = nil;
         if (!q.scheme().isEmpty() && q.scheme() != QStringLiteral("file")) {
-          u = [NSURL URLWithString:toNSString(arg)];
+          u = [NSURL URLWithString:toNSString(QString::fromUtf8(q.toEncoded()))];
         } else {
           QString const p = q.isLocalFile() ? q.toLocalFile() : arg;
           u = [NSURL fileURLWithPath:toNSString(p)];
