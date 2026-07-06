@@ -33,6 +33,10 @@ if (UNIX AND NOT APPLE)
 	list(APPEND LIBS wayland-client Qt6::DBus)
 endif()
 
+if (APPLE AND BUNDLE_SOULVER_CORE)
+	list(APPEND LIBS vicinae::soulver)
+endif()
+
 
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(EXTRA_PATH ${CMAKE_SOURCE_DIR}/extra)
@@ -607,10 +611,14 @@ set(SRCS
 
 )
 
-if (UNIX AND NOT APPLE)
+if ((UNIX AND NOT APPLE) OR (APPLE AND BUNDLE_SOULVER_CORE))
 	list(APPEND SRCS
 		src/services/calculator-service/soulver-core/soulver-core.cpp
 	)
+endif()
+
+if (APPLE AND BUNDLE_SOULVER_CORE)
+	add_compile_definitions(BUNDLE_SOULVER_CORE)
 endif()
 
 if (APPLE)

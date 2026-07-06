@@ -58,6 +58,27 @@ cp "$BROWSER_LINK_BIN" "$BUNDLE/Contents/MacOS/vicinae-browser-link"
 chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli" \
          "$BUNDLE/Contents/MacOS/vicinae-browser-link"
 
+# must run before macdeployqt so the framework is treated as already deployed
+bundle_soulver_core() {
+  otool -L "$BUNDLE/Contents/MacOS/Vicinae" | grep -q "SoulverCore.framework" || return 0
+
+  local fw
+  fw="$(find "$BUILD_DIR/_deps" -type d -path "*macos-arm64_x86_64/SoulverCore.framework" 2>/dev/null | head -1)"
+  if [[ -z "$fw" ]]; then
+    echo "macdeploy.sh: server links SoulverCore but SoulverCore.framework not found under $BUILD_DIR/_deps" >&2
+    exit 1
+  fi
+
+  echo "==> bundling SoulverCore.framework"
+  local dest="$BUNDLE/Contents/Frameworks/SoulverCore.framework"
+  mkdir -p "$BUNDLE/Contents/Frameworks"
+  cp -R "$fw" "$BUNDLE/Contents/Frameworks/"
+  rm -rf "$dest/Versions/A/Headers" "$dest/Versions/A/Modules"
+  rm -f "$dest/Headers" "$dest/Modules"
+}
+
+bundle_soulver_core
+
 echo "==> macdeployqt"
 macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/qml" -verbose=2
 
@@ -144,6 +165,15 @@ while IFS= read -r -d '' bin; do
   while install_name_tool -delete_rpath "$FRAMEWORKS_RPATH" "$bin" 2>/dev/null; do :; done
   install_name_tool -add_rpath "$FRAMEWORKS_RPATH" "$bin"
 done < <(find "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Frameworks" "$BUNDLE/Contents/PlugIns" -type f -print0)
+
+echo "==> remove build-tree rpaths"
+while IFS= read -r -d '' bin; do
+  while IFS= read -r rp; do
+    [[ "$rp" == "$BUILD_DIR"* ]] || continue
+    echo "  removing rpath $rp from ${bin#"$BUNDLE"/}"
+    install_name_tool -delete_rpath "$rp" "$bin"
+  done < <(otool -l "$bin" 2>/dev/null | awk '/LC_RPATH/{f=2} f && /^ *path /{print $2; f=0}')
+done < <(find "$BUNDLE/Contents/MacOS" -type f -print0)
 
 echo "==> strip"
 strip -x "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli" \
