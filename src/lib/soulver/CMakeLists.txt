@@ -7,7 +7,7 @@ if (NOT APPLE)
 	message(FATAL_ERROR "vicinae-soulver can only be built on macOS")
 endif()
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake)
 
 include(FetchContent)
 
