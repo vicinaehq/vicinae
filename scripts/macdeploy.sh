@@ -58,21 +58,26 @@ cp "$BROWSER_LINK_BIN" "$BUNDLE/Contents/MacOS/vicinae-browser-link"
 chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli" \
          "$BUNDLE/Contents/MacOS/vicinae-browser-link"
 
-# before macdeployqt so it is treated as already deployed
-if otool -L "$BUNDLE/Contents/MacOS/Vicinae" | grep -q "SoulverCore.framework"; then
-  SOULVER_FW="$(find "$BUILD_DIR/_deps" -type d -path "*macos-arm64_x86_64/SoulverCore.framework" 2>/dev/null | head -1)"
-  if [[ -z "$SOULVER_FW" ]]; then
+# must run before macdeployqt so the framework is treated as already deployed
+bundle_soulver_core() {
+  otool -L "$BUNDLE/Contents/MacOS/Vicinae" | grep -q "SoulverCore.framework" || return 0
+
+  local fw
+  fw="$(find "$BUILD_DIR/_deps" -type d -path "*macos-arm64_x86_64/SoulverCore.framework" 2>/dev/null | head -1)"
+  if [[ -z "$fw" ]]; then
     echo "macdeploy.sh: server links SoulverCore but SoulverCore.framework not found under $BUILD_DIR/_deps" >&2
     exit 1
   fi
+
   echo "==> bundling SoulverCore.framework"
+  local dest="$BUNDLE/Contents/Frameworks/SoulverCore.framework"
   mkdir -p "$BUNDLE/Contents/Frameworks"
-  cp -R "$SOULVER_FW" "$BUNDLE/Contents/Frameworks/"
-  rm -rf "$BUNDLE/Contents/Frameworks/SoulverCore.framework/Versions/A/Headers" \
-         "$BUNDLE/Contents/Frameworks/SoulverCore.framework/Versions/A/Modules"
-  rm -f "$BUNDLE/Contents/Frameworks/SoulverCore.framework/Headers" \
-        "$BUNDLE/Contents/Frameworks/SoulverCore.framework/Modules"
-fi
+  cp -R "$fw" "$BUNDLE/Contents/Frameworks/"
+  rm -rf "$dest/Versions/A/Headers" "$dest/Versions/A/Modules"
+  rm -f "$dest/Headers" "$dest/Modules"
+}
+
+bundle_soulver_core
 
 echo "==> macdeployqt"
 macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/qml" -verbose=2
