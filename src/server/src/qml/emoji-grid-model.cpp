@@ -1,5 +1,6 @@
 #include "emoji-grid-model.hpp"
 #include "builtin_icon.hpp"
+#include "extend/grid-model.hpp"
 #include "clipboard-actions.hpp"
 #include "edit-keywords-view-host.hpp"
 #include "navigation-controller.hpp"
@@ -237,6 +238,7 @@ EmojiGridModel::EmojiGridModel(QObject *parent) : SectionGridModel(parent) {}
 void EmojiGridModel::initialize() {
   m_glyphService = scope().services()->glyphService();
   m_sections = glyph::sections();
+  setInset(insetRatio(GridInset::Medium));
 
   if (auto *state = scope().topState(); state && state->sender) {
     if (auto *cmd = state->sender->command()) {

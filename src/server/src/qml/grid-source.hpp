@@ -20,6 +20,7 @@ public:
   virtual int count() const = 0;
   virtual std::optional<int> columns() const { return std::nullopt; }
   virtual std::optional<double> aspectRatio() const { return std::nullopt; }
+  virtual std::optional<double> inset() const { return std::nullopt; }
 
   virtual std::unique_ptr<ActionPanelState> actionPanel(int i) const = 0;
   virtual void onSelected(int) {}

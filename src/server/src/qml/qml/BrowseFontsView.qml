@@ -3,7 +3,6 @@ import Vicinae
 
 GenericGridView {
     columns: 6
-    cellInset: 0.18
     showCellTitle: true
 
     cellDelegate: Component {

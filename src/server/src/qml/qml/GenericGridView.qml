@@ -23,7 +23,6 @@ Item {
     property real aspectRatio: 1.0
     property real cellSpacing: 10
     property real horizontalPadding: 20
-    property real cellInset: 0.10  // ratio of cell size (None≈0.05, Small=0.10, Medium=0.15, Large=0.25)
 
     // Optional title/subtitle below each cell.
     // When enabled, the model must provide Q_INVOKABLE cellTitle(section, item)
@@ -152,6 +151,7 @@ Item {
             required property int rowItemCount
             required property int rowColumns
             required property double rowAspectRatio
+            required property double rowInset
 
             sourceComponent: isSection ? sectionComponent : rowComponent
 
@@ -172,6 +172,7 @@ Item {
 
                     readonly property int effectiveCols: delegateLoader.rowColumns
                     readonly property real effectiveAspectRatio: delegateLoader.rowAspectRatio
+                    readonly property real effectiveInset: delegateLoader.rowInset
                     readonly property real cellWidth: Math.floor((root.width - root.horizontalPadding * 2 - root.cellSpacing * (effectiveCols - 1)) / effectiveCols)
                     readonly property real cellHeight: Math.floor(cellWidth / effectiveAspectRatio)
 
@@ -246,10 +247,10 @@ Item {
                                 }
 
                                 Loader {
-                                    x: rowItem.cellWidth * root.cellInset
-                                    y: rowItem.cellHeight * root.cellInset
-                                    width: rowItem.cellWidth * (1 - 2 * root.cellInset)
-                                    height: rowItem.cellHeight * (1 - 2 * root.cellInset)
+                                    x: rowItem.cellWidth * rowItem.effectiveInset
+                                    y: rowItem.cellHeight * rowItem.effectiveInset
+                                    width: rowItem.cellWidth * (1 - 2 * rowItem.effectiveInset)
+                                    height: rowItem.cellHeight * (1 - 2 * rowItem.effectiveInset)
                                     sourceComponent: root.cellDelegate
                                     property int cellSection: cellWrapper.cellSection
                                     property int cellItem: cellWrapper.cellItem
@@ -262,7 +263,7 @@ Item {
                                 }
 
                                 SourceBlendRect {
-                                    visible: root.cellInset <= 0
+                                    visible: rowItem.effectiveInset <= 0
                                     width: rowItem.cellWidth
                                     height: rowItem.cellHeight
                                     radius: 10

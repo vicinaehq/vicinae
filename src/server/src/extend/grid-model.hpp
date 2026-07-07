@@ -11,6 +11,19 @@ enum GridFit { GridContain, GridFill };
 
 enum class GridInset { None, Small, Medium, Large };
 
+constexpr double insetRatio(GridInset inset) {
+  switch (inset) {
+  case GridInset::Small:
+    return 0.10;
+  case GridInset::Medium:
+    return 0.15;
+  case GridInset::Large:
+    return 0.25;
+  default:
+    return 0.0;
+  }
+}
+
 struct GridItemViewModel {
   using Content = std::variant<ImageLikeModel, ColorLike>;
 

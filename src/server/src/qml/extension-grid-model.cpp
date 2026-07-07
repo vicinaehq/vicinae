@@ -25,10 +25,15 @@ template <> struct fuzzy::FuzzySearchable<GridItemViewModel> {
 
 ExtensionGridSection::ExtensionGridSection(std::string name, std::vector<GridItemViewModel> items,
                                            std::optional<int> columns, std::optional<double> aspectRatio,
-                                           bool filtering, NotifyFn notify,
+                                           std::optional<GridInset> inset, bool filtering, NotifyFn notify,
                                            const std::optional<ActionPannelModel> *globalActions)
     : m_name(std::move(name)), m_items(std::move(items)), m_columns(columns), m_aspectRatio(aspectRatio),
-      m_filtering(filtering), m_notify(std::move(notify)), m_globalActions(globalActions) {}
+      m_inset(inset), m_filtering(filtering), m_notify(std::move(notify)), m_globalActions(globalActions) {}
+
+std::optional<double> ExtensionGridSection::inset() const {
+  if (m_inset) return insetRatio(*m_inset);
+  return std::nullopt;
+}
 
 int ExtensionGridSection::count() const {
   if (m_filtering && !m_query.empty()) return static_cast<int>(m_filtered.size());
@@ -82,29 +87,9 @@ void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSele
     emit fitChanged();
   }
 
-  double newInset;
-  switch (model.inset) {
-  case GridInset::None:
-    newInset = 0.05;
-    break;
-  case GridInset::Small:
-    newInset = 0.10;
-    break;
-  case GridInset::Medium:
-    newInset = 0.15;
-    break;
-  case GridInset::Large:
-    newInset = 0.25;
-    break;
-  default:
-    newInset = 0.10;
-    break;
-  }
+  double newInset = insetRatio(model.inset);
   if (m_fit == ObjectFit::Fill) newInset = 0.0;
-  if (!qFuzzyCompare(m_inset, newInset)) {
-    m_inset = newInset;
-    emit insetChanged();
-  }
+  setInset(newInset);
 
   rebuildFromSections(resetSelection);
 
@@ -123,9 +108,9 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
 
   auto flushFree = [&]() {
     if (freeBuf.empty()) return;
-    auto section =
-        std::make_unique<ExtensionGridSection>(std::move(freeItems), std::move(freeBuf), std::nullopt,
-                                               std::nullopt, m_model.filtering, m_notify, &m_model.actions);
+    auto section = std::make_unique<ExtensionGridSection>(std::move(freeItems), std::move(freeBuf),
+                                                          std::nullopt, std::nullopt, std::nullopt,
+                                                          m_model.filtering, m_notify, &m_model.actions);
     section->setOnItemSelected([this](const GridItemViewModel *item) {
       if (auto handler = m_model.onSelectionChanged) {
         if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }
@@ -144,7 +129,7 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
       flushFree();
       auto section =
           std::make_unique<ExtensionGridSection>(sec->title, sec->children, sec->columns, sec->aspectRatio,
-                                                 m_model.filtering, m_notify, &m_model.actions);
+                                                 sec->inset, m_model.filtering, m_notify, &m_model.actions);
       section->setOnItemSelected([this](const GridItemViewModel *item) {
         if (auto handler = m_model.onSelectionChanged) {
           if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }

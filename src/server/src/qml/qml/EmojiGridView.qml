@@ -2,7 +2,6 @@ import QtQuick
 
 GenericGridView {
     columns: 8
-    cellInset: 0.20
 
     cellDelegate: Component {
         Item {

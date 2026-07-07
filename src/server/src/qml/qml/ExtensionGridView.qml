@@ -3,7 +3,6 @@ import QtQuick
 GenericGridView {
     columns: cmdModel ? cmdModel.columns : 8
     aspectRatio: cmdModel ? cmdModel.aspectRatio : 1.0
-    cellInset: cmdModel ? cmdModel.inset : 0.10
     showCellTitle: true
     showCellSubtitle: true
 
