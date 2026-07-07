@@ -63,22 +63,9 @@ VicinaeStoreService::fetchExtensions(const VicinaeStore::ListPaginationOptions &
 }
 
 QFuture<VicinaeStore::ListResult> VicinaeStoreService::fetchAll() {
-  if (m_cache) {
-    return QtFuture::makeReadyValueFuture(VicinaeStore::ListResult{VicinaeStore::ListResponse{*m_cache, {}}});
-  }
-
   return fetchExtensions({.limit = 500})
-      .then(this, [this](VicinaeStore::ListResult result) -> VicinaeStore::ListResult {
-        if (result) { m_cache = result->extensions; }
-        return result;
-      });
+      .then(this, [](VicinaeStore::ListResult result) -> VicinaeStore::ListResult { return result; });
 }
-
-const std::vector<VicinaeStore::Extension> *VicinaeStoreService::cached() const {
-  return m_cache ? &*m_cache : nullptr;
-}
-
-void VicinaeStoreService::invalidateCache() { m_cache.reset(); }
 
 QFuture<VicinaeStore::ListResult> VicinaeStoreService::search(const QString &query) {
   auto url = QString("/store/search?q=%1").arg(query);
