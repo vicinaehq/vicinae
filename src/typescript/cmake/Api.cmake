@@ -33,7 +33,7 @@ set(API_STAMP "${CMAKE_CURRENT_BINARY_DIR}/api.stamp")
 if (INSTALL_NODE_MODULES)
 	add_custom_command(
 		OUTPUT ${API_NODE_MODULES}
-		COMMAND npm install
+		COMMAND npm ci
 		WORKING_DIRECTORY ${EXT_API_SRC_DIR}
 		COMMENT "Install API node_modules"
 	)

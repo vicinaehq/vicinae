@@ -45,7 +45,7 @@ jobs:
           npm version "$TAG_NAME" --no-git-tag-version
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Build package
         run: npm run build
       - uses: JS-DevTools/npm-publish@19c28f1ef146469e409470805ea4279d47c3d35c
