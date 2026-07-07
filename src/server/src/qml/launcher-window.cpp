@@ -1,6 +1,7 @@
 #include "launcher-window.hpp"
 #include "hud-bridge.hpp"
 #include "keybind-bridge.hpp"
+#include "keyboard-bridge.hpp"
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
 #include "ui/image/image-renderer.hpp"
@@ -17,7 +18,6 @@
 #include "extensions/vicinae/bug-report-url.hpp"
 #include "qml/vicinae-store-view-host.hpp"
 #include "settings-controller/settings-controller.hpp"
-#include "services/keybinding/keybinding-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
@@ -50,7 +50,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
       m_footerPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
-      m_platformBridge(new PlatformBridge(this)), m_themeBridge(new ThemeBridge(this)) {
+      m_keyboardBridge(new KeyboardBridge(this)), m_platformBridge(new PlatformBridge(this)),
+      m_themeBridge(new ThemeBridge(this)) {
 
 #ifndef Q_OS_MACOS
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
@@ -70,6 +71,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
   rootCtx->setContextProperty(QStringLiteral("footerPanel"), m_footerPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
+  rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"), ctx.services->fileChooserService());
 
   updateLayerShellProps();
@@ -517,10 +519,6 @@ void LauncherWindow::popToRoot() {
 }
 
 bool LauncherWindow::popOnBackspace() { return m_ctx.services->config()->value().popOnBackspace; }
-
-int LauncherWindow::matchNavigationKey(int key, int modifiers) {
-  return KeyBindingService::matchNavigation(key, modifiers, m_ctx.services->config()->value().keybinding);
-}
 
 void LauncherWindow::setCompleterValue(int index, const QString &value) {
   auto *nav = m_ctx.navigation.get();

@@ -80,7 +80,7 @@ ViciPopover {
                 onClicked: root.close()
                 Keys.onRightPressed: confirmBtn.forceActiveFocus()
                 Keys.onPressed: event => {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                    const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                     if (nav === 4) {
                         confirmBtn.forceActiveFocus();
                         event.accepted = true;
@@ -108,7 +108,7 @@ ViciPopover {
                 }
                 Keys.onLeftPressed: cancelBtn.forceActiveFocus()
                 Keys.onPressed: event => {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                    const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                     if (nav === 3) {
                         cancelBtn.forceActiveFocus();
                         event.accepted = true;
