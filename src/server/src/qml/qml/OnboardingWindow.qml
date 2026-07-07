@@ -164,9 +164,19 @@ Window {
                                 label: "Full Disk Access"
                                 description: "Lets file search cover your entire disk."
                                 iconSource: Img.system("internaldrive").withFillColor(Theme.foreground)
-                                showSeparator: false
+                                showSeparator: Permissions.notificationsSupported
                                 granted: Permissions.fullDiskAccessGranted
                                 onGrant: Permissions.requestFullDiskAccess()
+                            }
+
+                            PermissionRow {
+                                label: "Notifications"
+                                description: "Lets extensions send desktop notifications."
+                                iconSource: Img.system("bell.badge").withFillColor(Theme.foreground)
+                                showSeparator: false
+                                visible: Permissions.notificationsSupported
+                                granted: Permissions.notificationsGranted
+                                onGrant: Permissions.requestNotifications()
                             }
                         }
 

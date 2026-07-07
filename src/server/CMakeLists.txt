@@ -661,6 +661,8 @@ if (APPLE)
 		src/services/permissions/macos-permission-service.mm
 		src/services/autostart/macos-login-item.hpp
 		src/services/autostart/macos-login-item.mm
+		src/services/desktop-notification/macos/macos-notification-client.hpp
+		src/services/desktop-notification/macos/macos-notification-client.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -680,8 +682,9 @@ if (APPLE)
 		src/services/update/macos-update-installer.mm
 		src/services/permissions/macos-permission-service.mm
 		src/services/autostart/macos-login-item.mm
+		src/services/desktop-notification/macos/macos-notification-client.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
-	list(APPEND LIBS "-framework ServiceManagement")
+	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications")
 
 	if (AUTO_ENABLE_AUTOSTART)
 		add_compile_definitions(AUTO_ENABLE_AUTOSTART)

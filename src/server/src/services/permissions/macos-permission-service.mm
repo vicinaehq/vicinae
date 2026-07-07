@@ -2,7 +2,9 @@
 #include <ApplicationServices/ApplicationServices.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <QPointer>
 #import <AppKit/AppKit.h>
+#import <UserNotifications/UserNotifications.h>
 
 namespace {
 
@@ -41,8 +43,10 @@ void openPane(const char *url) {
 MacosPermissionService::MacosPermissionService(QObject *parent) : QObject(parent) {
   m_accessibilityGranted = AXIsProcessTrusted();
   m_fullDiskAccessGranted = probeFullDiskAccess();
+  m_notificationsSupported = NSBundle.mainBundle.bundleIdentifier != nil;
   m_pollTimer.setInterval(POLL_INTERVAL_MS);
   connect(&m_pollTimer, &QTimer::timeout, this, &MacosPermissionService::refresh);
+  refreshNotifications();
 }
 
 void MacosPermissionService::setWatching(bool value) {
@@ -70,6 +74,47 @@ void MacosPermissionService::requestAccessibility() {
 
 void MacosPermissionService::requestFullDiskAccess() { openPane(FULL_DISK_PANE_URL); }
 
+void MacosPermissionService::requestNotifications() {
+  if (!m_notificationsSupported) return;
+
+  if (m_notificationsNotDetermined) {
+    QPointer<MacosPermissionService> self(this);
+    [UNUserNotificationCenter.currentNotificationCenter
+        requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionSound)
+                      completionHandler:^(BOOL, NSError *) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                          if (self) self->refreshNotifications();
+                        });
+                      }];
+    return;
+  }
+
+  NSString *url =
+      [NSString stringWithFormat:@"x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=%@",
+                                 NSBundle.mainBundle.bundleIdentifier];
+  [NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:url]];
+}
+
+void MacosPermissionService::refreshNotifications() {
+  if (!m_notificationsSupported) return;
+
+  QPointer<MacosPermissionService> self(this);
+  [UNUserNotificationCenter.currentNotificationCenter
+      getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings) {
+        const UNAuthorizationStatus status = settings.authorizationStatus;
+        dispatch_async(dispatch_get_main_queue(), ^{
+          if (!self) return;
+          self->m_notificationsNotDetermined = status == UNAuthorizationStatusNotDetermined;
+          const bool granted =
+              status == UNAuthorizationStatusAuthorized || status == UNAuthorizationStatusProvisional;
+          if (granted != self->m_notificationsGranted) {
+            self->m_notificationsGranted = granted;
+            emit self->notificationsGrantedChanged();
+          }
+        });
+      }];
+}
+
 void MacosPermissionService::refresh() {
   const bool accessibility = AXIsProcessTrusted();
   if (accessibility != m_accessibilityGranted) {
@@ -82,4 +127,6 @@ void MacosPermissionService::refresh() {
     m_fullDiskAccessGranted = fullDisk;
     emit fullDiskAccessGrantedChanged();
   }
+
+  refreshNotifications();
 }
