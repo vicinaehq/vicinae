@@ -156,22 +156,14 @@ Window {
                                 label: "Accessibility"
                                 description: "Used to paste, expand snippets, and move windows."
                                 iconSource: Img.system("accessibility").withFillColor(Theme.foreground)
+                                showSeparator: false
                                 granted: root.accessibilityGranted
                                 onGrant: Permissions.requestAccessibility()
-                            }
-
-                            PermissionRow {
-                                label: "Full Disk Access"
-                                description: "Lets search cover your entire disk."
-                                iconSource: Img.system("internaldrive").withFillColor(Theme.foreground)
-                                showSeparator: false
-                                granted: Permissions.fullDiskAccessGranted
-                                onGrant: Permissions.requestFullDiskAccess()
                             }
                         }
 
                         Text {
-                            visible: !root.accessibilityGranted || !Permissions.fullDiskAccessGranted
+                            visible: !root.accessibilityGranted
                             text: "You may skip this step; macOS will prompt you for permission later."
                             color: Theme.textMuted
                             font.pointSize: Theme.smallerFontSize
