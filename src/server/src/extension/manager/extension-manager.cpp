@@ -85,6 +85,26 @@ ExtensionManager::ExtensionManager() : m_bus(&m_process), m_rpc(m_bus), m_client
 
 bool ExtensionManager::isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
 
+// exec node through a hard link so the process shows up as "vicinae-ext-runtime"
+// instead of a bare "node" in system monitors
+static fs::path taggedNodeExecutable(const fs::path &node) {
+  std::error_code ec;
+  const fs::path tagged = node.parent_path() / "vicinae-ext-runtime";
+
+  if (fs::equivalent(tagged, node, ec)) return tagged;
+
+  fs::remove(tagged, ec);
+  fs::create_hard_link(node, tagged, ec);
+
+  if (ec) {
+    qWarning() << "Failed to create tagged node runtime link:" << ec.message().c_str() << "- falling back to"
+               << node.c_str();
+    return node;
+  }
+
+  return tagged;
+}
+
 std::optional<fs::path> ExtensionManager::nodeExecutable() {
   if (auto bin = Environment::nodeBinaryOverride()) {
     std::error_code ec;
@@ -101,7 +121,7 @@ std::optional<fs::path> ExtensionManager::nodeExecutable() {
 
 #if VICINAE_NODE_RUNTIME_DOWNLOAD
   fs::path managed = Omnicast::dataDir() / "node" / VICINAE_NODE_RUNTIME_VERSION / "node";
-  if (std::error_code ec; fs::is_regular_file(managed, ec)) { return managed; }
+  if (std::error_code ec; fs::is_regular_file(managed, ec)) { return taggedNodeExecutable(managed); }
 #else
   if (auto path = QStandardPaths::findExecutable("node"); !path.isEmpty()) { return path.toStdString(); }
 #endif
