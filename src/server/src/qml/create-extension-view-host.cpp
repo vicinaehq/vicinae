@@ -1,7 +1,6 @@
 #include "create-extension-view-host.hpp"
 #include "create-extension-success-view-host.hpp"
 #include "navigation-controller.hpp"
-#include "view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
 #include "services/toast/toast-service.hpp"
@@ -55,7 +54,6 @@ void CreateExtensionViewHost::submit() {
   m_descriptionError.clear();
   m_locationError.clear();
   m_commandTitleError.clear();
-  m_commandSubtitleError.clear();
   m_commandDescriptionError.clear();
 
   bool valid = true;
@@ -87,10 +85,7 @@ void CreateExtensionViewHost::submit() {
     m_commandTitleError = QStringLiteral("Min. 3 chars");
     valid = false;
   }
-  if (m_commandSubtitle.size() < 3) {
-    m_commandSubtitleError = QStringLiteral("Min. 3 chars");
-    valid = false;
-  }
+
   if (m_commandDescription.size() < 3) {
     m_commandDescriptionError = QStringLiteral("Min. 3 chars");
     valid = false;
@@ -110,7 +105,6 @@ void CreateExtensionViewHost::submit() {
 
   ExtensionBoilerplateConfig::CommandConfig cmdCfg;
   cmdCfg.title = m_commandTitle;
-  cmdCfg.subtitle = m_commandSubtitle;
   cmdCfg.description = m_commandDescription;
   cmdCfg.templateId = m_selectedTemplate[QStringLiteral("id")].toString();
   cfg.commands.emplace_back(std::move(cmdCfg));

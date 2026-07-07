@@ -12,7 +12,6 @@ namespace fs = std::filesystem;
 static const QString COMMAND_JSON_TEMPLATE = R"(    {
       "name": "%NAME%",
       "title": "%TITLE%",
-      "subtitle": "%SUBTITLE%",
       "description": "%DESCRIPTION%",
       "mode": "%MODE%"
     })";
@@ -85,7 +84,6 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
     QString const cmdString = QString(COMMAND_JSON_TEMPLATE)
                                   .replace(PLACEHOLDER("NAME"), name.simplified())
                                   .replace(PLACEHOLDER("TITLE"), cmd.title.simplified())
-                                  .replace(PLACEHOLDER("SUBTITLE"), cmd.subtitle.simplified())
                                   .replace(PLACEHOLDER("DESCRIPTION"), cmd.description.simplified())
                                   .replace(PLACEHOLDER("MODE"), mode);
 

@@ -82,19 +82,6 @@ Item {
         }
 
         FormField {
-            id: subtitleField
-            label: "Subtitle"
-            error: root.host.commandSubtitleError
-
-            FormTextInput {
-                text: root.host.commandSubtitle
-                placeholder: "An helpful subtitle"
-                hasError: subtitleField.error !== ""
-                onTextEdited: root.host.commandSubtitle = text
-            }
-        }
-
-        FormField {
             id: cmdDescField
             label: "Description"
             error: root.host.commandDescriptionError
