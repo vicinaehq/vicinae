@@ -438,9 +438,19 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
   std::ranges::for_each(exec | std::views::drop(1), [&](auto &&arg) { argv << arg; });
   auto texec = getTermExec(*xdgApp);
 
-  if (texec.appId && opts.appId) { argv << texec.appId->c_str() << opts.appId.value(); }
-  if (texec.title && opts.title) { argv << texec.title->c_str() << opts.title.value(); }
-  if (texec.dir && opts.workingDirectory) { argv << texec.dir->c_str() << opts.workingDirectory.value(); }
+  // per the xdg-terminal-exec spec, a flag ending with '=' takes its value appended
+  // to the same argument, without whitespace
+  auto addFlag = [&argv](const std::string &flag, const QString &value) {
+    if (flag.ends_with('=')) {
+      argv << QString::fromStdString(flag) + value;
+    } else {
+      argv << flag.c_str() << value;
+    }
+  };
+
+  if (texec.appId && opts.appId) { addFlag(*texec.appId, opts.appId.value()); }
+  if (texec.title && opts.title) { addFlag(*texec.title, opts.title.value()); }
+  if (texec.dir && opts.workingDirectory) { addFlag(*texec.dir, opts.workingDirectory.value()); }
   if (texec.hold && opts.hold) { argv << texec.hold->c_str(); }
   if (texec.exec) { argv << texec.exec->c_str(); }
 
