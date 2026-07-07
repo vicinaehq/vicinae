@@ -83,7 +83,7 @@ static constexpr std::chrono::milliseconds DETAIL_CLEAR_DEBOUNCE(150);
 ExtensionListModel::ExtensionListModel(NotifyFn notify, QObject *parent)
     : SectionListModel(parent), m_notify(std::move(notify)) {
   m_detailClearTimer.setSingleShot(true);
-  connect(&m_detailClearTimer, &QTimer::timeout, this, [this]() { setCurrentDetail(nullptr); });
+  connect(&m_detailClearTimer, &QTimer::timeout, this, [this]() { refreshCurrentDetail(); });
 }
 
 void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSelection) {
