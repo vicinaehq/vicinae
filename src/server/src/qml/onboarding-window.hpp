@@ -8,6 +8,7 @@ class ConfigBridge;
 class ImageSource;
 class KeyboardBridge;
 class GlobalShortcutBridge;
+class PlatformBridge;
 class GeneralSettingsModel;
 class MacosPermissionService;
 class QQuickWindow;
@@ -51,6 +52,7 @@ private:
   ImageSource *m_imgSource = nullptr;
   KeyboardBridge *m_keyboardBridge = nullptr;
   GlobalShortcutBridge *m_globalShortcutBridge = nullptr;
+  PlatformBridge *m_platformBridge = nullptr;
   GeneralSettingsModel *m_generalModel = nullptr;
   MacosPermissionService *m_permissions = nullptr;
   QQuickWindow *m_window = nullptr;

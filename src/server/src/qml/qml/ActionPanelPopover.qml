@@ -37,7 +37,7 @@ ViciPopover {
         focus: true
 
         Keys.onPressed: event => {
-            const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+            const nav = Keyboard.matchNavigation(event.key, event.modifiers);
             if (event.key === Qt.Key_Escape) {
                 root.controller.pop();
                 event.accepted = true;

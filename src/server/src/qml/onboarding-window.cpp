@@ -4,6 +4,7 @@
 #include "global-shortcut-bridge.hpp"
 #include "image-source.hpp"
 #include "keyboard-bridge.hpp"
+#include "platform-bridge.hpp"
 #include "theme-bridge.hpp"
 #include "services/app-service/app-service.hpp"
 #include "vicinae.hpp"
@@ -98,6 +99,7 @@ void OnboardingWindow::ensureInitialized() {
   m_imgSource = new ImageSource(this);
   m_keyboardBridge = new KeyboardBridge(this);
   m_globalShortcutBridge = new GlobalShortcutBridge(this);
+  m_platformBridge = new PlatformBridge(this);
   m_generalModel = new GeneralSettingsModel(this);
 
   auto *rootCtx = m_engine.rootContext();
@@ -106,6 +108,7 @@ void OnboardingWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
   rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
   rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
+  rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
   rootCtx->setContextProperty(QStringLiteral("onboarding"), this);
 
 #ifdef Q_OS_MACOS

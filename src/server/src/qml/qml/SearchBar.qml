@@ -193,7 +193,7 @@ Item {
                 }
 
                 function _handleNavigation(event) {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                    const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                     if (nav === 0)
                         return false;
 
