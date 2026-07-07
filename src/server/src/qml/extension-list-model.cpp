@@ -1,5 +1,6 @@
 #include "extension-list-model.hpp"
 
+#include <chrono>
 #include <utility>
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "view-utils.hpp"
@@ -77,10 +78,16 @@ std::unique_ptr<ActionPanelState> ExtensionListSection::actionPanel(int i) const
 
 // --- ExtensionListModel ---
 
+static constexpr std::chrono::milliseconds DETAIL_CLEAR_DEBOUNCE(150);
+
 ExtensionListModel::ExtensionListModel(NotifyFn notify, QObject *parent)
-    : SectionListModel(parent), m_notify(std::move(notify)) {}
+    : SectionListModel(parent), m_notify(std::move(notify)) {
+  m_detailClearTimer.setSingleShot(true);
+  connect(&m_detailClearTimer, &QTimer::timeout, this, [this]() { setCurrentDetail(nullptr); });
+}
 
 void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSelection) {
+  bool const wasShowingDetail = m_model.isShowingDetail;
   m_model = model;
   m_placeholder = QString::fromStdString(model.searchPlaceholderText);
 
@@ -128,8 +135,47 @@ void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSele
     refreshActionPanel();
   }
 
+  refreshCurrentDetail();
+
+  if (wasShowingDetail != m_model.isShowingDetail) emit isShowingDetailChanged();
+
   emit emptyViewChanged();
+}
+
+void ExtensionListModel::refreshCurrentDetail() {
+  const DetailModel *detail = nullptr;
+
+  int sourceIdx = 0;
+  int itemIdx = 0;
+  if (dataItemAt(selectedIndex(), sourceIdx, itemIdx)) {
+    const auto &item = m_ownedSections[sourceIdx]->itemAt(itemIdx);
+    if (item.detail) detail = &*item.detail;
+  }
+
+  setCurrentDetail(detail);
+}
+
+void ExtensionListModel::setCurrentDetail(const DetailModel *detail) {
+  m_detailClearTimer.stop();
+
+  QString markdown;
+  QVariantList metadata;
+
+  if (detail) {
+    if (detail->markdown) markdown = QString::fromStdString(*detail->markdown);
+    metadata = qml::metadataToVariantList(detail->metadata);
+  }
+
+  if (markdown == m_detailMarkdown && metadata == m_detailMetadata) return;
+
+  m_detailMarkdown = std::move(markdown);
+  m_detailMetadata = std::move(metadata);
   emit detailChanged();
+}
+
+void ExtensionListModel::scheduleDetailClear() {
+  if (m_detailMarkdown.isEmpty() && m_detailMetadata.isEmpty()) return;
+  m_detailClearTimer.start(DETAIL_CLEAR_DEBOUNCE);
 }
 
 void ExtensionListModel::setFilter(const QString &text) {
@@ -158,17 +204,7 @@ ImageUrl ExtensionListModel::emptyIcon() const {
 
 bool ExtensionListModel::isShowingDetail() const { return m_model.isShowingDetail; }
 
-bool ExtensionListModel::hasDetail() const { return m_currentDetail.has_value(); }
-
-QString ExtensionListModel::detailMarkdown() const {
-  if (m_currentDetail && m_currentDetail->markdown) return QString::fromStdString(*m_currentDetail->markdown);
-  return {};
-}
-
-QVariantList ExtensionListModel::detailMetadata() const {
-  if (!m_currentDetail) return {};
-  return qml::metadataToVariantList(m_currentDetail->metadata);
-}
+QString ExtensionListModel::detailMarkdown() const { return m_detailMarkdown; }
 
 void ExtensionListModel::onSelectionCleared() {
   std::unique_ptr<ActionPanelState> panel;
@@ -190,8 +226,11 @@ void ExtensionListModel::onSelectionCleared() {
 }
 
 void ExtensionListModel::handleItemSelected(const ListItemViewModel *item) {
-  m_currentDetail = item ? item->detail : std::nullopt;
-  emit detailChanged();
+  if (item && item->detail) {
+    setCurrentDetail(&*item->detail);
+  } else {
+    scheduleDetailClear();
+  }
 
   if (auto handler = m_model.onSelectionChanged) {
     if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }

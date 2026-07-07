@@ -98,7 +98,7 @@ Item {
                 emptyIcon: root.host.contentModel.emptyIcon?.valid ? root.host.contentModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 
                 detailComponent: detailPanel
-                detailVisible: root.host.contentModel.isShowingDetail && root.host.contentModel.hasDetail
+                detailVisible: root.host.contentModel.isShowingDetail
 
                 delegate: Loader {
                     id: delegateLoader
