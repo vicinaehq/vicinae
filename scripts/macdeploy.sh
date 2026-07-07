@@ -109,6 +109,7 @@ rm -rf "$BUNDLE/Contents/PlugIns/sqldrivers" \
        "$BUNDLE/Contents/PlugIns/tls/libqopensslbackend.dylib" \
        "$BUNDLE/Contents/PlugIns/quick/libparticlesplugin.dylib" \
        "$BUNDLE/Contents/PlugIns/quick/libqmlshapesplugin.dylib" \
+       "$BUNDLE/Contents/PlugIns/quick/libqtquickshapesdesignhelpersplugin.dylib" \
        "$BUNDLE/Contents/PlugIns/quick/libqmlfolderlistmodelplugin.dylib" \
        "$BUNDLE/Contents/PlugIns/quick/libqmlxmllistmodelplugin.dylib" \
        "$BUNDLE/Contents/PlugIns/quick/libqmllocalstorageplugin.dylib" \
