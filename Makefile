@@ -36,6 +36,10 @@ dmg: mac-bundle
 	./scripts/mkdmg.sh $(BUILD_DIR)
 .PHONY: dmg
 
+verify-dmg:
+	./scripts/verify-dmg.sh $(BUILD_DIR)/Vicinae.dmg
+.PHONY: verify-dmg
+
 mac-deps:
 	@./scripts/macos-setup.sh
 .PHONY: mac-deps

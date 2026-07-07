@@ -1,0 +1,141 @@
+name: macOS DMG
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        default: ""
+      commit:
+        type: string
+        default: ""
+      upload-to-release:
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-macos-dmg:
+    runs-on: depot-macos-26
+    name: build-macos-dmg (arm64)
+    permissions:
+      contents: write
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      QT_VERSION: 6.11.1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag }}
+
+      - name: Cache Homebrew downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/Homebrew
+          key: brew-${{ runner.os }}-${{ hashFiles('scripts/macos-setup.sh') }}
+          restore-keys: |
+            brew-${{ runner.os }}-
+
+      - name: Cache Qt
+        uses: actions/cache@v4
+        with:
+          path: ~/Qt
+          key: qt-macos-${{ env.QT_VERSION }}
+
+      - name: Install dependencies
+        run: make mac-deps
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-macos-${{ github.sha }}
+          restore-keys: |
+            ccache-macos-
+
+      - name: Import Developer ID certificate
+        env:
+          APPLE_P12: ${{ secrets.APPLE_P12 }}
+          APPLE_P12_PASSWORD: ${{ secrets.APPLE_P12_PASSWORD }}
+          APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+        run: |
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+
+          echo -n "$APPLE_P12" | base64 --decode -o "$CERT_PATH"
+
+          security create-keychain -p "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$APPLE_P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain
+
+          rm -f "$CERT_PATH"
+
+      - name: Store notarization credentials
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          xcrun notarytool store-credentials vicinae \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD"
+
+      - name: Configure CMake
+        run: |
+          VERSION_FLAGS=()
+          if [[ -n "${{ inputs.tag }}" ]]; then
+            VERSION_FLAGS+=(
+              -DVICINAE_GIT_TAG="${{ inputs.tag }}"
+              -DVICINAE_GIT_COMMIT_HASH="${{ inputs.commit }}"
+            )
+          fi
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLTO=ON \
+            -DVICINAE_PROVENANCE=dmg \
+            -DQT_DIR=$HOME/Qt/$QT_VERSION/macos \
+            "${VERSION_FLAGS[@]}"
+
+      - name: Build
+        run: cmake --build build --parallel $(sysctl -n hw.ncpu)
+
+      - name: Package DMG (sign, notarize, staple)
+        env:
+          VICINAE_CODESIGN_IDENTITY: "Developer ID Application: Aurelien Brabant (GAKKWN484D)"
+          VICINAE_NOTARY_PROFILE: vicinae
+        run: make dmg
+
+      - name: Verify DMG
+        run: ./scripts/verify-dmg.sh build/Vicinae.dmg
+
+      - name: Upload DMG as workflow artifact
+        if: ${{ !inputs.upload-to-release }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vicinae-dmg-${{ github.sha }}
+          path: build/Vicinae.dmg
+          retention-days: 7
+
+      - name: Upload DMG to GitHub Release
+        if: ${{ inputs.upload-to-release }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
+          files: |
+            build/Vicinae.dmg
+
+      - name: Delete signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
