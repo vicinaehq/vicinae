@@ -62,8 +62,8 @@ ThemeFile ThemeFile::vicinaeDark() {
   data.semantics = {
       {SemanticColor::Background, QColor("#0f1014")},
       {SemanticColor::SecondaryBackground, QColor("#15161b")},
-      {SemanticColor::ListItemSelectionBackground, QColor("#343641")},
-      {SemanticColor::GridItemBackground, QColor("#2c2e38")},
+      {SemanticColor::ListItemSelectionBackground, QColor("#272831")},
+      {SemanticColor::GridItemBackground, QColor("#1b1c22")},
       {SemanticColor::Foreground, QColor("#e7e5e4")},
       {SemanticColor::BackgroundBorder, QColor("#373842")},
       {SemanticColor::Accent, QColor("#b8944e")},
