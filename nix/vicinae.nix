@@ -127,15 +127,41 @@ in
     # On macOS CMake installs only the CLI; assemble a thin .app bundle for the
     # GUI server. Both binaries go in the bundle so the CLI resolves the server
     # as a sibling (findServerBinary); $out/bin/vicinae is re-added in postFixup.
-    postInstall = lib.optionalString isDarwin ''
-      app=$out/Applications/Vicinae.app
-      install -Dm755 bin/vicinae-server "$app/Contents/MacOS/Vicinae"
-      install -Dm755 bin/vicinae "$app/Contents/MacOS/vicinae-cli"
-      install -Dm644 Info.plist "$app/Contents/Info.plist"
-      install -Dm644 ../extra/vicinae.icns "$app/Contents/Resources/vicinae.icns"
-      cp -r ../extra/themes "$app/Contents/Resources/themes"
-      rm -f "$out/bin/vicinae"
-    '';
+    postInstall =
+      lib.optionalString isDarwin ''
+        app=$out/Applications/Vicinae.app
+        install -Dm755 bin/vicinae-server "$app/Contents/MacOS/Vicinae"
+        install -Dm755 bin/vicinae "$app/Contents/MacOS/vicinae-cli"
+        install -Dm644 Info.plist "$app/Contents/Info.plist"
+        install -Dm644 ../extra/vicinae.icns "$app/Contents/Resources/vicinae.icns"
+        cp -r ../extra/themes "$app/Contents/Resources/themes"
+        rm -f "$out/bin/vicinae"
+      ''
+      # Generate native host manifests for Firefox and Chromium, so the browser
+      # extension can communicate with the browser link
+      + ''
+        install -d "$out/lib/mozilla/native-messaging-hosts"
+        cat > "$out/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json" <<EOF
+        {
+          "name": "com.vicinae.vicinae",
+          "description": "Vicinae Native Messaging Host",
+          "path": "$out/libexec/vicinae/vicinae-browser-link",
+          "type": "stdio",
+          "allowed_extensions": ["firefox@vicinae.com"]
+        }
+        EOF
+
+        install -d "$out/etc/chromium/native-messaging-hosts"
+        cat > "$out/etc/chromium/native-messaging-hosts/com.vicinae.vicinae.json" <<EOF
+        {
+          "name": "com.vicinae.vicinae",
+          "description": "Vicinae Native Messaging Host",
+          "path": "$out/libexec/vicinae/vicinae-browser-link",
+          "type": "stdio",
+          "allowed_origins": ["chrome-extension://kcmipingpfbohfjckomimmahknoddnke/"]
+        }
+        EOF
+      '';
 
     # Symlink the CLI onto PATH after wrapQtAppsHook runs, so the hook doesn't
     # double-wrap it and the CLI still resolves from inside the bundle.

@@ -86,6 +86,13 @@ in {
       '';
     };
 
+    enableChromeIntegration = lib.mkOption {
+      default = true;
+      description = ''
+        Whether to install the messaging host so that the chrome extension <https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke> works.
+      '';
+    };
+
     systemd = {
       enable = lib.mkEnableOption "vicinae systemd integration";
 
@@ -306,17 +313,9 @@ in {
           // themeFiles;
       };
 
-      programs.firefox.nativeMessagingHosts = lib.mkIf cfg.enableFirefoxIntegration [
-        (pkgs.writeTextDir "lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json" (
-          builtins.toJSON {
-            name = "com.vicinae.vicinae";
-            description = "Vicinae Native Messaging Host";
-            path = "${vicinaePkg}/libexec/vicinae/vicinae-browser-link";
-            type = "stdio";
-            allowed_extensions = ["firefox@vicinae.com"];
-          }
-        ))
-      ];
+      programs.firefox.nativeMessagingHosts = lib.mkIf (cfg.enableFirefoxIntegration) [vicinaePkg];
+
+      programs.google-chrome.nativeMessagingHosts = lib.mkIf (cfg.enableChromeIntegration) [vicinaePkg];
 
       systemd.user.services.vicinae = lib.mkIf (cfg.systemd.enable) {
         Unit = {
