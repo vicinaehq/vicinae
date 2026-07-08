@@ -6,6 +6,8 @@ ScrollView {
 
     property alias text: textArea.text
 
+    Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
+
     function moveUp() {
         contentItem.contentY = Math.max(0, contentItem.contentY - 40);
     }

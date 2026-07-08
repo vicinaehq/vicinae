@@ -67,10 +67,9 @@ public:
 
   /**
    * Return the node executable used to spawn the extension manager.
-   * We first look for the first `vicinae-node` binary in PATH and then do the same for `node`.
-   * `vicinae-node` is used by script installations and have a specific name to ensure we do not
-   * create conflict with existing node installations.
-   * If we are running from an appimage, the path to the internal distribution of node is returned.
+   * Self-distributed builds (VICINAE_NODE_RUNTIME_DOWNLOAD) only ever use the managed
+   * runtime downloaded on first use; other builds use the system node.
+   * VICINAE_NODE_BIN overrides everything.
    */
   std::optional<std::filesystem::path> nodeExecutable();
 
@@ -95,10 +94,13 @@ public:
   void readError();
 
 private:
+  void downloadNodeRuntime();
+  void installNodeRuntime(const std::filesystem::path &archive);
+
   QProcess m_process;
   Bus m_bus;
   manager::RpcTransport m_rpc;
   manager::Client m_client;
   std::unordered_set<QString> m_developmentSessions;
+  bool m_nodeDownloadStarted = false;
 };
-;

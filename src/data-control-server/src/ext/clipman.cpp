@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "clipman.hpp"
 #include "clipboard-writer.hpp"
+#include "common/clipboard-formats.hpp"
 #include "stdin-reader.hpp"
 #include "selection.hpp"
 
@@ -37,7 +38,7 @@ void ExtClipman::selection(ExtDataDevice &, ExtDataOffer &offer) {
   }
 
   auto &mimes = offer.mimes();
-  if (std::ranges::find(mimes, "vicinae/concealed") != mimes.end()) return;
+  if (std::ranges::find(mimes, Clipboard::CONCEALED_MIME_TYPE) != mimes.end()) return;
 
   auto selection = Selection::buildSelection(Selection::filterMimes(mimes), offer);
   m_writer(selection);

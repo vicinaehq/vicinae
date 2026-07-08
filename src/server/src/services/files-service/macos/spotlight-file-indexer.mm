@@ -238,6 +238,11 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
 
 } // namespace
 
+
+bool SpotlightFileIndexer::isAvailable() const {
+	return true;
+}
+
 QFuture<std::vector<IndexerFileResult>> SpotlightFileIndexer::queryAsync(std::string_view query,
                                                                          const IndexerQueryParams &params) {
   return QtConcurrent::run([params, q = std::string(query)]() {

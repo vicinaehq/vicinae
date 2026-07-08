@@ -1,4 +1,5 @@
 #include "general-settings-model.hpp"
+#include "capabilities.hpp"
 #include "config/config.hpp"
 #include "view-utils.hpp"
 #include "service-registry.hpp"
@@ -54,6 +55,11 @@ void GeneralSettingsModel::setActivateOnSingleClick(bool v) {
   cfgManager().mergeWithUser({.activateOnSingleClick = v});
 }
 
+bool GeneralSettingsModel::encryptSensitiveData() const { return cfg().encryptSensitiveData; }
+void GeneralSettingsModel::setEncryptSensitiveData(bool v) {
+  cfgManager().mergeWithUser({.encryptSensitiveData = v});
+}
+
 bool GeneralSettingsModel::telemetrySystemInfo() const { return cfg().telemetry.systemInfo; }
 void GeneralSettingsModel::setTelemetrySystemInfo(bool v) {
   cfgManager().mergeWithUser({.telemetry = config::Partial<config::TelemetryConfig>{.systemInfo = v}});
@@ -74,16 +80,14 @@ void GeneralSettingsModel::setClientSideDecorations(bool v) {
            .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = v}}});
 }
 
-QString GeneralSettingsModel::csdRounding() const {
-  return QString::number(cfg().launcherWindow.clientSideDecorations.rounding);
+QString GeneralSettingsModel::rounding() const {
+  return QString::number(cfg().launcherWindow.effectiveRounding());
 }
-void GeneralSettingsModel::setCsdRounding(const QString &v) {
+void GeneralSettingsModel::setRounding(const QString &v) {
   bool ok = false;
   int val = v.toInt(&ok);
   if (ok)
-    cfgManager().mergeWithUser(
-        {.launcherWindow = config::Partial<config::WindowConfig>{
-             .clientSideDecorations = config::Partial<config::WindowCSD>{.rounding = val}}});
+    cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.rounding = val}});
 }
 
 QString GeneralSettingsModel::csdBorderWidth() const {
@@ -122,7 +126,11 @@ void GeneralSettingsModel::setInputServerEnabled(bool v) {
   cfgManager().mergeWithUser({.inputServer = config::Partial<config::InputServer>{.enabled = v}});
 }
 
-QString GeneralSettingsModel::windowOpacity() const { return QString::number(cfg().launcherWindow.opacity); }
+QString GeneralSettingsModel::windowOpacity() const {
+  return QString::number(
+      cfg().launcherWindow.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),
+                                           platform::supports(platform::Capability::WindowMaterial)));
+}
 void GeneralSettingsModel::setWindowOpacity(const QString &v) {
   bool ok = false;
   float val = v.toFloat(&ok);
@@ -156,6 +164,30 @@ static QVariantList wrapSection(const QString &title, const QVariantList &items)
   section[QStringLiteral("title")] = title;
   section[QStringLiteral("items")] = items;
   return {section};
+}
+
+QVariantList GeneralSettingsModel::windowMaterialItems() const {
+  QVariantList items;
+  items.append(makeDropdownItem(QStringLiteral("none"), QStringLiteral("None")));
+  items.append(makeDropdownItem(QStringLiteral("blur"), QStringLiteral("Blurred")));
+  if (platform::supports(platform::Capability::LiquidGlass))
+    items.append(makeDropdownItem(QStringLiteral("liquid_glass"), QStringLiteral("Liquid Glass")));
+  return wrapSection(QStringLiteral("Window material"), items);
+}
+
+QVariant GeneralSettingsModel::currentWindowMaterial() const {
+  auto id = QString::fromStdString(
+      cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass),
+                                            platform::supports(platform::Capability::WindowMaterial)));
+  QString name = id == "liquid_glass" ? QStringLiteral("Liquid Glass")
+                 : id == "none"       ? QStringLiteral("None")
+                                      : QStringLiteral("Blurred");
+  return makeDropdownItem(id, name);
+}
+
+void GeneralSettingsModel::selectWindowMaterial(const QString &id) {
+  cfgManager().mergeWithUser(
+      {.launcherWindow = config::Partial<config::WindowConfig>{.material = id.toStdString()}});
 }
 
 QVariantList GeneralSettingsModel::themeItems() const {

@@ -227,7 +227,7 @@ Item {
                                 }
 
                                 ShortcutField {
-                                    visible: settings.globalShortcutsSupported
+                                    visible: Platform.supports("globalShortcuts")
                                     bordered: false
                                     placeholder: "Shortcut"
                                     shortcutId: cmdDelegate.entrypointId
@@ -249,7 +249,7 @@ Item {
                                     Layout.preferredHeight: 20
                                     radius: 4
                                     color: cmdDelegate.enabled ? Theme.accent : "transparent"
-                                    border.color: Config.withAlpha(cmdDelegate.enabled ? Theme.accent : Theme.inputBorder, Config.windowOpacity)
+                                    border.color: Config.withAlpha(cmdDelegate.enabled ? Theme.accent : Theme.inputBorder, Config.surfaceOpacity)
                                     border.width: 1
 
                                     Text {

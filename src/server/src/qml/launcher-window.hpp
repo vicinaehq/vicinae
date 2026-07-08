@@ -13,6 +13,8 @@ class ConfigBridge;
 class HudBridge;
 class ImageSource;
 class KeybindBridge;
+class KeyboardBridge;
+class PlatformBridge;
 class ThemeBridge;
 class ViewHostBase;
 class QQuickWindow;
@@ -93,7 +95,6 @@ public:
   Q_INVOKABLE void handleEscape();
   Q_INVOKABLE void goBack();
   Q_INVOKABLE void popToRoot();
-  Q_INVOKABLE int matchNavigationKey(int key, int modifiers);
   Q_INVOKABLE void setCompleterValue(int index, const QString &value);
   Q_INVOKABLE QRect cursorScreenGeometry() const;
   Q_INVOKABLE void positionOnCursorScreen();
@@ -145,6 +146,8 @@ private:
   ConfigBridge *m_configBridge;
   ImageSource *m_imgSource;
   KeybindBridge *m_keybindProxy;
+  KeyboardBridge *m_keyboardBridge;
+  PlatformBridge *m_platformBridge;
   ThemeBridge *m_themeBridge;
 
   QQmlApplicationEngine m_engine;

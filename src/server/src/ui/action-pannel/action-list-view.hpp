@@ -4,7 +4,6 @@
 
 class ActionPanelState;
 class ActionPanelModel;
-class SubmenuAction;
 
 class ActionListView : public ActionPanelView {
   Q_OBJECT
@@ -14,7 +13,6 @@ public:
   ~ActionListView() override;
 
   void adoptState(std::unique_ptr<ActionPanelState> state);
-  void activateSubmenu(SubmenuAction *action);
   const ActionPanelState *state() const { return m_state.get(); }
 
   QUrl componentUrl() const override;
@@ -27,7 +25,6 @@ public:
   void resetState() override;
 
 protected:
-  virtual ActionListView *createSubmenuChild(SubmenuAction *action);
   ActionPanelModel *model() const { return m_model; }
 
 private:

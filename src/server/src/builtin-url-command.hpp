@@ -20,7 +20,7 @@ class BuiltinUrlCommand : public BuiltinCallbackCommand {
       return;
     }
 
-    appDb->launch(*browser, {url(props.arguments).toString()});
+    appDb->launch(*browser, {url(props.arguments).toString(QUrl::FullyEncoded)});
     ctx->navigation->showHud("Opened in browser");
     ctx->navigation->clearSearchText();
   }

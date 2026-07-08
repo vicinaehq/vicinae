@@ -142,6 +142,8 @@ void FileService::preferenceValuesChanged(const QJsonObject &preferences) {
   m_indexer->preferenceValuesChanged(preferences);
 }
 
+bool FileService::isAvailable() const { return m_indexer->isAvailable(); }
+
 FileService::FileService(OmniDatabase &db)
     : m_db(db), m_recentFilesPath(Omnicast::stateDir() / RECENT_FILES_NAME) {
   bool const shouldMigrateRecentFiles = !fs::is_regular_file(m_recentFilesPath);

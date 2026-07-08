@@ -29,7 +29,7 @@ Flickable {
 
         SettingsGroup {
             SettingsRow {
-                visible: settings.globalShortcutsSupported
+                visible: Platform.supports("globalShortcuts")
                 label: "Launcher hotkey"
                 description: "Global shortcut to toggle the Vicinae launcher."
                 ShortcutField {
@@ -63,19 +63,10 @@ Flickable {
             SettingsRow {
                 label: "Pop to root on close"
                 description: "Reset the navigation state when the launcher window is closed."
+                showSeparator: false
                 SettingsToggle {
                     checked: root.model.popToRootOnClose
                     onToggled: root.model.popToRootOnClose = checked
-                }
-            }
-
-            SettingsRow {
-                label: "Compact mode"
-                description: "Show only the search bar at root; expand when a query is entered."
-                showSeparator: false
-                SettingsToggle {
-                    checked: root.model.compactMode
-                    onToggled: root.model.compactMode = checked
                 }
             }
         }

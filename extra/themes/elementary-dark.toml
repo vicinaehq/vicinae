@@ -13,7 +13,7 @@ icon = "icons/elementary.svg"
 background = "#2D2D2D"
 foreground = "#F5F5F5"
 secondary_background = "#383838"
-border = "#4A4A4A"
+border = "#575757"
 
 accent = "#3689E6"
 accent_foreground = "#FFFFFF"
@@ -36,5 +36,8 @@ cyan = "#28BCA3"
 purple = "#7E57C2"
 
 [colors.list.item.selection]
-background = "#4A4A4A"
+background = "#565656"
 secondary_background = "#555555"
+
+[colors.grid.item]
+background = "#4e4e4e"

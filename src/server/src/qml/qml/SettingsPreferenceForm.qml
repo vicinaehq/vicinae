@@ -21,6 +21,7 @@ ColumnLayout {
             required property string type
             required property string fieldId
             required property string label
+            required property string checkboxLabel
             required property string description
             required property string placeholder
             required property var value
@@ -102,7 +103,7 @@ ColumnLayout {
                     iconSource: Img.builtin(field.revealed ? "eye-disabled" : "eye").withFillColor(Theme.textMuted)
                     variant: "ghost"
                     border.width: revealBtn.hovered ? 1 : 0
-                    border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
+                    border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
                     onClicked: field.revealed = !field.revealed
                 }
             }
@@ -113,7 +114,7 @@ ColumnLayout {
         id: switchComp
         SettingsRow {
             id: field
-            label: field.parent.label
+            label: field.parent.label !== "" ? field.parent.label : field.parent.checkboxLabel
             description: field.parent.description
             controlWidth: root.fieldControlWidth
             showSeparator: field.parent.index < settingsRepeater.count - 1

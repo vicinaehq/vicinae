@@ -173,7 +173,7 @@ service WindowManagement {
   fn getWindows(workspaceId?: string) => Window[];
   fn getScreens() => Screen[];
   fn getWorkspaces() => Workspace[];
-  fn setWindowBounds(winId: string, bounds: Rect) => bool;
+  fn setWindowBounds(winId: string, bounds: Rect) => void;
 };
 
 // Clipboard
@@ -295,6 +295,36 @@ service OAuth {
   fn setTokens(payload: SetTokensRequest) => void;
   fn removeTokens(id?: string) => void;
 }
+
+enum WallpaperFit {
+  Cover,
+  Contain, 
+  Stretch,
+  Center,
+  Tile
+};
+
+struct SetWallpaperOptions {
+  fit?: WallpaperFit;
+  screen?: string;
+};
+
+service Wallpaper {
+  fn set(path: string, options: SetWallpaperOptions) => void;
+};
+
+struct BrowserTab {
+  id: int;
+  title?: string;
+  url: string;
+  active: boolean;
+  browserId: string;
+};
+
+service BrowserExtension {
+  fn getTabs() => BrowserTab[];
+  fn focusTab(browserId: string, tabId: int) => void;
+};
 
 // EventCore - used for loosely typed callbacks, required for component event handlers
 

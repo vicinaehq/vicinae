@@ -1,4 +1,5 @@
 #include "extension-action-panel-builder.hpp"
+#include "extension-action-list-view.hpp"
 #include "common-actions.hpp"
 #include "qml/shortcut-form-view-host.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -65,31 +66,7 @@ static AbstractAction *createActionFromModel(const ActionModel &model, const Not
 static AbstractAction *createSubmenuAction(const ActionPannelSubmenuPtr &submenuModel, const NotifyFn &notify,
                                            const SubmitFn &submit) {
   if (!submenuModel) return nullptr;
-
-  std::optional<ImageURL> icon;
-  if (submenuModel->icon) { icon = ImageURL(*submenuModel->icon); }
-
-  std::function<void()> onOpen = nullptr;
-  if (!submenuModel->onOpen.empty()) {
-    onOpen = [notify, handler = submenuModel->onOpen]() {
-      if (!handler.empty()) { notify(QString::fromStdString(handler), {}); }
-    };
-  }
-
-  auto qTitle = QString::fromStdString(submenuModel->title);
-  auto action = new SubmenuAction(qTitle, icon, onOpen);
-  if (submenuModel->stableId) { action->setId(QString::fromStdString(*submenuModel->stableId)); }
-  if (submenuModel->shortcut) { action->addShortcut(submenuModel->shortcut.value()); }
-  if (!submenuModel->onSearchTextChange.empty()) {
-    action->setOnSearchTextChangeHandler(QString::fromStdString(submenuModel->onSearchTextChange));
-  }
-
-  auto stateFactory = [notify, submenuModel, submit]() -> std::unique_ptr<ActionPanelState> {
-    return buildSubmenuState(submenuModel, notify, submit);
-  };
-  action->setSubmenuStateFactory(stateFactory);
-
-  return action;
+  return new ExtensionSubmenuAction(submenuModel, notify, submit);
 }
 
 std::unique_ptr<ActionPanelState> buildSubmenuState(const ActionPannelSubmenuPtr &submenuModel,

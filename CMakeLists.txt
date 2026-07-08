@@ -36,14 +36,42 @@ option(
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
-option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
+
+# Default for the USE_SYSTEM_* options below: Linux distros ship these as system
+# packages, macOS does not, so it flips per platform.
+set(USE_SYSTEM_DEFAULT ON)
+if (APPLE)
+	set(USE_SYSTEM_DEFAULT OFF)
+endif()
+
+option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of the vendored copy under vendor/cmark-gfm" ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
-option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ON)
+option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
-option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
+option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ${USE_SYSTEM_DEFAULT})
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
+option(AUTO_INSTALL_BROWSER_MANIFESTS "Install per-user browser native messaging host manifests at server startup" ON)
+option(AUTO_ENABLE_AUTOSTART "Register the app to start at login on first launch (currently macOS only)" ON)
+option(ENABLE_ONBOARDING "Show the onboarding window on first launch (macOS only)" ON)
+
+set(BUNDLE_SOULVER_CORE_DEFAULT OFF)
+if (APPLE)
+	set(BUNDLE_SOULVER_CORE_DEFAULT ON)
+endif()
+
+option(
+	BUNDLE_SOULVER_CORE
+	"Download the SoulverCore framework and bundle it with the app, making it the default calculator backend (macOS only)"
+	${BUNDLE_SOULVER_CORE_DEFAULT}
+)
+
+set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "macOS app bundle identifier")
+
+set(NATIVE_MESSAGING_HOST "com.vicinae.vicinae")
+set(CHROME_EXTENSION_ID "kcmipingpfbohfjckomimmahknoddnke") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke
+set(FIREFOX_EXTENSION_ID "firefox@vicinae.com")
 
 if (ENABLE_CLANG_TIDY)
 	set(CMAKE_CXX_CLANG_TIDY clang-tidy)
@@ -58,17 +86,18 @@ set(THEME_DIR "${EXTRA_DIR}/themes")
 set(VICINAE_LIBEXEC_PATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 set(VICINAE_LIBEXEC_DIR ${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 
-if (NOT USE_SYSTEM_GLAZE)
-	include(Glaze)
-	import_glaze()
-endif()
-
-if (NOT USE_SYSTEM_KF6 OR APPLE)
-	include(KF6)
-	import_kf6()
-endif()
-
 if (APPLE)
+	if (NOT QT_DIR AND NOT CMAKE_PREFIX_PATH)
+		file(GLOB _qt_candidates "$ENV{HOME}/Qt/*/macos/lib/cmake/Qt6")
+		if (_qt_candidates)
+			list(SORT _qt_candidates COMPARE NATURAL ORDER DESCENDING)
+			list(GET _qt_candidates 0 _qt_cmake_dir)
+			get_filename_component(_qt_prefix "${_qt_cmake_dir}/../../.." ABSOLUTE)
+			list(PREPEND CMAKE_PREFIX_PATH "${_qt_prefix}")
+			message(STATUS "Using Qt from ${_qt_prefix}")
+		endif()
+	endif()
+
 	find_program(BREW_EXECUTABLE brew)
 	if (BREW_EXECUTABLE)
 		execute_process(
@@ -84,18 +113,25 @@ if (APPLE)
 
 	if (HOMEBREW_PREFIX)
 		message(STATUS "Detected Homebrew prefix: ${HOMEBREW_PREFIX}")
-		if (NOT QT_DIR AND EXISTS "${HOMEBREW_PREFIX}/opt/qt/lib/cmake/Qt6")
+		if (NOT QT_DIR AND NOT CMAKE_PREFIX_PATH AND EXISTS "${HOMEBREW_PREFIX}/opt/qt/lib/cmake/Qt6")
 			list(PREPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/qt")
 		endif()
-		if (NOT DEFINED ENV{ICU_ROOT} AND EXISTS "${HOMEBREW_PREFIX}/opt/icu4c")
-			set(ENV{ICU_ROOT} "${HOMEBREW_PREFIX}/opt/icu4c")
-		endif()
+		include_directories(${HOMEBREW_PREFIX}/include)
 		link_directories(${HOMEBREW_PREFIX}/lib)
 	endif()
 
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
-	set(USE_SYSTEM_CMARK_GFM OFF)
+endif()
+
+if (NOT USE_SYSTEM_GLAZE)
+	include(Glaze)
+	import_glaze()
+endif()
+
+if (NOT USE_SYSTEM_KF6)
+	include(KF6)
+	import_kf6()
 endif()
 
 set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
@@ -113,6 +149,11 @@ add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/glyph)
 add_subdirectory(${LIB_DIR}/xdgpp)
 add_subdirectory(${LIB_DIR}/fuzzy)
+add_subdirectory(${LIB_DIR}/crypto)
+
+if (APPLE AND BUNDLE_SOULVER_CORE)
+	add_subdirectory(${LIB_DIR}/soulver)
+endif()
 
 # statically linked vendored libs.
 # Most of the other vendored libs are header only so no need for a CMakeLists.txt
@@ -158,6 +199,37 @@ endif()
 message(STATUS "Vicinae version: ${VICINAE_GIT_TAG}")
 message(STATUS "Vicinae commit hash: ${VICINAE_GIT_COMMIT_HASH}")
 
+set(VICINAE_NODE_RUNTIME_VERSION "v22.23.1" CACHE STRING "Pinned node runtime used to run extensions")
+
+if (APPLE)
+	# we only support apple silicon macs
+	set(_node_runtime_platform "darwin-arm64")
+	set(_node_runtime_sha256 "ef28d8fab2c0e4314522d4bb1b7173270aa3937e93b92cb7de79c112ac1fa953")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+	set(_node_runtime_platform "linux-arm64")
+	set(_node_runtime_sha256 "543fa39e57d4c07855939459a323f4deb9a79dd1bb45e6e99458b0f2de10db8d")
+else()
+	set(_node_runtime_platform "linux-x64")
+	set(_node_runtime_sha256 "7a8cb04b4a1df4eaf432125324b81b29a088e73570a23259a8de1c65d07fc129")
+endif()
+set(VICINAE_NODE_RUNTIME_SHA256 "${_node_runtime_sha256}" CACHE STRING "sha256 of the node runtime archive")
+set(VICINAE_NODE_RUNTIME_URL
+	"https://nodejs.org/dist/${VICINAE_NODE_RUNTIME_VERSION}/node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}.tar.gz"
+	CACHE STRING "URL of the node runtime archive")
+set(VICINAE_NODE_RUNTIME_TAR_MEMBER
+	"node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}/bin/node")
+
+# self-distributed builds (dmg, appimage) always download the pinned runtime so
+# the node version never depends on what the host has installed; package manager
+# builds use the system node unless this is explicitly turned on
+if (APPLE OR VICINAE_PROVENANCE STREQUAL "appimage")
+	set(_node_runtime_download_default ON)
+else()
+	set(_node_runtime_download_default OFF)
+endif()
+option(VICINAE_NODE_RUNTIME_DOWNLOAD "Run extensions with the pinned downloaded node runtime"
+	${_node_runtime_download_default})
+
 get_cxx_compiler_name(CXX_COMPILER_NAME)
 
 # Generate version header from template
@@ -182,7 +254,7 @@ endif()
 
 if (NOT USE_SYSTEM_CMARK_GFM)
 	include(CMark)
-	checkout_cmark()
+	setup_vendored_cmark()
   set(CMARK_LIBRARY "libcmark-gfm_static")
   set(CMARK_EXT_LIBRARY "libcmark-gfm-extensions_static")
 endif()

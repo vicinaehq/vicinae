@@ -6,7 +6,6 @@
 #include "services/snippet/snippet-copy.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/toast/toast-service.hpp"
-#include <QGuiApplication>
 
 QString ManageSnippetsSection::displayTitle(const snippet::SerializedSnippet &item) const {
   return QString::fromStdString(item.name);
@@ -31,9 +30,12 @@ ManageSnippetsSection::buildActionPanel(const snippet::SerializedSnippet &item) 
 
   auto copy =
       new StaticAction("Copy to clipboard", BuiltinIcon::CopyClipboard, [item](ApplicationContext *ctx) {
-        auto clip = QGuiApplication::clipboard();
-        SnippetCopy::copyToClipboard(item, ctx->navigation->completionValues(), clip);
-        ctx->navigation->showHud("Copied to clipboard");
+        auto clipman = ctx->services->clipman();
+        if (SnippetCopy::copyToClipboard(item, ctx->navigation->completionValues(), *clipman)) {
+          ctx->navigation->showHud("Copied to clipboard");
+        } else {
+          ctx->services->toastService()->failure("Failed to copy to clipboard");
+        }
       });
 
   auto edit = new StaticAction("Edit snippet", BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {

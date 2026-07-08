@@ -132,10 +132,13 @@ const develop: CommandDef = {
 			}
 		};
 
-		const pingError = vicinae.ping();
-
-		if (pingError) {
-			console.error(`Failed to ping vicinae\n`, pingError.message);
+		try {
+			await vicinae.ping();
+		} catch (error) {
+			console.error(
+				`Failed to ping vicinae\n`,
+				error instanceof Error ? error.message : error,
+			);
 			return;
 		}
 
@@ -145,7 +148,11 @@ const develop: CommandDef = {
 				await build(extensionDir);
 				const time = performance.now() - start;
 				logger.logReady(`Extension built in ${Math.round(time)}ms 🚀`);
-				vicinae.refreshDevSession(id);
+				await vicinae.refreshDevSession(id).catch((error: unknown) => {
+					logger.logError(
+						`Failed to refresh dev session: ${error instanceof Error ? error.message : error}`,
+					);
+				});
 			} catch (error: unknown) {
 				if (error instanceof Error) {
 					logger.logError(`Failed to build extension: ${error.message}`);
@@ -187,15 +194,15 @@ const develop: CommandDef = {
 
 		await safeBuild(extensionDir);
 
-		process.on("SIGINT", () => {
+		process.on("SIGINT", async () => {
 			logger.logInfo("Shutting down...");
-			vicinae.stopDevSession(id);
-			throw new Error(`Development session interrupted`);
+			await vicinae.stopDevSession(id).catch(() => {});
+			process.exit(0);
 		});
 
-		const error = vicinae.startDevSession(id);
-
-		if (error) {
+		try {
+			await vicinae.startDevSession(id);
+		} catch (error) {
 			console.error(`Failed to invoke vicinae`, error);
 			return;
 		}

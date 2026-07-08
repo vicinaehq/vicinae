@@ -21,6 +21,8 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   auto dangerSection = panel->createSection();
 
   auto open = new OpenCompletedShortcutAction(m_link);
+  auto openWith = new OpenCompletedShortcutWithAction(m_link);
+  auto copy = new CopyShortcutAction(m_link);
   auto edit = new EditShortcutAction(m_link);
   auto duplicate = new DuplicateShortcutAction(m_link);
   auto remove = new RemoveShortcutAction(m_link);
@@ -32,6 +34,8 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
 
   panel->setTitle(m_link->name());
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  mainSection->addAction(openWith);
+  mainSection->addAction(copy);
 
   manageSection->addAction(edit);
   manageSection->addAction(duplicate);

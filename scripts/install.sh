@@ -173,11 +173,21 @@ get_latest_release_info() {
 		exit 1
 	fi
 
+	local arch
+	case "$(uname -m)" in
+	x86_64 | amd64) arch="x86_64" ;;
+	aarch64 | arm64) arch="aarch64" ;;
+	*)
+		echo "Error: unsupported architecture: $(uname -m)" >&2
+		exit 1
+		;;
+	esac
+
 	local appimage_name
-	appimage_name=$(echo "$response" | jq -r '.assets[] | select(.name | contains("AppImage")) | .name')
+	appimage_name=$(echo "$response" | jq -r --arg arch "$arch" '.assets[] | select(.name | endswith(".AppImage")) | select(.name | contains($arch)) | .name' | head -1)
 
 	if [[ "$appimage_name" == "null" || -z "$appimage_name" ]]; then
-		echo "Error: Failed to find AppImage asset in latest release" >&2
+		echo "Error: Failed to find $arch AppImage asset in latest release" >&2
 		exit 1
 	fi
 
@@ -359,55 +369,6 @@ install_icons() {
 	fi
 }
 
-install_browser_manifests() {
-    echo "Installing browser native messaging manifests..." >&2
-
-    local templates_dir="$INSTALL_DIR/usr/share/vicinae/native-messaging-hosts"
-    local native_host_bin="$INSTALL_DIR/usr/libexec/vicinae/vicinae-browser-link"
-    local chrome_extension_id="com.vicinae.vicinae"
-
-    if [[ ! -d "$templates_dir" ]]; then
-        echo "Note: No browser manifest templates found" >&2
-        return
-    fi
-
-    if [[ $EUID -ne 0 ]]; then
-        warn "Note: Skipping browser native messaging manifest installation (not root)"
-        echo "  See $DOCS_URL for manual setup instructions." >&2
-        return
-    fi
-
-	# Chromium
-    local chromium_dest="/etc/chromium/native-messaging-hosts"
-    local chromium_template="$templates_dir/com.vicinae.vicinae.chromium.json.in"
-    if [[ -f "$chromium_template" ]]; then
-        if ! mkdir -p "$chromium_dest" 2>/tmp/vic.err; then
-            warn "Chromium: cannot create $chromium_dest"
-        elif ! sed -e "s|@NATIVE_HOST_BIN@|$native_host_bin|g" \
-                   -e "s|@CHROME_EXTENSION_ID@|$chrome_extension_id|g" \
-                   "$chromium_template" > "$chromium_dest/com.vicinae.vicinae.json" 2>/tmp/vic.err; then
-            warn "Chromium: failed to write manifest"
-        else
-            ok "Chromium native messaging manifest installed to $chromium_dest"
-        fi
-    fi
-
-	# Firefox
-    local firefox_dest="/usr/lib/mozilla/native-messaging-hosts"
-    local firefox_template="$templates_dir/com.vicinae.vicinae.firefox.json.in"
-    if [[ -f "$firefox_template" ]]; then
-        if ! mkdir -p "$firefox_dest" 2>/tmp/vic.err; then
-            warn "Firefox: cannot create $firefox_dest"
-        elif ! sed -e "s|@NATIVE_HOST_BIN@|$native_host_bin|g" \
-                   "$firefox_template" > "$firefox_dest/com.vicinae.vicinae.json" 2>/tmp/vic.err; then
-            warn "Firefox: failed to write manifest"
-			echo
-        else
-            ok "Firefox native messaging manifest installed"
-        fi
-    fi
-}
-
 install_input_server_capabilities() {
 	echo "Setting input server capabilities (for keyboard monitoring and injection)..." >&2
 
@@ -503,7 +464,8 @@ install_vicinae() {
 
 		ln -sf "$binary_path" "$BIN_DIR/$BINARY_NAME"
 
-		# Symlink node binary if it exists (to avoid conflicts with system node)
+		# Older releases bundle node in the AppImage; keep symlinking it so this
+		# script can still install them
 		local node_path="$INSTALL_DIR/usr/bin/node"
 		if [[ -f "$node_path" ]]; then
 			ln -sf "$node_path" "$BIN_DIR/vicinae-node"
@@ -524,7 +486,6 @@ install_vicinae() {
 		install_desktop_files
 		install_icons
 		install_systemd_service
-		install_browser_manifests
 		install_modules_load
 		install_input_server_capabilities
 	else
@@ -647,6 +608,12 @@ self_download() {
 }
 
 main() {
+	if [[ "$(uname -s)" == "Darwin" ]]; then
+		echo "Error: this installer exclusively supports linux based systems." >&2
+		echo "See https://docs.vicinae.com for macOS instructions." >&2
+		exit 1
+	fi
+
 	renderIcon
 
 	# Save original arguments for potential re-execution with sudo/doas

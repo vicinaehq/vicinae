@@ -1,4 +1,5 @@
 #pragma once
+#include <common/common.hpp>
 #include <common/enumerate.hpp>
 #include <cstring>
 #include <expected>
@@ -13,24 +14,7 @@
 
 namespace cli {
 
-inline std::filesystem::path socketPath() {
-  std::filesystem::path base;
-#ifdef __APPLE__
-  if (const char *t = getenv("TMPDIR")) {
-    base = t;
-  } else {
-    base = "/tmp";
-  }
-#else
-  if (const char *r = getenv("XDG_RUNTIME_DIR")) {
-    base = r;
-  } else {
-    const char *user = getenv("USER");
-    base = std::filesystem::path("/tmp") / (std::string("runtime-") + (user ? user : "unknown"));
-  }
-#endif
-  return base / "vicinae" / "vicinae.sock";
-}
+inline std::filesystem::path socketPath() { return vicinae::serverSocketPath(); }
 
 class IpcClient {
 public:

@@ -1,4 +1,6 @@
 #include "vicinae.hpp"
+#include "common/common.hpp"
+#include "utils.hpp"
 #include <qcoreapplication.h>
 #include <qlogging.h>
 #include <qprocess.h>
@@ -12,20 +14,11 @@
 
 namespace fs = std::filesystem;
 
-fs::path Omnicast::runtimeDir() {
-#ifdef Q_OS_MACOS
-  if (const char *t = std::getenv("TMPDIR")) return fs::path(t) / "vicinae";
-  return "/tmp/vicinae";
-#else
-  return fs::path(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toStdString()) /
-         "vicinae";
-#endif
-}
+fs::path Omnicast::runtimeDir() { return vicinae::runtimeDir(); }
 
 fs::path Omnicast::dataDir() {
 #ifdef Q_OS_MACOS
-  return fs::path(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation).toStdString()) /
-         "vicinae";
+  return homeDir() / ".local" / "share" / "vicinae";
 #else
   return xdgpp::dataHome() / "vicinae";
 #endif
@@ -33,7 +26,7 @@ fs::path Omnicast::dataDir() {
 
 fs::path Omnicast::configDir() {
 #ifdef Q_OS_MACOS
-  return dataDir();
+  return homeDir() / ".config" / "vicinae";
 #else
   return xdgpp::configHome() / "vicinae";
 #endif
@@ -41,9 +34,17 @@ fs::path Omnicast::configDir() {
 
 fs::path Omnicast::stateDir() {
 #ifdef Q_OS_MACOS
-  return dataDir();
+  return homeDir() / ".local" / "state" / "vicinae";
 #else
   return xdgpp::stateHome() / "vicinae";
+#endif
+}
+
+fs::path Omnicast::cacheDir() {
+#ifdef Q_OS_MACOS
+  return homeDir() / ".cache" / "vicinae";
+#else
+  return xdgpp::cacheHome() / "vicinae";
 #endif
 }
 
@@ -85,11 +86,11 @@ std::vector<fs::path> Omnicast::dataSearchPaths(std::string_view subdir) {
   return paths;
 }
 
-fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }
+fs::path Omnicast::commandSocketPath() { return vicinae::serverSocketPath(); }
 fs::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }
 
 void Omnicast::ensureDirectories() {
-  for (auto const &dir : {runtimeDir(), dataDir(), stateDir(), configDir()}) {
+  for (auto const &dir : {runtimeDir(), dataDir(), stateDir(), configDir(), cacheDir()}) {
     std::error_code ec;
     fs::create_directories(dir, ec);
     if (ec) { qWarning() << "Failed to create directory" << dir.c_str() << ec.message(); }

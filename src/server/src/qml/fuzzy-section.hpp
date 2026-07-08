@@ -30,6 +30,8 @@ public:
 protected:
   const T &at(int i) const { return m_items[m_filtered[i].data]; }
 
+  virtual void sortFiltered() {}
+
   virtual QString displayTitle(const T &item) const = 0;
   virtual QString displaySubtitle(const T &) const { return {}; }
   virtual QString displayIconSource(const T &item) const = 0;
@@ -42,7 +44,10 @@ protected:
   std::string m_query;
 
 private:
-  void refilter() { fuzzy::fuzzyFilter<T>(std::span<const T>(m_items), m_query, m_filtered); }
+  void refilter() {
+    fuzzy::fuzzyFilter<T>(std::span<const T>(m_items), m_query, m_filtered);
+    sortFiltered();
+  }
 
   QString itemId(int i) const override { return displayId(at(i)); }
   QString itemTitle(int i) const override { return displayTitle(at(i)); }

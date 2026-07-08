@@ -1,4 +1,5 @@
 #include "mac-app-database.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
@@ -175,7 +176,7 @@ bool MacAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
         QUrl const q(arg);
         NSURL *u = nil;
         if (!q.scheme().isEmpty() && q.scheme() != QStringLiteral("file")) {
-          u = [NSURL URLWithString:toNSString(arg)];
+          u = [NSURL URLWithString:toNSString(QString::fromUtf8(q.toEncoded()))];
         } else {
           QString const p = q.isLocalFile() ? q.toLocalFile() : arg;
           u = [NSURL fileURLWithPath:toNSString(p)];
@@ -394,3 +395,10 @@ bool MacAppDatabase::showInFileBrowser(const fs::path &path, bool select) const 
   return true;
 }
 
+bool MacAppDatabase::openLocation(const AbstractApplication &app) const {
+  return showInFileBrowser(app.path(), true);
+}
+
+AbstractAppDatabase::AppPtr MacAppDatabase::locationOpener(const AbstractApplication &app) const {
+  return fileBrowser();
+}

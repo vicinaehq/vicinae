@@ -10,6 +10,7 @@
 class AppService;
 class NewsService;
 class RootItemManager;
+class UpdateService;
 
 namespace config {
 class Manager;
@@ -41,10 +42,12 @@ private:
   RootItemManager *m_manager;
   AppService *m_appDb;
   NewsService *m_newsService;
+  UpdateService *m_updateService;
   CalculatorService *m_calculator;
   FileService *m_fileService;
   config::Manager *m_config;
 
+  RootUpdateSection *m_updateSource;
   RootLinkSection *m_linkSource;
   RootCalculatorSection *m_calcSource;
   RootNewsSection *m_newsSource;

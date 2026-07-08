@@ -10,9 +10,9 @@ public:
   bool isActivatable() const override;
   QString id() const override;
   int activationPriority() const override;
-  bool setClipboardContent(QMimeData *data) override;
 
 private:
+  bool writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) override;
   bool isAlive() const override;
   void handleRead();
   void handleReadError();

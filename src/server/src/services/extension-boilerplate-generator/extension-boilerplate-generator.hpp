@@ -7,7 +7,6 @@
 struct ExtensionBoilerplateConfig {
   struct CommandConfig {
     QString title;
-    QString subtitle;
     QString description;
     QString templateId;
   };

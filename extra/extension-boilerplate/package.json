@@ -80,6 +80,12 @@
 			"mode": "view"
 		},
 		{
+			"name": "wallpaper",
+			"title": "Wallpaper Picker",
+			"description": "Browse ~/Pictures and set the desktop wallpaper",
+			"mode": "view"
+		},
+		{
 			"name": "torture",
 			"title": "Torture Test",
 			"description": "Stress-test view hot-swaps, dynamic reactivity, and background mutations",
@@ -95,6 +101,18 @@
 			"name": "action-panel-stress",
 			"title": "Action Panel Stress Test",
 			"description": "Test action panel reconciliation, deep submenus, dynamic content, and filter preservation",
+			"mode": "view"
+		},
+		{
+			"name": "browser",
+			"title": "Browser Extension Showcase",
+			"description": "Browser extension",
+			"mode": "view"
+		},
+		{
+			"name": "capabilities",
+			"title": "Capabilities",
+			"description": "Check capabilities of install",
 			"mode": "view"
 		},
 		{
@@ -119,7 +137,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.3.2",
 		"@types/node": "^24.9.2",
-		"@types/react": "^19.2.2",
+		"@types/react": "^19.2.17",
 		"typescript": "^5.9.2"
 	}
 }

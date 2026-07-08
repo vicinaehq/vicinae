@@ -9,18 +9,10 @@ ActionListView::ActionListView(QObject *parent)
       m_model(new ActionPanelModel(m_state.get(), this)) {
   connect(m_model, &ActionPanelModel::actionExecuted, this, &ActionListView::actionExecuted);
   connect(m_model, &ActionPanelModel::closeRequested, this, &ActionListView::closeRequested);
-  connect(m_model, &ActionPanelModel::submenuActivated, this, [this](SubmenuAction *action) {
-    auto *child = createSubmenuChild(action);
-    if (child) emit pushViewRequested(child);
-  });
+  connect(m_model, &ActionPanelModel::submenuActivated, this, &ActionPanelView::submenuActivated);
 }
 
 ActionListView::~ActionListView() = default;
-
-void ActionListView::activateSubmenu(SubmenuAction *action) {
-  auto *child = createSubmenuChild(action);
-  if (child) emit pushViewRequested(child);
-}
 
 void ActionListView::adoptState(std::unique_ptr<ActionPanelState> state) {
   if (!state) {
@@ -72,11 +64,3 @@ bool ActionListView::hasActions() const { return m_state && m_state->actionCount
 bool ActionListView::hasMultipleActions() const { return m_state && m_state->actionCount() > 1; }
 
 void ActionListView::resetState() { m_model->setStateFrom(m_state.get()); }
-
-ActionListView *ActionListView::createSubmenuChild(SubmenuAction *action) {
-  auto state = action->createSubmenuState();
-  if (!state) return nullptr;
-  auto *child = new ActionListView(this);
-  child->adoptState(std::move(state));
-  return child;
-}

@@ -3,7 +3,7 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    height: 36
+    height: 32
 
     property bool selected: false
     readonly property bool hovered: mouseArea.containsMouse && HoverActivation.active
@@ -16,6 +16,11 @@ Item {
 
     signal clicked
 
+    readonly property var _win: root.Window.window
+    readonly property bool _nativeWindow: _win !== null && (_win.flags & Qt.Popup) === Qt.Popup
+    readonly property real _opacity: root._nativeWindow ? Config.popupOpacity : 1
+    readonly property real _fillOpacity: root._nativeWindow ? Config.popupSurfaceOpacity : 1
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
@@ -23,17 +28,23 @@ Item {
         onClicked: root.clicked()
     }
 
-    Rectangle {
+    SourceBlendRect {
         anchors.fill: parent
         anchors.leftMargin: 6
         anchors.rightMargin: 6
         radius: 10
+        backgroundColor: root._nativeWindow ? Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity) : "transparent"
         color: {
-            if (root.selected)
-                return Theme.listItemSelectionBg;
-            if (root.hovered)
-                return Theme.listItemHoverBg;
-            return "transparent";
+            if (root.selected) {
+                var c = Theme.listItemSelectionBg;
+                return Qt.rgba(c.r, c.g, c.b, root._fillOpacity);
+            }
+            if (root.hovered) {
+                var h = Theme.listItemHoverBg;
+                return Qt.rgba(h.r, h.g, h.b, root._fillOpacity);
+            }
+            var bg = Theme.popoverBackground;
+            return Qt.rgba(bg.r, bg.g, bg.b, root._opacity);
         }
     }
 

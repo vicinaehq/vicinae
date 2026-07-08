@@ -1,6 +1,7 @@
 #include "launcher-window.hpp"
 #include "hud-bridge.hpp"
 #include "keybind-bridge.hpp"
+#include "keyboard-bridge.hpp"
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
 #include "ui/image/image-renderer.hpp"
@@ -10,13 +11,13 @@
 #include "image-source.hpp"
 #include "image-url.hpp"
 #include "config-bridge.hpp"
+#include "platform-bridge.hpp"
 #include "theme-bridge.hpp"
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "extensions/vicinae/bug-report-url.hpp"
 #include "qml/vicinae-store-view-host.hpp"
 #include "settings-controller/settings-controller.hpp"
-#include "services/keybinding/keybinding-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
@@ -38,6 +39,7 @@
 #include <qcoreevent.h>
 #include <qlogging.h>
 #include <memory>
+#include <sys/ucontext.h>
 
 #ifdef __GLIBC__
 #include <malloc.h>
@@ -48,6 +50,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
       m_footerPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
+      m_keyboardBridge(new KeyboardBridge(this)), m_platformBridge(new PlatformBridge(this)),
       m_themeBridge(new ThemeBridge(this)) {
 
 #ifndef Q_OS_MACOS
@@ -61,12 +64,14 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
+  rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
 
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
   rootCtx->setContextProperty(QStringLiteral("footerPanel"), m_footerPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
+  rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"), ctx.services->fileChooserService());
 
   updateLayerShellProps();
@@ -89,7 +94,13 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   if (!Environment::isHudDisabled()) {
     m_hudBridge = new HudBridge(this);
     rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
-    m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/HudWindow.qml")));
+    m_engine.load(QUrl(
+#ifdef Q_OS_MACOS
+        QStringLiteral("qrc:/Vicinae/HudWindowMacOS.qml")
+#else
+        QStringLiteral("qrc:/Vicinae/HudWindowLayerShell.qml")
+#endif
+            ));
   }
 
   auto *nav = ctx.navigation.get();
@@ -267,6 +278,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     m_toastTitle = t->title();
     m_toastMessage = t->message();
     m_toastStyle = static_cast<int>(t->priority());
+    tryCompaction(); // we don't want to compact if there is a toast to show
     emit toastChanged();
     emit toastActiveChanged();
   });
@@ -508,10 +520,6 @@ void LauncherWindow::popToRoot() {
 
 bool LauncherWindow::popOnBackspace() { return m_ctx.services->config()->value().popOnBackspace; }
 
-int LauncherWindow::matchNavigationKey(int key, int modifiers) {
-  return KeyBindingService::matchNavigation(key, modifiers, m_ctx.services->config()->value().keybinding);
-}
-
 void LauncherWindow::setCompleterValue(int index, const QString &value) {
   auto *nav = m_ctx.navigation.get();
   auto values = nav->completionValues();
@@ -535,7 +543,7 @@ void LauncherWindow::positionOnCursorScreen() {
   m_window->setY(g.y() + (g.height() - m_window->height()) / 3);
 }
 
-void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(); }
+void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(true); }
 
 void LauncherWindow::buildFooterMenu() {
   auto state = std::make_unique<ActionPanelState>();
@@ -591,8 +599,10 @@ void LauncherWindow::setCompacted(bool value) {
 
 void LauncherWindow::tryCompaction() {
   auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
+
   setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled &&
-               m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1);
+               m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1 &&
+               !m_toastActive);
 }
 
 bool LauncherWindow::isLayerShellActive() const {

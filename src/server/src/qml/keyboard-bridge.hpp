@@ -2,6 +2,9 @@
 #include <QObject>
 #include <QVariantList>
 #include "keyboard/keyboard.hpp"
+#include "config/config.hpp"
+#include "service-registry.hpp"
+#include "services/keybinding/keybinding-service.hpp"
 
 /**
  * Exposes the generic Keyboard::Shortcut conversions to QML so shortcut widgets don't have to
@@ -28,6 +31,11 @@ public:
     if (shortcut.isEmpty()) return {};
     Keyboard::Shortcut const parsed = Keyboard::Shortcut::fromString(shortcut);
     return parsed.isValid() ? parsed.toDisplayTokens() : QVariantList{};
+  }
+
+  Q_INVOKABLE int matchNavigation(int key, int modifiers) const {
+    return KeyBindingService::matchNavigation(key, modifiers,
+                                              ServiceRegistry::instance()->config()->value().keybinding);
   }
 
   Q_INVOKABLE QString validate(int key, int modifiers) const {

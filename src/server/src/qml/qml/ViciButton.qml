@@ -11,6 +11,7 @@ Rectangle {
     property color foreground: root.variant === "accent" ? Theme.listItemSelectionFg : Theme.foreground
     property real iconSize: 16
     property real horizontalPadding: 12
+    property bool showFocus: activeFocus
 
     signal clicked
 
@@ -27,18 +28,18 @@ Rectangle {
         case "primary":
             return root.hovered ? Theme.buttonPrimaryHoverBg : Theme.buttonPrimaryBg;
         case "secondary":
-            return root.hovered ? Theme.listItemHoverBg : Theme.secondaryBackground;
+            return Config.withAlpha(Theme.foreground, root.hovered ? 0.12 : 0.07);
         case "accent":
-            return root.hovered ? Qt.lighter(Theme.accent, 1.15) : Theme.accent;
+            return root.hovered ? Qt.lighter(Theme.accent, 1.08) : Theme.accent;
         case "ghost":
         default:
-            return root.hovered ? Theme.listItemHoverBg : "transparent";
+            return root.hovered ? Config.withAlpha(Theme.foreground, 0.08) : "transparent";
         }
     }
 
-    border.width: root.bordered || root.activeFocus ? 1 : 0
+    border.width: root.bordered || root.showFocus ? 1 : 0
     border.color: {
-        if (root.activeFocus)
+        if (root.showFocus)
             return Config.withAlpha(root.variant === "accent" ? Theme.listItemSelectionFg : Theme.accent, Config.windowOpacity);
         if (!root.bordered)
             return "transparent";

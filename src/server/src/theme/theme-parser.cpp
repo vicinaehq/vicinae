@@ -41,6 +41,7 @@ static const std::vector<std::pair<std::string, SemanticColor>> RECOGNIZED_KEYS 
     {"text.selection.background", SemanticColor::TextSelectionBackground},
     {"text.selection.foreground", SemanticColor::TextSelectionForeground},
 
+    {"input.background", SemanticColor::InputBackground},
     {"input.border", SemanticColor::InputBorder},
     {"input.border_focus", SemanticColor::InputBorderFocus},
     {"input.border_error", SemanticColor::InputBorderError},

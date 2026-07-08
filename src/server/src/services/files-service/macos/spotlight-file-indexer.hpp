@@ -10,6 +10,7 @@
 class SpotlightFileIndexer : public AbstractFileIndexer {
 public:
   void start() override {}
+  bool isAvailable() const override;
   void rebuildIndex() override {}
   void preferenceValuesChanged(const QJsonObject &) override {}
 

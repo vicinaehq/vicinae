@@ -17,11 +17,13 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick WRITE setActivateOnSingleClick NOTIFY
                  configChanged)
   Q_PROPERTY(
+      bool encryptSensitiveData READ encryptSensitiveData WRITE setEncryptSensitiveData NOTIFY configChanged)
+  Q_PROPERTY(
       bool telemetrySystemInfo READ telemetrySystemInfo WRITE setTelemetrySystemInfo NOTIFY configChanged)
   Q_PROPERTY(bool layerShellEnabled READ layerShellEnabled WRITE setLayerShellEnabled NOTIFY configChanged)
   Q_PROPERTY(bool clientSideDecorations READ clientSideDecorations WRITE setClientSideDecorations NOTIFY
                  configChanged)
-  Q_PROPERTY(QString csdRounding READ csdRounding WRITE setCsdRounding NOTIFY configChanged)
+  Q_PROPERTY(QString rounding READ rounding WRITE setRounding NOTIFY configChanged)
   Q_PROPERTY(QString csdBorderWidth READ csdBorderWidth WRITE setCsdBorderWidth NOTIFY configChanged)
   Q_PROPERTY(QString csdShadowSize READ csdShadowSize WRITE setCsdShadowSize NOTIFY configChanged)
   Q_PROPERTY(bool compactMode READ compactMode WRITE setCompactMode NOTIFY configChanged)
@@ -29,6 +31,8 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(
       bool nativeTextRendering READ nativeTextRendering WRITE setNativeTextRendering NOTIFY configChanged)
   Q_PROPERTY(QString fontSize READ fontSize WRITE setFontSize NOTIFY configChanged)
+  Q_PROPERTY(QVariantList windowMaterialItems READ windowMaterialItems CONSTANT)
+  Q_PROPERTY(QVariant currentWindowMaterial READ currentWindowMaterial NOTIFY configChanged)
   Q_PROPERTY(QVariantList themeItems READ themeItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList fontItems READ fontItems CONSTANT)
   Q_PROPERTY(QVariantList iconThemeItems READ iconThemeItems NOTIFY configChanged)
@@ -61,14 +65,16 @@ public:
   void setPopOnBackspace(bool v);
   bool activateOnSingleClick() const;
   void setActivateOnSingleClick(bool v);
+  bool encryptSensitiveData() const;
+  void setEncryptSensitiveData(bool v);
   bool telemetrySystemInfo() const;
   void setTelemetrySystemInfo(bool v);
   bool layerShellEnabled() const;
   void setLayerShellEnabled(bool v);
   bool clientSideDecorations() const;
   void setClientSideDecorations(bool v);
-  QString csdRounding() const;
-  void setCsdRounding(const QString &v);
+  QString rounding() const;
+  void setRounding(const QString &v);
   QString csdBorderWidth() const;
   void setCsdBorderWidth(const QString &v);
   QString csdShadowSize() const;
@@ -83,6 +89,10 @@ public:
   void setInputServerEnabled(bool v);
   QString fontSize() const;
   void setFontSize(const QString &v);
+
+  QVariantList windowMaterialItems() const;
+  QVariant currentWindowMaterial() const;
+  Q_INVOKABLE void selectWindowMaterial(const QString &id);
 
   QVariantList themeItems() const;
   QVariantList fontItems() const;

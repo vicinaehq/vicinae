@@ -2,7 +2,6 @@
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"
-#include "utils/utils.hpp"
 
 VicinaeStoreViewHost::VicinaeStoreViewHost() {
   connect(&m_watcher, &QFutureWatcher<VicinaeStore::ListResult>::finished, this,
@@ -62,10 +61,4 @@ ImageURL VicinaeStoreViewHost::initialNavigationIcon() const {
   return ImageURL::builtin("cart").setBackgroundTint(SemanticColor::Accent);
 }
 
-void VicinaeStoreViewHost::refresh() {
-  if (auto *cached = m_store->cached()) {
-    m_section.setEntries(*cached, context()->services->extensionRegistry(), QStringLiteral("Extensions"));
-  } else {
-    fetchExtensions();
-  }
-}
+void VicinaeStoreViewHost::refresh() { fetchExtensions(); }

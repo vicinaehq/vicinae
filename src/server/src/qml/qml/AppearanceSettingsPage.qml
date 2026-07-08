@@ -51,6 +51,7 @@ Flickable {
             SettingsRow {
                 label: "Font size"
                 description: "The base point size used to compute font sizes. Fractional values are accepted. Recommended range is [10.0;12.0]."
+                showSeparator: Platform.supports("iconThemeSelection")
                 FormTextInput {
                     width: parent.width
                     releaseFocusOnAccept: true
@@ -65,6 +66,7 @@ Flickable {
             }
 
             SettingsRow {
+                visible: Platform.supports("iconThemeSelection")
                 label: "Icon Theme"
                 description: "The icon theme used for system icons (applications, mime types, folder icons...). Does not affect builtin Vicinae icons."
                 showSeparator: false
@@ -85,6 +87,18 @@ Flickable {
 
         SettingsGroup {
             SettingsRow {
+                visible: Platform.supports("windowMaterial")
+                label: "Window material"
+                description: "Background material applied to the launcher window. Lower the window opacity to see it."
+                SearchableDropdown {
+                    width: parent.width
+                    items: root.model.windowMaterialItems
+                    currentItem: root.model.currentWindowMaterial
+                    onActivated: item => root.model.selectWindowMaterial(item.id)
+                }
+            }
+
+            SettingsRow {
                 label: "Window opacity"
                 FormTextInput {
                     width: parent.width
@@ -100,7 +114,16 @@ Flickable {
             }
 
             SettingsRow {
-                visible: settings.layerShellSupported
+                label: "Compact mode"
+                description: "Show only the search bar at root; expand when a query is entered."
+                SettingsToggle {
+                    checked: root.model.compactMode
+                    onToggled: root.model.compactMode = checked
+                }
+            }
+
+            SettingsRow {
+                visible: Platform.supports("layerShell")
                 label: "Use layer shell"
                 description: "Anchor the launcher as a Wayland layer surface (wlr-layer-shell) instead of a regular window. May require reopening Vicinae to fully apply."
                 SettingsToggle {
@@ -110,6 +133,7 @@ Flickable {
             }
 
             SettingsRow {
+                visible: Platform.supports("clientSideDecorations")
                 label: "Client-side decorations"
                 description: "Let Vicinae draw its own rounded borders and shadow instead of relying on the windowing system."
                 SettingsToggle {
@@ -121,22 +145,23 @@ Flickable {
             SettingsRow {
                 label: "Corner rounding"
                 description: "Radius of the launcher window corners, in pixels."
-                enabled: root.model.clientSideDecorations
+                enabled: !Platform.supports("clientSideDecorations") || root.model.clientSideDecorations
                 opacity: enabled ? 1 : 0.4
                 FormTextInput {
                     width: parent.width
                     releaseFocusOnAccept: true
-                    text: root.model.csdRounding
+                    text: root.model.rounding
                     placeholder: "e.g. 10"
-                    onAccepted: root.model.csdRounding = text
+                    onAccepted: root.model.rounding = text
                     onEditingChanged: {
                         if (!editing)
-                            root.model.csdRounding = text;
+                            root.model.rounding = text;
                     }
                 }
             }
 
             SettingsRow {
+                visible: Platform.supports("clientSideDecorations")
                 label: "Border width"
                 description: "Thickness of the launcher window border, in pixels."
                 enabled: root.model.clientSideDecorations
@@ -155,6 +180,7 @@ Flickable {
             }
 
             SettingsRow {
+                visible: Platform.supports("clientSideDecorations")
                 label: "Shadow size"
                 description: "Size of the drop shadow cast by the launcher window, in pixels."
                 showSeparator: false
@@ -175,7 +201,7 @@ Flickable {
 
             SettingsRow {
                 label: "Native font rendering"
-                description: "Use platform/fontconfig text rendering for system-consistent text. Disable for Qt distance-field rendering (usually faster). May require reopening Vicinae to fully apply."
+                description: "Use the platform's native text rendering for system-consistent text. Disable for Qt distance-field rendering (usually faster). May require reopening Vicinae to fully apply."
                 SettingsToggle {
                     checked: root.model.nativeTextRendering
                     onToggled: checked => root.model.nativeTextRendering = checked

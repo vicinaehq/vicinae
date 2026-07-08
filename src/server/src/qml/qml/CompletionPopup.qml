@@ -11,6 +11,12 @@ Popup {
     property string filterPlaceholder: "Filter..."
     property string currentItemId: ""
 
+    // When true, show as a non-activating native window (so the field driving the
+    // completion keeps focus) where the platform supports it; in-scene otherwise.
+    property bool nativePanel: false
+
+    popupType: nativePanel && Platform.supports("nativePanels") ? Popup.Window : Popup.Item
+
     readonly property int count: completionModel.count
     readonly property bool hasSelection: _highlightedIndex >= 0
 
@@ -97,10 +103,16 @@ Popup {
     }
 
     background: Rectangle {
-        radius: 8
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.95)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
+        radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, Config.popupOpacity)
+        border.width: Platform.supports("clientSideDecorations") ? 1 : 0
+        Loader {
+            active: root.nativePanel && Platform.supports("nativePanels")
+            source: "qrc:/Vicinae/CompletionPanelMacOS.qml"
+        }
+
+        PopupMaterial {}
     }
 
     contentItem: ColumnLayout {
@@ -154,8 +166,6 @@ Popup {
 
                     onTextEdited: filterDebounce.restart()
 
-                    Keys.onUpPressed: root.moveUp()
-                    Keys.onDownPressed: root.moveDown()
                     Keys.onReturnPressed: root.acceptHighlighted()
                     Keys.onEscapePressed: root.close()
                     Keys.onTabPressed: event => {
@@ -163,6 +173,17 @@ Popup {
                     }
                     Keys.onBacktabPressed: event => {
                         event.accepted = true;
+                    }
+
+                    Keys.onPressed: function (event) {
+                        const nav = Keyboard.matchNavigation(event.key, event.modifiers);
+                        if (event.key === Qt.Key_Up || nav === 1) {
+                            root.moveUp();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down || nav === 2) {
+                            root.moveDown();
+                            event.accepted = true;
+                        }
                     }
                 }
             }
@@ -175,6 +196,10 @@ Popup {
             model: completionModel
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+
+            ViciWheelHandler {
+                target: completionList
+            }
 
             ScrollBar.vertical: ViciScrollBar {
                 policy: completionList.contentHeight > completionList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
@@ -218,12 +243,24 @@ Popup {
                     anchors.right: parent.right
                     height: visible ? 30 : 0
 
-                    Rectangle {
+                    SourceBlendRect {
                         anchors.fill: parent
                         anchors.leftMargin: 2
                         anchors.rightMargin: 2
                         radius: 6
-                        color: del._isHighlighted ? Theme.listItemSelectionBg : (itemHover.hovered && HoverActivation.active) ? Theme.listItemHoverBg : "transparent"
+                        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity)
+                        color: {
+                            if (del._isHighlighted) {
+                                var c = Theme.listItemSelectionBg;
+                                return Qt.rgba(c.r, c.g, c.b, Config.popupSurfaceOpacity);
+                            }
+                            if (itemHover.hovered && HoverActivation.active) {
+                                var h = Theme.listItemHoverBg;
+                                return Qt.rgba(h.r, h.g, h.b, Config.popupSurfaceOpacity);
+                            }
+                            var bg = Theme.popoverBackground;
+                            return Qt.rgba(bg.r, bg.g, bg.b, Config.popupOpacity);
+                        }
                     }
 
                     RowLayout {

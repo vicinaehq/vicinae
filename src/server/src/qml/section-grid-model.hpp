@@ -14,6 +14,7 @@ class SectionGridModel : public QAbstractListModel {
   Q_PROPERTY(int selectedItem READ selectedItem NOTIFY selectionChanged)
   Q_PROPERTY(int columns READ columns WRITE setColumns NOTIFY columnsChanged)
   Q_PROPERTY(double aspectRatio READ aspectRatio WRITE setAspectRatio NOTIFY aspectRatioChanged)
+  Q_PROPERTY(double inset READ inset WRITE setInset NOTIFY insetChanged)
   Q_PROPERTY(bool awaitingData READ awaitingData NOTIFY awaitingDataChanged)
 
 public:
@@ -25,6 +26,7 @@ public:
     RowItemCount,
     RowColumnsRole,
     RowAspectRatioRole,
+    RowInsetRole,
   };
 
   explicit SectionGridModel(QObject *parent = nullptr);
@@ -45,9 +47,11 @@ public:
   bool awaitingData() const { return m_awaitingData; }
   int columns() const { return m_columns; }
   double aspectRatio() const { return m_aspectRatio; }
+  double inset() const { return m_inset; }
 
   void setColumns(int cols);
   void setAspectRatio(double ratio);
+  void setInset(double inset);
   void setSelectFirstOnReset(bool value) { m_selectFirstOnReset = value; }
 
   Q_INVOKABLE void select(int section, int item);
@@ -69,6 +73,7 @@ signals:
   void selectionChanged();
   void columnsChanged();
   void aspectRatioChanged();
+  void insetChanged();
   void awaitingDataChanged();
 
 protected:
@@ -85,6 +90,7 @@ private:
     QString name;
     std::optional<int> columns;
     std::optional<double> aspectRatio;
+    std::optional<double> inset;
   };
 
   struct FlatRow {
@@ -96,6 +102,7 @@ private:
     int itemCount = 0;
     int columns = 0;
     double aspectRatio = 1.0;
+    double inset = 0.0;
   };
 
   void rebuildFromSources();
@@ -116,6 +123,7 @@ private:
   int m_selItem = -1;
   int m_columns = 8;
   double m_aspectRatio = 1.0;
+  double m_inset = 0.0;
   bool m_selectFirstOnReset = false;
   bool m_awaitingData = true;
   bool m_preferSectionHeaderForSelection = false;

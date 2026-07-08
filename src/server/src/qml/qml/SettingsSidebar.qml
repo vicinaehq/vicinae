@@ -133,6 +133,10 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
             model: settings.sidebarModel
 
+            ViciWheelHandler {
+                target: navList
+            }
+
             ScrollBar.vertical: ViciScrollBar {
                 policy: navList.contentHeight > navList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }

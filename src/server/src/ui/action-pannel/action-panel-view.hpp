@@ -7,6 +7,7 @@
 
 class AbstractAction;
 class QKeyEvent;
+class SubmenuAction;
 
 class ActionPanelView : public QObject {
   Q_OBJECT
@@ -37,7 +38,7 @@ signals:
   void contentChanged();
   void actionExecuted(AbstractAction *action);
   void closeRequested();
-  void pushViewRequested(ActionPanelView *view);
+  void submenuActivated(SubmenuAction *action);
 
 private:
   QString m_id;

@@ -12,6 +12,9 @@
 #include "x11/x11-window-manager.hpp"
 #include "wayland/wayland.hpp"
 #endif
+#ifdef Q_OS_MACOS
+#include "macos/macos-window-manager.hpp"
+#endif
 
 std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandidates() {
   // XXX - For all new window managers, it is needed to add it to this vector
@@ -26,6 +29,10 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
 
   // this implementation is good enough for most standalone wayland compositors
   candidates.emplace_back(std::make_unique<WaylandWindowManager>());
+#endif
+
+#ifdef Q_OS_MACOS
+  candidates.emplace_back(std::make_unique<MacosWindowManager>());
 #endif
 
   return candidates;
@@ -56,7 +63,7 @@ const AbstractWindowManager::AbstractWindow *WindowManager::findWindowById(const
   return nullptr;
 }
 
-AbstractWindowManager::WindowList WindowManager::listWindows() const { return m_windows; }
+const AbstractWindowManager::WindowList &WindowManager::listWindows() const { return m_windows; }
 
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
   return m_windows | std::views::filter([&](auto &&win) {
@@ -67,6 +74,8 @@ AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractAp
 }
 
 void WindowManager::updateWindowCache() { m_windows = m_provider->listWindowsSync(); }
+
+bool WindowManager::isCapable() const { return m_provider->id() != "dummy"; }
 
 WindowManager::WindowManager() {
   m_provider = createProvider();

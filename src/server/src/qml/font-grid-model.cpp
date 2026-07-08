@@ -1,5 +1,6 @@
 #include "font-grid-model.hpp"
 #include "clipboard-actions.hpp"
+#include "extend/grid-model.hpp"
 #include "common/context.hpp"
 #include "config/config.hpp"
 #include "font-demo-view-host.hpp"
@@ -82,6 +83,7 @@ void FontGridModel::initialize() {
   connect(this, &SectionGridModel::selectionChanged, this, &FontGridModel::updateNavigationTitle);
   setColumns(6);
   setAspectRatio(1.0);
+  setInset(insetRatio(GridInset::Medium));
   buildFilterOptions();
   rebuildRoot();
   setFilter(QString());

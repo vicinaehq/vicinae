@@ -1,5 +1,12 @@
 {
 	"files": {
-		"includes": ["api/**", "extension-manager/**", "raycast-api-compat/**"]
+		"includes": [
+			"api/**",
+			"extension-manager/**",
+			"raycast-api-compat/**",
+			"!api/src/proto/**",
+			"!api/src/api/proto/**",
+			"!extension-manager/src/proto/**"
+		]
 	}
 }

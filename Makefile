@@ -5,6 +5,8 @@ TAG 							:= $(shell git describe --tags --abbrev=0)
 APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
 APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 FIGURA_CC						:= $(BIN_DIR)/figura
+SHELL							:= /bin/sh
+APPLE_BUNDLE_ID						:= com.vicinaehq.Vicinae
 
 release:
 	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B $(BUILD_DIR)
@@ -22,13 +24,21 @@ preview:
 .PHONY: preview
 
 debug:
-	cmake -GNinja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake -GNinja -DLTO=OFF -DVICINAE_NODE_RUNTIME_DOWNLOAD=ON -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR) --parallel
 .PHONY: debug
 
 mac-bundle:
 	./scripts/macdeploy.sh $(BUILD_DIR)
 .PHONY: mac-bundle
+
+dmg: mac-bundle
+	./scripts/mkdmg.sh $(BUILD_DIR)
+.PHONY: dmg
+
+verify-dmg:
+	./scripts/verify-dmg.sh $(BUILD_DIR)/Vicinae.dmg
+.PHONY: verify-dmg
 
 mac-deps:
 	@./scripts/macos-setup.sh
@@ -59,6 +69,7 @@ test:
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
 	./$(BIN_DIR)/vicinae-file-indexer-tests
+	./$(BIN_DIR)/vicinae-crypto-tests
 .PHONY: test
 
 static:
@@ -103,6 +114,18 @@ appimage-build-env-push:
 	docker push $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
 .PHONY: appimage-build-env-push
 
+depot-push-arch:
+	depot build --save --save-tag arch-latest --platform linux/amd64 -f scripts/runners/arch/base.Dockerfile scripts/runners/arch
+.PHONY: depot-push-arch
+
+depot-push-appimage-amd64:
+	depot build --save --save-tag appimage-amd64-latest --platform linux/amd64 -f scripts/runners/appimage/AppImageBuilder.Dockerfile scripts/runners/appimage
+.PHONY: depot-push-appimage-amd64
+
+depot-push-appimage-arm64:
+	depot build --save --save-tag appimage-arm64-latest --platform linux/arm64 -f scripts/runners/appimage/AppImageBuilder.Dockerfile scripts/runners/appimage
+.PHONY: depot-push-appimage-arm64
+
 NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 CLANG_FORMAT := $(shell command -v clang-format 2>/dev/null || echo /opt/homebrew/opt/llvm/bin/clang-format)
 
@@ -137,6 +160,19 @@ bump-major:
 	./scripts/bump_version.sh major
 .PHONY: bump-major
 
+nix-hash:
+	$(SHELL) scripts/update-nix-npm-hashes.sh
+.PHONY: nix-hashes
+
+nix-hash-check:
+	$(SHELL) scripts/update-nix-npm-hashes.sh --check
+.PHONY: nix-hash-check
+
+# reset all macOS permission grants
+tcc-reset:
+	tccutil reset All $(APPLE_BUNDLE_ID)
+.PHONY: tcc-reset
+
 # if we need to manually create a release
 gh-release:
 	mkdir -p dist
@@ -161,7 +197,6 @@ clean:
 	$(RM) -rf ./scripts/.tmp
 	$(RM) -rf ./src/lib/*/build
 .PHONY: clean
-
 
 figen:
 	$(FIGURA_CC) compile ./figura/tsapi.fig --client typescript --output ./src/typescript/api/src/api/proto/api.ts

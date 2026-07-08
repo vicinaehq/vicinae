@@ -23,14 +23,18 @@
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
 #endif
 #include "service-registry.hpp"
-#include "services/background-effect/background-effect-manager.hpp"
-#include "qml/background-effect-attached.hpp"
+#include "services/window-material/window-material-manager.hpp"
+#include "qml/window-material-attached.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "qml/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/browser-extension-service.hpp"
+#ifdef AUTO_INSTALL_BROWSER_MANIFESTS
+#include "services/browser-extension/native-host-installer.hpp"
+#endif
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "db/database-key.hpp"
 #include "services/glyph-service/glyph-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
@@ -43,8 +47,15 @@
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/news/news-service.hpp"
 #include "services/telemetry/telemetry-service.hpp"
+#include "services/update/update-service.hpp"
+#ifdef Q_OS_MACOS
+#include "services/update/macos-update-installer.hpp"
+#else
+#include "services/update/null-update-installer.hpp"
+#endif
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/wallpaper/wallpaper-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
@@ -52,6 +63,8 @@
 #ifdef Q_OS_LINUX
 #include "services/input-server/linux-input-server.hpp"
 #include "services/snippet/linux-snippet-server.hpp"
+#elif defined(Q_OS_MACOS)
+#include "services/snippet/macos-snippet-server.hpp"
 #else
 #include "services/snippet/null-snippet-server.hpp"
 #endif
@@ -67,6 +80,7 @@
 #include "settings-controller/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "qml/launcher-window.hpp"
+#include "qml/onboarding-window.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include "generated/version.h"
@@ -81,7 +95,38 @@
 #include "server.hpp"
 
 #ifdef Q_OS_MACOS
+#include "ipc-command-handler.hpp"
 #include "qml/macos-chrome-attached.hpp"
+#include <QFileOpenEvent>
+#endif
+
+#ifdef AUTO_ENABLE_AUTOSTART
+#include "services/autostart/macos-login-item.hpp"
+#endif
+
+#ifdef Q_OS_MACOS
+class UrlSchemeOpenFilter : public QObject {
+public:
+  UrlSchemeOpenFilter(ApplicationContext &ctx) : m_ctx(ctx) {}
+
+protected:
+  bool eventFilter(QObject *watched, QEvent *event) override {
+    if (event->type() == QEvent::FileOpen) {
+      const QUrl url = static_cast<QFileOpenEvent *>(event)->url();
+      if (Omnicast::APP_SCHEMES.contains(url.scheme())) {
+        IpcCommandHandler handler(m_ctx);
+        if (auto res = handler.handleUrl(url); !res) {
+          qWarning() << "Failed to handle deeplink" << url.toString() << ":" << res.error();
+        }
+        return true;
+      }
+    }
+    return QObject::eventFilter(watched, event);
+  }
+
+private:
+  ApplicationContext &m_ctx;
+};
 #endif
 
 static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
@@ -92,8 +137,29 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   }
 }
 
+static constexpr QFont::Weight UI_FONT_WEIGHT = QFont::Medium;
+
+static QFont resolveAppFont(const config::FontConfig &fontConfig) {
+  QFont font;
+  const auto &family = fontConfig.normal.family;
+  if (family == "auto") {
+    auto builtin = ServiceRegistry::instance()->fontService()->builtinFontFamily();
+    if (!builtin.isEmpty()) font.setFamily(builtin);
+  } else if (family != "system") {
+    font.setFamily(QString::fromStdString(family));
+  }
+  font.setPointSizeF(fontConfig.normal.size);
+  font.setWeight(UI_FONT_WEIGHT);
+  return font;
+}
+
 int startServer(const ServerLaunchOptions &launchOpts) {
   qInstallMessageHandler(coloredMessageHandler);
+
+#ifdef AUTO_INSTALL_BROWSER_MANIFESTS
+  // always refresh manifests
+  vicinae::browser::installNativeHostManifests();
+#endif
 
   // Cheap single-instance probe before building any Qt state. macOS spawns
   // a fresh process on every `open` of the .app; without this guard, each
@@ -107,9 +173,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
       return 0;
     }
   }
-
-  if (!qEnvironmentVariableIsSet("QT_QUICK_FLICKABLE_WHEEL_DECELERATION"))
-    qputenv("QT_QUICK_FLICKABLE_WHEEL_DECELERATION", "10000");
 
 #ifdef Q_OS_MACOS
   if (!qEnvironmentVariableIsSet("QT_MAC_SET_RAISE_PROCESS")) qputenv("QT_MAC_SET_RAISE_PROCESS", "0");
@@ -141,22 +204,35 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   Omnicast::ensureDirectories();
 
+#ifdef AUTO_ENABLE_AUTOSTART
+  vicinae::macos::registerLoginItemOnce();
+#endif
+
   {
     auto registry = ServiceRegistry::instance();
-    auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "vicinae.db");
+
+    auto configService = std::make_unique<config::Manager>(m_config);
+    auto currentConfig = configService->value();
+
+    const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
+    const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
+    auto keys = db::prepareEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});
+
+    auto omniDb = std::make_unique<OmniDatabase>(vicinaeDbPath, keys.database);
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto appRuntime = std::make_unique<AppRuntime>(*windowManager, *appService);
-    auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
+    auto clipboardManager = std::make_unique<ClipboardService>(clipboardDbPath, keys.database);
+    clipboardManager->setEncryptionKey(keys.clipboard);
 #ifdef Q_OS_LINUX
     auto inputServer = std::make_unique<LinuxInputServer>();
     auto snippetServer = std::make_unique<LinuxSnippetServer>(*inputServer);
     auto platformPaste =
         std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*inputServer));
 #elif defined(Q_OS_MACOS)
-    auto snippetServer = std::make_unique<NullSnippetServer>();
+    auto snippetServer = std::make_unique<MacosSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<MacosPasteService>());
 #else
     auto snippetServer = std::make_unique<NullSnippetServer>();
@@ -164,18 +240,16 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #endif
     auto snippetService =
         std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json", *snippetServer,
-                                         *windowManager, *appService, *clipboardManager);
+                                         *windowManager, *appRuntime, *clipboardManager);
     auto pasteService = std::make_unique<PasteService>(*clipboardManager, *windowManager, *appService,
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
-    auto configService = std::make_unique<config::Manager>(m_config);
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
     auto globalShortcutService = std::make_unique<GlobalShortcutService>(*configService, *rootItemManager,
                                                                          createGlobalShortcutBackend());
     auto shortcutService =
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
     auto toastService = std::make_unique<ToastService>();
-    auto currentConfig = configService->value();
     auto glyphService =
         std::make_unique<GlyphService>(Omnicast::dataDir() / "emojis" / "emojis.json", omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
@@ -228,13 +302,21 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
-    registry->setBackgroundEffectManager(std::make_unique<BackgroundEffectManager>());
-    BackgroundEffect::setManager(registry->backgroundEffectManager());
+    registry->setWindowMaterialManager(std::make_unique<WindowMaterialManager>());
+    WindowMaterial::setManager(registry->windowMaterialManager());
     registry->setShortcutInhibitManager(std::make_unique<ShortcutInhibitManager>());
     ShortcutInhibitor::setManager(registry->shortcutInhibitManager());
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
+#ifdef Q_OS_MACOS
+    auto updateInstaller = std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<MacosUpdateInstaller>());
+#else
+    auto updateInstaller = std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<NullUpdateInstaller>());
+#endif
+    registry->setUpdateService(
+        std::make_unique<UpdateService>(*registry->toastService(), std::move(updateInstaller)));
+    registry->setWallpaperManager(std::make_unique<WallpaperManager>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
@@ -307,6 +389,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   commandServer.start(Omnicast::commandSocketPath());
 
+#ifdef Q_OS_MACOS
+  UrlSchemeOpenFilter urlSchemeOpenFilter(ctx);
+  qApp->installEventFilter(&urlSchemeOpenFilter);
+#endif
+
   QObject::connect(
       ctx.services->fileService()->indexer(), &AbstractFileIndexer::scanStatusChanged,
       ctx.services->toastService(),
@@ -348,18 +435,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     bool const fontChanged =
         next.font.normal.size != prev.font.normal.size || next.font.normal.family != prev.font.normal.family;
 
-    if (fontChanged) {
-      auto &family = next.font.normal.family;
-      QFont font;
-      if (family == "auto") {
-        auto builtin = ServiceRegistry::instance()->fontService()->builtinFontFamily();
-        if (!builtin.isEmpty()) font.setFamily(builtin);
-      } else if (family != "system") {
-        font.setFamily(QString::fromStdString(family));
-      }
-      font.setPointSizeF(next.font.normal.size);
-      QGuiApplication::setFont(font);
-    }
+    if (fontChanged) { QGuiApplication::setFont(resolveAppFont(next.font)); }
 
     if (themeChangeRequired) {
       theme.setTheme(nextTheme.name.c_str());
@@ -431,8 +507,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
-  auto builtinFont = ServiceRegistry::instance()->fontService()->builtinFontFamily();
-  if (!builtinFont.isEmpty()) QGuiApplication::setFont(QFont(builtinFont));
+  QGuiApplication::setFont(resolveAppFont(cfgService->value().font));
 
   configChanged(cfgService->value(), {});
 
@@ -447,6 +522,23 @@ int startServer(const ServerLaunchOptions &launchOpts) {
         ctx.settings->openTab(tab);
       }
     });
+    auto *updates = ServiceRegistry::instance()->updateService();
+
+    QObject::connect(tray.get(), &TrayService::checkForUpdatesRequested, [&ctx, updates]() {
+      if (updates->available()) {
+        ctx.navigation->popToRoot();
+        ctx.navigation->showWindow();
+      } else {
+        updates->checkNow();
+      }
+    });
+
+    auto syncTrayUpdate = [tray = tray.get(), updates]() {
+      tray->setAvailableUpdate(updates->available() ? updates->available()->tag : QString());
+    };
+    QObject::connect(updates, &UpdateService::updateChanged, tray.get(), syncTrayUpdate);
+    syncTrayUpdate();
+    tray->setCheckForUpdatesVisible(updates->checksSupported());
     QObject::connect(tray.get(), &TrayService::quitRequested, []() { QCoreApplication::quit(); });
     tray->show();
   }
@@ -454,6 +546,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   LauncherWindow const qmlWindow(ctx);
 
   ctx.navigation->launch(std::make_shared<RootCommand>());
+
+  OnboardingWindow onboardingWindow(ctx);
+  if (OnboardingWindow::shouldShow()) { onboardingWindow.show(); }
 
   if (launchOpts.open) {
     ctx.navigation->showWindow();

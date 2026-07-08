@@ -4,6 +4,7 @@
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "services/update/update-service.hpp"
 #include <memory>
 #include <optional>
 #include <string>
@@ -82,6 +83,28 @@ public:
 
 private:
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_result;
+};
+
+class RootUpdateSection : public SectionSource {
+public:
+  explicit RootUpdateSection(UpdateService *updates) : m_updates(updates) {}
+
+  QString sectionName() const override { return QStringLiteral("Update"); }
+  int count() const override { return m_update ? 1 : 0; }
+  QString itemId(int) const override;
+  QString itemTitle(int) const override;
+  QString itemSubtitle(int) const override;
+  QString itemIconSource(int) const override;
+  QVariant customData(int i, int role) const override;
+  QHash<int, QByteArray> customRoleNames() const override;
+  QHash<int, QVariant> customRoleDefaults() const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int) const override;
+
+  void setUpdate(std::optional<UpdateService::AvailableUpdate> update) { m_update = std::move(update); }
+
+private:
+  UpdateService *m_updates;
+  std::optional<UpdateService::AvailableUpdate> m_update;
 };
 
 class RootNewsSection : public SectionSource {

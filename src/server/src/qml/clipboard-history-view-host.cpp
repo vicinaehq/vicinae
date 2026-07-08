@@ -4,11 +4,28 @@
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "utils/utils.hpp"
+#include "vicinae.hpp"
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
-#include <QStandardPaths>
 #include <QUrl>
+
+static QString kindLabel(ClipboardOfferKind kind) {
+  switch (kind) {
+  case ClipboardOfferKind::Text:
+    return QStringLiteral("Text");
+  case ClipboardOfferKind::Link:
+    return QStringLiteral("Link");
+  case ClipboardOfferKind::Image:
+    return QStringLiteral("Image");
+  case ClipboardOfferKind::File:
+    return QStringLiteral("File");
+  case ClipboardOfferKind::Unknown:
+  case ClipboardOfferKind::Count:
+    break;
+  }
+  return QStringLiteral("Unknown");
+}
 
 static std::optional<ClipboardOfferKind> kindFromFilterIndex(int index) {
   switch (index) {
@@ -111,7 +128,10 @@ void ClipboardHistoryViewHost::initialize() {
   }
 }
 
-void ClipboardHistoryViewHost::loadInitialData() { m_controller->setFilter(searchText()); }
+void ClipboardHistoryViewHost::loadInitialData() {
+  m_controller->setFilter(searchText());
+  m_controller->reloadSearch();
+}
 
 void ClipboardHistoryViewHost::textChanged(const QString &text) {
   m_model.setSelectFirstOnReset(true);
@@ -171,7 +191,7 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   m_detailErrorTitle.clear();
   m_detailErrorDescription.clear();
 
-  m_detailMimeType = entry.mimeType;
+  m_detailType = kindLabel(entry.kind);
   m_detailSize = formatSize(entry.size);
   m_detailCopiedAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt).toString();
   m_detailMd5 = entry.md5sum;
@@ -189,16 +209,20 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
     case ClipboardService::OfferDecryptionError::DecryptionFailed:
       m_detailErrorTitle = QStringLiteral("Decryption failed");
       m_detailErrorDescription = QStringLiteral(
-          "Vicinae could not decrypt the data for this selection. This is most likely caused by a "
-          "keychain software change. To fix this disable encryption in the clipboard extension "
-          "settings.");
+          "Vicinae could not decrypt the data for this selection. It was most likely encrypted "
+          "with a different key and cannot be recovered. You can remove this entry from the "
+          "history.");
+      break;
+    case ClipboardService::OfferDecryptionError::DataUnavailable:
+      m_detailErrorTitle = QStringLiteral("Data unavailable");
+      m_detailErrorDescription = QStringLiteral("The data for this selection could not be found on disk.");
       break;
     case ClipboardService::OfferDecryptionError::DecryptionRequired:
       m_detailErrorTitle = QStringLiteral("Data is encrypted");
       m_detailErrorDescription = QStringLiteral(
           "Data for this selection was previously encrypted but the clipboard is not currently "
           "configured to use encryption. You should be able to fix this by enabling it in the "
-          "clipboard extension settings.");
+          "settings.");
       break;
     }
     m_hasDetail = true;
@@ -230,7 +254,7 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   }
 
   if (mime.startsWith("image/")) {
-    auto const cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    auto const cacheDir = QString::fromStdString(Omnicast::cacheDir().string());
     QDir().mkpath(cacheDir);
     QString const path = cacheDir + QStringLiteral("/clipboard-") + entry.md5sum;
     QFile f(path);
@@ -262,7 +286,7 @@ void ClipboardHistoryViewHost::clearDetail() {
   m_hasDetailError = false;
   m_detailTextContent.clear();
   m_detailImageSource.clear();
-  m_detailMimeType.clear();
+  m_detailType.clear();
   m_detailSize.clear();
   m_detailCopiedAt.clear();
   m_detailMd5.clear();

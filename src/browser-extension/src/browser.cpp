@@ -10,6 +10,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 #include <filesystem>
+#include "common/common.hpp"
 #include "generated/browser-ipc-client.hpp"
 
 #ifdef NDEBUG
@@ -63,9 +64,7 @@ private:
   Handler m_fn;
 };
 
-static std::filesystem::path socketPath() {
-  return std::filesystem::path(getenv("XDG_RUNTIME_DIR")) / "vicinae" / "vicinae.sock";
-}
+static std::filesystem::path socketPath() { return vicinae::serverSocketPath(); }
 
 static void sendToExtension(std::string_view message) {
   uint32_t size = message.size();

@@ -1,6 +1,7 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "services/app-service/abstract-app-db.hpp"
+#include "services/app-service/app-service.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class OpenAppAction : public AbstractAction {
@@ -16,6 +17,17 @@ private:
   std::shared_ptr<AbstractApplication> application;
   std::vector<QString> args;
   bool m_clearSearch = false;
+};
+
+class OpenAppLocationAction : public AbstractAction {
+public:
+  OpenAppLocationAction(const std::shared_ptr<AbstractApplication> &app,
+                        const std::shared_ptr<AbstractApplication> &opener);
+
+  void execute(ApplicationContext *ctx) override;
+
+private:
+  std::shared_ptr<AbstractApplication> m_app;
 };
 
 class OpenInTerminalAction : public AbstractAction {
@@ -90,4 +102,17 @@ public:
 private:
   QUrl m_url;
   QString m_title;
+};
+
+class OpenWithAction : public ListSubmenuAction {
+public:
+  OpenWithAction(QString target);
+
+  std::unique_ptr<ActionPanelState> buildState(ApplicationContext *ctx) const override;
+
+  void setTypeFiltering(bool filter = true);
+
+private:
+  bool m_typeFiltered = true;
+  QString m_target;
 };

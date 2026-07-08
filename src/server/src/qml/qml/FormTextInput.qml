@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-Item {
+FocusScope {
     id: root
     implicitHeight: 36
     Layout.fillWidth: true
@@ -13,6 +13,8 @@ Item {
     property bool readOnly: false
     property bool hasError: false
     property bool filled: false
+    // if set to true, pressing escape or enter/return will defocus the input field
+    // we usually want that on in settings window but not in form commands
     property bool releaseFocusOnAccept: false
     property alias echoMode: input.echoMode
     readonly property bool editing: input.activeFocus
@@ -43,7 +45,7 @@ Item {
         anchors.fill: parent
         radius: 8
         color: "transparent"
-        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus && !root.readOnly ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus && !root.readOnly ? Theme.inputBorderFocus : Theme.inputBorder, Config.surfaceOpacity)
         border.width: 1
         opacity: root.readOnly ? 0.5 : 1.0
     }
@@ -53,6 +55,7 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 10
         anchors.rightMargin: 10
+        opacity: root.readOnly ? 0.5 : 1.0
         verticalAlignment: TextInput.AlignVCenter
         font.pointSize: Theme.regularFontSize
         color: Theme.foreground
@@ -72,10 +75,18 @@ Item {
         }
 
         onTextEdited: root.textEdited()
+
+        Keys.onEscapePressed: ev => {
+            if (root.releaseFocusOnAccept) {
+                input.focus = false;
+                ev.accepted = true;
+            }
+        }
+
         onAccepted: {
             root.accepted();
             if (root.releaseFocusOnAccept)
-                focus = false;
+                input.focus = false;
         }
     }
 }

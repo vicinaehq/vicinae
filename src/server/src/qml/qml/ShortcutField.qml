@@ -10,6 +10,7 @@ RowLayout {
     property string shortcut: ""
     // Whether to draw an outline around the trigger (off for dense list rows).
     property bool bordered: true
+    property bool clearable: true
     property string placeholder: "Record shortcut"
     // Owner id of this shortcut, excluded from conflict checks (so re-recording it isn't self-conflict).
     property string shortcutId: ""
@@ -39,7 +40,7 @@ RowLayout {
         color: "transparent"
         // Borderless fields (dense list rows) still reveal a border on hover.
         border.width: hover.hovered || (field.bordered && field._tokens.length > 0) ? 1 : 0
-        border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
+        border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
 
         HoverHandler {
             id: hover
@@ -75,7 +76,7 @@ RowLayout {
     }
 
     Text {
-        visible: field._tokens.length > 0
+        visible: field._tokens.length > 0 && field.clearable
         text: "×"
         color: clearArea.containsMouse ? Theme.danger : Theme.textMuted
         font.pixelSize: 16

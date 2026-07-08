@@ -75,7 +75,7 @@ ColumnLayout {
                 anchors.fill: parent
                 radius: 6
                 color: "transparent"
-                border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
+                border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
                 border.width: 1
             }
 

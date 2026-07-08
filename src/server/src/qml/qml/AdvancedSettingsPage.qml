@@ -99,11 +99,13 @@ Flickable {
 
         SettingsSectionLabel {
             text: "System"
+            visible: Platform.supports("inputServer")
             Layout.topMargin: 24
             Layout.bottomMargin: 10
         }
 
         SettingsGroup {
+            visible: Platform.supports("inputServer")
             SettingsRow {
                 label: "Input server"
                 description: "Whether to spawn the input server at startup. This needs to be enabled in order to support snippets, paste to active window, and other features that require input monitoring or injection."
@@ -111,6 +113,24 @@ Flickable {
                 SettingsToggle {
                     checked: root.model.inputServerEnabled
                     onToggled: root.model.inputServerEnabled = checked
+                }
+            }
+        }
+
+        SettingsSectionLabel {
+            text: "Security"
+            Layout.topMargin: 24
+            Layout.bottomMargin: 10
+        }
+
+        SettingsGroup {
+            SettingsRow {
+                label: "Encrypt sensitive data"
+                description: "Encrypt sensitive data at rest, such as clipboard history and internal databases (OAuth tokens, extension local storage, API keys). Note that some components, such as on-disk clipboard history, may not be retroactively affected when toggling this option. Turning on this option may ask you to unlock your keychain. Requires a restart in order to apply."
+                showSeparator: false
+                SettingsToggle {
+                    checked: root.model.encryptSensitiveData
+                    onToggled: checked => root.model.encryptSensitiveData = checked
                 }
             }
         }

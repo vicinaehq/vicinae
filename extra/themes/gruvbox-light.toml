@@ -12,7 +12,7 @@ icon = "icons/gruvbox.png"
 background = "#FBF1C7"        # bg0_h (hard contrast bg)
 foreground = "#3C3836"        # fg1
 secondary_background = "#F9F5D7"  # bg0_s (soft bg for surfaces)
-border = "#A89984"            # bg3 (more visible)
+border = "#7A7661"            # bg3 (more visible)
 accent = "#458588"            # blue (neutral)
 
 [colors.accents]
@@ -26,9 +26,9 @@ yellow = "#D79921"            # yellow (neutral)
 cyan = "#689D6A"              # aqua (neutral)
 
 [colors.list.item.selection]
-background = "#EBDBB2"
+background = "#dabc6e"
 secondary_background = "#EBDBB2"
 
 [colors.grid.item]
-background = "#EBDBB2"
+background = "#e8d5a7"
 

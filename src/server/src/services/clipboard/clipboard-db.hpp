@@ -79,6 +79,7 @@ struct ClipboardSelectionOfferRecord {
 
 struct ClipboardSelectionRecord {
   std::vector<ClipboardSelectionOfferRecord> offers;
+  std::optional<QString> source;
 };
 
 class ClipboardDatabase {
@@ -108,7 +109,7 @@ public:
 
   void runMigrations();
 
-  ClipboardDatabase();
+  explicit ClipboardDatabase(std::optional<db::EncryptionKey> key);
   ~ClipboardDatabase() = default;
 
 private:

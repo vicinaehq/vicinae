@@ -18,7 +18,7 @@ class ClipboardHistoryViewHost : public ViewHostBase {
   Q_PROPERTY(int currentKindFilter READ currentKindFilter NOTIFY currentKindFilterChanged)
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(bool hasDetailError READ hasDetailError NOTIFY detailChanged)
-  Q_PROPERTY(QString detailMimeType READ detailMimeType NOTIFY detailChanged)
+  Q_PROPERTY(QString detailType READ detailType NOTIFY detailChanged)
   Q_PROPERTY(QString detailTextContent READ detailTextContent NOTIFY detailChanged)
   Q_PROPERTY(QString detailImageSource READ detailImageSource NOTIFY detailChanged)
   Q_PROPERTY(QString detailSize READ detailSize NOTIFY detailChanged)
@@ -51,7 +51,7 @@ public:
   int currentKindFilter() const { return m_currentKindFilter; }
   bool hasDetail() const { return m_hasDetail; }
   bool hasDetailError() const { return m_hasDetailError; }
-  QString detailMimeType() const { return m_detailMimeType; }
+  QString detailType() const { return m_detailType; }
   QString detailTextContent() const { return m_detailTextContent; }
   QString detailImageSource() const { return m_detailImageSource; }
   QString detailSize() const { return m_detailSize; }
@@ -89,7 +89,7 @@ private:
 
   bool m_hasDetail = false;
   bool m_hasDetailError = false;
-  QString m_detailMimeType;
+  QString m_detailType;
   QString m_detailTextContent;
   QString m_detailImageSource;
   QString m_detailSize;

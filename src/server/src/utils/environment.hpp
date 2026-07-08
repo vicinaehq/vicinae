@@ -52,6 +52,13 @@ inline bool isHyprlandCompositor() { return containsIgnoreCase(xdgpp::currentDes
 inline bool isPlasmaDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "kde"); }
 inline bool isWaylandPlasmaDesktop() { return isWaylandSession() && isPlasmaDesktop(); }
 inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "gnome"); }
+inline bool isCinnamonDesktop() {
+  // "X-Cinnamon" is the pre-spec value (used by Linux Mint); "Cinnamon" is the registered one.
+  return containsIgnoreCase(xdgpp::currentDesktop(), "x-cinnamon") ||
+         containsIgnoreCase(xdgpp::currentDesktop(), "cinnamon");
+}
+inline bool isMateDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "mate"); }
+inline bool isXfceDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "xfce"); }
 
 // used mostly to exclude cosmic which's implementation is currently broken
 inline bool isLayerShellSupported() {
@@ -64,17 +71,17 @@ inline bool isLayerShellSupported() {
 #endif
 }
 
-inline bool isHudDisabled() { return !isLayerShellSupported(); }
-
-/**
- * App image directory if we are running in an appimage.
- * We typically use this in order to find the bundled
- * node binary, instead of trying to launch the system one.
- */
-inline std::optional<std::filesystem::path> appImageDir() {
-  if (auto appdir = getenv("APPDIR")) return appdir;
-  return std::nullopt;
+inline bool isHudSupported() {
+#ifdef Q_OS_MACOS
+  return true;
+#else
+  // if layer shell is not supported, there doesn't seem to be an easy way for us to create
+  // a window that doesn't steal focus.
+  return isLayerShellSupported();
+#endif
 }
+
+inline bool isHudDisabled() { return !isHudSupported(); }
 
 /**
  * Optional override of the `node` executable to use to spawn the
@@ -84,8 +91,6 @@ inline std::optional<std::filesystem::path> nodeBinaryOverride() {
   if (auto bin = getenv("VICINAE_NODE_BIN")) return bin;
   return std::nullopt;
 }
-
-inline bool isAppImage() { return appImageDir().has_value(); }
 
 inline QStringList fallbackIconSearchPaths() {
   QStringList list;
@@ -109,10 +114,23 @@ inline QString vicinaeApiBaseUrl() {
   return "https://api.vicinae.com/v1";
 }
 
+inline QString updateFeedUrl() {
+  if (const char *url = getenv("VICINAE_UPDATE_FEED_URL")) { return url; }
+  return "https://api.github.com/repos/vicinaehq/vicinae/releases/latest";
+}
+
+inline std::optional<std::string> updateVersionOverride() {
+  if (const char *version = getenv("VICINAE_UPDATE_FORCE_VERSION")) { return version; }
+  return std::nullopt;
+}
+
 /**
  * Gets human-readable environment description
  */
 inline QString getEnvironmentDescription() {
+#ifdef Q_OS_MACOS
+  return QStringLiteral("Aqua");
+#else
   QString desc;
   const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
 
@@ -131,6 +149,7 @@ inline QString getEnvironmentDescription() {
   }
 
   return desc;
+#endif
 }
 
 inline std::string chassisType() {

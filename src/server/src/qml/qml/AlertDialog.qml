@@ -2,16 +2,18 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Popup {
+ViciPopover {
     id: root
-    anchors.centerIn: parent
+    x: Math.round((parent.width - width) / 2)
+    y: Math.round((parent.height - height) / 2)
     width: 400
+    contentWidth: availableWidth
     padding: 20
     focus: true
-    modal: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     property bool _confirmed: false
+    property Item _focusedButton: null
 
     onAboutToShow: {
         _confirmed = false;
@@ -24,55 +26,6 @@ Popup {
     onActiveFocusChanged: {
         if (!activeFocus && opened)
             close();
-    }
-
-    enter: Transition {
-        ParallelAnimation {
-            NumberAnimation {
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-            NumberAnimation {
-                property: "scale"
-                from: 0.95
-                to: 1
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-        }
-    }
-
-    exit: Transition {
-        ParallelAnimation {
-            NumberAnimation {
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: 100
-                easing.type: Easing.InCubic
-            }
-            NumberAnimation {
-                property: "scale"
-                from: 1
-                to: 0.95
-                duration: 100
-                easing.type: Easing.InCubic
-            }
-        }
-    }
-
-    background: Rectangle {
-        radius: 6
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.95)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
-    }
-
-    Overlay.modal: Rectangle {
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
     }
 
     contentItem: ColumnLayout {
@@ -121,10 +74,13 @@ Popup {
                 foreground: launcher.alertModel.cancelColor
                 focus: true
                 activeFocusOnTab: true
+                showFocus: root._focusedButton === cancelBtn
+                onActiveFocusChanged: if (activeFocus)
+                    root._focusedButton = cancelBtn
                 onClicked: root.close()
                 Keys.onRightPressed: confirmBtn.forceActiveFocus()
                 Keys.onPressed: event => {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                    const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                     if (nav === 4) {
                         confirmBtn.forceActiveFocus();
                         event.accepted = true;
@@ -142,6 +98,9 @@ Popup {
                 text: launcher.alertModel.confirmText
                 foreground: launcher.alertModel.confirmColor
                 activeFocusOnTab: true
+                showFocus: root._focusedButton === confirmBtn
+                onActiveFocusChanged: if (activeFocus)
+                    root._focusedButton = confirmBtn
                 onClicked: {
                     root._confirmed = true;
                     launcher.alertModel.confirm();
@@ -149,7 +108,7 @@ Popup {
                 }
                 Keys.onLeftPressed: cancelBtn.forceActiveFocus()
                 Keys.onPressed: event => {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                    const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                     if (nav === 3) {
                         cancelBtn.forceActiveFocus();
                         event.accepted = true;

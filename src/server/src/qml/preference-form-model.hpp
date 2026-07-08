@@ -14,6 +14,7 @@ public:
     TypeRole = Qt::UserRole + 1,
     FieldIdRole,
     LabelRole,
+    CheckboxLabelRole,
     DescriptionRole,
     PlaceholderRole,
     ValueRole,
@@ -43,6 +44,7 @@ private:
     QString type;
     QString id;
     QString label;
+    QString checkboxLabel;
     QString description;
     QString placeholder;
     QVariant value;

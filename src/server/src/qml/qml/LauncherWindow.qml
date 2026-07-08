@@ -31,9 +31,9 @@ Window {
     color: "transparent"
     visible: false
 
-    BackgroundEffect.enabled: root.blurEnabled && !root.nativeChrome
-    BackgroundEffect.radius: root.cornerRadius
-    BackgroundEffect.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? _contentH : _h)
+    WindowMaterial.enabled: root.blurEnabled && !root.nativeChrome
+    WindowMaterial.radius: root.cornerRadius
+    WindowMaterial.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? _contentH : _h)
 
     Item {
         id: shadowMask
@@ -203,33 +203,53 @@ Window {
 
         ActionPanelPopover {
             id: actionPanelPopover
-            z: 100
+            parent: footer
             controller: actionPanel
-            anchors.fill: parent
-            anchors.bottomMargin: footer.height + 1 + Config.borderWidth
+            maxHeight: Math.round(root.height * 0.6)
         }
 
         ActionPanelPopover {
             id: footerMenuPopover
-            z: 100
+            parent: footer
             controller: footerPanel
             alignLeft: true
+            maxHeight: Math.round(root.height * 0.6)
+        }
+
+        MouseArea {
+            id: modalScrim
             anchors.fill: parent
-            anchors.bottomMargin: footer.height + 1 + Config.borderWidth
+            z: 200
+            enabled: launcher.alertModel.visible
+            visible: dim.opacity > 0
+            hoverEnabled: true
+            acceptedButtons: Qt.AllButtons
+            onClicked: alertDialog.close()
+            onWheel: function (wheel) {
+                wheel.accepted = true;
+            }
+
+            Rectangle {
+                id: dim
+                x: root.shadowPadding
+                y: root.shadowPadding
+                width: parent.width - 2 * root.shadowPadding
+                height: parent.height - 2 * root.shadowPadding
+                radius: root.shadowPadding > 0 ? Config.borderRounding : 0
+                color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
+                opacity: launcher.alertModel.visible ? 1 : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 150
+                        easing.type: Easing.OutCubic
+                    }
+                }
+            }
         }
 
         AlertDialog {
             id: alertDialog
-            Overlay.modal: Item {
-                Rectangle {
-                    x: root.shadowPadding
-                    y: root.shadowPadding
-                    width: parent.width - 2 * root.shadowPadding
-                    height: parent.height - 2 * root.shadowPadding
-                    radius: root.shadowPadding > 0 ? Config.borderRounding : 0
-                    color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
-                }
-            }
         }
     }
 

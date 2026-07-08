@@ -14,13 +14,14 @@ public:
   using NotifyFn = ExtensionActionPanelBuilder::NotifyFn;
 
   ExtensionGridSection(std::string name, std::vector<GridItemViewModel> items, std::optional<int> columns,
-                       std::optional<double> aspectRatio, bool filtering, NotifyFn notify,
-                       const std::optional<ActionPannelModel> *globalActions);
+                       std::optional<double> aspectRatio, std::optional<GridInset> inset, bool filtering,
+                       NotifyFn notify, const std::optional<ActionPannelModel> *globalActions);
 
   QString sectionName() const override { return QString::fromStdString(m_name); }
   int count() const override;
   std::optional<int> columns() const override { return m_columns; }
   std::optional<double> aspectRatio() const override { return m_aspectRatio; }
+  std::optional<double> inset() const override;
   void setFilter(std::string_view query) override;
 
   void setOnItemSelected(std::function<void(const GridItemViewModel *)> cb) {
@@ -38,6 +39,7 @@ private:
   std::vector<Scored<int>> m_filtered;
   std::optional<int> m_columns;
   std::optional<double> m_aspectRatio;
+  std::optional<GridInset> m_inset;
   bool m_filtering;
   std::string m_query;
   NotifyFn m_notify;
@@ -51,7 +53,6 @@ class ExtensionGridModel : public SectionGridModel {
   Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
   Q_PROPERTY(ImageUrl emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
   Q_PROPERTY(int fit READ fit NOTIFY fitChanged)
-  Q_PROPERTY(double inset READ inset NOTIFY insetChanged)
   Q_PROPERTY(int dataRevision READ dataRevision NOTIFY dataRevisionChanged)
 
 public:
@@ -74,13 +75,11 @@ public:
   QString emptyDescription() const;
   ImageUrl emptyIcon() const;
   int fit() const { return static_cast<int>(m_fit); }
-  double inset() const { return m_inset; }
   int dataRevision() const { return m_dataRevision; }
 
 signals:
   void emptyViewChanged();
   void fitChanged();
-  void insetChanged();
   void dataRevisionChanged();
 
 protected:
@@ -94,7 +93,6 @@ private:
   std::vector<std::unique_ptr<ExtensionGridSection>> m_ownedSections;
   GridModel m_model;
   ObjectFit m_fit = ObjectFit::Contain;
-  double m_inset = 0.10;
   QString m_filter;
   QString m_placeholder;
   int m_dataRevision = 0;

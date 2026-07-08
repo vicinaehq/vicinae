@@ -3,7 +3,7 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    implicitHeight: 28
+    implicitHeight: Math.max(28, contentRow.implicitHeight)
     Layout.fillWidth: true
     activeFocusOnTab: !readOnly
 
@@ -42,6 +42,7 @@ Item {
     }
 
     RowLayout {
+        id: contentRow
         anchors.fill: parent
         spacing: 8
         opacity: root.readOnly ? 0.5 : 1.0
@@ -53,7 +54,7 @@ Item {
             radius: 4
             Layout.alignment: Qt.AlignVCenter
             color: root.checked ? Theme.accent : "transparent"
-            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : root.activeFocus ? Theme.inputBorderFocus : root.checked ? Theme.accent : Theme.inputBorder, Config.windowOpacity)
+            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : root.activeFocus ? Theme.inputBorderFocus : root.checked ? Theme.accent : Theme.inputBorder, Config.surfaceOpacity)
             border.width: 1
 
             Text {
@@ -71,6 +72,7 @@ Item {
             text: root.label
             color: Theme.foreground
             font.pointSize: Theme.regularFontSize
+            wrapMode: Text.Wrap
             Layout.fillWidth: true
         }
     }

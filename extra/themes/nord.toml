@@ -12,7 +12,7 @@ icon = "icons/nord.svg"
 background = "#2E3440"        # nord0 (Polar Night)
 foreground = "#D8DEE9"        # nord4 (Snow Storm)
 secondary_background = "#3B4252"  # nord1 (lighter surface)
-border = "#4C566A"            # nord3 (subtle border)
+border = "#525C72"            # nord3 (subtle border)
 accent = "#81A1C1"            # nord9 (blue)
 
 [colors.accents]
@@ -26,6 +26,9 @@ yellow = "#EBCB8B"            # nord13
 cyan = "#88C0D0"              # nord8
 
 [colors.list.item.selection]
-background = "#3B4252"
+background = "#505a6f"
 secondary_background = "#4C566A"
 
+
+[colors.grid.item]
+background = "#4a5367"

@@ -8,6 +8,7 @@ ColumnLayout {
 
     property string label: ""
     property string description: ""
+    property var iconSource
     property bool showSeparator: true
     property real controlWidth: 200
 
@@ -21,6 +22,13 @@ ColumnLayout {
         Layout.topMargin: root.description !== "" ? 11 : 9
         Layout.bottomMargin: root.description !== "" ? 11 : 9
         spacing: 20
+
+        ViciImage {
+            visible: root.iconSource !== undefined
+            source: visible ? root.iconSource : ""
+            Layout.preferredWidth: 20
+            Layout.preferredHeight: 20
+        }
 
         ColumnLayout {
             Layout.fillWidth: true

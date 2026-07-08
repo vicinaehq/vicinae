@@ -1,14 +1,15 @@
 #include "clipboard-history-model.hpp"
-#include "actions/root-search/root-search-actions.hpp"
+#include "common/context.hpp"
 #include "extensions/clipboard/history/clipboard-history-actions.hpp"
 #include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
+#include "settings-controller/settings-controller.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/paste/paste-service.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "utils/utils.hpp"
 #include <QDateTime>
-#include <utility>
 
 void ClipboardHistorySection::setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page) {
   m_entries = page.data;
@@ -51,7 +52,12 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
   auto mainSection = panel->createSection();
   bool const isCopyable = entry.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
 
-  if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction(EntrypointId{"clipboard", ""})); }
+  if (!isCopyable) {
+    mainSection->addAction(new StaticAction("Open Settings", BuiltinIcon::Cog, [](ApplicationContext *ctx) {
+      ctx->settings->openTab(QStringLiteral("advanced"));
+      ctx->navigation->closeWindow();
+    }));
+  }
 
   auto pasteService = scope().services()->pasteService();
   auto pin = new PinClipboardAction(entry.id, !entry.pinnedAt);

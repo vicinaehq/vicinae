@@ -10,8 +10,12 @@
 #include <system_error>
 #include <utility>
 #include "environment.hpp"
+#include "http-client.hpp"
 #include "pid-file/pid-file.hpp"
 #include "generated/version.h"
+#include <QCryptographicHash>
+#include <QScopeGuard>
+#include <QThreadPool>
 #include "rang/rang.hpp"
 #include "vicinae.hpp"
 
@@ -81,9 +85,27 @@ ExtensionManager::ExtensionManager() : m_bus(&m_process), m_rpc(m_bus), m_client
 
 bool ExtensionManager::isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
 
-std::optional<fs::path> ExtensionManager::nodeExecutable() {
-  static const std::array<const char *, 2> candidates = {"vicinae-node", "node"};
+// exec node through a hard link so the process shows up as "vicinae-ext-runtime"
+// instead of a bare "node" in system monitors
+static fs::path taggedNodeExecutable(const fs::path &node) {
+  std::error_code ec;
+  const fs::path tagged = node.parent_path() / "vicinae-ext-runtime";
 
+  if (fs::equivalent(tagged, node, ec)) return tagged;
+
+  fs::remove(tagged, ec);
+  fs::create_hard_link(node, tagged, ec);
+
+  if (ec) {
+    qWarning() << "Failed to create tagged node runtime link:" << ec.message().c_str() << "- falling back to"
+               << node.c_str();
+    return node;
+  }
+
+  return tagged;
+}
+
+std::optional<fs::path> ExtensionManager::nodeExecutable() {
   if (auto bin = Environment::nodeBinaryOverride()) {
     std::error_code ec;
 
@@ -97,18 +119,77 @@ std::optional<fs::path> ExtensionManager::nodeExecutable() {
     return {};
   }
 
-  if (auto appDir = Environment::appImageDir()) {
-    std::error_code ec;
-    fs::path path = *appDir / "usr" / "bin" / "node";
-    if (fs::is_regular_file(path, ec)) return path;
-  }
-
-  for (auto candidate : candidates) {
-    if (auto path = QStandardPaths::findExecutable(candidate); !path.isEmpty()) { return path.toStdString(); }
-  }
+#if VICINAE_NODE_RUNTIME_DOWNLOAD
+  fs::path managed = Omnicast::dataDir() / "node" / VICINAE_NODE_RUNTIME_VERSION / "node";
+  if (std::error_code ec; fs::is_regular_file(managed, ec)) { return taggedNodeExecutable(managed); }
+#else
+  if (auto path = QStandardPaths::findExecutable("node"); !path.isEmpty()) { return path.toStdString(); }
+#endif
 
   return {};
 }
+
+#if VICINAE_NODE_RUNTIME_DOWNLOAD
+void ExtensionManager::downloadNodeRuntime() {
+  m_nodeDownloadStarted = true;
+
+  std::error_code ec;
+  fs::create_directories(Omnicast::cacheDir(), ec);
+  const fs::path archive = Omnicast::cacheDir() / "node.tar.gz";
+
+  qInfo() << "Downloading node runtime from" << VICINAE_NODE_RUNTIME_URL;
+
+  auto *download = http::Client().download(VICINAE_NODE_RUNTIME_URL, archive);
+
+  connect(download, &http::Download::finished, this, [this](const fs::path &path) {
+    QThreadPool::globalInstance()->start([this, path]() { installNodeRuntime(path); });
+  });
+  connect(download, &http::Download::failed, this, [](const QString &error) {
+    qCritical() << "Failed to download node runtime, extensions will not work:" << error;
+  });
+}
+
+void ExtensionManager::installNodeRuntime(const std::filesystem::path &archive) {
+  std::error_code ec;
+  auto removeArchive = qScopeGuard([&]() { fs::remove(archive, ec); });
+
+  QFile file(archive.c_str());
+  QCryptographicHash hash(QCryptographicHash::Sha256);
+
+  qInfo() << "Verifying node runtime archive integrity (sha256)" << archive.c_str();
+
+  if (!file.open(QIODevice::ReadOnly) || !hash.addData(&file) ||
+      hash.result().toHex() != VICINAE_NODE_RUNTIME_SHA256) {
+    qCritical() << "Node runtime archive failed checksum verification, extensions will not work";
+    return;
+  }
+
+  qInfo() << "Node runtime archive integrity verified";
+
+  const fs::path dest = Omnicast::dataDir() / "node" / VICINAE_NODE_RUNTIME_VERSION;
+
+  fs::remove_all(Omnicast::dataDir() / "node", ec);
+  fs::create_directories(dest, ec);
+
+  qInfo() << "Extracting" << VICINAE_NODE_RUNTIME_TAR_MEMBER << "to" << dest.c_str();
+
+  QProcess tar;
+
+  tar.setProgram("/usr/bin/tar");
+  tar.setArguments(
+      {"-xzf", archive.c_str(), "-C", dest.c_str(), "--strip-components=2", VICINAE_NODE_RUNTIME_TAR_MEMBER});
+  tar.start();
+
+  if (!tar.waitForFinished(60000) || tar.exitStatus() != QProcess::NormalExit || tar.exitCode() != 0) {
+    qCritical() << "Failed to extract node runtime, extensions will not work:" << tar.readAllStandardError();
+    return;
+  }
+
+  qInfo() << "Installed node runtime" << VICINAE_NODE_RUNTIME_VERSION;
+
+  QMetaObject::invokeMethod(this, [this]() { start(); }, Qt::QueuedConnection);
+}
+#endif
 
 bool ExtensionManager::stop() {
   m_process.terminate();
@@ -128,6 +209,12 @@ bool ExtensionManager::start() {
   auto node = nodeExecutable();
 
   if (!node) {
+#if VICINAE_NODE_RUNTIME_DOWNLOAD
+    if (!m_nodeDownloadStarted) {
+      downloadNodeRuntime(); // calls start() once the runtime is available
+      return true;
+    }
+#endif
     qCritical() << "Unable to find a suitable node executable. TypeScript extensions will not work.";
     return false;
   }

@@ -198,6 +198,19 @@ public:
   virtual AppPtr terminalEmulator() const = 0;
 
   /**
+   * Open the location where the app is installed at.
+   * What this does highly depends on how applications are defined on the target platform.
+   * On linux this would open the .desktop file, on macOS open the app bundle directory...
+   */
+  virtual bool openLocation(const AbstractApplication &app) const = 0;
+
+  /**
+   * Application used to open the `app` at its installed location.
+   * If this return null, it means that calling `openLocation` will likely return `false`.
+   */
+  virtual AppPtr locationOpener(const AbstractApplication &app) const = 0;
+
+  /**
    * Open the system file browser for the provided path.
    * If `select` is true, implementations should try to reveal/select the item and
    * gracefully fall back to opening the containing folder when that is not supported.

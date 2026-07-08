@@ -52,7 +52,7 @@ Item {
                 anchors.fill: parent
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Theme.fontFamily
-                font.pointSize: Theme.regularFontSize * 1.15
+                font.pointSize: Theme.regularFontSize * 1.2
                 color: Theme.foreground
                 selectionColor: Theme.textSelectionBg
                 selectedTextColor: Theme.textSelectionFg
@@ -193,7 +193,7 @@ Item {
                 }
 
                 function _handleNavigation(event) {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                    const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                     if (nav === 0)
                         return false;
 

@@ -37,7 +37,8 @@ void SectionGridModel::rebuildFromSources() {
                           .count = source->count(),
                           .name = source->sectionName(),
                           .columns = source->columns(),
-                          .aspectRatio = source->aspectRatio()});
+                          .aspectRatio = source->aspectRatio(),
+                          .inset = source->inset()});
   }
 
   auto newFlat = buildFlatList();
@@ -78,12 +79,13 @@ std::vector<SectionGridModel::FlatRow> SectionGridModel::buildFlatList() const {
 
     int const cols = sec.columns.value_or(m_columns);
     double const ar = sec.aspectRatio.value_or(m_aspectRatio);
+    double const inset = sec.inset.value_or(m_inset);
 
-    if (!sec.name.isEmpty()) { rows.push_back({FlatRow::SectionHeader, s, sec.name, 0, 0, cols, ar}); }
+    if (!sec.name.isEmpty()) { rows.push_back({FlatRow::SectionHeader, s, sec.name, 0, 0, cols, ar, inset}); }
 
     for (int i = 0; i < sec.count; i += cols) {
       int const count = std::min(cols, sec.count - i);
-      rows.push_back({FlatRow::ItemRow, s, {}, i, count, cols, ar});
+      rows.push_back({FlatRow::ItemRow, s, {}, i, count, cols, ar, inset});
     }
   }
 
@@ -115,6 +117,8 @@ QVariant SectionGridModel::data(const QModelIndex &index, int role) const {
     return r.columns;
   case RowAspectRatioRole:
     return r.aspectRatio;
+  case RowInsetRole:
+    return r.inset;
   default:
     return {};
   }
@@ -129,6 +133,7 @@ QHash<int, QByteArray> SectionGridModel::roleNames() const {
       {RowItemCount, "rowItemCount"},
       {RowColumnsRole, "rowColumns"},
       {RowAspectRatioRole, "rowAspectRatio"},
+      {RowInsetRole, "rowInset"},
   };
 }
 
@@ -152,6 +157,14 @@ void SectionGridModel::setAspectRatio(double ratio) {
   if (qFuzzyCompare(ratio, m_aspectRatio)) return;
   m_aspectRatio = ratio;
   emit aspectRatioChanged();
+  rebuildRows();
+}
+
+void SectionGridModel::setInset(double inset) {
+  if (inset < 0.0) inset = 0.0;
+  if (qFuzzyCompare(1.0 + inset, 1.0 + m_inset)) return;
+  m_inset = inset;
+  emit insetChanged();
   rebuildRows();
 }
 

@@ -1,6 +1,8 @@
 #include "root-search-sources.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
+#include "builtin_icon.hpp"
+#include "theme/colors.hpp"
 #include "keyboard/keybind.hpp"
 #include "keyboard/keyboard.hpp"
 #include "utils/file-list-item.hpp"
@@ -160,6 +162,52 @@ std::unique_ptr<ActionPanelState> RootCalculatorSection::actionPanel(int) const 
   section->addAction(new CopyCalculatorQuestionAndAnswerAction(*m_result));
   section->addAction(new PutCalculatorAnswerInSearchBar(*m_result));
   section->addAction(new OpenCalculatorHistoryAction());
+  return panel;
+}
+
+QString RootUpdateSection::itemId(int) const {
+  return m_update ? QStringLiteral("update:") + m_update->tag : QString();
+}
+
+QString RootUpdateSection::itemTitle(int) const {
+  return m_update ? QString("Vicinae %1 is available").arg(m_update->tag) : QString();
+}
+
+QString RootUpdateSection::itemSubtitle(int) const {
+  if (!m_update) return {};
+  return QString("You are running %1").arg(m_updates->currentVersionTag());
+}
+
+QString RootUpdateSection::itemIconSource(int) const {
+  return imageSourceFor(ImageURL{BuiltinIcon::Download}.setBackgroundTint(SemanticColor::Blue));
+}
+
+QVariant RootUpdateSection::customData(int, int role) const {
+  if (role == ItemType) return QStringLiteral("update");
+  if (role == AccessoryText) return QStringLiteral("Update");
+  return {};
+}
+
+QHash<int, QByteArray> RootUpdateSection::customRoleNames() const { return root_search::customRoleNames(); }
+QHash<int, QVariant> RootUpdateSection::customRoleDefaults() const {
+  return root_search::customRoleDefaults();
+}
+
+std::unique_ptr<ActionPanelState> RootUpdateSection::actionPanel(int) const {
+  if (!m_update) return nullptr;
+
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto *section = panel->createSection();
+
+  auto *install = new InstallUpdateAction();
+  install->setPrimary(true);
+  section->addAction(install);
+  section->addAction(new OpenInBrowserAction(QUrl(m_update->releaseUrl), "View Release Notes"));
+
+  auto *skip = new SkipUpdateVersionAction();
+  skip->setShortcut(Keybind::RemoveAction);
+  section->addAction(skip);
+
   return panel;
 }
 

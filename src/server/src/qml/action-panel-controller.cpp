@@ -1,5 +1,6 @@
 #include "action-panel-controller.hpp"
 #include "action-panel-model.hpp"
+#include "extension/extension-action-list-view.hpp"
 #include "internal/keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -8,6 +9,10 @@
 #include "ui/action-pannel/action-panel-view.hpp"
 #include "ui/views/base-view.hpp"
 #include <QKeyEvent>
+
+namespace {
+constexpr qint64 REOPEN_GUARD_MS = 300;
+} // namespace
 
 ActionPanelController::ActionPanelController(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx) {}
@@ -79,12 +84,15 @@ void ActionPanelController::syncToView(BaseView *view) {
   refreshSubmenus();
 }
 
-void ActionPanelController::toggle() {
+void ActionPanelController::toggle(bool fromClick) {
   if (m_open) {
     close();
-  } else {
-    open();
+    return;
   }
+
+  if (fromClick && m_closedTimer.isValid() && m_closedTimer.elapsed() < REOPEN_GUARD_MS) return;
+
+  open();
 }
 
 void ActionPanelController::open() {
@@ -102,6 +110,7 @@ void ActionPanelController::close() {
   auto *root = activeRoot();
 
   m_open = false;
+  m_closedTimer.restart();
   emit openChanged();
   emit stackClearRequested();
   m_currentPanel = nullptr;
@@ -207,8 +216,15 @@ void ActionPanelController::executeAction(AbstractAction *action) {
 void ActionPanelController::openSubmenu(SubmenuAction *action) {
   open();
 
-  auto *root = dynamic_cast<ActionListView *>(activeRoot());
-  if (root) root->activateSubmenu(action);
+  action->onOpen(&m_ctx);
+
+  auto *child = action->createView(&m_ctx, this);
+  if (!child) return;
+
+  m_submenuStack.push_back(child);
+  child->onMount();
+  connectView(child);
+  emit panelPushRequested(child->componentUrl(), child->componentProps());
 }
 
 void ActionPanelController::connectView(ActionPanelView *view) {
@@ -219,15 +235,8 @@ void ActionPanelController::connectView(ActionPanelView *view) {
 
   connect(view, &ActionPanelView::closeRequested, m_connectionGuard, [this]() { close(); });
 
-  connect(view, &ActionPanelView::pushViewRequested, m_connectionGuard, [this](ActionPanelView *child) {
-    child->setParent(this);
-    m_submenuStack.push_back(child);
-    child->onMount();
-    connectView(child);
-    auto url = child->componentUrl();
-    auto props = child->componentProps();
-    emit panelPushRequested(url, props);
-  });
+  connect(view, &ActionPanelView::submenuActivated, m_connectionGuard,
+          [this](SubmenuAction *action) { openSubmenu(action); });
 }
 
 void ActionPanelController::clearSubmenuStack() {
@@ -238,6 +247,8 @@ void ActionPanelController::clearSubmenuStack() {
   m_submenuStack.clear();
 }
 
+// Reconciliation of open submenus is exclusive to extension re-renders,
+// hence the explicit cast: other submenu types are not rebuildable while open.
 void ActionPanelController::refreshSubmenus() {
   if (m_submenuStack.empty()) return;
 
@@ -250,10 +261,10 @@ void ActionPanelController::refreshSubmenus() {
     auto viewId = view->id();
     if (viewId.isEmpty()) break;
 
-    auto *submenuAction = parentState->findSubmenuAction(viewId);
+    auto *submenuAction = dynamic_cast<ExtensionSubmenuAction *>(parentState->findSubmenuAction(viewId));
     if (!submenuAction) break;
 
-    auto submenuState = submenuAction->createSubmenuStateStealthily();
+    auto submenuState = submenuAction->buildState(&m_ctx);
     if (!submenuState) break;
 
     parentState = submenuState.get();
