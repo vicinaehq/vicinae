@@ -409,6 +409,7 @@ set(SRCS
 	src/services/extension-boilerplate-generator/extension-boilerplate-generator.cpp
 
 	src/services/window-manager/abstract-window-manager.hpp
+	src/services/window-manager/abstract-window-manager.cpp
 	src/services/paste/abstract-paste-service.hpp
 	src/services/paste/dummy-paste-service.hpp
 	src/services/paste/paste-service.cpp

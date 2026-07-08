@@ -140,6 +140,11 @@ struct Rect {
   height: int;
 };
 
+struct Size {
+  width: int;
+  height: int;
+};
+
 struct Window {
   id: string;
   title: string;
@@ -156,6 +161,7 @@ struct Screen {
   make: string;
   serial?: string;
   bounds: Rect;
+  physicalResolution: Size;
 };
 
 struct Workspace {

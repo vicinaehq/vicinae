@@ -119,10 +119,19 @@ export namespace WindowManagement {
 		 * The serial number of the screen, if available.
 		 */
 		serial?: string;
+		/**
+		 * Screen geometry in logical coordinates. Positions are meaningful across screens, but sizes
+		 * are affected by display scaling: use {@link physicalResolution} to get the real pixel size.
+		 */
 		bounds: {
 			position: { x: number; y: number };
 			size: { width: number; height: number };
 		};
+
+		/**
+		 * The real pixel size of the screen, unaffected by any kind of display scaling.
+		 */
+		physicalResolution: { width: number; height: number };
 	};
 
 	export async function getWindows(
@@ -166,6 +175,10 @@ export namespace WindowManagement {
 					bounds: {
 						position: { x: sc.bounds.x, y: sc.bounds.y },
 						size: { width: sc.bounds.width, height: sc.bounds.height },
+					},
+					physicalResolution: {
+						width: sc.physicalResolution.width,
+						height: sc.physicalResolution.height,
 					},
 				})),
 			);

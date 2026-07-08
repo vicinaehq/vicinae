@@ -6,9 +6,8 @@
 #include <qpromise.h>
 #include <qstringview.h>
 #include "services/app-service/abstract-app-db.hpp"
-#include <QGuiApplication>
-#include <QScreen>
-#include <ranges>
+#include <QRect>
+#include <QSize>
 #include <vector>
 
 /**
@@ -39,7 +38,18 @@ public:
 
   struct Screen {
     QString name;
+
+    /**
+     * Screen geometry in Qt logical coordinates. Positions are meaningful across screens, but sizes are
+     * affected by display scaling: use `physicalResolution` to get the real pixel size of the screen.
+     */
     QRect bounds;
+
+    /**
+     * The real pixel size of the screen, unaffected by any kind of scaling.
+     */
+    QSize physicalResolution;
+
     QString manufacturer;
     QString model;
     std::optional<QString> serial;
@@ -106,17 +116,7 @@ public:
 
   virtual WindowList listWindowsSync() const { return {}; };
 
-  virtual std::vector<Screen> listScreensSync() const {
-    auto tr = [](const QScreen *qtScreen) -> Screen {
-      Screen sc{.name = qtScreen->name(),
-                .bounds = qtScreen->geometry(),
-                .manufacturer = qtScreen->manufacturer(),
-                .model = qtScreen->model()};
-      if (auto serial = qtScreen->serialNumber(); !serial.isEmpty()) { sc.serial = serial; }
-      return sc;
-    };
-    return QGuiApplication::screens() | std::views::transform(tr) | std::ranges::to<std::vector>();
-  }
+  virtual std::vector<Screen> listScreensSync() const;
 
   /**
    * Should return nullptr if there is no focused window. In particular, some wayland compositors may return
