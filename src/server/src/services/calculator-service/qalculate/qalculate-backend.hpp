@@ -17,6 +17,7 @@ public:
   ComputeResult compute(const QString &question, const ComputeOptions &opts) override;
   QFuture<ComputeResult> asyncCompute(const QString &question, const ComputeOptions &options) override;
   void abort() override;
+  void setDigitGroupingEnabled(bool value) override;
   bool supportsRefreshExchangeRates() const override;
 
   bool isActivatable() const override;

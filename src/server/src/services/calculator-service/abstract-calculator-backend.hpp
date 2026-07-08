@@ -61,6 +61,8 @@ public:
 
   virtual void abort() {}
 
+  virtual void setDigitGroupingEnabled(bool) {}
+
   virtual bool supportsCurrencyConversion() const { return false; }
 
   virtual bool supportsRefreshExchangeRates() const { return false; }

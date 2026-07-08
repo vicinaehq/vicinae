@@ -40,6 +40,7 @@ private:
   std::vector<CalculatorRecord> m_records;
   AbstractCalculatorBackend *m_backend = nullptr;
   std::vector<std::unique_ptr<AbstractCalculatorBackend>> m_backends;
+  bool m_digitGroupingEnabled = false;
 
   std::vector<CalculatorRecord> loadAll() const;
   bool m_updateConversionsAfterRateUpdate = true;
@@ -50,6 +51,7 @@ public:
   using GroupedRecordList = std::vector<std::pair<QString, std::vector<CalculatorRecord>>>;
 
   void startFirstHealthy();
+  void setDigitGroupingEnabled(bool value);
   void setUpdateConversionsAfterRateUpdate(bool value);
   std::vector<CalculatorRecord> records() const;
   GroupedRecordList groupRecordsByTime(const std::vector<CalculatorRecord> &records) const;

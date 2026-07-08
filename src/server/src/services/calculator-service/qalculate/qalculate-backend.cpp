@@ -294,6 +294,10 @@ QFuture<QalculateBackend::ComputeResult> QalculateBackend::asyncCompute(const QS
 
 void QalculateBackend::abort() { CALCULATOR->abort(); }
 
+void QalculateBackend::setDigitGroupingEnabled(bool value) {
+  m_printOpts.digit_grouping = value ? DIGIT_GROUPING_LOCALE : DIGIT_GROUPING_NONE;
+}
+
 QString QalculateBackend::id() const { return "qalculate"; }
 
 QString QalculateBackend::displayName() const { return "Qalculate!"; }
