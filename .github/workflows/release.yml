@@ -98,11 +98,12 @@ jobs:
         run: |
           tar -czvf "${{ steps.meta.outputs.artifact }}" -C "${INSTALL_DIR}" .
 
-      - name: Create GitHub Release and upload asset
+      - name: Create draft GitHub Release and upload asset
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
           name: ${{ steps.meta.outputs.tag }}
+          draft: true
           generate_release_notes: true
           files: |
             ${{ steps.meta.outputs.artifact }}
@@ -185,8 +186,22 @@ jobs:
       commit: ${{ needs.build-binary.outputs.commit }}
       upload-to-release: true
 
+  publish-release:
+    needs: [build-binary, build-appimage, build-macos-dmg]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "${{ needs.build-binary.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --draft=false --latest
+
   trigger-packaging:
-    needs: [build-binary, build-appimage]
+    needs: publish-release
     runs-on: ubuntu-latest
     steps:
       - name: Trigger bumpver in packaging-arch
