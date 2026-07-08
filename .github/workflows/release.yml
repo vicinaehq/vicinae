@@ -144,14 +144,16 @@ jobs:
 
       - name: Configure CMake
         run: |
+          TAG=$(grep "tag:" manifest.yaml | cut -d'"' -f2)
+          COMMIT=$(grep "short_rev:" manifest.yaml | cut -d'"' -f2)
           cd build
           cmake -G Ninja ..                           \
             -DCMAKE_BUILD_TYPE=${BUILD_TYPE}          \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5        \
             -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"   \
             -DVICINAE_PROVENANCE=appimage             \
-            -DVICINAE_GIT_TAG="${{ needs.build-binary.outputs.tag }}" \
-            -DVICINAE_GIT_COMMIT_HASH="${{ needs.build-binary.outputs.commit }}" \
+            -DVICINAE_GIT_TAG="$TAG"                  \
+            -DVICINAE_GIT_COMMIT_HASH="$COMMIT"       \
             -DLTO=ON
 
       - name: Build
