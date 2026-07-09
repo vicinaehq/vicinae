@@ -23,6 +23,12 @@ class Globals : NonCopyable {
 public:
   static auto kwinBlur() { return instance().m_kwinBlur; }
   static auto *extBackgroundEffectManager() { return instance().m_backgroundEffect; }
+
+  // We expose that ourselves because caps are announced once during global enumeration
+  static bool backgroundEffectSupportsBlur() {
+    return instance().m_backgroundEffectCaps & EXT_BACKGROUND_EFFECT_MANAGER_V1_CAPABILITY_BLUR;
+  }
+
   static ext_data_control_manager_v1 *dataControlManager();
   static vicinae_hotkey_manager_v1 *hotkey() { return instance().m_hotkey; }
   static zwp_keyboard_shortcuts_inhibit_manager_v1 *shortcutInhibit() { return instance().m_shortcutInhibit; }
@@ -51,6 +57,9 @@ private:
                            uint32_t version);
   static void globalRemove(void *data, struct wl_registry *registry, uint32_t name);
 
+  static void backgroundEffectCapabilities(void *data, ext_background_effect_manager_v1 *manager,
+                                           uint32_t flags);
+
   static void outputGeometry(void *data, wl_output *output, int32_t x, int32_t y, int32_t physicalWidth,
                              int32_t physicalHeight, int32_t subpixel, const char *make, const char *model,
                              int32_t transform);
@@ -63,6 +72,8 @@ private:
 
   constexpr static const struct wl_registry_listener m_listener = {.global = handleGlobal,
                                                                    .global_remove = globalRemove};
+  constexpr static const struct ext_background_effect_manager_v1_listener m_backgroundEffectListener = {
+      .capabilities = backgroundEffectCapabilities};
   constexpr static const struct wl_output_listener m_outputListener = {.geometry = outputGeometry,
                                                                        .mode = outputMode,
                                                                        .done = outputDone,
@@ -75,6 +86,7 @@ private:
   ext_data_control_manager_v1 *m_dataControlManager = nullptr;
   org_kde_kwin_blur_manager *m_kwinBlur = nullptr;
   ext_background_effect_manager_v1 *m_backgroundEffect = nullptr;
+  uint32_t m_backgroundEffectCaps = 0;
   vicinae_hotkey_manager_v1 *m_hotkey = nullptr;
   zwp_keyboard_shortcuts_inhibit_manager_v1 *m_shortcutInhibit = nullptr;
   std::vector<std::unique_ptr<Output>> m_outputs;

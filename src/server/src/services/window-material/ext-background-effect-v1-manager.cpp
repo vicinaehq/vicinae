@@ -3,25 +3,21 @@
 #include <qevent.h>
 #include <qlogging.h>
 #include <wayland-client-core.h>
+#include "internal/wayland/globals.hpp"
 #include "qt-wayland-utils.hpp"
-
-void ExtBackgroundEffectV1Manager::capabilities(void *data, ext_background_effect_manager_v1 *,
-                                                uint32_t flags) {
-  static_cast<ExtBackgroundEffectV1Manager *>(data) // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-      ->m_supportsBlur = flags & EXT_BACKGROUND_EFFECT_MANAGER_V1_CAPABILITY_BLUR;
-}
 
 ExtBackgroundEffectV1Manager::ExtBackgroundEffectV1Manager(ext_background_effect_manager_v1 *manager)
     : m_manager(manager) {
   auto *wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
-  ext_background_effect_manager_v1_add_listener(manager, &s_listener, this);
   wl_display_roundtrip(wayland->display());
 }
 
-bool ExtBackgroundEffectV1Manager::isSupported() const { return m_supportsBlur; }
+bool ExtBackgroundEffectV1Manager::isSupported() const {
+  return Wayland::Globals::backgroundEffectSupportsBlur();
+}
 
 bool ExtBackgroundEffectV1Manager::apply(QWindow *win, const Params &params) {
-  if (!m_supportsBlur) { return false; }
+  if (!isSupported()) { return false; }
 
   if (auto it = m_state.find(win); it != m_state.end()) {
     auto &state = it->second;

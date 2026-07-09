@@ -34,6 +34,11 @@ std::optional<QSize> Globals::outputPixelSize(std::string_view name) {
   }
 }
 
+void Globals::backgroundEffectCapabilities(void *data, ext_background_effect_manager_v1 *manager,
+                                           uint32_t flags) {
+  static_cast<Globals *>(data)->m_backgroundEffectCaps = flags;
+}
+
 void Globals::outputGeometry(void *data, wl_output *output, int32_t x, int32_t y, int32_t physicalWidth,
                              int32_t physicalHeight, int32_t subpixel, const char *make, const char *model,
                              int32_t transform) {
@@ -74,6 +79,8 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
   else if (strcmp(interface, ext_background_effect_manager_v1_interface.name) == 0) {
     self->m_backgroundEffect = static_cast<decltype(self->m_backgroundEffect)>(
         wl_registry_bind(registry, name, &ext_background_effect_manager_v1_interface, version));
+    ext_background_effect_manager_v1_add_listener(self->m_backgroundEffect, &m_backgroundEffectListener,
+                                                  self);
   }
 
   else if (strcmp(interface, vicinae_hotkey_manager_v1_interface.name) == 0) {
@@ -116,7 +123,6 @@ void Globals::scan(wl_display *display) {
   m_registry = wl_display_get_registry(display);
   wl_registry_add_listener(m_registry, &m_listener, this);
   wl_display_roundtrip(display);
-  if (!m_outputs.empty()) wl_display_roundtrip(display);
 }
 
 void Globals::globalRemove(void *data, struct wl_registry *registry, uint32_t name) {
