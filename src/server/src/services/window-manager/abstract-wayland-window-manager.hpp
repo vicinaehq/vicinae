@@ -3,5 +3,5 @@
 
 class AbstractWaylandWindowManager : public AbstractWindowManager {
 public:
-  std::vector<Screen> listScreensSync() const override;
+  std::vector<Screen> listScreensSync(QWindow *activeWindow) const override;
 };

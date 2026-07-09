@@ -162,6 +162,7 @@ struct Screen {
   serial?: string;
   bounds: Rect;
   physicalResolution: Size;
+  active: bool;
 };
 
 struct Workspace {

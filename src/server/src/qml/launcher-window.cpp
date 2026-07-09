@@ -107,6 +107,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   // Track window activation so toggleWindow() and closeOnFocusLoss work correctly
   if (m_window) {
+    nav->setWindow(m_window);
     connect(m_window, &QQuickWindow::activeChanged, this,
             [this]() { m_ctx.navigation->setWindowActivated(m_window->isActive()); });
     m_window->installEventFilter(this);

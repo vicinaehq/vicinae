@@ -18,6 +18,7 @@
 class BaseView;
 class DialogContentWidget;
 class ActionPanelView;
+class QWindow;
 
 #define VALUE_OR(VALUE, FALLBACK) (VALUE ? VALUE : FALLBACK)
 
@@ -135,6 +136,12 @@ public:
 
   bool windowActivated();
   void setWindowActivated(bool value = true);
+
+  /**
+   * Non-owning reference to the launcher window, registered by the QML window host.
+   */
+  void setWindow(QWindow *window) { m_window = window; }
+  QWindow *window() const { return m_window; }
 
   void setPopToRootOnClose(bool value);
 
@@ -267,6 +274,7 @@ private:
   bool m_popToRootOnClose = false;
   bool m_instantDismiss = false;
   bool m_closeOnFocusLoss = false;
+  QWindow *m_window = nullptr;
   std::vector<std::unique_ptr<ViewState>> m_views;
   std::optional<PendingPopToRoot> m_pendingPopToRoot;
 };

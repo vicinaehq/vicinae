@@ -132,6 +132,12 @@ export namespace WindowManagement {
 		 * The real pixel size of the screen, unaffected by any kind of display scaling.
 		 */
 		physicalResolution: { width: number; height: number };
+
+		/**
+		 * Whether this screen is the one the Vicinae window is currently displayed on.
+		 * Always `false` for every screen if the Vicinae window is not shown.
+		 */
+		active: boolean;
 	};
 
 	export async function getWindows(
@@ -180,6 +186,7 @@ export namespace WindowManagement {
 						width: sc.physicalResolution.width,
 						height: sc.physicalResolution.height,
 					},
+					active: sc.active,
 				})),
 			);
 	}
