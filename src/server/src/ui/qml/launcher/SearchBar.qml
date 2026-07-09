@@ -294,6 +294,9 @@ Item {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
                 }
+                Keys.onBacktabPressed: event => {
+                    event.accepted = false;
+                }
                 Keys.onTabPressed: event => {
                     if (launcher.atRoot && searchInput.text.length > 5) {
                         launcher.handleTab();
