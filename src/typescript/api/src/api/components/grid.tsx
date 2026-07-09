@@ -208,7 +208,7 @@ const GridRoot: React.FC<Grid.Props> = ({
 	return (
 		<grid
 			fit={fit}
-			throttle
+			throttle={throttle}
 			inset={inset}
 			aspectRatio={aspectRatioMap[aspectRatio]}
 			searchText={countedSearchText}
