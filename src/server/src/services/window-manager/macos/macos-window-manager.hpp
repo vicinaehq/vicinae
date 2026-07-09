@@ -29,6 +29,7 @@ public:
   QString displayName() const override { return "macOS"; }
 
   WindowList listWindowsSync() const override;
+  std::vector<Screen> listScreensSync() const override;
   std::shared_ptr<AbstractWindow> getFocusedWindowSync() const override;
   bool supportsFocusTracking() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
