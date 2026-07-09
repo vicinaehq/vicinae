@@ -99,7 +99,7 @@ export namespace Grid {
 		columns?: number;
 		fit?: GridFit;
 		aspectRatio?: Grid.AspectRatio;
-
+		throttle?: boolean;
 		actions?: React.ReactNode;
 		children?: React.ReactNode;
 		filtering?: boolean;
@@ -181,6 +181,7 @@ const GridRoot: React.FC<Grid.Props> = ({
 	fit = GridFit.Contain,
 	aspectRatio = "1",
 	searchText,
+	throttle = false,
 	onSearchTextChange,
 	...props
 }) => {
@@ -207,6 +208,7 @@ const GridRoot: React.FC<Grid.Props> = ({
 	return (
 		<grid
 			fit={fit}
+			throttle
 			inset={inset}
 			aspectRatio={aspectRatioMap[aspectRatio]}
 			searchText={countedSearchText}
