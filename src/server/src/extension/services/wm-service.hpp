@@ -89,6 +89,8 @@ public:
                      .y = screen.bounds.y(),
                      .width = screen.bounds.width(),
                      .height = screen.bounds.height()},
+          .physicalResolution = {.width = screen.physicalResolution.width(),
+                                 .height = screen.physicalResolution.height()},
       };
       if (screen.serial) sc.serial = screen.serial->toStdString();
       result.emplace_back(std::move(sc));

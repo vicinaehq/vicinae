@@ -27,14 +27,8 @@ private:
     }
   };
 
-  static void capabilities(void *data, ext_background_effect_manager_v1 *, uint32_t flags);
-
-  static constexpr const ext_background_effect_manager_v1_listener s_listener = {
-      .capabilities = &ExtBackgroundEffectV1Manager::capabilities};
-
   void applyBlur(QWindow *win, const BlurState &state);
 
   ext_background_effect_manager_v1 *m_manager = nullptr;
   std::unordered_map<QWindow *, std::unique_ptr<BlurState>> m_state;
-  bool m_supportsBlur = false;
 };

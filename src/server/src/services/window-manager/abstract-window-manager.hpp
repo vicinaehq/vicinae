@@ -39,7 +39,18 @@ public:
 
   struct Screen {
     QString name;
+
+    /**
+     * Screen geometry in Qt logical coordinates. Positions are meaningful across screens, but sizes are
+     * affected by display scaling: use `physicalResolution` to get the real pixel size of the screen.
+     */
     QRect bounds;
+
+    /**
+     * The real pixel size of the screen, unaffected by any kind of scaling.
+     */
+    QSize physicalResolution;
+
     QString manufacturer;
     QString model;
     std::optional<QString> serial;
@@ -110,6 +121,7 @@ public:
     auto tr = [](const QScreen *qtScreen) -> Screen {
       Screen sc{.name = qtScreen->name(),
                 .bounds = qtScreen->geometry(),
+                .physicalResolution = qtScreen->size() * qtScreen->devicePixelRatio(),
                 .manufacturer = qtScreen->manufacturer(),
                 .model = qtScreen->model()};
       if (auto serial = qtScreen->serialNumber(); !serial.isEmpty()) { sc.serial = serial; }

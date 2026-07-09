@@ -164,6 +164,11 @@ export type Rect = {
 	height: number;
 }
 
+export type Size = {
+	width: number;
+	height: number;
+}
+
 export type Window = {
 	id: string;
 	title: string;
@@ -180,6 +185,7 @@ export type Screen = {
 	make: string;
 	serial?: string;
 	bounds: Rect;
+	physicalResolution: Size;
 }
 
 export type Workspace = {

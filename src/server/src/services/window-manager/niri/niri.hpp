@@ -1,5 +1,5 @@
 #pragma once
-#include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/abstract-wayland-window-manager.hpp"
 #include <qsocketnotifier.h>
 
 namespace Niri {
@@ -55,7 +55,7 @@ private:
   bool m_focused = false;
 };
 
-class WindowManager : public AbstractWindowManager {
+class WindowManager : public AbstractWaylandWindowManager {
 public:
   WindowManager();
   ~WindowManager() override;

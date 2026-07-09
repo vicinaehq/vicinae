@@ -782,6 +782,7 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/gnome/gnome-window.cpp
 		src/services/window-manager/gnome/gnome-workspace.cpp
 		src/services/window-manager/gnome/gnome-listener.cpp
+		src/services/window-manager/abstract-wayland-window-manager.cpp
 		src/services/window-manager/wayland/wayland.cpp
 		src/services/window-manager/kde/kde-window-manager.hpp
 		src/services/window-manager/kde/kde-window-manager.cpp
