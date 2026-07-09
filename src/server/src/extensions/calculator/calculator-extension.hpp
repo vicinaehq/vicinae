@@ -104,15 +104,9 @@ public:
         "Whether exchange rates should be refreshed every time the vicinae server is started. If the current "
         "backend does not support it, this is ignored.");
 
-    auto digitGrouping = Preference::makeCheckbox("digitGrouping");
-
-    digitGrouping.setDefaultValue(false);
-    digitGrouping.setTitle("Digit Grouping");
-    digitGrouping.setDescription("Group digits in calculator output using the current locale.");
-
     if (!backendOptions.empty()) { backendPref.setDefaultValue(backendOptions.front().value); }
 
-    return {backendPref, digitGrouping, refreshOnStartup};
+    return {backendPref, refreshOnStartup};
   }
 
   void initialized(const QJsonObject &value) const override {
@@ -125,8 +119,6 @@ public:
   void preferenceValuesChanged(const QJsonObject &value) const override {
     auto calc = ServiceRegistry::instance()->calculatorService();
     QString backendId = value.value("backend").toString();
-
-    calc->setDigitGroupingEnabled(value.value("digitGrouping").toBool());
 
     // make sure we always have a backend running
     if (!calc->setBackend(backendId) && !calc->backend()) { calc->startFirstHealthy(); }

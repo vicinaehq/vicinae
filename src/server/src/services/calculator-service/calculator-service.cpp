@@ -27,7 +27,6 @@ bool CalculatorService::setBackend(AbstractCalculatorBackend *newBackend) {
   }
 
   qInfo() << "Started" << newBackend->displayName() << "calculator backend";
-  newBackend->setDigitGroupingEnabled(m_digitGroupingEnabled);
 
   if (m_backend) { m_backend->stop(); }
 
@@ -41,7 +40,6 @@ void CalculatorService::startFirstHealthy() {
   for (const auto &backend : m_backends) {
     if (backend->start()) {
       qInfo() << "Started" << backend->displayName() << "calculator backend";
-      backend->setDigitGroupingEnabled(m_digitGroupingEnabled);
       m_backend = backend.get();
       return;
     }
@@ -289,11 +287,6 @@ bool CalculatorService::removeRecord(const QString &id) {
 
 void CalculatorService::setUpdateConversionsAfterRateUpdate(bool value) {
   m_updateConversionsAfterRateUpdate = value;
-}
-
-void CalculatorService::setDigitGroupingEnabled(bool value) {
-  m_digitGroupingEnabled = value;
-  if (m_backend) { m_backend->setDigitGroupingEnabled(value); }
 }
 
 bool CalculatorService::removeAll() {
