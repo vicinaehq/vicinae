@@ -13,20 +13,24 @@ constexpr uint32_t MAX_OUTPUT_VERSION = 4;
 
 ext_data_control_manager_v1 *Globals::dataControlManager() { return instance().m_dataControlManager; }
 
-std::optional<QSize> Globals::outputPixelSize(std::string_view name) {
+std::optional<Globals::PixelSize> Globals::outputPixelSize(std::string_view name) {
   auto &self = instance();
   auto it = std::ranges::find_if(self.m_outputs, [&](const auto &out) { return out->name == name; });
 
-  if (it == self.m_outputs.end() || (*it)->modeSize.isEmpty()) return std::nullopt;
+  if (it == self.m_outputs.end()) return std::nullopt;
 
-  switch ((*it)->transform) {
+  const auto &out = **it;
+
+  if (out.modeWidth <= 0 || out.modeHeight <= 0) return std::nullopt;
+
+  switch (out.transform) {
   case WL_OUTPUT_TRANSFORM_90:
   case WL_OUTPUT_TRANSFORM_270:
   case WL_OUTPUT_TRANSFORM_FLIPPED_90:
   case WL_OUTPUT_TRANSFORM_FLIPPED_270:
-    return (*it)->modeSize.transposed();
+    return PixelSize{.width = out.modeHeight, .height = out.modeWidth};
   default:
-    return (*it)->modeSize;
+    return PixelSize{.width = out.modeWidth, .height = out.modeHeight};
   }
 }
 
@@ -39,7 +43,9 @@ void Globals::outputGeometry(void *data, wl_output *output, int32_t x, int32_t y
 void Globals::outputMode(void *data, wl_output *output, uint32_t flags, int32_t width, int32_t height,
                          int32_t refresh) {
   if (!(flags & WL_OUTPUT_MODE_CURRENT)) return;
-  static_cast<Output *>(data)->modeSize = QSize(width, height);
+  auto *out = static_cast<Output *>(data);
+  out->modeWidth = width;
+  out->modeHeight = height;
 }
 
 void Globals::outputName(void *data, wl_output *output, const char *name) {
@@ -91,7 +97,6 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
     output->proxy = static_cast<wl_output *>(
         wl_registry_bind(registry, name, &wl_output_interface, std::min(MAX_OUTPUT_VERSION, version)));
     wl_output_add_listener(output->proxy, &m_outputListener, output.get());
-    self->m_outputsChanged = true;
   }
 }
 // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
@@ -111,10 +116,7 @@ void Globals::scan(wl_display *display) {
   m_registry = wl_display_get_registry(display);
   wl_registry_add_listener(m_registry, &m_listener, this);
   wl_display_roundtrip(display);
-  // output binds are issued while dispatching the first roundtrip, so their initial
-  // events (mode, name, ...) only arrive after another one. Anything past this point
-  // (hotplugs, mode changes) is dispatched by Qt's event loop on the shared display.
-  if (m_outputsChanged) wl_display_roundtrip(display);
+  if (!m_outputs.empty()) wl_display_roundtrip(display);
 }
 
 void Globals::globalRemove(void *data, struct wl_registry *registry, uint32_t name) {

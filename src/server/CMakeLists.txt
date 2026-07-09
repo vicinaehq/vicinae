@@ -409,7 +409,6 @@ set(SRCS
 	src/services/extension-boilerplate-generator/extension-boilerplate-generator.cpp
 
 	src/services/window-manager/abstract-window-manager.hpp
-	src/services/window-manager/abstract-window-manager.cpp
 	src/services/paste/abstract-paste-service.hpp
 	src/services/paste/dummy-paste-service.hpp
 	src/services/paste/paste-service.cpp
@@ -783,6 +782,7 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/gnome/gnome-window.cpp
 		src/services/window-manager/gnome/gnome-workspace.cpp
 		src/services/window-manager/gnome/gnome-listener.cpp
+		src/services/window-manager/abstract-wayland-window-manager.cpp
 		src/services/window-manager/wayland/wayland.cpp
 		src/services/window-manager/kde/kde-window-manager.hpp
 		src/services/window-manager/kde/kde-window-manager.cpp

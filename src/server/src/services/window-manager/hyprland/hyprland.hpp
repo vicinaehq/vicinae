@@ -1,5 +1,5 @@
 #pragma once
-#include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/abstract-wayland-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-listener.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <QGuiApplication>
@@ -41,7 +41,7 @@ private:
   AbstractWindowManager::WindowBounds m_bounds;
 };
 
-class HyprlandWindowManager : public AbstractWindowManager {
+class HyprlandWindowManager : public AbstractWaylandWindowManager {
 public:
   HyprlandWindowManager();
 

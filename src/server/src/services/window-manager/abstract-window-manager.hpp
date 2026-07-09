@@ -6,8 +6,9 @@
 #include <qpromise.h>
 #include <qstringview.h>
 #include "services/app-service/abstract-app-db.hpp"
-#include <QRect>
-#include <QSize>
+#include <QGuiApplication>
+#include <QScreen>
+#include <ranges>
 #include <vector>
 
 /**
@@ -116,7 +117,18 @@ public:
 
   virtual WindowList listWindowsSync() const { return {}; };
 
-  virtual std::vector<Screen> listScreensSync() const;
+  virtual std::vector<Screen> listScreensSync() const {
+    auto tr = [](const QScreen *qtScreen) -> Screen {
+      Screen sc{.name = qtScreen->name(),
+                .bounds = qtScreen->geometry(),
+                .physicalResolution = qtScreen->size() * qtScreen->devicePixelRatio(),
+                .manufacturer = qtScreen->manufacturer(),
+                .model = qtScreen->model()};
+      if (auto serial = qtScreen->serialNumber(); !serial.isEmpty()) { sc.serial = serial; }
+      return sc;
+    };
+    return QGuiApplication::screens() | std::views::transform(tr) | std::ranges::to<std::vector>();
+  }
 
   /**
    * Should return nullptr if there is no focused window. In particular, some wayland compositors may return

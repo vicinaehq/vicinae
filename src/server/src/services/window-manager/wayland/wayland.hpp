@@ -1,5 +1,5 @@
 #pragma once
-#include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/abstract-wayland-window-manager.hpp"
 
 class WaylandWindowManager;
 
@@ -29,7 +29,7 @@ public:
   int m_pid;
 };
 
-class WaylandWindowManager : public AbstractWindowManager {
+class WaylandWindowManager : public AbstractWaylandWindowManager {
 public:
   QString id() const override;
   QString displayName() const override;

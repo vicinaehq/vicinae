@@ -5,7 +5,7 @@
 #include <qobject.h>
 #include <vector>
 #include "environment.hpp"
-#include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/abstract-wayland-window-manager.hpp"
 
 namespace KDE {
 
@@ -61,7 +61,7 @@ private:
   QString m_focused;
 };
 
-class WindowManager : public AbstractWindowManager {
+class WindowManager : public AbstractWaylandWindowManager {
   Q_OBJECT
 
 public:

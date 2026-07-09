@@ -8,7 +8,7 @@
 #include "vicinae-hotkey-v1-client-protocol.h"
 #include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
 
-#include <QSize>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -20,6 +20,11 @@ namespace Wayland {
 
 class Globals : NonCopyable {
 public:
+  struct PixelSize {
+    int32_t width = 0;
+    int32_t height = 0;
+  };
+
   static auto kwinBlur() { return instance().m_kwinBlur; }
   static auto *extBackgroundEffectManager() { return instance().m_backgroundEffect; }
   static ext_data_control_manager_v1 *dataControlManager();
@@ -31,14 +36,15 @@ public:
    * Pixel size of the current mode of the output with the given name (e.g "DP-1"), adjusted for the
    * output transform. Unlike sizes reported by Qt, this is not affected by any kind of scaling.
    */
-  static std::optional<QSize> outputPixelSize(std::string_view name);
+  static std::optional<PixelSize> outputPixelSize(std::string_view name);
 
 private:
   struct Output {
     wl_output *proxy = nullptr;
     uint32_t registryName = 0;
     std::string name;
-    QSize modeSize;
+    int32_t modeWidth = 0;
+    int32_t modeHeight = 0;
     int32_t transform = WL_OUTPUT_TRANSFORM_NORMAL;
   };
 
@@ -76,6 +82,5 @@ private:
   vicinae_hotkey_manager_v1 *m_hotkey = nullptr;
   zwp_keyboard_shortcuts_inhibit_manager_v1 *m_shortcutInhibit = nullptr;
   std::vector<std::unique_ptr<Output>> m_outputs;
-  bool m_outputsChanged = false;
 };
 } // namespace Wayland
