@@ -12,6 +12,8 @@ using ComputeMode = AbstractCalculatorBackend::ComputeMode;
 using Catch::Matchers::Equals;
 
 QalculateBackend makeBackend() {
+  // libqalculate formats results according to LC_NUMERIC
+  setenv("LC_ALL", "C", 1);
   QalculateBackend backend;
   REQUIRE(backend.start());
   return backend;
@@ -70,12 +72,12 @@ TEST_CASE("computes full expressions") {
 }
 
 TEST_CASE("supports basic unit conversion") {
-  assertComputationResult("100 g to kg", "0.1 kg");
-  assertComputationResult("ns to us", "0.001 μs");
-  assertComputationResult("ns to us", "0.001 μs");
-  assertComputationResult("day in hrs", "24 h");
-  assertComputationResult("day in min", "1,440 min");
-  assertComputationResult("100mm to m", "0.1 m");
+  assertComputationResult("100 g to kg", "0.1\u202Fkg");
+  assertComputationResult("ns to us", "0.001\u202Fμs");
+  assertComputationResult("ns to us", "0.001\u202Fμs");
+  assertComputationResult("day in hrs", "24\u202Fh");
+  assertComputationResult("day in min", "1440\u202Fmin");
+  assertComputationResult("100mm to m", "0.1\u202Fm");
 }
 
 TEST_CASE("handles datetime operations and conversions") {
@@ -148,13 +150,13 @@ TEST_CASE("normalizes storage unit shorthand") {
 
   REQUIRE(decimal);
   REQUIRE(decimal->type == AbstractCalculatorBackend::CONVERSION);
-  REQUIRE(decimal->answer.text.contains("1,000"));
+  REQUIRE(decimal->answer.text.contains("1000"));
   REQUIRE(decimal->answer.unit);
   REQUIRE_FALSE(decimal->answer.unit->displayName.isEmpty());
 
   REQUIRE(binary);
   REQUIRE(binary->type == AbstractCalculatorBackend::CONVERSION);
-  REQUIRE(binary->answer.text.contains("1,024"));
+  REQUIRE(binary->answer.text.contains("1024"));
   REQUIRE(binary->answer.unit);
   REQUIRE_FALSE(binary->answer.unit->displayName.isEmpty());
 }
