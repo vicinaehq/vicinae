@@ -65,6 +65,7 @@ declare module "react" {
 				columns?: number;
 				fit: Grid.Fit;
 				aspectRatio: number;
+				throttle: boolean;
 
 				children?: React.ReactNode;
 				filtering?: boolean;
