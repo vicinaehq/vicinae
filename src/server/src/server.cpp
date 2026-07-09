@@ -94,8 +94,6 @@
 #include <QPointer>
 #include <QQuickWindow>
 #include <QString>
-#include <glaze/json/prettify.hpp>
-#include <iostream>
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <QtQuickControls2/QQuickStyle>
@@ -516,12 +514,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
   QGuiApplication::setFont(resolveAppFont(cfgService->value().font));
-  AI::GenerateFunFact tool;
-
-  std::cout << "tool" << glz::prettify_json(tool.generateSchema()) << std::endl;
 
   /*
->>>>>>> feb17de24 (fix: rename agentic loop to agent)
   QTimer::singleShot(2000, [&ctx]() {
     auto agent = new AI::Agent(ctx);
     qDebug() << "agent setup";
