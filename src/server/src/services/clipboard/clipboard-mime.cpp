@@ -1,5 +1,7 @@
+#include <QImage>
 #include "clipboard-mime.hpp"
 #include <QUrl>
+#include <QBuffer>
 #include <qlogging.h>
 #include <ranges>
 
@@ -46,8 +48,17 @@ std::optional<ClipboardSelection> selectionFromMimeData(const QMimeData *mimeDat
       }
     }
 
-    if (!selectedFormat.isEmpty()) {
-      ClipboardDataOffer offer;
+    ClipboardDataOffer offer;
+
+    if (selectedFormat.isEmpty()) {
+      auto image = qvariant_cast<QImage>(mimeData->imageData());
+      if (!image.isNull()) {
+        QBuffer buf(&offer.data);
+        image.save(&buf, "PNG");
+        offer.mimeType = "image/png";
+        selection.offers.emplace_back(offer);
+      }
+    } else {
       offer.mimeType = selectedFormat;
       offer.data = mimeData->data(selectedFormat);
       selection.offers.emplace_back(offer);
