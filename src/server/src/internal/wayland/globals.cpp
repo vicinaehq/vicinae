@@ -13,7 +13,7 @@ constexpr uint32_t MAX_OUTPUT_VERSION = 4;
 
 ext_data_control_manager_v1 *Globals::dataControlManager() { return instance().m_dataControlManager; }
 
-std::optional<Globals::PixelSize> Globals::outputPixelSize(std::string_view name) {
+std::optional<QSize> Globals::outputPixelSize(std::string_view name) {
   auto &self = instance();
   auto it = std::ranges::find_if(self.m_outputs, [&](const auto &out) { return out->name == name; });
 
@@ -28,9 +28,9 @@ std::optional<Globals::PixelSize> Globals::outputPixelSize(std::string_view name
   case WL_OUTPUT_TRANSFORM_270:
   case WL_OUTPUT_TRANSFORM_FLIPPED_90:
   case WL_OUTPUT_TRANSFORM_FLIPPED_270:
-    return PixelSize{.width = out.modeHeight, .height = out.modeWidth};
+    return QSize(out.modeHeight, out.modeWidth);
   default:
-    return PixelSize{.width = out.modeWidth, .height = out.modeHeight};
+    return QSize(out.modeWidth, out.modeHeight);
   }
 }
 

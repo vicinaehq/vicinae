@@ -7,7 +7,7 @@ std::vector<AbstractWindowManager::Screen> AbstractWaylandWindowManager::listScr
   // the DPR-derived default is wrong under fractional scaling, the current output mode is ground truth
   for (auto &screen : screens) {
     if (auto size = Wayland::Globals::outputPixelSize(screen.name.toStdString())) {
-      screen.physicalResolution = QSize(size->width, size->height);
+      screen.physicalResolution = *size;
     }
   }
 
