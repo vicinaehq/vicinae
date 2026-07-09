@@ -378,15 +378,30 @@ static std::optional<QSize> displayScanoutSize(CGDirectDisplayID display) {
   return native ? *native : pixels;
 }
 
-std::vector<AbstractWindowManager::Screen> MacosWindowManager::listScreensSync() const {
+static CGDirectDisplayID screenDisplayId(NSScreen *screen) {
+  return (CGDirectDisplayID)[screen.deviceDescription[@"NSScreenNumber"] unsignedIntValue];
+}
+
+static std::optional<CGDirectDisplayID> windowDisplayId(QWindow *window) {
+  if (!window || !window->isVisible() || !window->handle()) return std::nullopt;
+
+  auto *view = (__bridge NSView *)reinterpret_cast<void *>(window->winId());
+  NSScreen *screen = view.window.screen;
+  if (!screen) return std::nullopt;
+
+  return screenDisplayId(screen);
+}
+
+std::vector<AbstractWindowManager::Screen> MacosWindowManager::listScreensSync(QWindow *activeWindow) const {
   std::vector<Screen> screens;
 
   @autoreleasepool {
+    auto activeDisplay = windowDisplayId(activeWindow);
     NSArray<NSScreen *> *nsScreens = [NSScreen screens];
     screens.reserve(nsScreens.count);
 
     for (NSScreen *nsScreen in nsScreens) {
-      auto display = (CGDirectDisplayID)[nsScreen.deviceDescription[@"NSScreenNumber"] unsignedIntValue];
+      auto display = screenDisplayId(nsScreen);
       const CGRect bounds = CGDisplayBounds(display);
       const QSize logicalSize(qRound(bounds.size.width), qRound(bounds.size.height));
 
@@ -394,6 +409,7 @@ std::vector<AbstractWindowManager::Screen> MacosWindowManager::listScreensSync()
                     .bounds = QRect(QPoint(qRound(bounds.origin.x), qRound(bounds.origin.y)), logicalSize),
                     .physicalResolution =
                         displayScanoutSize(display).value_or(logicalSize * nsScreen.backingScaleFactor)};
+      screen.active = activeDisplay == display;
       screens.emplace_back(std::move(screen));
     }
   }

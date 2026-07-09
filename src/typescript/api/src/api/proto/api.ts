@@ -186,6 +186,7 @@ export type Screen = {
 	serial?: string;
 	bounds: Rect;
 	physicalResolution: Size;
+	active: boolean;
 }
 
 export type Workspace = {
