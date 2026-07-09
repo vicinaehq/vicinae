@@ -47,6 +47,27 @@ in {
       description = "The vicinae package to use";
     };
 
+    enableSoulver = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Whether to enable the SoulverCore calculator backend.
+        SoulverCore is considered unfree software, therefore disabled by default.
+        Only adds a wrapper exposing `soulverPackage` to vicinae, so it works
+        with any `package` and never triggers a rebuild of vicinae itself.
+      '';
+    };
+
+    soulverPackage = lib.mkOption {
+      type = lib.types.nullOr lib.types.package;
+      default = self.packages.${system}.soulver-cpp or null;
+      defaultText = lib.literalExpression "vicinae.packages.\${system}.soulver-cpp";
+      description = ''
+        The soulver-cpp package providing libSoulverWrapper.so and the
+        SoulverCore resources. Only used when `enableSoulver` is true.
+      '';
+    };
+
     enableFirefoxIntegration = lib.mkOption {
       default = true;
       description = ''
@@ -219,11 +240,19 @@ in {
         overrideString = lib.concatStringsSep ":" allOverrides;
       in ''
         wrapProgram $out/bin/vicinae \
-          ${lib.optionalString (allOverrides != []) ''--set VICINAE_OVERRIDES "${overrideString}"''}
+          ${lib.optionalString (allOverrides != []) ''--set VICINAE_OVERRIDES "${overrideString}"''} \
+          ${lib.optionalString cfg.enableSoulver ''--prefix LD_LIBRARY_PATH : "${cfg.soulverPackage}/lib" --prefix XDG_DATA_DIRS : "${cfg.soulverPackage}/share"''}
       '';
     };
   in
     lib.mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = cfg.enableSoulver -> cfg.soulverPackage != null;
+          message = "programs.vicinae.enableSoulver: the soulver backend is not available on ${system} and no soulverPackage was set";
+        }
+      ];
+
       home.packages = [wrappedVicinae];
 
       xdg = let

@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-unstable";
     systems.url = "github:nix-systems/default";
+    soulver-cpp.url = "github:vicinaehq/soulver-cpp";
   };
 
   nixConfig = {
@@ -15,13 +16,34 @@
     self,
     nixpkgs,
     systems,
+    soulver-cpp,
   }: let
     inherit (nixpkgs) lib;
     forEachPkgs = f: lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
   in {
-    packages = forEachPkgs (pkgs: {
-      default = pkgs.callPackage ./nix/vicinae.nix {gcc15Stdenv = pkgs.gcc15Stdenv;};
-      nix-update-script = pkgs.writeShellScriptBin "nix-update-script" ''
+    packages = forEachPkgs (pkgs: let
+      vicinae = pkgs.callPackage ./nix/vicinae.nix {gcc15Stdenv = pkgs.gcc15Stdenv;};
+      soulver = soulver-cpp.packages.${pkgs.stdenv.hostPlatform.system}.default or null;
+    in
+      lib.optionalAttrs (soulver != null) {
+        soulver-cpp = soulver;
+        with-soulver = pkgs.symlinkJoin {
+          name = "${vicinae.name}-with-soulver";
+          paths = [vicinae];
+          nativeBuildInputs = [pkgs.makeWrapper];
+          postBuild = ''
+            for bin in $out/bin/*; do
+              wrapProgram "$bin" \
+                --prefix LD_LIBRARY_PATH : ${soulver}/lib \
+                --prefix XDG_DATA_DIRS : ${soulver}/share
+            done
+          '';
+          inherit (vicinae) meta;
+        };
+      }
+      // {
+        default = vicinae;
+        nix-update-script = pkgs.writeShellScriptBin "nix-update-script" ''
         OLD_API_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.apiDeps.hash)
         OLD_EXT_MAN_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.extensionManagerDeps.hash)
 
