@@ -526,7 +526,7 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
                  << "size:" << offer.data.size();
       }
     } else {
-      if (Utils::isTextMimeType(offer.mimeType)) {
+      if (offer.mimeType != "text/uri-list" && Utils::isTextMimeType(offer.mimeType)) {
         mimeData->setText(QString::fromUtf8(offer.data));
       } else {
         mimeData->setData(offer.mimeType, offer.data);
