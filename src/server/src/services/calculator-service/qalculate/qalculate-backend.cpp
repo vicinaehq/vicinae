@@ -335,6 +335,7 @@ void QalculateBackend::initializeCalculator() {
   m_printOpts.short_multiplication = true;
   m_printOpts.show_ending_zeroes = true;
   m_printOpts.min_exp = EXP_PRECISION;
+  m_printOpts.digit_grouping = DIGIT_GROUPING_LOCALE;
 
   m_calc.reset();
   m_calc.loadExchangeRates();

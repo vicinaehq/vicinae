@@ -74,7 +74,7 @@ TEST_CASE("supports basic unit conversion") {
   assertComputationResult("ns to us", "0.001 μs");
   assertComputationResult("ns to us", "0.001 μs");
   assertComputationResult("day in hrs", "24 h");
-  assertComputationResult("day in min", "1440 min");
+  assertComputationResult("day in min", "1,440 min");
   assertComputationResult("100mm to m", "0.1 m");
 }
 
@@ -148,13 +148,13 @@ TEST_CASE("normalizes storage unit shorthand") {
 
   REQUIRE(decimal);
   REQUIRE(decimal->type == AbstractCalculatorBackend::CONVERSION);
-  REQUIRE(decimal->answer.text.contains("1000"));
+  REQUIRE(decimal->answer.text.contains("1,000"));
   REQUIRE(decimal->answer.unit);
   REQUIRE_FALSE(decimal->answer.unit->displayName.isEmpty());
 
   REQUIRE(binary);
   REQUIRE(binary->type == AbstractCalculatorBackend::CONVERSION);
-  REQUIRE(binary->answer.text.contains("1024"));
+  REQUIRE(binary->answer.text.contains("1,024"));
   REQUIRE(binary->answer.unit);
   REQUIRE_FALSE(binary->answer.unit->displayName.isEmpty());
 }
