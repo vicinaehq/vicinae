@@ -104,7 +104,9 @@ void MacosClipboardServer::poll() {
   }
 
   auto selection = Clipboard::selectionFromMimeData(QGuiApplication::clipboard()->mimeData());
+
   if (!selection) return;
+
   // The pasteboard changed while we were reading it, let the next tick handle it
   if (currentChangeCount() != cc) return;
 
