@@ -456,7 +456,6 @@ set(SRCS
 	src/internal/db/database-key.cpp
 	src/internal/http-client.hpp
 
-	src/services/power-manager/systemd/systemd-power-manager.cpp
 	src/services/power-manager/dummy-power-manager.hpp
 
 	src/services/tray-host/tray-item.hpp

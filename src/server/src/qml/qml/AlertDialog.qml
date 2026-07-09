@@ -8,6 +8,9 @@ ViciPopover {
     frostedOpacity: 0.7
     x: Math.round((parent.width - width) / 2)
     y: Math.round((parent.height - height) / 2)
+    width: 400
+    contentWidth: availableWidth
+    padding: 20
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 

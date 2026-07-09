@@ -1,7 +1,6 @@
 #include "settings-window.hpp"
 #include "common/entrypoint.hpp"
 #include "config-bridge.hpp"
-#include "environment.hpp"
 #include "ai-settings-model.hpp"
 #include "extension-settings-model.hpp"
 #include "general-settings-model.hpp"
