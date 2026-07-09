@@ -385,7 +385,7 @@ static CGDirectDisplayID screenDisplayId(NSScreen *screen) {
 static std::optional<CGDirectDisplayID> windowDisplayId(QWindow *window) {
   if (!window || !window->isVisible() || !window->handle()) return std::nullopt;
 
-  auto *view = (NSView *)window->winId();
+  auto *view = (__bridge NSView *)reinterpret_cast<void *>(window->winId());
   NSScreen *screen = view.window.screen;
   if (!screen) return std::nullopt;
 
