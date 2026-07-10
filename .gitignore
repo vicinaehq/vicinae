@@ -1,6 +1,7 @@
 .cache
 /build
 /build-release
+CMakeUserPresets.json
 .tmp
 extension-manager/runtime/node_modules
 /cmake-build-debug

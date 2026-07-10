@@ -11,7 +11,6 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl",
-        "QT_DIR": "C:/Qt/6.10.1/msvc2022_64",
         "TYPESCRIPT_EXTENSIONS": "OFF",
         "INSTALL_NODE_MODULES": "OFF",
         "VICINAE_NODE_RUNTIME_DOWNLOAD": "OFF",
@@ -33,10 +32,17 @@
       "inherits": "windows-base",
       "binaryDir": "${sourceDir}/build-release",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "LTO": "ON" }
+    },
+    {
+      "name": "windows-ci",
+      "displayName": "Windows x64 (MSVC, Release, no LTO) — CI validation build",
+      "inherits": "windows-base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "LTO": "OFF" }
     }
   ],
   "buildPresets": [
     { "name": "windows-debug", "configurePreset": "windows-debug" },
-    { "name": "windows-release", "configurePreset": "windows-release" }
+    { "name": "windows-release", "configurePreset": "windows-release" },
+    { "name": "windows-ci", "configurePreset": "windows-ci" }
   ]
 }
