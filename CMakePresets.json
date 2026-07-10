@@ -32,7 +32,7 @@
       "displayName": "Windows x64 (MSVC, Release)",
       "inherits": "windows-base",
       "binaryDir": "${sourceDir}/build-release",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "LTO": "ON" }
     }
   ],
   "buildPresets": [
