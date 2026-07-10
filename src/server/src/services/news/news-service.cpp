@@ -58,7 +58,7 @@ std::vector<const NewsItem *> NewsService::activeItems() const {
   std::vector<const NewsItem *> result;
   for (const auto &item : m_items) {
     if (isDismissed(item.id)) continue;
-    if (item.id == "telemetry-notice-v1" && !cfg.telemetry.systemInfo) continue;
+    if (item.id == "telemetry-notice-v1" && !cfg.telemetry.system_info) continue;
     result.emplace_back(&item);
   }
   return result;

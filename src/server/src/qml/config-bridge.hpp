@@ -33,54 +33,54 @@ public:
   }
 
   qreal windowOpacity() const {
-    return cfg().launcherWindow.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),
+    return cfg().launcher_window.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),
                                                 platform::supports(platform::Capability::WindowMaterial));
   }
 
   qreal popupOpacity() const {
-    return cfg().launcherWindow.resolvedPopupOpacity(
+    return cfg().launcher_window.resolvedPopupOpacity(
         platform::supports(platform::Capability::LiquidGlass),
         platform::supports(platform::Capability::WindowMaterial));
   }
 
   qreal surfaceOpacity() const {
-    return cfg().launcherWindow.resolvedSurfaceOpacity(
+    return cfg().launcher_window.resolvedSurfaceOpacity(
         platform::supports(platform::Capability::LiquidGlass),
         platform::supports(platform::Capability::WindowMaterial));
   }
 
   qreal popupSurfaceOpacity() const {
-    return cfg().launcherWindow.resolvedPopupSurfaceOpacity(
+    return cfg().launcher_window.resolvedPopupSurfaceOpacity(
         platform::supports(platform::Capability::LiquidGlass),
         platform::supports(platform::Capability::WindowMaterial));
   }
 
   int borderWidth() const {
-    auto &csd = cfg().launcherWindow.clientSideDecorations;
-    return csd.enabled ? csd.borderWidth : 0;
+    auto &csd = cfg().launcher_window.client_side_decorations;
+    return csd.enabled ? csd.border_width : 0;
   }
 
   int borderRounding() const {
-    const auto &window = cfg().launcherWindow;
+    const auto &window = cfg().launcher_window;
     if (platform::supports(platform::Capability::ClientSideDecorations)) {
-      return window.clientSideDecorations.enabled ? window.effectiveRounding() : 0;
+      return window.client_side_decorations.enabled ? window.effectiveRounding() : 0;
     }
     return window.effectiveRounding();
   }
 
   int shadowSize() const {
-    auto &csd = cfg().launcherWindow.clientSideDecorations;
-    return csd.enabled ? csd.shadowSize : 0;
+    auto &csd = cfg().launcher_window.client_side_decorations;
+    return csd.enabled ? csd.shadow_size : 0;
   }
 
-  int windowWidth() const { return cfg().launcherWindow.size.width; }
-  int windowHeight() const { return cfg().launcherWindow.size.height; }
+  int windowWidth() const { return cfg().launcher_window.size.width; }
+  int windowHeight() const { return cfg().launcher_window.size.height; }
   bool emacsMode() const { return cfg().keybinding == "emacs"; }
-  bool considerPreedit() const { return cfg().considerPreedit; }
-  bool activateOnSingleClick() const { return cfg().activateOnSingleClick; }
+  bool considerPreedit() const { return cfg().consider_preedit; }
+  bool activateOnSingleClick() const { return cfg().activate_on_single_click; }
   QString windowMaterial() const {
     return QString::fromStdString(
-        cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass),
+        cfg().launcher_window.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass),
                                               platform::supports(platform::Capability::WindowMaterial)));
   }
   bool blurEnabled() const { return windowMaterial() != QStringLiteral("none"); }

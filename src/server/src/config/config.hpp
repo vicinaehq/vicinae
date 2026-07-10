@@ -16,6 +16,9 @@
 #include <string_view>
 
 namespace config {
+// Field names are snake_case to match the JSON keys directly via glaze's pure reflection. Do NOT
+// camelCase them and add a key transform / meta: glaze's key remapping (snake_case, modify, and
+// glz::object value) all silently corrupt keys on MSVC. https://github.com/stephenberry/glaze/issues/2219
 struct ProviderItemData {
   std::optional<std::string> alias;
   std::optional<bool> enabled;
@@ -33,7 +36,7 @@ template <typename T> struct Partial;
 
 struct SystemThemeConfig {
   std::string name;
-  std::string iconTheme;
+  std::string icon_theme;
 };
 
 struct ThemeConfig {
@@ -43,7 +46,7 @@ struct ThemeConfig {
 
 template <> struct Partial<SystemThemeConfig> {
   std::optional<std::string> name;
-  std::optional<std::string> iconTheme;
+  std::optional<std::string> icon_theme;
 };
 
 template <> struct Partial<ThemeConfig> {
@@ -58,14 +61,14 @@ template <> struct Partial<ProviderData> {
 };
 
 struct LayerShellConfig {
-  std::string keyboardInteractivity = "exclusive";
+  std::string keyboard_interactivity = "exclusive";
   std::string layer = "top";
   bool enabled = true;
 };
 
 template <> struct Partial<LayerShellConfig> {
   std::optional<std::string> layer;
-  std::optional<std::string> keyboardInteractivity;
+  std::optional<std::string> keyboard_interactivity;
   std::optional<bool> enabled;
 };
 
@@ -94,15 +97,15 @@ struct WindowCSD {
 #else
   int rounding = 10;
 #endif
-  int borderWidth = 3;
-  int shadowSize = 12;
+  int border_width = 3;
+  int shadow_size = 12;
 };
 
 template <> struct Partial<WindowCSD> {
   std::optional<bool> enabled;
   std::optional<int> rounding;
-  std::optional<int> borderWidth;
-  std::optional<int> shadowSize;
+  std::optional<int> border_width;
+  std::optional<int> shadow_size;
 };
 
 struct WindowCompactMode {
@@ -121,18 +124,18 @@ struct WindowConfig {
 
   std::optional<float> opacity;
   std::optional<int> rounding;
-  WindowCSD clientSideDecorations;
+  WindowCSD client_side_decorations;
   Size size;
   std::string screen;
   BlurConfig blur;
-  WindowCompactMode compactMode;
-  LayerShellConfig layerShell;
+  WindowCompactMode compact_mode;
+  LayerShellConfig layer_shell;
 
   std::string material = "auto";
 
   // Corner radius is a window-level property, but historically lived under client_side_decorations.
   // Fall back to that value when the flat key is unset to keep older configs working.
-  int effectiveRounding() const { return rounding.value_or(clientSideDecorations.rounding); }
+  int effectiveRounding() const { return rounding.value_or(client_side_decorations.rounding); }
 
   std::string resolvedMaterial(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
     if (material != "auto") return material;
@@ -176,11 +179,11 @@ struct WindowConfig {
 template <> struct Partial<WindowConfig> {
   std::optional<int> rounding;
   std::optional<float> opacity;
-  std::optional<Partial<WindowCSD>> clientSideDecorations;
+  std::optional<Partial<WindowCSD>> client_side_decorations;
   std::optional<Partial<Size>> size;
   std::optional<Partial<BlurConfig>> blur;
-  std::optional<Partial<WindowCompactMode>> compactMode;
-  std::optional<Partial<LayerShellConfig>> layerShell;
+  std::optional<Partial<WindowCompactMode>> compact_mode;
+  std::optional<Partial<LayerShellConfig>> layer_shell;
   std::optional<std::string> material;
 };
 
@@ -234,11 +237,11 @@ template <> struct Partial<Footer> {
 };
 
 struct TelemetryConfig {
-  bool systemInfo = true;
+  bool system_info = true;
 };
 
 template <> struct Partial<TelemetryConfig> {
-  std::optional<bool> systemInfo;
+  std::optional<bool> system_info;
 };
 
 using KeybindMap = std::map<std::string, std::string>;
@@ -270,30 +273,30 @@ template <> struct Partial<GlobalShortcuts> {
 struct ConfigValue {
   std::string schema = SCHEMA;
   std::vector<std::string> imports;
-  bool searchFilesInRoot = false;
-  bool closeOnFocusLoss = false;
-  bool considerPreedit = false;
-  bool popToRootOnClose = false;
-  bool popOnBackspace = true;
-  bool activateOnSingleClick = false;
+  bool search_files_in_root = false;
+  bool close_on_focus_loss = false;
+  bool consider_preedit = false;
+  bool pop_to_root_on_close = false;
+  bool pop_on_backspace = true;
+  bool activate_on_single_click = false;
 #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
-  bool encryptSensitiveData = false;
+  bool encrypt_sensitive_data = false;
 #else
-  bool encryptSensitiveData = true;
+  bool encrypt_sensitive_data = true;
 #endif
-  std::string escapeKeyBehavior;
-  std::string faviconService = "twenty";
+  std::string escape_key_behavior;
+  std::string favicon_service = "twenty";
   std::string keybinding = "default";
-  int pixmapCacheMb = 50;
+  int pixmap_cache_mb = 50;
 
-  InputServer inputServer;
-  GlobalShortcuts globalShortcuts;
+  InputServer input_server;
+  GlobalShortcuts global_shortcuts;
 
   FontConfig font;
   ThemeConfig theme;
   TelemetryConfig telemetry;
 
-  WindowConfig launcherWindow;
+  WindowConfig launcher_window;
   Header header;
   Footer footer;
 
@@ -328,25 +331,25 @@ using PartialValue = Partial<ConfigValue>;
 template <> struct Partial<ConfigValue> {
   std::string schema = SCHEMA;
   std::optional<std::vector<std::string>> imports;
-  std::optional<bool> closeOnFocusLoss;
-  std::optional<bool> considerPreedit;
-  std::optional<bool> popToRootOnClose;
-  std::optional<bool> popOnBackspace;
-  std::optional<bool> activateOnSingleClick;
-  std::optional<bool> encryptSensitiveData;
-  std::optional<std::string> escapeKeyBehavior;
-  std::optional<std::string> faviconService;
+  std::optional<bool> close_on_focus_loss;
+  std::optional<bool> consider_preedit;
+  std::optional<bool> pop_to_root_on_close;
+  std::optional<bool> pop_on_backspace;
+  std::optional<bool> activate_on_single_click;
+  std::optional<bool> encrypt_sensitive_data;
+  std::optional<std::string> escape_key_behavior;
+  std::optional<std::string> favicon_service;
   std::optional<std::string> keybinding;
-  std::optional<int> pixmapCacheMb;
-  std::optional<bool> searchFilesInRoot;
-  std::optional<Partial<InputServer>> inputServer;
-  std::optional<Partial<GlobalShortcuts>> globalShortcuts;
+  std::optional<int> pixmap_cache_mb;
+  std::optional<bool> search_files_in_root;
+  std::optional<Partial<InputServer>> input_server;
+  std::optional<Partial<GlobalShortcuts>> global_shortcuts;
 
   std::optional<Partial<FontConfig>> font;
   std::optional<Partial<ThemeConfig>> theme;
   std::optional<Partial<TelemetryConfig>> telemetry;
 
-  std::optional<Partial<WindowConfig>> launcherWindow;
+  std::optional<Partial<WindowConfig>> launcher_window;
   std::optional<Partial<Header>> header;
   std::optional<Partial<Footer>> footer;
 

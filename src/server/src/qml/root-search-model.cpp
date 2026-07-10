@@ -17,7 +17,7 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
       m_appDb(scope.services()->appDb()), m_newsService(scope.services()->newsService()),
       m_updateService(scope.services()->updateService()), m_calculator(scope.services()->calculatorService()),
       m_fileService(scope.services()->fileService()), m_config(scope.services()->config()),
-      m_fileSearchEnabled(m_config->value().searchFilesInRoot) {
+      m_fileSearchEnabled(m_config->value().search_files_in_root) {
 
   setScope(scope);
 
@@ -35,7 +35,7 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
 
   connect(m_config, &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &) {
-            m_fileSearchEnabled = next.searchFilesInRoot;
+            m_fileSearchEnabled = next.search_files_in_root;
           });
 
   connect(m_manager, &RootItemManager::metadataChanged, this, &RootSearchModel::refresh);

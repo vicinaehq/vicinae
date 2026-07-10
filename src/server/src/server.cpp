@@ -216,7 +216,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
     const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
-    auto keys = db::prepareEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});
+    auto keys = db::prepareEncryption(currentConfig.encrypt_sensitive_data, {vicinaeDbPath, clipboardDbPath});
 
     auto omniDb = std::make_unique<OmniDatabase>(vicinaeDbPath, keys.database);
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
@@ -443,17 +443,17 @@ int startServer(const ServerLaunchOptions &launchOpts) {
       theme.reloadCurrentTheme();
     }
 
-    ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
-    ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
+    ctx.navigation->setPopToRootOnClose(next.pop_to_root_on_close);
+    ctx.navigation->setCloseOnFocusLoss(next.close_on_focus_loss);
 #ifdef Q_OS_LINUX
-    ctx.services->inputServer()->setEnabled(next.inputServer.enabled);
+    ctx.services->inputServer()->setEnabled(next.input_server.enabled);
 #endif
 
     KeybindManager::instance()->mergeBinds({next.keybinds.begin(), next.keybinds.end()});
-    FaviconService::instance()->setService(next.faviconService.c_str());
+    FaviconService::instance()->setService(next.favicon_service.c_str());
 
-    if (nextTheme.iconTheme != "auto") {
-      QIcon::setThemeName(nextTheme.iconTheme.c_str());
+    if (nextTheme.icon_theme != "auto") {
+      QIcon::setThemeName(nextTheme.icon_theme.c_str());
     }
 #ifdef Q_OS_LINUX
     else if (QIcon::themeName() == "hicolor") {
@@ -462,7 +462,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     }
 #endif
 
-    ServiceRegistry::instance()->telemetry()->setEnabled(next.telemetry.systemInfo);
+    ServiceRegistry::instance()->telemetry()->setEnabled(next.telemetry.system_info);
   };
 
   auto cfgService = ServiceRegistry::instance()->config();
@@ -475,8 +475,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto &value = cfgService->value();
     auto &theme = value.systemTheme();
 
-    if (theme.iconTheme != "auto") {
-      QIcon::setThemeName(theme.iconTheme.c_str());
+    if (theme.icon_theme != "auto") {
+      QIcon::setThemeName(theme.icon_theme.c_str());
     }
 #ifdef Q_OS_LINUX
     else if (QIcon::themeName() == "hicolor") {

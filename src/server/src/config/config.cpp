@@ -4,7 +4,6 @@
 #include <fstream>
 #include <ranges>
 #include <QStyleHints>
-#include <glaze/util/key_transformers.hpp>
 #include <qlogging.h>
 #include <qstylehints.h>
 #include <string_view>
@@ -14,93 +13,6 @@
 #include "config.hpp"
 
 namespace fs = std::filesystem;
-
-// glaze's snake_case / rename_key key transform (returns std::string) and its `modify` augment
-// mechanism both silently emit wrong keys on MSVC, so the config would fall back to struct defaults.
-// This was only ever fixed for Clang/GCC: https://github.com/stephenberry/glaze/issues/2219
-// Plain glz::object `value` metas (which replace reflection with literal keys) DO work on MSVC, so we
-// map the snake_case JSON keys explicitly. Structs whose fields are all single-word keep pure
-// reflection and need no meta here.
-template <> struct glz::meta<config::SystemThemeConfig> {
-  static constexpr auto value =
-      glz::object("name", &config::SystemThemeConfig::name, "icon_theme", &config::SystemThemeConfig::iconTheme);
-};
-template <> struct glz::meta<config::Partial<config::SystemThemeConfig>> {
-  using T = config::Partial<config::SystemThemeConfig>;
-  static constexpr auto value = glz::object("name", &T::name, "icon_theme", &T::iconTheme);
-};
-
-template <> struct glz::meta<config::LayerShellConfig> {
-  using T = config::LayerShellConfig;
-  static constexpr auto value = glz::object("keyboard_interactivity", &T::keyboardInteractivity, "layer",
-                                            &T::layer, "enabled", &T::enabled);
-};
-template <> struct glz::meta<config::Partial<config::LayerShellConfig>> {
-  using T = config::Partial<config::LayerShellConfig>;
-  static constexpr auto value = glz::object("layer", &T::layer, "keyboard_interactivity",
-                                            &T::keyboardInteractivity, "enabled", &T::enabled);
-};
-
-template <> struct glz::meta<config::WindowCSD> {
-  using T = config::WindowCSD;
-  static constexpr auto value = glz::object("enabled", &T::enabled, "rounding", &T::rounding, "border_width",
-                                            &T::borderWidth, "shadow_size", &T::shadowSize);
-};
-template <> struct glz::meta<config::Partial<config::WindowCSD>> {
-  using T = config::Partial<config::WindowCSD>;
-  static constexpr auto value = glz::object("enabled", &T::enabled, "rounding", &T::rounding, "border_width",
-                                            &T::borderWidth, "shadow_size", &T::shadowSize);
-};
-
-template <> struct glz::meta<config::WindowConfig> {
-  using T = config::WindowConfig;
-  static constexpr auto value = glz::object(
-      "opacity", &T::opacity, "rounding", &T::rounding, "client_side_decorations", &T::clientSideDecorations,
-      "size", &T::size, "screen", &T::screen, "blur", &T::blur, "compact_mode", &T::compactMode, "layer_shell",
-      &T::layerShell, "material", &T::material);
-};
-template <> struct glz::meta<config::Partial<config::WindowConfig>> {
-  using T = config::Partial<config::WindowConfig>;
-  static constexpr auto value = glz::object(
-      "rounding", &T::rounding, "opacity", &T::opacity, "client_side_decorations", &T::clientSideDecorations,
-      "size", &T::size, "blur", &T::blur, "compact_mode", &T::compactMode, "layer_shell", &T::layerShell,
-      "material", &T::material);
-};
-
-template <> struct glz::meta<config::TelemetryConfig> {
-  static constexpr auto value = glz::object("system_info", &config::TelemetryConfig::systemInfo);
-};
-template <> struct glz::meta<config::Partial<config::TelemetryConfig>> {
-  static constexpr auto value =
-      glz::object("system_info", &config::Partial<config::TelemetryConfig>::systemInfo);
-};
-
-template <> struct glz::meta<config::ConfigValue> {
-  using T = config::ConfigValue;
-  static constexpr auto value = glz::object(
-      "$schema", &T::schema, "imports", &T::imports, "search_files_in_root", &T::searchFilesInRoot,
-      "close_on_focus_loss", &T::closeOnFocusLoss, "consider_preedit", &T::considerPreedit,
-      "pop_to_root_on_close", &T::popToRootOnClose, "pop_on_backspace", &T::popOnBackspace,
-      "activate_on_single_click", &T::activateOnSingleClick, "encrypt_sensitive_data", &T::encryptSensitiveData,
-      "escape_key_behavior", &T::escapeKeyBehavior, "favicon_service", &T::faviconService, "keybinding",
-      &T::keybinding, "pixmap_cache_mb", &T::pixmapCacheMb, "input_server", &T::inputServer, "global_shortcuts",
-      &T::globalShortcuts, "font", &T::font, "theme", &T::theme, "telemetry", &T::telemetry, "launcher_window",
-      &T::launcherWindow, "header", &T::header, "footer", &T::footer, "keybinds", &T::keybinds, "favorites",
-      &T::favorites, "fallbacks", &T::fallbacks, "providers", &T::providers);
-};
-template <> struct glz::meta<config::Partial<config::ConfigValue>> {
-  using T = config::Partial<config::ConfigValue>;
-  static constexpr auto value = glz::object(
-      "$schema", &T::schema, "imports", &T::imports, "close_on_focus_loss", &T::closeOnFocusLoss,
-      "consider_preedit", &T::considerPreedit, "pop_to_root_on_close", &T::popToRootOnClose, "pop_on_backspace",
-      &T::popOnBackspace, "activate_on_single_click", &T::activateOnSingleClick, "encrypt_sensitive_data",
-      &T::encryptSensitiveData, "escape_key_behavior", &T::escapeKeyBehavior, "favicon_service",
-      &T::faviconService, "keybinding", &T::keybinding, "pixmap_cache_mb", &T::pixmapCacheMb,
-      "search_files_in_root", &T::searchFilesInRoot, "input_server", &T::inputServer, "global_shortcuts",
-      &T::globalShortcuts, "font", &T::font, "theme", &T::theme, "telemetry", &T::telemetry, "launcher_window",
-      &T::launcherWindow, "header", &T::header, "footer", &T::footer, "keybinds", &T::keybinds, "favorites",
-      &T::favorites, "fallbacks", &T::fallbacks, "providers", &T::providers);
-};
 
 namespace config {
 static constexpr const char *TOP_COMMENT =
@@ -246,8 +158,12 @@ bool Manager::writeUser(const Partial<ConfigValue> &cfg) {
   }
 
   {
+    // reflection writes the `schema` field as "schema"; restore the conventional "$schema" key
+    auto pretty = glz::prettify_json(buf);
+    if (auto pos = pretty.find("\"schema\":"); pos != std::string::npos) { pretty.insert(pos + 1, "$"); }
+
     std::ofstream ofs(m_userPath);
-    ofs << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
+    ofs << TOP_COMMENT << "\n\n" << pretty;
   }
 
   reloadConfig();
