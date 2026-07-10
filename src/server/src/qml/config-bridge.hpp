@@ -2,6 +2,7 @@
 #include "capabilities.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
+#include "services/keybinding/keybinding-service.hpp"
 #include <QColor>
 #include <QObject>
 
@@ -75,7 +76,7 @@ public:
 
   int windowWidth() const { return cfg().launcherWindow.size.width; }
   int windowHeight() const { return cfg().launcherWindow.size.height; }
-  bool emacsMode() const { return cfg().keybinding == "emacs"; }
+  bool emacsMode() const { return KeyBindingService::getMode(cfg().keybinding) == KeyBindingMode::Emacs; }
   bool considerPreedit() const { return cfg().considerPreedit; }
   bool activateOnSingleClick() const { return cfg().activateOnSingleClick; }
   QString windowMaterial() const {

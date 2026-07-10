@@ -57,7 +57,7 @@ Flickable {
 
             SettingsRow {
                 label: "Keybinding Scheme"
-                description: "Default uses Vim-style Ctrl+J/K and Ctrl+H/L; Emacs uses Ctrl+N/P and Ctrl+Opt+B/F for navigation, plus Emacs editing in the search bar."
+                description: Qt.platform.os === "osx" ? "Default uses the standard macOS keys (arrows, Ctrl+N/P); Vim uses Ctrl+J/K and Ctrl+H/L; Emacs uses Ctrl+N/P and Ctrl+Opt+B/F for navigation, plus Emacs editing in the search bar." : "Default and Vim use Ctrl+J/K and Ctrl+H/L; Emacs uses Ctrl+N/P and Ctrl+Alt+B/F for navigation, plus Emacs editing in the search bar."
                 showSeparator: false
                 SearchableDropdown {
                     width: parent.width

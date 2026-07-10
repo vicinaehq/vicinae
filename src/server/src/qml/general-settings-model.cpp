@@ -263,14 +263,16 @@ QVariant GeneralSettingsModel::currentFaviconService() const {
 QVariantList GeneralSettingsModel::keybindingSchemeItems() const {
   QVariantList items;
   items.append(makeDropdownItem(QStringLiteral("default"), QStringLiteral("Default")));
+  items.append(makeDropdownItem(QStringLiteral("vim"), QStringLiteral("Vim")));
   items.append(makeDropdownItem(QStringLiteral("emacs"), QStringLiteral("Emacs")));
   return wrapSection(QStringLiteral("Keybinding Schemes"), items);
 }
 
 QVariant GeneralSettingsModel::currentKeybindingScheme() const {
   auto id = QString::fromStdString(cfg().keybinding);
-  auto name = id == "emacs" ? QStringLiteral("Emacs") : QStringLiteral("Default");
-  return makeDropdownItem(id, name);
+  if (id == "vim") return makeDropdownItem(id, QStringLiteral("Vim"));
+  if (id == "emacs") return makeDropdownItem(id, QStringLiteral("Emacs"));
+  return makeDropdownItem(id, QStringLiteral("Default"));
 }
 
 void GeneralSettingsModel::selectTheme(const QString &id) {

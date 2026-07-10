@@ -3,13 +3,29 @@
 #include <string>
 #include <qevent.h>
 
-enum class KeyBindingMode { Default, Emacs };
+enum class KeyBindingMode { Native, Vim, Emacs };
 
 class KeyBindingService {
 public:
+  // Qt swaps Control and Meta on macOS, so Qt::MetaModifier is the physical Control key there.
+  // Navigation chords are physical-Control idioms on every platform; regular shortcuts keep the swap.
+#ifdef Q_OS_MACOS
+  static constexpr Qt::KeyboardModifier PHYSICAL_CTRL = Qt::MetaModifier;
+  static constexpr bool NATIVE_NAV_CHORDS = true;
+#else
+  static constexpr Qt::KeyboardModifier PHYSICAL_CTRL = Qt::ControlModifier;
+  static constexpr bool NATIVE_NAV_CHORDS = false;
+#endif
+
+  // "default" resolves to the platform scheme: vim-style on Linux, native keys on macOS.
   static KeyBindingMode getMode(const std::string &keybinding) {
+    if (keybinding == "vim") { return KeyBindingMode::Vim; }
     if (keybinding == "emacs") { return KeyBindingMode::Emacs; }
-    return KeyBindingMode::Default;
+#ifdef Q_OS_MACOS
+    return KeyBindingMode::Native;
+#else
+    return KeyBindingMode::Vim;
+#endif
   }
 
   static bool usesOnly(QKeyEvent *event, Qt::KeyboardModifiers required) {
@@ -19,40 +35,49 @@ public:
   }
 
   static bool isDownKey(QKeyEvent *event, const std::string &keybinding) {
-    KeyBindingMode mode = getMode(keybinding);
-
-    if (!usesOnly(event, Qt::ControlModifier)) { return false; }
-
-    switch (mode) {
-    case KeyBindingMode::Default:
-      return event->key() == Qt::Key_J;
+    switch (getMode(keybinding)) {
+    case KeyBindingMode::Native:
+      return NATIVE_NAV_CHORDS && usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_N;
+    case KeyBindingMode::Vim:
+      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_J;
     case KeyBindingMode::Emacs:
-      return event->key() == Qt::Key_N;
+      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_N;
     }
     return false;
   }
 
   static bool isUpKey(QKeyEvent *event, const std::string &keybinding) {
-    KeyBindingMode mode = getMode(keybinding);
-
-    if (!usesOnly(event, Qt::ControlModifier)) { return false; }
-
-    switch (mode) {
-    case KeyBindingMode::Default:
-      return event->key() == Qt::Key_K;
+    switch (getMode(keybinding)) {
+    case KeyBindingMode::Native:
+      return NATIVE_NAV_CHORDS && usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_P;
+    case KeyBindingMode::Vim:
+      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_K;
     case KeyBindingMode::Emacs:
-      return event->key() == Qt::Key_P;
+      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_P;
     }
     return false;
   }
 
   static bool isLeftKey(QKeyEvent *event, const std::string &keybinding) {
-    KeyBindingMode mode = getMode(keybinding);
-    switch (mode) {
-    case KeyBindingMode::Default:
-      return usesOnly(event, Qt::ControlModifier) && event->key() == Qt::Key_H;
+    switch (getMode(keybinding)) {
+    case KeyBindingMode::Native:
+      return false;
+    case KeyBindingMode::Vim:
+      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_H;
     case KeyBindingMode::Emacs:
-      return usesOnly(event, Qt::ControlModifier | Qt::AltModifier) && event->key() == Qt::Key_B;
+      return usesOnly(event, PHYSICAL_CTRL | Qt::AltModifier) && event->key() == Qt::Key_B;
+    }
+    return false;
+  }
+
+  static bool isRightKey(QKeyEvent *event, const std::string &keybinding) {
+    switch (getMode(keybinding)) {
+    case KeyBindingMode::Native:
+      return false;
+    case KeyBindingMode::Vim:
+      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_L;
+    case KeyBindingMode::Emacs:
+      return usesOnly(event, PHYSICAL_CTRL | Qt::AltModifier) && event->key() == Qt::Key_F;
     }
     return false;
   }
@@ -65,16 +90,5 @@ public:
     if (isLeftKey(&ev, keybinding)) return 3;
     if (isRightKey(&ev, keybinding)) return 4;
     return 0;
-  }
-
-  static bool isRightKey(QKeyEvent *event, const std::string &keybinding) {
-    KeyBindingMode mode = getMode(keybinding);
-    switch (mode) {
-    case KeyBindingMode::Default:
-      return usesOnly(event, Qt::ControlModifier) && event->key() == Qt::Key_L;
-    case KeyBindingMode::Emacs:
-      return usesOnly(event, Qt::ControlModifier | Qt::AltModifier) && event->key() == Qt::Key_F;
-    }
-    return false;
   }
 };

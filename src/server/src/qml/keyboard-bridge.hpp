@@ -12,9 +12,12 @@
  */
 class KeyboardBridge : public QObject {
   Q_OBJECT
+  Q_PROPERTY(int physicalCtrlModifier READ physicalCtrlModifier CONSTANT)
 
 public:
   using QObject::QObject;
+
+  int physicalCtrlModifier() const { return static_cast<int>(KeyBindingService::PHYSICAL_CTRL); }
 
   Q_INVOKABLE QString serialize(int key, int modifiers) const {
     Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key),
