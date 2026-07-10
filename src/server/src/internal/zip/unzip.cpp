@@ -57,10 +57,10 @@ Unzipper::Unzipper(std::string_view data) {
 
   m_tmpFile->write(data.data(), data.size());
   m_tmpFile->flush();
-  m_zip = zip_open(m_tmpFile->filesystemFileName().c_str(), 0, 'r');
+  m_zip = zip_open(m_tmpFile->filesystemFileName().string().c_str(), 0, 'r');
 }
 
-Unzipper::Unzipper(const std::filesystem::path &path) { m_zip = zip_open(path.c_str(), 0, 'r'); }
+Unzipper::Unzipper(const std::filesystem::path &path) { m_zip = zip_open(path.string().c_str(), 0, 'r'); }
 
 Unzipper::~Unzipper() {
   if (m_zip) zip_close(m_zip);

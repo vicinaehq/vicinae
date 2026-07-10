@@ -1,9 +1,22 @@
-#include <unistd.h>
+#include <cstdio>
+#include <exception>
 #include <iostream>
 #include <glaze/glaze.hpp>
 #include "server.hpp"
 
 int main(int argc, char **argv) {
+  std::set_terminate([] {
+    if (auto e = std::current_exception()) {
+      try {
+        std::rethrow_exception(e);
+      } catch (const std::exception &ex) {
+        std::fprintf(stderr, "FATAL uncaught exception: %s\n", ex.what());
+      } catch (...) { std::fprintf(stderr, "FATAL uncaught non-std exception\n"); }
+    }
+    std::fflush(stderr);
+    std::abort();
+  });
+
   ServerLaunchOptions opts;
 
   if (argc >= 2) {

@@ -15,7 +15,7 @@ SnippetDatabase::SnippetDatabase(const std::filesystem::path &path) : m_path(pat
   if (!fs::is_regular_file(m_path)) {
     fs::create_directories(path.parent_path());
     if (const auto result = setSnippets({}); !result) {
-      qCritical() << "Unable to create default snippet file at" << m_path.c_str() << result.error().c_str();
+      qCritical() << "Unable to create default snippet file at" << m_path.string() << result.error().c_str();
     }
   }
 
@@ -25,7 +25,7 @@ SnippetDatabase::SnippetDatabase(const std::filesystem::path &path) : m_path(pat
 std::expected<std::vector<SerializedSnippet>, std::string> SnippetDatabase::loadSnippets() {
   std::vector<SerializedSnippet> snippets;
 
-  if (const auto error = glz::read_file_json(snippets, m_path.c_str(), m_buf)) {
+  if (const auto error = glz::read_file_json(snippets, m_path.string(), m_buf)) {
     return std::unexpected(glz::format_error(error));
   }
 
@@ -111,7 +111,7 @@ std::expected<SerializedSnippet, std::string> SnippetDatabase::addSnippet(const 
 }
 
 std::expected<void, std::string> SnippetDatabase::setSnippets(std::span<SerializedSnippet> snippets) {
-  if (const auto error = glz::write_file_json(snippets, m_path.c_str(), m_buf)) {
+  if (const auto error = glz::write_file_json(snippets, m_path.string(), m_buf)) {
     return std::unexpected(std::format("Failed to save snippets on disk: {}", glz::format_error(error)));
   }
 

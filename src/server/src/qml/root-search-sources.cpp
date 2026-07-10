@@ -377,7 +377,7 @@ QString RootFilesSection::itemTitle(int i) const {
 
 QString RootFilesSection::itemSubtitle(int i) const {
   if (std::cmp_greater_equal(i, m_files.size())) return {};
-  return QString::fromStdString(compressPath(m_files[i].path.parent_path()));
+  return QString::fromStdString(compressPath(m_files[i].path.parent_path()).string());
 }
 
 QString RootFilesSection::itemIconSource(int i) const {

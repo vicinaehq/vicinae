@@ -23,7 +23,7 @@ ExtensionRegistry::ExtensionRegistry(LocalStorageService &storage) : m_storage(s
   m_rescanDebounce.setSingleShot(true);
 
   for (const auto &dir : m_extDirs) {
-    m_watcher->addPath(dir.c_str());
+    m_watcher->addPath(QString::fromStdString(dir.string()));
   }
 
   // XXX: we currently do not support removing extensions by filesystem removal
@@ -115,7 +115,7 @@ std::vector<ExtensionManifest> ExtensionRegistry::scanAll() {
       if (!entry.is_directory(ec)) continue;
 
       fs::path const &path = entry.path();
-      std::string const filename = path.filename();
+      std::string const filename = path.filename().string();
 
       if (filename.starts_with('.')) continue;
 

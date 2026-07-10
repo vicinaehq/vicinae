@@ -3,7 +3,7 @@
 #include "common/context.hpp"
 #include "extension-error-view-host.hpp"
 #include "extension/services/application-service.hpp"
-#include "extension/services/browser-extension-service.hpp"
+#include "extension/services/ext-browser-extension-service.hpp"
 #include "extension/services/clipboard-service.hpp"
 #include "extension/services/command-service.hpp"
 #include "extension/services/event-core-service.hpp"
@@ -87,11 +87,11 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
     opts.env = manager::CommandEnv::Production;
   }
 
-  opts.entrypoint = m_command->manifest().entrypoint;
+  opts.entrypoint = m_command->manifest().entrypoint.string();
   opts.mode = m_command->mode() == CommandMode::CommandModeView ? manager::CommandMode::View
                                                                 : manager::CommandMode::NoView;
   opts.extension_id = m_command->extensionId().toStdString();
-  opts.vicinae_path = Omnicast::dataDir();
+  opts.vicinae_path = Omnicast::dataDir().string();
   opts.command_name = m_command->commandId().toStdString();
   opts.extension_name = m_command->repositoryName().toStdString();
   opts.owner_or_author_name = m_command->author().toStdString();

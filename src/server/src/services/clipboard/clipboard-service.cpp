@@ -4,7 +4,9 @@
 #include <numeric>
 #include <QGuiApplication>
 #include "services/app-service/abstract-app-db.hpp"
+#ifdef Q_OS_LINUX
 #include "x11/x11-clipboard-server.hpp"
+#endif
 #include <qclipboard.h>
 #include <qimagereader.h>
 #include <qlogging.h>
@@ -23,8 +25,10 @@
 #include "services/clipboard/clipboard-server.hpp"
 #include "utils.hpp"
 #ifdef Q_OS_LINUX
+#ifdef Q_OS_LINUX
 #include "services/clipboard/gnome/gnome-clipboard-server.hpp"
 #include "data-control/data-control-clipboard-server.hpp"
+#endif
 #endif
 #ifdef Q_OS_MACOS
 #include "macos/macos-clipboard-server.hpp"

@@ -66,7 +66,7 @@ class OpenVicinaeConfig : public BuiltinCallbackCommand {
 
   void execute(CommandController *controller) const override {
     auto ctx = controller->context();
-    ctx->services->appDb()->openTarget(ctx->services->config()->path().c_str());
+    ctx->services->appDb()->openTarget(QString::fromStdString(ctx->services->config()->path().string()));
     ctx->navigation->closeWindow();
     ctx->navigation->clearSearchText();
   }

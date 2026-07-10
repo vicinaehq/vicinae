@@ -10,6 +10,10 @@
 #include <mach-o/dyld.h>
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace vicinae {
@@ -22,6 +26,13 @@ fs::path selfPath() {
   std::string dyn(size, '\0');
   if (_NSGetExecutablePath(dyn.data(), &size) != 0) return {};
   return fs::canonical(dyn.c_str());
+}
+#elif defined(_WIN32)
+fs::path selfPath() {
+  wchar_t buf[MAX_PATH];
+  DWORD const len = GetModuleFileNameW(nullptr, buf, MAX_PATH);
+  if (len == 0) return {};
+  return fs::path(std::wstring(buf, len));
 }
 #else
 fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
@@ -64,6 +75,8 @@ fs::path runtimeDir() {
 #ifdef __APPLE__
   if (const char *t = std::getenv("TMPDIR")) return fs::path(t) / "vicinae";
   return "/tmp/vicinae";
+#elif defined(_WIN32)
+  return fs::temp_directory_path() / "vicinae";
 #else
   if (const char *r = std::getenv("XDG_RUNTIME_DIR")) return fs::path(r) / "vicinae";
   return "/tmp/vicinae";

@@ -221,7 +221,8 @@ public:
   static std::expected<Database, std::string> open(const std::filesystem::path &path) {
     sqlite3 *handle = nullptr;
     int const rc = sqlite3_open_v2(
-        path.c_str(), &handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
+        path.string().c_str(), &handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX,
+        nullptr);
     if (rc != SQLITE_OK) {
       std::string err = handle ? sqlite3_errmsg(handle) : "failed to allocate sqlite handle";
       if (handle) sqlite3_close_v2(handle);

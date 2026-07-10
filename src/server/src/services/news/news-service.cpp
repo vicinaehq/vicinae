@@ -68,7 +68,7 @@ void NewsService::loadState() {
   std::string buf;
   NewsState state;
 
-  if (const auto err = glz::read_file_json(state, m_stateFile.c_str(), buf)) {
+  if (const auto err = glz::read_file_json(state, m_stateFile.string(), buf)) {
     qWarning() << "Failed to parse news state:" << glz::format_error(err);
     return;
   }

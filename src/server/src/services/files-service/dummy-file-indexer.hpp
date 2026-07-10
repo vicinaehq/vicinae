@@ -12,4 +12,6 @@ public:
                                                      const IndexerQueryParams & = {}) override {
     return QtFuture::makeReadyValueFuture(std::vector<IndexerFileResult>{});
   }
+
+  bool isAvailable() const override { return false; }
 };

@@ -13,7 +13,7 @@ public:
   }
 
   OpenFileAction(const std::filesystem::path &path, const std::shared_ptr<AbstractApplication> &app)
-      : OpenAppAction(app, "Open with " + app->displayName(), {path.c_str()}), m_path(path) {
+      : OpenAppAction(app, "Open with " + app->displayName(), {QString::fromStdString(path.string())}), m_path(path) {
     setAutoClose();
   }
 
@@ -32,7 +32,7 @@ public:
 
   OpenFileInAppAction(const std::filesystem::path &path, const std::shared_ptr<AbstractApplication> &app,
                       const QString &title)
-      : OpenAppAction(app, title, {path.c_str()}), m_path(path) {}
+      : OpenAppAction(app, title, {QString::fromStdString(path.string())}), m_path(path) {}
   OpenFileInAppAction(const std::filesystem::path &path, const std::shared_ptr<AbstractApplication> &app,
                       const QString &title, std::vector<QString> overrideArgs)
       : OpenAppAction(app, title, overrideArgs), m_path(path) {}

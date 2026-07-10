@@ -92,7 +92,8 @@ class ScriptRootItem : public RootItem {
           new OpenFileInAppAction(m_file->path().parent_path(), fileBrowser, "Open script directory"));
     }
 
-    auto copyPath = new CopyToClipboardAction(Clipboard::Text(m_file->path().c_str()), "Copy path to script");
+    auto copyPath = new CopyToClipboardAction(Clipboard::Text(QString::fromStdString(m_file->path().string())),
+                                              "Copy path to script");
 
     extraSection->addAction(copyPath);
 

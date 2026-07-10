@@ -1,6 +1,9 @@
 #include "system-run-view-host.hpp"
 #include "system-run-model.hpp"
+#include <sstream>
+#ifndef Q_OS_WIN
 #include "xdgpp/desktop-entry/exec.hpp"
+#endif
 
 void SystemRunViewHost::initialize() {
   BaseView::initialize();
@@ -30,7 +33,13 @@ void SystemRunViewHost::textChanged(const QString &text) { refresh(text); }
 
 void SystemRunViewHost::refresh(const QString &text) {
   auto str = text.trimmed().toStdString();
+#ifdef Q_OS_WIN
+  std::vector<std::string> parsed;
+  std::istringstream iss(str);
+  for (std::string tok; iss >> tok;) { parsed.emplace_back(std::move(tok)); }
+#else
   auto parsed = xdgpp::ExecParser("").parse(str);
+#endif
   bool hasProg = false;
 
   if (!parsed.empty()) hasProg = ProgramDb::programPath(parsed.front()).has_value();

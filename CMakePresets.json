@@ -1,0 +1,42 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "windows-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl",
+        "QT_DIR": "C:/Qt/6.10.1/msvc2022_64",
+        "TYPESCRIPT_EXTENSIONS": "OFF",
+        "INSTALL_NODE_MODULES": "OFF",
+        "VICINAE_NODE_RUNTIME_DOWNLOAD": "OFF",
+        "WAYLAND_LAYER_SHELL": "OFF",
+        "AUTO_INSTALL_BROWSER_MANIFESTS": "OFF",
+        "BUILD_TESTS": "OFF",
+        "LTO": "OFF"
+      }
+    },
+    {
+      "name": "windows-debug",
+      "displayName": "Windows x64 (MSVC, Debug)",
+      "inherits": "windows-base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "windows-release",
+      "displayName": "Windows x64 (MSVC, Release)",
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/build-release",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "windows-debug", "configurePreset": "windows-debug" },
+    { "name": "windows-release", "configurePreset": "windows-release" }
+  ]
+}

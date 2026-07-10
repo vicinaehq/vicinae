@@ -15,27 +15,92 @@
 
 namespace fs = std::filesystem;
 
-#define SNAKE_CASIFY(T)                                                                                      \
-  template <> struct glz::meta<T> : glz::snake_case {};                                                      \
-  template <> struct glz::meta<config::Partial<T>> : glz::snake_case {};
-
-SNAKE_CASIFY(config::LayerShellConfig);
-SNAKE_CASIFY(config::WindowConfig);
-SNAKE_CASIFY(config::SystemThemeConfig);
-SNAKE_CASIFY(config::ThemeConfig);
-SNAKE_CASIFY(config::TelemetryConfig);
-SNAKE_CASIFY(config::WindowCSD);
-SNAKE_CASIFY(config::GlobalShortcuts);
-
-struct ConfigTransformer : glz::snake_case {
-  static constexpr std::string rename_key(const std::string_view key) {
-    if (key == "schema") return "$schema";
-    return glz::to_snake_case(key);
-  }
+// glaze's snake_case / rename_key key transform (returns std::string) and its `modify` augment
+// mechanism both silently emit wrong keys on MSVC, so the config would fall back to struct defaults.
+// This was only ever fixed for Clang/GCC: https://github.com/stephenberry/glaze/issues/2219
+// Plain glz::object `value` metas (which replace reflection with literal keys) DO work on MSVC, so we
+// map the snake_case JSON keys explicitly. Structs whose fields are all single-word keep pure
+// reflection and need no meta here.
+template <> struct glz::meta<config::SystemThemeConfig> {
+  static constexpr auto value =
+      glz::object("name", &config::SystemThemeConfig::name, "icon_theme", &config::SystemThemeConfig::iconTheme);
+};
+template <> struct glz::meta<config::Partial<config::SystemThemeConfig>> {
+  using T = config::Partial<config::SystemThemeConfig>;
+  static constexpr auto value = glz::object("name", &T::name, "icon_theme", &T::iconTheme);
 };
 
-template <> struct glz::meta<config::ConfigValue> : ConfigTransformer {};
-template <> struct glz::meta<config::Partial<config::ConfigValue>> : ConfigTransformer {};
+template <> struct glz::meta<config::LayerShellConfig> {
+  using T = config::LayerShellConfig;
+  static constexpr auto value = glz::object("keyboard_interactivity", &T::keyboardInteractivity, "layer",
+                                            &T::layer, "enabled", &T::enabled);
+};
+template <> struct glz::meta<config::Partial<config::LayerShellConfig>> {
+  using T = config::Partial<config::LayerShellConfig>;
+  static constexpr auto value = glz::object("layer", &T::layer, "keyboard_interactivity",
+                                            &T::keyboardInteractivity, "enabled", &T::enabled);
+};
+
+template <> struct glz::meta<config::WindowCSD> {
+  using T = config::WindowCSD;
+  static constexpr auto value = glz::object("enabled", &T::enabled, "rounding", &T::rounding, "border_width",
+                                            &T::borderWidth, "shadow_size", &T::shadowSize);
+};
+template <> struct glz::meta<config::Partial<config::WindowCSD>> {
+  using T = config::Partial<config::WindowCSD>;
+  static constexpr auto value = glz::object("enabled", &T::enabled, "rounding", &T::rounding, "border_width",
+                                            &T::borderWidth, "shadow_size", &T::shadowSize);
+};
+
+template <> struct glz::meta<config::WindowConfig> {
+  using T = config::WindowConfig;
+  static constexpr auto value = glz::object(
+      "opacity", &T::opacity, "rounding", &T::rounding, "client_side_decorations", &T::clientSideDecorations,
+      "size", &T::size, "screen", &T::screen, "blur", &T::blur, "compact_mode", &T::compactMode, "layer_shell",
+      &T::layerShell, "material", &T::material);
+};
+template <> struct glz::meta<config::Partial<config::WindowConfig>> {
+  using T = config::Partial<config::WindowConfig>;
+  static constexpr auto value = glz::object(
+      "rounding", &T::rounding, "opacity", &T::opacity, "client_side_decorations", &T::clientSideDecorations,
+      "size", &T::size, "blur", &T::blur, "compact_mode", &T::compactMode, "layer_shell", &T::layerShell,
+      "material", &T::material);
+};
+
+template <> struct glz::meta<config::TelemetryConfig> {
+  static constexpr auto value = glz::object("system_info", &config::TelemetryConfig::systemInfo);
+};
+template <> struct glz::meta<config::Partial<config::TelemetryConfig>> {
+  static constexpr auto value =
+      glz::object("system_info", &config::Partial<config::TelemetryConfig>::systemInfo);
+};
+
+template <> struct glz::meta<config::ConfigValue> {
+  using T = config::ConfigValue;
+  static constexpr auto value = glz::object(
+      "$schema", &T::schema, "imports", &T::imports, "search_files_in_root", &T::searchFilesInRoot,
+      "close_on_focus_loss", &T::closeOnFocusLoss, "consider_preedit", &T::considerPreedit,
+      "pop_to_root_on_close", &T::popToRootOnClose, "pop_on_backspace", &T::popOnBackspace,
+      "activate_on_single_click", &T::activateOnSingleClick, "encrypt_sensitive_data", &T::encryptSensitiveData,
+      "escape_key_behavior", &T::escapeKeyBehavior, "favicon_service", &T::faviconService, "keybinding",
+      &T::keybinding, "pixmap_cache_mb", &T::pixmapCacheMb, "input_server", &T::inputServer, "global_shortcuts",
+      &T::globalShortcuts, "font", &T::font, "theme", &T::theme, "telemetry", &T::telemetry, "launcher_window",
+      &T::launcherWindow, "header", &T::header, "footer", &T::footer, "keybinds", &T::keybinds, "favorites",
+      &T::favorites, "fallbacks", &T::fallbacks, "providers", &T::providers);
+};
+template <> struct glz::meta<config::Partial<config::ConfigValue>> {
+  using T = config::Partial<config::ConfigValue>;
+  static constexpr auto value = glz::object(
+      "$schema", &T::schema, "imports", &T::imports, "close_on_focus_loss", &T::closeOnFocusLoss,
+      "consider_preedit", &T::considerPreedit, "pop_to_root_on_close", &T::popToRootOnClose, "pop_on_backspace",
+      &T::popOnBackspace, "activate_on_single_click", &T::activateOnSingleClick, "encrypt_sensitive_data",
+      &T::encryptSensitiveData, "escape_key_behavior", &T::escapeKeyBehavior, "favicon_service",
+      &T::faviconService, "keybinding", &T::keybinding, "pixmap_cache_mb", &T::pixmapCacheMb,
+      "search_files_in_root", &T::searchFilesInRoot, "input_server", &T::inputServer, "global_shortcuts",
+      &T::globalShortcuts, "font", &T::font, "theme", &T::theme, "telemetry", &T::telemetry, "launcher_window",
+      &T::launcherWindow, "header", &T::header, "footer", &T::footer, "keybinds", &T::keybinds, "favorites",
+      &T::favorites, "fallbacks", &T::fallbacks, "providers", &T::providers);
+};
 
 namespace config {
 static constexpr const char *TOP_COMMENT =
@@ -78,9 +143,10 @@ Manager::Manager(fs::path path) : m_userPath(std::move(path)) {
 
   m_defaultData = file.readAll().toStdString();
 
-  if (auto error = glz::read_jsonc(m_defaultConfig, m_defaultData)) {
+  if (auto error =
+          glz::read<glz::opts{.comments = true, .error_on_unknown_keys = false}>(m_defaultConfig, m_defaultData)) {
     throw std::runtime_error(
-        std::format("Failed to parse default config file: {}", glz::format_error(error)));
+        std::format("Failed to parse default config file: {}", glz::format_error(error, m_defaultData)));
   }
 
   m_fsDebounce.setSingleShot(true);
@@ -104,7 +170,7 @@ Manager::Manager(fs::path path) : m_userPath(std::move(path)) {
 
   connect(&m_watcher, &QFileSystemWatcher::fileChanged, this, [this](const QString &path) {
     m_fsDebounce.start();
-    m_watcher.addPath(m_userPath.c_str());
+    m_watcher.addPath(QString::fromStdString(m_userPath.string()));
   });
   connect(&m_fsDebounce, &QTimer::timeout, this, [this]() { reloadConfig(); });
 }
@@ -121,7 +187,7 @@ bool Manager::updateUser(const std::function<void(Partial<ConfigValue> &value)> 
   Partial<ConfigValue> user;
 
   if (auto error =
-          glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(user, m_userPath.c_str(), buf)) {
+          glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(user, m_userPath.string(), buf)) {
     qWarning() << "Failed to read user config as partial";
     return false;
   }
@@ -151,7 +217,7 @@ bool Manager::mergeWithUser(const Partial<ConfigValue> &patch) {
   Partial<ConfigValue> user;
 
   if (auto error =
-          glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(user, m_userPath.c_str(), buf)) {
+          glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(user, m_userPath.string(), buf)) {
     qWarning() << "Failed to read user config as partial, config changes haven't been applied.";
     return false;
   }
@@ -229,23 +295,23 @@ void Manager::initConfig() {
 
 std::filesystem::path Manager::resolvePath(const std::filesystem::path &path,
                                            const std::filesystem::path &cwd) {
-  std::string importPath = expandPath(path);
+  std::string importPath = expandPath(path).string();
 
-  if (!importPath.starts_with('/')) { importPath = cwd.parent_path() / importPath; }
+  if (!importPath.starts_with('/')) { importPath = (cwd.parent_path() / importPath).string(); }
 
   return std::filesystem::weakly_canonical(importPath);
 }
 
 Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, const LoadingOptions &opts) {
-  m_watcher.addPath(path.c_str());
+  m_watcher.addPath(QString::fromStdString(path.string()));
 
   std::string buf;
   Partial<ConfigValue> cfg;
-  auto glzError = glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(cfg, path.c_str(), buf);
+  auto glzError = glz::read_file_jsonc<glz::opts{.error_on_unknown_keys = false}>(cfg, path.string(), buf);
 
   if (glzError) {
     std::string glzErrMsg = glz::format_error(glzError);
-    return std::unexpected(std::format("Failed to read JSONC file at {}: {}", path.c_str(), glzErrMsg));
+    return std::unexpected(std::format("Failed to read JSONC file at {}: {}", path.string(), glzErrMsg));
   }
 
   auto importFile = [this, &opts](Partial<ConfigValue> &cfg, const std::string &importPath,
@@ -274,13 +340,13 @@ Manager::PartialConfigResult Manager::load(const std::filesystem::path &path, co
 
   if (opts.resolveImports) {
     for (const auto &imp : cfg.imports.value_or(std::vector<std::string>{})) {
-      auto result = importFile(cfg, resolvePath(imp, path), false);
+      auto result = importFile(cfg, resolvePath(imp, path).string(), false);
       if (!result) return result;
       cfg = std::move(result).value();
     }
 
     for (const auto &overridePath : m_envOverrides) {
-      auto result = importFile(cfg, resolvePath(overridePath, path), true);
+      auto result = importFile(cfg, resolvePath(overridePath, path).string(), true);
       if (!result) return result;
       cfg = std::move(result).value();
     }

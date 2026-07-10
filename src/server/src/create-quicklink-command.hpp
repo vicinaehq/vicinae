@@ -30,8 +30,6 @@
 #include <qvariant.h>
 #include <qwidget.h>
 #include <ranges>
-#include <sched.h>
-#include <unistd.h>
 #include "services/app-service/app-service.hpp"
 #include "ui/views/form-view.hpp"
 #include "services/toast/toast-service.hpp"

@@ -195,7 +195,7 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) {
 
     if (auto resolved = RelativeAssetResolver::instance()->resolve(source.toStdString())) {
       setType(ImageURLType::Local);
-      setName(resolved->c_str());
+      setName(QString::fromStdString(resolved->string()));
       return;
     }
 

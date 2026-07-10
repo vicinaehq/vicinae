@@ -8,7 +8,7 @@
 std::expected<ScriptCommandFile, std::string> ScriptCommandFile::fromFile(const std::filesystem::path &path,
                                                                           const std::string &id) {
   if (!std::filesystem::is_regular_file(path)) {
-    return std::unexpected(std::format("{} is not a valid file", path.c_str()));
+    return std::unexpected(std::format("{} is not a valid file", path.string()));
   }
 
   auto parsed = script_command::ScriptCommand::fromFile(path);
@@ -43,7 +43,7 @@ std::string ScriptCommandFile::packageName() const {
     return "No data";
   }
 
-  return m_data.packageName.value_or(m_path.parent_path().filename());
+  return m_data.packageName.value_or(m_path.parent_path().filename().string());
 }
 
 std::vector<QString> ScriptCommandFile::createCommandLine(std::span<const QString> args) const {
@@ -82,7 +82,7 @@ ImageURL ScriptCommandFile::icon() const {
   const auto relativePath = m_path.parent_path() / m_data.icon.value();
 
   if (std::filesystem::is_regular_file(relativePath, ec)) {
-    return ImageURL::local(QString::fromStdString(relativePath));
+    return ImageURL::local(QString::fromStdString(relativePath.string()));
   }
 
   if (const auto url = QUrl(m_data.icon->c_str()); url.isValid()) {

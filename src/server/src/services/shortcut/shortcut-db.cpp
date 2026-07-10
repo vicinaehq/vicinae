@@ -15,7 +15,7 @@ ShortcutDatabase::ShortcutDatabase(const std::filesystem::path &path) : m_path(p
   if (!fs::is_regular_file(m_path)) {
     fs::create_directories(path.parent_path());
     if (const auto result = setShortcuts({}); !result) {
-      qCritical() << "Unable to create default shortcuts file at" << m_path.c_str() << result.error().c_str();
+      qCritical() << "Unable to create default shortcuts file at" << m_path.string() << result.error().c_str();
     }
   }
 
@@ -25,7 +25,7 @@ ShortcutDatabase::ShortcutDatabase(const std::filesystem::path &path) : m_path(p
 std::expected<std::vector<SerializedShortcut>, std::string> ShortcutDatabase::loadShortcuts() {
   std::vector<SerializedShortcut> shortcuts;
 
-  if (const auto error = glz::read_file_json(shortcuts, m_path.c_str(), m_buf)) {
+  if (const auto error = glz::read_file_json(shortcuts, m_path.string(), m_buf)) {
     return std::unexpected(glz::format_error(error));
   }
 
@@ -116,7 +116,7 @@ std::expected<void, std::string> ShortcutDatabase::registerVisit(std::string_vie
 void ShortcutDatabase::reload() { m_shortcuts = loadShortcuts().value_or(std::vector<SerializedShortcut>{}); }
 
 std::expected<void, std::string> ShortcutDatabase::setShortcuts(std::span<SerializedShortcut> shortcuts) {
-  if (const auto error = glz::write_file_json(shortcuts, m_path.c_str(), m_buf)) {
+  if (const auto error = glz::write_file_json(shortcuts, m_path.string(), m_buf)) {
     return std::unexpected(std::format("Failed to save shortcuts on disk: {}", glz::format_error(error)));
   }
 

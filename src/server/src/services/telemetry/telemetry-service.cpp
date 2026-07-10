@@ -4,7 +4,6 @@
 #include "generated/version.h"
 #include "utils.hpp"
 #include "vicinae.hpp"
-#include "xdgpp/env/env.hpp"
 #include <QGuiApplication>
 #include <QLocale>
 #include <QScreen>
@@ -78,7 +77,8 @@ void TelemetryService::sendSystemInfo() {
   payload.architecture = toLower(QSysInfo::currentCpuArchitecture().toStdString());
   payload.buildProvenance = toLower(VICINAE_PROVENANCE);
   payload.vicinaeVersion = toLower(VICINAE_GIT_TAG);
-  payload.desktops = xdgpp::currentDesktop() | std::views::transform([](auto &&s) { return toLower(s); }) |
+  payload.desktops = Environment::platformDesktopNames() |
+                     std::views::transform([](auto &&s) { return toLower(s); }) |
                      std::ranges::to<std::vector>();
   payload.displayProtocol = QGuiApplication::platformName().toStdString();
   payload.locale = QLocale::system().name().toStdString();
@@ -125,7 +125,7 @@ std::string TelemetryService::determineProductId() const {
   // omarchy doesn't override /etc/os-release so it is counted as arch
   // it is very useful to have omarchy be its own distinct demographic, especially since
   // a lot of the users come from macOS and expect a replacement for Raycast.
-  if (fs::is_directory(xdgpp::dataHome() / "omarchy", ec)) { return "omarchy"; }
+  if (fs::is_directory(Omnicast::dataHome() / "omarchy", ec)) { return "omarchy"; }
 
   return QSysInfo::productType().toStdString();
 }
@@ -135,8 +135,8 @@ void TelemetryService::saveState() {
 
   fs::create_directories(m_statePath.parent_path(), ec);
 
-  if (auto const error = glz::write_file_json(m_state, m_statePath.c_str(), m_buf)) {
-    qWarning() << "Failed to write telemetry state file at" << m_statePath.c_str()
+  if (auto const error = glz::write_file_json(m_state, m_statePath.string(), m_buf)) {
+    qWarning() << "Failed to write telemetry state file at" << m_statePath.string()
                << glz::format_error(error);
   }
 }
@@ -148,7 +148,7 @@ void TelemetryService::loadState() {
     return;
   }
 
-  if (auto const error = glz::read_file_json(m_state, m_statePath.c_str(), m_buf)) {
-    qWarning() << "Failed to read telemetry state file at" << m_statePath.c_str() << glz::format_error(error);
+  if (auto const error = glz::read_file_json(m_state, m_statePath.string(), m_buf)) {
+    qWarning() << "Failed to read telemetry state file at" << m_statePath.string() << glz::format_error(error);
   }
 }

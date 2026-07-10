@@ -62,7 +62,7 @@ QString DMenuSection::itemSubtitle(int i) const {
   if (entry.starts_with('/')) {
     std::error_code ec;
     if (std::filesystem::exists(entry, ec)) {
-      return QString::fromUtf8(std::filesystem::path(entry).parent_path().native());
+      return QString::fromStdString(std::filesystem::path(entry).parent_path().string());
     }
   }
   return {};

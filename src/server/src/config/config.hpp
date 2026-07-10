@@ -78,8 +78,8 @@ template <> struct Partial<BlurConfig> {
 };
 
 struct Size {
-  int width;
-  int height;
+  int width = 770;
+  int height = 480;
 };
 
 template <> struct Partial<Size> {
@@ -187,7 +187,7 @@ template <> struct Partial<WindowConfig> {
 struct FontConfig {
   std::string rendering = "qt";
 
-  struct {
+  struct FontSpec {
     std::string family = "auto";
 #ifdef Q_OS_MACOS
     float size = 13;
@@ -200,7 +200,7 @@ struct FontConfig {
 template <> struct Partial<FontConfig> {
   std::optional<std::string> rendering;
 
-  struct {
+  struct FontSpec {
     std::optional<std::string> family;
     std::optional<float> size;
   } normal;
@@ -276,7 +276,7 @@ struct ConfigValue {
   bool popToRootOnClose = false;
   bool popOnBackspace = true;
   bool activateOnSingleClick = false;
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
   bool encryptSensitiveData = false;
 #else
   bool encryptSensitiveData = true;

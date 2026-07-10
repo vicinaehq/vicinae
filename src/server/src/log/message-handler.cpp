@@ -35,7 +35,7 @@ void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, co
 
   if (context.file) {
     std::filesystem::path const file(context.file);
-    std::cerr << " (" << rang::fg::blue << file.filename().c_str() << ":" << context.line << rang::fg::reset
+    std::cerr << " (" << rang::fg::blue << file.filename().string() << ":" << context.line << rang::fg::reset
               << ")";
   }
 

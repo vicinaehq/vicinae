@@ -126,7 +126,7 @@ ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future IpcService::fsQuery(st
   return files->queryAsync(q, queryParams).then([](const std::vector<IndexerFileResult> &results) {
     auto fileResults =
         results | std::views::transform([](const IndexerFileResult &result) {
-          return ipc_gen::FileResult{.path = result.path,
+          return ipc_gen::FileResult{.path = result.path.string(),
                                      .score = static_cast<std::uint32_t>(result.rank),
                                      .category = std::string{fileCategoryToString(result.category)},
                                      .mimeType = result.mimeType};
@@ -328,7 +328,7 @@ bool IpcCommandServer::start(const std::filesystem::path &localPath) {
   // startServer(); by this point we already know we are.
   if (std::filesystem::exists(localPath)) { std::filesystem::remove(localPath); }
 
-  if (!m_server.listen(localPath.c_str())) {
+  if (!m_server.listen(QString::fromStdString(localPath.string()))) {
     qDebug() << "CommandServer failed to listen" << m_server.errorString();
     return false;
   }

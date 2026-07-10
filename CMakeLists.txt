@@ -37,10 +37,11 @@ option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol"
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
 
-# Default for the USE_SYSTEM_* options below: Linux distros ship these as system
-# packages, macOS does not, so it flips per platform.
+# Default for the USE_SYSTEM_* options below.
+# On linux we generally prefer linking to system libraries by default.
+
 set(USE_SYSTEM_DEFAULT ON)
-if (APPLE)
+if (APPLE OR WIN32)
 	set(USE_SYSTEM_DEFAULT OFF)
 endif()
 
@@ -129,7 +130,7 @@ if (NOT USE_SYSTEM_GLAZE)
 	import_glaze()
 endif()
 
-if (NOT USE_SYSTEM_KF6)
+if (NOT USE_SYSTEM_KF6 AND NOT WIN32)
 	include(KF6)
 	import_kf6()
 endif()
@@ -143,11 +144,15 @@ include_directories(
 
 find_package(glaze)
 
-add_subdirectory(src/browser-extension)
+if (NOT WIN32)
+	add_subdirectory(src/browser-extension)
+endif()
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/glyph)
-add_subdirectory(${LIB_DIR}/xdgpp)
+if (NOT WIN32)
+	add_subdirectory(${LIB_DIR}/xdgpp)
+endif()
 add_subdirectory(${LIB_DIR}/fuzzy)
 add_subdirectory(${LIB_DIR}/crypto)
 
@@ -271,10 +276,17 @@ endif()
 
 message(STATUS "Configured build type ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -O0")
+if (MSVC)
+	# /Zc:preprocessor and /bigobj are required by glaze's compile-time reflection
+	add_compile_options(/permissive- /Zc:preprocessor /Zc:__cplusplus /bigobj /utf-8 /W3 /wd4996)
+	# keep <windows.h> from leaking min/max and other macros into the codebase
+	add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+else()
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -O0")
 
-add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-missing-field-initializers)
+	add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-missing-field-initializers)
+endif()
 
 if (ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
 	message(STATUS "Sanitizers enabled (ASan + UBSan)")
@@ -311,7 +323,9 @@ if (CCACHE AND NOT IGNORE_CCACHE)
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
-add_subdirectory(src/cli)
+if (NOT WIN32)
+	add_subdirectory(src/cli)
+endif()
 add_subdirectory(src/server)
 
 if (UNIX AND NOT APPLE)
@@ -323,7 +337,7 @@ set(INSTALL_MODULES ${CMAKE_INSTALL_PREFIX}/lib/modules-load.d)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
 set(VICINAE_THEME_DIR ${VICINAE_INSTALL_SHARE}/themes)
 
-if(NOT APPLE)
+if(NOT APPLE AND NOT WIN32)
 	make_directory(${VICINAE_INSTALL_SHARE})
 	file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
 	install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})

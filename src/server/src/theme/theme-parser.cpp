@@ -167,8 +167,8 @@ std::expected<ThemeFile::ParseResult, std::string> ThemeFile::fromFile(const fs:
   try {
     InitData data;
     DiagnosticList diagnostics;
-    auto file = toml::parse_file(path.c_str());
-    QString filename = path.filename().c_str();
+    auto file = toml::parse_file(path.string());
+    QString filename = QString::fromStdString(path.filename().string());
 
     data.id = filename.slice(0, filename.lastIndexOf('.'));
 
@@ -276,7 +276,7 @@ std::string ThemeFile::toToml() const {
   doc << "variant = " << std::quoted(serializeVariant(variant())) << "\n";
   doc << "inherits = " << std::quoted(inherits().toStdString()) << "\n";
 
-  if (icon()) { doc << "icon = " << std::quoted(icon()->c_str()) << "\n"; }
+  if (icon()) { doc << "icon = " << std::quoted(icon()->string()) << "\n"; }
 
   std::map<std::string, std::vector<std::pair<std::string, SemanticColor>>> mapped;
   std::vector<std::string> tableNames;
