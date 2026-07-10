@@ -26,7 +26,6 @@
       soulver = soulver-cpp.packages.${pkgs.stdenv.hostPlatform.system}.default or null;
     in
       lib.optionalAttrs (soulver != null) {
-        soulver-cpp = soulver;
         with-soulver = pkgs.symlinkJoin {
           name = "${vicinae.name}-with-soulver";
           paths = [vicinae];

@@ -7,7 +7,13 @@ self: {
   cfg = config.programs.vicinae;
 
   inherit (pkgs.stdenv.hostPlatform) system;
-  vicinaePkg = self.packages.${system}.default;
+  soulverVicinaePkg = self.packages.${system}.with-soulver or null;
+  vicinaePkg =
+    if cfg.package != null
+    then cfg.package
+    else if cfg.enableSoulver && soulverVicinaePkg != null
+    then soulverVicinaePkg
+    else self.packages.${system}.default;
 
   jsonFormat = pkgs.formats.json {};
   tomlFormat = pkgs.formats.toml {};
@@ -41,10 +47,13 @@ in {
     enable = lib.mkEnableOption "vicinae launcher daemon";
 
     package = lib.mkOption {
-      type = lib.types.package;
-      default = vicinaePkg;
-      defaultText = lib.literalExpression "vicinae";
-      description = "The vicinae package to use";
+      type = lib.types.nullOr lib.types.package;
+      default = null;
+      defaultText = lib.literalExpression "vicinae.packages.\${system}.default, or vicinae.packages.\${system}.with-soulver when enableSoulver is true";
+      description = ''
+        The vicinae package to use. When null, this will default to the flake's
+        `default` package, or `with-soulver` when `enableSoulver` is true.
+      '';
     };
 
     enableSoulver = lib.mkOption {
@@ -53,18 +62,8 @@ in {
       description = ''
         Whether to enable the SoulverCore calculator backend.
         SoulverCore is considered unfree software, therefore disabled by default.
-        Only adds a wrapper exposing `soulverPackage` to vicinae, so it works
-        with any `package` and never triggers a rebuild of vicinae itself.
-      '';
-    };
-
-    soulverPackage = lib.mkOption {
-      type = lib.types.nullOr lib.types.package;
-      default = self.packages.${system}.soulver-cpp or null;
-      defaultText = lib.literalExpression "vicinae.packages.\${system}.soulver-cpp";
-      description = ''
-        The soulver-cpp package providing libSoulverWrapper.so and the
-        SoulverCore resources. Only used when `enableSoulver` is true.
+        Uses the flake's `with-soulver` package.
+        Ignored when `package` is set, wrap your own package if absolutely needed.
       '';
     };
 
@@ -232,28 +231,33 @@ in {
     settingsFile = jsonFormat.generate "vicinae-settings.json" cfg.settings;
 
     wrappedVicinae = pkgs.symlinkJoin {
-      name = "${cfg.package.name}-configured";
-      paths = [cfg.package];
+      name = "${vicinaePkg.name}-configured";
+      paths = [vicinaePkg];
       nativeBuildInputs = [pkgs.makeWrapper];
       postBuild = let
         allOverrides = (lib.optional (cfg.settings != {}) settingsFile) ++ cfg.settingOverrides;
         overrideString = lib.concatStringsSep ":" allOverrides;
       in ''
         wrapProgram $out/bin/vicinae \
-          ${lib.optionalString (allOverrides != []) ''--set VICINAE_OVERRIDES "${overrideString}"''} \
-          ${lib.optionalString cfg.enableSoulver ''--prefix LD_LIBRARY_PATH : "${cfg.soulverPackage}/lib" --prefix XDG_DATA_DIRS : "${cfg.soulverPackage}/share"''}
+          ${lib.optionalString (allOverrides != []) ''--set VICINAE_OVERRIDES "${overrideString}"''}
       '';
     };
   in
     lib.mkIf cfg.enable {
       assertions = [
         {
-          assertion = cfg.enableSoulver -> cfg.soulverPackage != null;
-          message = "programs.vicinae.enableSoulver: the soulver backend is not available on ${system} and no soulverPackage was set";
+          assertion = cfg.enableSoulver -> (cfg.package != null || soulverVicinaePkg != null);
+          message = "programs.vicinae.enableSoulver: the soulver backend is not available on ${system}";
         }
       ];
 
+      warnings = lib.optional (cfg.enableSoulver && cfg.package != null) "programs.vicinae.enableSoulver is ignored because programs.vicinae.package is set; wrap your package with soulver-cpp yourself";
+
       home.packages = [wrappedVicinae];
+
+      programs.vicinae.settings = lib.mkIf cfg.enableSoulver {
+        providers.calculator.preferences.backend = lib.mkDefault "soulver-core";
+      };
 
       xdg = let
         themeFiles =
@@ -278,12 +282,12 @@ in {
           // themeFiles;
       };
 
-      programs.firefox.nativeMessagingHosts = lib.mkIf (cfg.enableFirefoxIntegration && cfg.package != null) [
+      programs.firefox.nativeMessagingHosts = lib.mkIf cfg.enableFirefoxIntegration [
         (pkgs.writeTextDir "lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json" (
           builtins.toJSON {
             name = "com.vicinae.vicinae";
             description = "Vicinae Native Messaging Host";
-            path = "${cfg.package}/libexec/vicinae/vicinae-browser-link";
+            path = "${vicinaePkg}/libexec/vicinae/vicinae-browser-link";
             type = "stdio";
             allowed_extensions = ["firefox@vicinae.com"];
           }
