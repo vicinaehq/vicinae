@@ -197,8 +197,8 @@ ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenu
   nav->setInstantDismiss(true);
 
   if (request.width || request.height) {
-    int const w = request.width.value_or(cfg.launcher_window.size.width);
-    int const h = request.height.value_or(cfg.launcher_window.size.height);
+    int const w = request.width.value_or(cfg.launcherWindow.size.width);
+    int const h = request.height.value_or(cfg.launcherWindow.size.height);
     nav->requestWindowSize(QSize(w, h));
   }
 

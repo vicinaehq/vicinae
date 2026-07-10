@@ -90,6 +90,12 @@ Manager::Manager(fs::path path) : m_userPath(std::move(path)) {
 ConfigValue Manager::defaultConfig() const { return m_defaultConfig; }
 const char *Manager::defaultConfigData() const { return m_defaultData.c_str(); }
 
+void Manager::print(const ConfigValue &value) {
+  std::string buf;
+  [[maybe_unused]] auto res = glz::write_json(value, buf);
+  std::cout << glz::prettify_json(buf) << std::endl;
+}
+
 bool Manager::mergeProviderWithUser(std::string_view id, const Partial<ProviderData> &data) {
   return mergeWithUser({.providers = std::map<std::string, Partial<ProviderData>>{{std::string{id}, data}}});
 }
@@ -158,12 +164,8 @@ bool Manager::writeUser(const Partial<ConfigValue> &cfg) {
   }
 
   {
-    // reflection writes the `schema` field as "schema"; restore the conventional "$schema" key
-    auto pretty = glz::prettify_json(buf);
-    if (auto pos = pretty.find("\"schema\":"); pos != std::string::npos) { pretty.insert(pos + 1, "$"); }
-
     std::ofstream ofs(m_userPath);
-    ofs << TOP_COMMENT << "\n\n" << pretty;
+    ofs << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
   }
 
   reloadConfig();

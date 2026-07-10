@@ -130,7 +130,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 #endif
   });
 
-  m_closeOnFocusLoss = ctx.services->config()->value().close_on_focus_loss;
+  m_closeOnFocusLoss = ctx.services->config()->value().closeOnFocusLoss;
 
   connect(nav, &NavigationController::windowVisiblityChanged, this, &LauncherWindow::handleVisibilityChanged);
 
@@ -289,7 +289,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   connect(m_ctx.services->config(), &config::Manager::configChanged, this,
           [this](const auto &, const auto &) {
-            m_closeOnFocusLoss = m_ctx.services->config()->value().close_on_focus_loss;
+            m_closeOnFocusLoss = m_ctx.services->config()->value().closeOnFocusLoss;
             applyWindowConfig();
             tryCompaction();
           });
@@ -505,7 +505,7 @@ void LauncherWindow::goBack() {
 }
 
 void LauncherWindow::handleEscape() {
-  if (m_ctx.services->config()->value().escape_key_behavior == "close_window") {
+  if (m_ctx.services->config()->value().escapeKeyBehavior == "close_window") {
     m_ctx.navigation->closeWindow();
     return;
   }
@@ -518,7 +518,7 @@ void LauncherWindow::popToRoot() {
   emit viewNavigatedBack();
 }
 
-bool LauncherWindow::popOnBackspace() { return m_ctx.services->config()->value().pop_on_backspace; }
+bool LauncherWindow::popOnBackspace() { return m_ctx.services->config()->value().popOnBackspace; }
 
 void LauncherWindow::setCompleterValue(int index, const QString &value) {
   auto *nav = m_ctx.navigation.get();
@@ -598,7 +598,7 @@ void LauncherWindow::setCompacted(bool value) {
 }
 
 void LauncherWindow::tryCompaction() {
-  auto &cfg = m_ctx.services->config()->value().launcher_window.compact_mode;
+  auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
 
   setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled &&
                m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1 &&
@@ -608,7 +608,7 @@ void LauncherWindow::tryCompaction() {
 bool LauncherWindow::isLayerShellActive() const {
 #ifdef WAYLAND_LAYER_SHELL
   return Environment::isLayerShellSupported() &&
-         m_ctx.services->config()->value().launcher_window.layer_shell.enabled;
+         m_ctx.services->config()->value().launcherWindow.layerShell.enabled;
 #else
   return false;
 #endif
@@ -617,8 +617,8 @@ bool LauncherWindow::isLayerShellActive() const {
 void LauncherWindow::setExclusiveFocus(bool exclusive) {
   if (!isLayerShellActive()) return;
 
-  const auto &lc = m_ctx.services->config()->value().launcher_window.layer_shell;
-  int ki = (exclusive && lc.keyboard_interactivity == "exclusive") ? 1 : 2; // Exclusive : OnDemand
+  const auto &lc = m_ctx.services->config()->value().launcherWindow.layerShell;
+  int ki = (exclusive && lc.keyboardInteractivity == "exclusive") ? 1 : 2; // Exclusive : OnDemand
   if (m_lsKeyboardInteractivity != ki) {
     m_lsKeyboardInteractivity = ki;
     emit lsChanged();
@@ -627,7 +627,7 @@ void LauncherWindow::setExclusiveFocus(bool exclusive) {
 
 void LauncherWindow::applyWindowConfig() {
   if (!m_window) return;
-  auto &wcfg = m_ctx.services->config()->value().launcher_window;
+  auto &wcfg = m_ctx.services->config()->value().launcherWindow;
 
   updateLayerShellProps();
 }
@@ -636,11 +636,11 @@ void LauncherWindow::updateLayerShellProps() {
   if (!isLayerShellActive()) return;
 
   auto &cfg = m_ctx.services->config()->value();
-  const auto &lc = cfg.launcher_window.layer_shell;
+  const auto &lc = cfg.launcherWindow.layerShell;
 
   int layer = (lc.layer == "overlay") ? 3 : 2;                                  // LayerOverlay : LayerTop
   int ki = 2;                                                                   // OnDemand
-  if (lc.keyboard_interactivity == "exclusive" && !cfg.close_on_focus_loss) ki = 1; // Exclusive
+  if (lc.keyboardInteractivity == "exclusive" && !cfg.closeOnFocusLoss) ki = 1; // Exclusive
 
   bool changed = false;
   if (m_lsLayer != layer) {

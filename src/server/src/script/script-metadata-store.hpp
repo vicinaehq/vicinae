@@ -4,7 +4,7 @@
 
 class ScriptMetadataStore {
   struct RunMetadata {
-    std::int64_t last_run_at;
+    std::int64_t lastRunAt;
     std::string output; // encoded as base64 to make sure we always serialize valid json
   };
 
@@ -16,7 +16,7 @@ public:
 
 private:
   struct Data {
-    std::unordered_map<std::string, RunMetadata> inline_runs;
+    std::unordered_map<std::string, RunMetadata> inlineRuns;
   };
 
   std::optional<std::string> syncWithDisk();

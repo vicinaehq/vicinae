@@ -121,8 +121,8 @@ void RootItemManager::updateIndex() {
 
       auto visitInfo = m_visitTracker.getVisit(id);
 
-      sitem.meta->visitCount = visitInfo.visit_count;
-      sitem.meta->lastVisitedAt = visitInfo.last_visited_at;
+      sitem.meta->visitCount = visitInfo.visitCount;
+      sitem.meta->lastVisitedAt = visitInfo.lastVisitedAt;
       m_items.emplace_back(sitem);
     }
   }

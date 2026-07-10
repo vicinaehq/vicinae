@@ -6,10 +6,9 @@
 
 class VisitTracker {
 public:
-  // snake_case fields: serialized by pure reflection (glaze key transforms corrupt keys on MSVC)
   struct VisitInfo {
-    std::optional<std::uint64_t> last_visited_at;
-    int visit_count = 0;
+    std::optional<std::uint64_t> lastVisitedAt;
+    int visitCount = 0;
   };
 
   struct Data {

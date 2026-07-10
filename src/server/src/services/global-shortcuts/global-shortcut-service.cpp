@@ -37,9 +37,9 @@ void GlobalShortcutService::reconcile() {
 
   std::unordered_map<QString, Desired> desired;
 
-  if (cfg.global_shortcuts.toggle && !cfg.global_shortcuts.toggle->empty()) {
+  if (cfg.globalShortcuts.toggle && !cfg.globalShortcuts.toggle->empty()) {
     desired.emplace(QString::fromUtf8(TOGGLE_ID),
-                    Desired{.trigger = QString::fromStdString(*cfg.global_shortcuts.toggle),
+                    Desired{.trigger = QString::fromStdString(*cfg.globalShortcuts.toggle),
                             .description = QStringLiteral("Toggle Vicinae"),
                             .action = ToggleLauncherWindow{}});
   }
@@ -122,8 +122,8 @@ std::optional<QString> GlobalShortcutService::findConflict(const Keyboard::Short
     return Keyboard::Shortcut::fromString(QString::fromStdString(trigger)) == shortcut;
   };
 
-  if (excludeId != QString::fromUtf8(TOGGLE_ID) && cfg.global_shortcuts.toggle &&
-      !cfg.global_shortcuts.toggle->empty() && matches(*cfg.global_shortcuts.toggle)) {
+  if (excludeId != QString::fromUtf8(TOGGLE_ID) && cfg.globalShortcuts.toggle &&
+      !cfg.globalShortcuts.toggle->empty() && matches(*cfg.globalShortcuts.toggle)) {
     return QStringLiteral("the launcher hotkey");
   }
 

@@ -206,7 +206,7 @@ class ForgetTelemetryCommand : public BuiltinCallbackCommand {
     toast->dynamic("Processing...");
     telemetry->forget().then([toast, config](bool ok) {
       if (ok) {
-        config->mergeWithUser({.telemetry = config::Partial<config::TelemetryConfig>{.system_info = false}});
+        config->mergeWithUser({.telemetry = config::Partial<config::TelemetryConfig>{.systemInfo = false}});
         toast->success("Past telemetry was successfully detached from your vicinae user ID.");
       } else {
         toast->failure("Failed to forget past telemetry data");

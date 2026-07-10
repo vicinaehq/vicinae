@@ -24,118 +24,118 @@ const config::ConfigValue &GeneralSettingsModel::cfg() const {
 
 config::Manager &GeneralSettingsModel::cfgManager() const { return *ServiceRegistry::instance()->config(); }
 
-bool GeneralSettingsModel::searchFilesInRoot() const { return cfg().search_files_in_root; }
+bool GeneralSettingsModel::searchFilesInRoot() const { return cfg().searchFilesInRoot; }
 void GeneralSettingsModel::setSearchFilesInRoot(bool v) {
-  cfgManager().mergeWithUser({.search_files_in_root = v});
+  cfgManager().mergeWithUser({.searchFilesInRoot = v});
 }
 
-bool GeneralSettingsModel::closeOnFocusLoss() const { return cfg().close_on_focus_loss; }
+bool GeneralSettingsModel::closeOnFocusLoss() const { return cfg().closeOnFocusLoss; }
 void GeneralSettingsModel::setCloseOnFocusLoss(bool v) {
-  cfgManager().mergeWithUser({.close_on_focus_loss = v});
+  cfgManager().mergeWithUser({.closeOnFocusLoss = v});
 }
 
-bool GeneralSettingsModel::closeOnEscape() const { return cfg().escape_key_behavior == "close_window"; }
+bool GeneralSettingsModel::closeOnEscape() const { return cfg().escapeKeyBehavior == "close_window"; }
 void GeneralSettingsModel::setCloseOnEscape(bool v) {
-  cfgManager().mergeWithUser({.escape_key_behavior = v ? std::string{"close_window"} : std::string{}});
+  cfgManager().mergeWithUser({.escapeKeyBehavior = v ? std::string{"close_window"} : std::string{}});
 }
 
-bool GeneralSettingsModel::considerPreedit() const { return cfg().consider_preedit; }
-void GeneralSettingsModel::setConsiderPreedit(bool v) { cfgManager().mergeWithUser({.consider_preedit = v}); }
+bool GeneralSettingsModel::considerPreedit() const { return cfg().considerPreedit; }
+void GeneralSettingsModel::setConsiderPreedit(bool v) { cfgManager().mergeWithUser({.considerPreedit = v}); }
 
-bool GeneralSettingsModel::popToRootOnClose() const { return cfg().pop_to_root_on_close; }
+bool GeneralSettingsModel::popToRootOnClose() const { return cfg().popToRootOnClose; }
 void GeneralSettingsModel::setPopToRootOnClose(bool v) {
-  cfgManager().mergeWithUser({.pop_to_root_on_close = v});
+  cfgManager().mergeWithUser({.popToRootOnClose = v});
 }
 
-bool GeneralSettingsModel::popOnBackspace() const { return cfg().pop_on_backspace; }
-void GeneralSettingsModel::setPopOnBackspace(bool v) { cfgManager().mergeWithUser({.pop_on_backspace = v}); }
+bool GeneralSettingsModel::popOnBackspace() const { return cfg().popOnBackspace; }
+void GeneralSettingsModel::setPopOnBackspace(bool v) { cfgManager().mergeWithUser({.popOnBackspace = v}); }
 
-bool GeneralSettingsModel::activateOnSingleClick() const { return cfg().activate_on_single_click; }
+bool GeneralSettingsModel::activateOnSingleClick() const { return cfg().activateOnSingleClick; }
 void GeneralSettingsModel::setActivateOnSingleClick(bool v) {
-  cfgManager().mergeWithUser({.activate_on_single_click = v});
+  cfgManager().mergeWithUser({.activateOnSingleClick = v});
 }
 
-bool GeneralSettingsModel::encryptSensitiveData() const { return cfg().encrypt_sensitive_data; }
+bool GeneralSettingsModel::encryptSensitiveData() const { return cfg().encryptSensitiveData; }
 void GeneralSettingsModel::setEncryptSensitiveData(bool v) {
-  cfgManager().mergeWithUser({.encrypt_sensitive_data = v});
+  cfgManager().mergeWithUser({.encryptSensitiveData = v});
 }
 
-bool GeneralSettingsModel::telemetrySystemInfo() const { return cfg().telemetry.system_info; }
+bool GeneralSettingsModel::telemetrySystemInfo() const { return cfg().telemetry.systemInfo; }
 void GeneralSettingsModel::setTelemetrySystemInfo(bool v) {
-  cfgManager().mergeWithUser({.telemetry = config::Partial<config::TelemetryConfig>{.system_info = v}});
+  cfgManager().mergeWithUser({.telemetry = config::Partial<config::TelemetryConfig>{.systemInfo = v}});
 }
 
-bool GeneralSettingsModel::layerShellEnabled() const { return cfg().launcher_window.layer_shell.enabled; }
+bool GeneralSettingsModel::layerShellEnabled() const { return cfg().launcherWindow.layerShell.enabled; }
 void GeneralSettingsModel::setLayerShellEnabled(bool v) {
-  cfgManager().mergeWithUser({.launcher_window = config::Partial<config::WindowConfig>{
-                                  .layer_shell = config::Partial<config::LayerShellConfig>{.enabled = v}}});
+  cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
+                                  .layerShell = config::Partial<config::LayerShellConfig>{.enabled = v}}});
 }
 
 bool GeneralSettingsModel::clientSideDecorations() const {
-  return cfg().launcher_window.client_side_decorations.enabled;
+  return cfg().launcherWindow.clientSideDecorations.enabled;
 }
 void GeneralSettingsModel::setClientSideDecorations(bool v) {
   cfgManager().mergeWithUser(
-      {.launcher_window = config::Partial<config::WindowConfig>{
-           .client_side_decorations = config::Partial<config::WindowCSD>{.enabled = v}}});
+      {.launcherWindow = config::Partial<config::WindowConfig>{
+           .clientSideDecorations = config::Partial<config::WindowCSD>{.enabled = v}}});
 }
 
 QString GeneralSettingsModel::rounding() const {
-  return QString::number(cfg().launcher_window.effectiveRounding());
+  return QString::number(cfg().launcherWindow.effectiveRounding());
 }
 void GeneralSettingsModel::setRounding(const QString &v) {
   bool ok = false;
   int val = v.toInt(&ok);
   if (ok)
-    cfgManager().mergeWithUser({.launcher_window = config::Partial<config::WindowConfig>{.rounding = val}});
+    cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.rounding = val}});
 }
 
 QString GeneralSettingsModel::csdBorderWidth() const {
-  return QString::number(cfg().launcher_window.client_side_decorations.border_width);
+  return QString::number(cfg().launcherWindow.clientSideDecorations.borderWidth);
 }
 void GeneralSettingsModel::setCsdBorderWidth(const QString &v) {
   bool ok = false;
   int val = v.toInt(&ok);
   if (ok)
     cfgManager().mergeWithUser(
-        {.launcher_window = config::Partial<config::WindowConfig>{
-             .client_side_decorations = config::Partial<config::WindowCSD>{.border_width = val}}});
+        {.launcherWindow = config::Partial<config::WindowConfig>{
+             .clientSideDecorations = config::Partial<config::WindowCSD>{.borderWidth = val}}});
 }
 
 QString GeneralSettingsModel::csdShadowSize() const {
-  return QString::number(cfg().launcher_window.client_side_decorations.shadow_size);
+  return QString::number(cfg().launcherWindow.clientSideDecorations.shadowSize);
 }
 void GeneralSettingsModel::setCsdShadowSize(const QString &v) {
   bool ok = false;
   int val = v.toInt(&ok);
   if (ok)
     cfgManager().mergeWithUser(
-        {.launcher_window = config::Partial<config::WindowConfig>{
-             .client_side_decorations = config::Partial<config::WindowCSD>{.shadow_size = val}}});
+        {.launcherWindow = config::Partial<config::WindowConfig>{
+             .clientSideDecorations = config::Partial<config::WindowCSD>{.shadowSize = val}}});
 }
 
-bool GeneralSettingsModel::compactMode() const { return cfg().launcher_window.compact_mode.enabled; }
+bool GeneralSettingsModel::compactMode() const { return cfg().launcherWindow.compactMode.enabled; }
 void GeneralSettingsModel::setCompactMode(bool v) {
-  cfgManager().mergeWithUser({.launcher_window = config::Partial<config::WindowConfig>{
-                                  .compact_mode = config::Partial<config::WindowCompactMode>{.enabled = v}}});
+  cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
+                                  .compactMode = config::Partial<config::WindowCompactMode>{.enabled = v}}});
 }
 
-bool GeneralSettingsModel::inputServerEnabled() const { return cfg().input_server.enabled; }
+bool GeneralSettingsModel::inputServerEnabled() const { return cfg().inputServer.enabled; }
 
 void GeneralSettingsModel::setInputServerEnabled(bool v) {
-  cfgManager().mergeWithUser({.input_server = config::Partial<config::InputServer>{.enabled = v}});
+  cfgManager().mergeWithUser({.inputServer = config::Partial<config::InputServer>{.enabled = v}});
 }
 
 QString GeneralSettingsModel::windowOpacity() const {
   return QString::number(
-      cfg().launcher_window.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),
+      cfg().launcherWindow.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),
                                            platform::supports(platform::Capability::WindowMaterial)));
 }
 void GeneralSettingsModel::setWindowOpacity(const QString &v) {
   bool ok = false;
   float val = v.toFloat(&ok);
   if (ok)
-    cfgManager().mergeWithUser({.launcher_window = config::Partial<config::WindowConfig>{.opacity = val}});
+    cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.opacity = val}});
 }
 
 bool GeneralSettingsModel::nativeTextRendering() const { return cfg().font.rendering != "qt"; }
@@ -177,7 +177,7 @@ QVariantList GeneralSettingsModel::windowMaterialItems() const {
 
 QVariant GeneralSettingsModel::currentWindowMaterial() const {
   auto id = QString::fromStdString(
-      cfg().launcher_window.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass),
+      cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass),
                                             platform::supports(platform::Capability::WindowMaterial)));
   QString name = id == "liquid_glass" ? QStringLiteral("Liquid Glass")
                  : id == "none"       ? QStringLiteral("None")
@@ -187,7 +187,7 @@ QVariant GeneralSettingsModel::currentWindowMaterial() const {
 
 void GeneralSettingsModel::selectWindowMaterial(const QString &id) {
   cfgManager().mergeWithUser(
-      {.launcher_window = config::Partial<config::WindowConfig>{.material = id.toStdString()}});
+      {.launcherWindow = config::Partial<config::WindowConfig>{.material = id.toStdString()}});
 }
 
 QVariantList GeneralSettingsModel::themeItems() const {
@@ -238,7 +238,7 @@ QVariantList GeneralSettingsModel::iconThemeItems() const {
 }
 
 QVariant GeneralSettingsModel::currentIconTheme() const {
-  auto &ith = cfg().systemTheme().icon_theme;
+  auto &ith = cfg().systemTheme().iconTheme;
   auto name = ith == "auto" ? QIcon::themeName() : QString::fromStdString(ith);
   return makeDropdownItem(name, name);
 }
@@ -253,7 +253,7 @@ QVariantList GeneralSettingsModel::faviconServiceItems() const {
 }
 
 QVariant GeneralSettingsModel::currentFaviconService() const {
-  auto id = QString::fromStdString(cfg().favicon_service);
+  auto id = QString::fromStdString(cfg().faviconService);
   for (const auto &svc : FaviconService::providers()) {
     if (svc.id == id) return makeDropdownItem(id, svc.name);
   }
@@ -283,11 +283,11 @@ void GeneralSettingsModel::selectFont(const QString &id) {
 }
 
 void GeneralSettingsModel::selectIconTheme(const QString &id) {
-  cfgManager().mergeThemeConfig({.icon_theme = id.toStdString()});
+  cfgManager().mergeThemeConfig({.iconTheme = id.toStdString()});
 }
 
 void GeneralSettingsModel::selectFaviconService(const QString &id) {
-  cfgManager().mergeWithUser({.favicon_service = id.toStdString()});
+  cfgManager().mergeWithUser({.faviconService = id.toStdString()});
 }
 
 void GeneralSettingsModel::selectKeybindingScheme(const QString &id) {
@@ -295,10 +295,10 @@ void GeneralSettingsModel::selectKeybindingScheme(const QString &id) {
 }
 
 QString GeneralSettingsModel::toggleShortcut() const {
-  return QString::fromStdString(cfg().global_shortcuts.toggle.value_or(""));
+  return QString::fromStdString(cfg().globalShortcuts.toggle.value_or(""));
 }
 
 void GeneralSettingsModel::setToggleShortcut(const QString &shortcut) {
   cfgManager().mergeWithUser(
-      {.global_shortcuts = config::Partial<config::GlobalShortcuts>{.toggle = shortcut.toStdString()}});
+      {.globalShortcuts = config::Partial<config::GlobalShortcuts>{.toggle = shortcut.toStdString()}});
 }
