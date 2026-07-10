@@ -16,9 +16,6 @@
 #include <string_view>
 
 namespace config {
-// Field names are snake_case to match the JSON keys directly via glaze's pure reflection. Do NOT
-// camelCase them and add a key transform / meta: glaze's key remapping (snake_case, modify, and
-// glz::object value) all silently corrupt keys on MSVC. https://github.com/stephenberry/glaze/issues/2219
 struct ProviderItemData {
   std::optional<std::string> alias;
   std::optional<bool> enabled;

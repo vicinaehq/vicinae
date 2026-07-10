@@ -2,7 +2,6 @@
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
-#include <glaze/util/key_transformers.hpp>
 #include <qlogging.h>
 #include <QDateTime>
 
@@ -12,8 +11,8 @@ VisitTracker::VisitTracker(const fs::path &path) : m_path(path) { loadFromDisk()
 
 void VisitTracker::registerVisit(const EntrypointId &id) {
   VisitInfo &data = m_data.visited[id];
-  data.lastVisitedAt = QDateTime::currentSecsSinceEpoch();
-  ++data.visitCount;
+  data.last_visited_at = QDateTime::currentSecsSinceEpoch();
+  ++data.visit_count;
   // todo: we might want to flush ever X seconds instead of saving directly
   saveToDisk();
 }
@@ -39,5 +38,3 @@ void VisitTracker::saveToDisk() {
     qWarning() << "Failed to save visit to" << m_path.string().c_str() << glz::format_error(error);
   }
 }
-
-template <> struct glz::meta<VisitTracker::VisitInfo> : glz::snake_case {};
