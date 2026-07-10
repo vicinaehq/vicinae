@@ -1,47 +1,27 @@
 #pragma once
 #include <common/common.hpp>
 #include <common/enumerate.hpp>
-#include <cstring>
 #include <expected>
-#include <filesystem>
 #include <format>
 #include <optional>
 #include <string>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
+#include "local-socket.hpp"
 #include "generated/ipc-client.hpp"
 
 namespace cli {
 
-inline std::filesystem::path socketPath() { return vicinae::serverSocketPath(); }
-
 class IpcClient {
 public:
   static std::expected<IpcClient, std::string> connect() {
-    int const fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fd == -1) return std::unexpected(std::format("Failed to create socket: {}", strerror(errno)));
-
-    auto path = socketPath().string();
-    struct sockaddr_un addr{.sun_family = AF_UNIX};
-    strncpy(addr.sun_path, path.data(), path.size());
-
-    if (::connect(fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) == -1) {
-      ::close(fd);
-      return std::unexpected(std::format("Failed to connect to {}: {}", path, strerror(errno)));
-    }
-
-    return IpcClient(fd);
+    return LocalSocket::connect(vicinae::serverSocketName()).transform([](LocalSocket sock) {
+      return IpcClient(std::move(sock));
+    });
   }
 
-  ~IpcClient() {
-    if (m_fd >= 0) ::close(m_fd);
-  }
+  ~IpcClient() = default;
 
   IpcClient(IpcClient &&other) noexcept
-      : m_fd(other.m_fd), m_transport(m_fd), m_rpc(m_transport), m_client(m_rpc) {
-    other.m_fd = -1;
-  }
+      : m_sock(std::move(other.m_sock)), m_transport(m_sock), m_rpc(m_transport), m_client(m_rpc) {}
 
   IpcClient(const IpcClient &) = delete;
   IpcClient &operator=(const IpcClient &) = delete;
@@ -88,30 +68,25 @@ public:
   }
 
 private:
-  IpcClient(int fd) : m_fd(fd), m_transport(m_fd), m_rpc(m_transport), m_client(m_rpc) {}
+  IpcClient(LocalSocket sock)
+      : m_sock(std::move(sock)), m_transport(m_sock), m_rpc(m_transport), m_client(m_rpc) {}
 
   struct SocketTransport : public ipc::AbstractTransport {
-    int fd;
-    explicit SocketTransport(int &fd) : fd(fd) {}
+    LocalSocket &sock;
+    explicit SocketTransport(LocalSocket &sock) : sock(sock) {}
     void send(std::string_view data) override {
       uint32_t size = data.size();
-      ::send(fd, &size, sizeof(size), 0);
-      ::send(fd, data.data(), data.size(), 0);
+      sock.writeAll(&size, sizeof(size));
+      sock.writeAll(data.data(), data.size());
     }
   };
 
   std::expected<std::string, std::string> recv() {
     uint32_t size;
-    if (::recv(m_fd, &size, sizeof(size), 0) < static_cast<ssize_t>(sizeof(size)))
-      return std::unexpected("Failed to read response size");
+    if (!m_sock.readAll(&size, sizeof(size))) return std::unexpected("Failed to read response size");
 
     std::string buf(size, '\0');
-    size_t total = 0;
-    while (total < size) {
-      auto n = ::recv(m_fd, buf.data() + total, size - total, 0);
-      if (n <= 0) return std::unexpected("Failed to read response data");
-      total += n;
-    }
+    if (!m_sock.readAll(buf.data(), size)) return std::unexpected("Failed to read response data");
     return buf;
   }
 
@@ -128,7 +103,7 @@ private:
     return result;
   }
 
-  int m_fd;
+  LocalSocket m_sock;
   SocketTransport m_transport;
   ipc::RpcTransport m_rpc;
   ipc::Client m_client;

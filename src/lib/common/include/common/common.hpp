@@ -17,4 +17,7 @@ std::optional<std::filesystem::path> findServerBinary();
 
 std::filesystem::path runtimeDir();
 std::filesystem::path serverSocketPath();
+
+std::string currentUserName();
+std::string serverSocketName();
 }; // namespace vicinae

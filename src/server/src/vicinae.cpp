@@ -113,7 +113,7 @@ std::vector<fs::path> Omnicast::dataSearchPaths(std::string_view subdir) {
   return paths;
 }
 
-fs::path Omnicast::commandSocketPath() { return vicinae::serverSocketPath(); }
+std::string Omnicast::commandSocketName() { return vicinae::serverSocketName(); }
 fs::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }
 
 void Omnicast::ensureDirectories() {

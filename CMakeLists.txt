@@ -332,9 +332,7 @@ if (CCACHE AND NOT IGNORE_CCACHE)
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
-if (NOT WIN32)
-	add_subdirectory(src/cli)
-endif()
+add_subdirectory(src/cli)
 add_subdirectory(src/server)
 
 if (UNIX AND NOT APPLE)

@@ -322,20 +322,20 @@ void IpcCommandServer::handleConnection() {
   connect(conn, &QLocalSocket::readyRead, this, [this, conn]() { handleRead(conn); });
 }
 
-bool IpcCommandServer::start(const std::filesystem::path &localPath) {
-  // Stale socket from a previous run blocks listen(). The single-instance
-  // probe that decides whether we're the canonical server lives in
-  // startServer(); by this point we already know we are.
-  if (std::filesystem::exists(localPath)) { std::filesystem::remove(localPath); }
+bool IpcCommandServer::start(const std::string &name) {
+#ifndef _WIN32
+  // Named pipes have no filesystem entry; only a POSIX socket file can go stale and block listen().
+  if (std::filesystem::exists(name)) { std::filesystem::remove(name); }
+#endif
 
-  if (!m_server.listen(QString::fromStdString(localPath.string()))) {
+  if (!m_server.listen(QString::fromStdString(name))) {
     qDebug() << "CommandServer failed to listen" << m_server.errorString();
     return false;
   }
 
   connect(&m_server, &QLocalServer::newConnection, this, &IpcCommandServer::handleConnection);
 
-  qDebug() << "Server started, listening on:" << localPath.c_str();
+  qDebug() << "Server started, listening on:" << name.c_str();
 
   return true;
 }

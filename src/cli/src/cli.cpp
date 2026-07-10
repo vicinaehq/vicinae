@@ -8,7 +8,9 @@
 #include "generated/version.h"
 #include "theme.hpp"
 #include "ipc-client.hpp"
+#ifndef _WIN32
 #include "server.hpp"
+#endif
 
 constexpr const auto HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
 
@@ -378,7 +380,9 @@ int CommandLineInterface::execute(int ac, char **av) {
   CommandLineApp app(std::string{HEADLINE});
 
   app.registerCommand<VersionCommand>();
+#ifndef _WIN32
   app.registerCommand<CliServerCommand>();
+#endif
   app.registerCommand<CliPing>();
   app.registerCommand<ToggleCommand>();
   app.registerCommand<OpenCommand>();

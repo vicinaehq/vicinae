@@ -37,7 +37,7 @@ static const QString GH_SPONSOR_LINK = "https://github.com/sponsors/vicinaehq";
 static const SemanticColor ACCENT_COLOR = SemanticColor::Accent;
 
 std::filesystem::path runtimeDir();
-std::filesystem::path commandSocketPath();
+std::string commandSocketName();
 std::filesystem::path pidFile();
 std::filesystem::path dataDir();
 std::filesystem::path stateDir();

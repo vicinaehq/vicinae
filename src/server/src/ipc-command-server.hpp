@@ -44,7 +44,7 @@ private:
 class IpcCommandServer : public QObject {
 public:
   IpcCommandServer(ApplicationContext *ctx, QObject *parent = nullptr);
-  bool start(const std::filesystem::path &localPath);
+  bool start(const std::string &name);
 
 private:
   void processFrame(QLocalSocket *conn, QByteArrayView frame);

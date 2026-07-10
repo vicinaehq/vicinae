@@ -85,6 +85,25 @@ fs::path runtimeDir() {
 
 fs::path serverSocketPath() { return runtimeDir() / "vicinae.sock"; }
 
+#ifdef _WIN32
+std::string currentUserName() {
+  char buf[256];
+  DWORD len = sizeof(buf);
+  if (GetUserNameA(buf, &len) && len > 1) return std::string(buf, len - 1);
+  return "default";
+}
+
+std::string serverSocketName() { return "vicinae-" + currentUserName(); }
+#else
+std::string currentUserName() {
+  if (const char *u = std::getenv("USER")) return u;
+  if (const char *u = std::getenv("LOGNAME")) return u;
+  return "default";
+}
+
+std::string serverSocketName() { return serverSocketPath().string(); }
+#endif
+
 std::optional<fs::path> findServerBinary() {
 #ifdef __APPLE__
   // Inside a .app bundle the server is renamed to "Vicinae" (matches
