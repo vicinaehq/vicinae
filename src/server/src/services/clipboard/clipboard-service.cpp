@@ -1,5 +1,6 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
+#include <algorithm>
 #include <filesystem>
 #include <numeric>
 #include <QGuiApplication>
@@ -164,7 +165,8 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
   if (offer.mimeType == "text/uri-list") {
     QString const text = offer.data;
     auto uris = text.split("\r\n", Qt::SkipEmptyParts);
-    if (uris.size() == 1 && QUrl(uris.front()).isLocalFile()) return ClipboardOfferKind::File;
+    auto isLocalFile = [](const QString &uri) { return QUrl(uri).isLocalFile(); };
+    if (!uris.isEmpty() && std::ranges::all_of(uris, isLocalFile)) return ClipboardOfferKind::File;
     return ClipboardOfferKind::Text;
   }
 
