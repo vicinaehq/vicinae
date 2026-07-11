@@ -317,7 +317,34 @@ std::optional<fs::path> searchExecutable(const wchar_t *name) {
 
 } // namespace
 
-WindowsAppDatabase::WindowsAppDatabase() { scan(defaultSearchPaths()); }
+struct UwpPackageWatcher {
+  winrt::Windows::ApplicationModel::PackageCatalog catalog{nullptr};
+  winrt::Windows::ApplicationModel::PackageCatalog::PackageInstalling_revoker installing;
+  winrt::Windows::ApplicationModel::PackageCatalog::PackageUninstalling_revoker uninstalling;
+  winrt::Windows::ApplicationModel::PackageCatalog::PackageUpdating_revoker updating;
+};
+
+WindowsAppDatabase::WindowsAppDatabase() {
+  scan(defaultSearchPaths());
+
+  using namespace winrt::Windows::ApplicationModel;
+  try {
+    auto watcher = std::make_unique<UwpPackageWatcher>();
+    watcher->catalog = PackageCatalog::OpenForCurrentUser();
+    // Progress events fire repeatedly; only rescan on completion. Cross-thread emit is queued.
+    auto handler = [this](const auto &, const auto &args) {
+      if (args.IsComplete()) Q_EMIT changed();
+    };
+    watcher->installing = watcher->catalog.PackageInstalling(winrt::auto_revoke, handler);
+    watcher->uninstalling = watcher->catalog.PackageUninstalling(winrt::auto_revoke, handler);
+    watcher->updating = watcher->catalog.PackageUpdating(winrt::auto_revoke, handler);
+    m_uwpWatcher = std::move(watcher);
+  } catch (const winrt::hresult_error &e) {
+    qWarning() << "[win-app-db] package watcher unavailable:" << fromHString(e.message());
+  }
+}
+
+WindowsAppDatabase::~WindowsAppDatabase() = default;
 
 std::vector<fs::path> WindowsAppDatabase::defaultSearchPaths() const {
   std::vector<fs::path> paths;
@@ -681,6 +708,10 @@ bool WindowsAppDatabase::openLocation(const AbstractApplication &app) const {
   return showInFileBrowser(app.path(), true);
 }
 
-WindowsAppDatabase::AppPtr WindowsAppDatabase::locationOpener(const AbstractApplication &) const {
-  return nullptr;
+WindowsAppDatabase::AppPtr WindowsAppDatabase::locationOpener(const AbstractApplication &app) const {
+  if (const auto *winApp = dynamic_cast<const WindowsApplication *>(&app);
+      winApp && winApp->isPackaged()) {
+    return nullptr; // packaged apps live under the ACL-locked WindowsApps folder
+  }
+  return fileBrowser();
 }

@@ -2,13 +2,17 @@
 #include "services/app-service/abstract-app-db.hpp"
 #include "win-app.hpp"
 #include <QString>
+#include <memory>
 #include <unordered_map>
 #include <vector>
+
+struct UwpPackageWatcher;
 
 // App provider merging two tracks: Win32 shortcuts/registry and packaged apps (WinRT PackageManager).
 class WindowsAppDatabase : public AbstractAppDatabase {
 public:
   WindowsAppDatabase();
+  ~WindowsAppDatabase() override;
 
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
   bool scan(const std::vector<std::filesystem::path> &paths) override;
@@ -45,4 +49,5 @@ private:
 
   std::vector<std::shared_ptr<WindowsApplication>> m_apps;
   std::unordered_map<QString, std::shared_ptr<WindowsApplication>> m_appsById;
+  std::unique_ptr<UwpPackageWatcher> m_uwpWatcher;
 };

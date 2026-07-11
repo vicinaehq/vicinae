@@ -181,4 +181,5 @@ AppService::AppService(OmniDatabase &db) : m_db(db), m_provider(createLocalProvi
 
   reinstallWatches(mergedPaths());
   connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, &AppService::handleDirectoryChanged);
+  connect(m_provider.get(), &AbstractAppDatabase::changed, this, [this] { m_rescanDebounce->start(); });
 }

@@ -106,6 +106,8 @@ struct LaunchTerminalCommandOptions {
 };
 
 class AbstractAppDatabase : public QObject {
+  Q_OBJECT
+
 public:
   using AppPtr = std::shared_ptr<AbstractApplication>;
 
@@ -219,4 +221,8 @@ public:
    * gracefully fall back to opening the containing folder when that is not supported.
    */
   virtual bool showInFileBrowser(const std::filesystem::path &path, bool select) const = 0;
+
+signals:
+  // The provider detected an out-of-band change to installed apps (e.g. a package install).
+  void changed();
 };
