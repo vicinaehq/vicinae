@@ -17,7 +17,6 @@
         "TYPESCRIPT_EXTENSIONS": "ON",
         "INSTALL_NODE_MODULES": "ON",
         "VICINAE_NODE_RUNTIME_DOWNLOAD": "ON",
-        "WAYLAND_LAYER_SHELL": "OFF",
         "AUTO_INSTALL_BROWSER_MANIFESTS": "OFF",
         "BUILD_TESTS": "OFF",
         "LTO": "OFF"
@@ -41,11 +40,73 @@
       "displayName": "Windows x64 (MSVC, Release, no LTO) — CI validation build",
       "inherits": "windows-base",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "LTO": "OFF" }
+    },
+    {
+      "name": "unix-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "linux-base",
+      "hidden": true,
+      "inherits": "unix-base",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
+    },
+    {
+      "name": "macos-base",
+      "hidden": true,
+      "inherits": "unix-base",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
+    },
+    {
+      "name": "debug-flags",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "LTO": "OFF",
+        "VICINAE_NODE_RUNTIME_DOWNLOAD": "ON",
+        "ENABLE_PREVIEW_FEATURES": "ON",
+        "ENABLE_SANITIZERS": "ON",
+        "BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "release-flags",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "LTO": "ON"
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux (Debug, sanitizers, tests)",
+      "inherits": ["debug-flags", "linux-base"]
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux (Release, LTO)",
+      "inherits": ["release-flags", "linux-base"]
+    },
+    {
+      "name": "macos-debug",
+      "displayName": "macOS (Debug, sanitizers, tests)",
+      "inherits": ["debug-flags", "macos-base"]
+    },
+    {
+      "name": "macos-release",
+      "displayName": "macOS (Release, LTO)",
+      "inherits": ["release-flags", "macos-base"]
     }
   ],
   "buildPresets": [
     { "name": "windows-debug", "configurePreset": "windows-debug" },
     { "name": "windows-release", "configurePreset": "windows-release" },
-    { "name": "windows-ci", "configurePreset": "windows-ci" }
+    { "name": "windows-ci", "configurePreset": "windows-ci" },
+    { "name": "linux-debug", "configurePreset": "linux-debug" },
+    { "name": "linux-release", "configurePreset": "linux-release" },
+    { "name": "macos-debug", "configurePreset": "macos-debug" },
+    { "name": "macos-release", "configurePreset": "macos-release" }
   ]
 }
