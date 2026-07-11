@@ -2,7 +2,7 @@
 #ifdef Q_OS_MACOS
 #include "services/app-service/macos/mac-app-database.hpp"
 #elif defined(Q_OS_WIN)
-#include "services/app-service/dummy-app-database.hpp"
+#include "services/app-service/windows/win-app-database.hpp"
 #else
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #endif
@@ -43,7 +43,7 @@ std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #ifdef Q_OS_MACOS
   return std::make_unique<MacAppDatabase>();
 #elif defined(Q_OS_WIN)
-  return std::make_unique<DummyAppDatabase>();
+  return std::make_unique<WindowsAppDatabase>();
 #else
   return std::make_unique<XdgAppDatabase>();
 #endif

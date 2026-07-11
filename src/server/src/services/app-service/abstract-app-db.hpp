@@ -89,6 +89,9 @@ public:
    */
   virtual QString description() const = 0;
 
+  // Type label for the root search; empty means the default "Application".
+  virtual QString category() const { return {}; }
+
   // whether the executable can open url(s) or file(s)
   virtual bool isOpener() { return true; }
 };

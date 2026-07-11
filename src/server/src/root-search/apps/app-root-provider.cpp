@@ -17,7 +17,10 @@
 
 double AppRootItem::baseScoreWeight() const { return 1; }
 
-QString AppRootItem::typeDisplayName() const { return "Application"; }
+QString AppRootItem::typeDisplayName() const {
+  const QString category = m_app->category();
+  return category.isEmpty() ? QStringLiteral("Application") : category;
+}
 
 std::vector<QString> AppRootItem::keywords() const {
   auto keywords = m_app->keywords();
@@ -44,7 +47,9 @@ std::vector<std::pair<QString, QString>> AppRootItem::settingsMetadata() const {
 bool AppRootItem::isActive() const { return ServiceRegistry::instance()->appRuntime()->isRunning(*m_app); }
 
 AccessoryList AppRootItem::accessories() const {
-  return {{.text = "Application", .color = SemanticColor::TextMuted}};
+  const QString category = m_app->category();
+  return {{.text = category.isEmpty() ? QStringLiteral("Application") : category,
+           .color = SemanticColor::TextMuted}};
 }
 
 EntrypointId AppRootItem::uniqueId() const {
