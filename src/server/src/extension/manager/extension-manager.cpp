@@ -84,6 +84,7 @@ ExtensionManager::ExtensionManager() : m_bus(&m_process), m_rpc(m_bus), m_client
 bool ExtensionManager::isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
 
 bool ExtensionManager::stop() {
+  m_stopping = true;
   m_process.terminate();
   if (m_process.waitForFinished(2000)) return true;
   m_process.kill();
@@ -154,6 +155,10 @@ bool ExtensionManager::hasDevelopmentSession(const QString &id) const {
 void ExtensionManager::processStarted() { emit started(); }
 
 void ExtensionManager::finished(int exitCode, QProcess::ExitStatus status) {
+  if (m_stopping) {
+    m_stopping = false;
+    return;
+  }
   qCritical() << "Extension manager crashed. Extensions will not work" << m_process.errorString();
 }
 

@@ -89,5 +89,6 @@ private:
   manager::RpcTransport m_rpc;
   manager::Client m_client;
   NodeRuntime m_node;
+  bool m_stopping = false;
   std::unordered_set<QString> m_developmentSessions;
 };

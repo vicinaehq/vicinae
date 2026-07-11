@@ -19,7 +19,10 @@
 
 namespace fs = std::filesystem;
 
-NodeRuntime::NodeRuntime(QObject *parent) : QObject(parent) {}
+NodeRuntime::NodeRuntime(QObject *parent) : QObject(parent) {
+  // via signal: install() may fail on a worker thread, keep the reset on this one
+  connect(this, &NodeRuntime::installFailed, this, [this]() { m_downloadStarted = false; });
+}
 
 #ifndef Q_OS_WIN
 // exec node through a hard link so the process shows up as "vicinae-ext-runtime"
