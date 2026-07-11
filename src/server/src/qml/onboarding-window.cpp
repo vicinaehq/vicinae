@@ -35,7 +35,7 @@ std::filesystem::path stateFilePath() { return Omnicast::stateDir() / "onboardin
 int completedVersion() {
   OnboardingState state;
   std::string buf;
-  if (glz::read_file_json(state, stateFilePath().c_str(), buf)) return 0;
+  if (glz::read_file_json(state, stateFilePath().string(), buf)) return 0;
   return state.version;
 }
 
@@ -147,7 +147,7 @@ void OnboardingWindow::markCompleted() {
   };
 
   std::string buf;
-  if (auto const error = glz::write_file_json(state, stateFilePath().c_str(), buf)) {
-    qWarning() << "Failed to write onboarding state file" << stateFilePath().c_str();
+  if (auto const error = glz::write_file_json(state, stateFilePath().string(), buf)) {
+    qWarning() << "Failed to write onboarding state file" << stateFilePath().string();
   }
 }

@@ -3,19 +3,13 @@
 #include <filesystem>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
-#include <qstandardpaths.h>
 #include <qstringview.h>
 #include <qtypes.h>
 #include <string>
 #include <system_error>
 #include <utility>
-#include "environment.hpp"
-#include "http-client.hpp"
 #include "pid-file/pid-file.hpp"
 #include "generated/version.h"
-#include <QCryptographicHash>
-#include <QScopeGuard>
-#include <QThreadPool>
 #include "rang/rang.hpp"
 #include "vicinae.hpp"
 
@@ -42,7 +36,9 @@ void Bus::readyRead() {
     _message.data.append(read);
 
     while (std::cmp_greater_equal(_message.data.size(), sizeof(uint32_t))) {
-      uint32_t const length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
+      const auto *p = reinterpret_cast<const unsigned char *>(_message.data.data());
+      uint32_t const length =
+          (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) | uint32_t(p[3]);
       bool const isComplete = _message.data.size() - sizeof(uint32_t) >= length;
 
       if (!isComplete) break;
@@ -81,119 +77,18 @@ ExtensionManager::ExtensionManager() : m_bus(&m_process), m_rpc(m_bus), m_client
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
     if (auto res = m_client.route(view); !res) { qWarning() << "Failed to route message" << res.error(); }
   });
+
+  connect(&m_node, &NodeRuntime::installed, this, [this]() { start(); });
 }
 
 bool ExtensionManager::isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
 
-// exec node through a hard link so the process shows up as "vicinae-ext-runtime"
-// instead of a bare "node" in system monitors
-static fs::path taggedNodeExecutable(const fs::path &node) {
-  std::error_code ec;
-  const fs::path tagged = node.parent_path() / "vicinae-ext-runtime";
-
-  if (fs::equivalent(tagged, node, ec)) return tagged;
-
-  fs::remove(tagged, ec);
-  fs::create_hard_link(node, tagged, ec);
-
-  if (ec) {
-    qWarning() << "Failed to create tagged node runtime link:" << ec.message().c_str() << "- falling back to"
-               << node.c_str();
-    return node;
-  }
-
-  return tagged;
-}
-
-std::optional<fs::path> ExtensionManager::nodeExecutable() {
-  if (auto bin = Environment::nodeBinaryOverride()) {
-    std::error_code ec;
-
-    if (fs::is_regular_file(*bin, ec)) { return bin; }
-
-    if (auto path = QStandardPaths::findExecutable(bin->c_str()); !path.isEmpty()) {
-      return path.toStdString();
-    }
-
-    // we do not fallback if we got an explicit override
-    return {};
-  }
-
-#if VICINAE_NODE_RUNTIME_DOWNLOAD
-  fs::path managed = Omnicast::dataDir() / "node" / VICINAE_NODE_RUNTIME_VERSION / "node";
-  if (std::error_code ec; fs::is_regular_file(managed, ec)) { return taggedNodeExecutable(managed); }
-#else
-  if (auto path = QStandardPaths::findExecutable("node"); !path.isEmpty()) { return path.toStdString(); }
-#endif
-
-  return {};
-}
-
-#if VICINAE_NODE_RUNTIME_DOWNLOAD
-void ExtensionManager::downloadNodeRuntime() {
-  m_nodeDownloadStarted = true;
-
-  std::error_code ec;
-  fs::create_directories(Omnicast::cacheDir(), ec);
-  const fs::path archive = Omnicast::cacheDir() / "node.tar.gz";
-
-  qInfo() << "Downloading node runtime from" << VICINAE_NODE_RUNTIME_URL;
-
-  auto *download = http::Client().download(VICINAE_NODE_RUNTIME_URL, archive);
-
-  connect(download, &http::Download::finished, this, [this](const fs::path &path) {
-    QThreadPool::globalInstance()->start([this, path]() { installNodeRuntime(path); });
-  });
-  connect(download, &http::Download::failed, this, [](const QString &error) {
-    qCritical() << "Failed to download node runtime, extensions will not work:" << error;
-  });
-}
-
-void ExtensionManager::installNodeRuntime(const std::filesystem::path &archive) {
-  std::error_code ec;
-  auto removeArchive = qScopeGuard([&]() { fs::remove(archive, ec); });
-
-  QFile file(archive.c_str());
-  QCryptographicHash hash(QCryptographicHash::Sha256);
-
-  qInfo() << "Verifying node runtime archive integrity (sha256)" << archive.c_str();
-
-  if (!file.open(QIODevice::ReadOnly) || !hash.addData(&file) ||
-      hash.result().toHex() != VICINAE_NODE_RUNTIME_SHA256) {
-    qCritical() << "Node runtime archive failed checksum verification, extensions will not work";
-    return;
-  }
-
-  qInfo() << "Node runtime archive integrity verified";
-
-  const fs::path dest = Omnicast::dataDir() / "node" / VICINAE_NODE_RUNTIME_VERSION;
-
-  fs::remove_all(Omnicast::dataDir() / "node", ec);
-  fs::create_directories(dest, ec);
-
-  qInfo() << "Extracting" << VICINAE_NODE_RUNTIME_TAR_MEMBER << "to" << dest.c_str();
-
-  QProcess tar;
-
-  tar.setProgram("/usr/bin/tar");
-  tar.setArguments(
-      {"-xzf", archive.c_str(), "-C", dest.c_str(), "--strip-components=2", VICINAE_NODE_RUNTIME_TAR_MEMBER});
-  tar.start();
-
-  if (!tar.waitForFinished(60000) || tar.exitStatus() != QProcess::NormalExit || tar.exitCode() != 0) {
-    qCritical() << "Failed to extract node runtime, extensions will not work:" << tar.readAllStandardError();
-    return;
-  }
-
-  qInfo() << "Installed node runtime" << VICINAE_NODE_RUNTIME_VERSION;
-
-  QMetaObject::invokeMethod(this, [this]() { start(); }, Qt::QueuedConnection);
-}
-#endif
-
 bool ExtensionManager::stop() {
+  m_stopping = true;
   m_process.terminate();
-  return m_process.waitForFinished();
+  if (m_process.waitForFinished(2000)) return true;
+  m_process.kill();
+  return m_process.waitForFinished(2000);
 }
 
 bool ExtensionManager::start() {
@@ -206,28 +101,37 @@ bool ExtensionManager::start() {
 
   if (m_process.state() == QProcess::Running) { m_process.close(); }
 
-  auto node = nodeExecutable();
+  auto node = m_node.executable();
 
   if (!node) {
-#if VICINAE_NODE_RUNTIME_DOWNLOAD
-    if (!m_nodeDownloadStarted) {
-      downloadNodeRuntime(); // calls start() once the runtime is available
-      return true;
-    }
-#endif
+    // executable() kicks off an async download on managed builds; installed() re-drives start()
+    if (m_node.provisioning()) return true;
     qCritical() << "Unable to find a suitable node executable. TypeScript extensions will not work.";
     return false;
   }
 
   fs::path const managerPath = Omnicast::runtimeDir() / "extension-manager.js";
+  QString const managerPathStr = QString::fromStdString(managerPath.string());
 
-  QFile::remove(managerPath);
-  QFile::copy(":bin/extension-manager", managerPath.c_str());
+  // A live node process holds the bundle open on Windows, blocking the overwrite; kill it first.
   PidFile pidFile("extension-manager");
-
   if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing extension manager instance"; }
 
-  m_process.start(node->c_str(), {managerPath.c_str()});
+  QFile managerFile(managerPath);
+  if (managerFile.exists()) {
+    // The previous copy inherited the read-only bit of the Qt resource, which blocks removal on Windows.
+    managerFile.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    if (!managerFile.remove()) {
+      qWarning() << "Failed to remove stale extension manager bundle:" << managerFile.errorString();
+    }
+  }
+  if (!QFile::copy(":bin/extension-manager", managerPathStr)) {
+    qCritical() << "Failed to deploy extension manager bundle to" << managerPath.c_str();
+    return false;
+  }
+  QFile::setPermissions(managerPathStr, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+
+  m_process.start(QString::fromStdString(node->string()), {managerPathStr});
 
   if (!m_process.waitForStarted(maxWaitForStart)) {
     qCritical() << "Failed to start extension manager" << m_process.errorString();
@@ -251,6 +155,10 @@ bool ExtensionManager::hasDevelopmentSession(const QString &id) const {
 void ExtensionManager::processStarted() { emit started(); }
 
 void ExtensionManager::finished(int exitCode, QProcess::ExitStatus status) {
+  if (m_stopping) {
+    m_stopping = false;
+    return;
+  }
   qCritical() << "Extension manager crashed. Extensions will not work" << m_process.errorString();
 }
 

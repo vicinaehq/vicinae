@@ -5,7 +5,7 @@ set(TARGET vicinae-server)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
 
-if (USE_SYSTEM_KF6)
+if (USE_SYSTEM_KF6 AND NOT WIN32)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
@@ -17,9 +17,7 @@ list(APPEND LIBS
 	zip
 	qt6keychain
 	pugixml
-	KF6::SyntaxHighlighting
 	glaze::glaze
-	vicinae::xdgpp
 	vicinae::scriptcommand
 	vicinae::glyph
 	vicinae::common
@@ -27,6 +25,10 @@ list(APPEND LIBS
 	vicinae::crypto
 	sqlcipher
 )
+
+if (NOT WIN32)
+	list(APPEND LIBS KF6::SyntaxHighlighting vicinae::xdgpp)
+endif()
 
 if (UNIX AND NOT APPLE)
 	find_package(Qt6 REQUIRED COMPONENTS DBus)
@@ -129,6 +131,8 @@ set(SRCS
 	
 	src/extension/manager/extension-manager.hpp
 	src/extension/manager/extension-manager.cpp
+	src/extension/node-runtime/node-runtime.hpp
+	src/extension/node-runtime/node-runtime.cpp
 
 	# Bookmark - Start
 	src/services/shortcut/shortcut-service.hpp
@@ -689,6 +693,7 @@ if (APPLE)
 	if (AUTO_ENABLE_AUTOSTART)
 		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
 	endif()
+elseif (WIN32)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp
@@ -720,11 +725,13 @@ list(APPEND SRCS
 	src/services/global-shortcuts/global-shortcut-service.cpp
 )
 
-list(APPEND LIBS qalculate)
-list(APPEND SRCS
-	src/services/calculator-service/qalculate/qalculate-backend.hpp
-	src/services/calculator-service/qalculate/qalculate-backend.cpp
-)
+if (NOT WIN32)
+	list(APPEND LIBS qalculate)
+	list(APPEND SRCS
+		src/services/calculator-service/qalculate/qalculate-backend.hpp
+		src/services/calculator-service/qalculate/qalculate-backend.cpp
+	)
+endif()
 
 list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources-core.qrc)
 if (TYPESCRIPT_EXTENSIONS)
@@ -1093,7 +1100,7 @@ qt6_add_shaders(${TARGET} "sourceblend_shaders"
 		src/qml/shaders/sourceblend.frag
 )
 
-if(Qt6_FOUND)
+if(Qt6_FOUND AND NOT WIN32)
 	qt_import_plugins(${TARGET}
         INCLUDE Qt6::QWaylandIntegrationPlugin
     )

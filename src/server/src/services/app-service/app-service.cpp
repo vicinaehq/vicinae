@@ -1,6 +1,8 @@
 #include "app-service.hpp"
 #ifdef Q_OS_MACOS
 #include "services/app-service/macos/mac-app-database.hpp"
+#elif defined(Q_OS_WIN)
+#include "services/app-service/dummy-app-database.hpp"
 #else
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #endif
@@ -40,6 +42,8 @@ bool AppService::launchTerminalCommand(const std::vector<QString> &cmdLine,
 std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #ifdef Q_OS_MACOS
   return std::make_unique<MacAppDatabase>();
+#elif defined(Q_OS_WIN)
+  return std::make_unique<DummyAppDatabase>();
 #else
   return std::make_unique<XdgAppDatabase>();
 #endif
@@ -158,7 +162,7 @@ bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
   auto isDir = [](auto &&path) { return fs::is_directory(path); };
 
   for (const auto &path : paths | std::views::filter(isDir)) {
-    m_watcher->addPath(path.c_str());
+    m_watcher->addPath(QString::fromStdString(path.string()));
   }
 
   return true;

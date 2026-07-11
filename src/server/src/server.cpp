@@ -164,9 +164,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   // Cheap single-instance probe before building any Qt state. macOS spawns
   // a fresh process on every `open` of the .app; without this guard, each
   // launch would proceed and steal focus.
-  if (const auto sock = Omnicast::commandSocketPath(); std::filesystem::exists(sock)) {
+  {
     QLocalSocket probe;
-    probe.connectToServer(sock.c_str());
+    probe.connectToServer(QString::fromStdString(Omnicast::commandSocketName()));
     if (probe.waitForConnected(100)) {
       probe.disconnectFromServer();
       qWarning() << "another vicinae instance is already running";
@@ -387,7 +387,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   IpcCommandServer commandServer(&ctx);
 
-  commandServer.start(Omnicast::commandSocketPath());
+  commandServer.start(Omnicast::commandSocketName());
 
 #ifdef Q_OS_MACOS
   UrlSchemeOpenFilter urlSchemeOpenFilter(ctx);

@@ -55,7 +55,8 @@ InstalledExtensionsSection::buildActionPanel(const ExtensionManifest &m) const {
   auto copyId = new CopyToClipboardAction(Clipboard::Text(m.id), "Copy ID");
   utils->addAction(copyId);
 
-  auto copyPath = new CopyToClipboardAction(Clipboard::Text(m.path.c_str()), "Copy Path");
+  auto copyPath =
+      new CopyToClipboardAction(Clipboard::Text(QString::fromStdString(m.path.string())), "Copy Path");
   copyPath->setShortcut(Keybind::CopyPathAction);
   utils->addAction(copyPath);
 

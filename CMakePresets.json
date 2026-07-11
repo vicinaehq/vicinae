@@ -1,0 +1,132 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "windows-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+      "environment": {
+        "QTFRAMEWORK_BYPASS_LICENSE_CHECK": "1"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl",
+        "TYPESCRIPT_EXTENSIONS": "ON",
+        "INSTALL_NODE_MODULES": "ON",
+        "VICINAE_NODE_RUNTIME_DOWNLOAD": "ON",
+        "AUTO_INSTALL_BROWSER_MANIFESTS": "OFF",
+        "BUILD_TESTS": "OFF",
+        "LTO": "OFF"
+      }
+    },
+    {
+      "name": "windows-debug",
+      "displayName": "Windows x64 (MSVC, Debug)",
+      "inherits": "windows-base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "windows-release",
+      "displayName": "Windows x64 (MSVC, Release)",
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/build-release",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "LTO": "ON" }
+    },
+    {
+      "name": "windows-ci",
+      "displayName": "Windows x64 (MSVC, Release, no LTO) — CI validation build",
+      "inherits": "windows-base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "LTO": "OFF" }
+    },
+    {
+      "name": "unix-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "linux-base",
+      "hidden": true,
+      "inherits": "unix-base",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
+    },
+    {
+      "name": "macos-base",
+      "hidden": true,
+      "inherits": "unix-base",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
+    },
+    {
+      "name": "debug-flags",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "LTO": "OFF",
+        "VICINAE_NODE_RUNTIME_DOWNLOAD": "ON",
+        "ENABLE_PREVIEW_FEATURES": "ON",
+        "ENABLE_SANITIZERS": "ON",
+        "BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "release-flags",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "LTO": "ON"
+      }
+    },
+    {
+      "name": "preview-flags",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ENABLE_PREVIEW_FEATURES": "ON"
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux (Debug, sanitizers, tests)",
+      "inherits": ["debug-flags", "linux-base"]
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux (Release, LTO)",
+      "inherits": ["release-flags", "linux-base"]
+    },
+    {
+      "name": "linux-preview",
+      "displayName": "Linux (Release, preview features)",
+      "inherits": ["preview-flags", "linux-base"]
+    },
+    {
+      "name": "macos-debug",
+      "displayName": "macOS (Debug, sanitizers, tests)",
+      "inherits": ["debug-flags", "macos-base"]
+    },
+    {
+      "name": "macos-release",
+      "displayName": "macOS (Release, LTO)",
+      "inherits": ["release-flags", "macos-base"]
+    },
+    {
+      "name": "macos-preview",
+      "displayName": "macOS (Release, preview features)",
+      "inherits": ["preview-flags", "macos-base"]
+    }
+  ],
+  "buildPresets": [
+    { "name": "windows-debug", "configurePreset": "windows-debug" },
+    { "name": "windows-release", "configurePreset": "windows-release" },
+    { "name": "windows-ci", "configurePreset": "windows-ci" },
+    { "name": "linux-debug", "configurePreset": "linux-debug" },
+    { "name": "linux-release", "configurePreset": "linux-release" },
+    { "name": "linux-preview", "configurePreset": "linux-preview" },
+    { "name": "macos-debug", "configurePreset": "macos-debug" },
+    { "name": "macos-release", "configurePreset": "macos-release" },
+    { "name": "macos-preview", "configurePreset": "macos-preview" }
+  ]
+}

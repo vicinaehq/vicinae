@@ -108,6 +108,6 @@ void ThemeDatabase::reinstallWatches() {
     m_watcher->removePath(path);
   }
   for (const auto &path : searchPaths()) {
-    m_watcher->addPath(path.c_str());
+    m_watcher->addPath(QString::fromStdString(path.string()));
   }
 }

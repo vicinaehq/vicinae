@@ -172,16 +172,16 @@ void UpdateService::saveState() {
 
   fs::create_directories(m_statePath.parent_path(), ec);
 
-  if (auto const error = glz::write_file_json(m_state, m_statePath.c_str(), m_buf)) {
-    qWarning() << "Failed to write update state file at" << m_statePath.c_str() << glz::format_error(error);
+  if (auto const error = glz::write_file_json(m_state, m_statePath.string(), m_buf)) {
+    qWarning() << "Failed to write update state file at" << m_statePath.string() << glz::format_error(error);
   }
 }
 
 void UpdateService::loadState() {
   if (!fs::is_regular_file(m_statePath)) return;
 
-  if (auto const error = glz::read_file_json(m_state, m_statePath.c_str(), m_buf)) {
-    qWarning() << "Failed to read update state file at" << m_statePath.c_str() << glz::format_error(error);
+  if (auto const error = glz::read_file_json(m_state, m_statePath.string(), m_buf)) {
+    qWarning() << "Failed to read update state file at" << m_statePath.string() << glz::format_error(error);
   }
 }
 

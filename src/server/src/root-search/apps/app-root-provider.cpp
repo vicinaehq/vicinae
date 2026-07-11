@@ -37,7 +37,7 @@ QString AppRootItem::settingsDescription() const { return m_app->description(); 
 std::vector<std::pair<QString, QString>> AppRootItem::settingsMetadata() const {
   return {{"ID", m_app->id()},
           {"Name", m_app->displayName()},
-          {"Where", m_app->path().c_str()},
+          {"Where", QString::fromStdString(m_app->path().string())},
           {"Opens in terminal", m_app->isTerminalApp() ? "Yes" : "No"}};
 }
 
@@ -59,7 +59,8 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto appDb = ctx->services->appDb();
   auto open = new OpenAppAction(m_app, "Open Application", {});
   auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), "Copy App ID");
-  auto copyLocation = new CopyToClipboardAction(Clipboard::Text(m_app->path().c_str()), "Copy App Location");
+  auto copyLocation = new CopyToClipboardAction(
+      Clipboard::Text(QString::fromStdString(m_app->path().string())), "Copy App Location");
   auto preferences = ctx->services->rootItemManager()->getPreferenceValues(uniqueId());
   QString const defaultAction = preferences.value("defaultAction").toString();
 

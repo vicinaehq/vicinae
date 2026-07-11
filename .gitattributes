@@ -1,3 +1,7 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
 vendor/** linguist-vendored
 
 # this will probably be moved out of the repo eventually

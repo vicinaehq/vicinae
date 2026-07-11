@@ -39,7 +39,6 @@
 #include <qcoreevent.h>
 #include <qlogging.h>
 #include <memory>
-#include <sys/ucontext.h>
 
 #ifdef __GLIBC__
 #include <malloc.h>

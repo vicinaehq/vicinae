@@ -29,14 +29,14 @@ void VisitTracker::forget(const EntrypointId &id) {
 }
 
 void VisitTracker::loadFromDisk() {
-  if (auto error = glz::read_file_jsonc(m_data, m_path.c_str(), m_buf)) {
-    qWarning() << "Failed to load visits file from" << m_path.c_str() << glz::format_error(error);
+  if (auto error = glz::read_file_jsonc(m_data, m_path.string(), m_buf)) {
+    qWarning() << "Failed to load visits file from" << m_path.string().c_str() << glz::format_error(error);
   }
 }
 
 void VisitTracker::saveToDisk() {
-  if (auto error = glz::write_file_json(m_data, m_path.c_str(), m_buf)) {
-    qWarning() << "Failed to save visit to" << m_path.c_str() << glz::format_error(error);
+  if (auto error = glz::write_file_json(m_data, m_path.string(), m_buf)) {
+    qWarning() << "Failed to save visit to" << m_path.string().c_str() << glz::format_error(error);
   }
 }
 

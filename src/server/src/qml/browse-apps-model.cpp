@@ -54,7 +54,8 @@ std::unique_ptr<ActionPanelState> BrowseAppsSection::buildActionPanel(const AppP
   auto *copyId = new CopyToClipboardAction(Clipboard::Text(app->id()), "Copy App ID");
   utils->addAction(copyId);
 
-  auto *copyLocation = new CopyToClipboardAction(Clipboard::Text(app->path().c_str()), "Copy App Location");
+  auto *copyLocation = new CopyToClipboardAction(
+      Clipboard::Text(QString::fromStdString(app->path().string())), "Copy App Location");
   utils->addAction(copyLocation);
 
   return panel;

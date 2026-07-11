@@ -83,7 +83,8 @@ std::unique_ptr<ActionPanelState> ThemeSection::actionPanel(int i) const {
   section->addAction(setTheme);
 
   if (theme->path() && textEditor) {
-    auto *open = new OpenAppAction(textEditor, "Open theme file", {theme->path()->c_str()});
+    auto *open =
+        new OpenAppAction(textEditor, "Open theme file", {QString::fromStdString(theme->path()->string())});
     open->setShortcut(Keybind::OpenAction);
     section->addAction(open);
   }
@@ -94,7 +95,8 @@ std::unique_ptr<ActionPanelState> ThemeSection::actionPanel(int i) const {
   utils->addAction(copyId);
 
   if (theme->path()) {
-    auto *copyPath = new CopyToClipboardAction(Clipboard::Text(theme->path()->c_str()), "Copy path");
+    auto *copyPath = new CopyToClipboardAction(
+        Clipboard::Text(QString::fromStdString(theme->path()->string())), "Copy path");
     copyPath->setShortcut(Keybind::CopyPathAction);
     utils->addAction(copyPath);
   }

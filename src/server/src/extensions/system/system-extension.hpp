@@ -9,7 +9,10 @@
 #include "services/app-service/app-service.hpp"
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include <sstream>
+#ifndef Q_OS_WIN
 #include "xdgpp/desktop-entry/exec.hpp"
+#endif
 
 class SystemRunCommand : public BuiltinCallbackCommand {
   QString id() const override { return "run"; }
@@ -50,7 +53,16 @@ class SystemRunCommand : public BuiltinCallbackCommand {
     }
 
     auto command = args.front().second;
+#ifdef Q_OS_WIN
+    std::vector<std::string> parsedArgs;
+    {
+      std::istringstream iss(command.toStdString());
+      for (std::string tok; iss >> tok;)
+        parsedArgs.emplace_back(std::move(tok));
+    }
+#else
     auto parsedArgs = xdgpp::ExecParser("").parse(command.toStdString());
+#endif
 
     if (parsedArgs.empty() || !ProgramDb::programPath(parsedArgs.front())) {
       toast->failure("Not a valid executable");

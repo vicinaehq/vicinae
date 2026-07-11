@@ -90,7 +90,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
     QString const ext = it->mode == CommandModeView ? "tsx" : "ts";
     QString const filename = QString("%1.%2").arg(name).arg(ext);
 
-    userCopy(it->resource, QString::fromStdString(srcDir / filename.toStdString()));
+    userCopy(it->resource, QString::fromStdString((srcDir / filename.toStdString()).string()));
     cmdStrings << cmdString;
   }
 
@@ -124,9 +124,10 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
   if (!gitignore.open(QIODevice::WriteOnly)) { return std::unexpected(QString("Failed to write gitignore")); }
 
   gitignore.write("node_modules\nvicinae-env.d.ts\n");
-  userCopy(":boilerplate/tsconfig.json", QString::fromStdString(extDir / "tsconfig.json"));
-  userCopy(":boilerplate/extension_icon", QString::fromStdString(assetsDir / "extension_icon.png"));
-  userCopy(":boilerplate/README.md", QString::fromStdString(extDir / "README.md"));
+  userCopy(":boilerplate/tsconfig.json", QString::fromStdString((extDir / "tsconfig.json").string()));
+  userCopy(":boilerplate/extension_icon",
+           QString::fromStdString((assetsDir / "extension_icon.png").string()));
+  userCopy(":boilerplate/README.md", QString::fromStdString((extDir / "README.md").string()));
 
   return extDir;
 }

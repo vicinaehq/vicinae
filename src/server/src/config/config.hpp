@@ -78,8 +78,8 @@ template <> struct Partial<BlurConfig> {
 };
 
 struct Size {
-  int width;
-  int height;
+  int width = 770;
+  int height = 480;
 };
 
 template <> struct Partial<Size> {
@@ -187,7 +187,7 @@ template <> struct Partial<WindowConfig> {
 struct FontConfig {
   std::string rendering = "qt";
 
-  struct {
+  struct FontSpec {
     std::string family = "auto";
 #ifdef Q_OS_MACOS
     float size = 13;
@@ -200,7 +200,7 @@ struct FontConfig {
 template <> struct Partial<FontConfig> {
   std::optional<std::string> rendering;
 
-  struct {
+  struct FontSpec {
     std::optional<std::string> family;
     std::optional<float> size;
   } normal;
@@ -276,7 +276,7 @@ struct ConfigValue {
   bool popToRootOnClose = false;
   bool popOnBackspace = true;
   bool activateOnSingleClick = false;
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
   bool encryptSensitiveData = false;
 #else
   bool encryptSensitiveData = true;
@@ -397,11 +397,7 @@ public:
 
   std::filesystem::path path() const { return m_userPath; }
 
-  static void print(const ConfigValue &value) {
-    std::string buf;
-    [[maybe_unused]] auto res = glz::write_json(value, buf);
-    std::cout << glz::prettify_json(buf) << std::endl;
-  }
+  static void print(const ConfigValue &value);
 
   const ConfigValue &value() const { return m_user; }
 
@@ -430,3 +426,27 @@ private:
   std::vector<std::string> m_envOverrides;
 };
 }; // namespace config
+
+#define SNAKE_CASIFY(T)                                                                                      \
+  template <> struct glz::meta<T> : glz::snake_case {};                                                      \
+  template <> struct glz::meta<config::Partial<T>> : glz::snake_case {};
+
+SNAKE_CASIFY(config::LayerShellConfig);
+SNAKE_CASIFY(config::WindowConfig);
+SNAKE_CASIFY(config::SystemThemeConfig);
+SNAKE_CASIFY(config::ThemeConfig);
+SNAKE_CASIFY(config::TelemetryConfig);
+SNAKE_CASIFY(config::WindowCSD);
+SNAKE_CASIFY(config::GlobalShortcuts);
+
+#undef SNAKE_CASIFY
+
+struct ConfigTransformer : glz::snake_case {
+  static constexpr std::string rename_key(const std::string_view key) {
+    if (key == "schema") return "$schema";
+    return glz::to_snake_case(key);
+  }
+};
+
+template <> struct glz::meta<config::ConfigValue> : ConfigTransformer {};
+template <> struct glz::meta<config::Partial<config::ConfigValue>> : ConfigTransformer {};

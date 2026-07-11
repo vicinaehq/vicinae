@@ -37,12 +37,14 @@ static const QString GH_SPONSOR_LINK = "https://github.com/sponsors/vicinaehq";
 static const SemanticColor ACCENT_COLOR = SemanticColor::Accent;
 
 std::filesystem::path runtimeDir();
-std::filesystem::path commandSocketPath();
+std::string commandSocketName();
 std::filesystem::path pidFile();
 std::filesystem::path dataDir();
 std::filesystem::path stateDir();
 std::filesystem::path configDir();
 std::filesystem::path cacheDir();
+
+std::filesystem::path dataHome();
 
 // Read-only resources shipped with the application. On macOS this is
 // Vicinae.app/Contents/Resources; on other platforms it is the install-prefix

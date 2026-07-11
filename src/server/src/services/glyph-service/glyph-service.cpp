@@ -71,7 +71,7 @@ GlyphService::GlyphService(const std::filesystem::path &path, OmniDatabase *lega
 }
 
 bool GlyphService::load() {
-  if (const auto error = glz::read_file_json(m_entries, m_path.c_str(), m_buf)) {
+  if (const auto error = glz::read_file_json(m_entries, m_path.string(), m_buf)) {
     qWarning() << "Failed to read emoji metadata:" << glz::format_error(error).c_str();
     m_entries.clear();
     return false;
@@ -80,7 +80,7 @@ bool GlyphService::load() {
 }
 
 bool GlyphService::save() {
-  if (const auto error = glz::write_file_json(m_entries, m_path.c_str(), m_buf)) {
+  if (const auto error = glz::write_file_json(m_entries, m_path.string(), m_buf)) {
     qCritical() << "Failed to save emoji metadata:" << glz::format_error(error).c_str();
     return false;
   }
