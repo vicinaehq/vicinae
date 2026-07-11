@@ -34,7 +34,7 @@ jobs:
           host: windows
           target: desktop
           arch: win64_msvc2022_64
-          modules: qtshadertools qtsvg qtimageformats
+          modules: qtshadertools qtimageformats
           cache: true
 
       - name: Configure
