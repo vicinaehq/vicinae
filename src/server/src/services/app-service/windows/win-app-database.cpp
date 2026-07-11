@@ -11,6 +11,9 @@
 #include <shellapi.h>
 #include <shlwapi.h>
 #include <shobjidl_core.h>
+#include <propsys.h>
+#include <initguid.h>
+#include <propkey.h>
 
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -53,15 +56,20 @@ std::optional<fs::path> knownFolder(REFKNOWNFOLDERID id) {
   return result;
 }
 
-// Reads the stored target without IShellLink::Resolve, which can block on the network. Returns
-// nullopt for shortcuts backed by a PIDL rather than a filesystem path (AppsFolder, Control Panel).
-std::optional<fs::path> readShortcutTarget(const fs::path &lnk) {
+struct ShortcutInfo {
+  std::optional<fs::path> target; // nullopt for PIDL-backed shortcuts (AppsFolder, Control Panel)
+  QString arguments;
+  QString aumid; // explicit System.AppUserModel.ID, when the shortcut carries one (PWAs do)
+};
+
+// Reads the stored link data without IShellLink::Resolve, which can block on the network.
+ShortcutInfo readShortcutInfo(const fs::path &lnk) {
+  ShortcutInfo info;
+
   IShellLinkW *link = nullptr;
   if (FAILED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&link)))) {
-    return std::nullopt;
+    return info;
   }
-
-  std::optional<fs::path> result;
 
   IPersistFile *persist = nullptr;
   if (SUCCEEDED(link->QueryInterface(IID_PPV_ARGS(&persist)))) {
@@ -69,15 +77,47 @@ std::optional<fs::path> readShortcutTarget(const fs::path &lnk) {
       wchar_t buf[MAX_PATH] = {};
       WIN32_FIND_DATAW find = {};
       if (SUCCEEDED(link->GetPath(buf, MAX_PATH, &find, 0)) && buf[0] != L'\0') {
-        result = fs::path(buf);
+        info.target = fs::path(buf);
+      }
+
+      wchar_t args[1024] = {};
+      if (SUCCEEDED(link->GetArguments(args, 1024)) && args[0] != L'\0') {
+        info.arguments = QString::fromWCharArray(args).trimmed();
+      }
+
+      IPropertyStore *store = nullptr;
+      if (SUCCEEDED(link->QueryInterface(IID_PPV_ARGS(&store)))) {
+        PROPVARIANT value;
+        PropVariantInit(&value);
+        if (SUCCEEDED(store->GetValue(PKEY_AppUserModel_ID, &value)) && value.vt == VT_LPWSTR &&
+            value.pwszVal) {
+          info.aumid = QString::fromWCharArray(value.pwszVal);
+        }
+        PropVariantClear(&value);
+        store->Release();
       }
     }
     persist->Release();
   }
 
   link->Release();
-  return result;
+  return info;
 }
+
+// Identity mirrors the shell's: explicit AUMID, else target + args (args distinguish e.g. PWAs
+// all launched through the same proxy exe), else the shortcut file itself.
+QString win32AppId(const QString &program, const QString &arguments = {}, const QString &aumid = {},
+                   const fs::path &shortcut = {}) {
+  if (!aumid.isEmpty()) return QStringLiteral("win32:aumid:") + aumid.toLower();
+  if (!program.isEmpty()) {
+    QString id = QStringLiteral("win32:") + program.toLower();
+    if (!arguments.isEmpty()) id += QLatin1Char(' ') + arguments.toLower();
+    return id;
+  }
+  return QStringLiteral("win32:") + QString::fromStdWString(shortcut.wstring()).toLower();
+}
+
+QString uwpAppId(const QString &aumid) { return QStringLiteral("uwp:") + aumid; }
 
 QString readUrlTarget(const fs::path &url) {
   wchar_t buf[2048] = {};
@@ -367,20 +407,23 @@ void WindowsAppDatabase::addShortcut(const fs::path &file) {
   if (!isLnk && !isUrl && !isAppRef) return;
 
   QString program; // .lnk: target exe. .url: target URL.
+  QString arguments;
+  QString aumid;
   if (isLnk) {
-    auto target = readShortcutTarget(file);
-    if (target && looksLikeUninstaller(*target)) return;
-    if (target) program = QString::fromStdWString(target->wstring());
+    const ShortcutInfo info = readShortcutInfo(file);
+    if (info.target && looksLikeUninstaller(*info.target)) return;
+    // A shortcut carrying the AUMID of an installed package is that package's app; the UWP scan
+    // (run first) already listed it.
+    if (!info.aumid.isEmpty() && m_appsById.contains(uwpAppId(info.aumid))) return;
+    if (info.target) program = QString::fromStdWString(info.target->wstring());
+    arguments = info.arguments;
+    aumid = info.aumid;
   } else if (isUrl) {
     program = readUrlTarget(file);
   }
 
-  // Key on the target when known so the same app in Start Menu + Desktop collapses; otherwise
-  // fall back to the shortcut path.
-  const QString idBase = program.isEmpty() ? QString::fromStdWString(file.wstring()) : program;
-
   WindowsApplication::Data data;
-  data.id = QStringLiteral("win32:") + idBase.toLower();
+  data.id = win32AppId(program, arguments, aumid, file);
   data.displayName = QString::fromStdWString(file.stem().wstring());
   data.program = program;
   data.path = file;
@@ -440,7 +483,7 @@ void WindowsAppDatabase::scanAppPaths() {
     if (!fs::exists(exe, ec) || looksLikeUninstaller(exe)) continue;
 
     WindowsApplication::Data data;
-    data.id = QStringLiteral("win32:") + QString::fromStdWString(exe.wstring()).toLower();
+    data.id = win32AppId(QString::fromStdWString(exe.wstring()));
     data.displayName = QString::fromStdWString(exe.stem().wstring());
     data.program = QString::fromStdWString(exe.wstring());
     data.path = exe;
@@ -491,7 +534,7 @@ void WindowsAppDatabase::scanUwp() {
         if (name.isEmpty()) continue;
 
         WindowsApplication::Data data;
-        data.id = QStringLiteral("uwp:") + aumid;
+        data.id = uwpAppId(aumid);
         data.displayName = name;
         data.program = aumid;
         data.path = installPath;
@@ -511,10 +554,10 @@ bool WindowsAppDatabase::scan(const std::vector<fs::path> &paths) {
   m_appsById.clear();
 
   ScopedCom com;
+  scanUwp(); // first: addShortcut skips .lnk files whose AUMID names an already-listed package
   scanWin32(paths);
   scanDesktop();
   scanAppPaths();
-  scanUwp();
 
   return !m_apps.empty();
 }
@@ -583,7 +626,7 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::appForExecutable(const fs::path &
   const QString exeStr = QString::fromStdWString(exe.wstring());
 
   WindowsApplication::Data data;
-  data.id = QStringLiteral("win32:") + exeStr.toLower();
+  data.id = win32AppId(exeStr);
   data.displayName = name.isEmpty() ? QString::fromStdWString(exe.stem().wstring()) : name;
   data.program = exeStr;
   data.path = exe;
