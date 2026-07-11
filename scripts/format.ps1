@@ -125,7 +125,7 @@ if (-not $qmlFormat) {
 
 # --- TypeScript (biome) ---
 if (-not $biome) {
-    Write-Warning 'biome not found on PATH; skipping TypeScript'
+    Write-Warning 'biome not found on PATH; skipping TypeScript. Install with npm install -g @biomejs/biome'
 } else {
     Write-Host 'biome format --write' -ForegroundColor Cyan
     Push-Location $tsDir

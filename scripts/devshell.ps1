@@ -8,13 +8,13 @@
 #>
 
 if ($env:VCINSTALLDIR) {
-  Write-Host "[win-env] MSVC environment already active - skipping."
+  Write-Host "[devshell] MSVC environment already active - skipping."
   return
 }
 
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
 if (-not (Test-Path $vswhere)) {
-  Write-Error "[win-env] vswhere not found. Install Visual Studio 2017+ with the C++ workload."
+  Write-Error "[devshell] vswhere not found. Install Visual Studio 2017+ with the C++ workload."
   return
 }
 
@@ -22,13 +22,13 @@ $vsPath = & $vswhere -latest -products * `
   -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
   -property installationPath
 if (-not $vsPath) {
-  Write-Error "[win-env] No Visual Studio install with the C++ x64 toolset was found."
+  Write-Error "[devshell] No Visual Studio install with the C++ x64 toolset was found."
   return
 }
 
 $vcvars = Join-Path $vsPath 'VC\Auxiliary\Build\vcvars64.bat'
 if (-not (Test-Path $vcvars)) {
-  Write-Error "[win-env] vcvars64.bat not found at $vcvars"
+  Write-Error "[devshell] vcvars64.bat not found at $vcvars"
   return
 }
 
@@ -40,4 +40,4 @@ cmd /c "`"$vcvars`" >nul 2>&1 && set" | ForEach-Object {
   }
 }
 
-Write-Host "[win-env] MSVC x64 environment ready ($env:VSCMD_ARG_TGT_ARCH)."
+Write-Host "[devshell] MSVC x64 environment ready ($env:VSCMD_ARG_TGT_ARCH)."
