@@ -37,8 +37,21 @@ jobs:
           modules: qtshadertools qtimageformats
           cache: true
 
+      - name: Set up sccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          variant: sccache
+          key: windows-ci
+
       - name: Configure
-        run: cmake --preset windows-ci
+        run: >
+          cmake --preset windows-ci
+          -DCMAKE_C_COMPILER_LAUNCHER=sccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
 
       - name: Build
         run: cmake --build --preset windows-ci
+
+      - name: sccache stats
+        if: always()
+        run: sccache --show-stats
