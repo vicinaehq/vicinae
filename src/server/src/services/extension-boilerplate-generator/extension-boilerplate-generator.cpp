@@ -125,7 +125,8 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
   gitignore.write("node_modules\nvicinae-env.d.ts\n");
   userCopy(":boilerplate/tsconfig.json", QString::fromStdString((extDir / "tsconfig.json").string()));
-  userCopy(":boilerplate/extension_icon", QString::fromStdString((assetsDir / "extension_icon.png").string()));
+  userCopy(":boilerplate/extension_icon",
+           QString::fromStdString((assetsDir / "extension_icon.png").string()));
   userCopy(":boilerplate/README.md", QString::fromStdString((extDir / "README.md").string()));
 
   return extDir;

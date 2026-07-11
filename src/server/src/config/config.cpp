@@ -55,8 +55,8 @@ Manager::Manager(fs::path path) : m_userPath(std::move(path)) {
 
   m_defaultData = file.readAll().toStdString();
 
-  if (auto error =
-          glz::read<glz::opts{.comments = true, .error_on_unknown_keys = false}>(m_defaultConfig, m_defaultData)) {
+  if (auto error = glz::read<glz::opts{.comments = true, .error_on_unknown_keys = false}>(m_defaultConfig,
+                                                                                          m_defaultData)) {
     throw std::runtime_error(
         std::format("Failed to parse default config file: {}", glz::format_error(error, m_defaultData)));
   }

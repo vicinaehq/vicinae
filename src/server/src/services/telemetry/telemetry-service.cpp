@@ -149,6 +149,7 @@ void TelemetryService::loadState() {
   }
 
   if (auto const error = glz::read_file_json(m_state, m_statePath.string(), m_buf)) {
-    qWarning() << "Failed to read telemetry state file at" << m_statePath.string() << glz::format_error(error);
+    qWarning() << "Failed to read telemetry state file at" << m_statePath.string()
+               << glz::format_error(error);
   }
 }

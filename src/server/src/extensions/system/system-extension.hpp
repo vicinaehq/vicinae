@@ -57,7 +57,8 @@ class SystemRunCommand : public BuiltinCallbackCommand {
     std::vector<std::string> parsedArgs;
     {
       std::istringstream iss(command.toStdString());
-      for (std::string tok; iss >> tok;) parsedArgs.emplace_back(std::move(tok));
+      for (std::string tok; iss >> tok;)
+        parsedArgs.emplace_back(std::move(tok));
     }
 #else
     auto parsedArgs = xdgpp::ExecParser("").parse(command.toStdString());

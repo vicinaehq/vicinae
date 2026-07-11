@@ -91,7 +91,8 @@ std::expected<void, std::string> ensureCipherState(const fs::path &path, bool en
 
   sqlite3 *src = nullptr;
   // SQLITE_OPEN_CREATE is required so ATTACH can create the migration target file.
-  if (sqlite3_open_v2(path.string().c_str(), &src, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK) {
+  if (sqlite3_open_v2(path.string().c_str(), &src, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) !=
+      SQLITE_OK) {
     std::string err = src ? sqlite3_errmsg(src) : "failed to open database";
     if (src) sqlite3_close_v2(src);
     return std::unexpected(err);

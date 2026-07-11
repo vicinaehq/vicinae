@@ -66,7 +66,8 @@ void FileService::loadRecentFiles() {
     }
   }
 
-  if (const auto error = glz::read_file_json(m_recentFiles, m_recentFilesPath.string(), m_recentFilesBuffer)) {
+  if (const auto error =
+          glz::read_file_json(m_recentFiles, m_recentFilesPath.string(), m_recentFilesBuffer)) {
     qWarning() << "Failed to read recent files state at" << m_recentFilesPath.string()
                << glz::format_error(error).c_str();
     m_recentFiles.clear();

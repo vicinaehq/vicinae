@@ -36,7 +36,9 @@ void SystemRunViewHost::refresh(const QString &text) {
 #ifdef Q_OS_WIN
   std::vector<std::string> parsed;
   std::istringstream iss(str);
-  for (std::string tok; iss >> tok;) { parsed.emplace_back(std::move(tok)); }
+  for (std::string tok; iss >> tok;) {
+    parsed.emplace_back(std::move(tok));
+  }
 #else
   auto parsed = xdgpp::ExecParser("").parse(str);
 #endif

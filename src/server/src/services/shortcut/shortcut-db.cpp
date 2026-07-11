@@ -15,7 +15,8 @@ ShortcutDatabase::ShortcutDatabase(const std::filesystem::path &path) : m_path(p
   if (!fs::is_regular_file(m_path)) {
     fs::create_directories(path.parent_path());
     if (const auto result = setShortcuts({}); !result) {
-      qCritical() << "Unable to create default shortcuts file at" << m_path.string() << result.error().c_str();
+      qCritical() << "Unable to create default shortcuts file at" << m_path.string()
+                  << result.error().c_str();
     }
   }
 

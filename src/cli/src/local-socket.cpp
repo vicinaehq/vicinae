@@ -17,8 +17,7 @@ namespace cli {
 
 std::expected<LocalSocket, std::string> LocalSocket::connect(const std::string &name) {
   std::string pipe = "\\\\.\\pipe\\" + name;
-  HANDLE h =
-      CreateFileA(pipe.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+  HANDLE h = CreateFileA(pipe.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
 
   if (h == INVALID_HANDLE_VALUE)
     return std::unexpected(std::format("Failed to connect to {}: error {}", pipe, GetLastError()));

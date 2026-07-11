@@ -43,8 +43,8 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   }
 
   if (auto cmd = dynamic_cast<ExtensionCommand *>(m_command.get())) {
-    auto copyLocation =
-        new CopyToClipboardAction(Clipboard::Text(QString::fromStdString(cmd->path().string())), "Copy extension path");
+    auto copyLocation = new CopyToClipboardAction(
+        Clipboard::Text(QString::fromStdString(cmd->path().string())), "Copy extension path");
 
     extensionSection->addAction(copyLocation);
     dangerSection->addAction(new UninstallExtensionAction(cmd->extensionId()));
