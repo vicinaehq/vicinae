@@ -79,10 +79,10 @@ std::optional<ClipboardSelection> selectionFromMimeData(const QMimeData *mimeDat
     ClipboardDataOffer offer;
     offer.mimeType = "text/uri-list";
     for (const auto &url : mimeData->urls()) {
-      if (!offer.data.isEmpty()) { offer.data += ';'; }
+      if (!offer.data.isEmpty()) { offer.data += "\r\n"; }
       offer.data += url.toString().toUtf8();
     }
-    selection.offers.emplace_back(offer);
+    selection.offers.emplace_back(std::move(offer));
   }
 
   // We also want to index other formats that are not text, image, or legacy X11 target types.
