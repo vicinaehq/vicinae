@@ -4,6 +4,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "14.4" CACHE STRING "Minimum macOS version to target")
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
+if (WIN32 AND NOT MSVC)
+	message(FATAL_ERROR "Windows builds are only supported with MSVC (got '${CMAKE_CXX_COMPILER_ID}'). Use the windows-* presets or set -DCMAKE_CXX_COMPILER=cl.")
+endif()
+
 set(LIB_NAMESPACE "vicinae")
 
 if (QT_DIR)
@@ -22,7 +26,7 @@ include(Utils)
 # Viciane build configuration options
 
 option(BUILD_TESTS "Build test suites for various vicinae components" OFF)
-option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
+option(IGNORE_CCACHE "Always ignore ccache/sccache even if installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
 option(
@@ -325,6 +329,7 @@ endif()
 set(BUILD_INFO "${CXX_COMPILER_NAME} ${CMAKE_CXX_COMPILER_VERSION} - ${CMAKE_BUILD_TYPE}")
 
 find_program(CCACHE ccache)
+find_program(SCCACHE sccache)
 
 if (LTO)
 	set(BUILD_INFO "${BUILD_INFO} - LTO")
@@ -343,9 +348,18 @@ if (LTO)
 	endif()
 endif()
 
-if (CCACHE AND NOT IGNORE_CCACHE)
-	message(STATUS "ccache is installed, changing CMAKE_CXX_COMPILER_LAUNCHER")
-	set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+if (NOT IGNORE_CCACHE)
+	if (CCACHE)
+		set(COMPILER_CACHE "${CCACHE}")
+	elseif (SCCACHE)
+		set(COMPILER_CACHE "${SCCACHE}")
+	endif()
+
+	if (COMPILER_CACHE)
+		message(STATUS "Using compiler cache: ${COMPILER_CACHE}")
+		set(CMAKE_C_COMPILER_LAUNCHER "${COMPILER_CACHE}")
+		set(CMAKE_CXX_COMPILER_LAUNCHER "${COMPILER_CACHE}")
+	endif()
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
