@@ -48,16 +48,8 @@ std::vector<ZipedFile> Unzipper::listFiles() {
   return files;
 }
 
-Unzipper::Unzipper(std::string_view data) {
-  m_tmpFile = std::make_unique<QTemporaryFile>();
-  if (!m_tmpFile->open()) {
-    qCritical() << "Failed to open unzip temp file";
-    return;
-  }
-
-  m_tmpFile->write(data.data(), data.size());
-  m_tmpFile->flush();
-  m_zip = zip_open(m_tmpFile->filesystemFileName().string().c_str(), 0, 'r');
+Unzipper::Unzipper(std::string_view data) : m_data(data) {
+  m_zip = zip_stream_open(m_data.data(), m_data.size(), 0, 'r');
 }
 
 Unzipper::Unzipper(const std::filesystem::path &path) { m_zip = zip_open(path.string().c_str(), 0, 'r'); }

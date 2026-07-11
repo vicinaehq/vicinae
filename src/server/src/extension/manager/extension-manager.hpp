@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QString>
 #include "generated/manager.hpp"
+#include "extension/node-runtime/node-runtime.hpp"
 #include <QUuid>
 #include <QtCore>
 #include <cstdint>
@@ -62,14 +63,6 @@ signals:
 public:
   ExtensionManager();
 
-  /**
-   * Return the node executable used to spawn the extension manager.
-   * Self-distributed builds (VICINAE_NODE_RUNTIME_DOWNLOAD) only ever use the managed
-   * runtime downloaded on first use; other builds use the system node.
-   * VICINAE_NODE_BIN overrides everything.
-   */
-  std::optional<std::filesystem::path> nodeExecutable();
-
   void addDevelopmentSession(const QString &id);
   void removeDevelopmentSession(const QString &id);
   bool hasDevelopmentSession(const QString &id) const;
@@ -91,13 +84,10 @@ public:
   void readError();
 
 private:
-  void downloadNodeRuntime();
-  void installNodeRuntime(const std::filesystem::path &archive);
-
   QProcess m_process;
   Bus m_bus;
   manager::RpcTransport m_rpc;
   manager::Client m_client;
+  NodeRuntime m_node;
   std::unordered_set<QString> m_developmentSessions;
-  bool m_nodeDownloadStarted = false;
 };

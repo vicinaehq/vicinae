@@ -131,6 +131,8 @@ set(SRCS
 	
 	src/extension/manager/extension-manager.hpp
 	src/extension/manager/extension-manager.cpp
+	src/extension/node-runtime/node-runtime.hpp
+	src/extension/node-runtime/node-runtime.cpp
 
 	# Bookmark - Start
 	src/services/shortcut/shortcut-service.hpp

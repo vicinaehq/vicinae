@@ -1,12 +1,5 @@
 #include "extend/model-deser.hpp"
 
-#ifdef Q_OS_WIN
-
-// Windows stub; glaze variant/tuple issue: https://github.com/stephenberry/glaze/pull/2101
-ParsedRenderData parseRenderPayload(std::string_view json) { return {}; }
-
-#else
-
 #include <chrono>
 #include <string>
 #include <string_view>
@@ -1199,5 +1192,3 @@ ParsedRenderData parseRenderPayload(std::string_view json) {
 
   return result;
 }
-
-#endif

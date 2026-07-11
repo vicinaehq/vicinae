@@ -50,9 +50,7 @@ QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, const std::st
 
   auto watcher = new QFutureWatcher<bool>;
 
-  watcher->setFuture(future);
-
-  connect(watcher, &QFutureWatcher<bool>::finished, this, [this, id, cb, watcher = std::move(watcher)]() {
+  connect(watcher, &QFutureWatcher<bool>::finished, this, [this, id, cb, watcher]() {
     if (watcher->isCanceled()) return;
     auto result = watcher->result();
     if (cb) { cb(result); }
@@ -62,6 +60,8 @@ QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, const std::st
     }
     watcher->deleteLater();
   });
+
+  watcher->setFuture(future);
 
   return future;
 }

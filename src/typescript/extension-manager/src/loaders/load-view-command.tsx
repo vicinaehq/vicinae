@@ -4,6 +4,7 @@ import * as React from "react";
 import { NavigationProvider } from "../navigation-provider";
 import type * as extensionServer from "../proto/extension-manager";
 import { globalState } from "../globals";
+import { pathToFileURL } from "node:url";
 
 class ErrorBoundary extends React.Component<
 	{ children: React.ReactNode },
@@ -43,7 +44,7 @@ const App: React.FC<{ component: ComponentType; launchProps: any }> = ({
 };
 
 export default async function (data: extensionServer.LaunchEventData) {
-	const module = await import(data.entrypoint);
+	const module = await import(pathToFileURL(data.entrypoint).href);
 	const Component = module.default.default;
 	const sendRender = (views: ViewData[]) => {
 		globalState.client.UI.render(JSON.stringify({ views }));

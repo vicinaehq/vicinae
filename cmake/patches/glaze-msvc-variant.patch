@@ -1,0 +1,40 @@
+diff --git a/include/glaze/tuplet/tuple.hpp b/include/glaze/tuplet/tuple.hpp
+index 156cff0..657b53a 100644
+--- a/include/glaze/tuplet/tuple.hpp
++++ b/include/glaze/tuplet/tuple.hpp
+@@ -95,8 +95,6 @@ namespace glz
+          using base_list = type_list<Bases...>;
+          using Bases::operator[]...;
+          using Bases::decl_elem...;
+-         auto operator<=>(const type_map&) const = default;
+-         bool operator==(const type_map&) const = default;
+       };
+ 
+       template <size_t I, class T>
+@@ -111,8 +109,6 @@ namespace glz
+          constexpr decltype(auto) operator[](tag<I>) & { return (value); }
+          constexpr decltype(auto) operator[](tag<I>) const& { return (value); }
+          constexpr decltype(auto) operator[](tag<I>) && { return (std::move(*this).value); }
+-         auto operator<=>(const tuple_elem&) const = default;
+-         bool operator==(const tuple_elem&) const = default;
+          // Implements comparison for tuples containing reference types
+          constexpr auto operator<=>(const tuple_elem& other) const noexcept(noexcept(value <=> other.value))
+             requires(std::is_reference_v<T> && ordered<T>)
+@@ -213,8 +209,6 @@ namespace glz
+          return *this;
+       }*/
+ 
+-      auto operator<=>(const tuple&) const = default;
+-      bool operator==(const tuple&) const = default;
+ 
+       // Applies a function to every element of the tuple. The order is the
+       // declaration order, so first the function will be applied to element 0,
+@@ -356,8 +350,6 @@ namespace glz
+       }
+ 
+       constexpr auto& assign() noexcept { return *this; }
+-      auto operator<=>(const tuple&) const = default;
+-      bool operator==(const tuple&) const = default;
+ 
+       // Applies a function to every element of the tuple. The order is the
+       // declaration order, so first the function will be applied to element 0,

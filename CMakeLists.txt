@@ -210,6 +210,14 @@ if (APPLE)
 	# we only support apple silicon macs
 	set(_node_runtime_platform "darwin-arm64")
 	set(_node_runtime_sha256 "ef28d8fab2c0e4314522d4bb1b7173270aa3937e93b92cb7de79c112ac1fa953")
+elseif (WIN32)
+	if (CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64")
+		set(_node_runtime_platform "win-arm64")
+		set(_node_runtime_sha256 "b470fdfe3502c05151656e06d495e3f47544f2ee8b1d9c8705090f2dd5996bd0")
+	else()
+		set(_node_runtime_platform "win-x64")
+		set(_node_runtime_sha256 "7df0bc9375723f4a86b3aa1b7cc73342423d9677a8df4538aca31a049e309c29")
+	endif()
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
 	set(_node_runtime_platform "linux-arm64")
 	set(_node_runtime_sha256 "543fa39e57d4c07855939459a323f4deb9a79dd1bb45e6e99458b0f2de10db8d")
@@ -217,17 +225,24 @@ else()
 	set(_node_runtime_platform "linux-x64")
 	set(_node_runtime_sha256 "7a8cb04b4a1df4eaf432125324b81b29a088e73570a23259a8de1c65d07fc129")
 endif()
+
+if (WIN32)
+	set(_node_runtime_archive_ext "zip")
+else()
+	set(_node_runtime_archive_ext "tar.gz")
+endif()
+
 set(VICINAE_NODE_RUNTIME_SHA256 "${_node_runtime_sha256}" CACHE STRING "sha256 of the node runtime archive")
 set(VICINAE_NODE_RUNTIME_URL
-	"https://nodejs.org/dist/${VICINAE_NODE_RUNTIME_VERSION}/node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}.tar.gz"
+	"https://nodejs.org/dist/${VICINAE_NODE_RUNTIME_VERSION}/node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}.${_node_runtime_archive_ext}"
 	CACHE STRING "URL of the node runtime archive")
 set(VICINAE_NODE_RUNTIME_TAR_MEMBER
 	"node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}/bin/node")
 
-# self-distributed builds (dmg, appimage) always download the pinned runtime so
-# the node version never depends on what the host has installed; package manager
+# self-distributed builds (dmg, appimage, windows) always download the pinned runtime
+# so the node version never depends on what the host has installed; package manager
 # builds use the system node unless this is explicitly turned on
-if (APPLE OR VICINAE_PROVENANCE STREQUAL "appimage")
+if (APPLE OR WIN32 OR VICINAE_PROVENANCE STREQUAL "appimage")
 	set(_node_runtime_download_default ON)
 else()
 	set(_node_runtime_download_default OFF)
