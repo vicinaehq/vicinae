@@ -11,10 +11,8 @@ public:
   // Navigation chords are physical-Control idioms on every platform; regular shortcuts keep the swap.
 #ifdef Q_OS_MACOS
   static constexpr Qt::KeyboardModifier PHYSICAL_CTRL = Qt::MetaModifier;
-  static constexpr bool NATIVE_NAV_CHORDS = true;
 #else
   static constexpr Qt::KeyboardModifier PHYSICAL_CTRL = Qt::ControlModifier;
-  static constexpr bool NATIVE_NAV_CHORDS = false;
 #endif
 
   // "default" resolves to the platform scheme: vim-style on Linux, native keys on macOS.
@@ -37,11 +35,15 @@ public:
   static bool isDownKey(QKeyEvent *event, const std::string &keybinding) {
     switch (getMode(keybinding)) {
     case KeyBindingMode::Native:
-      return NATIVE_NAV_CHORDS && usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_N;
-    case KeyBindingMode::Vim:
-      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_J;
+#ifdef Q_OS_MACOS
+      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_N;
+#else
+      return false;
+#endif
     case KeyBindingMode::Emacs:
       return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_N;
+    case KeyBindingMode::Vim:
+      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_J;
     }
     return false;
   }
@@ -49,11 +51,15 @@ public:
   static bool isUpKey(QKeyEvent *event, const std::string &keybinding) {
     switch (getMode(keybinding)) {
     case KeyBindingMode::Native:
-      return NATIVE_NAV_CHORDS && usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_P;
-    case KeyBindingMode::Vim:
-      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_K;
+#ifdef Q_OS_MACOS
+      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_P;
+#else
+      return false;
+#endif
     case KeyBindingMode::Emacs:
       return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_P;
+    case KeyBindingMode::Vim:
+      return usesOnly(event, PHYSICAL_CTRL) && event->key() == Qt::Key_K;
     }
     return false;
   }
