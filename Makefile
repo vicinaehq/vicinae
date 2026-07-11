@@ -1,16 +1,20 @@
+# This Makefile is only for use on UNIX systems.
+# For Windows you are expected to use cmake directly and utility scripts in ./scripts
+
 BUILD_DIR						:= build
 BIN_DIR							:= build/bin
-RM								:= rm
+RM							:= rm
 TAG 							:= $(shell git describe --tags --abbrev=0)
 APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
 APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 FIGURA_CC						:= $(BIN_DIR)/figura
 SHELL							:= /bin/sh
 APPLE_BUNDLE_ID						:= com.vicinaehq.Vicinae
+PRESET_OS						:= $(if $(filter Darwin,$(shell uname -s)),macos,linux)
 
 release:
-	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR)
+	cmake --preset $(PRESET_OS)-release
+	cmake --build --preset $(PRESET_OS)-release
 .PHONY: release
 
 host-optimized:
@@ -19,13 +23,13 @@ host-optimized:
 .PHONY: optimized
 
 preview:
-	cmake -G Ninja -DENABLE_PREVIEW_FEATURES=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR)
+	cmake --preset $(PRESET_OS)-preview
+	cmake --build --preset $(PRESET_OS)-preview
 .PHONY: preview
 
 debug:
-	cmake -GNinja -DLTO=OFF -DVICINAE_NODE_RUNTIME_DOWNLOAD=ON -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR) --parallel
+	cmake --preset $(PRESET_OS)-debug
+	cmake --build --preset $(PRESET_OS)-debug
 .PHONY: debug
 
 mac-bundle:

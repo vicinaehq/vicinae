@@ -80,6 +80,14 @@
       }
     },
     {
+      "name": "preview-flags",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ENABLE_PREVIEW_FEATURES": "ON"
+      }
+    },
+    {
       "name": "linux-debug",
       "displayName": "Linux (Debug, sanitizers, tests)",
       "inherits": ["debug-flags", "linux-base"]
@@ -90,6 +98,11 @@
       "inherits": ["release-flags", "linux-base"]
     },
     {
+      "name": "linux-preview",
+      "displayName": "Linux (Release, preview features)",
+      "inherits": ["preview-flags", "linux-base"]
+    },
+    {
       "name": "macos-debug",
       "displayName": "macOS (Debug, sanitizers, tests)",
       "inherits": ["debug-flags", "macos-base"]
@@ -98,6 +111,11 @@
       "name": "macos-release",
       "displayName": "macOS (Release, LTO)",
       "inherits": ["release-flags", "macos-base"]
+    },
+    {
+      "name": "macos-preview",
+      "displayName": "macOS (Release, preview features)",
+      "inherits": ["preview-flags", "macos-base"]
     }
   ],
   "buildPresets": [
@@ -106,7 +124,9 @@
     { "name": "windows-ci", "configurePreset": "windows-ci" },
     { "name": "linux-debug", "configurePreset": "linux-debug" },
     { "name": "linux-release", "configurePreset": "linux-release" },
+    { "name": "linux-preview", "configurePreset": "linux-preview" },
     { "name": "macos-debug", "configurePreset": "macos-debug" },
-    { "name": "macos-release", "configurePreset": "macos-release" }
+    { "name": "macos-release", "configurePreset": "macos-release" },
+    { "name": "macos-preview", "configurePreset": "macos-preview" }
   ]
 }
