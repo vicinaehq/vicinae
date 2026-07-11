@@ -60,10 +60,7 @@
 	// If this is set to 'none', favicon loading is disabled and a placeholder icon will be used when a favicon is expected.
 	"favicon_service": "twenty",
 
-	// EXPERIMENTAL!
-	// Enable specific editing motions in the main search bar and during navigation.
-	// This will probably be changed in future updates.
-	// Supports: 'default' | 'emacs'
+	// Navigation scheme. Supports: 'default' | 'vim' | 'emacs'
 	"keybinding": "default",
 
 	"font": {
@@ -172,29 +169,30 @@
 	// Keybinds are serialized using a custom format.
 	// It is recommended to edit them through the settings GUI, which will write them to this file.
 	// NOTE: here, "control" remaps to the "command" (⌘) key on macOS.
+	// The default values are shown below, uncomment to override.
 	"keybinds": {
 		// common shortcuts
-		"open-search-filter": "control+P",
-		"open-settings": "control+,",
-		"toggle-action-panel": "control+K",
+		// "open-search-filter": "control+P",
+		// "open-settings": "control+,",
+		// "toggle-action-panel": "control+B", (control+K on macOS)
 
 		// used to assign shortcuts to generic actions
 		// if an extension provides a specific kind of action, it is encouraged to use shortcuts as defined here.
-		"action.copy": "control+shift+C",
-		"action.copy-name": "control+shift+.",
-		"action.copy-path": "control+shift+,",
-		"action.dangerous-remove": "control+shift+X",
-		"action.duplicate": "control+D",
-		"action.edit": "control+E",
-		"action.edit-secondary": "control+shift+E",
-		"action.move-down": "control+shift+ARROWDOWN",
-		"action.move-up": "control+shift+ARROWUP",
-		"action.new": "control+N",
-		"action.open": "control+O",
-		"action.pin": "control+shift+P",
-		"action.refresh": "control+R",
-		"action.remove": "control+X",
-		"action.save": "control+S"
+		// "action.copy": "control+shift+C",
+		// "action.copy-name": "control+shift+.",
+		// "action.copy-path": "control+shift+,",
+		// "action.dangerous-remove": "control+shift+X",
+		// "action.duplicate": "control+D",
+		// "action.edit": "control+E",
+		// "action.edit-secondary": "control+shift+E",
+		// "action.move-down": "control+shift+ARROWDOWN",
+		// "action.move-up": "control+shift+ARROWUP",
+		// "action.new": "control+N",
+		// "action.open": "control+O",
+		// "action.pin": "control+shift+P",
+		// "action.refresh": "control+R",
+		// "action.remove": "control+X",
+		// "action.save": "control+S"
 	},
 
 	// List of entrypoints that are tagged as "favorite".

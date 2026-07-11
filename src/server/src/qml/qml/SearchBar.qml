@@ -119,9 +119,9 @@ Item {
                     if (!Config.emacsMode)
                         return false;
 
-                    const ctrl = (event.modifiers & Qt.ControlModifier);
+                    const ctrl = (event.modifiers & Keyboard.physicalCtrlModifier);
                     const alt = (event.modifiers & Qt.AltModifier);
-                    const noOther = !(event.modifiers & ~(Qt.ControlModifier | Qt.AltModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier));
+                    const noOther = !(event.modifiers & ~(Keyboard.physicalCtrlModifier | Qt.AltModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier));
 
                     if (ctrl && !alt && noOther) {
                         switch (event.key) {

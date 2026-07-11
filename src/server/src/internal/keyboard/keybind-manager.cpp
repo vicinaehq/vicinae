@@ -7,7 +7,11 @@ static const std::unordered_map<Keybind, KeybindInfo> infos{
 		.name = "Toggle action panel",
 		.description = "Toggle the action panel to access and filter through the list of available actions for the currently selected item",
 		.icon = "switch",
+#ifdef Q_OS_MACOS
+		.dflt = Keyboard::Shortcut(Qt::Key_K, Qt::ControlModifier)
+#else
 		.dflt = Keyboard::Shortcut(Qt::Key_B, Qt::ControlModifier)
+#endif
 	}},
 	{Keybind::OpenSearchAccessorySelector, KeybindInfo{
 		.id = "open-search-filter", 
