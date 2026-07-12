@@ -56,6 +56,25 @@ private:
   bool m_owns = false;
 };
 
+std::wstring toLower(std::wstring s) {
+  for (auto &c : s)
+    c = static_cast<wchar_t>(::towlower(c));
+  return s;
+}
+
+QString toQString(const fs::path &p) { return QString::fromStdWString(p.wstring()); }
+
+std::optional<fs::path> envPath(const wchar_t *name) {
+  if (const wchar_t *value = _wgetenv(name); value && *value) return fs::path(value);
+  return std::nullopt;
+}
+
+std::wstring expandEnv(const std::wstring &s) {
+  wchar_t buf[1024] = {};
+  const DWORD n = ExpandEnvironmentStringsW(s.c_str(), buf, 1024);
+  return (n > 0 && n <= 1024) ? std::wstring(buf, n - 1) : s;
+}
+
 std::optional<fs::path> knownFolder(REFKNOWNFOLDERID id) {
   PWSTR raw = nullptr;
   const HRESULT hr = SHGetKnownFolderPath(id, KF_FLAG_DEFAULT, nullptr, &raw);
@@ -107,9 +126,7 @@ ShortcutInfo readShortcutInfo(const fs::path &lnk) {
         info.target = fs::path(name);
       } else if (SUCCEEDED(SHGetNameFromIDList(pidl, SIGDN_DESKTOPABSOLUTEPARSING, &name)) && name) {
         if (_wcsicmp(name, FILE_EXPLORER_CLSID) == 0) {
-          if (const wchar_t *windir = _wgetenv(L"WINDIR"); windir && *windir) {
-            info.target = fs::path(windir) / L"explorer.exe";
-          }
+          if (auto windir = envPath(L"WINDIR")) info.target = *windir / L"explorer.exe";
         }
       }
       if (name) CoTaskMemFree(name);
@@ -124,9 +141,7 @@ ShortcutInfo readShortcutInfo(const fs::path &lnk) {
 
   wchar_t dir[MAX_PATH] = {};
   if (SUCCEEDED(link->GetWorkingDirectory(dir, MAX_PATH)) && dir[0] != L'\0') {
-    wchar_t expanded[MAX_PATH] = {};
-    const DWORD n = ExpandEnvironmentStringsW(dir, expanded, MAX_PATH);
-    info.workingDirectory = QString::fromWCharArray((n > 0 && n <= MAX_PATH) ? expanded : dir);
+    info.workingDirectory = QString::fromStdWString(expandEnv(dir));
   }
 
   ComPtr<IPropertyStore> store;
@@ -161,7 +176,7 @@ QString win32AppId(const QString &program, const QString &arguments = {}, const 
     if (!arguments.isEmpty()) id += QLatin1Char(' ') + arguments.toLower();
     return id;
   }
-  return QStringLiteral("win32:") + QString::fromStdWString(shortcut.wstring()).toLower();
+  return QStringLiteral("win32:") + toQString(shortcut).toLower();
 }
 
 QString uwpAppId(const QString &aumid) { return QStringLiteral("uwp:") + aumid.toLower(); }
@@ -184,36 +199,21 @@ bool isGameLauncherUrl(const QString &url) {
 }
 
 bool looksLikeUninstaller(const fs::path &target) {
-  auto name = target.filename().wstring();
-  for (auto &c : name)
-    c = static_cast<wchar_t>(::towlower(c));
-  return name.find(L"unins") != std::wstring::npos;
+  return toLower(target.filename().wstring()).find(L"unins") != std::wstring::npos;
 }
 
 bool isMsiUninstall(const std::optional<fs::path> &target, const QString &arguments) {
   if (!target) return false;
-  auto name = target->filename().wstring();
-  for (auto &c : name)
-    c = static_cast<wchar_t>(::towlower(c));
-  return name == L"msiexec.exe" && arguments.contains(QLatin1String("/x"), Qt::CaseInsensitive);
+  return toLower(target->filename().wstring()) == L"msiexec.exe" &&
+         arguments.contains(QLatin1String("/x"), Qt::CaseInsensitive);
 }
 
-std::wstring lowerExtension(const fs::path &p) {
-  auto ext = p.extension().wstring();
-  for (auto &c : ext)
-    c = static_cast<wchar_t>(::towlower(c));
-  return ext;
-}
+std::wstring lowerExtension(const fs::path &p) { return toLower(p.extension().wstring()); }
 
 bool isUnderDirectory(const fs::path &p, const fs::path &dir) {
-  std::wstring a = p.wstring();
-  std::wstring b = dir.wstring();
-  for (auto &c : a)
-    c = static_cast<wchar_t>(::towlower(c));
-  for (auto &c : b)
-    c = static_cast<wchar_t>(::towlower(c));
-  if (!b.empty() && b.back() != L'\\') b += L'\\';
-  return a.starts_with(b);
+  std::wstring prefix = toLower(dir.wstring());
+  if (!prefix.empty() && prefix.back() != L'\\') prefix += L'\\';
+  return toLower(p.wstring()).starts_with(prefix);
 }
 
 QString exeFileDescription(const fs::path &exe) {
@@ -273,11 +273,7 @@ std::optional<fs::path> readAppPathValue(HKEY appPathsKey, const std::wstring &s
     if (value.size() >= 2 && value.front() == L'"' && value.back() == L'"') {
       value = value.substr(1, value.size() - 2);
     }
-    if (!value.empty()) {
-      wchar_t expanded[1024] = {};
-      const DWORD n = ExpandEnvironmentStringsW(value.c_str(), expanded, 1024);
-      result = fs::path((n > 0 && n <= 1024) ? std::wstring(expanded, n - 1) : value);
-    }
+    if (!value.empty()) result = fs::path(expandEnv(value));
   }
 
   RegCloseKey(sub);
@@ -389,38 +385,35 @@ Assoc classifyTarget(const QString &target) {
     }
   }
 
+  const fs::path path(target.toStdWString());
+
   // a dead UNC host can block for seconds
   std::error_code ec;
-  if (!target.startsWith(QLatin1String("\\\\")) &&
-      fs::is_directory(fs::path(target.toStdWString()), ec)) {
+  if (!target.startsWith(QLatin1String("\\\\")) && fs::is_directory(path, ec)) {
     return {AssocKind::Directory, L"Directory"};
   }
 
-  std::wstring ext = fs::path(target.toStdWString()).extension().wstring();
+  std::wstring ext = lowerExtension(path);
   if (ext.empty()) return {};
-  for (auto &c : ext)
-    c = static_cast<wchar_t>(::towlower(c));
   return {AssocKind::Extension, std::move(ext)};
 }
 
-QString friendlyAppName(const std::wstring &assoc) {
-  wchar_t buf[512];
-  DWORD len = 512;
-  if (SUCCEEDED(AssocQueryStringW(ASSOCF_NONE, ASSOCSTR_FRIENDLYAPPNAME, assoc.c_str(), nullptr, buf,
-                                  &len)) &&
-      len > 1) {
-    return QString::fromWCharArray(buf, len - 1);
+std::optional<std::wstring> assocQueryString(ASSOCSTR type, const std::wstring &assoc) {
+  wchar_t buf[1024];
+  DWORD len = 1024;
+  if (SUCCEEDED(AssocQueryStringW(ASSOCF_NONE, type, assoc.c_str(), nullptr, buf, &len)) && len > 1) {
+    return std::wstring(buf, len - 1);
   }
-  return {};
+  return std::nullopt;
+}
+
+QString friendlyAppName(const std::wstring &assoc) {
+  const auto name = assocQueryString(ASSOCSTR_FRIENDLYAPPNAME, assoc);
+  return name ? QString::fromStdWString(*name) : QString();
 }
 
 std::optional<fs::path> defaultHandlerExe(const std::wstring &assoc) {
-  wchar_t buf[1024];
-  DWORD len = 1024;
-  const HRESULT hr =
-      AssocQueryStringW(ASSOCF_NONE, ASSOCSTR_EXECUTABLE, assoc.c_str(), nullptr, buf, &len);
-  if (SUCCEEDED(hr) && len > 1) return fs::path(std::wstring(buf, len - 1));
-  return std::nullopt;
+  return assocQueryString(ASSOCSTR_EXECUTABLE, assoc);
 }
 
 std::vector<std::pair<fs::path, QString>> enumExtensionHandlers(const std::wstring &ext,
@@ -621,7 +614,7 @@ void WindowsAppDatabase::addShortcut(const fs::path &file) {
     if (info.target && looksLikeUninstaller(*info.target)) return;
     if (isMsiUninstall(info.target, info.arguments)) return;
     if (!info.aumid.isEmpty() && m_appsById.contains(uwpAppId(info.aumid))) return;
-    if (info.target) program = QString::fromStdWString(info.target->wstring());
+    if (info.target) program = toQString(*info.target);
   } else if (isUrl) {
     program = readUrlTarget(file);
   }
@@ -630,12 +623,12 @@ void WindowsAppDatabase::addShortcut(const fs::path &file) {
 
   WindowsApplication::Data data;
   data.id = win32AppId(program, info.arguments, info.aumid, file);
-  data.displayName = display.isEmpty() ? QString::fromStdWString(file.stem().wstring()) : display;
+  data.displayName = display.isEmpty() ? toQString(file.stem()) : display;
   data.program = program;
   data.arguments = info.arguments;
   data.workingDirectory = info.workingDirectory;
   data.path = file;
-  data.shellParsingName = QString::fromStdWString(file.wstring());
+  data.shellParsingName = toQString(file);
   data.packaged = false;
   if (isUrl) {
     if (isGameLauncherUrl(program)) {
@@ -654,7 +647,7 @@ void WindowsAppDatabase::scanWin32(const std::vector<fs::path> &paths) {
     std::error_code ec;
     if (!fs::is_directory(root, ec)) continue;
 
-    m_watchDirs.insert(QString::fromStdWString(root.wstring()));
+    m_watchDirs.insert(toQString(root));
 
     fs::recursive_directory_iterator it(root, fs::directory_options::skip_permission_denied, ec);
     const fs::recursive_directory_iterator end;
@@ -666,7 +659,7 @@ void WindowsAppDatabase::scanWin32(const std::vector<fs::path> &paths) {
         continue;
       }
       if (it->is_directory(ec)) {
-        m_watchDirs.insert(QString::fromStdWString(it->path().wstring()));
+        m_watchDirs.insert(toQString(it->path()));
       } else if (it->is_regular_file(ec)) {
         addShortcut(it->path());
       }
@@ -679,7 +672,7 @@ void WindowsAppDatabase::scanDesktop() {
     std::error_code ec;
     if (!fs::is_directory(root, ec)) continue;
 
-    m_watchDirs.insert(QString::fromStdWString(root.wstring()));
+    m_watchDirs.insert(toQString(root));
 
     fs::directory_iterator it(root, fs::directory_options::skip_permission_denied, ec);
     const fs::directory_iterator end;
@@ -696,13 +689,10 @@ void WindowsAppDatabase::scanDesktop() {
 }
 
 void WindowsAppDatabase::scanAppPaths() {
-  fs::path systemRoot;
-  if (const wchar_t *env = _wgetenv(L"SystemRoot"); env && *env) systemRoot = env;
+  const fs::path systemRoot = envPath(L"SystemRoot").value_or(fs::path());
 
   fs::path windowsApps; // packaged apps register execution aliases here; scanUwp already lists them
-  if (const wchar_t *env = _wgetenv(L"ProgramW6432"); env && *env) {
-    windowsApps = fs::path(env) / L"WindowsApps";
-  }
+  if (auto programFiles = envPath(L"ProgramW6432")) windowsApps = *programFiles / L"WindowsApps";
 
   for (const auto &exe : enumerateAppPaths()) {
     std::error_code ec;
@@ -714,12 +704,14 @@ void WindowsAppDatabase::scanAppPaths() {
     const QString description = exeFileDescription(exe);
     if (description.isEmpty()) continue;
 
+    const QString exeStr = toQString(exe);
+
     WindowsApplication::Data data;
-    data.id = win32AppId(QString::fromStdWString(exe.wstring()));
+    data.id = win32AppId(exeStr);
     data.displayName = description;
-    data.program = QString::fromStdWString(exe.wstring());
+    data.program = exeStr;
     data.path = exe;
-    data.shellParsingName = QString::fromStdWString(exe.wstring());
+    data.shellParsingName = exeStr;
     data.packaged = false;
 
     addApp(std::make_shared<WindowsApplication>(std::move(data)));
@@ -870,8 +862,7 @@ bool WindowsAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdli
   if (cmdline.empty()) return false;
 
   // cmd.exe is always present and gives us /k (hold) vs /c plus a working directory.
-  std::wstring comspec = L"cmd.exe";
-  if (const wchar_t *env = _wgetenv(L"ComSpec"); env && *env) comspec = env;
+  const fs::path comspec = envPath(L"ComSpec").value_or(L"cmd.exe");
 
   std::wstring inner;
   if (opts.title) inner += L"title " + cmdEscape(opts.title->toStdWString()) + L" & ";
@@ -892,7 +883,7 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::resolveExecutable(const fs::path 
                                                                 const QString &openerExtension) const {
   // registry handler paths can contain doubled separators
   const fs::path normalized = exe.lexically_normal();
-  const auto it = m_appsById.find(win32AppId(QString::fromStdWString(normalized.wstring())));
+  const auto it = m_appsById.find(win32AppId(toQString(normalized)));
   if (it != m_appsById.end()) return it->second;
   return appForExecutable(normalized, name, openerExtension);
 }
@@ -900,11 +891,11 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::resolveExecutable(const fs::path 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::appForExecutable(const fs::path &exe,
                                                                const QString &name,
                                                                const QString &openerExtension) const {
-  const QString exeStr = QString::fromStdWString(exe.wstring());
+  const QString exeStr = toQString(exe);
 
   WindowsApplication::Data data;
   data.id = win32AppId(exeStr);
-  data.displayName = name.isEmpty() ? QString::fromStdWString(exe.stem().wstring()) : name;
+  data.displayName = name.isEmpty() ? toQString(exe.stem()) : name;
   data.program = exeStr;
   data.path = exe;
   data.shellParsingName = exeStr;
@@ -942,7 +933,7 @@ std::vector<WindowsAppDatabase::AppPtr> WindowsAppDatabase::findOpeners(const Ta
   if (assoc.kind == AssocKind::Directory) {
     if (auto browser = fileBrowser()) result.emplace_back(std::move(browser));
     for (auto &[exe, display] : enumExtensionHandlers(assoc.value, ASSOC_FILTER_NONE)) {
-      auto app = resolveExecutable(exe, display, QStringLiteral("Directory"));
+      auto app = resolveExecutable(exe, display, QString::fromStdWString(assoc.value));
       const bool dup =
           std::ranges::any_of(result, [&](const AppPtr &r) { return r->id() == app->id(); });
       if (!dup) result.emplace_back(std::move(app));
@@ -985,8 +976,8 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::findByClass(const QString &) cons
 WindowsAppDatabase::AppPtr WindowsAppDatabase::fileBrowser() const {
   ScopedCom com;
   fs::path explorer;
-  if (const wchar_t *windir = _wgetenv(L"WINDIR"); windir && *windir) {
-    explorer = fs::path(windir) / L"explorer.exe";
+  if (auto windir = envPath(L"WINDIR")) {
+    explorer = *windir / L"explorer.exe";
   } else if (auto found = searchExecutable(L"explorer.exe")) {
     explorer = *found;
   } else {
@@ -1013,9 +1004,7 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::terminalEmulator() const {
   if (!defaultTerminalIsConhost()) {
     if (auto wt = searchExecutable(L"wt.exe")) return appForExecutable(*wt, QStringLiteral("Terminal"));
   }
-  fs::path comspec = L"cmd.exe";
-  if (const wchar_t *env = _wgetenv(L"ComSpec"); env && *env) comspec = env;
-  return appForExecutable(comspec, QStringLiteral("Command Prompt"));
+  return appForExecutable(envPath(L"ComSpec").value_or(L"cmd.exe"), QStringLiteral("Command Prompt"));
 }
 
 bool WindowsAppDatabase::showInFileBrowser(const fs::path &path, bool select) const {
