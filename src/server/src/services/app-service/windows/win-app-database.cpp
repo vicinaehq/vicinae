@@ -318,10 +318,10 @@ std::wstring joinArgs(const std::vector<QString> &args) {
   return out;
 }
 
-enum class AssocKind { None, Protocol, Extension };
+enum class AssocKind { None, Protocol, Extension, Directory };
 struct Assoc {
   AssocKind kind = AssocKind::None;
-  std::wstring value; // "http" for a protocol, ".txt" for an extension
+  std::wstring value; // "http" for a protocol, ".txt" for an extension, "Directory" for a folder
 };
 
 Assoc classifyTarget(const QString &target) {
@@ -338,6 +338,11 @@ Assoc classifyTarget(const QString &target) {
     if (const int colon = target.indexOf(QLatin1Char(':')); colon > 1) {
       return {AssocKind::Protocol, target.left(colon).toLower().toStdWString()};
     }
+  }
+
+  std::error_code ec;
+  if (fs::is_directory(fs::path(target.toStdWString()), ec)) {
+    return {AssocKind::Directory, L"Directory"};
   }
 
   std::wstring ext = fs::path(target.toStdWString()).extension().wstring();
@@ -367,11 +372,12 @@ std::optional<fs::path> defaultHandlerExe(const std::wstring &assoc) {
   return std::nullopt;
 }
 
-std::vector<std::pair<fs::path, QString>> enumExtensionHandlers(const std::wstring &ext) {
+std::vector<std::pair<fs::path, QString>> enumExtensionHandlers(const std::wstring &ext,
+                                                                ASSOC_FILTER filter) {
   std::vector<std::pair<fs::path, QString>> result;
 
   IEnumAssocHandlers *handlers = nullptr;
-  if (FAILED(SHAssocEnumHandlers(ext.c_str(), ASSOC_FILTER_RECOMMENDED, &handlers)) || !handlers) {
+  if (FAILED(SHAssocEnumHandlers(ext.c_str(), filter, &handlers)) || !handlers) {
     return result;
   }
 
@@ -422,8 +428,9 @@ IShellItemArray *shellItemArrayFromParsingNames(const std::vector<QString> &name
 // WindowsApps cannot be spawned directly.
 bool invokeAssocHandler(const std::wstring &ext, const QString &handlerName,
                         const std::vector<QString> &files) {
+  // NONE: "Directory" handlers are not in the recommended set; the name match keeps it exact
   IEnumAssocHandlers *handlers = nullptr;
-  if (FAILED(SHAssocEnumHandlers(ext.c_str(), ASSOC_FILTER_RECOMMENDED, &handlers)) || !handlers) {
+  if (FAILED(SHAssocEnumHandlers(ext.c_str(), ASSOC_FILTER_NONE, &handlers)) || !handlers) {
     return false;
   }
 
@@ -809,9 +816,11 @@ bool WindowsAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdli
 // executables we never scanned (packaged handlers, apps without shortcuts).
 WindowsAppDatabase::AppPtr WindowsAppDatabase::resolveExecutable(const fs::path &exe, const QString &name,
                                                                 const QString &openerExtension) const {
-  const auto it = m_appsById.find(win32AppId(QString::fromStdWString(exe.wstring())));
+  // registry handler paths can contain doubled separators, breaking id matches and icon parsing names
+  const fs::path normalized = exe.lexically_normal();
+  const auto it = m_appsById.find(win32AppId(QString::fromStdWString(normalized.wstring())));
   if (it != m_appsById.end()) return it->second;
-  return appForExecutable(exe, name, openerExtension);
+  return appForExecutable(normalized, name, openerExtension);
 }
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::appForExecutable(const fs::path &exe,
@@ -851,8 +860,18 @@ std::vector<WindowsAppDatabase::AppPtr> WindowsAppDatabase::findOpeners(const Ta
 
   if (assoc.kind == AssocKind::Extension) {
     const QString ext = QString::fromStdWString(assoc.value);
-    for (auto &[exe, display] : enumExtensionHandlers(assoc.value)) {
+    for (auto &[exe, display] : enumExtensionHandlers(assoc.value, ASSOC_FILTER_RECOMMENDED)) {
       result.emplace_back(resolveExecutable(exe, display, ext));
+    }
+  }
+
+  if (assoc.kind == AssocKind::Directory) {
+    if (auto browser = fileBrowser()) result.emplace_back(std::move(browser));
+    for (auto &[exe, display] : enumExtensionHandlers(assoc.value, ASSOC_FILTER_NONE)) {
+      auto app = resolveExecutable(exe, display, QStringLiteral("Directory"));
+      const bool dup =
+          std::ranges::any_of(result, [&](const AppPtr &r) { return r->id() == app->id(); });
+      if (!dup) result.emplace_back(std::move(app));
     }
   }
 
@@ -870,6 +889,7 @@ std::vector<WindowsAppDatabase::AppPtr> WindowsAppDatabase::findOpeners(const Ta
 WindowsAppDatabase::AppPtr WindowsAppDatabase::findDefaultOpener(const Target &target) const {
   const Assoc assoc = classifyTarget(target);
   if (assoc.kind == AssocKind::None) return nullptr;
+  if (assoc.kind == AssocKind::Directory) return fileBrowser();
 
   ScopedCom com;
   if (auto exe = defaultHandlerExe(assoc.value))
