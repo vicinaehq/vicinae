@@ -57,6 +57,13 @@ std::optional<fs::path> knownFolder(REFKNOWNFOLDERID id) {
   return result;
 }
 
+std::vector<fs::path> desktopRoots() {
+  std::vector<fs::path> roots;
+  if (auto user = knownFolder(FOLDERID_Desktop)) roots.emplace_back(std::move(*user));
+  if (auto common = knownFolder(FOLDERID_PublicDesktop)) roots.emplace_back(std::move(*common));
+  return roots;
+}
+
 struct ShortcutInfo {
   std::optional<fs::path> target; // nullopt for PIDL-backed shortcuts we cannot resolve
   QString arguments;
@@ -562,6 +569,12 @@ struct UwpPackageWatcher {
 WindowsAppDatabase::WindowsAppDatabase() {
   scan(defaultSearchPaths());
 
+  for (const auto &root : desktopRoots()) {
+    m_desktopWatcher.addPath(QString::fromStdWString(root.wstring()));
+  }
+  connect(&m_desktopWatcher, &QFileSystemWatcher::directoryChanged, this,
+          [this] { Q_EMIT changed(); });
+
   using namespace winrt::Windows::ApplicationModel;
   try {
     auto watcher = std::make_unique<UwpPackageWatcher>();
@@ -579,7 +592,7 @@ WindowsAppDatabase::WindowsAppDatabase() {
   }
 }
 
-WindowsAppDatabase::~WindowsAppDatabase() = default;
+WindowsAppDatabase::~WindowsAppDatabase() { m_uwpWatcher.reset(); }
 
 std::vector<fs::path> WindowsAppDatabase::defaultSearchPaths() const {
   std::vector<fs::path> paths;
@@ -656,11 +669,7 @@ void WindowsAppDatabase::scanWin32(const std::vector<fs::path> &paths) {
 }
 
 void WindowsAppDatabase::scanDesktop() {
-  std::vector<fs::path> roots;
-  if (auto user = knownFolder(FOLDERID_Desktop)) roots.emplace_back(std::move(*user));
-  if (auto common = knownFolder(FOLDERID_PublicDesktop)) roots.emplace_back(std::move(*common));
-
-  for (const auto &root : roots) {
+  for (const auto &root : desktopRoots()) {
     std::error_code ec;
     if (!fs::is_directory(root, ec)) continue;
 

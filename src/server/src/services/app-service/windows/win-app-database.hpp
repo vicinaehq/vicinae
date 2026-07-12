@@ -1,6 +1,7 @@
 #pragma once
 #include "services/app-service/abstract-app-db.hpp"
 #include "win-app.hpp"
+#include <QFileSystemWatcher>
 #include <QString>
 #include <memory>
 #include <unordered_map>
@@ -53,4 +54,5 @@ private:
   std::vector<std::shared_ptr<WindowsApplication>> m_apps;
   std::unordered_map<QString, std::shared_ptr<WindowsApplication>> m_appsById;
   std::unique_ptr<UwpPackageWatcher> m_uwpWatcher;
+  QFileSystemWatcher m_desktopWatcher;
 };
