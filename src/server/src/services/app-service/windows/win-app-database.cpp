@@ -15,6 +15,7 @@
 #include <initguid.h> // defines the BHID_*/PKEY_* GUIDs below in this TU
 #include <shlguid.h>
 #include <propkey.h>
+#include <wrl/client.h>
 
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -28,6 +29,7 @@
 #include <string>
 
 namespace fs = std::filesystem;
+using Microsoft::WRL::ComPtr;
 
 namespace {
 
@@ -75,68 +77,64 @@ struct ShortcutInfo {
 ShortcutInfo readShortcutInfo(const fs::path &lnk) {
   ShortcutInfo info;
 
-  IShellLinkW *link = nullptr;
+  ComPtr<IShellLinkW> link;
   if (FAILED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&link)))) {
     return info;
   }
 
-  IPersistFile *persist = nullptr;
-  if (SUCCEEDED(link->QueryInterface(IID_PPV_ARGS(&persist)))) {
-    if (SUCCEEDED(persist->Load(lnk.wstring().c_str(), STGM_READ))) {
-      wchar_t buf[MAX_PATH] = {};
-      WIN32_FIND_DATAW find = {};
-      if (SUCCEEDED(link->GetPath(buf, MAX_PATH, &find, 0)) && buf[0] != L'\0') {
-        info.target = fs::path(buf);
-      }
-
-      if (!info.target) {
-        PIDLIST_ABSOLUTE pidl = nullptr;
-        if (SUCCEEDED(link->GetIDList(&pidl)) && pidl) {
-          PWSTR name = nullptr;
-          if (SUCCEEDED(SHGetNameFromIDList(pidl, SIGDN_FILESYSPATH, &name)) && name) {
-            info.target = fs::path(name);
-          } else if (SUCCEEDED(SHGetNameFromIDList(pidl, SIGDN_DESKTOPABSOLUTEPARSING, &name)) &&
-                     name) {
-            // the File Explorer CLSID
-            if (_wcsicmp(name, L"::{52205FD8-5DFB-447D-801A-D0B52F2E83E1}") == 0) {
-              if (const wchar_t *windir = _wgetenv(L"WINDIR"); windir && *windir) {
-                info.target = fs::path(windir) / L"explorer.exe";
-              }
-            }
-          }
-          if (name) CoTaskMemFree(name);
-          CoTaskMemFree(pidl);
-        }
-      }
-
-      wchar_t args[1024] = {};
-      if (SUCCEEDED(link->GetArguments(args, 1024)) && args[0] != L'\0') {
-        info.arguments = QString::fromWCharArray(args).trimmed();
-      }
-
-      wchar_t dir[MAX_PATH] = {};
-      if (SUCCEEDED(link->GetWorkingDirectory(dir, MAX_PATH)) && dir[0] != L'\0') {
-        wchar_t expanded[MAX_PATH] = {};
-        const DWORD n = ExpandEnvironmentStringsW(dir, expanded, MAX_PATH);
-        info.workingDirectory = QString::fromWCharArray((n > 0 && n <= MAX_PATH) ? expanded : dir);
-      }
-
-      IPropertyStore *store = nullptr;
-      if (SUCCEEDED(link->QueryInterface(IID_PPV_ARGS(&store)))) {
-        PROPVARIANT value;
-        PropVariantInit(&value);
-        if (SUCCEEDED(store->GetValue(PKEY_AppUserModel_ID, &value)) && value.vt == VT_LPWSTR &&
-            value.pwszVal) {
-          info.aumid = QString::fromWCharArray(value.pwszVal);
-        }
-        PropVariantClear(&value);
-        store->Release();
-      }
-    }
-    persist->Release();
+  ComPtr<IPersistFile> persist;
+  if (FAILED(link.As(&persist)) || FAILED(persist->Load(lnk.wstring().c_str(), STGM_READ))) {
+    return info;
   }
 
-  link->Release();
+  wchar_t buf[MAX_PATH] = {};
+  WIN32_FIND_DATAW find = {};
+  if (SUCCEEDED(link->GetPath(buf, MAX_PATH, &find, 0)) && buf[0] != L'\0') {
+    info.target = fs::path(buf);
+  }
+
+  if (!info.target) {
+    PIDLIST_ABSOLUTE pidl = nullptr;
+    if (SUCCEEDED(link->GetIDList(&pidl)) && pidl) {
+      PWSTR name = nullptr;
+      if (SUCCEEDED(SHGetNameFromIDList(pidl, SIGDN_FILESYSPATH, &name)) && name) {
+        info.target = fs::path(name);
+      } else if (SUCCEEDED(SHGetNameFromIDList(pidl, SIGDN_DESKTOPABSOLUTEPARSING, &name)) && name) {
+        // the File Explorer CLSID
+        if (_wcsicmp(name, L"::{52205FD8-5DFB-447D-801A-D0B52F2E83E1}") == 0) {
+          if (const wchar_t *windir = _wgetenv(L"WINDIR"); windir && *windir) {
+            info.target = fs::path(windir) / L"explorer.exe";
+          }
+        }
+      }
+      if (name) CoTaskMemFree(name);
+      CoTaskMemFree(pidl);
+    }
+  }
+
+  wchar_t args[1024] = {};
+  if (SUCCEEDED(link->GetArguments(args, 1024)) && args[0] != L'\0') {
+    info.arguments = QString::fromWCharArray(args).trimmed();
+  }
+
+  wchar_t dir[MAX_PATH] = {};
+  if (SUCCEEDED(link->GetWorkingDirectory(dir, MAX_PATH)) && dir[0] != L'\0') {
+    wchar_t expanded[MAX_PATH] = {};
+    const DWORD n = ExpandEnvironmentStringsW(dir, expanded, MAX_PATH);
+    info.workingDirectory = QString::fromWCharArray((n > 0 && n <= MAX_PATH) ? expanded : dir);
+  }
+
+  ComPtr<IPropertyStore> store;
+  if (SUCCEEDED(link.As(&store))) {
+    PROPVARIANT value;
+    PropVariantInit(&value);
+    if (SUCCEEDED(store->GetValue(PKEY_AppUserModel_ID, &value)) && value.vt == VT_LPWSTR &&
+        value.pwszVal) {
+      info.aumid = QString::fromWCharArray(value.pwszVal);
+    }
+    PropVariantClear(&value);
+  }
+
   return info;
 }
 
@@ -415,12 +413,12 @@ std::vector<std::pair<fs::path, QString>> enumExtensionHandlers(const std::wstri
                                                                 ASSOC_FILTER filter) {
   std::vector<std::pair<fs::path, QString>> result;
 
-  IEnumAssocHandlers *handlers = nullptr;
+  ComPtr<IEnumAssocHandlers> handlers;
   if (FAILED(SHAssocEnumHandlers(ext.c_str(), filter, &handlers)) || !handlers) {
     return result;
   }
 
-  IAssocHandler *handler = nullptr;
+  ComPtr<IAssocHandler> handler;
   ULONG fetched = 0;
   while (handlers->Next(1, &handler, &fetched) == S_OK && fetched == 1) {
     LPWSTR path = nullptr;
@@ -432,28 +430,24 @@ std::vector<std::pair<fs::path, QString>> enumExtensionHandlers(const std::wstri
     }
     if (path) CoTaskMemFree(path);
     if (ui) CoTaskMemFree(ui);
-    handler->Release();
-    handler = nullptr;
   }
 
-  handlers->Release();
   return result;
 }
 
-IShellItemArray *shellItemArrayFromParsingNames(const std::vector<QString> &names) {
+ComPtr<IShellItemArray> shellItemArrayFromParsingNames(const std::vector<QString> &names) {
   std::vector<PIDLIST_ABSOLUTE> pidls;
   for (const auto &name : names) {
-    IShellItem *item = nullptr;
+    ComPtr<IShellItem> item;
     if (SUCCEEDED(SHCreateItemFromParsingName(name.toStdWString().c_str(), nullptr,
                                               IID_PPV_ARGS(&item))) &&
         item) {
       PIDLIST_ABSOLUTE pidl = nullptr;
-      if (SUCCEEDED(SHGetIDListFromObject(item, &pidl))) pidls.push_back(pidl);
-      item->Release();
+      if (SUCCEEDED(SHGetIDListFromObject(item.Get(), &pidl))) pidls.push_back(pidl);
     }
   }
 
-  IShellItemArray *array = nullptr;
+  ComPtr<IShellItemArray> array;
   if (!pidls.empty()) {
     SHCreateShellItemArrayFromIDLists(static_cast<UINT>(pidls.size()),
                                       const_cast<PCIDLIST_ABSOLUTE *>(pidls.data()), &array);
@@ -468,50 +462,42 @@ IShellItemArray *shellItemArrayFromParsingNames(const std::vector<QString> &name
 bool invokeAssocHandler(const std::wstring &ext, const QString &handlerName,
                         const std::vector<QString> &files) {
   // "Directory" handlers are not in the recommended set
-  IEnumAssocHandlers *handlers = nullptr;
+  ComPtr<IEnumAssocHandlers> handlers;
   if (FAILED(SHAssocEnumHandlers(ext.c_str(), ASSOC_FILTER_NONE, &handlers)) || !handlers) {
     return false;
   }
 
-  bool ok = false;
-  IAssocHandler *handler = nullptr;
+  ComPtr<IAssocHandler> handler;
   ULONG fetched = 0;
   while (handlers->Next(1, &handler, &fetched) == S_OK && fetched == 1) {
     LPWSTR name = nullptr;
     const bool match = SUCCEEDED(handler->GetName(&name)) && name &&
                        handlerName.compare(QString::fromWCharArray(name), Qt::CaseInsensitive) == 0;
     if (name) CoTaskMemFree(name);
+    if (!match) continue;
 
-    if (match) {
-      if (IShellItemArray *array = shellItemArrayFromParsingNames(files)) {
-        IDataObject *dataObject = nullptr;
-        if (SUCCEEDED(array->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&dataObject))) &&
-            dataObject) {
-          IAssocHandlerInvoker *invoker = nullptr;
-          if (SUCCEEDED(handler->CreateInvoker(dataObject, &invoker)) && invoker) {
-            ok = SUCCEEDED(invoker->Invoke());
-            invoker->Release();
-          }
-          dataObject->Release();
-        }
-        array->Release();
-      }
-      handler->Release();
-      break;
+    const auto array = shellItemArrayFromParsingNames(files);
+    if (!array) return false;
+
+    ComPtr<IDataObject> dataObject;
+    if (FAILED(array->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&dataObject))) ||
+        !dataObject) {
+      return false;
     }
 
-    handler->Release();
-    handler = nullptr;
+    ComPtr<IAssocHandlerInvoker> invoker;
+    if (FAILED(handler->CreateInvoker(dataObject.Get(), &invoker)) || !invoker) return false;
+
+    return SUCCEEDED(invoker->Invoke());
   }
 
-  handlers->Release();
-  return ok;
+  return false;
 }
 
 // Packaged apps never receive argv; documents and URIs are handed over through activation.
 bool activatePackaged(const std::wstring &aumid, const std::vector<QString> &files,
                       const std::vector<QString> &uris) {
-  IApplicationActivationManager *manager = nullptr;
+  ComPtr<IApplicationActivationManager> manager;
   if (FAILED(CoCreateInstance(CLSID_ApplicationActivationManager, nullptr, CLSCTX_INPROC_SERVER,
                               IID_PPV_ARGS(&manager))) ||
       !manager) {
@@ -522,19 +508,16 @@ bool activatePackaged(const std::wstring &aumid, const std::vector<QString> &fil
   DWORD pid = 0;
 
   if (!files.empty()) {
-    IShellItemArray *array = shellItemArrayFromParsingNames(files);
-    ok = array && SUCCEEDED(manager->ActivateForFile(aumid.c_str(), array, L"open", &pid));
-    if (array) array->Release();
+    const auto array = shellItemArrayFromParsingNames(files);
+    ok = array && SUCCEEDED(manager->ActivateForFile(aumid.c_str(), array.Get(), L"open", &pid));
   }
 
   // Protocol activation takes a single URI at a time.
   for (const auto &uri : uris) {
-    IShellItemArray *array = shellItemArrayFromParsingNames({uri});
-    ok = array && SUCCEEDED(manager->ActivateForProtocol(aumid.c_str(), array, &pid)) && ok;
-    if (array) array->Release();
+    const auto array = shellItemArrayFromParsingNames({uri});
+    ok = array && SUCCEEDED(manager->ActivateForProtocol(aumid.c_str(), array.Get(), &pid)) && ok;
   }
 
-  manager->Release();
   return ok;
 }
 
@@ -567,13 +550,13 @@ struct UwpPackageWatcher {
 };
 
 WindowsAppDatabase::WindowsAppDatabase() {
+  connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, [this] { Q_EMIT changed(); });
+
   scan(defaultSearchPaths());
 
-  for (const auto &root : desktopRoots()) {
-    m_desktopWatcher.addPath(QString::fromStdWString(root.wstring()));
-  }
-  connect(&m_desktopWatcher, &QFileSystemWatcher::directoryChanged, this,
-          [this] { Q_EMIT changed(); });
+  m_rescanTimer.setInterval(std::chrono::minutes(5));
+  connect(&m_rescanTimer, &QTimer::timeout, this, [this] { Q_EMIT changed(); });
+  m_rescanTimer.start();
 
   using namespace winrt::Windows::ApplicationModel;
   try {
@@ -581,7 +564,10 @@ WindowsAppDatabase::WindowsAppDatabase() {
     watcher->catalog = PackageCatalog::OpenForCurrentUser();
     // Progress events fire repeatedly; only rescan on completion. Cross-thread emit is queued.
     auto handler = [this](const auto &, const auto &args) {
-      if (args.IsComplete()) Q_EMIT changed();
+      if (args.IsComplete()) {
+        m_uwpDirty.store(true);
+        Q_EMIT changed();
+      }
     };
     watcher->installing = watcher->catalog.PackageInstalling(winrt::auto_revoke, handler);
     watcher->uninstalling = watcher->catalog.PackageUninstalling(winrt::auto_revoke, handler);
@@ -654,6 +640,8 @@ void WindowsAppDatabase::scanWin32(const std::vector<fs::path> &paths) {
     std::error_code ec;
     if (!fs::is_directory(root, ec)) continue;
 
+    m_watchDirs.insert(QString::fromStdWString(root.wstring()));
+
     fs::recursive_directory_iterator it(root, fs::directory_options::skip_permission_denied, ec);
     const fs::recursive_directory_iterator end;
     if (ec) continue;
@@ -663,7 +651,11 @@ void WindowsAppDatabase::scanWin32(const std::vector<fs::path> &paths) {
         ec.clear();
         continue;
       }
-      if (it->is_regular_file(ec)) addShortcut(it->path());
+      if (it->is_directory(ec)) {
+        m_watchDirs.insert(QString::fromStdWString(it->path().wstring()));
+      } else if (it->is_regular_file(ec)) {
+        addShortcut(it->path());
+      }
     }
   }
 }
@@ -672,6 +664,8 @@ void WindowsAppDatabase::scanDesktop() {
   for (const auto &root : desktopRoots()) {
     std::error_code ec;
     if (!fs::is_directory(root, ec)) continue;
+
+    m_watchDirs.insert(QString::fromStdWString(root.wstring()));
 
     fs::directory_iterator it(root, fs::directory_options::skip_permission_denied, ec);
     const fs::directory_iterator end;
@@ -720,6 +714,12 @@ void WindowsAppDatabase::scanAppPaths() {
 }
 
 void WindowsAppDatabase::scanUwp() {
+  if (m_uwpDirty.load()) refreshUwpCache();
+  for (const auto &app : m_uwpCache)
+    addApp(app);
+}
+
+void WindowsAppDatabase::refreshUwpCache() {
   using namespace winrt::Windows::Management::Deployment;
   using namespace winrt::Windows::ApplicationModel;
 
@@ -733,6 +733,9 @@ void WindowsAppDatabase::scanUwp() {
     qWarning() << "[win-app-db] PackageManager query failed:" << fromHString(e.message());
     return;
   }
+
+  m_uwpCache.clear();
+  m_uwpDirty.store(false);
 
   for (const auto &pkg : packages) {
     try {
@@ -765,7 +768,7 @@ void WindowsAppDatabase::scanUwp() {
         data.shellParsingName = QStringLiteral("shell:AppsFolder\\") + aumid;
         data.packaged = true;
 
-        addApp(std::make_shared<WindowsApplication>(std::move(data)));
+        m_uwpCache.push_back(std::make_shared<WindowsApplication>(std::move(data)));
       }
     } catch (const winrt::hresult_error &) {
       // skip a single bad package rather than aborting the scan
@@ -776,6 +779,7 @@ void WindowsAppDatabase::scanUwp() {
 bool WindowsAppDatabase::scan(const std::vector<fs::path> &paths) {
   m_apps.clear();
   m_appsById.clear();
+  m_watchDirs.clear();
 
   ScopedCom com;
   scanUwp(); // first: addShortcut drops shortcuts whose AUMID is already listed
@@ -783,7 +787,13 @@ bool WindowsAppDatabase::scan(const std::vector<fs::path> &paths) {
   scanDesktop();
   scanAppPaths();
 
+  installWatches();
   return !m_apps.empty();
+}
+
+void WindowsAppDatabase::installWatches() {
+  if (const QStringList old = m_watcher.directories(); !old.isEmpty()) m_watcher.removePaths(old);
+  if (!m_watchDirs.empty()) m_watcher.addPaths(QStringList(m_watchDirs.begin(), m_watchDirs.end()));
 }
 
 bool WindowsAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args) const {

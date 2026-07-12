@@ -3,8 +3,11 @@
 #include "win-app.hpp"
 #include <QFileSystemWatcher>
 #include <QString>
+#include <QTimer>
+#include <atomic>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 struct UwpPackageWatcher;
@@ -41,6 +44,8 @@ private:
   void scanDesktop();                                              // non-recursive
   void scanAppPaths();
   void scanUwp();
+  void refreshUwpCache();
+  void installWatches();
   void addShortcut(const std::filesystem::path &file);
   void addApp(std::shared_ptr<WindowsApplication> app);
 
@@ -54,5 +59,10 @@ private:
   std::vector<std::shared_ptr<WindowsApplication>> m_apps;
   std::unordered_map<QString, std::shared_ptr<WindowsApplication>> m_appsById;
   std::unique_ptr<UwpPackageWatcher> m_uwpWatcher;
-  QFileSystemWatcher m_desktopWatcher;
+  std::vector<std::shared_ptr<WindowsApplication>> m_uwpCache;
+  std::atomic<bool> m_uwpDirty = true; // set from WinRT event threads
+  std::unordered_set<QString> m_watchDirs;
+  QFileSystemWatcher m_watcher;
+  QTimer m_rescanTimer; // App Paths (registry) has no watcher
+
 };

@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <shobjidl_core.h>
+#include <wrl/client.h>
 
 #include <string>
 
@@ -68,25 +69,27 @@ QImage imageFromHBITMAP(HBITMAP bitmap) {
 QImage renderWinShellIcon(const QString &parsingName, const QSize &size) {
   if (parsingName.isEmpty() || size.isEmpty()) return {};
 
-  // Decoding-pool threads aren't COM-initialized by default.
-  const HRESULT coInit = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+  // STA required: from an MTA thread GetImage returns E_PENDING for icons not yet in the shell cache
+  const HRESULT coInit = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
   const bool ownsCom = coInit == S_OK || coInit == S_FALSE;
 
   QImage result;
 
-  IShellItemImageFactory *factory = nullptr;
-  const std::wstring wname = parsingName.toStdWString();
-  HRESULT hr = SHCreateItemFromParsingName(wname.c_str(), nullptr, IID_PPV_ARGS(&factory));
-  if (SUCCEEDED(hr) && factory) {
-    const SIZE requested{size.width(), size.height()};
-    HBITMAP bitmap = nullptr;
-    // ICONONLY: never a document thumbnail. BIGGERSIZEOK: allow upscaling for sharpness.
-    hr = factory->GetImage(requested, SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK, &bitmap);
-    if (SUCCEEDED(hr) && bitmap) {
-      result = imageFromHBITMAP(bitmap);
-      DeleteObject(bitmap);
+  // scoped so the factory is released before CoUninitialize
+  {
+    Microsoft::WRL::ComPtr<IShellItemImageFactory> factory;
+    const std::wstring wname = parsingName.toStdWString();
+    HRESULT hr = SHCreateItemFromParsingName(wname.c_str(), nullptr, IID_PPV_ARGS(&factory));
+    if (SUCCEEDED(hr) && factory) {
+      const SIZE requested{size.width(), size.height()};
+      HBITMAP bitmap = nullptr;
+      // ICONONLY: never a document thumbnail. BIGGERSIZEOK: allow upscaling for sharpness.
+      hr = factory->GetImage(requested, SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK, &bitmap);
+      if (SUCCEEDED(hr) && bitmap) {
+        result = imageFromHBITMAP(bitmap);
+        DeleteObject(bitmap);
+      }
     }
-    factory->Release();
   }
 
   if (ownsCom) CoUninitialize();
