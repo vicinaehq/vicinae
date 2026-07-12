@@ -145,7 +145,7 @@ QString win32AppId(const QString &program, const QString &arguments = {}, const 
   return QStringLiteral("win32:") + QString::fromStdWString(shortcut.wstring()).toLower();
 }
 
-QString uwpAppId(const QString &aumid) { return QStringLiteral("uwp:") + aumid; }
+QString uwpAppId(const QString &aumid) { return QStringLiteral("uwp:") + aumid.toLower(); }
 
 QString readUrlTarget(const fs::path &url) {
   wchar_t buf[2048] = {};
