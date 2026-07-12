@@ -1,5 +1,6 @@
 #include "dmenu-model.hpp"
 #include "clipboard-actions.hpp"
+#include "dmenu-output.hpp"
 #include "fuzzy/fzf.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -14,8 +15,9 @@
 void DMenuSection::setRawEntries(std::vector<std::string_view> entries) {
   m_entries = std::move(entries);
   m_filtered.clear();
-  for (auto e : m_entries) {
-    m_filtered.push_back({e, 0});
+  m_filtered.reserve(m_entries.size());
+  for (size_t i = 0; i < m_entries.size(); ++i) {
+    m_filtered.emplace_back(i, 0);
   }
   notifyChanged();
 }
@@ -25,9 +27,11 @@ void DMenuSection::setFilter(std::string_view query) {
   m_currentSearchText = QString::fromUtf8(query.data(), query.size());
 
   m_filtered.clear();
-  for (auto e : m_entries) {
+  m_filtered.reserve(m_entries.size());
+  for (size_t i = 0; i < m_entries.size(); ++i) {
+    auto const e = m_entries[i];
     int const score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(e, queryStr);
-    if (queryStr.empty() || score > 0) { m_filtered.push_back({e, score}); }
+    if (queryStr.empty() || score > 0) { m_filtered.emplace_back(i, score); }
   }
   std::ranges::stable_sort(m_filtered, std::greater{});
 }
@@ -45,7 +49,7 @@ QString DMenuSection::expandSectionName(size_t count) const {
 
 std::string_view DMenuSection::entryAt(int i) const {
   if (i < 0 || std::cmp_greater_equal(i, m_filtered.size())) return {};
-  return m_filtered[i].data;
+  return m_entries[m_filtered[i].data];
 }
 
 QString DMenuSection::itemTitle(int i) const {
@@ -87,19 +91,20 @@ std::unique_ptr<ActionPanelState> DMenuSection::actionPanel(int i) const {
   if (entry.empty()) return nullptr;
 
   auto text = QString::fromUtf8(entry.data(), entry.size());
+  auto output = formatDMenuOutput(text, m_filtered[i].data, m_outputIndex);
   auto panel = std::make_unique<ListActionPanelState>();
   auto *main = panel->createSection();
 
   main->addAction(new StaticAction("Select entry", ImageURL::builtin("save-document"),
-                                   [this, text](ApplicationContext *) { selectEntry(text); }));
+                                   [this, output](ApplicationContext *) { selectEntry(output); }));
 
   main->addAction(new StaticAction("Pass search text", ImageURL::builtin("save-document"),
                                    [this](ApplicationContext *) { selectEntry(m_currentSearchText); }));
 
   auto *selectAndCopy = new StaticAction("Select and copy entry", ImageURL::builtin("copy-clipboard"),
-                                         [this, text](ApplicationContext *ctx) {
+                                         [this, text, output](ApplicationContext *ctx) {
                                            ctx->services->clipman()->copyText(text);
-                                           selectEntry(text);
+                                           selectEntry(output);
                                          });
   selectAndCopy->setShortcut(Keybind::CopyAction);
   main->addAction(selectAndCopy);

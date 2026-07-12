@@ -12,6 +12,7 @@ public:
   void setSectionTemplate(std::string_view tpl) { m_sectionTemplate = tpl; }
   void setNoSection(bool v) { m_noSection = v; }
   void setNoQuickLook(bool v) { m_noQuickLook = v; }
+  void setOutputIndex(bool v) { m_outputIndex = v; }
   void setFilter(std::string_view query) override;
 
   QString sectionName() const override;
@@ -34,11 +35,12 @@ private:
   void selectEntry(const QString &text) const;
 
   std::vector<std::string_view> m_entries;
-  std::vector<Scored<std::string_view>> m_filtered;
+  std::vector<Scored<size_t>> m_filtered;
   std::string_view m_sectionTemplate = "Entries ({count})";
   QString m_currentSearchText;
   bool m_noSection = false;
   bool m_noQuickLook = false;
+  bool m_outputIndex = false;
 
   std::function<void(const QString &)> m_onEntryChosen;
   std::function<void(std::string_view)> m_onFileHighlighted;

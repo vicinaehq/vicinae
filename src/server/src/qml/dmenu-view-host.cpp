@@ -27,6 +27,7 @@ void DMenuViewHost::initialize() {
   if (m_data.noQuickLook) m_section.setNoQuickLook(true);
   if (m_data.noSection) m_section.setNoSection(true);
   if (m_data.sectionTitle) m_section.setSectionTemplate(*m_data.sectionTitle);
+  m_section.setOutputIndex(m_data.format.value_or("text") == "index");
   if (m_data.noFooter) setStatusBarVisiblity(false);
   if (m_data.navigationTitle) setNavigationTitle(QString::fromStdString(*m_data.navigationTitle));
 

@@ -443,6 +443,7 @@ set(SRCS
 
 	src/qml/dmenu-model.hpp
 	src/qml/dmenu-model.cpp
+	src/qml/dmenu-output.hpp
 	src/qml/dmenu-view-host.hpp
 	src/qml/dmenu-view-host.cpp
 
@@ -1155,6 +1156,7 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	target_sources(${TEST_TARGET} PRIVATE
 		src/services/calculator-service/qalculate/qalculate-backend.cpp
 		tests/calculator/qalculate-backend.cpp
+		tests/dmenu-output.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE qalculate Qt6::Concurrent)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
