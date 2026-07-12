@@ -103,15 +103,8 @@
       mkVicinaeExtension = prev.callPackage ./nix/mkVicinaeExtension.nix {};
       mkRayCastExtension = prev.callPackage ./nix/mkRayCastExtension.nix {};
     };
-    homeManagerModules.default = import ./nix/module.nix self;
 
-    nixosModules.default = {pkgs, ...}: {
-      security.wrappers.vicinae-input-server = {
-        source = "${self.packages.${pkgs.stdenv.hostPlatform.system}.default}/libexec/vicinae/vicinae-input-server";
-        capabilities = "cap_dac_override+ep";
-        owner = "root";
-        group = "root";
-      };
-    };
+    homeManagerModules.default = import ./nix/home-manager-module.nix self;
+    nixosModules.default = import ./nix/nixos-module.nix self;
   };
 }
