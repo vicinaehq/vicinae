@@ -11,6 +11,8 @@
 #include <shobjidl_core.h>
 #include <wrl/client.h>
 
+#include "utils/scoped-com.hpp"
+
 #include <string>
 
 namespace {
@@ -70,29 +72,23 @@ QImage renderWinShellIcon(const QString &parsingName, const QSize &size) {
   if (parsingName.isEmpty() || size.isEmpty()) return {};
 
   // STA required: from an MTA thread GetImage returns E_PENDING for icons not yet in the shell cache
-  const HRESULT coInit = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-  const bool ownsCom = coInit == S_OK || coInit == S_FALSE;
+  ScopedCom com;
 
   QImage result;
 
-  // scoped so the factory is released before CoUninitialize
-  {
-    Microsoft::WRL::ComPtr<IShellItemImageFactory> factory;
-    const std::wstring wname = parsingName.toStdWString();
-    HRESULT hr = SHCreateItemFromParsingName(wname.c_str(), nullptr, IID_PPV_ARGS(&factory));
-    if (SUCCEEDED(hr) && factory) {
-      const SIZE requested{size.width(), size.height()};
-      HBITMAP bitmap = nullptr;
-      // ICONONLY: never a document thumbnail. BIGGERSIZEOK: allow upscaling for sharpness.
-      hr = factory->GetImage(requested, SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK, &bitmap);
-      if (SUCCEEDED(hr) && bitmap) {
-        result = imageFromHBITMAP(bitmap);
-        DeleteObject(bitmap);
-      }
+  Microsoft::WRL::ComPtr<IShellItemImageFactory> factory;
+  const std::wstring wname = parsingName.toStdWString();
+  HRESULT hr = SHCreateItemFromParsingName(wname.c_str(), nullptr, IID_PPV_ARGS(&factory));
+  if (SUCCEEDED(hr) && factory) {
+    const SIZE requested{size.width(), size.height()};
+    HBITMAP bitmap = nullptr;
+    // ICONONLY: never a document thumbnail. BIGGERSIZEOK: allow upscaling for sharpness.
+    hr = factory->GetImage(requested, SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK, &bitmap);
+    if (SUCCEEDED(hr) && bitmap) {
+      result = imageFromHBITMAP(bitmap);
+      DeleteObject(bitmap);
     }
   }
-
-  if (ownsCom) CoUninitialize();
 
   return result;
 }

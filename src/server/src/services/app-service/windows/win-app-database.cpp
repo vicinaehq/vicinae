@@ -24,6 +24,8 @@
 #include <winrt/Windows.ApplicationModel.h>
 #include <winrt/Windows.ApplicationModel.Core.h>
 
+#include "utils/scoped-com.hpp"
+
 #include <QDebug>
 #include <array>
 #include <chrono>
@@ -38,23 +40,6 @@ constexpr const wchar_t *FILE_EXPLORER_CLSID = L"::{52205FD8-5DFB-447D-801A-D0B5
 constexpr const wchar_t *CONHOST_DELEGATION_CLSID = L"{B23D10C0-E52E-411E-9D5B-C09FDF709C7D}";
 constexpr const wchar_t *CMD_METACHARS = L"()%!^\"<>&|"; // quotes too: cmd must never enter quote mode
 constexpr auto APP_PATHS_RESCAN_INTERVAL = std::chrono::minutes(5);
-
-// Tolerates Qt's existing COM init (S_FALSE) and a foreign apartment mode (RPC_E_CHANGED_MODE).
-class ScopedCom {
-public:
-  ScopedCom() {
-    const HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-    m_owns = hr == S_OK || hr == S_FALSE;
-  }
-  ~ScopedCom() {
-    if (m_owns) CoUninitialize();
-  }
-  ScopedCom(const ScopedCom &) = delete;
-  ScopedCom &operator=(const ScopedCom &) = delete;
-
-private:
-  bool m_owns = false;
-};
 
 std::wstring toLower(std::wstring s) {
   for (auto &c : s)
