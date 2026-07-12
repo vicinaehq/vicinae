@@ -162,7 +162,7 @@ bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
   auto isDir = [](auto &&path) { return fs::is_directory(path); };
 
   for (const auto &path : paths | std::views::filter(isDir)) {
-    m_watcher->addPath(QString::fromStdString(path.string()));
+    m_watcher->addPath(QString::fromStdWString(path.wstring()));
   }
 
   return true;

@@ -701,7 +701,7 @@ elseif (WIN32)
 		src/services/app-service/windows/win-app-database.hpp
 		src/services/app-service/windows/win-app-database.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 windowsapp)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp

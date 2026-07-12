@@ -43,7 +43,10 @@ private:
   void addShortcut(const std::filesystem::path &file);
   void addApp(std::shared_ptr<WindowsApplication> app);
 
-  AppPtr appForExecutable(const std::filesystem::path &exe, const QString &name) const;
+  AppPtr appForExecutable(const std::filesystem::path &exe, const QString &name,
+                          const QString &openerExtension = {}) const;
+  AppPtr resolveExecutable(const std::filesystem::path &exe, const QString &name,
+                           const QString &openerExtension = {}) const;
 
   AppPtr makeShellOpenApp(const QString &target) const;
 
