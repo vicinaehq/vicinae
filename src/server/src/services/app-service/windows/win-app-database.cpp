@@ -163,18 +163,24 @@ QString shellDisplayName(const fs::path &file) {
   return result;
 }
 
-QString win32AppId(const QString &program, const QString &arguments = {}, const QString &aumid = {},
-                   const fs::path &shortcut = {}) {
-  if (!aumid.isEmpty()) return QStringLiteral("win32:aumid:") + aumid.toLower();
-  if (!program.isEmpty()) {
-    QString id = QStringLiteral("win32:") + program.toLower();
-    if (!arguments.isEmpty()) id += QLatin1Char(' ') + arguments.toLower();
+QString appId(const Win32ShortcutApp &app) {
+  if (!app.aumid.isEmpty()) return QStringLiteral("win32:aumid:") + app.aumid.toLower();
+  if (!app.program.isEmpty()) {
+    QString id = QStringLiteral("win32:") + app.program.toLower();
+    if (!app.arguments.isEmpty()) id += QLatin1Char(' ') + app.arguments.toLower();
     return id;
   }
-  return QStringLiteral("win32:") + toQString(shortcut).toLower();
+  return QStringLiteral("win32:") + toQString(app.shortcut).toLower();
 }
 
-QString uwpAppId(const QString &aumid) { return QStringLiteral("uwp:") + aumid.toLower(); }
+QString appId(const UrlShortcutApp &app) {
+  if (!app.url.isEmpty()) return QStringLiteral("win32:") + app.url.toLower();
+  return QStringLiteral("win32:") + toQString(app.shortcut).toLower();
+}
+
+QString appId(const Win32ExeApp &app) { return QStringLiteral("win32:") + toQString(app.exe).toLower(); }
+
+QString appId(const PackagedApp &app) { return QStringLiteral("uwp:") + app.aumid.toLower(); }
 
 QString readUrlTarget(const fs::path &url) {
   wchar_t buf[2048] = {};
@@ -353,24 +359,24 @@ std::wstring joinArgs(const std::vector<QString> &args) {
   return out;
 }
 
-enum class AssocKind { None, Protocol, Extension, Directory };
+enum class AssocKind { Protocol, Extension, Directory };
 struct Assoc {
-  AssocKind kind = AssocKind::None;
+  AssocKind kind;
   std::wstring value; // "http" for a protocol, ".txt" for an extension, "Directory" for a folder
 };
 
-Assoc classifyTarget(const QString &target) {
-  if (target.isEmpty()) return {};
+std::optional<Assoc> classifyTarget(const QString &target) {
+  if (target.isEmpty()) return std::nullopt;
 
   const int schemeSep = target.indexOf(QStringLiteral("://"));
   const bool driveLetter = target.size() >= 2 && target[1] == QLatin1Char(':') && target[0].isLetter();
 
   if (schemeSep > 0) {
     QString scheme = target.left(schemeSep).toLower();
-    if (scheme != QStringLiteral("file")) return {AssocKind::Protocol, scheme.toStdWString()};
+    if (scheme != QStringLiteral("file")) return Assoc{AssocKind::Protocol, scheme.toStdWString()};
   } else if (!driveLetter) {
     if (const int colon = target.indexOf(QLatin1Char(':')); colon > 1) {
-      return {AssocKind::Protocol, target.left(colon).toLower().toStdWString()};
+      return Assoc{AssocKind::Protocol, target.left(colon).toLower().toStdWString()};
     }
   }
 
@@ -379,12 +385,12 @@ Assoc classifyTarget(const QString &target) {
   // a dead UNC host can block for seconds
   std::error_code ec;
   if (!target.startsWith(QLatin1String("\\\\")) && fs::is_directory(path, ec)) {
-    return {AssocKind::Directory, L"Directory"};
+    return Assoc{AssocKind::Directory, L"Directory"};
   }
 
   std::wstring ext = lowerExtension(path);
-  if (ext.empty()) return {};
-  return {AssocKind::Extension, std::move(ext)};
+  if (ext.empty()) return std::nullopt;
+  return Assoc{AssocKind::Extension, std::move(ext)};
 }
 
 std::optional<std::wstring> assocQueryString(ASSOCSTR type, const std::wstring &assoc) {
@@ -461,8 +467,10 @@ bool invokeAssocHandler(const std::wstring &ext, const QString &handlerName,
   ULONG fetched = 0;
   while (handlers->Next(1, &handler, &fetched) == S_OK && fetched == 1) {
     LPWSTR name = nullptr;
-    const bool match = SUCCEEDED(handler->GetName(&name)) && name &&
-                       handlerName.compare(QString::fromWCharArray(name), Qt::CaseInsensitive) == 0;
+    // normalized: we store normalized paths, GetName returns the raw registry value
+    const bool match =
+        SUCCEEDED(handler->GetName(&name)) && name &&
+        handlerName.compare(toQString(fs::path(name).lexically_normal()), Qt::CaseInsensitive) == 0;
     if (name) CoTaskMemFree(name);
     if (!match) continue;
 
@@ -583,44 +591,37 @@ void WindowsAppDatabase::addApp(std::shared_ptr<WindowsApplication> app) {
 
 void WindowsAppDatabase::addShortcut(const fs::path &file) {
   const std::wstring ext = lowerExtension(file);
-  const bool isLnk = ext == L".lnk";
-  const bool isUrl = ext == L".url";
-  const bool isAppRef = ext == L".appref-ms";
-  if (!isLnk && !isUrl && !isAppRef) return;
-
+  if (ext != L".lnk" && ext != L".url" && ext != L".appref-ms") return;
   if (looksLikeUninstaller(file)) return;
 
-  ShortcutInfo info;
-  QString program;
-  if (isLnk) {
-    info = readShortcutInfo(file);
-    if (info.target && looksLikeUninstaller(*info.target)) return;
-    if (isMsiUninstall(info.target, info.arguments)) return;
-    if (!info.aumid.isEmpty() && m_appsById.contains(uwpAppId(info.aumid))) return;
-    if (info.target) program = toQString(*info.target);
-  } else if (isUrl) {
-    program = readUrlTarget(file);
+  WindowsApplication::Data data;
+
+  if (ext == L".url") {
+    UrlShortcutApp link{file, readUrlTarget(file)};
+    data.id = appId(link);
+    if (isGameLauncherUrl(link.url)) {
+      data.category = QStringLiteral("Game");
+    } else if (link.url.startsWith(QLatin1String("http://"), Qt::CaseInsensitive) ||
+               link.url.startsWith(QLatin1String("https://"), Qt::CaseInsensitive)) {
+      data.category = QStringLiteral("Link");
+    }
+    data.kind = std::move(link);
+  } else {
+    ShortcutInfo info;
+    if (ext == L".lnk") {
+      info = readShortcutInfo(file);
+      if (info.target && looksLikeUninstaller(*info.target)) return;
+      if (isMsiUninstall(info.target, info.arguments)) return;
+      if (!info.aumid.isEmpty() && m_appsById.contains(appId(PackagedApp{info.aumid}))) return;
+    }
+    const QString program = info.target ? toQString(*info.target) : QString();
+    Win32ShortcutApp shortcut{file, program, info.arguments, info.workingDirectory, info.aumid};
+    data.id = appId(shortcut);
+    data.kind = std::move(shortcut);
   }
 
   const QString display = shellDisplayName(file);
-
-  WindowsApplication::Data data;
-  data.id = win32AppId(program, info.arguments, info.aumid, file);
   data.displayName = display.isEmpty() ? toQString(file.stem()) : display;
-  data.program = program;
-  data.arguments = info.arguments;
-  data.workingDirectory = info.workingDirectory;
-  data.path = file;
-  data.shellParsingName = toQString(file);
-  data.packaged = false;
-  if (isUrl) {
-    if (isGameLauncherUrl(program)) {
-      data.category = QStringLiteral("Game");
-    } else if (program.startsWith(QLatin1String("http://"), Qt::CaseInsensitive) ||
-               program.startsWith(QLatin1String("https://"), Qt::CaseInsensitive)) {
-      data.category = QStringLiteral("Link");
-    }
-  }
 
   addApp(std::make_shared<WindowsApplication>(std::move(data)));
 }
@@ -687,15 +688,12 @@ void WindowsAppDatabase::scanAppPaths() {
     const QString description = exeFileDescription(exe);
     if (description.isEmpty()) continue;
 
-    const QString exeStr = toQString(exe);
+    Win32ExeApp exeApp{exe};
 
     WindowsApplication::Data data;
-    data.id = win32AppId(exeStr);
+    data.id = appId(exeApp);
     data.displayName = description;
-    data.program = exeStr;
-    data.path = exe;
-    data.shellParsingName = exeStr;
-    data.packaged = false;
+    data.kind = std::move(exeApp);
 
     addApp(std::make_shared<WindowsApplication>(std::move(data)));
   }
@@ -747,13 +745,12 @@ void WindowsAppDatabase::refreshUwpCache() {
         } catch (const winrt::hresult_error &) {}
         if (name.isEmpty()) continue;
 
+        PackagedApp packaged{aumid, installPath};
+
         WindowsApplication::Data data;
-        data.id = uwpAppId(aumid);
+        data.id = appId(packaged);
         data.displayName = name;
-        data.program = aumid;
-        data.path = installPath;
-        data.shellParsingName = QStringLiteral("shell:AppsFolder\\") + aumid;
-        data.packaged = true;
+        data.kind = std::move(packaged);
 
         m_uwpCache.push_back(std::make_shared<WindowsApplication>(std::move(data)));
       }
@@ -789,54 +786,67 @@ bool WindowsAppDatabase::launch(const AbstractApplication &app, const std::vecto
 
   ScopedCom com;
 
-  // only way to open a target whose default handler is a UWP app with no exe
-  if (winApp->opensViaShell()) {
-    if (args.empty()) return false;
-    bool ok = true;
-    for (const auto &target : args) {
-      qInfo() << "Shell-opening" << target;
-      ok = shellExecuteOpen(target.toStdWString()) && ok;
-    }
-    return ok;
-  }
-
-  if (winApp->isPackaged() && !args.empty()) {
-    std::vector<QString> files;
-    std::vector<QString> uris;
-    for (const auto &arg : args) {
-      (classifyTarget(arg).kind == AssocKind::Protocol ? uris : files).emplace_back(arg);
-    }
-    qInfo() << "Activating packaged app" << winApp->program() << "files" << files << "uris" << uris;
-    return activatePackaged(winApp->program().toStdWString(), files, uris);
-  }
-
-  if (!args.empty() && !winApp->openerExtension().isEmpty() &&
-      invokeAssocHandler(winApp->openerExtension().toStdWString(), winApp->program(), args)) {
-    qInfo() << "Invoked assoc handler" << winApp->program() << "with" << args;
-    return true;
-  }
-
-  const std::wstring params = joinArgs(args);
-
-  // ShellExecute ignores lpParameters for .lnk targets
-  if (!args.empty() && !winApp->program().isEmpty() &&
-      classifyTarget(winApp->program()).kind != AssocKind::Protocol) {
-    std::wstring combined = winApp->arguments().toStdWString();
-    if (!combined.empty()) combined += L' ';
-    combined += params;
-    const std::wstring workdir = winApp->workingDirectory().toStdWString();
-    qInfo() << "Launching" << winApp->program() << "args" << QString::fromStdWString(combined);
-    return shellExecuteOpen(winApp->program().toStdWString(), combined.c_str(),
-                            workdir.empty() ? nullptr : workdir.c_str());
-  }
-
-  qInfo() << "Launching" << winApp->shellParsingName() << "args" << QString::fromStdWString(params);
-  if (!shellExecuteOpen(winApp->shellParsingName().toStdWString(),
-                        params.empty() ? nullptr : params.c_str())) {
-    qWarning() << "Failed to launch" << winApp->displayName();
-    return false;
-  }
-  return true;
+  return match(
+      winApp->kind(),
+      // only way to open a target whose default handler is a UWP app with no exe
+      [&](const ShellOpenApp &) {
+        if (args.empty()) return false;
+        bool ok = true;
+        for (const auto &target : args) {
+          qInfo() << "Shell-opening" << target;
+          ok = shellExecuteOpen(target.toStdWString()) && ok;
+        }
+        return ok;
+      },
+      [&](const PackagedApp &packaged) {
+        if (args.empty()) {
+          qInfo() << "Launching" << winApp->shellParsingName();
+          return shellExecuteOpen(winApp->shellParsingName().toStdWString());
+        }
+        std::vector<QString> files;
+        std::vector<QString> uris;
+        for (const auto &arg : args) {
+          const auto assoc = classifyTarget(arg);
+          (assoc && assoc->kind == AssocKind::Protocol ? uris : files).emplace_back(arg);
+        }
+        qInfo() << "Activating packaged app" << packaged.aumid << "files" << files << "uris" << uris;
+        return activatePackaged(packaged.aumid.toStdWString(), files, uris);
+      },
+      [&](const Win32ExeApp &exe) {
+        const QString exeStr = toQString(exe.exe);
+        if (!args.empty() && !exe.openerExtension.isEmpty() &&
+            invokeAssocHandler(exe.openerExtension.toStdWString(), exeStr, args)) {
+          qInfo() << "Invoked assoc handler" << exeStr << "with" << args;
+          return true;
+        }
+        const std::wstring params = joinArgs(args);
+        qInfo() << "Launching" << exeStr << "args" << QString::fromStdWString(params);
+        return shellExecuteOpen(exe.exe.wstring(), params.empty() ? nullptr : params.c_str());
+      },
+      [&](const UrlShortcutApp &link) {
+        qInfo() << "Launching" << toQString(link.shortcut);
+        return shellExecuteOpen(link.shortcut.wstring());
+      },
+      [&](const Win32ShortcutApp &shortcut) {
+        // ShellExecute ignores lpParameters for .lnk targets
+        if (!args.empty() && !shortcut.program.isEmpty()) {
+          std::wstring combined = shortcut.arguments.toStdWString();
+          if (!combined.empty()) combined += L' ';
+          combined += joinArgs(args);
+          const std::wstring workdir = shortcut.workingDirectory.toStdWString();
+          qInfo() << "Launching" << shortcut.program << "args" << QString::fromStdWString(combined);
+          return shellExecuteOpen(shortcut.program.toStdWString(), combined.c_str(),
+                                  workdir.empty() ? nullptr : workdir.c_str());
+        }
+        const std::wstring params = joinArgs(args);
+        qInfo() << "Launching" << toQString(shortcut.shortcut) << "args"
+                << QString::fromStdWString(params);
+        if (!shellExecuteOpen(shortcut.shortcut.wstring(), params.empty() ? nullptr : params.c_str())) {
+          qWarning() << "Failed to launch" << winApp->displayName();
+          return false;
+        }
+        return true;
+      });
 }
 
 bool WindowsAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
@@ -864,56 +874,52 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::resolveExecutable(const fs::path 
                                                                  const QString &openerExtension) const {
   // registry handler paths can contain doubled separators
   const fs::path normalized = exe.lexically_normal();
-  const auto it = m_appsById.find(win32AppId(toQString(normalized)));
+  const auto it = m_appsById.find(appId(Win32ExeApp{normalized}));
   if (it != m_appsById.end()) return it->second;
   return appForExecutable(normalized, name, openerExtension);
 }
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::appForExecutable(const fs::path &exe, const QString &name,
                                                                 const QString &openerExtension) const {
-  const QString exeStr = toQString(exe);
+  Win32ExeApp exeApp{exe, openerExtension};
 
   WindowsApplication::Data data;
-  data.id = win32AppId(exeStr);
+  data.id = appId(exeApp);
   data.displayName = name.isEmpty() ? toQString(exe.stem()) : name;
-  data.program = exeStr;
-  data.path = exe;
-  data.shellParsingName = exeStr;
-  data.openerExtension = openerExtension;
-  data.packaged = false;
+  data.kind = std::move(exeApp);
   return std::make_shared<WindowsApplication>(std::move(data));
 }
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::makeShellOpenApp(const QString &target) const {
-  const Assoc assoc = classifyTarget(target);
+  const auto assoc = classifyTarget(target);
+  const QString assocValue = assoc ? QString::fromStdWString(assoc->value) : QString();
+  const QString friendly = assoc ? friendlyAppName(assoc->value) : QString();
 
   WindowsApplication::Data data;
-  const QString friendly = assoc.kind == AssocKind::None ? QString() : friendlyAppName(assoc.value);
-  data.id = QStringLiteral("shell-open:") + QString::fromStdWString(assoc.value);
+  data.id = QStringLiteral("shell-open:") + assocValue;
   data.displayName = friendly.isEmpty() ? QStringLiteral("Open") : friendly;
-  data.shellParsingName = target;
-  data.shellOpen = true;
+  data.kind = ShellOpenApp{target};
   return std::make_shared<WindowsApplication>(std::move(data));
 }
 
 std::vector<WindowsAppDatabase::AppPtr> WindowsAppDatabase::findOpeners(const Target &target) const {
-  const Assoc assoc = classifyTarget(target);
-  if (assoc.kind == AssocKind::None) return {};
+  const auto assoc = classifyTarget(target);
+  if (!assoc) return {};
 
   ScopedCom com;
   std::vector<AppPtr> result;
 
-  if (assoc.kind == AssocKind::Extension) {
-    const QString ext = QString::fromStdWString(assoc.value);
-    for (auto &[exe, display] : enumExtensionHandlers(assoc.value, ASSOC_FILTER_RECOMMENDED)) {
+  if (assoc->kind == AssocKind::Extension) {
+    const QString ext = QString::fromStdWString(assoc->value);
+    for (auto &[exe, display] : enumExtensionHandlers(assoc->value, ASSOC_FILTER_RECOMMENDED)) {
       result.emplace_back(resolveExecutable(exe, display, ext));
     }
   }
 
-  if (assoc.kind == AssocKind::Directory) {
+  if (assoc->kind == AssocKind::Directory) {
     if (auto browser = fileBrowser()) result.emplace_back(std::move(browser));
-    for (auto &[exe, display] : enumExtensionHandlers(assoc.value, ASSOC_FILTER_NONE)) {
-      auto app = resolveExecutable(exe, display, QString::fromStdWString(assoc.value));
+    for (auto &[exe, display] : enumExtensionHandlers(assoc->value, ASSOC_FILTER_NONE)) {
+      auto app = resolveExecutable(exe, display, QString::fromStdWString(assoc->value));
       const bool dup = std::ranges::any_of(result, [&](const AppPtr &r) { return r->id() == app->id(); });
       if (!dup) result.emplace_back(std::move(app));
     }
@@ -921,8 +927,8 @@ std::vector<WindowsAppDatabase::AppPtr> WindowsAppDatabase::findOpeners(const Ta
 
   // Protocols have no handler enumeration, and UWP handlers expose no exe.
   if (result.empty()) {
-    if (auto exe = defaultHandlerExe(assoc.value))
-      result.emplace_back(resolveExecutable(*exe, friendlyAppName(assoc.value)));
+    if (auto exe = defaultHandlerExe(assoc->value))
+      result.emplace_back(resolveExecutable(*exe, friendlyAppName(assoc->value)));
     else
       result.emplace_back(makeShellOpenApp(target));
   }
@@ -931,12 +937,12 @@ std::vector<WindowsAppDatabase::AppPtr> WindowsAppDatabase::findOpeners(const Ta
 }
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::findDefaultOpener(const Target &target) const {
-  const Assoc assoc = classifyTarget(target);
-  if (assoc.kind == AssocKind::None) return nullptr;
-  if (assoc.kind == AssocKind::Directory) return fileBrowser();
+  const auto assoc = classifyTarget(target);
+  if (!assoc) return nullptr;
+  if (assoc->kind == AssocKind::Directory) return fileBrowser();
 
   ScopedCom com;
-  if (auto exe = defaultHandlerExe(assoc.value)) return resolveExecutable(*exe, friendlyAppName(assoc.value));
+  if (auto exe = defaultHandlerExe(assoc->value)) return resolveExecutable(*exe, friendlyAppName(assoc->value));
   return makeShellOpenApp(target); // UWP handler: defer to the shell
 }
 
