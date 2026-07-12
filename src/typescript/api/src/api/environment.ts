@@ -6,6 +6,7 @@ import type { Wallpaper } from "./wallpaper";
 import type { WindowManagement } from "./window-management";
 
 export interface LaunchContext {
+	cwd: string;
 	[item: string]: any;
 }
 

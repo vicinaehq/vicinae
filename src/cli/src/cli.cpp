@@ -8,11 +8,32 @@
 #include "generated/version.h"
 #include "theme.hpp"
 #include "ipc-client.hpp"
+#include <filesystem>
+#include <glaze/glaze.hpp>
+#include <map>
+#include <system_error>
 #ifndef _WIN32
 #include "server.hpp"
 #endif
 
 constexpr const auto HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
+
+namespace {
+
+std::vector<std::pair<std::string, std::string>> makeLaunchContextQuery() {
+  std::error_code ec;
+  auto cwd = std::filesystem::current_path(ec);
+  if (ec) return {};
+
+  std::string json;
+  std::map<std::string, std::string> context{{"cwd", cwd.generic_string()}};
+
+  if (auto const error = glz::write_json(context, json)) { return {}; }
+
+  return {{"launchContext", std::move(json)}};
+}
+
+} // namespace
 
 class Formatter : public CLI::Formatter {
 public:
@@ -306,7 +327,7 @@ public:
   }
 
   bool run(CLI::App *) override {
-    if (const auto result = cli::IpcClient::sendDeeplink(link); !result) {
+    if (const auto result = cli::IpcClient::sendDeeplink(link, makeLaunchContextQuery()); !result) {
       std::println(std::cerr, "Failed to execute deeplink: {}", result.error());
       return false;
     }
@@ -351,7 +372,7 @@ int CommandLineApp::run(int ac, char **av) {
         std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
 
     if (hasScheme) {
-      if (auto res = cli::IpcClient::sendDeeplink(arg); !res) {
+      if (auto res = cli::IpcClient::sendDeeplink(arg, makeLaunchContextQuery()); !res) {
         std::println(std::cerr, "Deeplink execution failed: {}", res.error());
         return 1;
       }
