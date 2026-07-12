@@ -839,8 +839,7 @@ bool WindowsAppDatabase::launch(const AbstractApplication &app, const std::vecto
                                   workdir.empty() ? nullptr : workdir.c_str());
         }
         const std::wstring params = joinArgs(args);
-        qInfo() << "Launching" << toQString(shortcut.shortcut) << "args"
-                << QString::fromStdWString(params);
+        qInfo() << "Launching" << toQString(shortcut.shortcut) << "args" << QString::fromStdWString(params);
         if (!shellExecuteOpen(shortcut.shortcut.wstring(), params.empty() ? nullptr : params.c_str())) {
           qWarning() << "Failed to launch" << winApp->displayName();
           return false;
@@ -942,7 +941,8 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::findDefaultOpener(const Target &t
   if (assoc->kind == AssocKind::Directory) return fileBrowser();
 
   ScopedCom com;
-  if (auto exe = defaultHandlerExe(assoc->value)) return resolveExecutable(*exe, friendlyAppName(assoc->value));
+  if (auto exe = defaultHandlerExe(assoc->value))
+    return resolveExecutable(*exe, friendlyAppName(assoc->value));
   return makeShellOpenApp(target); // UWP handler: defer to the shell
 }
 

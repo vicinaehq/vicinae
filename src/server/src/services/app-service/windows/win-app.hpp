@@ -34,8 +34,7 @@ struct ShellOpenApp {
   QString target;
 };
 
-using WindowsAppKind =
-    std::variant<Win32ShortcutApp, UrlShortcutApp, Win32ExeApp, PackagedApp, ShellOpenApp>;
+using WindowsAppKind = std::variant<Win32ShortcutApp, UrlShortcutApp, Win32ExeApp, PackagedApp, ShellOpenApp>;
 
 class WindowsApplication : public AbstractApplication {
 public:
@@ -66,16 +65,14 @@ public:
   std::filesystem::path path() const override {
     return match(
         m_data.kind, [](const Win32ShortcutApp &s) { return s.shortcut; },
-        [](const UrlShortcutApp &u) { return u.shortcut; },
-        [](const Win32ExeApp &e) { return e.exe; },
+        [](const UrlShortcutApp &u) { return u.shortcut; }, [](const Win32ExeApp &e) { return e.exe; },
         [](const PackagedApp &p) { return p.installLocation; },
         [](const ShellOpenApp &) { return std::filesystem::path(); });
   }
 
   QString shellParsingName() const {
     return match(
-        m_data.kind,
-        [](const Win32ShortcutApp &s) { return QString::fromStdWString(s.shortcut.wstring()); },
+        m_data.kind, [](const Win32ShortcutApp &s) { return QString::fromStdWString(s.shortcut.wstring()); },
         [](const UrlShortcutApp &u) { return QString::fromStdWString(u.shortcut.wstring()); },
         [](const Win32ExeApp &e) { return QString::fromStdWString(e.exe.wstring()); },
         [](const PackagedApp &p) { return QStringLiteral("shell:AppsFolder\\") + p.aumid; },
