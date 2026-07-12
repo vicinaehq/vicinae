@@ -64,5 +64,4 @@ private:
   std::unordered_set<QString> m_watchDirs;
   QFileSystemWatcher m_watcher;
   QTimer m_rescanTimer;
-
 };

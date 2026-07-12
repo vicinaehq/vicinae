@@ -10,15 +10,15 @@ public:
   struct Data {
     QString id;
     QString displayName;
-    QString program;              // Win32: target exe. Packaged: AppUserModelID.
+    QString program; // Win32: target exe. Packaged: AppUserModelID.
     QString arguments;
     QString workingDirectory;
-    std::filesystem::path path;   // Win32: the .lnk. Packaged: install location.
-    QString shellParsingName;     // Win32: the .lnk. Packaged: shell:AppsFolder\<AUMID>.
-    QString openerExtension;      // set on openers from the assoc-handler enumeration
-    QString category;             // "Game", "Link", or empty for a regular application
+    std::filesystem::path path; // Win32: the .lnk. Packaged: install location.
+    QString shellParsingName;   // Win32: the .lnk. Packaged: shell:AppsFolder\<AUMID>.
+    QString openerExtension;    // set on openers from the assoc-handler enumeration
+    QString category;           // "Game", "Link", or empty for a regular application
     bool packaged = false;
-    bool shellOpen = false;       // opener that defers to the shell's default handler for the target
+    bool shellOpen = false; // opener that defers to the shell's default handler for the target
   };
 
   explicit WindowsApplication(Data data) : m_data(std::move(data)) {}

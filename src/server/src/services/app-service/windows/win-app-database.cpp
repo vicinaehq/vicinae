@@ -108,15 +108,11 @@ ShortcutInfo readShortcutInfo(const fs::path &lnk) {
   }
 
   ComPtr<IPersistFile> persist;
-  if (FAILED(link.As(&persist)) || FAILED(persist->Load(lnk.wstring().c_str(), STGM_READ))) {
-    return info;
-  }
+  if (FAILED(link.As(&persist)) || FAILED(persist->Load(lnk.wstring().c_str(), STGM_READ))) { return info; }
 
   wchar_t buf[MAX_PATH] = {};
   WIN32_FIND_DATAW find = {};
-  if (SUCCEEDED(link->GetPath(buf, MAX_PATH, &find, 0)) && buf[0] != L'\0') {
-    info.target = fs::path(buf);
-  }
+  if (SUCCEEDED(link->GetPath(buf, MAX_PATH, &find, 0)) && buf[0] != L'\0') { info.target = fs::path(buf); }
 
   if (!info.target) {
     PIDLIST_ABSOLUTE pidl = nullptr;
@@ -148,8 +144,7 @@ ShortcutInfo readShortcutInfo(const fs::path &lnk) {
   if (SUCCEEDED(link.As(&store))) {
     PROPVARIANT value;
     PropVariantInit(&value);
-    if (SUCCEEDED(store->GetValue(PKEY_AppUserModel_ID, &value)) && value.vt == VT_LPWSTR &&
-        value.pwszVal) {
+    if (SUCCEEDED(store->GetValue(PKEY_AppUserModel_ID, &value)) && value.vt == VT_LPWSTR && value.pwszVal) {
       info.aumid = QString::fromWCharArray(value.pwszVal);
     }
     PropVariantClear(&value);
@@ -188,14 +183,13 @@ QString readUrlTarget(const fs::path &url) {
 }
 
 bool isGameLauncherUrl(const QString &url) {
-  static constexpr std::array schemes = {"steam:",   "com.epicgames.launcher:",
-                                         "goggalaxy:", "uplay:",
-                                         "ubisoft:",  "battlenet:",
-                                         "origin:",   "link2ea:",
+  static constexpr std::array schemes = {"steam:",       "com.epicgames.launcher:",
+                                         "goggalaxy:",   "uplay:",
+                                         "ubisoft:",     "battlenet:",
+                                         "origin:",      "link2ea:",
                                          "amazon-games:"};
   const QString lower = url.toLower();
-  return std::ranges::any_of(schemes,
-                             [&](const char *s) { return lower.startsWith(QLatin1String(s)); });
+  return std::ranges::any_of(schemes, [&](const char *s) { return lower.startsWith(QLatin1String(s)); });
 }
 
 bool looksLikeUninstaller(const fs::path &target) {
@@ -231,8 +225,7 @@ QString exeFileDescription(const fs::path &exe) {
   std::vector<LangCp> translations;
   LangCp *table = nullptr;
   UINT cb = 0;
-  if (VerQueryValueW(info.data(), L"\\VarFileInfo\\Translation", reinterpret_cast<void **>(&table),
-                     &cb) &&
+  if (VerQueryValueW(info.data(), L"\\VarFileInfo\\Translation", reinterpret_cast<void **>(&table), &cb) &&
       table) {
     translations.assign(table, table + cb / sizeof(LangCp));
   }
@@ -245,8 +238,7 @@ QString exeFileDescription(const fs::path &exe) {
       swprintf_s(query, L"\\StringFileInfo\\%04x%04x\\%s", t.lang, t.codepage, field);
       wchar_t *value = nullptr;
       UINT len = 0;
-      if (VerQueryValueW(info.data(), query, reinterpret_cast<void **>(&value), &len) && value &&
-          len > 1) {
+      if (VerQueryValueW(info.data(), query, reinterpret_cast<void **>(&value), &len) && value && len > 1) {
         const QString name = QString::fromWCharArray(value).trimmed();
         if (!name.isEmpty()) return name;
       }
@@ -265,11 +257,11 @@ std::optional<fs::path> readAppPathValue(HKEY appPathsKey, const std::wstring &s
   wchar_t buf[1024] = {};
   DWORD cb = sizeof(buf);
   DWORD type = 0;
-  if (RegQueryValueExW(sub, nullptr, nullptr, &type, reinterpret_cast<LPBYTE>(buf), &cb) ==
-          ERROR_SUCCESS &&
+  if (RegQueryValueExW(sub, nullptr, nullptr, &type, reinterpret_cast<LPBYTE>(buf), &cb) == ERROR_SUCCESS &&
       (type == REG_SZ || type == REG_EXPAND_SZ)) {
     std::wstring value(buf, cb / sizeof(wchar_t));
-    while (!value.empty() && (value.back() == L'\0')) value.pop_back();
+    while (!value.empty() && (value.back() == L'\0'))
+      value.pop_back();
     if (value.size() >= 2 && value.front() == L'"' && value.back() == L'"') {
       value = value.substr(1, value.size() - 2);
     }
@@ -282,8 +274,7 @@ std::optional<fs::path> readAppPathValue(HKEY appPathsKey, const std::wstring &s
 
 std::vector<fs::path> enumerateAppPaths() {
   std::vector<fs::path> result;
-  static constexpr const wchar_t *APP_PATHS_KEY =
-      L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths";
+  static constexpr const wchar_t *APP_PATHS_KEY = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths";
 
   auto readHive = [&](HKEY root, REGSAM extraSam) {
     HKEY key = nullptr;
@@ -310,8 +301,7 @@ std::vector<fs::path> enumerateAppPaths() {
 
 bool shellExecuteOpen(const std::wstring &target, const wchar_t *params = nullptr,
                       const wchar_t *workdir = nullptr) {
-  const HINSTANCE ret =
-      ShellExecuteW(nullptr, L"open", target.c_str(), params, workdir, SW_SHOWNORMAL);
+  const HINSTANCE ret = ShellExecuteW(nullptr, L"open", target.c_str(), params, workdir, SW_SHOWNORMAL);
   return reinterpret_cast<INT_PTR>(ret) > 32;
 }
 
@@ -373,8 +363,7 @@ Assoc classifyTarget(const QString &target) {
   if (target.isEmpty()) return {};
 
   const int schemeSep = target.indexOf(QStringLiteral("://"));
-  const bool driveLetter =
-      target.size() >= 2 && target[1] == QLatin1Char(':') && target[0].isLetter();
+  const bool driveLetter = target.size() >= 2 && target[1] == QLatin1Char(':') && target[0].isLetter();
 
   if (schemeSep > 0) {
     QString scheme = target.left(schemeSep).toLower();
@@ -421,9 +410,7 @@ std::vector<std::pair<fs::path, QString>> enumExtensionHandlers(const std::wstri
   std::vector<std::pair<fs::path, QString>> result;
 
   ComPtr<IEnumAssocHandlers> handlers;
-  if (FAILED(SHAssocEnumHandlers(ext.c_str(), filter, &handlers)) || !handlers) {
-    return result;
-  }
+  if (FAILED(SHAssocEnumHandlers(ext.c_str(), filter, &handlers)) || !handlers) { return result; }
 
   ComPtr<IAssocHandler> handler;
   ULONG fetched = 0;
@@ -446,8 +433,7 @@ ComPtr<IShellItemArray> shellItemArrayFromParsingNames(const std::vector<QString
   std::vector<PIDLIST_ABSOLUTE> pidls;
   for (const auto &name : names) {
     ComPtr<IShellItem> item;
-    if (SUCCEEDED(SHCreateItemFromParsingName(name.toStdWString().c_str(), nullptr,
-                                              IID_PPV_ARGS(&item))) &&
+    if (SUCCEEDED(SHCreateItemFromParsingName(name.toStdWString().c_str(), nullptr, IID_PPV_ARGS(&item))) &&
         item) {
       PIDLIST_ABSOLUTE pidl = nullptr;
       if (SUCCEEDED(SHGetIDListFromObject(item.Get(), &pidl))) pidls.push_back(pidl);
@@ -469,9 +455,7 @@ bool invokeAssocHandler(const std::wstring &ext, const QString &handlerName,
                         const std::vector<QString> &files) {
   // "Directory" handlers are not in the recommended set
   ComPtr<IEnumAssocHandlers> handlers;
-  if (FAILED(SHAssocEnumHandlers(ext.c_str(), ASSOC_FILTER_NONE, &handlers)) || !handlers) {
-    return false;
-  }
+  if (FAILED(SHAssocEnumHandlers(ext.c_str(), ASSOC_FILTER_NONE, &handlers)) || !handlers) { return false; }
 
   ComPtr<IAssocHandler> handler;
   ULONG fetched = 0;
@@ -486,8 +470,7 @@ bool invokeAssocHandler(const std::wstring &ext, const QString &handlerName,
     if (!array) return false;
 
     ComPtr<IDataObject> dataObject;
-    if (FAILED(array->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&dataObject))) ||
-        !dataObject) {
+    if (FAILED(array->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&dataObject))) || !dataObject) {
       return false;
     }
 
@@ -530,8 +513,8 @@ bool activatePackaged(const std::wstring &aumid, const std::vector<QString> &fil
 bool defaultTerminalIsConhost() {
   wchar_t buf[64] = {};
   DWORD cb = sizeof(buf);
-  if (RegGetValueW(HKEY_CURRENT_USER, L"Console\\%%Startup", L"DelegationTerminal", RRF_RT_REG_SZ,
-                   nullptr, buf, &cb) != ERROR_SUCCESS) {
+  if (RegGetValueW(HKEY_CURRENT_USER, L"Console\\%%Startup", L"DelegationTerminal", RRF_RT_REG_SZ, nullptr,
+                   buf, &cb) != ERROR_SUCCESS) {
     return false;
   }
   return _wcsicmp(buf, CONHOST_DELEGATION_CLSID) == 0;
@@ -761,8 +744,7 @@ void WindowsAppDatabase::refreshUwpCache() {
         QString name;
         try {
           name = fromHString(entry.DisplayInfo().DisplayName());
-        } catch (const winrt::hresult_error &) {
-        }
+        } catch (const winrt::hresult_error &) {}
         if (name.isEmpty()) continue;
 
         WindowsApplication::Data data;
@@ -869,8 +851,7 @@ bool WindowsAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdli
   inner += cmdEscape(joinArgs(cmdline));
 
   const std::wstring params = (opts.hold ? L"/k " : L"/c ") + inner;
-  const std::wstring workdir =
-      opts.workingDirectory ? opts.workingDirectory->toStdWString() : std::wstring();
+  const std::wstring workdir = opts.workingDirectory ? opts.workingDirectory->toStdWString() : std::wstring();
 
   ScopedCom com;
   const HINSTANCE ret = ShellExecuteW(nullptr, L"open", comspec.c_str(), params.c_str(),
@@ -880,7 +861,7 @@ bool WindowsAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdli
 
 // prefers the scanned app for the same executable, like the XDG provider
 WindowsAppDatabase::AppPtr WindowsAppDatabase::resolveExecutable(const fs::path &exe, const QString &name,
-                                                                const QString &openerExtension) const {
+                                                                 const QString &openerExtension) const {
   // registry handler paths can contain doubled separators
   const fs::path normalized = exe.lexically_normal();
   const auto it = m_appsById.find(win32AppId(toQString(normalized)));
@@ -888,9 +869,8 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::resolveExecutable(const fs::path 
   return appForExecutable(normalized, name, openerExtension);
 }
 
-WindowsAppDatabase::AppPtr WindowsAppDatabase::appForExecutable(const fs::path &exe,
-                                                               const QString &name,
-                                                               const QString &openerExtension) const {
+WindowsAppDatabase::AppPtr WindowsAppDatabase::appForExecutable(const fs::path &exe, const QString &name,
+                                                                const QString &openerExtension) const {
   const QString exeStr = toQString(exe);
 
   WindowsApplication::Data data;
@@ -934,8 +914,7 @@ std::vector<WindowsAppDatabase::AppPtr> WindowsAppDatabase::findOpeners(const Ta
     if (auto browser = fileBrowser()) result.emplace_back(std::move(browser));
     for (auto &[exe, display] : enumExtensionHandlers(assoc.value, ASSOC_FILTER_NONE)) {
       auto app = resolveExecutable(exe, display, QString::fromStdWString(assoc.value));
-      const bool dup =
-          std::ranges::any_of(result, [&](const AppPtr &r) { return r->id() == app->id(); });
+      const bool dup = std::ranges::any_of(result, [&](const AppPtr &r) { return r->id() == app->id(); });
       if (!dup) result.emplace_back(std::move(app));
     }
   }
@@ -957,8 +936,7 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::findDefaultOpener(const Target &t
   if (assoc.kind == AssocKind::Directory) return fileBrowser();
 
   ScopedCom com;
-  if (auto exe = defaultHandlerExe(assoc.value))
-    return resolveExecutable(*exe, friendlyAppName(assoc.value));
+  if (auto exe = defaultHandlerExe(assoc.value)) return resolveExecutable(*exe, friendlyAppName(assoc.value));
   return makeShellOpenApp(target); // UWP handler: defer to the shell
 }
 
@@ -1033,8 +1011,7 @@ bool WindowsAppDatabase::openLocation(const AbstractApplication &app) const {
 }
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::locationOpener(const AbstractApplication &app) const {
-  if (const auto *winApp = dynamic_cast<const WindowsApplication *>(&app);
-      winApp && winApp->isPackaged()) {
+  if (const auto *winApp = dynamic_cast<const WindowsApplication *>(&app); winApp && winApp->isPackaged()) {
     return nullptr; // packaged apps live under the ACL-locked WindowsApps folder
   }
   return fileBrowser();
