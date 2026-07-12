@@ -69,7 +69,7 @@ QImage renderWinShellIcon(const QString &parsingName, const QSize &size) {
   if (parsingName.isEmpty() || size.isEmpty()) return {};
 
   // Decoding-pool threads aren't COM-initialized by default.
-  const HRESULT coInit = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  const HRESULT coInit = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
   const bool ownsCom = coInit == S_OK || coInit == S_FALSE;
 
   QImage result;
