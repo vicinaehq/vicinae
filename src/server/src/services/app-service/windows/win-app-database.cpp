@@ -90,7 +90,7 @@ ShortcutInfo readShortcutInfo(const fs::path &lnk) {
             info.target = fs::path(name);
           } else if (SUCCEEDED(SHGetNameFromIDList(pidl, SIGDN_DESKTOPABSOLUTEPARSING, &name)) &&
                      name) {
-            // the File Explorer CLSID; without a target exe, launch() cannot pass it arguments
+            // the File Explorer CLSID
             if (_wcsicmp(name, L"::{52205FD8-5DFB-447D-801A-D0B52F2E83E1}") == 0) {
               if (const wchar_t *windir = _wgetenv(L"WINDIR"); windir && *windir) {
                 info.target = fs::path(windir) / L"explorer.exe";
@@ -304,9 +304,39 @@ QString fromHString(const winrt::hstring &s) {
 }
 
 std::wstring quoteArg(const QString &arg) {
-  std::wstring w = arg.toStdWString();
-  if (w.find_first_of(L" \t") == std::wstring::npos) return w;
-  return L"\"" + w + L"\"";
+  const std::wstring w = arg.toStdWString();
+  if (!w.empty() && w.find_first_of(L" \t\"") == std::wstring::npos) return w;
+
+  // argv rules: backslashes are literal except before a quote
+  std::wstring out = L"\"";
+  size_t backslashes = 0;
+  for (const wchar_t c : w) {
+    if (c == L'\\') {
+      ++backslashes;
+      continue;
+    }
+    if (c == L'"') {
+      out.append(backslashes * 2 + 1, L'\\');
+    } else {
+      out.append(backslashes, L'\\');
+    }
+    backslashes = 0;
+    out += c;
+  }
+  out.append(backslashes * 2, L'\\');
+  out += L'"';
+  return out;
+}
+
+// quotes included, so cmd never enters quote mode
+std::wstring cmdEscape(const std::wstring &s) {
+  std::wstring out;
+  out.reserve(s.size());
+  for (const wchar_t c : s) {
+    if (wcschr(L"()%!^\"<>&|", c)) out += L'^';
+    out += c;
+  }
+  return out;
 }
 
 std::wstring joinArgs(const std::vector<QString> &args) {
@@ -340,8 +370,10 @@ Assoc classifyTarget(const QString &target) {
     }
   }
 
+  // a dead UNC host can block for seconds
   std::error_code ec;
-  if (fs::is_directory(fs::path(target.toStdWString()), ec)) {
+  if (!target.startsWith(QLatin1String("\\\\")) &&
+      fs::is_directory(fs::path(target.toStdWString()), ec)) {
     return {AssocKind::Directory, L"Directory"};
   }
 
@@ -428,7 +460,7 @@ IShellItemArray *shellItemArrayFromParsingNames(const std::vector<QString> &name
 // WindowsApps cannot be spawned directly.
 bool invokeAssocHandler(const std::wstring &ext, const QString &handlerName,
                         const std::vector<QString> &files) {
-  // NONE: "Directory" handlers are not in the recommended set; the name match keeps it exact
+  // "Directory" handlers are not in the recommended set
   IEnumAssocHandlers *handlers = nullptr;
   if (FAILED(SHAssocEnumHandlers(ext.c_str(), ASSOC_FILTER_NONE, &handlers)) || !handlers) {
     return false;
@@ -497,6 +529,17 @@ bool activatePackaged(const std::wstring &aumid, const std::vector<QString> &fil
 
   manager->Release();
   return ok;
+}
+
+bool defaultTerminalIsConhost() {
+  wchar_t buf[64] = {};
+  DWORD cb = sizeof(buf);
+  if (RegGetValueW(HKEY_CURRENT_USER, L"Console\\%%Startup", L"DelegationTerminal", RRF_RT_REG_SZ,
+                   nullptr, buf, &cb) != ERROR_SUCCESS) {
+    return false;
+  }
+  // the classic conhost delegation CLSID
+  return _wcsicmp(buf, L"{B23D10C0-E52E-411E-9D5B-C09FDF709C7D}") == 0;
 }
 
 // SearchPathW also resolves App Execution Aliases such as wt.exe.
@@ -799,8 +842,8 @@ bool WindowsAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdli
   if (const wchar_t *env = _wgetenv(L"ComSpec"); env && *env) comspec = env;
 
   std::wstring inner;
-  if (opts.title) inner += L"title " + opts.title->toStdWString() + L" & ";
-  inner += joinArgs(cmdline);
+  if (opts.title) inner += L"title " + cmdEscape(opts.title->toStdWString()) + L" & ";
+  inner += cmdEscape(joinArgs(cmdline));
 
   const std::wstring params = (opts.hold ? L"/k " : L"/c ") + inner;
   const std::wstring workdir =
@@ -816,7 +859,7 @@ bool WindowsAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdli
 // executables we never scanned (packaged handlers, apps without shortcuts).
 WindowsAppDatabase::AppPtr WindowsAppDatabase::resolveExecutable(const fs::path &exe, const QString &name,
                                                                 const QString &openerExtension) const {
-  // registry handler paths can contain doubled separators, breaking id matches and icon parsing names
+  // registry handler paths can contain doubled separators
   const fs::path normalized = exe.lexically_normal();
   const auto it = m_appsById.find(win32AppId(QString::fromStdWString(normalized.wstring())));
   if (it != m_appsById.end()) return it->second;
@@ -936,7 +979,9 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::webBrowser() const {
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::terminalEmulator() const {
   ScopedCom com;
-  if (auto wt = searchExecutable(L"wt.exe")) return appForExecutable(*wt, QStringLiteral("Terminal"));
+  if (!defaultTerminalIsConhost()) {
+    if (auto wt = searchExecutable(L"wt.exe")) return appForExecutable(*wt, QStringLiteral("Terminal"));
+  }
   fs::path comspec = L"cmd.exe";
   if (const wchar_t *env = _wgetenv(L"ComSpec"); env && *env) comspec = env;
   return appForExecutable(comspec, QStringLiteral("Command Prompt"));
