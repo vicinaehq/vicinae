@@ -1,6 +1,7 @@
 .cache
 /build
-/build-release
+/build-*
+.vscode
 CMakeUserPresets.json
 .tmp
 extension-manager/runtime/node_modules

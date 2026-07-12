@@ -3,7 +3,9 @@ vicinae is a multi purpose launcher built with QtQuick. This file focuses on exp
 It uses QML for presentation and C++ for business logic.
 React/Typescript is used to power the extension API.
 
-Build debug: `make debug`.
+For development: 
+- On UNIXes, use `make debug`.
+- On Windows use `cmake --preset windows-relwithdebinfo` (full debug builds only when needed)
 
 ## Separation of concerns
 
