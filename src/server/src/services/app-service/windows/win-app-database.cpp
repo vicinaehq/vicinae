@@ -26,12 +26,18 @@
 
 #include <QDebug>
 #include <array>
+#include <chrono>
 #include <string>
 
 namespace fs = std::filesystem;
 using Microsoft::WRL::ComPtr;
 
 namespace {
+
+constexpr const wchar_t *FILE_EXPLORER_CLSID = L"::{52205FD8-5DFB-447D-801A-D0B52F2E83E1}";
+constexpr const wchar_t *CONHOST_DELEGATION_CLSID = L"{B23D10C0-E52E-411E-9D5B-C09FDF709C7D}";
+constexpr const wchar_t *CMD_METACHARS = L"()%!^\"<>&|"; // quotes too: cmd must never enter quote mode
+constexpr auto APP_PATHS_RESCAN_INTERVAL = std::chrono::minutes(5);
 
 // Tolerates Qt's existing COM init (S_FALSE) and a foreign apartment mode (RPC_E_CHANGED_MODE).
 class ScopedCom {
@@ -67,7 +73,7 @@ std::vector<fs::path> desktopRoots() {
 }
 
 struct ShortcutInfo {
-  std::optional<fs::path> target; // nullopt for PIDL-backed shortcuts we cannot resolve
+  std::optional<fs::path> target;
   QString arguments;
   QString workingDirectory;
   QString aumid;
@@ -100,8 +106,7 @@ ShortcutInfo readShortcutInfo(const fs::path &lnk) {
       if (SUCCEEDED(SHGetNameFromIDList(pidl, SIGDN_FILESYSPATH, &name)) && name) {
         info.target = fs::path(name);
       } else if (SUCCEEDED(SHGetNameFromIDList(pidl, SIGDN_DESKTOPABSOLUTEPARSING, &name)) && name) {
-        // the File Explorer CLSID
-        if (_wcsicmp(name, L"::{52205FD8-5DFB-447D-801A-D0B52F2E83E1}") == 0) {
+        if (_wcsicmp(name, FILE_EXPLORER_CLSID) == 0) {
           if (const wchar_t *windir = _wgetenv(L"WINDIR"); windir && *windir) {
             info.target = fs::path(windir) / L"explorer.exe";
           }
@@ -138,7 +143,16 @@ ShortcutInfo readShortcutInfo(const fs::path &lnk) {
   return info;
 }
 
-// AUMID if present, else target + args, else the shortcut file itself
+QString shellDisplayName(const fs::path &file) {
+  ComPtr<IShellItem> item;
+  if (FAILED(SHCreateItemFromParsingName(file.c_str(), nullptr, IID_PPV_ARGS(&item)))) return {};
+  PWSTR name = nullptr;
+  if (FAILED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &name)) || !name) return {};
+  QString result = QString::fromWCharArray(name);
+  CoTaskMemFree(name);
+  return result;
+}
+
 QString win32AppId(const QString &program, const QString &arguments = {}, const QString &aumid = {},
                    const fs::path &shortcut = {}) {
   if (!aumid.isEmpty()) return QStringLiteral("win32:aumid:") + aumid.toLower();
@@ -222,7 +236,8 @@ QString exeFileDescription(const fs::path &exe) {
       table) {
     translations.assign(table, table + cb / sizeof(LangCp));
   }
-  translations.push_back({0x0409, 0x04B0}); // en-US Unicode, common even without a table
+  constexpr LangCp EN_US_UNICODE{0x0409, 0x04B0};
+  translations.push_back(EN_US_UNICODE);
 
   for (const wchar_t *field : {L"FileDescription", L"ProductName"}) {
     for (const auto &t : translations) {
@@ -271,12 +286,12 @@ std::optional<fs::path> readAppPathValue(HKEY appPathsKey, const std::wstring &s
 
 std::vector<fs::path> enumerateAppPaths() {
   std::vector<fs::path> result;
-  static constexpr const wchar_t *kSubKey =
+  static constexpr const wchar_t *APP_PATHS_KEY =
       L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths";
 
   auto readHive = [&](HKEY root, REGSAM extraSam) {
     HKEY key = nullptr;
-    if (RegOpenKeyExW(root, kSubKey, 0, KEY_READ | extraSam, &key) != ERROR_SUCCESS) return;
+    if (RegOpenKeyExW(root, APP_PATHS_KEY, 0, KEY_READ | extraSam, &key) != ERROR_SUCCESS) return;
 
     for (DWORD i = 0;; ++i) {
       wchar_t nameBuf[256];
@@ -333,12 +348,11 @@ std::wstring quoteArg(const QString &arg) {
   return out;
 }
 
-// quotes included, so cmd never enters quote mode
 std::wstring cmdEscape(const std::wstring &s) {
   std::wstring out;
   out.reserve(s.size());
   for (const wchar_t c : s) {
-    if (wcschr(L"()%!^\"<>&|", c)) out += L'^';
+    if (wcschr(CMD_METACHARS, c)) out += L'^';
     out += c;
   }
   return out;
@@ -457,8 +471,7 @@ ComPtr<IShellItemArray> shellItemArrayFromParsingNames(const std::vector<QString
   return array;
 }
 
-// Re-resolves the handler by name and invokes it; works for packaged handlers, whose exe under
-// WindowsApps cannot be spawned directly.
+// works for packaged handlers, whose exe cannot be spawned directly
 bool invokeAssocHandler(const std::wstring &ext, const QString &handlerName,
                         const std::vector<QString> &files) {
   // "Directory" handlers are not in the recommended set
@@ -528,8 +541,7 @@ bool defaultTerminalIsConhost() {
                    nullptr, buf, &cb) != ERROR_SUCCESS) {
     return false;
   }
-  // the classic conhost delegation CLSID
-  return _wcsicmp(buf, L"{B23D10C0-E52E-411E-9D5B-C09FDF709C7D}") == 0;
+  return _wcsicmp(buf, CONHOST_DELEGATION_CLSID) == 0;
 }
 
 // SearchPathW also resolves App Execution Aliases such as wt.exe.
@@ -554,7 +566,7 @@ WindowsAppDatabase::WindowsAppDatabase() {
 
   scan(defaultSearchPaths());
 
-  m_rescanTimer.setInterval(std::chrono::minutes(5));
+  m_rescanTimer.setInterval(APP_PATHS_RESCAN_INTERVAL);
   connect(&m_rescanTimer, &QTimer::timeout, this, [this] { Q_EMIT changed(); });
   m_rescanTimer.start();
 
@@ -562,7 +574,7 @@ WindowsAppDatabase::WindowsAppDatabase() {
   try {
     auto watcher = std::make_unique<UwpPackageWatcher>();
     watcher->catalog = PackageCatalog::OpenForCurrentUser();
-    // Progress events fire repeatedly; only rescan on completion. Cross-thread emit is queued.
+    // progress events fire repeatedly; only rescan on completion
     auto handler = [this](const auto &, const auto &args) {
       if (args.IsComplete()) {
         m_uwpDirty.store(true);
@@ -603,7 +615,7 @@ void WindowsAppDatabase::addShortcut(const fs::path &file) {
   if (looksLikeUninstaller(file)) return;
 
   ShortcutInfo info;
-  QString program; // .lnk: target exe. .url: target URL.
+  QString program;
   if (isLnk) {
     info = readShortcutInfo(file);
     if (info.target && looksLikeUninstaller(*info.target)) return;
@@ -614,9 +626,11 @@ void WindowsAppDatabase::addShortcut(const fs::path &file) {
     program = readUrlTarget(file);
   }
 
+  const QString display = shellDisplayName(file);
+
   WindowsApplication::Data data;
   data.id = win32AppId(program, info.arguments, info.aumid, file);
-  data.displayName = QString::fromStdWString(file.stem().wstring());
+  data.displayName = display.isEmpty() ? QString::fromStdWString(file.stem().wstring()) : display;
   data.program = program;
   data.arguments = info.arguments;
   data.workingDirectory = info.workingDirectory;
@@ -708,7 +722,6 @@ void WindowsAppDatabase::scanAppPaths() {
     data.shellParsingName = QString::fromStdWString(exe.wstring());
     data.packaged = false;
 
-    // Deduped by id, so this only contributes apps without a Start Menu / Desktop shortcut.
     addApp(std::make_shared<WindowsApplication>(std::move(data)));
   }
 }
@@ -874,8 +887,7 @@ bool WindowsAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdli
   return reinterpret_cast<INT_PTR>(ret) > 32;
 }
 
-// Prefers the scanned app for the same executable, like the XDG provider; synthesizes one only for
-// executables we never scanned (packaged handlers, apps without shortcuts).
+// prefers the scanned app for the same executable, like the XDG provider
 WindowsAppDatabase::AppPtr WindowsAppDatabase::resolveExecutable(const fs::path &exe, const QString &name,
                                                                 const QString &openerExtension) const {
   // registry handler paths can contain doubled separators
@@ -908,7 +920,7 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::makeShellOpenApp(const QString &t
   const QString friendly = assoc.kind == AssocKind::None ? QString() : friendlyAppName(assoc.value);
   data.id = QStringLiteral("shell-open:") + QString::fromStdWString(assoc.value);
   data.displayName = friendly.isEmpty() ? QStringLiteral("Open") : friendly;
-  data.shellParsingName = target; // icon resolves to the target's type icon
+  data.shellParsingName = target;
   data.shellOpen = true;
   return std::make_shared<WindowsApplication>(std::move(data));
 }

@@ -63,6 +63,6 @@ private:
   std::atomic<bool> m_uwpDirty = true; // set from WinRT event threads
   std::unordered_set<QString> m_watchDirs;
   QFileSystemWatcher m_watcher;
-  QTimer m_rescanTimer; // App Paths (registry) has no watcher
+  QTimer m_rescanTimer;
 
 };
