@@ -25,7 +25,8 @@ enum ImageURLType : std::uint8_t {
   MacBundle,
   FileIcon,
   FontPreview,
-  WinShellIcon
+  WinShellIcon,
+  WinStockIcon
 };
 
 static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
@@ -38,6 +39,7 @@ static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
     {"local", Local},
     {"bundle", MacBundle},
     {"win-shell", WinShellIcon},
+    {"win-stock", WinStockIcon},
     {"file-icon", FileIcon},
     {"emoji", Emoji},
     {"symbol", Symbol},
@@ -143,6 +145,7 @@ public:
   static ImageURL local(const std::filesystem::path &path);
   static ImageURL macBundle(const std::filesystem::path &bundlePath);
   static ImageURL winShellIcon(const QString &parsingName);
+  static ImageURL winStockIcon(int stockIconId); // SHSTOCKICONID
   static ImageURL http(const QUrl &httpUrl);
   static ImageURL emoji(const QString &emoji);
   static ImageURL symbol(const QString &symbol);

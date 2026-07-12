@@ -200,6 +200,10 @@ public:
   bool executePrimaryAction();
   void executeAction(AbstractAction *action);
 
+private:
+  void executeActionNow(AbstractAction *action);
+
+public:
   void setHeaderVisiblity(bool value, const BaseView *caller = nullptr);
   void setSearchVisibility(bool value, const BaseView *caller = nullptr);
   void setSearchInteractive(bool value, const BaseView *caller = nullptr);

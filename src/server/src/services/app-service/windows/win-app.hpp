@@ -41,7 +41,9 @@ public:
   struct Data {
     QString id;
     QString displayName;
+    QString fullyQualifiedName;
     QString category; // "Game", "Link", or empty
+    bool elevated = false;
     WindowsAppKind kind;
   };
 
@@ -49,10 +51,24 @@ public:
 
   QString id() const override { return m_data.id; }
   QString displayName() const override { return m_data.displayName; }
+  QString fullyQualifiedName() const override {
+    return m_data.fullyQualifiedName.isEmpty() ? m_data.displayName : m_data.fullyQualifiedName;
+  }
   bool displayable() const override { return true; }
   bool isTerminalApp() const override { return false; }
+  bool isAction() const override { return m_data.elevated; }
   QString description() const override { return {}; }
   QString category() const override { return m_data.category; }
+
+  std::vector<std::shared_ptr<AbstractApplication>> actions() const override {
+    if (m_data.elevated || !supportsElevation()) return {};
+    Data data = m_data;
+    data.id += QStringLiteral(":runas");
+    data.fullyQualifiedName = m_data.displayName + QStringLiteral(": Run as Administrator");
+    data.displayName = QStringLiteral("Run as Administrator");
+    data.elevated = true;
+    return {std::make_shared<WindowsApplication>(std::move(data))};
+  }
 
   QString program() const override {
     return match(
@@ -79,12 +95,24 @@ public:
         [](const ShellOpenApp &s) { return s.target; });
   }
 
-  ImageURL iconUrl() const override { return ImageURL::winShellIcon(shellParsingName()); }
+  ImageURL iconUrl() const override {
+    constexpr int SIID_SHIELD_ID = 77; // SIID_SHIELD
+    if (m_data.elevated) return ImageURL::winStockIcon(SIID_SHIELD_ID);
+    return ImageURL::winShellIcon(shellParsingName());
+  }
 
   const WindowsAppKind &kind() const { return m_data.kind; }
   bool isPackaged() const { return std::holds_alternative<PackagedApp>(m_data.kind); }
   bool opensViaShell() const { return std::holds_alternative<ShellOpenApp>(m_data.kind); }
+  bool elevated() const { return m_data.elevated; }
 
 private:
+  bool supportsElevation() const {
+    return match(
+        m_data.kind, [](const Win32ShortcutApp &) { return true; },
+        [](const UrlShortcutApp &) { return false; }, [](const Win32ExeApp &) { return true; },
+        [](const PackagedApp &) { return true; }, [](const ShellOpenApp &) { return false; });
+  }
+
   Data m_data;
 };

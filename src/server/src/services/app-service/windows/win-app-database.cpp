@@ -296,6 +296,13 @@ bool shellExecuteOpen(const std::wstring &target, const wchar_t *params = nullpt
   return reinterpret_cast<INT_PTR>(ret) > 32;
 }
 
+bool launchElevated(const std::wstring &target, const std::wstring &params, const std::wstring &workdir) {
+  const HINSTANCE ret =
+      ShellExecuteW(nullptr, L"runas", target.c_str(), params.empty() ? nullptr : params.c_str(),
+                    workdir.empty() ? nullptr : workdir.c_str(), SW_SHOWNORMAL);
+  return reinterpret_cast<INT_PTR>(ret) > 32;
+}
+
 QString fromHString(const winrt::hstring &s) {
   return QString::fromWCharArray(s.c_str(), static_cast<int>(s.size()));
 }
@@ -570,6 +577,9 @@ std::vector<fs::path> WindowsAppDatabase::defaultSearchPaths() const {
 
 void WindowsAppDatabase::addApp(std::shared_ptr<WindowsApplication> app) {
   if (!app || m_appsById.contains(app->id())) return;
+  for (const auto &action : app->actions()) {
+    m_appsById.emplace(action->id(), std::static_pointer_cast<WindowsApplication>(action));
+  }
   m_appsById.emplace(app->id(), app);
   m_apps.emplace_back(std::move(app));
 }
@@ -784,6 +794,10 @@ bool WindowsAppDatabase::launch(const AbstractApplication &app, const std::vecto
         return ok;
       },
       [&](const PackagedApp &packaged) {
+        if (winApp->elevated()) {
+          qInfo() << "Launching elevated" << winApp->shellParsingName();
+          return launchElevated(winApp->shellParsingName().toStdWString(), {}, {});
+        }
         if (args.empty()) {
           qInfo() << "Launching" << winApp->shellParsingName();
           return shellExecuteOpen(winApp->shellParsingName().toStdWString());
@@ -799,6 +813,10 @@ bool WindowsAppDatabase::launch(const AbstractApplication &app, const std::vecto
       },
       [&](const Win32ExeApp &exe) {
         const QString exeStr = toQString(exe.exe);
+        if (winApp->elevated()) {
+          qInfo() << "Launching elevated" << exeStr;
+          return launchElevated(exe.exe.wstring(), joinArgs(args), {});
+        }
         if (!args.empty() && !exe.openerExtension.isEmpty() &&
             invokeAssocHandler(exe.openerExtension.toStdWString(), exeStr, args)) {
           qInfo() << "Invoked assoc handler" << exeStr << "with" << args;
@@ -814,14 +832,23 @@ bool WindowsAppDatabase::launch(const AbstractApplication &app, const std::vecto
       },
       [&](const Win32ShortcutApp &shortcut) {
         // ShellExecute ignores lpParameters for .lnk targets
-        if (!args.empty() && !shortcut.program.isEmpty()) {
+        if (!shortcut.program.isEmpty() && (!args.empty() || winApp->elevated())) {
           std::wstring combined = shortcut.arguments.toStdWString();
-          if (!combined.empty()) combined += L' ';
-          combined += joinArgs(args);
+          if (const std::wstring extra = joinArgs(args); !extra.empty()) {
+            if (!combined.empty()) combined += L' ';
+            combined += extra;
+          }
           const std::wstring workdir = shortcut.workingDirectory.toStdWString();
           qInfo() << "Launching" << shortcut.program << "args" << QString::fromStdWString(combined);
+          if (winApp->elevated()) {
+            return launchElevated(shortcut.program.toStdWString(), combined, workdir);
+          }
           return shellExecuteOpen(shortcut.program.toStdWString(), combined.c_str(),
                                   workdir.empty() ? nullptr : workdir.c_str());
+        }
+        if (winApp->elevated()) {
+          qInfo() << "Launching elevated" << toQString(shortcut.shortcut);
+          return launchElevated(shortcut.shortcut.wstring(), {}, {});
         }
         const std::wstring params = joinArgs(args);
         qInfo() << "Launching" << toQString(shortcut.shortcut) << "args" << QString::fromStdWString(params);

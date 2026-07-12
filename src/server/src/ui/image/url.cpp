@@ -279,6 +279,15 @@ ImageURL ImageURL::winShellIcon(const QString &parsingName) {
   return url;
 }
 
+ImageURL ImageURL::winStockIcon(int stockIconId) {
+  ImageURL url;
+
+  url.setType(ImageURLType::WinStockIcon);
+  url.setName(QString::number(stockIconId));
+
+  return url;
+}
+
 ImageURL ImageURL::http(const QUrl &httpUrl) {
   ImageURL url;
 

@@ -8,11 +8,13 @@
 #endif
 #include <windows.h>
 #include <shlobj.h>
+#include <shellapi.h>
 #include <shobjidl_core.h>
 #include <wrl/client.h>
 
 #include "utils/scoped-com.hpp"
 
+#include <algorithm>
 #include <string>
 
 namespace {
@@ -90,5 +92,23 @@ QImage renderWinShellIcon(const QString &parsingName, const QSize &size) {
     }
   }
 
+  return result;
+}
+
+QImage renderWinStockIcon(int stockIconId, const QSize &size) {
+  if (size.isEmpty()) return {};
+
+  SHSTOCKICONINFO info{};
+  info.cbSize = sizeof(info);
+  if (FAILED(SHGetStockIconInfo(static_cast<SHSTOCKICONID>(stockIconId), SHGSI_ICONLOCATION, &info))) {
+    return {};
+  }
+
+  const UINT dim = static_cast<UINT>(std::max(size.width(), size.height()));
+  HICON icon = nullptr;
+  if (FAILED(SHDefExtractIconW(info.szPath, info.iIcon, 0, &icon, nullptr, dim)) || !icon) return {};
+
+  QImage result = QImage::fromHICON(icon);
+  DestroyIcon(icon);
   return result;
 }
