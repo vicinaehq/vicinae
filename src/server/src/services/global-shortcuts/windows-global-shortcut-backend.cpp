@@ -92,7 +92,8 @@ bool WindowsGlobalShortcutBackend::start() {
   return true;
 }
 
-std::expected<void, QString> WindowsGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request) {
+std::expected<void, QString>
+WindowsGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request) {
   unbindShortcut(request.id);
 
   const auto vk = vkForQtKey(request.trigger.key());
