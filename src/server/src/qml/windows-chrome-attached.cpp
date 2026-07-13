@@ -13,13 +13,14 @@ namespace {
 
 constexpr int DWM_ROUND_CORNER_RADIUS = 8;
 constexpr UINT_PTR CHROME_SUBCLASS_ID = 1;
+constexpr DWORD_PTR CHROME_TOPMOST = 1;
 
 HWND hwndFromWindow(QWindow *window) { return reinterpret_cast<HWND>(window->winId()); }
 
 COLORREF colorrefFromQColor(const QColor &c) { return RGB(c.red(), c.green(), c.blue()); }
 
 LRESULT CALLBACK chromeSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR,
-                                    DWORD_PTR) {
+                                    DWORD_PTR refData) {
   switch (msg) {
   case WM_NCCALCSIZE:
     if (wParam == TRUE) return 0;
@@ -32,7 +33,13 @@ LRESULT CALLBACK chromeSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
   case WM_NCACTIVATE:
     return DefWindowProcW(hwnd, msg, wParam, -1);
   case WM_SHOWWINDOW:
-    if (wParam == TRUE) DefWindowProcW(hwnd, WM_NCACTIVATE, TRUE, -1);
+    if (wParam == TRUE) {
+      DefWindowProcW(hwnd, WM_NCACTIVATE, TRUE, -1);
+      // Qt shows popups non-topmost, dropping them behind the topmost launcher.
+      if (refData & CHROME_TOPMOST) {
+        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+      }
+    }
     break;
   case WM_NCHITTEST: {
     LRESULT hit = DefSubclassProc(hwnd, msg, wParam, lParam);
@@ -60,8 +67,7 @@ WindowsWindowAttached::WindowsWindowAttached(QObject *parent) : QObject(parent) 
 }
 
 bool WindowsWindowAttached::acrylicSupported() {
-  static const bool supported =
-      QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows11_22H2;
+  static const bool supported = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows11_22H2;
   return supported;
 }
 
@@ -132,11 +138,12 @@ void WindowsWindowAttached::apply() {
   LONG_PTR exStyle = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
   if (exStyle & WS_EX_LAYERED) SetWindowLongPtrW(hwnd, GWL_EXSTYLE, exStyle & ~WS_EX_LAYERED);
 
+  const bool isPopup = (m_window->flags() & Qt::WindowType_Mask) == Qt::Popup;
   LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_STYLE);
   if (!(style & WS_THICKFRAME)) SetWindowLongPtrW(hwnd, GWL_STYLE, style | WS_THICKFRAME);
-  SetWindowSubclass(hwnd, chromeSubclassProc, CHROME_SUBCLASS_ID, 0);
-  SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
-               SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+  SetWindowSubclass(hwnd, chromeSubclassProc, CHROME_SUBCLASS_ID, isPopup ? CHROME_TOPMOST : 0);
+  SetWindowPos(hwnd, isPopup ? HWND_TOPMOST : nullptr, 0, 0, 0, 0,
+               SWP_NOMOVE | SWP_NOSIZE | (isPopup ? 0u : SWP_NOZORDER) | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 
   DWM_WINDOW_CORNER_PREFERENCE corner = DWMWCP_ROUND;
   DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(corner));

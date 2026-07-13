@@ -17,4 +17,9 @@ Item {
         active: Qt.platform.os === "osx"
         source: "qrc:/Vicinae/PopupMaterialMacOS.qml"
     }
+
+    Loader {
+        active: Qt.platform.os === "windows"
+        source: "qrc:/Vicinae/PopupMaterialWindows.qml"
+    }
 }

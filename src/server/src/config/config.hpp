@@ -118,6 +118,7 @@ struct WindowConfig {
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
   static constexpr float ACRYLIC_OPACITY = 0.9F;
   static constexpr float GLASS_POPUP_OPACITY = 0.2F;
+  static constexpr float ACRYLIC_POPUP_OPACITY = 0.4F;
   static constexpr float SURFACE_OPACITY_LIFT = 0.65F;
 
   std::optional<float> opacity;
@@ -159,8 +160,8 @@ struct WindowConfig {
       return GLASS_POPUP_OPACITY;
     }
 #ifdef Q_OS_WIN
-    // in-scene popups sit over launcher content, not a material
-    return OPAQUE_OPACITY;
+    // only native popups consume this; in-scene ones pin their own alpha to 1
+    return ACRYLIC_POPUP_OPACITY;
 #else
     return resolvedOpacity(liquidGlassAvailable, windowMaterialAvailable);
 #endif

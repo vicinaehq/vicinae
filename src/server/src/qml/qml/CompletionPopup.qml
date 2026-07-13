@@ -104,9 +104,10 @@ Popup {
 
     background: Rectangle {
         readonly property bool csd: root.popupType === Popup.Item || Platform.supports("clientSideDecorations")
+        readonly property real bgOpacity: root.popupType === Popup.Window ? Config.popupOpacity : 1
         radius: csd ? Math.min(Config.borderRounding, 15) : 0
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity)
-        border.color: Config.withAlpha(Theme.popoverBorder, Config.popupOpacity)
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bgOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, bgOpacity)
         border.width: csd ? 1 : 0
         Loader {
             active: root.nativePanel && Platform.supports("nativePanels")
