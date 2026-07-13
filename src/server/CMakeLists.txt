@@ -700,6 +700,8 @@ elseif (WIN32)
 		src/services/app-service/windows/win-app.hpp
 		src/services/app-service/windows/win-app-database.hpp
 		src/services/app-service/windows/win-app-database.cpp
+		src/services/global-shortcuts/windows-global-shortcut-backend.hpp
+		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
 	)
 	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp)
 else()
