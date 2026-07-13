@@ -703,7 +703,7 @@ elseif (WIN32)
 		src/services/global-shortcuts/windows-global-shortcut-backend.hpp
 		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp
@@ -1054,11 +1054,17 @@ endif()
 if(APPLE)
 	list(APPEND VICINAE_QML_FILES
 		src/qml/qml/LauncherWindowMacOS.qml
-		src/qml/qml/SettingsWindowMacOS.qml
 		src/qml/qml/OnboardingWindowMacOS.qml
 		src/qml/qml/HudWindowMacOS.qml
 		src/qml/qml/CompletionPanelMacOS.qml
 		src/qml/qml/PopupMaterialMacOS.qml
+	)
+endif()
+
+if(WIN32)
+	list(APPEND VICINAE_QML_FILES
+		src/qml/qml/LauncherWindowWindows.qml
+		src/qml/qml/HudWindowWindows.qml
 	)
 endif()
 
@@ -1090,6 +1096,13 @@ if(APPLE)
 	list(APPEND VICINAE_QML_SOURCES
 		src/qml/macos-chrome-attached.hpp
 		src/qml/macos-chrome-attached.mm
+	)
+endif()
+
+if(WIN32)
+	list(APPEND VICINAE_QML_SOURCES
+		src/qml/windows-chrome-attached.hpp
+		src/qml/windows-chrome-attached.cpp
 	)
 endif()
 

@@ -77,8 +77,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   buildFooterMenu();
 
   m_engine.load(QUrl(
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
       QStringLiteral("qrc:/Vicinae/LauncherWindowMacOS.qml")
+#elif defined(Q_OS_WIN)
+      QStringLiteral("qrc:/Vicinae/LauncherWindowWindows.qml")
 #else
       isLayerShellActive() ? QStringLiteral("qrc:/Vicinae/LauncherWindowLayerShell.qml")
                            : QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")
@@ -94,8 +96,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     m_hudBridge = new HudBridge(this);
     rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
     m_engine.load(QUrl(
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
         QStringLiteral("qrc:/Vicinae/HudWindowMacOS.qml")
+#elif defined(Q_OS_WIN)
+        QStringLiteral("qrc:/Vicinae/HudWindowWindows.qml")
 #else
         QStringLiteral("qrc:/Vicinae/HudWindowLayerShell.qml")
 #endif

@@ -10,6 +10,7 @@ ViciPopover {
 
     focus: true
     closePolicy: Popup.CloseOnPressOutside
+    itemAnimationEnabled: false
 
     readonly property int _gap: 6
 

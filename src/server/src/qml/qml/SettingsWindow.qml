@@ -45,11 +45,10 @@ Window {
     maximumHeight: 680
     visible: true
     color: "transparent"
-    // Server-side decorations: the compositor / OS owns the frame.
     flags: Qt.Window
     title: "Vicinae Settings"
 
-    WindowMaterial.enabled: Config.blurEnabled
+    WindowMaterial.enabled: Config.blurEnabled && Config.windowOpacity < 1
     WindowMaterial.radius: 10
 
     Rectangle {

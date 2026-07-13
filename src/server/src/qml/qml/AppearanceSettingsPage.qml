@@ -145,6 +145,7 @@ Flickable {
             SettingsRow {
                 label: "Corner rounding"
                 description: "Radius of the launcher window corners, in pixels."
+                visible: Platform.supports("customWindowRounding")
                 enabled: !Platform.supports("clientSideDecorations") || root.model.clientSideDecorations
                 opacity: enabled ? 1 : 0.4
                 FormTextInput {

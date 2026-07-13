@@ -103,10 +103,11 @@ Popup {
     }
 
     background: Rectangle {
-        radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
+        readonly property bool csd: root.popupType === Popup.Item || Platform.supports("clientSideDecorations")
+        radius: csd ? Math.min(Config.borderRounding, 15) : 0
         color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity)
         border.color: Config.withAlpha(Theme.popoverBorder, Config.popupOpacity)
-        border.width: Platform.supports("clientSideDecorations") ? 1 : 0
+        border.width: csd ? 1 : 0
         Loader {
             active: root.nativePanel && Platform.supports("nativePanels")
             source: "qrc:/Vicinae/CompletionPanelMacOS.qml"
