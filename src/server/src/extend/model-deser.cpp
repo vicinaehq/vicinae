@@ -320,9 +320,22 @@ template <> struct glz::meta<ListWireChild> {
       std::array{"list-item", "list-section", "action-panel", "empty-view", "dropdown"};
 };
 
+// Raycast types `filtering` as `boolean | { keepSectionOrder: boolean }`. The
+// object form enables filtering; keepSectionOrder is not honored yet.
+struct FilteringOptionsWire {
+  bool keepSectionOrder = false;
+};
+
+static bool resolveFiltering(const std::optional<std::variant<bool, FilteringOptionsWire>> &filtering,
+                             bool fallback) {
+  if (!filtering) return fallback;
+  if (auto *enabled = std::get_if<bool>(&*filtering)) return *enabled;
+  return true;
+}
+
 struct ListModelWire {
   bool isLoading = false;
-  std::optional<bool> filtering;
+  std::optional<std::variant<bool, FilteringOptionsWire>> filtering;
   bool throttle = false;
   bool isShowingDetail = false;
   std::string navigationTitle;
@@ -365,7 +378,7 @@ template <> struct glz::meta<GridWireChild> {
 
 struct GridModelWire {
   bool isLoading = false;
-  std::optional<bool> filtering;
+  std::optional<std::variant<bool, FilteringOptionsWire>> filtering;
   bool throttle = false;
   double aspectRatio = 1.0;
   std::optional<int> columns;
@@ -788,7 +801,7 @@ static ListModel toListModel(ListModelWire &w) {
   ListModel m;
   m.dirty = true;
   m.isLoading = w.isLoading;
-  m.filtering = w.filtering.value_or(!w.onSearchTextChange.has_value());
+  m.filtering = resolveFiltering(w.filtering, !w.onSearchTextChange.has_value());
   m.throttle = w.throttle;
   m.isShowingDetail = w.isShowingDetail;
   m.navigationTitle = std::move(w.navigationTitle);
@@ -854,7 +867,7 @@ static GridModel toGridModel(GridModelWire &w) {
   GridModel m;
   m.dirty = true;
   m.isLoading = w.isLoading;
-  m.filtering = w.filtering.value_or(!w.onSearchTextChange.has_value());
+  m.filtering = resolveFiltering(w.filtering, !w.onSearchTextChange.has_value());
   m.throttle = w.throttle;
   m.aspectRatio = w.aspectRatio;
   m.columns = w.columns;
