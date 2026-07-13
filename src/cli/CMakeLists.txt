@@ -22,6 +22,7 @@ if (NOT WIN32)
 endif()
 
 add_executable(${PROJECT_NAME} ${CLI_SOURCES})
+vicinae_enable_utf8(${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PRIVATE src ${GENOUT})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 include(EmbedFile)
