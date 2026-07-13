@@ -904,6 +904,8 @@ endif()
 
 qt_add_executable(${TARGET} ${SRCS})
 
+vicinae_enable_utf8(${TARGET})
+
 if(APPLE)
 	set(VICINAE_BUNDLE_EXECUTABLE "Vicinae")
 	set(VICINAE_BUNDLE_SHORT_VERSION "${VICINAE_GIT_TAG}")

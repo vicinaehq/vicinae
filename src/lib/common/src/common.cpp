@@ -1,4 +1,5 @@
 #include "common/common.hpp"
+#include <clocale>
 #include <cstdlib>
 #include <filesystem>
 #include <sstream>
@@ -17,6 +18,12 @@
 namespace fs = std::filesystem;
 
 namespace vicinae {
+void enableUtf8() {
+#ifdef _WIN32
+  std::setlocale(LC_ALL, ".UTF-8");
+#endif
+}
+
 #ifdef __APPLE__
 fs::path selfPath() {
   char buf[PATH_MAX];

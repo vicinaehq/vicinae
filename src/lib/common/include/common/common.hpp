@@ -8,6 +8,10 @@
 #include <vector>
 
 namespace vicinae {
+// Switches the CRT locale to UTF-8 on Windows so that we operate on UTF-8 rather
+// than the legacy ANSI code page. No-op elsewhere.
+void enableUtf8();
+
 std::filesystem::path selfPath();
 std::optional<std::filesystem::path> findHelperProgram(std::string_view program);
 std::vector<std::filesystem::path> helperProgramCandidates(std::string_view program);

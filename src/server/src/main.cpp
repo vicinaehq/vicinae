@@ -2,9 +2,12 @@
 #include <exception>
 #include <iostream>
 #include <glaze/glaze.hpp>
+#include "common/common.hpp"
 #include "server.hpp"
 
 int main(int argc, char **argv) {
+  vicinae::enableUtf8();
+
   std::set_terminate([] {
     if (auto e = std::current_exception()) {
       try {
