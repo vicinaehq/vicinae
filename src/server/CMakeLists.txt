@@ -694,6 +694,14 @@ if (APPLE)
 		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
 	endif()
 elseif (WIN32)
+	list(APPEND SRCS
+		src/ui/image/win-file-icon-loader.hpp
+		src/ui/image/win-file-icon-loader.cpp
+		src/services/app-service/windows/win-app.hpp
+		src/services/app-service/windows/win-app-database.hpp
+		src/services/app-service/windows/win-app-database.cpp
+	)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp

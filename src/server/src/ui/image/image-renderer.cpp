@@ -10,6 +10,9 @@
 #ifdef Q_OS_MACOS
 #include "ui/image/mac-file-icon-loader.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "ui/image/win-file-icon-loader.hpp"
+#endif
 #include <QBuffer>
 #include <QCoreApplication>
 #include <QFontMetricsF>
@@ -195,6 +198,11 @@ QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg, 
 #ifdef Q_OS_MACOS
   if (!fg.isValid()) {
     if (QImage native = renderMacFileIcon(path, size); !native.isNull()) { return native; }
+  }
+#endif
+#ifdef Q_OS_WIN
+  if (!fg.isValid()) {
+    if (QImage native = renderWinShellIcon(path, size); !native.isNull()) { return native; }
   }
 #endif
 

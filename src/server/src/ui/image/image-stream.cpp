@@ -7,6 +7,9 @@
 #ifdef Q_OS_MACOS
 #include "ui/image/mac-file-icon-loader.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "ui/image/win-file-icon-loader.hpp"
+#endif
 #include <QBuffer>
 #include <QCache>
 #include <QFutureWatcher>
@@ -182,6 +185,14 @@ void ImageStream::startStatic() {
 #ifdef Q_OS_MACOS
   case ImageURLType::MacBundle:
     runInPool([name, size = m_size]() { return renderMacFileIcon(name, size); }, m_fg);
+    break;
+#endif
+#ifdef Q_OS_WIN
+  case ImageURLType::WinShellIcon:
+    runInPool([name, size = m_size]() { return renderWinShellIcon(name, size); }, m_fg);
+    break;
+  case ImageURLType::WinStockIcon:
+    runInPool([name, size = m_size]() { return renderWinStockIcon(name.toInt(), size); }, m_fg);
     break;
 #endif
   case ImageURLType::FileIcon:

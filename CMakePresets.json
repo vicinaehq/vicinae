@@ -29,6 +29,13 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
     },
     {
+      "name": "windows-relwithdebinfo",
+      "displayName": "Windows x64 (MSVC, RelWithDebInfo)",
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/build-relwithdebinfo",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "LTO": "OFF" }
+    },
+    {
       "name": "windows-release",
       "displayName": "Windows x64 (MSVC, Release)",
       "inherits": "windows-base",
@@ -120,6 +127,7 @@
   ],
   "buildPresets": [
     { "name": "windows-debug", "configurePreset": "windows-debug" },
+    { "name": "windows-relwithdebinfo", "configurePreset": "windows-relwithdebinfo" },
     { "name": "windows-release", "configurePreset": "windows-release" },
     { "name": "windows-ci", "configurePreset": "windows-ci" },
     { "name": "linux-debug", "configurePreset": "linux-debug" },

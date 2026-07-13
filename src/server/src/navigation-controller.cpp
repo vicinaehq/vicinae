@@ -413,6 +413,20 @@ void NavigationController::executeAction(AbstractAction *action) {
   std::shared_ptr<AbstractAction> guard;
   if (auto *root = state->sender->actionPanelRoot()) { guard = root->retainAction(action); }
 
+  if (!guard) {
+    executeActionNow(action);
+    return;
+  }
+
+  // The action might tear down the window and the panel before the qml handler gets to run,
+  // so defer execution to next event loop turn
+  QMetaObject::invokeMethod(this, [this, action, guard] { executeActionNow(action); }, Qt::QueuedConnection);
+}
+
+void NavigationController::executeActionNow(AbstractAction *action) {
+  auto state = topState();
+  if (!state) return;
+
   if (action->isSubmenu()) {
     openActionPanel();
     return;

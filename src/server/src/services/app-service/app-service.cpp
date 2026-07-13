@@ -2,7 +2,7 @@
 #ifdef Q_OS_MACOS
 #include "services/app-service/macos/mac-app-database.hpp"
 #elif defined(Q_OS_WIN)
-#include "services/app-service/dummy-app-database.hpp"
+#include "services/app-service/windows/win-app-database.hpp"
 #else
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #endif
@@ -43,7 +43,7 @@ std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #ifdef Q_OS_MACOS
   return std::make_unique<MacAppDatabase>();
 #elif defined(Q_OS_WIN)
-  return std::make_unique<DummyAppDatabase>();
+  return std::make_unique<WindowsAppDatabase>();
 #else
   return std::make_unique<XdgAppDatabase>();
 #endif
@@ -162,7 +162,7 @@ bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
   auto isDir = [](auto &&path) { return fs::is_directory(path); };
 
   for (const auto &path : paths | std::views::filter(isDir)) {
-    m_watcher->addPath(QString::fromStdString(path.string()));
+    m_watcher->addPath(QString::fromStdWString(path.wstring()));
   }
 
   return true;
@@ -181,4 +181,5 @@ AppService::AppService(OmniDatabase &db) : m_db(db), m_provider(createLocalProvi
 
   reinstallWatches(mergedPaths());
   connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, &AppService::handleDirectoryChanged);
+  connect(m_provider.get(), &AbstractAppDatabase::changed, this, [this] { m_rescanDebounce->start(); });
 }
