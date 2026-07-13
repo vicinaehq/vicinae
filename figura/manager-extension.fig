@@ -33,6 +33,7 @@ struct LaunchEventData {
   support_path: string;
   preferenceValues: any;
   argumentValues: any;
+  launch_context: any;
   is_raycast: bool;
   owner_or_author_name: string;
   launch_type: LaunchType;

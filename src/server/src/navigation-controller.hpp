@@ -40,6 +40,8 @@ using ArgumentValues = std::vector<std::pair<QString, QString>>;
 struct ActivateEntrypointOptions {
   ArgumentValues arguments;
   QString fallbackText;
+  std::optional<LaunchContext> launchContext;
+  bool toggleIfAlreadyActive = true;
 };
 
 struct CompleterState {
@@ -214,6 +216,7 @@ public:
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
+  void launch(const std::shared_ptr<AbstractCmd> &cmd, const LaunchProps &props);
   bool activateEntrypoint(const EntrypointId &id, const ActivateEntrypointOptions &options = {});
 
   const AbstractCmd *activeCommand() const;

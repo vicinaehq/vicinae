@@ -52,6 +52,15 @@ public:
     return call<ipc::LaunchAppResponse>([&](auto cb) { m_client.ipc().launchApp(req, std::move(cb)); });
   }
 
+  std::expected<ipc::ListCommandsResponse, std::string> listCommands() {
+    return call<ipc::ListCommandsResponse>([&](auto cb) { m_client.ipc().listCommands(std::move(cb)); });
+  }
+
+  std::expected<ipc::LaunchCommandResponse, std::string> launchCommand(ipc::LaunchCommandRequest req) {
+    return call<ipc::LaunchCommandResponse>(
+        [&](auto cb) { m_client.ipc().launchCommand(req, std::move(cb)); });
+  }
+
   std::expected<std::vector<ipc::FileResult>, std::string> fsQuery(std::string_view query, int limit = 100,
                                                                    std::optional<std::string> category = {}) {
     ipc::FsQueryParams params{

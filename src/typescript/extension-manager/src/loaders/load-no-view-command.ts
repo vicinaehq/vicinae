@@ -11,5 +11,8 @@ export default async (data: LaunchEventData) => {
 		);
 	}
 
-	await entrypoint({ arguments: data.argumentValues });
+	await entrypoint({
+		arguments: data.argumentValues,
+		launchContext: data.launch_context,
+	});
 };

@@ -1,3 +1,5 @@
+#include <filesystem>
+#include <system_error>
 #include "cli.hpp"
 #include "config.hpp"
 #include "fs.hpp"
@@ -170,6 +172,74 @@ class AppCommand : public AbstractCommandLineCommand {
 
 public:
   AppCommand() { registerCommand<LaunchAppCommand>(); }
+};
+
+class ListCommandsCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "ls"; }
+  std::string description() const override { return "List loaded commands"; }
+
+  bool run(CLI::App *) override {
+    auto res =
+        cli::IpcClient::connect().and_then([](cli::IpcClient client) { return client.listCommands(); });
+
+    if (!res) {
+      std::println(std::cerr, "Failed to list commands: {}", res.error());
+      return false;
+    }
+
+    for (const auto &command : res->commands) {
+      std::println(std::cout, "{}", command);
+    }
+
+    return true;
+  }
+};
+
+class LaunchCommandCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "launch"; }
+  std::string description() const override { return "Launch a command"; }
+
+  void setup(CLI::App *app) override {
+    app->add_option("entrypoint", m_entrypoint, "The command entrypoint ID to launch")->required();
+    app->add_option("--cwd", m_cwd, "Working directory forwarded to the command");
+    app->add_option("args", m_args, "Arguments to pass to the command");
+  }
+
+  bool run(CLI::App *) override {
+    auto cwd = m_cwd;
+    std::error_code ec;
+
+    if (!cwd) {
+      if (auto path = std::filesystem::current_path(ec); !ec) { cwd = path.generic_string(); }
+    }
+
+    auto res = cli::IpcClient::connect().and_then([&](cli::IpcClient client) {
+      return client.launchCommand({.entrypoint = m_entrypoint, .args = m_args, .cwd = cwd});
+    });
+
+    if (!res) {
+      std::println(std::cerr, "Failed to launch command: {}", res.error());
+      return false;
+    }
+
+    return true;
+  }
+
+private:
+  std::string m_entrypoint;
+  std::optional<std::string> m_cwd;
+  std::vector<std::string> m_args;
+};
+
+class CommandCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "cmd"; }
+  std::string description() const override { return "Command utilities"; }
+
+public:
+  CommandCommand() {
+    registerCommand<ListCommandsCommand>();
+    registerCommand<LaunchCommandCommand>();
+  }
 };
 
 class CliPing : public AbstractCommandLineCommand {
@@ -387,6 +457,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<ToggleCommand>();
   app.registerCommand<OpenCommand>();
   app.registerCommand<CloseCommand>();
+  app.registerCommand<CommandCommand>();
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();
   app.registerCommand<ThemeCommand>();

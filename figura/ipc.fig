@@ -30,6 +30,20 @@ struct LaunchAppResponse {
   focusedWindowTitle: string;
 };
 
+struct LaunchCommandRequest {
+  entrypoint: string;
+  args: string[];
+  cwd?: string;
+};
+
+struct LaunchCommandResponse {
+  error?: string;
+};
+
+struct ListCommandsResponse {
+  commands: string[];
+};
+
 struct DMenuRequest {
   rawContent: string;
   navigationTitle?: string;
@@ -90,6 +104,8 @@ service Ipc {
   fn deeplink(req: DeeplinkRequest) => DeeplinkResponse;
   fn describe() => DescribeResponse;
   fn launchApp(req: LaunchAppRequest) => LaunchAppResponse;
+  fn listCommands() => ListCommandsResponse;
+  fn launchCommand(req: LaunchCommandRequest) => LaunchCommandResponse;
   fn dmenu(req: DMenuRequest) => DMenuResponse;
   fn browserInit(req: BrowserInitRequest) => void;
   fn browserTabsChanged(tabs: BrowserTabInfo[]) => void;

@@ -8,6 +8,8 @@
 #include "services/files-service/file-service.hpp"
 #include "qml/dmenu-view-host.hpp"
 #include "utils.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
+#include <algorithm>
 #include <cstdint>
 #include <optional>
 #include <qfuture.h>
@@ -82,6 +84,51 @@ std::string_view fileCategoryToString(vicinae::FileCategory category) {
     if (definition.category == category) return definition.name;
   }
   return "other";
+}
+
+std::expected<ArgumentValues, std::string> buildLaunchArguments(const ArgumentList &manifestArgs,
+                                                                const std::vector<std::string> &values) {
+  if (values.size() > manifestArgs.size()) {
+    return std::unexpected(
+        std::format("Too many arguments: expected at most {}, got {}", manifestArgs.size(), values.size()));
+  }
+
+  ArgumentValues arguments;
+  arguments.reserve(values.size());
+
+  for (size_t idx = 0; idx != values.size(); ++idx) {
+    const auto &value = values.at(idx);
+    const auto &arg = manifestArgs.at(idx);
+    const QString qvalue = QString::fromStdString(value);
+
+    if (arg.type == CommandArgument::Dropdown && arg.data) {
+      auto matchesValue = [&](const CommandArgument::DropdownData &option) { return option.value == qvalue; };
+      if (!std::ranges::any_of(*arg.data, matchesValue)) {
+        return std::unexpected(
+            std::format("Invalid value '{}' for argument '{}'", value, arg.name.toStdString()));
+      }
+    }
+
+    arguments.emplace_back(arg.name, qvalue);
+  }
+
+  for (size_t idx = values.size(); idx != manifestArgs.size(); ++idx) {
+    const auto &arg = manifestArgs.at(idx);
+    if (arg.required) {
+      return std::unexpected(std::format("Missing required argument '{}'", arg.name.toStdString()));
+    }
+  }
+
+  return arguments;
+}
+
+std::optional<LaunchContext> makeLaunchContext(const ipc_gen::LaunchCommandRequest &req) {
+  if (!req.cwd) return std::nullopt;
+
+  LaunchContext context;
+
+  context.insert("cwd", QString::fromStdString(*req.cwd));
+  return context;
 }
 
 } // namespace
@@ -160,6 +207,61 @@ ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future IpcService::launchApp(ipc_ge
         std::format("Failed to launch app with id {}", req.appId));
 
   return ipc_gen::Result<ipc_gen::LaunchAppResponse>::ok({});
+}
+
+ipc_gen::Result<ipc_gen::ListCommandsResponse>::Future IpcService::listCommands() {
+  std::vector<std::string> commands;
+  auto root = m_ctx.services->rootItemManager();
+  auto items = root->allItems();
+
+  commands.reserve(items.size());
+
+  for (const auto &item : items) {
+    if (!item.item) continue;
+
+    auto *commandItem = dynamic_cast<CommandRootItem *>(item.item.get());
+    if (!commandItem) continue;
+
+    auto command = commandItem->command();
+    commands.emplace_back(std::string{command->uniqueId()});
+  }
+
+  std::ranges::sort(commands);
+  return ipc_gen::Result<ipc_gen::ListCommandsResponse>::ok({.commands = std::move(commands)});
+}
+
+ipc_gen::Result<ipc_gen::LaunchCommandResponse>::Future
+IpcService::launchCommand(ipc_gen::LaunchCommandRequest req) {
+  auto id = EntrypointId::fromSerialized(req.entrypoint);
+  if (id.provider.empty() || id.entrypoint.empty()) {
+    return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(
+        std::format("Invalid command entrypoint: {}", req.entrypoint));
+  }
+
+  auto root = m_ctx.services->rootItemManager();
+  auto *item = root->findItemById(id);
+
+  if (!item) {
+    return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(
+        std::format("Unknown command entrypoint: {}", req.entrypoint));
+  }
+
+  auto *commandItem = dynamic_cast<CommandRootItem *>(item);
+  if (!commandItem) {
+    return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail("Target is not a command");
+  }
+
+  auto command = commandItem->command();
+  auto arguments = buildLaunchArguments(command->arguments(), req.args);
+  if (!arguments) return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(arguments.error());
+
+  if (!m_ctx.navigation->activateEntrypoint(id, {.arguments = std::move(*arguments),
+                                                 .launchContext = makeLaunchContext(req),
+                                                 .toggleIfAlreadyActive = false})) {
+    return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail("Failed to launch command");
+  }
+
+  return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::ok({});
 }
 
 ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenuRequest request) {
