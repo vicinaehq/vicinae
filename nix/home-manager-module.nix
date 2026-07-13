@@ -126,7 +126,7 @@ in {
       inherit (tomlFormat) type;
       default = {};
       description = ''
-        Theme settings to add to the themes folder in `~/.config/vicinae/themes`. See <https://docs.vicinae.com/theming/getting-started> for supported values.
+        Theme settings to add to the themes folder in `~/.local/share/vicinae/themes`. See <https://docs.vicinae.com/theming/getting-started> for supported values.
 
         The attribute name of the theme will be the name of theme file,
       '';
@@ -269,8 +269,6 @@ in {
           )
           cfg.themes;
       in {
-        configFile = {};
-
         dataFile =
           builtins.listToAttrs (
             map (item: {
