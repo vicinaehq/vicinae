@@ -21,6 +21,4 @@ void grantForeground() {
   SendInput(1, &input, sizeof(input));
 }
 
-void resetAfterHide(QQuickWindow *launcher) { launcher->destroy(); }
-
 } // namespace LauncherWindowPlatform

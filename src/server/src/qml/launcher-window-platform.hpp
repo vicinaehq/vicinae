@@ -15,13 +15,9 @@ void adoptWindows(QQuickWindow *launcher, QQuickWindow *hud);
 // The system only grants foreground to the process that last received input;
 // an empty synthesized input makes that us (the PowerToys Run trick).
 void grantForeground();
-
-// A recreated window is always assigned to the active virtual desktop.
-void resetAfterHide(QQuickWindow *launcher);
 #else
 inline void adoptWindows(QQuickWindow *, QQuickWindow *) {}
 inline void grantForeground() {}
-inline void resetAfterHide(QQuickWindow *) {}
 #endif
 
 } // namespace LauncherWindowPlatform

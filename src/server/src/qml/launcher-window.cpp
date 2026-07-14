@@ -390,7 +390,6 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     m_window->requestActivate();
   } else {
     m_window->hide();
-    LauncherWindowPlatform::resetAfterHide(m_window);
     m_cacheEvictionTimer.start();
   }
 }

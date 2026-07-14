@@ -178,7 +178,7 @@ WindowsGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request)
 
   // The source of truth to activate shortcuts is the keyboard hook but we still want
   // to register the global shortcut so that no other application can steal it.
-  if (!RegisterHotKey(nullptr, regId, mods | MOD_NOREPEAT, *vk)) {
+  if (!RegisterHotKey(nullptr, regId, mods, *vk)) {
     if (GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED) {
       return std::unexpected(QStringLiteral("already registered by another application"));
     }
