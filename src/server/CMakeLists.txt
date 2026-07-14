@@ -1065,7 +1065,6 @@ if(WIN32)
 	list(APPEND VICINAE_QML_FILES
 		src/qml/qml/LauncherWindowWindows.qml
 		src/qml/qml/HudWindowWindows.qml
-		src/qml/qml/PopupMaterialWindows.qml
 	)
 endif()
 

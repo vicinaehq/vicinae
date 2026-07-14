@@ -20,6 +20,9 @@ Popup {
     readonly property int count: completionModel.count
     readonly property bool hasSelection: _highlightedIndex >= 0
 
+    readonly property real _bgOpacity: popupType === Popup.Window ? Config.popupOpacity : 1
+    readonly property real _fillOpacity: popupType === Popup.Window ? Config.popupSurfaceOpacity : 1
+
     signal itemAccepted(var itemData)
 
     property int _highlightedIndex: -1
@@ -250,18 +253,18 @@ Popup {
                         anchors.leftMargin: 2
                         anchors.rightMargin: 2
                         radius: 6
-                        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity)
+                        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, root._bgOpacity)
                         color: {
                             if (del._isHighlighted) {
                                 var c = Theme.listItemSelectionBg;
-                                return Qt.rgba(c.r, c.g, c.b, Config.popupSurfaceOpacity);
+                                return Qt.rgba(c.r, c.g, c.b, root._fillOpacity);
                             }
                             if (itemHover.hovered && HoverActivation.active) {
                                 var h = Theme.listItemHoverBg;
-                                return Qt.rgba(h.r, h.g, h.b, Config.popupSurfaceOpacity);
+                                return Qt.rgba(h.r, h.g, h.b, root._fillOpacity);
                             }
                             var bg = Theme.popoverBackground;
-                            return Qt.rgba(bg.r, bg.g, bg.b, Config.popupOpacity);
+                            return Qt.rgba(bg.r, bg.g, bg.b, root._bgOpacity);
                         }
                     }
 

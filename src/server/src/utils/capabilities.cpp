@@ -94,9 +94,9 @@ bool preferItemPopup(std::string_view surface) {
 #if defined(Q_OS_LINUX)
   return surface == "popover" || surface == "dialog";
 #elif defined(Q_OS_WIN)
-  // native popup windows misplace and flicker on Windows (QTBUG-120051), but
-  // dropdowns must overflow their window
-  return surface != "dropdown";
+  // native popup windows misplace and flicker on Windows (QTBUG-120051)
+  (void)surface;
+  return true;
 #else
   (void)surface;
   return false;
