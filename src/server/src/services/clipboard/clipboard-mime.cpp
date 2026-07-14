@@ -90,7 +90,7 @@ std::optional<ClipboardSelection> selectionFromMimeData(const QMimeData *mimeDat
   auto isIndexableFormat = [](const QString &fmt) {
 #ifdef Q_OS_WIN
     // Unmapped native formats; reading one forces delayed rendering in the source app
-    if (fmt.startsWith("application/x-qt-windows-mime")) return false;
+    if (fmt.startsWith(Clipboard::WIN_NATIVE_MIME_PREFIX)) return false;
 #endif
     // Qt-internal synthetic format
     if (fmt == "application/x-qt-image") return false;

@@ -194,18 +194,32 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 
 QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
   static const std::vector<QString> plainTextMimeTypes = {
-      "text/uri-list", "text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT",
-      "COMPOUND_TEXT"};
+      "text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"};
 
-  for (const auto &mime : plainTextMimeTypes) {
-    auto it = std::ranges::find_if(
-        selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
-    if (it != selection.offers.end()) return it->mimeType;
+  auto uriIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
+    return offer.mimeType == "text/uri-list" && !offer.data.isEmpty();
+  });
+  if (uriIt != selection.offers.end() && getKind(*uriIt) == ClipboardOfferKind::File) {
+    return uriIt->mimeType;
   }
 
   auto imageIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
     return offer.mimeType.startsWith("image/") && !offer.data.isEmpty();
   });
+
+  auto isRemoteUrl = [](const QByteArray &data) {
+    auto url = QUrl::fromEncoded(data.trimmed(), QUrl::StrictMode);
+    return url.scheme().length() > 1 && !url.isLocalFile();
+  };
+
+  for (const auto &mime : plainTextMimeTypes) {
+    auto it = std::ranges::find_if(
+        selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
+    if (it == selection.offers.end()) continue;
+    if (imageIt != selection.offers.end() && isRemoteUrl(it->data)) break;
+    return it->mimeType;
+  }
+
   if (imageIt != selection.offers.end()) return imageIt->mimeType;
 
   auto htmlIt = std::ranges::find_if(selection.offers, [](const auto &offer) {

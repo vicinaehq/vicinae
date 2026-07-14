@@ -1,4 +1,4 @@
-#include <QTimer>
+﻿#include <QTimer>
 #include <qendian.h>
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -14,11 +14,10 @@
 #include "services/clipboard/clipboard-mime.hpp"
 
 namespace {
-constexpr const char *EXCLUDE_FMT =
-    R"(application/x-qt-windows-mime;value="ExcludeClipboardContentFromMonitorProcessing")";
-constexpr const char *HISTORY_FMT = R"(application/x-qt-windows-mime;value="CanIncludeInClipboardHistory")";
-constexpr const char *CLOUD_FMT = R"(application/x-qt-windows-mime;value="CanUploadToCloudClipboard")";
-constexpr const char *LEGACY_IGNORE_FMT = R"(application/x-qt-windows-mime;value="Clipboard Viewer Ignore")";
+using Clipboard::WIN_CLOUD_FMT;
+using Clipboard::WIN_EXCLUDE_FMT;
+using Clipboard::WIN_HISTORY_FMT;
+using Clipboard::WIN_LEGACY_IGNORE_FMT;
 
 bool isDwordZero(const QByteArray &data) {
   return data.size() >= 4 && qFromLittleEndian<quint32>(data.constData()) == 0;
@@ -50,12 +49,12 @@ void WindowsClipboardServer::handleChange(bool isRetry) {
     return;
   }
 
-  if (formats.contains(EXCLUDE_FMT) || formats.contains(LEGACY_IGNORE_FMT)) {
+  if (formats.contains(WIN_EXCLUDE_FMT) || formats.contains(WIN_LEGACY_IGNORE_FMT)) {
     qInfo() << "Windows: dropping selection excluded from monitoring";
     return;
   }
   // CanUploadToCloudClipboard=0 only opts out of cloud sync
-  if (formats.contains(HISTORY_FMT) && isDwordZero(mime->data(HISTORY_FMT))) {
+  if (formats.contains(WIN_HISTORY_FMT) && isDwordZero(mime->data(WIN_HISTORY_FMT))) {
     qInfo() << "Windows: dropping selection excluded from clipboard history";
     return;
   }
@@ -70,9 +69,9 @@ void WindowsClipboardServer::handleChange(bool isRetry) {
 bool WindowsClipboardServer::writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) {
   if (options.concealed || options.transient) {
     QByteArray const zero(4, '\0');
-    data->setData(EXCLUDE_FMT, zero);
-    data->setData(HISTORY_FMT, zero);
-    data->setData(CLOUD_FMT, zero);
+    data->setData(WIN_EXCLUDE_FMT, zero);
+    data->setData(WIN_HISTORY_FMT, zero);
+    data->setData(WIN_CLOUD_FMT, zero);
   }
   return AbstractClipboardServer::writeClipboard(data, options);
 }
