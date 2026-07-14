@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 ViciPopover {
     id: root
+    surface: "dialog"
     x: Math.round((parent.width - width) / 2)
     y: Math.round((parent.height - height) / 2)
     width: 400

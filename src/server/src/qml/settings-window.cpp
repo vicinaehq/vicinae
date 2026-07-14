@@ -36,7 +36,11 @@ void SettingsWindow::ensureInitialized() {
   m_initialized = true;
 
   m_themeBridge = new ThemeBridge(this);
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+  m_configBridge = new ConfigBridge(ConfigBridge::OpaqueSurfaces, this);
+#else
   m_configBridge = new ConfigBridge(this);
+#endif
   m_imgSource = new ImageSource(this);
   m_keyboardBridge = new KeyboardBridge(this);
   m_globalShortcutBridge = new GlobalShortcutBridge(this);
@@ -57,13 +61,7 @@ void SettingsWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("FileChooser"),
                               ServiceRegistry::instance()->fileChooserService());
 
-  m_engine.load(QUrl(
-#ifdef Q_OS_MACOS
-      QStringLiteral("qrc:/Vicinae/SettingsWindowMacOS.qml")
-#else
-      QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")
-#endif
-          ));
+  m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")));
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }

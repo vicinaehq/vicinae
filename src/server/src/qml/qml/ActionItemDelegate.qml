@@ -17,7 +17,9 @@ Item {
     signal clicked
 
     readonly property var _win: root.Window.window
-    readonly property bool _nativeWindow: _win !== null && (_win.flags & Qt.Popup) === Qt.Popup
+    // Qt.Tool contains the Qt.Popup bit, so mask the full window type or the
+    // launcher window itself matches for in-scene popups
+    readonly property bool _nativeWindow: _win !== null && (_win.flags & Qt.WindowType_Mask) === Qt.Popup
     readonly property real _opacity: root._nativeWindow ? Config.popupOpacity : 1
     readonly property real _fillOpacity: root._nativeWindow ? Config.popupSurfaceOpacity : 1
 

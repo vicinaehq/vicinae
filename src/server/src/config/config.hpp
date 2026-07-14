@@ -116,6 +116,7 @@ template <> struct Partial<WindowCompactMode> {
 struct WindowConfig {
   static constexpr float OPAQUE_OPACITY = 1.0F;
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
+  static constexpr float ACRYLIC_OPACITY = 0.9F;
   static constexpr float GLASS_POPUP_OPACITY = 0.2F;
   static constexpr float SURFACE_OPACITY_LIFT = 0.65F;
 
@@ -143,9 +144,12 @@ struct WindowConfig {
 
   float resolvedOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
     if (opacity) return *opacity;
-    return resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass"
-               ? TRANSLUCENT_OPACITY
-               : OPAQUE_OPACITY;
+    const std::string material = resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable);
+    if (material == "liquid_glass") return TRANSLUCENT_OPACITY;
+#ifdef Q_OS_WIN
+    if (material == "blur") return ACRYLIC_OPACITY;
+#endif
+    return OPAQUE_OPACITY;
   }
 
   // Popups draw their own material layer; on liquid glass a fixed low tint keeps the

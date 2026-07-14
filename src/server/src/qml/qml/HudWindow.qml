@@ -8,6 +8,7 @@ Window {
     property color pillColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.9)
     property color pillBorderColor: Config.withAlpha(Theme.divider, Config.windowOpacity)
     property int pillBorderWidth: 1
+    property real pillRadius: pill.height / 2
 
     signal shown
 
@@ -26,7 +27,7 @@ Window {
         id: pill
         width: row.width + 30
         height: row.height + 20
-        radius: height / 2
+        radius: root.pillRadius
         color: root.pillColor
         border.color: root.pillBorderColor
         border.width: root.pillBorderWidth

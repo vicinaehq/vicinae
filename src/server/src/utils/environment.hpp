@@ -83,7 +83,7 @@ inline bool isLayerShellSupported() {
 }
 
 inline bool isHudSupported() {
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
   return true;
 #else
   // if layer shell is not supported, there doesn't seem to be an easy way for us to create

@@ -1,6 +1,7 @@
-#include "services/global-shortcuts/windows-global-shortcut-backend.hpp"
-#include <QGuiApplication>
+#include <QtLogging>
+#include <future>
 #include <windows.h>
+#include "services/global-shortcuts/windows-global-shortcut-backend.hpp"
 
 namespace {
 
@@ -68,7 +69,7 @@ std::optional<UINT> vkForQtKey(Qt::Key key) {
 }
 
 UINT winModifiers(Qt::KeyboardModifiers mods) {
-  UINT win = MOD_NOREPEAT;
+  UINT win = 0;
   if (mods.testFlag(Qt::ControlModifier)) { win |= MOD_CONTROL; }
   if (mods.testFlag(Qt::AltModifier)) { win |= MOD_ALT; }
   if (mods.testFlag(Qt::ShiftModifier)) { win |= MOD_SHIFT; }
@@ -76,20 +77,92 @@ UINT winModifiers(Qt::KeyboardModifiers mods) {
   return win;
 }
 
+WindowsGlobalShortcutBackend *g_backend = nullptr;
+
+UINT currentModifiers() {
+  UINT mods = 0;
+  if (GetAsyncKeyState(VK_CONTROL) < 0) mods |= MOD_CONTROL;
+  if (GetAsyncKeyState(VK_MENU) < 0) mods |= MOD_ALT;
+  if (GetAsyncKeyState(VK_SHIFT) < 0) mods |= MOD_SHIFT;
+  if (GetAsyncKeyState(VK_LWIN) < 0 || GetAsyncKeyState(VK_RWIN) < 0) mods |= MOD_WIN;
+  return mods;
+}
+
+// We use a low level keyboard hook because the registered hotkey doesn't fire correctly
+// under some circumstances.
+// Typically, switching virtual workspaces and then immediately pressing the registered hotkey
+// won't work until another shell action is performed (opening a new window, pressing Win+Tab again...)
+// The hook works in all cases so we rely on that instead
+LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
+  if (nCode == HC_ACTION && g_backend) {
+    const auto *k = reinterpret_cast<KBDLLHOOKSTRUCT *>(lParam);
+    const bool down = wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN;
+    if (g_backend->dispatchKey(k->vkCode, currentModifiers(), down)) { return 1; }
+  }
+  return CallNextHookEx(nullptr, nCode, wParam, lParam);
+}
+
 } // namespace
 
 WindowsGlobalShortcutBackend::~WindowsGlobalShortcutBackend() {
   unbindAll();
-  if (m_started) { qGuiApp->removeNativeEventFilter(this); }
+  g_backend = nullptr;
+  if (m_hookThread.joinable()) {
+    PostThreadMessageW(m_hookThreadId, WM_QUIT, 0, 0);
+    m_hookThread.join();
+  }
 }
 
 bool WindowsGlobalShortcutBackend::start() {
   if (m_started) { return true; }
 
-  qGuiApp->installNativeEventFilter(this);
+  g_backend = this;
+
+  std::promise<bool> installed;
+  auto installedFuture = installed.get_future();
+
+  m_hookThread = std::thread([this, &installed]() {
+    m_hookThreadId = GetCurrentThreadId();
+    HHOOK hook = SetWindowsHookExW(WH_KEYBOARD_LL, keyboardHookProc, GetModuleHandleW(nullptr), 0);
+    installed.set_value(hook != nullptr);
+    if (!hook) { return; }
+
+    MSG msg;
+    while (GetMessageW(&msg, nullptr, 0, 0) > 0) {}
+    UnhookWindowsHookEx(hook);
+  });
+
+  if (!installedFuture.get()) {
+    qWarning() << "failed to install keyboard hook";
+    m_hookThread.join();
+    return false;
+  }
+
   m_started = true;
   emit ready();
   return true;
+}
+
+bool WindowsGlobalShortcutBackend::dispatchKey(unsigned int vk, unsigned int mods, bool down) {
+  std::scoped_lock lock(m_targetsMutex);
+
+  for (auto &target : m_targets) {
+    if (target.vk != vk) continue;
+    if (!down) {
+      target.down = false;
+      continue;
+    }
+    if (mods == target.mods) {
+      if (!target.down) {
+        target.down = true;
+        QMetaObject::invokeMethod(
+            this, [this, id = target.id]() { emit shortcutActivated(id, GetTickCount64()); },
+            Qt::QueuedConnection);
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 std::expected<void, QString>
@@ -97,50 +170,38 @@ WindowsGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request)
   unbindShortcut(request.id);
 
   const auto vk = vkForQtKey(request.trigger.key());
+
   if (!vk) { return std::unexpected(QStringLiteral("unsupported or invalid trigger")); }
 
-  const int hotkeyId = m_nextHotkeyId++;
-  if (!RegisterHotKey(nullptr, hotkeyId, winModifiers(request.trigger.mods()), *vk)) {
-    const DWORD error = GetLastError();
-    if (error == ERROR_HOTKEY_ALREADY_REGISTERED) {
+  const UINT mods = winModifiers(request.trigger.mods());
+  const int regId = m_nextRegistrationId++;
+
+  // The source of truth to activate shortcuts is the keyboard hook but we still want
+  // to register the global shortcut so that no other application can steal it.
+  if (!RegisterHotKey(nullptr, regId, mods, *vk)) {
+    if (GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED) {
       return std::unexpected(QStringLiteral("already registered by another application"));
     }
-    return std::unexpected(QStringLiteral("RegisterHotKey failed (%1)").arg(error));
   }
 
-  m_hotkeyIds.emplace(request.id, hotkeyId);
-  m_idByHotkeyId.emplace(hotkeyId, request.id);
+  std::scoped_lock lock(m_targetsMutex);
+  m_targets.push_back({*vk, mods, regId, request.id, false});
   return {};
 }
 
 void WindowsGlobalShortcutBackend::unbindShortcut(const QString &id) {
-  const auto it = m_hotkeyIds.find(id);
-  if (it == m_hotkeyIds.end()) { return; }
-
-  UnregisterHotKey(nullptr, it->second);
-  m_idByHotkeyId.erase(it->second);
-  m_hotkeyIds.erase(it);
+  std::scoped_lock lock(m_targetsMutex);
+  std::erase_if(m_targets, [&](const HookTarget &t) {
+    if (t.id != id) return false;
+    UnregisterHotKey(nullptr, t.regId);
+    return true;
+  });
 }
 
 void WindowsGlobalShortcutBackend::unbindAll() {
-  for (const auto &[id, hotkeyId] : m_hotkeyIds) {
-    UnregisterHotKey(nullptr, hotkeyId);
+  std::scoped_lock lock(m_targetsMutex);
+  for (const auto &target : m_targets) {
+    UnregisterHotKey(nullptr, target.regId);
   }
-  m_hotkeyIds.clear();
-  m_idByHotkeyId.clear();
-}
-
-bool WindowsGlobalShortcutBackend::nativeEventFilter(const QByteArray &eventType, void *message,
-                                                     qintptr *result) {
-  Q_UNUSED(eventType)
-  Q_UNUSED(result)
-
-  const MSG *msg = static_cast<MSG *>(message);
-  if (msg->message != WM_HOTKEY) { return false; }
-
-  if (const auto it = m_idByHotkeyId.find(static_cast<int>(msg->wParam)); it != m_idByHotkeyId.end()) {
-    emit shortcutActivated(it->second, GetTickCount64());
-  }
-
-  return false;
+  m_targets.clear();
 }

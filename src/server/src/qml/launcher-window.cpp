@@ -1,4 +1,5 @@
 #include "launcher-window.hpp"
+#include "launcher-window-platform.hpp"
 #include "hud-bridge.hpp"
 #include "keybind-bridge.hpp"
 #include "keyboard-bridge.hpp"
@@ -77,8 +78,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   buildFooterMenu();
 
   m_engine.load(QUrl(
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
       QStringLiteral("qrc:/Vicinae/LauncherWindowMacOS.qml")
+#elif defined(Q_OS_WIN)
+      QStringLiteral("qrc:/Vicinae/LauncherWindowWindows.qml")
 #else
       isLayerShellActive() ? QStringLiteral("qrc:/Vicinae/LauncherWindowLayerShell.qml")
                            : QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")
@@ -94,8 +97,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     m_hudBridge = new HudBridge(this);
     rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
     m_engine.load(QUrl(
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
         QStringLiteral("qrc:/Vicinae/HudWindowMacOS.qml")
+#elif defined(Q_OS_WIN)
+        QStringLiteral("qrc:/Vicinae/HudWindowWindows.qml")
 #else
         QStringLiteral("qrc:/Vicinae/HudWindowLayerShell.qml")
 #endif
@@ -373,6 +378,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     tryCompaction();
     m_window->show();
     m_window->raise();
+    LauncherWindowPlatform::grantForeground();
     m_window->requestActivate();
   } else {
     m_window->hide();

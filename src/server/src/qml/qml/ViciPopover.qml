@@ -7,6 +7,7 @@ Popup {
     property string surface: "popover"
     property bool nativeWindow: !Platform.preferItemPopup(surface)
     property bool nativeAnimationEnabled: true
+    property bool itemAnimationEnabled: true
     property real animationAnchorX: 0.5
     property real animationAnchorY: 0.5
     property real backgroundOpacity: isNativeWindow ? Config.popupOpacity : 1
@@ -23,8 +24,8 @@ Popup {
     onAboutToHide: if (popupMaterial.macImpl)
         popupMaterial.macImpl.animateOut(root.animationAnchorX, root.animationAnchorY)
 
-    enter: root.isNativeWindow ? null : _itemEnter
-    exit: root.hasNativeAnimation ? _holdExit : (root.isNativeWindow ? null : _itemExit)
+    enter: root.isNativeWindow || !root.itemAnimationEnabled ? null : _itemEnter
+    exit: root.hasNativeAnimation ? _holdExit : (root.isNativeWindow || !root.itemAnimationEnabled ? null : _itemExit)
 
     property Transition _itemEnter: Transition {
         ParallelAnimation {
@@ -71,10 +72,11 @@ Popup {
     }
 
     background: Rectangle {
-        radius: Math.min(Config.borderRounding, 15)
+        readonly property bool csd: !root.isNativeWindow || Platform.supports("clientSideDecorations")
+        radius: csd ? Math.min(Config.borderRounding, 15) : 0
         color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, root.backgroundOpacity)
         border.color: Config.withAlpha(Theme.popoverBorder, root.backgroundOpacity)
-        border.width: 1
+        border.width: csd ? 1 : 0
 
         PopupMaterial {
             id: materialImpl
