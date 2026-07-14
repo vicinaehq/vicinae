@@ -43,11 +43,21 @@ std::wstring escapeLikeTerm(QStringView word) {
 
   for (QChar qc : word) {
     switch (wchar_t const c = qc.unicode(); c) {
-    case L'\'': escaped += L"''"; break;
-    case L'%': escaped += L"[%]"; break;
-    case L'_': escaped += L"[_]"; break;
-    case L'[': escaped += L"[[]"; break;
-    default: escaped += c; break;
+    case L'\'':
+      escaped += L"''";
+      break;
+    case L'%':
+      escaped += L"[%]";
+      break;
+    case L'_':
+      escaped += L"[_]";
+      break;
+    case L'[':
+      escaped += L"[[]";
+      break;
+    default:
+      escaped += c;
+      break;
     }
   }
 
@@ -133,8 +143,8 @@ std::vector<Candidate> fetchCandidates(const std::wstring &sql, int candidateLim
   std::vector<Candidate> candidates;
   ComPtr<IDataInitialize> dataInit;
 
-  if (HRESULT hr = CoCreateInstance(CLSID_MSDAINITIALIZE, nullptr, CLSCTX_INPROC_SERVER,
-                                    IID_PPV_ARGS(&dataInit));
+  if (HRESULT hr =
+          CoCreateInstance(CLSID_MSDAINITIALIZE, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dataInit));
       FAILED(hr)) {
     qWarning() << "WinFileIndexer: failed to create OLE DB initializer" << Qt::hex << hr;
     return candidates;
@@ -199,8 +209,7 @@ std::vector<Candidate> fetchCandidates(const std::wstring &sql, int candidateLim
     HROW *rows = rowHandles;
     DBCOUNTITEM obtained = 0;
 
-    if (FAILED(rowset->GetNextRows(DB_NULL_HCHAPTER, 0, ROW_BATCH_SIZE, &obtained, &rows)) ||
-        obtained == 0) {
+    if (FAILED(rowset->GetNextRows(DB_NULL_HCHAPTER, 0, ROW_BATCH_SIZE, &obtained, &rows)) || obtained == 0) {
       break;
     }
 
@@ -254,8 +263,8 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
 
   for (Candidate &candidate : fetchCandidates(sql, candidateLimit)) {
     std::filesystem::path path{std::move(candidate.path)};
-    auto category = candidate.isDirectory ? vicinae::FileCategory::Directory
-                                          : vicinae::fileCategoryFor(path, false);
+    auto category =
+        candidate.isDirectory ? vicinae::FileCategory::Directory : vicinae::fileCategoryFor(path, false);
 
     if (params.category && *params.category != category) { continue; }
 
