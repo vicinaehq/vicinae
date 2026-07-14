@@ -18,8 +18,7 @@ HWND hwndFromWindow(QWindow *window) { return reinterpret_cast<HWND>(window->win
 
 COLORREF colorrefFromQColor(const QColor &c) { return RGB(c.red(), c.green(), c.blue()); }
 
-LRESULT CALLBACK chromeSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR,
-                                    DWORD_PTR) {
+LRESULT CALLBACK chromeSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR) {
   switch (msg) {
   case WM_NCCALCSIZE:
     if (wParam == TRUE) return 0;
