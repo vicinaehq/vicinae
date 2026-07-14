@@ -595,8 +595,8 @@ void WindowsAppDatabase::indexAliases(const std::shared_ptr<WindowsApplication> 
         add(s.aumid);
         add(s.program);
       },
-      [&](const Win32ExeApp &e) { add(toQString(e.exe)); },
-      [&](const PackagedApp &p) { add(p.aumid); }, [](const auto &) {});
+      [&](const Win32ExeApp &e) { add(toQString(e.exe)); }, [&](const PackagedApp &p) { add(p.aumid); },
+      [](const auto &) {});
 }
 
 void WindowsAppDatabase::addShortcut(const fs::path &file) {
