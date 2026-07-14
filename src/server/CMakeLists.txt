@@ -704,6 +704,8 @@ elseif (WIN32)
 		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
 		src/services/clipboard/windows/windows-clipboard-server.hpp
 		src/services/clipboard/windows/windows-clipboard-server.cpp
+		src/services/paste/windows-paste-service.hpp
+		src/services/paste/windows-paste-service.cpp
 		src/services/files-service/windows/win-file-indexer.hpp
 		src/services/files-service/windows/win-file-indexer.cpp
 	)
