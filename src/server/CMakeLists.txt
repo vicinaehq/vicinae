@@ -704,6 +704,8 @@ elseif (WIN32)
 		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
 		src/services/clipboard/windows/windows-clipboard-server.hpp
 		src/services/clipboard/windows/windows-clipboard-server.cpp
+		src/services/paste/windows-paste-service.hpp
+		src/services/paste/windows-paste-service.cpp
 	)
 	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32)
 else()
