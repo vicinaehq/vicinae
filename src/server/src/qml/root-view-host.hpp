@@ -20,6 +20,7 @@ public:
 
   QObject *listModel() const;
   Q_INVOKABLE bool tryAliasFastTrack();
+  Q_INVOKABLE bool applyTrailingFilter();
 
 private:
   RootSearchModel *m_model = nullptr;

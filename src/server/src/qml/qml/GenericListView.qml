@@ -123,6 +123,46 @@ Item {
         listView.currentIndex = root.listModel.nextSelectableIndex(-1, 1);
     }
 
+    // Move the selection by `delta` selectable rows (negative = up), clamping at
+    // the list ends instead of wrapping. Skips section headers.
+    function moveBy(delta) {
+        if (delta === 0)
+            return true;
+        const step = delta > 0 ? 1 : -1;
+        let idx = listView.currentIndex;
+        for (let i = 0; i < Math.abs(delta); i++) {
+            const next = root.listModel.nextSelectableIndex(idx, step);
+            // nextSelectableIndex wraps around; treat a wrap as reaching the end.
+            if (next === idx || (step > 0 && next < idx) || (step < 0 && next > idx))
+                break;
+            idx = next;
+        }
+        if (idx !== listView.currentIndex) {
+            listView.currentIndex = idx;
+            listView.positionViewAtIndex(sectionScrollTarget(idx, -1), ListView.Contain);
+        }
+        return true;
+    }
+
+    // Activate the item `offset` selectable rows below the current selection
+    // (offset 0 = current). Clamps to the last item; never wraps.
+    function activateRelative(offset) {
+        let idx = listView.currentIndex;
+        if (idx < 0)
+            idx = root.listModel.nextSelectableIndex(-1, 1);
+        if (idx < 0)
+            return;
+        for (let i = 0; i < offset; i++) {
+            const next = root.listModel.nextSelectableIndex(idx, 1);
+            if (next <= idx)
+                break; // reached end (no wrap)
+            idx = next;
+        }
+        listView.currentIndex = idx;
+        root.listModel.setSelectedIndex(idx);
+        root.listModel.activateSelected();
+    }
+
     onListModelChanged: {
         if (root.autoWireModel && root.listModel && listView.count > 0) {
             root.selectFirst();
