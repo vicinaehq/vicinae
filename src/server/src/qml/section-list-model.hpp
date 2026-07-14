@@ -55,6 +55,11 @@ public:
   Q_INVOKABLE int nextSelectableIndex(int from, int direction) const;
   Q_INVOKABLE int nextSectionIndex(int from, int direction) const;
   Q_INVOKABLE int scrollTargetIndex(int index, int direction) const;
+  // 1-based position of `row` among the selectable rows at/below the current
+  // selection (1 = selected, 2 = next selectable, ...), capped; 0 if not in range.
+  // Mirrors the Alt+1..5 "open Nth from selection" shortcut for on-screen numbering.
+  Q_INVOKABLE int quickSelectNumber(int row) const;
+  static constexpr int QUICK_SELECT_MAX = 5;
 
   void refreshActionPanel();
   void beforePop();

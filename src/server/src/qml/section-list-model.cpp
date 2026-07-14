@@ -190,6 +190,21 @@ int SectionListModel::nextSelectableIndex(int from, int direction) const {
   return from;
 }
 
+int SectionListModel::quickSelectNumber(int row) const {
+  if (row < 0 || m_selectedIndex < 0) return 0;
+  if (row == m_selectedIndex) return 1;
+
+  int idx = m_selectedIndex;
+  for (int n = 2; n <= QUICK_SELECT_MAX; ++n) {
+    int const next = nextSelectableIndex(idx, 1);
+    if (next <= idx) break; // reached the end (nextSelectableIndex wraps)
+    idx = next;
+    if (idx == row) return n;
+  }
+
+  return 0;
+}
+
 int SectionListModel::nextSectionIndex(int from, int direction) const {
   int const count = static_cast<int>(m_flat.size());
   if (count == 0) return from;

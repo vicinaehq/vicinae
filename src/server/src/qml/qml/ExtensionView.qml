@@ -48,6 +48,17 @@ Item {
         }
         return false;
     }
+    function moveBy(delta) {
+        if (contentLoader.item && typeof contentLoader.item.moveBy === "function") {
+            return contentLoader.item.moveBy(delta);
+        }
+        return false;
+    }
+    function activateRelative(offset) {
+        if (contentLoader.item && typeof contentLoader.item.activateRelative === "function") {
+            return contentLoader.item.activateRelative(offset);
+        }
+    }
 
     Loader {
         id: contentLoader
@@ -82,6 +93,12 @@ Item {
             }
             function moveSectionDown() {
                 return listView.moveSectionDown();
+            }
+            function moveBy(delta) {
+                return listView.moveBy(delta);
+            }
+            function activateRelative(offset) {
+                return listView.activateRelative(offset);
             }
 
             GenericListView {
@@ -133,6 +150,10 @@ Item {
                             itemAlias: ""
                             itemIsActive: false
                             itemAccessory: delegateLoader.itemAccessory
+                            quickNumber: {
+                                listView.listModel.selectedIndex;
+                                return listView.listModel.quickSelectNumber(delegateLoader.index);
+                            }
                             selected: listView.currentIndex === delegateLoader.index
                             onClicked: listView.currentIndex = delegateLoader.index
                             onActivated: listView.itemActivated(delegateLoader.index)
