@@ -706,8 +706,10 @@ elseif (WIN32)
 		src/services/clipboard/windows/windows-clipboard-server.cpp
 		src/services/paste/windows-paste-service.hpp
 		src/services/paste/windows-paste-service.cpp
+		src/services/files-service/windows/win-file-indexer.hpp
+		src/services/files-service/windows/win-file-indexer.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp

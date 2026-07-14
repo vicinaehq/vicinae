@@ -12,6 +12,8 @@
 #include "file-indexer/file-indexer.hpp"
 #elif defined(Q_OS_MACOS)
 #include "macos/spotlight-file-indexer.hpp"
+#elif defined(Q_OS_WIN)
+#include "windows/win-file-indexer.hpp"
 #else
 #include "dummy-file-indexer.hpp"
 #endif
@@ -156,6 +158,8 @@ FileService::FileService(OmniDatabase &db)
   m_indexer = std::make_unique<FileIndexer>();
 #elif defined(Q_OS_MACOS)
   m_indexer = std::make_unique<SpotlightFileIndexer>();
+#elif defined(Q_OS_WIN)
+  m_indexer = std::make_unique<WinFileIndexer>();
 #else
   m_indexer = std::make_unique<DummyFileIndexer>();
 #endif
