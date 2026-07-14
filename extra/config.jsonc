@@ -108,7 +108,7 @@
 		},
 
 		// "none", "blur", "liquid_glass", or "auto" (liquid_glass when available, else blur).
-		// Needs window opacity < 1 to be visible.
+		// When opacity is unset, liquid glass uses a translucent default automatically.
 		"material": "auto",
 
 		// Corner radius of the launcher window, in pixels.

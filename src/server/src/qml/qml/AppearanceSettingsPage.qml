@@ -89,7 +89,7 @@ Flickable {
             SettingsRow {
                 visible: Platform.supports("windowMaterial")
                 label: "Window material"
-                description: "Background material applied to the launcher window. Lower the window opacity to see it."
+                description: "Background material applied to the launcher window. Automatic uses Liquid Glass when available, then falls back to blur."
                 SearchableDropdown {
                     width: parent.width
                     items: root.model.windowMaterialItems
