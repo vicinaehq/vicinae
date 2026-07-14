@@ -93,8 +93,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   applyWindowConfig();
 
-  QQuickWindow *hudWindow = nullptr;
-
   if (!Environment::isHudDisabled()) {
     m_hudBridge = new HudBridge(this);
     rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
@@ -107,13 +105,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
         QStringLiteral("qrc:/Vicinae/HudWindowLayerShell.qml")
 #endif
             ));
-
-    if (!m_engine.rootObjects().isEmpty()) {
-      hudWindow = qobject_cast<QQuickWindow *>(m_engine.rootObjects().last());
-    }
   }
-
-  LauncherWindowPlatform::adoptWindows(m_window, hudWindow);
 
   auto *nav = ctx.navigation.get();
 
