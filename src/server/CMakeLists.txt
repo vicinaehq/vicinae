@@ -1104,6 +1104,7 @@ if(WIN32)
 	list(APPEND VICINAE_QML_SOURCES
 		src/qml/windows-chrome-attached.hpp
 		src/qml/windows-chrome-attached.cpp
+		src/qml/launcher-window-platform.cpp
 	)
 endif()
 

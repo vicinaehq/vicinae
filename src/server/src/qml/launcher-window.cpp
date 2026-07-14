@@ -1,4 +1,5 @@
 #include "launcher-window.hpp"
+#include "launcher-window-platform.hpp"
 #include "hud-bridge.hpp"
 #include "keybind-bridge.hpp"
 #include "keyboard-bridge.hpp"
@@ -92,6 +93,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   applyWindowConfig();
 
+  QQuickWindow *hudWindow = nullptr;
+
   if (!Environment::isHudDisabled()) {
     m_hudBridge = new HudBridge(this);
     rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
@@ -104,7 +107,13 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
         QStringLiteral("qrc:/Vicinae/HudWindowLayerShell.qml")
 #endif
             ));
+
+    if (!m_engine.rootObjects().isEmpty()) {
+      hudWindow = qobject_cast<QQuickWindow *>(m_engine.rootObjects().last());
+    }
   }
+
+  LauncherWindowPlatform::adoptWindows(m_window, hudWindow);
 
   auto *nav = ctx.navigation.get();
 
@@ -377,9 +386,11 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     tryCompaction();
     m_window->show();
     m_window->raise();
+    LauncherWindowPlatform::grantForeground();
     m_window->requestActivate();
   } else {
     m_window->hide();
+    LauncherWindowPlatform::resetAfterHide(m_window);
     m_cacheEvictionTimer.start();
   }
 }

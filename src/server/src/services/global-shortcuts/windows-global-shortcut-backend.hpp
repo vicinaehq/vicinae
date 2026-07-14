@@ -1,10 +1,11 @@
 #pragma once
 #include <expected>
-#include <unordered_map>
-#include <QAbstractNativeEventFilter>
+#include <mutex>
+#include <thread>
+#include <vector>
 #include "services/global-shortcuts/abstract-global-shortcut-backend.hpp"
 
-class WindowsGlobalShortcutBackend : public AbstractGlobalShortcutBackend, public QAbstractNativeEventFilter {
+class WindowsGlobalShortcutBackend : public AbstractGlobalShortcutBackend {
   Q_OBJECT
 
 public:
@@ -18,11 +19,21 @@ public:
   void unbindShortcut(const QString &id) override;
   void unbindAll() override;
 
-  bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
+  bool dispatchKey(unsigned int vk, unsigned int mods, bool down);
 
 private:
-  std::unordered_map<QString, int> m_hotkeyIds;
-  std::unordered_map<int, QString> m_idByHotkeyId;
-  int m_nextHotkeyId = 1;
+  struct HookTarget {
+    unsigned int vk;
+    unsigned int mods;
+    int regId;
+    QString id;
+    bool down;
+  };
+
+  std::mutex m_targetsMutex;
+  std::vector<HookTarget> m_targets;
+  std::thread m_hookThread;
+  unsigned long m_hookThreadId = 0;
+  int m_nextRegistrationId = 1;
   bool m_started = false;
 };
