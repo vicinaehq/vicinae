@@ -238,9 +238,9 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
     auto paths = text.split("\r\n", Qt::SkipEmptyParts);
     if (paths.size() == 1) {
       QUrl const url(paths.at(0));
-      if (url.scheme() == "file") {
+      if (url.isLocalFile()) {
         std::error_code ec;
-        std::filesystem::path const path = url.path().toStdString();
+        std::filesystem::path const path = url.toLocalFile().toStdString();
         if (std::filesystem::is_regular_file(path, ec)) {
           auto preview = qml::resolveFilePreview(path, m_mimeDb);
           m_detailImageSource = preview.imageSource;
