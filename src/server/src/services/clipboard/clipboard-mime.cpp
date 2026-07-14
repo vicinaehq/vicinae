@@ -88,6 +88,12 @@ std::optional<ClipboardSelection> selectionFromMimeData(const QMimeData *mimeDat
   // We also want to index other formats that are not text, image, or legacy X11 target types.
 
   auto isIndexableFormat = [](const QString &fmt) {
+#ifdef Q_OS_WIN
+    // Unmapped native formats; reading one forces delayed rendering in the source app
+    if (fmt.startsWith("application/x-qt-windows-mime")) return false;
+#endif
+    // Qt-internal synthetic format
+    if (fmt == "application/x-qt-image") return false;
     return !isLegacyContentType(fmt) && !fmt.startsWith("text/") && !fmt.startsWith("image/") &&
            fmt != Clipboard::PASSWORD_HINT_MIME_TYPE;
   };

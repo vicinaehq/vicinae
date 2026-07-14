@@ -48,6 +48,7 @@ private:
   void installWatches();
   void addShortcut(const std::filesystem::path &file);
   void addApp(std::shared_ptr<WindowsApplication> app);
+  void indexAliases(const std::shared_ptr<WindowsApplication> &app);
 
   AppPtr appForExecutable(const std::filesystem::path &exe, const QString &name,
                           const QString &openerExtension = {}) const;
@@ -58,6 +59,8 @@ private:
 
   std::vector<std::shared_ptr<WindowsApplication>> m_apps;
   std::unordered_map<QString, std::shared_ptr<WindowsApplication>> m_appsById;
+  // lowercased exe target paths and AUMIDs, for findByClass
+  std::unordered_map<QString, std::shared_ptr<WindowsApplication>> m_appsByAlias;
   std::unique_ptr<UwpPackageWatcher> m_uwpWatcher;
   std::vector<std::shared_ptr<WindowsApplication>> m_uwpCache;
   std::atomic<bool> m_uwpDirty = true; // set from WinRT event threads

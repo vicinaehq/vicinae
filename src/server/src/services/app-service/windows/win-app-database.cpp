@@ -581,7 +581,22 @@ void WindowsAppDatabase::addApp(std::shared_ptr<WindowsApplication> app) {
     m_appsById.emplace(action->id(), std::static_pointer_cast<WindowsApplication>(action));
   }
   m_appsById.emplace(app->id(), app);
+  indexAliases(app);
   m_apps.emplace_back(std::move(app));
+}
+
+void WindowsAppDatabase::indexAliases(const std::shared_ptr<WindowsApplication> &app) {
+  auto add = [&](const QString &alias) {
+    if (!alias.isEmpty()) m_appsByAlias.try_emplace(alias.toLower(), app);
+  };
+  match(
+      app->kind(),
+      [&](const Win32ShortcutApp &s) {
+        add(s.aumid);
+        add(s.program);
+      },
+      [&](const Win32ExeApp &e) { add(toQString(e.exe)); },
+      [&](const PackagedApp &p) { add(p.aumid); }, [](const auto &) {});
 }
 
 void WindowsAppDatabase::addShortcut(const fs::path &file) {
@@ -758,6 +773,7 @@ void WindowsAppDatabase::refreshUwpCache() {
 bool WindowsAppDatabase::scan(const std::vector<fs::path> &paths) {
   m_apps.clear();
   m_appsById.clear();
+  m_appsByAlias.clear();
   m_watchDirs.clear();
 
   ScopedCom com;
@@ -967,7 +983,10 @@ std::vector<WindowsAppDatabase::AppPtr> WindowsAppDatabase::list() const {
   return {m_apps.begin(), m_apps.end()};
 }
 
-WindowsAppDatabase::AppPtr WindowsAppDatabase::findByClass(const QString &) const { return nullptr; }
+WindowsAppDatabase::AppPtr WindowsAppDatabase::findByClass(const QString &name) const {
+  if (auto it = m_appsByAlias.find(name.toLower()); it != m_appsByAlias.end()) return it->second;
+  return nullptr;
+}
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::fileBrowser() const {
   ScopedCom com;

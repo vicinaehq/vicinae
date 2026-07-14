@@ -34,6 +34,9 @@
 #ifdef Q_OS_MACOS
 #include "macos/macos-clipboard-server.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "windows/windows-clipboard-server.hpp"
+#endif
 
 namespace fs = std::filesystem;
 
@@ -621,6 +624,9 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, std::optio
 #endif
 #ifdef Q_OS_MACOS
     factory.registerServer<MacosClipboardServer>();
+#endif
+#ifdef Q_OS_WIN
+    factory.registerServer<WindowsClipboardServer>();
 #endif
     m_clipboardServer = factory.createFirstActivatable();
     qInfo() << "Activated clipboard server" << m_clipboardServer->id();
