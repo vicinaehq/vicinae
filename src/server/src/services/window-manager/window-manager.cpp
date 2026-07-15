@@ -72,6 +72,17 @@ const AbstractWindowManager::AbstractWindow *WindowManager::findWindowById(const
 
 const AbstractWindowManager::WindowList &WindowManager::listWindows() const { return m_windows; }
 
+AbstractWindowManager::WorkspacePtr WindowManager::findWorkspaceById(const QString &id) {
+  if (!m_workspaces) {
+    m_workspaces =
+        m_provider->hasWorkspaces() ? m_provider->listWorkspaces() : AbstractWindowManager::WorkspaceList{};
+  }
+
+  auto pred = [&](auto &&ws) { return ws->id() == id; };
+  if (auto it = std::ranges::find_if(*m_workspaces, pred); it != m_workspaces->end()) { return *it; }
+  return nullptr;
+}
+
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
   return m_windows | std::views::filter([&](auto &&win) {
            return app.matchesWindowClass(win->wmClass()) ||
@@ -80,7 +91,10 @@ AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractAp
          std::ranges::to<std::vector>();
 }
 
-void WindowManager::updateWindowCache() { m_windows = m_provider->listWindowsSync(); }
+void WindowManager::updateWindowCache() {
+  m_windows = m_provider->listWindowsSync();
+  m_workspaces.reset();
+}
 
 bool WindowManager::isCapable() const { return m_provider->id() != "dummy"; }
 

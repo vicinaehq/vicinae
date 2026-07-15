@@ -129,7 +129,11 @@ void WindowManager::start() {
   s_instance = this;
 
   m_desktops = std::make_unique<VirtualDesktops>();
-  connect(m_desktops.get(), &VirtualDesktops::changed, this, [this]() { scheduleRebuild(); });
+  connect(m_desktops.get(), &VirtualDesktops::changed, this, [this]() {
+    scheduleRebuild();
+    // renames change no windows, so the rebuild alone would not notify
+    emit windowsChanged();
+  });
 
   m_rebuildTimer = new QTimer(this);
   m_rebuildTimer->setSingleShot(true);
