@@ -1,11 +1,11 @@
 import * as esbuild from "esbuild";
-import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { CommandDef } from "../../cli.js";
 import ManifestSchema from "../../schemas/manifest.js";
 import { updateExtensionTypes } from "../../utils/extension-types.js";
 import { Logger } from "../../utils/logger.js";
+import { typeCheck } from "../../utils/typecheck.js";
 import { extensionDataDir } from "../../utils/utils.js";
 
 const build: CommandDef = {
@@ -112,10 +112,10 @@ const build: CommandDef = {
 		updateExtensionTypes(manifest, src);
 
 		logger.logInfo("Checking types...");
-		const typeCheck = spawnSync("npx", ["tsc", "--noEmit"]);
+		const check = typeCheck(src);
 
-		if (typeCheck.error) {
-			logger.logError(`Type check failed: ${typeCheck.error}`);
+		if (!check.ok) {
+			logger.logError(`Type check failed:\n${check.output}`);
 			process.exit(1);
 		}
 
