@@ -2,6 +2,7 @@
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/window-manager/windows/windows-window.hpp"
+#include <optional>
 #include <unordered_set>
 #include <windows.h>
 
@@ -34,7 +35,7 @@ BOOL CALLBACK findCoreWindowProc(HWND child, LPARAM lparam) {
 
 // A UWP frame's pid is ApplicationFrameHost's; terminating it would take down every UWP window.
 // The hosted app's process owns the CoreWindow child.
-DWORD terminatablePid(HWND hwnd, DWORD pid) {
+std::optional<DWORD> terminatablePid(HWND hwnd, DWORD pid) {
   if (!isFrameHostPid(pid)) return pid;
 
   HWND core = nullptr;
@@ -42,7 +43,8 @@ DWORD terminatablePid(HWND hwnd, DWORD pid) {
 
   DWORD corePid = 0;
   if (core) GetWindowThreadProcessId(core, &corePid);
-  return corePid != pid ? corePid : 0;
+  if (corePid && corePid != pid) return corePid;
+  return std::nullopt;
 }
 
 } // namespace
@@ -84,10 +86,12 @@ bool WindowsAppRuntime::forceQuit(const AbstractApplication &app) const {
 
   for (const auto &win : m_wm.findAppWindows(app)) {
     const auto &window = static_cast<const Win::Window &>(*win);
-    DWORD pid = static_cast<DWORD>(window.pid().value_or(0));
 
-    if (DWORD target = pid ? terminatablePid(window.hwnd(), pid) : 0) {
-      pids.emplace(target);
+    std::optional<DWORD> target;
+    if (auto pid = window.pid()) target = terminatablePid(window.hwnd(), static_cast<DWORD>(*pid));
+
+    if (target) {
+      pids.emplace(*target);
     } else if (m_wm.provider()->closeWindow(window)) {
       acted = true;
     }
