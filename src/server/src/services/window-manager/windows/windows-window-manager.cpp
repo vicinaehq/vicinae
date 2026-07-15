@@ -206,9 +206,10 @@ bool WindowManager::isListable(HWND hwnd) const {
   GetWindowThreadProcessId(hwnd, &pid);
   if (!pid || pid == GetCurrentProcessId()) return false;
 
-  // cloaked windows are kept when they live on another virtual desktop, or when they are the
-  // frame of a suspended UWP app — alt-tab still lists those and focusing them resumes the app.
-  // Bare cloaked CoreWindows (dormant system apps) are dropped.
+  // no virtual desktop assignment = not on screen (dormant UWP frames, hidden launcher windows)
+  if (m_desktops && m_desktops->available() && !m_desktops->windowDesktopId(hwnd)) return false;
+
+  // keep cloaked windows on another desktop and minimized UWP frames; drop dormant CoreWindows
   DWORD cloaked = 0;
   DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked));
   if (cloaked && (!m_desktops || m_desktops->isWindowOnCurrentDesktop(hwnd))) {
@@ -227,7 +228,7 @@ std::shared_ptr<Window> WindowManager::buildWindow(HWND hwnd) const {
   DWORD pid = 0;
   GetWindowThreadProcessId(hwnd, &pid);
 
-  // minimized windows are parked at (-32000,-32000); no bounds is the honest value
+  // minimized windows report the -32000 parking rect
   std::optional<WindowBounds> bounds;
   RECT frame{};
   if (!IsIconic(hwnd) &&
@@ -272,8 +273,7 @@ QString WindowManager::keyForPid(DWORD pid) const {
 QString WindowManager::appKeyFor(HWND hwnd, DWORD pid) const {
   QString key = keyForPid(pid);
 
-  // UWP app windows belong to the frame host; the real app identity is the hosted app's AUMID,
-  // taken from the frame's property store (survives suspension) or the CoreWindow child's process
+  // UWP frames belong to ApplicationFrameHost; the hosted app's AUMID is the real identity
   if (key.endsWith(QLatin1String("\\applicationframehost.exe"))) {
     if (QString aumid = windowAumid(hwnd); !aumid.isEmpty()) return aumid;
 
@@ -378,8 +378,7 @@ HWND WindowManager::ensureHelperWindow() const {
 bool WindowManager::activateWorkspace(const QString &workspaceId) const {
   if (!hasWorkspaces()) return false;
 
-  // there is no stable API to switch desktops directly, but focusing a window that lives on the
-  // target desktop makes the shell switch to it — so we briefly plant our own helper window there
+  // no stable API to switch desktops; focusing our helper window planted there makes the shell do it
   HWND helper = ensureHelperWindow();
   if (!helper) return false;
   if (!m_desktops->moveOwnWindowToDesktop(helper, workspaceId)) return false;
