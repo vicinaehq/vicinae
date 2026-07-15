@@ -88,8 +88,14 @@ const develop: CommandDef = {
 				return esbuild.build({
 					bundle: true,
 					entryPoints: [source],
-					external: ["react", "@vicinae/api", "@raycast/api"],
+					external: [
+						"react",
+						"react/jsx-runtime",
+						"@vicinae/api",
+						"@raycast/api",
+					],
 					format: "cjs",
+					jsx: "automatic",
 					outdir: outDir,
 					platform: "node",
 					loader: {
