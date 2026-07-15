@@ -1178,7 +1178,10 @@ else()
 	message(STATUS "Precompiled headers are disabled")
 endif()
 
-if(NOT APPLE)
+if(WIN32)
+	include(WindowsDeploy)
+	vicinae_windows_deploy(${TARGET})
+elseif(NOT APPLE)
 	install(TARGETS ${TARGET}
 		RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 	)

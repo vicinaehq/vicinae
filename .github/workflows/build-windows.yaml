@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
@@ -51,6 +52,21 @@ jobs:
 
       - name: Build
         run: cmake --build --preset windows-ci
+
+      - name: Package (stage + installer)
+        run: ./scripts/mkinstaller.ps1 -BuildDir build
+
+      - name: Upload portable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: vicinae-windows-x64-portable
+          path: build/stage
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: vicinae-windows-x64-setup
+          path: dist/*.exe
 
       - name: sccache stats
         if: always()

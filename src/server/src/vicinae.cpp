@@ -89,6 +89,8 @@ std::vector<fs::path> Omnicast::systemDataDirs() {
 #ifdef Q_OS_MACOS
   if (auto bundle = bundleResourceDir(); !bundle.empty()) { paths.emplace_back(std::move(bundle)); }
 #elif defined(Q_OS_WIN)
+  auto const appDir = QCoreApplication::applicationDirPath().toStdString();
+  paths.emplace_back((fs::path(appDir) / VICINAE_DATA_ROOT_REL).lexically_normal());
 #else
   auto const dd = xdgpp::dataDirs();
   paths.reserve(dd.size());
