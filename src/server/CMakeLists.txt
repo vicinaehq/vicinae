@@ -713,6 +713,8 @@ elseif (WIN32)
 		src/services/window-manager/windows/virtual-desktops.cpp
 		src/services/window-manager/windows/windows-window-manager.hpp
 		src/services/window-manager/windows/windows-window-manager.cpp
+		src/services/app-runtime/windows/win-app-runtime.hpp
+		src/services/app-runtime/windows/win-app-runtime.cpp
 	)
 	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid)
 else()
