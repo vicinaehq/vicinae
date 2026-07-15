@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import * as ts from "typescript";
 
 export type TypeCheckResult = {
@@ -5,18 +6,22 @@ export type TypeCheckResult = {
 	output: string;
 };
 
+const FORCED_OPTIONS: ts.CompilerOptions = {
+	noEmit: true,
+	jsx: ts.JsxEmit.ReactJSX,
+	esModuleInterop: true,
+	skipLibCheck: true,
+};
+
 const DEFAULT_CONFIG = {
 	compilerOptions: {
 		target: "ES2022",
 		module: "commonjs",
 		moduleResolution: "node",
-		jsx: "react-jsx",
 		strict: true,
-		esModuleInterop: true,
-		skipLibCheck: true,
 		resolveJsonModule: true,
 	},
-	include: ["src", "vicinae-env.d.ts"],
+	include: ["src"],
 };
 
 const parseConfig = (target: string): ts.ParsedCommandLine => {
@@ -43,9 +48,13 @@ const parseConfig = (target: string): ts.ParsedCommandLine => {
 
 export const typeCheck = (target: string): TypeCheckResult => {
 	const parsed = parseConfig(target);
-	const program = ts.createProgram(parsed.fileNames, {
+	const envFile = path.join(target, "vicinae-env.d.ts");
+	const rootNames = ts.sys.fileExists(envFile)
+		? [...parsed.fileNames, envFile]
+		: parsed.fileNames;
+	const program = ts.createProgram(rootNames, {
 		...parsed.options,
-		noEmit: true,
+		...FORCED_OPTIONS,
 	});
 	const diagnostics = [
 		...ts.getConfigFileParsingDiagnostics(parsed),
