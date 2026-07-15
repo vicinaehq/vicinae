@@ -31,7 +31,15 @@ void SwitchWindowsViewHost::refreshWindows() {
   for (const auto &win : windows) {
     auto app = appDb->findByClass(win->wmClass());
     if (!app) app = appDb->findById(win->wmClass());
-    entries.push_back({.window = win, .app = std::move(app)});
+
+    QString workspaceName;
+    if (auto ws = win->workspace()) {
+      if (auto workspace = wm->findWorkspaceById(*ws); workspace && workspace->name() != workspace->id()) {
+        workspaceName = workspace->name();
+      }
+    }
+
+    entries.push_back({.window = win, .app = std::move(app), .workspaceName = std::move(workspaceName)});
   }
 
   m_section.setItems(std::move(entries));

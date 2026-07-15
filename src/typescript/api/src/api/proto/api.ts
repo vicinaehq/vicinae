@@ -194,7 +194,7 @@ export type Workspace = {
 	name: string;
 	active: boolean;
 	fullscreen: boolean;
-	monitor: string;
+	monitor?: string;
 }
 
 export type ClipboardContent = {

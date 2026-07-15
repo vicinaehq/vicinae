@@ -31,6 +31,10 @@ signals:
   void focusChanged() const;
 
 public:
+  /**
+   * Window geometry in Qt logical coordinates, composable with `Screen::bounds`.
+   * The X11 backend currently reports raw native pixels instead.
+   */
   struct WindowBounds {
     int32_t x = 0;
     int32_t y = 0;
@@ -61,11 +65,6 @@ public:
      * is not shown.
      */
     bool active = false;
-  };
-
-  struct BlurConfig {
-    bool enabled = true;
-    int rounding = 0;
   };
 
   /**
@@ -99,7 +98,12 @@ public:
 
     virtual QString id() const = 0;
     virtual QString name() const { return id(); }
-    virtual QString monitor() const = 0;
+
+    /**
+     * The monitor this workspace belongs to. Workspaces that span all monitors (Windows virtual
+     * desktops, X11 desktops) return nullopt.
+     */
+    virtual std::optional<QString> monitor() const { return std::nullopt; }
     virtual bool hasFullScreen() const { return false; }
   };
 
@@ -164,12 +168,12 @@ public:
   virtual bool supportsFocusTracking() const { return false; }
 
   /**
-   * Whether `getFocusedWindowSync` returns nullptr when a layer shell surface grabs keyboard focus.
-   * Some compositors (niri, gnome) null out the focused window when a layer has focus, making it
-   * possible to detect focus transitions. Others (hyprland) keep reporting the previously focused
-   * window, in which case we cannot reliably detect when focus has returned to the target app.
+   * Whether `getFocusedWindowSync` reliably reflects the launcher losing focus: while the launcher
+   * holds focus it reports either nullptr or the launcher's own window, so consumers can poll for
+   * the moment focus lands on the target app. Some wayland compositors (hyprland) keep reporting
+   * the previously focused window while a layer shell surface has focus, making this impossible.
    */
-  virtual bool focusNullsOnLayerGrab() const { return false; }
+  virtual bool supportsFocusHandoffDetection() const { return false; }
 
   virtual void focusWindowSync(const AbstractWindow &window) const {}
 
@@ -214,15 +218,23 @@ public:
    */
   virtual bool closeWindow(const AbstractWindow &window) const { return false; }
 
+  virtual bool supportsSetSticky() const { return false; }
   virtual bool setSticky(const AbstractWindow &window, bool sticky) const { return false; }
 
   virtual bool setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const {
     return false;
   }
 
+  virtual bool supportsMoveToWorkspace() const { return false; }
   virtual bool moveToWorkspace(const AbstractWindow &window, const QString &workspaceId) const {
     return false;
   }
+
+  /**
+   * Switch the active workspace, without moving any window.
+   */
+  virtual bool supportsWorkspaceActivation() const { return false; }
+  virtual bool activateWorkspace(const QString &workspaceId) const { return false; }
 
   /**
    * To make sure the window manager IPC link is healthy.

@@ -93,7 +93,11 @@ export namespace WindowManagement {
 	export type Workspace = {
 		id: string;
 		name: string;
-		monitorId: string;
+		/**
+		 * The ID of the monitor this workspace belongs to. Workspaces that span all
+		 * monitors (Windows virtual desktops, X11 desktops) have no monitor ID.
+		 */
+		monitorId?: string;
 		active: boolean;
 	};
 

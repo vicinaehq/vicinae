@@ -66,7 +66,7 @@ private:
   static tsapi::Application appToTsapi(const ::AbstractApplication &app) {
     return {.id = app.id().toStdString(),
             .name = app.displayName().toStdString(),
-            .icon = app.iconUrl().name().toStdString(),
+            .icon = app.iconUrl().toString().toStdString(),
             .path = app.path().string()};
   }
 

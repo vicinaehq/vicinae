@@ -38,7 +38,7 @@ class Workspace : public AbstractWindowManager::AbstractWorkspace {
 public:
   QString id() const override { return m_id; }
   QString name() const override { return m_name; }
-  QString monitor() const override { return m_monitor; }
+  std::optional<QString> monitor() const override { return m_monitor; }
 
   bool isActive() const { return m_active; }
   bool isFocused() const { return m_focused; }
@@ -66,7 +66,7 @@ public:
   WindowList listWindowsSync() const override;
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
   bool supportsFocusTracking() const override { return true; }
-  bool focusNullsOnLayerGrab() const override { return true; }
+  bool supportsFocusHandoffDetection() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
 

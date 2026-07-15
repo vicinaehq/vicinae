@@ -35,7 +35,7 @@ const transformNativeDesktop = (
 ): RaycastDesktop => {
 	return {
 		id: win.id,
-		screenId: win.monitorId,
+		screenId: win.monitorId ?? "",
 		size: { width: 0, height: 0 }, // FIXME: implement
 		active: win.active,
 		type: DesktopType.User,

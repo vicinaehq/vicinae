@@ -15,6 +15,7 @@ QString SwitchWindowsSection::displayIconSource(const WindowEntry &e) const {
 }
 
 QVariantList SwitchWindowsSection::displayAccessories(const WindowEntry &e) const {
+  if (!e.workspaceName.isEmpty()) { return qml::textAccessory(e.workspaceName); }
   if (auto ws = e.window->workspace()) { return qml::textAccessory(QString("WS %1").arg(*ws)); }
   return {};
 }
@@ -25,13 +26,10 @@ std::unique_ptr<ActionPanelState> SwitchWindowsSection::buildActionPanel(const W
   auto section = panel->createSection("Window Actions");
   section->addAction(new FocusWindowAction(e.window));
 
-  if (scope().services()->windowManager()->provider()->id() == "x11") {
-    auto pinAction = new PinWindowAction(e.window);
-    section->addAction(pinAction);
+  auto provider = scope().services()->windowManager()->provider();
 
-    auto bringAction = new BringToWorkspaceAction(e.window);
-    section->addAction(bringAction);
-  }
+  if (provider->supportsSetSticky()) { section->addAction(new PinWindowAction(e.window)); }
+  if (provider->supportsMoveToWorkspace()) { section->addAction(new BringToWorkspaceAction(e.window)); }
 
   auto closeAction = new CloseWindowAction(e.window);
   closeAction->setShortcut(Keyboard::Shortcut(Qt::Key_Q, Qt::ControlModifier));
