@@ -988,6 +988,16 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::findByClass(const QString &name) 
   return nullptr;
 }
 
+PreferenceList WindowsAppDatabase::preferences() const {
+  auto defaultAction =
+      Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
+  defaultAction.setDefaultValue("focus");
+  defaultAction.setTitle("Default action");
+  defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
+                               "if the app has no open window.");
+  return {defaultAction};
+}
+
 WindowsAppDatabase::AppPtr WindowsAppDatabase::fileBrowser() const {
   ScopedCom com;
   fs::path explorer;
