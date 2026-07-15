@@ -53,7 +53,7 @@ in
 
     apiDeps = fetchNpmDeps {
       src = "${finalAttrs.src}/src/typescript/api";
-      hash = "sha256-Im8fSG9sbaSynrN5gLsWVaPgH5g4Zp+x+FUPIBXrKjg=";
+      hash = "sha256-4FEaBDJK9abcgz+vptuL4wQ8zhp+wpLbbR4Y79BVhEg=";
     };
 
     extensionManagerDeps = fetchNpmDeps {
