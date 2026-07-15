@@ -170,7 +170,7 @@ struct Workspace {
   name: string;
   active: bool;
   fullscreen: bool;
-  monitor: string;
+  monitor?: string;
 };
 
 service WindowManagement {

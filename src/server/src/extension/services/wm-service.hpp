@@ -51,7 +51,7 @@ public:
         .name = active->name().toStdString(),
         .active = true,
         .fullscreen = active->hasFullScreen(),
-        .monitor = active->monitor().value_or(QString()).toStdString(),
+        .monitor = active->monitor().transform([](const QString &m) { return m.toStdString(); }),
     });
   }
 
@@ -114,7 +114,7 @@ public:
           .name = workspace->name().toStdString(),
           .active = isActive,
           .fullscreen = workspace->hasFullScreen(),
-          .monitor = workspace->monitor().value_or(QString()).toStdString(),
+          .monitor = workspace->monitor().transform([](const QString &m) { return m.toStdString(); }),
       });
     }
 
