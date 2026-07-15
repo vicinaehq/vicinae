@@ -15,6 +15,9 @@
 #ifdef Q_OS_MACOS
 #include "macos/macos-window-manager.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "windows/windows-window-manager.hpp"
+#endif
 
 std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandidates() {
   // XXX - For all new window managers, it is needed to add it to this vector
@@ -33,6 +36,10 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
 
 #ifdef Q_OS_MACOS
   candidates.emplace_back(std::make_unique<MacosWindowManager>());
+#endif
+
+#ifdef Q_OS_WIN
+  candidates.emplace_back(std::make_unique<Win::WindowManager>());
 #endif
 
   return candidates;

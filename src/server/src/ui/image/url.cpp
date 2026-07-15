@@ -149,6 +149,15 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) {
     if (auto mask = image->mask) { setMask(*mask); }
 
     if (url.isValid()) {
+      // some of our own APIs send icon:// urls as an opaque way to
+      // represent e.g internal app icons. They are not meant to be
+      // stable or anything, but they can be passed back to other extension
+      // APIs to display the icon.
+      if (url.scheme() == "icon") {
+        *this = url;
+        return;
+      }
+
       if (url.scheme() == "file") {
         setType(ImageURLType::Local);
         setName(url.host() + url.path());

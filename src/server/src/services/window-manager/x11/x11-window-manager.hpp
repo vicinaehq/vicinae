@@ -32,7 +32,9 @@ public:
   bool supportsFocusTracking() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
+  bool supportsSetSticky() const override { return true; }
   bool setSticky(const AbstractWindow &window, bool sticky) const override;
+  bool supportsMoveToWorkspace() const override { return true; }
   bool moveToWorkspace(const AbstractWindow &window, const QString &workspaceId) const override;
 
   bool hasWorkspaces() const override;

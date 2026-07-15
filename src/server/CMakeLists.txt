@@ -708,6 +708,11 @@ elseif (WIN32)
 		src/services/paste/windows-paste-service.cpp
 		src/services/files-service/windows/win-file-indexer.hpp
 		src/services/files-service/windows/win-file-indexer.cpp
+		src/services/window-manager/windows/windows-window.hpp
+		src/services/window-manager/windows/virtual-desktops.hpp
+		src/services/window-manager/windows/virtual-desktops.cpp
+		src/services/window-manager/windows/windows-window-manager.hpp
+		src/services/window-manager/windows/windows-window-manager.cpp
 	)
 	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid)
 else()

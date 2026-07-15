@@ -422,7 +422,6 @@ public:
 
   QString id() const override { return QString::number(m_index); }
   QString name() const override { return m_name.isEmpty() ? QString("Desktop %1").arg(m_index + 1) : m_name; }
-  QString monitor() const override { return QString(); } // X11 doesn't have per-monitor workspace concept
   bool hasFullScreen() const override { return false; }
 
 private:

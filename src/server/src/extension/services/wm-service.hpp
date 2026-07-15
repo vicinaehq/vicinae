@@ -51,7 +51,7 @@ public:
         .name = active->name().toStdString(),
         .active = true,
         .fullscreen = active->hasFullScreen(),
-        .monitor = active->monitor().toStdString(),
+        .monitor = active->monitor().value_or(QString()).toStdString(),
     });
   }
 
@@ -114,7 +114,7 @@ public:
           .name = workspace->name().toStdString(),
           .active = isActive,
           .fullscreen = workspace->hasFullScreen(),
-          .monitor = workspace->monitor().toStdString(),
+          .monitor = workspace->monitor().value_or(QString()).toStdString(),
       });
     }
 
@@ -151,7 +151,7 @@ private:
   static tsapi::Application toTsapiApp(const ::AbstractApplication &app) {
     return {.id = app.id().toStdString(),
             .name = app.displayName().toStdString(),
-            .icon = app.iconUrl().name().toStdString(),
+            .icon = app.iconUrl().toString().toStdString(),
             .path = app.path().string()};
   }
 

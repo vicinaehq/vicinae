@@ -70,6 +70,18 @@ public:
     return {std::make_shared<WindowsApplication>(std::move(data))};
   }
 
+  // matches the keys produced by the window manager: full exe paths and AUMIDs
+  bool matchesWindowClass(const QString &target) const override {
+    if (target.isEmpty()) return false;
+    auto equals = [&](const QString &value) {
+      return !value.isEmpty() && value.compare(target, Qt::CaseInsensitive) == 0;
+    };
+    return match(
+        m_data.kind, [&](const Win32ShortcutApp &s) { return equals(s.aumid) || equals(s.program); },
+        [&](const Win32ExeApp &e) { return equals(QString::fromStdWString(e.exe.wstring())); },
+        [&](const PackagedApp &p) { return equals(p.aumid); }, [](const auto &) { return false; });
+  }
+
   QString program() const override {
     return match(
         m_data.kind, [](const Win32ShortcutApp &s) { return s.program; },
