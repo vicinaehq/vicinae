@@ -47,12 +47,18 @@ fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
 
 std::vector<fs::path> helperProgramCandidates(std::string_view program) {
   const auto self = selfPath().parent_path();
+  fs::path name{program};
+
+#ifdef _WIN32
+  name += ".exe";
+#endif
+
   std::vector<fs::path> candidates;
   candidates.reserve(3);
 
-  candidates.emplace_back(self / program);
-  candidates.emplace_back(self.parent_path() / VICINAE_LIBEXECDIR / program);
-  candidates.emplace_back(fs::path{VICINAE_LIBEXEC_PATH} / program);
+  candidates.emplace_back(self / name);
+  candidates.emplace_back(self.parent_path() / VICINAE_LIBEXECDIR / name);
+  candidates.emplace_back(fs::path{VICINAE_LIBEXEC_PATH} / name);
   return candidates;
 }
 

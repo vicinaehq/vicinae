@@ -17,7 +17,6 @@
         "TYPESCRIPT_EXTENSIONS": "ON",
         "INSTALL_NODE_MODULES": "ON",
         "VICINAE_NODE_RUNTIME_DOWNLOAD": "ON",
-        "AUTO_INSTALL_BROWSER_MANIFESTS": "OFF",
         "BUILD_TESTS": "OFF",
         "LTO": "OFF"
       }

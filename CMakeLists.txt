@@ -153,9 +153,7 @@ include_directories(
 
 find_package(glaze)
 
-if (NOT WIN32)
-	add_subdirectory(src/browser-extension)
-endif()
+add_subdirectory(src/browser-extension)
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/glyph)
