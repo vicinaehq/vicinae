@@ -288,7 +288,11 @@ bool FileIndexer::shouldRebuildVocabulary() {
 }
 
 FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
-  if (m_db.isOpen()) { m_db.init(); }
+  if (m_db.isOpen()) {
+    m_db.init();
+    m_writer->pruneScanHistory(
+        std::chrono::duration_cast<std::chrono::seconds>(SCAN_HISTORY_MAX_AGE).count());
+  }
 
   m_dispatcher.setEventCallback([this](const ScanEvent &event) {
     if (event.type == ScanType::Full && event.status == ScanStatus::Succeeded) {

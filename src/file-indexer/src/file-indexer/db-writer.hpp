@@ -53,6 +53,7 @@ public:
   void finalizeScan(int scanId, ScanStatus status, int64_t indexedFileCount);
 
   void setScanError(int scanId, const std::string &error);
+  void pruneScanHistory(int64_t maxAgeSeconds);
   std::expected<FileIndexerDatabase::ScanRecord, std::string> createScan(const std::filesystem::path &path,
                                                                          ScanType type);
 

@@ -212,6 +212,21 @@ bool FileIndexerDatabase::finalizeScan(int scanId, ScanStatus status, int64_t in
   return true;
 }
 
+bool FileIndexerDatabase::pruneScanHistory(int64_t maxAgeSeconds) {
+  auto stmt = m_db.prepare("DELETE FROM scan_history "
+                           "WHERE created_at < unixepoch() - :maxAge "
+                           "AND id NOT IN (SELECT MAX(id) FROM scan_history "
+                           "GROUP BY entrypoint, type, status)");
+  stmt.bind(":maxAge", maxAgeSeconds);
+
+  if (!stmt.exec()) {
+    flog::warn() << "Failed to prune scan history" << stmt.lastError();
+    return false;
+  }
+
+  return true;
+}
+
 bool FileIndexerDatabase::updateScanStatus(int scanId, ScanStatus status) {
   auto stmt = m_db.prepare("UPDATE scan_history SET status = :status WHERE id = :id");
   stmt.bind(":id", scanId);
