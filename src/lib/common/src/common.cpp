@@ -1,4 +1,5 @@
 #include "common/common.hpp"
+#include <algorithm>
 #include <clocale>
 #include <cstdlib>
 #include <filesystem>
@@ -18,6 +19,12 @@
 namespace fs = std::filesystem;
 
 namespace vicinae {
+bool isAppDeeplink(std::string_view url) {
+  return std::ranges::any_of(APP_SCHEMES, [&](std::string_view scheme) {
+    return url.starts_with(scheme) && url.substr(scheme.size()).starts_with(":/");
+  });
+}
+
 void enableUtf8() {
 #ifdef _WIN32
   std::setlocale(LC_ALL, ".UTF-8");

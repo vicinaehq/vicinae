@@ -715,6 +715,8 @@ elseif (WIN32)
 		src/services/window-manager/windows/windows-window-manager.cpp
 		src/services/app-runtime/windows/win-app-runtime.hpp
 		src/services/app-runtime/windows/win-app-runtime.cpp
+		src/services/url-scheme/win-url-scheme-registrar.hpp
+		src/services/url-scheme/win-url-scheme-registrar.cpp
 	)
 	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid)
 else()

@@ -103,6 +103,10 @@
 #include <QFileOpenEvent>
 #endif
 
+#ifdef Q_OS_WIN
+#include "services/url-scheme/win-url-scheme-registrar.hpp"
+#endif
+
 #ifdef AUTO_ENABLE_AUTOSTART
 #include "services/autostart/macos-login-item.hpp"
 #endif
@@ -176,6 +180,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
       return 0;
     }
   }
+
+#ifdef Q_OS_WIN
+  vicinae::win::registerUrlSchemes();
+#endif
 
 #ifdef Q_OS_MACOS
   if (!qEnvironmentVariableIsSet("QT_MAC_SET_RAISE_PROCESS")) qputenv("QT_MAC_SET_RAISE_PROCESS", "0");
