@@ -63,6 +63,10 @@ void DbWriter::setScanError(int scanId, const std::string &error) {
   submit([scanId, error = std::move(error)](FileIndexerDatabase &db) { db.setScanError(scanId, error); });
 }
 
+void DbWriter::pruneScanHistory(int64_t maxAgeSeconds) {
+  submit([maxAgeSeconds](FileIndexerDatabase &db) { db.pruneScanHistory(maxAgeSeconds); });
+}
+
 void DbWriter::finalizeScan(int scanId, ScanStatus status, int64_t indexedFileCount) {
   submit([scanId, status, indexedFileCount](FileIndexerDatabase &db) {
     db.finalizeScan(scanId, status, indexedFileCount);

@@ -65,6 +65,10 @@ public:
 
   bool setScanError(int scanId, const std::string &error);
 
+  // drops rows older than maxAgeSeconds, keeping the latest per (entrypoint, type, status)
+  // so cutoff and interrupted-scan lookups keep working
+  bool pruneScanHistory(int64_t maxAgeSeconds);
+
   std::optional<int64_t> retrieveIndexedLastModified(const std::filesystem::path &path) const;
   std::optional<int64_t> retrieveIndexedSizeBytes(const std::filesystem::path &path) const;
   std::optional<int64_t> retrieveIndexedAt(const std::filesystem::path &path) const;
