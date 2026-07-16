@@ -12,6 +12,8 @@
 #include <windows.h>
 #include <shellapi.h>
 
+#include <array>
+
 namespace {
 
 constexpr const char *SETTINGS_APP_PARSING_NAME =
@@ -27,7 +29,7 @@ const QString &settingsGlyphFont() {
 }
 
 // clang-format off
-constexpr WinSettingsPage SETTINGS_PAGES[] = {
+constexpr auto SETTINGS_PAGES = std::to_array<WinSettingsPage>({
     {"display", "Display", "System", "ms-settings:display", SegoeIcon::TVMonitor, "monitor resolution brightness scale hdr screen"},
     {"night-light", "Night Light", "System", "ms-settings:nightlight", SegoeIcon::QuietHours, "blue light filter"},
     {"sound", "Sound", "System", "ms-settings:sound", SegoeIcon::Volume, "audio output input volume speaker microphone"},
@@ -128,7 +130,7 @@ constexpr WinSettingsPage SETTINGS_PAGES[] = {
     {"update-history", "Update History", "Windows Update", "ms-settings:windowsupdate-history", SegoeIcon::History, "installed updates"},
     {"update-advanced", "Advanced Update Options", "Windows Update", "ms-settings:windowsupdate-options", SegoeIcon::Settings, "active hours delivery optimization"},
     {"windows-insider", "Windows Insider Program", "Windows Update", "ms-settings:windowsinsider", SegoeIcon::FavoriteStar, "beta dev canary preview"},
-};
+});
 // clang-format on
 
 class OpenWindowsSettingAction : public AbstractAction {
@@ -217,7 +219,7 @@ RootProvider::Type WinSettingsRootProvider::type() const { return RootProvider::
 
 std::vector<std::shared_ptr<RootItem>> WinSettingsRootProvider::loadItems() const {
   std::vector<std::shared_ptr<RootItem>> items;
-  items.reserve(std::size(SETTINGS_PAGES));
+  items.reserve(SETTINGS_PAGES.size());
 
   for (const auto &page : SETTINGS_PAGES) {
     items.emplace_back(std::make_shared<WinSettingsPageRootItem>(page));
