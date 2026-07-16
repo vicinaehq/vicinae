@@ -1,7 +1,8 @@
-# Usage: scripts/mkinstaller.ps1 [-BuildDir build-release] [-OutDir dist]
+# Usage: scripts/mkinstaller.ps1 [-BuildDir build-release] [-OutDir <BuildDir>]
 param(
     [string]$BuildDir = "build-release",
-    [string]$OutDir = "dist"
+    [string]$OutDir = "",
+    [string]$Arch = "x64"
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot
@@ -37,11 +38,11 @@ foreach ($f in "bin\vicinae-server.exe", "bin\qt.conf", "plugins\platforms\qwind
     }
 }
 
-$OutDir = Join-Path $root $OutDir
-& $iscc "/DStageDir=$stage" "/DAppVersion=$version" "/O$OutDir" `
+if ($OutDir) { $OutDir = Join-Path $root $OutDir } else { $OutDir = $BuildDir }
+& $iscc "/DStageDir=$stage" "/DAppVersion=$version" "/DArch=$Arch" "/O$OutDir" `
     (Join-Path $root "extra\windows\vicinae.iss")
 if ($LASTEXITCODE -ne 0) { throw "iscc failed" }
 
-Get-ChildItem $OutDir -Filter "vicinae-$version-setup.exe" | ForEach-Object {
+Get-ChildItem $OutDir -Filter "vicinae-$Arch-setup.exe" | ForEach-Object {
     Write-Host ("installer: {0} ({1:N1} MB)" -f $_.FullName, ($_.Length / 1MB))
 }

@@ -6,6 +6,9 @@
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
+#ifndef Arch
+  #define Arch "x64"
+#endif
 
 [Setup]
 AppId={{C698C8E4-B6C9-4C86-A9AA-520A6D2E45A1}
@@ -20,7 +23,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-OutputBaseFilename=vicinae-{#AppVersion}-setup
+OutputBaseFilename=vicinae-{#Arch}-setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
