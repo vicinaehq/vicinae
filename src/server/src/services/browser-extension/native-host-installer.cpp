@@ -11,7 +11,10 @@
 #include "services/browser-extension/native-host-installer.hpp"
 #include "utils/utils.hpp"
 
-#ifndef Q_OS_MACOS
+#ifdef Q_OS_WIN
+#include <QSettings>
+#include "vicinae.hpp"
+#elif !defined(Q_OS_MACOS)
 #include "xdgpp/env/env.hpp"
 #endif
 
@@ -41,6 +44,68 @@ namespace {
 
 constexpr const char *MANIFEST_FILENAME = NATIVE_MESSAGING_HOST ".json";
 constexpr const char *MANIFEST_DESCRIPTION = "Vicinae Native Messaging Host";
+
+#ifdef Q_OS_WIN
+
+// Windows browsers locate native messaging hosts through per-user registry keys
+// pointing at a manifest file that can live anywhere. Chromium forks without their
+// own vendor key fall back to reading Chrome's.
+constexpr std::string_view CHROMIUM_REGISTRY_ROOTS[] = {
+    R"(Software\Google\Chrome)",
+    R"(Software\Chromium)",
+    R"(Software\Microsoft\Edge)",
+    R"(Software\BraveSoftware\Brave-Browser)",
+    R"(Software\Vivaldi)",
+};
+
+constexpr std::string_view GECKO_REGISTRY_ROOTS[] = {
+    R"(Software\Mozilla)",
+};
+
+std::optional<fs::path> writeManifestFile(const fs::path &dir, const std::string &content) {
+  std::error_code ec;
+
+  fs::create_directories(dir, ec);
+
+  const fs::path file = dir / MANIFEST_FILENAME;
+
+  if (std::ifstream ifs(file); ifs && vicinae::slurp(ifs) == content) return file;
+
+  std::ofstream ofs(file, std::ios::trunc);
+
+  if (!ofs || !(ofs << content)) {
+    qWarning() << "browser-link: failed to write manifest" << file.c_str();
+    return {};
+  }
+
+  qInfo() << "browser-link: installed manifest" << file.c_str();
+  return file;
+}
+
+void registerManifest(std::string_view root, const fs::path &manifest) {
+  const auto key =
+      std::format(R"(HKEY_CURRENT_USER\{}\NativeMessagingHosts\{})", root, NATIVE_MESSAGING_HOST);
+  QSettings settings(QString::fromStdString(key), QSettings::NativeFormat);
+  settings.setValue("Default", QString::fromStdString(manifest.string()));
+}
+
+void installManifests(const std::string &chromium, const std::string &gecko) {
+  const fs::path base = Omnicast::dataDir() / "browser-link";
+
+  if (const auto file = writeManifestFile(base / "chromium", chromium)) {
+    for (const auto &root : CHROMIUM_REGISTRY_ROOTS) {
+      registerManifest(root, *file);
+    }
+  }
+
+  if (const auto file = writeManifestFile(base / "gecko", gecko)) {
+    for (const auto &root : GECKO_REGISTRY_ROOTS) {
+      registerManifest(root, *file);
+    }
+  }
+}
+
+#else
 
 struct ManifestTarget {
   fs::path probe;
@@ -140,6 +205,8 @@ void writeManifest(const ManifestTarget &target) {
   qInfo() << "browser-link: installed manifest" << file.c_str();
 }
 
+#endif
+
 }; // namespace
 
 namespace vicinae::browser {
@@ -183,9 +250,13 @@ void installNativeHostManifests() {
     return;
   }
 
+#ifdef Q_OS_WIN
+  installManifests(*chromiumJson, *geckoJson);
+#else
   for (const auto &target : manifestTargets(*chromiumJson, *geckoJson)) {
     writeManifest(target);
   }
+#endif
 }
 
 }; // namespace vicinae::browser

@@ -14,12 +14,18 @@ figura_compile(
 	OUTPUT browser-ipc-client.hpp
 )
 
+find_package(Qt6 REQUIRED COMPONENTS Core Network)
+
 add_executable(${TARGET} src/browser.cpp ${SRCS})
+vicinae_enable_utf8(${TARGET})
 target_include_directories(${TARGET} PRIVATE ${GENOUT})
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 target_compile_definitions(${TARGET} PUBLIC NATIVE_MESSAGING_HOST="${NATIVE_MESSAGING_HOST}")
-target_link_libraries(${TARGET} PUBLIC glaze::glaze vicinae::common)
+target_link_libraries(${TARGET} PUBLIC glaze::glaze vicinae::common Qt6::Core Qt6::Network)
 
-install(TARGETS ${TARGET}
-	RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
-)
+if(WIN32)
+	# next to vicinae.exe so the deployed Qt DLLs resolve
+	install(TARGETS ${TARGET} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+else()
+	install(TARGETS ${TARGET} RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR})
+endif()
