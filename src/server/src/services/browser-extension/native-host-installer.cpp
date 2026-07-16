@@ -51,10 +51,8 @@ constexpr const char *MANIFEST_DESCRIPTION = "Vicinae Native Messaging Host";
 // pointing at a manifest file that can live anywhere. Chromium forks without their
 // own vendor key fall back to reading Chrome's.
 constexpr std::string_view CHROMIUM_REGISTRY_ROOTS[] = {
-    R"(Software\Google\Chrome)",
-    R"(Software\Chromium)",
-    R"(Software\Microsoft\Edge)",
-    R"(Software\BraveSoftware\Brave-Browser)",
+    R"(Software\Google\Chrome)",  R"(Software\Chromium)",
+    R"(Software\Microsoft\Edge)", R"(Software\BraveSoftware\Brave-Browser)",
     R"(Software\Vivaldi)",
 };
 
