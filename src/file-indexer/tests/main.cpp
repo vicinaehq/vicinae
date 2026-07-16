@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <ranges>
 #include "file-indexer/io-pacer.hpp"
+#include "file-indexer/util.hpp"
 #include "file-indexer/vocabulary.hpp"
 #include "file-indexer/file-indexer-query-engine.hpp"
 
@@ -197,6 +198,15 @@ TEST_CASE("correctionWeight decays with spelling distance") {
   CHECK(correctionWeight(0) == CORRECTION_PENALTY);
   CHECK(correctionWeight(20) > correctionWeight(120) * 1.5);
   CHECK(correctionWeight(MAX_CORRECTION_DISTANCE) == CORRECTION_PENALTY * 0.5);
+}
+
+TEST_CASE("compactSubtrees drops paths covered by another path") {
+  namespace fs = std::filesystem;
+  using file_indexer::compactSubtrees;
+
+  CHECK(compactSubtrees({"/a/b/c", "/a/b", "/a/bc", "/d"}) == std::vector<fs::path>{"/d", "/a/b", "/a/bc"});
+  CHECK(compactSubtrees({"/a", "/a"}) == std::vector<fs::path>{"/a"});
+  CHECK(compactSubtrees({}) == std::vector<fs::path>{});
 }
 
 TEST_CASE("splitQueryWords trims and drops empty words") {

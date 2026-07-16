@@ -17,24 +17,6 @@ struct ReconcilePlan {
   std::vector<fs::path> scanRoots;
 };
 
-std::vector<fs::path> compactSubtrees(std::vector<fs::path> paths) {
-  std::ranges::sort(paths, [](const fs::path &lhs, const fs::path &rhs) {
-    auto const lhsSize = std::ranges::distance(lhs);
-    auto const rhsSize = std::ranges::distance(rhs);
-    if (lhsSize != rhsSize) return lhsSize < rhsSize;
-    return lhs < rhs;
-  });
-
-  std::vector<fs::path> compacted;
-  compacted.reserve(paths.size());
-
-  for (const auto &path : paths) {
-    if (!file_indexer::isCoveredByAny(path, compacted)) { compacted.emplace_back(path); }
-  }
-
-  return compacted;
-}
-
 bool oldRootStillCovers(const fs::path &oldRoot, const std::vector<fs::path> &newRoots) {
   return file_indexer::isCoveredByAny(oldRoot, newRoots);
 }
@@ -73,8 +55,8 @@ ReconcilePlan buildReconcilePlan(const std::vector<fs::path> &oldRoots,
 
   std::erase_if(plan.scanRoots,
                 [&](const fs::path &path) { return file_indexer::isCoveredByAny(path, newExclusions); });
-  plan.deleteSubtrees = compactSubtrees(std::move(plan.deleteSubtrees));
-  plan.scanRoots = compactSubtrees(std::move(plan.scanRoots));
+  plan.deleteSubtrees = file_indexer::compactSubtrees(std::move(plan.deleteSubtrees));
+  plan.scanRoots = file_indexer::compactSubtrees(std::move(plan.scanRoots));
 
   return plan;
 }
@@ -194,7 +176,7 @@ void FileIndexer::markFullScanRootsPending(const std::vector<fs::path> &roots) {
     m_pendingFullScanRoots.emplace_back(file_indexer::normalizePath(root));
   }
 
-  m_pendingFullScanRoots = compactSubtrees(std::move(m_pendingFullScanRoots));
+  m_pendingFullScanRoots = file_indexer::compactSubtrees(std::move(m_pendingFullScanRoots));
 }
 
 void FileIndexer::markFullScanSucceeded(const fs::path &root) {
@@ -235,7 +217,7 @@ std::vector<fs::path> FileIndexer::pendingFullScanRootsFor(const std::vector<fs:
     }
   }
 
-  return compactSubtrees(std::move(pendingRoots));
+  return file_indexer::compactSubtrees(std::move(pendingRoots));
 }
 
 void FileIndexer::setConfig(std::vector<fs::path> paths, std::vector<fs::path> excludedPaths) {
@@ -259,7 +241,7 @@ void FileIndexer::applyConfig(std::vector<fs::path> paths, std::vector<fs::path>
   for (auto &pendingRoot : pendingRoots) {
     plan.scanRoots.emplace_back(std::move(pendingRoot));
   }
-  plan.scanRoots = compactSubtrees(std::move(plan.scanRoots));
+  plan.scanRoots = file_indexer::compactSubtrees(std::move(plan.scanRoots));
 
   m_entrypoints = std::move(newEntryPoints);
   m_excludedPaths = std::move(newExcludedPaths);
