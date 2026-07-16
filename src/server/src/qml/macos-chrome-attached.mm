@@ -471,6 +471,8 @@ void MacOSPanelAttached::apply() {
   NSWindow *nswin = nsview.window;
   if (!nswin) return;
 
+  const bool acceptsFocus = !(m_window->flags() & Qt::WindowDoesNotAcceptFocus);
+
   if (!m_snapshot.valid) {
     m_snapshot.valid = true;
     m_snapshot.styleMask = (unsigned long)nswin.styleMask;
@@ -512,7 +514,7 @@ void MacOSPanelAttached::apply() {
   if ([nswin isKindOfClass:[NSPanel class]]) {
     NSPanel *panel = (NSPanel *)nswin;
     panel.floatingPanel = YES;
-    panel.becomesKeyOnlyIfNeeded = NO;
+    panel.becomesKeyOnlyIfNeeded = acceptsFocus ? NO : YES;
     panel.worksWhenModal = YES;
   }
 
