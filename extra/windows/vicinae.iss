@@ -38,6 +38,22 @@ Name: "autostart"; Description: "Start Vicinae when you log in"
 [Files]
 Source: "{#StageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+[Registry]
+; URL scheme handlers. Also self-registered by the server at startup; declared
+; here so uninstall cleans them up.
+Root: HKCU; Subkey: "Software\Classes\vicinae"; ValueType: string; ValueData: "URL:vicinae"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\vicinae"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\vicinae\DefaultIcon"; ValueType: string; ValueData: "{app}\bin\vicinae-server.exe,0"
+Root: HKCU; Subkey: "Software\Classes\vicinae\shell\open\command"; ValueType: string; ValueData: """{app}\bin\vicinae-url-handler.exe"" ""%1"""
+Root: HKCU; Subkey: "Software\Classes\raycast"; ValueType: string; ValueData: "URL:raycast"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\raycast"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\raycast\DefaultIcon"; ValueType: string; ValueData: "{app}\bin\vicinae-server.exe,0"
+Root: HKCU; Subkey: "Software\Classes\raycast\shell\open\command"; ValueType: string; ValueData: """{app}\bin\vicinae-url-handler.exe"" ""%1"""
+Root: HKCU; Subkey: "Software\Classes\com.raycast"; ValueType: string; ValueData: "URL:com.raycast"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\com.raycast"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\com.raycast\DefaultIcon"; ValueType: string; ValueData: "{app}\bin\vicinae-server.exe,0"
+Root: HKCU; Subkey: "Software\Classes\com.raycast\shell\open\command"; ValueType: string; ValueData: """{app}\bin\vicinae-url-handler.exe"" ""%1"""
+
 [Icons]
 Name: "{autoprograms}\Vicinae"; Filename: "{app}\bin\vicinae-server.exe"
 Name: "{userstartup}\Vicinae"; Filename: "{app}\bin\vicinae-server.exe"; Tasks: autostart

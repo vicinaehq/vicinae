@@ -719,6 +719,8 @@ elseif (WIN32)
 		src/root-search/windows-settings/windows-settings-root-provider.cpp
 		src/root-search/control-panel/control-panel-root-provider.hpp
 		src/root-search/control-panel/control-panel-root-provider.cpp
+		src/services/url-scheme/win-url-scheme-registrar.hpp
+		src/services/url-scheme/win-url-scheme-registrar.cpp
 	)
 	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid)
 else()
