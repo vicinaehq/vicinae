@@ -345,12 +345,7 @@ int CommandLineApp::run(int ac, char **av) {
   if (ac == 2) {
     std::string arg = av[1];
 
-    // raycast:// or com.raycast:/
-    auto pred = [&](std::string_view scheme) { return arg.starts_with(std::string{scheme} + ":/"); };
-    const bool hasScheme =
-        std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
-
-    if (hasScheme) {
+    if (vicinae::isAppDeeplink(arg)) {
       if (auto res = cli::IpcClient::sendDeeplink(arg); !res) {
         std::println(std::cerr, "Deeplink execution failed: {}", res.error());
         return 1;
