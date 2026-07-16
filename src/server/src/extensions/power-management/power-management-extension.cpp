@@ -40,15 +40,15 @@ public:
     return preferences;
   }
 
-  void execute(CommandController *controller) const final {
-    auto &nav = controller->context()->navigation;
-    auto prefs = controller->preferenceValues();
+  void execute(CommandController &controller) const final {
+    auto &nav = controller.context()->navigation;
+    auto prefs = controller.preferenceValues();
     bool const shouldConfirm = prefs.value("confirm").toBool();
     std::optional<QString> customProgram;
 
     if (auto prog = prefs.value("customProgram").toString(); !prog.isEmpty()) { customProgram = prog; }
 
-    auto handleConfirm = [this, ctx = controller->context(), customProgram]() {
+    auto handleConfirm = [this, ctx = controller.context(), customProgram]() {
       auto toast = ctx->services->toastService();
 
       if (customProgram) {

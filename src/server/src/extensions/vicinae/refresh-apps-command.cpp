@@ -6,8 +6,8 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/toast/toast.hpp"
 
-void RefreshAppsCommand::execute(CommandController *controller) const {
-  auto ctx = controller->context();
+void RefreshAppsCommand::execute(CommandController &controller) const {
+  auto ctx = controller.context();
   auto appDb = ctx->services->appDb();
   auto toast = ctx->services->toastService();
 

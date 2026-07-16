@@ -1,6 +1,5 @@
 #include "browser-extension.hpp"
 #include "actions/app/app-actions.hpp"
-#include "actions/browser-tab-actions.hpp"
 #include "builtin_icon.hpp"
 #include "qml/browser-tabs-view-host.hpp"
 #include "qml/empty-view-host.hpp"
@@ -11,8 +10,8 @@
 #include "single-view-command-context.hpp"
 #include "theme/colors.hpp"
 
-static bool guard(CommandController *ctrl) {
-  const auto browserService = ctrl->context()->services->browserExtension();
+static bool guard(CommandController &ctrl) {
+  const auto browserService = ctrl.context()->services->browserExtension();
 
   if (browserService->browsers().empty()) {
     auto empty = new EmptyViewHost(
@@ -21,7 +20,7 @@ static bool guard(CommandController *ctrl) {
         "order to use this command.",
         ImageURL(BuiltinIcon::Link).setFill(SemanticColor::Red));
 
-    ctrl->context()->navigation->pushView(empty);
+    ctrl.context()->navigation->pushView(empty);
 
     auto panel = std::make_unique<ListActionPanelState>();
     auto main = panel->createSection();
@@ -46,11 +45,11 @@ class CreateShortcutFromActiveBrowserTabCommand : public GuardedBuiltinCallbackC
     return ImageURL(BuiltinIcon::Link).setBackgroundTint(SemanticColor::Red);
   }
 
-  void execute(CommandController *controller) const override {
+  void execute(CommandController &controller) const override {
     if (guard(controller)) return;
 
-    const auto toast = controller->context()->services->toastService();
-    const auto browser = controller->context()->services->browserExtension();
+    const auto toast = controller.context()->services->toastService();
+    const auto browser = controller.context()->services->browserExtension();
     const auto tab = browser->findActiveTab();
 
     if (!tab) {
@@ -61,7 +60,7 @@ class CreateShortcutFromActiveBrowserTabCommand : public GuardedBuiltinCallbackC
     auto view = new ShortcutFormViewHost;
 
     view->setPrefilledValues(tab->url.c_str(), tab->title.c_str());
-    controller->context()->navigation->pushView(view);
+    controller.context()->navigation->pushView(view);
   }
 };
 
@@ -73,9 +72,9 @@ class SearchBrowserTabsCommand : public GuardedBuiltinCallbackCommand {
     return ImageURL(BuiltinIcon::AppWindowSidebarLeft).setBackgroundTint(SemanticColor::Red);
   }
 
-  void execute(CommandController *controller) const override {
+  void execute(CommandController &controller) const override {
     if (guard(controller)) { return; }
-    controller->context()->navigation->pushView(new BrowserTabsViewHost);
+    controller.context()->navigation->pushView(new BrowserTabsViewHost);
   }
 };
 

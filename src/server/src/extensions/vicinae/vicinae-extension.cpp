@@ -64,8 +64,8 @@ class OpenVicinaeConfig : public BuiltinCallbackCommand {
     return ImageURL::builtin("pencil").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
     ctx->services->appDb()->openTarget(QString::fromStdString(ctx->services->config()->path().string()));
     ctx->navigation->closeWindow();
     ctx->navigation->clearSearchText();
@@ -80,8 +80,8 @@ class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
     return ImageURL::builtin("pencil").setBackgroundTint(SemanticColor::Accent);
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
     auto toast = ctx->services->toastService();
     auto path = Omnicast::runtimeDir() / "default-config.jsonc";
 
@@ -120,12 +120,12 @@ class PruneMemoryCommand : public BuiltinCallbackCommand {
     return ImageURL::emoji("🥊").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(CommandController *controller) const override {
+  void execute(CommandController &controller) const override {
     QPixmapCache::clear();
 #ifdef Q_OS_LINUX
     malloc_trim(0);
 #endif
-    controller->context()->services->toastService()->success("Pruned 🥊");
+    controller.context()->services->toastService()->success("Pruned 🥊");
   }
 };
 
@@ -140,8 +140,8 @@ class OpenSettingsCommand : public BuiltinCallbackCommand {
   }
   std::vector<QString> keywords() const override { return {"preferences"}; }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
 
     ctx->navigation->closeWindow();
     ctx->settings->openWindow();
@@ -156,8 +156,8 @@ class ReloadScriptDirectoriesCommand : public BuiltinCallbackCommand {
     return ImageURL(BuiltinIcon::Code).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
 
     ctx->services->scriptDb()->triggerScan();
     ctx->services->toastService()->success("New scan triggered, index will update shortly");
@@ -172,8 +172,8 @@ class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
     return ImageURL::builtin("keyboard").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
 
     ctx->navigation->closeWindow();
     ctx->settings->openTab("shortcuts");
@@ -195,8 +195,8 @@ class ForgetTelemetryCommand : public BuiltinCallbackCommand {
 
   bool isDefaultDisabled() const override { return true; }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
     auto toast = ctx->services->toastService();
     auto telemetry = ctx->services->telemetry();
     auto config = ctx->services->config();

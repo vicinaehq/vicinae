@@ -48,12 +48,12 @@ public:
    * You can, however, access the global application state by calling the
    * `context` method of the controller.
    */
-  virtual void execute(CommandController *controller) const {}
+  virtual void execute(CommandController &controller) const {}
 
   CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
     return new CallbackContext(command, [this, command](auto &&props, auto &&ctx) {
       CommandController ctrl(*ctx, *command, props);
-      execute(&ctrl);
+      execute(ctrl);
     });
   }
 };

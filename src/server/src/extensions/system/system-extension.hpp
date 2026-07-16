@@ -42,13 +42,13 @@ class SystemRunCommand : public BuiltinCallbackCommand {
     return {defaultAction};
   }
 
-  void execute(CommandController *ctrl) const override {
-    auto ctx = ctrl->context();
+  void execute(CommandController &ctrl) const override {
+    auto ctx = ctrl.context();
     auto toast = ctx->services->toastService();
-    auto args = ctrl->launchProps().arguments;
+    auto args = ctrl.launchProps().arguments;
 
     if (args.empty() || args.front().second.isEmpty()) {
-      ctrl->context()->navigation->pushView(new SystemRunViewHost);
+      ctrl.context()->navigation->pushView(new SystemRunViewHost);
       return;
     }
 
@@ -74,7 +74,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
 
     using DA = SystemRunDefaultAction;
 
-    switch (parseSystemRunDefaultAction(ctrl->preferenceValues().value("default-action").toString())) {
+    switch (parseSystemRunDefaultAction(ctrl.preferenceValues().value("default-action").toString())) {
     case DA::Run:
       appDb->launchRaw(argv);
       break;
@@ -136,10 +136,10 @@ class VolumeUpCommand : public BuiltinCallbackCommand {
     return {{.name = "step", .type = CommandArgument::Text, .placeholder = "+5", .required = false}};
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
     auto audio = ctx->services->audioControl()->provider();
-    auto arg = controller->launchProps().arguments;
+    auto arg = controller.launchProps().arguments;
     int step = 5;
     if (!arg.empty() && !arg.front().second.isEmpty()) {
       bool ok = false;
@@ -170,10 +170,10 @@ class VolumeDownCommand : public BuiltinCallbackCommand {
     return {{.name = "step", .type = CommandArgument::Text, .placeholder = "-5", .required = false}};
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
     auto audio = ctx->services->audioControl()->provider();
-    auto arg = controller->launchProps().arguments;
+    auto arg = controller.launchProps().arguments;
     int step = -5;
     if (!arg.empty() && !arg.front().second.isEmpty()) {
       bool ok = false;
@@ -201,8 +201,8 @@ template <int Percent, BuiltinIcon Icon> class SetVolumeCommand : public Builtin
   std::vector<QString> keywords() const override { return {"audio", "sound", "volume"}; }
   ImageURL iconUrl() const override { return ImageURL{Icon}.setBackgroundTint(VOLUME_COMMAND_TINT); }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
     auto audio = ctx->services->audioControl()->provider();
     auto result = audio->setVolume(LEVEL);
     if (!result) {
@@ -222,8 +222,8 @@ class ToggleMuteCommand : public BuiltinCallbackCommand {
     return ImageURL{BuiltinIcon::SpeakerOff}.setBackgroundTint(VOLUME_COMMAND_TINT);
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
     auto audio = ctx->services->audioControl()->provider();
     if (!audio->toggleMute()) {
       ctx->services->toastService()->failure("Failed to toggle mute");
