@@ -17,6 +17,18 @@ self: {
 
   jsonFormat = pkgs.formats.json {};
   tomlFormat = pkgs.formats.toml {};
+
+  envVarType = with lib.types; attrsOf (oneOf [str int float bool]);
+
+  envValueToString = val:
+    if lib.isBool val
+    then
+      (
+        if val
+        then "1"
+        else "0"
+      )
+    else toString val;
 in {
   disabledModules = ["programs/vicinae"];
 
@@ -84,15 +96,7 @@ in {
       };
 
       environment = lib.mkOption {
-        type = with lib.types; let
-          valueType = attrsOf (oneOf [
-            str
-            int
-            float
-            bool
-          ]);
-        in
-          valueType;
+        type = envVarType;
         default = {};
         description = "Environment variables for the vicinae daemon. See <https://docs.vicinae.com/launcher-window#wayland-layer-shell>";
         example = lib.literalExpression ''
@@ -109,6 +113,28 @@ in {
         example = "sway-session.target";
         description = ''
           The systemd target that will automatically start the vicinae service.
+        '';
+      };
+    };
+
+    launchd = {
+      enable = lib.mkEnableOption "vicinae launchd integration (macOS)";
+
+      autoStart = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to start the vicinae daemon automatically at login on macOS.";
+      };
+
+      environment = lib.mkOption {
+        type = envVarType;
+        default = {};
+        description = "Environment variables to pass to the vicinae daemon on macOS.";
+        example = lib.literalExpression ''
+          {
+            QT_SCALE_FACTOR = 1.5;
+            VICINAE_NODE_BIN = "/opt/homebrew/bin/node";
+          }
         '';
       };
     };
@@ -301,19 +327,7 @@ in {
         };
         Service = {
           Environment =
-            lib.mapAttrsToList (
-              key: val: let
-                valueStr =
-                  if lib.isBool val
-                  then
-                    (
-                      if val
-                      then "1"
-                      else "0"
-                    )
-                  else toString val;
-              in "${key}=${valueStr}"
-            )
+            lib.mapAttrsToList (key: val: "${key}=${envValueToString val}")
             cfg.systemd.environment;
           Type = "simple";
           ExecStart = "${lib.getExe' wrappedVicinae "vicinae"} server";
@@ -323,6 +337,23 @@ in {
         };
         Install = lib.mkIf cfg.systemd.autoStart {
           WantedBy = [cfg.systemd.target];
+        };
+      };
+
+      launchd.agents.vicinae = lib.mkIf cfg.launchd.enable {
+        enable = true;
+        config = {
+          ProgramArguments = [
+            "${lib.getExe' wrappedVicinae "vicinae"}"
+            "server"
+          ];
+          EnvironmentVariables = lib.mapAttrs (_: envValueToString) cfg.launchd.environment;
+          RunAtLoad = cfg.launchd.autoStart;
+          KeepAlive = {
+            Crashed = true;
+            SuccessfulExit = false;
+          };
+          ProcessType = "Interactive";
         };
       };
     };
