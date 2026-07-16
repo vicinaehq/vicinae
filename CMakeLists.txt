@@ -23,7 +23,7 @@ include(GNUInstallDirs)
 include(Git)
 include(Utils)
 
-# Viciane build configuration options
+# Vicinae build configuration options
 
 option(BUILD_TESTS "Build test suites for various vicinae components" OFF)
 option(IGNORE_CCACHE "Always ignore ccache/sccache even if installed" OFF)
@@ -130,6 +130,9 @@ if (APPLE OR WIN32)
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
 endif()
+
+# the Qt deploy API registers its support files on the first Qt6::Core scope seen
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
 
 if (NOT USE_SYSTEM_GLAZE)
 	include(Glaze)
@@ -375,7 +378,11 @@ set(INSTALL_MODULES ${CMAKE_INSTALL_PREFIX}/lib/modules-load.d)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
 set(VICINAE_THEME_DIR ${VICINAE_INSTALL_SHARE}/themes)
 
-if(NOT APPLE AND NOT WIN32)
+if(WIN32)
+	install(DIRECTORY ${THEME_DIR} DESTINATION .)
+	set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ${CMAKE_INSTALL_BINDIR})
+	include(InstallRequiredSystemLibraries)
+elseif(NOT APPLE)
 	make_directory(${VICINAE_INSTALL_SHARE})
 	file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
 	install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
