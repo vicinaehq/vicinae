@@ -715,6 +715,10 @@ elseif (WIN32)
 		src/services/window-manager/windows/windows-window-manager.cpp
 		src/services/app-runtime/windows/win-app-runtime.hpp
 		src/services/app-runtime/windows/win-app-runtime.cpp
+		src/root-search/windows-settings/windows-settings-root-provider.hpp
+		src/root-search/windows-settings/windows-settings-root-provider.cpp
+		src/root-search/control-panel/control-panel-root-provider.hpp
+		src/root-search/control-panel/control-panel-root-provider.cpp
 		src/services/url-scheme/win-url-scheme-registrar.hpp
 		src/services/url-scheme/win-url-scheme-registrar.cpp
 	)
