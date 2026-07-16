@@ -22,6 +22,10 @@
 #ifdef Q_OS_MACOS
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "root-search/control-panel/control-panel-root-provider.hpp"
+#include "root-search/windows-settings/windows-settings-root-provider.hpp"
+#endif
 #include "service-registry.hpp"
 #include "services/window-material/window-material-manager.hpp"
 #include "qml/window-material-attached.hpp"
@@ -376,6 +380,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
 #ifdef Q_OS_MACOS
     root->loadProvider(std::make_unique<MacSettingsRootProvider>());
+#endif
+#ifdef Q_OS_WIN
+    root->loadProvider(std::make_unique<WinSettingsRootProvider>());
+    root->loadProvider(std::make_unique<WinControlPanelRootProvider>());
 #endif
 
     // Force reload providers to make sure items that depend on them are shown

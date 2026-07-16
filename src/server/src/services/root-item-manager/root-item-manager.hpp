@@ -158,6 +158,7 @@ public:
 
   virtual QString uniqueId() const = 0;
   virtual QString displayName() const = 0;
+  virtual QString description() const { return {}; }
   virtual ImageURL icon() const = 0;
   virtual Type type() const = 0;
 

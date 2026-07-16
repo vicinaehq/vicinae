@@ -44,6 +44,7 @@ public:
   const std::shared_ptr<AbstractCommandRepository> &repository() const { return m_repo; }
   PreferenceList preferences() const override { return m_repo->preferences(); }
   QString displayName() const override { return m_repo->displayName(); }
+  QString description() const override { return m_repo->description(); }
   QString uniqueId() const override { return repositoryId(); }
   ImageURL icon() const override { return m_repo->iconUrl(); };
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
