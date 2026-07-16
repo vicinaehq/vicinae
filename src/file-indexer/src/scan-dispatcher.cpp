@@ -91,9 +91,8 @@ void ScanDispatcher::workerLoop() {
     auto [scanId, scan] = std::move(m_ready.front());
     m_ready.pop_front();
 
-    auto it = m_running
-                  .emplace(scanId, Running{std::move(scan), nullptr, std::chrono::steady_clock::now()})
-                  .first;
+    auto it =
+        m_running.emplace(scanId, Running{std::move(scan), nullptr, std::chrono::steady_clock::now()}).first;
     it->second.scanner = makeScanner(scanId, it->second.scan, readDb);
     auto *scanner = it->second.scanner.get();
 
@@ -105,9 +104,8 @@ void ScanDispatcher::workerLoop() {
                                                                           it->second.startedAt)
                         .count();
 
-    scanLog(it->second.scan) << std::format("Done scanning {} in {}ms ({}, {})",
-                                            it->second.scan.path.c_str(), duration,
-                                            scanTypeLabel(it->second.scan.type()),
+    scanLog(it->second.scan) << std::format("Done scanning {} in {}ms ({}, {})", it->second.scan.path.c_str(),
+                                            duration, scanTypeLabel(it->second.scan.type()),
                                             scanModeLabel(it->second.scan));
 
     m_running.erase(it);
