@@ -195,7 +195,7 @@ WinControlPanelRootItem::newActionPanel(ApplicationContext *ctx, const RootItemM
   auto itemSection = panel->createSection();
 
   const QString target = "shell:" + m_applet.parsingName;
-  auto open = new OpenControlPanelItemAction(QString("Open %1").arg(m_applet.displayName), iconUrl(), target);
+  auto open = new OpenControlPanelItemAction("Open Applet", iconUrl(), target);
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
 
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(target), "Copy Path"));
@@ -234,8 +234,7 @@ WinControlPanelTaskRootItem::newActionPanel(ApplicationContext *ctx, const RootI
   auto mainSection = panel->createSection();
   auto itemSection = panel->createSection();
 
-  auto open =
-      new OpenControlPanelTaskAction(QString("Open %1").arg(m_task.displayName), iconUrl(), m_task.pidl);
+  auto open = new OpenControlPanelTaskAction("Open", iconUrl(), m_task.pidl);
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
 
   for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
