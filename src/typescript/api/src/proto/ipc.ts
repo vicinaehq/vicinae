@@ -111,6 +111,7 @@ export type LaunchCommandRequest = {
 	entrypoint: string;
 	args: string[];
 	cwd?: string;
+	query?: string;
 }
 
 export type LaunchCommandResponse = {

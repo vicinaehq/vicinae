@@ -221,6 +221,7 @@ class LaunchCommandCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override {
     app->add_option("entrypoint", m_entrypoint, "The command entrypoint ID to launch")->required();
     app->add_option("--cwd", m_cwd, "Working directory forwarded to the command");
+    app->add_option("--query,-q", m_query, "");
     app->add_option("args", m_args, "Arguments to pass to the command");
   }
 
@@ -233,7 +234,7 @@ class LaunchCommandCommand : public AbstractCommandLineCommand {
     }
 
     auto res = cli::IpcClient::connect().and_then([&](cli::IpcClient client) {
-      return client.launchCommand({.entrypoint = m_entrypoint, .args = m_args, .cwd = cwd});
+      return client.launchCommand({.entrypoint = m_entrypoint, .args = m_args, .cwd = cwd, .query = m_query});
     });
 
     if (!res) {
@@ -247,6 +248,7 @@ class LaunchCommandCommand : public AbstractCommandLineCommand {
 private:
   std::string m_entrypoint;
   std::optional<std::string> m_cwd;
+  std::optional<std::string> m_query;
   std::vector<std::string> m_args;
 };
 

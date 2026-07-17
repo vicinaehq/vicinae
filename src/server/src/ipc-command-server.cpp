@@ -239,6 +239,7 @@ IpcService::launchCommand(ipc_gen::LaunchCommandRequest req) {
   LaunchProps props{
       .arguments = std::move(*arguments),
       .launchContext = makeLaunchContext(req),
+      .fallbackText = req.query.transform(QString::fromStdString),
       .cwd = req.cwd.transform(QString::fromStdString),
   };
 
