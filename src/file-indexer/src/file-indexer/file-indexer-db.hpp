@@ -22,6 +22,9 @@ enum class IndexedFileCategory {
 };
 
 class FileIndexerDatabase {
+  static constexpr int64_t COMPACT_MIN_DB_BYTES = 32 * 1024 * 1024;
+  static constexpr int64_t COMPACT_MIN_FREE_PERCENT = 25;
+
   db::Database m_db;
   std::unordered_map<std::string, int64_t> m_mimeTypeIds;
 
@@ -86,6 +89,7 @@ public:
   };
 
   void deleteAllIndexedFiles();
+  bool needsCompaction() const;
   void compact();
   void rebuildSpellfixVocabulary();
   bool hasSpellfixVocabulary();

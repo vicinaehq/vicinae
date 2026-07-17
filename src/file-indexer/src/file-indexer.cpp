@@ -292,6 +292,7 @@ FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatche
     m_db.init();
     m_writer->pruneScanHistory(
         std::chrono::duration_cast<std::chrono::seconds>(SCAN_HISTORY_MAX_AGE).count());
+    m_writer->compactIfNeeded();
   }
 
   m_dispatcher.setEventCallback([this](const ScanEvent &event) {

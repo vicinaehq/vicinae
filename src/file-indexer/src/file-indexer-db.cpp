@@ -451,7 +451,33 @@ void FileIndexerDatabase::deleteAllIndexedFiles() {
   }
 }
 
+bool FileIndexerDatabase::needsCompaction() const {
+  auto pragmaInt = [&](const char *sql) -> int64_t {
+    auto stmt = m_db.prepare(sql);
+    if (!stmt.step()) return 0;
+    return stmt.columnInt64(0);
+  };
+
+  int64_t const pageCount = pragmaInt("PRAGMA page_count");
+  int64_t const freeCount = pragmaInt("PRAGMA freelist_count");
+  int64_t const pageSize = pragmaInt("PRAGMA page_size");
+
+  if (pageCount * pageSize < COMPACT_MIN_DB_BYTES) return false;
+
+  return freeCount * 100 >= pageCount * COMPACT_MIN_FREE_PERCENT;
+}
+
 void FileIndexerDatabase::compact() {
+  flog::info() << "Compacting file indexer database";
+
+  // merge the incremental FTS b-trees first so VACUUM can reclaim the pages they free
+  if (!m_db.exec("INSERT INTO path_idx(path_idx) VALUES('optimize')")) {
+    flog::warn() << "path_idx optimize failed" << m_db.lastError();
+  }
+  if (!m_db.exec("INSERT INTO skeleton_idx(skeleton_idx) VALUES('optimize')")) {
+    flog::warn() << "skeleton_idx optimize failed" << m_db.lastError();
+  }
+
   if (!m_db.exec("VACUUM")) {
     flog::warn() << "VACUUM failed" << m_db.lastError();
     return;
