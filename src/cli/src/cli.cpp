@@ -180,7 +180,10 @@ struct ListCommandsCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "ls"; }
   std::string description() const override { return "List loaded commands"; }
 
-  void setup(CLI::App *app) override { app->add_flag("--json,-j", m_json, "Output command list as json"); }
+  void setup(CLI::App *app) override {
+    app->alias("list");
+    app->add_flag("--json,-j", m_json, "Output command list as json");
+  }
 
   bool run(CLI::App *) override {
     auto res =
@@ -220,9 +223,9 @@ class LaunchCommandCommand : public AbstractCommandLineCommand {
 
   void setup(CLI::App *app) override {
     app->add_option("entrypoint", m_entrypoint, "The command entrypoint ID to launch")->required();
+    app->add_option("args", m_args, "Arguments to pass to the command");
     app->add_option("--cwd", m_cwd, "Working directory forwarded to the command");
     app->add_option("--query,-q", m_query, "");
-    app->add_option("args", m_args, "Arguments to pass to the command");
   }
 
   bool run(CLI::App *) override {
@@ -255,6 +258,7 @@ private:
 class CommandCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "cmd"; }
   std::string description() const override { return "Command utilities"; }
+  void setup(CLI::App *app) override { app->alias("command"); }
 
 public:
   CommandCommand() {
