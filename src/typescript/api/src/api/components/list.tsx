@@ -116,7 +116,7 @@ export declare namespace List {
 		onSelectionChange?: (id: string) => void;
 
 		pagination?: {
-			onLoadMore: () => PromiseLike<void>;
+			onLoadMore: () => Promise<void> | void;
 			hasMore: boolean;
 		};
 	};
@@ -178,11 +178,11 @@ export declare namespace List {
 			 * @see {@link ImageLike}
 			 */
 			icon?:
-				| ImageLike
-				| {
-						value: ImageLike | undefined | null;
-						tooltip: string;
-				  };
+			| ImageLike
+			| {
+				value: ImageLike | undefined | null;
+				tooltip: string;
+			};
 
 			/**
 			 * Unique identifier for this item.

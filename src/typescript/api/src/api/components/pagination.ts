@@ -4,7 +4,7 @@ import { useRef } from "react";
 // block repeated load more calls from firing if one is already ongoing.
 // we don't bother queuing them or anything, maybe one day?
 export const usePagination = (options?: {
-	onLoadMore: () => PromiseLike<void>;
+	onLoadMore: () => Promise<void> | void;
 	hasMore: boolean;
 }) => {
 	const isLoadingMore = useRef(false);

@@ -117,7 +117,7 @@ export namespace Grid {
 		onSelectionChange?: (id: string) => void;
 
 		pagination?: {
-			onLoadMore: () => PromiseLike<void>;
+			onLoadMore: () => Promise<void> | void;
 			hasMore: boolean;
 		};
 	};
@@ -162,9 +162,9 @@ export namespace Grid {
 			keywords?: string[];
 			icon?: ImageLike;
 			content:
-				| Image.ImageLike
-				| { color: ColorLike }
-				| { value: Image.ImageLike | { color: ColorLike }; tooltip?: string };
+			| Image.ImageLike
+			| { color: ColorLike }
+			| { value: Image.ImageLike | { color: ColorLike }; tooltip?: string };
 			id?: string;
 			subtitle?: string;
 			actions?: ReactNode;
@@ -269,11 +269,11 @@ const GridItem: React.FC<Grid.Item.Props> = ({
 	// Accessory
 	const serializedAccessory = accessory
 		? {
-				icon: accessory.icon
-					? serializeProtoImage(accessory.icon)
-					: accessory.icon,
-				tooltip: accessory.tooltip,
-			}
+			icon: accessory.icon
+				? serializeProtoImage(accessory.icon)
+				: accessory.icon,
+			tooltip: accessory.tooltip,
+		}
 		: undefined;
 
 	return (
