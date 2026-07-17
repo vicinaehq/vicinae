@@ -42,7 +42,7 @@ struct LoadOptions {
   launch_context: any;
   launch_type: LaunchType;
   capabilities: Capabilities;
-  cwd: string;
+  cwd?: string;
 };
 
 struct LoadResponse {

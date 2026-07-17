@@ -38,7 +38,7 @@ struct LaunchEventData {
   owner_or_author_name: string;
   launch_type: LaunchType;
   capabilities: Capabilities;
-  cwd: string;
+  cwd?: string;
 };
 
 service Lifecycle {

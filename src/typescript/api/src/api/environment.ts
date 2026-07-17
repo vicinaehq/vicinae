@@ -45,6 +45,11 @@ export declare type LaunchProps<
 	 * When the command is launched as a fallback command, this string contains the text of the root search.
 	 */
 	fallbackText?: string;
+
+	/**
+	 * Set when the command is launched from the command line using `vicinae cmd launch`.
+	 */
+	cwd?: string;
 };
 
 export enum LaunchType {
