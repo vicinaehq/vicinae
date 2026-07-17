@@ -21,6 +21,8 @@ class Lifecycle extends extensionServer.LifecycleService {
 	async launch(data: extensionServer.LaunchEventData): Promise<boolean> {
 		const { environment } = workerData as { environment: EnvironmentType };
 
+		process.chdir(data.cwd);
+
 		// raycast compat captures preference values at load time: keep before patchRequire
 		loadEnviron(environment, data);
 		patchRequire(environment);

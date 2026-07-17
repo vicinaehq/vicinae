@@ -38,9 +38,8 @@ struct PopToRootOptions {
 using ArgumentValues = std::vector<std::pair<QString, QString>>;
 
 struct ActivateEntrypointOptions {
-  ArgumentValues arguments;
+  LaunchProps props;
   QString fallbackText;
-  std::optional<LaunchContext> launchContext;
   bool toggleIfAlreadyActive = true;
 };
 

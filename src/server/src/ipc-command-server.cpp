@@ -1,4 +1,5 @@
 #include "ipc-command-server.hpp"
+#include "common.hpp"
 #include "generated/ipc-server.hpp"
 #include "ipc-command-handler.hpp"
 #include "config/config.hpp"
@@ -122,14 +123,7 @@ std::expected<ArgumentValues, std::string> buildLaunchArguments(const ArgumentLi
   return arguments;
 }
 
-std::optional<LaunchContext> makeLaunchContext(const ipc_gen::LaunchCommandRequest &req) {
-  if (!req.cwd) return std::nullopt;
-
-  LaunchContext context;
-
-  context.insert("cwd", QString::fromStdString(*req.cwd));
-  return context;
-}
+LaunchContext makeLaunchContext(const ipc_gen::LaunchCommandRequest &req) { return LaunchContext{}; }
 
 } // namespace
 
@@ -242,9 +236,13 @@ IpcService::launchCommand(ipc_gen::LaunchCommandRequest req) {
 
   if (!arguments) return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(arguments.error());
 
-  if (!m_ctx.navigation->activateEntrypoint(id, {.arguments = std::move(*arguments),
-                                                 .launchContext = makeLaunchContext(req),
-                                                 .toggleIfAlreadyActive = false})) {
+  LaunchProps props{
+      .arguments = std::move(*arguments),
+      .launchContext = makeLaunchContext(req),
+      .cwd = req.cwd.transform(QString::fromStdString),
+  };
+
+  if (!m_ctx.navigation->activateEntrypoint(id, {.props = props, .toggleIfAlreadyActive = false})) {
     return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail("Failed to launch command");
   }
 

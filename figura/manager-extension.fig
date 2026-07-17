@@ -1,7 +1,6 @@
 // manager (client) to extension (server)
 // the worker is already provisioned but waiting for the manager to initialize it with extension info (to avoid cold starts)
 
-
 enum CommandMode {
   View,
   NoView
@@ -14,7 +13,8 @@ enum CommandEnv {
 
 enum LaunchType {
   User,
-  Background
+  Background,
+  CommandLine
 };
 
 struct Capabilities {
@@ -38,6 +38,7 @@ struct LaunchEventData {
   owner_or_author_name: string;
   launch_type: LaunchType;
   capabilities: Capabilities;
+  cwd: string;
 };
 
 service Lifecycle {

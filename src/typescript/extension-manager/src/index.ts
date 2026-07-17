@@ -104,6 +104,7 @@ class ExtensionManager extends manager.ManagerService {
 				command_name: load.command_name,
 				launch_type: load.launch_type,
 				capabilities: load.capabilities,
+				cwd: load.cwd,
 			},
 		};
 

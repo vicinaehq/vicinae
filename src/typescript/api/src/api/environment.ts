@@ -6,7 +6,6 @@ import type { Wallpaper } from "./wallpaper";
 import type { WindowManagement } from "./window-management";
 
 export interface LaunchContext {
-	cwd: string;
 	[item: string]: any;
 }
 
@@ -53,10 +52,18 @@ export enum LaunchType {
 	 * A regular launch through user interaction
 	 */
 	UserInitiated = "userInitiated",
+
 	/**
 	 * Scheduled through an interval and launched from background
 	 */
 	Background = "background",
+
+	/**
+	 * The command was started from the command line, using e.g
+	 * `vicinae cmd launch`. `process.cwd()` can be called to get the
+	 * working directory in which the command was issued.
+	 */
+	CommandLine = "commandLine",
 }
 
 // every API we can check availability for using environment.canAccess

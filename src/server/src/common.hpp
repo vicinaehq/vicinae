@@ -12,6 +12,7 @@ struct LaunchProps {
   QString query;
   std::vector<std::pair<QString, QString>> arguments;
   std::optional<LaunchContext> launchContext;
+  std::optional<QString> cwd;
 };
 
 enum CommandMode : std::uint8_t {

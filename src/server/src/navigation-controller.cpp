@@ -591,7 +591,7 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 
   // FIXME: we need a unified interface for this
   if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) {
-    launch(ext->command(), {.arguments = options.arguments, .launchContext = options.launchContext});
+    launch(ext->command(), options.props);
   } else {
     auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
     panel->finalize();
