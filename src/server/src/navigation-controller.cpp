@@ -603,9 +603,7 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
     action->execute(&m_ctx);
   }
 
-  if (!options.fallbackText.isEmpty()) { setSearchText(options.fallbackText); }
-
-  auto *active = activeCommand();
+  if (auto fallback = options.props.fallbackText; !fallback) { setSearchText(fallback.value()); }
 
   if (!isRootSearch() && !initialOpenState) {
     setInstantDismiss();

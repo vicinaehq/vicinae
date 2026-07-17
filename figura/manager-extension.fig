@@ -38,6 +38,7 @@ struct LaunchEventData {
   owner_or_author_name: string;
   launch_type: LaunchType;
   capabilities: Capabilities;
+  fallbackText?: string;
   cwd?: string;
 };
 

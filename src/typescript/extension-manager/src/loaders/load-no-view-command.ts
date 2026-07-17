@@ -1,3 +1,4 @@
+import { environment, type LaunchProps } from "@vicinae/api";
 import type { LaunchEventData } from "../proto/extension-manager";
 import { pathToFileURL } from "node:url";
 
@@ -12,7 +13,10 @@ export default async (data: LaunchEventData) => {
 	}
 
 	await entrypoint({
+		launchType: environment.launchType,
 		arguments: data.argumentValues,
 		launchContext: data.launch_context,
-	});
+		cwd: data.cwd,
+		fallbackText: data.fallbackText,
+	} as LaunchProps);
 };

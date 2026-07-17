@@ -92,6 +92,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
                                                                 : manager::CommandMode::NoView;
 
   opts.cwd = props.cwd.transform([](const QString &s) { return s.toStdString(); });
+  opts.fallbackText = props.fallbackText.transform([](const QString &s) { return s.toStdString(); });
   opts.extension_id = m_command->extensionId().toStdString();
   opts.vicinae_path = Omnicast::dataDir().string();
   opts.command_name = m_command->commandId().toStdString();

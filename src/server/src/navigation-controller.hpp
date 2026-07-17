@@ -39,7 +39,6 @@ using ArgumentValues = std::vector<std::pair<QString, QString>>;
 
 struct ActivateEntrypointOptions {
   LaunchProps props;
-  QString fallbackText;
   bool toggleIfAlreadyActive = true;
 };
 

@@ -105,6 +105,7 @@ class ExtensionManager extends manager.ManagerService {
 				launch_type: load.launch_type,
 				capabilities: load.capabilities,
 				cwd: load.cwd,
+				fallbackText: load.fallbackText,
 			},
 		};
 
@@ -134,7 +135,7 @@ class ExtensionManager extends manager.ManagerService {
 			logger.error(`worker error: ${error}`);
 		});
 
-		worker.on("online", () => {});
+		worker.on("online", () => { });
 
 		const stdoutStream = fs.createWriteStream(stdoutLog);
 		const stderrStream = fs.createWriteStream(stderrLog);

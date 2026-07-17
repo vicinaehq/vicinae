@@ -4,7 +4,10 @@
 void OpenBuiltinCommandAction::execute(ApplicationContext *context) {
   QString const searchText = context->navigation->searchText();
 
-  context->navigation->launch(cmd);
-
-  if (m_forwardSearchText) { context->navigation->setSearchText(searchText); }
+  if (m_forwardSearchText && !searchText.isEmpty()) {
+    context->navigation->launch(cmd, LaunchProps{.fallbackText = searchText});
+    context->navigation->setSearchText(searchText);
+  } else {
+    context->navigation->launch(cmd);
+  }
 }
