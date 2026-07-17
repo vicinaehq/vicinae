@@ -252,7 +252,7 @@ IpcService::launchCommand(ipc_gen::LaunchCommandRequest req) {
   if (!arguments) return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(arguments.error());
 
   LaunchProps props{
-      .arguments = std::move(*arguments),
+      .arguments = std::move(arguments).value(),
       .launchContext = makeLaunchContext(req),
       .fallbackText = req.query.transform(QString::fromStdString),
       .cwd = req.cwd.transform(QString::fromStdString),

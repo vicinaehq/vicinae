@@ -593,6 +593,10 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) {
     launch(ext->command(), options.props);
   } else {
+    // FIXME: hacky, again we need a proper unified interface for this
+    createCompletion(entrypoint->arguments(), entrypoint->iconUrl());
+    setCompletionValues(options.props.arguments);
+
     auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
     panel->finalize();
     auto *action = panel->primaryAction();
