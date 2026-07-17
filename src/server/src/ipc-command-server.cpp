@@ -1,4 +1,8 @@
 #include "ipc-command-server.hpp"
+#include "argument.hpp"
+#include "common.hpp"
+#include "common/entrypoint.hpp"
+#include "common/enumerate.hpp"
 #include "generated/ipc-server.hpp"
 #include "ipc-command-handler.hpp"
 #include "config/config.hpp"
@@ -8,11 +12,14 @@
 #include "services/files-service/file-service.hpp"
 #include "qml/dmenu-view-host.hpp"
 #include "utils.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
+#include <algorithm>
 #include <cstdint>
 #include <optional>
 #include <qfuture.h>
 #include <qlogging.h>
 #include <ranges>
+#include <sstream>
 #include <string_view>
 #include <utility>
 #include "services/app-service/app-service.hpp"
@@ -59,7 +66,7 @@ struct FileCategoryDefinition {
   vicinae::FileCategory category;
 };
 
-static constexpr FileCategoryDefinition FILE_CATEGORIES[] = {
+constexpr FileCategoryDefinition FILE_CATEGORIES[] = {
     {.name = "other", .category = vicinae::FileCategory::Other},
     {.name = "directory", .category = vicinae::FileCategory::Directory},
     {.name = "image", .category = vicinae::FileCategory::Image},
@@ -83,6 +90,55 @@ std::string_view fileCategoryToString(vicinae::FileCategory category) {
   }
   return "other";
 }
+
+std::expected<ArgumentValues, std::string> buildLaunchArguments(const EntrypointId &id,
+                                                                const ArgumentList &manifestArgs,
+                                                                const std::vector<std::string> &values) {
+  const auto fail = [&](auto &&message) {
+    std::ostringstream oss;
+
+    oss << message << "\n" << "Usage: vicinae cmd launch " << std::string{id};
+
+    for (const auto &[idx, arg] : manifestArgs | vicinae::enumerate) {
+      auto openChar = arg.required ? '<' : '[';
+      auto closeChar = arg.required ? '>' : ']';
+      oss << " " << openChar << arg.name.toStdString() << closeChar;
+    }
+
+    return std::unexpected(oss.str());
+  };
+
+  if (values.size() > manifestArgs.size()) {
+    return fail(
+        std::format("Too many arguments: expected at most {}, got {}", manifestArgs.size(), values.size()));
+  }
+
+  ArgumentValues arguments;
+  arguments.reserve(values.size());
+
+  for (const auto [idx, value] : values | vicinae::enumerate) {
+    const auto &arg = manifestArgs.at(idx);
+    const QString qvalue = QString::fromStdString(value);
+
+    if (arg.type == CommandArgument::Dropdown && arg.data) {
+      auto matchesValue = [&](const CommandArgument::DropdownData &option) { return option.value == qvalue; };
+      if (!std::ranges::any_of(*arg.data, matchesValue)) {
+        return fail(std::format("Invalid value '{}' for argument '{}'", value, arg.name.toStdString()));
+      }
+    }
+
+    arguments.emplace_back(arg.name, qvalue);
+  }
+
+  for (size_t idx = values.size(); idx != manifestArgs.size(); ++idx) {
+    const auto &arg = manifestArgs.at(idx);
+    if (arg.required) { return fail(std::format("Missing required argument '{}'", arg.name.toStdString())); }
+  }
+
+  return arguments;
+}
+
+LaunchContext makeLaunchContext(const ipc_gen::LaunchCommandRequest &req) { return LaunchContext{}; }
 
 } // namespace
 
@@ -160,6 +216,54 @@ ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future IpcService::launchApp(ipc_ge
         std::format("Failed to launch app with id {}", req.appId));
 
   return ipc_gen::Result<ipc_gen::LaunchAppResponse>::ok({});
+}
+
+ipc_gen::Result<ipc_gen::ListCommandsResponse>::Future IpcService::listCommands() {
+  auto root = m_ctx.services->rootItemManager();
+  auto commands =
+      root->allItems() | std::views::transform([](auto &&item) {
+        return ipc_gen::CommandInfo{.id = item.item->uniqueId(), .name = item.item->title().toStdString()};
+      }) |
+      std::ranges::to<std::vector>();
+
+  std::ranges::sort(commands, [](const auto &a, const auto &b) { return a.id < b.id; });
+
+  return ipc_gen::Result<ipc_gen::ListCommandsResponse>::ok({.commands = std::move(commands)});
+}
+
+ipc_gen::Result<ipc_gen::LaunchCommandResponse>::Future
+IpcService::launchCommand(ipc_gen::LaunchCommandRequest req) {
+  auto id = EntrypointId::fromSerialized(req.entrypoint);
+
+  if (!id.isValid()) {
+    return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(
+        std::format("Ill-formed command entrypoint: {}", req.entrypoint));
+  }
+
+  auto root = m_ctx.services->rootItemManager();
+  auto *item = root->findItemById(id);
+
+  if (!item) {
+    return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(
+        std::format("Unknown command entrypoint: {}", req.entrypoint));
+  }
+
+  auto arguments = buildLaunchArguments(id, item->arguments(), req.args);
+
+  if (!arguments) return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(arguments.error());
+
+  LaunchProps props{
+      .arguments = std::move(arguments).value(),
+      .launchContext = makeLaunchContext(req),
+      .fallbackText = req.query.transform(QString::fromStdString),
+      .cwd = req.cwd.transform(QString::fromStdString),
+  };
+
+  if (!m_ctx.navigation->activateEntrypoint(id, {.props = props, .toggleIfAlreadyActive = false})) {
+    return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail("Failed to launch command");
+  }
+
+  return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::ok({});
 }
 
 ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenuRequest request) {

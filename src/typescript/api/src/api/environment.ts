@@ -45,6 +45,11 @@ export declare type LaunchProps<
 	 * When the command is launched as a fallback command, this string contains the text of the root search.
 	 */
 	fallbackText?: string;
+
+	/**
+	 * Set when the command is launched from the command line using `vicinae cmd launch`.
+	 */
+	cwd?: string;
 };
 
 export enum LaunchType {
@@ -52,10 +57,18 @@ export enum LaunchType {
 	 * A regular launch through user interaction
 	 */
 	UserInitiated = "userInitiated",
+
 	/**
 	 * Scheduled through an interval and launched from background
 	 */
 	Background = "background",
+
+	/**
+	 * The command was started from the command line, using e.g
+	 * `vicinae cmd launch`. `process.cwd()` can be called to get the
+	 * working directory in which the command was issued.
+	 */
+	CommandLine = "commandLine",
 }
 
 // every API we can check availability for using environment.canAccess

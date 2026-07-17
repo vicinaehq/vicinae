@@ -595,7 +595,7 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   const bool isSameView = previouslyActive->uniqueId() == id && previouslyActive->isView();
 
   // toggle visibility if we are already showing
-  if (initialOpenState && isSameView) {
+  if (options.toggleIfAlreadyActive && initialOpenState && isSameView) {
     popToRoot({.clearSearch = false});
     m_ctx.navigation->closeWindow();
     return true;
@@ -605,8 +605,12 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 
   // FIXME: we need a unified interface for this
   if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) {
-    launch(ext->command(), options.arguments);
+    launch(ext->command(), options.props);
   } else {
+    // FIXME: hacky, again we need a proper unified interface for this
+    createCompletion(entrypoint->arguments(), entrypoint->iconUrl());
+    setCompletionValues(options.props.arguments);
+
     auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
     panel->finalize();
     auto *action = panel->primaryAction();
@@ -617,9 +621,7 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
     action->execute(&m_ctx);
   }
 
-  if (!options.fallbackText.isEmpty()) { setSearchText(options.fallbackText); }
-
-  auto *active = activeCommand();
+  if (auto fallback = options.props.fallbackText) { setSearchText(fallback.value()); }
 
   if (!isRootSearch() && !initialOpenState) {
     setInstantDismiss();
@@ -631,10 +633,14 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
-  launch(cmd, completionValues());
+  launch(cmd, LaunchProps{.arguments = completionValues()});
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments) {
+  launch(cmd, LaunchProps{.arguments = arguments});
+}
+
+void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const LaunchProps &props) {
   // unload stalled no-view command
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
 
@@ -644,9 +650,6 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
   }
 
   bool const shouldCheckPreferences = cmd->type() == CommandType::CommandTypeExtension;
-  LaunchProps props;
-
-  props.arguments = arguments;
 
   if (shouldCheckPreferences) {
     auto itemId = cmd->uniqueId();

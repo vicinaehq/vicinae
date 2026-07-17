@@ -71,6 +71,17 @@ client.EventCore.handlerActivated((id, data) => {
 	callbackManager.activateHandler(id, data);
 });
 
+const mapLaunchType = (t: extensionServer.LaunchType) => {
+	switch (t) {
+		case "User":
+			return LaunchType.UserInitiated;
+		case "Background":
+			return LaunchType.Background;
+		case "CommandLine":
+			return LaunchType.CommandLine;
+	}
+};
+
 const loadEnviron = (
 	environment: EnvironmentType,
 	data: extensionServer.LaunchEventData,
@@ -96,10 +107,7 @@ const loadEnviron = (
 		supportPath: data.support_path,
 		assetsPath: data.asset_path,
 		raycastVersion: "1.0.0", // provided for compatibility only, not meaningful
-		launchType:
-			data.launch_type === "User"
-				? LaunchType.UserInitiated
-				: LaunchType.Background,
+		launchType: mapLaunchType(data.launch_type),
 		extensionName: data.extension_name,
 		ownerOrAuthorName: data.owner_or_author_name,
 		vicinaeVersion: {

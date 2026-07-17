@@ -94,6 +94,7 @@ class ExtensionManager extends manager.ManagerService {
 				entrypoint: load.entrypoint,
 				argumentValues: load.arguments,
 				preferenceValues: load.preferences,
+				launch_context: load.launch_context,
 				mode: load.mode,
 				support_path: supportPath,
 				asset_path: assetsPath,
@@ -103,6 +104,8 @@ class ExtensionManager extends manager.ManagerService {
 				command_name: load.command_name,
 				launch_type: load.launch_type,
 				capabilities: load.capabilities,
+				cwd: load.cwd,
+				fallbackText: load.fallbackText,
 			},
 		};
 

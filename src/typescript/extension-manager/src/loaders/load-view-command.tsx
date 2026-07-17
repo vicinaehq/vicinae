@@ -1,3 +1,4 @@
+import { environment, type LaunchProps } from "@vicinae/api";
 import { createRenderer, type ViewData } from "../reconciler";
 import { type ComponentType, Suspense } from "react";
 import * as React from "react";
@@ -30,14 +31,16 @@ class ErrorBoundary extends React.Component<
 	}
 }
 
-const App: React.FC<{ component: ComponentType; launchProps: any }> = ({
+const App: React.FC<{ component: ComponentType; launchProps: LaunchProps }> = ({
 	component: Component,
 	launchProps,
 }) => {
 	return (
 		<ErrorBoundary>
 			<Suspense fallback={null}>
-				<NavigationProvider root={<Component {...launchProps} />} />
+				<NavigationProvider
+					root={<Component {...(launchProps as Record<string, unknown>)} />}
+				/>
 			</Suspense>
 		</ErrorBoundary>
 	);
@@ -57,7 +60,13 @@ export default async function (data: extensionServer.LaunchEventData) {
 
 	renderer.render(
 		<App
-			launchProps={{ arguments: data.argumentValues }}
+			launchProps={{
+				launchType: environment.launchType,
+				arguments: data.argumentValues,
+				launchContext: data.launch_context,
+				fallbackText: data.fallbackText,
+				cwd: data.cwd,
+			}}
 			component={Component}
 		/>,
 	);

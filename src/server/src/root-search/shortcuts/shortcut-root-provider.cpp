@@ -87,6 +87,7 @@ ArgumentList RootShortcutItem::arguments() const {
     CommandArgument cmdArg;
 
     cmdArg.type = CommandArgument::Text;
+    cmdArg.name = arg.name;
     cmdArg.required = arg.defaultValue.isEmpty();
     cmdArg.placeholder = arg.name;
     args.emplace_back(cmdArg);
