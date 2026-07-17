@@ -21,11 +21,11 @@ class RaycastStoreCommand : public BuiltinCallbackCommand {
     return {alwaysShowIntro};
   }
 
-  void execute(CommandController *ctrl) const override {
-    auto ctx = ctrl->context();
-    auto alwaysShowIntro = ctrl->preferenceValues().value("alwaysShowIntro").toBool(false);
+  void execute(CommandController &ctrl) const override {
+    auto ctx = ctrl.context();
+    auto alwaysShowIntro = ctrl.preferenceValues().value("alwaysShowIntro").toBool(false);
 
-    if (alwaysShowIntro || !ctrl->storage().getItem("introCompleted").toBool()) {
+    if (alwaysShowIntro || !ctrl.storage().getItem("introCompleted").toBool()) {
       static const QString INTRO = [] {
         QString intro = QStringLiteral(R"(
 # Welcome to the Raycast Extension Store
@@ -46,7 +46,7 @@ Vicinae also has its own [extension store](vicinae://launch/core/store).
         return intro;
       }();
       auto icon = iconUrl();
-      auto storage = ctrl->storage();
+      auto storage = ctrl.storage();
       ctx->navigation->pushView(
           new StoreIntroViewHost(INTRO, icon, "Continue to store", [storage, ctx]() mutable {
             storage.setItem("introCompleted", true);

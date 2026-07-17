@@ -42,11 +42,11 @@ class CalculatorRefreshRatesCommand : public BuiltinCallbackCommand {
     return ImageURL::builtin("globe-01").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(CommandController *ctrl) const override {
+  void execute(CommandController &ctrl) const override {
     using Watcher = QFutureWatcher<std::optional<std::string>>;
 
-    auto calc = ctrl->context()->services->calculatorService();
-    auto toast = ctrl->context()->services->toastService();
+    auto calc = ctrl.context()->services->calculatorService();
+    auto toast = ctrl.context()->services->toastService();
     auto task = calc->backend()->refreshExchangeRates();
     auto watcher = new QFutureWatcher<AbstractCalculatorBackend::RefreshExchangeRatesResult>;
 
@@ -54,7 +54,7 @@ class CalculatorRefreshRatesCommand : public BuiltinCallbackCommand {
       return toast->failure(QString("%1 can't refresh rates").arg(calc->backend()->displayName()));
     }
 
-    ctrl->context()->navigation->clearSearchText();
+    ctrl.context()->navigation->clearSearchText();
     toast->dynamic("Refreshing rates...");
     watcher->setFuture(task);
 

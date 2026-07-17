@@ -16,5 +16,5 @@ class RefreshAppsCommand : public BuiltinCallbackCommand {
   }
 
 public:
-  void execute(CommandController *controller) const override;
+  void execute(CommandController &controller) const override;
 };

@@ -21,11 +21,11 @@ class VicinaeStoreCommand : public BuiltinCallbackCommand {
     return {alwaysShowIntro};
   }
 
-  void execute(CommandController *ctrl) const override {
-    auto ctx = ctrl->context();
-    auto alwaysShowIntro = ctrl->preferenceValues().value("alwaysShowIntro").toBool(false);
+  void execute(CommandController &ctrl) const override {
+    auto ctx = ctrl.context();
+    auto alwaysShowIntro = ctrl.preferenceValues().value("alwaysShowIntro").toBool(false);
 
-    if (alwaysShowIntro || !ctrl->storage().getItem("introCompleted").toBool()) {
+    if (alwaysShowIntro || !ctrl.storage().getItem("introCompleted").toBool()) {
       static const QString INTRO = QStringLiteral(R"(
 # Welcome to the vicinae extension store
 
@@ -37,7 +37,7 @@ If you're looking to build your own extension, take a look at the [documentation
 )");
       auto icon = ImageURL::builtin("cart");
       icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
-      auto storage = ctrl->storage();
+      auto storage = ctrl.storage();
       ctx->navigation->pushView(
           new StoreIntroViewHost(INTRO, icon, "Continue to store", [storage, ctx]() mutable {
             storage.setItem("introCompleted", true);

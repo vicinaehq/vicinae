@@ -13,8 +13,8 @@ class ClipboardClearCommand : public BuiltinCallbackCommand {
   ImageURL iconUrl() const override {
     return ImageURL::builtin("delete-document").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
-  void execute(CommandController *ctrl) const override {
-    auto ctx = ctrl->context();
+  void execute(CommandController &ctrl) const override {
+    auto ctx = ctrl.context();
     auto clipman = ctx->services->clipman();
     auto toast = ctx->services->toastService();
 
@@ -34,8 +34,8 @@ class ClearClipboardHistoryCommand : public BuiltinCallbackCommand {
   ImageURL iconUrl() const override {
     return ImageURL(BuiltinIcon::Trash).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
-  void execute(CommandController *ctrl) const override {
-    auto ctx = ctrl->context();
+  void execute(CommandController &ctrl) const override {
+    auto ctx = ctrl.context();
     auto clipman = ctx->services->clipman();
     auto toast = ctx->services->toastService();
 
