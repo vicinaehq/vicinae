@@ -17,6 +17,7 @@ import {
 	serializeColorLike,
 } from "../color";
 import { Dropdown } from "./dropdown";
+import { usePagination } from "./pagination";
 
 /**
  * A List component that can be used to render a list of items sharing a similar representation.
@@ -113,6 +114,11 @@ export declare namespace List {
 		 * Note that this does *not* fire when transitioning from having a selected item to none at all.
 		 */
 		onSelectionChange?: (id: string) => void;
+
+		pagination?: {
+			onLoadMore: () => PromiseLike<void>;
+			hasMore: boolean;
+		};
 	};
 
 	/**
@@ -172,11 +178,11 @@ export declare namespace List {
 			 * @see {@link ImageLike}
 			 */
 			icon?:
-				| ImageLike
-				| {
-						value: ImageLike | undefined | null;
-						tooltip: string;
-				  };
+			| ImageLike
+			| {
+				value: ImageLike | undefined | null;
+				tooltip: string;
+			};
 
 			/**
 			 * Unique identifier for this item.
@@ -321,11 +327,14 @@ const ListRoot: React.FC<List.Props> = ({
 		onSearchTextChange,
 	);
 
+	const pagination = usePagination(props.pagination);
+
 	return (
 		<list
 			{...props}
 			searchText={countedSearchText}
 			onSearchTextChange={wrappedOnSearchTextChange}
+			pagination={pagination}
 		>
 			{searchBarAccessory}
 			{children}

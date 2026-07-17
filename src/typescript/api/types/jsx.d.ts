@@ -17,6 +17,11 @@ type BaseFormField = {
 	value?: any;
 };
 
+type Pagination = {
+	hasMore: boolean;
+	onLoadMore: () => PromiseLike<void>;
+};
+
 declare module "react" {
 	namespace JSX {
 		interface IntrinsicElements {
@@ -37,6 +42,7 @@ declare module "react" {
 				navigationTitle?: string;
 				onSearchTextChange?: (...args: any[]) => void;
 				onSelectionChange?: (selectedItemId: string) => void;
+				pagination?: Pagination;
 			};
 			"list-section": {
 				title?: string;
@@ -48,11 +54,11 @@ declare module "react" {
 				id?: string;
 				subtitle?: string;
 				icon?:
-					| SerializedImageLike
-					| {
-							value?: SerializedImageLike | null;
-							tooltip: string;
-					  };
+				| SerializedImageLike
+				| {
+					value?: SerializedImageLike | null;
+					tooltip: string;
+				};
 				keywords?: string[];
 				accessories?: List.Item.SerializedAccessory[];
 				children?: React.ReactNode;
@@ -76,6 +82,7 @@ declare module "react" {
 				navigationTitle?: string;
 				onSearchTextChange?: (...args: any[]) => void;
 				onSelectionChange?: (selectedItemId: string) => void;
+				pagination?: Pagination;
 			};
 			"grid-section": {
 				inset?: Grid.Inset;

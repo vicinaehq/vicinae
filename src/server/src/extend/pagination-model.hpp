@@ -1,10 +1,8 @@
 #pragma once
-#include <cstddef>
 #include <optional>
-#include <string>
+#include "extend/model.hpp"
 
 struct PaginationModel {
-  std::optional<std::string> onLoadMore;
+  std::optional<EventHandler> onLoadMore;
   bool hasMore = false;
-  size_t pageSize = 0;
 };

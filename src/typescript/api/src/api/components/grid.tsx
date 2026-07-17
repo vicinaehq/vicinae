@@ -5,6 +5,7 @@ import { EmptyView } from "./empty-view";
 import { type ColorLike, serializeColorLike } from "../color";
 import { Dropdown } from "./dropdown";
 import { useEventCounted } from "../hooks/use-event-counted";
+import { usePagination } from "./pagination";
 
 enum GridInset {
 	Zero = "zero",
@@ -114,6 +115,11 @@ export namespace Grid {
 		searchBarAccessory?: ReactNode;
 		onSearchTextChange?: (text: string) => void;
 		onSelectionChange?: (id: string) => void;
+
+		pagination?: {
+			onLoadMore: () => PromiseLike<void>;
+			hasMore: boolean;
+		};
 	};
 
 	/**
@@ -156,9 +162,9 @@ export namespace Grid {
 			keywords?: string[];
 			icon?: ImageLike;
 			content:
-				| Image.ImageLike
-				| { color: ColorLike }
-				| { value: Image.ImageLike | { color: ColorLike }; tooltip?: string };
+			| Image.ImageLike
+			| { color: ColorLike }
+			| { value: Image.ImageLike | { color: ColorLike }; tooltip?: string };
 			id?: string;
 			subtitle?: string;
 			actions?: ReactNode;
@@ -205,8 +211,11 @@ const GridRoot: React.FC<Grid.Props> = ({
 		onSearchTextChange,
 	);
 
+	const pagination = usePagination(props.pagination);
+
 	return (
 		<grid
+			pagination={pagination}
 			fit={fit}
 			throttle={throttle}
 			inset={inset}
@@ -259,11 +268,11 @@ const GridItem: React.FC<Grid.Item.Props> = ({
 	// Accessory
 	const serializedAccessory = accessory
 		? {
-				icon: accessory.icon
-					? serializeProtoImage(accessory.icon)
-					: accessory.icon,
-				tooltip: accessory.tooltip,
-			}
+			icon: accessory.icon
+				? serializeProtoImage(accessory.icon)
+				: accessory.icon,
+			tooltip: accessory.tooltip,
+		}
 		: undefined;
 
 	return (

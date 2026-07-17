@@ -21,6 +21,8 @@
 #include "extend/image-model.hpp"
 #include "extend/list-model.hpp"
 #include "extend/metadata-model.hpp"
+#include "extend/model-parser.hpp"
+#include "extend/model.hpp"
 #include "extend/pagination-model.hpp"
 #include "extend/root-detail-model.hpp"
 #include "extend/tag-model.hpp"
