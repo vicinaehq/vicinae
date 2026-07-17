@@ -62,6 +62,7 @@ public:
                           std::function<void()> onComplete = nullptr);
   void deleteAllIndexedFiles(std::function<void()> onComplete = nullptr);
   void compact(std::function<void()> onComplete = nullptr);
+  void compactIfNeeded();
 
   void rebuildSpellfixVocabulary();
 

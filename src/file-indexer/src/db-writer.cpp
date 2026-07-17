@@ -113,6 +113,12 @@ void DbWriter::compact(std::function<void()> onComplete) {
   });
 }
 
+void DbWriter::compactIfNeeded() {
+  submit([](FileIndexerDatabase &db) {
+    if (db.needsCompaction()) { db.compact(); }
+  });
+}
+
 void DbWriter::indexEvents(std::vector<FileEvent> events) {
   submit([events = std::move(events)](FileIndexerDatabase &db) { db.indexEvents(events); }, true);
 }
