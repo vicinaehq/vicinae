@@ -37,6 +37,34 @@ Item {
 
     property bool suppressEmpty: false
 
+    // Infinite-scroll pagination: consumers opt in by setting canLoadMore.
+    // endReached fires at most once per content growth cycle.
+    signal endReached
+    property bool canLoadMore: false
+    property real endReachedThreshold: root.height * 1.5
+    property bool _endArmed: true
+
+    onCanLoadMoreChanged: {
+        if (canLoadMore) {
+            _endArmed = true;
+            Qt.callLater(_maybeFireEnd);
+        }
+    }
+
+    function _maybeFireEnd() {
+        if (!root.canLoadMore || !root._endArmed)
+            return;
+        if (listView.contentHeight <= 0)
+            return;
+        const underfilled = listView.contentHeight <= listView.height;
+        if (!underfilled && listView.atYBeginning)
+            return;
+        if (listView.contentY + listView.height >= listView.contentHeight - root.endReachedThreshold) {
+            root._endArmed = false;
+            root.endReached();
+        }
+    }
+
     readonly property bool _empty: listView.count === 0
     readonly property bool _awaitingData: root.cmdModel && root.cmdModel.awaitingData === true
 
@@ -130,6 +158,16 @@ Item {
         spacing: root.cellSpacing
         reuseItems: true
         cacheBuffer: 200
+
+        property real _lastContentHeight: 0
+
+        onContentYChanged: root._maybeFireEnd()
+        onContentHeightChanged: {
+            if (contentHeight > _lastContentHeight)
+                root._endArmed = true;
+            _lastContentHeight = contentHeight;
+            root._maybeFireEnd();
+        }
 
         ViciWheelHandler {
             target: listView
@@ -350,6 +388,11 @@ Item {
 
     Connections {
         target: root.cmdModel
+        function onModelReset() {
+            root._endArmed = true;
+            listView._lastContentHeight = 0;
+            Qt.callLater(root._maybeFireEnd);
+        }
         function onSelectionChanged() {
             var row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1;
             if (row >= 0) {

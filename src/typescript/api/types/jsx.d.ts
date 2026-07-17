@@ -17,6 +17,13 @@ type BaseFormField = {
 	value?: any;
 };
 
+type WithPagination = {
+	// flattened so that the handler is detected as one
+	// by the reconciler
+	paginationHasMore: boolean;
+	paginationOnLoadMore?: () => Promise<void> | void;
+};
+
 declare module "react" {
 	namespace JSX {
 		interface IntrinsicElements {
@@ -37,7 +44,8 @@ declare module "react" {
 				navigationTitle?: string;
 				onSearchTextChange?: (...args: any[]) => void;
 				onSelectionChange?: (selectedItemId: string) => void;
-			};
+				pagination?: Pagination;
+			} & WithPagination;
 			"list-section": {
 				title?: string;
 				subtitle?: string;
@@ -76,7 +84,8 @@ declare module "react" {
 				navigationTitle?: string;
 				onSearchTextChange?: (...args: any[]) => void;
 				onSelectionChange?: (selectedItemId: string) => void;
-			};
+				pagination?: Pagination;
+			} & WithPagination;
 			"grid-section": {
 				inset?: Grid.Inset;
 				columns?: number;

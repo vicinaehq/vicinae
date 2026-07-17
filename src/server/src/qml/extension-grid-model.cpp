@@ -99,6 +99,7 @@ void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSele
 void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
   int const prevSection = selectedSection();
   int const prevItem = selectedItem();
+  int const prevRow = flatRowForSelection();
 
   clearSources();
   m_ownedSections.clear();
@@ -156,7 +157,7 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
     if (prevValid) {
       if (prevSection == selectedSection() && prevItem == selectedItem()) {
         refreshActionPanel();
-        emit selectionChanged();
+        if (flatRowForSelection() != prevRow) emit selectionChanged();
       } else {
         select(prevSection, prevItem);
       }

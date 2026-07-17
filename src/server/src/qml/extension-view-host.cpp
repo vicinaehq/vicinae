@@ -144,6 +144,7 @@ void ExtensionViewHost::renderList(const ListModel &model) {
   auto *list = activeModel<ExtensionListModel>();
   m_onSearchTextChange = model.onSearchTextChange;
   m_filtering = model.filtering;
+  m_pagination = model.pagination;
 
   if (model.throttle != m_throttle) {
     m_throttle = model.throttle;
@@ -169,6 +170,8 @@ void ExtensionViewHost::renderList(const ListModel &model) {
   } else {
     updateDropdown(nullptr);
   }
+
+  emit paginationChanged();
 
   if (model.dirty) {
     m_selectFirstOnReset = m_shouldResetSelection;
@@ -180,10 +183,18 @@ void ExtensionViewHost::renderList(const ListModel &model) {
   }
 }
 
+void ExtensionViewHost::onLoadMore() {
+  if (auto p = m_pagination; p && p->hasMore) {
+    qDebug() << "Trying to load more data, send to " << p->onLoadMore.c_str();
+    m_notify(p->onLoadMore.c_str(), {});
+  }
+}
+
 void ExtensionViewHost::renderGrid(const GridModel &model) {
   auto *grid = activeModel<ExtensionGridModel>();
   m_onSearchTextChange = model.onSearchTextChange;
   m_filtering = model.filtering;
+  m_pagination = model.pagination;
 
   if (model.throttle != m_throttle) {
     m_throttle = model.throttle;
@@ -209,6 +220,8 @@ void ExtensionViewHost::renderGrid(const GridModel &model) {
   } else {
     updateDropdown(nullptr);
   }
+
+  emit paginationChanged();
 
   if (model.dirty) {
     grid->setExtensionData(model, m_shouldResetSelection);

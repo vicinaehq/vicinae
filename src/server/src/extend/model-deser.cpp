@@ -21,6 +21,8 @@
 #include "extend/image-model.hpp"
 #include "extend/list-model.hpp"
 #include "extend/metadata-model.hpp"
+#include "extend/model-parser.hpp"
+#include "extend/model.hpp"
 #include "extend/pagination-model.hpp"
 #include "extend/root-detail-model.hpp"
 #include "extend/tag-model.hpp"
@@ -343,7 +345,8 @@ struct ListModelWire {
   std::optional<std::string> onSelectionChange;
   std::optional<std::string> onSearchTextChange;
   std::optional<EventCounted<std::string>> searchText;
-  std::optional<PaginationModel> pagination;
+  bool paginationHasMore = false;
+  std::optional<EventHandler> paginationOnLoadMore;
   std::vector<ListWireChild> children;
 };
 
@@ -390,7 +393,8 @@ struct GridModelWire {
   std::optional<std::string> onSearchTextChange;
   std::optional<std::string> selectedItemId;
   std::optional<EventCounted<std::string>> searchText;
-  std::optional<PaginationModel> pagination;
+  bool paginationHasMore = false;
+  std::optional<EventHandler> paginationOnLoadMore;
   std::vector<GridWireChild> children;
 };
 
@@ -809,7 +813,10 @@ static ListModel toListModel(ListModelWire &w) {
   m.onSelectionChanged = std::move(w.onSelectionChange);
   m.onSearchTextChange = std::move(w.onSearchTextChange);
   m.searchText = std::move(w.searchText);
-  m.pagination = std::move(w.pagination);
+
+  if (auto handler = w.paginationOnLoadMore) {
+    m.pagination = PaginationModel{.onLoadMore = handler.value(), .hasMore = w.paginationHasMore};
+  }
 
   m.items.reserve(w.children.size());
   size_t index = 0;
@@ -879,7 +886,10 @@ static GridModel toGridModel(GridModelWire &w) {
   m.onSearchTextChange = std::move(w.onSearchTextChange);
   m.selectedItemId = std::move(w.selectedItemId);
   m.searchText = std::move(w.searchText);
-  m.pagination = std::move(w.pagination);
+
+  if (auto handler = w.paginationOnLoadMore) {
+    m.pagination = PaginationModel{.onLoadMore = handler.value(), .hasMore = w.paginationHasMore};
+  }
 
   m.items.reserve(w.children.size());
   size_t index = 0;

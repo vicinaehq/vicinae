@@ -89,6 +89,9 @@ Item {
                 anchors.fill: parent
                 listModel: root.host.contentModel
                 model: root.host.contentModel
+                canLoadMore: root.host.hasMorePages
+                onEndReached: root.host.onLoadMore()
+
                 autoWireModel: true
                 selectFirstOnReset: root.host.selectFirstOnReset
                 suppressEmpty: root.host.suppressEmptyView
@@ -163,6 +166,8 @@ Item {
             anchors.fill: parent
             cmdModel: root.host.contentModel
             suppressEmpty: root.host.suppressEmptyView
+            canLoadMore: root.host.hasMorePages
+            onEndReached: root.host.onLoadMore()
         }
     }
 
