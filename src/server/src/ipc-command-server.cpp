@@ -221,8 +221,9 @@ ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future IpcService::launchApp(ipc_ge
 ipc_gen::Result<ipc_gen::ListCommandsResponse>::Future IpcService::listCommands() {
   auto root = m_ctx.services->rootItemManager();
   auto commands =
-      root->allItems() |
-      std::views::transform([](auto &&item) { return ipc_gen::CommandInfo{.id = item.item->uniqueId()}; }) |
+      root->allItems() | std::views::transform([](auto &&item) {
+        return ipc_gen::CommandInfo{.id = item.item->uniqueId(), .name = item.item->title().toStdString()};
+      }) |
       std::ranges::to<std::vector>();
 
   std::ranges::sort(commands, [](const auto &a, const auto &b) { return a.id < b.id; });

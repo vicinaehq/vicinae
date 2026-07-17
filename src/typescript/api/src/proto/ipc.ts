@@ -120,6 +120,7 @@ export type LaunchCommandResponse = {
 
 export type CommandInfo = {
 	id: string;
+	name: string;
 }
 
 export type ListCommandsResponse = {
