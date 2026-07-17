@@ -1,5 +1,8 @@
 #include "ipc-command-server.hpp"
+#include "argument.hpp"
 #include "common.hpp"
+#include "common/entrypoint.hpp"
+#include "common/enumerate.hpp"
 #include "generated/ipc-server.hpp"
 #include "ipc-command-handler.hpp"
 #include "config/config.hpp"
@@ -16,6 +19,7 @@
 #include <qfuture.h>
 #include <qlogging.h>
 #include <ranges>
+#include <sstream>
 #include <string_view>
 #include <utility>
 #include "services/app-service/app-service.hpp"
@@ -62,7 +66,7 @@ struct FileCategoryDefinition {
   vicinae::FileCategory category;
 };
 
-static constexpr FileCategoryDefinition FILE_CATEGORIES[] = {
+constexpr FileCategoryDefinition FILE_CATEGORIES[] = {
     {.name = "other", .category = vicinae::FileCategory::Other},
     {.name = "directory", .category = vicinae::FileCategory::Directory},
     {.name = "image", .category = vicinae::FileCategory::Image},
@@ -87,26 +91,39 @@ std::string_view fileCategoryToString(vicinae::FileCategory category) {
   return "other";
 }
 
-std::expected<ArgumentValues, std::string> buildLaunchArguments(const ArgumentList &manifestArgs,
+std::expected<ArgumentValues, std::string> buildLaunchArguments(const EntrypointId &id,
+                                                                const ArgumentList &manifestArgs,
                                                                 const std::vector<std::string> &values) {
+  const auto fail = [&](auto &&message) {
+    std::ostringstream oss;
+
+    oss << message << "\n" << "Usage: vicinae cmd launch " << std::string{id};
+
+    for (const auto &[idx, arg] : manifestArgs | vicinae::enumerate) {
+      auto openChar = arg.required ? '<' : '[';
+      auto closeChar = arg.required ? '>' : ']';
+      oss << " " << openChar << arg.name.toStdString() << closeChar;
+    }
+
+    return std::unexpected(oss.str());
+  };
+
   if (values.size() > manifestArgs.size()) {
-    return std::unexpected(
+    return fail(
         std::format("Too many arguments: expected at most {}, got {}", manifestArgs.size(), values.size()));
   }
 
   ArgumentValues arguments;
   arguments.reserve(values.size());
 
-  for (size_t idx = 0; idx != values.size(); ++idx) {
-    const auto &value = values.at(idx);
+  for (const auto [idx, value] : values | vicinae::enumerate) {
     const auto &arg = manifestArgs.at(idx);
     const QString qvalue = QString::fromStdString(value);
 
     if (arg.type == CommandArgument::Dropdown && arg.data) {
       auto matchesValue = [&](const CommandArgument::DropdownData &option) { return option.value == qvalue; };
       if (!std::ranges::any_of(*arg.data, matchesValue)) {
-        return std::unexpected(
-            std::format("Invalid value '{}' for argument '{}'", value, arg.name.toStdString()));
+        return fail(std::format("Invalid value '{}' for argument '{}'", value, arg.name.toStdString()));
       }
     }
 
@@ -115,9 +132,7 @@ std::expected<ArgumentValues, std::string> buildLaunchArguments(const ArgumentLi
 
   for (size_t idx = values.size(); idx != manifestArgs.size(); ++idx) {
     const auto &arg = manifestArgs.at(idx);
-    if (arg.required) {
-      return std::unexpected(std::format("Missing required argument '{}'", arg.name.toStdString()));
-    }
+    if (arg.required) { return fail(std::format("Missing required argument '{}'", arg.name.toStdString())); }
   }
 
   return arguments;
@@ -232,7 +247,7 @@ IpcService::launchCommand(ipc_gen::LaunchCommandRequest req) {
         std::format("Unknown command entrypoint: {}", req.entrypoint));
   }
 
-  auto arguments = buildLaunchArguments(item->arguments(), req.args);
+  auto arguments = buildLaunchArguments(id, item->arguments(), req.args);
 
   if (!arguments) return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(arguments.error());
 
