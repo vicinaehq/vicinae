@@ -44,6 +44,18 @@
 			"mode": "view"
 		},
 		{
+			"name": "paginated-list",
+			"title": "Paginated List",
+			"description": "An infinitely scrolling paginated list",
+			"mode": "view"
+		},
+		{
+			"name": "paginated-grid",
+			"title": "Paginated Grid",
+			"description": "An infinitely scrolling paginated grid",
+			"mode": "view"
+		},
+		{
 			"name": "simple-detail",
 			"title": "Simple Detail",
 			"description": "A simple detail view",
