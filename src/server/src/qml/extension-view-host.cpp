@@ -171,6 +171,8 @@ void ExtensionViewHost::renderList(const ListModel &model) {
     updateDropdown(nullptr);
   }
 
+  emit paginationChanged();
+
   if (model.dirty) {
     m_selectFirstOnReset = m_shouldResetSelection;
     emit selectFirstOnResetChanged();
@@ -179,10 +181,6 @@ void ExtensionViewHost::renderList(const ListModel &model) {
     emit selectFirstOnResetChanged();
     m_shouldResetSelection = false;
   }
-
-  // for now we mark it as changed on each render, it doesn't really matter as it
-  // only toggles a boolean.
-  emit paginationChanged();
 }
 
 void ExtensionViewHost::onLoadMore() {
@@ -223,14 +221,12 @@ void ExtensionViewHost::renderGrid(const GridModel &model) {
     updateDropdown(nullptr);
   }
 
+  emit paginationChanged();
+
   if (model.dirty) {
     grid->setExtensionData(model, m_shouldResetSelection);
     m_shouldResetSelection = false;
   }
-
-  // for now we mark it as changed on each render, it doesn't really matter as it
-  // only toggles a boolean.
-  emit paginationChanged();
 }
 
 void ExtensionViewHost::textChanged(const QString &text) {

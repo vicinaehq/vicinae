@@ -44,8 +44,12 @@ Item {
     property real endReachedThreshold: root.height * 1.5
     property bool _endArmed: true
 
-    onCanLoadMoreChanged: if (canLoadMore)
-        Qt.callLater(_maybeFireEnd)
+    onCanLoadMoreChanged: {
+        if (canLoadMore) {
+            _endArmed = true;
+            Qt.callLater(_maybeFireEnd);
+        }
+    }
 
     function _maybeFireEnd() {
         if (!root.canLoadMore || !root._endArmed)
