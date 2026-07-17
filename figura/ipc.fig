@@ -40,8 +40,12 @@ struct LaunchCommandResponse {
   error?: string;
 };
 
+struct CommandInfo {
+  id: string;
+};
+
 struct ListCommandsResponse {
-  commands: string[];
+  commands: CommandInfo[];
 };
 
 struct DMenuRequest {

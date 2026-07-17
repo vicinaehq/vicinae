@@ -117,8 +117,12 @@ export type LaunchCommandResponse = {
 	error?: string;
 }
 
+export type CommandInfo = {
+	id: string;
+}
+
 export type ListCommandsResponse = {
-	commands: string[];
+	commands: CommandInfo[];
 }
 
 export type DMenuRequest = {

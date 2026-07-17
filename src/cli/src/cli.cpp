@@ -1,4 +1,6 @@
 #include <filesystem>
+#include <glaze/core/opts.hpp>
+#include <glaze/core/reflect.hpp>
 #include <system_error>
 #include "cli.hpp"
 #include "config.hpp"
@@ -174,9 +176,11 @@ public:
   AppCommand() { registerCommand<LaunchAppCommand>(); }
 };
 
-class ListCommandsCommand : public AbstractCommandLineCommand {
+struct ListCommandsCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "ls"; }
   std::string description() const override { return "List loaded commands"; }
+
+  void setup(CLI::App *app) override { app->add_flag("--json,-j", m_json, "Output command list as json"); }
 
   bool run(CLI::App *) override {
     auto res =
@@ -187,12 +191,27 @@ class ListCommandsCommand : public AbstractCommandLineCommand {
       return false;
     }
 
-    for (const auto &command : res->commands) {
-      std::println(std::cout, "{}", command);
+    if (m_json) {
+      std::string buf;
+
+      if (auto error =
+              glz::write<glz::opts{.format = glz::JSON, .prettify = true}>(res.value().commands, buf)) {
+        std::println(std::cerr, "Failed to serialize json: {}", glz::format_error(error));
+        return false;
+      }
+
+      std::cout << buf << std::endl;
+    } else {
+      for (const auto &command : res->commands) {
+        std::cout << command.id << "\n";
+      }
     }
 
     return true;
   }
+
+private:
+  bool m_json;
 };
 
 class LaunchCommandCommand : public AbstractCommandLineCommand {

@@ -210,32 +210,24 @@ ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future IpcService::launchApp(ipc_ge
 }
 
 ipc_gen::Result<ipc_gen::ListCommandsResponse>::Future IpcService::listCommands() {
-  std::vector<std::string> commands;
   auto root = m_ctx.services->rootItemManager();
-  auto items = root->allItems();
+  auto commands =
+      root->allItems() |
+      std::views::transform([](auto &&item) { return ipc_gen::CommandInfo{.id = item.item->uniqueId()}; }) |
+      std::ranges::to<std::vector>();
 
-  commands.reserve(items.size());
+  std::ranges::sort(commands, [](const auto &a, const auto &b) { return a.id < b.id; });
 
-  for (const auto &item : items) {
-    if (!item.item) continue;
-
-    auto *commandItem = dynamic_cast<CommandRootItem *>(item.item.get());
-    if (!commandItem) continue;
-
-    auto command = commandItem->command();
-    commands.emplace_back(std::string{command->uniqueId()});
-  }
-
-  std::ranges::sort(commands);
   return ipc_gen::Result<ipc_gen::ListCommandsResponse>::ok({.commands = std::move(commands)});
 }
 
 ipc_gen::Result<ipc_gen::LaunchCommandResponse>::Future
 IpcService::launchCommand(ipc_gen::LaunchCommandRequest req) {
   auto id = EntrypointId::fromSerialized(req.entrypoint);
-  if (id.provider.empty() || id.entrypoint.empty()) {
+
+  if (!id.isValid()) {
     return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(
-        std::format("Invalid command entrypoint: {}", req.entrypoint));
+        std::format("Ill-formed command entrypoint: {}", req.entrypoint));
   }
 
   auto root = m_ctx.services->rootItemManager();
@@ -246,13 +238,8 @@ IpcService::launchCommand(ipc_gen::LaunchCommandRequest req) {
         std::format("Unknown command entrypoint: {}", req.entrypoint));
   }
 
-  auto *commandItem = dynamic_cast<CommandRootItem *>(item);
-  if (!commandItem) {
-    return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail("Target is not a command");
-  }
+  auto arguments = buildLaunchArguments(item->arguments(), req.args);
 
-  auto command = commandItem->command();
-  auto arguments = buildLaunchArguments(command->arguments(), req.args);
   if (!arguments) return ipc_gen::Result<ipc_gen::LaunchCommandResponse>::fail(arguments.error());
 
   if (!m_ctx.navigation->activateEntrypoint(id, {.arguments = std::move(*arguments),
