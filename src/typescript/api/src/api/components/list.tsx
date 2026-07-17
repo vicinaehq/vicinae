@@ -178,11 +178,11 @@ export declare namespace List {
 			 * @see {@link ImageLike}
 			 */
 			icon?:
-			| ImageLike
-			| {
-				value: ImageLike | undefined | null;
-				tooltip: string;
-			};
+				| ImageLike
+				| {
+						value: ImageLike | undefined | null;
+						tooltip: string;
+				  };
 
 			/**
 			 * Unique identifier for this item.
@@ -332,6 +332,8 @@ const ListRoot: React.FC<List.Props> = ({
 	return (
 		<list
 			{...props}
+			paginationHasMore={pagination?.hasMore ?? false}
+			paginationOnLoadMore={pagination?.onLoadMore}
 			searchText={countedSearchText}
 			onSearchTextChange={wrappedOnSearchTextChange}
 			pagination={pagination}

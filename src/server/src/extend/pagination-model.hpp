@@ -1,8 +1,7 @@
 #pragma once
-#include <optional>
 #include "extend/model.hpp"
 
 struct PaginationModel {
-  std::optional<EventHandler> onLoadMore;
+  EventHandler onLoadMore;
   bool hasMore = false;
 };

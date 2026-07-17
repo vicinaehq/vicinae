@@ -17,9 +17,11 @@ type BaseFormField = {
 	value?: any;
 };
 
-type Pagination = {
-	hasMore: boolean;
-	onLoadMore: () => PromiseLike<void>;
+type WithPagination = {
+	// flattened so that the handler is detected as one
+	// by the reconciler
+	paginationHasMore: boolean;
+	paginationOnLoadMore?: () => Promise<void> | void;
 };
 
 declare module "react" {
@@ -43,7 +45,7 @@ declare module "react" {
 				onSearchTextChange?: (...args: any[]) => void;
 				onSelectionChange?: (selectedItemId: string) => void;
 				pagination?: Pagination;
-			};
+			} & WithPagination;
 			"list-section": {
 				title?: string;
 				subtitle?: string;
@@ -54,11 +56,11 @@ declare module "react" {
 				id?: string;
 				subtitle?: string;
 				icon?:
-				| SerializedImageLike
-				| {
-					value?: SerializedImageLike | null;
-					tooltip: string;
-				};
+					| SerializedImageLike
+					| {
+							value?: SerializedImageLike | null;
+							tooltip: string;
+					  };
 				keywords?: string[];
 				accessories?: List.Item.SerializedAccessory[];
 				children?: React.ReactNode;
@@ -83,7 +85,7 @@ declare module "react" {
 				onSearchTextChange?: (...args: any[]) => void;
 				onSelectionChange?: (selectedItemId: string) => void;
 				pagination?: Pagination;
-			};
+			} & WithPagination;
 			"grid-section": {
 				inset?: Grid.Inset;
 				columns?: number;
