@@ -5,11 +5,16 @@ Item {
     id: root
 
     Flickable {
+        id: flickable
         anchors.fill: parent
         contentWidth: width
         contentHeight: content.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+
+        ViciWheelHandler {
+            target: flickable
+        }
 
         ColumnLayout {
             id: content

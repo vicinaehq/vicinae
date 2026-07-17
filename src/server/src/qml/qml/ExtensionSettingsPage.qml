@@ -60,6 +60,10 @@ Item {
         contentHeight: contentColumn.implicitHeight
         contentWidth: width
 
+        ViciWheelHandler {
+            target: cmdFlickable
+        }
+
         function scrollToIndex(row) {
             const item = cmdRepeater.itemAt(row);
             if (!item)

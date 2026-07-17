@@ -49,6 +49,7 @@ Item {
     }
 
     Flickable {
+        id: flickable
         anchors.fill: parent
         contentWidth: width
         contentHeight: _content.implicitHeight
@@ -56,6 +57,10 @@ Item {
         flickableDirection: Flickable.VerticalFlick
         boundsBehavior: Flickable.StopAtBounds
         visible: root.host.isReady
+
+        ViciWheelHandler {
+            target: flickable
+        }
 
         ColumnLayout {
             id: _content

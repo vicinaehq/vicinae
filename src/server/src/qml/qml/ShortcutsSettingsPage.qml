@@ -31,11 +31,16 @@ Item {
     }
 
     Flickable {
+        id: flickable
         anchors.fill: parent
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         contentHeight: contentColumn.implicitHeight
         contentWidth: width
+
+        ViciWheelHandler {
+            target: flickable
+        }
 
         ScrollBar.vertical: ViciScrollBar {
             policy: ScrollBar.AsNeeded
