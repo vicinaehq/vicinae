@@ -67,6 +67,10 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
+        ViciWheelHandler {
+            target: flickable
+        }
+
         onContentHeightChanged: {
             if (root._autoScroll) {
                 root._autoScroll = false;

@@ -8,6 +8,10 @@ Flickable {
     clip: true
     boundsBehavior: Flickable.StopAtBounds
 
+    ViciWheelHandler {
+        target: root
+    }
+
     ColumnLayout {
         id: content
         anchors.horizontalCenter: parent.horizontalCenter

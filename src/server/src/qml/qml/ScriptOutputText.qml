@@ -8,6 +8,10 @@ ScrollView {
 
     Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
 
+    ViciWheelHandler {
+        target: root.contentItem
+    }
+
     function moveUp() {
         contentItem.contentY = Math.max(0, contentItem.contentY - 40);
     }

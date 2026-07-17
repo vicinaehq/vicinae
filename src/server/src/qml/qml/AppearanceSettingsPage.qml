@@ -11,6 +11,10 @@ Flickable {
 
     readonly property var model: settings.generalModel
 
+    ViciWheelHandler {
+        target: root
+    }
+
     ScrollBar.vertical: ViciScrollBar {
         policy: ScrollBar.AsNeeded
     }
