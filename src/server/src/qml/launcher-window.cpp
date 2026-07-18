@@ -381,6 +381,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     LauncherWindowPlatform::grantForeground();
     m_window->requestActivate();
   } else {
+    LauncherWindowPlatform::suppressHeldKeyReleases();
     m_window->hide();
     m_cacheEvictionTimer.start();
   }
