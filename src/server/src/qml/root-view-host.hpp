@@ -1,5 +1,6 @@
 #pragma once
 #include "bridge-view.hpp"
+#include <qtimer.h>
 
 class RootSearchModel;
 
@@ -22,5 +23,6 @@ public:
   Q_INVOKABLE bool tryAliasFastTrack();
 
 private:
+  QTimer *m_clockTimer = new QTimer(this);
   RootSearchModel *m_model = nullptr;
 };
