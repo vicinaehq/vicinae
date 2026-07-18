@@ -79,6 +79,34 @@ UINT winModifiers(Qt::KeyboardModifiers mods) {
 
 WindowsGlobalShortcutBackend *g_backend = nullptr;
 
+// One-shot key up suppressions, armed when the launcher hides while keys are still
+// physically held (escape, return...). Without this the window regaining foreground
+// receives the orphan WM_KEYUP, which some apps act upon.
+constexpr ULONGLONG KEY_UP_SUPPRESSION_TTL_MS = 2000;
+
+struct KeyUpSuppression {
+  UINT vk;
+  ULONGLONG deadline;
+};
+
+std::mutex g_suppressionsMutex;
+std::vector<KeyUpSuppression> g_suppressions;
+
+// Any event for an armed vk disarms it; only a key up within the deadline is eaten.
+// A fresh key down means the next key up belongs to a new press and must go through.
+bool consumeSuppressedKeyUp(UINT vk, bool down) {
+  std::scoped_lock lock(g_suppressionsMutex);
+  const ULONGLONG now = GetTickCount64();
+  bool eat = false;
+  std::erase_if(g_suppressions, [&](const KeyUpSuppression &s) {
+    if (now > s.deadline) return true;
+    if (s.vk != vk) return false;
+    eat = !down;
+    return true;
+  });
+  return eat;
+}
+
 UINT currentModifiers() {
   UINT mods = 0;
   if (GetAsyncKeyState(VK_CONTROL) < 0) mods |= MOD_CONTROL;
@@ -94,10 +122,13 @@ UINT currentModifiers() {
 // won't work until another shell action is performed (opening a new window, pressing Win+Tab again...)
 // The hook works in all cases so we rely on that instead
 LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
-  if (nCode == HC_ACTION && g_backend) {
+  if (nCode == HC_ACTION) {
     const auto *k = reinterpret_cast<KBDLLHOOKSTRUCT *>(lParam);
     const bool down = wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN;
-    if (g_backend->dispatchKey(k->vkCode, currentModifiers(), down)) { return 1; }
+    // both must run on every event so their internal states stay consistent
+    const bool shortcutEaten = g_backend && g_backend->dispatchKey(k->vkCode, currentModifiers(), down);
+    const bool suppressionEaten = consumeSuppressedKeyUp(k->vkCode, down);
+    if (shortcutEaten || suppressionEaten) { return 1; }
   }
   return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
@@ -145,10 +176,14 @@ bool WindowsGlobalShortcutBackend::start() {
 
 bool WindowsGlobalShortcutBackend::dispatchKey(unsigned int vk, unsigned int mods, bool down) {
   std::scoped_lock lock(m_targetsMutex);
+  bool eaten = false;
 
   for (auto &target : m_targets) {
     if (target.vk != vk) continue;
     if (!down) {
+      // eat the key up of an eaten key down: some apps act on release (e.g. a
+      // focused browser button activates on space key up)
+      if (target.down) { eaten = true; }
       target.down = false;
       continue;
     }
@@ -159,10 +194,16 @@ bool WindowsGlobalShortcutBackend::dispatchKey(unsigned int vk, unsigned int mod
             this, [this, id = target.id]() { emit shortcutActivated(id, GetTickCount64()); },
             Qt::QueuedConnection);
       }
-      return true;
+      eaten = true;
     }
   }
-  return false;
+  return eaten;
+}
+
+void WindowsGlobalShortcutBackend::suppressNextKeyUp(unsigned int vk) {
+  std::scoped_lock lock(g_suppressionsMutex);
+  std::erase_if(g_suppressions, [&](const KeyUpSuppression &s) { return s.vk == vk; });
+  g_suppressions.push_back({vk, GetTickCount64() + KEY_UP_SUPPRESSION_TTL_MS});
 }
 
 std::expected<void, QString>

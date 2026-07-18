@@ -21,6 +21,8 @@ public:
 
   bool dispatchKey(unsigned int vk, unsigned int mods, bool down);
 
+  static void suppressNextKeyUp(unsigned int vk);
+
 private:
   struct HookTarget {
     unsigned int vk;
