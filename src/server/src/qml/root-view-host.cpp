@@ -4,8 +4,23 @@
 #include "view-scope.hpp"
 
 void RootViewHost::initialize() {
+  using namespace std::chrono_literals;
+
   BaseView::initialize();
   m_model = new RootSearchModel(ViewScope(context(), this), this);
+  m_clockTimer->setInterval(1min);
+  m_clockTimer->start();
+
+  auto refreshClock = [this]() {
+    QLocale locale;
+    QString timeStr = locale.toString(QTime::currentTime(), QLocale::ShortFormat);
+    ViewScope scope(context(), this);
+    scope.setNavigationTitle(timeStr);
+  };
+
+  refreshClock();
+
+  connect(m_clockTimer, &QTimer::timeout, this, refreshClock);
 
   connect(m_model, &SectionListModel::itemSelected, this, [this](SectionSource *source, int itemIdx) {
     if (auto panel = source->actionPanel(itemIdx))
