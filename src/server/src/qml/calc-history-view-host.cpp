@@ -16,9 +16,20 @@ void CalcLiveSection::clear() {
   notifyItemsRefreshed();
 }
 
-QString CalcLiveSection::itemTitle(int) const {
-  if (!m_result) return {};
-  return m_result->question.text + QStringLiteral(" = ") + m_result->answer.text;
+int CalcLiveSection::count() const {
+  return m_result ? 1 + static_cast<int>(m_result->alternatives.size()) : 0;
+}
+
+const AbstractCalculatorBackend::CalculatorResult *CalcLiveSection::resultAt(int i) const {
+  if (!m_result || i < 0) return nullptr;
+  if (i == 0) return &*m_result;
+  if (std::cmp_greater(i, m_result->alternatives.size())) return nullptr;
+  return &m_result->alternatives[i - 1];
+}
+
+QString CalcLiveSection::itemTitle(int i) const {
+  const auto *result = resultAt(i);
+  return result ? result->question.text + QStringLiteral(" = ") + result->answer.text : QString();
 }
 
 QString CalcLiveSection::itemIconSource(int) const { return imageSourceFor(ImageURL::builtin("calculator")); }
@@ -27,21 +38,28 @@ QVariantList CalcLiveSection::itemAccessories(int) const { return {}; }
 
 QHash<int, QByteArray> CalcLiveSection::customRoleNames() const {
   return {
-      {IsCalculator, "isCalculator"},         {CalcQuestion, "calcQuestion"},
-      {CalcQuestionUnit, "calcQuestionUnit"}, {CalcAnswer, "calcAnswer"},
+      {IsCalculator, "isCalculator"},
+      {CalcQuestion, "calcQuestion"},
+      {CalcQuestionUnit, "calcQuestionUnit"},
+      {CalcQuestionSubtitle, "calcQuestionSubtitle"},
+      {CalcAnswer, "calcAnswer"},
       {CalcAnswerUnit, "calcAnswerUnit"},
+      {CalcAnswerSubtitle, "calcAnswerSubtitle"},
   };
 }
 
 QHash<int, QVariant> CalcLiveSection::customRoleDefaults() const {
   return {
-      {IsCalculator, false},   {CalcQuestion, QString()},   {CalcQuestionUnit, QString()},
-      {CalcAnswer, QString()}, {CalcAnswerUnit, QString()},
+      {IsCalculator, false},           {CalcQuestion, QString()},
+      {CalcQuestionUnit, QString()},   {CalcQuestionSubtitle, QString()},
+      {CalcAnswer, QString()},         {CalcAnswerUnit, QString()},
+      {CalcAnswerSubtitle, QString()},
   };
 }
 
-QVariant CalcLiveSection::customData(int, int role) const {
-  if (!m_result) {
+QVariant CalcLiveSection::customData(int i, int role) const {
+  const auto *result = resultAt(i);
+  if (!result) {
     if (role == IsCalculator) return false;
     return {};
   }
@@ -49,27 +67,32 @@ QVariant CalcLiveSection::customData(int, int role) const {
   case IsCalculator:
     return true;
   case CalcQuestion:
-    return m_result->question.text;
+    return result->question.text;
   case CalcQuestionUnit:
-    return m_result->question.unit ? m_result->question.unit->displayName : QString();
+    return result->question.unit ? result->question.unit->displayName : QString();
+  case CalcQuestionSubtitle:
+    return result->question.subtitle.value_or(QString());
   case CalcAnswer:
-    return m_result->answer.text;
+    return result->answer.text;
   case CalcAnswerUnit:
-    return m_result->answer.unit ? m_result->answer.unit->displayName : QString();
+    return result->answer.unit ? result->answer.unit->displayName : QString();
+  case CalcAnswerSubtitle:
+    return result->answer.subtitle.value_or(QString());
   default:
     return {};
   }
 }
 
-std::unique_ptr<ActionPanelState> CalcLiveSection::actionPanel(int) const {
-  if (!m_result) return nullptr;
+std::unique_ptr<ActionPanelState> CalcLiveSection::actionPanel(int i) const {
+  const auto *result = resultAt(i);
+  if (!result) return nullptr;
 
   auto panel = std::make_unique<ListActionPanelState>();
   auto *main = panel->createSection();
-  auto *copyAnswer = new CopyCalculatorAnswerAction(*m_result);
+  auto *copyAnswer = new CopyCalculatorAnswerAction(*result);
   copyAnswer->setPrimary(true);
   main->addAction(copyAnswer);
-  main->addAction(new CopyCalculatorQuestionAndAnswerAction(*m_result));
+  main->addAction(new CopyCalculatorQuestionAndAnswerAction(*result));
 
   return panel;
 }

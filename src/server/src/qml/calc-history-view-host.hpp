@@ -15,15 +15,17 @@ public:
     IsCalculator = Qt::UserRole + 100,
     CalcQuestion,
     CalcQuestionUnit,
+    CalcQuestionSubtitle,
     CalcAnswer,
     CalcAnswerUnit,
+    CalcAnswerSubtitle,
   };
 
   void setResult(std::optional<AbstractCalculatorBackend::CalculatorResult> result);
   void clear();
 
   QString sectionName() const override { return QStringLiteral("Calculator"); }
-  int count() const override { return m_result ? 1 : 0; }
+  int count() const override;
 
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -36,6 +38,7 @@ protected:
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
+  const AbstractCalculatorBackend::CalculatorResult *resultAt(int i) const;
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_result;
 };
 

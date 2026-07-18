@@ -23,8 +23,10 @@ enum RootSearchRole {
   IsCalculator,
   CalcQuestion,
   CalcQuestionUnit,
+  CalcQuestionSubtitle,
   CalcAnswer,
   CalcAnswerUnit,
+  CalcAnswerSubtitle,
   IsFile,
   ShortcutTokens,
 };
@@ -69,7 +71,7 @@ private:
 class RootCalculatorSection : public SectionSource {
 public:
   QString sectionName() const override { return QStringLiteral("Calculator"); }
-  int count() const override { return m_result ? 1 : 0; }
+  int count() const override;
   QString itemId(int) const override;
   QString itemTitle(int) const override;
   QString itemIconSource(int) const override;
@@ -82,6 +84,7 @@ public:
   const auto &result() const { return m_result; }
 
 private:
+  const AbstractCalculatorBackend::CalculatorResult *resultAt(int i) const;
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_result;
 };
 

@@ -55,8 +55,10 @@ GenericListView {
                 width: delegateLoader.width
                 calcQuestion: delegateLoader.calcQuestion
                 calcQuestionUnit: delegateLoader.calcQuestionUnit
+                calcQuestionSubtitle: delegateLoader.calcQuestionSubtitle
                 calcAnswer: delegateLoader.calcAnswer
                 calcAnswerUnit: delegateLoader.calcAnswerUnit
+                calcAnswerSubtitle: delegateLoader.calcAnswerSubtitle
                 selected: searchListView.currentIndex === delegateLoader.index
                 onClicked: searchListView.currentIndex = delegateLoader.index
                 onActivated: searchListView.itemActivated(delegateLoader.index)

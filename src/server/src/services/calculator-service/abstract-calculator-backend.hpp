@@ -6,6 +6,7 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <vector>
 
 class AbstractCalculatorBackend {
 public:
@@ -34,12 +35,16 @@ public:
     struct {
       QString text;
       std::optional<Unit> unit;
+      std::optional<QString> subtitle;
     } question;
 
     struct {
       QString text;
       std::optional<Unit> unit;
+      std::optional<QString> subtitle;
     } answer;
+
+    std::vector<CalculatorResult> alternatives;
   };
 
   struct CalculatorError {

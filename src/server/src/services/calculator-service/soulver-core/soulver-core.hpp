@@ -8,8 +8,16 @@ class SoulverCoreCalculator : public AbstractCalculatorBackend {
 
 public:
   struct SoulverResult {
+    struct Alternative {
+      QString title;
+      QString result;
+      std::optional<QString> subtitle;
+    };
+
     QString type;
     QString result;
+    std::optional<QString> subtitle;
+    std::vector<Alternative> alternatives;
     std::optional<QString> error;
   };
 
@@ -28,6 +36,7 @@ private:
     bool (*soulver_initialize)(const char *) = nullptr;
     bool (*soulver_is_initialized)(void) = nullptr;
     char *(*soulver_evaluate)(const char *) = nullptr;
+    char *(*soulver_evaluate_ex)(const char *) = nullptr;
   };
 
   std::expected<SoulverResult, QString> calculate(const QString &expression) const;

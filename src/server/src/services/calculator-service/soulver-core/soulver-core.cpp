@@ -3,6 +3,7 @@
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <filesystem>
 #include <QDebug>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include "common/c-ptr.hpp"
@@ -71,6 +72,8 @@ void SoulverCoreCalculator::loadABI() {
   m_abi.soulver_is_initialized =
       reinterpret_cast<bool (*)(void)>(dlsym(m_dlHandle, "soulver_is_initialized"));
   m_abi.soulver_evaluate = reinterpret_cast<char *(*)(const char *)>(dlsym(m_dlHandle, "soulver_evaluate"));
+  m_abi.soulver_evaluate_ex =
+      reinterpret_cast<char *(*)(const char *)>(dlsym(m_dlHandle, "soulver_evaluate_ex"));
 }
 
 std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
@@ -97,10 +100,27 @@ SoulverCoreCalculator::compute(const QString &question, const ComputeOptions &op
   if (soulverRes.value().type == "none") return fail("Result type is none");
 
   CalculatorResult result;
+  const auto candidateResult = [](const SoulverResult::Alternative &candidate) {
+    CalculatorResult alternative;
+    alternative.question.text = candidate.title;
+    alternative.answer.text = candidate.result;
+    alternative.answer.subtitle = candidate.subtitle;
+    alternative.type = CalculatorAnswerType::NORMAL;
+    return alternative;
+  };
 
-  result.question.text = question;
-  result.answer.text = soulverRes.value().result;
-  result.type = CalculatorAnswerType::NORMAL;
+  if (soulverRes.value().alternatives.empty()) {
+    result.question.text = question;
+    result.answer.text = soulverRes.value().result;
+    result.answer.subtitle = soulverRes.value().subtitle;
+    result.type = CalculatorAnswerType::NORMAL;
+  } else {
+    result = candidateResult(soulverRes.value().alternatives.front());
+    result.alternatives.reserve(soulverRes.value().alternatives.size() - 1);
+    for (const auto &candidate : soulverRes.value().alternatives | std::views::drop(1)) {
+      result.alternatives.emplace_back(candidateResult(candidate));
+    }
+  }
 
   return result;
 };
@@ -115,11 +135,12 @@ SoulverCoreCalculator::asyncCompute(const QString &question, const ComputeOption
 
 std::expected<SoulverCoreCalculator::SoulverResult, QString>
 SoulverCoreCalculator::calculate(const QString &expression) const {
-  const CPtr<char> answer(m_abi.soulver_evaluate(expression.toStdString().c_str()));
+  const auto evaluate = m_abi.soulver_evaluate_ex ? m_abi.soulver_evaluate_ex : m_abi.soulver_evaluate;
+  const CPtr<char> answer(evaluate(expression.toStdString().c_str()));
 
   if (!answer) {
-    qWarning() << "soulver_evaluate returned a null pointer. This suggests soulver crashed or wasn't "
-                  "properly initialized.";
+    qWarning() << (m_abi.soulver_evaluate_ex ? "soulver_evaluate_ex" : "soulver_evaluate")
+               << "returned a null pointer. This suggests soulver crashed or wasn't properly initialized.";
     return std::unexpected("Failed to parse json");
   }
 
@@ -129,13 +150,31 @@ SoulverCoreCalculator::calculate(const QString &expression) const {
   if (parseError.error != QJsonParseError::NoError) { return std::unexpected("Failed to parse json"); }
 
   auto json = doc.object();
-  QString const value = json.value("value").toString();
-  QString const type = json.value("type").toString();
-
   SoulverResult result;
 
   result.result = json.value("value").toString();
   result.type = json.value("type").toString();
+  if (const auto subtitle = json.value("subtitle"); subtitle.isString()) {
+    result.subtitle = subtitle.toString();
+  }
+
+  const auto candidates = json.value("candidates").toArray();
+  result.alternatives.reserve(candidates.size());
+  for (const auto &value : candidates) {
+    const auto candidate = value.toObject();
+    const auto title = candidate.value("title");
+    const auto answer = candidate.value("value");
+    if (!title.isString() || !answer.isString()) continue;
+
+    SoulverResult::Alternative alternative{
+        .title = title.toString(),
+        .result = answer.toString(),
+    };
+    if (const auto subtitle = candidate.value("subtitle"); subtitle.isString()) {
+      alternative.subtitle = subtitle.toString();
+    }
+    result.alternatives.emplace_back(std::move(alternative));
+  }
 
   if (json.contains("error")) { result.error = json.value("error").toString(); }
 

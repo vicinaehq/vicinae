@@ -7,8 +7,10 @@ SelectableDelegate {
 
     required property string calcQuestion
     required property string calcQuestionUnit
+    required property string calcQuestionSubtitle
     required property string calcAnswer
     required property string calcAnswerUnit
+    required property string calcAnswerSubtitle
 
     Item {
         anchors.fill: parent
@@ -37,7 +39,7 @@ SelectableDelegate {
 
             Text {
                 width: parent.width
-                text: root.calcQuestionUnit || "Question"
+                text: root.calcQuestionSubtitle || root.calcQuestionUnit || "Question"
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideRight
@@ -94,7 +96,7 @@ SelectableDelegate {
 
             Text {
                 width: parent.width
-                text: root.calcAnswerUnit || "Answer"
+                text: root.calcAnswerSubtitle || root.calcAnswerUnit || "Answer"
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideRight

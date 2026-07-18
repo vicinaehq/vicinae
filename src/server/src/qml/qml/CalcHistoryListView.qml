@@ -53,8 +53,10 @@ GenericListView {
                 width: delegateLoader.width
                 calcQuestion: delegateLoader.calcQuestion
                 calcQuestionUnit: delegateLoader.calcQuestionUnit
+                calcQuestionSubtitle: delegateLoader.calcQuestionSubtitle
                 calcAnswer: delegateLoader.calcAnswer
                 calcAnswerUnit: delegateLoader.calcAnswerUnit
+                calcAnswerSubtitle: delegateLoader.calcAnswerSubtitle
                 selected: calcHistoryView.currentIndex === delegateLoader.index
                 onClicked: calcHistoryView.currentIndex = delegateLoader.index
                 onActivated: calcHistoryView.itemActivated(delegateLoader.index)
