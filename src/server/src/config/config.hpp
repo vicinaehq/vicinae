@@ -280,6 +280,7 @@ struct ConfigValue {
   bool popToRootOnClose = false;
   bool popOnBackspace = true;
   bool activateOnSingleClick = false;
+  bool wrapNavigation = false;
 #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
   bool encryptSensitiveData = false;
 #else
@@ -337,6 +338,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> popToRootOnClose;
   std::optional<bool> popOnBackspace;
   std::optional<bool> activateOnSingleClick;
+  std::optional<bool> wrapNavigation;
   std::optional<bool> encryptSensitiveData;
   std::optional<std::string> escapeKeyBehavior;
   std::optional<std::string> faviconService;

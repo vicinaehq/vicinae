@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "services/navigation/list-navigation.hpp"
+
 SectionListModel::SectionListModel(QObject *parent) : QAbstractListModel(parent) {
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
     if (rowCount() > 0) emit dataChanged(index(0), index(rowCount() - 1), {IconSource});
@@ -170,24 +172,8 @@ void SectionListModel::activateSelected() { m_scope.executePrimaryAction(); }
 
 int SectionListModel::nextSelectableIndex(int from, int direction) const {
   int const count = static_cast<int>(m_flat.size());
-  if (count == 0) return from;
-
-  int idx = from + direction;
-  if (idx < 0)
-    idx = count - 1;
-  else if (idx >= count)
-    idx = 0;
-
-  while (idx != from) {
-    if (m_flat[idx].kind != FlatItem::SectionHeader) return idx;
-    idx += direction;
-    if (idx < 0)
-      idx = count - 1;
-    else if (idx >= count)
-      idx = 0;
-  }
-
-  return from;
+  return ListNavigation::nextIndex(from, direction, count,
+                                   [&](int idx) { return m_flat[idx].kind != FlatItem::SectionHeader; });
 }
 
 int SectionListModel::nextSectionIndex(int from, int direction) const {
@@ -210,6 +196,7 @@ int SectionListModel::nextSectionIndex(int from, int direction) const {
         return firstDataItemFrom(idx + 1);
       }
     }
+    if (!ListNavigation::wrapEnabled()) return from;
     return nextSelectableIndex(-1, 1);
   }
 
@@ -240,6 +227,8 @@ int SectionListModel::nextSectionIndex(int from, int direction) const {
       break;
     }
   }
+
+  if (!ListNavigation::wrapEnabled()) return from;
 
   int lastSource = -1;
   for (int i = count - 1; i >= 0; --i) {

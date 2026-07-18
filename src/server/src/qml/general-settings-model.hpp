@@ -16,6 +16,7 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool popOnBackspace READ popOnBackspace WRITE setPopOnBackspace NOTIFY configChanged)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick WRITE setActivateOnSingleClick NOTIFY
                  configChanged)
+  Q_PROPERTY(bool wrapNavigation READ wrapNavigation WRITE setWrapNavigation NOTIFY configChanged)
   Q_PROPERTY(
       bool encryptSensitiveData READ encryptSensitiveData WRITE setEncryptSensitiveData NOTIFY configChanged)
   Q_PROPERTY(
@@ -65,6 +66,8 @@ public:
   void setPopOnBackspace(bool v);
   bool activateOnSingleClick() const;
   void setActivateOnSingleClick(bool v);
+  bool wrapNavigation() const;
+  void setWrapNavigation(bool v);
   bool encryptSensitiveData() const;
   void setEncryptSensitiveData(bool v);
   bool telemetrySystemInfo() const;
