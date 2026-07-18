@@ -21,6 +21,7 @@ struct ExtensionManifest {
     QString description;
     CommandMode mode;
     std::vector<Preference> preferences;
+    std::vector<QString> keywords;
     std::vector<CommandArgument> arguments;
     std::optional<QString> icon;
     std::optional<std::chrono::seconds> interval;

@@ -27,6 +27,8 @@ EntrypointId ExtensionCommand::uniqueId() const {
 
 QString ExtensionCommand::commandId() const { return m_command.name; }
 
+std::vector<QString> ExtensionCommand::keywords() const { return m_command.keywords; }
+
 QString ExtensionCommand::name() const { return m_command.title; }
 
 QString ExtensionCommand::repositoryDisplayName() const { return _extensionTitle; }

@@ -228,6 +228,10 @@ ExtensionManifest::Command ExtensionManifest::parseCommandFromObject(const QJson
     }
   }
 
+  for (const auto &obj : obj.value("keywords").toArray()) {
+    command.keywords.emplace_back(obj.toString());
+  }
+
   for (const auto &obj : obj.value("preferences").toArray()) {
     command.preferences.emplace_back(parsePreferenceFromObject(obj.toObject()));
   }
