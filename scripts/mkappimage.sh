@@ -25,9 +25,13 @@ export QML_SOURCES_PATHS=$PWD/src/server/src/qml/qml
 export EXTRA_PLATFORM_PLUGINS=libqwayland.so
 export EXTRA_QT_PLUGINS=waylandcompositor
 
-# deploy every libexec helper so none of them silently link against system Qt
+# Deploy every libexec helper so none of them silently link against system Qt.
+# vicinae-input-server is excluded on purpose: it links no Qt and the usr/bin
+# copy linuxdeploy would make shadows the to-be setcap'd libexec one, breaking
+# snippet expansion (#1691).
 EXECUTABLE_ARGS=(--executable $APPDIR/usr/bin/vicinae)
 for bin in $APPDIR/usr/libexec/vicinae/*; do
+	[ "$(basename $bin)" = "vicinae-input-server" ] && continue
 	EXECUTABLE_ARGS+=(--executable $bin)
 done
 
