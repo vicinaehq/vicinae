@@ -12,6 +12,9 @@
 #ifdef Q_OS_MACOS
 #include "macos/mac-wallpaper-backend.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "windows/windows-wallpaper-backend.hpp"
+#endif
 
 std::vector<std::unique_ptr<AbstractWallpaperBackend>> WallpaperManager::createCandidates() {
   // XXX - all new wallpaper backends must be added to this vector.
@@ -29,6 +32,9 @@ std::vector<std::unique_ptr<AbstractWallpaperBackend>> WallpaperManager::createC
 #endif
 #ifdef Q_OS_MACOS
   candidates.emplace_back(std::make_unique<MacWallpaperBackend>());
+#endif
+#ifdef Q_OS_WIN
+  candidates.emplace_back(std::make_unique<WindowsWallpaperBackend>());
 #endif
 
   return candidates;
