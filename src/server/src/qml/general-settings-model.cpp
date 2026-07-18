@@ -55,6 +55,9 @@ void GeneralSettingsModel::setActivateOnSingleClick(bool v) {
   cfgManager().mergeWithUser({.activateOnSingleClick = v});
 }
 
+bool GeneralSettingsModel::wrapNavigation() const { return cfg().wrapNavigation; }
+void GeneralSettingsModel::setWrapNavigation(bool v) { cfgManager().mergeWithUser({.wrapNavigation = v}); }
+
 bool GeneralSettingsModel::encryptSensitiveData() const { return cfg().encryptSensitiveData; }
 void GeneralSettingsModel::setEncryptSensitiveData(bool v) {
   cfgManager().mergeWithUser({.encryptSensitiveData = v});

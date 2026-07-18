@@ -51,6 +51,15 @@ Flickable {
             }
 
             SettingsRow {
+                label: "Wrap navigation"
+                description: "Wrap around to the opposite end when moving past the first or last item."
+                SettingsToggle {
+                    checked: root.model.wrapNavigation
+                    onToggled: root.model.wrapNavigation = checked
+                }
+            }
+
+            SettingsRow {
                 label: "IME handling"
                 description: "Include IME Preedit strings as part of search queries."
                 SettingsToggle {
