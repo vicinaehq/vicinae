@@ -108,24 +108,7 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
     }
 
     base.setData(Preference::DropdownData{options});
-
-    // For dropdown, validate default value: use provided value if valid, otherwise use first option
-    if (!options.empty()) {
-      QJsonValue const providedDefault = obj.value("default");
-      QString defaultValue = options.front().value; // Default to first option
-
-      if (providedDefault.isString()) {
-        QString const providedValue = providedDefault.toString();
-        for (const auto &option : options) {
-          if (option.value == providedValue) {
-            defaultValue = providedValue;
-            break;
-          }
-        }
-      }
-
-      base.setDefaultValue(defaultValue);
-    }
+    base.setDefaultValue(obj.value("default"));
   } else {
     qWarning() << "Unknown extension preference type" << type;
   }
