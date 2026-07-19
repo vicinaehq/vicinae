@@ -47,6 +47,11 @@ QString resolveAccessoryColor(const std::optional<ColorLike> &color);
 
 } // namespace root_search
 
+class RootItemSection : public SectionSource {
+public:
+  virtual const RootItem *rootItem(int i) const = 0;
+};
+
 class RootLinkSection : public SectionSource {
 public:
   QString sectionName() const override { return QStringLiteral("Link"); }
@@ -126,7 +131,7 @@ private:
   std::vector<const NewsItem *> m_items;
 };
 
-class RootFavoritesSection : public SectionSource {
+class RootFavoritesSection : public RootItemSection {
 public:
   explicit RootFavoritesSection(RootItemManager *mgr) : m_manager(mgr) {}
 
@@ -142,14 +147,14 @@ public:
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
   void setItems(std::vector<std::shared_ptr<RootItem>> items) { m_items = std::move(items); }
-  const RootItem *rootItem(int i) const;
+  const RootItem *rootItem(int i) const override;
 
 private:
   RootItemManager *m_manager;
   std::vector<std::shared_ptr<RootItem>> m_items;
 };
 
-class RootResultsSection : public SectionSource {
+class RootResultsSection : public RootItemSection {
 public:
   explicit RootResultsSection(RootItemManager *mgr) : m_manager(mgr) {}
 
@@ -166,7 +171,7 @@ public:
 
   void setItems(std::vector<OwnedResult> items) { m_items = std::move(items); }
   void setQueryEmpty(bool empty) { m_queryEmpty = empty; }
-  const RootItem *rootItem(int i) const;
+  const RootItem *rootItem(int i) const override;
 
 private:
   RootItemManager *m_manager;
@@ -196,7 +201,7 @@ private:
   std::vector<IndexerFileResult> m_files;
 };
 
-class RootFallbackSection : public SectionSource {
+class RootFallbackSection : public RootItemSection {
 public:
   explicit RootFallbackSection(RootItemManager *mgr) : m_manager(mgr) {}
 
@@ -213,6 +218,7 @@ public:
 
   void setItems(std::vector<std::shared_ptr<RootItem>> items) { m_items = std::move(items); }
   void setQuery(std::string query) { m_query = std::move(query); }
+  const RootItem *rootItem(int i) const override;
 
 private:
   RootItemManager *m_manager;

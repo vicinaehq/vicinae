@@ -427,6 +427,8 @@ void NavigationController::executeActionNow(AbstractAction *action) {
   auto state = topState();
   if (!state) return;
 
+  state->sender->beforeActionExecuted(action);
+
   if (action->isSubmenu()) {
     openActionPanel();
     return;

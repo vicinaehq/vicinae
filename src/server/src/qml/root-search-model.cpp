@@ -1,8 +1,6 @@
 #include "root-search-model.hpp"
 #include "config/config.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
-#include "ui/action-pannel/action-panel-view.hpp"
-#include "ui/views/base-view.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -201,6 +199,15 @@ void RootSearchModel::setSelectedIndex(int index) {
 
     if (!createdCompleter) scope().destroyCurrentCompletion();
   }
+}
+
+const RootItem *RootSearchModel::selectedRootItem() const {
+  int sourceIdx = -1;
+  int itemIdx = -1;
+  if (!dataItemAt(selectedIndex(), sourceIdx, itemIdx)) return nullptr;
+
+  auto *section = dynamic_cast<const RootItemSection *>(sources()[sourceIdx]);
+  return section ? section->rootItem(itemIdx) : nullptr;
 }
 
 bool RootSearchModel::tryAliasFastTrack() {

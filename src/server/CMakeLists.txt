@@ -325,6 +325,7 @@ set(SRCS
 	src/services/file-chooser/file-chooser-service.cpp
 	src/services/root-item-manager/root-item-manager.hpp
 	src/services/root-item-manager/root-item-manager.cpp
+	src/services/root-item-manager/search-history.cpp
 	src/services/root-item-manager/visit-tracker.cpp
 	
 	src/services/app-service/app-service.hpp

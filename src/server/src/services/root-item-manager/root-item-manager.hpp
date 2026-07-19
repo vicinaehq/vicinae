@@ -6,6 +6,7 @@
 #include "navigation-controller.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/local-storage/scoped-local-storage.hpp"
+#include "services/root-item-manager/search-history.hpp"
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "preference.hpp"
@@ -290,6 +291,7 @@ public:
   std::vector<std::shared_ptr<RootItem>> queryFavorites(std::optional<int> limit = {});
   bool resetRanking(const EntrypointId &id);
   bool registerVisit(const EntrypointId &id);
+  SearchHistory &searchHistory() { return m_searchHistory; }
   bool setItemAsFavorite(const EntrypointId &item, bool value = true);
   bool setProviderEnabled(const QString &providerId, bool value);
   bool disableItem(const EntrypointId &id);
@@ -359,4 +361,5 @@ private:
   LocalStorageService &m_storage;
   std::vector<SearchableRootItem> m_items;
   VisitTracker m_visitTracker;
+  SearchHistory m_searchHistory;
 };

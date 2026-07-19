@@ -81,12 +81,10 @@ ToggleItemAsFavorite::ToggleItemAsFavorite(const EntrypointId &id, bool currentV
     : m_id(id), m_value(currentValue) {}
 
 void DefaultActionWrapper::execute(ApplicationContext *ctx) {
-  auto manager = ctx->services->rootItemManager();
+  // auto manager = ctx->services->rootItemManager();
+  // auto q = ctx->navigation->searchText().toStdString();
 
-  if (manager->registerVisit(m_id)) {
-  } else {
-    qWarning() << "Failed to register root item visit";
-  }
+  // if (!manager->registerVisit(m_id, q)) { qWarning() << "Failed to register root item visit"; }
 
   m_action->execute(ctx);
 }

@@ -451,3 +451,8 @@ std::unique_ptr<ActionPanelState> RootFallbackSection::actionPanel(int i) const 
   return m_items[i]->fallbackActionPanel(scope().appContext(),
                                          m_manager->itemMetadata(m_items[i]->uniqueId()));
 }
+
+const RootItem *RootFallbackSection::rootItem(int i) const {
+  if (std::cmp_greater_equal(i, m_items.size())) return nullptr;
+  return m_items[i].get();
+}

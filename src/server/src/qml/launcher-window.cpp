@@ -350,6 +350,14 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
     if (ke->modifiers().testFlag(Qt::KeypadModifier)) {
       ke->setModifiers(ke->modifiers() & ~Qt::KeypadModifier);
     }
+    // the current view host gets first pick at any key press, unless a component
+    // that owns the keyboard (overlay, alert, action panel) is up.
+    const bool viewOwnsInput =
+        !m_hasOverlay && !m_alertModel->visible() && !m_actionPanel->isOpen() && !m_footerPanel->isOpen();
+    if (viewOwnsInput) {
+      auto *host = dynamic_cast<ViewHostBase *>(m_commandViewHost);
+      if (host && host->inputFilter(ke)) return true;
+    }
     // unmodified keys (return included) belong to the focused component: forwarding
     // them globally would steal text input or returns meant for local widgets such as
     // text areas, overlays or the opened action panel.
