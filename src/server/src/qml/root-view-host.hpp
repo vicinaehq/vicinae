@@ -21,6 +21,7 @@ public:
 
   QObject *listModel() const;
   Q_INVOKABLE bool tryAliasFastTrack();
+  Q_INVOKABLE bool applyTrailingFilter();
 
 private:
   QTimer *m_clockTimer = new QTimer(this);

@@ -311,7 +311,19 @@ Window {
     Shortcut {
         sequence: "Escape"
         enabled: !launcher.alertModel.visible && !actionPanel.open && !footerPanel.open && !launcher.hasOverlay
-        onActivated: launcher.handleEscape()
+        onActivated: {
+            // If the selection isn't on the first item, Escape resets it to the top
+            // instead of closing; a second Escape (already at top) closes as usual.
+            const view = commandStack.currentItem;
+            if (view && view.listModel && typeof view.selectFirst === "function" && typeof view.currentIndex !== "undefined") {
+                const first = view.listModel.nextSelectableIndex(-1, 1);
+                if (first >= 0 && view.currentIndex !== first) {
+                    view.selectFirst();
+                    return;
+                }
+            }
+            launcher.handleEscape();
+        }
     }
 
     Shortcut {

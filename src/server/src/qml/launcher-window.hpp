@@ -95,6 +95,8 @@ public:
   Q_INVOKABLE void handleEscape();
   Q_INVOKABLE void goBack();
   Q_INVOKABLE void popToRoot();
+  // Pop the current scoped view (a filter) but preserve the query text (Shift+Tab).
+  Q_INVOKABLE void removeCurrentFilter();
   Q_INVOKABLE void setCompleterValue(int index, const QString &value);
   Q_INVOKABLE QRect cursorScreenGeometry() const;
   Q_INVOKABLE void positionOnCursorScreen();

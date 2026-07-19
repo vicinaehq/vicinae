@@ -50,6 +50,10 @@ GenericListView {
                 itemAlias: ""
                 itemIsActive: false
                 itemAccessory: delegateLoader.itemAccessory
+                quickNumber: {
+                    commandListView.listModel.selectedIndex;
+                    return commandListView.listModel.quickSelectNumber(delegateLoader.index);
+                }
                 selected: commandListView.currentIndex === delegateLoader.index
                 onClicked: commandListView.currentIndex = delegateLoader.index
                 onActivated: commandListView.itemActivated(delegateLoader.index)

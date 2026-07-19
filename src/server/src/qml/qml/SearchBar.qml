@@ -192,6 +192,46 @@ Item {
                     return false;
                 }
 
+                // Alt+1..5 open the Nth result counting from the current selection;
+                // Alt+q / Alt+w move the selection up / down by 5 rows.
+                function _handleAltShortcuts(event) {
+                    if ((event.modifiers & Qt.AltModifier) === 0)
+                        return false;
+                    if (event.modifiers & ~(Qt.AltModifier | Qt.KeypadModifier))
+                        return false;
+
+                    const view = commandStack.currentItem;
+                    if (!view)
+                        return false;
+
+                    if (launcher.compacted) {
+                        launcher.expand();
+                        return true;
+                    }
+
+                    switch (event.key) {
+                    case Qt.Key_1:
+                    case Qt.Key_2:
+                    case Qt.Key_3:
+                    case Qt.Key_4:
+                    case Qt.Key_5:
+                        if (typeof view.activateRelative === "function") {
+                            view.activateRelative(event.key - Qt.Key_1);
+                            return true;
+                        }
+                        return false;
+                    case Qt.Key_Q:
+                        if (typeof view.moveBy === "function")
+                            return view.moveBy(-5);
+                        return false;
+                    case Qt.Key_W:
+                        if (typeof view.moveBy === "function")
+                            return view.moveBy(5);
+                        return false;
+                    }
+                    return false;
+                }
+
                 function _handleNavigation(event) {
                     const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                     if (nav === 0)
@@ -274,11 +314,27 @@ Item {
                         event.accepted = launcher.forwardKey(event.key, event.modifiers);
                     }
                 }
+                Keys.onTabPressed: event => {
+                    // Apply an alias typed at the end of the query as a scope filter,
+                    // keeping the preceding words as the scoped command's query.
+                    if (searchInput.text.length > 0 && typeof launcher.commandViewHost?.applyTrailingFilter === "function" && launcher.commandViewHost.applyTrailingFilter())
+                        event.accepted = true;
+                    else
+                        event.accepted = false;
+                }
                 Keys.onBacktabPressed: event => {
-                    event.accepted = false;
+                    // Remove the current scope filter but keep the query text.
+                    if (!launcher.atRoot) {
+                        launcher.removeCurrentFilter();
+                        event.accepted = true;
+                    } else {
+                        event.accepted = false;
+                    }
                 }
                 Keys.onPressed: event => {
-                    if (_handleEmacsEditing(event)) {
+                    if (_handleAltShortcuts(event)) {
+                        event.accepted = true;
+                    } else if (_handleEmacsEditing(event)) {
                         event.accepted = true;
                     } else if (_handleNavigation(event)) {
                         event.accepted = true;

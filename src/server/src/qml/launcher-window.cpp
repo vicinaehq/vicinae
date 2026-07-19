@@ -525,6 +525,16 @@ void LauncherWindow::popToRoot() {
   emit viewNavigatedBack();
 }
 
+void LauncherWindow::removeCurrentFilter() {
+  auto *nav = m_ctx.navigation.get();
+  if (nav->isRootSearch()) return;
+
+  QString const query = nav->searchText();
+  nav->popCurrentView();
+  nav->setSearchText(query);
+  emit viewNavigatedBack();
+}
+
 bool LauncherWindow::popOnBackspace() { return m_ctx.services->config()->value().popOnBackspace; }
 
 void LauncherWindow::setCompleterValue(int index, const QString &value) {

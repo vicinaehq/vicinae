@@ -58,3 +58,8 @@ bool RootViewHost::tryAliasFastTrack() {
   if (!m_model) return false;
   return m_model->tryAliasFastTrack();
 }
+
+bool RootViewHost::applyTrailingFilter() {
+  if (!m_model) return false;
+  return m_model->applyTrailingFilter();
+}
