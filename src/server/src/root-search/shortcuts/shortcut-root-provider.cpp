@@ -33,7 +33,7 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   remove->setShortcut(Keybind::DangerousRemoveAction);
 
   panel->setTitle(m_link->name());
-  mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  mainSection->addAction(open);
   mainSection->addAction(openWith);
   mainSection->addAction(copy);
 

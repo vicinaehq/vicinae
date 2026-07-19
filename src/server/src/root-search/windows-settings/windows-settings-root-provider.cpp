@@ -195,7 +195,7 @@ WinSettingsPageRootItem::newActionPanel(ApplicationContext *ctx, const RootItemM
 
   auto open = new OpenWindowsSettingAction(QString("Open %1 Settings").arg(m_page.title), iconUrl(),
                                            QString::fromUtf8(m_page.url));
-  mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  mainSection->addAction(open);
 
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_page.url), "Copy URL"));
 

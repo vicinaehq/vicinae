@@ -605,6 +605,10 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 
   popToRoot({.clearSearch = false});
 
+  // programmatic activation bypasses the action execution funnel, so the view hook
+  // never fires for it: register the visit explicitly.
+  m_ctx.services->rootItemManager()->registerVisit(id);
+
   // FIXME: we need a unified interface for this
   if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) {
     launch(ext->command(), options.props);
