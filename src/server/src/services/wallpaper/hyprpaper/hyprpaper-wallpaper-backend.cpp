@@ -34,7 +34,6 @@ HyprpaperWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
   return QtConcurrent::run([request]() -> std::expected<void, std::string> {
     const QString path = QString::fromStdString(request.path);
 
-
     const QString monitor = request.screen ? QString::fromStdString(*request.screen) : QString{};
     const QString spec = QString{"%1,%2,%3"}.arg(monitor, path, modePrefix(request.fit));
 
