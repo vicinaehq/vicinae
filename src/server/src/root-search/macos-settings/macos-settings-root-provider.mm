@@ -160,7 +160,7 @@ MacSettingsRootItem::newActionPanel(ApplicationContext *ctx, const RootItemMetad
   const QString url = paneUrl(m_pane);
   auto open =
       new OpenSettingsPaneAction(QString("Open %1 Settings").arg(m_pane.displayName), iconUrl(), url);
-  mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  mainSection->addAction(open);
 
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(url), "Copy URL"));
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_pane.bundleId), "Copy Bundle ID"));
