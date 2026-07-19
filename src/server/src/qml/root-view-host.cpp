@@ -1,6 +1,7 @@
 #include "root-view-host.hpp"
 #include "root-search-model.hpp"
 #include "section-source.hpp"
+#include "services/keybinding/keybinding-service.hpp"
 #include "view-scope.hpp"
 #include <qevent.h>
 
@@ -46,10 +47,13 @@ void RootViewHost::beforeActionExecuted(const AbstractAction *action) {
 bool RootViewHost::inputFilter(QKeyEvent *event) {
   auto manager = context()->services->rootItemManager();
   auto &nav = context()->navigation;
+  auto &cfg = context()->services->config()->value();
+
   // wrapped navigation is incompatible with overriding key up, so we disable history in that case
-  const bool activatableHistory = !context()->services->config()->value().wrapNavigation &&
-                                  m_model->selectedIndex() == m_model->nextSelectableIndex(-1, 1);
-  const bool shouldCycleHistory = !event->modifiers() && event->key() == Qt::Key_Up && activatableHistory;
+  const bool activatableHistory =
+      !cfg.wrapNavigation && m_model->selectedIndex() == m_model->nextSelectableIndex(-1, 1);
+  const bool shouldCycleHistory =
+      (event->key() == Qt::Key_Up || KeyBindingService::isUpKey(event, cfg.keybinding)) && activatableHistory;
 
   if (shouldCycleHistory) {
     if (!m_historyOffset) {
