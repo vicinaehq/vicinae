@@ -29,6 +29,8 @@ public:
   void setSelectedIndex(int index) override;
   Q_INVOKABLE bool tryAliasFastTrack();
 
+  const RootItem *selectedRootItem() const;
+
 private:
   void refresh();
   bool rerunSearch();

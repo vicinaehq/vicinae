@@ -79,7 +79,7 @@ class ScriptRootItem : public RootItem {
     auto exec = new ScriptExecutorAction(m_file);
     auto extraSection = panel->createSection();
 
-    section->addAction(new DefaultActionWrapper(uniqueId(), exec));
+    section->addAction(exec);
 
     if (editor) {
       auto open = new OpenFileAction(m_file->path(), editor);

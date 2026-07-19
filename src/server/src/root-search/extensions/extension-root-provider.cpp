@@ -36,7 +36,7 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   auto extensionSection = panel->createSection();
   auto dangerSection = panel->createSection();
 
-  mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  mainSection->addAction(open);
 
   for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
     itemSection->addAction(action);

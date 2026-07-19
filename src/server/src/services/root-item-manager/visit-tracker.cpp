@@ -14,7 +14,6 @@ void VisitTracker::registerVisit(const EntrypointId &id) {
   VisitInfo &data = m_data.visited[id];
   data.lastVisitedAt = QDateTime::currentSecsSinceEpoch();
   ++data.visitCount;
-  // todo: we might want to flush ever X seconds instead of saving directly
   saveToDisk();
 }
 

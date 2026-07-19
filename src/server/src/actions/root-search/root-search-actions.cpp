@@ -80,24 +80,6 @@ void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
 ToggleItemAsFavorite::ToggleItemAsFavorite(const EntrypointId &id, bool currentValue)
     : m_id(id), m_value(currentValue) {}
 
-void DefaultActionWrapper::execute(ApplicationContext *ctx) {
-  auto manager = ctx->services->rootItemManager();
-
-  if (manager->registerVisit(m_id)) {
-  } else {
-    qWarning() << "Failed to register root item visit";
-  }
-
-  m_action->execute(ctx);
-}
-
-QString DefaultActionWrapper::title() const { return m_action->title(); }
-
-DefaultActionWrapper::DefaultActionWrapper(const EntrypointId &id, AbstractAction *action)
-    : AbstractAction(action->title(), action->icon()), m_id(id), m_action(action) {
-  setAutoClose(action->autoClose());
-}
-
 void DisableItemAction::execute(ApplicationContext *ctx) {
   auto alert = new CallbackAlertWidget();
 

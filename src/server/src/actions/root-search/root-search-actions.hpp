@@ -78,21 +78,6 @@ public:
   DisableApplication(const EntrypointId &itemId) : DisableItemAction(itemId) {}
 };
 
-/**
- * Wrapper for the main action of a root item, automatically recording execution.
- */
-class DefaultActionWrapper : public AbstractAction {
-  EntrypointId m_id;
-  std::unique_ptr<AbstractAction> m_action;
-
-  void execute(ApplicationContext *context) override;
-
-public:
-  QString title() const override;
-
-  DefaultActionWrapper(const EntrypointId &id, AbstractAction *action);
-};
-
 class SetRootItemAliasAction : public AbstractAction {
 public:
   QString title() const override { return "Set alias"; }

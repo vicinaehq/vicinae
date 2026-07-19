@@ -1,8 +1,8 @@
 #pragma once
-#include "common/entrypoint.hpp"
 #include <cstdint>
 #include <unordered_map>
 #include <filesystem>
+#include "common/entrypoint.hpp"
 
 class VisitTracker {
 public:
