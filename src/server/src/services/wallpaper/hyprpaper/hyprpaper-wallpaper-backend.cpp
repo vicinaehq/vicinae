@@ -9,11 +9,13 @@ namespace {
 QString modePrefix(WallpaperFit fit) {
   switch (fit) {
   case WallpaperFit::Contain:
-    return "contain:";
+    return "contain";
   case WallpaperFit::Tile:
-    return "tile:";
+    return "tile";
   case WallpaperFit::Cover:
+    return "cover";
   case WallpaperFit::Stretch:
+    return "fill";
   case WallpaperFit::Center:
     return "";
   }
@@ -24,7 +26,7 @@ QString modePrefix(WallpaperFit fit) {
 
 bool HyprpaperWallpaperBackend::isActivatable() const {
   return !QStandardPaths::findExecutable("hyprctl").isEmpty() &&
-         wallpaper::runCommand("hyprctl", {"hyprpaper", "listloaded"}).has_value();
+         wallpaper::runCommand("hyprctl", {"hyprpaper", "listactive"}).has_value();
 }
 
 QFuture<std::expected<void, std::string>>
@@ -32,12 +34,9 @@ HyprpaperWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
   return QtConcurrent::run([request]() -> std::expected<void, std::string> {
     const QString path = QString::fromStdString(request.path);
 
-    if (auto preload = wallpaper::runCommand("hyprctl", {"hyprpaper", "preload", path}); !preload) {
-      return std::unexpected(preload.error());
-    }
 
     const QString monitor = request.screen ? QString::fromStdString(*request.screen) : QString{};
-    const QString spec = QString{"%1,%2%3"}.arg(monitor, modePrefix(request.fit), path);
+    const QString spec = QString{"%1,%2,%3"}.arg(monitor, path, modePrefix(request.fit));
 
     if (auto res = wallpaper::runCommand("hyprctl", {"hyprpaper", "wallpaper", spec}); !res) {
       return std::unexpected(res.error());
