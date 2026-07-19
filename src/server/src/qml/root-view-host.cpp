@@ -46,7 +46,7 @@ void RootViewHost::beforeActionExecuted(const AbstractAction *action) {
 bool RootViewHost::inputFilter(QKeyEvent *event) {
   auto manager = context()->services->rootItemManager();
   auto &nav = context()->navigation;
-  // wrapped navigation is incompatible with overriding key up, so we disable history for them
+  // wrapped navigation is incompatible with overriding key up, so we disable history in that case
   const bool activatableHistory = !context()->services->config()->value().wrapNavigation &&
                                   m_model->selectedIndex() == m_model->nextSelectableIndex(-1, 1);
   const bool shouldCycleHistory = !event->modifiers() && event->key() == Qt::Key_Up && activatableHistory;
@@ -58,9 +58,17 @@ bool RootViewHost::inputFilter(QKeyEvent *event) {
       *m_historyOffset += 1;
     }
 
-    if (auto history = manager->searchHistory().at(*m_historyOffset)) {
+    auto entry = manager->searchHistory().at(*m_historyOffset);
+
+    // skip entry if it's already our search text, we don't care
+    while (entry && QString::fromStdString(entry->q) == nav->searchText()) {
+      *m_historyOffset += 1;
+      entry = manager->searchHistory().at(*m_historyOffset);
+    }
+
+    if (entry) {
       m_textChangedByHistory = true;
-      nav->setSearchText(QString::fromStdString(history->q));
+      nav->setSearchText(QString::fromStdString(entry->q));
       m_textChangedByHistory = false;
     }
 
