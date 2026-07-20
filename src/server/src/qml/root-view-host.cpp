@@ -44,10 +44,27 @@ void RootViewHost::beforeActionExecuted(const AbstractAction *action) {
   if (auto item = m_model->selectedRootItem()) { manager->registerVisit(item->uniqueId()); }
 }
 
+bool RootViewHost::tryAliasFastTrack() {
+  const auto manager = context()->services->rootItemManager();
+  const auto item = m_model->selectedRootItem();
+
+  if (!item || !item->supportsAliasSpaceShortcut()) return false;
+
+  const auto query = context()->navigation->searchText(this).toStdString();
+  const auto meta = manager->itemMetadata(item->uniqueId());
+
+  if (!meta.alias || !meta.alias->starts_with(query)) return false;
+
+  m_model->activateSelected();
+  return true;
+}
+
 bool RootViewHost::inputFilter(QKeyEvent *event) {
   auto manager = context()->services->rootItemManager();
   auto &nav = context()->navigation;
   auto &cfg = context()->services->config()->value();
+
+  if (!event->modifiers() && event->key() == Qt::Key_Space) { return tryAliasFastTrack(); }
 
   // wrapped navigation is incompatible with overriding key up, so we disable history in that case
   const bool activatableHistory =
@@ -100,8 +117,3 @@ void RootViewHost::beforePop() {
 }
 
 QObject *RootViewHost::listModel() const { return m_model; }
-
-bool RootViewHost::tryAliasFastTrack() {
-  if (!m_model) return false;
-  return m_model->tryAliasFastTrack();
-}

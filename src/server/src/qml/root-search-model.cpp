@@ -210,28 +210,6 @@ const RootItem *RootSearchModel::selectedRootItem() const {
   return section ? section->rootItem(itemIdx) : nullptr;
 }
 
-bool RootSearchModel::tryAliasFastTrack() {
-  int sourceIdx = -1;
-  int itemIdx = -1;
-  if (!dataItemAt(selectedIndex(), sourceIdx, itemIdx)) return false;
-
-  auto *src = sources()[sourceIdx];
-  const RootItem *item = nullptr;
-
-  if (src == m_resultsSource) {
-    item = m_resultsSource->rootItem(itemIdx);
-  } else if (src == m_favoritesSource) {
-    item = m_favoritesSource->rootItem(itemIdx);
-  }
-
-  if (!item || !item->supportsAliasSpaceShortcut()) return false;
-  auto meta = m_manager->itemMetadata(item->uniqueId());
-  if (!meta.alias || !meta.alias->starts_with(m_query)) return false;
-
-  activateSelected();
-  return true;
-}
-
 void RootSearchModel::startCalculator() {
   if (m_calcWatcher.isRunning()) {
     m_calculator->backend()->abort();
