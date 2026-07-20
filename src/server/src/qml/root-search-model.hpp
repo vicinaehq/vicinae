@@ -27,7 +27,6 @@ public:
 
   Q_INVOKABLE void setFilter(const QString &text);
   void setSelectedIndex(int index) override;
-  Q_INVOKABLE bool tryAliasFastTrack();
 
   const RootItem *selectedRootItem() const;
 
