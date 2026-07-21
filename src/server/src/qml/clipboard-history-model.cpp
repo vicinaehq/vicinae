@@ -9,6 +9,7 @@
 #include "services/paste/paste-service.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "utils/utils.hpp"
+#include <QCoreApplication>
 #include <QDateTime>
 
 void ClipboardHistorySection::setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page) {
@@ -53,10 +54,12 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
   bool const isCopyable = entry.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
 
   if (!isCopyable) {
-    mainSection->addAction(new StaticAction("Open Settings", BuiltinIcon::Cog, [](ApplicationContext *ctx) {
-      ctx->settings->openTab(QStringLiteral("advanced"));
-      ctx->navigation->closeWindow();
-    }));
+    mainSection->addAction(
+        new StaticAction(QCoreApplication::translate("ClipboardHistorySection", "Open Settings"),
+                         BuiltinIcon::Cog, [](ApplicationContext *ctx) {
+                           ctx->settings->openTab(QStringLiteral("advanced"));
+                           ctx->navigation->closeWindow();
+                         }));
   }
 
   auto pasteService = scope().services()->pasteService();

@@ -262,7 +262,7 @@ Item {
 
             ActionItemDelegate {
                 Layout.fillWidth: true
-                title: "Copy"
+                title: qsTr("Copy")
                 iconSource: ""
                 shortcutTokens: []
                 isSubmenu: false
@@ -278,7 +278,7 @@ Item {
 
             ActionItemDelegate {
                 Layout.fillWidth: true
-                title: "Select All"
+                title: qsTr("Select All")
                 iconSource: ""
                 shortcutTokens: []
                 isSubmenu: false

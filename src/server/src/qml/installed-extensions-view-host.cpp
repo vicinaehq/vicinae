@@ -9,7 +9,7 @@ void InstalledExtensionsViewHost::initialize() {
 
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search extensions...");
+  setSearchPlaceholderText(tr("Search extensions..."));
 
   auto registry = ServiceRegistry::instance()->extensionRegistry();
   connect(registry, &ExtensionRegistry::extensionsChanged, this, &InstalledExtensionsViewHost::reload);

@@ -17,7 +17,7 @@ void SystemRunViewHost::initialize() {
   model()->addSource(&m_cmdSection);
   model()->addSource(&m_progSection);
 
-  setSearchPlaceholderText("Search for a program to execute...");
+  setSearchPlaceholderText(tr("Search for a program to execute..."));
   setLoading(true);
 
   connect(&m_programDb, &ProgramDb::backgroundScanFinished, this, [this]() {

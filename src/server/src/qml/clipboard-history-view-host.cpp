@@ -5,6 +5,7 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "utils/utils.hpp"
 #include "vicinae.hpp"
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
@@ -13,18 +14,18 @@
 static QString kindLabel(ClipboardOfferKind kind) {
   switch (kind) {
   case ClipboardOfferKind::Text:
-    return QStringLiteral("Text");
+    return QCoreApplication::translate("clipboard-history-view-host", "Text");
   case ClipboardOfferKind::Link:
-    return QStringLiteral("Link");
+    return QCoreApplication::translate("clipboard-history-view-host", "Link");
   case ClipboardOfferKind::Image:
-    return QStringLiteral("Image");
+    return QCoreApplication::translate("clipboard-history-view-host", "Image");
   case ClipboardOfferKind::File:
-    return QStringLiteral("File");
+    return QCoreApplication::translate("clipboard-history-view-host", "File");
   case ClipboardOfferKind::Unknown:
   case ClipboardOfferKind::Count:
     break;
   }
-  return QStringLiteral("Unknown");
+  return QCoreApplication::translate("clipboard-history-view-host", "Unknown");
 }
 
 static std::optional<ClipboardOfferKind> kindFromFilterIndex(int index) {
@@ -97,11 +98,11 @@ void ClipboardHistoryViewHost::initialize() {
   m_section.setDefaultAction(defaultActionStr == "paste" ? ClipboardHistorySection::DefaultAction::Paste
                                                          : ClipboardHistorySection::DefaultAction::Copy);
 
-  setSearchPlaceholderText("Browse clipboard history...");
+  setSearchPlaceholderText(tr("Browse clipboard history..."));
 
   m_canToggleMonitoring = m_clipman->supportsMonitoring();
   if (!m_canToggleMonitoring) {
-    m_clipboardStatusText = QStringLiteral("Clipboard monitoring unavailable");
+    m_clipboardStatusText = tr("Clipboard monitoring unavailable");
     m_clipboardStatusIcon = qml::imageSourceFor(ImageURL::builtin("warning").setFill(SemanticColor::Red));
   } else {
     handleMonitoringChanged(m_clipman->monitoring());
@@ -168,11 +169,11 @@ void ClipboardHistoryViewHost::setKindFilter(int kind) {
 
 void ClipboardHistoryViewHost::handleMonitoringChanged(bool monitoring) {
   if (monitoring) {
-    m_clipboardStatusText = QStringLiteral("Pause clipboard");
+    m_clipboardStatusText = tr("Pause clipboard");
     m_clipboardStatusIcon =
         qml::imageSourceFor(ImageURL::builtin("pause-filled").setFill(SemanticColor::Accent));
   } else {
-    m_clipboardStatusText = QStringLiteral("Resume clipboard");
+    m_clipboardStatusText = tr("Resume clipboard");
     m_clipboardStatusIcon =
         qml::imageSourceFor(ImageURL::builtin("play-filled").setFill(SemanticColor::Green));
   }
@@ -180,7 +181,7 @@ void ClipboardHistoryViewHost::handleMonitoringChanged(bool monitoring) {
 }
 
 void ClipboardHistoryViewHost::handleDataRetrieved(int totalCount) {
-  m_itemCountText = QString("%1 Items").arg(totalCount);
+  m_itemCountText = tr("%n Items", nullptr, totalCount);
   emit itemCountTextChanged();
 }
 
@@ -207,22 +208,22 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
     m_hasDetailError = true;
     switch (data.error()) {
     case ClipboardService::OfferDecryptionError::DecryptionFailed:
-      m_detailErrorTitle = QStringLiteral("Decryption failed");
-      m_detailErrorDescription = QStringLiteral(
-          "Vicinae could not decrypt the data for this selection. It was most likely encrypted "
-          "with a different key and cannot be recovered. You can remove this entry from the "
-          "history.");
+      m_detailErrorTitle = tr("Decryption failed");
+      m_detailErrorDescription =
+          tr("Vicinae could not decrypt the data for this selection. It was most likely encrypted "
+             "with a different key and cannot be recovered. You can remove this entry from the "
+             "history.");
       break;
     case ClipboardService::OfferDecryptionError::DataUnavailable:
-      m_detailErrorTitle = QStringLiteral("Data unavailable");
-      m_detailErrorDescription = QStringLiteral("The data for this selection could not be found on disk.");
+      m_detailErrorTitle = tr("Data unavailable");
+      m_detailErrorDescription = tr("The data for this selection could not be found on disk.");
       break;
     case ClipboardService::OfferDecryptionError::DecryptionRequired:
-      m_detailErrorTitle = QStringLiteral("Data is encrypted");
-      m_detailErrorDescription = QStringLiteral(
-          "Data for this selection was previously encrypted but the clipboard is not currently "
-          "configured to use encryption. You should be able to fix this by enabling it in the "
-          "settings.");
+      m_detailErrorTitle = tr("Data is encrypted");
+      m_detailErrorDescription =
+          tr("Data for this selection was previously encrypted but the clipboard is not currently "
+             "configured to use encryption. You should be able to fix this by enabling it in the "
+             "settings.");
       break;
     }
     m_hasDetail = true;

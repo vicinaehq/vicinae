@@ -3,12 +3,11 @@
 #include "navigation-controller.hpp"
 
 ExtensionErrorViewHost::ExtensionErrorViewHost(const QString &errorText) : m_errorText(errorText.trimmed()) {
-  m_markdown =
-      QStringLiteral("# Extension crashed 💥!\n\n"
-                     "This extension threw an uncaught exception and crashed as a result.\n\n"
-                     "Find the full stacktrace below. You can also directly copy it from the action menu.\n\n"
-                     "```\n%1\n```")
-          .arg(m_errorText);
+  m_markdown = tr("# Extension crashed 💥!\n\n"
+                  "This extension threw an uncaught exception and crashed as a result.\n\n"
+                  "Find the full stacktrace below. You can also directly copy it from the action menu.\n\n"
+                  "```\n%1\n```")
+                   .arg(m_errorText);
 }
 
 QUrl ExtensionErrorViewHost::qmlComponentUrl() const {

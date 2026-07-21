@@ -8,8 +8,11 @@
 #include "service-registry.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/toast/toast-service.hpp"
+#include <QCoreApplication>
 
 class PowerManagementCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(PowerManagementCommand)
+
 public:
   virtual bool requiresDefaultConfirmation() const { return true; }
   virtual bool supportsCustomProgram() const {
@@ -25,15 +28,15 @@ public:
 
     preferences.reserve(2);
 
-    auto confirm = Preference::makeCheckbox("confirm", "Ask for confirmation");
+    auto confirm = Preference::makeCheckbox("confirm", tr("Ask for confirmation"));
     confirm.setDefaultValue(requiresDefaultConfirmation());
     preferences.emplace_back(confirm);
 
     if (supportsCustomProgram()) {
       auto program = Preference::makeText("customProgram");
       program.setRequired(false);
-      program.setTitle("Custom program");
-      program.setDescription("Custom POSIX shell command to run instead of the default implementation");
+      program.setTitle(tr("Custom program"));
+      program.setDescription(tr("Custom POSIX shell command to run instead of the default implementation"));
       preferences.emplace_back(program);
     }
 
@@ -60,7 +63,7 @@ public:
         process.setArguments(std::move(args));
         process.start();
         if (!process.waitForFinished(-1)) {
-          toast->failure("Failed to execute custom program " + *customProgram);
+          toast->failure(tr("Failed to execute custom program %1").arg(*customProgram));
         }
       } else {
         confirm(ctx);
@@ -70,10 +73,11 @@ public:
     };
 
     if (shouldConfirm) {
-      nav->confirmAlert("Are you sure", "High-impact operation, please confirm", [&nav, handleConfirm]() {
-        nav->closeWindow({.clearRootSearch = true});
-        handleConfirm();
-      });
+      nav->confirmAlert(tr("Are you sure"), tr("High-impact operation, please confirm"),
+                        [&nav, handleConfirm]() {
+                          nav->closeWindow({.clearRootSearch = true});
+                          handleConfirm();
+                        });
       return;
     }
 
@@ -89,10 +93,12 @@ public:
 };
 
 class LockCommand : public PowerManagementCommand {
+  Q_DECLARE_TR_FUNCTIONS(LockCommand)
+
   QString id() const override { return "lock"; }
-  QString name() const override { return "Lock Session"; }
-  QString description() const override { return "Lock the current user session"; }
-  std::vector<QString> keywords() const override { return {"lock"}; }
+  QString name() const override { return tr("Lock Session"); }
+  QString description() const override { return tr("Lock the current user session"); }
+  std::vector<QString> keywords() const override { return {"lock", "Lock Session"}; }
   bool requiresDefaultConfirmation() const override { return false; }
 
   ImageURL iconUrl() const override {
@@ -104,24 +110,26 @@ class LockCommand : public PowerManagementCommand {
     auto toast = ctx->services->toastService();
 
     if (!pm->provider()->canLock()) {
-      toast->failure("System can't lock");
+      toast->failure(tr("System can't lock"));
       return;
     }
     if (!pm->provider()->lock()) {
-      toast->failure("Failed to lock");
+      toast->failure(tr("Failed to lock"));
       return;
     }
   }
 };
 
 class HibernateCommand : public PowerManagementCommand {
+  Q_DECLARE_TR_FUNCTIONS(HibernateCommand)
+
   QString id() const override { return "hibernate"; }
-  QString name() const override { return "Hibernate System"; }
+  QString name() const override { return tr("Hibernate System"); }
   QString description() const override {
-    return "Suspend the system to disk. This turns off the system completely and saves its "
-           "state on disk, to be restored on next boot.";
+    return tr("Suspend the system to disk. This turns off the system completely and saves its "
+              "state on disk, to be restored on next boot.");
   }
-  std::vector<QString> keywords() const override { return {"disk", "suspend"}; }
+  std::vector<QString> keywords() const override { return {"disk", "suspend", "Hibernate System"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::HardDrive}.setBackgroundTint(SemanticColor::Accent);
@@ -132,21 +140,23 @@ class HibernateCommand : public PowerManagementCommand {
     auto toast = ctx->services->toastService();
 
     if (!pm->provider()->canHibernate()) {
-      toast->failure("System can't hibernate");
+      toast->failure(tr("System can't hibernate"));
       return;
     }
     if (!pm->provider()->hibernate()) {
-      toast->failure("Failed to hibernate");
+      toast->failure(tr("Failed to hibernate"));
       return;
     }
   }
 };
 
 class RebootCommand : public PowerManagementCommand {
+  Q_DECLARE_TR_FUNCTIONS(RebootCommand)
+
   QString id() const override { return "reboot"; }
-  QString name() const override { return "Reboot System"; }
-  QString description() const override { return "Reboot the system"; }
-  std::vector<QString> keywords() const override { return {"restart"}; }
+  QString name() const override { return tr("Reboot System"); }
+  QString description() const override { return tr("Reboot the system"); }
+  std::vector<QString> keywords() const override { return {"restart", "Reboot System"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::RotateAntiClockwise}.setBackgroundTint(SemanticColor::Accent);
@@ -157,23 +167,25 @@ class RebootCommand : public PowerManagementCommand {
     auto toast = ctx->services->toastService();
 
     if (!pm->provider()->canReboot()) {
-      toast->failure("System can't reboot");
+      toast->failure(tr("System can't reboot"));
       return;
     }
     if (!pm->provider()->reboot()) {
-      toast->failure("Failed to reboot");
+      toast->failure(tr("Failed to reboot"));
       return;
     }
   }
 };
 
 class SoftRebootCommand : public PowerManagementCommand {
+  Q_DECLARE_TR_FUNCTIONS(SoftRebootCommand)
+
   QString id() const override { return "soft-reboot"; }
-  QString name() const override { return "Soft Reboot System"; }
+  QString name() const override { return tr("Soft Reboot System"); }
   QString description() const override {
-    return "Soft reboot the system, which usually means only userspace is rebooted.";
+    return tr("Soft reboot the system, which usually means only userspace is rebooted.");
   }
-  std::vector<QString> keywords() const override { return {"restart"}; }
+  std::vector<QString> keywords() const override { return {"restart", "Soft Reboot System"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("rotate-anti-clockwise").setBackgroundTint(SemanticColor::Cyan);
@@ -184,21 +196,23 @@ class SoftRebootCommand : public PowerManagementCommand {
     auto toast = ctx->services->toastService();
 
     if (!pm->provider()->canSoftReboot()) {
-      toast->failure("System can't soft reboot");
+      toast->failure(tr("System can't soft reboot"));
       return;
     }
     if (!pm->provider()->softReboot()) {
-      toast->failure("Failed to soft reboot");
+      toast->failure(tr("Failed to soft reboot"));
       return;
     }
   }
 };
 
 class PowerOffCommand : public PowerManagementCommand {
+  Q_DECLARE_TR_FUNCTIONS(PowerOffCommand)
+
   QString id() const override { return "power-off"; }
-  QString name() const override { return "Power Off System"; }
-  QString description() const override { return "Power off the system"; }
-  std::vector<QString> keywords() const override { return {"shutdown"}; }
+  QString name() const override { return tr("Power Off System"); }
+  QString description() const override { return tr("Power off the system"); }
+  std::vector<QString> keywords() const override { return {"shutdown", "Power Off System"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("power").setBackgroundTint(SemanticColor::Red);
   }
@@ -208,24 +222,26 @@ class PowerOffCommand : public PowerManagementCommand {
     auto toast = ctx->services->toastService();
 
     if (!pm->provider()->canPowerOff()) {
-      toast->failure("System cannot power off");
+      toast->failure(tr("System cannot power off"));
       return;
     }
     if (!pm->provider()->powerOff()) {
-      toast->failure("Failed to power off");
+      toast->failure(tr("Failed to power off"));
       return;
     }
   }
 };
 
 class SuspendCommand : public PowerManagementCommand {
+  Q_DECLARE_TR_FUNCTIONS(SuspendCommand)
+
   QString id() const override { return "suspend"; }
-  QString name() const override { return "Suspend System"; }
+  QString name() const override { return tr("Suspend System"); }
   QString description() const override {
-    return "Suspend the system to RAM. Unlike hibernation, this does not turn the computer off and will "
-           "break on power loss.";
+    return tr("Suspend the system to RAM. Unlike hibernation, this does not turn the computer off and will "
+              "break on power loss.");
   }
-  std::vector<QString> keywords() const override { return {"suspend"}; }
+  std::vector<QString> keywords() const override { return {"suspend", "Suspend System"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("pause").setBackgroundTint(SemanticColor::Accent);
   }
@@ -235,20 +251,23 @@ class SuspendCommand : public PowerManagementCommand {
     auto toast = ctx->services->toastService();
 
     if (!pm->provider()->canSuspend()) {
-      toast->failure("System cannot suspend");
+      toast->failure(tr("System cannot suspend"));
       return;
     }
     if (!pm->provider()->suspend()) {
-      toast->failure("Failed to suspend");
+      toast->failure(tr("Failed to suspend"));
       return;
     }
   }
 };
 
 class SleepCommand : public PowerManagementCommand {
+  Q_DECLARE_TR_FUNCTIONS(SleepCommand)
+
   QString id() const override { return "sleep"; }
-  QString name() const override { return "Put System to Sleep"; }
-  QString description() const override { return "Put system to sleep"; }
+  QString name() const override { return tr("Put System to Sleep"); }
+  QString description() const override { return tr("Put system to sleep"); }
+  std::vector<QString> keywords() const override { return {"Put System to Sleep"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("moon").setBackgroundTint(SemanticColor::Accent);
   }
@@ -258,25 +277,27 @@ class SleepCommand : public PowerManagementCommand {
     auto toast = ctx->services->toastService();
 
     if (!pm->provider()->canSleep()) {
-      toast->failure("System can't sleep");
+      toast->failure(tr("System can't sleep"));
       return;
     }
     if (!pm->provider()->sleep()) {
-      toast->failure("Failed to sleep");
+      toast->failure(tr("Failed to sleep"));
       return;
     }
   }
 };
 
 class LogOutCommand : public PowerManagementCommand {
+  Q_DECLARE_TR_FUNCTIONS(LogOutCommand)
+
   QString id() const override { return "logout"; }
-  QString name() const override { return "Log Out"; }
+  QString name() const override { return tr("Log Out"); }
   QString description() const override {
-    return "Terminate the current user session. If you simply want to lock your session you should use 'Lock "
-           "Session' instead.";
+    return tr("Terminate the current user session. If you simply want to lock your session you should use "
+              "'Lock Session' instead.");
   }
 
-  std::vector<QString> keywords() const override { return {"logout"}; }
+  std::vector<QString> keywords() const override { return {"logout", "Log Out"}; }
 
   ImageURL iconUrl() const override {
     return ImageURL::builtin("logout").setBackgroundTint(SemanticColor::Red);
@@ -287,11 +308,11 @@ class LogOutCommand : public PowerManagementCommand {
     auto toast = ctx->services->toastService();
 
     if (!pm->provider()->canLogOut()) {
-      toast->failure("System can't logout");
+      toast->failure(tr("System can't logout"));
       return;
     }
     if (!pm->provider()->logout()) {
-      toast->failure("Failed to log out");
+      toast->failure(tr("Failed to log out"));
       return;
     }
   }

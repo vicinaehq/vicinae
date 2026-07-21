@@ -81,7 +81,7 @@ private:
   ClipboardService *m_clipman = nullptr;
   QMimeDatabase m_mimeDb;
 
-  QString m_itemCountText = QStringLiteral("Loading...");
+  QString m_itemCountText = tr("Loading...");
   QString m_clipboardStatusText;
   QString m_clipboardStatusIcon;
   bool m_canToggleMonitoring = false;

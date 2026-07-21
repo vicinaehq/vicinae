@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include <QTimer>
 #include "builtin_icon.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -9,6 +10,8 @@
 #include "ui/action-pannel/action.hpp"
 
 class CopyToClipboardAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(CopyToClipboardAction)
+
   Clipboard::Content m_content;
   Clipboard::CopyOptions m_opts;
 
@@ -17,26 +20,28 @@ public:
     auto clipman = ctx->services->clipman();
 
     if (clipman->copyContent(m_content, m_opts)) {
-      ctx->navigation->showHud("Copied to clipboard", ImageURL::builtin("copy-clipboard"));
+      ctx->navigation->showHud(tr("Copied to clipboard"), ImageURL::builtin("copy-clipboard"));
       return;
     }
   }
 
 public:
-  CopyToClipboardAction(const Clipboard::Content &content, const QString &title = "Copy to clipboard",
+  CopyToClipboardAction(const Clipboard::Content &content, const QString &title = tr("Copy to clipboard"),
                         const Clipboard::CopyOptions options = {})
       : AbstractAction(title, BuiltinIcon::CopyClipboard), m_content(content), m_opts(options) {}
 };
 
 class PasteToFocusedWindowAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(PasteToFocusedWindowAction)
 
 public:
   void setConcealed(bool value = true) { m_concealed = value; }
 
-  QString title() const override { return "Paste to active window"; }
+  QString title() const override { return tr("Paste to active window"); }
 
   PasteToFocusedWindowAction(const Clipboard::Content &content = Clipboard::NoData{})
-      : AbstractAction("Copy to focused window", ImageURL::builtin("copy-clipboard")), m_content(content) {}
+      : AbstractAction(tr("Copy to focused window"), ImageURL::builtin("copy-clipboard")),
+        m_content(content) {}
 
 protected:
   void execute(ApplicationContext *ctx) override {

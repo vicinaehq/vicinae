@@ -21,7 +21,7 @@ Popup {
     property bool _below: false
 
     property var _currentShortcutTokens: []
-    property string _statusText: "Recording..."
+    property string _statusText: qsTr("Recording...")
     property color _statusColor: Theme.foreground
 
     property bool _justClosed: false
@@ -43,7 +43,7 @@ Popup {
             return false;
 
         _currentShortcutTokens = [];
-        _statusText = "Recording...";
+        _statusText = qsTr("Recording...");
         _statusColor = Theme.foreground;
         closeTimer.stop();
 
@@ -105,7 +105,7 @@ Popup {
                 recorder._currentShortcutTokens = recorder.shortcutDisplayProvider(key, mods);
 
             if (isModKey) {
-                recorder._statusText = "Recording...";
+                recorder._statusText = qsTr("Recording...");
                 recorder._statusColor = Theme.foreground;
                 return;
             }
@@ -119,7 +119,7 @@ Popup {
                 }
             }
 
-            recorder._statusText = "Keybind updated";
+            recorder._statusText = qsTr("Keybind updated");
             recorder._statusColor = Theme.toastSuccess;
             closeTimer.start();
             recorder.shortcutCaptured(key, mods);

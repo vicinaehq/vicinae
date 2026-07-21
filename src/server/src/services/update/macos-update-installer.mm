@@ -103,12 +103,22 @@ std::expected<fs::path, QString> locateBundledApp(const fs::path &mountPoint) {
 
   for (const auto &entry : fs::directory_iterator(mountPoint, ec)) {
     if (entry.path().extension() != ".app") continue;
-    if (!appPath.empty()) return std::unexpected(QStringLiteral("Update image contains more than one app"));
+    if (!appPath.empty()) {
+      return std::unexpected(
+          QCoreApplication::translate("macos-update-installer", "Update image contains more than one app"));
+    }
     appPath = entry.path();
   }
 
-  if (ec) return std::unexpected(QString("Failed to list update image: %1").arg(ec.message().c_str()));
-  if (appPath.empty()) return std::unexpected(QStringLiteral("No app found in update image"));
+  if (ec) {
+    return std::unexpected(
+        QCoreApplication::translate("macos-update-installer", "Failed to list update image: %1")
+            .arg(ec.message().c_str()));
+  }
+  if (appPath.empty()) {
+    return std::unexpected(
+        QCoreApplication::translate("macos-update-installer", "No app found in update image"));
+  }
 
   return appPath;
 }
@@ -119,7 +129,8 @@ std::optional<QString> verifySignature(const fs::path &appPath, const std::strin
     SecStaticCodeRef code = nullptr;
 
     if (SecStaticCodeCreateWithPath((__bridge CFURLRef)url, kSecCSDefaultFlags, &code) != errSecSuccess) {
-      return QStringLiteral("Failed to read the update's code signature");
+      return QCoreApplication::translate("macos-update-installer",
+                                         "Failed to read the update's code signature");
     }
 
     NSString *requirementString =
@@ -130,7 +141,8 @@ std::optional<QString> verifySignature(const fs::path &appPath, const std::strin
     if (SecRequirementCreateWithString((__bridge CFStringRef)requirementString, kSecCSDefaultFlags,
                                        &requirement) != errSecSuccess) {
       CFRelease(code);
-      return QStringLiteral("Failed to build the signature requirement");
+      return QCoreApplication::translate("macos-update-installer",
+                                         "Failed to build the signature requirement");
     }
 
     const SecCSFlags flags = kSecCSCheckAllArchitectures | kSecCSStrictValidate | kSecCSCheckNestedCode;
@@ -140,7 +152,9 @@ std::optional<QString> verifySignature(const fs::path &appPath, const std::strin
     CFRelease(requirement);
 
     if (status != errSecSuccess) {
-      return QString("Update signature verification failed (%1)").arg(status);
+      return QCoreApplication::translate("macos-update-installer",
+                                         "Update signature verification failed (%1)")
+          .arg(status);
     }
 
     return std::nullopt;
@@ -152,10 +166,14 @@ std::optional<QString> verifyBundleVersion(const fs::path &appPath, const QStrin
     NSBundle *bundle = [NSBundle bundleWithPath:@(appPath.c_str())];
     NSString *version = [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
 
-    if (!version.length) return QStringLiteral("Update has no CFBundleShortVersionString");
+    if (!version.length) {
+      return QCoreApplication::translate("macos-update-installer",
+                                         "Update has no CFBundleShortVersionString");
+    }
 
     if (expectedVersion != QString::fromNSString(version)) {
-      return QString("Update version mismatch: expected %1, found %2")
+      return QCoreApplication::translate("macos-update-installer",
+                                         "Update version mismatch: expected %1, found %2")
           .arg(expectedVersion)
           .arg(QString::fromNSString(version));
     }
@@ -187,7 +205,7 @@ MacosUpdateInstaller::MacosUpdateInstaller() {
 
 void MacosUpdateInstaller::install(const std::filesystem::path &archive, const QString &expectedVersion) {
   if (!m_self) {
-    emit failed(QStringLiteral("This installation cannot update itself"));
+    emit failed(tr("This installation cannot update itself"));
     return;
   }
 
@@ -197,7 +215,7 @@ void MacosUpdateInstaller::install(const std::filesystem::path &archive, const Q
 
 void MacosUpdateInstaller::performInstall(const std::filesystem::path &archive,
                                           const QString &expectedVersion) {
-  emit stageChanged(QStringLiteral("Mounting update image…"));
+  emit stageChanged(tr("Mounting update image…"));
 
   QProcess mount;
 
@@ -208,14 +226,14 @@ void MacosUpdateInstaller::performInstall(const std::filesystem::path &archive,
 
   if (!mount.waitForFinished(MOUNT_TIMEOUT_MS) || mount.exitStatus() != QProcess::NormalExit ||
       mount.exitCode() != 0) {
-    emit failed(QStringLiteral("Failed to mount the update image"));
+    emit failed(tr("Failed to mount the update image"));
     return;
   }
 
   const auto mountPoint = parseMountPoint(mount.readAllStandardOutput());
 
   if (!mountPoint) {
-    emit failed(QStringLiteral("Could not find the update image mount point"));
+    emit failed(tr("Could not find the update image mount point"));
     return;
   }
 
@@ -224,7 +242,7 @@ void MacosUpdateInstaller::performInstall(const std::filesystem::path &archive,
     emit failed(error);
   };
 
-  emit stageChanged(QStringLiteral("Verifying update…"));
+  emit stageChanged(tr("Verifying update…"));
 
   const auto appPath = locateBundledApp(*mountPoint);
   if (!appPath) return failWith(appPath.error());
@@ -232,7 +250,7 @@ void MacosUpdateInstaller::performInstall(const std::filesystem::path &archive,
   if (auto error = verifySignature(*appPath, m_self->teamId)) return failWith(*error);
   if (auto error = verifyBundleVersion(*appPath, expectedVersion)) return failWith(*error);
 
-  emit stageChanged(QStringLiteral("Installing update…"));
+  emit stageChanged(tr("Installing update…"));
 
   const fs::path staged = m_self->bundlePath.parent_path() / std::format("{}{}.app", STAGED_PREFIX, getpid());
 
@@ -243,8 +261,8 @@ void MacosUpdateInstaller::performInstall(const std::filesystem::path &archive,
 
     NSError *copyError = nil;
     if (![fm copyItemAtPath:@(appPath->c_str()) toPath:@(staged.c_str()) error:&copyError]) {
-      return failWith(QString("Failed to stage update: %1")
-                          .arg(QString::fromNSString(copyError.localizedDescription)));
+      return failWith(
+          tr("Failed to stage update: %1").arg(QString::fromNSString(copyError.localizedDescription)));
     }
   }
 
@@ -267,11 +285,11 @@ std::optional<QString> MacosUpdateInstaller::swapBundle(const std::filesystem::p
   const fs::path oldPath = bundle.parent_path() / std::format("{}{}.app", OLD_PREFIX, getpid());
 
   if (::rename(bundle.c_str(), oldPath.c_str()) != 0) {
-    return QString("Failed to move the current app aside: %1").arg(strerror(errno));
+    return tr("Failed to move the current app aside: %1").arg(strerror(errno));
   }
 
   if (::rename(stagedApp.c_str(), bundle.c_str()) != 0) {
-    QString error = QString("Failed to install the new app: %1").arg(strerror(errno));
+    QString error = tr("Failed to install the new app: %1").arg(strerror(errno));
     ::rename(oldPath.c_str(), bundle.c_str());
     return error;
   }

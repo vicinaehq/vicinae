@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
+find_package(Qt6 6.7 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools)
 
 if (USE_SYSTEM_KF6 AND NOT WIN32)
 	find_package(KF6SyntaxHighlighting REQUIRED)
@@ -1188,6 +1188,25 @@ if (USE_PRECOMPILED_HEADERS)
 else()
 	message(STATUS "Precompiled headers are disabled")
 endif()
+
+set(VICINAE_TRANSLATION_ARGS "")
+if (Qt6_VERSION VERSION_GREATER_EQUAL 6.8)
+	list(APPEND VICINAE_TRANSLATION_ARGS MERGE_QT_TRANSLATIONS QT_TRANSLATION_CATALOGS qtbase qtdeclarative)
+endif()
+
+# Headers are only scanned by lupdate when explicitly listed; glob them all so
+# command/action headers can't silently drop out of extraction.
+file(GLOB_RECURSE VICINAE_I18N_HEADERS CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)
+
+qt_add_translations(${TARGET}
+	SOURCE_TARGETS ${TARGET}
+	TS_FILE_BASE vicinae
+	TS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
+	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
+	SOURCES ${VICINAE_I18N_HEADERS}
+	LUPDATE_OPTIONS -locations none -no-obsolete
+	${VICINAE_TRANSLATION_ARGS}
+)
 
 if(WIN32)
 	include(WindowsDeploy)

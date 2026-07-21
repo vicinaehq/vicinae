@@ -6,6 +6,7 @@
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
 #include "view-utils.hpp"
+#include <QCoreApplication>
 
 void VicinaeStoreSection::setEntries(const std::vector<VicinaeStore::Extension> &extensions,
                                      ExtensionRegistry *registry, const QString &sectionName) {
@@ -37,7 +38,7 @@ VicinaeStoreSection::buildActionPanel(const VicinaeStoreEntry &entry) const {
   auto danger = panel->createSection();
 
   auto showDetails = new StaticAction(
-      "Show details", ImageURL::builtin("computer-chip"),
+      QCoreApplication::translate("VicinaeStoreSection", "Show details"), ImageURL::builtin("computer-chip"),
       [author = entry.extension.author.handle, name = entry.extension.name, scope = this->scope()]() {
         scope.pushView(new VicinaeStoreDetailHost(author, name));
       });

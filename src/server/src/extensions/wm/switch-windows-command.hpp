@@ -2,10 +2,14 @@
 #include "qml/switch-windows-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "theme.hpp"
+#include <QCoreApplication>
 
 class SwitchWindowsCommand : public BuiltinViewCommand<SwitchWindowsViewHost> {
   QString id() const override { return "switch-windows"; }
-  QString name() const override { return "Switch Windows"; }
+  QString name() const override {
+    return QCoreApplication::translate("SwitchWindowsCommand", "Switch Windows");
+  }
+  std::vector<QString> keywords() const override { return {"Switch Windows"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("app-window-list").setBackgroundTint(SemanticColor::Cyan);
   }

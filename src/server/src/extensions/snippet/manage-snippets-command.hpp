@@ -1,3 +1,4 @@
+#include <QCoreApplication>
 #include "builtin_icon.hpp"
 #include "qml/manage-snippets-view-host.hpp"
 #include "ui/image/url.hpp"
@@ -5,7 +6,10 @@
 
 class ManageSnippetsCommand : public BuiltinViewCommand<ManageSnippetsViewHost> {
   QString id() const override { return "manage"; }
-  QString name() const override { return "Manage Snippets"; }
+  QString name() const override {
+    return QCoreApplication::translate("ManageSnippetsCommand", "Manage Snippets");
+  }
+  std::vector<QString> keywords() const override { return {"Manage Snippets"}; }
   ImageURL iconUrl() const override {
     return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }

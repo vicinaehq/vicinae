@@ -289,6 +289,8 @@ struct ConfigValue {
   std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
+  // BCP47 language tag (e.g "fr", "zh-CN"). Unset means follow the system locale.
+  std::optional<std::string> language;
   int pixmapCacheMb = 50;
 
   InputServer inputServer;
@@ -343,6 +345,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<std::string> escapeKeyBehavior;
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;
+  std::optional<std::string> language;
   std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
   std::optional<Partial<InputServer>> inputServer;

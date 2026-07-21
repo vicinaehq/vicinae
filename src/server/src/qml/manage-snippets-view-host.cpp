@@ -25,7 +25,7 @@ void ManageSnippetsViewHost::initialize() {
   m_section.setOnSnippetSelected([this](const snippet::SerializedSnippet &s) { loadDetail(s); });
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search for snippets...");
+  setSearchPlaceholderText(tr("Search for snippets..."));
 
   connect(m_snippetService, &SnippetService::snippetsChanged, this, &ManageSnippetsViewHost::reload);
 
@@ -50,30 +50,30 @@ void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippe
   QVariantList meta;
 
   const auto typeStr =
-      std::visit(overloads{[](const snippet::TextSnippet &) -> QString { return QStringLiteral("Text"); },
-                           [](const snippet::FileSnippet &) -> QString { return QStringLiteral("File"); }},
+      std::visit(overloads{[](const snippet::TextSnippet &) -> QString { return tr("Text"); },
+                           [](const snippet::FileSnippet &) -> QString { return tr("File"); }},
                  snippet.data);
 
   meta.append(QVariantMap{
-      {QStringLiteral("label"), QStringLiteral("Type")},
+      {QStringLiteral("label"), tr("Type")},
       {QStringLiteral("value"), typeStr},
   });
 
   meta.append(QVariantMap{
-      {QStringLiteral("label"), QStringLiteral("Created at")},
+      {QStringLiteral("label"), tr("Created at")},
       {QStringLiteral("value"), QDateTime::fromSecsSinceEpoch(snippet.createdAt).toString()},
   });
 
   if (snippet.updatedAt) {
     meta.append(QVariantMap{
-        {QStringLiteral("label"), QStringLiteral("Updated at")},
+        {QStringLiteral("label"), tr("Updated at")},
         {QStringLiteral("value"), QDateTime::fromSecsSinceEpoch(*snippet.updatedAt).toString()},
     });
   }
 
   if (snippet.expansion) {
     meta.append(QVariantMap{
-        {QStringLiteral("label"), QStringLiteral("Keyword")},
+        {QStringLiteral("label"), tr("Keyword")},
         {QStringLiteral("value"), QString::fromStdString(snippet.expansion->keyword)},
     });
 
@@ -89,7 +89,7 @@ void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippe
       }
       meta.append(QVariantMap{
           {QStringLiteral("type"), QStringLiteral("icons")},
-          {QStringLiteral("label"), QStringLiteral("Apps")},
+          {QStringLiteral("label"), tr("Apps")},
           {QStringLiteral("icons"), icons},
       });
     }
@@ -157,7 +157,7 @@ void ManageSnippetsViewHost::createSnippet() { context()->navigation->pushView(n
 std::unique_ptr<ActionPanelState> ManageSnippetsViewHost::emptyActionPanel() {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
-  auto *create = new StaticAction("Create snippet", BuiltinIcon::Plus,
+  auto *create = new StaticAction(tr("Create snippet"), BuiltinIcon::Plus,
                                   [this](ApplicationContext *) { createSnippet(); });
   create->setPrimary(true);
   section->addAction(create);

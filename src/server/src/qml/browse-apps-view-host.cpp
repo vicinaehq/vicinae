@@ -9,7 +9,7 @@ void BrowseAppsViewHost::initialize() {
 
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search apps...");
+  setSearchPlaceholderText(tr("Search apps..."));
 }
 
 void BrowseAppsViewHost::loadInitialData() { reload(); }

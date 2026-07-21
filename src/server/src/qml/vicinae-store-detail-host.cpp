@@ -34,9 +34,9 @@ void VicinaeStoreDetailHost::initialize() {
     watcher->deleteLater();
     auto result = watcher->result();
     if (!result) {
-      context()->navigation->replaceView(
-          new EmptyViewHost("Failed to load extension", "Could not fetch extension data from the store.",
-                            ImageURL(BuiltinIcon::Exclamationmark).setFill(SemanticColor::Red)));
+      context()->navigation->replaceView(new EmptyViewHost(
+          tr("Failed to load extension"), tr("Could not fetch extension data from the store."),
+          ImageURL(BuiltinIcon::Exclamationmark).setFill(SemanticColor::Red)));
       return;
     }
 
@@ -46,7 +46,7 @@ void VicinaeStoreDetailHost::initialize() {
     if (it == result->extensions.end()) {
       auto id = QString("%1/%2").arg(m_authorHandle, m_extensionName);
       context()->navigation->replaceView(new EmptyViewHost(
-          "Extension not found", QString("The extension \"%1\" could not be found in the store.").arg(id),
+          tr("Extension not found"), tr("The extension \"%1\" could not be found in the store.").arg(id),
           ImageURL(BuiltinIcon::MagnifyingGlass).setFill(SemanticColor::Red)));
       return;
     }
@@ -66,7 +66,7 @@ void VicinaeStoreDetailHost::hydrate(const VicinaeStore::Extension &extension) {
   auto icon = ImageURL::builtin("cart");
   icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
   setNavigationIcon(icon);
-  setNavigationTitle(QString("Extension Store - %1").arg(m_ext.title));
+  setNavigationTitle(tr("Extension Store - %1").arg(m_ext.title));
   createActions();
   emit extensionChanged();
 
@@ -139,7 +139,7 @@ void VicinaeStoreDetailHost::openUrl(const QString &url) {
   ServiceRegistry::instance()->appDb()->openTarget(url);
 }
 
-QString VicinaeStoreDetailHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
+QString VicinaeStoreDetailHost::initialNavigationTitle() const { return tr("Extension Store"); }
 
 void VicinaeStoreDetailHost::createActions() {
   auto panel = std::make_unique<ListActionPanelState>();
@@ -147,31 +147,31 @@ void VicinaeStoreDetailHost::createActions() {
 
   if (!m_isInstalled) {
     auto install = new StaticAction(
-        "Install extension", m_ext.themedIcon(), [ext = m_ext](const ApplicationContext *ctx) {
+        tr("Install extension"), m_ext.themedIcon(), [ext = m_ext](const ApplicationContext *ctx) {
           using Watcher = QFutureWatcher<VicinaeStore::DownloadExtensionResult>;
           auto store = ctx->services->vicinaeStore();
           auto watcher = new Watcher;
           auto toast = ctx->services->toastService();
           auto registry = ctx->services->extensionRegistry();
 
-          toast->dynamic("Downloading extension...");
+          toast->dynamic(tr("Downloading extension..."));
 
           QObject::connect(watcher, &Watcher::finished, [ctx, registry, toast, ext, watcher]() {
             auto result = watcher->result();
             watcher->deleteLater();
 
             if (!result) {
-              toast->failure("Failed to download extension");
+              toast->failure(tr("Failed to download extension"));
               return;
             }
 
             registry->installFromZip(QString("store.vicinae.%1").arg(ext.name), result->toStdString(),
                                      [toast](bool ok) {
                                        if (!ok) {
-                                         toast->failure("Failed to extract extension archive");
+                                         toast->failure(tr("Failed to extract extension archive"));
                                          return;
                                        }
-                                       toast->success("Extension installed");
+                                       toast->success(tr("Extension installed"));
                                      });
           });
 
@@ -185,7 +185,7 @@ void VicinaeStoreDetailHost::createActions() {
   }
 
   auto reportIssue =
-      new StaticAction("Report issue", ImageURL::builtin("bug"), [](const ApplicationContext *ctx) {
+      new StaticAction(tr("Report issue"), ImageURL::builtin("bug"), [](const ApplicationContext *ctx) {
         ctx->services->appDb()->openTarget(Omnicast::GH_EXTENSIONS_CREATE_ISSUE);
       });
   main->addAction(reportIssue);

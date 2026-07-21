@@ -22,7 +22,7 @@ Item {
     property real detailRatio: 0.65
     property bool detailVisible: false
 
-    property string emptyTitle: "No results"
+    property string emptyTitle: qsTr("No results")
     property string emptyDescription: ""
     property var emptyIcon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
     property Component emptyViewComponent: null

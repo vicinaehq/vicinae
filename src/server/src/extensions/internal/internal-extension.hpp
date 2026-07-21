@@ -4,6 +4,7 @@
 #include "vicinae.hpp"
 #include "qml/bridge-view.hpp"
 #include "markdown-showcase-command.hpp"
+#include <QCoreApplication>
 
 class UIShowcaseView : public FormViewBase {
 public:
@@ -11,9 +12,12 @@ public:
 };
 
 class UIPlayground : public BuiltinViewCommand<UIShowcaseView> {
+  Q_DECLARE_TR_FUNCTIONS(UIPlayground)
+
   QString id() const override { return "playground"; }
-  QString name() const override { return "UI Showcase"; }
-  QString description() const override { return "Showcase of vicinae UI elements"; }
+  QString name() const override { return tr("UI Showcase"); }
+  QString description() const override { return tr("Showcase of vicinae UI elements"); }
+  std::vector<QString> keywords() const override { return {"UI Showcase"}; }
   bool isFallback() const override { return false; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(Omnicast::ACCENT_COLOR);
@@ -23,9 +27,11 @@ class UIPlayground : public BuiltinViewCommand<UIShowcaseView> {
 };
 
 class InternalExtension : public BuiltinCommandRepository {
+  Q_DECLARE_TR_FUNCTIONS(InternalExtension)
+
   QString id() const override { return "internal"; }
-  QString displayName() const override { return "Internal Commands"; }
-  QString description() const override { return "Internal Commands"; }
+  QString displayName() const override { return tr("Internal Commands"); }
+  QString description() const override { return tr("Internal Commands"); }
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }

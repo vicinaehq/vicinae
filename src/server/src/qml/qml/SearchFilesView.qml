@@ -34,19 +34,19 @@ Item {
         DetailPanel {
             metadata: [
                 {
-                    label: "Name",
+                    label: qsTr("Name"),
                     value: root.host.detailName
                 },
                 {
-                    label: "Path",
+                    label: qsTr("Path"),
                     value: root.host.detailPath
                 },
                 {
-                    label: "Type",
+                    label: qsTr("Type"),
                     value: root.host.detailMimeType
                 },
                 {
-                    label: "Last modified",
+                    label: qsTr("Last modified"),
                     value: root.host.detailLastModified
                 }
             ]

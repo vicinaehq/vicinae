@@ -35,16 +35,17 @@ std::vector<Preference> SnippetExtension::preferences() const {
 
   {
     auto enabled = Preference::makeCheckbox("enabled");
-    enabled.setTitle("Expansion");
-    enabled.setDescription("Enable automatic snippet expansion when triggers are typed");
+    enabled.setTitle(tr("Expansion"));
+    enabled.setDescription(tr("Enable automatic snippet expansion when triggers are typed"));
     enabled.setDefaultValue(true);
     prefs.emplace_back(enabled);
   }
 
   {
     auto undo = Preference::makeCheckbox("undo");
-    undo.setTitle("Undo");
-    undo.setDescription("Press backspace immediately after expansion to undo and restore the trigger text");
+    undo.setTitle(tr("Undo"));
+    undo.setDescription(
+        tr("Press backspace immediately after expansion to undo and restore the trigger text"));
     undo.setDefaultValue(true);
     prefs.emplace_back(undo);
   }
@@ -53,9 +54,9 @@ std::vector<Preference> SnippetExtension::preferences() const {
 #ifdef Q_OS_LINUX
   {
     auto layout = Preference::makeText("layout");
-    layout.setTitle("Keyboard layout");
+    layout.setTitle(tr("Keyboard layout"));
     layout.setDescription(
-        R"(XKB layout used for trigger detection (e.g. "us", "fr"). Leave empty for system default.)");
+        tr(R"(XKB layout used for trigger detection (e.g. "us", "fr"). Leave empty for system default.)"));
     layout.setRequired(false);
     layout.setDefaultValue("");
     prefs.emplace_back(layout);
@@ -63,10 +64,10 @@ std::vector<Preference> SnippetExtension::preferences() const {
 
   {
     auto prePasteDelay = Preference::makeText("prePasteDelay");
-    prePasteDelay.setTitle("Pre-paste delay (ms)");
+    prePasteDelay.setTitle(tr("Pre-paste delay (ms)"));
     prePasteDelay.setDescription(
-        "Delay between setting clipboard and injecting paste shortcut. Increase if expansions paste empty on "
-        "slow compositors.");
+        tr("Delay between setting clipboard and injecting paste shortcut. Increase if expansions paste "
+           "empty on slow compositors."));
     prePasteDelay.setRequired(false);
     prePasteDelay.setDefaultValue(QString::number(SnippetService::DEFAULT_PRE_PASTE_DELAY_MS));
     prefs.emplace_back(prePasteDelay);
@@ -74,10 +75,9 @@ std::vector<Preference> SnippetExtension::preferences() const {
 
   {
     auto keyDelay = Preference::makeText("keyDelay");
-    keyDelay.setTitle("Key injection delay (ms)");
-    keyDelay.setDescription("Delay between injected key events. Increase if expansions produce missing or "
-                            "garbled characters on slow "
-                            "compositors.");
+    keyDelay.setTitle(tr("Key injection delay (ms)"));
+    keyDelay.setDescription(tr("Delay between injected key events. Increase if expansions produce missing "
+                               "or garbled characters on slow compositors."));
     keyDelay.setRequired(false);
     keyDelay.setDefaultValue(QString::number(SnippetService::DEFAULT_KEY_DELAY_US / 1000));
     prefs.emplace_back(keyDelay);

@@ -56,7 +56,7 @@ void SearchFilesViewHost::initialize() {
   m_section.setOnFileSelected([this](const fs::path &p) { loadDetail(p); });
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search for files...");
+  setSearchPlaceholderText(tr("Search for files..."));
   restoreCategoryFilter();
 
   m_debounce.setSingleShot(true);
@@ -86,11 +86,11 @@ void SearchFilesViewHost::textChanged(const QString &text) {
     setLoading(false);
 
     if (auto category = selectedCategory(); category && categoryForPath(path) != *category) {
-      m_section.setFiles({}, QStringLiteral("Direct file path"));
+      m_section.setFiles({}, tr("Direct file path"));
       return;
     }
 
-    m_section.setFiles({path}, QStringLiteral("Direct file path"));
+    m_section.setFiles({path}, tr("Direct file path"));
     return;
   }
 
@@ -108,7 +108,7 @@ void SearchFilesViewHost::renderRecentFiles() {
                        return !category || categoryForPath(path) == *category;
                      }) |
                      std::ranges::to<std::vector>();
-  m_section.setFiles(std::move(recentFiles), QStringLiteral("Recently Accessed"));
+  m_section.setFiles(std::move(recentFiles), tr("Recently Accessed"));
 }
 
 void SearchFilesViewHost::handleDebounce() {
@@ -138,7 +138,7 @@ void SearchFilesViewHost::handleSearchResults() {
   auto results = m_pendingResults.result();
   auto paths =
       results | std::views::transform([](auto &&f) { return f.path; }) | std::ranges::to<std::vector>();
-  m_section.setFiles(std::move(paths), QStringLiteral("Results"));
+  m_section.setFiles(std::move(paths), tr("Results"));
 }
 
 void SearchFilesViewHost::loadDetail(const fs::path &path) {

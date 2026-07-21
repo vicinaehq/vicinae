@@ -5,6 +5,7 @@
 #include "http-client.hpp"
 #include "semver.hpp"
 #include "ui/action-pannel/action.hpp"
+#include <QCoreApplication>
 #include <QObject>
 #include <QTimer>
 #include <filesystem>
@@ -68,6 +69,8 @@ private:
 };
 
 class InstallUpdateAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(InstallUpdateAction)
+
 public:
   InstallUpdateAction();
 
@@ -75,6 +78,8 @@ public:
 };
 
 class SkipUpdateVersionAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(SkipUpdateVersionAction)
+
 public:
   SkipUpdateVersionAction();
 

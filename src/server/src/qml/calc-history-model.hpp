@@ -1,11 +1,13 @@
 #pragma once
 #include "section-source.hpp"
 #include "services/calculator-service/calculator-service.hpp"
+#include <QCoreApplication>
 #include <vector>
 
 using CalculatorRecord = CalculatorService::CalculatorRecord;
 
 class CalcHistorySection : public SectionSource {
+  Q_DECLARE_TR_FUNCTIONS(CalcHistorySection)
 public:
   void setRecords(const QString &groupName, std::vector<CalculatorRecord> records);
 

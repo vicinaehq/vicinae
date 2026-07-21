@@ -11,7 +11,7 @@ RowLayout {
     // Whether to draw an outline around the trigger (off for dense list rows).
     property bool bordered: true
     property bool clearable: true
-    property string placeholder: "Record shortcut"
+    property string placeholder: qsTr("Record shortcut")
     // Owner id of this shortcut, excluded from conflict checks (so re-recording it isn't self-conflict).
     property string shortcutId: ""
 

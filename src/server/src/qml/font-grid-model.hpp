@@ -44,7 +44,7 @@ public:
   void setFilter(const QString &text);
   void setCategoryFilter(std::optional<int> index);
   const QStringList &categoryNames() const { return m_categoryNames; }
-  QString searchPlaceholder() const { return QStringLiteral("Search fonts..."); }
+  QString searchPlaceholder() const { return tr("Search fonts..."); }
 
   Q_INVOKABLE QString cellTitle(int section, int item) const;
   Q_INVOKABLE QString fontIcon(int section, int item) const;

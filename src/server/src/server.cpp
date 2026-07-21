@@ -93,9 +93,11 @@
 #include "generated/version.h"
 #include <filesystem>
 #include <QGuiApplication>
+#include <QLibraryInfo>
 #include <QPointer>
 #include <QQuickWindow>
 #include <QString>
+#include <QTranslator>
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <QtQuickControls2/QQuickStyle>
@@ -139,6 +141,26 @@ private:
   ApplicationContext &m_ctx;
 };
 #endif
+
+static void installTranslators(const std::optional<std::string> &language) {
+  const bool useSystem = !language || language->empty();
+  const QLocale locale = useSystem ? QLocale::system() : QLocale(QString::fromStdString(*language));
+  QLocale::setDefault(locale);
+
+  // Fallback for builds where Qt catalogs are not merged into the app catalog (Qt < 6.8).
+  static QTranslator qtTranslator;
+  if (qtTranslator.load(locale, QStringLiteral("qtbase"), QStringLiteral("_"),
+                        QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
+    QCoreApplication::installTranslator(&qtTranslator);
+  }
+
+  static QTranslator appTranslator;
+  if (appTranslator.load(locale, QStringLiteral("vicinae"), QStringLiteral("_"), QStringLiteral(":/i18n"))) {
+    QCoreApplication::installTranslator(&appTranslator);
+  } else if (!useSystem) {
+    qWarning() << "No translation catalog for configured language" << QString::fromStdString(*language);
+  }
+}
 
 static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   if (fontConfig.rendering == "qt") {
@@ -228,6 +250,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     auto configService = std::make_unique<config::Manager>(m_config);
     auto currentConfig = configService->value();
+
+    installTranslators(currentConfig.language);
 
     const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
     const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
@@ -485,6 +509,12 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #endif
 
     ServiceRegistry::instance()->telemetry()->setEnabled(next.telemetry.systemInfo);
+
+    if (next.language != prev.language) {
+      ctx.navigation->confirmAlert(
+          QCoreApplication::translate("server", "Language changed"),
+          QCoreApplication::translate("server", "Restart Vicinae to apply the new language."), []() {});
+    }
   };
 
   auto cfgService = ServiceRegistry::instance()->config();

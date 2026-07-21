@@ -24,7 +24,7 @@ void VicinaeStoreViewHost::initialize() {
 
   m_store = context()->services->vicinaeStore();
 
-  setSearchPlaceholderText("Browse Vicinae extensions");
+  setSearchPlaceholderText(tr("Browse Vicinae extensions"));
 
   connect(context()->services->extensionRegistry(), &ExtensionRegistry::extensionsChanged, this,
           &VicinaeStoreViewHost::refresh);
@@ -47,15 +47,14 @@ void VicinaeStoreViewHost::handleFinished() {
 
   if (!result) {
     qWarning() << "[VicinaeStore] fetch error:" << result.error();
-    context()->services->toastService()->setToast("Failed to fetch extensions", ToastStyle::Danger);
+    context()->services->toastService()->setToast(tr("Failed to fetch extensions"), ToastStyle::Danger);
     return;
   }
 
-  m_section.setEntries(result->extensions, context()->services->extensionRegistry(),
-                       QStringLiteral("Extensions"));
+  m_section.setEntries(result->extensions, context()->services->extensionRegistry(), tr("Extensions"));
 }
 
-QString VicinaeStoreViewHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
+QString VicinaeStoreViewHost::initialNavigationTitle() const { return tr("Extension Store"); }
 
 ImageURL VicinaeStoreViewHost::initialNavigationIcon() const {
   return ImageURL::builtin("cart").setBackgroundTint(SemanticColor::Accent);

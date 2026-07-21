@@ -183,7 +183,7 @@ void ExtensionGridModel::setFilter(const QString &text) {
 }
 
 QString ExtensionGridModel::searchPlaceholder() const {
-  return m_placeholder.isEmpty() ? QStringLiteral("Search...") : m_placeholder;
+  return m_placeholder.isEmpty() ? tr("Search...") : m_placeholder;
 }
 
 const GridItemViewModel *ExtensionGridModel::resolveItem(int section, int item) const {
@@ -235,7 +235,7 @@ QString ExtensionGridModel::cellColor(int section, int item) const {
 
 QString ExtensionGridModel::emptyTitle() const {
   if (m_model.emptyView) return QString::fromStdString(m_model.emptyView->title);
-  return QStringLiteral("No results");
+  return tr("No results");
 }
 
 QString ExtensionGridModel::emptyDescription() const {

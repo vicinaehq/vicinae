@@ -48,7 +48,7 @@ public:
   Q_INVOKABLE QString validate(int key, int modifiers) const {
     Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key),
                                       static_cast<Qt::KeyboardModifiers>(modifiers));
-    if (!shortcut.hasMods() && !shortcut.isFunctionKey()) return QStringLiteral("Modifier required");
+    if (!shortcut.hasMods() && !shortcut.isFunctionKey()) return tr("Modifier required");
     return {};
   }
 };

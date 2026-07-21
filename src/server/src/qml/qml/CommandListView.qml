@@ -9,7 +9,7 @@ GenericListView {
     autoWireModel: true
     selectFirstOnReset: cmdModel ? cmdModel.selectFirstOnReset : true
 
-    emptyTitle: cmdModel && cmdModel.emptyTitle || "No results"
+    emptyTitle: cmdModel && cmdModel.emptyTitle || qsTr("No results")
     emptyDescription: (cmdModel && cmdModel.emptyDescription) || ""
     emptyIcon: cmdModel?.emptyIcon?.valid ? cmdModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 

@@ -12,6 +12,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/url.hpp"
 #include "view-utils.hpp"
+#include <QCoreApplication>
 
 namespace {
 
@@ -25,7 +26,9 @@ class SetAppFont : public AbstractAction {
 
 public:
   SetAppFont(const QString &family)
-      : AbstractAction("Set as vicinae font", ImageURL::builtin("text")), m_family(family) {}
+      : AbstractAction(QCoreApplication::translate("SetAppFont", "Set as vicinae font"),
+                       ImageURL::builtin("text")),
+        m_family(family) {}
 };
 
 class PreviewFontAction : public AbstractAction {
@@ -38,7 +41,9 @@ class PreviewFontAction : public AbstractAction {
 
 public:
   PreviewFontAction(const QString &family, FontCategory category)
-      : AbstractAction("Preview font", ImageURL::builtin("eye")), m_family(family), m_category(category) {}
+      : AbstractAction(QCoreApplication::translate("PreviewFontAction", "Preview font"),
+                       ImageURL::builtin("eye")),
+        m_family(family), m_category(category) {}
 };
 
 std::unique_ptr<ActionPanelState> buildFontActionPanel(const FontFamily *family) {
@@ -46,7 +51,8 @@ std::unique_ptr<ActionPanelState> buildFontActionPanel(const FontFamily *family)
 
   auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
-  auto copyFamily = new CopyToClipboardAction(Clipboard::Text(family->name), "Copy font family");
+  auto copyFamily = new CopyToClipboardAction(
+      Clipboard::Text(family->name), QCoreApplication::translate("font-grid-model", "Copy font family"));
   auto preview = new PreviewFontAction(family->family, family->primary);
 
   copyFamily->setShortcut(Keybind::CopyAction);
@@ -121,7 +127,7 @@ void FontGridModel::rebuildRoot() {
   const int n = static_cast<int>(members.size());
   const QString title =
       m_categoryFilter ? QStringLiteral("%1 (%2)").arg(FontService::categoryName(*m_categoryFilter)).arg(n)
-                       : QStringLiteral("All Fonts (%1)").arg(n);
+                       : tr("All Fonts (%1)").arg(n);
   m_rootSource.setBucket(title, std::move(members));
 }
 
@@ -137,7 +143,7 @@ void FontGridModel::setFilter(const QString &text) {
                                     return fzf::threadLocalMatcher().fuzzy_match_v2_score_query(
                                         f.name.toStdString(), query);
                                   });
-    m_searchSource.setResults(QStringLiteral("Results (%1)").arg(results.size()), results);
+    m_searchSource.setResults(tr("Results (%1)").arg(results.size()), results);
   }
   applyReset();
 }

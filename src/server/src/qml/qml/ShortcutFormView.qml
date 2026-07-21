@@ -11,20 +11,20 @@ Item {
         Component.onCompleted: Qt.callLater(formView.focusFirst)
 
         FormField {
-            label: "Name"
+            label: qsTr("Name")
 
             FormTextInput {
                 text: root.host.name
-                placeholder: "Shortcut Name"
+                placeholder: qsTr("Shortcut Name")
                 onTextEdited: root.host.name = text
             }
         }
 
         FormField {
             id: urlField
-            label: "URL"
+            label: qsTr("URL")
             error: root.host.linkError
-            info: "The URL that will be opened by the specified app. You can make it dynamic by using placeholders such as {argument}."
+            info: qsTr("The URL that will be opened by the specified app. You can make it dynamic by using placeholders such as {argument}.")
 
             FormCompletedInput {
                 id: linkInput
@@ -46,7 +46,7 @@ Item {
 
         FormField {
             id: appField
-            label: "Open with"
+            label: qsTr("Open with")
             error: root.host.appError
 
             SearchableDropdown {
@@ -59,7 +59,7 @@ Item {
 
         FormField {
             id: iconField
-            label: "Icon"
+            label: qsTr("Icon")
             error: root.host.iconError
 
             SearchableDropdown {

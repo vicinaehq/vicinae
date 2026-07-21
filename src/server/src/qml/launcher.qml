@@ -8,7 +8,7 @@ Window {
     width: 400
     height: 600
     visible: true
-    title: "Basic Window"
+    title: qsTr("Basic Window")
 
     ColumnLayout {
         anchors.fill: parent
@@ -22,7 +22,7 @@ Window {
             TextField {
                 anchors.fill: parent
                 anchors.margins: 8
-                placeholderText: "Search or type here..."
+                placeholderText: qsTr("Search or type here...")
                 background: Rectangle {
                     radius: 4
                     color: "#ecf0f1"
@@ -37,7 +37,7 @@ Window {
 
             Text {
                 anchors.centerIn: parent
-                text: "Content Area"
+                text: qsTr("Content Area")
                 font.pixelSize: 20
                 color: "#7f8c8d"
             }
@@ -50,7 +50,7 @@ Window {
 
             Text {
                 anchors.centerIn: parent
-                text: "Footer"
+                text: qsTr("Footer")
                 color: "white"
                 font.pixelSize: 14
             }

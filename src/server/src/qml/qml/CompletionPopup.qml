@@ -8,7 +8,7 @@ Popup {
     property var items: []
     property var sections: []
     property bool showFilter: false
-    property string filterPlaceholder: "Filter..."
+    property string filterPlaceholder: qsTr("Filter...")
     property string currentItemId: ""
 
     // When true, show as a non-activating native window (so the field driving the

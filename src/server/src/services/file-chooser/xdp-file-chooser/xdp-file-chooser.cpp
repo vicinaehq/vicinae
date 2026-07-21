@@ -36,7 +36,7 @@ bool XdpFileChooser::open(const FileChooserOptions &options) {
   payload["directory"] = directoryMode;
 
   QString const windowHandle;
-  QString const title = directoryMode ? "Open Directory" : "Open File";
+  QString const title = directoryMode ? tr("Open Directory") : tr("Open File");
 
   QDBusReply<QDBusObjectPath> const message = m_interface->call("OpenFile", windowHandle, title, payload);
 

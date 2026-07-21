@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "favicon/favicon-service.hpp"
 #include "theme.hpp"
 #include "ui/views/base-view.hpp"
@@ -59,7 +60,9 @@ public:
 
 class DefaultAppItem : public AppSelectorItem {
   QString generateId() const override { return "default"; }
-  QString displayName() const override { return AppSelectorItem::displayName() + " (Default)"; }
+  QString displayName() const override {
+    return QCoreApplication::translate("DefaultAppItem", "%1 (Default)").arg(AppSelectorItem::displayName());
+  }
   AbstractItem *clone() const override { return new DefaultAppItem(*this); }
 
 public:
@@ -89,7 +92,9 @@ public:
 
 class DefaultIconSelectorItem : public IconSelectorItem {
   QString generateId() const override { return "default"; }
-  QString displayName() const override { return "Default"; }
+  QString displayName() const override {
+    return QCoreApplication::translate("DefaultIconSelectorItem", "Default");
+  }
   AbstractItem *clone() const override { return new DefaultIconSelectorItem(*this); }
 
 public:
@@ -119,16 +124,18 @@ public:
 };
 
 class ShortcutFormView : public ManagedFormView {
+  Q_DECLARE_TR_FUNCTIONS(ShortcutFormView)
+
   std::vector<LinkDynamicPlaceholder> mainLinkArguments{
       LinkDynamicPlaceholder{
-          .icon = ImageURL::builtin("text-cursor"), .title = "Selected Text", .id = "selected"},
+          .icon = ImageURL::builtin("text-cursor"), .title = tr("Selected Text"), .id = "selected"},
       LinkDynamicPlaceholder{
-          .icon = ImageURL::builtin("copy-clipboard"), .title = "Clipboard Text", .id = "clipboard"},
+          .icon = ImageURL::builtin("copy-clipboard"), .title = tr("Clipboard Text"), .id = "clipboard"},
       LinkDynamicPlaceholder{.icon = ImageURL::builtin("text-cursor"),
-                             .title = "Argument",
+                             .title = tr("Argument"),
                              .id = "argument",
                              .arguments = {{"name", "Argument"}}},
-      LinkDynamicPlaceholder{.icon = ImageURL::builtin("fingerprint"), .title = "UUID", .id = "uuid"},
+      LinkDynamicPlaceholder{.icon = ImageURL::builtin("fingerprint"), .title = tr("UUID"), .id = "uuid"},
   };
 
   void handleAppSelectorTextChanged(const QString &text) {}
@@ -191,7 +198,7 @@ class ShortcutFormView : public ManagedFormView {
         auto appItem = static_cast<const AppSelectorItem *>(appSelector->value());
 
         if (auto ico = appItem->icon()) { icon->setIcon(*ico); }
-        icon->setDisplayName("Default");
+        icon->setDisplayName(tr("Default"));
       });
     }
 
@@ -293,7 +300,7 @@ public:
       : name(new BaseInput), link(new CompletedInput), appSelector(new SelectorInput),
         iconSelector(new SelectorInput) {
     Timer timer;
-    name->setPlaceholderText("Shortcut Name");
+    name->setPlaceholderText(tr("Shortcut Name"));
     link->setPlaceholderText("https://google.com/search?q={argument}");
 
     auto nameField = new FormField;
@@ -301,15 +308,15 @@ public:
     auto openField = new FormField;
     auto iconField = new FormField;
 
-    nameField->setName("Name");
+    nameField->setName(tr("Name"));
     nameField->setWidget(name, name->focusNotifier());
-    linkField->setName("URL");
+    linkField->setName(tr("URL"));
     linkField->setWidget(link, link->focusNotifier());
-    linkField->setInfo("The URL that will be opened by the specified app. You can make it dynamic by using "
-                       "placeholders such as `{argument}`");
-    openField->setName("Open with");
+    linkField->setInfo(tr("The URL that will be opened by the specified app. You can make it dynamic by "
+                          "using placeholders such as `{argument}`"));
+    openField->setName(tr("Open with"));
     openField->setWidget(appSelector, appSelector->focusNotifier());
-    iconField->setName("Icon");
+    iconField->setName(tr("Icon"));
     iconField->setWidget(iconSelector, iconSelector->focusNotifier());
 
     form()->addField(nameField);
@@ -341,7 +348,8 @@ public:
     iconItems.reserve(BuiltinIconService::mapping().size() + 1);
     auto items = BuiltinIconService::mapping() | std::views::transform(mapItem);
 
-    iconItems.emplace_back(std::make_shared<DefaultIconSelectorItem>(ImageURL::builtin("link"), "Default"));
+    iconItems.emplace_back(
+        std::make_shared<DefaultIconSelectorItem>(ImageURL::builtin("link"), tr("Default")));
     std::ranges::for_each(items, [&](auto item) { iconItems.emplace_back(item); });
 
     iconSelector->addSection("", iconItems);
@@ -418,40 +426,42 @@ private:
     auto toast = context()->services->toastService();
 
     if (link->text().isEmpty()) {
-      form()->setError(link, "Required");
+      form()->setError(link, tr("Required"));
       return;
     }
 
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
-      form()->setError(appSelector, "Required");
+      form()->setError(appSelector, tr("Required"));
       return;
     }
 
     auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
-      form()->setError(iconSelector, "Required");
+      form()->setError(iconSelector, tr("Required"));
       return;
     }
 
     if (shortcutDb->createShortcut(name->text(), icon->icon()->toString(), link->text(), item->app->id())) {
-      toast->setToast("Created shortcut");
+      toast->setToast(tr("Created shortcut"));
       popSelf();
     } else {
-      toast->setToast("Failed to create shortcut", ToastStyle::Danger);
+      toast->setToast(tr("Failed to create shortcut"), ToastStyle::Danger);
     }
   }
 };
 
 class EditShortcutView : public ShortcutFormView {
+  Q_DECLARE_TR_FUNCTIONS(EditShortcutView)
+
   std::shared_ptr<Shortcut> m_shortcut;
 
 public:
   EditShortcutView(const std::shared_ptr<Shortcut> &shortcut) : m_shortcut(shortcut) {}
 
-  QString initialNavigationTitle() const override { return "Edit Shortcut"; }
+  QString initialNavigationTitle() const override { return tr("Edit Shortcut"); }
   ImageURL initialNavigationIcon() const override {
     return ImageURL::builtin("link").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -474,14 +484,14 @@ public:
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
-      form()->setError(appSelector, "Required");
+      form()->setError(appSelector, tr("Required"));
       return;
     }
 
     auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
-      form()->setError(iconSelector, "Required");
+      form()->setError(iconSelector, tr("Required"));
       return;
     }
 
@@ -489,7 +499,7 @@ public:
                                               link->text(), item->app->id());
 
     if (!updated) {
-      toast->setToast("Failed to update shortcut");
+      toast->setToast(tr("Failed to update shortcut"));
       return;
     }
 
@@ -498,12 +508,14 @@ public:
 };
 
 class DuplicateShortcutView : public ShortcutFormView {
+  Q_DECLARE_TR_FUNCTIONS(DuplicateShortcutView)
+
   std::shared_ptr<Shortcut> m_shortcut;
 
 public:
   DuplicateShortcutView(const std::shared_ptr<Shortcut> &shortcut) : m_shortcut(shortcut) {}
 
-  QString initialNavigationTitle() const override { return "Duplicate Shortcut"; }
+  QString initialNavigationTitle() const override { return tr("Duplicate Shortcut"); }
 
   ImageURL initialNavigationIcon() const override {
     return ImageURL::builtin("link").setBackgroundTint(Omnicast::ACCENT_COLOR);
@@ -514,7 +526,7 @@ public:
 
     auto appDb = context()->services->appDb();
 
-    name->setText(QString("Copy of %1").arg(m_shortcut->name()));
+    name->setText(tr("Copy of %1").arg(m_shortcut->name()));
     link->setText(m_shortcut->url());
 
     if (!iconSelector->setValue(m_shortcut->icon())) {
@@ -533,22 +545,22 @@ public:
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
-      form()->setError(appSelector, "Required");
+      form()->setError(appSelector, tr("Required"));
       return;
     }
 
     auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
-      form()->setError(iconSelector, "Required");
+      form()->setError(iconSelector, tr("Required"));
       return;
     }
 
     if (shortcutDb->createShortcut(name->text(), icon->icon()->toString(), link->text(), item->app->id())) {
-      toast->setToast("Created shortcut");
+      toast->setToast(tr("Created shortcut"));
       popSelf();
     } else {
-      toast->setToast("Failed to create shortcut", ToastStyle::Danger);
+      toast->setToast(tr("Failed to create shortcut"), ToastStyle::Danger);
     }
   }
 };

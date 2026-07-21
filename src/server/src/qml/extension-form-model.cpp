@@ -197,7 +197,7 @@ std::expected<QJsonObject, QString> ExtensionFormModel::submit() const {
   for (const auto &item : m_items) {
     if (!item.isField()) continue;
     if (!item.storeValue) continue;
-    if (!item.error.isEmpty()) return std::unexpected(QString("One or more fields have errors"));
+    if (!item.error.isEmpty()) return std::unexpected(tr("One or more fields have errors"));
     payload[item.fieldId] = item.effectiveValue();
   }
   return payload;

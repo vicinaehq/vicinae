@@ -39,7 +39,7 @@ UpdateService::UpdateService(ToastService &toast, std::unique_ptr<AbstractUpdate
           [this](const QString &stage) { m_toast.dynamic(stage); });
   connect(m_installer.get(), &AbstractUpdateInstaller::finished, this, [this]() {
     setStatus(Status::Installed);
-    m_toast.success("Update installed", "Restarting…");
+    m_toast.success(tr("Update installed"), tr("Restarting…"));
     QTimer::singleShot(RELAUNCH_DELAY, this, [this]() { relaunch(); });
   });
   connect(m_installer.get(), &AbstractUpdateInstaller::failed, this, &UpdateService::failInstall);
@@ -127,20 +127,20 @@ void UpdateService::downloadAndInstall() {
   const QString tag = m_available->tag;
   const QString version = m_available->version;
 
-  m_toast.dynamic(QString("Downloading Vicinae %1…").arg(tag));
+  m_toast.dynamic(tr("Downloading Vicinae %1…").arg(tag));
 
   auto *download = m_client.download(m_available->assetUrl, archivePath);
 
   connect(download, &http::Download::progress, this, [this, tag](qint64 received, qint64 total) {
     if (total > 0) {
       int const pct = static_cast<int>(received * 100 / total);
-      m_toast.dynamic(QString("Downloading Vicinae %1… %2%").arg(tag).arg(pct));
+      m_toast.dynamic(tr("Downloading Vicinae %1… %2%").arg(tag).arg(pct));
     }
   });
   connect(download, &http::Download::failed, this, &UpdateService::failInstall);
   connect(download, &http::Download::finished, this, [this, version](const fs::path &path) {
     setStatus(Status::Installing);
-    m_toast.dynamic("Installing update…");
+    m_toast.dynamic(tr("Installing update…"));
     m_installer->install(path, version);
   });
 }
@@ -164,7 +164,7 @@ void UpdateService::setStatus(Status status) {
 void UpdateService::failInstall(const QString &error) {
   qWarning() << "Update failed:" << error;
   setStatus(Status::Failed);
-  m_toast.failure("Update failed", error);
+  m_toast.failure(tr("Update failed"), error);
 }
 
 void UpdateService::saveState() {
@@ -185,15 +185,14 @@ void UpdateService::loadState() {
   }
 }
 
-InstallUpdateAction::InstallUpdateAction()
-    : AbstractAction(QStringLiteral("Install Update"), BuiltinIcon::Download) {}
+InstallUpdateAction::InstallUpdateAction() : AbstractAction(tr("Install Update"), BuiltinIcon::Download) {}
 
 void InstallUpdateAction::execute(ApplicationContext *ctx) {
   auto *updates = ctx->services->updateService();
   auto const status = updates->status();
 
   if (status == UpdateService::Status::Downloading || status == UpdateService::Status::Installing) {
-    ctx->services->toastService()->setToast("An update is already in progress");
+    ctx->services->toastService()->setToast(tr("An update is already in progress"));
     return;
   }
 
@@ -201,13 +200,13 @@ void InstallUpdateAction::execute(ApplicationContext *ctx) {
 }
 
 SkipUpdateVersionAction::SkipUpdateVersionAction()
-    : AbstractAction(QStringLiteral("Skip This Version"), BuiltinIcon::Xmark) {}
+    : AbstractAction(tr("Skip This Version"), BuiltinIcon::Xmark) {}
 
 void SkipUpdateVersionAction::execute(ApplicationContext *ctx) {
   auto *updates = ctx->services->updateService();
 
   if (const auto &update = updates->available()) {
-    ctx->services->toastService()->setToast(QString("Skipped %1").arg(update->tag));
+    ctx->services->toastService()->setToast(tr("Skipped %1").arg(update->tag));
   }
 
   updates->skipAvailableVersion();

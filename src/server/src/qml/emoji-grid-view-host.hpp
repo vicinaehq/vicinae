@@ -36,7 +36,7 @@ public:
   QObject *listModel() const { return const_cast<EmojiGridModel *>(&m_model); }
 
   QStringList categoryFilterOptions() const {
-    QStringList options{QStringLiteral("All")};
+    QStringList options{tr("All")};
     for (const auto &section : glyph::sections())
       options.append(QString::fromUtf8(section.label.data(), section.label.size()));
     return options;

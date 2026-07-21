@@ -12,7 +12,7 @@ QString BrowserTabsSection::displayIconSource(const BrowserTab &tab) const {
 }
 
 QVariantList BrowserTabsSection::displayAccessories(const BrowserTab &tab) const {
-  if (tab.audible) return qml::textAccessory(tab.muted ? QStringLiteral("Muted") : QStringLiteral("Playing"));
+  if (tab.audible) return qml::textAccessory(tab.muted ? tr("Muted") : tr("Playing"));
   return {};
 }
 

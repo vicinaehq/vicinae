@@ -9,34 +9,39 @@
 #include "services/app-service/app-service.hpp"
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include <QCoreApplication>
 #include <sstream>
 #ifndef Q_OS_WIN
 #include "xdgpp/desktop-entry/exec.hpp"
 #endif
 
 class SystemRunCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(SystemRunCommand)
+
   QString id() const override { return "run"; }
-  QString name() const override { return "Run Terminal Program"; }
-  QString description() const override { return "Run a program in a terminal window"; }
-  std::vector<QString> keywords() const override { return {"shell command", "run program"}; }
+  QString name() const override { return tr("Run Terminal Program"); }
+  QString description() const override { return tr("Run a program in a terminal window"); }
+  std::vector<QString> keywords() const override {
+    return {"shell command", "run program", "Run Terminal Program"};
+  }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("terminal").setBackgroundTint(SemanticColor::Accent);
   }
   CommandMode mode() const override { return CommandMode::CommandModeView; }
   virtual std::vector<CommandArgument> arguments() const override {
-    return {CommandArgument{.name = "command", .placeholder = "command", .required = false}};
+    return {CommandArgument{.name = "command", .placeholder = tr("command"), .required = false}};
   }
 
   virtual std::vector<Preference> preferences() const override {
     std::vector<Preference::DropdownData::Option> defaultActions = {
-        {"Run in terminal", "run-in-terminal"},
-        {"Run in terminal (hold)", "run-in-terminal-hold"},
-        {"Run directly", "run"},
+        {tr("Run in terminal"), "run-in-terminal"},
+        {tr("Run in terminal (hold)"), "run-in-terminal-hold"},
+        {tr("Run directly"), "run"},
     };
     Preference defaultAction = Preference::makeDropdown("default-action", defaultActions);
 
-    defaultAction.setTitle("Default Action");
-    defaultAction.setDescription("The default action to run on pressing return");
+    defaultAction.setTitle(tr("Default Action"));
+    defaultAction.setDescription(tr("The default action to run on pressing return"));
     defaultAction.setDefaultValue("run-in-terminal");
 
     return {defaultAction};
@@ -65,7 +70,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
 #endif
 
     if (parsedArgs.empty() || !ProgramDb::programPath(parsedArgs.front())) {
-      toast->failure("Not a valid executable");
+      toast->failure(tr("Not a valid executable"));
       return;
     }
 
@@ -91,17 +96,21 @@ class SystemRunCommand : public BuiltinCallbackCommand {
 };
 
 class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(SystemBrowseApps)
+
   QString id() const override { return "browse-apps"; }
-  QString name() const override { return "Browse Apps"; }
-  QString description() const override { return "Browse all applications that are installed on the system"; }
-  std::vector<QString> keywords() const override { return {}; }
+  QString name() const override { return tr("Browse Apps"); }
+  QString description() const override {
+    return tr("Browse all applications that are installed on the system");
+  }
+  std::vector<QString> keywords() const override { return {"Browse Apps"}; }
   bool isDefaultDisabled() const override { return true; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("box").setBackgroundTint(SemanticColor::Accent);
   }
   std::vector<Preference> preferences() const override {
-    auto showHidden = Preference::makeCheckbox("showHidden", "Show hidden apps");
-    auto sortAlphabetically = Preference::makeCheckbox("sortAlphabetically", "Sort alphabetically");
+    auto showHidden = Preference::makeCheckbox("showHidden", tr("Show hidden apps"));
+    auto sortAlphabetically = Preference::makeCheckbox("sortAlphabetically", tr("Sort alphabetically"));
     showHidden.setDefaultValue(false);
     sortAlphabetically.setDefaultValue(true);
     return {sortAlphabetically, showHidden};
@@ -120,15 +129,18 @@ ImageURL volumeIcon(float level) {
 
 void showVolumeHud(const ApplicationContext *ctx, float level) {
   auto vol = qRound(level * 100);
-  ctx->navigation->showHud("Volume " + QString::number(vol) + "%", volumeIcon(level));
+  ctx->navigation->showHud(QCoreApplication::translate("system-extension", "Volume %1%").arg(vol),
+                           volumeIcon(level));
 }
 } // namespace
 
 class VolumeUpCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(VolumeUpCommand)
+
   QString id() const override { return "volume-up"; }
-  QString name() const override { return "Turn Volume Up"; }
-  QString description() const override { return "Increase system volume"; }
-  std::vector<QString> keywords() const override { return {"audio", "sound", "louder"}; }
+  QString name() const override { return tr("Turn Volume Up"); }
+  QString description() const override { return tr("Increase system volume"); }
+  std::vector<QString> keywords() const override { return {"audio", "sound", "louder", "Turn Volume Up"}; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::SpeakerUp}.setBackgroundTint(VOLUME_COMMAND_TINT);
   }
@@ -145,13 +157,13 @@ class VolumeUpCommand : public BuiltinCallbackCommand {
       bool ok = false;
       step = arg.front().second.toInt(&ok);
       if (!ok) {
-        ctx->services->toastService()->failure("Invalid step value");
+        ctx->services->toastService()->failure(tr("Invalid step value"));
         return;
       }
     }
     auto result = audio->adjustVolume(static_cast<float>(step) / 100.0f);
     if (!result) {
-      ctx->services->toastService()->failure("Failed to adjust volume");
+      ctx->services->toastService()->failure(tr("Failed to adjust volume"));
       return;
     }
     showVolumeHud(ctx, *result);
@@ -159,10 +171,12 @@ class VolumeUpCommand : public BuiltinCallbackCommand {
 };
 
 class VolumeDownCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(VolumeDownCommand)
+
   QString id() const override { return "volume-down"; }
-  QString name() const override { return "Turn Volume Down"; }
-  QString description() const override { return "Decrease system volume"; }
-  std::vector<QString> keywords() const override { return {"audio", "sound", "quieter"}; }
+  QString name() const override { return tr("Turn Volume Down"); }
+  QString description() const override { return tr("Decrease system volume"); }
+  std::vector<QString> keywords() const override { return {"audio", "sound", "quieter", "Turn Volume Down"}; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::SpeakerDown}.setBackgroundTint(VOLUME_COMMAND_TINT);
   }
@@ -179,13 +193,13 @@ class VolumeDownCommand : public BuiltinCallbackCommand {
       bool ok = false;
       step = arg.front().second.toInt(&ok);
       if (!ok) {
-        ctx->services->toastService()->failure("Invalid step value");
+        ctx->services->toastService()->failure(tr("Invalid step value"));
         return;
       }
     }
     auto result = audio->adjustVolume(static_cast<float>(step) / 100.0f);
     if (!result) {
-      ctx->services->toastService()->failure("Failed to adjust volume");
+      ctx->services->toastService()->failure(tr("Failed to adjust volume"));
       return;
     }
     showVolumeHud(ctx, *result);
@@ -193,12 +207,16 @@ class VolumeDownCommand : public BuiltinCallbackCommand {
 };
 
 template <int Percent, BuiltinIcon Icon> class SetVolumeCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(SetVolumeCommand)
+
   static constexpr float LEVEL = static_cast<float>(Percent) / 100.0f;
 
   QString id() const override { return "volume-" + QString::number(Percent); }
-  QString name() const override { return "Set Volume to " + QString::number(Percent) + "%"; }
-  QString description() const override { return "Set system volume to " + QString::number(Percent) + "%"; }
-  std::vector<QString> keywords() const override { return {"audio", "sound", "volume"}; }
+  QString name() const override { return tr("Set Volume to %1%").arg(Percent); }
+  QString description() const override { return tr("Set system volume to %1%").arg(Percent); }
+  std::vector<QString> keywords() const override {
+    return {"audio", "sound", "volume", QString("Set Volume to %1%").arg(Percent)};
+  }
   ImageURL iconUrl() const override { return ImageURL{Icon}.setBackgroundTint(VOLUME_COMMAND_TINT); }
 
   void execute(CommandController &controller) const override {
@@ -206,7 +224,7 @@ template <int Percent, BuiltinIcon Icon> class SetVolumeCommand : public Builtin
     auto audio = ctx->services->audioControl()->provider();
     auto result = audio->setVolume(LEVEL);
     if (!result) {
-      ctx->services->toastService()->failure("Failed to set volume");
+      ctx->services->toastService()->failure(tr("Failed to set volume"));
       return;
     }
     showVolumeHud(ctx, *result);
@@ -214,10 +232,14 @@ template <int Percent, BuiltinIcon Icon> class SetVolumeCommand : public Builtin
 };
 
 class ToggleMuteCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(ToggleMuteCommand)
+
   QString id() const override { return "toggle-mute"; }
-  QString name() const override { return "Toggle Mute"; }
-  QString description() const override { return "Mute or unmute system audio"; }
-  std::vector<QString> keywords() const override { return {"audio", "sound", "volume", "mute", "unmute"}; }
+  QString name() const override { return tr("Toggle Mute"); }
+  QString description() const override { return tr("Mute or unmute system audio"); }
+  std::vector<QString> keywords() const override {
+    return {"audio", "sound", "volume", "mute", "unmute", "Toggle Mute"};
+  }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::SpeakerOff}.setBackgroundTint(VOLUME_COMMAND_TINT);
   }
@@ -226,11 +248,11 @@ class ToggleMuteCommand : public BuiltinCallbackCommand {
     auto ctx = controller.context();
     auto audio = ctx->services->audioControl()->provider();
     if (!audio->toggleMute()) {
-      ctx->services->toastService()->failure("Failed to toggle mute");
+      ctx->services->toastService()->failure(tr("Failed to toggle mute"));
       return;
     }
     if (audio->isMuted()) {
-      ctx->navigation->showHud("Muted", ImageURL{BuiltinIcon::SpeakerOff});
+      ctx->navigation->showHud(tr("Muted"), ImageURL{BuiltinIcon::SpeakerOff});
     } else {
       showVolumeHud(ctx, audio->getVolume());
     }
@@ -238,9 +260,11 @@ class ToggleMuteCommand : public BuiltinCallbackCommand {
 };
 
 class SystemExtension : public BuiltinCommandRepository {
+  Q_DECLARE_TR_FUNCTIONS(SystemExtension)
+
   QString id() const override { return "system"; }
-  QString displayName() const override { return "System"; }
-  QString description() const override { return "System-related commands"; }
+  QString displayName() const override { return tr("System"); }
+  QString description() const override { return tr("System-related commands"); }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("cog").setBackgroundTint(SemanticColor::Accent);
   }

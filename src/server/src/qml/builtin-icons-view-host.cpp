@@ -7,7 +7,7 @@ void BuiltinIconsViewHost::initialize() {
 
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search icons...");
+  setSearchPlaceholderText(tr("Search icons..."));
 }
 
 void BuiltinIconsViewHost::loadInitialData() {
