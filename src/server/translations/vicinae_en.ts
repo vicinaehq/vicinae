@@ -4,6 +4,7 @@
 <context>
     <name>ClipboardHistoryViewHost</name>
     <message numerus="yes">
+        <location filename="../src/qml/clipboard-history-view-host.cpp" line="+184"/>
         <source>%n Items</source>
         <translation>
             <numerusform>%n Item</numerusform>
@@ -14,6 +15,7 @@
 <context>
     <name>QObject</name>
     <message numerus="yes">
+        <location filename="../src/utils/utils.cpp" line="+58"/>
         <source>%n year(s) ago</source>
         <translation>
             <numerusform>%n year ago</numerusform>
@@ -21,6 +23,7 @@
         </translation>
     </message>
     <message numerus="yes">
+        <location line="+3"/>
         <source>%n month(s) ago</source>
         <translation>
             <numerusform>%n month ago</numerusform>
@@ -28,6 +31,7 @@
         </translation>
     </message>
     <message numerus="yes">
+        <location line="+2"/>
         <source>%n day(s) ago</source>
         <translation>
             <numerusform>%n day ago</numerusform>
@@ -35,6 +39,7 @@
         </translation>
     </message>
     <message numerus="yes">
+        <location line="+2"/>
         <source>%n hour(s) ago</source>
         <translation>
             <numerusform>%n hour ago</numerusform>
@@ -42,6 +47,7 @@
         </translation>
     </message>
     <message numerus="yes">
+        <location line="+2"/>
         <source>%n minute(s) ago</source>
         <translation>
             <numerusform>%n minute ago</numerusform>

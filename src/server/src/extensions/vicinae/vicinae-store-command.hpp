@@ -9,7 +9,7 @@ class VicinaeStoreCommand : public BuiltinCallbackCommand {
   Q_DECLARE_TR_FUNCTIONS(VicinaeStoreCommand)
 
   QString id() const override { return "store"; }
-  QString name() const override { return tr("Extension Store"); }
+  QString name() const override { return QStringLiteral("Extension Store"); }
   QString description() const override { return tr("Install extensions from the Vicinae store"); }
   std::vector<QString> keywords() const override { return {"Extension Store"}; }
   QString extensionId() const override { return "vicinae"; }

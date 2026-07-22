@@ -456,7 +456,7 @@ Item {
                         spacing: 5
 
                         SidebarLabel {
-                            text: qsTr("README")
+                            text: "README"
                         }
                         TextLink {
                             label: qsTr("Open README")

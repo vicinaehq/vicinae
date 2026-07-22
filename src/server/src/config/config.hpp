@@ -289,7 +289,6 @@ struct ConfigValue {
   std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
-  // BCP47 language tag (e.g. "fr", "zh-CN") or "system" to follow the system locale.
   std::optional<std::string> language;
   int pixmapCacheMb = 50;
 

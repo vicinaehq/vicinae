@@ -38,7 +38,7 @@ QString AppRootItem::title() const { return m_app->displayName(); }
 QString AppRootItem::settingsDescription() const { return m_app->description(); }
 
 std::vector<std::pair<QString, QString>> AppRootItem::settingsMetadata() const {
-  return {{tr("ID"), m_app->id()},
+  return {{QStringLiteral("ID"), m_app->id()},
           {tr("Name"), m_app->displayName()},
           {tr("Where"), QString::fromStdString(m_app->path().string())},
           {tr("Opens in terminal"), m_app->isTerminalApp() ? tr("Yes") : tr("No")}};

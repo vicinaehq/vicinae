@@ -156,10 +156,12 @@ std::string generatePrefixedId(std::string_view prefix, int length) {
 QString formatSize(size_t bytes) {
   if (bytes <= 0) { return QCoreApplication::translate("utils", "0 bytes"); }
 
-  const std::vector<QString> units = {
-      QCoreApplication::translate("utils", "bytes"), QCoreApplication::translate("utils", "KB"),
-      QCoreApplication::translate("utils", "MB"),    QCoreApplication::translate("utils", "GB"),
-      QCoreApplication::translate("utils", "TB"),    QCoreApplication::translate("utils", "PB")};
+  const std::vector<QString> units = {QCoreApplication::translate("utils", "bytes"),
+                                      QStringLiteral("KB"),
+                                      QStringLiteral("MB"),
+                                      QStringLiteral("GB"),
+                                      QStringLiteral("TB"),
+                                      QStringLiteral("PB")};
   const double base = 1024.0;
 
   int unitIndex = static_cast<int>(std::floor(std::log(bytes) / std::log(base)));

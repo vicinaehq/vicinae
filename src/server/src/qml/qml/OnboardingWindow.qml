@@ -320,7 +320,7 @@ Window {
                             Layout.alignment: Qt.AlignHCenter
 
                             ViciButton {
-                                text: qsTr("GitHub")
+                                text: "GitHub"
                                 variant: "secondary"
                                 onClicked: onboarding.openUrl("https://github.com/vicinaehq/vicinae")
                             }

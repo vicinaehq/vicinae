@@ -179,7 +179,7 @@ void ShortcutFormViewHost::buildLinkCompletions() {
       },
       QVariantMap{
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("fingerprint"))},
-          {QStringLiteral("title"), tr("UUID")},
+          {QStringLiteral("title"), QStringLiteral("UUID")},
           {QStringLiteral("value"), QStringLiteral("uuid")},
       },
   };

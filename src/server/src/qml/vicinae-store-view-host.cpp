@@ -54,7 +54,7 @@ void VicinaeStoreViewHost::handleFinished() {
   m_section.setEntries(result->extensions, context()->services->extensionRegistry(), tr("Extensions"));
 }
 
-QString VicinaeStoreViewHost::initialNavigationTitle() const { return tr("Extension Store"); }
+QString VicinaeStoreViewHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
 
 ImageURL VicinaeStoreViewHost::initialNavigationIcon() const {
   return ImageURL::builtin("cart").setBackgroundTint(SemanticColor::Accent);

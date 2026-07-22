@@ -67,15 +67,17 @@ Some configuration and theming options may need to be accessed directly in QML. 
 
 ## Internationalization
 
-All user-visible strings must be marked for translation. English source text is the translation key.
+User-visible natural-language strings must be marked for translation. English source text is the translation key.
 
 - QML: wrap literals in `qsTr("...")`.
 - C++ classes with `Q_OBJECT`: use `tr("...")`.
 - C++ classes without `Q_OBJECT`: NEVER call the inherited `tr()` (it resolves to the wrong context at runtime). Add `Q_DECLARE_TR_FUNCTIONS(ClassName)` at the top of the class, or for a single string use `QCoreApplication::translate("ClassName", "...")`.
 - Never store translated strings in `static`/`constexpr` data. Plurals use `tr("%n item(s)", nullptr, n)`. Never concatenate translated fragments: use `%1` placeholders with `.arg()`.
-- When translating a command's `name()`, keep the original English title in `keywords()` so English search keeps working.
-- Never translate: ids, icon names (`ImageURL::builtin`), log output, storage keys, or strings compared as discriminants.
-- `src/server/translations/*.ts` are generated: never hand-edit source text in them. After changing user-visible strings, run the `update_translations` build target to resync catalogs.
+- Preserve brand and product names such as "Raycast Store", "Raycast Compat", and "Extension Store". Translate the surrounding prose, not the name itself.
+- Never translate stable technical notation such as ids, acronyms, unit symbols (`MB`, `GB`), filenames, protocol names, icon names (`ImageURL::builtin`), log output, storage keys, or strings compared as discriminants.
+- Use the platform's official localized terminology for operating-system features and settings pages.
+- Use stable explicit translation contexts for shared domain strings. Add translator notes or disambiguation only when the source text is genuinely ambiguous.
+- `src/server/translations/*.ts` are generated: never hand-edit source text in them. After changing user-visible strings, run `make update-translations`
 
 ## General guidelines
 

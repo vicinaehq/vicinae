@@ -22,7 +22,7 @@ Item {
 
         FormField {
             id: urlField
-            label: qsTr("URL")
+            label: "URL"
             error: root.host.linkError
             info: qsTr("The URL that will be opened by the specified app. You can make it dynamic by using placeholders such as {argument}.")
 

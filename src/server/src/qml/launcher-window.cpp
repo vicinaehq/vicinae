@@ -577,12 +577,12 @@ void LauncherWindow::buildFooterMenu() {
         ctx->navigation->closeWindow();
         ctx->settings->openTab(QStringLiteral("shortcuts"));
       }));
-  appSection->addAction(
-      new StaticAction(tr("Extension Store"), ImageURL::builtin("cart"), [](ApplicationContext *ctx) {
-        ctx->navigation->popToRoot();
-        ctx->navigation->clearSearchText();
-        ctx->navigation->pushView(new VicinaeStoreViewHost);
-      }));
+  appSection->addAction(new StaticAction(QStringLiteral("Extension Store"), ImageURL::builtin("cart"),
+                                         [](ApplicationContext *ctx) {
+                                           ctx->navigation->popToRoot();
+                                           ctx->navigation->clearSearchText();
+                                           ctx->navigation->pushView(new VicinaeStoreViewHost);
+                                         }));
 
   auto *helpSection = state->createSection();
   helpSection->addAction(

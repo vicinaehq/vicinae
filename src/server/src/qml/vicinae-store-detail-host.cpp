@@ -139,7 +139,7 @@ void VicinaeStoreDetailHost::openUrl(const QString &url) {
   ServiceRegistry::instance()->appDb()->openTarget(url);
 }
 
-QString VicinaeStoreDetailHost::initialNavigationTitle() const { return tr("Extension Store"); }
+QString VicinaeStoreDetailHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
 
 void VicinaeStoreDetailHost::createActions() {
   auto panel = std::make_unique<ListActionPanelState>();

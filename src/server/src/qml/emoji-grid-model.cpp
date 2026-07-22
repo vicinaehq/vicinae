@@ -16,8 +16,7 @@
 
 namespace {
 
-// lupdate extraction table for glyph::sections() labels, which are looked up at
-// display time via translate("emoji-categories", ...). Keep in sync with src/lib/glyph.
+// Keep in sync with glyph::sections().
 [[maybe_unused]] constexpr auto EMOJI_CATEGORY_LABELS = std::to_array<const char *>({
     QT_TRANSLATE_NOOP("emoji-categories", "Smileys & Emotion"),
     QT_TRANSLATE_NOOP("emoji-categories", "People & Body"),

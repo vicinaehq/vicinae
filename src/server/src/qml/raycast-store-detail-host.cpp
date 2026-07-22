@@ -207,7 +207,7 @@ void RaycastStoreDetailHost::openUrl(const QString &url) {
   ServiceRegistry::instance()->appDb()->openTarget(url);
 }
 
-QString RaycastStoreDetailHost::initialNavigationTitle() const { return tr("Extension Store"); }
+QString RaycastStoreDetailHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
 
 void RaycastStoreDetailHost::createActions() {
   auto panel = std::make_unique<ListActionPanelState>();

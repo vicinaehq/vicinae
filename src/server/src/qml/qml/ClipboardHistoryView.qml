@@ -197,7 +197,7 @@ Item {
                     value: root.host.detailCopiedAt
                 },
                 {
-                    label: qsTr("MD5"),
+                    label: "MD5",
                     value: root.host.detailMd5
                 }
             ]

@@ -1188,10 +1188,7 @@ else()
 	message(STATUS "Precompiled headers are disabled")
 endif()
 
-# lupdate only scans files it is given: headers are not listed as target sources, and
-# platform-guarded sources (.mm, WIN32-only .cpp) are absent from this platform's target.
-# Glob everything so extraction is complete and platform-independent (lupdate does not
-# evaluate preprocessor conditionals).
+# Include sources excluded from the current platform's target.
 file(GLOB_RECURSE VICINAE_I18N_HEADERS CONFIGURE_DEPENDS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
@@ -1203,7 +1200,7 @@ qt_add_translations(${TARGET}
 	TS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
 	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
 	SOURCES ${VICINAE_I18N_HEADERS}
-	LUPDATE_OPTIONS -locations none -no-obsolete
+	LUPDATE_OPTIONS -locations relative -no-obsolete
 	MERGE_QT_TRANSLATIONS
 	QT_TRANSLATION_CATALOGS qtbase qtdeclarative
 )

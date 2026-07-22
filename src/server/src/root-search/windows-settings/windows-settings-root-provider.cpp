@@ -59,12 +59,12 @@ constexpr auto SETTINGS_PAGES = std::to_array<WinSettingsPage>({
     {"touchpad", QT_TRANSLATE_NOOP("WinSettingsPage", "Touchpad"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:devices-touchpad", SegoeIcon::Touchpad, "gestures trackpad"},
     {"pen", QT_TRANSLATE_NOOP("WinSettingsPage", "Pen & Windows Ink"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:pen", SegoeIcon::Edit, "tablet stylus"},
     {"autoplay", QT_TRANSLATE_NOOP("WinSettingsPage", "AutoPlay"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:autoplay", SegoeIcon::Play, "removable drive memory card"},
-    {"usb", QT_TRANSLATE_NOOP("WinSettingsPage", "USB"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:usb", SegoeIcon::USB, ""},
+    {"usb", "USB", QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:usb", SegoeIcon::USB, ""},
 
     {"network", QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-status", SegoeIcon::Globe, "internet status connection"},
     {"wifi", QT_TRANSLATE_NOOP("WinSettingsPage", "Wi-Fi"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-wifi", SegoeIcon::Wifi, "wireless wlan"},
     {"ethernet", QT_TRANSLATE_NOOP("WinSettingsPage", "Ethernet"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-ethernet", SegoeIcon::Ethernet, "lan wired"},
-    {"vpn", QT_TRANSLATE_NOOP("WinSettingsPage", "VPN"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-vpn", SegoeIcon::VPN, "tunnel"},
+    {"vpn", "VPN", QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-vpn", SegoeIcon::VPN, "tunnel"},
     {"mobile-hotspot", QT_TRANSLATE_NOOP("WinSettingsPage", "Mobile Hotspot"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-mobilehotspot", SegoeIcon::InternetSharing, "tethering"},
     {"airplane-mode", QT_TRANSLATE_NOOP("WinSettingsPage", "Airplane Mode"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-airplanemode", SegoeIcon::Airplane, "flight"},
     {"proxy", QT_TRANSLATE_NOOP("WinSettingsPage", "Proxy"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-proxy", SegoeIcon::Globe, ""},
@@ -190,7 +190,7 @@ std::vector<QString> WinSettingsPageRootItem::keywords() const {
 }
 
 std::vector<std::pair<QString, QString>> WinSettingsPageRootItem::settingsMetadata() const {
-  return {{tr("Name"), title()}, {tr("Category"), subtitle()}, {tr("URL"), m_page.url}};
+  return {{tr("Name"), title()}, {tr("Category"), subtitle()}, {QStringLiteral("URL"), m_page.url}};
 }
 
 std::unique_ptr<ActionPanelState>
