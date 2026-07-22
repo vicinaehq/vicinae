@@ -142,7 +142,7 @@ private:
 #endif
 
 static void installTranslators(const std::optional<std::string> &language) {
-  const bool useSystem = !language || language->empty();
+  const bool useSystem = !language || *language == "system";
   const QLocale locale = useSystem ? QLocale::system() : QLocale(QString::fromStdString(*language));
 
   static QTranslator appTranslator;

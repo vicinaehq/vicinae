@@ -32,6 +32,15 @@ debug:
 	cmake --build --preset $(PRESET_OS)-debug
 .PHONY: debug
 
+update-translations:
+	cmake --preset $(PRESET_OS)-debug
+	cmake --build --preset $(PRESET_OS)-debug --target update_translations
+.PHONY: update-translations
+
+check-translations: update-translations
+	git diff --exit-code -- src/server/translations
+.PHONY: check-translations
+
 mac-bundle:
 	./scripts/macdeploy.sh $(BUILD_DIR)
 .PHONY: mac-bundle

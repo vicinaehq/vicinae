@@ -325,7 +325,7 @@ QVariantList GeneralSettingsModel::languageItems() const {
 
 QVariant GeneralSettingsModel::currentLanguage() const {
   const auto &language = cfg().language;
-  if (!language || language->empty()) {
+  if (!language || *language == "system") {
     return makeDropdownItem(QStringLiteral("system"), tr("System default"));
   }
   auto code = QString::fromStdString(*language);
@@ -335,7 +335,7 @@ QVariant GeneralSettingsModel::currentLanguage() const {
 void GeneralSettingsModel::selectLanguage(const QString &id) {
   cfgManager().updateUser([&](config::Partial<config::ConfigValue> &value) {
     if (id == QStringLiteral("system")) {
-      value.language = std::string{};
+      value.language = "system";
     } else {
       value.language = id.toStdString();
     }
