@@ -29,6 +29,7 @@ public:
   const ListItemViewModel &itemAt(int i) const;
 
 protected:
+  QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
   QString itemIconSource(int i) const override;

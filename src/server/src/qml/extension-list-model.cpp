@@ -47,6 +47,8 @@ void ExtensionListSection::onSelected(int i) {
   if (m_onItemSelected) m_onItemSelected(&itemAt(i));
 }
 
+QString ExtensionListSection::itemId(int i) const { return QString::fromStdString(itemAt(i).id); }
+
 QString ExtensionListSection::itemTitle(int i) const { return QString::fromStdString(itemAt(i).title); }
 
 QString ExtensionListSection::itemSubtitle(int i) const { return QString::fromStdString(itemAt(i).subtitle); }
@@ -135,9 +137,9 @@ void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSele
     refreshActionPanel();
   }
 
-  refreshCurrentDetail();
-
   if (wasShowingDetail != m_model.isShowingDetail) emit isShowingDetailChanged();
+
+  refreshCurrentDetail();
 
   emit emptyViewChanged();
 }
