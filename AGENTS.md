@@ -65,6 +65,18 @@ Try to keep the amount of logic in these files small. Logic in QML is only for p
 
 Some configuration and theming options may need to be accessed directly in QML. We expose a global config and theme bridges for this use case.
 
+## Internationalization
+
+All user-visible strings must be marked for translation. English source text is the translation key.
+
+- QML: wrap literals in `qsTr("...")`.
+- C++ classes with `Q_OBJECT`: use `tr("...")`.
+- C++ classes without `Q_OBJECT`: NEVER call the inherited `tr()` (it resolves to the wrong context at runtime). Add `Q_DECLARE_TR_FUNCTIONS(ClassName)` at the top of the class, or for a single string use `QCoreApplication::translate("ClassName", "...")`.
+- Never store translated strings in `static`/`constexpr` data. Plurals use `tr("%n item(s)", nullptr, n)`. Never concatenate translated fragments: use `%1` placeholders with `.arg()`.
+- When translating a command's `name()`, keep the original English title in `keywords()` so English search keeps working.
+- Never translate: ids, icon names (`ImageURL::builtin`), log output, storage keys, or strings compared as discriminants.
+- `src/server/translations/*.ts` are generated: never hand-edit source text in them. After changing user-visible strings, run the `update_translations` build target to resync catalogs.
+
 ## General guidelines
 
 - Search should always be fuzzy, unless it has a good reason not to. We have fuzzy utilities already, and we like to use our fuzzy trait system by specializing the `FuzzySearchable` template

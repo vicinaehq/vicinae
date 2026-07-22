@@ -93,7 +93,6 @@
 #include "generated/version.h"
 #include <filesystem>
 #include <QGuiApplication>
-#include <QLibraryInfo>
 #include <QPointer>
 #include <QQuickWindow>
 #include <QString>
@@ -145,14 +144,6 @@ private:
 static void installTranslators(const std::optional<std::string> &language) {
   const bool useSystem = !language || language->empty();
   const QLocale locale = useSystem ? QLocale::system() : QLocale(QString::fromStdString(*language));
-  QLocale::setDefault(locale);
-
-  // Fallback for builds where Qt catalogs are not merged into the app catalog (Qt < 6.8).
-  static QTranslator qtTranslator;
-  if (qtTranslator.load(locale, QStringLiteral("qtbase"), QStringLiteral("_"),
-                        QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
-    QCoreApplication::installTranslator(&qtTranslator);
-  }
 
   static QTranslator appTranslator;
   if (appTranslator.load(locale, QStringLiteral("vicinae"), QStringLiteral("_"), QStringLiteral(":/i18n"))) {
@@ -509,12 +500,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #endif
 
     ServiceRegistry::instance()->telemetry()->setEnabled(next.telemetry.systemInfo);
-
-    if (next.language != prev.language) {
-      ctx.navigation->confirmAlert(
-          QCoreApplication::translate("server", "Language changed"),
-          QCoreApplication::translate("server", "Restart Vicinae to apply the new language."), []() {});
-    }
   };
 
   auto cfgService = ServiceRegistry::instance()->config();

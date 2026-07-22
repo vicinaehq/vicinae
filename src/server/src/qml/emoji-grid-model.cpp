@@ -11,9 +11,33 @@
 #include "view-utils.hpp"
 #include <QCoreApplication>
 #include <algorithm>
+#include <array>
 #include <utility>
 
 namespace {
+
+// lupdate extraction table for glyph::sections() labels, which are looked up at
+// display time via translate("emoji-categories", ...). Keep in sync with src/lib/glyph.
+[[maybe_unused]] constexpr auto EMOJI_CATEGORY_LABELS = std::to_array<const char *>({
+    QT_TRANSLATE_NOOP("emoji-categories", "Smileys & Emotion"),
+    QT_TRANSLATE_NOOP("emoji-categories", "People & Body"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Animals & Nature"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Food & Drink"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Travel & Places"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Activities"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Objects"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Symbols"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Flags"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Math"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Arrows"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Currency"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Punctuation"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Shapes"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Misc Symbols"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Greek"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Number Forms"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Fancy Letters"),
+});
 
 QString getFormattedCodepoint(std::string_view glyph) {
   auto codepoint = qStringFromStdView(glyph).toUcs4().constFirst();
@@ -372,7 +396,8 @@ void EmojiGridModel::rebuildSections() {
       items.reserve(section.members.size());
       for (const auto &item : section.members)
         items.push_back(&item);
-      src.setEmojis(QString::fromUtf8(section.label.data(), section.label.size()), items);
+      const QByteArray label(section.label.data(), static_cast<qsizetype>(section.label.size()));
+      src.setEmojis(QCoreApplication::translate("emoji-categories", label.constData()), items);
       addSource(&src);
     }
   } else {

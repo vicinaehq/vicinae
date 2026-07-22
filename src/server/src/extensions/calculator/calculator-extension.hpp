@@ -12,13 +12,6 @@
 #include "vicinae.hpp"
 #include <qfuturewatcher.h>
 
-static const std::vector<Preference::DropdownData::Option> refreshRatesOptions = {
-    {"Every hour", "hourly"},
-    {"Every day", "daily"},
-    {"Every week", "weekly"},
-    {"Every month", "monthly"},
-};
-
 class CalculatorHistoryCommand : public BuiltinViewCommand<CalcHistoryViewHost> {
   Q_DECLARE_TR_FUNCTIONS(CalculatorHistoryCommand)
   QString id() const override { return "history"; }

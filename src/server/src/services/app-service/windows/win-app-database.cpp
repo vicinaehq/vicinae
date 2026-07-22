@@ -989,12 +989,12 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::findByClass(const QString &name) 
 }
 
 PreferenceList WindowsAppDatabase::preferences() const {
-  auto defaultAction =
-      Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
+  auto defaultAction = Preference::makeDropdown(
+      "defaultAction", {{tr("Focus window"), "focus"}, {tr("Launch app"), "launch"}});
   defaultAction.setDefaultValue("focus");
-  defaultAction.setTitle("Default action");
-  defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
-                               "if the app has no open window.");
+  defaultAction.setTitle(tr("Default action"));
+  defaultAction.setDescription(tr("Action to perform when the return key is pressed. Always default to "
+                                  "'launch' if the app has no open window."));
   return {defaultAction};
 }
 
@@ -1008,7 +1008,7 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::fileBrowser() const {
   } else {
     return nullptr;
   }
-  return appForExecutable(explorer, QStringLiteral("File Explorer"));
+  return appForExecutable(explorer, tr("File Explorer"));
 }
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::genericTextEditor() const {
@@ -1027,9 +1027,9 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::webBrowser() const {
 WindowsAppDatabase::AppPtr WindowsAppDatabase::terminalEmulator() const {
   ScopedCom com;
   if (!defaultTerminalIsConhost()) {
-    if (auto wt = searchExecutable(L"wt.exe")) return appForExecutable(*wt, QStringLiteral("Terminal"));
+    if (auto wt = searchExecutable(L"wt.exe")) return appForExecutable(*wt, tr("Terminal"));
   }
-  return appForExecutable(envPath(L"ComSpec").value_or(L"cmd.exe"), QStringLiteral("Command Prompt"));
+  return appForExecutable(envPath(L"ComSpec").value_or(L"cmd.exe"), tr("Command Prompt"));
 }
 
 bool WindowsAppDatabase::showInFileBrowser(const fs::path &path, bool select) const {

@@ -45,11 +45,11 @@
     </message>
     <message>
         <source>Activate on single click</source>
-        <translation>Activer d&apos;un simple clic</translation>
+        <translation>Activer d’un simple clic</translation>
     </message>
     <message>
         <source>Activate items with a single click instead of requiring a double click.</source>
-        <translation>Activer les éléments d&apos;un simple clic au lieu de nécessiter un double clic.</translation>
+        <translation>Activer les éléments d’un simple clic au lieu de nécessiter un double clic.</translation>
     </message>
     <message>
         <source>Wrap navigation</source>
@@ -57,15 +57,15 @@
     </message>
     <message>
         <source>Wrap around to the opposite end when moving past the first or last item.</source>
-        <translation>Revenir à l&apos;extrémité opposée en dépassant le premier ou le dernier élément.</translation>
+        <translation>Revenir à l’extrémité opposée en dépassant le premier ou le dernier élément.</translation>
     </message>
     <message>
         <source>IME handling</source>
-        <translation>Gestion de l&apos;IME</translation>
+        <translation>Gestion de l’IME</translation>
     </message>
     <message>
         <source>Include IME Preedit strings as part of search queries.</source>
-        <translation>Inclure les chaînes de pré-édition de l&apos;IME dans les requêtes de recherche.</translation>
+        <translation>Inclure les chaînes de pré-édition de l’IME dans les requêtes de recherche.</translation>
     </message>
     <message>
         <source>Keybinding Scheme</source>
@@ -73,11 +73,11 @@
     </message>
     <message>
         <source>Default uses the standard macOS keys (arrows, Ctrl+N/P); Vim uses Ctrl+J/K and Ctrl+H/L; Emacs uses Ctrl+N/P and Ctrl+Opt+B/F for navigation, plus Emacs editing in the search bar.</source>
-        <translation>Par défaut utilise les touches macOS standard (flèches, Ctrl+N/P) ; Vim utilise Ctrl+J/K et Ctrl+H/L ; Emacs utilise Ctrl+N/P et Ctrl+Opt+B/F pour la navigation, ainsi que l&apos;édition Emacs dans la barre de recherche.</translation>
+        <translation>Par défaut utilise les touches macOS standard (flèches, Ctrl+N/P) ; Vim utilise Ctrl+J/K et Ctrl+H/L ; Emacs utilise Ctrl+N/P et Ctrl+Opt+B/F pour la navigation, ainsi que l’édition Emacs dans la barre de recherche.</translation>
     </message>
     <message>
         <source>Default and Vim use Ctrl+J/K and Ctrl+H/L; Emacs uses Ctrl+N/P and Ctrl+Alt+B/F for navigation, plus Emacs editing in the search bar.</source>
-        <translation>Par défaut et Vim utilisent Ctrl+J/K et Ctrl+H/L ; Emacs utilise Ctrl+N/P et Ctrl+Alt+B/F pour la navigation, ainsi que l&apos;édition Emacs dans la barre de recherche.</translation>
+        <translation>Par défaut et Vim utilisent Ctrl+J/K et Ctrl+H/L ; Emacs utilise Ctrl+N/P et Ctrl+Alt+B/F pour la navigation, ainsi que l’édition Emacs dans la barre de recherche.</translation>
     </message>
     <message>
         <source>Search</source>
@@ -89,7 +89,7 @@
     </message>
     <message>
         <source>Files are searched asynchronously, so if enabled you should expect a slight delay for file search results to show up.</source>
-        <translation>Les fichiers sont recherchés de manière asynchrone : si cette option est activée, un léger délai est à prévoir avant l&apos;affichage des résultats de fichiers.</translation>
+        <translation>Les fichiers sont recherchés de manière asynchrone : si cette option est activée, un léger délai est à prévoir avant l’affichage des résultats de fichiers.</translation>
     </message>
     <message>
         <source>Favicon Fetching</source>
@@ -97,7 +97,7 @@
     </message>
     <message>
         <source>The favicon provider used to load favicons where needed. Select &apos;None&apos; to turn off favicon loading.</source>
-        <translation>Le fournisseur utilisé pour charger les favicons lorsque nécessaire. Sélectionnez &apos;Aucun&apos; pour désactiver le chargement des favicons.</translation>
+        <translation>Le fournisseur utilisé pour charger les favicons lorsque nécessaire. Sélectionnez ’Aucun’ pour désactiver le chargement des favicons.</translation>
     </message>
     <message>
         <source>System</source>
@@ -109,7 +109,7 @@
     </message>
     <message>
         <source>Whether to spawn the input server at startup. This needs to be enabled in order to support snippets, paste to active window, and other features that require input monitoring or injection.</source>
-        <translation>Indique si le serveur de saisie doit être lancé au démarrage. Il doit être activé pour prendre en charge les snippets, le collage dans la fenêtre active et d&apos;autres fonctionnalités nécessitant la surveillance ou l&apos;injection de saisie.</translation>
+        <translation>Indique si le serveur de saisie doit être lancé au démarrage. Il doit être activé pour prendre en charge les snippets, le collage dans la fenêtre active et d’autres fonctionnalités nécessitant la surveillance ou l’injection de saisie.</translation>
     </message>
     <message>
         <source>Security</source>
@@ -121,7 +121,7 @@
     </message>
     <message>
         <source>Encrypt sensitive data at rest, such as clipboard history and internal databases (OAuth tokens, extension local storage, API keys). Note that some components, such as on-disk clipboard history, may not be retroactively affected when toggling this option. Turning on this option may ask you to unlock your keychain. Requires a restart in order to apply.</source>
-        <translation>Chiffrer les données sensibles au repos, comme l&apos;historique du presse-papiers et les bases de données internes (jetons OAuth, stockage local des extensions, clés API). Notez que certains composants, comme l&apos;historique du presse-papiers sur disque, peuvent ne pas être affectés rétroactivement lors du basculement de cette option. Activer cette option peut vous demander de déverrouiller votre trousseau. Nécessite un redémarrage pour être appliqué.</translation>
+        <translation>Chiffrer les données sensibles au repos, comme l’historique du presse-papiers et les bases de données internes (jetons OAuth, stockage local des extensions, clés API). Notez que certains composants, comme l’historique du presse-papiers sur disque, peuvent ne pas être affectés rétroactivement lors du basculement de cette option. Activer cette option peut vous demander de déverrouiller votre trousseau. Nécessite un redémarrage pour être appliqué.</translation>
     </message>
 </context>
 <context>
@@ -158,7 +158,7 @@
     <name>AliasFormViewHost</name>
     <message>
         <source>Set alias - %1</source>
-        <translation>Définir l&apos;alias - %1</translation>
+        <translation>Définir l’alias - %1</translation>
     </message>
     <message>
         <source>Submit</source>
@@ -170,7 +170,57 @@
     </message>
     <message>
         <source>Failed to modify alias</source>
-        <translation>Échec de la modification de l&apos;alias</translation>
+        <translation>Échec de la modification de l’alias</translation>
+    </message>
+</context>
+<context>
+    <name>AppRootItem</name>
+    <message>
+        <source>Application</source>
+        <translation>Application</translation>
+    </message>
+    <message>
+        <source>ID</source>
+        <translation>ID</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nom</translation>
+    </message>
+    <message>
+        <source>Where</source>
+        <translation>Emplacement</translation>
+    </message>
+    <message>
+        <source>Opens in terminal</source>
+        <translation>S’ouvre dans un terminal</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation>Oui</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>Non</translation>
+    </message>
+    <message>
+        <source>Open Application</source>
+        <translation>Ouvrir l’application</translation>
+    </message>
+    <message>
+        <source>Copy App ID</source>
+        <translation>Copier l’ID de l’application</translation>
+    </message>
+    <message>
+        <source>Copy App Location</source>
+        <translation>Copier l’emplacement de l’application</translation>
+    </message>
+</context>
+<context>
+    <name>AppRootProvider</name>
+    <message>
+        <source>Applications</source>
+        <translation>Applications</translation>
     </message>
 </context>
 <context>
@@ -204,11 +254,11 @@
     </message>
     <message>
         <source>Icon Theme</source>
-        <translation>Thème d&apos;icônes</translation>
+        <translation>Thème d’icônes</translation>
     </message>
     <message>
         <source>The icon theme used for system icons (applications, mime types, folder icons...). Does not affect builtin Vicinae icons.</source>
-        <translation>Le thème d&apos;icônes utilisé pour les icônes système (applications, types MIME, icônes de dossiers...). N&apos;affecte pas les icônes intégrées de Vicinae.</translation>
+        <translation>Le thème d’icônes utilisé pour les icônes système (applications, types MIME, icônes de dossiers...). N’affecte pas les icônes intégrées de Vicinae.</translation>
     </message>
     <message>
         <source>Window</source>
@@ -220,7 +270,7 @@
     </message>
     <message>
         <source>Background material applied to the launcher window. Lower the window opacity to see it.</source>
-        <translation>Matériau d&apos;arrière-plan appliqué à la fenêtre du lanceur. Réduisez l&apos;opacité de la fenêtre pour le voir.</translation>
+        <translation>Matériau d’arrière-plan appliqué à la fenêtre du lanceur. Réduisez l’opacité de la fenêtre pour le voir.</translation>
     </message>
     <message>
         <source>Window opacity</source>
@@ -236,7 +286,7 @@
     </message>
     <message>
         <source>Show only the search bar at root; expand when a query is entered.</source>
-        <translation>N&apos;afficher que la barre de recherche à la racine ; s&apos;étend lorsqu&apos;une requête est saisie.</translation>
+        <translation>N’afficher que la barre de recherche à la racine ; s’étend lorsqu’une requête est saisie.</translation>
     </message>
     <message>
         <source>Use layer shell</source>
@@ -244,7 +294,7 @@
     </message>
     <message>
         <source>Anchor the launcher as a Wayland layer surface (wlr-layer-shell) instead of a regular window. May require reopening Vicinae to fully apply.</source>
-        <translation>Ancrer le lanceur comme une surface de couche Wayland (wlr-layer-shell) plutôt qu&apos;une fenêtre classique. Peut nécessiter de rouvrir Vicinae pour s&apos;appliquer complètement.</translation>
+        <translation>Ancrer le lanceur comme une surface de couche Wayland (wlr-layer-shell) plutôt qu’une fenêtre classique. Peut nécessiter de rouvrir Vicinae pour s’appliquer complètement.</translation>
     </message>
     <message>
         <source>Client-side decorations</source>
@@ -252,7 +302,7 @@
     </message>
     <message>
         <source>Let Vicinae draw its own rounded borders and shadow instead of relying on the windowing system.</source>
-        <translation>Laisser Vicinae dessiner ses propres bordures arrondies et son ombre plutôt que de s&apos;en remettre au système de fenêtrage.</translation>
+        <translation>Laisser Vicinae dessiner ses propres bordures arrondies et son ombre plutôt que de s’en remettre au système de fenêtrage.</translation>
     </message>
     <message>
         <source>Corner rounding</source>
@@ -280,11 +330,11 @@
     </message>
     <message>
         <source>Shadow size</source>
-        <translation>Taille de l&apos;ombre</translation>
+        <translation>Taille de l’ombre</translation>
     </message>
     <message>
         <source>Size of the drop shadow cast by the launcher window, in pixels.</source>
-        <translation>Taille de l&apos;ombre portée par la fenêtre du lanceur, en pixels.</translation>
+        <translation>Taille de l’ombre portée par la fenêtre du lanceur, en pixels.</translation>
     </message>
     <message>
         <source>e.g. 12</source>
@@ -296,7 +346,7 @@
     </message>
     <message>
         <source>Use the platform&apos;s native text rendering for system-consistent text. Disable for Qt distance-field rendering (usually faster). May require reopening Vicinae to fully apply.</source>
-        <translation>Utiliser le rendu de texte natif de la plateforme pour un texte cohérent avec le système. Désactivez pour utiliser le rendu distance-field de Qt (généralement plus rapide). Peut nécessiter de rouvrir Vicinae pour s&apos;appliquer complètement.</translation>
+        <translation>Utiliser le rendu de texte natif de la plateforme pour un texte cohérent avec le système. Désactivez pour utiliser le rendu distance-field de Qt (généralement plus rapide). Peut nécessiter de rouvrir Vicinae pour s’appliquer complètement.</translation>
     </message>
 </context>
 <context>
@@ -311,6 +361,13 @@
     </message>
 </context>
 <context>
+    <name>BringToWorkspaceAction</name>
+    <message>
+        <source>Bring to current workspace</source>
+        <translation>Amener sur l’espace de travail actuel</translation>
+    </message>
+</context>
+<context>
     <name>BrowseAppsSection</name>
     <message>
         <source>Applications ({count})</source>
@@ -322,15 +379,15 @@
     </message>
     <message>
         <source>Open Application</source>
-        <translation>Ouvrir l&apos;application</translation>
+        <translation>Ouvrir l’application</translation>
     </message>
     <message>
         <source>Copy App ID</source>
-        <translation>Copier l&apos;ID de l&apos;application</translation>
+        <translation>Copier l’ID de l’application</translation>
     </message>
     <message>
         <source>Copy App Location</source>
-        <translation>Copier l&apos;emplacement de l&apos;application</translation>
+        <translation>Copier l’emplacement de l’application</translation>
     </message>
 </context>
 <context>
@@ -356,6 +413,59 @@
     <message>
         <source>Browser extension related commands.</source>
         <translation>Commandes liées à l’extension navigateur.</translation>
+    </message>
+</context>
+<context>
+    <name>BrowserTabActionGenerator</name>
+    <message>
+        <source>Switch to tab</source>
+        <translation>Basculer vers l’onglet</translation>
+    </message>
+    <message>
+        <source>Convert to shortcut</source>
+        <translation>Convertir en raccourci</translation>
+    </message>
+    <message>
+        <source>Convert tab to shortcut</source>
+        <translation>Convertir l’onglet en raccourci</translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation>Fermer l’onglet</translation>
+    </message>
+    <message>
+        <source>Failed to close tab: %1</source>
+        <translation>Échec de la fermeture de l’onglet : %1</translation>
+    </message>
+    <message>
+        <source>Copy URL</source>
+        <translation>Copier l’URL</translation>
+    </message>
+    <message>
+        <source>Copy Title</source>
+        <translation>Copier le titre</translation>
+    </message>
+    <message>
+        <source>Copy ID</source>
+        <translation>Copier l’ID</translation>
+    </message>
+</context>
+<context>
+    <name>BrowserTabProvider</name>
+    <message>
+        <source>Browser Tabs</source>
+        <translation>Onglets de navigateur</translation>
+    </message>
+</context>
+<context>
+    <name>BrowserTabRootItem</name>
+    <message>
+        <source>Browser Tab</source>
+        <translation>Onglet de navigateur</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Onglet</translation>
     </message>
 </context>
 <context>
@@ -388,7 +498,7 @@
     </message>
     <message>
         <source>Copy Icon Name</source>
-        <translation>Copier le nom de l&apos;icône</translation>
+        <translation>Copier le nom de l’icône</translation>
     </message>
 </context>
 <context>
@@ -507,6 +617,33 @@
     </message>
 </context>
 <context>
+    <name>CalculatorService</name>
+    <message>
+        <source>Pinned</source>
+        <translation>Épinglés</translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation>Aujourd’hui</translation>
+    </message>
+    <message>
+        <source>This week</source>
+        <translation>Cette semaine</translation>
+    </message>
+    <message>
+        <source>This month</source>
+        <translation>Ce mois-ci</translation>
+    </message>
+    <message>
+        <source>This year</source>
+        <translation>Cette année</translation>
+    </message>
+    <message>
+        <source>A few years ago</source>
+        <translation>Il y a quelques années</translation>
+    </message>
+</context>
+<context>
     <name>CategoryFilterAccessory</name>
     <message>
         <source>All</source>
@@ -524,11 +661,11 @@
     <name>ClearClipboardHistoryCommand</name>
     <message>
         <source>Clear Clipboard History</source>
-        <translation>Effacer l&apos;historique du presse-papiers</translation>
+        <translation>Effacer l’historique du presse-papiers</translation>
     </message>
     <message>
         <source>Clear the clipboard history</source>
-        <translation>Effacer l&apos;historique du presse-papiers</translation>
+        <translation>Effacer l’historique du presse-papiers</translation>
     </message>
     <message>
         <source>Are you sure?</source>
@@ -540,7 +677,7 @@
     </message>
     <message>
         <source>Failed to clear clipboard history</source>
-        <translation>Échec de l&apos;effacement de l&apos;historique du presse-papiers</translation>
+        <translation>Échec de l’effacement de l’historique du presse-papiers</translation>
     </message>
     <message>
         <source>Clipboard history cleared</source>
@@ -559,7 +696,7 @@
     </message>
     <message>
         <source>Failed to clear clipboard</source>
-        <translation>Échec de l&apos;effacement du presse-papiers</translation>
+        <translation>Échec de l’effacement du presse-papiers</translation>
     </message>
     <message>
         <source>Clipboard cleared</source>
@@ -582,7 +719,7 @@
     </message>
     <message>
         <source>Erase clipboard history every time the vicinae server is started</source>
-        <translation>Effacer l&apos;historique du presse-papiers à chaque démarrage du serveur Vicinae</translation>
+        <translation>Effacer l’historique du presse-papiers à chaque démarrage du serveur Vicinae</translation>
     </message>
     <message>
         <source>Clipboard monitoring</source>
@@ -590,7 +727,7 @@
     </message>
     <message>
         <source>Whether clipboard activity is recorded in the history. Every clipboard action performed while this is turned off will not be recorded.</source>
-        <translation>Détermine si l&apos;activité du presse-papiers est enregistrée dans l&apos;historique. Aucune action du presse-papiers effectuée lorsque cette option est désactivée ne sera enregistrée.</translation>
+        <translation>Détermine si l’activité du presse-papiers est enregistrée dans l’historique. Aucune action du presse-papiers effectuée lorsque cette option est désactivée ne sera enregistrée.</translation>
     </message>
     <message>
         <source>Ignore Passwords</source>
@@ -598,7 +735,7 @@
     </message>
     <message>
         <source>Ignore selections that can be identified as a password. This relies on the application providing an explicit hint that the selection is a password. While most password managers and private browser windows do, some might not implement this properly.</source>
-        <translation>Ignorer les sélections pouvant être identifiées comme des mots de passe. Cela repose sur le fait que l&apos;application indique explicitement que la sélection est un mot de passe. La plupart des gestionnaires de mots de passe et des fenêtres de navigation privée le font, mais certains peuvent ne pas l&apos;implémenter correctement.</translation>
+        <translation>Ignorer les sélections pouvant être identifiées comme des mots de passe. Cela repose sur le fait que l’application indique explicitement que la sélection est un mot de passe. La plupart des gestionnaires de mots de passe et des fenêtres de navigation privée le font, mais certains peuvent ne pas l’implémenter correctement.</translation>
     </message>
 </context>
 <context>
@@ -640,7 +777,7 @@
     </message>
     <message>
         <source>The default action to perform on pressing return. Paste is only available if your environment supports it.</source>
-        <translation>L&apos;action par défaut à effectuer en appuyant sur Entrée. Coller n&apos;est disponible que si votre environnement le prend en charge.</translation>
+        <translation>L’action par défaut à effectuer en appuyant sur Entrée. Coller n’est disponible que si votre environnement le prend en charge.</translation>
     </message>
     <message>
         <source>Clipboard History</source>
@@ -689,7 +826,7 @@
     </message>
     <message>
         <source>Browse clipboard history...</source>
-        <translation>Parcourir l&apos;historique du presse-papiers...</translation>
+        <translation>Parcourir l’historique du presse-papiers...</translation>
     </message>
     <message>
         <source>Clipboard monitoring unavailable</source>
@@ -716,7 +853,7 @@
     </message>
     <message>
         <source>Vicinae could not decrypt the data for this selection. It was most likely encrypted with a different key and cannot be recovered. You can remove this entry from the history.</source>
-        <translation>Vicinae n&apos;a pas pu déchiffrer les données de cette sélection. Elles ont très probablement été chiffrées avec une autre clé et ne peuvent pas être récupérées. Vous pouvez supprimer cette entrée de l&apos;historique.</translation>
+        <translation>Vicinae n’a pas pu déchiffrer les données de cette sélection. Elles ont très probablement été chiffrées avec une autre clé et ne peuvent pas être récupérées. Vous pouvez supprimer cette entrée de l’historique.</translation>
     </message>
     <message>
         <source>Data unavailable</source>
@@ -732,7 +869,29 @@
     </message>
     <message>
         <source>Data for this selection was previously encrypted but the clipboard is not currently configured to use encryption. You should be able to fix this by enabling it in the settings.</source>
-        <translation>Les données de cette sélection ont été chiffrées, mais le presse-papiers n&apos;est pas actuellement configuré pour utiliser le chiffrement. Vous devriez pouvoir corriger cela en l&apos;activant dans les paramètres.</translation>
+        <translation>Les données de cette sélection ont été chiffrées, mais le presse-papiers n’est pas actuellement configuré pour utiliser le chiffrement. Vous devriez pouvoir corriger cela en l’activant dans les paramètres.</translation>
+    </message>
+</context>
+<context>
+    <name>ClipboardService</name>
+    <message>
+        <source>Image (%1x%2)</source>
+        <translation>Image (%1x%2)</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation>Image</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Inconnu</translation>
+    </message>
+</context>
+<context>
+    <name>CloseWindowAction</name>
+    <message>
+        <source>Close window</source>
+        <translation>Fermer la fenêtre</translation>
     </message>
 </context>
 <context>
@@ -758,10 +917,59 @@
     </message>
 </context>
 <context>
+    <name>CommandRootItem</name>
+    <message>
+        <source>Command</source>
+        <translation>Commande</translation>
+    </message>
+    <message>
+        <source>Open command</source>
+        <translation>Ouvrir la commande</translation>
+    </message>
+    <message>
+        <source>Copy extension path</source>
+        <translation>Copier le chemin de l’extension</translation>
+    </message>
+    <message>
+        <source>Internal Command</source>
+        <translation>Commande interne</translation>
+    </message>
+</context>
+<context>
     <name>CompletionPopup</name>
     <message>
         <source>Filter...</source>
         <translation>Filtrer...</translation>
+    </message>
+</context>
+<context>
+    <name>CopyCalculatorAnswerAction</name>
+    <message>
+        <source>Answer copied to clipboard</source>
+        <translation>Réponse copiée dans le presse-papiers</translation>
+    </message>
+    <message>
+        <source>Failed to copy answer</source>
+        <translation>Échec de la copie de la réponse</translation>
+    </message>
+    <message>
+        <source>Copy Result</source>
+        <translation>Copier le résultat</translation>
+    </message>
+</context>
+<context>
+    <name>CopyCalculatorQuestionAndAnswerAction</name>
+    <message>
+        <source>Answer copied to clipboard</source>
+        <translation>Réponse copiée dans le presse-papiers</translation>
+    </message>
+    <message>
+        <source>Failed to copy answer</source>
+        <translation>Échec de la copie de la réponse</translation>
+    </message>
+    <message>
+        <source>Copy Question And Answer</source>
+        <translation>Copier la question et la réponse</translation>
     </message>
 </context>
 <context>
@@ -777,6 +985,28 @@
     <message>
         <source>Copy to clipboard</source>
         <translation>Copier dans le presse-papiers</translation>
+    </message>
+</context>
+<context>
+    <name>CopyItemDeeplink</name>
+    <message>
+        <source>Deeplink copied in clipboard</source>
+        <translation>Deeplink copié dans le presse-papiers</translation>
+    </message>
+    <message>
+        <source>Copy Deeplink</source>
+        <translation>Copier le deeplink</translation>
+    </message>
+</context>
+<context>
+    <name>CopyShortcutAction</name>
+    <message>
+        <source>Copied to clipboard</source>
+        <translation>Copié dans le presse-papiers</translation>
+    </message>
+    <message>
+        <source>Copy shortcut</source>
+        <translation>Copier le raccourci</translation>
     </message>
 </context>
 <context>
@@ -809,11 +1039,11 @@
     </message>
     <message>
         <source>Username</source>
-        <translation>Nom d&apos;utilisateur</translation>
+        <translation>Nom d’utilisateur</translation>
     </message>
     <message>
         <source>Extension Title</source>
-        <translation>Titre de l&apos;extension</translation>
+        <translation>Titre de l’extension</translation>
     </message>
     <message>
         <source>My Extension</source>
@@ -879,7 +1109,7 @@ npm install
 npm run dev
 ```
 
-Vous pouvez en apprendre davantage sur le développement d&apos;extensions dans la [documentation Vicinae](https://docs.vicinae.com/).
+Vous pouvez en apprendre davantage sur le développement d’extensions dans la [documentation Vicinae](https://docs.vicinae.com/).
 </translation>
     </message>
     <message>
@@ -911,7 +1141,7 @@ Vous pouvez en apprendre davantage sur le développement d&apos;extensions dans 
     </message>
     <message>
         <source>Failed to create extension</source>
-        <translation>Échec de la création de l&apos;extension</translation>
+        <translation>Échec de la création de l’extension</translation>
     </message>
     <message>
         <source>Extension created!</source>
@@ -929,11 +1159,11 @@ Vous pouvez en apprendre davantage sur le développement d&apos;extensions dans 
     <name>CreateShortcutFromActiveBrowserTabCommand</name>
     <message>
         <source>Create Shortcut from Active Tab</source>
-        <translation>Créer un raccourci depuis l&apos;onglet actif</translation>
+        <translation>Créer un raccourci depuis l’onglet actif</translation>
     </message>
     <message>
         <source>Create a vicinae shortcut from the currently active browser tab. May yield unexpected results if many browsers are connected at once.</source>
-        <translation>Créer un raccourci Vicinae depuis l&apos;onglet de navigateur actuellement actif. Peut donner des résultats inattendus si plusieurs navigateurs sont connectés à la fois.</translation>
+        <translation>Créer un raccourci Vicinae depuis l’onglet de navigateur actuellement actif. Peut donner des résultats inattendus si plusieurs navigateurs sont connectés à la fois.</translation>
     </message>
     <message>
         <source>No active tab!</source>
@@ -951,7 +1181,7 @@ Vous pouvez en apprendre davantage sur le développement d&apos;extensions dans 
     <name>DMenuSection</name>
     <message>
         <source>Select entry</source>
-        <translation>Sélectionner l&apos;entrée</translation>
+        <translation>Sélectionner l’entrée</translation>
     </message>
     <message>
         <source>Pass search text</source>
@@ -959,7 +1189,7 @@ Vous pouvez en apprendre davantage sur le développement d&apos;extensions dans 
     </message>
     <message>
         <source>Select and copy entry</source>
-        <translation>Sélectionner et copier l&apos;entrée</translation>
+        <translation>Sélectionner et copier l’entrée</translation>
     </message>
 </context>
 <context>
@@ -993,20 +1223,6 @@ Vous pouvez en apprendre davantage sur le développement d&apos;extensions dans 
     </message>
 </context>
 <context>
-    <name>DefaultAppItem</name>
-    <message>
-        <source>%1 (Default)</source>
-        <translation>%1 (par défaut)</translation>
-    </message>
-</context>
-<context>
-    <name>DefaultIconSelectorItem</name>
-    <message>
-        <source>Default</source>
-        <translation>Par défaut</translation>
-    </message>
-</context>
-<context>
     <name>DetailListView</name>
     <message>
         <source>No results</source>
@@ -1021,6 +1237,40 @@ Vous pouvez en apprendre davantage sur le développement d&apos;extensions dans 
     </message>
 </context>
 <context>
+    <name>DisableApplication</name>
+    <message>
+        <source>Disable item</source>
+        <translation>Désactiver l’élément</translation>
+    </message>
+</context>
+<context>
+    <name>DisableItemAction</name>
+    <message>
+        <source>Are you sure?</source>
+        <translation>Êtes-vous sûr ?</translation>
+    </message>
+    <message>
+        <source>You will need to go in the settings to manually re-enable it.</source>
+        <translation>Vous devrez aller dans les paramètres pour le réactiver manuellement.</translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation>Désactiver</translation>
+    </message>
+    <message>
+        <source>Item disabled</source>
+        <translation>Élément désactivé</translation>
+    </message>
+    <message>
+        <source>Failed to disable</source>
+        <translation>Échec de la désactivation</translation>
+    </message>
+    <message>
+        <source>Disable item</source>
+        <translation>Désactiver l’élément</translation>
+    </message>
+</context>
+<context>
     <name>DismissNewsAction</name>
     <message>
         <source>Dismiss</source>
@@ -1028,26 +1278,10 @@ Vous pouvez en apprendre davantage sur le développement d&apos;extensions dans 
     </message>
 </context>
 <context>
-    <name>DuplicateShortcutView</name>
+    <name>DuplicateShortcutAction</name>
     <message>
-        <source>Duplicate Shortcut</source>
-        <translation>Dupliquer le raccourci</translation>
-    </message>
-    <message>
-        <source>Copy of %1</source>
-        <translation>Copie de %1</translation>
-    </message>
-    <message>
-        <source>Required</source>
-        <translation>Requis</translation>
-    </message>
-    <message>
-        <source>Created shortcut</source>
-        <translation>Raccourci créé</translation>
-    </message>
-    <message>
-        <source>Failed to create shortcut</source>
-        <translation>Échec de la création du raccourci</translation>
+        <source>Duplicate link</source>
+        <translation>Dupliquer le lien</translation>
     </message>
 </context>
 <context>
@@ -1095,18 +1329,10 @@ Vous pouvez en apprendre davantage sur le développement d&apos;extensions dans 
     </message>
 </context>
 <context>
-    <name>EditShortcutView</name>
+    <name>EditShortcutAction</name>
     <message>
-        <source>Edit Shortcut</source>
+        <source>Edit shortcut</source>
         <translation>Modifier le raccourci</translation>
-    </message>
-    <message>
-        <source>Required</source>
-        <translation>Requis</translation>
-    </message>
-    <message>
-        <source>Failed to update shortcut</source>
-        <translation>Échec de la mise à jour du raccourci</translation>
     </message>
 </context>
 <context>
@@ -1157,6 +1383,44 @@ Vous pouvez en apprendre davantage sur le développement d&apos;extensions dans 
     </message>
 </context>
 <context>
+    <name>Expansion</name>
+    <message>
+        <source>Keyword cannot be empty</source>
+        <translation>Le mot-clé ne peut pas être vide</translation>
+    </message>
+    <message>
+        <source>Keyword exceeds maximum length of %1</source>
+        <translation>Le mot-clé dépasse la longueur maximale de %1</translation>
+    </message>
+    <message>
+        <source>Keyword must only contain printable ASCII characters (no spaces)</source>
+        <translation>Le mot-clé ne doit contenir que des caractères ASCII imprimables (sans espaces)</translation>
+    </message>
+</context>
+<context>
+    <name>ExtensionBoilerplateGenerator</name>
+    <message>
+        <source>Simple List</source>
+        <translation>Liste simple</translation>
+    </message>
+    <message>
+        <source>List with Detail</source>
+        <translation>Liste avec détail</translation>
+    </message>
+    <message>
+        <source>Controlled List</source>
+        <translation>Liste contrôlée</translation>
+    </message>
+    <message>
+        <source>Simple Detail</source>
+        <translation>Détail simple</translation>
+    </message>
+    <message>
+        <source>No View</source>
+        <translation>Sans vue</translation>
+    </message>
+</context>
+<context>
     <name>ExtensionErrorViewHost</name>
     <message>
         <source># Extension crashed 💥!
@@ -1168,11 +1432,11 @@ Find the full stacktrace below. You can also directly copy it from the action me
 ```
 %1
 ```</source>
-        <translation># L&apos;extension a planté 💥 !
+        <translation># L’extension a planté 💥 !
 
 Cette extension a levé une exception non interceptée et a donc planté.
 
-Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier directement depuis le menu d&apos;actions.
+Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier directement depuis le menu d’actions.
 
 ```
 %1
@@ -1288,6 +1552,20 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
 </context>
 <context>
+    <name>FocusWindowAction</name>
+    <message>
+        <source>Focus window</source>
+        <translation>Activer la fenêtre</translation>
+    </message>
+</context>
+<context>
+    <name>FontBrowserViewHost</name>
+    <message>
+        <source>All</source>
+        <translation>Toutes</translation>
+    </message>
+</context>
+<context>
     <name>FontExtension</name>
     <message>
         <source>Font</source>
@@ -1317,6 +1595,21 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
 </context>
 <context>
+    <name>ForceQuitAppAction</name>
+    <message>
+        <source>Force Quit Application</source>
+        <translation>Forcer la fermeture de l’application</translation>
+    </message>
+    <message>
+        <source>Failed to force quit %1</source>
+        <translation>Échec de la fermeture forcée de %1</translation>
+    </message>
+    <message>
+        <source>Force quit %1</source>
+        <translation>Forcer la fermeture de %1</translation>
+    </message>
+</context>
+<context>
     <name>ForgetTelemetryCommand</name>
     <message>
         <source>Forget Past Vicinae Telemetry</source>
@@ -1324,7 +1617,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Asks the vicinae server to anonymize telemetry data that was sent with your vicinae instance ID attached. The ID is only linked to your vicinae install, which has no direct relationship with your system.</source>
-        <translation>Demande au serveur vicinae d&apos;anonymiser les données de télémétrie envoyées avec l&apos;ID de votre instance vicinae. Cet ID est uniquement lié à votre installation vicinae, qui n&apos;a aucun lien direct avec votre système.</translation>
+        <translation>Demande au serveur vicinae d’anonymiser les données de télémétrie envoyées avec l’ID de votre instance vicinae. Cet ID est uniquement lié à votre installation vicinae, qui n’a aucun lien direct avec votre système.</translation>
     </message>
     <message>
         <source>Processing...</source>
@@ -1336,7 +1629,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Failed to forget past telemetry data</source>
-        <translation>Impossible d&apos;oublier les données de télémétrie passées</translation>
+        <translation>Impossible d’oublier les données de télémétrie passées</translation>
     </message>
 </context>
 <context>
@@ -1409,7 +1702,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Icon Themes</source>
-        <translation>Thèmes d&apos;icônes</translation>
+        <translation>Thèmes d’icônes</translation>
     </message>
     <message>
         <source>Favicon Services</source>
@@ -1464,7 +1757,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Reset the navigation state when the launcher window is closed.</source>
-        <translation>Réinitialiser l&apos;état de navigation lorsque la fenêtre du lanceur est fermée.</translation>
+        <translation>Réinitialiser l’état de navigation lorsque la fenêtre du lanceur est fermée.</translation>
     </message>
     <message>
         <source>Language</source>
@@ -1480,11 +1773,11 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Basic usage statistics</source>
-        <translation>Statistiques d&apos;utilisation de base</translation>
+        <translation>Statistiques d’utilisation de base</translation>
     </message>
     <message>
         <source>Send basic system and vicinae installation information on startup to help improve Vicinae.</source>
-        <translation>Envoyer au démarrage des informations de base sur le système et l&apos;installation de Vicinae afin d&apos;aider à améliorer Vicinae.</translation>
+        <translation>Envoyer au démarrage des informations de base sur le système et l’installation de Vicinae afin d’aider à améliorer Vicinae.</translation>
     </message>
 </context>
 <context>
@@ -1499,6 +1792,28 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     <message>
         <source>No results</source>
         <translation>Aucun résultat</translation>
+    </message>
+</context>
+<context>
+    <name>GlobalShortcutService</name>
+    <message>
+        <source>Toggle Vicinae</source>
+        <translation>Afficher/Masquer Vicinae</translation>
+    </message>
+    <message>
+        <source>the launcher hotkey</source>
+        <translation>le raccourci clavier du lanceur</translation>
+    </message>
+    <message>
+        <source>another command</source>
+        <translation>une autre commande</translation>
+    </message>
+</context>
+<context>
+    <name>Gnome::Workspace</name>
+    <message>
+        <source>Workspace %1</source>
+        <translation>Espace de travail %1</translation>
     </message>
 </context>
 <context>
@@ -1528,7 +1843,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Search Vicinae builtin set of icons</source>
-        <translation>Rechercher dans le jeu d&apos;icônes intégré de Vicinae</translation>
+        <translation>Rechercher dans le jeu d’icônes intégré de Vicinae</translation>
     </message>
 </context>
 <context>
@@ -1546,7 +1861,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Browse data stored in Vicinae&apos;s local storage. This includes data stored for builtin extensions as well as third-party extensions making use of the LocalStorage API.</source>
-        <translation>Parcourir les données du stockage local de Vicinae. Cela inclut les données des extensions intégrées ainsi que celles des extensions tierces utilisant l&apos;API LocalStorage.</translation>
+        <translation>Parcourir les données du stockage local de Vicinae. Cela inclut les données des extensions intégrées ainsi que celles des extensions tierces utilisant l’API LocalStorage.</translation>
     </message>
 </context>
 <context>
@@ -1580,7 +1895,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Copy ID</source>
-        <translation>Copier l&apos;ID</translation>
+        <translation>Copier l’ID</translation>
     </message>
     <message>
         <source>Copy Path</source>
@@ -1588,7 +1903,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Copy Author</source>
-        <translation>Copier l&apos;auteur</translation>
+        <translation>Copier l’auteur</translation>
     </message>
 </context>
 <context>
@@ -1628,7 +1943,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Extension Store</source>
-        <translation>Boutique d&apos;extensions</translation>
+        <translation>Boutique d’extensions</translation>
     </message>
     <message>
         <source>Documentation</source>
@@ -1673,7 +1988,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Browse namespace</source>
-        <translation>Parcourir l&apos;espace de noms</translation>
+        <translation>Parcourir l’espace de noms</translation>
     </message>
 </context>
 <context>
@@ -1710,7 +2025,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>Terminate the current user session. If you simply want to lock your session you should use &apos;Lock Session&apos; instead.</source>
-        <translation>Mettre fin à la session utilisateur en cours. Si vous voulez simplement verrouiller votre session, utilisez plutôt &apos;Verrouiller la session&apos;.</translation>
+        <translation>Mettre fin à la session utilisateur en cours. Si vous voulez simplement verrouiller votre session, utilisez plutôt ’Verrouiller la session’.</translation>
     </message>
     <message>
         <source>System can&apos;t logout</source>
@@ -1719,6 +2034,105 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     <message>
         <source>Failed to log out</source>
         <translation>Échec de la fermeture de session</translation>
+    </message>
+</context>
+<context>
+    <name>MacOSGlobalShortcutBackend</name>
+    <message>
+        <source>unsupported or invalid trigger</source>
+        <translation>déclencheur non pris en charge ou non valide</translation>
+    </message>
+    <message>
+        <source>RegisterEventHotKey failed (%1)</source>
+        <translation>Échec de RegisterEventHotKey (%1)</translation>
+    </message>
+</context>
+<context>
+    <name>MacSettingsRootItem</name>
+    <message>
+        <source>System Settings</source>
+        <translation>Réglages Système</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nom</translation>
+    </message>
+    <message>
+        <source>Bundle ID</source>
+        <translation>Identifiant de bundle</translation>
+    </message>
+    <message>
+        <source>Legacy ID</source>
+        <translation>Ancien identifiant</translation>
+    </message>
+    <message>
+        <source>Where</source>
+        <translation>Emplacement</translation>
+    </message>
+    <message>
+        <source>Open %1 Settings</source>
+        <translation>Ouvrir les réglages %1</translation>
+    </message>
+    <message>
+        <source>Copy URL</source>
+        <translation>Copier l’URL</translation>
+    </message>
+    <message>
+        <source>Copy Bundle ID</source>
+        <translation>Copier l’identifiant de bundle</translation>
+    </message>
+</context>
+<context>
+    <name>MacSettingsRootProvider</name>
+    <message>
+        <source>System Settings</source>
+        <translation>Réglages Système</translation>
+    </message>
+</context>
+<context>
+    <name>MacosUpdateInstaller</name>
+    <message>
+        <source>This installation cannot update itself</source>
+        <translation>Cette installation ne peut pas se mettre à jour elle-même</translation>
+    </message>
+    <message>
+        <source>Mounting update image…</source>
+        <translation>Montage de l’image de mise à jour…</translation>
+    </message>
+    <message>
+        <source>Failed to mount the update image</source>
+        <translation>Échec du montage de l’image de mise à jour</translation>
+    </message>
+    <message>
+        <source>Could not find the update image mount point</source>
+        <translation>Impossible de trouver le point de montage de l’image de mise à jour</translation>
+    </message>
+    <message>
+        <source>Verifying update…</source>
+        <translation>Vérification de la mise à jour…</translation>
+    </message>
+    <message>
+        <source>Installing update…</source>
+        <translation>Installation de la mise à jour…</translation>
+    </message>
+    <message>
+        <source>Failed to stage update: %1</source>
+        <translation>Échec de la préparation de la mise à jour : %1</translation>
+    </message>
+    <message>
+        <source>Failed to move the current app aside: %1</source>
+        <translation>Échec de la mise à l’écart de l’application actuelle : %1</translation>
+    </message>
+    <message>
+        <source>Failed to install the new app: %1</source>
+        <translation>Échec de l’installation de la nouvelle application : %1</translation>
+    </message>
+</context>
+<context>
+    <name>ManageFallbackActions</name>
+    <message>
+        <source>Manage Fallback Actions</source>
+        <translation>Gérer les actions de secours</translation>
     </message>
 </context>
 <context>
@@ -1874,6 +2288,13 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
 </context>
 <context>
+    <name>MarkItemAsFavorite</name>
+    <message>
+        <source>Mark as favorite</source>
+        <translation>Marquer comme favori</translation>
+    </message>
+</context>
+<context>
     <name>MarkdownShowcase</name>
     <message>
         <source>Markdown Showcase</source>
@@ -1955,7 +2376,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     <name>NavigationController</name>
     <message>
         <source>Extension manager is not running</source>
-        <translation>Le gestionnaire d&apos;extensions n&apos;est pas en cours d&apos;exécution</translation>
+        <translation>Le gestionnaire d’extensions n’est pas en cours d’exécution</translation>
     </message>
 </context>
 <context>
@@ -1966,7 +2387,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     </message>
     <message>
         <source>We now collect basic usage statistics on startup</source>
-        <translation>Nous collectons désormais des statistiques d&apos;utilisation basiques au démarrage</translation>
+        <translation>Nous collectons désormais des statistiques d’utilisation basiques au démarrage</translation>
     </message>
     <message>
         <source>Learn more</source>
@@ -1977,7 +2398,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
     <name>NullUpdateInstaller</name>
     <message>
         <source>Self update is not supported on this platform</source>
-        <translation>La mise à jour automatique n&apos;est pas prise en charge sur cette plateforme</translation>
+        <translation>La mise à jour automatique n’est pas prise en charge sur cette plateforme</translation>
     </message>
 </context>
 <context>
@@ -2044,7 +2465,7 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Copy Access Token</source>
-        <translation>Copier le jeton d&apos;accès</translation>
+        <translation>Copier le jeton d’accès</translation>
     </message>
     <message>
         <source>Copy Refresh Token</source>
@@ -2052,7 +2473,7 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Copy ID Token</source>
-        <translation>Copier le jeton d&apos;identité</translation>
+        <translation>Copier le jeton d’identité</translation>
     </message>
     <message>
         <source>Copy Scopes</source>
@@ -2060,7 +2481,7 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Copy Expiration Date</source>
-        <translation>Copier la date d&apos;expiration</translation>
+        <translation>Copier la date d’expiration</translation>
     </message>
 </context>
 <context>
@@ -2074,7 +2495,7 @@ Retour à la commande dans un instant...</translation>
     <name>OnboardingWindow</name>
     <message>
         <source>Grant Access</source>
-        <translation>Autoriser l&apos;accès</translation>
+        <translation>Autoriser l’accès</translation>
     </message>
     <message>
         <source>Granted</source>
@@ -2086,7 +2507,7 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Let&apos;s set it up. It only takes a minute.</source>
-        <translation>Passons à la configuration. Cela ne prend qu&apos;une minute.</translation>
+        <translation>Passons à la configuration. Cela ne prend qu’une minute.</translation>
     </message>
     <message>
         <source>Permissions</source>
@@ -2094,7 +2515,7 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Vicinae needs additional permissions in order to make the best of your Mac.</source>
-        <translation>Vicinae a besoin d&apos;autorisations supplémentaires pour tirer le meilleur parti de votre Mac.</translation>
+        <translation>Vicinae a besoin d’autorisations supplémentaires pour tirer le meilleur parti de votre Mac.</translation>
     </message>
     <message>
         <source>Accessibility</source>
@@ -2118,11 +2539,11 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Lets extensions send desktop notifications.</source>
-        <translation>Permet aux extensions d&apos;envoyer des notifications de bureau.</translation>
+        <translation>Permet aux extensions d’envoyer des notifications de bureau.</translation>
     </message>
     <message>
         <source>If you skip this step, macOS may prompt you for some of these permissions later. Full disk access needs to be explicitly enabled if you want file search to cover all your files.</source>
-        <translation>Si vous ignorez cette étape, macOS pourra vous demander certaines de ces autorisations plus tard. L&apos;accès complet au disque doit être explicitement activé si vous voulez que la recherche de fichiers couvre tous vos fichiers.</translation>
+        <translation>Si vous ignorez cette étape, macOS pourra vous demander certaines de ces autorisations plus tard. L’accès complet au disque doit être explicitement activé si vous voulez que la recherche de fichiers couvre tous vos fichiers.</translation>
     </message>
     <message>
         <source>Make it your own</source>
@@ -2138,7 +2559,7 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Shared across the entire app.</source>
-        <translation>Partagé dans toute l&apos;application.</translation>
+        <translation>Partagé dans toute l’application.</translation>
     </message>
     <message>
         <source>Global hotkey</source>
@@ -2146,15 +2567,15 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Opens the launcher from anywhere.</source>
-        <translation>Ouvre le lanceur depuis n&apos;importe où.</translation>
+        <translation>Ouvre le lanceur depuis n’importe où.</translation>
     </message>
     <message>
         <source>Launch at login</source>
-        <translation>Lancer à l&apos;ouverture de session</translation>
+        <translation>Lancer à l’ouverture de session</translation>
     </message>
     <message>
         <source>Starts Vicinae in the background at login.</source>
-        <translation>Démarre Vicinae en arrière-plan à l&apos;ouverture de session.</translation>
+        <translation>Démarre Vicinae en arrière-plan à l’ouverture de session.</translation>
     </message>
     <message>
         <source>Setup complete</source>
@@ -2162,7 +2583,7 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Vicinae is running. Open the launcher with:</source>
-        <translation>Vicinae est en cours d&apos;exécution. Ouvrez le lanceur avec :</translation>
+        <translation>Vicinae est en cours d’exécution. Ouvrez le lanceur avec :</translation>
     </message>
     <message>
         <source>Vicinae is open source software.</source>
@@ -2205,10 +2626,63 @@ Retour à la commande dans un instant...</translation>
     </message>
 </context>
 <context>
+    <name>OpenAppAction</name>
+    <message>
+        <source>Failed to start app</source>
+        <translation>Échec du démarrage de l’application</translation>
+    </message>
+</context>
+<context>
+    <name>OpenAppLocationAction</name>
+    <message>
+        <source>Open Location</source>
+        <translation>Ouvrir l’emplacement</translation>
+    </message>
+    <message>
+        <source>Failed to open app location</source>
+        <translation>Échec de l’ouverture de l’emplacement de l’application</translation>
+    </message>
+</context>
+<context>
     <name>OpenBuiltinCommandAction</name>
     <message>
         <source>Open command</source>
         <translation>Ouvrir la commande</translation>
+    </message>
+</context>
+<context>
+    <name>OpenCalculatorHistoryAction</name>
+    <message>
+        <source>Open Calculator History</source>
+        <translation>Ouvrir l’historique de la calculatrice</translation>
+    </message>
+</context>
+<context>
+    <name>OpenCompletedShortcutAction</name>
+    <message>
+        <source>Open shortcut</source>
+        <translation>Ouvrir le raccourci</translation>
+    </message>
+</context>
+<context>
+    <name>OpenCompletedShortcutWithAction</name>
+    <message>
+        <source>Open with...</source>
+        <translation>Ouvrir avec...</translation>
+    </message>
+</context>
+<context>
+    <name>OpenControlPanelItemAction</name>
+    <message>
+        <source>Failed to open settings</source>
+        <translation>Échec de l’ouverture des paramètres</translation>
+    </message>
+</context>
+<context>
+    <name>OpenControlPanelTaskAction</name>
+    <message>
+        <source>Failed to open settings</source>
+        <translation>Échec de l’ouverture des paramètres</translation>
     </message>
 </context>
 <context>
@@ -2223,11 +2697,11 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Failed to open temporary file</source>
-        <translation>Échec de l&apos;ouverture du fichier temporaire</translation>
+        <translation>Échec de l’ouverture du fichier temporaire</translation>
     </message>
     <message>
         <source>Failed to open default config file</source>
-        <translation>Échec de l&apos;ouverture du fichier de configuration par défaut</translation>
+        <translation>Échec de l’ouverture du fichier de configuration par défaut</translation>
     </message>
 </context>
 <context>
@@ -2253,6 +2727,46 @@ Retour à la commande dans un instant...</translation>
     </message>
 </context>
 <context>
+    <name>OpenFileAction</name>
+    <message>
+        <source>Open with %1</source>
+        <translation>Ouvrir avec %1</translation>
+    </message>
+</context>
+<context>
+    <name>OpenInBrowserAction</name>
+    <message>
+        <source>Open in browser</source>
+        <translation>Ouvrir dans le navigateur</translation>
+    </message>
+    <message>
+        <source>Failed to open in browser</source>
+        <translation>Échec de l’ouverture dans le navigateur</translation>
+    </message>
+    <message>
+        <source>Opened in browser</source>
+        <translation>Ouvert dans le navigateur</translation>
+    </message>
+</context>
+<context>
+    <name>OpenInTerminalAction</name>
+    <message>
+        <source>Open in %1</source>
+        <translation>Ouvrir dans %1</translation>
+    </message>
+    <message>
+        <source>Failed to start app</source>
+        <translation>Échec du démarrage de l’application</translation>
+    </message>
+</context>
+<context>
+    <name>OpenItemPreferencesAction</name>
+    <message>
+        <source>Open Preferences</source>
+        <translation>Ouvrir les préférences</translation>
+    </message>
+</context>
+<context>
     <name>OpenKeybindSettingsCommand</name>
     <message>
         <source>Open Vicinae Keybind Settings</source>
@@ -2261,6 +2775,17 @@ Retour à la commande dans un instant...</translation>
     <message>
         <source>Open the vicinae keybind settings window</source>
         <translation>Ouvrir la fenêtre des paramètres de raccourcis clavier de vicinae</translation>
+    </message>
+</context>
+<context>
+    <name>OpenRawProgramAction</name>
+    <message>
+        <source>Execute program</source>
+        <translation>Exécuter le programme</translation>
+    </message>
+    <message>
+        <source>Failed to start app</source>
+        <translation>Échec du démarrage de l’application</translation>
     </message>
 </context>
 <context>
@@ -2275,6 +2800,31 @@ Retour à la commande dans un instant...</translation>
     </message>
 </context>
 <context>
+    <name>OpenSettingsPaneAction</name>
+    <message>
+        <source>Failed to open System Settings</source>
+        <translation>Échec de l’ouverture des Réglages Système</translation>
+    </message>
+</context>
+<context>
+    <name>OpenShortcutAction</name>
+    <message>
+        <source>No app with id %1</source>
+        <translation>Aucune application avec l’ID %1</translation>
+    </message>
+    <message>
+        <source>Open shortcut</source>
+        <translation>Ouvrir le raccourci</translation>
+    </message>
+</context>
+<context>
+    <name>OpenShortcutFromSearchText</name>
+    <message>
+        <source>Open shortcut</source>
+        <translation>Ouvrir le raccourci</translation>
+    </message>
+</context>
+<context>
     <name>OpenVicinaeConfig</name>
     <message>
         <source>Open Config File</source>
@@ -2286,6 +2836,20 @@ Retour à la commande dans un instant...</translation>
     </message>
 </context>
 <context>
+    <name>OpenWindowsSettingAction</name>
+    <message>
+        <source>Failed to open settings</source>
+        <translation>Échec de l’ouverture des paramètres</translation>
+    </message>
+</context>
+<context>
+    <name>OpenWithAction</name>
+    <message>
+        <source>Open with...</source>
+        <translation>Ouvrir avec...</translation>
+    </message>
+</context>
+<context>
     <name>PasteToFocusedWindowAction</name>
     <message>
         <source>Paste to active window</source>
@@ -2294,6 +2858,17 @@ Retour à la commande dans un instant...</translation>
     <message>
         <source>Copy to focused window</source>
         <translation>Copier dans la fenêtre active</translation>
+    </message>
+</context>
+<context>
+    <name>PinCalculatorHistoryRecordAction</name>
+    <message>
+        <source>Entry pinned</source>
+        <translation>Entrée épinglée</translation>
+    </message>
+    <message>
+        <source>Pin entry</source>
+        <translation>Épingler l’entrée</translation>
     </message>
 </context>
 <context>
@@ -2323,7 +2898,18 @@ Retour à la commande dans un instant...</translation>
     <name>PinEmojiAction</name>
     <message>
         <source>Pin emoji</source>
-        <translation>Épingler l&apos;emoji</translation>
+        <translation>Épingler l’emoji</translation>
+    </message>
+</context>
+<context>
+    <name>PinWindowAction</name>
+    <message>
+        <source>Unpin from all workspaces</source>
+        <translation>Désépingler de tous les espaces de travail</translation>
+    </message>
+    <message>
+        <source>Pin to all workspaces</source>
+        <translation>Épingler sur tous les espaces de travail</translation>
     </message>
 </context>
 <context>
@@ -2338,11 +2924,11 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Custom POSIX shell command to run instead of the default implementation</source>
-        <translation>Commande shell POSIX personnalisée à exécuter à la place de l&apos;implémentation par défaut</translation>
+        <translation>Commande shell POSIX personnalisée à exécuter à la place de l’implémentation par défaut</translation>
     </message>
     <message>
         <source>Failed to execute custom program %1</source>
-        <translation>Échec de l&apos;exécution du programme personnalisé %1</translation>
+        <translation>Échec de l’exécution du programme personnalisé %1</translation>
     </message>
     <message>
         <source>Are you sure</source>
@@ -2376,11 +2962,11 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>System cannot power off</source>
-        <translation>Le système ne peut pas s&apos;éteindre</translation>
+        <translation>Le système ne peut pas s’éteindre</translation>
     </message>
     <message>
         <source>Failed to power off</source>
-        <translation>Échec de l&apos;extinction</translation>
+        <translation>Échec de l’extinction</translation>
     </message>
 </context>
 <context>
@@ -2406,7 +2992,7 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>Copy exec path</source>
-        <translation>Copier le chemin de l&apos;exécutable</translation>
+        <translation>Copier le chemin de l’exécutable</translation>
     </message>
 </context>
 <context>
@@ -2427,15 +3013,22 @@ Retour à la commande dans un instant...</translation>
     <name>PruneMemoryCommand</name>
     <message>
         <source>Prune Vicinae Memory Usage</source>
-        <translation>Réduire l&apos;utilisation mémoire de Vicinae</translation>
+        <translation>Réduire l’utilisation mémoire de Vicinae</translation>
     </message>
     <message>
         <source>Try pruning vicinae&apos;s memory usage by clearing pixmap cache and calling malloc_trim(). Mostly provided for internal testing.</source>
-        <translation>Tente de réduire l&apos;utilisation mémoire de vicinae en vidant le cache de pixmaps et en appelant malloc_trim(). Principalement fourni pour des tests internes.</translation>
+        <translation>Tente de réduire l’utilisation mémoire de vicinae en vidant le cache de pixmaps et en appelant malloc_trim(). Principalement fourni pour des tests internes.</translation>
     </message>
     <message>
         <source>Pruned 🥊</source>
         <translation>Mémoire nettoyée 🥊</translation>
+    </message>
+</context>
+<context>
+    <name>PutCalculatorAnswerInSearchBar</name>
+    <message>
+        <source>Put answer in search bar</source>
+        <translation>Insérer la réponse dans la barre de recherche</translation>
     </message>
 </context>
 <context>
@@ -2481,7 +3074,22 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <source>just now</source>
-        <translation>à l&apos;instant</translation>
+        <translation>à l’instant</translation>
+    </message>
+</context>
+<context>
+    <name>QuitAppAction</name>
+    <message>
+        <source>Quit Application</source>
+        <translation>Quitter l’application</translation>
+    </message>
+    <message>
+        <source>Failed to quit %1</source>
+        <translation>Échec de la fermeture de %1</translation>
+    </message>
+    <message>
+        <source>Quit %1</source>
+        <translation>Quitter %1</translation>
     </message>
 </context>
 <context>
@@ -2550,15 +3158,15 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <name>RaycastStoreDetailHost</name>
     <message>
         <source>Failed to load extension</source>
-        <translation>Échec du chargement de l&apos;extension</translation>
+        <translation>Échec du chargement de l’extension</translation>
     </message>
     <message>
         <source>The extension &quot;%1&quot; could not be loaded. It may not exist or the store may be unreachable.</source>
-        <translation>L&apos;extension &quot;%1&quot; n&apos;a pas pu être chargée. Elle n&apos;existe peut-être pas ou la boutique est peut-être inaccessible.</translation>
+        <translation>L’extension &quot;%1&quot; n’a pas pu être chargée. Elle n’existe peut-être pas ou la boutique est peut-être inaccessible.</translation>
     </message>
     <message>
         <source>Extension Store - %1</source>
-        <translation>Boutique d&apos;extensions - %1</translation>
+        <translation>Boutique d’extensions - %1</translation>
     </message>
     <message>
         <source>This extension should be fully compatible.</source>
@@ -2570,35 +3178,35 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>This extension is not compatible.</source>
-        <translation>Cette extension n&apos;est pas compatible.</translation>
+        <translation>Cette extension n’est pas compatible.</translation>
     </message>
     <message>
         <source>No compatibility data is available for this extension.</source>
-        <translation>Aucune donnée de compatibilité n&apos;est disponible pour cette extension.</translation>
+        <translation>Aucune donnée de compatibilité n’est disponible pour cette extension.</translation>
     </message>
     <message>
         <source>No compatibility data is available — this extension may or may not work.</source>
-        <translation>Aucune donnée de compatibilité n&apos;est disponible — cette extension peut fonctionner ou non.</translation>
+        <translation>Aucune donnée de compatibilité n’est disponible — cette extension peut fonctionner ou non.</translation>
     </message>
     <message>
         <source>Extension Store</source>
-        <translation>Boutique d&apos;extensions</translation>
+        <translation>Boutique d’extensions</translation>
     </message>
     <message>
         <source>Install extension</source>
-        <translation>Installer l&apos;extension</translation>
+        <translation>Installer l’extension</translation>
     </message>
     <message>
         <source>Downloading extension...</source>
-        <translation>Téléchargement de l&apos;extension...</translation>
+        <translation>Téléchargement de l’extension...</translation>
     </message>
     <message>
         <source>Failed to download extension</source>
-        <translation>Échec du téléchargement de l&apos;extension</translation>
+        <translation>Échec du téléchargement de l’extension</translation>
     </message>
     <message>
         <source>Failed to extract extension archive</source>
-        <translation>Échec de l&apos;extraction de l&apos;archive de l&apos;extension</translation>
+        <translation>Échec de l’extraction de l’archive de l’extension</translation>
     </message>
     <message>
         <source>Extension installed</source>
@@ -2632,7 +3240,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>Failed to search extensions</source>
-        <translation>Échec de la recherche d&apos;extensions</translation>
+        <translation>Échec de la recherche d’extensions</translation>
     </message>
     <message>
         <source>Results</source>
@@ -2701,7 +3309,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>Failed to refresh apps</source>
-        <translation>Échec de l&apos;actualisation des applications</translation>
+        <translation>Échec de l’actualisation des applications</translation>
     </message>
 </context>
 <context>
@@ -2716,7 +3324,14 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>New scan triggered, index will update shortly</source>
-        <translation>Nouvelle analyse déclenchée, l&apos;index sera mis à jour sous peu</translation>
+        <translation>Nouvelle analyse déclenchée, l’index sera mis à jour sous peu</translation>
+    </message>
+</context>
+<context>
+    <name>RemoveAllCalculatorHistoryRecordsAction</name>
+    <message>
+        <source>Delete all entries</source>
+        <translation>Supprimer toutes les entrées</translation>
     </message>
 </context>
 <context>
@@ -2747,6 +3362,21 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
 </context>
 <context>
+    <name>RemoveCalculatorHistoryRecordAction</name>
+    <message>
+        <source>Entry removed</source>
+        <translation>Entrée supprimée</translation>
+    </message>
+    <message>
+        <source>Failed to remove entry</source>
+        <translation>Échec de la suppression de l’entrée</translation>
+    </message>
+    <message>
+        <source>Delete entry</source>
+        <translation>Supprimer l’entrée</translation>
+    </message>
+</context>
+<context>
     <name>RemoveSelectionAction</name>
     <message>
         <source>Entry removed</source>
@@ -2759,6 +3389,21 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <source>Remove entry</source>
         <translation>Supprimer l’entrée</translation>
+    </message>
+</context>
+<context>
+    <name>RemoveShortcutAction</name>
+    <message>
+        <source>Removed link</source>
+        <translation>Lien supprimé</translation>
+    </message>
+    <message>
+        <source>Failed to remove link</source>
+        <translation>Échec de la suppression du lien</translation>
+    </message>
+    <message>
+        <source>Remove link</source>
+        <translation>Supprimer le lien</translation>
     </message>
 </context>
 <context>
@@ -2788,6 +3433,44 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <source>Reset to preference</source>
         <translation>Rétablir la préférence</translation>
+    </message>
+</context>
+<context>
+    <name>ResetItemRanking</name>
+    <message>
+        <source>Ranking was successfully reset</source>
+        <translation>Le classement a été réinitialisé avec succès</translation>
+    </message>
+    <message>
+        <source>Unable to reset ranking</source>
+        <translation>Impossible de réinitialiser le classement</translation>
+    </message>
+    <message>
+        <source>Are you sure?</source>
+        <translation>Êtes-vous sûr ?</translation>
+    </message>
+    <message>
+        <source>You will have to rebuild search history for this item in order for it to reappear on top of the root search results.</source>
+        <translation>Vous devrez reconstruire l’historique de recherche de cet élément pour qu’il réapparaisse en haut des résultats de la recherche principale.</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Réinitialiser</translation>
+    </message>
+    <message>
+        <source>Reset ranking</source>
+        <translation>Réinitialiser le classement</translation>
+    </message>
+</context>
+<context>
+    <name>RevealFileInFolderAction</name>
+    <message>
+        <source>Show in file browser</source>
+        <translation>Afficher dans le gestionnaire de fichiers</translation>
+    </message>
+    <message>
+        <source>Failed to open folder</source>
+        <translation>Échec de l’ouverture du dossier</translation>
     </message>
 </context>
 <context>
@@ -2848,6 +3531,20 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
 </context>
 <context>
+    <name>RootSearchActionGenerator</name>
+    <message>
+        <source>Copy ID</source>
+        <translation>Copier l’ID</translation>
+    </message>
+</context>
+<context>
+    <name>RootShortcutItem</name>
+    <message>
+        <source>Shortcut</source>
+        <translation>Raccourci</translation>
+    </message>
+</context>
+<context>
     <name>RootUpdateSection</name>
     <message>
         <source>Update</source>
@@ -2877,7 +3574,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <name>ScriptExecutorViewHost</name>
     <message>
         <source>Script execution failed: %1</source>
-        <translation>Échec de l&apos;exécution du script : %1</translation>
+        <translation>Échec de l’exécution du script : %1</translation>
     </message>
     <message>
         <source>Running... (%1s ago)</source>
@@ -2902,6 +3599,48 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <source>Run script again</source>
         <translation>Relancer le script</translation>
+    </message>
+</context>
+<context>
+    <name>ScriptRootItem</name>
+    <message>
+        <source>Script</source>
+        <translation>Script</translation>
+    </message>
+    <message>
+        <source>Mode</source>
+        <translation>Mode</translation>
+    </message>
+    <message>
+        <source>Path</source>
+        <translation>Chemin</translation>
+    </message>
+    <message>
+        <source>Author</source>
+        <translation>Auteur</translation>
+    </message>
+    <message>
+        <source>Open script directory</source>
+        <translation>Ouvrir le répertoire du script</translation>
+    </message>
+    <message>
+        <source>Copy path to script</source>
+        <translation>Copier le chemin du script</translation>
+    </message>
+</context>
+<context>
+    <name>ScriptRootProvider</name>
+    <message>
+        <source>Script Commands</source>
+        <translation>Commandes de script</translation>
+    </message>
+    <message>
+        <source>Custom directories</source>
+        <translation>Répertoires personnalisés</translation>
+    </message>
+    <message>
+        <source>Additional list of directories to source scripts from. These directories always take precedence over the default system ones</source>
+        <translation>Liste supplémentaire de répertoires d’où charger des scripts. Ces répertoires ont toujours priorité sur les répertoires système par défaut</translation>
     </message>
 </context>
 <context>
@@ -3005,12 +3744,66 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <source>Results</source>
         <translation>Résultats</translation>
     </message>
+    <message>
+        <source>All</source>
+        <translation>Tous</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Autres</translation>
+    </message>
+    <message>
+        <source>Directories</source>
+        <translation>Dossiers</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation>Images</translation>
+    </message>
+    <message>
+        <source>Videos</source>
+        <translation>Vidéos</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>Audio</translation>
+    </message>
+    <message>
+        <source>Documents</source>
+        <translation>Documents</translation>
+    </message>
+    <message>
+        <source>Archives</source>
+        <translation>Archives</translation>
+    </message>
+    <message>
+        <source>Applications</source>
+        <translation>Applications</translation>
+    </message>
 </context>
 <context>
     <name>SetAppFont</name>
     <message>
         <source>Set as vicinae font</source>
         <translation>Définir comme police de Vicinae</translation>
+    </message>
+</context>
+<context>
+    <name>SetRootItemAliasAction</name>
+    <message>
+        <source>Set alias</source>
+        <translation>Définir un alias</translation>
+    </message>
+</context>
+<context>
+    <name>SetThemeAction</name>
+    <message>
+        <source>Theme successfully updated</source>
+        <translation>Thème mis à jour avec succès</translation>
+    </message>
+    <message>
+        <source>Set theme</source>
+        <translation>Appliquer le thème</translation>
     </message>
 </context>
 <context>
@@ -3033,6 +3826,21 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <source>Failed to set volume</source>
         <translation>Échec du réglage du volume</translation>
+    </message>
+</context>
+<context>
+    <name>SetWallpaperAction</name>
+    <message>
+        <source>Set as wallpaper</source>
+        <translation>Définir comme fond d’écran</translation>
+    </message>
+    <message>
+        <source>Wallpaper set</source>
+        <translation>Fond d’écran défini</translation>
+    </message>
+    <message>
+        <source>Failed to set wallpaper</source>
+        <translation>Échec de la définition du fond d’écran</translation>
     </message>
 </context>
 <context>
@@ -3134,7 +3942,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>The URL that will be opened by the specified app. You can make it dynamic by using placeholders such as {argument}.</source>
-        <translation>L&apos;URL qui sera ouverte par l&apos;application spécifiée. Vous pouvez la rendre dynamique en utilisant des espaces réservés tels que {argument}.</translation>
+        <translation>L’URL qui sera ouverte par l’application spécifiée. Vous pouvez la rendre dynamique en utilisant des espaces réservés tels que {argument}.</translation>
     </message>
     <message>
         <source>Open with</source>
@@ -3143,42 +3951,6 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <source>Icon</source>
         <translation>Icône</translation>
-    </message>
-    <message>
-        <source>Selected Text</source>
-        <translation>Texte sélectionné</translation>
-    </message>
-    <message>
-        <source>Clipboard Text</source>
-        <translation>Texte du presse-papiers</translation>
-    </message>
-    <message>
-        <source>Argument</source>
-        <translation>Argument</translation>
-    </message>
-    <message>
-        <source>UUID</source>
-        <translation>UUID</translation>
-    </message>
-    <message>
-        <source>Default</source>
-        <translation>Par défaut</translation>
-    </message>
-    <message>
-        <source>The URL that will be opened by the specified app. You can make it dynamic by using placeholders such as `{argument}`</source>
-        <translation>L&apos;URL qui sera ouverte par l&apos;application spécifiée. Vous pouvez la rendre dynamique en utilisant des espaces réservés tels que `{argument}`</translation>
-    </message>
-    <message>
-        <source>Required</source>
-        <translation>Requis</translation>
-    </message>
-    <message>
-        <source>Created shortcut</source>
-        <translation>Raccourci créé</translation>
-    </message>
-    <message>
-        <source>Failed to create shortcut</source>
-        <translation>Échec de la création du raccourci</translation>
     </message>
 </context>
 <context>
@@ -3256,6 +4028,13 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
 </context>
 <context>
+    <name>ShortcutRootProvider</name>
+    <message>
+        <source>Shortcuts</source>
+        <translation>Raccourcis</translation>
+    </message>
+</context>
+<context>
     <name>ShortcutsSettingsPage</name>
     <message>
         <source>Keybindings</source>
@@ -3297,6 +4076,29 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
 </context>
 <context>
+    <name>SnippetDatabase</name>
+    <message>
+        <source>keyword already assigned to &quot;%1&quot;</source>
+        <translation>mot-clé déjà assigné à &quot;%1&quot;</translation>
+    </message>
+    <message>
+        <source>No snippet with that ID</source>
+        <translation>Aucun snippet avec cet ID</translation>
+    </message>
+    <message>
+        <source>No such snippet</source>
+        <translation>Snippet introuvable</translation>
+    </message>
+    <message>
+        <source>Snippet limit reached (%1)</source>
+        <translation>Limite de snippets atteinte (%1)</translation>
+    </message>
+    <message>
+        <source>Failed to save snippets on disk: %1</source>
+        <translation>Échec de l’enregistrement des snippets sur le disque : %1</translation>
+    </message>
+</context>
+<context>
     <name>SnippetExtension</name>
     <message>
         <source>Expansion</source>
@@ -3304,7 +4106,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>Enable automatic snippet expansion when triggers are typed</source>
-        <translation>Activer l&apos;expansion automatique des snippets lors de la saisie des déclencheurs</translation>
+        <translation>Activer l’expansion automatique des snippets lors de la saisie des déclencheurs</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -3312,7 +4114,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>Press backspace immediately after expansion to undo and restore the trigger text</source>
-        <translation>Appuyez sur retour arrière juste après l&apos;expansion pour annuler et restaurer le texte du déclencheur</translation>
+        <translation>Appuyez sur retour arrière juste après l’expansion pour annuler et restaurer le texte du déclencheur</translation>
     </message>
     <message>
         <source>Keyboard layout</source>
@@ -3328,11 +4130,11 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>Delay between setting clipboard and injecting paste shortcut. Increase if expansions paste empty on slow compositors.</source>
-        <translation>Délai entre l&apos;écriture dans le presse-papiers et l&apos;injection du raccourci de collage. Augmentez-le si les expansions collent un contenu vide sur les compositeurs lents.</translation>
+        <translation>Délai entre l’écriture dans le presse-papiers et l’injection du raccourci de collage. Augmentez-le si les expansions collent un contenu vide sur les compositeurs lents.</translation>
     </message>
     <message>
         <source>Key injection delay (ms)</source>
-        <translation>Délai d&apos;injection des touches (ms)</translation>
+        <translation>Délai d’injection des touches (ms)</translation>
     </message>
     <message>
         <source>Delay between injected key events. Increase if expansions produce missing or garbled characters on slow compositors.</source>
@@ -3371,11 +4173,11 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>Typing this keyword anywhere will result in it being replaced by the content of the snippet.</source>
-        <translation>Taper ce mot-clé n&apos;importe où le remplacera par le contenu du snippet.</translation>
+        <translation>Taper ce mot-clé n’importe où le remplacera par le contenu du snippet.</translation>
     </message>
     <message>
         <source>The snippet server is not running. Keyword expansion is unavailable. &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;Learn more&lt;/a&gt;.</source>
-        <translation>Le serveur de snippets n&apos;est pas en cours d&apos;exécution. L&apos;expansion par mot-clé est indisponible. &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;En savoir plus&lt;/a&gt;.</translation>
+        <translation>Le serveur de snippets n’est pas en cours d’exécution. L’expansion par mot-clé est indisponible. &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;En savoir plus&lt;/a&gt;.</translation>
     </message>
     <message>
         <source>Applications</source>
@@ -3383,7 +4185,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>Restrict expansion to specific applications. By default, it works everywhere.</source>
-        <translation>Restreindre l&apos;expansion à certaines applications. Par défaut, elle fonctionne partout.</translation>
+        <translation>Restreindre l’expansion à certaines applications. Par défaut, elle fonctionne partout.</translation>
     </message>
     <message>
         <source>Expand as word</source>
@@ -3391,7 +4193,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>If a keyword is typed, it will only be expanded after space or punctuation.</source>
-        <translation>Si un mot-clé est tapé, il ne sera développé qu&apos;après un espace ou une ponctuation.</translation>
+        <translation>Si un mot-clé est tapé, il ne sera développé qu’après un espace ou une ponctuation.</translation>
     </message>
 </context>
 <context>
@@ -3469,7 +4271,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>Soft reboot the system, which usually means only userspace is rebooted.</source>
-        <translation>Redémarrer le système à chaud, ce qui signifie généralement que seul l&apos;espace utilisateur est redémarré.</translation>
+        <translation>Redémarrer le système à chaud, ce qui signifie généralement que seul l’espace utilisateur est redémarré.</translation>
     </message>
     <message>
         <source>System can&apos;t soft reboot</source>
@@ -3542,7 +4344,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>Suspend the system to RAM. Unlike hibernation, this does not turn the computer off and will break on power loss.</source>
-        <translation>Mettre le système en veille en RAM. Contrairement à l&apos;hibernation, cela n&apos;éteint pas l&apos;ordinateur et ne résistera pas à une coupure de courant.</translation>
+        <translation>Mettre le système en veille en RAM. Contrairement à l’hibernation, cela n’éteint pas l’ordinateur et ne résistera pas à une coupure de courant.</translation>
     </message>
     <message>
         <source>System cannot suspend</source>
@@ -3677,7 +4479,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
     <message>
         <source>Copy ID</source>
-        <translation>Copier l&apos;ID</translation>
+        <translation>Copier l’ID</translation>
     </message>
     <message>
         <source>Copy path</source>
@@ -3697,6 +4499,33 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <source>Available Themes</source>
         <translation>Thèmes disponibles</translation>
+    </message>
+</context>
+<context>
+    <name>ToggleItemAsFavorite</name>
+    <message>
+        <source>Remove from favorites</source>
+        <translation>Retirer des favoris</translation>
+    </message>
+    <message>
+        <source>Add to favorites</source>
+        <translation>Ajouter aux favoris</translation>
+    </message>
+    <message>
+        <source>Successfuly added to favorites</source>
+        <translation>Ajouté aux favoris avec succès</translation>
+    </message>
+    <message>
+        <source>Successfuly removed from favorites</source>
+        <translation>Retiré des favoris avec succès</translation>
+    </message>
+    <message>
+        <source>Failed to add to favorites</source>
+        <translation>Échec de l’ajout aux favoris</translation>
+    </message>
+    <message>
+        <source>Failed to remove from favorites</source>
+        <translation>Échec du retrait des favoris</translation>
     </message>
 </context>
 <context>
@@ -3737,10 +4566,48 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     </message>
 </context>
 <context>
+    <name>UninstallExtensionAction</name>
+    <message>
+        <source>Are you sure?</source>
+        <translation>Êtes-vous sûr ?</translation>
+    </message>
+    <message>
+        <source>All this extension data will be permanently lost. If you just want the extension to not appear in the root search anymore, consider disabling it instead.</source>
+        <translation>Toutes les données de cette extension seront définitivement perdues. Si vous souhaitez simplement que l’extension n’apparaisse plus dans la recherche principale, envisagez plutôt de la désactiver.</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>Désinstaller</translation>
+    </message>
+    <message>
+        <source>Extension uninstalled</source>
+        <translation>Extension désinstallée</translation>
+    </message>
+    <message>
+        <source>Failed to uninstall extension</source>
+        <translation>Échec de la désinstallation de l’extension</translation>
+    </message>
+    <message>
+        <source>Uninstall Extension</source>
+        <translation>Désinstaller l’extension</translation>
+    </message>
+</context>
+<context>
+    <name>UnpinCalculatorHistoryRecordAction</name>
+    <message>
+        <source>Entry unpinned</source>
+        <translation>Entrée désépinglée</translation>
+    </message>
+    <message>
+        <source>Unpin entry</source>
+        <translation>Désépingler l’entrée</translation>
+    </message>
+</context>
+<context>
     <name>UnpinEmojiAction</name>
     <message>
         <source>Unpin emoji</source>
-        <translation>Désépingler l&apos;émoji</translation>
+        <translation>Désépingler l’émoji</translation>
     </message>
 </context>
 <context>
@@ -3775,6 +4642,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <source>General vicinae-related commands.</source>
         <translation>Commandes générales liées à vicinae.</translation>
+    </message>
+</context>
+<context>
+    <name>VicinaeHotkeyGlobalShortcutBackend</name>
+    <message>
+        <source>Unsupported trigger key</source>
+        <translation>Touche de déclenchement non prise en charge</translation>
+    </message>
+    <message>
+        <source>Hotkey binding was lost</source>
+        <translation>L’association du raccourci clavier a été perdue</translation>
     </message>
 </context>
 <context>
@@ -3831,11 +4709,11 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <name>VicinaeStoreDetailHost</name>
     <message>
         <source>Failed to load extension</source>
-        <translation>Échec du chargement de l&apos;extension</translation>
+        <translation>Échec du chargement de l’extension</translation>
     </message>
     <message>
         <source>Could not fetch extension data from the store.</source>
-        <translation>Impossible de récupérer les données de l&apos;extension depuis la boutique.</translation>
+        <translation>Impossible de récupérer les données de l’extension depuis la boutique.</translation>
     </message>
     <message>
         <source>Extension not found</source>
@@ -3843,31 +4721,31 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     </message>
     <message>
         <source>The extension &quot;%1&quot; could not be found in the store.</source>
-        <translation>L&apos;extension &quot;%1&quot; est introuvable dans la boutique.</translation>
+        <translation>L’extension &quot;%1&quot; est introuvable dans la boutique.</translation>
     </message>
     <message>
         <source>Extension Store - %1</source>
-        <translation>Boutique d&apos;extensions - %1</translation>
+        <translation>Boutique d’extensions - %1</translation>
     </message>
     <message>
         <source>Extension Store</source>
-        <translation>Boutique d&apos;extensions</translation>
+        <translation>Boutique d’extensions</translation>
     </message>
     <message>
         <source>Install extension</source>
-        <translation>Installer l&apos;extension</translation>
+        <translation>Installer l’extension</translation>
     </message>
     <message>
         <source>Downloading extension...</source>
-        <translation>Téléchargement de l&apos;extension...</translation>
+        <translation>Téléchargement de l’extension...</translation>
     </message>
     <message>
         <source>Failed to download extension</source>
-        <translation>Échec du téléchargement de l&apos;extension</translation>
+        <translation>Échec du téléchargement de l’extension</translation>
     </message>
     <message>
         <source>Failed to extract extension archive</source>
-        <translation>Échec de l&apos;extraction de l&apos;archive de l&apos;extension</translation>
+        <translation>Échec de l’extraction de l’archive de l’extension</translation>
     </message>
     <message>
         <source>Extension installed</source>
@@ -3901,7 +4779,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     </message>
     <message>
         <source>Extension Store</source>
-        <translation>Boutique d&apos;extensions</translation>
+        <translation>Boutique d’extensions</translation>
     </message>
 </context>
 <context>
@@ -3943,10 +4821,621 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     </message>
 </context>
 <context>
+    <name>WallpaperManager</name>
+    <message>
+        <source>Setting the wallpaper is not supported in the current environment</source>
+        <translation>La définition du fond d’écran n’est pas prise en charge dans l’environnement actuel</translation>
+    </message>
+    <message>
+        <source>No such file: %1</source>
+        <translation>Fichier introuvable : %1</translation>
+    </message>
+</context>
+<context>
+    <name>WinControlPanelRootItem</name>
+    <message>
+        <source>Control Panel</source>
+        <translation>Panneau de configuration</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nom</translation>
+    </message>
+    <message>
+        <source>Where</source>
+        <translation>Emplacement</translation>
+    </message>
+    <message>
+        <source>Open Applet</source>
+        <translation>Ouvrir l’applet</translation>
+    </message>
+    <message>
+        <source>Copy Path</source>
+        <translation>Copier le chemin</translation>
+    </message>
+</context>
+<context>
+    <name>WinControlPanelRootProvider</name>
+    <message>
+        <source>Control Panel</source>
+        <translation>Panneau de configuration</translation>
+    </message>
+    <message>
+        <source>Control Panel applets and system tasks.</source>
+        <translation>Applets du Panneau de configuration et tâches système.</translation>
+    </message>
+</context>
+<context>
+    <name>WinControlPanelTaskRootItem</name>
+    <message>
+        <source>Control Panel</source>
+        <translation>Panneau de configuration</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nom</translation>
+    </message>
+    <message>
+        <source>Task ID</source>
+        <translation>Identifiant de tâche</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Ouvrir</translation>
+    </message>
+</context>
+<context>
+    <name>WinSettingsPage</name>
+    <message>
+        <source>Display</source>
+        <translation>Affichage</translation>
+    </message>
+    <message>
+        <source>System</source>
+        <translation>Système</translation>
+    </message>
+    <message>
+        <source>Night Light</source>
+        <translation>Éclairage nocturne</translation>
+    </message>
+    <message>
+        <source>Sound</source>
+        <translation>Son</translation>
+    </message>
+    <message>
+        <source>Volume Mixer</source>
+        <translation>Mélangeur de volume</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation>Notifications</translation>
+    </message>
+    <message>
+        <source>Focus</source>
+        <translation>Concentration</translation>
+    </message>
+    <message>
+        <source>Power &amp; Battery</source>
+        <translation>Alimentation et batterie</translation>
+    </message>
+    <message>
+        <source>Storage</source>
+        <translation>Stockage</translation>
+    </message>
+    <message>
+        <source>Nearby Sharing</source>
+        <translation>Partage de proximité</translation>
+    </message>
+    <message>
+        <source>Multitasking</source>
+        <translation>Multitâche</translation>
+    </message>
+    <message>
+        <source>Activation</source>
+        <translation>Activation</translation>
+    </message>
+    <message>
+        <source>Troubleshoot</source>
+        <translation>Résolution des problèmes</translation>
+    </message>
+    <message>
+        <source>Recovery</source>
+        <translation>Récupération</translation>
+    </message>
+    <message>
+        <source>Projecting to This PC</source>
+        <translation>Projection sur ce PC</translation>
+    </message>
+    <message>
+        <source>Remote Desktop</source>
+        <translation>Bureau à distance</translation>
+    </message>
+    <message>
+        <source>Clipboard</source>
+        <translation>Presse-papiers</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>Informations système</translation>
+    </message>
+    <message>
+        <source>Optional Features</source>
+        <translation>Fonctionnalités facultatives</translation>
+    </message>
+    <message>
+        <source>For Developers</source>
+        <translation>Espace développeurs</translation>
+    </message>
+    <message>
+        <source>Bluetooth &amp; Devices</source>
+        <translation>Bluetooth et appareils</translation>
+    </message>
+    <message>
+        <source>Devices</source>
+        <translation>Appareils</translation>
+    </message>
+    <message>
+        <source>Printers &amp; Scanners</source>
+        <translation>Imprimantes et scanners</translation>
+    </message>
+    <message>
+        <source>Mobile Devices</source>
+        <translation>Appareils mobiles</translation>
+    </message>
+    <message>
+        <source>Cameras</source>
+        <translation>Caméras</translation>
+    </message>
+    <message>
+        <source>Mouse</source>
+        <translation>Souris</translation>
+    </message>
+    <message>
+        <source>Touchpad</source>
+        <translation>Pavé tactile</translation>
+    </message>
+    <message>
+        <source>Pen &amp; Windows Ink</source>
+        <translation>Stylet et Windows Ink</translation>
+    </message>
+    <message>
+        <source>AutoPlay</source>
+        <translation>Exécution automatique</translation>
+    </message>
+    <message>
+        <source>USB</source>
+        <translation>USB</translation>
+    </message>
+    <message>
+        <source>Network &amp; Internet</source>
+        <translation>Réseau et Internet</translation>
+    </message>
+    <message>
+        <source>Wi-Fi</source>
+        <translation>Wi-Fi</translation>
+    </message>
+    <message>
+        <source>Ethernet</source>
+        <translation>Ethernet</translation>
+    </message>
+    <message>
+        <source>VPN</source>
+        <translation>VPN</translation>
+    </message>
+    <message>
+        <source>Mobile Hotspot</source>
+        <translation>Point d’accès sans fil mobile</translation>
+    </message>
+    <message>
+        <source>Airplane Mode</source>
+        <translation>Mode avion</translation>
+    </message>
+    <message>
+        <source>Proxy</source>
+        <translation>Proxy</translation>
+    </message>
+    <message>
+        <source>Dial-up</source>
+        <translation>Accès réseau à distance</translation>
+    </message>
+    <message>
+        <source>Advanced Network Settings</source>
+        <translation>Paramètres réseau avancés</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation>Arrière-plan</translation>
+    </message>
+    <message>
+        <source>Personalization</source>
+        <translation>Personnalisation</translation>
+    </message>
+    <message>
+        <source>Colors</source>
+        <translation>Couleurs</translation>
+    </message>
+    <message>
+        <source>Themes</source>
+        <translation>Thèmes</translation>
+    </message>
+    <message>
+        <source>Lock Screen</source>
+        <translation>Écran de verrouillage</translation>
+    </message>
+    <message>
+        <source>Touch Keyboard</source>
+        <translation>Clavier tactile</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Démarrer</translation>
+    </message>
+    <message>
+        <source>Taskbar</source>
+        <translation>Barre des tâches</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation>Polices</translation>
+    </message>
+    <message>
+        <source>Dynamic Lighting</source>
+        <translation>Éclairage dynamique</translation>
+    </message>
+    <message>
+        <source>Installed Apps</source>
+        <translation>Applications installées</translation>
+    </message>
+    <message>
+        <source>Apps</source>
+        <translation>Applications</translation>
+    </message>
+    <message>
+        <source>Default Apps</source>
+        <translation>Applications par défaut</translation>
+    </message>
+    <message>
+        <source>Offline Maps</source>
+        <translation>Cartes hors connexion</translation>
+    </message>
+    <message>
+        <source>Apps for Websites</source>
+        <translation>Applications pour les sites web</translation>
+    </message>
+    <message>
+        <source>Video Playback</source>
+        <translation>Lecture vidéo</translation>
+    </message>
+    <message>
+        <source>Startup Apps</source>
+        <translation>Applications de démarrage</translation>
+    </message>
+    <message>
+        <source>Your Info</source>
+        <translation>Vos informations</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Comptes</translation>
+    </message>
+    <message>
+        <source>Email &amp; Accounts</source>
+        <translation>E-mail et comptes</translation>
+    </message>
+    <message>
+        <source>Sign-in Options</source>
+        <translation>Options de connexion</translation>
+    </message>
+    <message>
+        <source>Access Work or School</source>
+        <translation>Accès professionnel ou scolaire</translation>
+    </message>
+    <message>
+        <source>Family &amp; Other Users</source>
+        <translation>Famille et autres utilisateurs</translation>
+    </message>
+    <message>
+        <source>Windows Backup</source>
+        <translation>Sauvegarde Windows</translation>
+    </message>
+    <message>
+        <source>Date &amp; Time</source>
+        <translation>Date et heure</translation>
+    </message>
+    <message>
+        <source>Time &amp; Language</source>
+        <translation>Heure et langue</translation>
+    </message>
+    <message>
+        <source>Language &amp; Region</source>
+        <translation>Langue et région</translation>
+    </message>
+    <message>
+        <source>Typing</source>
+        <translation>Saisie</translation>
+    </message>
+    <message>
+        <source>Speech</source>
+        <translation>Voix</translation>
+    </message>
+    <message>
+        <source>Game Bar</source>
+        <translation>Game Bar</translation>
+    </message>
+    <message>
+        <source>Gaming</source>
+        <translation>Jeux</translation>
+    </message>
+    <message>
+        <source>Captures</source>
+        <translation>Captures</translation>
+    </message>
+    <message>
+        <source>Game Mode</source>
+        <translation>Mode Jeu</translation>
+    </message>
+    <message>
+        <source>Text Size</source>
+        <translation>Taille du texte</translation>
+    </message>
+    <message>
+        <source>Accessibility</source>
+        <translation>Accessibilité</translation>
+    </message>
+    <message>
+        <source>Visual Effects</source>
+        <translation>Effets visuels</translation>
+    </message>
+    <message>
+        <source>Magnifier</source>
+        <translation>Loupe</translation>
+    </message>
+    <message>
+        <source>Color Filters</source>
+        <translation>Filtres de couleur</translation>
+    </message>
+    <message>
+        <source>Contrast Themes</source>
+        <translation>Thèmes de contraste</translation>
+    </message>
+    <message>
+        <source>Narrator</source>
+        <translation>Narrateur</translation>
+    </message>
+    <message>
+        <source>Accessibility Audio</source>
+        <translation>Audio (accessibilité)</translation>
+    </message>
+    <message>
+        <source>Captions</source>
+        <translation>Sous-titres</translation>
+    </message>
+    <message>
+        <source>Accessibility Keyboard</source>
+        <translation>Clavier (accessibilité)</translation>
+    </message>
+    <message>
+        <source>Accessibility Mouse</source>
+        <translation>Souris (accessibilité)</translation>
+    </message>
+    <message>
+        <source>Eye Control</source>
+        <translation>Contrôle visuel</translation>
+    </message>
+    <message>
+        <source>Windows Security</source>
+        <translation>Sécurité Windows</translation>
+    </message>
+    <message>
+        <source>Privacy &amp; Security</source>
+        <translation>Confidentialité et sécurité</translation>
+    </message>
+    <message>
+        <source>Find My Device</source>
+        <translation>Localiser mon appareil</translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation>Confidentialité</translation>
+    </message>
+    <message>
+        <source>Location</source>
+        <translation>Localisation</translation>
+    </message>
+    <message>
+        <source>Camera Access</source>
+        <translation>Accès à la caméra</translation>
+    </message>
+    <message>
+        <source>Microphone Access</source>
+        <translation>Accès au microphone</translation>
+    </message>
+    <message>
+        <source>Activity History</source>
+        <translation>Historique des activités</translation>
+    </message>
+    <message>
+        <source>Diagnostics &amp; Feedback</source>
+        <translation>Diagnostics et commentaires</translation>
+    </message>
+    <message>
+        <source>Search Permissions</source>
+        <translation>Autorisations de recherche</translation>
+    </message>
+    <message>
+        <source>Windows Update</source>
+        <translation>Windows Update</translation>
+    </message>
+    <message>
+        <source>Update History</source>
+        <translation>Historique des mises à jour</translation>
+    </message>
+    <message>
+        <source>Advanced Update Options</source>
+        <translation>Options avancées de mise à jour</translation>
+    </message>
+    <message>
+        <source>Windows Insider Program</source>
+        <translation>Programme Windows Insider</translation>
+    </message>
+</context>
+<context>
+    <name>WinSettingsPageRootItem</name>
+    <message>
+        <source>System Settings</source>
+        <translation>Paramètres système</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Paramètres</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nom</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Catégorie</translation>
+    </message>
+    <message>
+        <source>URL</source>
+        <translation>URL</translation>
+    </message>
+    <message>
+        <source>Open %1 Settings</source>
+        <translation>Ouvrir les paramètres %1</translation>
+    </message>
+    <message>
+        <source>Copy URL</source>
+        <translation>Copier l’URL</translation>
+    </message>
+</context>
+<context>
+    <name>WinSettingsRootProvider</name>
+    <message>
+        <source>Windows Settings</source>
+        <translation>Paramètres Windows</translation>
+    </message>
+    <message>
+        <source>Pages of the Windows Settings app.</source>
+        <translation>Pages de l’application Paramètres de Windows.</translation>
+    </message>
+</context>
+<context>
     <name>WindowManagementExtension</name>
     <message>
         <source>Window Management</source>
         <translation>Gestion des fenêtres</translation>
+    </message>
+</context>
+<context>
+    <name>WindowsAppDatabase</name>
+    <message>
+        <source>Focus window</source>
+        <translation>Activer la fenêtre</translation>
+    </message>
+    <message>
+        <source>Launch app</source>
+        <translation>Lancer l’application</translation>
+    </message>
+    <message>
+        <source>Default action</source>
+        <translation>Action par défaut</translation>
+    </message>
+    <message>
+        <source>Action to perform when the return key is pressed. Always default to &apos;launch&apos; if the app has no open window.</source>
+        <translation>Action à effectuer lorsque la touche Entrée est pressée. Utilise toujours ’launch’ par défaut si l’application n’a aucune fenêtre ouverte.</translation>
+    </message>
+    <message>
+        <source>File Explorer</source>
+        <translation>Explorateur de fichiers</translation>
+    </message>
+    <message>
+        <source>Terminal</source>
+        <translation>Terminal</translation>
+    </message>
+    <message>
+        <source>Command Prompt</source>
+        <translation>Invite de commandes</translation>
+    </message>
+</context>
+<context>
+    <name>WindowsApplication</name>
+    <message>
+        <source>%1: Run as Administrator</source>
+        <translation>%1 : Exécuter en tant qu’administrateur</translation>
+    </message>
+    <message>
+        <source>Run as Administrator</source>
+        <translation>Exécuter en tant qu’administrateur</translation>
+    </message>
+</context>
+<context>
+    <name>WindowsGlobalShortcutBackend</name>
+    <message>
+        <source>unsupported or invalid trigger</source>
+        <translation>déclencheur non pris en charge ou non valide</translation>
+    </message>
+    <message>
+        <source>already registered by another application</source>
+        <translation>déjà enregistré par une autre application</translation>
+    </message>
+</context>
+<context>
+    <name>X11GlobalShortcutBackend</name>
+    <message>
+        <source>This shortcut is already in use by another application</source>
+        <translation>Ce raccourci est déjà utilisé par une autre application</translation>
+    </message>
+    <message>
+        <source>Unsupported trigger key</source>
+        <translation>Touche de déclenchement non prise en charge</translation>
+    </message>
+    <message>
+        <source>Trigger key is not present on this keyboard</source>
+        <translation>La touche de déclenchement n’est pas présente sur ce clavier</translation>
+    </message>
+</context>
+<context>
+    <name>X11Workspace</name>
+    <message>
+        <source>Desktop %1</source>
+        <translation>Bureau %1</translation>
+    </message>
+</context>
+<context>
+    <name>XdgAppDatabase</name>
+    <message>
+        <source>Focus window</source>
+        <translation>Activer la fenêtre</translation>
+    </message>
+    <message>
+        <source>Launch app</source>
+        <translation>Lancer l’application</translation>
+    </message>
+    <message>
+        <source>Default action</source>
+        <translation>Action par défaut</translation>
+    </message>
+    <message>
+        <source>Action to perform when the return key is pressed. Always default to &apos;launch&apos; if the app has no open window.</source>
+        <translation>Action à effectuer lorsque la touche Entrée est pressée. Utilise toujours ’launch’ par défaut si l’application n’a aucune fenêtre ouverte.</translation>
+    </message>
+    <message>
+        <source>Launch Prefix</source>
+        <translation>Préfixe de lancement</translation>
+    </message>
+    <message>
+        <source>Custom app launcher to use. Affects applications as well as their sub-actions.</source>
+        <translation>Lanceur d’applications personnalisé à utiliser. Affecte les applications ainsi que leurs sous-actions.</translation>
+    </message>
+    <message>
+        <source>Application directories</source>
+        <translation>Répertoires d’applications</translation>
+    </message>
+    <message>
+        <source>Directories applications are sourced from. The list cannot be modified directly. In order to do so, you need to append additonal paths to the &lt;b&gt;XDG_DATA_DIRS&lt;/b&gt; environment variables.</source>
+        <translation>Répertoires d’où sont chargées les applications. La liste ne peut pas être modifiée directement. Pour ce faire, vous devez ajouter des chemins supplémentaires à la variable d’environnement &lt;b&gt;XDG_DATA_DIRS&lt;/b&gt;.</translation>
     </message>
 </context>
 <context>
@@ -3968,7 +5457,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     </message>
     <message>
         <source>You need to connect at least one browser to vicinae using the browser extension in order to use this command.</source>
-        <translation>Vous devez connecter au moins un navigateur à vicinae via l&apos;extension de navigateur pour utiliser cette commande.</translation>
+        <translation>Vous devez connecter au moins un navigateur à vicinae via l’extension de navigateur pour utiliser cette commande.</translation>
     </message>
     <message>
         <source>Open documentation</source>
@@ -3999,6 +5488,81 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     </message>
 </context>
 <context>
+    <name>emoji-categories</name>
+    <message>
+        <source>Smileys &amp; Emotion</source>
+        <translation>Smileys et émotions</translation>
+    </message>
+    <message>
+        <source>People &amp; Body</source>
+        <translation>Personnes et corps</translation>
+    </message>
+    <message>
+        <source>Animals &amp; Nature</source>
+        <translation>Animaux et nature</translation>
+    </message>
+    <message>
+        <source>Food &amp; Drink</source>
+        <translation>Nourriture et boissons</translation>
+    </message>
+    <message>
+        <source>Travel &amp; Places</source>
+        <translation>Voyages et lieux</translation>
+    </message>
+    <message>
+        <source>Activities</source>
+        <translation>Activités</translation>
+    </message>
+    <message>
+        <source>Objects</source>
+        <translation>Objets</translation>
+    </message>
+    <message>
+        <source>Symbols</source>
+        <translation>Symboles</translation>
+    </message>
+    <message>
+        <source>Flags</source>
+        <translation>Drapeaux</translation>
+    </message>
+    <message>
+        <source>Math</source>
+        <translation>Mathématiques</translation>
+    </message>
+    <message>
+        <source>Arrows</source>
+        <translation>Flèches</translation>
+    </message>
+    <message>
+        <source>Currency</source>
+        <translation>Devises</translation>
+    </message>
+    <message>
+        <source>Punctuation</source>
+        <translation>Ponctuation</translation>
+    </message>
+    <message>
+        <source>Shapes</source>
+        <translation>Formes</translation>
+    </message>
+    <message>
+        <source>Misc Symbols</source>
+        <translation>Symboles divers</translation>
+    </message>
+    <message>
+        <source>Greek</source>
+        <translation>Grec</translation>
+    </message>
+    <message>
+        <source>Number Forms</source>
+        <translation>Formes numériques</translation>
+    </message>
+    <message>
+        <source>Fancy Letters</source>
+        <translation>Lettres stylisées</translation>
+    </message>
+</context>
+<context>
     <name>emoji-grid-model</name>
     <message>
         <source>Copy</source>
@@ -4022,6 +5586,168 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     </message>
 </context>
 <context>
+    <name>file-list-item</name>
+    <message>
+        <source>Copy file</source>
+        <translation>Copier le fichier</translation>
+    </message>
+    <message>
+        <source>Copy file path</source>
+        <translation>Copier le chemin du fichier</translation>
+    </message>
+    <message>
+        <source>Copy file name</source>
+        <translation>Copier le nom du fichier</translation>
+    </message>
+    <message>
+        <source>Copy mime type</source>
+        <translation>Copier le type MIME</translation>
+    </message>
+</context>
+<context>
+    <name>font-categories</name>
+    <message>
+        <source>Latin</source>
+        <translation>Latin</translation>
+    </message>
+    <message>
+        <source>Cyrillic</source>
+        <translation>Cyrillique</translation>
+    </message>
+    <message>
+        <source>Greek</source>
+        <translation>Grec</translation>
+    </message>
+    <message>
+        <source>Monospace</source>
+        <translation>Monospace</translation>
+    </message>
+    <message>
+        <source>Nerd Fonts</source>
+        <translation>Nerd Fonts</translation>
+    </message>
+    <message>
+        <source>Emoji</source>
+        <translation>Emoji</translation>
+    </message>
+    <message>
+        <source>CJK</source>
+        <translation>CJK</translation>
+    </message>
+    <message>
+        <source>Japanese</source>
+        <translation>Japonais</translation>
+    </message>
+    <message>
+        <source>Korean</source>
+        <translation>Coréen</translation>
+    </message>
+    <message>
+        <source>Simplified Chinese</source>
+        <translation>Chinois simplifié</translation>
+    </message>
+    <message>
+        <source>Traditional Chinese</source>
+        <translation>Chinois traditionnel</translation>
+    </message>
+    <message>
+        <source>Arabic</source>
+        <translation>Arabe</translation>
+    </message>
+    <message>
+        <source>Hebrew</source>
+        <translation>Hébreu</translation>
+    </message>
+    <message>
+        <source>Thai</source>
+        <translation>Thaï</translation>
+    </message>
+    <message>
+        <source>Lao</source>
+        <translation>Lao</translation>
+    </message>
+    <message>
+        <source>Devanagari</source>
+        <translation>Dévanagari</translation>
+    </message>
+    <message>
+        <source>Bengali</source>
+        <translation>Bengali</translation>
+    </message>
+    <message>
+        <source>Gurmukhi</source>
+        <translation>Gourmoukhî</translation>
+    </message>
+    <message>
+        <source>Gujarati</source>
+        <translation>Goudjarati</translation>
+    </message>
+    <message>
+        <source>Tamil</source>
+        <translation>Tamoul</translation>
+    </message>
+    <message>
+        <source>Telugu</source>
+        <translation>Télougou</translation>
+    </message>
+    <message>
+        <source>Kannada</source>
+        <translation>Kannada</translation>
+    </message>
+    <message>
+        <source>Malayalam</source>
+        <translation>Malayalam</translation>
+    </message>
+    <message>
+        <source>Sinhala</source>
+        <translation>Cingalais</translation>
+    </message>
+    <message>
+        <source>Armenian</source>
+        <translation>Arménien</translation>
+    </message>
+    <message>
+        <source>Georgian</source>
+        <translation>Géorgien</translation>
+    </message>
+    <message>
+        <source>Thaana</source>
+        <translation>Thâna</translation>
+    </message>
+    <message>
+        <source>Tibetan</source>
+        <translation>Tibétain</translation>
+    </message>
+    <message>
+        <source>Myanmar</source>
+        <translation>Birman</translation>
+    </message>
+    <message>
+        <source>Khmer</source>
+        <translation>Khmer</translation>
+    </message>
+    <message>
+        <source>Syriac</source>
+        <translation>Syriaque</translation>
+    </message>
+    <message>
+        <source>Ogham</source>
+        <translation>Ogham</translation>
+    </message>
+    <message>
+        <source>Runic</source>
+        <translation>Runique</translation>
+    </message>
+    <message>
+        <source>N&apos;Ko</source>
+        <translation>N&apos;Ko</translation>
+    </message>
+    <message>
+        <source>Symbols</source>
+        <translation>Symboles</translation>
+    </message>
+</context>
+<context>
     <name>font-grid-model</name>
     <message>
         <source>Copy font family</source>
@@ -4029,14 +5755,185 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     </message>
 </context>
 <context>
-    <name>server</name>
+    <name>keybind-manager</name>
     <message>
-        <source>Language changed</source>
-        <translation>Langue modifiée</translation>
+        <source>Toggle action panel</source>
+        <translation>Afficher/Masquer le panneau d’actions</translation>
     </message>
     <message>
-        <source>Restart Vicinae to apply the new language.</source>
-        <translation>Redémarrez Vicinae pour appliquer la nouvelle langue.</translation>
+        <source>Toggle the action panel to access and filter through the list of available actions for the currently selected item</source>
+        <translation>Afficher ou masquer le panneau d’actions pour accéder à la liste des actions disponibles pour l’élément actuellement sélectionné et la filtrer</translation>
+    </message>
+    <message>
+        <source>Open Search Filter</source>
+        <translation>Ouvrir le filtre de recherche</translation>
+    </message>
+    <message>
+        <source>Open the search filter selector if present</source>
+        <translation>Ouvrir le sélecteur de filtre de recherche s’il est présent</translation>
+    </message>
+    <message>
+        <source>Open settings window</source>
+        <translation>Ouvrir la fenêtre des paramètres</translation>
+    </message>
+    <message>
+        <source>Open this settings window from the launcher window</source>
+        <translation>Ouvrir cette fenêtre de paramètres depuis la fenêtre du lanceur</translation>
+    </message>
+    <message>
+        <source>Generic Open Action</source>
+        <translation>Action d’ouverture générique</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can open the selected item</source>
+        <translation>Peut être utilisé par les actions capables d’ouvrir l’élément sélectionné</translation>
+    </message>
+    <message>
+        <source>Generic Copy Action</source>
+        <translation>Action de copie générique</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can copy the selected item</source>
+        <translation>Peut être utilisé par les actions capables de copier l’élément sélectionné</translation>
+    </message>
+    <message>
+        <source>Copy Name Action</source>
+        <translation>Action de copie du nom</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can copy the name of the selected item</source>
+        <translation>Peut être utilisé par les actions capables de copier le nom de l’élément sélectionné</translation>
+    </message>
+    <message>
+        <source>Copy Path Action</source>
+        <translation>Action de copie du chemin</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can copy the path of the selected item</source>
+        <translation>Peut être utilisé par les actions capables de copier le chemin de l’élément sélectionné</translation>
+    </message>
+    <message>
+        <source>Save Action</source>
+        <translation>Action d’enregistrement</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can save the selected item</source>
+        <translation>Peut être utilisé par les actions capables d’enregistrer l’élément sélectionné</translation>
+    </message>
+    <message>
+        <source>Duplicate Action</source>
+        <translation>Action de duplication</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can duplicate the selected item</source>
+        <translation>Peut être utilisé par les actions capables de dupliquer l’élément sélectionné</translation>
+    </message>
+    <message>
+        <source>Generic New Action</source>
+        <translation>Action de création générique</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that create something</source>
+        <translation>Peut être utilisé par les actions qui créent quelque chose</translation>
+    </message>
+    <message>
+        <source>Generic Move Up Action</source>
+        <translation>Action générique de déplacement vers le haut</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can move up the selected item. This does not affect list navigation controls.</source>
+        <translation>Peut être utilisé par les actions capables de déplacer l’élément sélectionné vers le haut. Cela n’affecte pas les contrôles de navigation dans les listes.</translation>
+    </message>
+    <message>
+        <source>Generic Move Down Action</source>
+        <translation>Action générique de déplacement vers le bas</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can move down the selected item. This does not affect list navigation controls.</source>
+        <translation>Peut être utilisé par les actions capables de déplacer l’élément sélectionné vers le bas. Cela n’affecte pas les contrôles de navigation dans les listes.</translation>
+    </message>
+    <message>
+        <source>Generic Refresh Action</source>
+        <translation>Action d’actualisation générique</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can refresh the selected item</source>
+        <translation>Peut être utilisé par les actions capables d’actualiser l’élément sélectionné</translation>
+    </message>
+    <message>
+        <source>Generic Pin Action</source>
+        <translation>Action d’épinglage générique</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can pin the selected item</source>
+        <translation>Peut être utilisé par les actions capables d’épingler l’élément sélectionné</translation>
+    </message>
+    <message>
+        <source>Remove Action</source>
+        <translation>Action de suppression</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can remove the selected item. This is normally used for small, not too impactful removals.</source>
+        <translation>Peut être utilisé par les actions capables de supprimer l’élément sélectionné. Ceci est normalement utilisé pour des suppressions mineures, sans grande conséquence.</translation>
+    </message>
+    <message>
+        <source>Dangerous Remove Action</source>
+        <translation>Action de suppression dangereuse</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that perform an impactful removal, generally accompanied by a confirmation dialog.</source>
+        <translation>Peut être utilisé par les actions effectuant une suppression importante, généralement accompagnée d’un dialogue de confirmation.</translation>
+    </message>
+    <message>
+        <source>Edit Action</source>
+        <translation>Action de modification</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can edit the currently selected item</source>
+        <translation>Peut être utilisé par les actions capables de modifier l’élément actuellement sélectionné</translation>
+    </message>
+    <message>
+        <source>Edit Secondary Action</source>
+        <translation>Action de modification secondaire</translation>
+    </message>
+    <message>
+        <source>Can be used by actions that can edit a secondary characteristic of the currently selected item</source>
+        <translation>Peut être utilisé par les actions capables de modifier une caractéristique secondaire de l’élément actuellement sélectionné</translation>
+    </message>
+</context>
+<context>
+    <name>macos-update-installer</name>
+    <message>
+        <source>Update image contains more than one app</source>
+        <translation>L’image de mise à jour contient plusieurs applications</translation>
+    </message>
+    <message>
+        <source>Failed to list update image: %1</source>
+        <translation>Échec de la lecture du contenu de l’image de mise à jour : %1</translation>
+    </message>
+    <message>
+        <source>No app found in update image</source>
+        <translation>Aucune application trouvée dans l’image de mise à jour</translation>
+    </message>
+    <message>
+        <source>Failed to read the update&apos;s code signature</source>
+        <translation>Échec de la lecture de la signature de code de la mise à jour</translation>
+    </message>
+    <message>
+        <source>Failed to build the signature requirement</source>
+        <translation>Échec de la construction de l’exigence de signature</translation>
+    </message>
+    <message>
+        <source>Update signature verification failed (%1)</source>
+        <translation>Échec de la vérification de la signature de la mise à jour (%1)</translation>
+    </message>
+    <message>
+        <source>Update has no CFBundleShortVersionString</source>
+        <translation>La mise à jour n’a pas de CFBundleShortVersionString</translation>
+    </message>
+    <message>
+        <source>Update version mismatch: expected %1, found %2</source>
+        <translation>La version de la mise à jour ne correspond pas : %1 attendue, %2 trouvée</translation>
     </message>
 </context>
 <context>
@@ -4055,6 +5952,44 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <source>Volume %1%</source>
         <translation>Volume %1%</translation>
+    </message>
+</context>
+<context>
+    <name>utils</name>
+    <message>
+        <source>0 bytes</source>
+        <translation>0 octet</translation>
+    </message>
+    <message>
+        <source>bytes</source>
+        <translation>octets</translation>
+    </message>
+    <message>
+        <source>KB</source>
+        <translation>Ko</translation>
+    </message>
+    <message>
+        <source>MB</source>
+        <translation>Mo</translation>
+    </message>
+    <message>
+        <source>GB</source>
+        <translation>Go</translation>
+    </message>
+    <message>
+        <source>TB</source>
+        <translation>To</translation>
+    </message>
+    <message>
+        <source>PB</source>
+        <translation>Po</translation>
+    </message>
+</context>
+<context>
+    <name>virtual-desktops</name>
+    <message>
+        <source>Desktop %1</source>
+        <translation>Bureau %1</translation>
     </message>
 </context>
 </TS>

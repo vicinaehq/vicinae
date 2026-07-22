@@ -64,7 +64,7 @@ RootShortcutItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMet
   return panel;
 }
 
-QString RootShortcutItem::typeDisplayName() const { return "Shortcut"; }
+QString RootShortcutItem::typeDisplayName() const { return tr("Shortcut"); }
 
 EntrypointId RootShortcutItem::uniqueId() const {
   return EntrypointId{"shortcuts", m_link->id().toStdString()};
@@ -75,7 +75,7 @@ QString RootShortcutItem::title() const { return m_link->name(); }
 double RootShortcutItem::baseScoreWeight() const { return 1.4; }
 
 AccessoryList RootShortcutItem::accessories() const {
-  return {{.text = "Shortcut", .color = SemanticColor::TextMuted}};
+  return {{.text = tr("Shortcut"), .color = SemanticColor::TextMuted}};
 }
 
 bool RootShortcutItem::isSuitableForFallback() const { return m_link->arguments().size() == 1; }
@@ -116,7 +116,9 @@ std::vector<std::shared_ptr<RootItem>> ShortcutRootProvider::loadItems() const {
   return items;
 };
 
-QString ShortcutRootProvider::displayName() const { return "Shortcuts"; }
+QString ShortcutRootProvider::displayName() const {
+  return QCoreApplication::translate("ShortcutRootProvider", "Shortcuts");
+}
 
 ImageURL ShortcutRootProvider::icon() const {
   auto icon = ImageURL::builtin("bolt");

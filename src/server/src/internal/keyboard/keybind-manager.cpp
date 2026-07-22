@@ -1,11 +1,13 @@
 #include "keybind-manager.hpp"
+#include <QCoreApplication>
 
 // clang-format off
-static const std::unordered_map<Keybind, KeybindInfo> infos{
+static const std::unordered_map<Keybind, KeybindInfo> &keybindInfos() {
+	static const std::unordered_map<Keybind, KeybindInfo> infos{
 	{Keybind::ToggleActionPanel, KeybindInfo{
-		.id = "toggle-action-panel", 
-		.name = "Toggle action panel",
-		.description = "Toggle the action panel to access and filter through the list of available actions for the currently selected item",
+		.id = "toggle-action-panel",
+		.name = QCoreApplication::translate("keybind-manager", "Toggle action panel"),
+		.description = QCoreApplication::translate("keybind-manager", "Toggle the action panel to access and filter through the list of available actions for the currently selected item"),
 		.icon = "switch",
 #ifdef Q_OS_MACOS
 		.dflt = Keyboard::Shortcut(Qt::Key_K, Qt::ControlModifier)
@@ -14,125 +16,127 @@ static const std::unordered_map<Keybind, KeybindInfo> infos{
 #endif
 	}},
 	{Keybind::OpenSearchAccessorySelector, KeybindInfo{
-		.id = "open-search-filter", 
-		.name = "Open Search Filter",
-		.description = "Open the search filter selector if present",
+		.id = "open-search-filter",
+		.name = QCoreApplication::translate("keybind-manager", "Open Search Filter"),
+		.description = QCoreApplication::translate("keybind-manager", "Open the search filter selector if present"),
 		.icon = "arrow-up",
 		.dflt = Keyboard::Shortcut(Qt::Key_P, Qt::ControlModifier)
 	}},
 	{Keybind::OpenSettings, KeybindInfo{
-		.id = "open-settings", 
-		.name = "Open settings window",
-		.description = "Open this settings window from the launcher window",
+		.id = "open-settings",
+		.name = QCoreApplication::translate("keybind-manager", "Open settings window"),
+		.description = QCoreApplication::translate("keybind-manager", "Open this settings window from the launcher window"),
 		.icon = "cog",
 		.dflt = Keyboard::Shortcut(Qt::Key_Comma, Qt::ControlModifier)
 	}},
 	{Keybind::OpenAction, KeybindInfo{
-		.id = "action.open", 
-		.name = "Generic Open Action",
-		.description = "Can be used by actions that can open the selected item",
+		.id = "action.open",
+		.name = QCoreApplication::translate("keybind-manager", "Generic Open Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can open the selected item"),
 		.icon = "arrow-up",
 		.dflt = Keyboard::Shortcut(Qt::Key_O, Qt::ControlModifier)
 	}},
 	{Keybind::CopyAction, KeybindInfo{
-		.id = "action.copy", 
-		.name = "Generic Copy Action",
-		.description = "Can be used by actions that can copy the selected item",
+		.id = "action.copy",
+		.name = QCoreApplication::translate("keybind-manager", "Generic Copy Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can copy the selected item"),
 		.icon = "copy-clipboard",
 		.dflt = Keyboard::Shortcut(Qt::Key_C, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::CopyNameAction, KeybindInfo{
-		.id = "action.copy-name", 
-		.name = "Copy Name Action",
-		.description = "Can be used by actions that can copy the name of the selected item",
+		.id = "action.copy-name",
+		.name = QCoreApplication::translate("keybind-manager", "Copy Name Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can copy the name of the selected item"),
 		.icon = "copy-clipboard",
 		.dflt = Keyboard::Shortcut(Qt::Key_Period, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::CopyPathAction, KeybindInfo{
-		.id = "action.copy-path", 
-		.name = "Copy Path Action",
-		.description = "Can be used by actions that can copy the path of the selected item",
+		.id = "action.copy-path",
+		.name = QCoreApplication::translate("keybind-manager", "Copy Path Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can copy the path of the selected item"),
 		.icon = "copy-clipboard",
 		.dflt = Keyboard::Shortcut(Qt::Key_Comma, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::SaveAction, KeybindInfo{
-		.id = "action.save", 
-		.name = "Save Action",
-		.description = "Can be used by actions that can save the selected item",
+		.id = "action.save",
+		.name = QCoreApplication::translate("keybind-manager", "Save Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can save the selected item"),
 		.icon = "save-document",
 		.dflt = Keyboard::Shortcut(Qt::Key_S, Qt::ControlModifier)
 	}},
 	{Keybind::DuplicateAction, KeybindInfo{
-		.id = "action.duplicate", 
-		.name = "Duplicate Action",
-		.description = "Can be used by actions that can duplicate the selected item",
+		.id = "action.duplicate",
+		.name = QCoreApplication::translate("keybind-manager", "Duplicate Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can duplicate the selected item"),
 		.icon = "duplicate",
 		.dflt = Keyboard::Shortcut(Qt::Key_D, Qt::ControlModifier)
 	}},
 	{Keybind::NewAction, KeybindInfo{
 			.id = "action.new",
-			.name = "Generic New Action",
-			.description = "Can be used by actions that create something",
+			.name = QCoreApplication::translate("keybind-manager", "Generic New Action"),
+			.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that create something"),
 			 .icon = "new-document",
 			.dflt = Keyboard::Shortcut(Qt::Key_N, Qt::ControlModifier)
 	}},
 	{Keybind::MoveUpAction, KeybindInfo{
 			.id = "action.move-up",
-			.name = "Generic Move Up Action",
-			.description = "Can be used by actions that can move up the selected item. This does not affect list navigation controls.",
+			.name = QCoreApplication::translate("keybind-manager", "Generic Move Up Action"),
+			.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can move up the selected item. This does not affect list navigation controls."),
 			 .icon = "arrow-up",
 			.dflt = Keyboard::Shortcut(Qt::Key_Up, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::MoveDownAction, KeybindInfo{
 			.id = "action.move-down",
-			.name = "Generic Move Down Action",
-			.description = "Can be used by actions that can move down the selected item. This does not affect list navigation controls.",
+			.name = QCoreApplication::translate("keybind-manager", "Generic Move Down Action"),
+			.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can move down the selected item. This does not affect list navigation controls."),
 			 .icon = "arrow-down",
 			.dflt = Keyboard::Shortcut(Qt::Key_Down, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::RefreshAction, KeybindInfo{
 			.id = "action.refresh",
-			.name = "Generic Refresh Action",
-			.description = "Can be used by actions that can refresh the selected item",
+			.name = QCoreApplication::translate("keybind-manager", "Generic Refresh Action"),
+			.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can refresh the selected item"),
 			 .icon = "arrow-clockwise",
 			.dflt = Keyboard::Shortcut(Qt::Key_R, Qt::ControlModifier)
 	}},
 	{Keybind::PinAction, KeybindInfo{
 		.id = "action.pin",
-		.name = "Generic Pin Action",
-		.description = "Can be used by actions that can pin the selected item",
+		.name = QCoreApplication::translate("keybind-manager", "Generic Pin Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can pin the selected item"),
 		.icon = "pin",
 		.dflt = Keyboard::Shortcut(Qt::Key_P, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::RemoveAction, KeybindInfo{
 		.id = "action.remove",
-		.name = "Remove Action",
-		.description = "Can be used by actions that can remove the selected item. This is normally used for small, not too impactful removals.",
+		.name = QCoreApplication::translate("keybind-manager", "Remove Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can remove the selected item. This is normally used for small, not too impactful removals."),
 		.icon = "trash",
 		.dflt = Keyboard::Shortcut(Qt::Key_X, Qt::ControlModifier)
 	}},
 	{Keybind::DangerousRemoveAction, KeybindInfo{
-		.id = "action.dangerous-remove", 
-		.name = "Dangerous Remove Action",
-		.description = "Can be used by actions that perform an impactful removal, generally accompanied by a confirmation dialog.",
+		.id = "action.dangerous-remove",
+		.name = QCoreApplication::translate("keybind-manager", "Dangerous Remove Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that perform an impactful removal, generally accompanied by a confirmation dialog."),
 		.icon = "trash",
 		.dflt = Keyboard::Shortcut(Qt::Key_X, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::EditAction, KeybindInfo{
-		.id = "action.edit", 
-		.name = "Edit Action",
-		.description = "Can be used by actions that can edit the currently selected item",
+		.id = "action.edit",
+		.name = QCoreApplication::translate("keybind-manager", "Edit Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can edit the currently selected item"),
 		.icon = "pencil",
 		.dflt = Keyboard::Shortcut(Qt::Key_E, Qt::ControlModifier)
 	}},
 	{Keybind::EditSecondaryAction, KeybindInfo{
-		.id = "action.edit-secondary", 
-		.name = "Edit Secondary Action",
-		.description = "Can be used by actions that can edit a secondary characteristic of the currently selected item",
+		.id = "action.edit-secondary",
+		.name = QCoreApplication::translate("keybind-manager", "Edit Secondary Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can edit a secondary characteristic of the currently selected item"),
 		.icon = "pencil",
 		.dflt = Keyboard::Shortcut(Qt::Key_E, Qt::ControlModifier | Qt::ShiftModifier)
 	}}
-};
+	};
+	return infos;
+}
 // clang-format on
 
 KeybindManager *KeybindManager::instance() {
@@ -141,7 +145,7 @@ KeybindManager *KeybindManager::instance() {
 }
 
 KeybindManager::KeybindManager() {
-  for (const auto &[bind, info] : infos) {
+  for (const auto &[bind, info] : keybindInfos()) {
     m_shortcuts[bind] = info.dflt;
     m_idToBind[info.id] = bind;
   }
@@ -149,6 +153,7 @@ KeybindManager::KeybindManager() {
 
 Keyboard::Shortcut KeybindManager::resolve(Keybind bind) const {
   if (auto it = m_shortcuts.find(bind); it != m_shortcuts.end()) { return it->second; }
+  const auto &infos = keybindInfos();
   if (auto it = infos.find(bind); it != infos.end()) { return it->second.dflt; }
 
   return Keyboard::Shortcut();
@@ -168,6 +173,7 @@ bool KeybindManager::isBound(const Keyboard::Shortcut &shortcut) const {
  */
 std::optional<KeybindInfo> KeybindManager::findBoundInfo(const Keyboard::Shortcut &shortcut,
                                                          const QString &excludeId) const {
+  const auto &infos = keybindInfos();
   for (const auto &[bind, stcut] : m_shortcuts) {
     if (stcut == shortcut) {
       if (auto it = infos.find(bind); it != infos.end() && it->second.id != excludeId) { return it->second; }
@@ -178,6 +184,7 @@ std::optional<KeybindInfo> KeybindManager::findBoundInfo(const Keyboard::Shortcu
 }
 
 QString KeybindManager::idFor(Keybind bind) const {
+  const auto &infos = keybindInfos();
   if (auto it = infos.find(bind); it != infos.end()) { return it->second.id; }
   return {};
 }
@@ -188,7 +195,7 @@ void KeybindManager::setKeybind(Keybind bind, const Keyboard::Shortcut &shortcut
 }
 
 void KeybindManager::mergeBinds(const SerializedKeybindMap &map) {
-  for (const auto &[bind, info] : infos) {
+  for (const auto &[bind, info] : keybindInfos()) {
     if (auto it = map.find(info.id.toStdString()); it != map.end()) {
       m_shortcuts[bind] = Keyboard::Shortcut{it->second.c_str()};
     } else {
@@ -202,6 +209,7 @@ void KeybindManager::setMap(const KeybindMap &map) { m_shortcuts = map; }
 const KeybindManager::KeybindMap &KeybindManager::map() const { return m_shortcuts; }
 
 std::vector<std::pair<Keybind, const KeybindInfo *>> KeybindManager::orderedInfoList() {
+  const auto &infos = keybindInfos();
   std::vector<std::pair<Keybind, const KeybindInfo *>> list;
   list.reserve(static_cast<uint8_t>(Keybind::KeybindEnd));
 
@@ -214,6 +222,7 @@ std::vector<std::pair<Keybind, const KeybindInfo *>> KeybindManager::orderedInfo
 }
 
 KeybindManager::SerializedKeybindMap KeybindManager::toSerializedMap() {
+  const auto &infos = keybindInfos();
   SerializedKeybindMap mp;
 
   for (const auto &[bind, shortcut] : m_shortcuts) {

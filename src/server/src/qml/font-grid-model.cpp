@@ -126,7 +126,10 @@ void FontGridModel::rebuildRoot() {
 
   const int n = static_cast<int>(members.size());
   const QString title =
-      m_categoryFilter ? QStringLiteral("%1 (%2)").arg(FontService::categoryName(*m_categoryFilter)).arg(n)
+      m_categoryFilter ? QStringLiteral("%1 (%2)")
+                             .arg(QCoreApplication::translate(
+                                 "font-categories", qPrintable(FontService::categoryName(*m_categoryFilter))))
+                             .arg(n)
                        : tr("All Fonts (%1)").arg(n);
   m_rootSource.setBucket(title, std::move(members));
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include <QGuiApplication>
 #include "actions/app/app-actions.hpp"
 #include "builtin_icon.hpp"
@@ -45,6 +46,8 @@ QString expandShortcut(const Shortcut &sh, std::span<const QString> args) {
 }; // namespace
 
 class OpenShortcutAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(OpenShortcutAction)
+
   std::shared_ptr<Shortcut> m_shortcut;
   std::vector<QString> m_arguments;
   std::shared_ptr<AbstractApplication> m_app;
@@ -62,7 +65,7 @@ public:
     } else if (auto app = appDb->findById(m_shortcut->app())) {
       appDb->launch(*app, {expanded});
     } else {
-      toast->setToast("No app with id " + m_shortcut->app(), ToastStyle::Danger);
+      toast->setToast(tr("No app with id %1").arg(m_shortcut->app()), ToastStyle::Danger);
       return;
     }
 
@@ -71,14 +74,14 @@ public:
     if (m_clearSearch) ctx->navigation->clearSearchText();
   }
 
-  QString title() const override { return "Open shortcut"; }
+  QString title() const override { return tr("Open shortcut"); }
 
 public:
   void setClearSearch(bool value) { m_clearSearch = value; }
 
   OpenShortcutAction(const std::shared_ptr<Shortcut> &shortcut, const std::vector<QString> &arguments,
                      const std::shared_ptr<AbstractApplication> &app = nullptr)
-      : AbstractAction("Open shortcut", shortcut->icon()), m_shortcut(shortcut), m_arguments(arguments),
+      : AbstractAction(tr("Open shortcut"), shortcut->icon()), m_shortcut(shortcut), m_arguments(arguments),
         m_app(app) {}
 };
 
@@ -105,7 +108,9 @@ public:
 
   OpenCompletedShortcutAction(const std::shared_ptr<Shortcut> &shortcut,
                               const std::shared_ptr<AbstractApplication> &app = nullptr)
-      : AbstractAction("Open shortcut", shortcut->icon()), m_shortcut(shortcut), m_app(app) {}
+      : AbstractAction(QCoreApplication::translate("OpenCompletedShortcutAction", "Open shortcut"),
+                       shortcut->icon()),
+        m_shortcut(shortcut), m_app(app) {}
 };
 
 class OpenShortcutFromSearchText : public AbstractAction {
@@ -119,7 +124,9 @@ class OpenShortcutFromSearchText : public AbstractAction {
 
 public:
   OpenShortcutFromSearchText(const std::shared_ptr<Shortcut> &shortcut)
-      : AbstractAction("Open shortcut", shortcut->icon()), m_shortcut(shortcut) {}
+      : AbstractAction(QCoreApplication::translate("OpenShortcutFromSearchText", "Open shortcut"),
+                       shortcut->icon()),
+        m_shortcut(shortcut) {}
 };
 
 struct EditShortcutAction : public AbstractAction {
@@ -133,10 +140,14 @@ public:
   }
 
   EditShortcutAction(const std::shared_ptr<Shortcut> &shortcut, const QList<QString> &args = {})
-      : AbstractAction("Edit shortcut", ImageURL::builtin("pencil")), m_shortcut(shortcut) {}
+      : AbstractAction(QCoreApplication::translate("EditShortcutAction", "Edit shortcut"),
+                       ImageURL::builtin("pencil")),
+        m_shortcut(shortcut) {}
 };
 
 struct RemoveShortcutAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(RemoveShortcutAction)
+
   std::shared_ptr<Shortcut> m_shortcut;
 
 public:
@@ -146,14 +157,14 @@ public:
     bool removeResult = shortcutDb->removeShortcut(m_shortcut->id());
 
     if (removeResult) {
-      toast->setToast("Removed link");
+      toast->setToast(tr("Removed link"));
     } else {
-      toast->setToast("Failed to remove link", ToastStyle::Danger);
+      toast->setToast(tr("Failed to remove link"), ToastStyle::Danger);
     }
   }
 
   RemoveShortcutAction(const std::shared_ptr<Shortcut> &link)
-      : AbstractAction("Remove link", ImageURL::builtin("trash")), m_shortcut(link) {
+      : AbstractAction(tr("Remove link"), ImageURL::builtin("trash")), m_shortcut(link) {
     setStyle(AbstractAction::Style::Danger);
     setShortcut(Keybind::DangerousRemoveAction);
   }
@@ -170,7 +181,9 @@ public:
   }
 
   DuplicateShortcutAction(const std::shared_ptr<Shortcut> &link)
-      : AbstractAction("Duplicate link", ImageURL::builtin("duplicate")), link(link) {}
+      : AbstractAction(QCoreApplication::translate("DuplicateShortcutAction", "Duplicate link"),
+                       ImageURL::builtin("duplicate")),
+        link(link) {}
 };
 
 /**
@@ -180,7 +193,9 @@ public:
 class OpenCompletedShortcutWithAction : public ListSubmenuAction {
 public:
   OpenCompletedShortcutWithAction(const std::shared_ptr<Shortcut> &shortcut)
-      : ListSubmenuAction("Open with...", BuiltinIcon::ArrowUp), m_shortcut(shortcut) {
+      : ListSubmenuAction(QCoreApplication::translate("OpenCompletedShortcutWithAction", "Open with..."),
+                          BuiltinIcon::ArrowUp),
+        m_shortcut(shortcut) {
     setShortcut(Keybind::OpenAction);
   }
 
@@ -203,6 +218,8 @@ private:
 };
 
 class CopyShortcutAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(CopyShortcutAction)
+
 public:
   void execute(ApplicationContext *ctx) override {
     auto args = ctx->navigation->completionValues() |
@@ -210,11 +227,11 @@ public:
     auto expanded = expandShortcut(*m_shortcut, args);
 
     ctx->services->clipman()->copyText(expanded);
-    ctx->navigation->showHud("Copied to clipboard");
+    ctx->navigation->showHud(tr("Copied to clipboard"));
   }
 
   CopyShortcutAction(const std::shared_ptr<Shortcut> &shortcut)
-      : AbstractAction("Copy shortcut", BuiltinIcon::CopyClipboard), m_shortcut(shortcut) {}
+      : AbstractAction(tr("Copy shortcut"), BuiltinIcon::CopyClipboard), m_shortcut(shortcut) {}
 
 private:
   std::shared_ptr<Shortcut> m_shortcut;

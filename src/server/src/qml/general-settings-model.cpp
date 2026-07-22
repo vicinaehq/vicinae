@@ -335,7 +335,7 @@ QVariant GeneralSettingsModel::currentLanguage() const {
 void GeneralSettingsModel::selectLanguage(const QString &id) {
   cfgManager().updateUser([&](config::Partial<config::ConfigValue> &value) {
     if (id == QStringLiteral("system")) {
-      value.language = std::nullopt;
+      value.language = std::string{};
     } else {
       value.language = id.toStdString();
     }

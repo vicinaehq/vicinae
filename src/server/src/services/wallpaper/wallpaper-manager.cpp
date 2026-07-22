@@ -64,11 +64,12 @@ QFuture<std::expected<void, std::string>> WallpaperManager::setWallpaper(const W
 
   auto *backend = this->backend();
 
-  if (!backend) return makeError("Setting the wallpaper is not supported in the current environment");
+  if (!backend)
+    return makeError(tr("Setting the wallpaper is not supported in the current environment").toStdString());
 
   std::error_code ec;
   if (!std::filesystem::is_regular_file(request.path, ec)) {
-    return makeError("No such file: " + request.path);
+    return makeError(tr("No such file: %1").arg(QString::fromStdString(request.path)).toStdString());
   }
 
   return backend->setWallpaper(request);

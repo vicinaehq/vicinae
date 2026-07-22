@@ -1,5 +1,6 @@
 #pragma once
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <QCoreApplication>
 
 // Official Segoe Fluent Icons glyph names (all also present in Segoe MDL2 Assets on Windows 10).
 enum class SegoeIcon : char16_t {
@@ -93,6 +94,8 @@ struct WinSettingsPage {
 };
 
 class WinSettingsPageRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(WinSettingsPageRootItem)
+
   const WinSettingsPage &m_page;
 
   QString title() const override;
@@ -111,6 +114,8 @@ public:
 };
 
 class WinSettingsRootProvider : public RootProvider {
+  Q_DECLARE_TR_FUNCTIONS(WinSettingsRootProvider)
+
 public:
   QString uniqueId() const override;
   QString displayName() const override;

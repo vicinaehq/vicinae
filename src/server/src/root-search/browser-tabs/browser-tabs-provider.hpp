@@ -6,14 +6,17 @@
 #include "services/browser-extension-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
+#include <QCoreApplication>
 #include <qjsonobject.h>
 #include <qstringliteral.h>
 #include <ranges>
 
 class BrowserTabRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(BrowserTabRootItem)
+
   double baseScoreWeight() const override { return 1.1; }
 
-  QString typeDisplayName() const override { return "Browser Tab"; }
+  QString typeDisplayName() const override { return tr("Browser Tab"); }
 
   QString title() const override { return m_tab.host(); }
 
@@ -27,7 +30,7 @@ class BrowserTabRootItem : public RootItem {
   }
 
   AccessoryList accessories() const override {
-    ListAccessory accessory{.text = "Tab"};
+    ListAccessory accessory{.text = tr("Tab")};
 
     if (m_tab.audible) { accessory.icon = ImageURL::emoji(m_tab.muted ? "🔇" : "🔊"); }
 
@@ -63,7 +66,9 @@ public:
 
   ImageURL icon() const override { return BuiltinIcon::AppWindowSidebarLeft; }
 
-  QString displayName() const override { return "Browser Tabs"; }
+  QString displayName() const override {
+    return QCoreApplication::translate("BrowserTabProvider", "Browser Tabs");
+  }
 
   bool isTransient() const override { return true; }
 

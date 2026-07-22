@@ -1,10 +1,13 @@
 #pragma once
 #include "common.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <QCoreApplication>
 #include <qjsonobject.h>
 #include "common/entrypoint.hpp"
 
 class CommandRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(CommandRootItem)
+
   std::shared_ptr<AbstractCmd> m_command;
 
 public:

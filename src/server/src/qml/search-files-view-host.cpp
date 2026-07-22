@@ -168,12 +168,18 @@ void SearchFilesViewHost::clearDetail() {
   emit detailChanged();
 }
 
-QStringList SearchFilesViewHost::categoryFilterOptions() const {
-  return {
+static const QStringList &categoryFilterKeys() {
+  static const QStringList keys = {
       QStringLiteral("All"),       QStringLiteral("Other"),    QStringLiteral("Directories"),
       QStringLiteral("Images"),    QStringLiteral("Videos"),   QStringLiteral("Audio"),
       QStringLiteral("Documents"), QStringLiteral("Archives"), QStringLiteral("Applications"),
   };
+  return keys;
+}
+
+QStringList SearchFilesViewHost::categoryFilterOptions() const {
+  return {tr("All"),   tr("Other"),     tr("Directories"), tr("Images"),      tr("Videos"),
+          tr("Audio"), tr("Documents"), tr("Archives"),    tr("Applications")};
 }
 
 void SearchFilesViewHost::setCategoryFilter(int index) {
@@ -183,7 +189,7 @@ void SearchFilesViewHost::setCategoryFilter(int index) {
   m_currentCategoryFilter = index;
   emit currentCategoryFilterChanged();
 
-  command()->storage().setItem("fileCategory", categoryFilterOptions().value(index));
+  command()->storage().setItem("fileCategory", categoryFilterKeys().value(index));
 
   if (searchText().isEmpty()) {
     renderRecentFiles();
@@ -196,7 +202,7 @@ void SearchFilesViewHost::restoreCategoryFilter() {
   const auto saved = command()->storage().getItem("fileCategory");
   if (saved.isUndefined() || saved.isNull()) return;
 
-  const int index = categoryFilterOptions().indexOf(saved.toString());
+  const int index = categoryFilterKeys().indexOf(saved.toString());
   if (index > 0) setCategoryFilter(index);
 }
 

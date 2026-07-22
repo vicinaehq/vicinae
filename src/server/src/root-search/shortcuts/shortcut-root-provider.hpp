@@ -2,8 +2,11 @@
 #include "common.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <QCoreApplication>
 
 class RootShortcutItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(RootShortcutItem)
+
   std::shared_ptr<Shortcut> m_link;
 
   QString title() const override;

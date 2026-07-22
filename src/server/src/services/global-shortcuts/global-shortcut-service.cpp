@@ -40,7 +40,7 @@ void GlobalShortcutService::reconcile() {
   if (cfg.globalShortcuts.toggle && !cfg.globalShortcuts.toggle->empty()) {
     desired.emplace(QString::fromUtf8(TOGGLE_ID),
                     Desired{.trigger = QString::fromStdString(*cfg.globalShortcuts.toggle),
-                            .description = QStringLiteral("Toggle Vicinae"),
+                            .description = tr("Toggle Vicinae"),
                             .action = ToggleLauncherWindow{}});
   }
 
@@ -124,7 +124,7 @@ std::optional<QString> GlobalShortcutService::findConflict(const Keyboard::Short
 
   if (excludeId != QString::fromUtf8(TOGGLE_ID) && cfg.globalShortcuts.toggle &&
       !cfg.globalShortcuts.toggle->empty() && matches(*cfg.globalShortcuts.toggle)) {
-    return QStringLiteral("the launcher hotkey");
+    return tr("the launcher hotkey");
   }
 
   for (const auto &[provider, providerData] : cfg.providers) {
@@ -135,7 +135,7 @@ std::optional<QString> GlobalShortcutService::findConflict(const Keyboard::Short
       if (QString::fromStdString(eid) == excludeId || !matches(*item.shortcut)) { continue; }
 
       if (auto meta = m_rootItemManager.itemMetadata(eid); meta.item) { return meta.item->title(); }
-      return QStringLiteral("another command");
+      return tr("another command");
     }
   }
 

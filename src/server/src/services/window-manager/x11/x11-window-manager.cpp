@@ -1,6 +1,7 @@
 #include "x11-window-manager.hpp"
 #include "x11-event-listener.hpp"
 #include "x11-window.hpp"
+#include <QCoreApplication>
 #include <QGuiApplication>
 #include <QLoggingCategory>
 #include <QtCore/qnativeinterface.h>
@@ -421,7 +422,10 @@ public:
   X11Workspace(uint32_t index, const QString &name) : m_index(index), m_name(name) {}
 
   QString id() const override { return QString::number(m_index); }
-  QString name() const override { return m_name.isEmpty() ? QString("Desktop %1").arg(m_index + 1) : m_name; }
+  QString name() const override {
+    return m_name.isEmpty() ? QCoreApplication::translate("X11Workspace", "Desktop %1").arg(m_index + 1)
+                            : m_name;
+  }
   bool hasFullScreen() const override { return false; }
 
 private:
