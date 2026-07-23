@@ -4,7 +4,8 @@
 BUILD_DIR						:= build
 BIN_DIR							:= build/bin
 RM							:= rm
-TAG 							:= $(shell git describe --tags --abbrev=0)
+TAG 							:= $(shell grep "tag:" manifest.yaml | cut -d'"' -f2)
+COMMIT							:= $(shell grep "short_rev:" manifest.yaml | cut -d'"' -f2)
 APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
 APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 FIGURA_CC						:= $(BIN_DIR)/figura
@@ -96,7 +97,7 @@ portable:
 .PHONY: portable
 
 appimage:
-	cmake -G Ninja -DCMAKE_INSTALL_PREFIX=./build/install -DVICINAE_PROVENANCE=appimage -B $(BUILD_DIR)
+	cmake -G Ninja -DCMAKE_INSTALL_PREFIX=./build/install -DVICINAE_PROVENANCE=appimage -DVICINAE_GIT_TAG="$(TAG)" -DVICINAE_GIT_COMMIT_HASH="$(COMMIT)" -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 	cmake --install $(BUILD_DIR)
 	./scripts/mkappimage.sh ./build/install AppDir
