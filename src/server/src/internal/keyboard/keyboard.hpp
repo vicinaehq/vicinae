@@ -15,8 +15,7 @@ namespace Keyboard {
 // so recorded shortcuts stay layout-independent. Identity for Latin keys and non-macOS platforms.
 Qt::Key normalizeToLatin(Qt::Key key);
 
-// The typed character for keys below the special-key range (whose Qt::Key value is the uppercase
-// code point), or nullopt for named/special keys.
+// Typed character for keys whose Qt::Key value is its uppercase code point, nullopt for named keys.
 std::optional<QChar> printableCharForKey(Qt::Key key);
 
 std::optional<QString> stringForKey(Qt::Key key);

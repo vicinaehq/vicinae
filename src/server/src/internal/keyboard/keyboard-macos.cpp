@@ -25,6 +25,9 @@ QString translateKeycode(CFDataRef layoutData, uint16_t keycode, bool shifted, u
 
 namespace {
 
+const CFStringRef US_LAYOUT_ID = CFSTR("com.apple.keylayout.US");
+const CFStringRef ABC_LAYOUT_ID = CFSTR("com.apple.keylayout.ABC");
+
 CFDataRef copyLayoutDataById(CFStringRef id) {
   CFMutableDictionaryRef filter = CFDictionaryCreateMutable(
       kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
@@ -56,8 +59,8 @@ CFDataRef copyCurrentLayoutData() {
 }
 
 CFDataRef copyQwertyLayoutData() {
-  if (CFDataRef data = copyLayoutDataById(CFSTR("com.apple.keylayout.US"))) { return data; }
-  return copyLayoutDataById(CFSTR("com.apple.keylayout.ABC"));
+  if (CFDataRef data = copyLayoutDataById(US_LAYOUT_ID)) { return data; }
+  return copyLayoutDataById(ABC_LAYOUT_ID);
 }
 
 } // namespace Keyboard::macos

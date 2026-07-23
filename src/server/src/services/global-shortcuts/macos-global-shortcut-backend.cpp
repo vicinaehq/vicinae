@@ -10,6 +10,7 @@ namespace {
 
 constexpr uint64_t MODIFIER_MASK =
     kCGEventFlagMaskCommand | kCGEventFlagMaskControl | kCGEventFlagMaskAlternate | kCGEventFlagMaskShift;
+constexpr int PERMISSION_RETRY_INTERVAL_MS = 2000;
 
 std::optional<uint32_t> staticKeycodeForQtKey(Qt::Key key) {
   switch (key) {
@@ -152,7 +153,7 @@ bool MacOSGlobalShortcutBackend::start() {
   startTapThread();
 
   if (!AXIsProcessTrusted()) {
-    m_permissionRetryTimer.setInterval(2000);
+    m_permissionRetryTimer.setInterval(PERMISSION_RETRY_INTERVAL_MS);
     connect(&m_permissionRetryTimer, &QTimer::timeout, this, [this]() {
       if (!AXIsProcessTrusted()) return;
       m_permissionRetryTimer.stop();
@@ -283,8 +284,7 @@ bool MacOSGlobalShortcutBackend::handleKeyDown(uint32_t keycode, uint64_t rawFla
       candidates[0] = Keyboard::macos::translateKeycode(active, code, false, m_kbdType);
       // shortcuts can hold a shifted char (e.g ':' recorded on layouts where it is Shift+';')
       if (shift) { candidates[1] = Keyboard::macos::translateKeycode(active, code, true, m_kbdType); }
-      // QWERTY fallback so Latin shortcuts keep firing while a non-Latin layout is active,
-      // mirroring how native macOS key equivalents behave
+      // QWERTY fallback keeps Latin shortcuts firing while a non-Latin layout is active
       candidates[2] = Keyboard::macos::translateKeycode(qwerty, code, false, m_kbdType);
       if (shift) { candidates[3] = Keyboard::macos::translateKeycode(qwerty, code, true, m_kbdType); }
     }

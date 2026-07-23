@@ -146,7 +146,6 @@ namespace Keyboard {
 Qt::Key normalizeToLatin(Qt::Key key) { return key; }
 #endif
 
-// Qt::Key values below the special-key range are the uppercase code point of the typed char.
 std::optional<QChar> printableCharForKey(Qt::Key key) {
   const auto code = static_cast<uint32_t>(key);
   if (code >= 0x10000) return {};
