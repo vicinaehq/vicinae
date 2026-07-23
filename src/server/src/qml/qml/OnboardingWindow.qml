@@ -10,6 +10,8 @@ Window {
     readonly property bool accessibilityGranted: Permissions.accessibilityGranted
 
     function advance() {
+        if (root.onPermissionStep && !root.accessibilityGranted)
+            return;
         if (root.step === root.stepCount - 1) {
             onboarding.finish();
             return;
@@ -153,8 +155,8 @@ Window {
 
                         SettingsGroup {
                             PermissionRow {
-                                label: "Accessibility"
-                                description: "Used to paste, expand snippets, and move windows."
+                                label: `Accessibility <font color="${Theme.danger}">*</font>`
+                                description: "Powers global shortcuts, paste, snippet expansion, and window management."
                                 iconSource: Img.system("accessibility").withFillColor(Theme.foreground)
                                 granted: root.accessibilityGranted
                                 onGrant: Permissions.requestAccessibility()
@@ -182,7 +184,7 @@ Window {
 
                         Text {
                             visible: !root.accessibilityGranted || !Permissions.fullDiskAccessGranted
-                            text: "If you skip this step, macOS may prompt you for some of these permissions later. Full disk access needs to be explicitly enabled if you want file search to cover all your files."
+                            text: !root.accessibilityGranted ? "Accessibility is required: global shortcuts, paste, and snippet expansion cannot work without it." : "Full disk access needs to be explicitly enabled if you want file search to cover all your files."
                             color: Theme.textMuted
                             font.pointSize: Theme.smallerFontSize
                             wrapMode: Text.Wrap
@@ -357,7 +359,11 @@ Window {
                                 anchors.margins: -5
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.step = index
+                                onClicked: {
+                                    if (index > 1 && !root.accessibilityGranted)
+                                        return;
+                                    root.step = index;
+                                }
                             }
                         }
                     }
@@ -367,14 +373,10 @@ Window {
                     id: nextButton
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    text: {
-                        if (root.step === root.stepCount - 1)
-                            return "Finish";
-                        if (root.onPermissionStep && !root.accessibilityGranted)
-                            return "Set up later";
-                        return "Continue";
-                    }
-                    variant: root.onPermissionStep && !root.accessibilityGranted ? "secondary" : "accent"
+                    enabled: !root.onPermissionStep || root.accessibilityGranted
+                    opacity: enabled ? 1 : 0.4
+                    text: root.step === root.stepCount - 1 ? "Finish" : "Continue"
+                    variant: "accent"
                     onClicked: root.advance()
                 }
             }

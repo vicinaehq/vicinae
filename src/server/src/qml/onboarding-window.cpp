@@ -19,6 +19,7 @@
 #include "macos-chrome-attached.hpp"
 #include "services/autostart/macos-login-item.hpp"
 #include "services/permissions/macos-permission-service.hpp"
+#include <ApplicationServices/ApplicationServices.h>
 #endif
 
 struct OnboardingState {
@@ -45,7 +46,9 @@ OnboardingWindow::OnboardingWindow(ApplicationContext &ctx, QObject *parent) : Q
 
 bool OnboardingWindow::shouldShow() {
 #if defined(Q_OS_MACOS) && defined(ENABLE_ONBOARDING)
-  return completedVersion() < ONBOARDING_VERSION;
+  // Accessibility is a hard requirement (global shortcuts, paste, snippets); if it was revoked we
+  // run the onboarding again until it's back.
+  return completedVersion() < ONBOARDING_VERSION || !AXIsProcessTrusted();
 #else
   return false;
 #endif
@@ -82,6 +85,11 @@ void OnboardingWindow::openUrl(const QString &url) { m_ctx.services->appDb()->op
 void OnboardingWindow::show() {
   ensureInitialized();
   if (!m_window) return;
+
+  // Returning users only ever land here because accessibility went missing: skip the intro.
+  constexpr int PERMISSION_STEP = 1;
+  if (completedVersion() >= ONBOARDING_VERSION) { m_window->setProperty("step", PERMISSION_STEP); }
+
   m_window->show();
   m_window->raise();
   m_window->requestActivate();
