@@ -19,6 +19,10 @@ public:
 
   int physicalCtrlModifier() const { return static_cast<int>(KeyBindingService::PHYSICAL_CTRL); }
 
+  Q_INVOKABLE int normalizeKey(int key) const {
+    return static_cast<int>(Keyboard::normalizeToLatin(static_cast<Qt::Key>(key)));
+  }
+
   Q_INVOKABLE QString serialize(int key, int modifiers) const {
     Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key),
                                       static_cast<Qt::KeyboardModifiers>(modifiers));

@@ -90,7 +90,7 @@ Popup {
             event.accepted = true;
             closeTimer.stop();
 
-            var key = event.key;
+            var key = Keyboard.normalizeKey(event.key);
             var mods = event.modifiers;
 
             var isModKey = key === Qt.Key_Shift || key === Qt.Key_Control || key === Qt.Key_Alt || key === Qt.Key_Meta;
