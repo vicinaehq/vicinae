@@ -96,6 +96,18 @@ static const std::unordered_map<QString, Qt::Key> keyMap = [](){
 		{"f10", Qt::Key_F10},
 		{"f11", Qt::Key_F11},
 		{"f12", Qt::Key_F12},
+		{"f13", Qt::Key_F13},
+		{"f14", Qt::Key_F14},
+		{"f15", Qt::Key_F15},
+		{"f16", Qt::Key_F16},
+		{"f17", Qt::Key_F17},
+		{"f18", Qt::Key_F18},
+		{"f19", Qt::Key_F19},
+		{"f20", Qt::Key_F20},
+		{"f21", Qt::Key_F21},
+		{"f22", Qt::Key_F22},
+		{"f23", Qt::Key_F23},
+		{"f24", Qt::Key_F24},
 	};
 }();
 
@@ -130,14 +142,35 @@ static const std::unordered_map<QString, Qt::KeyboardModifier> modifierMap = {
 
 namespace Keyboard {
 
+#ifndef Q_OS_MACOS
+Qt::Key normalizeToLatin(Qt::Key key) { return key; }
+#endif
+
+std::optional<QChar> printableCharForKey(Qt::Key key) {
+  const auto code = static_cast<uint32_t>(key);
+  if (code >= 0x10000) return {};
+
+  const QChar ch(static_cast<char16_t>(code));
+  if (!ch.isPrint() || ch.isSpace()) return {};
+
+  return ch;
+}
+
 std::optional<QString> stringForKey(Qt::Key key) {
   if (auto it = keyMapReverse.find(key); it != keyMapReverse.end()) return it->second;
+  if (auto ch = printableCharForKey(key)) return QString(ch->toLower());
   return {};
 }
 
 std::optional<Qt::Key> keyFromString(QStringView key) {
   auto keyString = key.toString().toLower();
   if (auto it = keyMap.find(keyString); it != keyMap.end()) return it->second;
+
+  if (keyString.size() == 1) {
+    const auto candidate = static_cast<Qt::Key>(keyString.front().toUpper().unicode());
+    if (printableCharForKey(candidate)) return candidate;
+  }
+
   return {};
 }
 
@@ -275,7 +308,8 @@ std::vector<DisplayTokenSpec> buildDisplayTokenSpecs(const Shortcut &shortcut) {
 } // namespace
 
 Shortcut::Shortcut(const QKeyEvent *event)
-    : m_key(static_cast<Qt::Key>(event->key())), m_modifiers(event->modifiers()), m_isValid(true) {}
+    : m_key(normalizeToLatin(static_cast<Qt::Key>(event->key()))), m_modifiers(event->modifiers()),
+      m_isValid(true) {}
 
 Shortcut Shortcut::fromKeyPress(const QKeyEvent &event) { return Shortcut(&event); }
 
