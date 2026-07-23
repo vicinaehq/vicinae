@@ -327,7 +327,8 @@ void ExtensionViewHost::renderDetail(const RootDetailModel &model) {
   detail->actions = model.actions;
   if (model.actions) {
     auto notify = [this](const QString &handler, const QJsonArray &args) { notifyExtension(handler, args); };
-    setActions(ExtensionActionPanelBuilder::build(*model.actions, notify));
+    setActions(
+        ExtensionActionPanelBuilder::build(*model.actions, notify, ActionPanelState::ShortcutPreset::List));
   }
 }
 
