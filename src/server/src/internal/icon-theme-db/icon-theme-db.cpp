@@ -1,9 +1,13 @@
 #include <filesystem>
+#include <qdir.h>
 #include <qicon.h>
 #include <qlogging.h>
+#include <qprocess.h>
 #include <qsettings.h>
+#include <qstandardpaths.h>
 #include <set>
 #include "icon-theme-db/icon-theme-db.hpp"
+#include "utils/environment.hpp"
 
 namespace fs = std::filesystem;
 
@@ -31,28 +35,90 @@ IconThemeDatabase::IconThemeList IconThemeDatabase::themes(bool includeHidden) c
   return themeList;
 }
 
+std::optional<QString> IconThemeDatabase::systemIconThemeId() const {
+#ifdef Q_OS_LINUX
+  auto validated = [this](QString id) -> std::optional<QString> {
+    id = id.trimmed();
+    if (id.isEmpty()) return std::nullopt;
+    if (hasThemeId(id)) return id;
+    return std::nullopt;
+  };
+
+  if (Environment::isPlasmaDesktop()) {
+    const QString path =
+        QDir(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)).filePath("kdeglobals");
+    QSettings kde(path, QSettings::IniFormat);
+    if (auto id = validated(kde.value("Icons/Theme").toString())) return id;
+  }
+
+  // gsettings is the source of truth on GNOME and most GTK-based desktops.
+  QProcess gsettings;
+  gsettings.start("gsettings", {"get", "org.gnome.desktop.interface", "icon-theme"});
+  if (gsettings.waitForFinished(1000) && gsettings.exitStatus() == QProcess::NormalExit &&
+      gsettings.exitCode() == 0) {
+    QString out = QString::fromUtf8(gsettings.readAllStandardOutput()).trimmed();
+    // gsettings wraps strings in single quotes: 'kora'
+    if (out.startsWith('\'') && out.endsWith('\'') && out.size() >= 2) { out = out.mid(1, out.size() - 2); }
+    if (auto id = validated(out)) return id;
+  }
+
+  // Fallback: GTK settings files (some setups write these even without gsettings access).
+  for (const char *sub : {"gtk-4.0/settings.ini", "gtk-3.0/settings.ini"}) {
+    const QString path =
+        QDir(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)).filePath(sub);
+    if (!QFile::exists(path)) continue;
+    QSettings gtk(path, QSettings::IniFormat);
+    if (auto id = validated(gtk.value("Settings/gtk-icon-theme-name").toString())) return id;
+  }
+#endif
+
+  return std::nullopt;
+}
+
 QString IconThemeDatabase::guessBestTheme() const {
-  std::vector<QString> const wellKnown = {"Adwaita Dark", "Adwaita", "Breeze", "Breeze Dark"};
+  if (auto sys = systemIconThemeId()) { return *sys; }
+
+  std::vector<QString> const wellKnown = {"Adwaita", "breeze", "Breeze", "oxygen"};
 
   for (const auto &theme : wellKnown) {
-    if (hasTheme(theme)) { return theme; }
+    if (hasThemeId(theme)) { return theme; }
   }
 
   if (auto it = std::ranges::find_if(m_themes, [&](auto &&info) { return !info.hidden; });
       it != m_themes.end()) {
-    return it->name;
+    return it->id;
   }
 
-  if (!m_themes.empty()) { return m_themes.front().name; }
+  if (!m_themes.empty()) { return m_themes.front().id; }
 
   return "hicolor";
 }
 
-bool IconThemeDatabase::hasTheme(const QString &name) const {
-  return std::ranges::any_of(m_themes, [&](auto &&info) { return info.name == name; });
+bool IconThemeDatabase::hasThemeId(const QString &id) const {
+  return std::ranges::any_of(m_themes, [&](auto &&info) { return info.id == id; });
 }
 
-bool IconThemeDatabase::isSuitableTheme(const QString &name) const { return hasTheme(name); }
+bool IconThemeDatabase::isSuitableTheme(const QString &id) const { return hasThemeId(id); }
+
+QString IconThemeDatabase::resolveThemeId(const QString &value) const {
+  if (hasThemeId(value)) return value;
+
+  // Legacy configs (and older builds) stored the display name; map it back to the directory id.
+  if (auto it = std::ranges::find_if(m_themes, [&](auto &&info) { return info.name == value; });
+      it != m_themes.end()) {
+    return it->id;
+  }
+
+  return value;
+}
+
+QString IconThemeDatabase::displayName(const QString &id) const {
+  if (auto it = std::ranges::find_if(m_themes, [&](auto &&info) { return info.id == id; });
+      it != m_themes.end()) {
+    return it->name;
+  }
+  return id;
+}
 
 IconThemeDatabase::IconThemeList IconThemeDatabase::scan() {
   IconThemeDatabase::IconThemeList themes;
@@ -77,14 +143,26 @@ IconThemeDatabase::IconThemeList IconThemeDatabase::scan() {
       QSettings ini(manifest.c_str(), QSettings::IniFormat);
       IconThemeInfo info;
 
+      info.id = QString::fromStdString(entry.path().filename().string());
+
       ini.beginGroup("Icon Theme");
       info.name = ini.value("Name").toString();
       info.hidden = ini.value("Hidden").toString() == "true";
+      // The XDG icon theme spec requires a "Directories" key listing the theme's icon
+      // subdirectories. Cursor themes live under the same search paths but omit it, so its absence
+      // lets us skip them (and other non-icon entries) instead of offering them as icon themes.
+      const bool isIconTheme = ini.contains("Directories");
       ini.endGroup();
 
-      if (seen.contains(info.name)) continue;
+      if (!isIconTheme) continue;
 
-      seen.insert(info.name);
+      if (info.name.isEmpty()) info.name = info.id;
+
+      // The directory id is the canonical identifier; the same theme may appear under several search
+      // paths (system + user), so dedup on it rather than the display name.
+      if (seen.contains(info.id)) continue;
+
+      seen.insert(info.id);
       themes.emplace_back(info);
     }
   }
