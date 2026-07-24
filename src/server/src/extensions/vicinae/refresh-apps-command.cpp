@@ -12,8 +12,8 @@ void RefreshAppsCommand::execute(CommandController &controller) const {
   auto toast = ctx->services->toastService();
 
   if (appDb->scanSync()) {
-    toast->setToast("Apps successfully refreshed");
+    toast->setToast(tr("Apps successfully refreshed"));
   } else {
-    toast->setToast("Failed to refresh apps", ToastStyle::Danger);
+    toast->setToast(tr("Failed to refresh apps"), ToastStyle::Danger);
   }
 }

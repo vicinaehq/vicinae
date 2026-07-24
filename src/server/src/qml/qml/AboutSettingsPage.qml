@@ -54,7 +54,7 @@ Item {
             }
 
             Text {
-                text: "Version %1 - Commit %2\n(%3)".arg(settings.version).arg(settings.commitHash).arg(settings.buildInfo)
+                text: qsTr("Version %1 - Commit %2\n(%3)").arg(settings.version).arg(settings.commitHash).arg(settings.buildInfo)
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 horizontalAlignment: Text.AlignHCenter
@@ -78,7 +78,7 @@ Item {
 
             ViciButton {
                 icon: "book"
-                text: "Documentation"
+                text: qsTr("Documentation")
                 variant: "secondary"
                 radius: 8
                 implicitWidth: 200
@@ -88,7 +88,7 @@ Item {
 
             ViciButton {
                 icon: "bug"
-                text: "Report a Bug"
+                text: qsTr("Report a Bug")
                 variant: "secondary"
                 radius: 8
                 implicitWidth: 200

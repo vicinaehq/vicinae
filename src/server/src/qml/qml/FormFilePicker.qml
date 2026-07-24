@@ -81,7 +81,7 @@ FocusScope {
 
     FileDialog {
         id: _fallbackFileDialog
-        title: root.multiple ? "Select files" : "Select a file"
+        title: root.multiple ? qsTr("Select files") : qsTr("Select a file")
         onAccepted: {
             root._handleFallbackResult(selectedFiles);
             FileChooser.notifyFallbackDone();
@@ -91,7 +91,7 @@ FocusScope {
 
     FolderDialog {
         id: _fallbackFolderDialog
-        title: "Select a directory"
+        title: qsTr("Select a directory")
         onAccepted: {
             root._handleFallbackResult([selectedFolder]);
             FileChooser.notifyFallbackDone();
@@ -137,7 +137,7 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     verticalAlignment: Text.AlignVCenter
-                    text: singleMode._displayText || (root._directoriesOnly ? "No directory selected" : "No file selected")
+                    text: singleMode._displayText || (root._directoriesOnly ? qsTr("No directory selected") : qsTr("No file selected"))
                     color: singleMode._displayText ? Theme.foreground : Theme.textPlaceholder
                     font.pointSize: Theme.regularFontSize
                     elide: Text.ElideMiddle
@@ -252,7 +252,7 @@ FocusScope {
             ViciButton {
                 anchors.fill: parent
                 radius: 6
-                text: root._directoriesOnly ? "+ Add folder…" : "+ Add file…"
+                text: root._directoriesOnly ? qsTr("+ Add folder…") : qsTr("+ Add file…")
                 foreground: Theme.textMuted
                 variant: "ghost"
                 bordered: true

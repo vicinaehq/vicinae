@@ -25,7 +25,7 @@ void ManageShortcutsViewHost::initialize() {
   m_section.setOnShortcutSelected([this](const std::shared_ptr<Shortcut> &s) { loadDetail(s); });
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search shortcuts...");
+  setSearchPlaceholderText(tr("Search shortcuts..."));
 
   connect(m_shortcutService, &ShortcutService::shortcutSaved, this, &ManageShortcutsViewHost::reload);
   connect(m_shortcutService, &ShortcutService::shortcutUpdated, this, &ManageShortcutsViewHost::reload);
@@ -53,32 +53,32 @@ void ManageShortcutsViewHost::loadDetail(const std::shared_ptr<Shortcut> &shortc
   QVariantList meta;
 
   meta.append(QVariantMap{
-      {QStringLiteral("label"), QStringLiteral("Name")},
+      {QStringLiteral("label"), tr("Name")},
       {QStringLiteral("value"), shortcut->name()},
   });
 
   if (auto app = appDb->findById(shortcut->app())) {
     meta.append(QVariantMap{
-        {QStringLiteral("label"), QStringLiteral("Application")},
+        {QStringLiteral("label"), tr("Application")},
         {QStringLiteral("value"), app->displayName()},
         {QStringLiteral("icon"), qml::imageSourceFor(app->iconUrl())},
     });
   }
 
   meta.append(QVariantMap{
-      {QStringLiteral("label"), QStringLiteral("Opened")},
+      {QStringLiteral("label"), tr("Opened")},
       {QStringLiteral("value"), QString::number(shortcut->openCount())},
   });
 
   meta.append(QVariantMap{
-      {QStringLiteral("label"), QStringLiteral("Last Opened")},
+      {QStringLiteral("label"), tr("Last Opened")},
       {QStringLiteral("value"), shortcut->lastOpenedAt()
                                     .transform([](const QDateTime &dt) { return dt.toString(); })
-                                    .value_or(QStringLiteral("Never"))},
+                                    .value_or(tr("Never"))},
   });
 
   meta.append(QVariantMap{
-      {QStringLiteral("label"), QStringLiteral("Created at")},
+      {QStringLiteral("label"), tr("Created at")},
       {QStringLiteral("value"), shortcut->createdAt().toString()},
   });
 

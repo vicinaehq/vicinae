@@ -313,12 +313,12 @@ QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
 
     buffer.setData(offer.data);
     if (auto size = reader.size(); size.isValid()) {
-      return QString("Image (%1x%2)").arg(size.width()).arg(size.height());
+      return tr("Image (%1x%2)").arg(size.width()).arg(size.height());
     }
-    return "Image";
+    return tr("Image");
   }
   default:
-    return "Unknown";
+    return tr("Unknown");
   }
 }
 

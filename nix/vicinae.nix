@@ -88,6 +88,7 @@ in
         ninja
         nodejs
         pkg-config
+        qt6.qttools
         qt6.wrapQtAppsHook
       ]
       ++ lib.optionals isDarwin [

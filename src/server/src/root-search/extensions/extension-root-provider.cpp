@@ -25,12 +25,12 @@ ImageURL CommandRootItem::iconUrl() const { return m_command->iconUrl(); }
 ArgumentList CommandRootItem::arguments() const { return m_command->arguments(); }
 bool CommandRootItem::isSuitableForFallback() const { return m_command->isFallback(); }
 double CommandRootItem::baseScoreWeight() const { return 1.1; }
-QString CommandRootItem::typeDisplayName() const { return "Command"; }
+QString CommandRootItem::typeDisplayName() const { return tr("Command"); }
 
 std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationContext *ctx,
                                                                   const RootItemMetadata &metadata) const {
   auto panel = std::make_unique<ListActionPanelState>();
-  auto open = new OpenBuiltinCommandAction(m_command, "Open command");
+  auto open = new OpenBuiltinCommandAction(m_command, tr("Open command"));
   auto mainSection = panel->createSection();
   auto itemSection = panel->createSection();
   auto extensionSection = panel->createSection();
@@ -44,7 +44,7 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
 
   if (auto cmd = dynamic_cast<ExtensionCommand *>(m_command.get())) {
     auto copyLocation = new CopyToClipboardAction(
-        Clipboard::Text(QString::fromStdString(cmd->path().string())), "Copy extension path");
+        Clipboard::Text(QString::fromStdString(cmd->path().string())), tr("Copy extension path"));
 
     extensionSection->addAction(copyLocation);
     dangerSection->addAction(new UninstallExtensionAction(cmd->extensionId()));
@@ -57,7 +57,7 @@ std::unique_ptr<ActionPanelState>
 CommandRootItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMetadata &metadata) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto main = panel->createSection();
-  auto open = new OpenBuiltinCommandAction(m_command, "Open command", "");
+  auto open = new OpenBuiltinCommandAction(m_command, tr("Open command"), "");
   auto manage = new ManageFallbackActions;
 
   open->setForwardSearchText(true);
@@ -72,8 +72,8 @@ CommandRootItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMeta
 EntrypointId CommandRootItem::uniqueId() const { return m_command->uniqueId(); }
 
 AccessoryList CommandRootItem::accessories() const {
-  if (m_command->isInternal()) { return {{.text = "Internal Command", .color = SemanticColor::Cyan}}; }
-  return {{.text = "Command", .color = SemanticColor::TextMuted}};
+  if (m_command->isInternal()) { return {{.text = tr("Internal Command"), .color = SemanticColor::Cyan}}; }
+  return {{.text = tr("Command"), .color = SemanticColor::TextMuted}};
 }
 
 std::vector<std::shared_ptr<RootItem>> ExtensionRootProvider::loadItems() const {

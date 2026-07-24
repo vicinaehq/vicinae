@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "builtin_icon.hpp"
 #include "clipboard-actions.hpp"
 #include "qml/edit-keywords-view-host.hpp"
@@ -19,59 +20,62 @@ public:
 };
 
 class CopyClipboardSelection : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(CopyClipboardSelection)
   QString m_id;
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
     auto toast = ctx->services->toastService();
     if (clipman->copySelectionRecord(m_id, {.concealed = true})) {
-      ctx->navigation->showHud("Selection copied to clipboard");
+      ctx->navigation->showHud(tr("Selection copied to clipboard"));
       return;
     }
-    toast->failure("Failed to copy to clipboard");
+    toast->failure(tr("Failed to copy to clipboard"));
   }
 
 public:
   CopyClipboardSelection(const QString &id)
-      : AbstractAction("Copy to clipboard", BuiltinIcon::CopyClipboard), m_id(id) {}
+      : AbstractAction(tr("Copy to clipboard"), BuiltinIcon::CopyClipboard), m_id(id) {}
 };
 
 class RemoveSelectionAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(RemoveSelectionAction)
   QString m_id;
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
     auto toast = ctx->services->toastService();
     if (clipman->removeSelection(m_id)) {
-      toast->setToast("Entry removed");
+      toast->setToast(tr("Entry removed"));
     } else {
-      toast->setToast("Failed to remove entry", ToastStyle::Danger);
+      toast->setToast(tr("Failed to remove entry"), ToastStyle::Danger);
     }
   }
 
 public:
   RemoveSelectionAction(const QString &id)
-      : AbstractAction("Remove entry", ImageURL::builtin("trash")), m_id(id) {
+      : AbstractAction(tr("Remove entry"), ImageURL::builtin("trash")), m_id(id) {
     setStyle(AbstractAction::Style::Danger);
   }
 };
 
 class PinClipboardAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(PinClipboardAction)
   QString m_id;
   bool m_value;
   void execute(ApplicationContext *ctx) override {
-    QString action = m_value ? "pinned" : "unpinned";
     if (ctx->services->clipman()->setPinned(m_id, m_value)) {
-      ctx->services->toastService()->success(QString("Selection %1").arg(action));
+      ctx->services->toastService()->success(m_value ? tr("Selection pinned") : tr("Selection unpinned"));
     } else {
-      ctx->services->toastService()->failure("Failed to change pin status");
+      ctx->services->toastService()->failure(tr("Failed to change pin status"));
     }
   }
 
 public:
   PinClipboardAction(const QString &id, bool value)
-      : AbstractAction(value ? "Pin" : "Unpin", ImageURL::builtin("pin")), m_id(id), m_value(value) {}
+      : AbstractAction(value ? tr("Pin") : tr("Unpin"), ImageURL::builtin("pin")), m_id(id), m_value(value) {}
 };
 
 class EditClipboardKeywordsAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(EditClipboardKeywordsAction)
   QString m_id;
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
@@ -79,37 +83,38 @@ class EditClipboardKeywordsAction : public AbstractAction {
     auto view =
         new EditKeywordsViewHost([clipman, id]() { return clipman->retrieveKeywords(id).value_or(""); },
                                  [clipman, id](const QString &kw) { return clipman->setKeywords(id, kw); },
-                                 "Additional keywords that will be used to index this selection.");
+                                 tr("Additional keywords that will be used to index this selection."));
     ctx->navigation->pushView(view);
     ctx->navigation->setNavigationTitle(title());
   }
 
 public:
-  QString title() const override { return "Edit keywords"; }
+  QString title() const override { return tr("Edit keywords"); }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("text"); }
   EditClipboardKeywordsAction(const QString &id) : m_id(id) {}
 };
 
 class RemoveAllSelectionsAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(RemoveAllSelectionsAction)
   void execute(ApplicationContext *ctx) override {
     auto alert = new CallbackAlertWidget();
-    alert->setTitle("Are you sure?");
-    alert->setMessage("All your clipboard history will be lost forever");
-    alert->setConfirmText("Delete all", SemanticColor::Red);
+    alert->setTitle(tr("Are you sure?"));
+    alert->setMessage(tr("All your clipboard history will be lost forever"));
+    alert->setConfirmText(tr("Delete all"), SemanticColor::Red);
     alert->setConfirmCallback([ctx]() {
       auto toast = ctx->services->toastService();
       auto clipman = ctx->services->clipman();
       if (clipman->removeAllSelections()) {
-        toast->success("All selections were removed");
+        toast->success(tr("All selections were removed"));
       } else {
-        toast->failure("Failed to remove all selections");
+        toast->failure(tr("Failed to remove all selections"));
       }
     });
     ctx->navigation->setDialog(alert);
   }
 
 public:
-  QString title() const override { return "Remove all"; }
+  QString title() const override { return tr("Remove all"); }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("trash"); }
   RemoveAllSelectionsAction() { setStyle(AbstractAction::Style::Danger); }
 };

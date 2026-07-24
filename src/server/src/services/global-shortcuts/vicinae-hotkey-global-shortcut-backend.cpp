@@ -45,7 +45,7 @@ VicinaeHotkeyGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &re
 
   if (!keysym) {
     qWarning() << "no xkb keysym matching qt key code" << request.trigger.key();
-    return std::unexpected(QStringLiteral("Unsupported trigger key"));
+    return std::unexpected(tr("Unsupported trigger key"));
   }
 
   auto description = request.description.toUtf8();
@@ -65,7 +65,7 @@ VicinaeHotkeyGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &re
     return std::unexpected(std::move(*m_pendingDeny));
   }
 
-  if (!findHotkey(handle)) { return std::unexpected(QStringLiteral("Hotkey binding was lost")); }
+  if (!findHotkey(handle)) { return std::unexpected(tr("Hotkey binding was lost")); }
 
   return {};
 }

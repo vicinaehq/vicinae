@@ -1,6 +1,7 @@
 #pragma once
 #include "fuzzy-section.hpp"
 #include "services/browser-extension-service.hpp"
+#include <QCoreApplication>
 
 using BrowserTab = BrowserExtensionService::BrowserTab;
 
@@ -11,8 +12,9 @@ template <> struct fuzzy::FuzzySearchable<BrowserTab> {
 };
 
 class BrowserTabsSection : public FuzzySection<BrowserTab> {
+  Q_DECLARE_TR_FUNCTIONS(BrowserTabsSection)
 public:
-  QString sectionName() const override { return QStringLiteral("Tabs ({count})"); }
+  QString sectionName() const override { return tr("Tabs ({count})"); }
 
 protected:
   QString displayTitle(const BrowserTab &tab) const override;

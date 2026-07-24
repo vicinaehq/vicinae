@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "builtin_icon.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/app-service/app-service.hpp"
@@ -20,6 +21,8 @@ private:
 };
 
 class OpenAppLocationAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(OpenAppLocationAction)
+
 public:
   OpenAppLocationAction(const std::shared_ptr<AbstractApplication> &app,
                         const std::shared_ptr<AbstractApplication> &opener);
@@ -31,13 +34,13 @@ private:
 };
 
 class OpenInTerminalAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(OpenInTerminalAction)
+
 public:
   void setClearSearch(bool value) { m_clearSearch = value; }
   void execute(ApplicationContext *context) override;
 
-  QString title() const override {
-    return m_title.value_or(QString("Open in %1").arg(m_emulator->displayName()));
-  }
+  QString title() const override { return m_title.value_or(tr("Open in %1").arg(m_emulator->displayName())); }
   void setTitle(const QString &title) { m_title = title; }
 
   std::optional<ImageURL> icon() const override { return m_emulator->iconUrl(); }
@@ -55,12 +58,14 @@ private:
 };
 
 class OpenRawProgramAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(OpenRawProgramAction)
+
 public:
   OpenRawProgramAction(const std::vector<QString> &args);
 
   void execute(ApplicationContext *context) override;
   void setClearSearch(bool value) { m_clearSearch = value; }
-  QString title() const override { return "Execute program"; }
+  QString title() const override { return tr("Execute program"); }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("terminal"); }
 
 private:
@@ -70,6 +75,8 @@ private:
 };
 
 class QuitAppAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(QuitAppAction)
+
 public:
   QuitAppAction(const std::shared_ptr<AbstractApplication> &app);
 
@@ -80,6 +87,8 @@ private:
 };
 
 class ForceQuitAppAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(ForceQuitAppAction)
+
 public:
   ForceQuitAppAction(const std::shared_ptr<AbstractApplication> &app);
 
@@ -90,8 +99,10 @@ private:
 };
 
 class OpenInBrowserAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(OpenInBrowserAction)
+
 public:
-  OpenInBrowserAction(QUrl url, const QString &title = "Open in browser") : m_url(url), m_title(title) {}
+  OpenInBrowserAction(QUrl url, const QString &title = tr("Open in browser")) : m_url(url), m_title(title) {}
 
   QString title() const override { return m_title; }
 

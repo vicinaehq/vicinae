@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "service-registry.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -14,7 +15,9 @@ class FocusWindowAction : public AbstractAction {
 
 public:
   FocusWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
-      : AbstractAction("Focus window", ImageURL::builtin("app-window")), m_window(window) {
+      : AbstractAction(QCoreApplication::translate("FocusWindowAction", "Focus window"),
+                       ImageURL::builtin("app-window")),
+        m_window(window) {
     setAutoClose();
   }
 };
@@ -29,12 +32,16 @@ class CloseWindowAction : public AbstractAction {
 
 public:
   CloseWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
-      : AbstractAction("Close window", ImageURL::builtin("xmark")), m_window(window) {
+      : AbstractAction(QCoreApplication::translate("CloseWindowAction", "Close window"),
+                       ImageURL::builtin("xmark")),
+        m_window(window) {
     setStyle(AbstractAction::Style::Danger);
   }
 };
 
 class PinWindowAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(PinWindowAction)
+
   std::shared_ptr<AbstractWindowManager::AbstractWindow> m_window;
 
   void execute(ApplicationContext *ctx) override {
@@ -45,7 +52,7 @@ class PinWindowAction : public AbstractAction {
 
 public:
   PinWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
-      : AbstractAction(window->sticky() ? "Unpin from all workspaces" : "Pin to all workspaces",
+      : AbstractAction(window->sticky() ? tr("Unpin from all workspaces") : tr("Pin to all workspaces"),
                        ImageURL::builtin(window->sticky() ? "pin-disabled" : "pin")),
         m_window(window) {}
 };
@@ -62,7 +69,9 @@ class BringToWorkspaceAction : public AbstractAction {
 
 public:
   BringToWorkspaceAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
-      : AbstractAction("Bring to current workspace", ImageURL::builtin("move")), m_window(window) {
+      : AbstractAction(QCoreApplication::translate("BringToWorkspaceAction", "Bring to current workspace"),
+                       ImageURL::builtin("move")),
+        m_window(window) {
     setAutoClose();
   }
 };

@@ -38,12 +38,12 @@ std::unique_ptr<ActionPanelState> CalcHistorySection::actionPanel(int i) const {
   }
 
   auto *copySection = panel->createSection();
-  auto *copyAnswer = new CopyToClipboardAction(Clipboard::Text(record.answer), "Copy answer");
+  auto *copyAnswer = new CopyToClipboardAction(Clipboard::Text(record.answer), tr("Copy answer"));
   copyAnswer->setPrimary(true);
   copySection->addAction(copyAnswer);
-  copySection->addAction(new CopyToClipboardAction(Clipboard::Text(record.question), "Copy question"));
+  copySection->addAction(new CopyToClipboardAction(Clipboard::Text(record.question), tr("Copy question")));
   copySection->addAction(
-      new CopyToClipboardAction(Clipboard::Text(record.expression()), "Copy question and answer"));
+      new CopyToClipboardAction(Clipboard::Text(record.expression()), tr("Copy question and answer")));
 
   auto *dangerSection = panel->createSection();
   dangerSection->addAction(new RemoveCalculatorHistoryRecordAction(record.id));

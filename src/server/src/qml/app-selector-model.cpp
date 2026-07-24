@@ -17,7 +17,7 @@ void AppSelectorModel::buildItems() {
   if (auto browser = m_appDb->webBrowser()) {
     m_defaultEntry = QVariantMap{
         {QStringLiteral("id"), QStringLiteral("default")},
-        {QStringLiteral("displayName"), browser->fullyQualifiedName() + " (Default)"},
+        {QStringLiteral("displayName"), tr("%1 (Default)").arg(browser->fullyQualifiedName())},
         {QStringLiteral("iconSource"), qml::imageSourceFor(browser->iconUrl())},
     };
     allApps.append(m_defaultEntry);
@@ -82,7 +82,7 @@ void AppSelectorModel::updateDefaultApp(const std::shared_ptr<AbstractApplicatio
 
   m_defaultEntry = QVariantMap{
       {QStringLiteral("id"), QStringLiteral("default")},
-      {QStringLiteral("displayName"), app->fullyQualifiedName() + " (Default)"},
+      {QStringLiteral("displayName"), tr("%1 (Default)").arg(app->fullyQualifiedName())},
       {QStringLiteral("iconSource"), qml::imageSourceFor(app->iconUrl())},
   };
 

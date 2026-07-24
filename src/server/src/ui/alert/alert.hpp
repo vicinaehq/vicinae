@@ -12,11 +12,11 @@ class AlertWidget : public DialogContentWidget {
   std::function<void(void)> m_cancelCallback;
   bool m_finished = false;
 
-  QString m_titleText = "Are you sure?";
-  QString m_messageText = "This action cannot be undone";
+  QString m_titleText = tr("Are you sure?");
+  QString m_messageText = tr("This action cannot be undone");
   std::optional<ImageURL> m_iconUrl = ImageURL::builtin("warning").setFill(SemanticColor::Red);
-  QString m_confirmText = "Confirm";
-  QString m_cancelText = "Cancel";
+  QString m_confirmText = tr("Confirm");
+  QString m_cancelText = tr("Cancel");
   ColorLike m_confirmColor = SemanticColor::Red;
   ColorLike m_cancelColor = SemanticColor::Foreground;
 

@@ -52,7 +52,7 @@ Item {
             spacing: 0
 
             SettingsSectionLabel {
-                text: "Keybindings"
+                text: qsTr("Keybindings")
                 Layout.fillWidth: true
                 Layout.leftMargin: root.sideMargin + 20
                 Layout.rightMargin: root.sideMargin + 20
@@ -130,7 +130,7 @@ Item {
 
                                 Text {
                                     visible: !rowItem.isRecording && rowItem.shortcutTokens.length === 0
-                                    text: "Record Shortcut"
+                                    text: qsTr("Record Shortcut")
                                     color: Theme.textPlaceholder
                                     font.pointSize: Theme.smallerFontSize
                                 }

@@ -212,7 +212,7 @@ WindowsGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request)
 
   const auto vk = vkForQtKey(request.trigger.key());
 
-  if (!vk) { return std::unexpected(QStringLiteral("unsupported or invalid trigger")); }
+  if (!vk) { return std::unexpected(tr("unsupported or invalid trigger")); }
 
   const UINT mods = winModifiers(request.trigger.mods());
   const int regId = m_nextRegistrationId++;
@@ -221,7 +221,7 @@ WindowsGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request)
   // to register the global shortcut so that no other application can steal it.
   if (!RegisterHotKey(nullptr, regId, mods, *vk)) {
     if (GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED) {
-      return std::unexpected(QStringLiteral("already registered by another application"));
+      return std::unexpected(tr("already registered by another application"));
     }
   }
 

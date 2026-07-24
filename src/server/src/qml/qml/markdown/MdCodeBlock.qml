@@ -55,7 +55,7 @@ Rectangle {
 
                 Text {
                     id: copyBtn
-                    text: copyTimer.running ? "Copied!" : "Copy"
+                    text: copyTimer.running ? qsTr("Copied!") : qsTr("Copy")
                     color: copyMouse.containsMouse ? Theme.foreground : Theme.textMuted
                     font.pointSize: Theme.smallerFontSize * 0.9
 

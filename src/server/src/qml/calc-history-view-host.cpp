@@ -80,7 +80,7 @@ void CalcHistoryViewHost::initialize() {
 
   m_calc = context()->services->calculatorService();
 
-  setSearchPlaceholderText("Search past calculations...");
+  setSearchPlaceholderText(tr("Search past calculations..."));
 
   m_calculatorDebounce.setInterval(200ms);
   m_calculatorDebounce.setSingleShot(true);

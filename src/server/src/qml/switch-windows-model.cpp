@@ -16,14 +16,14 @@ QString SwitchWindowsSection::displayIconSource(const WindowEntry &e) const {
 
 QVariantList SwitchWindowsSection::displayAccessories(const WindowEntry &e) const {
   if (!e.workspaceName.isEmpty()) { return qml::textAccessory(e.workspaceName); }
-  if (auto ws = e.window->workspace()) { return qml::textAccessory(QString("WS %1").arg(*ws)); }
+  if (auto ws = e.window->workspace()) { return qml::textAccessory(tr("WS %1").arg(*ws)); }
   return {};
 }
 
 std::unique_ptr<ActionPanelState> SwitchWindowsSection::buildActionPanel(const WindowEntry &e) const {
   auto panel = std::make_unique<ListActionPanelState>();
 
-  auto section = panel->createSection("Window Actions");
+  auto section = panel->createSection(tr("Window Actions"));
   section->addAction(new FocusWindowAction(e.window));
 
   auto provider = scope().services()->windowManager()->provider();

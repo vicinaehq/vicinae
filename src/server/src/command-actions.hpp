@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "command.hpp"
 #include "ui/action-pannel/action.hpp"
 
@@ -12,7 +13,9 @@ struct OpenBuiltinCommandAction : public AbstractAction {
   // current search text will be forwarded to the new view
   void setForwardSearchText(bool value = true) { m_forwardSearchText = value; }
 
-  OpenBuiltinCommandAction(const std::shared_ptr<AbstractCmd> &cmd, const QString &title = "Open command",
+  OpenBuiltinCommandAction(const std::shared_ptr<AbstractCmd> &cmd,
+                           const QString &title = QCoreApplication::translate("OpenBuiltinCommandAction",
+                                                                              "Open command"),
                            const QString &text = "")
       : AbstractAction(title, cmd->iconUrl()), cmd(cmd), text(text) {}
 };

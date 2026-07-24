@@ -11,17 +11,20 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "utils.hpp"
+#include <QCoreApplication>
 #include <QProcess>
 #include <common/enumerate.hpp>
 #include <qjsonobject.h>
 #include <ranges>
 
 class ScriptRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(ScriptRootItem)
+
   QString title() const override { return m_file->data().title.c_str(); }
 
   QString subtitle() const override { return m_file->packageName().c_str(); }
 
-  QString typeDisplayName() const override { return "Script"; }
+  QString typeDisplayName() const override { return tr("Script"); }
 
   ArgumentList arguments() const override {
     ArgumentList args;
@@ -64,9 +67,10 @@ class ScriptRootItem : public RootItem {
   std::vector<std::pair<QString, QString>> settingsMetadata() const override {
     std::vector<std::pair<QString, QString>> meta;
     meta.reserve(4);
-    meta.emplace_back("Mode", qStringFromStdView(script_command::outputModeToString(m_file->data().mode)));
-    meta.emplace_back("Path", compressPath(m_file->path()).c_str());
-    if (const auto author = m_file->data().author) meta.emplace_back("Author", author.value().c_str());
+    meta.emplace_back(tr("Mode"),
+                      qStringFromStdView(script_command::outputModeToString(m_file->data().mode)));
+    meta.emplace_back(tr("Path"), compressPath(m_file->path()).c_str());
+    if (const auto author = m_file->data().author) meta.emplace_back(tr("Author"), author.value().c_str());
     return meta;
   }
 
@@ -89,11 +93,11 @@ class ScriptRootItem : public RootItem {
 
     if (fileBrowser) {
       extraSection->addAction(
-          new OpenFileInAppAction(m_file->path().parent_path(), fileBrowser, "Open script directory"));
+          new OpenFileInAppAction(m_file->path().parent_path(), fileBrowser, tr("Open script directory")));
     }
 
     auto copyPath = new CopyToClipboardAction(
-        Clipboard::Text(QString::fromStdString(m_file->path().string())), "Copy path to script");
+        Clipboard::Text(QString::fromStdString(m_file->path().string())), tr("Copy path to script"));
 
     extraSection->addAction(copyPath);
 
@@ -106,7 +110,7 @@ class ScriptRootItem : public RootItem {
     return panel;
   }
 
-  AccessoryList accessories() const override { return {{.text = "Script"}}; }
+  AccessoryList accessories() const override { return {{.text = tr("Script")}}; }
 
   EntrypointId uniqueId() const override { return EntrypointId("scripts", std::string{m_file->id()}); };
 
@@ -122,6 +126,8 @@ private:
 };
 
 class ScriptRootProvider : public RootProvider {
+  Q_DECLARE_TR_FUNCTIONS(ScriptRootProvider)
+
 public:
   ScriptRootProvider(ScriptCommandService &service) : m_service(service) {
     connect(&m_service, &ScriptCommandService::scriptsChanged, this, [this]() { emit itemsChanged(); });
@@ -138,16 +144,16 @@ public:
 
   ImageURL icon() const override { return ScriptCommandFile::defaultIcon(); }
 
-  QString displayName() const override { return "Script Commands"; }
+  QString displayName() const override { return tr("Script Commands"); }
 
   QString uniqueId() const override { return "scripts"; }
 
   PreferenceList preferences() const override {
     Preference customDirs = Preference::directories("customDirs");
 
-    customDirs.setTitle("Custom directories");
-    customDirs.setDescription("Additional list of directories to source scripts from. These directories "
-                              "always take precedence over the default system ones");
+    customDirs.setTitle(tr("Custom directories"));
+    customDirs.setDescription(tr("Additional list of directories to source scripts from. These directories "
+                                 "always take precedence over the default system ones"));
 
     return {customDirs};
   }

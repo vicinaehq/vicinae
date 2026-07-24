@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "services/app-service/abstract-app-db.hpp"
 #include "win-app.hpp"
 #include <QFileSystemWatcher>
@@ -14,6 +15,8 @@ struct UwpPackageWatcher;
 
 // App provider merging two tracks: Win32 shortcuts/registry and packaged apps (WinRT PackageManager).
 class WindowsAppDatabase : public AbstractAppDatabase {
+  Q_DECLARE_TR_FUNCTIONS(WindowsAppDatabase)
+
 public:
   WindowsAppDatabase();
   ~WindowsAppDatabase() override;

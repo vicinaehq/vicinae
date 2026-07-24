@@ -651,7 +651,7 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
 
   if (cmd->type() == CommandType::CommandTypeExtension && !m_ctx.services->extensionManager()->isRunning()) {
-    m_ctx.services->toastService()->failure("Extension manager is not running");
+    m_ctx.services->toastService()->failure(tr("Extension manager is not running"));
     return;
   }
 

@@ -6,6 +6,7 @@
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
 #include "view-utils.hpp"
+#include <QCoreApplication>
 
 void RaycastStoreSection::setEntries(const std::vector<Raycast::Extension> &extensions,
                                      ExtensionRegistry *registry, const Raycast::CompatMap &compat,
@@ -41,7 +42,7 @@ std::unique_ptr<ActionPanelState> RaycastStoreSection::actionPanel(int i) const 
   auto danger = panel->createSection();
 
   auto showDetails = new StaticAction(
-      "Show details", ImageURL::builtin("computer-chip"),
+      QCoreApplication::translate("RaycastStoreSection", "Show details"), ImageURL::builtin("computer-chip"),
       [ext = entry.extension, scope = this->scope()]() { scope.pushView(new RaycastStoreDetailHost(ext)); });
   auto uninstall = new UninstallExtensionAction(entry.extension.id);
 

@@ -6,7 +6,7 @@ GenericGridView {
     showCellTitle: true
     showCellSubtitle: true
 
-    emptyTitle: cmdModel && cmdModel.emptyTitle ? cmdModel.emptyTitle : "No results"
+    emptyTitle: cmdModel && cmdModel.emptyTitle ? cmdModel.emptyTitle : qsTr("No results")
     emptyDescription: cmdModel ? cmdModel.emptyDescription : ""
     emptyIcon: cmdModel?.emptyIcon?.valid ? cmdModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 

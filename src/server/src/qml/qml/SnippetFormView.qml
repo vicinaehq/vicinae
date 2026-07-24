@@ -12,12 +12,12 @@ Item {
 
         FormField {
             id: titleField
-            label: "Title"
+            label: qsTr("Title")
             error: root.host.nameError
 
             FormTextInput {
                 text: root.host.name
-                placeholder: "Euro symbol"
+                placeholder: qsTr("Euro symbol")
                 hasError: titleField.error !== ""
                 onTextEdited: root.host.name = text
             }
@@ -25,9 +25,9 @@ Item {
 
         FormField {
             id: contentField
-            label: "Content"
+            label: qsTr("Content")
             error: root.host.contentError
-            info: "You can use {dynamic placeholders} to make the content dynamic: <a href=\"https://docs.vicinae.com/snippets\">learn more</a>."
+            info: qsTr("You can use {dynamic placeholders} to make the content dynamic: <a href=\"https://docs.vicinae.com/snippets\">learn more</a>.")
             topAlignLabel: true
 
             FormCompletedTextArea {
@@ -43,9 +43,9 @@ Item {
 
         FormField {
             id: keywordField
-            label: "Keyword"
+            label: qsTr("Keyword")
             error: root.host.keywordError
-            info: root.host.serverRunning ? "Typing this keyword anywhere will result in it being replaced by the content of the snippet." : "The snippet server is not running. Keyword expansion is unavailable. <a href=\"https://docs.vicinae.com/snippets\">Learn more</a>."
+            info: root.host.serverRunning ? qsTr("Typing this keyword anywhere will result in it being replaced by the content of the snippet.") : qsTr("The snippet server is not running. Keyword expansion is unavailable. <a href=\"https://docs.vicinae.com/snippets\">Learn more</a>.")
 
             FormTextInput {
                 text: root.host.keyword
@@ -57,8 +57,8 @@ Item {
         }
 
         FormField {
-            label: "Applications"
-            info: "Restrict expansion to specific applications. By default, it works everywhere."
+            label: qsTr("Applications")
+            info: qsTr("Restrict expansion to specific applications. By default, it works everywhere.")
             visible: root.host.serverRunning && root.host.keyword !== ""
             topAlignLabel: true
 
@@ -70,8 +70,8 @@ Item {
         }
 
         FormField {
-            label: "Expand as word"
-            info: "If a keyword is typed, it will only be expanded after space or punctuation."
+            label: qsTr("Expand as word")
+            info: qsTr("If a keyword is typed, it will only be expanded after space or punctuation.")
             visible: root.host.serverRunning
 
             FormCheckbox {

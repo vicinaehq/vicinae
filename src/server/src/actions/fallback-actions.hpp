@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "qml/manage-fallback-view-host.hpp"
 #include "ui/action-pannel/action.hpp"
 
@@ -11,5 +12,6 @@ class ManageFallbackActions : public AbstractAction {
 
 public:
   ManageFallbackActions()
-      : AbstractAction("Manage Fallback Actions", ImageURL::builtin("arrow-counter-clockwise")) {}
+      : AbstractAction(QCoreApplication::translate("ManageFallbackActions", "Manage Fallback Actions"),
+                       ImageURL::builtin("arrow-counter-clockwise")) {}
 };

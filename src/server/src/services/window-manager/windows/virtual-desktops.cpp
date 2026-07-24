@@ -1,4 +1,5 @@
 #include "virtual-desktops.hpp"
+#include <QCoreApplication>
 #include <QWinEventNotifier>
 #include <QDebug>
 
@@ -63,7 +64,7 @@ QString readDesktopName(const QString &id, size_t position) {
       name[0]) {
     return QString::fromWCharArray(name);
   }
-  return QString("Desktop %1").arg(position + 1);
+  return QCoreApplication::translate("virtual-desktops", "Desktop %1").arg(position + 1);
 }
 
 } // namespace

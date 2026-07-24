@@ -25,13 +25,12 @@ void AliasFormViewHost::initialize() {
   m_alias = QString::fromStdString(meta.alias.value_or(""));
   emit formChanged();
 
-  setNavigationTitle(QString("Set alias - %1").arg(meta.item->title()));
+  setNavigationTitle(tr("Set alias - %1").arg(meta.item->title()));
   setNavigationIcon(meta.item->iconUrl());
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto section = panel->createSection();
-  auto submitAction =
-      new StaticAction(QStringLiteral("Submit"), ImageURL::builtin("enter-key"), [this]() { submit(); });
+  auto submitAction = new StaticAction(tr("Submit"), ImageURL::builtin("enter-key"), [this]() { submit(); });
   section->addAction(submitAction);
   setActions(std::move(panel));
 }
@@ -44,9 +43,9 @@ void AliasFormViewHost::submit() {
   emit errorsChanged();
 
   if (manager->setAlias(m_id, m_alias.toStdString())) {
-    toast->setToast("Alias modified", ToastStyle::Success);
+    toast->setToast(tr("Alias modified"), ToastStyle::Success);
     popSelf();
   } else {
-    toast->setToast("Failed to modify alias", ToastStyle::Danger);
+    toast->setToast(tr("Failed to modify alias"), ToastStyle::Danger);
   }
 }

@@ -86,12 +86,12 @@ void SettingsSidebarModel::rebuildRows() {
     QString label;
     QString icon;
   };
-  static const std::array<CorePage, 5> corePages = {{
-      {QStringLiteral("general"), QStringLiteral("General"), QStringLiteral("cog")},
-      {QStringLiteral("appearance"), QStringLiteral("Appearance"), QStringLiteral("swatch")},
-      {QStringLiteral("keybindings"), QStringLiteral("Keybindings"), QStringLiteral("keyboard")},
-      {QStringLiteral("advanced"), QStringLiteral("Advanced"), QStringLiteral("wrench-screwdriver")},
-      {QStringLiteral("about"), QStringLiteral("About"), QStringLiteral("vicinae")},
+  const std::array<CorePage, 5> corePages = {{
+      {QStringLiteral("general"), tr("General"), QStringLiteral("cog")},
+      {QStringLiteral("appearance"), tr("Appearance"), QStringLiteral("swatch")},
+      {QStringLiteral("keybindings"), tr("Keybindings"), QStringLiteral("keyboard")},
+      {QStringLiteral("advanced"), tr("Advanced"), QStringLiteral("wrench-screwdriver")},
+      {QStringLiteral("about"), tr("About"), QStringLiteral("vicinae")},
   }};
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();

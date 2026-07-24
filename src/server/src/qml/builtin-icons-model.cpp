@@ -12,7 +12,7 @@ std::unique_ptr<ActionPanelState> BuiltinIconsSection::buildActionPanel(const Ic
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
 
-  auto *copyName = new CopyToClipboardAction(Clipboard::Text(e.name.c_str()), "Copy Icon Name");
+  auto *copyName = new CopyToClipboardAction(Clipboard::Text(e.name.c_str()), tr("Copy Icon Name"));
   copyName->setShortcut(Keybind::CopyNameAction);
   section->addAction(copyName);
 

@@ -39,6 +39,8 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(QVariantList iconThemeItems READ iconThemeItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList faviconServiceItems READ faviconServiceItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList keybindingSchemeItems READ keybindingSchemeItems NOTIFY configChanged)
+  Q_PROPERTY(QVariantList languageItems READ languageItems CONSTANT)
+  Q_PROPERTY(QVariant currentLanguage READ currentLanguage NOTIFY configChanged)
   Q_PROPERTY(QVariant currentTheme READ currentTheme NOTIFY configChanged)
   Q_PROPERTY(QVariant currentFont READ currentFont NOTIFY configChanged)
   Q_PROPERTY(QVariant currentIconTheme READ currentIconTheme NOTIFY configChanged)
@@ -102,6 +104,8 @@ public:
   QVariantList iconThemeItems() const;
   QVariantList faviconServiceItems() const;
   QVariantList keybindingSchemeItems() const;
+  QVariantList languageItems() const;
+  QVariant currentLanguage() const;
   QVariant currentTheme() const;
   QVariant currentFont() const;
   QVariant currentIconTheme() const;
@@ -113,6 +117,7 @@ public:
   Q_INVOKABLE void selectIconTheme(const QString &id);
   Q_INVOKABLE void selectFaviconService(const QString &id);
   Q_INVOKABLE void selectKeybindingScheme(const QString &id);
+  Q_INVOKABLE void selectLanguage(const QString &id);
 
   QString toggleShortcut() const;
   void setToggleShortcut(const QString &shortcut);

@@ -1,10 +1,13 @@
 #pragma once
+#include <QCoreApplication>
 #include "clipboard-actions.hpp"
 #include "common/entrypoint.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class DisableItemAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(DisableItemAction)
+
   EntrypointId m_id;
 
   void execute(ApplicationContext *ctx) override;
@@ -14,6 +17,8 @@ public:
 };
 
 class ResetItemRanking : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(ResetItemRanking)
+
   EntrypointId m_id;
   void execute(ApplicationContext *context) override;
 
@@ -31,6 +36,8 @@ public:
 };
 
 class ToggleItemAsFavorite : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(ToggleItemAsFavorite)
+
   EntrypointId m_id;
   bool m_value;
 
@@ -47,7 +54,9 @@ public:
   OpenItemPreferencesAction(const EntrypointId &id) : m_id(id) {}
 
   void execute(ApplicationContext *context) override;
-  QString title() const override { return "Open Preferences"; }
+  QString title() const override {
+    return QCoreApplication::translate("OpenItemPreferencesAction", "Open Preferences");
+  }
   std::optional<ImageURL> icon() const override { return ImageURL::builtin("cog"); }
 
 private:
@@ -55,16 +64,18 @@ private:
 };
 
 class CopyItemDeeplink : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(CopyItemDeeplink)
+
 public:
   CopyItemDeeplink(const EntrypointId &id) : m_id(id) { setShortcut(Keybind::CopyAction); }
 
   void execute(ApplicationContext *context) override {
     auto deeplink = QString{"vicinae://launch/%1/%2"}.arg(m_id.provider.c_str()).arg(m_id.entrypoint.c_str());
     context->services->clipman()->copyText(deeplink);
-    context->navigation->showHud("Deeplink copied in clipboard");
+    context->navigation->showHud(tr("Deeplink copied in clipboard"));
   }
 
-  QString title() const override { return "Copy Deeplink"; }
+  QString title() const override { return tr("Copy Deeplink"); }
   std::optional<ImageURL> icon() const override { return ImageURL{BuiltinIcon::CopyClipboard}; }
 
 private:
@@ -72,7 +83,7 @@ private:
 };
 
 class DisableApplication : public DisableItemAction {
-  QString title() const override { return "Disable item"; }
+  QString title() const override { return QCoreApplication::translate("DisableApplication", "Disable item"); }
 
 public:
   DisableApplication(const EntrypointId &itemId) : DisableItemAction(itemId) {}
@@ -80,7 +91,9 @@ public:
 
 class SetRootItemAliasAction : public AbstractAction {
 public:
-  QString title() const override { return "Set alias"; }
+  QString title() const override {
+    return QCoreApplication::translate("SetRootItemAliasAction", "Set alias");
+  }
   std::optional<ImageURL> icon() const override { return BuiltinIcon::Text; }
   void execute(ApplicationContext *context) override;
   SetRootItemAliasAction(EntrypointId id) : m_id(id) { setShortcut(Keybind::EditSecondaryAction); }
@@ -95,7 +108,9 @@ public:
   static std::vector<AbstractAction *> generateActions(const RootItem &item,
                                                        const RootItemMetadata &metadata) {
     const auto id = item.uniqueId();
-    const auto copyId = new CopyToClipboardAction(Clipboard::Text(QString::fromStdString(id)), "Copy ID");
+    const auto copyId =
+        new CopyToClipboardAction(Clipboard::Text(QString::fromStdString(id)),
+                                  QCoreApplication::translate("RootSearchActionGenerator", "Copy ID"));
     const auto copyDeeplink = new CopyItemDeeplink(id);
     const auto resetRanking = new ResetItemRanking(id);
     const auto markAsFavorite = new ToggleItemAsFavorite(id, metadata.favorite);

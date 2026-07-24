@@ -26,7 +26,7 @@ Window {
     maximumWidth: _w + 2 * shadowPadding
     minimumHeight: _h + 2 * shadowPadding
     maximumHeight: _h + 2 * shadowPadding
-    title: "Vicinae Launcher"
+    title: qsTr("Vicinae Launcher")
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
     visible: false

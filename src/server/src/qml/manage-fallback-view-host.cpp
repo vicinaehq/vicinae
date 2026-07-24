@@ -9,7 +9,7 @@ void ManageFallbackViewHost::initialize() {
   model()->addSource(&m_enabledSection);
   model()->addSource(&m_availableSection);
 
-  setSearchPlaceholderText("Search commands...");
+  setSearchPlaceholderText(tr("Search commands..."));
 
   auto manager = context()->services->rootItemManager();
   connect(manager, &RootItemManager::fallbackEnabled, this, &ManageFallbackViewHost::reload);

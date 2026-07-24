@@ -1,5 +1,6 @@
 #pragma once
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <QCoreApplication>
 
 struct WinControlPanelApplet {
   QString displayName;
@@ -15,6 +16,8 @@ struct WinControlPanelTask {
 };
 
 class WinControlPanelRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(WinControlPanelRootItem)
+
   WinControlPanelApplet m_applet;
 
   QString title() const override;
@@ -31,6 +34,8 @@ public:
 };
 
 class WinControlPanelTaskRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(WinControlPanelTaskRootItem)
+
   WinControlPanelTask m_task;
 
   QString title() const override;
@@ -47,6 +52,8 @@ public:
 };
 
 class WinControlPanelRootProvider : public RootProvider {
+  Q_DECLARE_TR_FUNCTIONS(WinControlPanelRootProvider)
+
 public:
   QString uniqueId() const override;
   QString displayName() const override;

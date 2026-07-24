@@ -18,19 +18,23 @@ static const QString COMMAND_JSON_TEMPLATE = R"(    {
 
 static const QString COMMAND_LIST_JSON_TEMPLATE = "[\n%1\n  ]";
 
-static const std::vector<CommandBoilerplate> CMD_TEMPLATE_LIST = {
-    CommandBoilerplate{.resource = ":boilerplate/tmpl-list", .name = "Simple List", .mode = CommandModeView},
-    CommandBoilerplate{
-        .resource = ":boilerplate/tmpl-list-detail", .name = "List with Detail", .mode = CommandModeView},
-    CommandBoilerplate{
-        .resource = ":boilerplate/tmpl-controlled-list", .name = "Controlled List", .mode = CommandModeView},
-    CommandBoilerplate{
-        .resource = ":boilerplate/tmpl-simple-detail", .name = "Simple Detail", .mode = CommandModeView},
-    CommandBoilerplate{.resource = ":boilerplate/tmpl-no-view", .name = "No View", .mode = CommandModeNoView},
-};
-
 const std::vector<CommandBoilerplate> &ExtensionBoilerplateGenerator::commandBoilerplates() const {
-  return CMD_TEMPLATE_LIST;
+  static const std::vector<CommandBoilerplate> cmdTemplateList = {
+      CommandBoilerplate{
+          .resource = ":boilerplate/tmpl-list", .name = tr("Simple List"), .mode = CommandModeView},
+      CommandBoilerplate{.resource = ":boilerplate/tmpl-list-detail",
+                         .name = tr("List with Detail"),
+                         .mode = CommandModeView},
+      CommandBoilerplate{.resource = ":boilerplate/tmpl-controlled-list",
+                         .name = tr("Controlled List"),
+                         .mode = CommandModeView},
+      CommandBoilerplate{.resource = ":boilerplate/tmpl-simple-detail",
+                         .name = tr("Simple Detail"),
+                         .mode = CommandModeView},
+      CommandBoilerplate{
+          .resource = ":boilerplate/tmpl-no-view", .name = tr("No View"), .mode = CommandModeNoView},
+  };
+  return cmdTemplateList;
 }
 
 std::expected<fs::path, QString>
@@ -74,9 +78,9 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
     QString const name = slugify(cmd.title);
 
     auto pred = [&](auto &&tmpl) { return tmpl.resource == cmd.templateId; };
-    auto it = std::ranges::find_if(CMD_TEMPLATE_LIST, pred);
+    auto it = std::ranges::find_if(commandBoilerplates(), pred);
 
-    if (it == CMD_TEMPLATE_LIST.end()) {
+    if (it == commandBoilerplates().end()) {
       return std::unexpected(QString("Unknown template with id %1").arg(cmd.templateId));
     }
 

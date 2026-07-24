@@ -235,7 +235,7 @@ std::expected<void, QString> MacOSGlobalShortcutBackend::bindShortcut(const Glob
   } else if (const auto character = Keyboard::printableCharForKey(request.trigger.key())) {
     binding.character = QString(character->toLower());
   } else {
-    return std::unexpected(QStringLiteral("unsupported or invalid trigger"));
+    return std::unexpected(tr("unsupported or invalid trigger"));
   }
 
   std::lock_guard lock(m_mutex);

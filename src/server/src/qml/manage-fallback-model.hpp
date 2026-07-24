@@ -1,6 +1,7 @@
 #pragma once
 #include "fuzzy-section.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <QCoreApplication>
 
 using RootItemPtr = std::shared_ptr<RootItem>;
 
@@ -24,8 +25,9 @@ template <> struct fuzzy::FuzzySearchable<RootItemPtr> {
 };
 
 class EnabledFallbackSection : public FuzzySection<RootItemPtr> {
+  Q_DECLARE_TR_FUNCTIONS(EnabledFallbackSection)
 public:
-  QString sectionName() const override { return QStringLiteral("Enabled"); }
+  QString sectionName() const override { return tr("Enabled"); }
 
   void setFallbackOrder(std::vector<RootItemPtr> fallbacks) { m_fallbacks = std::move(fallbacks); }
 
@@ -42,8 +44,9 @@ private:
 };
 
 class AvailableFallbackSection : public FuzzySection<RootItemPtr> {
+  Q_DECLARE_TR_FUNCTIONS(AvailableFallbackSection)
 public:
-  QString sectionName() const override { return QStringLiteral("Available"); }
+  QString sectionName() const override { return tr("Available"); }
 
 protected:
   QString displayTitle(const RootItemPtr &item) const override;

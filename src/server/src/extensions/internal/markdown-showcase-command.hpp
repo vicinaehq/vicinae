@@ -2,6 +2,7 @@
 #include "qml/bridge-view.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
+#include <QCoreApplication>
 
 class MarkdownShowcaseView : public FormViewBase {
   Q_OBJECT
@@ -165,9 +166,11 @@ Just some preformatted text.
 };
 
 class MarkdownShowcase : public BuiltinViewCommand<MarkdownShowcaseView> {
+  Q_DECLARE_TR_FUNCTIONS(MarkdownShowcase)
+
   QString id() const override { return "markdown-showcase"; }
-  QString name() const override { return "Markdown Showcase"; }
-  QString description() const override { return "Preview all supported markdown features"; }
+  QString name() const override { return tr("Markdown Showcase"); }
+  QString description() const override { return tr("Preview all supported markdown features"); }
   bool isFallback() const override { return false; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("text").setBackgroundTint(Omnicast::ACCENT_COLOR);

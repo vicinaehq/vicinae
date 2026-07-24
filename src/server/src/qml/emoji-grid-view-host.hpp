@@ -2,6 +2,7 @@
 #include "bridge-view.hpp"
 #include "emoji-grid-model.hpp"
 #include "glyph/glyph.hpp"
+#include <QCoreApplication>
 #include <QStringList>
 
 class EmojiGridViewHost : public ViewHostBase {
@@ -36,9 +37,11 @@ public:
   QObject *listModel() const { return const_cast<EmojiGridModel *>(&m_model); }
 
   QStringList categoryFilterOptions() const {
-    QStringList options{QStringLiteral("All")};
-    for (const auto &section : glyph::sections())
-      options.append(QString::fromUtf8(section.label.data(), section.label.size()));
+    QStringList options{tr("All")};
+    for (const auto &section : glyph::sections()) {
+      const QByteArray label(section.label.data(), static_cast<qsizetype>(section.label.size()));
+      options.append(QCoreApplication::translate("emoji-categories", label.constData()));
+    }
     return options;
   }
 

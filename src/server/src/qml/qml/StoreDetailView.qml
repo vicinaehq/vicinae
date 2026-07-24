@@ -193,7 +193,7 @@ Item {
                         }
 
                         Text {
-                            text: "Installed"
+                            text: qsTr("Installed")
                             color: Theme.toastSuccess
                             font.pointSize: Theme.smallerFontSize
                             font.bold: true
@@ -359,7 +359,7 @@ Item {
                         spacing: 10
 
                         Text {
-                            text: "Description"
+                            text: qsTr("Description")
                             color: Theme.foreground
                             font.pointSize: Theme.regularFontSize
                             font.bold: true
@@ -385,7 +385,7 @@ Item {
                         spacing: 15
 
                         Text {
-                            text: "Commands"
+                            text: qsTr("Commands")
                             color: Theme.textMuted
                             font.pointSize: Theme.regularFontSize
                         }
@@ -459,7 +459,7 @@ Item {
                             text: "README"
                         }
                         TextLink {
-                            label: "Open README"
+                            label: qsTr("Open README")
                             url: root.host.readmeUrl || ""
                         }
                     }
@@ -468,7 +468,7 @@ Item {
                         spacing: 5
 
                         SidebarLabel {
-                            text: "Last update"
+                            text: qsTr("Last update")
                         }
                         Text {
                             text: root.host.lastUpdate
@@ -482,7 +482,7 @@ Item {
                         spacing: 10
 
                         SidebarLabel {
-                            text: "Contributors"
+                            text: qsTr("Contributors")
                         }
 
                         Repeater {
@@ -511,7 +511,7 @@ Item {
                         spacing: 5
 
                         SidebarLabel {
-                            text: "Categories"
+                            text: qsTr("Categories")
                         }
 
                         Repeater {
@@ -530,10 +530,10 @@ Item {
                         spacing: 5
 
                         SidebarLabel {
-                            text: "Source Code"
+                            text: qsTr("Source Code")
                         }
                         TextLink {
-                            label: "View Code"
+                            label: qsTr("View Code")
                             url: root.host.sourceUrl || ""
                         }
                     }

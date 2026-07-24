@@ -6,11 +6,14 @@
 #include "single-view-command-context.hpp"
 #include "services/paste/paste-service.hpp"
 #include "utils.hpp"
+#include <QCoreApplication>
 
 class SearchEmojiCommand : public BuiltinViewCommand<EmojiGridViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(SearchEmojiCommand)
+
   QString id() const override { return "search-emojis"; }
-  QString name() const override { return "Search Emojis & Symbols"; }
-  QString description() const override { return "Search for any emoji or symbol"; }
+  QString name() const override { return tr("Search Emojis & Symbols"); }
+  QString description() const override { return tr("Search for any emoji or symbol"); }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("emoji").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -23,17 +26,17 @@ class SearchEmojiCommand : public BuiltinViewCommand<EmojiGridViewHost> {
     QString dflt = "copy";
 
     if (paste->supportsPaste()) {
-      defaultActionOptions.emplace_back(Opt("Paste", "paste"));
+      defaultActionOptions.emplace_back(Opt(tr("Paste"), "paste"));
       dflt = "paste";
     }
-    defaultActionOptions.emplace_back(Opt("Copy", "copy"));
+    defaultActionOptions.emplace_back(Opt(tr("Copy"), "copy"));
 
     auto defaultAction = Preference::makeDropdown("defaultAction", defaultActionOptions);
 
     defaultAction.setDefaultValue(dflt);
-    defaultAction.setTitle("Default Action");
-    defaultAction.setDescription("The default action to perform on pressing return. Paste is only available "
-                                 "if your environment supports it.");
+    defaultAction.setTitle(tr("Default Action"));
+    defaultAction.setDescription(tr("The default action to perform on pressing return. Paste is only "
+                                    "available if your environment supports it."));
     preferences.emplace_back(defaultAction);
 
     {
@@ -53,8 +56,8 @@ class SearchEmojiCommand : public BuiltinViewCommand<EmojiGridViewHost> {
       auto skinTonePreference = Preference::makeDropdown("skinTone", opts);
 
       skinTonePreference.setDefaultValue("default");
-      skinTonePreference.setTitle("Skin tone");
-      skinTonePreference.setDescription("Skin tone to use for relevant emojis.");
+      skinTonePreference.setTitle(tr("Skin tone"));
+      skinTonePreference.setDescription(tr("Skin tone to use for relevant emojis."));
       preferences.emplace_back(skinTonePreference);
     }
 

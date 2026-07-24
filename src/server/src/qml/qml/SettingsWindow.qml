@@ -7,27 +7,27 @@ Window {
     // Single source of truth for the built-in (non-extension) pages.
     readonly property var corePages: ({
             "general": {
-                "title": "General",
+                "title": qsTr("General"),
                 "icon": "cog",
                 "page": generalPage
             },
             "appearance": {
-                "title": "Appearance",
+                "title": qsTr("Appearance"),
                 "icon": "swatch",
                 "page": appearancePage
             },
             "keybindings": {
-                "title": "Keybindings",
+                "title": qsTr("Keybindings"),
                 "icon": "keyboard",
                 "page": shortcutsPage
             },
             "advanced": {
-                "title": "Advanced",
+                "title": qsTr("Advanced"),
                 "icon": "wrench-screwdriver",
                 "page": advancedPage
             },
             "about": {
-                "title": "About",
+                "title": qsTr("About"),
                 "icon": "vicinae",
                 "page": aboutPage
             }
@@ -46,7 +46,7 @@ Window {
     visible: true
     color: "transparent"
     flags: Qt.Window
-    title: "Vicinae Settings"
+    title: qsTr("Vicinae Settings")
 
     WindowMaterial.enabled: Config.blurEnabled && Config.windowOpacity < 1
     WindowMaterial.radius: 10
@@ -134,11 +134,11 @@ Window {
                                 text: {
                                     const p = root.extModel.selectedProvenance;
                                     if (p === "Raycast")
-                                        return "Imported from Raycast";
+                                        return qsTr("Imported from Raycast");
                                     if (p === "Vicinae")
-                                        return "From the Vicinae store";
+                                        return qsTr("From the Vicinae store");
                                     if (p === "Local")
-                                        return "Locally installed extension";
+                                        return qsTr("Locally installed extension");
                                     return "";
                                 }
                                 visible: provenanceHover.hovered && text !== ""

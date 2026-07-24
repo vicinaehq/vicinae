@@ -8,8 +8,8 @@ void SetThemeAction::execute(ApplicationContext *ctx) {
   auto toast = ctx->services->toastService();
 
   cfg->mergeThemeConfig({.name = m_themeId.toStdString()});
-  toast->success("Theme successfully updated");
+  toast->success(tr("Theme successfully updated"));
 }
 
 SetThemeAction::SetThemeAction(const QString &themeName)
-    : AbstractAction("Set theme", ImageURL::builtin("brush")), m_themeId(themeName) {}
+    : AbstractAction(tr("Set theme"), ImageURL::builtin("brush")), m_themeId(themeName) {}

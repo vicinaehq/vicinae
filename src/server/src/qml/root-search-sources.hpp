@@ -5,6 +5,7 @@
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/update/update-service.hpp"
+#include <QCoreApplication>
 #include <memory>
 #include <optional>
 #include <string>
@@ -53,8 +54,9 @@ public:
 };
 
 class RootLinkSection : public SectionSource {
+  Q_DECLARE_TR_FUNCTIONS(RootLinkSection)
 public:
-  QString sectionName() const override { return QStringLiteral("Link"); }
+  QString sectionName() const override { return tr("Link"); }
   int count() const override { return m_link ? 1 : 0; }
   QString itemId(int) const override;
   QString itemTitle(int) const override;
@@ -73,7 +75,9 @@ private:
 
 class RootCalculatorSection : public SectionSource {
 public:
-  QString sectionName() const override { return QStringLiteral("Calculator"); }
+  QString sectionName() const override {
+    return QCoreApplication::translate("RootCalculatorSection", "Calculator");
+  }
   int count() const override { return m_result ? 1 : 0; }
   QString itemId(int) const override;
   QString itemTitle(int) const override;
@@ -91,10 +95,11 @@ private:
 };
 
 class RootUpdateSection : public SectionSource {
+  Q_DECLARE_TR_FUNCTIONS(RootUpdateSection)
 public:
   explicit RootUpdateSection(UpdateService *updates) : m_updates(updates) {}
 
-  QString sectionName() const override { return QStringLiteral("Update"); }
+  QString sectionName() const override { return tr("Update"); }
   int count() const override { return m_update ? 1 : 0; }
   QString itemId(int) const override;
   QString itemTitle(int) const override;
@@ -114,7 +119,9 @@ private:
 
 class RootNewsSection : public SectionSource {
 public:
-  QString sectionName() const override { return QStringLiteral("What's New"); }
+  QString sectionName() const override {
+    return QCoreApplication::translate("RootNewsSection", "What's New");
+  }
   int count() const override { return static_cast<int>(m_items.size()); }
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
@@ -135,7 +142,9 @@ class RootFavoritesSection : public RootItemSection {
 public:
   explicit RootFavoritesSection(RootItemManager *mgr) : m_manager(mgr) {}
 
-  QString sectionName() const override { return QStringLiteral("Favorites"); }
+  QString sectionName() const override {
+    return QCoreApplication::translate("RootFavoritesSection", "Favorites");
+  }
   int count() const override { return static_cast<int>(m_items.size()); }
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
@@ -155,6 +164,7 @@ private:
 };
 
 class RootResultsSection : public RootItemSection {
+  Q_DECLARE_TR_FUNCTIONS(RootResultsSection)
 public:
   explicit RootResultsSection(RootItemManager *mgr) : m_manager(mgr) {}
 
@@ -183,7 +193,7 @@ class RootFilesSection : public SectionSource {
 public:
   explicit RootFilesSection(AppService *appDb) : m_appDb(appDb) {}
 
-  QString sectionName() const override { return QStringLiteral("Files"); }
+  QString sectionName() const override { return QCoreApplication::translate("RootFilesSection", "Files"); }
   int count() const override { return static_cast<int>(m_files.size()); }
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;

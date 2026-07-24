@@ -9,7 +9,7 @@ void SwitchWindowsViewHost::initialize() {
 
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search open window...");
+  setSearchPlaceholderText(tr("Search open window..."));
 
   auto wm = context()->services->windowManager();
   wm->provider()->refresh();

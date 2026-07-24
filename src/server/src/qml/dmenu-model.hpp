@@ -1,12 +1,14 @@
 #pragma once
 #include "fuzzy/scored.hpp"
 #include "section-source.hpp"
+#include <QCoreApplication>
 #include <functional>
 #include <string>
 #include <string_view>
 #include <vector>
 
 class DMenuSection : public SectionSource {
+  Q_DECLARE_TR_FUNCTIONS(DMenuSection)
 public:
   void setRawEntries(std::vector<std::string_view> entries);
   void setSectionTemplate(std::string_view tpl) { m_sectionTemplate = tpl; }

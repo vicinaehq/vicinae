@@ -132,7 +132,7 @@ if (APPLE OR WIN32)
 endif()
 
 # the Qt deploy API registers its support files on the first Qt6::Core scope seen
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Core Qml)
 
 if (NOT USE_SYSTEM_GLAZE)
 	include(Glaze)

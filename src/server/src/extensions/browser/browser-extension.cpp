@@ -9,15 +9,17 @@
 #include "services/browser-extension-service.hpp"
 #include "single-view-command-context.hpp"
 #include "theme/colors.hpp"
+#include <QCoreApplication>
 
 static bool guard(CommandController &ctrl) {
   const auto browserService = ctrl.context()->services->browserExtension();
 
   if (browserService->browsers().empty()) {
     auto empty = new EmptyViewHost(
-        "No browser connected",
-        "You need to connect at least one browser to vicinae using the browser extension in "
-        "order to use this command.",
+        QCoreApplication::translate("browser-extension", "No browser connected"),
+        QCoreApplication::translate("browser-extension",
+                                    "You need to connect at least one browser to vicinae using the browser "
+                                    "extension in order to use this command."),
         ImageURL(BuiltinIcon::Link).setFill(SemanticColor::Red));
 
     ctrl.context()->navigation->pushView(empty);
@@ -25,7 +27,8 @@ static bool guard(CommandController &ctrl) {
     auto panel = std::make_unique<ListActionPanelState>();
     auto main = panel->createSection();
     main->addAction(
-        new OpenInBrowserAction(QUrl("https://docs.vicinae.com/browser-extension"), "Open documentation"));
+        new OpenInBrowserAction(QUrl("https://docs.vicinae.com/browser-extension"),
+                                QCoreApplication::translate("browser-extension", "Open documentation")));
     empty->setActions(std::move(panel));
 
     return true;
@@ -35,11 +38,13 @@ static bool guard(CommandController &ctrl) {
 }
 
 class CreateShortcutFromActiveBrowserTabCommand : public GuardedBuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(CreateShortcutFromActiveBrowserTabCommand)
+
   QString id() const override { return "shortcut-active-tab"; }
-  QString name() const override { return "Create Shortcut from Active Tab"; }
+  QString name() const override { return tr("Create Shortcut from Active Tab"); }
   QString description() const override {
-    return "Create a vicinae shortcut from the currently active browser tab. May yield unexpected results if "
-           "many browsers are connected at once.";
+    return tr("Create a vicinae shortcut from the currently active browser tab. May yield unexpected "
+              "results if many browsers are connected at once.");
   }
   ImageURL iconUrl() const override {
     return ImageURL(BuiltinIcon::Link).setBackgroundTint(SemanticColor::Red);
@@ -53,7 +58,7 @@ class CreateShortcutFromActiveBrowserTabCommand : public GuardedBuiltinCallbackC
     const auto tab = browser->findActiveTab();
 
     if (!tab) {
-      toast->failure("No active tab!");
+      toast->failure(tr("No active tab!"));
       return;
     }
 
@@ -65,9 +70,11 @@ class CreateShortcutFromActiveBrowserTabCommand : public GuardedBuiltinCallbackC
 };
 
 class SearchBrowserTabsCommand : public GuardedBuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(SearchBrowserTabsCommand)
+
   QString id() const override { return "browse-tabs"; }
-  QString name() const override { return "Search Browser Tabs"; }
-  QString description() const override { return "Search tabs from all connected browsers"; }
+  QString name() const override { return tr("Search Browser Tabs"); }
+  QString description() const override { return tr("Search tabs from all connected browsers"); }
   ImageURL iconUrl() const override {
     return ImageURL(BuiltinIcon::AppWindowSidebarLeft).setBackgroundTint(SemanticColor::Red);
   }

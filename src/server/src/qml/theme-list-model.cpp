@@ -19,7 +19,7 @@ QString ThemeSection::itemTitle(int i) const { return m_themes[i]->name(); }
 
 QString ThemeSection::itemSubtitle(int i) const {
   auto desc = m_themes[i]->description();
-  return desc.isEmpty() ? QStringLiteral("Default theme description") : desc;
+  return desc.isEmpty() ? tr("Default theme description") : desc;
 }
 
 QString ThemeSection::itemIconSource(int i) const {
@@ -83,20 +83,20 @@ std::unique_ptr<ActionPanelState> ThemeSection::actionPanel(int i) const {
   section->addAction(setTheme);
 
   if (theme->path() && textEditor) {
-    auto *open =
-        new OpenAppAction(textEditor, "Open theme file", {QString::fromStdString(theme->path()->string())});
+    auto *open = new OpenAppAction(textEditor, tr("Open theme file"),
+                                   {QString::fromStdString(theme->path()->string())});
     open->setShortcut(Keybind::OpenAction);
     section->addAction(open);
   }
 
   auto *utils = panel->createSection();
-  auto *copyId = new CopyToClipboardAction(Clipboard::Text(theme->id()), "Copy ID");
+  auto *copyId = new CopyToClipboardAction(Clipboard::Text(theme->id()), tr("Copy ID"));
   copyId->setShortcut(Keybind::CopyNameAction);
   utils->addAction(copyId);
 
   if (theme->path()) {
     auto *copyPath = new CopyToClipboardAction(
-        Clipboard::Text(QString::fromStdString(theme->path()->string())), "Copy path");
+        Clipboard::Text(QString::fromStdString(theme->path()->string())), tr("Copy path"));
     copyPath->setShortcut(Keybind::CopyPathAction);
     utils->addAction(copyPath);
   }

@@ -4,7 +4,7 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 
-static const QString MARKDOWN = R"(
+static const char MARKDOWN[] = QT_TRANSLATE_NOOP("CreateExtensionSuccessViewHost", R"(
 # Extension successfully created
 
 Your new extension %1 has been succesfully created at `%2`.
@@ -18,11 +18,12 @@ npm run dev
 ```
 
 You can learn more about extension development in the [Vicinae documentation](https://docs.vicinae.com/).
-)";
+)");
 
 CreateExtensionSuccessViewHost::CreateExtensionSuccessViewHost(const ExtensionBoilerplateConfig &cfg,
                                                                const std::filesystem::path &location)
-    : m_markdown(MARKDOWN.arg(cfg.title).arg(QString::fromStdString(location.string()))), m_path(location) {}
+    : m_markdown(tr(MARKDOWN).arg(cfg.title).arg(QString::fromStdString(location.string()))),
+      m_path(location) {}
 
 QUrl CreateExtensionSuccessViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/MarkdownDetailView.qml"));
@@ -40,7 +41,7 @@ void CreateExtensionSuccessViewHost::initialize() {
   auto *section = panel->createSection();
 
   for (const auto &opener : appDb->findOpeners("inode/directory")) {
-    auto open = new OpenAppAction(opener, QString("Open in %1").arg(opener->displayName()),
+    auto open = new OpenAppAction(opener, tr("Open in %1").arg(opener->displayName()),
                                   {QString::fromStdString(m_path.string())});
     section->addAction(open);
   }

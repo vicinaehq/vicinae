@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "common/types.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "ui/image/url.hpp"
@@ -37,6 +38,8 @@ struct ShellOpenApp {
 using WindowsAppKind = std::variant<Win32ShortcutApp, UrlShortcutApp, Win32ExeApp, PackagedApp, ShellOpenApp>;
 
 class WindowsApplication : public AbstractApplication {
+  Q_DECLARE_TR_FUNCTIONS(WindowsApplication)
+
 public:
   struct Data {
     QString id;
@@ -64,8 +67,8 @@ public:
     if (m_data.elevated || !supportsElevation()) return {};
     Data data = m_data;
     data.id += QStringLiteral(":runas");
-    data.fullyQualifiedName = m_data.displayName + QStringLiteral(": Run as Administrator");
-    data.displayName = QStringLiteral("Run as Administrator");
+    data.fullyQualifiedName = tr("%1: Run as Administrator").arg(m_data.displayName);
+    data.displayName = tr("Run as Administrator");
     data.elevated = true;
     return {std::make_shared<WindowsApplication>(std::move(data))};
   }
