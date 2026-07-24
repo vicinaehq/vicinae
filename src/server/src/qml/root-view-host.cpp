@@ -10,10 +10,6 @@ void RootViewHost::initialize() {
 
   BaseView::initialize();
   m_model = new RootSearchModel(ViewScope(context(), this), this);
-  m_clockTimer->setInterval(1min);
-  m_clockTimer->start();
-  refreshClock();
-
   scheduleNextClockTick();
 
   connect(m_clockTimer, &QTimer::timeout, this, &RootViewHost::scheduleNextClockTick);
@@ -31,8 +27,6 @@ void RootViewHost::initialize() {
 void RootViewHost::scheduleNextClockTick() {
   refreshClock();
   auto delta = 60 - (QDateTime::currentSecsSinceEpoch() % 60);
-
-  qDebug() << "next clock tick is in" << delta;
 
   m_clockTimer->setInterval(std::chrono::seconds(delta));
   m_clockTimer->setSingleShot(true);
