@@ -68,6 +68,7 @@
             pkgs.qt6.qtdeclarative
             pkgs.qt6.qtsvg
             pkgs.qt6.qtimageformats
+            pkgs.qt6.qttools
           ]
           ++ pkgs.lib.optionals isLinux [
             pkgs.qt6.qtwayland
