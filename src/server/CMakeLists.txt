@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools)
 
 if (USE_SYSTEM_KF6 AND NOT WIN32)
 	find_package(KF6SyntaxHighlighting REQUIRED)
@@ -1189,7 +1189,7 @@ else()
 endif()
 
 # Include sources excluded from the current platform's target.
-file(GLOB_RECURSE VICINAE_I18N_HEADERS CONFIGURE_DEPENDS
+file(GLOB_RECURSE VICINAE_I18N_SOURCES CONFIGURE_DEPENDS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/*.mm)
@@ -1199,7 +1199,7 @@ qt_add_translations(${TARGET}
 	TS_FILE_BASE vicinae
 	TS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
 	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
-	SOURCES ${VICINAE_I18N_HEADERS}
+	SOURCES ${VICINAE_I18N_SOURCES}
 	LUPDATE_OPTIONS -locations relative -no-obsolete
 	MERGE_QT_TRANSLATIONS
 	QT_TRANSLATION_CATALOGS qtbase qtdeclarative

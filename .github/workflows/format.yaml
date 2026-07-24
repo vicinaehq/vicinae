@@ -25,6 +25,3 @@ jobs:
       - name: Check TypeScript formatting
         working-directory: src/typescript
         run: npx @biomejs/biome format
-
-      - name: Check translations
-        run: make check-translations

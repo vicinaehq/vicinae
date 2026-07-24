@@ -77,7 +77,9 @@ User-visible natural-language strings must be marked for translation. English so
 - Never translate stable technical notation such as ids, acronyms, unit symbols (`MB`, `GB`), filenames, protocol names, icon names (`ImageURL::builtin`), log output, storage keys, or strings compared as discriminants.
 - Use the platform's official localized terminology for operating-system features and settings pages.
 - Use stable explicit translation contexts for shared domain strings. Add translator notes or disambiguation only when the source text is genuinely ambiguous.
-- `src/server/translations/*.ts` are generated: never hand-edit source text in them. After changing user-visible strings, run `make update-translations`
+- Source text and location metadata in `src/server/translations/*.ts` are generated: never hand-edit them. Edit
+  translations with Qt Linguist. Contributors are not required to translate new strings or include regenerated catalogs in
+  feature PRs. Maintainers periodically run `make update-translations` in dedicated localization updates.
 
 ## General guidelines
 

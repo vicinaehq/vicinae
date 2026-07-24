@@ -3036,29 +3036,29 @@ Retour à la commande dans un instant...</translation>
         <translation>Accès complet au disque</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Lets file search cover your entire disk.</source>
-        <translation>Permet à la recherche de fichiers de couvrir tout votre disque.</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>Notifications</source>
         <translation>Notifications</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Lets extensions send desktop notifications.</source>
+        <location line="-8"/>
+        <source>Allows file search to cover your entire disk.</source>
+        <translation>Permet à la recherche de fichiers de couvrir tout votre disque.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Allows extensions to send desktop notifications.</source>
         <translation>Permet aux extensions d’envoyer des notifications de bureau.</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Accessibility is required: global shortcuts, paste, and snippet expansion cannot work without it.</source>
-        <translation type="unfinished"></translation>
+        <translation>L’accessibilité est requise : les raccourcis globaux, le collage et l’expansion des extraits ne peuvent pas fonctionner sans elle.</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Full disk access needs to be explicitly enabled if you want file search to cover all your files.</source>
-        <translation type="unfinished"></translation>
+        <translation>L’accès complet au disque doit être explicitement activé pour que la recherche de fichiers couvre tous vos fichiers.</translation>
     </message>
     <message>
         <location line="+18"/>

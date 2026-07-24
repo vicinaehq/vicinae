@@ -164,7 +164,7 @@ Window {
 
                             PermissionRow {
                                 label: qsTr("Full Disk Access")
-                                description: qsTr("Lets file search cover your entire disk.")
+                                description: qsTr("Allows file search to cover your entire disk.")
                                 iconSource: Img.system("internaldrive").withFillColor(Theme.foreground)
                                 showSeparator: Permissions.notificationsSupported
                                 granted: Permissions.fullDiskAccessGranted
@@ -173,7 +173,7 @@ Window {
 
                             PermissionRow {
                                 label: qsTr("Notifications")
-                                description: qsTr("Lets extensions send desktop notifications.")
+                                description: qsTr("Allows extensions to send desktop notifications.")
                                 iconSource: Img.system("bell.badge").withFillColor(Theme.foreground)
                                 showSeparator: false
                                 visible: Permissions.notificationsSupported
