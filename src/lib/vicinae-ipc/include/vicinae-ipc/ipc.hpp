@@ -96,6 +96,7 @@ struct DMenu {
     std::optional<int> width;
     std::optional<int> height;
     bool noFooter = false;
+    std::optional<std::string> format;
   };
 
   struct Response {
