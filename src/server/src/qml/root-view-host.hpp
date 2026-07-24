@@ -24,7 +24,6 @@ public:
 
 protected:
   bool inputFilter(QKeyEvent *) override;
-  void refreshClock();
   void beforeActionExecuted(const AbstractAction *action) override;
   bool tryAliasFastTrack();
   void scheduleNextClockTick();

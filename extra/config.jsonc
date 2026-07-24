@@ -114,6 +114,19 @@
 		// Corner radius of the launcher window, in pixels.
 		// "rounding": 10,
 
+		// customize the format used for the clock, displayed in the
+		// root search status bar when there is nothing better to show.
+		"clock": {
+			"enabled": true,
+
+			// defaults to localized "hh:mm" if not specified
+			// the format follows https://doc.qt.io/qt-6/qdate.html#fromString
+			// "format": "hh:mm:ss",
+
+			// how often the clock needs to be updated, in seconds.
+			"interval": 60
+		},
+
 		// Client-side decorations are Linux-only: vicinae draws its own border and shadow instead of
 		// letting the compositor decorate the window. You can turn them off to let your compositor draw
 		// the rounded borders and such. This usually gives better results, but is more complicated to
