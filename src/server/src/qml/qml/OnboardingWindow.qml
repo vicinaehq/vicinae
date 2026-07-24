@@ -155,13 +155,8 @@ Window {
 
                         SettingsGroup {
                             PermissionRow {
-<<<<<<< HEAD
-                                label: `Accessibility <font color="${Theme.danger}">*</font>`
-                                description: "Powers global shortcuts, paste, snippet expansion, and window management."
-=======
                                 label: qsTr("Accessibility")
                                 description: qsTr("Used to paste, expand snippets, and move windows.")
->>>>>>> f64b94196 (feat: i18n experiments)
                                 iconSource: Img.system("accessibility").withFillColor(Theme.foreground)
                                 granted: root.accessibilityGranted
                                 onGrant: Permissions.requestAccessibility()
@@ -189,11 +184,7 @@ Window {
 
                         Text {
                             visible: !root.accessibilityGranted || !Permissions.fullDiskAccessGranted
-<<<<<<< HEAD
-                            text: !root.accessibilityGranted ? "Accessibility is required: global shortcuts, paste, and snippet expansion cannot work without it." : "Full disk access needs to be explicitly enabled if you want file search to cover all your files."
-=======
-                            text: qsTr("If you skip this step, macOS may prompt you for some of these permissions later. Full disk access needs to be explicitly enabled if you want file search to cover all your files.")
->>>>>>> f64b94196 (feat: i18n experiments)
+                            text: !root.accessibilityGranted ? qsTr("Accessibility is required: global shortcuts, paste, and snippet expansion cannot work without it.") : qsTr("Full disk access needs to be explicitly enabled if you want file search to cover all your files.")
                             color: Theme.textMuted
                             font.pointSize: Theme.smallerFontSize
                             wrapMode: Text.Wrap
