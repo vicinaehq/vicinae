@@ -3,6 +3,7 @@
 #include "section-source.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "view-scope.hpp"
+#include <chrono>
 #include <qevent.h>
 
 void RootViewHost::initialize() {
@@ -14,7 +15,9 @@ void RootViewHost::initialize() {
   m_clockTimer->start();
   refreshClock();
 
-  connect(m_clockTimer, &QTimer::timeout, this, &RootViewHost::refreshClock);
+  scheduleNextClockTick();
+
+  connect(m_clockTimer, &QTimer::timeout, this, &RootViewHost::scheduleNextClockTick);
   connect(m_model, &SectionListModel::itemSelected, this, [this](SectionSource *source, int itemIdx) {
     if (auto panel = source->actionPanel(itemIdx))
       setActions(std::move(panel));
@@ -24,6 +27,17 @@ void RootViewHost::initialize() {
   connect(m_model, &SectionListModel::selectionCleared, this, [this]() { clearActions(); });
 
   m_model->setFilter({});
+}
+
+void RootViewHost::scheduleNextClockTick() {
+  refreshClock();
+  auto delta = 60 - (QDateTime::currentSecsSinceEpoch() % 60);
+
+  qDebug() << "next clock tick is in" << delta;
+
+  m_clockTimer->setInterval(std::chrono::seconds(delta));
+  m_clockTimer->setSingleShot(true);
+  m_clockTimer->start();
 }
 
 void RootViewHost::refreshClock() {
