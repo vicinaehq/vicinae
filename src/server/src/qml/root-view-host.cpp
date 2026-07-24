@@ -3,7 +3,6 @@
 #include "section-source.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "view-scope.hpp"
-#include <chrono>
 #include <qevent.h>
 
 void RootViewHost::initialize() {
