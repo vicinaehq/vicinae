@@ -113,6 +113,17 @@ template <> struct Partial<WindowCompactMode> {
   std::optional<bool> enabled;
 };
 
+struct ClockConfig {
+  bool enabled = true;
+  unsigned interval = 60;
+  std::optional<std::string> format;
+};
+
+template <> struct Partial<ClockConfig> {
+  std::optional<std::string> format;
+  std::optional<unsigned> interval;
+};
+
 struct WindowConfig {
   static constexpr float OPAQUE_OPACITY = 1.0F;
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
@@ -128,6 +139,7 @@ struct WindowConfig {
   BlurConfig blur;
   WindowCompactMode compactMode;
   LayerShellConfig layerShell;
+  ClockConfig clock;
 
   std::string material = "auto";
 
@@ -186,6 +198,7 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<WindowCompactMode>> compactMode;
   std::optional<Partial<LayerShellConfig>> layerShell;
   std::optional<std::string> material;
+  std::optional<ClockConfig> clock;
 };
 
 struct FontConfig {
@@ -443,6 +456,7 @@ SNAKE_CASIFY(config::SystemThemeConfig);
 SNAKE_CASIFY(config::ThemeConfig);
 SNAKE_CASIFY(config::TelemetryConfig);
 SNAKE_CASIFY(config::WindowCSD);
+SNAKE_CASIFY(config::ClockConfig);
 SNAKE_CASIFY(config::GlobalShortcuts);
 
 #undef SNAKE_CASIFY
