@@ -20,7 +20,6 @@ class CalculatorHistoryCommand : public BuiltinViewCommand<CalcHistoryViewHost> 
     return tr("Browse past calculations. You need to copy the result of a calculation for it to be saved "
               "in history.");
   }
-  std::vector<QString> keywords() const override { return {"Calculator history"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -34,7 +33,6 @@ class CalculatorRefreshRatesCommand : public BuiltinCallbackCommand {
     return tr("Refresh exchange rates used by the calculator to provide currency conversion features. Not "
               "all backends may support currency conversions or manually refreshing the rates.");
   }
-  std::vector<QString> keywords() const override { return {"Refresh Exchange Rates"}; }
 
   ImageURL iconUrl() const override {
     return ImageURL::builtin("globe-01").setBackgroundTint(Omnicast::ACCENT_COLOR);

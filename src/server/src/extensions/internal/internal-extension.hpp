@@ -17,7 +17,6 @@ class UIPlayground : public BuiltinViewCommand<UIShowcaseView> {
   QString id() const override { return "playground"; }
   QString name() const override { return tr("UI Showcase"); }
   QString description() const override { return tr("Showcase of vicinae UI elements"); }
-  std::vector<QString> keywords() const override { return {"UI Showcase"}; }
   bool isFallback() const override { return false; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(Omnicast::ACCENT_COLOR);

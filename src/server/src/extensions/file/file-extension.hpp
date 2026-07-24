@@ -15,7 +15,6 @@ class SearchFilesCommand : public BuiltinViewCommand<SearchFilesViewHost> {
 
   QString id() const override { return "search"; }
   QString name() const override { return tr("Search Files"); }
-  std::vector<QString> keywords() const override { return {"Search Files"}; }
   QString description() const override { return tr("Search files on your system"); }
   bool isFallback() const override { return true; }
   ImageURL iconUrl() const override {
@@ -30,7 +29,6 @@ class RebuildFileIndexCommand : public BuiltinCallbackCommand {
 
   QString id() const override { return "rebuild-index"; }
   QString name() const override { return tr("Rebuild File Index"); }
-  std::vector<QString> keywords() const override { return {"Rebuild File Index"}; }
   QString description() const override {
     return tr("Fully rebuild the file index. Running this manually can be useful if the file search feels "
               "particularly out of date.");

@@ -98,7 +98,7 @@ class LockCommand : public PowerManagementCommand {
   QString id() const override { return "lock"; }
   QString name() const override { return tr("Lock Session"); }
   QString description() const override { return tr("Lock the current user session"); }
-  std::vector<QString> keywords() const override { return {"lock", "Lock Session"}; }
+  std::vector<QString> keywords() const override { return {"lock"}; }
   bool requiresDefaultConfirmation() const override { return false; }
 
   ImageURL iconUrl() const override {
@@ -129,7 +129,7 @@ class HibernateCommand : public PowerManagementCommand {
     return tr("Suspend the system to disk. This turns off the system completely and saves its "
               "state on disk, to be restored on next boot.");
   }
-  std::vector<QString> keywords() const override { return {"disk", "suspend", "Hibernate System"}; }
+  std::vector<QString> keywords() const override { return {"disk", "suspend"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::HardDrive}.setBackgroundTint(SemanticColor::Accent);
@@ -156,7 +156,7 @@ class RebootCommand : public PowerManagementCommand {
   QString id() const override { return "reboot"; }
   QString name() const override { return tr("Reboot System"); }
   QString description() const override { return tr("Reboot the system"); }
-  std::vector<QString> keywords() const override { return {"restart", "Reboot System"}; }
+  std::vector<QString> keywords() const override { return {"restart"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::RotateAntiClockwise}.setBackgroundTint(SemanticColor::Accent);
@@ -185,7 +185,7 @@ class SoftRebootCommand : public PowerManagementCommand {
   QString description() const override {
     return tr("Soft reboot the system, which usually means only userspace is rebooted.");
   }
-  std::vector<QString> keywords() const override { return {"restart", "Soft Reboot System"}; }
+  std::vector<QString> keywords() const override { return {"restart"}; }
   bool requiresDefaultConfirmation() const override { return true; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("rotate-anti-clockwise").setBackgroundTint(SemanticColor::Cyan);
@@ -212,7 +212,7 @@ class PowerOffCommand : public PowerManagementCommand {
   QString id() const override { return "power-off"; }
   QString name() const override { return tr("Power Off System"); }
   QString description() const override { return tr("Power off the system"); }
-  std::vector<QString> keywords() const override { return {"shutdown", "Power Off System"}; }
+  std::vector<QString> keywords() const override { return {"shutdown"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("power").setBackgroundTint(SemanticColor::Red);
   }
@@ -241,7 +241,7 @@ class SuspendCommand : public PowerManagementCommand {
     return tr("Suspend the system to RAM. Unlike hibernation, this does not turn the computer off and will "
               "break on power loss.");
   }
-  std::vector<QString> keywords() const override { return {"suspend", "Suspend System"}; }
+  std::vector<QString> keywords() const override { return {"suspend"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("pause").setBackgroundTint(SemanticColor::Accent);
   }
@@ -267,7 +267,6 @@ class SleepCommand : public PowerManagementCommand {
   QString id() const override { return "sleep"; }
   QString name() const override { return tr("Put System to Sleep"); }
   QString description() const override { return tr("Put system to sleep"); }
-  std::vector<QString> keywords() const override { return {"Put System to Sleep"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("moon").setBackgroundTint(SemanticColor::Accent);
   }
@@ -297,7 +296,7 @@ class LogOutCommand : public PowerManagementCommand {
               "'Lock Session' instead.");
   }
 
-  std::vector<QString> keywords() const override { return {"logout", "Log Out"}; }
+  std::vector<QString> keywords() const override { return {"logout"}; }
 
   ImageURL iconUrl() const override {
     return ImageURL::builtin("logout").setBackgroundTint(SemanticColor::Red);

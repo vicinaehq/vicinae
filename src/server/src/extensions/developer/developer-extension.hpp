@@ -9,7 +9,6 @@ class CreateExtensionCommand : public BuiltinViewCommand<CreateExtensionViewHost
   QString name() const override {
     return QCoreApplication::translate("CreateExtensionCommand", "Create Extension");
   }
-  std::vector<QString> keywords() const override { return {"Create Extension"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("hammer").setBackgroundTint(SemanticColor::Green);
   }

@@ -12,7 +12,6 @@ class ClipboardHistoryCommand : public BuiltinViewCommand<ClipboardHistoryViewHo
   QString description() const override {
     return tr("Browse your clipboard's history, pin, edit and remove entries.");
   }
-  std::vector<QString> keywords() const override { return {"Clipboard History"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("copy-clipboard").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }

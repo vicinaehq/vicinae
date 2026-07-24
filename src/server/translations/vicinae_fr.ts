@@ -660,7 +660,7 @@
 <context>
     <name>CalculatorExtension</name>
     <message>
-        <location filename="../src/extensions/calculator/calculator-extension.hpp" line="+75"/>
+        <location filename="../src/extensions/calculator/calculator-extension.hpp" line="+73"/>
         <source>Calculator</source>
         <translation>Calculatrice</translation>
     </message>
@@ -693,7 +693,7 @@
 <context>
     <name>CalculatorHistoryCommand</name>
     <message>
-        <location line="-88"/>
+        <location line="-86"/>
         <source>Calculator history</source>
         <translation>Historique de la calculatrice</translation>
     </message>
@@ -706,7 +706,7 @@
 <context>
     <name>CalculatorRefreshRatesCommand</name>
     <message>
-        <location line="+12"/>
+        <location line="+11"/>
         <source>Refresh Exchange Rates</source>
         <translation>Actualiser les taux de change</translation>
     </message>
@@ -716,7 +716,7 @@
         <translation>Actualiser les taux de change utilisés par la calculatrice pour offrir la conversion de devises. Tous les moteurs ne prennent pas forcément en charge la conversion de devises ni l’actualisation manuelle des taux.</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+17"/>
         <source>%1 can&apos;t refresh rates</source>
         <translation>%1 ne peut pas actualiser les taux</translation>
     </message>
@@ -796,7 +796,7 @@
 <context>
     <name>ClearClipboardHistoryCommand</name>
     <message>
-        <location filename="../src/extensions/clipboard/clipboard-extension.cpp" line="+36"/>
+        <location filename="../src/extensions/clipboard/clipboard-extension.cpp" line="+35"/>
         <source>Clear Clipboard History</source>
         <translation>Effacer l’historique du presse-papiers</translation>
     </message>
@@ -806,7 +806,7 @@
         <translation>Effacer l’historique du presse-papiers</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+9"/>
         <source>Are you sure?</source>
         <translation>Êtes-vous sûr ?</translation>
     </message>
@@ -829,7 +829,7 @@
 <context>
     <name>ClipboardClearCommand</name>
     <message>
-        <location line="-41"/>
+        <location line="-39"/>
         <source>Clear Current Clipboard Data</source>
         <translation>Effacer les données actuelles du presse-papiers</translation>
     </message>
@@ -839,7 +839,7 @@
         <translation>Effacer le contenu actuel du presse-papiers</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+10"/>
         <source>Failed to clear clipboard</source>
         <translation>Échec de l’effacement du presse-papiers</translation>
     </message>
@@ -862,7 +862,7 @@
         <translation>Intégration du presse-papiers système</translation>
     </message>
     <message>
-        <location filename="../src/extensions/clipboard/clipboard-extension.cpp" line="+56"/>
+        <location filename="../src/extensions/clipboard/clipboard-extension.cpp" line="+55"/>
         <source>Erase on startup</source>
         <translation>Effacer au démarrage</translation>
     </message>
@@ -1398,7 +1398,7 @@ Vous pouvez en apprendre davantage sur le développement d’extensions dans la 
         <translation>Créer un raccourci depuis l’onglet actif</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+2"/>
         <source>Create a vicinae shortcut from the currently active browser tab. May yield unexpected results if many browsers are connected at once.</source>
         <translation>Créer un raccourci Vicinae depuis l’onglet de navigateur actuellement actif. Peut donner des résultats inattendus si plusieurs navigateurs sont connectés à la fois.</translation>
     </message>
@@ -1481,7 +1481,7 @@ Vous pouvez en apprendre davantage sur le développement d’extensions dans la 
 <context>
     <name>DeveloperExtension</name>
     <message>
-        <location filename="../src/extensions/developer/developer-extension.hpp" line="+11"/>
+        <location filename="../src/extensions/developer/developer-extension.hpp" line="+10"/>
         <source>Developer</source>
         <translation>Développeur</translation>
     </message>
@@ -1760,7 +1760,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
 <context>
     <name>ExtensionListModel</name>
     <message>
-        <location filename="../src/qml/extension-list-model.cpp" line="+187"/>
+        <location filename="../src/qml/extension-list-model.cpp" line="+189"/>
         <source>Search...</source>
         <translation>Rechercher...</translation>
     </message>
@@ -1809,7 +1809,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
 <context>
     <name>FileExtension</name>
     <message>
-        <location filename="../src/extensions/file/file-extension.hpp" line="+67"/>
+        <location filename="../src/extensions/file/file-extension.hpp" line="+65"/>
         <source>System files</source>
         <translation>Fichiers système</translation>
     </message>
@@ -1928,7 +1928,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
 <context>
     <name>ForgetTelemetryCommand</name>
     <message>
-        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+216"/>
+        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+210"/>
         <source>Forget Past Vicinae Telemetry</source>
         <translation>Oublier la télémétrie passée de Vicinae</translation>
     </message>
@@ -1938,7 +1938,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
         <translation>Demande au serveur vicinae d’anonymiser les données de télémétrie envoyées avec l’ID de votre instance vicinae. Cet ID est uniquement lié à votre installation vicinae, qui n’a aucun lien direct avec votre système.</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+19"/>
         <source>Processing...</source>
         <translation>Traitement...</translation>
     </message>
@@ -2209,7 +2209,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
 <context>
     <name>IconBrowserCommand</name>
     <message>
-        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+26"/>
+        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+25"/>
         <source>Search Builtin Icons</source>
         <translation>Rechercher les icônes intégrées</translation>
     </message>
@@ -2230,7 +2230,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
 <context>
     <name>InspectLocalStorage</name>
     <message>
-        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+13"/>
+        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+12"/>
         <source>Inspect Local Storage</source>
         <translation>Inspecter le stockage local</translation>
     </message>
@@ -2302,7 +2302,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
 <context>
     <name>InternalExtension</name>
     <message>
-        <location filename="../src/extensions/internal/internal-extension.hpp" line="+33"/>
+        <location filename="../src/extensions/internal/internal-extension.hpp" line="+32"/>
         <location line="+1"/>
         <source>Internal Commands</source>
         <translation>Commandes internes</translation>
@@ -2311,7 +2311,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
 <context>
     <name>KeyboardBridge</name>
     <message>
-        <location filename="../src/qml/keyboard-bridge.hpp" line="+47"/>
+        <location filename="../src/qml/keyboard-bridge.hpp" line="+51"/>
         <source>Modifier required</source>
         <translation>Modificateur requis</translation>
     </message>
@@ -2423,7 +2423,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
 <context>
     <name>LogOutCommand</name>
     <message>
-        <location line="+177"/>
+        <location line="+176"/>
         <source>Log Out</source>
         <translation>Fermer la session</translation>
     </message>
@@ -2446,14 +2446,9 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
 <context>
     <name>MacOSGlobalShortcutBackend</name>
     <message>
-        <location filename="../src/services/global-shortcuts/macos-global-shortcut-backend.cpp" line="+216"/>
+        <location filename="../src/services/global-shortcuts/macos-global-shortcut-backend.cpp" line="+238"/>
         <source>unsupported or invalid trigger</source>
         <translation>déclencheur non pris en charge ou non valide</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>RegisterEventHotKey failed (%1)</source>
-        <translation>Échec de RegisterEventHotKey (%1)</translation>
     </message>
 </context>
 <context>
@@ -2572,7 +2567,7 @@ Vous trouverez la stacktrace complète ci-dessous. Vous pouvez aussi la copier d
         <translation>Configurer les commandes de secours</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+5"/>
         <source>Configure what commands are to be presented as fallback options when nothing matches the search in the root search.</source>
         <translation>Configurer les commandes à proposer comme options de secours lorsqu’aucun résultat ne correspond dans la recherche racine.</translation>
     </message>
@@ -2906,7 +2901,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>OAuthTokenStoreCommand</name>
     <message>
-        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-33"/>
+        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-31"/>
         <source>Manage OAuth Token Sets</source>
         <translation>Gérer les jeux de jetons OAuth</translation>
     </message>
@@ -2995,7 +2990,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>OnboardingWindow</name>
     <message>
-        <location filename="../src/qml/qml/OnboardingWindow.qml" line="+37"/>
+        <location filename="../src/qml/qml/OnboardingWindow.qml" line="+39"/>
         <source>Grant Access</source>
         <translation>Autoriser l’accès</translation>
     </message>
@@ -3057,8 +3052,13 @@ Retour à la commande dans un instant...</translation>
     </message>
     <message>
         <location line="+11"/>
-        <source>If you skip this step, macOS may prompt you for some of these permissions later. Full disk access needs to be explicitly enabled if you want file search to cover all your files.</source>
-        <translation>Si vous ignorez cette étape, macOS pourra vous demander certaines de ces autorisations plus tard. L’accès complet au disque doit être explicitement activé si vous voulez que la recherche de fichiers couvre tous vos fichiers.</translation>
+        <source>Accessibility is required: global shortcuts, paste, and snippet expansion cannot work without it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Full disk access needs to be explicitly enabled if you want file search to cover all your files.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+18"/>
@@ -3126,14 +3126,9 @@ Retour à la commande dans un instant...</translation>
         <translation>Retour</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+44"/>
         <source>Finish</source>
         <translation>Terminer</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Set up later</source>
-        <translation>Configurer plus tard</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3226,7 +3221,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>OpenDefaultVicinaeConfig</name>
     <message>
-        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-162"/>
+        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-157"/>
         <source>Open Default Config File</source>
         <translation>Ouvrir le fichier de configuration par défaut</translation>
     </message>
@@ -3236,7 +3231,7 @@ Retour à la commande dans un instant...</translation>
         <translation>Ouvrir le fichier de configuration par défaut de vicinae</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+16"/>
         <source>Failed to open temporary file</source>
         <translation>Échec de l’ouverture du fichier temporaire</translation>
     </message>
@@ -3249,7 +3244,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>OpenDiscordCommand</name>
     <message>
-        <location line="-68"/>
+        <location line="-66"/>
         <source>Join the Discord Server</source>
         <translation>Rejoindre le serveur Discord</translation>
     </message>
@@ -3262,7 +3257,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>OpenDocumentationCommand</name>
     <message>
-        <location line="-17"/>
+        <location line="-16"/>
         <source>Open Online Documentation</source>
         <translation>Ouvrir la documentation en ligne</translation>
     </message>
@@ -3322,7 +3317,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>OpenKeybindSettingsCommand</name>
     <message>
-        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+161"/>
+        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+156"/>
         <source>Open Vicinae Keybind Settings</source>
         <translation>Ouvrir les paramètres de raccourcis clavier de Vicinae</translation>
     </message>
@@ -3348,7 +3343,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>OpenSettingsCommand</name>
     <message>
-        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-41"/>
+        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-40"/>
         <source>Open Vicinae Settings</source>
         <translation>Ouvrir les paramètres de Vicinae</translation>
     </message>
@@ -3391,7 +3386,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>OpenVicinaeConfig</name>
     <message>
-        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-84"/>
+        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-81"/>
         <source>Open Config File</source>
         <translation>Ouvrir le fichier de configuration</translation>
     </message>
@@ -3495,7 +3490,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>PowerManagementCommand</name>
     <message>
-        <location filename="../src/extensions/power-management/power-management-extension.cpp" line="-284"/>
+        <location filename="../src/extensions/power-management/power-management-extension.cpp" line="-283"/>
         <source>Ask for confirmation</source>
         <translation>Demander une confirmation</translation>
     </message>
@@ -3611,7 +3606,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>PruneMemoryCommand</name>
     <message>
-        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+58"/>
+        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+56"/>
         <source>Prune Vicinae Memory Usage</source>
         <translation>Réduire l’utilisation mémoire de Vicinae</translation>
     </message>
@@ -3621,7 +3616,7 @@ Retour à la commande dans un instant...</translation>
         <translation>Tente de réduire l’utilisation mémoire de vicinae en vidant le cache de pixmaps et en appelant malloc_trim(). Principalement fourni pour des tests internes.</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+12"/>
         <source>Pruned 🥊</source>
         <translation>Mémoire nettoyée 🥊</translation>
     </message>
@@ -3716,7 +3711,7 @@ Retour à la commande dans un instant...</translation>
 <context>
     <name>RaycastStoreCommand</name>
     <message>
-        <location filename="../src/extensions/raycast/raycast-store-command.hpp" line="+14"/>
+        <location filename="../src/extensions/raycast/raycast-store-command.hpp" line="+13"/>
         <source>Install compatible extensions from the Raycast store</source>
         <translation>Installer des extensions compatibles depuis la boutique Raycast</translation>
     </message>
@@ -3901,12 +3896,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
 <context>
     <name>RebuildFileIndexCommand</name>
     <message>
-        <location filename="../src/extensions/file/file-extension.hpp" line="-73"/>
+        <location filename="../src/extensions/file/file-extension.hpp" line="-72"/>
         <source>Rebuild File Index</source>
         <translation>Reconstruire l’index des fichiers</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+2"/>
         <source>Fully rebuild the file index. Running this manually can be useful if the file search feels particularly out of date.</source>
         <translation>Reconstruire entièrement l’index des fichiers. L’exécuter manuellement peut être utile si la recherche de fichiers semble particulièrement obsolète.</translation>
     </message>
@@ -3967,7 +3962,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <translation>Recharger les répertoires de scripts</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+9"/>
         <source>New scan triggered, index will update shortly</source>
         <translation>Nouvelle analyse déclenchée, l’index sera mis à jour sous peu</translation>
     </message>
@@ -4361,7 +4356,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <translation>Rechercher des onglets de navigateur</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+1"/>
         <source>Search tabs from all connected browsers</source>
         <translation>Rechercher les onglets de tous les navigateurs connectés</translation>
     </message>
@@ -4379,7 +4374,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <translation>Rechercher n’importe quel émoji ou symbole</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Paste</source>
         <translation>Coller</translation>
     </message>
@@ -4420,12 +4415,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
 <context>
     <name>SearchFilesCommand</name>
     <message>
-        <location filename="../src/extensions/file/file-extension.hpp" line="-40"/>
+        <location filename="../src/extensions/file/file-extension.hpp" line="-38"/>
         <source>Search Files</source>
         <translation>Rechercher des fichiers</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+1"/>
         <source>Search files on your system</source>
         <translation>Rechercher des fichiers sur votre système</translation>
     </message>
@@ -4562,7 +4557,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
 <context>
     <name>SetVolumeCommand</name>
     <message>
-        <location filename="../src/extensions/system/system-extension.hpp" line="+215"/>
+        <location filename="../src/extensions/system/system-extension.hpp" line="+213"/>
         <source>Set Volume to %1%</source>
         <translation>Régler le volume à %1%</translation>
     </message>
@@ -4572,7 +4567,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <translation>Régler le volume du système à %1%</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+9"/>
         <source>Failed to set volume</source>
         <translation>Échec du réglage du volume</translation>
     </message>
@@ -4862,7 +4857,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <translation>Mettre le système en veille</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+10"/>
         <source>System can&apos;t sleep</source>
         <translation>Le système ne peut pas se mettre en veille</translation>
     </message>
@@ -5103,7 +5098,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
 <context>
     <name>SoftRebootCommand</name>
     <message>
-        <location filename="../src/extensions/power-management/power-management-extension.cpp" line="-100"/>
+        <location filename="../src/extensions/power-management/power-management-extension.cpp" line="-99"/>
         <source>Soft Reboot System</source>
         <translation>Redémarrer le système à chaud</translation>
     </message>
@@ -5126,7 +5121,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
 <context>
     <name>SponsorVicinaeCommand</name>
     <message>
-        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-125"/>
+        <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-121"/>
         <source>Donate to Vicinae</source>
         <translation>Faire un don à Vicinae</translation>
     </message>
@@ -5244,7 +5239,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
 <context>
     <name>SystemBrowseApps</name>
     <message>
-        <location filename="../src/extensions/system/system-extension.hpp" line="-125"/>
+        <location filename="../src/extensions/system/system-extension.hpp" line="-123"/>
         <source>Browse Apps</source>
         <translation>Parcourir les applications</translation>
     </message>
@@ -5267,7 +5262,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
 <context>
     <name>SystemExtension</name>
     <message>
-        <location line="+153"/>
+        <location line="+149"/>
         <source>System</source>
         <translation>Système</translation>
     </message>
@@ -5280,7 +5275,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
 <context>
     <name>SystemRunCommand</name>
     <message>
-        <location line="-245"/>
+        <location line="-239"/>
         <source>Run Terminal Program</source>
         <translation>Exécuter un programme dans un terminal</translation>
     </message>
@@ -5290,7 +5285,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <translation>Exécuter un programme dans une fenêtre de terminal</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+7"/>
         <source>command</source>
         <translation>commande</translation>
     </message>
@@ -5418,7 +5413,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
 <context>
     <name>ToggleMuteCommand</name>
     <message>
-        <location filename="../src/extensions/system/system-extension.hpp" line="+165"/>
+        <location filename="../src/extensions/system/system-extension.hpp" line="+163"/>
         <source>Toggle Mute</source>
         <translation>Activer/désactiver la sourdine</translation>
     </message>
@@ -5428,7 +5423,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <translation>Couper ou rétablir le son du système</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+10"/>
         <source>Failed to toggle mute</source>
         <translation>Échec du basculement de la sourdine</translation>
     </message>
@@ -5441,7 +5436,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
 <context>
     <name>UIPlayground</name>
     <message>
-        <location filename="../src/extensions/internal/internal-extension.hpp" line="-16"/>
+        <location filename="../src/extensions/internal/internal-extension.hpp" line="-15"/>
         <source>UI Showcase</source>
         <translation>Vitrine de l’interface</translation>
     </message>
@@ -5575,7 +5570,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <translation>Afficher les extensions installées</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+2"/>
         <source>Show all third-party extensions that have been installed. This includes local extensions as well as extensions downloaded from the stores (vicinae and raycast).</source>
         <translation>Afficher toutes les extensions tierces installées. Cela inclut les extensions locales ainsi que les extensions téléchargées depuis les boutiques (vicinae et raycast).</translation>
     </message>
@@ -5588,7 +5583,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <translation>Installer des extensions depuis la boutique Vicinae</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+9"/>
         <source>Always show intro</source>
         <translation>Toujours afficher l’introduction</translation>
     </message>
@@ -5706,7 +5701,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
 <context>
     <name>VolumeDownCommand</name>
     <message>
-        <location filename="../src/extensions/system/system-extension.hpp" line="-78"/>
+        <location filename="../src/extensions/system/system-extension.hpp" line="-74"/>
         <source>Turn Volume Down</source>
         <translation>Baisser le volume</translation>
     </message>
@@ -6403,7 +6398,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <translation>Paramètres</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+12"/>
         <source>Name</source>
         <translation>Nom</translation>
     </message>
@@ -6593,7 +6588,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
 <context>
     <name>browser-extension</name>
     <message>
-        <location filename="../src/extensions/browser/browser-extension.cpp" line="-60"/>
+        <location filename="../src/extensions/browser/browser-extension.cpp" line="-58"/>
         <source>No browser connected</source>
         <translation>Aucun navigateur connecté</translation>
     </message>

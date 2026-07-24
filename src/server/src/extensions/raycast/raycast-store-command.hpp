@@ -10,7 +10,6 @@ class RaycastStoreCommand : public BuiltinCallbackCommand {
 
   QString id() const override { return "store"; }
   QString name() const override { return QStringLiteral("Raycast Store"); }
-  std::vector<QString> keywords() const override { return {"Raycast Store"}; }
   QString description() const override { return tr("Install compatible extensions from the Raycast store"); }
   QString extensionId() const override { return "raycast-compat"; }
   QString commandId() const override { return "store"; }

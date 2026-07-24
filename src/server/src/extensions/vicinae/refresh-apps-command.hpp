@@ -14,7 +14,6 @@ class RefreshAppsCommand : public BuiltinCallbackCommand {
     return tr("Force a refresh of the application database. The database should normally automatically "
               "update itself on changes, but this can help working around some edge cases.");
   }
-  std::vector<QString> keywords() const override { return {"Refresh Apps"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("redo").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }

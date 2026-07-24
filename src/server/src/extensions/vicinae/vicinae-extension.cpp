@@ -35,7 +35,6 @@ class OpenDocumentationCommand : public BuiltinUrlCommand {
   QString description() const override {
     return tr("Navigate to the official vicinae documentation website.");
   }
-  std::vector<QString> keywords() const override { return {"Open Online Documentation"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("book").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -53,7 +52,7 @@ class OpenDiscordCommand : public BuiltinUrlCommand {
   ImageURL iconUrl() const override {
     return ImageURL::builtin("discord").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
-  std::vector<QString> keywords() const override { return {"help", "support", "Join the Discord Server"}; }
+  std::vector<QString> keywords() const override { return {"help", "support"}; }
   QUrl url(const ArgumentValues &values) const override { return Omnicast::DISCORD_INVITE_LINK; }
 };
 
@@ -64,7 +63,7 @@ class SponsorVicinaeCommand : public BuiltinUrlCommand {
   QString name() const override { return tr("Donate to Vicinae"); }
   QString description() const override { return tr("Open link to Vicinae's GitHub sponsor page"); }
   ImageURL iconUrl() const override { return ImageURL::builtin("heart").setFill(SemanticColor::Magenta); }
-  std::vector<QString> keywords() const override { return {"sponsor", "donate", "Donate to Vicinae"}; }
+  std::vector<QString> keywords() const override { return {"sponsor", "donate"}; }
   QUrl url(const ArgumentValues &values) const override { return Omnicast::GH_SPONSOR_LINK; }
 };
 
@@ -74,7 +73,6 @@ class OpenVicinaeConfig : public BuiltinCallbackCommand {
   QString id() const override { return "open-config-file"; }
   QString name() const override { return tr("Open Config File"); }
   QString description() const override { return tr("Open the main vicinae configuration file"); }
-  std::vector<QString> keywords() const override { return {"Open Config File"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("pencil").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -93,7 +91,6 @@ class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
   QString id() const override { return "open-default-config"; }
   QString name() const override { return tr("Open Default Config File"); }
   QString description() const override { return tr("Open the default vicinae configuration file"); }
-  std::vector<QString> keywords() const override { return {"Open Default Config File"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("pencil").setBackgroundTint(SemanticColor::Accent);
   }
@@ -136,7 +133,6 @@ class PruneMemoryCommand : public BuiltinCallbackCommand {
     return tr("Try pruning vicinae's memory usage by clearing pixmap cache and calling malloc_trim(). "
               "Mostly provided for internal testing.");
   }
-  std::vector<QString> keywords() const override { return {"Prune Vicinae Memory Usage"}; }
   ImageURL iconUrl() const override {
     return ImageURL::emoji("🥊").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -161,7 +157,7 @@ class OpenSettingsCommand : public BuiltinCallbackCommand {
   ImageURL iconUrl() const override {
     return ImageURL::builtin("cog").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
-  std::vector<QString> keywords() const override { return {"preferences", "Open Vicinae Settings"}; }
+  std::vector<QString> keywords() const override { return {"preferences"}; }
 
   void execute(CommandController &controller) const override {
     auto ctx = controller.context();
@@ -177,7 +173,6 @@ class ReloadScriptDirectoriesCommand : public BuiltinCallbackCommand {
   QString id() const override { return "reload-scripts"; }
   QString name() const override { return tr("Reload Script Directories"); }
   QString description() const override { return tr("Reload script directories"); }
-  std::vector<QString> keywords() const override { return {"Reload Script Directories"}; }
   ImageURL iconUrl() const override {
     return ImageURL(BuiltinIcon::Code).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -196,7 +191,6 @@ class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
   QString id() const override { return "keybind-settings"; }
   QString name() const override { return tr("Open Vicinae Keybind Settings"); }
   QString description() const override { return tr("Open the vicinae keybind settings window"); }
-  std::vector<QString> keywords() const override { return {"Open Vicinae Keybind Settings"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("keyboard").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -219,7 +213,6 @@ class ForgetTelemetryCommand : public BuiltinCallbackCommand {
               "ID attached. The ID is only linked to your vicinae install, which has no direct relationship "
               "with your system.");
   }
-  std::vector<QString> keywords() const override { return {"Forget Past Vicinae Telemetry"}; }
 
   ImageURL iconUrl() const override {
     return ImageURL(BuiltinIcon::XMarkCircle).setBackgroundTint(Omnicast::ACCENT_COLOR);
@@ -255,7 +248,6 @@ class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreViewHost
   QString description() const override {
     return tr("Manage OAuth token sets that have been saved by extensions providing OAuth integrations.");
   }
-  std::vector<QString> keywords() const override { return {"Manage OAuth Token Sets"}; }
   ImageURL iconUrl() const override {
     auto icon = ImageURL::builtin("key");
     icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
@@ -269,7 +261,6 @@ class IconBrowserCommand : public BuiltinViewCommand<BuiltinIconsViewHost> {
   QString id() const override { return "search-builtin-icons"; }
   QString name() const override { return tr("Search Builtin Icons"); }
   QString description() const override { return tr("Search Vicinae builtin set of icons"); }
-  std::vector<QString> keywords() const override { return {"Search Builtin Icons"}; }
   ImageURL iconUrl() const override {
     ImageURL icon{BuiltinIcon::Box};
     icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
@@ -287,7 +278,6 @@ class InspectLocalStorage : public BuiltinViewCommand<LocalStorageViewHost> {
     return tr("Browse data stored in Vicinae's local storage. This includes data stored for builtin "
               "extensions as well as third-party extensions making use of the LocalStorage API.");
   }
-  std::vector<QString> keywords() const override { return {"Inspect Local Storage"}; }
   ImageURL iconUrl() const override {
     auto icon = ImageURL::builtin("coin");
     icon.setBackgroundTint(Omnicast::ACCENT_COLOR);

@@ -8,7 +8,6 @@ class ManageShortcutsCommand : public BuiltinViewCommand<ManageShortcutsViewHost
   QString name() const override {
     return QCoreApplication::translate("ManageShortcutsCommand", "Manage Shortcuts");
   }
-  std::vector<QString> keywords() const override { return {"Manage Shortcuts"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("link").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }

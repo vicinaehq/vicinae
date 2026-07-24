@@ -9,7 +9,6 @@ class SwitchWindowsCommand : public BuiltinViewCommand<SwitchWindowsViewHost> {
   QString name() const override {
     return QCoreApplication::translate("SwitchWindowsCommand", "Switch Windows");
   }
-  std::vector<QString> keywords() const override { return {"Switch Windows"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("app-window-list").setBackgroundTint(SemanticColor::Cyan);
   }

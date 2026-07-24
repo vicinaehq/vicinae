@@ -9,7 +9,6 @@ class ManageFallbackCommand : public BuiltinViewCommand<ManageFallbackViewHost> 
 
   QString id() const override { return "manage-fallback"; }
   QString name() const override { return tr("Configure Fallback Commands"); }
-  std::vector<QString> keywords() const override { return {"Configure Fallback Commands"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("undo").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }

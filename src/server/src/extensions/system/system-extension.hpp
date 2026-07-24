@@ -21,9 +21,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
   QString id() const override { return "run"; }
   QString name() const override { return tr("Run Terminal Program"); }
   QString description() const override { return tr("Run a program in a terminal window"); }
-  std::vector<QString> keywords() const override {
-    return {"shell command", "run program", "Run Terminal Program"};
-  }
+  std::vector<QString> keywords() const override { return {"shell command", "run program"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("terminal").setBackgroundTint(SemanticColor::Accent);
   }
@@ -103,7 +101,7 @@ class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsViewHost> {
   QString description() const override {
     return tr("Browse all applications that are installed on the system");
   }
-  std::vector<QString> keywords() const override { return {"Browse Apps"}; }
+  std::vector<QString> keywords() const override { return {}; }
   bool isDefaultDisabled() const override { return true; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("box").setBackgroundTint(SemanticColor::Accent);
@@ -140,7 +138,7 @@ class VolumeUpCommand : public BuiltinCallbackCommand {
   QString id() const override { return "volume-up"; }
   QString name() const override { return tr("Turn Volume Up"); }
   QString description() const override { return tr("Increase system volume"); }
-  std::vector<QString> keywords() const override { return {"audio", "sound", "louder", "Turn Volume Up"}; }
+  std::vector<QString> keywords() const override { return {"audio", "sound", "louder"}; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::SpeakerUp}.setBackgroundTint(VOLUME_COMMAND_TINT);
   }
@@ -176,7 +174,7 @@ class VolumeDownCommand : public BuiltinCallbackCommand {
   QString id() const override { return "volume-down"; }
   QString name() const override { return tr("Turn Volume Down"); }
   QString description() const override { return tr("Decrease system volume"); }
-  std::vector<QString> keywords() const override { return {"audio", "sound", "quieter", "Turn Volume Down"}; }
+  std::vector<QString> keywords() const override { return {"audio", "sound", "quieter"}; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::SpeakerDown}.setBackgroundTint(VOLUME_COMMAND_TINT);
   }
@@ -214,9 +212,7 @@ template <int Percent, BuiltinIcon Icon> class SetVolumeCommand : public Builtin
   QString id() const override { return "volume-" + QString::number(Percent); }
   QString name() const override { return tr("Set Volume to %1%").arg(Percent); }
   QString description() const override { return tr("Set system volume to %1%").arg(Percent); }
-  std::vector<QString> keywords() const override {
-    return {"audio", "sound", "volume", QString("Set Volume to %1%").arg(Percent)};
-  }
+  std::vector<QString> keywords() const override { return {"audio", "sound", "volume"}; }
   ImageURL iconUrl() const override { return ImageURL{Icon}.setBackgroundTint(VOLUME_COMMAND_TINT); }
 
   void execute(CommandController &controller) const override {
@@ -237,9 +233,7 @@ class ToggleMuteCommand : public BuiltinCallbackCommand {
   QString id() const override { return "toggle-mute"; }
   QString name() const override { return tr("Toggle Mute"); }
   QString description() const override { return tr("Mute or unmute system audio"); }
-  std::vector<QString> keywords() const override {
-    return {"audio", "sound", "volume", "mute", "unmute", "Toggle Mute"};
-  }
+  std::vector<QString> keywords() const override { return {"audio", "sound", "volume", "mute", "unmute"}; }
   ImageURL iconUrl() const override {
     return ImageURL{BuiltinIcon::SpeakerOff}.setBackgroundTint(VOLUME_COMMAND_TINT);
   }

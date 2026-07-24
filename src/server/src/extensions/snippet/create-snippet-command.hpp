@@ -9,7 +9,6 @@ class CreateSnippetCommand : public BuiltinViewCommand<SnippetFormViewHost> {
   QString name() const override {
     return QCoreApplication::translate("CreateSnippetCommand", "Create Snippet");
   }
-  std::vector<QString> keywords() const override { return {"Create Snippet"}; }
   ImageURL iconUrl() const override {
     return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }

@@ -42,7 +42,6 @@ class CreateShortcutFromActiveBrowserTabCommand : public GuardedBuiltinCallbackC
 
   QString id() const override { return "shortcut-active-tab"; }
   QString name() const override { return tr("Create Shortcut from Active Tab"); }
-  std::vector<QString> keywords() const override { return {"Create Shortcut from Active Tab"}; }
   QString description() const override {
     return tr("Create a vicinae shortcut from the currently active browser tab. May yield unexpected "
               "results if many browsers are connected at once.");
@@ -75,7 +74,6 @@ class SearchBrowserTabsCommand : public GuardedBuiltinCallbackCommand {
 
   QString id() const override { return "browse-tabs"; }
   QString name() const override { return tr("Search Browser Tabs"); }
-  std::vector<QString> keywords() const override { return {"Search Browser Tabs"}; }
   QString description() const override { return tr("Search tabs from all connected browsers"); }
   ImageURL iconUrl() const override {
     return ImageURL(BuiltinIcon::AppWindowSidebarLeft).setBackgroundTint(SemanticColor::Red);

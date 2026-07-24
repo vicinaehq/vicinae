@@ -12,7 +12,6 @@ class ClipboardClearCommand : public BuiltinCallbackCommand {
   QString id() const override { return "clear"; }
   QString name() const override { return tr("Clear Current Clipboard Data"); }
   QString description() const override { return tr("Clear the current content of the clipboard"); }
-  std::vector<QString> keywords() const override { return {"Clear Current Clipboard Data"}; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("delete-document").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -35,7 +34,6 @@ class ClearClipboardHistoryCommand : public BuiltinCallbackCommand {
   QString id() const override { return "clear-history"; }
   QString name() const override { return tr("Clear Clipboard History"); }
   QString description() const override { return tr("Clear the clipboard history"); }
-  std::vector<QString> keywords() const override { return {"Clear Clipboard History"}; }
   ImageURL iconUrl() const override {
     return ImageURL(BuiltinIcon::Trash).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }

@@ -21,7 +21,7 @@ class ReportVicinaeBugCommand : public BuiltinUrlCommand {
     return {CommandArgument{.name = "title", .placeholder = tr("Title"), .required = false}};
   }
 
-  std::vector<QString> keywords() const override { return {"create issue", "Report a Vicinae Bug"}; }
+  std::vector<QString> keywords() const override { return {"create issue"}; }
 
   QUrl url(const ArgumentValues &values) const override {
     return makeVicinaeBugReportUrl(values.empty() ? QString() : values.front().second);

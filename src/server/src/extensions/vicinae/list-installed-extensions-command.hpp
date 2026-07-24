@@ -9,7 +9,6 @@ class VicinaeListInstalledExtensionsCommand : public BuiltinViewCommand<Installe
 
   QString id() const override { return "list-extensions"; }
   QString name() const override { return tr("Show Installed Extensions"); }
-  std::vector<QString> keywords() const override { return {"Show Installed Extensions"}; }
   QString description() const override {
     return tr("Show all third-party extensions that have been installed. This includes local extensions as "
               "well as extensions downloaded from the stores (vicinae and raycast).");

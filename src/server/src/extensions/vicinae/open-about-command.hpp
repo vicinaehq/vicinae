@@ -12,7 +12,6 @@ class OpenAboutCommand : public BuiltinCallbackCommand {
   QString id() const override { return "about"; }
   QString name() const override { return tr("About"); }
   QString description() const override { return tr("Open the \"About\" tab of the vicinae settings."); }
-  std::vector<QString> keywords() const override { return {"About"}; }
 
   ImageURL iconUrl() const override {
     return ImageURL::builtin("info-01").setBackgroundTint(Omnicast::ACCENT_COLOR);

@@ -184,8 +184,6 @@ std::vector<QString> WinSettingsPageRootItem::keywords() const {
   for (const QString &word : QString::fromUtf8(m_page.keywords).split(' ', Qt::SkipEmptyParts)) {
     words.emplace_back(word);
   }
-  words.emplace_back(QString::fromUtf8(m_page.title));
-  words.emplace_back(QString::fromUtf8(m_page.category));
   return words;
 }
 

@@ -377,7 +377,8 @@ Window {
                     opacity: enabled ? 1 : 0.4
                     variant: "accent"
                     text: {
-                        if (root.step === root.stepCount - 1) return qsTr("Finish");
+                        if (root.step === root.stepCount - 1)
+                            return qsTr("Finish");
                         return qsTr("Continue");
                     }
                     onClicked: root.advance()
