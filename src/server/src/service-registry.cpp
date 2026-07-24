@@ -30,6 +30,7 @@
 #include "services/wallpaper/wallpaper-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
+#include "services/layout-switch/abstract-layout-switch-service.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
@@ -212,6 +213,12 @@ GlobalShortcutService *ServiceRegistry::globalShortcuts() const { return m_globa
 
 void ServiceRegistry::setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service) {
   m_globalShortcuts = std::move(service);
+}
+
+AbstractLayoutSwitchService *ServiceRegistry::layoutSwitch() const { return m_layoutSwitch.get(); }
+
+void ServiceRegistry::setLayoutSwitch(std::unique_ptr<AbstractLayoutSwitchService> service) {
+  m_layoutSwitch = std::move(service);
 }
 
 ServiceRegistry *ServiceRegistry::instance() {

@@ -7,6 +7,7 @@
 #include "action-panel-controller.hpp"
 #include "ui/image/image-renderer.hpp"
 #include "services/news/news-service.hpp"
+#include "services/layout-switch/abstract-layout-switch-service.hpp"
 #include "alert-model.hpp"
 #include "bridge-view.hpp"
 #include "image-source.hpp"
@@ -380,15 +381,22 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
 void LauncherWindow::handleVisibilityChanged(bool visible) {
   if (!m_window) return;
 
+  auto *layoutSwitch = m_ctx.services->layoutSwitch();
+
   if (visible) {
     m_cacheEvictionTimer.stop();
     applyWindowConfig();
     tryCompaction();
+    if (layoutSwitch) {
+      const auto &layout = m_ctx.services->config()->value().keyboard.launcherLayout;
+      if (layout && !layout->empty()) { layoutSwitch->activate(QString::fromStdString(*layout)); }
+    }
     m_window->show();
     m_window->raise();
     LauncherWindowPlatform::grantForeground();
     m_window->requestActivate();
   } else {
+    if (layoutSwitch) { layoutSwitch->restore(); }
     LauncherWindowPlatform::suppressHeldKeyReleases();
     m_window->hide();
     m_cacheEvictionTimer.start();

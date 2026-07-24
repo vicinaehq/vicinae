@@ -6,6 +6,7 @@
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include "favicon/favicon-service.hpp"
+#include "services/layout-switch/abstract-layout-switch-service.hpp"
 #include "font-service.hpp"
 #ifdef Q_OS_LINUX
 #include "internal/icon-theme-db/icon-theme-db.hpp"
@@ -306,4 +307,36 @@ QString GeneralSettingsModel::toggleShortcut() const {
 void GeneralSettingsModel::setToggleShortcut(const QString &shortcut) {
   cfgManager().mergeWithUser(
       {.globalShortcuts = config::Partial<config::GlobalShortcuts>{.toggle = shortcut.toStdString()}});
+}
+
+static const QString NO_LAYOUT_ID = QStringLiteral("none");
+static const QString NO_LAYOUT_NAME = QStringLiteral("Don't switch");
+
+QVariantList GeneralSettingsModel::keyboardLayoutItems() const {
+  QVariantList items;
+  items.append(makeDropdownItem(NO_LAYOUT_ID, NO_LAYOUT_NAME));
+  if (auto *service = ServiceRegistry::instance()->layoutSwitch()) {
+    for (const auto &layout : service->availableLayouts()) {
+      items.append(makeDropdownItem(layout.id, layout.name));
+    }
+  }
+  return wrapSection(QStringLiteral("Keyboard layout"), items);
+}
+
+QVariant GeneralSettingsModel::currentKeyboardLayout() const {
+  const auto id = QString::fromStdString(cfg().keyboard.launcherLayout.value_or(""));
+  if (id.isEmpty()) return makeDropdownItem(NO_LAYOUT_ID, NO_LAYOUT_NAME);
+
+  if (auto *service = ServiceRegistry::instance()->layoutSwitch()) {
+    for (const auto &layout : service->availableLayouts()) {
+      if (layout.id == id) return makeDropdownItem(id, layout.name);
+    }
+  }
+
+  return makeDropdownItem(id, id);
+}
+
+void GeneralSettingsModel::selectKeyboardLayout(const QString &id) {
+  cfgManager().mergeWithUser({.keyboard = config::Partial<config::KeyboardConfig>{
+                                  .launcherLayout = id == NO_LAYOUT_ID ? std::string{} : id.toStdString()}});
 }

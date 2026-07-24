@@ -40,6 +40,7 @@ class UpdateService;
 class AudioControlService;
 class AppRuntime;
 class GlobalShortcutService;
+class AbstractLayoutSwitchService;
 
 namespace config {
 class Manager;
@@ -86,6 +87,7 @@ public:
   AudioControlService *audioControl() const;
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
+  AbstractLayoutSwitchService *layoutSwitch() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
@@ -125,6 +127,7 @@ public:
   void setAudioControl(std::unique_ptr<AudioControlService> service);
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
+  void setLayoutSwitch(std::unique_ptr<AbstractLayoutSwitchService> service);
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
@@ -164,4 +167,5 @@ private:
   std::unique_ptr<AudioControlService> m_audioControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
+  std::unique_ptr<AbstractLayoutSwitchService> m_layoutSwitch;
 };

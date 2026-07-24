@@ -271,6 +271,15 @@ template <> struct Partial<GlobalShortcuts> {
   std::optional<std::string> toggle;
 };
 
+struct KeyboardConfig {
+  // input source to switch to while the launcher is open; empty/absent = don't switch
+  std::optional<std::string> launcherLayout;
+};
+
+template <> struct Partial<KeyboardConfig> {
+  std::optional<std::string> launcherLayout;
+};
+
 struct ConfigValue {
   std::string schema = SCHEMA;
   std::vector<std::string> imports;
@@ -293,6 +302,7 @@ struct ConfigValue {
 
   InputServer inputServer;
   GlobalShortcuts globalShortcuts;
+  KeyboardConfig keyboard;
 
   FontConfig font;
   ThemeConfig theme;
@@ -347,6 +357,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> searchFilesInRoot;
   std::optional<Partial<InputServer>> inputServer;
   std::optional<Partial<GlobalShortcuts>> globalShortcuts;
+  std::optional<Partial<KeyboardConfig>> keyboard;
 
   std::optional<Partial<FontConfig>> font;
   std::optional<Partial<ThemeConfig>> theme;
@@ -444,6 +455,7 @@ SNAKE_CASIFY(config::ThemeConfig);
 SNAKE_CASIFY(config::TelemetryConfig);
 SNAKE_CASIFY(config::WindowCSD);
 SNAKE_CASIFY(config::GlobalShortcuts);
+SNAKE_CASIFY(config::KeyboardConfig);
 
 #undef SNAKE_CASIFY
 

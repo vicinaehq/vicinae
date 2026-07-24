@@ -2,6 +2,7 @@
 #include "environment.hpp"
 #include "service-registry.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
+#include "services/layout-switch/abstract-layout-switch-service.hpp"
 #include "services/window-material/window-material-manager.hpp"
 #include <array>
 #include <utility>
@@ -16,7 +17,7 @@ bool windowsAcrylicSupported();
 
 namespace platform {
 
-static constexpr std::array<std::pair<std::string_view, Capability>, 9> CAPABILITY_NAMES{{
+static constexpr std::array<std::pair<std::string_view, Capability>, 10> CAPABILITY_NAMES{{
     {"layerShell", Capability::LayerShell},
     {"globalShortcuts", Capability::GlobalShortcuts},
     {"inputServer", Capability::InputServer},
@@ -26,6 +27,7 @@ static constexpr std::array<std::pair<std::string_view, Capability>, 9> CAPABILI
     {"nativePanels", Capability::NativePanels},
     {"windowMaterial", Capability::WindowMaterial},
     {"customWindowRounding", Capability::CustomWindowRounding},
+    {"layoutSwitch", Capability::LayoutSwitch},
 }};
 
 bool supports(Capability cap) {
@@ -77,6 +79,10 @@ bool supports(Capability cap) {
 #else
     return true;
 #endif
+  case Capability::LayoutSwitch: {
+    auto *service = ServiceRegistry::instance()->layoutSwitch();
+    return service && service->isSupported();
+  }
   }
 
   return false;

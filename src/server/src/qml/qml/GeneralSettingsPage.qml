@@ -48,6 +48,18 @@ Flickable {
             }
 
             SettingsRow {
+                visible: Platform.supports("layoutSwitch")
+                label: "Launcher keyboard layout"
+                description: "Layout to switch to while the launcher is open. Restored when it closes."
+                SearchableDropdown {
+                    width: parent.width
+                    items: root.model.keyboardLayoutItems
+                    currentItem: root.model.currentKeyboardLayout
+                    onActivated: item => root.model.selectKeyboardLayout(item.id)
+                }
+            }
+
+            SettingsRow {
                 label: "Close on focus loss"
                 SettingsToggle {
                     checked: root.model.closeOnFocusLoss

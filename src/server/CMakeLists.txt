@@ -644,6 +644,8 @@ if (APPLE)
 		src/services/global-shortcuts/macos-global-shortcut-backend.cpp
 		src/internal/keyboard/keyboard-macos.hpp
 		src/internal/keyboard/keyboard-macos.cpp
+		src/services/layout-switch/macos-layout-switch-service.hpp
+		src/services/layout-switch/macos-layout-switch-service.cpp
 		src/services/files-service/macos/spotlight-file-indexer.hpp
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/tray/macos/tray-service-macos.hpp
@@ -757,6 +759,9 @@ list(APPEND SRCS
 	src/services/global-shortcuts/global-shortcut-backend-factory.cpp
 	src/services/global-shortcuts/global-shortcut-service.hpp
 	src/services/global-shortcuts/global-shortcut-service.cpp
+	src/services/layout-switch/abstract-layout-switch-service.hpp
+	src/services/layout-switch/layout-switch-service-factory.hpp
+	src/services/layout-switch/layout-switch-service-factory.cpp
 )
 
 if (NOT WIN32)

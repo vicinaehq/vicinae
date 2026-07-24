@@ -64,6 +64,7 @@
 #include "services/snippet/snippet-service.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/global-shortcuts/global-shortcut-backend-factory.hpp"
+#include "services/layout-switch/layout-switch-service-factory.hpp"
 #ifdef Q_OS_LINUX
 #include "services/input-server/linux-input-server.hpp"
 #include "services/snippet/linux-snippet-server.hpp"
@@ -317,6 +318,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
     registry->setGlobalShortcuts(std::move(globalShortcutService));
+    registry->setLayoutSwitch(createLayoutSwitchService());
     registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());

@@ -45,6 +45,8 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(QVariant currentFaviconService READ currentFaviconService NOTIFY configChanged)
   Q_PROPERTY(QVariant currentKeybindingScheme READ currentKeybindingScheme NOTIFY configChanged)
   Q_PROPERTY(QString toggleShortcut READ toggleShortcut WRITE setToggleShortcut NOTIFY configChanged)
+  Q_PROPERTY(QVariantList keyboardLayoutItems READ keyboardLayoutItems CONSTANT)
+  Q_PROPERTY(QVariant currentKeyboardLayout READ currentKeyboardLayout NOTIFY configChanged)
 
 signals:
   void configChanged();
@@ -116,6 +118,10 @@ public:
 
   QString toggleShortcut() const;
   void setToggleShortcut(const QString &shortcut);
+
+  QVariantList keyboardLayoutItems() const;
+  QVariant currentKeyboardLayout() const;
+  Q_INVOKABLE void selectKeyboardLayout(const QString &id);
 
 private:
   const config::ConfigValue &cfg() const;
