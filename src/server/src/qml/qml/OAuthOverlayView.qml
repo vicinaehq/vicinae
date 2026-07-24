@@ -88,7 +88,7 @@ Item {
                 implicitHeight: 34
                 horizontalPadding: 20
                 radius: 4
-                text: "Continue with " + root.host.providerName
+                text: qsTr("Continue with %1").arg(root.host.providerName)
                 variant: "accent"
                 focus: true
                 onClicked: root.host.openBrowser()
@@ -121,7 +121,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
-                text: "You're in!"
+                text: qsTr("You're in!")
                 color: Theme.foreground
                 font.pointSize: Theme.regularFontSize + 2
                 font.bold: true
@@ -130,7 +130,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
-                text: "Successfully connected to " + root.host.providerName + ".\nBack to command in an instant..."
+                text: qsTr("Successfully connected to %1.\nBack to command in an instant...").arg(root.host.providerName)
                 color: Theme.textMuted
                 font.pointSize: Theme.regularFontSize
                 horizontalAlignment: Text.AlignHCenter

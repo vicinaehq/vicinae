@@ -23,7 +23,7 @@ Flickable {
         }
 
         Text {
-            text: "Buttons"
+            text: qsTr("Buttons")
             color: Theme.foreground
             font.pointSize: Theme.regularFontSize + 4
             font.bold: true

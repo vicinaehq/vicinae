@@ -90,13 +90,13 @@ std::unique_ptr<ActionPanelState> DMenuSection::actionPanel(int i) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *main = panel->createSection();
 
-  main->addAction(new StaticAction("Select entry", ImageURL::builtin("save-document"),
+  main->addAction(new StaticAction(tr("Select entry"), ImageURL::builtin("save-document"),
                                    [this, text](ApplicationContext *) { selectEntry(text); }));
 
-  main->addAction(new StaticAction("Pass search text", ImageURL::builtin("save-document"),
+  main->addAction(new StaticAction(tr("Pass search text"), ImageURL::builtin("save-document"),
                                    [this](ApplicationContext *) { selectEntry(m_currentSearchText); }));
 
-  auto *selectAndCopy = new StaticAction("Select and copy entry", ImageURL::builtin("copy-clipboard"),
+  auto *selectAndCopy = new StaticAction(tr("Select and copy entry"), ImageURL::builtin("copy-clipboard"),
                                          [this, text](ApplicationContext *ctx) {
                                            ctx->services->clipman()->copyText(text);
                                            selectEntry(text);

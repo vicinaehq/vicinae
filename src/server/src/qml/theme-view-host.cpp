@@ -19,7 +19,7 @@ void ThemeViewHost::initialize() {
   m_availableSection.setOnThemeSelected(
       [this](const std::shared_ptr<ThemeFile> &theme) { m_themeService->setTheme(theme->id()); });
 
-  setSearchPlaceholderText("Search for a theme...");
+  setSearchPlaceholderText(tr("Search for a theme..."));
 
   connect(m_config, &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
@@ -70,6 +70,6 @@ void ThemeViewHost::regenerateThemes() {
   for (auto &s : scoredAvailable)
     available.emplace_back(std::move(s.data));
 
-  m_currentSection.setThemes(QStringLiteral("Current Theme"), std::move(current));
-  m_availableSection.setThemes(QStringLiteral("Available Themes"), std::move(available));
+  m_currentSection.setThemes(tr("Current Theme"), std::move(current));
+  m_availableSection.setThemes(tr("Available Themes"), std::move(available));
 }

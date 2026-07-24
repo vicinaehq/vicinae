@@ -1,9 +1,11 @@
 #pragma once
 #include "fuzzy-section.hpp"
+#include <QCoreApplication>
 
 class LocalStorageNamespaceSection : public FuzzySection<QString> {
+  Q_DECLARE_TR_FUNCTIONS(LocalStorageNamespaceSection)
 public:
-  QString sectionName() const override { return QStringLiteral("Namespaces ({count})"); }
+  QString sectionName() const override { return tr("Namespaces ({count})"); }
 
 protected:
   QString displayTitle(const QString &item) const override { return item; }
@@ -12,8 +14,9 @@ protected:
 };
 
 class LocalStorageItemSection : public FuzzySection<QString> {
+  Q_DECLARE_TR_FUNCTIONS(LocalStorageItemSection)
 public:
-  QString sectionName() const override { return QStringLiteral("Items ({count})"); }
+  QString sectionName() const override { return tr("Items ({count})"); }
 
   void setNamespace(const QString &ns) { m_ns = ns; }
 

@@ -20,32 +20,34 @@ void ResetItemRanking::execute(ApplicationContext *ctx) {
 
     auto manager = ServiceRegistry::instance()->rootItemManager();
     if (manager->resetRanking(id)) {
-      toast->setToast("Ranking was successfuly reset");
+      toast->setToast(tr("Ranking was successfully reset"));
     } else {
-      toast->setToast("Unable to reset ranking");
+      toast->setToast(tr("Unable to reset ranking"));
     }
   };
 
   auto alert = new CallbackAlertWidget();
 
-  alert->setTitle("Are you sure?");
+  alert->setTitle(tr("Are you sure?"));
   alert->setMessage(
-      "You will have to rebuild search history for this item in order for it to reappear on top of the "
-      "root search results.");
-  alert->setConfirmText("Reset", SemanticColor::Red);
+      tr("You will have to rebuild search history for this item in order for it to reappear on top of the "
+         "root search results."));
+  alert->setConfirmText(tr("Reset"), SemanticColor::Red);
   alert->setCallback(callback);
   ctx->navigation->setDialog(alert);
 }
 
 ResetItemRanking::ResetItemRanking(const EntrypointId &id)
-    : AbstractAction("Reset ranking", ImageURL::builtin("arrow-counter-clockwise")), m_id(id) {}
+    : AbstractAction(tr("Reset ranking"), ImageURL::builtin("arrow-counter-clockwise")), m_id(id) {}
 
 void MarkItemAsFavorite::execute(ApplicationContext *ctx) {
   // TODO: mark as favorite
 }
 
 MarkItemAsFavorite::MarkItemAsFavorite(const QString &id)
-    : AbstractAction("Mark as favorite", ImageURL::builtin("stars")), m_id(id) {}
+    : AbstractAction(QCoreApplication::translate("MarkItemAsFavorite", "Mark as favorite"),
+                     ImageURL::builtin("stars")),
+      m_id(id) {}
 
 std::optional<ImageURL> ToggleItemAsFavorite::icon() const {
   if (m_value) return ImageURL::builtin("star-disabled");
@@ -53,8 +55,8 @@ std::optional<ImageURL> ToggleItemAsFavorite::icon() const {
 }
 
 QString ToggleItemAsFavorite::title() const {
-  if (m_value) return "Remove from favorites";
-  return "Add to favorites";
+  if (m_value) return tr("Remove from favorites");
+  return tr("Add to favorites");
 }
 
 void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
@@ -64,15 +66,15 @@ void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
 
   if (manager->setItemAsFavorite(m_id, targetValue)) {
     if (targetValue) {
-      toast->setToast("Successfuly added to favorites");
+      toast->setToast(tr("Successfuly added to favorites"));
     } else {
-      toast->setToast("Successfuly removed from favorites");
+      toast->setToast(tr("Successfuly removed from favorites"));
     }
   } else {
     if (targetValue) {
-      toast->setToast("Failed to add to favorites");
+      toast->setToast(tr("Failed to add to favorites"));
     } else {
-      toast->setToast("Failed to remove from favorites", ToastStyle::Danger);
+      toast->setToast(tr("Failed to remove from favorites"), ToastStyle::Danger);
     }
   }
 };
@@ -83,9 +85,9 @@ ToggleItemAsFavorite::ToggleItemAsFavorite(const EntrypointId &id, bool currentV
 void DisableItemAction::execute(ApplicationContext *ctx) {
   auto alert = new CallbackAlertWidget();
 
-  alert->setTitle("Are you sure?");
-  alert->setMessage("You will need to go in the settings to manually re-enable it.");
-  alert->setConfirmText("Disable", SemanticColor::Red);
+  alert->setTitle(tr("Are you sure?"));
+  alert->setMessage(tr("You will need to go in the settings to manually re-enable it."));
+  alert->setConfirmText(tr("Disable"), SemanticColor::Red);
   alert->setCallback([ctx, id = m_id](bool ok) {
     auto manager = ctx->services->rootItemManager();
     auto toast = ctx->services->toastService();
@@ -93,9 +95,9 @@ void DisableItemAction::execute(ApplicationContext *ctx) {
     if (!ok) return;
 
     if (manager->disableItem(id)) {
-      toast->setToast("Item disabled", ToastStyle::Success);
+      toast->setToast(tr("Item disabled"), ToastStyle::Success);
     } else {
-      toast->setToast("Failed to disable", ToastStyle::Danger);
+      toast->setToast(tr("Failed to disable"), ToastStyle::Danger);
     }
   });
 
@@ -103,7 +105,7 @@ void DisableItemAction::execute(ApplicationContext *ctx) {
 }
 
 DisableItemAction::DisableItemAction(const EntrypointId &id)
-    : AbstractAction("Disable item", ImageURL::builtin("trash")), m_id(id) {
+    : AbstractAction(tr("Disable item"), ImageURL::builtin("trash")), m_id(id) {
   setStyle(AbstractAction::Style::Danger);
 }
 

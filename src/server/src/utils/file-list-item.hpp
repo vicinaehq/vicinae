@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "actions/app/app-actions.hpp"
 #include "actions/files/file-actions.hpp"
 #include "clipboard-actions.hpp"
@@ -18,9 +19,11 @@
 namespace FileActions {
 
 class RevealFileInFolderAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(RevealFileInFolderAction)
+
 public:
   RevealFileInFolderAction(std::filesystem::path path)
-      : AbstractAction("Show in file browser", ImageURL::builtin("folder")), m_path(std::move(path)) {
+      : AbstractAction(tr("Show in file browser"), ImageURL::builtin("folder")), m_path(std::move(path)) {
     setShortcut(Keyboard::Shortcut::submit());
   }
 
@@ -32,7 +35,7 @@ public:
     bool const success = appDb->showInFileBrowser(m_path, true);
 
     if (!success) {
-      toast->failure("Failed to open folder");
+      toast->failure(tr("Failed to open folder"));
       return;
     }
 
@@ -45,9 +48,11 @@ private:
 };
 
 class SetWallpaperAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(SetWallpaperAction)
+
 public:
   SetWallpaperAction(std::filesystem::path path)
-      : AbstractAction("Set as wallpaper", ImageURL::builtin("image")), m_path(std::move(path)) {
+      : AbstractAction(tr("Set as wallpaper"), ImageURL::builtin("image")), m_path(std::move(path)) {
     setShortcut(Keyboard::Shortcut(Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier));
   }
 
@@ -58,9 +63,9 @@ public:
     wallpaper->setWallpaper({.path = m_path.string()})
         .then(toast, [ctx, toast](const std::expected<void, std::string> &result) {
           if (result) {
-            ctx->navigation->showHud("Wallpaper set", ImageURL::builtin("image"));
+            ctx->navigation->showHud(tr("Wallpaper set"), ImageURL::builtin("image"));
           } else {
-            toast->failure("Failed to set wallpaper", QString::fromStdString(result.error()));
+            toast->failure(tr("Failed to set wallpaper"), QString::fromStdString(result.error()));
           }
         });
   }
@@ -94,11 +99,14 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   }
 
   auto utils = panel->createSection();
-  auto copy = AbstractAction::make<CopyToClipboardAction>(Clipboard::File(path), "Copy file");
+  auto copy = AbstractAction::make<CopyToClipboardAction>(
+      Clipboard::File(path), QCoreApplication::translate("file-list-item", "Copy file"));
   auto copyPath = AbstractAction::make<CopyToClipboardAction>(
-      Clipboard::Text(QString::fromStdString(path.string())), "Copy file path");
+      Clipboard::Text(QString::fromStdString(path.string())),
+      QCoreApplication::translate("file-list-item", "Copy file path"));
   auto copyFileName = AbstractAction::make<CopyToClipboardAction>(
-      Clipboard::Text(QString::fromStdString(path.filename().string())), "Copy file name");
+      Clipboard::Text(QString::fromStdString(path.filename().string())),
+      QCoreApplication::translate("file-list-item", "Copy file name"));
 
   copy->setShortcut(Keybind::CopyAction);
 
@@ -117,7 +125,8 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   utils->addAction(std::move(copyFileName));
 
   if (mime.isValid()) {
-    utils->addAction(new CopyToClipboardAction(Clipboard::Text(mime.name()), "Copy mime type"));
+    utils->addAction(new CopyToClipboardAction(
+        Clipboard::Text(mime.name()), QCoreApplication::translate("file-list-item", "Copy mime type")));
   }
 
   return panel;

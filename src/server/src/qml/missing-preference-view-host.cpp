@@ -198,8 +198,8 @@ void MissingPreferenceViewHost::initialize() {
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto section = panel->createSection();
-  auto submitAction = new StaticAction(QStringLiteral("Save preferences"), ImageURL::builtin("enter-key"),
-                                       [this]() { submit(); });
+  auto submitAction =
+      new StaticAction(tr("Save preferences"), ImageURL::builtin("enter-key"), [this]() { submit(); });
   section->addAction(submitAction);
   setActions(std::move(panel));
 }
@@ -208,7 +208,7 @@ void MissingPreferenceViewHost::submit() {
   auto result = m_prefModel->validate();
 
   if (!result.valid) {
-    context()->services->toastService()->failure("Please fill in all required fields");
+    context()->services->toastService()->failure(tr("Please fill in all required fields"));
     return;
   }
 

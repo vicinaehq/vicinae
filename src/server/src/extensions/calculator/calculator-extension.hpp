@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "qml/calc-history-view-host.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -11,19 +12,13 @@
 #include "vicinae.hpp"
 #include <qfuturewatcher.h>
 
-static const std::vector<Preference::DropdownData::Option> refreshRatesOptions = {
-    {"Every hour", "hourly"},
-    {"Every day", "daily"},
-    {"Every week", "weekly"},
-    {"Every month", "monthly"},
-};
-
 class CalculatorHistoryCommand : public BuiltinViewCommand<CalcHistoryViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(CalculatorHistoryCommand)
   QString id() const override { return "history"; }
-  QString name() const override { return "Calculator history"; }
+  QString name() const override { return tr("Calculator history"); }
   QString description() const override {
-    return "Browse past calculations. You need to copy the result of a calculation for it to be saved in "
-           "history.";
+    return tr("Browse past calculations. You need to copy the result of a calculation for it to be saved "
+              "in history.");
   }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(Omnicast::ACCENT_COLOR);
@@ -31,11 +26,12 @@ class CalculatorHistoryCommand : public BuiltinViewCommand<CalcHistoryViewHost> 
 };
 
 class CalculatorRefreshRatesCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(CalculatorRefreshRatesCommand)
   QString id() const override { return "refresh-rates"; }
-  QString name() const override { return "Refresh Exchange Rates"; }
+  QString name() const override { return tr("Refresh Exchange Rates"); }
   QString description() const override {
-    return "Refresh exchange rates used by the calculator to provide curreny conversion features. Not all "
-           "backends may support curreny conversions or manually refreshing the rates.";
+    return tr("Refresh exchange rates used by the calculator to provide currency conversion features. Not "
+              "all backends may support currency conversions or manually refreshing the rates.");
   }
 
   ImageURL iconUrl() const override {
@@ -51,11 +47,11 @@ class CalculatorRefreshRatesCommand : public BuiltinCallbackCommand {
     auto watcher = new QFutureWatcher<AbstractCalculatorBackend::RefreshExchangeRatesResult>;
 
     if (!calc->backend()->supportsRefreshExchangeRates()) {
-      return toast->failure(QString("%1 can't refresh rates").arg(calc->backend()->displayName()));
+      return toast->failure(tr("%1 can't refresh rates").arg(calc->backend()->displayName()));
     }
 
     ctrl.context()->navigation->clearSearchText();
-    toast->dynamic("Refreshing rates...");
+    toast->dynamic(tr("Refreshing rates..."));
     watcher->setFuture(task);
 
     QObject::connect(watcher, &Watcher::finished, [watcher, toast]() {
@@ -64,16 +60,20 @@ class CalculatorRefreshRatesCommand : public BuiltinCallbackCommand {
       if (auto result = watcher->result(); !result) {
         return toast->failure(QString::fromStdString(result.error()));
       }
-      return toast->success("Rates successfully refreshed");
+      return toast->success(tr("Rates successfully refreshed"));
     });
   }
 };
 
 class CalculatorExtension : public BuiltinCommandRepository {
+  Q_DECLARE_TR_FUNCTIONS(CalculatorExtension)
+
 public:
   QString id() const override { return "calculator"; }
-  QString displayName() const override { return "Calculator"; }
-  QString description() const override { return "Do maths, convert units or search past calculations..."; }
+  QString displayName() const override { return tr("Calculator"); }
+  QString description() const override {
+    return tr("Do maths, convert units or search past calculations...");
+  }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -93,16 +93,16 @@ public:
 
     auto backendPref = Preference::makeDropdown("backend", backendOptions);
 
-    backendPref.setTitle("Calculator Backend");
-    backendPref.setDescription("Which backend to use to perform calculations");
+    backendPref.setTitle(tr("Calculator Backend"));
+    backendPref.setDescription(tr("Which backend to use to perform calculations"));
 
     auto refreshOnStartup = Preference::makeCheckbox("refreshRatesOnStartup");
 
     refreshOnStartup.setDefaultValue(true);
-    refreshOnStartup.setTitle("Refresh rates on startup");
+    refreshOnStartup.setTitle(tr("Refresh rates on startup"));
     refreshOnStartup.setDescription(
-        "Whether exchange rates should be refreshed every time the vicinae server is started. If the current "
-        "backend does not support it, this is ignored.");
+        tr("Whether exchange rates should be refreshed every time the vicinae server is started. If the "
+           "current backend does not support it, this is ignored."));
 
     if (!backendOptions.empty()) { backendPref.setDefaultValue(backendOptions.front().value); }
 

@@ -1,11 +1,13 @@
 #pragma once
 #include "section-source.hpp"
 #include "theme/theme-file.hpp"
+#include <QCoreApplication>
 #include <functional>
 #include <memory>
 #include <vector>
 
 class ThemeSection : public SectionSource {
+  Q_DECLARE_TR_FUNCTIONS(ThemeSection)
 public:
   enum ExtraRole {
     PaletteColor0 = 100,

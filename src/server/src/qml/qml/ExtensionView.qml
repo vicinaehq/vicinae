@@ -96,7 +96,7 @@ Item {
                 selectFirstOnReset: root.host.selectFirstOnReset
                 suppressEmpty: root.host.suppressEmptyView
 
-                emptyTitle: root.host.contentModel.emptyTitle || "No results"
+                emptyTitle: root.host.contentModel.emptyTitle || qsTr("No results")
                 emptyDescription: root.host.contentModel.emptyDescription || ""
                 emptyIcon: root.host.contentModel.emptyIcon?.valid ? root.host.contentModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 

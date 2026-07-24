@@ -156,7 +156,7 @@ Popup {
             Text {
                 id: _counter
                 anchors.centerIn: parent
-                text: `${root.currentIndex + 1} / ${root.sources.length}`
+                text: qsTr("%1 / %2").arg(root.currentIndex + 1).arg(root.sources.length)
                 color: "white"
                 font.pointSize: Theme.smallerFontSize
             }

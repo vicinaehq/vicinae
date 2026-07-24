@@ -65,6 +65,22 @@ Try to keep the amount of logic in these files small. Logic in QML is only for p
 
 Some configuration and theming options may need to be accessed directly in QML. We expose a global config and theme bridges for this use case.
 
+## Internationalization
+
+User-visible natural-language strings must be marked for translation. English source text is the translation key.
+
+- QML: wrap literals in `qsTr("...")`.
+- C++ classes with `Q_OBJECT`: use `tr("...")`.
+- C++ classes without `Q_OBJECT`: NEVER call the inherited `tr()` (it resolves to the wrong context at runtime). Add `Q_DECLARE_TR_FUNCTIONS(ClassName)` at the top of the class, or for a single string use `QCoreApplication::translate("ClassName", "...")`.
+- Never store translated strings in `static`/`constexpr` data. Plurals use `tr("%n item(s)", nullptr, n)`. Never concatenate translated fragments: use `%1` placeholders with `.arg()`.
+- Preserve brand and product names such as "Raycast Store", "Raycast Compat", and "Extension Store". Translate the surrounding prose, not the name itself.
+- Never translate stable technical notation such as ids, acronyms, unit symbols (`MB`, `GB`), filenames, protocol names, icon names (`ImageURL::builtin`), log output, storage keys, or strings compared as discriminants.
+- Use the platform's official localized terminology for operating-system features and settings pages.
+- Use stable explicit translation contexts for shared domain strings. Add translator notes or disambiguation only when the source text is genuinely ambiguous.
+- Source text and location metadata in `src/server/translations/*.ts` are generated: never hand-edit them. Edit
+  translations with Qt Linguist. Contributors are not required to translate new strings or include regenerated catalogs in
+  feature PRs. Maintainers periodically run `make update-translations` in dedicated localization updates.
+
 ## General guidelines
 
 - Search should always be fuzzy, unless it has a good reason not to. We have fuzzy utilities already, and we like to use our fuzzy trait system by specializing the `FuzzySearchable` template

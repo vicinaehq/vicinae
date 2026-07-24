@@ -1,12 +1,15 @@
 #pragma once
 #include "vicinae-hotkey-v1-client-protocol.h"
 #include "services/global-shortcuts/abstract-global-shortcut-backend.hpp"
+#include <QCoreApplication>
 #include <cstdint>
 #include <expected>
 #include <optional>
 #include <qtmetamacros.h>
 
 class VicinaeHotkeyGlobalShortcutBackend : public AbstractGlobalShortcutBackend {
+  Q_DECLARE_TR_FUNCTIONS(VicinaeHotkeyGlobalShortcutBackend)
+
 public:
   ~VicinaeHotkeyGlobalShortcutBackend() override;
 

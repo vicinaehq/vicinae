@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "actions/app/app-actions.hpp"
 #include "service-registry.hpp"
 #include "services/files-service/file-service.hpp"
@@ -13,7 +14,9 @@ public:
   }
 
   OpenFileAction(const std::filesystem::path &path, const std::shared_ptr<AbstractApplication> &app)
-      : OpenAppAction(app, "Open with " + app->displayName(), {QString::fromStdString(path.string())}),
+      : OpenAppAction(app,
+                      QCoreApplication::translate("OpenFileAction", "Open with %1").arg(app->displayName()),
+                      {QString::fromStdString(path.string())}),
         m_path(path) {
     setAutoClose();
   }

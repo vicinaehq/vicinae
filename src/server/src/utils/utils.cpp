@@ -9,6 +9,7 @@
 #include <qmimedatabase.h>
 #include <qmimetype.h>
 #include <QColor>
+#include <QCoreApplication>
 #include <QString>
 #include <QRegularExpression>
 #include <qrgb.h>
@@ -54,18 +55,18 @@ QString getRelativeTimeString(const QDateTime &pastTime) {
 
   if (days >= 365) {
     int const years = days / 365;
-    return QString("%1 year%2 ago").arg(years).arg(years > 1 ? "s" : "");
+    return QObject::tr("%n year(s) ago", nullptr, years);
   } else if (days >= 30) {
     int const months = days / 30;
-    return QString("%1 month%2 ago").arg(months).arg(months > 1 ? "s" : "");
+    return QObject::tr("%n month(s) ago", nullptr, months);
   } else if (days >= 1) {
-    return QString("%1 day%2 ago").arg(days).arg(days > 1 ? "s" : "");
+    return QObject::tr("%n day(s) ago", nullptr, static_cast<int>(days));
   } else if (hours >= 1) {
-    return QString("%1 hour%2 ago").arg(hours).arg(hours > 1 ? "s" : "");
+    return QObject::tr("%n hour(s) ago", nullptr, static_cast<int>(hours));
   } else if (minutes >= 1) {
-    return QString("%1 minute%2 ago").arg(minutes).arg(minutes > 1 ? "s" : "");
+    return QObject::tr("%n minute(s) ago", nullptr, static_cast<int>(minutes));
   } else {
-    return "just now";
+    return QObject::tr("just now");
   }
 }
 
@@ -153,9 +154,14 @@ std::string generatePrefixedId(std::string_view prefix, int length) {
 }
 
 QString formatSize(size_t bytes) {
-  if (bytes <= 0) { return "0 bytes"; }
+  if (bytes <= 0) { return QCoreApplication::translate("utils", "0 bytes"); }
 
-  const std::vector<QString> units = {"bytes", "KB", "MB", "GB", "TB", "PB"};
+  const std::vector<QString> units = {QCoreApplication::translate("utils", "bytes"),
+                                      QStringLiteral("KB"),
+                                      QStringLiteral("MB"),
+                                      QStringLiteral("GB"),
+                                      QStringLiteral("TB"),
+                                      QStringLiteral("PB")};
   const double base = 1024.0;
 
   int unitIndex = static_cast<int>(std::floor(std::log(bytes) / std::log(base)));

@@ -560,17 +560,17 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
 std::vector<AppPtr> XdgAppDatabase::list() const { return {m_apps.begin(), m_apps.end()}; }
 
 PreferenceList XdgAppDatabase::preferences() const {
-  auto defaultAction =
-      Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
+  auto defaultAction = Preference::makeDropdown(
+      "defaultAction", {{tr("Focus window"), "focus"}, {tr("Launch app"), "launch"}});
   defaultAction.setDefaultValue("focus");
-  defaultAction.setTitle("Default action");
-  defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
-                               "if the app has no open window.");
+  defaultAction.setTitle(tr("Default action"));
+  defaultAction.setDescription(tr("Action to perform when the return key is pressed. Always default to "
+                                  "'launch' if the app has no open window."));
 
   auto launchPrefix = Preference::makeText("launchPrefix");
-  launchPrefix.setTitle("Launch Prefix");
+  launchPrefix.setTitle(tr("Launch Prefix"));
   launchPrefix.setDescription(
-      "Custom app launcher to use. Affects applications as well as their sub-actions.");
+      tr("Custom app launcher to use. Affects applications as well as their sub-actions."));
   launchPrefix.setPlaceholder("uwsm app --");
 
   auto paths = Preference::directories("paths");
@@ -578,10 +578,10 @@ PreferenceList XdgAppDatabase::preferences() const {
   for (const auto &searchPath : defaultSearchPaths()) {
     defaultPaths.push_back(QString::fromStdString(searchPath));
   }
-  paths.setTitle("Application directories");
+  paths.setTitle(tr("Application directories"));
   paths.setDescription(
-      "Directories applications are sourced from. The list cannot be modified directly. In order to do so, "
-      "you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables.");
+      tr("Directories applications are sourced from. The list cannot be modified directly. In order to do "
+         "so, you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables."));
   paths.setReadOnly(true);
   paths.setDefaultValue(defaultPaths);
 

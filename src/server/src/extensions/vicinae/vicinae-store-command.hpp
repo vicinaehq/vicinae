@@ -3,11 +3,14 @@
 #include "qml/vicinae-store-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
+#include <QCoreApplication>
 
 class VicinaeStoreCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(VicinaeStoreCommand)
+
   QString id() const override { return "store"; }
-  QString name() const override { return "Extension Store"; }
-  QString description() const override { return "Install extensions from the Vicinae store"; }
+  QString name() const override { return QStringLiteral("Extension Store"); }
+  QString description() const override { return tr("Install extensions from the Vicinae store"); }
   QString extensionId() const override { return "vicinae"; }
   QString commandId() const override { return "store"; }
   ImageURL iconUrl() const override {
@@ -16,7 +19,7 @@ class VicinaeStoreCommand : public BuiltinCallbackCommand {
     return icon;
   }
   std::vector<Preference> preferences() const override {
-    auto alwaysShowIntro = Preference::makeCheckbox("alwaysShowIntro", "Always show intro");
+    auto alwaysShowIntro = Preference::makeCheckbox("alwaysShowIntro", tr("Always show intro"));
     alwaysShowIntro.setDefaultValue(false);
     return {alwaysShowIntro};
   }
@@ -26,7 +29,7 @@ class VicinaeStoreCommand : public BuiltinCallbackCommand {
     auto alwaysShowIntro = ctrl.preferenceValues().value("alwaysShowIntro").toBool(false);
 
     if (alwaysShowIntro || !ctrl.storage().getItem("introCompleted").toBool()) {
-      static const QString INTRO = QStringLiteral(R"(
+      static const QString INTRO = tr(R"(
 # Welcome to the vicinae extension store
 
 The vicinae extension store features community-built extensions that have been approved by our core contributors.
@@ -39,7 +42,7 @@ If you're looking to build your own extension, take a look at the [documentation
       icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
       auto storage = ctrl.storage();
       ctx->navigation->pushView(
-          new StoreIntroViewHost(INTRO, icon, "Continue to store", [storage, ctx]() mutable {
+          new StoreIntroViewHost(INTRO, icon, tr("Continue to store"), [storage, ctx]() mutable {
             storage.setItem("introCompleted", true);
             ctx->navigation->replaceView<VicinaeStoreViewHost>();
           }));

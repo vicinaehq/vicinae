@@ -73,7 +73,7 @@ void ScriptExecutorViewHost::initialize() {
     rebuildHtml();
   });
   connect(m_process, &QProcess::errorOccurred, this, [this, toastService]() {
-    toastService->failure(QString("Script execution failed: %1").arg(m_process->errorString()));
+    toastService->failure(tr("Script execution failed: %1").arg(m_process->errorString()));
   });
   connect(m_process, &QProcess::started, this, [this, toastService]() {
     m_startedAt = QDateTime::currentDateTime();
@@ -83,14 +83,14 @@ void ScriptExecutorViewHost::initialize() {
     if (!m_startedAt || m_exited) return;
     auto secs = m_startedAt->secsTo(QDateTime::currentDateTime());
     if (secs < 1) return;
-    toastService->dynamic(QString("Running... (%1s ago)").arg(secs));
+    toastService->dynamic(tr("Running... (%1s ago)").arg(secs));
   });
   connect(m_process, &QProcess::finished, this, [this, toastService](int code) {
     auto ms = m_startedAt->msecsTo(QDateTime::currentDateTime());
     m_exited = true;
     m_toastUpdater.stop();
     toastService->clear();
-    setNavigationTitle(QString("Done in %1s (exit=%2)").arg(ms / 1e3).arg(code));
+    setNavigationTitle(tr("Done in %1s (exit=%2)").arg(ms / 1e3).arg(code));
     emit runningChanged();
     generateActions();
   });
@@ -102,7 +102,7 @@ void ScriptExecutorViewHost::beforePop() {
   auto toastService = context()->services->toastService();
   if (!m_exited && m_process->state() == QProcess::Running) {
     m_process->kill();
-    toastService->failure("Script process killed");
+    toastService->failure(tr("Script process killed"));
   } else {
     toastService->clear();
   }
@@ -111,7 +111,7 @@ void ScriptExecutorViewHost::beforePop() {
 void ScriptExecutorViewHost::killProcess() {
   if (!m_exited && m_process->state() == QProcess::Running) {
     m_process->kill();
-    context()->services->toastService()->failure("Script process killed");
+    context()->services->toastService()->failure(tr("Script process killed"));
   }
 }
 
@@ -131,7 +131,7 @@ void ScriptExecutorViewHost::startProcess() {
   env.insert("FORCE_COLOR", "1");
   m_process->setEnvironment(env.toStringList());
   m_process->start();
-  toastService->dynamic("Running...");
+  toastService->dynamic(tr("Running..."));
   m_toastUpdater.setInterval(1000);
   m_toastUpdater.start();
 }
@@ -146,11 +146,11 @@ void ScriptExecutorViewHost::generateActions() {
   auto *section = panel->createSection();
 
   if (!m_exited) {
-    section->addAction(new StaticAction("Kill process", BuiltinIcon::Droplets,
+    section->addAction(new StaticAction(tr("Kill process"), BuiltinIcon::Droplets,
                                         [this](ApplicationContext *) { killProcess(); }));
   } else {
-    section->addAction(
-        new StaticAction("Run script again", BuiltinIcon::Undo, [this](ApplicationContext *) { rerun(); }));
+    section->addAction(new StaticAction(tr("Run script again"), BuiltinIcon::Undo,
+                                        [this](ApplicationContext *) { rerun(); }));
   }
 
   setActions(std::move(panel));

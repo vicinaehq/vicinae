@@ -12,13 +12,13 @@ Item {
 
         FormField {
             id: authorField
-            label: "Author"
+            label: qsTr("Author")
             error: root.host.authorError
-            info: 'If you plan on submitting your extension to the <a href="vicinae://launch/core/store">Vicinae store</a>, this must exactly match your GitHub handle. Otherwise, you can set it to anything.'
+            info: qsTr('If you plan on submitting your extension to the <a href="vicinae://launch/core/store">Vicinae store</a>, this must exactly match your GitHub handle. Otherwise, you can set it to anything.')
 
             FormTextInput {
                 text: root.host.author
-                placeholder: "Username"
+                placeholder: qsTr("Username")
                 hasError: authorField.error !== ""
                 onTextEdited: root.host.author = text
             }
@@ -28,12 +28,12 @@ Item {
 
         FormField {
             id: extTitleField
-            label: "Extension Title"
+            label: qsTr("Extension Title")
             error: root.host.titleError
 
             FormTextInput {
                 text: root.host.title
-                placeholder: "My Extension"
+                placeholder: qsTr("My Extension")
                 hasError: extTitleField.error !== ""
                 onTextEdited: root.host.title = text
             }
@@ -41,13 +41,13 @@ Item {
 
         FormField {
             id: descriptionField
-            label: "Description"
+            label: qsTr("Description")
             error: root.host.descriptionError
             topAlignLabel: true
 
             FormTextArea {
                 text: root.host.description
-                placeholder: "An extension that does super cool things"
+                placeholder: qsTr("An extension that does super cool things")
                 hasError: descriptionField.error !== ""
                 onTextEdited: root.host.description = text
             }
@@ -55,7 +55,7 @@ Item {
 
         FormField {
             id: locationField
-            label: "Location"
+            label: qsTr("Location")
             error: root.host.locationError
 
             FormTextInput {
@@ -70,12 +70,12 @@ Item {
 
         FormField {
             id: cmdTitleField
-            label: "Command Title"
+            label: qsTr("Command Title")
             error: root.host.commandTitleError
 
             FormTextInput {
                 text: root.host.commandTitle
-                placeholder: "My Wonderful Command"
+                placeholder: qsTr("My Wonderful Command")
                 hasError: cmdTitleField.error !== ""
                 onTextEdited: root.host.commandTitle = text
             }
@@ -83,20 +83,20 @@ Item {
 
         FormField {
             id: cmdDescField
-            label: "Description"
+            label: qsTr("Description")
             error: root.host.commandDescriptionError
             topAlignLabel: true
 
             FormTextArea {
                 text: root.host.commandDescription
-                placeholder: "My command does this, and that..."
+                placeholder: qsTr("My command does this, and that...")
                 hasError: cmdDescField.error !== ""
                 onTextEdited: root.host.commandDescription = text
             }
         }
 
         FormField {
-            label: "Template"
+            label: qsTr("Template")
 
             SearchableDropdown {
                 items: root.host.templateItems

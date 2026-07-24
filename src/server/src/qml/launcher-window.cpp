@@ -567,16 +567,16 @@ void LauncherWindow::buildFooterMenu() {
   state->setId(QStringLiteral("footer-menu"));
 
   auto *appSection = state->createSection();
-  appSection->addAction(new StaticAction(QStringLiteral("Open Settings"), ImageURL::builtin("cog"),
-                                         [](ApplicationContext *ctx) {
-                                           ctx->navigation->closeWindow();
-                                           ctx->settings->openWindow();
-                                         }));
-  appSection->addAction(new StaticAction(QStringLiteral("Keyboard Shortcuts"), ImageURL::builtin("keyboard"),
-                                         [](ApplicationContext *ctx) {
-                                           ctx->navigation->closeWindow();
-                                           ctx->settings->openTab(QStringLiteral("shortcuts"));
-                                         }));
+  appSection->addAction(
+      new StaticAction(tr("Open Settings"), ImageURL::builtin("cog"), [](ApplicationContext *ctx) {
+        ctx->navigation->closeWindow();
+        ctx->settings->openWindow();
+      }));
+  appSection->addAction(
+      new StaticAction(tr("Keyboard Shortcuts"), ImageURL::builtin("keyboard"), [](ApplicationContext *ctx) {
+        ctx->navigation->closeWindow();
+        ctx->settings->openTab(QStringLiteral("shortcuts"));
+      }));
   appSection->addAction(new StaticAction(QStringLiteral("Extension Store"), ImageURL::builtin("cart"),
                                          [](ApplicationContext *ctx) {
                                            ctx->navigation->popToRoot();
@@ -585,21 +585,21 @@ void LauncherWindow::buildFooterMenu() {
                                          }));
 
   auto *helpSection = state->createSection();
-  helpSection->addAction(new StaticAction(QStringLiteral("Documentation"), ImageURL::builtin("book"),
-                                          [](ApplicationContext *ctx) {
-                                            ctx->services->appDb()->openTarget(Omnicast::DOC_URL);
-                                            ctx->navigation->showHud(QStringLiteral("Opened in browser"));
-                                          }));
   helpSection->addAction(
-      new StaticAction(QStringLiteral("Report a Bug"), ImageURL::builtin("bug"), [](ApplicationContext *ctx) {
-        ctx->services->appDb()->openTarget(makeVicinaeBugReportUrl());
-        ctx->navigation->showHud(QStringLiteral("Opened in browser"));
+      new StaticAction(tr("Documentation"), ImageURL::builtin("book"), [](ApplicationContext *ctx) {
+        ctx->services->appDb()->openTarget(Omnicast::DOC_URL);
+        ctx->navigation->showHud(tr("Opened in browser"));
       }));
-  helpSection->addAction(new StaticAction(QStringLiteral("About Vicinae"), ImageURL::builtin("info-01"),
-                                          [](ApplicationContext *ctx) {
-                                            ctx->navigation->closeWindow();
-                                            ctx->settings->openTab(QStringLiteral("about"));
-                                          }));
+  helpSection->addAction(
+      new StaticAction(tr("Report a Bug"), ImageURL::builtin("bug"), [](ApplicationContext *ctx) {
+        ctx->services->appDb()->openTarget(makeVicinaeBugReportUrl());
+        ctx->navigation->showHud(tr("Opened in browser"));
+      }));
+  helpSection->addAction(
+      new StaticAction(tr("About Vicinae"), ImageURL::builtin("info-01"), [](ApplicationContext *ctx) {
+        ctx->navigation->closeWindow();
+        ctx->settings->openTab(QStringLiteral("about"));
+      }));
 
   m_footerPanel->setActions(std::move(state));
 }

@@ -34,7 +34,7 @@ void RaycastStoreViewHost::initialize() {
 
   m_store = context()->services->raycastStore();
 
-  setSearchPlaceholderText("Browse Raycast extensions");
+  setSearchPlaceholderText(tr("Browse Raycast extensions"));
 
   connect(context()->services->extensionRegistry(), &ExtensionRegistry::extensionsChanged, this,
           &RaycastStoreViewHost::refresh);
@@ -66,7 +66,7 @@ void RaycastStoreViewHost::handleFinishedPage() {
   auto result = m_listResultWatcher.result();
   if (!result) {
     qWarning() << "[RaycastStore] fetch error:" << result.error();
-    context()->services->toastService()->setToast("Failed to fetch extensions", ToastStyle::Danger);
+    context()->services->toastService()->setToast(tr("Failed to fetch extensions"), ToastStyle::Danger);
     return;
   }
 
@@ -84,7 +84,7 @@ void RaycastStoreViewHost::tryPopulateModel() {
 
   setLoading(false);
   m_section.setEntries(m_pendingPage->extensions, context()->services->extensionRegistry(),
-                       m_store->compatMap(), QStringLiteral("Extensions"));
+                       m_store->compatMap(), tr("Extensions"));
   m_pendingPage.reset();
 }
 
@@ -93,13 +93,13 @@ void RaycastStoreViewHost::handleFinishedQuery() {
 
   auto result = m_queryResultWatcher.result();
   if (!result) {
-    context()->services->toastService()->setToast("Failed to search extensions", ToastStyle::Danger);
+    context()->services->toastService()->setToast(tr("Failed to search extensions"), ToastStyle::Danger);
     return;
   }
 
   setLoading(false);
   m_section.setEntries(result->extensions, context()->services->extensionRegistry(), m_store->compatMap(),
-                       QStringLiteral("Results"));
+                       tr("Results"));
 }
 
 void RaycastStoreViewHost::handleDebounce() {

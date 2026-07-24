@@ -4,10 +4,13 @@
 #include "theme.hpp"
 #include <qcontainerfwd.h>
 #include "switch-windows-command.hpp"
+#include <QCoreApplication>
 
 class WindowManagementExtension : public BuiltinCommandRepository {
   QString id() const override { return "wm"; }
-  QString displayName() const override { return "Window Management"; }
+  QString displayName() const override {
+    return QCoreApplication::translate("WindowManagementExtension", "Window Management");
+  }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("app-window-list").setBackgroundTint(SemanticColor::Cyan);
   }

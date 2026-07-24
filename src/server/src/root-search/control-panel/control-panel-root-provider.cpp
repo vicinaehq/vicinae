@@ -41,7 +41,8 @@ public:
     const HINSTANCE ret = ShellExecuteW(nullptr, L"open", target.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 
     if (reinterpret_cast<INT_PTR>(ret) <= 32) {
-      ctx->services->toastService()->failure("Failed to open settings");
+      ctx->services->toastService()->failure(
+          QCoreApplication::translate("OpenControlPanelItemAction", "Failed to open settings"));
       return;
     }
 
@@ -66,7 +67,8 @@ public:
     sei.lpIDList = const_cast<char *>(m_pidl.constData());
 
     if (!ShellExecuteExW(&sei)) {
-      ctx->services->toastService()->failure("Failed to open settings");
+      ctx->services->toastService()->failure(
+          QCoreApplication::translate("OpenControlPanelTaskAction", "Failed to open settings"));
       return;
     }
 
@@ -170,7 +172,7 @@ std::vector<WinControlPanelTask> enumerateControlPanelTasks() {
 
 QString WinControlPanelRootItem::title() const { return m_applet.displayName; }
 
-QString WinControlPanelRootItem::typeDisplayName() const { return "Control Panel"; }
+QString WinControlPanelRootItem::typeDisplayName() const { return tr("Control Panel"); }
 
 ImageURL WinControlPanelRootItem::iconUrl() const { return ImageURL::winShellIcon(m_applet.parsingName); }
 
@@ -180,11 +182,11 @@ EntrypointId WinControlPanelRootItem::uniqueId() const {
 }
 
 AccessoryList WinControlPanelRootItem::accessories() const {
-  return {{.text = "Control Panel", .color = SemanticColor::TextMuted}};
+  return {{.text = tr("Control Panel"), .color = SemanticColor::TextMuted}};
 }
 
 std::vector<std::pair<QString, QString>> WinControlPanelRootItem::settingsMetadata() const {
-  return {{"Name", m_applet.displayName}, {"Where", "shell:" + m_applet.parsingName}};
+  return {{tr("Name"), m_applet.displayName}, {tr("Where"), "shell:" + m_applet.parsingName}};
 }
 
 std::unique_ptr<ActionPanelState>
@@ -195,10 +197,10 @@ WinControlPanelRootItem::newActionPanel(ApplicationContext *ctx, const RootItemM
   auto itemSection = panel->createSection();
 
   const QString target = "shell:" + m_applet.parsingName;
-  auto open = new OpenControlPanelItemAction("Open Applet", iconUrl(), target);
+  auto open = new OpenControlPanelItemAction(tr("Open Applet"), iconUrl(), target);
   mainSection->addAction(open);
 
-  utils->addAction(new CopyToClipboardAction(Clipboard::Text(target), "Copy Path"));
+  utils->addAction(new CopyToClipboardAction(Clipboard::Text(target), tr("Copy Path")));
 
   for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
     itemSection->addAction(action);
@@ -210,7 +212,7 @@ WinControlPanelRootItem::newActionPanel(ApplicationContext *ctx, const RootItemM
 
 QString WinControlPanelTaskRootItem::title() const { return m_task.displayName; }
 
-QString WinControlPanelTaskRootItem::typeDisplayName() const { return "Control Panel"; }
+QString WinControlPanelTaskRootItem::typeDisplayName() const { return tr("Control Panel"); }
 
 ImageURL WinControlPanelTaskRootItem::iconUrl() const {
   return ImageURL::winShellIcon(ALL_TASKS_ICON_PREFIX + m_task.taskId);
@@ -221,11 +223,11 @@ EntrypointId WinControlPanelTaskRootItem::uniqueId() const {
 }
 
 AccessoryList WinControlPanelTaskRootItem::accessories() const {
-  return {{.text = "Control Panel", .color = SemanticColor::TextMuted}};
+  return {{.text = tr("Control Panel"), .color = SemanticColor::TextMuted}};
 }
 
 std::vector<std::pair<QString, QString>> WinControlPanelTaskRootItem::settingsMetadata() const {
-  return {{"Name", m_task.displayName}, {"Task ID", m_task.taskId}};
+  return {{tr("Name"), m_task.displayName}, {tr("Task ID"), m_task.taskId}};
 }
 
 std::unique_ptr<ActionPanelState>
@@ -234,7 +236,7 @@ WinControlPanelTaskRootItem::newActionPanel(ApplicationContext *ctx, const RootI
   auto mainSection = panel->createSection();
   auto itemSection = panel->createSection();
 
-  auto open = new OpenControlPanelTaskAction("Open", iconUrl(), m_task.pidl);
+  auto open = new OpenControlPanelTaskAction(tr("Open"), iconUrl(), m_task.pidl);
   mainSection->addAction(open);
 
   for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
@@ -247,9 +249,11 @@ WinControlPanelTaskRootItem::newActionPanel(ApplicationContext *ctx, const RootI
 
 QString WinControlPanelRootProvider::uniqueId() const { return "control-panel"; }
 
-QString WinControlPanelRootProvider::displayName() const { return "Control Panel"; }
+QString WinControlPanelRootProvider::displayName() const { return tr("Control Panel"); }
 
-QString WinControlPanelRootProvider::description() const { return "Control Panel applets and system tasks."; }
+QString WinControlPanelRootProvider::description() const {
+  return tr("Control Panel applets and system tasks.");
+}
 
 ImageURL WinControlPanelRootProvider::icon() const { return ImageURL::winShellIcon(CONTROL_PANEL_CLSID); }
 

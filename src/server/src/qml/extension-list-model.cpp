@@ -186,12 +186,12 @@ void ExtensionListModel::setFilter(const QString &text) {
 }
 
 QString ExtensionListModel::searchPlaceholder() const {
-  return m_placeholder.isEmpty() ? QStringLiteral("Search...") : m_placeholder;
+  return m_placeholder.isEmpty() ? tr("Search...") : m_placeholder;
 }
 
 QString ExtensionListModel::emptyTitle() const {
   if (m_model.emptyView) return QString::fromStdString(m_model.emptyView->title);
-  return QStringLiteral("No results");
+  return tr("No results");
 }
 
 QString ExtensionListModel::emptyDescription() const {

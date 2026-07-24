@@ -40,8 +40,8 @@ void CreateExtensionViewHost::initialize() {
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto actionSection = panel->createSection();
-  auto submitAction = new StaticAction(QStringLiteral("Create extension"), ImageURL::builtin("enter-key"),
-                                       [this]() { submit(); });
+  auto submitAction =
+      new StaticAction(tr("Create extension"), ImageURL::builtin("enter-key"), [this]() { submit(); });
   actionSection->addAction(submitAction);
   setActions(std::move(panel));
 }
@@ -59,15 +59,15 @@ void CreateExtensionViewHost::submit() {
   bool valid = true;
 
   if (m_author.size() < 3) {
-    m_authorError = QStringLiteral("Min. 3 chars");
+    m_authorError = tr("Min. 3 chars");
     valid = false;
   }
   if (m_title.size() < 3) {
-    m_titleError = QStringLiteral("Min. 3 chars");
+    m_titleError = tr("Min. 3 chars");
     valid = false;
   }
   if (m_description.size() < 16) {
-    m_descriptionError = QStringLiteral("Min. 16 chars");
+    m_descriptionError = tr("Min. 16 chars");
     valid = false;
   }
 
@@ -76,25 +76,25 @@ void CreateExtensionViewHost::submit() {
     std::error_code ec;
     fs::path const path = expandPath(m_location.toStdString());
     if (!fs::is_directory(path, ec)) {
-      m_locationError = QStringLiteral("Must exist");
+      m_locationError = tr("Must exist");
       valid = false;
     }
   }
 
   if (m_commandTitle.size() < 3) {
-    m_commandTitleError = QStringLiteral("Min. 3 chars");
+    m_commandTitleError = tr("Min. 3 chars");
     valid = false;
   }
 
   if (m_commandDescription.size() < 3) {
-    m_commandDescriptionError = QStringLiteral("Min. 3 chars");
+    m_commandDescriptionError = tr("Min. 3 chars");
     valid = false;
   }
 
   emit errorsChanged();
 
   if (!valid) {
-    toast->failure("Form has errors");
+    toast->failure(tr("Form has errors"));
     return;
   }
 
@@ -115,7 +115,7 @@ void CreateExtensionViewHost::submit() {
   auto v = gen.generate(targetDir, cfg);
 
   if (!v) {
-    toast->failure("Failed to create extension");
+    toast->failure(tr("Failed to create extension"));
     qCritical() << "Failed to create extension with error" << v.error();
     return;
   }
@@ -125,7 +125,7 @@ void CreateExtensionViewHost::submit() {
   popSelf();
   context()->navigation->pushView(successView);
   context()->navigation->setNavigationIcon(ImageURL::emoji("🥳"));
-  context()->navigation->setNavigationTitle("Extension created!");
+  context()->navigation->setNavigationTitle(tr("Extension created!"));
 }
 
 void CreateExtensionViewHost::selectTemplate(const QVariantMap &item) {

@@ -2,9 +2,12 @@
 #include "common.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <QCoreApplication>
 #include <qjsonobject.h>
 
 class AppRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(AppRootItem)
+
   std::shared_ptr<AbstractApplication> m_app;
 
   double baseScoreWeight() const override;

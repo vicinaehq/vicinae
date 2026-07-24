@@ -19,7 +19,7 @@ double AppRootItem::baseScoreWeight() const { return 1; }
 
 QString AppRootItem::typeDisplayName() const {
   const QString category = m_app->category();
-  return category.isEmpty() ? QStringLiteral("Application") : category;
+  return category.isEmpty() ? tr("Application") : category;
 }
 
 std::vector<QString> AppRootItem::keywords() const {
@@ -38,18 +38,17 @@ QString AppRootItem::title() const { return m_app->displayName(); }
 QString AppRootItem::settingsDescription() const { return m_app->description(); }
 
 std::vector<std::pair<QString, QString>> AppRootItem::settingsMetadata() const {
-  return {{"ID", m_app->id()},
-          {"Name", m_app->displayName()},
-          {"Where", QString::fromStdString(m_app->path().string())},
-          {"Opens in terminal", m_app->isTerminalApp() ? "Yes" : "No"}};
+  return {{QStringLiteral("ID"), m_app->id()},
+          {tr("Name"), m_app->displayName()},
+          {tr("Where"), QString::fromStdString(m_app->path().string())},
+          {tr("Opens in terminal"), m_app->isTerminalApp() ? tr("Yes") : tr("No")}};
 }
 
 bool AppRootItem::isActive() const { return ServiceRegistry::instance()->appRuntime()->isRunning(*m_app); }
 
 AccessoryList AppRootItem::accessories() const {
   const QString category = m_app->category();
-  return {{.text = category.isEmpty() ? QStringLiteral("Application") : category,
-           .color = SemanticColor::TextMuted}};
+  return {{.text = category.isEmpty() ? tr("Application") : category, .color = SemanticColor::TextMuted}};
 }
 
 EntrypointId AppRootItem::uniqueId() const {
@@ -62,10 +61,10 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
                                                               const RootItemMetadata &metadata) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto appDb = ctx->services->appDb();
-  auto open = new OpenAppAction(m_app, "Open Application", {});
-  auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), "Copy App ID");
+  auto open = new OpenAppAction(m_app, tr("Open Application"), {});
+  auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), tr("Copy App ID"));
   auto copyLocation = new CopyToClipboardAction(
-      Clipboard::Text(QString::fromStdString(m_app->path().string())), "Copy App Location");
+      Clipboard::Text(QString::fromStdString(m_app->path().string())), tr("Copy App Location"));
   auto preferences = ctx->services->rootItemManager()->getPreferenceValues(uniqueId());
   QString const defaultAction = preferences.value("defaultAction").toString();
 
@@ -139,7 +138,9 @@ ImageURL AppRootProvider::icon() const {
   return ImageURL::builtin("app-window-grid-2x2").setBackgroundTint(Omnicast::ACCENT_COLOR);
 }
 
-QString AppRootProvider::displayName() const { return "Applications"; }
+QString AppRootProvider::displayName() const {
+  return QCoreApplication::translate("AppRootProvider", "Applications");
+}
 
 QString AppRootProvider::uniqueId() const { return "applications"; }
 

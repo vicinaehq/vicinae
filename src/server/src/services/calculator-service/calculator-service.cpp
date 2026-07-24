@@ -116,14 +116,14 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
       {"Today", 1}, {"A week ago", 7}, {"A month ago", 30}, {"A year ago", 365}};
 
   groups.reserve(dividers.size() + 2);
-  groups.push_back({"Pinned", {}});
+  groups.push_back({tr("Pinned"), {}});
 
   for (; it != records.end() && it->pinnedAt; ++it) {
     groups.back().second.emplace_back(*it);
   }
 
   now.date().startOfDay();
-  groups.push_back({"Today", {}});
+  groups.push_back({tr("Today"), {}});
 
   for (; it != records.end() && it->createdAt >= now.date().startOfDay() &&
          it->createdAt <= now.date().endOfDay();
@@ -135,7 +135,7 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
     QDate const startOfWeek(now.date().addDays(-(now.date().dayOfWeek() - 1)));
     QDate const endOfWeek(startOfWeek.addDays(7));
 
-    groups.push_back({"This week", {}});
+    groups.push_back({tr("This week"), {}});
 
     for (; it != records.end() && it->createdAt >= startOfWeek.startOfDay() &&
            it->createdAt <= endOfWeek.startOfDay();
@@ -148,7 +148,7 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
     QDate const startOfMonth(QDate(now.date().year(), now.date().month(), 1));
     QDateTime const endOfMonth = startOfMonth.addMonths(1).startOfDay();
 
-    groups.push_back({"This month", {}});
+    groups.push_back({tr("This month"), {}});
 
     for (; it != records.end() && it->createdAt >= startOfMonth.startOfDay() && it->createdAt <= endOfMonth;
          ++it) {
@@ -161,7 +161,7 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
     QDate const startOfYear(now.date().year(), 1, 1);
     QDate const endOfYear(startOfYear.addYears(1));
 
-    groups.push_back({"This year", {}});
+    groups.push_back({tr("This year"), {}});
 
     for (; it != records.end() && it->createdAt >= startOfYear.startOfDay() &&
            it->createdAt <= endOfYear.startOfDay();
@@ -170,7 +170,7 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
     }
   }
 
-  groups.push_back({"A few years ago", {}});
+  groups.push_back({tr("A few years ago"), {}});
 
   for (; it != records.end(); ++it) {
     groups.back().second.emplace_back(*it);

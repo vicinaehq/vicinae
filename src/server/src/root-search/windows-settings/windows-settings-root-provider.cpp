@@ -30,106 +30,106 @@ const QString &settingsGlyphFont() {
 
 // clang-format off
 constexpr auto SETTINGS_PAGES = std::to_array<WinSettingsPage>({
-    {"display", "Display", "System", "ms-settings:display", SegoeIcon::TVMonitor, "monitor resolution brightness scale hdr screen"},
-    {"night-light", "Night Light", "System", "ms-settings:nightlight", SegoeIcon::QuietHours, "blue light filter"},
-    {"sound", "Sound", "System", "ms-settings:sound", SegoeIcon::Volume, "audio output input volume speaker microphone"},
-    {"volume-mixer", "Volume Mixer", "System", "ms-settings:apps-volume", SegoeIcon::Equalizer, "audio per app"},
-    {"notifications", "Notifications", "System", "ms-settings:notifications", SegoeIcon::Ringer, "banners alerts"},
-    {"focus", "Focus", "System", "ms-settings:quiethours", SegoeIcon::RingerSilent, "do not disturb dnd quiet hours"},
-    {"power", "Power & Battery", "System", "ms-settings:powersleep", SegoeIcon::Battery10, "sleep saver screen timeout energy hibernate"},
-    {"storage", "Storage", "System", "ms-settings:storagesense", SegoeIcon::HardDrive, "disk space cleanup sense"},
-    {"nearby-sharing", "Nearby Sharing", "System", "ms-settings:crossdevice", SegoeIcon::Share, "share files"},
-    {"multitasking", "Multitasking", "System", "ms-settings:multitasking", SegoeIcon::TaskView, "snap layouts alt tab virtual desktops"},
-    {"activation", "Activation", "System", "ms-settings:activation", SegoeIcon::Permissions, "license product key"},
-    {"troubleshoot", "Troubleshoot", "System", "ms-settings:troubleshoot", SegoeIcon::Repair, "fix problems"},
-    {"recovery", "Recovery", "System", "ms-settings:recovery", SegoeIcon::UpdateRestore, "reset pc restore reinstall"},
-    {"projection", "Projecting to This PC", "System", "ms-settings:project", SegoeIcon::MiracastLogoSmall, "miracast wireless display cast"},
-    {"remote-desktop", "Remote Desktop", "System", "ms-settings:remotedesktop", SegoeIcon::Remote, "rdp"},
-    {"clipboard", "Clipboard", "System", "ms-settings:clipboard", SegoeIcon::Paste, "history sync paste"},
-    {"about", "About", "System", "ms-settings:about", SegoeIcon::Info, "system info version specs rename pc"},
-    {"optional-features", "Optional Features", "System", "ms-settings:optionalfeatures", SegoeIcon::Add, "add windows features"},
-    {"developers", "For Developers", "System", "ms-settings:developers", SegoeIcon::DeveloperTools, "developer mode sudo"},
+    {"display", QT_TRANSLATE_NOOP("WinSettingsPage", "Display"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:display", SegoeIcon::TVMonitor, "monitor resolution brightness scale hdr screen"},
+    {"night-light", QT_TRANSLATE_NOOP("WinSettingsPage", "Night Light"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:nightlight", SegoeIcon::QuietHours, "blue light filter"},
+    {"sound", QT_TRANSLATE_NOOP("WinSettingsPage", "Sound"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:sound", SegoeIcon::Volume, "audio output input volume speaker microphone"},
+    {"volume-mixer", QT_TRANSLATE_NOOP("WinSettingsPage", "Volume Mixer"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:apps-volume", SegoeIcon::Equalizer, "audio per app"},
+    {"notifications", QT_TRANSLATE_NOOP("WinSettingsPage", "Notifications"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:notifications", SegoeIcon::Ringer, "banners alerts"},
+    {"focus", QT_TRANSLATE_NOOP("WinSettingsPage", "Focus"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:quiethours", SegoeIcon::RingerSilent, "do not disturb dnd quiet hours"},
+    {"power", QT_TRANSLATE_NOOP("WinSettingsPage", "Power & Battery"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:powersleep", SegoeIcon::Battery10, "sleep saver screen timeout energy hibernate"},
+    {"storage", QT_TRANSLATE_NOOP("WinSettingsPage", "Storage"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:storagesense", SegoeIcon::HardDrive, "disk space cleanup sense"},
+    {"nearby-sharing", QT_TRANSLATE_NOOP("WinSettingsPage", "Nearby Sharing"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:crossdevice", SegoeIcon::Share, "share files"},
+    {"multitasking", QT_TRANSLATE_NOOP("WinSettingsPage", "Multitasking"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:multitasking", SegoeIcon::TaskView, "snap layouts alt tab virtual desktops"},
+    {"activation", QT_TRANSLATE_NOOP("WinSettingsPage", "Activation"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:activation", SegoeIcon::Permissions, "license product key"},
+    {"troubleshoot", QT_TRANSLATE_NOOP("WinSettingsPage", "Troubleshoot"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:troubleshoot", SegoeIcon::Repair, "fix problems"},
+    {"recovery", QT_TRANSLATE_NOOP("WinSettingsPage", "Recovery"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:recovery", SegoeIcon::UpdateRestore, "reset pc restore reinstall"},
+    {"projection", QT_TRANSLATE_NOOP("WinSettingsPage", "Projecting to This PC"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:project", SegoeIcon::MiracastLogoSmall, "miracast wireless display cast"},
+    {"remote-desktop", QT_TRANSLATE_NOOP("WinSettingsPage", "Remote Desktop"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:remotedesktop", SegoeIcon::Remote, "rdp"},
+    {"clipboard", QT_TRANSLATE_NOOP("WinSettingsPage", "Clipboard"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:clipboard", SegoeIcon::Paste, "history sync paste"},
+    {"about", QT_TRANSLATE_NOOP("WinSettingsPage", "About"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:about", SegoeIcon::Info, "system info version specs rename pc"},
+    {"optional-features", QT_TRANSLATE_NOOP("WinSettingsPage", "Optional Features"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:optionalfeatures", SegoeIcon::Add, "add windows features"},
+    {"developers", QT_TRANSLATE_NOOP("WinSettingsPage", "For Developers"), QT_TRANSLATE_NOOP("WinSettingsPage", "System"), "ms-settings:developers", SegoeIcon::DeveloperTools, "developer mode sudo"},
 
-    {"bluetooth", "Bluetooth & Devices", "Bluetooth & Devices", "ms-settings:bluetooth", SegoeIcon::Bluetooth, "pair pairing wireless"},
-    {"connected-devices", "Devices", "Bluetooth & Devices", "ms-settings:connecteddevices", SegoeIcon::Devices, "add device"},
-    {"printers", "Printers & Scanners", "Bluetooth & Devices", "ms-settings:printers", SegoeIcon::Print, "print scan"},
-    {"mobile-devices", "Mobile Devices", "Bluetooth & Devices", "ms-settings:mobile-devices", SegoeIcon::CellPhone, "phone link android iphone"},
-    {"cameras", "Cameras", "Bluetooth & Devices", "ms-settings:camera", SegoeIcon::Camera, "webcam"},
-    {"mouse", "Mouse", "Bluetooth & Devices", "ms-settings:mousetouchpad", SegoeIcon::Mouse, "cursor pointer speed scroll"},
-    {"touchpad", "Touchpad", "Bluetooth & Devices", "ms-settings:devices-touchpad", SegoeIcon::Touchpad, "gestures trackpad"},
-    {"pen", "Pen & Windows Ink", "Bluetooth & Devices", "ms-settings:pen", SegoeIcon::Edit, "tablet stylus"},
-    {"autoplay", "AutoPlay", "Bluetooth & Devices", "ms-settings:autoplay", SegoeIcon::Play, "removable drive memory card"},
-    {"usb", "USB", "Bluetooth & Devices", "ms-settings:usb", SegoeIcon::USB, ""},
+    {"bluetooth", QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:bluetooth", SegoeIcon::Bluetooth, "pair pairing wireless"},
+    {"connected-devices", QT_TRANSLATE_NOOP("WinSettingsPage", "Devices"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:connecteddevices", SegoeIcon::Devices, "add device"},
+    {"printers", QT_TRANSLATE_NOOP("WinSettingsPage", "Printers & Scanners"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:printers", SegoeIcon::Print, "print scan"},
+    {"mobile-devices", QT_TRANSLATE_NOOP("WinSettingsPage", "Mobile Devices"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:mobile-devices", SegoeIcon::CellPhone, "phone link android iphone"},
+    {"cameras", QT_TRANSLATE_NOOP("WinSettingsPage", "Cameras"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:camera", SegoeIcon::Camera, "webcam"},
+    {"mouse", QT_TRANSLATE_NOOP("WinSettingsPage", "Mouse"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:mousetouchpad", SegoeIcon::Mouse, "cursor pointer speed scroll"},
+    {"touchpad", QT_TRANSLATE_NOOP("WinSettingsPage", "Touchpad"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:devices-touchpad", SegoeIcon::Touchpad, "gestures trackpad"},
+    {"pen", QT_TRANSLATE_NOOP("WinSettingsPage", "Pen & Windows Ink"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:pen", SegoeIcon::Edit, "tablet stylus"},
+    {"autoplay", QT_TRANSLATE_NOOP("WinSettingsPage", "AutoPlay"), QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:autoplay", SegoeIcon::Play, "removable drive memory card"},
+    {"usb", "USB", QT_TRANSLATE_NOOP("WinSettingsPage", "Bluetooth & Devices"), "ms-settings:usb", SegoeIcon::USB, ""},
 
-    {"network", "Network & Internet", "Network & Internet", "ms-settings:network-status", SegoeIcon::Globe, "internet status connection"},
-    {"wifi", "Wi-Fi", "Network & Internet", "ms-settings:network-wifi", SegoeIcon::Wifi, "wireless wlan"},
-    {"ethernet", "Ethernet", "Network & Internet", "ms-settings:network-ethernet", SegoeIcon::Ethernet, "lan wired"},
-    {"vpn", "VPN", "Network & Internet", "ms-settings:network-vpn", SegoeIcon::VPN, "tunnel"},
-    {"mobile-hotspot", "Mobile Hotspot", "Network & Internet", "ms-settings:network-mobilehotspot", SegoeIcon::InternetSharing, "tethering"},
-    {"airplane-mode", "Airplane Mode", "Network & Internet", "ms-settings:network-airplanemode", SegoeIcon::Airplane, "flight"},
-    {"proxy", "Proxy", "Network & Internet", "ms-settings:network-proxy", SegoeIcon::Globe, ""},
-    {"dial-up", "Dial-up", "Network & Internet", "ms-settings:network-dialup", SegoeIcon::Phone, "modem"},
-    {"advanced-network", "Advanced Network Settings", "Network & Internet", "ms-settings:network-advancedsettings", SegoeIcon::NetworkAdapter, "adapters data usage"},
+    {"network", QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-status", SegoeIcon::Globe, "internet status connection"},
+    {"wifi", QT_TRANSLATE_NOOP("WinSettingsPage", "Wi-Fi"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-wifi", SegoeIcon::Wifi, "wireless wlan"},
+    {"ethernet", QT_TRANSLATE_NOOP("WinSettingsPage", "Ethernet"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-ethernet", SegoeIcon::Ethernet, "lan wired"},
+    {"vpn", "VPN", QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-vpn", SegoeIcon::VPN, "tunnel"},
+    {"mobile-hotspot", QT_TRANSLATE_NOOP("WinSettingsPage", "Mobile Hotspot"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-mobilehotspot", SegoeIcon::InternetSharing, "tethering"},
+    {"airplane-mode", QT_TRANSLATE_NOOP("WinSettingsPage", "Airplane Mode"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-airplanemode", SegoeIcon::Airplane, "flight"},
+    {"proxy", QT_TRANSLATE_NOOP("WinSettingsPage", "Proxy"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-proxy", SegoeIcon::Globe, ""},
+    {"dial-up", QT_TRANSLATE_NOOP("WinSettingsPage", "Dial-up"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-dialup", SegoeIcon::Phone, "modem"},
+    {"advanced-network", QT_TRANSLATE_NOOP("WinSettingsPage", "Advanced Network Settings"), QT_TRANSLATE_NOOP("WinSettingsPage", "Network & Internet"), "ms-settings:network-advancedsettings", SegoeIcon::NetworkAdapter, "adapters data usage"},
 
-    {"background", "Background", "Personalization", "ms-settings:personalization-background", SegoeIcon::Picture, "wallpaper desktop"},
-    {"colors", "Colors", "Personalization", "ms-settings:personalization-colors", SegoeIcon::Color, "accent dark mode light mode theme"},
-    {"themes", "Themes", "Personalization", "ms-settings:themes", SegoeIcon::Personalize, ""},
-    {"lock-screen", "Lock Screen", "Personalization", "ms-settings:lockscreen", SegoeIcon::Lock, ""},
-    {"touch-keyboard", "Touch Keyboard", "Personalization", "ms-settings:personalization-touchkeyboard", SegoeIcon::KeyboardClassic, "osk"},
-    {"start", "Start", "Personalization", "ms-settings:personalization-start", SegoeIcon::GridView, "start menu"},
-    {"taskbar", "Taskbar", "Personalization", "ms-settings:taskbar", SegoeIcon::DockBottom, "system tray"},
-    {"fonts", "Fonts", "Personalization", "ms-settings:fonts", SegoeIcon::Font, "typeface install font"},
-    {"dynamic-lighting", "Dynamic Lighting", "Personalization", "ms-settings:personalization-lighting", SegoeIcon::Lightbulb, "rgb"},
+    {"background", QT_TRANSLATE_NOOP("WinSettingsPage", "Background"), QT_TRANSLATE_NOOP("WinSettingsPage", "Personalization"), "ms-settings:personalization-background", SegoeIcon::Picture, "wallpaper desktop"},
+    {"colors", QT_TRANSLATE_NOOP("WinSettingsPage", "Colors"), QT_TRANSLATE_NOOP("WinSettingsPage", "Personalization"), "ms-settings:personalization-colors", SegoeIcon::Color, "accent dark mode light mode theme"},
+    {"themes", QT_TRANSLATE_NOOP("WinSettingsPage", "Themes"), QT_TRANSLATE_NOOP("WinSettingsPage", "Personalization"), "ms-settings:themes", SegoeIcon::Personalize, ""},
+    {"lock-screen", QT_TRANSLATE_NOOP("WinSettingsPage", "Lock Screen"), QT_TRANSLATE_NOOP("WinSettingsPage", "Personalization"), "ms-settings:lockscreen", SegoeIcon::Lock, ""},
+    {"touch-keyboard", QT_TRANSLATE_NOOP("WinSettingsPage", "Touch Keyboard"), QT_TRANSLATE_NOOP("WinSettingsPage", "Personalization"), "ms-settings:personalization-touchkeyboard", SegoeIcon::KeyboardClassic, "osk"},
+    {"start", QT_TRANSLATE_NOOP("WinSettingsPage", "Start"), QT_TRANSLATE_NOOP("WinSettingsPage", "Personalization"), "ms-settings:personalization-start", SegoeIcon::GridView, "start menu"},
+    {"taskbar", QT_TRANSLATE_NOOP("WinSettingsPage", "Taskbar"), QT_TRANSLATE_NOOP("WinSettingsPage", "Personalization"), "ms-settings:taskbar", SegoeIcon::DockBottom, "system tray"},
+    {"fonts", QT_TRANSLATE_NOOP("WinSettingsPage", "Fonts"), QT_TRANSLATE_NOOP("WinSettingsPage", "Personalization"), "ms-settings:fonts", SegoeIcon::Font, "typeface install font"},
+    {"dynamic-lighting", QT_TRANSLATE_NOOP("WinSettingsPage", "Dynamic Lighting"), QT_TRANSLATE_NOOP("WinSettingsPage", "Personalization"), "ms-settings:personalization-lighting", SegoeIcon::Lightbulb, "rgb"},
 
-    {"installed-apps", "Installed Apps", "Apps", "ms-settings:appsfeatures", SegoeIcon::AllApps, "uninstall programs remove add"},
-    {"default-apps", "Default Apps", "Apps", "ms-settings:defaultapps", SegoeIcon::OpenWith, "browser file associations"},
-    {"offline-maps", "Offline Maps", "Apps", "ms-settings:maps", SegoeIcon::DownloadMap, ""},
-    {"apps-for-websites", "Apps for Websites", "Apps", "ms-settings:appsforwebsites", SegoeIcon::Link, ""},
-    {"video-playback", "Video Playback", "Apps", "ms-settings:videoplayback", SegoeIcon::Video, "hdr streaming"},
-    {"startup-apps", "Startup Apps", "Apps", "ms-settings:startupapps", SegoeIcon::LightningBolt, "boot autostart"},
+    {"installed-apps", QT_TRANSLATE_NOOP("WinSettingsPage", "Installed Apps"), QT_TRANSLATE_NOOP("WinSettingsPage", "Apps"), "ms-settings:appsfeatures", SegoeIcon::AllApps, "uninstall programs remove add"},
+    {"default-apps", QT_TRANSLATE_NOOP("WinSettingsPage", "Default Apps"), QT_TRANSLATE_NOOP("WinSettingsPage", "Apps"), "ms-settings:defaultapps", SegoeIcon::OpenWith, "browser file associations"},
+    {"offline-maps", QT_TRANSLATE_NOOP("WinSettingsPage", "Offline Maps"), QT_TRANSLATE_NOOP("WinSettingsPage", "Apps"), "ms-settings:maps", SegoeIcon::DownloadMap, ""},
+    {"apps-for-websites", QT_TRANSLATE_NOOP("WinSettingsPage", "Apps for Websites"), QT_TRANSLATE_NOOP("WinSettingsPage", "Apps"), "ms-settings:appsforwebsites", SegoeIcon::Link, ""},
+    {"video-playback", QT_TRANSLATE_NOOP("WinSettingsPage", "Video Playback"), QT_TRANSLATE_NOOP("WinSettingsPage", "Apps"), "ms-settings:videoplayback", SegoeIcon::Video, "hdr streaming"},
+    {"startup-apps", QT_TRANSLATE_NOOP("WinSettingsPage", "Startup Apps"), QT_TRANSLATE_NOOP("WinSettingsPage", "Apps"), "ms-settings:startupapps", SegoeIcon::LightningBolt, "boot autostart"},
 
-    {"your-info", "Your Info", "Accounts", "ms-settings:yourinfo", SegoeIcon::Contact, "account picture profile"},
-    {"email-accounts", "Email & Accounts", "Accounts", "ms-settings:emailandaccounts", SegoeIcon::Mail, "mail"},
-    {"sign-in-options", "Sign-in Options", "Accounts", "ms-settings:signinoptions", SegoeIcon::Fingerprint, "windows hello pin password face"},
-    {"work-school", "Access Work or School", "Accounts", "ms-settings:workplace", SegoeIcon::Work, "domain organization"},
-    {"family-users", "Family & Other Users", "Accounts", "ms-settings:otherusers", SegoeIcon::People, "accounts kiosk"},
-    {"windows-backup", "Windows Backup", "Accounts", "ms-settings:backup", SegoeIcon::Cloud, "onedrive sync"},
+    {"your-info", QT_TRANSLATE_NOOP("WinSettingsPage", "Your Info"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accounts"), "ms-settings:yourinfo", SegoeIcon::Contact, "account picture profile"},
+    {"email-accounts", QT_TRANSLATE_NOOP("WinSettingsPage", "Email & Accounts"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accounts"), "ms-settings:emailandaccounts", SegoeIcon::Mail, "mail"},
+    {"sign-in-options", QT_TRANSLATE_NOOP("WinSettingsPage", "Sign-in Options"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accounts"), "ms-settings:signinoptions", SegoeIcon::Fingerprint, "windows hello pin password face"},
+    {"work-school", QT_TRANSLATE_NOOP("WinSettingsPage", "Access Work or School"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accounts"), "ms-settings:workplace", SegoeIcon::Work, "domain organization"},
+    {"family-users", QT_TRANSLATE_NOOP("WinSettingsPage", "Family & Other Users"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accounts"), "ms-settings:otherusers", SegoeIcon::People, "accounts kiosk"},
+    {"windows-backup", QT_TRANSLATE_NOOP("WinSettingsPage", "Windows Backup"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accounts"), "ms-settings:backup", SegoeIcon::Cloud, "onedrive sync"},
 
-    {"date-time", "Date & Time", "Time & Language", "ms-settings:dateandtime", SegoeIcon::Recent, "timezone clock"},
-    {"language-region", "Language & Region", "Time & Language", "ms-settings:regionlanguage", SegoeIcon::TimeLanguage, "locale format keyboard layout"},
-    {"typing", "Typing", "Time & Language", "ms-settings:typing", SegoeIcon::KeyboardClassic, "autocorrect text suggestions"},
-    {"speech", "Speech", "Time & Language", "ms-settings:speech", SegoeIcon::Microphone, "voice"},
+    {"date-time", QT_TRANSLATE_NOOP("WinSettingsPage", "Date & Time"), QT_TRANSLATE_NOOP("WinSettingsPage", "Time & Language"), "ms-settings:dateandtime", SegoeIcon::Recent, "timezone clock"},
+    {"language-region", QT_TRANSLATE_NOOP("WinSettingsPage", "Language & Region"), QT_TRANSLATE_NOOP("WinSettingsPage", "Time & Language"), "ms-settings:regionlanguage", SegoeIcon::TimeLanguage, "locale format keyboard layout"},
+    {"typing", QT_TRANSLATE_NOOP("WinSettingsPage", "Typing"), QT_TRANSLATE_NOOP("WinSettingsPage", "Time & Language"), "ms-settings:typing", SegoeIcon::KeyboardClassic, "autocorrect text suggestions"},
+    {"speech", QT_TRANSLATE_NOOP("WinSettingsPage", "Speech"), QT_TRANSLATE_NOOP("WinSettingsPage", "Time & Language"), "ms-settings:speech", SegoeIcon::Microphone, "voice"},
 
-    {"game-bar", "Game Bar", "Gaming", "ms-settings:gaming-gamebar", SegoeIcon::Game, "xbox"},
-    {"captures", "Captures", "Gaming", "ms-settings:gaming-gamedvr", SegoeIcon::Video, "recording screenshots dvr"},
-    {"game-mode", "Game Mode", "Gaming", "ms-settings:gaming-gamemode", SegoeIcon::SpeedHigh, "performance"},
+    {"game-bar", QT_TRANSLATE_NOOP("WinSettingsPage", "Game Bar"), QT_TRANSLATE_NOOP("WinSettingsPage", "Gaming"), "ms-settings:gaming-gamebar", SegoeIcon::Game, "xbox"},
+    {"captures", QT_TRANSLATE_NOOP("WinSettingsPage", "Captures"), QT_TRANSLATE_NOOP("WinSettingsPage", "Gaming"), "ms-settings:gaming-gamedvr", SegoeIcon::Video, "recording screenshots dvr"},
+    {"game-mode", QT_TRANSLATE_NOOP("WinSettingsPage", "Game Mode"), QT_TRANSLATE_NOOP("WinSettingsPage", "Gaming"), "ms-settings:gaming-gamemode", SegoeIcon::SpeedHigh, "performance"},
 
-    {"text-size", "Text Size", "Accessibility", "ms-settings:easeofaccess-display", SegoeIcon::FontSize, "bigger accessibility"},
-    {"visual-effects", "Visual Effects", "Accessibility", "ms-settings:easeofaccess-visualeffects", SegoeIcon::RedEye, "animations transparency"},
-    {"magnifier", "Magnifier", "Accessibility", "ms-settings:easeofaccess-magnifier", SegoeIcon::Zoom, "zoom"},
-    {"color-filters", "Color Filters", "Accessibility", "ms-settings:easeofaccess-colorfilter", SegoeIcon::Color, "colorblind"},
-    {"contrast-themes", "Contrast Themes", "Accessibility", "ms-settings:easeofaccess-highcontrast", SegoeIcon::Color, "high contrast"},
-    {"narrator", "Narrator", "Accessibility", "ms-settings:easeofaccess-narrator", SegoeIcon::Narrator, "screen reader"},
-    {"accessibility-audio", "Accessibility Audio", "Accessibility", "ms-settings:easeofaccess-audio", SegoeIcon::Headphone, "mono"},
-    {"captions", "Captions", "Accessibility", "ms-settings:easeofaccess-closedcaptioning", SegoeIcon::CC, "subtitles"},
-    {"accessibility-keyboard", "Accessibility Keyboard", "Accessibility", "ms-settings:easeofaccess-keyboard", SegoeIcon::KeyboardClassic, "sticky keys filter keys"},
-    {"accessibility-mouse", "Accessibility Mouse", "Accessibility", "ms-settings:easeofaccess-mouse", SegoeIcon::Mouse, "mouse keys"},
-    {"eye-control", "Eye Control", "Accessibility", "ms-settings:easeofaccess-eyecontrol", SegoeIcon::RedEye, "tracking"},
+    {"text-size", QT_TRANSLATE_NOOP("WinSettingsPage", "Text Size"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-display", SegoeIcon::FontSize, "bigger accessibility"},
+    {"visual-effects", QT_TRANSLATE_NOOP("WinSettingsPage", "Visual Effects"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-visualeffects", SegoeIcon::RedEye, "animations transparency"},
+    {"magnifier", QT_TRANSLATE_NOOP("WinSettingsPage", "Magnifier"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-magnifier", SegoeIcon::Zoom, "zoom"},
+    {"color-filters", QT_TRANSLATE_NOOP("WinSettingsPage", "Color Filters"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-colorfilter", SegoeIcon::Color, "colorblind"},
+    {"contrast-themes", QT_TRANSLATE_NOOP("WinSettingsPage", "Contrast Themes"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-highcontrast", SegoeIcon::Color, "high contrast"},
+    {"narrator", QT_TRANSLATE_NOOP("WinSettingsPage", "Narrator"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-narrator", SegoeIcon::Narrator, "screen reader"},
+    {"accessibility-audio", QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility Audio"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-audio", SegoeIcon::Headphone, "mono"},
+    {"captions", QT_TRANSLATE_NOOP("WinSettingsPage", "Captions"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-closedcaptioning", SegoeIcon::CC, "subtitles"},
+    {"accessibility-keyboard", QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility Keyboard"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-keyboard", SegoeIcon::KeyboardClassic, "sticky keys filter keys"},
+    {"accessibility-mouse", QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility Mouse"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-mouse", SegoeIcon::Mouse, "mouse keys"},
+    {"eye-control", QT_TRANSLATE_NOOP("WinSettingsPage", "Eye Control"), QT_TRANSLATE_NOOP("WinSettingsPage", "Accessibility"), "ms-settings:easeofaccess-eyecontrol", SegoeIcon::RedEye, "tracking"},
 
-    {"windows-security", "Windows Security", "Privacy & Security", "ms-settings:windowsdefender", SegoeIcon::Shield, "defender antivirus firewall virus"},
-    {"find-my-device", "Find My Device", "Privacy & Security", "ms-settings:findmydevice", SegoeIcon::Location, "locate"},
-    {"privacy", "Privacy", "Privacy & Security", "ms-settings:privacy", SegoeIcon::Lock, "permissions"},
-    {"location", "Location", "Privacy & Security", "ms-settings:privacy-location", SegoeIcon::MapPin, "gps permissions"},
-    {"camera-access", "Camera Access", "Privacy & Security", "ms-settings:privacy-webcam", SegoeIcon::Camera, "permissions"},
-    {"microphone-access", "Microphone Access", "Privacy & Security", "ms-settings:privacy-microphone", SegoeIcon::Microphone, "permissions"},
-    {"activity-history", "Activity History", "Privacy & Security", "ms-settings:privacy-activityhistory", SegoeIcon::History, ""},
-    {"diagnostics", "Diagnostics & Feedback", "Privacy & Security", "ms-settings:privacy-feedback", SegoeIcon::Diagnostic, "telemetry"},
-    {"search-permissions", "Search Permissions", "Privacy & Security", "ms-settings:search-permissions", SegoeIcon::Search, "safesearch"},
+    {"windows-security", QT_TRANSLATE_NOOP("WinSettingsPage", "Windows Security"), QT_TRANSLATE_NOOP("WinSettingsPage", "Privacy & Security"), "ms-settings:windowsdefender", SegoeIcon::Shield, "defender antivirus firewall virus"},
+    {"find-my-device", QT_TRANSLATE_NOOP("WinSettingsPage", "Find My Device"), QT_TRANSLATE_NOOP("WinSettingsPage", "Privacy & Security"), "ms-settings:findmydevice", SegoeIcon::Location, "locate"},
+    {"privacy", QT_TRANSLATE_NOOP("WinSettingsPage", "Privacy"), QT_TRANSLATE_NOOP("WinSettingsPage", "Privacy & Security"), "ms-settings:privacy", SegoeIcon::Lock, "permissions"},
+    {"location", QT_TRANSLATE_NOOP("WinSettingsPage", "Location"), QT_TRANSLATE_NOOP("WinSettingsPage", "Privacy & Security"), "ms-settings:privacy-location", SegoeIcon::MapPin, "gps permissions"},
+    {"camera-access", QT_TRANSLATE_NOOP("WinSettingsPage", "Camera Access"), QT_TRANSLATE_NOOP("WinSettingsPage", "Privacy & Security"), "ms-settings:privacy-webcam", SegoeIcon::Camera, "permissions"},
+    {"microphone-access", QT_TRANSLATE_NOOP("WinSettingsPage", "Microphone Access"), QT_TRANSLATE_NOOP("WinSettingsPage", "Privacy & Security"), "ms-settings:privacy-microphone", SegoeIcon::Microphone, "permissions"},
+    {"activity-history", QT_TRANSLATE_NOOP("WinSettingsPage", "Activity History"), QT_TRANSLATE_NOOP("WinSettingsPage", "Privacy & Security"), "ms-settings:privacy-activityhistory", SegoeIcon::History, ""},
+    {"diagnostics", QT_TRANSLATE_NOOP("WinSettingsPage", "Diagnostics & Feedback"), QT_TRANSLATE_NOOP("WinSettingsPage", "Privacy & Security"), "ms-settings:privacy-feedback", SegoeIcon::Diagnostic, "telemetry"},
+    {"search-permissions", QT_TRANSLATE_NOOP("WinSettingsPage", "Search Permissions"), QT_TRANSLATE_NOOP("WinSettingsPage", "Privacy & Security"), "ms-settings:search-permissions", SegoeIcon::Search, "safesearch"},
 
-    {"windows-update", "Windows Update", "Windows Update", "ms-settings:windowsupdate", SegoeIcon::Sync, "check updates upgrade patch"},
-    {"update-history", "Update History", "Windows Update", "ms-settings:windowsupdate-history", SegoeIcon::History, "installed updates"},
-    {"update-advanced", "Advanced Update Options", "Windows Update", "ms-settings:windowsupdate-options", SegoeIcon::Settings, "active hours delivery optimization"},
-    {"windows-insider", "Windows Insider Program", "Windows Update", "ms-settings:windowsinsider", SegoeIcon::FavoriteStar, "beta dev canary preview"},
+    {"windows-update", QT_TRANSLATE_NOOP("WinSettingsPage", "Windows Update"), QT_TRANSLATE_NOOP("WinSettingsPage", "Windows Update"), "ms-settings:windowsupdate", SegoeIcon::Sync, "check updates upgrade patch"},
+    {"update-history", QT_TRANSLATE_NOOP("WinSettingsPage", "Update History"), QT_TRANSLATE_NOOP("WinSettingsPage", "Windows Update"), "ms-settings:windowsupdate-history", SegoeIcon::History, "installed updates"},
+    {"update-advanced", QT_TRANSLATE_NOOP("WinSettingsPage", "Advanced Update Options"), QT_TRANSLATE_NOOP("WinSettingsPage", "Windows Update"), "ms-settings:windowsupdate-options", SegoeIcon::Settings, "active hours delivery optimization"},
+    {"windows-insider", QT_TRANSLATE_NOOP("WinSettingsPage", "Windows Insider Program"), QT_TRANSLATE_NOOP("WinSettingsPage", "Windows Update"), "ms-settings:windowsinsider", SegoeIcon::FavoriteStar, "beta dev canary preview"},
 });
 // clang-format on
 
@@ -143,7 +143,8 @@ public:
     const HINSTANCE ret = ShellExecuteW(nullptr, L"open", target.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 
     if (reinterpret_cast<INT_PTR>(ret) <= 32) {
-      ctx->services->toastService()->failure("Failed to open settings");
+      ctx->services->toastService()->failure(
+          QCoreApplication::translate("OpenWindowsSettingAction", "Failed to open settings"));
       return;
     }
 
@@ -157,11 +158,15 @@ private:
 
 } // namespace
 
-QString WinSettingsPageRootItem::title() const { return m_page.title; }
+QString WinSettingsPageRootItem::title() const {
+  return QCoreApplication::translate("WinSettingsPage", m_page.title);
+}
 
-QString WinSettingsPageRootItem::subtitle() const { return m_page.category; }
+QString WinSettingsPageRootItem::subtitle() const {
+  return QCoreApplication::translate("WinSettingsPage", m_page.category);
+}
 
-QString WinSettingsPageRootItem::typeDisplayName() const { return "System Settings"; }
+QString WinSettingsPageRootItem::typeDisplayName() const { return tr("System Settings"); }
 
 ImageURL WinSettingsPageRootItem::iconUrl() const {
   return ImageURL::fontPreview(settingsGlyphFont(), QString(QChar(static_cast<char16_t>(m_page.glyph))))
@@ -171,7 +176,7 @@ ImageURL WinSettingsPageRootItem::iconUrl() const {
 EntrypointId WinSettingsPageRootItem::uniqueId() const { return EntrypointId("windows-settings", m_page.id); }
 
 AccessoryList WinSettingsPageRootItem::accessories() const {
-  return {{.text = "Settings", .color = SemanticColor::TextMuted}};
+  return {{.text = tr("Settings"), .color = SemanticColor::TextMuted}};
 }
 
 std::vector<QString> WinSettingsPageRootItem::keywords() const {
@@ -183,7 +188,7 @@ std::vector<QString> WinSettingsPageRootItem::keywords() const {
 }
 
 std::vector<std::pair<QString, QString>> WinSettingsPageRootItem::settingsMetadata() const {
-  return {{"Name", m_page.title}, {"Category", m_page.category}, {"URL", m_page.url}};
+  return {{tr("Name"), title()}, {tr("Category"), subtitle()}, {QStringLiteral("URL"), m_page.url}};
 }
 
 std::unique_ptr<ActionPanelState>
@@ -193,11 +198,11 @@ WinSettingsPageRootItem::newActionPanel(ApplicationContext *ctx, const RootItemM
   auto utils = panel->createSection();
   auto itemSection = panel->createSection();
 
-  auto open = new OpenWindowsSettingAction(QString("Open %1 Settings").arg(m_page.title), iconUrl(),
+  auto open = new OpenWindowsSettingAction(tr("Open %1 Settings").arg(title()), iconUrl(),
                                            QString::fromUtf8(m_page.url));
   mainSection->addAction(open);
 
-  utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_page.url), "Copy URL"));
+  utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_page.url), tr("Copy URL")));
 
   for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
     itemSection->addAction(action);
@@ -209,9 +214,9 @@ WinSettingsPageRootItem::newActionPanel(ApplicationContext *ctx, const RootItemM
 
 QString WinSettingsRootProvider::uniqueId() const { return "windows-settings"; }
 
-QString WinSettingsRootProvider::displayName() const { return "Windows Settings"; }
+QString WinSettingsRootProvider::displayName() const { return tr("Windows Settings"); }
 
-QString WinSettingsRootProvider::description() const { return "Pages of the Windows Settings app."; }
+QString WinSettingsRootProvider::description() const { return tr("Pages of the Windows Settings app."); }
 
 ImageURL WinSettingsRootProvider::icon() const { return ImageURL::winShellIcon(SETTINGS_APP_PARSING_NAME); }
 

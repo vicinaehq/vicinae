@@ -6,6 +6,7 @@
 #include "service-registry.hpp"
 #include "theme/colors.hpp"
 #include "vicinae.hpp"
+#include <QCoreApplication>
 #include <algorithm>
 #include <fstream>
 #include <glaze/core/common.hpp>
@@ -30,7 +31,8 @@ private:
 } // namespace
 
 DismissNewsAction::DismissNewsAction(std::string newsId)
-    : AbstractAction(QStringLiteral("Dismiss"), BuiltinIcon::Xmark), m_newsId(std::move(newsId)) {}
+    : AbstractAction(QCoreApplication::translate("DismissNewsAction", "Dismiss"), BuiltinIcon::Xmark),
+      m_newsId(std::move(newsId)) {}
 
 void DismissNewsAction::execute(ApplicationContext *ctx) { ctx->services->newsService()->dismiss(m_newsId); }
 
@@ -97,15 +99,15 @@ std::vector<NewsItem> NewsService::allItems() {
 
   items.push_back({
       .id = "telemetry-notice-v1",
-      .title = QStringLiteral("Telemetry"),
-      .subtitle = QStringLiteral("We now collect basic usage statistics on startup"),
+      .title = tr("Telemetry"),
+      .subtitle = tr("We now collect basic usage statistics on startup"),
       .icon = ImageURL{BuiltinIcon::Megaphone}.setBackgroundTint(SemanticColor::Yellow),
       .actionFactory =
           [](ApplicationContext *) {
             auto panel = std::make_unique<ListActionPanelState>();
             auto *section = panel->createSection();
 
-            auto *openDocs = new OpenInBrowserAction(QUrl(Omnicast::DOC_TELEMETRY_URL), "Learn more");
+            auto *openDocs = new OpenInBrowserAction(QUrl(Omnicast::DOC_TELEMETRY_URL), tr("Learn more"));
             auto *proxy = new AutoDismissProxy(openDocs, "telemetry-notice-v1");
             proxy->setPrimary(true);
             section->addAction(proxy);

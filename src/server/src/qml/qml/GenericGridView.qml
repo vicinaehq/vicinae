@@ -30,7 +30,7 @@ Item {
     property bool showCellTitle: false
     property bool showCellSubtitle: false
 
-    property string emptyTitle: "No results"
+    property string emptyTitle: qsTr("No results")
     property string emptyDescription: ""
     property var emptyIcon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
     property Component emptyViewComponent: null

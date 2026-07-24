@@ -184,16 +184,16 @@ Item {
         DetailPanel {
             metadata: [
                 {
-                    label: "Type",
+                    label: qsTr("Type"),
                     value: root.host.detailType,
                     icon: root.host.detailEncryptionIcon
                 },
                 {
-                    label: "Size",
+                    label: qsTr("Size"),
                     value: root.host.detailSize
                 },
                 {
-                    label: "Copied at",
+                    label: qsTr("Copied at"),
                     value: root.host.detailCopiedAt
                 },
                 {
@@ -245,7 +245,7 @@ Item {
                 visible: active
                 sourceComponent: EmptyView {
                     title: root.host.detailType
-                    description: "Preview not available for this content type"
+                    description: qsTr("Preview not available for this content type")
                 }
             }
         }

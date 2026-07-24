@@ -5,7 +5,7 @@ SearchableDropdown {
     compact: true
     minimumWidth: 100
 
-    readonly property var _options: launcher.commandViewHost ? launcher.commandViewHost.categoryFilterOptions : ["All"]
+    readonly property var _options: launcher.commandViewHost ? launcher.commandViewHost.categoryFilterOptions : [qsTr("All")]
 
     items: [
         {

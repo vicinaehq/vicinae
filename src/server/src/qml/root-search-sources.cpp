@@ -109,7 +109,7 @@ std::unique_ptr<ActionPanelState> RootLinkSection::actionPanel(int) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
   auto *open =
-      new OpenAppAction(m_link->app, QString("Open in %1").arg(m_link->app->displayName()), {m_link->url});
+      new OpenAppAction(m_link->app, tr("Open in %1").arg(m_link->app->displayName()), {m_link->url});
   open->setClearSearch(true);
   section->addAction(open);
   return panel;
@@ -170,12 +170,12 @@ QString RootUpdateSection::itemId(int) const {
 }
 
 QString RootUpdateSection::itemTitle(int) const {
-  return m_update ? QString("Vicinae %1 is available").arg(m_update->tag) : QString();
+  return m_update ? tr("Vicinae %1 is available").arg(m_update->tag) : QString();
 }
 
 QString RootUpdateSection::itemSubtitle(int) const {
   if (!m_update) return {};
-  return QString("You are running %1").arg(m_updates->currentVersionTag());
+  return tr("You are running %1").arg(m_updates->currentVersionTag());
 }
 
 QString RootUpdateSection::itemIconSource(int) const {
@@ -184,7 +184,7 @@ QString RootUpdateSection::itemIconSource(int) const {
 
 QVariant RootUpdateSection::customData(int, int role) const {
   if (role == ItemType) return QStringLiteral("update");
-  if (role == AccessoryText) return QStringLiteral("Update");
+  if (role == AccessoryText) return tr("Update");
   return {};
 }
 
@@ -202,7 +202,7 @@ std::unique_ptr<ActionPanelState> RootUpdateSection::actionPanel(int) const {
   auto *install = new InstallUpdateAction();
   install->setPrimary(true);
   section->addAction(install);
-  section->addAction(new OpenInBrowserAction(QUrl(m_update->releaseUrl), "View Release Notes"));
+  section->addAction(new OpenInBrowserAction(QUrl(m_update->releaseUrl), tr("View Release Notes")));
 
   auto *skip = new SkipUpdateVersionAction();
   skip->setShortcut(Keybind::RemoveAction);
@@ -308,8 +308,8 @@ const RootItem *RootFavoritesSection::rootItem(int i) const {
 }
 
 QString RootResultsSection::sectionName() const {
-  if (m_queryEmpty) return QStringLiteral("Suggestions");
-  return QString::fromStdString(std::format("Results ({})", m_items.size()));
+  if (m_queryEmpty) return tr("Suggestions");
+  return tr("Results (%1)").arg(m_items.size());
 }
 
 QString RootResultsSection::itemId(int i) const {
@@ -404,7 +404,8 @@ std::unique_ptr<ActionPanelState> RootFilesSection::actionPanel(int i) const {
 QString RootFallbackSection::sectionName() const {
   constexpr std::size_t MAX_QUERY_LEN = 30;
   auto truncated = m_query.length() > MAX_QUERY_LEN ? m_query.substr(0, MAX_QUERY_LEN) + "..." : m_query;
-  return QString::fromStdString(std::format("Use \"{}\" with...", truncated));
+  return QCoreApplication::translate("RootFallbackSection", "Use \"%1\" with...")
+      .arg(QString::fromStdString(truncated));
 }
 
 QString RootFallbackSection::itemId(int i) const {

@@ -29,7 +29,7 @@ Item {
         detailComponent: detailPanel
         detailVisible: root.host.hasDetail
 
-        emptyTitle: root.host.emptyTitle ?? "No results"
+        emptyTitle: root.host.emptyTitle ?? qsTr("No results")
         emptyDescription: root.host.emptyDescription ?? ""
         emptyIcon: root.host.emptyIcon
 
