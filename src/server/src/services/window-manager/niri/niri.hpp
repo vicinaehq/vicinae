@@ -69,6 +69,8 @@ public:
   bool supportsFocusHandoffDetection() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
+  bool toggleFullscreen(const AbstractWindow &window) override;
+  bool toggleFloating(const AbstractWindow &window) override;
 
   bool hasWorkspaces() const override { return true; }
   WorkspaceList listWorkspaces() const override;

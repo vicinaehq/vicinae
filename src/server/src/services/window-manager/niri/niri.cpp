@@ -136,6 +136,8 @@ std::optional<Window::FocusTimestamp> parseFocusTimestamp(const QJsonValue &valu
 } // namespace
 
 void Window::updateFromJson(const QJsonObject &json) {
+  qDebug() << json;
+
   m_id = QString::number(static_cast<qulonglong>(json.value("id").toInteger()));
   m_title = json.value("title").toString();
   m_wmClass = json.value("app_id").toString();
@@ -188,8 +190,11 @@ AbstractWindowManager::WorkspaceList WindowManager::listWorkspaces() const { ret
 AbstractWindowManager::WindowPtr WindowManager::getFocusedWindowSync() const {
   for (const auto &window : m_windows) {
     auto niriWindow = std::static_pointer_cast<Window>(window);
+    qDebug() << niriWindow->isFocused() << niriWindow->title() << niriWindow->id();
     if (niriWindow->isFocused()) { return window; }
   }
+
+  qDebug() << "no focus!";
 
   return nullptr;
 }
@@ -341,6 +346,7 @@ void WindowManager::processEventLine(const QString &line) {
     changed = true;
   } else if (event.contains("WindowFocusChanged")) {
     auto payload = event.value("WindowFocusChanged").toObject();
+    qDebug() << "focus changed" << payload;
     if (payload.contains("id") && !payload.value("id").isNull()) {
       setFocusedWindow(QString::number(static_cast<qulonglong>(payload.value("id").toInteger())));
     } else {
@@ -406,10 +412,46 @@ void WindowManager::removeWindow(const QString &id) {
   sortWindowsByFocusTimestamp();
 }
 
+bool WindowManager::toggleFullscreen(const AbstractWindow &window) {
+  auto id = parseWindowId(window.id());
+  if (!id.has_value()) { return false; }
+
+  QJsonObject payload;
+  payload.insert("id", static_cast<qint64>(*id));
+  auto res = sendActionRequest("FullscreenWindow", payload);
+
+  if (!res.has_value()) {
+    qWarning() << "Niri::WindowManager: failed to fullscreen window" << window.id();
+    return false;
+  }
+
+  emit windowsChanged();
+  return true;
+}
+
+bool WindowManager::toggleFloating(const AbstractWindow &window) {
+  auto id = parseWindowId(window.id());
+  if (!id.has_value()) { return false; }
+
+  QJsonObject payload;
+  payload.insert("id", static_cast<qint64>(*id));
+  auto res = sendActionRequest("ToggleWindowFloating", payload);
+
+  if (!res.has_value()) {
+    qWarning() << "Niri::WindowManager: failed to toggle floating for window" << window.id();
+    return false;
+  }
+
+  emit windowsChanged();
+  return true;
+}
+
 void WindowManager::setFocusedWindow(const QString &id) {
+  if (id.isEmpty()) return;
+
   for (auto &window : m_windows) {
     auto niriWindow = std::static_pointer_cast<Window>(window);
-    niriWindow->setFocused(!id.isEmpty() && niriWindow->id() == id);
+    niriWindow->setFocused(niriWindow->id() == id);
   }
   emit focusChanged();
 }

@@ -5,7 +5,6 @@
 #include <qobject.h>
 #include <qpromise.h>
 #include <qstringview.h>
-#include "services/app-service/abstract-app-db.hpp"
 #include <QGuiApplication>
 #include <QScreen>
 #include <QWindow>
@@ -31,6 +30,8 @@ signals:
   void focusChanged() const;
 
 public:
+  enum Capability { Fullscreen, Minimize, SetFloatingWindow, SetTilingWindow };
+
   /**
    * Window geometry in Qt logical coordinates, composable with `Screen::bounds`.
    * The X11 backend currently reports raw native pixels instead.
@@ -235,6 +236,14 @@ public:
    */
   virtual bool supportsWorkspaceActivation() const { return false; }
   virtual bool activateWorkspace(const QString &workspaceId) const { return false; }
+
+  virtual bool toggleFullscreen(const AbstractWindow &window) { return false; }
+
+  /**
+   * Toggle the target window from tiling to floating and vice-versa.
+   * This mostly applies to tiling/scrolling WMs.
+   */
+  virtual bool toggleFloating(const AbstractWindow &window) { return false; }
 
   /**
    * To make sure the window manager IPC link is healthy.
