@@ -13,6 +13,7 @@
 #include "extension-interval-scheduler.hpp"
 #include "ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
+#include "common/common.hpp"
 #include "log/message-handler.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "extensions/root/root-command.hpp"
@@ -178,7 +179,8 @@ static QFont resolveAppFont(const config::FontConfig &fontConfig) {
 }
 
 int startServer(const ServerLaunchOptions &launchOpts) {
-  qInstallMessageHandler(coloredMessageHandler);
+  vicinae::log::installMessageHandler();
+  vicinae::log::openFile(vicinae::logFilePath());
 
 #ifdef AUTO_INSTALL_BROWSER_MANIFESTS
   // always refresh manifests

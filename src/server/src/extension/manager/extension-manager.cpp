@@ -10,7 +10,7 @@
 #include <utility>
 #include "pid-file/pid-file.hpp"
 #include "generated/version.h"
-#include "rang/rang.hpp"
+#include "log/message-handler.hpp"
 #include "vicinae.hpp"
 
 namespace fs = std::filesystem;
@@ -164,10 +164,16 @@ void ExtensionManager::finished(int exitCode, QProcess::ExitStatus status) {
 
 void ExtensionManager::readError() {
   auto buf = m_process.readAllStandardError();
-  auto ts = QDateTime::currentDateTime().toString("yyyy-MM-dd'T'hh:mm:ss");
 
-  for (const auto &line : buf.trimmed().split('\n')) {
-    std::cout << "[" << rang::fg::magenta << "E" << rang::fg::reset << "] " << rang::fg::gray
-              << ts.toStdString() << " " << line.toStdString() << "\n";
+  for (const auto &raw : buf.trimmed().split('\n')) {
+    QString const line = QString::fromUtf8(raw);
+    int const tab = line.indexOf('\t');
+
+    if (tab == -1) {
+      vicinae::log::subprocessLine(vicinae::log::EXTENSION, {}, line);
+      continue;
+    }
+
+    vicinae::log::subprocessLine(vicinae::log::EXTENSION, line.left(tab), line.sliced(tab + 1));
   }
 }
