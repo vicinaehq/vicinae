@@ -6,8 +6,10 @@
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
 
-ExtensionViewHost::ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notify, QObject *parent)
-    : ViewHostBase(), m_notify(std::move(notify)), m_searchDebounce(new QTimer(this)) {
+ExtensionViewHost::ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notify, QString windowTitleSuffix,
+                                     QObject *parent)
+    : ViewHostBase(), m_notify(std::move(notify)), m_windowTitleSuffix(std::move(windowTitleSuffix)),
+      m_searchDebounce(new QTimer(this)) {
   m_searchDebounce->setSingleShot(true);
   connect(m_searchDebounce, &QTimer::timeout, this, &ExtensionViewHost::handleDebouncedSearch);
 }
@@ -15,6 +17,8 @@ ExtensionViewHost::ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notif
 QUrl ExtensionViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionView.qml"));
 }
+
+QString ExtensionViewHost::windowTitleSuffix() const { return m_windowTitleSuffix; }
 
 QUrl ExtensionViewHost::qmlSearchAccessoryUrl() const {
   if (!m_dropdownItems.isEmpty()) return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionDropdownAccessory.qml"));

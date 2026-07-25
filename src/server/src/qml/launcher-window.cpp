@@ -89,7 +89,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
           ));
 
   auto rootObjects = m_engine.rootObjects();
-  if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
+  if (!rootObjects.isEmpty()) {
+    m_window = qobject_cast<QQuickWindow *>(rootObjects.first());
+    if (m_window) { m_defaultWindowTitle = m_window->title(); }
+  }
 
   applyWindowConfig();
 
@@ -391,6 +394,11 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
   } else {
     LauncherWindowPlatform::suppressHeldKeyReleases();
     m_window->hide();
+    ++m_windowTitleRevision;
+    m_window->setTitle(
+        m_requestedWindowTitleSuffix.isEmpty()
+            ? m_defaultWindowTitle
+            : QStringLiteral("%1 [%2]").arg(m_defaultWindowTitle, m_requestedWindowTitleSuffix));
     m_cacheEvictionTimer.start();
   }
 }
@@ -413,6 +421,8 @@ void LauncherWindow::handleCurrentViewChanged() {
 
   auto *bridge = dynamic_cast<ViewHostBase *>(state->sender);
   if (!bridge) return;
+
+  updateWindowTitle(bridge);
 
   bool const isRoot = nav->viewStackSize() == 1;
   if (m_atRoot != isRoot) {
@@ -457,6 +467,52 @@ void LauncherWindow::handleCurrentViewChanged() {
     bridge->onReactivated();
   }
   tryCompaction();
+}
+
+void LauncherWindow::updateWindowTitle(const ViewHostBase *view) {
+  m_requestedWindowTitleSuffix = view->windowTitleSuffix();
+  const std::uint64_t revision = ++m_windowTitleRevision;
+
+  if (!m_window) return;
+
+  const auto title = m_requestedWindowTitleSuffix.isEmpty()
+                         ? m_defaultWindowTitle
+                         : QStringLiteral("%1 [%2]").arg(m_defaultWindowTitle, m_requestedWindowTitleSuffix);
+
+  if (m_window->title() == title) return;
+
+  if (m_window->title() == m_defaultWindowTitle) {
+    m_window->setTitle(title);
+    return;
+  }
+
+  static constexpr int WINDOW_TITLE_UPDATE_FRAME_COUNT = 2;
+  waitForWindowTitleUpdate(revision, title, WINDOW_TITLE_UPDATE_FRAME_COUNT);
+}
+
+void LauncherWindow::waitForWindowTitleUpdate(std::uint64_t revision, QString title, int framesRemaining) {
+  if (!m_window || revision != m_windowTitleRevision) return;
+
+  connect(
+      m_window, &QQuickWindow::afterFrameEnd, this,
+      [this, revision, title = std::move(title), framesRemaining]() {
+        QMetaObject::invokeMethod(
+            this,
+            [this, revision, title, framesRemaining]() {
+              if (!m_window || revision != m_windowTitleRevision) return;
+
+              if (framesRemaining > 1) {
+                waitForWindowTitleUpdate(revision, title, framesRemaining - 1);
+                return;
+              }
+
+              m_window->setTitle(title);
+            },
+            Qt::QueuedConnection);
+      },
+      static_cast<Qt::ConnectionType>(Qt::DirectConnection | Qt::SingleShotConnection));
+
+  m_window->update();
 }
 
 void LauncherWindow::forwardSearchText(const QString &text) {

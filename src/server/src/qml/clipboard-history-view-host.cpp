@@ -82,6 +82,8 @@ QVariantMap ClipboardHistoryViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
+QString ClipboardHistoryViewHost::windowTitleSuffix() const { return QStringLiteral("clipboard-history"); }
+
 void ClipboardHistoryViewHost::initialize() {
   BaseView::initialize();
 

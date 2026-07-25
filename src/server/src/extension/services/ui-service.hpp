@@ -110,7 +110,9 @@ public:
 
   Void::Future pushView() override {
     auto notifyFn = makeNotifyFn();
-    auto *host = new ExtensionViewHost(notifyFn);
+    const auto entrypointId = static_cast<std::string>(m_command->uniqueId());
+    const auto titleSuffix = QStringLiteral("extension:%1").arg(QString::fromStdString(entrypointId));
+    auto *host = new ExtensionViewHost(notifyFn, titleSuffix);
 
     m_navigation->pushView(host);
     m_navigation->setNavigationTitle(m_command->name());

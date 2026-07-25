@@ -14,6 +14,7 @@ public:
   virtual QUrl qmlComponentUrl() const = 0;
   virtual QUrl qmlSearchAccessoryUrl() const { return {}; }
   virtual QVariantMap qmlProperties() { return {}; }
+  virtual QString windowTitleSuffix() const { return {}; }
   virtual void loadInitialData() {}
   virtual void onReactivated() {}
 
