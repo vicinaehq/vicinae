@@ -75,6 +75,7 @@ User-visible natural-language strings must be marked for translation. English so
 - Never store translated strings in `static`/`constexpr` data. Plurals use `tr("%n item(s)", nullptr, n)`. Never concatenate translated fragments: use `%1` placeholders with `.arg()`.
 - Preserve brand and product names such as "Raycast Store", "Raycast Compat", and "Extension Store". Translate the surrounding prose, not the name itself.
 - Never translate stable technical notation such as ids, acronyms, unit symbols (`MB`, `GB`), filenames, protocol names, icon names (`ImageURL::builtin`), log output, storage keys, or strings compared as discriminants.
+- Use natural, concise language appropriate for a desktop launcher. Prefer familiar UI wording over literal translations, bureaucratic language, or an excessively formal or polite tone.
 - Use the platform's official localized terminology for operating-system features and settings pages.
 - Use stable explicit translation contexts for shared domain strings. Add translator notes or disambiguation only when the source text is genuinely ambiguous.
 - Source text and location metadata in `src/server/translations/*.ts` are generated: never hand-edit them. Edit

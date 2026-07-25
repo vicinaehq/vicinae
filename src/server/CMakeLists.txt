@@ -1197,7 +1197,9 @@ file(GLOB_RECURSE VICINAE_I18N_SOURCES CONFIGURE_DEPENDS
 qt_add_translations(${TARGET}
 	SOURCE_TARGETS ${TARGET}
 	TS_FILE_BASE vicinae
-	TS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
+	TS_FILES
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_zh_CN.ts
 	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
 	SOURCES ${VICINAE_I18N_SOURCES}
 	LUPDATE_OPTIONS -locations relative -no-obsolete
