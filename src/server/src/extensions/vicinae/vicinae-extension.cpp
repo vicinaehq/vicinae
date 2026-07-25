@@ -85,6 +85,23 @@ class OpenVicinaeConfig : public BuiltinCallbackCommand {
   }
 };
 
+class ShowLogs : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(OpenVicinaeConfig)
+
+  QString id() const override { return "show-logs"; }
+  QString name() const override { return tr("Show Log File"); }
+  QString description() const override { return tr("Open the Vicinae log file in your file browser"); }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Paragraph).setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
+    ctx->services->appDb()->showInFileBrowser(Omnicast::stateDir() / "vicinae.log", true);
+    ctx->navigation->closeWindow();
+  }
+};
+
 class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
   Q_DECLARE_TR_FUNCTIONS(OpenDefaultVicinaeConfig)
 
@@ -305,4 +322,5 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<PruneMemoryCommand>();
   registerCommand<IconBrowserCommand>();
   registerCommand<ForgetTelemetryCommand>();
+  registerCommand<ShowLogs>();
 }

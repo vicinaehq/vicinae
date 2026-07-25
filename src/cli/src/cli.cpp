@@ -9,6 +9,7 @@
 #include "script.hpp"
 #include "common/common.hpp"
 #include "state.hpp"
+#include "tail.hpp"
 #include "generated/version.h"
 #include "theme.hpp"
 #include "ipc-client.hpp"
@@ -412,6 +413,34 @@ private:
   std::string link;
 };
 
+class LogsCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "logs"; }
+  std::string description() const override { return "Show the vicinae server logs"; }
+
+  void setup(CLI::App *app) override {
+    app->add_flag("--follow,-f", m_follow, "Keep printing new log lines as they are written");
+  }
+
+  bool run(CLI::App *) override {
+    auto const path = vicinae::logFilePath();
+    cli::FileTailer tailer(path);
+
+    if (!tailer.isOpen() && !m_follow) {
+      std::println(std::cerr, "No log file at {}. Has the server been started yet?", path.string());
+      return false;
+    }
+
+    tailer.drain(std::cout);
+
+    if (m_follow) tailer.follow(std::cout);
+
+    return true;
+  }
+
+private:
+  bool m_follow = false;
+};
+
 int CommandLineApp::run(int ac, char **av) {
   CLI::App app(m_name);
 
@@ -486,6 +515,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<ConfigCommand>();
   app.registerCommand<ScriptCommand>();
   app.registerCommand<StateCommand>();
+  app.registerCommand<LogsCommand>();
 
   return app.run(ac, av);
 }

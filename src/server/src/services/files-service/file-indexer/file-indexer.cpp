@@ -10,7 +10,7 @@
 #include <filesystem>
 #include <utility>
 #include "common/common.hpp"
-#include "rang/rang.hpp"
+#include "log/message-handler.hpp"
 
 void FileIndexerBus::send(std::string_view data) {
   uint32_t size = data.size();
@@ -297,31 +297,13 @@ void FileIndexer::handleStderr() {
     m_stderrBuf = m_stderrBuf.sliced(idx + 1);
 
     QString const line = QString::fromUtf8(lineBytes);
-    if (line.isEmpty()) continue;
+    int const tab = line.indexOf('\t');
 
-    QString level;
-    QString message = line;
-    if (int const tab = line.indexOf('\t'); tab != -1) {
-      level = line.left(tab);
-      message = line.sliced(tab + 1);
+    if (tab == -1) {
+      vicinae::log::subprocessLine(vicinae::log::FILE_INDEXER, {}, line);
+      continue;
     }
 
-    rang::fg color = rang::fg::reset;
-    if (level == "trace") {
-      color = rang::fg::gray;
-    } else if (level == "debug") {
-      color = rang::fg::cyan;
-    } else if (level == "info") {
-      color = rang::fg::green;
-    } else if (level == "warn") {
-      color = rang::fg::yellow;
-    } else if (level == "error") {
-      color = rang::fg::red;
-    }
-
-    auto const ts = QDateTime::currentDateTime().toString("yyyy-MM-dd'T'hh:mm:ss");
-    std::cerr << "[" << rang::fg::blue << "F" << rang::fg::reset << "] " << rang::fg::gray << ts.toStdString()
-              << " " << color << level.toStdString() << rang::fg::reset << (level.isEmpty() ? "" : " - ")
-              << message.toStdString() << "\n";
+    vicinae::log::subprocessLine(vicinae::log::FILE_INDEXER, line.left(tab), line.sliced(tab + 1));
   }
 }

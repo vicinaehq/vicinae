@@ -16,7 +16,7 @@ figura_compile(
 	OUTPUT ipc-client.hpp
 )
 
-set(CLI_SOURCES src/main.cpp src/cli.cpp src/theme.cpp src/fs.cpp src/local-socket.cpp ${SRCS})
+set(CLI_SOURCES src/main.cpp src/cli.cpp src/theme.cpp src/fs.cpp src/tail.cpp src/local-socket.cpp ${SRCS})
 if (NOT WIN32)
 	list(APPEND CLI_SOURCES src/server.cpp)
 endif()
