@@ -2,17 +2,6 @@
 #include "fuzzy/fzf.hpp"
 #include "order-helpers.hpp"
 
-static int bestScore(std::string_view text, std::string_view query) {
-  const auto &matcher = fzf::threadLocalMatcher();
-  int best = 0;
-
-  for (const auto &variant : fzf::queryVariants(query)) {
-    best = std::max(best, matcher.fuzzy_match_v2_score_query(text, std::string_view{variant}));
-  }
-
-  return best;
-}
-
 TEST_CASE("fuzzy_match_v2: exact substring scores positive and matches range") {
   const auto &m = fzf::threadLocalMatcher();
   const auto r = m.fuzzy_match_v2("Open File Manager", "file");
@@ -61,6 +50,14 @@ TEST_CASE("fuzzy_match_v2: non-Latin scripts are unaffected by folding") {
     REQUIRE(folded.end == raw.end);
     REQUIRE(folded.positions == raw.positions);
   }
+}
+
+TEST_CASE("fuzzy_match_v2: Cyrillic and Greek matching is case-insensitive") {
+  const auto &m = fzf::threadLocalMatcher();
+
+  REQUIRE(m.fuzzy_match_v2("Открыть настройки", "открыть").matched());
+  REQUIRE(m.fuzzy_match_v2("ТЕЛЕГРАМ", "телеграм").matched());
+  REQUIRE(m.fuzzy_match_v2("ΤΕΡΜΙΝΑΛ", "τερμιναλ").matched());
 }
 
 TEST_CASE("fuzzy_match_v2: match offsets map back to original bytes") {
@@ -122,20 +119,24 @@ TEST_CASE("transliterate: non-latin scripts map to ascii") {
   REQUIRE(fzf::transliterate("ьъ") == std::nullopt);
 }
 
-TEST_CASE("queryVariants: query first, then one variant per scheme") {
-  REQUIRE(fzf::queryVariants("telegram") == std::vector<std::string>{"telegram"});
-  REQUIRE(fzf::queryVariants("телеграм") == std::vector<std::string>{"телеграм", "telegram"});
-  REQUIRE(fzf::queryVariants("дискорд") == std::vector<std::string>{"дискорд", "diskord", "discord"});
+TEST_CASE("needsTransliteration: only supported scripts need extra matching") {
+  REQUIRE(fzf::needsTransliteration("телеграм"));
+  REQUIRE(fzf::needsTransliteration("ΤΕΡΜΙΝΑΛ"));
+  REQUIRE_FALSE(fzf::needsTransliteration("telegram"));
+  REQUIRE_FALSE(fzf::needsTransliteration("日本語"));
 }
 
 TEST_CASE("transliteration: matching across scripts") {
-  REQUIRE(bestScore("Telegram", "телеграм") > 0);
-  REQUIRE(bestScore("Discord", "дискорд") > 0);
-  REQUIRE(bestScore("Konsole", "консоль") > 0);
-  REQUIRE(bestScore("Terminal", "τερμιναλ") > 0);
-  REQUIRE(bestScore("Telegram", "музыка") == 0);
+  const auto &matcher = fzf::threadLocalMatcher();
 
-  REQUIRE(bestScore("Привет мир", "мир") > 0);
-  REQUIRE(bestScore("Telegram", "teleg") ==
-          fzf::threadLocalMatcher().fuzzy_match_v2_score_query("Telegram", "teleg"));
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Telegram", "телеграм") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Discord", "дискорд") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Konsole", "консоль") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Terminal", "τερμιναλ") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Telegram", "музыка") == 0);
+
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Привет мир", "мир") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Открыть Discord", "открыть дискорд") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Telegram", "teleg") ==
+          matcher.fuzzy_match_v2_ascii("Telegram", "teleg").score);
 }

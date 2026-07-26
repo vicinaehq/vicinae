@@ -133,19 +133,13 @@ void RootItemManager::updateIndex() {
   emit itemsChanged();
 }
 
-float RootItemManager::SearchableRootItem::fuzzyScore(std::span<const std::string> patterns) const {
+float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
   using WS = fzf::WeightedString;
   std::string alias = meta->alias.value_or("");
   std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
-  const auto &matcher = fzf::threadLocalMatcher();
-
-  float score = 0;
-  for (const auto &pattern : patterns) {
-    float const variantScore =
-        pattern.empty() ? 1 : matcher.fuzzy_match_v2_score_query(ss, kws, std::string_view{pattern});
-    score = std::max(score, variantScore);
-  }
+  float const score =
+      pattern.empty() ? 1 : fzf::threadLocalMatcher().fuzzy_match_v2_score_query(ss, kws, pattern);
 
   if (score == 0) return 0;
 
@@ -181,7 +175,7 @@ std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &
 void RootItemManager::search(const QString &query, std::vector<ScoredItem> &results,
                              const RootItemPrefixSearchOptions &opts) {
   std::string pattern = query.toStdString();
-  auto const patternView = fzf::queryVariants(pattern);
+  std::string_view const patternView = pattern;
 
   results.clear();
   results.reserve(m_items.size());
@@ -216,7 +210,7 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
 std::vector<RootItemManager::ProviderSearchGroup>
 RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPrefixSearchOptions &opts) {
   std::string const pattern = query.toStdString();
-  auto const patternViews = fzf::queryVariants(pattern);
+  std::string_view const patternView = pattern;
   const auto &matcher = fzf::threadLocalMatcher();
 
   std::unordered_map<std::string, RootProvider *> providerById;
@@ -225,13 +219,7 @@ RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPre
     if (provider->isTransient()) continue;
     auto id = provider->uniqueId().toStdString();
     providerById.emplace(id, provider);
-
-    auto const displayName = provider->displayName().toStdString();
-    int score = 0;
-    for (const auto &variant : patternViews) {
-      score = std::max(score, matcher.fuzzy_match_v2_score_query(displayName, std::string_view{variant}));
-    }
-
+    int const score = matcher.fuzzy_match_v2_score_query(provider->displayName().toStdString(), patternView);
     if (score > 0) providerNameScore.emplace(id, static_cast<double>(score));
   }
 
@@ -253,7 +241,7 @@ RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPre
     const auto &providerId = item.meta->providerId;
     if (!providerById.contains(providerId)) continue;
 
-    double const titleScore = item.fuzzyScore(patternViews);
+    double const titleScore = item.fuzzyScore(patternView);
     auto nameIt = providerNameScore.find(providerId);
     bool const providerMatched = nameIt != providerNameScore.end();
     if (titleScore <= 0 && !providerMatched) continue;

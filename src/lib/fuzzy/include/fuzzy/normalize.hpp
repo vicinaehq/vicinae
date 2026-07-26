@@ -18,7 +18,6 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
 
 namespace fzf {
 
@@ -28,7 +27,7 @@ struct FoldEntry {
 };
 
 inline constexpr auto NORMALIZE_TABLE = [] {
-  std::array<FoldEntry, 690> table = {{
+  auto table = std::to_array<FoldEntry>({
       {0x00C0, 'A'},  {0x00C1, 'A'},  {0x00C2, 'A'}, {0x00C3, 'A'}, {0x00C4, 'A'}, {0x00C5, 'A'},
       {0x00C7, 'C'},  {0x00C8, 'E'},  {0x00C9, 'E'}, {0x00CA, 'E'}, {0x00CB, 'E'}, {0x00CC, 'I'},
       {0x00CD, 'I'},  {0x00CE, 'I'},  {0x00CF, 'I'}, {0x00D1, 'N'}, {0x00D2, 'O'}, {0x00D3, 'O'},
@@ -144,7 +143,7 @@ inline constexpr auto NORMALIZE_TABLE = [] {
       {0xFF4E, 'n'},  {0xFF4F, 'o'},  {0xFF50, 'p'}, {0xFF51, 'q'}, {0xFF52, 'r'}, {0xFF53, 's'},
       {0xFF54, 't'},  {0xFF55, 'u'},  {0xFF56, 'v'}, {0xFF57, 'w'}, {0xFF58, 'x'}, {0xFF59, 'y'},
       {0xFF5A, 'z'},  {0xFF5B, '{'},  {0xFF5C, '|'}, {0xFF5D, '}'}, {0xFF5E, '~'}, {0xFF61, '.'},
-  }};
+  });
   std::ranges::sort(table, {}, &FoldEntry::cp);
   return table;
 }();
@@ -191,6 +190,29 @@ inline std::pair<char32_t, int> decodeUtf8(std::string_view s, size_t i) {
   return {cp, len};
 }
 
+inline int encodeUtf8(char32_t cp, std::array<char, 4> &out) {
+  if (cp < 0x80) {
+    out[0] = static_cast<char>(cp);
+    return 1;
+  }
+  if (cp < 0x800) {
+    out[0] = static_cast<char>(0xC0 | (cp >> 6));
+    out[1] = static_cast<char>(0x80 | (cp & 0x3F));
+    return 2;
+  }
+  if (cp < 0x10000) {
+    out[0] = static_cast<char>(0xE0 | (cp >> 12));
+    out[1] = static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+    out[2] = static_cast<char>(0x80 | (cp & 0x3F));
+    return 3;
+  }
+  out[0] = static_cast<char>(0xF0 | (cp >> 18));
+  out[1] = static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+  out[2] = static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+  out[3] = static_cast<char>(0x80 | (cp & 0x3F));
+  return 4;
+}
+
 struct TranslitEntry {
   char32_t cp;
   std::string_view ascii;
@@ -232,10 +254,28 @@ inline constexpr auto TRANSLIT_TABLE = [] {
 }();
 
 inline constexpr char32_t foldScriptCase(char32_t cp) {
+  constexpr auto GREEK_SPECIAL_CASES = std::to_array<std::pair<char32_t, char32_t>>({
+      {0x0386, 0x03AC},
+      {0x0388, 0x03AD},
+      {0x0389, 0x03AE},
+      {0x038A, 0x03AF},
+      {0x038C, 0x03CC},
+      {0x038E, 0x03CD},
+      {0x038F, 0x03CE},
+      {0x03AA, 0x03CA},
+      {0x03AB, 0x03CB},
+  });
+
   if (cp >= 0x0410 && cp <= 0x042F) { return cp + 0x20; }
   if (cp >= 0x0400 && cp <= 0x040F) { return cp + 0x50; }
   if (cp >= 0x0391 && cp <= 0x03A9) { return cp + 0x20; }
+  if (cp == 0x03C2) { return 0x03C3; }
   if (cp == 0x0490) { return 0x0491; }
+
+  for (const auto &[upper, lower] : GREEK_SPECIAL_CASES) {
+    if (cp == upper) { return lower; }
+  }
+
   return cp;
 }
 
@@ -251,9 +291,19 @@ transliterateCodepoint(char32_t cp, TranslitScheme scheme = TranslitScheme::Prim
   return it->ascii;
 }
 
-inline std::optional<std::string> transliterate(std::string_view text,
-                                                TranslitScheme scheme = TranslitScheme::Primary) {
-  std::string out;
+inline bool needsTransliteration(std::string_view text) {
+  size_t i = 0;
+  while (i < text.size()) {
+    const auto [cp, len] = decodeUtf8(text, i);
+    if (transliterateCodepoint(cp)) { return true; }
+    i += static_cast<size_t>(len);
+  }
+  return false;
+}
+
+inline bool transliterate(std::string_view text, std::string &out,
+                          TranslitScheme scheme = TranslitScheme::Primary) {
+  out.clear();
   out.reserve(text.size());
   bool transliterated = false;
 
@@ -269,25 +319,18 @@ inline std::optional<std::string> transliterate(std::string_view text,
     i += static_cast<size_t>(len);
   }
 
-  if (!transliterated || out.empty()) { return std::nullopt; }
-  return out;
+  if (!transliterated || out.empty()) {
+    out.clear();
+    return false;
+  }
+  return true;
 }
 
-constexpr size_t MAX_QUERY_VARIANTS = 3;
-
-inline std::vector<std::string> queryVariants(std::string_view query) {
-  std::vector<std::string> variants;
-  variants.reserve(MAX_QUERY_VARIANTS);
-  variants.emplace_back(query);
-
-  for (const auto scheme : {TranslitScheme::Primary, TranslitScheme::Alternate}) {
-    auto translit = transliterate(query, scheme);
-    if (!translit) { continue; }
-    if (std::ranges::contains(variants, *translit)) { continue; }
-    variants.emplace_back(std::move(*translit));
-  }
-
-  return variants;
+inline std::optional<std::string> transliterate(std::string_view text,
+                                                TranslitScheme scheme = TranslitScheme::Primary) {
+  std::string out;
+  if (!transliterate(text, out, scheme)) { return std::nullopt; }
+  return out;
 }
 
 } // namespace fzf

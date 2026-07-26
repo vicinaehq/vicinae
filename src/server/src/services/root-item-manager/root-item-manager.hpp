@@ -12,7 +12,6 @@
 #include "preference.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include <cstdint>
-#include <span>
 #include <qdnslookup.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -236,7 +235,7 @@ public:
     std::vector<std::string> keywords;
     RootItemMetadata *meta = nullptr;
 
-    float fuzzyScore(std::span<const std::string> patterns) const;
+    float fuzzyScore(std::string_view pattern = "") const;
   };
 
   struct ScoredItem {
