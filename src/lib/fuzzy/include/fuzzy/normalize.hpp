@@ -1,5 +1,6 @@
 /**
- * Latin-script diacritic folding table.
+ * Latin-script diacritic folding table, plus transliteration for scripts that need
+ * more than one ASCII character per letter.
  *
  * Ported from fzf (src/algo/normalize.go), then augmented with the missing
  * upper/lower case partners (fzf omits most Latin Extended-A capitals such as
@@ -12,6 +13,9 @@
 #pragma once
 #include <algorithm>
 #include <array>
+#include <cstdint>
+#include <optional>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -23,7 +27,7 @@ struct FoldEntry {
 };
 
 inline constexpr auto NORMALIZE_TABLE = [] {
-  std::array<FoldEntry, 690> table = {{
+  auto table = std::to_array<FoldEntry>({
       {0x00C0, 'A'},  {0x00C1, 'A'},  {0x00C2, 'A'}, {0x00C3, 'A'}, {0x00C4, 'A'}, {0x00C5, 'A'},
       {0x00C7, 'C'},  {0x00C8, 'E'},  {0x00C9, 'E'}, {0x00CA, 'E'}, {0x00CB, 'E'}, {0x00CC, 'I'},
       {0x00CD, 'I'},  {0x00CE, 'I'},  {0x00CF, 'I'}, {0x00D1, 'N'}, {0x00D2, 'O'}, {0x00D3, 'O'},
@@ -139,7 +143,7 @@ inline constexpr auto NORMALIZE_TABLE = [] {
       {0xFF4E, 'n'},  {0xFF4F, 'o'},  {0xFF50, 'p'}, {0xFF51, 'q'}, {0xFF52, 'r'}, {0xFF53, 's'},
       {0xFF54, 't'},  {0xFF55, 'u'},  {0xFF56, 'v'}, {0xFF57, 'w'}, {0xFF58, 'x'}, {0xFF59, 'y'},
       {0xFF5A, 'z'},  {0xFF5B, '{'},  {0xFF5C, '|'}, {0xFF5D, '}'}, {0xFF5E, '~'}, {0xFF61, '.'},
-  }};
+  });
   std::ranges::sort(table, {}, &FoldEntry::cp);
   return table;
 }();
@@ -184,6 +188,149 @@ inline std::pair<char32_t, int> decodeUtf8(std::string_view s, size_t i) {
     cp = (cp << 6) | (bk & 0x3F);
   }
   return {cp, len};
+}
+
+inline int encodeUtf8(char32_t cp, std::array<char, 4> &out) {
+  if (cp < 0x80) {
+    out[0] = static_cast<char>(cp);
+    return 1;
+  }
+  if (cp < 0x800) {
+    out[0] = static_cast<char>(0xC0 | (cp >> 6));
+    out[1] = static_cast<char>(0x80 | (cp & 0x3F));
+    return 2;
+  }
+  if (cp < 0x10000) {
+    out[0] = static_cast<char>(0xE0 | (cp >> 12));
+    out[1] = static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+    out[2] = static_cast<char>(0x80 | (cp & 0x3F));
+    return 3;
+  }
+  out[0] = static_cast<char>(0xF0 | (cp >> 18));
+  out[1] = static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+  out[2] = static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+  out[3] = static_cast<char>(0x80 | (cp & 0x3F));
+  return 4;
+}
+
+struct TranslitEntry {
+  char32_t cp;
+  std::string_view ascii;
+  std::string_view alt = "";
+};
+
+/**
+ * Non-Latin letters spelled out in ASCII. Keyed by lowercase codepoint, except for
+ * the Greek accented capitals whose lowercase partners are not a fixed offset away.
+ *
+ * The matcher is a subsequence matcher, so a spelling longer than the Latin one it
+ * has to match rules the item out entirely, while a shorter one still matches at a
+ * gap penalty: prefer under-expanding (щ -> "sh", not "shch"; х -> "h", not "kh").
+ * `alt` covers sounds with two common Latin spellings, notably /k/ written "c" in
+ * Calculator or Discord and "k" in Konsole or Kitty.
+ */
+inline constexpr auto TRANSLIT_TABLE = [] {
+  auto table = std::to_array<TranslitEntry>({
+      {0x0430, "a"},  {0x0431, "b"},  {0x0432, "v"}, {0x0433, "g"},      {0x0434, "d"},      {0x0435, "e"},
+      {0x0436, "zh"}, {0x0437, "z"},  {0x0438, "i"}, {0x0439, "i"},      {0x043A, "k", "c"}, {0x043B, "l"},
+      {0x043C, "m"},  {0x043D, "n"},  {0x043E, "o"}, {0x043F, "p"},      {0x0440, "r"},      {0x0441, "s"},
+      {0x0442, "t"},  {0x0443, "u"},  {0x0444, "f"}, {0x0445, "h"},      {0x0446, "c"},      {0x0447, "ch"},
+      {0x0448, "sh"}, {0x0449, "sh"}, {0x044A, ""},  {0x044B, "y"},      {0x044C, ""},       {0x044D, "e"},
+      {0x044E, "u"},  {0x044F, "a"},  {0x0451, "e"}, {0x0452, "d"},      {0x0453, "g"},      {0x0454, "e"},
+      {0x0455, "z"},  {0x0456, "i"},  {0x0457, "i"}, {0x0458, "i"},      {0x0459, "l"},      {0x045A, "n"},
+      {0x045B, "c"},  {0x045C, "k"},  {0x045E, "u"}, {0x045F, "d"},      {0x0491, "g"},
+
+      {0x03B1, "a"},  {0x03B2, "b"},  {0x03B3, "g"}, {0x03B4, "d"},      {0x03B5, "e"},      {0x03B6, "z"},
+      {0x03B7, "i"},  {0x03B8, "th"}, {0x03B9, "i"}, {0x03BA, "k", "c"}, {0x03BB, "l"},      {0x03BC, "m"},
+      {0x03BD, "n"},  {0x03BE, "x"},  {0x03BF, "o"}, {0x03C0, "p"},      {0x03C1, "r"},      {0x03C2, "s"},
+      {0x03C3, "s"},  {0x03C4, "t"},  {0x03C5, "u"}, {0x03C6, "f"},      {0x03C7, "h"},      {0x03C8, "ps"},
+      {0x03C9, "o"},  {0x03AC, "a"},  {0x03AD, "e"}, {0x03AE, "i"},      {0x03AF, "i"},      {0x03CA, "i"},
+      {0x03CB, "u"},  {0x03CC, "o"},  {0x03CD, "u"}, {0x03CE, "o"},      {0x0390, "i"},      {0x03B0, "u"},
+      {0x0386, "a"},  {0x0388, "e"},  {0x0389, "i"}, {0x038A, "i"},      {0x038C, "o"},      {0x038E, "u"},
+      {0x038F, "o"},  {0x03AA, "i"},  {0x03AB, "u"},
+  });
+  std::ranges::sort(table, {}, &TranslitEntry::cp);
+  return table;
+}();
+
+inline constexpr char32_t foldScriptCase(char32_t cp) {
+  constexpr auto GREEK_SPECIAL_CASES = std::to_array<std::pair<char32_t, char32_t>>({
+      {0x0386, 0x03AC},
+      {0x0388, 0x03AD},
+      {0x0389, 0x03AE},
+      {0x038A, 0x03AF},
+      {0x038C, 0x03CC},
+      {0x038E, 0x03CD},
+      {0x038F, 0x03CE},
+      {0x03AA, 0x03CA},
+      {0x03AB, 0x03CB},
+  });
+
+  if (cp >= 0x0410 && cp <= 0x042F) { return cp + 0x20; }
+  if (cp >= 0x0400 && cp <= 0x040F) { return cp + 0x50; }
+  if (cp >= 0x0391 && cp <= 0x03A9) { return cp + 0x20; }
+  if (cp == 0x03C2) { return 0x03C3; }
+  if (cp == 0x0490) { return 0x0491; }
+
+  for (const auto &[upper, lower] : GREEK_SPECIAL_CASES) {
+    if (cp == upper) { return lower; }
+  }
+
+  return cp;
+}
+
+enum class TranslitScheme : std::uint8_t { Primary, Alternate };
+
+inline std::optional<std::string_view>
+transliterateCodepoint(char32_t cp, TranslitScheme scheme = TranslitScheme::Primary) {
+  const char32_t folded = foldScriptCase(cp);
+  const auto it = std::lower_bound(TRANSLIT_TABLE.begin(), TRANSLIT_TABLE.end(), folded,
+                                   [](const TranslitEntry &e, char32_t v) { return e.cp < v; });
+  if (it == TRANSLIT_TABLE.end() || it->cp != folded) { return std::nullopt; }
+  if (scheme == TranslitScheme::Alternate && !it->alt.empty()) { return it->alt; }
+  return it->ascii;
+}
+
+inline bool needsTransliteration(std::string_view text) {
+  size_t i = 0;
+  while (i < text.size()) {
+    const auto [cp, len] = decodeUtf8(text, i);
+    if (transliterateCodepoint(cp)) { return true; }
+    i += static_cast<size_t>(len);
+  }
+  return false;
+}
+
+inline bool transliterate(std::string_view text, std::string &out,
+                          TranslitScheme scheme = TranslitScheme::Primary) {
+  out.clear();
+  out.reserve(text.size());
+  bool transliterated = false;
+
+  size_t i = 0;
+  while (i < text.size()) {
+    const auto [cp, len] = decodeUtf8(text, i);
+    if (const auto ascii = transliterateCodepoint(cp, scheme)) {
+      out.append(*ascii);
+      transliterated = true;
+    } else {
+      out.append(text.substr(i, static_cast<size_t>(len)));
+    }
+    i += static_cast<size_t>(len);
+  }
+
+  if (!transliterated || out.empty()) {
+    out.clear();
+    return false;
+  }
+  return true;
+}
+
+inline std::optional<std::string> transliterate(std::string_view text,
+                                                TranslitScheme scheme = TranslitScheme::Primary) {
+  std::string out;
+  if (!transliterate(text, out, scheme)) { return std::nullopt; }
+  return out;
 }
 
 } // namespace fzf

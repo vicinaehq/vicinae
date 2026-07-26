@@ -52,6 +52,14 @@ TEST_CASE("fuzzy_match_v2: non-Latin scripts are unaffected by folding") {
   }
 }
 
+TEST_CASE("fuzzy_match_v2: Cyrillic and Greek matching is case-insensitive") {
+  const auto &m = fzf::threadLocalMatcher();
+
+  REQUIRE(m.fuzzy_match_v2("Открыть настройки", "открыть").matched());
+  REQUIRE(m.fuzzy_match_v2("ТЕЛЕГРАМ", "телеграм").matched());
+  REQUIRE(m.fuzzy_match_v2("ΤΕΡΜΙΝΑΛ", "τερμιναλ").matched());
+}
+
 TEST_CASE("fuzzy_match_v2: match offsets map back to original bytes") {
   const auto &m = fzf::threadLocalMatcher();
   // "Café Bar": C(0) a(1) f(2) é(bytes 3-4) space(5) B(6) a(7) r(8)
@@ -97,4 +105,38 @@ TEST_CASE("ordering: github issue #946 examples") {
   fuzzy::test::expectRankedOrder({"eos-update", "Configure EOS Update Notifier"}, "eos");
   fuzzy::test::expectRankedOrder({"Avidemux", "Donate to vicinae"}, "avi");
   fuzzy::test::expectRankedOrder({"Spotify", "Reload Script Directories", "Sysprog"}, "Spo");
+}
+
+TEST_CASE("transliterate: non-latin scripts map to ascii") {
+  REQUIRE(fzf::transliterate("телеграм") == "telegram");
+  REQUIRE(fzf::transliterate("ТЕЛЕГРАМ") == "telegram");
+  REQUIRE(fzf::transliterate("Ёж") == "ezh");
+  REQUIRE(fzf::transliterate("тел egram") == "tel egram");
+  REQUIRE(fzf::transliterate("ΤΕΡΜΙΝΑΛ") == "terminal");
+  REQUIRE(fzf::transliterate("Ελλάδα") == "ellada");
+
+  REQUIRE(fzf::transliterate("telegram") == std::nullopt);
+  REQUIRE(fzf::transliterate("ьъ") == std::nullopt);
+}
+
+TEST_CASE("needsTransliteration: only supported scripts need extra matching") {
+  REQUIRE(fzf::needsTransliteration("телеграм"));
+  REQUIRE(fzf::needsTransliteration("ΤΕΡΜΙΝΑΛ"));
+  REQUIRE_FALSE(fzf::needsTransliteration("telegram"));
+  REQUIRE_FALSE(fzf::needsTransliteration("日本語"));
+}
+
+TEST_CASE("transliteration: matching across scripts") {
+  const auto &matcher = fzf::threadLocalMatcher();
+
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Telegram", "телеграм") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Discord", "дискорд") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Konsole", "консоль") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Terminal", "τερμιναλ") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Telegram", "музыка") == 0);
+
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Привет мир", "мир") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Открыть Discord", "открыть дискорд") > 0);
+  REQUIRE(matcher.fuzzy_match_v2_score_query("Telegram", "teleg") ==
+          matcher.fuzzy_match_v2_ascii("Telegram", "teleg").score);
 }
