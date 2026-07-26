@@ -21,6 +21,12 @@ cp extra/vicinae.png ${APPDIR}
 # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57
 cp /usr/lib/$(uname -m)-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
 
+# qtkeychain dlopens libsecret instead of linking it, so linuxdeploy can't see it in the
+# dependency tree and the host copy can't be loaded next to our bundled glib/openssl.
+# Without it qtkeychain silently falls back to kwallet or errors out (#1632).
+LIBSECRET=/usr/lib/$(uname -m)-linux-gnu/libsecret-1.so.0
+[ -e "$LIBSECRET" ] || die "$LIBSECRET not found: install libsecret-1-dev in the build image"
+
 export QML_SOURCES_PATHS=$PWD/src/server/src/qml/qml
 export EXTRA_PLATFORM_PLUGINS=libqwayland.so
 export EXTRA_QT_PLUGINS=waylandcompositor
@@ -36,5 +42,6 @@ for bin in $APPDIR/usr/libexec/vicinae/*; do
 done
 
 linuxdeploy --appdir $APPDIR "${EXECUTABLE_ARGS[@]}" \
+	--library "$LIBSECRET" \
 	--desktop-file $APPDIR/usr/share/applications/vicinae.desktop \
 	--plugin qt --output appimage
