@@ -90,7 +90,7 @@ template <> struct Partial<Size> {
 struct WindowCSD {
   bool enabled = true;
 #ifdef Q_OS_MACOS
-  int rounding = 30;
+  int rounding = 20;
 #else
   int rounding = 10;
 #endif
