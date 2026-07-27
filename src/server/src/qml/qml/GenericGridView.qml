@@ -152,6 +152,7 @@ Item {
         visible: !root._empty
         model: root.cmdModel
         clip: true
+        interactive: false
         boundsBehavior: Flickable.StopAtBounds
         topMargin: root.cellSpacing
         bottomMargin: root.cellSpacing
