@@ -4,7 +4,6 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "argument.hpp"
 #include "common.hpp"
-#include "navigation-controller.hpp"
 #include "ui/image/url.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -63,6 +62,8 @@ RootShortcutItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMet
 
   return panel;
 }
+
+std::vector<QString> RootShortcutItem::keywords() const { return {m_link->url()}; }
 
 QString RootShortcutItem::typeDisplayName() const { return tr("Shortcut"); }
 
