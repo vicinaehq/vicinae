@@ -104,6 +104,15 @@ QVariant RootLinkSection::customData(int, int role) const {
 QHash<int, QByteArray> RootLinkSection::customRoleNames() const { return root_search::customRoleNames(); }
 QHash<int, QVariant> RootLinkSection::customRoleDefaults() const { return root_search::customRoleDefaults(); }
 
+std::unique_ptr<QMimeData> RootLinkSection::dragMimeData(int) const {
+  if (!m_link) return {};
+
+  auto data = std::make_unique<QMimeData>();
+  data->setUrls({QUrl(m_link->url)});
+  data->setText(m_link->url);
+  return data;
+}
+
 std::unique_ptr<ActionPanelState> RootLinkSection::actionPanel(int) const {
   if (!m_link) return nullptr;
   auto panel = std::make_unique<ListActionPanelState>();
@@ -394,6 +403,16 @@ QVariant RootFilesSection::customData(int, int role) const {
 QHash<int, QByteArray> RootFilesSection::customRoleNames() const { return root_search::customRoleNames(); }
 QHash<int, QVariant> RootFilesSection::customRoleDefaults() const {
   return root_search::customRoleDefaults();
+}
+
+std::unique_ptr<QMimeData> RootFilesSection::dragMimeData(int i) const {
+  if (!isDraggable(i)) return {};
+
+  auto data = std::make_unique<QMimeData>();
+  auto path = QString::fromStdString(m_files[i].path.string());
+  data->setUrls({QUrl::fromLocalFile(path)});
+  data->setText(path);
+  return data;
 }
 
 std::unique_ptr<ActionPanelState> RootFilesSection::actionPanel(int i) const {
