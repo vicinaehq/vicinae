@@ -115,6 +115,7 @@ Item {
                     required property string subtitle
                     required property string iconSource
                     required property var itemAccessory
+                    required property bool isDraggable
 
                     sourceComponent: isSection ? sectionComponent : itemComponent
 
@@ -137,8 +138,13 @@ Item {
                             itemIsActive: false
                             itemAccessory: delegateLoader.itemAccessory
                             selected: listView.currentIndex === delegateLoader.index
+                            draggable: delegateLoader.isDraggable
                             onClicked: listView.currentIndex = delegateLoader.index
                             onActivated: listView.itemActivated(delegateLoader.index)
+                            onDragRequested: function (source) {
+                                listView.currentIndex = delegateLoader.index;
+                                root.host.contentModel.startDrag(delegateLoader.index, source);
+                            }
                         }
                     }
                 }

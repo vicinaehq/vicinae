@@ -10,4 +10,4 @@ namespace DragUtils {
 
 void startDrag(QObject *source, std::unique_ptr<QMimeData> mimeData, const QString &iconSource);
 
-}
+} // namespace DragUtils
