@@ -15,9 +15,9 @@ std::optional<ImageURL> CalcHistorySection::itemIcon(int i) const {
   const auto &record = m_records[i];
   switch (record.typeHint) {
   case AbstractCalculatorBackend::CONVERSION:
-    return ImageURL::builtin("switch");
+    return ImageURL::builtin(BuiltinIcon::Switch);
   default:
-    return ImageURL::builtin("calculator");
+    return ImageURL::builtin(BuiltinIcon::Calculator);
   }
 }
 

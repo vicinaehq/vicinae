@@ -10,7 +10,7 @@ public:
   QString id() const override { return "raycast-compat"; }
   QString displayName() const override { return QStringLiteral("Raycast Compat"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("raycast").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin(BuiltinIcon::Raycast).setBackgroundTint(SemanticColor::Red);
   }
   QString description() const override { return tr("Raycast compatibility features"); }
 

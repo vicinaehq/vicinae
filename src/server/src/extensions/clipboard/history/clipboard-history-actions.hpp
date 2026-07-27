@@ -52,7 +52,7 @@ class RemoveSelectionAction : public AbstractAction {
 
 public:
   RemoveSelectionAction(const QString &id)
-      : AbstractAction(tr("Remove entry"), ImageURL::builtin("trash")), m_id(id) {
+      : AbstractAction(tr("Remove entry"), ImageURL::builtin(BuiltinIcon::Trash)), m_id(id) {
     setStyle(AbstractAction::Style::Danger);
   }
 };
@@ -71,7 +71,8 @@ class PinClipboardAction : public AbstractAction {
 
 public:
   PinClipboardAction(const QString &id, bool value)
-      : AbstractAction(value ? tr("Pin") : tr("Unpin"), ImageURL::builtin("pin")), m_id(id), m_value(value) {}
+      : AbstractAction(value ? tr("Pin") : tr("Unpin"), ImageURL::builtin(BuiltinIcon::Pin)), m_id(id),
+        m_value(value) {}
 };
 
 class EditClipboardKeywordsAction : public AbstractAction {
@@ -90,7 +91,7 @@ class EditClipboardKeywordsAction : public AbstractAction {
 
 public:
   QString title() const override { return tr("Edit keywords"); }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("text"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::Text); }
   EditClipboardKeywordsAction(const QString &id) : m_id(id) {}
 };
 
@@ -115,6 +116,6 @@ class RemoveAllSelectionsAction : public AbstractAction {
 
 public:
   QString title() const override { return tr("Remove all"); }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("trash"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::Trash); }
   RemoveAllSelectionsAction() { setStyle(AbstractAction::Style::Danger); }
 };

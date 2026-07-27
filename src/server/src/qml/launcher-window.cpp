@@ -568,38 +568,38 @@ void LauncherWindow::buildFooterMenu() {
 
   auto *appSection = state->createSection();
   appSection->addAction(
-      new StaticAction(tr("Open Settings"), ImageURL::builtin("cog"), [](ApplicationContext *ctx) {
+      new StaticAction(tr("Open Settings"), ImageURL::builtin(BuiltinIcon::Cog), [](ApplicationContext *ctx) {
         ctx->navigation->closeWindow();
         ctx->settings->openWindow();
       }));
-  appSection->addAction(
-      new StaticAction(tr("Keyboard Shortcuts"), ImageURL::builtin("keyboard"), [](ApplicationContext *ctx) {
-        ctx->navigation->closeWindow();
-        ctx->settings->openTab(QStringLiteral("shortcuts"));
-      }));
-  appSection->addAction(new StaticAction(QStringLiteral("Extension Store"), ImageURL::builtin("cart"),
+  appSection->addAction(new StaticAction(tr("Keyboard Shortcuts"), ImageURL::builtin(BuiltinIcon::Keyboard),
                                          [](ApplicationContext *ctx) {
+                                           ctx->navigation->closeWindow();
+                                           ctx->settings->openTab(QStringLiteral("shortcuts"));
+                                         }));
+  appSection->addAction(new StaticAction(QStringLiteral("Extension Store"),
+                                         ImageURL::builtin(BuiltinIcon::Cart), [](ApplicationContext *ctx) {
                                            ctx->navigation->popToRoot();
                                            ctx->navigation->clearSearchText();
                                            ctx->navigation->pushView(new VicinaeStoreViewHost);
                                          }));
 
   auto *helpSection = state->createSection();
+  helpSection->addAction(new StaticAction(tr("Documentation"), ImageURL::builtin(BuiltinIcon::Book),
+                                          [](ApplicationContext *ctx) {
+                                            ctx->services->appDb()->openTarget(Omnicast::DOC_URL);
+                                            ctx->navigation->showHud(tr("Opened in browser"));
+                                          }));
   helpSection->addAction(
-      new StaticAction(tr("Documentation"), ImageURL::builtin("book"), [](ApplicationContext *ctx) {
-        ctx->services->appDb()->openTarget(Omnicast::DOC_URL);
-        ctx->navigation->showHud(tr("Opened in browser"));
-      }));
-  helpSection->addAction(
-      new StaticAction(tr("Report a Bug"), ImageURL::builtin("bug"), [](ApplicationContext *ctx) {
+      new StaticAction(tr("Report a Bug"), ImageURL::builtin(BuiltinIcon::Bug), [](ApplicationContext *ctx) {
         ctx->services->appDb()->openTarget(makeVicinaeBugReportUrl());
         ctx->navigation->showHud(tr("Opened in browser"));
       }));
-  helpSection->addAction(
-      new StaticAction(tr("About Vicinae"), ImageURL::builtin("info-01"), [](ApplicationContext *ctx) {
-        ctx->navigation->closeWindow();
-        ctx->settings->openTab(QStringLiteral("about"));
-      }));
+  helpSection->addAction(new StaticAction(tr("About Vicinae"), ImageURL::builtin(BuiltinIcon::Info01),
+                                          [](ApplicationContext *ctx) {
+                                            ctx->navigation->closeWindow();
+                                            ctx->settings->openTab(QStringLiteral("about"));
+                                          }));
 
   m_footerPanel->setActions(std::move(state));
 }

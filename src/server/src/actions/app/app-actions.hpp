@@ -66,7 +66,7 @@ public:
   void execute(ApplicationContext *context) override;
   void setClearSearch(bool value) { m_clearSearch = value; }
   QString title() const override { return tr("Execute program"); }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("terminal"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::Terminal); }
 
 private:
   QString m_prog;

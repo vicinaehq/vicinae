@@ -23,7 +23,9 @@ QString CommandLineSection::itemTitle(int) const {
   return QString::fromStdString(query);
 }
 
-std::optional<ImageURL> CommandLineSection::itemIcon(int) const { return ImageURL::builtin("terminal"); }
+std::optional<ImageURL> CommandLineSection::itemIcon(int) const {
+  return ImageURL::builtin(BuiltinIcon::Terminal);
+}
 
 std::unique_ptr<ActionPanelState> CommandLineSection::actionPanel(int) const {
   auto panel = std::make_unique<ListActionPanelState>();

@@ -24,8 +24,10 @@ QString ThemeSection::itemSubtitle(int i) const {
 
 std::optional<ImageURL> ThemeSection::itemIcon(int i) const {
   const auto &theme = m_themes[i];
-  if (theme->icon()) { return ImageURL::local(*theme->icon()).withFallback(ImageURL::builtin("vicinae")); }
-  return ImageURL::builtin("vicinae");
+  if (theme->icon()) {
+    return ImageURL::local(*theme->icon()).withFallback(ImageURL::builtin(BuiltinIcon::Vicinae));
+  }
+  return ImageURL::builtin(BuiltinIcon::Vicinae);
 }
 
 QVariant ThemeSection::customData(int i, int role) const {

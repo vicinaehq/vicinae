@@ -25,7 +25,7 @@ std::unique_ptr<ActionPanelState> EnabledFallbackSection::buildActionPanel(const
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
 
-  section->addAction(new StaticAction(tr("Disable fallback"), ImageURL::builtin("redo"),
+  section->addAction(new StaticAction(tr("Disable fallback"), ImageURL::builtin(BuiltinIcon::Redo),
                                       [id = item->uniqueId()](ApplicationContext *ctx) {
                                         ctx->services->rootItemManager()->disableFallback(id);
                                       }));
@@ -47,7 +47,7 @@ std::unique_ptr<ActionPanelState> AvailableFallbackSection::buildActionPanel(con
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
 
-  section->addAction(new StaticAction(tr("Enable fallback"), ImageURL::builtin("redo"),
+  section->addAction(new StaticAction(tr("Enable fallback"), ImageURL::builtin(BuiltinIcon::Redo),
                                       [id = item->uniqueId()](ApplicationContext *ctx) {
                                         ctx->services->rootItemManager()->enableFallback(id);
                                       }));

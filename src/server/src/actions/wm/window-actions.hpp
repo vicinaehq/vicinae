@@ -16,7 +16,7 @@ class FocusWindowAction : public AbstractAction {
 public:
   FocusWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
       : AbstractAction(QCoreApplication::translate("FocusWindowAction", "Focus window"),
-                       ImageURL::builtin("app-window")),
+                       ImageURL::builtin(BuiltinIcon::AppWindow)),
         m_window(window) {
     setAutoClose();
   }
@@ -33,7 +33,7 @@ class CloseWindowAction : public AbstractAction {
 public:
   CloseWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
       : AbstractAction(QCoreApplication::translate("CloseWindowAction", "Close window"),
-                       ImageURL::builtin("xmark")),
+                       ImageURL::builtin(BuiltinIcon::Xmark)),
         m_window(window) {
     setStyle(AbstractAction::Style::Danger);
   }
@@ -53,7 +53,7 @@ class PinWindowAction : public AbstractAction {
 public:
   PinWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
       : AbstractAction(window->sticky() ? tr("Unpin from all workspaces") : tr("Pin to all workspaces"),
-                       ImageURL::builtin(window->sticky() ? "pin-disabled" : "pin")),
+                       ImageURL::builtin(window->sticky() ? BuiltinIcon::PinDisabled : BuiltinIcon::Pin)),
         m_window(window) {}
 };
 
@@ -70,7 +70,7 @@ class BringToWorkspaceAction : public AbstractAction {
 public:
   BringToWorkspaceAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
       : AbstractAction(QCoreApplication::translate("BringToWorkspaceAction", "Bring to current workspace"),
-                       ImageURL::builtin("move")),
+                       ImageURL::builtin(BuiltinIcon::Move)),
         m_window(window) {
     setAutoClose();
   }

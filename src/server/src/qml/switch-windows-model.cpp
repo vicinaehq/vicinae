@@ -11,7 +11,7 @@ QString SwitchWindowsSection::displaySubtitle(const WindowEntry &e) const {
 
 std::optional<ImageURL> SwitchWindowsSection::displayIcon(const WindowEntry &e) const {
   if (e.app) return e.app->iconUrl();
-  return ImageURL::builtin("app-window");
+  return ImageURL::builtin(BuiltinIcon::AppWindow);
 }
 
 QVariantList SwitchWindowsSection::displayAccessories(const WindowEntry &e) const {

@@ -63,7 +63,7 @@ void VicinaeStoreDetailHost::hydrate(const VicinaeStore::Extension &extension) {
   auto registry = context()->services->extensionRegistry();
   m_isInstalled = registry->isInstalled(m_ext.id);
 
-  auto icon = ImageURL::builtin("cart");
+  auto icon = ImageURL::builtin(BuiltinIcon::Cart);
   icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
   setNavigationIcon(icon);
   setNavigationTitle(tr("Extension Store - %1").arg(m_ext.title));
@@ -93,7 +93,7 @@ QString VicinaeStoreDetailHost::iconSource() const { return qml::imageSourceFor(
 QString VicinaeStoreDetailHost::authorName() const { return m_ext.author.name; }
 
 QString VicinaeStoreDetailHost::authorAvatar() const {
-  if (m_ext.author.avatarUrl.isEmpty()) return qml::imageSourceFor(ImageURL::builtin("person"));
+  if (m_ext.author.avatarUrl.isEmpty()) return qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Person));
   return qml::imageSourceFor(ImageURL::http(QUrl(m_ext.author.avatarUrl)).circle());
 }
 
@@ -184,8 +184,8 @@ void VicinaeStoreDetailHost::createActions() {
     main->addAction(uninstall);
   }
 
-  auto reportIssue =
-      new StaticAction(tr("Report issue"), ImageURL::builtin("bug"), [](const ApplicationContext *ctx) {
+  auto reportIssue = new StaticAction(
+      tr("Report issue"), ImageURL::builtin(BuiltinIcon::Bug), [](const ApplicationContext *ctx) {
         ctx->services->appDb()->openTarget(Omnicast::GH_EXTENSIONS_CREATE_ISSUE);
       });
   main->addAction(reportIssue);

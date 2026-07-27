@@ -220,20 +220,22 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) {
   }
 }
 
-ImageURL ImageURL::builtin(const QString &name) {
+ImageURL ImageURL::builtinByName(QStringView name) {
   ImageURL url;
 
   url.setType(ImageURLType::Builtin);
-  url.setName(name);
+  url.setName(name.toString());
   url.setFill(SemanticColor::Foreground);
 
   return url;
 }
 
 ImageURL ImageURL::builtin(BuiltinIcon icon) {
-  if (auto name = BuiltinIconService::nameForIcon(icon)) { return ImageURL::builtin(name); }
+  if (auto name = BuiltinIconService::nameForIcon(icon)) {
+    return ImageURL::builtinByName(QString::fromLatin1(name));
+  }
   if (auto name = BuiltinIconService::nameForIcon(BuiltinIconService::unknownIcon())) {
-    return ImageURL::builtin(name);
+    return ImageURL::builtinByName(QString::fromLatin1(name));
   }
   return {};
 }

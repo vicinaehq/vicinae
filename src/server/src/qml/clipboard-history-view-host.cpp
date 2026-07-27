@@ -103,7 +103,8 @@ void ClipboardHistoryViewHost::initialize() {
   m_canToggleMonitoring = m_clipman->supportsMonitoring();
   if (!m_canToggleMonitoring) {
     m_clipboardStatusText = tr("Clipboard monitoring unavailable");
-    m_clipboardStatusIcon = qml::imageSourceFor(ImageURL::builtin("warning").setFill(SemanticColor::Red));
+    m_clipboardStatusIcon =
+        qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Warning).setFill(SemanticColor::Red));
   } else {
     handleMonitoringChanged(m_clipman->monitoring());
   }
@@ -171,11 +172,11 @@ void ClipboardHistoryViewHost::handleMonitoringChanged(bool monitoring) {
   if (monitoring) {
     m_clipboardStatusText = tr("Pause clipboard");
     m_clipboardStatusIcon =
-        qml::imageSourceFor(ImageURL::builtin("pause-filled").setFill(SemanticColor::Accent));
+        qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::PauseFilled).setFill(SemanticColor::Accent));
   } else {
     m_clipboardStatusText = tr("Resume clipboard");
     m_clipboardStatusIcon =
-        qml::imageSourceFor(ImageURL::builtin("play-filled").setFill(SemanticColor::Green));
+        qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::PlayFilled).setFill(SemanticColor::Green));
   }
   emit clipboardStatusChanged();
 }
@@ -198,7 +199,8 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   m_detailMd5 = entry.md5sum;
 
   if (entry.encryption != ClipboardEncryptionType::None) {
-    m_detailEncryptionIcon = qml::imageSourceFor(ImageURL::builtin("key").setFill(SemanticColor::Green));
+    m_detailEncryptionIcon =
+        qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Key).setFill(SemanticColor::Green));
   } else {
     m_detailEncryptionIcon.clear();
   }

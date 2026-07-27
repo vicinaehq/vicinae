@@ -57,7 +57,7 @@ void VicinaeStoreViewHost::handleFinished() {
 QString VicinaeStoreViewHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
 
 ImageURL VicinaeStoreViewHost::initialNavigationIcon() const {
-  return ImageURL::builtin("cart").setBackgroundTint(SemanticColor::Accent);
+  return ImageURL::builtin(BuiltinIcon::Cart).setBackgroundTint(SemanticColor::Accent);
 }
 
 void VicinaeStoreViewHost::refresh() { fetchExtensions(); }

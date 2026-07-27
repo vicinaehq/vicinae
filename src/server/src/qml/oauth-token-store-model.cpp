@@ -13,7 +13,7 @@ QString OAuthTokenStoreSection::displaySubtitle(const OAuth::TokenSet &set) cons
 }
 
 std::optional<ImageURL> OAuthTokenStoreSection::displayIcon(const OAuth::TokenSet &set) const {
-  return ImageURL::builtin("key");
+  return ImageURL::builtin(BuiltinIcon::Key);
 }
 
 QVariantList OAuthTokenStoreSection::displayAccessories(const OAuth::TokenSet &set) const {
@@ -28,7 +28,7 @@ std::unique_ptr<ActionPanelState> OAuthTokenStoreSection::buildActionPanel(const
   auto primary = panel->createSection();
 
   auto removeToken =
-      new StaticAction(tr("Remove token set"), ImageURL::builtin("trash"),
+      new StaticAction(tr("Remove token set"), ImageURL::builtin(BuiltinIcon::Trash),
                        [id = set.extensionId, pid = set.providerId](ApplicationContext *ctx) {
                          auto oauth = ctx->services->oauthService();
                          auto toast = ctx->services->toastService();

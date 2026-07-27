@@ -132,7 +132,9 @@ QString RootCalculatorSection::itemTitle(int) const {
   return m_result ? m_result->question.text + QStringLiteral(" = ") + m_result->answer.text : QString();
 }
 
-std::optional<ImageURL> RootCalculatorSection::itemIcon(int) const { return ImageURL::builtin("calculator"); }
+std::optional<ImageURL> RootCalculatorSection::itemIcon(int) const {
+  return ImageURL::builtin(BuiltinIcon::Calculator);
+}
 
 QVariant RootCalculatorSection::customData(int, int role) const {
   if (role == ItemType) return QStringLiteral("calculator");

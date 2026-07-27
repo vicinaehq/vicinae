@@ -40,8 +40,8 @@ void CreateExtensionViewHost::initialize() {
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto actionSection = panel->createSection();
-  auto submitAction =
-      new StaticAction(tr("Create extension"), ImageURL::builtin("enter-key"), [this]() { submit(); });
+  auto submitAction = new StaticAction(tr("Create extension"), ImageURL::builtin(BuiltinIcon::EnterKey),
+                                       [this]() { submit(); });
   actionSection->addAction(submitAction);
   setActions(std::move(panel));
 }

@@ -20,7 +20,7 @@ std::optional<ImageURL> Command::themedIcon() const { return icons.themedIcon();
 
 ImageURL Extension::themedIcon() const {
   if (auto icon = icons.themedIcon()) return *icon;
-  return ImageURL::builtin("plug");
+  return ImageURL::builtin(BuiltinIcon::Plug);
 }
 
 } // namespace VicinaeStore

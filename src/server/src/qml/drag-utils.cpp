@@ -21,10 +21,10 @@ static ImageURL fallbackIcon(const QMimeData &mimeData) {
     const auto urls = mimeData.urls();
     const bool onlyLocalFiles =
         !urls.empty() && std::ranges::all_of(urls, [](const QUrl &url) { return url.isLocalFile(); });
-    return ImageURL::builtin(onlyLocalFiles ? "blank-document" : "link");
+    return ImageURL::builtin(onlyLocalFiles ? BuiltinIcon::BlankDocument : BuiltinIcon::Link);
   }
-  if (mimeData.hasText() || mimeData.hasHtml()) return ImageURL::builtin("text");
-  return ImageURL::builtin("blank-document");
+  if (mimeData.hasText() || mimeData.hasHtml()) return ImageURL::builtin(BuiltinIcon::Text);
+  return ImageURL::builtin(BuiltinIcon::BlankDocument);
 }
 
 static void executeDrag(QObject *source, std::unique_ptr<QMimeData> mimeData,

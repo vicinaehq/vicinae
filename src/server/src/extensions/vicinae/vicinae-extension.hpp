@@ -11,7 +11,7 @@ class VicinaeExtension : public BuiltinCommandRepository {
     return QCoreApplication::translate("VicinaeExtension", "General vicinae-related commands.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("vicinae").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Vicinae).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
 public:

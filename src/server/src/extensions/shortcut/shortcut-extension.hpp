@@ -11,7 +11,7 @@ class ShortcutExtension : public BuiltinCommandRepository {
     return QCoreApplication::translate("ShortcutExtension", "Manage Shortcuts");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("link").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Link).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
 public:

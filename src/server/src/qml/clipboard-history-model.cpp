@@ -31,16 +31,17 @@ std::optional<ImageURL> ClipboardHistorySection::itemIcon(int i) const { return 
 ImageURL ClipboardHistorySection::iconForEntry(const ClipboardHistoryEntry &entry) const {
   switch (entry.kind) {
   case ClipboardOfferKind::Image:
-    return ImageURL::builtin("image");
+    return ImageURL::builtin(BuiltinIcon::Image);
   case ClipboardOfferKind::Link:
-    if (entry.urlHost) return ImageURL::favicon(*entry.urlHost).withFallback(ImageURL::builtin("link"));
-    return ImageURL::builtin("link");
+    if (entry.urlHost)
+      return ImageURL::favicon(*entry.urlHost).withFallback(ImageURL::builtin(BuiltinIcon::Link));
+    return ImageURL::builtin(BuiltinIcon::Link);
   case ClipboardOfferKind::Text:
-    return ImageURL::builtin("text");
+    return ImageURL::builtin(BuiltinIcon::Text);
   case ClipboardOfferKind::File:
-    return ImageURL::builtin("folder");
+    return ImageURL::builtin(BuiltinIcon::Folder);
   default:
-    return ImageURL::builtin("question-mark-circle");
+    return ImageURL::builtin(BuiltinIcon::QuestionMarkCircle);
   }
 }
 

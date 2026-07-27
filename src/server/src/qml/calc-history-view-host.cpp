@@ -21,7 +21,9 @@ QString CalcLiveSection::itemTitle(int) const {
   return m_result->question.text + QStringLiteral(" = ") + m_result->answer.text;
 }
 
-std::optional<ImageURL> CalcLiveSection::itemIcon(int) const { return ImageURL::builtin("calculator"); }
+std::optional<ImageURL> CalcLiveSection::itemIcon(int) const {
+  return ImageURL::builtin(BuiltinIcon::Calculator);
+}
 
 QVariantList CalcLiveSection::itemAccessories(int) const { return {}; }
 

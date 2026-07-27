@@ -14,7 +14,7 @@ class VicinaeListInstalledExtensionsCommand : public BuiltinViewCommand<Installe
               "well as extensions downloaded from the stores (vicinae and raycast).");
   }
   ImageURL iconUrl() const override {
-    auto icon = ImageURL::builtin("plug");
+    auto icon = ImageURL::builtin(BuiltinIcon::Plug);
     icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
     return icon;
   }

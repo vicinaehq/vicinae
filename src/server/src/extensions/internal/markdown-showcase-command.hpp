@@ -173,7 +173,7 @@ class MarkdownShowcase : public BuiltinViewCommand<MarkdownShowcaseView> {
   QString description() const override { return tr("Preview all supported markdown features"); }
   bool isFallback() const override { return false; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("text").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Text).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   bool isInternal() const override { return true; }
 };

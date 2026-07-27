@@ -23,7 +23,8 @@ void EditKeywordsViewHost::initialize() {
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto section = panel->createSection();
-  auto submitAction = new StaticAction(tr("Submit"), ImageURL::builtin("enter-key"), [this]() { submit(); });
+  auto submitAction =
+      new StaticAction(tr("Submit"), ImageURL::builtin(BuiltinIcon::EnterKey), [this]() { submit(); });
   section->addAction(submitAction);
   setActions(std::move(panel));
 
