@@ -12,54 +12,54 @@ namespace {
 
 std::filesystem::path markerPath() { return Omnicast::stateDir() / "login-item-registered"; }
 
-}  // namespace
+} // namespace
 
 // we only set it once, otherwise we would end up overriding the user preference
 // every single time
 void registerLoginItemOnce() {
-    if (!NSBundle.mainBundle.bundleIdentifier) return;
+  if (!NSBundle.mainBundle.bundleIdentifier) return;
 
-    const auto marker = markerPath();
-    if (std::filesystem::exists(marker)) return;
+  const auto marker = markerPath();
+  if (std::filesystem::exists(marker)) return;
 
-    SMAppService *service = SMAppService.mainAppService;
+  SMAppService *service = SMAppService.mainAppService;
 
-    if (service.status != SMAppServiceStatusEnabled) {
-        NSError *error = nil;
-        if (![service registerAndReturnError:&error]) {
-            qWarning() << "Failed to register login item:" << error.localizedDescription.UTF8String;
-            return;
-        }
+  if (service.status != SMAppServiceStatusEnabled) {
+    NSError *error = nil;
+    if (![service registerAndReturnError:&error]) {
+      qWarning() << "Failed to register login item:" << error.localizedDescription.UTF8String;
+      return;
     }
+  }
 
-    std::ofstream{marker};
+  std::ofstream{marker};
 }
 
 bool isLoginItemSupported() { return NSBundle.mainBundle.bundleIdentifier != nil; }
 
 bool isLoginItemEnabled() {
-    if (!isLoginItemSupported()) return false;
-    return SMAppService.mainAppService.status == SMAppServiceStatusEnabled;
+  if (!isLoginItemSupported()) return false;
+  return SMAppService.mainAppService.status == SMAppServiceStatusEnabled;
 }
 
 void setLoginItemEnabled(bool enabled) {
-    if (!isLoginItemSupported()) return;
+  if (!isLoginItemSupported()) return;
 
-    SMAppService *service = SMAppService.mainAppService;
-    const bool currentlyEnabled = service.status == SMAppServiceStatusEnabled;
+  SMAppService *service = SMAppService.mainAppService;
+  const bool currentlyEnabled = service.status == SMAppServiceStatusEnabled;
 
-    if (enabled != currentlyEnabled) {
-        NSError *error = nil;
-        const BOOL ok = enabled ? [service registerAndReturnError:&error]
-                                : [service unregisterAndReturnError:&error];
-        if (!ok) {
-            qWarning() << "Failed to" << (enabled ? "register" : "unregister")
-                       << "login item:" << error.localizedDescription.UTF8String;
-            return;
-        }
+  if (enabled != currentlyEnabled) {
+    NSError *error = nil;
+    const BOOL ok =
+        enabled ? [service registerAndReturnError:&error] : [service unregisterAndReturnError:&error];
+    if (!ok) {
+      qWarning() << "Failed to" << (enabled ? "register" : "unregister")
+                 << "login item:" << error.localizedDescription.UTF8String;
+      return;
     }
+  }
 
-    std::ofstream{markerPath()};
+  std::ofstream{markerPath()};
 }
 
-}  // namespace vicinae::macos
+} // namespace vicinae::macos
