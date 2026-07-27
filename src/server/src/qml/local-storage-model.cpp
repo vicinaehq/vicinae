@@ -4,8 +4,8 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 
-QString LocalStorageNamespaceSection::displayIconSource(const QString &) const {
-  return imageSourceFor(ImageURL::builtin("coin"));
+std::optional<ImageURL> LocalStorageNamespaceSection::displayIcon(const QString &) const {
+  return ImageURL::builtin("coin");
 }
 
 std::unique_ptr<ActionPanelState> LocalStorageNamespaceSection::buildActionPanel(const QString &item) const {
@@ -21,8 +21,8 @@ std::unique_ptr<ActionPanelState> LocalStorageNamespaceSection::buildActionPanel
   return panel;
 }
 
-QString LocalStorageItemSection::displayIconSource(const QString &) const {
-  return imageSourceFor(ImageURL::builtin("coin"));
+std::optional<ImageURL> LocalStorageItemSection::displayIcon(const QString &) const {
+  return ImageURL::builtin("coin");
 }
 
 std::unique_ptr<ActionPanelState> LocalStorageItemSection::buildActionPanel(const QString &item) const {

@@ -13,9 +13,7 @@ QString BrowseAppsSection::displayTitle(const AppPtr &app) const { return app->d
 
 QString BrowseAppsSection::displaySubtitle(const AppPtr &app) const { return app->description(); }
 
-QString BrowseAppsSection::displayIconSource(const AppPtr &app) const {
-  return imageSourceFor(app->iconUrl());
-}
+std::optional<ImageURL> BrowseAppsSection::displayIcon(const AppPtr &app) const { return app->iconUrl(); }
 
 QVariantList BrowseAppsSection::displayAccessories(const AppPtr &app) const {
   if (!app->displayable()) return qml::textAccessory(tr("Hidden"));

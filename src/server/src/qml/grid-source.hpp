@@ -23,7 +23,7 @@ public:
   virtual std::optional<int> columns() const { return std::nullopt; }
   virtual std::optional<double> aspectRatio() const { return std::nullopt; }
   virtual std::optional<double> inset() const { return std::nullopt; }
-  virtual QString itemIconSource(int) const { return {}; }
+  virtual std::optional<ImageURL> itemIcon(int) const { return std::nullopt; }
 
   virtual bool isDraggable(int) const { return false; }
   virtual std::unique_ptr<QMimeData> dragMimeData(int) const { return {}; }

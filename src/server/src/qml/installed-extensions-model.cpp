@@ -14,12 +14,12 @@ QString InstalledExtensionsSection::displaySubtitle(const ExtensionManifest &m) 
   return m.description;
 }
 
-QString InstalledExtensionsSection::displayIconSource(const ExtensionManifest &m) const {
+std::optional<ImageURL> InstalledExtensionsSection::displayIcon(const ExtensionManifest &m) const {
   if (!m.icon.isEmpty()) {
     auto iconPath = m.path / "assets" / m.icon.toStdString();
-    return imageSourceFor(ImageURL::local(iconPath).withFallback(ImageURL::builtin("plug")));
+    return ImageURL::local(iconPath).withFallback(ImageURL::builtin("plug"));
   }
-  return imageSourceFor(ImageURL::builtin("plug"));
+  return ImageURL::builtin("plug");
 }
 
 QVariantList InstalledExtensionsSection::displayAccessories(const ExtensionManifest &m) const {

@@ -26,9 +26,7 @@ QString ClipboardHistorySection::itemSubtitle(int i) const {
   return getRelativeTimeString(dt);
 }
 
-QString ClipboardHistorySection::itemIconSource(int i) const {
-  return imageSourceFor(iconForEntry(m_entries[i]));
-}
+std::optional<ImageURL> ClipboardHistorySection::itemIcon(int i) const { return iconForEntry(m_entries[i]); }
 
 ImageURL ClipboardHistorySection::iconForEntry(const ClipboardHistoryEntry &entry) const {
   switch (entry.kind) {

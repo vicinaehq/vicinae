@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string_view>
 
 #include "view-scope.hpp"
@@ -23,7 +24,7 @@ public:
   virtual QString itemId(int i) const { return itemTitle(i); }
   virtual QString itemTitle(int i) const = 0;
   virtual QString itemSubtitle(int) const { return {}; }
-  virtual QString itemIconSource(int i) const = 0;
+  virtual std::optional<ImageURL> itemIcon(int i) const = 0;
   virtual QVariantList itemAccessories(int) const { return {}; }
 
   virtual bool isDraggable(int) const { return false; }

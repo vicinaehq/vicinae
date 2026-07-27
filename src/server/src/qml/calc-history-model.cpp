@@ -11,13 +11,13 @@ void CalcHistorySection::setRecords(const QString &groupName, std::vector<Calcul
 
 QString CalcHistorySection::itemTitle(int i) const { return m_records[i].question; }
 
-QString CalcHistorySection::itemIconSource(int i) const {
+std::optional<ImageURL> CalcHistorySection::itemIcon(int i) const {
   const auto &record = m_records[i];
   switch (record.typeHint) {
   case AbstractCalculatorBackend::CONVERSION:
-    return imageSourceFor(ImageURL::builtin("switch"));
+    return ImageURL::builtin("switch");
   default:
-    return imageSourceFor(ImageURL::builtin("calculator"));
+    return ImageURL::builtin("calculator");
   }
 }
 

@@ -32,7 +32,7 @@ public:
   const GridItemViewModel *itemAt(int i) const;
 
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   bool isDraggable(int i) const override;
   std::unique_ptr<QMimeData> dragMimeData(int i) const override;
 

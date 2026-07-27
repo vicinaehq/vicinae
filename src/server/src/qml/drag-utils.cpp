@@ -46,11 +46,11 @@ static void executeDrag(QObject *source, std::unique_ptr<QMimeData> mimeData,
   drag->deleteLater();
 }
 
-void startDrag(QObject *source, std::unique_ptr<QMimeData> mimeData, const QString &iconSource) {
+void startDrag(QObject *source, std::unique_ptr<QMimeData> mimeData, std::optional<ImageURL> icon) {
   if (!source || !mimeData) return;
 
-  const auto icon = iconSource.isEmpty() ? fallbackIcon(*mimeData) : ImageURL(iconSource);
-  if (auto frame = ImageRendering::cachedFrame(icon)) {
+  const auto dragIcon = icon.value_or(fallbackIcon(*mimeData));
+  if (auto frame = ImageRendering::cachedFrame(dragIcon)) {
     executeDrag(source, std::move(mimeData), frame);
     return;
   }
@@ -59,7 +59,7 @@ void startDrag(QObject *source, std::unique_ptr<QMimeData> mimeData, const QStri
   const auto physicalSize = qRound(DRAG_ICON_SIZE * dpr);
   auto retainedMimeData = std::make_shared<std::unique_ptr<QMimeData>>(std::move(mimeData));
 
-  ImageRendering::renderFirstFrame(icon, {physicalSize, physicalSize})
+  ImageRendering::renderFirstFrame(dragIcon, {physicalSize, physicalSize})
       .then(qGuiApp, [source = QPointer(source), retainedMimeData](QImage frame) mutable {
         if (!source || !(QGuiApplication::mouseButtons() & Qt::LeftButton)) return;
         executeDrag(source, std::move(*retainedMimeData),

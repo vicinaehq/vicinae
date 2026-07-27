@@ -9,7 +9,7 @@ public:
 
 protected:
   QString displayTitle(const QString &item) const override { return item; }
-  QString displayIconSource(const QString &item) const override;
+  std::optional<ImageURL> displayIcon(const QString &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const QString &item) const override;
 };
 
@@ -22,7 +22,7 @@ public:
 
 protected:
   QString displayTitle(const QString &item) const override { return item; }
-  QString displayIconSource(const QString &item) const override;
+  std::optional<ImageURL> displayIcon(const QString &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const QString &item) const override;
 
 private:

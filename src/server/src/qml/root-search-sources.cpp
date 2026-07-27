@@ -92,8 +92,8 @@ QString RootLinkSection::itemId(int) const { return m_link ? m_link->url : QStri
 
 QString RootLinkSection::itemTitle(int) const { return m_link ? m_link->url : QString(); }
 
-QString RootLinkSection::itemIconSource(int) const {
-  return m_link ? imageSourceFor(m_link->app->iconUrl()) : QString();
+std::optional<ImageURL> RootLinkSection::itemIcon(int) const {
+  return m_link ? std::optional(m_link->app->iconUrl()) : std::nullopt;
 }
 
 QVariant RootLinkSection::customData(int, int role) const {
@@ -132,9 +132,7 @@ QString RootCalculatorSection::itemTitle(int) const {
   return m_result ? m_result->question.text + QStringLiteral(" = ") + m_result->answer.text : QString();
 }
 
-QString RootCalculatorSection::itemIconSource(int) const {
-  return imageSourceFor(ImageURL::builtin("calculator"));
-}
+std::optional<ImageURL> RootCalculatorSection::itemIcon(int) const { return ImageURL::builtin("calculator"); }
 
 QVariant RootCalculatorSection::customData(int, int role) const {
   if (role == ItemType) return QStringLiteral("calculator");
@@ -187,8 +185,8 @@ QString RootUpdateSection::itemSubtitle(int) const {
   return tr("You are running %1").arg(m_updates->currentVersionTag());
 }
 
-QString RootUpdateSection::itemIconSource(int) const {
-  return imageSourceFor(ImageURL{BuiltinIcon::Download}.setBackgroundTint(SemanticColor::Blue));
+std::optional<ImageURL> RootUpdateSection::itemIcon(int) const {
+  return ImageURL{BuiltinIcon::Download}.setBackgroundTint(SemanticColor::Blue);
 }
 
 QVariant RootUpdateSection::customData(int, int role) const {
@@ -235,9 +233,9 @@ QString RootNewsSection::itemSubtitle(int i) const {
   return m_items[i]->subtitle;
 }
 
-QString RootNewsSection::itemIconSource(int i) const {
+std::optional<ImageURL> RootNewsSection::itemIcon(int i) const {
   if (std::cmp_greater_equal(i, m_items.size())) return {};
-  return imageSourceFor(m_items[i]->icon);
+  return m_items[i]->icon;
 }
 
 QVariant RootNewsSection::customData(int, int role) const {
@@ -274,9 +272,9 @@ QString RootFavoritesSection::itemSubtitle(int i) const {
   return m_items[i]->subtitle();
 }
 
-QString RootFavoritesSection::itemIconSource(int i) const {
+std::optional<ImageURL> RootFavoritesSection::itemIcon(int i) const {
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
-  return imageSourceFor(m_items[i]->iconUrl());
+  return m_items[i]->iconUrl();
 }
 
 QVariant RootFavoritesSection::customData(int i, int role) const {
@@ -336,9 +334,9 @@ QString RootResultsSection::itemSubtitle(int i) const {
   return m_items[i].item->subtitle();
 }
 
-QString RootResultsSection::itemIconSource(int i) const {
+std::optional<ImageURL> RootResultsSection::itemIcon(int i) const {
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i].item) return {};
-  return imageSourceFor(m_items[i].item->iconUrl());
+  return m_items[i].item->iconUrl();
 }
 
 QVariant RootResultsSection::customData(int i, int role) const {
@@ -389,9 +387,9 @@ QString RootFilesSection::itemSubtitle(int i) const {
   return QString::fromStdString(compressPath(m_files[i].path.parent_path()).string());
 }
 
-QString RootFilesSection::itemIconSource(int i) const {
+std::optional<ImageURL> RootFilesSection::itemIcon(int i) const {
   if (std::cmp_greater_equal(i, m_files.size())) return {};
-  return imageSourceFor(ImageURL::fileIcon(m_files[i].path));
+  return ImageURL::fileIcon(m_files[i].path);
 }
 
 QVariant RootFilesSection::customData(int, int role) const {
@@ -442,9 +440,9 @@ QString RootFallbackSection::itemSubtitle(int i) const {
   return m_items[i]->subtitle();
 }
 
-QString RootFallbackSection::itemIconSource(int i) const {
+std::optional<ImageURL> RootFallbackSection::itemIcon(int i) const {
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
-  return imageSourceFor(m_items[i]->iconUrl());
+  return m_items[i]->iconUrl();
 }
 
 QVariant RootFallbackSection::customData(int i, int role) const {

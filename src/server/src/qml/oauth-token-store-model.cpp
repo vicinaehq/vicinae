@@ -12,8 +12,8 @@ QString OAuthTokenStoreSection::displaySubtitle(const OAuth::TokenSet &set) cons
   return set.providerId.value_or("");
 }
 
-QString OAuthTokenStoreSection::displayIconSource(const OAuth::TokenSet &set) const {
-  return imageSourceFor(ImageURL::builtin("key"));
+std::optional<ImageURL> OAuthTokenStoreSection::displayIcon(const OAuth::TokenSet &set) const {
+  return ImageURL::builtin("key");
 }
 
 QVariantList OAuthTokenStoreSection::displayAccessories(const OAuth::TokenSet &set) const {

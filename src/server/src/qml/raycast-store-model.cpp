@@ -31,8 +31,8 @@ QString RaycastStoreSection::itemTitle(int i) const { return m_entries[i].extens
 
 QString RaycastStoreSection::itemSubtitle(int i) const { return m_entries[i].extension.description; }
 
-QString RaycastStoreSection::itemIconSource(int i) const {
-  return imageSourceFor(m_entries[i].extension.themedIcon());
+std::optional<ImageURL> RaycastStoreSection::itemIcon(int i) const {
+  return m_entries[i].extension.themedIcon();
 }
 
 std::unique_ptr<ActionPanelState> RaycastStoreSection::actionPanel(int i) const {

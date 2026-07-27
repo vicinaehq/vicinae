@@ -17,8 +17,8 @@ QString EnabledFallbackSection::displayTitle(const RootItemPtr &item) const { re
 
 QString EnabledFallbackSection::displaySubtitle(const RootItemPtr &item) const { return item->subtitle(); }
 
-QString EnabledFallbackSection::displayIconSource(const RootItemPtr &item) const {
-  return imageSourceFor(item->iconUrl());
+std::optional<ImageURL> EnabledFallbackSection::displayIcon(const RootItemPtr &item) const {
+  return item->iconUrl();
 }
 
 std::unique_ptr<ActionPanelState> EnabledFallbackSection::buildActionPanel(const RootItemPtr &item) const {
@@ -39,8 +39,8 @@ QString AvailableFallbackSection::displayTitle(const RootItemPtr &item) const { 
 
 QString AvailableFallbackSection::displaySubtitle(const RootItemPtr &item) const { return item->subtitle(); }
 
-QString AvailableFallbackSection::displayIconSource(const RootItemPtr &item) const {
-  return imageSourceFor(item->iconUrl());
+std::optional<ImageURL> AvailableFallbackSection::displayIcon(const RootItemPtr &item) const {
+  return item->iconUrl();
 }
 
 std::unique_ptr<ActionPanelState> AvailableFallbackSection::buildActionPanel(const RootItemPtr &item) const {

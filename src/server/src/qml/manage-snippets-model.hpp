@@ -27,7 +27,7 @@ public:
 
 protected:
   QString displayTitle(const snippet::SerializedSnippet &item) const override;
-  QString displayIconSource(const snippet::SerializedSnippet &item) const override;
+  std::optional<ImageURL> displayIcon(const snippet::SerializedSnippet &item) const override;
   QVariantList displayAccessories(const snippet::SerializedSnippet &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const snippet::SerializedSnippet &item) const override;
 

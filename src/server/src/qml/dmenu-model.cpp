@@ -68,13 +68,13 @@ QString DMenuSection::itemSubtitle(int i) const {
   return {};
 }
 
-QString DMenuSection::itemIconSource(int i) const {
+std::optional<ImageURL> DMenuSection::itemIcon(int i) const {
   auto entry = entryAt(i);
   if (entry.starts_with('/')) {
     std::error_code ec;
-    if (std::filesystem::exists(entry, ec)) { return imageSourceFor(ImageURL::fileIcon(entry)); }
+    if (std::filesystem::exists(entry, ec)) { return ImageURL::fileIcon(entry); }
   }
-  return {};
+  return std::nullopt;
 }
 
 void DMenuSection::selectEntry(const QString &text) const {

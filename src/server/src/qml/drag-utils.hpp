@@ -2,12 +2,14 @@
 #include <QMimeData>
 
 #include <memory>
+#include <optional>
+
+#include "ui/image/url.hpp"
 
 class QObject;
-class QString;
 
 namespace DragUtils {
 
-void startDrag(QObject *source, std::unique_ptr<QMimeData> mimeData, const QString &iconSource);
+void startDrag(QObject *source, std::unique_ptr<QMimeData> mimeData, std::optional<ImageURL> icon);
 
 } // namespace DragUtils
