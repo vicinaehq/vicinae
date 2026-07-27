@@ -1,7 +1,6 @@
-#include <QDrag>
-
 #include <algorithm>
 
+#include "drag-utils.hpp"
 #include "section-grid-model.hpp"
 #include "services/navigation/list-navigation.hpp"
 SectionGridModel::SectionGridModel(QObject *parent) : QAbstractListModel(parent) {}
@@ -229,13 +228,8 @@ void SectionGridModel::startDrag(int section, int item, QObject *dragSource) {
   int itemIdx;
   if (!dragSource || !resolveSelection(section, item, sourceIdx, itemIdx)) return;
 
-  auto mimeData = m_sources[sourceIdx]->dragMimeData(itemIdx);
-  if (!mimeData) return;
-
-  auto *drag = new QDrag(dragSource);
-  drag->setMimeData(mimeData.release());
-  drag->exec(Qt::CopyAction);
-  drag->deleteLater();
+  auto *source = m_sources[sourceIdx];
+  DragUtils::startDrag(dragSource, source->dragMimeData(itemIdx), source->itemIconSource(itemIdx));
 }
 
 void SectionGridModel::selectFirst() {

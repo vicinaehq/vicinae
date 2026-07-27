@@ -1,7 +1,6 @@
-#include <QDrag>
-
 #include <utility>
 
+#include "drag-utils.hpp"
 #include "section-list-model.hpp"
 #include "services/navigation/list-navigation.hpp"
 
@@ -172,13 +171,8 @@ void SectionListModel::startDrag(int index, QObject *dragSource) {
   int itemIdx;
   if (!dragSource || !dataItemAt(index, sourceIdx, itemIdx)) return;
 
-  auto mimeData = m_sources[sourceIdx]->dragMimeData(itemIdx);
-  if (!mimeData) return;
-
-  auto *drag = new QDrag(dragSource);
-  drag->setMimeData(mimeData.release());
-  drag->exec(Qt::CopyAction);
-  drag->deleteLater();
+  auto *source = m_sources[sourceIdx];
+  DragUtils::startDrag(dragSource, source->dragMimeData(itemIdx), source->itemIconSource(itemIdx));
 }
 
 void SectionListModel::refreshActionPanel() { setSelectedIndex(m_selectedIndex); }

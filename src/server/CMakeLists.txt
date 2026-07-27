@@ -474,6 +474,8 @@ set(SRCS
 	src/qml/root-search-model.cpp
 	src/qml/root-search-sources.hpp
 	src/qml/root-search-sources.cpp
+	src/qml/drag-utils.hpp
+	src/qml/drag-utils.cpp
 	src/qml/section-source.hpp
 	src/qml/section-list-model.hpp
 	src/qml/section-list-model.cpp
