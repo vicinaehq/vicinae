@@ -5,6 +5,8 @@
 #include <QSize>
 #include <QString>
 
+#include <optional>
+
 class ImageURL;
 class QThread;
 class QThreadPool;
@@ -12,6 +14,7 @@ class QThreadPool;
 namespace ImageRendering {
 
 QFuture<QImage> renderFirstFrame(const ImageURL &url, const QSize &size, bool safetyMargins = false);
+std::optional<QImage> cachedFrame(const ImageURL &url);
 
 QImage renderBuiltinSvg(const QString &name, const QSize &size, const QColor &fg, const QColor &bg);
 QImage renderEmoji(const QString &emoji, const QSize &size);

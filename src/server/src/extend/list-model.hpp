@@ -7,6 +7,7 @@
 #include "extend/image-model.hpp"
 #include "extend/dropdown-model.hpp"
 #include "extend/pagination-model.hpp"
+#include "services/clipboard/clipboard-content.hpp"
 
 struct ListItemViewModel {
   bool changed = false;
@@ -18,6 +19,7 @@ struct ListItemViewModel {
   std::optional<ActionPannelModel> actionPannel;
   std::vector<AccessoryModel> accessories;
   std::vector<std::string> keywords;
+  std::optional<Clipboard::Content> dragContent;
 };
 
 struct ListSectionModel {

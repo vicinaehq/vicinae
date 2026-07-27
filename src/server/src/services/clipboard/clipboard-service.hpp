@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "extensions/wm/wm-extension.hpp"
+#include "services/clipboard/clipboard-content.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
@@ -15,33 +16,6 @@
 #include <qmimedatabase.h>
 #include <qstringview.h>
 #include <QTimer>
-
-namespace Clipboard {
-using NoData = std::monostate;
-struct File {
-  std::filesystem::path path;
-};
-struct Text {
-  QString text;
-};
-struct Html {
-  QString html;
-  std::optional<QString> text;
-};
-
-struct SelectionRecordHandle {
-  QString id;
-};
-
-using Content = std::variant<NoData, File, Text, Html, SelectionRecordHandle, ClipboardSelection>;
-
-struct ReadContent {
-  QString text;
-  std::optional<QString> html;
-  std::optional<QString> file;
-};
-
-}; // namespace Clipboard
 
 class ClipboardService : public QObject, public NonCopyable {
   Q_OBJECT
@@ -89,6 +63,7 @@ public:
   bool copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyFile(const std::filesystem::path &path,
                 const Clipboard::CopyOptions &options = {.concealed = false});
+  bool copyUrls(const std::vector<QUrl> &urls, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyContent(const Clipboard::Content &content,
                    const Clipboard::CopyOptions options = {.concealed = false});
   void setRecordAllOffers(bool value);

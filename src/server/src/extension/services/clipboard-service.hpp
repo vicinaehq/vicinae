@@ -31,15 +31,30 @@ public:
 
     result.text = rc.text.toStdString();
     if (rc.html) result.html = rc.html->toStdString();
-    if (rc.file) result.path = rc.file->toStdString();
+    if (!rc.urls.empty()) {
+      result.urls.emplace();
+      result.urls->reserve(rc.urls.size());
+      for (const auto &url : rc.urls)
+        result.urls->emplace_back(url.toString().toStdString());
+    }
 
     return tsapi::Result<tsapi::ClipboardContent>::ok(std::move(result));
   }
 
 private:
   static Clipboard::Content parseContent(const tsapi::ClipboardContent &content) {
-    if (content.html) return Clipboard::Html({QString::fromStdString(*content.html)});
-    if (content.path) return Clipboard::File(std::string{*content.path});
+    if (content.html) {
+      return Clipboard::Html{.html = QString::fromStdString(*content.html),
+                             .text = content.text ? std::optional(QString::fromStdString(*content.text))
+                                                  : std::nullopt};
+    }
+    if (content.urls && !content.urls->empty()) {
+      std::vector<QUrl> urls;
+      urls.reserve(content.urls->size());
+      for (const auto &url : *content.urls)
+        urls.emplace_back(QString::fromStdString(url));
+      return Clipboard::Urls{std::move(urls)};
+    }
     if (content.text) return Clipboard::Text(QString::fromStdString(*content.text));
     return {};
   }

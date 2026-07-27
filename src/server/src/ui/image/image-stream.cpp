@@ -36,6 +36,11 @@ static QCache<QString, QImage> &imageCache() {
   return cache;
 }
 
+static QCache<QString, QImage> &latestImageCache() {
+  static QCache<QString, QImage> cache(256);
+  return cache;
+}
+
 static QCache<QString, QByteArray> &bytesCache() {
   static QCache<QString, QByteArray> cache(32 * 1024 * 1024);
   return cache;
@@ -44,9 +49,17 @@ static QCache<QString, QByteArray> &bytesCache() {
 namespace ImageRendering {
 void clearCache() {
   imageCache().clear();
+  latestImageCache().clear();
   bytesCache().clear();
 }
 } // namespace ImageRendering
+
+static QString makeLatestCacheKey(const ImageURL &url) {
+  auto key = url.toString();
+  if (url.type() == ImageURLType::System || url.type() == ImageURLType::FileIcon)
+    key += QStringLiteral("|it:") + QIcon::themeName();
+  return key;
+}
 
 static QString makeCacheKey(const ImageURL &url, const QSize &size, bool safetyMargins) {
   auto key = QStringLiteral("%1|%2x%3").arg(url.toString()).arg(size.width()).arg(size.height());
@@ -55,6 +68,13 @@ static QString makeCacheKey(const ImageURL &url, const QSize &size, bool safetyM
     key += QStringLiteral("|it:") + QIcon::themeName();
   return key;
 }
+
+namespace ImageRendering {
+std::optional<QImage> cachedFrame(const ImageURL &url) {
+  if (auto *cached = latestImageCache().object(makeLatestCacheKey(url.resolved()))) return *cached;
+  return std::nullopt;
+}
+} // namespace ImageRendering
 
 static bool isGif(const QByteArray &data) {
   return data.size() >= 6 && (data.startsWith("GIF87a") || data.startsWith("GIF89a"));
@@ -75,6 +95,8 @@ ImageStream::ImageStream(const ImageURL &url, const QSize &size, ImageStreamOpti
   m_mask = m_url.mask();
   m_cacheKey = makeCacheKey(m_url, size, m_opts.safetyMargins);
   m_originalCacheKey = m_cacheKey;
+  m_latestCacheKey = makeLatestCacheKey(m_url);
+  m_originalLatestCacheKey = m_latestCacheKey;
 }
 
 ImageStream::~ImageStream() {
@@ -127,6 +149,7 @@ void ImageStream::tryFallback() {
   if (auto fill = m_url.fillColor()) m_fg = OmniPainter::resolveColor(*fill);
   m_mask = m_url.mask();
   m_cacheKey = makeCacheKey(m_url, m_size, m_opts.safetyMargins);
+  m_latestCacheKey = makeLatestCacheKey(m_url);
 
   if (m_opts.cache) {
     if (auto *cached = imageCache().object(m_cacheKey)) {
@@ -352,6 +375,9 @@ void ImageStream::emitStaticFrame(QImage img) {
     auto cost = static_cast<int>(img.sizeInBytes());
     imageCache().insert(m_cacheKey, new QImage(img), cost);
     if (m_originalCacheKey != m_cacheKey) imageCache().insert(m_originalCacheKey, new QImage(img), cost);
+    latestImageCache().insert(m_latestCacheKey, new QImage(img));
+    if (m_originalLatestCacheKey != m_latestCacheKey)
+      latestImageCache().insert(m_originalLatestCacheKey, new QImage(img));
   }
   emit frameReady(img);
 }
@@ -392,8 +418,14 @@ void ImageStream::startAnimation(QByteArray data) {
     emit worker->frameReady(frame);
   });
 
-  connect(worker, &AnimFrameWorker::frameReady, this,
-          [this](const QImage &frame) { emit this->frameReady(frame); });
+  connect(worker, &AnimFrameWorker::frameReady, this, [this](const QImage &frame) {
+    if (m_opts.cache) {
+      latestImageCache().insert(m_latestCacheKey, new QImage(frame));
+      if (m_originalLatestCacheKey != m_latestCacheKey)
+        latestImageCache().insert(m_originalLatestCacheKey, new QImage(frame));
+    }
+    emit this->frameReady(frame);
+  });
 
   m_movie = movie;
   movie->moveToThread(&ImageRendering::animationThread());

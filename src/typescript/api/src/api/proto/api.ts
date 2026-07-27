@@ -200,7 +200,7 @@ export type Workspace = {
 export type ClipboardContent = {
 	text?: string;
 	html?: string;
-	path?: string;
+	urls?: string[];
 }
 
 export type ClipboardOptions = {

@@ -7,23 +7,27 @@ Item {
     id: root
 
     property bool selected: false
+    property bool draggable: false
     readonly property bool hovered: mouseArea.containsMouse && HoverActivation.active
 
     default property alias contentData: contentItem.data
 
     signal clicked
     signal activated
+    signal dragRequested(var source)
 
-    MouseArea {
+    DraggableMouseArea {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        onClicked: {
+        draggable: root.draggable
+        onItemClicked: {
             root.clicked();
             if (Config.activateOnSingleClick)
                 root.activated();
         }
-        onDoubleClicked: root.activated()
+        onItemActivated: root.activated()
+        onDragRequested: root.dragRequested(root)
     }
 
     SourceBlendRect {
