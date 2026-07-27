@@ -172,6 +172,13 @@ std::vector<ManifestTarget> manifestTargets(const std::string &chromium, const s
   const fs::path mozilla = home / ".mozilla" / "native-messaging-hosts";
 
   targets.emplace_back(home / ".mozilla", mozilla, &gecko);
+
+  // works now: https://bugzilla.mozilla.org/show_bug.cgi?id=2005167
+  // but the native host is still expected in .mozilla.
+  // We write it in both locations for future proofing.
+  const fs::path xdgMozilla = xdgpp::configHome() / "mozilla";
+  targets.emplace_back(xdgMozilla, xdgMozilla / "native-messaging-hosts", &gecko);
+
   targets.emplace_back(home / ".waterfox", mozilla, &gecko);
   targets.emplace_back(home / ".floorp", mozilla, &gecko);
   targets.emplace_back(home / ".zen", mozilla, &gecko);
