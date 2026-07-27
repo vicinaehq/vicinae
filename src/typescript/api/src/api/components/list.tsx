@@ -18,6 +18,7 @@ import {
 } from "../color";
 import { Dropdown } from "./dropdown";
 import { usePagination } from "./pagination";
+import { Clipboard } from "../clipboard";
 
 /**
  * A List component that can be used to render a list of items sharing a similar representation.
@@ -200,6 +201,9 @@ export declare namespace List {
 			 */
 			actions?: ReactNode;
 
+			/** Content transferred when this item is dragged. */
+			dragContent?: Clipboard.Content;
+
 			accessories?: List.Item.Accessory[];
 
 			/**
@@ -348,6 +352,7 @@ const ListRoot: React.FC<List.Props> = ({
 const ListItem: React.FC<List.Item.Props> = ({
 	detail,
 	actions,
+	dragContent,
 	icon,
 	accessories,
 	...props
@@ -373,6 +378,9 @@ const ListItem: React.FC<List.Item.Props> = ({
 		<list-item
 			{...props}
 			icon={serializedIcon}
+			dragContent={
+				dragContent ? Clipboard.serializeContent(dragContent) : undefined
+			}
 			accessories={serializedAccessories}
 			id={id.current}
 		>

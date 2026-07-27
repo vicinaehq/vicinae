@@ -297,6 +297,12 @@ template <> struct glz::meta<ListItemChild> {
   static constexpr auto ids = std::array{"action-panel", "list-item-detail"};
 };
 
+struct ClipboardContentWire {
+  std::optional<std::string> text;
+  std::optional<std::string> html;
+  std::vector<std::string> urls;
+};
+
 struct ListItemViewModelWire {
   std::string id;
   FlexString title;
@@ -304,6 +310,7 @@ struct ListItemViewModelWire {
   std::optional<ImageWrappedWire> icon;
   std::vector<AccessoryWire> accessories;
   std::vector<std::string> keywords;
+  std::optional<ClipboardContentWire> dragContent;
   std::vector<ListItemChild> children;
 };
 
@@ -357,6 +364,7 @@ struct GridItemViewModelWire {
   GridContentWire content;
   std::optional<std::string> tooltip;
   std::vector<std::string> keywords;
+  std::optional<ClipboardContentWire> dragContent;
   std::vector<SingleAPChild> children;
 };
 
@@ -769,6 +777,24 @@ static EmptyViewModel toEmptyViewModel(EmptyViewModelWire w) {
   return m;
 }
 
+static std::optional<Clipboard::Content> toClipboardContent(std::optional<ClipboardContentWire> wire) {
+  if (!wire) return std::nullopt;
+  if (wire->html) {
+    return Clipboard::Html{QString::fromStdString(std::move(*wire->html)),
+                           wire->text ? std::optional(QString::fromStdString(std::move(*wire->text)))
+                                      : std::nullopt};
+  }
+  if (!wire->urls.empty()) {
+    std::vector<QUrl> urls;
+    urls.reserve(wire->urls.size());
+    for (auto &url : wire->urls)
+      urls.emplace_back(QString::fromStdString(std::move(url)));
+    return Clipboard::Urls{std::move(urls)};
+  }
+  if (wire->text) return Clipboard::Text{QString::fromStdString(std::move(*wire->text))};
+  return std::nullopt;
+}
+
 static ListItemViewModel toListItemViewModel(ListItemViewModelWire w) {
   ListItemViewModel m;
   m.changed = true;
@@ -780,6 +806,7 @@ static ListItemViewModel toListItemViewModel(ListItemViewModelWire w) {
   for (auto &a : w.accessories)
     m.accessories.emplace_back(toAccessoryModel(std::move(a)));
   m.keywords = std::move(w.keywords);
+  m.dragContent = toClipboardContent(std::move(w.dragContent));
   for (auto &child : w.children) {
     match(
         child, [&](ActionPannelModelWire &c) { m.actionPannel = toActionPannelModel(std::move(c)); },
@@ -846,6 +873,7 @@ static GridItemViewModel toGridItemViewModel(GridItemViewModelWire w) {
   m.tooltip = std::move(w.tooltip);
   m.content = toGridContent(std::move(w.content), m.tooltip);
   m.keywords = std::move(w.keywords);
+  m.dragContent = toClipboardContent(std::move(w.dragContent));
   for (auto &child : w.children) {
     if (auto *ap = std::get_if<ActionPannelModelWire>(&child))
       m.actionPannel = toActionPannelModel(std::move(*ap));

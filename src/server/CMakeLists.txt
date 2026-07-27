@@ -162,6 +162,7 @@ set(SRCS
 	src/color-formatter.cpp
 
 	src/services/clipboard/clipboard-server.hpp
+	src/services/clipboard/clipboard-content.hpp
 	src/services/clipboard/clipboard-mime.hpp
 	src/services/clipboard/clipboard-mime.cpp
 	src/services/clipboard/clipboard-db.hpp

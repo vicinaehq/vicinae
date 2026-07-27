@@ -3,6 +3,7 @@
 #include <utility>
 #include "common/types.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "services/clipboard/clipboard-mime.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
@@ -57,6 +58,24 @@ const GridItemViewModel *ExtensionGridSection::itemAt(int i) const {
   }
   if (i < 0 || std::cmp_greater_equal(i, m_items.size())) return nullptr;
   return &m_items[i];
+}
+
+QString ExtensionGridSection::itemIconSource(int i) const {
+  if (auto *item = itemAt(i)) {
+    if (auto *image = std::get_if<ImageLikeModel>(&item->content))
+      return qml::imageSourceFor(ImageURL(*image));
+  }
+  return {};
+}
+
+bool ExtensionGridSection::isDraggable(int i) const {
+  auto *item = itemAt(i);
+  return item && item->dragContent.has_value();
+}
+
+std::unique_ptr<QMimeData> ExtensionGridSection::dragMimeData(int i) const {
+  auto *item = itemAt(i);
+  return item && item->dragContent ? Clipboard::mimeDataForContent(*item->dragContent) : nullptr;
 }
 
 std::unique_ptr<ActionPanelState> ExtensionGridSection::actionPanel(int i) const {

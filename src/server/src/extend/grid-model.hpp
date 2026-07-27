@@ -6,6 +6,7 @@
 #include "extend/pagination-model.hpp"
 #include "extend/dropdown-model.hpp"
 #include "ui/image/url.hpp"
+#include "services/clipboard/clipboard-content.hpp"
 
 enum GridFit { GridContain, GridFill };
 
@@ -34,6 +35,7 @@ struct GridItemViewModel {
   std::optional<std::string> tooltip;
   std::vector<std::string> keywords;
   std::optional<ActionPannelModel> actionPannel;
+  std::optional<Clipboard::Content> dragContent;
 };
 
 struct GridSectionModel {
