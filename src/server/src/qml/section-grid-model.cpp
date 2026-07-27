@@ -1,7 +1,9 @@
-#include "section-grid-model.hpp"
-#include "services/navigation/list-navigation.hpp"
+#include <QDrag>
+
 #include <algorithm>
 
+#include "section-grid-model.hpp"
+#include "services/navigation/list-navigation.hpp"
 SectionGridModel::SectionGridModel(QObject *parent) : QAbstractListModel(parent) {}
 
 void SectionGridModel::addSource(GridSource *source) {
@@ -214,6 +216,26 @@ void SectionGridModel::select(int section, int item) {
       m_scope.clearActions();
     }
   }
+}
+
+bool SectionGridModel::isDraggable(int section, int item) const {
+  int sourceIdx;
+  int itemIdx;
+  return resolveSelection(section, item, sourceIdx, itemIdx) && m_sources[sourceIdx]->isDraggable(itemIdx);
+}
+
+void SectionGridModel::startDrag(int section, int item, QObject *dragSource) {
+  int sourceIdx;
+  int itemIdx;
+  if (!dragSource || !resolveSelection(section, item, sourceIdx, itemIdx)) return;
+
+  auto mimeData = m_sources[sourceIdx]->dragMimeData(itemIdx);
+  if (!mimeData) return;
+
+  auto *drag = new QDrag(dragSource);
+  drag->setMimeData(mimeData.release());
+  drag->exec(Qt::CopyAction);
+  drag->deleteLater();
 }
 
 void SectionGridModel::selectFirst() {

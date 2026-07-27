@@ -1,11 +1,12 @@
 #pragma once
-#include "grid-source.hpp"
-#include "view-scope.hpp"
 #include <QAbstractListModel>
+
 #include <cstdint>
 #include <memory>
 #include <vector>
 
+#include "grid-source.hpp"
+#include "view-scope.hpp"
 class ActionPanelState;
 
 class SectionGridModel : public QAbstractListModel {
@@ -55,6 +56,8 @@ public:
   void setSelectFirstOnReset(bool value) { m_selectFirstOnReset = value; }
 
   Q_INVOKABLE void select(int section, int item);
+  Q_INVOKABLE bool isDraggable(int section, int item) const;
+  Q_INVOKABLE void startDrag(int section, int item, QObject *source);
   Q_INVOKABLE void activateSelected();
   Q_INVOKABLE void navigateUp();
   Q_INVOKABLE void navigateDown();
