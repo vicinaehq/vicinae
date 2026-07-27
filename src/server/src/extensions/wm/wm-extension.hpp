@@ -12,7 +12,7 @@ class WindowManagementExtension : public BuiltinCommandRepository {
     return QCoreApplication::translate("WindowManagementExtension", "Window Management");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("app-window-list").setBackgroundTint(SemanticColor::Cyan);
+    return ImageURL::builtin(BuiltinIcon::AppWindowList).setBackgroundTint(SemanticColor::Cyan);
   }
 
 public:

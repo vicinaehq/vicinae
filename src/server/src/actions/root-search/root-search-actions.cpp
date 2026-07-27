@@ -38,7 +38,7 @@ void ResetItemRanking::execute(ApplicationContext *ctx) {
 }
 
 ResetItemRanking::ResetItemRanking(const EntrypointId &id)
-    : AbstractAction(tr("Reset ranking"), ImageURL::builtin("arrow-counter-clockwise")), m_id(id) {}
+    : AbstractAction(tr("Reset ranking"), ImageURL::builtin(BuiltinIcon::ArrowCounterClockwise)), m_id(id) {}
 
 void MarkItemAsFavorite::execute(ApplicationContext *ctx) {
   // TODO: mark as favorite
@@ -46,12 +46,12 @@ void MarkItemAsFavorite::execute(ApplicationContext *ctx) {
 
 MarkItemAsFavorite::MarkItemAsFavorite(const QString &id)
     : AbstractAction(QCoreApplication::translate("MarkItemAsFavorite", "Mark as favorite"),
-                     ImageURL::builtin("stars")),
+                     ImageURL::builtin(BuiltinIcon::Stars)),
       m_id(id) {}
 
 std::optional<ImageURL> ToggleItemAsFavorite::icon() const {
-  if (m_value) return ImageURL::builtin("star-disabled");
-  return ImageURL::builtin("star");
+  if (m_value) return ImageURL::builtin(BuiltinIcon::StarDisabled);
+  return ImageURL::builtin(BuiltinIcon::Star);
 }
 
 QString ToggleItemAsFavorite::title() const {
@@ -105,7 +105,7 @@ void DisableItemAction::execute(ApplicationContext *ctx) {
 }
 
 DisableItemAction::DisableItemAction(const EntrypointId &id)
-    : AbstractAction(tr("Disable item"), ImageURL::builtin("trash")), m_id(id) {
+    : AbstractAction(tr("Disable item"), ImageURL::builtin(BuiltinIcon::Trash)), m_id(id) {
   setStyle(AbstractAction::Style::Danger);
 }
 

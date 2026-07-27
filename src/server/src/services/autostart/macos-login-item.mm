@@ -1,10 +1,10 @@
 #include "macos-login-item.hpp"
-#include "vicinae.hpp"
-#include <filesystem>
-#include <fstream>
-#include <qlogging.h>
 #import <Foundation/Foundation.h>
 #import <ServiceManagement/ServiceManagement.h>
+#include <qlogging.h>
+#include <filesystem>
+#include <fstream>
+#include "vicinae.hpp"
 
 namespace vicinae::macos {
 
@@ -50,7 +50,8 @@ void setLoginItemEnabled(bool enabled) {
 
   if (enabled != currentlyEnabled) {
     NSError *error = nil;
-    const BOOL ok = enabled ? [service registerAndReturnError:&error] : [service unregisterAndReturnError:&error];
+    const BOOL ok =
+        enabled ? [service registerAndReturnError:&error] : [service unregisterAndReturnError:&error];
     if (!ok) {
       qWarning() << "Failed to" << (enabled ? "register" : "unregister")
                  << "login item:" << error.localizedDescription.UTF8String;

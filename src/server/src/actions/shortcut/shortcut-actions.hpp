@@ -141,7 +141,7 @@ public:
 
   EditShortcutAction(const std::shared_ptr<Shortcut> &shortcut, const QList<QString> &args = {})
       : AbstractAction(QCoreApplication::translate("EditShortcutAction", "Edit shortcut"),
-                       ImageURL::builtin("pencil")),
+                       ImageURL::builtin(BuiltinIcon::Pencil)),
         m_shortcut(shortcut) {}
 };
 
@@ -164,7 +164,7 @@ public:
   }
 
   RemoveShortcutAction(const std::shared_ptr<Shortcut> &link)
-      : AbstractAction(tr("Remove link"), ImageURL::builtin("trash")), m_shortcut(link) {
+      : AbstractAction(tr("Remove link"), ImageURL::builtin(BuiltinIcon::Trash)), m_shortcut(link) {
     setStyle(AbstractAction::Style::Danger);
     setShortcut(Keybind::DangerousRemoveAction);
   }
@@ -182,7 +182,7 @@ public:
 
   DuplicateShortcutAction(const std::shared_ptr<Shortcut> &link)
       : AbstractAction(QCoreApplication::translate("DuplicateShortcutAction", "Duplicate link"),
-                       ImageURL::builtin("duplicate")),
+                       ImageURL::builtin(BuiltinIcon::Duplicate)),
         link(link) {}
 };
 

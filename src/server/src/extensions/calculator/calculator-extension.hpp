@@ -21,7 +21,7 @@ class CalculatorHistoryCommand : public BuiltinViewCommand<CalcHistoryViewHost> 
               "in history.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::PlusMinusDivideMultiply).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 };
 
@@ -35,7 +35,7 @@ class CalculatorRefreshRatesCommand : public BuiltinCallbackCommand {
   }
 
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("globe-01").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Globe01).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
   void execute(CommandController &ctrl) const override {
@@ -75,7 +75,7 @@ public:
     return tr("Do maths, convert units or search past calculations...");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::PlusMinusDivideMultiply).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
   CalculatorExtension() {

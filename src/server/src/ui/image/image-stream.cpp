@@ -143,7 +143,7 @@ void ImageStream::tryFallback() {
   if (auto fb = m_url.fallback())
     m_url = ImageURL(*fb).resolved();
   else
-    m_url = ImageURL::builtin("question-mark-circle").resolved();
+    m_url = ImageURL::builtin(BuiltinIcon::QuestionMarkCircle).resolved();
 
   m_fg = QColor();
   if (auto fill = m_url.fillColor()) m_fg = OmniPainter::resolveColor(*fill);

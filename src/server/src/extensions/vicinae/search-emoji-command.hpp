@@ -15,7 +15,7 @@ class SearchEmojiCommand : public BuiltinViewCommand<EmojiGridViewHost> {
   QString name() const override { return tr("Search Emojis & Symbols"); }
   QString description() const override { return tr("Search for any emoji or symbol"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("emoji").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Emoji).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
   std::vector<Preference> preferences() const override {

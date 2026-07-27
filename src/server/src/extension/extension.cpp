@@ -7,7 +7,7 @@
 #include <qlogging.h>
 
 ImageURL Extension::iconUrl() const {
-  auto fallback = ImageURL::builtin("hammer").setBackgroundTint(SemanticColor::Cyan);
+  auto fallback = ImageURL::builtin(BuiltinIcon::Hammer).setBackgroundTint(SemanticColor::Cyan);
 
   if (!m_manifest.icon.isEmpty()) {
     return ImageURL::local(assetDirectory() / m_manifest.icon.toStdString()).withFallback(fallback);

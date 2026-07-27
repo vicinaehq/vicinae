@@ -36,7 +36,7 @@ class OpenDocumentationCommand : public BuiltinUrlCommand {
     return tr("Navigate to the official vicinae documentation website.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("book").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Book).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   QUrl url(const ArgumentValues &values) const override { return Omnicast::DOC_URL; }
 };
@@ -50,7 +50,7 @@ class OpenDiscordCommand : public BuiltinUrlCommand {
     return tr("Open link to join the official Vicinae discord server.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("discord").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Discord).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   std::vector<QString> keywords() const override { return {"help", "support"}; }
   QUrl url(const ArgumentValues &values) const override { return Omnicast::DISCORD_INVITE_LINK; }
@@ -62,7 +62,9 @@ class SponsorVicinaeCommand : public BuiltinUrlCommand {
   QString id() const override { return "sponsor"; }
   QString name() const override { return tr("Donate to Vicinae"); }
   QString description() const override { return tr("Open link to Vicinae's GitHub sponsor page"); }
-  ImageURL iconUrl() const override { return ImageURL::builtin("heart").setFill(SemanticColor::Magenta); }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Heart).setFill(SemanticColor::Magenta);
+  }
   std::vector<QString> keywords() const override { return {"sponsor", "donate"}; }
   QUrl url(const ArgumentValues &values) const override { return Omnicast::GH_SPONSOR_LINK; }
 };
@@ -74,7 +76,7 @@ class OpenVicinaeConfig : public BuiltinCallbackCommand {
   QString name() const override { return tr("Open Config File"); }
   QString description() const override { return tr("Open the main vicinae configuration file"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("pencil").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Pencil).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
   void execute(CommandController &controller) const override {
@@ -109,7 +111,7 @@ class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
   QString name() const override { return tr("Open Default Config File"); }
   QString description() const override { return tr("Open the default vicinae configuration file"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("pencil").setBackgroundTint(SemanticColor::Accent);
+    return ImageURL::builtin(BuiltinIcon::Pencil).setBackgroundTint(SemanticColor::Accent);
   }
 
   void execute(CommandController &controller) const override {
@@ -172,7 +174,7 @@ class OpenSettingsCommand : public BuiltinCallbackCommand {
     return tr("Open the vicinae settings window, which is an independent floating window.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("cog").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Cog).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   std::vector<QString> keywords() const override { return {"preferences"}; }
 
@@ -209,7 +211,7 @@ class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
   QString name() const override { return tr("Open Vicinae Keybind Settings"); }
   QString description() const override { return tr("Open the vicinae keybind settings window"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("keyboard").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Keyboard).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
   void execute(CommandController &controller) const override {
@@ -266,7 +268,7 @@ class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreViewHost
     return tr("Manage OAuth token sets that have been saved by extensions providing OAuth integrations.");
   }
   ImageURL iconUrl() const override {
-    auto icon = ImageURL::builtin("key");
+    auto icon = ImageURL::builtin(BuiltinIcon::Key);
     icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
     return icon;
   }
@@ -296,7 +298,7 @@ class InspectLocalStorage : public BuiltinViewCommand<LocalStorageViewHost> {
               "extensions as well as third-party extensions making use of the LocalStorage API.");
   }
   ImageURL iconUrl() const override {
-    auto icon = ImageURL::builtin("coin");
+    auto icon = ImageURL::builtin(BuiltinIcon::Coin);
     icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
     return icon;
   }

@@ -18,8 +18,8 @@ QString SearchFilesSection::itemTitle(int i) const {
 
 QString SearchFilesSection::itemSubtitle(int i) const { return {}; }
 
-QString SearchFilesSection::itemIconSource(int i) const {
-  return imageSourceFor(ImageURL::fileIcon(m_files.at(i)));
+std::optional<ImageURL> SearchFilesSection::itemIcon(int i) const {
+  return ImageURL::fileIcon(m_files.at(i));
 }
 
 std::unique_ptr<ActionPanelState> SearchFilesSection::actionPanel(int i) const {

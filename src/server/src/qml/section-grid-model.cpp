@@ -229,7 +229,7 @@ void SectionGridModel::startDrag(int section, int item, QObject *dragSource) {
   if (!dragSource || !resolveSelection(section, item, sourceIdx, itemIdx)) return;
 
   auto *source = m_sources[sourceIdx];
-  DragUtils::startDrag(dragSource, source->dragMimeData(itemIdx), source->itemIconSource(itemIdx));
+  DragUtils::startDrag(dragSource, source->dragMimeData(itemIdx), source->itemIcon(itemIdx));
 }
 
 void SectionGridModel::selectFirst() {

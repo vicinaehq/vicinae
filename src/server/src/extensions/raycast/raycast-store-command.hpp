@@ -14,7 +14,7 @@ class RaycastStoreCommand : public BuiltinCallbackCommand {
   QString extensionId() const override { return "raycast-compat"; }
   QString commandId() const override { return "store"; }
   ImageURL iconUrl() const override {
-    auto icon = ImageURL::builtin("raycast");
+    auto icon = ImageURL::builtin(BuiltinIcon::Raycast);
     icon.setBackgroundTint(SemanticColor::Red);
     return icon;
   }

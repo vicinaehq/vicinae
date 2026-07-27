@@ -54,10 +54,9 @@ QString ExtensionListSection::itemTitle(int i) const { return QString::fromStdSt
 
 QString ExtensionListSection::itemSubtitle(int i) const { return QString::fromStdString(itemAt(i).subtitle); }
 
-QString ExtensionListSection::itemIconSource(int i) const {
+std::optional<ImageURL> ExtensionListSection::itemIcon(int i) const {
   const auto &item = itemAt(i);
-  if (item.icon) return imageSourceFor(ImageURL(*item.icon));
-  return {};
+  return item.icon ? std::optional(ImageURL(*item.icon)) : std::nullopt;
 }
 
 QVariantList ExtensionListSection::itemAccessories(int i) const {

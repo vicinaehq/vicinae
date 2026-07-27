@@ -70,7 +70,7 @@ public:
   int count() const override { return m_link ? 1 : 0; }
   QString itemId(int) const override;
   QString itemTitle(int) const override;
-  QString itemIconSource(int) const override;
+  std::optional<ImageURL> itemIcon(int) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -93,7 +93,7 @@ public:
   int count() const override { return m_result ? 1 : 0; }
   QString itemId(int) const override;
   QString itemTitle(int) const override;
-  QString itemIconSource(int) const override;
+  std::optional<ImageURL> itemIcon(int) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -116,7 +116,7 @@ public:
   QString itemId(int) const override;
   QString itemTitle(int) const override;
   QString itemSubtitle(int) const override;
-  QString itemIconSource(int) const override;
+  std::optional<ImageURL> itemIcon(int) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -138,7 +138,7 @@ public:
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -161,7 +161,7 @@ public:
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -185,7 +185,7 @@ public:
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -210,7 +210,7 @@ public:
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -234,7 +234,7 @@ public:
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;

@@ -122,7 +122,7 @@ QString ShortcutRootProvider::displayName() const {
 }
 
 ImageURL ShortcutRootProvider::icon() const {
-  auto icon = ImageURL::builtin("bolt");
+  auto icon = ImageURL::builtin(BuiltinIcon::Bolt);
 
   icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
 

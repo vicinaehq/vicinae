@@ -26,7 +26,8 @@ class CopyCalculatorAnswerAction : public AbstractAction {
     if (m_addToHistory) { calculator->addRecord(m_item); }
 
     if (clip->copyText(m_item.answer.text)) {
-      ctx->navigation->showHud(tr("Answer copied to clipboard"), ImageURL::builtin("copy-clipboard"));
+      ctx->navigation->showHud(tr("Answer copied to clipboard"),
+                               ImageURL::builtin(BuiltinIcon::CopyClipboard));
     } else {
       ctx->services->toastService()->setToast(tr("Failed to copy answer"), ToastStyle::Danger);
     }
@@ -35,7 +36,7 @@ class CopyCalculatorAnswerAction : public AbstractAction {
 public:
   CopyCalculatorAnswerAction(const AbstractCalculatorBackend::CalculatorResult &item,
                              bool addToHistory = true)
-      : AbstractAction(tr("Copy Result"), ImageURL::builtin("copy-clipboard")), m_item(item),
+      : AbstractAction(tr("Copy Result"), ImageURL::builtin(BuiltinIcon::CopyClipboard)), m_item(item),
         m_addToHistory(addToHistory) {}
 };
 
@@ -53,7 +54,8 @@ class CopyCalculatorQuestionAndAnswerAction : public AbstractAction {
     if (m_addToHistory) { calculator->addRecord(m_item); }
 
     if (clip->copyText(result)) {
-      ctx->navigation->showHud(tr("Answer copied to clipboard"), ImageURL::builtin("copy-clipboard"));
+      ctx->navigation->showHud(tr("Answer copied to clipboard"),
+                               ImageURL::builtin(BuiltinIcon::CopyClipboard));
     } else {
       ctx->services->toastService()->setToast(tr("Failed to copy answer"), ToastStyle::Danger);
     }
@@ -62,8 +64,8 @@ class CopyCalculatorQuestionAndAnswerAction : public AbstractAction {
 public:
   CopyCalculatorQuestionAndAnswerAction(const AbstractCalculatorBackend::CalculatorResult &item,
                                         bool addToHistory = true)
-      : AbstractAction(tr("Copy Question And Answer"), ImageURL::builtin("copy-clipboard")), m_item(item),
-        m_addToHistory(addToHistory) {}
+      : AbstractAction(tr("Copy Question And Answer"), ImageURL::builtin(BuiltinIcon::CopyClipboard)),
+        m_item(item), m_addToHistory(addToHistory) {}
 };
 
 class OpenCalculatorHistoryAction : public AbstractAction {
@@ -72,7 +74,7 @@ class OpenCalculatorHistoryAction : public AbstractAction {
 public:
   OpenCalculatorHistoryAction()
       : AbstractAction(QCoreApplication::translate("OpenCalculatorHistoryAction", "Open Calculator History"),
-                       ImageURL::builtin("calculator")) {}
+                       ImageURL::builtin(BuiltinIcon::Calculator)) {}
 };
 
 class PutCalculatorAnswerInSearchBar : public AbstractAction {
@@ -84,7 +86,7 @@ public:
   QString title() const override {
     return QCoreApplication::translate("PutCalculatorAnswerInSearchBar", "Put answer in search bar");
   }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("text"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::Text); }
 
   PutCalculatorAnswerInSearchBar(const AbstractCalculatorBackend::CalculatorResult &item) : m_item(item) {}
 };
@@ -103,7 +105,7 @@ public:
   }
 
   QString title() const override { return tr("Pin entry"); }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::Pin); }
 
   PinCalculatorHistoryRecordAction(const QString &id) : m_id(id) {}
 };
@@ -123,7 +125,7 @@ public:
   }
 
   QString title() const override { return tr("Unpin entry"); }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin-disabled"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::PinDisabled); }
 
   UnpinCalculatorHistoryRecordAction(const QString &id) : m_id(id) {}
 };
@@ -143,7 +145,7 @@ public:
   }
 
   QString title() const override { return tr("Delete entry"); }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("trash"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::Trash); }
 
   RemoveCalculatorHistoryRecordAction(const QString &id) : m_id(id) {
     setStyle(AbstractAction::Style::Danger);
@@ -181,7 +183,7 @@ public:
   QString title() const override {
     return QCoreApplication::translate("RemoveAllCalculatorHistoryRecordsAction", "Delete all entries");
   }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("trash"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::Trash); }
 
   RemoveAllCalculatorHistoryRecordsAction() { setStyle(AbstractAction::Style::Danger); }
 };

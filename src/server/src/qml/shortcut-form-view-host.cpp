@@ -44,7 +44,8 @@ void ShortcutFormViewHost::initialize() {
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto section = panel->createSection();
-  auto submitAction = new StaticAction(tr("Submit"), ImageURL::builtin("enter-key"), [this]() { submit(); });
+  auto submitAction =
+      new StaticAction(tr("Submit"), ImageURL::builtin(BuiltinIcon::EnterKey), [this]() { submit(); });
   section->addAction(submitAction);
   setActions(std::move(panel));
 
@@ -135,16 +136,16 @@ void ShortcutFormViewHost::initialize() {
 void ShortcutFormViewHost::buildIconItems() {
   QVariantList allIcons;
 
-  m_resolvedDefaultIcon = ImageURL::builtin("link").toString();
+  m_resolvedDefaultIcon = ImageURL::builtin(BuiltinIcon::Link).toString();
   m_defaultIconEntry = QVariantMap{
       {QStringLiteral("id"), QStringLiteral("default")},
       {QStringLiteral("displayName"), tr("Default")},
-      {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("link"))},
+      {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Link))},
   };
   allIcons.append(m_defaultIconEntry);
 
   for (const auto &[icon, name] : BuiltinIconService::mapping()) {
-    auto url = ImageURL::builtin(name);
+    auto url = ImageURL::builtinByName(QString::fromLatin1(name));
     allIcons.append(QVariantMap{
         {QStringLiteral("id"), url.toString()},
         {QStringLiteral("displayName"), QString::fromUtf8(name)},
@@ -161,24 +162,24 @@ void ShortcutFormViewHost::buildIconItems() {
 void ShortcutFormViewHost::buildLinkCompletions() {
   m_linkCompletions = QVariantList{
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))},
           {QStringLiteral("title"), tr("Selected Text")},
           {QStringLiteral("value"), QStringLiteral("selected")},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("copy-clipboard"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::CopyClipboard))},
           {QStringLiteral("title"), tr("Clipboard Text")},
           {QStringLiteral("value"), QStringLiteral("clipboard")},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))},
           {QStringLiteral("title"), tr("Argument")},
           {QStringLiteral("value"), QStringLiteral("argument")},
           {QStringLiteral("template"), QStringLiteral("{argument name=\"\"}")},
           {QStringLiteral("cursorOffset"), 16},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("fingerprint"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Fingerprint))},
           {QStringLiteral("title"), QStringLiteral("UUID")},
           {QStringLiteral("value"), QStringLiteral("uuid")},
       },
@@ -286,7 +287,7 @@ void ShortcutFormViewHost::handleLinkBlurred() {
 
     watcher->setFuture(FaviconService::instance()->makeRequest(url.host()));
     connect(ptr, &Watcher::finished, this, [this, url, watcher = std::move(watcher)]() {
-      auto icon = ImageURL::favicon(url.host()).withFallback(ImageURL::builtin("image"));
+      auto icon = ImageURL::favicon(url.host()).withFallback(ImageURL::builtin(BuiltinIcon::Image));
       m_resolvedDefaultIcon = icon.toString();
       m_defaultIconEntry[QStringLiteral("iconSource")] = qml::imageSourceFor(icon);
       m_defaultIconEntry[QStringLiteral("displayName")] = url.host();

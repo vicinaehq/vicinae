@@ -8,7 +8,7 @@ class PowerManagementExtension : public BuiltinCommandRepository {
   QString displayName() const override { return tr("Power Management"); }
   QString description() const override { return tr("Power off, suspend, sleep, hibernate your computer."); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("power").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin(BuiltinIcon::Power).setBackgroundTint(SemanticColor::Red);
   }
 
 public:

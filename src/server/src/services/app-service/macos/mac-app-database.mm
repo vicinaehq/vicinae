@@ -5,9 +5,9 @@
 #import <Foundation/Foundation.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
+#include <qlogging.h>
 #include <QDebug>
 #include <QUrl>
-#include <qlogging.h>
 
 #include <fstream>
 
@@ -39,8 +39,8 @@ ClassifiedTarget classifyTarget(const QString &target) {
 
   if (target.contains(QStringLiteral("://"))) return {TargetKind::Url, target};
 
-  bool const looksLikePath = target.startsWith('/') || target.startsWith('~') ||
-                             target.startsWith("./") || target.startsWith("../");
+  bool const looksLikePath =
+      target.startsWith('/') || target.startsWith('~') || target.startsWith("./") || target.startsWith("../");
 
   if (looksLikePath) {
     @autoreleasepool {
@@ -130,9 +130,7 @@ std::vector<fs::path> MacAppDatabase::defaultSearchPaths() const {
   paths.emplace_back("/Applications");
   paths.emplace_back("/System/Applications");
   paths.emplace_back("/System/Library/CoreServices/Applications");
-  if (const char *home = std::getenv("HOME")) {
-    paths.emplace_back(fs::path(home) / "Applications");
-  }
+  if (const char *home = std::getenv("HOME")) { paths.emplace_back(fs::path(home) / "Applications"); }
   return paths;
 }
 

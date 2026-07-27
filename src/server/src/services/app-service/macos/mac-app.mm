@@ -7,21 +7,14 @@
 
 namespace {
 
-NSString *toNSString(const std::filesystem::path &p) {
-  return [NSString stringWithUTF8String:p.c_str()];
-}
+NSString *toNSString(const std::filesystem::path &p) { return [NSString stringWithUTF8String:p.c_str()]; }
 
 QString toQString(NSString *s) { return s ? QString::fromNSString(s) : QString(); }
 
 const std::unordered_set<std::string> &knownTerminalBundleIds() {
   static const std::unordered_set<std::string> set = {
-      "com.apple.Terminal",
-      "com.googlecode.iterm2",
-      "com.github.wez.wezterm",
-      "io.alacritty",
-      "net.kovidgoyal.kitty",
-      "com.mitchellh.ghostty",
-      "dev.warp.Warp-Stable",
+      "com.apple.Terminal",   "com.googlecode.iterm2", "com.github.wez.wezterm", "io.alacritty",
+      "net.kovidgoyal.kitty", "com.mitchellh.ghostty", "dev.warp.Warp-Stable",
   };
   return set;
 }
@@ -52,9 +45,7 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
     if (displayName.length == 0) displayName = info[@"CFBundleDisplayName"];
     if (displayName.length == 0) displayName = localized[@"CFBundleName"];
     if (displayName.length == 0) displayName = info[@"CFBundleName"];
-    if (displayName.length == 0) {
-      displayName = [[nsPath lastPathComponent] stringByDeletingPathExtension];
-    }
+    if (displayName.length == 0) { displayName = [[nsPath lastPathComponent] stringByDeletingPathExtension]; }
 
     NSString *executable = info[@"CFBundleExecutable"];
 

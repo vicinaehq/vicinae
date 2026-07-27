@@ -96,7 +96,7 @@ $biome     = Resolve-Tool 'biome'
 $failed = $false
 
 # --- C++ (clang-format) ---
-$cppFiles = @(Get-Sources @('*.cpp', '*.hpp'))
+$cppFiles = @(Get-Sources @('*.cpp', '*.hpp', '*.mm'))
 if (-not $clangFormat) {
     Write-Warning 'clang-format not found on PATH; skipping C++'
     if ($Check) { $failed = $true }

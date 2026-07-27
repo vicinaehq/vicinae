@@ -14,7 +14,7 @@ class AlertWidget : public DialogContentWidget {
 
   QString m_titleText = tr("Are you sure?");
   QString m_messageText = tr("This action cannot be undone");
-  std::optional<ImageURL> m_iconUrl = ImageURL::builtin("warning").setFill(SemanticColor::Red);
+  std::optional<ImageURL> m_iconUrl = ImageURL::builtin(BuiltinIcon::Warning).setFill(SemanticColor::Red);
   QString m_confirmText = tr("Confirm");
   QString m_cancelText = tr("Cancel");
   ColorLike m_confirmColor = SemanticColor::Red;

@@ -27,8 +27,8 @@ QString VicinaeStoreSection::displaySubtitle(const VicinaeStoreEntry &entry) con
   return entry.extension.description;
 }
 
-QString VicinaeStoreSection::displayIconSource(const VicinaeStoreEntry &entry) const {
-  return imageSourceFor(entry.extension.themedIcon());
+std::optional<ImageURL> VicinaeStoreSection::displayIcon(const VicinaeStoreEntry &entry) const {
+  return entry.extension.themedIcon();
 }
 
 std::unique_ptr<ActionPanelState>
@@ -38,7 +38,8 @@ VicinaeStoreSection::buildActionPanel(const VicinaeStoreEntry &entry) const {
   auto danger = panel->createSection();
 
   auto showDetails = new StaticAction(
-      QCoreApplication::translate("VicinaeStoreSection", "Show details"), ImageURL::builtin("computer-chip"),
+      QCoreApplication::translate("VicinaeStoreSection", "Show details"),
+      ImageURL::builtin(BuiltinIcon::ComputerChip),
       [author = entry.extension.author.handle, name = entry.extension.name, scope = this->scope()]() {
         scope.pushView(new VicinaeStoreDetailHost(author, name));
       });
@@ -62,7 +63,7 @@ QVariant VicinaeStoreSection::customData(int i, int role) const {
     return formatCount(entry.extension.downloadCount);
   case AuthorAvatar: {
     const auto &avatar = entry.extension.author.avatarUrl;
-    if (avatar.isEmpty()) return imageSourceFor(ImageURL::builtin("person"));
+    if (avatar.isEmpty()) return imageSourceFor(ImageURL::builtin(BuiltinIcon::Person));
     return imageSourceFor(ImageURL::http(QUrl(avatar)).circle());
   }
   case IsInstalled:

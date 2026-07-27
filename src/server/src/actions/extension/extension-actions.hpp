@@ -9,7 +9,7 @@ class UninstallExtensionAction : public AbstractAction {
 
   QString m_id;
 
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("computer-chip"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::ComputerChip); }
   void execute(ApplicationContext *ctx) override;
   QString title() const override { return tr("Uninstall Extension"); }
 

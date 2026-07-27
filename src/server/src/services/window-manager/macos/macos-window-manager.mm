@@ -4,6 +4,7 @@
 #import <Foundation/Foundation.h>
 #include <IOKit/graphics/IOGraphicsTypes.h>
 
+#include <unistd.h>
 #include <QFutureWatcher>
 #include <QPointer>
 #include <QTimer>
@@ -11,16 +12,16 @@
 #include <array>
 #include <chrono>
 #include <cstring>
-#include <unistd.h>
 #include <unordered_set>
 
 #include "macos-window.hpp"
 
-// Private but stable HIServices APIs used by virtually every macOS window switcher (AltTab, HyperSwitch, ...).
-// _AXUIElementGetWindow maps an AX window element to its CoreGraphics window id, giving us a stable identity.
-// _AXUIElementCreateWithRemoteToken builds an AX element straight from a (pid, element id) token, which lets us
-// reach windows living on other Spaces: kAXWindowsAttribute only ever returns windows of the current Space.
-// Both degrade gracefully (failed calls are simply skipped) if Apple ever changes them.
+// Private but stable HIServices APIs used by virtually every macOS window switcher (AltTab,
+// HyperSwitch, ...). _AXUIElementGetWindow maps an AX window element to its CoreGraphics window id,
+// giving us a stable identity. _AXUIElementCreateWithRemoteToken builds an AX element straight from
+// a (pid, element id) token, which lets us reach windows living on other Spaces:
+// kAXWindowsAttribute only ever returns windows of the current Space. Both degrade gracefully
+// (failed calls are simply skipped) if Apple ever changes them.
 extern "C" {
 AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *identifier);
 AXUIElementRef _AXUIElementCreateWithRemoteToken(CFDataRef token);
@@ -95,8 +96,8 @@ bool axHasAttribute(AXUIElementRef element, CFStringRef attribute) {
 bool axCopyBool(AXUIElementRef element, CFStringRef attribute) {
   CFTypeRef value = nullptr;
   if (AXUIElementCopyAttributeValue(element, attribute, &value) != kAXErrorSuccess || !value) return false;
-  bool result = CFGetTypeID(value) == CFBooleanGetTypeID() &&
-                CFBooleanGetValue(static_cast<CFBooleanRef>(value));
+  bool result =
+      CFGetTypeID(value) == CFBooleanGetTypeID() && CFBooleanGetValue(static_cast<CFBooleanRef>(value));
   CFRelease(value);
   return result;
 }
@@ -114,10 +115,10 @@ std::optional<AbstractWindowManager::WindowBounds> axCopyBounds(AXUIElementRef e
   CGPoint position{};
   CGSize size{};
 
-  bool hasPosition = AXUIElementCopyAttributeValue(element, kAXPositionAttribute, &positionValue) ==
-                         kAXErrorSuccess &&
-                     positionValue &&
-                     AXValueGetValue(static_cast<AXValueRef>(positionValue), kAXValueTypeCGPoint, &position);
+  bool hasPosition =
+      AXUIElementCopyAttributeValue(element, kAXPositionAttribute, &positionValue) == kAXErrorSuccess &&
+      positionValue &&
+      AXValueGetValue(static_cast<AXValueRef>(positionValue), kAXValueTypeCGPoint, &position);
   bool hasSize = AXUIElementCopyAttributeValue(element, kAXSizeAttribute, &sizeValue) == kAXErrorSuccess &&
                  sizeValue && AXValueGetValue(static_cast<AXValueRef>(sizeValue), kAXValueTypeCGSize, &size);
 
@@ -139,7 +140,8 @@ bool isWindowLike(AXUIElementRef element) {
          subrole == QString::fromCFString(kAXDialogSubrole);
 }
 
-// Stricter than isWindowLike: brute-forced element ids resolve to all kinds of UI elements (buttons, menus,
+// Stricter than isWindowLike: brute-forced element ids resolve to all kinds of UI elements
+// (buttons, menus,
 // ...), so here we require an explicit window subrole and reject anything without one.
 bool hasWindowSubrole(AXUIElementRef element) {
   QString subrole = axCopyString(element, kAXSubroleAttribute);
@@ -183,8 +185,9 @@ void appendWindowDeduped(AXUIElementRef element, pid_t pid, const QString &bundl
   if (auto window = buildWindow(element, pid, bundleId, appName)) { out.emplace_back(std::move(window)); }
 }
 
-// Windows on the current Space, as reported by the AX windows attribute. Elements are owned by the returned
-// array, so callers must not release them individually (MacosWindow retains the ones it keeps).
+// Windows on the current Space, as reported by the AX windows attribute. Elements are owned by the
+// returned array, so callers must not release them individually (MacosWindow retains the ones it
+// keeps).
 void collectCurrentSpaceWindows(pid_t pid, const QString &bundleId, const QString &appName,
                                 AbstractWindowManager::WindowList &out,
                                 std::unordered_set<CGWindowID> &seen) {
@@ -237,8 +240,8 @@ struct AppDescriptor {
   QString appName;
 };
 
-// Must run on the main thread: NSWorkspace is not safe to query off-main. We only collect lightweight
-// descriptors here so the expensive AX walk can happen on a worker thread.
+// Must run on the main thread: NSWorkspace is not safe to query off-main. We only collect
+// lightweight descriptors here so the expensive AX walk can happen on a worker thread.
 std::vector<AppDescriptor> runningRegularApps() {
   std::vector<AppDescriptor> result;
   pid_t selfPid = getpid();
@@ -315,9 +318,10 @@ void MacosWindowManager::scheduleCoalescedRebuild() const {
   if (m_coalesceTimer) m_coalesceTimer->start();
 }
 
-// The full AX scan is expensive (the per-app brute-force needed for other-Space windows is cross-process and
-// budgeted), so it runs on a worker thread and the result is swapped into the cache on the main thread. Only
-// one scan runs at a time; requests arriving mid-scan are coalesced into a single follow-up.
+// The full AX scan is expensive (the per-app brute-force needed for other-Space windows is
+// cross-process and budgeted), so it runs on a worker thread and the result is swapped into the
+// cache on the main thread. Only one scan runs at a time; requests arriving mid-scan are coalesced
+// into a single follow-up.
 void MacosWindowManager::rebuildCache() {
   if (!AXIsProcessTrusted()) {
     m_cache.clear();
@@ -429,8 +433,7 @@ AbstractWindowManager::WindowPtr MacosWindowManager::getFocusedWindowSync() cons
     pid_t pid = front.processIdentifier;
     if (pid <= 0 || pid == getpid()) return nullptr;
 
-    QString bundleId =
-        front.bundleIdentifier ? QString::fromNSString(front.bundleIdentifier) : QString();
+    QString bundleId = front.bundleIdentifier ? QString::fromNSString(front.bundleIdentifier) : QString();
     QString appName = front.localizedName ? QString::fromNSString(front.localizedName) : bundleId;
 
     AXUIElementRef appElement = AXUIElementCreateApplication(pid);
@@ -459,8 +462,7 @@ void MacosWindowManager::focusWindowSync(const AbstractWindow &window) const {
 
   if (auto pid = macWindow->pid()) {
     @autoreleasepool {
-      NSRunningApplication *app =
-          [NSRunningApplication runningApplicationWithProcessIdentifier:*pid];
+      NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:*pid];
       [app activateWithOptions:NSApplicationActivateAllWindows];
     }
   }

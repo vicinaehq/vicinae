@@ -1,8 +1,10 @@
+#include "spotlight-file-indexer.hpp"
 #include <CoreServices/CoreServices.h>
 #include <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #include <QtConcurrent/QtConcurrentRun>
 #include <algorithm>
 #include <climits>
+#include <common/file-category.hpp>
 #include <filesystem>
 #include <initializer_list>
 #include <optional>
@@ -10,9 +12,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <common/file-category.hpp>
 #include "fuzzy/fzf.hpp"
-#include "spotlight-file-indexer.hpp"
 
 namespace {
 
@@ -32,7 +32,8 @@ vicinae::FileCategory categoryForPath(const std::filesystem::path &path) {
 }
 
 std::string anyOf(std::initializer_list<std::string_view> predicates) {
-  auto predicate = predicates | std::views::join_with(std::string_view{" || "}) | std::ranges::to<std::string>();
+  auto predicate =
+      predicates | std::views::join_with(std::string_view{" || "}) | std::ranges::to<std::string>();
 
   return "(" + predicate + ")";
 }
@@ -238,10 +239,7 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
 
 } // namespace
 
-
-bool SpotlightFileIndexer::isAvailable() const {
-	return true;
-}
+bool SpotlightFileIndexer::isAvailable() const { return true; }
 
 QFuture<std::vector<IndexerFileResult>> SpotlightFileIndexer::queryAsync(std::string_view query,
                                                                          const IndexerQueryParams &params) {

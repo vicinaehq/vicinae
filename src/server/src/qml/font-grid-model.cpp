@@ -27,7 +27,7 @@ class SetAppFont : public AbstractAction {
 public:
   SetAppFont(const QString &family)
       : AbstractAction(QCoreApplication::translate("SetAppFont", "Set as vicinae font"),
-                       ImageURL::builtin("text")),
+                       ImageURL::builtin(BuiltinIcon::Text)),
         m_family(family) {}
 };
 
@@ -42,7 +42,7 @@ class PreviewFontAction : public AbstractAction {
 public:
   PreviewFontAction(const QString &family, FontCategory category)
       : AbstractAction(QCoreApplication::translate("PreviewFontAction", "Preview font"),
-                       ImageURL::builtin("eye")),
+                       ImageURL::builtin(BuiltinIcon::Eye)),
         m_family(family), m_category(category) {}
 };
 

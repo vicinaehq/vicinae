@@ -14,7 +14,7 @@ class VicinaeStoreCommand : public BuiltinCallbackCommand {
   QString extensionId() const override { return "vicinae"; }
   QString commandId() const override { return "store"; }
   ImageURL iconUrl() const override {
-    auto icon = ImageURL::builtin("cart");
+    auto icon = ImageURL::builtin(BuiltinIcon::Cart);
     icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
     return icon;
   }
@@ -38,7 +38,7 @@ Every extension listed here has its source code available in the [vicinaehq/exte
 
 If you're looking to build your own extension, take a look at the [documentation](https://docs.vicinae.com/extensions/introduction). If you think your extension would be a good fit for the store, feel free to submit it!
 )");
-      auto icon = ImageURL::builtin("cart");
+      auto icon = ImageURL::builtin(BuiltinIcon::Cart);
       icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
       auto storage = ctrl.storage();
       ctx->navigation->pushView(

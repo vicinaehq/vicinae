@@ -60,12 +60,11 @@ const GridItemViewModel *ExtensionGridSection::itemAt(int i) const {
   return &m_items[i];
 }
 
-QString ExtensionGridSection::itemIconSource(int i) const {
+std::optional<ImageURL> ExtensionGridSection::itemIcon(int i) const {
   if (auto *item = itemAt(i)) {
-    if (auto *image = std::get_if<ImageLikeModel>(&item->content))
-      return qml::imageSourceFor(ImageURL(*image));
+    if (auto *image = std::get_if<ImageLikeModel>(&item->content)) return ImageURL(*image);
   }
-  return {};
+  return std::nullopt;
 }
 
 bool ExtensionGridSection::isDraggable(int i) const {

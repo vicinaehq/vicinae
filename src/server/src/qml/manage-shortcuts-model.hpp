@@ -27,7 +27,7 @@ public:
 
 protected:
   QString displayTitle(const std::shared_ptr<Shortcut> &item) const override;
-  QString displayIconSource(const std::shared_ptr<Shortcut> &item) const override;
+  std::optional<ImageURL> displayIcon(const std::shared_ptr<Shortcut> &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const std::shared_ptr<Shortcut> &item) const override;
 
 private:

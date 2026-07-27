@@ -13,7 +13,7 @@ class ClipboardClearCommand : public BuiltinCallbackCommand {
   QString name() const override { return tr("Clear Current Clipboard Data"); }
   QString description() const override { return tr("Clear the current content of the clipboard"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("delete-document").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::DeleteDocument).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   void execute(CommandController &ctrl) const override {
     auto ctx = ctrl.context();

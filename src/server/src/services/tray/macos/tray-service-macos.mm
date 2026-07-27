@@ -2,8 +2,8 @@
 #import <AppKit/AppKit.h>
 #include <QImage>
 #include <QPainter>
-#include <QSvgRenderer>
 #include <QString>
+#include <QSvgRenderer>
 
 namespace {
 constexpr qreal MENU_BAR_ICON_POINT_SIZE = 18.0;
@@ -27,9 +27,9 @@ NSImage *renderTrayImage() {
                     static_cast<CGBitmapInfo>(kCGImageAlphaPremultipliedLast | kCGBitmapByteOrderDefault),
                     provider, nullptr, false, kCGRenderingIntentDefault);
 
-  NSImage *nsImage = [[NSImage alloc]
-      initWithCGImage:cgImage
-                 size:NSMakeSize(MENU_BAR_ICON_POINT_SIZE, MENU_BAR_ICON_POINT_SIZE)];
+  NSImage *nsImage =
+      [[NSImage alloc] initWithCGImage:cgImage
+                                  size:NSMakeSize(MENU_BAR_ICON_POINT_SIZE, MENU_BAR_ICON_POINT_SIZE)];
   [nsImage setTemplate:YES];
 
   CGImageRelease(cgImage);
@@ -140,8 +140,7 @@ void TrayServiceMacOS::setAvailableUpdate(const QString &tag) {
   if (tag.isEmpty()) {
     m_impl->checkForUpdatesItem.title = @"Check for Updates…";
   } else {
-    m_impl->checkForUpdatesItem.title =
-        [NSString stringWithFormat:@"Update Available: %@", tag.toNSString()];
+    m_impl->checkForUpdatesItem.title = [NSString stringWithFormat:@"Update Available: %@", tag.toNSString()];
   }
 }
 

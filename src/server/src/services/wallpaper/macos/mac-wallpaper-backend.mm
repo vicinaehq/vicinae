@@ -55,7 +55,6 @@ std::expected<void, std::string> apply(const WallpaperRequest &request) {
 
 } // namespace
 
-QFuture<std::expected<void, std::string>>
-MacWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
+QFuture<std::expected<void, std::string>> MacWallpaperBackend::setWallpaper(const WallpaperRequest &request) {
   return QtFuture::makeReadyValueFuture(apply(request));
 }

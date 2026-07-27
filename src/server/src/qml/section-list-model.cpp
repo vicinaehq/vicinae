@@ -105,7 +105,8 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
   case Subtitle:
     return source->itemSubtitle(flat.itemIdx);
   case IconSource:
-    return source->itemIconSource(flat.itemIdx);
+    if (auto icon = source->itemIcon(flat.itemIdx)) return icon->toString();
+    return QString();
   case Accessory:
     return source->itemAccessories(flat.itemIdx);
   case IsDraggable:
@@ -172,7 +173,7 @@ void SectionListModel::startDrag(int index, QObject *dragSource) {
   if (!dragSource || !dataItemAt(index, sourceIdx, itemIdx)) return;
 
   auto *source = m_sources[sourceIdx];
-  DragUtils::startDrag(dragSource, source->dragMimeData(itemIdx), source->itemIconSource(itemIdx));
+  DragUtils::startDrag(dragSource, source->dragMimeData(itemIdx), source->itemIcon(itemIdx));
 }
 
 void SectionListModel::refreshActionPanel() { setSelectedIndex(m_selectedIndex); }

@@ -23,7 +23,8 @@ class RevealFileInFolderAction : public AbstractAction {
 
 public:
   RevealFileInFolderAction(std::filesystem::path path)
-      : AbstractAction(tr("Show in file browser"), ImageURL::builtin("folder")), m_path(std::move(path)) {
+      : AbstractAction(tr("Show in file browser"), ImageURL::builtin(BuiltinIcon::Folder)),
+        m_path(std::move(path)) {
     setShortcut(Keyboard::Shortcut::submit());
   }
 
@@ -52,7 +53,8 @@ class SetWallpaperAction : public AbstractAction {
 
 public:
   SetWallpaperAction(std::filesystem::path path)
-      : AbstractAction(tr("Set as wallpaper"), ImageURL::builtin("image")), m_path(std::move(path)) {
+      : AbstractAction(tr("Set as wallpaper"), ImageURL::builtin(BuiltinIcon::Image)),
+        m_path(std::move(path)) {
     setShortcut(Keyboard::Shortcut(Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier));
   }
 
@@ -63,7 +65,7 @@ public:
     wallpaper->setWallpaper({.path = m_path.string()})
         .then(toast, [ctx, toast](const std::expected<void, std::string> &result) {
           if (result) {
-            ctx->navigation->showHud(tr("Wallpaper set"), ImageURL::builtin("image"));
+            ctx->navigation->showHud(tr("Wallpaper set"), ImageURL::builtin(BuiltinIcon::Image));
           } else {
             toast->failure(tr("Failed to set wallpaper"), QString::fromStdString(result.error()));
           }

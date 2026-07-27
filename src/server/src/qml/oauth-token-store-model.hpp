@@ -19,7 +19,7 @@ public:
 protected:
   QString displayTitle(const OAuth::TokenSet &set) const override;
   QString displaySubtitle(const OAuth::TokenSet &set) const override;
-  QString displayIconSource(const OAuth::TokenSet &set) const override;
+  std::optional<ImageURL> displayIcon(const OAuth::TokenSet &set) const override;
   QVariantList displayAccessories(const OAuth::TokenSet &set) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const OAuth::TokenSet &set) const override;
 };

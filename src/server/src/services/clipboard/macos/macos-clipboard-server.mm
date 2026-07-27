@@ -3,10 +3,10 @@
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
+#include <qlogging.h>
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QMimeData>
-#include <qlogging.h>
 
 #include "services/clipboard/clipboard-mime.hpp"
 

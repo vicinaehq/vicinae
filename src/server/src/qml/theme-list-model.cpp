@@ -22,12 +22,12 @@ QString ThemeSection::itemSubtitle(int i) const {
   return desc.isEmpty() ? tr("Default theme description") : desc;
 }
 
-QString ThemeSection::itemIconSource(int i) const {
+std::optional<ImageURL> ThemeSection::itemIcon(int i) const {
   const auto &theme = m_themes[i];
   if (theme->icon()) {
-    return imageSourceFor(ImageURL::local(*theme->icon()).withFallback(ImageURL::builtin("vicinae")));
+    return ImageURL::local(*theme->icon()).withFallback(ImageURL::builtin(BuiltinIcon::Vicinae));
   }
-  return imageSourceFor(ImageURL::builtin("vicinae"));
+  return ImageURL::builtin(BuiltinIcon::Vicinae);
 }
 
 QVariant ThemeSection::customData(int i, int role) const {

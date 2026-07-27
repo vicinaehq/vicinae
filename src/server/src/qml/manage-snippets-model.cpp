@@ -11,10 +11,11 @@ QString ManageSnippetsSection::displayTitle(const snippet::SerializedSnippet &it
   return QString::fromStdString(item.name);
 }
 
-QString ManageSnippetsSection::displayIconSource(const snippet::SerializedSnippet &item) const {
-  const auto visitor =
-      overloads{[this](const snippet::TextSnippet &) { return imageSourceFor(BuiltinIcon::TextInput); },
-                [this](const auto &) { return imageSourceFor(BuiltinIcon::BlankDocument); }};
+std::optional<ImageURL> ManageSnippetsSection::displayIcon(const snippet::SerializedSnippet &item) const {
+  const auto visitor = overloads{
+      [](const snippet::TextSnippet &) { return ImageURL(BuiltinIcon::TextInput); },
+      [](const auto &) { return ImageURL(BuiltinIcon::BlankDocument); },
+  };
   return std::visit(visitor, item.data);
 }
 
