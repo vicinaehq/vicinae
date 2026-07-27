@@ -151,14 +151,14 @@ tsfmt:
 .PHONY: tsfmt
 
 clang-format:
-	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(NPROC) clang-format -i
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.mm' \) -print0 | xargs -0 -n 10 -P $(NPROC) clang-format -i
 .PHONY: clang-format
 
 format: qmlformat tsfmt clang-format
 .PHONY: format
 
 check-format:
-	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(NPROC) $(CLANG_FORMAT) --dry-run -Werror
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.mm' \) -print0 | xargs -0 -n 10 -P $(NPROC) $(CLANG_FORMAT) --dry-run -Werror
 .PHONY: check-format
 
 bump-patch:
