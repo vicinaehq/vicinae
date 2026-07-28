@@ -205,7 +205,7 @@ function sendCurrentTabs() {
 			url: tab.url,
 			windowId: tab.windowId,
 			active: tab.active,
-			audible: tab.audible,
+			audible: tab.audible ?? false,
 			muted: tab.mutedInfo?.muted ?? false,
 			lastAccessed: tab.lastAccessed ?? 0
 		})));

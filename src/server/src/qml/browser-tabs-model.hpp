@@ -14,7 +14,13 @@ template <> struct fuzzy::FuzzySearchable<BrowserTab> {
 class BrowserTabsSection : public FuzzySection<BrowserTab> {
   Q_DECLARE_TR_FUNCTIONS(BrowserTabsSection)
 public:
-  QString sectionName() const override { return tr("Tabs ({count})"); }
+  enum class Kind { PlayingMedia, Tabs };
+
+  explicit BrowserTabsSection(Kind kind) : m_kind(kind) {}
+
+  QString sectionName() const override {
+    return m_kind == Kind::PlayingMedia ? tr("Playing Media ({count})") : tr("Tabs ({count})");
+  }
 
 protected:
   QString displayTitle(const BrowserTab &tab) const override;
@@ -22,4 +28,7 @@ protected:
   std::optional<ImageURL> displayIcon(const BrowserTab &tab) const override;
   QVariantList displayAccessories(const BrowserTab &tab) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const BrowserTab &tab) const override;
+
+private:
+  Kind m_kind;
 };
