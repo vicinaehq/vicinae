@@ -206,7 +206,8 @@ function sendCurrentTabs() {
 			windowId: tab.windowId,
 			active: tab.active,
 			audible: tab.audible,
-			muted: tab.mutedInfo?.muted ?? false
+			muted: tab.mutedInfo?.muted ?? false,
+			lastAccessed: tab.lastAccessed ?? 0
 		})));
 	});
 }

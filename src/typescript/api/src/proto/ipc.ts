@@ -160,6 +160,7 @@ export type BrowserTabInfo = {
 	active: boolean;
 	muted: boolean;
 	audible: boolean;
+	lastAccessed: number;
 }
 
 export type FocusTabRequest = {
