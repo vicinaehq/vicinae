@@ -40,6 +40,7 @@ public:
     IsProviderRole,
     IndentRole,
     EnabledRole,
+    FavoriteRole,
     AliasRole,
     EntrypointIdRole,
     ExpandedRole,
@@ -72,6 +73,7 @@ public:
   Q_INVOKABLE void setFilter(const QString &text);
   Q_INVOKABLE void select(int row);
   Q_INVOKABLE void setEnabled(int row, bool value);
+  Q_INVOKABLE void setFavorite(int row, bool value);
   Q_INVOKABLE void setAlias(int row, const QString &alias);
   Q_INVOKABLE void toggleExpanded(int row);
   Q_INVOKABLE void moveUp();
@@ -79,6 +81,7 @@ public:
   Q_INVOKABLE void activate();
   Q_INVOKABLE void selectProviderById(const QString &providerId);
   Q_INVOKABLE void setEnabledByEntrypointId(const QString &id, bool value);
+  Q_INVOKABLE void setFavoriteByEntrypointId(const QString &id, bool value);
   Q_INVOKABLE void setAliasByEntrypointId(const QString &id, const QString &alias);
   Q_INVOKABLE void setShortcutByEntrypointId(const QString &id, const QString &shortcut);
   Q_INVOKABLE void clearShortcutByEntrypointId(const QString &id);
@@ -92,6 +95,7 @@ private:
     QString description;
     bool isProvider;
     bool enabled;
+    bool favorite;
     QString alias;
     QString shortcut;
     EntrypointId entrypointId;
