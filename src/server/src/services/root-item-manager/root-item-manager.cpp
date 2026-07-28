@@ -532,6 +532,11 @@ bool RootItemManager::disableItem(const EntrypointId &id) { return setItemEnable
 
 bool RootItemManager::enableItem(const EntrypointId &id) { return setItemEnabled(id, true); }
 
+bool RootItemManager::setProviderFavorite(const QString &providerId, bool value) {
+  m_cfg.mergeProviderWithUser(providerId.toStdString(), {.favorite = value});
+  return true;
+}
+
 std::vector<RootProvider *> RootItemManager::providers() const {
   std::vector<RootProvider *> providers;
 
