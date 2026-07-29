@@ -14,9 +14,8 @@ public:
   void setSaveDirectoryMode(QString value) { m_saveDirectoryMode = std::move(value); }
   void setSaveCustomDirectory(QString value) { m_saveCustomDirectory = std::move(value); }
   void setSaveFileNameMode(QString value) { m_saveFileNameMode = std::move(value); }
-  void resetSelectionOnNextUpdate() { setSelectFirstOnReset(true); }
-  void setFilter(const QString &text) override {}
-  QString searchPlaceholder() const override { return QStringLiteral("Browse clipboard history..."); }
+  void setFilter(std::string_view) override {}
+  void setFilter(const QString &text) { setFilter(text.toUtf8().toStdString()); }
 
   QString sectionName() const override { return {}; }
   int count() const override { return static_cast<int>(m_entries.size()); }
