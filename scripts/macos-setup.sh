@@ -18,7 +18,8 @@ brew install \
   libqalculate \
   dylibbundler \
   ccache	\
-  extra-cmake-modules
+  extra-cmake-modules \
+  catch2
 
 if [[ ! -d "$QT_DIR" ]]; then
   echo "==> installing official Qt $QT_VERSION to ~/Qt"
