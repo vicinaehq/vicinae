@@ -1,7 +1,7 @@
 #pragma once
 #include "gnome-listener.hpp"
 #include "gnome-window.hpp"
-#include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/abstract-wayland-window-manager.hpp"
 #include <QDBusInterface>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -12,7 +12,7 @@
  * Window manager implementation for GNOME Shell.
  * Communicates with the Vicinae GNOME extension via D-Bus to manage windows.
  */
-class GnomeWindowManager : public AbstractWindowManager {
+class GnomeWindowManager : public AbstractWaylandWindowManager {
   Q_OBJECT
 
 signals:
@@ -65,7 +65,7 @@ public:
   WindowList listWindowsSync() const override;
   std::shared_ptr<AbstractWindow> getFocusedWindowSync() const override;
   bool supportsFocusTracking() const override { return true; }
-  bool focusNullsOnLayerGrab() const override { return true; }
+  bool supportsFocusHandoffDetection() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
 

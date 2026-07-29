@@ -21,6 +21,8 @@
 #include "extend/image-model.hpp"
 #include "extend/list-model.hpp"
 #include "extend/metadata-model.hpp"
+#include "extend/model-parser.hpp"
+#include "extend/model.hpp"
 #include "extend/pagination-model.hpp"
 #include "extend/root-detail-model.hpp"
 #include "extend/tag-model.hpp"
@@ -295,6 +297,12 @@ template <> struct glz::meta<ListItemChild> {
   static constexpr auto ids = std::array{"action-panel", "list-item-detail"};
 };
 
+struct ClipboardContentWire {
+  std::optional<std::string> text;
+  std::optional<std::string> html;
+  std::vector<std::string> urls;
+};
+
 struct ListItemViewModelWire {
   std::string id;
   FlexString title;
@@ -302,6 +310,7 @@ struct ListItemViewModelWire {
   std::optional<ImageWrappedWire> icon;
   std::vector<AccessoryWire> accessories;
   std::vector<std::string> keywords;
+  std::optional<ClipboardContentWire> dragContent;
   std::vector<ListItemChild> children;
 };
 
@@ -320,9 +329,22 @@ template <> struct glz::meta<ListWireChild> {
       std::array{"list-item", "list-section", "action-panel", "empty-view", "dropdown"};
 };
 
+// Raycast types `filtering` as `boolean | { keepSectionOrder: boolean }`. The
+// object form enables filtering; keepSectionOrder is not honored yet.
+struct FilteringOptionsWire {
+  bool keepSectionOrder = false;
+};
+
+static bool resolveFiltering(const std::optional<std::variant<bool, FilteringOptionsWire>> &filtering,
+                             bool fallback) {
+  if (!filtering) return fallback;
+  if (auto *enabled = std::get_if<bool>(&*filtering)) return *enabled;
+  return true;
+}
+
 struct ListModelWire {
   bool isLoading = false;
-  std::optional<bool> filtering;
+  std::optional<std::variant<bool, FilteringOptionsWire>> filtering;
   bool throttle = false;
   bool isShowingDetail = false;
   std::string navigationTitle;
@@ -330,7 +352,8 @@ struct ListModelWire {
   std::optional<std::string> onSelectionChange;
   std::optional<std::string> onSearchTextChange;
   std::optional<EventCounted<std::string>> searchText;
-  std::optional<PaginationModel> pagination;
+  bool paginationHasMore = false;
+  std::optional<EventHandler> paginationOnLoadMore;
   std::vector<ListWireChild> children;
 };
 
@@ -341,6 +364,7 @@ struct GridItemViewModelWire {
   GridContentWire content;
   std::optional<std::string> tooltip;
   std::vector<std::string> keywords;
+  std::optional<ClipboardContentWire> dragContent;
   std::vector<SingleAPChild> children;
 };
 
@@ -365,7 +389,7 @@ template <> struct glz::meta<GridWireChild> {
 
 struct GridModelWire {
   bool isLoading = false;
-  std::optional<bool> filtering;
+  std::optional<std::variant<bool, FilteringOptionsWire>> filtering;
   bool throttle = false;
   double aspectRatio = 1.0;
   std::optional<int> columns;
@@ -377,7 +401,8 @@ struct GridModelWire {
   std::optional<std::string> onSearchTextChange;
   std::optional<std::string> selectedItemId;
   std::optional<EventCounted<std::string>> searchText;
-  std::optional<PaginationModel> pagination;
+  bool paginationHasMore = false;
+  std::optional<EventHandler> paginationOnLoadMore;
   std::vector<GridWireChild> children;
 };
 
@@ -752,6 +777,24 @@ static EmptyViewModel toEmptyViewModel(EmptyViewModelWire w) {
   return m;
 }
 
+static std::optional<Clipboard::Content> toClipboardContent(std::optional<ClipboardContentWire> wire) {
+  if (!wire) return std::nullopt;
+  if (wire->html) {
+    return Clipboard::Html{QString::fromStdString(std::move(*wire->html)),
+                           wire->text ? std::optional(QString::fromStdString(std::move(*wire->text)))
+                                      : std::nullopt};
+  }
+  if (!wire->urls.empty()) {
+    std::vector<QUrl> urls;
+    urls.reserve(wire->urls.size());
+    for (auto &url : wire->urls)
+      urls.emplace_back(QString::fromStdString(std::move(url)));
+    return Clipboard::Urls{std::move(urls)};
+  }
+  if (wire->text) return Clipboard::Text{QString::fromStdString(std::move(*wire->text))};
+  return std::nullopt;
+}
+
 static ListItemViewModel toListItemViewModel(ListItemViewModelWire w) {
   ListItemViewModel m;
   m.changed = true;
@@ -763,6 +806,7 @@ static ListItemViewModel toListItemViewModel(ListItemViewModelWire w) {
   for (auto &a : w.accessories)
     m.accessories.emplace_back(toAccessoryModel(std::move(a)));
   m.keywords = std::move(w.keywords);
+  m.dragContent = toClipboardContent(std::move(w.dragContent));
   for (auto &child : w.children) {
     match(
         child, [&](ActionPannelModelWire &c) { m.actionPannel = toActionPannelModel(std::move(c)); },
@@ -788,7 +832,7 @@ static ListModel toListModel(ListModelWire &w) {
   ListModel m;
   m.dirty = true;
   m.isLoading = w.isLoading;
-  m.filtering = w.filtering.value_or(!w.onSearchTextChange.has_value());
+  m.filtering = resolveFiltering(w.filtering, !w.onSearchTextChange.has_value());
   m.throttle = w.throttle;
   m.isShowingDetail = w.isShowingDetail;
   m.navigationTitle = std::move(w.navigationTitle);
@@ -796,7 +840,10 @@ static ListModel toListModel(ListModelWire &w) {
   m.onSelectionChanged = std::move(w.onSelectionChange);
   m.onSearchTextChange = std::move(w.onSearchTextChange);
   m.searchText = std::move(w.searchText);
-  m.pagination = std::move(w.pagination);
+
+  if (auto handler = w.paginationOnLoadMore) {
+    m.pagination = PaginationModel{.onLoadMore = handler.value(), .hasMore = w.paginationHasMore};
+  }
 
   m.items.reserve(w.children.size());
   size_t index = 0;
@@ -826,6 +873,7 @@ static GridItemViewModel toGridItemViewModel(GridItemViewModelWire w) {
   m.tooltip = std::move(w.tooltip);
   m.content = toGridContent(std::move(w.content), m.tooltip);
   m.keywords = std::move(w.keywords);
+  m.dragContent = toClipboardContent(std::move(w.dragContent));
   for (auto &child : w.children) {
     if (auto *ap = std::get_if<ActionPannelModelWire>(&child))
       m.actionPannel = toActionPannelModel(std::move(*ap));
@@ -854,7 +902,7 @@ static GridModel toGridModel(GridModelWire &w) {
   GridModel m;
   m.dirty = true;
   m.isLoading = w.isLoading;
-  m.filtering = w.filtering.value_or(!w.onSearchTextChange.has_value());
+  m.filtering = resolveFiltering(w.filtering, !w.onSearchTextChange.has_value());
   m.throttle = w.throttle;
   m.aspectRatio = w.aspectRatio;
   m.columns = w.columns;
@@ -866,7 +914,10 @@ static GridModel toGridModel(GridModelWire &w) {
   m.onSearchTextChange = std::move(w.onSearchTextChange);
   m.selectedItemId = std::move(w.selectedItemId);
   m.searchText = std::move(w.searchText);
-  m.pagination = std::move(w.pagination);
+
+  if (auto handler = w.paginationOnLoadMore) {
+    m.pagination = PaginationModel{.onLoadMore = handler.value(), .hasMore = w.paginationHasMore};
+  }
 
   m.items.reserve(w.children.size());
   size_t index = 0;

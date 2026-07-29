@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <cctype>
+#include <QCoreApplication>
 #include <QDebug>
 #include <cstdint>
 #include <format>
@@ -19,18 +20,21 @@ struct TextSnippet {
 };
 
 struct Expansion {
+  Q_DECLARE_TR_FUNCTIONS(Expansion)
+
+public:
   std::string keyword;
   std::vector<std::string> apps;
   bool word = true;
 
   static std::optional<std::string> validateKeyword(const std::string &keyword) {
-    if (keyword.empty()) return "Keyword cannot be empty";
-    if (keyword.size() > 32) return std::format("Keyword exceeds maximum length of {}", 32);
+    if (keyword.empty()) return tr("Keyword cannot be empty").toStdString();
+    if (keyword.size() > 32) return tr("Keyword exceeds maximum length of %1").arg(32).toStdString();
     if (!std::ranges::all_of(keyword, [](char c) {
           auto uc = static_cast<unsigned char>(c);
           return uc <= 127 && std::isprint(uc) && !std::isspace(uc);
         }))
-      return "Keyword must only contain printable ASCII characters (no spaces)";
+      return tr("Keyword must only contain printable ASCII characters (no spaces)").toStdString();
     return std::nullopt;
   }
 };
@@ -59,6 +63,8 @@ struct SerializedSnippet {
 
 // basic snippet CRUD
 class SnippetDatabase {
+  Q_DECLARE_TR_FUNCTIONS(SnippetDatabase)
+
 public:
   static constexpr size_t MAX_SNIPPETS = 10000;
   static constexpr size_t MAX_KEYWORD_LENGTH = 32;

@@ -2,10 +2,12 @@
 #include "fuzzy-section.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
+#include <QCoreApplication>
 
 struct WindowEntry {
   AbstractWindowManager::WindowPtr window;
   std::shared_ptr<AbstractApplication> app;
+  QString workspaceName;
 };
 
 template <> struct fuzzy::FuzzySearchable<WindowEntry> {
@@ -21,13 +23,14 @@ template <> struct fuzzy::FuzzySearchable<WindowEntry> {
 };
 
 class SwitchWindowsSection : public FuzzySection<WindowEntry> {
+  Q_DECLARE_TR_FUNCTIONS(SwitchWindowsSection)
 public:
-  QString sectionName() const override { return QStringLiteral("Open Windows"); }
+  QString sectionName() const override { return tr("Open Windows"); }
 
 protected:
   QString displayTitle(const WindowEntry &e) const override;
   QString displaySubtitle(const WindowEntry &e) const override;
-  QString displayIconSource(const WindowEntry &e) const override;
+  std::optional<ImageURL> displayIcon(const WindowEntry &e) const override;
   QVariantList displayAccessories(const WindowEntry &e) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const WindowEntry &e) const override;
 };

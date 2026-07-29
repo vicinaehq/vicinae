@@ -1,0 +1,26 @@
+IDI_ICON1 ICON "@VICINAE_WIN_ICO@"
+
+1 VERSIONINFO
+FILEVERSION @VICINAE_RC_MAJOR@,@VICINAE_RC_MINOR@,@VICINAE_RC_PATCH@,0
+PRODUCTVERSION @VICINAE_RC_MAJOR@,@VICINAE_RC_MINOR@,@VICINAE_RC_PATCH@,0
+FILEOS 0x40004L
+FILETYPE 0x1L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "Vicinae"
+            VALUE "FileDescription", "Vicinae"
+            VALUE "FileVersion", "@VICINAE_GIT_TAG@"
+            VALUE "InternalName", "vicinae-server"
+            VALUE "OriginalFilename", "vicinae-server.exe"
+            VALUE "ProductName", "Vicinae"
+            VALUE "ProductVersion", "@VICINAE_GIT_TAG@"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

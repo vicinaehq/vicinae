@@ -10,7 +10,8 @@ RowLayout {
     property string shortcut: ""
     // Whether to draw an outline around the trigger (off for dense list rows).
     property bool bordered: true
-    property string placeholder: "Record shortcut"
+    property bool clearable: true
+    property string placeholder: qsTr("Record shortcut")
     // Owner id of this shortcut, excluded from conflict checks (so re-recording it isn't self-conflict).
     property string shortcutId: ""
 
@@ -18,6 +19,16 @@ RowLayout {
     signal cleared
 
     readonly property var _tokens: Keyboard.tokensForString(shortcut)
+
+    // The recorder is a window-backed Popup; create it lazily so dense lists
+    // (e.g. hundreds of command rows) don't each build one upfront.
+    property var _recorder: null
+    function _showRecorder() {
+        if (!_recorder)
+            _recorder = recorderComponent.createObject(trigger);
+        if (_recorder)
+            _recorder.show(trigger);
+    }
 
     spacing: 4
 
@@ -27,8 +38,9 @@ RowLayout {
         implicitWidth: Math.max(content.implicitWidth + 16, 80)
         radius: 4
         color: "transparent"
-        border.width: field.bordered && (hover.hovered || field._tokens.length > 0) ? 1 : 0
-        border.color: Config.withAlpha(hover.hovered ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
+        // Borderless fields (dense list rows) still reveal a border on hover.
+        border.width: hover.hovered || (field.bordered && field._tokens.length > 0) ? 1 : 0
+        border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
 
         HoverHandler {
             id: hover
@@ -36,7 +48,7 @@ RowLayout {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: recorder.show(trigger)
+            onClicked: field._showRecorder()
         }
 
         Item {
@@ -64,7 +76,7 @@ RowLayout {
     }
 
     Text {
-        visible: field._tokens.length > 0
+        visible: field._tokens.length > 0 && field.clearable
         text: "×"
         color: clearArea.containsMouse ? Theme.danger : Theme.textMuted
         font.pixelSize: 16
@@ -78,14 +90,16 @@ RowLayout {
         }
     }
 
-    ShortcutRecorderField {
-        id: recorder
-        shortcutDisplayProvider: (key, mods) => Keyboard.tokens(key, mods)
-        validateShortcut: (key, mods) => GlobalShortcuts.validate(key, mods, field.shortcutId)
-        onShortcutCaptured: (key, modifiers) => {
-            const serialized = Keyboard.serialize(key, modifiers);
-            if (serialized !== "")
-                field.accepted(serialized);
+    Component {
+        id: recorderComponent
+        ShortcutRecorderField {
+            shortcutDisplayProvider: (key, mods) => Keyboard.tokens(key, mods)
+            validateShortcut: (key, mods) => GlobalShortcuts.validate(key, mods, field.shortcutId)
+            onShortcutCaptured: (key, modifiers) => {
+                const serialized = Keyboard.serialize(key, modifiers);
+                if (serialized !== "")
+                    field.accepted(serialized);
+            }
         }
     }
 }

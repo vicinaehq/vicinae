@@ -10,13 +10,16 @@ signals:
   void focusChanged() const;
 
 public:
+  bool isCapable() const;
+
   AbstractWindowManager *provider() const;
   AbstractWindowManager::WindowList listWindowsSync();
   AbstractWindowManager::WindowPtr getFocusedWindow();
 
   AbstractWindowManager::WindowList findAppWindows(const AbstractApplication &app) const;
-  AbstractWindowManager::WindowList listWindows() const;
+  const AbstractWindowManager::WindowList &listWindows() const;
   const AbstractWindowManager::AbstractWindow *findWindowById(const QString &id);
+  AbstractWindowManager::WorkspacePtr findWorkspaceById(const QString &id);
 
   WindowManager();
 
@@ -27,6 +30,9 @@ private:
 
   // we maintain our own window cache so that wm implementations are not required to cache themselves.
   AbstractWindowManager::WindowList m_windows;
+
+  // fetched on first lookup, invalidated on windowsChanged; some backends list workspaces over IPC
+  std::optional<AbstractWindowManager::WorkspaceList> m_workspaces;
 
   std::unique_ptr<AbstractWindowManager> m_provider;
 };

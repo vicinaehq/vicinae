@@ -8,7 +8,7 @@ public:
   QString id() const override;
   QString name() const override;
   bool hasFullScreen() const override;
-  QString monitor() const override;
+  std::optional<QString> monitor() const override;
 
   Workspace(const QJsonObject &json);
 

@@ -1,5 +1,7 @@
 #pragma once
 #include "bridge-view.hpp"
+#include "ui/action-pannel/action.hpp"
+#include <qtimer.h>
 
 class RootSearchModel;
 
@@ -10,7 +12,7 @@ class RootViewHost : public ViewHostBase {
 public:
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
-  QString initialSearchPlaceholderText() const override { return QStringLiteral("Search for anything..."); }
+  QString initialSearchPlaceholderText() const override { return tr("Search for anything..."); }
   bool showBackButton() const override { return false; }
 
   void initialize() override;
@@ -19,8 +21,16 @@ public:
   void beforePop() override;
 
   QObject *listModel() const;
-  Q_INVOKABLE bool tryAliasFastTrack();
+
+protected:
+  bool inputFilter(QKeyEvent *) override;
+  void beforeActionExecuted(const AbstractAction *action) override;
+  bool tryAliasFastTrack();
+  void scheduleNextClockTick();
 
 private:
+  bool m_textChangedByHistory = false;
+  std::optional<int> m_historyOffset;
+  QTimer *m_clockTimer = new QTimer(this);
   RootSearchModel *m_model = nullptr;
 };

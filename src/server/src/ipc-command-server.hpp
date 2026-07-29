@@ -28,9 +28,14 @@ public:
   ipc_gen::Result<ipc_gen::DeeplinkResponse>::Future deeplink(ipc_gen::DeeplinkRequest req) override;
   ipc_gen::Result<ipc_gen::DescribeResponse>::Future describe() override;
   ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future launchApp(ipc_gen::LaunchAppRequest req) override;
+  ipc_gen::Result<ipc_gen::ListCommandsResponse>::Future listCommands() override;
+  ipc_gen::Result<ipc_gen::LaunchCommandResponse>::Future
+  launchCommand(ipc_gen::LaunchCommandRequest req) override;
   ipc_gen::Result<ipc_gen::DMenuResponse>::Future dmenu(ipc_gen::DMenuRequest req) override;
   ipc_gen::Result<void>::Future browserInit(ipc_gen::BrowserInitRequest req) override;
   ipc_gen::Result<void>::Future browserTabsChanged(std::vector<ipc_gen::BrowserTabInfo> tabs) override;
+  ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future fsQuery(std::string q,
+                                                                    ipc_gen::FsQueryParams params) override;
 
   void setCallerInfo(ClientInfo *info) { m_caller = info; }
 
@@ -42,7 +47,7 @@ private:
 class IpcCommandServer : public QObject {
 public:
   IpcCommandServer(ApplicationContext *ctx, QObject *parent = nullptr);
-  bool start(const std::filesystem::path &localPath);
+  bool start(const std::string &name);
 
 private:
   void processFrame(QLocalSocket *conn, QByteArrayView frame);

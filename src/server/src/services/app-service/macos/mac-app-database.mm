@@ -1,12 +1,13 @@
 #include "mac-app-database.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
+#include <qlogging.h>
 #include <QDebug>
 #include <QUrl>
-#include <qlogging.h>
 
 #include <fstream>
 
@@ -38,8 +39,8 @@ ClassifiedTarget classifyTarget(const QString &target) {
 
   if (target.contains(QStringLiteral("://"))) return {TargetKind::Url, target};
 
-  bool const looksLikePath = target.startsWith('/') || target.startsWith('~') ||
-                             target.startsWith("./") || target.startsWith("../");
+  bool const looksLikePath =
+      target.startsWith('/') || target.startsWith('~') || target.startsWith("./") || target.startsWith("../");
 
   if (looksLikePath) {
     @autoreleasepool {
@@ -129,9 +130,7 @@ std::vector<fs::path> MacAppDatabase::defaultSearchPaths() const {
   paths.emplace_back("/Applications");
   paths.emplace_back("/System/Applications");
   paths.emplace_back("/System/Library/CoreServices/Applications");
-  if (const char *home = std::getenv("HOME")) {
-    paths.emplace_back(fs::path(home) / "Applications");
-  }
+  if (const char *home = std::getenv("HOME")) { paths.emplace_back(fs::path(home) / "Applications"); }
   return paths;
 }
 
@@ -175,7 +174,7 @@ bool MacAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
         QUrl const q(arg);
         NSURL *u = nil;
         if (!q.scheme().isEmpty() && q.scheme() != QStringLiteral("file")) {
-          u = [NSURL URLWithString:toNSString(arg)];
+          u = [NSURL URLWithString:toNSString(QString::fromUtf8(q.toEncoded()))];
         } else {
           QString const p = q.isLocalFile() ? q.toLocalFile() : arg;
           u = [NSURL fileURLWithPath:toNSString(p)];
@@ -394,3 +393,10 @@ bool MacAppDatabase::showInFileBrowser(const fs::path &path, bool select) const 
   return true;
 }
 
+bool MacAppDatabase::openLocation(const AbstractApplication &app) const {
+  return showInFileBrowser(app.path(), true);
+}
+
+AbstractAppDatabase::AppPtr MacAppDatabase::locationOpener(const AbstractApplication &app) const {
+  return fileBrowser();
+}

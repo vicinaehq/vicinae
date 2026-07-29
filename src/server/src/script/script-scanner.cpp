@@ -1,8 +1,23 @@
-#include <qmimedatabase.h>
+#include <array>
+#include <fstream>
 #include <stack>
 #include "script-scanner.hpp"
 #include "script-command-file.hpp"
 #include "utils.hpp"
+
+static bool isProbablyTextFile(const std::filesystem::path &path) {
+  std::ifstream ifs(path, std::ios::binary);
+
+  if (!ifs) return false;
+
+  std::array<char, 8192> buf;
+
+  ifs.read(buf.data(), buf.size());
+
+  const std::string_view head(buf.data(), static_cast<size_t>(ifs.gcount()));
+
+  return !head.contains('\0');
+}
 
 std::vector<std::shared_ptr<ScriptCommandFile>>
 ScriptScanner::scan(std::span<const std::filesystem::path> dirs) {
@@ -11,7 +26,6 @@ ScriptScanner::scan(std::span<const std::filesystem::path> dirs) {
   std::error_code ec;
   std::stack<ScannedDirectory> dirStack;
   std::unordered_set<std::string> idsSeen;
-  QMimeDatabase const mimeDb;
 
   static const auto forbiddenExtensions = {".md", ".svg", ".txt"};
 
@@ -45,10 +59,7 @@ ScriptScanner::scan(std::span<const std::filesystem::path> dirs) {
 
       if (std::ranges::contains(forbiddenExtensions, ext)) { continue; }
 
-      QMimeType const mime = mimeDb.mimeTypeForFile(ent.path().c_str());
-      bool const plainText = mime.inherits("text/plain");
-
-      if (!plainText) continue;
+      if (!isProbablyTextFile(ent.path())) continue;
 
       auto script = ScriptCommandFile::fromFile(ent.path(), id);
 

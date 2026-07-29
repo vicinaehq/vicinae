@@ -13,6 +13,7 @@ FocusScope {
     property bool canChooseFiles: true
     property bool readOnly: false
     property bool hasError: false
+    property bool filled: false
     property var selectedPaths: []
 
     signal pathsChanged(var paths)
@@ -80,7 +81,7 @@ FocusScope {
 
     FileDialog {
         id: _fallbackFileDialog
-        title: root.multiple ? "Select files" : "Select a file"
+        title: root.multiple ? qsTr("Select files") : qsTr("Select a file")
         onAccepted: {
             root._handleFallbackResult(selectedFiles);
             FileChooser.notifyFallbackDone();
@@ -90,7 +91,7 @@ FocusScope {
 
     FolderDialog {
         id: _fallbackFolderDialog
-        title: "Select a directory"
+        title: qsTr("Select a directory")
         onAccepted: {
             root._handleFallbackResult([selectedFolder]);
             FileChooser.notifyFallbackDone();
@@ -111,12 +112,19 @@ FocusScope {
             return root.selectedPaths[0] || "";
         }
 
+        FormInputBackground {
+            anchors.fill: parent
+            radius: 8
+            filled: root.filled
+            opacity: root.readOnly ? 0.5 : 1.0
+        }
+
         Rectangle {
             anchors.fill: parent
             radius: 8
             opacity: root.readOnly ? 0.5 : 1.0
             color: "transparent"
-            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
+            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.surfaceOpacity)
             border.width: 1
 
             RowLayout {
@@ -129,7 +137,7 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     verticalAlignment: Text.AlignVCenter
-                    text: singleMode._displayText || (root._directoriesOnly ? "No directory selected" : "No file selected")
+                    text: singleMode._displayText || (root._directoriesOnly ? qsTr("No directory selected") : qsTr("No file selected"))
                     color: singleMode._displayText ? Theme.foreground : Theme.textPlaceholder
                     font.pointSize: Theme.regularFontSize
                     elide: Text.ElideMiddle
@@ -170,16 +178,26 @@ FocusScope {
         Repeater {
             model: root.multiple ? root.selectedPaths : []
 
-            Rectangle {
+            Item {
                 required property int index
                 required property var modelData
 
                 Layout.fillWidth: true
                 implicitHeight: 32
-                radius: 6
-                color: "transparent"
-                border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
-                border.width: 1
+
+                FormInputBackground {
+                    anchors.fill: parent
+                    radius: 6
+                    filled: root.filled
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 6
+                    color: "transparent"
+                    border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
+                    border.width: 1
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -220,19 +238,29 @@ FocusScope {
             }
         }
 
-        ViciButton {
+        Item {
             visible: !root.readOnly
             Layout.fillWidth: true
             implicitHeight: 32
-            radius: 6
-            text: root._directoriesOnly ? "+ Add folder…" : "+ Add file…"
-            foreground: Theme.textMuted
-            variant: "ghost"
-            bordered: true
-            activeFocusOnTab: !root.readOnly
-            onClicked: {
-                forceActiveFocus();
-                root._openDialog();
+
+            FormInputBackground {
+                anchors.fill: parent
+                radius: 6
+                filled: root.filled
+            }
+
+            ViciButton {
+                anchors.fill: parent
+                radius: 6
+                text: root._directoriesOnly ? qsTr("+ Add folder…") : qsTr("+ Add file…")
+                foreground: Theme.textMuted
+                variant: "ghost"
+                bordered: true
+                activeFocusOnTab: !root.readOnly
+                onClicked: {
+                    forceActiveFocus();
+                    root._openDialog();
+                }
             }
         }
     }

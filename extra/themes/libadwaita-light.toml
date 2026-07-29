@@ -26,14 +26,14 @@ accent_foreground = "colors.accents.blue"
 background = "#fafafb"
 foreground = "#333338"
 secondary_background = "#ebebed"
-border = "#dddde0"
+border = "#848485"
 
 [colors.main_window]
 border = "colors.core.border"
 footer = { background = "colors.core.secondary_background" }
 
 [colors.settings_window]
-border = "#dddde0"
+border = "#848485"
 
 [colors.shortcut]
 border = "colors.core.border"
@@ -51,7 +51,7 @@ default = "#0461be"
 visited = "#8939a4"
 
 [colors.input]
-border = "#dddde0"
+border = "#848485"
 border_focus = "colors.core.accent"
 border_error = "#c30000"
 
@@ -66,13 +66,13 @@ foreground = "#333338"
 secondary_foreground = "#5e5c64"
 
 [colors.list.item.selection]
-background = "#DFDFE1"
+background = "#bbbbc0"
 foreground = "#333338"
 secondary_background = "colors.core.accent"
 secondary_foreground = "#5e5c64"
 
 [colors.grid.item]
-background = "#ebebed"
+background = "#dfdfe3"
 hover = { outline = "colors.core.accent" }
 selection = { outline = "colors.core.accent" }
 

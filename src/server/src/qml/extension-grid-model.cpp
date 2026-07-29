@@ -3,6 +3,7 @@
 #include <utility>
 #include "common/types.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "services/clipboard/clipboard-mime.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
@@ -25,10 +26,15 @@ template <> struct fuzzy::FuzzySearchable<GridItemViewModel> {
 
 ExtensionGridSection::ExtensionGridSection(std::string name, std::vector<GridItemViewModel> items,
                                            std::optional<int> columns, std::optional<double> aspectRatio,
-                                           bool filtering, NotifyFn notify,
+                                           std::optional<GridInset> inset, bool filtering, NotifyFn notify,
                                            const std::optional<ActionPannelModel> *globalActions)
     : m_name(std::move(name)), m_items(std::move(items)), m_columns(columns), m_aspectRatio(aspectRatio),
-      m_filtering(filtering), m_notify(std::move(notify)), m_globalActions(globalActions) {}
+      m_inset(inset), m_filtering(filtering), m_notify(std::move(notify)), m_globalActions(globalActions) {}
+
+std::optional<double> ExtensionGridSection::inset() const {
+  if (m_inset) return insetRatio(*m_inset);
+  return std::nullopt;
+}
 
 int ExtensionGridSection::count() const {
   if (m_filtering && !m_query.empty()) return static_cast<int>(m_filtered.size());
@@ -52,6 +58,23 @@ const GridItemViewModel *ExtensionGridSection::itemAt(int i) const {
   }
   if (i < 0 || std::cmp_greater_equal(i, m_items.size())) return nullptr;
   return &m_items[i];
+}
+
+std::optional<ImageURL> ExtensionGridSection::itemIcon(int i) const {
+  if (auto *item = itemAt(i)) {
+    if (auto *image = std::get_if<ImageLikeModel>(&item->content)) return ImageURL(*image);
+  }
+  return std::nullopt;
+}
+
+bool ExtensionGridSection::isDraggable(int i) const {
+  auto *item = itemAt(i);
+  return item && item->dragContent.has_value();
+}
+
+std::unique_ptr<QMimeData> ExtensionGridSection::dragMimeData(int i) const {
+  auto *item = itemAt(i);
+  return item && item->dragContent ? Clipboard::mimeDataForContent(*item->dragContent) : nullptr;
 }
 
 std::unique_ptr<ActionPanelState> ExtensionGridSection::actionPanel(int i) const {
@@ -82,29 +105,9 @@ void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSele
     emit fitChanged();
   }
 
-  double newInset;
-  switch (model.inset) {
-  case GridInset::None:
-    newInset = 0.05;
-    break;
-  case GridInset::Small:
-    newInset = 0.10;
-    break;
-  case GridInset::Medium:
-    newInset = 0.15;
-    break;
-  case GridInset::Large:
-    newInset = 0.25;
-    break;
-  default:
-    newInset = 0.10;
-    break;
-  }
+  double newInset = insetRatio(model.inset);
   if (m_fit == ObjectFit::Fill) newInset = 0.0;
-  if (!qFuzzyCompare(m_inset, newInset)) {
-    m_inset = newInset;
-    emit insetChanged();
-  }
+  setInset(newInset);
 
   rebuildFromSections(resetSelection);
 
@@ -114,6 +117,7 @@ void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSele
 void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
   int const prevSection = selectedSection();
   int const prevItem = selectedItem();
+  int const prevRow = flatRowForSelection();
 
   clearSources();
   m_ownedSections.clear();
@@ -123,9 +127,9 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
 
   auto flushFree = [&]() {
     if (freeBuf.empty()) return;
-    auto section =
-        std::make_unique<ExtensionGridSection>(std::move(freeItems), std::move(freeBuf), std::nullopt,
-                                               std::nullopt, m_model.filtering, m_notify, &m_model.actions);
+    auto section = std::make_unique<ExtensionGridSection>(std::move(freeItems), std::move(freeBuf),
+                                                          std::nullopt, std::nullopt, std::nullopt,
+                                                          m_model.filtering, m_notify, &m_model.actions);
     section->setOnItemSelected([this](const GridItemViewModel *item) {
       if (auto handler = m_model.onSelectionChanged) {
         if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }
@@ -144,7 +148,7 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
       flushFree();
       auto section =
           std::make_unique<ExtensionGridSection>(sec->title, sec->children, sec->columns, sec->aspectRatio,
-                                                 m_model.filtering, m_notify, &m_model.actions);
+                                                 sec->inset, m_model.filtering, m_notify, &m_model.actions);
       section->setOnItemSelected([this](const GridItemViewModel *item) {
         if (auto handler = m_model.onSelectionChanged) {
           if (item) { m_notify(handler->c_str(), {item->id.c_str()}); }
@@ -171,7 +175,7 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
     if (prevValid) {
       if (prevSection == selectedSection() && prevItem == selectedItem()) {
         refreshActionPanel();
-        emit selectionChanged();
+        if (flatRowForSelection() != prevRow) emit selectionChanged();
       } else {
         select(prevSection, prevItem);
       }
@@ -197,7 +201,7 @@ void ExtensionGridModel::setFilter(const QString &text) {
 }
 
 QString ExtensionGridModel::searchPlaceholder() const {
-  return m_placeholder.isEmpty() ? QStringLiteral("Search...") : m_placeholder;
+  return m_placeholder.isEmpty() ? tr("Search...") : m_placeholder;
 }
 
 const GridItemViewModel *ExtensionGridModel::resolveItem(int section, int item) const {
@@ -249,7 +253,7 @@ QString ExtensionGridModel::cellColor(int section, int item) const {
 
 QString ExtensionGridModel::emptyTitle() const {
   if (m_model.emptyView) return QString::fromStdString(m_model.emptyView->title);
-  return QStringLiteral("No results");
+  return tr("No results");
 }
 
 QString ExtensionGridModel::emptyDescription() const {

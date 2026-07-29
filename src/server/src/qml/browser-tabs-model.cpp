@@ -7,12 +7,10 @@ QString BrowserTabsSection::displaySubtitle(const BrowserTab &tab) const {
   return QString::fromStdString(tab.title);
 }
 
-QString BrowserTabsSection::displayIconSource(const BrowserTab &tab) const {
-  return imageSourceFor(tab.icon());
-}
+std::optional<ImageURL> BrowserTabsSection::displayIcon(const BrowserTab &tab) const { return tab.icon(); }
 
 QVariantList BrowserTabsSection::displayAccessories(const BrowserTab &tab) const {
-  if (tab.audible) return qml::textAccessory(tab.muted ? QStringLiteral("Muted") : QStringLiteral("Playing"));
+  if (tab.audible) return qml::textAccessory(tab.muted ? tr("Muted") : tr("Playing"));
   return {};
 }
 

@@ -4,6 +4,8 @@
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "services/update/update-service.hpp"
+#include <QCoreApplication>
 #include <memory>
 #include <optional>
 #include <string>
@@ -46,16 +48,34 @@ QString resolveAccessoryColor(const std::optional<ColorLike> &color);
 
 } // namespace root_search
 
-class RootLinkSection : public SectionSource {
+class RootItemSection : public SectionSource {
 public:
-  QString sectionName() const override { return QStringLiteral("Link"); }
+  virtual const RootItem *rootItem(int i) const = 0;
+
+  bool isDraggable(int i) const override {
+    const auto *item = rootItem(i);
+    return item && item->isDraggable();
+  }
+
+  std::unique_ptr<QMimeData> dragMimeData(int i) const override {
+    const auto *item = rootItem(i);
+    return item ? item->dragMimeData() : nullptr;
+  }
+};
+
+class RootLinkSection : public SectionSource {
+  Q_DECLARE_TR_FUNCTIONS(RootLinkSection)
+public:
+  QString sectionName() const override { return tr("Link"); }
   int count() const override { return m_link ? 1 : 0; }
   QString itemId(int) const override;
   QString itemTitle(int) const override;
-  QString itemIconSource(int) const override;
+  std::optional<ImageURL> itemIcon(int) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
+  bool isDraggable(int) const override { return m_link.has_value(); }
+  std::unique_ptr<QMimeData> dragMimeData(int) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int) const override;
 
   void setLink(std::optional<LinkItem> link) { m_link = std::move(link); }
@@ -67,11 +87,13 @@ private:
 
 class RootCalculatorSection : public SectionSource {
 public:
-  QString sectionName() const override { return QStringLiteral("Calculator"); }
+  QString sectionName() const override {
+    return QCoreApplication::translate("RootCalculatorSection", "Calculator");
+  }
   int count() const override { return m_result ? 1 : 0; }
   QString itemId(int) const override;
   QString itemTitle(int) const override;
-  QString itemIconSource(int) const override;
+  std::optional<ImageURL> itemIcon(int) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -84,14 +106,39 @@ private:
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_result;
 };
 
+class RootUpdateSection : public SectionSource {
+  Q_DECLARE_TR_FUNCTIONS(RootUpdateSection)
+public:
+  explicit RootUpdateSection(UpdateService *updates) : m_updates(updates) {}
+
+  QString sectionName() const override { return tr("Update"); }
+  int count() const override { return m_update ? 1 : 0; }
+  QString itemId(int) const override;
+  QString itemTitle(int) const override;
+  QString itemSubtitle(int) const override;
+  std::optional<ImageURL> itemIcon(int) const override;
+  QVariant customData(int i, int role) const override;
+  QHash<int, QByteArray> customRoleNames() const override;
+  QHash<int, QVariant> customRoleDefaults() const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int) const override;
+
+  void setUpdate(std::optional<UpdateService::AvailableUpdate> update) { m_update = std::move(update); }
+
+private:
+  UpdateService *m_updates;
+  std::optional<UpdateService::AvailableUpdate> m_update;
+};
+
 class RootNewsSection : public SectionSource {
 public:
-  QString sectionName() const override { return QStringLiteral("What's New"); }
+  QString sectionName() const override {
+    return QCoreApplication::translate("RootNewsSection", "What's New");
+  }
   int count() const override { return static_cast<int>(m_items.size()); }
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -103,30 +150,33 @@ private:
   std::vector<const NewsItem *> m_items;
 };
 
-class RootFavoritesSection : public SectionSource {
+class RootFavoritesSection : public RootItemSection {
 public:
   explicit RootFavoritesSection(RootItemManager *mgr) : m_manager(mgr) {}
 
-  QString sectionName() const override { return QStringLiteral("Favorites"); }
+  QString sectionName() const override {
+    return QCoreApplication::translate("RootFavoritesSection", "Favorites");
+  }
   int count() const override { return static_cast<int>(m_items.size()); }
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
   void setItems(std::vector<std::shared_ptr<RootItem>> items) { m_items = std::move(items); }
-  const RootItem *rootItem(int i) const;
+  const RootItem *rootItem(int i) const override;
 
 private:
   RootItemManager *m_manager;
   std::vector<std::shared_ptr<RootItem>> m_items;
 };
 
-class RootResultsSection : public SectionSource {
+class RootResultsSection : public RootItemSection {
+  Q_DECLARE_TR_FUNCTIONS(RootResultsSection)
 public:
   explicit RootResultsSection(RootItemManager *mgr) : m_manager(mgr) {}
 
@@ -135,7 +185,7 @@ public:
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -143,7 +193,7 @@ public:
 
   void setItems(std::vector<OwnedResult> items) { m_items = std::move(items); }
   void setQueryEmpty(bool empty) { m_queryEmpty = empty; }
-  const RootItem *rootItem(int i) const;
+  const RootItem *rootItem(int i) const override;
 
 private:
   RootItemManager *m_manager;
@@ -155,15 +205,17 @@ class RootFilesSection : public SectionSource {
 public:
   explicit RootFilesSection(AppService *appDb) : m_appDb(appDb) {}
 
-  QString sectionName() const override { return QStringLiteral("Files"); }
+  QString sectionName() const override { return QCoreApplication::translate("RootFilesSection", "Files"); }
   int count() const override { return static_cast<int>(m_files.size()); }
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
+  bool isDraggable(int i) const override { return i >= 0 && std::cmp_less(i, m_files.size()); }
+  std::unique_ptr<QMimeData> dragMimeData(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
   void setFiles(std::vector<IndexerFileResult> files) { m_files = std::move(files); }
@@ -173,7 +225,7 @@ private:
   std::vector<IndexerFileResult> m_files;
 };
 
-class RootFallbackSection : public SectionSource {
+class RootFallbackSection : public RootItemSection {
 public:
   explicit RootFallbackSection(RootItemManager *mgr) : m_manager(mgr) {}
 
@@ -182,7 +234,7 @@ public:
   QString itemId(int i) const override;
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
@@ -190,6 +242,7 @@ public:
 
   void setItems(std::vector<std::shared_ptr<RootItem>> items) { m_items = std::move(items); }
   void setQuery(std::string query) { m_query = std::move(query); }
+  const RootItem *rootItem(int i) const override;
 
 private:
   RootItemManager *m_manager;

@@ -1,5 +1,6 @@
 #include "xdg-app-database.hpp"
 #include "environment.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
 #include "utils.hpp"
 #include "xdgpp/desktop-entry/entry.hpp"
@@ -283,6 +284,19 @@ bool XdgAppDatabase::showInFileBrowser(const fs::path &path, bool select) const 
   return launch(*browser, {target->c_str()});
 }
 
+bool XdgAppDatabase::openLocation(const AbstractApplication &app) const {
+  auto path = QString::fromStdString(app.path());
+  const auto opener = findDefaultOpener(path);
+
+  if (!opener) return false;
+
+  return launch(*opener, {std::move(path)});
+}
+
+AppPtr XdgAppDatabase::locationOpener(const AbstractApplication &app) const {
+  return findDefaultOpener(QString::fromStdString(app.path()));
+}
+
 std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const { return xdgpp::appDirs(); }
 
 AppPtr XdgAppDatabase::findById(const QString &id) const {
@@ -424,9 +438,19 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
   std::ranges::for_each(exec | std::views::drop(1), [&](auto &&arg) { argv << arg; });
   auto texec = getTermExec(*xdgApp);
 
-  if (texec.appId && opts.appId) { argv << texec.appId->c_str() << opts.appId.value(); }
-  if (texec.title && opts.title) { argv << texec.title->c_str() << opts.title.value(); }
-  if (texec.dir && opts.workingDirectory) { argv << texec.dir->c_str() << opts.workingDirectory.value(); }
+  // per the xdg-terminal-exec spec, a flag ending with '=' takes its value appended
+  // to the same argument, without whitespace
+  auto addFlag = [&argv](const std::string &flag, const QString &value) {
+    if (flag.ends_with('=')) {
+      argv << QString::fromStdString(flag) + value;
+    } else {
+      argv << flag.c_str() << value;
+    }
+  };
+
+  if (texec.appId && opts.appId) { addFlag(*texec.appId, opts.appId.value()); }
+  if (texec.title && opts.title) { addFlag(*texec.title, opts.title.value()); }
+  if (texec.dir && opts.workingDirectory) { addFlag(*texec.dir, opts.workingDirectory.value()); }
   if (texec.hold && opts.hold) { argv << texec.hold->c_str(); }
   if (texec.exec) { argv << texec.exec->c_str(); }
 
@@ -474,7 +498,18 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
     return launch(*opener, {*url});
   }
 
-  if (xdgApp.isTerminalApp()) return launchTerminalCommand(xdgApp.parseExec(args), {});
+  if (xdgApp.isTerminalApp()) {
+    auto wd = xdgApp.data().workingDirectory().transform(QString::fromStdString);
+    // we pass a proper appId if the terminal allows it (according to xdg-terminal-exec spec)
+    // so that we can identify the terminal app from its own wm class and not the one of the terminal
+    // emulator. We don't alter title because it is usually dynamic and useful
+    auto opts = LaunchTerminalCommandOptions{
+        .appId = xdgApp.windowClass().value_or(xdgApp.id()),
+        .workingDirectory = std::move(wd),
+    };
+
+    return launchTerminalCommand(xdgApp.parseExec(args), std::move(opts));
+  }
 
   auto exec = xdgApp.parseExec(args, m_launchPrefix);
 
@@ -525,17 +560,17 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
 std::vector<AppPtr> XdgAppDatabase::list() const { return {m_apps.begin(), m_apps.end()}; }
 
 PreferenceList XdgAppDatabase::preferences() const {
-  auto defaultAction =
-      Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
+  auto defaultAction = Preference::makeDropdown(
+      "defaultAction", {{tr("Focus window"), "focus"}, {tr("Launch app"), "launch"}});
   defaultAction.setDefaultValue("focus");
-  defaultAction.setTitle("Default action");
-  defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
-                               "if the app has no open window.");
+  defaultAction.setTitle(tr("Default action"));
+  defaultAction.setDescription(tr("Action to perform when the return key is pressed. Always default to "
+                                  "'launch' if the app has no open window."));
 
   auto launchPrefix = Preference::makeText("launchPrefix");
-  launchPrefix.setTitle("Launch Prefix");
+  launchPrefix.setTitle(tr("Launch Prefix"));
   launchPrefix.setDescription(
-      "Custom app launcher to use. Affects applications as well as their sub-actions.");
+      tr("Custom app launcher to use. Affects applications as well as their sub-actions."));
   launchPrefix.setPlaceholder("uwsm app --");
 
   auto paths = Preference::directories("paths");
@@ -543,10 +578,10 @@ PreferenceList XdgAppDatabase::preferences() const {
   for (const auto &searchPath : defaultSearchPaths()) {
     defaultPaths.push_back(QString::fromStdString(searchPath));
   }
-  paths.setTitle("Application directories");
+  paths.setTitle(tr("Application directories"));
   paths.setDescription(
-      "Directories applications are sourced from. The list cannot be modified directly. In order to do so, "
-      "you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables.");
+      tr("Directories applications are sourced from. The list cannot be modified directly. In order to do "
+         "so, you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables."));
   paths.setReadOnly(true);
   paths.setDefaultValue(defaultPaths);
 

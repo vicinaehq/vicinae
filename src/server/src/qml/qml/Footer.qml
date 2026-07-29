@@ -35,7 +35,7 @@ Item {
             label: actionPanel.primaryActionTitle
             shortcutTokens: actionPanel.primaryActionShortcutTokens
             highlighted: true
-            onClicked: launcher.handleReturn()
+            onClicked: actionPanel.executePrimaryAction()
         }
 
         Rectangle {
@@ -58,11 +58,11 @@ Item {
             id: actionsButton
             visible: actionPanel.hasMultipleActions
             Layout.alignment: Qt.AlignVCenter
-            label: "Actions"
+            label: qsTr("Actions")
             shortcutTokens: Keybinds.toggleActionPanelTokens
             highlighted: actionPanel.open
             backgrounded: actionPanel.open
-            onClicked: actionPanel.toggle()
+            onClicked: actionPanel.toggle(true)
         }
     }
 }

@@ -1,8 +1,12 @@
 .cache
 /build
+/build-*
+.vscode
+CMakeUserPresets.json
 .tmp
 extension-manager/runtime/node_modules
 /cmake-build-debug
+/CMakeFiles
 /.idea
 /vgcore*
 .env
@@ -16,6 +20,7 @@ __cmake*
 *.tgz
 
 /qt6
+**/.qmlls.ini
 
 /AppDir
 *AppImage
@@ -34,3 +39,7 @@ heaptrack*
 /tmp
 
 /internal-docs
+
+
+.worktrees
+.envrc.local

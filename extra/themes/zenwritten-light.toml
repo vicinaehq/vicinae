@@ -12,7 +12,7 @@ icon = "icons/zenbones.png"
 background = "#EEEEEE"        # bg (light sand)
 foreground = "#353535"        # fg (dark stone)
 secondary_background = "#CFCFCF"  # bg1 (slightly darker for surfaces)
-border = "#D7D7D7"            # selection bg (subtle border)
+border = "#787878"            # selection bg (subtle border)
 accent = "#286486"            # blue (neutral accent)
 
 [colors.accents]
@@ -26,8 +26,8 @@ yellow = "#944927"            # yellow
 cyan = "#3B8992"              # cyan
 
 [colors.list.item.selection]
-background = "#D7D7D7"
+background = "#b1b1b1"
 secondary_background = "#D7D7D7"
 
 [colors.grid.item]
-background = "#D7D7D7"
+background = "#d4d4d4"

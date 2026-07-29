@@ -10,9 +10,10 @@
 class SpotlightFileIndexer : public AbstractFileIndexer {
 public:
   void start() override {}
+  bool isAvailable() const override;
   void rebuildIndex() override {}
   void preferenceValuesChanged(const QJsonObject &) override {}
 
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view query,
-                                                     const QueryParams &params = {}) override;
+                                                     const IndexerQueryParams &params = {}) override;
 };

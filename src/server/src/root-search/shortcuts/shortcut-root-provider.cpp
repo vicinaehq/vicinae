@@ -4,7 +4,6 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "argument.hpp"
 #include "common.hpp"
-#include "navigation-controller.hpp"
 #include "ui/image/url.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -21,6 +20,8 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   auto dangerSection = panel->createSection();
 
   auto open = new OpenCompletedShortcutAction(m_link);
+  auto openWith = new OpenCompletedShortcutWithAction(m_link);
+  auto copy = new CopyShortcutAction(m_link);
   auto edit = new EditShortcutAction(m_link);
   auto duplicate = new DuplicateShortcutAction(m_link);
   auto remove = new RemoveShortcutAction(m_link);
@@ -31,7 +32,9 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   remove->setShortcut(Keybind::DangerousRemoveAction);
 
   panel->setTitle(m_link->name());
-  mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  mainSection->addAction(open);
+  mainSection->addAction(openWith);
+  mainSection->addAction(copy);
 
   manageSection->addAction(edit);
   manageSection->addAction(duplicate);
@@ -47,7 +50,7 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
 
 std::unique_ptr<ActionPanelState>
 RootShortcutItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMetadata &metadata) const {
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto main = panel->createSection();
 
   auto open = new OpenShortcutFromSearchText(m_link);
@@ -60,7 +63,9 @@ RootShortcutItem::fallbackActionPanel(ApplicationContext *ctx, const RootItemMet
   return panel;
 }
 
-QString RootShortcutItem::typeDisplayName() const { return "Shortcut"; }
+std::vector<QString> RootShortcutItem::keywords() const { return {m_link->url()}; }
+
+QString RootShortcutItem::typeDisplayName() const { return tr("Shortcut"); }
 
 EntrypointId RootShortcutItem::uniqueId() const {
   return EntrypointId{"shortcuts", m_link->id().toStdString()};
@@ -71,7 +76,7 @@ QString RootShortcutItem::title() const { return m_link->name(); }
 double RootShortcutItem::baseScoreWeight() const { return 1.4; }
 
 AccessoryList RootShortcutItem::accessories() const {
-  return {{.text = "Shortcut", .color = SemanticColor::TextMuted}};
+  return {{.text = tr("Shortcut"), .color = SemanticColor::TextMuted}};
 }
 
 bool RootShortcutItem::isSuitableForFallback() const { return m_link->arguments().size() == 1; }
@@ -83,6 +88,7 @@ ArgumentList RootShortcutItem::arguments() const {
     CommandArgument cmdArg;
 
     cmdArg.type = CommandArgument::Text;
+    cmdArg.name = arg.name;
     cmdArg.required = arg.defaultValue.isEmpty();
     cmdArg.placeholder = arg.name;
     args.emplace_back(cmdArg);
@@ -111,10 +117,12 @@ std::vector<std::shared_ptr<RootItem>> ShortcutRootProvider::loadItems() const {
   return items;
 };
 
-QString ShortcutRootProvider::displayName() const { return "Shortcuts"; }
+QString ShortcutRootProvider::displayName() const {
+  return QCoreApplication::translate("ShortcutRootProvider", "Shortcuts");
+}
 
 ImageURL ShortcutRootProvider::icon() const {
-  auto icon = ImageURL::builtin("bolt");
+  auto icon = ImageURL::builtin(BuiltinIcon::Bolt);
 
   icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
 

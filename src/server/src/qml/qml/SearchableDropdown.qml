@@ -19,6 +19,7 @@ Item {
     property string placeholder: ""
     property bool readOnly: false
     property bool hasError: false
+    property bool filled: false
 
     width: compact ? Math.max(triggerButton.implicitWidth, minimumWidth) : implicitWidth
 
@@ -32,6 +33,10 @@ Item {
         completionPopup.open();
     }
 
+    function popupX() {
+        return Math.min(0, triggerButton.width - completionPopup.width);
+    }
+
     Keys.onReturnPressed: {
         if (!completionPopup.visible)
             open();
@@ -39,6 +44,13 @@ Item {
     Keys.onSpacePressed: {
         if (!completionPopup.visible)
             open();
+    }
+
+    FormInputBackground {
+        anchors.fill: triggerButton
+        radius: triggerButton.radius
+        filled: root.filled || root.compact
+        opacity: root.readOnly ? 0.5 : 1.0
     }
 
     Rectangle {
@@ -49,8 +61,8 @@ Item {
         width: compact ? root.width : implicitWidth
         height: compact ? 28 : implicitHeight
         radius: compact ? 6 : 8
-        color: buttonMouseArea.containsMouse ? Theme.listItemHoverBg : "transparent"
-        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder)), Config.windowOpacity)
+        color: "transparent"
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder)), Config.surfaceOpacity)
         border.width: 1
 
         RowLayout {
@@ -78,6 +90,7 @@ Item {
 
             ViciImage {
                 source: completionPopup.visible ? Img.builtin("chevron-up") : Img.builtin("chevron-down")
+                opacity: completionPopup.visible || (buttonMouseArea.containsMouse && !root.readOnly) ? 1.0 : 0.5
                 Layout.preferredWidth: 10
                 Layout.preferredHeight: 10
             }
@@ -95,8 +108,11 @@ Item {
     CompletionPopup {
         id: completionPopup
         parent: triggerButton
-        popupType: Popup.Window
-        x: compact ? triggerButton.width - width : 0
+        popupType: Platform.preferItemPopup("dropdown") ? Popup.Item : Popup.Window
+        // On Wayland the compositor places the native popup window from the
+        // PopupPlacement anchor; x/y only apply on other platforms.
+        PopupPlacement.alignment: root.compact ? Qt.AlignRight : Qt.AlignLeft
+        x: root.popupX()
         y: triggerButton.height + 4
         width: Math.max(compact ? 200 : 250, root.width)
         focus: true
@@ -105,12 +121,13 @@ Item {
         currentItemId: root.currentItem ? root.currentItem.id : ""
 
         background: Rectangle {
-            radius: 8
-            color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.95)
-            border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-            border.width: 1
-            BackgroundEffect.enabled: Config.blurEnabled
-            BackgroundEffect.radius: 8
+            readonly property bool csd: completionPopup.popupType === Popup.Item || Platform.supports("clientSideDecorations")
+            readonly property real bgOpacity: completionPopup.popupType === Popup.Window ? Config.popupOpacity : 1
+            radius: csd ? Math.min(Config.borderRounding, 15) : 0
+            color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bgOpacity)
+            border.color: Config.withAlpha(Theme.popoverBorder, bgOpacity)
+            border.width: csd ? 1 : 0
+            PopupMaterial {}
         }
 
         onClosed: {

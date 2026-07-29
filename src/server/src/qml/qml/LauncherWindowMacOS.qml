@@ -7,13 +7,18 @@ LauncherWindow {
     flags: Qt.Tool | Qt.FramelessWindowHint
     autoPlaceOnShow: false
 
-    onAboutToShow: MacOSPanel.beginShow(placementFraction)
-    onShown: MacOSPanel.finishShow(placementFraction)
+    height: _contentH
+    minimumHeight: _contentH
+    maximumHeight: _contentH
+
+    onAboutToShow: MacOSPanel.beginShow(placementFraction, _h)
+    onShown: MacOSPanel.finishShow(placementFraction, _h)
 
     MacOSWindow.enabled: true
     MacOSWindow.cornerRadius: cornerRadius
     MacOSWindow.blurEnabled: blurEnabled
-    MacOSWindow.material: "hud"
+    MacOSWindow.material: Config.windowMaterial === "liquid_glass" ? "liquidGlass" : "hud"
+    MacOSWindow.appearance: Theme.isDark ? "dark" : "light"
     MacOSWindow.borderColor: Theme.mainWindowBorder
     MacOSWindow.borderWidth: Config.borderWidth
 

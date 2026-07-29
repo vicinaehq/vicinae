@@ -78,6 +78,7 @@ public:
 
 private:
   static QColor withAlphaF(const QColor &color, float alpha = 1.0f);
+  static QColor mix(const QColor &a, const QColor &b, float t);
 
   /**
    * Derive semantic color from base16 palette

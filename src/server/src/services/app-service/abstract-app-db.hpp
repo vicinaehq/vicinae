@@ -89,6 +89,9 @@ public:
    */
   virtual QString description() const = 0;
 
+  // Type label for the root search; empty means the default "Application".
+  virtual QString category() const { return {}; }
+
   // whether the executable can open url(s) or file(s)
   virtual bool isOpener() { return true; }
 };
@@ -103,6 +106,8 @@ struct LaunchTerminalCommandOptions {
 };
 
 class AbstractAppDatabase : public QObject {
+  Q_OBJECT
+
 public:
   using AppPtr = std::shared_ptr<AbstractApplication>;
 
@@ -198,9 +203,26 @@ public:
   virtual AppPtr terminalEmulator() const = 0;
 
   /**
+   * Open the location where the app is installed at.
+   * What this does highly depends on how applications are defined on the target platform.
+   * On linux this would open the .desktop file, on macOS open the app bundle directory...
+   */
+  virtual bool openLocation(const AbstractApplication &app) const = 0;
+
+  /**
+   * Application used to open the `app` at its installed location.
+   * If this return null, it means that calling `openLocation` will likely return `false`.
+   */
+  virtual AppPtr locationOpener(const AbstractApplication &app) const = 0;
+
+  /**
    * Open the system file browser for the provided path.
    * If `select` is true, implementations should try to reveal/select the item and
    * gracefully fall back to opening the containing folder when that is not supported.
    */
   virtual bool showInFileBrowser(const std::filesystem::path &path, bool select) const = 0;
+
+signals:
+  // The provider detected an out-of-band change to installed apps (e.g. a package install).
+  void changed();
 };

@@ -1,5 +1,5 @@
-import { RaycastApplication, transformApp } from "./system";
 import * as vicinae from "@vicinae/api";
+import { type RaycastApplication, transformApp } from "./system";
 
 type RaycastWindow = {
 	active: boolean;
@@ -35,7 +35,7 @@ const transformNativeDesktop = (
 ): RaycastDesktop => {
 	return {
 		id: win.id,
-		screenId: win.monitorId,
+		screenId: win.monitorId ?? "",
 		size: { width: 0, height: 0 }, // FIXME: implement
 		active: win.active,
 		type: DesktopType.User,

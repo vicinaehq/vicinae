@@ -1,0 +1,341 @@
+#pragma once
+#include <sqlcipher/sqlite3.h>
+
+#include <cstdint>
+#include <expected>
+#include <filesystem>
+#include <format>
+#include <optional>
+#include <string>
+#include <string_view>
+#include "file-indexer/log.hpp"
+
+namespace db {
+
+extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
+extern "C" int vicinaeSpellfixInit(sqlite3 *, char **, const void *);
+
+static constexpr int BUSY_TIMEOUT_MS = 5000;
+
+class Statement {
+  sqlite3_stmt *m_stmt = nullptr;
+  sqlite3 *m_db = nullptr;
+  bool m_valid = true;
+
+  int paramIndex(const char *name) const {
+    if (!m_stmt) return 0;
+    return sqlite3_bind_parameter_index(m_stmt, name);
+  }
+
+public:
+  Statement() : m_valid(false) {}
+
+  explicit operator bool() const { return m_valid; }
+
+  Statement(sqlite3_stmt *stmt, sqlite3 *db) : m_stmt(stmt), m_db(db) {}
+
+  ~Statement() {
+    if (m_stmt) sqlite3_finalize(m_stmt);
+  }
+
+  Statement(const Statement &) = delete;
+  Statement &operator=(const Statement &) = delete;
+
+  Statement(Statement &&other) noexcept : m_stmt(other.m_stmt), m_db(other.m_db), m_valid(other.m_valid) {
+    other.m_stmt = nullptr;
+    other.m_db = nullptr;
+    other.m_valid = false;
+  }
+
+  Statement &operator=(Statement &&other) noexcept {
+    if (this != &other) {
+      if (m_stmt) sqlite3_finalize(m_stmt);
+      m_stmt = other.m_stmt;
+      m_db = other.m_db;
+      m_valid = other.m_valid;
+      other.m_stmt = nullptr;
+      other.m_db = nullptr;
+      other.m_valid = false;
+    }
+    return *this;
+  }
+
+  void bind(const char *name, int val) {
+    if (int const idx = paramIndex(name)) sqlite3_bind_int(m_stmt, idx, val);
+  }
+
+  void bind(const char *name, int64_t val) {
+    if (int const idx = paramIndex(name)) sqlite3_bind_int64(m_stmt, idx, val);
+  }
+
+  void bind(const char *name, uint64_t val) {
+    if (int const idx = paramIndex(name)) sqlite3_bind_int64(m_stmt, idx, static_cast<int64_t>(val));
+  }
+
+  void bind(const char *name, double val) {
+    if (int const idx = paramIndex(name)) sqlite3_bind_double(m_stmt, idx, val);
+  }
+
+  void bind(const char *name, std::string_view val) {
+    if (int const idx = paramIndex(name))
+      sqlite3_bind_text(m_stmt, idx, val.data(), static_cast<int>(val.size()), SQLITE_TRANSIENT);
+  }
+
+  void bind(const char *name, const char *val) { bind(name, std::string_view(val)); }
+
+  void bind(const char *name, const std::string &val) { bind(name, std::string_view(val)); }
+
+  template <typename T> void bind(const char *name, const std::optional<T> &val) {
+    if (val) {
+      bind(name, *val);
+    } else {
+      bindNull(name);
+    }
+  }
+
+  void bindNull(const char *name) {
+    if (int const idx = paramIndex(name)) sqlite3_bind_null(m_stmt, idx);
+  }
+
+  bool step() {
+    if (!m_stmt) return false;
+    int const rc = sqlite3_step(m_stmt);
+    if (rc == SQLITE_ROW) return true;
+    return false;
+  }
+
+  bool exec() {
+    if (!m_stmt) return false;
+    int const rc = sqlite3_step(m_stmt);
+    sqlite3_reset(m_stmt);
+    sqlite3_clear_bindings(m_stmt);
+    if (rc == SQLITE_DONE || rc == SQLITE_ROW) return true;
+    return false;
+  }
+
+  void reset() {
+    if (!m_stmt) return;
+    sqlite3_reset(m_stmt);
+    sqlite3_clear_bindings(m_stmt);
+  }
+
+  int columnInt(int col) const { return sqlite3_column_int(m_stmt, col); }
+
+  int64_t columnInt64(int col) const { return sqlite3_column_int64(m_stmt, col); }
+
+  uint64_t columnUInt64(int col) const { return static_cast<uint64_t>(sqlite3_column_int64(m_stmt, col)); }
+
+  double columnDouble(int col) const { return sqlite3_column_double(m_stmt, col); }
+
+  std::string columnText(int col) const {
+    auto *text = reinterpret_cast<const char *>(sqlite3_column_text(m_stmt, col));
+    if (!text) return {};
+    return {text, static_cast<size_t>(sqlite3_column_bytes(m_stmt, col))};
+  }
+
+  bool isNull(int col) const { return sqlite3_column_type(m_stmt, col) == SQLITE_NULL; }
+
+  std::string lastError() const {
+    if (!m_db) return "database is not open";
+    return sqlite3_errmsg(m_db);
+  }
+};
+
+class Transaction {
+  sqlite3 *m_db = nullptr;
+  bool m_done = false;
+
+public:
+  explicit Transaction(sqlite3 *db) : m_db(db) {
+    if (m_db) { sqlite3_exec(m_db, "BEGIN", nullptr, nullptr, nullptr); }
+  }
+
+  ~Transaction() {
+    if (!m_done && m_db) sqlite3_exec(m_db, "ROLLBACK", nullptr, nullptr, nullptr);
+  }
+
+  Transaction(const Transaction &) = delete;
+  Transaction &operator=(const Transaction &) = delete;
+
+  Transaction(Transaction &&other) noexcept : m_db(other.m_db), m_done(other.m_done) {
+    other.m_db = nullptr;
+    other.m_done = true;
+  }
+
+  Transaction &operator=(Transaction &&other) noexcept {
+    if (this != &other) {
+      if (!m_done && m_db) sqlite3_exec(m_db, "ROLLBACK", nullptr, nullptr, nullptr);
+      m_db = other.m_db;
+      m_done = other.m_done;
+      other.m_db = nullptr;
+      other.m_done = true;
+    }
+    return *this;
+  }
+
+  bool commit() {
+    if (!m_db) return false;
+    m_done = true;
+    return sqlite3_exec(m_db, "COMMIT", nullptr, nullptr, nullptr) == SQLITE_OK;
+  }
+
+  void rollback() {
+    if (!m_db) return;
+    m_done = true;
+    sqlite3_exec(m_db, "ROLLBACK", nullptr, nullptr, nullptr);
+  }
+};
+
+class Database {
+  sqlite3 *m_handle = nullptr;
+
+  explicit Database(sqlite3 *handle) : m_handle(handle) {}
+
+public:
+  Database() = default;
+
+  ~Database() {
+    if (m_handle) sqlite3_close_v2(m_handle);
+  }
+
+  Database(const Database &) = delete;
+  Database &operator=(const Database &) = delete;
+
+  Database(Database &&other) noexcept : m_handle(other.m_handle) { other.m_handle = nullptr; }
+
+  Database &operator=(Database &&other) noexcept {
+    if (this != &other) {
+      if (m_handle) sqlite3_close_v2(m_handle);
+      m_handle = other.m_handle;
+      other.m_handle = nullptr;
+    }
+    return *this;
+  }
+
+  static std::expected<Database, std::string> open(const std::filesystem::path &path) {
+    sqlite3 *handle = nullptr;
+    int const rc = sqlite3_open_v2(
+        path.c_str(), &handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
+    if (rc != SQLITE_OK) {
+      std::string err = errorString("open", rc, handle, path);
+      if (handle) sqlite3_close_v2(handle);
+      return std::unexpected(std::move(err));
+    }
+
+    sqlite3_extended_result_codes(handle, 1);
+    sqlite3_busy_timeout(handle, BUSY_TIMEOUT_MS);
+
+    if (auto extensionError = registerExtensions(handle)) {
+      sqlite3_close_v2(handle);
+      return std::unexpected(std::move(*extensionError));
+    }
+
+    return Database(handle);
+  }
+
+  Statement prepare(std::string_view sql) const {
+    if (!m_handle) {
+      flog::warn() << "db::prepare failed: database is not open";
+      return {};
+    }
+
+    sqlite3_stmt *stmt = nullptr;
+    int const rc = sqlite3_prepare_v2(m_handle, sql.data(), static_cast<int>(sql.size()), &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+      flog::warn() << errorString("prepare", rc, m_handle);
+      return {};
+    }
+    return {stmt, m_handle};
+  }
+
+  bool exec(const char *sql) const {
+    if (!m_handle) return false;
+    return sqlite3_exec(m_handle, sql, nullptr, nullptr, nullptr) == SQLITE_OK;
+  }
+
+  bool exec(const std::string &sql) const { return exec(sql.c_str()); }
+
+  Transaction transaction() const { return Transaction(m_handle); }
+
+  int64_t lastInsertRowId() const {
+    if (!m_handle) return 0;
+    return sqlite3_last_insert_rowid(m_handle);
+  }
+
+  int changes() const {
+    if (!m_handle) return 0;
+    return sqlite3_changes(m_handle);
+  }
+
+  std::string lastError() const {
+    if (!m_handle) return "database is not open";
+    return sqlite3_errmsg(m_handle);
+  }
+
+  sqlite3 *handle() { return m_handle; }
+  bool isOpen() const { return m_handle != nullptr; }
+
+  static std::optional<std::string> registerExtensions(sqlite3 *handle) {
+    auto registerExtension = [&](const char *name, auto init) -> std::optional<std::string> {
+      char *error = nullptr;
+      int const rc = init(handle, &error, nullptr);
+
+      if (rc == SQLITE_OK) return std::nullopt;
+
+      std::string message = std::format("sqlite extension registration failed for {}: rc={} ({})", name, rc,
+                                        sqlite3_errstr(rc));
+      if (error) {
+        message += ": ";
+        message += error;
+        sqlite3_free(error);
+      }
+      return message;
+    };
+
+    if (auto error = registerExtension("fuzzy_trigram", vicinaeFuzzyTrigramInit)) return error;
+    if (auto error = registerExtension("spellfix1", vicinaeSpellfixInit)) return error;
+
+    return std::nullopt;
+  }
+
+  static std::string errorString(std::string_view operation, int rc, sqlite3 *handle,
+                                 const std::filesystem::path &path = {}) {
+    std::string message;
+
+    message.reserve(128);
+    message += "sqlite ";
+    message += operation;
+    message += " failed";
+
+    if (!path.empty()) {
+      message += " for ";
+      message += path.string();
+    }
+
+    message += ": rc=";
+    message += std::to_string(rc);
+    message += " (";
+    message += sqlite3_errstr(rc);
+    message += ")";
+
+    if (handle) {
+      int const extended = sqlite3_extended_errcode(handle);
+      if (extended != rc) {
+        message += ", extended_rc=";
+        message += std::to_string(extended);
+        message += " (";
+        message += sqlite3_errstr(extended);
+        message += ")";
+      }
+
+      message += ": ";
+      message += sqlite3_errmsg(handle);
+    } else {
+      message += ": failed to allocate sqlite handle";
+    }
+
+    return message;
+  }
+};
+
+} // namespace db

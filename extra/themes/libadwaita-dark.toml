@@ -26,7 +26,7 @@ accent_foreground = "colors.accents.blue"
 background = "#222226"
 foreground = "#ffffff"
 secondary_background = "#2e2e32"
-border = "#383838"
+border = "#4A4A53"
 
 [colors.main_window]
 border = "colors.core.border"
@@ -66,13 +66,13 @@ foreground = "#ffffff"
 secondary_foreground = "#c0bfbc"
 
 [colors.list.item.selection]
-background = "#3D3D41"
+background = "#4a4a4f"
 foreground = "#ffffff"
 secondary_background = "colors.core.accent"
 secondary_foreground = "#ffffff"
 
 [colors.grid.item]
-background = "#2e2e32"
+background = "#424248"
 hover = { outline = "colors.core.accent" }
 selection = { outline = "colors.core.accent" }
 

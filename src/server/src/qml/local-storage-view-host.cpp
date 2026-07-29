@@ -5,7 +5,7 @@ void LocalStorageViewHost::initialize() {
   BaseView::initialize();
   initModel();
   model()->addSource(&m_section);
-  setSearchPlaceholderText("Search namespaces...");
+  setSearchPlaceholderText(tr("Search namespaces..."));
 }
 
 void LocalStorageViewHost::loadInitialData() {
@@ -20,7 +20,7 @@ void LocalStorageItemViewHost::initialize() {
   initModel();
   m_section.setNamespace(m_ns);
   model()->addSource(&m_section);
-  setSearchPlaceholderText("Search items...");
+  setSearchPlaceholderText(tr("Search items..."));
 }
 
 void LocalStorageItemViewHost::loadInitialData() { m_section.setItems(std::move(m_keys)); }

@@ -60,10 +60,7 @@
 	// If this is set to 'none', favicon loading is disabled and a placeholder icon will be used when a favicon is expected.
 	"favicon_service": "twenty",
 
-	// EXPERIMENTAL!
-	// Enable specific editing motions in the main search bar and during navigation.
-	// This will probably be changed in future updates.
-	// Supports: 'default' | 'emacs'
+	// Navigation scheme. Supports: 'default' | 'vim' | 'emacs'
 	"keybinding": "default",
 
 	"font": {
@@ -77,9 +74,11 @@
 		// "system": uses the system/platform default font
 		// Or specify any font family name (e.g. "Fira Sans")
 		"normal": {
-			"family": "auto",
+			"family": "auto"
 			// The point size of the font (unlike pixel size, the point size scales with resolution)
-			"size": 10.5
+			// NOTE: if unspecified, Vicinae will pick the best point size for the current platform (there is no one size fits all)
+			// Therefore, it is recommended to leave this unset unless you really want a custom font size.
+			// "size": 10.5
 		}
 	},
 
@@ -101,20 +100,41 @@
 		// Control the opacity of the main window.
 		// Opacity for other surfaces are controlled by the active theme.
 		// [0;1]
-		"opacity": 1.0,
-		
-		// Blur the window background.
-		// Supported on wayland compositors that implement ext-background-effect
-		// Make sure the window opacity above is < 1
+		// "opacity": 0.6,
+
+		// @Deprecated: use "material". "enabled": false maps to material "none".
 		"blur": {
 			"enabled": true
 		},
 
-		// You can turn client side decorations off if you want to let your compositor draw the rounded
-		// borders and such. This usually gives better results, but is more complicated to setup, if at all possible.
+		// "none", "blur", "liquid_glass", or "auto" (liquid_glass when available, else blur).
+		// Needs window opacity < 1 to be visible.
+		"material": "auto",
+
+		// Corner radius of the launcher window, in pixels.
+		// "rounding": 10,
+
+		// customize the format used for the clock, displayed in the
+		// root search status bar when there is nothing better to show.
+		"clock": {
+			"enabled": true,
+
+			// defaults to localized "hh:mm" if not specified
+			// the format follows https://doc.qt.io/qt-6/qdate.html#fromString
+			// "format": "hh:mm:ss",
+
+			// how often the clock needs to be updated, in seconds.
+			"interval": 60
+		},
+
+		// Client-side decorations are Linux-only: vicinae draws its own border and shadow instead of
+		// letting the compositor decorate the window. You can turn them off to let your compositor draw
+		// the rounded borders and such. This usually gives better results, but is more complicated to
+		// setup, if at all possible.
 		"client_side_decorations": {
 			"enabled": true,
-			"rounding": 10,
+			// @Deprecated: prefer the top-level launcher_window.rounding.
+			// "rounding": 10,
 			"border_width": 1,
 
 			// Draws drop shadows on the client side, ONLY if we are a layer surface.
@@ -125,7 +145,7 @@
 		},
 
 		// In compact mode, vicinae only shows a search bar in the root search if no query is entered, only expanding to its full size when searching.
-		// WARNING: compact mode works best when vicinae is rendered as a layer surface (the default if available), as opposed to a regular floating window.
+		// WARNING: on Linux, compact mode works best when vicinae is rendered as a layer surface (the default if available), as opposed to a regular floating window.
 		"compact_mode": {
 			"enabled": false
 		},
@@ -158,36 +178,34 @@
 			"layer": "top" 
 		}
 	},
-
-	// How much memory (in MB) can be used to cache small image assets in memory directly
-	// The higher this value is the more memory vicinae will use. In exchange for this, you get lower cpu usage.
-	"pixmap_cache_mb": 50,
-
+	
 	// Keybinds are serialized using a custom format.
 	// It is recommended to edit them through the settings GUI, which will write them to this file.
+	// NOTE: here, "control" remaps to the "command" (⌘) key on macOS.
+	// The default values are shown below, uncomment to override.
 	"keybinds": {
 		// common shortcuts
-		"open-search-filter": "control+P",
-		"open-settings": "control+,",
-		"toggle-action-panel": "control+B",
+		// "open-search-filter": "control+P",
+		// "open-settings": "control+,",
+		// "toggle-action-panel": "control+B", (control+K on macOS)
 
 		// used to assign shortcuts to generic actions
 		// if an extension provides a specific kind of action, it is encouraged to use shortcuts as defined here.
-		"action.copy": "control+shift+C",
-		"action.copy-name": "control+shift+.",
-		"action.copy-path": "control+shift+,",
-		"action.dangerous-remove": "control+shift+X",
-		"action.duplicate": "control+D",
-		"action.edit": "control+E",
-		"action.edit-secondary": "control+shift+E",
-		"action.move-down": "control+shift+ARROWDOWN",
-		"action.move-up": "control+shift+ARROWUP",
-		"action.new": "control+N",
-		"action.open": "control+O",
-		"action.pin": "control+shift+P",
-		"action.refresh": "control+R",
-		"action.remove": "control+X",
-		"action.save": "control+S"
+		// "action.copy": "control+shift+C",
+		// "action.copy-name": "control+shift+.",
+		// "action.copy-path": "control+shift+,",
+		// "action.dangerous-remove": "control+shift+X",
+		// "action.duplicate": "control+D",
+		// "action.edit": "control+E",
+		// "action.edit-secondary": "control+shift+E",
+		// "action.move-down": "control+shift+ARROWDOWN",
+		// "action.move-up": "control+shift+ARROWUP",
+		// "action.new": "control+N",
+		// "action.open": "control+O",
+		// "action.pin": "control+shift+P",
+		// "action.refresh": "control+R",
+		// "action.remove": "control+X",
+		// "action.save": "control+S"
 	},
 
 	// List of entrypoints that are tagged as "favorite".

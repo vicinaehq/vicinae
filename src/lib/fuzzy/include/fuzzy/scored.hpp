@@ -8,3 +8,5 @@ template <typename T> struct Scored {
   bool operator>(const Scored<T> &rhs) const { return score > rhs.score; }
   bool operator==(const Scored<T> &rhs) const { return score == rhs.score; }
 };
+
+template <typename T> using ScoredRef = Scored<const T *>;

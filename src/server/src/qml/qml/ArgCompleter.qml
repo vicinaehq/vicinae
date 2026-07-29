@@ -132,13 +132,6 @@ RowLayout {
                         Keys.onDownPressed: {
                             commandStack.currentItem.moveDown();
                         }
-                        Keys.onReturnPressed: event => {
-                            if (event.modifiers !== Qt.NoModifier) {
-                                event.accepted = launcher.forwardKey(event.key, event.modifiers);
-                            } else {
-                                launcher.handleReturn();
-                            }
-                        }
                         Keys.onTabPressed: event => {
                             if (argLoader.isLast) {
                                 root.focusSearchInput();
@@ -226,13 +219,6 @@ RowLayout {
                             root.valueChanged(argLoader.index, item.id);
                         }
 
-                        Keys.onReturnPressed: event => {
-                            if (event.modifiers !== Qt.NoModifier) {
-                                event.accepted = launcher.forwardKey(event.key, event.modifiers);
-                            } else {
-                                launcher.handleReturn();
-                            }
-                        }
                         Keys.onTabPressed: event => {
                             if (argLoader.isLast) {
                                 root.focusSearchInput();
@@ -240,6 +226,9 @@ RowLayout {
                             } else {
                                 event.accepted = false;
                             }
+                        }
+                        Keys.onPressed: event => {
+                            event.accepted = launcher.forwardKey(event.key, event.modifiers);
                         }
                     }
                 }

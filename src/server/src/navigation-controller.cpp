@@ -413,6 +413,22 @@ void NavigationController::executeAction(AbstractAction *action) {
   std::shared_ptr<AbstractAction> guard;
   if (auto *root = state->sender->actionPanelRoot()) { guard = root->retainAction(action); }
 
+  if (!guard) {
+    executeActionNow(action);
+    return;
+  }
+
+  // The action might tear down the window and the panel before the qml handler gets to run,
+  // so defer execution to next event loop turn
+  QMetaObject::invokeMethod(this, [this, action, guard] { executeActionNow(action); }, Qt::QueuedConnection);
+}
+
+void NavigationController::executeActionNow(AbstractAction *action) {
+  auto state = topState();
+  if (!state) return;
+
+  state->sender->beforeActionExecuted(action);
+
   if (action->isSubmenu()) {
     openActionPanel();
     return;
@@ -434,16 +450,6 @@ void NavigationController::executeAction(AbstractAction *action) {
 
   action->execute(&m_ctx);
   closeActionPanel();
-}
-
-AbstractAction *NavigationController::findBoundAction(const QKeyEvent *event) const {
-  auto state = topState();
-  if (!state) return nullptr;
-
-  auto *root = state->sender->actionPanelRoot();
-  if (!root) return nullptr;
-
-  return root->findBoundAction(event);
 }
 
 void NavigationController::activateView(const ViewState &state) {
@@ -591,7 +597,7 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   const bool isSameView = previouslyActive->uniqueId() == id && previouslyActive->isView();
 
   // toggle visibility if we are already showing
-  if (initialOpenState && isSameView) {
+  if (options.toggleIfAlreadyActive && initialOpenState && isSameView) {
     popToRoot({.clearSearch = false});
     m_ctx.navigation->closeWindow();
     return true;
@@ -599,12 +605,18 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 
   popToRoot({.clearSearch = false});
 
-  if (!initialOpenState) { setInstantDismiss(); }
+  // programmatic activation bypasses the action execution funnel, so the view hook
+  // never fires for it: register the visit explicitly.
+  m_ctx.services->rootItemManager()->registerVisit(id);
 
   // FIXME: we need a unified interface for this
   if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) {
-    launch(ext->command(), options.arguments);
+    launch(ext->command(), options.props);
   } else {
+    // FIXME: hacky, again we need a proper unified interface for this
+    createCompletion(entrypoint->arguments(), entrypoint->iconUrl());
+    setCompletionValues(options.props.arguments);
+
     auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
     panel->finalize();
     auto *action = panel->primaryAction();
@@ -615,11 +627,10 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
     action->execute(&m_ctx);
   }
 
-  if (!options.fallbackText.isEmpty()) { setSearchText(options.fallbackText); }
+  if (auto fallback = options.props.fallbackText) { setSearchText(fallback.value()); }
 
-  auto *active = activeCommand();
-
-  if (!isRootSearch() && active && active->isView() && !initialOpenState) {
+  if (!isRootSearch() && !initialOpenState) {
+    setInstantDismiss();
     setBackButtonVisibility(false);
     showWindow();
   }
@@ -628,22 +639,23 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
-  launch(cmd, completionValues());
+  launch(cmd, LaunchProps{.arguments = completionValues()});
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments) {
+  launch(cmd, LaunchProps{.arguments = arguments});
+}
+
+void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const LaunchProps &props) {
   // unload stalled no-view command
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
 
   if (cmd->type() == CommandType::CommandTypeExtension && !m_ctx.services->extensionManager()->isRunning()) {
-    m_ctx.services->toastService()->failure("Extension manager is not running");
+    m_ctx.services->toastService()->failure(tr("Extension manager is not running"));
     return;
   }
 
   bool const shouldCheckPreferences = cmd->type() == CommandType::CommandTypeExtension;
-  LaunchProps props;
-
-  props.arguments = arguments;
 
   if (shouldCheckPreferences) {
     auto itemId = cmd->uniqueId();

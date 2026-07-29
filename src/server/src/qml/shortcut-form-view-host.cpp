@@ -45,7 +45,7 @@ void ShortcutFormViewHost::initialize() {
   auto panel = std::make_unique<FormActionPanelState>();
   auto section = panel->createSection();
   auto submitAction =
-      new StaticAction(QStringLiteral("Submit"), ImageURL::builtin("enter-key"), [this]() { submit(); });
+      new StaticAction(tr("Submit"), ImageURL::builtin(BuiltinIcon::EnterKey), [this]() { submit(); });
   section->addAction(submitAction);
   setActions(std::move(panel));
 
@@ -58,7 +58,7 @@ void ShortcutFormViewHost::initialize() {
     auto appDb = context()->services->appDb();
 
     if (m_mode == Mode::Duplicate) {
-      m_name = QString("Copy of %1").arg(m_initialShortcut->name());
+      m_name = tr("Copy of %1").arg(m_initialShortcut->name());
     } else {
       m_name = m_initialShortcut->name();
     }
@@ -125,10 +125,10 @@ void ShortcutFormViewHost::initialize() {
   case Mode::Create:
     break;
   case Mode::Edit:
-    setNavigationTitle(QString("Edit \"%1\"").arg(m_initialShortcut->name()));
+    setNavigationTitle(tr("Edit \"%1\"").arg(m_initialShortcut->name()));
     break;
   case Mode::Duplicate:
-    setNavigationTitle(QString("Duplicate \"%1\"").arg(m_initialShortcut->name()));
+    setNavigationTitle(tr("Duplicate \"%1\"").arg(m_initialShortcut->name()));
     break;
   }
 }
@@ -136,16 +136,16 @@ void ShortcutFormViewHost::initialize() {
 void ShortcutFormViewHost::buildIconItems() {
   QVariantList allIcons;
 
-  m_resolvedDefaultIcon = ImageURL::builtin("link").toString();
+  m_resolvedDefaultIcon = ImageURL::builtin(BuiltinIcon::Link).toString();
   m_defaultIconEntry = QVariantMap{
       {QStringLiteral("id"), QStringLiteral("default")},
-      {QStringLiteral("displayName"), QStringLiteral("Default")},
-      {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("link"))},
+      {QStringLiteral("displayName"), tr("Default")},
+      {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Link))},
   };
   allIcons.append(m_defaultIconEntry);
 
   for (const auto &[icon, name] : BuiltinIconService::mapping()) {
-    auto url = ImageURL::builtin(name);
+    auto url = ImageURL::builtinByName(QString::fromLatin1(name));
     allIcons.append(QVariantMap{
         {QStringLiteral("id"), url.toString()},
         {QStringLiteral("displayName"), QString::fromUtf8(name)},
@@ -162,24 +162,24 @@ void ShortcutFormViewHost::buildIconItems() {
 void ShortcutFormViewHost::buildLinkCompletions() {
   m_linkCompletions = QVariantList{
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
-          {QStringLiteral("title"), QStringLiteral("Selected Text")},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))},
+          {QStringLiteral("title"), tr("Selected Text")},
           {QStringLiteral("value"), QStringLiteral("selected")},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("copy-clipboard"))},
-          {QStringLiteral("title"), QStringLiteral("Clipboard Text")},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::CopyClipboard))},
+          {QStringLiteral("title"), tr("Clipboard Text")},
           {QStringLiteral("value"), QStringLiteral("clipboard")},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
-          {QStringLiteral("title"), QStringLiteral("Argument")},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))},
+          {QStringLiteral("title"), tr("Argument")},
           {QStringLiteral("value"), QStringLiteral("argument")},
           {QStringLiteral("template"), QStringLiteral("{argument name=\"\"}")},
           {QStringLiteral("cursorOffset"), 16},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("fingerprint"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Fingerprint))},
           {QStringLiteral("title"), QStringLiteral("UUID")},
           {QStringLiteral("value"), QStringLiteral("uuid")},
       },
@@ -208,24 +208,24 @@ void ShortcutFormViewHost::submit() {
   bool valid = true;
 
   if (m_link.isEmpty()) {
-    m_linkError = QStringLiteral("Required");
+    m_linkError = tr("Required");
     valid = false;
   }
 
   if (m_selectedApp.isEmpty()) {
-    m_appError = QStringLiteral("Required");
+    m_appError = tr("Required");
     valid = false;
   }
 
   if (m_selectedIcon.isEmpty()) {
-    m_iconError = QStringLiteral("Required");
+    m_iconError = tr("Required");
     valid = false;
   }
 
   emit errorsChanged();
 
   if (!valid) {
-    toast->failure("Validation failed");
+    toast->failure(tr("Validation failed"));
     return;
   }
 
@@ -234,7 +234,9 @@ void ShortcutFormViewHost::submit() {
 
   if (appId == QStringLiteral("default")) {
     auto appDb = context()->services->appDb();
-    if (auto browser = appDb->webBrowser()) { appId = browser->id(); }
+    auto opener = appDb->findDefaultOpener(m_link);
+    if (!opener) { opener = appDb->webBrowser(); }
+    if (opener) { appId = opener->id(); }
   }
 
   if (iconId == QStringLiteral("default")) { iconId = m_resolvedDefaultIcon; }
@@ -242,17 +244,17 @@ void ShortcutFormViewHost::submit() {
   if (m_mode == Mode::Edit) {
     bool const updated = m_service->updateShortcut(m_initialShortcut->id(), m_name, iconId, m_link, appId);
     if (!updated) {
-      toast->failure("Failed to update shortcut");
+      toast->failure(tr("Failed to update shortcut"));
       return;
     }
-    toast->success("Shortcut updated");
+    toast->success(tr("Shortcut updated"));
   } else {
     bool const created = m_service->createShortcut(m_name, iconId, m_link, appId);
     if (!created) {
-      toast->failure("Failed to create shortcut");
+      toast->failure(tr("Failed to create shortcut"));
       return;
     }
-    toast->success("Shortcut created");
+    toast->success(tr("Shortcut created"));
   }
 
   popSelf();
@@ -268,7 +270,7 @@ void ShortcutFormViewHost::handleLinkBlurred() {
 
     m_resolvedDefaultIcon = app->iconUrl().toString();
     m_defaultIconEntry[QStringLiteral("iconSource")] = qml::imageSourceFor(app->iconUrl());
-    m_defaultIconEntry[QStringLiteral("displayName")] = QStringLiteral("Default");
+    m_defaultIconEntry[QStringLiteral("displayName")] = tr("Default");
     updateDefaultIconInItems();
 
     if (m_selectedIcon[QStringLiteral("id")].toString() == QStringLiteral("default")) {
@@ -285,7 +287,7 @@ void ShortcutFormViewHost::handleLinkBlurred() {
 
     watcher->setFuture(FaviconService::instance()->makeRequest(url.host()));
     connect(ptr, &Watcher::finished, this, [this, url, watcher = std::move(watcher)]() {
-      auto icon = ImageURL::favicon(url.host()).withFallback(ImageURL::builtin("image"));
+      auto icon = ImageURL::favicon(url.host()).withFallback(ImageURL::builtin(BuiltinIcon::Image));
       m_resolvedDefaultIcon = icon.toString();
       m_defaultIconEntry[QStringLiteral("iconSource")] = qml::imageSourceFor(icon);
       m_defaultIconEntry[QStringLiteral("displayName")] = url.host();
@@ -307,16 +309,18 @@ void ShortcutFormViewHost::selectApp(const QVariantMap &item) {
     auto appId = item[QStringLiteral("id")].toString();
     auto appDb = context()->services->appDb();
     std::shared_ptr<AbstractApplication> resolvedApp;
-    if (appId == QStringLiteral("default"))
-      resolvedApp = appDb->webBrowser();
-    else
+    if (appId == QStringLiteral("default")) {
+      resolvedApp = appDb->findDefaultOpener(m_link);
+      if (!resolvedApp) resolvedApp = appDb->webBrowser();
+    } else {
       resolvedApp = appDb->findById(appId);
+    }
 
     if (resolvedApp) m_resolvedDefaultIcon = resolvedApp->iconUrl().toString();
 
     auto iconSource = item[QStringLiteral("iconSource")].toString();
     m_defaultIconEntry[QStringLiteral("iconSource")] = iconSource;
-    m_defaultIconEntry[QStringLiteral("displayName")] = QStringLiteral("Default");
+    m_defaultIconEntry[QStringLiteral("displayName")] = tr("Default");
     updateDefaultIconInItems();
 
     if (m_selectedIcon[QStringLiteral("id")].toString() == QStringLiteral("default")) {

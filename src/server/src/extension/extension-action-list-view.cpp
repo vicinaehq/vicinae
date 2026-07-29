@@ -1,6 +1,6 @@
 #include "extension-action-list-view.hpp"
 #include "action-panel-model.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-pannel/action-panel-state.hpp"
 #include <utility>
 
 ExtensionActionListView::ExtensionActionListView(ExtensionActionPanelBuilder::NotifyFn notify,
@@ -13,11 +13,30 @@ ExtensionActionListView::ExtensionActionListView(ExtensionActionPanelBuilder::No
   }
 }
 
-ActionListView *ExtensionActionListView::createSubmenuChild(SubmenuAction *action) {
-  auto state = action->createSubmenuState();
+ExtensionSubmenuAction::ExtensionSubmenuAction(ActionPannelSubmenuPtr model,
+                                               ExtensionActionPanelBuilder::NotifyFn notify,
+                                               ExtensionActionPanelBuilder::SubmitFn submit)
+    : ListSubmenuAction(QString::fromStdString(model->title),
+                        model->icon ? std::optional(ImageURL(*model->icon)) : std::nullopt),
+      m_model(std::move(model)), m_notify(std::move(notify)), m_submit(std::move(submit)) {
+  if (m_model->stableId) { setId(QString::fromStdString(*m_model->stableId)); }
+  if (m_model->shortcut) { addShortcut(*m_model->shortcut); }
+}
+
+void ExtensionSubmenuAction::onOpen(ApplicationContext *) {
+  if (!m_model->onOpen.empty()) { m_notify(QString::fromStdString(m_model->onOpen), {}); }
+}
+
+std::unique_ptr<ActionPanelState> ExtensionSubmenuAction::buildState(ApplicationContext *) const {
+  return ExtensionActionPanelBuilder::buildSubmenuState(m_model, m_notify, m_submit);
+}
+
+ActionPanelView *ExtensionSubmenuAction::createView(ApplicationContext *ctx, QObject *parent) {
+  auto state = buildState(ctx);
   if (!state) return nullptr;
 
-  auto *child = new ExtensionActionListView(m_notify, action->onSearchTextChangeHandler(), this);
-  child->adoptState(std::move(state));
-  return child;
+  auto *view =
+      new ExtensionActionListView(m_notify, QString::fromStdString(m_model->onSearchTextChange), parent);
+  view->adoptState(std::move(state));
+  return view;
 }

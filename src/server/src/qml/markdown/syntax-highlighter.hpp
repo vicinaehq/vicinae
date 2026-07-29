@@ -2,15 +2,35 @@
 
 #include "theme/colors.hpp"
 #include "theme/theme-file.hpp"
+#include <QString>
+#include <QStringView>
+#include <array>
+
+#ifdef Q_OS_WIN
+namespace syntax {
+
+struct StyleInfo {
+  QString color;
+  bool bold = false;
+  bool italic = false;
+};
+
+struct StyleMap {};
+
+inline StyleMap buildStyleMap(const ThemeFile &) { return {}; }
+
+inline QString highlight(const QString &code, const QString &, const StyleMap &, bool) {
+  return QStringLiteral("<pre>") + code.toHtmlEscaped() + QStringLiteral("</pre>");
+}
+
+} // namespace syntax
+#else
 #include <KSyntaxHighlighting/AbstractHighlighter>
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Format>
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/State>
 #include <KSyntaxHighlighting/Theme>
-#include <QString>
-#include <QStringView>
-#include <array>
 
 namespace syntax {
 
@@ -177,3 +197,4 @@ inline QString highlight(const QString &code, const QString &language, const Sty
 }
 
 } // namespace syntax
+#endif

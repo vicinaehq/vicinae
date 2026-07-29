@@ -1,7 +1,6 @@
 #pragma once
 #include "list-view-host.hpp"
 #include "switch-windows-model.hpp"
-#include <chrono>
 
 class SwitchWindowsViewHost : public ListViewHost {
   Q_OBJECT
@@ -15,5 +14,4 @@ private:
   void refreshWindows();
 
   SwitchWindowsSection m_section;
-  std::chrono::time_point<std::chrono::steady_clock> m_lastFetch{};
 };

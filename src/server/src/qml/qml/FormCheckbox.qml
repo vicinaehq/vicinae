@@ -3,7 +3,7 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    implicitHeight: 28
+    implicitHeight: Math.max(28, contentRow.implicitHeight)
     Layout.fillWidth: true
     activeFocusOnTab: !readOnly
 
@@ -11,6 +11,7 @@ Item {
     property string label: ""
     property bool readOnly: false
     property bool hasError: false
+    property bool filled: false
 
     signal toggled
 
@@ -30,7 +31,18 @@ Item {
         onClicked: root.toggle()
     }
 
+    FormInputBackground {
+        width: 16
+        height: 16
+        radius: 4
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        filled: root.filled && !root.checked
+        opacity: root.readOnly ? 0.5 : 1.0
+    }
+
     RowLayout {
+        id: contentRow
         anchors.fill: parent
         spacing: 8
         opacity: root.readOnly ? 0.5 : 1.0
@@ -42,7 +54,7 @@ Item {
             radius: 4
             Layout.alignment: Qt.AlignVCenter
             color: root.checked ? Theme.accent : "transparent"
-            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : root.activeFocus ? Theme.inputBorderFocus : root.checked ? Theme.accent : Theme.inputBorder, Config.windowOpacity)
+            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : root.activeFocus ? Theme.inputBorderFocus : root.checked ? Theme.accent : Theme.inputBorder, Config.surfaceOpacity)
             border.width: 1
 
             Text {
@@ -60,6 +72,7 @@ Item {
             text: root.label
             color: Theme.foreground
             font.pointSize: Theme.regularFontSize
+            wrapMode: Text.Wrap
             Layout.fillWidth: true
         }
     }

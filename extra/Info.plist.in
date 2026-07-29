@@ -11,7 +11,7 @@
 	<key>CFBundleIconFile</key>
 	<string>vicinae</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.vicinaehq.Vicinae</string>
+	<string>@VICINAE_BUNDLE_ID@</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -22,6 +22,21 @@
 	<string>@VICINAE_BUNDLE_SHORT_VERSION@</string>
 	<key>CFBundleVersion</key>
 	<string>@VICINAE_BUNDLE_VERSION@</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>@VICINAE_BUNDLE_ID@.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>vicinae</string>
+				<string>raycast</string>
+				<string>com.raycast</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.4</string>
 	<key>LSApplicationCategoryType</key>
@@ -34,6 +49,8 @@
 	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Vicinae uses Apple Events to perform system power actions such as restart, shut down, and log out.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © Vicinae contributors. Licensed under GPL-3.0.</string>
 </dict>

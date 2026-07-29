@@ -1,12 +1,14 @@
 #pragma once
-#include "view-scope.hpp"
-#include "view-utils.hpp"
+#include <QMimeData>
 #include <QVariant>
+
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string_view>
 
+#include "view-scope.hpp"
+#include "view-utils.hpp"
 class ActionPanelState;
 
 class GridSource {
@@ -20,6 +22,11 @@ public:
   virtual int count() const = 0;
   virtual std::optional<int> columns() const { return std::nullopt; }
   virtual std::optional<double> aspectRatio() const { return std::nullopt; }
+  virtual std::optional<double> inset() const { return std::nullopt; }
+  virtual std::optional<ImageURL> itemIcon(int) const { return std::nullopt; }
+
+  virtual bool isDraggable(int) const { return false; }
+  virtual std::unique_ptr<QMimeData> dragMimeData(int) const { return {}; }
 
   virtual std::unique_ptr<ActionPanelState> actionPanel(int i) const = 0;
   virtual void onSelected(int) {}

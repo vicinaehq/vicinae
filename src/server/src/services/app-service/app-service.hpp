@@ -77,6 +77,7 @@ public:
   std::shared_ptr<AbstractApplication> findDefaultOpener(const QString &target) const;
   void setAdditionalSearchPaths(const std::vector<std::filesystem::path> &paths);
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const;
+  bool openLocation(const AbstractApplication &app) const;
 
   bool openTarget(const QString &target) const;
   bool openTarget(const QUrl &target) const;

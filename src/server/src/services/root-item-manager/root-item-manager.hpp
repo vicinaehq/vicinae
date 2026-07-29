@@ -6,6 +6,7 @@
 #include "navigation-controller.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/local-storage/scoped-local-storage.hpp"
+#include "services/root-item-manager/search-history.hpp"
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "preference.hpp"
@@ -15,6 +16,7 @@
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
+#include <qmimedata.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
@@ -54,6 +56,9 @@ public:
   virtual QString title() const = 0;
 
   virtual ImageURL iconUrl() const = 0;
+
+  virtual bool isDraggable() const { return false; }
+  virtual std::unique_ptr<QMimeData> dragMimeData() const { return {}; }
 
   /**
    * Whether the item can be selected as a fallback command or not
@@ -158,6 +163,7 @@ public:
 
   virtual QString uniqueId() const = 0;
   virtual QString displayName() const = 0;
+  virtual QString description() const { return {}; }
   virtual ImageURL icon() const = 0;
   virtual Type type() const = 0;
 
@@ -244,6 +250,18 @@ public:
     std::reference_wrapper<ItemPtr> item;
   };
 
+  // A provider together with the items that matched a query, used by views that
+  // present results grouped under their provider (e.g. the settings sidebar).
+  struct ProviderSearchItem {
+    ItemPtr item;
+    bool enabled = true;
+  };
+  struct ProviderSearchGroup {
+    RootProvider *provider = nullptr;
+    double score = 0;
+    std::vector<ProviderSearchItem> items;
+  };
+
   RootItemManager(config::Manager &config, LocalStorageService &storage);
 
   static glz::generic::object_t transformPreferenceValues(const QJsonObject &preferences);
@@ -277,6 +295,7 @@ public:
   std::vector<std::shared_ptr<RootItem>> queryFavorites(std::optional<int> limit = {});
   bool resetRanking(const EntrypointId &id);
   bool registerVisit(const EntrypointId &id);
+  SearchHistory &searchHistory() { return m_searchHistory; }
   bool setItemAsFavorite(const EntrypointId &item, bool value = true);
   bool setProviderEnabled(const QString &providerId, bool value);
   bool disableItem(const EntrypointId &id);
@@ -315,6 +334,13 @@ public:
               const RootItemPrefixSearchOptions &opts = {});
   std::vector<ScoredItem> search(const QString &query, const RootItemPrefixSearchOptions &opts = {});
 
+  /**
+   * Like search(), but grouped by provider: an item also matches when its
+   * provider's name does, so a provider name lists all its commands.
+   */
+  std::vector<ProviderSearchGroup> searchGroupedByProvider(const QString &query,
+                                                           const RootItemPrefixSearchOptions &opts = {});
+
   RootItem *findItemById(const EntrypointId &id) const;
   bool pruneProvider(const QString &id);
 
@@ -339,4 +365,5 @@ private:
   LocalStorageService &m_storage;
   std::vector<SearchableRootItem> m_items;
   VisitTracker m_visitTracker;
+  SearchHistory m_searchHistory;
 };

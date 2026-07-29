@@ -3,7 +3,9 @@ vicinae is a multi purpose launcher built with QtQuick. This file focuses on exp
 It uses QML for presentation and C++ for business logic.
 React/Typescript is used to power the extension API.
 
-Build debug: `make debug`.
+For development: 
+- On UNIXes, use `make debug`.
+- On Windows use `cmake --preset windows-relwithdebinfo` (full debug builds only when needed)
 
 ## Separation of concerns
 
@@ -20,6 +22,8 @@ We use C++23 so we have access to most modern C++ features.
 Here are a few rules to keep in mind:
 
 - Lack of value: use `std::optional` instead of arbitrary value discriminants such as the empty string. If this is not possible or goes against a commonly used convention, respect the convention first, no shoehorning. If we are dealing with raw pointers, the nullable component is already part of it so no need to add a layer of indirection.
+- Prefer `std::array` to C arrays where it makes sense. You can use `std::to_array` to initialize them automatically sized from an initializer list.
+- use `constexpr` and `consteval` as much as possible, we want to move what we can at compile time.
 - Avoid raw pointers: unless we are dealing with QT's ownership model or a C API. For QT classes that are not QObjects, you should probably use standard smart pointers as recommended in modern QT. 
 - QObjects must be deleted using `deleteLater` and never raw `delete`, as this can cause memory corruption with signal and slots. Calling `delete` on a `QObject` is a **STRONG** code smell.
 - Watch for implicit copies: avoid copies as much as possible, use non owning containers when you can (`std::span`, `std::string_view`, `QStringView`) and just `std::move` the data when applicable. When copy is the safest option, use copy: don't go out of your way to respect this rule.
@@ -44,6 +48,11 @@ Here are a few rules to keep in mind:
 
 We format all our code using `clang-format`. We have a `make format` rule that will automatically format the entire codebase if necessary.
 
+To format the codebase:
+
+- On UNIXes, run `make format`
+- On Windows, run the PowerShell script at `.\scripts\format.ps1`
+
 ALWAYS run `make format` at the end of a development session to make sure formatting is properly applied to all files.
 
 All our code is also linted with `clang-tidy` in order to make detecting common mistakes easier. `clang-tidy` violations may be acceptable under some circumstances, and should be implemented using `//NOLINTBEGIN(<rule>)` and `NOLINTEND(<rule>)`. comments. Inline `//NOLINT` comments are generally discouraged because they can break after formatting. If a nolint directive does not work (e.g we're dealing with an internal STL false positive) then you can do a local override of the `clang-tidy` configuration to explicitly disable the faulty check.
@@ -55,6 +64,23 @@ When writing JavaScript inside QML files, use ES6 syntax to the largest extent p
 Try to keep the amount of logic in these files small. Logic in QML is only for presentation concerns: metrics computation, hover on signal, etc...
 
 Some configuration and theming options may need to be accessed directly in QML. We expose a global config and theme bridges for this use case.
+
+## Internationalization
+
+User-visible natural-language strings must be marked for translation. English source text is the translation key.
+
+- QML: wrap literals in `qsTr("...")`.
+- C++ classes with `Q_OBJECT`: use `tr("...")`.
+- C++ classes without `Q_OBJECT`: NEVER call the inherited `tr()` (it resolves to the wrong context at runtime). Add `Q_DECLARE_TR_FUNCTIONS(ClassName)` at the top of the class, or for a single string use `QCoreApplication::translate("ClassName", "...")`.
+- Never store translated strings in `static`/`constexpr` data. Plurals use `tr("%n item(s)", nullptr, n)`. Never concatenate translated fragments: use `%1` placeholders with `.arg()`.
+- Preserve brand and product names such as "Raycast Store", "Raycast Compat", and "Extension Store". Translate the surrounding prose, not the name itself.
+- Never translate stable technical notation such as ids, acronyms, unit symbols (`MB`, `GB`), filenames, protocol names, icon names (`ImageURL::builtin`), log output, storage keys, or strings compared as discriminants.
+- Use natural, concise language appropriate for a desktop launcher. Prefer familiar UI wording over literal translations, bureaucratic language, or an excessively formal or polite tone.
+- Use the platform's official localized terminology for operating-system features and settings pages.
+- Use stable explicit translation contexts for shared domain strings. Add translator notes or disambiguation only when the source text is genuinely ambiguous.
+- Source text and location metadata in `src/server/translations/*.ts` are generated: never hand-edit them. Edit
+  translations with Qt Linguist. Contributors are not required to translate new strings or include regenerated catalogs in
+  feature PRs. Maintainers periodically run `make update-translations` in dedicated localization updates.
 
 ## General guidelines
 

@@ -5,7 +5,7 @@ SearchableDropdown {
     compact: true
     minimumWidth: 100
 
-    readonly property var _options: ["All", "Text", "Images", "Links", "Files"]
+    readonly property var _options: [qsTr("All"), qsTr("Text"), qsTr("Images"), qsTr("Links"), qsTr("Files")]
 
     items: [
         {

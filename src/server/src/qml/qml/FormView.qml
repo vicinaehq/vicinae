@@ -15,6 +15,10 @@ Flickable {
     property real padding: 16
     property real maxContentWidth: Infinity
 
+    ViciWheelHandler {
+        target: root
+    }
+
     function focusFirst() {
         _focusFirstIn(layout);
     }

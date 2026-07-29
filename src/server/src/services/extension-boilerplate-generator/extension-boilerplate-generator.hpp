@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include <QCoreApplication>
 #include <expected>
 #include <qstring.h>
 #include <filesystem>
@@ -7,7 +8,6 @@
 struct ExtensionBoilerplateConfig {
   struct CommandConfig {
     QString title;
-    QString subtitle;
     QString description;
     QString templateId;
   };
@@ -25,6 +25,8 @@ struct CommandBoilerplate {
 };
 
 class ExtensionBoilerplateGenerator {
+  Q_DECLARE_TR_FUNCTIONS(ExtensionBoilerplateGenerator)
+
   // returns the generated extension path or an error
   using BoilerplateGenRes = std::expected<std::filesystem::path, QString>;
 

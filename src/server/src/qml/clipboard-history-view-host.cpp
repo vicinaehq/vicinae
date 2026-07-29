@@ -4,11 +4,29 @@
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "utils/utils.hpp"
+#include "vicinae.hpp"
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
-#include <QStandardPaths>
 #include <QUrl>
+
+static QString kindLabel(ClipboardOfferKind kind) {
+  switch (kind) {
+  case ClipboardOfferKind::Text:
+    return QCoreApplication::translate("clipboard-history-view-host", "Text");
+  case ClipboardOfferKind::Link:
+    return QCoreApplication::translate("clipboard-history-view-host", "Link");
+  case ClipboardOfferKind::Image:
+    return QCoreApplication::translate("clipboard-history-view-host", "Image");
+  case ClipboardOfferKind::File:
+    return QCoreApplication::translate("clipboard-history-view-host", "File");
+  case ClipboardOfferKind::Unknown:
+  case ClipboardOfferKind::Count:
+    break;
+  }
+  return QCoreApplication::translate("clipboard-history-view-host", "Unknown");
+}
 
 static std::optional<ClipboardOfferKind> kindFromFilterIndex(int index) {
   switch (index) {
@@ -80,12 +98,13 @@ void ClipboardHistoryViewHost::initialize() {
   m_section.setDefaultAction(defaultActionStr == "paste" ? ClipboardHistorySection::DefaultAction::Paste
                                                          : ClipboardHistorySection::DefaultAction::Copy);
 
-  setSearchPlaceholderText("Browse clipboard history...");
+  setSearchPlaceholderText(tr("Browse clipboard history..."));
 
   m_canToggleMonitoring = m_clipman->supportsMonitoring();
   if (!m_canToggleMonitoring) {
-    m_clipboardStatusText = QStringLiteral("Clipboard monitoring unavailable");
-    m_clipboardStatusIcon = qml::imageSourceFor(ImageURL::builtin("warning").setFill(SemanticColor::Red));
+    m_clipboardStatusText = tr("Clipboard monitoring unavailable");
+    m_clipboardStatusIcon =
+        qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Warning).setFill(SemanticColor::Red));
   } else {
     handleMonitoringChanged(m_clipman->monitoring());
   }
@@ -111,7 +130,10 @@ void ClipboardHistoryViewHost::initialize() {
   }
 }
 
-void ClipboardHistoryViewHost::loadInitialData() { m_controller->setFilter(searchText()); }
+void ClipboardHistoryViewHost::loadInitialData() {
+  m_controller->setFilter(searchText());
+  m_controller->reloadSearch();
+}
 
 void ClipboardHistoryViewHost::textChanged(const QString &text) {
   m_model.setSelectFirstOnReset(true);
@@ -148,19 +170,19 @@ void ClipboardHistoryViewHost::setKindFilter(int kind) {
 
 void ClipboardHistoryViewHost::handleMonitoringChanged(bool monitoring) {
   if (monitoring) {
-    m_clipboardStatusText = QStringLiteral("Pause clipboard");
+    m_clipboardStatusText = tr("Pause clipboard");
     m_clipboardStatusIcon =
-        qml::imageSourceFor(ImageURL::builtin("pause-filled").setFill(SemanticColor::Accent));
+        qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::PauseFilled).setFill(SemanticColor::Accent));
   } else {
-    m_clipboardStatusText = QStringLiteral("Resume clipboard");
+    m_clipboardStatusText = tr("Resume clipboard");
     m_clipboardStatusIcon =
-        qml::imageSourceFor(ImageURL::builtin("play-filled").setFill(SemanticColor::Green));
+        qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::PlayFilled).setFill(SemanticColor::Green));
   }
   emit clipboardStatusChanged();
 }
 
 void ClipboardHistoryViewHost::handleDataRetrieved(int totalCount) {
-  m_itemCountText = QString("%1 Items").arg(totalCount);
+  m_itemCountText = tr("%n Items", nullptr, totalCount);
   emit itemCountTextChanged();
 }
 
@@ -171,13 +193,14 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   m_detailErrorTitle.clear();
   m_detailErrorDescription.clear();
 
-  m_detailMimeType = entry.mimeType;
+  m_detailType = kindLabel(entry.kind);
   m_detailSize = formatSize(entry.size);
   m_detailCopiedAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt).toString();
   m_detailMd5 = entry.md5sum;
 
   if (entry.encryption != ClipboardEncryptionType::None) {
-    m_detailEncryptionIcon = qml::imageSourceFor(ImageURL::builtin("key").setFill(SemanticColor::Green));
+    m_detailEncryptionIcon =
+        qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Key).setFill(SemanticColor::Green));
   } else {
     m_detailEncryptionIcon.clear();
   }
@@ -187,18 +210,22 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
     m_hasDetailError = true;
     switch (data.error()) {
     case ClipboardService::OfferDecryptionError::DecryptionFailed:
-      m_detailErrorTitle = QStringLiteral("Decryption failed");
-      m_detailErrorDescription = QStringLiteral(
-          "Vicinae could not decrypt the data for this selection. This is most likely caused by a "
-          "keychain software change. To fix this disable encryption in the clipboard extension "
-          "settings.");
+      m_detailErrorTitle = tr("Decryption failed");
+      m_detailErrorDescription =
+          tr("Vicinae could not decrypt the data for this selection. It was most likely encrypted "
+             "with a different key and cannot be recovered. You can remove this entry from the "
+             "history.");
+      break;
+    case ClipboardService::OfferDecryptionError::DataUnavailable:
+      m_detailErrorTitle = tr("Data unavailable");
+      m_detailErrorDescription = tr("The data for this selection could not be found on disk.");
       break;
     case ClipboardService::OfferDecryptionError::DecryptionRequired:
-      m_detailErrorTitle = QStringLiteral("Data is encrypted");
-      m_detailErrorDescription = QStringLiteral(
-          "Data for this selection was previously encrypted but the clipboard is not currently "
-          "configured to use encryption. You should be able to fix this by enabling it in the "
-          "clipboard extension settings.");
+      m_detailErrorTitle = tr("Data is encrypted");
+      m_detailErrorDescription =
+          tr("Data for this selection was previously encrypted but the clipboard is not currently "
+             "configured to use encryption. You should be able to fix this by enabling it in the "
+             "settings.");
       break;
     }
     m_hasDetail = true;
@@ -214,9 +241,9 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
     auto paths = text.split("\r\n", Qt::SkipEmptyParts);
     if (paths.size() == 1) {
       QUrl const url(paths.at(0));
-      if (url.scheme() == "file") {
+      if (url.isLocalFile()) {
         std::error_code ec;
-        std::filesystem::path const path = url.path().toStdString();
+        std::filesystem::path const path = url.toLocalFile().toStdString();
         if (std::filesystem::is_regular_file(path, ec)) {
           auto preview = qml::resolveFilePreview(path, m_mimeDb);
           m_detailImageSource = preview.imageSource;
@@ -230,7 +257,7 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   }
 
   if (mime.startsWith("image/")) {
-    auto const cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    auto const cacheDir = QString::fromStdString(Omnicast::cacheDir().string());
     QDir().mkpath(cacheDir);
     QString const path = cacheDir + QStringLiteral("/clipboard-") + entry.md5sum;
     QFile f(path);
@@ -262,7 +289,7 @@ void ClipboardHistoryViewHost::clearDetail() {
   m_hasDetailError = false;
   m_detailTextContent.clear();
   m_detailImageSource.clear();
-  m_detailMimeType.clear();
+  m_detailType.clear();
   m_detailSize.clear();
   m_detailCopiedAt.clear();
   m_detailMd5.clear();

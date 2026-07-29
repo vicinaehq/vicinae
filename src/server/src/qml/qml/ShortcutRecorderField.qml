@@ -14,11 +14,14 @@ Popup {
     height: 80
     focus: true
     closePolicy: Popup.CloseOnPressOutside
-    popupType: Popup.Window
+    popupType: Platform.preferItemPopup("popover") ? Popup.Item : Popup.Window
+    PopupPlacement.alignment: Qt.AlignHCenter | (recorder._below ? Qt.AlignBottom : Qt.AlignTop)
     padding: 10
 
+    property bool _below: false
+
     property var _currentShortcutTokens: []
-    property string _statusText: "Recording..."
+    property string _statusText: qsTr("Recording...")
     property color _statusColor: Theme.foreground
 
     property bool _justClosed: false
@@ -40,13 +43,16 @@ Popup {
             return false;
 
         _currentShortcutTokens = [];
-        _statusText = "Recording...";
+        _statusText = qsTr("Recording...");
         _statusColor = Theme.foreground;
         closeTimer.stop();
 
-        var pos = targetItem.mapToItem(recorder.parent, 0, 0);
-        recorder.x = pos.x + targetItem.width / 2 - recorder.width / 2;
-        recorder.y = below ? pos.y + targetItem.height + 10 : pos.y - recorder.height - 10;
+        // Parent to the trigger so the native popup anchors to it; x/y only
+        // apply on non-Wayland platforms.
+        recorder._below = !!below;
+        recorder.parent = targetItem;
+        recorder.x = targetItem.width / 2 - recorder.width / 2;
+        recorder.y = below ? targetItem.height + 10 : -recorder.height - 10;
         recorder.open();
         return true;
     }
@@ -66,12 +72,13 @@ Popup {
     Component.onDestruction: GlobalShortcuts.setCapturing(false)
 
     background: Rectangle {
-        radius: 8
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.95)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
-        BackgroundEffect.enabled: Config.blurEnabled
-        BackgroundEffect.radius: 8
+        readonly property bool csd: recorder.popupType === Popup.Item || Platform.supports("clientSideDecorations")
+        readonly property real bgOpacity: recorder.popupType === Popup.Window ? Config.popupOpacity : 1
+        radius: csd ? Math.min(Config.borderRounding, 15) : 0
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bgOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, bgOpacity)
+        border.width: csd ? 1 : 0
+        PopupMaterial {}
     }
 
     contentItem: FocusScope {
@@ -83,7 +90,7 @@ Popup {
             event.accepted = true;
             closeTimer.stop();
 
-            var key = event.key;
+            var key = Keyboard.normalizeKey(event.key);
             var mods = event.modifiers;
 
             var isModKey = key === Qt.Key_Shift || key === Qt.Key_Control || key === Qt.Key_Alt || key === Qt.Key_Meta;
@@ -98,7 +105,7 @@ Popup {
                 recorder._currentShortcutTokens = recorder.shortcutDisplayProvider(key, mods);
 
             if (isModKey) {
-                recorder._statusText = "Recording...";
+                recorder._statusText = qsTr("Recording...");
                 recorder._statusColor = Theme.foreground;
                 return;
             }
@@ -112,7 +119,7 @@ Popup {
                 }
             }
 
-            recorder._statusText = "Keybind updated";
+            recorder._statusText = qsTr("Keybind updated");
             recorder._statusColor = Theme.toastSuccess;
             closeTimer.start();
             recorder.shortcutCaptured(key, mods);

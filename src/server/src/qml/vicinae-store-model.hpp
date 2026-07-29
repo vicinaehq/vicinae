@@ -46,7 +46,7 @@ public:
 protected:
   QString displayTitle(const VicinaeStoreEntry &entry) const override;
   QString displaySubtitle(const VicinaeStoreEntry &entry) const override;
-  QString displayIconSource(const VicinaeStoreEntry &entry) const override;
+  std::optional<ImageURL> displayIcon(const VicinaeStoreEntry &entry) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const VicinaeStoreEntry &entry) const override;
 
 private:

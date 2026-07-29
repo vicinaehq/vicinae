@@ -471,7 +471,7 @@ void WindowManager::setActiveWorkspace(const QString &id, bool focused) {
   for (auto &workspace : m_workspaces) {
     auto niriWorkspace = std::static_pointer_cast<Workspace>(workspace);
     if (niriWorkspace->id() == id) {
-      targetMonitor = niriWorkspace->monitor();
+      targetMonitor = niriWorkspace->monitor().value_or(QString());
       break;
     }
   }

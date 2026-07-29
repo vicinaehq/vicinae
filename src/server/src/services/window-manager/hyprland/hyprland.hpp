@@ -1,5 +1,5 @@
 #pragma once
-#include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/abstract-wayland-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-listener.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <QGuiApplication>
@@ -20,7 +20,10 @@
 class HyprlandWindow : public AbstractWindowManager::AbstractWindow {
 public:
   QString id() const override { return m_id; }
-  std::optional<int> pid() const override { return m_pid; }
+  std::optional<int> pid() const override {
+    if (m_pid <= 0) return std::nullopt;
+    return m_pid;
+  }
   QString title() const override { return m_title; }
   QString wmClass() const override { return m_wmClass; }
   std::optional<AbstractWindowManager::WindowBounds> bounds() const override { return m_bounds; }
@@ -34,11 +37,11 @@ private:
   QString m_title;
   QString m_wmClass;
   int m_workspaceId;
-  int m_pid;
+  int m_pid = 0;
   AbstractWindowManager::WindowBounds m_bounds;
 };
 
-class HyprlandWindowManager : public AbstractWindowManager {
+class HyprlandWindowManager : public AbstractWaylandWindowManager {
 public:
   HyprlandWindowManager();
 

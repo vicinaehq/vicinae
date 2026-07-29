@@ -2,6 +2,8 @@
 
 #ifdef Q_OS_MACOS
 #include "services/app-runtime/macos/mac-app-runtime.hpp"
+#elif defined(Q_OS_WIN)
+#include "services/app-runtime/windows/win-app-runtime.hpp"
 #else
 #include "services/app-runtime/linux/linux-app-runtime.hpp"
 #endif
@@ -18,10 +20,16 @@ std::shared_ptr<AbstractApplication> AppRuntime::frontmostApp() const { return m
 
 bool AppRuntime::activate(const AbstractApplication &app) const { return m_provider->activate(app); }
 
+bool AppRuntime::quit(const AbstractApplication &app) const { return m_provider->quit(app); }
+
+bool AppRuntime::forceQuit(const AbstractApplication &app) const { return m_provider->forceQuit(app); }
+
 std::unique_ptr<AbstractAppRuntime> AppRuntime::createProvider(WindowManager &wm, AppService &appService) {
 #ifdef Q_OS_MACOS
   (void)wm;
   return std::make_unique<MacAppRuntime>(appService);
+#elif defined(Q_OS_WIN)
+  return std::make_unique<WindowsAppRuntime>(wm, appService);
 #else
   return std::make_unique<LinuxAppRuntime>(wm, appService);
 #endif

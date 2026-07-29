@@ -47,5 +47,7 @@ public:
   bool isAlive() const override;
   bool isActivatable() const override;
   int activationPriority() const override;
-  bool setClipboardContent(QMimeData *data) override;
+
+private:
+  bool writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) override;
 };

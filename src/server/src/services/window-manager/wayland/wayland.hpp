@@ -1,12 +1,15 @@
 #pragma once
-#include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/abstract-wayland-window-manager.hpp"
 
 class WaylandWindowManager;
 
 class WaylandWindow : public AbstractWindowManager::AbstractWindow {
 public:
   QString id() const override { return m_id; }
-  std::optional<int> pid() const override { return m_pid; }
+  std::optional<int> pid() const override {
+    if (m_pid <= 0) return std::nullopt;
+    return m_pid;
+  }
   QString title() const override { return m_title; }
   QString wmClass() const override { return m_wmClass; }
 
@@ -26,7 +29,7 @@ public:
   int m_pid;
 };
 
-class WaylandWindowManager : public AbstractWindowManager {
+class WaylandWindowManager : public AbstractWaylandWindowManager {
 public:
   QString id() const override;
   QString displayName() const override;
@@ -34,7 +37,7 @@ public:
 
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
   bool supportsFocusTracking() const override { return true; }
-  bool focusNullsOnLayerGrab() const override { return true; }
+  bool supportsFocusHandoffDetection() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
 

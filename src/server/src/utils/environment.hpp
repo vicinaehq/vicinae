@@ -1,18 +1,32 @@
 #pragma once
+#include <QtGlobal>
+#ifndef Q_OS_WIN
 #include "xdgpp/env/env.hpp"
+#endif
 #include <QString>
 #include <QGuiApplication>
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QStandardPaths>
 #include <algorithm>
-#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <qtenvironmentvariables.h>
 
+#ifdef Q_OS_LINUX
+#include "internal/wayland/globals.hpp"
+#endif
+
 namespace Environment {
+
+#ifdef Q_OS_WIN
+inline std::vector<std::string> platformDesktopNames() { return {}; }
+inline std::vector<std::filesystem::path> platformDataDirs() { return {}; }
+#else
+inline auto platformDesktopNames() { return xdgpp::currentDesktop(); }
+inline auto platformDataDirs() { return xdgpp::dataDirs(); }
+#endif
 
 inline bool isGnomeEnvironment() {
   const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
@@ -43,32 +57,42 @@ static inline bool containsIgnoreCase(const std::vector<std::string> &desktops, 
   });
 }
 
-inline bool isCosmicDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "cosmic"); }
-inline bool isNiriCompositor() { return containsIgnoreCase(xdgpp::currentDesktop(), "niri"); }
-inline bool isHyprlandCompositor() { return containsIgnoreCase(xdgpp::currentDesktop(), "Hyprland"); }
-inline bool isPlasmaDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "kde"); }
+inline bool isCosmicDesktop() { return containsIgnoreCase(platformDesktopNames(), "cosmic"); }
+inline bool isNiriCompositor() { return containsIgnoreCase(platformDesktopNames(), "niri"); }
+inline bool isHyprlandCompositor() { return containsIgnoreCase(platformDesktopNames(), "Hyprland"); }
+inline bool isPlasmaDesktop() { return containsIgnoreCase(platformDesktopNames(), "kde"); }
 inline bool isWaylandPlasmaDesktop() { return isWaylandSession() && isPlasmaDesktop(); }
-inline bool isGnomeDesktop() { return containsIgnoreCase(xdgpp::currentDesktop(), "gnome"); }
+inline bool isGnomeDesktop() { return containsIgnoreCase(platformDesktopNames(), "gnome"); }
+inline bool isCinnamonDesktop() {
+  // "X-Cinnamon" is the pre-spec value (used by Linux Mint); "Cinnamon" is the registered one.
+  return containsIgnoreCase(platformDesktopNames(), "x-cinnamon") ||
+         containsIgnoreCase(platformDesktopNames(), "cinnamon");
+}
+inline bool isMateDesktop() { return containsIgnoreCase(platformDesktopNames(), "mate"); }
+inline bool isXfceDesktop() { return containsIgnoreCase(platformDesktopNames(), "xfce"); }
 
 // used mostly to exclude cosmic which's implementation is currently broken
 inline bool isLayerShellSupported() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
+#elifdef Q_OS_LINUX
+  return Wayland::Globals::layerShell() && !isCosmicDesktop();
+#else
+  return false;
 #endif
-  return isWaylandSession() && !isCosmicDesktop() && !isGnomeEnvironment();
 }
 
-inline bool isHudDisabled() { return !isLayerShellSupported(); }
-
-/**
- * App image directory if we are running in an appimage.
- * We typically use this in order to find the bundled
- * node binary, instead of trying to launch the system one.
- */
-inline std::optional<std::filesystem::path> appImageDir() {
-  if (auto appdir = getenv("APPDIR")) return appdir;
-  return std::nullopt;
+inline bool isHudSupported() {
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
+  return true;
+#else
+  // if layer shell is not supported, there doesn't seem to be an easy way for us to create
+  // a window that doesn't steal focus.
+  return isLayerShellSupported();
+#endif
 }
+
+inline bool isHudDisabled() { return !isHudSupported(); }
 
 /**
  * Optional override of the `node` executable to use to spawn the
@@ -79,20 +103,18 @@ inline std::optional<std::filesystem::path> nodeBinaryOverride() {
   return std::nullopt;
 }
 
-inline bool isAppImage() { return appImageDir().has_value(); }
-
 inline QStringList fallbackIconSearchPaths() {
   QStringList list;
-  auto dirs = xdgpp::dataDirs();
+  auto dirs = platformDataDirs();
 
   list.reserve(dirs.size() * 2);
 
   for (const auto &dir : dirs) {
-    list << (dir / "pixmaps").c_str();
+    list << QString::fromStdString((dir / "pixmaps").string());
   }
 
   for (const auto &dir : dirs) {
-    list << (dir / "icons").c_str();
+    list << QString::fromStdString((dir / "icons").string());
   }
 
   return list;
@@ -103,10 +125,23 @@ inline QString vicinaeApiBaseUrl() {
   return "https://api.vicinae.com/v1";
 }
 
+inline QString updateFeedUrl() {
+  if (const char *url = getenv("VICINAE_UPDATE_FEED_URL")) { return url; }
+  return "https://api.github.com/repos/vicinaehq/vicinae/releases/latest";
+}
+
+inline std::optional<std::string> updateVersionOverride() {
+  if (const char *version = getenv("VICINAE_UPDATE_FORCE_VERSION")) { return version; }
+  return std::nullopt;
+}
+
 /**
  * Gets human-readable environment description
  */
 inline QString getEnvironmentDescription() {
+#ifdef Q_OS_MACOS
+  return QStringLiteral("Aqua");
+#else
   QString desc;
   const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
 
@@ -125,6 +160,7 @@ inline QString getEnvironmentDescription() {
   }
 
   return desc;
+#endif
 }
 
 inline std::string chassisType() {

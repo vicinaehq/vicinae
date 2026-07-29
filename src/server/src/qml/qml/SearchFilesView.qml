@@ -7,16 +7,16 @@ Item {
     required property var host
 
     function moveUp() {
-        listView.moveUp();
+        return listView.moveUp();
     }
     function moveDown() {
-        listView.moveDown();
+        return listView.moveDown();
     }
     function moveSectionUp() {
-        listView.moveSectionUp();
+        return listView.moveSectionUp();
     }
     function moveSectionDown() {
-        listView.moveSectionDown();
+        return listView.moveSectionDown();
     }
 
     CommandListView {
@@ -34,19 +34,19 @@ Item {
         DetailPanel {
             metadata: [
                 {
-                    label: "Name",
+                    label: qsTr("Name"),
                     value: root.host.detailName
                 },
                 {
-                    label: "Where",
+                    label: qsTr("Path"),
                     value: root.host.detailPath
                 },
                 {
-                    label: "Type",
+                    label: qsTr("Type"),
                     value: root.host.detailMimeType
                 },
                 {
-                    label: "Last modified",
+                    label: qsTr("Last modified"),
                     value: root.host.detailLastModified
                 }
             ]

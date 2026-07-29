@@ -4,16 +4,11 @@ import { access } from "fs/promises";
 import { kill } from "process";
 
 const platformDataDir = () => {
-	const platform = process.platform;
-
-	if (platform === "linux")
-		return process.env.XDG_DATA_HOME || join(homedir(), ".local", "share");
-	if (platform === "darwin")
-		return join(homedir(), "Library", "Application Support");
-	if (platform === "win32")
+	if (process.platform === "win32")
 		return process.env.APPDATA || join(homedir(), "AppData", "Roaming");
+	if (process.platform === "darwin") return join(homedir(), ".local", "share");
 
-	return join(homedir(), ".data");
+	return process.env.XDG_DATA_HOME || join(homedir(), ".local", "share");
 };
 
 export const dataDir = () => join(platformDataDir(), "vicinae");

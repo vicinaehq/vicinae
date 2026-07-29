@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "extensions/wm/wm-extension.hpp"
+#include "services/clipboard/clipboard-content.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
@@ -15,40 +16,6 @@
 #include <qmimedatabase.h>
 #include <qstringview.h>
 #include <QTimer>
-#include <qt6keychain/keychain.h>
-
-namespace Clipboard {
-[[maybe_unused]] static const char *CONCEALED_MIME_TYPE = "vicinae/concealed";
-
-using NoData = std::monostate;
-struct File {
-  std::filesystem::path path;
-};
-struct Text {
-  QString text;
-};
-struct Html {
-  QString html;
-  std::optional<QString> text;
-};
-
-struct SelectionRecordHandle {
-  QString id;
-};
-
-struct CopyOptions {
-  bool concealed = false;
-};
-
-using Content = std::variant<NoData, File, Text, Html, SelectionRecordHandle, ClipboardSelection>;
-
-struct ReadContent {
-  QString text;
-  std::optional<QString> html;
-  std::optional<QString> file;
-};
-
-}; // namespace Clipboard
 
 class ClipboardService : public QObject, public NonCopyable {
   Q_OBJECT
@@ -70,9 +37,10 @@ public:
   enum class OfferDecryptionError {
     DecryptionRequired, // if encryption is disabled and data was previous encrypted
     DecryptionFailed,
+    DataUnavailable,
   };
 
-  ClipboardService(const std::filesystem::path &path);
+  ClipboardService(const std::filesystem::path &path, std::optional<db::EncryptionKey> key = std::nullopt);
 
   static QString readText();
   static Clipboard::ReadContent readContent();
@@ -95,6 +63,7 @@ public:
   bool copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyFile(const std::filesystem::path &path,
                 const Clipboard::CopyOptions &options = {.concealed = false});
+  bool copyUrls(const std::vector<QUrl> &urls, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyContent(const Clipboard::Content &content,
                    const Clipboard::CopyOptions options = {.concealed = false});
   void setRecordAllOffers(bool value);
@@ -114,15 +83,18 @@ public:
   bool supportsMonitoring() const;
   bool monitoring() const;
   void setMonitoring(bool value);
-  void setEncryption(bool value);
+  void setEncryptionKey(std::optional<db::EncryptionKey> key);
   void setIgnorePasswords(bool value);
   bool isEncryptionReady() const;
 
 private:
+  ClipboardDatabase openDatabase() const { return ClipboardDatabase(m_dbKey); }
+
   std::unique_ptr<ClipboardEncrypter> m_encrypter;
 
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;
+  std::optional<db::EncryptionKey> m_dbKey;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
 
   static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
@@ -134,8 +106,6 @@ private:
    */
   QByteArray computeSelectionHash(const ClipboardSelection &selection) const;
   bool isClearSelection(const ClipboardSelection &selection) const;
-  static bool isConcealedSelection(const ClipboardSelection &selection);
-  static bool isPasswordSelection(const ClipboardSelection &selection);
 
   /**
    * Sanitize the passed selection by removing duplicate offers.

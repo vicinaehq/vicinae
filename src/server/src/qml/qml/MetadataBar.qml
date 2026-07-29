@@ -14,10 +14,15 @@ Item {
     implicitHeight: column.implicitHeight + 20  // 2 * margins
 
     Flickable {
+        id: flickable
         anchors.fill: parent
         contentHeight: column.implicitHeight + 20
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+
+        ViciWheelHandler {
+            target: flickable
+        }
 
         ColumnLayout {
             id: column

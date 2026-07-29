@@ -1,11 +1,9 @@
 #pragma once
-#include <QTemporaryFile>
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <memory>
 
 struct zip_t;
 
@@ -30,7 +28,7 @@ public:
 
 private:
   zip_t *m_zip = nullptr;
-  std::unique_ptr<QTemporaryFile> m_tmpFile;
+  std::string m_data;
 
 public:
   operator bool() const { return m_zip != nullptr; }

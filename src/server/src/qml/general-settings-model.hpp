@@ -10,25 +10,37 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool searchFilesInRoot READ searchFilesInRoot WRITE setSearchFilesInRoot NOTIFY configChanged)
   Q_PROPERTY(bool inputServerEnabled READ inputServerEnabled WRITE setInputServerEnabled NOTIFY configChanged)
   Q_PROPERTY(bool closeOnFocusLoss READ closeOnFocusLoss WRITE setCloseOnFocusLoss NOTIFY configChanged)
+  Q_PROPERTY(bool closeOnEscape READ closeOnEscape WRITE setCloseOnEscape NOTIFY configChanged)
   Q_PROPERTY(bool considerPreedit READ considerPreedit WRITE setConsiderPreedit NOTIFY configChanged)
   Q_PROPERTY(bool popToRootOnClose READ popToRootOnClose WRITE setPopToRootOnClose NOTIFY configChanged)
   Q_PROPERTY(bool popOnBackspace READ popOnBackspace WRITE setPopOnBackspace NOTIFY configChanged)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick WRITE setActivateOnSingleClick NOTIFY
                  configChanged)
+  Q_PROPERTY(bool wrapNavigation READ wrapNavigation WRITE setWrapNavigation NOTIFY configChanged)
+  Q_PROPERTY(
+      bool encryptSensitiveData READ encryptSensitiveData WRITE setEncryptSensitiveData NOTIFY configChanged)
   Q_PROPERTY(
       bool telemetrySystemInfo READ telemetrySystemInfo WRITE setTelemetrySystemInfo NOTIFY configChanged)
+  Q_PROPERTY(bool layerShellEnabled READ layerShellEnabled WRITE setLayerShellEnabled NOTIFY configChanged)
   Q_PROPERTY(bool clientSideDecorations READ clientSideDecorations WRITE setClientSideDecorations NOTIFY
                  configChanged)
+  Q_PROPERTY(QString rounding READ rounding WRITE setRounding NOTIFY configChanged)
+  Q_PROPERTY(QString csdBorderWidth READ csdBorderWidth WRITE setCsdBorderWidth NOTIFY configChanged)
+  Q_PROPERTY(QString csdShadowSize READ csdShadowSize WRITE setCsdShadowSize NOTIFY configChanged)
   Q_PROPERTY(bool compactMode READ compactMode WRITE setCompactMode NOTIFY configChanged)
   Q_PROPERTY(QString windowOpacity READ windowOpacity WRITE setWindowOpacity NOTIFY configChanged)
   Q_PROPERTY(
       bool nativeTextRendering READ nativeTextRendering WRITE setNativeTextRendering NOTIFY configChanged)
   Q_PROPERTY(QString fontSize READ fontSize WRITE setFontSize NOTIFY configChanged)
+  Q_PROPERTY(QVariantList windowMaterialItems READ windowMaterialItems CONSTANT)
+  Q_PROPERTY(QVariant currentWindowMaterial READ currentWindowMaterial NOTIFY configChanged)
   Q_PROPERTY(QVariantList themeItems READ themeItems NOTIFY configChanged)
-  Q_PROPERTY(QVariantList fontItems READ fontItems NOTIFY configChanged)
+  Q_PROPERTY(QVariantList fontItems READ fontItems CONSTANT)
   Q_PROPERTY(QVariantList iconThemeItems READ iconThemeItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList faviconServiceItems READ faviconServiceItems NOTIFY configChanged)
   Q_PROPERTY(QVariantList keybindingSchemeItems READ keybindingSchemeItems NOTIFY configChanged)
+  Q_PROPERTY(QVariantList languageItems READ languageItems CONSTANT)
+  Q_PROPERTY(QVariant currentLanguage READ currentLanguage NOTIFY configChanged)
   Q_PROPERTY(QVariant currentTheme READ currentTheme NOTIFY configChanged)
   Q_PROPERTY(QVariant currentFont READ currentFont NOTIFY configChanged)
   Q_PROPERTY(QVariant currentIconTheme READ currentIconTheme NOTIFY configChanged)
@@ -46,6 +58,8 @@ public:
   void setSearchFilesInRoot(bool v);
   bool closeOnFocusLoss() const;
   void setCloseOnFocusLoss(bool v);
+  bool closeOnEscape() const;
+  void setCloseOnEscape(bool v);
   bool considerPreedit() const;
   void setConsiderPreedit(bool v);
   bool popToRootOnClose() const;
@@ -54,10 +68,22 @@ public:
   void setPopOnBackspace(bool v);
   bool activateOnSingleClick() const;
   void setActivateOnSingleClick(bool v);
+  bool wrapNavigation() const;
+  void setWrapNavigation(bool v);
+  bool encryptSensitiveData() const;
+  void setEncryptSensitiveData(bool v);
   bool telemetrySystemInfo() const;
   void setTelemetrySystemInfo(bool v);
+  bool layerShellEnabled() const;
+  void setLayerShellEnabled(bool v);
   bool clientSideDecorations() const;
   void setClientSideDecorations(bool v);
+  QString rounding() const;
+  void setRounding(const QString &v);
+  QString csdBorderWidth() const;
+  void setCsdBorderWidth(const QString &v);
+  QString csdShadowSize() const;
+  void setCsdShadowSize(const QString &v);
   bool compactMode() const;
   void setCompactMode(bool v);
   QString windowOpacity() const;
@@ -69,11 +95,17 @@ public:
   QString fontSize() const;
   void setFontSize(const QString &v);
 
+  QVariantList windowMaterialItems() const;
+  QVariant currentWindowMaterial() const;
+  Q_INVOKABLE void selectWindowMaterial(const QString &id);
+
   QVariantList themeItems() const;
   QVariantList fontItems() const;
   QVariantList iconThemeItems() const;
   QVariantList faviconServiceItems() const;
   QVariantList keybindingSchemeItems() const;
+  QVariantList languageItems() const;
+  QVariant currentLanguage() const;
   QVariant currentTheme() const;
   QVariant currentFont() const;
   QVariant currentIconTheme() const;
@@ -85,6 +117,7 @@ public:
   Q_INVOKABLE void selectIconTheme(const QString &id);
   Q_INVOKABLE void selectFaviconService(const QString &id);
   Q_INVOKABLE void selectKeybindingScheme(const QString &id);
+  Q_INVOKABLE void selectLanguage(const QString &id);
 
   QString toggleShortcut() const;
   void setToggleShortcut(const QString &shortcut);
@@ -92,4 +125,6 @@ public:
 private:
   const config::ConfigValue &cfg() const;
   config::Manager &cfgManager() const;
+
+  mutable QVariantList m_fontItems;
 };

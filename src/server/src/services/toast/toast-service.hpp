@@ -59,7 +59,15 @@ public:
   void failure(const QString &title, const QString &message = "") {
     setToast(title, ToastStyle::Danger, message);
   }
-  void dynamic(const QString &title) { setToast(title, ToastStyle::Dynamic); }
+  void dynamic(const QString &title, const QString &message = "") {
+    if (auto *current = currentToast(); current && current->priority() == ToastStyle::Dynamic) {
+      current->setTitle(title);
+      current->setMessage(message);
+      return;
+    }
+
+    setToast(title, ToastStyle::Dynamic, message);
+  }
 
   void clear() {
     m_queue.clear();
@@ -74,7 +82,7 @@ public:
     auto toast = std::shared_ptr<Toast>(new Toast(title, priority, message), QObjectDeleter());
 
     if (priority != ToastStyle::Dynamic) {
-      QTimer::singleShot(duration, toast.get(), [this, toast]() { toast->close(); });
+      QTimer::singleShot(duration, toast.get(), [toast]() { toast->close(); });
     }
     registerToast(toast);
   }

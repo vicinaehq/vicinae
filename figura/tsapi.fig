@@ -140,6 +140,11 @@ struct Rect {
   height: int;
 };
 
+struct Size {
+  width: int;
+  height: int;
+};
+
 struct Window {
   id: string;
   title: string;
@@ -156,6 +161,8 @@ struct Screen {
   make: string;
   serial?: string;
   bounds: Rect;
+  physicalResolution: Size;
+  active: bool;
 };
 
 struct Workspace {
@@ -163,7 +170,7 @@ struct Workspace {
   name: string;
   active: bool;
   fullscreen: bool;
-  monitor: string;
+  monitor?: string;
 };
 
 service WindowManagement {
@@ -173,7 +180,7 @@ service WindowManagement {
   fn getWindows(workspaceId?: string) => Window[];
   fn getScreens() => Screen[];
   fn getWorkspaces() => Workspace[];
-  fn setWindowBounds(winId: string, bounds: Rect) => bool;
+  fn setWindowBounds(winId: string, bounds: Rect) => void;
 };
 
 // Clipboard
@@ -181,7 +188,7 @@ service WindowManagement {
 struct ClipboardContent {
   text?: string;
   html?: string;
-  path?: string;
+  urls?: string[];
 };
 
 struct ClipboardOptions {
@@ -207,15 +214,35 @@ service Storage {
 
 // FileSearch
 
+enum FileSearchCategory {
+  Other,
+  Directory,
+  Image,
+  Video,
+  Audio,
+  Document,
+  Archive,
+  Application
+};
+
 struct FileInfo {
   path: string;
-  mimeType: string;
+  category: FileSearchCategory;
+  mimeType?: string;
+};
+
+struct FileSearchFilters {
+  category?: FileSearchCategory;
+};
+
+struct FileSearchOptions {
+  filters: FileSearchFilters;
+  limit: uint;
 };
 
 service FileSearch {
-  fn search(q: string) => FileInfo[];
+  fn search(q: string, opts: FileSearchOptions) => FileInfo[];
 };
-
 
 // Command
 
@@ -275,6 +302,36 @@ service OAuth {
   fn setTokens(payload: SetTokensRequest) => void;
   fn removeTokens(id?: string) => void;
 }
+
+enum WallpaperFit {
+  Cover,
+  Contain, 
+  Stretch,
+  Center,
+  Tile
+};
+
+struct SetWallpaperOptions {
+  fit?: WallpaperFit;
+  screen?: string;
+};
+
+service Wallpaper {
+  fn set(path: string, options: SetWallpaperOptions) => void;
+};
+
+struct BrowserTab {
+  id: int;
+  title?: string;
+  url: string;
+  active: boolean;
+  browserId: string;
+};
+
+service BrowserExtension {
+  fn getTabs() => BrowserTab[];
+  fn focusTab(browserId: string, tabId: int) => void;
+};
 
 // EventCore - used for loosely typed callbacks, required for component event handlers
 

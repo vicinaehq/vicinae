@@ -1,6 +1,8 @@
 #include "root-search-sources.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
+#include "builtin_icon.hpp"
+#include "theme/colors.hpp"
 #include "keyboard/keybind.hpp"
 #include "keyboard/keyboard.hpp"
 #include "utils/file-list-item.hpp"
@@ -90,8 +92,8 @@ QString RootLinkSection::itemId(int) const { return m_link ? m_link->url : QStri
 
 QString RootLinkSection::itemTitle(int) const { return m_link ? m_link->url : QString(); }
 
-QString RootLinkSection::itemIconSource(int) const {
-  return m_link ? imageSourceFor(m_link->app->iconUrl()) : QString();
+std::optional<ImageURL> RootLinkSection::itemIcon(int) const {
+  return m_link ? std::optional(m_link->app->iconUrl()) : std::nullopt;
 }
 
 QVariant RootLinkSection::customData(int, int role) const {
@@ -102,12 +104,21 @@ QVariant RootLinkSection::customData(int, int role) const {
 QHash<int, QByteArray> RootLinkSection::customRoleNames() const { return root_search::customRoleNames(); }
 QHash<int, QVariant> RootLinkSection::customRoleDefaults() const { return root_search::customRoleDefaults(); }
 
+std::unique_ptr<QMimeData> RootLinkSection::dragMimeData(int) const {
+  if (!m_link) return {};
+
+  auto data = std::make_unique<QMimeData>();
+  data->setUrls({QUrl(m_link->url)});
+  data->setText(m_link->url);
+  return data;
+}
+
 std::unique_ptr<ActionPanelState> RootLinkSection::actionPanel(int) const {
   if (!m_link) return nullptr;
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
   auto *open =
-      new OpenAppAction(m_link->app, QString("Open in %1").arg(m_link->app->displayName()), {m_link->url});
+      new OpenAppAction(m_link->app, tr("Open in %1").arg(m_link->app->displayName()), {m_link->url});
   open->setClearSearch(true);
   section->addAction(open);
   return panel;
@@ -121,8 +132,8 @@ QString RootCalculatorSection::itemTitle(int) const {
   return m_result ? m_result->question.text + QStringLiteral(" = ") + m_result->answer.text : QString();
 }
 
-QString RootCalculatorSection::itemIconSource(int) const {
-  return imageSourceFor(ImageURL::builtin("calculator"));
+std::optional<ImageURL> RootCalculatorSection::itemIcon(int) const {
+  return ImageURL::builtin(BuiltinIcon::Calculator);
 }
 
 QVariant RootCalculatorSection::customData(int, int role) const {
@@ -163,6 +174,52 @@ std::unique_ptr<ActionPanelState> RootCalculatorSection::actionPanel(int) const 
   return panel;
 }
 
+QString RootUpdateSection::itemId(int) const {
+  return m_update ? QStringLiteral("update:") + m_update->tag : QString();
+}
+
+QString RootUpdateSection::itemTitle(int) const {
+  return m_update ? tr("Vicinae %1 is available").arg(m_update->tag) : QString();
+}
+
+QString RootUpdateSection::itemSubtitle(int) const {
+  if (!m_update) return {};
+  return tr("You are running %1").arg(m_updates->currentVersionTag());
+}
+
+std::optional<ImageURL> RootUpdateSection::itemIcon(int) const {
+  return ImageURL{BuiltinIcon::Download}.setBackgroundTint(SemanticColor::Blue);
+}
+
+QVariant RootUpdateSection::customData(int, int role) const {
+  if (role == ItemType) return QStringLiteral("update");
+  if (role == AccessoryText) return tr("Update");
+  return {};
+}
+
+QHash<int, QByteArray> RootUpdateSection::customRoleNames() const { return root_search::customRoleNames(); }
+QHash<int, QVariant> RootUpdateSection::customRoleDefaults() const {
+  return root_search::customRoleDefaults();
+}
+
+std::unique_ptr<ActionPanelState> RootUpdateSection::actionPanel(int) const {
+  if (!m_update) return nullptr;
+
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto *section = panel->createSection();
+
+  auto *install = new InstallUpdateAction();
+  install->setPrimary(true);
+  section->addAction(install);
+  section->addAction(new OpenInBrowserAction(QUrl(m_update->releaseUrl), tr("View Release Notes")));
+
+  auto *skip = new SkipUpdateVersionAction();
+  skip->setShortcut(Keybind::RemoveAction);
+  section->addAction(skip);
+
+  return panel;
+}
+
 QString RootNewsSection::itemId(int i) const {
   if (std::cmp_greater_equal(i, m_items.size())) return {};
   return QStringLiteral("news:") + QString::fromStdString(m_items[i]->id);
@@ -178,9 +235,9 @@ QString RootNewsSection::itemSubtitle(int i) const {
   return m_items[i]->subtitle;
 }
 
-QString RootNewsSection::itemIconSource(int i) const {
+std::optional<ImageURL> RootNewsSection::itemIcon(int i) const {
   if (std::cmp_greater_equal(i, m_items.size())) return {};
-  return imageSourceFor(m_items[i]->icon);
+  return m_items[i]->icon;
 }
 
 QVariant RootNewsSection::customData(int, int role) const {
@@ -217,9 +274,9 @@ QString RootFavoritesSection::itemSubtitle(int i) const {
   return m_items[i]->subtitle();
 }
 
-QString RootFavoritesSection::itemIconSource(int i) const {
+std::optional<ImageURL> RootFavoritesSection::itemIcon(int i) const {
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
-  return imageSourceFor(m_items[i]->iconUrl());
+  return m_items[i]->iconUrl();
 }
 
 QVariant RootFavoritesSection::customData(int i, int role) const {
@@ -260,8 +317,8 @@ const RootItem *RootFavoritesSection::rootItem(int i) const {
 }
 
 QString RootResultsSection::sectionName() const {
-  if (m_queryEmpty) return QStringLiteral("Suggestions");
-  return QString::fromStdString(std::format("Results ({})", m_items.size()));
+  if (m_queryEmpty) return tr("Suggestions");
+  return tr("Results (%1)").arg(m_items.size());
 }
 
 QString RootResultsSection::itemId(int i) const {
@@ -279,9 +336,9 @@ QString RootResultsSection::itemSubtitle(int i) const {
   return m_items[i].item->subtitle();
 }
 
-QString RootResultsSection::itemIconSource(int i) const {
+std::optional<ImageURL> RootResultsSection::itemIcon(int i) const {
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i].item) return {};
-  return imageSourceFor(m_items[i].item->iconUrl());
+  return m_items[i].item->iconUrl();
 }
 
 QVariant RootResultsSection::customData(int i, int role) const {
@@ -329,12 +386,12 @@ QString RootFilesSection::itemTitle(int i) const {
 
 QString RootFilesSection::itemSubtitle(int i) const {
   if (std::cmp_greater_equal(i, m_files.size())) return {};
-  return QString::fromStdString(compressPath(m_files[i].path.parent_path()));
+  return QString::fromStdString(compressPath(m_files[i].path.parent_path()).string());
 }
 
-QString RootFilesSection::itemIconSource(int i) const {
+std::optional<ImageURL> RootFilesSection::itemIcon(int i) const {
   if (std::cmp_greater_equal(i, m_files.size())) return {};
-  return imageSourceFor(ImageURL::fileIcon(m_files[i].path));
+  return ImageURL::fileIcon(m_files[i].path);
 }
 
 QVariant RootFilesSection::customData(int, int role) const {
@@ -348,15 +405,26 @@ QHash<int, QVariant> RootFilesSection::customRoleDefaults() const {
   return root_search::customRoleDefaults();
 }
 
+std::unique_ptr<QMimeData> RootFilesSection::dragMimeData(int i) const {
+  if (!isDraggable(i)) return {};
+
+  auto data = std::make_unique<QMimeData>();
+  auto path = QString::fromStdString(m_files[i].path.string());
+  data->setUrls({QUrl::fromLocalFile(path)});
+  data->setText(path);
+  return data;
+}
+
 std::unique_ptr<ActionPanelState> RootFilesSection::actionPanel(int i) const {
   if (std::cmp_greater_equal(i, m_files.size())) return nullptr;
-  return FileActions::actionPanel(m_files[i].path, m_appDb);
+  return FileActions::actionPanel(m_files[i].path, scope().appContext());
 }
 
 QString RootFallbackSection::sectionName() const {
   constexpr std::size_t MAX_QUERY_LEN = 30;
   auto truncated = m_query.length() > MAX_QUERY_LEN ? m_query.substr(0, MAX_QUERY_LEN) + "..." : m_query;
-  return QString::fromStdString(std::format("Use \"{}\" with...", truncated));
+  return QCoreApplication::translate("RootFallbackSection", "Use \"%1\" with...")
+      .arg(QString::fromStdString(truncated));
 }
 
 QString RootFallbackSection::itemId(int i) const {
@@ -374,9 +442,9 @@ QString RootFallbackSection::itemSubtitle(int i) const {
   return m_items[i]->subtitle();
 }
 
-QString RootFallbackSection::itemIconSource(int i) const {
+std::optional<ImageURL> RootFallbackSection::itemIcon(int i) const {
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
-  return imageSourceFor(m_items[i]->iconUrl());
+  return m_items[i]->iconUrl();
 }
 
 QVariant RootFallbackSection::customData(int i, int role) const {
@@ -402,4 +470,9 @@ std::unique_ptr<ActionPanelState> RootFallbackSection::actionPanel(int i) const 
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return nullptr;
   return m_items[i]->fallbackActionPanel(scope().appContext(),
                                          m_manager->itemMetadata(m_items[i]->uniqueId()));
+}
+
+const RootItem *RootFallbackSection::rootItem(int i) const {
+  if (std::cmp_greater_equal(i, m_items.size())) return nullptr;
+  return m_items[i].get();
 }

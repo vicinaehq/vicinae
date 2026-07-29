@@ -27,6 +27,8 @@ public:
   AppPtr webBrowser() const override;
   AppPtr terminalEmulator() const override;
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const override;
+  bool openLocation(const AbstractApplication &app) const override;
+  AppPtr locationOpener(const AbstractApplication &app) const override;
 
 private:
   std::vector<std::shared_ptr<MacApplication>> m_apps;

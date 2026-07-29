@@ -11,6 +11,7 @@
 class ThemeBridge : public QObject {
   Q_OBJECT
 
+  Q_PROPERTY(bool isDark READ isDark NOTIFY changed)
   Q_PROPERTY(QColor background READ background NOTIFY changed)
   Q_PROPERTY(QColor foreground READ foreground NOTIFY changed)
   Q_PROPERTY(QColor textMuted READ textMuted NOTIFY changed)
@@ -20,11 +21,14 @@ class ThemeBridge : public QObject {
   Q_PROPERTY(QColor accent READ accent NOTIFY changed)
   Q_PROPERTY(QColor statusBarBackground READ statusBarBackground NOTIFY changed)
   Q_PROPERTY(QColor mainWindowBorder READ mainWindowBorder NOTIFY changed)
+  Q_PROPERTY(QColor inputBackground READ inputBackground NOTIFY changed)
   Q_PROPERTY(QColor inputBorder READ inputBorder NOTIFY changed)
   Q_PROPERTY(QColor inputBorderFocus READ inputBorderFocus NOTIFY changed)
   Q_PROPERTY(QColor inputBorderError READ inputBorderError NOTIFY changed)
   Q_PROPERTY(QColor divider READ divider NOTIFY changed)
   Q_PROPERTY(QColor secondaryBackground READ secondaryBackground NOTIFY changed)
+  Q_PROPERTY(QColor popoverBackground READ popoverBackground NOTIFY changed)
+  Q_PROPERTY(QColor popoverBorder READ popoverBorder NOTIFY changed)
   Q_PROPERTY(QColor listItemSelectionFg READ listItemSelectionFg NOTIFY changed)
   Q_PROPERTY(QColor listItemHoverFg READ listItemHoverFg NOTIFY changed)
   Q_PROPERTY(QColor listItemSecondarySelectionFg READ listItemSecondarySelectionFg NOTIFY changed)
@@ -60,6 +64,7 @@ public:
     qApp->installEventFilter(this);
   }
 
+  bool isDark() const { return ThemeService::instance().theme().isDark(); }
   QColor background() const { return resolve(SemanticColor::Background); }
   QColor foreground() const { return resolve(SemanticColor::Foreground); }
   QColor textMuted() const { return resolve(SemanticColor::TextMuted); }
@@ -75,11 +80,14 @@ public:
   QColor accent() const { return resolve(SemanticColor::Accent); }
   QColor statusBarBackground() const { return resolve(SemanticColor::StatusBarBackground); }
   QColor mainWindowBorder() const { return resolve(SemanticColor::MainWindowBorder); }
+  QColor inputBackground() const { return resolve(SemanticColor::InputBackground); }
   QColor inputBorder() const { return resolve(SemanticColor::InputBorder); }
   QColor inputBorderFocus() const { return resolve(SemanticColor::InputBorderFocus); }
   QColor inputBorderError() const { return resolve(SemanticColor::InputBorderError); }
   QColor divider() const { return resolve(SemanticColor::BackgroundBorder); }
   QColor secondaryBackground() const { return resolve(SemanticColor::SecondaryBackground); }
+  QColor popoverBackground() const { return resolve(SemanticColor::PopoverBackground); }
+  QColor popoverBorder() const { return resolve(SemanticColor::PopoverBorder); }
   QColor scrollBarBackground() const { return resolve(SemanticColor::ScrollBarBackground); }
   QColor gridItemBackground() const { return resolve(SemanticColor::GridItemBackground); }
   QColor gridItemSelectionOutline() const { return resolve(SemanticColor::GridItemSelectionOutline); }

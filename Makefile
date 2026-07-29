@@ -1,37 +1,60 @@
+# This Makefile is only for use on UNIX systems.
+# For Windows you are expected to use cmake directly and utility scripts in ./scripts
+
 BUILD_DIR						:= build
 BIN_DIR							:= build/bin
-RM								:= rm
+RM							:= rm
 TAG 							:= $(shell git describe --tags --abbrev=0)
 APPIMAGE_BUILD_ENV_DIR			:= ./scripts/runners/appimage/
 APPIMAGE_BUILD_ENV_IMAGE_TAG	:= vicinae/appimage-build-env
 FIGURA_CC						:= $(BIN_DIR)/figura
+SHELL							:= /bin/sh
+APPLE_BUNDLE_ID						:= com.vicinaehq.Vicinae
+PRESET_OS						:= $(if $(filter Darwin,$(shell uname -s)),macos,linux)
 
 release:
-	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR)
+	cmake --preset $(PRESET_OS)-release
+	cmake --build --preset $(PRESET_OS)-release
 .PHONY: release
 
 host-optimized:
-	CXXFLAGS="${CXXFLAGS} -march=native" cmake -DLTO=ON -G Ninja -B build
+	CXXFLAGS="${CXXFLAGS} -march=native" cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B build
 	cmake --build $(BUILD_DIR)
 .PHONY: optimized
 
 preview:
-	cmake -G Ninja -DENABLE_PREVIEW_FEATURES=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR)
+	cmake --preset $(PRESET_OS)-preview
+	cmake --build --preset $(PRESET_OS)-preview
 .PHONY: preview
 
 debug:
-	cmake -GNinja -DLTO=OFF -DENABLE_PREVIEW_FEATURES=ON -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR) --parallel
+	cmake --preset $(PRESET_OS)-debug
+	cmake --build --preset $(PRESET_OS)-debug
 .PHONY: debug
+
+update-translations:
+	cmake --preset $(PRESET_OS)-debug
+	cmake --build --preset $(PRESET_OS)-debug --target update_translations
+.PHONY: update-translations
+
+check-translations: update-translations
+	git diff --exit-code -- src/server/translations
+.PHONY: check-translations
 
 mac-bundle:
 	./scripts/macdeploy.sh $(BUILD_DIR)
 .PHONY: mac-bundle
 
+dmg: mac-bundle
+	./scripts/mkdmg.sh $(BUILD_DIR)
+.PHONY: dmg
+
+verify-dmg:
+	./scripts/verify-dmg.sh $(BUILD_DIR)/Vicinae.dmg
+.PHONY: verify-dmg
+
 mac-deps:
-	./scripts/macos-setup.sh
+	@./scripts/macos-setup.sh
 .PHONY: mac-deps
 
 debug-tidy:
@@ -55,8 +78,11 @@ strip:
 test:
 	./$(BIN_DIR)/vicinae-glyph-tests
 	./$(BIN_DIR)/vicinae-fuzzy-tests
+	./$(BIN_DIR)/vicinae-server-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
+	./$(BIN_DIR)/vicinae-file-indexer-tests
+	./$(BIN_DIR)/vicinae-crypto-tests
 .PHONY: test
 
 static:
@@ -101,6 +127,18 @@ appimage-build-env-push:
 	docker push $(APPIMAGE_BUILD_ENV_IMAGE_TAG)
 .PHONY: appimage-build-env-push
 
+depot-push-arch:
+	depot build --save --save-tag arch-latest --platform linux/amd64 -f scripts/runners/arch/base.Dockerfile scripts/runners/arch
+.PHONY: depot-push-arch
+
+depot-push-appimage-amd64:
+	depot build --save --save-tag appimage-amd64-latest --platform linux/amd64 -f scripts/runners/appimage/AppImageBuilder.Dockerfile scripts/runners/appimage
+.PHONY: depot-push-appimage-amd64
+
+depot-push-appimage-arm64:
+	depot build --save --save-tag appimage-arm64-latest --platform linux/arm64 -f scripts/runners/appimage/AppImageBuilder.Dockerfile scripts/runners/appimage
+.PHONY: depot-push-appimage-arm64
+
 NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 CLANG_FORMAT := $(shell command -v clang-format 2>/dev/null || echo /opt/homebrew/opt/llvm/bin/clang-format)
 
@@ -113,14 +151,14 @@ tsfmt:
 .PHONY: tsfmt
 
 clang-format:
-	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(NPROC) clang-format -i
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.mm' \) -print0 | xargs -0 -n 10 -P $(NPROC) clang-format -i
 .PHONY: clang-format
 
 format: qmlformat tsfmt clang-format
 .PHONY: format
 
 check-format:
-	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 -n 10 -P $(NPROC) $(CLANG_FORMAT) --dry-run -Werror
+	find ./src -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.mm' \) -print0 | xargs -0 -n 10 -P $(NPROC) $(CLANG_FORMAT) --dry-run -Werror
 .PHONY: check-format
 
 bump-patch:
@@ -135,10 +173,18 @@ bump-major:
 	./scripts/bump_version.sh major
 .PHONY: bump-major
 
-# Regenerate the manifest in place from the latest existing tag (does not bump).
-update-manifest:
-	./scripts/update-manifest.sh ./manifest.yaml
-.PHONY: update-manifest
+nix-hash:
+	$(SHELL) scripts/update-nix-npm-hashes.sh
+.PHONY: nix-hashes
+
+nix-hash-check:
+	$(SHELL) scripts/update-nix-npm-hashes.sh --check
+.PHONY: nix-hash-check
+
+# reset all macOS permission grants
+tcc-reset:
+	tccutil reset All $(APPLE_BUNDLE_ID)
+.PHONY: tcc-reset
 
 # if we need to manually create a release
 gh-release:
@@ -164,7 +210,6 @@ clean:
 	$(RM) -rf ./scripts/.tmp
 	$(RM) -rf ./src/lib/*/build
 .PHONY: clean
-
 
 figen:
 	$(FIGURA_CC) compile ./figura/tsapi.fig --client typescript --output ./src/typescript/api/src/api/proto/api.ts

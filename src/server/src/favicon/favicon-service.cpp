@@ -6,9 +6,18 @@
 #include <qlogging.h>
 
 static const std::vector<FaviconService::FaviconServiceData> faviconProviders = {
-    {.id = "google", .name = "Google", .icon = ImageURL::builtin("google"), .type = FaviconService::Google},
-    {.id = "twenty", .name = "Twenty", .icon = ImageURL::builtin("twenty"), .type = FaviconService::Twenty},
-    {.id = "none", .name = "None", .icon = ImageURL::builtin("image"), .type = FaviconService::None}};
+    {.id = "google",
+     .name = "Google",
+     .icon = ImageURL::builtin(BuiltinIcon::Google),
+     .type = FaviconService::Google},
+    {.id = "twenty",
+     .name = "Twenty",
+     .icon = ImageURL::builtin(BuiltinIcon::Twenty),
+     .type = FaviconService::Twenty},
+    {.id = "none",
+     .name = "None",
+     .icon = ImageURL::builtin(BuiltinIcon::Image),
+     .type = FaviconService::None}};
 
 std::vector<FaviconService::FaviconServiceData> FaviconService::providers() { return faviconProviders; }
 

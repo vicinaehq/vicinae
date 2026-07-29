@@ -1,5 +1,6 @@
 #pragma once
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <QCoreApplication>
 #include <filesystem>
 
 struct MacSettingsPane {
@@ -10,6 +11,8 @@ struct MacSettingsPane {
 };
 
 class MacSettingsRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(MacSettingsRootItem)
+
   MacSettingsPane m_pane;
 
   QString title() const override;

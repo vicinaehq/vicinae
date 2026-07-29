@@ -23,13 +23,28 @@ enum ImageURLType : std::uint8_t {
   Symbol,
   DataURI,
   MacBundle,
-  FileIcon
+  FileIcon,
+  FontPreview,
+  WinShellIcon,
+  WinStockIcon
 };
 
 static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
-    {"favicon", Favicon},    {"omnicast", Builtin}, {"builtin", Builtin}, {"system", System},
-    {"http", Http},          {"https", Http},       {"local", Local},     {"bundle", MacBundle},
-    {"file-icon", FileIcon}, {"emoji", Emoji},      {"symbol", Symbol},   {"datauri", DataURI},
+    {"favicon", Favicon},
+    {"omnicast", Builtin},
+    {"builtin", Builtin},
+    {"system", System},
+    {"http", Http},
+    {"https", Http},
+    {"local", Local},
+    {"bundle", MacBundle},
+    {"win-shell", WinShellIcon},
+    {"win-stock", WinStockIcon},
+    {"file-icon", FileIcon},
+    {"emoji", Emoji},
+    {"symbol", Symbol},
+    {"datauri", DataURI},
+    {"font-preview", FontPreview},
 };
 
 static std::vector<std::pair<QString, SemanticColor>> colorTints = {
@@ -122,16 +137,19 @@ public:
 
   operator QString() const { return toString(); }
 
-  static ImageURL builtin(const QString &name);
+  static ImageURL builtinByName(QStringView name);
   static ImageURL builtin(BuiltinIcon icon);
   static ImageURL favicon(const QString &domain);
   static ImageURL system(const QString &name);
   static ImageURL local(const QString &path);
   static ImageURL local(const std::filesystem::path &path);
   static ImageURL macBundle(const std::filesystem::path &bundlePath);
+  static ImageURL winShellIcon(const QString &parsingName);
+  static ImageURL winStockIcon(int stockIconId); // SHSTOCKICONID
   static ImageURL http(const QUrl &httpUrl);
   static ImageURL emoji(const QString &emoji);
   static ImageURL symbol(const QString &symbol);
+  static ImageURL fontPreview(const QString &family, const QString &glyph);
   static ImageURL rawData(const QByteArray &data, const QString &mimeType);
   static ImageURL fileIcon(const std::filesystem::path &path);
 

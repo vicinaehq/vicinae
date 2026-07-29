@@ -21,7 +21,9 @@ QString CalcLiveSection::itemTitle(int) const {
   return m_result->question.text + QStringLiteral(" = ") + m_result->answer.text;
 }
 
-QString CalcLiveSection::itemIconSource(int) const { return imageSourceFor(ImageURL::builtin("calculator")); }
+std::optional<ImageURL> CalcLiveSection::itemIcon(int) const {
+  return ImageURL::builtin(BuiltinIcon::Calculator);
+}
 
 QVariantList CalcLiveSection::itemAccessories(int) const { return {}; }
 
@@ -80,7 +82,7 @@ void CalcHistoryViewHost::initialize() {
 
   m_calc = context()->services->calculatorService();
 
-  setSearchPlaceholderText("Search past calculations...");
+  setSearchPlaceholderText(tr("Search past calculations..."));
 
   m_calculatorDebounce.setInterval(200ms);
   m_calculatorDebounce.setSingleShot(true);
@@ -138,14 +140,15 @@ void CalcHistoryViewHost::startCalculator() {
 
   if (!m_calc->backend() || m_query.isEmpty()) return;
 
+  using Calc = AbstractCalculatorBackend;
+
   if (m_query.startsWith('=') && m_query.size() > 1) {
-    m_calcWatcher.setFuture(m_calc->backend()->asyncCompute(m_query.mid(1)));
+    m_calcWatcher.setFuture(
+        m_calc->backend()->asyncCompute(m_query.mid(1), {.mode = Calc::ComputeMode::Full}));
     return;
   }
 
-  if (!m_calc->backend()->isExpression(m_query.toStdString())) return;
-
-  m_calcWatcher.setFuture(m_calc->backend()->asyncCompute(m_query));
+  m_calcWatcher.setFuture(m_calc->backend()->asyncCompute(m_query, {.mode = Calc::ComputeMode::MixedSearch}));
 }
 
 void CalcHistoryViewHost::handleCalculatorFinished() {

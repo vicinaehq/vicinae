@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "services/app-service/abstract-app-db.hpp"
 #include <xdgpp/desktop-entry/file.hpp>
 #include "xdg-app.hpp"
@@ -11,6 +12,8 @@
 #include <xdgpp/xdgpp.hpp>
 
 class XdgAppDatabase : public AbstractAppDatabase {
+  Q_DECLARE_TR_FUNCTIONS(XdgAppDatabase)
+
 public:
   bool scan(const std::vector<std::filesystem::path> &paths) override;
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
@@ -33,6 +36,8 @@ public:
   AppPtr genericTextEditor() const override;
   AppPtr webBrowser() const override;
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const override;
+  bool openLocation(const AbstractApplication &app) const override;
+  AppPtr locationOpener(const AbstractApplication &app) const override;
 
   XdgAppDatabase();
 

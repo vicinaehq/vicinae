@@ -5,6 +5,7 @@ HyprlandWindow::HyprlandWindow(const QJsonObject &json) {
   m_title = json.value("title").toString();
   m_wmClass = json.value("class").toString();
   m_workspaceId = json.value("workspace").toObject().value("id").toInt();
+  m_pid = json.value("pid").toInt();
 
   auto at = json.value("at").toArray();
   auto size = json.value("size").toArray();

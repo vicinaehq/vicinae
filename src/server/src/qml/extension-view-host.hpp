@@ -1,11 +1,13 @@
 #pragma once
 #include "extend/model-parser.hpp"
+#include "extend/pagination-model.hpp"
 #include "extension/extension-action-panel-builder.hpp"
 #include "bridge-view.hpp"
 #include "extension-form-model.hpp"
 #include "extension-grid-model.hpp"
 #include "extension-list-model.hpp"
 #include <QTimer>
+#include <qtmetamacros.h>
 #include <variant>
 
 class ExtensionViewHost : public ViewHostBase {
@@ -22,6 +24,7 @@ class ExtensionViewHost : public ViewHostBase {
   Q_PROPERTY(QVariantList dropdownItems READ dropdownItems NOTIFY dropdownChanged)
   Q_PROPERTY(QVariant dropdownCurrentItem READ dropdownCurrentItem NOTIFY dropdownChanged)
   Q_PROPERTY(QString dropdownPlaceholder READ dropdownPlaceholder NOTIFY dropdownChanged)
+  Q_PROPERTY(bool hasMorePages READ hasMorePages NOTIFY paginationChanged)
 
 public:
   explicit ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notify, QObject *parent = nullptr);
@@ -52,7 +55,12 @@ public:
   QVariant dropdownCurrentItem() const { return m_dropdownCurrentItem; }
   QString dropdownPlaceholder() const { return m_dropdownPlaceholder; }
 
+  bool hasMorePages() const {
+    return m_pagination.transform([](auto &&p) { return p.hasMore; }).value_or(false);
+  }
+
   Q_INVOKABLE void setDropdownValue(const QString &value);
+  Q_INVOKABLE void onLoadMore();
 
 signals:
   void selectFirstOnResetChanged();
@@ -62,6 +70,7 @@ signals:
   void suppressEmptyViewChanged();
   void linkAccessoryChanged();
   void dropdownChanged();
+  void paginationChanged();
 
 private:
   struct DetailState {
@@ -113,4 +122,5 @@ private:
   QString m_dropdownValue;
   QString m_dropdownPlaceholder;
   std::optional<std::string> m_dropdownOnChange;
+  std::optional<PaginationModel> m_pagination;
 };

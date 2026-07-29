@@ -1,13 +1,21 @@
+#include <filesystem>
+#include <glaze/core/opts.hpp>
+#include <glaze/core/reflect.hpp>
+#include <system_error>
 #include "cli.hpp"
 #include "config.hpp"
+#include "fs.hpp"
 #include "rang/rang.hpp"
 #include "script.hpp"
 #include "common/common.hpp"
 #include "state.hpp"
+#include "tail.hpp"
 #include "generated/version.h"
 #include "theme.hpp"
 #include "ipc-client.hpp"
+#ifndef _WIN32
 #include "server.hpp"
+#endif
 
 constexpr const auto HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
 
@@ -169,6 +177,97 @@ public:
   AppCommand() { registerCommand<LaunchAppCommand>(); }
 };
 
+struct ListCommandsCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "ls"; }
+  std::string description() const override { return "List loaded commands"; }
+
+  void setup(CLI::App *app) override {
+    app->alias("list");
+    app->add_flag("--json,-j", m_json, "Output command list as json");
+  }
+
+  bool run(CLI::App *) override {
+    auto res =
+        cli::IpcClient::connect().and_then([](cli::IpcClient client) { return client.listCommands(); });
+
+    if (!res) {
+      std::println(std::cerr, "Failed to list commands: {}", res.error());
+      return false;
+    }
+
+    if (m_json) {
+      std::string buf;
+
+      if (auto error =
+              glz::write<glz::opts{.format = glz::JSON, .prettify = true}>(res.value().commands, buf)) {
+        std::println(std::cerr, "Failed to serialize json: {}", glz::format_error(error));
+        return false;
+      }
+
+      std::cout << buf << std::endl;
+    } else {
+      for (const auto &command : res->commands) {
+        std::cout << command.id << "\n";
+      }
+    }
+
+    return true;
+  }
+
+private:
+  bool m_json;
+};
+
+class LaunchCommandCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "launch"; }
+  std::string description() const override { return "Launch a command"; }
+
+  void setup(CLI::App *app) override {
+    app->add_option("entrypoint", m_entrypoint, "The command entrypoint ID to launch")->required();
+    app->add_option("args", m_args, "Arguments to pass to the command");
+    app->add_option("--cwd", m_cwd, "Working directory forwarded to the command");
+    app->add_option("--query,-q", m_query, "");
+  }
+
+  bool run(CLI::App *) override {
+    auto cwd = m_cwd;
+    std::error_code ec;
+
+    if (!cwd) {
+      if (auto path = std::filesystem::current_path(ec); !ec) { cwd = path.generic_string(); }
+    }
+
+    auto res = cli::IpcClient::connect().and_then([&](cli::IpcClient client) {
+      return client.launchCommand({.entrypoint = m_entrypoint, .args = m_args, .cwd = cwd, .query = m_query});
+    });
+
+    if (!res) {
+      std::println(std::cerr, "Failed to launch command: {}", res.error());
+      return false;
+    }
+
+    return true;
+  }
+
+private:
+  std::string m_entrypoint;
+  std::optional<std::string> m_cwd;
+  std::optional<std::string> m_query;
+  std::vector<std::string> m_args;
+};
+
+class CommandCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "cmd"; }
+  std::string description() const override { return "Command utilities"; }
+  void setup(CLI::App *app) override { app->alias("command"); }
+
+public:
+  CommandCommand() {
+    registerCommand<ListCommandsCommand>();
+    registerCommand<LaunchCommandCommand>();
+  }
+};
+
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
   std::string description() const override { return "Ping the vicinae server"; }
@@ -314,6 +413,34 @@ private:
   std::string link;
 };
 
+class LogsCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "logs"; }
+  std::string description() const override { return "Show the vicinae server logs"; }
+
+  void setup(CLI::App *app) override {
+    app->add_flag("--follow,-f", m_follow, "Keep printing new log lines as they are written");
+  }
+
+  bool run(CLI::App *) override {
+    auto const path = vicinae::logFilePath();
+    cli::FileTailer tailer(path);
+
+    if (!tailer.isOpen() && !m_follow) {
+      std::println(std::cerr, "No log file at {}. Has the server been started yet?", path.string());
+      return false;
+    }
+
+    tailer.drain(std::cout);
+
+    if (m_follow) tailer.follow(std::cout);
+
+    return true;
+  }
+
+private:
+  bool m_follow = false;
+};
+
 int CommandLineApp::run(int ac, char **av) {
   CLI::App app(m_name);
 
@@ -342,12 +469,7 @@ int CommandLineApp::run(int ac, char **av) {
   if (ac == 2) {
     std::string arg = av[1];
 
-    // raycast:// or com.raycast:/
-    auto pred = [&](std::string_view scheme) { return arg.starts_with(std::string{scheme} + ":/"); };
-    const bool hasScheme =
-        std::ranges::any_of(std::initializer_list{"vicinae", "raycast", "com.raycast"}, pred);
-
-    if (hasScheme) {
+    if (vicinae::isAppDeeplink(arg)) {
       if (auto res = cli::IpcClient::sendDeeplink(arg); !res) {
         std::println(std::cerr, "Deeplink execution failed: {}", res.error());
         return 1;
@@ -377,18 +499,23 @@ int CommandLineInterface::execute(int ac, char **av) {
   CommandLineApp app(std::string{HEADLINE});
 
   app.registerCommand<VersionCommand>();
+#ifndef _WIN32
   app.registerCommand<CliServerCommand>();
+#endif
   app.registerCommand<CliPing>();
   app.registerCommand<ToggleCommand>();
   app.registerCommand<OpenCommand>();
   app.registerCommand<CloseCommand>();
+  app.registerCommand<CommandCommand>();
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();
   app.registerCommand<ThemeCommand>();
+  app.registerCommand<FileSearchCommand>();
   app.registerCommand<AppCommand>();
   app.registerCommand<ConfigCommand>();
   app.registerCommand<ScriptCommand>();
   app.registerCommand<StateCommand>();
+  app.registerCommand<LogsCommand>();
 
   return app.run(ac, av);
 }

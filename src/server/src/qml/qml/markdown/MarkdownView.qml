@@ -67,6 +67,10 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
+        ViciWheelHandler {
+            target: flickable
+        }
+
         onContentHeightChanged: {
             if (root._autoScroll) {
                 root._autoScroll = false;
@@ -206,13 +210,13 @@ Item {
     }
 
     Shortcut {
-        sequence: StandardKey.Copy
+        sequences: [StandardKey.Copy]
         enabled: root._controller.hasSelection
         onActivated: root._controller.copy()
     }
 
     Shortcut {
-        sequence: StandardKey.SelectAll
+        sequences: [StandardKey.SelectAll]
         onActivated: root._controller.selectAll()
     }
 
@@ -258,7 +262,7 @@ Item {
 
             ActionItemDelegate {
                 Layout.fillWidth: true
-                title: "Copy"
+                title: qsTr("Copy")
                 iconSource: ""
                 shortcutTokens: []
                 isSubmenu: false
@@ -274,7 +278,7 @@ Item {
 
             ActionItemDelegate {
                 Layout.fillWidth: true
-                title: "Select All"
+                title: qsTr("Select All")
                 iconSource: ""
                 shortcutTokens: []
                 isSubmenu: false

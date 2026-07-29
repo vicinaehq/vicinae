@@ -35,6 +35,7 @@ QString imageProviderUrl(const QString &rawUrl) {
   QUrl const url(rawUrl);
   auto const scheme = url.scheme();
 
+  if (scheme == "icon") return rawUrl;
   if (scheme == "https" || scheme == "http") return ImageURL::http(url).toString();
 
   if (scheme == "data") {

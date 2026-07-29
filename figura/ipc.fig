@@ -30,6 +30,26 @@ struct LaunchAppResponse {
   focusedWindowTitle: string;
 };
 
+struct LaunchCommandRequest {
+  entrypoint: string;
+  args: string[];
+  cwd?: string;
+  query?: string;
+};
+
+struct LaunchCommandResponse {
+  error?: string;
+};
+
+struct CommandInfo {
+  id: string;
+  name: string;
+};
+
+struct ListCommandsResponse {
+  commands: CommandInfo[];
+};
+
 struct DMenuRequest {
   rawContent: string;
   navigationTitle?: string;
@@ -73,14 +93,31 @@ struct CloseTabRequest {
   tabId: int;
 };
 
+struct FileResult {
+  path: string;
+  score: uint;
+  category: string;
+  mimeType?: string;
+};
+
+struct FsQueryParams {
+  limit: int;
+  category?: string;
+};
+
 service Ipc {
   fn ping() => PingResponse;
   fn deeplink(req: DeeplinkRequest) => DeeplinkResponse;
   fn describe() => DescribeResponse;
   fn launchApp(req: LaunchAppRequest) => LaunchAppResponse;
+  fn listCommands() => ListCommandsResponse;
+  fn launchCommand(req: LaunchCommandRequest) => LaunchCommandResponse;
   fn dmenu(req: DMenuRequest) => DMenuResponse;
   fn browserInit(req: BrowserInitRequest) => void;
   fn browserTabsChanged(tabs: BrowserTabInfo[]) => void;
+
+  // filesystem
+  fn fsQuery(q: string, params: FsQueryParams) => FileResult[];
 
   event focusTab(req: FocusTabRequest);
   event closeTab(req: CloseTabRequest);

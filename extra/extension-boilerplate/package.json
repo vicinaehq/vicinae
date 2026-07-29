@@ -44,6 +44,18 @@
 			"mode": "view"
 		},
 		{
+			"name": "paginated-list",
+			"title": "Paginated List",
+			"description": "An infinitely scrolling paginated list",
+			"mode": "view"
+		},
+		{
+			"name": "paginated-grid",
+			"title": "Paginated Grid",
+			"description": "An infinitely scrolling paginated grid",
+			"mode": "view"
+		},
+		{
 			"name": "simple-detail",
 			"title": "Simple Detail",
 			"description": "A simple detail view",
@@ -68,9 +80,21 @@
 			"mode": "view"
 		},
 		{
+			"name": "image-search",
+			"title": "Image Search",
+			"description": "Image search",
+			"mode": "view"
+		},
+		{
 			"name": "window-switcher",
 			"title": "Window Switcher",
 			"description": "Test window management APIs",
+			"mode": "view"
+		},
+		{
+			"name": "wallpaper",
+			"title": "Wallpaper Picker",
+			"description": "Browse ~/Pictures and set the desktop wallpaper",
 			"mode": "view"
 		},
 		{
@@ -89,6 +113,18 @@
 			"name": "action-panel-stress",
 			"title": "Action Panel Stress Test",
 			"description": "Test action panel reconciliation, deep submenus, dynamic content, and filter preservation",
+			"mode": "view"
+		},
+		{
+			"name": "browser",
+			"title": "Browser Extension Showcase",
+			"description": "Browser extension",
+			"mode": "view"
+		},
+		{
+			"name": "capabilities",
+			"title": "Capabilities",
+			"description": "Check capabilities of install",
 			"mode": "view"
 		},
 		{
@@ -113,7 +149,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.3.2",
 		"@types/node": "^24.9.2",
-		"@types/react": "^19.2.2",
+		"@types/react": "^19.2.17",
 		"typescript": "^5.9.2"
 	}
 }

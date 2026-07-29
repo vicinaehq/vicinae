@@ -3,11 +3,12 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "extension/extension-command.hpp"
+#include "launcher-window-platform.hpp"
 #include "hud-bridge.hpp"
 #include "keybind-bridge.hpp"
+#include "keyboard-bridge.hpp"
 #include "view-utils.hpp"
 #include "action-panel-controller.hpp"
-#include "ui/action-pannel/action.hpp"
 #include "ui/image/image-renderer.hpp"
 #include "services/news/news-service.hpp"
 #include "alert-model.hpp"
@@ -15,6 +16,7 @@
 #include "image-source.hpp"
 #include "image-url.hpp"
 #include "config-bridge.hpp"
+#include "platform-bridge.hpp"
 #include "theme-bridge.hpp"
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
@@ -24,7 +26,6 @@
 #include "qml/vicinae-store-view-host.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "settings-controller/settings-controller.hpp"
-#include "services/keybinding/keybinding-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
@@ -56,6 +57,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
       m_footerPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
+      m_keyboardBridge(new KeyboardBridge(this)), m_platformBridge(new PlatformBridge(this)),
       m_themeBridge(new ThemeBridge(this)) {
 
 #ifndef Q_OS_MACOS
@@ -69,20 +71,24 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
+  rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
 
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);
   rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
   rootCtx->setContextProperty(QStringLiteral("footerPanel"), m_footerPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
+  rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"), ctx.services->fileChooserService());
 
   updateLayerShellProps();
   buildFooterMenu();
 
   m_engine.load(QUrl(
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
       QStringLiteral("qrc:/Vicinae/LauncherWindowMacOS.qml")
+#elif defined(Q_OS_WIN)
+      QStringLiteral("qrc:/Vicinae/LauncherWindowWindows.qml")
 #else
       isLayerShellActive() ? QStringLiteral("qrc:/Vicinae/LauncherWindowLayerShell.qml")
                            : QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")
@@ -97,13 +103,22 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   if (!Environment::isHudDisabled()) {
     m_hudBridge = new HudBridge(this);
     rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
-    m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/HudWindow.qml")));
+    m_engine.load(QUrl(
+#if defined(Q_OS_MACOS)
+        QStringLiteral("qrc:/Vicinae/HudWindowMacOS.qml")
+#elif defined(Q_OS_WIN)
+        QStringLiteral("qrc:/Vicinae/HudWindowWindows.qml")
+#else
+        QStringLiteral("qrc:/Vicinae/HudWindowLayerShell.qml")
+#endif
+            ));
   }
 
   auto *nav = ctx.navigation.get();
 
   // Track window activation so toggleWindow() and closeOnFocusLoss work correctly
   if (m_window) {
+    nav->setWindow(m_window);
     connect(m_window, &QQuickWindow::activeChanged, this,
             [this]() { m_ctx.navigation->setWindowActivated(m_window->isActive()); });
     m_window->installEventFilter(this);
@@ -276,6 +291,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     m_toastTitle = t->title();
     m_toastMessage = t->message();
     m_toastStyle = static_cast<int>(t->priority());
+    tryCompaction(); // we don't want to compact if there is a toast to show
     emit toastChanged();
     emit toastActiveChanged();
   });
@@ -342,7 +358,20 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
     if (ke->modifiers().testFlag(Qt::KeypadModifier)) {
       ke->setModifiers(ke->modifiers() & ~Qt::KeypadModifier);
     }
-    if (forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) { return true; }
+    // the current view host gets first pick at any key press, unless a component
+    // that owns the keyboard (overlay, alert, action panel) is up.
+    const bool viewOwnsInput =
+        !m_hasOverlay && !m_alertModel->visible() && !m_actionPanel->isOpen() && !m_footerPanel->isOpen();
+    if (viewOwnsInput) {
+      auto *host = dynamic_cast<ViewHostBase *>(m_commandViewHost);
+      if (host && host->inputFilter(ke)) return true;
+    }
+    // unmodified keys (return included) belong to the focused component: forwarding
+    // them globally would steal text input or returns meant for local widgets such as
+    // text areas, overlays or the opened action panel.
+    if (ke->modifiers() != Qt::NoModifier && forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) {
+      return true;
+    }
   }
 
   // only works on some compositors.
@@ -365,8 +394,10 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     tryCompaction();
     m_window->show();
     m_window->raise();
+    LauncherWindowPlatform::grantForeground();
     m_window->requestActivate();
   } else {
+    LauncherWindowPlatform::suppressHeldKeyReleases();
     m_window->hide();
     m_cacheEvictionTimer.start();
   }
@@ -442,12 +473,19 @@ void LauncherWindow::forwardSearchText(const QString &text) {
   tryCompaction();
 }
 
-void LauncherWindow::handleReturn() { m_actionPanel->executePrimaryAction(); }
-
 bool LauncherWindow::forwardKey(int key, int modifiers) {
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
+  const bool isReturn = key == Qt::Key_Return || key == Qt::Key_Enter;
+  const bool unmodified = (mods & ~Qt::KeypadModifier) == Qt::NoModifier;
 
-  if (mods == Qt::NoModifier) return false;
+  // unmodified keys are regular text input, except return which the action panel
+  // knows how to handle
+  if (unmodified && !isReturn) return false;
+
+  if (unmodified && m_compacted) {
+    expand();
+    return true;
+  }
 
   switch (key) {
   case Qt::Key_Shift:
@@ -474,15 +512,7 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
 
   QKeyEvent const event(QEvent::KeyPress, key, mods);
 
-  if (auto *action = m_ctx.navigation->findBoundAction(&event)) {
-    if (auto *submenu = dynamic_cast<SubmenuAction *>(action)) {
-      m_actionPanel->openSubmenu(submenu);
-    } else {
-      m_ctx.navigation->executeAction(action);
-      m_actionPanel->close();
-    }
-    return true;
-  }
+  if (m_actionPanel->activateBoundAction(&event)) return true;
 
   if (Keyboard::Shortcut(Keybind::OpenSettings) == &event) {
     m_ctx.navigation->closeWindow();
@@ -513,10 +543,6 @@ void LauncherWindow::popToRoot() {
 }
 
 bool LauncherWindow::popOnBackspace() { return m_ctx.services->config()->value().popOnBackspace; }
-
-int LauncherWindow::matchNavigationKey(int key, int modifiers) {
-  return KeyBindingService::matchNavigation(key, modifiers, m_ctx.services->config()->value().keybinding);
-}
 
 void LauncherWindow::setCompleterValue(int index, const QString &value) {
   auto *nav = m_ctx.navigation.get();
@@ -559,7 +585,7 @@ void LauncherWindow::openFooterMenu() {
     return;
   }
 
-  m_footerPanel->toggle();
+  m_footerPanel->toggle(true);
 }
 
 bool LauncherWindow::buildCommandFooterMenu() {
@@ -591,13 +617,13 @@ bool LauncherWindow::buildCommandFooterMenu() {
 
   if (cmd->isVicinae()) {
     extensionSection->addAction(
-        new StaticAction(QStringLiteral("View in Store"), ImageURL::builtin("cart"),
+        new StaticAction(QStringLiteral("View in Store"), ImageURL::builtin(BuiltinIcon::Cart),
                          [author = cmd->author(), name = cmd->repositoryName()](ApplicationContext *ctx) {
                            ctx->navigation->pushView(new VicinaeStoreDetailHost(author, name));
                          }));
   } else if (cmd->isRaycast()) {
     extensionSection->addAction(
-        new StaticAction(QStringLiteral("View in Store"), ImageURL::builtin("cart"),
+        new StaticAction(QStringLiteral("View in Store"), ImageURL::builtin(BuiltinIcon::Cart),
                          [author = cmd->author(), name = cmd->repositoryName()](ApplicationContext *ctx) {
                            ctx->navigation->pushView(new RaycastStoreDetailHost(author, name));
                          }));
@@ -620,35 +646,35 @@ void LauncherWindow::buildFooterMenu() {
   state->setId(QStringLiteral("footer-menu"));
 
   auto *appSection = state->createSection();
-  appSection->addAction(new StaticAction(QStringLiteral("Open Settings"), ImageURL::builtin("cog"),
-                                         [](ApplicationContext *ctx) {
-                                           ctx->navigation->closeWindow();
-                                           ctx->settings->openWindow();
-                                         }));
-  appSection->addAction(new StaticAction(QStringLiteral("Keyboard Shortcuts"), ImageURL::builtin("keyboard"),
+  appSection->addAction(
+      new StaticAction(tr("Open Settings"), ImageURL::builtin(BuiltinIcon::Cog), [](ApplicationContext *ctx) {
+        ctx->navigation->closeWindow();
+        ctx->settings->openWindow();
+      }));
+  appSection->addAction(new StaticAction(tr("Keyboard Shortcuts"), ImageURL::builtin(BuiltinIcon::Keyboard),
                                          [](ApplicationContext *ctx) {
                                            ctx->navigation->closeWindow();
                                            ctx->settings->openTab(QStringLiteral("shortcuts"));
                                          }));
-  appSection->addAction(new StaticAction(QStringLiteral("Extension Store"), ImageURL::builtin("cart"),
-                                         [](ApplicationContext *ctx) {
+  appSection->addAction(new StaticAction(QStringLiteral("Extension Store"),
+                                         ImageURL::builtin(BuiltinIcon::Cart), [](ApplicationContext *ctx) {
                                            ctx->navigation->popToRoot();
                                            ctx->navigation->clearSearchText();
                                            ctx->navigation->pushView(new VicinaeStoreViewHost);
                                          }));
 
   auto *helpSection = state->createSection();
-  helpSection->addAction(new StaticAction(QStringLiteral("Documentation"), ImageURL::builtin("book"),
+  helpSection->addAction(new StaticAction(tr("Documentation"), ImageURL::builtin(BuiltinIcon::Book),
                                           [](ApplicationContext *ctx) {
                                             ctx->services->appDb()->openTarget(Omnicast::DOC_URL);
-                                            ctx->navigation->showHud(QStringLiteral("Opened in browser"));
+                                            ctx->navigation->showHud(tr("Opened in browser"));
                                           }));
   helpSection->addAction(
-      new StaticAction(QStringLiteral("Report a Bug"), ImageURL::builtin("bug"), [](ApplicationContext *ctx) {
+      new StaticAction(tr("Report a Bug"), ImageURL::builtin(BuiltinIcon::Bug), [](ApplicationContext *ctx) {
         ctx->services->appDb()->openTarget(makeVicinaeBugReportUrl());
-        ctx->navigation->showHud(QStringLiteral("Opened in browser"));
+        ctx->navigation->showHud(tr("Opened in browser"));
       }));
-  helpSection->addAction(new StaticAction(QStringLiteral("About Vicinae"), ImageURL::builtin("info-01"),
+  helpSection->addAction(new StaticAction(tr("About Vicinae"), ImageURL::builtin(BuiltinIcon::Info01),
                                           [](ApplicationContext *ctx) {
                                             ctx->navigation->closeWindow();
                                             ctx->settings->openTab(QStringLiteral("about"));
@@ -667,8 +693,10 @@ void LauncherWindow::setCompacted(bool value) {
 
 void LauncherWindow::tryCompaction() {
   auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
+
   setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled &&
-               m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1);
+               m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1 &&
+               !m_toastActive);
 }
 
 bool LauncherWindow::isLayerShellActive() const {

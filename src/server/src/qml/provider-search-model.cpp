@@ -12,7 +12,7 @@ QString ProviderSearchSection::itemTitle(int i) const { return itemAt(i)->title(
 
 QString ProviderSearchSection::itemSubtitle(int i) const { return itemAt(i)->subtitle(); }
 
-QString ProviderSearchSection::itemIconSource(int i) const { return imageSourceFor(itemAt(i)->iconUrl()); }
+std::optional<ImageURL> ProviderSearchSection::itemIcon(int i) const { return itemAt(i)->iconUrl(); }
 
 std::unique_ptr<ActionPanelState> ProviderSearchSection::actionPanel(int i) const {
   auto *item = itemAt(i);

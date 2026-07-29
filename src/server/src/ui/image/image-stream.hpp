@@ -51,6 +51,8 @@ private:
   OmniPainter::ImageMaskType m_mask = OmniPainter::NoMask;
   QString m_cacheKey;
   QString m_originalCacheKey;
+  QString m_latestCacheKey;
+  QString m_originalLatestCacheKey;
   int m_fallbacksRemaining = 2;
   ImageStreamOptions m_opts;
 

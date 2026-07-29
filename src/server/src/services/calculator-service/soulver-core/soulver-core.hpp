@@ -1,5 +1,6 @@
 #pragma once
 #include "services/calculator-service/abstract-calculator-backend.hpp"
+#include <QtGlobal>
 #include <expected>
 #include <filesystem>
 
@@ -14,8 +15,8 @@ public:
 
   bool isActivatable() const override;
   bool start() override;
-  ComputeResult compute(const QString &question) override;
-  QFuture<ComputeResult> asyncCompute(const QString &question) override;
+  ComputeResult compute(const QString &question, const ComputeOptions &opts) override;
+  QFuture<ComputeResult> asyncCompute(const QString &question, const ComputeOptions &opts) override;
 
   QString displayName() const override { return "SoulverCore"; }
   QString id() const override { return "soulver-core"; }
@@ -29,11 +30,13 @@ private:
     char *(*soulver_evaluate)(const char *) = nullptr;
   };
 
-  void loadABI();
-
   std::expected<SoulverResult, QString> calculate(const QString &expression) const;
-  std::vector<std::filesystem::path> availableResourcePaths() const;
   ABI m_abi;
 
+#ifndef Q_OS_MACOS
+  void loadABI();
+  std::vector<std::filesystem::path> availableResourcePaths() const;
+
   void *m_dlHandle = nullptr;
+#endif
 };

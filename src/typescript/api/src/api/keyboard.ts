@@ -79,8 +79,18 @@ export type KeyEquivalent =
 
 /**
  * @category Keyboard
+ * `cmd` maps to command on macOS, control elsewhere
+ * `meta` and `windows` both map to the meta key, also known as "windows" key or "super" key
+ * `alt` and `opt` both map to alt on every platform, the latter being the name it is given on macOS.
  */
-export type KeyModifier = "cmd" | "ctrl" | "opt" | "shift";
+export type KeyModifier =
+	| "cmd"
+	| "windows"
+	| "meta"
+	| "ctrl"
+	| "opt"
+	| "alt"
+	| "shift";
 
 /**
  * @category Keyboard

@@ -25,7 +25,7 @@ Item {
             }
 
             Text {
-                text: "Welcome to " + root.host.commandName
+                text: qsTr("Welcome to %1").arg(root.host.commandName)
                 color: Theme.foreground
                 font.pointSize: Theme.regularFontSize
                 font.weight: Font.DemiBold
@@ -34,7 +34,7 @@ Item {
             }
 
             Text {
-                text: "Before you can use this command, you need to fill in the required preference fields below."
+                text: qsTr("Before you can use this command, you need to fill in the required preference fields below.")
                 color: Theme.textMuted
                 font.pointSize: Theme.regularFontSize
                 wrapMode: Text.WordWrap
@@ -55,6 +55,7 @@ Item {
                 required property string type
                 required property string fieldId
                 required property string label
+                required property string checkboxLabel
                 required property string description
                 required property string placeholder
                 required property var value
@@ -122,9 +123,9 @@ Item {
         FormField {
             id: field
             label: parent.label
-            info: parent.description
             FormCheckbox {
                 checked: field.parent.value === true
+                label: field.parent.checkboxLabel
                 onToggled: root.host.prefModel.setFieldValue(field.parent.index, checked)
             }
         }

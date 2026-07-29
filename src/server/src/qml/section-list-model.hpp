@@ -1,11 +1,12 @@
 #pragma once
-#include "section-source.hpp"
-#include "view-scope.hpp"
-#include "theme.hpp"
 #include <QAbstractListModel>
+
 #include <memory>
 #include <vector>
 
+#include "section-source.hpp"
+#include "theme.hpp"
+#include "view-scope.hpp"
 class SectionListModel : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(bool selectFirstOnReset READ selectFirstOnReset NOTIFY selectFirstOnResetChanged)
@@ -28,6 +29,7 @@ public:
     Subtitle,
     IconSource,
     Accessory,
+    IsDraggable,
   };
 
   explicit SectionListModel(QObject *parent = nullptr);
@@ -49,6 +51,7 @@ public:
   int selectedIndex() const { return m_selectedIndex; }
 
   Q_INVOKABLE virtual void setSelectedIndex(int index);
+  Q_INVOKABLE void startDrag(int index, QObject *source);
   Q_INVOKABLE void activateSelected();
   Q_INVOKABLE int nextSelectableIndex(int from, int direction) const;
   Q_INVOKABLE int nextSectionIndex(int from, int direction) const;

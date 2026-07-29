@@ -8,99 +8,102 @@
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include "services/toast/toast-service.hpp"
+#include <QCoreApplication>
 
 class SearchFilesCommand : public BuiltinViewCommand<SearchFilesViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(SearchFilesCommand)
+
   QString id() const override { return "search"; }
-  QString name() const override { return "Search Files"; }
-  QString description() const override { return "Search files on your system"; }
+  QString name() const override { return tr("Search Files"); }
+  QString description() const override { return tr("Search files on your system"); }
   bool isFallback() const override { return true; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("magnifying-glass").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   std::vector<Preference> preferences() const override { return {}; }
   void preferenceValuesChanged(const QJsonObject &value) const override {}
 };
 
 class RebuildFileIndexCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(RebuildFileIndexCommand)
+
   QString id() const override { return "rebuild-index"; }
-  QString name() const override { return "Rebuild File Index"; }
+  QString name() const override { return tr("Rebuild File Index"); }
   QString description() const override {
-    return "Fully rebuild the file index. Running this manually can be useful if the file search feels "
-           "particularly out of date.";
+    return tr("Fully rebuild the file index. Running this manually can be useful if the file search feels "
+              "particularly out of date.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("hammer").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Hammer).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   std::vector<Preference> preferences() const override { return {}; }
   void preferenceValuesChanged(const QJsonObject &value) const override {}
 
-  void execute(CommandController *controller) const override {
+  void execute(CommandController &controller) const override {
     auto alert = new CallbackAlertWidget;
-    auto ctx = controller->context();
+    auto ctx = controller.context();
 
-    alert->setTitle("Are you sure?");
-    alert->setMessage("Rebuilding the entire index can be time consuming and CPU intensive, depending on the "
-                      "number of files present in your home directory.");
-    alert->setConfirmText("Reset", SemanticColor::Red);
+    alert->setTitle(tr("Are you sure?"));
+    alert->setMessage(
+        tr("Rebuilding the entire index can be time consuming and CPU intensive, depending on the "
+           "number of files present in your home directory."));
+    alert->setConfirmText(tr("Reset"), SemanticColor::Red);
     alert->setCallback([ctx](bool confirmed) {
       if (!confirmed) return;
 
       ctx->services->fileService()->rebuildIndex();
-      ctx->services->toastService()->setToast("Index rebuild started...");
+      ctx->services->toastService()->setToast(tr("Index rebuild started..."));
     });
     ctx->navigation->setDialog(alert);
   }
 };
 
 class FileExtension : public BuiltinCommandRepository {
+  Q_DECLARE_TR_FUNCTIONS(FileExtension)
+
   QString id() const override { return "files"; }
-  QString displayName() const override { return "System files"; }
-  QString description() const override { return "Integrate with system files"; }
+  QString displayName() const override { return tr("System files"); }
+  QString description() const override { return tr("Integrate with system files"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("magnifying-glass").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
 public:
   void initialized(const QJsonObject &preferences) const override {
 #ifdef Q_OS_LINUX
-    auto files = ServiceRegistry::instance()->fileService();
-    if (preferences.value("autoIndexing").toBool()) { files->indexer()->start(); }
+    ServiceRegistry::instance()->fileService()->preferenceValuesChanged(preferences);
 #endif
   }
 
   FileExtension() {
     registerCommand<SearchFilesCommand>();
-#ifdef Q_OS_LINUX
-    registerCommand<RebuildFileIndexCommand>();
-#endif
+
+    // XXX - we don't really need this anymore, as the indexer now executes full sweeps at a given interval
+    // This behavior can be easily replicated by simply removing the `.cache/vicinae/file-indexer` directory.
+    // registerCommand<RebuildFileIndexCommand>();
   }
 
   std::vector<Preference> preferences() const override {
 #ifdef Q_OS_LINUX
     auto indexing = Preference::makeCheckbox("autoIndexing");
 
-    indexing.setTitle("Enabled");
+    indexing.setTitle(tr("Enabled"));
     indexing.setDescription(
-        "Whether to run the file indexer in the background. When turned off, the indexer process is "
-        "stopped entirely and file search becomes unavailable until it is turned back on.");
+        tr("Whether to run the file indexer in the background. When turned off, the indexer process is "
+           "stopped entirely and file search becomes unavailable until it is turned back on."));
     indexing.setDefaultValue(true);
 
-    auto paths = Preference::makeText("paths");
-    paths.setTitle("Search paths");
-    paths.setDescription("Semicolon-separated list of paths that vicinae will search");
-    paths.setDefaultValue(homeDir().c_str());
+    auto paths = Preference::directories("indexingPaths");
+    paths.setTitle(tr("Search paths"));
+    paths.setDescription(tr("Directories that Vicinae will search"));
+    paths.setDefaultValue(QJsonArray{homeDir().c_str()});
 
-    auto excludedPaths = Preference::makeText("excludedPaths");
-    excludedPaths.setTitle("Excluded search paths");
-    excludedPaths.setDescription("Semicolon-separated list of paths to exclude from file indexing");
-    excludedPaths.setDefaultValue("");
+    auto excludedPaths = Preference::directories("excludedIndexingPaths");
+    excludedPaths.setTitle(tr("Excluded search paths"));
+    excludedPaths.setDescription(tr("Directories to exclude from file indexing"));
+    excludedPaths.setDefaultValue(QJsonArray{});
 
-    auto watcherPaths = Preference::makeText("watcherPaths");
-    watcherPaths.setTitle("Watcher paths");
-    watcherPaths.setDescription("Semicolon-separated list of paths watched by experimental watcher");
-    watcherPaths.setDefaultValue("");
-
-    return {indexing, paths, excludedPaths, watcherPaths};
+    return {indexing, paths, excludedPaths};
 #else
     return {};
 #endif

@@ -3,6 +3,8 @@
 #include "services/power-manager/abstract-power-manager.hpp"
 #ifdef Q_OS_LINUX
 #include "services/power-manager/systemd/systemd-power-manager.hpp"
+#elif defined(Q_OS_MACOS)
+#include "services/power-manager/macos/macos-power-manager.hpp"
 #else
 #include "services/power-manager/dummy-power-manager.hpp"
 #endif
@@ -13,6 +15,8 @@ public:
   PowerManager() {
 #ifdef Q_OS_LINUX
     m_manager = std::make_unique<SystemdPowerManager>();
+#elif defined(Q_OS_MACOS)
+    m_manager = std::make_unique<MacosPowerManager>();
 #else
     m_manager = std::make_unique<DummyPowerManager>();
 #endif

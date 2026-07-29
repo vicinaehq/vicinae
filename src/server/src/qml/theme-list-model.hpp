@@ -1,11 +1,13 @@
 #pragma once
 #include "section-source.hpp"
 #include "theme/theme-file.hpp"
+#include <QCoreApplication>
 #include <functional>
 #include <memory>
 #include <vector>
 
 class ThemeSection : public SectionSource {
+  Q_DECLARE_TR_FUNCTIONS(ThemeSection)
 public:
   enum ExtraRole {
     PaletteColor0 = 100,
@@ -38,7 +40,7 @@ public:
 protected:
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:

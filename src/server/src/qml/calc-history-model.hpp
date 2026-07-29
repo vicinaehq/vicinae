@@ -1,11 +1,13 @@
 #pragma once
 #include "section-source.hpp"
 #include "services/calculator-service/calculator-service.hpp"
+#include <QCoreApplication>
 #include <vector>
 
 using CalculatorRecord = CalculatorService::CalculatorRecord;
 
 class CalcHistorySection : public SectionSource {
+  Q_DECLARE_TR_FUNCTIONS(CalcHistorySection)
 public:
   void setRecords(const QString &groupName, std::vector<CalculatorRecord> records);
 
@@ -14,7 +16,7 @@ public:
 
 protected:
   QString itemTitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariantList itemAccessories(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 

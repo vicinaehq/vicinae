@@ -1,6 +1,8 @@
-#include "section-list-model.hpp"
-
 #include <utility>
+
+#include "drag-utils.hpp"
+#include "section-list-model.hpp"
+#include "services/navigation/list-navigation.hpp"
 
 SectionListModel::SectionListModel(QObject *parent) : QAbstractListModel(parent) {
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
@@ -80,6 +82,8 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
       return QString();
     case Accessory:
       return {};
+    case IsDraggable:
+      return false;
     default: {
       auto it = m_customRoleDefaults.find(role);
       return it != m_customRoleDefaults.end() ? it.value() : QVariant{};
@@ -101,9 +105,12 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
   case Subtitle:
     return source->itemSubtitle(flat.itemIdx);
   case IconSource:
-    return source->itemIconSource(flat.itemIdx);
+    if (auto icon = source->itemIcon(flat.itemIdx)) return icon->toString();
+    return QString();
   case Accessory:
     return source->itemAccessories(flat.itemIdx);
+  case IsDraggable:
+    return source->isDraggable(flat.itemIdx);
   default: {
     auto v = source->customData(flat.itemIdx, role);
     if (v.isValid()) return v;
@@ -118,7 +125,7 @@ QHash<int, QByteArray> SectionListModel::roleNames() const {
       {IsSection, "isSection"},     {IsSelectable, "isSelectable"},
       {SectionName, "sectionName"}, {Title, "title"},
       {Subtitle, "subtitle"},       {IconSource, "iconSource"},
-      {Accessory, "itemAccessory"},
+      {Accessory, "itemAccessory"}, {IsDraggable, "isDraggable"},
   };
   for (auto *source : m_sources)
     roles.insert(source->customRoleNames());
@@ -160,30 +167,23 @@ void SectionListModel::setSelectedIndex(int index) {
   emit itemSelected(source, flat.itemIdx);
 }
 
+void SectionListModel::startDrag(int index, QObject *dragSource) {
+  int sourceIdx;
+  int itemIdx;
+  if (!dragSource || !dataItemAt(index, sourceIdx, itemIdx)) return;
+
+  auto *source = m_sources[sourceIdx];
+  DragUtils::startDrag(dragSource, source->dragMimeData(itemIdx), source->itemIcon(itemIdx));
+}
+
 void SectionListModel::refreshActionPanel() { setSelectedIndex(m_selectedIndex); }
 
 void SectionListModel::activateSelected() { m_scope.executePrimaryAction(); }
 
 int SectionListModel::nextSelectableIndex(int from, int direction) const {
   int const count = static_cast<int>(m_flat.size());
-  if (count == 0) return from;
-
-  int idx = from + direction;
-  if (idx < 0)
-    idx = count - 1;
-  else if (idx >= count)
-    idx = 0;
-
-  while (idx != from) {
-    if (m_flat[idx].kind != FlatItem::SectionHeader) return idx;
-    idx += direction;
-    if (idx < 0)
-      idx = count - 1;
-    else if (idx >= count)
-      idx = 0;
-  }
-
-  return from;
+  return ListNavigation::nextIndex(from, direction, count,
+                                   [&](int idx) { return m_flat[idx].kind != FlatItem::SectionHeader; });
 }
 
 int SectionListModel::nextSectionIndex(int from, int direction) const {
@@ -206,6 +206,7 @@ int SectionListModel::nextSectionIndex(int from, int direction) const {
         return firstDataItemFrom(idx + 1);
       }
     }
+    if (!ListNavigation::wrapEnabled()) return from;
     return nextSelectableIndex(-1, 1);
   }
 
@@ -236,6 +237,8 @@ int SectionListModel::nextSectionIndex(int from, int direction) const {
       break;
     }
   }
+
+  if (!ListNavigation::wrapEnabled()) return from;
 
   int lastSource = -1;
   for (int i = count - 1; i >= 0; --i) {

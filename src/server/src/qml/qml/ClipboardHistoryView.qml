@@ -184,16 +184,16 @@ Item {
         DetailPanel {
             metadata: [
                 {
-                    label: "Mime",
-                    value: root.host.detailMimeType,
+                    label: qsTr("Type"),
+                    value: root.host.detailType,
                     icon: root.host.detailEncryptionIcon
                 },
                 {
-                    label: "Size",
+                    label: qsTr("Size"),
                     value: root.host.detailSize
                 },
                 {
-                    label: "Copied at",
+                    label: qsTr("Copied at"),
                     value: root.host.detailCopiedAt
                 },
                 {
@@ -244,8 +244,8 @@ Item {
                 active: !root.host.hasDetailError && root.host.detailImageSource === "" && root.host.detailTextContent === ""
                 visible: active
                 sourceComponent: EmptyView {
-                    title: root.host.detailMimeType
-                    description: "Preview not available for this content type"
+                    title: root.host.detailType
+                    description: qsTr("Preview not available for this content type")
                 }
             }
         }
