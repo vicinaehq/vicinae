@@ -1,6 +1,8 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "command-database.hpp"
+#include "service-registry.hpp"
+#include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "../../ui/image/url.hpp"
@@ -52,6 +54,21 @@ class ToggleFloatingWindowCommand : public BuiltinCallbackCommand {
   }
 };
 
+class ToggleOverviewCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "toggle-overview"; }
+  QString name() const override {
+    return QCoreApplication::translate("ToggleOverviewCommand", "Toggle Overview");
+  }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::AppWindow).setBackgroundTint(SemanticColor::Cyan);
+  }
+  void execute(CommandController &controller) const override {
+    auto wm = controller.context()->services->windowManager();
+    wm->provider()->toggleOverview();
+    controller.context()->navigation->closeWindow();
+  }
+};
+
 class WindowManagementExtension : public BuiltinCommandRepository {
   QString id() const override { return "wm"; }
   QString displayName() const override {
@@ -62,9 +79,15 @@ class WindowManagementExtension : public BuiltinCommandRepository {
   }
 
 public:
-  WindowManagementExtension() {
+  WindowManagementExtension(const ServiceRegistry &services) {
+    using Cap = AbstractWindowManager::Capability;
+    auto wm = services.windowManager()->provider();
+
     registerCommand<SwitchWindowsCommand>();
-    registerCommand<ToggleFullscreenWindowCommand>();
-    registerCommand<ToggleFloatingWindowCommand>();
+
+    if (wm->supports(Cap::Fullscreen)) { registerCommand<ToggleFullscreenWindowCommand>(); }
+    if (wm->supports(Cap::ToggleFloating)) { registerCommand<ToggleFloatingWindowCommand>(); }
+    if (wm->supports(Cap::ToggleOverview)) { registerCommand<ToggleOverviewCommand>(); }
+    if (wm->supports(AbstractWindowManager::Capability::SetSticky)) {}
   }
 };

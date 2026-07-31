@@ -446,6 +446,18 @@ bool WindowManager::toggleFloating(const AbstractWindow &window) {
   return true;
 }
 
+bool WindowManager::toggleOverview() {
+  auto res = sendActionRequest("ToggleOverview", {});
+
+  if (!res.has_value()) {
+    qWarning() << "Niri::WindowManager: failed to toggle overview";
+    return false;
+  }
+
+  emit windowsChanged();
+  return true;
+}
+
 void WindowManager::setFocusedWindow(const QString &id) {
   if (id.isEmpty()) return;
 

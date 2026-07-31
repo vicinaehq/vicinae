@@ -30,7 +30,7 @@ signals:
   void focusChanged() const;
 
 public:
-  enum Capability { Fullscreen, Minimize, SetFloatingWindow, SetTilingWindow };
+  enum class Capability { Fullscreen, Minimize, SetSticky, ToggleFloating, ToggleOverview };
 
   /**
    * Window geometry in Qt logical coordinates, composable with `Screen::bounds`.
@@ -178,6 +178,10 @@ public:
 
   virtual void focusWindowSync(const AbstractWindow &window) const {}
 
+  virtual QFlags<Capability> capabilities() const { return {}; }
+
+  bool supports(Capability cap) const { return capabilities().testFlag(cap); }
+
   /**
    * Refresh the window list. No-op by default; poll-based implementations re-scan, event-driven ones that
    * stay current on their own can ignore it.
@@ -244,6 +248,11 @@ public:
    * This mostly applies to tiling/scrolling WMs.
    */
   virtual bool toggleFloating(const AbstractWindow &window) { return false; }
+
+  /**
+   * Toggle the "overview" mode of the desktop, if supported.
+   */
+  virtual bool toggleOverview() { return false; }
 
   /**
    * To make sure the window manager IPC link is healthy.

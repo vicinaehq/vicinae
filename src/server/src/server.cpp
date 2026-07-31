@@ -354,7 +354,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
 
     auto root = registry->rootItemManager();
-    auto builtinCommandDb = std::make_unique<CommandDatabase>();
+    auto builtinCommandDb = std::make_unique<CommandDatabase>(*registry);
 
     for (const auto &repo : builtinCommandDb->repositories()) {
       root->loadProvider(std::make_unique<ExtensionRootProvider>(repo));

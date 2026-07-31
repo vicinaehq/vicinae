@@ -90,7 +90,9 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     }
 
     auto provider = ctx->services->windowManager()->provider();
-    if (provider->supportsSetSticky()) { mainSection->addAction(new PinWindowAction(activeWindows.front())); }
+    if (provider->supports(AbstractWindowManager::Capability::SetSticky)) {
+      mainSection->addAction(new PinWindowAction(activeWindows.front()));
+    }
     if (provider->supportsMoveToWorkspace()) {
       mainSection->addAction(new BringToWorkspaceAction(activeWindows.front()));
     }

@@ -1,5 +1,7 @@
 #pragma once
 #include "services/window-manager/abstract-wayland-window-manager.hpp"
+#include "services/window-manager/abstract-window-manager.hpp"
+#include <cstdint>
 #include <qsocketnotifier.h>
 
 namespace Niri {
@@ -79,6 +81,12 @@ public:
   bool ping() const override;
   bool isActivatable() const override;
   void start() override;
+
+  bool toggleOverview() override;
+
+  QFlags<Capability> capabilities() const override {
+    return {Capability::ToggleFloating, Capability::ToggleOverview, Capability::Fullscreen};
+  }
 
 private:
   bool connectEventStream();
