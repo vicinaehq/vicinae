@@ -133,8 +133,10 @@ namespace Niri {
 
 namespace {
 
+using namespace std::chrono_literals;
+
 constexpr glz::opts PARSE_OPTS{.error_on_unknown_keys = false};
-constexpr std::chrono::milliseconds WINDOWS_CHANGED_THROTTLE_INTERVAL{100};
+constexpr auto WINDOWS_CHANGED_THROTTLE_INTERVAL = 500ms;
 
 template <class T> std::optional<T> parsePayload(const glz::raw_json &raw) {
   T value{};
