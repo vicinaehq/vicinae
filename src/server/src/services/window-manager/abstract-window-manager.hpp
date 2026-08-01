@@ -30,7 +30,13 @@ signals:
   void focusChanged() const;
 
 public:
-  enum class Capability { Fullscreen, Minimize, SetSticky, ToggleFloating, ToggleOverview };
+  enum class Capability {
+    Fullscreen = 1,
+    Minimize = 1 << 1,
+    ToggleFloating = 1 << 2,
+    ToggleOverview = 1 << 3,
+    SetSticky = 1 << 4
+  };
 
   /**
    * Window geometry in Qt logical coordinates, composable with `Screen::bounds`.
