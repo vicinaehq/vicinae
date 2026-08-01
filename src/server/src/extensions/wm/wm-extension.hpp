@@ -10,7 +10,12 @@
 #include "theme.hpp"
 #include <qcontainerfwd.h>
 #include "switch-windows-command.hpp"
+#include "theme/colors.hpp"
 #include <QCoreApplication>
+
+namespace {
+const auto COLOR = SemanticColor::Cyan;
+};
 
 class ToggleFullscreenWindowCommand : public BuiltinCallbackCommand {
   QString id() const override { return "toggle-fullscreen"; }
@@ -18,7 +23,7 @@ class ToggleFullscreenWindowCommand : public BuiltinCallbackCommand {
     return QCoreApplication::translate("ToggleFullscreenWindowCommand", "Toggle Fullscreen");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::ArrowsExpand).setBackgroundTint(SemanticColor::Cyan);
+    return ImageURL::builtin(BuiltinIcon::Fullscreen).setBackgroundTint(COLOR);
   }
   void execute(CommandController &controller) const override {
     auto wm = controller.context()->services->windowManager();
@@ -39,7 +44,7 @@ class ToggleFloatingWindowCommand : public BuiltinCallbackCommand {
     return QCoreApplication::translate("ToggleFloatingWindowCommand", "Toggle Floating");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::AppWindow).setBackgroundTint(SemanticColor::Cyan);
+    return ImageURL::builtin(BuiltinIcon::FloatingWindow).setBackgroundTint(COLOR);
   }
   void execute(CommandController &controller) const override {
     auto wm = controller.context()->services->windowManager();
@@ -60,7 +65,7 @@ class ToggleOverviewCommand : public BuiltinCallbackCommand {
     return QCoreApplication::translate("ToggleOverviewCommand", "Toggle Overview");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::AppWindow).setBackgroundTint(SemanticColor::Cyan);
+    return ImageURL::builtin(BuiltinIcon::Overview).setBackgroundTint(COLOR);
   }
   void execute(CommandController &controller) const override {
     auto wm = controller.context()->services->windowManager();
@@ -75,7 +80,7 @@ class WindowManagementExtension : public BuiltinCommandRepository {
     return QCoreApplication::translate("WindowManagementExtension", "Window Management");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::AppWindowList).setBackgroundTint(SemanticColor::Cyan);
+    return ImageURL::builtin(BuiltinIcon::AppWindowList).setBackgroundTint(COLOR);
   }
 
 public:

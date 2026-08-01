@@ -1,5 +1,6 @@
+
 export enum Icon {
-	Aarch64 = "aarch64",
+Aarch64 = "aarch64",
 	AddPerson = "add-person",
 	Adonisjs = "adonisjs",
 	Aftereffects = "aftereffects",
@@ -279,6 +280,7 @@ export enum Icon {
 	Firefox = "firefox",
 	Flag = "flag",
 	Flask = "flask",
+	FloatingWindow = "floating-window",
 	Flutter = "flutter",
 	Folder = "folder",
 	Footprints = "footprints",
@@ -291,6 +293,7 @@ export enum Icon {
 	Framework7 = "framework7",
 	Fsharp = "fsharp",
 	FullSignal = "full-signal",
+	Fullscreen = "fullscreen",
 	GameController = "game-controller",
 	Gatling = "gatling",
 	Gatsby = "gatsby",
@@ -527,6 +530,7 @@ export enum Icon {
 	OptionSymbol = "option-symbol",
 	Oracle = "oracle",
 	Ory = "ory",
+	Overview = "overview",
 	P5js = "p5js",
 	Packer = "packer",
 	Pandas = "pandas",
@@ -729,6 +733,7 @@ export enum Icon {
 	Swatch = "swatch",
 	Swift = "swift",
 	Swiper = "swiper",
+	SwitchWindows = "switch-windows",
 	Switch = "switch",
 	Symfony = "symfony",
 	Syringe = "syringe",
@@ -845,5 +850,5 @@ export enum Icon {
 	Yunohost = "yunohost",
 	Zend = "zend",
 	Zendesk = "zendesk",
-	Zig = "zig",
+	Zig = "zig"
 }
