@@ -128,7 +128,7 @@ set(SRCS
 	src/root-search/shortcuts/shortcut-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
-	
+
 	src/extension/manager/extension-manager.hpp
 	src/extension/manager/extension-manager.cpp
 	src/extension/node-runtime/node-runtime.hpp
@@ -272,6 +272,9 @@ set(SRCS
 	src/extensions/clipboard/history/clipboard-history-controller.hpp
 	src/extensions/clipboard/history/clipboard-history-controller.cpp
 	src/extensions/browser/browser-extension.cpp
+
+	src/extensions/wm/wm-extension.hpp
+	src/extensions/wm/wm-extension.cpp
 
 	src/extensions/clipboard/clipboard-extension.hpp
 	src/extensions/clipboard/clipboard-extension.cpp
