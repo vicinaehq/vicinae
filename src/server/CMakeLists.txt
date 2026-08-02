@@ -1235,3 +1235,16 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()
+
+if (BUILD_TESTS)
+	set(CONFIG_TEST_TARGET ${TARGET}-config-tests)
+	find_package(Catch2 3 REQUIRED)
+	add_executable(${CONFIG_TEST_TARGET}
+		src/config/config.cpp
+		src/utils/utils.cpp
+		tests/config/manager.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/resources-core.qrc
+	)
+	target_link_libraries(${CONFIG_TEST_TARGET} PRIVATE Catch2::Catch2WithMain glaze::glaze Qt6::Core Qt6::Gui)
+	target_compile_features(${CONFIG_TEST_TARGET} PUBLIC cxx_std_23)
+endif()

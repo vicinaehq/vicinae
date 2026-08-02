@@ -309,6 +309,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
       ie.isProvider = false;
       ie.indent = 1;
       ie.enabled = metadata.enabled;
+      ie.hotkeyExcluded = metadata.hotkeyExcluded;
       ie.alias = QString::fromStdString(metadata.alias.value_or(""));
       ie.shortcut = QString::fromStdString(metadata.shortcut.value_or(""));
       ie.entrypointId = item->uniqueId();
@@ -396,7 +397,7 @@ void ExtensionSettingsModel::loadCommandsForProvider(const QString &providerId) 
         auto *item = manager->findItemById(e.entrypointId);
         bool const hasPrefs = item && !item->preferences().empty();
         commands.push_back({e.name, e.type, e.iconSource, e.description, e.enabled, hasPrefs, e.alias,
-                            QString::fromStdString(e.entrypointId), e.shortcut});
+                            QString::fromStdString(e.entrypointId), e.shortcut, e.hotkeyExcluded});
       }
       break;
     }
@@ -435,6 +436,16 @@ void ExtensionSettingsModel::setEnabledByEntrypointId(const QString &id, bool va
     setEnabled(row, value);
     m_commandModel->setEnabled(id, value);
   }
+}
+
+void ExtensionSettingsModel::setHotkeyExcludedByEntrypointId(const QString &id, bool value) {
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
+  manager->setItemHotkeyExcluded(EntrypointId::fromSerialized(id.toStdString()), value);
+
+  if (int const row = findVisibleEntryByEntrypointId(id); row >= 0) {
+    m_allEntries.at(m_visibleIndices.at(row)).hotkeyExcluded = value;
+  }
+  m_commandModel->setHotkeyExcluded(id, value);
 }
 
 void ExtensionSettingsModel::setAliasByEntrypointId(const QString &id, const QString &alias) {

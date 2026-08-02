@@ -72,5 +72,6 @@ jobs:
         run: |
           ./build/bin/vicinae-glyph-tests
           ./build/bin/vicinae-fuzzy-tests
+          ./build/bin/vicinae-server-config-tests
           ./build/bin/xdgpp-tests
           ./build/bin/scriptcommand-tests

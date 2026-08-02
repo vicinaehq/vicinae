@@ -1,6 +1,8 @@
 #pragma once
 #include <expected>
+#include <functional>
 #include <optional>
+#include <utility>
 #include <QObject>
 #include "keyboard/keyboard.hpp"
 
@@ -36,4 +38,16 @@ public:
   virtual std::expected<void, QString> bindShortcut(const GlobalShortcutRequest &request) = 0;
   virtual void unbindShortcut(const QString &id) = 0;
   virtual void unbindAll() = 0;
+
+  /**
+   * Install a predicate consulted before acting on a shortcut activation. Must be safe to call from
+   * any thread (implementations may be invoked from a platform event-tap thread). Returning true
+   * means the activation should be suppressed: backends that can avoid consuming the physical
+   * keystroke (e.g. a non-exclusive macOS CGEventTap) should let it propagate to the focused app
+   * instead of acting on it.
+   */
+  void setActivationGate(std::function<bool(const QString &id)> gate) { m_gate = std::move(gate); }
+
+protected:
+  std::function<bool(const QString &id)> m_gate;
 };

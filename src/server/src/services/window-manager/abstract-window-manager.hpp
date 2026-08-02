@@ -156,6 +156,12 @@ public:
    */
   virtual std::shared_ptr<AbstractWindow> getFocusedWindowSync() const { return nullptr; }
 
+  virtual std::optional<QString> focusedApplicationId() const {
+    auto const window = getFocusedWindowSync();
+    if (!window) return std::nullopt;
+    return window->wmClass();
+  }
+
   /**
    * Whether the window manager is able to track what window is currently focused.
    * Note that a WM implementation can still implement `focusWindowSync` even if it

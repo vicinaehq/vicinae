@@ -301,6 +301,11 @@ bool MacOSGlobalShortcutBackend::handleKeyDown(uint32_t keycode, uint64_t rawFla
 
   if (!match) { return false; }
 
+  // Suppressed activations (e.g. the toggle hotkey while an excluded app is focused) are not
+  // consumed: returning false here makes tapCallback hand the original event back to the OS, so it
+  // reaches the focused app exactly as if we weren't intercepting it.
+  if (m_gate && m_gate(match->id)) { return false; }
+
   if (!autorepeat) {
     const QString id = match->id;
     QMetaObject::invokeMethod(

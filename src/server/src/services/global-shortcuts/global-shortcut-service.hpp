@@ -1,6 +1,8 @@
 #pragma once
+#include <atomic>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <QObject>
 #include "common/entrypoint.hpp"
 #include "services/global-shortcuts/abstract-global-shortcut-backend.hpp"
@@ -9,7 +11,9 @@ namespace config {
 class Manager;
 }
 
+class AppService;
 class RootItemManager;
+class WindowManager;
 
 /**
  * Projects the global shortcuts declared in the config onto the provided backend, and dispatches
@@ -30,6 +34,7 @@ public:
   static constexpr const char *TOGGLE_ID = "@toggle-launcher";
 
   GlobalShortcutService(config::Manager &config, RootItemManager &rootItemManager,
+                        WindowManager &windowManager, AppService &appService,
                         std::unique_ptr<AbstractGlobalShortcutBackend> backend);
 
   AbstractGlobalShortcutBackend *backend() const { return m_backend.get(); }
@@ -64,10 +69,19 @@ private:
   void onActivated(const QString &id, quint64 timestamp);
   QString describeCommand(const EntrypointId &id) const;
 
+  // Recomputes whether the toggle shortcut should be suppressed for the currently focused app.
+  // Cheap to call often: the actual window/app lookup only happens here, never on the hot path of
+  // a keypress. Consulted by `m_backend` via the activation gate, possibly from a non-Qt thread.
+  void updateToggleSuppression();
+
   config::Manager &m_config;
   RootItemManager &m_rootItemManager;
-  std::unique_ptr<AbstractGlobalShortcutBackend> m_backend;
+  WindowManager &m_windowManager;
+  AppService &m_appService;
   std::unordered_map<QString, Action> m_actions;
   std::unordered_map<QString, QString> m_appliedTriggers;
+  std::unordered_set<std::string> m_hotkeyExcludedAppIds;
+  std::atomic<bool> m_toggleSuppressed{false};
   bool m_capturing = false;
+  std::unique_ptr<AbstractGlobalShortcutBackend> m_backend;
 };

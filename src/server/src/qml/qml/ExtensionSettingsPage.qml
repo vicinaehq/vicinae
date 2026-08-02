@@ -160,6 +160,7 @@ Item {
                         required property string entrypointId
                         required property bool hasPreferences
                         required property string shortcut
+                        required property bool hotkeyExcluded
 
                         readonly property bool isExpanded: root.expandedCommandId === entrypointId
 
@@ -246,6 +247,38 @@ Item {
                                     text: cmdDelegate.alias
                                     placeholder: qsTr("Add Alias")
                                     onCommitted: value => root.extModel.setAliasByEntrypointId(cmdDelegate.entrypointId, value)
+                                }
+
+                                Rectangle {
+                                    visible: root.providerId === "applications" && Platform.supports("globalShortcuts")
+                                    Layout.preferredWidth: 20
+                                    Layout.preferredHeight: 20
+                                    radius: 4
+                                    color: cmdDelegate.hotkeyExcluded ? Theme.accent : "transparent"
+                                    border.color: Config.withAlpha(cmdDelegate.hotkeyExcluded ? Theme.accent : Theme.inputBorder, Config.surfaceOpacity)
+                                    border.width: 1
+
+                                    ViciImage {
+                                        anchors.centerIn: parent
+                                        width: 12
+                                        height: 12
+                                        source: Img.builtin("keyboard").withFillColor(cmdDelegate.hotkeyExcluded ? "#ffffff" : Theme.textMuted)
+                                    }
+
+                                    HoverHandler {
+                                        id: hotkeyExcludedHover
+                                    }
+
+                                    ViciToolTip {
+                                        text: qsTr("Don't toggle Vicinae with the global hotkey while this app is focused")
+                                        visible: hotkeyExcludedHover.hovered
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.extModel.setHotkeyExcludedByEntrypointId(cmdDelegate.entrypointId, !cmdDelegate.hotkeyExcluded)
+                                    }
                                 }
 
                                 Rectangle {

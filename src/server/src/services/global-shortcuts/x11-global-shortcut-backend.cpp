@@ -201,7 +201,10 @@ void X11GlobalShortcutBackend::drainEvents() {
       uint16_t const mods = key->state & MODIFIER_BITS;
       auto it =
           std::ranges::find_if(m_binds, [&](auto &&b) { return b.keycode == key->detail && b.mods == mods; });
-      if (it != m_binds.end()) { emit shortcutActivated(it->id, key->time); }
+      // XGrabKey is an exclusive OS-level grab: the physical keystroke never reaches the focused
+      // app regardless, so a gated activation can only suppress our own action, not truly pass
+      // the key through.
+      if (it != m_binds.end() && !(m_gate && m_gate(it->id))) { emit shortcutActivated(it->id, key->time); }
       break;
     }
     case XCB_KEY_RELEASE: {

@@ -134,7 +134,11 @@ void VicinaeHotkeyGlobalShortcutBackend::pressed(void *data, struct vicinae_hotk
                                                  uint32_t serial, uint32_t time) {
   auto self = static_cast<VicinaeHotkeyGlobalShortcutBackend *>(data);
 
-  if (auto bind = self->findHotkey(hotkey)) { emit self->shortcutActivated(bind->id, time); }
+  // The compositor grabs the hotkey itself, so a gated activation can only suppress our own
+  // action; the physical keystroke was already consumed before it reached us.
+  if (auto bind = self->findHotkey(hotkey); bind && !(self->m_gate && self->m_gate(bind->id))) {
+    emit self->shortcutActivated(bind->id, time);
+  }
 }
 
 void VicinaeHotkeyGlobalShortcutBackend::released(void *data, struct vicinae_hotkey_v1 *hotkey,

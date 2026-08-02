@@ -199,6 +199,7 @@ public:
 struct RootItemMetadata {
   int visitCount = 0;
   bool enabled = true;
+  bool hotkeyExcluded = false;
   bool favorite = false;
   bool fallback = false;
   std::optional<std::uint64_t> lastVisitedAt;
@@ -271,6 +272,7 @@ public:
   bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences);
 
   bool setItemEnabled(const EntrypointId &id, bool value);
+  bool setItemHotkeyExcluded(const EntrypointId &id, bool value);
   bool setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
 
   void setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);

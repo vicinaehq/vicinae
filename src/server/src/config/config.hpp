@@ -19,6 +19,7 @@ namespace config {
 struct ProviderItemData {
   std::optional<std::string> alias;
   std::optional<bool> enabled;
+  std::optional<bool> hotkeyExcluded;
   std::optional<std::string> shortcut;
   std::optional<glz::generic::object_t> preferences;
 };
@@ -451,6 +452,8 @@ private:
 #define SNAKE_CASIFY(T)                                                                                      \
   template <> struct glz::meta<T> : glz::snake_case {};                                                      \
   template <> struct glz::meta<config::Partial<T>> : glz::snake_case {};
+
+template <> struct glz::meta<config::ProviderItemData> : glz::snake_case {};
 
 SNAKE_CASIFY(config::LayerShellConfig);
 SNAKE_CASIFY(config::WindowConfig);

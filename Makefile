@@ -79,6 +79,7 @@ test:
 	./$(BIN_DIR)/vicinae-glyph-tests
 	./$(BIN_DIR)/vicinae-fuzzy-tests
 	./$(BIN_DIR)/vicinae-server-tests
+	./$(BIN_DIR)/vicinae-server-config-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
 	./$(BIN_DIR)/vicinae-file-indexer-tests
