@@ -95,9 +95,9 @@ void TelemetryService::sendSystemInfo() {
   payload.productVersion = QSysInfo::productVersion().toStdString();
   payload.qtVersion = QT_VERSION_STR;
 
-  std::string debugBuf;
-  [[maybe_unused]] auto writeErr = glz::write_json(payload, debugBuf);
-  qDebug().noquote() << "Sending system info:\n" << glz::prettify_json(debugBuf);
+  std::string payloadJson;
+  [[maybe_unused]] auto writeErr = glz::write_json(payload, payloadJson);
+  qInfo().noquote() << "Sending system info:\n" << glz::prettify_json(payloadJson);
 
   m_client.post<SystemInfoResponse, SystemInfoRequest>("/telemetry/system-info", std::move(payload))
       .then([this](const http::Client::Result<SystemInfoResponse> &res) {
