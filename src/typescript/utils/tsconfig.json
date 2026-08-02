@@ -1,0 +1,13 @@
+{
+	"include": ["src"],
+	"compilerOptions": {
+		"module": "nodenext",
+		"declaration": true,
+		"declarationMap": false,
+		"noEmit": false,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"skipLibCheck": true
+	}
+}

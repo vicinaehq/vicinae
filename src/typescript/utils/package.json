@@ -1,0 +1,27 @@
+{
+	"name": "@vicinae/utils",
+	"version": "0.0.0",
+	"description": "Shared utilities for Vicinae extensions",
+	"scripts": {
+		"build": "tsc --outDir dist",
+		"pack": "npm run build && npm pack",
+		"format": "biome format --write"
+	},
+	"files": [
+		"dist"
+	],
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"publishConfig": {
+		"access": "public"
+	},
+	"peerDependencies": {
+		"@vicinae/api": "*"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.2",
+		"@vicinae/api": "file:../api",
+		"typescript": "5.9.2"
+	},
+	"repository": "vicinaehq/vicinae"
+}
