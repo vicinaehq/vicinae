@@ -97,7 +97,7 @@ void TelemetryService::sendSystemInfo() {
 
   std::string debugBuf;
   [[maybe_unused]] auto writeErr = glz::write_json(payload, debugBuf);
-  qDebug().noquote() << "Sending system info:\n" << glz::prettify_json(debugBuf);
+  qInfo().noquote() << "Sending system info:\n" << glz::prettify_json(debugBuf);
 
   m_client.post<SystemInfoResponse, SystemInfoRequest>("/telemetry/system-info", std::move(payload))
       .then([this](const http::Client::Result<SystemInfoResponse> &res) {
