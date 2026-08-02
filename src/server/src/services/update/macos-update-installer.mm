@@ -1,6 +1,7 @@
 #include "macos-update-installer.hpp"
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
+#include <unistd.h>
 #include <QCoreApplication>
 #include <QDebug>
 #include <QProcess>
@@ -10,7 +11,6 @@
 #include <expected>
 #include <filesystem>
 #include <system_error>
-#include <unistd.h>
 
 namespace fs = std::filesystem;
 
@@ -82,9 +82,9 @@ std::optional<fs::path> parseMountPoint(const QByteArray &plistData) {
     NSData *data = [NSData dataWithBytes:plistData.constData() length:plistData.size()];
     NSError *error = nil;
     id plist = [NSPropertyListSerialization propertyListWithData:data
-                                                          options:NSPropertyListImmutable
-                                                           format:nil
-                                                            error:&error];
+                                                         options:NSPropertyListImmutable
+                                                          format:nil
+                                                           error:&error];
 
     if (![plist isKindOfClass:[NSDictionary class]]) return std::nullopt;
 
@@ -133,9 +133,8 @@ std::optional<QString> verifySignature(const fs::path &appPath, const std::strin
                                          "Failed to read the update's code signature");
     }
 
-    NSString *requirementString =
-        [NSString stringWithFormat:@"anchor apple generic and certificate leaf[subject.OU] = \"%s\"",
-                                   teamId.c_str()];
+    NSString *requirementString = [NSString
+        stringWithFormat:@"anchor apple generic and certificate leaf[subject.OU] = \"%s\"", teamId.c_str()];
     SecRequirementRef requirement = nullptr;
 
     if (SecRequirementCreateWithString((__bridge CFStringRef)requirementString, kSecCSDefaultFlags,
@@ -298,9 +297,7 @@ std::optional<QString> MacosUpdateInstaller::swapBundle(const std::filesystem::p
     NSFileManager *fm = [NSFileManager defaultManager];
     NSURL *oldUrl = [NSURL fileURLWithPath:@(oldPath.c_str())];
 
-    if (![fm trashItemAtURL:oldUrl resultingItemURL:nil error:nil]) {
-      [fm removeItemAtURL:oldUrl error:nil];
-    }
+    if (![fm trashItemAtURL:oldUrl resultingItemURL:nil error:nil]) { [fm removeItemAtURL:oldUrl error:nil]; }
   }
 
   return std::nullopt;

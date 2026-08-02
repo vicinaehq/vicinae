@@ -23,6 +23,7 @@
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
+#include "services/clipboard/clipboard-mime.hpp"
 #include "services/clipboard/clipboard-server.hpp"
 #include "utils.hpp"
 #ifdef Q_OS_LINUX
@@ -66,6 +67,7 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
     }
     bool operator()(const Clipboard::Html &html) const { return service.copyHtml(html, options); }
     bool operator()(const Clipboard::File &file) const { return service.copyFile(file.path, options); }
+    bool operator()(const Clipboard::Urls &urls) const { return service.copyUrls(urls.values, options); }
     bool operator()(const Clipboard::Text &text) const { return service.copyText(text.text, options); }
     bool operator()(const ClipboardSelection &selection) const {
       return service.copySelection(selection, options);
@@ -89,6 +91,12 @@ bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboa
   data->setUrls({QUrl::fromLocalFile(QString::fromStdString(path.string()))});
 
   return copyQMimeData(data, options);
+}
+
+bool ClipboardService::copyUrls(const std::vector<QUrl> &urls, const Clipboard::CopyOptions &options) {
+  auto data = Clipboard::mimeDataForContent(Clipboard::Urls{urls});
+
+  return copyQMimeData(data.release(), options);
 }
 
 void ClipboardService::setRecordAllOffers(bool value) { m_recordAllOffers = value; }
@@ -592,12 +600,8 @@ Clipboard::ReadContent ClipboardService::readContent() {
   if (!mimeData) return content;
 
   if (mimeData->hasUrls()) {
-    for (const auto &url : mimeData->urls()) {
-      if (url.isLocalFile()) {
-        content.file = url.toLocalFile();
-        break;
-      }
-    }
+    const auto urls = mimeData->urls();
+    content.urls.assign(urls.begin(), urls.end());
   }
 
   if (mimeData->hasHtml()) { content.html = mimeData->html(); }

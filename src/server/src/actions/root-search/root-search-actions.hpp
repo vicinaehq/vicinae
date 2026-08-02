@@ -57,7 +57,7 @@ public:
   QString title() const override {
     return QCoreApplication::translate("OpenItemPreferencesAction", "Open Preferences");
   }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("cog"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::Cog); }
 
 private:
   EntrypointId m_id;

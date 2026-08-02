@@ -144,23 +144,37 @@ public:
   }
 
   Result fuzzy_match_v2(std::string_view text, std::string_view pattern, bool with_pos = false) const {
-    if (!has_non_ascii(text) && !has_non_ascii(pattern)) {
-      return fuzzy_match_v2_ascii(text, pattern, with_pos);
-    }
-
-    fold_text(text);
-    const std::string_view ftext{m_fold_text.data(), m_fold_text.size()};
-    const std::string_view fpat = fold_pattern(pattern);
-
-    Result r = fuzzy_match_v2_ascii(ftext, fpat, with_pos);
-    if (r.matched()) {
-      r.start = m_fold_off[r.start];
-      r.end = m_fold_off[r.end];
-      for (int &p : r.positions) {
-        p = m_fold_off[p];
+    const auto match = [&](std::string_view candidate) {
+      if (!has_non_ascii(text) && !has_non_ascii(candidate)) {
+        return fuzzy_match_v2_ascii(text, candidate, with_pos);
       }
+
+      fold_text(text);
+      const std::string_view ftext{m_fold_text.data(), m_fold_text.size()};
+      const std::string_view fpat = fold_pattern(candidate);
+
+      Result result = fuzzy_match_v2_ascii(ftext, fpat, with_pos);
+      if (result.matched()) {
+        result.start = m_fold_off[result.start];
+        result.end = m_fold_off[result.end];
+        for (int &position : result.positions) {
+          position = m_fold_off[position];
+        }
+      }
+      return result;
+    };
+
+    Result best = match(pattern);
+    if (!has_non_ascii(pattern) || !needsTransliteration(pattern)) { return best; }
+
+    for (const auto scheme : {TranslitScheme::Primary, TranslitScheme::Alternate}) {
+      if (!transliterate(pattern, m_translit_pattern, scheme) || m_translit_pattern == pattern) { continue; }
+
+      Result candidate = match(m_translit_pattern);
+      if (candidate.score > best.score) { best = std::move(candidate); }
     }
-    return r;
+
+    return best;
   }
 
   Result fuzzy_match_v2_ascii(std::string_view text, std::string_view pattern, bool with_pos = false) const {
@@ -378,9 +392,19 @@ private:
         m_fold_text.emplace_back(folded);
         m_fold_off.emplace_back(static_cast<int>(i));
       } else {
-        for (int k = 0; k < len; ++k) {
-          m_fold_text.emplace_back(text[i + k]);
-          m_fold_off.emplace_back(static_cast<int>(i + k));
+        const char32_t caseFolded = foldScriptCase(cp);
+        if (caseFolded != cp) {
+          std::array<char, 4> encoded{};
+          const int encodedLen = encodeUtf8(caseFolded, encoded);
+          for (int k = 0; k < encodedLen; ++k) {
+            m_fold_text.emplace_back(encoded[k]);
+            m_fold_off.emplace_back(static_cast<int>(i + k));
+          }
+        } else {
+          for (int k = 0; k < len; ++k) {
+            m_fold_text.emplace_back(text[i + k]);
+            m_fold_off.emplace_back(static_cast<int>(i + k));
+          }
         }
       }
       i += len;
@@ -402,8 +426,15 @@ private:
       if (folded != 0) {
         m_fold_pat.emplace_back(folded);
       } else {
-        for (int k = 0; k < len; ++k) {
-          m_fold_pat.emplace_back(pattern[i + k]);
+        const char32_t caseFolded = foldScriptCase(cp);
+        if (caseFolded != cp) {
+          std::array<char, 4> encoded{};
+          const int encodedLen = encodeUtf8(caseFolded, encoded);
+          m_fold_pat.insert(m_fold_pat.end(), encoded.begin(), encoded.begin() + encodedLen);
+        } else {
+          for (int k = 0; k < len; ++k) {
+            m_fold_pat.emplace_back(pattern[i + k]);
+          }
         }
       }
       i += len;
@@ -503,7 +534,7 @@ private:
   std::array<CharClass, 128> ascii_char_classes_;
   std::array<std::array<int, 8>, 8> bonus_matrix_;
 
-  // we reuse these vectors across search in order to not allocate on every search
+  // we reuse these buffers across search in order to not allocate on every search
   // this is what makes this matcher non thread safe,
 
   mutable std::vector<int> H0; // Score for first pattern char
@@ -517,6 +548,7 @@ private:
   mutable std::vector<char> m_fold_text; // folded text
   mutable std::vector<int> m_fold_off;   // source byte offset per folded byte (+1 sentinel)
   mutable std::vector<char> m_fold_pat;  // folded pattern
+  mutable std::string m_translit_pattern;
 };
 
 /**

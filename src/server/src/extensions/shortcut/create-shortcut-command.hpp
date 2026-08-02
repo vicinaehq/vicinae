@@ -10,6 +10,6 @@ class CreateShortcutCommand : public BuiltinViewCommand<ShortcutFormViewHost> {
     return QCoreApplication::translate("CreateShortcutCommand", "Create Shortcut");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("link").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Link).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 };

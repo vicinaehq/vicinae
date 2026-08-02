@@ -34,7 +34,7 @@ static AbstractAction *createActionFromModel(const ActionModel &model, const Not
     if (model.icon) {
       actionIcon = ImageURL(*model.icon);
     } else {
-      actionIcon = ImageURL::builtin("link");
+      actionIcon = ImageURL::builtin(BuiltinIcon::Link);
     }
 
     auto qTitle = QString::fromStdString(model.title);

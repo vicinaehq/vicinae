@@ -20,7 +20,7 @@ public:
     auto clipman = ctx->services->clipman();
 
     if (clipman->copyContent(m_content, m_opts)) {
-      ctx->navigation->showHud(tr("Copied to clipboard"), ImageURL::builtin("copy-clipboard"));
+      ctx->navigation->showHud(tr("Copied to clipboard"), ImageURL::builtin(BuiltinIcon::CopyClipboard));
       return;
     }
   }
@@ -40,7 +40,7 @@ public:
   QString title() const override { return tr("Paste to active window"); }
 
   PasteToFocusedWindowAction(const Clipboard::Content &content = Clipboard::NoData{})
-      : AbstractAction(tr("Copy to focused window"), ImageURL::builtin("copy-clipboard")),
+      : AbstractAction(tr("Copy to focused window"), ImageURL::builtin(BuiltinIcon::CopyClipboard)),
         m_content(content) {}
 
 protected:

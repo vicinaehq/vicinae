@@ -7,8 +7,8 @@ QString ManageShortcutsSection::displayTitle(const std::shared_ptr<Shortcut> &it
   return item->name();
 }
 
-QString ManageShortcutsSection::displayIconSource(const std::shared_ptr<Shortcut> &item) const {
-  return imageSourceFor(item->icon());
+std::optional<ImageURL> ManageShortcutsSection::displayIcon(const std::shared_ptr<Shortcut> &item) const {
+  return item->icon();
 }
 
 std::unique_ptr<ActionPanelState>

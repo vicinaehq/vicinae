@@ -17,15 +17,15 @@ QString EnabledFallbackSection::displayTitle(const RootItemPtr &item) const { re
 
 QString EnabledFallbackSection::displaySubtitle(const RootItemPtr &item) const { return item->subtitle(); }
 
-QString EnabledFallbackSection::displayIconSource(const RootItemPtr &item) const {
-  return imageSourceFor(item->iconUrl());
+std::optional<ImageURL> EnabledFallbackSection::displayIcon(const RootItemPtr &item) const {
+  return item->iconUrl();
 }
 
 std::unique_ptr<ActionPanelState> EnabledFallbackSection::buildActionPanel(const RootItemPtr &item) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
 
-  section->addAction(new StaticAction(tr("Disable fallback"), ImageURL::builtin("redo"),
+  section->addAction(new StaticAction(tr("Disable fallback"), ImageURL::builtin(BuiltinIcon::Redo),
                                       [id = item->uniqueId()](ApplicationContext *ctx) {
                                         ctx->services->rootItemManager()->disableFallback(id);
                                       }));
@@ -39,15 +39,15 @@ QString AvailableFallbackSection::displayTitle(const RootItemPtr &item) const { 
 
 QString AvailableFallbackSection::displaySubtitle(const RootItemPtr &item) const { return item->subtitle(); }
 
-QString AvailableFallbackSection::displayIconSource(const RootItemPtr &item) const {
-  return imageSourceFor(item->iconUrl());
+std::optional<ImageURL> AvailableFallbackSection::displayIcon(const RootItemPtr &item) const {
+  return item->iconUrl();
 }
 
 std::unique_ptr<ActionPanelState> AvailableFallbackSection::buildActionPanel(const RootItemPtr &item) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
 
-  section->addAction(new StaticAction(tr("Enable fallback"), ImageURL::builtin("redo"),
+  section->addAction(new StaticAction(tr("Enable fallback"), ImageURL::builtin(BuiltinIcon::Redo),
                                       [id = item->uniqueId()](ApplicationContext *ctx) {
                                         ctx->services->rootItemManager()->enableFallback(id);
                                       }));

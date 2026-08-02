@@ -22,6 +22,6 @@ public:
 protected:
   QString displayTitle(const IconEntry &e) const override;
   QString displaySubtitle(const IconEntry &) const override { return {}; }
-  QString displayIconSource(const IconEntry &e) const override;
+  std::optional<ImageURL> displayIcon(const IconEntry &e) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const IconEntry &e) const override;
 };

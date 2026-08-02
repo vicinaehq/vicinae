@@ -103,6 +103,22 @@ fs::path runtimeDir() {
 #endif
 }
 
+fs::path stateDir() {
+#ifdef __APPLE__
+  if (const char *h = std::getenv("HOME")) return fs::path(h) / ".local" / "state" / "vicinae";
+  return "/tmp/vicinae";
+#elif defined(_WIN32)
+  if (const char *l = std::getenv("LOCALAPPDATA")) return fs::path(l) / "vicinae" / "state";
+  return fs::temp_directory_path() / "vicinae" / "state";
+#else
+  if (const char *s = std::getenv("XDG_STATE_HOME")) return fs::path(s) / "vicinae";
+  if (const char *h = std::getenv("HOME")) return fs::path(h) / ".local" / "state" / "vicinae";
+  return "/tmp/vicinae";
+#endif
+}
+
+fs::path logFilePath() { return stateDir() / "vicinae.log"; }
+
 fs::path serverSocketPath() { return runtimeDir() / "vicinae.sock"; }
 
 #ifdef _WIN32

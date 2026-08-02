@@ -159,8 +159,7 @@ MacSettingsRootItem::newActionPanel(ApplicationContext *ctx, const RootItemMetad
   auto itemSection = panel->createSection();
 
   const QString url = paneUrl(m_pane);
-  auto open =
-      new OpenSettingsPaneAction(tr("Open %1 Settings").arg(m_pane.displayName), iconUrl(), url);
+  auto open = new OpenSettingsPaneAction(tr("Open %1 Settings").arg(m_pane.displayName), iconUrl(), url);
   mainSection->addAction(open);
 
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(url), tr("Copy URL")));
@@ -181,7 +180,7 @@ QString MacSettingsRootProvider::displayName() const {
 }
 
 ImageURL MacSettingsRootProvider::icon() const {
-  return ImageURL::builtin("cog").setBackgroundTint(Omnicast::ACCENT_COLOR);
+  return ImageURL::builtin(BuiltinIcon::Cog).setBackgroundTint(Omnicast::ACCENT_COLOR);
 }
 
 RootProvider::Type MacSettingsRootProvider::type() const { return RootProvider::Type::GroupProvider; }

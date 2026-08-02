@@ -4,6 +4,7 @@
 #include <QBuffer>
 #include <qlogging.h>
 #include <ranges>
+#include <concepts>
 
 static bool isLegacyContentType(const QString &str) {
   if (str.startsWith("-x") || str.startsWith("-X")) return false;
@@ -11,6 +12,30 @@ static bool isLegacyContentType(const QString &str) {
 }
 
 namespace Clipboard {
+
+std::unique_ptr<QMimeData> mimeDataForContent(const Content &content) {
+  return std::visit(
+      [](const auto &value) -> std::unique_ptr<QMimeData> {
+        using T = std::decay_t<decltype(value)>;
+        auto data = std::make_unique<QMimeData>();
+
+        if constexpr (std::same_as<T, Text>) {
+          data->setText(value.text);
+        } else if constexpr (std::same_as<T, Html>) {
+          data->setHtml(value.html);
+          if (value.text) data->setText(*value.text);
+        } else if constexpr (std::same_as<T, File>) {
+          data->setUrls({QUrl::fromLocalFile(QString::fromStdString(value.path.string()))});
+        } else if constexpr (std::same_as<T, Urls>) {
+          data->setUrls(QList<QUrl>(value.values.begin(), value.values.end()));
+        } else {
+          return nullptr;
+        }
+
+        return data;
+      },
+      content);
+}
 
 std::optional<ClipboardSelection> selectionFromMimeData(const QMimeData *mimeData) {
   if (!mimeData) return std::nullopt;

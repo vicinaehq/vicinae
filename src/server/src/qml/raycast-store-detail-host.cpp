@@ -252,8 +252,8 @@ void RaycastStoreDetailHost::createActions() {
     main->addAction(uninstall);
   }
 
-  auto reportIssue =
-      new StaticAction(tr("Report issue"), ImageURL::builtin("bug"), [](const ApplicationContext *ctx) {
+  auto reportIssue = new StaticAction(
+      tr("Report issue"), ImageURL::builtin(BuiltinIcon::Bug), [](const ApplicationContext *ctx) {
         ctx->services->appDb()->openTarget(Omnicast::GH_EXTENSIONS_CREATE_ISSUE);
       });
   main->addAction(reportIssue);

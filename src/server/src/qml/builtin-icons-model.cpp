@@ -4,8 +4,8 @@
 
 QString BuiltinIconsSection::displayTitle(const IconEntry &e) const { return QString::fromStdString(e.name); }
 
-QString BuiltinIconsSection::displayIconSource(const IconEntry &e) const {
-  return imageSourceFor(ImageURL::builtin(QString::fromStdString(e.name)));
+std::optional<ImageURL> BuiltinIconsSection::displayIcon(const IconEntry &e) const {
+  return ImageURL::builtinByName(QString::fromStdString(e.name));
 }
 
 std::unique_ptr<ActionPanelState> BuiltinIconsSection::buildActionPanel(const IconEntry &e) const {

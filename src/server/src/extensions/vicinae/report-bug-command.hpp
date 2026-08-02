@@ -14,7 +14,7 @@ class ReportVicinaeBugCommand : public BuiltinUrlCommand {
   }
 
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("bug").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Bug).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
   ArgumentList arguments() const override {

@@ -6,6 +6,7 @@ import { type ColorLike, serializeColorLike } from "../color";
 import { Dropdown } from "./dropdown";
 import { useEventCounted } from "../hooks/use-event-counted";
 import { usePagination } from "./pagination";
+import { Clipboard } from "../clipboard";
 
 enum GridInset {
 	Zero = "zero",
@@ -168,6 +169,8 @@ export namespace Grid {
 			id?: string;
 			subtitle?: string;
 			actions?: ReactNode;
+			/** Content transferred when this item is dragged. */
+			dragContent?: Clipboard.Content;
 			accessory?: Grid.Item.Accessory;
 		};
 
@@ -235,6 +238,7 @@ const GridRoot: React.FC<Grid.Props> = ({
 const GridItem: React.FC<Grid.Item.Props> = ({
 	detail,
 	actions,
+	dragContent,
 	content,
 	accessory,
 	...props
@@ -280,6 +284,9 @@ const GridItem: React.FC<Grid.Item.Props> = ({
 		<grid-item
 			{...props}
 			content={serializedContent}
+			dragContent={
+				dragContent ? Clipboard.serializeContent(dragContent) : undefined
+			}
 			tooltip={tooltip}
 			accessory={serializedAccessory}
 			id={id.current}

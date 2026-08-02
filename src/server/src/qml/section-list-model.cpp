@@ -1,7 +1,7 @@
-#include "section-list-model.hpp"
-
 #include <utility>
 
+#include "drag-utils.hpp"
+#include "section-list-model.hpp"
 #include "services/navigation/list-navigation.hpp"
 
 SectionListModel::SectionListModel(QObject *parent) : QAbstractListModel(parent) {
@@ -82,9 +82,8 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
       return QString();
     case Accessory:
       return {};
-    case FilePath:
-    case FileUrl:
-      return QString();
+    case IsDraggable:
+      return false;
     default: {
       auto it = m_customRoleDefaults.find(role);
       return it != m_customRoleDefaults.end() ? it.value() : QVariant{};
@@ -106,9 +105,12 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
   case Subtitle:
     return source->itemSubtitle(flat.itemIdx);
   case IconSource:
-    return source->itemIconSource(flat.itemIdx);
+    if (auto icon = source->itemIcon(flat.itemIdx)) return icon->toString();
+    return QString();
   case Accessory:
     return source->itemAccessories(flat.itemIdx);
+  case IsDraggable:
+    return source->isDraggable(flat.itemIdx);
   default: {
     auto v = source->customData(flat.itemIdx, role);
     if (v.isValid()) return v;
@@ -123,8 +125,7 @@ QHash<int, QByteArray> SectionListModel::roleNames() const {
       {IsSection, "isSection"},     {IsSelectable, "isSelectable"},
       {SectionName, "sectionName"}, {Title, "title"},
       {Subtitle, "subtitle"},       {IconSource, "iconSource"},
-      {Accessory, "itemAccessory"}, {FilePath, "filePath"},
-      {FileUrl, "fileUrl"},
+      {Accessory, "itemAccessory"}, {IsDraggable, "isDraggable"},
   };
   for (auto *source : m_sources)
     roles.insert(source->customRoleNames());
@@ -164,6 +165,15 @@ void SectionListModel::setSelectedIndex(int index) {
   }
 
   emit itemSelected(source, flat.itemIdx);
+}
+
+void SectionListModel::startDrag(int index, QObject *dragSource) {
+  int sourceIdx;
+  int itemIdx;
+  if (!dragSource || !dataItemAt(index, sourceIdx, itemIdx)) return;
+
+  auto *source = m_sources[sourceIdx];
+  DragUtils::startDrag(dragSource, source->dragMimeData(itemIdx), source->itemIcon(itemIdx));
 }
 
 void SectionListModel::refreshActionPanel() { setSelectedIndex(m_selectedIndex); }

@@ -44,15 +44,7 @@ fs::path Omnicast::configDir() {
 #endif
 }
 
-fs::path Omnicast::stateDir() {
-#ifdef Q_OS_MACOS
-  return homeDir() / ".local" / "state" / "vicinae";
-#elif defined(Q_OS_WIN)
-  return winLocalAppData() / "state";
-#else
-  return xdgpp::stateHome() / "vicinae";
-#endif
-}
+fs::path Omnicast::stateDir() { return vicinae::stateDir(); }
 
 fs::path Omnicast::cacheDir() {
 #ifdef Q_OS_MACOS

@@ -152,6 +152,7 @@ Item {
         visible: !root._empty
         model: root.cmdModel
         clip: true
+        interactive: false
         boundsBehavior: Flickable.StopAtBounds
         topMargin: root.cellSpacing
         bottomMargin: root.cellSpacing
@@ -354,21 +355,28 @@ Item {
                                     opacity: 0.7
                                 }
 
-                                MouseArea {
+                                DraggableMouseArea {
                                     id: cellMouseArea
                                     anchors.fill: parent
                                     hoverEnabled: true
-                                    onClicked: {
+                                    draggable: root.cmdModel && root.cmdModel.isDraggable(cellWrapper.cellSection, cellWrapper.cellItem)
+                                    onItemClicked: {
                                         if (root.cmdModel) {
                                             root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
                                             if (Config.activateOnSingleClick)
                                                 root.cmdModel.activateSelected();
                                         }
                                     }
-                                    onDoubleClicked: {
+                                    onItemActivated: {
                                         if (root.cmdModel) {
                                             root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
                                             root.cmdModel.activateSelected();
+                                        }
+                                    }
+                                    onDragRequested: {
+                                        if (root.cmdModel) {
+                                            root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
+                                            root.cmdModel.startDrag(cellWrapper.cellSection, cellWrapper.cellItem, cellWrapper);
                                         }
                                     }
                                 }

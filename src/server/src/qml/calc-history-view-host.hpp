@@ -34,7 +34,7 @@ public:
 
 protected:
   QString itemTitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   QVariantList itemAccessories(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 

@@ -162,6 +162,7 @@ set(SRCS
 	src/color-formatter.cpp
 
 	src/services/clipboard/clipboard-server.hpp
+	src/services/clipboard/clipboard-content.hpp
 	src/services/clipboard/clipboard-mime.hpp
 	src/services/clipboard/clipboard-mime.cpp
 	src/services/clipboard/clipboard-db.hpp
@@ -474,6 +475,8 @@ set(SRCS
 	src/qml/root-search-model.cpp
 	src/qml/root-search-sources.hpp
 	src/qml/root-search-sources.cpp
+	src/qml/drag-utils.hpp
+	src/qml/drag-utils.cpp
 	src/qml/section-source.hpp
 	src/qml/section-list-model.hpp
 	src/qml/section-list-model.cpp
@@ -957,6 +960,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ListAccessory.qml
 	src/qml/qml/ListAccessoryRow.qml
 	src/qml/qml/SelectableDelegate.qml
+	src/qml/qml/DraggableMouseArea.qml
 	src/qml/qml/SectionHeader.qml
 	src/qml/qml/Footer.qml
 	src/qml/qml/FooterButton.qml

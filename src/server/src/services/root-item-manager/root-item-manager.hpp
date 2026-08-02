@@ -16,6 +16,7 @@
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
+#include <qmimedata.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
@@ -55,6 +56,9 @@ public:
   virtual QString title() const = 0;
 
   virtual ImageURL iconUrl() const = 0;
+
+  virtual bool isDraggable() const { return false; }
+  virtual std::unique_ptr<QMimeData> dragMimeData() const { return {}; }
 
   /**
    * Whether the item can be selected as a fallback command or not

@@ -8,7 +8,7 @@ class ThemeExtension : public BuiltinCommandRepository {
   QString id() const override { return "theme"; }
   QString displayName() const override { return QCoreApplication::translate("ThemeExtension", "Theme"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("brush").setBackgroundTint(SemanticColor::Purple);
+    return ImageURL::builtin(BuiltinIcon::Brush).setBackgroundTint(SemanticColor::Purple);
   }
 
 public:

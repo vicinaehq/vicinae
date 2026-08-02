@@ -188,7 +188,7 @@ service WindowManagement {
 struct ClipboardContent {
   text?: string;
   html?: string;
-  path?: string;
+  urls?: string[];
 };
 
 struct ClipboardOptions {

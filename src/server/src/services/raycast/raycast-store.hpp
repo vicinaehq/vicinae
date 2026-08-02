@@ -46,7 +46,7 @@ struct User {
   std::optional<QString> avatar;
 
   ImageURL validUserIcon() const {
-    if (!avatar) return ImageURL::builtin("person").setBackgroundTint(SemanticColor::Cyan);
+    if (!avatar) return ImageURL::builtin(BuiltinIcon::Person).setBackgroundTint(SemanticColor::Cyan);
     return ImageURL::http(*avatar);
   }
 
@@ -69,7 +69,7 @@ struct Command {
   ImageURL themedIcon() const {
     if (auto icon = icons.themedIcon()) return *icon;
     if (auto icon = extensionIcons.themedIcon()) return *icon;
-    return ImageURL::builtin("plug");
+    return ImageURL::builtin(BuiltinIcon::Plug);
   }
 };
 
@@ -107,7 +107,7 @@ struct Extension {
 
   ImageURL themedIcon() const {
     if (auto icon = icons.themedIcon()) return *icon;
-    return ImageURL::builtin("plug");
+    return ImageURL::builtin(BuiltinIcon::Plug);
   }
 
   QDateTime createdAtDateTime() const { return QDateTime::fromSecsSinceEpoch(created_at); }

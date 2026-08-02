@@ -197,7 +197,7 @@ QVariantList GeneralSettingsModel::themeItems() const {
   QVariantList items;
   for (const auto &theme : ThemeService::instance().themes()) {
     auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
-                                 : ImageURL::builtin("vicinae");
+                                 : ImageURL::builtin(BuiltinIcon::Vicinae);
     items.append(makeDropdownItem(theme->id(), theme->name(), qml::imageSourceFor(iconUrl)));
   }
   return wrapSection(tr("Themes"), items);
@@ -208,7 +208,7 @@ QVariant GeneralSettingsModel::currentTheme() const {
   auto *theme = ThemeService::instance().findTheme(id);
   if (!theme) return makeDropdownItem(id, id);
   auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
-                               : ImageURL::builtin("vicinae");
+                               : ImageURL::builtin(BuiltinIcon::Vicinae);
   return makeDropdownItem(id, theme->name(), qml::imageSourceFor(iconUrl));
 }
 

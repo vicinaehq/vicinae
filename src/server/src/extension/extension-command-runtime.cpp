@@ -81,7 +81,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   if (m_isDevMode) {
     if (!m_headless)
       context()->navigation->setNavigationSuffixIcon(
-          ImageURL::builtin("hammer").setFill(SemanticColor::Green));
+          ImageURL::builtin(BuiltinIcon::Hammer).setFill(SemanticColor::Green));
     opts.env = manager::CommandEnv::Development;
   } else {
     opts.env = manager::CommandEnv::Production;

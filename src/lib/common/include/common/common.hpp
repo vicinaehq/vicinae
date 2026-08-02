@@ -26,6 +26,8 @@ std::string slurp(std::istream &ifs);
 std::optional<std::filesystem::path> findServerBinary();
 
 std::filesystem::path runtimeDir();
+std::filesystem::path stateDir();
+std::filesystem::path logFilePath();
 std::filesystem::path serverSocketPath();
 
 std::string currentUserName();

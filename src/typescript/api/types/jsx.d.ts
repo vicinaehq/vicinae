@@ -9,6 +9,7 @@ import type {
 	SerializedColorLike,
 	SerializedImageLike,
 } from "../src";
+import type { ClipboardContent } from "../src/api/proto/api";
 
 type BaseFormField = {
 	onBlur?: Function;
@@ -62,6 +63,7 @@ declare module "react" {
 							tooltip: string;
 					  };
 				keywords?: string[];
+				dragContent?: ClipboardContent;
 				accessories?: List.Item.SerializedAccessory[];
 				children?: React.ReactNode;
 			};
@@ -103,6 +105,7 @@ declare module "react" {
 				content?: SerializedImageLike | { color: SerializedColorLike };
 				tooltip?: string;
 				keywords?: string[];
+				dragContent?: ClipboardContent;
 				accessory?: {
 					icon?: SerializedImageLike;
 					tooltip?: string | null;

@@ -61,7 +61,7 @@ class PinEmojiAction : public AbstractAction {
 public:
   PinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
   QString title() const override { return QCoreApplication::translate("PinEmojiAction", "Pin emoji"); }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::Pin); }
   void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->pin(m_emoji); }
 };
 
@@ -71,7 +71,7 @@ class UnpinEmojiAction : public AbstractAction {
 public:
   UnpinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
   QString title() const override { return QCoreApplication::translate("UnpinEmojiAction", "Unpin emoji"); }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin-disabled"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::PinDisabled); }
   void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->unpin(m_emoji); }
 };
 
@@ -83,7 +83,9 @@ public:
   QString title() const override {
     return QCoreApplication::translate("ResetEmojiRankingAction", "Reset ranking");
   }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("arrow-counter-clockwise"); }
+  std::optional<ImageURL> icon() const override {
+    return ImageURL::builtin(BuiltinIcon::ArrowCounterClockwise);
+  }
   void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->resetRanking(m_emoji); }
 };
 

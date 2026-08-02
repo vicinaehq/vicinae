@@ -36,7 +36,7 @@ protected:
 
   QString displayTitle(const RootItemPtr &item) const override;
   QString displaySubtitle(const RootItemPtr &item) const override;
-  QString displayIconSource(const RootItemPtr &item) const override;
+  std::optional<ImageURL> displayIcon(const RootItemPtr &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const RootItemPtr &item) const override;
 
 private:
@@ -51,6 +51,6 @@ public:
 protected:
   QString displayTitle(const RootItemPtr &item) const override;
   QString displaySubtitle(const RootItemPtr &item) const override;
-  QString displayIconSource(const RootItemPtr &item) const override;
+  std::optional<ImageURL> displayIcon(const RootItemPtr &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const RootItemPtr &item) const override;
 };

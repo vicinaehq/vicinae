@@ -1,3 +1,4 @@
+#include "log/message-handler.hpp"
 #include "pid-file/pid-file.hpp"
 #include "services/clipboard/clipboard-server.hpp"
 #include <QtCore>
@@ -63,7 +64,9 @@ bool DataControlClipboardServer::start() {
 }
 
 void DataControlClipboardServer::handleReadError() {
-  QTextStream(stderr) << m_process.readAllStandardError();
+  for (const auto &line : m_process.readAllStandardError().trimmed().split('\n')) {
+    vicinae::log::subprocessLine(vicinae::log::CLIPBOARD_SERVER, {}, QString::fromUtf8(line));
+  }
 }
 
 void DataControlClipboardServer::handleRead() {

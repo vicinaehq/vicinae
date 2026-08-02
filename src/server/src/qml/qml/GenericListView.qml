@@ -213,6 +213,7 @@ Item {
             clip: true
             reuseItems: true
             cacheBuffer: 200
+            interactive: false
             boundsBehavior: Flickable.StopAtBounds
             highlightMoveDuration: 0
             currentIndex: -1

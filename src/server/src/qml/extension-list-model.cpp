@@ -3,6 +3,7 @@
 #include <chrono>
 #include <utility>
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "services/clipboard/clipboard-mime.hpp"
 #include "view-utils.hpp"
 #include "ui/image/url.hpp"
 
@@ -53,16 +54,22 @@ QString ExtensionListSection::itemTitle(int i) const { return QString::fromStdSt
 
 QString ExtensionListSection::itemSubtitle(int i) const { return QString::fromStdString(itemAt(i).subtitle); }
 
-QString ExtensionListSection::itemIconSource(int i) const {
+std::optional<ImageURL> ExtensionListSection::itemIcon(int i) const {
   const auto &item = itemAt(i);
-  if (item.icon) return imageSourceFor(ImageURL(*item.icon));
-  return {};
+  return item.icon ? std::optional(ImageURL(*item.icon)) : std::nullopt;
 }
 
 QVariantList ExtensionListSection::itemAccessories(int i) const {
   const auto &item = itemAt(i);
   if (!item.accessories.empty()) return qml::accessoriesToVariantList(item.accessories);
   return {};
+}
+
+bool ExtensionListSection::isDraggable(int i) const { return itemAt(i).dragContent.has_value(); }
+
+std::unique_ptr<QMimeData> ExtensionListSection::dragMimeData(int i) const {
+  const auto &content = itemAt(i).dragContent;
+  return content ? Clipboard::mimeDataForContent(*content) : nullptr;
 }
 
 std::unique_ptr<ActionPanelState> ExtensionListSection::actionPanel(int i) const {

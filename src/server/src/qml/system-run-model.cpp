@@ -23,8 +23,8 @@ QString CommandLineSection::itemTitle(int) const {
   return QString::fromStdString(query);
 }
 
-QString CommandLineSection::itemIconSource(int) const {
-  return imageSourceFor(ImageURL::builtin("terminal"));
+std::optional<ImageURL> CommandLineSection::itemIcon(int) const {
+  return ImageURL::builtin(BuiltinIcon::Terminal);
 }
 
 std::unique_ptr<ActionPanelState> CommandLineSection::actionPanel(int) const {

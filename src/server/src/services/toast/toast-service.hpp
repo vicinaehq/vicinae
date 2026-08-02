@@ -82,7 +82,7 @@ public:
     auto toast = std::shared_ptr<Toast>(new Toast(title, priority, message), QObjectDeleter());
 
     if (priority != ToastStyle::Dynamic) {
-      QTimer::singleShot(duration, toast.get(), [this, toast]() { toast->close(); });
+      QTimer::singleShot(duration, toast.get(), [toast]() { toast->close(); });
     }
     registerToast(toast);
   }

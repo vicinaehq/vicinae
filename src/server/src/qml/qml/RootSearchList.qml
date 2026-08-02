@@ -32,6 +32,7 @@ GenericListView {
         required property string calcAnswer
         required property string calcAnswerUnit
         required property bool isFile
+        required property bool isDraggable
 
         sourceComponent: {
             if (isSection)
@@ -76,8 +77,13 @@ GenericListView {
                 itemAccessory: delegateLoader.accessoryText
                 itemAccessoryColor: delegateLoader.accessoryColor
                 selected: searchListView.currentIndex === delegateLoader.index
+                draggable: delegateLoader.isDraggable
                 onClicked: searchListView.currentIndex = delegateLoader.index
                 onActivated: searchListView.itemActivated(delegateLoader.index)
+                onDragRequested: function (source) {
+                    searchListView.currentIndex = delegateLoader.index;
+                    searchListView.cmdModel.startDrag(delegateLoader.index, source);
+                }
             }
         }
     }

@@ -15,7 +15,7 @@ class RefreshAppsCommand : public BuiltinCallbackCommand {
               "update itself on changes, but this can help working around some edge cases.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("redo").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Redo).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
 public:

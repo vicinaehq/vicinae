@@ -46,7 +46,8 @@ void SnippetFormViewHost::initialize() {
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto section2 = panel->createSection();
-  auto submitAction = new StaticAction(tr("Submit"), ImageURL::builtin("enter-key"), [this]() { submit(); });
+  auto submitAction =
+      new StaticAction(tr("Submit"), ImageURL::builtin(BuiltinIcon::EnterKey), [this]() { submit(); });
   section2->addAction(submitAction);
   setActions(std::move(panel));
 
@@ -164,36 +165,36 @@ bool SnippetFormViewHost::serverRunning() const { return m_service && m_service-
 void SnippetFormViewHost::buildContentCompletions() {
   m_contentCompletions = QVariantList{
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))},
           {QStringLiteral("title"), tr("Cursor Position")},
           {QStringLiteral("value"), QStringLiteral("cursor")},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("copy-clipboard"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::CopyClipboard))},
           {QStringLiteral("title"), tr("Clipboard Text")},
           {QStringLiteral("value"), QStringLiteral("clipboard")},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("fingerprint"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Fingerprint))},
           {QStringLiteral("title"), QStringLiteral("UUID")},
           {QStringLiteral("value"), QStringLiteral("uuid")},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("calendar"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Calendar))},
           {QStringLiteral("title"), tr("Date")},
           {QStringLiteral("value"), QStringLiteral("date")},
           {QStringLiteral("template"), QStringLiteral("{date format=\"yyyy-MM-dd hh:mm\"}")},
           {QStringLiteral("cursorOffset"), 30},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))},
           {QStringLiteral("title"), tr("Argument")},
           {QStringLiteral("value"), QStringLiteral("argument")},
           {QStringLiteral("template"), QStringLiteral("{argument name=\"\"}")},
           {QStringLiteral("cursorOffset"), 16},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("terminal"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Terminal))},
           {QStringLiteral("title"), tr("Shell Command")},
           {QStringLiteral("value"), QStringLiteral("shell")},
           {QStringLiteral("template"), QStringLiteral("{shell code=\"\"}")},

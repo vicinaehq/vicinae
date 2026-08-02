@@ -13,5 +13,5 @@ class ManageFallbackActions : public AbstractAction {
 public:
   ManageFallbackActions()
       : AbstractAction(QCoreApplication::translate("ManageFallbackActions", "Manage Fallback Actions"),
-                       ImageURL::builtin("arrow-counter-clockwise")) {}
+                       ImageURL::builtin(BuiltinIcon::ArrowCounterClockwise)) {}
 };
