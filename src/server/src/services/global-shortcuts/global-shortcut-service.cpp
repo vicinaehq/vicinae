@@ -1,16 +1,27 @@
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "common/types.hpp"
 #include "config/config.hpp"
+#include "services/app-service/abstract-app-db.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include <utility>
 
 GlobalShortcutService::GlobalShortcutService(config::Manager &config, RootItemManager &rootItemManager,
+                                             WindowManager &windowManager, AppService &appService,
                                              std::unique_ptr<AbstractGlobalShortcutBackend> backend)
-    : m_config(config), m_rootItemManager(rootItemManager), m_backend(std::move(backend)) {
+    : m_config(config), m_rootItemManager(rootItemManager), m_windowManager(windowManager),
+      m_appService(appService), m_backend(std::move(backend)) {
   connect(m_backend.get(), &AbstractGlobalShortcutBackend::shortcutActivated, this,
           &GlobalShortcutService::onActivated);
   connect(m_backend.get(), &AbstractGlobalShortcutBackend::ready, this, &GlobalShortcutService::reconcile);
   connect(&m_config, &config::Manager::configChanged, this, [this] { reconcile(); });
+  connect(&m_windowManager, &WindowManager::focusChanged, this,
+          &GlobalShortcutService::updateToggleSuppression);
+
+  m_backend->setActivationGate([this](const QString &id) {
+    return id == QString::fromUtf8(TOGGLE_ID) && m_toggleSuppressed.load(std::memory_order_relaxed);
+  });
 
   m_backend->start();
   reconcile();
@@ -34,6 +45,14 @@ void GlobalShortcutService::reconcile() {
   if (!isSupported()) { return; }
 
   const config::ConfigValue &cfg = m_config.value();
+
+  m_hotkeyExcludedAppIds.clear();
+  if (auto it = cfg.providers.find("applications"); it != cfg.providers.end()) {
+    for (const auto &[entrypoint, item] : it->second.entrypoints) {
+      if (item.hotkeyExcluded.value_or(false)) { m_hotkeyExcludedAppIds.insert(entrypoint); }
+    }
+  }
+  updateToggleSuppression();
 
   std::unordered_map<QString, Desired> desired;
 
@@ -103,6 +122,23 @@ std::optional<QString> GlobalShortcutService::probeBind(const Keyboard::Shortcut
 QString GlobalShortcutService::describeCommand(const EntrypointId &id) const {
   if (auto meta = m_rootItemManager.itemMetadata(id); meta.item) { return meta.item->title(); }
   return QString::fromStdString(id);
+}
+
+void GlobalShortcutService::updateToggleSuppression() {
+  if (m_hotkeyExcludedAppIds.empty()) {
+    m_toggleSuppressed.store(false, std::memory_order_relaxed);
+    return;
+  }
+
+  auto const focusedApplicationId = m_windowManager.focusedApplicationId();
+  if (!focusedApplicationId) {
+    m_toggleSuppressed.store(false, std::memory_order_relaxed);
+    return;
+  }
+
+  auto const app = m_appService.findByClass(*focusedApplicationId);
+  bool const suppressed = app && m_hotkeyExcludedAppIds.contains(app->id().remove(".desktop").toStdString());
+  m_toggleSuppressed.store(suppressed, std::memory_order_relaxed);
 }
 
 void GlobalShortcutService::onActivated(const QString &id, quint64 timestamp) {

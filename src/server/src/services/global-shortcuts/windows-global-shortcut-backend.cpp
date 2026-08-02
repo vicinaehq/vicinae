@@ -188,6 +188,10 @@ bool WindowsGlobalShortcutBackend::dispatchKey(unsigned int vk, unsigned int mod
       continue;
     }
     if (mods == target.mods) {
+      // RegisterHotKey still reserves the combination, so gating can suppress our action but cannot
+      // guarantee that the focused app receives the physical keystroke.
+      if (m_gate && m_gate(target.id)) { continue; }
+
       if (!target.down) {
         target.down = true;
         QMetaObject::invokeMethod(

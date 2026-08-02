@@ -64,6 +64,10 @@ AbstractWindowManager::WindowPtr WindowManager::getFocusedWindow() {
   return m_provider->getFocusedWindowSync();
 }
 
+std::optional<QString> WindowManager::focusedApplicationId() const {
+  return m_provider->focusedApplicationId();
+}
+
 const AbstractWindowManager::AbstractWindow *WindowManager::findWindowById(const QString &id) {
   auto pred = [&](auto &&win) { return win->id() == id; };
   if (auto it = std::ranges::find_if(m_windows, pred); it != m_windows.end()) { return it->get(); }

@@ -31,6 +31,7 @@ public:
   WindowList listWindowsSync() const override;
   std::vector<Screen> listScreensSync(QWindow *activeWindow) const override;
   std::shared_ptr<AbstractWindow> getFocusedWindowSync() const override;
+  std::optional<QString> focusedApplicationId() const override;
   bool supportsFocusTracking() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
