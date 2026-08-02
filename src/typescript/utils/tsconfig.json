@@ -1,6 +1,7 @@
 {
 	"include": ["src"],
 	"compilerOptions": {
+		"jsx": "react-jsx",
 		"module": "nodenext",
 		"declaration": true,
 		"declarationMap": false,
