@@ -856,7 +856,6 @@ if (UNIX AND NOT APPLE)
 
     wayland_generate_protocol("wlr-foreign-toplevel-management-unstable-v1")
 	wayland_generate_protocol("ext-data-control-v1")
-	wayland_generate_protocol("kde-blur")
 	wayland_generate_protocol("ext-background-effect-v1")
 	wayland_generate_protocol("keyboard-shortcuts-inhibit-unstable-v1")
 	wayland_generate_protocol("wlr-layer-shell-unstable-v1")
@@ -872,7 +871,6 @@ if (UNIX AND NOT APPLE)
 		src/internal/wayland/registry.cpp
 		src/internal/wayland/seat.cpp
 		src/services/window-material/ext-background-effect-v1-manager.cpp
-		src/services/window-material/kde-background-effect-manager.cpp
 		src/services/shortcut-inhibit/wayland-shortcut-inhibit-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp

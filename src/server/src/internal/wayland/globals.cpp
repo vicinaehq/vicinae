@@ -71,11 +71,6 @@ void Globals::handleGlobal(void *data, struct wl_registry *registry, uint32_t na
         wl_registry_bind(registry, name, &ext_data_control_manager_v1_interface, version));
   }
 
-  else if (strcmp(interface, org_kde_kwin_blur_manager_interface.name) == 0) {
-    self->m_kwinBlur = static_cast<decltype(self->m_kwinBlur)>(
-        wl_registry_bind(registry, name, &org_kde_kwin_blur_manager_interface, version));
-  }
-
   else if (strcmp(interface, ext_background_effect_manager_v1_interface.name) == 0) {
     self->m_backgroundEffect = static_cast<decltype(self->m_backgroundEffect)>(
         wl_registry_bind(registry, name, &ext_background_effect_manager_v1_interface, version));
