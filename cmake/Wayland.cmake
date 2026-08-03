@@ -1,7 +1,5 @@
 set(WAYLAND_SCANNER_EXECUTABLE "wayland-scanner")
 
-# qt6_generate_wayland_protocol_client_sources expects this target, normally
-# provided by ECM's FindWaylandScanner. Define it ourselves to avoid the dependency.
 if(NOT TARGET Wayland::Scanner)
 	find_program(WAYLAND_SCANNER_PATH wayland-scanner REQUIRED)
 	add_executable(Wayland::Scanner IMPORTED)
