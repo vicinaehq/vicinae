@@ -83,6 +83,18 @@ AbstractWindowManager::WorkspacePtr WindowManager::findWorkspaceById(const QStri
   return nullptr;
 }
 
+bool WindowManager::isOnActiveWorkspace(const AbstractWindowManager::AbstractWindow &window) const {
+  if (!m_provider->hasWorkspaces()) { return true; }
+
+  auto workspaceId = window.workspace();
+  if (!workspaceId.has_value() || workspaceId->isEmpty()) { return true; }
+
+  auto active = m_provider->getActiveWorkspace();
+  if (!active) { return true; }
+
+  return active->id() == *workspaceId;
+}
+
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
   return m_windows | std::views::filter([&](auto &&win) {
            return app.matchesWindowClass(win->wmClass()) ||

@@ -21,6 +21,8 @@ public:
   const AbstractWindowManager::AbstractWindow *findWindowById(const QString &id);
   AbstractWindowManager::WorkspacePtr findWorkspaceById(const QString &id);
 
+  bool isOnActiveWorkspace(const AbstractWindowManager::AbstractWindow &window) const;
+
   WindowManager();
 
 private:

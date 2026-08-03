@@ -1,8 +1,12 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
-#include <qjsonobject.h>
 
 namespace Hyprland {
+
+namespace ipc {
+struct Workspace;
+}
+
 class Workspace : public AbstractWindowManager::AbstractWorkspace {
 public:
   QString id() const override;
@@ -10,7 +14,7 @@ public:
   bool hasFullScreen() const override;
   std::optional<QString> monitor() const override;
 
-  Workspace(const QJsonObject &json);
+  Workspace(const ipc::Workspace &workspace);
 
 private:
   int m_monitorId = -1;
@@ -18,4 +22,5 @@ private:
   QString m_name;
   bool m_hasFullScreen = false;
 };
-}; // namespace Hyprland
+
+} // namespace Hyprland

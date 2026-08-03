@@ -1,6 +1,7 @@
 #pragma once
 #include "gnome-listener.hpp"
 #include "gnome-window.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "services/window-manager/abstract-wayland-window-manager.hpp"
 #include <QDBusInterface>
 #include <QJsonArray>

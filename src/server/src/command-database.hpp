@@ -1,6 +1,7 @@
 #pragma once
 #include "argument.hpp"
 #include "command.hpp"
+#include "service-registry.hpp"
 #include "ui/image/url.hpp"
 #include <QKeyEvent>
 #include <QString>
@@ -81,9 +82,11 @@ class CommandDatabase {
 public:
   const std::vector<std::shared_ptr<AbstractCommandRepository>> &repositories() const;
 
-  template <typename T> void registerRepository() { _repositories.push_back(std::make_shared<T>()); }
+  template <typename T, typename... U> void registerRepository(const U &...args) {
+    _repositories.push_back(std::make_shared<T>(args...));
+  }
 
   const AbstractCommandRepository *findRepository(const QString &name);
 
-  CommandDatabase();
+  CommandDatabase(const ServiceRegistry &services);
 };
