@@ -23,16 +23,21 @@ class ToggleFullscreenWindowCommand : public BuiltinCallbackCommand {
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::Fullscreen).setBackgroundTint(COLOR);
   }
-  void execute(CommandController &controller) const override {
-    auto wm = controller.context()->services->windowManager();
+  void execute(CommandController &ctrl) const override {
+    auto wm = ctrl.context()->services->windowManager();
+    auto toast = ctrl.context()->services->toastService();
 
     if (auto window = wm->provider()->getFocusedWindowSync()) {
-      wm->provider()->toggleFullscreen(*window);
+      if (wm->isOnActiveWorkspace(*window)) {
+        wm->provider()->toggleFullscreen(*window);
+      } else {
+        toast->failure(QCoreApplication::translate("ToggleFullscreenWindowCommand",
+                                                   "Active window is not on the current workspace"));
+      }
+      ctrl.context()->navigation->closeWindow();
     } else {
-      controller.context()->services->toastService()->failure("No window to fullscreen");
+      toast->failure(QCoreApplication::translate("ToggleFullscreenWindowCommand", "No window to fullscreen"));
     }
-
-    controller.context()->navigation->closeWindow();
   }
 };
 
@@ -44,16 +49,21 @@ class ToggleFloatingWindowCommand : public BuiltinCallbackCommand {
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::FloatingWindow).setBackgroundTint(COLOR);
   }
-  void execute(CommandController &controller) const override {
-    auto wm = controller.context()->services->windowManager();
+  void execute(CommandController &ctrl) const override {
+    auto wm = ctrl.context()->services->windowManager();
+    auto toast = ctrl.context()->services->toastService();
 
     if (auto window = wm->provider()->getFocusedWindowSync()) {
-      wm->provider()->toggleFloating(*window);
+      if (wm->isOnActiveWorkspace(*window)) {
+        wm->provider()->toggleFloating(*window);
+      } else {
+        toast->failure(QCoreApplication::translate("ToggleFloatingWindowCommand",
+                                                   "Active window is not on the current workspace"));
+      }
+      ctrl.context()->navigation->closeWindow();
     } else {
-      controller.context()->services->toastService()->failure("No active window");
+      toast->failure(QCoreApplication::translate("ToggleFloatingWindowCommand", "No window to toggle"));
     }
-
-    controller.context()->navigation->closeWindow();
   }
 };
 
