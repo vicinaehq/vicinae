@@ -1,21 +1,10 @@
 #pragma once
 #include "services/window-manager/abstract-wayland-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-listener.hpp"
-#include <QtConcurrent/qtconcurrentrun.h>
-#include <QGuiApplication>
-#include <qfuture.h>
-#include <qjsondocument.h>
-#include <qjsonobject.h>
-#include <qjsonvalue.h>
-#include <qkeysequence.h>
-#include <qlogging.h>
-#include <qnamespace.h>
-#include <qprocess.h>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <qpromise.h>
-#include <qstringview.h>
-#include <string_view>
+
+namespace Hyprland::ipc {
+struct Window;
+}
 
 class HyprlandWindow : public AbstractWindowManager::AbstractWindow {
 public:
@@ -30,7 +19,7 @@ public:
   std::optional<QString> workspace() const override { return QString::number(m_workspaceId); }
   bool canClose() const override { return true; }
 
-  HyprlandWindow(const QJsonObject &json);
+  HyprlandWindow(const Hyprland::ipc::Window &window);
 
 private:
   QString m_id;
@@ -53,9 +42,15 @@ public:
 
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
+  bool toggleFullscreen(const AbstractWindow &window) override;
+  bool toggleFloating(const AbstractWindow &window) override;
   bool isActivatable() const override;
   bool hasWorkspaces() const override;
   WorkspaceList listWorkspaces() const override;
+
+  QFlags<Capability> capabilities() const override {
+    return {Capability::ToggleFloating, Capability::Fullscreen};
+  }
 
   bool ping() const override;
   void start() override;
