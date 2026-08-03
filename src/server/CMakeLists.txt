@@ -872,7 +872,6 @@ if (UNIX AND NOT APPLE)
 		src/internal/wayland/registry.cpp
 		src/internal/wayland/seat.cpp
 		src/services/window-material/ext-background-effect-v1-manager.cpp
-		src/services/window-material/kde-background-effect-manager.cpp
 		src/services/shortcut-inhibit/wayland-shortcut-inhibit-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
