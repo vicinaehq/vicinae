@@ -3,7 +3,6 @@
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "common/types.hpp"
 #include "ext-data-control-v1-client-protocol.h"
-#include "kde-blur-client-protocol.h"
 #include "ext-background-effect-v1-client-protocol.h"
 #include "vicinae-hotkey-v1-client-protocol.h"
 #include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
@@ -21,7 +20,6 @@ namespace Wayland {
 
 class Globals : NonCopyable {
 public:
-  static auto kwinBlur() { return instance().m_kwinBlur; }
   static auto *extBackgroundEffectManager() { return instance().m_backgroundEffect; }
 
   // We expose that ourselves because caps are announced once during global enumeration
@@ -84,7 +82,6 @@ private:
   wl_registry *m_registry = nullptr;
   zwlr_layer_shell_v1 *m_layerShell = nullptr;
   ext_data_control_manager_v1 *m_dataControlManager = nullptr;
-  org_kde_kwin_blur_manager *m_kwinBlur = nullptr;
   ext_background_effect_manager_v1 *m_backgroundEffect = nullptr;
   uint32_t m_backgroundEffectCaps = 0;
   vicinae_hotkey_manager_v1 *m_hotkey = nullptr;
