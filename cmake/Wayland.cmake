@@ -1,5 +1,13 @@
 set(WAYLAND_SCANNER_EXECUTABLE "wayland-scanner")
 
+# qt6_generate_wayland_protocol_client_sources expects this target, normally
+# provided by ECM's FindWaylandScanner. Define it ourselves to avoid the dependency.
+if(NOT TARGET Wayland::Scanner)
+	find_program(WAYLAND_SCANNER_PATH wayland-scanner REQUIRED)
+	add_executable(Wayland::Scanner IMPORTED)
+	set_target_properties(Wayland::Scanner PROPERTIES IMPORTED_LOCATION "${WAYLAND_SCANNER_PATH}")
+endif()
+
 function(wayland_generate_protocol protocol)
 	set(protocol_file ${CMAKE_SOURCE_DIR}/src/wayland-protocols/${protocol}.xml)
 	get_filename_component(protocol_name ${protocol_file} NAME_WE)

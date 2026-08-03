@@ -1,15 +1,37 @@
 #pragma once
+#include <optional>
+#include <QtWaylandClient/QWaylandClientExtension>
+#include "qwayland-wlr-foreign-toplevel-management-unstable-v1.h"
 #include "services/window-manager/abstract-wayland-window-manager.hpp"
 
 class WaylandWindowManager;
 
-class WaylandWindow : public AbstractWindowManager::AbstractWindow {
+class ForeignToplevelManagerV1 : public QWaylandClientExtensionTemplate<ForeignToplevelManagerV1>,
+                                 public QtWayland::zwlr_foreign_toplevel_manager_v1 {
+  Q_OBJECT
+
 public:
+  explicit ForeignToplevelManagerV1(WaylandWindowManager *wm);
+
+  bool isFinished() const { return m_finished; }
+
+protected:
+  void zwlr_foreign_toplevel_manager_v1_toplevel(struct ::zwlr_foreign_toplevel_handle_v1 *toplevel) override;
+  void zwlr_foreign_toplevel_manager_v1_finished() override;
+
+private:
+  WaylandWindowManager *m_wm;
+  bool m_finished = false;
+};
+
+class WaylandWindow : public AbstractWindowManager::AbstractWindow,
+                      public QtWayland::zwlr_foreign_toplevel_handle_v1 {
+public:
+  WaylandWindow(WaylandWindowManager *manager, struct ::zwlr_foreign_toplevel_handle_v1 *handle);
+  ~WaylandWindow() override;
+
   QString id() const override { return m_id; }
-  std::optional<int> pid() const override {
-    if (m_pid <= 0) return std::nullopt;
-    return m_pid;
-  }
+  std::optional<int> pid() const override { return std::nullopt; }
   QString title() const override { return m_title; }
   QString wmClass() const override { return m_wmClass; }
 
@@ -17,16 +39,21 @@ public:
   std::optional<QString> workspace() const override { return std::nullopt; }
   bool canClose() const override { return true; }
 
-  WaylandWindow(WaylandWindowManager *manager, struct zwlr_foreign_toplevel_handle_v1 *handle);
-  ~WaylandWindow();
+  bool isActive() const { return m_active; }
 
+protected:
+  void zwlr_foreign_toplevel_handle_v1_title(const QString &title) override;
+  void zwlr_foreign_toplevel_handle_v1_app_id(const QString &appId) override;
+  void zwlr_foreign_toplevel_handle_v1_state(wl_array *state) override;
+  void zwlr_foreign_toplevel_handle_v1_done() override;
+  void zwlr_foreign_toplevel_handle_v1_closed() override;
+
+private:
   QString m_id;
   QString m_title;
   QString m_wmClass;
   WaylandWindowManager *m_manager;
-  bool m_active;
-  struct zwlr_foreign_toplevel_handle_v1 *m_handle;
-  int m_pid;
+  bool m_active = false;
 };
 
 class WaylandWindowManager : public AbstractWaylandWindowManager {
@@ -48,11 +75,9 @@ public:
 
   ~WaylandWindowManager() override = default;
 
-  struct wl_registry *m_registry;
-  struct zwlr_foreign_toplevel_manager_v1 *m_manager;
   WindowList m_toplevels;
 
 private:
-  struct wl_display *m_display;
-  struct wl_seat *m_seat;
+  std::optional<ForeignToplevelManagerV1> m_manager;
+  struct wl_seat *m_seat = nullptr;
 };
