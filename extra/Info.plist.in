@@ -32,8 +32,6 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>vicinae</string>
-				<string>raycast</string>
-				<string>com.raycast</string>
 			</array>
 		</dict>
 	</array>
