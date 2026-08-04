@@ -15,7 +15,7 @@
 #include <qtenvironmentvariables.h>
 
 #ifdef Q_OS_LINUX
-#include "internal/wayland/globals.hpp"
+#include "internal/wayland/layer-shell.hpp"
 #endif
 
 namespace Environment {
@@ -76,7 +76,7 @@ inline bool isLayerShellSupported() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
 #elifdef Q_OS_LINUX
-  return Wayland::Globals::layerShell() && !isCosmicDesktop();
+  return Wayland::hasLayerShell() && !isCosmicDesktop();
 #else
   return false;
 #endif
