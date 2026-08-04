@@ -392,9 +392,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     LauncherWindowPlatform::grantForeground();
     m_window->requestActivate();
 #ifdef Q_OS_LINUX
-    // Qt's own requestActivate uses a stale input serial when we are summoned by a global
-    // shortcut, as the triggering key event never reached us. Use the serial forwarded by the
-    // compositor instead. Layer shell surfaces get focus through keyboard interactivity.
+    // layer-shell has its own focus mechanism, we don't need a token
     if (!isLayerShellActive()) { Wayland::XdgActivation::activateWindow(m_window); }
 #endif
   } else {
