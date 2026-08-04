@@ -856,7 +856,13 @@ if (UNIX AND NOT APPLE)
 
 	# only needed to provide the xdg_* interface symbols referenced by the
 	# generated wlr-layer-shell protocol code
-	wayland_generate_protocol("xdg-shell")
+	wayland_system_protocol(XDG_SHELL_XML "stable/xdg-shell/xdg-shell.xml")
+	wayland_generate_protocol(${XDG_SHELL_XML})
+
+	wayland_system_protocol(EXT_BACKGROUND_EFFECT_XML "staging/ext-background-effect/ext-background-effect-v1.xml")
+	wayland_system_protocol(EXT_DATA_CONTROL_XML "staging/ext-data-control/ext-data-control-v1.xml")
+	wayland_system_protocol(KEYBOARD_SHORTCUTS_INHIBIT_XML "unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml")
+	wayland_system_protocol(XDG_ACTIVATION_XML "staging/xdg-activation/xdg-activation-v1.xml")
 
 	list(APPEND LIBS xkbcommon)
 
@@ -930,13 +936,13 @@ if (UNIX AND NOT APPLE)
 	qt6_generate_wayland_protocol_client_sources(${TARGET}
 		PRIVATE_CODE
 		FILES
-			${CMAKE_SOURCE_DIR}/src/wayland-protocols/ext-background-effect-v1.xml
-			${CMAKE_SOURCE_DIR}/src/wayland-protocols/ext-data-control-v1.xml
-			${CMAKE_SOURCE_DIR}/src/wayland-protocols/keyboard-shortcuts-inhibit-unstable-v1.xml
+			${EXT_BACKGROUND_EFFECT_XML}
+			${EXT_DATA_CONTROL_XML}
+			${KEYBOARD_SHORTCUTS_INHIBIT_XML}
+			${XDG_ACTIVATION_XML}
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/vicinae-hotkey-v1.xml
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-foreign-toplevel-management-unstable-v1.xml
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-layer-shell-unstable-v1.xml
-			${CMAKE_SOURCE_DIR}/src/wayland-protocols/xdg-activation-v1.xml
 	)
 endif()
 
