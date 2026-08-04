@@ -1,5 +1,8 @@
 #include "launcher-window.hpp"
 #include "launcher-window-platform.hpp"
+#ifdef Q_OS_LINUX
+#include "internal/wayland/xdg-activation.hpp"
+#endif
 #include "hud-bridge.hpp"
 #include "keybind-bridge.hpp"
 #include "keyboard-bridge.hpp"
@@ -388,6 +391,12 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     m_window->raise();
     LauncherWindowPlatform::grantForeground();
     m_window->requestActivate();
+#ifdef Q_OS_LINUX
+    // Qt's own requestActivate uses a stale input serial when we are summoned by a global
+    // shortcut, as the triggering key event never reached us. Use the serial forwarded by the
+    // compositor instead. Layer shell surfaces get focus through keyboard interactivity.
+    if (!isLayerShellActive()) { Wayland::XdgActivation::activateWindow(m_window); }
+#endif
   } else {
     LauncherWindowPlatform::suppressHeldKeyReleases();
     m_window->hide();

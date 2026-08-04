@@ -1,5 +1,6 @@
 #include "xdg-app-database.hpp"
 #include "environment.hpp"
+#include "internal/wayland/xdg-activation.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
 #include "utils.hpp"
@@ -458,11 +459,12 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
     argv << arg;
   }
 
-  return launchProcess(exec.front(), argv, xdgApp->data().workingDirectory());
+  return launchProcess(exec.front(), argv, xdgApp->data().workingDirectory(), opts.appId.value_or(QString()));
 }
 
 bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList &args,
-                                   const std::optional<std::filesystem::path> &workingDirectory) const {
+                                   const std::optional<std::filesystem::path> &workingDirectory,
+                                   const QString &appId) const {
   QProcess process;
   process.setProgram(prog);
   process.setArguments(args);
@@ -470,6 +472,15 @@ bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList &args,
   process.setStandardErrorFile(QProcess::nullDevice());
 
   if (workingDirectory) { process.setWorkingDirectory(workingDirectory->c_str()); }
+
+  if (auto token = Wayland::XdgActivation::requestLaunchToken(appId)) {
+    qDebug() << "Successfully minted xdg activation token for app" << appId;
+    auto env = QProcessEnvironment::systemEnvironment();
+    env.insert("XDG_ACTIVATION_TOKEN", *token);
+    process.setProcessEnvironment(env);
+  } else {
+    qWarning() << "Unable to mint xdg activation token to launch" << appId;
+  }
 
   QStringList cmdline;
   cmdline << prog << args;
@@ -520,7 +531,8 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
 
   auto argv = exec | std::views::drop(1) | std::ranges::to<QStringList>();
 
-  return launchProcess(exec.front(), argv, xdgApp.data().workingDirectory());
+  return launchProcess(exec.front(), argv, xdgApp.data().workingDirectory(),
+                       xdgApp.windowClass().value_or(xdgApp.id()));
 }
 
 QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {

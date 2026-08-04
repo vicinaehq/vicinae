@@ -1,4 +1,5 @@
 #include "vicinae-hotkey-global-shortcut-backend.hpp"
+#include "internal/wayland/xdg-activation.hpp"
 #include "services/global-shortcuts/abstract-global-shortcut-backend.hpp"
 #include "services/global-shortcuts/xkb-keysym.hpp"
 #include <algorithm>
@@ -56,6 +57,7 @@ void VicinaeHotkeyGlobalShortcutBackend::Hotkey::vicinae_hotkey_v1_revoked(uint3
 }
 
 void VicinaeHotkeyGlobalShortcutBackend::Hotkey::vicinae_hotkey_v1_pressed(uint32_t serial, uint32_t time) {
+  Wayland::XdgActivation::setPendingSerial(serial);
   emit m_backend->shortcutActivated(m_id, time);
 }
 
@@ -81,11 +83,11 @@ VicinaeHotkeyGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &re
 
   auto *handle = m_manager.bind(keysym.value(), fromQtMods(request.trigger.mods()), nullptr,
                                 QStringLiteral("vicinae"), request.description);
-  auto &hotkey = m_binds.emplace_back(std::make_unique<Hotkey>(this, handle, request.id));
 
-  m_pendingBind = hotkey.get();
+  m_pendingBind = m_binds.emplace_back(std::make_unique<Hotkey>(this, handle, request.id)).get();
   m_pendingDeny.reset();
   wlRoundtrip();
+
   auto *bound = std::exchange(m_pendingBind, nullptr);
 
   if (m_pendingDeny) {

@@ -864,6 +864,7 @@ if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
 		src/internal/wayland/output-tracker.cpp
 		src/internal/wayland/layer-shell.cpp
+		src/internal/wayland/xdg-activation.cpp
 		src/services/window-material/ext-background-effect-v1-manager.cpp
 		src/services/shortcut-inhibit/wayland-shortcut-inhibit-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
@@ -935,6 +936,7 @@ if (UNIX AND NOT APPLE)
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/vicinae-hotkey-v1.xml
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-foreign-toplevel-management-unstable-v1.xml
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-layer-shell-unstable-v1.xml
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/xdg-activation-v1.xml
 	)
 endif()
 
