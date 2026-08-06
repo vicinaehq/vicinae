@@ -3141,12 +3141,12 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location filename="../src/extensions/vicinae/open-about-command.hpp" line="+13"/>
         <source>About</source>
-        <translation>A Riguardo</translation>
+        <translation>Informazioni</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Open the &quot;About&quot; tab of the vicinae settings.</source>
-        <translation>Apri la pagina ’A Riguardo’ delle impostazioni.</translation>
+        <translation>Apri la pagina ’Informazioni’ delle impostazioni.</translation>
     </message>
 </context>
 <context>
@@ -4623,7 +4623,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+1"/>
         <source>About</source>
-        <translation>A Riguardo</translation>
+        <translation>Informazioni</translation>
     </message>
 </context>
 <context>
@@ -4651,7 +4651,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+5"/>
         <source>About</source>
-        <translation>A Riguardo</translation>
+        <translation>Informazioni</translation>
     </message>
     <message>
         <location line="+19"/>
