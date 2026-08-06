@@ -2921,7 +2921,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location filename="../src/qml/oauth-token-store-model.cpp" line="+20"/>
         <source>Expired</source>
-        <translation>Scaduti</translation>
+        <translation>Scaduto</translation>
     </message>
     <message>
         <location line="+11"/>
@@ -4613,7 +4613,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+1"/>
         <source>Keybindings</source>
-        <translation>Scorciatoie clavier</translation>
+        <translation>Scorciatoie</translation>
     </message>
     <message>
         <location line="+1"/>
