@@ -247,7 +247,7 @@
     <message>
         <location line="+20"/>
         <source>Open Application</source>
-        <translation>Apri l’Applicazione</translation>
+        <translation>Apri Applicazione</translation>
     </message>
     <message>
         <location line="+1"/>
