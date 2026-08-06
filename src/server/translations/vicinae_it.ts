@@ -157,7 +157,7 @@
     <message>
         <location filename="../src/ui/alert/alert.hpp" line="+15"/>
         <source>Are you sure?</source>
-        <translation>Sei sicuro?</translation>
+        <translation>Sei sicuro/a?</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -808,7 +808,7 @@
     <message>
         <location line="+9"/>
         <source>Are you sure?</source>
-        <translation>Sei sicuro?</translation>
+        <translation>Sei sicuro/a?</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -2931,7 +2931,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location line="+5"/>
         <source>Are you sure?</source>
-        <translation>Sei sicuro?</translation>
+        <translation>Sei sicuro/a?</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3752,13 +3752,13 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
 Vicinae also has its own [extension store](vicinae://launch/core/store).
 </source>
         <translation>
-Vicinae dispose également de sa propre [boutique d’extensions](vicinae://launch/core/store).
+Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store).
 </translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Continue to store</source>
-        <translation>Continuer vers la boutique</translation>
+        <translation>Continua nel negozio</translation>
     </message>
 </context>
 <context>
@@ -3766,72 +3766,72 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/raycast-store-detail-host.cpp" line="+43"/>
         <source>Failed to load extension</source>
-        <translation>Échec du chargement de l’extension</translation>
+        <translation>Impossibile caricare estensione</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The extension &quot;%1&quot; could not be loaded. It may not exist or the store may be unreachable.</source>
-        <translation>L’extension &quot;%1&quot; n’a pas pu être chargée. Elle n’existe peut-être pas ou la boutique est peut-être inaccessible.</translation>
+        <translation>Impossibile caricare l’estensione ’%1’. Potrebbe non esistere o il negozio potrebbe non essere raggiungibile.</translation>
     </message>
     <message>
         <location line="+27"/>
         <source>Extension Store - %1</source>
-        <translation>Boutique d’extensions - %1</translation>
+        <translation>Negozio d’estensioni - %1</translation>
     </message>
     <message>
         <location line="+31"/>
         <source>This extension should be fully compatible.</source>
-        <translation>Cette extension devrait être entièrement compatible.</translation>
+        <translation>Quest’estensione dovrebbe essere completamente compatibile.</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>This extension works but has a few quirks.</source>
-        <translation>Cette extension fonctionne mais présente quelques défauts.</translation>
+        <translation>Quest’estensione funziona con qualche problema.</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>This extension is not compatible.</source>
-        <translation>Cette extension n’est pas compatible.</translation>
+        <translation>Quest’estensione non è compatibile.</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>No compatibility data is available for this extension.</source>
-        <translation>Aucune donnée de compatibilité n’est disponible pour cette extension.</translation>
+        <translation>Nessun dato disponibile sulla compatibilità di quest’estensione.</translation>
     </message>
     <message>
         <location line="+21"/>
         <source>No compatibility data is available — this extension may or may not work.</source>
-        <translation>Aucune donnée de compatibilité n’est disponible — cette extension peut fonctionner ou non.</translation>
+        <translation>Nessun dato disponibile sulla compatibilità - quest’estensione potrebbe funzionare oppure no.</translation>
     </message>
     <message>
         <location line="+83"/>
         <source>Install extension</source>
-        <translation>Installer l’extension</translation>
+        <translation>Installa estensione</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Downloading extension...</source>
-        <translation>Téléchargement de l’extension...</translation>
+        <translation>Scarico l’estensione...</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Failed to download extension</source>
-        <translation>Échec du téléchargement de l’extension</translation>
+        <translation>Impossibile scaricare l’estensione</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Failed to extract extension archive</source>
-        <translation>Échec de l’extraction de l’archive de l’extension</translation>
+        <translation>Impossibile estrarre l’archivio dell’estensione</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Extension installed</source>
-        <translation>Extension installée</translation>
+        <translation>Estensione Installata</translation>
     </message>
     <message>
         <location line="+14"/>
         <source>Report issue</source>
-        <translation>Signaler un problème</translation>
+        <translation>Segnala un problema</translation>
     </message>
 </context>
 <context>
@@ -3839,7 +3839,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/raycast-store-model.cpp" line="+45"/>
         <source>Show details</source>
-        <translation>Afficher les détails</translation>
+        <translation>Mostra dettagli</translation>
     </message>
 </context>
 <context>
@@ -3847,27 +3847,27 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/raycast-store-view-host.cpp" line="+37"/>
         <source>Browse Raycast extensions</source>
-        <translation>Parcourir les extensions Raycast</translation>
+        <translation>Naviga estensioni Raycast</translation>
     </message>
     <message>
         <location line="+32"/>
         <source>Failed to fetch extensions</source>
-        <translation>Échec de la récupération des extensions</translation>
+        <translation>Impossibile trovare le estensioni</translation>
     </message>
     <message>
         <location line="+18"/>
         <source>Extensions</source>
-        <translation>Extensions</translation>
+        <translation>Estensioni</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Failed to search extensions</source>
-        <translation>Échec de la recherche d’extensions</translation>
+        <translation>Impossibile cercare estensioni</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Results</source>
-        <translation>Résultats</translation>
+        <translation>Risultati</translation>
     </message>
 </context>
 <context>
@@ -3875,22 +3875,22 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/power-management/power-management-extension.cpp" line="-72"/>
         <source>Reboot System</source>
-        <translation>Redémarrer le système</translation>
+        <translation>Riavvia Sistema</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reboot the system</source>
-        <translation>Redémarrer le système</translation>
+        <translation>Riavia il sistema</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>System can&apos;t reboot</source>
-        <translation>Le système ne peut pas redémarrer</translation>
+        <translation>Il sistema non può riavviarsi</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Failed to reboot</source>
-        <translation>Échec du redémarrage</translation>
+        <translation>Impossibile riavviare</translation>
     </message>
 </context>
 <context>
@@ -3898,12 +3898,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/file/file-extension.hpp" line="-72"/>
         <source>Rebuild File Index</source>
-        <translation>Reconstruire l’index des fichiers</translation>
+        <translation>Ricostruisci Indice File</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Fully rebuild the file index. Running this manually can be useful if the file search feels particularly out of date.</source>
-        <translation>Reconstruire entièrement l’index des fichiers. L’exécuter manuellement peut être utile si la recherche de fichiers semble particulièrement obsolète.</translation>
+        <translation>Ricostruisce interamente l’indice dei file. L’esecuzione manuale può aiutare se l’indice di ricerca è particolarmente datato.</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -3913,17 +3913,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location line="+2"/>
         <source>Rebuilding the entire index can be time consuming and CPU intensive, depending on the number of files present in your home directory.</source>
-        <translation>Reconstruire l’index complet peut prendre du temps et solliciter fortement le processeur, selon le nombre de fichiers présents dans votre répertoire personnel.</translation>
+        <translation>Ricostruire l’intero indice può richiedere tempo e occupare la CPU, a dipendenza del numero di file presenti nella tua cartella utente.</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Reset</source>
-        <translation>Réinitialiser</translation>
+        <translation>Ripristina</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Index rebuild started...</source>
-        <translation>Reconstruction de l’index démarrée...</translation>
+        <translation>Ricostruzione dell’indice avviata...</translation>
     </message>
 </context>
 <context>
@@ -3931,22 +3931,22 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/vicinae/refresh-apps-command.hpp" line="+12"/>
         <source>Refresh Apps</source>
-        <translation>Actualiser les applications</translation>
+        <translation>Aggiorna Lista App</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Force a refresh of the application database. The database should normally automatically update itself on changes, but this can help working around some edge cases.</source>
-        <translation>Forcer une actualisation de la base de données des applications. La base de données devrait normalement se mettre à jour automatiquement lors des changements, mais ceci peut aider à contourner certains cas particuliers.</translation>
+        <translation>Forza l’aggiornamento del database applicazioni. Normalmente questo database si aggiorna da solo quando serve, ma quest’opzione può aiutare in casi specifici.</translation>
     </message>
     <message>
         <location filename="../src/extensions/vicinae/refresh-apps-command.cpp" line="+15"/>
         <source>Apps successfully refreshed</source>
-        <translation>Applications actualisées avec succès</translation>
+        <translation>Lista app aggiornata</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Failed to refresh apps</source>
-        <translation>Échec de l’actualisation des applications</translation>
+        <translation>Impossibile aggiornare la lista di applicazioni</translation>
     </message>
 </context>
 <context>
@@ -3954,17 +3954,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="+29"/>
         <source>Reload Script Directories</source>
-        <translation>Recharger les répertoires de scripts</translation>
+        <translation>Ricarica Cartelle Script</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reload script directories</source>
-        <translation>Recharger les répertoires de scripts</translation>
+        <translation>Ricarica le cartelle degli script</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>New scan triggered, index will update shortly</source>
-        <translation>Nouvelle analyse déclenchée, l’index sera mis à jour sous peu</translation>
+        <translation>Nuova scansione avviata, l’indice sarà aggiornato a breve</translation>
     </message>
 </context>
 <context>
@@ -3972,7 +3972,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/actions/calculator/calculator-actions.hpp" line="+97"/>
         <source>Delete all entries</source>
-        <translation>Supprimer toutes les entrées</translation>
+        <translation>Elimina tutti gli elementi</translation>
     </message>
 </context>
 <context>
@@ -3980,32 +3980,32 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/clipboard/history/clipboard-history-actions.hpp" line="+27"/>
         <source>Are you sure?</source>
-        <translation>Êtes-vous sûr ?</translation>
+        <translation>Sei sicuro/a?</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>All your clipboard history will be lost forever</source>
-        <translation>Tout l’historique de votre presse-papiers sera définitivement perdu</translation>
+        <translation>Tutta la cronologia degli appunti andrà persa per sempre</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Delete all</source>
-        <translation>Tout supprimer</translation>
+        <translation>Elimina tutto</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>All selections were removed</source>
-        <translation>Toutes les sélections ont été supprimées</translation>
+        <translation>Tutti gli elementi sono stati eliminati</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Failed to remove all selections</source>
-        <translation>Échec de la suppression de toutes les sélections</translation>
+        <translation>Impossibile eliminare tutto</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Remove all</source>
-        <translation>Tout supprimer</translation>
+        <translation>Elimina tutto</translation>
     </message>
 </context>
 <context>
@@ -4013,17 +4013,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/actions/calculator/calculator-actions.hpp" line="-43"/>
         <source>Entry removed</source>
-        <translation>Entrée supprimée</translation>
+        <translation>Elemento eliminato</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Failed to remove entry</source>
-        <translation>Échec de la suppression de l’entrée</translation>
+        <translation>Impossibile eliminare l’elemento</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Delete entry</source>
-        <translation>Supprimer l’entrée</translation>
+        <translation>Elimina l’elemento</translation>
     </message>
 </context>
 <context>
@@ -4031,17 +4031,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/clipboard/history/clipboard-history-actions.hpp" line="-70"/>
         <source>Entry removed</source>
-        <translation>Entrée supprimée</translation>
+        <translation>Elemento eliminato</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Failed to remove entry</source>
-        <translation>Échec de la suppression de l’entrée</translation>
+        <translation>Impossibile eliminare l’elemento</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Remove entry</source>
-        <translation>Supprimer l’entrée</translation>
+        <translation>Elimina elemento</translation>
     </message>
 </context>
 <context>
@@ -4049,17 +4049,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/actions/shortcut/shortcut-actions.hpp" line="+33"/>
         <source>Removed link</source>
-        <translation>Lien supprimé</translation>
+        <translation>Collegamento rimosso</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Failed to remove link</source>
-        <translation>Échec de la suppression du lien</translation>
+        <translation>Impossibile rimuovere il collegamento</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Remove link</source>
-        <translation>Supprimer le lien</translation>
+        <translation>Rimuovi collegamento</translation>
     </message>
 </context>
 <context>
@@ -4067,17 +4067,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/vicinae/report-bug-command.hpp" line="+10"/>
         <source>Report a Vicinae Bug</source>
-        <translation>Signaler un bug Vicinae</translation>
+        <translation>Segnala un Bug di Vicinae</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Navigate to Vicinae issue creation page with all relevant informations pre-filled.</source>
-        <translation>Accéder à la page de création de tickets Vicinae avec toutes les informations pertinentes préremplies.</translation>
+        <translation>Vai alla pagina per segnalare un bug di Vicinae con le informazioni rilevanti pre-compilate.</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>Title</source>
-        <translation>Titre</translation>
+        <translation>Titolo</translation>
     </message>
 </context>
 <context>
@@ -4085,7 +4085,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/emoji-grid-model.cpp" line="+21"/>
         <source>Reset ranking</source>
-        <translation>Réinitialiser le classement</translation>
+        <translation>Ripristina ordine</translation>
     </message>
 </context>
 <context>
@@ -4093,7 +4093,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location line="+32"/>
         <source>Reset to preference</source>
-        <translation>Rétablir la préférence</translation>
+        <translation>Ripristina alla preferenza</translation>
     </message>
 </context>
 <context>
@@ -4101,32 +4101,32 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/actions/root-search/root-search-actions.cpp" line="-25"/>
         <source>Ranking was successfully reset</source>
-        <translation>Le classement a été réinitialisé avec succès</translation>
+        <translation>L’ordine è stato ripristinato con successo</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Unable to reset ranking</source>
-        <translation>Impossible de réinitialiser le classement</translation>
+        <translation>Impossibile ripristinare l’ordine</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Are you sure?</source>
-        <translation>Êtes-vous sûr ?</translation>
+        <translation>Sei sicuro/a?</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>You will have to rebuild search history for this item in order for it to reappear on top of the root search results.</source>
-        <translation>Vous devrez reconstruire l’historique de recherche de cet élément pour qu’il réapparaisse en haut des résultats de la recherche principale.</translation>
+        <translation>Dovrai ricostruire la cronologia di ricerca perché questo riappaia in cima ai risultati di ricerca.</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Reset</source>
-        <translation>Réinitialiser</translation>
+        <translation>Ripristina</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Reset ranking</source>
-        <translation>Réinitialiser le classement</translation>
+        <translation>Ripristina l’odine</translation>
     </message>
 </context>
 <context>
@@ -4134,12 +4134,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/utils/file-list-item.hpp" line="+26"/>
         <source>Show in file browser</source>
-        <translation>Afficher dans le gestionnaire de fichiers</translation>
+        <translation>Mostra nel gestore file</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Failed to open folder</source>
-        <translation>Échec de l’ouverture du dossier</translation>
+        <translation>Impossibible aprire la cartella</translation>
     </message>
 </context>
 <context>
@@ -4147,7 +4147,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/root-search-sources.hpp" line="+79"/>
         <source>Calculator</source>
-        <translation>Calculatrice</translation>
+        <translation>Calcolatrice</translation>
     </message>
 </context>
 <context>
@@ -4155,7 +4155,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/root-search-sources.cpp" line="+407"/>
         <source>Use &quot;%1&quot; with...</source>
-        <translation>Utiliser &quot;%1&quot; avec...</translation>
+        <translation>Usa ’%1’ con...</translation>
     </message>
 </context>
 <context>
@@ -4163,7 +4163,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/root-search-sources.hpp" line="+67"/>
         <source>Favorites</source>
-        <translation>Favoris</translation>
+        <translation>Preferiti</translation>
     </message>
 </context>
 <context>
@@ -4171,7 +4171,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location line="+50"/>
         <source>Files</source>
-        <translation>Fichiers</translation>
+        <translation>File</translation>
     </message>
 </context>
 <context>
@@ -4179,12 +4179,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location line="-137"/>
         <source>Link</source>
-        <translation>Lien</translation>
+        <translation>Collegamenti</translation>
     </message>
     <message>
         <location filename="../src/qml/root-search-sources.cpp" line="-295"/>
         <source>Open in %1</source>
-        <translation>Ouvrir dans %1</translation>
+        <translation>Apri in %1</translation>
     </message>
 </context>
 <context>
@@ -4192,7 +4192,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/root-search-sources.hpp" line="+64"/>
         <source>What&apos;s New</source>
-        <translation>Nouveautés</translation>
+        <translation>Novità</translation>
     </message>
 </context>
 <context>
@@ -4200,12 +4200,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/root-search-sources.cpp" line="+199"/>
         <source>Suggestions</source>
-        <translation>Suggestions</translation>
+        <translation>Suggerimenti</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Results (%1)</source>
-        <translation>Résultats (%1)</translation>
+        <translation>Risultati (%1)</translation>
     </message>
 </context>
 <context>
@@ -4213,7 +4213,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/actions/root-search/root-search-actions.hpp" line="+55"/>
         <source>Copy ID</source>
-        <translation>Copier l’ID</translation>
+        <translation>Copia ID</translation>
     </message>
 </context>
 <context>
@@ -4222,7 +4222,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <location filename="../src/root-search/shortcuts/shortcut-root-provider.cpp" line="+67"/>
         <location line="+11"/>
         <source>Shortcut</source>
-        <translation>Raccourci</translation>
+        <translation>Scorciatoia</translation>
     </message>
 </context>
 <context>
@@ -4231,22 +4231,22 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <location filename="../src/qml/root-search-sources.hpp" line="-21"/>
         <location filename="../src/qml/root-search-sources.cpp" line="-125"/>
         <source>Update</source>
-        <translation>Mise à jour</translation>
+        <translation>Aggiornamento</translation>
     </message>
     <message>
         <location filename="../src/qml/root-search-sources.cpp" line="-14"/>
         <source>Vicinae %1 is available</source>
-        <translation>Vicinae %1 est disponible</translation>
+        <translation>Vicinae %1 è disponibile</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>You are running %1</source>
-        <translation>Vous utilisez %1</translation>
+        <translation>Stai utilizzando %1</translation>
     </message>
     <message>
         <location line="+27"/>
         <source>View Release Notes</source>
-        <translation>Voir les notes de version</translation>
+        <translation>Vedi Note d’Aggiornamento</translation>
     </message>
 </context>
 <context>
@@ -4254,7 +4254,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/root-view-host.hpp" line="+15"/>
         <source>Search for anything...</source>
-        <translation>Rechercher...</translation>
+        <translation>Cerca qualunque cosa...</translation>
     </message>
 </context>
 <context>
@@ -4262,38 +4262,38 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/script-executor-view-host.cpp" line="+76"/>
         <source>Script execution failed: %1</source>
-        <translation>Échec de l’exécution du script : %1</translation>
+        <translation>Esecuzione dello script fallita: %1</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>Running... (%1s ago)</source>
-        <translation>En cours... (il y a %1s)</translation>
+        <translation>In corso... (il y a %1s)</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Done in %1s (exit=%2)</source>
-        <translation>Terminé en %1s (exit=%2)</translation>
+        <translation>Terminato in %1s (exit=%2)</translation>
     </message>
     <message>
         <location line="+12"/>
         <location line="+9"/>
         <source>Script process killed</source>
-        <translation>Processus du script tué</translation>
+        <translation>Processo dello script terminato</translation>
     </message>
     <message>
         <location line="+20"/>
         <source>Running...</source>
-        <translation>En cours...</translation>
+        <translation>In corso...</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>Kill process</source>
-        <translation>Tuer le processus</translation>
+        <translation>Termina processo</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Run script again</source>
-        <translation>Relancer le script</translation>
+        <translation>Esegui lo script di nuovo</translation>
     </message>
 </context>
 <context>
@@ -4307,27 +4307,27 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location line="-43"/>
         <source>Mode</source>
-        <translation>Mode</translation>
+        <translation>Modalità</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Path</source>
-        <translation>Chemin</translation>
+        <translation>Percorso</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Author</source>
-        <translation>Auteur</translation>
+        <translation>Autore</translation>
     </message>
     <message>
         <location line="+23"/>
         <source>Open script directory</source>
-        <translation>Ouvrir le répertoire du script</translation>
+        <translation>Apri la cartella degli script</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Copy path to script</source>
-        <translation>Copier le chemin du script</translation>
+        <translation>Copia il percorso dello script</translation>
     </message>
 </context>
 <context>
@@ -4335,17 +4335,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location line="+47"/>
         <source>Script Commands</source>
-        <translation>Commandes de script</translation>
+        <translation>Comandi Script</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Custom directories</source>
-        <translation>Répertoires personnalisés</translation>
+        <translation>Cartelle personalizzate</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Additional list of directories to source scripts from. These directories always take precedence over the default system ones</source>
-        <translation>Liste supplémentaire de répertoires d’où charger des scripts. Ces répertoires ont toujours priorité sur les répertoires système par défaut</translation>
+        <translation>Una lista aggiuntiva di cartelle in cui cercare script. Queste cartelle hanno la precedenza su quelle predefinite</translation>
     </message>
 </context>
 <context>
@@ -4353,12 +4353,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/browser/browser-extension.cpp" line="+15"/>
         <source>Search Browser Tabs</source>
-        <translation>Rechercher des onglets de navigateur</translation>
+        <translation>Cerca Schede Browser</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Search tabs from all connected browsers</source>
-        <translation>Rechercher les onglets de tous les navigateurs connectés</translation>
+        <translation>Cerca schede da tutti i browser connessi</translation>
     </message>
 </context>
 <context>
@@ -4366,42 +4366,42 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/vicinae/search-emoji-command.hpp" line="+15"/>
         <source>Search Emojis &amp; Symbols</source>
-        <translation>Rechercher des émojis et symboles</translation>
+        <translation>Cerca Emoji e Simboli</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Search for any emoji or symbol</source>
-        <translation>Rechercher n’importe quel émoji ou symbole</translation>
+        <translation>Cerca una qualsiasi emoji o simbolo</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>Paste</source>
-        <translation>Coller</translation>
+        <translation>Incolla</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Copy</source>
-        <translation>Copier</translation>
+        <translation>Copia</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Default Action</source>
-        <translation>Action par défaut</translation>
+        <translation>Azione Predefinita</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The default action to perform on pressing return. Paste is only available if your environment supports it.</source>
-        <translation>L’action par défaut à effectuer en appuyant sur Entrée. Coller n’est disponible que si votre environnement le prend en charge.</translation>
+        <translation>L’azione predefinita per quando premi invio. Incolla è disponibile solo se supportata dal tuo ambiente.</translation>
     </message>
     <message>
         <location line="+21"/>
         <source>Skin tone</source>
-        <translation>Couleur de peau</translation>
+        <translation>Colore della pelle</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Skin tone to use for relevant emojis.</source>
-        <translation>Couleur de peau à utiliser pour les émojis concernés.</translation>
+        <translation>Il colore della pelle utilizzato per le emoji rilevanti.</translation>
     </message>
 </context>
 <context>
@@ -4409,7 +4409,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/emoji-grid-model.hpp" line="-22"/>
         <source>Results (%1)</source>
-        <translation>Résultats (%1)</translation>
+        <translation>Risultati (%1)</translation>
     </message>
 </context>
 <context>
@@ -4417,12 +4417,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/file/file-extension.hpp" line="-38"/>
         <source>Search Files</source>
-        <translation>Rechercher des fichiers</translation>
+        <translation>Cerca File</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Search files on your system</source>
-        <translation>Rechercher des fichiers sur votre système</translation>
+        <translation>Cerca file nel tuo sistema</translation>
     </message>
 </context>
 <context>
@@ -4430,22 +4430,22 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/qml/SearchFilesView.qml" line="+37"/>
         <source>Name</source>
-        <translation>Nom</translation>
+        <translation>Nome</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Path</source>
-        <translation>Chemin</translation>
+        <translation>Percorso</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Type</source>
-        <translation>Type</translation>
+        <translation>Tipo</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Last modified</source>
-        <translation>Dernière modification</translation>
+        <translation>Ultima modifica</translation>
     </message>
 </context>
 <context>
@@ -4453,48 +4453,48 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/search-files-view-host.cpp" line="+59"/>
         <source>Search for files...</source>
-        <translation>Rechercher des fichiers...</translation>
+        <translation>Cerca file...</translation>
     </message>
     <message>
         <location line="+30"/>
         <location line="+4"/>
         <source>Direct file path</source>
-        <translation>Chemin de fichier direct</translation>
+        <translation>Percorso diretto del file</translation>
     </message>
     <message>
         <location line="+18"/>
         <source>Recently Accessed</source>
-        <translation>Consultés récemment</translation>
+        <translation>Aperti di recente</translation>
     </message>
     <message>
         <location line="+30"/>
         <source>Results</source>
-        <translation>Résultats</translation>
+        <translation>Risultati</translation>
     </message>
     <message>
         <location line="+40"/>
         <source>All</source>
-        <translation>Tous</translation>
+        <translation>Tutti</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Other</source>
-        <translation>Autres</translation>
+        <translation>Altri</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Directories</source>
-        <translation>Dossiers</translation>
+        <translation>Cartelle</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Images</source>
-        <translation>Images</translation>
+        <translation>Immagini</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Videos</source>
-        <translation>Vidéos</translation>
+        <translation>Video</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -4504,17 +4504,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location line="+0"/>
         <source>Documents</source>
-        <translation>Documents</translation>
+        <translation>Documenti</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Archives</source>
-        <translation>Archives</translation>
+        <translation>Archivi</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Applications</source>
-        <translation>Applications</translation>
+        <translation>Applicazioni</translation>
     </message>
 </context>
 <context>
@@ -4522,7 +4522,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/font-grid-model.cpp" line="-15"/>
         <source>Set as vicinae font</source>
-        <translation>Définir comme police de Vicinae</translation>
+        <translation>Imposta come font di Vicinae</translation>
     </message>
 </context>
 <context>
@@ -4530,7 +4530,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/actions/root-search/root-search-actions.hpp" line="-18"/>
         <source>Set alias</source>
-        <translation>Définir un alias</translation>
+        <translation>Definisci alias</translation>
     </message>
 </context>
 <context>
@@ -4538,12 +4538,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/actions/theme/theme-actions.cpp" line="+11"/>
         <source>Theme successfully updated</source>
-        <translation>Thème mis à jour avec succès</translation>
+        <translation>Tema aggiornato correttamente</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Set theme</source>
-        <translation>Appliquer le thème</translation>
+        <translation>Applica tema</translation>
     </message>
 </context>
 <context>
@@ -4551,7 +4551,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/theme/set-theme-command.hpp" line="+9"/>
         <source>Set Theme</source>
-        <translation>Définir le thème</translation>
+        <translation>Imposta tema</translation>
     </message>
 </context>
 <context>
@@ -4559,17 +4559,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/system/system-extension.hpp" line="+213"/>
         <source>Set Volume to %1%</source>
-        <translation>Régler le volume à %1%</translation>
+        <translation>Imposta il volume su %1%</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Set system volume to %1%</source>
-        <translation>Régler le volume du système à %1%</translation>
+        <translation>Imposta il volume di sistema su %1%</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Failed to set volume</source>
-        <translation>Échec du réglage du volume</translation>
+        <translation>Impossibile regolare il volume</translation>
     </message>
 </context>
 <context>
@@ -4577,17 +4577,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/utils/file-list-item.hpp" line="+17"/>
         <source>Set as wallpaper</source>
-        <translation>Définir comme fond d’écran</translation>
+        <translation>Imposta come sfondo</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Wallpaper set</source>
-        <translation>Fond d’écran défini</translation>
+        <translation>Sfondo impostato</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Failed to set wallpaper</source>
-        <translation>Échec de la définition du fond d’écran</translation>
+        <translation>Impossibile cambiare lo sfondo</translation>
     </message>
 </context>
 <context>
@@ -4595,7 +4595,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/qml/SettingsSidebar.qml" line="+99"/>
         <source>Search...</source>
-        <translation>Rechercher...</translation>
+        <translation>Cerca...</translation>
     </message>
 </context>
 <context>
@@ -4603,27 +4603,27 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/settings-sidebar-model.cpp" line="+90"/>
         <source>General</source>
-        <translation>Général</translation>
+        <translation>Generali</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Appearance</source>
-        <translation>Apparence</translation>
+        <translation>Aspetto</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Keybindings</source>
-        <translation>Raccourcis clavier</translation>
+        <translation>Scorciatoie clavier</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Advanced</source>
-        <translation>Avancé</translation>
+        <translation>Avanzate</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>About</source>
-        <translation>À propos</translation>
+        <translation>A Riguardo</translation>
     </message>
 </context>
 <context>
@@ -4631,47 +4631,47 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/qml/SettingsWindow.qml" line="+10"/>
         <source>General</source>
-        <translation>Général</translation>
+        <translation>Generali</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Appearance</source>
-        <translation>Apparence</translation>
+        <translation>Aspetto</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Keybindings</source>
-        <translation>Raccourcis clavier</translation>
+        <translation>Scorciatoie</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Advanced</source>
-        <translation>Avancé</translation>
+        <translation>Avanzate</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>About</source>
-        <translation>À propos</translation>
+        <translation>A Riguardo</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Vicinae Settings</source>
-        <translation>Paramètres de Vicinae</translation>
+        <translation>Impostazioni di Vicinae</translation>
     </message>
     <message>
         <location line="+88"/>
         <source>Imported from Raycast</source>
-        <translation>Importée depuis Raycast</translation>
+        <translation>Importate da Raycast</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>From the Vicinae store</source>
-        <translation>Depuis la boutique Vicinae</translation>
+        <translation>Dal negozio di Vicinae</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Locally installed extension</source>
-        <translation>Extension installée localement</translation>
+        <translation>Estensioni installate localmente</translation>
     </message>
 </context>
 <context>
@@ -4679,7 +4679,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/shortcut/shortcut-extension.hpp" line="+11"/>
         <source>Manage Shortcuts</source>
-        <translation>Gérer les raccourcis</translation>
+        <translation>Gestisci Scorciatoie</translation>
     </message>
 </context>
 <context>
@@ -4687,7 +4687,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/qml/ShortcutField.qml" line="+14"/>
         <source>Record shortcut</source>
-        <translation>Enregistrer le raccourci</translation>
+        <translation>Registra scorciatoia</translation>
     </message>
 </context>
 <context>
@@ -4695,27 +4695,27 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/qml/ShortcutFormView.qml" line="+14"/>
         <source>Name</source>
-        <translation>Nom</translation>
+        <translation>Nome</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Shortcut Name</source>
-        <translation>Nom du raccourci</translation>
+        <translation>Nome della Scorciatoia</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>The URL that will be opened by the specified app. You can make it dynamic by using placeholders such as {argument}.</source>
-        <translation>L’URL qui sera ouverte par l’application spécifiée. Vous pouvez la rendre dynamique en utilisant des espaces réservés tels que {argument}.</translation>
+        <translation>L’URL che sarà aperto dall’app specificata. Puoi renderlo dinamico tramite placeholder come {argument}.</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>Open with</source>
-        <translation>Ouvrir avec</translation>
+        <translation>Apri con</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>Icon</source>
-        <translation>Icône</translation>
+        <translation>Icona</translation>
     </message>
 </context>
 <context>
@@ -4723,76 +4723,76 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/shortcut-form-view-host.cpp" line="+47"/>
         <source>Submit</source>
-        <translation>Valider</translation>
+        <translation>Conferma</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>Copy of %1</source>
-        <translation>Copie de %1</translation>
+        <translation>Copia di %1</translation>
     </message>
     <message>
         <location line="+67"/>
         <source>Edit &quot;%1&quot;</source>
-        <translation>Modifier &quot;%1&quot;</translation>
+        <translation>Modifica ’%1’;</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Duplicate &quot;%1&quot;</source>
-        <translation>Dupliquer &quot;%1&quot;</translation>
+        <translation>Duplica ’%1’</translation>
     </message>
     <message>
         <location line="+11"/>
         <location line="+131"/>
         <location line="+50"/>
         <source>Default</source>
-        <translation>Par défaut</translation>
+        <translation>Predefinito</translation>
     </message>
     <message>
         <location line="-157"/>
         <source>Selected Text</source>
-        <translation>Texte sélectionné</translation>
+        <translation>Testo Selezionato</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Clipboard Text</source>
-        <translation>Texte du presse-papiers</translation>
+        <translation>Testo degli Appunti</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Argument</source>
-        <translation>Argument</translation>
+        <translation>Argomento</translation>
     </message>
     <message>
         <location line="+35"/>
         <location line="+5"/>
         <location line="+5"/>
         <source>Required</source>
-        <translation>Requis</translation>
+        <translation>Richiesto</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Validation failed</source>
-        <translation>Échec de la validation</translation>
+        <translation>Impossibile validare</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Failed to update shortcut</source>
-        <translation>Échec de la mise à jour du raccourci</translation>
+        <translation>Impossibile aggiornare la scorciatoia</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Shortcut updated</source>
-        <translation>Raccourci mis à jour</translation>
+        <translation>Scorciatoioa aggiornata</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Failed to create shortcut</source>
-        <translation>Échec de la création du raccourci</translation>
+        <translation>Impossibile creare la scorciatoia</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Shortcut created</source>
-        <translation>Raccourci créé</translation>
+        <translation>Scorciatoia creata</translation>
     </message>
 </context>
 <context>
@@ -4802,12 +4802,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <location line="+22"/>
         <location line="+62"/>
         <source>Recording...</source>
-        <translation>Enregistrement...</translation>
+        <translation>Registro...</translation>
     </message>
     <message>
         <location line="+14"/>
         <source>Keybind updated</source>
-        <translation>Raccourci clavier mis à jour</translation>
+        <translation>Scorciatoia aggiornata</translation>
     </message>
 </context>
 <context>
@@ -4815,7 +4815,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/root-search/shortcuts/shortcut-root-provider.cpp" line="+42"/>
         <source>Shortcuts</source>
-        <translation>Raccourcis</translation>
+        <translation>Scorciatoie</translation>
     </message>
 </context>
 <context>
@@ -4823,12 +4823,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/qml/ShortcutsSettingsPage.qml" line="+55"/>
         <source>Keybindings</source>
-        <translation>Raccourcis clavier</translation>
+        <translation>Scorciatoie da Tastiera</translation>
     </message>
     <message>
         <location line="+78"/>
         <source>Record Shortcut</source>
-        <translation>Enregistrer un raccourci</translation>
+        <translation>Registra Scorciatoia</translation>
     </message>
 </context>
 <context>
@@ -4836,12 +4836,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/services/update/update-service.cpp" line="+8"/>
         <source>Skip This Version</source>
-        <translation>Ignorer cette version</translation>
+        <translation>Ignora Questa Versione</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Skipped %1</source>
-        <translation>%1 ignorée</translation>
+        <translation>%1 Ignorata</translation>
     </message>
 </context>
 <context>
@@ -4849,22 +4849,22 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/power-management/power-management-extension.cpp" line="+94"/>
         <source>Put System to Sleep</source>
-        <translation>Mettre le système en veille</translation>
+        <translation>Sospendi Sistema</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Put system to sleep</source>
-        <translation>Mettre le système en veille</translation>
+        <translation>Sospende il sistema</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>System can&apos;t sleep</source>
-        <translation>Le système ne peut pas se mettre en veille</translation>
+        <translation>Il sistema non può essere sospeso</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Failed to sleep</source>
-        <translation>Échec de la mise en veille</translation>
+        <translation>Impossibile sospendere</translation>
     </message>
 </context>
 <context>
@@ -4873,27 +4873,27 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
         <location filename="../src/services/snippet/snippet-db.cpp" line="+42"/>
         <location line="+56"/>
         <source>keyword already assigned to &quot;%1&quot;</source>
-        <translation>mot-clé déjà assigné à &quot;%1&quot;</translation>
+        <translation>Parola chiave già assegnata a &quot;%1&quot;</translation>
     </message>
     <message>
         <location line="-43"/>
         <source>No snippet with that ID</source>
-        <translation>Aucun snippet avec cet ID</translation>
+        <translation>Nessun snippet con quest ID</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>No such snippet</source>
-        <translation>Snippet introuvable</translation>
+        <translation>Snippet non trovato</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>Snippet limit reached (%1)</source>
-        <translation>Limite de snippets atteinte (%1)</translation>
+        <translation>Limite di snippet raggiunto (%1)</translation>
     </message>
     <message>
         <location line="+26"/>
         <source>Failed to save snippets on disk: %1</source>
-        <translation>Échec de l’enregistrement des snippets sur le disque : %1</translation>
+        <translation>Impossibile salvare gli snippet su disco: %1</translation>
     </message>
 </context>
 <context>
@@ -4901,62 +4901,62 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/snippet/snippet-extension.cpp" line="+38"/>
         <source>Expansion</source>
-        <translation>Expansion</translation>
+        <translation>Espansione</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Enable automatic snippet expansion when triggers are typed</source>
-        <translation>Activer l’expansion automatique des snippets lors de la saisie des déclencheurs</translation>
+        <translation>Attiva l’espansione automatica degli snippet quando sono rilevati</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Undo</source>
-        <translation>Annuler</translation>
+        <translation>Annulla</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Press backspace immediately after expansion to undo and restore the trigger text</source>
-        <translation>Appuyez sur retour arrière juste après l’expansion pour annuler et restaurer le texte du déclencheur</translation>
+        <translation>Premi indietro immediatamente dopo l’espansione per annullarla e ripristinare il testo</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Keyboard layout</source>
-        <translation>Disposition du clavier</translation>
+        <translation>Layout tastiera</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>XKB layout used for trigger detection (e.g. &quot;us&quot;, &quot;fr&quot;). Leave empty for system default.</source>
-        <translation>Disposition XKB utilisée pour la détection des déclencheurs (par ex. &quot;us&quot;, &quot;fr&quot;). Laissez vide pour utiliser la valeur par défaut du système.</translation>
+        <translation>Layout XKB usato per la rilevazione (es. &quot;us&quot;, &quot;it&quot;). Lascia vuoto per usare il layout di sistema.</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>Pre-paste delay (ms)</source>
-        <translation>Délai avant collage (ms)</translation>
+        <translation>Delay prima di incollare (ms)</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Delay between setting clipboard and injecting paste shortcut. Increase if expansions paste empty on slow compositors.</source>
-        <translation>Délai entre l’écriture dans le presse-papiers et l’injection du raccourci de collage. Augmentez-le si les expansions collent un contenu vide sur les compositeurs lents.</translation>
+        <translation>Delay tra quando vengono aggiornati gli appunti e quando viene incollato. Aumentalo se l’espansione non incolla nulla su compositor lenti.</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Key injection delay (ms)</source>
-        <translation>Délai d’injection des touches (ms)</translation>
+        <translation>Delay prima di inserire tasti (ms)</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Delay between injected key events. Increase if expansions produce missing or garbled characters on slow compositors.</source>
-        <translation>Délai entre les événements de touches injectés. Augmentez-le si les expansions produisent des caractères manquants ou altérés sur les compositeurs lents.</translation>
+        <translation>Delay tra l’inseriemnto di eventi di tastiera. Aumenta se l’espansione produce caratteri misti o alterati su compositor lenti.</translation>
     </message>
     <message>
         <location filename="../src/extensions/snippet/snippet-extension.hpp" line="+11"/>
         <source>Snippets</source>
-        <translation>Snippets</translation>
+        <translation>Snippet</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Text expansion and snippet management</source>
-        <translation>Expansion de texte et gestion des snippets</translation>
+        <translation>Gestione d’espansione di testo e snippet</translation>
     </message>
 </context>
 <context>
@@ -4964,57 +4964,57 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/qml/SnippetFormView.qml" line="+15"/>
         <source>Title</source>
-        <translation>Titre</translation>
+        <translation>Titolo</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Euro symbol</source>
-        <translation>Symbole euro</translation>
+        <translation>Symbolo euro</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>Content</source>
-        <translation>Contenu</translation>
+        <translation>Contenuto</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>You can use {dynamic placeholders} to make the content dynamic: &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;learn more&lt;/a&gt;.</source>
-        <translation>Vous pouvez utiliser des {espaces réservés dynamiques} pour rendre le contenu dynamique : &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;en savoir plus&lt;/a&gt;.</translation>
+        <translation>Puoi utilizzare {placeholder dinamici} per rendere dinamico il contenuto: &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;scopri di più&lt;/a&gt;.</translation>
     </message>
     <message>
         <location line="+16"/>
         <source>Keyword</source>
-        <translation>Mot-clé</translation>
+        <translation>Parola Chiave</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Typing this keyword anywhere will result in it being replaced by the content of the snippet.</source>
-        <translation>Taper ce mot-clé n’importe où le remplacera par le contenu du snippet.</translation>
+        <translation>Scrivendo ovunque questa parola sarà rimpiazzata dal contenuto del tuo snippet.</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>The snippet server is not running. Keyword expansion is unavailable. &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;Learn more&lt;/a&gt;.</source>
-        <translation>Le serveur de snippets n’est pas en cours d’exécution. L’expansion par mot-clé est indisponible. &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;En savoir plus&lt;/a&gt;.</translation>
+        <translation>Il server snippet non è in esecuzione. L’espandione tramite parola chiave non è disponibile. &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;Scopri di più&lt;/a&gt;.</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Applications</source>
-        <translation>Applications</translation>
+        <translation>Applicazioni</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Restrict expansion to specific applications. By default, it works everywhere.</source>
-        <translation>Restreindre l’expansion à certaines applications. Par défaut, elle fonctionne partout.</translation>
+        <translation>Restringi l’espanzione ad applicazioni specifiche. Di default, funziona ovunque.</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Expand as word</source>
-        <translation>Développer en tant que mot</translation>
+        <translation>Espandi come parola</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>If a keyword is typed, it will only be expanded after space or punctuation.</source>
-        <translation>Si un mot-clé est tapé, il ne sera développé qu’après un espace ou une ponctuation.</translation>
+        <translation>Se scrivi una parola chiave, sarà solo espansa dopo spazi o punteggiatura.</translation>
     </message>
 </context>
 <context>
@@ -5022,77 +5022,77 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/snippet-form-view-host.cpp" line="+49"/>
         <source>Submit</source>
-        <translation>Valider</translation>
+        <translation>Conferma</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>Copy of %1</source>
-        <translation>Copie de %1</translation>
+        <translation>Copia di %1</translation>
     </message>
     <message>
         <location line="+24"/>
         <source>Edit &quot;%1&quot;</source>
-        <translation>Modifier &quot;%1&quot;</translation>
+        <translation>Modifica &quot;%1&quot;</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Duplicate &quot;%1&quot;</source>
-        <translation>Dupliquer &quot;%1&quot;</translation>
+        <translation>Duplica &quot;%1&quot;</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>2 chars min.</source>
-        <translation>2 caractères min.</translation>
+        <translation>Min. 2 caratteri</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Content should not be empty</source>
-        <translation>Le contenu ne doit pas être vide</translation>
+        <translation>Il contenuto non può essere vuoto</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Only one {cursor} placeholder is allowed</source>
-        <translation>Un seul espace réservé {cursor} est autorisé</translation>
+        <translation>Solo un placeholder {cursor} è permesso</translation>
     </message>
     <message>
         <location line="+14"/>
         <source>Validation failed</source>
-        <translation>Échec de la validation</translation>
+        <translation>Impossibile validare</translation>
     </message>
     <message>
         <location line="+26"/>
         <source>Snippet updated</source>
-        <translation>Snippet mis à jour</translation>
+        <translation>Snippet aggiornato</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Snippet successfully created</source>
-        <translation>Snippet créé avec succès</translation>
+        <translation>Snippet creato correttamente</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Cursor Position</source>
-        <translation>Position du curseur</translation>
+        <translation>Posizione del Cursore</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Clipboard Text</source>
-        <translation>Texte du presse-papiers</translation>
+        <translation>Testo Copiato</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>Date</source>
-        <translation>Date</translation>
+        <translation>Data</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Argument</source>
-        <translation>Argument</translation>
+        <translation>Argomento</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Shell Command</source>
-        <translation>Commande shell</translation>
+        <translation>Comando Shell</translation>
     </message>
 </context>
 <context>
@@ -5100,22 +5100,22 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/power-management/power-management-extension.cpp" line="-99"/>
         <source>Soft Reboot System</source>
-        <translation>Redémarrer le système à chaud</translation>
+        <translation>Riavvia Parzialmente Sistema</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Soft reboot the system, which usually means only userspace is rebooted.</source>
-        <translation>Redémarrer le système à chaud, ce qui signifie généralement que seul l’espace utilisateur est redémarré.</translation>
+        <translation>Riavvia Parzialmente il Sistema. Generalmente significa un riavvio solo dello spazio utente.</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>System can&apos;t soft reboot</source>
-        <translation>Le système ne peut pas redémarrer à chaud</translation>
+        <translation>Il sistema non può riavviarsi parzialmente</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Failed to soft reboot</source>
-        <translation>Échec du redémarrage à chaud</translation>
+        <translation>Impossibile riavviare parzialmente</translation>
     </message>
 </context>
 <context>
@@ -5123,12 +5123,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/vicinae/vicinae-extension.cpp" line="-121"/>
         <source>Donate to Vicinae</source>
-        <translation>Faire un don à Vicinae</translation>
+        <translation>Dona a Vicinae</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Open link to Vicinae&apos;s GitHub sponsor page</source>
-        <translation>Ouvrir le lien vers la page de sponsor GitHub de Vicinae</translation>
+        <translation>Apri il link della pagina GitHub Sponsor di Vicinae</translation>
     </message>
 </context>
 <context>
@@ -5136,47 +5136,47 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/qml/StoreDetailView.qml" line="+196"/>
         <source>Installed</source>
-        <translation>Installée</translation>
+        <translation>Installato</translation>
     </message>
     <message>
         <location line="+166"/>
         <source>Description</source>
-        <translation>Description</translation>
+        <translation>Descrizione</translation>
     </message>
     <message>
         <location line="+26"/>
         <source>Commands</source>
-        <translation>Commandes</translation>
+        <translation>Comandi</translation>
     </message>
     <message>
         <location line="+74"/>
         <source>Open README</source>
-        <translation>Ouvrir le README</translation>
+        <translation>Apri il README</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Last update</source>
-        <translation>Dernière mise à jour</translation>
+        <translation>Ultimo aggiornamento</translation>
     </message>
     <message>
         <location line="+14"/>
         <source>Contributors</source>
-        <translation>Contributeurs</translation>
+        <translation>Contributori</translation>
     </message>
     <message>
         <location line="+29"/>
         <source>Categories</source>
-        <translation>Catégories</translation>
+        <translation>Categorie</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Source Code</source>
-        <translation>Code source</translation>
+        <translation>Codice Sorgente</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>View Code</source>
-        <translation>Voir le code</translation>
+        <translation>Vedi Codice</translation>
     </message>
 </context>
 <context>
@@ -5184,22 +5184,22 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/power-management/power-management-extension.cpp" line="+36"/>
         <source>Suspend System</source>
-        <translation>Mettre en veille le système</translation>
+        <translation>Sospendi Sistema</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Suspend the system to RAM. Unlike hibernation, this does not turn the computer off and will break on power loss.</source>
-        <translation>Mettre le système en veille en RAM. Contrairement à l’hibernation, cela n’éteint pas l’ordinateur et ne résistera pas à une coupure de courant.</translation>
+        <translation>Spsnede il sistema nella RAM. Al contrario dell’ibernazoine, non spegne il computer e può risultare nella perdita di dati in mancanza di alimentazione.</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>System cannot suspend</source>
-        <translation>Le système ne peut pas se mettre en veille</translation>
+        <translation>Il sistema non può essere sospeso</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Failed to suspend</source>
-        <translation>Échec de la mise en veille</translation>
+        <translation>Impossibile sospendere</translation>
     </message>
 </context>
 <context>
@@ -5207,7 +5207,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/wm/switch-windows-command.hpp" line="+10"/>
         <source>Switch Windows</source>
-        <translation>Changer de fenêtre</translation>
+        <translation>Cambia Finestra</translation>
     </message>
 </context>
 <context>
@@ -5215,7 +5215,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/switch-windows-model.hpp" line="+28"/>
         <source>Open Windows</source>
-        <translation>Fenêtres ouvertes</translation>
+        <translation>Finestre Aperte</translation>
     </message>
     <message>
         <location filename="../src/qml/switch-windows-model.cpp" line="+19"/>
@@ -5225,7 +5225,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location line="+7"/>
         <source>Window Actions</source>
-        <translation>Actions de fenêtre</translation>
+        <translation>Azioni Finestra</translation>
     </message>
 </context>
 <context>
@@ -5233,7 +5233,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/switch-windows-view-host.cpp" line="+12"/>
         <source>Search open window...</source>
-        <translation>Rechercher une fenêtre ouverte...</translation>
+        <translation>Cerca una finestra aperta...</translation>
     </message>
 </context>
 <context>
@@ -5241,22 +5241,22 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/system/system-extension.hpp" line="-123"/>
         <source>Browse Apps</source>
-        <translation>Parcourir les applications</translation>
+        <translation>Cerca App</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Browse all applications that are installed on the system</source>
-        <translation>Parcourir toutes les applications installées sur le système</translation>
+        <translation>Esplora tutte le app installate sul sistema</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>Show hidden apps</source>
-        <translation>Afficher les applications masquées</translation>
+        <translation>Mostra app nascoste</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Sort alphabetically</source>
-        <translation>Trier par ordre alphabétique</translation>
+        <translation>Ordina alfabeticamente</translation>
     </message>
 </context>
 <context>
@@ -5264,12 +5264,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location line="+149"/>
         <source>System</source>
-        <translation>Système</translation>
+        <translation>Sistema</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>System-related commands</source>
-        <translation>Commandes liées au système</translation>
+        <translation>Comandi di sistema</translation>
     </message>
 </context>
 <context>
@@ -5277,47 +5277,47 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location line="-239"/>
         <source>Run Terminal Program</source>
-        <translation>Exécuter un programme dans un terminal</translation>
+        <translation>Esegui Programma nel Terminale</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Run a program in a terminal window</source>
-        <translation>Exécuter un programme dans une fenêtre de terminal</translation>
+        <translation>Esegui un programma in una finestra di terminale</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>command</source>
-        <translation>commande</translation>
+        <translation>comando</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Run in terminal</source>
-        <translation>Exécuter dans un terminal</translation>
+        <translation>Esegui nel terminale</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Run in terminal (hold)</source>
-        <translation>Exécuter dans un terminal (garder ouvert)</translation>
+        <translation>Esegui in un terminale (tieni aperto)</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Run directly</source>
-        <translation>Exécuter directement</translation>
+        <translation>Esegui direttamente</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Default Action</source>
-        <translation>Action par défaut</translation>
+        <translation>Azione Predefinita</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The default action to run on pressing return</source>
-        <translation>L’action par défaut à exécuter en appuyant sur Entrée</translation>
+        <translation>L’azione predefinita da eseguire quando premi invio</translation>
     </message>
     <message>
         <location line="+29"/>
         <source>Not a valid executable</source>
-        <translation>Exécutable non valide</translation>
+        <translation>Eseguibile non valido</translation>
     </message>
 </context>
 <context>
@@ -5325,7 +5325,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/system-run-view-host.cpp" line="+20"/>
         <source>Search for a program to execute...</source>
-        <translation>Rechercher un programme à exécuter...</translation>
+        <translation>Cerca un programma da eseguire...</translation>
     </message>
 </context>
 <context>
@@ -5333,7 +5333,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/theme/theme-extension.hpp" line="+9"/>
         <source>Theme</source>
-        <translation>Thème</translation>
+        <translation>Tema</translation>
     </message>
 </context>
 <context>
@@ -5341,22 +5341,22 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/theme-list-model.cpp" line="+22"/>
         <source>Default theme description</source>
-        <translation>Description du thème par défaut</translation>
+        <translation>Descrizione del tema predefinito</translation>
     </message>
     <message>
         <location line="+64"/>
         <source>Open theme file</source>
-        <translation>Ouvrir le fichier du thème</translation>
+        <translation>Apri il file del tema</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Copy ID</source>
-        <translation>Copier l’ID</translation>
+        <translation>Copia ID</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Copy path</source>
-        <translation>Copier le chemin</translation>
+        <translation>Copia percorso</translation>
     </message>
 </context>
 <context>
@@ -5364,17 +5364,17 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/theme-view-host.cpp" line="+22"/>
         <source>Search for a theme...</source>
-        <translation>Rechercher un thème...</translation>
+        <translation>Cerca un tema...</translation>
     </message>
     <message>
         <location line="+51"/>
         <source>Current Theme</source>
-        <translation>Thème actuel</translation>
+        <translation>Tema Attuale</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Available Themes</source>
-        <translation>Thèmes disponibles</translation>
+        <translation>Temi Disponibili</translation>
     </message>
 </context>
 <context>
@@ -5382,32 +5382,32 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/actions/root-search/root-search-actions.cpp" line="+17"/>
         <source>Remove from favorites</source>
-        <translation>Retirer des favoris</translation>
+        <translation>Togli dai preferiti</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Add to favorites</source>
-        <translation>Ajouter aux favoris</translation>
+        <translation>Aggiungi ai preferiti</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>Successfuly added to favorites</source>
-        <translation>Ajouté aux favoris avec succès</translation>
+        <translation>Aggiunto ai preferiti</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Successfuly removed from favorites</source>
-        <translation>Retiré des favoris avec succès</translation>
+        <translation>Tolto dai preferiti</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Failed to add to favorites</source>
-        <translation>Échec de l’ajout aux favoris</translation>
+        <translation>Imposibile aggiungere ai preferiti</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Failed to remove from favorites</source>
-        <translation>Échec du retrait des favoris</translation>
+        <translation>Impossibile togliere dai preferiti</translation>
     </message>
 </context>
 <context>
@@ -5415,22 +5415,22 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/system/system-extension.hpp" line="+163"/>
         <source>Toggle Mute</source>
-        <translation>Activer/désactiver la sourdine</translation>
+        <translation>Muta/Attiva Audio</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Mute or unmute system audio</source>
-        <translation>Couper ou rétablir le son du système</translation>
+        <translation>Muta o riattiva l’audio del sistema</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>Failed to toggle mute</source>
-        <translation>Échec du basculement de la sourdine</translation>
+        <translation>Impossibile mutare o rimutare l’audio</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Muted</source>
-        <translation>En sourdine</translation>
+        <translation>Mutato</translation>
     </message>
 </context>
 <context>
@@ -5438,12 +5438,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/internal/internal-extension.hpp" line="-15"/>
         <source>UI Showcase</source>
-        <translation>Vitrine de l’interface</translation>
+        <translation>Anteprima Interfaccia</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Showcase of vicinae UI elements</source>
-        <translation>Vitrine des éléments d’interface de vicinae</translation>
+        <translation>Anteprima degli elementi dell’interfaccia di Vicinae</translation>
     </message>
 </context>
 <context>
@@ -5451,7 +5451,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/qml/UIShowcase.qml" line="+26"/>
         <source>Buttons</source>
-        <translation>Boutons</translation>
+        <translation>Pulsanti</translation>
     </message>
 </context>
 <context>
@@ -5459,32 +5459,32 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/actions/extension/extension-actions.cpp" line="+11"/>
         <source>Are you sure?</source>
-        <translation>Êtes-vous sûr ?</translation>
+        <translation>Sei sicuro/a?</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>All this extension data will be permanently lost. If you just want the extension to not appear in the root search anymore, consider disabling it instead.</source>
-        <translation>Toutes les données de cette extension seront définitivement perdues. Si vous souhaitez simplement que l’extension n’apparaisse plus dans la recherche principale, envisagez plutôt de la désactiver.</translation>
+        <translation>Tutti i dati di quest’estensione saranno persi per sempre. Se vuoi solo nascondere l’estensione dalla schermata principale, puoi disabilitarla.</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Uninstall</source>
-        <translation>Désinstaller</translation>
+        <translation>Disinstalla</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Extension uninstalled</source>
-        <translation>Extension désinstallée</translation>
+        <translation>Estensione disinstallata</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Failed to uninstall extension</source>
-        <translation>Échec de la désinstallation de l’extension</translation>
+        <translation>Impossibile disinstallare l’estensione</translation>
     </message>
     <message>
         <location filename="../src/actions/extension/extension-actions.hpp" line="+14"/>
         <source>Uninstall Extension</source>
-        <translation>Désinstaller l’extension</translation>
+        <translation>Disinstalla Estensione</translation>
     </message>
 </context>
 <context>
@@ -5492,12 +5492,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/actions/calculator/calculator-actions.hpp" line="-23"/>
         <source>Entry unpinned</source>
-        <translation>Entrée désépinglée</translation>
+        <translation>Elemento tolto</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Unpin entry</source>
-        <translation>Désépingler l’entrée</translation>
+        <translation>Togli elemento</translation>
     </message>
 </context>
 <context>
@@ -5505,7 +5505,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/qml/emoji-grid-model.cpp" line="-43"/>
         <source>Unpin emoji</source>
-        <translation>Désépingler l’émoji</translation>
+        <translation>Togli emoji</translation>
     </message>
 </context>
 <context>
@@ -5513,32 +5513,32 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/services/update/update-service.cpp" line="-167"/>
         <source>Update installed</source>
-        <translation>Mise à jour installée</translation>
+        <translation>Aggiornamento installato</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Restarting…</source>
-        <translation>Redémarrage…</translation>
+        <translation>Riavvio…</translation>
     </message>
     <message>
         <location line="+88"/>
         <source>Downloading Vicinae %1…</source>
-        <translation>Téléchargement de Vicinae %1…</translation>
+        <translation>Download di Vicinae %1…</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Downloading Vicinae %1… %2%</source>
-        <translation>Téléchargement de Vicinae %1… %2%</translation>
+        <translation>Download di Vicinae %1… %2%</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Installing update…</source>
-        <translation>Installation de la mise à jour…</translation>
+        <translation>Installazione dell’aggiornamento…</translation>
     </message>
     <message>
         <location line="+24"/>
         <source>Update failed</source>
-        <translation>Échec de la mise à jour</translation>
+        <translation>Impossibile aggiornare</translation>
     </message>
 </context>
 <context>
@@ -5546,7 +5546,7 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/vicinae/vicinae-extension.hpp" line="+11"/>
         <source>General vicinae-related commands.</source>
-        <translation>Commandes générales liées à vicinae.</translation>
+        <translation>Comandi generali legati a Vicinae.</translation>
     </message>
 </context>
 <context>
@@ -5554,12 +5554,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/services/global-shortcuts/vicinae-hotkey-global-shortcut-backend.cpp" line="+48"/>
         <source>Unsupported trigger key</source>
-        <translation>Touche de déclenchement non prise en charge</translation>
+        <translation>Tasto d’avvio non suportato</translation>
     </message>
     <message>
         <location line="+20"/>
         <source>Hotkey binding was lost</source>
-        <translation>L’association du raccourci clavier a été perdue</translation>
+        <translation>La scorciatoia da tastiera è andata persa</translation>
     </message>
 </context>
 <context>
@@ -5567,12 +5567,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/vicinae/list-installed-extensions-command.hpp" line="+11"/>
         <source>Show Installed Extensions</source>
-        <translation>Afficher les extensions installées</translation>
+        <translation>Mostra Estensioni Installate</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Show all third-party extensions that have been installed. This includes local extensions as well as extensions downloaded from the stores (vicinae and raycast).</source>
-        <translation>Afficher toutes les extensions tierces installées. Cela inclut les extensions locales ainsi que les extensions téléchargées depuis les boutiques (vicinae et raycast).</translation>
+        <translation>Mostra tutte le estensioni di terze parti installate. Include estensioni sia locali che scaricate dai negozi di Vicinae e Raycast.</translation>
     </message>
 </context>
 <context>
@@ -5580,12 +5580,12 @@ Vicinae dispose également de sa propre [boutique d’extensions](vicinae://laun
     <message>
         <location filename="../src/extensions/vicinae/vicinae-store-command.hpp" line="+13"/>
         <source>Install extensions from the Vicinae store</source>
-        <translation>Installer des extensions depuis la boutique Vicinae</translation>
+        <translation>Installa estensioni dal negozio di Vicinae</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Always show intro</source>
-        <translation>Toujours afficher l’introduction</translation>
+        <translation>Mostra sempre introduzione</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -5599,19 +5599,19 @@ Every extension listed here has its source code available in the [vicinaehq/exte
 If you&apos;re looking to build your own extension, take a look at the [documentation](https://docs.vicinae.com/extensions/introduction). If you think your extension would be a good fit for the store, feel free to submit it!
 </source>
         <translation>
-# Bienvenue dans la boutique d’extensions vicinae
+# Benvenuto nel negozio di estensioni di Vicinae
 
-La boutique d’extensions vicinae propose des extensions créées par la communauté et approuvées par nos contributeurs principaux.
+Il negozio di estensioni Vicinae contiene estensioni create dalla community approvate dai nostri sviluppatori principali.
 
-Le code source de chaque extension listée ici est disponible dans le dépôt [vicinaehq/extensions](https://github.com/vicinaehq/extensions).
+Puoi trovare il codice sorgente di ogni estensione elencata qui su [vicinaehq/extensions](https://github.com/vicinaehq/extensions).
 
-Si vous souhaitez créer votre propre extension, consultez la [documentation](https://docs.vicinae.com/extensions/introduction). Si vous pensez que votre extension aurait sa place dans la boutique, n’hésitez pas à la soumettre !
+Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentazione](https://docs.vicinae.com/extensions/introduction). Se pensi che la tua estensione sia adatta allo store, sentiti libero/a di propocela!
 </translation>
     </message>
     <message>
         <location line="+13"/>
         <source>Continue to store</source>
-        <translation>Continuer vers la boutique</translation>
+        <translation>Avanti nel negozio</translation>
     </message>
 </context>
 <context>
@@ -5619,57 +5619,57 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/qml/vicinae-store-detail-host.cpp" line="+38"/>
         <source>Failed to load extension</source>
-        <translation>Échec du chargement de l’extension</translation>
+        <translation>Impossibile caricare l’estensione</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Could not fetch extension data from the store.</source>
-        <translation>Impossible de récupérer les données de l’extension depuis la boutique.</translation>
+        <translation>Impossibile ricevere i dati delle estensioni dal negozio.</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Extension not found</source>
-        <translation>Extension introuvable</translation>
+        <translation>Estensione non trovata</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>The extension &quot;%1&quot; could not be found in the store.</source>
-        <translation>L’extension &quot;%1&quot; est introuvable dans la boutique.</translation>
+        <translation>L’estensioone &quot;%1&quot; non è stata trovata nel negozio.</translation>
     </message>
     <message>
         <location line="+20"/>
         <source>Extension Store - %1</source>
-        <translation>Boutique d’extensions - %1</translation>
+        <translation>Negozio di estensioni - %1</translation>
     </message>
     <message>
         <location line="+81"/>
         <source>Install extension</source>
-        <translation>Installer l’extension</translation>
+        <translation>Installa estensione</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Downloading extension...</source>
-        <translation>Téléchargement de l’extension...</translation>
+        <translation>Download dell’estensione...</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Failed to download extension</source>
-        <translation>Échec du téléchargement de l’extension</translation>
+        <translation>Impossibile scaricare l’estensione</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Failed to extract extension archive</source>
-        <translation>Échec de l’extraction de l’archive de l’extension</translation>
+        <translation>Impossibile estrarre l’archivio dell’estensione</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Extension installed</source>
-        <translation>Extension installée</translation>
+        <translation>Estensione installata</translation>
     </message>
     <message>
         <location line="+14"/>
         <source>Report issue</source>
-        <translation>Signaler un problème</translation>
+        <translation>Segnala un problema</translation>
     </message>
 </context>
 <context>
@@ -5677,7 +5677,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/qml/vicinae-store-model.cpp" line="+41"/>
         <source>Show details</source>
-        <translation>Afficher les détails</translation>
+        <translation>Mostra dettagli</translation>
     </message>
 </context>
 <context>
@@ -5685,17 +5685,17 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/qml/vicinae-store-view-host.cpp" line="+27"/>
         <source>Browse Vicinae extensions</source>
-        <translation>Parcourir les extensions Vicinae</translation>
+        <translation>Esplora le estensioni di Vicinae</translation>
     </message>
     <message>
         <location line="+23"/>
         <source>Failed to fetch extensions</source>
-        <translation>Échec de la récupération des extensions</translation>
+        <translation>Impossibile ricevere le estensioni</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Extensions</source>
-        <translation>Extensions</translation>
+        <translation>Estensioni</translation>
     </message>
 </context>
 <context>
@@ -5703,22 +5703,22 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/extensions/system/system-extension.hpp" line="-74"/>
         <source>Turn Volume Down</source>
-        <translation>Baisser le volume</translation>
+        <translation>Abbassa Volume</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Decrease system volume</source>
-        <translation>Diminuer le volume du système</translation>
+        <translation>Abbassa il volume del sistema</translation>
     </message>
     <message>
         <location line="+18"/>
         <source>Invalid step value</source>
-        <translation>Valeur de pas non valide</translation>
+        <translation>Incremento non valido</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Failed to adjust volume</source>
-        <translation>Échec de l’ajustement du volume</translation>
+        <translation>Impossibile regolare il volume</translation>
     </message>
 </context>
 <context>
@@ -5726,22 +5726,22 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="-61"/>
         <source>Turn Volume Up</source>
-        <translation>Augmenter le volume</translation>
+        <translation>Alza Volume</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Increase system volume</source>
-        <translation>Augmenter le volume du système</translation>
+        <translation>Alza il volume del sistema</translation>
     </message>
     <message>
         <location line="+18"/>
         <source>Invalid step value</source>
-        <translation>Valeur de pas non valide</translation>
+        <translation>Incremento non valido</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Failed to adjust volume</source>
-        <translation>Échec de l’ajustement du volume</translation>
+        <translation>Impossibile regolare il volume</translation>
     </message>
 </context>
 <context>
@@ -5749,12 +5749,12 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/services/wallpaper/wallpaper-manager.cpp" line="+68"/>
         <source>Setting the wallpaper is not supported in the current environment</source>
-        <translation>La définition du fond d’écran n’est pas prise en charge dans l’environnement actuel</translation>
+        <translation>Il cambiamento dello sfondo non è supportato nell’ambiente attuale</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>No such file: %1</source>
-        <translation>Fichier introuvable : %1</translation>
+        <translation>File non trovato: %1</translation>
     </message>
 </context>
 <context>
@@ -5763,27 +5763,27 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location filename="../src/root-search/control-panel/control-panel-root-provider.cpp" line="+104"/>
         <location line="+10"/>
         <source>Control Panel</source>
-        <translation>Panneau de configuration</translation>
+        <translation>Pannello di Controllo</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Name</source>
-        <translation>Nom</translation>
+        <translation>Nome</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Where</source>
-        <translation>Emplacement</translation>
+        <translation>Dove</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Open Applet</source>
-        <translation>Ouvrir l’applet</translation>
+        <translation>Apri Applet</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Copy Path</source>
-        <translation>Copier le chemin</translation>
+        <translation>Copia Percorso</translation>
     </message>
 </context>
 <context>
@@ -5791,12 +5791,12 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+49"/>
         <source>Control Panel</source>
-        <translation>Panneau de configuration</translation>
+        <translation>Pannello di Controllo</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Control Panel applets and system tasks.</source>
-        <translation>Applets du Panneau de configuration et tâches système.</translation>
+        <translation>Applet del pannello di controllo e attività di sistema.</translation>
     </message>
 </context>
 <context>
@@ -5805,22 +5805,22 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="-40"/>
         <location line="+11"/>
         <source>Control Panel</source>
-        <translation>Panneau de configuration</translation>
+        <translation>Pannello di Controllo</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Name</source>
-        <translation>Nom</translation>
+        <translation>Nome</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Task ID</source>
-        <translation>Identifiant de tâche</translation>
+        <translation>ID Attività</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Open</source>
-        <translation>Ouvrir</translation>
+        <translation>Apri</translation>
     </message>
 </context>
 <context>
@@ -5828,7 +5828,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/root-search/windows-settings/windows-settings-root-provider.cpp" line="-114"/>
         <source>Display</source>
-        <translation>Affichage</translation>
+        <translation>Schermo</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -5851,97 +5851,97 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="+1"/>
         <location line="+1"/>
         <source>System</source>
-        <translation>Système</translation>
+        <translation>Sistema</translation>
     </message>
     <message>
         <location line="-17"/>
         <source>Night Light</source>
-        <translation>Éclairage nocturne</translation>
+        <translation>Luce Notturna</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Sound</source>
-        <translation>Son</translation>
+        <translation>Suono</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Volume Mixer</source>
-        <translation>Mélangeur de volume</translation>
+        <translation>Mixel Volume</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Notifications</source>
-        <translation>Notifications</translation>
+        <translation>Notifiche</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Focus</source>
-        <translation>Concentration</translation>
+        <translation>Concentrazione</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Power &amp; Battery</source>
-        <translation>Alimentation et batterie</translation>
+        <translation>Alimentazione e Batteria</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Storage</source>
-        <translation>Stockage</translation>
+        <translation>Storage</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Nearby Sharing</source>
-        <translation>Partage de proximité</translation>
+        <translation>Condivisione nelle Vicinanze</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Multitasking</source>
-        <translation>Multitâche</translation>
+        <translation>Multitasking</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Activation</source>
-        <translation>Activation</translation>
+        <translation>Attivazione</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Troubleshoot</source>
-        <translation>Résolution des problèmes</translation>
+        <translation>Risoluzione Problemi</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Recovery</source>
-        <translation>Récupération</translation>
+        <translation>Recupero</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Projecting to This PC</source>
-        <translation>Projection sur ce PC</translation>
+        <translation>Proietta su Questo PC</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Remote Desktop</source>
-        <translation>Bureau à distance</translation>
+        <translation>Desktop Remoto</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Clipboard</source>
-        <translation>Presse-papiers</translation>
+        <translation>Appunti</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>About</source>
-        <translation>Informations système</translation>
+        <translation>Informazioni Sistema</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Optional Features</source>
-        <translation>Fonctionnalités facultatives</translation>
+        <translation>Funzionalità Facoltative</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>For Developers</source>
-        <translation>Espace développeurs</translation>
+        <translation>Per Sviluppatori</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -5955,47 +5955,47 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="+1"/>
         <location line="+1"/>
         <source>Bluetooth &amp; Devices</source>
-        <translation>Bluetooth et appareils</translation>
+        <translation>Bluetooth e Dispositiv</translation>
     </message>
     <message>
         <location line="-8"/>
         <source>Devices</source>
-        <translation>Appareils</translation>
+        <translation>Dispositivi</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Printers &amp; Scanners</source>
-        <translation>Imprimantes et scanners</translation>
+        <translation>Stampanti e Scanner</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Mobile Devices</source>
-        <translation>Appareils mobiles</translation>
+        <translation>Dispositivi Mobili</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Cameras</source>
-        <translation>Caméras</translation>
+        <translation>Camere</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Mouse</source>
-        <translation>Souris</translation>
+        <translation>Mouse</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Touchpad</source>
-        <translation>Pavé tactile</translation>
+        <translation>Touchpad</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Pen &amp; Windows Ink</source>
-        <translation>Stylet et Windows Ink</translation>
+        <translation>Penne e Windows Ink</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>AutoPlay</source>
-        <translation>Exécution automatique</translation>
+        <translation>Riproduzione Automatica</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -6008,7 +6008,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="+1"/>
         <location line="+1"/>
         <source>Network &amp; Internet</source>
-        <translation>Réseau et Internet</translation>
+        <translation>Rete e Internet</translation>
     </message>
     <message>
         <location line="-7"/>
@@ -6023,12 +6023,12 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+2"/>
         <source>Mobile Hotspot</source>
-        <translation>Point d’accès sans fil mobile</translation>
+        <translation>Hotspot Mobile</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Airplane Mode</source>
-        <translation>Mode avion</translation>
+        <translation>Modalità Aereo</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6038,17 +6038,17 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+1"/>
         <source>Dial-up</source>
-        <translation>Accès réseau à distance</translation>
+        <translation>Accesso remoto</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Advanced Network Settings</source>
-        <translation>Paramètres réseau avancés</translation>
+        <translation>Impostazioni di Rete Avanzate</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Background</source>
-        <translation>Arrière-plan</translation>
+        <translation>Sfondo</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -6061,52 +6061,52 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="+1"/>
         <location line="+1"/>
         <source>Personalization</source>
-        <translation>Personnalisation</translation>
+        <translation>Personalizzazione</translation>
     </message>
     <message>
         <location line="-7"/>
         <source>Colors</source>
-        <translation>Couleurs</translation>
+        <translation>Colori</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Themes</source>
-        <translation>Thèmes</translation>
+        <translation>Temi</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Lock Screen</source>
-        <translation>Écran de verrouillage</translation>
+        <translation>Schermata di Blocco</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Touch Keyboard</source>
-        <translation>Clavier tactile</translation>
+        <translation>Tastiera Touch</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Start</source>
-        <translation>Démarrer</translation>
+        <translation>Avvio</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Taskbar</source>
-        <translation>Barre des tâches</translation>
+        <translation>Taskbar</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Fonts</source>
-        <translation>Polices</translation>
+        <translation>Font</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Dynamic Lighting</source>
-        <translation>Éclairage dynamique</translation>
+        <translation>Illuminazione Dinamica</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Installed Apps</source>
-        <translation>Applications installées</translation>
+        <translation>App Installate</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -6116,37 +6116,37 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="+1"/>
         <location line="+1"/>
         <source>Apps</source>
-        <translation>Applications</translation>
+        <translation>Applicazioni</translation>
     </message>
     <message>
         <location line="-4"/>
         <source>Default Apps</source>
-        <translation>Applications par défaut</translation>
+        <translation>App Predefinite</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline Maps</source>
-        <translation>Cartes hors connexion</translation>
+        <translation>Mappe Offline</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Apps for Websites</source>
-        <translation>Applications pour les sites web</translation>
+        <translation>App per Siti Web</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Video Playback</source>
-        <translation>Lecture vidéo</translation>
+        <translation>Riproduzione Video</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Startup Apps</source>
-        <translation>Applications de démarrage</translation>
+        <translation>App di Avvio</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Your Info</source>
-        <translation>Vos informations</translation>
+        <translation>Tue Informazioni</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -6156,37 +6156,37 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="+1"/>
         <location line="+1"/>
         <source>Accounts</source>
-        <translation>Comptes</translation>
+        <translation>Account</translation>
     </message>
     <message>
         <location line="-4"/>
         <source>Email &amp; Accounts</source>
-        <translation>E-mail et comptes</translation>
+        <translation>E-mail ed Account</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Sign-in Options</source>
-        <translation>Options de connexion</translation>
+        <translation>Opzioni di Accesso</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Access Work or School</source>
-        <translation>Accès professionnel ou scolaire</translation>
+        <translation>Accesso Professionale o Scolastico</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Family &amp; Other Users</source>
-        <translation>Famille et autres utilisateurs</translation>
+        <translation>Famiglia ed Altri Utenti</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Windows Backup</source>
-        <translation>Sauvegarde Windows</translation>
+        <translation>Backup Windows</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Date &amp; Time</source>
-        <translation>Date et heure</translation>
+        <translation>Data e Ora</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -6194,22 +6194,22 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="+1"/>
         <location line="+1"/>
         <source>Time &amp; Language</source>
-        <translation>Heure et langue</translation>
+        <translation>Ora e Lingua</translation>
     </message>
     <message>
         <location line="-2"/>
         <source>Language &amp; Region</source>
-        <translation>Langue et région</translation>
+        <translation>Lingua e Regione</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Typing</source>
-        <translation>Saisie</translation>
+        <translation>Inserimento</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Speech</source>
-        <translation>Voix</translation>
+        <translation>Voce</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6221,22 +6221,22 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="+1"/>
         <location line="+1"/>
         <source>Gaming</source>
-        <translation>Jeux</translation>
+        <translation>Giochi</translation>
     </message>
     <message>
         <location line="-1"/>
         <source>Captures</source>
-        <translation>Captures</translation>
+        <translation>Registrazione</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Game Mode</source>
-        <translation>Mode Jeu</translation>
+        <translation>Modalità Gioco</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Text Size</source>
-        <translation>Taille du texte</translation>
+        <translation>Dimensione Testo</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -6251,62 +6251,62 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="+1"/>
         <location line="+1"/>
         <source>Accessibility</source>
-        <translation>Accessibilité</translation>
+        <translation>Accessibilità</translation>
     </message>
     <message>
         <location line="-9"/>
         <source>Visual Effects</source>
-        <translation>Effets visuels</translation>
+        <translation>Effeti Visivi</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Magnifier</source>
-        <translation>Loupe</translation>
+        <translation>Lente d’Ingrandimento</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Color Filters</source>
-        <translation>Filtres de couleur</translation>
+        <translation>Filtri Colore</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Contrast Themes</source>
-        <translation>Thèmes de contraste</translation>
+        <translation>Temi ad Alto Contrasto</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Narrator</source>
-        <translation>Narrateur</translation>
+        <translation>Narratore</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Accessibility Audio</source>
-        <translation>Audio (accessibilité)</translation>
+        <translation>Audio (accessibilità)</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Captions</source>
-        <translation>Sous-titres</translation>
+        <translation>Sottotitoli</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Accessibility Keyboard</source>
-        <translation>Clavier (accessibilité)</translation>
+        <translation>Tastiera (accessibilità)</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Accessibility Mouse</source>
-        <translation>Souris (accessibilité)</translation>
+        <translation>Mouse (accessibilità)</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Eye Control</source>
-        <translation>Contrôle visuel</translation>
+        <translation>Controlli Oculare</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Windows Security</source>
-        <translation>Sécurité Windows</translation>
+        <translation>Sicurezza Windows</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -6319,47 +6319,47 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <location line="+1"/>
         <location line="+1"/>
         <source>Privacy &amp; Security</source>
-        <translation>Confidentialité et sécurité</translation>
+        <translation>Privacy e Sicurezza</translation>
     </message>
     <message>
         <location line="-7"/>
         <source>Find My Device</source>
-        <translation>Localiser mon appareil</translation>
+        <translation>Trova il mio Dispositivo</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Privacy</source>
-        <translation>Confidentialité</translation>
+        <translation>Privacy</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Location</source>
-        <translation>Localisation</translation>
+        <translation>Posizione</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Camera Access</source>
-        <translation>Accès à la caméra</translation>
+        <translation>Accesso Camera</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Microphone Access</source>
-        <translation>Accès au microphone</translation>
+        <translation>Accesso Microfono</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Activity History</source>
-        <translation>Historique des activités</translation>
+        <translation>Cronologia Attività</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Diagnostics &amp; Feedback</source>
-        <translation>Diagnostics et commentaires</translation>
+        <translation>Diagnostica e Feedback</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Search Permissions</source>
-        <translation>Autorisations de recherche</translation>
+        <translation>Autorizzazioni di Ricerca</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6372,17 +6372,17 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="-2"/>
         <source>Update History</source>
-        <translation>Historique des mises à jour</translation>
+        <translation>Cronologia Aggiornamenti</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Advanced Update Options</source>
-        <translation>Options avancées de mise à jour</translation>
+        <translation>Impostazioni di Aggiornamento Avanzate</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Windows Insider Program</source>
-        <translation>Programme Windows Insider</translation>
+        <translation>Programma Windows Insider</translation>
     </message>
 </context>
 <context>
@@ -6390,32 +6390,32 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+37"/>
         <source>System Settings</source>
-        <translation>Paramètres système</translation>
+        <translation>Impostazioni di Sistema</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>Settings</source>
-        <translation>Paramètres</translation>
+        <translation>Impostazioni</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Name</source>
-        <translation>Nom</translation>
+        <translation>Nome</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Category</source>
-        <translation>Catégorie</translation>
+        <translation>Categoria</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>Open %1 Settings</source>
-        <translation>Ouvrir les paramètres %1</translation>
+        <translation>Apri Impostazioni %1</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Copy URL</source>
-        <translation>Copier l’URL</translation>
+        <translation>Copia URL</translation>
     </message>
 </context>
 <context>
@@ -6423,12 +6423,12 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+12"/>
         <source>Windows Settings</source>
-        <translation>Paramètres Windows</translation>
+        <translation>Impostazioni Windows</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Pages of the Windows Settings app.</source>
-        <translation>Pages de l’application Paramètres de Windows.</translation>
+        <translation>Pagine dell’App Impostazioni di Windows.</translation>
     </message>
 </context>
 <context>
@@ -6436,7 +6436,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/extensions/wm/wm-extension.hpp" line="+12"/>
         <source>Window Management</source>
-        <translation>Gestion des fenêtres</translation>
+        <translation>Gestione Finestre</translation>
     </message>
 </context>
 <context>
@@ -6444,37 +6444,37 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/services/app-service/windows/win-app-database.cpp" line="+993"/>
         <source>Focus window</source>
-        <translation>Activer la fenêtre</translation>
+        <translation>Attiva Finestra</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Launch app</source>
-        <translation>Lancer l’application</translation>
+        <translation>Apri Applicazione</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Default action</source>
-        <translation>Action par défaut</translation>
+        <translation>Azione predefinita</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Action to perform when the return key is pressed. Always default to &apos;launch&apos; if the app has no open window.</source>
-        <translation>Action à effectuer lorsque la touche Entrée est pressée. Utilise toujours ’launch’ par défaut si l’application n’a aucune fenêtre ouverte.</translation>
+        <translation>L’azione da eseguire quando premi invio. Di Default è sempre ’Avvia’ se l’app non ha finestre aperte.</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>File Explorer</source>
-        <translation>Explorateur de fichiers</translation>
+        <translation>Esplora Risorse</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Terminal</source>
-        <translation>Terminal</translation>
+        <translation>Terminale</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Command Prompt</source>
-        <translation>Invite de commandes</translation>
+        <translation>Prompt dei Comandi</translation>
     </message>
 </context>
 <context>
@@ -6482,12 +6482,12 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/services/app-service/windows/win-app.hpp" line="+70"/>
         <source>%1: Run as Administrator</source>
-        <translation>%1 : Exécuter en tant qu’administrateur</translation>
+        <translation>%1: Esegui come Amministratore</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Run as Administrator</source>
-        <translation>Exécuter en tant qu’administrateur</translation>
+        <translation>Esegui come Amministratore</translation>
     </message>
 </context>
 <context>
@@ -6495,12 +6495,12 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/services/global-shortcuts/windows-global-shortcut-backend.cpp" line="+215"/>
         <source>unsupported or invalid trigger</source>
-        <translation>déclencheur non pris en charge ou non valide</translation>
+        <translation>Trigger non valido o non supportato</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>already registered by another application</source>
-        <translation>déjà enregistré par une autre application</translation>
+        <translation>Già registrato da un’altra applicazione</translation>
     </message>
 </context>
 <context>
@@ -6508,17 +6508,17 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/services/global-shortcuts/x11-global-shortcut-backend.cpp" line="+122"/>
         <source>This shortcut is already in use by another application</source>
-        <translation>Ce raccourci est déjà utilisé par une autre application</translation>
+        <translation>Questa scorciatoia è già in uso da un’altra applcazione</translation>
     </message>
     <message>
         <location line="+17"/>
         <source>Unsupported trigger key</source>
-        <translation>Touche de déclenchement non prise en charge</translation>
+        <translation>Tasto d’avvio non supportato</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Trigger key is not present on this keyboard</source>
-        <translation>La touche de déclenchement n’est pas présente sur ce clavier</translation>
+        <translation>Il tasto d’avvio non è presente su questa tastiera</translation>
     </message>
 </context>
 <context>
@@ -6526,7 +6526,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/services/window-manager/x11/x11-window-manager.cpp" line="+426"/>
         <source>Desktop %1</source>
-        <translation>Bureau %1</translation>
+        <translation>Scrivania %1</translation>
     </message>
 </context>
 <context>
@@ -6534,42 +6534,42 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/services/app-service/xdg/xdg-app-database.cpp" line="+564"/>
         <source>Focus window</source>
-        <translation>Activer la fenêtre</translation>
+        <translation>Attiva Finestra</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Launch app</source>
-        <translation>Lancer l’application</translation>
+        <translation>Avvia app</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Default action</source>
-        <translation>Action par défaut</translation>
+        <translation>Azione predefinita</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Action to perform when the return key is pressed. Always default to &apos;launch&apos; if the app has no open window.</source>
-        <translation>Action à effectuer lorsque la touche Entrée est pressée. Utilise toujours ’launch’ par défaut si l’application n’a aucune fenêtre ouverte.</translation>
+        <translation>Azione da eseguire quando premi invio. Di default è sempre ’Avvia’ se l’app non ha finestre aperte.</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Launch Prefix</source>
-        <translation>Préfixe de lancement</translation>
+        <translation>Prefisso d’Avvio</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Custom app launcher to use. Affects applications as well as their sub-actions.</source>
-        <translation>Lanceur d’applications personnalisé à utiliser. Affecte les applications ainsi que leurs sous-actions.</translation>
+        <translation>Launcher personalizzato da usare. Tocca sia le applicazioni che le loro sotto-azioni.</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>Application directories</source>
-        <translation>Répertoires d’applications</translation>
+        <translation>Cartelle delle applicazioni</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Directories applications are sourced from. The list cannot be modified directly. In order to do so, you need to append additonal paths to the &lt;b&gt;XDG_DATA_DIRS&lt;/b&gt; environment variables.</source>
-        <translation>Répertoires d’où sont chargées les applications. La liste ne peut pas être modifiée directement. Pour ce faire, vous devez ajouter des chemins supplémentaires à la variable d’environnement &lt;b&gt;XDG_DATA_DIRS&lt;/b&gt;.</translation>
+        <translation>Cartelle dove cercare le applicazioni. La lista non può essere direttamente modificata. Per farlo, devi aggiugnere percorsi aggiuntivi alla variabile d’ambiente &lt;b&gt;XDG_DATA_DIRS&lt;/b&gt;.</translation>
     </message>
 </context>
 <context>
@@ -6577,12 +6577,12 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp" line="+39"/>
         <source>Open Directory</source>
-        <translation>Ouvrir un dossier</translation>
+        <translation>Apri Cartella</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Open File</source>
-        <translation>Ouvrir un fichier</translation>
+        <translation>Apri File</translation>
     </message>
 </context>
 <context>
@@ -6590,17 +6590,17 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/extensions/browser/browser-extension.cpp" line="-58"/>
         <source>No browser connected</source>
-        <translation>Aucun navigateur connecté</translation>
+        <translation>Nessun browser connesso</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>You need to connect at least one browser to vicinae using the browser extension in order to use this command.</source>
-        <translation>Vous devez connecter au moins un navigateur à vicinae via l’extension de navigateur pour utiliser cette commande.</translation>
+        <translation>Devi connettere almeno un browser usando l’estensione per il browser di Vicinae per usare questo comando.</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Open documentation</source>
-        <translation>Ouvrir la documentation</translation>
+        <translation>Apri documentazione</translation>
     </message>
 </context>
 <context>
@@ -6608,27 +6608,27 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/qml/clipboard-history-view-host.cpp" line="-207"/>
         <source>Text</source>
-        <translation>Texte</translation>
+        <translation>Testo</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Link</source>
-        <translation>Lien</translation>
+        <translation>Collegamento</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Image</source>
-        <translation>Image</translation>
+        <translation>Immagine</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>File</source>
-        <translation>Fichier</translation>
+        <translation>File</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Unknown</source>
-        <translation>Inconnu</translation>
+        <translation>Sconosciuto</translation>
     </message>
 </context>
 <context>
@@ -6636,67 +6636,67 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/qml/emoji-grid-model.cpp" line="-52"/>
         <source>Smileys &amp; Emotion</source>
-        <translation>Smileys et émotions</translation>
+        <translation>Smileys ed Emoticon</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>People &amp; Body</source>
-        <translation>Personnes et corps</translation>
+        <translation>Persone e Corpo</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Animals &amp; Nature</source>
-        <translation>Animaux et nature</translation>
+        <translation>Animali e Natura</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Food &amp; Drink</source>
-        <translation>Nourriture et boissons</translation>
+        <translation>Cibo e Bevande</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Travel &amp; Places</source>
-        <translation>Voyages et lieux</translation>
+        <translation>Viaggio e Luoghi</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Activities</source>
-        <translation>Activités</translation>
+        <translation>Attività</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Objects</source>
-        <translation>Objets</translation>
+        <translation>Oggetti</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Symbols</source>
-        <translation>Symboles</translation>
+        <translation>Simboli</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Flags</source>
-        <translation>Drapeaux</translation>
+        <translation>Bandiere</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Math</source>
-        <translation>Mathématiques</translation>
+        <translation>Matematica</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Arrows</source>
-        <translation>Flèches</translation>
+        <translation>Frecce</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Currency</source>
-        <translation>Devises</translation>
+        <translation>Valute</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Punctuation</source>
-        <translation>Ponctuation</translation>
+        <translation>Punteggiatura</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6706,22 +6706,22 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+1"/>
         <source>Misc Symbols</source>
-        <translation>Symboles divers</translation>
+        <translation>Simboli vari</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Greek</source>
-        <translation>Grec</translation>
+        <translation>Greco</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Number Forms</source>
-        <translation>Formes numériques</translation>
+        <translation>Forme Numeriche</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Fancy Letters</source>
-        <translation>Lettres stylisées</translation>
+        <translation>Lettere Stilizzate</translation>
     </message>
 </context>
 <context>
@@ -6729,27 +6729,27 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+129"/>
         <source>Copy</source>
-        <translation>Copier</translation>
+        <translation>Copia</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Copy name</source>
-        <translation>Copier le nom</translation>
+        <translation>Copia Nome</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Copy unicode codepoint</source>
-        <translation>Copier le point de code Unicode</translation>
+        <translation>Copia codepoint Unicode</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Copy category</source>
-        <translation>Copier la catégorie</translation>
+        <translation>Copia categoria</translation>
     </message>
     <message>
         <location line="+40"/>
         <source>Skin tones</source>
-        <translation>Teintes de peau</translation>
+        <translation>Colori della pelle</translation>
     </message>
 </context>
 <context>
@@ -6757,22 +6757,22 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/utils/file-list-item.hpp" line="+35"/>
         <source>Copy file</source>
-        <translation>Copier le fichier</translation>
+        <translation>Copia file</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Copy file path</source>
-        <translation>Copier le chemin du fichier</translation>
+        <translation>Copia percorso file</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Copy file name</source>
-        <translation>Copier le nom du fichier</translation>
+        <translation>Copai nome file</translation>
     </message>
     <message>
         <location line="+20"/>
         <source>Copy mime type</source>
-        <translation>Copier le type MIME</translation>
+        <translation>Copia tipo MIME</translation>
     </message>
 </context>
 <context>
@@ -6780,22 +6780,22 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/font-service.cpp" line="+127"/>
         <source>Latin</source>
-        <translation>Latin</translation>
+        <translation>Latino</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Cyrillic</source>
-        <translation>Cyrillique</translation>
+        <translation>Cirillico</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Greek</source>
-        <translation>Grec</translation>
+        <translation>Greco</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Monospace</source>
-        <translation>Monospace</translation>
+        <translation>Monospaziato</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -6805,37 +6805,37 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+3"/>
         <source>Japanese</source>
-        <translation>Japonais</translation>
+        <translation>Giapponese</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Korean</source>
-        <translation>Coréen</translation>
+        <translation>Coreano</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Simplified Chinese</source>
-        <translation>Chinois simplifié</translation>
+        <translation>Cinese Semplificato</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Traditional Chinese</source>
-        <translation>Chinois traditionnel</translation>
+        <translation>Cinese Tradizionale</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Arabic</source>
-        <translation>Arabe</translation>
+        <translation>Arabo</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Hebrew</source>
-        <translation>Hébreu</translation>
+        <translation>Ebraico</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Thai</source>
-        <translation>Thaï</translation>
+        <translation>Thai</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6845,7 +6845,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+1"/>
         <source>Devanagari</source>
-        <translation>Dévanagari</translation>
+        <translation>Devanagari</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6855,22 +6855,22 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+2"/>
         <source>Gurmukhi</source>
-        <translation>Gourmoukhî</translation>
+        <translation>Gurmukhi</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Gujarati</source>
-        <translation>Goudjarati</translation>
+        <translation>Gujarati</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Tamil</source>
-        <translation>Tamoul</translation>
+        <translation>Tamil</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Telugu</source>
-        <translation>Télougou</translation>
+        <translation>Telugu</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6885,32 +6885,32 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+2"/>
         <source>Sinhala</source>
-        <translation>Cingalais</translation>
+        <translation>Sinhala</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Armenian</source>
-        <translation>Arménien</translation>
+        <translation>Armeno</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Georgian</source>
-        <translation>Géorgien</translation>
+        <translation>Georgiano</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Thaana</source>
-        <translation>Thâna</translation>
+        <translation>Thana</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Tibetan</source>
-        <translation>Tibétain</translation>
+        <translation>Tibetano</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Myanmar</source>
-        <translation>Birman</translation>
+        <translation>Birmano</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6920,7 +6920,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+2"/>
         <source>Syriac</source>
-        <translation>Syriaque</translation>
+        <translation>Siriano</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6930,7 +6930,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+1"/>
         <source>Runic</source>
-        <translation>Runique</translation>
+        <translation>Rune</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6940,7 +6940,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+1"/>
         <source>Symbols</source>
-        <translation>Symboles</translation>
+        <translation>Simboli</translation>
     </message>
 </context>
 <context>
@@ -6948,7 +6948,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/qml/font-grid-model.cpp" line="+26"/>
         <source>Copy font family</source>
-        <translation>Copier la famille de police</translation>
+        <translation>Copia Famiglia di Font</translation>
     </message>
 </context>
 <context>
@@ -6956,132 +6956,132 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/internal/keyboard/keybind-manager.cpp" line="+9"/>
         <source>Toggle action panel</source>
-        <translation>Afficher/Masquer le panneau d’actions</translation>
+        <translation>Mostra/Nascondi pannello azioni</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Toggle the action panel to access and filter through the list of available actions for the currently selected item</source>
-        <translation>Afficher ou masquer le panneau d’actions pour accéder à la liste des actions disponibles pour l’élément actuellement sélectionné et la filtrer</translation>
+        <translation>Mostra/Nascondi il pannello delle azioni e filtra la lista delle azioni disponibili per l’elemento selezionaot</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>Open Search Filter</source>
-        <translation>Ouvrir le filtre de recherche</translation>
+        <translation>Mostra Filtri di Ricerca</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Open the search filter selector if present</source>
-        <translation>Ouvrir le sélecteur de filtre de recherche s’il est présent</translation>
+        <translation>Mostra la scelta di filtri di ricerca se disponibili</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Open settings window</source>
-        <translation>Ouvrir la fenêtre des paramètres</translation>
+        <translation>Apri la finestra delle impostazioni</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Open this settings window from the launcher window</source>
-        <translation>Ouvrir cette fenêtre de paramètres depuis la fenêtre du lanceur</translation>
+        <translation>Apre questa finestra partendo dalla finestra del launcher</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Generic Open Action</source>
-        <translation>Action d’ouverture générique</translation>
+        <translation>Azione d’Apertura Generica</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can open the selected item</source>
-        <translation>Peut être utilisé par les actions capables d’ouvrir l’élément sélectionné</translation>
+        <translation>Può essere usata dalle azioni che possono aprire l’elemento selezionato</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Generic Copy Action</source>
-        <translation>Action de copie générique</translation>
+        <translation>Azione di Copia Generica</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can copy the selected item</source>
-        <translation>Peut être utilisé par les actions capables de copier l’élément sélectionné</translation>
+        <translation>Può essere usata dalle azioni che possono copiare l’elemento selezionato</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Copy Name Action</source>
-        <translation>Action de copie du nom</translation>
+        <translation>Azione Copia Nome</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can copy the name of the selected item</source>
-        <translation>Peut être utilisé par les actions capables de copier le nom de l’élément sélectionné</translation>
+        <translation>Può essere usata dalle azioni che possono copiare il nome dell’elemento selezionato</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Copy Path Action</source>
-        <translation>Action de copie du chemin</translation>
+        <translation>Azione Copia Percorso</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can copy the path of the selected item</source>
-        <translation>Peut être utilisé par les actions capables de copier le chemin de l’élément sélectionné</translation>
+        <translation>Può essere usata dalle azioni che possono copiare il percorso dell’elemento selezionato</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Save Action</source>
-        <translation>Action d’enregistrement</translation>
+        <translation>Azione Salva</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can save the selected item</source>
-        <translation>Peut être utilisé par les actions capables d’enregistrer l’élément sélectionné</translation>
+        <translation>Può essere usata dalle azioni che possono salvare l’elemento selezionato</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Duplicate Action</source>
-        <translation>Action de duplication</translation>
+        <translation>Azione Duplica</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can duplicate the selected item</source>
-        <translation>Peut être utilisé par les actions capables de dupliquer l’élément sélectionné</translation>
+        <translation>Può essere usata dalle azioni che possono duplicare l’elemento selezionato</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Generic New Action</source>
-        <translation>Action de création générique</translation>
+        <translation>Azione Crea Generica</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that create something</source>
-        <translation>Peut être utilisé par les actions qui créent quelque chose</translation>
+        <translation>Può essere usata dalle azioni che creano qualcosa</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Generic Move Up Action</source>
-        <translation>Action générique de déplacement vers le haut</translation>
+        <translation>Azione Generica di Spostamento Verso l’Alto</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can move up the selected item. This does not affect list navigation controls.</source>
-        <translation>Peut être utilisé par les actions capables de déplacer l’élément sélectionné vers le haut. Cela n’affecte pas les contrôles de navigation dans les listes.</translation>
+        <translation>Può essere usata dalle azioni che spostano in su l’elemento selezionato. Non tocca i controlli per la navigazione della lista.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <source>Generic Move Down Action</source>
+        <source>Azione Generica di Spostamento Verso il Basso</source>
         <translation>Action générique de déplacement vers le bas</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can move down the selected item. This does not affect list navigation controls.</source>
-        <translation>Peut être utilisé par les actions capables de déplacer l’élément sélectionné vers le bas. Cela n’affecte pas les contrôles de navigation dans les listes.</translation>
+        <translation>Può essere usata dalle azioni che spostano in giù l’elemento selezionato. Non tocca i controlli per la navigazione della lista.</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Generic Refresh Action</source>
-        <translation>Action d’actualisation générique</translation>
+        <translation>Azzione Aggiorna Generica</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can refresh the selected item</source>
-        <translation>Peut être utilisé par les actions capables d’actualiser l’élément sélectionné</translation>
+        <translation>Può essere usata dalle azioni che possono aggiornare l’elemento selezionato</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -7091,47 +7091,47 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can pin the selected item</source>
-        <translation>Peut être utilisé par les actions capables d’épingler l’élément sélectionné</translation>
+        <translation>Può essere usata dalle azioni che possono fissare l’elemento selezionato</translation>
     </message>
     <message>
         <location line="+6"/>
-        <source>Remove Action</source>
+        <source>Azione Rimuovi</source>
         <translation>Action de suppression</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can remove the selected item. This is normally used for small, not too impactful removals.</source>
-        <translation>Peut être utilisé par les actions capables de supprimer l’élément sélectionné. Ceci est normalement utilisé pour des suppressions mineures, sans grande conséquence.</translation>
+        <translation>Può essere usata dalle azioni che possono rimuovere l’elemento selezionato. Generalmente usata per piccole rimozioni di poco conto.</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Dangerous Remove Action</source>
-        <translation>Action de suppression dangereuse</translation>
+        <translation>Azione Rimuovi Pericolosa</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that perform an impactful removal, generally accompanied by a confirmation dialog.</source>
-        <translation>Peut être utilisé par les actions effectuant une suppression importante, généralement accompagnée d’un dialogue de confirmation.</translation>
+        <translation>Può essere usata dalle azioni che possono fare rimozioni importanti, genearalmente con una finestra di conferma.</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Edit Action</source>
-        <translation>Action de modification</translation>
+        <translation>Azione Modifica</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can edit the currently selected item</source>
-        <translation>Peut être utilisé par les actions capables de modifier l’élément actuellement sélectionné</translation>
+        <translation>Può essere usata dalle azioni che possono modificare l’elemento selezionato.</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Edit Secondary Action</source>
-        <translation>Action de modification secondaire</translation>
+        <translation>Azione Modifica Secondaria</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Can be used by actions that can edit a secondary characteristic of the currently selected item</source>
-        <translation>Peut être utilisé par les actions capables de modifier une caractéristique secondaire de l’élément actuellement sélectionné</translation>
+        <translation>Può essere usata dalle azioni che possono modificare una caratteristica secondaria dell’elemento selezionato.</translation>
     </message>
 </context>
 <context>
@@ -7139,42 +7139,42 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/services/update/macos-update-installer.mm" line="-184"/>
         <source>Update image contains more than one app</source>
-        <translation>L’image de mise à jour contient plusieurs applications</translation>
+        <translation>L’immagine contiene più di un’app</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Failed to list update image: %1</source>
-        <translation>Échec de la lecture du contenu de l’image de mise à jour : %1</translation>
+        <translation>Impossibile elencare l’immagine d’aggiornamento: %1</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>No app found in update image</source>
-        <translation>Aucune application trouvée dans l’image de mise à jour</translation>
+        <translation>Nessun’app trovata nell’immagine d’aggiornamento</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Failed to read the update&apos;s code signature</source>
-        <translation>Échec de la lecture de la signature de code de la mise à jour</translation>
+        <translation>Impossibile leggere la firma del codice dell’aggiornamento</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Failed to build the signature requirement</source>
-        <translation>Échec de la construction de l’exigence de signature</translation>
+        <translation>Impossibile soddisfare i requisiti di firma</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Update signature verification failed (%1)</source>
-        <translation>Échec de la vérification de la signature de la mise à jour (%1)</translation>
+        <translation>Impossibile verificare la firma dell’aggiornamento (%1)</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>Update has no CFBundleShortVersionString</source>
-        <translation>La mise à jour n’a pas de CFBundleShortVersionString</translation>
+        <translation>L’aggiornamento non ha alcun CFBundleShortVersionString</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Update version mismatch: expected %1, found %2</source>
-        <translation>La version de la mise à jour ne correspond pas : %1 attendue, %2 trouvée</translation>
+        <translation>Conflitto di versioni per l’aggiornamento: atteso %1, trovato %2</translation>
     </message>
 </context>
 <context>
@@ -7182,13 +7182,13 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/qml/shortcut-conflict.cpp" line="+10"/>
         <source>Modifier required</source>
-        <translation>Modificateur requis</translation>
+        <translation>Modificatore richiesto</translation>
     </message>
     <message>
         <location line="+4"/>
         <location line="+5"/>
         <source>Already bound to &quot;%1&quot;</source>
-        <translation>Déjà associé à &quot;%1&quot;</translation>
+        <translation>Già associato a &quot;%1&quot;</translation>
     </message>
 </context>
 <context>
@@ -7204,12 +7204,12 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/utils/utils.cpp" line="+88"/>
         <source>0 bytes</source>
-        <translation>0 octet</translation>
+        <translation>0 byte</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>bytes</source>
-        <translation>octets</translation>
+        <translation>byte</translation>
     </message>
 </context>
 <context>
@@ -7217,7 +7217,7 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
     <message>
         <location filename="../src/services/window-manager/windows/virtual-desktops.cpp" line="+67"/>
         <source>Desktop %1</source>
-        <translation>Bureau %1</translation>
+        <translation>Scrivania %1</translation>
     </message>
 </context>
 </TS>
