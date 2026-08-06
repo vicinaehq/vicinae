@@ -1,6 +1,7 @@
 #pragma once
 #include "fuzzy-section.hpp"
 #include "services/app-service/abstract-app-db.hpp"
+#include <QCoreApplication>
 
 using AppPtr = std::shared_ptr<AbstractApplication>;
 
@@ -26,13 +27,14 @@ template <> struct fuzzy::FuzzySearchable<AppPtr> {
 };
 
 class BrowseAppsSection : public FuzzySection<AppPtr> {
+  Q_DECLARE_TR_FUNCTIONS(BrowseAppsSection)
 public:
-  QString sectionName() const override { return QStringLiteral("Applications ({count})"); }
+  QString sectionName() const override { return tr("Applications ({count})"); }
 
 protected:
   QString displayTitle(const AppPtr &app) const override;
   QString displaySubtitle(const AppPtr &app) const override;
-  QString displayIconSource(const AppPtr &app) const override;
+  std::optional<ImageURL> displayIcon(const AppPtr &app) const override;
   QVariantList displayAccessories(const AppPtr &app) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const AppPtr &app) const override;
 };

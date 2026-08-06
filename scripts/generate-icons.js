@@ -3,7 +3,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const OMNI_ICON_DIR = path.join(__dirname, "..", "vicinae", "icons");
+const OMNI_ICON_DIR = path.join(__dirname, "..", "src", "server", "icons");
 
 const generateQrc = (files) => {
 	const serializedFiles = files.map(file => `<file>${file}</file>`);
@@ -49,16 +49,19 @@ public:
 
 	const src = `#include "builtin_icon.hpp"
 
-static const std::unordered_map<BuiltinIcon, const char*> iconMap = {
-	${enumNames.map((name, i) => `{BuiltinIcon::${name}, ${serializedFileNames[i]}}`)
-			.join(',\n\t')}
-};
+
 
 const BuiltinIconService::Mapping& BuiltinIconService::mapping() {
+	static const std::unordered_map<BuiltinIcon, const char*> iconMap = {
+		${enumNames.map((name, i) => `{BuiltinIcon::${name}, ${serializedFileNames[i]}}`)
+			.join(',\n\t')}
+	};
 	return iconMap;
 }
 
 const char* BuiltinIconService::nameForIcon(BuiltinIcon icon) {
+	const auto& iconMap = mapping();
+
 	if (auto it = iconMap.find(icon); it != iconMap.end()) {
 		return it->second;
 	}
@@ -86,10 +89,10 @@ const writeFile = (path, data) => {
 const icons = fs.readdirSync(OMNI_ICON_DIR).filter((file) => file.endsWith('.svg'));
 const qrc = generateQrc(icons);
 const { cpp, ts } = generateSources(icons);
-const cppSrcDir = path.join(__dirname, "..", "vicinae", "src");
-const apiIconSource = path.join(__dirname, "..", "typescript", "api", "src", "api", "icon.ts");
+const cppSrcDir = path.join(__dirname, "..", "src", "server", "src");
+const apiIconSource = path.join(__dirname, "..", "src", "typescript", "api", "src", "api", "icon.ts");
 
-writeFile(path.join(__dirname, "..", "vicinae", "icons", "icons.qrc"), qrc);
+writeFile(path.join(__dirname, "..", "src", "server", "icons", "icons.qrc"), qrc);
 writeFile(path.join(cppSrcDir, "builtin_icon.cpp"), cpp.src);
 writeFile(path.join(cppSrcDir, "builtin_icon.hpp"), cpp.header);
 writeFile(apiIconSource, ts.iconEnum);

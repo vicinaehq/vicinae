@@ -1,9 +1,12 @@
 #pragma once
+#include <QCoreApplication>
 #include "abstract-update-installer.hpp"
 #include <optional>
 #include <string>
 
 class MacosUpdateInstaller : public AbstractUpdateInstaller {
+  Q_DECLARE_TR_FUNCTIONS(MacosUpdateInstaller)
+
 public:
   MacosUpdateInstaller();
 

@@ -164,6 +164,11 @@ export type Rect = {
 	height: number;
 }
 
+export type Size = {
+	width: number;
+	height: number;
+}
+
 export type Window = {
 	id: string;
 	title: string;
@@ -180,6 +185,8 @@ export type Screen = {
 	make: string;
 	serial?: string;
 	bounds: Rect;
+	physicalResolution: Size;
+	active: boolean;
 }
 
 export type Workspace = {
@@ -187,13 +194,13 @@ export type Workspace = {
 	name: string;
 	active: boolean;
 	fullscreen: boolean;
-	monitor: string;
+	monitor?: string;
 }
 
 export type ClipboardContent = {
 	text?: string;
 	html?: string;
-	path?: string;
+	urls?: string[];
 }
 
 export type ClipboardOptions = {

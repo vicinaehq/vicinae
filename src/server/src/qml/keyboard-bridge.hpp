@@ -12,9 +12,16 @@
  */
 class KeyboardBridge : public QObject {
   Q_OBJECT
+  Q_PROPERTY(int physicalCtrlModifier READ physicalCtrlModifier CONSTANT)
 
 public:
   using QObject::QObject;
+
+  int physicalCtrlModifier() const { return static_cast<int>(KeyBindingService::PHYSICAL_CTRL); }
+
+  Q_INVOKABLE int normalizeKey(int key) const {
+    return static_cast<int>(Keyboard::normalizeToLatin(static_cast<Qt::Key>(key)));
+  }
 
   Q_INVOKABLE QString serialize(int key, int modifiers) const {
     Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key),
@@ -41,7 +48,7 @@ public:
   Q_INVOKABLE QString validate(int key, int modifiers) const {
     Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key),
                                       static_cast<Qt::KeyboardModifiers>(modifiers));
-    if (!shortcut.hasMods() && !shortcut.isFunctionKey()) return QStringLiteral("Modifier required");
+    if (!shortcut.hasMods() && !shortcut.isFunctionKey()) return tr("Modifier required");
     return {};
   }
 };

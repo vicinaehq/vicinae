@@ -21,16 +21,27 @@ cp extra/vicinae.png ${APPDIR}
 # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57
 cp /usr/lib/$(uname -m)-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
 
+# qtkeychain dlopens libsecret instead of linking it, so linuxdeploy can't see it in the
+# dependency tree and the host copy can't be loaded next to our bundled glib/openssl.
+# Without it qtkeychain silently falls back to kwallet or errors out (#1632).
+LIBSECRET=/usr/lib/$(uname -m)-linux-gnu/libsecret-1.so.0
+[ -e "$LIBSECRET" ] || die "$LIBSECRET not found: install libsecret-1-dev in the build image"
+
 export QML_SOURCES_PATHS=$PWD/src/server/src/qml/qml
 export EXTRA_PLATFORM_PLUGINS=libqwayland.so
 export EXTRA_QT_PLUGINS=waylandcompositor
 
-# deploy every libexec helper so none of them silently link against system Qt
+# Deploy every libexec helper so none of them silently link against system Qt.
+# vicinae-input-server is excluded on purpose: it links no Qt and the usr/bin
+# copy linuxdeploy would make shadows the to-be setcap'd libexec one, breaking
+# snippet expansion (#1691).
 EXECUTABLE_ARGS=(--executable $APPDIR/usr/bin/vicinae)
 for bin in $APPDIR/usr/libexec/vicinae/*; do
+	[ "$(basename $bin)" = "vicinae-input-server" ] && continue
 	EXECUTABLE_ARGS+=(--executable $bin)
 done
 
 linuxdeploy --appdir $APPDIR "${EXECUTABLE_ARGS[@]}" \
+	--library "$LIBSECRET" \
 	--desktop-file $APPDIR/usr/share/applications/vicinae.desktop \
 	--plugin qt --output appimage

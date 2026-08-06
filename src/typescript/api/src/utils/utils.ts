@@ -1,18 +1,20 @@
 import * as os from "node:os";
 import * as path from "node:path";
 
-const platformDataDir = () => {
-	if (process.platform === "win32")
-		return process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
+export const dataDir = () => {
+	if (process.platform === "win32") {
+		const local =
+			process.env.LOCALAPPDATA ?? path.join(os.homedir(), "AppData", "Local");
+		return path.join(local, "vicinae", "data");
+	}
 	if (process.platform === "darwin")
-		return path.join(os.homedir(), ".local", "share");
+		return path.join(os.homedir(), ".local", "share", "vicinae");
 
-	return (
-		process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share")
+	return path.join(
+		process.env.XDG_DATA_HOME ?? path.join(os.homedir(), ".local", "share"),
+		"vicinae",
 	);
 };
-
-export const dataDir = () => path.join(platformDataDir(), "vicinae");
 
 export const extensionDataDir = () => path.join(dataDir(), "extensions");
 

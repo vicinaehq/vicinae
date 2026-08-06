@@ -3,7 +3,7 @@
 #include "common/context.hpp"
 #include "extension-error-view-host.hpp"
 #include "extension/services/application-service.hpp"
-#include "extension/services/browser-extension-service.hpp"
+#include "extension/services/ext-browser-extension-service.hpp"
 #include "extension/services/clipboard-service.hpp"
 #include "extension/services/command-service.hpp"
 #include "extension/services/event-core-service.hpp"
@@ -49,7 +49,7 @@ void ExtensionCommandRuntime::initialize() {
   auto *ui = new ExtUIService(*m_transport, context()->navigation.get(), m_command, eventCore,
                               *services->toastService());
   auto *wm = new ExtWindowManagementService(*m_transport, *services->windowManager(), *services->appDb(),
-                                            *services->appRuntime());
+                                            *services->appRuntime(), *ctx.navigation);
   auto *clipboard = new ExtClipboardService(*m_transport, *services->clipman(), *services->pasteService());
   auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
@@ -81,22 +81,27 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   if (m_isDevMode) {
     if (!m_headless)
       context()->navigation->setNavigationSuffixIcon(
-          ImageURL::builtin("hammer").setFill(SemanticColor::Green));
+          ImageURL::builtin(BuiltinIcon::Hammer).setFill(SemanticColor::Green));
     opts.env = manager::CommandEnv::Development;
   } else {
     opts.env = manager::CommandEnv::Production;
   }
 
-  opts.entrypoint = m_command->manifest().entrypoint;
+  opts.entrypoint = m_command->manifest().entrypoint.string();
   opts.mode = m_command->mode() == CommandMode::CommandModeView ? manager::CommandMode::View
                                                                 : manager::CommandMode::NoView;
+
+  opts.cwd = props.cwd.transform([](const QString &s) { return s.toStdString(); });
+  opts.fallbackText = props.fallbackText.transform([](const QString &s) { return s.toStdString(); });
   opts.extension_id = m_command->extensionId().toStdString();
-  opts.vicinae_path = Omnicast::dataDir();
+  opts.vicinae_path = Omnicast::dataDir().string();
   opts.command_name = m_command->commandId().toStdString();
   opts.extension_name = m_command->repositoryName().toStdString();
   opts.owner_or_author_name = m_command->author().toStdString();
   opts.is_raycast = m_command->isRaycast();
   opts.preferences = qJsonObjectToGlazeGeneric(preferenceValues);
+  opts.launch_context =
+      props.launchContext ? qJsonObjectToGlazeGeneric(*props.launchContext) : glz::generic{};
   opts.arguments = props.arguments |
                    std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {
                      return {pair.first.toStdString(), pair.second.toStdString()};
@@ -108,7 +113,12 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   opts.capabilities.wallpaper = context()->services->wallpaperManager()->canSetWallpaper();
   opts.capabilities.fileSearch = context()->services->fileService()->isAvailable();
 
-  if (m_headless) {
+  // FIXME: relying on the presence of props.cwd to infer CommandLine mode is not
+  // very accurate and could break in the future, we probably want to pass the activation
+  // mode in the props at some point and map them to the figura types.
+  if (props.cwd) {
+    opts.launch_type = manager::LaunchType::CommandLine;
+  } else if (m_headless) {
     opts.launch_type = manager::LaunchType::Background;
   } else {
     opts.launch_type = manager::LaunchType::User;

@@ -1,5 +1,6 @@
 #include "xdg-app-database.hpp"
 #include "environment.hpp"
+#include "internal/wayland/xdg-activation.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
 #include "utils.hpp"
@@ -458,11 +459,12 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
     argv << arg;
   }
 
-  return launchProcess(exec.front(), argv, xdgApp->data().workingDirectory());
+  return launchProcess(exec.front(), argv, xdgApp->data().workingDirectory(), opts.appId.value_or(QString()));
 }
 
 bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList &args,
-                                   const std::optional<std::filesystem::path> &workingDirectory) const {
+                                   const std::optional<std::filesystem::path> &workingDirectory,
+                                   const QString &appId) const {
   QProcess process;
   process.setProgram(prog);
   process.setArguments(args);
@@ -470,6 +472,15 @@ bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList &args,
   process.setStandardErrorFile(QProcess::nullDevice());
 
   if (workingDirectory) { process.setWorkingDirectory(workingDirectory->c_str()); }
+
+  if (auto token = Wayland::XdgActivation::requestLaunchToken(appId)) {
+    qDebug() << "Successfully minted xdg activation token for app" << appId;
+    auto env = QProcessEnvironment::systemEnvironment();
+    env.insert("XDG_ACTIVATION_TOKEN", *token);
+    process.setProcessEnvironment(env);
+  } else {
+    qWarning() << "Unable to mint xdg activation token to launch" << appId;
+  }
 
   QStringList cmdline;
   cmdline << prog << args;
@@ -520,7 +531,8 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
 
   auto argv = exec | std::views::drop(1) | std::ranges::to<QStringList>();
 
-  return launchProcess(exec.front(), argv, xdgApp.data().workingDirectory());
+  return launchProcess(exec.front(), argv, xdgApp.data().workingDirectory(),
+                       xdgApp.windowClass().value_or(xdgApp.id()));
 }
 
 QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {
@@ -560,17 +572,17 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
 std::vector<AppPtr> XdgAppDatabase::list() const { return {m_apps.begin(), m_apps.end()}; }
 
 PreferenceList XdgAppDatabase::preferences() const {
-  auto defaultAction =
-      Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
+  auto defaultAction = Preference::makeDropdown(
+      "defaultAction", {{tr("Focus window"), "focus"}, {tr("Launch app"), "launch"}});
   defaultAction.setDefaultValue("focus");
-  defaultAction.setTitle("Default action");
-  defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
-                               "if the app has no open window.");
+  defaultAction.setTitle(tr("Default action"));
+  defaultAction.setDescription(tr("Action to perform when the return key is pressed. Always default to "
+                                  "'launch' if the app has no open window."));
 
   auto launchPrefix = Preference::makeText("launchPrefix");
-  launchPrefix.setTitle("Launch Prefix");
+  launchPrefix.setTitle(tr("Launch Prefix"));
   launchPrefix.setDescription(
-      "Custom app launcher to use. Affects applications as well as their sub-actions.");
+      tr("Custom app launcher to use. Affects applications as well as their sub-actions."));
   launchPrefix.setPlaceholder("uwsm app --");
 
   auto paths = Preference::directories("paths");
@@ -578,10 +590,10 @@ PreferenceList XdgAppDatabase::preferences() const {
   for (const auto &searchPath : defaultSearchPaths()) {
     defaultPaths.push_back(QString::fromStdString(searchPath));
   }
-  paths.setTitle("Application directories");
+  paths.setTitle(tr("Application directories"));
   paths.setDescription(
-      "Directories applications are sourced from. The list cannot be modified directly. In order to do so, "
-      "you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables.");
+      tr("Directories applications are sourced from. The list cannot be modified directly. In order to do "
+         "so, you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables."));
   paths.setReadOnly(true);
   paths.setDefaultValue(defaultPaths);
 

@@ -13,6 +13,7 @@
 #include "extension-interval-scheduler.hpp"
 #include "ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
+#include "common/common.hpp"
 #include "log/message-handler.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "extensions/root/root-command.hpp"
@@ -21,6 +22,10 @@
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
 #ifdef Q_OS_MACOS
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
+#endif
+#ifdef Q_OS_WIN
+#include "root-search/control-panel/control-panel-root-provider.hpp"
+#include "root-search/windows-settings/windows-settings-root-provider.hpp"
 #endif
 #include "service-registry.hpp"
 #include "services/window-material/window-material-manager.hpp"
@@ -77,6 +82,9 @@
 #ifdef Q_OS_MACOS
 #include "services/paste/macos-paste-service.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "services/paste/windows-paste-service.hpp"
+#endif
 #include "settings-controller/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "qml/launcher-window.hpp"
@@ -89,6 +97,7 @@
 #include <QPointer>
 #include <QQuickWindow>
 #include <QString>
+#include <QTranslator>
 #include <qlockfile.h>
 #include <qlogging.h>
 #include <QtQuickControls2/QQuickStyle>
@@ -98,6 +107,10 @@
 #include "ipc-command-handler.hpp"
 #include "qml/macos-chrome-attached.hpp"
 #include <QFileOpenEvent>
+#endif
+
+#ifdef Q_OS_WIN
+#include "services/url-scheme/win-url-scheme-registrar.hpp"
 #endif
 
 #ifdef AUTO_ENABLE_AUTOSTART
@@ -129,6 +142,18 @@ private:
 };
 #endif
 
+static void installTranslators(const std::optional<std::string> &language) {
+  const bool useSystem = !language || *language == "system";
+  const QLocale locale = useSystem ? QLocale::system() : QLocale(QString::fromStdString(*language));
+
+  static QTranslator appTranslator;
+  if (appTranslator.load(locale, QStringLiteral("vicinae"), QStringLiteral("_"), QStringLiteral(":/i18n"))) {
+    QCoreApplication::installTranslator(&appTranslator);
+  } else if (!useSystem) {
+    qWarning() << "No translation catalog for configured language" << QString::fromStdString(*language);
+  }
+}
+
 static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   if (fontConfig.rendering == "qt") {
     QQuickWindow::setTextRenderType(QQuickWindow::QtTextRendering);
@@ -154,7 +179,8 @@ static QFont resolveAppFont(const config::FontConfig &fontConfig) {
 }
 
 int startServer(const ServerLaunchOptions &launchOpts) {
-  qInstallMessageHandler(coloredMessageHandler);
+  vicinae::log::installMessageHandler();
+  vicinae::log::openFile(vicinae::logFilePath());
 
 #ifdef AUTO_INSTALL_BROWSER_MANIFESTS
   // always refresh manifests
@@ -164,15 +190,19 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   // Cheap single-instance probe before building any Qt state. macOS spawns
   // a fresh process on every `open` of the .app; without this guard, each
   // launch would proceed and steal focus.
-  if (const auto sock = Omnicast::commandSocketPath(); std::filesystem::exists(sock)) {
+  {
     QLocalSocket probe;
-    probe.connectToServer(sock.c_str());
+    probe.connectToServer(QString::fromStdString(Omnicast::commandSocketName()));
     if (probe.waitForConnected(100)) {
       probe.disconnectFromServer();
       qWarning() << "another vicinae instance is already running";
       return 0;
     }
   }
+
+#ifdef Q_OS_WIN
+  vicinae::win::registerUrlSchemes();
+#endif
 
 #ifdef Q_OS_MACOS
   if (!qEnvironmentVariableIsSet("QT_MAC_SET_RAISE_PROCESS")) qputenv("QT_MAC_SET_RAISE_PROCESS", "0");
@@ -214,6 +244,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto configService = std::make_unique<config::Manager>(m_config);
     auto currentConfig = configService->value();
 
+    installTranslators(currentConfig.language);
+
     const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
     const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
     auto keys = db::prepareEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});
@@ -234,6 +266,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #elif defined(Q_OS_MACOS)
     auto snippetServer = std::make_unique<MacosSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<MacosPasteService>());
+#elif defined(Q_OS_WIN)
+    auto snippetServer = std::make_unique<NullSnippetServer>();
+    auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<WindowsPasteService>());
 #else
     auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());
@@ -319,7 +354,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
 
     auto root = registry->rootItemManager();
-    auto builtinCommandDb = std::make_unique<CommandDatabase>();
+    auto builtinCommandDb = std::make_unique<CommandDatabase>(*registry);
 
     for (const auto &repo : builtinCommandDb->repositories()) {
       root->loadProvider(std::make_unique<ExtensionRootProvider>(repo));
@@ -371,6 +406,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #ifdef Q_OS_MACOS
     root->loadProvider(std::make_unique<MacSettingsRootProvider>());
 #endif
+#ifdef Q_OS_WIN
+    root->loadProvider(std::make_unique<WinSettingsRootProvider>());
+    root->loadProvider(std::make_unique<WinControlPanelRootProvider>());
+#endif
 
     // Force reload providers to make sure items that depend on them are shown
     root->updateIndex();
@@ -387,7 +426,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   IpcCommandServer commandServer(&ctx);
 
-  commandServer.start(Omnicast::commandSocketPath());
+  commandServer.start(Omnicast::commandSocketName());
 
 #ifdef Q_OS_MACOS
   UrlSchemeOpenFilter urlSchemeOpenFilter(ctx);

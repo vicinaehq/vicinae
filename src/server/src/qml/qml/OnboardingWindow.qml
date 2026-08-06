@@ -10,6 +10,8 @@ Window {
     readonly property bool accessibilityGranted: Permissions.accessibilityGranted
 
     function advance() {
+        if (root.onPermissionStep && !root.accessibilityGranted)
+            return;
         if (root.step === root.stepCount - 1) {
             onboarding.finish();
             return;
@@ -34,7 +36,7 @@ Window {
             visible: !permissionRow.granted
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: "Grant Access"
+            text: qsTr("Grant Access")
             variant: "accent"
             onClicked: permissionRow.grant()
         }
@@ -52,7 +54,7 @@ Window {
             }
 
             Text {
-                text: "Granted"
+                text: qsTr("Granted")
                 color: Theme.toastSuccess
                 font.pointSize: Theme.regularFontSize
             }
@@ -68,7 +70,7 @@ Window {
     visible: true
     color: "transparent"
     flags: Qt.Window
-    title: "Welcome to Vicinae"
+    title: qsTr("Welcome to Vicinae")
 
     WindowMaterial.enabled: Config.blurEnabled
     WindowMaterial.radius: 10
@@ -107,7 +109,7 @@ Window {
                         }
 
                         Text {
-                            text: "Welcome to Vicinae"
+                            text: qsTr("Welcome to Vicinae")
                             color: Theme.foreground
                             font.pointSize: Theme.regularFontSize + 6
                             font.weight: Font.DemiBold
@@ -116,7 +118,7 @@ Window {
                         }
 
                         Text {
-                            text: "Let's set it up. It only takes a minute."
+                            text: qsTr("Let's set it up. It only takes a minute.")
                             color: Theme.textMuted
                             font.pointSize: Theme.regularFontSize
                             wrapMode: Text.Wrap
@@ -133,7 +135,7 @@ Window {
                         spacing: 8
 
                         Text {
-                            text: "Permissions"
+                            text: qsTr("Permissions")
                             color: Theme.foreground
                             font.pointSize: Theme.regularFontSize + 6
                             font.weight: Font.DemiBold
@@ -142,7 +144,7 @@ Window {
                         }
 
                         Text {
-                            text: "Vicinae needs additional permissions in order to make the best of your Mac."
+                            text: qsTr("Vicinae needs additional permissions in order to make the best of your Mac.")
                             color: Theme.textMuted
                             font.pointSize: Theme.regularFontSize
                             wrapMode: Text.Wrap
@@ -153,16 +155,16 @@ Window {
 
                         SettingsGroup {
                             PermissionRow {
-                                label: "Accessibility"
-                                description: "Used to paste, expand snippets, and move windows."
+                                label: qsTr("Accessibility")
+                                description: qsTr("Used to paste, expand snippets, and move windows.")
                                 iconSource: Img.system("accessibility").withFillColor(Theme.foreground)
                                 granted: root.accessibilityGranted
                                 onGrant: Permissions.requestAccessibility()
                             }
 
                             PermissionRow {
-                                label: "Full Disk Access"
-                                description: "Lets file search cover your entire disk."
+                                label: qsTr("Full Disk Access")
+                                description: qsTr("Allows file search to cover your entire disk.")
                                 iconSource: Img.system("internaldrive").withFillColor(Theme.foreground)
                                 showSeparator: Permissions.notificationsSupported
                                 granted: Permissions.fullDiskAccessGranted
@@ -170,8 +172,8 @@ Window {
                             }
 
                             PermissionRow {
-                                label: "Notifications"
-                                description: "Lets extensions send desktop notifications."
+                                label: qsTr("Notifications")
+                                description: qsTr("Allows extensions to send desktop notifications.")
                                 iconSource: Img.system("bell.badge").withFillColor(Theme.foreground)
                                 showSeparator: false
                                 visible: Permissions.notificationsSupported
@@ -182,7 +184,7 @@ Window {
 
                         Text {
                             visible: !root.accessibilityGranted || !Permissions.fullDiskAccessGranted
-                            text: "If you skip this step, macOS may prompt you for some of these permissions later. Full disk access needs to be explicitly enabled if you want file search to cover all your files."
+                            text: !root.accessibilityGranted ? qsTr("Accessibility is required: global shortcuts, paste, and snippet expansion cannot work without it.") : qsTr("Full disk access needs to be explicitly enabled if you want file search to cover all your files.")
                             color: Theme.textMuted
                             font.pointSize: Theme.smallerFontSize
                             wrapMode: Text.Wrap
@@ -200,7 +202,7 @@ Window {
                         spacing: 8
 
                         Text {
-                            text: "Make it your own"
+                            text: qsTr("Make it your own")
                             color: Theme.foreground
                             font.pointSize: Theme.regularFontSize + 6
                             font.weight: Font.DemiBold
@@ -209,7 +211,7 @@ Window {
                         }
 
                         Text {
-                            text: "You will be able to change these settings later."
+                            text: qsTr("You will be able to change these settings later.")
                             color: Theme.textMuted
                             font.pointSize: Theme.regularFontSize
                             wrapMode: Text.Wrap
@@ -220,8 +222,8 @@ Window {
 
                         SettingsGroup {
                             SettingsRow {
-                                label: "Theme"
-                                description: "Shared across the entire app."
+                                label: qsTr("Theme")
+                                description: qsTr("Shared across the entire app.")
 
                                 SearchableDropdown {
                                     width: parent.width
@@ -232,8 +234,8 @@ Window {
                             }
 
                             SettingsRow {
-                                label: "Global hotkey"
-                                description: "Opens the launcher from anywhere."
+                                label: qsTr("Global hotkey")
+                                description: qsTr("Opens the launcher from anywhere.")
                                 showSeparator: onboarding.loginItemSupported
 
                                 ShortcutField {
@@ -249,8 +251,8 @@ Window {
 
                             SettingsRow {
                                 visible: onboarding.loginItemSupported
-                                label: "Launch at login"
-                                description: "Starts Vicinae in the background at login."
+                                label: qsTr("Launch at login")
+                                description: qsTr("Starts Vicinae in the background at login.")
                                 showSeparator: false
 
                                 SettingsToggle {
@@ -269,7 +271,7 @@ Window {
                         spacing: 8
 
                         Text {
-                            text: "Setup complete"
+                            text: qsTr("Setup complete")
                             color: Theme.foreground
                             font.pointSize: Theme.regularFontSize + 6
                             font.weight: Font.DemiBold
@@ -278,7 +280,7 @@ Window {
                         }
 
                         Text {
-                            text: "Vicinae is running. Open the launcher with:"
+                            text: qsTr("Vicinae is running. Open the launcher with:")
                             color: Theme.textMuted
                             font.pointSize: Theme.regularFontSize
                             wrapMode: Text.Wrap
@@ -295,7 +297,7 @@ Window {
                         }
 
                         Text {
-                            text: "Vicinae is open source software."
+                            text: qsTr("Vicinae is open source software.")
                             color: Theme.textMuted
                             font.pointSize: Theme.smallerFontSize
                             wrapMode: Text.Wrap
@@ -315,7 +317,7 @@ Window {
                             }
 
                             ViciButton {
-                                text: "Sponsor"
+                                text: qsTr("Sponsor")
                                 variant: "secondary"
                                 onClicked: onboarding.openUrl("https://github.com/sponsors/vicinaehq")
                             }
@@ -332,7 +334,7 @@ Window {
                 ViciButton {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Back"
+                    text: qsTr("Back")
                     visible: root.step > 0
                     onClicked: root.goBack()
                 }
@@ -357,7 +359,11 @@ Window {
                                 anchors.margins: -5
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.step = index
+                                onClicked: {
+                                    if (index > 1 && !root.accessibilityGranted)
+                                        return;
+                                    root.step = index;
+                                }
                             }
                         }
                     }
@@ -367,14 +373,14 @@ Window {
                     id: nextButton
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
+                    enabled: !root.onPermissionStep || root.accessibilityGranted
+                    opacity: enabled ? 1 : 0.4
+                    variant: "accent"
                     text: {
                         if (root.step === root.stepCount - 1)
-                            return "Finish";
-                        if (root.onPermissionStep && !root.accessibilityGranted)
-                            return "Set up later";
-                        return "Continue";
+                            return qsTr("Finish");
+                        return qsTr("Continue");
                     }
-                    variant: root.onPermissionStep && !root.accessibilityGranted ? "secondary" : "accent"
                     onClicked: root.advance()
                 }
             }

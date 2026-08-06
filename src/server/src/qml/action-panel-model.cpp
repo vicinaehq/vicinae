@@ -1,5 +1,6 @@
 #include "action-panel-model.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "services/navigation/list-navigation.hpp"
 #include "theme.hpp"
 #include <QKeyEvent>
 #include <utility>
@@ -203,24 +204,8 @@ void ActionPanelModel::setFilter(const QString &text) {
 
 int ActionPanelModel::nextSelectableIndex(int from, int direction) const {
   int const count = static_cast<int>(m_flat.size());
-  if (count == 0) return from;
-
-  int idx = from + direction;
-  if (idx < 0)
-    idx = count - 1;
-  else if (idx >= count)
-    idx = 0;
-
-  while (idx != from) {
-    if (m_flat[idx].kind == FlatItem::ActionItem) return idx;
-    idx += direction;
-    if (idx < 0)
-      idx = count - 1;
-    else if (idx >= count)
-      idx = 0;
-  }
-
-  return from;
+  return ListNavigation::nextIndex(from, direction, count,
+                                   [&](int idx) { return m_flat[idx].kind == FlatItem::ActionItem; });
 }
 
 int ActionPanelModel::nextSectionIndex(int from, int direction) const {
@@ -237,6 +222,7 @@ int ActionPanelModel::nextSectionIndex(int from, int direction) const {
         return idx;
       }
     }
+    if (!ListNavigation::wrapEnabled()) return from;
     return nextSelectableIndex(-1, 1);
   }
 
@@ -265,6 +251,8 @@ int ActionPanelModel::nextSectionIndex(int from, int direction) const {
       if (m_flat[i].kind == FlatItem::ActionItem && m_flat[i].sectionIdx == prevSection) return i;
     }
   }
+
+  if (!ListNavigation::wrapEnabled()) return from;
 
   // Wrap: last section.
   for (int i = count - 1; i >= 0; --i) {

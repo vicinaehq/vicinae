@@ -14,14 +14,14 @@ Popup {
     height: 80
     focus: true
     closePolicy: Popup.CloseOnPressOutside
-    popupType: Popup.Window
+    popupType: Platform.preferItemPopup("popover") ? Popup.Item : Popup.Window
     PopupPlacement.alignment: Qt.AlignHCenter | (recorder._below ? Qt.AlignBottom : Qt.AlignTop)
     padding: 10
 
     property bool _below: false
 
     property var _currentShortcutTokens: []
-    property string _statusText: "Recording..."
+    property string _statusText: qsTr("Recording...")
     property color _statusColor: Theme.foreground
 
     property bool _justClosed: false
@@ -43,7 +43,7 @@ Popup {
             return false;
 
         _currentShortcutTokens = [];
-        _statusText = "Recording...";
+        _statusText = qsTr("Recording...");
         _statusColor = Theme.foreground;
         closeTimer.stop();
 
@@ -72,10 +72,12 @@ Popup {
     Component.onDestruction: GlobalShortcuts.setCapturing(false)
 
     background: Rectangle {
-        radius: Platform.supports("clientSideDecorations") ? Math.min(Config.borderRounding, 15) : 0
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, Config.popupOpacity)
-        border.color: Config.withAlpha(Theme.popoverBorder, Config.popupOpacity)
-        border.width: Platform.supports("clientSideDecorations") ? 1 : 0
+        readonly property bool csd: recorder.popupType === Popup.Item || Platform.supports("clientSideDecorations")
+        readonly property real bgOpacity: recorder.popupType === Popup.Window ? Config.popupOpacity : 1
+        radius: csd ? Math.min(Config.borderRounding, 15) : 0
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bgOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, bgOpacity)
+        border.width: csd ? 1 : 0
         PopupMaterial {}
     }
 
@@ -88,7 +90,7 @@ Popup {
             event.accepted = true;
             closeTimer.stop();
 
-            var key = event.key;
+            var key = Keyboard.normalizeKey(event.key);
             var mods = event.modifiers;
 
             var isModKey = key === Qt.Key_Shift || key === Qt.Key_Control || key === Qt.Key_Alt || key === Qt.Key_Meta;
@@ -103,7 +105,7 @@ Popup {
                 recorder._currentShortcutTokens = recorder.shortcutDisplayProvider(key, mods);
 
             if (isModKey) {
-                recorder._statusText = "Recording...";
+                recorder._statusText = qsTr("Recording...");
                 recorder._statusColor = Theme.foreground;
                 return;
             }
@@ -117,7 +119,7 @@ Popup {
                 }
             }
 
-            recorder._statusText = "Keybind updated";
+            recorder._statusText = qsTr("Keybind updated");
             recorder._statusColor = Theme.toastSuccess;
             closeTimer.start();
             recorder.shortcutCaptured(key, mods);

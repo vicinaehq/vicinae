@@ -1,6 +1,7 @@
 #pragma once
 #include "fuzzy-section.hpp"
 #include "services/snippet/snippet-db.hpp"
+#include <QCoreApplication>
 
 template <> struct fuzzy::FuzzySearchable<snippet::SerializedSnippet> {
   static int score(const snippet::SerializedSnippet &item, std::string_view query) {
@@ -12,8 +13,9 @@ template <> struct fuzzy::FuzzySearchable<snippet::SerializedSnippet> {
 };
 
 class ManageSnippetsSection : public FuzzySection<snippet::SerializedSnippet> {
+  Q_DECLARE_TR_FUNCTIONS(ManageSnippetsSection)
 public:
-  QString sectionName() const override { return QStringLiteral("Snippets ({count})"); }
+  QString sectionName() const override { return tr("Snippets ({count})"); }
 
   void setOnSnippetSelected(std::function<void(const snippet::SerializedSnippet &)> cb) {
     m_onSnippetSelected = std::move(cb);
@@ -25,7 +27,7 @@ public:
 
 protected:
   QString displayTitle(const snippet::SerializedSnippet &item) const override;
-  QString displayIconSource(const snippet::SerializedSnippet &item) const override;
+  std::optional<ImageURL> displayIcon(const snippet::SerializedSnippet &item) const override;
   QVariantList displayAccessories(const snippet::SerializedSnippet &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const snippet::SerializedSnippet &item) const override;
 

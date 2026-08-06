@@ -13,12 +13,10 @@ QString BrowseAppsSection::displayTitle(const AppPtr &app) const { return app->d
 
 QString BrowseAppsSection::displaySubtitle(const AppPtr &app) const { return app->description(); }
 
-QString BrowseAppsSection::displayIconSource(const AppPtr &app) const {
-  return imageSourceFor(app->iconUrl());
-}
+std::optional<ImageURL> BrowseAppsSection::displayIcon(const AppPtr &app) const { return app->iconUrl(); }
 
 QVariantList BrowseAppsSection::displayAccessories(const AppPtr &app) const {
-  if (!app->displayable()) return qml::textAccessory(QStringLiteral("Hidden"));
+  if (!app->displayable()) return qml::textAccessory(tr("Hidden"));
   return {};
 }
 
@@ -34,7 +32,7 @@ std::unique_ptr<ActionPanelState> BrowseAppsSection::buildActionPanel(const AppP
   auto activeWindows = scope().services()->windowManager()->findAppWindows(*app);
   if (!activeWindows.empty()) { mainSection->addAction(new FocusWindowAction(activeWindows.front())); }
 
-  auto *open = new OpenAppAction(app, "Open Application", {});
+  auto *open = new OpenAppAction(app, tr("Open Application"), {});
   open->setClearSearch(true);
   mainSection->addAction(open);
 
@@ -51,10 +49,11 @@ std::unique_ptr<ActionPanelState> BrowseAppsSection::buildActionPanel(const AppP
     utils->addAction(openLocation);
   }
 
-  auto *copyId = new CopyToClipboardAction(Clipboard::Text(app->id()), "Copy App ID");
+  auto *copyId = new CopyToClipboardAction(Clipboard::Text(app->id()), tr("Copy App ID"));
   utils->addAction(copyId);
 
-  auto *copyLocation = new CopyToClipboardAction(Clipboard::Text(app->path().c_str()), "Copy App Location");
+  auto *copyLocation = new CopyToClipboardAction(
+      Clipboard::Text(QString::fromStdString(app->path().string())), tr("Copy App Location"));
   utils->addAction(copyLocation);
 
   return panel;

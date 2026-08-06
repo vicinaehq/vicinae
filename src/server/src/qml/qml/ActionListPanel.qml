@@ -110,7 +110,7 @@ Item {
         Text {
             id: emptyLabel
             visible: root._empty
-            text: "No matching actions"
+            text: qsTr("No matching actions")
             color: Theme.textMuted
             font.pointSize: Theme.smallerFontSize
             horizontalAlignment: Text.AlignHCenter
@@ -245,7 +245,7 @@ Item {
                     Text {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
-                        text: "Filter actions..."
+                        text: qsTr("Filter actions...")
                         color: Theme.textPlaceholder
                         font: filterInput.font
                         visible: !filterInput.text

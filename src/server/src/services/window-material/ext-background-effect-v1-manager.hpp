@@ -1,15 +1,29 @@
 #pragma once
 #include <memory>
-#include <qobject.h>
 #include <qwindow.h>
 #include <unordered_map>
-#include "ext-background-effect-v1-client-protocol.h"
+#include <QtWaylandClient/QWaylandClientExtension>
+#include "qwayland-ext-background-effect-v1.h"
 #include "services/window-material/window-material-backend.hpp"
+
+class ExtBackgroundEffectV1 : public QWaylandClientExtensionTemplate<ExtBackgroundEffectV1>,
+                              public QtWayland::ext_background_effect_manager_v1 {
+  Q_OBJECT
+
+public:
+  ExtBackgroundEffectV1();
+
+  bool supportsBlur() const { return m_capabilities & capability_blur; }
+
+protected:
+  void ext_background_effect_manager_v1_capabilities(uint32_t flags) override;
+
+private:
+  uint32_t m_capabilities = 0;
+};
 
 class ExtBackgroundEffectV1Manager : public WindowMaterialBackend {
 public:
-  explicit ExtBackgroundEffectV1Manager(ext_background_effect_manager_v1 *manager);
-
   bool isSupported() const override;
   bool apply(QWindow *win, const Params &params) override;
   bool clear(QWindow *win) override;
@@ -19,22 +33,17 @@ protected:
 
 private:
   struct BlurState {
-    ext_background_effect_surface_v1 *effect;
+    QtWayland::ext_background_effect_surface_v1 effect;
     Params cfg;
 
+    BlurState(::ext_background_effect_surface_v1 *effect, const Params &cfg) : effect(effect), cfg(cfg) {}
     ~BlurState() {
-      if (effect) ext_background_effect_surface_v1_destroy(effect);
+      if (effect.isInitialized()) effect.destroy();
     }
   };
 
-  static void capabilities(void *data, ext_background_effect_manager_v1 *, uint32_t flags);
+  void applyBlur(QWindow *win, BlurState &state);
 
-  static constexpr const ext_background_effect_manager_v1_listener s_listener = {
-      .capabilities = &ExtBackgroundEffectV1Manager::capabilities};
-
-  void applyBlur(QWindow *win, const BlurState &state);
-
-  ext_background_effect_manager_v1 *m_manager = nullptr;
+  ExtBackgroundEffectV1 m_manager;
   std::unordered_map<QWindow *, std::unique_ptr<BlurState>> m_state;
-  bool m_supportsBlur = false;
 };

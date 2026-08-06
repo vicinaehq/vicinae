@@ -9,6 +9,7 @@
 #include "services/paste/paste-service.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "utils/utils.hpp"
+#include <QCoreApplication>
 #include <QDateTime>
 
 void ClipboardHistorySection::setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page) {
@@ -25,23 +26,22 @@ QString ClipboardHistorySection::itemSubtitle(int i) const {
   return getRelativeTimeString(dt);
 }
 
-QString ClipboardHistorySection::itemIconSource(int i) const {
-  return imageSourceFor(iconForEntry(m_entries[i]));
-}
+std::optional<ImageURL> ClipboardHistorySection::itemIcon(int i) const { return iconForEntry(m_entries[i]); }
 
 ImageURL ClipboardHistorySection::iconForEntry(const ClipboardHistoryEntry &entry) const {
   switch (entry.kind) {
   case ClipboardOfferKind::Image:
-    return ImageURL::builtin("image");
+    return ImageURL::builtin(BuiltinIcon::Image);
   case ClipboardOfferKind::Link:
-    if (entry.urlHost) return ImageURL::favicon(*entry.urlHost).withFallback(ImageURL::builtin("link"));
-    return ImageURL::builtin("link");
+    if (entry.urlHost)
+      return ImageURL::favicon(*entry.urlHost).withFallback(ImageURL::builtin(BuiltinIcon::Link));
+    return ImageURL::builtin(BuiltinIcon::Link);
   case ClipboardOfferKind::Text:
-    return ImageURL::builtin("text");
+    return ImageURL::builtin(BuiltinIcon::Text);
   case ClipboardOfferKind::File:
-    return ImageURL::builtin("folder");
+    return ImageURL::builtin(BuiltinIcon::Folder);
   default:
-    return ImageURL::builtin("question-mark-circle");
+    return ImageURL::builtin(BuiltinIcon::QuestionMarkCircle);
   }
 }
 
@@ -53,10 +53,12 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
   bool const isCopyable = entry.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
 
   if (!isCopyable) {
-    mainSection->addAction(new StaticAction("Open Settings", BuiltinIcon::Cog, [](ApplicationContext *ctx) {
-      ctx->settings->openTab(QStringLiteral("advanced"));
-      ctx->navigation->closeWindow();
-    }));
+    mainSection->addAction(
+        new StaticAction(QCoreApplication::translate("ClipboardHistorySection", "Open Settings"),
+                         BuiltinIcon::Cog, [](ApplicationContext *ctx) {
+                           ctx->settings->openTab(QStringLiteral("advanced"));
+                           ctx->navigation->closeWindow();
+                         }));
   }
 
   auto pasteService = scope().services()->pasteService();

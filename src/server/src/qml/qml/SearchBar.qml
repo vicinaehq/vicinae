@@ -119,9 +119,9 @@ Item {
                     if (!Config.emacsMode)
                         return false;
 
-                    const ctrl = (event.modifiers & Qt.ControlModifier);
+                    const ctrl = (event.modifiers & Keyboard.physicalCtrlModifier);
                     const alt = (event.modifiers & Qt.AltModifier);
-                    const noOther = !(event.modifiers & ~(Qt.ControlModifier | Qt.AltModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier));
+                    const noOther = !(event.modifiers & ~(Keyboard.physicalCtrlModifier | Qt.AltModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier));
 
                     if (ctrl && !alt && noOther) {
                         switch (event.key) {
@@ -284,8 +284,6 @@ Item {
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && launcher.showBackButton && launcher.popOnBackspace) {
                         launcher.goBack();
-                        event.accepted = true;
-                    } else if (event.key === Qt.Key_Space && event.modifiers === Qt.NoModifier && searchInput.text.length > 0 && launcher.commandViewHost?.tryAliasFastTrack()) {
                         event.accepted = true;
                     } else if (launcher.forwardKey(event.key, event.modifiers)) {
                         if (launcher.compacted)

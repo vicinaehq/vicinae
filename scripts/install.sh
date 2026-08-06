@@ -145,7 +145,7 @@ check_permissions() {
 				exit 0
 			fi
 
-			echo "Re-downloading script to execute with elevated privileges..."
+			echo "Preparing script to execute with elevated privileges..."
 			self_download
 			
 			# Re-execute with privilege escalation
@@ -265,6 +265,7 @@ download_appimage() {
 
 extract_appimage() {
 	local appimage_path="$1"
+	local keep_appimage="${2:-}"
 	local extract_dir="$INSTALL_DIR.extract"
 	local extract_logs="$TEMP_DIR/appimage-extract.log" 
 
@@ -287,7 +288,9 @@ extract_appimage() {
 			ok "Extraction completed"
 			echo "$extract_dir"
 			rm $extract_logs
-			rm $appimage_path
+			if [[ -z "$keep_appimage" ]]; then
+				rm "$appimage_path"
+			fi
 		else
 			echo "Error: squashfs-root directory not found after extraction" >&2
 			ls -la >&2
@@ -586,9 +589,10 @@ show_usage() {
 	echo "Usage: $0 [OPTIONS]"
 	echo ""
 	echo "Options:"
-	echo "  --prefix PATH  Installation prefix (default: /usr/local)"
-	echo "  --uninstall    Uninstall Vicinae"
-	echo "  --help, -h     Show this help message"
+	echo "  --prefix PATH    Installation prefix (default: /usr/local)"
+	echo "  --appimage PATH  Install from a local AppImage instead of downloading the latest release"
+	echo "  --uninstall      Uninstall Vicinae"
+	echo "  --help, -h       Show this help message"
 	echo ""
 	echo "Environment variables:"
 	echo "  PREFIX         Installation prefix (overridden by --prefix)"
@@ -601,9 +605,14 @@ show_usage() {
 	echo "  PREFIX=/opt/vicinae $0       # Install to /opt/vicinae"
 }
 
-# we need to download the script and store it on disk to re-execute it with privilege elevation, if needed
+# we need the script stored on disk to re-execute it with privilege elevation, if needed.
+# when piped from curl there is no file to copy, so we download it again
 self_download() {
-	curl -fsSL $SCRIPT_DOWNLOAD_URL > $VICINAE_SCRIPT_PATH
+	if [[ -f "$0" ]]; then
+		cp "$0" "$VICINAE_SCRIPT_PATH"
+	else
+		curl -fsSL $SCRIPT_DOWNLOAD_URL > $VICINAE_SCRIPT_PATH
+	fi
 	chmod +x $VICINAE_SCRIPT_PATH
 }
 
@@ -621,8 +630,22 @@ main() {
 	
 	# Parse arguments
 	local action=""
+	local local_appimage=""
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
+		--appimage)
+			if [[ -z "${2:-}" ]]; then
+				echo "Error: --appimage requires a path argument"
+				show_usage
+				exit 1
+			fi
+			if [[ ! -f "$2" ]]; then
+				echo "Error: AppImage not found at $2"
+				exit 1
+			fi
+			local_appimage=$(readlink -f "$2")
+			shift 2
+			;;
 		--prefix)
 			if [[ -z "${2:-}" ]]; then
 				echo "Error: --prefix requires a path argument"
@@ -665,74 +688,86 @@ main() {
 	check_dependencies
 	check_permissions
 
-	local release_info
-	release_info=$(get_latest_release_info)
-
+	local appimage_path
 	local latest_version
-	local appimage_name
-	IFS='|' read -r latest_version appimage_name <<<"$release_info"
 
-	local installed_version
-	installed_version=$(get_installed_version)
+	if [[ -n "$local_appimage" ]]; then
+		appimage_path="$local_appimage"
+		latest_version="(local)"
+		# artifact zips downloaded from CI do not preserve the executable bit
+		chmod +x "$appimage_path" 2>/dev/null || true
+		echo "Installing from local AppImage: $appimage_path"
+	else
+		local release_info
+		release_info=$(get_latest_release_info)
 
-	echo
-	echo "  Installed version: $installed_version"
-	echo "  Latest version:    $latest_version"
-	echo
+		local appimage_name
+		IFS='|' read -r latest_version appimage_name <<<"$release_info"
 
-	# Check if update is needed
-	if compare_versions "$installed_version" "$latest_version"; then
+		local installed_version
+		installed_version=$(get_installed_version)
+
+		echo
+		echo "  Installed version: $installed_version"
+		echo "  Latest version:    $latest_version"
+		echo
+
+		if ! compare_versions "$installed_version" "$latest_version"; then
+			ok "Vicinae is already up to date"
+			return 0
+		fi
+
 		if [[ "$installed_version" == "none" ]]; then
 			echo "Installing Vicinae for the first time..."
 		else
 			echo "Updating Vicinae from $installed_version to $latest_version..."
 		fi
 
-		local appimage_path
 		appimage_path=$(download_appimage "$latest_version" "$appimage_name")
-
-		echo $appimage_path
-
-		local extract_dir
-		extract_dir=$(extract_appimage "$appimage_path")
-
-		install_vicinae "$extract_dir" "$appimage_path"
-
-		if (( ${#WARNINGS[@]} > 0 )); then
-			echo 
-			echo -e "\033[1;33mInstallation completed with ${#WARNINGS[@]} warning(s):\033[0m"
-			for w in "${WARNINGS[@]}"; do
-				echo "  • $w"
-			done
-		fi
-
-		echo 
-		echo "🎉 Vicinae $latest_version has been successfully installed!"
-		echo 
-
-		# Check if binary directory is in PATH
-		if [[ ":$PATH:" == *":$BIN_DIR:"* ]]; then
-			ok "$BIN_DIR is already in your PATH. You can now run 'vicinae' from anywhere in your terminal."
-		else
-			echo "To use Vicinae, add $BIN_DIR to your PATH:"
-			if [[ "$BIN_DIR" == "$HOME"* ]]; then
-				# User installation - show unexpanded path
-				local_path="${BIN_DIR/#$HOME/\$HOME}"
-				echo "  export PATH=\"$local_path:\$PATH\""
-			else
-				# System installation
-				echo "  export PATH=\"$BIN_DIR:\$PATH\""
-			fi
-			echo ""
-			echo "You can add this to your shell profile (~/.bashrc, ~/.zshrc, etc.) for permanent access."
-			echo "Then restart your terminal or run the export command above."
-		fi
-
-		echo ""
-		echo "Check the quickstart section for your Desktop Environment at https://docs.vicinae.com"
-	else
-		ok "Vicinae is already up to date"
 	fi
+
+	# local AppImages are never deleted, only downloaded ones are cleaned up
+	local extract_dir
+	if [[ -n "$local_appimage" ]]; then
+		extract_dir=$(extract_appimage "$appimage_path" keep)
+		install_vicinae "$extract_dir"
+	else
+		extract_dir=$(extract_appimage "$appimage_path")
+		install_vicinae "$extract_dir" "$appimage_path"
+	fi
+
+	if (( ${#WARNINGS[@]} > 0 )); then
+		echo
+		echo -e "\033[1;33mInstallation completed with ${#WARNINGS[@]} warning(s):\033[0m"
+		for w in "${WARNINGS[@]}"; do
+			echo "  • $w"
+		done
+	fi
+
+	echo
+	echo "🎉 Vicinae $latest_version has been successfully installed!"
+	echo
+
+	# Check if binary directory is in PATH
+	if [[ ":$PATH:" == *":$BIN_DIR:"* ]]; then
+		ok "$BIN_DIR is already in your PATH. You can now run 'vicinae' from anywhere in your terminal."
+	else
+		echo "To use Vicinae, add $BIN_DIR to your PATH:"
+		if [[ "$BIN_DIR" == "$HOME"* ]]; then
+			# User installation - show unexpanded path
+			local_path="${BIN_DIR/#$HOME/\$HOME}"
+			echo "  export PATH=\"$local_path:\$PATH\""
+		else
+			# System installation
+			echo "  export PATH=\"$BIN_DIR:\$PATH\""
+		fi
+		echo ""
+		echo "You can add this to your shell profile (~/.bashrc, ~/.zshrc, etc.) for permanent access."
+		echo "Then restart your terminal or run the export command above."
+	fi
+
+	echo ""
+	echo "Check the quickstart section for your Desktop Environment at https://docs.vicinae.com"
 }
 
 main "$@"

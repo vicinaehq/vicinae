@@ -14,7 +14,8 @@
 #include "vicinae.hpp"
 
 RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &storage)
-    : m_cfg(cfg), m_storage(storage), m_visitTracker(Omnicast::dataDir() / "metadata.json") {
+    : m_cfg(cfg), m_storage(storage), m_visitTracker(Omnicast::dataDir() / "metadata.json"),
+      m_searchHistory(Omnicast::dataDir() / "search-history.json") {
   connect(&cfg, &config::Manager::configChanged, this, [this](const config::ConfigValue &next) {
     mergeConfigWithMetadata(next);
     qDebug() << "configuration changed";

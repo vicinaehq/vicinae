@@ -37,7 +37,7 @@ SelectableDelegate {
 
             Text {
                 width: parent.width
-                text: root.calcQuestionUnit || "Question"
+                text: root.calcQuestionUnit || qsTr("Question")
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideRight
@@ -94,7 +94,7 @@ SelectableDelegate {
 
             Text {
                 width: parent.width
-                text: root.calcAnswerUnit || "Answer"
+                text: root.calcAnswerUnit || qsTr("Answer")
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideRight

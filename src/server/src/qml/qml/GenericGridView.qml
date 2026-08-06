@@ -30,12 +30,40 @@ Item {
     property bool showCellTitle: false
     property bool showCellSubtitle: false
 
-    property string emptyTitle: "No results"
+    property string emptyTitle: qsTr("No results")
     property string emptyDescription: ""
     property var emptyIcon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
     property Component emptyViewComponent: null
 
     property bool suppressEmpty: false
+
+    // Infinite-scroll pagination: consumers opt in by setting canLoadMore.
+    // endReached fires at most once per content growth cycle.
+    signal endReached
+    property bool canLoadMore: false
+    property real endReachedThreshold: root.height * 1.5
+    property bool _endArmed: true
+
+    onCanLoadMoreChanged: {
+        if (canLoadMore) {
+            _endArmed = true;
+            Qt.callLater(_maybeFireEnd);
+        }
+    }
+
+    function _maybeFireEnd() {
+        if (!root.canLoadMore || !root._endArmed)
+            return;
+        if (listView.contentHeight <= 0)
+            return;
+        const underfilled = listView.contentHeight <= listView.height;
+        if (!underfilled && listView.atYBeginning)
+            return;
+        if (listView.contentY + listView.height >= listView.contentHeight - root.endReachedThreshold) {
+            root._endArmed = false;
+            root.endReached();
+        }
+    }
 
     readonly property bool _empty: listView.count === 0
     readonly property bool _awaitingData: root.cmdModel && root.cmdModel.awaitingData === true
@@ -124,12 +152,23 @@ Item {
         visible: !root._empty
         model: root.cmdModel
         clip: true
+        interactive: false
         boundsBehavior: Flickable.StopAtBounds
         topMargin: root.cellSpacing
         bottomMargin: root.cellSpacing
         spacing: root.cellSpacing
         reuseItems: true
         cacheBuffer: 200
+
+        property real _lastContentHeight: 0
+
+        onContentYChanged: root._maybeFireEnd()
+        onContentHeightChanged: {
+            if (contentHeight > _lastContentHeight)
+                root._endArmed = true;
+            _lastContentHeight = contentHeight;
+            root._maybeFireEnd();
+        }
 
         ViciWheelHandler {
             target: listView
@@ -316,21 +355,28 @@ Item {
                                     opacity: 0.7
                                 }
 
-                                MouseArea {
+                                DraggableMouseArea {
                                     id: cellMouseArea
                                     anchors.fill: parent
                                     hoverEnabled: true
-                                    onClicked: {
+                                    draggable: root.cmdModel && root.cmdModel.isDraggable(cellWrapper.cellSection, cellWrapper.cellItem)
+                                    onItemClicked: {
                                         if (root.cmdModel) {
                                             root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
                                             if (Config.activateOnSingleClick)
                                                 root.cmdModel.activateSelected();
                                         }
                                     }
-                                    onDoubleClicked: {
+                                    onItemActivated: {
                                         if (root.cmdModel) {
                                             root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
                                             root.cmdModel.activateSelected();
+                                        }
+                                    }
+                                    onDragRequested: {
+                                        if (root.cmdModel) {
+                                            root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
+                                            root.cmdModel.startDrag(cellWrapper.cellSection, cellWrapper.cellItem, cellWrapper);
                                         }
                                     }
                                 }
@@ -350,6 +396,11 @@ Item {
 
     Connections {
         target: root.cmdModel
+        function onModelReset() {
+            root._endArmed = true;
+            listView._lastContentHeight = 0;
+            Qt.callLater(root._maybeFireEnd);
+        }
         function onSelectionChanged() {
             var row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1;
             if (row >= 0) {

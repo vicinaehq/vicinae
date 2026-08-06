@@ -7,6 +7,7 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <utility>
 
 class AbstractScanner {
 public:
@@ -14,6 +15,7 @@ public:
 
 protected:
   std::shared_ptr<DbWriter> m_writer;
+  Scan m_scan;
 
 private:
   static constexpr std::chrono::milliseconds PROGRESS_NOTIFY_INTERVAL{500};
@@ -25,12 +27,12 @@ private:
   std::atomic<bool> m_interrupted = false;
 
 protected:
-  void start(const Scan &scan) {
-    auto result = m_writer->createScan(scan.path, scan.type());
+  void start() {
+    auto result = m_writer->createScan(m_scan.path, m_scan.type());
 
     if (!result.has_value()) {
-      flog::warn() << "Not scanning" << scan.path.native() << "because scan record creation failed with error"
-                   << result.error();
+      flog::warn() << "Not scanning" << m_scan.path.native()
+                   << "because scan record creation failed with error" << result.error();
       m_statusCallback(ScanStatus::Failed, m_processedCount);
       return;
     }
@@ -71,11 +73,10 @@ protected:
   bool isInterrupted() const { return m_interrupted; }
 
 public:
-  AbstractScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, StatusCallback callback)
-      : m_writer(writer), m_statusCallback(callback) {}
+  AbstractScanner(std::shared_ptr<DbWriter> writer, Scan scan, StatusCallback callback)
+      : m_writer(std::move(writer)), m_scan(std::move(scan)), m_statusCallback(std::move(callback)) {}
   virtual ~AbstractScanner() = default;
 
+  virtual void run() = 0;
   virtual void interrupt() = 0;
-
-  virtual void join() = 0;
 };

@@ -28,6 +28,7 @@ enum class Capability {
   LiquidGlass,
   NativePanels,
   WindowMaterial,
+  CustomWindowRounding,
 };
 
 bool supports(Capability cap);

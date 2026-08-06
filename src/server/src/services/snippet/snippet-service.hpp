@@ -151,7 +151,7 @@ private:
     // requires pulling config...
     std::shared_ptr<AbstractApplication> frontmost = nullptr;
 
-    if (!(QGuiApplication::focusWindow() && !m_wm.provider()->focusNullsOnLayerGrab())) {
+    if (!(QGuiApplication::focusWindow() && !m_wm.provider()->supportsFocusHandoffDetection())) {
       frontmost = m_appRuntime.frontmostApp();
     }
 

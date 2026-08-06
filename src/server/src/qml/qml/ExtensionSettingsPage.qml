@@ -60,6 +60,10 @@ Item {
         contentHeight: contentColumn.implicitHeight
         contentWidth: width
 
+        ViciWheelHandler {
+            target: cmdFlickable
+        }
+
         function scrollToIndex(row) {
             const item = cmdRepeater.itemAt(row);
             if (!item)
@@ -87,7 +91,7 @@ Item {
                 spacing: 0
 
                 SettingsSectionLabel {
-                    text: "Description"
+                    text: qsTr("Description")
                     Layout.bottomMargin: 10
                 }
 
@@ -110,7 +114,7 @@ Item {
                 spacing: 0
 
                 SettingsSectionLabel {
-                    text: "Preferences"
+                    text: qsTr("Preferences")
                     Layout.bottomMargin: 10
                 }
 
@@ -124,7 +128,7 @@ Item {
 
             SettingsSectionLabel {
                 visible: root.extModel.commandModel.totalCount > 0
-                text: "Commands"
+                text: qsTr("Commands")
                 Layout.fillWidth: true
                 Layout.leftMargin: root.sideMargin + 20
                 Layout.rightMargin: root.sideMargin + 20
@@ -229,7 +233,7 @@ Item {
                                 ShortcutField {
                                     visible: Platform.supports("globalShortcuts")
                                     bordered: false
-                                    placeholder: "Shortcut"
+                                    placeholder: qsTr("Shortcut")
                                     shortcutId: cmdDelegate.entrypointId
                                     shortcut: cmdDelegate.shortcut
                                     onAccepted: shortcut => root.extModel.setShortcutByEntrypointId(cmdDelegate.entrypointId, shortcut)
@@ -240,7 +244,7 @@ Item {
                                     Layout.preferredWidth: 120
                                     Layout.preferredHeight: 24
                                     text: cmdDelegate.alias
-                                    placeholder: "Add Alias"
+                                    placeholder: qsTr("Add Alias")
                                     onCommitted: value => root.extModel.setAliasByEntrypointId(cmdDelegate.entrypointId, value)
                                 }
 

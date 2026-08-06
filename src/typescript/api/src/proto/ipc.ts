@@ -107,6 +107,26 @@ export type LaunchAppResponse = {
 	focusedWindowTitle: string;
 }
 
+export type LaunchCommandRequest = {
+	entrypoint: string;
+	args: string[];
+	cwd?: string;
+	query?: string;
+}
+
+export type LaunchCommandResponse = {
+	error?: string;
+}
+
+export type CommandInfo = {
+	id: string;
+	name: string;
+}
+
+export type ListCommandsResponse = {
+	commands: CommandInfo[];
+}
+
 export type DMenuRequest = {
 	rawContent: string;
 	navigationTitle?: string;
@@ -179,6 +199,14 @@ class IpcService {
 
 	launchApp(req: LaunchAppRequest): Promise<LaunchAppResponse> {
 		return this.transport.request("Ipc/launchApp", { req});	
+	}
+
+	listCommands(): Promise<ListCommandsResponse> {
+		return this.transport.request("Ipc/listCommands", { });	
+	}
+
+	launchCommand(req: LaunchCommandRequest): Promise<LaunchCommandResponse> {
+		return this.transport.request("Ipc/launchCommand", { req});	
 	}
 
 	dmenu(req: DMenuRequest): Promise<DMenuResponse> {

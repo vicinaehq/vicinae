@@ -96,7 +96,7 @@ Item {
                         Text {
                             anchors.fill: parent
                             verticalAlignment: Text.AlignVCenter
-                            text: "Search..."
+                            text: qsTr("Search...")
                             color: Theme.textPlaceholder
                             font: extSearchField.font
                             visible: !extSearchField.text

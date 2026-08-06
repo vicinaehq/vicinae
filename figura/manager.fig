@@ -16,7 +16,8 @@ enum CommandEnv {
 
 enum LaunchType {
   User,
-  Background
+  Background,
+  CommandLine
 };
 
 struct Capabilities {
@@ -38,8 +39,11 @@ struct LoadOptions {
   owner_or_author_name: string;
   arguments: any;
   preferences: any;
+  launch_context: any;
   launch_type: LaunchType;
   capabilities: Capabilities;
+  fallbackText?: string;
+  cwd?: string;
 };
 
 struct LoadResponse {

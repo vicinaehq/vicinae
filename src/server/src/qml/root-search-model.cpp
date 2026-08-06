@@ -1,8 +1,6 @@
 #include "root-search-model.hpp"
 #include "config/config.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
-#include "ui/action-pannel/action-panel-view.hpp"
-#include "ui/views/base-view.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -203,26 +201,13 @@ void RootSearchModel::setSelectedIndex(int index) {
   }
 }
 
-bool RootSearchModel::tryAliasFastTrack() {
+const RootItem *RootSearchModel::selectedRootItem() const {
   int sourceIdx = -1;
   int itemIdx = -1;
-  if (!dataItemAt(selectedIndex(), sourceIdx, itemIdx)) return false;
+  if (!dataItemAt(selectedIndex(), sourceIdx, itemIdx)) return nullptr;
 
-  auto *src = sources()[sourceIdx];
-  const RootItem *item = nullptr;
-
-  if (src == m_resultsSource) {
-    item = m_resultsSource->rootItem(itemIdx);
-  } else if (src == m_favoritesSource) {
-    item = m_favoritesSource->rootItem(itemIdx);
-  }
-
-  if (!item || !item->supportsAliasSpaceShortcut()) return false;
-  auto meta = m_manager->itemMetadata(item->uniqueId());
-  if (!meta.alias || !meta.alias->starts_with(m_query)) return false;
-
-  activateSelected();
-  return true;
+  auto *section = dynamic_cast<const RootItemSection *>(sources()[sourceIdx]);
+  return section ? section->rootItem(itemIdx) : nullptr;
 }
 
 void RootSearchModel::startCalculator() {

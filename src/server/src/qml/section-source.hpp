@@ -1,11 +1,14 @@
 #pragma once
-#include "view-scope.hpp"
-#include "view-utils.hpp"
+#include <QMimeData>
 #include <QVariantList>
+
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string_view>
 
+#include "view-scope.hpp"
+#include "view-utils.hpp"
 class ActionPanelState;
 
 class SectionSource {
@@ -21,8 +24,11 @@ public:
   virtual QString itemId(int i) const { return itemTitle(i); }
   virtual QString itemTitle(int i) const = 0;
   virtual QString itemSubtitle(int) const { return {}; }
-  virtual QString itemIconSource(int i) const = 0;
+  virtual std::optional<ImageURL> itemIcon(int i) const = 0;
   virtual QVariantList itemAccessories(int) const { return {}; }
+
+  virtual bool isDraggable(int) const { return false; }
+  virtual std::unique_ptr<QMimeData> dragMimeData(int) const { return {}; }
 
   virtual QVariant customData(int, int) const { return {}; }
   virtual QHash<int, QByteArray> customRoleNames() const { return {}; }

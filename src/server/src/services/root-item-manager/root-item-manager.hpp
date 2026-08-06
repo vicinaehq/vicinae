@@ -6,6 +6,7 @@
 #include "navigation-controller.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/local-storage/scoped-local-storage.hpp"
+#include "services/root-item-manager/search-history.hpp"
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "preference.hpp"
@@ -15,6 +16,7 @@
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
+#include <qmimedata.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
@@ -54,6 +56,9 @@ public:
   virtual QString title() const = 0;
 
   virtual ImageURL iconUrl() const = 0;
+
+  virtual bool isDraggable() const { return false; }
+  virtual std::unique_ptr<QMimeData> dragMimeData() const { return {}; }
 
   /**
    * Whether the item can be selected as a fallback command or not
@@ -158,6 +163,7 @@ public:
 
   virtual QString uniqueId() const = 0;
   virtual QString displayName() const = 0;
+  virtual QString description() const { return {}; }
   virtual ImageURL icon() const = 0;
   virtual Type type() const = 0;
 
@@ -289,6 +295,7 @@ public:
   std::vector<std::shared_ptr<RootItem>> queryFavorites(std::optional<int> limit = {});
   bool resetRanking(const EntrypointId &id);
   bool registerVisit(const EntrypointId &id);
+  SearchHistory &searchHistory() { return m_searchHistory; }
   bool setItemAsFavorite(const EntrypointId &item, bool value = true);
   bool setProviderEnabled(const QString &providerId, bool value);
   bool disableItem(const EntrypointId &id);
@@ -358,4 +365,5 @@ private:
   LocalStorageService &m_storage;
   std::vector<SearchableRootItem> m_items;
   VisitTracker m_visitTracker;
+  SearchHistory m_searchHistory;
 };

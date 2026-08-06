@@ -9,7 +9,7 @@ void OAuthTokenStoreViewHost::initialize() {
 
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search token sets...");
+  setSearchPlaceholderText(tr("Search token sets..."));
 
   auto oauth = ServiceRegistry::instance()->oauthService();
   connect(&oauth->store(), &OAuth::TokenStore::setRemoved, this, &OAuthTokenStoreViewHost::reload);

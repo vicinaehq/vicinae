@@ -30,7 +30,8 @@ void DMenuViewHost::initialize() {
   if (m_data.noFooter) setStatusBarVisiblity(false);
   if (m_data.navigationTitle) setNavigationTitle(QString::fromStdString(*m_data.navigationTitle));
 
-  setSearchPlaceholderText(m_data.placeholder.value_or("Search entries...").c_str());
+  setSearchPlaceholderText(m_data.placeholder ? QString::fromStdString(*m_data.placeholder)
+                                              : tr("Search entries..."));
 
   auto entries = std::views::split(m_data.rawContent, std::string_view("\n")) |
                  std::views::transform([](auto &&s) { return std::string_view(s); }) |
@@ -103,12 +104,12 @@ std::unique_ptr<ActionPanelState> DMenuViewHost::emptyActionPanel() {
     ctx->navigation->closeWindow();
   };
 
-  auto *select = new StaticAction("Pass search text", BuiltinIcon::SaveDocument,
+  auto *select = new StaticAction(tr("Pass search text"), BuiltinIcon::SaveDocument,
                                   [this, onChosen](ApplicationContext *ctx) { onChosen(searchText(), ctx); });
   select->setPrimary(true);
   section->addAction(select);
 
-  auto *selectAndCopy = new StaticAction("Pass and copy search text", BuiltinIcon::CopyClipboard,
+  auto *selectAndCopy = new StaticAction(tr("Pass and copy search text"), BuiltinIcon::CopyClipboard,
                                          [this, onChosen](ApplicationContext *ctx) {
                                            auto text = searchText();
                                            ctx->services->clipman()->copyText(text);

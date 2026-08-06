@@ -291,6 +291,7 @@ RUN apt-get update \
 		curl				\
 		wget				\
 		qtkeychain-qt6-dev	\
+		libsecret-1-dev		\
 		libminizip-dev		\
 		squashfs-tools		\
 		ccache				\

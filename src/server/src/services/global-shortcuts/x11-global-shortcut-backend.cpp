@@ -119,7 +119,7 @@ std::expected<void, QString> X11GlobalShortcutBackend::grab(xcb_keycode_t keycod
         xcb_ungrab_key(m_connection, keycode, m_root, mods | m_lockCombos[j]);
       }
       xcb_flush(m_connection);
-      return std::unexpected(QStringLiteral("This shortcut is already in use by another application"));
+      return std::unexpected(tr("This shortcut is already in use by another application"));
     }
   }
 
@@ -136,12 +136,12 @@ std::expected<void, QString> X11GlobalShortcutBackend::bindShortcut(const Global
   auto keysym = global_shortcuts::xkbKeysymForQtKey(request.trigger.key());
   if (!keysym) {
     qWarning() << "X11GlobalShortcutBackend: no xkb keysym for qt key" << request.trigger.key();
-    return std::unexpected(QStringLiteral("Unsupported trigger key"));
+    return std::unexpected(tr("Unsupported trigger key"));
   }
 
   CPtr<xcb_keycode_t> keycodes(xcb_key_symbols_get_keycode(m_keysyms, *keysym));
   if (!keycodes || keycodes.get()[0] == XCB_NO_SYMBOL) {
-    return std::unexpected(QStringLiteral("Trigger key is not present on this keyboard"));
+    return std::unexpected(tr("Trigger key is not present on this keyboard"));
   }
 
   xcb_keycode_t const keycode = keycodes.get()[0];

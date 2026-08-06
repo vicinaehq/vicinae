@@ -1,4 +1,6 @@
 #include "common/common.hpp"
+#include <algorithm>
+#include <clocale>
 #include <cstdlib>
 #include <filesystem>
 #include <sstream>
@@ -10,9 +12,25 @@
 #include <mach-o/dyld.h>
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace vicinae {
+bool isAppDeeplink(std::string_view url) {
+  return std::ranges::any_of(APP_SCHEMES, [&](std::string_view scheme) {
+    return url.starts_with(scheme) && url.substr(scheme.size()).starts_with(":/");
+  });
+}
+
+void enableUtf8() {
+#ifdef _WIN32
+  std::setlocale(LC_ALL, ".UTF-8");
+#endif
+}
+
 #ifdef __APPLE__
 fs::path selfPath() {
   char buf[PATH_MAX];
@@ -23,18 +41,31 @@ fs::path selfPath() {
   if (_NSGetExecutablePath(dyn.data(), &size) != 0) return {};
   return fs::canonical(dyn.c_str());
 }
+#elif defined(_WIN32)
+fs::path selfPath() {
+  wchar_t buf[MAX_PATH];
+  DWORD const len = GetModuleFileNameW(nullptr, buf, MAX_PATH);
+  if (len == 0) return {};
+  return fs::path(std::wstring(buf, len));
+}
 #else
 fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
 #endif
 
 std::vector<fs::path> helperProgramCandidates(std::string_view program) {
   const auto self = selfPath().parent_path();
+  fs::path name{program};
+
+#ifdef _WIN32
+  name += ".exe";
+#endif
+
   std::vector<fs::path> candidates;
   candidates.reserve(3);
 
-  candidates.emplace_back(self / program);
-  candidates.emplace_back(self.parent_path() / VICINAE_LIBEXECDIR / program);
-  candidates.emplace_back(fs::path{VICINAE_LIBEXEC_PATH} / program);
+  candidates.emplace_back(self / name);
+  candidates.emplace_back(self.parent_path() / VICINAE_LIBEXECDIR / name);
+  candidates.emplace_back(fs::path{VICINAE_LIBEXEC_PATH} / name);
   return candidates;
 }
 
@@ -64,13 +95,50 @@ fs::path runtimeDir() {
 #ifdef __APPLE__
   if (const char *t = std::getenv("TMPDIR")) return fs::path(t) / "vicinae";
   return "/tmp/vicinae";
+#elif defined(_WIN32)
+  return fs::temp_directory_path() / "vicinae";
 #else
   if (const char *r = std::getenv("XDG_RUNTIME_DIR")) return fs::path(r) / "vicinae";
   return "/tmp/vicinae";
 #endif
 }
 
+fs::path stateDir() {
+#ifdef __APPLE__
+  if (const char *h = std::getenv("HOME")) return fs::path(h) / ".local" / "state" / "vicinae";
+  return "/tmp/vicinae";
+#elif defined(_WIN32)
+  if (const char *l = std::getenv("LOCALAPPDATA")) return fs::path(l) / "vicinae" / "state";
+  return fs::temp_directory_path() / "vicinae" / "state";
+#else
+  if (const char *s = std::getenv("XDG_STATE_HOME")) return fs::path(s) / "vicinae";
+  if (const char *h = std::getenv("HOME")) return fs::path(h) / ".local" / "state" / "vicinae";
+  return "/tmp/vicinae";
+#endif
+}
+
+fs::path logFilePath() { return stateDir() / "vicinae.log"; }
+
 fs::path serverSocketPath() { return runtimeDir() / "vicinae.sock"; }
+
+#ifdef _WIN32
+std::string currentUserName() {
+  char buf[256];
+  DWORD len = sizeof(buf);
+  if (GetUserNameA(buf, &len) && len > 1) return std::string(buf, len - 1);
+  return "default";
+}
+
+std::string serverSocketName() { return "vicinae-" + currentUserName(); }
+#else
+std::string currentUserName() {
+  if (const char *u = std::getenv("USER")) return u;
+  if (const char *u = std::getenv("LOGNAME")) return u;
+  return "default";
+}
+
+std::string serverSocketName() { return serverSocketPath().string(); }
+#endif
 
 std::optional<fs::path> findServerBinary() {
 #ifdef __APPLE__

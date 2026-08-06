@@ -1,6 +1,7 @@
 #pragma once
 #include "fuzzy-section.hpp"
 #include "services/extension-registry/extension-manifest.hpp"
+#include <QCoreApplication>
 
 template <> struct fuzzy::FuzzySearchable<ExtensionManifest> {
   static int score(const ExtensionManifest &m, std::string_view query) {
@@ -12,13 +13,14 @@ template <> struct fuzzy::FuzzySearchable<ExtensionManifest> {
 };
 
 class InstalledExtensionsSection : public FuzzySection<ExtensionManifest> {
+  Q_DECLARE_TR_FUNCTIONS(InstalledExtensionsSection)
 public:
-  QString sectionName() const override { return QStringLiteral("Installed Extensions ({count})"); }
+  QString sectionName() const override { return tr("Installed Extensions ({count})"); }
 
 protected:
   QString displayTitle(const ExtensionManifest &m) const override;
   QString displaySubtitle(const ExtensionManifest &m) const override;
-  QString displayIconSource(const ExtensionManifest &m) const override;
+  std::optional<ImageURL> displayIcon(const ExtensionManifest &m) const override;
   QVariantList displayAccessories(const ExtensionManifest &m) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const ExtensionManifest &m) const override;
 };

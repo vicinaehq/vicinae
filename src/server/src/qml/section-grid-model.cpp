@@ -1,6 +1,8 @@
-#include "section-grid-model.hpp"
 #include <algorithm>
 
+#include "drag-utils.hpp"
+#include "section-grid-model.hpp"
+#include "services/navigation/list-navigation.hpp"
 SectionGridModel::SectionGridModel(QObject *parent) : QAbstractListModel(parent) {}
 
 void SectionGridModel::addSource(GridSource *source) {
@@ -215,6 +217,21 @@ void SectionGridModel::select(int section, int item) {
   }
 }
 
+bool SectionGridModel::isDraggable(int section, int item) const {
+  int sourceIdx;
+  int itemIdx;
+  return resolveSelection(section, item, sourceIdx, itemIdx) && m_sources[sourceIdx]->isDraggable(itemIdx);
+}
+
+void SectionGridModel::startDrag(int section, int item, QObject *dragSource) {
+  int sourceIdx;
+  int itemIdx;
+  if (!dragSource || !resolveSelection(section, item, sourceIdx, itemIdx)) return;
+
+  auto *source = m_sources[sourceIdx];
+  DragUtils::startDrag(dragSource, source->dragMimeData(itemIdx), source->itemIcon(itemIdx));
+}
+
 void SectionGridModel::selectFirst() {
   for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
     if (m_sections[s].count > 0) {
@@ -258,12 +275,15 @@ int SectionGridModel::sectionColumns(int sectionIdx) const {
 int SectionGridModel::nextNonEmptySection(int sectionIdx, int direction) const {
   if (m_sections.empty()) return -1;
 
+  const bool wrap = ListNavigation::wrapEnabled();
   int idx = sectionIdx;
   for (size_t attempts = 0; attempts < m_sections.size(); ++attempts) {
     idx += direction;
     if (idx < 0) {
+      if (!wrap) return -1;
       idx = static_cast<int>(m_sections.size()) - 1;
     } else if (std::cmp_greater_equal(idx, m_sections.size())) {
+      if (!wrap) return -1;
       idx = 0;
     }
     if (m_sections[idx].count > 0) return idx;
@@ -315,7 +335,10 @@ void SectionGridModel::navigateRight() {
   int g = toGlobal(m_selSection, m_selItem) + 1;
   int const total = totalItemCount();
   if (total == 0) return;
-  if (g >= total) g = 0;
+  if (g >= total) {
+    if (!ListNavigation::wrapEnabled()) return;
+    g = 0;
+  }
   int s, i;
   fromGlobal(g, s, i);
   select(s, i);
@@ -327,7 +350,10 @@ void SectionGridModel::navigateLeft() {
   int g = toGlobal(m_selSection, m_selItem) - 1;
   int const total = totalItemCount();
   if (total == 0) return;
-  if (g < 0) g = total - 1;
+  if (g < 0) {
+    if (!ListNavigation::wrapEnabled()) return;
+    g = total - 1;
+  }
   int s, i;
   fromGlobal(g, s, i);
   select(s, i);
@@ -358,6 +384,8 @@ void SectionGridModel::navigateDown() {
       return;
     }
   }
+
+  if (!ListNavigation::wrapEnabled()) return;
 
   for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
     if (m_sections[s].count > 0) {
@@ -394,6 +422,8 @@ void SectionGridModel::navigateUp() {
       return;
     }
   }
+
+  if (!ListNavigation::wrapEnabled()) return;
 
   for (int s = static_cast<int>(m_sections.size()) - 1; s >= 0; --s) {
     if (m_sections[s].count > 0) {

@@ -34,7 +34,7 @@ protected:
 
   virtual QString displayTitle(const T &item) const = 0;
   virtual QString displaySubtitle(const T &) const { return {}; }
-  virtual QString displayIconSource(const T &item) const = 0;
+  virtual std::optional<ImageURL> displayIcon(const T &item) const = 0;
   virtual QVariantList displayAccessories(const T &) const { return {}; }
   virtual QString displayId(const T &item) const { return displayTitle(item); }
   virtual std::unique_ptr<ActionPanelState> buildActionPanel(const T &item) const = 0;
@@ -52,7 +52,7 @@ private:
   QString itemId(int i) const override { return displayId(at(i)); }
   QString itemTitle(int i) const override { return displayTitle(at(i)); }
   QString itemSubtitle(int i) const override { return displaySubtitle(at(i)); }
-  QString itemIconSource(int i) const override { return displayIconSource(at(i)); }
+  std::optional<ImageURL> itemIcon(int i) const override { return displayIcon(at(i)); }
   QVariantList itemAccessories(int i) const override { return displayAccessories(at(i)); }
 
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override { return buildActionPanel(at(i)); }

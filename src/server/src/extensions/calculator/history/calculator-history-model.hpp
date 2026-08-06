@@ -17,11 +17,11 @@ protected:
   ImageURL icon(const Item &record) const {
     switch (record.typeHint) {
     case AbstractCalculatorBackend::NORMAL:
-      return ImageURL::builtin("calculator");
+      return ImageURL::builtin(BuiltinIcon::Calculator);
     case AbstractCalculatorBackend::CONVERSION:
-      return ImageURL::builtin("switch");
+      return ImageURL::builtin(BuiltinIcon::Switch);
     default:
-      return ImageURL::builtin("calculator");
+      return ImageURL::builtin(BuiltinIcon::Calculator);
     }
   }
 

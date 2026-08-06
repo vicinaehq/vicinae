@@ -286,9 +286,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
     pe.childCount = childCount;
     pe.expanded = isFiltering || m_expandedProviders.contains(pe.providerId);
     pe.provenance = provenanceForProvider(provider);
-
-    if (auto *ext = dynamic_cast<ExtensionRootProvider *>(provider))
-      pe.description = ext->repository()->description();
+    pe.description = provider->description();
 
     return pe;
   };

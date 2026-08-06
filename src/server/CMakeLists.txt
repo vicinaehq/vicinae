@@ -3,9 +3,9 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools)
 
-if (USE_SYSTEM_KF6)
+if (USE_SYSTEM_KF6 AND NOT WIN32)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
@@ -17,9 +17,7 @@ list(APPEND LIBS
 	zip
 	qt6keychain
 	pugixml
-	KF6::SyntaxHighlighting
 	glaze::glaze
-	vicinae::xdgpp
 	vicinae::scriptcommand
 	vicinae::glyph
 	vicinae::common
@@ -28,9 +26,13 @@ list(APPEND LIBS
 	sqlcipher
 )
 
+if (NOT WIN32)
+	list(APPEND LIBS KF6::SyntaxHighlighting vicinae::xdgpp)
+endif()
+
 if (UNIX AND NOT APPLE)
-	find_package(Qt6 REQUIRED COMPONENTS DBus)
-	list(APPEND LIBS wayland-client Qt6::DBus)
+	find_package(Qt6 REQUIRED COMPONENTS DBus WaylandClient)
+	list(APPEND LIBS wayland-client Qt6::DBus Qt6::WaylandClient)
 endif()
 
 if (APPLE AND BUNDLE_SOULVER_CORE)
@@ -126,9 +128,11 @@ set(SRCS
 	src/root-search/shortcuts/shortcut-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
-	
+
 	src/extension/manager/extension-manager.hpp
 	src/extension/manager/extension-manager.cpp
+	src/extension/node-runtime/node-runtime.hpp
+	src/extension/node-runtime/node-runtime.cpp
 
 	# Bookmark - Start
 	src/services/shortcut/shortcut-service.hpp
@@ -158,6 +162,7 @@ set(SRCS
 	src/color-formatter.cpp
 
 	src/services/clipboard/clipboard-server.hpp
+	src/services/clipboard/clipboard-content.hpp
 	src/services/clipboard/clipboard-mime.hpp
 	src/services/clipboard/clipboard-mime.cpp
 	src/services/clipboard/clipboard-db.hpp
@@ -227,7 +232,6 @@ set(SRCS
 		src/ui/image/url.hpp
 
 
-	src/create-quicklink-command.hpp
 
 	src/builtin_icon.cpp
 
@@ -268,6 +272,9 @@ set(SRCS
 	src/extensions/clipboard/history/clipboard-history-controller.hpp
 	src/extensions/clipboard/history/clipboard-history-controller.cpp
 	src/extensions/browser/browser-extension.cpp
+
+	src/extensions/wm/wm-extension.hpp
+	src/extensions/wm/wm-extension.cpp
 
 	src/extensions/clipboard/clipboard-extension.hpp
 	src/extensions/clipboard/clipboard-extension.cpp
@@ -321,6 +328,7 @@ set(SRCS
 	src/services/file-chooser/file-chooser-service.cpp
 	src/services/root-item-manager/root-item-manager.hpp
 	src/services/root-item-manager/root-item-manager.cpp
+	src/services/root-item-manager/search-history.cpp
 	src/services/root-item-manager/visit-tracker.cpp
 	
 	src/services/app-service/app-service.hpp
@@ -470,6 +478,8 @@ set(SRCS
 	src/qml/root-search-model.cpp
 	src/qml/root-search-sources.hpp
 	src/qml/root-search-sources.cpp
+	src/qml/drag-utils.hpp
+	src/qml/drag-utils.cpp
 	src/qml/section-source.hpp
 	src/qml/section-list-model.hpp
 	src/qml/section-list-model.cpp
@@ -637,6 +647,8 @@ if (APPLE)
 		src/root-search/macos-settings/macos-settings-root-provider.mm
 		src/services/global-shortcuts/macos-global-shortcut-backend.hpp
 		src/services/global-shortcuts/macos-global-shortcut-backend.cpp
+		src/internal/keyboard/keyboard-macos.hpp
+		src/internal/keyboard/keyboard-macos.cpp
 		src/services/files-service/macos/spotlight-file-indexer.hpp
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/tray/macos/tray-service-macos.hpp
@@ -689,6 +701,38 @@ if (APPLE)
 	if (AUTO_ENABLE_AUTOSTART)
 		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
 	endif()
+elseif (WIN32)
+	list(APPEND SRCS
+		src/ui/image/win-file-icon-loader.hpp
+		src/ui/image/win-file-icon-loader.cpp
+		src/services/app-service/windows/win-app.hpp
+		src/services/app-service/windows/win-app-database.hpp
+		src/services/app-service/windows/win-app-database.cpp
+		src/services/global-shortcuts/windows-global-shortcut-backend.hpp
+		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
+		src/services/clipboard/windows/windows-clipboard-server.hpp
+		src/services/clipboard/windows/windows-clipboard-server.cpp
+		src/services/paste/windows-paste-service.hpp
+		src/services/paste/windows-paste-service.cpp
+		src/services/files-service/windows/win-file-indexer.hpp
+		src/services/files-service/windows/win-file-indexer.cpp
+		src/services/window-manager/windows/windows-window.hpp
+		src/services/window-manager/windows/virtual-desktops.hpp
+		src/services/window-manager/windows/virtual-desktops.cpp
+		src/services/window-manager/windows/windows-window-manager.hpp
+		src/services/window-manager/windows/windows-window-manager.cpp
+		src/services/app-runtime/windows/win-app-runtime.hpp
+		src/services/app-runtime/windows/win-app-runtime.cpp
+		src/root-search/windows-settings/windows-settings-root-provider.hpp
+		src/root-search/windows-settings/windows-settings-root-provider.cpp
+		src/root-search/control-panel/control-panel-root-provider.hpp
+		src/root-search/control-panel/control-panel-root-provider.cpp
+		src/services/url-scheme/win-url-scheme-registrar.hpp
+		src/services/url-scheme/win-url-scheme-registrar.cpp
+		src/services/wallpaper/windows/windows-wallpaper-backend.hpp
+		src/services/wallpaper/windows/windows-wallpaper-backend.cpp
+	)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp
@@ -720,11 +764,13 @@ list(APPEND SRCS
 	src/services/global-shortcuts/global-shortcut-service.cpp
 )
 
-list(APPEND LIBS qalculate)
-list(APPEND SRCS
-	src/services/calculator-service/qalculate/qalculate-backend.hpp
-	src/services/calculator-service/qalculate/qalculate-backend.cpp
-)
+if (NOT WIN32)
+	list(APPEND LIBS qalculate)
+	list(APPEND SRCS
+		src/services/calculator-service/qalculate/qalculate-backend.hpp
+		src/services/calculator-service/qalculate/qalculate-backend.cpp
+	)
+endif()
 
 list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources-core.qrc)
 if (TYPESCRIPT_EXTENSIONS)
@@ -782,6 +828,7 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/gnome/gnome-window.cpp
 		src/services/window-manager/gnome/gnome-workspace.cpp
 		src/services/window-manager/gnome/gnome-listener.cpp
+		src/services/window-manager/abstract-wayland-window-manager.cpp
 		src/services/window-manager/wayland/wayland.cpp
 		src/services/window-manager/kde/kde-window-manager.hpp
 		src/services/window-manager/kde/kde-window-manager.cpp
@@ -807,25 +854,24 @@ if (UNIX AND NOT APPLE)
 
     include("Wayland")
 
-    wayland_generate_protocol("wlr-foreign-toplevel-management-unstable-v1")
-	wayland_generate_protocol("ext-data-control-v1")
-	wayland_generate_protocol("kde-blur")
-	wayland_generate_protocol("ext-background-effect-v1")
-	wayland_generate_protocol("keyboard-shortcuts-inhibit-unstable-v1")
-	wayland_generate_protocol("wlr-layer-shell-unstable-v1")
-	wayland_generate_protocol("xdg-shell")
-	wayland_generate_protocol("vicinae-hotkey-v1")
+	# only needed to provide the xdg_* interface symbols referenced by the
+	# generated wlr-layer-shell protocol code
+	wayland_system_protocol(XDG_SHELL_XML "stable/xdg-shell/xdg-shell.xml")
+	wayland_generate_protocol(${XDG_SHELL_XML})
+
+	wayland_system_protocol(EXT_BACKGROUND_EFFECT_XML "staging/ext-background-effect/ext-background-effect-v1.xml")
+	wayland_system_protocol(EXT_DATA_CONTROL_XML "staging/ext-data-control/ext-data-control-v1.xml")
+	wayland_system_protocol(KEYBOARD_SHORTCUTS_INHIBIT_XML "unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml")
+	wayland_system_protocol(XDG_ACTIVATION_XML "staging/xdg-activation/xdg-activation-v1.xml")
 
 	list(APPEND LIBS xkbcommon)
 
 	# Common Wayland support files
 	list(APPEND SRCS
-		src/internal/wayland/globals.cpp
-		src/internal/wayland/display.cpp
-		src/internal/wayland/registry.cpp
-		src/internal/wayland/seat.cpp
+		src/internal/wayland/output-tracker.cpp
+		src/internal/wayland/layer-shell.cpp
+		src/internal/wayland/xdg-activation.cpp
 		src/services/window-material/ext-background-effect-v1-manager.cpp
-		src/services/window-material/kde-background-effect-manager.cpp
 		src/services/shortcut-inhibit/wayland-shortcut-inhibit-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
@@ -886,6 +932,22 @@ endif()
 
 qt_add_executable(${TARGET} ${SRCS})
 
+if (UNIX AND NOT APPLE)
+	qt6_generate_wayland_protocol_client_sources(${TARGET}
+		PRIVATE_CODE
+		FILES
+			${EXT_BACKGROUND_EFFECT_XML}
+			${EXT_DATA_CONTROL_XML}
+			${KEYBOARD_SHORTCUTS_INHIBIT_XML}
+			${XDG_ACTIVATION_XML}
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/vicinae-hotkey-v1.xml
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-foreign-toplevel-management-unstable-v1.xml
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-layer-shell-unstable-v1.xml
+	)
+endif()
+
+vicinae_enable_utf8(${TARGET})
+
 if(APPLE)
 	set(VICINAE_BUNDLE_EXECUTABLE "Vicinae")
 	set(VICINAE_BUNDLE_SHORT_VERSION "${VICINAE_GIT_TAG}")
@@ -914,6 +976,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ListAccessory.qml
 	src/qml/qml/ListAccessoryRow.qml
 	src/qml/qml/SelectableDelegate.qml
+	src/qml/qml/DraggableMouseArea.qml
 	src/qml/qml/SectionHeader.qml
 	src/qml/qml/Footer.qml
 	src/qml/qml/FooterButton.qml
@@ -1034,11 +1097,17 @@ endif()
 if(APPLE)
 	list(APPEND VICINAE_QML_FILES
 		src/qml/qml/LauncherWindowMacOS.qml
-		src/qml/qml/SettingsWindowMacOS.qml
 		src/qml/qml/OnboardingWindowMacOS.qml
 		src/qml/qml/HudWindowMacOS.qml
 		src/qml/qml/CompletionPanelMacOS.qml
 		src/qml/qml/PopupMaterialMacOS.qml
+	)
+endif()
+
+if(WIN32)
+	list(APPEND VICINAE_QML_FILES
+		src/qml/qml/LauncherWindowWindows.qml
+		src/qml/qml/HudWindowWindows.qml
 	)
 endif()
 
@@ -1073,6 +1142,14 @@ if(APPLE)
 	)
 endif()
 
+if(WIN32)
+	list(APPEND VICINAE_QML_SOURCES
+		src/qml/windows-chrome-attached.hpp
+		src/qml/windows-chrome-attached.cpp
+		src/qml/launcher-window-platform.cpp
+	)
+endif()
+
 qt_add_qml_module(${TARGET}
 	URI Vicinae
 	VERSION 1.0
@@ -1092,7 +1169,7 @@ qt6_add_shaders(${TARGET} "sourceblend_shaders"
 		src/qml/shaders/sourceblend.frag
 )
 
-if(Qt6_FOUND)
+if(Qt6_FOUND AND NOT WIN32)
 	qt_import_plugins(${TARGET}
         INCLUDE Qt6::QWaylandIntegrationPlugin
     )
@@ -1131,7 +1208,29 @@ else()
 	message(STATUS "Precompiled headers are disabled")
 endif()
 
-if(NOT APPLE)
+# Include sources excluded from the current platform's target.
+file(GLOB_RECURSE VICINAE_I18N_SOURCES CONFIGURE_DEPENDS
+	${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/*.mm)
+
+qt_add_translations(${TARGET}
+	SOURCE_TARGETS ${TARGET}
+	TS_FILE_BASE vicinae
+	TS_FILES
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_zh_CN.ts
+	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
+	SOURCES ${VICINAE_I18N_SOURCES}
+	LUPDATE_OPTIONS -locations relative -no-obsolete
+	MERGE_QT_TRANSLATIONS
+	QT_TRANSLATION_CATALOGS qtbase qtdeclarative
+)
+
+if(WIN32)
+	include(WindowsDeploy)
+	vicinae_windows_deploy(${TARGET})
+elseif(NOT APPLE)
 	install(TARGETS ${TARGET}
 		RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 	)

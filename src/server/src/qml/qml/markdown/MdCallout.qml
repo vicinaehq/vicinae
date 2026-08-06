@@ -32,15 +32,15 @@ Rectangle {
     readonly property string _label: {
         switch (calloutType) {
         case "caution":
-            return "Caution";
+            return qsTr("Caution");
         case "warning":
-            return "Warning";
+            return qsTr("Warning");
         case "important":
-            return "Important";
+            return qsTr("Important");
         case "tip":
-            return "Tip";
+            return qsTr("Tip");
         default:
-            return "Note";
+            return qsTr("Note");
         }
     }
 

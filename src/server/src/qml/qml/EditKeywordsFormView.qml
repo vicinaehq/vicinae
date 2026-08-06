@@ -16,7 +16,7 @@ Item {
         }
 
         FormField {
-            label: "Keywords"
+            label: qsTr("Keywords")
             info: root.host.infoText
             topAlignLabel: true
 

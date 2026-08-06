@@ -8,7 +8,7 @@ void BrowserTabsViewHost::initialize() {
 
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText("Search, focus and close tabs");
+  setSearchPlaceholderText(tr("Search, focus and close tabs"));
 
   auto browser = context()->services->browserExtension();
   connect(browser, &BrowserExtensionService::tabsChanged, this, &BrowserTabsViewHost::reload);

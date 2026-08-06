@@ -281,6 +281,7 @@
 		<file>firefox.svg</file>
 		<file>flag.svg</file>
 		<file>flask.svg</file>
+		<file>floating-window.svg</file>
 		<file>flutter.svg</file>
 		<file>folder.svg</file>
 		<file>footprints.svg</file>
@@ -293,6 +294,7 @@
 		<file>framework7.svg</file>
 		<file>fsharp.svg</file>
 		<file>full-signal.svg</file>
+		<file>fullscreen.svg</file>
 		<file>game-controller.svg</file>
 		<file>gatling.svg</file>
 		<file>gatsby.svg</file>
@@ -529,6 +531,7 @@
 		<file>option-symbol.svg</file>
 		<file>oracle.svg</file>
 		<file>ory.svg</file>
+		<file>overview.svg</file>
 		<file>p5js.svg</file>
 		<file>packer.svg</file>
 		<file>pandas.svg</file>
@@ -731,6 +734,7 @@
 		<file>swatch.svg</file>
 		<file>swift.svg</file>
 		<file>swiper.svg</file>
+		<file>switch-windows.svg</file>
 		<file>switch.svg</file>
 		<file>symfony.svg</file>
 		<file>syringe.svg</file>

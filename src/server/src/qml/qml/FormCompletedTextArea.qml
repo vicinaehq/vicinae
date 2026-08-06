@@ -67,9 +67,6 @@ FocusScope {
             anchors.leftMargin: 10
             anchors.rightMargin: 10
             acceptedButtons: Qt.NoButton
-            onWheel: wheel => {
-                wheel.accepted = flickable.contentHeight > flickable.height;
-            }
 
             Flickable {
                 id: flickable
@@ -78,6 +75,11 @@ FocusScope {
                 contentHeight: edit.height
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
+
+                ViciWheelHandler {
+                    target: flickable
+                    blockTargetWheel: false
+                }
 
                 ScrollBar.vertical: ViciScrollBar {
                     policy: flickable.contentHeight > flickable.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff

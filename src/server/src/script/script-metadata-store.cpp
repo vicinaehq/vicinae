@@ -37,7 +37,7 @@ std::optional<std::string> ScriptMetadataStore::lastRunData(const std::string &i
 std::optional<std::string> ScriptMetadataStore::syncWithDisk() {
   std::string buf;
 
-  if (const auto error = glz::write_file_json(m_data, m_path.c_str(), buf)) {
+  if (const auto error = glz::write_file_json(m_data, m_path.string(), buf)) {
     return glz::format_error(error);
   }
 
@@ -47,7 +47,7 @@ std::optional<std::string> ScriptMetadataStore::syncWithDisk() {
 std::expected<ScriptMetadataStore::Data, std::string> ScriptMetadataStore::loadDataFromDisk() {
   Data data;
   std::string buf;
-  if (const auto error = glz::read_file_json(data, m_path.c_str(), buf)) {
+  if (const auto error = glz::read_file_json(data, m_path.string(), buf)) {
     return std::unexpected(glz::format_error(error));
   }
   return data;

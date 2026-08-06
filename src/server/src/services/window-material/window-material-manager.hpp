@@ -4,9 +4,8 @@
 #include "services/window-material/null-window-material-backend.hpp"
 #include "services/window-material/window-material-backend.hpp"
 #ifdef Q_OS_LINUX
-#include "internal/wayland/globals.hpp"
+#include <QGuiApplication>
 #include "services/window-material/ext-background-effect-v1-manager.hpp"
-#include "services/window-material/kde-background-effect-manager.hpp"
 #endif
 
 class WindowMaterialManager : NonCopyable {
@@ -27,11 +26,8 @@ public:
 private:
   static std::unique_ptr<WindowMaterialBackend> createBackend() {
 #ifdef Q_OS_LINUX
-    if (auto manager = Wayland::Globals::extBackgroundEffectManager()) {
-      return std::make_unique<ExtBackgroundEffectV1Manager>(manager);
-    }
-    if (auto blur = Wayland::Globals::kwinBlur()) {
-      return std::make_unique<KDE::BackgroundEffectManager>(blur);
+    if (QGuiApplication::platformName() == "wayland") {
+      return std::make_unique<ExtBackgroundEffectV1Manager>();
     }
 #endif
     return std::make_unique<NullWindowMaterialBackend>();

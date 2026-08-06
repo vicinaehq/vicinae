@@ -67,6 +67,10 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
+        ViciWheelHandler {
+            target: flickable
+        }
+
         onContentHeightChanged: {
             if (root._autoScroll) {
                 root._autoScroll = false;
@@ -258,7 +262,7 @@ Item {
 
             ActionItemDelegate {
                 Layout.fillWidth: true
-                title: "Copy"
+                title: qsTr("Copy")
                 iconSource: ""
                 shortcutTokens: []
                 isSubmenu: false
@@ -274,7 +278,7 @@ Item {
 
             ActionItemDelegate {
                 Layout.fillWidth: true
-                title: "Select All"
+                title: qsTr("Select All")
                 iconSource: ""
                 shortcutTokens: []
                 isSubmenu: false

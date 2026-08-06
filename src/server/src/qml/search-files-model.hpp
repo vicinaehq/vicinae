@@ -22,14 +22,13 @@ public:
 
   QString itemId(int i) const override;
 
-  QVariant customData(int i, int role) const override;
-  QHash<int, QByteArray> customRoleNames() const override;
-  QHash<int, QVariant> customRoleDefaults() const override;
+  bool isDraggable(int) const override { return true; }
+  std::unique_ptr<QMimeData> dragMimeData(int i) const override;
 
 protected:
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:

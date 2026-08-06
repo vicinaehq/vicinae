@@ -1,70 +1,59 @@
-#include <cassert>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
-#include <netinet/in.h>
+#include <functional>
 #include <string>
 #include <iostream>
+#include <print>
+#include <thread>
+#include <QCoreApplication>
+#include <QLocalSocket>
 #include <glaze/glaze.hpp>
-#include <sys/poll.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
-#include <filesystem>
 #include "common/common.hpp"
 #include "generated/browser-ipc-client.hpp"
 
-#ifdef NDEBUG
-#define READ_SIZE 8096
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
 #else
-#define READ_SIZE 1
+#include <unistd.h>
 #endif
 
+static constexpr int CONNECT_TIMEOUT_MS = 3000;
+static constexpr uint32_t MAX_MESSAGE_SIZE = 64 * 1024 * 1024;
+
+// Incremental parser for the length-prefixed socket stream (readyRead delivers arbitrary chunks)
 class Frame {
 public:
   using Handler = std::function<void(std::string_view message)>;
 
   void setHandler(Handler fn) { m_fn = std::move(fn); }
 
-  bool readPart(int fd) {
-    const int rc = read(fd, m_buf.data(), m_buf.size());
-
-    if (rc == -1) {
-      std::println(std::cerr, "Failed to read fd {}: {}", fd, strerror(errno));
-      return false;
-    }
-
-    if (rc == 0) { return false; }
-
-    data.append(std::string_view(m_buf.data(), rc));
+  void feed(std::string_view chunk) {
+    m_data.append(chunk);
 
     for (;;) {
-      if (size == 0 && data.size() >= sizeof(size)) {
-        size = *reinterpret_cast<decltype(size) *>(data.data());
-        data.erase(data.begin(), data.begin() + sizeof(size));
+      if (m_size == 0 && m_data.size() >= sizeof(m_size)) {
+        std::memcpy(&m_size, m_data.data(), sizeof(m_size));
+        m_data.erase(0, sizeof(m_size));
       }
 
-      if (size && size <= data.size()) {
-        const std::string_view view(data);
-        if (m_fn) m_fn(view.substr(0, size));
-        data = view.substr(size);
-        size = 0;
+      if (m_size && m_size <= m_data.size()) {
+        if (m_fn) m_fn(std::string_view(m_data).substr(0, m_size));
+        m_data.erase(0, m_size);
+        m_size = 0;
         continue;
       }
 
       break;
     }
-
-    return true;
   }
 
 private:
-  std::array<char, READ_SIZE> m_buf;
-  std::string data;
-  uint32_t size = 0;
+  std::string m_data;
+  uint32_t m_size = 0;
   Handler m_fn;
 };
-
-static std::filesystem::path socketPath() { return vicinae::serverSocketPath(); }
 
 static void sendToExtension(std::string_view message) {
   uint32_t size = message.size();
@@ -73,18 +62,18 @@ static void sendToExtension(std::string_view message) {
   std::cout.flush();
 }
 
-class SocketTransport : public ipc::AbstractTransport {
+class LocalSocketTransport : public ipc::AbstractTransport {
 public:
-  explicit SocketTransport(int fd) : m_fd(fd) {}
+  explicit LocalSocketTransport(QLocalSocket &socket) : m_socket(socket) {}
 
   void send(std::string_view data) override {
-    uint32_t size = data.size();
-    ::send(m_fd, &size, sizeof(size), 0);
-    ::send(m_fd, data.data(), data.size(), 0);
+    const uint32_t size = data.size();
+    m_socket.write(reinterpret_cast<const char *>(&size), sizeof(size));
+    m_socket.write(data.data(), data.size());
   }
 
 private:
-  int m_fd;
+  QLocalSocket &m_socket;
 };
 
 struct NativeNotification {
@@ -98,8 +87,29 @@ struct ExtensionMessage {
   glz::raw_json data;
 };
 
-static int entrypoint() {
-  if (isatty(STDIN_FILENO)) {
+static bool readExact(char *buf, size_t size) {
+  size_t off = 0;
+
+  while (off < size) {
+    const size_t rc = std::fread(buf + off, 1, size - off, stdin);
+    if (rc == 0) return false;
+    off += rc;
+  }
+
+  return true;
+}
+
+int main(int ac, char **av) {
+#ifdef _WIN32
+  // CRLF translation corrupts the length-prefixed framing
+  _setmode(_fileno(stdin), _O_BINARY);
+  _setmode(_fileno(stdout), _O_BINARY);
+  const bool tty = _isatty(_fileno(stdin));
+#else
+  const bool tty = isatty(STDIN_FILENO);
+#endif
+
+  if (tty) {
     std::println(
         std::cerr,
         "This executable is meant to be started by the vicinae browser extension using native host messaging "
@@ -108,24 +118,18 @@ static int entrypoint() {
     return 1;
   }
 
-  auto path = socketPath().string();
-  int const fd = socket(AF_UNIX, SOCK_STREAM, 0);
+  // Chrome passes extra arguments (--parent-window=, the extension origin); ignore them
+  QCoreApplication app(ac, av);
 
-  if (fd == -1) {
-    std::println(std::cerr, "Failed to create socket: {}", strerror(errno));
+  QLocalSocket socket;
+  socket.connectToServer(QString::fromStdString(vicinae::serverSocketName()));
+
+  if (!socket.waitForConnected(CONNECT_TIMEOUT_MS)) {
+    std::println(std::cerr, "Failed to connect to vicinae server: {}", socket.errorString().toStdString());
     return 1;
   }
 
-  struct sockaddr_un addr{.sun_family = AF_UNIX};
-  strncpy(addr.sun_path, path.data(), path.size());
-
-  if (::connect(fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) == -1) {
-    ::close(fd);
-    std::println(std::cerr, "Failed to connect to {}: {}", path, strerror(errno));
-    return 1;
-  }
-
-  SocketTransport transport(fd);
+  LocalSocketTransport transport(socket);
   ipc::RpcTransport rpc(transport);
   ipc::Client client(rpc);
 
@@ -153,9 +157,7 @@ static int entrypoint() {
       [&](const ipc::CloseTabRequest &req) { forwardNotification("browser/close-tab", req); });
 
   // Handle messages from the browser extension (via stdin native messaging)
-  Frame extensionFrame;
-
-  extensionFrame.setHandler([&](std::string_view message) {
+  auto handleExtensionMessage = [&](std::string_view message) {
     std::println(std::cerr, "got message from extension: {}", message);
 
     ExtensionMessage msg;
@@ -197,7 +199,7 @@ static int entrypoint() {
         if (!res) std::println(std::cerr, "browserTabsChanged failed: {}", res.error());
       });
     }
-  });
+  };
 
   // Listen for incoming events from vicinae server
   Frame vicinaeFrame;
@@ -209,51 +211,46 @@ static int entrypoint() {
     }
   });
 
-  auto fds = std::array{pollfd(STDIN_FILENO, POLLIN), pollfd(fd, POLLIN)};
+  QObject::connect(&socket, &QLocalSocket::readyRead, [&] {
+    const QByteArray data = socket.readAll();
+    vicinaeFrame.feed(std::string_view(data.constData(), static_cast<size_t>(data.size())));
+  });
+
+  QObject::connect(&socket, &QLocalSocket::disconnected, [] {
+    std::println(std::cerr, "The connection to the vicinae daemon broke, exiting...");
+    QCoreApplication::quit();
+  });
+
+  // stdin cannot be watched asynchronously on Windows (anonymous pipe, no overlapped I/O),
+  // so a blocking reader thread is used on all platforms
+  std::thread([&app, &handleExtensionMessage] {
+    for (;;) {
+      uint32_t size = 0;
+      if (!readExact(reinterpret_cast<char *>(&size), sizeof(size))) break;
+      if (size == 0 || size > MAX_MESSAGE_SIZE) break;
+
+      std::string body(size, '\0');
+      if (!readExact(body.data(), body.size())) break;
+
+      QMetaObject::invokeMethod(
+          &app, [&handleExtensionMessage, msg = std::move(body)] { handleExtensionMessage(msg); },
+          Qt::QueuedConnection);
+    }
+
+    QMetaObject::invokeMethod(
+        &app,
+        [] {
+          std::println(std::cerr, "extension input closed, exiting...");
+          QCoreApplication::quit();
+        },
+        Qt::QueuedConnection);
+  }).detach();
 
   std::println(std::cerr, "Listening for messages...");
 
-  while (true) {
-    const int ready = poll(fds.data(), fds.size(), -1);
+  const int rc = app.exec();
 
-    if (ready == -1) {
-      std::println(std::cerr, "poll() failed: {} (exiting)", strerror(errno));
-      break;
-    }
-
-    if (fds[0].revents & (POLLHUP | POLLERR)) {
-      std::println(std::cerr, "extension input closed (hangup/error), exiting...");
-      break;
-    }
-
-    if (fds[1].revents & (POLLHUP | POLLERR)) {
-      std::println(std::cerr, "vicinae connection closed (hangup/error), exiting...");
-      break;
-    }
-
-    if (fds[0].revents & POLLIN) {
-      if (!extensionFrame.readPart(fds[0].fd)) {
-        std::println(std::cerr, "extension input closed, exiting...");
-        break;
-      }
-    }
-
-    if (fds[1].revents & POLLIN) {
-      if (!vicinaeFrame.readPart(fds[1].fd)) {
-        std::println(std::cerr, "The connection to the vicinae daemon broke, exiting...");
-        break;
-      }
-    }
-  }
-
-  ::close(fd);
   std::println(std::cerr, "Native host is exiting.");
-
-  return 0;
-}
-
-int main(int ac, char **av) {
-  try {
-    return entrypoint();
-  } catch (...) { return 1; }
+  // the reader thread may still be blocked in fread; skip teardown it could race with
+  std::_Exit(rc);
 }

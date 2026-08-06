@@ -10,8 +10,10 @@
 #ifdef Q_OS_LINUX
 #include "internal/icon-theme-db/icon-theme-db.hpp"
 #endif
+#include <QDirIterator>
 #include <QGuiApplication>
 #include <QIcon>
+#include <QLocale>
 
 GeneralSettingsModel::GeneralSettingsModel(QObject *parent) : QObject(parent) {
   connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged, this,
@@ -54,6 +56,9 @@ bool GeneralSettingsModel::activateOnSingleClick() const { return cfg().activate
 void GeneralSettingsModel::setActivateOnSingleClick(bool v) {
   cfgManager().mergeWithUser({.activateOnSingleClick = v});
 }
+
+bool GeneralSettingsModel::wrapNavigation() const { return cfg().wrapNavigation; }
+void GeneralSettingsModel::setWrapNavigation(bool v) { cfgManager().mergeWithUser({.wrapNavigation = v}); }
 
 bool GeneralSettingsModel::encryptSensitiveData() const { return cfg().encryptSensitiveData; }
 void GeneralSettingsModel::setEncryptSensitiveData(bool v) {
@@ -168,20 +173,18 @@ static QVariantList wrapSection(const QString &title, const QVariantList &items)
 
 QVariantList GeneralSettingsModel::windowMaterialItems() const {
   QVariantList items;
-  items.append(makeDropdownItem(QStringLiteral("none"), QStringLiteral("None")));
-  items.append(makeDropdownItem(QStringLiteral("blur"), QStringLiteral("Blurred")));
+  items.append(makeDropdownItem(QStringLiteral("none"), tr("None")));
+  items.append(makeDropdownItem(QStringLiteral("blur"), tr("Blurred")));
   if (platform::supports(platform::Capability::LiquidGlass))
-    items.append(makeDropdownItem(QStringLiteral("liquid_glass"), QStringLiteral("Liquid Glass")));
-  return wrapSection(QStringLiteral("Window material"), items);
+    items.append(makeDropdownItem(QStringLiteral("liquid_glass"), tr("Liquid Glass")));
+  return wrapSection(tr("Window material"), items);
 }
 
 QVariant GeneralSettingsModel::currentWindowMaterial() const {
   auto id = QString::fromStdString(
       cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass),
                                             platform::supports(platform::Capability::WindowMaterial)));
-  QString name = id == "liquid_glass" ? QStringLiteral("Liquid Glass")
-                 : id == "none"       ? QStringLiteral("None")
-                                      : QStringLiteral("Blurred");
+  QString name = id == "liquid_glass" ? tr("Liquid Glass") : id == "none" ? tr("None") : tr("Blurred");
   return makeDropdownItem(id, name);
 }
 
@@ -194,10 +197,10 @@ QVariantList GeneralSettingsModel::themeItems() const {
   QVariantList items;
   for (const auto &theme : ThemeService::instance().themes()) {
     auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
-                                 : ImageURL::builtin("vicinae");
+                                 : ImageURL::builtin(BuiltinIcon::Vicinae);
     items.append(makeDropdownItem(theme->id(), theme->name(), qml::imageSourceFor(iconUrl)));
   }
-  return wrapSection(QStringLiteral("Themes"), items);
+  return wrapSection(tr("Themes"), items);
 }
 
 QVariant GeneralSettingsModel::currentTheme() const {
@@ -205,7 +208,7 @@ QVariant GeneralSettingsModel::currentTheme() const {
   auto *theme = ThemeService::instance().findTheme(id);
   if (!theme) return makeDropdownItem(id, id);
   auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
-                               : ImageURL::builtin("vicinae");
+                               : ImageURL::builtin(BuiltinIcon::Vicinae);
   return makeDropdownItem(id, theme->name(), qml::imageSourceFor(iconUrl));
 }
 
@@ -215,7 +218,7 @@ QVariantList GeneralSettingsModel::fontItems() const {
     for (const auto &family : ServiceRegistry::instance()->fontService()->families()) {
       items.append(makeDropdownItem(family, family));
     }
-    m_fontItems = wrapSection(QStringLiteral("Fonts"), items);
+    m_fontItems = wrapSection(tr("Fonts"), items);
   }
   return m_fontItems;
 }
@@ -234,7 +237,7 @@ QVariantList GeneralSettingsModel::iconThemeItems() const {
     items.append(makeDropdownItem(theme.name, theme.name));
   }
 #endif
-  return wrapSection(QStringLiteral("Icon Themes"), items);
+  return wrapSection(tr("Icon Themes"), items);
 }
 
 QVariant GeneralSettingsModel::currentIconTheme() const {
@@ -249,7 +252,7 @@ QVariantList GeneralSettingsModel::faviconServiceItems() const {
     auto iconSource = qml::imageSourceFor(svc.icon);
     items.append(makeDropdownItem(svc.id, svc.name, iconSource));
   }
-  return wrapSection(QStringLiteral("Favicon Services"), items);
+  return wrapSection(tr("Favicon Services"), items);
 }
 
 QVariant GeneralSettingsModel::currentFaviconService() const {
@@ -262,15 +265,17 @@ QVariant GeneralSettingsModel::currentFaviconService() const {
 
 QVariantList GeneralSettingsModel::keybindingSchemeItems() const {
   QVariantList items;
-  items.append(makeDropdownItem(QStringLiteral("default"), QStringLiteral("Default")));
+  items.append(makeDropdownItem(QStringLiteral("default"), tr("Default")));
+  items.append(makeDropdownItem(QStringLiteral("vim"), QStringLiteral("Vim")));
   items.append(makeDropdownItem(QStringLiteral("emacs"), QStringLiteral("Emacs")));
-  return wrapSection(QStringLiteral("Keybinding Schemes"), items);
+  return wrapSection(tr("Keybinding Schemes"), items);
 }
 
 QVariant GeneralSettingsModel::currentKeybindingScheme() const {
   auto id = QString::fromStdString(cfg().keybinding);
-  auto name = id == "emacs" ? QStringLiteral("Emacs") : QStringLiteral("Default");
-  return makeDropdownItem(id, name);
+  if (id == "vim") return makeDropdownItem(id, QStringLiteral("Vim"));
+  if (id == "emacs") return makeDropdownItem(id, QStringLiteral("Emacs"));
+  return makeDropdownItem(id, tr("Default"));
 }
 
 void GeneralSettingsModel::selectTheme(const QString &id) {
@@ -292,6 +297,49 @@ void GeneralSettingsModel::selectFaviconService(const QString &id) {
 
 void GeneralSettingsModel::selectKeybindingScheme(const QString &id) {
   cfgManager().mergeWithUser({.keybinding = id.toStdString()});
+}
+
+static QString languageDisplayName(const QString &code) {
+  QString name = QLocale(code).nativeLanguageName();
+  if (name.isEmpty()) return code;
+  name[0] = name.at(0).toUpper();
+  return name;
+}
+
+QVariantList GeneralSettingsModel::languageItems() const {
+  QStringList codes;
+  QDirIterator it(QStringLiteral(":/i18n"), {QStringLiteral("vicinae_*.qm")});
+  while (it.hasNext()) {
+    it.next();
+    codes.append(it.fileInfo().baseName().sliced(QStringLiteral("vicinae_").size()));
+  }
+  codes.sort();
+
+  QVariantList items;
+  items.append(makeDropdownItem(QStringLiteral("system"), tr("System default")));
+  for (const auto &code : codes) {
+    items.append(makeDropdownItem(code, languageDisplayName(code)));
+  }
+  return wrapSection(tr("Languages"), items);
+}
+
+QVariant GeneralSettingsModel::currentLanguage() const {
+  const auto &language = cfg().language;
+  if (!language || *language == "system") {
+    return makeDropdownItem(QStringLiteral("system"), tr("System default"));
+  }
+  auto code = QString::fromStdString(*language);
+  return makeDropdownItem(code, languageDisplayName(code));
+}
+
+void GeneralSettingsModel::selectLanguage(const QString &id) {
+  cfgManager().updateUser([&](config::Partial<config::ConfigValue> &value) {
+    if (id == QStringLiteral("system")) {
+      value.language = "system";
+    } else {
+      value.language = id.toStdString();
+    }
+  });
 }
 
 QString GeneralSettingsModel::toggleShortcut() const {

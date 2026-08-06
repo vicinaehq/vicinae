@@ -2,6 +2,8 @@
 
 #ifdef Q_OS_MACOS
 #include "services/app-runtime/macos/mac-app-runtime.hpp"
+#elif defined(Q_OS_WIN)
+#include "services/app-runtime/windows/win-app-runtime.hpp"
 #else
 #include "services/app-runtime/linux/linux-app-runtime.hpp"
 #endif
@@ -26,6 +28,8 @@ std::unique_ptr<AbstractAppRuntime> AppRuntime::createProvider(WindowManager &wm
 #ifdef Q_OS_MACOS
   (void)wm;
   return std::make_unique<MacAppRuntime>(appService);
+#elif defined(Q_OS_WIN)
+  return std::make_unique<WindowsAppRuntime>(wm, appService);
 #else
   return std::make_unique<LinuxAppRuntime>(wm, appService);
 #endif

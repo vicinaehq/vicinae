@@ -1,4 +1,5 @@
 import * as net from "node:net";
+import * as os from "node:os";
 import * as path from "node:path";
 import { Client, type PingResponse, RpcTransport } from "../proto/ipc.js";
 
@@ -14,8 +15,11 @@ const runtimeDir = (): string => {
 	return path.join(process.env.XDG_RUNTIME_DIR ?? "/tmp", "vicinae");
 };
 
-export const serverSocketPath = (): string =>
-	path.join(runtimeDir(), "vicinae.sock");
+export const serverSocketPath = (): string => {
+	if (process.platform === "win32")
+		return `\\\\.\\pipe\\vicinae-${os.userInfo().username}`;
+	return path.join(runtimeDir(), "vicinae.sock");
+};
 
 export class VicinaeClient {
 	constructor(private readonly options: VicinaeClientOptions = {}) {}

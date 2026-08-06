@@ -22,7 +22,7 @@ Item {
     property real detailRatio: 0.65
     property bool detailVisible: false
 
-    property string emptyTitle: "No results"
+    property string emptyTitle: qsTr("No results")
     property string emptyDescription: ""
     property var emptyIcon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
     property Component emptyViewComponent: null
@@ -47,6 +47,34 @@ Item {
 
     signal itemActivated(int index)
     signal itemSelected(int index)
+
+    // Infinite-scroll pagination: consumers opt in by setting canLoadMore.
+    // endReached fires at most once per content growth cycle.
+    signal endReached
+    property bool canLoadMore: false
+    property real endReachedThreshold: root.height * 1.5
+    property bool _endArmed: true
+
+    onCanLoadMoreChanged: {
+        if (canLoadMore) {
+            _endArmed = true;
+            Qt.callLater(_maybeFireEnd);
+        }
+    }
+
+    function _maybeFireEnd() {
+        if (!root.canLoadMore || !root._endArmed)
+            return;
+        if (listView.contentHeight <= 0)
+            return;
+        const underfilled = listView.contentHeight <= listView.height;
+        if (!underfilled && listView.atYBeginning)
+            return;
+        if (listView.contentY + listView.height >= listView.contentHeight - root.endReachedThreshold) {
+            root._endArmed = false;
+            root.endReached();
+        }
+    }
 
     function sectionScrollTarget(index, direction) {
         if (!root.listModel || typeof root.listModel.scrollTargetIndex !== "function")
@@ -142,6 +170,15 @@ Item {
         }
     }
 
+    Connections {
+        target: root.listModel
+        function onModelReset() {
+            root._endArmed = true;
+            listView._lastContentHeight = 0;
+            Qt.callLater(root._maybeFireEnd);
+        }
+    }
+
     HoverResetOnModelChange {
         target: root.listModel
     }
@@ -176,11 +213,22 @@ Item {
             clip: true
             reuseItems: true
             cacheBuffer: 200
+            interactive: false
             boundsBehavior: Flickable.StopAtBounds
             highlightMoveDuration: 0
             currentIndex: -1
             topMargin: 4
             bottomMargin: 4
+
+            property real _lastContentHeight: 0
+
+            onContentYChanged: root._maybeFireEnd()
+            onContentHeightChanged: {
+                if (contentHeight > _lastContentHeight)
+                    root._endArmed = true;
+                _lastContentHeight = contentHeight;
+                root._maybeFireEnd();
+            }
 
             ViciWheelHandler {
                 target: listView

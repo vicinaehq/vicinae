@@ -1,5 +1,6 @@
 #pragma once
 #include "generated/tsapi.hpp"
+#include "navigation-controller.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -9,8 +10,8 @@ class ExtWindowManagementService : public tsapi::AbstractWindowManagement {
 
 public:
   ExtWindowManagementService(tsapi::RpcTransport &transport, WindowManager &wm, AppService &app,
-                             AppRuntime &runtime)
-      : AbstractWindowManagement(transport), m_wm(wm), m_app(app), m_runtime(runtime) {}
+                             AppRuntime &runtime, NavigationController &nav)
+      : AbstractWindowManagement(transport), m_wm(wm), m_app(app), m_runtime(runtime), m_nav(nav) {}
 
   tsapi::Result<bool>::Future focusWindow(std::string winId) override {
     auto win = m_wm.findWindowById(QString::fromStdString(winId));
@@ -50,7 +51,7 @@ public:
         .name = active->name().toStdString(),
         .active = true,
         .fullscreen = active->hasFullScreen(),
-        .monitor = active->monitor().toStdString(),
+        .monitor = active->monitor().transform([](const QString &m) { return m.toStdString(); }),
     });
   }
 
@@ -76,7 +77,7 @@ public:
   }
 
   tsapi::Result<std::vector<tsapi::Screen>>::Future getScreens() override {
-    auto screens = m_wm.provider()->listScreensSync();
+    auto screens = m_wm.provider()->listScreensSync(m_nav.window());
     std::vector<tsapi::Screen> result;
     result.reserve(screens.size());
 
@@ -89,6 +90,9 @@ public:
                      .y = screen.bounds.y(),
                      .width = screen.bounds.width(),
                      .height = screen.bounds.height()},
+          .physicalResolution = {.width = screen.physicalResolution.width(),
+                                 .height = screen.physicalResolution.height()},
+          .active = screen.active,
       };
       if (screen.serial) sc.serial = screen.serial->toStdString();
       result.emplace_back(std::move(sc));
@@ -110,7 +114,7 @@ public:
           .name = workspace->name().toStdString(),
           .active = isActive,
           .fullscreen = workspace->hasFullScreen(),
-          .monitor = workspace->monitor().toStdString(),
+          .monitor = workspace->monitor().transform([](const QString &m) { return m.toStdString(); }),
       });
     }
 
@@ -147,11 +151,12 @@ private:
   static tsapi::Application toTsapiApp(const ::AbstractApplication &app) {
     return {.id = app.id().toStdString(),
             .name = app.displayName().toStdString(),
-            .icon = app.iconUrl().name().toStdString(),
+            .icon = app.iconUrl().toString().toStdString(),
             .path = app.path().string()};
   }
 
   WindowManager &m_wm;
   AppService &m_app;
   AppRuntime &m_runtime;
+  NavigationController &m_nav;
 };

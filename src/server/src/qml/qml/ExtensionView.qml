@@ -89,11 +89,14 @@ Item {
                 anchors.fill: parent
                 listModel: root.host.contentModel
                 model: root.host.contentModel
+                canLoadMore: root.host.hasMorePages
+                onEndReached: root.host.onLoadMore()
+
                 autoWireModel: true
                 selectFirstOnReset: root.host.selectFirstOnReset
                 suppressEmpty: root.host.suppressEmptyView
 
-                emptyTitle: root.host.contentModel.emptyTitle || "No results"
+                emptyTitle: root.host.contentModel.emptyTitle || qsTr("No results")
                 emptyDescription: root.host.contentModel.emptyDescription || ""
                 emptyIcon: root.host.contentModel.emptyIcon?.valid ? root.host.contentModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 
@@ -112,6 +115,7 @@ Item {
                     required property string subtitle
                     required property string iconSource
                     required property var itemAccessory
+                    required property bool isDraggable
 
                     sourceComponent: isSection ? sectionComponent : itemComponent
 
@@ -134,8 +138,13 @@ Item {
                             itemIsActive: false
                             itemAccessory: delegateLoader.itemAccessory
                             selected: listView.currentIndex === delegateLoader.index
+                            draggable: delegateLoader.isDraggable
                             onClicked: listView.currentIndex = delegateLoader.index
                             onActivated: listView.itemActivated(delegateLoader.index)
+                            onDragRequested: function (source) {
+                                listView.currentIndex = delegateLoader.index;
+                                root.host.contentModel.startDrag(delegateLoader.index, source);
+                            }
                         }
                     }
                 }
@@ -163,6 +172,8 @@ Item {
             anchors.fill: parent
             cmdModel: root.host.contentModel
             suppressEmpty: root.host.suppressEmptyView
+            canLoadMore: root.host.hasMorePages
+            onEndReached: root.host.onLoadMore()
         }
     }
 

@@ -3,6 +3,7 @@
 #include <chrono>
 #include <utility>
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "services/clipboard/clipboard-mime.hpp"
 #include "view-utils.hpp"
 #include "ui/image/url.hpp"
 
@@ -47,20 +48,28 @@ void ExtensionListSection::onSelected(int i) {
   if (m_onItemSelected) m_onItemSelected(&itemAt(i));
 }
 
+QString ExtensionListSection::itemId(int i) const { return QString::fromStdString(itemAt(i).id); }
+
 QString ExtensionListSection::itemTitle(int i) const { return QString::fromStdString(itemAt(i).title); }
 
 QString ExtensionListSection::itemSubtitle(int i) const { return QString::fromStdString(itemAt(i).subtitle); }
 
-QString ExtensionListSection::itemIconSource(int i) const {
+std::optional<ImageURL> ExtensionListSection::itemIcon(int i) const {
   const auto &item = itemAt(i);
-  if (item.icon) return imageSourceFor(ImageURL(*item.icon));
-  return {};
+  return item.icon ? std::optional(ImageURL(*item.icon)) : std::nullopt;
 }
 
 QVariantList ExtensionListSection::itemAccessories(int i) const {
   const auto &item = itemAt(i);
   if (!item.accessories.empty()) return qml::accessoriesToVariantList(item.accessories);
   return {};
+}
+
+bool ExtensionListSection::isDraggable(int i) const { return itemAt(i).dragContent.has_value(); }
+
+std::unique_ptr<QMimeData> ExtensionListSection::dragMimeData(int i) const {
+  const auto &content = itemAt(i).dragContent;
+  return content ? Clipboard::mimeDataForContent(*content) : nullptr;
 }
 
 std::unique_ptr<ActionPanelState> ExtensionListSection::actionPanel(int i) const {
@@ -135,9 +144,9 @@ void ExtensionListModel::setExtensionData(const ListModel &model, bool resetSele
     refreshActionPanel();
   }
 
-  refreshCurrentDetail();
-
   if (wasShowingDetail != m_model.isShowingDetail) emit isShowingDetailChanged();
+
+  refreshCurrentDetail();
 
   emit emptyViewChanged();
 }
@@ -184,12 +193,12 @@ void ExtensionListModel::setFilter(const QString &text) {
 }
 
 QString ExtensionListModel::searchPlaceholder() const {
-  return m_placeholder.isEmpty() ? QStringLiteral("Search...") : m_placeholder;
+  return m_placeholder.isEmpty() ? tr("Search...") : m_placeholder;
 }
 
 QString ExtensionListModel::emptyTitle() const {
   if (m_model.emptyView) return QString::fromStdString(m_model.emptyView->title);
-  return QStringLiteral("No results");
+  return tr("No results");
 }
 
 QString ExtensionListModel::emptyDescription() const {

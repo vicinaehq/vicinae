@@ -21,7 +21,9 @@ QString CalcLiveSection::itemTitle(int) const {
   return m_result->question.text + QStringLiteral(" = ") + m_result->answer.text;
 }
 
-QString CalcLiveSection::itemIconSource(int) const { return imageSourceFor(ImageURL::builtin("calculator")); }
+std::optional<ImageURL> CalcLiveSection::itemIcon(int) const {
+  return ImageURL::builtin(BuiltinIcon::Calculator);
+}
 
 QVariantList CalcLiveSection::itemAccessories(int) const { return {}; }
 
@@ -80,7 +82,7 @@ void CalcHistoryViewHost::initialize() {
 
   m_calc = context()->services->calculatorService();
 
-  setSearchPlaceholderText("Search past calculations...");
+  setSearchPlaceholderText(tr("Search past calculations..."));
 
   m_calculatorDebounce.setInterval(200ms);
   m_calculatorDebounce.setSingleShot(true);

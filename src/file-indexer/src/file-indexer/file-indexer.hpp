@@ -41,6 +41,7 @@ public:
   pendingFullScanRootsFor(const std::vector<std::filesystem::path> &roots,
                           const std::vector<std::filesystem::path> &exclusions);
 
+  static constexpr std::chrono::days SCAN_HISTORY_MAX_AGE{7};
   static constexpr std::chrono::minutes VOCAB_REBUILD_MIN_INTERVAL{10};
   std::mutex m_vocabRebuildMtx;
   std::chrono::steady_clock::time_point m_lastVocabRebuild{};

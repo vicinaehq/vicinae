@@ -11,10 +11,11 @@ QString ManageSnippetsSection::displayTitle(const snippet::SerializedSnippet &it
   return QString::fromStdString(item.name);
 }
 
-QString ManageSnippetsSection::displayIconSource(const snippet::SerializedSnippet &item) const {
-  const auto visitor =
-      overloads{[this](const snippet::TextSnippet &) { return imageSourceFor(BuiltinIcon::TextInput); },
-                [this](const auto &) { return imageSourceFor(BuiltinIcon::BlankDocument); }};
+std::optional<ImageURL> ManageSnippetsSection::displayIcon(const snippet::SerializedSnippet &item) const {
+  const auto visitor = overloads{
+      [](const snippet::TextSnippet &) { return ImageURL(BuiltinIcon::TextInput); },
+      [](const auto &) { return ImageURL(BuiltinIcon::BlankDocument); },
+  };
   return std::visit(visitor, item.data);
 }
 
@@ -29,27 +30,27 @@ ManageSnippetsSection::buildActionPanel(const snippet::SerializedSnippet &item) 
   auto section = panel->createSection();
 
   auto copy =
-      new StaticAction("Copy to clipboard", BuiltinIcon::CopyClipboard, [item](ApplicationContext *ctx) {
+      new StaticAction(tr("Copy to clipboard"), BuiltinIcon::CopyClipboard, [item](ApplicationContext *ctx) {
         auto clipman = ctx->services->clipman();
         if (SnippetCopy::copyToClipboard(item, ctx->navigation->completionValues(), *clipman)) {
-          ctx->navigation->showHud("Copied to clipboard");
+          ctx->navigation->showHud(tr("Copied to clipboard"));
         } else {
-          ctx->services->toastService()->failure("Failed to copy to clipboard");
+          ctx->services->toastService()->failure(tr("Failed to copy to clipboard"));
         }
       });
 
-  auto edit = new StaticAction("Edit snippet", BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {
+  auto edit = new StaticAction(tr("Edit snippet"), BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {
     ctx->navigation->pushView(new SnippetFormViewHost(item, SnippetFormViewHost::Mode::Edit));
   });
 
   auto duplicate =
-      new StaticAction("Duplicate snippet", BuiltinIcon::Duplicate, [item](ApplicationContext *ctx) {
+      new StaticAction(tr("Duplicate snippet"), BuiltinIcon::Duplicate, [item](ApplicationContext *ctx) {
         ctx->navigation->pushView(new SnippetFormViewHost(item, SnippetFormViewHost::Mode::Duplicate));
       });
 
-  auto remove = new StaticAction("Remove snippet", BuiltinIcon::Trash, [item](ApplicationContext *ctx) {
+  auto remove = new StaticAction(tr("Remove snippet"), BuiltinIcon::Trash, [item](ApplicationContext *ctx) {
     if (const auto result = ctx->services->snippetService()->removeSnippet(item.id); !result) {
-      ctx->services->toastService()->failure("Failed to remove snippet");
+      ctx->services->toastService()->failure(tr("Failed to remove snippet"));
     }
   });
 

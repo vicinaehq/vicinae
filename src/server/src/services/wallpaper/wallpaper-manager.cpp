@@ -12,6 +12,9 @@
 #ifdef Q_OS_MACOS
 #include "macos/mac-wallpaper-backend.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "windows/windows-wallpaper-backend.hpp"
+#endif
 
 std::vector<std::unique_ptr<AbstractWallpaperBackend>> WallpaperManager::createCandidates() {
   // XXX - all new wallpaper backends must be added to this vector.
@@ -29,6 +32,9 @@ std::vector<std::unique_ptr<AbstractWallpaperBackend>> WallpaperManager::createC
 #endif
 #ifdef Q_OS_MACOS
   candidates.emplace_back(std::make_unique<MacWallpaperBackend>());
+#endif
+#ifdef Q_OS_WIN
+  candidates.emplace_back(std::make_unique<WindowsWallpaperBackend>());
 #endif
 
   return candidates;
@@ -58,11 +64,12 @@ QFuture<std::expected<void, std::string>> WallpaperManager::setWallpaper(const W
 
   auto *backend = this->backend();
 
-  if (!backend) return makeError("Setting the wallpaper is not supported in the current environment");
+  if (!backend)
+    return makeError(tr("Setting the wallpaper is not supported in the current environment").toStdString());
 
   std::error_code ec;
   if (!std::filesystem::is_regular_file(request.path, ec)) {
-    return makeError("No such file: " + request.path);
+    return makeError(tr("No such file: %1").arg(QString::fromStdString(request.path)).toStdString());
   }
 
   return backend->setWallpaper(request);

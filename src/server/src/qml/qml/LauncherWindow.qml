@@ -26,7 +26,7 @@ Window {
     maximumWidth: _w + 2 * shadowPadding
     minimumHeight: _h + 2 * shadowPadding
     maximumHeight: _h + 2 * shadowPadding
-    title: "Vicinae Launcher"
+    title: qsTr("Vicinae Launcher")
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
     visible: false
@@ -57,22 +57,18 @@ Window {
         anchors.fill: parent
         visible: root.shadowEnabled && !root.nativeChrome
 
-        Rectangle {
+        RectangularShadow {
             x: root.shadowPadding
             y: root.shadowPadding
             width: _w
             height: _contentH
             radius: root.cornerRadius
-            color: "black"
+            blur: root.shadowPadding
+            color: Qt.rgba(0, 0, 0, 0.3)
         }
 
         layer.enabled: root.shadowEnabled && !root.nativeChrome
         layer.effect: MultiEffect {
-            autoPaddingEnabled: false
-            shadowEnabled: true
-            shadowBlur: 0.5
-            shadowVerticalOffset: 3
-            shadowColor: Qt.rgba(0, 0, 0, 0.3)
             maskEnabled: true
             maskInverted: true
             maskSource: shadowMask

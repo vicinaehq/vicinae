@@ -2,6 +2,7 @@
 #include "argument.hpp"
 #include "command-controller.hpp"
 #include "common.hpp"
+#include "ui/action-pannel/action.hpp"
 #include <QObject>
 #include <vector>
 
@@ -44,6 +45,7 @@ public:
   virtual void argumentValuesChanged(const std::vector<std::pair<QString, QString>> &arguments) {}
 
   virtual void textChanged(const QString &text);
+  virtual void beforeActionExecuted(const AbstractAction *action) {}
 
   QString navigationTitle() const;
 

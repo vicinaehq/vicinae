@@ -2,6 +2,7 @@
 #include "bridge-view.hpp"
 #include "font-grid-model.hpp"
 #include "view-scope.hpp"
+#include <QCoreApplication>
 #include <QStringList>
 
 class FontBrowserViewHost : public ViewHostBase {
@@ -34,8 +35,10 @@ public:
   void loadInitialData() override { m_model.setFilter(searchText()); }
 
   QStringList categoryFilterOptions() const {
-    QStringList options{QStringLiteral("All")};
-    options << m_model.categoryNames();
+    QStringList options{tr("All")};
+    for (const auto &name : m_model.categoryNames()) {
+      options << QCoreApplication::translate("font-categories", qPrintable(name));
+    }
     return options;
   }
 
@@ -47,16 +50,22 @@ public:
     emit currentCategoryFilterChanged();
 
     m_model.setCategoryFilter(index <= 0 ? std::nullopt : std::optional<int>(index - 1));
-    command()->storage().setItem("fontCategory", categoryFilterOptions().value(index));
+    command()->storage().setItem("fontCategory", categoryFilterKeys().value(index));
 
     if (!searchText().isEmpty()) m_model.setFilter(searchText());
   }
 
 private:
+  QStringList categoryFilterKeys() const {
+    QStringList keys{QStringLiteral("All")};
+    keys << m_model.categoryNames();
+    return keys;
+  }
+
   void restoreCategoryFilter() {
     const auto saved = command()->storage().getItem("fontCategory");
     if (saved.isUndefined() || saved.isNull()) return;
-    const int index = categoryFilterOptions().indexOf(saved.toString());
+    const int index = categoryFilterKeys().indexOf(saved.toString());
     if (index > 0) setCategoryFilter(index);
   }
 

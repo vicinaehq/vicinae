@@ -1,8 +1,12 @@
 .cache
 /build
+/build-*
+.vscode
+CMakeUserPresets.json
 .tmp
 extension-manager/runtime/node_modules
 /cmake-build-debug
+/CMakeFiles
 /.idea
 /vgcore*
 .env

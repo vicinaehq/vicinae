@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-unstable";
     systems.url = "github:nix-systems/default";
+    soulver-cpp.url = "github:vicinaehq/soulver-cpp";
   };
 
   nixConfig = {
@@ -15,27 +16,47 @@
     self,
     nixpkgs,
     systems,
+    soulver-cpp,
   }: let
     inherit (nixpkgs) lib;
     forEachPkgs = f: lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
   in {
-    packages = forEachPkgs (pkgs: {
-      default = pkgs.callPackage ./nix/vicinae.nix {gcc15Stdenv = pkgs.gcc15Stdenv;};
-      nix-update-script = pkgs.writeShellScriptBin "nix-update-script" ''
-        OLD_API_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.apiDeps.hash)
-        OLD_EXT_MAN_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.extensionManagerDeps.hash)
+    packages = forEachPkgs (pkgs: let
+      vicinae = pkgs.callPackage ./nix/vicinae.nix {gcc15Stdenv = pkgs.gcc15Stdenv;};
+      soulver = soulver-cpp.packages.${pkgs.stdenv.hostPlatform.system}.default or null;
+    in
+      lib.optionalAttrs (soulver != null) {
+        with-soulver = pkgs.symlinkJoin {
+          name = "${vicinae.name}-with-soulver";
+          paths = [vicinae];
+          nativeBuildInputs = [pkgs.makeWrapper];
+          postBuild = ''
+            for bin in $out/bin/*; do
+              wrapProgram "$bin" \
+                --prefix LD_LIBRARY_PATH : ${soulver}/lib \
+                --prefix XDG_DATA_DIRS : ${soulver}/share
+            done
+          '';
+          inherit (vicinae) meta;
+        };
+      }
+      // {
+        default = vicinae;
+        nix-update-script = pkgs.writeShellScriptBin "nix-update-script" ''
+          OLD_API_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.apiDeps.hash)
+          OLD_EXT_MAN_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.extensionManagerDeps.hash)
 
-        cd src/typescript/api
-        NEW_API_DEPS_HASH=$(${pkgs.lib.getExe pkgs.prefetch-npm-deps} package-lock.json)
-        cd ../extension-manager
-        NEW_EXT_MAN_DEPS_HASH=$(${pkgs.lib.getExe pkgs.prefetch-npm-deps} package-lock.json)
-        cd ..
+          cd src/typescript/api
+          NEW_API_DEPS_HASH=$(${pkgs.lib.getExe pkgs.prefetch-npm-deps} package-lock.json)
+          cd ../extension-manager
+          NEW_EXT_MAN_DEPS_HASH=$(${pkgs.lib.getExe pkgs.prefetch-npm-deps} package-lock.json)
+          cd ..
 
-        [[ "$OLD_API_DEPS_HASH" == "$NEW_API_DEPS_HASH" ]] || { echo -e "\e[31mHash mismatch for API npm deps, please replace the value in vicinae.nix with '$NEW_API_DEPS_HASH'.\e[0m" >&2; exit 1;}
+          [[ "$OLD_API_DEPS_HASH" == "$NEW_API_DEPS_HASH" ]] || { echo -e "\e[31mHash mismatch for API npm deps, please replace the value in vicinae.nix with '$NEW_API_DEPS_HASH'.\e[0m" >&2; exit 1;}
 
-        [[ "$OLD_EXT_MAN_DEPS_HASH" == "$NEW_EXT_MAN_DEPS_HASH" ]] || { echo -e "\e[31mHash mismatch for extension-manager npm deps, please replace the value in vicinae.nix with '$NEW_EXT_MAN_DEPS_HASH'.\e[0m" >&2; exit 1;}
-      '';
-    });
+          [[ "$OLD_EXT_MAN_DEPS_HASH" == "$NEW_EXT_MAN_DEPS_HASH" ]] || { echo -e "\e[31mHash mismatch for extension-manager npm deps, please replace the value in vicinae.nix with '$NEW_EXT_MAN_DEPS_HASH'.\e[0m" >&2; exit 1;}
+        '';
+      });
     lib = forEachPkgs (pkgs: {
       mkVicinaeExtension = pkgs.callPackage ./nix/mkVicinaeExtension.nix {};
       mkRayCastExtension = pkgs.callPackage ./nix/mkRayCastExtension.nix {};
@@ -47,6 +68,7 @@
             pkgs.qt6.qtdeclarative
             pkgs.qt6.qtsvg
             pkgs.qt6.qtimageformats
+            pkgs.qt6.qttools
           ]
           ++ pkgs.lib.optionals isLinux [
             pkgs.qt6.qtwayland
@@ -82,15 +104,8 @@
       mkVicinaeExtension = prev.callPackage ./nix/mkVicinaeExtension.nix {};
       mkRayCastExtension = prev.callPackage ./nix/mkRayCastExtension.nix {};
     };
-    homeManagerModules.default = import ./nix/module.nix self;
 
-    nixosModules.default = {pkgs, ...}: {
-      security.wrappers.vicinae-input-server = {
-        source = "${self.packages.${pkgs.stdenv.hostPlatform.system}.default}/libexec/vicinae/vicinae-input-server";
-        capabilities = "cap_dac_override+ep";
-        owner = "root";
-        group = "root";
-      };
-    };
+    homeManagerModules.default = import ./nix/home-manager-module.nix self;
+    nixosModules.default = import ./nix/nixos-module.nix self;
   };
 }

@@ -78,8 +78,8 @@ template <> struct Partial<BlurConfig> {
 };
 
 struct Size {
-  int width;
-  int height;
+  int width = 770;
+  int height = 480;
 };
 
 template <> struct Partial<Size> {
@@ -90,7 +90,7 @@ template <> struct Partial<Size> {
 struct WindowCSD {
   bool enabled = true;
 #ifdef Q_OS_MACOS
-  int rounding = 30;
+  int rounding = 20;
 #else
   int rounding = 10;
 #endif
@@ -113,9 +113,21 @@ template <> struct Partial<WindowCompactMode> {
   std::optional<bool> enabled;
 };
 
+struct ClockConfig {
+  bool enabled = true;
+  unsigned interval = 60;
+  std::optional<std::string> format;
+};
+
+template <> struct Partial<ClockConfig> {
+  std::optional<std::string> format;
+  std::optional<unsigned> interval;
+};
+
 struct WindowConfig {
   static constexpr float OPAQUE_OPACITY = 1.0F;
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
+  static constexpr float ACRYLIC_OPACITY = 0.9F;
   static constexpr float GLASS_POPUP_OPACITY = 0.2F;
   static constexpr float SURFACE_OPACITY_LIFT = 0.65F;
 
@@ -127,6 +139,7 @@ struct WindowConfig {
   BlurConfig blur;
   WindowCompactMode compactMode;
   LayerShellConfig layerShell;
+  ClockConfig clock;
 
   std::string material = "auto";
 
@@ -143,9 +156,12 @@ struct WindowConfig {
 
   float resolvedOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
     if (opacity) return *opacity;
-    return resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass"
-               ? TRANSLUCENT_OPACITY
-               : OPAQUE_OPACITY;
+    const std::string material = resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable);
+    if (material == "liquid_glass") return TRANSLUCENT_OPACITY;
+#ifdef Q_OS_WIN
+    if (material == "blur") return ACRYLIC_OPACITY;
+#endif
+    return OPAQUE_OPACITY;
   }
 
   // Popups draw their own material layer; on liquid glass a fixed low tint keeps the
@@ -182,12 +198,13 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<WindowCompactMode>> compactMode;
   std::optional<Partial<LayerShellConfig>> layerShell;
   std::optional<std::string> material;
+  std::optional<ClockConfig> clock;
 };
 
 struct FontConfig {
   std::string rendering = "qt";
 
-  struct {
+  struct FontSpec {
     std::string family = "auto";
 #ifdef Q_OS_MACOS
     float size = 13;
@@ -200,7 +217,7 @@ struct FontConfig {
 template <> struct Partial<FontConfig> {
   std::optional<std::string> rendering;
 
-  struct {
+  struct FontSpec {
     std::optional<std::string> family;
     std::optional<float> size;
   } normal;
@@ -276,7 +293,8 @@ struct ConfigValue {
   bool popToRootOnClose = false;
   bool popOnBackspace = true;
   bool activateOnSingleClick = false;
-#ifdef Q_OS_LINUX
+  bool wrapNavigation = false;
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
   bool encryptSensitiveData = false;
 #else
   bool encryptSensitiveData = true;
@@ -284,6 +302,7 @@ struct ConfigValue {
   std::string escapeKeyBehavior;
   std::string faviconService = "twenty";
   std::string keybinding = "default";
+  std::optional<std::string> language;
   int pixmapCacheMb = 50;
 
   InputServer inputServer;
@@ -333,10 +352,12 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> popToRootOnClose;
   std::optional<bool> popOnBackspace;
   std::optional<bool> activateOnSingleClick;
+  std::optional<bool> wrapNavigation;
   std::optional<bool> encryptSensitiveData;
   std::optional<std::string> escapeKeyBehavior;
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;
+  std::optional<std::string> language;
   std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
   std::optional<Partial<InputServer>> inputServer;
@@ -397,11 +418,7 @@ public:
 
   std::filesystem::path path() const { return m_userPath; }
 
-  static void print(const ConfigValue &value) {
-    std::string buf;
-    [[maybe_unused]] auto res = glz::write_json(value, buf);
-    std::cout << glz::prettify_json(buf) << std::endl;
-  }
+  static void print(const ConfigValue &value);
 
   const ConfigValue &value() const { return m_user; }
 
@@ -430,3 +447,28 @@ private:
   std::vector<std::string> m_envOverrides;
 };
 }; // namespace config
+
+#define SNAKE_CASIFY(T)                                                                                      \
+  template <> struct glz::meta<T> : glz::snake_case {};                                                      \
+  template <> struct glz::meta<config::Partial<T>> : glz::snake_case {};
+
+SNAKE_CASIFY(config::LayerShellConfig);
+SNAKE_CASIFY(config::WindowConfig);
+SNAKE_CASIFY(config::SystemThemeConfig);
+SNAKE_CASIFY(config::ThemeConfig);
+SNAKE_CASIFY(config::TelemetryConfig);
+SNAKE_CASIFY(config::WindowCSD);
+SNAKE_CASIFY(config::ClockConfig);
+SNAKE_CASIFY(config::GlobalShortcuts);
+
+#undef SNAKE_CASIFY
+
+struct ConfigTransformer : glz::snake_case {
+  static constexpr std::string rename_key(const std::string_view key) {
+    if (key == "schema") return "$schema";
+    return glz::to_snake_case(key);
+  }
+};
+
+template <> struct glz::meta<config::ConfigValue> : ConfigTransformer {};
+template <> struct glz::meta<config::Partial<config::ConfigValue>> : ConfigTransformer {};

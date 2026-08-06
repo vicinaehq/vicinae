@@ -3,6 +3,7 @@
 #include <utility>
 #include "common/types.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "services/clipboard/clipboard-mime.hpp"
 #include "theme.hpp"
 #include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
@@ -59,6 +60,23 @@ const GridItemViewModel *ExtensionGridSection::itemAt(int i) const {
   return &m_items[i];
 }
 
+std::optional<ImageURL> ExtensionGridSection::itemIcon(int i) const {
+  if (auto *item = itemAt(i)) {
+    if (auto *image = std::get_if<ImageLikeModel>(&item->content)) return ImageURL(*image);
+  }
+  return std::nullopt;
+}
+
+bool ExtensionGridSection::isDraggable(int i) const {
+  auto *item = itemAt(i);
+  return item && item->dragContent.has_value();
+}
+
+std::unique_ptr<QMimeData> ExtensionGridSection::dragMimeData(int i) const {
+  auto *item = itemAt(i);
+  return item && item->dragContent ? Clipboard::mimeDataForContent(*item->dragContent) : nullptr;
+}
+
 std::unique_ptr<ActionPanelState> ExtensionGridSection::actionPanel(int i) const {
   if (auto *it = itemAt(i); it && it->actionPannel) {
     return ExtensionActionPanelBuilder::build(*it->actionPannel, m_notify,
@@ -99,6 +117,7 @@ void ExtensionGridModel::setExtensionData(const GridModel &model, bool resetSele
 void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
   int const prevSection = selectedSection();
   int const prevItem = selectedItem();
+  int const prevRow = flatRowForSelection();
 
   clearSources();
   m_ownedSections.clear();
@@ -156,7 +175,7 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
     if (prevValid) {
       if (prevSection == selectedSection() && prevItem == selectedItem()) {
         refreshActionPanel();
-        emit selectionChanged();
+        if (flatRowForSelection() != prevRow) emit selectionChanged();
       } else {
         select(prevSection, prevItem);
       }
@@ -182,7 +201,7 @@ void ExtensionGridModel::setFilter(const QString &text) {
 }
 
 QString ExtensionGridModel::searchPlaceholder() const {
-  return m_placeholder.isEmpty() ? QStringLiteral("Search...") : m_placeholder;
+  return m_placeholder.isEmpty() ? tr("Search...") : m_placeholder;
 }
 
 const GridItemViewModel *ExtensionGridModel::resolveItem(int section, int item) const {
@@ -234,7 +253,7 @@ QString ExtensionGridModel::cellColor(int section, int item) const {
 
 QString ExtensionGridModel::emptyTitle() const {
   if (m_model.emptyView) return QString::fromStdString(m_model.emptyView->title);
-  return QStringLiteral("No results");
+  return tr("No results");
 }
 
 QString ExtensionGridModel::emptyDescription() const {

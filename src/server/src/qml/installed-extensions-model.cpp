@@ -14,12 +14,12 @@ QString InstalledExtensionsSection::displaySubtitle(const ExtensionManifest &m) 
   return m.description;
 }
 
-QString InstalledExtensionsSection::displayIconSource(const ExtensionManifest &m) const {
+std::optional<ImageURL> InstalledExtensionsSection::displayIcon(const ExtensionManifest &m) const {
   if (!m.icon.isEmpty()) {
     auto iconPath = m.path / "assets" / m.icon.toStdString();
-    return imageSourceFor(ImageURL::local(iconPath).withFallback(ImageURL::builtin("plug")));
+    return ImageURL::local(iconPath).withFallback(ImageURL::builtin(BuiltinIcon::Plug));
   }
-  return imageSourceFor(ImageURL::builtin("plug"));
+  return ImageURL::builtin(BuiltinIcon::Plug);
 }
 
 QVariantList InstalledExtensionsSection::displayAccessories(const ExtensionManifest &m) const {
@@ -32,8 +32,9 @@ QVariantList InstalledExtensionsSection::displayAccessories(const ExtensionManif
                                            .icon = ExtensionImageModel{.source = QString("vicinae")}}});
   }
   if (m.isLocal()) {
-    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Cyan, "Local"),
-                                           .icon = ExtensionImageModel{.source = QString("box")}}});
+    return qml::accessoriesToVariantList(
+        {{.data = AccessoryModel::Tag(SemanticColor::Cyan, tr("Local").toStdString()),
+          .icon = ExtensionImageModel{.source = QString("box")}}});
   }
   return {};
 }
@@ -46,20 +47,21 @@ InstalledExtensionsSection::buildActionPanel(const ExtensionManifest &m) const {
   auto primary = panel->createSection();
   primary->addAction(new UninstallExtensionAction(m.id));
 
-  auto utils = panel->createSection("Copy");
+  auto utils = panel->createSection(tr("Copy"));
 
-  auto copyName = new CopyToClipboardAction(Clipboard::Text(m.name), "Copy Name");
+  auto copyName = new CopyToClipboardAction(Clipboard::Text(m.name), tr("Copy Name"));
   copyName->setShortcut(Keybind::CopyNameAction);
   utils->addAction(copyName);
 
-  auto copyId = new CopyToClipboardAction(Clipboard::Text(m.id), "Copy ID");
+  auto copyId = new CopyToClipboardAction(Clipboard::Text(m.id), tr("Copy ID"));
   utils->addAction(copyId);
 
-  auto copyPath = new CopyToClipboardAction(Clipboard::Text(m.path.c_str()), "Copy Path");
+  auto copyPath =
+      new CopyToClipboardAction(Clipboard::Text(QString::fromStdString(m.path.string())), tr("Copy Path"));
   copyPath->setShortcut(Keybind::CopyPathAction);
   utils->addAction(copyPath);
 
-  auto copyAuthor = new CopyToClipboardAction(Clipboard::Text(m.author), "Copy Author");
+  auto copyAuthor = new CopyToClipboardAction(Clipboard::Text(m.author), tr("Copy Author"));
   utils->addAction(copyAuthor);
 
   return panel;

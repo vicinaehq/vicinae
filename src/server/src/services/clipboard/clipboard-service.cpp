@@ -1,10 +1,13 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
+#include <algorithm>
 #include <filesystem>
 #include <numeric>
 #include <QGuiApplication>
 #include "services/app-service/abstract-app-db.hpp"
+#ifdef Q_OS_LINUX
 #include "x11/x11-clipboard-server.hpp"
+#endif
 #include <qclipboard.h>
 #include <qimagereader.h>
 #include <qlogging.h>
@@ -20,14 +23,20 @@
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
+#include "services/clipboard/clipboard-mime.hpp"
 #include "services/clipboard/clipboard-server.hpp"
 #include "utils.hpp"
+#ifdef Q_OS_LINUX
 #ifdef Q_OS_LINUX
 #include "services/clipboard/gnome/gnome-clipboard-server.hpp"
 #include "data-control/data-control-clipboard-server.hpp"
 #endif
+#endif
 #ifdef Q_OS_MACOS
 #include "macos/macos-clipboard-server.hpp"
+#endif
+#ifdef Q_OS_WIN
+#include "windows/windows-clipboard-server.hpp"
 #endif
 
 namespace fs = std::filesystem;
@@ -58,6 +67,7 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
     }
     bool operator()(const Clipboard::Html &html) const { return service.copyHtml(html, options); }
     bool operator()(const Clipboard::File &file) const { return service.copyFile(file.path, options); }
+    bool operator()(const Clipboard::Urls &urls) const { return service.copyUrls(urls.values, options); }
     bool operator()(const Clipboard::Text &text) const { return service.copyText(text.text, options); }
     bool operator()(const ClipboardSelection &selection) const {
       return service.copySelection(selection, options);
@@ -81,6 +91,12 @@ bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboa
   data->setUrls({QUrl::fromLocalFile(QString::fromStdString(path.string()))});
 
   return copyQMimeData(data, options);
+}
+
+bool ClipboardService::copyUrls(const std::vector<QUrl> &urls, const Clipboard::CopyOptions &options) {
+  auto data = Clipboard::mimeDataForContent(Clipboard::Urls{urls});
+
+  return copyQMimeData(data.release(), options);
 }
 
 void ClipboardService::setRecordAllOffers(bool value) { m_recordAllOffers = value; }
@@ -164,7 +180,8 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
   if (offer.mimeType == "text/uri-list") {
     QString const text = offer.data;
     auto uris = text.split("\r\n", Qt::SkipEmptyParts);
-    if (uris.size() == 1 && QUrl(uris.front()).isLocalFile()) return ClipboardOfferKind::File;
+    auto isLocalFile = [](const QString &uri) { return QUrl(uri).isLocalFile(); };
+    if (!uris.isEmpty() && std::ranges::all_of(uris, isLocalFile)) return ClipboardOfferKind::File;
     return ClipboardOfferKind::Text;
   }
 
@@ -185,18 +202,32 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 
 QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
   static const std::vector<QString> plainTextMimeTypes = {
-      "text/uri-list", "text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT",
-      "COMPOUND_TEXT"};
+      "text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"};
 
-  for (const auto &mime : plainTextMimeTypes) {
-    auto it = std::ranges::find_if(
-        selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
-    if (it != selection.offers.end()) return it->mimeType;
+  auto uriIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
+    return offer.mimeType == "text/uri-list" && !offer.data.isEmpty();
+  });
+  if (uriIt != selection.offers.end() && getKind(*uriIt) == ClipboardOfferKind::File) {
+    return uriIt->mimeType;
   }
 
   auto imageIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
     return offer.mimeType.startsWith("image/") && !offer.data.isEmpty();
   });
+
+  auto isRemoteUrl = [](const QByteArray &data) {
+    auto url = QUrl::fromEncoded(data.trimmed(), QUrl::StrictMode);
+    return url.scheme().length() > 1 && !url.isLocalFile();
+  };
+
+  for (const auto &mime : plainTextMimeTypes) {
+    auto it = std::ranges::find_if(
+        selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
+    if (it == selection.offers.end()) continue;
+    if (imageIt != selection.offers.end() && isRemoteUrl(it->data)) break;
+    return it->mimeType;
+  }
+
   if (imageIt != selection.offers.end()) return imageIt->mimeType;
 
   auto htmlIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
@@ -290,12 +321,12 @@ QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
 
     buffer.setData(offer.data);
     if (auto size = reader.size(); size.isValid()) {
-      return QString("Image (%1x%2)").arg(size.width()).arg(size.height());
+      return tr("Image (%1x%2)").arg(size.width()).arg(size.height());
     }
-    return "Image";
+    return tr("Image");
   }
   default:
-    return "Unknown";
+    return tr("Unknown");
   }
 }
 
@@ -526,7 +557,7 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
                  << "size:" << offer.data.size();
       }
     } else {
-      if (Utils::isTextMimeType(offer.mimeType)) {
+      if (offer.mimeType != "text/uri-list" && Utils::isTextMimeType(offer.mimeType)) {
         mimeData->setText(QString::fromUtf8(offer.data));
       } else {
         mimeData->setData(offer.mimeType, offer.data);
@@ -569,12 +600,8 @@ Clipboard::ReadContent ClipboardService::readContent() {
   if (!mimeData) return content;
 
   if (mimeData->hasUrls()) {
-    for (const auto &url : mimeData->urls()) {
-      if (url.isLocalFile()) {
-        content.file = url.toLocalFile();
-        break;
-      }
-    }
+    const auto urls = mimeData->urls();
+    content.urls.assign(urls.begin(), urls.end());
   }
 
   if (mimeData->hasHtml()) { content.html = mimeData->html(); }
@@ -615,6 +642,9 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, std::optio
 #endif
 #ifdef Q_OS_MACOS
     factory.registerServer<MacosClipboardServer>();
+#endif
+#ifdef Q_OS_WIN
+    factory.registerServer<WindowsClipboardServer>();
 #endif
     m_clipboardServer = factory.createFirstActivatable();
     qInfo() << "Activated clipboard server" << m_clipboardServer->id();

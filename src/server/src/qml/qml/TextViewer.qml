@@ -12,6 +12,10 @@ ScrollView {
 
     Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
 
+    ViciWheelHandler {
+        target: root.contentItem
+    }
+
     TextEdit {
         width: root.availableWidth
         text: root.text

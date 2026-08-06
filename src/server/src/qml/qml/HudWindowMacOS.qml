@@ -5,7 +5,7 @@ HudWindow {
 
     readonly property int bottomMargin: 96
 
-    flags: Qt.Tool | Qt.FramelessWindowHint
+    flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowDoesNotAcceptFocus
 
     // The glass material provides the background, so the shared pill stays transparent.
     pillColor: "transparent"

@@ -11,17 +11,16 @@ QImage renderNSImage(NSImage *image, const QSize &size) {
   NSInteger const height = size.height();
   NSInteger const bytesPerRow = width * 4;
 
-  NSBitmapImageRep *target =
-      [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
-                                              pixelsWide:width
-                                              pixelsHigh:height
-                                           bitsPerSample:8
-                                         samplesPerPixel:4
-                                                hasAlpha:YES
-                                                isPlanar:NO
-                                          colorSpaceName:NSCalibratedRGBColorSpace
-                                             bytesPerRow:bytesPerRow
-                                            bitsPerPixel:32];
+  NSBitmapImageRep *target = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+                                                                     pixelsWide:width
+                                                                     pixelsHigh:height
+                                                                  bitsPerSample:8
+                                                                samplesPerPixel:4
+                                                                       hasAlpha:YES
+                                                                       isPlanar:NO
+                                                                 colorSpaceName:NSCalibratedRGBColorSpace
+                                                                    bytesPerRow:bytesPerRow
+                                                                   bitsPerPixel:32];
   if (!target) return {};
 
   NSGraphicsContext *ctx = [NSGraphicsContext graphicsContextWithBitmapImageRep:target];
@@ -42,11 +41,11 @@ QImage renderNSImage(NSImage *image, const QSize &size) {
   [[NSColor clearColor] setFill];
   NSRectFillUsingOperation(NSMakeRect(0, 0, width, height), NSCompositingOperationCopy);
   [image drawInRect:drawRect
-           fromRect:NSZeroRect
-          operation:NSCompositingOperationSourceOver
-           fraction:1.0
-     respectFlipped:YES
-              hints:nil];
+            fromRect:NSZeroRect
+           operation:NSCompositingOperationSourceOver
+            fraction:1.0
+      respectFlipped:YES
+               hints:nil];
   [NSGraphicsContext restoreGraphicsState];
 
   QImage view(target.bitmapData, static_cast<int>(width), static_cast<int>(height),

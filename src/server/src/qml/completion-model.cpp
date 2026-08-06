@@ -1,5 +1,6 @@
 #include "completion-model.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "services/navigation/list-navigation.hpp"
 #include <utility>
 
 template <> struct fuzzy::FuzzySearchable<CompletionModel::Item> {
@@ -78,24 +79,8 @@ void CompletionModel::setFilter(const QString &query) {
 int CompletionModel::nextSelectableIndex(int from, int direction) const {
   const auto count = static_cast<int>(m_flat.size());
   if (count == 0) return -1;
-
-  int idx = from + direction;
-  if (idx < 0)
-    idx = count - 1;
-  else if (idx >= count)
-    idx = 0;
-
-  const int start = idx;
-  do {
-    if (m_flat[idx].kind == FlatItem::Entry) return idx;
-    idx += direction;
-    if (idx < 0)
-      idx = count - 1;
-    else if (idx >= count)
-      idx = 0;
-  } while (idx != start);
-
-  return -1;
+  return ListNavigation::nextIndex(from, direction, count,
+                                   [&](int idx) { return m_flat[idx].kind == FlatItem::Entry; });
 }
 
 int CompletionModel::indexOfItemId(const QString &id) const {

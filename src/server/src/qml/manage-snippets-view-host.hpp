@@ -51,7 +51,7 @@ private:
   bool m_hasDetail = false;
   QString m_detailContent;
   QVariantList m_detailMetadata;
-  QString m_emptyTitle = QStringLiteral("No snippets");
-  QString m_emptyDescription = QStringLiteral("Create a snippet to get started");
+  QString m_emptyTitle = tr("No snippets");
+  QString m_emptyDescription = tr("Create a snippet to get started");
   ImageUrl m_emptyIcon = ImageUrl(ImageURL(BuiltinIcon::Snippets));
 };
