@@ -200,6 +200,8 @@ set(SRCS
 	src/ui/action-pannel/action-panel-view.hpp
 	src/ui/action-pannel/action-list-view.hpp
 	src/ui/action-pannel/action-list-view.cpp
+	src/ui/action-pannel/shortcut-recorder-panel-view.hpp
+	src/ui/action-pannel/shortcut-recorder-panel-view.cpp
 
 	
 	src/extension/extension-command.hpp
@@ -1074,6 +1076,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ExtensionSettingsPage.qml
 	src/qml/qml/AboutSettingsPage.qml
 	src/qml/qml/ShortcutRecorderField.qml
+	src/qml/qml/ShortcutRecorderCapture.qml
+	src/qml/qml/ShortcutRecorderPanel.qml
 	src/qml/qml/ShortcutField.qml
 	src/qml/qml/PreferenceFormView.qml
 	src/qml/qml/SettingsPreferenceForm.qml
