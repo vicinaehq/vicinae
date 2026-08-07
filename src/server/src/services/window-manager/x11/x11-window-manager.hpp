@@ -35,11 +35,14 @@ public:
   bool supportsSetSticky() const override { return true; }
   bool setSticky(const AbstractWindow &window, bool sticky) const override;
   bool supportsMoveToWorkspace() const override { return true; }
+
   bool moveToWorkspace(const AbstractWindow &window, const QString &workspaceId) const override;
 
   bool hasWorkspaces() const override;
   WorkspaceList listWorkspaces() const override;
   std::shared_ptr<AbstractWorkspace> getActiveWorkspace() const override;
+
+  QFlags<Capability> capabilities() const override { return {Capability::SetSticky}; }
 
   bool ping() const override;
   bool isActivatable() const override;

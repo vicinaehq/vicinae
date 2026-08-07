@@ -43,7 +43,8 @@ public:
 
 private:
   bool launchProcess(const QString &prog, const QStringList &args,
-                     const std::optional<std::filesystem::path> &workingDirectory) const;
+                     const std::optional<std::filesystem::path> &workingDirectory,
+                     const QString &appId = {}) const;
 
   xdgpp::DesktopEntry::TerminalExec getTermExec(const XdgApplication &app) const;
   xdgpp::DesktopEntry::TerminalExec inferTermExec(const XdgApplication &app) const;

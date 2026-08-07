@@ -1,5 +1,8 @@
 #include "launcher-window.hpp"
 #include "launcher-window-platform.hpp"
+#ifdef Q_OS_LINUX
+#include "internal/wayland/xdg-activation.hpp"
+#endif
 #include "hud-bridge.hpp"
 #include "keybind-bridge.hpp"
 #include "keyboard-bridge.hpp"
@@ -391,6 +394,10 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     m_window->raise();
     LauncherWindowPlatform::grantForeground();
     m_window->requestActivate();
+#ifdef Q_OS_LINUX
+    // layer-shell has its own focus mechanism, we don't need a token
+    if (!isLayerShellActive()) { Wayland::XdgActivation::activateWindow(m_window); }
+#endif
   } else {
     LauncherWindowPlatform::suppressHeldKeyReleases();
     m_window->hide();

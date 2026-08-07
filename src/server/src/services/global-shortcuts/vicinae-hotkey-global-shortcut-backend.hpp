@@ -1,11 +1,23 @@
 #pragma once
-#include "vicinae-hotkey-v1-client-protocol.h"
-#include "services/global-shortcuts/abstract-global-shortcut-backend.hpp"
 #include <QCoreApplication>
-#include <cstdint>
+#include <QtWaylandClient/QWaylandClientExtension>
 #include <expected>
+#include <memory>
 #include <optional>
-#include <qtmetamacros.h>
+#include <vector>
+#include "qwayland-vicinae-hotkey-v1.h"
+#include "services/global-shortcuts/abstract-global-shortcut-backend.hpp"
+
+class VicinaeHotkeyManagerV1 : public QWaylandClientExtensionTemplate<VicinaeHotkeyManagerV1>,
+                               public QtWayland::vicinae_hotkey_manager_v1 {
+  Q_OBJECT
+
+public:
+  using QtWayland::vicinae_hotkey_manager_v1::bind;
+  using QWaylandClientExtension::bind;
+
+  VicinaeHotkeyManagerV1();
+};
 
 class VicinaeHotkeyGlobalShortcutBackend : public AbstractGlobalShortcutBackend {
   Q_DECLARE_TR_FUNCTIONS(VicinaeHotkeyGlobalShortcutBackend)
@@ -19,32 +31,30 @@ public:
   std::expected<void, QString> bindShortcut(const GlobalShortcutRequest &request) override;
   void unbindShortcut(const QString &id) override;
   void unbindAll() override;
-  bool isSupported() const override { return true; }
+  bool isSupported() const override { return m_manager.isActive(); }
 
 private:
-  struct HotkeyInfo {
-    vicinae_hotkey_v1 *handle;
-    QString id;
+  class Hotkey : public QtWayland::vicinae_hotkey_v1 {
+  public:
+    Hotkey(VicinaeHotkeyGlobalShortcutBackend *backend, struct ::vicinae_hotkey_v1 *object, QString id);
+    ~Hotkey() override;
+
+    QString m_id;
+
+  protected:
+    void vicinae_hotkey_v1_denied(uint32_t reason, const QString &message) override;
+    void vicinae_hotkey_v1_revoked(uint32_t reason, const QString &message) override;
+    void vicinae_hotkey_v1_pressed(uint32_t serial, uint32_t time) override;
+
+  private:
+    VicinaeHotkeyGlobalShortcutBackend *m_backend;
   };
 
-  static void bound(void *data, vicinae_hotkey_v1 *hotkey);
+  bool isTracked(const Hotkey *hotkey) const;
+  void dropHotkey(Hotkey *hotkey);
 
-  static void denied(void *data, vicinae_hotkey_v1 *hotkey, uint32_t reason, const char *msg);
-
-  static void revoked(void *data, vicinae_hotkey_v1 *hotkey, uint32_t reason, const char *msg);
-
-  static void pressed(void *data, struct vicinae_hotkey_v1 *vicinae_hotkey_v1, uint32_t serial,
-                      uint32_t time);
-
-  static void released(void *data, struct vicinae_hotkey_v1 *vicinae_hotkey_v1, uint32_t serial,
-                       uint32_t time);
-
-  static constexpr const vicinae_hotkey_v1_listener listener = {bound, denied, revoked, pressed, released};
-
-  HotkeyInfo *findHotkey(vicinae_hotkey_v1 *hotkey);
-  void dropHotkey(vicinae_hotkey_v1 *hotkey);
-
-  std::vector<HotkeyInfo> m_binds;
-  vicinae_hotkey_v1 *m_pendingBind = nullptr;
+  VicinaeHotkeyManagerV1 m_manager;
+  std::vector<std::unique_ptr<Hotkey>> m_binds;
+  Hotkey *m_pendingBind = nullptr;
   std::optional<QString> m_pendingDeny;
 };

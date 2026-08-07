@@ -31,8 +31,8 @@ if (NOT WIN32)
 endif()
 
 if (UNIX AND NOT APPLE)
-	find_package(Qt6 REQUIRED COMPONENTS DBus)
-	list(APPEND LIBS wayland-client Qt6::DBus)
+	find_package(Qt6 REQUIRED COMPONENTS DBus WaylandClient)
+	list(APPEND LIBS wayland-client Qt6::DBus Qt6::WaylandClient)
 endif()
 
 if (APPLE AND BUNDLE_SOULVER_CORE)
@@ -128,7 +128,7 @@ set(SRCS
 	src/root-search/shortcuts/shortcut-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
-	
+
 	src/extension/manager/extension-manager.hpp
 	src/extension/manager/extension-manager.cpp
 	src/extension/node-runtime/node-runtime.hpp
@@ -272,6 +272,9 @@ set(SRCS
 	src/extensions/clipboard/history/clipboard-history-controller.hpp
 	src/extensions/clipboard/history/clipboard-history-controller.cpp
 	src/extensions/browser/browser-extension.cpp
+
+	src/extensions/wm/wm-extension.hpp
+	src/extensions/wm/wm-extension.cpp
 
 	src/extensions/clipboard/clipboard-extension.hpp
 	src/extensions/clipboard/clipboard-extension.cpp
@@ -851,25 +854,24 @@ if (UNIX AND NOT APPLE)
 
     include("Wayland")
 
-    wayland_generate_protocol("wlr-foreign-toplevel-management-unstable-v1")
-	wayland_generate_protocol("ext-data-control-v1")
-	wayland_generate_protocol("kde-blur")
-	wayland_generate_protocol("ext-background-effect-v1")
-	wayland_generate_protocol("keyboard-shortcuts-inhibit-unstable-v1")
-	wayland_generate_protocol("wlr-layer-shell-unstable-v1")
-	wayland_generate_protocol("xdg-shell")
-	wayland_generate_protocol("vicinae-hotkey-v1")
+	# only needed to provide the xdg_* interface symbols referenced by the
+	# generated wlr-layer-shell protocol code
+	wayland_system_protocol(XDG_SHELL_XML "stable/xdg-shell/xdg-shell.xml")
+	wayland_generate_protocol(${XDG_SHELL_XML})
+
+	wayland_system_protocol(EXT_BACKGROUND_EFFECT_XML "staging/ext-background-effect/ext-background-effect-v1.xml")
+	wayland_system_protocol(EXT_DATA_CONTROL_XML "staging/ext-data-control/ext-data-control-v1.xml")
+	wayland_system_protocol(KEYBOARD_SHORTCUTS_INHIBIT_XML "unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml")
+	wayland_system_protocol(XDG_ACTIVATION_XML "staging/xdg-activation/xdg-activation-v1.xml")
 
 	list(APPEND LIBS xkbcommon)
 
 	# Common Wayland support files
 	list(APPEND SRCS
-		src/internal/wayland/globals.cpp
-		src/internal/wayland/display.cpp
-		src/internal/wayland/registry.cpp
-		src/internal/wayland/seat.cpp
+		src/internal/wayland/output-tracker.cpp
+		src/internal/wayland/layer-shell.cpp
+		src/internal/wayland/xdg-activation.cpp
 		src/services/window-material/ext-background-effect-v1-manager.cpp
-		src/services/window-material/kde-background-effect-manager.cpp
 		src/services/shortcut-inhibit/wayland-shortcut-inhibit-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
@@ -929,6 +931,20 @@ endif()
 
 
 qt_add_executable(${TARGET} ${SRCS})
+
+if (UNIX AND NOT APPLE)
+	qt6_generate_wayland_protocol_client_sources(${TARGET}
+		PRIVATE_CODE
+		FILES
+			${EXT_BACKGROUND_EFFECT_XML}
+			${EXT_DATA_CONTROL_XML}
+			${KEYBOARD_SHORTCUTS_INHIBIT_XML}
+			${XDG_ACTIVATION_XML}
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/vicinae-hotkey-v1.xml
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-foreign-toplevel-management-unstable-v1.xml
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-layer-shell-unstable-v1.xml
+	)
+endif()
 
 vicinae_enable_utf8(${TARGET})
 
