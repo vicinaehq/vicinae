@@ -132,6 +132,8 @@ private:
   void handleVisibilityChanged(bool visible);
   void handleCurrentViewChanged();
   void handleViewPoped(const BaseView *view);
+  void updateWindowTitle();
+  void applyPendingWindowTitle(int framesRemaining);
   void setCompacted(bool value);
   void tryCompaction();
   void applyWindowConfig();
@@ -154,6 +156,8 @@ private:
 
   QQmlApplicationEngine m_engine;
   QQuickWindow *m_window = nullptr;
+  QString m_defaultWindowTitle;
+  QString m_pendingWindowTitle;
   bool m_compacted = false;
   bool m_atRoot = true;
   bool m_showBackButton = true;
