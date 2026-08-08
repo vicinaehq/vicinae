@@ -576,6 +576,11 @@
         <translation>标签页（{count}）</translation>
     </message>
     <message>
+        <location line="+5"/>
+        <source>Playing Media ({count})</source>
+        <translation>正在播放媒体（{count}）</translation>
+    </message>
+    <message>
         <location filename="../src/qml/browser-tabs-model.cpp" line="+15"/>
         <source>Muted</source>
         <translation>已静音</translation>

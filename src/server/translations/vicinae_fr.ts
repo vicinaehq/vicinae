@@ -576,6 +576,11 @@
         <translation>Onglets ({count})</translation>
     </message>
     <message>
+        <location line="+5"/>
+        <source>Playing Media ({count})</source>
+        <translation>Médias en lecture ({count})</translation>
+    </message>
+    <message>
         <location filename="../src/qml/browser-tabs-model.cpp" line="+15"/>
         <source>Muted</source>
         <translation>En sourdine</translation>

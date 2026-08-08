@@ -12,5 +12,6 @@ public:
 private:
   void reload();
 
-  BrowserTabsSection m_section;
+  BrowserTabsSection m_mediaSection{BrowserTabsSection::Kind::PlayingMedia};
+  BrowserTabsSection m_tabsSection{BrowserTabsSection::Kind::Tabs};
 };
