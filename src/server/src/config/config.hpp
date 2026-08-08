@@ -25,6 +25,7 @@ struct ProviderItemData {
 
 struct ProviderData {
   std::optional<bool> enabled;
+  std::optional<bool> favorite;
   std::optional<glz::generic::object_t> preferences;
   std::map<std::string, ProviderItemData> entrypoints;
 };
@@ -53,6 +54,7 @@ template <> struct Partial<ThemeConfig> {
 
 template <> struct Partial<ProviderData> {
   std::optional<bool> enabled;
+  std::optional<bool> favorite;
   std::optional<glz::generic::object_t> preferences;
   std::optional<std::map<std::string, ProviderItemData>> entrypoints;
 };

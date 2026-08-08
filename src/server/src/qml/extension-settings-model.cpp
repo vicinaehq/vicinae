@@ -40,6 +40,8 @@ QVariant ExtensionSettingsModel::data(const QModelIndex &index, int role) const 
     return e.indent;
   case EnabledRole:
     return e.enabled;
+  case FavoriteRole:
+    return e.favorite;
   case AliasRole:
     return e.alias;
   case EntrypointIdRole:
@@ -64,6 +66,7 @@ QHash<int, QByteArray> ExtensionSettingsModel::roleNames() const {
           {IsProviderRole, "isProvider"},
           {IndentRole, "indent"},
           {EnabledRole, "enabled"},
+          {FavoriteRole, "favorite"},
           {AliasRole, "alias"},
           {EntrypointIdRole, "entrypointId"},
           {ExpandedRole, "expanded"},
@@ -163,6 +166,26 @@ void ExtensionSettingsModel::setEnabled(int row, bool value) {
     e.enabled = value;
     auto idx = index(row);
     emit dataChanged(idx, idx, {EnabledRole});
+  }
+
+  if (row == m_selectedRow) emit selectedChanged();
+}
+
+void ExtensionSettingsModel::setFavorite(int row, bool value) {
+  if (row < 0 || std::cmp_greater_equal(row, m_visibleIndices.size())) return;
+  auto &e = m_allEntries[m_visibleIndices[row]];
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
+
+  if (e.isProvider) {
+    manager->setProviderFavorite(e.providerId, value);
+    e.favorite = value;
+    auto idx = index(row);
+    emit dataChanged(idx, idx, {FavoriteRole});
+  } else {
+    manager->setItemAsFavorite(e.entrypointId, value);
+    e.favorite = value;
+    auto idx = index(row);
+    emit dataChanged(idx, idx, {FavoriteRole});
   }
 
   if (row == m_selectedRow) emit selectedChanged();
@@ -309,6 +332,7 @@ void ExtensionSettingsModel::rebuild(const QString &filter) {
       ie.isProvider = false;
       ie.indent = 1;
       ie.enabled = metadata.enabled;
+      ie.favorite = metadata.favorite;
       ie.alias = QString::fromStdString(metadata.alias.value_or(""));
       ie.shortcut = QString::fromStdString(metadata.shortcut.value_or(""));
       ie.entrypointId = item->uniqueId();
@@ -395,8 +419,8 @@ void ExtensionSettingsModel::loadCommandsForProvider(const QString &providerId) 
         const auto &e = m_allEntries[j];
         auto *item = manager->findItemById(e.entrypointId);
         bool const hasPrefs = item && !item->preferences().empty();
-        commands.push_back({e.name, e.type, e.iconSource, e.description, e.enabled, hasPrefs, e.alias,
-                            QString::fromStdString(e.entrypointId), e.shortcut});
+        commands.push_back({e.name, e.type, e.iconSource, e.description, e.enabled, e.favorite, hasPrefs,
+                            e.alias, QString::fromStdString(e.entrypointId), e.shortcut});
       }
       break;
     }
@@ -437,6 +461,14 @@ void ExtensionSettingsModel::setEnabledByEntrypointId(const QString &id, bool va
   }
 }
 
+void ExtensionSettingsModel::setFavoriteByEntrypointId(const QString &id, bool value) {
+  int const row = findVisibleEntryByEntrypointId(id);
+  if (row >= 0) {
+    setFavorite(row, value);
+    m_commandModel->setFavorite(id, value);
+  }
+}
+
 void ExtensionSettingsModel::setAliasByEntrypointId(const QString &id, const QString &alias) {
   int const row = findVisibleEntryByEntrypointId(id);
   if (row >= 0) {
@@ -473,6 +505,7 @@ void ExtensionSettingsModel::loadCommandPreferences(const QString &entrypointId)
   for (auto &e : m_allEntries) {
     if (!e.isProvider && QString::fromStdString(e.entrypointId) == entrypointId) {
       auto *item = manager->findItemById(e.entrypointId);
+
       m_cmdPrefModel->load(e.entrypointId, item ? item->preferences() : std::vector<Preference>{});
       return;
     }
