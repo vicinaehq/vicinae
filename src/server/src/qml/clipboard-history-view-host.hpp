@@ -34,7 +34,6 @@ public:
   QUrl qmlComponentUrl() const override;
   QUrl qmlSearchAccessoryUrl() const override;
   QVariantMap qmlProperties() override;
-  QString windowTitleSuffix() const override;
   void loadInitialData() override;
   void textChanged(const QString &text) override;
   void initialize() override;

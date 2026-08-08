@@ -401,11 +401,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
   } else {
     LauncherWindowPlatform::suppressHeldKeyReleases();
     m_window->hide();
-    ++m_windowTitleRevision;
-    m_window->setTitle(
-        m_requestedWindowTitleSuffix.isEmpty()
-            ? m_defaultWindowTitle
-            : QStringLiteral("%1 [%2]").arg(m_defaultWindowTitle, m_requestedWindowTitleSuffix));
+    updateWindowTitle();
     m_cacheEvictionTimer.start();
   }
 }
@@ -429,7 +425,7 @@ void LauncherWindow::handleCurrentViewChanged() {
   auto *bridge = dynamic_cast<ViewHostBase *>(state->sender);
   if (!bridge) return;
 
-  updateWindowTitle(bridge);
+  updateWindowTitle();
 
   bool const isRoot = nav->viewStackSize() == 1;
   if (m_atRoot != isRoot) {
@@ -476,50 +472,48 @@ void LauncherWindow::handleCurrentViewChanged() {
   tryCompaction();
 }
 
-void LauncherWindow::updateWindowTitle(const ViewHostBase *view) {
-  m_requestedWindowTitleSuffix = view->windowTitleSuffix();
-  const std::uint64_t revision = ++m_windowTitleRevision;
-
+void LauncherWindow::updateWindowTitle() {
   if (!m_window) return;
 
-  const auto title = m_requestedWindowTitleSuffix.isEmpty()
-                         ? m_defaultWindowTitle
-                         : QStringLiteral("%1 [%2]").arg(m_defaultWindowTitle, m_requestedWindowTitleSuffix);
+  QString title = m_defaultWindowTitle;
+  auto *nav = m_ctx.navigation.get();
 
+  if (!nav->isRootSearch()) {
+    if (const auto *cmd = nav->activeCommand()) {
+      title = QStringLiteral("%1 [%2]").arg(m_defaultWindowTitle, QString::fromStdString(cmd->uniqueId()));
+    }
+  }
+
+  m_pendingWindowTitle.clear();
   if (m_window->title() == title) return;
 
-  if (m_window->title() == m_defaultWindowTitle) {
-    m_window->setTitle(title);
+  // The dynamic title is generally used in order to exclude the Vicinae window from
+  // screen recordings when a sensitive command is active (e.g clipboard history). We need
+  // to make sure we don't unexpectedly show the last few frames of the sensitive view before
+  // the title is actually changed. To that end, we wait a few frames before applying the title
+  // change.
+  if (m_window->isVisible() && m_window->title() != m_defaultWindowTitle) {
+    m_pendingWindowTitle = title;
+    applyPendingWindowTitle(2);
     return;
   }
 
-  static constexpr int WINDOW_TITLE_UPDATE_FRAME_COUNT = 2;
-  waitForWindowTitleUpdate(revision, title, WINDOW_TITLE_UPDATE_FRAME_COUNT);
+  m_window->setTitle(title);
 }
 
-void LauncherWindow::waitForWindowTitleUpdate(std::uint64_t revision, QString title, int framesRemaining) {
-  if (!m_window || revision != m_windowTitleRevision) return;
-
+void LauncherWindow::applyPendingWindowTitle(int framesRemaining) {
   connect(
-      m_window, &QQuickWindow::afterFrameEnd, this,
-      [this, revision, title = std::move(title), framesRemaining]() {
-        QMetaObject::invokeMethod(
-            this,
-            [this, revision, title, framesRemaining]() {
-              if (!m_window || revision != m_windowTitleRevision) return;
-
-              if (framesRemaining > 1) {
-                waitForWindowTitleUpdate(revision, title, framesRemaining - 1);
-                return;
-              }
-
-              m_window->setTitle(title);
-            },
-            Qt::QueuedConnection);
+      m_window, &QQuickWindow::frameSwapped, this,
+      [this, framesRemaining] {
+        if (m_pendingWindowTitle.isEmpty()) return;
+        if (framesRemaining > 1) {
+          applyPendingWindowTitle(framesRemaining - 1);
+          return;
+        }
+        m_window->setTitle(m_pendingWindowTitle);
+        m_pendingWindowTitle.clear();
       },
-      static_cast<Qt::ConnectionType>(Qt::DirectConnection | Qt::SingleShotConnection));
-
-  m_window->update();
+      static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
 }
 
 void LauncherWindow::forwardSearchText(const QString &text) {

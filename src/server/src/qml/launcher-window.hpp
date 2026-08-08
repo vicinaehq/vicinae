@@ -1,15 +1,11 @@
 #pragma once
-
-#include <cstdint>
-
-#include <QObject>
-#include <QQmlApplicationEngine>
-#include <QRect>
-#include <QTimer>
-#include <qtmetamacros.h>
-
 #include "common/context.hpp"
 #include "image-url.hpp"
+#include <QObject>
+#include <QQmlApplicationEngine>
+#include <QTimer>
+#include <QRect>
+#include <qtmetamacros.h>
 
 class ActionPanelController;
 class AlertModel;
@@ -135,8 +131,8 @@ private:
   void handleVisibilityChanged(bool visible);
   void handleCurrentViewChanged();
   void handleViewPoped(const BaseView *view);
-  void updateWindowTitle(const ViewHostBase *view);
-  void waitForWindowTitleUpdate(std::uint64_t revision, QString title, int framesRemaining);
+  void updateWindowTitle();
+  void applyPendingWindowTitle(int framesRemaining);
   void setCompacted(bool value);
   void tryCompaction();
   void applyWindowConfig();
@@ -159,8 +155,7 @@ private:
   QQmlApplicationEngine m_engine;
   QQuickWindow *m_window = nullptr;
   QString m_defaultWindowTitle;
-  QString m_requestedWindowTitleSuffix;
-  std::uint64_t m_windowTitleRevision = 0;
+  QString m_pendingWindowTitle;
   bool m_compacted = false;
   bool m_atRoot = true;
   bool m_showBackButton = true;

@@ -27,13 +27,11 @@ class ExtensionViewHost : public ViewHostBase {
   Q_PROPERTY(bool hasMorePages READ hasMorePages NOTIFY paginationChanged)
 
 public:
-  explicit ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notify, QString windowTitleSuffix,
-                             QObject *parent = nullptr);
+  explicit ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notify, QObject *parent = nullptr);
 
   QUrl qmlComponentUrl() const override;
   QUrl qmlSearchAccessoryUrl() const override;
   QVariantMap qmlProperties() override;
-  QString windowTitleSuffix() const override;
   void loadInitialData() override;
   void onReactivated() override;
 
@@ -100,7 +98,6 @@ private:
   }
 
   ExtensionActionPanelBuilder::NotifyFn m_notify;
-  QString m_windowTitleSuffix;
   ViewModel m_model;
   int m_renderIndex = -1;
   QTimer *m_searchDebounce;
