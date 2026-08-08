@@ -291,6 +291,8 @@ struct ConfigValue {
   bool closeOnFocusLoss = false;
   bool considerPreedit = false;
   bool popToRootOnClose = false;
+  // seconds; with popToRootOnClose, reopening within this window keeps the query/view stack
+  int popToRootOnCloseDelay = 0;
   bool popOnBackspace = true;
   bool activateOnSingleClick = false;
   bool wrapNavigation = false;
@@ -350,6 +352,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> closeOnFocusLoss;
   std::optional<bool> considerPreedit;
   std::optional<bool> popToRootOnClose;
+  std::optional<int> popToRootOnCloseDelay;
   std::optional<bool> popOnBackspace;
   std::optional<bool> activateOnSingleClick;
   std::optional<bool> wrapNavigation;

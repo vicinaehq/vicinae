@@ -90,9 +90,16 @@ void NavigationController::showHud(const QString &title, const std::optional<Ima
 }
 
 void NavigationController::applyPopToRoot(const PendingPopToRoot &settings) {
+  // Raycast-style delayed pop to root: a Default-policy close that reopens within
+  // m_popToRootOnCloseDelay seconds keeps the view stack and search text.
+  bool const closedRecently = m_popToRootOnCloseDelay > 0 && m_closedAt.isValid() &&
+                              m_closedAt.elapsed() < qint64(m_popToRootOnCloseDelay) * 1000;
+
   auto resolveApplicablePopToRoot = [&]() {
-    if (settings.type == PopToRootType::Default)
+    if (settings.type == PopToRootType::Default) {
+      if (closedRecently) return PopToRootType::Suspended;
       return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;
+    }
     return settings.type;
   };
 
@@ -106,7 +113,7 @@ void NavigationController::applyPopToRoot(const PendingPopToRoot &settings) {
     break;
   }
 
-  if (isRootSearch() && settings.clearSearch) clearSearchText();
+  if (isRootSearch() && settings.clearSearch && !closedRecently) clearSearchText();
 }
 
 void NavigationController::setDialog(DialogContentWidget *widget) {
@@ -312,6 +319,8 @@ QString NavigationController::navigationTitle(const BaseView *caller) const {
 
 void NavigationController::setPopToRootOnClose(bool value) { m_popToRootOnClose = value; }
 
+void NavigationController::setPopToRootOnCloseDelay(int seconds) { m_popToRootOnCloseDelay = seconds; }
+
 void NavigationController::closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay) {
   QTimer::singleShot(delay, [this, settings]() { closeWindow(settings); });
 }
@@ -328,6 +337,7 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   }
 
   m_pendingPopToRoot = PendingPopToRoot{.type = type, .clearSearch = settings.clearRootSearch};
+  m_closedAt.start();
   m_windowOpened = false;
   emit windowVisiblityChanged(false);
 }
