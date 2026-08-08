@@ -6,12 +6,9 @@ Window {
 
     property int step: 0
     readonly property int stepCount: 4
-    readonly property bool onPermissionStep: root.step === 1
     readonly property bool accessibilityGranted: Permissions.accessibilityGranted
 
     function advance() {
-        if (root.onPermissionStep && !root.accessibilityGranted)
-            return;
         if (root.step === root.stepCount - 1) {
             onboarding.finish();
             return;
@@ -184,7 +181,7 @@ Window {
 
                         Text {
                             visible: !root.accessibilityGranted || !Permissions.fullDiskAccessGranted
-                            text: !root.accessibilityGranted ? qsTr("Accessibility is required: global shortcuts, paste, and snippet expansion cannot work without it.") : qsTr("Full disk access needs to be explicitly enabled if you want file search to cover all your files.")
+                            text: !root.accessibilityGranted ? qsTr("Without accessibility access, paste, snippet expansion, and window management are unavailable.") : qsTr("Full disk access needs to be explicitly enabled if you want file search to cover all your files.")
                             color: Theme.textMuted
                             font.pointSize: Theme.smallerFontSize
                             wrapMode: Text.Wrap
@@ -359,11 +356,7 @@ Window {
                                 anchors.margins: -5
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (index > 1 && !root.accessibilityGranted)
-                                        return;
-                                    root.step = index;
-                                }
+                                onClicked: root.step = index
                             }
                         }
                     }
@@ -373,8 +366,6 @@ Window {
                     id: nextButton
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    enabled: !root.onPermissionStep || root.accessibilityGranted
-                    opacity: enabled ? 1 : 0.4
                     variant: "accent"
                     text: {
                         if (root.step === root.stepCount - 1)
