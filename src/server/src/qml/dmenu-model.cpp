@@ -1,7 +1,6 @@
 #include "dmenu-model.hpp"
 #include "common/enumerate.hpp"
 #include "fuzzy/fzf.hpp"
-#include "generated/ipc-client.hpp"
 #include "service-registry.hpp"
 #include "template-engine/template-engine.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -9,7 +8,6 @@
 #include "utils/utils.hpp"
 #include <algorithm>
 #include <filesystem>
-#include <qhashfunctions.h>
 #include <ranges>
 #include <utility>
 
