@@ -179,6 +179,21 @@
 		}
 	},
 	
+	// Shortcuts that work system-wide, even when the vicinae window is closed.
+	"global_shortcuts": {
+		// The shortcut used to toggle the launcher window.
+		// Defaults to "alt+space" on macOS and Windows, "super+control+space" elsewhere.
+		// "toggle": "alt+space",
+
+		// While one of these applications is focused, all global shortcuts are released so that
+		// the keystrokes reach the application itself. Useful for virtual machines or remote
+		// desktops that need to receive every key.
+		// Values are application IDs:
+		// - macOS: the bundle identifier, e.g "com.vmware.fusion"
+		// - Linux: the desktop file ID, e.g "org.gnome.Boxes.desktop"
+		"inhibit_apps": []
+	},
+
 	// Keybinds are serialized using a custom format.
 	// It is recommended to edit them through the settings GUI, which will write them to this file.
 	// NOTE: here, "control" remaps to the "command" (⌘) key on macOS.

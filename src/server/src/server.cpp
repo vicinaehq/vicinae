@@ -280,8 +280,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
-    auto globalShortcutService = std::make_unique<GlobalShortcutService>(*configService, *rootItemManager,
-                                                                         createGlobalShortcutBackend());
+    auto globalShortcutService = std::make_unique<GlobalShortcutService>(
+        *configService, *rootItemManager, *appRuntime, createGlobalShortcutBackend());
     auto shortcutService =
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
     auto toastService = std::make_unique<ToastService>();
