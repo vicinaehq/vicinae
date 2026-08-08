@@ -278,10 +278,12 @@ struct GlobalShortcuts {
 #else
   std::optional<std::string> toggle = "super+control+space";
 #endif
+  std::vector<std::string> inhibitApps;
 };
 
 template <> struct Partial<GlobalShortcuts> {
   std::optional<std::string> toggle;
+  std::optional<std::vector<std::string>> inhibitApps;
 };
 
 struct ConfigValue {
