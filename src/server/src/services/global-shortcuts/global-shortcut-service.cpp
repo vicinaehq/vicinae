@@ -9,7 +9,12 @@ GlobalShortcutService::GlobalShortcutService(config::Manager &config, RootItemMa
     : m_config(config), m_rootItemManager(rootItemManager), m_backend(std::move(backend)) {
   connect(m_backend.get(), &AbstractGlobalShortcutBackend::shortcutActivated, this,
           &GlobalShortcutService::onActivated);
-  connect(m_backend.get(), &AbstractGlobalShortcutBackend::ready, this, &GlobalShortcutService::reconcile);
+  // `ready` may be re-emitted after a backend reset, in which case every binding is replayed
+  connect(m_backend.get(), &AbstractGlobalShortcutBackend::ready, this, [this] {
+    m_appliedTriggers.clear();
+    m_actions.clear();
+    reconcile();
+  });
   connect(&m_config, &config::Manager::configChanged, this, [this] { reconcile(); });
 
   m_backend->start();
