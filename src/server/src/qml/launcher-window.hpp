@@ -10,6 +10,7 @@
 class ActionPanelController;
 class AlertModel;
 class ConfigBridge;
+class GlobalShortcutBridge;
 class HudBridge;
 class ImageSource;
 class KeybindBridge;
@@ -147,6 +148,7 @@ private:
   ImageSource *m_imgSource;
   KeybindBridge *m_keybindProxy;
   KeyboardBridge *m_keyboardBridge;
+  GlobalShortcutBridge *m_globalShortcutBridge;
   PlatformBridge *m_platformBridge;
   ThemeBridge *m_themeBridge;
 

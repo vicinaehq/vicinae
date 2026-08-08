@@ -1,5 +1,6 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "qml/alias-form-view-host.hpp"
+#include "ui/action-pannel/shortcut-recorder-panel-view.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -116,4 +117,22 @@ void OpenItemPreferencesAction::execute(ApplicationContext *ctx) {
 
 void SetRootItemAliasAction::execute(ApplicationContext *ctx) {
   ctx->navigation->pushView(new AliasFormViewHost(m_id));
+}
+
+SetRootItemShortcutAction::SetRootItemShortcutAction(const EntrypointId &id, const QString &itemTitle,
+                                                     const ImageURL &itemIcon,
+                                                     const std::optional<std::string> &shortcut)
+    : SubmenuAction(tr("Set Global Shortcut"), ImageURL::builtin(BuiltinIcon::Keyboard)), m_id(id),
+      m_itemTitle(itemTitle), m_itemIcon(itemIcon),
+      m_shortcut(QString::fromStdString(shortcut.value_or(""))) {}
+
+ActionPanelView *SetRootItemShortcutAction::createView(ApplicationContext *ctx, QObject *parent) {
+  auto *view = new ShortcutRecorderPanelView(m_itemTitle, m_itemIcon, QString::fromStdString(m_id),
+                                             m_shortcut, parent);
+
+  view->setAcceptHandler([ctx, id = m_id](const QString &serialized) {
+    ctx->services->rootItemManager()->setShortcut(id, serialized.toStdString());
+  });
+
+  return view;
 }

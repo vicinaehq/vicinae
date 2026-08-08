@@ -61,6 +61,13 @@ public:
   Q_INVOKABLE bool tryShortcut(int key, int modifiers);
 
   /**
+   * Whether the currently displayed panel wants every keypress delivered to it
+   * (e.g. a shortcut recorder). Window-level key routing must not match bound
+   * actions or app keybinds while this is true.
+   */
+  bool capturesAllKeys() const;
+
+  /**
    * Activate the action the key event is bound to, if any: submenus are opened,
    * regular actions are executed. Enter/return uniformization is handled as part
    * of the shortcut matching.

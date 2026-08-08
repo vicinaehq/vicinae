@@ -4,6 +4,7 @@
 #include "common/entrypoint.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "utils/capabilities.hpp"
 
 class DisableItemAction : public AbstractAction {
   Q_DECLARE_TR_FUNCTIONS(DisableItemAction)
@@ -96,10 +97,26 @@ public:
   }
   std::optional<ImageURL> icon() const override { return BuiltinIcon::Text; }
   void execute(ApplicationContext *context) override;
-  SetRootItemAliasAction(EntrypointId id) : m_id(id) { setShortcut(Keybind::EditSecondaryAction); }
+  SetRootItemAliasAction(EntrypointId id) : m_id(std::move(id)) { setShortcut(Keybind::EditSecondaryAction); }
 
 private:
   EntrypointId m_id;
+};
+
+class SetRootItemShortcutAction : public SubmenuAction {
+  Q_DECLARE_TR_FUNCTIONS(SetRootItemShortcutAction)
+
+public:
+  SetRootItemShortcutAction(const EntrypointId &id, const QString &itemTitle, const ImageURL &itemIcon,
+                            const std::optional<std::string> &shortcut);
+
+  ActionPanelView *createView(ApplicationContext *ctx, QObject *parent) override;
+
+private:
+  EntrypointId m_id;
+  QString m_itemTitle;
+  ImageURL m_itemIcon;
+  QString m_shortcut;
 };
 
 // common actions applicable to all root search items
@@ -120,6 +137,21 @@ public:
 
     disable->setShortcut(Keybind::RemoveAction);
 
-    return {copyDeeplink, resetRanking, markAsFavorite, setAlias, openPreferences, copyId, disable};
+    std::vector<AbstractAction *> actions;
+    actions.reserve(8);
+    actions.emplace_back(copyDeeplink);
+    actions.emplace_back(resetRanking);
+    actions.emplace_back(markAsFavorite);
+    actions.emplace_back(setAlias);
+    if (platform::supports(platform::Capability::GlobalShortcuts)) {
+      auto setGlobalShortcut =
+          new SetRootItemShortcutAction(id, item.title(), item.iconUrl(), metadata.shortcut);
+      actions.emplace_back(setGlobalShortcut);
+    }
+    actions.emplace_back(openPreferences);
+    actions.emplace_back(copyId);
+    actions.emplace_back(disable);
+
+    return actions;
   }
 };

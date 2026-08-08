@@ -3,6 +3,7 @@
 #ifdef Q_OS_LINUX
 #include "internal/wayland/xdg-activation.hpp"
 #endif
+#include "global-shortcut-bridge.hpp"
 #include "hud-bridge.hpp"
 #include "keybind-bridge.hpp"
 #include "keyboard-bridge.hpp"
@@ -53,8 +54,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
       m_footerPanel(new ActionPanelController(ctx, this)),
       m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
       m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
-      m_keyboardBridge(new KeyboardBridge(this)), m_platformBridge(new PlatformBridge(this)),
-      m_themeBridge(new ThemeBridge(this)) {
+      m_keyboardBridge(new KeyboardBridge(this)), m_globalShortcutBridge(new GlobalShortcutBridge(this)),
+      m_platformBridge(new PlatformBridge(this)), m_themeBridge(new ThemeBridge(this)) {
 
 #ifndef Q_OS_MACOS
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
@@ -75,6 +76,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("footerPanel"), m_footerPanel);
   rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
   rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
+  rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"), ctx.services->fileChooserService());
 
   updateLayerShellProps();
@@ -214,10 +216,16 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   });
 
   connect(m_footerPanel, &ActionPanelController::openChanged, this, [this]() {
-    if (m_footerPanel->isOpen()) m_actionPanel->close();
+    if (m_footerPanel->isOpen()) {
+      setCompacted(false);
+      m_actionPanel->close();
+    }
   });
   connect(m_actionPanel, &ActionPanelController::openChanged, this, [this]() {
-    if (m_actionPanel->isOpen()) m_footerPanel->close();
+    if (m_actionPanel->isOpen()) {
+      setCompacted(false);
+      m_footerPanel->close();
+    }
   });
 
   connect(nav, &NavigationController::navigationStatusChanged, this,
@@ -472,6 +480,8 @@ void LauncherWindow::forwardSearchText(const QString &text) {
 }
 
 bool LauncherWindow::forwardKey(int key, int modifiers) {
+  if (m_actionPanel->capturesAllKeys()) return false;
+
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
   const bool isReturn = key == Qt::Key_Return || key == Qt::Key_Enter;
   const bool unmodified = (mods & ~Qt::KeypadModifier) == Qt::NoModifier;
@@ -622,7 +632,7 @@ void LauncherWindow::setCompacted(bool value) {
 void LauncherWindow::tryCompaction() {
   auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
 
-  setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled &&
+  setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled && !m_actionPanel->isOpen() &&
                m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1 &&
                !m_toastActive);
 }
@@ -649,8 +659,6 @@ void LauncherWindow::setExclusiveFocus(bool exclusive) {
 
 void LauncherWindow::applyWindowConfig() {
   if (!m_window) return;
-  auto &wcfg = m_ctx.services->config()->value().launcherWindow;
-
   updateLayerShellProps();
 }
 
