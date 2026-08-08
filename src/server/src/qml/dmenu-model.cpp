@@ -1,21 +1,23 @@
 #include "dmenu-model.hpp"
-#include "clipboard-actions.hpp"
+#include "common/enumerate.hpp"
 #include "fuzzy/fzf.hpp"
-#include "navigation-controller.hpp"
+#include "generated/ipc-client.hpp"
 #include "service-registry.hpp"
 #include "template-engine/template-engine.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "utils/utils.hpp"
 #include <algorithm>
 #include <filesystem>
+#include <qhashfunctions.h>
 #include <ranges>
 #include <utility>
 
 void DMenuSection::setRawEntries(std::vector<std::string_view> entries) {
   m_entries = std::move(entries);
   m_filtered.clear();
-  for (auto e : m_entries) {
-    m_filtered.push_back({e, 0});
+  for (auto [idx, e] : vicinae::enumerate(m_entries)) {
+    m_filtered.push_back({{e, idx}, 0});
   }
   notifyChanged();
 }
@@ -25,9 +27,9 @@ void DMenuSection::setFilter(std::string_view query) {
   m_currentSearchText = QString::fromUtf8(query.data(), query.size());
 
   m_filtered.clear();
-  for (auto e : m_entries) {
+  for (auto [idx, e] : vicinae::enumerate(m_entries)) {
     int const score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(e, queryStr);
-    if (queryStr.empty() || score > 0) { m_filtered.push_back({e, score}); }
+    if (queryStr.empty() || score > 0) { m_filtered.push_back({{e, idx}, score}); }
   }
   std::ranges::stable_sort(m_filtered, std::greater{});
 }
@@ -43,13 +45,13 @@ QString DMenuSection::expandSectionName(size_t count) const {
   return engine.build(QString::fromUtf8(m_sectionTemplate.data(), m_sectionTemplate.size()));
 }
 
-std::string_view DMenuSection::entryAt(int i) const {
+DMenuSection::IndexedData DMenuSection::entryAt(int i) const {
   if (i < 0 || std::cmp_greater_equal(i, m_filtered.size())) return {};
   return m_filtered[i].data;
 }
 
 QString DMenuSection::itemTitle(int i) const {
-  auto entry = entryAt(i);
+  auto entry = entryAt(i).first;
   if (entry.starts_with('/')) {
     return QString::fromStdString(getLastPathComponent(std::filesystem::path(entry)));
   }
@@ -58,7 +60,7 @@ QString DMenuSection::itemTitle(int i) const {
 
 QString DMenuSection::itemSubtitle(int i) const {
   if (!m_noQuickLook) return {};
-  auto entry = entryAt(i);
+  auto entry = entryAt(i).first;
   if (entry.starts_with('/')) {
     std::error_code ec;
     if (std::filesystem::exists(entry, ec)) {
@@ -69,7 +71,7 @@ QString DMenuSection::itemSubtitle(int i) const {
 }
 
 std::optional<ImageURL> DMenuSection::itemIcon(int i) const {
-  auto entry = entryAt(i);
+  auto entry = entryAt(i).first;
   if (entry.starts_with('/')) {
     std::error_code ec;
     if (std::filesystem::exists(entry, ec)) { return ImageURL::fileIcon(entry); }
@@ -83,15 +85,28 @@ void DMenuSection::selectEntry(const QString &text) const {
 }
 
 std::unique_ptr<ActionPanelState> DMenuSection::actionPanel(int i) const {
-  auto entry = entryAt(i);
+  auto [entry, idx] = entryAt(i);
   if (entry.empty()) return nullptr;
 
   auto text = QString::fromUtf8(entry.data(), entry.size());
   auto panel = std::make_unique<ListActionPanelState>();
   auto *main = panel->createSection();
 
-  main->addAction(new StaticAction(tr("Select entry"), ImageURL::builtin(BuiltinIcon::SaveDocument),
-                                   [this, text](ApplicationContext *) { selectEntry(text); }));
+  using Format = ipc_gen::DMenuOutputFormat;
+
+  auto selectEntryLabel = m_outputFormat == Format::Data ? tr("Select entry") : tr("Select entry (index)");
+
+  main->addAction(new StaticAction(selectEntryLabel, ImageURL::builtin(BuiltinIcon::SaveDocument),
+                                   [this, text, idx](ApplicationContext *) {
+                                     switch (m_outputFormat) {
+                                     case Format::Data:
+                                       selectEntry(text);
+                                       break;
+                                     case Format::Index:
+                                       selectEntry(QString::number(idx));
+                                       break;
+                                     }
+                                   }));
 
   main->addAction(new StaticAction(tr("Pass search text"), ImageURL::builtin(BuiltinIcon::SaveDocument),
                                    [this](ApplicationContext *) { selectEntry(m_currentSearchText); }));
@@ -109,7 +124,7 @@ std::unique_ptr<ActionPanelState> DMenuSection::actionPanel(int i) const {
 }
 
 void DMenuSection::onSelected(int i) {
-  auto entry = entryAt(i);
+  auto entry = entryAt(i).first;
   if (!entry.empty()) {
     std::error_code ec;
     if (entry.starts_with('/') && std::filesystem::exists(entry, ec)) {

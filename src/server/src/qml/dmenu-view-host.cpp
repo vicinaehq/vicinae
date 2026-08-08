@@ -24,6 +24,7 @@ void DMenuViewHost::initialize() {
   BaseView::initialize();
   initModel();
 
+  m_section.setOutputFormat(m_data.format);
   if (m_data.noQuickLook) m_section.setNoQuickLook(true);
   if (m_data.noSection) m_section.setNoSection(true);
   if (m_data.sectionTitle) m_section.setSectionTemplate(*m_data.sectionTitle);

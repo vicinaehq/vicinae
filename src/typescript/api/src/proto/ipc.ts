@@ -78,6 +78,8 @@ export class RpcTransport {
 	private handlers = new Map<string, Array<(result: any) => void>>;
 };
 
+export type DMenuOutputFormat = 'Data' | 'Index';
+
 export type PingResponse = {
 	version: string;
 	pid: number;
@@ -131,6 +133,7 @@ export type DMenuRequest = {
 	rawContent: string;
 	navigationTitle?: string;
 	placeholder?: string;
+	format: DMenuOutputFormat;
 	sectionTitle?: string;
 	noSection: boolean;
 	noQuickLook: boolean;
