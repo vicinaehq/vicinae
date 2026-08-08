@@ -174,6 +174,7 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
 
   MathStructure in = CALCULATOR->parse(calcExpression);
   MathStructure result;
+
   CALCULATOR->calculate(&result, calcExpression, 10000, m_evalOpts, &in);
 
   if (CALCULATOR->aborted()) return std::unexpected(CalculatorError("Computation aborted"));
@@ -238,10 +239,8 @@ bool QalculateBackend::isExpression(const std::string &query) const {
 
   CALCULATOR->clearMessages();
 
-  bool hasDigit = std::ranges::any_of(stdExpr, [](unsigned char c) { return std::isdigit(c); });
-  if (hasDigit && parsed.containsType(STRUCT_UNIT) && parsed.containsType(STRUCT_NUMBER)) return true;
+  constexpr std::string_view ARITHMETIC_OPS = "+-*/^%";
 
-  static constexpr std::string_view ARITHMETIC_OPS = "+-*/^%";
   for (size_t i = 1; i < stdExpr.size(); ++i) {
     if (ARITHMETIC_OPS.find(stdExpr[i]) != std::string_view::npos) return true;
   }
