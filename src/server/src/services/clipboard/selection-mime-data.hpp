@@ -51,6 +51,7 @@ public:
 
       if (ensureImage(path)) {
         auto file = QUrl::fromLocalFile(path);
+        qDebug() << "Serving image data as file" << file;
         if (preferredType == QMetaType::fromType<QVariantList>()) return QVariantList{file};
         return file;
       }
