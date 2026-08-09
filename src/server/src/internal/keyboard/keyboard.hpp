@@ -27,7 +27,7 @@ public:
   static Shortcut osCopy() { return Shortcut(Qt::Key_C, Qt::ControlModifier); }
   static Shortcut osPaste() { return Shortcut(Qt::Key_V, Qt::ControlModifier); }
   static Shortcut enter() { return Qt::Key_Return; }
-  static Shortcut submit() { return enter().shifted(); }
+  static Shortcut submit() { return Shortcut(Qt::Key_Return, Qt::ControlModifier); }
 
   static Shortcut shiftPaste() { return osPaste().shifted(); }
   static Shortcut fromString(const QString &str) { return str; }
