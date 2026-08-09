@@ -53,7 +53,8 @@ inline std::string glazeBeveEnumSpecializations(std::string_view ns, std::span<c
     oss << "\t}\n};\n";
     oss << "template <> struct from<BEVE, " << ns << "::" << e.name << "> {\n";
     oss << "\ttemplate <auto Opts, class... Args>\n";
-    oss << "\tstatic void op(" << ns << "::" << e.name << " &value, is_context auto &&ctx, Args &&...args) {\n";
+    oss << "\tstatic void op(" << ns << "::" << e.name
+        << " &value, is_context auto &&ctx, Args &&...args) {\n";
     oss << "\t\t" << names.str() << "\n";
     oss << "\t\tstd::string s;\n";
     oss << "\t\tparse<BEVE>::op<Opts>(s, ctx, args...);\n";
