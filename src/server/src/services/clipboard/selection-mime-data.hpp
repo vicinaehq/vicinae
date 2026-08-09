@@ -49,12 +49,7 @@ public:
     if (m_imageMimeType && mimetype == Clipboard::URI_LIST) {
       auto path = QString::fromStdString(Omnicast::runtimeDir() / "vicinae-drag-image.png");
 
-      if (ensureImage(path)) {
-        auto file = QUrl::fromLocalFile(path);
-        qDebug() << "Serving image data as file" << file;
-        if (preferredType == QMetaType::fromType<QVariantList>()) return QVariantList{file};
-        return file;
-      }
+      if (ensureImage(path)) { return QVariantList{QUrl::fromLocalFile(path)}; }
     }
 
     return QMimeData::retrieveData(mimetype, preferredType);
