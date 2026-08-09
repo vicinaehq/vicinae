@@ -446,9 +446,8 @@ void NavigationController::executeActionNow(AbstractAction *action) {
     }
   }
 
-  if (action->autoClose()) { closeWindow({.clearRootSearch = true}); }
-
   action->execute(&m_ctx);
+  if (action->autoClose()) { closeWindow({.clearRootSearch = true}); }
   closeActionPanel();
 }
 
