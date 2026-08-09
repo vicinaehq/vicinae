@@ -102,6 +102,7 @@ Item {
                 required property string iconSource
                 required property var itemAccessory
                 required property bool isPinned
+                required property bool isDraggable
 
                 sourceComponent: isSection ? sectionComponent : itemComponent
 
@@ -122,6 +123,11 @@ Item {
                         selected: listView.currentIndex === delegateLoader.index
                         onClicked: listView.currentIndex = delegateLoader.index
                         onActivated: listView.itemActivated(delegateLoader.index)
+                        draggable: delegateLoader.isDraggable
+                        onDragRequested: function (source) {
+                            listView.currentIndex = delegateLoader.index;
+                            root.host.listModel.startDrag(delegateLoader.index, source);
+                        }
 
                         RowLayout {
                             anchors.fill: parent

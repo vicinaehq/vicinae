@@ -86,7 +86,7 @@ public:
     return writeClipboard(data, options);
   }
 
-  AbstractClipboardServer() {}
+  AbstractClipboardServer() = default;
 
 signals:
   void selectionAdded(const ClipboardSelection &selection);
