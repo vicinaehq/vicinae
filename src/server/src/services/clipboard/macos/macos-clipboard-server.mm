@@ -255,11 +255,21 @@ bool MacosClipboardServer::writeClipboard(QMimeData *data, const Clipboard::Copy
     NSMutableArray<NSPasteboardItem *> *objects = [NSMutableArray array];
     if (item.types.count > 0) { [objects addObject:item]; }
 
+    // one pasteboard item per pasted "thing": the first URL rides on the primary item so a file
+    // and its preview flavors don't paste as two separate entities
+    bool firstUrl = true;
     for (const QUrl &url : data->urls()) {
-      NSPasteboardItem *urlItem = [[NSPasteboardItem alloc] init];
       NSPasteboardType type = url.isLocalFile() ? NSPasteboardTypeFileURL : NSPasteboardTypeURL;
-      [urlItem setString:url.toString(QUrl::FullyEncoded).toNSString() forType:type];
-      [objects addObject:urlItem];
+      NSString *value = url.toString(QUrl::FullyEncoded).toNSString();
+
+      if (firstUrl && objects.count > 0) {
+        [item setString:value forType:type];
+      } else {
+        NSPasteboardItem *urlItem = [[NSPasteboardItem alloc] init];
+        [urlItem setString:value forType:type];
+        [objects addObject:urlItem];
+      }
+      firstUrl = false;
     }
 
     if (lazyTypes.count > 0) {
