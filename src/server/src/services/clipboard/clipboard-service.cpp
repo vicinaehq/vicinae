@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <numeric>
 #include <QGuiApplication>
+#include <qstandardpaths.h>
 #include "services/app-service/abstract-app-db.hpp"
 #ifdef Q_OS_LINUX
 #include "x11/x11-clipboard-server.hpp"
@@ -22,6 +23,7 @@
 #include <quuid.h>
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "services/clipboard/selection-mime-data.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-mime.hpp"
 #include "services/clipboard/clipboard-server.hpp"
@@ -533,13 +535,8 @@ void ClipboardService::restoreClipboard() {
   m_lastSelection.reset();
 }
 
-bool ClipboardService::copySelection(const ClipboardSelection &selection,
-                                     const Clipboard::CopyOptions &options) {
-  if (selection.offers.empty()) {
-    qWarning() << "Not copying selection with no offers";
-    return false;
-  }
-
+std::unique_ptr<QMimeData>
+ClipboardService::mimeDataFromSelection(const ClipboardSelection &selection) const {
   QMimeData *mimeData = new QMimeData;
 
   for (const auto &offer : selection.offers) {
@@ -565,9 +562,27 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
     }
   }
 
+  return std::unique_ptr<QMimeData>{mimeData};
+}
+
+std::unique_ptr<QMimeData>
+ClipboardService::dragMimeDataForSelection(const ClipboardSelection &selection) const {
+  return std::make_unique<DragAndDropSelectionMimeData>(selection);
+}
+
+bool ClipboardService::copySelection(const ClipboardSelection &selection,
+                                     const Clipboard::CopyOptions &options) {
+  if (selection.offers.empty()) {
+    qWarning() << "Not copying selection with no offers";
+    return false;
+  }
+
+  auto mimeData = mimeDataFromSelection(selection);
   auto enrichedOptions = options;
+
   if (!enrichedOptions.sourceApp) enrichedOptions.sourceApp = selection.sourceApp;
-  return copyQMimeData(mimeData, enrichedOptions);
+
+  return copyQMimeData(mimeData.release(), enrichedOptions);
 }
 
 bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::CopyOptions &options) {

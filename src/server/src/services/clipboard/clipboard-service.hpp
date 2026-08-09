@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "extensions/wm/wm-extension.hpp"
+#include "common/types.hpp"
 #include "services/clipboard/clipboard-content.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
@@ -9,10 +9,13 @@
 #include <expected>
 #include <filesystem>
 #include <QJsonObject>
+#include <qcontainerfwd.h>
 #include <qdir.h>
 #include <qfileinfo.h>
 #include <qfuture.h>
+#include <qimage.h>
 #include <qjsonobject.h>
+#include <qmimedata.h>
 #include <qmimedatabase.h>
 #include <qstringview.h>
 #include <QTimer>
@@ -72,6 +75,8 @@ public:
   ClipboardSelection retrieveSelection(int offset = 0);
   std::optional<ClipboardSelection> retrieveSelectionById(const QString &id);
   bool copySelectionRecord(const QString &id, const Clipboard::CopyOptions &options);
+  std::unique_ptr<QMimeData> mimeDataFromSelection(const ClipboardSelection &selection) const;
+  std::unique_ptr<QMimeData> dragMimeDataForSelection(const ClipboardSelection &selection) const;
   bool copySelection(const ClipboardSelection &selection, const Clipboard::CopyOptions &options);
   bool copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options = {});
 

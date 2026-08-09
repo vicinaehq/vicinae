@@ -45,6 +45,17 @@ ImageURL ClipboardHistorySection::iconForEntry(const ClipboardHistoryEntry &entr
   }
 }
 
+bool ClipboardHistorySection::isDraggable(int idx) const { return true; }
+
+std::unique_ptr<QMimeData> ClipboardHistorySection::dragMimeData(int idx) const {
+  auto clipman = scope().services()->clipman();
+  auto selection = clipman->retrieveSelectionById(m_entries[idx].id);
+
+  return selection
+      .transform([&](const auto &selection) { return clipman->dragMimeDataForSelection(selection); })
+      .value_or(nullptr);
+}
+
 std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) const {
   const auto &entry = m_entries[i];
   auto panel = std::make_unique<ListActionPanelState>();
