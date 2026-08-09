@@ -12,17 +12,23 @@
 #include <ranges>
 
 constexpr const auto COMMON = R"(
-struct JsonRpcRequest {
+template <class P> struct JsonRpcRequestT {
   std::string jsonrpc;
   std::string method;
   int id;
-  glz::raw_json params;
+  P params;
 };
 
-struct JsonRpcNotification {
+template <class P> struct JsonRpcNotificationT {
   std::string jsonrpc;
   std::string method;
-  glz::raw_json params;
+  P params;
+};
+
+template <class R> struct JsonRpcResponseT {
+  int id;
+  std::string jsonrpc;
+  R result;
 };
 
 struct JsonRpcErrorResponse {
@@ -32,15 +38,18 @@ struct JsonRpcErrorResponse {
   std::string error;
 };
 
-struct JsonRpcResponse {
-  int id;
-  std::string jsonrpc;
-  glz::raw_json result;
-};
+inline constexpr glz::opts WIRE_OPTS{.format = WIRE_FORMAT};
+inline constexpr glz::opts WIRE_READ_OPTS{.format = WIRE_FORMAT, .error_on_unknown_keys = false};
 
-using RpcMessage = std::variant<JsonRpcResponse, JsonRpcErrorResponse, JsonRpcNotification, JsonRpcRequest>;
-using IncomingJsonRpcMessage = std::variant<JsonRpcRequest, JsonRpcNotification>;
-using OutgoingJsonRpcMessage = std::variant<JsonRpcResponse, JsonRpcNotification, JsonRpcErrorResponse>;
+template <class T> std::expected<void, std::string> wireWrite(const T &value, std::string &buf) {
+  if (auto const err = glz::write<WIRE_OPTS>(value, buf)) { return std::unexpected(glz::format_error(err)); }
+  return {};
+}
+
+template <class T> std::expected<void, std::string> wireRead(T &value, std::string_view data) {
+  if (auto const err = glz::read<WIRE_READ_OPTS>(value, data)) { return std::unexpected(glz::format_error(err)); }
+  return {};
+}
 
 class AbstractTransport {
 public:
@@ -74,8 +83,8 @@ struct RpcIncomingMessage {
   std::optional<int> id;
   std::optional<std::string> method;
   std::optional<std::string> error;
-  glz::raw_json result;
-  glz::raw_json params;
+  glz::skip result{};
+  glz::skip params{};
 };
 
 class RpcTransport {
@@ -101,7 +110,7 @@ public:
   std::expected<void, std::string> dispatchMessage(std::string_view data) {
     RpcIncomingMessage msg;
 
-    if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(msg, data)) { return std::unexpected(glz::format_error(error)); }
+    if (auto const error = wireRead(msg, data); !error) { return error; }
 
     if (msg.id) {
       if (auto it = m_requestMap.find(*msg.id); it != m_requestMap.end()) {
@@ -111,7 +120,7 @@ public:
           it->second.handler(std::unexpected(*msg.error));
         } else {
           if (m_logger) m_logger->onResponse(it->second.method, true, latencyMs);
-          it->second.handler(std::move(msg.result.str));
+          it->second.handler(data);
         }
         m_requestMap.erase(it);
       }
@@ -119,7 +128,7 @@ public:
       if (m_logger) m_logger->onEvent(*msg.method);
       if (auto it = m_handlers.find(*msg.method); it != m_handlers.end()) {
         for (const auto &handler : it->second) {
-          handler(msg.params.str);
+          handler(data);
         }
       }
     }
@@ -128,13 +137,9 @@ public:
   }
 
   template <typename T, typename U>
-  QFuture<std::expected<T, std::string>> request(std::string_view method, const U &params) {
-    if (auto const error = glz::write_json(params, m_buf)) {
-      return QtFuture::makeReadyValueFuture<Result<T>>(std::unexpected(glz::format_error(error)));
-    }
-
+  QFuture<std::expected<T, std::string>> request(std::string_view method, U params) {
     int id = m_id++;
-    auto sendRes = sendMessage(JsonRpcRequest{.jsonrpc = "2.0", .method = std::string{method}, .id = id, .params = m_buf});
+    auto sendRes = sendMessage(JsonRpcRequestT<U>{.jsonrpc = "2.0", .method = std::string{method}, .id = id, .params = std::move(params)});
 
     if (!sendRes)
       return QtFuture::makeReadyValueFuture<Result<T>>(std::unexpected(std::move(sendRes).error()));
@@ -149,11 +154,11 @@ public:
         else promise->addResult(std::unexpected(data.error()));
       } else {
         auto value = data.and_then([](std::string_view data) -> Result<T> {
-          T payload;
-          if (auto const error = glz::read_json(payload, data)) {
-            return std::unexpected(glz::format_error(error));
+          JsonRpcResponseT<T> payload{};
+          if (auto const error = wireRead(payload, data); !error) {
+            return std::unexpected(std::move(error).error());
           }
-          return payload;
+          return std::move(payload.result);
         });
 
         promise->addResult(std::move(value));
@@ -174,11 +179,11 @@ public:
         else cb(std::unexpected(data.error()));
       } else {
         auto value = data.and_then([](std::string_view data) -> Result<T> {
-          T payload;
-          if (auto const error = glz::read_json(payload, data)) {
-            return std::unexpected(glz::format_error(error));
+          JsonRpcNotificationT<T> payload{};
+          if (auto const error = wireRead(payload, data); !error) {
+            return std::unexpected(std::move(error).error());
           }
-          return payload;
+          return std::move(payload.params);
         });
 
         cb(value);
@@ -192,8 +197,9 @@ public:
     }
   }
 
-  std::expected<void, std::string> sendMessage(const IncomingJsonRpcMessage &msg) {
-    if (auto const res = glz::write_json(msg, m_buf)) { return std::unexpected(glz::format_error(res)); }
+  template <typename Msg>
+  std::expected<void, std::string> sendMessage(const Msg &msg) {
+    if (auto const res = wireWrite(msg, m_buf); !res) { return res; }
 
     m_transport.send(m_buf);
     return {};
@@ -211,7 +217,12 @@ private:
 )";
 
 constexpr const auto BASE = R"(
-
+struct RpcRequestHead {
+  std::string jsonrpc;
+  std::string method;
+  int id;
+  glz::skip params{};
+};
 
 class RpcTransport {
 	public:
@@ -220,31 +231,21 @@ class RpcTransport {
 		void bindReply(int id) { m_transport.bindReply(id); }
 
 		template <typename T>
-		void notify(std::string_view method, const T& params) {
-			std::string paramsBuf;
-			{
-			[[maybe_unused]] auto res = glz::write_json(params, paramsBuf);
-			}
-
-			send(JsonRpcNotification{
+		void notify(std::string_view method, T params) {
+			send(JsonRpcNotificationT<T>{
 				.jsonrpc = "2.0",
 				.method = std::string{method},
-				.params = paramsBuf
+				.params = std::move(params)
 			});
 		}
 
 		template <typename T>
-		void reply(int id, const T& result) {
-			std::string resultBuf;
-			{
-			[[maybe_unused]] auto res = glz::write_json(result, resultBuf);
-			}
-
+		void reply(int id, T result) {
 			m_transport.activateReply(id);
-			send(JsonRpcResponse{
+			send(JsonRpcResponseT<T>{
 				.id = id,
 				.jsonrpc = "2.0",
-				.result = resultBuf
+				.result = std::move(result)
 			});
 		}
 
@@ -254,9 +255,10 @@ class RpcTransport {
 		}
 
 	private:
-		void send(const OutgoingJsonRpcMessage& msg) {
+		template <typename Msg>
+		void send(const Msg& msg) {
 			std::string buf;
-			[[maybe_unused]] auto res = glz::write_json(msg, buf);
+			[[maybe_unused]] auto res = wireWrite(msg, buf);
 			m_transport.send(buf);
 		}
 
@@ -335,6 +337,8 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
                       return "std::string";
                     case PrimitiveType::Any:
                       return "glz::generic";
+                    case PrimitiveType::Raw:
+                      return "raw_t";
                     default:
                       std::unreachable();
                     }
@@ -530,7 +534,9 @@ public:
 
     oss << R"(
 #pragma once
+#include <array>
 #include <chrono>
+#include <cstdint>
 #include <QDebug>
 #include <QFuture>
 #include <memory>
@@ -539,6 +545,7 @@ public:
 #include <variant>
 #include <string_view>
 #include <expected>
+#include <vector>
 	)";
 
     auto const ns =
@@ -546,6 +553,7 @@ public:
 
     oss << "namespace " << ns << " {\n";
 
+    oss << glazeWirePrelude(opts.wire);
     oss << COMMON << clientCode;
 
     generateTypes(oss, ast);
@@ -572,7 +580,9 @@ oss << serializeEventParams(s->name, e);
       for (const auto &m : s->events) {
         std::string methodId = std::format("{}/{}", s->name, m.name);
         oss << "transport.subscribe<" << getMethodParamName(s->name, m.name) << ">(" << std::quoted(methodId)
-            << ", " << "[this](const auto& payload){ if (!payload) return; emit " << m.name << "(";
+            << ", "
+            << "[this](const auto& payload){ if (!payload) { qWarning() << \"figura: failed to decode "
+            << methodId << " event:\" << payload.error().c_str(); return; } emit " << m.name << "(";
 
         for (const auto &[idx, param] : m.params | vicinae::enumerate) {
           if (idx > 0) { oss << ", "; }
@@ -657,6 +667,7 @@ oss << serializeEventParams(s->name, e);
     oss << "\n}"; // end namespace
 
     oss << serializeEnumGlazeMetas(ns, ast.enums);
+    if (opts.wire == WireFormat::Beve) { oss << glazeBeveEnumSpecializations(ns, ast.enums); }
 
     return oss.str();
   }
@@ -666,7 +677,9 @@ oss << serializeEventParams(s->name, e);
 
     oss << R"(
 #pragma once
+#include <array>
 #include <chrono>
+#include <cstdint>
 #include <QFuture>
 #include <QFutureWatcher>
 #include <expected>
@@ -676,12 +689,14 @@ oss << serializeEventParams(s->name, e);
 #include <concepts>
 #include <variant>
 #include <string_view>
+#include <vector>
 	)";
 
     auto const ns =
         opts.generationNamespace.value_or(std::string{stripExtension(opts.file.filename().string())});
 
     oss << "namespace " << ns << " {\n";
+    oss << glazeWirePrelude(opts.wire);
     oss << COMMON << BASE;
 
     generateTypes(oss, ast);
@@ -724,10 +739,10 @@ oss << serializeEventParams(s->name, e);
 	}
 
 	void route(std::string_view data) {
-		JsonRpcRequest msg;
-		if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(msg, data)) { return; }
+		RpcRequestHead msg;
+		if (auto const error = wireRead(msg, data); !error) { return; }
 		if (msg.method.empty()) return;
-		dispatch(msg);
+		dispatch(msg, data);
 	}
 	)";
 
@@ -750,7 +765,7 @@ oss << serializeEventParams(s->name, e);
 		}
 		if (m_logger) m_logger->onResponse(method, true, latencyMs);
 		if constexpr (std::is_void_v<typename T::value_type>) {
-			m_transport.reply(id, nullptr);
+			m_transport.reply(id, glz::generic{});
 		} else {
 			m_transport.reply(id, *result);
 		}
@@ -779,7 +794,7 @@ oss << serializeEventParams(s->name, e);
 	}
 	)";
 
-    oss << "\tvoid dispatch(const JsonRpcRequest& req) {\n";
+    oss << "\tvoid dispatch(const RpcRequestHead& req, std::string_view data) {\n";
     oss << "\t\tauto sentAt = Clock::now();\n";
     oss << "\t\tif (m_logger) m_logger->onRequest(req.method);\n";
 
@@ -791,8 +806,9 @@ oss << serializeEventParams(s->name, e);
         oss << "\t\t" << (firstMethod ? "if" : "} else if") << " (req.method == " << std::quoted(methodId)
             << ") {\n";
         firstMethod = false;
-        oss << "\t\t\t" << getMethodParamName(s->name, m.name) << " payload;\n";
-        oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
+        oss << "\t\t\tJsonRpcRequestT<" << getMethodParamName(s->name, m.name) << "> env{};\n";
+        oss << "\t\t\t[[maybe_unused]] auto res = wireRead(env, data);\n";
+        if (!m.params.empty()) { oss << "\t\t\tauto& payload = env.params;\n"; }
         oss << "\t\t\t" << "handleResult(req.id, req.method, sentAt, " << "m_" << s->name << "->" << m.name
             << "(";
         for (const auto &[idx, param] : m.params | vicinae::enumerate) {
@@ -821,6 +837,7 @@ oss << serializeEventParams(s->name, e);
     oss << "\n}"; // end namespace
 
     oss << serializeEnumGlazeMetas(ns, ast.enums);
+    if (opts.wire == WireFormat::Beve) { oss << glazeBeveEnumSpecializations(ns, ast.enums); }
 
     return oss.str();
   }

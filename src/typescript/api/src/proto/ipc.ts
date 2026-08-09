@@ -11,7 +11,17 @@ interface JsonRpcMessage {
 }
 
 interface ITransport {
-	send(data: string): void;
+	send(data: WireData): void;
+}
+
+export type WireData = string;
+
+function encodeMessage(msg: JsonRpcMessage): WireData {
+	return JSON.stringify(msg);
+}
+
+function decodeMessage(data: WireData): JsonRpcMessage {
+	return JSON.parse(data) as JsonRpcMessage;
 }
 
 type EventSubscription = {
@@ -21,8 +31,8 @@ type EventSubscription = {
 export class RpcTransport {
 	constructor(private readonly transport: ITransport) { }
 
-	dispatchMessage(data: string) {
-		const msg = JSON.parse(data) as JsonRpcMessage;
+	dispatchMessage(data: WireData) {
+		const msg = decodeMessage(data);
 
 		if (msg.id !== undefined) {
 			const handler = this.requestMap.get(msg.id);
@@ -69,7 +79,7 @@ export class RpcTransport {
 	}
 
 	private sendMessage(msg: JsonRpcMessage) {
-		this.transport.send(JSON.stringify(msg));
+		this.transport.send(encodeMessage(msg));
 	}
 
 
@@ -242,7 +252,7 @@ export class Client {
 		this.Ipc = new IpcService(this.transport);
 	}
 
-  	route(msg: string): void { this.transport.dispatchMessage(msg); }
+  	route(msg: WireData): void { this.transport.dispatchMessage(msg); }
   	Ipc: IpcService;
 
 }

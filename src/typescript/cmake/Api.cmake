@@ -42,7 +42,7 @@ endif()
 # Step 1: generate TS protos from .fig + figura binary
 add_custom_command(
     OUTPUT ${API_PROTO_GENERATED}
-    COMMAND ${FIGURA_CC} compile ${API_FIG_FILE} --client typescript --output ${API_PROTO_GENERATED}
+    COMMAND ${FIGURA_CC} compile ${API_FIG_FILE} --client typescript --wire beve --output ${API_PROTO_GENERATED}
     DEPENDS ${FIGURA_CC} ${API_FIG_FILE}
     COMMENT "Figura codegen: API client (typescript)"
 )

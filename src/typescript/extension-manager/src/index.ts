@@ -9,7 +9,7 @@ import * as manager from "./proto/manager";
 import * as extension from "./proto/manager-extension";
 import * as path from "node:path";
 
-import type { EnvironmentType } from "./types";
+import type { EnvironmentType, WorkerManagerMessage } from "./types";
 import { Logger } from "./logger";
 import { setTimeout } from "node:timers";
 
@@ -31,7 +31,7 @@ type WorkerInfo = {
 export const logger = new Logger();
 
 class ExtensionManager extends manager.ManagerService {
-	constructor(transport: manager.RpcTransport) {
+	constructor(private readonly transport: manager.RpcTransport) {
 		super(transport);
 		this.workerPool.push(this.createWorker("production"));
 	}
@@ -115,10 +115,14 @@ class ExtensionManager extends manager.ManagerService {
 			this.unload(sessionId);
 		});
 
-		worker.on("message", (data) => {
-			client.route(data); // try routing to us
-			if (workerInfo.status !== "running") return;
-			this.emit_extensionMessage(sessionId, data); // regular extension stuff
+		worker.on("message", (data: Uint8Array | WorkerManagerMessage) => {
+			if (data instanceof Uint8Array) {
+				if (workerInfo.status !== "running") return;
+				this.emit_extensionMessage(sessionId, data);
+				return;
+			}
+
+			if (data?.channel === "manager") client.route(data.data);
 		});
 
 		worker.on("messageerror", (error) => {
@@ -135,7 +139,7 @@ class ExtensionManager extends manager.ManagerService {
 			logger.error(`worker error: ${error}`);
 		});
 
-		worker.on("online", () => {});
+		worker.on("online", () => { });
 
 		const stdoutStream = fs.createWriteStream(stdoutLog);
 		const stderrStream = fs.createWriteStream(stderrLog);
@@ -229,7 +233,7 @@ class ExtensionManager extends manager.ManagerService {
 
 	async messageExtension(
 		session_id: string,
-		payload: string,
+		payload: Uint8Array,
 	): Promise<boolean> {
 		const worker = this.workerMap.get(session_id);
 		worker?.client.Lifecycle.send_message(payload);
@@ -303,7 +307,7 @@ class Vicinae {
 
 			const packet = this.currentMessage.data.subarray(4, length + 4);
 
-			this.server.route(packet.toString("utf8"))?.catch((error) => {
+			this.server.route(packet)?.catch((error) => {
 				logger.error(`Uncaught exception from handler: ${error}`);
 			});
 

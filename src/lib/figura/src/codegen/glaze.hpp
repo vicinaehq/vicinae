@@ -8,17 +8,23 @@
 #include <ranges>
 
 constexpr const auto GLAZE_COMMON = R"(
-struct JsonRpcRequest {
+template <class P> struct JsonRpcRequestT {
   std::string jsonrpc;
   std::string method;
   int id;
-  glz::raw_json params;
+  P params;
 };
 
-struct JsonRpcNotification {
+template <class P> struct JsonRpcNotificationT {
   std::string jsonrpc;
   std::string method;
-  glz::raw_json params;
+  P params;
+};
+
+template <class R> struct JsonRpcResponseT {
+  int id;
+  std::string jsonrpc;
+  R result;
 };
 
 struct JsonRpcErrorResponse {
@@ -28,15 +34,18 @@ struct JsonRpcErrorResponse {
   std::string error;
 };
 
-struct JsonRpcResponse {
-  int id;
-  std::string jsonrpc;
-  glz::raw_json result;
-};
+inline constexpr glz::opts WIRE_OPTS{.format = WIRE_FORMAT};
+inline constexpr glz::opts WIRE_READ_OPTS{.format = WIRE_FORMAT, .error_on_unknown_keys = false};
 
-using RpcMessage = std::variant<JsonRpcResponse, JsonRpcErrorResponse, JsonRpcNotification, JsonRpcRequest>;
-using IncomingJsonRpcMessage = std::variant<JsonRpcRequest, JsonRpcNotification>;
-using OutgoingJsonRpcMessage = std::variant<JsonRpcResponse, JsonRpcNotification, JsonRpcErrorResponse>;
+template <class T> std::expected<void, std::string> wireWrite(const T &value, std::string &buf) {
+  if (auto const err = glz::write<WIRE_OPTS>(value, buf)) { return std::unexpected(glz::format_error(err)); }
+  return {};
+}
+
+template <class T> std::expected<void, std::string> wireRead(T &value, std::string_view data) {
+  if (auto const err = glz::read<WIRE_READ_OPTS>(value, data)) { return std::unexpected(glz::format_error(err)); }
+  return {};
+}
 
 class AbstractTransport {
 public:
@@ -50,8 +59,8 @@ struct RpcIncomingMessage {
   std::optional<int> id;
   std::optional<std::string> method;
   std::optional<std::string> error;
-  glz::raw_json result;
-  glz::raw_json params;
+  glz::skip result{};
+  glz::skip params{};
 };
 
 class RpcTransport {
@@ -64,21 +73,21 @@ public:
   std::expected<void, std::string> dispatchMessage(std::string_view data) {
     RpcIncomingMessage msg;
 
-    if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(msg, data)) { return std::unexpected(glz::format_error(error)); }
+    if (auto const error = wireRead(msg, data); !error) { return error; }
 
     if (msg.id) {
       if (auto it = m_requestMap.find(*msg.id); it != m_requestMap.end()) {
         if (msg.error) {
           it->second(std::unexpected(*msg.error));
         } else {
-          it->second(std::move(msg.result.str));
+          it->second(data);
         }
         m_requestMap.erase(it);
       }
     } else if (msg.method) {
       if (auto it = m_handlers.find(*msg.method); it != m_handlers.end()) {
         for (const auto &handler : it->second) {
-          handler(msg.params.str);
+          handler(data);
         }
       }
     }
@@ -87,14 +96,9 @@ public:
   }
 
   template <typename T, typename U>
-  void request(std::string_view method, const U &params, std::function<void(Result<T>)> cb) {
-    if (auto const error = glz::write_json(params, m_buf)) {
-      cb(std::unexpected(glz::format_error(error)));
-      return;
-    }
-
+  void request(std::string_view method, U params, std::function<void(Result<T>)> cb) {
     int id = m_id++;
-    auto sendRes = sendMessage(JsonRpcRequest{.jsonrpc = "2.0", .method = std::string{method}, .id = id, .params = m_buf});
+    auto sendRes = sendMessage(JsonRpcRequestT<U>{.jsonrpc = "2.0", .method = std::string{method}, .id = id, .params = std::move(params)});
 
     if (!sendRes) {
       cb(std::unexpected(std::move(sendRes).error()));
@@ -107,11 +111,11 @@ public:
         else cb(std::unexpected(data.error()));
       } else {
         auto value = data.and_then([](std::string_view data) -> Result<T> {
-          T payload;
-          if (auto const error = glz::read_json(payload, data)) {
-            return std::unexpected(glz::format_error(error));
+          JsonRpcResponseT<T> payload{};
+          if (auto const error = wireRead(payload, data); !error) {
+            return std::unexpected(std::move(error).error());
           }
-          return payload;
+          return std::move(payload.result);
         });
 
         cb(std::move(value));
@@ -123,11 +127,11 @@ public:
   void subscribe(std::string_view method, std::function<void(const Result<T> &result)> cb) {
     auto handler = [cb = std::move(cb)](Result<std::string_view> data) {
       auto value = data.and_then([](std::string_view data) -> Result<T> {
-        T payload;
-        if (auto const error = glz::read_json(payload, data)) {
-          return std::unexpected(glz::format_error(error));
+        JsonRpcNotificationT<T> payload{};
+        if (auto const error = wireRead(payload, data); !error) {
+          return std::unexpected(std::move(error).error());
         }
-        return payload;
+        return std::move(payload.params);
       });
 
       cb(value);
@@ -140,8 +144,9 @@ public:
     }
   }
 
-  std::expected<void, std::string> sendMessage(const IncomingJsonRpcMessage &msg) {
-    if (auto const res = glz::write_json(msg, m_buf)) { return std::unexpected(glz::format_error(res)); }
+  template <typename Msg>
+  std::expected<void, std::string> sendMessage(const Msg &msg) {
+    if (auto const res = wireWrite(msg, m_buf); !res) { return res; }
 
     m_transport.send(m_buf);
     return {};
@@ -158,36 +163,32 @@ private:
 )";
 
 constexpr const auto GLAZE_SERVER_BASE = R"(
+struct RpcRequestHead {
+  std::string jsonrpc;
+  std::string method;
+  int id;
+  glz::skip params{};
+};
 
 class RpcTransport {
 	public:
 		RpcTransport(AbstractTransport& transport): m_transport(transport) {}
 
 		template <typename T>
-		void notify(std::string_view method, const T& params) {
-			std::string paramsBuf;
-			{
-			[[maybe_unused]] auto res = glz::write_json(params, paramsBuf);
-			}
-
-			send(JsonRpcNotification{
+		void notify(std::string_view method, T params) {
+			send(JsonRpcNotificationT<T>{
 				.jsonrpc = "2.0",
 				.method = std::string{method},
-				.params = paramsBuf
+				.params = std::move(params)
 			});
 		}
 
 		template <typename T>
-		void reply(int id, const T& result) {
-			std::string resultBuf;
-			{
-			[[maybe_unused]] auto res = glz::write_json(result, resultBuf);
-			}
-
-			send(JsonRpcResponse{
+		void reply(int id, T result) {
+			send(JsonRpcResponseT<T>{
 				.id = id,
 				.jsonrpc = "2.0",
-				.result = resultBuf
+				.result = std::move(result)
 			});
 		}
 
@@ -196,9 +197,10 @@ class RpcTransport {
 		}
 
 	private:
-		void send(const OutgoingJsonRpcMessage& msg) {
+		template <typename Msg>
+		void send(const Msg& msg) {
 			std::string buf;
-			[[maybe_unused]] auto res = glz::write_json(msg, buf);
+			[[maybe_unused]] auto res = wireWrite(msg, buf);
 			m_transport.send(buf);
 		}
 
@@ -242,6 +244,8 @@ class GlazeGenerator : public AbstractCodeGenerator {
                       return "std::string";
                     case PrimitiveType::Any:
                       return "glz::generic";
+                    case PrimitiveType::Raw:
+                      return "raw_t";
                     default:
                       std::unreachable();
                     }
@@ -434,9 +438,13 @@ public:
 
     oss << R"(
 #pragma once
+#include <array>
+#include <cstdint>
 #include <expected>
 #include <functional>
 #include <glaze/glaze.hpp>
+#include <iostream>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -449,6 +457,7 @@ public:
 
     oss << "namespace " << ns << " {\n";
 
+    oss << glazeWirePrelude(opts.wire);
     oss << GLAZE_COMMON << GLAZE_CLIENT_CODE;
 
     generateTypes(oss, ast);
@@ -461,7 +470,8 @@ public:
       for (const auto &m : s->events) {
         std::string methodId = std::format("{}/{}", s->name, m.name);
         oss << "transport.subscribe<" << getMethodParamName(s->name, m.name) << ">(" << std::quoted(methodId)
-            << ", " << "[this](const auto& payload){ if (!payload) return;";
+            << ", " << "[this](const auto& payload){ if (!payload) { std::cerr << \"figura: failed to decode "
+            << methodId << " event: \" << payload.error() << std::endl; return; }";
         oss << " if (m_" << m.name << "Handler) m_" << m.name << "Handler(";
 
         for (const auto &[idx, param] : m.params | vicinae::enumerate) {
@@ -560,6 +570,7 @@ public:
     oss << "\n}"; // end namespace
 
     oss << serializeEnumGlazeMetas(ns, ast.enums);
+    if (opts.wire == WireFormat::Beve) { oss << glazeBeveEnumSpecializations(ns, ast.enums); }
 
     return oss.str();
   }
@@ -569,9 +580,12 @@ public:
 
     oss << R"(
 #pragma once
+#include <array>
+#include <cstdint>
 #include <expected>
 #include <functional>
 #include <glaze/glaze.hpp>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -582,6 +596,7 @@ public:
         opts.generationNamespace.value_or(std::string{stripExtension(opts.file.filename().string())});
 
     oss << "namespace " << ns << " {\n";
+    oss << glazeWirePrelude(opts.wire);
     oss << GLAZE_COMMON << GLAZE_SERVER_BASE;
 
     generateTypes(oss, ast);
@@ -608,10 +623,10 @@ public:
 
     oss << R"(
 	void route(std::string_view data) {
-		JsonRpcRequest msg;
-		if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(msg, data)) { return; }
+		RpcRequestHead msg;
+		if (auto const error = wireRead(msg, data); !error) { return; }
 		if (msg.method.empty()) return;
-		dispatch(msg);
+		dispatch(msg, data);
 	}
 	)";
 
@@ -622,7 +637,7 @@ public:
 
     oss << "private:\n";
 
-    oss << "\tvoid dispatch(const JsonRpcRequest& req) {\n";
+    oss << "\tvoid dispatch(const RpcRequestHead& req, std::string_view data) {\n";
 
     bool firstMethod = true;
     for (const auto &s : ast.services) {
@@ -632,8 +647,9 @@ public:
         oss << "\t\t" << (firstMethod ? "if" : "} else if") << " (req.method == " << std::quoted(methodId)
             << ") {\n";
         firstMethod = false;
-        oss << "\t\t\t" << getMethodParamName(s->name, m.name) << " payload;\n";
-        oss << "\t\t\t[[maybe_unused]] auto res = glz::read_json(payload, req.params.str);\n";
+        oss << "\t\t\tJsonRpcRequestT<" << getMethodParamName(s->name, m.name) << "> env{};\n";
+        oss << "\t\t\t[[maybe_unused]] auto res = wireRead(env, data);\n";
+        if (!m.params.empty()) { oss << "\t\t\tauto& payload = env.params;\n"; }
         if (m.isAsync) {
           oss << "\t\t\tm_" << s->name << "." << m.name << "(";
           for (const auto &param : m.params) {
@@ -645,7 +661,7 @@ public:
           oss << "\t\t\t\t\tm_transport.replyError(id, result.error());\n";
           if (isVoid(m.returnType)) {
             oss << "\t\t\t\t} else {\n";
-            oss << "\t\t\t\t\tm_transport.reply(id, nullptr);\n";
+            oss << "\t\t\t\t\tm_transport.reply(id, glz::generic{});\n";
           } else {
             oss << "\t\t\t\t} else {\n";
             oss << "\t\t\t\t\tm_transport.reply(id, *result);\n";
@@ -664,7 +680,7 @@ public:
           oss << "\t\t\t\tm_transport.replyError(req.id, result.error());\n";
           if (isVoid(m.returnType)) {
             oss << "\t\t\t} else {\n";
-            oss << "\t\t\t\tm_transport.reply(req.id, nullptr);\n";
+            oss << "\t\t\t\tm_transport.reply(req.id, glz::generic{});\n";
           } else {
             oss << "\t\t\t} else {\n";
             oss << "\t\t\t\tm_transport.reply(req.id, *result);\n";
@@ -688,6 +704,7 @@ public:
     oss << "\n}"; // end namespace
 
     oss << serializeEnumGlazeMetas(ns, ast.enums);
+    if (opts.wire == WireFormat::Beve) { oss << glazeBeveEnumSpecializations(ns, ast.enums); }
 
     return oss.str();
   }

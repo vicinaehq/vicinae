@@ -19,6 +19,7 @@ figura_compile(
 	LANG glaze
 	NAMESPACE file_indexer_gen
 	OUTPUT file-indexer-server.hpp
+	WIRE beve
 )
 
 

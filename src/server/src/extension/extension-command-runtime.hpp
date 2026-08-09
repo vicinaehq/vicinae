@@ -11,7 +11,8 @@ public:
   ExtensionManagerBus(ExtensionManager &manager) : m_manager(manager) {}
 
   void send(std::string_view data) override {
-    m_manager.client().manager()->messageExtension(m_sessionId, std::string{data});
+    auto const *bytes = reinterpret_cast<const std::uint8_t *>(data.data());
+    m_manager.client().manager()->messageExtension(m_sessionId, manager::raw_t{bytes, bytes + data.size()});
   }
 
   void setSessionId(std::string str) { m_sessionId = std::move(str); }
