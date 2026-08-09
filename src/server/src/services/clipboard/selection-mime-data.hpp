@@ -47,7 +47,7 @@ public:
     qDebug() << "retrieve format" << mimetype << preferredType;
 
     if (m_imageMimeType && mimetype == Clipboard::URI_LIST) {
-      auto path = QString::fromStdString(Omnicast::runtimeDir() / "vicinae-drag-image.png");
+      auto path = QString::fromStdString((Omnicast::runtimeDir() / "vicinae-drag-image.png").string());
 
       if (ensureImage(path)) { return QVariantList{QUrl::fromLocalFile(path)}; }
     }
