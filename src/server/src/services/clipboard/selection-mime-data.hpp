@@ -1,11 +1,14 @@
+#pragma once
 #include <algorithm>
 #include <filesystem>
 #include <QImage>
 #include <QMimeData>
 #include <QUrl>
-#include <system_error>
+#include <qcontainerfwd.h>
+#include <qlogging.h>
 #include "common/clipboard-formats.hpp"
 #include "services/clipboard/clipboard-server.hpp"
+#include "vicinae.hpp"
 
 /**
  * QMimeData for a saved clipboard selection that is optimized for drag and drop.
@@ -15,41 +18,42 @@
  */
 class DragAndDropSelectionMimeData : public QMimeData {
 public:
-  DragAndDropSelectionMimeData(ClipboardSelection selection) : m_selection(std::move(selection)) {
-    auto fileIt = std::ranges::find_if(m_selection.offers, [](const ClipboardDataOffer &offer) {
+  DragAndDropSelectionMimeData(ClipboardSelection selection) {
+    auto fileIt = std::ranges::find_if(selection.offers, [](const ClipboardDataOffer &offer) {
       return offer.mimeType == Clipboard::URI_LIST;
     });
 
-    for (const auto &offer : m_selection.offers) {
+    bool hasImage = false;
+
+    for (auto &offer : selection.offers) {
       // if we have raw image data and no file attached, then we
       // probably want to convert the image to a file.
-      if (offer.mimeType.startsWith("image/")) {
-        if (fileIt == m_selection.offers.end()) {
+      if (!hasImage && offer.mimeType.startsWith("image/")) {
+        if (fileIt == selection.offers.end()) {
+          hasImage = true;
           m_formats << Clipboard::URI_LIST;
           m_imageMimeType = offer.mimeType;
         }
       }
-      setData(offer.mimeType, std::move(offer.data));
+
       m_formats << offer.mimeType;
+      setData(offer.mimeType, std::move(offer.data));
     }
   }
 
   QStringList formats() const override { return m_formats; }
 
-  bool hasFormat(const QString &mimetype) const override {
-    qDebug() << "has format" << mimetype << m_formats.contains(mimetype);
-    return m_formats.contains(mimetype);
-  }
-
   QVariant retrieveData(const QString &mimetype, QMetaType preferredType) const override {
     qDebug() << "retrieve format" << mimetype << preferredType;
 
     if (m_imageMimeType && mimetype == Clipboard::URI_LIST) {
-      std::error_code ec;
-      auto path = QString::fromStdString(
-          (std::filesystem::temp_directory_path(ec) / "vicinae-drag-image.png").string());
+      auto path = QString::fromStdString(Omnicast::runtimeDir() / "vicinae-drag-image.png");
 
-      if (!ec && ensureImage(path)) { return QUrl::fromLocalFile(path); }
+      if (ensureImage(path)) {
+        auto file = QUrl::fromLocalFile(path);
+        if (preferredType == QMetaType::fromType<QVariantList>()) return QVariantList{file};
+        return file;
+      }
     }
 
     return QMimeData::retrieveData(mimetype, preferredType);
@@ -61,12 +65,15 @@ protected:
     if (imageLoaded) return true;
 
     auto img = QImage::fromData(data(*m_imageMimeType));
-    return imageLoaded = img.save(path, "PNG");
+    if (!img.save(path, "PNG")) {
+      qWarning() << "[DND] failed to save image data as PNG";
+      return false;
+    }
+    return imageLoaded = true;
   }
 
 private:
   mutable bool imageLoaded = false;
-  ClipboardSelection m_selection;
   std::optional<QString> m_imageMimeType;
   QStringList m_formats;
 };
