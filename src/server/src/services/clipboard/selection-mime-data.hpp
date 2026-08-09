@@ -1,9 +1,13 @@
 #pragma once
 #include <algorithm>
+#include <chrono>
 #include <filesystem>
+#include <QFile>
 #include <QImage>
 #include <QMimeData>
+#include <QMimeDatabase>
 #include <QUrl>
+#include <optional>
 #include <qcontainerfwd.h>
 #include <qlogging.h>
 #include "common/clipboard-formats.hpp"
@@ -19,6 +23,7 @@
 class DragAndDropSelectionMimeData : public QMimeData {
 public:
   DragAndDropSelectionMimeData(ClipboardSelection selection) {
+    auto start = std::chrono::high_resolution_clock::now();
     auto fileIt = std::ranges::find_if(selection.offers, [](const ClipboardDataOffer &offer) {
       return offer.mimeType == Clipboard::URI_LIST;
     });
@@ -39,37 +44,51 @@ public:
       m_formats << offer.mimeType;
       setData(offer.mimeType, std::move(offer.data));
     }
+
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now() - start);
+    qDebug() << "ctor" << elapsed / 1000 << "seconds";
   }
 
   QStringList formats() const override { return m_formats; }
 
   QVariant retrieveData(const QString &mimetype, QMetaType preferredType) const override {
-    qDebug() << "retrieve format" << mimetype << preferredType;
-
     if (m_imageMimeType && mimetype == Clipboard::URI_LIST) {
-      auto path = QString::fromStdString((Omnicast::runtimeDir() / "vicinae-drag-image.png").string());
-
-      if (ensureImage(path)) { return QVariantList{QUrl::fromLocalFile(path)}; }
+      if (auto path = ensureImageFile()) { return QVariantList{QUrl::fromLocalFile(*path)}; }
     }
 
     return QMimeData::retrieveData(mimetype, preferredType);
   }
 
 protected:
-  bool ensureImage(const QString &path) const {
-    if (!m_imageMimeType) return false;
-    if (imageLoaded) return true;
+  std::optional<QString> ensureImageFile() const {
+    if (!m_imageMimeType) return std::nullopt;
+    if (m_imageFilePath) return m_imageFilePath;
 
-    auto img = QImage::fromData(data(*m_imageMimeType));
-    if (!img.save(path, "PNG")) {
-      qWarning() << "[DND] failed to save image data as PNG";
-      return false;
+    const auto bytes = data(*m_imageMimeType);
+    const auto suffix = QMimeDatabase().mimeTypeForName(*m_imageMimeType).preferredSuffix();
+    auto path = QString::fromStdString((Omnicast::runtimeDir() / "vicinae-drag-image").string());
+
+    if (suffix.isEmpty()) {
+      path += ".png";
+      if (!QImage::fromData(bytes).save(path, "PNG")) {
+        qWarning() << "[DND] failed to save image data as PNG";
+        return std::nullopt;
+      }
+    } else {
+      path += '.' + suffix;
+      QFile file(path);
+      if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size()) {
+        qWarning() << "[DND] failed to write drag image to" << path;
+        return std::nullopt;
+      }
     }
-    return imageLoaded = true;
+
+    return m_imageFilePath = path;
   }
 
 private:
-  mutable bool imageLoaded = false;
+  mutable std::optional<QString> m_imageFilePath;
   std::optional<QString> m_imageMimeType;
   QStringList m_formats;
 };

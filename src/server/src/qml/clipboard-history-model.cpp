@@ -11,6 +11,8 @@
 #include "utils/utils.hpp"
 #include <QCoreApplication>
 #include <QDateTime>
+#include <chrono>
+#include <qlogging.h>
 
 void ClipboardHistorySection::setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page) {
   m_entries = page.data;
@@ -49,7 +51,15 @@ bool ClipboardHistorySection::isDraggable(int idx) const { return true; }
 
 std::unique_ptr<QMimeData> ClipboardHistorySection::dragMimeData(int idx) const {
   auto clipman = scope().services()->clipman();
+
+  auto start = std::chrono::system_clock::now();
+
   auto selection = clipman->retrieveSelectionById(m_entries[idx].id);
+
+  auto elapsed =
+      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
+
+  qDebug() << "time to retrieve selection for drag:" << elapsed / 1000 << "seconds";
 
   return selection
       .transform([&](const auto &selection) { return clipman->dragMimeDataForSelection(selection); })
