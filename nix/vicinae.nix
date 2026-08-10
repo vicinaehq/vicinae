@@ -5,15 +5,23 @@
   kdePackages,
   lib,
   libqalculate,
+  libx11,
+  libxcb,
+  libxcb-keysyms,
+  libxkbcommon,
   llvmPackages_21,
   ninja,
   nodejs,
   npmHooks,
+  openssl,
   pkg-config,
   qt6,
   stdenv,
   gcc15Stdenv,
+  udev,
   wayland,
+  wayland-protocols,
+  wayland-scanner,
   glaze,
   swift ? null,
   apple-sdk ? null,
@@ -91,6 +99,9 @@ in
         qt6.qttools
         qt6.wrapQtAppsHook
       ]
+      ++ lib.optionals isLinux [
+        wayland-scanner
+      ]
       ++ lib.optionals isDarwin [
         swift
       ];
@@ -111,8 +122,15 @@ in
       ]
       ++ lib.optionals isLinux [
         kdePackages.layer-shell-qt
+        libx11
+        libxcb
+        libxcb-keysyms
+        libxkbcommon
+        openssl
         qt6.qtwayland
+        udev
         wayland
+        wayland-protocols
       ]
       ++ lib.optionals isDarwin [
         apple-sdk
