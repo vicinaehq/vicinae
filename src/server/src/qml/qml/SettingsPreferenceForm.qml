@@ -30,6 +30,7 @@ ColumnLayout {
             required property bool multiple
             required property bool canChooseFiles
             required property bool canChooseDirectories
+            required property var lockedPaths
 
             sourceComponent: {
                 switch (type) {
@@ -203,6 +204,7 @@ ColumnLayout {
                     canChooseFiles: field.parent.canChooseFiles
                     canChooseDirectories: field.parent.canChooseDirectories
                     readOnly: field.parent.readOnly
+                    lockedPaths: field.parent.lockedPaths
                     selectedPaths: {
                         const v = field.parent.value;
                         if (!v)

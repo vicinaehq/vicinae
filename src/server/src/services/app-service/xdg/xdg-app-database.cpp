@@ -585,17 +585,19 @@ PreferenceList XdgAppDatabase::preferences() const {
       tr("Custom app launcher to use. Affects applications as well as their sub-actions."));
   launchPrefix.setPlaceholder("uwsm app --");
 
-  auto paths = Preference::directories("paths");
-  QJsonArray defaultPaths;
-  for (const auto &searchPath : defaultSearchPaths()) {
-    defaultPaths.push_back(QString::fromStdString(searchPath));
+  std::vector<QString> lockedPaths;
+  auto defaults = defaultSearchPaths();
+  lockedPaths.reserve(defaults.size());
+  for (const auto &searchPath : defaults) {
+    lockedPaths.emplace_back(QString::fromStdString(searchPath));
   }
+
+  auto paths = Preference::directories("paths", std::move(lockedPaths));
   paths.setTitle(tr("Application directories"));
   paths.setDescription(
       tr("Directories applications are sourced from. The list cannot be modified directly. In order to do "
          "so, you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables."));
   paths.setReadOnly(true);
-  paths.setDefaultValue(defaultPaths);
 
   return {defaultAction, launchPrefix, paths};
 }

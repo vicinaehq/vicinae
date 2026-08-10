@@ -1,16 +1,23 @@
 #pragma once
 #include "mac-app.hpp"
 #include "services/app-service/abstract-app-db.hpp"
+#include <QCoreApplication>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 
 class MacAppDatabase : public AbstractAppDatabase {
+  Q_DECLARE_TR_FUNCTIONS(MacAppDatabase)
+
 public:
   MacAppDatabase();
 
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
+  std::vector<std::filesystem::path> searchPaths() const override;
   bool scan(const std::vector<std::filesystem::path> &paths) override;
+
+  PreferenceList preferences() const override;
+  void applyPreferences(const QJsonObject &preferences) override;
 
   bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const override;
   bool launchTerminalCommand(const std::vector<QString> &cmdline,
@@ -33,4 +40,5 @@ public:
 private:
   std::vector<std::shared_ptr<MacApplication>> m_apps;
   std::unordered_map<QString, std::shared_ptr<MacApplication>> m_appsById;
+  std::vector<std::filesystem::path> m_extraSearchPaths;
 };

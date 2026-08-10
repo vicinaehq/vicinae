@@ -47,6 +47,8 @@ QVariant PreferenceFormModel::data(const QModelIndex &index, int role) const {
     return f.canChooseFiles;
   case CanChooseDirectoriesRole:
     return f.canChooseDirectories;
+  case LockedPathsRole:
+    return f.lockedPaths;
   default:
     return {};
   }
@@ -64,7 +66,8 @@ QHash<int, QByteArray> PreferenceFormModel::roleNames() const {
           {ReadOnlyRole, "readOnly"},
           {MultipleRole, "multiple"},
           {CanChooseFilesRole, "canChooseFiles"},
-          {CanChooseDirectoriesRole, "canChooseDirectories"}};
+          {CanChooseDirectoriesRole, "canChooseDirectories"},
+          {LockedPathsRole, "lockedPaths"}};
 }
 
 static QString preferenceType(const Preference &p) {
@@ -103,17 +106,19 @@ static QVariantList dropdownOptions(const Preference &p) {
 }
 
 static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChooseFiles,
-                             bool &canChooseDirectories) {
+                             bool &canChooseDirectories, QStringList &lockedPaths) {
   auto d = p.data();
   if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) {
     multiple = fp->multiple;
     canChooseFiles = true;
     canChooseDirectories = false;
+    lockedPaths = QStringList(fp->lockedPaths.begin(), fp->lockedPaths.end());
   }
   if (auto *dp = std::get_if<Preference::DirectoryPickerData>(&d)) {
     multiple = dp->multiple;
     canChooseFiles = false;
     canChooseDirectories = true;
+    lockedPaths = QStringList(dp->lockedPaths.begin(), dp->lockedPaths.end());
   }
 }
 
@@ -158,7 +163,7 @@ void PreferenceFormModel::load(const EntrypointId &id, const std::vector<Prefere
     f.readOnly = pref.isReadOnly();
     f.options = dropdownOptions(pref);
 
-    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
+    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);
 
     QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
     if (isFilePickerType(pref)) raw = normalizeFilePickerValue(raw);
@@ -191,7 +196,7 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
     f.readOnly = pref.isReadOnly();
     f.options = dropdownOptions(pref);
 
-    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
+    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);
 
     QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
     if (isFilePickerType(pref)) raw = normalizeFilePickerValue(raw);
