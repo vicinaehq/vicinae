@@ -12,23 +12,23 @@
 class CopyToClipboardAction : public AbstractAction {
   Q_DECLARE_TR_FUNCTIONS(CopyToClipboardAction)
 
-  Clipboard::Content m_content;
-  Clipboard::CopyOptions m_opts;
-
 public:
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
 
-    if (clipman->copyContent(m_content, m_opts)) {
+    if (clipman->copyContent(std::move(m_content), m_opts)) {
       ctx->navigation->showHud(tr("Copied to clipboard"), ImageURL::builtin(BuiltinIcon::CopyClipboard));
       return;
     }
   }
 
-public:
-  CopyToClipboardAction(const Clipboard::Content &content, const QString &title = tr("Copy to clipboard"),
-                        const Clipboard::CopyOptions options = {})
-      : AbstractAction(title, BuiltinIcon::CopyClipboard), m_content(content), m_opts(options) {}
+  CopyToClipboardAction(Clipboard::Content content, const QString &title = tr("Copy to clipboard"),
+                        const Clipboard::CopyOptions &options = {})
+      : AbstractAction(title, BuiltinIcon::CopyClipboard), m_content(std::move(content)), m_opts(options) {}
+
+private:
+  Clipboard::Content m_content;
+  Clipboard::CopyOptions m_opts;
 };
 
 class PasteToFocusedWindowAction : public AbstractAction {

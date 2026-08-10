@@ -336,3 +336,5 @@ ClipboardDatabase::ClipboardDatabase(std::optional<db::EncryptionKey> key) {
     if (!m_db.exec(pragma)) { qCritical() << "Failed to execute pragma" << pragma; }
   }
 }
+
+ClipboardDatabase::ClipboardDatabase(ClipboardDatabase &&other) noexcept : m_db(std::move(other.m_db)) {}

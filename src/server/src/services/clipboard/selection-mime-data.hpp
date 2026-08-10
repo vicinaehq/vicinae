@@ -22,7 +22,7 @@
  */
 class DragAndDropSelectionMimeData : public QMimeData {
 public:
-  DragAndDropSelectionMimeData(ClipboardSelection selection) {
+  DragAndDropSelectionMimeData(const ClipboardSelection &selection) {
     auto start = std::chrono::high_resolution_clock::now();
     auto fileIt = std::ranges::find_if(selection.offers, [](const ClipboardDataOffer &offer) {
       return offer.mimeType == Clipboard::URI_LIST;
@@ -42,7 +42,7 @@ public:
       }
 
       m_formats << offer.mimeType;
-      setData(offer.mimeType, std::move(offer.data));
+      setData(offer.mimeType, offer.data);
     }
 
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(

@@ -5,6 +5,7 @@ namespace Clipboard {
 inline constexpr const char *CONCEALED_MIME_TYPE = "vicinae/concealed";
 inline constexpr const char *PASSWORD_HINT_MIME_TYPE = "x-kde-passwordManagerHint";
 inline constexpr const char *URI_LIST = "text/uri-list";
+inline constexpr const char *QT_IMAGE_DATA = "application/x-qt-image";
 
 // Qt wraps native Windows clipboard formats it has no mime mapping for
 inline constexpr const char *WIN_NATIVE_MIME_PREFIX = "application/x-qt-windows-mime";

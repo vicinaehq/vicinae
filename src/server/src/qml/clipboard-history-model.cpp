@@ -51,19 +51,11 @@ bool ClipboardHistorySection::isDraggable(int idx) const { return true; }
 
 std::unique_ptr<QMimeData> ClipboardHistorySection::dragMimeData(int idx) const {
   auto clipman = scope().services()->clipman();
-
-  auto start = std::chrono::system_clock::now();
-
   auto selection = clipman->retrieveSelectionById(m_entries[idx].id);
 
-  auto elapsed =
-      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
+  if (!selection) return nullptr;
 
-  qDebug() << "time to retrieve selection for drag:" << elapsed / 1000 << "seconds";
-
-  return selection
-      .transform([&](const auto &selection) { return clipman->dragMimeDataForSelection(selection); })
-      .value_or(nullptr);
+  return clipman->dragMimeDataForSelection(*std::move(selection));
 }
 
 std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) const {
