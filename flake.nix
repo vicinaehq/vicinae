@@ -87,9 +87,12 @@
             clang-tools
           ];
 
+          # qmlls discovers QML modules through these, so point them at the
+          # aggregate env: qtdeclarative alone hides LayerShellQt and the
+          # modules shipped by the other Qt packages.
           shellHook = ''
-            export QML2_IMPORT_PATH=${pkgs.qt6.qtdeclarative}/lib/qt-6/qml
-            export QML_IMPORT_PATH=${pkgs.qt6.qtdeclarative}/lib/qt-6/qml
+            export QML2_IMPORT_PATH=${qtEnv}/lib/qt-6/qml
+            export QML_IMPORT_PATH=${qtEnv}/lib/qt-6/qml
           '';
         };
       }
