@@ -73,6 +73,7 @@ in
       "VICINAE_GIT_TAG" = "v${finalAttrs.version}";
       "VICINAE_GIT_COMMIT_HASH" = manifestGet "short_rev";
       "VICINAE_PROVENANCE" = "nix";
+      "INSTALL_MODULES_LOAD_CONFIG" = "OFF";
       "INSTALL_NODE_MODULES" = "OFF";
       "USE_SYSTEM_CMARK_GFM" = "ON";
       "USE_SYSTEM_GLAZE" = "ON";
