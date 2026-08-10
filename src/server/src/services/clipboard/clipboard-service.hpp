@@ -13,6 +13,7 @@
 #include <qdir.h>
 #include <qfileinfo.h>
 #include <qfuture.h>
+#include <qfuturewatcher.h>
 #include <qimage.h>
 #include <qjsonobject.h>
 #include <qmimedata.h>
@@ -67,8 +68,7 @@ public:
   bool copyFile(const std::filesystem::path &path,
                 const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyUrls(const std::vector<QUrl> &urls, const Clipboard::CopyOptions &options = {.concealed = false});
-  bool copyContent(const Clipboard::Content &content,
-                   const Clipboard::CopyOptions options = {.concealed = false});
+  bool copyContent(Clipboard::Content content, const Clipboard::CopyOptions &options = {.concealed = false});
   void setRecordAllOffers(bool value);
   bool clear();
   void saveSelection(ClipboardSelection selection);
@@ -130,4 +130,5 @@ private:
   bool m_ignorePasswords = true;
   std::optional<ClipboardSelection> m_lastSelection;
   QTimer m_restoreTimer;
+  QFutureWatcher<std::expected<ClipboardHistoryEntry, QString>> m_indexingSelection;
 };
