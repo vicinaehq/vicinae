@@ -5,6 +5,7 @@
 #include <numeric>
 #include <QGuiApplication>
 #include <qstandardpaths.h>
+#include "common/clipboard-formats.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #ifdef Q_OS_LINUX
 #include "x11/x11-clipboard-server.hpp"
@@ -540,25 +541,10 @@ ClipboardService::mimeDataFromSelection(const ClipboardSelection &selection) con
   QMimeData *mimeData = new QMimeData;
 
   for (const auto &offer : selection.offers) {
-    if (offer.mimeType == "application/x-qt-image") continue; // we handle that ourselves
-    if (offer.mimeType.startsWith("image/") && !mimeData->hasImage()) {
-      auto img = QImage::fromData(offer.data);
-
-      if (img.isNull()) {
-        qWarning() << offer.mimeType << "could not be converted to valid image format";
-        mimeData->setData(offer.mimeType, offer.data);
-      } else {
-        mimeData->setData(offer.mimeType, offer.data);
-        mimeData->setImageData(img);
-        qDebug() << "ClipboardService: Set image data with mime type" << offer.mimeType
-                 << "size:" << offer.data.size();
-      }
+    if (offer.mimeType != Clipboard::URI_LIST && Utils::isTextMimeType(offer.mimeType)) {
+      mimeData->setText(QString::fromUtf8(offer.data));
     } else {
-      if (offer.mimeType != "text/uri-list" && Utils::isTextMimeType(offer.mimeType)) {
-        mimeData->setText(QString::fromUtf8(offer.data));
-      } else {
-        mimeData->setData(offer.mimeType, offer.data);
-      }
+      mimeData->setData(offer.mimeType, offer.data);
     }
   }
 
