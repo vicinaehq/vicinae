@@ -48,9 +48,4 @@ struct ExtensionManifest {
   bool isFromRaycastStore() const { return provenance == ExtensionManifest::Provenance::Raycast; }
   bool isFromVicinaeStore() const { return provenance == ExtensionManifest::Provenance::Vicinae; }
   bool isLocal() const { return provenance == ExtensionManifest::Provenance::Local; }
-
-private:
-  static CommandArgument parseArgumentFromObject(const QJsonObject &obj);
-  static Preference parsePreferenceFromObject(const QJsonObject &obj);
-  static Command parseCommandFromObject(const QJsonObject &obj);
 };

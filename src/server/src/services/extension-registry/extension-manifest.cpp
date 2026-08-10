@@ -1,146 +1,135 @@
 #include "extension-manifest.hpp"
+#include "glaze-qt.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
-#include <QJsonObject>
-#include <QJsonDocument>
+#include <QDebug>
 #include <charconv>
+#include <format>
+#include <glaze/glaze.hpp>
+#include <map>
+#include <ranges>
+#include <set>
 
 namespace fs = std::filesystem;
 
-std::expected<ExtensionManifest, ManifestError> ExtensionManifest::fromPackageJson(const fs::path &path) {
-  static const std::set<CommandMode> supportedModes{CommandMode::CommandModeView, CommandModeNoView};
-  fs::path const manifestPath = path / "package.json";
+namespace manifest_dto {
 
-  if (!fs::exists(manifestPath)) {
-    return std::unexpected<ManifestError>(
-        QString("Could not find package.json file at %1").arg(manifestPath.c_str()));
-  }
+struct DropdownOption {
+  QString title;
+  QString value;
+};
 
-  QFile file(manifestPath);
+struct Preference {
+  QString type;
+  QString name;
+  QString title;
+  QString description;
+  QString placeholder;
+  std::optional<QString> label;
+  bool required = false;
+  bool multiple = false;
+  std::vector<DropdownOption> data;
+  std::optional<glz::generic> defaultValue;
+};
 
-  if (!file.open(QIODevice::ReadOnly)) {
-    return std::unexpected<ManifestError>(QString("Failed to open %1 for read").arg(manifestPath.c_str()));
-  }
+struct Argument {
+  QString type;
+  QString name;
+  QString placeholder;
+  bool required = false;
+  std::vector<DropdownOption> data;
+};
 
-  QJsonParseError jsonError;
-  auto json = QJsonDocument::fromJson(file.readAll(), &jsonError);
+struct Command {
+  QString name;
+  QString title;
+  QString description;
+  QString mode;
+  bool disabledByDefault = false;
+  std::optional<QString> icon;
+  std::optional<QString> interval;
+  std::vector<QString> keywords;
+  std::vector<Preference> preferences;
+  std::vector<Argument> arguments;
+};
 
-  if (jsonError.error) {
-    return std::unexpected<ManifestError>(
-        QString("Failed to parse package.json at %1").arg(manifestPath.c_str()));
-  }
+struct Package {
+  QString name;
+  QString title;
+  QString description;
+  QString icon;
+  QString author;
+  std::vector<QString> categories;
+  std::vector<Command> commands;
+  std::vector<Preference> preferences;
+  std::map<std::string, glz::raw_json> dependencies;
+};
 
-  ExtensionManifest manifest;
-  auto obj = json.object();
-  auto deps = obj.value("dependencies").toObject();
+} // namespace manifest_dto
 
-  manifest.path = path;
-  manifest.id = QString::fromStdString(getLastPathComponent(path));
-  manifest.name = obj.value("name").toString();
-  manifest.title = obj.value("title").toString();
-  manifest.description = obj.value("description").toString();
-  manifest.icon = obj.value("icon").toString();
-  manifest.author = obj.value("author").toString();
-  manifest.needsRaycastApi = deps.contains(Omnicast::RAYCAST_NPM_API_PACKAGE);
+template <> struct glz::meta<manifest_dto::Preference> {
+  using T = manifest_dto::Preference;
+  static constexpr auto value =
+      object(&T::type, &T::name, &T::title, &T::description, &T::placeholder, &T::label, &T::required,
+             &T::multiple, &T::data, "default", &T::defaultValue);
+};
 
-  if (manifest.id.startsWith("store.vicinae.")) {
-    manifest.provenance = ExtensionManifest::Provenance::Vicinae;
-  } else if (manifest.id.startsWith("store.raycast.")) {
-    manifest.provenance = ExtensionManifest::Provenance::Raycast;
-  } else {
-    manifest.provenance = ExtensionManifest::Provenance::Local;
-  }
-
-  for (const auto &obj : obj.value("categories").toArray()) {
-    manifest.categories.emplace_back(obj.toString());
-  }
-
-  for (const auto &obj : obj.value("commands").toArray()) {
-    auto command = parseCommandFromObject(obj.toObject());
-
-    command.provenance = manifest.provenance;
-    command.entrypoint = path / std::format("{}.js", command.name.toStdString());
-
-    if (supportedModes.contains(command.mode)) { manifest.commands.emplace_back(command); }
-  }
-
-  for (const auto &obj : obj.value("preferences").toArray()) {
-    manifest.preferences.emplace_back(parsePreferenceFromObject(obj.toObject()));
-  }
-
-  return manifest;
-}
-
-Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) {
-  auto type = obj["type"].toString();
+static Preference parsePreference(manifest_dto::Preference &&dto) {
   Preference base;
 
-  base.setTitle(obj["title"].toString());
-  base.setDescription(obj["description"].toString());
-  base.setName(obj["name"].toString());
-  base.setPlaceholder(obj["placeholder"].toString());
-  base.setRequired(obj["required"].toBool());
-  base.setDefaultValue(obj.value("default"));
+  base.setTitle(std::move(dto.title));
+  base.setDescription(std::move(dto.description));
+  base.setName(std::move(dto.name));
+  base.setPlaceholder(std::move(dto.placeholder));
+  base.setRequired(dto.required);
+  base.setDefaultValue(dto.defaultValue ? glazeToQJsonValue(*dto.defaultValue)
+                                        : QJsonValue(QJsonValue::Undefined));
 
-  if (type == "textfield") {
+  if (dto.type == "textfield") {
     base.setData(Preference::TextData());
-  } else if (type == "password") {
+  } else if (dto.type == "password") {
     base.setData(Preference::PasswordData());
-  } else if (type == "checkbox") {
-    auto checkbox = Preference::CheckboxData(obj["label"].toString());
-    base.setData(checkbox);
-  } else if (type == "appPicker") {
+  } else if (dto.type == "checkbox") {
+    base.setData(Preference::CheckboxData{.label = std::move(dto.label)});
+  } else if (dto.type == "appPicker") {
     base.setData(Preference::AppPickerData());
-  } else if (type == "file") {
-    base.setData(Preference::FilePickerData{.multiple = obj["multiple"].toBool()});
-  } else if (type == "directory") {
-    base.setData(Preference::DirectoryPickerData{.multiple = obj["multiple"].toBool()});
-  } else if (type == "dropdown") {
-    auto data = obj["data"].toArray();
-    std::vector<Preference::DropdownData::Option> options;
+  } else if (dto.type == "file") {
+    base.setData(Preference::FilePickerData{.multiple = dto.multiple});
+  } else if (dto.type == "directory") {
+    base.setData(Preference::DirectoryPickerData{.multiple = dto.multiple});
+  } else if (dto.type == "dropdown") {
+    auto options = dto.data | std::views::as_rvalue |
+                   std::views::transform([](manifest_dto::DropdownOption &&opt) {
+                     return Preference::DropdownData::Option{.title = std::move(opt.title),
+                                                             .value = std::move(opt.value)};
+                   }) |
+                   std::ranges::to<std::vector>();
 
-    options.reserve(data.size());
-
-    for (const auto &child : data) {
-      auto obj = child.toObject();
-
-      options.push_back({.title = obj["title"].toString(), .value = obj["value"].toString()});
-    }
-
-    base.setData(Preference::DropdownData{options});
-    base.setDefaultValue(obj.value("default"));
+    base.setData(Preference::DropdownData{std::move(options)});
   } else {
-    qWarning() << "Unknown extension preference type" << type;
+    qWarning() << "Unknown extension preference type" << dto.type;
   }
 
   return base;
 }
 
-CommandArgument ExtensionManifest::parseArgumentFromObject(const QJsonObject &obj) {
+static CommandArgument parseArgument(manifest_dto::Argument &&dto) {
   CommandArgument arg;
-  QString const type = obj.value("type").toString();
 
-  if (type == "text") arg.type = CommandArgument::Text;
-  if (type == "password") arg.type = CommandArgument::Password;
-  if (type == "dropdown") arg.type = CommandArgument::Dropdown;
+  if (dto.type == "text") arg.type = CommandArgument::Text;
+  if (dto.type == "password") arg.type = CommandArgument::Password;
+  if (dto.type == "dropdown") arg.type = CommandArgument::Dropdown;
 
-  arg.name = obj.value("name").toString();
-  arg.placeholder = obj.value("placeholder").toString();
-  arg.required = obj.value("required").toBool(false);
+  arg.name = std::move(dto.name);
+  arg.placeholder = std::move(dto.placeholder);
+  arg.required = dto.required;
 
-  if (type == "dropdown") {
-    auto data = obj.value("data").toArray();
-    std::vector<CommandArgument::DropdownData> options;
-
-    options.reserve(data.size());
-
-    for (const auto &child : data) {
-      auto obj = child.toObject();
-
-      options.push_back({.title = obj["title"].toString(), .value = obj["value"].toString()});
-    }
-
-    arg.data = options;
+  if (dto.type == "dropdown") {
+    arg.data =
+        dto.data | std::views::as_rvalue | std::views::transform([](manifest_dto::DropdownOption &&opt) {
+          return CommandArgument::DropdownData{.title = std::move(opt.title), .value = std::move(opt.value)};
+        }) |
+        std::ranges::to<std::vector>();
   }
 
   return arg;
@@ -183,27 +172,25 @@ static std::expected<std::chrono::seconds, QString> parseInterval(const std::str
   return secs;
 }
 
-ExtensionManifest::Command ExtensionManifest::parseCommandFromObject(const QJsonObject &obj) {
+static ExtensionManifest::Command parseCommand(manifest_dto::Command &&dto) {
   ExtensionManifest::Command command;
-  auto type = obj.value("mode");
 
-  command.name = obj.value("name").toString();
-  command.title = obj.value("title").toString();
-  command.description = obj.value("description").toString();
-  command.defaultDisabled = obj.value("disabledByDefault").toBool(false);
+  command.name = std::move(dto.name);
+  command.title = std::move(dto.title);
+  command.description = std::move(dto.description);
+  command.defaultDisabled = dto.disabledByDefault;
+  command.icon = std::move(dto.icon);
 
-  if (obj.contains("icon")) { command.icon = obj.value("icon").toString(); }
-
-  if (type == "view") {
+  if (dto.mode == "view") {
     command.mode = CommandMode::CommandModeView;
-  } else if (type == "no-view") {
+  } else if (dto.mode == "no-view") {
     command.mode = CommandMode::CommandModeNoView;
   } else {
     command.mode = CommandMode::CommandModeInvalid;
   }
 
-  if (obj.contains("interval") && command.mode == CommandModeNoView) {
-    auto interval = parseInterval(obj.value("interval").toString().toStdString());
+  if (dto.interval && command.mode == CommandModeNoView) {
+    auto interval = parseInterval(dto.interval->toStdString());
     if (interval) {
       command.interval = *interval;
     } else {
@@ -211,17 +198,67 @@ ExtensionManifest::Command ExtensionManifest::parseCommandFromObject(const QJson
     }
   }
 
-  for (const auto &obj : obj.value("keywords").toArray()) {
-    command.keywords.emplace_back(obj.toString());
-  }
-
-  for (const auto &obj : obj.value("preferences").toArray()) {
-    command.preferences.emplace_back(parsePreferenceFromObject(obj.toObject()));
-  }
-
-  for (const auto &obj : obj.value("arguments").toArray()) {
-    command.arguments.emplace_back(parseArgumentFromObject(obj.toObject()));
-  }
+  command.keywords = std::move(dto.keywords);
+  command.preferences = dto.preferences | std::views::as_rvalue | std::views::transform(parsePreference) |
+                        std::ranges::to<std::vector>();
+  command.arguments = dto.arguments | std::views::as_rvalue | std::views::transform(parseArgument) |
+                      std::ranges::to<std::vector>();
 
   return command;
+}
+
+std::expected<ExtensionManifest, ManifestError> ExtensionManifest::fromPackageJson(const fs::path &path) {
+  static const std::set<CommandMode> supportedModes{CommandMode::CommandModeView, CommandModeNoView};
+  fs::path const manifestPath = path / "package.json";
+
+  if (!fs::exists(manifestPath)) {
+    return std::unexpected<ManifestError>(
+        QString("Could not find package.json file at %1").arg(manifestPath.c_str()));
+  }
+
+  manifest_dto::Package pkg;
+  std::string buf;
+
+  if (auto error =
+          glz::read_file_json<glz::opts{.error_on_unknown_keys = false}>(pkg, manifestPath.string(), buf)) {
+    return std::unexpected<ManifestError>(QString("Failed to parse package.json at %1: %2")
+                                              .arg(manifestPath.c_str())
+                                              .arg(QString::fromStdString(glz::format_error(error, buf))));
+  }
+
+  ExtensionManifest manifest;
+
+  manifest.path = path;
+  manifest.id = QString::fromStdString(getLastPathComponent(path));
+  manifest.name = std::move(pkg.name);
+  manifest.title = std::move(pkg.title);
+  manifest.description = std::move(pkg.description);
+  manifest.icon = std::move(pkg.icon);
+  manifest.author = std::move(pkg.author);
+  manifest.needsRaycastApi = pkg.dependencies.contains(Omnicast::RAYCAST_NPM_API_PACKAGE.toStdString());
+
+  if (manifest.id.startsWith("store.vicinae.")) {
+    manifest.provenance = ExtensionManifest::Provenance::Vicinae;
+  } else if (manifest.id.startsWith("store.raycast.")) {
+    manifest.provenance = ExtensionManifest::Provenance::Raycast;
+  } else {
+    manifest.provenance = ExtensionManifest::Provenance::Local;
+  }
+
+  manifest.categories = std::move(pkg.categories);
+  manifest.preferences = pkg.preferences | std::views::as_rvalue | std::views::transform(parsePreference) |
+                         std::ranges::to<std::vector>();
+
+  manifest.commands.reserve(pkg.commands.size());
+
+  for (auto &dto : pkg.commands) {
+    auto command = parseCommand(std::move(dto));
+
+    command.provenance = manifest.provenance;
+    command.entrypoint = path / std::format("{}.js", command.name.toStdString());
+
+    if (supportedModes.contains(command.mode)) { manifest.commands.emplace_back(std::move(command)); }
+  }
+
+  return manifest;
 }

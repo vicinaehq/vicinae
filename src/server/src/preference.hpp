@@ -65,14 +65,14 @@ public:
     return preference;
   }
 
-  void setName(const QString &name) { m_name = name; }
-  void setTitle(const QString &name) { m_title = name; }
-  void setDescription(const QString &name) { m_description = name; }
-  void setPlaceholder(const QString &name) { m_placeholder = name; }
+  void setName(QString name) { m_name = std::move(name); }
+  void setTitle(QString name) { m_title = std::move(name); }
+  void setDescription(QString name) { m_description = std::move(name); }
+  void setPlaceholder(QString name) { m_placeholder = std::move(name); }
   void setRequired(bool required) { m_required = required; }
   void setReadOnly(bool value = true) { m_readOnly = value; }
-  void setData(const Data &data) { m_data = data; }
-  void setDefaultValue(const QJsonValue &value) { m_value = value; }
+  void setData(Data data) { m_data = std::move(data); }
+  void setDefaultValue(QJsonValue value) { m_value = std::move(value); }
   bool hasDefaultValue() const { return !m_value.isUndefined(); }
   bool isValid() const { return !std::holds_alternative<UnknownData>(m_data); }
   bool isReadOnly() const { return m_readOnly; }
