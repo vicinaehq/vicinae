@@ -15,19 +15,6 @@
 
 namespace fs = std::filesystem;
 
-std::vector<std::filesystem::path> AppService::mergedPaths() const {
-  std::vector<fs::path> paths;
-  auto defaultPaths = defaultSearchPaths();
-
-  paths.reserve(defaultPaths.size() + m_additionalSearchPaths.size());
-  // Manually added paths have highest priority, so they come first
-  paths.insert(paths.end(), m_additionalSearchPaths.begin(), m_additionalSearchPaths.end());
-  // Then add default system paths (XDG_DATA_HOME, XDG_DATA_DIRS)
-  paths.insert(paths.end(), defaultPaths.begin(), defaultPaths.end());
-
-  return paths;
-}
-
 AbstractAppDatabase *AppService::provider() const { return m_provider.get(); }
 
 bool AppService::launch(const AbstractApplication &app, const std::vector<QString> &args) const {
@@ -87,8 +74,6 @@ bool AppService::openTarget(const QString &target) const {
 
 bool AppService::openTarget(const QUrl &target) const { return openTarget(target.toString()); }
 
-std::vector<fs::path> AppService::defaultSearchPaths() const { return m_provider->defaultSearchPaths(); }
-
 std::shared_ptr<AbstractApplication> AppService::textEditor() const {
   return m_provider->genericTextEditor();
 }
@@ -128,11 +113,6 @@ void AppService::handleDirectoryChanged(const QString &path) {
   m_rescanDebounce->start();
 }
 
-void AppService::setAdditionalSearchPaths(const std::vector<std::filesystem::path> &paths) {
-  m_additionalSearchPaths = paths;
-  reinstallWatches(mergedPaths());
-}
-
 std::vector<std::shared_ptr<AbstractApplication>> AppService::findOpeners(const QString &target) const {
   return m_provider->findOpeners(target);
 }
@@ -169,7 +149,8 @@ bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
 }
 
 bool AppService::scanSync() {
-  bool const result = m_provider->scan(mergedPaths());
+  reinstallWatches(m_provider->searchPaths());
+  bool const result = m_provider->scan();
   emit appsChanged();
   return result;
 }
@@ -179,7 +160,7 @@ AppService::AppService(OmniDatabase &db) : m_db(db), m_provider(createLocalProvi
   m_rescanDebounce->setInterval(500);
   connect(m_rescanDebounce, &QTimer::timeout, this, [this] { scanSync(); });
 
-  reinstallWatches(mergedPaths());
+  reinstallWatches(m_provider->searchPaths());
   connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, &AppService::handleDirectoryChanged);
   connect(m_provider.get(), &AbstractAppDatabase::changed, this, [this] { m_rescanDebounce->start(); });
 }

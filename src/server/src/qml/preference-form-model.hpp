@@ -22,7 +22,8 @@ public:
     ReadOnlyRole,
     MultipleRole,
     CanChooseFilesRole,
-    CanChooseDirectoriesRole
+    CanChooseDirectoriesRole,
+    LockedPathsRole
   };
 
   explicit PreferenceFormModel(QObject *parent = nullptr);
@@ -53,6 +54,7 @@ private:
     bool multiple = false;
     bool canChooseFiles = true;
     bool canChooseDirectories = false;
+    QStringList lockedPaths;
   };
 
   std::vector<Field> m_fields;

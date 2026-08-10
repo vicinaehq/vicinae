@@ -124,14 +124,20 @@ public:
   virtual std::vector<std::filesystem::path> defaultSearchPaths() const = 0;
 
   /**
+   * The effective list of directories scanned for apps: the default system paths plus any
+   * provider-specific additions (such as user-configured directories coming from preferences).
+   */
+  virtual std::vector<std::filesystem::path> searchPaths() const { return defaultSearchPaths(); }
+
+  /**
    * This method is a request for the service to explicitly update the list of apps installed on the system.
-   * What it does is left to the implementer but it is expected that after calling this, we can query the
-   * service for the most up-to-date information.
+   * Implementations rebuild their database from their own searchPaths(). It is expected that after calling
+   * this, we can query the service for the most up-to-date information.
    * Usually, implementers install their own watching logic to detect changes and rebuild their app database
    * internally, but this is called when a higher level operation that could impact apps is performed (such as
    * changing app-related preferences).
    */
-  virtual bool scan(const std::vector<std::filesystem::path> &paths) = 0;
+  virtual bool scan() = 0;
 
   /**
    * Launch an instance of the application with the provided set of arguments.

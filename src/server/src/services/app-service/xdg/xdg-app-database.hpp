@@ -15,7 +15,7 @@ class XdgAppDatabase : public AbstractAppDatabase {
   Q_DECLARE_TR_FUNCTIONS(XdgAppDatabase)
 
 public:
-  bool scan(const std::vector<std::filesystem::path> &paths) override;
+  bool scan() override;
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
   AppPtr findByClass(const QString &name) const override;
   AppPtr findDefaultOpener(const QString &target) const override;
