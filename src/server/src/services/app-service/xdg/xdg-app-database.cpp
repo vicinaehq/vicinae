@@ -93,7 +93,7 @@ AppPtr XdgAppDatabase::findDefaultOpener(const QString &target) const {
   return defaultForMime(mimeNameForTarget(target));
 }
 
-bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
+bool XdgAppDatabase::scan() {
   appMap.clear();
   m_apps.clear();
   m_mimeAppsLists.clear();
@@ -102,7 +102,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
   std::set<std::string> seen;
 
-  for (const auto &dir : paths) {
+  for (const auto &dir : searchPaths()) {
     std::error_code ec;
 
     for (const auto &entry :
@@ -611,4 +611,4 @@ void XdgAppDatabase::applyPreferences(const QJsonObject &preferences) {
   }
 }
 
-XdgAppDatabase::XdgAppDatabase() { scan(defaultSearchPaths()); }
+XdgAppDatabase::XdgAppDatabase() { scan(); }

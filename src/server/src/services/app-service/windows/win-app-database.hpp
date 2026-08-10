@@ -22,7 +22,7 @@ public:
   ~WindowsAppDatabase() override;
 
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
-  bool scan(const std::vector<std::filesystem::path> &paths) override;
+  bool scan() override;
 
   bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const override;
   bool launchTerminalCommand(const std::vector<QString> &cmdline,

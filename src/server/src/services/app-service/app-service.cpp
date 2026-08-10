@@ -74,8 +74,6 @@ bool AppService::openTarget(const QString &target) const {
 
 bool AppService::openTarget(const QUrl &target) const { return openTarget(target.toString()); }
 
-std::vector<fs::path> AppService::defaultSearchPaths() const { return m_provider->defaultSearchPaths(); }
-
 std::shared_ptr<AbstractApplication> AppService::textEditor() const {
   return m_provider->genericTextEditor();
 }
@@ -151,9 +149,8 @@ bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
 }
 
 bool AppService::scanSync() {
-  auto paths = m_provider->searchPaths();
-  reinstallWatches(paths);
-  bool const result = m_provider->scan(paths);
+  reinstallWatches(m_provider->searchPaths());
+  bool const result = m_provider->scan();
   emit appsChanged();
   return result;
 }

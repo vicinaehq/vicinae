@@ -14,7 +14,7 @@ public:
 
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
   std::vector<std::filesystem::path> searchPaths() const override;
-  bool scan(const std::vector<std::filesystem::path> &paths) override;
+  bool scan() override;
 
   PreferenceList preferences() const override;
   void applyPreferences(const QJsonObject &preferences) override;

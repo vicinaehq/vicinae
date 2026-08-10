@@ -122,7 +122,7 @@ std::string shellQuote(const QString &arg) {
 
 } // namespace
 
-MacAppDatabase::MacAppDatabase() { scan(searchPaths()); }
+MacAppDatabase::MacAppDatabase() { scan(); }
 
 std::vector<fs::path> MacAppDatabase::defaultSearchPaths() const {
   std::vector<fs::path> paths;
@@ -177,11 +177,11 @@ void MacAppDatabase::applyPreferences(const QJsonObject &preferences) {
   emit changed();
 }
 
-bool MacAppDatabase::scan(const std::vector<fs::path> &paths) {
+bool MacAppDatabase::scan() {
   m_apps.clear();
   m_appsById.clear();
 
-  auto scanned = collectAppPaths(paths);
+  auto scanned = collectAppPaths(searchPaths());
   m_apps.reserve(scanned.size());
 
   for (const auto &path : scanned) {

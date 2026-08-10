@@ -50,8 +50,6 @@ public:
    */
   bool launchRaw(const std::vector<QString> &args);
 
-  std::vector<std::filesystem::path> defaultSearchPaths() const;
-
   /**
    * Returns the default terminal emulator or a null pointer if none is available.
    */
