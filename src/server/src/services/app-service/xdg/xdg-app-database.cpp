@@ -5,6 +5,7 @@
 #include "services/app-service/xdg/xdg-app.hpp"
 #include "utils.hpp"
 #include "xdgpp/desktop-entry/entry.hpp"
+#include "xdgpp/desktop-entry/exec.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <algorithm>
@@ -35,16 +36,20 @@ using AppPtr = XdgAppDatabase::AppPtr;
 
 // This is non standard, and isn't set correctly in most environments
 // This will be deprecated in favor of xdg-terminal-exec compliance
-static constexpr const auto FALLBACK_TERMINAL_MIME = "x-scheme-handler/terminal";
+static constexpr auto FALLBACK_TERMINAL_MIME = "x-scheme-handler/terminal";
 
 namespace {
 
 // TryExec check
-bool isExecutable(const xdgpp::DesktopEntry &entry) {
-  if (auto exec = entry.tryExec()) {
-    return !QStandardPaths::findExecutable(qStringFromStdView(*exec)).isEmpty();
-  }
-  return true;
+bool isExecutable(const AbstractApplication &entry) {
+  constexpr auto programExists = [](const QString &text) {
+    return !QStandardPaths::findExecutable(text).isEmpty();
+  };
+  auto &xdg = static_cast<const XdgApplication &>(entry);
+
+  if (auto exec = xdg.data().tryExec(); exec && !programExists(qStringFromStdView(*exec))) return false;
+
+  return programExists(entry.program());
 }
 
 bool revealInFileManager(const std::filesystem::path &path) {
@@ -80,7 +85,9 @@ std::optional<fs::path> containingFolderTarget(const fs::path &path) {
 std::shared_ptr<AbstractApplication> XdgAppDatabase::defaultForMime(const QString &mime) const {
   for (const auto &list : m_mimeAppsLists) {
     for (const auto &appId : list.defaultAssociations(mime.toStdString())) {
-      if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) { return appIt->second; }
+      if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end() && isExecutable(*appIt->second)) {
+        return appIt->second;
+      }
     }
   }
 
@@ -117,7 +124,9 @@ bool XdgAppDatabase::scan() {
 
       auto file = xdgpp::DesktopFile::fromFile(entry.path(), dir);
 
-      if (!isExecutable(file) || file.deleted()) continue;
+      // we no longer check TryExec here, we still want to track the app even if it's
+      // not executable at scan time, because it may become executable later.
+      if (file.deleted()) continue;
 
       if (file.errorMessage()) {
         qWarning() << "Desktop file" << file.path().c_str() << "is invalid" << *file.errorMessage();
@@ -332,7 +341,7 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
     // perform a full file tour to find the default if there is one
     for (const auto &list : m_mimeAppsLists) {
       for (const auto &appId : list.defaultAssociations(mime.toStdString())) {
-        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) {
+        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end() && isExecutable(*appIt->second)) {
           seen.insert(appIt->second->id().toStdString());
           openers.emplace_back(appIt->second);
           break;
@@ -344,7 +353,7 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
       for (const auto &appId : list.addedAssociations(mime.toStdString())) {
         if (removed.contains(appId) || seen.contains(appId)) continue;
         seen.insert(appId);
-        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) {
+        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end() && isExecutable(*appIt->second)) {
           openers.emplace_back(appIt->second);
         }
       }
@@ -359,7 +368,7 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
         for (const auto &app : it->second) {
           std::string const appId = app->id().toStdString();
           if (removed.contains(appId) || seen.contains(appId)) continue;
-          if (app->data().supportsMime(mime.toStdString())) {
+          if (app->data().supportsMime(mime.toStdString()) && isExecutable(*app)) {
             seen.insert(appId);
             openers.emplace_back(app);
           }
