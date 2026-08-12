@@ -1,5 +1,6 @@
+
 export enum Icon {
-	Aarch64 = "aarch64",
+Aarch64 = "aarch64",
 	AddPerson = "add-person",
 	Adonisjs = "adonisjs",
 	Aftereffects = "aftereffects",
@@ -123,6 +124,7 @@ export enum Icon {
 	Capacitor = "capacitor",
 	Car = "car",
 	Carbon = "carbon",
+	Carousel = "carousel",
 	Cart = "cart",
 	Cassandra = "cassandra",
 	Cd = "cd",
@@ -849,5 +851,5 @@ export enum Icon {
 	Yunohost = "yunohost",
 	Zend = "zend",
 	Zendesk = "zendesk",
-	Zig = "zig",
+	Zig = "zig"
 }

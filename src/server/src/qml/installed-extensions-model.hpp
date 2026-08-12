@@ -21,6 +21,6 @@ protected:
   QString displayTitle(const ExtensionManifest &m) const override;
   QString displaySubtitle(const ExtensionManifest &m) const override;
   std::optional<ImageURL> displayIcon(const ExtensionManifest &m) const override;
-  QVariantList displayAccessories(const ExtensionManifest &m) const override;
+  AccessoryList displayAccessories(const ExtensionManifest &m) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const ExtensionManifest &m) const override;
 };

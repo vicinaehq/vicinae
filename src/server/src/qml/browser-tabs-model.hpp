@@ -26,7 +26,7 @@ protected:
   QString displayTitle(const BrowserTab &tab) const override;
   QString displaySubtitle(const BrowserTab &tab) const override;
   std::optional<ImageURL> displayIcon(const BrowserTab &tab) const override;
-  QVariantList displayAccessories(const BrowserTab &tab) const override;
+  AccessoryList displayAccessories(const BrowserTab &tab) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const BrowserTab &tab) const override;
 
 private:

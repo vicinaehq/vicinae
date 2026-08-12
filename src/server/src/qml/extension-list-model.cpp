@@ -1,6 +1,7 @@
 #include "extension-list-model.hpp"
 
 #include <chrono>
+#include <ranges>
 #include <utility>
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "services/clipboard/clipboard-mime.hpp"
@@ -59,10 +60,10 @@ std::optional<ImageURL> ExtensionListSection::itemIcon(int i) const {
   return item.icon ? std::optional(ImageURL(*item.icon)) : std::nullopt;
 }
 
-QVariantList ExtensionListSection::itemAccessories(int i) const {
-  const auto &item = itemAt(i);
-  if (!item.accessories.empty()) return qml::accessoriesToVariantList(item.accessories);
-  return {};
+AccessoryList ExtensionListSection::itemAccessories(int i) const {
+  return itemAt(i).accessories |
+         std::views::transform([](const AccessoryModel &a) { return a.toAccessory(); }) |
+         std::ranges::to<AccessoryList>();
 }
 
 bool ExtensionListSection::isDraggable(int i) const { return itemAt(i).dragContent.has_value(); }

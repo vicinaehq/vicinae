@@ -566,6 +566,9 @@ set(SRCS
 	src/qml/switch-windows-model.cpp
 	src/qml/switch-windows-view-host.hpp
 	src/qml/switch-windows-view-host.cpp
+	src/qml/switch-workspaces-model.hpp
+	src/qml/switch-workspaces-view-host.hpp
+	src/qml/switch-workspaces-view-host.cpp
 	src/qml/manage-shortcuts-model.hpp
 	src/qml/manage-shortcuts-model.cpp
 	src/qml/manage-shortcuts-view-host.hpp

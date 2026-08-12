@@ -3,6 +3,7 @@
 #include "drag-utils.hpp"
 #include "section-list-model.hpp"
 #include "services/navigation/list-navigation.hpp"
+#include "view-utils.hpp"
 
 SectionListModel::SectionListModel(QObject *parent) : QAbstractListModel(parent) {
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
@@ -108,7 +109,7 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
     if (auto icon = source->itemIcon(flat.itemIdx)) return icon->toString();
     return QString();
   case Accessory:
-    return source->itemAccessories(flat.itemIdx);
+    return qml::accessoriesToVariantList(source->itemAccessories(flat.itemIdx));
   case IsDraggable:
     return source->isDraggable(flat.itemIdx);
   default: {

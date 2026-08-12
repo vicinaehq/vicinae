@@ -5,6 +5,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "switch-windows-view-host.hpp"
+#include "switch-workspaces-view-host.hpp"
 #include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
 #include "theme.hpp"
@@ -91,6 +92,16 @@ class SwitchWindowsCommand : public BuiltinViewCommand<SwitchWindowsViewHost> {
     return ImageURL::builtin(BuiltinIcon::SwitchWindows).setBackgroundTint(SemanticColor::Cyan);
   }
 };
+
+class SwitchWorkspacesCommand : public BuiltinViewCommand<SwitchWorkspacesViewHost> {
+  QString id() const override { return "switch-workspaces"; }
+  QString name() const override {
+    return QCoreApplication::translate("SwitchWorkspacesCommand", "Switch Workspaces");
+  }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Carousel).setBackgroundTint(SemanticColor::Cyan);
+  }
+};
 } // namespace
 
 WindowManagementExtension::WindowManagementExtension(const ServiceRegistry &services) {
@@ -99,6 +110,7 @@ WindowManagementExtension::WindowManagementExtension(const ServiceRegistry &serv
 
   registerCommand<SwitchWindowsCommand>();
 
+  if (wm->hasWorkspaces()) { registerCommand<SwitchWorkspacesCommand>(); }
   if (wm->supports(Cap::Fullscreen)) { registerCommand<ToggleFullscreenWindowCommand>(); }
   if (wm->supports(Cap::ToggleFloating)) { registerCommand<ToggleFloatingWindowCommand>(); }
   if (wm->supports(Cap::ToggleOverview)) { registerCommand<ToggleOverviewCommand>(); }
@@ -111,5 +123,5 @@ QString WindowManagementExtension::displayName() const {
   return QCoreApplication::translate("WindowManagementExtension", "Window Management");
 }
 ImageURL WindowManagementExtension::iconUrl() const {
-  return ImageURL::builtin(BuiltinIcon::AppWindowList).setBackgroundTint(COLOR);
+  return ImageURL::builtin(BuiltinIcon::AppWindow).setBackgroundTint(COLOR);
 }

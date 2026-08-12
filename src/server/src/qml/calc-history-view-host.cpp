@@ -25,8 +25,6 @@ std::optional<ImageURL> CalcLiveSection::itemIcon(int) const {
   return ImageURL::builtin(BuiltinIcon::Calculator);
 }
 
-QVariantList CalcLiveSection::itemAccessories(int) const { return {}; }
-
 QHash<int, QByteArray> CalcLiveSection::customRoleNames() const {
   return {
       {IsCalculator, "isCalculator"},         {CalcQuestion, "calcQuestion"},
