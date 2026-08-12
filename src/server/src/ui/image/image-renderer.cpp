@@ -50,6 +50,20 @@ QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor
   bool const hasBg = bg.isValid() && bg.alpha() > 0;
   int const pad = hasBg ? 0 : AA_PAD;
 
+  // Theme tints are tuned for text on the app background, not as fills: their
+  // lightness varies per hue, which makes a row of tiles look uneven. Clamp
+  // every tile into one tonal band so the set reads as a family and always
+  // supports a light glyph.
+  QColor tile = bg;
+  if (hasBg) {
+    float h, s, l, a;
+    bg.getHslF(&h, &s, &l, &a);
+    if (h < 0.f) h = 0.f;
+    if (s > 0.05f) s = std::clamp(s, 0.55f, 0.8f);
+    l = std::clamp(l, 0.42f, 0.52f);
+    tile = QColor::fromHslF(h, s, l, a);
+  }
+
   QImage canvas(size.width() + pad * 2, size.height() + pad * 2, QImage::Format_ARGB32_Premultiplied);
   canvas.fill(Qt::transparent);
   QPainter painter(&canvas);
@@ -63,9 +77,30 @@ QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor
     int const side = qMin(size.width(), size.height());
     qreal const radius = side * 0.25;
     margin = qRound(side * 0.19);
-    painter.setBrush(bg);
+
+    auto shifted = [](const QColor &c, float dh, float ds, float dl) {
+      float h, s, l, a;
+      c.getHslF(&h, &s, &l, &a);
+      if (h < 0.f) h = 0.f;
+      h = std::fmod(h + dh + 1.f, 1.f);
+      s = std::clamp(s + ds, 0.f, 1.f);
+      l = std::clamp(l + dl, 0.f, 1.f);
+      return QColor::fromHslF(h, s, l, a);
+    };
+
+    QLinearGradient gradient(contentRect.topLeft(), contentRect.bottomLeft());
+    gradient.setColorAt(0, shifted(tile, 0.025f, -0.03f, 0.10f));
+    gradient.setColorAt(1, shifted(tile, -0.015f, 0.06f, -0.05f));
+    painter.setBrush(gradient);
     painter.setPen(Qt::NoPen);
     painter.drawRoundedRect(contentRect, radius, radius);
+
+    qreal const strokeWidth = std::max(1.0, side / 32.0);
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(QPen(QColor(255, 255, 255, 30), strokeWidth));
+    qreal const inset = strokeWidth / 2.0;
+    painter.drawRoundedRect(contentRect.adjusted(inset, inset, -inset, -inset), radius - inset,
+                            radius - inset);
   }
 
   QRectF const iconRect =
@@ -81,10 +116,21 @@ QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor
     renderer.render(&svgPainter, svgImage.rect());
 
     QColor fillColor = fg;
-    if (bg.isValid() && bg.alpha() > 0) fillColor = ContrastHelper::getTonalContrastColor(bg, 5);
+    if (hasBg) fillColor = ContrastHelper::getTonalContrastColor(tile, 5, 0.1);
 
     svgPainter.setCompositionMode(QPainter::CompositionMode_SourceIn);
     svgPainter.fillRect(svgImage.rect(), fillColor);
+  }
+
+  if (hasBg) {
+    QImage shadow(svgImage.size(), QImage::Format_ARGB32_Premultiplied);
+    shadow.fill(Qt::transparent);
+    QPainter shadowPainter(&shadow);
+    shadowPainter.drawImage(0, 0, svgImage);
+    shadowPainter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    shadowPainter.fillRect(shadow.rect(), QColor(0, 0, 0, 70));
+    qreal const offset = qMin(size.width(), size.height()) * 0.035;
+    painter.drawImage(iconRect.translated(0, offset), shadow);
   }
 
   painter.drawImage(iconRect, svgImage);

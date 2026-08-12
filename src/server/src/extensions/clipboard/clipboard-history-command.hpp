@@ -13,7 +13,7 @@ class ClipboardHistoryCommand : public BuiltinViewCommand<ClipboardHistoryViewHo
     return tr("Browse your clipboard's history, pin, edit and remove entries.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::CopyClipboard).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::CopyClipboard).setBackgroundTint(SemanticColor::Red);
   }
   std::vector<Preference> preferences() const override;
   void preferenceValuesChanged(const QJsonObject &value) const override;

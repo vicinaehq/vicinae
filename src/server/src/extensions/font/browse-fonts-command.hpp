@@ -8,6 +8,6 @@ class BrowseFontsCommand : public BuiltinViewCommand<FontBrowserViewHost> {
   QString name() const override { return QCoreApplication::translate("BrowseFontsCommand", "Search Fonts"); };
   std::vector<QString> keywords() const override { return {"browse fonts"}; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Text).setBackgroundTint(SemanticColor::Accent);
+    return ImageURL::builtin(BuiltinIcon::Text).setBackgroundTint(SemanticColor::Orange);
   }
 };

@@ -23,7 +23,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
   QString description() const override { return tr("Run a program in a terminal window"); }
   std::vector<QString> keywords() const override { return {"shell command", "run program"}; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Terminal).setBackgroundTint(SemanticColor::Accent);
+    return ImageURL::builtin(BuiltinIcon::Terminal).setBackgroundTint(SemanticColor::Cyan);
   }
   CommandMode mode() const override { return CommandMode::CommandModeView; }
   virtual std::vector<CommandArgument> arguments() const override {
@@ -104,7 +104,7 @@ class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsViewHost> {
   std::vector<QString> keywords() const override { return {}; }
   bool isDefaultDisabled() const override { return true; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Box).setBackgroundTint(SemanticColor::Accent);
+    return ImageURL::builtin(BuiltinIcon::Box).setBackgroundTint(SemanticColor::Cyan);
   }
   std::vector<Preference> preferences() const override {
     auto showHidden = Preference::makeCheckbox("showHidden", tr("Show hidden apps"));
@@ -116,7 +116,7 @@ class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsViewHost> {
 };
 
 namespace {
-constexpr auto VOLUME_COMMAND_TINT = SemanticColor::Cyan;
+const QColor VOLUME_COMMAND_TINT = QColor(128, 132, 138);
 
 ImageURL volumeIcon(float level) {
   if (level <= 0.0f) return ImageURL{BuiltinIcon::SpeakerOff};
@@ -260,7 +260,7 @@ class SystemExtension : public BuiltinCommandRepository {
   QString displayName() const override { return tr("System"); }
   QString description() const override { return tr("System-related commands"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Cog).setBackgroundTint(SemanticColor::Accent);
+    return ImageURL::builtin(BuiltinIcon::Cog).setBackgroundTint(SemanticColor::Cyan);
   }
 
 public:

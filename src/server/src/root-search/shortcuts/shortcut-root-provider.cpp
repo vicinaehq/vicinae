@@ -100,7 +100,7 @@ ArgumentList RootShortcutItem::arguments() const {
 ImageURL RootShortcutItem::iconUrl() const {
   ImageURL url(m_link->icon());
 
-  if (url.type() == ImageURLType::Builtin) { url.setBackgroundTint(Omnicast::ACCENT_COLOR); }
+  if (url.type() == ImageURLType::Builtin) { url.setBackgroundTint(SemanticColor::Green); }
 
   return url;
 }
@@ -124,7 +124,7 @@ QString ShortcutRootProvider::displayName() const {
 ImageURL ShortcutRootProvider::icon() const {
   auto icon = ImageURL::builtin(BuiltinIcon::Bolt);
 
-  icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
+  icon.setBackgroundTint(SemanticColor::Green);
 
   return icon;
 }

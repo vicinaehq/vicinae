@@ -10,6 +10,6 @@ class ManageSnippetsCommand : public BuiltinViewCommand<ManageSnippetsViewHost> 
     return QCoreApplication::translate("ManageSnippetsCommand", "Manage Snippets");
   }
   ImageURL iconUrl() const override {
-    return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(SemanticColor::Orange);
   }
 };

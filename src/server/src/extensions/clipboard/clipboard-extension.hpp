@@ -12,7 +12,7 @@ public:
   QString id() const override { return "clipboard"; }
   QString displayName() const override { return tr("Clipboard"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::CopyClipboard).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::CopyClipboard).setBackgroundTint(SemanticColor::Red);
   }
   QString description() const override { return tr("System clipboard integration"); }
 

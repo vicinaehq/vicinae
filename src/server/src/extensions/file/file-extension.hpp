@@ -18,7 +18,7 @@ class SearchFilesCommand : public BuiltinViewCommand<SearchFilesViewHost> {
   QString description() const override { return tr("Search files on your system"); }
   bool isFallback() const override { return true; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(SemanticColor::Yellow);
   }
   std::vector<Preference> preferences() const override { return {}; }
   void preferenceValuesChanged(const QJsonObject &value) const override {}
@@ -34,7 +34,7 @@ class RebuildFileIndexCommand : public BuiltinCallbackCommand {
               "particularly out of date.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Hammer).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Hammer).setBackgroundTint(SemanticColor::Yellow);
   }
   std::vector<Preference> preferences() const override { return {}; }
   void preferenceValuesChanged(const QJsonObject &value) const override {}
@@ -65,7 +65,7 @@ class FileExtension : public BuiltinCommandRepository {
   QString displayName() const override { return tr("System files"); }
   QString description() const override { return tr("Integrate with system files"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(SemanticColor::Yellow);
   }
 
 public:
