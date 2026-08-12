@@ -94,21 +94,24 @@ void ViciImageItem::reload() {
   }
 
   qreal const dpr = window() ? window()->devicePixelRatio() : qGuiApp->devicePixelRatio();
-  QSize const physicalSize(qCeil(w * dpr), qCeil(h * dpr));
+  // Icon-sized sources rasterize with too few pixels per curve on low-DPR
+  // screens; render at >=2x and let mipmapped minification scale back down.
+  qreal const renderScale = std::max(w, h) <= 128 ? std::max<qreal>(dpr, 2.0) : dpr;
+  QSize const physicalSize(qCeil(w * renderScale), qCeil(h * renderScale));
 
   m_stream = new ImageStream(m_resolvedUrl.imageUrl(), physicalSize,
                              {.safetyMargins = m_safetyMargins, .cache = m_cache}, this);
 
-  connect(m_stream, &ImageStream::frameReady, this, [this, dpr, w, h](const QImage &frame) {
+  connect(m_stream, &ImageStream::frameReady, this, [this, renderScale, w, h](const QImage &frame) {
     qint64 const key = frame.cacheKey();
     if (m_currentFrameKey == key && !m_currentFrame.isNull()) {
       setStatus(Ready);
       return;
     }
     // Sources smaller than the requested physical size arrive at native resolution;
-    // stamping those with the full dpr would shrink their natural size by the dpr factor.
+    // stamping those with the full scale would shrink their natural size by that factor.
     qreal const effectiveDpr =
-        std::clamp(std::max(frame.width() / qreal(w), frame.height() / qreal(h)), 1.0, dpr);
+        std::clamp(std::max(frame.width() / qreal(w), frame.height() / qreal(h)), 1.0, renderScale);
     QImage img = frame;
     img.setDevicePixelRatio(effectiveDpr);
     m_currentFrame = std::move(img);

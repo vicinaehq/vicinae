@@ -10,6 +10,6 @@ class CreateSnippetCommand : public BuiltinViewCommand<SnippetFormViewHost> {
     return QCoreApplication::translate("CreateSnippetCommand", "Create Snippet");
   }
   ImageURL iconUrl() const override {
-    return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(SemanticColor::Orange);
   }
 };

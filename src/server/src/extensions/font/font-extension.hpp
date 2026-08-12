@@ -8,7 +8,7 @@ class FontExtension : public BuiltinCommandRepository {
   QString id() const override { return "font"; }
   QString displayName() const override { return QCoreApplication::translate("FontExtension", "Font"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Text).setBackgroundTint(SemanticColor::Accent);
+    return ImageURL::builtin(BuiltinIcon::Text).setBackgroundTint(SemanticColor::Magenta);
   }
 
 public:

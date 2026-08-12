@@ -9,6 +9,6 @@ class ManageShortcutsCommand : public BuiltinViewCommand<ManageShortcutsViewHost
     return QCoreApplication::translate("ManageShortcutsCommand", "Manage Shortcuts");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Link).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Link).setBackgroundTint(SemanticColor::Green);
   }
 };
