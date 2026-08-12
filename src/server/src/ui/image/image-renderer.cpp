@@ -78,8 +78,6 @@ QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor
     qreal const radius = side * 0.25;
     margin = qRound(side * 0.19);
 
-    // hue-shifted gradient ends, not a flat lighten: this is what gives
-    // macOS-style tiles their depth
     auto shifted = [](const QColor &c, float dh, float ds, float dl) {
       float h, s, l, a;
       c.getHslF(&h, &s, &l, &a);
