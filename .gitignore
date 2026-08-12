@@ -32,6 +32,9 @@ heaptrack*
 .claude/*
 !.claude/CLAUDE.md
 
+# you can symlink AGENTS.md yourself
+/CLAUDE.md
+
 .omx/
 .codex/
 .gitnexus/
