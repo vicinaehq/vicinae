@@ -162,7 +162,7 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   }
 }
 
-static constexpr QFont::Weight UI_FONT_WEIGHT = QFont::Medium;
+static constexpr QFont::Weight UI_FONT_WEIGHT = QFont::Normal;
 
 static QFont resolveAppFont(const config::FontConfig &fontConfig) {
   QFont font;
