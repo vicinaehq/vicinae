@@ -23,6 +23,7 @@ struct Workspace {
   int id = -1;
   std::string name;
   bool hasFullScreen = false;
+  std::string monitor;
   int monitorId = -1;
 };
 
@@ -37,6 +38,6 @@ template <> struct glz::meta<Hyprland::ipc::Window> {
 
 template <> struct glz::meta<Hyprland::ipc::Workspace> {
   using T = Hyprland::ipc::Workspace;
-  static constexpr auto value =
-      object("id", &T::id, "name", &T::name, "hasfullscreen", &T::hasFullScreen, "monitorID", &T::monitorId);
+  static constexpr auto value = object("id", &T::id, "name", &T::name, "hasfullscreen", &T::hasFullScreen,
+                                       "monitorID", &T::monitorId, "monitor", &T::monitor);
 };

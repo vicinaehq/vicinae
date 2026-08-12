@@ -128,6 +128,7 @@ enum class BuiltinIcon : std::uint16_t {
   Capacitor,
   Car,
   Carbon,
+  Carousel,
   Cart,
   Cassandra,
   Cd,

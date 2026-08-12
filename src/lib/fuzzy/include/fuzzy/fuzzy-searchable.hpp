@@ -23,6 +23,11 @@ struct WeightedField {
   double weight;
 };
 
+struct OwnedWeightedField {
+  std::string text;
+  double weight;
+};
+
 namespace detail {
 template <std::ranges::forward_range R>
   requires std::same_as<std::ranges::range_value_t<R>, WeightedField>
@@ -45,6 +50,12 @@ template <std::ranges::forward_range R>
   requires std::same_as<std::ranges::range_value_t<R>, WeightedField>
 inline int scoreWeighted(R &&fields, std::string_view query) {
   return detail::scoreFields(std::forward<R>(fields), query);
+}
+
+inline int scoreWeighted(const std::vector<OwnedWeightedField> &fields, std::string_view query) {
+  auto view = fields | std::views::transform(
+                           [](const OwnedWeightedField &f) { return WeightedField{f.text, f.weight}; });
+  return detail::scoreFields(view, query);
 }
 
 template <FuzzySearchableType T>

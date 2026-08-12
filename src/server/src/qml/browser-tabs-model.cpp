@@ -9,8 +9,8 @@ QString BrowserTabsSection::displaySubtitle(const BrowserTab &tab) const {
 
 std::optional<ImageURL> BrowserTabsSection::displayIcon(const BrowserTab &tab) const { return tab.icon(); }
 
-QVariantList BrowserTabsSection::displayAccessories(const BrowserTab &tab) const {
-  if (tab.audible) return qml::textAccessory(tab.muted ? tr("Muted") : tr("Playing"));
+AccessoryList BrowserTabsSection::displayAccessories(const BrowserTab &tab) const {
+  if (tab.audible) return {{.text = tab.muted ? tr("Muted") : tr("Playing")}};
   return {};
 }
 

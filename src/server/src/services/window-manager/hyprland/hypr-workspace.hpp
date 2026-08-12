@@ -17,9 +17,9 @@ public:
   Workspace(const ipc::Workspace &workspace);
 
 private:
-  int m_monitorId = -1;
   int m_id = -1;
   QString m_name;
+  QString m_monitorName;
   bool m_hasFullScreen = false;
 };
 

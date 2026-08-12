@@ -16,8 +16,8 @@ std::optional<ImageURL> OAuthTokenStoreSection::displayIcon(const OAuth::TokenSe
   return ImageURL::builtin(BuiltinIcon::Key);
 }
 
-QVariantList OAuthTokenStoreSection::displayAccessories(const OAuth::TokenSet &set) const {
-  if (set.isExpired()) return qml::textAccessory(tr("Expired"));
+AccessoryList OAuthTokenStoreSection::displayAccessories(const OAuth::TokenSet &set) const {
+  if (set.isExpired()) return {{.text = tr("Expired")}};
   return {};
 }
 

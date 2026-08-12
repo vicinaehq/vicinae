@@ -21,9 +21,7 @@ std::optional<ImageURL> CalcHistorySection::itemIcon(int i) const {
   }
 }
 
-QVariantList CalcHistorySection::itemAccessories(int i) const {
-  return qml::textAccessory(m_records[i].answer);
-}
+AccessoryList CalcHistorySection::itemAccessories(int i) const { return {{.text = m_records[i].answer}}; }
 
 std::unique_ptr<ActionPanelState> CalcHistorySection::actionPanel(int i) const {
   const auto &record = m_records[i];

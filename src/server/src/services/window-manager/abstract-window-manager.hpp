@@ -184,6 +184,8 @@ public:
 
   virtual void focusWindowSync(const AbstractWindow &window) const {}
 
+  virtual void focusWorkspaceSync(const AbstractWorkspace &workspace) const {}
+
   virtual QFlags<Capability> capabilities() const { return {}; }
 
   bool supports(Capability cap) const { return capabilities().testFlag(cap); }

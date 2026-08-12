@@ -69,6 +69,10 @@ void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const 
   dispatchLua(std::format(R"(hl.dsp.focus({{ window = "{}" }}))", windowTarget(window)));
 }
 
+void HyprlandWindowManager::focusWorkspaceSync(const AbstractWorkspace &workspace) const {
+  dispatchLua(std::format(R"(hl.dsp.focus({{ workspace = "{}" }}))", workspace.id().toStdString()));
+}
+
 bool HyprlandWindowManager::closeWindow(const AbstractWindow &window) const {
   if (!dispatchLua(std::format(R"(hl.dsp.window.close({{ window = "{}" }}))", windowTarget(window)))) {
     return false;

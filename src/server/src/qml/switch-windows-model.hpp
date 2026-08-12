@@ -31,6 +31,6 @@ protected:
   QString displayTitle(const WindowEntry &e) const override;
   QString displaySubtitle(const WindowEntry &e) const override;
   std::optional<ImageURL> displayIcon(const WindowEntry &e) const override;
-  QVariantList displayAccessories(const WindowEntry &e) const override;
+  AccessoryList displayAccessories(const WindowEntry &e) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const WindowEntry &e) const override;
 };

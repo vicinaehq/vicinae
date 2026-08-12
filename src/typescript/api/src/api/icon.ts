@@ -123,6 +123,7 @@ export enum Icon {
 	Capacitor = "capacitor",
 	Car = "car",
 	Carbon = "carbon",
+	Carousel = "carousel",
 	Cart = "cart",
 	Cassandra = "cassandra",
 	Cd = "cd",

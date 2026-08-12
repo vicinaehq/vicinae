@@ -14,9 +14,9 @@ std::optional<ImageURL> SwitchWindowsSection::displayIcon(const WindowEntry &e) 
   return ImageURL::builtin(BuiltinIcon::AppWindow);
 }
 
-QVariantList SwitchWindowsSection::displayAccessories(const WindowEntry &e) const {
-  if (!e.workspaceName.isEmpty()) { return qml::textAccessory(e.workspaceName); }
-  if (auto ws = e.window->workspace()) { return qml::textAccessory(tr("WS %1").arg(*ws)); }
+AccessoryList SwitchWindowsSection::displayAccessories(const WindowEntry &e) const {
+  if (!e.workspaceName.isEmpty()) { return {{.text = e.workspaceName}}; }
+  if (auto ws = e.window->workspace()) { return {{.text = tr("WS %1").arg(*ws)}}; }
   return {};
 }
 

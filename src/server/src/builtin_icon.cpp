@@ -126,6 +126,7 @@ const BuiltinIconService::Mapping &BuiltinIconService::mapping() {
       {BuiltinIcon::Capacitor, "capacitor"},
       {BuiltinIcon::Car, "car"},
       {BuiltinIcon::Carbon, "carbon"},
+      {BuiltinIcon::Carousel, "carousel"},
       {BuiltinIcon::Cart, "cart"},
       {BuiltinIcon::Cassandra, "cassandra"},
       {BuiltinIcon::Cd, "cd"},
