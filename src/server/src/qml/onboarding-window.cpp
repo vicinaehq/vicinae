@@ -5,6 +5,7 @@
 #include "image-source.hpp"
 #include "keyboard-bridge.hpp"
 #include "platform-bridge.hpp"
+#include "style-bridge.hpp"
 #include "theme-bridge.hpp"
 #include "services/app-service/app-service.hpp"
 #include "vicinae.hpp"
@@ -110,6 +111,7 @@ void OnboardingWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
   rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
   rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
+  rootCtx->setContextProperty(QStringLiteral("Style"), new StyleBridge(this));
   rootCtx->setContextProperty(QStringLiteral("onboarding"), this);
 
 #ifdef Q_OS_MACOS

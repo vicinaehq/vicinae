@@ -6,6 +6,12 @@ Item {
     id: root
     implicitWidth: 220
 
+    // Native surface: rows blend onto the window's own material instead of
+    // repainting the theme background (macOS sidebar vibrancy).
+    property bool nativeSurface: false
+    property real topInset: 0
+    readonly property real _edgeInset: nativeSurface ? 8 : 6
+
     property string _selectedKey: ""
     readonly property bool _searching: extSearchField.text.length > 0
     readonly property string _activeKey: _searching ? _selectedKey : settings.currentPage
@@ -48,18 +54,21 @@ Item {
 
         Item {
             Layout.fillWidth: true
+            Layout.topMargin: root.topInset
             Layout.preferredHeight: 46
 
             SourceBlendRect {
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.leftMargin: 6
-                anchors.rightMargin: 6
+                anchors.leftMargin: root._edgeInset
+                anchors.rightMargin: root._edgeInset
                 anchors.verticalCenter: parent.verticalCenter
                 height: 30
                 radius: 8
-                backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-                color: Config.withAlpha(Theme.secondaryBackground, Config.windowOpacity)
+                backgroundColor: root.nativeSurface ? "transparent" : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                color: Config.withAlpha(Theme.secondaryBackground, root.nativeSurface ? 0.6 : Config.windowOpacity)
+                borderWidth: root.nativeSurface ? 1 : 0
+                borderColor: Config.withAlpha(Theme.foreground, 0.09)
 
                 RowLayout {
                     anchors.fill: parent
@@ -164,21 +173,23 @@ Item {
                 SourceBlendRect {
                     visible: navItem.model.kind !== "divider"
                     anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
+                    anchors.leftMargin: root._edgeInset
+                    anchors.rightMargin: root._edgeInset
                     anchors.topMargin: 1
                     anchors.bottomMargin: 1
                     radius: 8
-                    backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                    backgroundColor: root.nativeSurface ? "transparent" : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
                     color: {
                         if (navItem._selected) {
                             const c = Theme.listItemSelectionBg;
-                            return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
+                            return Qt.rgba(c.r, c.g, c.b, root.nativeSurface ? 1 : Config.windowOpacity);
                         }
                         if (itemHover.hovered && HoverActivation.active) {
                             const h = Theme.listItemHoverBg;
-                            return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
+                            return Qt.rgba(h.r, h.g, h.b, root.nativeSurface ? 0.6 : Config.windowOpacity);
                         }
+                        if (root.nativeSurface)
+                            return "transparent";
                         return Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity);
                     }
 

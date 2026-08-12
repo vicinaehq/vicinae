@@ -2,8 +2,8 @@ import QtQuick
 
 Item {
     id: root
-    implicitWidth: 36
-    implicitHeight: 20
+    implicitWidth: 34
+    implicitHeight: 18
     anchors.right: parent ? parent.right : undefined
     activeFocusOnTab: true
 
@@ -19,7 +19,7 @@ Item {
     Rectangle {
         id: track
         anchors.fill: parent
-        radius: 10
+        radius: 9
         antialiasing: true
 
         property color base: root.checked ? Theme.accent : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.2)
@@ -44,9 +44,9 @@ Item {
         border.color: Config.withAlpha(Theme.inputBorderFocus, Config.surfaceOpacity)
 
         Rectangle {
-            width: 16
-            height: 16
-            radius: 8
+            width: knob.width
+            height: knob.height
+            radius: knob.radius
             antialiasing: true
             x: knob.x
             y: knob.y + 1
@@ -55,9 +55,9 @@ Item {
 
         Rectangle {
             id: knob
-            width: 16
-            height: 16
-            radius: 8
+            width: Style.switchKnobWidth
+            height: 14
+            radius: height / 2
             antialiasing: true
             x: root.checked ? parent.width - width - 2 : 2
             anchors.verticalCenter: parent.verticalCenter

@@ -13,14 +13,15 @@ ColumnLayout {
     property real controlWidth: 200
 
     readonly property real _hPadding: 16
+    readonly property real _vPadding: Style.settingsRowVPad + (description !== "" ? 2 : 0)
     default property alias contentData: controlSlot.data
 
     RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: root._hPadding
         Layout.rightMargin: root._hPadding
-        Layout.topMargin: root.description !== "" ? 11 : 9
-        Layout.bottomMargin: root.description !== "" ? 11 : 9
+        Layout.topMargin: root._vPadding
+        Layout.bottomMargin: root._vPadding
         spacing: 20
 
         ViciImage {

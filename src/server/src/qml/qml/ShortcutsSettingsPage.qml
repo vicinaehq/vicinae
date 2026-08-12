@@ -5,7 +5,7 @@ import QtQuick.Layouts
 Item {
     id: root
     readonly property var model: settings.keybindModel
-    readonly property real contentWidth: Math.min(width, 720)
+    readonly property real contentWidth: Math.min(width - 32, 720)
     readonly property real sideMargin: (width - contentWidth) / 2
 
     property int _recordingRow: -1
@@ -35,6 +35,8 @@ Item {
         anchors.fill: parent
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        topMargin: Style.contentTopInset
+        Component.onCompleted: contentY = -topMargin
         contentHeight: contentColumn.implicitHeight
         contentWidth: width
 
@@ -54,15 +56,15 @@ Item {
             SettingsSectionLabel {
                 text: qsTr("Keybindings")
                 Layout.fillWidth: true
-                Layout.leftMargin: root.sideMargin + 20
-                Layout.rightMargin: root.sideMargin + 20
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
                 Layout.topMargin: 24
                 Layout.bottomMargin: 10
             }
 
             SettingsGroup {
-                Layout.leftMargin: root.sideMargin + 20
-                Layout.rightMargin: root.sideMargin + 20
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
 
                 Repeater {
                     id: keybindRepeater

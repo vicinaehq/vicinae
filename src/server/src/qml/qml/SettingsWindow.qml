@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 
 Window {
@@ -37,6 +38,19 @@ Window {
     readonly property string topbarTitle: root.isExtensionPage ? root.extModel.selectedTitle : root.coreMeta.title
     readonly property var topbarIconSource: root.isExtensionPage ? root.extModel.selectedIconSource : Img.builtin(root.coreMeta.icon).withFillColor(Theme.foreground)
 
+    // Set by per-OS variants (SettingsWindowMacOS.qml): the sidebar becomes a floating
+    // rounded pane on the window's native material, under a hidden titlebar whose
+    // buttons overlay the pane's top inset.
+    property bool nativeChrome: false
+    property real sidebarTopPadding: 0
+    // Slot for platform components that have no cross-platform equivalent,
+    // e.g. the macOS back/forward capsule. Filled by the per-OS variants.
+    property Component headerAccessory: null
+    readonly property int sidebarWidth: 240
+    readonly property real paneInset: nativeChrome ? 6 : 0
+    readonly property real paneLeftInset: nativeChrome ? 6 : 0
+    readonly property real paneRadius: 16
+
     width: 980
     height: 680
     minimumWidth: 980
@@ -55,40 +69,153 @@ Window {
         id: background
         anchors.fill: parent
         Keys.onEscapePressed: settings.close()
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+        color: root.nativeChrome ? "transparent" : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
         clip: true
+
+        // Opaque theme background with a rounded hole where the floating sidebar pane
+        // lets the window's native material show through.
+        Item {
+            visible: root.nativeChrome
+            anchors.fill: parent
+
+            readonly property real paneWidth: root.paneInset + root.sidebarWidth - root.paneLeftInset
+
+            Rectangle {
+                width: root.paneLeftInset
+                height: parent.height
+                color: Theme.background
+            }
+
+            Rectangle {
+                x: root.paneLeftInset
+                width: parent.paneWidth
+                height: root.paneInset
+                color: Theme.background
+            }
+
+            Rectangle {
+                x: root.paneLeftInset
+                y: parent.height - root.paneInset
+                width: parent.paneWidth
+                height: root.paneInset
+                color: Theme.background
+            }
+
+            Rectangle {
+                x: root.paneInset + root.sidebarWidth
+                width: parent.width - root.paneInset - root.sidebarWidth
+                height: parent.height
+                color: Theme.background
+            }
+
+            SourceBlendRect {
+                x: root.paneLeftInset
+                y: root.paneInset
+                width: parent.paneWidth
+                height: parent.height - 2 * root.paneInset
+                radius: root.paneRadius
+                backgroundColor: Theme.background
+                color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.8)
+                borderWidth: 1
+                borderColor: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.06)
+            }
+        }
 
         RowLayout {
             anchors.fill: parent
             spacing: 0
 
-            SettingsSidebar {
+            Item {
                 Layout.fillHeight: true
-                Layout.preferredWidth: 220
+                Layout.preferredWidth: root.paneInset + root.sidebarWidth
+
+                SettingsSidebar {
+                    anchors.fill: parent
+                    anchors.leftMargin: root.paneLeftInset
+                    anchors.topMargin: root.paneInset
+                    anchors.bottomMargin: root.paneInset
+                    nativeSurface: root.nativeChrome
+                    topInset: root.sidebarTopPadding
+                }
             }
 
             ViciDivider {
+                visible: !root.nativeChrome
                 vertical: true
                 Layout.fillHeight: true
             }
 
-            ColumnLayout {
+            Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 0
 
                 Item {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 44
+                    id: contentHeader
+                    z: 1
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: 44
+
+                    // Glassy scroll edge: pages scroll under the header and blur out
+                    // instead of clipping.
+                    ShaderEffectSource {
+                        id: headerBackdrop
+                        visible: false
+                        live: true
+                        width: contentHeader.width
+                        height: contentHeader.height
+                        sourceItem: root.nativeChrome ? pageLoader : null
+                        sourceRect: Qt.rect(0, 0, contentHeader.width, contentHeader.height)
+                    }
+
+                    // Opaque base hides the sharp content scrolling underneath, so only
+                    // the blurred copy above it shows through the wash.
+                    Rectangle {
+                        visible: root.nativeChrome
+                        anchors.fill: parent
+                        color: Theme.background
+                    }
+
+                    MultiEffect {
+                        visible: root.nativeChrome
+                        anchors.fill: parent
+                        source: headerBackdrop
+                        blurEnabled: true
+                        blur: 1.0
+                        blurMax: 20
+                    }
+
+                    Rectangle {
+                        visible: root.nativeChrome
+                        anchors.fill: parent
+                        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.4)
+                    }
+
+                    DragHandler {
+                        enabled: root.nativeChrome
+                        target: null
+                        onActiveChanged: if (active) root.startSystemMove()
+                    }
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 24
-                        anchors.rightMargin: 16
+                        // Same formula as the pages' content column, so the header
+                        // aligns with the cards below it.
+                        anchors.leftMargin: Math.max(16, (contentHeader.width - 720) / 2)
+                        anchors.rightMargin: Math.max(16, (contentHeader.width - 720) / 2)
+                        anchors.topMargin: root.nativeChrome ? 9 : 0
                         spacing: 12
 
+                        Loader {
+                            active: root.headerAccessory !== null
+                            visible: active
+                            sourceComponent: root.headerAccessory
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+
                         ViciImage {
-                            visible: root.topbarIconSource !== ""
+                            visible: root.topbarIconSource !== "" && (!root.nativeChrome || root.isExtensionPage)
                             source: root.topbarIconSource
                             Layout.preferredWidth: 22
                             Layout.preferredHeight: 22
@@ -166,13 +293,16 @@ Window {
                 }
 
                 ViciDivider {
-                    Layout.fillWidth: true
+                    visible: !root.nativeChrome
+                    anchors.top: contentHeader.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                 }
 
                 Loader {
                     id: pageLoader
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    anchors.fill: parent
+                    anchors.topMargin: root.nativeChrome ? 0 : 45
 
                     Component.onCompleted: _loadPage(settings.currentPage)
 
@@ -193,6 +323,17 @@ Window {
                         }
                     }
                 }
+            }
+        }
+
+        Item {
+            visible: root.nativeChrome
+            width: root.paneInset + root.sidebarWidth
+            height: root.paneInset + root.sidebarTopPadding
+
+            DragHandler {
+                target: null
+                onActiveChanged: if (active) root.startSystemMove()
             }
         }
     }

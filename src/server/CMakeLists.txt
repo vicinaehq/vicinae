@@ -550,6 +550,7 @@ set(SRCS
 	src/qml/keyboard-bridge.hpp
 	src/qml/global-shortcut-bridge.hpp
 	src/qml/platform-bridge.hpp
+	src/qml/style-bridge.hpp
 	src/qml/shortcut-conflict.hpp
 	src/qml/shortcut-conflict.cpp
 	src/qml/create-extension-view-host.hpp
@@ -1108,6 +1109,8 @@ if(APPLE)
 		src/qml/qml/HudWindowMacOS.qml
 		src/qml/qml/CompletionPanelMacOS.qml
 		src/qml/qml/PopupMaterialMacOS.qml
+		src/qml/qml/SettingsWindowMacOS.qml
+		src/qml/qml/SettingsNavButtonsMacOS.qml
 	)
 endif()
 

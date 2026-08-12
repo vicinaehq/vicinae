@@ -6,7 +6,7 @@ Item {
     id: root
     readonly property var extModel: settings.extensionModel
     readonly property string providerId: settings.currentPage
-    readonly property real contentWidth: Math.min(width, 720)
+    readonly property real contentWidth: Math.min(width - 32, 720)
     readonly property real sideMargin: (width - contentWidth) / 2
     property string expandedCommandId: ""
     property string _focusedCommandId: ""
@@ -15,6 +15,14 @@ Item {
         id: focusFlash
         interval: 2000
         onTriggered: root._focusedCommandId = ""
+    }
+
+    // Sections above the command list (wrapped description, async preference
+    // forms) settle after the initial scroll; keep re-anchoring briefly.
+    Timer {
+        id: scrollSettle
+        interval: 800
+        onTriggered: cmdFlickable.pendingScrollRow = -1
     }
 
     Component.onCompleted: {
@@ -39,6 +47,8 @@ Item {
         root._focusedCommandId = pending;
         focusFlash.restart();
         root.extModel.loadCommandPreferences(pending);
+        cmdFlickable.pendingScrollRow = row;
+        scrollSettle.restart();
         Qt.callLater(() => {
             if (cmdFlickable)
                 cmdFlickable.scrollToIndex(row);
@@ -57,8 +67,16 @@ Item {
         anchors.fill: parent
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        topMargin: Style.contentTopInset
+        Component.onCompleted: contentY = -topMargin
         contentHeight: contentColumn.implicitHeight
         contentWidth: width
+
+        property int pendingScrollRow: -1
+        onContentHeightChanged: {
+            if (pendingScrollRow >= 0)
+                Qt.callLater(() => scrollToIndex(pendingScrollRow));
+        }
 
         ViciWheelHandler {
             target: cmdFlickable
@@ -70,7 +88,7 @@ Item {
                 return;
             // Map into the Flickable content so the header above the list counts.
             const y = item.mapToItem(cmdFlickable.contentItem, 0, 0).y;
-            contentY = Math.max(0, Math.min(y - 24, contentHeight - height));
+            contentY = Math.max(-topMargin, Math.min(y - 24 - topMargin, contentHeight - height));
         }
 
         ScrollBar.vertical: ViciScrollBar {
@@ -85,8 +103,8 @@ Item {
             ColumnLayout {
                 visible: root.extModel.selectedDescription !== ""
                 Layout.fillWidth: true
-                Layout.leftMargin: root.sideMargin + 20
-                Layout.rightMargin: root.sideMargin + 20
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
                 Layout.topMargin: 24
                 spacing: 0
 
@@ -108,8 +126,8 @@ Item {
             ColumnLayout {
                 visible: root.extModel.hasPreferences
                 Layout.fillWidth: true
-                Layout.leftMargin: root.sideMargin + 20
-                Layout.rightMargin: root.sideMargin + 20
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
                 Layout.topMargin: 24
                 spacing: 0
 
@@ -130,8 +148,8 @@ Item {
                 visible: root.extModel.commandModel.totalCount > 0
                 text: qsTr("Commands")
                 Layout.fillWidth: true
-                Layout.leftMargin: root.sideMargin + 20
-                Layout.rightMargin: root.sideMargin + 20
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
                 Layout.topMargin: 24
                 Layout.bottomMargin: 10
             }
@@ -139,8 +157,8 @@ Item {
             // Command list
             SettingsGroup {
                 visible: root.extModel.commandModel.totalCount > 0
-                Layout.leftMargin: root.sideMargin + 20
-                Layout.rightMargin: root.sideMargin + 20
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
 
                 Repeater {
                     id: cmdRepeater

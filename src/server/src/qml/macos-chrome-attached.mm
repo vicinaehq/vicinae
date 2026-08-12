@@ -14,6 +14,7 @@
 namespace {
 
 NSString *const EFFECT_VIEW_IDENTIFIER = @"vicinae-effect";
+NSString *const EMPTY_TOOLBAR_IDENTIFIER = @"vicinae-empty-toolbar";
 
 NSView *nsViewFromWinId(WId winId) { return (__bridge NSView *)reinterpret_cast<void *>(winId); }
 
@@ -132,6 +133,18 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
   }
 }
 
+// Radius the OS gives titled windows (larger on Tahoe); read off NSThemeFrame's SPI
+// so the effect view's clip matches the native frame shape.
+CGFloat nativeTitledCornerRadius(NSWindow *nswin) {
+  NSView *frame = nswin.contentView.superview;
+  SEL sel = sel_registerName("_cornerRadius");
+  if (frame && [frame respondsToSelector:sel]) {
+    CGFloat r = ((CGFloat(*)(id, SEL))objc_msgSend)(frame, sel);
+    if (r > 0) return r;
+  }
+  return 10.0;
+}
+
 NSScreen *cursorScreen() {
   NSPoint mouse = [NSEvent mouseLocation];
   for (NSScreen *candidate in [NSScreen screens]) {
@@ -227,6 +240,13 @@ void MacOSWindowAttached::setBorderWidth(int value) {
   apply();
 }
 
+void MacOSWindowAttached::setTransparentTitlebar(bool value) {
+  if (m_transparentTitlebar == value) return;
+  m_transparentTitlebar = value;
+  emit transparentTitlebarChanged();
+  apply();
+}
+
 void MacOSWindowAttached::trackWindow(QWindow *window) {
   m_window = window;
   if (!m_window) return;
@@ -264,6 +284,9 @@ void MacOSWindowAttached::apply() {
     m_snapshot.backgroundColor = (void *)CFBridgingRetain(nswin.backgroundColor);
     m_snapshot.hasShadow = nswin.hasShadow;
     m_snapshot.animationBehavior = (long)nswin.animationBehavior;
+    m_snapshot.styleMask = (unsigned long)nswin.styleMask;
+    m_snapshot.titleVisibility = (long)nswin.titleVisibility;
+    m_snapshot.titlebarAppearsTransparent = nswin.titlebarAppearsTransparent;
   }
 
   nswin.opaque = NO;
@@ -271,8 +294,23 @@ void MacOSWindowAttached::apply() {
   nswin.hasShadow = YES;
   nswin.animationBehavior = NSWindowAnimationBehaviorNone;
 
+  int cornerRadius = m_cornerRadius;
+  if (m_transparentTitlebar) {
+    nswin.styleMask |= NSWindowStyleMaskFullSizeContentView;
+    nswin.titlebarAppearsTransparent = YES;
+    nswin.titleVisibility = NSWindowTitleHidden;
+    // An empty unified toolbar tells AppKit to lay the traffic lights out with the
+    // taller, inset metrics native full-content windows use (System Settings & co).
+    if (!nswin.toolbar) {
+      nswin.toolbar = [[NSToolbar alloc] initWithIdentifier:EMPTY_TOOLBAR_IDENTIFIER];
+    }
+    nswin.toolbarStyle = NSWindowToolbarStyleUnified;
+    nswin.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
+    if (cornerRadius <= 0) cornerRadius = (int)nativeTitledCornerRadius(nswin);
+  }
+
   installEffectView(nswin, m_blurEnabled, m_material == QStringLiteral("liquidGlass"),
-                    materialFromString(m_material), m_appearance, m_cornerRadius, m_borderColor,
+                    materialFromString(m_material), m_appearance, cornerRadius, m_borderColor,
                     m_borderWidth);
 }
 
@@ -290,6 +328,12 @@ void MacOSWindowAttached::revert() {
     nswin.opaque = m_snapshot.opaque;
     nswin.hasShadow = m_snapshot.hasShadow;
     nswin.animationBehavior = (NSWindowAnimationBehavior)m_snapshot.animationBehavior;
+    // Only the bit this attached type owns; MacOSPanel manages the rest of the mask.
+    nswin.styleMask = (nswin.styleMask & ~NSWindowStyleMaskFullSizeContentView) |
+                      (m_snapshot.styleMask & NSWindowStyleMaskFullSizeContentView);
+    nswin.titleVisibility = (NSWindowTitleVisibility)m_snapshot.titleVisibility;
+    nswin.titlebarAppearsTransparent = m_snapshot.titlebarAppearsTransparent;
+    if ([nswin.toolbar.identifier isEqualToString:EMPTY_TOOLBAR_IDENTIFIER]) nswin.toolbar = nil;
     if (m_snapshot.backgroundColor) {
       NSColor *bg = (NSColor *)CFBridgingRelease(m_snapshot.backgroundColor);
       m_snapshot.backgroundColor = nullptr;
@@ -568,6 +612,12 @@ bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
 }
 
 bool macosLiquidGlassAvailable() { return liquidGlassClass() != nil; }
+
+QColor macosAccentColor() {
+  NSColor *c = [[NSColor controlAccentColor] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+  if (!c) return QColor(10, 132, 255);
+  return QColor::fromRgbF(c.redComponent, c.greenComponent, c.blueComponent, c.alphaComponent);
+}
 
 void macosSetAccessoryActivationPolicy() {
   [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
