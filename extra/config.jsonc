@@ -65,9 +65,11 @@
 
 	"font": {
 		// Text rendering backend used by Qt Quick text.
-		// "native": uses platform/fontconfig rendering (can have better dark-mode weight/clarity)
+		// "native": uses the platform rasterizer (CoreText/DirectWrite/fontconfig), matching how other apps on the system render text
 		// "qt": uses Qt distance-field rendering (typically better performance for heavy scaling/animation)
-		"rendering": "qt",
+		// NOTE: if unspecified, Vicinae picks the best backend for the current platform:
+		// "native" on macOS and Windows, "qt" on Linux (native rendering degrades under fractional scaling).
+		// "rendering": "qt",
 
 		// The font family to use for the general vicinae UI.
 		// "auto" (recommended): uses the bundled Inter font
