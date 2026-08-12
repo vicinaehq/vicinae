@@ -116,7 +116,7 @@ class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsViewHost> {
 };
 
 namespace {
-constexpr auto VOLUME_COMMAND_TINT = SemanticColor::Cyan;
+const QColor VOLUME_COMMAND_TINT = QColor(128, 132, 138);
 
 ImageURL volumeIcon(float level) {
   if (level <= 0.0f) return ImageURL{BuiltinIcon::SpeakerOff};
