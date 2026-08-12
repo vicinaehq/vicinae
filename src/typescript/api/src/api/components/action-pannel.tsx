@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import React, { type ReactNode, useRef } from "react";
 import { type Image, serializeProtoImage } from "../image";
 import type { Keyboard } from "../keyboard";
+import type { ValueOf } from "../lib/types";
 
 /**
  * @category Actions
@@ -23,7 +24,7 @@ export namespace ActionPanel {
 		export type Props = {
 			title: string;
 			icon?: Image.ImageLike;
-			shortcut?: Keyboard.Shortcut | Keyboard.Shortcut.Common;
+			shortcut?: Keyboard.Shortcut | ValueOf<typeof Keyboard.Shortcut.Common>;
 			//autoFocus?: boolean;
 			//filtering?: boolean | { keepSectionOrder: boolean };
 			//isLoading?: boolean;
