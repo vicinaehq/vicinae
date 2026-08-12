@@ -19,6 +19,7 @@ import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
 import { ActionPanel } from "./action-pannel";
 import { showToast } from "../toast";
+import type { ValueOf } from "../lib/types";
 
 type BaseActionProps = {
 	title: string;
@@ -28,7 +29,7 @@ type BaseActionProps = {
 	 * It is highly recommended to use named shortcuts such as
 	 * Keyboard.Shortcut.Common.Copy as they will respect user preferences.
 	 */
-	shortcut?: Keyboard.Shortcut | Keyboard.Shortcut.Common;
+	shortcut?: Keyboard.Shortcut | ValueOf<typeof Keyboard.Shortcut.Common>;
 	autoFocus?: boolean;
 	style?: "regular" | "destructive";
 };
