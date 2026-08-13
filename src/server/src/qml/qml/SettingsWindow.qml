@@ -206,7 +206,7 @@ Window {
                         }
 
                         ViciImage {
-                            visible: root.topbarIconSource !== "" && (!root.nativeChrome || root.isExtensionPage)
+                            visible: root.topbarIconSource !== "" && root.isExtensionPage
                             source: root.topbarIconSource
                             Layout.preferredWidth: 22
                             Layout.preferredHeight: 22
