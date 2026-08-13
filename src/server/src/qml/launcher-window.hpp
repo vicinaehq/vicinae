@@ -100,6 +100,8 @@ public:
   Q_INVOKABLE QRect cursorScreenGeometry() const;
   Q_INVOKABLE void positionOnCursorScreen();
   Q_INVOKABLE void openFooterMenu();
+  Q_INVOKABLE void saveZonePosition(const QString &screen, double fx, double fy);
+  Q_INVOKABLE QVariantMap zonePosition(const QString &screen) const;
 
 signals:
   void compactedChanged();

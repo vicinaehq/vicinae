@@ -13,38 +13,69 @@ Window {
     property bool shadowEnabled: shadowPadding > 0
     property bool nativeChrome: false
     property bool autoPlaceOnShow: true
+    property bool zoneMode: false
+    property int zoneX: 0
+    property int zoneY: 0
     signal aboutToShow
     signal shown
 
     readonly property int _w: launcher.overrideWidth || Config.windowWidth
     readonly property int _h: launcher.overrideHeight || Config.windowHeight
     readonly property int _contentH: launcher.compacted ? 60 + 2 * Config.borderWidth : _h
+    readonly property int contentX: zoneMode ? Math.max(0, Math.min(zoneX, width - _w)) : shadowPadding
+    readonly property int contentY: zoneMode ? Math.max(0, Math.min(zoneY, height - _h)) : shadowPadding
 
-    width: _w + 2 * shadowPadding
-    height: _h + 2 * shadowPadding
-    minimumWidth: _w + 2 * shadowPadding
-    maximumWidth: _w + 2 * shadowPadding
-    minimumHeight: _h + 2 * shadowPadding
-    maximumHeight: _h + 2 * shadowPadding
+    function zoneLayout() {
+        if (!zoneMode || width <= 0 || height <= 0)
+            return;
+        const availW = Math.max(0, width - _w);
+        const availH = Math.max(0, height - _h);
+        const saved = launcher.zonePosition(Screen.name);
+        if (saved.valid) {
+            zoneX = Math.round(Math.min(availW, Math.max(0, saved.fx * availW)));
+            zoneY = Math.round(Math.min(availH, Math.max(0, saved.fy * availH)));
+        } else {
+            zoneX = Math.round(availW / 2);
+            zoneY = Math.round(availH / 3);
+        }
+    }
+
+    function persistZonePosition() {
+        const availW = Math.max(0, width - _w);
+        const availH = Math.max(0, height - _h);
+        launcher.saveZonePosition(Screen.name, availW > 0 ? zoneX / availW : 0.5, availH > 0 ? zoneY / availH : 1 / 3);
+    }
+
+    width: zoneMode ? Screen.width : _w + 2 * shadowPadding
+    height: zoneMode ? Screen.height : _h + 2 * shadowPadding
+    minimumWidth: zoneMode ? 0 : _w + 2 * shadowPadding
+    maximumWidth: zoneMode ? 16777215 : _w + 2 * shadowPadding
+    minimumHeight: zoneMode ? 0 : _h + 2 * shadowPadding
+    maximumHeight: zoneMode ? 16777215 : _h + 2 * shadowPadding
     title: qsTr("Vicinae Launcher")
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
     visible: false
 
+    onAboutToShow: zoneLayout()
+
     WindowMaterial.enabled: root.blurEnabled && !root.nativeChrome
     WindowMaterial.radius: root.cornerRadius
-    WindowMaterial.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? _contentH : _h)
+    WindowMaterial.region: Qt.rect(contentX, contentY, _w, launcher.compacted ? _contentH : _h)
+
+    InputRegion.enabled: root.zoneMode
+    InputRegion.region: Qt.rect(contentX, contentY, _w, _contentH)
 
     Item {
         id: shadowMask
         width: root.width
         height: root.height
         visible: false
-        layer.enabled: true
+        layer.enabled: root.shadowEnabled && !root.nativeChrome
 
         Rectangle {
-            x: root.shadowPadding
-            y: root.shadowPadding
+            x: root.contentX
+            y: root.contentY
             width: _w
             height: _contentH
             radius: Config.borderRounding
@@ -58,8 +89,8 @@ Window {
         visible: root.shadowEnabled && !root.nativeChrome
 
         RectangularShadow {
-            x: root.shadowPadding
-            y: root.shadowPadding
+            x: root.contentX
+            y: root.contentY
             width: _w
             height: _contentH
             radius: root.cornerRadius
@@ -77,10 +108,31 @@ Window {
 
     Item {
         id: content
-        x: root.shadowPadding
-        y: root.shadowPadding
+        x: root.contentX
+        y: root.contentY
         width: _w
         height: _h
+
+        DragHandler {
+            id: zoneDragHandler
+            enabled: root.zoneMode
+            acceptedModifiers: Qt.ControlModifier
+            target: null
+            property int pressX: 0
+            property int pressY: 0
+            onActiveChanged: {
+                if (active) {
+                    pressX = root.zoneX;
+                    pressY = root.zoneY;
+                } else {
+                    root.persistZonePosition();
+                }
+            }
+            onActiveTranslationChanged: {
+                root.zoneX = Math.round(Math.max(0, Math.min(root.width - root._w, pressX + activeTranslation.x)));
+                root.zoneY = Math.round(Math.max(0, Math.min(root.height - root._h, pressY + activeTranslation.y)));
+            }
+        }
 
         Rectangle {
             visible: launcher.compacted
@@ -201,7 +253,7 @@ Window {
             id: actionPanelPopover
             parent: footer
             controller: actionPanel
-            maxHeight: Math.round(root.height * 0.6)
+            maxHeight: Math.round(content.height * 0.6)
         }
 
         ActionPanelPopover {
@@ -209,7 +261,7 @@ Window {
             parent: footer
             controller: footerPanel
             alignLeft: true
-            maxHeight: Math.round(root.height * 0.6)
+            maxHeight: Math.round(content.height * 0.6)
         }
 
         MouseArea {
@@ -327,16 +379,22 @@ Window {
     }
 
     onWidthChanged: {
-        if (launcher.canPositionWindow && root.autoPlaceOnShow)
+        if (root.zoneMode)
+            zoneLayout();
+        else if (launcher.canPositionWindow && root.autoPlaceOnShow)
             root.x = Screen.virtualX + (Screen.width - root.width) / 2;
     }
     onHeightChanged: {
-        if (launcher.canPositionWindow && root.autoPlaceOnShow)
+        if (root.zoneMode)
+            zoneLayout();
+        else if (launcher.canPositionWindow && root.autoPlaceOnShow)
             root.y = Screen.virtualY + (Screen.height - root.height) / 3;
     }
 
     Component.onCompleted: {
-        if (launcher.canPositionWindow && root.autoPlaceOnShow) {
+        if (root.zoneMode) {
+            zoneLayout();
+        } else if (launcher.canPositionWindow && root.autoPlaceOnShow) {
             root.x = Screen.virtualX + (Screen.width - root.width) / 2;
             root.y = Screen.virtualY + (Screen.height - root.height) / 3;
             launcher.positionOnCursorScreen();

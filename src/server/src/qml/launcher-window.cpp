@@ -28,6 +28,7 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
+#include "services/local-storage/local-storage-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
 #include "vicinae.hpp"
@@ -36,6 +37,7 @@
 #include "ui/action-pannel/action-panel-state.hpp"
 #include <QCursor>
 #include <QGuiApplication>
+#include <QJsonObject>
 #include <QQmlContext>
 #include <QQuickWindow>
 #include <QScreen>
@@ -626,6 +628,27 @@ void LauncherWindow::positionOnCursorScreen() {
 }
 
 void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(true); }
+
+static const QString ZONE_STORAGE_NAMESPACE = QStringLiteral("vicinae.launcher.zone");
+
+void LauncherWindow::saveZonePosition(const QString &screen, double fx, double fy) {
+  auto *storage = m_ctx.services->localStorage();
+  if (!storage) return;
+  const QString key = screen.isEmpty() ? QStringLiteral("default") : screen;
+  storage->setItem(ZONE_STORAGE_NAMESPACE, key, QJsonObject{{"fx", fx}, {"fy", fy}});
+}
+
+QVariantMap LauncherWindow::zonePosition(const QString &screen) const {
+  auto *storage = m_ctx.services->localStorage();
+  if (!storage) return {{QStringLiteral("valid"), false}};
+  const QString key = screen.isEmpty() ? QStringLiteral("default") : screen;
+  const QJsonValue value = storage->getItem(ZONE_STORAGE_NAMESPACE, key);
+  if (!value.isObject()) return {{QStringLiteral("valid"), false}};
+  const QJsonObject obj = value.toObject();
+  return {{QStringLiteral("valid"), true},
+          {QStringLiteral("fx"), obj.value(QStringLiteral("fx")).toDouble()},
+          {QStringLiteral("fy"), obj.value(QStringLiteral("fy")).toDouble()}};
+}
 
 void LauncherWindow::buildFooterMenu() {
   auto state = std::make_unique<ActionPanelState>();

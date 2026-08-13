@@ -1134,6 +1134,8 @@ set(VICINAE_QML_SOURCES
 	src/qml/markdown/text-selection-controller.hpp
 	src/qml/window-material-attached.hpp
 	src/qml/window-material-attached.cpp
+	src/qml/input-region-attached.hpp
+	src/qml/input-region-attached.cpp
 	src/qml/popup-placement-attached.hpp
 	src/qml/popup-placement-attached.cpp
 	src/qml/shortcut-inhibitor-attached.hpp
