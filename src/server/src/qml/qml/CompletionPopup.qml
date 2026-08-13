@@ -20,8 +20,8 @@ Popup {
     readonly property int count: completionModel.count
     readonly property bool hasSelection: _highlightedIndex >= 0
 
-    readonly property real _bgOpacity: popupType === Popup.Window ? Config.popupOpacity : 1
-    readonly property real _fillOpacity: popupType === Popup.Window ? Config.popupSurfaceOpacity : 1
+    readonly property real _bgOpacity: popupType === Popup.Window ? Config.popupOpacity : 0
+    readonly property real _fillOpacity: Config.popupSurfaceOpacity
 
     signal itemAccepted(var itemData)
 
@@ -105,13 +105,9 @@ Popup {
         target: completionModel
     }
 
-    background: Rectangle {
-        readonly property bool csd: root.popupType === Popup.Item || Platform.supports("clientSideDecorations")
-        readonly property real bgOpacity: root.popupType === Popup.Window ? Config.popupOpacity : 1
-        radius: csd ? Math.min(Config.borderRounding, 15) : 0
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bgOpacity)
-        border.color: Config.withAlpha(Theme.popoverBorder, bgOpacity)
-        border.width: csd ? 1 : 0
+    background: PopoverBackground {
+        popup: root
+
         Loader {
             active: root.nativePanel && Platform.supports("nativePanels")
             source: "qrc:/Vicinae/CompletionPanelMacOS.qml"

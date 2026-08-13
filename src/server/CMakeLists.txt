@@ -973,6 +973,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/LauncherWindow.qml
 	src/qml/qml/PopupMaterial.qml
 	src/qml/qml/ViciPopover.qml
+	src/qml/qml/PopoverBackground.qml
 	src/qml/qml/SearchBar.qml
 	src/qml/qml/GenericListView.qml
 	src/qml/qml/StatusBarInset.qml

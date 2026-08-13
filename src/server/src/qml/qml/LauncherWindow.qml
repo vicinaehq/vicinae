@@ -15,6 +15,7 @@ Window {
     property bool autoPlaceOnShow: true
     readonly property int statusBarOverlap: floatingStatusBar.visible ? floatingStatusBar.height - Config.borderWidth : 0
     readonly property real statusBarTop: shadowPadding + floatingStatusBar.y
+    readonly property Item popupBackdrop: contentArea
     signal aboutToShow
     signal shown
 
@@ -264,7 +265,7 @@ Window {
             id: actionPanelPopover
             parent: footer
             controller: actionPanel
-            maxHeight: Math.round(root.height * 0.6)
+            maxHeight: Math.round(root.height * 0.55)
         }
 
         ActionPanelPopover {
@@ -272,7 +273,7 @@ Window {
             parent: footer
             controller: footerPanel
             alignLeft: true
-            maxHeight: Math.round(root.height * 0.6)
+            maxHeight: Math.round(root.height * 0.55)
         }
 
         MouseArea {
