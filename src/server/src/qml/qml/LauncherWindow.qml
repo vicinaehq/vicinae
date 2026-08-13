@@ -290,11 +290,8 @@ Window {
 
             Rectangle {
                 id: dim
-                x: root.shadowPadding
-                y: root.shadowPadding
-                width: parent.width - 2 * root.shadowPadding
-                height: parent.height - 2 * root.shadowPadding
-                radius: root.shadowPadding > 0 ? Config.borderRounding : 0
+                anchors.fill: parent
+                radius: Config.borderRounding
                 color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
                 opacity: launcher.alertModel.visible ? 1 : 0
 
