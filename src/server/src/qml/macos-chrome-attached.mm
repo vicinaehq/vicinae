@@ -255,6 +255,13 @@ void MacOSWindowAttached::setFollowsWindowActiveState(bool value) {
   apply();
 }
 
+void MacOSWindowAttached::setMoveToActiveSpace(bool value) {
+  if (m_moveToActiveSpace == value) return;
+  m_moveToActiveSpace = value;
+  emit moveToActiveSpaceChanged();
+  apply();
+}
+
 void MacOSWindowAttached::trackWindow(QWindow *window) {
   m_window = window;
   if (!m_window) return;
@@ -301,6 +308,8 @@ void MacOSWindowAttached::apply() {
   nswin.backgroundColor = NSColor.clearColor;
   nswin.hasShadow = YES;
   nswin.animationBehavior = NSWindowAnimationBehaviorNone;
+
+  if (m_moveToActiveSpace) nswin.collectionBehavior |= NSWindowCollectionBehaviorMoveToActiveSpace;
 
   int cornerRadius = m_cornerRadius;
   if (m_transparentTitlebar) {

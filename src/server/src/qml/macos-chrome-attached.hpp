@@ -21,6 +21,8 @@ class MacOSWindowAttached : public QObject {
                  transparentTitlebarChanged)
   Q_PROPERTY(bool followsWindowActiveState READ followsWindowActiveState WRITE setFollowsWindowActiveState
                  NOTIFY followsWindowActiveStateChanged)
+  Q_PROPERTY(bool moveToActiveSpace READ moveToActiveSpace WRITE setMoveToActiveSpace NOTIFY
+                 moveToActiveSpaceChanged)
 
 signals:
   void enabledChanged();
@@ -32,6 +34,7 @@ signals:
   void borderWidthChanged();
   void transparentTitlebarChanged();
   void followsWindowActiveStateChanged();
+  void moveToActiveSpaceChanged();
 
 public:
   explicit MacOSWindowAttached(QObject *parent);
@@ -68,6 +71,11 @@ public:
   bool followsWindowActiveState() const { return m_followsWindowActiveState; }
   void setFollowsWindowActiveState(bool value);
 
+  // Reshowing the window pulls it to the current space instead of switching
+  // to the space it was left on.
+  bool moveToActiveSpace() const { return m_moveToActiveSpace; }
+  void setMoveToActiveSpace(bool value);
+
   Q_INVOKABLE void animateIn(qreal anchorX = 0.5, qreal anchorY = 0.5);
   Q_INVOKABLE void animateOut(qreal anchorX = 0.5, qreal anchorY = 0.5);
 
@@ -101,6 +109,7 @@ private:
   int m_borderWidth = 0;
   bool m_transparentTitlebar = false;
   bool m_followsWindowActiveState = false;
+  bool m_moveToActiveSpace = false;
   bool m_surfaceReady = false;
   bool m_pendingAnimateIn = false;
   qreal m_pendingAnchorX = 0.5;
