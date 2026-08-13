@@ -17,11 +17,10 @@ Item {
     implicitWidth: row.implicitWidth + 2 * horizontalPadding
     implicitHeight: buttonHeight
 
-    SourceBlendRect {
+    Rectangle {
         anchors.fill: parent
         visible: root.hovered || root.backgrounded
         radius: 6
-        backgroundColor: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, Config.windowOpacity)
         color: Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity)
     }
 

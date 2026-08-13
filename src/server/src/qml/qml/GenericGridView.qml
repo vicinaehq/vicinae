@@ -1,8 +1,11 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Window
 
 Item {
     id: root
+
+    readonly property real _bottomInset: Window.window?.statusBarOverlap ?? 0
 
     // The backing model — must be a QAbstractListModel with roles:
     //   isSection, sectionName, rowSectionIdx, rowStartItem, rowItemCount
@@ -139,11 +142,25 @@ Item {
             return false;
 
         const viewportTop = listView.contentY;
-        const viewportBottom = viewportTop + listView.height;
+        const viewportBottom = viewportTop + listView.height - root._bottomInset;
         const itemTop = item.y;
         const itemBottom = item.y + item.height;
 
         return itemBottom > viewportTop && itemTop < viewportBottom;
+    }
+
+    // positionViewAtIndex ignores ListView margins, so Contain can leave the
+    // row within the band covered by the floating status bar.
+    function _liftAboveInset(row) {
+        if (root._bottomInset <= 0)
+            return;
+        const item = listView.itemAtIndex(row);
+        if (!item)
+            return;
+        const usable = listView.height - root._bottomInset;
+        const itemBottom = item.y + item.height;
+        if (listView.contentHeight > usable && itemBottom > listView.contentY + usable)
+            listView.contentY = itemBottom - usable;
     }
 
     ListView {
@@ -155,7 +172,7 @@ Item {
         interactive: false
         boundsBehavior: Flickable.StopAtBounds
         topMargin: root.cellSpacing
-        bottomMargin: root.cellSpacing
+        bottomMargin: root.cellSpacing + root._bottomInset
         spacing: root.cellSpacing
         reuseItems: true
         cacheBuffer: 200
@@ -409,6 +426,7 @@ Item {
                     mode = ListView.Beginning;
                 }
                 listView.positionViewAtIndex(row, mode);
+                root._liftAboveInset(row);
             }
         }
     }
