@@ -13,6 +13,8 @@ Window {
     property bool shadowEnabled: shadowPadding > 0
     property bool nativeChrome: false
     property bool autoPlaceOnShow: true
+    readonly property int statusBarOverlap: floatingStatusBar.visible ? floatingStatusBar.height - Config.borderWidth : 0
+    readonly property real statusBarTop: shadowPadding + floatingStatusBar.y
     signal aboutToShow
     signal shown
 
@@ -100,44 +102,12 @@ Window {
             borderWidth: Config.borderWidth
         }
 
-        Item {
+        Rectangle {
             visible: !launcher.compacted
-            anchors.fill: parent
-            anchors.bottomMargin: launcher.hasOverlay || !launcher.statusBarVisible ? 0 : footer.height + Config.borderWidth
-            clip: true
-
-            Rectangle {
-                width: _w
-                height: _h
-                radius: root.cornerRadius
-                color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-            }
-        }
-
-        Item {
-            visible: !launcher.compacted && !launcher.hasOverlay && launcher.statusBarVisible
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: footer.height + Config.borderWidth
-            clip: true
-
-            Rectangle {
-                width: _w
-                height: _h
-                anchors.bottom: parent.bottom
-                radius: root.cornerRadius
-                color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, Config.windowOpacity)
-            }
-        }
-
-        SourceBlendRect {
-            visible: !launcher.compacted && !root.nativeChrome
-            anchors.fill: parent
+            width: _w
+            height: _h
             radius: root.cornerRadius
-            overlay: true
-            borderColor: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
-            borderWidth: Config.borderWidth
+            color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
         }
 
         ColumnLayout {
@@ -162,29 +132,122 @@ Window {
             }
 
             Item {
-                id: contentArea
-                objectName: "contentArea"
+                id: contentViewport
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                StackView {
-                    id: commandStack
+                Item {
                     anchors.fill: parent
-                    visible: !launcher.compacted
+                    anchors.bottomMargin: floatingStatusBar.visible ? floatingStatusBar.height - Config.borderWidth : 0
+                    clip: true
+
+                    Item {
+                        id: contentArea
+                        objectName: "contentArea"
+                        width: contentViewport.width
+                        height: contentViewport.height
+
+                        StackView {
+                            id: commandStack
+                            anchors.fill: parent
+                            visible: !launcher.compacted
+                        }
+                    }
+                }
+            }
+        }
+
+        Item {
+            id: floatingStatusBar
+            visible: !launcher.compacted && !launcher.hasOverlay && launcher.statusBarVisible
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 41 + Config.borderWidth
+            clip: true
+
+            readonly property int backdropPad: 64
+
+            ShaderEffectSource {
+                id: statusBarBackdrop
+                visible: false
+                sourceItem: contentArea
+                sourceRect: Qt.rect(-Config.borderWidth, contentArea.height - (floatingStatusBar.height - Config.borderWidth) - floatingStatusBar.backdropPad, floatingStatusBar.width, floatingStatusBar.height + floatingStatusBar.backdropPad)
+                textureSize: Qt.size(Math.max(1, Math.round(floatingStatusBar.width / 10)), Math.max(1, Math.round((floatingStatusBar.height + floatingStatusBar.backdropPad) / 10)))
+            }
+
+            MultiEffect {
+                y: -floatingStatusBar.backdropPad
+                width: floatingStatusBar.width
+                height: floatingStatusBar.height + floatingStatusBar.backdropPad
+                source: statusBarBackdrop
+                autoPaddingEnabled: false
+                blurEnabled: true
+                blur: 1.0
+                blurMax: 64
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    autoPaddingEnabled: false
+                    blurEnabled: true
+                    blur: 1.0
+                    blurMax: 64
+                    maskEnabled: true
+                    maskSource: statusBarBlurMask
                 }
             }
 
+            Rectangle {
+                width: _w
+                height: _h
+                anchors.bottom: parent.bottom
+                radius: root.cornerRadius
+                color: Config.withAlpha(Theme.statusBarBackground, 0.78)
+            }
+
             ViciDivider {
-                visible: !launcher.compacted && launcher.statusBarVisible
-                Layout.fillWidth: true
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: Config.borderWidth
+                anchors.rightMargin: Config.borderWidth
             }
 
             Footer {
                 id: footer
-                visible: !launcher.compacted && launcher.statusBarVisible
-                Layout.fillWidth: true
-                Layout.preferredHeight: visible ? 40 : 0
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.leftMargin: Config.borderWidth
+                anchors.rightMargin: Config.borderWidth
+                anchors.bottomMargin: Config.borderWidth
+                height: 40
             }
+        }
+
+        Item {
+            id: statusBarBlurMask
+            width: floatingStatusBar.width
+            height: floatingStatusBar.height + floatingStatusBar.backdropPad
+            visible: false
+            layer.enabled: true
+
+            Rectangle {
+                width: _w
+                height: _h
+                anchors.bottom: parent.bottom
+                radius: root.cornerRadius
+                color: "white"
+            }
+        }
+
+        SourceBlendRect {
+            visible: !launcher.compacted && !root.nativeChrome
+            anchors.fill: parent
+            radius: root.cornerRadius
+            overlay: true
+            borderColor: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
+            borderWidth: Config.borderWidth
         }
 
         Loader {

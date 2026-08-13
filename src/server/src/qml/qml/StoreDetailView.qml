@@ -48,6 +48,10 @@ Item {
         font.pointSize: Theme.smallerFontSize
     }
 
+    StatusBarInset {
+        id: statusBarInset
+    }
+
     Flickable {
         id: flickable
         anchors.fill: parent
@@ -56,6 +60,7 @@ Item {
         clip: true
         flickableDirection: Flickable.VerticalFlick
         boundsBehavior: Flickable.StopAtBounds
+        bottomMargin: statusBarInset.value
         visible: root.host.isReady
 
         ViciWheelHandler {

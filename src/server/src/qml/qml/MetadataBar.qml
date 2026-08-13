@@ -13,12 +13,17 @@ Item {
     property var model: []
     implicitHeight: column.implicitHeight + 20  // 2 * margins
 
+    StatusBarInset {
+        id: statusBarInset
+    }
+
     Flickable {
         id: flickable
         anchors.fill: parent
         contentHeight: column.implicitHeight + 20
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        bottomMargin: statusBarInset.value
 
         ViciWheelHandler {
             target: flickable

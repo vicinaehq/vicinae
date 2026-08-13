@@ -5,6 +5,12 @@ import QtQuick.Layouts
 Item {
     id: root
 
+    readonly property real _bottomInset: _statusBarInset.value
+
+    StatusBarInset {
+        id: _statusBarInset
+    }
+
     // The backing model — must have Q_INVOKABLE nextSelectableIndex(int, int)
     required property var listModel
 
@@ -95,12 +101,27 @@ Item {
         return Math.abs(listView.contentY - previousContentY) > 0.5;
     }
 
+    // positionViewAtIndex ignores ListView margins, so Contain can leave the
+    // item within the band covered by the floating status bar.
+    function _liftAboveInset(index) {
+        if (root._bottomInset <= 0)
+            return;
+        const item = listView.itemAtIndex(index);
+        if (!item)
+            return;
+        const usable = listView.height - root._bottomInset;
+        const itemBottom = item.y + item.height;
+        if (listView.contentHeight > usable && itemBottom > listView.contentY + usable)
+            listView.contentY = itemBottom - usable;
+    }
+
     function moveDown() {
         const next = root.listModel.nextSelectableIndex(listView.currentIndex, 1);
         if (next !== listView.currentIndex) {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            _liftAboveInset(next);
         }
         return true;
     }
@@ -114,6 +135,7 @@ Item {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            _liftAboveInset(next);
         }
         return true;
     }
@@ -127,6 +149,7 @@ Item {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            _liftAboveInset(next);
         }
         return true;
     }
@@ -143,6 +166,7 @@ Item {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            _liftAboveInset(next);
         }
         return true;
     }
@@ -218,7 +242,7 @@ Item {
             highlightMoveDuration: 0
             currentIndex: -1
             topMargin: 4
-            bottomMargin: 4
+            bottomMargin: 4 + root._bottomInset
 
             property real _lastContentHeight: 0
 

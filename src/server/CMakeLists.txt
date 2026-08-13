@@ -975,6 +975,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ViciPopover.qml
 	src/qml/qml/SearchBar.qml
 	src/qml/qml/GenericListView.qml
+	src/qml/qml/StatusBarInset.qml
 	src/qml/qml/HoverResetOnModelChange.qml
 	src/qml/qml/HoverResetOnShow.qml
 	src/qml/qml/RootSearchList.qml
