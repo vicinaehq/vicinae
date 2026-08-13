@@ -46,6 +46,10 @@ Item {
         mdModel: root.model
     }
 
+    StatusBarInset {
+        id: statusBarInset
+    }
+
     // Cursor-only MouseArea below Flickable — sets I-beam for non-interactive gaps.
     // Interactive children (copy button) override with their own cursor.
     MouseArea {
@@ -66,6 +70,7 @@ Item {
         contentHeight: col.implicitHeight + root.topPadding + root.contentPadding
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        bottomMargin: statusBarInset.value
 
         ViciWheelHandler {
             target: flickable
@@ -74,7 +79,7 @@ Item {
         onContentHeightChanged: {
             if (root._autoScroll) {
                 root._autoScroll = false;
-                contentY = Math.max(0, contentHeight - height);
+                contentY = Math.max(0, contentHeight - height + bottomMargin);
             }
         }
 

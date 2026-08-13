@@ -6,6 +6,13 @@ ScrollBar {
 
     property bool _recentlyScrolled: false
 
+    bottomPadding: control.orientation === Qt.Vertical ? statusBarInset.value : 0
+
+    StatusBarInset {
+        id: statusBarInset
+        target: control
+    }
+
     function revealOnScroll() {
         _recentlyScrolled = true;
         scrollActivityTimer.restart();

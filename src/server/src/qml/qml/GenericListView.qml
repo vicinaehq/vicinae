@@ -1,12 +1,15 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Window
 
 Item {
     id: root
 
-    readonly property real _bottomInset: Window.window?.statusBarOverlap ?? 0
+    readonly property real _bottomInset: _statusBarInset.value
+
+    StatusBarInset {
+        id: _statusBarInset
+    }
 
     // The backing model — must have Q_INVOKABLE nextSelectableIndex(int, int)
     required property var listModel

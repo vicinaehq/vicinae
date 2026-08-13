@@ -14,6 +14,7 @@ Window {
     property bool nativeChrome: false
     property bool autoPlaceOnShow: true
     readonly property int statusBarOverlap: floatingStatusBar.visible ? floatingStatusBar.height - Config.borderWidth : 0
+    readonly property real statusBarTop: shadowPadding + floatingStatusBar.y
     signal aboutToShow
     signal shown
 

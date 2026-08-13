@@ -1,11 +1,14 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Window
 
 Item {
     id: root
 
-    readonly property real _bottomInset: Window.window?.statusBarOverlap ?? 0
+    readonly property real _bottomInset: _statusBarInset.value
+
+    StatusBarInset {
+        id: _statusBarInset
+    }
 
     // The backing model — must be a QAbstractListModel with roles:
     //   isSection, sectionName, rowSectionIdx, rowStartItem, rowItemCount

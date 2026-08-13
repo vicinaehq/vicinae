@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Window
 
 /// Reusable detail panel with arbitrary content on top and optional metadata at the bottom.
 /// Place child items inside to fill the content area. Set `metadata` to show a MetadataBar.
@@ -12,9 +11,13 @@ Item {
 
     readonly property bool _hasMetadata: root.metadata.length > 0
 
+    StatusBarInset {
+        id: statusBarInset
+    }
+
     ColumnLayout {
         anchors.fill: parent
-        anchors.bottomMargin: root._hasMetadata ? (root.Window.window?.statusBarOverlap ?? 0) : 0
+        anchors.bottomMargin: root._hasMetadata ? statusBarInset.value : 0
         spacing: 0
 
         Item {
