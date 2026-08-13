@@ -65,7 +65,7 @@ void SettingsWindow::ensureInitialized() {
 #else
       QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")
 #endif
-      ));
+          ));
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }

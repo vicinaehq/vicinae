@@ -182,7 +182,8 @@ Window {
                     DragHandler {
                         enabled: root.nativeChrome
                         target: null
-                        onActiveChanged: if (active) root.startSystemMove()
+                        onActiveChanged: if (active)
+                            root.startSystemMove()
                     }
 
                     RowLayout {
@@ -316,7 +317,8 @@ Window {
 
             DragHandler {
                 target: null
-                onActiveChanged: if (active) root.startSystemMove()
+                onActiveChanged: if (active)
+                    root.startSystemMove()
             }
         }
     }

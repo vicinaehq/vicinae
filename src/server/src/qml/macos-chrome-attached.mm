@@ -140,7 +140,7 @@ CGFloat nativeTitledCornerRadius(NSWindow *nswin) {
   NSView *frame = nswin.contentView.superview;
   SEL sel = sel_registerName("_cornerRadius");
   if (frame && [frame respondsToSelector:sel]) {
-    CGFloat r = ((CGFloat(*)(id, SEL))objc_msgSend)(frame, sel);
+    CGFloat r = ((CGFloat (*)(id, SEL))objc_msgSend)(frame, sel);
     if (r > 0) return r;
   }
   return 10.0;
@@ -318,9 +318,7 @@ void MacOSWindowAttached::apply() {
     nswin.titleVisibility = NSWindowTitleHidden;
     // An empty unified toolbar tells AppKit to lay the traffic lights out with the
     // taller, inset metrics native full-content windows use (System Settings & co).
-    if (!nswin.toolbar) {
-      nswin.toolbar = [[NSToolbar alloc] initWithIdentifier:EMPTY_TOOLBAR_IDENTIFIER];
-    }
+    if (!nswin.toolbar) { nswin.toolbar = [[NSToolbar alloc] initWithIdentifier:EMPTY_TOOLBAR_IDENTIFIER]; }
     nswin.toolbarStyle = NSWindowToolbarStyleUnified;
     nswin.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
     // Qt's WindowMaximizeButtonHint doesn't reach the zoom button, which Cocoa
@@ -333,8 +331,8 @@ void MacOSWindowAttached::apply() {
   }
 
   installEffectView(nswin, m_blurEnabled, m_material == QStringLiteral("liquidGlass"),
-                    materialFromString(m_material), m_appearance, cornerRadius, m_borderColor,
-                    m_borderWidth, m_followsWindowActiveState);
+                    materialFromString(m_material), m_appearance, cornerRadius, m_borderColor, m_borderWidth,
+                    m_followsWindowActiveState);
 }
 
 void MacOSWindowAttached::revert() {
