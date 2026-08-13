@@ -230,25 +230,36 @@ Item {
                                     Layout.preferredHeight: 22
                                 }
 
-                                Text {
-                                    text: cmdDelegate.name
-                                    color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
-                                    font.pointSize: Theme.regularFontSize
-                                    elide: Text.ElideRight
+                                Item {
+                                    id: titleWrap
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
-                                    Layout.maximumWidth: implicitWidth
-                                }
+                                    implicitHeight: titleText.implicitHeight
 
-                                ViciImage {
-                                    visible: cmdDelegate.hasPreferences
-                                    source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small").withFillColor(Theme.textMuted)
-                                    Layout.preferredWidth: 16
-                                    Layout.preferredHeight: 16
-                                }
+                                    readonly property real chevronSpace: cmdChevron.visible ? cmdChevron.width + cmdRow.spacing : 0
 
-                                Item {
-                                    Layout.fillWidth: true
+                                    Text {
+                                        id: titleText
+                                        anchors.left: parent.left
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: Math.min(implicitWidth, titleWrap.width - titleWrap.chevronSpace)
+                                        text: cmdDelegate.name
+                                        color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
+                                        font.pointSize: Theme.regularFontSize
+                                        elide: Text.ElideRight
+                                        maximumLineCount: 1
+                                    }
+
+                                    ViciImage {
+                                        id: cmdChevron
+                                        visible: cmdDelegate.hasPreferences
+                                        source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small").withFillColor(Theme.textMuted)
+                                        anchors.left: titleText.right
+                                        anchors.leftMargin: visible ? cmdRow.spacing : 0
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 16
+                                        height: 16
+                                    }
                                 }
 
                                 ShortcutField {
