@@ -13,7 +13,7 @@ ColumnLayout {
     property real controlWidth: 200
 
     readonly property real _hPadding: 16
-    readonly property real _vPadding: Style.settingsRowVPad + (description !== "" ? 2 : 0)
+    readonly property real _vPadding: description !== "" ? 13 : 11
     default property alias contentData: controlSlot.data
 
     RowLayout {

@@ -9,11 +9,9 @@ SourceBlendRect {
     Layout.fillWidth: true
     implicitHeight: inner.implicitHeight
 
-    radius: Style.cardRadius
+    radius: 12
     backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
     color: Config.withAlpha(Theme.secondaryBackground, Config.windowOpacity)
-    borderColor: Config.withAlpha(Theme.divider, Config.windowOpacity)
-    borderWidth: Style.cardBorderWidth
 
     ColumnLayout {
         id: inner

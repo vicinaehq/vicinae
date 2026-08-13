@@ -37,11 +37,7 @@ void SettingsWindow::ensureInitialized() {
   m_initialized = true;
 
   m_themeBridge = new ThemeBridge(this);
-#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
   m_configBridge = new ConfigBridge(ConfigBridge::OpaqueSurfaces, this);
-#else
-  m_configBridge = new ConfigBridge(this);
-#endif
   m_imgSource = new ImageSource(this);
   m_keyboardBridge = new KeyboardBridge(this);
   m_globalShortcutBridge = new GlobalShortcutBridge(this);

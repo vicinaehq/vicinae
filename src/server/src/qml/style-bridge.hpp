@@ -11,9 +11,6 @@ class StyleBridge : public QObject {
 
   // Space pages reserve for the overlaid window header.
   Q_PROPERTY(qreal contentTopInset READ contentTopInset CONSTANT)
-  Q_PROPERTY(qreal cardRadius READ cardRadius CONSTANT)
-  Q_PROPERTY(qreal cardBorderWidth READ cardBorderWidth CONSTANT)
-  Q_PROPERTY(qreal settingsRowVPad READ settingsRowVPad CONSTANT)
   Q_PROPERTY(qreal switchKnobWidth READ switchKnobWidth CONSTANT)
   Q_PROPERTY(qreal paneInset READ paneInset CONSTANT)
   Q_PROPERTY(qreal paneLeftInset READ paneLeftInset CONSTANT)
@@ -25,30 +22,6 @@ public:
   explicit StyleBridge(QObject *parent = nullptr) : QObject(parent) {}
 
   qreal contentTopInset() const { return 44; }
-
-  qreal cardRadius() const {
-#ifdef Q_OS_MACOS
-    return 12;
-#else
-    return 10;
-#endif
-  }
-
-  qreal cardBorderWidth() const {
-#ifdef Q_OS_MACOS
-    return 0;
-#else
-    return 1;
-#endif
-  }
-
-  qreal settingsRowVPad() const {
-#ifdef Q_OS_MACOS
-    return 11;
-#else
-    return 9;
-#endif
-  }
 
   // Wider than tall on macOS: the native knob is a stadium, not a circle.
   qreal switchKnobWidth() const {
