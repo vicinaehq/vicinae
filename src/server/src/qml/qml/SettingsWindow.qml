@@ -55,7 +55,7 @@ Window {
     maximumWidth: 980
     visible: true
     color: "transparent"
-    flags: Qt.Window
+    flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint
     title: qsTr("Vicinae Settings")
 
     WindowMaterial.enabled: Config.blurEnabled && Config.windowOpacity < 1

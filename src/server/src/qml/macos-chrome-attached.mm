@@ -314,6 +314,12 @@ void MacOSWindowAttached::apply() {
     }
     nswin.toolbarStyle = NSWindowToolbarStyleUnified;
     nswin.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
+    // Qt's WindowMaximizeButtonHint doesn't reach the zoom button, which Cocoa
+    // wires to fullscreen; enforce the declared flags here.
+    if (!(m_window->flags() & Qt::WindowMaximizeButtonHint)) {
+      [nswin standardWindowButton:NSWindowZoomButton].enabled = NO;
+      nswin.collectionBehavior |= NSWindowCollectionBehaviorFullScreenNone;
+    }
     if (cornerRadius <= 0) cornerRadius = (int)nativeTitledCornerRadius(nswin);
   }
 
