@@ -71,12 +71,9 @@ Popup {
         }
     }
 
-    background: Rectangle {
-        readonly property bool csd: !root.isNativeWindow || Platform.supports("clientSideDecorations")
-        radius: csd ? Math.min(Config.borderRounding, 15) : 0
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, root.backgroundOpacity)
-        border.color: Config.withAlpha(Theme.popoverBorder, root.backgroundOpacity)
-        border.width: csd ? 1 : 0
+    background: PopoverBackground {
+        popup: root
+        backgroundOpacity: root.backgroundOpacity
 
         PopupMaterial {
             id: materialImpl
