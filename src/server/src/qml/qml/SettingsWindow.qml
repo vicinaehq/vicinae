@@ -9,34 +9,29 @@ Window {
     readonly property var corePages: ({
             "general": {
                 "title": qsTr("General"),
-                "icon": "cog",
                 "page": generalPage
             },
             "appearance": {
                 "title": qsTr("Appearance"),
-                "icon": "swatch",
                 "page": appearancePage
             },
             "keybindings": {
                 "title": qsTr("Keybindings"),
-                "icon": "keyboard",
                 "page": shortcutsPage
             },
             "advanced": {
                 "title": qsTr("Advanced"),
-                "icon": "wrench-screwdriver",
                 "page": advancedPage
             },
             "about": {
                 "title": qsTr("About"),
-                "icon": "vicinae",
                 "page": aboutPage
             }
         })
     readonly property var coreMeta: root.corePages[settings.currentPage] ?? null
     readonly property bool isExtensionPage: root.coreMeta === null
     readonly property string topbarTitle: root.isExtensionPage ? root.extModel.selectedTitle : root.coreMeta.title
-    readonly property var topbarIconSource: root.isExtensionPage ? root.extModel.selectedIconSource : Img.builtin(root.coreMeta.icon).withFillColor(Theme.foreground)
+    readonly property var topbarIconSource: root.isExtensionPage ? root.extModel.selectedIconSource : ""
 
     property bool nativeChrome: false
     property Component headerAccessory: Component {
@@ -58,14 +53,11 @@ Window {
     flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint
     title: qsTr("Vicinae Settings")
 
-    WindowMaterial.enabled: Config.blurEnabled && Config.windowOpacity < 1
-    WindowMaterial.radius: 10
-
     Rectangle {
         id: background
         anchors.fill: parent
         Keys.onEscapePressed: settings.close()
-        color: root.nativeChrome ? "transparent" : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+        color: root.nativeChrome ? "transparent" : Theme.background
         clip: true
 
         Item {
@@ -163,7 +155,7 @@ Window {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                        color: Theme.background
                     }
 
                     MultiEffect {
@@ -207,7 +199,7 @@ Window {
                         }
 
                         ViciImage {
-                            visible: root.topbarIconSource !== "" && root.isExtensionPage
+                            visible: root.topbarIconSource !== ""
                             source: root.topbarIconSource
                             Layout.preferredWidth: 22
                             Layout.preferredHeight: 22

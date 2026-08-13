@@ -634,12 +634,6 @@ bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
 
 bool macosLiquidGlassAvailable() { return liquidGlassClass() != nil; }
 
-QColor macosAccentColor() {
-  NSColor *c = [[NSColor controlAccentColor] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
-  if (!c) return QColor(10, 132, 255);
-  return QColor::fromRgbF(c.redComponent, c.greenComponent, c.blueComponent, c.alphaComponent);
-}
-
 void macosSetAccessoryActivationPolicy() {
   [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
 }

@@ -81,8 +81,8 @@ Item {
                 anchors.bottomMargin: 6
                 height: 34
                 radius: 10
-                backgroundColor: root.nativeSurface ? "transparent" : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-                color: root.nativeSurface ? Theme.secondaryBackground : Config.withAlpha(Theme.secondaryBackground, Config.windowOpacity)
+                backgroundColor: root.nativeSurface ? "transparent" : Theme.background
+                color: Theme.secondaryBackground
                 borderWidth: root.nativeSurface ? 1 : 0
                 borderColor: Config.withAlpha(Theme.foreground, 0.09)
 
@@ -196,19 +196,15 @@ Item {
                     anchors.topMargin: 1
                     anchors.bottomMargin: 1
                     radius: 8
-                    backgroundColor: root.nativeSurface ? "transparent" : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                    backgroundColor: root.nativeSurface ? "transparent" : Theme.background
                     color: {
-                        if (navItem._selected) {
-                            const c = Theme.listItemSelectionBg;
-                            return Qt.rgba(c.r, c.g, c.b, root.nativeSurface ? 1 : Config.windowOpacity);
-                        }
+                        if (navItem._selected)
+                            return Theme.listItemSelectionBg;
                         if (itemHover.hovered && HoverActivation.active) {
                             const h = Theme.listItemHoverBg;
-                            return Qt.rgba(h.r, h.g, h.b, root.nativeSurface ? 0.6 : Config.windowOpacity);
+                            return Qt.rgba(h.r, h.g, h.b, root.nativeSurface ? 0.6 : 1);
                         }
-                        if (root.nativeSurface)
-                            return "transparent";
-                        return Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity);
+                        return root.nativeSurface ? "transparent" : Theme.background;
                     }
 
                     RowLayout {

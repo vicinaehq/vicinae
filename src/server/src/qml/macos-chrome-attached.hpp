@@ -208,8 +208,5 @@ void macosSetAccessoryActivationPolicy();
 void macosActivateApp();
 void macosReleaseMenuShortcuts();
 
-// The user's accent color ([NSColor controlAccentColor]) in sRGB.
-QColor macosAccentColor();
-
 // True when NSGlassEffectView is available (macOS 26 Tahoe and later).
 bool macosLiquidGlassAvailable();
