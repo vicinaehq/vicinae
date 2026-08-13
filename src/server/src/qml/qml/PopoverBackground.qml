@@ -95,7 +95,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: bg.cornerRadius
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bg.frosted ? 0.7 : bg.backgroundOpacity)
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bg.frosted ? 0.85 : bg.backgroundOpacity)
         border.color: Config.withAlpha(Theme.popoverBorder, bg.backgroundOpacity)
         border.width: bg.csd ? 1 : 0
     }
