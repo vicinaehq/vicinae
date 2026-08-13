@@ -9,7 +9,7 @@
 class StyleBridge : public QObject {
   Q_OBJECT
 
-  // Space pages reserve for the overlaid window header (0 = header is stacked).
+  // Space pages reserve for the overlaid window header.
   Q_PROPERTY(qreal contentTopInset READ contentTopInset CONSTANT)
   Q_PROPERTY(qreal cardRadius READ cardRadius CONSTANT)
   Q_PROPERTY(qreal cardBorderWidth READ cardBorderWidth CONSTANT)
@@ -24,13 +24,7 @@ class StyleBridge : public QObject {
 public:
   explicit StyleBridge(QObject *parent = nullptr) : QObject(parent) {}
 
-  qreal contentTopInset() const {
-#ifdef Q_OS_MACOS
-    return 44;
-#else
-    return 0;
-#endif
-  }
+  qreal contentTopInset() const { return 44; }
 
   qreal cardRadius() const {
 #ifdef Q_OS_MACOS

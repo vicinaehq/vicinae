@@ -157,18 +157,16 @@ Window {
                         live: true
                         width: contentHeader.width
                         height: contentHeader.height
-                        sourceItem: root.nativeChrome ? pageLoader : null
+                        sourceItem: pageLoader
                         sourceRect: Qt.rect(0, 0, contentHeader.width, contentHeader.height)
                     }
 
                     Rectangle {
-                        visible: root.nativeChrome
                         anchors.fill: parent
-                        color: Theme.background
+                        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
                     }
 
                     MultiEffect {
-                        visible: root.nativeChrome
                         anchors.fill: parent
                         source: headerBackdrop
                         blurEnabled: true
@@ -177,7 +175,6 @@ Window {
                     }
 
                     Rectangle {
-                        visible: root.nativeChrome
                         anchors.fill: parent
                         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.4)
                     }
@@ -286,17 +283,9 @@ Window {
                     }
                 }
 
-                ViciDivider {
-                    visible: !root.nativeChrome
-                    anchors.top: contentHeader.bottom
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                }
-
                 Loader {
                     id: pageLoader
                     anchors.fill: parent
-                    anchors.topMargin: root.nativeChrome ? 0 : 45
 
                     Component.onCompleted: _loadPage(settings.currentPage)
 
