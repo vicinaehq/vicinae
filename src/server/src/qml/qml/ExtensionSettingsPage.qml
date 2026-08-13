@@ -345,4 +345,34 @@ Item {
             }
         }
     }
+
+    ColumnLayout {
+        anchors.centerIn: parent
+        spacing: 4
+        visible: root.extModel.selectedDescription === "" && !root.extModel.hasPreferences && root.extModel.commandModel.totalCount === 0
+
+        ViciImage {
+            source: root.extModel.selectedIconSource
+            opacity: 0.5
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
+            Layout.alignment: Qt.AlignHCenter
+            Layout.bottomMargin: 8
+        }
+
+        Text {
+            text: qsTr("Nothing to configure")
+            color: Theme.foreground
+            font.pointSize: Theme.regularFontSize + 1
+            font.bold: true
+            Layout.alignment: Qt.AlignHCenter
+        }
+
+        Text {
+            text: qsTr("Commands and preferences will show up here once available.")
+            color: Theme.textMuted
+            font.pointSize: Theme.smallerFontSize
+            Layout.alignment: Qt.AlignHCenter
+        }
+    }
 }
