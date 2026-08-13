@@ -41,7 +41,7 @@ lib.extendMkDerivation {
         runHook preInstall
 
         mkdir -p $out
-        cp -r /build/.config/raycast/extensions/${name}/* $out/
+        cp -r "$HOME/.config/raycast/extensions/"*/. $out/
 
         runHook postInstall
       '';
