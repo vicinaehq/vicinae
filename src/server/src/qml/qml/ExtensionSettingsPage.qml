@@ -235,7 +235,9 @@ Item {
                                     color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
                                     font.pointSize: Theme.regularFontSize
                                     elide: Text.ElideRight
-                                    Layout.maximumWidth: cmdRow.width * 0.55
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    Layout.maximumWidth: implicitWidth
                                 }
 
                                 ViciImage {
