@@ -18,6 +18,8 @@ Flickable {
     }
 
     ScrollBar.vertical: ViciScrollBar {
+        topPadding: Style.contentTopInset
+        bottomPadding: 16
         policy: root.contentHeight > root.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
     }
 

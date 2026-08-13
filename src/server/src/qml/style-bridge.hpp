@@ -15,6 +15,11 @@ class StyleBridge : public QObject {
   Q_PROPERTY(qreal cardBorderWidth READ cardBorderWidth CONSTANT)
   Q_PROPERTY(qreal settingsRowVPad READ settingsRowVPad CONSTANT)
   Q_PROPERTY(qreal switchKnobWidth READ switchKnobWidth CONSTANT)
+  Q_PROPERTY(qreal paneInset READ paneInset CONSTANT)
+  Q_PROPERTY(qreal paneLeftInset READ paneLeftInset CONSTANT)
+  Q_PROPERTY(qreal paneRadius READ paneRadius CONSTANT)
+  Q_PROPERTY(qreal sidebarTopInset READ sidebarTopInset CONSTANT)
+  Q_PROPERTY(qreal sidebarContentInset READ sidebarContentInset CONSTANT)
 
 public:
   explicit StyleBridge(QObject *parent = nullptr) : QObject(parent) {}
@@ -57,6 +62,43 @@ public:
     return 20;
 #else
     return 14;
+#endif
+  }
+
+  // Floating sidebar pane (settings window native chrome). Zero insets mean
+  // the sidebar is a flush panel.
+  qreal paneInset() const {
+#ifdef Q_OS_MACOS
+    return 6;
+#else
+    return 0;
+#endif
+  }
+
+  qreal paneLeftInset() const {
+#ifdef Q_OS_MACOS
+    return 6;
+#else
+    return 0;
+#endif
+  }
+
+  qreal paneRadius() const { return 16; }
+
+  // Clearance under the native titlebar buttons overlaying the sidebar top.
+  qreal sidebarTopInset() const {
+#ifdef Q_OS_MACOS
+    return 34;
+#else
+    return 0;
+#endif
+  }
+
+  qreal sidebarContentInset() const {
+#ifdef Q_OS_MACOS
+    return 8;
+#else
+    return 6;
 #endif
   }
 };

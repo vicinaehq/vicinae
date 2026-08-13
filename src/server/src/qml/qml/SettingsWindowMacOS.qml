@@ -2,7 +2,6 @@ import QtQuick
 
 SettingsWindow {
     nativeChrome: true
-    sidebarTopPadding: 34
 
     headerAccessory: Component {
         SettingsNavButtonsMacOS {}
@@ -15,5 +14,6 @@ SettingsWindow {
     MacOSWindow.blurEnabled: true
     MacOSWindow.material: "sidebar"
     MacOSWindow.transparentTitlebar: true
+    MacOSWindow.followsWindowActiveState: true
     MacOSWindow.appearance: Theme.isDark ? "dark" : "light"
 }

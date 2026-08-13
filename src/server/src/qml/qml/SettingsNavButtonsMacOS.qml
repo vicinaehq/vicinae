@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 
-// System Settings style back/forward capsule.
 Rectangle {
     id: root
     implicitWidth: 68

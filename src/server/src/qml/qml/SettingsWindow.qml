@@ -38,18 +38,13 @@ Window {
     readonly property string topbarTitle: root.isExtensionPage ? root.extModel.selectedTitle : root.coreMeta.title
     readonly property var topbarIconSource: root.isExtensionPage ? root.extModel.selectedIconSource : Img.builtin(root.coreMeta.icon).withFillColor(Theme.foreground)
 
-    // Set by per-OS variants (SettingsWindowMacOS.qml): the sidebar becomes a floating
-    // rounded pane on the window's native material, under a hidden titlebar whose
-    // buttons overlay the pane's top inset.
     property bool nativeChrome: false
-    property real sidebarTopPadding: 0
-    // Slot for platform components that have no cross-platform equivalent,
-    // e.g. the macOS back/forward capsule. Filled by the per-OS variants.
     property Component headerAccessory: null
     readonly property int sidebarWidth: 240
-    readonly property real paneInset: nativeChrome ? 6 : 0
-    readonly property real paneLeftInset: nativeChrome ? 6 : 0
-    readonly property real paneRadius: 16
+    readonly property real sidebarTopPadding: Style.sidebarTopInset
+    readonly property real paneInset: Style.paneInset
+    readonly property real paneLeftInset: Style.paneLeftInset
+    readonly property real paneRadius: Style.paneRadius
 
     width: 980
     height: 680
@@ -72,8 +67,6 @@ Window {
         color: root.nativeChrome ? "transparent" : Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
         clip: true
 
-        // Opaque theme background with a rounded hole where the floating sidebar pane
-        // lets the window's native material show through.
         Item {
             visible: root.nativeChrome
             anchors.fill: parent
@@ -157,8 +150,6 @@ Window {
                     anchors.right: parent.right
                     height: 44
 
-                    // Glassy scroll edge: pages scroll under the header and blur out
-                    // instead of clipping.
                     ShaderEffectSource {
                         id: headerBackdrop
                         visible: false
@@ -169,8 +160,6 @@ Window {
                         sourceRect: Qt.rect(0, 0, contentHeader.width, contentHeader.height)
                     }
 
-                    // Opaque base hides the sharp content scrolling underneath, so only
-                    // the blurred copy above it shows through the wash.
                     Rectangle {
                         visible: root.nativeChrome
                         anchors.fill: parent
@@ -200,11 +189,15 @@ Window {
 
                     RowLayout {
                         anchors.fill: parent
-                        // Same formula as the pages' content column, so the header
-                        // aligns with the cards below it.
                         anchors.leftMargin: Math.max(16, (contentHeader.width - 720) / 2)
                         anchors.rightMargin: Math.max(16, (contentHeader.width - 720) / 2)
                         anchors.topMargin: root.nativeChrome ? 9 : 0
+                        opacity: !root.nativeChrome || root.active ? 1 : 0.55
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 150
+                            }
+                        }
                         spacing: 12
 
                         Loader {

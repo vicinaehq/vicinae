@@ -17,8 +17,7 @@ Item {
         onTriggered: root._focusedCommandId = ""
     }
 
-    // Sections above the command list (wrapped description, async preference
-    // forms) settle after the initial scroll; keep re-anchoring briefly.
+    // Content above the list lays out async after the initial scroll; re-anchor until settled.
     Timer {
         id: scrollSettle
         interval: 800
@@ -92,6 +91,8 @@ Item {
         }
 
         ScrollBar.vertical: ViciScrollBar {
+            topPadding: Style.contentTopInset
+            bottomPadding: 16
             policy: cmdFlickable.contentHeight > cmdFlickable.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         }
 

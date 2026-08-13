@@ -57,7 +57,7 @@ CGColorRef cgColorFromQColor(const QColor &c) {
 
 void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
                        NSVisualEffectMaterial fallbackMaterial, const QString &appearance, int cornerRadius,
-                       const QColor &borderColor, int borderWidth) {
+                       const QColor &borderColor, int borderWidth, bool followsActiveState) {
   NSView *contentView = nswin.contentView;
   if (!contentView) return;
 
@@ -98,7 +98,6 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
     } else {
       NSVisualEffectView *v = [[NSVisualEffectView alloc] initWithFrame:parent.bounds];
       v.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-      v.state = NSVisualEffectStateActive;
       existing = v;
     }
     existing.identifier = EFFECT_VIEW_IDENTIFIER;
@@ -123,7 +122,9 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
       ((void (*)(id, SEL, double))objc_msgSend)(existing, setCR, (double)cornerRadius);
     }
   } else {
-    ((NSVisualEffectView *)existing).material = fallbackMaterial;
+    NSVisualEffectView *v = (NSVisualEffectView *)existing;
+    v.material = fallbackMaterial;
+    v.state = followsActiveState ? NSVisualEffectStateFollowsWindowActiveState : NSVisualEffectStateActive;
     existing.layer.cornerRadius = cornerRadius;
     existing.layer.masksToBounds = YES;
     existing.layer.borderWidth = borderWidth;
@@ -247,6 +248,13 @@ void MacOSWindowAttached::setTransparentTitlebar(bool value) {
   apply();
 }
 
+void MacOSWindowAttached::setFollowsWindowActiveState(bool value) {
+  if (m_followsWindowActiveState == value) return;
+  m_followsWindowActiveState = value;
+  emit followsWindowActiveStateChanged();
+  apply();
+}
+
 void MacOSWindowAttached::trackWindow(QWindow *window) {
   m_window = window;
   if (!m_window) return;
@@ -311,7 +319,7 @@ void MacOSWindowAttached::apply() {
 
   installEffectView(nswin, m_blurEnabled, m_material == QStringLiteral("liquidGlass"),
                     materialFromString(m_material), m_appearance, cornerRadius, m_borderColor,
-                    m_borderWidth);
+                    m_borderWidth, m_followsWindowActiveState);
 }
 
 void MacOSWindowAttached::revert() {
@@ -322,7 +330,7 @@ void MacOSWindowAttached::revert() {
   if (!nswin) return;
 
   installEffectView(nswin, /*enabled=*/false, /*wantLiquidGlass=*/false, NSVisualEffectMaterialHUDWindow,
-                    QString(), 0, QColor(), 0);
+                    QString(), 0, QColor(), 0, false);
 
   if (m_snapshot.valid) {
     nswin.opaque = m_snapshot.opaque;

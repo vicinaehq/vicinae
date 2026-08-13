@@ -19,6 +19,8 @@ class MacOSWindowAttached : public QObject {
   Q_PROPERTY(int borderWidth READ borderWidth WRITE setBorderWidth NOTIFY borderWidthChanged)
   Q_PROPERTY(bool transparentTitlebar READ transparentTitlebar WRITE setTransparentTitlebar NOTIFY
                  transparentTitlebarChanged)
+  Q_PROPERTY(bool followsWindowActiveState READ followsWindowActiveState WRITE setFollowsWindowActiveState
+                 NOTIFY followsWindowActiveStateChanged)
 
 signals:
   void enabledChanged();
@@ -29,6 +31,7 @@ signals:
   void borderColorChanged();
   void borderWidthChanged();
   void transparentTitlebarChanged();
+  void followsWindowActiveStateChanged();
 
 public:
   explicit MacOSWindowAttached(QObject *parent);
@@ -59,6 +62,11 @@ public:
   // the standard traffic lights. cornerRadius 0 then follows the native frame radius.
   bool transparentTitlebar() const { return m_transparentTitlebar; }
   void setTransparentTitlebar(bool value);
+
+  // Material goes flat when the window resigns key, like native sidebars. Leave off
+  // for non-activating panels, which are never "active".
+  bool followsWindowActiveState() const { return m_followsWindowActiveState; }
+  void setFollowsWindowActiveState(bool value);
 
   Q_INVOKABLE void animateIn(qreal anchorX = 0.5, qreal anchorY = 0.5);
   Q_INVOKABLE void animateOut(qreal anchorX = 0.5, qreal anchorY = 0.5);
@@ -92,6 +100,7 @@ private:
   QColor m_borderColor;
   int m_borderWidth = 0;
   bool m_transparentTitlebar = false;
+  bool m_followsWindowActiveState = false;
   bool m_surfaceReady = false;
   bool m_pendingAnimateIn = false;
   qreal m_pendingAnchorX = 0.5;

@@ -45,6 +45,8 @@ Item {
         }
 
         ScrollBar.vertical: ViciScrollBar {
+            topPadding: Style.contentTopInset
+            bottomPadding: 16
             policy: ScrollBar.AsNeeded
         }
 

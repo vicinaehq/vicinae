@@ -1067,6 +1067,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ScriptOutputText.qml
 	src/qml/qml/ScriptExecutorView.qml
 	src/qml/qml/SettingsWindow.qml
+	src/qml/qml/SettingsScrollEdge.qml
 	src/qml/qml/SettingsSidebar.qml
 	src/qml/qml/SettingsRow.qml
 	src/qml/qml/SettingsGroup.qml
