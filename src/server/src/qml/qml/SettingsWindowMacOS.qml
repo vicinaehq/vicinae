@@ -1,14 +1,5 @@
-import QtQuick
-
 SettingsWindow {
     nativeChrome: true
-
-    headerAccessory: Component {
-        SettingsNavButtonsMacOS {}
-    }
-
-    minimumHeight: 600
-    maximumHeight: 16777215
 
     MacOSWindow.enabled: true
     MacOSWindow.blurEnabled: true

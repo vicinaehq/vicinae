@@ -39,7 +39,9 @@ Window {
     readonly property var topbarIconSource: root.isExtensionPage ? root.extModel.selectedIconSource : Img.builtin(root.coreMeta.icon).withFillColor(Theme.foreground)
 
     property bool nativeChrome: false
-    property Component headerAccessory: null
+    property Component headerAccessory: Component {
+        SettingsNavButtons {}
+    }
     readonly property int sidebarWidth: 240
     readonly property real sidebarTopPadding: Style.sidebarTopInset
     readonly property real paneInset: Style.paneInset
@@ -49,9 +51,8 @@ Window {
     width: 980
     height: 680
     minimumWidth: 980
-    minimumHeight: 680
+    minimumHeight: 600
     maximumWidth: 980
-    maximumHeight: 680
     visible: true
     color: "transparent"
     flags: Qt.Window

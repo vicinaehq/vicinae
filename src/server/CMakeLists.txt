@@ -1068,6 +1068,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ScriptExecutorView.qml
 	src/qml/qml/SettingsWindow.qml
 	src/qml/qml/SettingsScrollEdge.qml
+	src/qml/qml/SettingsNavButtons.qml
 	src/qml/qml/SettingsSidebar.qml
 	src/qml/qml/SettingsRow.qml
 	src/qml/qml/SettingsGroup.qml
@@ -1111,7 +1112,6 @@ if(APPLE)
 		src/qml/qml/CompletionPanelMacOS.qml
 		src/qml/qml/PopupMaterialMacOS.qml
 		src/qml/qml/SettingsWindowMacOS.qml
-		src/qml/qml/SettingsNavButtonsMacOS.qml
 	)
 endif()
 
