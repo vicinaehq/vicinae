@@ -17,6 +17,7 @@
 #include "image-url.hpp"
 #include "config-bridge.hpp"
 #include "platform-bridge.hpp"
+#include "style-bridge.hpp"
 #include "theme-bridge.hpp"
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
@@ -69,6 +70,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
   rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
+  rootCtx->setContextProperty(QStringLiteral("Style"), new StyleBridge(this));
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
 
   rootCtx->setContextProperty(QStringLiteral("launcher"), this);

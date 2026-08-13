@@ -4,7 +4,13 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    implicitWidth: 220
+
+    property bool nativeSurface: false
+    property real topInset: 0
+
+    readonly property real _searchZoneHeight: topInset + 46
+    readonly property real _edgeHeight: _searchZoneHeight - 6
+    readonly property real _edgeInset: Style.sidebarContentInset
 
     property string _selectedKey: ""
     readonly property bool _searching: extSearchField.text.length > 0
@@ -42,24 +48,43 @@ Item {
         navList.positionViewAtIndex(next, ListView.Contain);
     }
 
-    ColumnLayout {
+    Item {
         anchors.fill: parent
-        spacing: 0
+        opacity: !root.nativeSurface || root.Window.active ? 1 : 0.55
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 150
+            }
+        }
 
         Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 46
+            id: searchZone
+            z: 1
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: root._searchZoneHeight
+
+            SettingsScrollEdge {
+                anchors.fill: parent
+                active: root.nativeSurface
+                flickable: navList
+                edgeHeight: root._edgeHeight
+            }
 
             SourceBlendRect {
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.leftMargin: 6
-                anchors.rightMargin: 6
-                anchors.verticalCenter: parent.verticalCenter
-                height: 30
-                radius: 8
-                backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-                color: Config.withAlpha(Theme.secondaryBackground, Config.windowOpacity)
+                anchors.leftMargin: root._edgeInset
+                anchors.rightMargin: root._edgeInset
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 6
+                height: 34
+                radius: 10
+                backgroundColor: root.nativeSurface ? "transparent" : Theme.background
+                color: Theme.secondaryBackground
+                borderWidth: root.nativeSurface ? 1 : 0
+                borderColor: Config.withAlpha(Theme.foreground, 0.09)
 
                 RowLayout {
                     anchors.fill: parent
@@ -125,11 +150,12 @@ Item {
 
         ListView {
             id: navList
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            anchors.fill: parent
+            anchors.topMargin: root.nativeSurface ? root._edgeHeight : root._searchZoneHeight
             clip: true
             bottomMargin: 8
-            topMargin: 2
+            topMargin: root.nativeSurface ? 10 : 2
+            displayMarginBeginning: root.nativeSurface ? root._edgeHeight : 0
             boundsBehavior: Flickable.StopAtBounds
             model: settings.sidebarModel
 
@@ -138,6 +164,7 @@ Item {
             }
 
             ScrollBar.vertical: ViciScrollBar {
+                bottomPadding: 16
                 policy: navList.contentHeight > navList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }
 
@@ -164,22 +191,20 @@ Item {
                 SourceBlendRect {
                     visible: navItem.model.kind !== "divider"
                     anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
+                    anchors.leftMargin: root._edgeInset
+                    anchors.rightMargin: root._edgeInset
                     anchors.topMargin: 1
                     anchors.bottomMargin: 1
                     radius: 8
-                    backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+                    backgroundColor: root.nativeSurface ? "transparent" : Theme.background
                     color: {
-                        if (navItem._selected) {
-                            const c = Theme.listItemSelectionBg;
-                            return Qt.rgba(c.r, c.g, c.b, Config.windowOpacity);
-                        }
+                        if (navItem._selected)
+                            return Theme.listItemSelectionBg;
                         if (itemHover.hovered && HoverActivation.active) {
                             const h = Theme.listItemHoverBg;
-                            return Qt.rgba(h.r, h.g, h.b, Config.windowOpacity);
+                            return Qt.rgba(h.r, h.g, h.b, root.nativeSurface ? 0.6 : 1);
                         }
-                        return Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity);
+                        return root.nativeSurface ? "transparent" : Theme.background;
                     }
 
                     RowLayout {

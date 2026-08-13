@@ -8,6 +8,8 @@ Flickable {
     contentHeight: outer.implicitHeight
     clip: true
     boundsBehavior: Flickable.StopAtBounds
+    topMargin: Style.contentTopInset
+    Component.onCompleted: contentY = -topMargin
 
     readonly property var model: settings.generalModel
 
@@ -16,13 +18,15 @@ Flickable {
     }
 
     ScrollBar.vertical: ViciScrollBar {
+        topPadding: Style.contentTopInset
+        bottomPadding: 16
         policy: ScrollBar.AsNeeded
     }
 
     ColumnLayout {
         id: outer
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Math.min(root.width - 48, 720)
+        width: Math.min(root.width - 32, 720)
         spacing: 0
 
         SettingsSectionLabel {

@@ -7,6 +7,7 @@
 #include "keyboard-bridge.hpp"
 #include "global-shortcut-bridge.hpp"
 #include "platform-bridge.hpp"
+#include "style-bridge.hpp"
 #include "keybind-settings-model.hpp"
 #include "settings-sidebar-model.hpp"
 #include "theme-bridge.hpp"
@@ -36,11 +37,7 @@ void SettingsWindow::ensureInitialized() {
   m_initialized = true;
 
   m_themeBridge = new ThemeBridge(this);
-#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
   m_configBridge = new ConfigBridge(ConfigBridge::OpaqueSurfaces, this);
-#else
-  m_configBridge = new ConfigBridge(this);
-#endif
   m_imgSource = new ImageSource(this);
   m_keyboardBridge = new KeyboardBridge(this);
   m_globalShortcutBridge = new GlobalShortcutBridge(this);
@@ -57,11 +54,18 @@ void SettingsWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
   rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
   rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
+  rootCtx->setContextProperty(QStringLiteral("Style"), new StyleBridge(this));
   rootCtx->setContextProperty(QStringLiteral("settings"), this);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"),
                               ServiceRegistry::instance()->fileChooserService());
 
-  m_engine.load(QUrl(QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")));
+  m_engine.load(QUrl(
+#ifdef Q_OS_MACOS
+      QStringLiteral("qrc:/Vicinae/SettingsWindowMacOS.qml")
+#else
+      QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")
+#endif
+          ));
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
@@ -74,10 +78,30 @@ void SettingsWindow::ensureInitialized() {
 }
 
 void SettingsWindow::setCurrentPage(const QString &page) {
-  if (m_currentPage != page) {
-    m_currentPage = page;
-    emit currentPageChanged();
+  if (m_currentPage == page) return;
+  if (!m_navigatingHistory) {
+    m_backStack.append(m_currentPage);
+    m_forwardStack.clear();
   }
+  m_currentPage = page;
+  emit currentPageChanged();
+  emit historyChanged();
+}
+
+void SettingsWindow::goBack() {
+  if (m_backStack.isEmpty()) return;
+  m_forwardStack.append(m_currentPage);
+  m_navigatingHistory = true;
+  setCurrentPage(m_backStack.takeLast());
+  m_navigatingHistory = false;
+}
+
+void SettingsWindow::goForward() {
+  if (m_forwardStack.isEmpty()) return;
+  m_backStack.append(m_currentPage);
+  m_navigatingHistory = true;
+  setCurrentPage(m_forwardStack.takeLast());
+  m_navigatingHistory = false;
 }
 
 void SettingsWindow::setPendingCommandId(const QString &id) {

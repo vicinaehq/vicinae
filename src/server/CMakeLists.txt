@@ -550,6 +550,7 @@ set(SRCS
 	src/qml/keyboard-bridge.hpp
 	src/qml/global-shortcut-bridge.hpp
 	src/qml/platform-bridge.hpp
+	src/qml/style-bridge.hpp
 	src/qml/shortcut-conflict.hpp
 	src/qml/shortcut-conflict.cpp
 	src/qml/create-extension-view-host.hpp
@@ -1066,6 +1067,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ScriptOutputText.qml
 	src/qml/qml/ScriptExecutorView.qml
 	src/qml/qml/SettingsWindow.qml
+	src/qml/qml/SettingsScrollEdge.qml
+	src/qml/qml/SettingsNavButtons.qml
 	src/qml/qml/SettingsSidebar.qml
 	src/qml/qml/SettingsRow.qml
 	src/qml/qml/SettingsGroup.qml
@@ -1108,6 +1111,7 @@ if(APPLE)
 		src/qml/qml/HudWindowMacOS.qml
 		src/qml/qml/CompletionPanelMacOS.qml
 		src/qml/qml/PopupMaterialMacOS.qml
+		src/qml/qml/SettingsWindowMacOS.qml
 	)
 endif()
 

@@ -17,6 +17,12 @@ class MacOSWindowAttached : public QObject {
   Q_PROPERTY(QString appearance READ appearance WRITE setAppearance NOTIFY appearanceChanged)
   Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY borderColorChanged)
   Q_PROPERTY(int borderWidth READ borderWidth WRITE setBorderWidth NOTIFY borderWidthChanged)
+  Q_PROPERTY(bool transparentTitlebar READ transparentTitlebar WRITE setTransparentTitlebar NOTIFY
+                 transparentTitlebarChanged)
+  Q_PROPERTY(bool followsWindowActiveState READ followsWindowActiveState WRITE setFollowsWindowActiveState
+                 NOTIFY followsWindowActiveStateChanged)
+  Q_PROPERTY(bool moveToActiveSpace READ moveToActiveSpace WRITE setMoveToActiveSpace NOTIFY
+                 moveToActiveSpaceChanged)
 
 signals:
   void enabledChanged();
@@ -26,6 +32,9 @@ signals:
   void appearanceChanged();
   void borderColorChanged();
   void borderWidthChanged();
+  void transparentTitlebarChanged();
+  void followsWindowActiveStateChanged();
+  void moveToActiveSpaceChanged();
 
 public:
   explicit MacOSWindowAttached(QObject *parent);
@@ -52,6 +61,21 @@ public:
   int borderWidth() const { return m_borderWidth; }
   void setBorderWidth(int value);
 
+  // Extends the content under a hidden titlebar (full-size content view), keeping
+  // the standard traffic lights. cornerRadius 0 then follows the native frame radius.
+  bool transparentTitlebar() const { return m_transparentTitlebar; }
+  void setTransparentTitlebar(bool value);
+
+  // Material goes flat when the window resigns key, like native sidebars. Leave off
+  // for non-activating panels, which are never "active".
+  bool followsWindowActiveState() const { return m_followsWindowActiveState; }
+  void setFollowsWindowActiveState(bool value);
+
+  // Reshowing the window pulls it to the current space instead of switching
+  // to the space it was left on.
+  bool moveToActiveSpace() const { return m_moveToActiveSpace; }
+  void setMoveToActiveSpace(bool value);
+
   Q_INVOKABLE void animateIn(qreal anchorX = 0.5, qreal anchorY = 0.5);
   Q_INVOKABLE void animateOut(qreal anchorX = 0.5, qreal anchorY = 0.5);
 
@@ -63,6 +87,9 @@ private:
     void *backgroundColor = nullptr;
     bool hasShadow = true;
     long animationBehavior = 0;
+    unsigned long styleMask = 0;
+    long titleVisibility = 0;
+    bool titlebarAppearsTransparent = false;
   };
 
   void apply();
@@ -80,6 +107,9 @@ private:
   QString m_appearance;
   QColor m_borderColor;
   int m_borderWidth = 0;
+  bool m_transparentTitlebar = false;
+  bool m_followsWindowActiveState = false;
+  bool m_moveToActiveSpace = false;
   bool m_surfaceReady = false;
   bool m_pendingAnimateIn = false;
   qreal m_pendingAnchorX = 0.5;

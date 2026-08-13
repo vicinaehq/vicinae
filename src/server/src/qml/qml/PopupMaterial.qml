@@ -16,7 +16,7 @@ Item {
 
     Loader {
         id: macLoader
-        active: Qt.platform.os === "osx"
+        active: Platform.supports("nativePanels")
         source: "qrc:/Vicinae/PopupMaterialMacOS.qml"
     }
 }
