@@ -1,5 +1,6 @@
 #include "macos-snippet-server.hpp"
 #include <ApplicationServices/ApplicationServices.h>
+#include <pthread/qos.h>
 #include <unistd.h>
 #include <QString>
 #include <QTimer>
@@ -124,6 +125,8 @@ MacosSnippetServer::~MacosSnippetServer() {
 }
 
 void MacosSnippetServer::runTap() {
+  pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+
   const CGEventMask mask = CGEventMaskBit(kCGEventKeyDown);
 
   CFMachPortRef tap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionListenOnly,

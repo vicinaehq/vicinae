@@ -2,15 +2,11 @@
 #include "keyboard/keyboard-macos.hpp"
 
 #include <algorithm>
-#include <array>
 #include <QChar>
 #include <QDebug>
 
 namespace {
 
-constexpr uint64_t MODIFIER_MASK =
-    kCGEventFlagMaskCommand | kCGEventFlagMaskControl | kCGEventFlagMaskAlternate | kCGEventFlagMaskShift;
-constexpr int PERMISSION_POLL_INTERVAL_MS = 2000;
 constexpr OSType HOT_KEY_SIGNATURE = 'vici';
 constexpr uint32_t MAX_LAYOUT_KEYCODE = 128;
 
@@ -123,23 +119,6 @@ OSStatus hotKeyHandler(EventHandlerCallRef, EventRef event, void *userData) {
   return noErr;
 }
 
-CGEventRef tapCallback(CGEventTapProxy, CGEventType type, CGEventRef event, void *refcon) {
-  auto *self = static_cast<MacOSGlobalShortcutBackend *>(refcon);
-
-  if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
-    self->reenableTap();
-    return event;
-  }
-  if (type != kCGEventKeyDown) { return event; }
-
-  const auto keycode = static_cast<uint32_t>(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
-  const bool autorepeat = CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat) != 0;
-  const quint64 timestamp = CGEventGetTimestamp(event) / 1'000'000; // ns -> ms
-
-  if (self->handleKeyDown(keycode, CGEventGetFlags(event), autorepeat, timestamp)) { return nullptr; }
-  return event;
-}
-
 void layoutChangedCallback(CFNotificationCenterRef, void *observer, CFNotificationName, const void *,
                            CFDictionaryRef) {
   static_cast<MacOSGlobalShortcutBackend *>(observer)->refreshLayout();
@@ -154,9 +133,7 @@ MacOSGlobalShortcutBackend::~MacOSGlobalShortcutBackend() {
                                      kTISNotifySelectedKeyboardInputSourceChanged, nullptr);
 
   teardownCarbon();
-  stopTapThread();
 
-  std::lock_guard lock(m_mutex);
   if (m_layoutData) {
     CFRelease(m_layoutData);
     m_layoutData = nullptr;
@@ -175,100 +152,16 @@ bool MacOSGlobalShortcutBackend::start() {
                                   kTISNotifySelectedKeyboardInputSourceChanged, nullptr,
                                   CFNotificationSuspensionBehaviorDeliverImmediately);
 
-  m_trusted = AXIsProcessTrusted();
-  if (m_trusted) {
-    startTapThread();
-  } else {
-    startCarbonHandler();
-  }
-
-  m_permissionTimer.setInterval(PERMISSION_POLL_INTERVAL_MS);
-  connect(&m_permissionTimer, &QTimer::timeout, this, &MacOSGlobalShortcutBackend::syncPermissionState);
-  m_permissionTimer.start();
+  startCarbonHandler();
 
   m_started = true;
   emit ready();
   return true;
 }
 
-void MacOSGlobalShortcutBackend::syncPermissionState() {
-  const bool trusted = AXIsProcessTrusted();
-
-  if (trusted == m_trusted) {
-    if (trusted) { ensureTapRunning(); }
-    return;
-  }
-
-  m_trusted = trusted;
-  if (trusted) {
-    unbindAll();
-    teardownCarbon();
-    startTapThread();
-  } else {
-    stopTapThread();
-    unbindAll();
-    startCarbonHandler();
-  }
-
-  emit ready();
-}
-
-// The tap gets its own run loop thread so a busy Qt main loop can't get it disabled by timeout.
-void MacOSGlobalShortcutBackend::startTapThread() {
-  if (m_thread.joinable()) { m_thread.join(); }
-  m_tapThreadDone = false;
-  m_thread = std::thread([this]() {
-    runTap();
-    m_tapThreadDone = true;
-  });
-}
-
-void MacOSGlobalShortcutBackend::stopTapThread() {
-  if (void *loop = m_runLoop.load()) { CFRunLoopStop(static_cast<CFRunLoopRef>(loop)); }
-  if (m_thread.joinable()) { m_thread.join(); }
-}
-
-void MacOSGlobalShortcutBackend::ensureTapRunning() {
-  if (!m_tapThreadDone) return;
-  startTapThread();
-}
-
-void MacOSGlobalShortcutBackend::runTap() {
-  const CGEventMask mask = CGEventMaskBit(kCGEventKeyDown);
-
-  CFMachPortRef tap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault,
-                                       mask, tapCallback, this);
-
-  if (!tap) {
-    qWarning()
-        << "MacOSGlobalShortcutBackend: failed to create event tap (accessibility permission missing?)";
-    return;
-  }
-
-  CFRunLoopSourceRef source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0);
-  CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopCommonModes);
-  CGEventTapEnable(tap, true);
-
-  m_tap = tap;
-  m_runLoop = CFRunLoopGetCurrent();
-
-  CFRunLoopRun();
-
-  m_runLoop = nullptr;
-  CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, kCFRunLoopCommonModes);
-  CFRelease(source);
-  CFRelease(tap);
-  m_tap = nullptr;
-}
-
-void MacOSGlobalShortcutBackend::reenableTap() {
-  if (m_tap) { CGEventTapEnable(static_cast<CFMachPortRef>(m_tap), true); }
-}
-
 void MacOSGlobalShortcutBackend::refreshLayout() {
   CFDataRef data = Keyboard::macos::copyCurrentLayoutData();
 
-  std::lock_guard lock(m_mutex);
   if (m_layoutData) { CFRelease(m_layoutData); }
   m_layoutData = data;
   m_kbdType = LMGetKbdType();
@@ -302,11 +195,8 @@ bool MacOSGlobalShortcutBackend::startCarbonHandler() {
 }
 
 void MacOSGlobalShortcutBackend::teardownCarbon() {
-  {
-    std::lock_guard lock(m_mutex);
-    for (auto &binding : m_bindings) {
-      unregisterCarbonHotKey(binding);
-    }
+  for (auto &binding : m_bindings) {
+    unregisterCarbonHotKey(binding);
   }
 
   if (m_hotKeyHandler) {
@@ -315,7 +205,6 @@ void MacOSGlobalShortcutBackend::teardownCarbon() {
   }
 }
 
-// requires m_mutex to be held
 std::optional<uint32_t> MacOSGlobalShortcutBackend::resolveCarbonKeycode(const Binding &binding) const {
   if (binding.keycode) { return binding.keycode; }
 
@@ -344,7 +233,6 @@ std::optional<uint32_t> MacOSGlobalShortcutBackend::resolveCarbonKeycode(const B
   return std::nullopt;
 }
 
-// requires m_mutex to be held
 std::expected<void, QString> MacOSGlobalShortcutBackend::registerCarbonHotKey(Binding &binding) {
   const auto keycode = resolveCarbonKeycode(binding);
   if (!keycode) { return std::unexpected(tr("unsupported or invalid trigger")); }
@@ -369,18 +257,12 @@ void MacOSGlobalShortcutBackend::unregisterCarbonHotKey(Binding &binding) {
 }
 
 void MacOSGlobalShortcutBackend::handleHotKey(uint32_t carbonId, quint64 timestamp) {
-  QString id;
+  const auto it = std::ranges::find_if(m_bindings, [&](const Binding &binding) {
+    return binding.carbonId == carbonId && binding.hotKeyRef != nullptr;
+  });
+  if (it == m_bindings.end()) { return; }
 
-  {
-    std::lock_guard lock(m_mutex);
-    const auto it = std::ranges::find_if(m_bindings, [&](const Binding &binding) {
-      return binding.carbonId == carbonId && binding.hotKeyRef != nullptr;
-    });
-    if (it == m_bindings.end()) { return; }
-    id = it->id;
-  }
-
-  emit shortcutActivated(id, timestamp);
+  emit shortcutActivated(it->id, timestamp);
 }
 
 std::expected<void, QString> MacOSGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request) {
@@ -396,16 +278,12 @@ std::expected<void, QString> MacOSGlobalShortcutBackend::bindShortcut(const Glob
     return std::unexpected(tr("unsupported or invalid trigger"));
   }
 
-  std::lock_guard lock(m_mutex);
-  if (m_hotKeyHandler) {
-    if (auto registered = registerCarbonHotKey(binding); !registered) { return registered; }
-  }
+  if (auto registered = registerCarbonHotKey(binding); !registered) { return registered; }
   m_bindings.emplace_back(std::move(binding));
   return {};
 }
 
 void MacOSGlobalShortcutBackend::unbindShortcut(const QString &id) {
-  std::lock_guard lock(m_mutex);
   for (auto &binding : m_bindings) {
     if (binding.id == id) { unregisterCarbonHotKey(binding); }
   }
@@ -413,65 +291,8 @@ void MacOSGlobalShortcutBackend::unbindShortcut(const QString &id) {
 }
 
 void MacOSGlobalShortcutBackend::unbindAll() {
-  std::lock_guard lock(m_mutex);
   for (auto &binding : m_bindings) {
     unregisterCarbonHotKey(binding);
   }
   m_bindings.clear();
-}
-
-bool MacOSGlobalShortcutBackend::handleKeyDown(uint32_t keycode, uint64_t rawFlags, bool autorepeat,
-                                               quint64 timestamp) {
-  const uint64_t flags = rawFlags & MODIFIER_MASK;
-
-  std::lock_guard lock(m_mutex);
-  if (m_bindings.empty()) { return false; }
-
-  const Binding *match = nullptr;
-  std::array<QString, 4> candidates;
-  bool translated = false;
-
-  for (const auto &binding : m_bindings) {
-    if (binding.flags != flags) { continue; }
-
-    if (binding.keycode) {
-      if (*binding.keycode == keycode) {
-        match = &binding;
-        break;
-      }
-      continue;
-    }
-
-    if (!translated) {
-      translated = true;
-      const bool shift = (flags & kCGEventFlagMaskShift) != 0;
-      const auto active = static_cast<CFDataRef>(m_layoutData);
-      const auto qwerty = static_cast<CFDataRef>(m_qwertyLayoutData);
-      const auto code = static_cast<uint16_t>(keycode);
-      candidates[0] = Keyboard::macos::translateKeycode(active, code, false, m_kbdType);
-      // shortcuts can hold a shifted char (e.g ':' recorded on layouts where it is Shift+';')
-      if (shift) { candidates[1] = Keyboard::macos::translateKeycode(active, code, true, m_kbdType); }
-      // QWERTY fallback keeps Latin shortcuts firing while a non-Latin layout is active
-      candidates[2] = Keyboard::macos::translateKeycode(qwerty, code, false, m_kbdType);
-      if (shift) { candidates[3] = Keyboard::macos::translateKeycode(qwerty, code, true, m_kbdType); }
-    }
-
-    const bool matches = std::ranges::any_of(candidates, [&](const QString &candidate) {
-      return !candidate.isEmpty() && binding.character == candidate;
-    });
-
-    if (matches) {
-      match = &binding;
-      break;
-    }
-  }
-
-  if (!match) { return false; }
-
-  if (!autorepeat) {
-    const QString id = match->id;
-    QMetaObject::invokeMethod(
-        this, [this, id, timestamp]() { emit shortcutActivated(id, timestamp); }, Qt::QueuedConnection);
-  }
-  return true;
 }
