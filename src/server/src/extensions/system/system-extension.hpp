@@ -2,7 +2,6 @@
 #include "command-database.hpp"
 #include "common/context.hpp"
 #include "qml/browse-apps-view-host.hpp"
-#include "set-default-terminal-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "qml/system-run-model.hpp"
 #include "qml/system-run-view-host.hpp"
@@ -12,9 +11,10 @@
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include <QCoreApplication>
+
 #ifndef Q_OS_WIN
 #include "xdgpp/desktop-entry/exec.hpp"
-#include "xdgpp/xdg-terminal-exec/xdg-terminals-list.hpp"
+#include "set-default-terminal-view-host.hpp"
 #endif
 
 namespace {
@@ -257,6 +257,7 @@ class ToggleMuteCommand : public BuiltinCallbackCommand {
   }
 };
 
+#ifdef Q_OS_LINUX
 class SetDefaultTerminal : public BuiltinViewCommand<SetDefaultTerminalViewHost> {
   Q_DECLARE_TR_FUNCTIONS(SetDefaultTerminal)
 
@@ -266,6 +267,8 @@ class SetDefaultTerminal : public BuiltinViewCommand<SetDefaultTerminalViewHost>
   std::vector<QString> keywords() const override { return {}; }
   ImageURL iconUrl() const override { return ImageURL::symbol("$").setBackgroundTint(VOLUME_COMMAND_TINT); }
 };
+#endif
+
 } // namespace
 
 class SystemExtension : public BuiltinCommandRepository {
