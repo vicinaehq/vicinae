@@ -203,7 +203,7 @@ Window {
                 height: _h
                 anchors.bottom: parent.bottom
                 radius: root.cornerRadius
-                color: Config.withAlpha(Theme.statusBarBackground, 0.78)
+                color: Config.withAlpha(Theme.statusBarBackground, 0.78 * Config.windowOpacity)
             }
 
             ViciDivider {
