@@ -40,7 +40,7 @@ Rectangle {
     border.width: root.bordered || root.showFocus ? 1 : 0
     border.color: {
         if (root.showFocus)
-            return Config.withAlpha(root.variant === "accent" ? Theme.listItemSelectionFg : Theme.accent, Config.windowOpacity);
+            return Config.withAlpha(root.variant === "accent" ? Theme.listItemSelectionFg : Theme.buttonFocusOutline, Config.windowOpacity);
         if (!root.bordered)
             return "transparent";
         if (root.variant === "secondary")

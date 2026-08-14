@@ -82,7 +82,7 @@ RowLayout {
                     radius: 4
                     color: "transparent"
                     border.width: 1
-                    border.color: Config.withAlpha(textDel.showError ? "#e53935" : textField.activeFocus ? Theme.accent : Theme.divider, Config.windowOpacity)
+                    border.color: Config.withAlpha(textDel.showError ? Theme.inputBorderError : textField.activeFocus ? Theme.inputBorderFocus : Theme.divider, Config.windowOpacity)
 
                     function forceActiveFocus() {
                         textField.forceActiveFocus();

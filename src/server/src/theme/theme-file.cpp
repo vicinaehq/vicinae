@@ -152,7 +152,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case ButtonPrimaryHoverForeground:
     return resolve(SemanticColor::ButtonPrimaryBackground);
   case SemanticColor::ButtonPrimaryFocusOutline:
-    return resolve(SemanticColor::Accent);
+    return resolve(SemanticColor::InputBorderFocus);
 
   case SemanticColor::ScrollBarBackground:
     return withAlphaF(resolve(SemanticColor::Foreground), 0.25);
@@ -202,7 +202,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::InputBorder:
     return resolve(SemanticColor::BackgroundBorder);
   case SemanticColor::InputBorderFocus:
-    return resolve(SemanticColor::Accent);
+    return mix(resolve(SemanticColor::InputBorder), resolve(SemanticColor::Foreground), 0.4f);
   case SemanticColor::InputBorderError:
     return resolve(SemanticColor::Red);
   case SemanticColor::TextPlaceholder:
