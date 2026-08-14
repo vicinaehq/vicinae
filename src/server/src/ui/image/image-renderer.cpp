@@ -42,98 +42,18 @@ QThreadPool &decodingPool() {
   return pool;
 }
 
-QImage renderBuiltinSvg(const QString &iconName, const QSize &size, const QColor &fg, const QColor &bg) {
+QImage renderBuiltinSvg(const QString &iconName, const QSize &size) {
   QString const iconPath = QStringLiteral(":icons/%1.svg").arg(iconName);
   QSvgRenderer renderer(iconPath);
   if (!renderer.isValid()) return {};
 
-  bool const hasBg = bg.isValid() && bg.alpha() > 0;
-  int const pad = hasBg ? 0 : AA_PAD;
-
-  // Theme tints are tuned for text on the app background, not as fills: their
-  // lightness varies per hue, which makes a row of tiles look uneven. Clamp
-  // every tile into one tonal band so the set reads as a family and always
-  // supports a light glyph.
-  QColor tile = bg;
-  if (hasBg) {
-    float h, s, l, a;
-    bg.getHslF(&h, &s, &l, &a);
-    if (h < 0.f) h = 0.f;
-    if (s > 0.05f) s = std::clamp(s, 0.55f, 0.8f);
-    l = std::clamp(l, 0.42f, 0.52f);
-    tile = QColor::fromHslF(h, s, l, a);
-  }
-
-  QImage canvas(size.width() + pad * 2, size.height() + pad * 2, QImage::Format_ARGB32_Premultiplied);
+  QImage canvas(size.width() + AA_PAD * 2, size.height() + AA_PAD * 2, QImage::Format_ARGB32_Premultiplied);
   canvas.fill(Qt::transparent);
   QPainter painter(&canvas);
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
-  QRectF const contentRect(pad, pad, size.width(), size.height());
-  int margin = 0;
-
-  if (hasBg) {
-    int const side = qMin(size.width(), size.height());
-    qreal const radius = side * 0.25;
-    margin = qRound(side * 0.19);
-
-    auto shifted = [](const QColor &c, float dh, float ds, float dl) {
-      float h, s, l, a;
-      c.getHslF(&h, &s, &l, &a);
-      if (h < 0.f) h = 0.f;
-      h = std::fmod(h + dh + 1.f, 1.f);
-      s = std::clamp(s + ds, 0.f, 1.f);
-      l = std::clamp(l + dl, 0.f, 1.f);
-      return QColor::fromHslF(h, s, l, a);
-    };
-
-    QLinearGradient gradient(contentRect.topLeft(), contentRect.bottomLeft());
-    gradient.setColorAt(0, shifted(tile, 0.025f, -0.03f, 0.10f));
-    gradient.setColorAt(1, shifted(tile, -0.015f, 0.06f, -0.05f));
-    painter.setBrush(gradient);
-    painter.setPen(Qt::NoPen);
-    painter.drawRoundedRect(contentRect, radius, radius);
-
-    qreal const strokeWidth = std::max(1.0, side / 32.0);
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(QColor(255, 255, 255, 30), strokeWidth));
-    qreal const inset = strokeWidth / 2.0;
-    painter.drawRoundedRect(contentRect.adjusted(inset, inset, -inset, -inset), radius - inset,
-                            radius - inset);
-  }
-
-  QRectF const iconRect =
-      contentRect.marginsRemoved({qreal(margin), qreal(margin), qreal(margin), qreal(margin)});
-
-  QImage svgImage(iconRect.size().toSize(), QImage::Format_ARGB32_Premultiplied);
-  svgImage.fill(Qt::transparent);
-  {
-    QPainter svgPainter(&svgImage);
-    svgPainter.setRenderHint(QPainter::Antialiasing, true);
-    svgPainter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-    renderer.setAspectRatioMode(Qt::KeepAspectRatio);
-    renderer.render(&svgPainter, svgImage.rect());
-
-    QColor fillColor = fg;
-    if (hasBg) fillColor = ContrastHelper::getTonalContrastColor(tile, 5, 0.1);
-
-    svgPainter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-    svgPainter.fillRect(svgImage.rect(), fillColor);
-  }
-
-  if (hasBg) {
-    QImage shadow(svgImage.size(), QImage::Format_ARGB32_Premultiplied);
-    shadow.fill(Qt::transparent);
-    QPainter shadowPainter(&shadow);
-    shadowPainter.drawImage(0, 0, svgImage);
-    shadowPainter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-    shadowPainter.fillRect(shadow.rect(), QColor(0, 0, 0, 70));
-    qreal const offset = qMin(size.width(), size.height()) * 0.035;
-    painter.drawImage(iconRect.translated(0, offset), shadow);
-  }
-
-  painter.drawImage(iconRect, svgImage);
+  renderer.setAspectRatioMode(Qt::KeepAspectRatio);
+  renderer.render(&painter, QRectF(AA_PAD, AA_PAD, size.width(), size.height()));
   return canvas;
 }
 
@@ -240,7 +160,7 @@ static void applyFillColor(QImage &image, const QColor &fg) {
   image = tinted;
 }
 
-QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg, const QColor &bg) {
+QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg) {
 #ifdef Q_OS_MACOS
   if (!fg.isValid()) {
     if (QImage native = renderMacFileIcon(path, size); !native.isNull()) { return native; }
@@ -268,7 +188,9 @@ QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg, 
                                   : QStringLiteral("blank-document");
   QColor const builtinFg =
       fg.isValid() ? fg : ThemeService::instance().theme().resolve(SemanticColor::Foreground);
-  return renderBuiltinSvg(builtinName, size, builtinFg, bg);
+  QImage builtin = renderBuiltinSvg(builtinName, size);
+  applyFillColor(builtin, builtinFg);
+  return builtin;
 }
 
 QImage decodeImageData(QIODevice *device, const QSize &size) {
@@ -341,9 +263,89 @@ void applySafetyMargins(QImage &image) {
   image = padded;
 }
 
-void applyPostTransforms(QImage &image, const QColor &fg, OmniPainter::ImageMaskType mask) {
+static bool hasBackdrop(const QColor &bg) { return bg.isValid() && bg.alpha() > 0; }
+
+QSize backdropContentSize(const QSize &size) {
+  int const margin = qRound(qMin(size.width(), size.height()) * 0.19);
+  return {std::max(1, size.width() - margin * 2), std::max(1, size.height() - margin * 2)};
+}
+
+// Theme tints are tuned for text on the app background, not as fills: their
+// lightness varies per hue, which makes a row of tiles look uneven. Clamp
+// every tile into one tonal band so the set reads as a family and always
+// supports a light glyph.
+static QColor clampTileTone(const QColor &bg) {
+  float h, s, l, a;
+  bg.getHslF(&h, &s, &l, &a);
+  if (h < 0.f) h = 0.f;
+  if (s > 0.05f) s = std::clamp(s, 0.55f, 0.8f);
+  l = std::clamp(l, 0.42f, 0.52f);
+  return QColor::fromHslF(h, s, l, a);
+}
+
+static void applyBackdrop(QImage &image, const QSize &size, const QColor &tile) {
+  QImage canvas(size, QImage::Format_ARGB32_Premultiplied);
+  canvas.fill(Qt::transparent);
+  QPainter painter(&canvas);
+  painter.setRenderHint(QPainter::Antialiasing, true);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+  QRectF const tileRect(0, 0, size.width(), size.height());
+  int const side = qMin(size.width(), size.height());
+  qreal const radius = side * 0.25;
+
+  auto shifted = [](const QColor &c, float dh, float ds, float dl) {
+    float h, s, l, a;
+    c.getHslF(&h, &s, &l, &a);
+    if (h < 0.f) h = 0.f;
+    h = std::fmod(h + dh + 1.f, 1.f);
+    s = std::clamp(s + ds, 0.f, 1.f);
+    l = std::clamp(l + dl, 0.f, 1.f);
+    return QColor::fromHslF(h, s, l, a);
+  };
+
+  QLinearGradient gradient(tileRect.topLeft(), tileRect.bottomLeft());
+  gradient.setColorAt(0, shifted(tile, 0.025f, -0.03f, 0.10f));
+  gradient.setColorAt(1, shifted(tile, -0.015f, 0.06f, -0.05f));
+  painter.setBrush(gradient);
+  painter.setPen(Qt::NoPen);
+  painter.drawRoundedRect(tileRect, radius, radius);
+
+  qreal const strokeWidth = std::max(1.0, side / 32.0);
+  painter.setBrush(Qt::NoBrush);
+  painter.setPen(QPen(QColor(255, 255, 255, 30), strokeWidth));
+  qreal const inset = strokeWidth / 2.0;
+  painter.drawRoundedRect(tileRect.adjusted(inset, inset, -inset, -inset), radius - inset, radius - inset);
+
+  QRectF const dest((size.width() - image.width()) / 2.0, (size.height() - image.height()) / 2.0,
+                    image.width(), image.height());
+
+  QImage shadow(image.size(), QImage::Format_ARGB32_Premultiplied);
+  shadow.fill(Qt::transparent);
+  {
+    QPainter shadowPainter(&shadow);
+    shadowPainter.drawImage(0, 0, image);
+    shadowPainter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    shadowPainter.fillRect(shadow.rect(), QColor(0, 0, 0, 70));
+  }
+  painter.drawImage(dest.translated(0, side * 0.035), shadow);
+  painter.drawImage(dest, image);
+  image = canvas;
+}
+
+void applyPostTransforms(QImage &image, const QColor &fg, const QColor &bg, const QSize &size,
+                         OmniPainter::ImageMaskType mask) {
   if (image.isNull()) return;
-  if (fg.isValid()) applyFillColor(image, fg);
+  bool const hasBg = hasBackdrop(bg) && size.isValid();
+  QColor const tile = hasBg ? clampTileTone(bg) : QColor();
+
+  // On a tile, tintable content gets a contrast-derived fill instead of the
+  // requested one; untinted content (emoji, raster) keeps its own colors.
+  QColor fill = fg;
+  if (hasBg && fg.isValid()) fill = ContrastHelper::getTonalContrastColor(tile, 5, 0.1);
+  if (fill.isValid()) applyFillColor(image, fill);
+  if (hasBg) applyBackdrop(image, size, tile);
+
   switch (mask) {
   case OmniPainter::CircleMask:
     applyCircleMask(image);
@@ -356,7 +358,7 @@ void applyPostTransforms(QImage &image, const QColor &fg, OmniPainter::ImageMask
   }
 }
 
-QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QColor &fg,
+QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QColor &fg, const QColor &bg,
                               OmniPainter::ImageMaskType mask) {
   auto promise = std::make_shared<QPromise<QImage>>();
   auto future = promise->future();
@@ -364,7 +366,7 @@ QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QC
 
   QMetaObject::invokeMethod(
       qApp,
-      [promise, domain, size, fg, mask]() {
+      [promise, domain, size, fg, bg, mask]() {
         auto *svc = FaviconService::instance();
         if (!svc) {
           promise->addResult(QImage{});
@@ -373,18 +375,22 @@ QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QC
         }
         auto faviconFuture = svc->makeRequest(domain);
         auto *watcher = new QFutureWatcher<FaviconService::FaviconResponse>;
-        QObject::connect(watcher, &QFutureWatcherBase::finished, qApp, [promise, watcher, size, fg, mask]() {
-          auto result = watcher->result();
-          if (result) {
-            QImage img = result.value().scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage();
-            applyPostTransforms(img, fg, mask);
-            promise->addResult(std::move(img));
-          } else {
-            promise->addResult(QImage{});
-          }
-          promise->finish();
-          watcher->deleteLater();
-        });
+        QObject::connect(
+            watcher, &QFutureWatcherBase::finished, qApp, [promise, watcher, size, fg, bg, mask]() {
+              auto result = watcher->result();
+              if (result) {
+                QSize const contentSize = hasBackdrop(bg) ? backdropContentSize(size) : size;
+                QImage img = result.value()
+                                 .scaled(contentSize, Qt::KeepAspectRatio, Qt::SmoothTransformation)
+                                 .toImage();
+                applyPostTransforms(img, fg, bg, size, mask);
+                promise->addResult(std::move(img));
+              } else {
+                promise->addResult(QImage{});
+              }
+              promise->finish();
+              watcher->deleteLater();
+            });
         watcher->setFuture(faviconFuture);
       },
       Qt::QueuedConnection);
@@ -392,14 +398,15 @@ QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QC
   return future;
 }
 
-QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColor &fg,
+QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColor &fg, const QColor &bg,
                           OmniPainter::ImageMaskType mask) {
+  QSize const contentSize = hasBackdrop(bg) ? backdropContentSize(size) : size;
   QImage img;
 
   if (data.trimmed().startsWith("<?xml") || data.trimmed().startsWith("<svg")) {
     QSvgRenderer renderer(data);
     if (renderer.isValid()) {
-      img = QImage(size, QImage::Format_ARGB32_Premultiplied);
+      img = QImage(contentSize, QImage::Format_ARGB32_Premultiplied);
       img.fill(Qt::transparent);
       QPainter painter(&img);
       painter.setRenderHint(QPainter::Antialiasing, true);
@@ -408,10 +415,10 @@ QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColo
       renderer.render(&painter, img.rect());
     }
   } else {
-    img = decodeImageData(data, size);
+    img = decodeImageData(data, contentSize);
   }
 
-  applyPostTransforms(img, fg, mask);
+  applyPostTransforms(img, fg, bg, size, mask);
   return img;
 }
 
