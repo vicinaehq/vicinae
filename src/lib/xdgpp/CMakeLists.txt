@@ -53,7 +53,7 @@ if (BUILD_TESTS)
 	set(FIXTURE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/fixtures)
 	find_package(Catch2 3 REQUIRED)
 	add_compile_options(-g3)
-	add_executable(${TEST_TARGET} tests/main.cpp tests/entry.cpp tests/env.cpp tests/locale.cpp tests/mime.cpp tests/file.cpp tests/special.cpp)
+	add_executable(${TEST_TARGET} tests/main.cpp tests/entry.cpp tests/env.cpp tests/locale.cpp tests/mime.cpp tests/file.cpp tests/special.cpp tests/xdg-terminal-exec.cpp)
 	target_compile_definitions(${TEST_TARGET} PRIVATE
 		XDGPP_FIXTURE_DIR="${FIXTURE_DIR}"
 	)

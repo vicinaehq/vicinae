@@ -5,15 +5,19 @@
 #include "single-view-command-context.hpp"
 #include "qml/system-run-model.hpp"
 #include "qml/system-run-view-host.hpp"
+#include "theme/colors.hpp"
 #include "utils.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include <QCoreApplication>
-#include <sstream>
+
 #ifndef Q_OS_WIN
 #include "xdgpp/desktop-entry/exec.hpp"
+#include "set-default-terminal-view-host.hpp"
 #endif
+
+namespace {
 
 class SystemRunCommand : public BuiltinCallbackCommand {
   Q_DECLARE_TR_FUNCTIONS(SystemRunCommand)
@@ -253,6 +257,20 @@ class ToggleMuteCommand : public BuiltinCallbackCommand {
   }
 };
 
+#ifdef Q_OS_LINUX
+class SetDefaultTerminal : public BuiltinViewCommand<SetDefaultTerminalViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(SetDefaultTerminal)
+
+  QString id() const override { return "set-default-terminal"; }
+  QString name() const override { return tr("Set Default Terminal"); }
+  QString description() const override { return tr("Change the default system terminal"); }
+  std::vector<QString> keywords() const override { return {}; }
+  ImageURL iconUrl() const override { return ImageURL::symbol("$").setBackgroundTint(VOLUME_COMMAND_TINT); }
+};
+#endif
+
+} // namespace
+
 class SystemExtension : public BuiltinCommandRepository {
   Q_DECLARE_TR_FUNCTIONS(SystemExtension)
 
@@ -275,6 +293,11 @@ public:
     registerCommand<SetVolumeCommand<25, BuiltinIcon::SpeakerLow>>();
     registerCommand<SetVolumeCommand<0, BuiltinIcon::SpeakerOff>>();
     registerCommand<ToggleMuteCommand>();
+
+#ifdef Q_OS_LINUX
+    // set default terminal using xdg-terminal-exec
+    registerCommand<SetDefaultTerminal>();
+#endif
   }
 
   std::vector<Preference> preferences() const override { return {}; }
