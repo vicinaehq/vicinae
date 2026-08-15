@@ -1,5 +1,6 @@
 #pragma once
 #include "common/entrypoint.hpp"
+#include "completion-model.hpp"
 #include "preference.hpp"
 #include "bridge-view.hpp"
 #include <QAbstractListModel>
@@ -21,7 +22,8 @@ public:
     DescriptionRole,
     PlaceholderRole,
     ValueRole,
-    OptionsRole,
+    OptionsModelRole,
+    CurrentOptionRole,
     ReadOnlyRole,
     MultipleRole,
     CanChooseFilesRole,
@@ -58,7 +60,7 @@ private:
     QString description;
     QString placeholder;
     QVariant value;
-    QVariantList options;
+    CompletionModel *optionsModel = nullptr;
     bool multiple = false;
     bool canChooseFiles = true;
     bool canChooseDirectories = false;

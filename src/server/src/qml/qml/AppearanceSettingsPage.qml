@@ -40,7 +40,7 @@ Flickable {
                 label: qsTr("Theme")
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.themeItems
+                    model: root.model.themeModel
                     currentItem: root.model.currentTheme
                     onActivated: item => root.model.selectTheme(item.id)
                 }
@@ -50,7 +50,7 @@ Flickable {
                 label: qsTr("Font")
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.fontItems
+                    model: root.model.fontModel
                     currentItem: root.model.currentFont
                     onActivated: item => root.model.selectFont(item.id)
                 }
@@ -80,7 +80,7 @@ Flickable {
                 showSeparator: false
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.iconThemeItems
+                    model: root.model.iconThemeModel
                     currentItem: root.model.currentIconTheme
                     onActivated: item => root.model.selectIconTheme(item.id)
                 }
@@ -100,7 +100,7 @@ Flickable {
                 description: qsTr("Background material applied to the launcher window. Lower the window opacity to see it.")
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.windowMaterialItems
+                    model: root.model.windowMaterialModel
                     currentItem: root.model.currentWindowMaterial
                     onActivated: item => root.model.selectWindowMaterial(item.id)
                 }

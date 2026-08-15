@@ -5,7 +5,7 @@ SearchableDropdown {
     compact: true
     minimumWidth: 100
 
-    items: launcher.commandViewHost ? launcher.commandViewHost.dropdownItems : []
+    model: launcher.commandViewHost ? launcher.commandViewHost.dropdownModel : null
     currentItem: launcher.commandViewHost ? launcher.commandViewHost.dropdownCurrentItem : null
     placeholder: launcher.commandViewHost ? launcher.commandViewHost.dropdownPlaceholder : ""
 

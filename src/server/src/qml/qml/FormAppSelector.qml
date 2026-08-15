@@ -7,19 +7,15 @@ ColumnLayout {
     spacing: 6
 
     property var model: []
-    property var sections: []
+    property CompletionModel appsModel: null
     property bool filled: false
 
     signal changed(var apps)
 
     function _appInfo(wmClass) {
-        for (let s = 0; s < sections.length; s++) {
-            const items = sections[s].items;
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].id === wmClass)
-                    return items[i];
-            }
-        }
+        const info = appsModel ? appsModel.itemDataById(wmClass) : null;
+        if (info && info.id !== undefined)
+            return info;
         return {
             displayName: wmClass,
             iconSource: ""
@@ -118,7 +114,7 @@ ColumnLayout {
 
     SearchableDropdown {
         placeholder: qsTr("+ Restrict to app…")
-        items: root.sections
+        model: root.appsModel
         currentItem: null
         filled: root.filled
         onActivated: item => root.add(item.id)

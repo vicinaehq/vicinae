@@ -1,5 +1,6 @@
 #include "create-extension-view-host.hpp"
 #include "create-extension-success-view-host.hpp"
+#include "view-utils.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
@@ -25,16 +26,9 @@ void CreateExtensionViewHost::initialize() {
   ExtensionBoilerplateGenerator const gen;
   QVariantList items;
   for (const auto &tmpl : gen.commandBoilerplates()) {
-    items.append(QVariantMap{
-        {QStringLiteral("id"), tmpl.resource},
-        {QStringLiteral("displayName"), tmpl.name},
-    });
+    items.append(qml::makeDropdownItem(tmpl.resource, tmpl.name));
   }
-
-  QVariantMap section;
-  section[QStringLiteral("title")] = QString();
-  section[QStringLiteral("items")] = items;
-  m_templateItems.append(section);
+  m_templateModel.setItems(items);
 
   if (!items.isEmpty()) { m_selectedTemplate = items.first().toMap(); }
 

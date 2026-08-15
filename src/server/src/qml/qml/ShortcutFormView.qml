@@ -50,7 +50,7 @@ Item {
             error: root.host.appError
 
             SearchableDropdown {
-                items: root.host.appSelectorModel.items
+                model: root.host.appSelectorModel.model
                 currentItem: root.host.selectedApp
                 hasError: appField.error !== ""
                 onActivated: item => root.host.selectApp(item)
@@ -63,7 +63,7 @@ Item {
             error: root.host.iconError
 
             SearchableDropdown {
-                items: root.host.iconItems
+                model: root.host.iconModel
                 currentItem: root.host.selectedIcon
                 hasError: iconField.error !== ""
                 onActivated: item => root.host.selectIcon(item)

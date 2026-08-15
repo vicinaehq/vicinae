@@ -17,7 +17,8 @@ QUrl ExtensionViewHost::qmlComponentUrl() const {
 }
 
 QUrl ExtensionViewHost::qmlSearchAccessoryUrl() const {
-  if (!m_dropdownItems.isEmpty()) return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionDropdownAccessory.qml"));
+  if (m_dropdownModel.rowCount() > 0)
+    return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionDropdownAccessory.qml"));
   if (!m_linkAccessoryText.isEmpty()) return QUrl(QStringLiteral("qrc:/Vicinae/FormLinkAccessory.qml"));
   return {};
 }
@@ -376,11 +377,11 @@ void ExtensionViewHost::renderForm(const FormModel &model) {
 }
 
 void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
-  bool const hadDropdown = !m_dropdownItems.isEmpty();
+  bool const hadDropdown = m_dropdownModel.rowCount() > 0;
 
   if (!dropdown) {
     if (hadDropdown) {
-      m_dropdownItems.clear();
+      m_dropdownModel.setSections({});
       m_dropdownCurrentItem.clear();
       m_dropdownPlaceholder.clear();
       m_dropdownOnChange.reset();
@@ -393,7 +394,7 @@ void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
   m_dropdownOnChange = dropdown->onChange;
   m_dropdownPlaceholder = dropdown->placeholder ? QString::fromStdString(*dropdown->placeholder) : QString();
 
-  if (dropdown->dirty) { m_dropdownItems = qml::convertDropdownChildren(dropdown->children); }
+  if (dropdown->dirty) { m_dropdownModel.setSections(qml::convertDropdownChildren(dropdown->children)); }
 
   QString resolvedValue;
   if (dropdown->value) {
@@ -409,23 +410,11 @@ void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
 
   m_dropdownValue = resolvedValue;
 
-  QVariant newCurrentItem;
-  for (const auto &section : m_dropdownItems) {
-    auto sectionMap = section.toMap();
-    auto items = sectionMap["items"].toList();
-    for (const auto &item : items) {
-      auto itemMap = item.toMap();
-      if (itemMap["id"].toString() == resolvedValue) {
-        newCurrentItem = item;
-        break;
-      }
-    }
-    if (newCurrentItem.isValid()) break;
-  }
-  m_dropdownCurrentItem = newCurrentItem;
+  auto newCurrentItem = m_dropdownModel.itemDataById(resolvedValue);
+  m_dropdownCurrentItem = newCurrentItem.isEmpty() ? QVariant{} : QVariant(newCurrentItem);
 
   emit dropdownChanged();
-  if (hadDropdown != !m_dropdownItems.isEmpty()) { emit searchAccessoryUrlChanged(); }
+  if (hadDropdown != (m_dropdownModel.rowCount() > 0)) { emit searchAccessoryUrlChanged(); }
 
   if (!hadDropdown && !resolvedValue.isEmpty() && m_dropdownOnChange) {
     notifyExtension(QString::fromStdString(*m_dropdownOnChange), {resolvedValue});
@@ -435,19 +424,12 @@ void ExtensionViewHost::updateDropdown(const DropdownModel *dropdown) {
 void ExtensionViewHost::setDropdownValue(const QString &value) {
   m_dropdownValue = value;
 
-  for (const auto &section : m_dropdownItems) {
-    auto sectionMap = section.toMap();
-    auto items = sectionMap["items"].toList();
-    for (const auto &item : items) {
-      auto itemMap = item.toMap();
-      if (itemMap["id"].toString() == value) {
-        m_dropdownCurrentItem = item;
-        emit dropdownChanged();
-        if (m_dropdownOnChange) { notifyExtension(QString::fromStdString(*m_dropdownOnChange), {value}); }
-        return;
-      }
-    }
-  }
+  auto item = m_dropdownModel.itemDataById(value);
+  if (item.isEmpty()) return;
+
+  m_dropdownCurrentItem = item;
+  emit dropdownChanged();
+  if (m_dropdownOnChange) { notifyExtension(QString::fromStdString(*m_dropdownOnChange), {value}); }
 }
 
 void ExtensionViewHost::notifyExtension(const QString &handler, const QJsonArray &args) {

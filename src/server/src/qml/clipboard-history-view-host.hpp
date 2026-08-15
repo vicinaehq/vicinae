@@ -1,6 +1,7 @@
 #pragma once
 #include "clipboard-history-model.hpp"
 #include "bridge-view.hpp"
+#include "completion-model.hpp"
 #include "section-list-model.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "view-utils.hpp"
@@ -15,6 +16,7 @@ class ClipboardHistoryViewHost : public ViewHostBase {
   Q_PROPERTY(QString clipboardStatusText READ clipboardStatusText NOTIFY clipboardStatusChanged)
   Q_PROPERTY(QString clipboardStatusIcon READ clipboardStatusIcon NOTIFY clipboardStatusChanged)
   Q_PROPERTY(bool canToggleMonitoring READ canToggleMonitoring CONSTANT)
+  Q_PROPERTY(CompletionModel *kindFilterModel READ kindFilterModel CONSTANT)
   Q_PROPERTY(int currentKindFilter READ currentKindFilter NOTIFY currentKindFilterChanged)
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(bool hasDetailError READ hasDetailError NOTIFY detailChanged)
@@ -44,6 +46,7 @@ public:
   Q_INVOKABLE void setKindFilter(int kind);
 
   QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
+  CompletionModel *kindFilterModel() { return &m_kindFilterModel; }
   QString itemCountText() const { return m_itemCountText; }
   QString clipboardStatusText() const { return m_clipboardStatusText; }
   QString clipboardStatusIcon() const { return m_clipboardStatusIcon; }
@@ -76,6 +79,7 @@ private:
   std::optional<QString> getSavedDropdownFilter();
 
   SectionListModel m_model{this};
+  CompletionModel m_kindFilterModel{this};
   ClipboardHistorySection m_section;
   ClipboardHistoryController *m_controller = nullptr;
   ClipboardService *m_clipman = nullptr;

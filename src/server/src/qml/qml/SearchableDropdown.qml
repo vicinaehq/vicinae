@@ -9,6 +9,7 @@ Item {
     activeFocusOnTab: !compact && !readOnly
 
     property var items: []
+    property CompletionModel model: null
     property var currentItem: null
     signal activated(var item)
     signal popupClosed
@@ -117,6 +118,7 @@ Item {
         width: Math.max(compact ? 200 : 250, root.width)
         focus: true
         sections: root.items
+        model: root.model
         showFilter: true
         currentItemId: root.currentItem ? root.currentItem.id : ""
 

@@ -5,24 +5,13 @@ SearchableDropdown {
     compact: true
     minimumWidth: 100
 
-    readonly property var _options: [qsTr("All"), qsTr("Text"), qsTr("Images"), qsTr("Links"), qsTr("Files")]
-
-    items: [
-        {
-            title: "",
-            items: _options.map((name, i) => ({
-                        id: i.toString(),
-                        displayName: name
-                    }))
-        }
-    ]
+    model: launcher.commandViewHost ? launcher.commandViewHost.kindFilterModel : null
 
     currentItem: {
-        var idx = launcher.commandViewHost ? launcher.commandViewHost.currentKindFilter : 0;
-        return {
-            id: idx?.toString() ?? 'unknown',
-            displayName: _options[idx]
-        };
+        const host = launcher.commandViewHost;
+        if (!host)
+            return null;
+        return host.kindFilterModel.itemDataById(host.currentKindFilter.toString());
     }
 
     onActivated: item => {

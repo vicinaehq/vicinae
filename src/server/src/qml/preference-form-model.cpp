@@ -1,5 +1,6 @@
 #include "preference-form-model.hpp"
 
+#include "view-utils.hpp"
 #include <QJSValue>
 #include <utility>
 #include "service-registry.hpp"
@@ -37,8 +38,10 @@ QVariant PreferenceFormModel::data(const QModelIndex &index, int role) const {
     return f.placeholder;
   case ValueRole:
     return f.value;
-  case OptionsRole:
-    return f.options;
+  case OptionsModelRole:
+    return QVariant::fromValue(static_cast<QObject *>(f.optionsModel));
+  case CurrentOptionRole:
+    return currentOption(f);
   case ReadOnlyRole:
     return f.readOnly;
   case MultipleRole:
@@ -62,7 +65,8 @@ QHash<int, QByteArray> PreferenceFormModel::roleNames() const {
           {DescriptionRole, "description"},
           {PlaceholderRole, "placeholder"},
           {ValueRole, "value"},
-          {OptionsRole, "options"},
+          {OptionsModelRole, "optionsModel"},
+          {CurrentOptionRole, "currentOption"},
           {ReadOnlyRole, "readOnly"},
           {MultipleRole, "multiple"},
           {CanChooseFilesRole, "canChooseFiles"},
@@ -97,10 +101,9 @@ static QVariantList dropdownOptions(const Preference &p) {
   if (auto *dd = std::get_if<Preference::DropdownData>(&d)) {
     QVariantList items;
     for (const auto &opt : dd->options) {
-      items.append(
-          QVariantMap{{QStringLiteral("id"), opt.value}, {QStringLiteral("displayName"), opt.title}});
+      items.append(qml::makeDropdownItem(opt.value, opt.title));
     }
-    return {QVariantMap{{QStringLiteral("title"), QString()}, {QStringLiteral("items"), items}}};
+    return items;
   }
   return {};
 }
@@ -142,34 +145,55 @@ static QString checkboxLabel(const Preference &p) {
   return {};
 }
 
+QVariant PreferenceFormModel::currentOption(const Field &f) {
+  if (!f.optionsModel) return {};
+  auto option = f.optionsModel->itemDataById(f.value.toString());
+  return option.isEmpty() ? QVariant{} : QVariant(option);
+}
+
+void PreferenceFormModel::clearFields() {
+  for (const auto &f : m_fields) {
+    if (f.optionsModel) f.optionsModel->deleteLater();
+  }
+  m_fields.clear();
+}
+
+PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pref) {
+  Field f;
+  f.type = preferenceType(pref);
+  f.id = pref.name();
+  f.label = pref.title();
+  f.checkboxLabel = checkboxLabel(pref);
+  f.description = pref.description();
+  f.placeholder = pref.placeholder();
+  f.readOnly = pref.isReadOnly();
+
+  if (auto options = dropdownOptions(pref); !options.isEmpty()) {
+    f.optionsModel = new CompletionModel(this);
+    f.optionsModel->setItems(options);
+  }
+
+  applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);
+
+  QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
+  if (isFilePickerType(pref)) raw = normalizeFilePickerValue(raw);
+  f.value = raw.toVariant();
+
+  return f;
+}
+
 void PreferenceFormModel::load(const EntrypointId &id, const std::vector<Preference> &preferences) {
   if (m_saveTimer.isActive()) save();
   beginResetModel();
   m_itemId = id;
   m_isProvider = false;
-  m_fields.clear();
+  clearFields();
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   m_values = manager->getItemPreferenceValues(id);
 
   for (const auto &pref : preferences) {
-    Field f;
-    f.type = preferenceType(pref);
-    f.id = pref.name();
-    f.label = pref.title();
-    f.checkboxLabel = checkboxLabel(pref);
-    f.description = pref.description();
-    f.placeholder = pref.placeholder();
-    f.readOnly = pref.isReadOnly();
-    f.options = dropdownOptions(pref);
-
-    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);
-
-    QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
-    if (isFilePickerType(pref)) raw = normalizeFilePickerValue(raw);
-    f.value = raw.toVariant();
-
-    m_fields.push_back(std::move(f));
+    m_fields.push_back(createField(pref));
   }
   endResetModel();
 }
@@ -180,29 +204,13 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
   beginResetModel();
   m_providerId = providerId;
   m_isProvider = true;
-  m_fields.clear();
+  clearFields();
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   m_values = manager->getProviderPreferenceValues(providerId);
 
   for (const auto &pref : preferences) {
-    Field f;
-    f.type = preferenceType(pref);
-    f.id = pref.name();
-    f.label = pref.title();
-    f.checkboxLabel = checkboxLabel(pref);
-    f.description = pref.description();
-    f.placeholder = pref.placeholder();
-    f.readOnly = pref.isReadOnly();
-    f.options = dropdownOptions(pref);
-
-    applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);
-
-    QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
-    if (isFilePickerType(pref)) raw = normalizeFilePickerValue(raw);
-    f.value = raw.toVariant();
-
-    m_fields.push_back(std::move(f));
+    m_fields.push_back(createField(pref));
   }
   endResetModel();
 }
@@ -214,7 +222,7 @@ void PreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   m_fields[row].value = resolved;
   m_values[m_fields[row].id] = QJsonValue::fromVariant(resolved);
   auto idx = index(row);
-  emit dataChanged(idx, idx, {ValueRole});
+  emit dataChanged(idx, idx, {ValueRole, CurrentOptionRole});
   m_saveTimer.start();
 }
 

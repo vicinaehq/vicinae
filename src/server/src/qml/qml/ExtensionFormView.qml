@@ -68,6 +68,8 @@ Item {
                 required property var value
                 required property bool autoFocus
                 required property var fieldData
+                required property var optionsModel
+                required property var currentOption
 
                 readonly property bool isField: type !== "separator" && type !== "description"
 
@@ -233,26 +235,12 @@ Item {
             }
 
             readonly property var _fd: parent.fieldData || ({})
-            readonly property var _items: _fd.items || []
-
-            function _findCurrentItem(items, value) {
-                for (var s = 0; s < items.length; s++) {
-                    var section = items[s];
-                    if (!section || !section.items)
-                        continue;
-                    for (var i = 0; i < section.items.length; i++) {
-                        if (section.items[i].id === value)
-                            return section.items[i];
-                    }
-                }
-                return null;
-            }
 
             SearchableDropdown {
                 id: dropdown
-                items: field._items
+                model: field.parent.optionsModel
                 hasError: field.error !== ""
-                currentItem: field._findCurrentItem(field._items, field.parent.value)
+                currentItem: field.parent.currentOption
                 placeholder: field._fd.placeholder || field.parent.placeholder || ""
                 onActivated: item => {
                     root.formModel.setFieldValue(field.parent.index, item.id);

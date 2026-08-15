@@ -224,7 +224,7 @@ Window {
 
                                 SearchableDropdown {
                                     width: parent.width
-                                    items: onboarding.generalModel.themeItems
+                                    model: onboarding.generalModel.themeModel
                                     currentItem: onboarding.generalModel.currentTheme
                                     onActivated: item => onboarding.generalModel.selectTheme(item.id)
                                 }

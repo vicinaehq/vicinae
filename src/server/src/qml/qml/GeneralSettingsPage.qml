@@ -92,7 +92,7 @@ Flickable {
                 showSeparator: false
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.languageItems
+                    model: root.model.languageModel
                     currentItem: root.model.currentLanguage
                     onActivated: item => root.model.selectLanguage(item.id)
                 }

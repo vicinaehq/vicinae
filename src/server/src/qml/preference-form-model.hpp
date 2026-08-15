@@ -1,4 +1,5 @@
 #pragma once
+#include "completion-model.hpp"
 #include "preference.hpp"
 #include "common/entrypoint.hpp"
 #include <QAbstractListModel>
@@ -18,7 +19,8 @@ public:
     DescriptionRole,
     PlaceholderRole,
     ValueRole,
-    OptionsRole,
+    OptionsModelRole,
+    CurrentOptionRole,
     ReadOnlyRole,
     MultipleRole,
     CanChooseFilesRole,
@@ -49,13 +51,17 @@ private:
     QString description;
     QString placeholder;
     QVariant value;
-    QVariantList options;
+    CompletionModel *optionsModel = nullptr;
     bool readOnly = false;
     bool multiple = false;
     bool canChooseFiles = true;
     bool canChooseDirectories = false;
     QStringList lockedPaths;
   };
+
+  Field createField(const Preference &pref);
+  void clearFields();
+  static QVariant currentOption(const Field &f);
 
   std::vector<Field> m_fields;
   QJsonObject m_values;

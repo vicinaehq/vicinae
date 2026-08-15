@@ -1,4 +1,5 @@
 #pragma once
+#include "completion-model.hpp"
 #include "list-view-host.hpp"
 #include "search-files-model.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
@@ -16,7 +17,7 @@ class SearchFilesViewHost : public ListViewHost {
   Q_PROPERTY(QString detailLastModified READ detailLastModified NOTIFY detailChanged)
   Q_PROPERTY(QString detailImageSource READ detailImageSource NOTIFY detailChanged)
   Q_PROPERTY(QString detailTextContent READ detailTextContent NOTIFY detailChanged)
-  Q_PROPERTY(QStringList categoryFilterOptions READ categoryFilterOptions CONSTANT)
+  Q_PROPERTY(CompletionModel *categoryFilterModel READ categoryFilterModel CONSTANT)
   Q_PROPERTY(int currentCategoryFilter READ currentCategoryFilter NOTIFY currentCategoryFilterChanged)
 
 signals:
@@ -38,12 +39,13 @@ public:
   QString detailLastModified() const { return m_detailLastModified; }
   QString detailImageSource() const { return m_detailImageSource; }
   QString detailTextContent() const { return m_detailTextContent; }
-  QStringList categoryFilterOptions() const;
+  CompletionModel *categoryFilterModel() { return &m_categoryFilterModel; }
   int currentCategoryFilter() const { return m_currentCategoryFilter; }
 
   Q_INVOKABLE void setCategoryFilter(int index);
 
 private:
+  QStringList categoryFilterOptions() const;
   void renderRecentFiles();
   void handleDebounce();
   void handleSearchResults();
@@ -70,5 +72,6 @@ private:
   QString m_detailLastModified;
   QString m_detailImageSource;
   QString m_detailTextContent;
+  CompletionModel m_categoryFilterModel{this};
   int m_currentCategoryFilter = 0;
 };

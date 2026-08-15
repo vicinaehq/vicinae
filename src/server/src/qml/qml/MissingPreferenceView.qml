@@ -59,7 +59,8 @@ Item {
                 required property string description
                 required property string placeholder
                 required property var value
-                required property var options
+                required property var optionsModel
+                required property var currentOption
                 required property bool readOnly
                 required property bool multiple
                 required property bool canChooseFiles
@@ -138,22 +139,9 @@ Item {
             label: parent.label
             info: parent.description
 
-            function _findCurrentItem(items, val) {
-                for (var s = 0; s < items.length; s++) {
-                    var section = items[s];
-                    if (!section || !section.items)
-                        continue;
-                    for (var i = 0; i < section.items.length; i++) {
-                        if (section.items[i].id === val)
-                            return section.items[i];
-                    }
-                }
-                return null;
-            }
-
             SearchableDropdown {
-                items: field.parent.options || []
-                currentItem: field._findCurrentItem(field.parent.options || [], field.parent.value)
+                model: field.parent.optionsModel
+                currentItem: field.parent.currentOption
                 onActivated: item => root.host.prefModel.setFieldValue(field.parent.index, item.id)
             }
         }

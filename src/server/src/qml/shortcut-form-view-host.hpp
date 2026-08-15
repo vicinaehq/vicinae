@@ -1,6 +1,7 @@
 #pragma once
 #include "app-selector-model.hpp"
 #include "bridge-view.hpp"
+#include "completion-model.hpp"
 #include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
@@ -25,7 +26,7 @@ public:
   Q_PROPERTY(QString iconError READ iconError NOTIFY errorsChanged)
 
   Q_PROPERTY(AppSelectorModel *appSelectorModel READ appSelectorModel CONSTANT)
-  Q_PROPERTY(QVariantList iconItems READ iconItems NOTIFY iconItemsChanged)
+  Q_PROPERTY(CompletionModel *iconModel READ iconModel CONSTANT)
   Q_PROPERTY(QVariantList linkCompletions READ linkCompletions CONSTANT)
 
   ShortcutFormViewHost();
@@ -45,7 +46,7 @@ public:
   QString iconError() const { return m_iconError; }
 
   AppSelectorModel *appSelectorModel() const { return m_appSelectorModel; }
-  QVariantList iconItems() const { return m_iconItems; }
+  CompletionModel *iconModel() { return &m_iconModel; }
   QVariantList linkCompletions() const { return m_linkCompletions; }
 
   void setName(const QString &v) {
@@ -72,7 +73,6 @@ public:
 signals:
   void formChanged();
   void errorsChanged();
-  void iconItemsChanged();
 
 private:
   void buildIconItems();
@@ -86,6 +86,7 @@ private:
 
   QString m_name;
   QString m_link;
+  QString m_lastDetectedLink;
   QVariantMap m_selectedApp;
   QVariantMap m_selectedIcon;
 
@@ -93,7 +94,7 @@ private:
   QString m_appError;
   QString m_iconError;
 
-  QVariantList m_iconItems;
+  CompletionModel m_iconModel{this};
   QVariantList m_linkCompletions;
   QVariantMap m_defaultIconEntry;
   QString m_resolvedDefaultIcon;

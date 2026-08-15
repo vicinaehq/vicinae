@@ -25,7 +25,8 @@ ColumnLayout {
             required property string description
             required property string placeholder
             required property var value
-            required property var options
+            required property var optionsModel
+            required property var currentOption
             required property bool readOnly
             required property bool multiple
             required property bool canChooseFiles
@@ -141,24 +142,11 @@ ColumnLayout {
             controlWidth: root.fieldControlWidth
             showSeparator: field.parent.index < settingsRepeater.count - 1
 
-            function _findCurrentItem(items, val) {
-                for (var s = 0; s < items.length; s++) {
-                    var section = items[s];
-                    if (!section || !section.items)
-                        continue;
-                    for (var i = 0; i < section.items.length; i++) {
-                        if (section.items[i].id === val)
-                            return section.items[i];
-                    }
-                }
-                return null;
-            }
-
             SearchableDropdown {
                 width: parent.width
-                items: field.parent.options || []
+                model: field.parent.optionsModel
                 readOnly: field.parent.readOnly
-                currentItem: field._findCurrentItem(field.parent.options || [], field.parent.value)
+                currentItem: field.parent.currentOption
                 onActivated: item => root.prefModel.setFieldValue(field.parent.index, item.id)
             }
         }
