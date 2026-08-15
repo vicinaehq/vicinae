@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 
 RowLayout {
     spacing: 6
@@ -26,25 +27,28 @@ RowLayout {
         }
     }
 
-    Rectangle {
+    Shape {
         id: spinner
         visible: launcher.toastStyle === 4
         Layout.preferredWidth: 12
         Layout.preferredHeight: 12
         Layout.alignment: Qt.AlignVCenter
-        radius: 6
-        color: "transparent"
-        border.width: 2
-        border.color: Config.withAlpha(Theme.textMuted, Config.windowOpacity)
+        preferredRendererType: Shape.CurveRenderer
 
-        Rectangle {
-            width: 6
-            height: 6
-            color: Theme.statusBarBackground
-            anchors.top: parent.top
-            anchors.right: parent.right
-            anchors.topMargin: -1
-            anchors.rightMargin: -1
+        ShapePath {
+            strokeColor: Config.withAlpha(Theme.textMuted, Config.windowOpacity)
+            strokeWidth: 2
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+
+            PathAngleArc {
+                centerX: 6
+                centerY: 6
+                radiusX: 5
+                radiusY: 5
+                startAngle: 0
+                sweepAngle: 270
+            }
         }
 
         RotationAnimation on rotation {
