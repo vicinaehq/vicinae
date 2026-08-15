@@ -60,14 +60,16 @@ public:
     auto shortcut = ctx->services->shortcuts();
     const auto expanded = expandShortcut(*m_shortcut, m_arguments);
 
-    if (m_app) {
-      appDb->launch(*m_app, {expanded});
-    } else if (auto app = appDb->findById(m_shortcut->app())) {
-      appDb->launch(*app, {expanded});
-    } else {
-      toast->setToast(tr("No app with id %1").arg(m_shortcut->app()), ToastStyle::Danger);
+    auto app = m_app ? m_app : ShortcutService::resolveApp(*appDb, m_shortcut->app(), expanded);
+
+    if (!app) {
+      auto message = m_shortcut->isDefaultApp() ? tr("No default app to open %1").arg(expanded)
+                                                : tr("No app with id %1").arg(m_shortcut->app());
+      toast->setToast(message, ToastStyle::Danger);
       return;
     }
+
+    appDb->launch(*app, {expanded});
 
     shortcut->registerVisit(m_shortcut->id());
     ctx->navigation->closeWindow();

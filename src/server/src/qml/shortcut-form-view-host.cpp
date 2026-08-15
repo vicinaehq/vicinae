@@ -66,16 +66,16 @@ void ShortcutFormViewHost::initialize() {
     m_link = m_initialShortcut->url();
 
     auto appId = m_initialShortcut->app();
-    if (appDb->findById(appId)) {
+    if (!m_initialShortcut->isDefaultApp() && appDb->findById(appId)) {
       m_appSelectorModel->selectById(appId);
       m_selectedApp = m_appSelectorModel->currentItem();
     }
 
     if (auto item = m_iconModel.itemDataById(m_initialShortcut->icon()); !item.isEmpty()) {
       m_selectedIcon = item;
-    } else {
-      handleLinkBlurred();
     }
+
+    handleLinkBlurred();
 
     emit formChanged();
   } else if (!m_prefilledLink.isEmpty() || !m_prefilledName.isEmpty()) {
@@ -190,13 +190,6 @@ void ShortcutFormViewHost::submit() {
   auto appId = m_selectedApp[QStringLiteral("id")].toString();
   auto iconId = m_selectedIcon[QStringLiteral("id")].toString();
 
-  if (appId == QStringLiteral("default")) {
-    auto appDb = context()->services->appDb();
-    auto opener = appDb->findDefaultOpener(m_link);
-    if (!opener) { opener = appDb->webBrowser(); }
-    if (opener) { appId = opener->id(); }
-  }
-
   if (iconId == QStringLiteral("default")) { iconId = m_resolvedDefaultIcon; }
 
   if (m_mode == Mode::Edit) {
@@ -267,15 +260,8 @@ void ShortcutFormViewHost::selectApp(const QVariantMap &item) {
   m_selectedApp = item;
 
   if (!m_link.isEmpty()) {
-    auto appId = item[QStringLiteral("id")].toString();
-    auto appDb = context()->services->appDb();
-    std::shared_ptr<AbstractApplication> resolvedApp;
-    if (appId == QStringLiteral("default")) {
-      resolvedApp = appDb->findDefaultOpener(m_link);
-      if (!resolvedApp) resolvedApp = appDb->webBrowser();
-    } else {
-      resolvedApp = appDb->findById(appId);
-    }
+    auto resolvedApp = ShortcutService::resolveApp(*context()->services->appDb(),
+                                                   item[QStringLiteral("id")].toString(), m_link);
 
     if (resolvedApp) m_resolvedDefaultIcon = resolvedApp->iconUrl().toString();
 

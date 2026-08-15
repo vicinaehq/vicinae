@@ -57,10 +57,11 @@ void ManageShortcutsViewHost::loadDetail(const std::shared_ptr<Shortcut> &shortc
       {QStringLiteral("value"), shortcut->name()},
   });
 
-  if (auto app = appDb->findById(shortcut->app())) {
+  if (auto app = ShortcutService::resolveApp(*appDb, shortcut->app(), shortcut->url())) {
     meta.append(QVariantMap{
         {QStringLiteral("label"), tr("Application")},
-        {QStringLiteral("value"), app->displayName()},
+        {QStringLiteral("value"),
+         shortcut->isDefaultApp() ? tr("%1 (Default)").arg(app->displayName()) : app->displayName()},
         {QStringLiteral("icon"), qml::imageSourceFor(app->iconUrl())},
     });
   }
