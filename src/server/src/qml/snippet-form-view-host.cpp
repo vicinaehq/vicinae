@@ -32,8 +32,7 @@ void SnippetFormViewHost::initialize() {
   const auto *appDb = context()->services->appDb();
   for (const auto &app : appDb->list({.sortAlphabetically = true})) {
     if (!app->displayable()) continue;
-    allApps.append(
-        qml::makeDropdownItem(app->id(), app->displayName(), qml::imageSourceFor(app->iconUrl())));
+    allApps.append(qml::makeDropdownItem(app->id(), app->displayName(), qml::imageSourceFor(app->iconUrl())));
   }
   m_availableAppsModel.setItems(allApps);
 

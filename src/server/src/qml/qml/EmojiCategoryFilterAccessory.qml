@@ -5,17 +5,20 @@ SearchableDropdown {
     compact: true
     minimumWidth: 100
 
-    model: launcher.commandViewHost ? launcher.commandViewHost.categoryFilterModel : null
+    readonly property var _host: launcher.commandViewHost
+
+    model: _host?.categoryFilterModel ?? null
 
     currentItem: {
-        const host = launcher.commandViewHost;
-        if (!host)
+        const m = _host?.categoryFilterModel;
+        const idx = _host?.currentCategoryFilter;
+        if (!m || idx === undefined)
             return null;
-        return host.categoryFilterModel.itemDataById(host.currentCategoryFilter.toString());
+        return m.itemDataById(idx.toString());
     }
 
     onActivated: item => {
-        if (launcher.commandViewHost)
-            launcher.commandViewHost.setCategoryFilter(parseInt(item.id));
+        if (root._host)
+            root._host.setCategoryFilter(parseInt(item.id));
     }
 }

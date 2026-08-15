@@ -60,10 +60,17 @@ QVariant ExtensionFormModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> ExtensionFormModel::roleNames() const {
   return {
-      {TypeRole, "type"},   {FieldIdRole, "fieldId"},     {LabelRole, "label"},
-      {ErrorRole, "error"}, {InfoRole, "info"},           {PlaceholderRole, "placeholder"},
-      {ValueRole, "value"}, {AutoFocusRole, "autoFocus"}, {FieldDataRole, "fieldData"},
-      {OptionsModelRole, "optionsModel"}, {CurrentOptionRole, "currentOption"},
+      {TypeRole, "type"},
+      {FieldIdRole, "fieldId"},
+      {LabelRole, "label"},
+      {ErrorRole, "error"},
+      {InfoRole, "info"},
+      {PlaceholderRole, "placeholder"},
+      {ValueRole, "value"},
+      {AutoFocusRole, "autoFocus"},
+      {FieldDataRole, "fieldData"},
+      {OptionsModelRole, "optionsModel"},
+      {CurrentOptionRole, "currentOption"},
   };
 }
 

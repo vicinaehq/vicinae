@@ -121,8 +121,7 @@ void ShortcutFormViewHost::buildIconItems() {
 
   for (const auto &[icon, name] : BuiltinIconService::mapping()) {
     auto url = ImageURL::builtinByName(QString::fromLatin1(name));
-    allIcons.append(
-        qml::makeDropdownItem(url.toString(), QString::fromUtf8(name), qml::imageSourceFor(url)));
+    allIcons.append(qml::makeDropdownItem(url.toString(), QString::fromUtf8(name), qml::imageSourceFor(url)));
   }
 
   m_iconModel.setItems(allIcons);
