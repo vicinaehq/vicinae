@@ -39,7 +39,8 @@ QVariantList metadataToVariantList(const MetadataModel &metadata) {
       entry[QStringLiteral("label")] = QString::fromStdString(label->title);
       entry[QStringLiteral("value")] = QString::fromStdString(label->text);
       if (label->icon) entry[QStringLiteral("icon")] = imageSourceFor(ImageURL(*label->icon));
-      if (label->color) entry[QStringLiteral("valueColor")] = ThemeService::instance().theme().resolve(*label->color).name();
+      if (label->color)
+        entry[QStringLiteral("valueColor")] = ThemeService::instance().theme().resolve(*label->color).name();
       result.append(entry);
     } else if (auto *link = std::get_if<MetadataLink>(&child)) {
       QVariantMap entry;
@@ -60,7 +61,8 @@ QVariantList metadataToVariantList(const MetadataModel &metadata) {
       for (const auto &tag : tags->items) {
         QVariantMap t;
         t[QStringLiteral("text")] = QString::fromStdString(tag.text);
-        if (tag.color) t[QStringLiteral("color")] = ThemeService::instance().theme().resolve(*tag.color).name();
+        if (tag.color)
+          t[QStringLiteral("color")] = ThemeService::instance().theme().resolve(*tag.color).name();
         if (tag.icon) t[QStringLiteral("icon")] = imageSourceFor(ImageURL(*tag.icon));
         tagList.append(t);
       }

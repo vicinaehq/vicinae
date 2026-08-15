@@ -16,7 +16,5 @@ class InternalExtension : public BuiltinCommandRepository {
   }
 
 public:
-  InternalExtension() {
-    registerCommand<MarkdownShowcase>();
-  }
+  InternalExtension() { registerCommand<MarkdownShowcase>(); }
 };

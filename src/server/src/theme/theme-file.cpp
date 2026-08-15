@@ -28,15 +28,14 @@ bool ThemeFile::isLight() const { return variant() == ThemeVariant::Light; }
 bool ThemeFile::isDark() const { return variant() == ThemeVariant::Dark; }
 
 QColor ThemeFile::resolve(const ColorLike &color) const {
-  return std::visit(overloads{
-                        [](const QColor &c) { return c; },
-                        [](const QString &s) { return Utils::colorFromString(s); },
-                        [this](SemanticColor c) { return resolve(c); },
-                        [this](const DynamicColor &d) {
-                          return Utils::colorFromString(isLight() ? d.light : d.dark);
-                        },
-                    },
-                    color);
+  return std::visit(
+      overloads{
+          [](const QColor &c) { return c; },
+          [](const QString &s) { return Utils::colorFromString(s); },
+          [this](SemanticColor c) { return resolve(c); },
+          [this](const DynamicColor &d) { return Utils::colorFromString(isLight() ? d.light : d.dark); },
+      },
+      color);
 }
 
 QColor ThemeFile::resolve(SemanticColor color) const {
