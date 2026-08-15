@@ -56,10 +56,10 @@ static QString resolveThemedLocalPath(const QString &path) {
 ImageURL ImageURL::resolved() const {
   ImageURL out = *this;
   if (auto fill = fillColor())
-    out.setFill(OmniPainter::resolveColor(*fill));
+    out.setFill(ThemeService::instance().theme().resolve(*fill));
   else if (type() == ImageURLType::Builtin || type() == ImageURLType::Symbol)
     out.setFill(ThemeService::instance().theme().resolve(SemanticColor::Foreground));
-  if (auto bg = backgroundTint()) out.setBackgroundTint(OmniPainter::resolveColor(*bg));
+  if (auto bg = backgroundTint()) out.setBackgroundTint(ThemeService::instance().theme().resolve(*bg));
   if (out.type() == ImageURLType::Local) out.setName(resolveThemedLocalPath(out.name()));
   return out;
 }

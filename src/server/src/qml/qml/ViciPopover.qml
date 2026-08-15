@@ -11,6 +11,7 @@ Popup {
     property real animationAnchorX: 0.5
     property real animationAnchorY: 0.5
     property real backgroundOpacity: isNativeWindow ? Config.popupOpacity : 1
+    property real frostedOpacity: 0.85
 
     readonly property alias popupMaterial: materialImpl
     readonly property bool isNativeWindow: popupType === Popup.Window
@@ -74,6 +75,7 @@ Popup {
     background: PopoverBackground {
         popup: root
         backgroundOpacity: root.backgroundOpacity
+        frostedOpacity: root.frostedOpacity
 
         PopupMaterial {
             id: materialImpl

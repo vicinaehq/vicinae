@@ -1,5 +1,8 @@
 #pragma once
 #include <cstdint>
+#include <qcolor.h>
+#include <qstring.h>
+#include <variant>
 
 enum SemanticColor : std::uint8_t {
 
@@ -87,3 +90,11 @@ enum SemanticColor : std::uint8_t {
 
   ShortcutIndicatorBorder,
 };
+
+struct DynamicColor {
+  QString light;
+  QString dark;
+  bool adjustContrast = false;
+};
+
+using ColorLike = std::variant<QColor, QString, SemanticColor, DynamicColor>;

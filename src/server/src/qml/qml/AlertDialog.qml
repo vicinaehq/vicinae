@@ -5,6 +5,7 @@ import QtQuick.Layouts
 ViciPopover {
     id: root
     surface: "dialog"
+    frostedOpacity: 0.7
     x: Math.round((parent.width - width) / 2)
     y: Math.round((parent.height - height) / 2)
     width: 400
@@ -32,12 +33,20 @@ ViciPopover {
     contentItem: ColumnLayout {
         spacing: 15
 
-        ViciImage {
+        Rectangle {
             Layout.alignment: Qt.AlignHCenter
-            width: 30
-            height: 30
             visible: launcher.alertModel.iconSource !== ""
-            source: launcher.alertModel.iconSource
+            width: 44
+            height: 44
+            radius: width / 2
+            color: launcher.alertModel.iconBadged ? Config.withAlpha(launcher.alertModel.confirmColor, 0.14) : "transparent"
+
+            ViciImage {
+                anchors.centerIn: parent
+                width: launcher.alertModel.iconBadged ? 22 : 30
+                height: width
+                source: launcher.alertModel.iconSource
+            }
         }
 
         Text {
