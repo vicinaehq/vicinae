@@ -25,8 +25,8 @@ ColumnLayout {
             required property string description
             required property string placeholder
             required property var value
-            required property var optionsModel
-            required property var currentOption
+            required property var dropdownModel
+            required property var currentDropdownItem
             required property bool readOnly
             required property bool multiple
             required property bool canChooseFiles
@@ -144,9 +144,9 @@ ColumnLayout {
 
             SearchableDropdown {
                 width: parent.width
-                model: field.parent.optionsModel
+                model: field.parent.dropdownModel
                 readOnly: field.parent.readOnly
-                currentItem: field.parent.currentOption
+                currentItem: field.parent.currentDropdownItem
                 onActivated: item => root.prefModel.setFieldValue(field.parent.index, item.id)
             }
         }

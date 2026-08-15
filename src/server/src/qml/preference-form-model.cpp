@@ -38,10 +38,10 @@ QVariant PreferenceFormModel::data(const QModelIndex &index, int role) const {
     return f.placeholder;
   case ValueRole:
     return f.value;
-  case OptionsModelRole:
-    return QVariant::fromValue(static_cast<QObject *>(f.optionsModel));
-  case CurrentOptionRole:
-    return currentOption(f);
+  case DropdownModelRole:
+    return QVariant::fromValue(static_cast<QObject *>(f.dropdownModel));
+  case CurrentDropdownItemRole:
+    return currentDropdownItem(f);
   case ReadOnlyRole:
     return f.readOnly;
   case MultipleRole:
@@ -65,8 +65,8 @@ QHash<int, QByteArray> PreferenceFormModel::roleNames() const {
           {DescriptionRole, "description"},
           {PlaceholderRole, "placeholder"},
           {ValueRole, "value"},
-          {OptionsModelRole, "optionsModel"},
-          {CurrentOptionRole, "currentOption"},
+          {DropdownModelRole, "dropdownModel"},
+          {CurrentDropdownItemRole, "currentDropdownItem"},
           {ReadOnlyRole, "readOnly"},
           {MultipleRole, "multiple"},
           {CanChooseFilesRole, "canChooseFiles"},
@@ -145,15 +145,15 @@ static QString checkboxLabel(const Preference &p) {
   return {};
 }
 
-QVariant PreferenceFormModel::currentOption(const Field &f) {
-  if (!f.optionsModel) return {};
-  auto option = f.optionsModel->itemDataById(f.value.toString());
+QVariant PreferenceFormModel::currentDropdownItem(const Field &f) {
+  if (!f.dropdownModel) return {};
+  auto option = f.dropdownModel->itemDataById(f.value.toString());
   return option.isEmpty() ? QVariant{} : QVariant(option);
 }
 
 void PreferenceFormModel::clearFields() {
   for (const auto &f : m_fields) {
-    if (f.optionsModel) f.optionsModel->deleteLater();
+    if (f.dropdownModel) f.dropdownModel->deleteLater();
   }
   m_fields.clear();
 }
@@ -169,8 +169,8 @@ PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pr
   f.readOnly = pref.isReadOnly();
 
   if (auto options = dropdownOptions(pref); !options.isEmpty()) {
-    f.optionsModel = new CompletionModel(this);
-    f.optionsModel->setItems(options);
+    f.dropdownModel = new CompletionModel(this);
+    f.dropdownModel->setItems(options);
   }
 
   applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);
@@ -222,7 +222,7 @@ void PreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   m_fields[row].value = resolved;
   m_values[m_fields[row].id] = QJsonValue::fromVariant(resolved);
   auto idx = index(row);
-  emit dataChanged(idx, idx, {ValueRole, CurrentOptionRole});
+  emit dataChanged(idx, idx, {ValueRole, CurrentDropdownItemRole});
   m_saveTimer.start();
 }
 

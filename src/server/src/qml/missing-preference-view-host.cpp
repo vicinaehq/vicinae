@@ -90,11 +90,11 @@ QVariant MissingPreferenceFormModel::data(const QModelIndex &index, int role) co
     return f.placeholder;
   case ValueRole:
     return f.value;
-  case OptionsModelRole:
-    return QVariant::fromValue(static_cast<QObject *>(f.optionsModel));
-  case CurrentOptionRole: {
-    if (!f.optionsModel) return {};
-    auto option = f.optionsModel->itemDataById(f.value.toString());
+  case DropdownModelRole:
+    return QVariant::fromValue(static_cast<QObject *>(f.dropdownModel));
+  case CurrentDropdownItemRole: {
+    if (!f.dropdownModel) return {};
+    auto option = f.dropdownModel->itemDataById(f.value.toString());
     return option.isEmpty() ? QVariant{} : QVariant(option);
   }
   case ReadOnlyRole:
@@ -118,8 +118,8 @@ QHash<int, QByteArray> MissingPreferenceFormModel::roleNames() const {
           {DescriptionRole, "description"},
           {PlaceholderRole, "placeholder"},
           {ValueRole, "value"},
-          {OptionsModelRole, "optionsModel"},
-          {CurrentOptionRole, "currentOption"},
+          {DropdownModelRole, "dropdownModel"},
+          {CurrentDropdownItemRole, "currentDropdownItem"},
           {ReadOnlyRole, "readOnly"},
           {MultipleRole, "multiple"},
           {CanChooseFilesRole, "canChooseFiles"},
@@ -130,7 +130,7 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
                                       const QJsonObject &existingValues) {
   beginResetModel();
   for (const auto &f : m_fields) {
-    if (f.optionsModel) f.optionsModel->deleteLater();
+    if (f.dropdownModel) f.dropdownModel->deleteLater();
   }
   m_fields.clear();
   m_values = QJsonObject{};
@@ -151,8 +151,8 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
     f.description = pref.description();
     f.placeholder = pref.placeholder();
     if (auto options = dropdownOptions(pref); !options.isEmpty()) {
-      f.optionsModel = new CompletionModel(this);
-      f.optionsModel->setItems(options);
+      f.dropdownModel = new CompletionModel(this);
+      f.dropdownModel->setItems(options);
     }
     applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
@@ -171,7 +171,7 @@ void MissingPreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   m_fields[row].value = value;
   m_values[m_fields[row].id] = QJsonValue::fromVariant(value);
   auto idx = index(row);
-  emit dataChanged(idx, idx, {ValueRole, CurrentOptionRole});
+  emit dataChanged(idx, idx, {ValueRole, CurrentDropdownItemRole});
 }
 
 static bool isEmptyPreferenceValue(const QJsonValue &v) {

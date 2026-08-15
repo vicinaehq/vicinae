@@ -46,11 +46,11 @@ QVariant ExtensionFormModel::data(const QModelIndex &index, int role) const {
     return item.autoFocus;
   case FieldDataRole:
     return item.fieldData;
-  case OptionsModelRole:
-    return QVariant::fromValue(static_cast<QObject *>(item.optionsModel));
-  case CurrentOptionRole: {
-    if (!item.optionsModel) return {};
-    auto option = item.optionsModel->itemDataById(item.effectiveValue().toString());
+  case DropdownModelRole:
+    return QVariant::fromValue(static_cast<QObject *>(item.dropdownModel));
+  case CurrentDropdownItemRole: {
+    if (!item.dropdownModel) return {};
+    auto option = item.dropdownModel->itemDataById(item.effectiveValue().toString());
     return option.isEmpty() ? QVariant{} : QVariant(option);
   }
   default:
@@ -69,8 +69,8 @@ QHash<int, QByteArray> ExtensionFormModel::roleNames() const {
       {ValueRole, "value"},
       {AutoFocusRole, "autoFocus"},
       {FieldDataRole, "fieldData"},
-      {OptionsModelRole, "optionsModel"},
-      {CurrentOptionRole, "currentOption"},
+      {DropdownModelRole, "dropdownModel"},
+      {CurrentDropdownItemRole, "currentDropdownItem"},
   };
 }
 
@@ -82,7 +82,7 @@ void ExtensionFormModel::setFieldValue(int index, const QVariant &value) {
   item.userValue = QJsonValue::fromVariant(value);
   item.hasUserValue = true;
   ++item.eventCount;
-  emit dataChanged(createIndex(index, 0), createIndex(index, 0), {ValueRole, CurrentOptionRole});
+  emit dataChanged(createIndex(index, 0), createIndex(index, 0), {ValueRole, CurrentDropdownItemRole});
 
   if (item.onChange) {
     m_notify(toQ(*item.onChange), QJsonArray{item.userValue, static_cast<int>(item.eventCount)});
@@ -159,7 +159,7 @@ void ExtensionFormModel::setFormData(const FormModel &model) {
   if (oldCount > newCount) {
     beginRemoveRows({}, newCount, oldCount - 1);
     for (int i = newCount; i < oldCount; ++i) {
-      if (m_items[i].optionsModel) m_items[i].optionsModel->deleteLater();
+      if (m_items[i].dropdownModel) m_items[i].dropdownModel->deleteLater();
     }
     m_items.resize(newCount);
     endRemoveRows();
@@ -186,7 +186,7 @@ void ExtensionFormModel::setFormData(const FormModel &model) {
           newData.hasUserValue = true;
         }
       }
-      if (m_items[i].optionsModel) m_items[i].optionsModel->deleteLater();
+      if (m_items[i].dropdownModel) m_items[i].dropdownModel->deleteLater();
       m_items[i] = std::move(newData);
     } else {
       updateItem(m_items[i], newItem);
@@ -264,8 +264,8 @@ ExtensionFormModel::FormItemData ExtensionFormModel::createItem(const FormModel:
 
     if (auto *dd = std::get_if<FormModel::DropdownField>(fieldPtr)) {
       data.dropdownItems = qml::convertDropdownChildren(dd->items);
-      data.optionsModel = new CompletionModel(this);
-      data.optionsModel->setSections(data.dropdownItems);
+      data.dropdownModel = new CompletionModel(this);
+      data.dropdownModel->setSections(data.dropdownItems);
     }
 
     if (base.value) {
@@ -296,11 +296,11 @@ void ExtensionFormModel::updateItem(FormItemData &existing, const FormModel::Ite
     existing.fieldData = buildFieldData(*fieldPtr);
 
     if (auto *dd = std::get_if<FormModel::DropdownField>(fieldPtr);
-        dd && existing.type == FormItemData::Type::Dropdown && existing.optionsModel) {
+        dd && existing.type == FormItemData::Type::Dropdown && existing.dropdownModel) {
       auto items = qml::convertDropdownChildren(dd->items);
       if (items != existing.dropdownItems) {
         existing.dropdownItems = std::move(items);
-        existing.optionsModel->setSections(existing.dropdownItems);
+        existing.dropdownModel->setSections(existing.dropdownItems);
       }
     }
 

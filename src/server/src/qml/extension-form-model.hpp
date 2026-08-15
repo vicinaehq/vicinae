@@ -29,8 +29,8 @@ public:
     ValueRole,
     AutoFocusRole,
     FieldDataRole,
-    OptionsModelRole,
-    CurrentOptionRole,
+    DropdownModelRole,
+    CurrentDropdownItemRole,
   };
 
   explicit ExtensionFormModel(NotifyFn notify, QObject *parent = nullptr);
@@ -85,7 +85,7 @@ private:
 
     QVariantMap fieldData;
     QVariantList dropdownItems;
-    CompletionModel *optionsModel = nullptr;
+    CompletionModel *dropdownModel = nullptr;
 
     QJsonValue effectiveValue() const { return hasUserValue ? userValue : modelValue; }
     QString typeString() const;

@@ -22,8 +22,8 @@ public:
     DescriptionRole,
     PlaceholderRole,
     ValueRole,
-    OptionsModelRole,
-    CurrentOptionRole,
+    DropdownModelRole,
+    CurrentDropdownItemRole,
     ReadOnlyRole,
     MultipleRole,
     CanChooseFilesRole,
@@ -60,7 +60,7 @@ private:
     QString description;
     QString placeholder;
     QVariant value;
-    CompletionModel *optionsModel = nullptr;
+    CompletionModel *dropdownModel = nullptr;
     bool multiple = false;
     bool canChooseFiles = true;
     bool canChooseDirectories = false;

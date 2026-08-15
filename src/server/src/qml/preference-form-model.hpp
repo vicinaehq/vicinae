@@ -19,8 +19,8 @@ public:
     DescriptionRole,
     PlaceholderRole,
     ValueRole,
-    OptionsModelRole,
-    CurrentOptionRole,
+    DropdownModelRole,
+    CurrentDropdownItemRole,
     ReadOnlyRole,
     MultipleRole,
     CanChooseFilesRole,
@@ -51,7 +51,7 @@ private:
     QString description;
     QString placeholder;
     QVariant value;
-    CompletionModel *optionsModel = nullptr;
+    CompletionModel *dropdownModel = nullptr;
     bool readOnly = false;
     bool multiple = false;
     bool canChooseFiles = true;
@@ -61,7 +61,7 @@ private:
 
   Field createField(const Preference &pref);
   void clearFields();
-  static QVariant currentOption(const Field &f);
+  static QVariant currentDropdownItem(const Field &f);
 
   std::vector<Field> m_fields;
   QJsonObject m_values;

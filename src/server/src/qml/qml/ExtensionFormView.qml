@@ -68,8 +68,8 @@ Item {
                 required property var value
                 required property bool autoFocus
                 required property var fieldData
-                required property var optionsModel
-                required property var currentOption
+                required property var dropdownModel
+                required property var currentDropdownItem
 
                 readonly property bool isField: type !== "separator" && type !== "description"
 
@@ -238,9 +238,9 @@ Item {
 
             SearchableDropdown {
                 id: dropdown
-                model: field.parent.optionsModel
+                model: field.parent.dropdownModel
                 hasError: field.error !== ""
-                currentItem: field.parent.currentOption
+                currentItem: field.parent.currentDropdownItem
                 placeholder: field._fd.placeholder || field.parent.placeholder || ""
                 onActivated: item => {
                     root.formModel.setFieldValue(field.parent.index, item.id);

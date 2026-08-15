@@ -59,8 +59,8 @@ Item {
                 required property string description
                 required property string placeholder
                 required property var value
-                required property var optionsModel
-                required property var currentOption
+                required property var dropdownModel
+                required property var currentDropdownItem
                 required property bool readOnly
                 required property bool multiple
                 required property bool canChooseFiles
@@ -140,8 +140,8 @@ Item {
             info: parent.description
 
             SearchableDropdown {
-                model: field.parent.optionsModel
-                currentItem: field.parent.currentOption
+                model: field.parent.dropdownModel
+                currentItem: field.parent.currentDropdownItem
                 onActivated: item => root.host.prefModel.setFieldValue(field.parent.index, item.id)
             }
         }
