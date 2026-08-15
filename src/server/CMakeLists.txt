@@ -1095,10 +1095,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/OnboardingWindow.qml
 )
 
-if(CMAKE_BUILD_TYPE MATCHES "Debug")
-	list(APPEND VICINAE_QML_FILES src/qml/qml/ButtonShowcase.qml src/qml/qml/UIShowcase.qml)
-endif()
-
 if(WAYLAND_LAYER_SHELL)
 	list(APPEND VICINAE_QML_FILES
 		src/qml/qml/LauncherWindowLayerShell.qml

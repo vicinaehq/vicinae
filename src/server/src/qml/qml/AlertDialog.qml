@@ -67,10 +67,8 @@ ViciPopover {
             ViciButton {
                 id: cancelBtn
                 Layout.fillWidth: true
-                implicitHeight: 30
-                radius: 4
-                variant: "ghost"
-                bordered: true
+                implicitHeight: 32
+                variant: "secondary"
                 text: launcher.alertModel.cancelText
                 foreground: launcher.alertModel.cancelColor
                 focus: true
@@ -92,10 +90,8 @@ ViciPopover {
             ViciButton {
                 id: confirmBtn
                 Layout.fillWidth: true
-                implicitHeight: 30
-                radius: 4
-                variant: "ghost"
-                bordered: true
+                implicitHeight: 32
+                variant: "tinted"
                 text: launcher.alertModel.confirmText
                 foreground: launcher.alertModel.confirmColor
                 activeFocusOnTab: true
