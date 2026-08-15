@@ -91,7 +91,7 @@ static bool isMultiFrameGif(const QByteArray &data) {
 
 static QColor resolveBackgroundTint(const ImageURL &url) {
   if (auto bg = url.backgroundTint()) {
-    QColor const c = OmniPainter::resolveColor(*bg);
+    QColor const c = ThemeService::instance().theme().resolve(*bg);
     if (c.isValid() && c.alpha() > 0) return c;
   }
   return {};
@@ -99,7 +99,7 @@ static QColor resolveBackgroundTint(const ImageURL &url) {
 
 ImageStream::ImageStream(const ImageURL &url, const QSize &size, ImageStreamOptions opts, QObject *parent)
     : QObject(parent), m_url(url.resolved()), m_size(size), m_opts(opts) {
-  if (auto fill = m_url.fillColor()) m_fg = OmniPainter::resolveColor(*fill);
+  if (auto fill = m_url.fillColor()) m_fg = ThemeService::instance().theme().resolve(*fill);
   m_bg = resolveBackgroundTint(m_url);
   m_mask = m_url.mask();
   m_cacheKey = makeCacheKey(m_url, size, m_opts.safetyMargins);
@@ -155,7 +155,7 @@ void ImageStream::tryFallback() {
     m_url = ImageURL::builtin(BuiltinIcon::QuestionMarkCircle).resolved();
 
   m_fg = QColor();
-  if (auto fill = m_url.fillColor()) m_fg = OmniPainter::resolveColor(*fill);
+  if (auto fill = m_url.fillColor()) m_fg = ThemeService::instance().theme().resolve(*fill);
   m_bg = resolveBackgroundTint(m_url);
   m_mask = m_url.mask();
   m_cacheKey = makeCacheKey(m_url, m_size, m_opts.safetyMargins);

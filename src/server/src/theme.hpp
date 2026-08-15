@@ -15,14 +15,6 @@ struct ThemeRadialGradient {
   std::vector<QColor> points;
 };
 
-struct DynamicColor {
-  QString light;
-  QString dark;
-  bool adjustContrast = false;
-};
-
-using ColorLike = std::variant<QColor, QString, SemanticColor, DynamicColor>;
-
 class ThemeService : public QObject {
   Q_OBJECT
 

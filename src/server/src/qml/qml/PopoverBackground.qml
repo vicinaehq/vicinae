@@ -11,6 +11,7 @@ Item {
 
     required property var popup
     property real backgroundOpacity: nativeWindow ? Config.popupOpacity : 1
+    property real frostedOpacity: 0.85
 
     readonly property bool nativeWindow: popup.popupType === Popup.Window
     readonly property bool csd: !nativeWindow || Platform.supports("clientSideDecorations")
@@ -95,7 +96,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: bg.cornerRadius
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bg.frosted ? 0.85 : bg.backgroundOpacity)
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bg.frosted ? bg.frostedOpacity : bg.backgroundOpacity)
         border.color: Config.withAlpha(Theme.popoverBorder, bg.backgroundOpacity)
         border.width: bg.csd ? 1 : 0
     }

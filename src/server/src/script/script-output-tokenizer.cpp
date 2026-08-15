@@ -1,7 +1,8 @@
 #include "script-output-tokenizer.hpp"
 
 #include <utility>
-#include "ui/omni-painter/omni-painter.hpp"
+#include "theme.hpp"
+#include "theme/theme-file.hpp"
 
 ScriptOutputTokenizer::ScriptOutputTokenizer(QStringView str) : m_data(str) {}
 
@@ -100,7 +101,7 @@ ScriptOutputTokenizer::Format ScriptOutputTokenizer::parseColor(const std::vecto
 }
 
 QColor ScriptOutputTokenizer::parseBgColor(int code) {
-  return OmniPainter::resolveColor(getStandardColor(code - 10));
+  return ThemeService::instance().theme().resolve(getStandardColor(code - 10));
 }
 
 bool ScriptOutputTokenizer::isValidUrlChar(QChar c) {
@@ -108,7 +109,7 @@ bool ScriptOutputTokenizer::isValidUrlChar(QChar c) {
 }
 
 QColor ScriptOutputTokenizer::parseFgColor(std::uint8_t code) {
-  return OmniPainter::resolveColor(getStandardColor(code));
+  return ThemeService::instance().theme().resolve(getStandardColor(code));
 }
 
 ColorLike ScriptOutputTokenizer::getStandardColor(std::uint8_t code) {
