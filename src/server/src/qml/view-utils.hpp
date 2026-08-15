@@ -29,6 +29,15 @@ QVariantMap accessoryToVariant(const ListAccessory &acc);
 
 inline QString imageSourceFor(const ImageURL &url) { return url.toString(); }
 
+inline QVariantMap makeDropdownItem(const QString &id, const QString &displayName,
+                                    const QString &iconSource = {}) {
+  QVariantMap m;
+  m[QStringLiteral("id")] = id;
+  m[QStringLiteral("displayName")] = displayName;
+  if (!iconSource.isEmpty()) m[QStringLiteral("iconSource")] = iconSource;
+  return m;
+}
+
 inline std::optional<QString> firstDropdownItemValue(const std::vector<DropdownModel::Child> &children) {
   for (const auto &child : children) {
     if (auto *item = std::get_if<DropdownModel::Item>(&child)) {

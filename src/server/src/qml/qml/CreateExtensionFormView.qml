@@ -99,7 +99,7 @@ Item {
             label: qsTr("Template")
 
             SearchableDropdown {
-                items: root.host.templateItems
+                model: root.host.templateModel
                 currentItem: root.host.selectedTemplate
                 onActivated: item => root.host.selectTemplate(item)
             }

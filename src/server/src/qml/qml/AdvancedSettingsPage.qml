@@ -78,7 +78,7 @@ Flickable {
                 showSeparator: false
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.keybindingSchemeItems
+                    model: root.model.keybindingSchemeModel
                     currentItem: root.model.currentKeybindingScheme
                     onActivated: item => root.model.selectKeybindingScheme(item.id)
                 }
@@ -107,7 +107,7 @@ Flickable {
                 showSeparator: false
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.faviconServiceItems
+                    model: root.model.faviconServiceModel
                     currentItem: root.model.currentFaviconService
                     onActivated: item => root.model.selectFaviconService(item.id)
                 }

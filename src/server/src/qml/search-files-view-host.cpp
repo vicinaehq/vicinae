@@ -57,6 +57,7 @@ void SearchFilesViewHost::initialize() {
   model()->addSource(&m_section);
 
   setSearchPlaceholderText(tr("Search for files..."));
+  m_categoryFilterModel.setStringOptions(categoryFilterOptions());
   restoreCategoryFilter();
 
   m_debounce.setSingleShot(true);

@@ -64,7 +64,7 @@ Item {
 
             FormAppSelector {
                 model: root.host.apps
-                sections: root.host.availableApps
+                appsModel: root.host.availableAppsModel
                 onChanged: apps => root.host.apps = apps
             }
         }

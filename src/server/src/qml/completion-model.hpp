@@ -24,6 +24,10 @@ public:
 
   Q_INVOKABLE void setItems(const QVariantList &items);
   Q_INVOKABLE void setSections(const QVariantList &sections);
+  Q_INVOKABLE void updateItem(const QVariantMap &item);
+  Q_INVOKABLE QVariantMap itemDataById(const QString &id) const;
+
+  void setStringOptions(const QStringList &options);
   Q_INVOKABLE void setFilter(const QString &query);
   Q_INVOKABLE int nextSelectableIndex(int from, int direction) const;
   Q_INVOKABLE int indexOfItemId(const QString &id) const;
