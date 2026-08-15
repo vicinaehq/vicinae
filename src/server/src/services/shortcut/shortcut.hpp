@@ -55,6 +55,8 @@ public:
    * The ID of the application that is configured to open this url.
    */
   QString app() const;
+  bool isDefaultApp() const { return m_app == defaultAppId(); }
+  static QString defaultAppId() { return QStringLiteral("default"); }
   QString name() const;
   QString icon() const;
   int openCount() const;
