@@ -5,6 +5,8 @@
 
 using namespace std::chrono_literals;
 
+constexpr auto CALCULATOR_MIN_CHARS = 3;
+
 void CalcLiveSection::setResult(std::optional<AbstractCalculatorBackend::CalculatorResult> result) {
   m_result = std::move(result);
   notifyChanged();
@@ -99,10 +101,14 @@ void CalcHistoryViewHost::textChanged(const QString &text) {
   auto data = m_calc->groupRecordsByTime(m_calc->query(text));
   applyGroupedData(std::move(data));
 
-  QString calcQuery = text.startsWith("=") ? text.mid(1) : text;
+  bool explicitCalc = text.startsWith("=");
 
-  if (auto res = m_calc->backend()->compute(calcQuery, {})) {
-    m_liveSection.setResult(std::move(res.value()));
+  if (explicitCalc || text.size() >= CALCULATOR_MIN_CHARS) {
+    QString calcQuery = explicitCalc ? text.mid(1) : text;
+
+    if (auto res = m_calc->backend()->compute(calcQuery, {})) {
+      m_liveSection.setResult(std::move(res.value()));
+    }
   }
 }
 
