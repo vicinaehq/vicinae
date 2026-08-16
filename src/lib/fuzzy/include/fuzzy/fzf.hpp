@@ -36,7 +36,8 @@ struct Result {
   int score = 0;
   // false when the alignment spreads over several words while some run of consecutive matched
   // characters starts mid-word ("time" in "S[t]art [I]nput [Me]thod"): a match nobody would recognize.
-  // Substrings, in-word abbreviations ("kbd"/"Keyboard") and acronyms ("sim"/"Start Input Method") are coherent.
+  // Substrings, in-word abbreviations ("kbd"/"Keyboard") and acronyms ("sim"/"Start Input Method") are
+  // coherent.
   bool coherent = true;
   // not populated if position is not requested
   std::vector<int> positions;

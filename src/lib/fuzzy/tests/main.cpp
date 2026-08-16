@@ -146,8 +146,8 @@ TEST_CASE("query score: quality is the worst per-word match, weighted respects f
   const auto &m = fzf::threadLocalMatcher();
   using WS = fzf::WeightedString;
 
-  std::initializer_list<WS> anki = {
-      {"Anki", 1.0f}, {"An intelligent spaced-repetition memory training program", 0.5f}};
+  std::initializer_list<WS> anki = {{"Anki", 1.0f},
+                                    {"An intelligent spaced-repetition memory training program", 0.5f}};
   auto empty = std::views::empty<WS>;
 
   auto perfect = m.score_query(std::initializer_list<WS>{{"Firefox", 1.0f}}, empty, fzf::Query{"fire"});
@@ -179,9 +179,12 @@ TEST_CASE("fuzzy::scoreWeighted: normalized match with quality gate") {
   REQUIRE(fuzzy::scoreWeighted({{"Keyboard Settings", 1.0}}, fuzzy::Query{"kbd stg"}).accepted());
   REQUIRE_FALSE(fuzzy::scoreWeighted({{"Firefox", 1.0}}, fuzzy::Query{""}).accepted());
   REQUIRE_FALSE(fuzzy::scoreWeighted({{"Firefox", 1.0}}, fuzzy::Query{"xyz"}).accepted());
-  REQUIRE_FALSE(fuzzy::scoreWeighted({{"An intelligent spaced-repetition memory training program", 1.0}}, fuzzy::Query{"ny"}).accepted());
+  REQUIRE_FALSE(fuzzy::scoreWeighted({{"An intelligent spaced-repetition memory training program", 1.0}},
+                                     fuzzy::Query{"ny"})
+                    .accepted());
 
-  auto const weighted = fuzzy::scoreWeighted({{"Firefox", 1.0}, {"Web Browser", 0.5}}, fuzzy::Query{"browser"});
+  auto const weighted =
+      fuzzy::scoreWeighted({{"Firefox", 1.0}, {"Web Browser", 0.5}}, fuzzy::Query{"browser"});
   REQUIRE(weighted.quality == 100);
   REQUIRE(weighted.score == 50);
 }

@@ -30,7 +30,8 @@ struct Match {
 };
 
 // [0, 1]; timestamps are unix seconds
-inline double frecency(std::uint32_t visitCount, std::optional<std::uint64_t> lastVisitedAt, std::int64_t now) {
+inline double frecency(std::uint32_t visitCount, std::optional<std::uint64_t> lastVisitedAt,
+                       std::int64_t now) {
   constexpr double FREQUENCY_SCALE = 5.0;
   constexpr double RECENCY_PEAK = 10.0;
   constexpr double RECENCY_HALF_LIFE_DAYS = 30.0;

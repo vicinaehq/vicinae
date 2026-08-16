@@ -130,7 +130,8 @@ std::span<Scored<const glyph::Item *>> GlyphService::search(std::string_view que
     fuzzy::Match m{.score = qs.score, .quality = qs.quality};
 
     if (entry) {
-      double const f = fuzzy::frecency(entry->visitCount, entry->lastVisitedAt, QDateTime::currentSecsSinceEpoch());
+      double const f =
+          fuzzy::frecency(entry->visitCount, entry->lastVisitedAt, QDateTime::currentSecsSinceEpoch());
       m.score += static_cast<int>(std::lround(fuzzy::FRECENCY_WEIGHT * f));
     }
 
