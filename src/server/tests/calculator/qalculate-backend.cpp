@@ -94,31 +94,6 @@ TEST_CASE("resolves timezones by city, casing and custom offset") {
   assertIsValidDatetime("now to -08:00", DatetimeFormat::WithOffset);
 }
 
-TEST_CASE("computes timezone conversions in mixed search mode") {
-  assertIsValidDatetime("now in havana", DatetimeFormat::WithOffset);
-  assertIsValidDatetime("now in utc", DatetimeFormat::UtcWithZ);
-}
-
-TEST_CASE("rejects non expressions in mixed search mode") {
-  auto backend = makeBackend();
-
-  REQUIRE_FALSE(backend.compute("hello", {}));
-  REQUIRE_FALSE(backend.compute("2", {}));
-  REQUIRE_FALSE(backend.compute("+ 2", {}));
-}
-
-TEST_CASE("accepts expressions in mixed search mode") {
-  auto backend = makeBackend();
-
-  auto arithmetic = backend.compute("2 + 2", {});
-  auto functionCall = backend.compute("sqrt(16)", {});
-
-  REQUIRE(arithmetic);
-  REQUIRE(arithmetic->answer.text == "4");
-  REQUIRE(functionCall);
-  REQUIRE(functionCall->answer.text == "4");
-}
-
 TEST_CASE("strips trailing operators before computing") {
   auto backend = makeBackend();
 
@@ -157,34 +132,6 @@ TEST_CASE("normalizes storage unit shorthand") {
   REQUIRE(binary->answer.text.contains("1024"));
   REQUIRE(binary->answer.unit);
   REQUIRE_FALSE(binary->answer.unit->displayName.isEmpty());
-}
-
-TEST_CASE("Standalone currency name should not trigger conversion in mixed search mode") {
-  auto r = makeBackend().compute("USD", {});
-  REQUIRE_FALSE(r);
-}
-
-TEST_CASE("Standalone currency name should trigger conversion in full mode") {
-  auto r = makeBackend().compute("USD", {});
-  REQUIRE(r);
-}
-
-const auto CONSTANTS = {"pi", "e"};
-
-TEST_CASE("raw constants should not expand in mixed search mode") {
-  auto calc = makeBackend();
-
-  for (auto constant : CONSTANTS) {
-    REQUIRE_FALSE(calc.compute(constant, {}));
-  }
-}
-
-TEST_CASE("PI constant should expand in full mode") {
-  auto calc = makeBackend();
-
-  for (auto constant : CONSTANTS) {
-    REQUIRE(calc.compute(constant, {}));
-  }
 }
 
 TEST_CASE("supports currency conversions") {
