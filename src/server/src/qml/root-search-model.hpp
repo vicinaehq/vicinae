@@ -34,7 +34,6 @@ private:
   void refresh();
   bool rerunSearch();
   void startCalculator();
-  void handleCalculatorFinished();
   void startFileSearch();
   void handleFileSearchFinished();
 
@@ -60,9 +59,7 @@ private:
   std::string m_query;
   QString m_lastCompleterItemId;
 
-  QTimer m_calculatorDebounce;
   QTimer m_fileSearchDebounce;
-  CalculatorWatcher m_calcWatcher;
   FileSearchWatcher m_fileWatcher;
   std::string m_calculatorSearchQuery;
   std::string m_fileSearchQuery;

@@ -15,7 +15,7 @@
 #include <string_view>
 #include <vector>
 #include <common/file-category.hpp>
-#include "fuzzy/fzf.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "utils/scoped-com.hpp"
 #include "win-file-indexer.hpp"
 
@@ -258,8 +258,8 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
     std::optional<std::string> mimeType;
   };
 
-  const auto &matcher = fzf::threadLocalMatcher();
   std::vector<Scored> scored;
+  fuzzy::Query const fuzzyQuery{query};
 
   for (Candidate &candidate : fetchCandidates(sql, candidateLimit)) {
     std::filesystem::path path{std::move(candidate.path)};
@@ -268,11 +268,11 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
 
     if (params.category && *params.category != category) { continue; }
 
-    int const fuzzyScore = matcher.fuzzy_match_v2_score_query(path.filename().string(), query);
+    auto const m = fuzzy::scoreWeighted({{path.filename().string(), 1.0}}, fuzzyQuery);
 
-    if (fuzzyScore > 0) {
+    if (m.accepted()) {
       scored.emplace_back(Scored{.path = std::move(path),
-                                 .score = fuzzyScore,
+                                 .score = m.score,
                                  .category = category,
                                  .mimeType = std::move(candidate.mimeType)});
     }

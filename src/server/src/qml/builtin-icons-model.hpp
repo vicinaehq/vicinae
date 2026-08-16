@@ -9,7 +9,7 @@ struct IconEntry {
 };
 
 template <> struct fuzzy::FuzzySearchable<IconEntry> {
-  static int score(const IconEntry &e, std::string_view query) {
+  static fuzzy::Match score(const IconEntry &e, const fuzzy::Query &query) {
     return fuzzy::scoreWeighted({{e.name, 1.0}}, query);
   }
 };

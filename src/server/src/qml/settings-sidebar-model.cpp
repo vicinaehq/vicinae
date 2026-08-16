@@ -142,9 +142,10 @@ void SettingsSidebarModel::rebuildRows() {
   };
   std::vector<Top> tops;
 
+  fuzzy::Query const query{m_query};
   for (const auto &page : corePages) {
-    int const score = fuzzy::scoreWeighted({{page.label.toStdString(), 1.0}}, m_query);
-    if (score > 0) tops.push_back({static_cast<double>(score), coreRow(page), {}});
+    auto const m = fuzzy::scoreWeighted({{page.label.toStdString(), 1.0}}, query);
+    if (m.accepted()) tops.push_back({static_cast<double>(m.score), coreRow(page), {}});
   }
 
   RootItemPrefixSearchOptions opts;

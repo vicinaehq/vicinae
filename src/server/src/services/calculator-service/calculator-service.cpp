@@ -95,13 +95,15 @@ std::vector<CalculatorRecord> CalculatorService::records() const { return m_reco
 std::vector<CalculatorRecord> CalculatorService::query(const QString &query) {
   if (query.isEmpty()) return records();
 
-  std::string const q = query.toStdString();
   std::vector<CalculatorRecord> results;
 
+  fuzzy::Query const fuzzyQuery{query.toStdString()};
   for (const auto &record : records()) {
     auto question = record.question.toStdString();
     auto answer = record.answer.toStdString();
-    if (fuzzy::scoreWeighted({{question, 1.0}, {answer, 0.5}}, q) > 0) { results.emplace_back(record); }
+    if (fuzzy::scoreWeighted({{question, 1.0}, {answer, 0.5}}, fuzzyQuery).accepted()) {
+      results.emplace_back(record);
+    }
   }
 
   return results;
@@ -313,7 +315,7 @@ void CalculatorService::updateConversionRecords() {
   };
 
   for (auto &record : m_records | std::views::filter(isConversionRecord)) {
-    auto result = m_backend->compute(record.question, {.mode = AbstractCalculatorBackend::ComputeMode::Full});
+    auto result = m_backend->compute(record.question, {});
 
     if (!result) continue;
 

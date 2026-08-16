@@ -47,13 +47,15 @@ void ThemeViewHost::regenerateThemes() {
   std::vector<std::shared_ptr<ThemeFile>> current;
   std::vector<Scored<std::shared_ptr<ThemeFile>>> scoredAvailable;
 
+  fuzzy::Query const fuzzyQuery{query};
   for (auto &theme : themes) {
     int score = 0;
     if (!query.empty()) {
       auto name = theme->name().toStdString();
       auto desc = theme->description().toStdString();
-      score = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, query);
-      if (score == 0) continue;
+      auto const m = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, fuzzyQuery);
+      if (!m.accepted()) continue;
+      score = m.score;
     }
 
     if (theme->id() == currentId) {

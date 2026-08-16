@@ -1,11 +1,8 @@
 #pragma once
-#include <cctype>
 #include <qfuture.h>
 #include <qstring.h>
 #include <expected>
-#include <ranges>
 #include <string>
-#include <string_view>
 
 class AbstractCalculatorBackend {
 public:
@@ -14,16 +11,7 @@ public:
     CONVERSION // unit/currency conversion
   };
 
-  enum class ComputeMode {
-    MixedSearch, // compute should expect to be fed regular search queries that aren't necessarily
-                 // computable expressions. each backend should apply its own logic to decide what
-                 // it should attempt to process or not.
-    Full,        // expression can be passed to the calculator backend raw
-  };
-
-  struct ComputeOptions {
-    ComputeMode mode = ComputeMode::Full;
-  };
+  struct ComputeOptions {};
 
   struct Unit {
     QString displayName;
@@ -99,27 +87,6 @@ public:
    * stead. It's okay to not cleanup stuff here as hot backend swapping is not frequent, but do it if you can.
    */
   virtual void stop() {}
-
-  virtual bool isExpression(const std::string &query) const {
-    if (query.starts_with("0x") || query.starts_with("0b") || query.starts_with("0o")) return true;
-
-    static constexpr std::string_view ALWAYS_BINARY = "*/^%";
-    for (size_t i = 1; i < query.size(); ++i) {
-      auto cur = static_cast<unsigned char>(query[i]);
-      auto prev = static_cast<unsigned char>(query[i - 1]);
-      if (ALWAYS_BINARY.find(query[i]) != std::string_view::npos) return true;
-      if ((cur == '+' || cur == '-') && (std::isalnum(prev) || query[i - 1] == ')')) return true;
-      if (cur == '(' || prev == '(') return true;
-    }
-
-    auto hasConversion = [&](std::string_view keyword) {
-      auto pos = query.find(keyword);
-      if (pos == std::string_view::npos || pos == 0 || pos + keyword.size() >= query.size()) return false;
-      auto before = query.substr(0, pos);
-      return std::ranges::any_of(before, [](unsigned char c) { return std::isdigit(c); });
-    };
-    return hasConversion(" to ") || hasConversion(" in ");
-  }
 
   virtual ~AbstractCalculatorBackend() = default;
 };

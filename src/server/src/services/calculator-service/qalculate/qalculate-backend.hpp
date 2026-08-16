@@ -20,7 +20,6 @@ public:
   bool supportsRefreshExchangeRates() const override;
 
   bool isActivatable() const override;
-  bool isExpression(const std::string &query) const override;
 
 private:
   static std::optional<std::string> getUnitDisplayName(const MathStructure &s, std::string_view prefix = "");

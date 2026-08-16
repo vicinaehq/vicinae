@@ -1,5 +1,6 @@
 #pragma once
 #include "argument.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "common.hpp"
 #include "config/config.hpp"
 #include "common/entrypoint.hpp"
@@ -239,7 +240,8 @@ public:
     std::vector<std::string> keywords;
     RootItemMetadata *meta = nullptr;
 
-    float fuzzyScore(std::string_view pattern = "") const;
+    double frecency() const;
+    double fuzzyScore(const fuzzy::Query &query) const;
   };
 
   struct ScoredItem {

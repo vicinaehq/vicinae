@@ -7,7 +7,7 @@
 #include <vector>
 
 template <> struct fuzzy::FuzzySearchable<QString> {
-  static int score(const QString &item, std::string_view query) {
+  static fuzzy::Match score(const QString &item, const fuzzy::Query &query) {
     return fuzzy::scoreWeighted({{item.toStdString(), 1.0}}, query);
   }
 };

@@ -4,7 +4,7 @@
 #include <QCoreApplication>
 
 template <> struct fuzzy::FuzzySearchable<snippet::SerializedSnippet> {
-  static int score(const snippet::SerializedSnippet &item, std::string_view query) {
+  static fuzzy::Match score(const snippet::SerializedSnippet &item, const fuzzy::Query &query) {
     auto name = item.name;
     std::string keyword;
     if (item.expansion) keyword = item.expansion->keyword;

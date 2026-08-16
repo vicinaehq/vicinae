@@ -23,7 +23,7 @@ host-optimized:
 .PHONY: optimized
 
 relwithdebinfo:
-	cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -B $(BUILD_DIR)
+	cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTS=ON -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: relwithdebinfo
 

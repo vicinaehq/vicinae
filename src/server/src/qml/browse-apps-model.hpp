@@ -6,7 +6,7 @@
 using AppPtr = std::shared_ptr<AbstractApplication>;
 
 template <> struct fuzzy::FuzzySearchable<AppPtr> {
-  static int score(const AppPtr &app, std::string_view query) {
+  static fuzzy::Match score(const AppPtr &app, const fuzzy::Query &query) {
     auto name = app->displayName().toStdString();
     auto desc = app->description().toStdString();
 

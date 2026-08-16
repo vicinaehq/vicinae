@@ -149,19 +149,6 @@ std::pair<std::string, PrintOptions> QalculateBackend::handleToExpression(const 
 std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question,
                                                                            const ComputeOptions &opts) {
 
-  const auto fail = [](auto &&reason) { return std::unexpected(CalculatorError(reason)); };
-
-  if (opts.mode == ComputeMode::MixedSearch) {
-    const auto isAllowedLeadingChar = [](QChar c) {
-      return c == '-' || c == '(' || c == ')' || c.isLetterOrNumber() ||
-             c.category() == QChar::Symbol_Currency;
-    };
-    bool const isMixedSearchComputable =
-        question.size() > 1 && isAllowedLeadingChar(question.at(0)) && isExpression(question.toStdString());
-
-    if (!isMixedSearchComputable) { return fail("Not a valid expression"); }
-  }
-
   QString expression = preprocessQuestion(question);
   expression = stripTrailingOperators(expression);
   if (expression.isEmpty()) return std::unexpected(CalculatorError("Empty expression"));
@@ -226,28 +213,6 @@ QString QalculateBackend::stripTrailingOperators(QString expr) {
     }
   }
   return expr.trimmed();
-}
-
-bool QalculateBackend::isExpression(const std::string &query) const {
-  QString expression = preprocessQuestion(QString::fromStdString(query));
-  expression = stripTrailingOperators(expression);
-  if (expression.isEmpty()) return false;
-
-  auto stdExpr = expression.toStdString();
-  std::string const localized = CALCULATOR->unlocalizeExpression(stdExpr);
-  MathStructure parsed = CALCULATOR->parse(localized, m_evalOpts.parse_options);
-
-  CALCULATOR->clearMessages();
-
-  constexpr std::string_view ARITHMETIC_OPS = "+-*/^%";
-
-  for (size_t i = 1; i < stdExpr.size(); ++i) {
-    if (ARITHMETIC_OPS.find(stdExpr[i]) != std::string_view::npos) return true;
-  }
-  if (stdExpr.find('(') != std::string::npos) return true;
-  if (stdExpr.find(" to ") != std::string::npos) return true;
-
-  return false;
 }
 
 QString QalculateBackend::preprocessQuestion(const QString &query) {

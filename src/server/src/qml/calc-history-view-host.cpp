@@ -5,6 +5,8 @@
 
 using namespace std::chrono_literals;
 
+constexpr auto CALCULATOR_MIN_CHARS = 3;
+
 void CalcLiveSection::setResult(std::optional<AbstractCalculatorBackend::CalculatorResult> result) {
   m_result = std::move(result);
   notifyChanged();
@@ -82,12 +84,6 @@ void CalcHistoryViewHost::initialize() {
 
   setSearchPlaceholderText(tr("Search past calculations..."));
 
-  m_calculatorDebounce.setInterval(200ms);
-  m_calculatorDebounce.setSingleShot(true);
-
-  connect(&m_calculatorDebounce, &QTimer::timeout, this, &CalcHistoryViewHost::startCalculator);
-  connect(&m_calcWatcher, &CalculatorWatcher::finished, this, &CalcHistoryViewHost::handleCalculatorFinished);
-
   connect(m_calc, &CalculatorService::recordPinned, this, &CalcHistoryViewHost::refresh);
   connect(m_calc, &CalculatorService::recordUnpinned, this, &CalcHistoryViewHost::refresh);
   connect(m_calc, &CalculatorService::recordRemoved, this, &CalcHistoryViewHost::refresh);
@@ -100,14 +96,20 @@ void CalcHistoryViewHost::loadInitialData() { textChanged(searchText()); }
 
 void CalcHistoryViewHost::textChanged(const QString &text) {
   m_query = text;
-
-  m_calculatorDebounce.stop();
   m_liveSection.clear();
 
   auto data = m_calc->groupRecordsByTime(m_calc->query(text));
   applyGroupedData(std::move(data));
 
-  if (!text.isEmpty()) { m_calculatorDebounce.start(); }
+  bool explicitCalc = text.startsWith("=");
+
+  if (explicitCalc || text.size() >= CALCULATOR_MIN_CHARS) {
+    QString calcQuery = explicitCalc ? text.mid(1) : text;
+
+    if (auto res = m_calc->backend()->compute(calcQuery, {})) {
+      m_liveSection.setResult(std::move(res.value()));
+    }
+  }
 }
 
 void CalcHistoryViewHost::refresh() { textChanged(m_query); }
@@ -128,31 +130,4 @@ void CalcHistoryViewHost::applyGroupedData(CalculatorService::GroupedRecordList 
   }
 
   model()->rebuild();
-}
-
-void CalcHistoryViewHost::startCalculator() {
-  if (m_calcWatcher.isRunning()) {
-    m_calc->backend()->abort();
-    m_calcWatcher.waitForFinished();
-  }
-
-  if (!m_calc->backend() || m_query.isEmpty()) return;
-
-  using Calc = AbstractCalculatorBackend;
-
-  if (m_query.startsWith('=') && m_query.size() > 1) {
-    m_calcWatcher.setFuture(
-        m_calc->backend()->asyncCompute(m_query.mid(1), {.mode = Calc::ComputeMode::Full}));
-    return;
-  }
-
-  m_calcWatcher.setFuture(m_calc->backend()->asyncCompute(m_query, {.mode = Calc::ComputeMode::MixedSearch}));
-}
-
-void CalcHistoryViewHost::handleCalculatorFinished() {
-  if (!m_calcWatcher.isFinished()) return;
-  auto res = m_calcWatcher.result();
-  if (!res) return;
-
-  m_liveSection.setResult(std::move(res.value()));
 }
