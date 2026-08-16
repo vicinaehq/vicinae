@@ -4,6 +4,7 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "argument.hpp"
 #include "common.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -100,7 +101,7 @@ ArgumentList RootShortcutItem::arguments() const {
 ImageURL RootShortcutItem::iconUrl() const {
   ImageURL url(m_link->icon());
 
-  if (url.type() == ImageURLType::Builtin) { url.setBackgroundTint(SemanticColor::Green); }
+  if (url.type() == ImageURLType::Builtin) { url.setBackgroundTint(SemanticColor::Purple); }
 
   return url;
 }
@@ -122,11 +123,7 @@ QString ShortcutRootProvider::displayName() const {
 }
 
 ImageURL ShortcutRootProvider::icon() const {
-  auto icon = ImageURL::builtin(BuiltinIcon::Bolt);
-
-  icon.setBackgroundTint(SemanticColor::Green);
-
-  return icon;
+  return ImageURL::builtin(BuiltinIcon::Bolt).setBackgroundTint(SemanticColor::Purple);
 }
 
 QString ShortcutRootProvider::uniqueId() const { return "shortcuts"; }
