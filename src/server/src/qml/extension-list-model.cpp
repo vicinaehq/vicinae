@@ -9,7 +9,7 @@
 #include "ui/image/url.hpp"
 
 template <> struct fuzzy::FuzzySearchable<ListItemViewModel> {
-  static fuzzy::Match score(const ListItemViewModel &item, std::string_view query) {
+  static fuzzy::Match score(const ListItemViewModel &item, const fuzzy::Query &query) {
     std::vector<fuzzy::WeightedField> fields;
     fields.reserve(2 + item.keywords.size());
     fields.push_back({item.title, 1.0});

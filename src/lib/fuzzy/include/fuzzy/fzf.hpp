@@ -62,6 +62,27 @@ struct QueryScore {
 
 enum class Scheme { Default, Path, History };
 
+class Matcher;
+inline const Matcher &threadLocalMatcher();
+
+// A query prepared for scoring many items: split into words, each with the best score it can
+// reach (`self`, the word matched against itself), so per-item scoring never recomputes it.
+// Ceilings depend on the matcher scheme; the default matcher is used unless one is given.
+struct Query {
+  struct Word {
+    std::string text;
+    int self = 0;
+  };
+
+  std::string text;
+  std::vector<Word> words;
+
+  Query() = default;
+  explicit Query(std::string_view text, const Matcher &matcher = threadLocalMatcher());
+
+  bool empty() const { return words.empty(); }
+};
+
 class Matcher {
 public:
   explicit Matcher(Scheme scheme = Scheme::Default) : m_scheme_(scheme) {
@@ -118,20 +139,16 @@ public:
   template <std::ranges::forward_range R1, std::ranges::forward_range R2>
     requires std::same_as<std::ranges::range_value_t<R1>, WeightedString> &&
              std::same_as<std::ranges::range_value_t<R2>, WeightedString>
-  QueryScore score_query(R1 &&range1, R2 &&range2, std::string_view query) const {
+  QueryScore score_query(R1 &&range1, R2 &&range2, const Query &query) const {
     int weightedSum = 0;
     int selfSum = 0;
     int minQuality = 100;
-    int count = 0;
-    auto words = std::views::split(query, std::string_view{" "}) |
-                 std::views::transform([](auto &&part) { return std::string_view{part}; }) |
-                 std::views::filter([](auto &&s) { return !s.empty(); });
 
-    for (auto word : words) {
+    for (const auto &word : query.words) {
       int maxWeighted = 0;
       int maxRaw = 0;
       auto score = [&](const WeightedString &str) {
-        auto const r = match(str.str, word);
+        auto const r = match(str.str, word.text);
         if (r.coherent) { maxRaw = std::max(maxRaw, r.score); }
         maxWeighted = std::max(maxWeighted, static_cast<int>(r.score * str.weight));
       };
@@ -142,26 +159,24 @@ public:
 
       if (!maxWeighted) return {};
 
-      int const self = match(word, word).score;
-      minQuality = std::min(minQuality, self > 0 ? maxRaw * 100 / self : 0);
+      minQuality = std::min(minQuality, word.self > 0 ? maxRaw * 100 / word.self : 0);
       weightedSum += maxWeighted;
-      selfSum += self;
-      ++count;
+      selfSum += word.self;
     }
 
-    if (count == 0 || selfSum == 0) return {};
-    return {.weighted = weightedSum / count,
+    if (query.words.empty() || selfSum == 0) return {};
+    return {.weighted = weightedSum / static_cast<int>(query.words.size()),
             .score = std::min(100, weightedSum * 100 / selfSum),
             .quality = minQuality};
   }
 
   template <std::ranges::forward_range R>
     requires std::same_as<std::ranges::range_value_t<R>, WeightedString>
-  QueryScore score_query(R &&weightedStrs, std::string_view query) const {
+  QueryScore score_query(R &&weightedStrs, const Query &query) const {
     return score_query(std::forward<R>(weightedStrs), std::views::empty<WeightedString>, query);
   }
 
-  QueryScore score_query(std::string_view text, std::string_view query) const {
+  QueryScore score_query(std::string_view text, const Query &query) const {
     std::initializer_list<WeightedString> lst{{text, 1.0f}};
     return score_query(std::views::all(lst), query);
   }
@@ -594,6 +609,14 @@ private:
 inline const Matcher &threadLocalMatcher() {
   thread_local const Matcher matcher{};
   return matcher;
+}
+
+inline Query::Query(std::string_view text, const Matcher &matcher) : text(text) {
+  for (auto &&part : std::views::split(std::string_view{this->text}, std::string_view{" "})) {
+    std::string_view const word{part};
+    if (word.empty()) continue;
+    words.push_back({.text = std::string(word), .self = matcher.match(word, word).score});
+  }
 }
 
 } // namespace fzf

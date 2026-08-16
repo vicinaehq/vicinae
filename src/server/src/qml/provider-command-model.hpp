@@ -69,7 +69,7 @@ private:
 };
 
 template <> struct fuzzy::FuzzySearchable<ProviderCommandModel::Command> {
-  static fuzzy::Match score(const ProviderCommandModel::Command &cmd, std::string_view query) {
+  static fuzzy::Match score(const ProviderCommandModel::Command &cmd, const fuzzy::Query &query) {
     return fuzzy::scoreWeighted({{cmd.name.toStdString(), 1.0}, {cmd.alias.toStdString(), 1.0}}, query);
   }
 };

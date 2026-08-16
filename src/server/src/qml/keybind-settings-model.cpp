@@ -115,6 +115,7 @@ void KeybindSettingsModel::rebuild(const QString &filter) {
   m_entries.clear();
 
   auto query = filter.toStdString();
+  fuzzy::Query const fuzzyQuery{query};
   std::vector<Scored<Entry>> scored;
 
   for (const auto &[id, info] : KeybindManager::instance()->orderedInfoList()) {
@@ -122,7 +123,7 @@ void KeybindSettingsModel::rebuild(const QString &filter) {
     if (!query.empty()) {
       auto name = info->name.toStdString();
       auto desc = info->description.toStdString();
-      auto const m = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, query);
+      auto const m = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, fuzzyQuery);
       if (!m.accepted()) continue;
       sc = m.score;
     }

@@ -116,7 +116,7 @@ SerializedEmojiMetadata &GlyphService::entryFor(std::string_view emoji) {
 }
 
 std::span<Scored<const glyph::Item *>> GlyphService::search(std::string_view query) const {
-  auto score = [this](const glyph::Item &data, std::string_view query) {
+  auto score = [this](const glyph::Item &data, const fuzzy::Query &query) {
     using WS = fzf::WeightedString;
     const auto *entry = findEntry(data.character);
 

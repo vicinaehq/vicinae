@@ -11,7 +11,7 @@ struct WindowEntry {
 };
 
 template <> struct fuzzy::FuzzySearchable<WindowEntry> {
-  static fuzzy::Match score(const WindowEntry &e, std::string_view query) {
+  static fuzzy::Match score(const WindowEntry &e, const fuzzy::Query &query) {
     auto title = e.window->title().toStdString();
     auto wmClass = e.window->wmClass().toStdString();
     if (e.app) {

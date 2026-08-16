@@ -259,6 +259,7 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
   };
 
   std::vector<Scored> scored;
+  fuzzy::Query const fuzzyQuery{query};
 
   for (Candidate &candidate : fetchCandidates(sql, candidateLimit)) {
     std::filesystem::path path{std::move(candidate.path)};
@@ -267,7 +268,7 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
 
     if (params.category && *params.category != category) { continue; }
 
-    auto const m = fuzzy::scoreWeighted({{path.filename().string(), 1.0}}, query);
+    auto const m = fuzzy::scoreWeighted({{path.filename().string(), 1.0}}, fuzzyQuery);
 
     if (m.accepted()) {
       scored.emplace_back(Scored{.path = std::move(path),

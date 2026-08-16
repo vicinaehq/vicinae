@@ -27,7 +27,7 @@ TEST_CASE("match: diacritic-insensitive matching") {
   REQUIRE(m.match("Café Society", "cafe").matched());
   REQUIRE(m.match("Mañana", "manana").matched());
   REQUIRE(m.match("Tomáš Brzobohatý", "tomas").matched());
-  REQUIRE(m.score_query("Łódź Express", "lodz").weighted);
+  REQUIRE(m.score_query("Łódź Express", fzf::Query{"lodz"}).weighted);
 
   // folding is symmetric: accented query matches ASCII text
   REQUIRE(m.match("cafe society", "café").matched());
@@ -78,15 +78,15 @@ TEST_CASE("ordering: word-boundary match outranks scattered match") {
 
 TEST_CASE("sparse matches") {
   const auto &m = fzf::threadLocalMatcher();
-  REQUIRE(m.score_query("Obsidian Wayland", "obs wld").weighted);
-  REQUIRE(m.score_query("Search Emojis", "emoji srch").weighted);
-  REQUIRE(m.score_query("Keyboard Settings", "kbd stg").weighted);
-  REQUIRE(m.score_query("System Info Event Log", "evlog sinfo").weighted);
-  REQUIRE(m.score_query("Minecraft", "mcft").weighted);
-  REQUIRE(m.score_query("Create Issue For Myself", "cisfmyslf").weighted);
+  REQUIRE(m.score_query("Obsidian Wayland", fzf::Query{"obs wld"}).weighted);
+  REQUIRE(m.score_query("Search Emojis", fzf::Query{"emoji srch"}).weighted);
+  REQUIRE(m.score_query("Keyboard Settings", fzf::Query{"kbd stg"}).weighted);
+  REQUIRE(m.score_query("System Info Event Log", fzf::Query{"evlog sinfo"}).weighted);
+  REQUIRE(m.score_query("Minecraft", fzf::Query{"mcft"}).weighted);
+  REQUIRE(m.score_query("Create Issue For Myself", fzf::Query{"cisfmyslf"}).weighted);
 
-  REQUIRE_FALSE(m.score_query("Minecraft", "avi").weighted);
-  REQUIRE_FALSE(m.score_query("System Info Event Log", "kbd").weighted);
+  REQUIRE_FALSE(m.score_query("Minecraft", fzf::Query{"avi"}).weighted);
+  REQUIRE_FALSE(m.score_query("System Info Event Log", fzf::Query{"kbd"}).weighted);
 }
 
 // yeah, not feeling very inspired...
@@ -130,15 +130,15 @@ TEST_CASE("needsTransliteration: only supported scripts need extra matching") {
 TEST_CASE("transliteration: matching across scripts") {
   const auto &matcher = fzf::threadLocalMatcher();
 
-  REQUIRE(matcher.score_query("Telegram", "телеграм").weighted > 0);
-  REQUIRE(matcher.score_query("Discord", "дискорд").weighted > 0);
-  REQUIRE(matcher.score_query("Konsole", "консоль").weighted > 0);
-  REQUIRE(matcher.score_query("Terminal", "τερμιναλ").weighted > 0);
-  REQUIRE(matcher.score_query("Telegram", "музыка").weighted == 0);
+  REQUIRE(matcher.score_query("Telegram", fzf::Query{"телеграм"}).weighted > 0);
+  REQUIRE(matcher.score_query("Discord", fzf::Query{"дискорд"}).weighted > 0);
+  REQUIRE(matcher.score_query("Konsole", fzf::Query{"консоль"}).weighted > 0);
+  REQUIRE(matcher.score_query("Terminal", fzf::Query{"τερμιναλ"}).weighted > 0);
+  REQUIRE(matcher.score_query("Telegram", fzf::Query{"музыка"}).weighted == 0);
 
-  REQUIRE(matcher.score_query("Привет мир", "мир").weighted > 0);
-  REQUIRE(matcher.score_query("Открыть Discord", "открыть дискорд").weighted > 0);
-  REQUIRE(matcher.score_query("Telegram", "teleg").weighted ==
+  REQUIRE(matcher.score_query("Привет мир", fzf::Query{"мир"}).weighted > 0);
+  REQUIRE(matcher.score_query("Открыть Discord", fzf::Query{"открыть дискорд"}).weighted > 0);
+  REQUIRE(matcher.score_query("Telegram", fzf::Query{"teleg"}).weighted ==
           matcher.match_ascii("Telegram", "teleg").score);
 }
 
@@ -150,38 +150,38 @@ TEST_CASE("query score: quality is the worst per-word match, weighted respects f
       {"Anki", 1.0f}, {"An intelligent spaced-repetition memory training program", 0.5f}};
   auto empty = std::views::empty<WS>;
 
-  auto perfect = m.score_query(std::initializer_list<WS>{{"Firefox", 1.0f}}, empty, "fire");
+  auto perfect = m.score_query(std::initializer_list<WS>{{"Firefox", 1.0f}}, empty, fzf::Query{"fire"});
   REQUIRE(perfect.quality == 100);
   REQUIRE(perfect.score == 100);
   REQUIRE(perfect.weighted == m.match("Firefox", "fire").score);
 
-  auto substring = m.score_query("Firefox", "fox");
+  auto substring = m.score_query("Firefox", fzf::Query{"fox"});
   REQUIRE(substring.quality == substring.score);
   REQUIRE(substring.quality >= fuzzy::MIN_QUALITY);
   REQUIRE(substring.quality < 100);
 
-  auto scattered = m.score_query(anki, empty, "time in");
+  auto scattered = m.score_query(anki, empty, fzf::Query{"time in"});
   REQUIRE(scattered.weighted > 0);
   REQUIRE(scattered.quality == 0);
 
-  auto keywordOnly = m.score_query(anki, empty, "memory");
+  auto keywordOnly = m.score_query(anki, empty, fzf::Query{"memory"});
   REQUIRE(keywordOnly.quality == 100);
   REQUIRE(keywordOnly.score == 50);
   REQUIRE(keywordOnly.weighted == static_cast<int>(m.match("memory", "memory").score * 0.5f));
 
-  REQUIRE(m.score_query(anki, empty, "xyz").quality == 0);
+  REQUIRE(m.score_query(anki, empty, fzf::Query{"xyz"}).quality == 0);
 }
 
 TEST_CASE("fuzzy::scoreWeighted: normalized match with quality gate") {
-  REQUIRE(fuzzy::scoreWeighted({{"Firefox", 1.0}}, "fire").accepted());
-  REQUIRE(fuzzy::scoreWeighted({{"Firefox", 1.0}}, "fire").score == 100);
-  REQUIRE(fuzzy::scoreWeighted({{"Thunderbird", 1.0}}, "bird").accepted());
-  REQUIRE(fuzzy::scoreWeighted({{"Keyboard Settings", 1.0}}, "kbd stg").accepted());
-  REQUIRE_FALSE(fuzzy::scoreWeighted({{"Firefox", 1.0}}, "").accepted());
-  REQUIRE_FALSE(fuzzy::scoreWeighted({{"Firefox", 1.0}}, "xyz").accepted());
-  REQUIRE_FALSE(fuzzy::scoreWeighted({{"An intelligent spaced-repetition memory training program", 1.0}}, "ny").accepted());
+  REQUIRE(fuzzy::scoreWeighted({{"Firefox", 1.0}}, fuzzy::Query{"fire"}).accepted());
+  REQUIRE(fuzzy::scoreWeighted({{"Firefox", 1.0}}, fuzzy::Query{"fire"}).score == 100);
+  REQUIRE(fuzzy::scoreWeighted({{"Thunderbird", 1.0}}, fuzzy::Query{"bird"}).accepted());
+  REQUIRE(fuzzy::scoreWeighted({{"Keyboard Settings", 1.0}}, fuzzy::Query{"kbd stg"}).accepted());
+  REQUIRE_FALSE(fuzzy::scoreWeighted({{"Firefox", 1.0}}, fuzzy::Query{""}).accepted());
+  REQUIRE_FALSE(fuzzy::scoreWeighted({{"Firefox", 1.0}}, fuzzy::Query{"xyz"}).accepted());
+  REQUIRE_FALSE(fuzzy::scoreWeighted({{"An intelligent spaced-repetition memory training program", 1.0}}, fuzzy::Query{"ny"}).accepted());
 
-  auto const weighted = fuzzy::scoreWeighted({{"Firefox", 1.0}, {"Web Browser", 0.5}}, "browser");
+  auto const weighted = fuzzy::scoreWeighted({{"Firefox", 1.0}, {"Web Browser", 0.5}}, fuzzy::Query{"browser"});
   REQUIRE(weighted.quality == 100);
   REQUIRE(weighted.score == 50);
 }
@@ -208,6 +208,6 @@ TEST_CASE("match: coherence separates substrings/abbreviations/acronyms from sca
   REQUIRE_FALSE(m.match("Start Input Method", "time").coherent);
   REQUIRE_FALSE(m.match("An intelligent spaced-repetition memory training program", "time").coherent);
 
-  REQUIRE_FALSE(fuzzy::scoreWeighted({{"Play this game on Steam", 1.0}}, "time").accepted());
-  REQUIRE(fuzzy::scoreWeighted({{"Play this game on Steam", 1.0}}, "steam").accepted());
+  REQUIRE_FALSE(fuzzy::scoreWeighted({{"Play this game on Steam", 1.0}}, fuzzy::Query{"time"}).accepted());
+  REQUIRE(fuzzy::scoreWeighted({{"Play this game on Steam", 1.0}}, fuzzy::Query{"steam"}).accepted());
 }

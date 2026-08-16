@@ -36,8 +36,9 @@ std::vector<Scored<fs::path>> ProgramDb::search(std::string_view query, int limi
 
   filtered.reserve(m_progs.size());
 
+  fuzzy::Query const fuzzyQuery{query};
   for (const auto &prog : m_progs) {
-    auto const m = fuzzy::scoreWeighted({{prog.string(), 1.0}}, query);
+    auto const m = fuzzy::scoreWeighted({{prog.string(), 1.0}}, fuzzyQuery);
     if (m.accepted() || query.empty()) { filtered.push_back({prog, m.score}); }
   }
 

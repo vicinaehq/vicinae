@@ -6,7 +6,7 @@
 using RootItemPtr = std::shared_ptr<RootItem>;
 
 template <> struct fuzzy::FuzzySearchable<RootItemPtr> {
-  static fuzzy::Match score(const RootItemPtr &item, std::string_view query) {
+  static fuzzy::Match score(const RootItemPtr &item, const fuzzy::Query &query) {
     auto name = item->title().toStdString();
 
     std::vector<std::string> keywords;

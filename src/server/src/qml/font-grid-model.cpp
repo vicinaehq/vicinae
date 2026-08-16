@@ -141,7 +141,7 @@ void FontGridModel::setFilter(const QString &text) {
     m_mode = Mode::Search;
     const auto &all = m_fontService->fontFamilies();
     auto results = m_scorer.score(std::span<const FontFamily>(all), text.toStdString(),
-                                  [this](const FontFamily &f, std::string_view query) -> fuzzy::Match {
+                                  [this](const FontFamily &f, const fuzzy::Query &query) -> fuzzy::Match {
                                     if (m_categoryFilter && !f.has(*m_categoryFilter)) return {};
                                     return fuzzy::scoreWeighted({{f.name.toStdString(), 1.0}}, query);
                                   });

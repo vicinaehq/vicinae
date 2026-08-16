@@ -6,7 +6,7 @@
 #include <utility>
 
 template <> struct fuzzy::FuzzySearchable<std::shared_ptr<AbstractAction>> {
-  static fuzzy::Match score(const std::shared_ptr<AbstractAction> &action, std::string_view query) {
+  static fuzzy::Match score(const std::shared_ptr<AbstractAction> &action, const fuzzy::Query &query) {
     auto title = action->title().toStdString();
     return fuzzy::scoreWeighted({{title, 1.0}}, query);
   }

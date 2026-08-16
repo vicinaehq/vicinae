@@ -130,7 +130,7 @@ double computeFileRelevanceMultiplier(const SC &candidate) {
   return 1.0;
 }
 
-int scoreCandidate(const SC &candidate, std::string_view query) {
+int scoreCandidate(const SC &candidate, const fzf::Query &query) {
   const auto &ranker = fzf::threadLocalMatcher();
   auto pcstr = candidate.path.c_str();
   auto filename = file_indexer::vocab::basenameView(pcstr);
@@ -139,7 +139,7 @@ int scoreCandidate(const SC &candidate, std::string_view query) {
   int score = ranker.score_query(strs, query).weighted;
 
   return score * computeFileRelevanceMultiplier(candidate) *
-         computeSubstringMatchMultiplier(candidate, query);
+         computeSubstringMatchMultiplier(candidate, query.text);
 }
 
 int scoreCandidate(const SC &candidate, const CorrectionPlan &plan) {
@@ -278,7 +278,7 @@ std::vector<IndexerFileResult> rankCandidates(std::vector<SC> candidates, const 
 }
 
 int idealScoreForQuery(std::string_view query) {
-  return fzf::threadLocalMatcher().score_query(query, query).weighted;
+  return fzf::threadLocalMatcher().score_query(query, fzf::Query{query}).weighted;
 }
 
 double idealScoreForCorrectionPlan(const CorrectionPlan &plan) {
@@ -442,8 +442,10 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
 
   SkeletonMergeDecision skeletonDecision;
 
+  fzf::Query const fuzzyQuery{q};
+
   if (!candidates.empty()) {
-    auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, q); };
+    auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, fuzzyQuery); };
     auto ranked = scoreCandidates(std::span<const SC>{candidates}, scorer);
     skeletonDecision = skeletonMergeDecision(ranked, q, limit);
 
@@ -472,7 +474,7 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
   }
 
   if (!candidates.empty()) {
-    auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, q); };
+    auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, fuzzyQuery); };
 
     if (auto results = rankCandidates(std::move(candidates), scorer, limit); !results.empty()) {
       return results;

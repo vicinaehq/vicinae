@@ -1,5 +1,6 @@
 #pragma once
 #include "argument.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "common.hpp"
 #include "config/config.hpp"
 #include "common/entrypoint.hpp"
@@ -240,7 +241,7 @@ public:
     RootItemMetadata *meta = nullptr;
 
     double frecency() const;
-    double fuzzyScore(std::string_view pattern = "") const;
+    double fuzzyScore(const fuzzy::Query &query) const;
   };
 
   struct ScoredItem {

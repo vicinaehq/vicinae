@@ -180,6 +180,7 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
   std::vector<Scored> scored;
 
   scored.reserve(count);
+  fuzzy::Query const fuzzyQuery{query};
 
   for (CFIndex i = 0; i < count; ++i) {
     auto item = (MDItemRef)MDQueryGetResultAtIndex(mdQuery, i);
@@ -201,7 +202,7 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
         continue;
       }
 
-      auto const m = fuzzy::scoreWeighted({{path.filename().string(), 1.0}}, query);
+      auto const m = fuzzy::scoreWeighted({{path.filename().string(), 1.0}}, fuzzyQuery);
 
       if (m.accepted()) {
         scored.emplace_back(Scored{.path = std::move(path),

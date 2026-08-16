@@ -25,8 +25,9 @@ void DMenuSection::setFilter(std::string_view query) {
   m_currentSearchText = QString::fromUtf8(query.data(), query.size());
 
   m_filtered.clear();
+  fuzzy::Query const fuzzyQuery{queryStr};
   for (auto [idx, e] : vicinae::enumerate(m_entries)) {
-    auto const m = fuzzy::scoreWeighted({{e, 1.0}}, queryStr);
+    auto const m = fuzzy::scoreWeighted({{e, 1.0}}, fuzzyQuery);
     if (queryStr.empty() || m.accepted()) { m_filtered.push_back({{e, idx}, m.score}); }
   }
   std::ranges::stable_sort(m_filtered, std::greater{});

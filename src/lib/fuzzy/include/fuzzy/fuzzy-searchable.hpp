@@ -14,6 +14,8 @@
 
 namespace fuzzy {
 
+using Query = fzf::Query;
+
 inline constexpr int MIN_QUALITY = 60;
 // score points (out of 100) a maximal frecency is worth
 inline constexpr double FRECENCY_WEIGHT = 6.0;
@@ -49,7 +51,7 @@ inline double frecency(std::uint32_t visitCount, std::optional<std::uint64_t> la
 template <typename T> struct FuzzySearchable;
 
 template <typename T>
-concept FuzzySearchableType = requires(const T &item, std::string_view query) {
+concept FuzzySearchableType = requires(const T &item, const Query &query) {
   { FuzzySearchable<T>::score(item, query) } -> std::convertible_to<Match>;
 };
 
@@ -66,7 +68,7 @@ struct OwnedWeightedField {
 namespace detail {
 template <std::ranges::forward_range R>
   requires std::same_as<std::ranges::range_value_t<R>, WeightedField>
-inline Match scoreFields(R &&fields, std::string_view query) {
+inline Match scoreFields(R &&fields, const Query &query) {
   if (query.empty()) return {};
 
   auto ws = fields | std::views::transform([](const WeightedField &f) {
@@ -78,34 +80,35 @@ inline Match scoreFields(R &&fields, std::string_view query) {
 }
 } // namespace detail
 
-inline Match scoreWeighted(std::initializer_list<WeightedField> fields, std::string_view query) {
+inline Match scoreWeighted(std::initializer_list<WeightedField> fields, const Query &query) {
   return detail::scoreFields(fields, query);
 }
 
 template <std::ranges::forward_range R>
   requires std::same_as<std::ranges::range_value_t<R>, WeightedField>
-inline Match scoreWeighted(R &&fields, std::string_view query) {
+inline Match scoreWeighted(R &&fields, const Query &query) {
   return detail::scoreFields(std::forward<R>(fields), query);
 }
 
-inline Match scoreWeighted(const std::vector<OwnedWeightedField> &fields, std::string_view query) {
+inline Match scoreWeighted(const std::vector<OwnedWeightedField> &fields, const Query &query) {
   auto view = fields | std::views::transform(
                            [](const OwnedWeightedField &f) { return WeightedField{f.text, f.weight}; });
   return detail::scoreFields(view, query);
 }
 
 template <FuzzySearchableType T>
-void fuzzyFilter(std::span<const T> items, std::string_view query, std::vector<Scored<int>> &out) {
+void fuzzyFilter(std::span<const T> items, std::string_view text, std::vector<Scored<int>> &out) {
   out.clear();
   out.reserve(items.size());
 
-  if (query.empty()) {
+  if (text.empty()) {
     for (int i = 0; i < static_cast<int>(items.size()); ++i) {
       out.push_back({.data = i, .score = 0});
     }
     return;
   }
 
+  Query const query{text};
   for (int i = 0; i < static_cast<int>(items.size()); ++i) {
     Match const m = FuzzySearchable<T>::score(items[i], query);
     if (m.accepted()) { out.push_back({.data = i, .score = m.score}); }
