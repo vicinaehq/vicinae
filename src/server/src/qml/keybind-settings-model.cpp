@@ -122,8 +122,9 @@ void KeybindSettingsModel::rebuild(const QString &filter) {
     if (!query.empty()) {
       auto name = info->name.toStdString();
       auto desc = info->description.toStdString();
-      sc = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, query);
-      if (sc <= 0) continue;
+      auto const m = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, query);
+      if (!m.accepted()) continue;
+      sc = m.score;
     }
 
     Entry e;

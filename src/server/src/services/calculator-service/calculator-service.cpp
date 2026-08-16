@@ -101,7 +101,7 @@ std::vector<CalculatorRecord> CalculatorService::query(const QString &query) {
   for (const auto &record : records()) {
     auto question = record.question.toStdString();
     auto answer = record.answer.toStdString();
-    if (fuzzy::scoreWeighted({{question, 1.0}, {answer, 0.5}}, q) > 0) { results.emplace_back(record); }
+    if (fuzzy::scoreWeighted({{question, 1.0}, {answer, 0.5}}, q).accepted()) { results.emplace_back(record); }
   }
 
   return results;

@@ -17,7 +17,7 @@ inline std::vector<std::string_view> rankByQuery(std::span<const std::string_vie
   scored.reserve(items.size());
 
   for (auto text : items) {
-    int s = matcher.fuzzy_match_v2_score_query(text, query);
+    int s = matcher.score_query(text, query).weighted;
     if (s > 0) { scored.push_back({.data = text, .score = s}); }
   }
 

@@ -13,7 +13,7 @@ struct VicinaeStoreEntry {
 };
 
 template <> struct fuzzy::FuzzySearchable<VicinaeStoreEntry> {
-  static int score(const VicinaeStoreEntry &entry, std::string_view query) {
+  static fuzzy::Match score(const VicinaeStoreEntry &entry, std::string_view query) {
     auto title = entry.extension.title.toStdString();
     auto author = entry.extension.author.name.toStdString();
     auto desc = entry.extension.description.toStdString();

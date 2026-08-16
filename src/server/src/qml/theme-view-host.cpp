@@ -52,8 +52,9 @@ void ThemeViewHost::regenerateThemes() {
     if (!query.empty()) {
       auto name = theme->name().toStdString();
       auto desc = theme->description().toStdString();
-      score = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, query);
-      if (score == 0) continue;
+      auto const m = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, query);
+      if (!m.accepted()) continue;
+      score = m.score;
     }
 
     if (theme->id() == currentId) {

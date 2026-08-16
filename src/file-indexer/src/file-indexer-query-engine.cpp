@@ -136,7 +136,7 @@ int scoreCandidate(const SC &candidate, std::string_view query) {
   auto filename = file_indexer::vocab::basenameView(pcstr);
   auto dirname = file_indexer::vocab::dirnameView(pcstr);
   std::initializer_list<fzf::WeightedString> strs = {{filename, 1}, {dirname, 0.7}};
-  int score = ranker.fuzzy_match_v2_score_query(strs, query);
+  int score = ranker.score_query(strs, query).weighted;
 
   return score * computeFileRelevanceMultiplier(candidate) *
          computeSubstringMatchMultiplier(candidate, query);
@@ -148,8 +148,8 @@ int scoreCandidate(const SC &candidate, const CorrectionPlan &plan) {
   std::string_view const fullPath{candidate.path.c_str()};
 
   auto wordScore = [&](std::string_view word) {
-    int const onFilename = ranker.fuzzy_match_v2(filename, word).score;
-    int const onPath = static_cast<int>(ranker.fuzzy_match_v2(fullPath, word).score * 0.7);
+    int const onFilename = ranker.match(filename, word).score;
+    int const onPath = static_cast<int>(ranker.match(fullPath, word).score * 0.7);
     return std::max(onFilename, onPath);
   };
 
@@ -278,7 +278,7 @@ std::vector<IndexerFileResult> rankCandidates(std::vector<SC> candidates, const 
 }
 
 int idealScoreForQuery(std::string_view query) {
-  return fzf::threadLocalMatcher().fuzzy_match_v2_score_query(query, query);
+  return fzf::threadLocalMatcher().score_query(query, query).weighted;
 }
 
 double idealScoreForCorrectionPlan(const CorrectionPlan &plan) {

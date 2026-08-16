@@ -34,6 +34,10 @@ struct Result {
   int start = -1;
   int end = -1;
   int score = 0;
+  // false when the alignment spreads over several words while some run of consecutive matched
+  // characters starts mid-word ("time" in "S[t]art [I]nput [Me]thod"): a match nobody would recognize.
+  // Substrings, in-word abbreviations ("kbd"/"Keyboard") and acronyms ("sim"/"Start Input Method") are coherent.
+  bool coherent = true;
   // not populated if position is not requested
   std::vector<int> positions;
 
@@ -45,11 +49,14 @@ struct WeightedString {
   float weight;
 };
 
-// `weighted` is the score with field weights applied (use for ranking);
+// `weighted` is the raw fzf score with field weights applied, averaged over query words;
+// `score` (0-100) is `weighted` relative to a perfect match of the whole query (use for ranking);
 // `quality` (0-100) is the unweighted score of the worst-matched query word relative to a perfect
 // match of that word, so it can be thresholded independently of query length (use for filtering).
+// Only coherent alignments (see Result::coherent) count toward `quality`.
 struct QueryScore {
   int weighted = 0;
+  int score = 0;
   int quality = 0;
 };
 
@@ -111,8 +118,9 @@ public:
   template <std::ranges::forward_range R1, std::ranges::forward_range R2>
     requires std::same_as<std::ranges::range_value_t<R1>, WeightedString> &&
              std::same_as<std::ranges::range_value_t<R2>, WeightedString>
-  QueryScore fuzzy_match_v2_query_score(R1 &&range1, R2 &&range2, std::string_view query) const {
+  QueryScore score_query(R1 &&range1, R2 &&range2, std::string_view query) const {
     int weightedSum = 0;
+    int selfSum = 0;
     int minQuality = 100;
     int count = 0;
     auto words = std::views::split(query, std::string_view{" "}) |
@@ -123,9 +131,9 @@ public:
       int maxWeighted = 0;
       int maxRaw = 0;
       auto score = [&](const WeightedString &str) {
-        int const raw = fuzzy_match_v2(str.str, word).score;
-        maxRaw = std::max(maxRaw, raw);
-        maxWeighted = std::max(maxWeighted, static_cast<int>(raw * str.weight));
+        auto const r = match(str.str, word);
+        if (r.coherent) { maxRaw = std::max(maxRaw, r.score); }
+        maxWeighted = std::max(maxWeighted, static_cast<int>(r.score * str.weight));
       };
       for (const auto &s : range1)
         score(s);
@@ -134,46 +142,41 @@ public:
 
       if (!maxWeighted) return {};
 
-      int const self = fuzzy_match_v2(word, word).score;
+      int const self = match(word, word).score;
       minQuality = std::min(minQuality, self > 0 ? maxRaw * 100 / self : 0);
       weightedSum += maxWeighted;
+      selfSum += self;
       ++count;
     }
 
-    if (count == 0) return {};
-    return {.weighted = weightedSum / count, .quality = minQuality};
-  }
-
-  template <std::ranges::forward_range R1, std::ranges::forward_range R2>
-    requires std::same_as<std::ranges::range_value_t<R1>, WeightedString> &&
-             std::same_as<std::ranges::range_value_t<R2>, WeightedString>
-  int fuzzy_match_v2_score_query(R1 &&range1, R2 &&range2, std::string_view query) const {
-    return fuzzy_match_v2_query_score(std::forward<R1>(range1), std::forward<R2>(range2), query).weighted;
+    if (count == 0 || selfSum == 0) return {};
+    return {.weighted = weightedSum / count,
+            .score = std::min(100, weightedSum * 100 / selfSum),
+            .quality = minQuality};
   }
 
   template <std::ranges::forward_range R>
     requires std::same_as<std::ranges::range_value_t<R>, WeightedString>
-  int fuzzy_match_v2_score_query(R &&weightedStrs, std::string_view query) const {
-    return fuzzy_match_v2_score_query(std::forward<R>(weightedStrs), std::views::empty<WeightedString>,
-                                      query);
+  QueryScore score_query(R &&weightedStrs, std::string_view query) const {
+    return score_query(std::forward<R>(weightedStrs), std::views::empty<WeightedString>, query);
   }
 
-  int fuzzy_match_v2_score_query(std::string_view text, std::string_view query) const {
+  QueryScore score_query(std::string_view text, std::string_view query) const {
     std::initializer_list<WeightedString> lst{{text, 1.0f}};
-    return fuzzy_match_v2_score_query(std::views::all(lst), query);
+    return score_query(std::views::all(lst), query);
   }
 
-  Result fuzzy_match_v2(std::string_view text, std::string_view pattern, bool with_pos = false) const {
+  Result match(std::string_view text, std::string_view pattern, bool with_pos = false) const {
     const auto match = [&](std::string_view candidate) {
       if (!has_non_ascii(text) && !has_non_ascii(candidate)) {
-        return fuzzy_match_v2_ascii(text, candidate, with_pos);
+        return match_ascii(text, candidate, with_pos);
       }
 
       fold_text(text);
       const std::string_view ftext{m_fold_text.data(), m_fold_text.size()};
       const std::string_view fpat = fold_pattern(candidate);
 
-      Result result = fuzzy_match_v2_ascii(ftext, fpat, with_pos);
+      Result result = match_ascii(ftext, fpat, with_pos);
       if (result.matched()) {
         result.start = m_fold_off[result.start];
         result.end = m_fold_off[result.end];
@@ -197,7 +200,7 @@ public:
     return best;
   }
 
-  Result fuzzy_match_v2_ascii(std::string_view text, std::string_view pattern, bool with_pos = false) const {
+  Result match_ascii(std::string_view text, std::string_view pattern, bool with_pos = false) const {
     const int M = static_cast<int>(pattern.length());
     const int N = static_cast<int>(text.length());
 
@@ -349,17 +352,22 @@ public:
       }
     }
 
-    // Phase 4: Backtracking (optional)
+    // Phase 4: Backtracking. Always walked to classify the alignment (Result::coherent);
+    // positions are only recorded on request.
     Result result;
     result.start = min_idx + f0;
     result.end = min_idx + max_score_pos + 1;
     result.score = max_score;
 
-    if (with_pos) {
-      result.positions.reserve(M);
+    if (with_pos) { result.positions.reserve(M); }
+
+    {
       int i = M - 1;
       int j = max_score_pos;
       bool prefer_match = true;
+      bool boundary_inside = false;
+      bool mid_word_run_start = false;
+      int next_pos = -1;
 
       while (true) {
         const int I = i * width;
@@ -371,17 +379,23 @@ public:
         if (j > F[i]) { s2 = H[I + j0 - 1]; }
 
         if (s > s1 && (s > s2 || (s == s2 && prefer_match))) {
-          result.positions.push_back(min_idx + j);
-          if (i == 0) break;
+          if (with_pos) { result.positions.push_back(min_idx + j); }
+          if (next_pos >= 0 && next_pos != j + 1 && B[next_pos] == 0) { mid_word_run_start = true; }
+          next_pos = j;
+          if (i == 0) {
+            if (B[j] == 0) { mid_word_run_start = true; }
+            break;
+          }
           i--;
         }
 
+        if (B[j] > 0) { boundary_inside = true; }
         prefer_match =
             C[I + j0] > 1 || (I + width + j0 + 1 < static_cast<int>(C.size()) && C[I + width + j0 + 1] > 0);
         j--;
       }
 
-      // Positions were added in reverse order
+      result.coherent = !boundary_inside || !mid_word_run_start;
       std::reverse(result.positions.begin(), result.positions.end());
     }
 

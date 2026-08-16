@@ -20,7 +20,7 @@ struct WorkspaceInfo {
 };
 
 template <> struct fuzzy::FuzzySearchable<WorkspaceInfo> {
-  static int score(const WorkspaceInfo &e, std::string_view query) {
+  static fuzzy::Match score(const WorkspaceInfo &e, std::string_view query) {
     std::vector<OwnedWeightedField> fields{};
 
     fields.push_back({e.workspace->name().toStdString(), 1.0});

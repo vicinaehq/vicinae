@@ -1,6 +1,6 @@
 #include "dmenu-model.hpp"
 #include "common/enumerate.hpp"
-#include "fuzzy/fzf.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "service-registry.hpp"
 #include "template-engine/template-engine.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -26,8 +26,8 @@ void DMenuSection::setFilter(std::string_view query) {
 
   m_filtered.clear();
   for (auto [idx, e] : vicinae::enumerate(m_entries)) {
-    int const score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(e, queryStr);
-    if (queryStr.empty() || score > 0) { m_filtered.push_back({{e, idx}, score}); }
+    auto const m = fuzzy::scoreWeighted({{e, 1.0}}, queryStr);
+    if (queryStr.empty() || m.accepted()) { m_filtered.push_back({{e, idx}, m.score}); }
   }
   std::ranges::stable_sort(m_filtered, std::greater{});
 }

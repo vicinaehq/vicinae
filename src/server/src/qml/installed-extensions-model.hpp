@@ -4,7 +4,7 @@
 #include <QCoreApplication>
 
 template <> struct fuzzy::FuzzySearchable<ExtensionManifest> {
-  static int score(const ExtensionManifest &m, std::string_view query) {
+  static fuzzy::Match score(const ExtensionManifest &m, std::string_view query) {
     auto title = m.title.toStdString();
     auto desc = m.description.toStdString();
     auto author = m.author.toStdString();

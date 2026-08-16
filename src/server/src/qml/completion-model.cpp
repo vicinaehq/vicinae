@@ -4,7 +4,7 @@
 #include <utility>
 
 template <> struct fuzzy::FuzzySearchable<CompletionModel::Item> {
-  static int score(const CompletionModel::Item &item, std::string_view query) {
+  static fuzzy::Match score(const CompletionModel::Item &item, std::string_view query) {
     return fuzzy::scoreWeighted({{item.title, 1.0}}, query);
   }
 };

@@ -5,7 +5,7 @@
 #include <memory>
 
 template <> struct fuzzy::FuzzySearchable<std::shared_ptr<Shortcut>> {
-  static int score(const std::shared_ptr<Shortcut> &s, std::string_view query) {
+  static fuzzy::Match score(const std::shared_ptr<Shortcut> &s, std::string_view query) {
     auto name = s->name().toStdString();
     return fuzzy::scoreWeighted({{name, 1.0}}, query);
   }
