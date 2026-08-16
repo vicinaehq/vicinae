@@ -14,7 +14,7 @@
 #include <QCoreApplication>
 
 namespace {
-const auto COLOR = SemanticColor::Cyan;
+const auto COLOR = SemanticColor::Blue;
 
 class ToggleFullscreenWindowCommand : public BuiltinCallbackCommand {
   QString id() const override { return "toggle-fullscreen"; }
@@ -89,7 +89,7 @@ class SwitchWindowsCommand : public BuiltinViewCommand<SwitchWindowsViewHost> {
     return QCoreApplication::translate("SwitchWindowsCommand", "Switch Windows");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::SwitchWindows).setBackgroundTint(SemanticColor::Cyan);
+    return ImageURL::builtin(BuiltinIcon::SwitchWindows).setBackgroundTint(COLOR);
   }
 };
 
@@ -99,7 +99,7 @@ class SwitchWorkspacesCommand : public BuiltinViewCommand<SwitchWorkspacesViewHo
     return QCoreApplication::translate("SwitchWorkspacesCommand", "Switch Workspaces");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Carousel).setBackgroundTint(SemanticColor::Cyan);
+    return ImageURL::builtin(BuiltinIcon::Carousel).setBackgroundTint(COLOR);
   }
 };
 } // namespace
