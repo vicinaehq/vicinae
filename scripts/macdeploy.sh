@@ -86,7 +86,7 @@ macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/qml" -verbose=2
 # in particular, we prune the default openssl-backed tls backend because we want to force QT to use SecureTransport
 PRUNE_FRAMEWORKS=(
   QtSql QtWidgets QtLabsFolderListModel QtQmlLocalStorage QtQmlXmlListModel
-  QtQuickParticles QtQuickShapes QtQuickShapesDesignHelpers
+  QtQuickParticles
   QtQuickVectorImage QtQuickVectorImageGenerator QtQuickVectorImageHelpers
   QtQuickControls2Fusion QtQuickControls2FusionStyleImpl
   QtQuickControls2Imagine QtQuickControls2ImagineStyleImpl
@@ -108,7 +108,6 @@ rm -rf "$BUNDLE/Contents/PlugIns/sqldrivers" \
        "$BUNDLE/Contents/PlugIns/styles" \
        "$BUNDLE/Contents/PlugIns/tls/libqopensslbackend.dylib" \
        "$BUNDLE/Contents/PlugIns/quick/libparticlesplugin.dylib" \
-       "$BUNDLE/Contents/PlugIns/quick/libqmlshapesplugin.dylib" \
        "$BUNDLE/Contents/PlugIns/quick/libqtquickshapesdesignhelpersplugin.dylib" \
        "$BUNDLE/Contents/PlugIns/quick/libqmlfolderlistmodelplugin.dylib" \
        "$BUNDLE/Contents/PlugIns/quick/libqmlxmllistmodelplugin.dylib" \
@@ -119,7 +118,6 @@ rm -rf "$BUNDLE/Contents/PlugIns/sqldrivers" \
        "$BUNDLE/Contents/Resources/qml/QtQml/XmlListModel" \
        "$BUNDLE/Contents/Resources/qml/QtQuick/LocalStorage" \
        "$BUNDLE/Contents/Resources/qml/QtQuick/Particles" \
-       "$BUNDLE/Contents/Resources/qml/QtQuick/Shapes" \
        "$BUNDLE/Contents/Resources/qml/QtQuick/VectorImage" \
        "$BUNDLE/Contents/Resources/qml/QtQuick/NativeStyle" \
        "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/designer" \
