@@ -53,8 +53,6 @@ public:
   }
 
 private:
-  using CalculatorWatcher = QFutureWatcher<AbstractCalculatorBackend::ComputeResult>;
-
   void refresh();
   void applyGroupedData(CalculatorService::GroupedRecordList data);
   void startCalculator();
@@ -65,6 +63,4 @@ private:
   std::vector<std::unique_ptr<CalcHistorySection>> m_sections;
 
   CalcLiveSection m_liveSection;
-  CalculatorWatcher m_calcWatcher;
-  QTimer m_calculatorDebounce;
 };

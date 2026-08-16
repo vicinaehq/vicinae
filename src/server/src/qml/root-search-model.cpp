@@ -23,14 +23,10 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
 
   using namespace std::chrono_literals;
 
-  m_calculatorDebounce.setInterval(200ms);
-  m_calculatorDebounce.setSingleShot(true);
   m_fileSearchDebounce.setInterval(200ms);
   m_fileSearchDebounce.setSingleShot(true);
 
-  connect(&m_calculatorDebounce, &QTimer::timeout, this, &RootSearchModel::startCalculator);
   connect(&m_fileSearchDebounce, &QTimer::timeout, this, &RootSearchModel::startFileSearch);
-  connect(&m_calcWatcher, &CalculatorWatcher::finished, this, &RootSearchModel::handleCalculatorFinished);
   connect(&m_fileWatcher, &FileSearchWatcher::finished, this, &RootSearchModel::handleFileSearchFinished);
 
   connect(m_config, &config::Manager::configChanged, this,
@@ -77,8 +73,6 @@ void RootSearchModel::setFilter(const QString &text) {
 
   m_calcSource->setResult({});
   m_filesSource->setFiles({});
-
-  m_calculatorDebounce.stop();
   m_fileSearchDebounce.stop();
 
   bool const directMatch = rerunSearch();
@@ -159,7 +153,11 @@ bool RootSearchModel::rerunSearch() {
   m_resultsSource->setItems(std::move(results));
 
   if (!text.isEmpty()) {
-    if (!inhibitCalculator && m_query.size() >= CALCULATOR_MIN_CHARS) {
+    if (text.startsWith("=")) {
+      if (auto res = m_calculator->backend()->compute(QString::fromStdString(m_query.substr(1)), {})) {
+        m_calcSource->setResult(res.value());
+      }
+    } else if (!inhibitCalculator && m_query.size() >= CALCULATOR_MIN_CHARS) {
       if (auto res = m_calculator->backend()->compute(QString::fromStdString(m_query), {})) {
         m_calcSource->setResult(res.value());
       }
@@ -217,41 +215,6 @@ const RootItem *RootSearchModel::selectedRootItem() const {
 
   auto *section = dynamic_cast<const RootItemSection *>(sources()[sourceIdx]);
   return section ? section->rootItem(itemIdx) : nullptr;
-}
-
-void RootSearchModel::startCalculator() {
-  if (m_calcWatcher.isRunning()) {
-    m_calculator->backend()->abort();
-    m_calcWatcher.waitForFinished();
-  }
-
-  m_calculatorSearchQuery = m_query;
-
-  if (!m_calculator->backend()) return;
-
-  auto expression = QString::fromStdString(m_query);
-  if (expression.startsWith("=") && expression.size() > 1) {
-    m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(
-        expression.mid(1), {.mode = AbstractCalculatorBackend::ComputeMode::Full}));
-    return;
-  }
-
-  m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(
-      expression, {.mode = AbstractCalculatorBackend::ComputeMode::MixedSearch}));
-}
-
-void RootSearchModel::handleCalculatorFinished() {
-  if (!m_calcWatcher.isFinished() || m_calculatorSearchQuery != m_query) return;
-  auto res = m_calcWatcher.result();
-  if (!res) return;
-
-  m_calcSource->setResult(res.value());
-
-  auto saved = selectFirstOnReset();
-  setSelectFirstOnReset(false);
-  rebuild();
-  setSelectFirstOnReset(saved);
-  refreshActionPanel();
 }
 
 void RootSearchModel::startFileSearch() {
