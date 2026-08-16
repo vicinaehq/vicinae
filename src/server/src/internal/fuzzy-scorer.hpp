@@ -1,5 +1,7 @@
 #pragma once
 
+#include "fuzzy/fuzzy-searchable.hpp"
+#include "fuzzy/fzf.hpp"
 #include "fuzzy/scored.hpp"
 #include <QtConcurrent>
 #include <algorithm>
@@ -22,6 +24,18 @@ public:
   static constexpr size_t PARALLEL_THRESHOLD = 1000;
   static constexpr size_t MIN_BATCH = 256;
   using TScored = Scored<const T *>;
+
+  // produces a score between [0, 100]
+  std::span<Scored<const T *>> scoreNormalized(std::span<const T> items, std::string_view query) {
+    fzf::Matcher matcher{};
+    int max = matcher.fuzzy_match_v2_score_query(query, query);
+    Scorer scorer = [max](const T &item, std::string_view query) {
+      int n = fuzzy::FuzzySearchable<T>::score(item, query);
+      return std::floor(static_cast<double>(n) / max * 100);
+    };
+
+    return score(items, query, scorer);
+  }
 
   std::span<Scored<const T *>> score(std::span<const T> items, std::string_view query,
                                      const Scorer &scorer) const {

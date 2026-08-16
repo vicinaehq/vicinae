@@ -6,8 +6,8 @@
 #include <span>
 #include <string_view>
 #include <vector>
-#include "fuzzy/scored.hpp"
 #include "fuzzy/fzf.hpp"
+#include "scored.hpp"
 
 namespace fuzzy {
 

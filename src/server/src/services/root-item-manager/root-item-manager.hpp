@@ -239,7 +239,8 @@ public:
     std::vector<std::string> keywords;
     RootItemMetadata *meta = nullptr;
 
-    float fuzzyScore(std::string_view pattern = "") const;
+    double frecency() const;
+    double fuzzyScore(int max, std::string_view pattern = "") const;
   };
 
   struct ScoredItem {

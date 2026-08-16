@@ -140,3 +140,26 @@ TEST_CASE("transliteration: matching across scripts") {
   REQUIRE(matcher.fuzzy_match_v2_score_query("Telegram", "teleg") ==
           matcher.fuzzy_match_v2_ascii("Telegram", "teleg").score);
 }
+
+TEST_CASE("query score: quality is the worst per-word match, weighted respects field weights") {
+  const auto &m = fzf::threadLocalMatcher();
+  using WS = fzf::WeightedString;
+
+  std::initializer_list<WS> anki = {
+      {"Anki", 1.0f}, {"An intelligent spaced-repetition memory training program", 0.5f}};
+  auto empty = std::views::empty<WS>;
+
+  auto perfect = m.fuzzy_match_v2_query_score(std::initializer_list<WS>{{"Firefox", 1.0f}}, empty, "fire");
+  REQUIRE(perfect.quality == 100);
+  REQUIRE(perfect.weighted == m.fuzzy_match_v2("Firefox", "fire").score);
+
+  auto scattered = m.fuzzy_match_v2_query_score(anki, empty, "time in ny");
+  REQUIRE(scattered.quality > 0);
+  REQUIRE(scattered.quality < 50);
+
+  auto keywordOnly = m.fuzzy_match_v2_query_score(anki, empty, "memory");
+  REQUIRE(keywordOnly.quality == 100);
+  REQUIRE(keywordOnly.weighted == static_cast<int>(m.fuzzy_match_v2("memory", "memory").score * 0.5f));
+
+  REQUIRE(m.fuzzy_match_v2_query_score(anki, empty, "xyz").quality == 0);
+}

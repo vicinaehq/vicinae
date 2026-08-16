@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <qlogging.h>
 #include "root-item-manager.hpp"
-#include "common.hpp"
 #include "glaze-qt.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "fuzzy/fzf.hpp"
@@ -12,6 +11,9 @@
 #include "services/local-storage/local-storage-service.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
+
+static constexpr int MATCH_QUALITY_THRESHOLD = 70;
+static constexpr double FRECENCY_WEIGHT = 6.0;
 
 RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &storage)
     : m_cfg(cfg), m_storage(storage), m_visitTracker(Omnicast::dataDir() / "metadata.json"),
@@ -133,36 +135,39 @@ void RootItemManager::updateIndex() {
   emit itemsChanged();
 }
 
-float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
-  using WS = fzf::WeightedString;
-  std::string alias = meta->alias.value_or("");
-  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
-  auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
-  float const score =
-      pattern.empty() ? 1 : fzf::threadLocalMatcher().fuzzy_match_v2_score_query(ss, kws, pattern);
-
-  if (score == 0) return 0;
-
-  constexpr double FRECENCY_BOOST_CAP = 25.0;
-  constexpr double FRECENCY_FREQ_SCALE = 5.0;
-  constexpr double FRECENCY_RECENCY_PEAK = 10.0;
-  constexpr double FRECENCY_RECENCY_HALF_LIFE_DAYS = 30.0;
+double RootItemManager::SearchableRootItem::frecency() const {
+  constexpr double FREQUENCY_SCALE = 5.0;
+  constexpr double RECENCY_PEAK = 10.0;
+  constexpr double RECENCY_HALF_LIFE_DAYS = 30.0;
+  constexpr double CAP = 25.0;
   constexpr double SECONDS_PER_DAY = 86400.0;
 
-  double const frequencyTerm = FRECENCY_FREQ_SCALE * std::log(1 + meta->visitCount * 0.1);
+  double const frequency = FREQUENCY_SCALE * std::log(1 + meta->visitCount * 0.1);
+  double recency = 0.0;
 
-  double recencyTerm = 0.0;
   if (meta->lastVisitedAt) {
     double const daysSince =
         (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*meta->lastVisitedAt)) /
         SECONDS_PER_DAY;
-    recencyTerm =
-        FRECENCY_RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / FRECENCY_RECENCY_HALF_LIFE_DAYS);
+    recency = RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / RECENCY_HALF_LIFE_DAYS);
   }
 
-  double const boost = std::min(FRECENCY_BOOST_CAP, frequencyTerm + recencyTerm);
+  return std::min(CAP, frequency + recency) / CAP;
+}
 
-  return score + boost;
+double RootItemManager::SearchableRootItem::fuzzyScore(int max, std::string_view pattern) const {
+  if (pattern.empty()) return 100.0 * frecency();
+  if (max <= 0) return 0;
+
+  using WS = fzf::WeightedString;
+  std::string alias = meta->alias.value_or("");
+  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
+  auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.6f}; });
+  auto const score = fzf::threadLocalMatcher().fuzzy_match_v2_query_score(ss, kws, pattern);
+
+  if (score.quality < MATCH_QUALITY_THRESHOLD) return 0;
+
+  return 100.0 * score.weighted / max + FRECENCY_WEIGHT * frecency();
 }
 
 std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
@@ -176,6 +181,8 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
                              const RootItemPrefixSearchOptions &opts) {
   std::string pattern = query.toStdString();
   std::string_view const patternView = pattern;
+  const int max =
+      fzf::threadLocalMatcher().fuzzy_match_v2_score_query(query.toStdString(), query.toStdString());
 
   results.clear();
   results.reserve(m_items.size());
@@ -184,7 +191,7 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
     if (!item.meta->enabled && !opts.includeDisabled) continue;
     if (opts.providerId && opts.providerId != item.meta->providerId) continue;
     if (item.meta->favorite && !opts.includeFavorites) continue;
-    double const fuzzyScore = item.fuzzyScore(patternView);
+    double const fuzzyScore = item.fuzzyScore(max, patternView);
 
     if (!fuzzyScore) { continue; }
 
@@ -234,6 +241,8 @@ RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPre
   };
   std::unordered_map<std::string, Bucket> buckets;
 
+  const int max = matcher.fuzzy_match_v2_score_query(query.toStdString(), query.toStdString());
+
   for (auto &item : m_items) {
     if (!item.meta->enabled && !opts.includeDisabled) continue;
     if (item.meta->favorite && !opts.includeFavorites) continue;
@@ -241,7 +250,7 @@ RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPre
     const auto &providerId = item.meta->providerId;
     if (!providerById.contains(providerId)) continue;
 
-    double const titleScore = item.fuzzyScore(patternView);
+    double const titleScore = item.fuzzyScore(max, patternView);
     auto nameIt = providerNameScore.find(providerId);
     bool const providerMatched = nameIt != providerNameScore.end();
     if (titleScore <= 0 && !providerMatched) continue;

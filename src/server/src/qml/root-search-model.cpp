@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <utility>
 
+constexpr auto CALCULATOR_MIN_CHARS = 3;
+
 RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
     : SectionListModel(parent), m_manager(scope.services()->rootItemManager()),
       m_appDb(scope.services()->appDb()), m_newsService(scope.services()->newsService()),
@@ -80,11 +82,6 @@ void RootSearchModel::setFilter(const QString &text) {
   m_fileSearchDebounce.stop();
 
   bool const directMatch = rerunSearch();
-
-  if (!text.isEmpty() && !directMatch) {
-    m_calculatorDebounce.start();
-    m_fileSearchDebounce.start();
-  }
 }
 
 void RootSearchModel::refresh() {
@@ -156,7 +153,19 @@ bool RootSearchModel::rerunSearch() {
         .meta = s.meta ? *s.meta : RootItemMetadata{},
     });
   }
+
+  bool inhibitCalculator = !results.empty();
+
   m_resultsSource->setItems(std::move(results));
+
+  if (!text.isEmpty()) {
+    if (!inhibitCalculator && m_query.size() >= CALCULATOR_MIN_CHARS) {
+      if (auto res = m_calculator->backend()->compute(QString::fromStdString(m_query), {})) {
+        m_calcSource->setResult(res.value());
+      }
+    }
+    m_fileSearchDebounce.start();
+  }
 
   rebuild();
   return false;
