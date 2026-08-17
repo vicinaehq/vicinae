@@ -138,7 +138,7 @@ double RootItemManager::SearchableRootItem::frecency() const {
 }
 
 double RootItemManager::SearchableRootItem::fuzzyScore(const fuzzy::Query &query) const {
-  if (query.empty()) return 100.0 * frecency();
+  if (query.empty()) return 100.0 - fuzzy::FRECENCY_WEIGHT + fuzzy::FRECENCY_WEIGHT * frecency();
 
   using WS = fzf::WeightedString;
   std::string alias = meta->alias.value_or("");
