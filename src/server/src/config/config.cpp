@@ -39,13 +39,18 @@ template <typename T> T static merge(const auto &v1, const auto &v2) {
   return cfg;
 }
 
+bool ConfigValue::followsSystemAppearance() const {
+  return theme.appearance != "light" && theme.appearance != "dark";
+}
+
+bool ConfigValue::isLightAppearance() const {
+  if (theme.appearance == "light") return true;
+  if (theme.appearance == "dark") return false;
+  return QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Light;
+}
+
 const SystemThemeConfig &ConfigValue::systemTheme() const {
-  switch (QGuiApplication::styleHints()->colorScheme()) {
-  case Qt::ColorScheme::Light:
-    return theme.light;
-  default:
-    return theme.dark;
-  }
+  return isLightAppearance() ? theme.light : theme.dark;
 }
 
 Manager::Manager(fs::path path) : m_userPath(std::move(path)) {
@@ -122,12 +127,10 @@ bool Manager::mergeEntrypointWithUser(const EntrypointId &id, const ProviderItem
 }
 
 bool Manager::mergeThemeConfig(const config::Partial<config::SystemThemeConfig> &cfg) {
-  switch (QGuiApplication::styleHints()->colorScheme()) {
-  case Qt::ColorScheme::Light:
+  if (m_user.isLightAppearance()) {
     return mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.light = cfg}});
-  default:
-    return mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.dark = cfg}});
   }
+  return mergeWithUser({.theme = config::Partial<config::ThemeConfig>{.dark = cfg}});
 }
 
 bool Manager::mergeWithUser(const Partial<ConfigValue> &patch) {

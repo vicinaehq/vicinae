@@ -37,12 +37,31 @@ Flickable {
 
         SettingsGroup {
             SettingsRow {
-                label: qsTr("Theme")
+                label: qsTr("Follow system appearance")
+                description: qsTr("Automatically switch between the light and dark themes based on your system appearance.")
+                SettingsToggle {
+                    checked: root.model.followSystemAppearance
+                    onToggled: checked => root.model.followSystemAppearance = checked
+                }
+            }
+
+            SettingsRow {
+                label: qsTr("Light theme")
                 SearchableDropdown {
                     width: parent.width
-                    model: root.model.themeModel
-                    currentItem: root.model.currentTheme
-                    onActivated: item => root.model.selectTheme(item.id)
+                    model: root.model.lightThemeModel
+                    currentItem: root.model.currentLightTheme
+                    onActivated: item => root.model.selectLightTheme(item.id)
+                }
+            }
+
+            SettingsRow {
+                label: qsTr("Dark theme")
+                SearchableDropdown {
+                    width: parent.width
+                    model: root.model.darkThemeModel
+                    currentItem: root.model.currentDarkTheme
+                    onActivated: item => root.model.selectDarkTheme(item.id)
                 }
             }
 

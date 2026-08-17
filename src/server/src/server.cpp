@@ -512,6 +512,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, [&]() {
     auto &value = cfgService->value();
+    if (!value.followsSystemAppearance()) return;
     auto &theme = value.systemTheme();
 
     if (theme.iconTheme != "auto") {

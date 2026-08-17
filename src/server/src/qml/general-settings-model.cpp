@@ -14,6 +14,42 @@
 #include <QGuiApplication>
 #include <QIcon>
 #include <QLocale>
+#include <QStyleHints>
+#include <optional>
+
+namespace {
+
+QVariantList wrapSection(const QString &title, const QVariantList &items) {
+  QVariantMap section;
+  section[QStringLiteral("title")] = title;
+  section[QStringLiteral("items")] = items;
+  return {section};
+}
+
+QVariant themeDropdownItem(const std::string &id) {
+  const auto qid = QString::fromStdString(id);
+  const auto *theme = ThemeService::instance().findTheme(qid);
+  if (!theme) return qml::makeDropdownItem(qid, qid);
+  const auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
+                                     : ImageURL::builtin(BuiltinIcon::Vicinae);
+  return qml::makeDropdownItem(qid, theme->name(), qml::imageSourceFor(iconUrl));
+}
+
+QVariantList themeItemsForVariant(std::optional<ThemeVariant> variant) {
+  QVariantList items;
+  for (const auto &theme : ThemeService::instance().themes()) {
+    if (variant && theme->variant() != *variant) continue;
+    const auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
+                                       : ImageURL::builtin(BuiltinIcon::Vicinae);
+    items.append(qml::makeDropdownItem(theme->id(), theme->name(), qml::imageSourceFor(iconUrl)));
+  }
+  const QString title = !variant                          ? GeneralSettingsModel::tr("Themes")
+                        : *variant == ThemeVariant::Light ? GeneralSettingsModel::tr("Light themes")
+                                                          : GeneralSettingsModel::tr("Dark themes");
+  return wrapSection(title, items);
+}
+
+} // namespace
 
 GeneralSettingsModel::GeneralSettingsModel(QObject *parent) : QObject(parent) {
   m_windowMaterialModel.setSections(windowMaterialItems());
@@ -33,6 +69,14 @@ void GeneralSettingsModel::refreshDynamicModels() {
   if (auto items = themeItems(); items != m_themeItems) {
     m_themeItems = items;
     m_themeModel.setSections(items);
+  }
+  if (auto items = themeItemsForVariant(ThemeVariant::Light); items != m_lightThemeItems) {
+    m_lightThemeItems = items;
+    m_lightThemeModel.setSections(items);
+  }
+  if (auto items = themeItemsForVariant(ThemeVariant::Dark); items != m_darkThemeItems) {
+    m_darkThemeItems = items;
+    m_darkThemeModel.setSections(items);
   }
   if (auto items = iconThemeItems(); items != m_iconThemeItems) {
     m_iconThemeItems = items;
@@ -175,14 +219,21 @@ void GeneralSettingsModel::setFontSize(const QString &v) {
   if (ok) cfgManager().mergeWithUser({.font = config::Partial<config::FontConfig>{.normal{.size = val}}});
 }
 
-using qml::makeDropdownItem;
+bool GeneralSettingsModel::followSystemAppearance() const { return cfg().followsSystemAppearance(); }
 
-static QVariantList wrapSection(const QString &title, const QVariantList &items) {
-  QVariantMap section;
-  section[QStringLiteral("title")] = title;
-  section[QStringLiteral("items")] = items;
-  return {section};
+void GeneralSettingsModel::setFollowSystemAppearance(bool follow) {
+  if (follow) {
+    cfgManager().mergeWithUser(
+        {.theme = config::Partial<config::ThemeConfig>{.appearance = std::string{"system"}}});
+    return;
+  }
+
+  const bool light = QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Light;
+  cfgManager().mergeWithUser({.theme = config::Partial<config::ThemeConfig>{
+                                  .appearance = light ? std::string{"light"} : std::string{"dark"}}});
 }
+
+using qml::makeDropdownItem;
 
 QVariantList GeneralSettingsModel::windowMaterialItems() const {
   QVariantList items;
@@ -206,24 +257,13 @@ void GeneralSettingsModel::selectWindowMaterial(const QString &id) {
       {.launcherWindow = config::Partial<config::WindowConfig>{.material = id.toStdString()}});
 }
 
-QVariantList GeneralSettingsModel::themeItems() const {
-  QVariantList items;
-  for (const auto &theme : ThemeService::instance().themes()) {
-    auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
-                                 : ImageURL::builtin(BuiltinIcon::Vicinae);
-    items.append(makeDropdownItem(theme->id(), theme->name(), qml::imageSourceFor(iconUrl)));
-  }
-  return wrapSection(tr("Themes"), items);
-}
+QVariantList GeneralSettingsModel::themeItems() const { return themeItemsForVariant(std::nullopt); }
 
-QVariant GeneralSettingsModel::currentTheme() const {
-  auto id = QString::fromStdString(cfg().systemTheme().name);
-  auto *theme = ThemeService::instance().findTheme(id);
-  if (!theme) return makeDropdownItem(id, id);
-  auto iconUrl = theme->icon() ? ImageURL::local(QString::fromStdString(theme->icon()->string()))
-                               : ImageURL::builtin(BuiltinIcon::Vicinae);
-  return makeDropdownItem(id, theme->name(), qml::imageSourceFor(iconUrl));
-}
+QVariant GeneralSettingsModel::currentTheme() const { return themeDropdownItem(cfg().systemTheme().name); }
+
+QVariant GeneralSettingsModel::currentLightTheme() const { return themeDropdownItem(cfg().theme.light.name); }
+
+QVariant GeneralSettingsModel::currentDarkTheme() const { return themeDropdownItem(cfg().theme.dark.name); }
 
 QVariantList GeneralSettingsModel::fontItems() const {
   QVariantList items;
@@ -290,6 +330,20 @@ QVariant GeneralSettingsModel::currentKeybindingScheme() const {
 
 void GeneralSettingsModel::selectTheme(const QString &id) {
   cfgManager().mergeThemeConfig({.name = id.toStdString()});
+}
+
+void GeneralSettingsModel::selectLightTheme(const QString &id) {
+  config::Partial<config::ThemeConfig> theme{
+      .light = config::Partial<config::SystemThemeConfig>{.name = id.toStdString()}};
+  if (!followSystemAppearance()) theme.appearance = "light";
+  cfgManager().mergeWithUser({.theme = theme});
+}
+
+void GeneralSettingsModel::selectDarkTheme(const QString &id) {
+  config::Partial<config::ThemeConfig> theme{
+      .dark = config::Partial<config::SystemThemeConfig>{.name = id.toStdString()}};
+  if (!followSystemAppearance()) theme.appearance = "dark";
+  cfgManager().mergeWithUser({.theme = theme});
 }
 
 void GeneralSettingsModel::selectFont(const QString &id) {
