@@ -2,6 +2,7 @@
 #include <expected>
 #include <filesystem>
 #include "common/entrypoint.hpp"
+#include "theme/theme-variant.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
@@ -348,7 +349,7 @@ struct ConfigValue {
   }
 
   bool followsSystemAppearance() const;
-  bool isLightAppearance() const;
+  ThemeVariant activeAppearance() const;
   const SystemThemeConfig &systemTheme() const;
 };
 
