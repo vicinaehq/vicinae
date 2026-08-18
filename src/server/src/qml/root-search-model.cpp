@@ -208,6 +208,22 @@ void RootSearchModel::setSelectedIndex(int index) {
   }
 }
 
+bool RootSearchModel::activateFavorite(int index) {
+  if (index < 0 || std::cmp_greater_equal(index, m_favoritesSource->count())) return false;
+
+  int sourceIdx = -1;
+  int itemIdx = -1;
+  for (int row = 0; row < rowCount(); ++row) {
+    if (!dataItemAt(row, sourceIdx, itemIdx)) continue;
+    if (sources()[sourceIdx] != m_favoritesSource || itemIdx != index) continue;
+    setSelectedIndex(row);
+    activateSelected();
+    return true;
+  }
+
+  return false;
+}
+
 const RootItem *RootSearchModel::selectedRootItem() const {
   int sourceIdx = -1;
   int itemIdx = -1;

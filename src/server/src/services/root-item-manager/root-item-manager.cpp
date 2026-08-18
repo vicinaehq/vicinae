@@ -489,6 +489,32 @@ bool RootItemManager::setItemAsFavorite(const EntrypointId &itemId, bool value) 
   return true;
 }
 
+bool RootItemManager::moveFavoriteDown(const EntrypointId &id) {
+  auto favorites = m_cfg.value().favorites;
+  auto it = std::ranges::find(favorites, std::string{id});
+
+  if (it == favorites.end() || it + 1 == favorites.end()) return false;
+
+  std::iter_swap(it, it + 1);
+  m_cfg.mergeWithUser({.favorites = favorites});
+  emit favoriteOrderChanged(id);
+
+  return true;
+}
+
+bool RootItemManager::moveFavoriteUp(const EntrypointId &id) {
+  auto favorites = m_cfg.value().favorites;
+  auto it = std::ranges::find(favorites, std::string{id});
+
+  if (it == favorites.end() || it == favorites.begin()) return false;
+
+  std::iter_swap(it, it - 1);
+  m_cfg.mergeWithUser({.favorites = favorites});
+  emit favoriteOrderChanged(id);
+
+  return true;
+}
+
 std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(std::optional<int> limit) {
   return getFromSerializedEntrypointIds(m_cfg.value().favorites);
 }

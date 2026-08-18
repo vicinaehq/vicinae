@@ -79,6 +79,7 @@ private:
 
   void rebuildFlatList();
   void rebuildCustomRoleDefaults();
+  int indexOfItemId(const QString &id) const;
 
   ViewScope m_scope;
   std::vector<SectionSource *> m_sources;

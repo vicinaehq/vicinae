@@ -50,6 +50,28 @@ public:
   ToggleItemAsFavorite(const EntrypointId &id, bool currentValue);
 };
 
+class MoveFavoriteUpAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(MoveFavoriteUpAction)
+
+  EntrypointId m_id;
+
+  void execute(ApplicationContext *ctx) override;
+
+public:
+  MoveFavoriteUpAction(const EntrypointId &id);
+};
+
+class MoveFavoriteDownAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(MoveFavoriteDownAction)
+
+  EntrypointId m_id;
+
+  void execute(ApplicationContext *ctx) override;
+
+public:
+  MoveFavoriteDownAction(const EntrypointId &id);
+};
+
 class OpenItemPreferencesAction : public AbstractAction {
 public:
   OpenItemPreferencesAction(const EntrypointId &id) : m_id(id) {}
@@ -138,10 +160,14 @@ public:
     disable->setShortcut(Keybind::RemoveAction);
 
     std::vector<AbstractAction *> actions;
-    actions.reserve(8);
+    actions.reserve(metadata.favorite ? 10 : 8);
     actions.emplace_back(copyDeeplink);
     actions.emplace_back(resetRanking);
     actions.emplace_back(markAsFavorite);
+    if (metadata.favorite) {
+      actions.emplace_back(new MoveFavoriteUpAction(id));
+      actions.emplace_back(new MoveFavoriteDownAction(id));
+    }
     actions.emplace_back(setAlias);
     if (platform::supports(platform::Capability::GlobalShortcuts)) {
       auto setGlobalShortcut =
