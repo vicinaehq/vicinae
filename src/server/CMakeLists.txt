@@ -24,6 +24,7 @@ list(APPEND LIBS
 	vicinae::fuzzy
 	vicinae::crypto
 	sqlcipher
+	numen
 )
 
 if (NOT WIN32)
@@ -343,6 +344,9 @@ set(SRCS
 
 	src/services/calculator-service/calculator-service.hpp
 	src/services/calculator-service/calculator-service.cpp
+
+	src/services/calculator-service/numen/numen-vicinae-currency-provider.hpp
+	src/services/calculator-service/numen/numen-vicinae-currency-provider.cpp
 
 	src/services/files-service/abstract-file-indexer.hpp
 	src/services/files-service/dummy-file-indexer.hpp
@@ -1257,7 +1261,7 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/calculator-service/qalculate/qalculate-backend.cpp
 		tests/calculator/qalculate-backend.cpp
 	)
-	target_link_libraries(${TEST_TARGET} PRIVATE qalculate Qt6::Concurrent)
+	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common qalculate Qt6::Concurrent)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()

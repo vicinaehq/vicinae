@@ -45,7 +45,9 @@ public:
   virtual QString displayName() const { return id(); }
 
   virtual ComputeResult compute(const QString &question, const ComputeOptions &opts) = 0;
-  virtual QFuture<ComputeResult> asyncCompute(const QString &question, const ComputeOptions &opts) = 0;
+  virtual QFuture<ComputeResult> asyncCompute(const QString &question, const ComputeOptions &opts) {
+    return QtFuture::makeReadyValueFuture(compute(question, opts));
+  }
 
   virtual void abort() {}
 

@@ -9,12 +9,9 @@
 #include <ranges>
 #include <variant>
 #include <vector>
+#include "common/types.hpp"
 
 struct TypeStruct;
-
-template <class... Ts> struct overloads : Ts... {
-  using Ts::operator()...;
-};
 
 enum class PrimitiveType {
   Void,
@@ -77,6 +74,7 @@ struct Tree {
 };
 
 class Parser {
+
   static std::string highlightError(std::string_view data, int line, int col) {
     static int padding = 2;
     std::ostringstream oss;
