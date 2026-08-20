@@ -21,9 +21,9 @@ public:
               [&](const numen::Number &n) {
                 result.answer.text = QString::fromStdString(n.text);
                 if (n.unit && n.unit->resolved) {
-                  auto unitName = QString::fromStdString(n.unit->resolved->render());
-                  result.answer.text = QString::fromStdString(n.text) + " " + unitName;
-                  result.answer.unit = Unit{.displayName = unitName};
+                  result.answer.text = QString::fromStdString(n.text) + " " +
+                                       QString::fromStdString(n.unit->resolved->render());
+                  result.answer.unit = Unit{.displayName = QString::fromStdString(n.unit->resolved->name())};
                 }
               },
               [&](const numen::DateTime &dt) {
