@@ -72,6 +72,10 @@ genicon:
 	node scripts/generate-icons.js
 .PHONY: genicon
 
+emoji:
+	$(MAKE) -C src/lib/glyph gen-db
+.PHONY: emoji
+
 install:
 	cmake --install $(BUILD_DIR)
 .PHONY: install

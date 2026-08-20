@@ -23,6 +23,7 @@
 #include <QMimeDatabase>
 #include <QPainter>
 #include <QPromise>
+#include <QRawFont>
 #include <QSvgRenderer>
 #include <QThread>
 #include <QThreadPool>
@@ -76,10 +77,24 @@ static QImage renderGlyph(const QString &glyph, const QSize &size, QFont font, b
   return canvas;
 }
 
+static bool fontCoversEmoji(const QFont &font, const QString &emoji) {
+  const QRawFont raw = QRawFont::fromFont(font);
+  if (!raw.isValid()) return false;
+
+  for (const char32_t cp : emoji.toStdU32String()) {
+    // joiners, variation selectors and tags are not mapped by most fonts
+    const bool invisible = cp == 0x200D || cp == 0xFE0E || cp == 0xFE0F || (cp >= 0xE0020 && cp <= 0xE007F);
+    if (!invisible && !raw.supportsCharacter(static_cast<uint>(cp))) return false;
+  }
+  return true;
+}
+
 QImage renderEmoji(const QString &emoji, const QSize &size) {
   auto *fontService = ServiceRegistry::instance()->fontService();
   if (!fontService) return QImage(size, QImage::Format_ARGB32_Premultiplied);
-  return renderGlyph(emoji, size, fontService->emojiFont(), /*allowMerging=*/false);
+
+  const QFont &font = fontService->emojiFont();
+  return renderGlyph(emoji, size, font, /*allowMerging=*/!fontCoversEmoji(font, emoji));
 }
 
 QImage renderSymbol(const QString &symbol, const QSize &size) {
