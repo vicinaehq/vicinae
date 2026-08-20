@@ -29,7 +29,6 @@ private:
   void persistOnDisk(const std::filesystem::path &path, const CurrencyData &data);
 
   http::Client m_client;
-  mutable std::mutex m_mut;
   std::unordered_map<std::string, double> m_rates;
   std::optional<std::chrono::time_point<std::chrono::system_clock>> m_lastFetchedAt;
 };

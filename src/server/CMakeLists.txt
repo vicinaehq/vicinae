@@ -345,8 +345,8 @@ set(SRCS
 	src/services/calculator-service/calculator-service.hpp
 	src/services/calculator-service/calculator-service.cpp
 
-	src/services/calculator-service/numen/numen-vicinae-currency-provider.hpp
-	src/services/calculator-service/numen/numen-vicinae-currency-provider.cpp
+	src/services/calculator-service/numen/numen-currency-provider.hpp
+	src/services/calculator-service/numen/numen-currency-provider.cpp
 
 	src/services/files-service/abstract-file-indexer.hpp
 	src/services/files-service/dummy-file-indexer.hpp
