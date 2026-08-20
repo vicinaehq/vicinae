@@ -177,10 +177,7 @@ void ExtensionSettingsModel::setFavorite(int row, bool value) {
   auto *manager = ServiceRegistry::instance()->rootItemManager();
 
   if (e.isProvider) {
-    manager->setProviderFavorite(e.providerId, value);
-    e.favorite = value;
-    auto idx = index(row);
-    emit dataChanged(idx, idx, {FavoriteRole});
+    return;
   } else {
     manager->setItemAsFavorite(e.entrypointId, value);
     e.favorite = value;

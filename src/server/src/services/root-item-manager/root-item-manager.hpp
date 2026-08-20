@@ -304,8 +304,6 @@ public:
 
   bool enableItem(const EntrypointId &id);
 
-  bool setProviderFavorite(const QString &providerId, bool value);
-
   std::vector<RootProvider *> providers() const;
   std::vector<ExtensionRootProvider *> extensions() const;
 
