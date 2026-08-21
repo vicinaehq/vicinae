@@ -264,6 +264,7 @@ set(SRCS
 	src/internal/keyboard/keybind-manager.cpp
 	src/internal/keyboard/keyboard.cpp
 
+	src/theme/theme-variant.hpp
 	src/theme/theme-file.hpp
 	src/theme/theme-file.cpp
 	src/theme/theme-parser.cpp
