@@ -48,9 +48,31 @@
         "type": "github"
       }
     },
+    "numen": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787338537,
+        "narHash": "sha256-999IfyqY4HDNG9JYLIDPN9VZbDAtOGAWRAzaMA68s+Y=",
+        "owner": "vicinaehq",
+        "repo": "numen",
+        "rev": "6c30467818e1cc142addba71b50b3972c1ea1b96",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vicinaehq",
+        "ref": "v0.1.0",
+        "repo": "numen",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
+        "numen": "numen",
         "soulver-cpp": "soulver-cpp",
         "systems": "systems"
       }

@@ -5,6 +5,10 @@
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-unstable";
     systems.url = "github:nix-systems/default";
     soulver-cpp.url = "github:vicinaehq/soulver-cpp";
+    numen = {
+      url = "github:vicinaehq/numen/v0.1.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {
@@ -17,12 +21,16 @@
     nixpkgs,
     systems,
     soulver-cpp,
+    numen,
   }: let
     inherit (nixpkgs) lib;
     forEachPkgs = f: lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
   in {
     packages = forEachPkgs (pkgs: let
-      vicinae = pkgs.callPackage ./nix/vicinae.nix {gcc15Stdenv = pkgs.gcc15Stdenv;};
+      vicinae = pkgs.callPackage ./nix/vicinae.nix {
+        gcc15Stdenv = pkgs.gcc15Stdenv;
+        numen = numen.packages.${pkgs.stdenv.hostPlatform.system}.numen;
+      };
       soulver = soulver-cpp.packages.${pkgs.stdenv.hostPlatform.system}.default or null;
     in
       lib.optionalAttrs (soulver != null) {

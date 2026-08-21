@@ -9,6 +9,19 @@ if (USE_SYSTEM_KF6 AND NOT WIN32)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
+if (USE_SYSTEM_NUMEN)
+	find_package(numen REQUIRED)
+else()
+	include(FetchContent)
+
+	FetchContent_Declare(numen
+	  GIT_REPOSITORY https://github.com/vicinaehq/numen
+	  GIT_TAG        v0.1.0
+	)
+
+	FetchContent_MakeAvailable(numen)
+endif()
+
 list(APPEND LIBS
 	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
@@ -24,7 +37,7 @@ list(APPEND LIBS
 	vicinae::fuzzy
 	vicinae::crypto
 	sqlcipher
-	numen
+	numen::numen
 )
 
 if (NOT WIN32)
