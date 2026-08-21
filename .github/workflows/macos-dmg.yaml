@@ -47,7 +47,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/Qt
-          key: qt-macos-${{ env.QT_VERSION }}
+          key: qt-macos-${{ env.QT_VERSION }}-${{ hashFiles('scripts/macos-setup.sh') }}
 
       - name: Install dependencies
         run: make mac-deps
