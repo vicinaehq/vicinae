@@ -71,6 +71,14 @@ if [[ "$fail" -ne 0 ]]; then
   exit 1
 fi
 
+echo "==> image format plugins"
+for plugin in qicns qwebp qtiff qmacheif qgif qico qjpeg qsvg; do
+  if [[ ! -f "$APP/Contents/PlugIns/imageformats/lib$plugin.dylib" ]]; then
+    echo "verify-dmg.sh: missing imageformats plugin lib$plugin.dylib" >&2
+    exit 1
+  fi
+done
+
 echo "==> launch check"
 xattr -dr com.apple.quarantine "$APP"
 "$APP/Contents/MacOS/Vicinae" &

@@ -104,6 +104,12 @@ for style in fusion imagine material universal macos ios fluentwinui3 native; do
         "$BUNDLE/Contents/PlugIns/quick/libqtquickcontrols2${style}styleimplplugin.dylib"
 done
 
+# from qtimageformats we keep icns, webp, tiff (macOS pasteboard canonical type) and heif
+rm -f "$BUNDLE/Contents/PlugIns/imageformats/libqtga.dylib" \
+      "$BUNDLE/Contents/PlugIns/imageformats/libqwbmp.dylib" \
+      "$BUNDLE/Contents/PlugIns/imageformats/libqmng.dylib" \
+      "$BUNDLE/Contents/PlugIns/imageformats/libqmacjp2.dylib"
+
 rm -rf "$BUNDLE/Contents/PlugIns/sqldrivers" \
        "$BUNDLE/Contents/PlugIns/styles" \
        "$BUNDLE/Contents/PlugIns/tls/libqopensslbackend.dylib" \
