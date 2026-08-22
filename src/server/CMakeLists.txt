@@ -16,7 +16,7 @@ else()
 
 	FetchContent_Declare(numen
 	  GIT_REPOSITORY https://github.com/vicinaehq/numen
-	  GIT_TAG        v0.3.0
+	  GIT_TAG        v0.3.1
 	)
 
 	FetchContent_MakeAvailable(numen)
