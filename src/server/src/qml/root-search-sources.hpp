@@ -152,6 +152,8 @@ private:
 
 class RootFavoritesSection : public RootItemSection {
 public:
+  static constexpr int QUICK_OPEN_COUNT = 9;
+
   explicit RootFavoritesSection(RootItemManager *mgr) : m_manager(mgr) {}
 
   QString sectionName() const override {

@@ -1,5 +1,6 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "qml/alias-form-view-host.hpp"
+#include "keyboard/keybind.hpp"
 #include "ui/action-pannel/shortcut-recorder-panel-view.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
@@ -81,7 +82,27 @@ void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
 };
 
 ToggleItemAsFavorite::ToggleItemAsFavorite(const EntrypointId &id, bool currentValue)
-    : m_id(id), m_value(currentValue) {}
+    : m_id(id), m_value(currentValue) {
+  setShortcut(Keybind::FavoriteAction);
+}
+
+void MoveFavoriteUpAction::execute(ApplicationContext *ctx) {
+  ctx->services->rootItemManager()->moveFavoriteUp(m_id);
+}
+
+MoveFavoriteUpAction::MoveFavoriteUpAction(const EntrypointId &id)
+    : AbstractAction(tr("Move up in favorites"), ImageURL::builtin(BuiltinIcon::ArrowUp)), m_id(id) {
+  setShortcut(Keybind::MoveUpAction);
+}
+
+void MoveFavoriteDownAction::execute(ApplicationContext *ctx) {
+  ctx->services->rootItemManager()->moveFavoriteDown(m_id);
+}
+
+MoveFavoriteDownAction::MoveFavoriteDownAction(const EntrypointId &id)
+    : AbstractAction(tr("Move down in favorites"), ImageURL::builtin(BuiltinIcon::ArrowDown)), m_id(id) {
+  setShortcut(Keybind::MoveDownAction);
+}
 
 void DisableItemAction::execute(ApplicationContext *ctx) {
   auto alert = new CallbackAlertWidget();

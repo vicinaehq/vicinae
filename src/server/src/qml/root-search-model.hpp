@@ -29,6 +29,7 @@ public:
   void setSelectedIndex(int index) override;
 
   const RootItem *selectedRootItem() const;
+  bool activateFavorite(int index);
 
 private:
   void refresh();
