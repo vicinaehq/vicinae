@@ -4,16 +4,20 @@
 #include "numen/abstract-currency-provider.hpp"
 #include <unordered_map>
 
+struct NumenVicinaeFiatData {
+  std::string updatedAt;
+  std::unordered_map<std::string, double> rates;
+};
+
+struct NumenVicinaeCryptoData {
+  std::string updatedAt;
+  std::unordered_map<std::string, double> prices;
+};
+
 struct NumenVicinaeCurrencyData {
   std::string base;
-  struct {
-    std::string updatedAt;
-    std::unordered_map<std::string, double> rates;
-  } fiat;
-  struct {
-    std::string updatedAt;
-    std::unordered_map<std::string, double> prices;
-  } crypto;
+  NumenVicinaeFiatData fiat;
+  NumenVicinaeCryptoData crypto;
 };
 
 class NumenVicinaeCurrencyProvider : public numen::AbstractCurrencyProvider {
