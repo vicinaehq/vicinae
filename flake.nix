@@ -29,7 +29,7 @@
     packages = forEachPkgs (pkgs: let
       vicinae = pkgs.callPackage ./nix/vicinae.nix {
         gcc15Stdenv = pkgs.gcc15Stdenv;
-        numen = numen.packages.${pkgs.stdenv.hostPlatform.system}.numen.override { withRepl = false; };
+        numen = numen.packages.${pkgs.stdenv.hostPlatform.system}.numen.override {withRepl = false;};
       };
       soulver = soulver-cpp.packages.${pkgs.stdenv.hostPlatform.system}.default or null;
     in
