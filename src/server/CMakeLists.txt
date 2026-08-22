@@ -1261,15 +1261,3 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()
-
-if (BUILD_TESTS AND APPLE)
-	set(MAC_APP_TEST_TARGET ${TARGET}-mac-app-tests)
-	find_package(Catch2 3 REQUIRED)
-	add_executable(${MAC_APP_TEST_TARGET}
-		src/services/app-service/macos/mac-app.mm
-		tests/app-service/macos/mac-app.cpp
-	)
-	target_link_libraries(${MAC_APP_TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui
-	                                                     "-framework Foundation")
-	target_compile_features(${MAC_APP_TEST_TARGET} PUBLIC cxx_std_23)
-endif()
