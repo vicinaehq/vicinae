@@ -99,6 +99,13 @@ void ClipboardHistoryViewHost::initialize() {
   auto defaultActionStr = preferences.value("defaultAction").toString();
   m_section.setDefaultAction(defaultActionStr == "paste" ? ClipboardHistorySection::DefaultAction::Paste
                                                          : ClipboardHistorySection::DefaultAction::Copy);
+  auto saveDirectoryMode = preferences.value("saveDirectoryMode").toString();
+  auto saveCustomDirectory = preferences.value("saveCustomDirectory").toString();
+  auto saveFileNameMode = preferences.value("saveFileNameMode").toString();
+
+  m_section.setSaveDirectoryMode(saveDirectoryMode.isEmpty() ? "downloads" : saveDirectoryMode);
+  m_section.setSaveCustomDirectory(saveCustomDirectory);
+  m_section.setSaveFileNameMode(saveFileNameMode.isEmpty() ? "content" : saveFileNameMode);
 
   setSearchPlaceholderText(tr("Browse clipboard history..."));
 
