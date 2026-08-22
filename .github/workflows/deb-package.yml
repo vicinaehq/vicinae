@@ -1,0 +1,179 @@
+name: Build .deb Packages
+
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deb-package.yml"
+      - "CMakeLists.txt"
+      - "cmake/**"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.2.3) — leave blank to build a test package"
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-deb:
+    name: Build .deb (${{ matrix.distro.label }})
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.distro.image }}
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - label: ubuntu-22.04
+            image: ubuntu:22.04
+            codename: jammy
+            qt_svg_pkg: libqt6svg6-dev
+          - label: ubuntu-24.04
+            image: ubuntu:24.04
+            codename: noble
+            qt_svg_pkg: qt6-svg-dev
+          - label: debian-12
+            image: debian:bookworm
+            codename: bookworm
+            qt_svg_pkg: qt6-svg-dev
+
+    steps:
+      - name: Resolve tag
+        id: meta
+        shell: bash
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          TAG=""
+          IS_RELEASE="false"
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && -n "${INPUT_TAG:-}" ]]; then
+            TAG="$INPUT_TAG"
+          elif [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF_NAME" =~ ^v[0-9]+(\.[0-9]+)*$ ]]; then
+            TAG="$GITHUB_REF_NAME"
+          fi
+
+          if [[ -n "$TAG" ]]; then
+            if ! [[ "$TAG" =~ ^v[0-9]+(\.[0-9]+)*$ ]]; then
+              echo "Tag '$TAG' does not match expected format (e.g. v1.2.3)." >&2
+              exit 1
+            fi
+            VERSION="${TAG#v}"
+            IS_RELEASE="true"
+          else
+            VERSION="0.0.0~test"
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "is_release=$IS_RELEASE" >> "$GITHUB_OUTPUT"
+          echo "package=vicinae_${VERSION}_${{ matrix.distro.codename }}_amd64.deb" >> "$GITHUB_OUTPUT"
+
+      - name: Install git
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update -y
+          apt-get install -y --no-install-recommends git ca-certificates
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.meta.outputs.tag || github.sha }}
+
+      - name: Install build dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config curl \
+            libssl-dev libxml2-dev libminizip-dev libwayland-dev \
+            qt6-base-dev qt6-base-private-dev qt6-declarative-dev \
+            ${{ matrix.distro.qt_svg_pkg }} qt6-wayland-dev \
+            libqalculate-dev \
+            dpkg-dev
+
+      - name: Install Node.js
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+          apt-get install -y nodejs
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DVICINAE_PROVENANCE=deb_package \
+            -DVICINAE_GIT_TAG=${{ steps.meta.outputs.version_tag }} \
+            -DUSE_SYSTEM_PROTOBUF=OFF \
+            -DUSE_SYSTEM_ABSEIL=OFF \
+            -DUSE_SYSTEM_CMARK_GFM=OFF \
+            -DUSE_SYSTEM_LAYER_SHELL=OFF \
+            -DUSE_SYSTEM_KF6=OFF \
+            -DUSE_SYSTEM_QT_KEYCHAIN=OFF \
+            -DCMAKE_INSTALL_PREFIX=/usr
+
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Package with CPack
+        run: |
+          cd build
+          cpack -G DEB -D CPACK_PACKAGE_FILE_NAME="${{ steps.meta.outputs.package }}"
+
+      - name: Verify .deb package
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEB="build/${{ steps.meta.outputs.package }}"
+
+          echo "=== Checking package file ==="
+          test -s "$DEB" || { echo "ERROR: .deb file not found or empty: $DEB" >&2; exit 1; }
+          ls -lh "$DEB"
+
+          echo "=== Package metadata ==="
+          dpkg-deb --info "$DEB"
+
+          echo "=== Package contents ==="
+          dpkg-deb --contents "$DEB"
+
+          echo "=== Installing package ==="
+          apt-get install -y --no-install-recommends "./$DEB"
+
+          echo "=== Verifying installed files ==="
+          test -x /usr/bin/vicinae \
+            || { echo "ERROR: /usr/bin/vicinae not found after install" >&2; exit 1; }
+          echo "OK: /usr/bin/vicinae is present"
+          test -x /usr/libexec/vicinae/vicinae-server \
+            || { echo "ERROR: /usr/libexec/vicinae/vicinae-server not found after install" >&2; exit 1; }
+          echo "OK: /usr/libexec/vicinae/vicinae-server is present"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.package }}
+          path: build/${{ steps.meta.outputs.package }}
+
+      - name: Upload to GitHub Release
+        if: steps.meta.outputs.is_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          files: build/${{ steps.meta.outputs.package }}
