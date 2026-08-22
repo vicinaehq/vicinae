@@ -16,7 +16,7 @@ else()
 
 	FetchContent_Declare(numen
 	  GIT_REPOSITORY https://github.com/vicinaehq/numen
-	  GIT_TAG        v0.2.0
+	  GIT_TAG        v0.3.0
 	)
 
 	FetchContent_MakeAvailable(numen)
@@ -360,6 +360,8 @@ set(SRCS
 
 	src/services/calculator-service/numen/numen-currency-provider.hpp
 	src/services/calculator-service/numen/numen-currency-provider.cpp
+	src/services/calculator-service/numen/numen-calculator-backend.hpp
+	src/services/calculator-service/numen/numen-calculator-backend.cpp
 
 	src/services/files-service/abstract-file-indexer.hpp
 	src/services/files-service/dummy-file-indexer.hpp

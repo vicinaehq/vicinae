@@ -9,6 +9,7 @@
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include "numen-currency-provider.hpp"
+#include "numen/abstract-currency-provider.hpp"
 #include "vicinae.hpp"
 
 namespace fs = std::filesystem;
@@ -26,8 +27,10 @@ std::string normalizeCurrencyId(std::string_view id) {
 
 } // namespace
 
-std::optional<double> NumenVicinaeCurrencyProvider::getRate(const std::string &code) const {
-  if (auto it = m_rates.find(code); it != m_rates.end()) { return it->second; }
+std::optional<numen::ExchangeRate> NumenVicinaeCurrencyProvider::getRate(std::string_view code) const {
+  if (auto it = m_rates.find(std::string{code}); it != m_rates.end()) {
+    return numen::ExchangeRate{.rate = it->second};
+  }
 
   // we use $<ticker> as disambiguation for crypto tickers
   // for instance "sol" maps to the Peruvian sol, while

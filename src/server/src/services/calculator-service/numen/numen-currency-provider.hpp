@@ -4,9 +4,9 @@
 #include "numen/abstract-currency-provider.hpp"
 #include <unordered_map>
 
-class NumenVicinaeCurrencyProvider : public AbstractCurrencyProvider {
+class NumenVicinaeCurrencyProvider : public numen::AbstractCurrencyProvider {
 public:
-  std::optional<double> getRate(const std::string &code) const override;
+  std::optional<numen::ExchangeRate> getRate(const std::string_view code) const override;
   void updateRates() override;
 
   NumenVicinaeCurrencyProvider() { m_client.setBaseUrl(Environment::vicinaeApiBaseUrl()); }
