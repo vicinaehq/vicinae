@@ -10,7 +10,7 @@
 
 class CalculatorService;
 
-class CalcLiveSection : public SectionSource {
+class CalcLiveSection : public SectionSource, QObject {
 public:
   enum CustomRole {
     IsCalculator = Qt::UserRole + 100,

@@ -4,6 +4,18 @@
 #include "numen/abstract-currency-provider.hpp"
 #include <unordered_map>
 
+struct NumenVicinaeCurrencyData {
+  std::string base;
+  struct {
+    std::string updatedAt;
+    std::unordered_map<std::string, double> rates;
+  } fiat;
+  struct {
+    std::string updatedAt;
+    std::unordered_map<std::string, double> prices;
+  } crypto;
+};
+
 class NumenVicinaeCurrencyProvider : public numen::AbstractCurrencyProvider {
 public:
   std::optional<numen::ExchangeRate> getRate(const std::string_view code) const override;
@@ -12,21 +24,9 @@ public:
   NumenVicinaeCurrencyProvider() { m_client.setBaseUrl(Environment::vicinaeApiBaseUrl()); }
 
 private:
-  struct CurrencyData {
-    std::string base;
-    struct {
-      std::string updatedAt;
-      std::unordered_map<std::string, double> rates;
-    } fiat;
-    struct {
-      std::string updatedAt;
-      std::unordered_map<std::string, double> prices;
-    } crypto;
-  };
-
   void fetchRates();
-  bool loadRates(const CurrencyData &data);
-  void persistOnDisk(const std::filesystem::path &path, const CurrencyData &data);
+  bool loadRates(const NumenVicinaeCurrencyData &data);
+  void persistOnDisk(const std::filesystem::path &path, const NumenVicinaeCurrencyData &data);
 
   http::Client m_client;
   std::unordered_map<std::string, double> m_rates;

@@ -26,6 +26,7 @@ public:
 
     struct {
       QString text;
+      std::optional<QString> unformatted;
       std::optional<Unit> unit;
     } answer;
   };

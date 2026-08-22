@@ -66,6 +66,7 @@ NumenCalculatorBackend::ComputeResult NumenCalculatorBackend::compute(const QStr
 
         auto visitor = overloads{
             [&](const numen::Number &n) {
+              result.answer.unformatted = QString::number(n.n);
               result.answer.text = QString::fromStdString(n.text);
               if (n.unit && n.unit->resolved) {
                 result.answer.text =

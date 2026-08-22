@@ -2,6 +2,7 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "builtin_icon.hpp"
+#include "clipboard-actions.hpp"
 #include "theme/colors.hpp"
 #include "keyboard/keybind.hpp"
 #include "keyboard/keyboard.hpp"
@@ -169,8 +170,16 @@ std::unique_ptr<ActionPanelState> RootCalculatorSection::actionPanel(int) const 
   copyAnswer->setPrimary(true);
   section->addAction(copyAnswer);
   section->addAction(new CopyCalculatorQuestionAndAnswerAction(*m_result));
+
+  if (auto s = m_result->answer.unformatted) {
+    auto copy = new CopyToClipboardAction(Clipboard::Text{*s}, tr("Copy unformatted answer"));
+    copy->setShortcut(Keybind::CopyAction);
+    section->addAction(copy);
+  }
+
   section->addAction(new PutCalculatorAnswerInSearchBar(*m_result));
   section->addAction(new OpenCalculatorHistoryAction());
+
   return panel;
 }
 

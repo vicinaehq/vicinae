@@ -1,5 +1,6 @@
 #include "calc-history-view-host.hpp"
 #include "actions/calculator/calculator-actions.hpp"
+#include "clipboard-actions.hpp"
 #include "service-registry.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 
@@ -72,6 +73,12 @@ std::unique_ptr<ActionPanelState> CalcLiveSection::actionPanel(int) const {
   copyAnswer->setPrimary(true);
   main->addAction(copyAnswer);
   main->addAction(new CopyCalculatorQuestionAndAnswerAction(*m_result));
+
+  if (auto s = m_result->answer.unformatted) {
+    auto copy = new CopyToClipboardAction(Clipboard::Text{*s}, tr("Copy unformatted answer"));
+    copy->setShortcut(Keybind::CopyAction);
+    main->addAction(copy);
+  }
 
   return panel;
 }

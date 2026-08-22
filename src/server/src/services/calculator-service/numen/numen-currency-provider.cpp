@@ -40,7 +40,7 @@ std::optional<numen::ExchangeRate> NumenVicinaeCurrencyProvider::getRate(std::st
   return std::nullopt;
 }
 
-bool NumenVicinaeCurrencyProvider::loadRates(const CurrencyData &data) {
+bool NumenVicinaeCurrencyProvider::loadRates(const NumenVicinaeCurrencyData &data) {
   for (const auto &[symbol, rate] : data.fiat.rates) {
     m_rates[normalizeCurrencyId(symbol)] = rate;
   }
@@ -60,7 +60,7 @@ void NumenVicinaeCurrencyProvider::fetchRates() {
 
   if (!m_lastFetchedAt && fs::is_regular_file(path, ec)) {
     if (std::chrono::file_clock::now() - fs::last_write_time(path) < CACHE_TTL) {
-      CurrencyData data;
+      NumenVicinaeCurrencyData data;
       std::ifstream ifs{path};
       std::stringstream buffer;
       buffer << ifs.rdbuf();
@@ -73,9 +73,9 @@ void NumenVicinaeCurrencyProvider::fetchRates() {
 
   if (m_lastFetchedAt && std::chrono::system_clock::now() - *m_lastFetchedAt < CACHE_TTL) return;
 
-  auto watcher = new http::Client::Watcher<http::Client::Result<CurrencyData>>(nullptr);
+  auto watcher = new http::Client::Watcher<http::Client::Result<NumenVicinaeCurrencyData>>(nullptr);
 
-  watcher->setFuture(m_client.get<CurrencyData>("/currencies"));
+  watcher->setFuture(m_client.get<NumenVicinaeCurrencyData>("/currencies"));
 
   QObject::connect(watcher, &QFutureWatcherBase::finished, [this, watcher]() {
     watcher->deleteLater();
@@ -92,7 +92,7 @@ void NumenVicinaeCurrencyProvider::fetchRates() {
 }
 
 void NumenVicinaeCurrencyProvider::persistOnDisk(const std::filesystem::path &path,
-                                                 const CurrencyData &data) {
+                                                 const NumenVicinaeCurrencyData &data) {
   std::string buf{};
 
   if (auto res = glz::write_file_json(data, path.string(), buf)) {
