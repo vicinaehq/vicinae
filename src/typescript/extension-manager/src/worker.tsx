@@ -15,7 +15,7 @@ import loadView from "./loaders/load-view-command";
 import { patchRequire } from "./patch-require";
 import * as api from "./proto/api";
 import * as extensionServer from "./proto/extension-manager";
-import type { EnvironmentType } from "./types";
+import type { EnvironmentType, WorkerManagerMessage } from "./types";
 
 class Lifecycle extends extensionServer.LifecycleService {
 	async launch(data: extensionServer.LaunchEventData): Promise<boolean> {
@@ -45,7 +45,7 @@ class Lifecycle extends extensionServer.LifecycleService {
 		return true;
 	}
 
-	async send_message(msg: string): Promise<boolean> {
+	async send_message(msg: Uint8Array): Promise<boolean> {
 		client.route(msg);
 		return true;
 	}
@@ -53,14 +53,15 @@ class Lifecycle extends extensionServer.LifecycleService {
 
 const serverRpc = new extensionServer.RpcTransport({
 	send: (msg) => {
-		parentPort?.postMessage(msg);
+		const message: WorkerManagerMessage = { channel: "manager", data: msg };
+		parentPort?.postMessage(message);
 	},
 });
 
 const server = new extensionServer.Server(serverRpc, new Lifecycle(serverRpc));
 
 const clientRpc = new api.RpcTransport({
-	send: (msg: string) => {
+	send: (msg) => {
 		parentPort?.postMessage(msg);
 	},
 });

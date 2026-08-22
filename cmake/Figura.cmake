@@ -9,7 +9,7 @@ function(figura_compile)
 	cmake_parse_arguments(
         ARG
 		"CLIENT;SERVER"
-		"LANG;PROTO;NAMESPACE;OUTPUT"
+		"LANG;PROTO;NAMESPACE;OUTPUT;WIRE"
 		""
         ${ARGN}
     )
@@ -28,6 +28,10 @@ function(figura_compile)
 
 	if (DEFINED ARG_NAMESPACE)
 		list(APPEND CMD_ARGS --namespace ${ARG_NAMESPACE})
+	endif()
+
+	if (DEFINED ARG_WIRE)
+		list(APPEND CMD_ARGS --wire ${ARG_WIRE})
 	endif()
 
 	add_custom_command(

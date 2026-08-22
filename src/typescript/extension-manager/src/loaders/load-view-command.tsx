@@ -50,7 +50,7 @@ export default async function (data: extensionServer.LaunchEventData) {
 	const module = await import(pathToFileURL(data.entrypoint).href);
 	const Component = module.default.default;
 	const sendRender = (views: ViewData[]) => {
-		globalState.client.UI.render(JSON.stringify({ views }));
+		globalState.client.UI.render(Buffer.from(JSON.stringify({ views })));
 	};
 	const renderer = createRenderer({
 		onInitialRender: sendRender,

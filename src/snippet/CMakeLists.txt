@@ -19,6 +19,7 @@ figura_compile(
 	LANG glaze
 	NAMESPACE snippet_gen
 	OUTPUT snippet-server.hpp
+	WIRE beve
 )
 
 add_library(${PROJECT_NAME} STATIC src/server.cpp ${SRCS})

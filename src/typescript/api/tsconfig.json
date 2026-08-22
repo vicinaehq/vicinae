@@ -2,6 +2,7 @@
 	"include": ["src/components", "types", "src", "src/commands"],
 	"compilerOptions": {
 		"jsx": "react-jsx",
+		"target": "es2022",
 		"module": "nodenext",
 		"declaration": true,
 		"declarationMap": false,
