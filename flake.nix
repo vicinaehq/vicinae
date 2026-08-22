@@ -6,7 +6,7 @@
     systems.url = "github:nix-systems/default";
     soulver-cpp.url = "github:vicinaehq/soulver-cpp";
     numen = {
-      url = "github:vicinaehq/numen/v0.3.1";
+      url = "github:vicinaehq/numen/v0.3.2";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -29,7 +29,7 @@
     packages = forEachPkgs (pkgs: let
       vicinae = pkgs.callPackage ./nix/vicinae.nix {
         gcc15Stdenv = pkgs.gcc15Stdenv;
-        numen = numen.packages.${pkgs.stdenv.hostPlatform.system}.numen;
+        numen = numen.packages.${pkgs.stdenv.hostPlatform.system}.numen.override { withRepl = false; };
       };
       soulver = soulver-cpp.packages.${pkgs.stdenv.hostPlatform.system}.default or null;
     in
