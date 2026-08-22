@@ -9,6 +9,19 @@ if (USE_SYSTEM_KF6 AND NOT WIN32)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
+if (USE_SYSTEM_NUMEN)
+	find_package(numen REQUIRED)
+else()
+	include(FetchContent)
+
+	FetchContent_Declare(numen
+	  GIT_REPOSITORY https://github.com/vicinaehq/numen
+	  GIT_TAG        v0.3.2
+	)
+
+	FetchContent_MakeAvailable(numen)
+endif()
+
 list(APPEND LIBS
 	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
@@ -24,6 +37,7 @@ list(APPEND LIBS
 	vicinae::fuzzy
 	vicinae::crypto
 	sqlcipher
+	numen::numen
 )
 
 if (NOT WIN32)
@@ -343,6 +357,11 @@ set(SRCS
 
 	src/services/calculator-service/calculator-service.hpp
 	src/services/calculator-service/calculator-service.cpp
+
+	src/services/calculator-service/numen/numen-currency-provider.hpp
+	src/services/calculator-service/numen/numen-currency-provider.cpp
+	src/services/calculator-service/numen/numen-calculator-backend.hpp
+	src/services/calculator-service/numen/numen-calculator-backend.cpp
 
 	src/services/files-service/abstract-file-indexer.hpp
 	src/services/files-service/dummy-file-indexer.hpp
@@ -1257,7 +1276,7 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/calculator-service/qalculate/qalculate-backend.cpp
 		tests/calculator/qalculate-backend.cpp
 	)
-	target_link_libraries(${TEST_TARGET} PRIVATE qalculate Qt6::Concurrent)
+	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common qalculate Qt6::Concurrent)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()
