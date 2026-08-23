@@ -7,7 +7,6 @@
 #include "navigation-controller.hpp"
 #include "qml/extension-view-host.hpp"
 #include "services/desktop-notification/desktop-notification-client.hpp"
-#include "services/selection/abstract-selection-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/image/image-renderer.hpp"
@@ -32,9 +31,9 @@ class ExtUIService : public tsapi::AbstractUI {
 public:
   ExtUIService(tsapi::RpcTransport &transport, NavigationController *navigation,
                const std::shared_ptr<ExtensionCommand> &command, tsapi::AbstractEventCore *eventCore,
-               ToastService &toast, AbstractSelectionService &selection, QObject *parent = nullptr)
+               ToastService &toast, QObject *parent = nullptr)
       : AbstractUI(transport), m_navigation(navigation), m_command(command), m_eventCore(eventCore),
-        m_toast(toast), m_selection(selection) {
+        m_toast(toast) {
     connect(&m_modelWatcher, &QFutureWatcher<ParsedRenderData>::finished, this, &ExtUIService::modelCreated);
     connect(navigation, &NavigationController::viewPoped, this, &ExtUIService::handleViewPoped);
   }
@@ -135,12 +134,8 @@ public:
   }
 
   tsapi::Result<std::string>::Future getSelectedText() override {
-    using Result = tsapi::Result<std::string>;
-
-    return m_selection.selectedText().then(this, [](AbstractSelectionService::Result result) -> Result::Type {
-      if (!result) return std::unexpected(result.error().toStdString());
-      return result->toStdString();
-    });
+    auto text = QGuiApplication::clipboard()->text(QClipboard::Mode::Selection);
+    return tsapi::Result<std::string>::ok(text.toStdString());
   }
 
   tsapi::Result<void>::Future sendDesktopNotification(tsapi::DesktopNotificationPayload data) override {
@@ -272,6 +267,5 @@ private:
   std::shared_ptr<ExtensionCommand> m_command;
   tsapi::AbstractEventCore *m_eventCore;
   ToastService &m_toast;
-  AbstractSelectionService &m_selection;
   DesktopNotificationClient m_notificationClient;
 };

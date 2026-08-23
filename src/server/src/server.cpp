@@ -76,18 +76,14 @@
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/paste/dummy-paste-service.hpp"
-#include "services/selection/dummy-selection-service.hpp"
 #ifdef Q_OS_LINUX
 #include "services/paste/linux-paste-service.hpp"
-#include "services/selection/linux-selection-service.hpp"
 #endif
 #ifdef Q_OS_MACOS
 #include "services/paste/macos-paste-service.hpp"
-#include "services/selection/macos-selection-service.hpp"
 #endif
 #ifdef Q_OS_WIN
 #include "services/paste/windows-paste-service.hpp"
-#include "services/selection/windows-selection-service.hpp"
 #endif
 #include "settings-controller/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
@@ -267,23 +263,15 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto snippetServer = std::make_unique<LinuxSnippetServer>(*inputServer);
     auto platformPaste =
         std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*inputServer));
-    auto selectionService =
-        std::unique_ptr<AbstractSelectionService>(std::make_unique<LinuxSelectionService>());
 #elif defined(Q_OS_MACOS)
     auto snippetServer = std::make_unique<MacosSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<MacosPasteService>());
-    auto selectionService =
-        std::unique_ptr<AbstractSelectionService>(std::make_unique<MacosSelectionService>());
 #elif defined(Q_OS_WIN)
     auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<WindowsPasteService>());
-    auto selectionService =
-        std::unique_ptr<AbstractSelectionService>(std::make_unique<WindowsSelectionService>());
 #else
     auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());
-    auto selectionService =
-        std::unique_ptr<AbstractSelectionService>(std::make_unique<DummySelectionService>());
 #endif
     auto snippetService =
         std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json", *snippetServer,
@@ -331,7 +319,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionManager(std::move(extensionManager));
     registry->setClipman(std::move(clipboardManager));
     registry->setPasteService(std::move(pasteService));
-    registry->setSelectionService(std::move(selectionService));
 #ifdef Q_OS_LINUX
     registry->setInputServer(std::move(inputServer));
 #endif
