@@ -6,7 +6,7 @@
     systems.url = "github:nix-systems/default";
     soulver-cpp.url = "github:vicinaehq/soulver-cpp";
     numen = {
-      url = "github:vicinaehq/numen/v0.3.2";
+      url = "github:vicinaehq/numen/v0.4.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
