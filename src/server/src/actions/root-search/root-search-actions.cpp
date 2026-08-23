@@ -111,8 +111,8 @@ DisableItemAction::DisableItemAction(const EntrypointId &id)
 }
 
 void OpenItemPreferencesAction::execute(ApplicationContext *ctx) {
-  ctx->navigation->closeWindow();
   ctx->settings->openExtensionPreferences(m_id);
+  ctx->navigation->closeWindow();
 }
 
 void SetRootItemAliasAction::execute(ApplicationContext *ctx) {
