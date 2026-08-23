@@ -1,4 +1,5 @@
 #include "services/calculator-service/numen/numen-calculator-backend.hpp"
+#include "numen/numen.hpp"
 #include "services/calculator-service/numen/numen-currency-provider.hpp"
 #include <qfuture.h>
 #include <chrono>
@@ -38,7 +39,13 @@ bool NumenCalculatorBackend::start() {
 
 NumenCalculatorBackend::ComputeResult NumenCalculatorBackend::compute(const QString &question,
                                                                       const ComputeOptions &opts) {
-  return m_numen.compute(question.toStdString())
+
+  numen::EvalOptions evalOpts{
+      .parseOptions = {.strict = true},
+      .locale = QLocale::system().name().toStdString(),
+  };
+
+  return m_numen.compute(question.toStdString(), evalOpts)
       .transform([&](const numen::ComputedValue &res) -> ComputeResult {
         CalculatorResult result{};
 
