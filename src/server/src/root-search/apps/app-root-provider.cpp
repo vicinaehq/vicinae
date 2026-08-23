@@ -3,7 +3,6 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "common.hpp"
-#include "navigation-controller.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -11,9 +10,6 @@
 #include "services/app-runtime/app-runtime.hpp"
 #include "vicinae.hpp"
 #include "actions/wm/window-actions.hpp"
-#include "utils/environment.hpp"
-#include <qjsonobject.h>
-#include <qkeysequence.h>
 
 double AppRootItem::baseScoreWeight() const { return 1; }
 
@@ -24,7 +20,6 @@ QString AppRootItem::typeDisplayName() const {
 
 std::vector<QString> AppRootItem::keywords() const {
   auto keywords = m_app->keywords();
-  keywords.emplace_back(m_app->description());
 
   if (auto name = m_app->unlocalizedName()) { keywords.emplace_back(name.value()); }
 
