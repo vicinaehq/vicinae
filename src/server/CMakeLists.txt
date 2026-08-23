@@ -441,6 +441,8 @@ set(SRCS
 	src/services/paste/abstract-paste-service.hpp
 	src/services/paste/dummy-paste-service.hpp
 	src/services/paste/paste-service.cpp
+	src/services/selection/abstract-selection-service.hpp
+	src/services/selection/dummy-selection-service.hpp
 	src/services/browser-extension-service.hpp
 
 	src/internal/program-db/program-db.hpp
@@ -680,6 +682,8 @@ if (APPLE)
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.hpp
 		src/services/paste/macos-paste-service.mm
+		src/services/selection/macos-selection-service.hpp
+		src/services/selection/macos-selection-service.mm
 		src/services/power-manager/macos/macos-power-manager.hpp
 		src/services/power-manager/macos/macos-power-manager.mm
 		src/services/audio-control/macos/coreaudio-audio-control.hpp
@@ -712,6 +716,7 @@ if (APPLE)
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.mm
+		src/services/selection/macos-selection-service.mm
 		src/services/power-manager/macos/macos-power-manager.mm
 		src/services/window-manager/macos/macos-window.mm
 		src/services/window-manager/macos/macos-window-manager.mm
@@ -739,6 +744,8 @@ elseif (WIN32)
 		src/services/clipboard/windows/windows-clipboard-server.cpp
 		src/services/paste/windows-paste-service.hpp
 		src/services/paste/windows-paste-service.cpp
+		src/services/selection/windows-selection-service.hpp
+		src/services/selection/windows-selection-service.cpp
 		src/services/files-service/windows/win-file-indexer.hpp
 		src/services/files-service/windows/win-file-indexer.cpp
 		src/services/window-manager/windows/windows-window.hpp
@@ -757,7 +764,7 @@ elseif (WIN32)
 		src/services/wallpaper/windows/windows-wallpaper-backend.hpp
 		src/services/wallpaper/windows/windows-wallpaper-backend.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp
@@ -828,6 +835,7 @@ if (UNIX AND NOT APPLE)
 		src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
 
 		src/services/paste/linux-paste-service.cpp
+		src/services/selection/linux-selection-service.cpp
 
 		src/services/input-server/linux-input-server.hpp
 		src/services/input-server/linux-input-server.cpp

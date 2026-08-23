@@ -35,6 +35,7 @@ class ShortcutInhibitManager;
 class FileChooserService;
 class NewsService;
 class PasteService;
+class AbstractSelectionService;
 class TelemetryService;
 class UpdateService;
 class AudioControlService;
@@ -77,6 +78,7 @@ public:
 #endif
   SnippetService *snippetService() const;
   PasteService *pasteService() const;
+  AbstractSelectionService *selectionService() const;
   FileChooserService *fileChooserService() const;
   NewsService *newsService() const;
   WindowMaterialManager *windowMaterialManager() const;
@@ -116,6 +118,7 @@ public:
   void setSnippetServerBackend(std::unique_ptr<AbstractSnippetServer> backend);
   void setSnippetService(std::unique_ptr<SnippetService> service);
   void setPasteService(std::unique_ptr<PasteService> service);
+  void setSelectionService(std::unique_ptr<AbstractSelectionService> service);
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
   void setNewsService(std::unique_ptr<NewsService> service);
   void setWindowMaterialManager(std::unique_ptr<WindowMaterialManager> manager);
@@ -155,6 +158,7 @@ private:
   std::unique_ptr<AbstractSnippetServer> m_snippetServerBackend;
   std::unique_ptr<SnippetService> m_snippetService;
   std::unique_ptr<PasteService> m_pasteService;
+  std::unique_ptr<AbstractSelectionService> m_selectionService;
   std::unique_ptr<FileChooserService> m_fileChooserService;
   std::unique_ptr<NewsService> m_newsService;
   std::unique_ptr<WindowMaterialManager> m_windowMaterialManager;
