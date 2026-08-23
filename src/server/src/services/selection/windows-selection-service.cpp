@@ -1,7 +1,12 @@
 #include "windows-selection-service.hpp"
-#include <memory>
 #include <windows.h>
+#include <objbase.h>
+#include <oleauto.h>
 #include <uiautomation.h>
+#include <wrl/client.h>
+#include "utils/scoped-com.hpp"
+
+using Microsoft::WRL::ComPtr;
 
 namespace {
 
@@ -16,26 +21,17 @@ void CALLBACK foregroundChanged(HWINEVENTHOOK, DWORD, HWND hwnd, LONG, LONG, DWO
   if (pid && pid != GetCurrentProcessId()) g_lastForeground = hwnd;
 }
 
-template <typename T> struct ComRelease {
-  void operator()(T *p) const {
-    if (p) p->Release();
-  }
-};
-template <typename T> using ComPtr = std::unique_ptr<T, ComRelease<T>>;
-
 QString textFromPattern(IUIAutomationTextPattern *pattern) {
-  IUIAutomationTextRangeArray *rawRanges = nullptr;
-  if (FAILED(pattern->GetSelection(&rawRanges)) || !rawRanges) return {};
-  ComPtr<IUIAutomationTextRangeArray> ranges(rawRanges);
+  ComPtr<IUIAutomationTextRangeArray> ranges;
+  if (FAILED(pattern->GetSelection(&ranges)) || !ranges) return {};
 
   int count = 0;
   ranges->get_Length(&count);
 
   QString text;
   for (int i = 0; i < count; ++i) {
-    IUIAutomationTextRange *rawRange = nullptr;
-    if (FAILED(ranges->GetElement(i, &rawRange)) || !rawRange) continue;
-    ComPtr<IUIAutomationTextRange> range(rawRange);
+    ComPtr<IUIAutomationTextRange> range;
+    if (FAILED(ranges->GetElement(i, &range)) || !range) continue;
 
     BSTR bstr = nullptr;
     if (SUCCEEDED(range->GetText(-1, &bstr)) && bstr) {
@@ -48,25 +44,23 @@ QString textFromPattern(IUIAutomationTextPattern *pattern) {
 }
 
 QString textFromElement(IUIAutomationElement *element) {
-  IUnknown *rawPattern = nullptr;
-  if (FAILED(element->GetCurrentPattern(UIA_TextPatternId, &rawPattern)) || !rawPattern) return {};
-  ComPtr<IUnknown> unknown(rawPattern);
+  ComPtr<IUnknown> unknown;
+  if (FAILED(element->GetCurrentPattern(UIA_TextPatternId, &unknown)) || !unknown) return {};
 
-  IUIAutomationTextPattern *rawText = nullptr;
-  if (FAILED(unknown->QueryInterface(IID_PPV_ARGS(&rawText))) || !rawText) return {};
-  ComPtr<IUIAutomationTextPattern> pattern(rawText);
+  ComPtr<IUIAutomationTextPattern> pattern;
+  if (FAILED(unknown.As(&pattern)) || !pattern) return {};
 
-  return textFromPattern(pattern.get());
+  return textFromPattern(pattern.Get());
 }
 
 QString selectedTextFromWindow(HWND foreground) {
-  IUIAutomation *rawAutomation = nullptr;
-  if (FAILED(CoCreateInstance(CLSID_CUIAutomation, nullptr, CLSCTX_INPROC_SERVER,
-                              IID_PPV_ARGS(&rawAutomation))) ||
-      !rawAutomation) {
+  ScopedCom com;
+  ComPtr<IUIAutomation> automation;
+  if (FAILED(
+          CoCreateInstance(CLSID_CUIAutomation, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&automation))) ||
+      !automation) {
     return {};
   }
-  ComPtr<IUIAutomation> automation(rawAutomation);
 
   // GetFocusedElement would resolve to the launcher; ask the target thread for its focused control
   GUITHREADINFO info{};
@@ -74,29 +68,25 @@ QString selectedTextFromWindow(HWND foreground) {
   DWORD thread = GetWindowThreadProcessId(foreground, nullptr);
   HWND focus = (thread && GetGUIThreadInfo(thread, &info) && info.hwndFocus) ? info.hwndFocus : foreground;
 
-  IUIAutomationElement *rawElement = nullptr;
-  if (FAILED(automation->ElementFromHandle(focus, &rawElement)) || !rawElement) return {};
-  ComPtr<IUIAutomationElement> element(rawElement);
+  ComPtr<IUIAutomationElement> element;
+  if (FAILED(automation->ElementFromHandle(focus, &element)) || !element) return {};
 
-  if (QString text = textFromElement(element.get()); !text.isEmpty()) return text;
+  if (QString text = textFromElement(element.Get()); !text.isEmpty()) return text;
 
   VARIANT focusedValue;
   focusedValue.vt = VT_BOOL;
   focusedValue.boolVal = VARIANT_TRUE;
 
-  IUIAutomationCondition *rawCondition = nullptr;
-  if (FAILED(
-          automation->CreatePropertyCondition(UIA_HasKeyboardFocusPropertyId, focusedValue, &rawCondition)) ||
-      !rawCondition) {
+  ComPtr<IUIAutomationCondition> condition;
+  if (FAILED(automation->CreatePropertyCondition(UIA_HasKeyboardFocusPropertyId, focusedValue, &condition)) ||
+      !condition) {
     return {};
   }
-  ComPtr<IUIAutomationCondition> condition(rawCondition);
 
-  IUIAutomationElement *rawFocused = nullptr;
-  if (FAILED(element->FindFirst(TreeScope_Subtree, condition.get(), &rawFocused)) || !rawFocused) return {};
-  ComPtr<IUIAutomationElement> focused(rawFocused);
+  ComPtr<IUIAutomationElement> focused;
+  if (FAILED(element->FindFirst(TreeScope_Subtree, condition.Get(), &focused)) || !focused) return {};
 
-  return textFromElement(focused.get());
+  return textFromElement(focused.Get());
 }
 
 } // namespace
