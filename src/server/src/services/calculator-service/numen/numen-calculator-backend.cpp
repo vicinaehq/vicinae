@@ -76,8 +76,14 @@ NumenCalculatorBackend::ComputeResult NumenCalculatorBackend::compute(const QStr
               result.answer.unformatted = QString::number(n.n);
               result.answer.text = QString::fromStdString(n.text);
               if (n.unit && n.unit->resolved) {
-                result.answer.text =
-                    QString::fromStdString(n.text) + " " + QString::fromStdString(n.unit->resolved->render());
+                auto render = QString::fromStdString(n.unit->resolved->render());
+
+                if (auto def = n.unit->def(); def && def->symbolPrefix) {
+                  result.answer.text = render + QString::fromStdString(n.text);
+                } else {
+                  result.answer.text = QString::fromStdString(n.text) + " " + render;
+                }
+
                 if (!result.answer.unit) {
                   result.answer.unit = Unit{.displayName = QString::fromStdString(n.unit->resolved->name())};
                 }
