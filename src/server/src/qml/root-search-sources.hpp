@@ -85,7 +85,7 @@ private:
   std::optional<LinkItem> m_link;
 };
 
-class RootCalculatorSection : public SectionSource {
+class RootCalculatorSection : public SectionSource, QObject {
 public:
   QString sectionName() const override {
     return QCoreApplication::translate("RootCalculatorSection", "Calculator");

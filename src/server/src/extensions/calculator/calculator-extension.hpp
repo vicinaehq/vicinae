@@ -93,6 +93,7 @@ public:
 
     auto backendPref = Preference::makeDropdown("backend", backendOptions);
 
+    backendPref.setDefaultValue("numen");
     backendPref.setTitle(tr("Calculator Backend"));
     backendPref.setDescription(tr("Which backend to use to perform calculations"));
 
@@ -103,8 +104,6 @@ public:
     refreshOnStartup.setDescription(
         tr("Whether exchange rates should be refreshed every time the vicinae server is started. If the "
            "current backend does not support it, this is ignored."));
-
-    if (!backendOptions.empty()) { backendPref.setDefaultValue(backendOptions.front().value); }
 
     return {backendPref, refreshOnStartup};
   }

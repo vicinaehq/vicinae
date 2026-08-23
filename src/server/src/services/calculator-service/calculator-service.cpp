@@ -4,6 +4,7 @@
 #include "omni-database.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"
+#include "services/calculator-service/numen/numen-calculator-backend.hpp"
 #include <ranges>
 #include <qdatetime.h>
 #include <qlogging.h>
@@ -348,6 +349,7 @@ CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
   {
     std::vector<std::unique_ptr<AbstractCalculatorBackend>> candidates;
 
+    candidates.emplace_back(std::make_unique<NumenCalculatorBackend>());
 #if defined(Q_OS_MACOS) && defined(BUNDLE_SOULVER_CORE)
     candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
 #endif

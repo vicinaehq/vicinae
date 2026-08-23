@@ -6,6 +6,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_library(${PROJECT_NAME} STATIC src/common.cpp)
 add_library(vicinae::common ALIAS ${PROJECT_NAME})
-target_include_directories(${PROJECT_NAME} PUBLIC include PRIVATE src)
+
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE src)
+target_include_directories(${PROJECT_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_definitions(${PROJECT_NAME} PRIVATE VICINAE_LIBEXECDIR="${VICINAE_LIBEXEC_DIR}" VICINAE_LIBEXEC_PATH="${VICINAE_LIBEXEC_PATH}")
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
