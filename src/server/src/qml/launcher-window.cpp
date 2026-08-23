@@ -575,8 +575,8 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
   if (m_actionPanel->activateBoundAction(&event)) return true;
 
   if (Keyboard::Shortcut(Keybind::OpenSettings) == &event) {
-    m_ctx.settings->openWindow();
     m_ctx.navigation->closeWindow();
+    m_ctx.settings->openWindow();
     return true;
   }
 
@@ -638,13 +638,13 @@ void LauncherWindow::buildFooterMenu() {
   auto *appSection = state->createSection();
   appSection->addAction(
       new StaticAction(tr("Open Settings"), ImageURL::builtin(BuiltinIcon::Cog), [](ApplicationContext *ctx) {
-        ctx->settings->openWindow();
         ctx->navigation->closeWindow();
+        ctx->settings->openWindow();
       }));
   appSection->addAction(new StaticAction(tr("Keyboard Shortcuts"), ImageURL::builtin(BuiltinIcon::Keyboard),
                                          [](ApplicationContext *ctx) {
-                                           ctx->settings->openTab(QStringLiteral("shortcuts"));
                                            ctx->navigation->closeWindow();
+                                           ctx->settings->openTab(QStringLiteral("shortcuts"));
                                          }));
   appSection->addAction(new StaticAction(QStringLiteral("Extension Store"),
                                          ImageURL::builtin(BuiltinIcon::Cart), [](ApplicationContext *ctx) {
@@ -666,8 +666,8 @@ void LauncherWindow::buildFooterMenu() {
       }));
   helpSection->addAction(new StaticAction(tr("About Vicinae"), ImageURL::builtin(BuiltinIcon::Info01),
                                           [](ApplicationContext *ctx) {
-                                            ctx->settings->openTab(QStringLiteral("about"));
                                             ctx->navigation->closeWindow();
+                                            ctx->settings->openTab(QStringLiteral("about"));
                                           }));
 
   m_footerPanel->setActions(std::move(state));

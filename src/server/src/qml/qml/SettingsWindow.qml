@@ -48,7 +48,7 @@ Window {
     minimumWidth: 980
     minimumHeight: 600
     maximumWidth: 980
-    visible: true
+    visible: false
     color: "transparent"
     flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint
     title: qsTr("Vicinae Settings")

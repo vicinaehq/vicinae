@@ -71,9 +71,8 @@ void SettingsWindow::ensureInitialized() {
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
 
   if (m_window) {
-    connect(m_window, &QQuickWindow::visibleChanged, this, [this](bool visible) {
-      if (!visible) m_ctx.settings->closeWindow();
-    });
+    connect(m_window, &QQuickWindow::closing, this,
+            [this](QQuickCloseEvent *) { m_ctx.settings->closeWindow(); });
   }
 }
 
