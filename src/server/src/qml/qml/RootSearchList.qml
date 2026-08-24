@@ -72,7 +72,8 @@ GenericListView {
                 itemSubtitle: delegateLoader.subtitle
                 itemIconSource: delegateLoader.iconSource
                 itemAlias: delegateLoader.alias
-                itemShortcutTokens: delegateLoader.shortcutTokens
+                overlayShortcutTokens: delegateLoader.itemType === "favorite"
+                itemShortcutTokens: (delegateLoader.itemType === "favorite" && !launcher.commandHeld) ? [] : delegateLoader.shortcutTokens
                 itemIsActive: delegateLoader.isActive
                 itemAccessory: delegateLoader.accessoryText
                 itemAccessoryColor: delegateLoader.accessoryColor

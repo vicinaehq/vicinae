@@ -297,6 +297,9 @@ QVariant RootFavoritesSection::customData(int i, int role) const {
     return QString::fromStdString(meta.alias.value_or(""));
   }
   case ShortcutTokens:
+    if (i < QUICK_OPEN_COUNT) {
+      return Keyboard::Shortcut(static_cast<Qt::Key>(Qt::Key_1 + i), Qt::ControlModifier).toDisplayTokens();
+    }
     return shortcutTokensFor(m_manager->itemMetadata(m_items[i]->uniqueId()));
   case IsActive:
     return m_items[i]->isActive();

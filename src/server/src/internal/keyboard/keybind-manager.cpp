@@ -106,6 +106,13 @@ static const std::unordered_map<Keybind, KeybindInfo> &keybindInfos() {
 		.icon = "pin",
 		.dflt = Keyboard::Shortcut(Qt::Key_P, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
+	{Keybind::FavoriteAction, KeybindInfo{
+		.id = "action.favorite",
+		.name = QCoreApplication::translate("keybind-manager", "Favorite Action"),
+		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can add or remove the selected item from favorites"),
+		.icon = "star",
+		.dflt = Keyboard::Shortcut(Qt::Key_F, Qt::ControlModifier | Qt::ShiftModifier)
+	}},
 	{Keybind::RemoveAction, KeybindInfo{
 		.id = "action.remove",
 		.name = QCoreApplication::translate("keybind-manager", "Remove Action"),

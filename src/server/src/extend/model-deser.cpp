@@ -562,6 +562,7 @@ static const std::unordered_map<std::string, Keybind> NAMED_SHORTCUTS = {
     {"open", Keybind::OpenAction},
     {"open-with", Keybind::OpenAction},
     {"pin", Keybind::PinAction},
+    {"favorite", Keybind::FavoriteAction},
     {"refresh", Keybind::RefreshAction},
     {"remove", Keybind::RemoveAction},
     {"remove-all", Keybind::DangerousRemoveAction},
