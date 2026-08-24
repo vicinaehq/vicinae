@@ -28,11 +28,12 @@
   }: let
     inherit (nixpkgs) lib;
     forEachPkgs = f: lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
+    numenFor = pkgs: numen.packages.${pkgs.stdenv.hostPlatform.system}.numen.override {withRepl = false;};
   in {
     packages = forEachPkgs (pkgs: let
       vicinae = pkgs.callPackage ./nix/vicinae.nix {
         gcc15Stdenv = pkgs.gcc15Stdenv;
-        numen = numen.packages.${pkgs.stdenv.hostPlatform.system}.numen.override {withRepl = false;};
+        numen = numenFor pkgs;
       };
       soulver = soulver-cpp.packages.${pkgs.stdenv.hostPlatform.system}.default or null;
     in
@@ -111,7 +112,7 @@
       }
     );
     overlays.default = final: prev: {
-      vicinae = final.callPackage ./nix/vicinae.nix {};
+      vicinae = final.callPackage ./nix/vicinae.nix {numen = numenFor final;};
       mkVicinaeExtension = prev.callPackage ./nix/mkVicinaeExtension.nix {};
       mkRayCastExtension = prev.callPackage ./nix/mkRayCastExtension.nix {};
     };

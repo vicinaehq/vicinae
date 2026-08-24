@@ -79,6 +79,15 @@ in {
       '';
     };
 
+    enableNumen = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Whether to select the Numen calculator backend.
+        Numen is bundled in the flake's `default` package.
+      '';
+    };
+
     enableFirefoxIntegration = lib.mkOption {
       default = true;
       description = ''
@@ -279,6 +288,10 @@ in {
     lib.mkIf cfg.enable {
       assertions = [
         {
+          assertion = !(cfg.enableSoulver && cfg.enableNumen);
+          message = "programs.vicinae.enableSoulver and programs.vicinae.enableNumen are mutually exclusive";
+        }
+        {
           assertion = cfg.enableSoulver -> (cfg.package != null || soulverVicinaePkg != null);
           message = "programs.vicinae.enableSoulver: the soulver backend is not available on ${system}";
         }
@@ -288,8 +301,12 @@ in {
 
       home.packages = [wrappedVicinae];
 
-      programs.vicinae.settings = lib.mkIf cfg.enableSoulver {
-        providers.calculator.preferences.backend = lib.mkDefault "soulver-core";
+      programs.vicinae.settings = lib.mkIf (cfg.enableSoulver || cfg.enableNumen) {
+        providers.calculator.preferences.backend = lib.mkDefault (
+          if cfg.enableSoulver
+          then "soulver-core"
+          else "numen"
+        );
       };
 
       xdg = let
