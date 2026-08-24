@@ -5,8 +5,6 @@
 #include "service-registry.hpp"
 #include "qml/missing-preference-view-host.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "services/app-runtime/app-runtime.hpp"
-#include "services/window-manager/window-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
@@ -503,8 +501,6 @@ size_t NavigationController::viewStackSize() const { return m_views.size(); }
 
 void NavigationController::showWindow() {
   if (m_windowOpened) return;
-  m_ctx.services->windowManager()->capturePasteTarget();
-  m_ctx.services->appRuntime()->capturePasteTarget();
   if (auto popToRoot = m_pendingPopToRoot) {
     applyPopToRoot(*popToRoot);
     m_pendingPopToRoot.reset();

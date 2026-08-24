@@ -1,11 +1,9 @@
 #include "window-manager.hpp"
 #include <algorithm>
-#include <QCoreApplication>
 #include <qnamespace.h>
 #include <ranges>
 #include "dummy-window-manager.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
-#include "vicinae.hpp"
 #ifdef Q_OS_LINUX
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
@@ -62,28 +60,8 @@ AbstractWindowManager *WindowManager::provider() const { return m_provider.get()
 
 AbstractWindowManager::WindowList WindowManager::listWindowsSync() { return m_provider->listWindowsSync(); }
 
-namespace {
-
-bool isLauncherWindow(const AbstractWindowManager::AbstractWindow &win) {
-  if (auto pid = win.pid(); pid && *pid == QCoreApplication::applicationPid()) return true;
-  const auto &cls = win.wmClass();
-  return cls.compare(Omnicast::APP_ID, Qt::CaseInsensitive) == 0 ||
-         cls.contains(QStringLiteral("vicinae"), Qt::CaseInsensitive);
-}
-
-} // namespace
-
 AbstractWindowManager::WindowPtr WindowManager::getFocusedWindow() {
   return m_provider->getFocusedWindowSync();
-}
-
-void WindowManager::capturePasteTarget() {
-  if (auto win = getFocusedWindow(); win && !isLauncherWindow(*win)) { m_pasteTarget = win; }
-}
-
-AbstractWindowManager::WindowPtr WindowManager::pasteTargetWindow() const {
-  if (auto win = m_provider->getFocusedWindowSync(); win && !isLauncherWindow(*win)) return win;
-  return m_pasteTarget;
 }
 
 const AbstractWindowManager::AbstractWindow *WindowManager::findWindowById(const QString &id) {
@@ -135,15 +113,11 @@ bool WindowManager::isCapable() const { return m_provider->id() != "dummy"; }
 WindowManager::WindowManager() {
   m_provider = createProvider();
   updateWindowCache();
-  capturePasteTarget();
 
   connect(m_provider.get(), &AbstractWindowManager::windowsChanged, this, [this]() {
     updateWindowCache();
     emit windowsChanged();
   });
 
-  connect(m_provider.get(), &AbstractWindowManager::focusChanged, this, [this]() {
-    capturePasteTarget();
-    emit focusChanged();
-  });
+  connect(m_provider.get(), &AbstractWindowManager::focusChanged, this, &WindowManager::focusChanged);
 }
