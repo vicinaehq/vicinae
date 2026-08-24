@@ -4,7 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-unstable";
     systems.url = "github:nix-systems/default";
-    soulver-cpp.url = "github:vicinaehq/soulver-cpp";
+    soulver-cpp = {
+      url = "github:vicinaehq/soulver-cpp";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     numen = {
       url = "github:vicinaehq/numen/v0.4.1";
       inputs.nixpkgs.follows = "nixpkgs";
