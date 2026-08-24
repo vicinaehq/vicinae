@@ -202,8 +202,6 @@ public:
 
 void macosSetAccessoryActivationPolicy();
 void macosActivateApp();
-
-void macosPrepareOverlayWindow(QWindow *window);
 void macosReleaseMenuShortcuts();
 
 // True when NSGlassEffectView is available (macOS 26 Tahoe and later).

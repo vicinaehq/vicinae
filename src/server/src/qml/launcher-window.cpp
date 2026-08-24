@@ -1,8 +1,5 @@
 #include "launcher-window.hpp"
 #include "launcher-window-platform.hpp"
-#ifdef Q_OS_MACOS
-#include "macos-chrome-attached.hpp"
-#endif
 #ifdef Q_OS_LINUX
 #include "internal/wayland/xdg-activation.hpp"
 #endif
@@ -707,9 +704,7 @@ void LauncherWindow::beginWindowDrag() {
   updateActiveDragAnchor(m_window->position());
   m_dragOverlayVisible = true;
   emit dragOverlayChanged();
-#ifdef Q_OS_MACOS
-  if (m_dragOverlayWindow) macosPrepareOverlayWindow(m_dragOverlayWindow);
-#endif
+  LauncherWindowPlatform::prepareOverlayWindow(m_dragOverlayWindow);
 }
 
 void LauncherWindow::registerDragOverlay(QQuickWindow *window) { m_dragOverlayWindow = window; }

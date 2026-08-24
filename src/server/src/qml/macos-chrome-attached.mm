@@ -1,4 +1,5 @@
 #include "macos-chrome-attached.hpp"
+#include "launcher-window-platform.hpp"
 
 #include <qevent.h>
 #include <qlogging.h>
@@ -620,7 +621,7 @@ void macosSetAccessoryActivationPolicy() {
 
 void macosActivateApp() { [NSApp activateIgnoringOtherApps:YES]; }
 
-void macosPrepareOverlayWindow(QWindow *window) {
+void LauncherWindowPlatform::prepareOverlayWindow(QWindow *window) {
   if (!window || !window->handle()) return;
   NSView *view = nsViewFromWinId(window->winId());
   if (!view) return;
