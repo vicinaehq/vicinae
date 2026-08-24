@@ -1,4 +1,5 @@
 #include "root-view-host.hpp"
+#include "lib/figura/src/utils.hpp"
 #include "root-search-model.hpp"
 #include "section-source.hpp"
 #include "service-registry.hpp"
@@ -74,16 +75,28 @@ void RootViewHost::beforeActionExecuted(const AbstractAction *action) {
 bool RootViewHost::tryAliasFastTrack() {
   const auto manager = context()->services->rootItemManager();
   const auto item = m_model->selectedRootItem();
+  auto &nav = context()->navigation;
 
-  if (!item || !item->supportsAliasSpaceShortcut()) return false;
+  if (!item) return false;
 
   const auto query = context()->navigation->searchText(this).toStdString();
   const auto meta = manager->itemMetadata(item->uniqueId());
 
-  if (!meta.alias || !meta.alias->starts_with(query)) return false;
+  if (!meta.alias || meta.alias != toLower(query)) return false;
 
-  m_model->activateSelected();
-  return true;
+  // if the command has a completer, we focus the first input instead of activating
+  if (nav->hasCompleter()) {
+    nav->requestCompleterFocus();
+    return true;
+  }
+
+  // no-view command cannot use fast track
+  if (item->supportsAliasSpaceShortcut()) {
+    m_model->activateSelected();
+    return true;
+  }
+
+  return false;
 }
 
 bool RootViewHost::inputFilter(QKeyEvent *event) {

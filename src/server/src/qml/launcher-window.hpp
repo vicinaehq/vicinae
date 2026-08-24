@@ -123,6 +123,7 @@ signals:
   void completerChanged();
   void completerValuesChanged();
   void completerValidationFailed();
+  void completerFocusRequested();
   void windowSizeOverrideChanged();
   void overlayChanged();
   void lsChanged();

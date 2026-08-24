@@ -240,6 +240,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
             emit navigationStatusChanged();
           });
 
+  connect(nav, &NavigationController::completerFocusedRequested, this,
+          &LauncherWindow::completerFocusRequested);
   connect(nav, &NavigationController::completionCreated, this, [this](const CompleterState &state) {
     m_hasCompleter = true;
     m_completerArgs.clear();

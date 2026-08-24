@@ -118,6 +118,7 @@ signals:
 
   void completionCreated(const CompleterState &completer) const;
   void completionDestroyed() const;
+  void completerFocusedRequested() const;
 
   void headerVisiblityChanged(bool value);
   void searchVisibilityChanged(bool value);
@@ -173,6 +174,8 @@ public:
 
   void setDialog(DialogContentWidget *dialog);
   void confirmAlert(const QString &title, const QString &description, const std::function<void()> &onConfirm);
+
+  void requestCompleterFocus();
 
   void createCompletion(const ArgumentList &args, const ImageURL &icon);
   void destroyCurrentCompletion();

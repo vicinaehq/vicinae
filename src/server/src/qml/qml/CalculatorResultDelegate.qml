@@ -10,13 +10,13 @@ SelectableDelegate {
     required property string calcAnswer
     required property string calcAnswerUnit
 
-	// quite naive, but good enough.
-	// if we find we need this to be actually accurate, we probably need a per backend
-	// way to figure out what token carries operator significance.
+    // quite naive, but good enough.
+    // if we find we need this to be actually accurate, we probably need a per backend
+    // way to figure out what token carries operator significance.
     function highlight(expr) {
-        const escaped = expr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-        const tokens = /(\b(?:to|in|as|of|mod|and|or|xor)\b|[+\-*\/^%()=,])/gi
-        return escaped.replace(tokens, m => `<font color="${Theme.textMuted}">${m}</font>`)
+        const escaped = expr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const tokens = /(\b(?:to|in|as|of|mod|and|or|xor)\b|[+\-*\/^%()=,])/gi;
+        return escaped.replace(tokens, m => `<font color="${Theme.textMuted}">${m}</font>`);
     }
 
     Item {

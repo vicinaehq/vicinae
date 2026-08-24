@@ -15,6 +15,18 @@ RowLayout {
 
     spacing: 4
 
+    function focusFirst() {
+        const item = argRepeater.itemAt(0)?.item;
+
+        if (!item) {
+            console.warn("Cannot focus first, may not be an input field");
+            return false;
+        }
+
+        item.forceActiveFocus();
+        return true;
+    }
+
     function validate() {
         var firstRequired = -1;
         for (var i = 0; i < argRepeater.count; i++) {
