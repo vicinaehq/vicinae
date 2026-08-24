@@ -5,7 +5,6 @@
 #include <QPointer>
 #include <QQuickItem>
 #include <QQuickWindow>
-#include <QTimer>
 
 #import <AppKit/AppKit.h>
 #import <QuartzCore/QuartzCore.h>
@@ -152,25 +151,6 @@ NSScreen *cursorScreen() {
     if (NSPointInRect(mouse, candidate.frame)) return candidate;
   }
   return [NSScreen mainScreen];
-}
-
-void placeWindowOnCursorScreen(QWindow *window, qreal yFraction, qreal referenceHeight) {
-  if (!window) return;
-  NSView *view = nsViewFromWinId(window->winId());
-  if (!view) return;
-  NSWindow *nswin = view.window;
-  if (!nswin) return;
-
-  NSScreen *screen = cursorScreen();
-  if (!screen) return;
-
-  NSRect const vf = screen.visibleFrame;
-  NSSize const size = nswin.frame.size;
-  CGFloat const refHeight = referenceHeight > 0 ? referenceHeight : size.height;
-  CGFloat const x = vf.origin.x + (vf.size.width - size.width) / 2.0;
-  CGFloat const visibleTop = vf.origin.y + vf.size.height;
-  CGFloat const windowTop = visibleTop - (vf.size.height - refHeight) * yFraction;
-  [nswin setFrameOrigin:NSMakePoint(x, windowTop - size.height)];
 }
 
 } // namespace
@@ -640,6 +620,19 @@ void macosSetAccessoryActivationPolicy() {
 
 void macosActivateApp() { [NSApp activateIgnoringOtherApps:YES]; }
 
+void macosPrepareOverlayWindow(QWindow *window) {
+  if (!window || !window->handle()) return;
+  NSView *view = nsViewFromWinId(window->winId());
+  if (!view) return;
+  NSWindow *nswin = view.window;
+  if (!nswin) return;
+
+  nswin.level = NSStatusWindowLevel;
+  nswin.collectionBehavior |=
+      NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary;
+  nswin.ignoresMouseEvents = YES;
+}
+
 static void macosClearMenuShortcuts(NSMenu *menu) {
   if (!menu) return;
   NSMenu *servicesMenu = [NSApp servicesMenu];
@@ -657,22 +650,6 @@ static void macosClearMenuShortcuts(NSMenu *menu) {
 void macosReleaseMenuShortcuts() {
   macosClearMenuShortcuts([NSApp mainMenu]);
   dispatch_async(dispatch_get_main_queue(), ^{ macosClearMenuShortcuts([NSApp mainMenu]); });
-}
-
-void MacOSPanelAttached::beginShow(qreal yFraction, qreal referenceHeight) {
-  if (!m_window) return;
-  m_window->setOpacity(0.0);
-  placeWindowOnCursorScreen(m_window, yFraction, referenceHeight);
-}
-
-void MacOSPanelAttached::finishShow(qreal yFraction, qreal referenceHeight) {
-  if (!m_window) return;
-  QPointer<MacOSPanelAttached> self(this);
-  QTimer::singleShot(0, this, [self, yFraction, referenceHeight]() {
-    if (!self || !self->m_window) return;
-    placeWindowOnCursorScreen(self->m_window, yFraction, referenceHeight);
-    self->m_window->setOpacity(1.0);
-  });
 }
 
 void MacOSPanelAttached::placeBottomCenter(qreal bottomMargin) {
