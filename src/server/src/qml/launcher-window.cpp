@@ -646,7 +646,7 @@ void LauncherWindow::buildFooterMenu() {
                                            ctx->navigation->closeWindow();
                                            ctx->settings->openTab(QStringLiteral("shortcuts"));
                                          }));
-  appSection->addAction(new StaticAction(QStringLiteral("Extension Store"),
+  appSection->addAction(new StaticAction(tr("Extension Store"),
                                          ImageURL::builtin(BuiltinIcon::Cart), [](ApplicationContext *ctx) {
                                            ctx->navigation->popToRoot();
                                            ctx->navigation->clearSearchText();
