@@ -5,6 +5,7 @@
 #include "service-registry.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "view-scope.hpp"
+#include <algorithm>
 #include <qevent.h>
 
 void RootViewHost::initialize() {
@@ -86,8 +87,16 @@ bool RootViewHost::tryAliasFastTrack() {
 
   // if the command has a completer, we focus the first input instead of activating
   if (nav->hasCompleter()) {
-    nav->requestCompleterFocus();
-    return true;
+    // FIXME: we need to make sure we are not eating space if we are in the completer,
+    // since completer input is routed through the same path as launcher input.
+    // We should probably architecture this in a better way
+    const auto isEmpty =
+        std::ranges::all_of(nav->completionValues(), [](auto &&pair) { return pair.second.isEmpty(); });
+    if (isEmpty) {
+      nav->requestCompleterFocus();
+      return true;
+    }
+    return false;
   }
 
   // no-view command cannot use fast track
