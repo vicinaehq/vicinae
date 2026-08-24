@@ -81,7 +81,7 @@ in {
 
     enableNumen = lib.mkOption {
       type = lib.types.bool;
-      default = false;
+      default = true;
       description = ''
         Whether to select the Numen calculator backend.
         Numen is bundled in the flake's `default` package.
