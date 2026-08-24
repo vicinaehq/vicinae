@@ -21,7 +21,6 @@ class ViewHostBase;
 class QQuickWindow;
 class BaseView;
 class DialogContentWidget;
-class QKeyEvent;
 
 class LauncherWindow : public QObject {
   Q_OBJECT
@@ -55,7 +54,6 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(int lsLayer READ lsLayer NOTIFY lsChanged)
   Q_PROPERTY(int lsKeyboardInteractivity READ lsKeyboardInteractivity NOTIFY lsChanged)
   Q_PROPERTY(bool canPositionWindow READ canPositionWindow CONSTANT)
-  Q_PROPERTY(bool commandHeld READ commandHeld NOTIFY commandHeldChanged)
 
 public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -91,7 +89,6 @@ public:
   int lsLayer() const { return m_lsLayer; }
   int lsKeyboardInteractivity() const { return m_lsKeyboardInteractivity; }
   static bool canPositionWindow();
-  bool commandHeld() const { return m_commandHeld; }
 
   Q_INVOKABLE void expand();
   Q_INVOKABLE void forwardSearchText(const QString &text);
@@ -129,7 +126,6 @@ signals:
   void windowSizeOverrideChanged();
   void overlayChanged();
   void lsChanged();
-  void commandHeldChanged();
 
 private:
   bool eventFilter(QObject *obj, QEvent *event) override;
@@ -145,8 +141,6 @@ private:
   void setExclusiveFocus(bool exclusive);
   void updateLayerShellProps();
   void buildFooterMenu();
-  void setCommandHeld(bool held);
-  void syncCommandHeld(const QKeyEvent *event);
 
   ApplicationContext &m_ctx;
   ActionPanelController *m_actionPanel;
@@ -200,7 +194,6 @@ private:
   int m_lsLayer = 2;                 // LayerShellQt::Window::LayerTop
   int m_lsKeyboardInteractivity = 2; // LayerShellQt::Window::KeyboardInteractivityOnDemand
   bool m_hasCompleter = false;
-  bool m_commandHeld = false;
   QVariantList m_completerArgs;
   QString m_completerIcon;
   QVariantList m_completerValues;

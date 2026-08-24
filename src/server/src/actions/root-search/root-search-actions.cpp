@@ -82,9 +82,7 @@ void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
 };
 
 ToggleItemAsFavorite::ToggleItemAsFavorite(const EntrypointId &id, bool currentValue)
-    : m_id(id), m_value(currentValue) {
-  setShortcut(Keybind::FavoriteAction);
-}
+    : m_id(id), m_value(currentValue) {}
 
 void MoveFavoriteUpAction::execute(ApplicationContext *ctx) {
   ctx->services->rootItemManager()->moveFavoriteUp(m_id);
