@@ -1,5 +1,5 @@
 {
-  description = "A flake for Vicinae, a high-performance native launcher for Linux.";
+  description = "A focused launcher for your desktop - native, fast, extensible";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-unstable";
