@@ -117,9 +117,7 @@ QString SettingsWindow::headline() const { return Omnicast::HEADLINE; }
 
 void SettingsWindow::openUrl(const QString &url) { m_ctx.services->appDb()->openTarget(url); }
 
-void SettingsWindow::close() {
-  if (m_window) m_window->hide();
-}
+void SettingsWindow::close() { m_ctx.settings->closeWindow(); }
 
 void SettingsWindow::requestDefaultFocus() { emit defaultFocusRequested(); }
 
