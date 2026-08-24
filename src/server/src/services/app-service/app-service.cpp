@@ -135,15 +135,24 @@ AppService::findCuratedOpeners(const QString &target) const {
 }
 
 bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
-  for (const auto &path : m_watcher->directories()) {
-    m_watcher->removePath(path);
+  QStringList current = m_watcher->directories();
+  QStringList desired;
+  std::error_code ec{};
+
+  for (const auto &path : paths) {
+    if (fs::is_directory(path, ec)) { desired.append(QString::fromStdString(path.string())); }
   }
 
-  auto isDir = [](auto &&path) { return fs::is_directory(path); };
+  desired.sort();
+  desired.removeDuplicates();
+  current.sort();
 
-  for (const auto &path : paths | std::views::filter(isDir)) {
-    m_watcher->addPath(QString::fromStdWString(path.wstring()));
-  }
+  // It's important that we don't reinstall the watches if the directories haven't changed.
+  // On some systems it's a no-op, on others like macOS it can trigger a new flood
+  // of events, which can create some performance problems.
+  if (current == desired) return true;
+  if (!current.isEmpty()) m_watcher->removePaths(current);
+  if (!desired.isEmpty()) m_watcher->addPaths(desired);
 
   return true;
 }
