@@ -49,6 +49,7 @@
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include "services/power-manager/power-manager.hpp"
+#include "services/status-notifier/system-tray-service.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 #include "services/script-command/script-command-service.hpp"
@@ -351,6 +352,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
+    registry->setSystemTray(std::make_unique<SystemTrayService>());
     registry->setGlobalShortcuts(std::move(globalShortcutService));
     registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setMediaControl(std::make_unique<MediaControlService>());

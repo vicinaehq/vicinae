@@ -457,6 +457,14 @@ set(SRCS
 
 	src/services/power-manager/dummy-power-manager.hpp
 
+	src/services/status-notifier/tray-item.hpp
+	src/services/status-notifier/tray-item.cpp
+	src/services/status-notifier/abstract-tray-service.hpp
+	src/services/status-notifier/dummy-tray-service.hpp
+	src/services/status-notifier/system-tray-service.hpp
+	src/qml/search-tray-view-host.hpp
+	src/extensions/vicinae/search-tray-command.hpp
+
 	src/services/desktop-notification/dummy-desktop-notification-client.hpp
 
 	src/services/audio-control/pactl/pactl-audio-control.cpp
@@ -845,6 +853,10 @@ if (UNIX AND NOT APPLE)
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 		src/services/power-manager/systemd/systemd-power-manager.cpp
+		src/services/status-notifier/sni/sni-tray-service.hpp
+		src/services/status-notifier/sni/sni-tray-service.cpp
+		src/services/status-notifier/sni/sni-watcher.hpp
+		src/services/status-notifier/sni/sni-watcher.cpp
 		src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
 
 		src/services/media-control/mpris/mpris-media-control.hpp
