@@ -15,6 +15,8 @@ public:
   AbstractWindowManager *provider() const;
   AbstractWindowManager::WindowList listWindowsSync();
   AbstractWindowManager::WindowPtr getFocusedWindow();
+  AbstractWindowManager::WindowPtr pasteTargetWindow() const;
+  void capturePasteTarget();
 
   AbstractWindowManager::WindowList findAppWindows(const AbstractApplication &app) const;
   const AbstractWindowManager::WindowList &listWindows() const;
@@ -32,6 +34,7 @@ private:
 
   // we maintain our own window cache so that wm implementations are not required to cache themselves.
   AbstractWindowManager::WindowList m_windows;
+  AbstractWindowManager::WindowPtr m_pasteTarget;
 
   // fetched on first lookup, invalidated on windowsChanged; some backends list workspaces over IPC
   std::optional<AbstractWindowManager::WorkspaceList> m_workspaces;

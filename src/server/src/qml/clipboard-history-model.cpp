@@ -6,7 +6,6 @@
 #include "settings-controller/settings-controller.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "services/paste/paste-service.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "utils/utils.hpp"
 #include <QCoreApplication>
@@ -74,7 +73,6 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
                          }));
   }
 
-  auto pasteService = scope().services()->pasteService();
   auto pin = new PinClipboardAction(entry.id, !entry.pinnedAt);
   auto editKeywords = new EditClipboardKeywordsAction(entry.id);
   auto remove = new RemoveSelectionAction(entry.id);
@@ -89,18 +87,13 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
   if (isCopyable) {
     auto copy = new CopyClipboardSelection(entry.id);
     copy->addShortcut(Keybind::CopyAction);
-
-    if (pasteService->supportsPaste()) {
-      auto paste = new PasteClipboardSelection(entry.id);
-      paste->addShortcut(Keybind::PasteAction);
-      if (m_defaultAction == DefaultAction::Copy) {
-        mainSection->addAction(copy);
-        mainSection->addAction(paste);
-      } else {
-        mainSection->addAction(paste);
-        mainSection->addAction(copy);
-      }
+    auto paste = new PasteClipboardSelection(entry.id);
+    paste->addShortcut(Keybind::PasteAction);
+    if (m_defaultAction == DefaultAction::Copy) {
+      mainSection->addAction(copy);
+      mainSection->addAction(paste);
     } else {
+      mainSection->addAction(paste);
       mainSection->addAction(copy);
     }
   }

@@ -47,6 +47,6 @@ private:
   ImageURL iconForEntry(const ClipboardHistoryEntry &entry) const;
 
   std::vector<ClipboardHistoryEntry> m_entries;
-  DefaultAction m_defaultAction = DefaultAction::Copy;
+  DefaultAction m_defaultAction = DefaultAction::Paste;
   std::function<void(const ClipboardHistoryEntry &)> m_onEntrySelected;
 };

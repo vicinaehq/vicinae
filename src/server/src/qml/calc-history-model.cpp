@@ -28,20 +28,20 @@ std::unique_ptr<ActionPanelState> CalcHistorySection::actionPanel(int i) const {
 
   auto panel = std::make_unique<ListActionPanelState>();
 
+  auto *copySection = panel->createSection();
+  auto *copyAnswer = new CopyToClipboardAction(Clipboard::Text(record.answer), tr("Copy answer"));
+  auto *pasteAnswer = new PasteToFocusedWindowAction(Clipboard::Text(record.answer));
+  addCalculatorPasteCopyActions(copySection, pasteAnswer, copyAnswer);
+  copySection->addAction(new CopyToClipboardAction(Clipboard::Text(record.question), tr("Copy question")));
+  copySection->addAction(
+      new CopyToClipboardAction(Clipboard::Text(record.expression()), tr("Copy question and answer")));
+
   auto *pinSection = panel->createSection();
   if (record.pinnedAt) {
     pinSection->addAction(new UnpinCalculatorHistoryRecordAction(record.id));
   } else {
     pinSection->addAction(new PinCalculatorHistoryRecordAction(record.id));
   }
-
-  auto *copySection = panel->createSection();
-  auto *copyAnswer = new CopyToClipboardAction(Clipboard::Text(record.answer), tr("Copy answer"));
-  copyAnswer->setPrimary(true);
-  copySection->addAction(copyAnswer);
-  copySection->addAction(new CopyToClipboardAction(Clipboard::Text(record.question), tr("Copy question")));
-  copySection->addAction(
-      new CopyToClipboardAction(Clipboard::Text(record.expression()), tr("Copy question and answer")));
 
   auto *dangerSection = panel->createSection();
   dangerSection->addAction(new RemoveCalculatorHistoryRecordAction(record.id));

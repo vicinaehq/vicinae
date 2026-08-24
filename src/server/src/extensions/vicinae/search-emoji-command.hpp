@@ -4,7 +4,6 @@
 #include "qml/emoji-grid-view-host.hpp"
 #include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
-#include "services/paste/paste-service.hpp"
 #include "utils.hpp"
 #include <QCoreApplication>
 
@@ -20,23 +19,12 @@ class SearchEmojiCommand : public BuiltinViewCommand<EmojiGridViewHost> {
 
   std::vector<Preference> preferences() const override {
     using Opt = Preference::DropdownData::Option;
-    auto paste = ServiceRegistry::instance()->pasteService();
     std::vector<Preference> preferences;
-    std::vector<Preference::DropdownData::Option> defaultActionOptions;
-    QString dflt = "copy";
-
-    if (paste->supportsPaste()) {
-      defaultActionOptions.emplace_back(Opt(tr("Paste"), "paste"));
-      dflt = "paste";
-    }
-    defaultActionOptions.emplace_back(Opt(tr("Copy"), "copy"));
-
-    auto defaultAction = Preference::makeDropdown("defaultAction", defaultActionOptions);
-
-    defaultAction.setDefaultValue(dflt);
+    auto defaultAction =
+        Preference::makeDropdown("defaultAction", {Opt(tr("Paste"), "paste"), Opt(tr("Copy"), "copy")});
+    defaultAction.setDefaultValue("paste");
     defaultAction.setTitle(tr("Default Action"));
-    defaultAction.setDescription(tr("The default action to perform on pressing return. Paste is only "
-                                    "available if your environment supports it."));
+    defaultAction.setDescription(tr("The default action to perform on pressing return."));
     preferences.emplace_back(defaultAction);
 
     {
