@@ -1,4 +1,8 @@
 #include "app-service.hpp"
+#include "timer.hpp"
+#include <chrono>
+#include <qlogging.h>
+#include <qnumeric.h>
 #ifdef Q_OS_MACOS
 #include "services/app-service/macos/mac-app-database.hpp"
 #elif defined(Q_OS_WIN)
@@ -167,7 +171,11 @@ bool AppService::scanSync() {
 AppService::AppService(OmniDatabase &db) : m_db(db), m_provider(createLocalProvider()) {
   m_rescanDebounce->setSingleShot(true);
   m_rescanDebounce->setInterval(500);
-  connect(m_rescanDebounce, &QTimer::timeout, this, [this] { scanSync(); });
+  connect(m_rescanDebounce, &QTimer::timeout, this, [this] {
+    qInfo() << "Scanning apps again, following a directory change...";
+    auto elapsed = timer::time([&]() { scanSync(); });
+    qInfo() << "Done scanning apps, took" << elapsed.count() / 1e6 << "ms";
+  });
 
   reinstallWatches(m_provider->searchPaths());
   connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, &AppService::handleDirectoryChanged);
