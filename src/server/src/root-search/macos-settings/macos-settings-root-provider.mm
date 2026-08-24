@@ -165,7 +165,7 @@ MacSettingsRootItem::newActionPanel(ApplicationContext *ctx, const RootItemMetad
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(url), tr("Copy URL")));
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_pane.bundleId), tr("Copy Bundle ID")));
 
-  for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto &action : RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 

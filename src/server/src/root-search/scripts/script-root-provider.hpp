@@ -103,7 +103,8 @@ class ScriptRootItem : public RootItem {
 
     auto itemSection = panel->createSection();
 
-    for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+    for (const auto action :
+         RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
       itemSection->addAction(action);
     }
 
