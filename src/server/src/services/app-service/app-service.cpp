@@ -135,28 +135,22 @@ AppService::findCuratedOpeners(const QString &target) const {
 }
 
 bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
-  auto isDir = [](auto &&path) { return fs::is_directory(path); };
-
+  QStringList current = m_watcher->directories();
   QStringList desired;
+  std::error_code ec{};
 
-  for (const auto &path : paths | std::views::filter(isDir)) {
-    desired.append(QString::fromStdWString(path.wstring()));
+  for (const auto &path : paths) {
+    if (fs::is_directory(path, ec)) { desired.append(QString::fromStdString(path.string())); }
   }
 
   desired.sort();
   desired.removeDuplicates();
-
-  QStringList current = m_watcher->directories();
-
   current.sort();
 
-  // Rebuilding an identical watch set re-triggers directoryChanged, which
-  // schedules another rescan, which lands back here: the loop never settles.
+  // It's important that we don't reinstall the watches if the directories haven't changed.
+  // On some systems it's a no-op, on others like macOS it can trigger a new flood
+  // of events, which can create some performance problems.
   if (current == desired) return true;
-
-  // Qt's macOS backend rebuilds the whole FSEventStream on every
-  // add/removePath and blocks in FSEventStreamFlushSync until fseventsd
-  // answers, so batch instead of paying that once per path.
   if (!current.isEmpty()) m_watcher->removePaths(current);
   if (!desired.isEmpty()) m_watcher->addPaths(desired);
 
