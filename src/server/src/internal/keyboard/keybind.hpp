@@ -16,6 +16,7 @@ enum class Keybind : uint8_t {
   PasteAction,
   NewAction,
   PinAction,
+  FavoriteAction,
   RemoveAction,
   DangerousRemoveAction,
   EditAction,

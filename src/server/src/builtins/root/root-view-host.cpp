@@ -114,6 +114,11 @@ bool RootViewHost::inputFilter(QKeyEvent *event) {
   auto &nav = context()->navigation;
   auto &cfg = context()->services->config()->value();
 
+  if (!event->isAutoRepeat() && event->modifiers() == Qt::ControlModifier && event->key() >= Qt::Key_1 &&
+      event->key() < Qt::Key_1 + RootFavoritesSection::QUICK_OPEN_COUNT) {
+    return m_model->activateFavorite(event->key() - Qt::Key_1);
+  }
+
   if (!(event->modifiers() & ~Qt::ShiftModifier) && event->key() == Qt::Key_Space) {
     return tryAliasFastTrack();
   }
