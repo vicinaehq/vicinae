@@ -4,7 +4,9 @@
 #include <QObject>
 #include <QQmlApplicationEngine>
 #include <QTimer>
+#include <QPoint>
 #include <QRect>
+#include <QVariantList>
 #include <qtmetamacros.h>
 
 class ActionPanelController;
@@ -19,6 +21,7 @@ class PlatformBridge;
 class ThemeBridge;
 class ViewHostBase;
 class QQuickWindow;
+class QScreen;
 class BaseView;
 class DialogContentWidget;
 
@@ -54,6 +57,12 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(int lsLayer READ lsLayer NOTIFY lsChanged)
   Q_PROPERTY(int lsKeyboardInteractivity READ lsKeyboardInteractivity NOTIFY lsChanged)
   Q_PROPERTY(bool canPositionWindow READ canPositionWindow CONSTANT)
+  Q_PROPERTY(bool dragOverlayVisible READ dragOverlayVisible NOTIFY dragOverlayChanged)
+  Q_PROPERTY(QRect dragOverlayGeometry READ dragOverlayGeometry NOTIFY dragOverlayChanged)
+  Q_PROPERTY(QVariantList dragAnchors READ dragAnchors NOTIFY dragOverlayChanged)
+  Q_PROPERTY(QVariantList dragGuideXs READ dragGuideXs NOTIFY dragOverlayChanged)
+  Q_PROPERTY(QVariantList dragGuideYs READ dragGuideYs NOTIFY dragOverlayChanged)
+  Q_PROPERTY(int dragActiveAnchor READ dragActiveAnchor NOTIFY dragActiveAnchorChanged)
 
 public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -99,6 +108,20 @@ public:
   Q_INVOKABLE void setCompleterValue(int index, const QString &value);
   Q_INVOKABLE QRect cursorScreenGeometry() const;
   Q_INVOKABLE void positionOnCursorScreen();
+  Q_INVOKABLE bool restoreWindowPosition();
+  Q_INVOKABLE void prepareShow();
+  Q_INVOKABLE void finalizeShow();
+  Q_INVOKABLE void beginWindowDrag();
+  Q_INVOKABLE void updateWindowDrag();
+  Q_INVOKABLE void endWindowDrag();
+  Q_INVOKABLE void registerDragOverlay(QQuickWindow *window);
+
+  bool dragOverlayVisible() const { return m_dragOverlayVisible; }
+  QRect dragOverlayGeometry() const { return m_dragOverlayGeometry; }
+  QVariantList dragAnchors() const { return m_dragAnchors; }
+  QVariantList dragGuideXs() const { return m_dragGuideXs; }
+  QVariantList dragGuideYs() const { return m_dragGuideYs; }
+  int dragActiveAnchor() const { return m_dragActiveAnchor; }
   Q_INVOKABLE void openFooterMenu();
 
 signals:
@@ -127,6 +150,8 @@ signals:
   void windowSizeOverrideChanged();
   void overlayChanged();
   void lsChanged();
+  void dragOverlayChanged();
+  void dragActiveAnchorChanged();
 
 private:
   bool eventFilter(QObject *obj, QEvent *event) override;
@@ -138,6 +163,10 @@ private:
   void setCompacted(bool value);
   void tryCompaction();
   void applyWindowConfig();
+  void applyShowPlacement();
+  void saveWindowPosition();
+  void computeDragAnchors(QScreen *screen);
+  void updateActiveDragAnchor(QPoint windowPos);
   bool isLayerShellActive() const;
   void setExclusiveFocus(bool exclusive);
   void updateLayerShellProps();
@@ -168,6 +197,17 @@ private:
   bool m_statusBarVisible = true;
   bool m_viewWasPopped = false;
   bool m_viewWasReplaced = false;
+
+  QPoint m_dragOffset;
+  QQuickWindow *m_dragOverlayWindow = nullptr;
+  QScreen *m_dragScreen = nullptr;
+  QList<QPoint> m_dragAnchorTargets;
+  QVariantList m_dragAnchors;
+  QVariantList m_dragGuideXs;
+  QVariantList m_dragGuideYs;
+  QRect m_dragOverlayGeometry;
+  int m_dragActiveAnchor = -1;
+  bool m_dragOverlayVisible = false;
   bool m_pendingLauncherFileChoice = false;
   QString m_searchPlaceholder;
   QUrl m_searchAccessoryUrl;

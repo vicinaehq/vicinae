@@ -3,6 +3,7 @@ import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Effects
+import QtQuick.Shapes
 
 Window {
     id: root
@@ -308,6 +309,79 @@ Window {
         AlertDialog {
             id: alertDialog
         }
+
+        MouseArea {
+            anchors.fill: parent
+            z: 300
+            enabled: launcher.canPositionWindow
+            acceptedButtons: Qt.LeftButton
+            onPressed: mouse => {
+                if (mouse.modifiers & Qt.ControlModifier) {
+                    launcher.beginWindowDrag();
+                } else {
+                    mouse.accepted = false;
+                }
+            }
+            onPositionChanged: launcher.updateWindowDrag()
+            onReleased: launcher.endWindowDrag()
+            onCanceled: launcher.endWindowDrag()
+        }
+    }
+
+    Window {
+        id: anchorOverlay
+        visible: launcher.dragOverlayVisible
+        x: launcher.dragOverlayGeometry.x
+        y: launcher.dragOverlayGeometry.y
+        width: launcher.dragOverlayGeometry.width
+        height: launcher.dragOverlayGeometry.height
+        flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus
+        color: "transparent"
+
+        Component.onCompleted: launcher.registerDragOverlay(anchorOverlay)
+
+        readonly property var activeAnchor: launcher.dragActiveAnchor >= 0 ? launcher.dragAnchors[launcher.dragActiveAnchor] : null
+
+        component GuideLine: Shape {
+            property bool active: false
+            property bool vertical: false
+
+            ShapePath {
+                strokeStyle: ShapePath.DashLine
+                dashPattern: [3, 3]
+                strokeWidth: 2
+                strokeColor: active ? Theme.accent : Config.withAlpha(Theme.foreground, 0.45)
+                fillColor: "transparent"
+                startX: 0
+                startY: 0
+
+                PathLine {
+                    x: vertical ? 0 : anchorOverlay.width
+                    y: vertical ? anchorOverlay.height : 0
+                }
+            }
+        }
+
+        Repeater {
+            model: launcher.dragGuideXs
+
+            GuideLine {
+                required property var modelData
+                x: modelData
+                vertical: true
+                active: anchorOverlay.activeAnchor !== null && anchorOverlay.activeAnchor.x === modelData
+            }
+        }
+
+        Repeater {
+            model: launcher.dragGuideYs
+
+            GuideLine {
+                required property var modelData
+                y: modelData
+                active: anchorOverlay.activeAnchor !== null && anchorOverlay.activeAnchor.y === modelData
+            }
+        }
     }
 
     Connections {
@@ -352,7 +426,7 @@ Window {
         function onWindowVisiblityChanged(visible) {
             if (visible) {
                 root.aboutToShow();
-                if (root.autoPlaceOnShow)
+                if (root.autoPlaceOnShow && !launcher.restoreWindowPosition())
                     launcher.positionOnCursorScreen();
                 root.visible = true;
                 root.raise();
