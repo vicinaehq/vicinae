@@ -358,6 +358,10 @@ Item {
                 searchInput.forceActiveFocus();
             }
         }
+        function onCompleterFocusRequested() {
+            if (launcher.hasCompleter)
+                argCompleter.focusFirst();
+        }
         function onCompleterValidationFailed() {
             argCompleter.validate();
         }

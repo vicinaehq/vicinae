@@ -15,6 +15,10 @@ RowLayout {
 
     spacing: 4
 
+    function focusFirst() {
+        argRepeater.itemAt(0)?.item?.forceActiveFocus();
+    }
+
     function validate() {
         var firstRequired = -1;
         for (var i = 0; i < argRepeater.count; i++) {

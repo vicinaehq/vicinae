@@ -1,9 +1,11 @@
 #include "root-view-host.hpp"
+#include "lib/figura/src/utils.hpp"
 #include "root-search-model.hpp"
 #include "section-source.hpp"
 #include "service-registry.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "view-scope.hpp"
+#include <algorithm>
 #include <qevent.h>
 
 void RootViewHost::initialize() {
@@ -74,16 +76,36 @@ void RootViewHost::beforeActionExecuted(const AbstractAction *action) {
 bool RootViewHost::tryAliasFastTrack() {
   const auto manager = context()->services->rootItemManager();
   const auto item = m_model->selectedRootItem();
+  auto &nav = context()->navigation;
 
-  if (!item || !item->supportsAliasSpaceShortcut()) return false;
+  if (!item) return false;
 
   const auto query = context()->navigation->searchText(this).toStdString();
   const auto meta = manager->itemMetadata(item->uniqueId());
 
-  if (!meta.alias || !meta.alias->starts_with(query)) return false;
+  if (!meta.alias || meta.alias != toLower(query)) return false;
 
-  m_model->activateSelected();
-  return true;
+  // if the command has a completer, we focus the first input instead of activating
+  if (nav->hasCompleter()) {
+    // FIXME: we need to make sure we are not eating space if we are in the completer,
+    // since completer input is routed through the same path as launcher input.
+    // We should probably architecture this in a better way
+    const auto isEmpty =
+        std::ranges::all_of(nav->completionValues(), [](auto &&pair) { return pair.second.isEmpty(); });
+    if (isEmpty) {
+      nav->requestCompleterFocus();
+      return true;
+    }
+    return false;
+  }
+
+  // no-view command cannot use fast track
+  if (item->supportsAliasSpaceShortcut()) {
+    m_model->activateSelected();
+    return true;
+  }
+
+  return false;
 }
 
 bool RootViewHost::inputFilter(QKeyEvent *event) {
