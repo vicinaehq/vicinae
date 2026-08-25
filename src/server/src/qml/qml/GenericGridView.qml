@@ -4,10 +4,10 @@ import QtQuick.Controls
 Item {
     id: root
 
-    readonly property real _bottomInset: _statusBarInset.value
+    readonly property real _bottomInset: statusBarInset.value
 
     StatusBarInset {
-        id: _statusBarInset
+        id: statusBarInset
     }
 
     // The backing model — must be a QAbstractListModel with roles:
@@ -82,12 +82,12 @@ Item {
 
     // Hidden TextMetrics to measure actual line heights from the font
     TextMetrics {
-        id: _titleMetrics
+        id: titleMetrics
         font.pointSize: Theme.smallerFontSize
         text: "Ag"
     }
     TextMetrics {
-        id: _subtitleMetrics
+        id: subtitleMetrics
         font.pointSize: Theme.smallerFontSize - 1
         text: "Ag"
     }
@@ -98,9 +98,9 @@ Item {
             return 0;
         var h = _textGap;
         if (showCellTitle)
-            h += _titleMetrics.height;
+            h += titleMetrics.height;
         if (showCellSubtitle)
-            h += _subtitleMetrics.height;
+            h += subtitleMetrics.height;
         return h;
     }
     readonly property real rowHeight: cellSize + cellTextHeight
@@ -262,9 +262,9 @@ Item {
                             return 0;
                         var h = root._textGap;
                         if (rowHasTitle)
-                            h += _titleMetrics.height;
+                            h += titleMetrics.height;
                         if (rowHasSubtitle)
-                            h += _subtitleMetrics.height;
+                            h += subtitleMetrics.height;
                         return h;
                     }
 
@@ -346,13 +346,13 @@ Item {
                                     visible: rowItem.rowHasTitle
                                     y: rowItem.cellHeight + root._textGap
                                     width: rowItem.cellWidth
-                                    height: _titleMetrics.height
+                                    height: titleMetrics.height
                                     text: {
                                         var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
                                         return (root.cmdModel && typeof root.cmdModel.cellTitle === "function") ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
                                     }
                                     color: Theme.textMuted
-                                    font: _titleMetrics.font
+                                    font: titleMetrics.font
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
                                     horizontalAlignment: Text.AlignHCenter
@@ -360,15 +360,15 @@ Item {
 
                                 Text {
                                     visible: rowItem.rowHasSubtitle
-                                    y: rowItem.cellHeight + root._textGap + (rowItem.rowHasTitle ? _titleMetrics.height + root._textGap : 0)
+                                    y: rowItem.cellHeight + root._textGap + (rowItem.rowHasTitle ? titleMetrics.height + root._textGap : 0)
                                     width: rowItem.cellWidth
-                                    height: _subtitleMetrics.height
+                                    height: subtitleMetrics.height
                                     text: {
                                         var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
                                         return (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function") ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
                                     }
                                     color: Theme.textMuted
-                                    font: _subtitleMetrics.font
+                                    font: subtitleMetrics.font
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
                                     horizontalAlignment: Text.AlignHCenter

@@ -200,7 +200,7 @@ public:
 struct RootItemMetadata {
   int visitCount = 0;
   bool enabled = true;
-  bool favorite = false;
+  std::optional<std::size_t> favoriteIdx;
   bool fallback = false;
   std::optional<std::uint64_t> lastVisitedAt;
   std::optional<std::string> alias;
@@ -216,6 +216,7 @@ signals:
   void itemsChanged() const;
   void itemRankingReset(const EntrypointId &id) const;
   void itemFavoriteChanged(const EntrypointId &id, bool favorite) const;
+  void favoriteOrderChanged(const EntrypointId &id) const;
   void fallbackEnabled(const EntrypointId &id) const;
   void fallbackOrderChanged(const EntrypointId &id) const;
   void fallbackDisabled(const EntrypointId &id) const;
@@ -295,14 +296,16 @@ public:
   bool moveFallbackUp(const EntrypointId &id);
   bool enableFallback(const EntrypointId &id);
   std::vector<std::shared_ptr<RootItem>> queryFavorites(std::optional<int> limit = {});
+  bool moveFavoriteDown(const EntrypointId &id);
+  bool moveFavoriteUp(const EntrypointId &id);
   bool resetRanking(const EntrypointId &id);
   bool registerVisit(const EntrypointId &id);
   SearchHistory &searchHistory() { return m_searchHistory; }
   bool setItemAsFavorite(const EntrypointId &item, bool value = true);
   bool setProviderEnabled(const QString &providerId, bool value);
   bool disableItem(const EntrypointId &id);
-
   bool enableItem(const EntrypointId &id);
+  std::size_t favoriteCount() const;
 
   std::vector<RootProvider *> providers() const;
   std::vector<ExtensionRootProvider *> extensions() const;

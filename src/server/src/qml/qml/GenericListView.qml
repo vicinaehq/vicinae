@@ -5,10 +5,10 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    readonly property real _bottomInset: _statusBarInset.value
+    readonly property real _bottomInset: statusBarInset.value
 
     StatusBarInset {
-        id: _statusBarInset
+        id: statusBarInset
     }
 
     // The backing model — must have Q_INVOKABLE nextSelectableIndex(int, int)

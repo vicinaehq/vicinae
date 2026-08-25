@@ -1,3 +1,4 @@
+#include <iterator>
 #include <qjsonvalue.h>
 #include <ranges>
 #include <algorithm>
@@ -26,6 +27,8 @@ RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &stor
 std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
   return getFromSerializedEntrypointIds(m_cfg.value().fallbacks);
 }
+
+std::size_t RootItemManager::favoriteCount() const { return m_cfg.value().favorites.size(); }
 
 bool RootItemManager::moveFallbackDown(const EntrypointId &id) {
   auto fbs = m_cfg.value().fallbacks;
@@ -169,7 +172,7 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
   for (auto &item : m_items) {
     if (!item.meta->enabled && !opts.includeDisabled) continue;
     if (opts.providerId && opts.providerId != item.meta->providerId) continue;
-    if (item.meta->favorite && !opts.includeFavorites) continue;
+    if (item.meta->favoriteIdx.has_value() && !opts.includeFavorites) continue;
     double const fuzzyScore = item.fuzzyScore(fuzzyQuery);
 
     if (!fuzzyScore) { continue; }
@@ -220,7 +223,7 @@ RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPre
 
   for (auto &item : m_items) {
     if (!item.meta->enabled && !opts.includeDisabled) continue;
-    if (item.meta->favorite && !opts.includeFavorites) continue;
+    if (item.meta->favoriteIdx.has_value() && !opts.includeFavorites) continue;
 
     const auto &providerId = item.meta->providerId;
     if (!providerById.contains(providerId)) continue;
@@ -489,6 +492,32 @@ bool RootItemManager::setItemAsFavorite(const EntrypointId &itemId, bool value) 
   return true;
 }
 
+bool RootItemManager::moveFavoriteDown(const EntrypointId &id) {
+  auto favorites = m_cfg.value().favorites;
+  auto it = std::ranges::find(favorites, std::string{id});
+
+  if (it == favorites.end() || it + 1 == favorites.end()) return false;
+
+  std::iter_swap(it, it + 1);
+  m_cfg.mergeWithUser({.favorites = favorites});
+  emit favoriteOrderChanged(id);
+
+  return true;
+}
+
+bool RootItemManager::moveFavoriteUp(const EntrypointId &id) {
+  auto favorites = m_cfg.value().favorites;
+  auto it = std::ranges::find(favorites, std::string{id});
+
+  if (it == favorites.end() || it == favorites.begin()) return false;
+
+  std::iter_swap(it, it - 1);
+  m_cfg.mergeWithUser({.favorites = favorites});
+  emit favoriteOrderChanged(id);
+
+  return true;
+}
+
 std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(std::optional<int> limit) {
   return getFromSerializedEntrypointIds(m_cfg.value().favorites);
 }
@@ -620,7 +649,6 @@ RootItemManager::getFromSerializedEntrypointIds(std::span<const std::string> ids
 }
 
 void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
-  auto favoriteSet = cfg.favorites | std::ranges::to<std::unordered_set>();
   auto fallbackSet = cfg.fallbacks | std::ranges::to<std::unordered_set>();
 
   for (const SearchableRootItem &item : m_items) {
@@ -643,7 +671,11 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
 
     meta.providerId = entrypointId.provider;
     meta.enabled = !item.item->isDefaultDisabled();
-    meta.favorite = favoriteSet.contains(entrypointId);
+
+    if (auto it = std::ranges::find(cfg.favorites, std::string{entrypointId}); it != cfg.favorites.end()) {
+      meta.favoriteIdx = std::distance(cfg.favorites.begin(), it);
+    }
+
     meta.fallback = fallbackSet.contains(entrypointId);
 
     if (itemConfig) {

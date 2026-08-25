@@ -83,6 +83,7 @@ private:
   void rebuildCustomRoleDefaults();
   int quickAccessRow(int shortcutIndex) const;
   int quickAccessIndexForRow(int row) const;
+  int indexOfItemId(const QString &id) const;
 
   static constexpr int QUICK_ACCESS_COUNT = 10;
 
