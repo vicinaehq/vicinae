@@ -1,18 +1,19 @@
 name: API Publish
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+    secrets:
+      NPM_TOKEN:
+        required: true
   workflow_dispatch:
     inputs:
       tag:
         description: 'Release tag (e.g. v1.2.3)'
-        required: false
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+        required: true
 
 jobs:
   publish:
@@ -22,6 +23,8 @@ jobs:
         working-directory: ./src/typescript/api
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,11 +34,7 @@ jobs:
 
       - name: Set version from tag
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG_NAME=${{ github.event.inputs.tag }}
-          else
-            TAG_NAME=${GITHUB_REF_NAME}
-          fi
+          TAG_NAME="${{ inputs.tag }}"
 
           if [ -z "$TAG_NAME" ]; then
             echo "Error: No tag specified."

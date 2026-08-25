@@ -19,7 +19,7 @@ jobs:
     runs-on: depot-ubuntu-24.04-16
     container: registry.depot.dev/dwd5s9sq7d:arch-latest
     permissions:
-      contents: write
+      contents: read
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
       commit: ${{ steps.commit.outputs.commit }}
@@ -98,15 +98,14 @@ jobs:
         run: |
           tar -czvf "${{ steps.meta.outputs.artifact }}" -C "${INSTALL_DIR}" .
 
-      - name: Create draft GitHub Release and upload asset
-        uses: softprops/action-gh-release@v2
+      - name: Upload binary as workflow artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ steps.meta.outputs.tag }}
-          name: ${{ steps.meta.outputs.tag }}
-          draft: true
-          generate_release_notes: true
-          files: |
-            ${{ steps.meta.outputs.artifact }}
+          name: vicinae-linux-x86_64
+          path: ${{ steps.meta.outputs.artifact }}
+          retention-days: 7
+          if-no-files-found: error
+          overwrite: true
 
 
   build-appimage:
@@ -114,7 +113,7 @@ jobs:
     runs-on: ${{ matrix.target.runner }}
     container: registry.depot.dev/dwd5s9sq7d:${{ matrix.target.tag }}
     permissions:
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -167,38 +166,50 @@ jobs:
           chmod +x ./scripts/mkappimage.sh
           ./scripts/mkappimage.sh "${INSTALL_DIR}" "${APP_DIR}"
 
-      - name: Upload AppImage to GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload AppImage as workflow artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ needs.build-binary.outputs.tag }}
-          name: ${{ needs.build-binary.outputs.tag }}
-          files: |
-            *.AppImage
+          name: vicinae-appimage-${{ matrix.target.arch }}
+          path: "*.AppImage"
+          retention-days: 7
+          if-no-files-found: error
+          overwrite: true
 
   build-macos-dmg:
     needs: build-binary
-    permissions:
-      contents: write
     uses: ./.github/workflows/macos-dmg.yaml
     secrets: inherit
     with:
       tag: ${{ needs.build-binary.outputs.tag }}
       commit: ${{ needs.build-binary.outputs.commit }}
-      upload-to-release: true
+
+  publish-npm:
+    needs: [build-binary, build-appimage, build-macos-dmg]
+    uses: ./.github/workflows/api-release.yml
+    secrets: inherit
+    with:
+      tag: ${{ needs.build-binary.outputs.tag }}
 
   publish-release:
-    needs: [build-binary, build-appimage, build-macos-dmg]
+    needs: [build-binary, build-appimage, build-macos-dmg, publish-npm]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Publish release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release edit "${{ needs.build-binary.outputs.tag }}" \
-            --repo "${{ github.repository }}" \
-            --draft=false --latest
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build-binary.outputs.tag }}
+          name: ${{ needs.build-binary.outputs.tag }}
+          generate_release_notes: true
+          make_latest: true
+          files: dist/*
 
   trigger-packaging:
     needs: publish-release
