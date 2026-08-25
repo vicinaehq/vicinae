@@ -78,7 +78,7 @@
     <message>
         <location line="+1" />
         <source>Include IME Preedit strings as part of search queries.</source>
-        <translation>Включать строки прередуктирования IME в поисковые запросы.</translation>
+        <translation>Включать строки предварительного ввода (preedit) IME в поисковые запросы.</translation>
     </message>
     <message>
         <location line="+8" />
@@ -4983,7 +4983,7 @@ Vicinae also has its own [extension store](vicinae://launch/core/store).
     <message>
         <location line="+1" />
         <source>Delay between injected key events. Increase if expansions produce missing or garbled characters on slow compositors.</source>
-        <translation>Задержка между вводимыми нажатиями клавиш. Увеличьте, если на медленных композиторах в расширении теряются или искажаются символы.</translation>
+        <translation>Задержка между вводимыми нажатиями клавиш. Увеличьте, если на медленных композиторах при раскрытии теряются или искажаются символы.</translation>
     </message>
     <message>
         <location filename="../src/extensions/snippet/snippet-extension.hpp" line="+11" />

@@ -78,7 +78,7 @@
     <message>
         <location line="+1" />
         <source>Include IME Preedit strings as part of search queries.</source>
-        <translation>Включати рядки прередукування IME в пошукові запити.</translation>
+        <translation>Включати рядки попереднього введення (preedit) IME в пошукові запити.</translation>
     </message>
     <message>
         <location line="+8" />
@@ -241,7 +241,7 @@
     <message>
         <location line="+0" />
         <source>No</source>
-        <translation>Немає</translation>
+        <translation>Ні</translation>
     </message>
     <message>
         <location line="+20" />
@@ -1221,7 +1221,7 @@
     <message>
         <location line="+5" />
         <source>Copy to clipboard</source>
-        <translation>Назва розширення</translation>
+        <translation>Копіювати в буфер обміну</translation>
     </message>
 </context>
 <context>
@@ -1229,7 +1229,7 @@
     <message>
         <location filename="../src/extensions/developer/developer-extension.hpp" line="+10" />
         <source>Create Extension</source>
-        <translation>Моє розширення</translation>
+        <translation>Створити розширення</translation>
     </message>
 </context>
 <context>
@@ -1237,17 +1237,17 @@
     <message>
         <location filename="../src/qml/qml/CreateExtensionFormView.qml" line="+15" />
         <source>Author</source>
-        <translation>Опис</translation>
+        <translation>Автор</translation>
     </message>
     <message>
         <location line="+2" />
         <source>If you plan on submitting your extension to the &lt;a href="vicinae://launch/core/store"&gt;Vicinae store&lt;/a&gt;, this must exactly match your GitHub handle. Otherwise, you can set it to anything.</source>
-        <translation>Розширення, яке робить супер круті речі</translation>
+        <translation>Якщо ви плануєте надіслати своє розширення до &lt;a href="vicinae://launch/core/store"&gt;магазину Vicinae&lt;/a&gt;, це значення має точно збігатися з вашим іменем користувача на GitHub. Інакше можна вказати будь-що.</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Username</source>
-        <translation>Розташування</translation>
+        <translation>Ім'я користувача</translation>
     </message>
     <message>
         <location line="+10" />
@@ -1863,7 +1863,7 @@ Find the full stacktrace below. You can also directly copy it from the action me
     <message>
         <location filename="../src/actions/wm/window-actions.hpp" line="-17" />
         <source>Focus window</source>
-        <translation>Звернути вікно</translation>
+        <translation>Сфокусувати вікно</translation>
     </message>
 </context>
 <context>
@@ -1946,7 +1946,7 @@ Find the full stacktrace below. You can also directly copy it from the action me
     <message>
         <location line="+4" />
         <source>Past telemetry was successfully detached from your vicinae user ID.</source>
-        <translation>Останній телеметрія успішно від'єднано від вашого ідентифікатора vicinae.</translation>
+        <translation>Попередню телеметрію успішно від'єднано від вашого ідентифікатора vicinae.</translation>
     </message>
     <message>
         <location line="+2" />
@@ -2189,7 +2189,7 @@ Find the full stacktrace below. You can also directly copy it from the action me
     <message>
         <location filename="../src/extensions/power-management/power-management-extension.cpp" line="+127" />
         <source>Hibernate System</source>
-        <translation>Перевести систему в режим сну</translation>
+        <translation>Перевести систему в гібернацію</translation>
     </message>
     <message>
         <location line="+2" />
@@ -2199,12 +2199,12 @@ Find the full stacktrace below. You can also directly copy it from the action me
     <message>
         <location line="+14" />
         <source>System can't hibernate</source>
-        <translation>Система не може перейти в режим сну</translation>
+        <translation>Система не може перейти в гібернацію</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Failed to hibernate</source>
-        <translation>Не вдалося перейти в режим сну</translation>
+        <translation>Не вдалося виконати гібернацію</translation>
     </message>
 </context>
 <context>
@@ -2259,7 +2259,7 @@ Find the full stacktrace below. You can also directly copy it from the action me
     <message>
         <location filename="../src/qml/installed-extensions-model.hpp" line="+18" />
         <source>Installed Extensions ({count})</source>
-        <translation>{count}</translation>
+        <translation>Встановлені розширення ({count})</translation>
     </message>
     <message>
         <location filename="../src/qml/installed-extensions-model.cpp" line="+38" />
@@ -2322,7 +2322,7 @@ Find the full stacktrace below. You can also directly copy it from the action me
     <message>
         <location filename="../src/qml/qml/LauncherWindow.qml" line="+32" />
         <source>Vicinae Launcher</source>
-        <translation>Запустіть Vicinae</translation>
+        <translation>Лаунчер Vicinae</translation>
     </message>
     <message>
         <location filename="../src/qml/launcher-window.cpp" line="+640" />
@@ -2446,7 +2446,7 @@ Find the full stacktrace below. You can also directly copy it from the action me
     <message>
         <location line="+4" />
         <source>Failed to log out</source>
-        <translation>Не вдалося завершити запуск</translation>
+        <translation>Не вдалося вийти</translation>
     </message>
 </context>
 <context>
@@ -2618,7 +2618,7 @@ Find the full stacktrace below. You can also directly copy it from the action me
     <message>
         <location filename="../src/qml/manage-shortcuts-model.hpp" line="+17" />
         <source>Shortcuts ({count})</source>
-        <translation>{count}</translation>
+        <translation>Ярлики ({count})</translation>
     </message>
 </context>
 <context>
@@ -2677,7 +2677,7 @@ Find the full stacktrace below. You can also directly copy it from the action me
     <message>
         <location filename="../src/qml/manage-snippets-model.hpp" line="+18" />
         <source>Snippets ({count})</source>
-        <translation>{count}</translation>
+        <translation>Сніпети ({count})</translation>
     </message>
     <message>
         <location filename="../src/qml/manage-snippets-model.cpp" line="+33" />
@@ -2786,7 +2786,7 @@ Find the full stacktrace below. You can also directly copy it from the action me
     <message>
         <location filename="../src/extensions/internal/markdown-showcase-command.hpp" line="+172" />
         <source>Markdown Showcase</source>
-        <translation>Магазин Markdown</translation>
+        <translation>Вітрина Markdown</translation>
     </message>
     <message>
         <location line="+1" />
@@ -2946,7 +2946,7 @@ Back to command in an instant...</source>
     <message>
         <location filename="../src/qml/oauth-token-store-model.hpp" line="+17" />
         <source>OAuth Token Sets ({count})</source>
-        <translation>{count}</translation>
+        <translation>Набори OAuth-токенів ({count})</translation>
     </message>
     <message>
         <location filename="../src/qml/oauth-token-store-model.cpp" line="+20" />
@@ -2976,7 +2976,7 @@ Back to command in an instant...</source>
     <message>
         <location line="+3" />
         <source>Token set removed</source>
-        <translation>Набір токенів, видалених</translation>
+        <translation>Набір токенів видалено</translation>
     </message>
     <message>
         <location line="+7" />
@@ -3454,7 +3454,7 @@ Back to command in an instant...</source>
     <message>
         <location line="+0" />
         <source>Selection unpinned</source>
-        <translation>Закріплено</translation>
+        <translation>Відкріплено</translation>
     </message>
     <message>
         <location line="+2" />
@@ -3598,7 +3598,7 @@ Back to command in an instant...</source>
     <message>
         <location filename="../src/qml/provider-search-model.hpp" line="+11" />
         <source>Results ({count})</source>
-        <translation>{count}</translation>
+        <translation>Результати ({count})</translation>
     </message>
 </context>
 <context>
@@ -3657,7 +3657,7 @@ Back to command in an instant...</source>
     <message>
         <location line="+2" />
         <source>just now</source>
-        <translation>Встановити сумісні розширення з магазину Raycast</translation>
+        <translation>щойно</translation>
     </message>
 </context>
 <context>
@@ -3665,7 +3665,7 @@ Back to command in an instant...</source>
     <message>
         <location filename="../src/actions/app/app-actions.cpp" line="-43" />
         <source>Quit Application</source>
-        <translation>Завжди показувати вступ</translation>
+        <translation>Завершити програму</translation>
     </message>
     <message>
         <location line="+8" />
@@ -3683,7 +3683,7 @@ Back to command in an instant...</source>
     <message>
         <location filename="../src/extensions/raycast/raycast-compat-extension.hpp" line="+15" />
         <source>Raycast compatibility features</source>
-        <translation>У Vicinae також є власний [магазин розширень](vicinae://launch/core/store).</translation>
+        <translation>Функції сумісності з Raycast</translation>
     </message>
 </context>
 <context>
@@ -4204,7 +4204,7 @@ Vicinae also has its own [extension store](vicinae://launch/core/store).
         <location filename="../src/root-search/shortcuts/shortcut-root-provider.cpp" line="+69" />
         <location line="+11" />
         <source>Shortcut</source>
-        <translation>Запустіть</translation>
+        <translation>Ярлик</translation>
     </message>
 </context>
 <context>
@@ -4567,7 +4567,7 @@ Vicinae also has its own [extension store](vicinae://launch/core/store).
     <message>
         <location line="+1" />
         <source>Set system volume to %1%</source>
-        <translation>Встановлює гучність системи на %1</translation>
+        <translation>Встановлює гучність системи на %1%</translation>
     </message>
     <message>
         <location line="+9" />
@@ -4708,7 +4708,7 @@ Vicinae also has its own [extension store](vicinae://launch/core/store).
     <message>
         <location line="+9" />
         <source>The URL that will be opened by the specified app. You can make it dynamic by using placeholders such as {argument}.</source>
-        <translation>{argument}</translation>
+        <translation>URL, який буде відкрито вказаним додатком. Ви можете зробити його динамічним за допомогою плейсхолдерів, наприклад {argument}.</translation>
     </message>
     <message>
         <location line="+22" />
@@ -4912,7 +4912,7 @@ Vicinae also has its own [extension store](vicinae://launch/core/store).
     <message>
         <location filename="../src/extensions/snippet/snippet-extension.cpp" line="+38" />
         <source>Expansion</source>
-        <translation>Відкрити</translation>
+        <translation>Розкриття</translation>
     </message>
     <message>
         <location line="+1" />
@@ -5063,7 +5063,7 @@ Vicinae also has its own [extension store](vicinae://launch/core/store).
     <message>
         <location line="+7" />
         <source>Only one {cursor} placeholder is allowed</source>
-        <translation>{cursor}</translation>
+        <translation>Дозволено лише один плейсхолдер {cursor}</translation>
     </message>
     <message>
         <location line="+14" />
@@ -5111,22 +5111,22 @@ Vicinae also has its own [extension store](vicinae://launch/core/store).
     <message>
         <location filename="../src/extensions/power-management/power-management-extension.cpp" line="-99" />
         <source>Soft Reboot System</source>
-        <translation>М'яка перезавантаження системи</translation>
+        <translation>М'яке перезавантаження системи</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Soft reboot the system, which usually means only userspace is rebooted.</source>
-        <translation>М'яка перезавантаження системи, зазвичай означає перезапуск лише користувацького простору.</translation>
+        <translation>М'яке перезавантаження системи, зазвичай означає перезапуск лише користувацького простору.</translation>
     </message>
     <message>
         <location line="+13" />
         <source>System can't soft reboot</source>
-        <translation>Система не може виконати м'яку перезавантаження</translation>
+        <translation>Система не може виконати м'яке перезавантаження</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Failed to soft reboot</source>
-        <translation>Не вдалося виконати м'яку перезавантаження</translation>
+        <translation>Не вдалося виконати м'яке перезавантаження</translation>
     </message>
 </context>
 <context>
@@ -5682,12 +5682,19 @@ Every extension listed here has its source code available in the [vicinaehq/exte
 
 If you're looking to build your own extension, take a look at the [documentation](https://docs.vicinae.com/extensions/introduction). If you think your extension would be a good fit for the store, feel free to submit it!
 </source>
-        <translation>Розширення «%1» не знайдено в магазині.</translation>
+        <translation># Ласкаво просимо до магазину розширень vicinae
+
+У магазині розширень vicinae представлені розширення від спільноти, схвалені нашими ключовими учасниками.
+
+Вихідний код кожного розширення доступний у репозиторії [vicinaehq/extensions](https://github.com/vicinaehq/extensions).
+
+Якщо ви хочете створити власне розширення, ознайомтеся з [документацією](https://docs.vicinae.com/extensions/introduction). Якщо вважаєте, що ваше розширення підійде для магазину, сміливо надсилайте його!
+</translation>
     </message>
     <message>
         <location line="+13" />
         <source>Continue to store</source>
-        <translation>Магазин розширень - %1</translation>
+        <translation>Перейти до магазину</translation>
     </message>
 </context>
 <context>
@@ -5695,17 +5702,17 @@ If you're looking to build your own extension, take a look at the [documentation
     <message>
         <location filename="../src/qml/vicinae-store-detail-host.cpp" line="+38" />
         <source>Failed to load extension</source>
-        <translation>Магазин розширень</translation>
+        <translation>Не вдалося завантажити розширення</translation>
     </message>
     <message>
         <location line="+0" />
         <source>Could not fetch extension data from the store.</source>
-        <translation>Встановити розширення</translation>
+        <translation>Не вдалося отримати дані розширення з магазину.</translation>
     </message>
     <message>
         <location line="+11" />
         <source>Extension not found</source>
-        <translation>Завантаження розширення...</translation>
+        <translation>Розширення не знайдено</translation>
     </message>
     <message>
         <location line="+0" />
@@ -6461,7 +6468,7 @@ If you're looking to build your own extension, take a look at the [documentation
     <message>
         <location line="-2" />
         <source>Update History</source>
-        <translation>Журнал оновлено</translation>
+        <translation>Журнал оновлень</translation>
     </message>
     <message>
         <location line="+1" />
@@ -6533,7 +6540,7 @@ If you're looking to build your own extension, take a look at the [documentation
     <message>
         <location filename="../src/services/app-service/windows/win-app-database.cpp" line="+993" />
         <source>Focus window</source>
-        <translation>Звернути вікно</translation>
+        <translation>Сфокусувати вікно</translation>
     </message>
     <message>
         <location line="+0" />
@@ -6623,7 +6630,7 @@ If you're looking to build your own extension, take a look at the [documentation
     <message>
         <location filename="../src/services/app-service/xdg/xdg-app-database.cpp" line="+585" />
         <source>Focus window</source>
-        <translation>Звернути вікно</translation>
+        <translation>Сфокусувати вікно</translation>
     </message>
     <message>
         <location line="+0" />
@@ -7285,7 +7292,7 @@ If you're looking to build your own extension, take a look at the [documentation
     <message>
         <location filename="../src/extensions/system/system-extension.hpp" line="-34" />
         <source>Volume %1%</source>
-        <translation>Гучність %1</translation>
+        <translation>Гучність %1%</translation>
     </message>
 </context>
 <context>
