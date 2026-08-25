@@ -404,10 +404,12 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
 
   // only works on some compositors.
   // we could probably make it work everywhere layer shell is supported by adding a layer behind ours.
-  else if (event->type() == QEvent::MouseMove && m_closeOnFocusLoss && !m_dragOverlayVisible) {
+  else if (event->type() == QEvent::MouseMove && m_closeOnFocusLoss) {
     auto *me = static_cast<QMouseEvent *>(event); // NOLINT
     QRect const contentRect(0, 0, m_window->width(), m_window->height());
-    if (!contentRect.contains(me->position().toPoint())) { m_ctx.navigation->closeWindow(); }
+    if (me->buttons() == Qt::NoButton && !contentRect.contains(me->position().toPoint())) {
+      m_ctx.navigation->closeWindow();
+    }
   }
 
   return QObject::eventFilter(obj, event);
