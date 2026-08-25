@@ -829,6 +829,8 @@ if (UNIX AND NOT APPLE)
 		src/services/app-service/xdg/xdg-app-database.hpp
 		src/services/app-service/xdg/xdg-app-database.cpp
 		src/services/app-service/xdg/xdg-app.cpp
+		src/root-search/kde-settings/kde-settings-root-provider.hpp
+		src/root-search/kde-settings/kde-settings-root-provider.cpp
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 		src/services/power-manager/systemd/systemd-power-manager.cpp
