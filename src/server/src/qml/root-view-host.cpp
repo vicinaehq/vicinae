@@ -87,14 +87,11 @@ bool RootViewHost::tryAliasFastTrack() {
 }
 
 bool RootViewHost::inputFilter(QKeyEvent *event) {
+  if (ViewHostBase::inputFilter(event)) return true;
+
   auto manager = context()->services->rootItemManager();
   auto &nav = context()->navigation;
   auto &cfg = context()->services->config()->value();
-
-  if (!event->isAutoRepeat() && event->modifiers() == Qt::ControlModifier && event->key() >= Qt::Key_1 &&
-      event->key() < Qt::Key_1 + RootFavoritesSection::QUICK_OPEN_COUNT) {
-    return m_model->activateFavorite(event->key() - Qt::Key_1);
-  }
 
   if (!event->modifiers() && event->key() == Qt::Key_Space) { return tryAliasFastTrack(); }
 
@@ -149,3 +146,5 @@ void RootViewHost::beforePop() {
 }
 
 QObject *RootViewHost::listModel() const { return m_model; }
+
+SectionListModel *RootViewHost::quickAccessModel() { return m_model; }

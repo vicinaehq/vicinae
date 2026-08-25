@@ -32,6 +32,7 @@ Item {
             required property int index
             required property bool isSection
             required property bool isSelectable
+            required property int quickAccessIndex
             required property string sectionName
             required property string title
             required property string subtitle
@@ -58,6 +59,7 @@ Item {
                     id: itemDelegate
                     width: delegateLoader.width
                     height: 50
+                    quickAccessIndex: delegateLoader.quickAccessIndex
                     selected: listView.currentIndex === delegateLoader.index
                     onClicked: listView.currentIndex = delegateLoader.index
                     onActivated: listView.itemActivated(delegateLoader.index)
@@ -109,36 +111,49 @@ Item {
                             }
                         }
 
-                        ViciImage {
-                            visible: delegateLoader.isInstalled
-                            Layout.preferredWidth: 20
-                            Layout.preferredHeight: 20
-                            Layout.alignment: Qt.AlignVCenter
-                            source: Img.builtin("check-circle").withFillColor(Theme.toastSuccess)
-                        }
-
                         RowLayout {
-                            spacing: 4
+                            spacing: 15
                             Layout.alignment: Qt.AlignVCenter
+                            opacity: itemDelegate.quickAccessActive ? 0 : 1
 
                             ViciImage {
-                                Layout.preferredWidth: 14
-                                Layout.preferredHeight: 14
-                                source: Img.builtin("arrow-down-circle").withFillColor(Theme.textMuted)
+                                visible: delegateLoader.isInstalled
+                                Layout.preferredWidth: 20
+                                Layout.preferredHeight: 20
+                                Layout.alignment: Qt.AlignVCenter
+                                source: Img.builtin("check-circle").withFillColor(Theme.toastSuccess)
                             }
 
-                            Text {
-                                text: delegateLoader.downloadCount
-                                color: Theme.textMuted
-                                font.pointSize: Theme.smallerFontSize
-                            }
-                        }
+                            RowLayout {
+                                spacing: 4
+                                Layout.alignment: Qt.AlignVCenter
 
-                        ViciImage {
-                            Layout.preferredWidth: 20
-                            Layout.preferredHeight: 20
-                            Layout.alignment: Qt.AlignVCenter
-                            source: delegateLoader.authorAvatar
+                                ViciImage {
+                                    Layout.preferredWidth: 14
+                                    Layout.preferredHeight: 14
+                                    source: Img.builtin("arrow-down-circle").withFillColor(Theme.textMuted)
+                                }
+
+                                Text {
+                                    text: delegateLoader.downloadCount
+                                    color: Theme.textMuted
+                                    font.pointSize: Theme.smallerFontSize
+                                }
+                            }
+
+                            ViciImage {
+                                Layout.preferredWidth: 20
+                                Layout.preferredHeight: 20
+                                Layout.alignment: Qt.AlignVCenter
+                                source: delegateLoader.authorAvatar
+                            }
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 120
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
                         }
                     }
                 }

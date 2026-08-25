@@ -1,6 +1,6 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "qml/alias-form-view-host.hpp"
-#include "keyboard/keybind.hpp"
+#include "keyboard/keyboard.hpp"
 #include "ui/action-pannel/shortcut-recorder-panel-view.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
@@ -83,7 +83,7 @@ void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
 
 ToggleItemAsFavorite::ToggleItemAsFavorite(const EntrypointId &id, bool currentValue)
     : m_id(id), m_value(currentValue) {
-  setShortcut(Keybind::FavoriteAction);
+  setShortcut(Keyboard::Shortcut(Qt::Key_F, Qt::ControlModifier | Qt::ShiftModifier));
 }
 
 void DisableItemAction::execute(ApplicationContext *ctx) {

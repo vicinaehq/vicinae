@@ -271,7 +271,7 @@ void ExtensionViewHost::handleDebouncedSearch() {
   }
 }
 
-bool ExtensionViewHost::inputFilter(QKeyEvent *event) { return false; }
+bool ExtensionViewHost::inputFilter(QKeyEvent *event) { return ViewHostBase::inputFilter(event); }
 
 void ExtensionViewHost::beforePop() {
   if (auto *list = activeModel<ExtensionListModel>()) {

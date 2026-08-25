@@ -70,6 +70,9 @@ signals:
   void currentKindFilterChanged();
   void detailChanged();
 
+protected:
+  SectionListModel *quickAccessModel() override { return &m_model; }
+
 private:
   void handleMonitoringChanged(bool monitoring);
   void handleDataRetrieved(int totalCount);

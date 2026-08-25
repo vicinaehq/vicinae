@@ -10,12 +10,9 @@ SelectableDelegate {
     required property string itemIconSource
     required property string itemAlias
     property var itemShortcutTokens: []
-    property bool overlayShortcutTokens: false
     required property bool itemIsActive
     property var itemAccessory: []
     property string itemAccessoryColor: ""
-
-    readonly property bool _overlayShortcutActive: overlayShortcutTokens && itemShortcutTokens.length > 0
 
     RowLayout {
         anchors.fill: parent
@@ -55,8 +52,7 @@ SelectableDelegate {
 
             readonly property real spacing: 6
             readonly property real shortcutLeadingSpace: 8
-            readonly property bool inlineShortcutVisible: !root.overlayShortcutTokens && shortcutBadge.visible
-            readonly property real aliasSpace: (aliasBadge.visible ? aliasBadge.width + spacing : 0) + (inlineShortcutVisible ? shortcutBadge.width + spacing + shortcutLeadingSpace : 0)
+            readonly property real aliasSpace: (aliasBadge.visible ? aliasBadge.width + spacing : 0) + (shortcutBadge.visible ? shortcutBadge.width + spacing + shortcutLeadingSpace : 0)
             readonly property real availableForText: width - aliasSpace
             readonly property real subtitleReserved: subtitleText.visible ? Math.min(subtitleText.implicitWidth + spacing, availableForText * 0.5) : 0
 
@@ -97,7 +93,7 @@ SelectableDelegate {
 
             ShortcutBadge {
                 id: shortcutBadge
-                visible: !root.overlayShortcutTokens && root.itemShortcutTokens.length > 0
+                visible: root.itemShortcutTokens.length > 0
                 anchors.left: aliasBadge.visible ? aliasBadge.right : (subtitleText.visible ? subtitleText.right : titleText.right)
                 anchors.leftMargin: visible ? textRow.spacing + textRow.shortcutLeadingSpace : 0
                 anchors.verticalCenter: parent.verticalCenter
@@ -106,7 +102,6 @@ SelectableDelegate {
         }
 
         ListAccessoryRow {
-            id: accessoryRow
             accessories: {
                 if (root.itemAccessory instanceof Array)
                     return root.itemAccessory;
@@ -125,31 +120,13 @@ SelectableDelegate {
             Layout.maximumWidth: implicitWidth
             Layout.alignment: Qt.AlignVCenter
             clip: true
-            opacity: root._overlayShortcutActive ? 0 : 1
+            opacity: root.quickAccessActive ? 0 : 1
 
             Behavior on opacity {
                 NumberAnimation {
                     duration: 120
                     easing.type: Easing.OutCubic
                 }
-            }
-        }
-    }
-
-    ShortcutBadge {
-        id: overlayShortcutBadge
-        visible: opacity > 0
-        anchors.right: parent.right
-        anchors.rightMargin: 12
-        anchors.verticalCenter: parent.verticalCenter
-        z: 2
-        tokens: root.itemShortcutTokens
-        opacity: root._overlayShortcutActive ? 1 : 0
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 120
-                easing.type: Easing.OutCubic
             }
         }
     }
