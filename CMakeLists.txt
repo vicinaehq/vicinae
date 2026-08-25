@@ -146,6 +146,14 @@ if (NOT USE_SYSTEM_KF6 AND NOT WIN32)
 	import_kf6()
 endif()
 
+# The appimage bundles its own libraries (including the GCC runtime) in usr/lib.
+# linuxdeploy only patches a RUNPATH into the usr/bin copies it deploys, so install
+# every binary with a self-relative RUNPATH so the libexec helpers resolve the
+# bundled libraries too (#1841).
+if (VICINAE_PROVENANCE STREQUAL "appimage")
+	set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib" "$ORIGIN/../../lib")
+endif()
+
 set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
 
 include_directories(
