@@ -138,6 +138,7 @@ struct WindowConfig {
   std::string screen;
   BlurConfig blur;
   WindowCompactMode compactMode;
+  bool floatingStatusBar = true;
   LayerShellConfig layerShell;
   ClockConfig clock;
 
@@ -196,6 +197,7 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<Size>> size;
   std::optional<Partial<BlurConfig>> blur;
   std::optional<Partial<WindowCompactMode>> compactMode;
+  std::optional<bool> floatingStatusBar;
   std::optional<Partial<LayerShellConfig>> layerShell;
   std::optional<std::string> material;
   std::optional<ClockConfig> clock;

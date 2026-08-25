@@ -26,6 +26,7 @@ class ConfigBridge : public QObject {
   Q_PROPERTY(bool considerPreedit READ considerPreedit NOTIFY changed)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick NOTIFY changed)
   Q_PROPERTY(bool blurEnabled READ blurEnabled NOTIFY changed)
+  Q_PROPERTY(bool floatingStatusBar READ floatingStatusBar NOTIFY changed)
   Q_PROPERTY(QString windowMaterial READ windowMaterial NOTIFY changed)
 
 signals:
@@ -105,6 +106,7 @@ public:
                                               platform::supports(platform::Capability::WindowMaterial)));
   }
   bool blurEnabled() const { return windowMaterial() != QStringLiteral("none"); }
+  bool floatingStatusBar() const { return cfg().launcherWindow.floatingStatusBar; }
 
   Q_INVOKABLE static QColor withAlpha(const QColor &c, qreal alpha) {
     return QColor::fromRgbF(c.redF(), c.greenF(), c.blueF(), alpha);

@@ -14,7 +14,7 @@ Window {
     property bool shadowEnabled: shadowPadding > 0
     property bool nativeChrome: false
     property bool autoPlaceOnShow: true
-    readonly property int statusBarOverlap: floatingStatusBar.visible ? floatingStatusBar.height - Config.borderWidth : 0
+    readonly property int statusBarOverlap: floatingStatusBar.visible && Config.floatingStatusBar ? floatingStatusBar.height - Config.borderWidth : 0
     readonly property real statusBarTop: shadowPadding + floatingStatusBar.y
     readonly property Item popupBackdrop: contentArea
     signal aboutToShow
@@ -147,7 +147,7 @@ Window {
                         id: contentArea
                         objectName: "contentArea"
                         width: contentViewport.width
-                        height: contentViewport.height
+                        height: Config.floatingStatusBar ? contentViewport.height : parent.height
 
                         StackView {
                             id: commandStack
@@ -173,12 +173,13 @@ Window {
             ShaderEffectSource {
                 id: statusBarBackdrop
                 visible: false
-                sourceItem: contentArea
+                sourceItem: Config.floatingStatusBar ? contentArea : null
                 sourceRect: Qt.rect(-Config.borderWidth, contentArea.height - (floatingStatusBar.height - Config.borderWidth) - floatingStatusBar.backdropPad, floatingStatusBar.width, floatingStatusBar.height + floatingStatusBar.backdropPad)
                 textureSize: Qt.size(Math.max(1, Math.round(floatingStatusBar.width / 10)), Math.max(1, Math.round((floatingStatusBar.height + floatingStatusBar.backdropPad) / 10)))
             }
 
             MultiEffect {
+                visible: Config.floatingStatusBar
                 y: -floatingStatusBar.backdropPad
                 width: floatingStatusBar.width
                 height: floatingStatusBar.height + floatingStatusBar.backdropPad
@@ -204,7 +205,7 @@ Window {
                 height: _h
                 anchors.bottom: parent.bottom
                 radius: root.cornerRadius
-                color: Config.withAlpha(Theme.statusBarBackground, 0.78 * Config.windowOpacity)
+                color: Config.withAlpha(Theme.statusBarBackground, (Config.floatingStatusBar ? 0.78 : 1.0) * Config.windowOpacity)
             }
 
             ViciDivider {
