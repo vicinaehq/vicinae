@@ -30,6 +30,7 @@ RUN apt-get -y update &&	\
     libxkbcommon-x11-dev	\
     libfontconfig1-dev		\
     libfreetype6-dev		\
+    libglib2.0-dev			\
     libx11-dev				\
     libxext-dev				\
     libxfixes-dev			\
@@ -89,12 +90,14 @@ WORKDIR /qt6
 
 RUN perl init-repository --module-subset=qtbase,qtsvg,qtwayland,qtdeclarative,qttools
 
+# -feature-glib is needed for qtkeychain libsecret backend to not timeout
 RUN ./configure					\
     -release					\
     -ltcg						\
     -reduce-exports				\
     -prefix ${INSTALL_DIR}		\
     -xcb						\
+    -feature-glib				\
     -feature-wayland-client		\
     -no-feature-wayland-server	\
     -feature-sql				\
