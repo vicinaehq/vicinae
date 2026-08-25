@@ -147,7 +147,8 @@ void GeneralSettingsModel::setCompactMode(bool v) {
 
 bool GeneralSettingsModel::floatingStatusBar() const { return cfg().launcherWindow.floatingStatusBar; }
 void GeneralSettingsModel::setFloatingStatusBar(bool v) {
-  cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.floatingStatusBar = v}});
+  cfgManager().mergeWithUser(
+      {.launcherWindow = config::Partial<config::WindowConfig>{.floatingStatusBar = v}});
 }
 
 bool GeneralSettingsModel::inputServerEnabled() const { return cfg().inputServer.enabled; }

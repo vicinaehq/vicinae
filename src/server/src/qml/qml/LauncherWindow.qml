@@ -343,26 +343,6 @@ Window {
 
         readonly property var activeAnchor: launcher.dragActiveAnchor >= 0 ? launcher.dragAnchors[launcher.dragActiveAnchor] : null
 
-        component GuideLine: Shape {
-            property bool active: false
-            property bool vertical: false
-
-            ShapePath {
-                strokeStyle: ShapePath.DashLine
-                dashPattern: [3, 3]
-                strokeWidth: 2
-                strokeColor: active ? Theme.accent : Config.withAlpha(Theme.foreground, 0.45)
-                fillColor: "transparent"
-                startX: 0
-                startY: 0
-
-                PathLine {
-                    x: vertical ? 0 : anchorOverlay.width
-                    y: vertical ? anchorOverlay.height : 0
-                }
-            }
-        }
-
         Repeater {
             model: launcher.dragGuideXs
 
@@ -381,6 +361,26 @@ Window {
                 required property var modelData
                 y: modelData
                 active: anchorOverlay.activeAnchor !== null && anchorOverlay.activeAnchor.y === modelData
+            }
+        }
+    }
+
+    component GuideLine: Shape {
+        property bool active: false
+        property bool vertical: false
+
+        ShapePath {
+            strokeStyle: ShapePath.DashLine
+            dashPattern: [3, 3]
+            strokeWidth: 2
+            strokeColor: active ? Theme.accent : Config.withAlpha(Theme.foreground, 0.45)
+            fillColor: "transparent"
+            startX: 0
+            startY: 0
+
+            PathLine {
+                x: vertical ? 0 : anchorOverlay.width
+                y: vertical ? anchorOverlay.height : 0
             }
         }
     }
