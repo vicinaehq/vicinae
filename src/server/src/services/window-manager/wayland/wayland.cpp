@@ -88,7 +88,7 @@ bool WaylandWindowManager::closeWindow(const AbstractWindow &window) const {
 
 // cosmic needs its own top level management protocol integration
 bool WaylandWindowManager::isActivatable() const {
-  return QGuiApplication::platformName() == "wayland" && !Environment::isCosmicDesktop();
+  return Environment::isWaylandSession() && !Environment::isCosmicDesktop();
 }
 
 bool WaylandWindowManager::ping() const {

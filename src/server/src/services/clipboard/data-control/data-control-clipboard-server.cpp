@@ -1,3 +1,4 @@
+#include "environment.hpp"
 #include "log/message-handler.hpp"
 #include "pid-file/pid-file.hpp"
 #include "services/clipboard/clipboard-server.hpp"
@@ -40,7 +41,7 @@ public:
 } // namespace
 
 bool DataControlClipboardServer::isActivatable() const {
-  if (QGuiApplication::platformName() != "wayland") { return false; }
+  if (!Environment::isWaylandSession()) return false;
 
   static DataControlManagerV1 manager;
   return manager.isActive();
