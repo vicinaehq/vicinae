@@ -185,8 +185,10 @@ jobs:
 
   publish-npm:
     needs: [build-binary, build-appimage, build-macos-dmg]
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/api-release.yml
-    secrets: inherit
     with:
       tag: ${{ needs.build-binary.outputs.tag }}
 
