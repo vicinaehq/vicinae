@@ -23,6 +23,9 @@
 #ifdef Q_OS_MACOS
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
 #endif
+#ifdef Q_OS_LINUX
+#include "root-search/kde-settings/kde-settings-root-provider.hpp"
+#endif
 #ifdef Q_OS_WIN
 #include "root-search/control-panel/control-panel-root-provider.hpp"
 #include "root-search/windows-settings/windows-settings-root-provider.hpp"
@@ -418,6 +421,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
 #ifdef Q_OS_MACOS
     root->loadProvider(std::make_unique<MacSettingsRootProvider>());
+#endif
+#ifdef Q_OS_LINUX
+    if (Environment::isPlasmaDesktop()) {
+      root->loadProvider(std::make_unique<KdeSettingsRootProvider>(*registry->appDb()));
+    }
 #endif
 #ifdef Q_OS_WIN
     root->loadProvider(std::make_unique<WinSettingsRootProvider>());
