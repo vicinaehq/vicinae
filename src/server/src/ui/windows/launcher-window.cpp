@@ -420,6 +420,7 @@ void LauncherWindow::loadRoot() {
       // unloadRoot() nulls m_window before deleting the underlying window, whose
       // teardown synchronously resigns key and re-enters here.
       if (!m_window) return;
+      if (!m_window->isActive()) setCommandHeld(false);
       // losing focus to our own file dialog or to a selection capture is not user focus loss
       if (m_pendingLauncherFileChoice || LauncherWindowPlatform::foregroundLent()) return;
       m_ctx.navigation->setWindowActivated(m_window->isActive());
@@ -633,9 +634,11 @@ void LauncherWindow::setCommandHeld(bool held) {
 }
 
 void LauncherWindow::syncCommandHeld(const QKeyEvent *event) {
-  bool held = event->modifiers().testFlag(Qt::ControlModifier);
-  if (event->key() == Qt::Key_Control) { held = event->type() == QEvent::KeyPress; }
-  setCommandHeld(held);
+  auto modifiers = event->modifiers() & ~Qt::KeypadModifier;
+  if (auto modifier = Keyboard::modifierForKey(static_cast<Qt::Key>(event->key()))) {
+    modifiers.setFlag(*modifier, event->type() == QEvent::KeyPress);
+  }
+  setCommandHeld(modifiers == Qt::ControlModifier);
 }
 
 void LauncherWindow::goBack() {

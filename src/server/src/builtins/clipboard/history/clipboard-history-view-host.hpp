@@ -76,6 +76,9 @@ signals:
   void detailChanged();
   void searchTermsChanged();
 
+protected:
+  SectionListModel *quickAccessModel() override { return &m_model; }
+
 private:
   void handleMonitoringChanged(bool monitoring);
   void updateSearchTerms(const QString &text);

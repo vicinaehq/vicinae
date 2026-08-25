@@ -72,6 +72,7 @@ private:
   Q_PROPERTY(int lsLayer READ lsLayer NOTIFY lsChanged)
   Q_PROPERTY(int lsKeyboardInteractivity READ lsKeyboardInteractivity NOTIFY lsChanged)
   Q_PROPERTY(bool canPositionWindow READ canPositionWindow CONSTANT)
+  Q_PROPERTY(bool commandHeld READ commandHeld NOTIFY commandHeldChanged)
   Q_PROPERTY(bool dragOverlayVisible READ dragOverlayVisible NOTIFY dragOverlayChanged)
   Q_PROPERTY(QRect dragOverlayGeometry READ dragOverlayGeometry NOTIFY dragOverlayChanged)
   Q_PROPERTY(QVariantList dragAnchors READ dragAnchors NOTIFY dragOverlayChanged)
@@ -79,7 +80,6 @@ private:
   Q_PROPERTY(QVariantList dragGuideYs READ dragGuideYs NOTIFY dragOverlayChanged)
   Q_PROPERTY(int dragActiveAnchor READ dragActiveAnchor NOTIFY dragActiveAnchorChanged)
   Q_PROPERTY(bool filePicking READ filePicking NOTIFY filePickingChanged)
-  Q_PROPERTY(bool commandHeld READ commandHeld NOTIFY commandHeldChanged)
 
 public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -172,10 +172,10 @@ signals:
   void windowSizeOverrideChanged();
   void overlayChanged();
   void lsChanged();
+  void commandHeldChanged();
   void dragOverlayChanged();
   void dragActiveAnchorChanged();
   void filePickingChanged();
-  void commandHeldChanged();
 
 private:
   bool eventFilter(QObject *obj, QEvent *event) override;

@@ -1,8 +1,8 @@
-#include "root-search-sources.hpp"
-#include "actions/app/app-actions.hpp"
-#include "actions/calculator/calculator-actions.hpp"
-#include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
+#include "builtins/root/root-search-sources.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/calculator-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "theme/colors.hpp"
 #include "keyboard/keybind.hpp"
 #include "keyboard/keyboard.hpp"
@@ -11,7 +11,7 @@
 #include "service-registry.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/news/news-service.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include "utils/utils.hpp"
 #include <format>
@@ -20,9 +20,7 @@ namespace root_search {
 
 const QHash<int, QByteArray> &customRoleNames() {
   static const QHash<int, QByteArray> roles = {
-      {ItemType, "itemType"},
       {Alias, "alias"},
-      {ShortcutTokens, "shortcutTokens"},
       {IsActive, "isActive"},
       {AccessoryText, "accessoryText"},
       {AccessoryColor, "accessoryColor"},
@@ -38,10 +36,16 @@ const QHash<int, QByteArray> &customRoleNames() {
 
 const QHash<int, QVariant> &customRoleDefaults() {
   static const QHash<int, QVariant> defaults = {
-      {ItemType, QString()},   {Alias, QString()},          {ShortcutTokens, QVariantList()},
-      {IsActive, false},       {AccessoryText, QString()},  {AccessoryColor, QString()},
-      {IsCalculator, false},   {CalcQuestion, QString()},   {CalcQuestionUnit, QString()},
-      {CalcAnswer, QString()}, {CalcAnswerUnit, QString()}, {IsFile, false},
+      {Alias, QString()},
+      {IsActive, false},
+      {AccessoryText, QString()},
+      {AccessoryColor, QString()},
+      {IsCalculator, false},
+      {CalcQuestion, QString()},
+      {CalcQuestionUnit, QString()},
+      {CalcAnswer, QString()},
+      {CalcAnswerUnit, QString()},
+      {IsFile, false},
   };
   return defaults;
 }
@@ -80,11 +84,11 @@ QVariant rootItemAccessoryData(const RootItem *item, int role) {
   return {};
 }
 
-QVariantList shortcutTokensFor(const RootItemMetadata &meta) {
+Keyboard::Shortcut shortcutFor(const RootItemMetadata &meta) {
   if (!meta.shortcut || meta.shortcut->empty()) return {};
   auto *service = ServiceRegistry::instance()->globalShortcuts();
   if (!service || !service->isSupported()) return {};
-  return Keyboard::Shortcut::fromString(QString::fromStdString(*meta.shortcut)).toDisplayTokens();
+  return Keyboard::Shortcut::fromString(QString::fromStdString(*meta.shortcut));
 }
 
 } // namespace
@@ -97,10 +101,7 @@ std::optional<ImageURL> RootLinkSection::itemIcon(int) const {
   return m_link ? std::optional(m_link->app->iconUrl()) : std::nullopt;
 }
 
-QVariant RootLinkSection::customData(int, int role) const {
-  if (role == ItemType) return QStringLiteral("link");
-  return {};
-}
+QVariant RootLinkSection::customData(int, int role) const { return {}; }
 
 QHash<int, QByteArray> RootLinkSection::customRoleNames() const { return root_search::customRoleNames(); }
 QHash<int, QVariant> RootLinkSection::customRoleDefaults() const { return root_search::customRoleDefaults(); }
@@ -138,7 +139,6 @@ std::optional<ImageURL> RootCalculatorSection::itemIcon(int) const {
 }
 
 QVariant RootCalculatorSection::customData(int, int role) const {
-  if (role == ItemType) return QStringLiteral("calculator");
   if (role == IsCalculator) return true;
   if (!m_result) return {};
   switch (role) {
@@ -201,7 +201,6 @@ std::optional<ImageURL> RootUpdateSection::itemIcon(int) const {
 }
 
 QVariant RootUpdateSection::customData(int, int role) const {
-  if (role == ItemType) return QStringLiteral("update");
   if (role == AccessoryText) return tr("Update");
   return {};
 }
@@ -249,10 +248,7 @@ std::optional<ImageURL> RootNewsSection::itemIcon(int i) const {
   return m_items[i]->icon;
 }
 
-QVariant RootNewsSection::customData(int, int role) const {
-  if (role == ItemType) return QStringLiteral("news");
-  return {};
-}
+QVariant RootNewsSection::customData(int, int role) const { return {}; }
 
 QHash<int, QByteArray> RootNewsSection::customRoleNames() const { return root_search::customRoleNames(); }
 QHash<int, QVariant> RootNewsSection::customRoleDefaults() const { return root_search::customRoleDefaults(); }
@@ -289,18 +285,12 @@ std::optional<ImageURL> RootFavoritesSection::itemIcon(int i) const {
 }
 
 QVariant RootFavoritesSection::customData(int i, int role) const {
-  if (role == ItemType) return QStringLiteral("favorite");
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
   switch (role) {
   case Alias: {
     auto meta = m_manager->itemMetadata(m_items[i]->uniqueId());
     return QString::fromStdString(meta.alias.value_or(""));
   }
-  case ShortcutTokens:
-    if (i < QUICK_OPEN_COUNT) {
-      return Keyboard::Shortcut(static_cast<Qt::Key>(Qt::Key_1 + i), Qt::ControlModifier).toDisplayTokens();
-    }
-    return shortcutTokensFor(m_manager->itemMetadata(m_items[i]->uniqueId()));
   case IsActive:
     return m_items[i]->isActive();
   case AccessoryText:
@@ -309,6 +299,11 @@ QVariant RootFavoritesSection::customData(int i, int role) const {
   default:
     return {};
   }
+}
+
+Keyboard::Shortcut RootFavoritesSection::itemShortcut(int i) const {
+  if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
+  return shortcutFor(m_manager->itemMetadata(m_items[i]->uniqueId()));
 }
 
 QHash<int, QByteArray> RootFavoritesSection::customRoleNames() const {
@@ -354,13 +349,10 @@ std::optional<ImageURL> RootResultsSection::itemIcon(int i) const {
 }
 
 QVariant RootResultsSection::customData(int i, int role) const {
-  if (role == ItemType) return QStringLiteral("result");
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i].item) return {};
   switch (role) {
   case Alias:
     return QString::fromStdString(m_items[i].meta.alias.value_or(""));
-  case ShortcutTokens:
-    return shortcutTokensFor(m_items[i].meta);
   case IsActive:
     return m_items[i].item->isActive();
   case AccessoryText:
@@ -369,6 +361,11 @@ QVariant RootResultsSection::customData(int i, int role) const {
   default:
     return {};
   }
+}
+
+Keyboard::Shortcut RootResultsSection::itemShortcut(int i) const {
+  if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i].item) return {};
+  return shortcutFor(m_items[i].meta);
 }
 
 QHash<int, QByteArray> RootResultsSection::customRoleNames() const { return root_search::customRoleNames(); }
@@ -407,7 +404,6 @@ std::optional<ImageURL> RootFilesSection::itemIcon(int i) const {
 }
 
 QVariant RootFilesSection::customData(int, int role) const {
-  if (role == ItemType) return QStringLiteral("file");
   if (role == IsFile) return true;
   return {};
 }
@@ -460,7 +456,6 @@ std::optional<ImageURL> RootFallbackSection::itemIcon(int i) const {
 }
 
 QVariant RootFallbackSection::customData(int i, int role) const {
-  if (role == ItemType) return QStringLiteral("fallback");
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
   switch (role) {
   case IsActive:
