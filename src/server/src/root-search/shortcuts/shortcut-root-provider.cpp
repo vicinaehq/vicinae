@@ -40,7 +40,8 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   manageSection->addAction(edit);
   manageSection->addAction(duplicate);
 
-  for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto action :
+       RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 
