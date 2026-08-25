@@ -1,5 +1,5 @@
 #include "xdg-activation.hpp"
-#include <QGuiApplication>
+#include "environment.hpp"
 #include <QtWaylandClient/QWaylandClientExtension>
 #include <qlogging.h>
 #include <qwindow.h>
@@ -28,7 +28,7 @@ protected:
 };
 
 XdgActivationV1 *activation() {
-  if (QGuiApplication::platformName() != "wayland") return nullptr;
+  if (!Environment::isWaylandSession()) return nullptr;
 
   static XdgActivationV1 instance;
   return instance.isActive() ? &instance : nullptr;

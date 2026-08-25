@@ -1,5 +1,5 @@
 #include "layer-shell.hpp"
-#include <QGuiApplication>
+#include "environment.hpp"
 #include <QtWaylandClient/QWaylandClientExtension>
 #include "qwayland-wlr-layer-shell-unstable-v1.h"
 
@@ -14,7 +14,7 @@ public:
 namespace Wayland {
 
 bool hasLayerShell() {
-  if (QGuiApplication::platformName() != "wayland") { return false; }
+  if (!Environment::isWaylandSession()) { return false; }
 
   static LayerShellV1 layerShell;
   return layerShell.isActive();

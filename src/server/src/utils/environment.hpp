@@ -1,5 +1,6 @@
 #pragma once
 #include <QtGlobal>
+#include <qguiapplication.h>
 #ifndef Q_OS_WIN
 #include "xdgpp/env/env.hpp"
 #endif
@@ -34,7 +35,10 @@ inline bool isGnomeEnvironment() {
   return desktop.contains("GNOME", Qt::CaseInsensitive) || session.contains("gnome", Qt::CaseInsensitive);
 }
 
-inline bool isWaylandSession() { return QGuiApplication::platformName() == "wayland"; }
+inline bool isWaylandSession() {
+  const auto platform = QGuiApplication::platformName();
+  return platform == "wayland" || platform == "wayland-egl";
+}
 
 inline bool isX11() { return QGuiApplication::platformName() == "xcb"; }
 
