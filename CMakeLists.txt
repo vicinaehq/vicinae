@@ -18,6 +18,12 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# No-op as it is the default for most toolchains, but this led to problem
+# with our AppImage build toolchain + LTO
+include(CheckPIESupported)
+check_pie_supported(LANGUAGES C CXX)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 include(FetchContent)
 include(GNUInstallDirs)
 include(Git)
