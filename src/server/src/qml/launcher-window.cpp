@@ -340,12 +340,14 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     if (!m_window || !m_window->isActive()) return;
     m_pendingLauncherFileChoice = true;
     setExclusiveFocus(false);
-    if (isLayerShellActive()) { m_ctx.navigation->closeWindow({.popToRootType = PopToRootType::Suspended}); }
+    if (suspendsDuringFileChoice()) {
+      m_ctx.navigation->closeWindow({.popToRootType = PopToRootType::Suspended});
+    }
   });
   connect(fileChooser, &FileChooserService::dialogClosed, this, [this]() {
     if (m_pendingLauncherFileChoice) {
       setExclusiveFocus(true);
-      if (isLayerShellActive()) { m_ctx.navigation->showWindow(); }
+      if (suspendsDuringFileChoice()) { m_ctx.navigation->showWindow(); }
       m_pendingLauncherFileChoice = false;
     }
   });
@@ -864,6 +866,15 @@ bool LauncherWindow::isLayerShellActive() const {
          m_ctx.services->config()->value().launcherWindow.layerShell.enabled;
 #else
   return false;
+#endif
+}
+
+bool LauncherWindow::suspendsDuringFileChoice() const {
+#ifdef Q_OS_MACOS
+  // the native panel deactivates the launcher; without a suspended close, focus loss destroys the form
+  return true;
+#else
+  return isLayerShellActive();
 #endif
 }
 

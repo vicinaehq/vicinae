@@ -168,6 +168,7 @@ private:
   void computeDragAnchors(QScreen *screen);
   void updateActiveDragAnchor(QPoint windowPos);
   bool isLayerShellActive() const;
+  bool suspendsDuringFileChoice() const;
   void setExclusiveFocus(bool exclusive);
   void updateLayerShellProps();
   void buildFooterMenu();
