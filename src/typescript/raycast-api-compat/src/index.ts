@@ -43,7 +43,7 @@ export {
 	trash,
 	updateCommandMetadata,
 	useNavigation,
-	launchCommand
+	launchCommand,
 } from "@vicinae/api";
 export { Clipboard } from "./clipboard.js";
 export { BrowserExtension } from "./browser.js";

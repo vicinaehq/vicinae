@@ -46,7 +46,7 @@ const App: React.FC<{ component: ComponentType; launchProps: LaunchProps }> = ({
 	);
 };
 
-export default async function(data: extensionServer.LaunchEventData) {
+export default async function (data: extensionServer.LaunchEventData) {
 	const module = await import(pathToFileURL(data.entrypoint).href);
 	const Component = module.default.default;
 	const sendRender = (views: ViewData[]) => {
