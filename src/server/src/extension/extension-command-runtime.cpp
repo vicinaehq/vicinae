@@ -19,6 +19,8 @@
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
 #include <glaze/json/generic.hpp>
+#include <glaze/json/prettify.hpp>
+#include <glaze/json/write.hpp>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <ranges>
@@ -101,8 +103,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   opts.owner_or_author_name = m_command->author().toStdString();
   opts.is_raycast = m_command->isRaycast();
   opts.preferences = qJsonObjectToGlazeGeneric(preferenceValues);
-  opts.launch_context =
-      props.launchContext ? qJsonObjectToGlazeGeneric(*props.launchContext) : glz::generic{};
+  opts.launch_context = props.launchContext;
   opts.arguments = props.arguments |
                    std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {
                      return {pair.first.toStdString(), pair.second.toStdString()};

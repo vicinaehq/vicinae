@@ -1,12 +1,12 @@
 #pragma once
 #include <QString>
 #include <cstdint>
-#include <optional>
+#include <glaze/glaze.hpp>
 #include <qjsonobject.h>
 
 class CommandContext;
 
-using LaunchContext = QJsonObject;
+using LaunchContext = glz::generic;
 
 struct LaunchProps {
   QString query;

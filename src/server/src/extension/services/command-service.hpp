@@ -13,6 +13,8 @@ namespace {
 LaunchProps transformApiLaunchProps(const tsapi::LaunchCommandOptions &options) {
   LaunchProps props;
 
+  props.launchContext = options.context;
+
   if (auto t = options.fallbackText) props.fallbackText = QString::fromStdString(t.value());
   if (auto args = options.arguments; args && args->is_object()) {
     for (const auto &[k, v] : args->get_object()) {
@@ -36,8 +38,6 @@ public:
         m_settings(settings) {}
 
   tsapi::Result<void>::Future launchCommand(tsapi::LaunchCommandOptions options) override {
-    qDebug() << "extension launching another command with name" << options.name;
-
     for (auto item : m_rootManager->extensions()) {
       auto &repo = item->repository();
 
@@ -46,6 +46,7 @@ public:
         for (const auto &cmd : repo->commands()) {
           if (cmd->commandId() == options.name) {
             m_nav.activateEntrypoint(cmd->uniqueId(), {.props = transformApiLaunchProps(options)});
+            return Void::ok();
           }
         }
       }

@@ -38,6 +38,19 @@ export type LaunchOptions =
 	| InterExtensionLaunchOptions
 	| IntraExtensionLaunchOptions;
 
+/**
+ * Launch another command from the current extension or a different one.
+ *
+ * The `context` object can be used to pass arbitrary JSON stringifiable data
+ * to the other command. Note that buffer or date objects NEED to be encoded/stringified before
+ * passing them.
+ *
+ * @returns Returns when the other command has been successfully launched. Note that control is fully transferred
+ * to the other command and that the current command from which `launchCommand` has been called is effectively unloaded
+ * if the call succeeds.
+ *
+ * @throws If the command doesn't exist or couldn't be started, for any reason.
+ */
 export async function launchCommand(options: LaunchOptions) {
 	const isInter = (t: LaunchOptions): t is InterExtensionLaunchOptions => {
 		return Object.hasOwn(t, "extensionName");
@@ -54,7 +67,7 @@ export async function launchCommand(options: LaunchOptions) {
 		ownerOrAuthorName: ownerOrAuthorName,
 		name: options.name,
 		arguments: options.arguments,
-		type: options.type,
 		context: options.context,
+		type: options.type,
 	});
 }

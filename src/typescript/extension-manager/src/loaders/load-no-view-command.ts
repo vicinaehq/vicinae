@@ -15,7 +15,7 @@ export default async (data: LaunchEventData) => {
 	await entrypoint({
 		launchType: environment.launchType,
 		arguments: data.argumentValues,
-		launchContext: data.launch_context ?? {},
+		launchContext: data.launch_context || undefined,
 		cwd: data.cwd,
 		fallbackText: data.fallbackText,
 	} as LaunchProps);
