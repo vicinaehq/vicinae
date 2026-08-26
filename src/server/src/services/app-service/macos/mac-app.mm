@@ -12,6 +12,14 @@ NSString *toNSString(const std::filesystem::path &p) { return [NSString stringWi
 
 QString toQString(NSString *s) { return s ? QString::fromNSString(s) : QString(); }
 
+NSString *finderDisplayName(NSString *path) {
+  NSString *name = [[NSFileManager defaultManager] displayNameAtPath:path];
+  if ([[name pathExtension] caseInsensitiveCompare:@"app"] == NSOrderedSame) {
+    name = [name stringByDeletingPathExtension];
+  }
+  return [name stringByReplacingOccurrencesOfString:@"\u00AD" withString:@""];
+}
+
 const std::unordered_set<std::string> &knownTerminalBundleIds() {
   static const std::unordered_set<std::string> set = {
       "com.apple.Terminal",   "com.googlecode.iterm2", "com.github.wez.wezterm", "io.alacritty",
@@ -60,7 +68,8 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
     NSDictionary *info = bundle.infoDictionary;
     NSDictionary *localized = bundle.localizedInfoDictionary;
 
-    NSString *displayName = localized[@"CFBundleDisplayName"];
+    NSString *displayName = finderDisplayName(nsPath);
+    if (displayName.length == 0) displayName = localized[@"CFBundleDisplayName"];
     if (displayName.length == 0) displayName = info[@"CFBundleDisplayName"];
     if (displayName.length == 0) displayName = localized[@"CFBundleName"];
     if (displayName.length == 0) displayName = info[@"CFBundleName"];
