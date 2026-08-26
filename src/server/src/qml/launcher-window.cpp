@@ -342,12 +342,14 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(fileChooser, &FileChooserService::dialogOpened, this, [this]() {
     if (!m_window || !m_window->isActive()) return;
     m_pendingLauncherFileChoice = true;
+    emit filePickingChanged();
     setExclusiveFocus(false);
     if (isLayerShellActive()) { m_ctx.navigation->closeWindow({.popToRootType = PopToRootType::Suspended}); }
   });
   connect(fileChooser, &FileChooserService::dialogClosed, this, [this]() {
     if (m_pendingLauncherFileChoice) {
       m_pendingLauncherFileChoice = false;
+      emit filePickingChanged();
       setExclusiveFocus(true);
       if (isLayerShellActive()) {
         m_ctx.navigation->showWindow();

@@ -63,6 +63,7 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(QVariantList dragGuideXs READ dragGuideXs NOTIFY dragOverlayChanged)
   Q_PROPERTY(QVariantList dragGuideYs READ dragGuideYs NOTIFY dragOverlayChanged)
   Q_PROPERTY(int dragActiveAnchor READ dragActiveAnchor NOTIFY dragActiveAnchorChanged)
+  Q_PROPERTY(bool filePicking READ filePicking NOTIFY filePickingChanged)
 
 public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -95,6 +96,7 @@ public:
   bool hasOverlay() const { return m_hasOverlay; }
   QUrl overlayUrl() const { return m_overlayUrl; }
   QObject *overlayHost() const { return m_overlayHost; }
+  bool filePicking() const { return m_pendingLauncherFileChoice; }
   int lsLayer() const { return m_lsLayer; }
   int lsKeyboardInteractivity() const { return m_lsKeyboardInteractivity; }
   static bool canPositionWindow();
@@ -152,6 +154,7 @@ signals:
   void lsChanged();
   void dragOverlayChanged();
   void dragActiveAnchorChanged();
+  void filePickingChanged();
 
 private:
   bool eventFilter(QObject *obj, QEvent *event) override;

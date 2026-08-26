@@ -21,6 +21,6 @@ LauncherWindow {
     MacOSWindow.borderWidth: Config.borderWidth
 
     MacOSPanel.enabled: true
-    MacOSPanel.windowLevel: MacOSPanel.Status
-    MacOSPanel.onResignKey: Nav.closeWindow()
+    MacOSPanel.windowLevel: launcher.filePicking ? MacOSPanel.Floating : MacOSPanel.Status
+    MacOSPanel.onResignKey: if (!launcher.filePicking) Nav.closeWindow()
 }
