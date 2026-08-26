@@ -19,7 +19,7 @@ void ThemeViewHost::initialize() {
   m_availableSection.setOnThemeSelected(
       [this](const std::shared_ptr<ThemeFile> &theme) { m_themeService->setTheme(theme->id()); });
 
-  setSearchPlaceholderText("Search for a theme...");
+  setSearchPlaceholderText(tr("Search for a theme..."));
 
   connect(m_config, &config::Manager::configChanged, this,
           [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
@@ -47,13 +47,15 @@ void ThemeViewHost::regenerateThemes() {
   std::vector<std::shared_ptr<ThemeFile>> current;
   std::vector<Scored<std::shared_ptr<ThemeFile>>> scoredAvailable;
 
+  fuzzy::Query const fuzzyQuery{query};
   for (auto &theme : themes) {
     int score = 0;
     if (!query.empty()) {
       auto name = theme->name().toStdString();
       auto desc = theme->description().toStdString();
-      score = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, query);
-      if (score == 0) continue;
+      auto const m = fuzzy::scoreWeighted({{name, 1.0}, {desc, 0.5}}, fuzzyQuery);
+      if (!m.accepted()) continue;
+      score = m.score;
     }
 
     if (theme->id() == currentId) {
@@ -70,6 +72,6 @@ void ThemeViewHost::regenerateThemes() {
   for (auto &s : scoredAvailable)
     available.emplace_back(std::move(s.data));
 
-  m_currentSection.setThemes(QStringLiteral("Current Theme"), std::move(current));
-  m_availableSection.setThemes(QStringLiteral("Available Themes"), std::move(available));
+  m_currentSection.setThemes(tr("Current Theme"), std::move(current));
+  m_availableSection.setThemes(tr("Available Themes"), std::move(available));
 }

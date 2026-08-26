@@ -1,8 +1,6 @@
 #include "root-search-model.hpp"
 #include "config/config.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
-#include "ui/action-pannel/action-panel-view.hpp"
-#include "ui/views/base-view.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -12,24 +10,23 @@
 #include <filesystem>
 #include <utility>
 
+constexpr auto CALCULATOR_MIN_CHARS = 3;
+
 RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
     : SectionListModel(parent), m_manager(scope.services()->rootItemManager()),
       m_appDb(scope.services()->appDb()), m_newsService(scope.services()->newsService()),
-      m_calculator(scope.services()->calculatorService()), m_fileService(scope.services()->fileService()),
-      m_config(scope.services()->config()), m_fileSearchEnabled(m_config->value().searchFilesInRoot) {
+      m_updateService(scope.services()->updateService()), m_calculator(scope.services()->calculatorService()),
+      m_fileService(scope.services()->fileService()), m_config(scope.services()->config()),
+      m_fileSearchEnabled(m_config->value().searchFilesInRoot) {
 
   setScope(scope);
 
   using namespace std::chrono_literals;
 
-  m_calculatorDebounce.setInterval(200ms);
-  m_calculatorDebounce.setSingleShot(true);
   m_fileSearchDebounce.setInterval(200ms);
   m_fileSearchDebounce.setSingleShot(true);
 
-  connect(&m_calculatorDebounce, &QTimer::timeout, this, &RootSearchModel::startCalculator);
   connect(&m_fileSearchDebounce, &QTimer::timeout, this, &RootSearchModel::startFileSearch);
-  connect(&m_calcWatcher, &CalculatorWatcher::finished, this, &RootSearchModel::handleCalculatorFinished);
   connect(&m_fileWatcher, &FileSearchWatcher::finished, this, &RootSearchModel::handleFileSearchFinished);
 
   connect(m_config, &config::Manager::configChanged, this,
@@ -40,11 +37,13 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
   connect(m_manager, &RootItemManager::metadataChanged, this, &RootSearchModel::refresh);
   connect(m_manager, &RootItemManager::itemsChanged, this, &RootSearchModel::refresh);
   connect(m_newsService, &NewsService::itemsChanged, this, &RootSearchModel::refresh);
+  connect(m_updateService, &UpdateService::updateChanged, this, &RootSearchModel::refresh);
 
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
     if (rowCount() > 0) emit dataChanged(index(0), index(rowCount() - 1), {IconSource, AccessoryColor});
   });
 
+  m_updateSource = new RootUpdateSection(m_updateService);
   m_linkSource = new RootLinkSection;
   m_calcSource = new RootCalculatorSection;
   m_newsSource = new RootNewsSection;
@@ -53,6 +52,7 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
   m_filesSource = new RootFilesSection(m_appDb);
   m_fallbackSource = new RootFallbackSection(m_manager);
 
+  addSource(m_updateSource);
   addSource(m_linkSource);
   addSource(m_calcSource);
   addSource(m_newsSource);
@@ -73,16 +73,9 @@ void RootSearchModel::setFilter(const QString &text) {
 
   m_calcSource->setResult({});
   m_filesSource->setFiles({});
-
-  m_calculatorDebounce.stop();
   m_fileSearchDebounce.stop();
 
   bool const directMatch = rerunSearch();
-
-  if (!text.isEmpty() && !directMatch) {
-    m_calculatorDebounce.start();
-    m_fileSearchDebounce.start();
-  }
 }
 
 void RootSearchModel::refresh() {
@@ -99,6 +92,7 @@ bool RootSearchModel::rerunSearch() {
   if (!text.isEmpty() && text.startsWith('/')) {
     std::error_code ec;
     if (std::filesystem::exists(m_query, ec)) {
+      m_updateSource->setUpdate({});
       m_linkSource->setLink({});
       m_resultsSource->setItems({});
       m_resultsSource->setQueryEmpty(false);
@@ -114,6 +108,7 @@ bool RootSearchModel::rerunSearch() {
   if (!text.isEmpty()) {
     if (auto url = QUrl(text); url.isValid() && !url.scheme().isEmpty()) {
       if (auto app = m_appDb->findDefaultOpener(text)) {
+        m_updateSource->setUpdate({});
         m_linkSource->setLink(LinkItem{.app = app, .url = text});
         m_resultsSource->setItems({});
         m_resultsSource->setQueryEmpty(false);
@@ -132,11 +127,13 @@ bool RootSearchModel::rerunSearch() {
   std::vector<RootItemManager::ScoredItem> scored;
   if (m_query.empty()) {
     m_manager->search("", scored, {.includeFavorites = false, .prioritizeAliased = false});
+    m_updateSource->setUpdate(m_updateService->available());
     m_newsSource->setItems(m_newsService->activeItems());
     m_favoritesSource->setItems(m_manager->queryFavorites());
     m_fallbackSource->setItems({});
   } else {
     m_manager->search(text, scored);
+    m_updateSource->setUpdate({});
     m_newsSource->setItems({});
     m_favoritesSource->setItems({});
     m_fallbackSource->setItems(m_manager->fallbackItems());
@@ -150,7 +147,23 @@ bool RootSearchModel::rerunSearch() {
         .meta = s.meta ? *s.meta : RootItemMetadata{},
     });
   }
+
+  bool inhibitCalculator = !results.empty();
+
   m_resultsSource->setItems(std::move(results));
+
+  if (!text.isEmpty()) {
+    if (text.startsWith("=")) {
+      if (auto res = m_calculator->backend()->compute(QString::fromStdString(m_query.substr(1)), {})) {
+        m_calcSource->setResult(res.value());
+      }
+    } else if (!inhibitCalculator && m_query.size() >= CALCULATOR_MIN_CHARS) {
+      if (auto res = m_calculator->backend()->compute(QString::fromStdString(m_query), {})) {
+        m_calcSource->setResult(res.value());
+      }
+    }
+    m_fileSearchDebounce.start();
+  }
 
   rebuild();
   return false;
@@ -195,61 +208,13 @@ void RootSearchModel::setSelectedIndex(int index) {
   }
 }
 
-bool RootSearchModel::tryAliasFastTrack() {
+const RootItem *RootSearchModel::selectedRootItem() const {
   int sourceIdx = -1;
   int itemIdx = -1;
-  if (!dataItemAt(selectedIndex(), sourceIdx, itemIdx)) return false;
+  if (!dataItemAt(selectedIndex(), sourceIdx, itemIdx)) return nullptr;
 
-  auto *src = sources()[sourceIdx];
-  const RootItem *item = nullptr;
-
-  if (src == m_resultsSource) {
-    item = m_resultsSource->rootItem(itemIdx);
-  } else if (src == m_favoritesSource) {
-    item = m_favoritesSource->rootItem(itemIdx);
-  }
-
-  if (!item || !item->supportsAliasSpaceShortcut()) return false;
-  auto meta = m_manager->itemMetadata(item->uniqueId());
-  if (!meta.alias || !meta.alias->starts_with(m_query)) return false;
-
-  activateSelected();
-  return true;
-}
-
-void RootSearchModel::startCalculator() {
-  if (m_calcWatcher.isRunning()) {
-    m_calculator->backend()->abort();
-    m_calcWatcher.waitForFinished();
-  }
-
-  m_calculatorSearchQuery = m_query;
-
-  if (!m_calculator->backend()) return;
-
-  auto expression = QString::fromStdString(m_query);
-  if (expression.startsWith("=") && expression.size() > 1) {
-    m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(
-        expression.mid(1), {.mode = AbstractCalculatorBackend::ComputeMode::Full}));
-    return;
-  }
-
-  m_calcWatcher.setFuture(m_calculator->backend()->asyncCompute(
-      expression, {.mode = AbstractCalculatorBackend::ComputeMode::MixedSearch}));
-}
-
-void RootSearchModel::handleCalculatorFinished() {
-  if (!m_calcWatcher.isFinished() || m_calculatorSearchQuery != m_query) return;
-  auto res = m_calcWatcher.result();
-  if (!res) return;
-
-  m_calcSource->setResult(res.value());
-
-  auto saved = selectFirstOnReset();
-  setSelectFirstOnReset(false);
-  rebuild();
-  setSelectFirstOnReset(saved);
-  refreshActionPanel();
+  auto *section = dynamic_cast<const RootItemSection *>(sources()[sourceIdx]);
+  return section ? section->rootItem(itemIdx) : nullptr;
 }
 
 void RootSearchModel::startFileSearch() {

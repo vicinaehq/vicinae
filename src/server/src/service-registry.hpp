@@ -21,6 +21,7 @@ class VicinaeStoreService;
 class ExtensionRegistry;
 class OAuthService;
 class WindowManager;
+class WallpaperManager;
 class PowerManager;
 class ScriptCommandService;
 class AbstractSnippetServer;
@@ -29,12 +30,14 @@ class LinuxInputServer;
 #endif
 class SnippetService;
 class BrowserExtensionService;
-class BackgroundEffectManager;
+class WindowMaterialManager;
 class ShortcutInhibitManager;
 class FileChooserService;
 class NewsService;
 class PasteService;
+class AbstractSelectionService;
 class TelemetryService;
+class UpdateService;
 class AudioControlService;
 class AppRuntime;
 class GlobalShortcutService;
@@ -53,6 +56,7 @@ public:
   OmniDatabase *omniDb() const;
   CalculatorService *calculatorService() const;
   WindowManager *windowManager() const;
+  WallpaperManager *wallpaperManager() const;
   GlyphService *glyphService() const;
   FontService *fontService() const;
   LocalStorageService *localStorage() const;
@@ -74,17 +78,20 @@ public:
 #endif
   SnippetService *snippetService() const;
   PasteService *pasteService() const;
+  AbstractSelectionService *selectionService() const;
   FileChooserService *fileChooserService() const;
   NewsService *newsService() const;
-  BackgroundEffectManager *backgroundEffectManager() const;
+  WindowMaterialManager *windowMaterialManager() const;
   ShortcutInhibitManager *shortcutInhibitManager() const;
   TelemetryService *telemetry() const;
+  UpdateService *updateService() const;
   AudioControlService *audioControl() const;
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
+  void setWallpaperManager(std::unique_ptr<WallpaperManager> manager);
   void setRootItemManager(std::unique_ptr<RootItemManager> manager);
   void setRaycastStore(std::unique_ptr<RaycastStoreService> service);
   void setScriptDb(std::unique_ptr<ScriptCommandService> service);
@@ -111,17 +118,20 @@ public:
   void setSnippetServerBackend(std::unique_ptr<AbstractSnippetServer> backend);
   void setSnippetService(std::unique_ptr<SnippetService> service);
   void setPasteService(std::unique_ptr<PasteService> service);
+  void setSelectionService(std::unique_ptr<AbstractSelectionService> service);
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
   void setNewsService(std::unique_ptr<NewsService> service);
-  void setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> manager);
+  void setWindowMaterialManager(std::unique_ptr<WindowMaterialManager> manager);
   void setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitManager> manager);
   void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
+  void setUpdateService(std::unique_ptr<UpdateService> service);
   void setAudioControl(std::unique_ptr<AudioControlService> service);
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
+  std::unique_ptr<WallpaperManager> m_wallpaperManager;
   std::unique_ptr<AppService> m_appDb;
   std::unique_ptr<OmniDatabase> m_omniDb;
   std::unique_ptr<LocalStorageService> m_localStorage;
@@ -148,11 +158,13 @@ private:
   std::unique_ptr<AbstractSnippetServer> m_snippetServerBackend;
   std::unique_ptr<SnippetService> m_snippetService;
   std::unique_ptr<PasteService> m_pasteService;
+  std::unique_ptr<AbstractSelectionService> m_selectionService;
   std::unique_ptr<FileChooserService> m_fileChooserService;
   std::unique_ptr<NewsService> m_newsService;
-  std::unique_ptr<BackgroundEffectManager> m_backgroundEffectManager;
+  std::unique_ptr<WindowMaterialManager> m_windowMaterialManager;
   std::unique_ptr<ShortcutInhibitManager> m_shortcutInhibitManager;
   std::unique_ptr<TelemetryService> m_telemetry;
+  std::unique_ptr<UpdateService> m_updateService;
   std::unique_ptr<AudioControlService> m_audioControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;

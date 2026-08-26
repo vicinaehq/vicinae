@@ -1,9 +1,10 @@
 #include "completion-model.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "services/navigation/list-navigation.hpp"
 #include <utility>
 
 template <> struct fuzzy::FuzzySearchable<CompletionModel::Item> {
-  static int score(const CompletionModel::Item &item, std::string_view query) {
+  static fuzzy::Match score(const CompletionModel::Item &item, const fuzzy::Query &query) {
     return fuzzy::scoreWeighted({{item.title, 1.0}}, query);
   }
 };
@@ -64,6 +65,56 @@ void CompletionModel::setSections(const QVariantList &sections) {
   emit countChanged();
 }
 
+void CompletionModel::updateItem(const QVariantMap &item) {
+  const auto id = item.value(QStringLiteral("id")).toString();
+  if (id.isEmpty()) return;
+
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
+    auto &items = m_sections[s].items;
+    for (int i = 0; std::cmp_less(i, items.size()); ++i) {
+      if (items[i].data.value(QStringLiteral("id")).toString() != id) continue;
+
+      auto title = item.value(QStringLiteral("title")).toString();
+      if (title.isEmpty()) title = item.value(QStringLiteral("displayName")).toString();
+      items[i] = {
+          .title = title.toStdString(),
+          .iconSource = item.value(QStringLiteral("iconSource")).toString(),
+          .data = item,
+      };
+
+      for (int f = 0; std::cmp_less(f, m_flat.size()); ++f) {
+        const auto &fi = m_flat[f];
+        if (fi.kind == FlatItem::Entry && fi.sectionIdx == s && fi.itemIdx == i) {
+          const auto idx = index(f);
+          emit dataChanged(idx, idx);
+          break;
+        }
+      }
+      return;
+    }
+  }
+}
+
+QVariantMap CompletionModel::itemDataById(const QString &id) const {
+  for (const auto &section : m_sections) {
+    for (const auto &item : section.items) {
+      if (item.data.value(QStringLiteral("id")).toString() == id) return item.data;
+    }
+  }
+  return {};
+}
+
+void CompletionModel::setStringOptions(const QStringList &options) {
+  QVariantList items;
+  for (qsizetype i = 0; i < options.size(); ++i) {
+    items.append(QVariantMap{
+        {QStringLiteral("id"), QString::number(i)},
+        {QStringLiteral("displayName"), options[i]},
+    });
+  }
+  setItems(items);
+}
+
 void CompletionModel::setFilter(const QString &query) {
   auto q = query.toStdString();
   if (m_filterQuery == q) return;
@@ -78,24 +129,8 @@ void CompletionModel::setFilter(const QString &query) {
 int CompletionModel::nextSelectableIndex(int from, int direction) const {
   const auto count = static_cast<int>(m_flat.size());
   if (count == 0) return -1;
-
-  int idx = from + direction;
-  if (idx < 0)
-    idx = count - 1;
-  else if (idx >= count)
-    idx = 0;
-
-  const int start = idx;
-  do {
-    if (m_flat[idx].kind == FlatItem::Entry) return idx;
-    idx += direction;
-    if (idx < 0)
-      idx = count - 1;
-    else if (idx >= count)
-      idx = 0;
-  } while (idx != start);
-
-  return -1;
+  return ListNavigation::nextIndex(from, direction, count,
+                                   [&](int idx) { return m_flat[idx].kind == FlatItem::Entry; });
 }
 
 int CompletionModel::indexOfItemId(const QString &id) const {

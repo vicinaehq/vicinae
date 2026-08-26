@@ -30,6 +30,7 @@ RUN apt-get -y update &&	\
     libxkbcommon-x11-dev	\
     libfontconfig1-dev		\
     libfreetype6-dev		\
+    libglib2.0-dev			\
     libx11-dev				\
     libxext-dev				\
     libxfixes-dev			\
@@ -89,12 +90,14 @@ WORKDIR /qt6
 
 RUN perl init-repository --module-subset=qtbase,qtsvg,qtwayland,qtdeclarative,qttools
 
+# -feature-glib is needed for qtkeychain libsecret backend to not timeout
 RUN ./configure					\
     -release					\
     -ltcg						\
     -reduce-exports				\
     -prefix ${INSTALL_DIR}		\
     -xcb						\
+    -feature-glib				\
     -feature-wayland-client		\
     -no-feature-wayland-server	\
     -feature-sql				\
@@ -228,8 +231,16 @@ RUN git clone --recursive https://github.com/KDE/syntax-highlighting --branch v6
 RUN cd syntax-highlighting && /usr/bin/cmake -B build -DKSYNTAXHIGHLIGHTING_USE_GUI=OFF && /usr/bin/cmake --build build --parallel $(nproc) && /usr/bin/cmake --install build
 
 # install node 22 (used to build the main vicinae binary and bundled in the app image)
-RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz
-RUN mkdir /opt/node && tar -xf node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C /opt/node && rm -rf *.tar.xz
+ARG TARGETARCH
+RUN case "${TARGETARCH}" in \
+        amd64) NODE_ARCH=x64 ;; \
+        arm64) NODE_ARCH=arm64 ;; \
+        *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac && \
+    wget "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" && \
+    mkdir /opt/node && \
+    tar -xf "node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" --strip-components=1 -C /opt/node && \
+    rm -rf *.tar.xz
 
 FROM ubuntu:22.04 AS runtime
 
@@ -258,9 +269,11 @@ RUN apt-get update \
         libxext6 \
         libxfixes3 \
         libxcb1 \
+        libxcb1-dev \
         libxcb-cursor0 \
         libxcb-glx0 \
         libxcb-keysyms1 \
+        libxcb-keysyms1-dev \
         libxcb-image0 \
         libxcb-shm0 \
         libxcb-icccm4 \
@@ -281,6 +294,7 @@ RUN apt-get update \
 		curl				\
 		wget				\
 		qtkeychain-qt6-dev	\
+		libsecret-1-dev		\
 		libminizip-dev		\
 		squashfs-tools		\
 		ccache				\
@@ -298,14 +312,21 @@ COPY --from=deps-builder /opt/gcc /opt/gcc
 COPY --from=deps-builder /usr/local /usr/local
 COPY --from=deps-builder /opt/node /opt/node
 
-ENV LINUXDEPLOY_APPIMAGE_URL "https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage"
-ENV LINUXDEPLOY_PLUGIN_QT_APPIMAGE_URL "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-alpha-20250213-1/linuxdeploy-plugin-qt-x86_64.AppImage"
-
-RUN wget -O /usr/local/bin/linuxdeploy "${LINUXDEPLOY_APPIMAGE_URL}" && chmod +x /usr/local/bin/linuxdeploy
-RUN wget -O /usr/local/bin/linuxdeploy-plugin-qt "${LINUXDEPLOY_PLUGIN_QT_APPIMAGE_URL}" && chmod +x /usr/local/bin/linuxdeploy-plugin-qt
+ARG TARGETARCH
+RUN case "${TARGETARCH}" in \
+        amd64) DEPLOY_ARCH=x86_64 ;; \
+        arm64) DEPLOY_ARCH=aarch64 ;; \
+        *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac && \
+    wget -O /usr/local/bin/linuxdeploy \
+        "https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-${DEPLOY_ARCH}.AppImage" && \
+    chmod +x /usr/local/bin/linuxdeploy && \
+    wget -O /usr/local/bin/linuxdeploy-plugin-qt \
+        "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-alpha-20250213-1/linuxdeploy-plugin-qt-${DEPLOY_ARCH}.AppImage" && \
+    chmod +x /usr/local/bin/linuxdeploy-plugin-qt
 
 ENV PATH="/opt/gcc/bin:/opt/node/bin:${PATH}"
-ENV LD_LIBRARY_PATH="/opt/gcc/lib64:/usr/local/lib:/usr/local/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+ENV LD_LIBRARY_PATH="/opt/gcc/lib64:/usr/local/lib:/usr/local/lib/x86_64-linux-gnu:/usr/local/lib/aarch64-linux-gnu:${LD_LIBRARY_PATH}"
 ENV CC=/opt/gcc/bin/gcc
 ENV CXX=/opt/gcc/bin/g++
 

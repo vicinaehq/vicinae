@@ -177,8 +177,8 @@ ExtensionIntervalScheduler::computeInitialDelay(const std::string &key, std::chr
 void ExtensionIntervalScheduler::loadState() {
   if (!fs::is_regular_file(m_statePath)) return;
 
-  if (auto const error = glz::read_file_json(m_lastRun, m_statePath.c_str(), m_buf)) {
-    qWarning() << "[ExtensionIntervalScheduler] Failed to read state from" << m_statePath.c_str()
+  if (auto const error = glz::read_file_json(m_lastRun, m_statePath.string(), m_buf)) {
+    qWarning() << "[ExtensionIntervalScheduler] Failed to read state from" << m_statePath.string()
                << glz::format_error(error);
   }
 }
@@ -187,8 +187,8 @@ void ExtensionIntervalScheduler::saveState() {
   std::error_code ec;
   fs::create_directories(m_statePath.parent_path(), ec);
 
-  if (auto const error = glz::write_file_json(m_lastRun, m_statePath.c_str(), m_buf)) {
-    qWarning() << "[ExtensionIntervalScheduler] Failed to write state to" << m_statePath.c_str()
+  if (auto const error = glz::write_file_json(m_lastRun, m_statePath.string(), m_buf)) {
+    qWarning() << "[ExtensionIntervalScheduler] Failed to write state to" << m_statePath.string()
                << glz::format_error(error);
   }
 }

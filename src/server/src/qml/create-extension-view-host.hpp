@@ -1,5 +1,6 @@
 #pragma once
 #include "bridge-view.hpp"
+#include "completion-model.hpp"
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -17,7 +18,7 @@ class CreateExtensionViewHost : public FormViewBase {
       QString commandDescription READ commandDescription WRITE setCommandDescription NOTIFY formChanged)
   Q_PROPERTY(QVariantMap selectedTemplate READ selectedTemplate NOTIFY formChanged)
 
-  Q_PROPERTY(QVariantList templateItems READ templateItems CONSTANT)
+  Q_PROPERTY(CompletionModel *templateModel READ templateModel CONSTANT)
 
   Q_PROPERTY(QString authorError READ authorError NOTIFY errorsChanged)
   Q_PROPERTY(QString titleError READ titleError NOTIFY errorsChanged)
@@ -44,7 +45,7 @@ public:
   QString commandDescription() const { return m_commandDescription; }
   QVariantMap selectedTemplate() const { return m_selectedTemplate; }
 
-  QVariantList templateItems() const { return m_templateItems; }
+  CompletionModel *templateModel() { return &m_templateModel; }
 
   QString authorError() const { return m_authorError; }
   QString titleError() const { return m_titleError; }
@@ -116,7 +117,7 @@ private:
   QString m_commandDescription;
   QVariantMap m_selectedTemplate;
 
-  QVariantList m_templateItems;
+  CompletionModel m_templateModel{this};
 
   QString m_authorError;
   QString m_titleError;

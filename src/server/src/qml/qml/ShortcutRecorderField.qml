@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 
 Popup {
     id: recorder
@@ -14,16 +13,11 @@ Popup {
     height: 80
     focus: true
     closePolicy: Popup.CloseOnPressOutside
-    popupType: Popup.Window
+    popupType: Platform.preferItemPopup("popover") ? Popup.Item : Popup.Window
     PopupPlacement.alignment: Qt.AlignHCenter | (recorder._below ? Qt.AlignBottom : Qt.AlignTop)
     padding: 10
 
     property bool _below: false
-
-    property var _currentShortcutTokens: []
-    property string _statusText: "Recording..."
-    property color _statusColor: Theme.foreground
-
     property bool _justClosed: false
 
     Timer {
@@ -42,9 +36,7 @@ Popup {
         if (_justClosed)
             return false;
 
-        _currentShortcutTokens = [];
-        _statusText = "Recording...";
-        _statusColor = Theme.foreground;
+        capture.reset();
         closeTimer.stop();
 
         // Parent to the trigger so the native popup anchors to it; x/y only
@@ -57,103 +49,31 @@ Popup {
         return true;
     }
 
-    onOpened: {
-        GlobalShortcuts.setCapturing(true);
-        keyReceiver.forceActiveFocus();
-    }
+    onOpened: capture.forceActiveFocus()
     onAboutToHide: {
         _justClosed = true;
         reopenGuard.restart();
     }
-    onClosed: GlobalShortcuts.setCapturing(false)
     onActiveFocusChanged: if (!activeFocus && opened)
         close()
 
-    Component.onDestruction: GlobalShortcuts.setCapturing(false)
-
-    background: Rectangle {
-        radius: 8
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.95)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
-        BackgroundEffect.enabled: Config.blurEnabled
-        BackgroundEffect.radius: 8
+    background: PopoverBackground {
+        popup: recorder
+        PopupMaterial {}
     }
 
-    contentItem: FocusScope {
+    contentItem: ShortcutRecorderCapture {
+        id: capture
         focus: true
+        capturing: recorder.opened
+        validateShortcut: recorder.validateShortcut
+        shortcutDisplayProvider: recorder.shortcutDisplayProvider
 
-        ShortcutInhibitor.enabled: recorder.opened
-
-        Keys.onPressed: event => {
-            event.accepted = true;
-            closeTimer.stop();
-
-            var key = event.key;
-            var mods = event.modifiers;
-
-            var isModKey = key === Qt.Key_Shift || key === Qt.Key_Control || key === Qt.Key_Alt || key === Qt.Key_Meta;
-            var isCloseKey = key === Qt.Key_Escape || key === Qt.Key_Backspace;
-
-            if (!isModKey && isCloseKey && mods === Qt.NoModifier) {
-                recorder.close();
-                return;
-            }
-
-            if (recorder.shortcutDisplayProvider)
-                recorder._currentShortcutTokens = recorder.shortcutDisplayProvider(key, mods);
-
-            if (isModKey) {
-                recorder._statusText = "Recording...";
-                recorder._statusColor = Theme.foreground;
-                return;
-            }
-
-            if (recorder.validateShortcut) {
-                var error = recorder.validateShortcut(key, mods);
-                if (error !== "") {
-                    recorder._statusText = error;
-                    recorder._statusColor = Theme.danger;
-                    return;
-                }
-            }
-
-            recorder._statusText = "Keybind updated";
-            recorder._statusColor = Theme.toastSuccess;
+        onActivity: closeTimer.stop()
+        onDismissRequested: recorder.close()
+        onShortcutCaptured: (key, modifiers) => {
             closeTimer.start();
-            recorder.shortcutCaptured(key, mods);
-        }
-
-        Item {
-            id: keyReceiver
-            focus: true
-        }
-
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: 5
-
-            Item {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: badge.width
-                Layout.preferredHeight: badge.height
-                visible: recorder._currentShortcutTokens.length > 0
-
-                ShortcutBadge {
-                    id: badge
-                    tokens: recorder._currentShortcutTokens
-                }
-            }
-
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillWidth: true
-                text: recorder._statusText
-                color: recorder._statusColor
-                font.pointSize: Theme.smallerFontSize
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-            }
+            recorder.shortcutCaptured(key, modifiers);
         }
     }
 }

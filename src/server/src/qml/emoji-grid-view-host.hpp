@@ -1,13 +1,15 @@
 #pragma once
 #include "bridge-view.hpp"
+#include "completion-model.hpp"
 #include "emoji-grid-model.hpp"
 #include "glyph/glyph.hpp"
+#include <QCoreApplication>
 #include <QStringList>
 
 class EmojiGridViewHost : public ViewHostBase {
   Q_OBJECT
   Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
-  Q_PROPERTY(QStringList categoryFilterOptions READ categoryFilterOptions CONSTANT)
+  Q_PROPERTY(CompletionModel *categoryFilterModel READ categoryFilterModel CONSTANT)
   Q_PROPERTY(int currentCategoryFilter READ currentCategoryFilter NOTIFY currentCategoryFilterChanged)
 
 public:
@@ -25,6 +27,7 @@ public:
     m_model.setScope(ViewScope(context(), this));
     m_model.initialize();
     setSearchPlaceholderText(m_model.searchPlaceholder());
+    m_categoryFilterModel.setStringOptions(categoryFilterOptions());
     restoreCategoryFilter();
   }
 
@@ -35,12 +38,7 @@ public:
 
   QObject *listModel() const { return const_cast<EmojiGridModel *>(&m_model); }
 
-  QStringList categoryFilterOptions() const {
-    QStringList options{QStringLiteral("All")};
-    for (const auto &section : glyph::sections())
-      options.append(QString::fromUtf8(section.label.data(), section.label.size()));
-    return options;
-  }
+  CompletionModel *categoryFilterModel() { return &m_categoryFilterModel; }
 
   int currentCategoryFilter() const { return m_currentCategoryFilter; }
 
@@ -62,6 +60,15 @@ signals:
   void currentCategoryFilterChanged();
 
 private:
+  QStringList categoryFilterOptions() const {
+    QStringList options{tr("All")};
+    for (const auto &section : glyph::sections()) {
+      const QByteArray label(section.label.data(), static_cast<qsizetype>(section.label.size()));
+      options.append(QCoreApplication::translate("emoji-categories", label.constData()));
+    }
+    return options;
+  }
+
   static QString categoryKey(glyph::Category category) {
     const auto label = glyph::categoryLabel(category);
     return QString::fromUtf8(label.data(), label.size());
@@ -81,5 +88,6 @@ private:
   }
 
   EmojiGridModel m_model{this};
+  CompletionModel m_categoryFilterModel{this};
   int m_currentCategoryFilter = 0;
 };

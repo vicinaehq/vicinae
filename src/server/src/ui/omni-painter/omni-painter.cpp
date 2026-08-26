@@ -8,34 +8,8 @@
 #include <qpainterpath.h>
 #include <qsvgrenderer.h>
 
-class ColorResolver {
-public:
-  static QColor resolve(const ColorLike &color, const ThemeFile &theme) {
-    return std::visit(ColorResolver(theme), color);
-  }
-
-  ColorResolver(const ThemeFile &theme) : m_theme(theme) {}
-
-  QColor operator()(const DynamicColor &dynamic) const {
-    // for now, we ignore `adjustContrast`
-    if (m_theme.isLight()) return Utils::colorFromString(dynamic.light);
-    return Utils::colorFromString(dynamic.dark);
-  }
-  QColor operator()(const QColor &color) const { return color; }
-  QColor operator()(const SemanticColor &color) const { return m_theme.resolve(color); }
-  QColor operator()(const QString &text) const { return Utils::colorFromString(text); }
-
-private:
-  const ThemeFile &m_theme;
-};
-
 class ColorSerializer {
 public:
-  static QColor resolve(const ColorLike &color, const ThemeFile &theme) {
-    auto result = std::visit(ColorResolver(theme), color);
-    return result;
-  }
-
   ColorSerializer(const ThemeFile &theme) : m_theme(theme) {}
 
   QString operator()(const DynamicColor &dynamic) const {
@@ -69,15 +43,12 @@ void OmniPainter::fillRect(QRect rect, const QColor &color, int radius, float al
   drawRoundedRect(rect, radius, radius);
 }
 
-QBrush OmniPainter::colorBrush(const ColorLike &colorLike) const { return QBrush(resolveColor(colorLike)); }
-
-QColor OmniPainter::resolveColor(const ColorLike &colorLike) {
-  return ColorResolver::resolve(colorLike, ThemeService::instance().theme());
+QBrush OmniPainter::colorBrush(const ColorLike &colorLike) const {
+  return QBrush(ThemeService::instance().theme().resolve(colorLike));
 }
 
 void OmniPainter::fillRect(QRect rect, const ColorLike &colorLike, int radius, float alpha) {
-  auto color = resolveColor(colorLike);
-  fillRect(rect, color, radius, alpha);
+  fillRect(rect, ThemeService::instance().theme().resolve(colorLike), radius, alpha);
 }
 
 void OmniPainter::setThemePen(const ColorLike &color, int width) {

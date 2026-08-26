@@ -1,12 +1,14 @@
 #pragma once
 #include "bridge-view.hpp"
+#include "completion-model.hpp"
 #include "font-grid-model.hpp"
 #include "view-scope.hpp"
+#include <QCoreApplication>
 #include <QStringList>
 
 class FontBrowserViewHost : public ViewHostBase {
   Q_OBJECT
-  Q_PROPERTY(QStringList categoryFilterOptions READ categoryFilterOptions CONSTANT)
+  Q_PROPERTY(CompletionModel *categoryFilterModel READ categoryFilterModel CONSTANT)
   Q_PROPERTY(int currentCategoryFilter READ currentCategoryFilter NOTIFY currentCategoryFilterChanged)
 
 signals:
@@ -27,17 +29,14 @@ public:
     m_model.setScope(ViewScope(context(), this));
     m_model.initialize();
     setSearchPlaceholderText(m_model.searchPlaceholder());
+    m_categoryFilterModel.setStringOptions(categoryFilterOptions());
     restoreCategoryFilter();
   }
 
   void textChanged(const QString &text) override { m_model.setFilter(text); }
   void loadInitialData() override { m_model.setFilter(searchText()); }
 
-  QStringList categoryFilterOptions() const {
-    QStringList options{QStringLiteral("All")};
-    options << m_model.categoryNames();
-    return options;
-  }
+  CompletionModel *categoryFilterModel() { return &m_categoryFilterModel; }
 
   int currentCategoryFilter() const { return m_currentCategoryFilter; }
 
@@ -47,19 +46,34 @@ public:
     emit currentCategoryFilterChanged();
 
     m_model.setCategoryFilter(index <= 0 ? std::nullopt : std::optional<int>(index - 1));
-    command()->storage().setItem("fontCategory", categoryFilterOptions().value(index));
+    command()->storage().setItem("fontCategory", categoryFilterKeys().value(index));
 
     if (!searchText().isEmpty()) m_model.setFilter(searchText());
   }
 
 private:
+  QStringList categoryFilterOptions() const {
+    QStringList options{tr("All")};
+    for (const auto &name : m_model.categoryNames()) {
+      options << QCoreApplication::translate("font-categories", qPrintable(name));
+    }
+    return options;
+  }
+
+  QStringList categoryFilterKeys() const {
+    QStringList keys{QStringLiteral("All")};
+    keys << m_model.categoryNames();
+    return keys;
+  }
+
   void restoreCategoryFilter() {
     const auto saved = command()->storage().getItem("fontCategory");
     if (saved.isUndefined() || saved.isNull()) return;
-    const int index = categoryFilterOptions().indexOf(saved.toString());
+    const int index = categoryFilterKeys().indexOf(saved.toString());
     if (index > 0) setCategoryFilter(index);
   }
 
   FontGridModel m_model{this};
+  CompletionModel m_categoryFilterModel{this};
   int m_currentCategoryFilter = 0;
 };

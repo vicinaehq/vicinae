@@ -3,30 +3,41 @@ import QtQuick.Layouts
 
 SelectableDelegate {
     id: root
-    height: 90
+    height: 110
 
     required property string calcQuestion
     required property string calcQuestionUnit
     required property string calcAnswer
     required property string calcAnswerUnit
 
+    // quite naive, but good enough.
+    // if we find we need this to be actually accurate, we probably need a per backend
+    // way to figure out what token carries operator significance.
+    function highlight(expr) {
+        const escaped = expr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const tokens = /(\b(?:to|in|as|of|mod|and|or|xor)\b|[+\-*\/^%()=,])/gi;
+        return escaped.replace(tokens, m => `<font color="${Theme.textMuted}">${m}</font>`);
+    }
+
     Item {
         anchors.fill: parent
         anchors.leftMargin: 16
         anchors.rightMargin: 16
 
-        Column {
+        Item {
             id: leftColumn
             anchors.left: parent.left
             anchors.right: arrowIcon.left
             anchors.rightMargin: 12
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 4
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
 
             Text {
-                id: questionText
                 width: parent.width
-                text: root.calcQuestion
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: -10
+                text: root.highlight(root.calcQuestion)
+                textFormat: Text.StyledText
                 color: root.selected ? Theme.listItemSelectionFg : Theme.foreground
                 font.pointSize: Theme.regularFontSize * 1.5
                 font.weight: Font.Medium
@@ -35,14 +46,12 @@ SelectableDelegate {
                 horizontalAlignment: Text.AlignHCenter
             }
 
-            Text {
-                width: parent.width
-                text: root.calcQuestionUnit || "Question"
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                horizontalAlignment: Text.AlignHCenter
+            TextBadge {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 16
+                text: root.calcQuestionUnit || qsTr("Expression")
+                contentColor: root.selected ? Theme.listItemSelectionFg : Theme.foreground
             }
         }
 
@@ -74,15 +83,18 @@ SelectableDelegate {
             color: Theme.divider
         }
 
-        Column {
+        Item {
+            id: rightColumn
             anchors.left: arrowIcon.right
             anchors.leftMargin: 12
             anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 4
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
 
             Text {
                 width: parent.width
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: -10
                 text: root.calcAnswer
                 color: root.selected ? Theme.listItemSelectionFg : Theme.foreground
                 font.pointSize: Theme.regularFontSize * 1.5
@@ -92,14 +104,12 @@ SelectableDelegate {
                 horizontalAlignment: Text.AlignHCenter
             }
 
-            Text {
-                width: parent.width
-                text: root.calcAnswerUnit || "Answer"
-                color: Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                horizontalAlignment: Text.AlignHCenter
+            TextBadge {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 16
+                text: root.calcAnswerUnit || qsTr("Result")
+                contentColor: root.selected ? Theme.listItemSelectionFg : Theme.foreground
             }
         }
     }

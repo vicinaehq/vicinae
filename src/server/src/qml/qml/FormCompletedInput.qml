@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Item {
+FocusScope {
     id: root
     implicitHeight: 36
     Layout.fillWidth: true

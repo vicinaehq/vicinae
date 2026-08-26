@@ -18,6 +18,7 @@
 class BaseView;
 class DialogContentWidget;
 class ActionPanelView;
+class QWindow;
 
 #define VALUE_OR(VALUE, FALLBACK) (VALUE ? VALUE : FALLBACK)
 
@@ -37,8 +38,8 @@ struct PopToRootOptions {
 using ArgumentValues = std::vector<std::pair<QString, QString>>;
 
 struct ActivateEntrypointOptions {
-  ArgumentValues arguments;
-  QString fallbackText;
+  LaunchProps props;
+  bool toggleIfAlreadyActive = true;
 };
 
 struct CompleterState {
@@ -117,6 +118,7 @@ signals:
 
   void completionCreated(const CompleterState &completer) const;
   void completionDestroyed() const;
+  void completerFocusedRequested() const;
 
   void headerVisiblityChanged(bool value);
   void searchVisibilityChanged(bool value);
@@ -135,6 +137,12 @@ public:
 
   bool windowActivated();
   void setWindowActivated(bool value = true);
+
+  /**
+   * Non-owning reference to the launcher window, registered by the QML window host.
+   */
+  void setWindow(QWindow *window) { m_window = window; }
+  QWindow *window() const { return m_window; }
 
   void setPopToRootOnClose(bool value);
 
@@ -167,6 +175,8 @@ public:
   void setDialog(DialogContentWidget *dialog);
   void confirmAlert(const QString &title, const QString &description, const std::function<void()> &onConfirm);
 
+  void requestCompleterFocus();
+
   void createCompletion(const ArgumentList &args, const ImageURL &icon);
   void destroyCurrentCompletion();
 
@@ -193,6 +203,10 @@ public:
   bool executePrimaryAction();
   void executeAction(AbstractAction *action);
 
+private:
+  void executeActionNow(AbstractAction *action);
+
+public:
   void setHeaderVisiblity(bool value, const BaseView *caller = nullptr);
   void setSearchVisibility(bool value, const BaseView *caller = nullptr);
   void setSearchInteractive(bool value, const BaseView *caller = nullptr);
@@ -207,6 +221,7 @@ public:
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
+  void launch(const std::shared_ptr<AbstractCmd> &cmd, const LaunchProps &props);
   bool activateEntrypoint(const EntrypointId &id, const ActivateEntrypointOptions &options = {});
 
   const AbstractCmd *activeCommand() const;
@@ -267,6 +282,7 @@ private:
   bool m_popToRootOnClose = false;
   bool m_instantDismiss = false;
   bool m_closeOnFocusLoss = false;
+  QWindow *m_window = nullptr;
   std::vector<std::unique_ptr<ViewState>> m_views;
   std::optional<PendingPopToRoot> m_pendingPopToRoot;
 };

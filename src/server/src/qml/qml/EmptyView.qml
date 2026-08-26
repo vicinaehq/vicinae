@@ -4,7 +4,7 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    property string title: "No results"
+    property string title: qsTr("No results")
     property string description: ""
     property var icon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 

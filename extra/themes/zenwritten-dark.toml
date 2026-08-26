@@ -12,7 +12,7 @@ icon = "icons/zenbones.png"
 background = "#191919"        # bg (dark sand)
 foreground = "#BBBBBB"        # fg (light stone)
 secondary_background = "#303030"  # bg1 (slightly lighter for surfaces)
-border = "#404040"            # selection bg (subtle border)
+border = "#434343"            # selection bg (subtle border)
 accent = "#6099C0"            # blue (neutral accent)
 
 [colors.accents]

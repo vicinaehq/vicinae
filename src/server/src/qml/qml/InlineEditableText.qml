@@ -14,7 +14,7 @@ Rectangle {
     implicitHeight: 24
     radius: 4
     color: "transparent"
-    border.color: Config.withAlpha(root._editing ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
+    border.color: Config.withAlpha(root._editing ? Theme.inputBorderFocus : Theme.inputBorder, Config.surfaceOpacity)
     border.width: root._editing || hover.hovered ? 1 : 0
 
     HoverHandler {

@@ -128,7 +128,7 @@ private:
   std::vector<Keyboard::Shortcut> shortcutsForPreset(ShortcutPreset preset) {
     switch (preset) {
     case ShortcutPreset::List:
-      return {Keyboard::Shortcut::enter(), Keyboard::Shortcut::submit()};
+      return {Keyboard::Shortcut::enter(), Keyboard::Shortcut::enter().shifted()};
     case ShortcutPreset::Form:
       return {Keyboard::Shortcut::submit()};
     default:

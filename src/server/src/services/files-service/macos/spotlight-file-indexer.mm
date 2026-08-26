@@ -1,8 +1,10 @@
+#include "spotlight-file-indexer.hpp"
 #include <CoreServices/CoreServices.h>
 #include <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #include <QtConcurrent/QtConcurrentRun>
 #include <algorithm>
 #include <climits>
+#include <common/file-category.hpp>
 #include <filesystem>
 #include <initializer_list>
 #include <optional>
@@ -10,9 +12,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <common/file-category.hpp>
-#include "fuzzy/fzf.hpp"
-#include "spotlight-file-indexer.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 
 namespace {
 
@@ -32,7 +32,8 @@ vicinae::FileCategory categoryForPath(const std::filesystem::path &path) {
 }
 
 std::string anyOf(std::initializer_list<std::string_view> predicates) {
-  auto predicate = predicates | std::views::join_with(std::string_view{" || "}) | std::ranges::to<std::string>();
+  auto predicate =
+      predicates | std::views::join_with(std::string_view{" || "}) | std::ranges::to<std::string>();
 
   return "(" + predicate + ")";
 }
@@ -176,10 +177,10 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
   };
 
   CFIndex const count = MDQueryGetResultCount(mdQuery);
-  const auto &matcher = fzf::threadLocalMatcher();
   std::vector<Scored> scored;
 
   scored.reserve(count);
+  fuzzy::Query const fuzzyQuery{query};
 
   for (CFIndex i = 0; i < count; ++i) {
     auto item = (MDItemRef)MDQueryGetResultAtIndex(mdQuery, i);
@@ -201,11 +202,11 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
         continue;
       }
 
-      int const fuzzyScore = matcher.fuzzy_match_v2_score_query(path.filename().string(), query);
+      auto const m = fuzzy::scoreWeighted({{path.filename().string(), 1.0}}, fuzzyQuery);
 
-      if (fuzzyScore > 0) {
+      if (m.accepted()) {
         scored.emplace_back(Scored{.path = std::move(path),
-                                   .score = fuzzyScore,
+                                   .score = m.score,
                                    .category = category,
                                    .mimeType = mimeTypeForItem(item)});
       }
@@ -237,6 +238,8 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
 }
 
 } // namespace
+
+bool SpotlightFileIndexer::isAvailable() const { return true; }
 
 QFuture<std::vector<IndexerFileResult>> SpotlightFileIndexer::queryAsync(std::string_view query,
                                                                          const IndexerQueryParams &params) {

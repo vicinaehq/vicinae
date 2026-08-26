@@ -1,5 +1,6 @@
 #include "emoji-grid-model.hpp"
 #include "builtin_icon.hpp"
+#include "extend/grid-model.hpp"
 #include "clipboard-actions.hpp"
 #include "edit-keywords-view-host.hpp"
 #include "navigation-controller.hpp"
@@ -8,10 +9,34 @@
 #include "ui/views/base-view.hpp"
 #include "utils.hpp"
 #include "view-utils.hpp"
+#include <QCoreApplication>
 #include <algorithm>
+#include <array>
 #include <utility>
 
 namespace {
+
+// Keep in sync with glyph::sections().
+[[maybe_unused]] constexpr auto EMOJI_CATEGORY_LABELS = std::to_array<const char *>({
+    QT_TRANSLATE_NOOP("emoji-categories", "Smileys & Emotion"),
+    QT_TRANSLATE_NOOP("emoji-categories", "People & Body"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Animals & Nature"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Food & Drink"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Travel & Places"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Activities"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Objects"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Symbols"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Flags"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Math"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Arrows"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Currency"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Punctuation"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Shapes"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Misc Symbols"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Greek"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Number Forms"),
+    QT_TRANSLATE_NOOP("emoji-categories", "Fancy Letters"),
+});
 
 QString getFormattedCodepoint(std::string_view glyph) {
   auto codepoint = qStringFromStdView(glyph).toUcs4().constFirst();
@@ -35,8 +60,8 @@ class PinEmojiAction : public AbstractAction {
 
 public:
   PinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
-  QString title() const override { return "Pin emoji"; }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin"); }
+  QString title() const override { return QCoreApplication::translate("PinEmojiAction", "Pin emoji"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::Pin); }
   void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->pin(m_emoji); }
 };
 
@@ -45,8 +70,8 @@ class UnpinEmojiAction : public AbstractAction {
 
 public:
   UnpinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
-  QString title() const override { return "Unpin emoji"; }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin-disabled"); }
+  QString title() const override { return QCoreApplication::translate("UnpinEmojiAction", "Unpin emoji"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin(BuiltinIcon::PinDisabled); }
   void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->unpin(m_emoji); }
 };
 
@@ -55,8 +80,12 @@ class ResetEmojiRankingAction : public AbstractAction {
 
 public:
   ResetEmojiRankingAction(std::string_view emoji) : m_emoji(emoji) {}
-  QString title() const override { return "Reset ranking"; }
-  std::optional<ImageURL> icon() const override { return ImageURL::builtin("arrow-counter-clockwise"); }
+  QString title() const override {
+    return QCoreApplication::translate("ResetEmojiRankingAction", "Reset ranking");
+  }
+  std::optional<ImageURL> icon() const override {
+    return ImageURL::builtin(BuiltinIcon::ArrowCounterClockwise);
+  }
   void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->resetRanking(m_emoji); }
 };
 
@@ -69,7 +98,8 @@ public:
   ChangeEmojiSkinToneAction(std::string_view emoji, emoji::SkinToneInfo toneInfo, QString icon)
       : m_emoji(emoji), m_toneInfo(toneInfo), m_emojiIcon(std::move(icon)) {}
   QString title() const override {
-    return QStringLiteral("%1 skin tone").arg(qStringFromStdView(m_toneInfo.displayName));
+    return QCoreApplication::translate("ChangeEmojiSkinToneAction", "%1 skin tone")
+        .arg(qStringFromStdView(m_toneInfo.displayName));
   }
   std::optional<ImageURL> icon() const override { return ImageURL::emoji(m_emojiIcon); }
   void execute(ApplicationContext *ctx) override {
@@ -84,12 +114,15 @@ class ResetEmojiSkinToneAction : public AbstractAction {
 public:
   ResetEmojiSkinToneAction(std::string_view emoji, QString icon)
       : m_emoji(emoji), m_emojiIcon(std::move(icon)) {}
-  QString title() const override { return "Reset to preference"; }
+  QString title() const override {
+    return QCoreApplication::translate("ResetEmojiSkinToneAction", "Reset to preference");
+  }
   std::optional<ImageURL> icon() const override { return ImageURL::emoji(m_emojiIcon); }
   void execute(ApplicationContext *ctx) override { ctx->services->glyphService()->resetSkinTone(m_emoji); }
 };
 
 class EditEmojiKeywordsAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(EditEmojiKeywordsAction)
 public:
   void execute(ApplicationContext *ctx) override {
     auto glyphService = ctx->services->glyphService();
@@ -100,14 +133,14 @@ public:
         [glyphService, emoji = m_emoji](const QString &kw) {
           return glyphService->setKeywords(emoji, kw.toStdString());
         },
-        "Additional keywords that will be used to index this glyph");
+        tr("Additional keywords that will be used to index this glyph"));
     ctx->navigation->pushView(view);
     ctx->navigation->setNavigationTitle(title());
   }
 
   std::optional<ImageURL> icon() const override { return BuiltinIcon::Text; }
 
-  QString title() const override { return "Edit keyword"; }
+  QString title() const override { return tr("Edit keyword"); }
 
   EditEmojiKeywordsAction(std::string_view emoji) : m_emoji(emoji) {}
 
@@ -132,14 +165,18 @@ std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const glyph::Item *data,
 
   auto pasteService = scope.services()->pasteService();
   auto panel = std::make_unique<ListActionPanelState>();
-  auto *copyEmoji = new CopyToClipboardAction(Clipboard::Text(copiedEmoji), "Copy");
-  auto *copyName = new CopyToClipboardAction(
-      Clipboard::Text(QString::fromUtf8(data->name.data(), data->name.size())), "Copy name");
+  auto *copyEmoji = new CopyToClipboardAction(Clipboard::Text(copiedEmoji),
+                                              QCoreApplication::translate("emoji-grid-model", "Copy"));
+  auto *copyName =
+      new CopyToClipboardAction(Clipboard::Text(QString::fromUtf8(data->name.data(), data->name.size())),
+                                QCoreApplication::translate("emoji-grid-model", "Copy name"));
   auto const categoryLabel = glyph::categoryLabel(data->category);
-  auto copyCodepoint = new CopyToClipboardAction(Clipboard::Text(getFormattedCodepoint(data->character)),
-                                                 "Copy unicode codepoint");
+  auto copyCodepoint =
+      new CopyToClipboardAction(Clipboard::Text(getFormattedCodepoint(data->character)),
+                                QCoreApplication::translate("emoji-grid-model", "Copy unicode codepoint"));
   auto *copyGroup = new CopyToClipboardAction(
-      Clipboard::Text(QString::fromUtf8(categoryLabel.data(), categoryLabel.size())), "Copy category");
+      Clipboard::Text(QString::fromUtf8(categoryLabel.data(), categoryLabel.size())),
+      QCoreApplication::translate("emoji-grid-model", "Copy category"));
   auto *resetRanking = new ResetEmojiRankingAction(data->character);
   auto editKeyword = new EditEmojiKeywordsAction(data->character);
 
@@ -179,7 +216,7 @@ std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const glyph::Item *data,
   }
 
   if (data->skinnable) {
-    auto *toneSection = panel->createSection("Skin tones");
+    auto *toneSection = panel->createSection(QCoreApplication::translate("emoji-grid-model", "Skin tones"));
 
     if (tone != defaultTone)
       toneSection->addAction(new ResetEmojiSkinToneAction(data->character, defaultToneEmoji));
@@ -237,6 +274,7 @@ EmojiGridModel::EmojiGridModel(QObject *parent) : SectionGridModel(parent) {}
 void EmojiGridModel::initialize() {
   m_glyphService = scope().services()->glyphService();
   m_sections = glyph::sections();
+  setInset(insetRatio(GridInset::Medium));
 
   if (auto *state = scope().topState(); state && state->sender) {
     if (auto *cmd = state->sender->command()) {
@@ -343,10 +381,10 @@ void EmojiGridModel::rebuildSections() {
 
   if (m_displayMode == DisplayMode::Root) {
     if (!m_categoryFilter) {
-      m_pinnedSource.setEmojis(QStringLiteral("Pinned"), m_pinned);
+      m_pinnedSource.setEmojis(tr("Pinned"), m_pinned);
       addSource(&m_pinnedSource);
 
-      m_recentSource.setEmojis(QStringLiteral("Recently used"), m_recent);
+      m_recentSource.setEmojis(tr("Recently used"), m_recent);
       addSource(&m_recentSource);
     }
 
@@ -359,7 +397,8 @@ void EmojiGridModel::rebuildSections() {
       items.reserve(section.members.size());
       for (const auto &item : section.members)
         items.push_back(&item);
-      src.setEmojis(QString::fromUtf8(section.label.data(), section.label.size()), items);
+      const QByteArray label(section.label.data(), static_cast<qsizetype>(section.label.size()));
+      src.setEmojis(QCoreApplication::translate("emoji-categories", label.constData()), items);
       addSource(&src);
     }
   } else {

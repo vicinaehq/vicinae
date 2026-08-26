@@ -1,16 +1,15 @@
+#include "hypr-ipc.hpp"
 #include "hyprland.hpp"
 
-HyprlandWindow::HyprlandWindow(const QJsonObject &json) {
-  m_id = json.value("address").toString();
-  m_title = json.value("title").toString();
-  m_wmClass = json.value("class").toString();
-  m_workspaceId = json.value("workspace").toObject().value("id").toInt();
+HyprlandWindow::HyprlandWindow(const Hyprland::ipc::Window &window) {
+  m_id = QString::fromStdString(window.address);
+  m_title = QString::fromStdString(window.title);
+  m_wmClass = QString::fromStdString(window.wmClass);
+  m_workspaceId = window.workspace.id;
+  m_pid = window.pid;
 
-  auto at = json.value("at").toArray();
-  auto size = json.value("size").toArray();
-
-  m_bounds.x = at.at(0).toInt();
-  m_bounds.y = at.at(1).toInt();
-  m_bounds.width = size.at(0).toInt();
-  m_bounds.height = size.at(1).toInt();
+  m_bounds.x = window.at[0];
+  m_bounds.y = window.at[1];
+  m_bounds.width = window.size[0];
+  m_bounds.height = window.size[1];
 }

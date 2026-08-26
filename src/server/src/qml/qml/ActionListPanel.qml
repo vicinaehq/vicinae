@@ -110,7 +110,7 @@ Item {
         Text {
             id: emptyLabel
             visible: root._empty
-            text: "No matching actions"
+            text: qsTr("No matching actions")
             color: Theme.textMuted
             font.pointSize: Theme.smallerFontSize
             horizontalAlignment: Text.AlignHCenter
@@ -132,6 +132,10 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
             highlightMoveDuration: 0
             model: root.model
+
+            ViciWheelHandler {
+                target: listView
+            }
 
             delegate: Loader {
                 id: delegateLoader
@@ -170,7 +174,7 @@ Item {
                             anchors.centerIn: parent
                             width: parent.width - 24
                             height: 1
-                            color: Theme.divider
+                            color: Config.withAlpha(Theme.divider, 0.5)
                         }
                     }
                 }
@@ -203,7 +207,7 @@ Item {
             id: divider
             Layout.fillWidth: true
             implicitHeight: 1
-            color: Theme.divider
+            color: Config.withAlpha(Theme.divider, 0.5)
         }
 
         Item {
@@ -241,7 +245,7 @@ Item {
                     Text {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
-                        text: "Filter actions..."
+                        text: qsTr("Filter actions...")
                         color: Theme.textPlaceholder
                         font: filterInput.font
                         visible: !filterInput.text
@@ -256,7 +260,7 @@ Item {
                     onTextEdited: filterDebounce.restart()
 
                     Keys.onPressed: function (event) {
-                        const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                        const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                         if (nav === 1) {
                             root.moveUp();
                             event.accepted = true;

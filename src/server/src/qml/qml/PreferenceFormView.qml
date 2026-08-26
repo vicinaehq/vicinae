@@ -22,10 +22,12 @@ Item {
                 required property string type
                 required property string fieldId
                 required property string label
+                required property string checkboxLabel
                 required property string description
                 required property string placeholder
                 required property var value
-                required property var options
+                required property var dropdownModel
+                required property var currentDropdownItem
                 required property bool readOnly
                 required property bool multiple
                 required property bool canChooseFiles
@@ -88,9 +90,9 @@ Item {
         FormField {
             id: field
             label: parent.label
-            info: parent.description
             FormCheckbox {
                 checked: field.parent.value === true
+                label: field.parent.checkboxLabel
                 readOnly: field.parent.readOnly
                 onToggled: root.prefModel.setFieldValue(field.parent.index, checked)
             }
@@ -104,23 +106,10 @@ Item {
             label: parent.label
             info: parent.description
 
-            function _findCurrentItem(items, val) {
-                for (var s = 0; s < items.length; s++) {
-                    var section = items[s];
-                    if (!section || !section.items)
-                        continue;
-                    for (var i = 0; i < section.items.length; i++) {
-                        if (section.items[i].id === val)
-                            return section.items[i];
-                    }
-                }
-                return null;
-            }
-
             SearchableDropdown {
-                items: field.parent.options || []
+                model: field.parent.dropdownModel
                 readOnly: field.parent.readOnly
-                currentItem: field._findCurrentItem(field.parent.options || [], field.parent.value)
+                currentItem: field.parent.currentDropdownItem
                 onActivated: item => root.prefModel.setFieldValue(field.parent.index, item.id)
             }
         }

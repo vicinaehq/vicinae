@@ -1,4 +1,5 @@
 #include "hypr-workspace.hpp"
+#include "hypr-ipc.hpp"
 
 using namespace Hyprland;
 
@@ -6,13 +7,10 @@ QString Workspace::id() const { return QString::number(m_id); }
 
 QString Workspace::name() const { return m_name; }
 
-QString Workspace::monitor() const { return QString::number(m_monitorId); }
+std::optional<QString> Workspace::monitor() const { return m_monitorName; }
 
 bool Workspace::hasFullScreen() const { return m_hasFullScreen; };
 
-Workspace::Workspace(const QJsonObject &json) {
-  m_id = json.value("id").toInt();
-  m_name = json.value("name").toString();
-  m_hasFullScreen = json.value("hasfullscreen").toBool();
-  m_monitorId = json.value("monitorID").toInt();
-}
+Workspace::Workspace(const ipc::Workspace &workspace)
+    : m_id(workspace.id), m_name(QString::fromStdString(workspace.name)),
+      m_monitorName(QString::fromStdString(workspace.monitor)), m_hasFullScreen(workspace.hasFullScreen) {}

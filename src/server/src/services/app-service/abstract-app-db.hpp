@@ -89,6 +89,9 @@ public:
    */
   virtual QString description() const = 0;
 
+  // Type label for the root search; empty means the default "Application".
+  virtual QString category() const { return {}; }
+
   // whether the executable can open url(s) or file(s)
   virtual bool isOpener() { return true; }
 };
@@ -103,6 +106,8 @@ struct LaunchTerminalCommandOptions {
 };
 
 class AbstractAppDatabase : public QObject {
+  Q_OBJECT
+
 public:
   using AppPtr = std::shared_ptr<AbstractApplication>;
 
@@ -119,14 +124,20 @@ public:
   virtual std::vector<std::filesystem::path> defaultSearchPaths() const = 0;
 
   /**
+   * The effective list of directories scanned for apps: the default system paths plus any
+   * provider-specific additions (such as user-configured directories coming from preferences).
+   */
+  virtual std::vector<std::filesystem::path> searchPaths() const { return defaultSearchPaths(); }
+
+  /**
    * This method is a request for the service to explicitly update the list of apps installed on the system.
-   * What it does is left to the implementer but it is expected that after calling this, we can query the
-   * service for the most up-to-date information.
+   * Implementations rebuild their database from their own searchPaths(). It is expected that after calling
+   * this, we can query the service for the most up-to-date information.
    * Usually, implementers install their own watching logic to detect changes and rebuild their app database
    * internally, but this is called when a higher level operation that could impact apps is performed (such as
    * changing app-related preferences).
    */
-  virtual bool scan(const std::vector<std::filesystem::path> &paths) = 0;
+  virtual bool scan() = 0;
 
   /**
    * Launch an instance of the application with the provided set of arguments.
@@ -198,9 +209,26 @@ public:
   virtual AppPtr terminalEmulator() const = 0;
 
   /**
+   * Open the location where the app is installed at.
+   * What this does highly depends on how applications are defined on the target platform.
+   * On linux this would open the .desktop file, on macOS open the app bundle directory...
+   */
+  virtual bool openLocation(const AbstractApplication &app) const = 0;
+
+  /**
+   * Application used to open the `app` at its installed location.
+   * If this return null, it means that calling `openLocation` will likely return `false`.
+   */
+  virtual AppPtr locationOpener(const AbstractApplication &app) const = 0;
+
+  /**
    * Open the system file browser for the provided path.
    * If `select` is true, implementations should try to reveal/select the item and
    * gracefully fall back to opening the containing folder when that is not supported.
    */
   virtual bool showInFileBrowser(const std::filesystem::path &path, bool select) const = 0;
+
+signals:
+  // The provider detected an out-of-band change to installed apps (e.g. a package install).
+  void changed();
 };

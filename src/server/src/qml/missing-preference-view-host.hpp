@@ -1,5 +1,6 @@
 #pragma once
 #include "common/entrypoint.hpp"
+#include "completion-model.hpp"
 #include "preference.hpp"
 #include "bridge-view.hpp"
 #include <QAbstractListModel>
@@ -17,10 +18,12 @@ public:
     TypeRole = Qt::UserRole + 1,
     FieldIdRole,
     LabelRole,
+    CheckboxLabelRole,
     DescriptionRole,
     PlaceholderRole,
     ValueRole,
-    OptionsRole,
+    DropdownModelRole,
+    CurrentDropdownItemRole,
     ReadOnlyRole,
     MultipleRole,
     CanChooseFilesRole,
@@ -53,10 +56,11 @@ private:
     QString type;
     QString id;
     QString label;
+    QString checkboxLabel;
     QString description;
     QString placeholder;
     QVariant value;
-    QVariantList options;
+    CompletionModel *dropdownModel = nullptr;
     bool multiple = false;
     bool canChooseFiles = true;
     bool canChooseDirectories = false;

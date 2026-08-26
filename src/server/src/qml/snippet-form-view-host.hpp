@@ -1,5 +1,6 @@
 #pragma once
 #include "bridge-view.hpp"
+#include "completion-model.hpp"
 #include "services/snippet/snippet-db.hpp"
 #include <optional>
 
@@ -13,7 +14,7 @@ class SnippetFormViewHost : public FormViewBase {
   Q_PROPERTY(QString keyword READ keyword WRITE setKeyword NOTIFY formChanged)
   Q_PROPERTY(bool expandAsWord READ expandAsWord WRITE setExpandAsWord NOTIFY formChanged)
   Q_PROPERTY(QStringList apps READ apps WRITE setApps NOTIFY formChanged)
-  Q_PROPERTY(QVariantList availableApps READ availableApps CONSTANT)
+  Q_PROPERTY(CompletionModel *availableAppsModel READ availableAppsModel CONSTANT)
 
   Q_PROPERTY(QVariantList contentCompletions READ contentCompletions CONSTANT)
 
@@ -39,7 +40,7 @@ public:
   QString keyword() const { return m_keyword; }
   bool expandAsWord() const { return m_expandAsWord; }
   QStringList apps() const { return m_apps; }
-  QVariantList availableApps() const { return m_availableApps; }
+  CompletionModel *availableAppsModel() { return &m_availableAppsModel; }
 
   QVariantList contentCompletions() const { return m_contentCompletions; }
 
@@ -101,5 +102,5 @@ private:
   QString m_keywordError;
 
   QVariantList m_contentCompletions;
-  QVariantList m_availableApps;
+  CompletionModel m_availableAppsModel{this};
 };

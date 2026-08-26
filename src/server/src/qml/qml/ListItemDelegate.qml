@@ -3,7 +3,7 @@ import QtQuick.Layouts
 
 SelectableDelegate {
     id: root
-    height: 41
+    height: 38
 
     required property string itemTitle
     required property string itemSubtitle
@@ -13,43 +13,17 @@ SelectableDelegate {
     required property bool itemIsActive
     property var itemAccessory: []
     property string itemAccessoryColor: ""
-    property string filePath: ""
-    property string fileUrl: ""
-
-    readonly property bool _isDraggable: root.filePath !== ""
-
-    Component.onCompleted: {
-        if (_isDraggable) {
-            //console.debug("[DRAG] ListItemDelegate created: filePath=" + root.filePath + " fileUrl=" + root.fileUrl);
-        }
-    }
-
-    Drag.dragType: root._isDraggable ? Drag.Automatic : Drag.None
-    Drag.active: root._isDraggable ? dragHandler.active : false
-    Drag.mimeData: root._isDraggable ? ({
-            "text/uri-list": root.fileUrl,
-            "text/plain": root.filePath
-        }) : ({})
-    Drag.supportedActions: Qt.CopyAction
-
-    DragHandler {
-        id: dragHandler
-        enabled: root._isDraggable
-        onActiveChanged: {
-            //console.debug("[DRAG] DragHandler ACTIVATED! filePath=" + root.filePath);
-        }
-    }
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
         spacing: 10
 
         Item {
             visible: root.itemIconSource !== ""
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
+            Layout.preferredWidth: 26
+            Layout.preferredHeight: 26
             Layout.alignment: Qt.AlignVCenter
 
             ViciImage {
@@ -103,7 +77,7 @@ SelectableDelegate {
                 width: Math.min(implicitWidth, Math.max(0, textRow.availableForText - titleText.width - textRow.spacing))
                 text: root.itemSubtitle
                 color: root.selected ? Theme.listItemSecondarySelectionFg : root.hovered ? Theme.listItemSecondaryHoverFg : Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
+                font.pointSize: Theme.regularFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1
             }

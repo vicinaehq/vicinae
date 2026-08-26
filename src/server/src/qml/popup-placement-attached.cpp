@@ -52,10 +52,14 @@ void PopupPlacementAttached::apply() {
   if (!m_window) return;
 
   // The anchor is the point on the trigger item the popup attaches to, the
-  // gravity the direction it grows in. No horizontal edge means centered.
-  const Qt::Edge side = m_alignment.testFlag(Qt::AlignTop) ? Qt::TopEdge : Qt::BottomEdge;
-  Qt::Edges anchor = side;
-  Qt::Edges gravity = side;
+  // gravity the direction it grows in. No edge on an axis means centered on it.
+  Qt::Edges anchor;
+  Qt::Edges gravity;
+  if (!m_alignment.testFlag(Qt::AlignVCenter)) {
+    const Qt::Edge side = m_alignment.testFlag(Qt::AlignTop) ? Qt::TopEdge : Qt::BottomEdge;
+    anchor |= side;
+    gravity |= side;
+  }
   if (m_alignment.testFlag(Qt::AlignLeft)) {
     anchor |= Qt::LeftEdge;
     gravity |= Qt::RightEdge;

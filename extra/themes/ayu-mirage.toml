@@ -12,7 +12,7 @@ icon = "icons/ayu.png"
 background = "#1F2430"        # UI background
 foreground = "#CCCAC2"        # Main text
 secondary_background = "#232834"  # Elevated surfaces (between UI and editor bg)
-border = "#343C4D"            # Darker for borders
+border = "#414B65"            # Darker for borders
 accent = "#5CCFE6"            # Cyan tag color
 
 [colors.accents]
@@ -26,5 +26,8 @@ yellow = "#FFD173"            # Function
 cyan = "#95E6CB"              # Regexp
 
 [colors.list.item.selection]
-background = "#2C3241"
+background = "#414a60"
 secondary_background = "#3E4759"
+
+[colors.grid.item]
+background = "#394258"

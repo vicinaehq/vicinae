@@ -12,7 +12,7 @@ icon = "icons/evergarden.png"
 background = "#d7e1eb"
 foreground = "#171c1f"
 secondary_background = "#c8d5e1"
-border = "#879da4"
+border = "#666B70"
 accent = "#91ac75"
 
 [colors.accents]
@@ -26,5 +26,8 @@ yellow = "#bc9c6b"
 cyan = "#7baa92"
 
 [colors.list.item.selection]
-background = "#ced9e0"
+background = "#8fa8b8"
 secondary_background = "#b4c6cc"
+
+[colors.grid.item]
+background = "#b5c7da"

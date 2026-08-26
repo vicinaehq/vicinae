@@ -50,7 +50,7 @@ std::ostream &operator<<(std::ostream &ofs, const ScriptCommand &cmd) {
   if (cmd.icon) std::println(ofs, "icon => {}", cmd.icon.value());
   if (cmd.iconDark) std::println(ofs, "iconDark => {}", cmd.iconDark.value());
   if (cmd.currentDirectoryPath)
-    std::println(ofs, "currentDirectoryPath => {}", cmd.currentDirectoryPath.value().c_str());
+    std::println(ofs, "currentDirectoryPath => {}", cmd.currentDirectoryPath.value().string());
   if (cmd.needsConfirmation) std::println(ofs, "needsConfirmation => {}", cmd.needsConfirmation);
   if (cmd.author) std::println(ofs, "author => {}", cmd.author.value());
   if (cmd.authorUrl) std::println(ofs, "authorUrl => {}", cmd.authorUrl.value());

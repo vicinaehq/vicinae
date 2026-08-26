@@ -6,7 +6,7 @@ on:
 
 jobs:
   update-tags:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v5
@@ -16,4 +16,4 @@ jobs:
       - uses: cachix/install-nix-action@v31
       - name: Check nix hashes
         run: |
-          nix run .#nix-update-script --extra-experimental-features nix-command flakes --accept-flake-config
+          nix run --no-update-lock-file .#nix-update-script --extra-experimental-features nix-command flakes --accept-flake-config

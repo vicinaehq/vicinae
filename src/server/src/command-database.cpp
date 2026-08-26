@@ -14,6 +14,7 @@
 #include "extensions/wm/wm-extension.hpp"
 #include "extensions/vicinae/vicinae-extension.hpp"
 #include "extensions/system/system-extension.hpp"
+#include "service-registry.hpp"
 #include <memory>
 
 const std::vector<std::shared_ptr<AbstractCommandRepository>> &CommandDatabase::repositories() const {
@@ -28,7 +29,7 @@ const AbstractCommandRepository *CommandDatabase::findRepository(const QString &
   return nullptr;
 }
 
-CommandDatabase::CommandDatabase() {
+CommandDatabase::CommandDatabase(const ServiceRegistry &services) {
   registerRepository<ClipboardExtension>();
   registerRepository<FileExtension>();
   registerRepository<PowerManagementExtension>();
@@ -40,7 +41,9 @@ CommandDatabase::CommandDatabase() {
   registerRepository<VicinaeExtension>();
   registerRepository<CalculatorExtension>();
   registerRepository<ShortcutExtension>();
-  registerRepository<WindowManagementExtension>();
+
+  registerRepository<WindowManagementExtension>(services);
+
   registerRepository<ThemeExtension>();
   registerRepository<FontExtension>();
   registerRepository<DeveloperExtension>();

@@ -10,43 +10,28 @@ AppSelectorModel::AppSelectorModel(QObject *parent)
 }
 
 void AppSelectorModel::buildItems() {
-  m_items.clear();
-
   QVariantList allApps;
 
   if (auto browser = m_appDb->webBrowser()) {
-    m_defaultEntry = QVariantMap{
-        {QStringLiteral("id"), QStringLiteral("default")},
-        {QStringLiteral("displayName"), browser->fullyQualifiedName() + " (Default)"},
-        {QStringLiteral("iconSource"), qml::imageSourceFor(browser->iconUrl())},
-    };
+    m_defaultEntry = qml::makeDropdownItem(QStringLiteral("default"),
+                                           tr("%1 (Default)").arg(browser->fullyQualifiedName()),
+                                           qml::imageSourceFor(browser->iconUrl()));
     allApps.append(m_defaultEntry);
   }
 
   for (const auto &app : m_appDb->list()) {
     if (!app->displayable()) continue;
 
-    allApps.append(QVariantMap{
-        {QStringLiteral("id"), app->id()},
-        {QStringLiteral("displayName"), app->fullyQualifiedName()},
-        {QStringLiteral("iconSource"), qml::imageSourceFor(app->iconUrl())},
-    });
+    allApps.append(
+        qml::makeDropdownItem(app->id(), app->fullyQualifiedName(), qml::imageSourceFor(app->iconUrl())));
 
     for (const auto &action : app->actions()) {
-      allApps.append(QVariantMap{
-          {QStringLiteral("id"), action->id()},
-          {QStringLiteral("displayName"), action->fullyQualifiedName()},
-          {QStringLiteral("iconSource"), qml::imageSourceFor(action->iconUrl())},
-      });
+      allApps.append(qml::makeDropdownItem(action->id(), action->fullyQualifiedName(),
+                                           qml::imageSourceFor(action->iconUrl())));
     }
   }
 
-  QVariantMap section;
-  section[QStringLiteral("title")] = QString();
-  section[QStringLiteral("items")] = allApps;
-  m_items.append(section);
-
-  emit itemsChanged();
+  m_model.setItems(allApps);
 }
 
 void AppSelectorModel::select(const QVariantMap &item) {
@@ -63,42 +48,19 @@ void AppSelectorModel::selectById(const QString &id) {
     return;
   }
 
-  for (const auto &sectionVar : m_items) {
-    auto section = sectionVar.toMap();
-    auto items = section[QStringLiteral("items")].toList();
-    for (const auto &itemVar : items) {
-      auto item = itemVar.toMap();
-      if (item[QStringLiteral("id")].toString() == id) {
-        m_currentItem = item;
-        emit currentItemChanged();
-        return;
-      }
-    }
+  if (auto item = m_model.itemDataById(id); !item.isEmpty()) {
+    m_currentItem = item;
+    emit currentItemChanged();
   }
 }
 
 void AppSelectorModel::updateDefaultApp(const std::shared_ptr<AbstractApplication> &app) {
   if (!app) return;
 
-  m_defaultEntry = QVariantMap{
-      {QStringLiteral("id"), QStringLiteral("default")},
-      {QStringLiteral("displayName"), app->fullyQualifiedName() + " (Default)"},
-      {QStringLiteral("iconSource"), qml::imageSourceFor(app->iconUrl())},
-  };
-
-  if (!m_items.isEmpty()) {
-    auto section = m_items[0].toMap();
-    auto items = section[QStringLiteral("items")].toList();
-    if (!items.isEmpty()) {
-      auto first = items[0].toMap();
-      if (first[QStringLiteral("id")].toString() == QStringLiteral("default")) {
-        items[0] = m_defaultEntry;
-        section[QStringLiteral("items")] = items;
-        m_items[0] = section;
-        emit itemsChanged();
-      }
-    }
-  }
+  m_defaultEntry =
+      qml::makeDropdownItem(QStringLiteral("default"), tr("%1 (Default)").arg(app->fullyQualifiedName()),
+                            qml::imageSourceFor(app->iconUrl()));
+  m_model.updateItem(m_defaultEntry);
 
   if (m_currentItem[QStringLiteral("id")].toString() == QStringLiteral("default")) {
     m_currentItem = m_defaultEntry;

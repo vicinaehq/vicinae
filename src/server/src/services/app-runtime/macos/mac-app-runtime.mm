@@ -82,17 +82,52 @@ void MacAppRuntime::refreshRunningCache() {
 }
 
 bool MacAppRuntime::isRunning(const AbstractApplication &app) const {
-  return m_runningIds.contains(app.id());
+  auto const bundleId = app.windowClass();
+  return bundleId && m_runningIds.contains(*bundleId);
 }
 
 bool MacAppRuntime::activate(const AbstractApplication &app) const {
   @autoreleasepool {
-    NSString *bundleId = app.id().toNSString();
-    if (bundleId.length == 0) return false;
+    auto const bundleIdentifier = app.windowClass();
+    if (!bundleIdentifier || bundleIdentifier->isEmpty()) return false;
+
+    NSString *const bundleId = bundleIdentifier->toNSString();
     NSArray<NSRunningApplication *> *matches =
         [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleId];
     if (matches.count == 0) return false;
     return [matches.firstObject activateWithOptions:NSApplicationActivateAllWindows];
+  }
+}
+
+bool MacAppRuntime::quit(const AbstractApplication &app) const {
+  @autoreleasepool {
+    auto const bundleIdentifier = app.windowClass();
+    if (!bundleIdentifier || bundleIdentifier->isEmpty()) return false;
+
+    NSString *const bundleId = bundleIdentifier->toNSString();
+    NSArray<NSRunningApplication *> *matches =
+        [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleId];
+    bool requested = false;
+    for (NSRunningApplication *a in matches) {
+      if ([a terminate]) requested = true;
+    }
+    return requested;
+  }
+}
+
+bool MacAppRuntime::forceQuit(const AbstractApplication &app) const {
+  @autoreleasepool {
+    auto const bundleIdentifier = app.windowClass();
+    if (!bundleIdentifier || bundleIdentifier->isEmpty()) return false;
+
+    NSString *const bundleId = bundleIdentifier->toNSString();
+    NSArray<NSRunningApplication *> *matches =
+        [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleId];
+    bool killed = false;
+    for (NSRunningApplication *a in matches) {
+      if ([a forceTerminate]) killed = true;
+    }
+    return killed;
   }
 }
 

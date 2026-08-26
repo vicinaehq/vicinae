@@ -5,6 +5,7 @@
 #include "fuzzy/scored.hpp"
 #include "section-list-model.hpp"
 #include "section-source.hpp"
+#include <QTimer>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -25,16 +26,19 @@ public:
   }
   void onSelected(int i) override;
 
-protected:
-  QString itemTitle(int i) const override;
-  QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
-  QVariantList itemAccessories(int i) const override;
-  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
-
-private:
   const ListItemViewModel &itemAt(int i) const;
 
+protected:
+  QString itemId(int i) const override;
+  QString itemTitle(int i) const override;
+  QString itemSubtitle(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
+  AccessoryList itemAccessories(int i) const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
+  bool isDraggable(int i) const override;
+  std::unique_ptr<QMimeData> dragMimeData(int i) const override;
+
+private:
   std::string m_name;
   std::vector<ListItemViewModel> m_items;
   std::vector<Scored<int>> m_filtered;
@@ -50,8 +54,7 @@ class ExtensionListModel : public SectionListModel {
   Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
   Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
   Q_PROPERTY(ImageUrl emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
-  Q_PROPERTY(bool isShowingDetail READ isShowingDetail NOTIFY detailChanged)
-  Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
+  Q_PROPERTY(bool isShowingDetail READ isShowingDetail NOTIFY isShowingDetailChanged)
   Q_PROPERTY(QString detailMarkdown READ detailMarkdown NOTIFY detailChanged)
   Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailChanged)
 
@@ -70,12 +73,12 @@ public:
   ImageUrl emptyIcon() const;
 
   bool isShowingDetail() const;
-  bool hasDetail() const;
   QString detailMarkdown() const;
-  QVariantList detailMetadata() const;
+  QVariantList detailMetadata() const { return m_detailMetadata; }
 
 signals:
   void detailChanged();
+  void isShowingDetailChanged();
   void emptyViewChanged();
 
 protected:
@@ -83,9 +86,14 @@ protected:
 
 private:
   void handleItemSelected(const ListItemViewModel *item);
+  void refreshCurrentDetail();
+  void setCurrentDetail(const DetailModel *detail);
+  void scheduleDetailClear();
 
   NotifyFn m_notify;
-  std::optional<DetailModel> m_currentDetail;
+  QTimer m_detailClearTimer;
+  QString m_detailMarkdown;
+  QVariantList m_detailMetadata;
   std::vector<std::unique_ptr<ExtensionListSection>> m_ownedSections;
   ListModel m_model;
   QString m_filter;

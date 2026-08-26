@@ -36,12 +36,13 @@ const preferenceSchema = z.discriminatedUnion("type", [
 				.union([
 					z.string(),
 					z.object({
+						Linux: z.string().optional(),
 						macOS: z.string().optional(),
 						Windows: z.string().optional(),
 					}),
 				])
 				.describe(
-					"The optional default value for the field. For textfields, this is a string value. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+					"The optional default value for the field. For textfields, this is a string value. Additionally, you can specify a different value per platform by passing an object: { 'Linux': ..., 'macOS': ..., 'Windows': ... }.",
 				)
 				.optional(),
 		})
@@ -61,12 +62,13 @@ const preferenceSchema = z.discriminatedUnion("type", [
 				.union([
 					z.string(),
 					z.object({
+						Linux: z.string().optional(),
 						macOS: z.string().optional(),
 						Windows: z.string().optional(),
 					}),
 				])
 				.describe(
-					"The optional default value for the field. For passwords, this is a string value. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+					"The optional default value for the field. For passwords, this is a string value. Additionally, you can specify a different value per platform by passing an object: { 'Linux': ..., 'macOS': ..., 'Windows': ... }.",
 				)
 				.optional(),
 		})
@@ -84,12 +86,13 @@ const preferenceSchema = z.discriminatedUnion("type", [
 				.union([
 					z.boolean(),
 					z.object({
+						Linux: z.boolean().optional(),
 						macOS: z.boolean().optional(),
 						Windows: z.boolean().optional(),
 					}),
 				])
 				.describe(
-					"The optional default value for the field. For checkboxes, this is a boolean value. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+					"The optional default value for the field. For checkboxes, this is a boolean value. Additionally, you can specify a different value per platform by passing an object: { 'Linux': ..., 'macOS': ..., 'Windows': ... }.",
 				)
 				.optional(),
 		})
@@ -114,12 +117,13 @@ const preferenceSchema = z.discriminatedUnion("type", [
 				.union([
 					z.string(),
 					z.object({
+						Linux: z.string().optional(),
 						macOS: z.string().optional(),
 						Windows: z.string().optional(),
 					}),
 				])
 				.describe(
-					"The optional default value for the field. For dropdowns, this is the value of an object in the data array. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+					"The optional default value for the field. For dropdowns, this is the value of an object in the data array. Additionally, you can specify a different value per platform by passing an object: { 'Linux': ..., 'macOS': ..., 'Windows': ... }.",
 				)
 				.optional(),
 		})
@@ -133,12 +137,13 @@ const preferenceSchema = z.discriminatedUnion("type", [
 				.union([
 					z.string(),
 					z.object({
+						Linux: z.string().optional(),
 						macOS: z.string().optional(),
 						Windows: z.string().optional(),
 					}),
 				])
 				.describe(
-					"The optional default value for the field. For appPickers, this is an application name, bundle ID or path. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+					"The optional default value for the field. For appPickers, this is an application name, bundle ID or path. Additionally, you can specify a different value per platform by passing an object: { 'Linux': ..., 'macOS': ..., 'Windows': ... }.",
 				)
 				.optional(),
 		})
@@ -152,12 +157,13 @@ const preferenceSchema = z.discriminatedUnion("type", [
 				.union([
 					z.string(),
 					z.object({
+						Linux: z.string().optional(),
 						macOS: z.string().optional(),
 						Windows: z.string().optional(),
 					}),
 				])
 				.describe(
-					"The optional default value for the field. For file preferences, this is a file path. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+					"The optional default value for the field. For file preferences, this is a file path. Additionally, you can specify a different value per platform by passing an object: { 'Linux': ..., 'macOS': ..., 'Windows': ... }.",
 				)
 				.optional(),
 		})
@@ -171,12 +177,13 @@ const preferenceSchema = z.discriminatedUnion("type", [
 				.union([
 					z.string(),
 					z.object({
+						Linux: z.string().optional(),
 						macOS: z.string().optional(),
 						Windows: z.string().optional(),
 					}),
 				])
 				.describe(
-					"The optional default value for the field. For directory preferences, this is a directory path. Additionally, you can specify a different value per platform by passing an object: { 'macOS': ..., 'Windows': ... }.",
+					"The optional default value for the field. For directory preferences, this is a directory path. Additionally, you can specify a different value per platform by passing an object: { 'Linux': ..., 'macOS': ..., 'Windows': ... }.",
 				)
 				.optional(),
 		})
@@ -317,10 +324,10 @@ export default z.object({
 			"Currently only MIT is accepted, although more licenses will probably be available in the future.",
 		),
 	platforms: z
-		.array(z.enum(["macOS", "Windows"]))
+		.array(z.enum(["Linux", "macOS", "Windows"]))
 		.min(1)
 		.describe(
-			"Currently only `macOS` and `Windows` are accepted. If not present, the extension is assumed to be available on all platforms.",
+			"Platforms where this extension can run. If not present, the extension is assumed to be available on all platforms.",
 		)
 		.optional(),
 	commands: z

@@ -14,16 +14,27 @@ class MacOSWindowAttached : public QObject {
   Q_PROPERTY(int cornerRadius READ cornerRadius WRITE setCornerRadius NOTIFY cornerRadiusChanged)
   Q_PROPERTY(bool blurEnabled READ blurEnabled WRITE setBlurEnabled NOTIFY blurEnabledChanged)
   Q_PROPERTY(QString material READ material WRITE setMaterial NOTIFY materialChanged)
+  Q_PROPERTY(QString appearance READ appearance WRITE setAppearance NOTIFY appearanceChanged)
   Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY borderColorChanged)
   Q_PROPERTY(int borderWidth READ borderWidth WRITE setBorderWidth NOTIFY borderWidthChanged)
+  Q_PROPERTY(bool transparentTitlebar READ transparentTitlebar WRITE setTransparentTitlebar NOTIFY
+                 transparentTitlebarChanged)
+  Q_PROPERTY(bool followsWindowActiveState READ followsWindowActiveState WRITE setFollowsWindowActiveState
+                 NOTIFY followsWindowActiveStateChanged)
+  Q_PROPERTY(bool moveToActiveSpace READ moveToActiveSpace WRITE setMoveToActiveSpace NOTIFY
+                 moveToActiveSpaceChanged)
 
 signals:
   void enabledChanged();
   void cornerRadiusChanged();
   void blurEnabledChanged();
   void materialChanged();
+  void appearanceChanged();
   void borderColorChanged();
   void borderWidthChanged();
+  void transparentTitlebarChanged();
+  void followsWindowActiveStateChanged();
+  void moveToActiveSpaceChanged();
 
 public:
   explicit MacOSWindowAttached(QObject *parent);
@@ -40,19 +51,45 @@ public:
   QString material() const { return m_material; }
   void setMaterial(const QString &value);
 
+  // "dark" / "light" pin the effect view's NSAppearance; empty follows the system.
+  QString appearance() const { return m_appearance; }
+  void setAppearance(const QString &value);
+
   QColor borderColor() const { return m_borderColor; }
   void setBorderColor(const QColor &value);
 
   int borderWidth() const { return m_borderWidth; }
   void setBorderWidth(int value);
 
+  // Extends the content under a hidden titlebar (full-size content view), keeping
+  // the standard traffic lights. cornerRadius 0 then follows the native frame radius.
+  bool transparentTitlebar() const { return m_transparentTitlebar; }
+  void setTransparentTitlebar(bool value);
+
+  // Material goes flat when the window resigns key, like native sidebars. Leave off
+  // for non-activating panels, which are never "active".
+  bool followsWindowActiveState() const { return m_followsWindowActiveState; }
+  void setFollowsWindowActiveState(bool value);
+
+  // Reshowing the window pulls it to the current space instead of switching
+  // to the space it was left on.
+  bool moveToActiveSpace() const { return m_moveToActiveSpace; }
+  void setMoveToActiveSpace(bool value);
+
+  Q_INVOKABLE void animateIn(qreal anchorX = 0.5, qreal anchorY = 0.5);
+  Q_INVOKABLE void animateOut(qreal anchorX = 0.5, qreal anchorY = 0.5);
+
 private:
+  void runAnimate(bool appearing, qreal anchorX, qreal anchorY);
   struct Snapshot {
     bool valid = false;
     bool opaque = true;
     void *backgroundColor = nullptr;
     bool hasShadow = true;
     long animationBehavior = 0;
+    unsigned long styleMask = 0;
+    long titleVisibility = 0;
+    bool titlebarAppearsTransparent = false;
   };
 
   void apply();
@@ -67,9 +104,16 @@ private:
   int m_cornerRadius = 0;
   bool m_blurEnabled = false;
   QString m_material;
+  QString m_appearance;
   QColor m_borderColor;
   int m_borderWidth = 0;
+  bool m_transparentTitlebar = false;
+  bool m_followsWindowActiveState = false;
+  bool m_moveToActiveSpace = false;
   bool m_surfaceReady = false;
+  bool m_pendingAnimateIn = false;
+  qreal m_pendingAnchorX = 0.5;
+  qreal m_pendingAnchorY = 0.5;
   Snapshot m_snapshot;
 };
 
@@ -108,10 +152,7 @@ public:
   int windowLevel() const { return m_windowLevel; }
   void setWindowLevel(int value);
 
-  // Show the launcher panel placed on the cursor's screen without AppKit's reveal-time slide:
-  // beginShow() hides and positions it before it is shown, finishShow() reveals it once settled.
-  Q_INVOKABLE void beginShow(qreal yFraction);
-  Q_INVOKABLE void finishShow(qreal yFraction);
+  Q_INVOKABLE void placeBottomCenter(qreal bottomMargin);
 
 private:
   struct Snapshot {
@@ -161,3 +202,7 @@ public:
 
 void macosSetAccessoryActivationPolicy();
 void macosActivateApp();
+void macosReleaseMenuShortcuts();
+
+// True when NSGlassEffectView is available (macOS 26 Tahoe and later).
+bool macosLiquidGlassAvailable();

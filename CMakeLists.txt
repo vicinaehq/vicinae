@@ -4,6 +4,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "14.4" CACHE STRING "Minimum macOS version to target")
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
+if (WIN32 AND NOT MSVC)
+	message(FATAL_ERROR "Windows builds are only supported with MSVC (got '${CMAKE_CXX_COMPILER_ID}'). Use the windows-* presets or set -DCMAKE_CXX_COMPILER=cl.")
+endif()
+
 set(LIB_NAMESPACE "vicinae")
 
 if (QT_DIR)
@@ -14,15 +18,21 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# No-op as it is the default for most toolchains, but this led to problem
+# with our AppImage build toolchain + LTO
+include(CheckPIESupported)
+check_pie_supported(LANGUAGES C CXX)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 include(FetchContent)
 include(GNUInstallDirs)
 include(Git)
 include(Utils)
 
-# Viciane build configuration options
+# Vicinae build configuration options
 
 option(BUILD_TESTS "Build test suites for various vicinae components" OFF)
-option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
+option(IGNORE_CCACHE "Always ignore ccache/sccache even if installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
 option(
@@ -36,14 +46,45 @@ option(
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
-option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
+
+# Default for the USE_SYSTEM_* options below.
+# On linux we generally prefer linking to system libraries by default.
+
+set(USE_SYSTEM_DEFAULT ON)
+if (APPLE OR WIN32)
+	set(USE_SYSTEM_DEFAULT OFF)
+endif()
+
+option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of the vendored copy under vendor/cmark-gfm" ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
-option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ON)
+option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
-option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
+option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ${USE_SYSTEM_DEFAULT})
+option(USE_SYSTEM_NUMEN "Use system version of the numen calculator backend, instead of fetching it" OFF)
+
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
+option(AUTO_INSTALL_BROWSER_MANIFESTS "Install per-user browser native messaging host manifests at server startup" ON)
+option(AUTO_ENABLE_AUTOSTART "Register the app to start at login on first launch (currently macOS only)" ON)
+option(ENABLE_ONBOARDING "Show the onboarding window on first launch (macOS only)" ON)
+
+set(BUNDLE_SOULVER_CORE_DEFAULT OFF)
+if (APPLE)
+	set(BUNDLE_SOULVER_CORE_DEFAULT ON)
+endif()
+
+option(
+	BUNDLE_SOULVER_CORE
+	"Download the SoulverCore framework and bundle it with the app, making it the default calculator backend (macOS only)"
+	${BUNDLE_SOULVER_CORE_DEFAULT}
+)
+
+set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "macOS app bundle identifier")
+
+set(NATIVE_MESSAGING_HOST "com.vicinae.vicinae")
+set(CHROME_EXTENSION_ID "kcmipingpfbohfjckomimmahknoddnke") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke
+set(FIREFOX_EXTENSION_ID "firefox@vicinae.com")
 
 if (ENABLE_CLANG_TIDY)
 	set(CMAKE_CXX_CLANG_TIDY clang-tidy)
@@ -58,17 +99,18 @@ set(THEME_DIR "${EXTRA_DIR}/themes")
 set(VICINAE_LIBEXEC_PATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 set(VICINAE_LIBEXEC_DIR ${CMAKE_INSTALL_LIBEXECDIR}/vicinae)
 
-if (NOT USE_SYSTEM_GLAZE)
-	include(Glaze)
-	import_glaze()
-endif()
-
-if (NOT USE_SYSTEM_KF6 OR APPLE)
-	include(KF6)
-	import_kf6()
-endif()
-
 if (APPLE)
+	if (NOT QT_DIR AND NOT CMAKE_PREFIX_PATH)
+		file(GLOB _qt_candidates "$ENV{HOME}/Qt/*/macos/lib/cmake/Qt6")
+		if (_qt_candidates)
+			list(SORT _qt_candidates COMPARE NATURAL ORDER DESCENDING)
+			list(GET _qt_candidates 0 _qt_cmake_dir)
+			get_filename_component(_qt_prefix "${_qt_cmake_dir}/../../.." ABSOLUTE)
+			list(PREPEND CMAKE_PREFIX_PATH "${_qt_prefix}")
+			message(STATUS "Using Qt from ${_qt_prefix}")
+		endif()
+	endif()
+
 	find_program(BREW_EXECUTABLE brew)
 	if (BREW_EXECUTABLE)
 		execute_process(
@@ -84,18 +126,38 @@ if (APPLE)
 
 	if (HOMEBREW_PREFIX)
 		message(STATUS "Detected Homebrew prefix: ${HOMEBREW_PREFIX}")
-		if (NOT QT_DIR AND EXISTS "${HOMEBREW_PREFIX}/opt/qt/lib/cmake/Qt6")
+		if (NOT QT_DIR AND NOT CMAKE_PREFIX_PATH AND EXISTS "${HOMEBREW_PREFIX}/opt/qt/lib/cmake/Qt6")
 			list(PREPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/qt")
 		endif()
-		if (NOT DEFINED ENV{ICU_ROOT} AND EXISTS "${HOMEBREW_PREFIX}/opt/icu4c")
-			set(ENV{ICU_ROOT} "${HOMEBREW_PREFIX}/opt/icu4c")
-		endif()
+		include_directories(${HOMEBREW_PREFIX}/include)
 		link_directories(${HOMEBREW_PREFIX}/lib)
 	endif()
+endif()
 
+if (APPLE OR WIN32)
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
-	set(USE_SYSTEM_CMARK_GFM OFF)
+endif()
+
+# the Qt deploy API registers its support files on the first Qt6::Core scope seen
+find_package(Qt6 6.9 REQUIRED COMPONENTS Core Qml)
+
+if (NOT USE_SYSTEM_GLAZE)
+	include(Glaze)
+	import_glaze()
+endif()
+
+if (NOT USE_SYSTEM_KF6 AND NOT WIN32)
+	include(KF6)
+	import_kf6()
+endif()
+
+# The appimage bundles its own libraries (including the GCC runtime) in usr/lib.
+# linuxdeploy only patches a RUNPATH into the usr/bin copies it deploys, so install
+# every binary with a self-relative RUNPATH so the libexec helpers resolve the
+# bundled libraries too (#1841).
+if (VICINAE_PROVENANCE STREQUAL "appimage")
+	set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib" "$ORIGIN/../../lib")
 endif()
 
 set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
@@ -111,8 +173,16 @@ add_subdirectory(src/browser-extension)
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/glyph)
-add_subdirectory(${LIB_DIR}/xdgpp)
+
+if (NOT WIN32)
+	add_subdirectory(${LIB_DIR}/xdgpp)
+endif()
 add_subdirectory(${LIB_DIR}/fuzzy)
+add_subdirectory(${LIB_DIR}/crypto)
+
+if (APPLE AND BUNDLE_SOULVER_CORE)
+	add_subdirectory(${LIB_DIR}/soulver)
+endif()
 
 # statically linked vendored libs.
 # Most of the other vendored libs are header only so no need for a CMakeLists.txt
@@ -158,6 +228,52 @@ endif()
 message(STATUS "Vicinae version: ${VICINAE_GIT_TAG}")
 message(STATUS "Vicinae commit hash: ${VICINAE_GIT_COMMIT_HASH}")
 
+set(VICINAE_NODE_RUNTIME_VERSION "v22.23.1" CACHE STRING "Pinned node runtime used to run extensions")
+
+if (APPLE)
+	# we only support apple silicon macs
+	set(_node_runtime_platform "darwin-arm64")
+	set(_node_runtime_sha256 "ef28d8fab2c0e4314522d4bb1b7173270aa3937e93b92cb7de79c112ac1fa953")
+elseif (WIN32)
+	if (CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64")
+		set(_node_runtime_platform "win-arm64")
+		set(_node_runtime_sha256 "b470fdfe3502c05151656e06d495e3f47544f2ee8b1d9c8705090f2dd5996bd0")
+	else()
+		set(_node_runtime_platform "win-x64")
+		set(_node_runtime_sha256 "7df0bc9375723f4a86b3aa1b7cc73342423d9677a8df4538aca31a049e309c29")
+	endif()
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+	set(_node_runtime_platform "linux-arm64")
+	set(_node_runtime_sha256 "543fa39e57d4c07855939459a323f4deb9a79dd1bb45e6e99458b0f2de10db8d")
+else()
+	set(_node_runtime_platform "linux-x64")
+	set(_node_runtime_sha256 "7a8cb04b4a1df4eaf432125324b81b29a088e73570a23259a8de1c65d07fc129")
+endif()
+
+if (WIN32)
+	set(_node_runtime_archive_ext "zip")
+else()
+	set(_node_runtime_archive_ext "tar.gz")
+endif()
+
+set(VICINAE_NODE_RUNTIME_SHA256 "${_node_runtime_sha256}" CACHE STRING "sha256 of the node runtime archive")
+set(VICINAE_NODE_RUNTIME_URL
+	"https://nodejs.org/dist/${VICINAE_NODE_RUNTIME_VERSION}/node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}.${_node_runtime_archive_ext}"
+	CACHE STRING "URL of the node runtime archive")
+set(VICINAE_NODE_RUNTIME_TAR_MEMBER
+	"node-${VICINAE_NODE_RUNTIME_VERSION}-${_node_runtime_platform}/bin/node")
+
+# self-distributed builds (dmg, appimage, windows) always download the pinned runtime
+# so the node version never depends on what the host has installed; package manager
+# builds use the system node unless this is explicitly turned on
+if (APPLE OR WIN32 OR VICINAE_PROVENANCE STREQUAL "appimage")
+	set(_node_runtime_download_default ON)
+else()
+	set(_node_runtime_download_default OFF)
+endif()
+option(VICINAE_NODE_RUNTIME_DOWNLOAD "Run extensions with the pinned downloaded node runtime"
+	${_node_runtime_download_default})
+
 get_cxx_compiler_name(CXX_COMPILER_NAME)
 
 # Generate version header from template
@@ -182,7 +298,7 @@ endif()
 
 if (NOT USE_SYSTEM_CMARK_GFM)
 	include(CMark)
-	checkout_cmark()
+	setup_vendored_cmark()
   set(CMARK_LIBRARY "libcmark-gfm_static")
   set(CMARK_EXT_LIBRARY "libcmark-gfm-extensions_static")
 endif()
@@ -199,10 +315,17 @@ endif()
 
 message(STATUS "Configured build type ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -O0")
+if (MSVC)
+	# /Zc:preprocessor and /bigobj are required by glaze's compile-time reflection
+	add_compile_options(/permissive- /Zc:preprocessor /Zc:__cplusplus /bigobj /utf-8 /W3 /wd4996)
+	# keep <windows.h> from leaking min/max and other macros into the codebase
+	add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+else()
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -O0")
 
-add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-missing-field-initializers)
+	add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-missing-field-initializers)
+endif()
 
 if (ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
 	message(STATUS "Sanitizers enabled (ASan + UBSan)")
@@ -224,18 +347,37 @@ endif()
 set(BUILD_INFO "${CXX_COMPILER_NAME} ${CMAKE_CXX_COMPILER_VERSION} - ${CMAKE_BUILD_TYPE}")
 
 find_program(CCACHE ccache)
+find_program(SCCACHE sccache)
 
 if (LTO)
 	set(BUILD_INFO "${BUILD_INFO} - LTO")
 	message(STATUS "Link Time Optimization (LTO) is enabled")
-	# gcc needs 'auto' to enable parallel compilation: https://stackoverflow.com/questions/72218980/gcc-v12-1-warning-about-serial-compilation
-	add_compile_options(-flto=auto)
-	add_link_options(-flto=auto)
+	if (MSVC)
+		include(CheckIPOSupported)
+		check_ipo_supported(RESULT _ipo_ok OUTPUT _ipo_msg)
+		if (_ipo_ok)
+			set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+		else()
+			message(WARNING "IPO/LTCG unsupported: ${_ipo_msg}")
+		endif()
+	else()
+		add_compile_options(-flto=auto)
+		add_link_options(-flto=auto)
+	endif()
 endif()
 
-if (CCACHE AND NOT IGNORE_CCACHE)
-	message(STATUS "ccache is installed, changing CMAKE_CXX_COMPILER_LAUNCHER")
-	set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+if (NOT IGNORE_CCACHE)
+	if (CCACHE)
+		set(COMPILER_CACHE "${CCACHE}")
+	elseif (SCCACHE)
+		set(COMPILER_CACHE "${SCCACHE}")
+	endif()
+
+	if (COMPILER_CACHE)
+		message(STATUS "Using compiler cache: ${COMPILER_CACHE}")
+		set(CMAKE_C_COMPILER_LAUNCHER "${COMPILER_CACHE}")
+		set(CMAKE_CXX_COMPILER_LAUNCHER "${COMPILER_CACHE}")
+	endif()
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
@@ -251,7 +393,11 @@ set(INSTALL_MODULES ${CMAKE_INSTALL_PREFIX}/lib/modules-load.d)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
 set(VICINAE_THEME_DIR ${VICINAE_INSTALL_SHARE}/themes)
 
-if(NOT APPLE)
+if(WIN32)
+	install(DIRECTORY ${THEME_DIR} DESTINATION .)
+	set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ${CMAKE_INSTALL_BINDIR})
+	include(InstallRequiredSystemLibraries)
+elseif(NOT APPLE)
 	make_directory(${VICINAE_INSTALL_SHARE})
 	file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
 	install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})

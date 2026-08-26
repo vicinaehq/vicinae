@@ -15,6 +15,7 @@ FocusScope {
     property bool hasError: false
     property bool filled: false
     property var selectedPaths: []
+    property var lockedPaths: []
 
     signal pathsChanged(var paths)
 
@@ -38,10 +39,10 @@ FocusScope {
 
     function _openFallbackDialog() {
         if (root._directoriesOnly)
-            _fallbackFolderDialog.open();
+            fallbackFolderDialog.open();
         else {
-            _fallbackFileDialog.fileMode = root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile;
-            _fallbackFileDialog.open();
+            fallbackFileDialog.fileMode = root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile;
+            fallbackFileDialog.open();
         }
     }
 
@@ -80,8 +81,8 @@ FocusScope {
     }
 
     FileDialog {
-        id: _fallbackFileDialog
-        title: root.multiple ? "Select files" : "Select a file"
+        id: fallbackFileDialog
+        title: root.multiple ? qsTr("Select files") : qsTr("Select a file")
         onAccepted: {
             root._handleFallbackResult(selectedFiles);
             FileChooser.notifyFallbackDone();
@@ -90,8 +91,8 @@ FocusScope {
     }
 
     FolderDialog {
-        id: _fallbackFolderDialog
-        title: "Select a directory"
+        id: fallbackFolderDialog
+        title: qsTr("Select a directory")
         onAccepted: {
             root._handleFallbackResult([selectedFolder]);
             FileChooser.notifyFallbackDone();
@@ -124,7 +125,7 @@ FocusScope {
             radius: 8
             opacity: root.readOnly ? 0.5 : 1.0
             color: "transparent"
-            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
+            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.surfaceOpacity)
             border.width: 1
 
             RowLayout {
@@ -137,7 +138,7 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     verticalAlignment: Text.AlignVCenter
-                    text: singleMode._displayText || (root._directoriesOnly ? "No directory selected" : "No file selected")
+                    text: singleMode._displayText || (root._directoriesOnly ? qsTr("No directory selected") : qsTr("No file selected"))
                     color: singleMode._displayText ? Theme.foreground : Theme.textPlaceholder
                     font.pointSize: Theme.regularFontSize
                     elide: Text.ElideMiddle
@@ -176,6 +177,55 @@ FocusScope {
         opacity: root.readOnly ? 0.5 : 1.0
 
         Repeater {
+            model: root.multiple ? root.lockedPaths : []
+
+            Item {
+                required property var modelData
+
+                Layout.fillWidth: true
+                implicitHeight: 32
+
+                FormInputBackground {
+                    anchors.fill: parent
+                    radius: 6
+                    filled: root.filled
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 6
+                    color: "transparent"
+                    border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
+                    border.width: 1
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 6
+
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        verticalAlignment: Text.AlignVCenter
+                        text: modelData
+                        color: Theme.textMuted
+                        font.pointSize: Theme.regularFontSize
+                        elide: Text.ElideMiddle
+                    }
+
+                    ViciImage {
+                        Layout.preferredWidth: 12
+                        Layout.preferredHeight: 12
+                        Layout.alignment: Qt.AlignVCenter
+                        source: Img.builtin("lock").withFillColor(Theme.textMuted)
+                    }
+                }
+            }
+        }
+
+        Repeater {
             model: root.multiple ? root.selectedPaths : []
 
             Item {
@@ -195,7 +245,7 @@ FocusScope {
                     anchors.fill: parent
                     radius: 6
                     color: "transparent"
-                    border.color: Config.withAlpha(Theme.inputBorder, Config.windowOpacity)
+                    border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
                     border.width: 1
                 }
 
@@ -252,7 +302,7 @@ FocusScope {
             ViciButton {
                 anchors.fill: parent
                 radius: 6
-                text: root._directoriesOnly ? "+ Add folder…" : "+ Add file…"
+                text: root._directoriesOnly ? qsTr("+ Add folder…") : qsTr("+ Add file…")
                 foreground: Theme.textMuted
                 variant: "ghost"
                 bordered: true

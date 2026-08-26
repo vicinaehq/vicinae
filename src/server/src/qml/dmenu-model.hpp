@@ -1,17 +1,22 @@
 #pragma once
 #include "fuzzy/scored.hpp"
+#include "generated/ipc-server.hpp"
 #include "section-source.hpp"
+#include <QCoreApplication>
+#include <cstddef>
 #include <functional>
-#include <string>
 #include <string_view>
 #include <vector>
 
 class DMenuSection : public SectionSource {
+  Q_DECLARE_TR_FUNCTIONS(DMenuSection)
+
 public:
   void setRawEntries(std::vector<std::string_view> entries);
   void setSectionTemplate(std::string_view tpl) { m_sectionTemplate = tpl; }
   void setNoSection(bool v) { m_noSection = v; }
   void setNoQuickLook(bool v) { m_noQuickLook = v; }
+  void setOutputFormat(ipc_gen::DMenuOutputFormat format) { m_outputFormat = format; }
   void setFilter(std::string_view query) override;
 
   QString sectionName() const override;
@@ -25,20 +30,23 @@ public:
 protected:
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
-  std::string_view entryAt(int i) const;
+  using IndexedData = std::pair<std::string_view, std::size_t>;
+
+  IndexedData entryAt(int i) const;
   QString expandSectionName(size_t count) const;
   void selectEntry(const QString &text) const;
 
   std::vector<std::string_view> m_entries;
-  std::vector<Scored<std::string_view>> m_filtered;
+  std::vector<Scored<IndexedData>> m_filtered;
   std::string_view m_sectionTemplate = "Entries ({count})";
   QString m_currentSearchText;
   bool m_noSection = false;
   bool m_noQuickLook = false;
+  ipc_gen::DMenuOutputFormat m_outputFormat = ipc_gen::DMenuOutputFormat::Data;
 
   std::function<void(const QString &)> m_onEntryChosen;
   std::function<void(std::string_view)> m_onFileHighlighted;

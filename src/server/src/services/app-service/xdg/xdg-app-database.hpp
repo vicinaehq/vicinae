@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "services/app-service/abstract-app-db.hpp"
 #include <xdgpp/desktop-entry/file.hpp>
 #include "xdg-app.hpp"
@@ -11,8 +12,10 @@
 #include <xdgpp/xdgpp.hpp>
 
 class XdgAppDatabase : public AbstractAppDatabase {
+  Q_DECLARE_TR_FUNCTIONS(XdgAppDatabase)
+
 public:
-  bool scan(const std::vector<std::filesystem::path> &paths) override;
+  bool scan() override;
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
   AppPtr findByClass(const QString &name) const override;
   AppPtr findDefaultOpener(const QString &target) const override;
@@ -33,12 +36,15 @@ public:
   AppPtr genericTextEditor() const override;
   AppPtr webBrowser() const override;
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const override;
+  bool openLocation(const AbstractApplication &app) const override;
+  AppPtr locationOpener(const AbstractApplication &app) const override;
 
   XdgAppDatabase();
 
 private:
   bool launchProcess(const QString &prog, const QStringList &args,
-                     const std::optional<std::filesystem::path> &workingDirectory) const;
+                     const std::optional<std::filesystem::path> &workingDirectory,
+                     const QString &appId = {}) const;
 
   xdgpp::DesktopEntry::TerminalExec getTermExec(const XdgApplication &app) const;
   xdgpp::DesktopEntry::TerminalExec inferTermExec(const XdgApplication &app) const;

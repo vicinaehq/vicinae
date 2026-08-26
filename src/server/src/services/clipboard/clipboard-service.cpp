@@ -1,48 +1,52 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
+#include <algorithm>
 #include <filesystem>
 #include <numeric>
 #include <QGuiApplication>
-#include "services/app-service/abstract-app-db.hpp"
+#include <qfuturewatcher.h>
+#include <qstandardpaths.h>
+#include <qtconcurrentrun.h>
+#include "common/clipboard-formats.hpp"
+#include "common/types.hpp"
+#ifdef Q_OS_LINUX
 #include "x11/x11-clipboard-server.hpp"
+#endif
 #include <qclipboard.h>
 #include <qimagereader.h>
 #include <qlogging.h>
 #include <qmimedata.h>
 #include <qnamespace.h>
 #include <qstringview.h>
-#include <qt6keychain/keychain.h>
 #include <QtConcurrent/QtConcurrent>
 #include <QFutureWatcher>
 #include <QBuffer>
 #include <QImage>
 #include "clipboard-server-factory.hpp"
 #include <quuid.h>
-#include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "services/clipboard/selection-mime-data.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
+#include "services/clipboard/clipboard-mime.hpp"
 #include "services/clipboard/clipboard-server.hpp"
-#include "services/clipboard/gnome/gnome-clipboard-server.hpp"
 #include "utils.hpp"
 #ifdef Q_OS_LINUX
+#ifdef Q_OS_LINUX
+#include "services/clipboard/gnome/gnome-clipboard-server.hpp"
 #include "data-control/data-control-clipboard-server.hpp"
+#endif
+#endif
+#ifdef Q_OS_MACOS
+#include "macos/macos-clipboard-server.hpp"
+#endif
+#ifdef Q_OS_WIN
+#include "windows/windows-clipboard-server.hpp"
 #endif
 
 namespace fs = std::filesystem;
 
-/**
- * If any of these is found in a selection, we ignore the entire selection.
- */
-static const std::set<QString> IGNORED_MIME_TYPES = {
-    Clipboard::CONCEALED_MIME_TYPE,
-};
-
-static const std::set<QString> PASSWORD_MIME_TYPES = {
-    "x-kde-passwordManagerHint",
-};
-
 bool ClipboardService::setPinned(const QString &id, bool pinned) {
-  if (!ClipboardDatabase().setPinned(id, pinned)) { return false; }
+  if (!openDatabase().setPinned(id, pinned)) { return false; }
 
   emit selectionPinStatusChanged(id, pinned);
 
@@ -56,30 +60,19 @@ bool ClipboardService::clear() {
 
 bool ClipboardService::supportsMonitoring() const { return m_clipboardServer->id() != "dummy"; }
 
-bool ClipboardService::copyContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
-  struct ContentVisitor {
-    ClipboardService &service;
-    const Clipboard::CopyOptions &options;
-
-    bool operator()(const Clipboard::NoData &dummy) const {
-      qWarning() << "attempt to copy NoData content";
-      return false;
-    }
-    bool operator()(const Clipboard::Html &html) const { return service.copyHtml(html, options); }
-    bool operator()(const Clipboard::File &file) const { return service.copyFile(file.path, options); }
-    bool operator()(const Clipboard::Text &text) const { return service.copyText(text.text, options); }
-    bool operator()(const ClipboardSelection &selection) const {
-      return service.copySelection(selection, options);
-    }
-    bool operator()(const Clipboard::SelectionRecordHandle &handle) const {
-      return service.copySelectionRecord(handle.id, options);
-    }
-
-    ContentVisitor(ClipboardService &service, const Clipboard::CopyOptions &options)
-        : service(service), options(options) {}
+bool ClipboardService::copyContent(Clipboard::Content content, const Clipboard::CopyOptions &options) {
+  const auto visitor = overloads{
+      [&](const Clipboard::Html &html) { return copyHtml(html, options); },
+      [&](const Clipboard::File &file) { return copyFile(file.path, options); },
+      [&](const Clipboard::Urls &urls) { return copyUrls(urls.values, options); },
+      [&](const Clipboard::Text &text) { return copyText(text.text, options); },
+      [&](ClipboardSelection &&selection) { return copySelection(std::move(selection), options); },
+      [&](const Clipboard::SelectionRecordHandle &handle) { return copySelectionRecord(handle.id, options); },
+      [](const auto &dummy) {
+        qWarning() << "attempt to copy NoData content";
+        return false;
+      },
   };
-
-  ContentVisitor visitor(*this, options);
 
   return std::visit(visitor, content);
 }
@@ -87,22 +80,25 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
 bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboard::CopyOptions &options) {
   QMimeData *data = new QMimeData;
 
-  // copying files should normally copy a link to the file, not the file itself
-  // This is what text/uri-list is used for. On Windows or other systems we might have
-  // to do something else, I'm not sure.
-  data->setData("text/uri-list", QString("file://%1").arg(path.c_str()).toUtf8());
+  data->setUrls({QUrl::fromLocalFile(QString::fromStdString(path.string()))});
 
   return copyQMimeData(data, options);
 }
 
+bool ClipboardService::copyUrls(const std::vector<QUrl> &urls, const Clipboard::CopyOptions &options) {
+  auto data = Clipboard::mimeDataForContent(Clipboard::Urls{urls});
+
+  return copyQMimeData(data.release(), options);
+}
+
 void ClipboardService::setRecordAllOffers(bool value) { m_recordAllOffers = value; }
 
-void ClipboardService::setEncryption(bool value) {
-  m_encrypter.reset();
-
-  if (value) {
-    m_encrypter = std::make_unique<ClipboardEncrypter>();
-    m_encrypter->loadKey();
+void ClipboardService::setEncryptionKey(std::optional<db::EncryptionKey> key) {
+  if (key) {
+    m_encrypter = std::make_unique<ClipboardEncrypter>(
+        QByteArray(reinterpret_cast<const char *>(key->data()), key->size()));
+  } else {
+    m_encrypter.reset();
   }
 }
 
@@ -151,8 +147,6 @@ bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOption
   mimeData->setData("text/plain", text.toUtf8());
   mimeData->setData("text/plain;charset=utf-8", text.toUtf8());
 
-  if (options.concealed) mimeData->setData(Clipboard::CONCEALED_MIME_TYPE, "1");
-
   return copyQMimeData(mimeData, options);
 }
 
@@ -169,15 +163,17 @@ void ClipboardService::scheduleClipboardRestore(int delayMs) {
 
 QFuture<PaginatedResponse<ClipboardHistoryEntry>>
 ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &opts) const {
+  auto key = m_dbKey;
   return QtConcurrent::run(
-      [opts, limit, offset]() { return ClipboardDatabase().query(limit, offset, opts); });
+      [opts, limit, offset, key]() { return ClipboardDatabase(key).query(limit, offset, opts); });
 }
 
 ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
   if (offer.mimeType == "text/uri-list") {
     QString const text = offer.data;
     auto uris = text.split("\r\n", Qt::SkipEmptyParts);
-    if (uris.size() == 1 && QUrl(uris.front()).isLocalFile()) return ClipboardOfferKind::File;
+    auto isLocalFile = [](const QString &uri) { return QUrl(uri).isLocalFile(); };
+    if (!uris.isEmpty() && std::ranges::all_of(uris, isLocalFile)) return ClipboardOfferKind::File;
     return ClipboardOfferKind::Text;
   }
 
@@ -198,18 +194,32 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 
 QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
   static const std::vector<QString> plainTextMimeTypes = {
-      "text/uri-list", "text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT",
-      "COMPOUND_TEXT"};
+      "text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"};
 
-  for (const auto &mime : plainTextMimeTypes) {
-    auto it = std::ranges::find_if(
-        selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
-    if (it != selection.offers.end()) return it->mimeType;
+  auto uriIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
+    return offer.mimeType == "text/uri-list" && !offer.data.isEmpty();
+  });
+  if (uriIt != selection.offers.end() && getKind(*uriIt) == ClipboardOfferKind::File) {
+    return uriIt->mimeType;
   }
 
   auto imageIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
     return offer.mimeType.startsWith("image/") && !offer.data.isEmpty();
   });
+
+  auto isRemoteUrl = [](const QByteArray &data) {
+    auto url = QUrl::fromEncoded(data.trimmed(), QUrl::StrictMode);
+    return url.scheme().length() > 1 && !url.isLocalFile();
+  };
+
+  for (const auto &mime : plainTextMimeTypes) {
+    auto it = std::ranges::find_if(
+        selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
+    if (it == selection.offers.end()) continue;
+    if (imageIt != selection.offers.end() && isRemoteUrl(it->data)) break;
+    return it->mimeType;
+  }
+
   if (imageIt != selection.offers.end()) return imageIt->mimeType;
 
   auto htmlIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
@@ -228,7 +238,7 @@ QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection
 }
 
 bool ClipboardService::removeSelection(const QString &selectionId) {
-  ClipboardDatabase cdb;
+  auto cdb = openDatabase();
 
   for (const auto &offer : cdb.removeSelection(selectionId)) {
     fs::remove(m_dataDir / offer.toStdString());
@@ -255,13 +265,13 @@ ClipboardService::decryptOffer(const QByteArray &data, ClipboardEncryptionType t
 
 std::expected<QByteArray, ClipboardService::OfferDecryptionError>
 ClipboardService::getMainOfferData(const QString &selectionId) const {
-  ClipboardDatabase cdb;
+  auto cdb = openDatabase();
 
   auto offer = cdb.findPreferredOffer(selectionId);
 
   if (!offer) {
     qWarning() << "Can't find preferred offer for selection" << selectionId;
-    return {};
+    return std::unexpected(OfferDecryptionError::DataUnavailable);
   };
 
   fs::path const path = m_dataDir / offer->id.toStdString();
@@ -270,7 +280,7 @@ ClipboardService::getMainOfferData(const QString &selectionId) const {
 
   if (!file.open(QIODevice::ReadOnly)) {
     qWarning() << "Failed to open file at" << path;
-    return {};
+    return std::unexpected(OfferDecryptionError::DataUnavailable);
   }
 
   return decryptOffer(file.readAll(), offer->encryption);
@@ -303,65 +313,61 @@ QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
 
     buffer.setData(offer.data);
     if (auto size = reader.size(); size.isValid()) {
-      return QString("Image (%1x%2)").arg(size.width()).arg(size.height());
+      return tr("Image (%1x%2)").arg(size.width()).arg(size.height());
     }
-    return "Image";
+    return tr("Image");
   }
   default:
-    return "Unknown";
+    return tr("Unknown");
   }
 }
 
 std::optional<QString> ClipboardService::retrieveKeywords(const QString &id) {
-  return ClipboardDatabase().retrieveKeywords(id);
+  return openDatabase().retrieveKeywords(id);
 }
 
 bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
-  return ClipboardDatabase().setKeywords(id, keywords);
-}
-
-bool ClipboardService::isConcealedSelection(const ClipboardSelection &selection) {
-  return std::ranges::any_of(selection.offers,
-                             [](auto &&offer) { return IGNORED_MIME_TYPES.contains(offer.mimeType); });
-}
-
-bool ClipboardService::isPasswordSelection(const ClipboardSelection &selection) {
-  return std::ranges::any_of(selection.offers,
-                             [](auto &&offer) { return PASSWORD_MIME_TYPES.contains(offer.mimeType); });
+  return openDatabase().setKeywords(id, keywords);
 }
 
 ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &selection) {
-  std::ranges::sort(selection.offers, [](auto &&a, auto &&b) {
-    return std::ranges::lexicographical_compare(a.mimeType, b.mimeType);
-  });
-  const auto [first, last] =
-      std::ranges::unique(selection.offers, [](auto &&a, auto &&b) { return a.mimeType == b.mimeType; });
+  {
+    std::ranges::sort(selection.offers, [](auto &&a, auto &&b) {
+      return std::ranges::lexicographical_compare(a.mimeType, b.mimeType);
+    });
+    const auto [first, last] =
+        std::ranges::unique(selection.offers, [](auto &&a, auto &&b) { return a.mimeType == b.mimeType; });
 
-  selection.offers.erase(first, last);
+    selection.offers.erase(first, last);
+  }
+
+  {
+    // we never want to index raw image data, as we cannot propose it back without paying
+    // a significant price for it.
+    auto it = std::ranges::find_if(selection.offers,
+                                   [](auto &&offer) { return offer.mimeType == Clipboard::QT_IMAGE_DATA; });
+
+    if (it != selection.offers.end()) selection.offers.erase(it);
+  }
 
   return selection;
 }
 
 void ClipboardService::saveSelection(ClipboardSelection selection) {
-  sanitizeSelection(selection);
+  if (!m_monitoring) return;
 
   m_lastSelection = selection;
 
-  if (!m_monitoring) return;
+  sanitizeSelection(selection);
 
-  qInfo() << "Received new clipboard selection with" << selection.offers.size() << "offers";
+  qInfo() << "Received new clipboard selection with" << selection.offers.size()
+          << "offers (password=" << selection.isPassword << ")";
 
   for (const auto &offer : selection.offers) {
-    qInfo().nospace() << offer.mimeType << " (size=" << formatSize(offer.data.size())
-                      << ", password=" << PASSWORD_MIME_TYPES.contains(offer.mimeType) << ")";
+    qInfo().nospace() << offer.mimeType << " (size=" << formatSize(offer.data.size()) << ")";
   }
 
-  if (isConcealedSelection(selection)) {
-    qInfo() << "Ignoring concealed selection";
-    return;
-  }
-
-  if (m_ignorePasswords && isPasswordSelection(selection)) {
+  if (m_ignorePasswords && selection.isPassword) {
     qInfo() << "Ignored password clipboard selection";
     return;
   }
@@ -372,8 +378,6 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
   }
 
   QString preferredMimeType = getSelectionPreferredMimeType(selection);
-  ClipboardHistoryEntry insertedEntry;
-  ClipboardDatabase cdb;
   auto preferredOfferIt =
       std::ranges::find_if(selection.offers, [&](auto &&o) { return o.mimeType == preferredMimeType; });
 
@@ -396,98 +400,111 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
     return;
   }
 
-  cdb.transaction([&](ClipboardDatabase *db) {
-    if (db->tryBubbleUpSelection(selectionHash)) {
-      qInfo() << "A similar clipboard selection is already indexed: moving it on top of the history";
-      return true;
-    }
+  // we wait synchronously instead of queuing, in practice this will almost never happen,
+  // so adding queuing infrastructure seems unnecessary here.
+  if (m_indexingSelection.isRunning()) m_indexingSelection.waitForFinished();
 
-    QString const selectionId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+  m_indexingSelection.setFuture(
+      QtConcurrent::run([this, selection = std::move(selection), selectionHash, preferredKind,
+                         preferredMimeType]() -> std::expected<ClipboardHistoryEntry, QString> {
+        ClipboardHistoryEntry insertedEntry;
+        auto cdb = openDatabase();
+        const bool ok = cdb.transaction([&](ClipboardDatabase *db) {
+          if (db->tryBubbleUpSelection(selectionHash)) {
+            qInfo() << "A similar clipboard selection is already indexed: moving it on top of the history";
+            return true;
+          }
 
-    if (!db->insertSelection({.id = selectionId,
-                              .offerCount = static_cast<int>(selection.offers.size()),
-                              .hash = selectionHash,
-                              .preferredMimeType = preferredMimeType,
-                              .kind = preferredKind,
-                              .source = selection.sourceApp})) {
-      qWarning() << "failed to insert selection";
-      return false;
-    }
+          QString const selectionId = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
-    // Index all offers, including empty ones
-    for (const auto &offer : selection.offers) {
-      ClipboardOfferKind const kind = getKind(offer);
-      bool const isIndexableText = kind == ClipboardOfferKind::Text || kind == ClipboardOfferKind::Link;
-      QString const textPreview = getOfferTextPreview(offer);
+          if (!db->insertSelection({.id = selectionId,
+                                    .offerCount = static_cast<int>(selection.offers.size()),
+                                    .hash = selectionHash,
+                                    .preferredMimeType = preferredMimeType,
+                                    .kind = preferredKind,
+                                    .source = selection.sourceApp})) {
+            qWarning() << "failed to insert selection";
+            return false;
+          }
 
-      if (isIndexableText && !offer.data.isEmpty()) {
-        if (!db->indexSelectionContent(selectionId, offer.data)) {
-          qWarning() << "Failed to index selection content for offer" << offer.mimeType;
-          return false;
-        }
-      }
+          // Index all offers, including empty ones
+          for (const auto &offer : selection.offers) {
+            ClipboardOfferKind const kind = getKind(offer);
+            bool const isIndexableText = kind == ClipboardOfferKind::Text || kind == ClipboardOfferKind::Link;
+            QString const textPreview = getOfferTextPreview(offer);
 
-      auto md5sum = QCryptographicHash::hash(offer.data, QCryptographicHash::Md5).toHex();
-      auto offerId = QUuid::createUuid().toString(QUuid::WithoutBraces);
-      ClipboardEncryptionType encryption = ClipboardEncryptionType::None;
+            if (isIndexableText && !offer.data.isEmpty()) {
+              if (!db->indexSelectionContent(selectionId, offer.data)) {
+                qWarning() << "Failed to index selection content for offer" << offer.mimeType;
+                return false;
+              }
+            }
 
-      if (m_encrypter) encryption = ClipboardEncryptionType::Local;
+            auto md5sum = QCryptographicHash::hash(offer.data, QCryptographicHash::Md5).toHex();
+            auto offerId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+            ClipboardEncryptionType encryption = ClipboardEncryptionType::None;
 
-      InsertClipboardOfferPayload dto{
-          .id = offerId,
-          .selectionId = selectionId,
-          .mimeType = offer.mimeType,
-          .textPreview = textPreview,
-          .md5sum = md5sum,
-          .encryption = encryption,
-          .size = static_cast<quint64>(offer.data.size()),
-      };
+            if (m_encrypter) encryption = ClipboardEncryptionType::Local;
 
-      if (kind == ClipboardOfferKind::Link) {
-        auto url = QUrl::fromEncoded(offer.data, QUrl::StrictMode);
-        if (url.scheme().startsWith("http")) { dto.urlHost = url.host(); }
-      }
+            InsertClipboardOfferPayload dto{
+                .id = offerId,
+                .selectionId = selectionId,
+                .mimeType = offer.mimeType,
+                .textPreview = textPreview,
+                .md5sum = md5sum,
+                .encryption = encryption,
+                .size = static_cast<quint64>(offer.data.size()),
+            };
 
-      if (!db->insertOffer(dto)) {
-        qWarning() << "Failed to insert offer" << offer.mimeType;
-        return false;
-      }
+            if (kind == ClipboardOfferKind::Link) {
+              auto url = QUrl::fromEncoded(offer.data, QUrl::StrictMode);
+              if (url.scheme().startsWith("http")) { dto.urlHost = url.host(); }
+            }
 
-      fs::path const targetPath = m_dataDir / offerId.toStdString();
-      QFile targetFile(targetPath);
+            if (!db->insertOffer(dto)) {
+              qWarning() << "Failed to insert offer" << offer.mimeType;
+              return false;
+            }
 
-      if (!targetFile.open(QIODevice::WriteOnly)) { continue; }
+            fs::path const targetPath = m_dataDir / offerId.toStdString();
+            QFile targetFile(targetPath);
 
-      if (m_encrypter) {
-        if (auto encrypted = m_encrypter->encrypt(offer.data)) {
-          targetFile.write(encrypted.value());
-        } else {
-          qWarning() << "Failed to encrypt clipboard selection";
-          return false;
-        }
-      } else {
-        targetFile.write(offer.data);
-      }
+            if (!targetFile.open(QIODevice::WriteOnly)) { continue; }
 
-      // Set the insertedEntry for the preferred offer
-      if (offer.mimeType == preferredMimeType) {
-        insertedEntry.id = selectionId;
-        insertedEntry.pinnedAt = 0;
-        insertedEntry.updatedAt = {};
-        insertedEntry.mimeType = offer.mimeType;
-        insertedEntry.md5sum = md5sum;
-        insertedEntry.textPreview = textPreview;
-      }
-    }
+            if (m_encrypter) {
+              if (auto encrypted = m_encrypter->encrypt(offer.data)) {
+                targetFile.write(encrypted.value());
+                ClipboardHistoryEntry insertedEntry;
+              } else {
+                qWarning() << "Failed to encrypt clipboard selection";
+                return false;
+              }
+            } else {
+              targetFile.write(offer.data);
+            }
 
-    return true;
-  });
+            // Set the insertedEntry for the preferred offer
+            if (offer.mimeType == preferredMimeType) {
+              insertedEntry.id = selectionId;
+              insertedEntry.pinnedAt = 0;
+              insertedEntry.updatedAt = {};
+              insertedEntry.mimeType = offer.mimeType;
+              insertedEntry.md5sum = md5sum;
+              insertedEntry.textPreview = textPreview;
+            }
+          }
 
-  emit itemInserted(insertedEntry);
+          return true;
+        });
+
+        if (!ok) return std::unexpected(QStringLiteral("Failed to insert selection"));
+
+        return insertedEntry;
+      }));
 }
 
 std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const QString &id) {
-  ClipboardDatabase cdb;
+  auto cdb = openDatabase();
   ClipboardSelection populatedSelection;
   const auto selection = cdb.findSelection(id);
 
@@ -509,13 +526,12 @@ std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const 
     populatedSelection.offers.emplace_back(populatedOffer);
   }
 
+  populatedSelection.sourceApp = selection->source;
   return populatedSelection;
 }
 
 bool ClipboardService::copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options) {
-  if (options.concealed) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
-
-  return m_clipboardServer->setClipboardContent(data);
+  return m_clipboardServer->setClipboardContent(data, options);
 }
 
 void ClipboardService::restoreClipboard() {
@@ -526,9 +542,29 @@ void ClipboardService::restoreClipboard() {
     data->setData(offer.mimeType, offer.data);
   }
 
-  data->setData(Clipboard::CONCEALED_MIME_TYPE, {});
-  m_clipboardServer->setClipboardContent(data);
+  // Restore is transient so we don't re-index a selection that was already on the clipboard.
+  m_clipboardServer->setClipboardContent(data, {.transient = true, .sourceApp = m_lastSelection->sourceApp});
   m_lastSelection.reset();
+}
+
+std::unique_ptr<QMimeData>
+ClipboardService::mimeDataFromSelection(const ClipboardSelection &selection) const {
+  QMimeData *mimeData = new QMimeData;
+
+  for (auto &offer : selection.offers) {
+    if (offer.mimeType != Clipboard::URI_LIST && Utils::isTextMimeType(offer.mimeType)) {
+      mimeData->setText(QString::fromUtf8(offer.data));
+    } else {
+      mimeData->setData(offer.mimeType, offer.data);
+    }
+  }
+
+  return std::unique_ptr<QMimeData>{mimeData};
+}
+
+std::unique_ptr<QMimeData>
+ClipboardService::dragMimeDataForSelection(const ClipboardSelection &selection) const {
+  return std::make_unique<DragAndDropSelectionMimeData>(selection);
 }
 
 bool ClipboardService::copySelection(const ClipboardSelection &selection,
@@ -538,32 +574,13 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
     return false;
   }
 
-  QMimeData *mimeData = new QMimeData;
+  auto enrichedOptions = options;
 
-  for (const auto &offer : selection.offers) {
-    if (offer.mimeType == "application/x-qt-image") continue; // we handle that ourselves
-    if (offer.mimeType.startsWith("image/") && !mimeData->hasImage()) {
-      auto img = QImage::fromData(offer.data);
+  if (!enrichedOptions.sourceApp) enrichedOptions.sourceApp = selection.sourceApp;
 
-      if (img.isNull()) {
-        qWarning() << offer.mimeType << "could not be converted to valid image format";
-        mimeData->setData(offer.mimeType, offer.data);
-      } else {
-        mimeData->setData(offer.mimeType, offer.data);
-        mimeData->setImageData(img);
-        qDebug() << "ClipboardService: Set image data with mime type" << offer.mimeType
-                 << "size:" << offer.data.size();
-      }
-    } else {
-      if (Utils::isTextMimeType(offer.mimeType)) {
-        mimeData->setText(QString::fromUtf8(offer.data));
-      } else {
-        mimeData->setData(offer.mimeType, offer.data);
-      }
-    }
-  }
+  auto mimeData = mimeDataFromSelection(std::move(selection));
 
-  return copyQMimeData(mimeData, options);
+  return copyQMimeData(mimeData.release(), enrichedOptions);
 }
 
 bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::CopyOptions &options) {
@@ -574,7 +591,7 @@ bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::C
     return false;
   }
 
-  ClipboardDatabase db;
+  auto db = openDatabase();
 
   if (!db.tryBubbleUpSelection(id)) {
     qWarning() << "Failed to bubble up selection with id" << id;
@@ -584,7 +601,7 @@ bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::C
   // we don't want subscribers to block before the actual copy happens
   QMetaObject::invokeMethod(this, [this]() { emit selectionUpdated(); }, Qt::QueuedConnection);
 
-  return copySelection(*selection, options);
+  return copySelection(*std::move(selection), options);
 }
 
 QString ClipboardService::readText() { return QGuiApplication::clipboard()->text(); }
@@ -596,12 +613,8 @@ Clipboard::ReadContent ClipboardService::readContent() {
   if (!mimeData) return content;
 
   if (mimeData->hasUrls()) {
-    for (const auto &url : mimeData->urls()) {
-      if (url.isLocalFile()) {
-        content.file = url.toLocalFile();
-        break;
-      }
-    }
+    const auto urls = mimeData->urls();
+    content.urls.assign(urls.begin(), urls.end());
   }
 
   if (mimeData->hasHtml()) { content.html = mimeData->html(); }
@@ -611,7 +624,7 @@ Clipboard::ReadContent ClipboardService::readContent() {
 }
 
 bool ClipboardService::removeAllSelections() {
-  ClipboardDatabase db;
+  auto db = openDatabase();
 
   if (!db.removeAll()) {
     qWarning() << "Failed to remove all clipboard selections";
@@ -628,24 +641,35 @@ bool ClipboardService::removeAllSelections() {
 
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
 
-ClipboardService::ClipboardService(const std::filesystem::path &path) {
+ClipboardService::ClipboardService(const std::filesystem::path &path, std::optional<db::EncryptionKey> key)
+    : m_dbKey(key) {
   m_dataDir = path.parent_path() / "clipboard-data";
 
   {
     ClipboardServerFactory factory;
 
-    factory.registerServer<GnomeClipboardServer>();
 #ifdef Q_OS_LINUX
+    factory.registerServer<GnomeClipboardServer>();
     factory.registerServer<DataControlClipboardServer>();
     factory.registerServer<X11ClipboardServer>();
+#endif
+#ifdef Q_OS_MACOS
+    factory.registerServer<MacosClipboardServer>();
+#endif
+#ifdef Q_OS_WIN
+    factory.registerServer<WindowsClipboardServer>();
 #endif
     m_clipboardServer = factory.createFirstActivatable();
     qInfo() << "Activated clipboard server" << m_clipboardServer->id();
   }
 
   fs::create_directories(m_dataDir);
-  ClipboardDatabase().runMigrations();
+  openDatabase().runMigrations();
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);
+  connect(&m_indexingSelection, &decltype(m_indexingSelection)::finished, this, [this]() {
+    if (m_indexingSelection.isCanceled()) return;
+    if (auto result = m_indexingSelection.result()) { emit itemInserted(*result); }
+  });
 }

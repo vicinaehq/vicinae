@@ -24,7 +24,7 @@ void EditKeywordsViewHost::initialize() {
   auto panel = std::make_unique<FormActionPanelState>();
   auto section = panel->createSection();
   auto submitAction =
-      new StaticAction(QStringLiteral("Submit"), ImageURL::builtin("enter-key"), [this]() { submit(); });
+      new StaticAction(tr("Submit"), ImageURL::builtin(BuiltinIcon::EnterKey), [this]() { submit(); });
   section->addAction(submitAction);
   setActions(std::move(panel));
 
@@ -35,9 +35,9 @@ void EditKeywordsViewHost::submit() {
   auto toast = context()->services->toastService();
 
   if (m_saveKeywords(m_keywords)) {
-    toast->setToast("Keywords edited", ToastStyle::Success);
+    toast->setToast(tr("Keywords edited"), ToastStyle::Success);
     popSelf();
   } else {
-    toast->setToast("Failed to edit keywords", ToastStyle::Danger);
+    toast->setToast(tr("Failed to edit keywords"), ToastStyle::Danger);
   }
 }

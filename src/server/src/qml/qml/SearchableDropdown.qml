@@ -9,6 +9,7 @@ Item {
     activeFocusOnTab: !compact && !readOnly
 
     property var items: []
+    property CompletionModel model: null
     property var currentItem: null
     signal activated(var item)
     signal popupClosed
@@ -62,7 +63,7 @@ Item {
         height: compact ? 28 : implicitHeight
         radius: compact ? 6 : 8
         color: "transparent"
-        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder)), Config.windowOpacity)
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder)), Config.surfaceOpacity)
         border.width: 1
 
         RowLayout {
@@ -108,7 +109,7 @@ Item {
     CompletionPopup {
         id: completionPopup
         parent: triggerButton
-        popupType: Popup.Window
+        popupType: Platform.preferItemPopup("dropdown") ? Popup.Item : Popup.Window
         // On Wayland the compositor places the native popup window from the
         // PopupPlacement anchor; x/y only apply on other platforms.
         PopupPlacement.alignment: root.compact ? Qt.AlignRight : Qt.AlignLeft
@@ -117,16 +118,18 @@ Item {
         width: Math.max(compact ? 200 : 250, root.width)
         focus: true
         sections: root.items
+        model: root.model
         showFilter: true
         currentItemId: root.currentItem ? root.currentItem.id : ""
 
         background: Rectangle {
-            radius: 8
-            color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.95)
-            border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-            border.width: 1
-            BackgroundEffect.enabled: Config.blurEnabled
-            BackgroundEffect.radius: 8
+            readonly property bool csd: completionPopup.popupType === Popup.Item || Platform.supports("clientSideDecorations")
+            readonly property real bgOpacity: completionPopup.popupType === Popup.Window ? Config.popupOpacity : 1
+            radius: csd ? Math.min(Config.borderRounding, 15) : 0
+            color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bgOpacity)
+            border.color: Config.withAlpha(Theme.popoverBorder, bgOpacity)
+            border.width: csd ? 1 : 0
+            PopupMaterial {}
         }
 
         onClosed: {

@@ -8,17 +8,18 @@
 
 namespace {
 
-using ComputeMode = AbstractCalculatorBackend::ComputeMode;
 using Catch::Matchers::Equals;
 
 QalculateBackend makeBackend() {
+  // libqalculate formats results according to LC_NUMERIC
+  setenv("LC_ALL", "C", 1);
   QalculateBackend backend;
   REQUIRE(backend.start());
   return backend;
 }
 
 void assertComputationResult(const QString &question, const QString &expected) {
-  auto r = makeBackend().compute(question, {.mode = ComputeMode::MixedSearch});
+  auto r = makeBackend().compute(question, {});
   REQUIRE(r);
   REQUIRE_THAT(r->answer.text.toStdString(), Equals(expected.toStdString()));
 }
@@ -49,10 +50,9 @@ bool isValidIsoDatetime(const std::string &str, DatetimeFormat format) {
   return std::regex_match(trimmed.begin(), trimmed.end(), spec.pattern);
 }
 
-void assertIsValidDatetime(const QString &question, DatetimeFormat format,
-                           ComputeMode mode = ComputeMode::Full) {
+void assertIsValidDatetime(const QString &question, DatetimeFormat format) {
   auto backend = makeBackend();
-  auto r = backend.compute(question, {.mode = mode});
+  auto r = backend.compute(question, {});
   REQUIRE(r);
   REQUIRE(isValidIsoDatetime(r->answer.text.toStdString(), format));
 }
@@ -62,7 +62,7 @@ void assertIsValidDatetime(const QString &question, DatetimeFormat format,
 TEST_CASE("computes full expressions") {
   auto backend = makeBackend();
 
-  auto result = backend.compute("2 + 2", {.mode = ComputeMode::Full});
+  auto result = backend.compute("2 + 2", {});
 
   REQUIRE(result);
   REQUIRE(result->type == AbstractCalculatorBackend::NORMAL);
@@ -70,12 +70,12 @@ TEST_CASE("computes full expressions") {
 }
 
 TEST_CASE("supports basic unit conversion") {
-  assertComputationResult("100 g to kg", "0.1 kg");
-  assertComputationResult("ns to us", "0.001 μs");
-  assertComputationResult("ns to us", "0.001 μs");
-  assertComputationResult("day in hrs", "24 h");
-  assertComputationResult("day in min", "1440 min");
-  assertComputationResult("100mm to m", "0.1 m");
+  assertComputationResult("100 g to kg", "0.1\u202Fkg");
+  assertComputationResult("ns to us", "0.001\u202Fμs");
+  assertComputationResult("ns to us", "0.001\u202Fμs");
+  assertComputationResult("day in hrs", "24\u202Fh");
+  assertComputationResult("day in min", "1440\u202Fmin");
+  assertComputationResult("100mm to m", "0.1\u202Fm");
 }
 
 TEST_CASE("handles datetime operations and conversions") {
@@ -94,35 +94,10 @@ TEST_CASE("resolves timezones by city, casing and custom offset") {
   assertIsValidDatetime("now to -08:00", DatetimeFormat::WithOffset);
 }
 
-TEST_CASE("computes timezone conversions in mixed search mode") {
-  assertIsValidDatetime("now in havana", DatetimeFormat::WithOffset, ComputeMode::MixedSearch);
-  assertIsValidDatetime("now in utc", DatetimeFormat::UtcWithZ, ComputeMode::MixedSearch);
-}
-
-TEST_CASE("rejects non expressions in mixed search mode") {
-  auto backend = makeBackend();
-
-  REQUIRE_FALSE(backend.compute("hello", {.mode = ComputeMode::MixedSearch}));
-  REQUIRE_FALSE(backend.compute("2", {.mode = ComputeMode::MixedSearch}));
-  REQUIRE_FALSE(backend.compute("+ 2", {.mode = ComputeMode::MixedSearch}));
-}
-
-TEST_CASE("accepts expressions in mixed search mode") {
-  auto backend = makeBackend();
-
-  auto arithmetic = backend.compute("2 + 2", {.mode = ComputeMode::MixedSearch});
-  auto functionCall = backend.compute("sqrt(16)", {.mode = ComputeMode::MixedSearch});
-
-  REQUIRE(arithmetic);
-  REQUIRE(arithmetic->answer.text == "4");
-  REQUIRE(functionCall);
-  REQUIRE(functionCall->answer.text == "4");
-}
-
 TEST_CASE("strips trailing operators before computing") {
   auto backend = makeBackend();
 
-  auto result = backend.compute("2 +", {.mode = ComputeMode::Full});
+  auto result = backend.compute("2 +", {});
 
   REQUIRE(result);
   REQUIRE(result->answer.text == "2");
@@ -131,7 +106,7 @@ TEST_CASE("strips trailing operators before computing") {
 TEST_CASE("rewrites infix in to to for unit conversion") {
   auto backend = makeBackend();
 
-  auto result = backend.compute("100in in m", {.mode = ComputeMode::MixedSearch});
+  auto result = backend.compute("100in in m", {});
 
   REQUIRE(result);
   REQUIRE(result->type == AbstractCalculatorBackend::CONVERSION);
@@ -143,8 +118,8 @@ TEST_CASE("rewrites infix in to to for unit conversion") {
 TEST_CASE("normalizes storage unit shorthand") {
   auto backend = makeBackend();
 
-  auto decimal = backend.compute("1 gb to mb", {.mode = ComputeMode::MixedSearch});
-  auto binary = backend.compute("1 gib to mib", {.mode = ComputeMode::MixedSearch});
+  auto decimal = backend.compute("1 gb to mb", {});
+  auto binary = backend.compute("1 gib to mib", {});
 
   REQUIRE(decimal);
   REQUIRE(decimal->type == AbstractCalculatorBackend::CONVERSION);
@@ -159,37 +134,9 @@ TEST_CASE("normalizes storage unit shorthand") {
   REQUIRE_FALSE(binary->answer.unit->displayName.isEmpty());
 }
 
-TEST_CASE("Standalone currency name should not trigger conversion in mixed search mode") {
-  auto r = makeBackend().compute("USD", {.mode = ComputeMode::MixedSearch});
-  REQUIRE_FALSE(r);
-}
-
-TEST_CASE("Standalone currency name should trigger conversion in full mode") {
-  auto r = makeBackend().compute("USD", {.mode = ComputeMode::Full});
-  REQUIRE(r);
-}
-
-const auto CONSTANTS = {"pi", "e"};
-
-TEST_CASE("raw constants should not expand in mixed search mode") {
-  auto calc = makeBackend();
-
-  for (auto constant : CONSTANTS) {
-    REQUIRE_FALSE(calc.compute(constant, {.mode = ComputeMode::MixedSearch}));
-  }
-}
-
-TEST_CASE("PI constant should expand in full mode") {
-  auto calc = makeBackend();
-
-  for (auto constant : CONSTANTS) {
-    REQUIRE(calc.compute(constant, {.mode = ComputeMode::Full}));
-  }
-}
-
 TEST_CASE("supports currency conversions") {
   auto backend = makeBackend();
-  auto result = backend.compute("1 USD to USD", {.mode = ComputeMode::MixedSearch});
+  auto result = backend.compute("1 USD to USD", {});
 
   REQUIRE(result);
   REQUIRE(result->type == AbstractCalculatorBackend::CONVERSION);
@@ -201,7 +148,7 @@ TEST_CASE("supports currency conversions") {
 TEST_CASE("basic currency support") {
   auto backend = makeBackend();
   const auto assertCurrency = [&](auto &&cur) {
-    auto result = backend.compute(QString("1 %1 to %1").arg(cur), {.mode = ComputeMode::MixedSearch});
+    auto result = backend.compute(QString("1 %1 to %1").arg(cur), {});
     REQUIRE(result);
     REQUIRE(result->type == AbstractCalculatorBackend::CONVERSION);
     REQUIRE(result->answer.text.contains("1"));

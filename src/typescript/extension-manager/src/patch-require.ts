@@ -3,12 +3,22 @@ import type { EnvironmentType } from "./types";
 
 const injectJsxGlobals = () => {
 	const { jsx, jsxs, Fragment } = require("react/jsx-runtime");
+	const { createElement } = require("react");
 
-	// react/jsx-runtime always expect non-null props
+	const isKey = (v: unknown) =>
+		v === undefined || typeof v === "string" || typeof v === "number";
+
 	const safeJsx =
 		(original: typeof jsx) =>
-		(type: React.ElementType, props: unknown, key: React.Key) =>
-			original(type, props ?? {}, key);
+		(type: React.ElementType, props: any, ...rest: unknown[]) => {
+			props ??= {};
+			const classic =
+				rest.length > 1 ||
+				(rest.length === 1 && !isKey(rest[0])) ||
+				"key" in props;
+			if (classic) return createElement(type, props, ...rest);
+			return original(type, props, rest[0] as React.Key);
+		};
 
 	(globalThis as any)._jsx = safeJsx(jsx);
 	(globalThis as any)._jsxs = safeJsx(jsxs);
@@ -27,12 +37,26 @@ export const patchRequire = (env: EnvironmentType) => {
 	const apiCompat = require("@vicinae/raycast-api-compat");
 	delete process.env.NODE_ENV;
 
+	// resolved on module namespaces by bundler/promise interop; must stay undefined
+	const MODULE_INTEROP_KEYS = new Set(["__esModule", "default", "then"]);
+
+	// unknown symbols resolve to a throwing stub instead of undefined, so
+	// extensions using @raycast/api features we don't know about fail loudly
+	const raycastApi = new Proxy(apiCompat, {
+		get: (target, prop, receiver) => {
+			if (typeof prop === "symbol" || prop in target)
+				return Reflect.get(target, prop, receiver);
+			if (MODULE_INTEROP_KEYS.has(prop)) return undefined;
+			return apiCompat.unsupported(prop);
+		},
+	});
+
 	const requireOverrides: Record<string, any> = {
 		react: () => react,
 		"react/jsx-runtime": () => jsxRuntime,
 		"react-reconciler": () => reconciler,
 		"@vicinae/api": () => api,
-		"@raycast/api": () => apiCompat,
+		"@raycast/api": () => raycastApi,
 	};
 	const originalRequire = Module.prototype.require;
 

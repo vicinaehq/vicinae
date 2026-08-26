@@ -1,8 +1,12 @@
 .cache
 /build
+/build-*
+.vscode
+CMakeUserPresets.json
 .tmp
 extension-manager/runtime/node_modules
 /cmake-build-debug
+/CMakeFiles
 /.idea
 /vgcore*
 .env
@@ -16,6 +20,7 @@ __cmake*
 *.tgz
 
 /qt6
+**/.qmlls.ini
 
 /AppDir
 *AppImage
@@ -27,6 +32,9 @@ heaptrack*
 .claude/*
 !.claude/CLAUDE.md
 
+# you can symlink AGENTS.md yourself
+/CLAUDE.md
+
 .omx/
 .codex/
 .gitnexus/
@@ -37,3 +45,7 @@ heaptrack*
 
 
 .worktrees
+.envrc.local
+
+# Local translation tooling (stored, not part of translation PRs)
+BACKUP/

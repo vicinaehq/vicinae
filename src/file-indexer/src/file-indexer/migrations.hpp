@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS scan_history (
 		indexed_file_count INT DEFAULT 0
 );
 
+-- serves the per-directory cutoff lookups issued by every incremental scan
+CREATE INDEX IF NOT EXISTS scan_history_entrypoint_idx
+	ON scan_history(entrypoint, status, created_at);
+
 CREATE TABLE IF NOT EXISTS indexed_file (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	path TEXT UNIQUE NOT NULL,

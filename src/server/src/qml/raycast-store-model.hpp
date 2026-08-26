@@ -16,7 +16,7 @@ public:
   struct Entry {
     Raycast::Extension extension;
     bool installed = false;
-    Raycast::CompatTier compatTier = Raycast::CompatTier::Unknown;
+    std::optional<Raycast::CompatTier> compatTier;
   };
 
   void setEntries(const std::vector<Raycast::Extension> &extensions, ExtensionRegistry *registry,
@@ -38,7 +38,7 @@ public:
 protected:
   QString itemTitle(int i) const override;
   QString itemSubtitle(int i) const override;
-  QString itemIconSource(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:

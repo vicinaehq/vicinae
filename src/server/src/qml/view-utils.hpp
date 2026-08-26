@@ -1,9 +1,9 @@
 #pragma once
-#include "extend/accessory-model.hpp"
 #include "extend/dropdown-model.hpp"
 #include "extend/metadata-model.hpp"
 #include "image-url.hpp"
 #include "ui/image/url.hpp"
+#include "ui/list-accessory/list-accessory.hpp"
 #include <QMimeDatabase>
 #include <QString>
 #include <QVariantList>
@@ -24,14 +24,19 @@ struct FilePreviewContent {
 FilePreviewContent resolveFilePreview(const std::filesystem::path &path, QMimeDatabase &mimeDb);
 
 QVariantList metadataToVariantList(const MetadataModel &metadata);
-QVariantList accessoriesToVariantList(const std::vector<AccessoryModel> &accessories);
-QVariantMap accessoryToVariant(const AccessoryModel &acc);
-
-inline QVariantList textAccessory(const QString &text) {
-  return accessoriesToVariantList({{.data = AccessoryModel::Text{{}, text.toStdString()}}});
-}
+QVariantList accessoriesToVariantList(const AccessoryList &accessories);
+QVariantMap accessoryToVariant(const ListAccessory &acc);
 
 inline QString imageSourceFor(const ImageURL &url) { return url.toString(); }
+
+inline QVariantMap makeDropdownItem(const QString &id, const QString &displayName,
+                                    const QString &iconSource = {}) {
+  QVariantMap m;
+  m[QStringLiteral("id")] = id;
+  m[QStringLiteral("displayName")] = displayName;
+  if (!iconSource.isEmpty()) m[QStringLiteral("iconSource")] = iconSource;
+  return m;
+}
 
 inline std::optional<QString> firstDropdownItemValue(const std::vector<DropdownModel::Child> &children) {
   for (const auto &child : children) {

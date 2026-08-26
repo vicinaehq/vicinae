@@ -16,7 +16,7 @@ Item {
     property bool _autoScroll: false
     focus: true
 
-    readonly property var _controller: selectionController ?? _internalController
+    readonly property var _controller: selectionController ?? internalController
 
     function scrollUp() {
         flickable.flick(0, 800);
@@ -40,10 +40,14 @@ Item {
     }
 
     TextSelectionController {
-        id: _internalController
+        id: internalController
         container: col
         flickable: flickable
         mdModel: root.model
+    }
+
+    StatusBarInset {
+        id: statusBarInset
     }
 
     // Cursor-only MouseArea below Flickable — sets I-beam for non-interactive gaps.
@@ -66,11 +70,16 @@ Item {
         contentHeight: col.implicitHeight + root.topPadding + root.contentPadding
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        bottomMargin: statusBarInset.value
+
+        ViciWheelHandler {
+            target: flickable
+        }
 
         onContentHeightChanged: {
             if (root._autoScroll) {
                 root._autoScroll = false;
-                contentY = Math.max(0, contentHeight - height);
+                contentY = Math.max(0, contentHeight - height + bottomMargin);
             }
         }
 
@@ -258,7 +267,7 @@ Item {
 
             ActionItemDelegate {
                 Layout.fillWidth: true
-                title: "Copy"
+                title: qsTr("Copy")
                 iconSource: ""
                 shortcutTokens: []
                 isSubmenu: false
@@ -274,7 +283,7 @@ Item {
 
             ActionItemDelegate {
                 Layout.fillWidth: true
-                title: "Select All"
+                title: qsTr("Select All")
                 iconSource: ""
                 shortcutTokens: []
                 isSubmenu: false

@@ -52,7 +52,7 @@ Item {
                 anchors.fill: parent
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Theme.fontFamily
-                font.pointSize: Theme.regularFontSize * 1.15
+                font.pointSize: Theme.regularFontSize * 1.2
                 color: Theme.foreground
                 selectionColor: Theme.textSelectionBg
                 selectedTextColor: Theme.textSelectionFg
@@ -119,9 +119,9 @@ Item {
                     if (!Config.emacsMode)
                         return false;
 
-                    const ctrl = (event.modifiers & Qt.ControlModifier);
+                    const ctrl = (event.modifiers & Keyboard.physicalCtrlModifier);
                     const alt = (event.modifiers & Qt.AltModifier);
-                    const noOther = !(event.modifiers & ~(Qt.ControlModifier | Qt.AltModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier));
+                    const noOther = !(event.modifiers & ~(Keyboard.physicalCtrlModifier | Qt.AltModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier));
 
                     if (ctrl && !alt && noOther) {
                         switch (event.key) {
@@ -193,7 +193,7 @@ Item {
                 }
 
                 function _handleNavigation(event) {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                    const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                     if (nav === 0)
                         return false;
 
@@ -285,8 +285,6 @@ Item {
                     } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && launcher.showBackButton && launcher.popOnBackspace) {
                         launcher.goBack();
                         event.accepted = true;
-                    } else if (event.key === Qt.Key_Space && event.modifiers === Qt.NoModifier && searchInput.text.length > 0 && launcher.commandViewHost?.tryAliasFastTrack()) {
-                        event.accepted = true;
                     } else if (launcher.forwardKey(event.key, event.modifiers)) {
                         if (launcher.compacted)
                             launcher.expand();
@@ -359,6 +357,10 @@ Item {
             if (!launcher.hasCompleter && !searchInput.activeFocus) {
                 searchInput.forceActiveFocus();
             }
+        }
+        function onCompleterFocusRequested() {
+            if (launcher.hasCompleter)
+                argCompleter.focusFirst();
         }
         function onCompleterValidationFailed() {
             argCompleter.validate();

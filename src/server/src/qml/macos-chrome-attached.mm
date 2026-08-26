@@ -1,18 +1,20 @@
 #include "macos-chrome-attached.hpp"
+#include "launcher-window-platform.hpp"
 
+#include <qevent.h>
+#include <qlogging.h>
 #include <QPointer>
 #include <QQuickItem>
 #include <QQuickWindow>
-#include <QTimer>
-#include <qevent.h>
-#include <qlogging.h>
 
 #import <AppKit/AppKit.h>
+#import <QuartzCore/QuartzCore.h>
 #import <objc/message.h>
 
 namespace {
 
 NSString *const EFFECT_VIEW_IDENTIFIER = @"vicinae-effect";
+NSString *const EMPTY_TOOLBAR_IDENTIFIER = @"vicinae-empty-toolbar";
 
 NSView *nsViewFromWinId(WId winId) { return (__bridge NSView *)reinterpret_cast<void *>(winId); }
 
@@ -27,6 +29,12 @@ NSVisualEffectMaterial materialFromString(const QString &name) {
   if (name == "underWindowBackground") return NSVisualEffectMaterialUnderWindowBackground;
   if (name == "contentBackground") return NSVisualEffectMaterialContentBackground;
   return NSVisualEffectMaterialHUDWindow;
+}
+
+NSAppearance *appearanceFromString(const QString &name) {
+  if (name == QStringLiteral("dark")) return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+  if (name == QStringLiteral("light")) return [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+  return nil;
 }
 
 NSView *findEffectView(NSView *root) {
@@ -48,8 +56,8 @@ CGColorRef cgColorFromQColor(const QColor &c) {
 }
 
 void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
-                       NSVisualEffectMaterial fallbackMaterial, int cornerRadius,
-                       const QColor &borderColor, int borderWidth) {
+                       NSVisualEffectMaterial fallbackMaterial, const QString &appearance, int cornerRadius,
+                       const QColor &borderColor, int borderWidth, bool followsActiveState) {
   NSView *contentView = nswin.contentView;
   if (!contentView) return;
 
@@ -90,7 +98,6 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
     } else {
       NSVisualEffectView *v = [[NSVisualEffectView alloc] initWithFrame:parent.bounds];
       v.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-      v.state = NSVisualEffectStateActive;
       existing = v;
     }
     existing.identifier = EFFECT_VIEW_IDENTIFIER;
@@ -99,12 +106,15 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
     [parent addSubview:existing positioned:NSWindowBelow relativeTo:contentView];
   }
 
-  // Round the parent (NSThemeFrame) when using glass so its rectangular layer
-  // doesn't bleed through the glass's rounded corners. The visual-effect path
-  // masks the parent on its own.
+  // The material renders per NSAppearance, which follows the system by default;
+  // pin it to the active theme's variant so a light theme never sits on dark glass.
+  existing.appearance = appearanceFromString(appearance);
+
+  // Round the parent (NSThemeFrame) so the OS clips content to the rounded
+  // corners server-side, for both the glass and visual-effect paths.
   parent.wantsLayer = YES;
-  parent.layer.cornerRadius = useGlass ? cornerRadius : 0;
-  parent.layer.masksToBounds = useGlass && cornerRadius > 0;
+  parent.layer.cornerRadius = cornerRadius;
+  parent.layer.masksToBounds = cornerRadius > 0;
 
   if (useGlass) {
     SEL setCR = sel_registerName("setCornerRadius:");
@@ -112,7 +122,9 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
       ((void (*)(id, SEL, double))objc_msgSend)(existing, setCR, (double)cornerRadius);
     }
   } else {
-    ((NSVisualEffectView *)existing).material = fallbackMaterial;
+    NSVisualEffectView *v = (NSVisualEffectView *)existing;
+    v.material = fallbackMaterial;
+    v.state = followsActiveState ? NSVisualEffectStateFollowsWindowActiveState : NSVisualEffectStateActive;
     existing.layer.cornerRadius = cornerRadius;
     existing.layer.masksToBounds = YES;
     existing.layer.borderWidth = borderWidth;
@@ -122,30 +134,24 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
   }
 }
 
-void placeWindowOnCursorScreen(QWindow *window, qreal yFraction) {
-  if (!window) return;
-  NSView *view = nsViewFromWinId(window->winId());
-  if (!view) return;
-  NSWindow *nswin = view.window;
-  if (!nswin) return;
-
-  NSPoint mouse = [NSEvent mouseLocation];
-  NSScreen *screen = nil;
-  for (NSScreen *candidate in [NSScreen screens]) {
-    if (NSPointInRect(mouse, candidate.frame)) {
-      screen = candidate;
-      break;
-    }
+// Radius the OS gives titled windows (larger on Tahoe); read off NSThemeFrame's SPI
+// so the effect view's clip matches the native frame shape.
+CGFloat nativeTitledCornerRadius(NSWindow *nswin) {
+  NSView *frame = nswin.contentView.superview;
+  SEL sel = sel_registerName("_cornerRadius");
+  if (frame && [frame respondsToSelector:sel]) {
+    CGFloat r = ((CGFloat (*)(id, SEL))objc_msgSend)(frame, sel);
+    if (r > 0) return r;
   }
-  if (!screen) screen = [NSScreen mainScreen];
-  if (!screen) return;
+  return 10.0;
+}
 
-  NSRect const vf = screen.visibleFrame;
-  NSSize const size = nswin.frame.size;
-  CGFloat const x = vf.origin.x + (vf.size.width - size.width) / 2.0;
-  CGFloat const visibleTop = vf.origin.y + vf.size.height;
-  CGFloat const windowTop = visibleTop - (vf.size.height - size.height) * yFraction;
-  [nswin setFrameOrigin:NSMakePoint(x, windowTop - size.height)];
+NSScreen *cursorScreen() {
+  NSPoint mouse = [NSEvent mouseLocation];
+  for (NSScreen *candidate in [NSScreen screens]) {
+    if (NSPointInRect(mouse, candidate.frame)) return candidate;
+  }
+  return [NSScreen mainScreen];
 }
 
 } // namespace
@@ -195,6 +201,13 @@ void MacOSWindowAttached::setMaterial(const QString &value) {
   apply();
 }
 
+void MacOSWindowAttached::setAppearance(const QString &value) {
+  if (m_appearance == value) return;
+  m_appearance = value;
+  emit appearanceChanged();
+  apply();
+}
+
 void MacOSWindowAttached::setBorderColor(const QColor &value) {
   if (m_borderColor == value) return;
   m_borderColor = value;
@@ -206,6 +219,27 @@ void MacOSWindowAttached::setBorderWidth(int value) {
   if (m_borderWidth == value) return;
   m_borderWidth = value;
   emit borderWidthChanged();
+  apply();
+}
+
+void MacOSWindowAttached::setTransparentTitlebar(bool value) {
+  if (m_transparentTitlebar == value) return;
+  m_transparentTitlebar = value;
+  emit transparentTitlebarChanged();
+  apply();
+}
+
+void MacOSWindowAttached::setFollowsWindowActiveState(bool value) {
+  if (m_followsWindowActiveState == value) return;
+  m_followsWindowActiveState = value;
+  emit followsWindowActiveStateChanged();
+  apply();
+}
+
+void MacOSWindowAttached::setMoveToActiveSpace(bool value) {
+  if (m_moveToActiveSpace == value) return;
+  m_moveToActiveSpace = value;
+  emit moveToActiveSpaceChanged();
   apply();
 }
 
@@ -246,6 +280,9 @@ void MacOSWindowAttached::apply() {
     m_snapshot.backgroundColor = (void *)CFBridgingRetain(nswin.backgroundColor);
     m_snapshot.hasShadow = nswin.hasShadow;
     m_snapshot.animationBehavior = (long)nswin.animationBehavior;
+    m_snapshot.styleMask = (unsigned long)nswin.styleMask;
+    m_snapshot.titleVisibility = (long)nswin.titleVisibility;
+    m_snapshot.titlebarAppearsTransparent = nswin.titlebarAppearsTransparent;
   }
 
   nswin.opaque = NO;
@@ -253,8 +290,30 @@ void MacOSWindowAttached::apply() {
   nswin.hasShadow = YES;
   nswin.animationBehavior = NSWindowAnimationBehaviorNone;
 
+  if (m_moveToActiveSpace) nswin.collectionBehavior |= NSWindowCollectionBehaviorMoveToActiveSpace;
+
+  int cornerRadius = m_cornerRadius;
+  if (m_transparentTitlebar) {
+    nswin.styleMask |= NSWindowStyleMaskFullSizeContentView;
+    nswin.titlebarAppearsTransparent = YES;
+    nswin.titleVisibility = NSWindowTitleHidden;
+    // An empty unified toolbar tells AppKit to lay the traffic lights out with the
+    // taller, inset metrics native full-content windows use (System Settings & co).
+    if (!nswin.toolbar) { nswin.toolbar = [[NSToolbar alloc] initWithIdentifier:EMPTY_TOOLBAR_IDENTIFIER]; }
+    nswin.toolbarStyle = NSWindowToolbarStyleUnified;
+    nswin.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
+    // Qt's WindowMaximizeButtonHint doesn't reach the zoom button, which Cocoa
+    // wires to fullscreen; enforce the declared flags here.
+    if (!(m_window->flags() & Qt::WindowMaximizeButtonHint)) {
+      [nswin standardWindowButton:NSWindowZoomButton].enabled = NO;
+      nswin.collectionBehavior |= NSWindowCollectionBehaviorFullScreenNone;
+    }
+    if (cornerRadius <= 0) cornerRadius = (int)nativeTitledCornerRadius(nswin);
+  }
+
   installEffectView(nswin, m_blurEnabled, m_material == QStringLiteral("liquidGlass"),
-                    materialFromString(m_material), m_cornerRadius, m_borderColor, m_borderWidth);
+                    materialFromString(m_material), m_appearance, cornerRadius, m_borderColor, m_borderWidth,
+                    m_followsWindowActiveState);
 }
 
 void MacOSWindowAttached::revert() {
@@ -265,12 +324,18 @@ void MacOSWindowAttached::revert() {
   if (!nswin) return;
 
   installEffectView(nswin, /*enabled=*/false, /*wantLiquidGlass=*/false, NSVisualEffectMaterialHUDWindow,
-                    0, QColor(), 0);
+                    QString(), 0, QColor(), 0, false);
 
   if (m_snapshot.valid) {
     nswin.opaque = m_snapshot.opaque;
     nswin.hasShadow = m_snapshot.hasShadow;
     nswin.animationBehavior = (NSWindowAnimationBehavior)m_snapshot.animationBehavior;
+    // Only the bit this attached type owns; MacOSPanel manages the rest of the mask.
+    nswin.styleMask = (nswin.styleMask & ~NSWindowStyleMaskFullSizeContentView) |
+                      (m_snapshot.styleMask & NSWindowStyleMaskFullSizeContentView);
+    nswin.titleVisibility = (NSWindowTitleVisibility)m_snapshot.titleVisibility;
+    nswin.titlebarAppearsTransparent = m_snapshot.titlebarAppearsTransparent;
+    if ([nswin.toolbar.identifier isEqualToString:EMPTY_TOOLBAR_IDENTIFIER]) nswin.toolbar = nil;
     if (m_snapshot.backgroundColor) {
       NSColor *bg = (NSColor *)CFBridgingRelease(m_snapshot.backgroundColor);
       m_snapshot.backgroundColor = nullptr;
@@ -286,11 +351,77 @@ bool MacOSWindowAttached::eventFilter(QObject *obj, QEvent *event) {
     if (se->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated) {
       m_surfaceReady = true;
       apply();
+      if (m_pendingAnimateIn) {
+        m_pendingAnimateIn = false;
+        runAnimate(true, m_pendingAnchorX, m_pendingAnchorY);
+      }
     } else if (se->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
       m_surfaceReady = false;
     }
   }
   return QObject::eventFilter(obj, event);
+}
+
+void MacOSWindowAttached::animateIn(qreal anchorX, qreal anchorY) {
+  if (m_surfaceReady && m_window && m_window->handle()) {
+    runAnimate(true, anchorX, anchorY);
+  } else {
+    m_pendingAnimateIn = true;
+    m_pendingAnchorX = anchorX;
+    m_pendingAnchorY = anchorY;
+  }
+}
+
+void MacOSWindowAttached::animateOut(qreal anchorX, qreal anchorY) {
+  if (m_surfaceReady && m_window && m_window->handle()) runAnimate(false, anchorX, anchorY);
+}
+
+void MacOSWindowAttached::runAnimate(bool appearing, qreal anchorX, qreal anchorY) {
+  if (!m_window) return;
+  NSView *nsview = nsViewFromWinId(m_window->winId());
+  if (!nsview) return;
+  NSWindow *nswin = nsview.window;
+  NSView *content = nswin.contentView;
+  NSView *parent = content.superview;
+  if (!parent || !parent.layer) return;
+  CALayer *layer = parent.layer;
+
+  const CGFloat w = layer.bounds.size.width;
+  const CGFloat h = layer.bounds.size.height;
+  const CGFloat px = anchorX * w;
+  const CGFloat py = anchorY * h;
+  auto scaleAboutAnchor = [&](CGFloat s) {
+    CATransform3D t = CATransform3DMakeTranslation(px, py, 0);
+    t = CATransform3DScale(t, s, s, 1);
+    return CATransform3DTranslate(t, -px, -py, 0);
+  };
+
+  constexpr CGFloat START_SCALE = 0.95;
+  const CGFloat from = appearing ? START_SCALE : 1.0;
+  const CGFloat to = appearing ? 1.0 : START_SCALE;
+  const CFTimeInterval duration = appearing ? 0.15 : 0.10;
+
+  if (appearing) {
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    layer.transform = scaleAboutAnchor(START_SCALE);
+    [CATransaction commit];
+    nswin.alphaValue = 0.0;
+  }
+
+  CABasicAnimation *anim = [CABasicAnimation animationWithKeyPath:@"transform"];
+  anim.fromValue = [NSValue valueWithCATransform3D:scaleAboutAnchor(from)];
+  anim.toValue = [NSValue valueWithCATransform3D:scaleAboutAnchor(to)];
+  anim.duration = duration;
+  anim.timingFunction = [CAMediaTimingFunction
+      functionWithName:appearing ? kCAMediaTimingFunctionEaseOut : kCAMediaTimingFunctionEaseIn];
+  layer.transform = scaleAboutAnchor(to);
+  [layer addAnimation:anim forKey:@"vicinae-window-transition"];
+
+  [NSAnimationContext runAnimationGroup:^(NSAnimationContext *ctx) {
+    ctx.duration = duration;
+    nswin.animator.alphaValue = appearing ? 1.0 : 0.0;
+  }];
 }
 
 MacOSPanelAttached::MacOSPanelAttached(QObject *parent) : QObject(parent) {
@@ -354,13 +485,12 @@ void MacOSPanelAttached::installResignKeyObserver(void *nswinPtr) {
   removeResignKeyObserver();
 
   QPointer<MacOSPanelAttached> weak(this);
-  id token = [[NSNotificationCenter defaultCenter]
-      addObserverForName:NSWindowDidResignKeyNotification
-                  object:nswin
-                   queue:[NSOperationQueue mainQueue]
-              usingBlock:^(NSNotification *) {
-                if (weak) emit weak->resignKey();
-              }];
+  id token = [[NSNotificationCenter defaultCenter] addObserverForName:NSWindowDidResignKeyNotification
+                                                               object:nswin
+                                                                queue:[NSOperationQueue mainQueue]
+                                                           usingBlock:^(NSNotification *) {
+                                                             if (weak) emit weak->resignKey();
+                                                           }];
 
   m_resignKeyObserver = (void *)CFBridgingRetain(token);
   m_observedNSWindow = nswinPtr;
@@ -385,6 +515,8 @@ void MacOSPanelAttached::apply() {
   if (!nsview) return;
   NSWindow *nswin = nsview.window;
   if (!nswin) return;
+
+  const bool acceptsFocus = !(m_window->flags() & Qt::WindowDoesNotAcceptFocus);
 
   if (!m_snapshot.valid) {
     m_snapshot.valid = true;
@@ -414,20 +546,20 @@ void MacOSPanelAttached::apply() {
   if ([nswin respondsToSelector:preventsSel]) {
     ((void (*)(id, SEL, BOOL))objc_msgSend)(nswin, preventsSel, YES);
   } else {
-    qWarning() << "macos-chrome: -[NSWindow _setPreventsActivation:] is unavailable; panel will steal focus";
+    qWarning() << "macos-chrome: -[NSWindow _setPreventsActivation:] is unavailable; panel "
+                  "will steal focus";
   }
 
   nswin.collectionBehavior = NSWindowCollectionBehaviorCanJoinAllSpaces |
                              NSWindowCollectionBehaviorFullScreenAuxiliary |
-                             NSWindowCollectionBehaviorTransient |
-                             NSWindowCollectionBehaviorIgnoresCycle;
+                             NSWindowCollectionBehaviorTransient | NSWindowCollectionBehaviorIgnoresCycle;
   nswin.hidesOnDeactivate = NO;
   nswin.movableByWindowBackground = NO;
 
   if ([nswin isKindOfClass:[NSPanel class]]) {
     NSPanel *panel = (NSPanel *)nswin;
     panel.floatingPanel = YES;
-    panel.becomesKeyOnlyIfNeeded = NO;
+    panel.becomesKeyOnlyIfNeeded = acceptsFocus ? NO : YES;
     panel.worksWhenModal = YES;
   }
 
@@ -481,24 +613,59 @@ bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
   return QObject::eventFilter(obj, event);
 }
 
+bool macosLiquidGlassAvailable() { return liquidGlassClass() != nil; }
+
 void macosSetAccessoryActivationPolicy() {
   [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
 }
 
 void macosActivateApp() { [NSApp activateIgnoringOtherApps:YES]; }
 
-void MacOSPanelAttached::beginShow(qreal yFraction) {
-  if (!m_window) return;
-  m_window->setOpacity(0.0);
-  placeWindowOnCursorScreen(m_window, yFraction);
+void LauncherWindowPlatform::prepareOverlayWindow(QWindow *window) {
+  if (!window || !window->handle()) return;
+  NSView *view = nsViewFromWinId(window->winId());
+  if (!view) return;
+  NSWindow *nswin = view.window;
+  if (!nswin) return;
+
+  nswin.level = NSStatusWindowLevel;
+  nswin.collectionBehavior |=
+      NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary;
+  nswin.ignoresMouseEvents = YES;
 }
 
-void MacOSPanelAttached::finishShow(qreal yFraction) {
+static void macosClearMenuShortcuts(NSMenu *menu) {
+  if (!menu) return;
+  NSMenu *servicesMenu = [NSApp servicesMenu];
+  for (NSMenuItem *topItem in menu.itemArray) {
+    NSMenu *submenu = topItem.submenu;
+    if (!submenu) continue;
+    for (NSMenuItem *item in submenu.itemArray) {
+      if (item.submenu == servicesMenu) continue;
+      item.keyEquivalent = @"";
+      item.keyEquivalentModifierMask = 0;
+    }
+  }
+}
+
+void macosReleaseMenuShortcuts() {
+  macosClearMenuShortcuts([NSApp mainMenu]);
+  dispatch_async(dispatch_get_main_queue(), ^{ macosClearMenuShortcuts([NSApp mainMenu]); });
+}
+
+void MacOSPanelAttached::placeBottomCenter(qreal bottomMargin) {
   if (!m_window) return;
-  QPointer<MacOSPanelAttached> self(this);
-  QTimer::singleShot(0, this, [self, yFraction]() {
-    if (!self || !self->m_window) return;
-    placeWindowOnCursorScreen(self->m_window, yFraction);
-    self->m_window->setOpacity(1.0);
-  });
+  NSView *view = nsViewFromWinId(m_window->winId());
+  if (!view) return;
+  NSWindow *nswin = view.window;
+  if (!nswin) return;
+
+  NSScreen *screen = cursorScreen();
+  if (!screen) return;
+
+  NSRect const vf = screen.visibleFrame;
+  NSSize const size = nswin.frame.size;
+  CGFloat const x = vf.origin.x + (vf.size.width - size.width) / 2.0;
+  CGFloat const y = vf.origin.y + bottomMargin;
+  [nswin setFrameOrigin:NSMakePoint(x, y)];
 }

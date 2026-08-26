@@ -1,6 +1,8 @@
 #include "x11-window-manager.hpp"
+#include "environment.hpp"
 #include "x11-event-listener.hpp"
 #include "x11-window.hpp"
+#include <QCoreApplication>
 #include <QGuiApplication>
 #include <QLoggingCategory>
 #include <QtCore/qnativeinterface.h>
@@ -20,10 +22,7 @@ X11WindowManager::~X11WindowManager() {
   m_screen = nullptr;
 }
 
-bool X11WindowManager::isActivatable() const {
-  // Check if we're running on X11 (xcb platform)
-  return QGuiApplication::platformName() == "xcb";
-}
+bool X11WindowManager::isActivatable() const { return Environment::isX11(); }
 
 void X11WindowManager::start() {
   // Initialize connection
@@ -421,8 +420,10 @@ public:
   X11Workspace(uint32_t index, const QString &name) : m_index(index), m_name(name) {}
 
   QString id() const override { return QString::number(m_index); }
-  QString name() const override { return m_name.isEmpty() ? QString("Desktop %1").arg(m_index + 1) : m_name; }
-  QString monitor() const override { return QString(); } // X11 doesn't have per-monitor workspace concept
+  QString name() const override {
+    return m_name.isEmpty() ? QCoreApplication::translate("X11Workspace", "Desktop %1").arg(m_index + 1)
+                            : m_name;
+  }
   bool hasFullScreen() const override { return false; }
 
 private:

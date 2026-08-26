@@ -57,11 +57,11 @@ Item {
             id: actionsButton
             visible: actionPanel.hasMultipleActions
             Layout.alignment: Qt.AlignVCenter
-            label: "Actions"
+            label: qsTr("Actions")
             shortcutTokens: Keybinds.toggleActionPanelTokens
             highlighted: actionPanel.open
             backgrounded: actionPanel.open
-            onClicked: actionPanel.toggle()
+            onClicked: actionPanel.toggle(true)
         }
     }
 }

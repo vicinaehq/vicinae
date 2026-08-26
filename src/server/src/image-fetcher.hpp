@@ -5,7 +5,6 @@
 #include <qnetworkdiskcache.h>
 #include <qnetworkreply.h>
 #include <qobject.h>
-#include <qstandardpaths.h>
 #include <qstringview.h>
 #include <qthread.h>
 #include <deque>
@@ -42,7 +41,7 @@ class FetcherWorker : public QObject {
 
 public:
   void initialize() {
-    QString directory = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/images";
+    QString directory = QString::fromStdString((Omnicast::cacheDir() / "images").string());
 
     m_manager = new QNetworkAccessManager;
     m_diskCache = new QNetworkDiskCache;

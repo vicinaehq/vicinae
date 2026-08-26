@@ -1,4 +1,5 @@
 #pragma once
+#include "completion-model.hpp"
 #include "extend/form-model.hpp"
 #include "services/file-chooser/abstract-file-chooser.hpp"
 #include <QAbstractListModel>
@@ -28,6 +29,8 @@ public:
     ValueRole,
     AutoFocusRole,
     FieldDataRole,
+    DropdownModelRole,
+    CurrentDropdownItemRole,
   };
 
   explicit ExtensionFormModel(NotifyFn notify, QObject *parent = nullptr);
@@ -81,13 +84,15 @@ private:
     std::optional<std::string> onFocus;
 
     QVariantMap fieldData;
+    QVariantList dropdownItems;
+    CompletionModel *dropdownModel = nullptr;
 
     QJsonValue effectiveValue() const { return hasUserValue ? userValue : modelValue; }
     QString typeString() const;
     bool isField() const { return type != Type::Description && type != Type::Separator; }
   };
 
-  FormItemData createItem(const FormModel::Item &item) const;
+  FormItemData createItem(const FormModel::Item &item);
   void updateItem(FormItemData &existing, const FormModel::Item &newItem);
 
   static FormItemData::Type fieldType(const FormModel::Field &field);

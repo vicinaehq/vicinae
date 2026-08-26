@@ -21,7 +21,7 @@ Item {
         anchors.fill: parent
         visible: root.hovered || root.backgrounded
         radius: 6
-        color: Theme.listItemHoverBg
+        color: Qt.rgba(Theme.listItemHoverBg.r, Theme.listItemHoverBg.g, Theme.listItemHoverBg.b, Config.windowOpacity)
     }
 
     Row {

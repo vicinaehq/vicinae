@@ -16,9 +16,13 @@ public:
   struct AppPickerData {};
   struct FilePickerData {
     bool multiple = false;
+    // Paths that are always part of the effective set but are not part of the stored
+    // value: they are displayed as non-removable entries.
+    std::vector<QString> lockedPaths;
   };
   struct DirectoryPickerData {
     bool multiple = false;
+    std::vector<QString> lockedPaths;
   };
   struct DropdownData {
     struct Option {
@@ -55,8 +59,8 @@ public:
   static Preference file(const QString &id) { return {id, FilePickerData()}; }
   static Preference files(const QString &id) { return {id, FilePickerData{.multiple = true}}; }
   static Preference directory(const QString &id) { return {id, DirectoryPickerData{}}; }
-  static Preference directories(const QString &id) {
-    Preference preference{id, DirectoryPickerData{.multiple = true}};
+  static Preference directories(const QString &id, std::vector<QString> lockedPaths = {}) {
+    Preference preference{id, DirectoryPickerData{.multiple = true, .lockedPaths = std::move(lockedPaths)}};
     preference.setDefaultValue(QJsonArray());
     return preference;
   }

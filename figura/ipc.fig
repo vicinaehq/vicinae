@@ -30,10 +30,36 @@ struct LaunchAppResponse {
   focusedWindowTitle: string;
 };
 
+struct LaunchCommandRequest {
+  entrypoint: string;
+  args: string[];
+  cwd?: string;
+  query?: string;
+};
+
+struct LaunchCommandResponse {
+  error?: string;
+};
+
+struct CommandInfo {
+  id: string;
+  name: string;
+};
+
+struct ListCommandsResponse {
+  commands: CommandInfo[];
+};
+
+enum DMenuOutputFormat {
+  Data,
+  Index
+};
+
 struct DMenuRequest {
   rawContent: string;
   navigationTitle?: string;
   placeholder?: string;
+  format: DMenuOutputFormat;
   sectionTitle?: string;
   noSection: bool;
   noQuickLook: bool;
@@ -63,6 +89,7 @@ struct BrowserTabInfo {
   active: bool;
   muted: bool;
   audible: bool;
+  lastAccessed: double;
 };
 
 struct FocusTabRequest {
@@ -90,6 +117,8 @@ service Ipc {
   fn deeplink(req: DeeplinkRequest) => DeeplinkResponse;
   fn describe() => DescribeResponse;
   fn launchApp(req: LaunchAppRequest) => LaunchAppResponse;
+  fn listCommands() => ListCommandsResponse;
+  fn launchCommand(req: LaunchCommandRequest) => LaunchCommandResponse;
   fn dmenu(req: DMenuRequest) => DMenuResponse;
   fn browserInit(req: BrowserInitRequest) => void;
   fn browserTabsChanged(tabs: BrowserTabInfo[]) => void;

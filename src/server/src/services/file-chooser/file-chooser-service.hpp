@@ -3,8 +3,6 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 
-class FileChooser;
-
 class FileChooserService : public QObject {
   Q_OBJECT
   Q_PROPERTY(bool active READ isActive NOTIFY activeChanged)
@@ -30,6 +28,6 @@ public:
 private:
   void finish(const QStringList *paths);
 
-  FileChooser *m_activeChooser = nullptr;
+  AbstractFileChooser *m_activeChooser = nullptr;
   bool m_fallbackActive = false;
 };

@@ -7,10 +7,11 @@ Rectangle {
     property string icon: ""
     property var iconSource
     property string variant: "ghost"
-    property bool bordered: root.variant === "secondary"
+    property bool bordered: false
     property color foreground: root.variant === "accent" ? Theme.listItemSelectionFg : Theme.foreground
     property real iconSize: 16
     property real horizontalPadding: 12
+    property bool showFocus: activeFocus
 
     signal clicked
 
@@ -22,24 +23,31 @@ Rectangle {
     implicitHeight: 36
     radius: 6
 
+    readonly property bool _raised: root.hovered || root.showFocus
+
     color: {
         switch (root.variant) {
         case "primary":
-            return root.hovered ? Theme.buttonPrimaryHoverBg : Theme.buttonPrimaryBg;
+            return root._raised ? Theme.buttonPrimaryHoverBg : Theme.buttonPrimaryBg;
         case "secondary":
-            return root.hovered ? Theme.listItemHoverBg : Theme.secondaryBackground;
+            return Config.withAlpha(Theme.foreground, root._raised ? 0.12 : 0.07);
         case "accent":
-            return root.hovered ? Qt.lighter(Theme.accent, 1.15) : Theme.accent;
+            return root._raised ? Qt.lighter(Theme.accent, 1.08) : Theme.accent;
+        case "tinted":
+            return Config.withAlpha(root.foreground, root._raised ? 0.24 : 0.14);
         case "ghost":
         default:
-            return root.hovered ? Theme.listItemHoverBg : "transparent";
+            return root._raised ? Config.withAlpha(Theme.foreground, 0.08) : "transparent";
         }
     }
 
-    border.width: root.bordered || root.activeFocus ? 1 : 0
+    border.width: root.bordered || root.showFocus ? 1 : 0
     border.color: {
-        if (root.activeFocus)
-            return Config.withAlpha(root.variant === "accent" ? Theme.listItemSelectionFg : Theme.accent, Config.windowOpacity);
+        if (root.showFocus) {
+            if (root.variant === "tinted")
+                return Config.withAlpha(root.foreground, 0.6);
+            return Config.withAlpha(root.variant === "accent" ? Theme.listItemSelectionFg : Theme.buttonFocusOutline, Config.windowOpacity);
+        }
         if (!root.bordered)
             return "transparent";
         if (root.variant === "secondary")

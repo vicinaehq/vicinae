@@ -13,17 +13,17 @@ std::vector<Preference> ClipboardHistoryCommand::preferences() const {
   QString dflt = "copy";
 
   if (paste->supportsPaste()) {
-    defaultActionOptions.emplace_back(Preference::DropdownData::Option{"Paste", "paste"});
+    defaultActionOptions.emplace_back(Preference::DropdownData::Option{tr("Paste"), "paste"});
     dflt = "paste";
   }
-  defaultActionOptions.emplace_back(Preference::DropdownData::Option{"Copy", "copy"});
+  defaultActionOptions.emplace_back(Preference::DropdownData::Option{tr("Copy"), "copy"});
 
   auto defaultAction = Preference::makeDropdown("defaultAction", defaultActionOptions);
 
   defaultAction.setDefaultValue(dflt);
-  defaultAction.setTitle("Default Action");
-  defaultAction.setDescription("The default action to perform on pressing return. Paste is only available "
-                               "if your environment supports it.");
+  defaultAction.setTitle(tr("Default Action"));
+  defaultAction.setDescription(tr("The default action to perform on pressing return. Paste is only "
+                                  "available if your environment supports it."));
   preferences.emplace_back(defaultAction);
 
   return preferences;

@@ -40,9 +40,9 @@ void RaycastStoreDetailHost::initialize() {
       if (!result) {
         auto id = QString("%1/%2").arg(m_authorHandle, m_extensionName);
         context()->navigation->replaceView(new EmptyViewHost(
-            "Failed to load extension",
-            QString("The extension \"%1\" could not be loaded. It may not exist or the store may be "
-                    "unreachable.")
+            tr("Failed to load extension"),
+            tr("The extension \"%1\" could not be loaded. It may not exist or the store may be "
+               "unreachable.")
                 .arg(id),
             ImageURL(BuiltinIcon::Exclamationmark).setFill(SemanticColor::Red)));
         return;
@@ -68,7 +68,7 @@ void RaycastStoreDetailHost::hydrate(const Raycast::Extension &extension) {
 
   auto icon = m_ext.themedIcon();
   setNavigationIcon(icon);
-  setNavigationTitle(QString("Extension Store - %1").arg(m_ext.title));
+  setNavigationTitle(tr("Extension Store - %1").arg(m_ext.title));
   createActions();
   emit extensionChanged();
 
@@ -88,6 +88,8 @@ void RaycastStoreDetailHost::hydrate(const Raycast::Extension &extension) {
 }
 
 void RaycastStoreDetailHost::buildAlert() {
+  if constexpr (!Raycast::hasCompatSheet()) return;
+
   const auto &compat = context()->services->raycastStore()->compatMap();
   if (auto it = compat.find(m_ext.name.toStdString()); it != compat.end()) {
     auto tier = Raycast::compatTierFromInfo(it->second);
@@ -97,19 +99,19 @@ void RaycastStoreDetailHost::buildAlert() {
     switch (tier) {
     case Raycast::CompatTier::Compatible:
       type = QStringLiteral("success");
-      message = QStringLiteral("This extension should be fully compatible.");
+      message = tr("This extension should be fully compatible.");
       break;
     case Raycast::CompatTier::Partial:
       type = QStringLiteral("warning");
-      message = QStringLiteral("This extension works but has a few quirks.");
+      message = tr("This extension works but has a few quirks.");
       break;
     case Raycast::CompatTier::Incompatible:
       type = QStringLiteral("danger");
-      message = QStringLiteral("This extension is not compatible.");
+      message = tr("This extension is not compatible.");
       break;
     case Raycast::CompatTier::Unknown:
       type = QStringLiteral("muted");
-      message = QStringLiteral("No compatibility data is available for this extension.");
+      message = tr("No compatibility data is available for this extension.");
       break;
     }
 
@@ -130,7 +132,7 @@ void RaycastStoreDetailHost::buildAlert() {
     m_alert = {
         {QStringLiteral("type"), QStringLiteral("muted")},
         {QStringLiteral("message"),
-         QStringLiteral("No compatibility data is available — this extension may or may not work.")},
+         tr("No compatibility data is available — this extension may or may not work.")},
     };
   }
 }
@@ -205,7 +207,7 @@ void RaycastStoreDetailHost::openUrl(const QString &url) {
   ServiceRegistry::instance()->appDb()->openTarget(url);
 }
 
-QString RaycastStoreDetailHost::initialNavigationTitle() const { return QStringLiteral("Extension Store"); }
+QString RaycastStoreDetailHost::initialNavigationTitle() const { return tr("Extension Store"); }
 
 void RaycastStoreDetailHost::createActions() {
   auto panel = std::make_unique<ListActionPanelState>();
@@ -213,31 +215,31 @@ void RaycastStoreDetailHost::createActions() {
 
   if (!m_isInstalled) {
     auto install = new StaticAction(
-        "Install extension", m_ext.themedIcon(), [ext = m_ext](const ApplicationContext *ctx) {
+        tr("Install extension"), m_ext.themedIcon(), [ext = m_ext](const ApplicationContext *ctx) {
           using Watcher = QFutureWatcher<Raycast::DownloadExtensionResult>;
           auto store = ctx->services->raycastStore();
           auto watcher = new Watcher;
           auto toast = ctx->services->toastService();
           auto registry = ctx->services->extensionRegistry();
 
-          toast->dynamic("Downloading extension...");
+          toast->dynamic(tr("Downloading extension..."));
 
           QObject::connect(watcher, &Watcher::finished, [ctx, registry, toast, ext, watcher]() {
             auto result = watcher->result();
             watcher->deleteLater();
 
             if (!result) {
-              toast->failure("Failed to download extension");
+              toast->failure(tr("Failed to download extension"));
               return;
             }
 
             registry->installFromZip(QString("store.raycast.%1").arg(ext.name), result->toStdString(),
                                      [toast](bool ok) {
                                        if (!ok) {
-                                         toast->failure("Failed to extract extension archive");
+                                         toast->failure(tr("Failed to extract extension archive"));
                                          return;
                                        }
-                                       toast->success("Extension installed");
+                                       toast->success(tr("Extension installed"));
                                      });
           });
 
@@ -250,8 +252,8 @@ void RaycastStoreDetailHost::createActions() {
     main->addAction(uninstall);
   }
 
-  auto reportIssue =
-      new StaticAction("Report issue", ImageURL::builtin("bug"), [](const ApplicationContext *ctx) {
+  auto reportIssue = new StaticAction(
+      tr("Report issue"), ImageURL::builtin(BuiltinIcon::Bug), [](const ApplicationContext *ctx) {
         ctx->services->appDb()->openTarget(Omnicast::GH_EXTENSIONS_CREATE_ISSUE);
       });
   main->addAction(reportIssue);

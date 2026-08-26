@@ -86,12 +86,12 @@ void SettingsSidebarModel::rebuildRows() {
     QString label;
     QString icon;
   };
-  static const std::array<CorePage, 5> corePages = {{
-      {QStringLiteral("general"), QStringLiteral("General"), QStringLiteral("cog")},
-      {QStringLiteral("appearance"), QStringLiteral("Appearance"), QStringLiteral("swatch")},
-      {QStringLiteral("keybindings"), QStringLiteral("Keybindings"), QStringLiteral("keyboard")},
-      {QStringLiteral("advanced"), QStringLiteral("Advanced"), QStringLiteral("wrench-screwdriver")},
-      {QStringLiteral("about"), QStringLiteral("About"), QStringLiteral("vicinae")},
+  const std::array<CorePage, 5> corePages = {{
+      {QStringLiteral("general"), tr("General"), QStringLiteral("cog")},
+      {QStringLiteral("appearance"), tr("Appearance"), QStringLiteral("swatch")},
+      {QStringLiteral("keybindings"), tr("Keybindings"), QStringLiteral("keyboard")},
+      {QStringLiteral("advanced"), tr("Advanced"), QStringLiteral("wrench-screwdriver")},
+      {QStringLiteral("about"), tr("About"), QStringLiteral("vicinae")},
   }};
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
@@ -142,9 +142,10 @@ void SettingsSidebarModel::rebuildRows() {
   };
   std::vector<Top> tops;
 
+  fuzzy::Query const query{m_query};
   for (const auto &page : corePages) {
-    int const score = fuzzy::scoreWeighted({{page.label.toStdString(), 1.0}}, m_query);
-    if (score > 0) tops.push_back({static_cast<double>(score), coreRow(page), {}});
+    auto const m = fuzzy::scoreWeighted({{page.label.toStdString(), 1.0}}, query);
+    if (m.accepted()) tops.push_back({static_cast<double>(m.score), coreRow(page), {}});
   }
 
   RootItemPrefixSearchOptions opts;

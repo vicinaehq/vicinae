@@ -15,15 +15,6 @@ void postKey(CGKeyCode key, bool down, CGEventFlags flags) {
 
 } // namespace
 
-MacosPasteService::MacosPasteService() {
-  const void *keys[] = {kAXTrustedCheckOptionPrompt};
-  const void *values[] = {kCFBooleanTrue};
-  CFDictionaryRef options = CFDictionaryCreate(kCFAllocatorDefault, keys, values, 1,
-                                               &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-  AXIsProcessTrustedWithOptions(options);
-  CFRelease(options);
-}
-
 bool MacosPasteService::supportsPaste() const { return AXIsProcessTrusted(); }
 
 bool MacosPasteService::pasteToApp(const AbstractWindowManager::AbstractWindow *,

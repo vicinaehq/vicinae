@@ -1,7 +1,6 @@
 #include "installed-extensions-model.hpp"
 #include "actions/extension/extension-actions.hpp"
 #include "clipboard-actions.hpp"
-#include "extend/accessory-model.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "theme/colors.hpp"
@@ -14,26 +13,32 @@ QString InstalledExtensionsSection::displaySubtitle(const ExtensionManifest &m) 
   return m.description;
 }
 
-QString InstalledExtensionsSection::displayIconSource(const ExtensionManifest &m) const {
+std::optional<ImageURL> InstalledExtensionsSection::displayIcon(const ExtensionManifest &m) const {
   if (!m.icon.isEmpty()) {
     auto iconPath = m.path / "assets" / m.icon.toStdString();
-    return imageSourceFor(ImageURL::local(iconPath).withFallback(ImageURL::builtin("plug")));
+    return ImageURL::local(iconPath).withFallback(ImageURL::builtin(BuiltinIcon::Plug));
   }
-  return imageSourceFor(ImageURL::builtin("plug"));
+  return ImageURL::builtin(BuiltinIcon::Plug);
 }
 
-QVariantList InstalledExtensionsSection::displayAccessories(const ExtensionManifest &m) const {
+AccessoryList InstalledExtensionsSection::displayAccessories(const ExtensionManifest &m) const {
   if (m.isFromRaycastStore()) {
-    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Red, "Raycast"),
-                                           .icon = ExtensionImageModel{.source = QString("raycast")}}});
+    return {{.text = "Raycast",
+             .color = SemanticColor::Red,
+             .fillBackground = true,
+             .icon = ImageURL::builtin(BuiltinIcon::Raycast)}};
   }
   if (m.isFromVicinaeStore()) {
-    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Accent, "Vicinae"),
-                                           .icon = ExtensionImageModel{.source = QString("vicinae")}}});
+    return {{.text = "Vicinae",
+             .color = SemanticColor::Accent,
+             .fillBackground = true,
+             .icon = ImageURL::builtin(BuiltinIcon::Vicinae)}};
   }
   if (m.isLocal()) {
-    return qml::accessoriesToVariantList({{.data = AccessoryModel::Tag(SemanticColor::Cyan, "Local"),
-                                           .icon = ExtensionImageModel{.source = QString("box")}}});
+    return {{.text = tr("Local"),
+             .color = SemanticColor::Cyan,
+             .fillBackground = true,
+             .icon = ImageURL::builtin(BuiltinIcon::Box)}};
   }
   return {};
 }
@@ -46,20 +51,21 @@ InstalledExtensionsSection::buildActionPanel(const ExtensionManifest &m) const {
   auto primary = panel->createSection();
   primary->addAction(new UninstallExtensionAction(m.id));
 
-  auto utils = panel->createSection("Copy");
+  auto utils = panel->createSection(tr("Copy"));
 
-  auto copyName = new CopyToClipboardAction(Clipboard::Text(m.name), "Copy Name");
+  auto copyName = new CopyToClipboardAction(Clipboard::Text(m.name), tr("Copy Name"));
   copyName->setShortcut(Keybind::CopyNameAction);
   utils->addAction(copyName);
 
-  auto copyId = new CopyToClipboardAction(Clipboard::Text(m.id), "Copy ID");
+  auto copyId = new CopyToClipboardAction(Clipboard::Text(m.id), tr("Copy ID"));
   utils->addAction(copyId);
 
-  auto copyPath = new CopyToClipboardAction(Clipboard::Text(m.path.c_str()), "Copy Path");
+  auto copyPath =
+      new CopyToClipboardAction(Clipboard::Text(QString::fromStdString(m.path.string())), tr("Copy Path"));
   copyPath->setShortcut(Keybind::CopyPathAction);
   utils->addAction(copyPath);
 
-  auto copyAuthor = new CopyToClipboardAction(Clipboard::Text(m.author), "Copy Author");
+  auto copyAuthor = new CopyToClipboardAction(Clipboard::Text(m.author), tr("Copy Author"));
   utils->addAction(copyAuthor);
 
   return panel;

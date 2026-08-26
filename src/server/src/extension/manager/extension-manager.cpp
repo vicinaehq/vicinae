@@ -3,16 +3,14 @@
 #include <filesystem>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
-#include <qstandardpaths.h>
 #include <qstringview.h>
 #include <qtypes.h>
 #include <string>
 #include <system_error>
 #include <utility>
-#include "environment.hpp"
 #include "pid-file/pid-file.hpp"
 #include "generated/version.h"
-#include "rang/rang.hpp"
+#include "log/message-handler.hpp"
 #include "vicinae.hpp"
 
 namespace fs = std::filesystem;
@@ -38,7 +36,9 @@ void Bus::readyRead() {
     _message.data.append(read);
 
     while (std::cmp_greater_equal(_message.data.size(), sizeof(uint32_t))) {
-      uint32_t const length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
+      const auto *p = reinterpret_cast<const unsigned char *>(_message.data.data());
+      uint32_t const length =
+          (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) | uint32_t(p[3]);
       bool const isComplete = _message.data.size() - sizeof(uint32_t) >= length;
 
       if (!isComplete) break;
@@ -77,42 +77,18 @@ ExtensionManager::ExtensionManager() : m_bus(&m_process), m_rpc(m_bus), m_client
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
     if (auto res = m_client.route(view); !res) { qWarning() << "Failed to route message" << res.error(); }
   });
+
+  connect(&m_node, &NodeRuntime::installed, this, [this]() { start(); });
 }
 
 bool ExtensionManager::isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
 
-std::optional<fs::path> ExtensionManager::nodeExecutable() {
-  static const std::array<const char *, 2> candidates = {"vicinae-node", "node"};
-
-  if (auto bin = Environment::nodeBinaryOverride()) {
-    std::error_code ec;
-
-    if (fs::is_regular_file(*bin, ec)) { return bin; }
-
-    if (auto path = QStandardPaths::findExecutable(bin->c_str()); !path.isEmpty()) {
-      return path.toStdString();
-    }
-
-    // we do not fallback if we got an explicit override
-    return {};
-  }
-
-  if (auto appDir = Environment::appImageDir()) {
-    std::error_code ec;
-    fs::path path = *appDir / "usr" / "bin" / "node";
-    if (fs::is_regular_file(path, ec)) return path;
-  }
-
-  for (auto candidate : candidates) {
-    if (auto path = QStandardPaths::findExecutable(candidate); !path.isEmpty()) { return path.toStdString(); }
-  }
-
-  return {};
-}
-
 bool ExtensionManager::stop() {
+  m_stopping = true;
   m_process.terminate();
-  return m_process.waitForFinished();
+  if (m_process.waitForFinished(2000)) return true;
+  m_process.kill();
+  return m_process.waitForFinished(2000);
 }
 
 bool ExtensionManager::start() {
@@ -125,22 +101,37 @@ bool ExtensionManager::start() {
 
   if (m_process.state() == QProcess::Running) { m_process.close(); }
 
-  auto node = nodeExecutable();
+  auto node = m_node.executable();
 
   if (!node) {
+    // executable() kicks off an async download on managed builds; installed() re-drives start()
+    if (m_node.provisioning()) return true;
     qCritical() << "Unable to find a suitable node executable. TypeScript extensions will not work.";
     return false;
   }
 
   fs::path const managerPath = Omnicast::runtimeDir() / "extension-manager.js";
+  QString const managerPathStr = QString::fromStdString(managerPath.string());
 
-  QFile::remove(managerPath);
-  QFile::copy(":bin/extension-manager", managerPath.c_str());
+  // A live node process holds the bundle open on Windows, blocking the overwrite; kill it first.
   PidFile pidFile("extension-manager");
-
   if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing extension manager instance"; }
 
-  m_process.start(node->c_str(), {managerPath.c_str()});
+  QFile managerFile(managerPath);
+  if (managerFile.exists()) {
+    // The previous copy inherited the read-only bit of the Qt resource, which blocks removal on Windows.
+    managerFile.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    if (!managerFile.remove()) {
+      qWarning() << "Failed to remove stale extension manager bundle:" << managerFile.errorString();
+    }
+  }
+  if (!QFile::copy(":bin/extension-manager", managerPathStr)) {
+    qCritical() << "Failed to deploy extension manager bundle to" << managerPath.c_str();
+    return false;
+  }
+  QFile::setPermissions(managerPathStr, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+
+  m_process.start(QString::fromStdString(node->string()), {managerPathStr});
 
   if (!m_process.waitForStarted(maxWaitForStart)) {
     qCritical() << "Failed to start extension manager" << m_process.errorString();
@@ -164,15 +155,25 @@ bool ExtensionManager::hasDevelopmentSession(const QString &id) const {
 void ExtensionManager::processStarted() { emit started(); }
 
 void ExtensionManager::finished(int exitCode, QProcess::ExitStatus status) {
+  if (m_stopping) {
+    m_stopping = false;
+    return;
+  }
   qCritical() << "Extension manager crashed. Extensions will not work" << m_process.errorString();
 }
 
 void ExtensionManager::readError() {
   auto buf = m_process.readAllStandardError();
-  auto ts = QDateTime::currentDateTime().toString("yyyy-MM-dd'T'hh:mm:ss");
 
-  for (const auto &line : buf.trimmed().split('\n')) {
-    std::cout << "[" << rang::fg::magenta << "E" << rang::fg::reset << "] " << rang::fg::gray
-              << ts.toStdString() << " " << line.toStdString() << "\n";
+  for (const auto &raw : buf.trimmed().split('\n')) {
+    QString const line = QString::fromUtf8(raw);
+    int const tab = line.indexOf('\t');
+
+    if (tab == -1) {
+      vicinae::log::subprocessLine(vicinae::log::EXTENSION, {}, line);
+      continue;
+    }
+
+    vicinae::log::subprocessLine(vicinae::log::EXTENSION, line.left(tab), line.sliced(tab + 1));
   }
 }

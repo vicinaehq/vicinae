@@ -12,12 +12,13 @@ namespace fuzzy::test {
 inline std::vector<std::string_view> rankByQuery(std::span<const std::string_view> items,
                                                  std::string_view query) {
   const auto &matcher = fzf::threadLocalMatcher();
+  fzf::Query const fuzzyQuery{query};
 
   std::vector<Scored<std::string_view>> scored;
   scored.reserve(items.size());
 
   for (auto text : items) {
-    int s = matcher.fuzzy_match_v2_score_query(text, query);
+    int s = matcher.score_query(text, fuzzyQuery).weighted;
     if (s > 0) { scored.push_back({.data = text, .score = s}); }
   }
 

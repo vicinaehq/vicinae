@@ -7,12 +7,28 @@ Popup {
 
     property var items: []
     property var sections: []
+    property CompletionModel model: null
+    readonly property CompletionModel _model: model ?? internalModel
     property bool showFilter: false
-    property string filterPlaceholder: "Filter..."
+    property string filterPlaceholder: qsTr("Filter...")
     property string currentItemId: ""
 
-    readonly property int count: completionModel.count
+    // When true, show as a non-activating native window (so the field driving the
+    // completion keeps focus) where the platform supports it; in-scene otherwise.
+    property bool nativePanel: false
+
+    popupType: nativePanel && Platform.supports("nativePanels") ? Popup.Window : Popup.Item
+
+    readonly property int count: _model.count
     readonly property bool hasSelection: _highlightedIndex >= 0
+
+    onCountChanged: {
+        if (_highlightedIndex >= count)
+            _highlightedIndex = -1;
+    }
+
+    readonly property real _bgOpacity: popupType === Popup.Window ? Config.popupOpacity : 0
+    readonly property real _fillOpacity: Config.popupSurfaceOpacity
 
     signal itemAccepted(var itemData)
 
@@ -31,14 +47,14 @@ Popup {
     }
 
     onItemsChanged: if (items.length > 0)
-        completionModel.setItems(items)
+        internalModel.setItems(items)
     onSectionsChanged: if (sections.length > 0)
-        completionModel.setSections(sections)
+        internalModel.setSections(sections)
 
     onOpened: {
         if (showFilter) {
             filterField.text = "";
-            completionModel.setFilter("");
+            _model.setFilter("");
             _highlightCurrentOrFirst();
             filterField.forceActiveFocus();
         }
@@ -50,34 +66,34 @@ Popup {
 
     function _highlightCurrentOrFirst() {
         if (currentItemId !== "") {
-            const idx = completionModel.indexOfItemId(currentItemId);
+            const idx = _model.indexOfItemId(currentItemId);
             if (idx >= 0) {
                 _highlightedIndex = idx;
                 return;
             }
         }
-        const first = completionModel.nextSelectableIndex(-1, 1);
+        const first = _model.nextSelectableIndex(-1, 1);
         _highlightedIndex = first >= 0 ? first : -1;
     }
 
     function filter(query) {
-        completionModel.setFilter(query);
-        const first = completionModel.nextSelectableIndex(-1, 1);
+        _model.setFilter(query);
+        const first = _model.nextSelectableIndex(-1, 1);
         _highlightedIndex = first >= 0 ? first : -1;
     }
 
     function moveUp() {
-        _highlightedIndex = completionModel.nextSelectableIndex(_highlightedIndex, -1);
+        _highlightedIndex = _model.nextSelectableIndex(_highlightedIndex, -1);
     }
 
     function moveDown() {
-        _highlightedIndex = completionModel.nextSelectableIndex(_highlightedIndex, 1);
+        _highlightedIndex = _model.nextSelectableIndex(_highlightedIndex, 1);
     }
 
     function acceptHighlighted() {
         if (_highlightedIndex < 0)
             return;
-        const data = completionModel.itemDataAt(_highlightedIndex);
+        const data = _model.itemDataAt(_highlightedIndex);
         if (Object.keys(data).length > 0) {
             itemAccepted(data);
             close();
@@ -85,22 +101,22 @@ Popup {
     }
 
     CompletionModel {
-        id: completionModel
-        onCountChanged: {
-            if (root._highlightedIndex >= count)
-                root._highlightedIndex = -1;
-        }
+        id: internalModel
     }
 
     HoverResetOnModelChange {
-        target: completionModel
+        target: root._model
     }
 
-    background: Rectangle {
-        radius: 8
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.95)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
+    background: PopoverBackground {
+        popup: root
+
+        Loader {
+            active: root.nativePanel && Platform.supports("nativePanels")
+            source: "qrc:/Vicinae/CompletionPanelMacOS.qml"
+        }
+
+        PopupMaterial {}
     }
 
     contentItem: ColumnLayout {
@@ -154,8 +170,6 @@ Popup {
 
                     onTextEdited: filterDebounce.restart()
 
-                    Keys.onUpPressed: root.moveUp()
-                    Keys.onDownPressed: root.moveDown()
                     Keys.onReturnPressed: root.acceptHighlighted()
                     Keys.onEscapePressed: root.close()
                     Keys.onTabPressed: event => {
@@ -163,6 +177,17 @@ Popup {
                     }
                     Keys.onBacktabPressed: event => {
                         event.accepted = true;
+                    }
+
+                    Keys.onPressed: function (event) {
+                        const nav = Keyboard.matchNavigation(event.key, event.modifiers);
+                        if (event.key === Qt.Key_Up || nav === 1) {
+                            root.moveUp();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down || nav === 2) {
+                            root.moveDown();
+                            event.accepted = true;
+                        }
                     }
                 }
             }
@@ -172,9 +197,13 @@ Popup {
             id: completionList
             Layout.fillWidth: true
             Layout.preferredHeight: Math.min(contentHeight, root.showFilter ? 300 : 200)
-            model: completionModel
+            model: root._model
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+
+            ViciWheelHandler {
+                target: completionList
+            }
 
             ScrollBar.vertical: ViciScrollBar {
                 policy: completionList.contentHeight > completionList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
@@ -218,12 +247,24 @@ Popup {
                     anchors.right: parent.right
                     height: visible ? 30 : 0
 
-                    Rectangle {
+                    SourceBlendRect {
                         anchors.fill: parent
                         anchors.leftMargin: 2
                         anchors.rightMargin: 2
                         radius: 6
-                        color: del._isHighlighted ? Theme.listItemSelectionBg : (itemHover.hovered && HoverActivation.active) ? Theme.listItemHoverBg : "transparent"
+                        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, root._bgOpacity)
+                        color: {
+                            if (del._isHighlighted) {
+                                var c = Theme.listItemSelectionBg;
+                                return Qt.rgba(c.r, c.g, c.b, root._fillOpacity);
+                            }
+                            if (itemHover.hovered && HoverActivation.active) {
+                                var h = Theme.listItemHoverBg;
+                                return Qt.rgba(h.r, h.g, h.b, root._fillOpacity);
+                            }
+                            var bg = Theme.popoverBackground;
+                            return Qt.rgba(bg.r, bg.g, bg.b, root._bgOpacity);
+                        }
                     }
 
                     RowLayout {

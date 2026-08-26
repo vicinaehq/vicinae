@@ -102,6 +102,7 @@ Item {
                 required property string iconSource
                 required property var itemAccessory
                 required property bool isPinned
+                required property bool isDraggable
 
                 sourceComponent: isSection ? sectionComponent : itemComponent
 
@@ -122,6 +123,11 @@ Item {
                         selected: listView.currentIndex === delegateLoader.index
                         onClicked: listView.currentIndex = delegateLoader.index
                         onActivated: listView.itemActivated(delegateLoader.index)
+                        draggable: delegateLoader.isDraggable
+                        onDragRequested: function (source) {
+                            listView.currentIndex = delegateLoader.index;
+                            root.host.listModel.startDrag(delegateLoader.index, source);
+                        }
 
                         RowLayout {
                             anchors.fill: parent
@@ -184,16 +190,16 @@ Item {
         DetailPanel {
             metadata: [
                 {
-                    label: "Mime",
-                    value: root.host.detailMimeType,
+                    label: qsTr("Type"),
+                    value: root.host.detailType,
                     icon: root.host.detailEncryptionIcon
                 },
                 {
-                    label: "Size",
+                    label: qsTr("Size"),
                     value: root.host.detailSize
                 },
                 {
-                    label: "Copied at",
+                    label: qsTr("Copied at"),
                     value: root.host.detailCopiedAt
                 },
                 {
@@ -244,8 +250,8 @@ Item {
                 active: !root.host.hasDetailError && root.host.detailImageSource === "" && root.host.detailTextContent === ""
                 visible: active
                 sourceComponent: EmptyView {
-                    title: root.host.detailMimeType
-                    description: "Preview not available for this content type"
+                    title: root.host.detailType
+                    description: qsTr("Preview not available for this content type")
                 }
             }
         }

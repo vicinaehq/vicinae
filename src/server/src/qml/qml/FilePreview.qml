@@ -39,7 +39,7 @@ Item {
         visible: active
         sourceComponent: EmptyView {
             title: root.mimeType
-            description: "Preview not available for this file type"
+            description: qsTr("Preview not available for this file type")
         }
     }
 }

@@ -1,9 +1,10 @@
 #pragma once
 #include "fuzzy-section.hpp"
 #include "services/oauth/oauth-token-store.hpp"
+#include <QCoreApplication>
 
 template <> struct fuzzy::FuzzySearchable<OAuth::TokenSet> {
-  static int score(const OAuth::TokenSet &set, std::string_view query) {
+  static fuzzy::Match score(const OAuth::TokenSet &set, const fuzzy::Query &query) {
     auto extId = set.extensionId.toStdString();
     auto providerId = set.providerId.value_or("").toStdString();
     return fuzzy::scoreWeighted({{extId, 1.0}, {providerId, 0.5}}, query);
@@ -11,13 +12,14 @@ template <> struct fuzzy::FuzzySearchable<OAuth::TokenSet> {
 };
 
 class OAuthTokenStoreSection : public FuzzySection<OAuth::TokenSet> {
+  Q_DECLARE_TR_FUNCTIONS(OAuthTokenStoreSection)
 public:
-  QString sectionName() const override { return QStringLiteral("OAuth Token Sets ({count})"); }
+  QString sectionName() const override { return tr("OAuth Token Sets ({count})"); }
 
 protected:
   QString displayTitle(const OAuth::TokenSet &set) const override;
   QString displaySubtitle(const OAuth::TokenSet &set) const override;
-  QString displayIconSource(const OAuth::TokenSet &set) const override;
-  QVariantList displayAccessories(const OAuth::TokenSet &set) const override;
+  std::optional<ImageURL> displayIcon(const OAuth::TokenSet &set) const override;
+  AccessoryList displayAccessories(const OAuth::TokenSet &set) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const OAuth::TokenSet &set) const override;
 };

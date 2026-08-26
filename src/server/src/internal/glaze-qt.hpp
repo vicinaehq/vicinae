@@ -2,13 +2,14 @@
 #include <QDateTime>
 #include <QString>
 #include <glaze/json/generic.hpp>
+#include <glaze/json/prettify.hpp>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qjsonarray.h>
+#include <string>
 #include <string_view>
-#include <vector>
 
 namespace glz {
 
@@ -19,11 +20,11 @@ template <> struct from<JSON, QString> {
       value = QString();
       return;
     }
-    std::string_view sv;
-    parse<JSON>::op<Opts>(sv, ctx, it, end);
+    std::string buf; // we need an owning buffer for glaze to properly decode the string
+    parse<JSON>::op<Opts>(buf, ctx, it, end);
     if (bool(ctx.error)) [[unlikely]]
       return;
-    value = QString::fromUtf8(sv.data(), static_cast<qsizetype>(sv.size()));
+    value = QString::fromUtf8(buf.data(), static_cast<qsizetype>(buf.size()));
   }
 };
 
@@ -60,3 +61,9 @@ QJsonValue glazeToQJsonValue(const glz::generic &v);
 QJsonObject glazeToQJsonObject(const glz::generic::object_t &v);
 glz::generic::object_t qJsonObjectToGlazeGeneric(const QJsonObject &v);
 glz::generic qJsonValueToGlazeGeneric(const QJsonValue &v);
+
+std::string glazeStringify(const auto &data) {
+  std::string buf{};
+  glz::write_json(data, buf);
+  return glz::prettify_json(buf);
+}

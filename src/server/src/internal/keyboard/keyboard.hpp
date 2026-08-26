@@ -2,6 +2,7 @@
 // We use our own shortcut stuff by design, instead of using QShortcut and the likes.
 #include <optional>
 #include <vector>
+#include <QChar>
 #include <QStringView>
 #include <QVariantList>
 #include <qnamespace.h>
@@ -10,6 +11,13 @@
 class QKeyEvent;
 
 namespace Keyboard {
+// Maps a non-Latin character key (e.g Cyrillic) to the Latin key at the same physical position,
+// so recorded shortcuts stay layout-independent. Identity for Latin keys and non-macOS platforms.
+Qt::Key normalizeToLatin(Qt::Key key);
+
+// Typed character for keys whose Qt::Key value is its uppercase code point, nullopt for named keys.
+std::optional<QChar> printableCharForKey(Qt::Key key);
+
 std::optional<QString> stringForKey(Qt::Key key);
 std::optional<Qt::Key> keyFromString(QStringView key);
 std::optional<Qt::KeyboardModifier> modifierFromString(QStringView modifier);
@@ -19,7 +27,7 @@ public:
   static Shortcut osCopy() { return Shortcut(Qt::Key_C, Qt::ControlModifier); }
   static Shortcut osPaste() { return Shortcut(Qt::Key_V, Qt::ControlModifier); }
   static Shortcut enter() { return Qt::Key_Return; }
-  static Shortcut submit() { return enter().shifted(); }
+  static Shortcut submit() { return Shortcut(Qt::Key_Return, Qt::ControlModifier); }
 
   static Shortcut shiftPaste() { return osPaste().shifted(); }
   static Shortcut fromString(const QString &str) { return str; }
@@ -47,7 +55,7 @@ public:
   std::vector<Qt::KeyboardModifier> modList() const;
 
   bool isValidKey() const { return stringForKey(m_key).has_value(); }
-  bool isFunctionKey() const { return m_key >= Qt::Key_F1 && m_key <= Qt::Key_F12; }
+  bool isFunctionKey() const { return m_key >= Qt::Key_F1 && m_key <= Qt::Key_F24; }
 
   // The keyboard shortcut as a string.
   // This form is used to serialize shortcut data in config files/database.

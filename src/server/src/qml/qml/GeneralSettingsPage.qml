@@ -8,30 +8,38 @@ Flickable {
     contentHeight: outer.implicitHeight
     clip: true
     boundsBehavior: Flickable.StopAtBounds
+    topMargin: Style.contentTopInset
+    Component.onCompleted: contentY = -topMargin
 
     readonly property var model: settings.generalModel
 
+    ViciWheelHandler {
+        target: root
+    }
+
     ScrollBar.vertical: ViciScrollBar {
+        topPadding: Style.contentTopInset
+        bottomPadding: 16
         policy: root.contentHeight > root.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
     }
 
     ColumnLayout {
         id: outer
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Math.min(root.width - 48, 720)
+        width: Math.min(root.width - 32, 720)
         spacing: 0
 
         SettingsSectionLabel {
-            text: "Behavior"
+            text: qsTr("Behavior")
             Layout.topMargin: 24
             Layout.bottomMargin: 10
         }
 
         SettingsGroup {
             SettingsRow {
-                visible: settings.globalShortcutsSupported
-                label: "Launcher hotkey"
-                description: "Global shortcut to toggle the Vicinae launcher."
+                visible: Platform.supports("globalShortcuts")
+                label: qsTr("Launcher hotkey")
+                description: qsTr("Global shortcut to toggle the Vicinae launcher.")
                 ShortcutField {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
@@ -44,7 +52,7 @@ Flickable {
             }
 
             SettingsRow {
-                label: "Close on focus loss"
+                label: qsTr("Close on focus loss")
                 SettingsToggle {
                     checked: root.model.closeOnFocusLoss
                     onToggled: checked => root.model.closeOnFocusLoss = checked
@@ -52,8 +60,8 @@ Flickable {
             }
 
             SettingsRow {
-                label: "Close on Escape"
-                description: "Pressing Escape closes the launcher instead of navigating one view back."
+                label: qsTr("Close on Escape")
+                description: qsTr("Pressing Escape closes the launcher instead of navigating one view back.")
                 SettingsToggle {
                     checked: root.model.closeOnEscape
                     onToggled: checked => root.model.closeOnEscape = checked
@@ -61,35 +69,46 @@ Flickable {
             }
 
             SettingsRow {
-                label: "Pop to root on close"
-                description: "Reset the navigation state when the launcher window is closed."
+                label: qsTr("Pop to root on close")
+                description: qsTr("Reset the navigation state when the launcher window is closed.")
+                showSeparator: false
                 SettingsToggle {
                     checked: root.model.popToRootOnClose
                     onToggled: root.model.popToRootOnClose = checked
                 }
             }
-
-            SettingsRow {
-                label: "Compact mode"
-                description: "Show only the search bar at root; expand when a query is entered."
-                showSeparator: false
-                SettingsToggle {
-                    checked: root.model.compactMode
-                    onToggled: root.model.compactMode = checked
-                }
-            }
         }
 
         SettingsSectionLabel {
-            text: "Privacy"
+            text: qsTr("Language")
             Layout.topMargin: 24
             Layout.bottomMargin: 10
         }
 
         SettingsGroup {
             SettingsRow {
-                label: "Basic usage statistics"
-                description: "Send basic system and vicinae installation information on startup to help improve Vicinae."
+                label: qsTr("Language")
+                description: qsTr("Requires restarting Vicinae to take effect.")
+                showSeparator: false
+                SearchableDropdown {
+                    width: parent.width
+                    model: root.model.languageModel
+                    currentItem: root.model.currentLanguage
+                    onActivated: item => root.model.selectLanguage(item.id)
+                }
+            }
+        }
+
+        SettingsSectionLabel {
+            text: qsTr("Privacy")
+            Layout.topMargin: 24
+            Layout.bottomMargin: 10
+        }
+
+        SettingsGroup {
+            SettingsRow {
+                label: qsTr("Basic usage statistics")
+                description: qsTr("Send basic system and vicinae installation information on startup to help improve Vicinae.")
                 showSeparator: false
                 SettingsToggle {
                     checked: root.model.telemetrySystemInfo

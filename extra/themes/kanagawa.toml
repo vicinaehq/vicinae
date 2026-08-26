@@ -12,7 +12,7 @@ icon = "icons/kanagawa.png"
 background = "#1F1F28"        # sumiInk3 - main background
 foreground = "#DCD7BA"        # fujiWhite - main text
 secondary_background = "#16161D"  # sumiInk0 - darker surfaces
-border = "#2A2A37"            # sumiInk4 - subtle borders
+border = "#454559"            # sumiInk4 - subtle borders
 accent = "#7E9CD8"            # crystalBlue - primary accent
 
 [colors.accents]
@@ -26,5 +26,8 @@ yellow = "#DCA561"            # autumnYellow - golden yellow
 cyan = "#7FB4CA"              # springBlue - aqua blue
 
 [colors.list.item.selection]
-background = "#262631"
+background = "#434356"
 secondary_background = "#363646"
+
+[colors.grid.item]
+background = "#3c3c4d"

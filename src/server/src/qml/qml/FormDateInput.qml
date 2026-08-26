@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-Item {
+FocusScope {
     id: root
     implicitHeight: 36
     Layout.fillWidth: true
@@ -39,7 +39,7 @@ Item {
         anchors.fill: parent
         radius: 8
         color: "transparent"
-        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.windowOpacity)
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.surfaceOpacity)
         border.width: 1
 
         TextInput {

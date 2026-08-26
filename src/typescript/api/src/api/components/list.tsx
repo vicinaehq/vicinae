@@ -17,6 +17,8 @@ import {
 	serializeColorLike,
 } from "../color";
 import { Dropdown } from "./dropdown";
+import { usePagination } from "./pagination";
+import { Clipboard } from "../clipboard";
 
 /**
  * A List component that can be used to render a list of items sharing a similar representation.
@@ -113,6 +115,11 @@ export declare namespace List {
 		 * Note that this does *not* fire when transitioning from having a selected item to none at all.
 		 */
 		onSelectionChange?: (id: string) => void;
+
+		pagination?: {
+			onLoadMore: () => Promise<void> | void;
+			hasMore: boolean;
+		};
 	};
 
 	/**
@@ -193,6 +200,9 @@ export declare namespace List {
 			 * Action panel to show when this item is selected.
 			 */
 			actions?: ReactNode;
+
+			/** Content transferred when this item is dragged. */
+			dragContent?: Clipboard.Content;
 
 			accessories?: List.Item.Accessory[];
 
@@ -321,11 +331,16 @@ const ListRoot: React.FC<List.Props> = ({
 		onSearchTextChange,
 	);
 
+	const pagination = usePagination(props.pagination);
+
 	return (
 		<list
 			{...props}
+			paginationHasMore={pagination?.hasMore ?? false}
+			paginationOnLoadMore={pagination?.onLoadMore}
 			searchText={countedSearchText}
 			onSearchTextChange={wrappedOnSearchTextChange}
+			pagination={pagination}
 		>
 			{searchBarAccessory}
 			{children}
@@ -337,6 +352,7 @@ const ListRoot: React.FC<List.Props> = ({
 const ListItem: React.FC<List.Item.Props> = ({
 	detail,
 	actions,
+	dragContent,
 	icon,
 	accessories,
 	...props
@@ -362,6 +378,9 @@ const ListItem: React.FC<List.Item.Props> = ({
 		<list-item
 			{...props}
 			icon={serializedIcon}
+			dragContent={
+				dragContent ? Clipboard.serializeContent(dragContent) : undefined
+			}
 			accessories={serializedAccessories}
 			id={id.current}
 		>

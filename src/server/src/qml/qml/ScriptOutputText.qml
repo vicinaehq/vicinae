@@ -6,11 +6,28 @@ ScrollView {
 
     property alias text: textArea.text
 
+    Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
+
+    StatusBarInset {
+        id: statusBarInset
+        target: root
+    }
+
+    Binding {
+        target: root.contentItem
+        property: "bottomMargin"
+        value: statusBarInset.value
+    }
+
+    ViciWheelHandler {
+        target: root.contentItem
+    }
+
     function moveUp() {
         contentItem.contentY = Math.max(0, contentItem.contentY - 40);
     }
     function moveDown() {
-        contentItem.contentY = Math.min(contentItem.contentHeight - height, contentItem.contentY + 40);
+        contentItem.contentY = Math.min(contentItem.contentHeight - height + contentItem.bottomMargin, contentItem.contentY + 40);
     }
     function moveSectionUp() {
         moveUp();
@@ -23,7 +40,7 @@ ScrollView {
     }
     function scrollToBottom() {
         let flick = contentItem;
-        flick.contentY = Math.max(0, flick.contentHeight - root.height);
+        flick.contentY = Math.max(0, flick.contentHeight - root.height + flick.bottomMargin);
     }
 
     TextArea {

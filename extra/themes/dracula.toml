@@ -12,7 +12,7 @@ icon = "icons/dracula.png"
 background = "#282A36"        # Background
 foreground = "#F8F8F2"        # Foreground
 secondary_background = "#21222C"  # Slightly darker for surfaces
-border = "#44475A"            # Current Line (subtle border)
+border = "#4D5168"            # Current Line (subtle border)
 accent = "#8BE9FD"            # Cyan
 
 [colors.accents]
@@ -26,6 +26,9 @@ yellow = "#F1FA8C"
 cyan = "#8BE9FD"
 
 [colors.list.item.selection]
-background = "#393B4C"
+background = "#4b4e64"
 secondary_background = "#6272A4"
 
+
+[colors.grid.item]
+background = "#44485c"

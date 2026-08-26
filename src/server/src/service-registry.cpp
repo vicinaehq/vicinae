@@ -7,7 +7,7 @@
 #include "font-service.hpp"
 #include "omni-database.hpp"
 #include "services/app-service/app-service.hpp"
-#include "services/background-effect/background-effect-manager.hpp"
+#include "services/window-material/window-material-manager.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/power-manager/power-manager.hpp"
@@ -15,6 +15,7 @@
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "services/selection/abstract-selection-service.hpp"
 #include "services/glyph-service/glyph-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
@@ -24,8 +25,10 @@
 #include "services/extension-store/vicinae-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/telemetry/telemetry-service.hpp"
+#include "services/update/update-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/window-manager/window-manager.hpp"
+#include "services/wallpaper/wallpaper-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/snippet/snippet-service.hpp"
@@ -41,6 +44,7 @@ config::Manager *ServiceRegistry::config() const { return m_config.get(); }
 OmniDatabase *ServiceRegistry::omniDb() const { return m_omniDb.get(); }
 CalculatorService *ServiceRegistry::calculatorService() const { return m_calculatorService.get(); }
 WindowManager *ServiceRegistry::windowManager() const { return m_windowManager.get(); }
+WallpaperManager *ServiceRegistry::wallpaperManager() const { return m_wallpaperManager.get(); }
 GlyphService *ServiceRegistry::glyphService() const { return m_glyphService.get(); }
 FontService *ServiceRegistry::fontService() const { return m_fontService.get(); }
 LocalStorageService *ServiceRegistry::localStorage() const { return m_localStorage.get(); }
@@ -68,13 +72,14 @@ LinuxInputServer *ServiceRegistry::inputServer() const { return m_inputServer.ge
 SnippetService *ServiceRegistry::snippetService() const { return m_snippetService.get(); }
 
 PasteService *ServiceRegistry::pasteService() const { return m_pasteService.get(); }
+AbstractSelectionService *ServiceRegistry::selectionService() const { return m_selectionService.get(); }
 
 FileChooserService *ServiceRegistry::fileChooserService() const { return m_fileChooserService.get(); }
 
 NewsService *ServiceRegistry::newsService() const { return m_newsService.get(); }
 
-BackgroundEffectManager *ServiceRegistry::backgroundEffectManager() const {
-  return m_backgroundEffectManager.get();
+WindowMaterialManager *ServiceRegistry::windowMaterialManager() const {
+  return m_windowMaterialManager.get();
 }
 
 ShortcutInhibitManager *ServiceRegistry::shortcutInhibitManager() const {
@@ -82,6 +87,8 @@ ShortcutInhibitManager *ServiceRegistry::shortcutInhibitManager() const {
 }
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
+
+UpdateService *ServiceRegistry::updateService() const { return m_updateService.get(); }
 
 AudioControlService *ServiceRegistry::audioControl() const { return m_audioControl.get(); }
 
@@ -93,6 +100,10 @@ void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
 
 void ServiceRegistry::setWindowManager(std::unique_ptr<WindowManager> manager) {
   m_windowManager = std::move(manager);
+}
+
+void ServiceRegistry::setWallpaperManager(std::unique_ptr<WallpaperManager> manager) {
+  m_wallpaperManager = std::move(manager);
 }
 
 void ServiceRegistry::ServiceRegistry::setRootItemManager(std::unique_ptr<RootItemManager> manager) {
@@ -167,6 +178,10 @@ void ServiceRegistry::setPasteService(std::unique_ptr<PasteService> service) {
   m_pasteService = std::move(service);
 }
 
+void ServiceRegistry::setSelectionService(std::unique_ptr<AbstractSelectionService> service) {
+  m_selectionService = std::move(service);
+}
+
 void ServiceRegistry::setFileChooserService(std::unique_ptr<FileChooserService> service) {
   m_fileChooserService = std::move(service);
 }
@@ -175,8 +190,8 @@ void ServiceRegistry::setNewsService(std::unique_ptr<NewsService> service) {
   m_newsService = std::move(service);
 }
 
-void ServiceRegistry::setBackgroundEffectManager(std::unique_ptr<BackgroundEffectManager> service) {
-  m_backgroundEffectManager = std::move(service);
+void ServiceRegistry::setWindowMaterialManager(std::unique_ptr<WindowMaterialManager> service) {
+  m_windowMaterialManager = std::move(service);
 }
 
 void ServiceRegistry::setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitManager> service) {
@@ -185,6 +200,10 @@ void ServiceRegistry::setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitM
 
 void ServiceRegistry::setTelemetry(std::unique_ptr<TelemetryService> telemetry) {
   m_telemetry = std::move(telemetry);
+}
+
+void ServiceRegistry::setUpdateService(std::unique_ptr<UpdateService> service) {
+  m_updateService = std::move(service);
 }
 
 void ServiceRegistry::setAudioControl(std::unique_ptr<AudioControlService> service) {

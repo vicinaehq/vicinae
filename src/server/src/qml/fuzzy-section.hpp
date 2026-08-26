@@ -7,7 +7,7 @@
 #include <vector>
 
 template <> struct fuzzy::FuzzySearchable<QString> {
-  static int score(const QString &item, std::string_view query) {
+  static fuzzy::Match score(const QString &item, const fuzzy::Query &query) {
     return fuzzy::scoreWeighted({{item.toStdString(), 1.0}}, query);
   }
 };
@@ -30,10 +30,12 @@ public:
 protected:
   const T &at(int i) const { return m_items[m_filtered[i].data]; }
 
+  virtual void sortFiltered() {}
+
   virtual QString displayTitle(const T &item) const = 0;
   virtual QString displaySubtitle(const T &) const { return {}; }
-  virtual QString displayIconSource(const T &item) const = 0;
-  virtual QVariantList displayAccessories(const T &) const { return {}; }
+  virtual std::optional<ImageURL> displayIcon(const T &item) const = 0;
+  virtual AccessoryList displayAccessories(const T &) const { return {}; }
   virtual QString displayId(const T &item) const { return displayTitle(item); }
   virtual std::unique_ptr<ActionPanelState> buildActionPanel(const T &item) const = 0;
 
@@ -42,13 +44,16 @@ protected:
   std::string m_query;
 
 private:
-  void refilter() { fuzzy::fuzzyFilter<T>(std::span<const T>(m_items), m_query, m_filtered); }
+  void refilter() {
+    fuzzy::fuzzyFilter<T>(std::span<const T>(m_items), m_query, m_filtered);
+    sortFiltered();
+  }
 
   QString itemId(int i) const override { return displayId(at(i)); }
   QString itemTitle(int i) const override { return displayTitle(at(i)); }
   QString itemSubtitle(int i) const override { return displaySubtitle(at(i)); }
-  QString itemIconSource(int i) const override { return displayIconSource(at(i)); }
-  QVariantList itemAccessories(int i) const override { return displayAccessories(at(i)); }
+  std::optional<ImageURL> itemIcon(int i) const override { return displayIcon(at(i)); }
+  AccessoryList itemAccessories(int i) const override { return displayAccessories(at(i)); }
 
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override { return buildActionPanel(at(i)); }
 };

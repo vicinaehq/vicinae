@@ -18,6 +18,8 @@ public:
     int accessCount = 0;
   };
 
+  bool isAvailable() const;
+
   AbstractFileIndexer *indexer() const;
 
   void rebuildIndex();

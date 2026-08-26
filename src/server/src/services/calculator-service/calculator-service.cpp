@@ -4,15 +4,20 @@
 #include "omni-database.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"
+#include "services/calculator-service/numen/numen-calculator-backend.hpp"
 #include <ranges>
 #include <qdatetime.h>
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobjectdefs.h>
 
+#ifdef Q_OS_WIN
+#include "dummy-calculator-backend.hpp"
+#else
 #include "qalculate/qalculate-backend.hpp"
+#endif
 
-#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
+#if (defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)) || defined(BUNDLE_SOULVER_CORE)
 #include "soulver-core/soulver-core.hpp"
 #endif
 
@@ -91,13 +96,15 @@ std::vector<CalculatorRecord> CalculatorService::records() const { return m_reco
 std::vector<CalculatorRecord> CalculatorService::query(const QString &query) {
   if (query.isEmpty()) return records();
 
-  std::string const q = query.toStdString();
   std::vector<CalculatorRecord> results;
 
+  fuzzy::Query const fuzzyQuery{query.toStdString()};
   for (const auto &record : records()) {
     auto question = record.question.toStdString();
     auto answer = record.answer.toStdString();
-    if (fuzzy::scoreWeighted({{question, 1.0}, {answer, 0.5}}, q) > 0) { results.emplace_back(record); }
+    if (fuzzy::scoreWeighted({{question, 1.0}, {answer, 0.5}}, fuzzyQuery).accepted()) {
+      results.emplace_back(record);
+    }
   }
 
   return results;
@@ -112,14 +119,14 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
       {"Today", 1}, {"A week ago", 7}, {"A month ago", 30}, {"A year ago", 365}};
 
   groups.reserve(dividers.size() + 2);
-  groups.push_back({"Pinned", {}});
+  groups.push_back({tr("Pinned"), {}});
 
   for (; it != records.end() && it->pinnedAt; ++it) {
     groups.back().second.emplace_back(*it);
   }
 
   now.date().startOfDay();
-  groups.push_back({"Today", {}});
+  groups.push_back({tr("Today"), {}});
 
   for (; it != records.end() && it->createdAt >= now.date().startOfDay() &&
          it->createdAt <= now.date().endOfDay();
@@ -131,7 +138,7 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
     QDate const startOfWeek(now.date().addDays(-(now.date().dayOfWeek() - 1)));
     QDate const endOfWeek(startOfWeek.addDays(7));
 
-    groups.push_back({"This week", {}});
+    groups.push_back({tr("This week"), {}});
 
     for (; it != records.end() && it->createdAt >= startOfWeek.startOfDay() &&
            it->createdAt <= endOfWeek.startOfDay();
@@ -144,7 +151,7 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
     QDate const startOfMonth(QDate(now.date().year(), now.date().month(), 1));
     QDateTime const endOfMonth = startOfMonth.addMonths(1).startOfDay();
 
-    groups.push_back({"This month", {}});
+    groups.push_back({tr("This month"), {}});
 
     for (; it != records.end() && it->createdAt >= startOfMonth.startOfDay() && it->createdAt <= endOfMonth;
          ++it) {
@@ -157,7 +164,7 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
     QDate const startOfYear(now.date().year(), 1, 1);
     QDate const endOfYear(startOfYear.addYears(1));
 
-    groups.push_back({"This year", {}});
+    groups.push_back({tr("This year"), {}});
 
     for (; it != records.end() && it->createdAt >= startOfYear.startOfDay() &&
            it->createdAt <= endOfYear.startOfDay();
@@ -166,7 +173,7 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
     }
   }
 
-  groups.push_back({"A few years ago", {}});
+  groups.push_back({tr("A few years ago"), {}});
 
   for (; it != records.end(); ++it) {
     groups.back().second.emplace_back(*it);
@@ -309,7 +316,7 @@ void CalculatorService::updateConversionRecords() {
   };
 
   for (auto &record : m_records | std::views::filter(isConversionRecord)) {
-    auto result = m_backend->compute(record.question, {.mode = AbstractCalculatorBackend::ComputeMode::Full});
+    auto result = m_backend->compute(record.question, {});
 
     if (!result) continue;
 
@@ -342,7 +349,15 @@ CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
   {
     std::vector<std::unique_ptr<AbstractCalculatorBackend>> candidates;
 
+    candidates.emplace_back(std::make_unique<NumenCalculatorBackend>());
+#if defined(Q_OS_MACOS) && defined(BUNDLE_SOULVER_CORE)
+    candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
+#endif
+#ifdef Q_OS_WIN
+    candidates.emplace_back(std::make_unique<DummyCalculatorBackend>());
+#else
     candidates.emplace_back(std::make_unique<QalculateBackend>());
+#endif
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
 #endif

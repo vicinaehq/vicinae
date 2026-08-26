@@ -24,18 +24,18 @@ Item {
 
         Text {
             text: parent.label
-            color: _linkArea.containsMouse ? Theme.accent : Theme.foreground
+            color: linkArea.containsMouse ? Theme.accent : Theme.foreground
             font.pointSize: Theme.regularFontSize
         }
 
         ViciImage {
             Layout.preferredWidth: 14
             Layout.preferredHeight: 14
-            source: Img.builtin("arrow-ne").withFillColor(_linkArea.containsMouse ? Theme.accent : Theme.textMuted)
+            source: Img.builtin("arrow-ne").withFillColor(linkArea.containsMouse ? Theme.accent : Theme.textMuted)
         }
 
         MouseArea {
-            id: _linkArea
+            id: linkArea
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
@@ -48,17 +48,27 @@ Item {
         font.pointSize: Theme.smallerFontSize
     }
 
+    StatusBarInset {
+        id: statusBarInset
+    }
+
     Flickable {
+        id: flickable
         anchors.fill: parent
         contentWidth: width
-        contentHeight: _content.implicitHeight
+        contentHeight: content.implicitHeight
         clip: true
         flickableDirection: Flickable.VerticalFlick
         boundsBehavior: Flickable.StopAtBounds
+        bottomMargin: statusBarInset.value
         visible: root.host.isReady
 
+        ViciWheelHandler {
+            target: flickable
+        }
+
         ColumnLayout {
-            id: _content
+            id: content
             width: parent.width
             spacing: 0
 
@@ -172,12 +182,12 @@ Item {
                     visible: root.host.isInstalled
                     Layout.alignment: Qt.AlignTop
                     Layout.preferredHeight: 30
-                    implicitWidth: _badgeLayout.implicitWidth + 16
+                    implicitWidth: badgeLayout.implicitWidth + 16
                     radius: 6
                     color: Qt.rgba(Theme.toastSuccess.r, Theme.toastSuccess.g, Theme.toastSuccess.b, 0.15)
 
                     RowLayout {
-                        id: _badgeLayout
+                        id: badgeLayout
                         anchors.centerIn: parent
                         spacing: 6
 
@@ -188,7 +198,7 @@ Item {
                         }
 
                         Text {
-                            text: "Installed"
+                            text: qsTr("Installed")
                             color: Theme.toastSuccess
                             font.pointSize: Theme.smallerFontSize
                             font.bold: true
@@ -204,12 +214,12 @@ Item {
             }
 
             Rectangle {
-                id: _alertBox
+                id: alertBox
                 visible: root._hasAlert
                 Layout.fillWidth: true
                 Layout.margins: 20
                 Layout.bottomMargin: 0
-                implicitHeight: _alertContent.implicitHeight + 20
+                implicitHeight: alertContent.implicitHeight + 20
                 radius: 8
                 color: Qt.rgba(_alertColor.r, _alertColor.g, _alertColor.b, 0.1)
                 border.color: Qt.rgba(_alertColor.r, _alertColor.g, _alertColor.b, 0.3)
@@ -236,7 +246,7 @@ Item {
                 }
 
                 RowLayout {
-                    id: _alertContent
+                    id: alertContent
                     anchors.fill: parent
                     anchors.margins: 10
                     spacing: 10
@@ -245,7 +255,7 @@ Item {
                         Layout.preferredWidth: 18
                         Layout.preferredHeight: 18
                         Layout.alignment: Qt.AlignTop
-                        source: Img.builtin(_alertBox._alertIcon).withFillColor(_alertBox._alertColor)
+                        source: Img.builtin(alertBox._alertIcon).withFillColor(alertBox._alertColor)
                     }
 
                     ColumnLayout {
@@ -291,13 +301,13 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 160
                 Layout.margins: 20
-                contentWidth: _screenshotRow.width
+                contentWidth: screenshotRow.width
                 clip: true
                 flickableDirection: Flickable.HorizontalFlick
                 boundsBehavior: Flickable.StopAtBounds
 
                 Row {
-                    id: _screenshotRow
+                    id: screenshotRow
                     spacing: 12
 
                     Repeater {
@@ -324,7 +334,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: _imageViewer.showImage(index, root.host.screenshots)
+                                onClicked: imageViewer.showImage(index, root.host.screenshots)
                             }
                         }
                     }
@@ -354,7 +364,7 @@ Item {
                         spacing: 10
 
                         Text {
-                            text: "Description"
+                            text: qsTr("Description")
                             color: Theme.foreground
                             font.pointSize: Theme.regularFontSize
                             font.bold: true
@@ -380,7 +390,7 @@ Item {
                         spacing: 15
 
                         Text {
-                            text: "Commands"
+                            text: qsTr("Commands")
                             color: Theme.textMuted
                             font.pointSize: Theme.regularFontSize
                         }
@@ -454,7 +464,7 @@ Item {
                             text: "README"
                         }
                         TextLink {
-                            label: "Open README"
+                            label: qsTr("Open README")
                             url: root.host.readmeUrl || ""
                         }
                     }
@@ -463,7 +473,7 @@ Item {
                         spacing: 5
 
                         SidebarLabel {
-                            text: "Last update"
+                            text: qsTr("Last update")
                         }
                         Text {
                             text: root.host.lastUpdate
@@ -477,7 +487,7 @@ Item {
                         spacing: 10
 
                         SidebarLabel {
-                            text: "Contributors"
+                            text: qsTr("Contributors")
                         }
 
                         Repeater {
@@ -506,7 +516,7 @@ Item {
                         spacing: 5
 
                         SidebarLabel {
-                            text: "Categories"
+                            text: qsTr("Categories")
                         }
 
                         Repeater {
@@ -525,10 +535,10 @@ Item {
                         spacing: 5
 
                         SidebarLabel {
-                            text: "Source Code"
+                            text: qsTr("Source Code")
                         }
                         TextLink {
-                            label: "View Code"
+                            label: qsTr("View Code")
                             url: root.host.sourceUrl || ""
                         }
                     }
@@ -538,16 +548,16 @@ Item {
     }
 
     ImageViewer {
-        id: _imageViewer
+        id: imageViewer
     }
 
     Connections {
         target: Nav
         function onWindowVisiblityChanged(visible) {
             if (!visible)
-                _imageViewer.close();
+                imageViewer.close();
         }
     }
 
-    Component.onDestruction: _imageViewer.close()
+    Component.onDestruction: imageViewer.close()
 }

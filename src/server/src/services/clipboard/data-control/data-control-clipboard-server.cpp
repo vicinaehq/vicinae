@@ -1,3 +1,5 @@
+#include "environment.hpp"
+#include "log/message-handler.hpp"
 #include "pid-file/pid-file.hpp"
 #include "services/clipboard/clipboard-server.hpp"
 #include <QtCore>
@@ -11,8 +13,10 @@
 #include <glaze/glaze.hpp>
 #include "data-control-clipboard-server.hpp"
 #include "common/common.hpp"
-#include "wayland/globals.hpp"
+#include <QtWaylandClient/QWaylandClientExtension>
+#include "qwayland-ext-data-control-v1.h"
 #include "common/clipboard-protocol.hpp"
+#include "common/clipboard-formats.hpp"
 
 static constexpr const char *HELPER_PROGRAM = "vicinae-data-control-server";
 
@@ -28,8 +32,19 @@ QString DataControlClipboardServer::id() const { return "data-control"; }
 
 int DataControlClipboardServer::activationPriority() const { return 1; }
 
+namespace {
+class DataControlManagerV1 : public QWaylandClientExtensionTemplate<DataControlManagerV1>,
+                             public QtWayland::ext_data_control_manager_v1 {
+public:
+  DataControlManagerV1() : QWaylandClientExtensionTemplate(1) { initialize(); }
+};
+} // namespace
+
 bool DataControlClipboardServer::isActivatable() const {
-  return Wayland::Globals::dataControlManager() != nullptr;
+  if (!Environment::isWaylandSession()) return false;
+
+  static DataControlManagerV1 manager;
+  return manager.isActive();
 }
 
 // Process must stay alive even when monitoring is off: it handles clipboard writes for snippets.
@@ -62,7 +77,9 @@ bool DataControlClipboardServer::start() {
 }
 
 void DataControlClipboardServer::handleReadError() {
-  QTextStream(stderr) << m_process.readAllStandardError();
+  for (const auto &line : m_process.readAllStandardError().trimmed().split('\n')) {
+    vicinae::log::subprocessLine(vicinae::log::CLIPBOARD_SERVER, {}, QString::fromUtf8(line));
+  }
 }
 
 void DataControlClipboardServer::handleRead() {
@@ -89,17 +106,32 @@ void DataControlClipboardServer::handleRead() {
         if (auto err = glz::read_beve(selection, payload)) {
           qWarning() << "Failed to parse clipboard selection";
         } else {
-          ClipboardSelection cs;
-          cs.offers.reserve(selection.offers.size());
-
+          bool concealed = false;
           for (const auto &offer : selection.offers) {
-            cs.offers.push_back({
-                QString::fromStdString(offer.mime_type),
-                QByteArray(reinterpret_cast<const char *>(offer.data.data()), offer.data.size()),
-            });
+            if (offer.mime_type == Clipboard::CONCEALED_MIME_TYPE) {
+              concealed = true;
+              break;
+            }
           }
+          if (concealed) {
+            qInfo() << "data-control: dropping concealed selection";
+          } else {
+            ClipboardSelection cs;
+            cs.offers.reserve(selection.offers.size());
 
-          emit selectionAdded(cs);
+            for (const auto &offer : selection.offers) {
+              if (offer.mime_type == Clipboard::PASSWORD_HINT_MIME_TYPE) {
+                cs.isPassword = true;
+                continue;
+              }
+              cs.offers.emplace_back(ClipboardDataOffer{
+                  QString::fromStdString(offer.mime_type),
+                  QByteArray(reinterpret_cast<const char *>(offer.data.data()), offer.data.size()),
+              });
+            }
+
+            emit selectionAdded(cs);
+          }
         }
       } else {
         qWarning() << "Unknown command tag from data-control-server:" << static_cast<int>(tag);
@@ -110,7 +142,7 @@ void DataControlClipboardServer::handleRead() {
   }
 }
 
-bool DataControlClipboardServer::setClipboardContent(QMimeData *data) {
+bool DataControlClipboardServer::writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) {
   if (!QGuiApplication::focusWindow() && m_process.state() == QProcess::Running) {
     clipboard_proto::Selection selection;
     for (const auto &format : data->formats()) {
@@ -136,7 +168,7 @@ bool DataControlClipboardServer::setClipboardContent(QMimeData *data) {
     return true;
   }
 
-  return AbstractClipboardServer::setClipboardContent(data);
+  return AbstractClipboardServer::writeClipboard(data, options);
 }
 
 DataControlClipboardServer::DataControlClipboardServer() {

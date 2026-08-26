@@ -25,7 +25,7 @@ Item {
             }
 
             Text {
-                text: "Welcome to " + root.host.commandName
+                text: qsTr("Welcome to %1").arg(root.host.commandName)
                 color: Theme.foreground
                 font.pointSize: Theme.regularFontSize
                 font.weight: Font.DemiBold
@@ -34,7 +34,7 @@ Item {
             }
 
             Text {
-                text: "Before you can use this command, you need to fill in the required preference fields below."
+                text: qsTr("Before you can use this command, you need to fill in the required preference fields below.")
                 color: Theme.textMuted
                 font.pointSize: Theme.regularFontSize
                 wrapMode: Text.WordWrap
@@ -55,10 +55,12 @@ Item {
                 required property string type
                 required property string fieldId
                 required property string label
+                required property string checkboxLabel
                 required property string description
                 required property string placeholder
                 required property var value
-                required property var options
+                required property var dropdownModel
+                required property var currentDropdownItem
                 required property bool readOnly
                 required property bool multiple
                 required property bool canChooseFiles
@@ -122,9 +124,9 @@ Item {
         FormField {
             id: field
             label: parent.label
-            info: parent.description
             FormCheckbox {
                 checked: field.parent.value === true
+                label: field.parent.checkboxLabel
                 onToggled: root.host.prefModel.setFieldValue(field.parent.index, checked)
             }
         }
@@ -137,22 +139,9 @@ Item {
             label: parent.label
             info: parent.description
 
-            function _findCurrentItem(items, val) {
-                for (var s = 0; s < items.length; s++) {
-                    var section = items[s];
-                    if (!section || !section.items)
-                        continue;
-                    for (var i = 0; i < section.items.length; i++) {
-                        if (section.items[i].id === val)
-                            return section.items[i];
-                    }
-                }
-                return null;
-            }
-
             SearchableDropdown {
-                items: field.parent.options || []
-                currentItem: field._findCurrentItem(field.parent.options || [], field.parent.value)
+                model: field.parent.dropdownModel
+                currentItem: field.parent.currentDropdownItem
                 onActivated: item => root.host.prefModel.setFieldValue(field.parent.index, item.id)
             }
         }

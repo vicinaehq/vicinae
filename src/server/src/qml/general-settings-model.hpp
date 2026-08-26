@@ -1,4 +1,5 @@
 #pragma once
+#include "completion-model.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include <QObject>
@@ -16,24 +17,32 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool popOnBackspace READ popOnBackspace WRITE setPopOnBackspace NOTIFY configChanged)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick WRITE setActivateOnSingleClick NOTIFY
                  configChanged)
+  Q_PROPERTY(bool wrapNavigation READ wrapNavigation WRITE setWrapNavigation NOTIFY configChanged)
+  Q_PROPERTY(
+      bool encryptSensitiveData READ encryptSensitiveData WRITE setEncryptSensitiveData NOTIFY configChanged)
   Q_PROPERTY(
       bool telemetrySystemInfo READ telemetrySystemInfo WRITE setTelemetrySystemInfo NOTIFY configChanged)
   Q_PROPERTY(bool layerShellEnabled READ layerShellEnabled WRITE setLayerShellEnabled NOTIFY configChanged)
   Q_PROPERTY(bool clientSideDecorations READ clientSideDecorations WRITE setClientSideDecorations NOTIFY
                  configChanged)
-  Q_PROPERTY(QString csdRounding READ csdRounding WRITE setCsdRounding NOTIFY configChanged)
+  Q_PROPERTY(QString rounding READ rounding WRITE setRounding NOTIFY configChanged)
   Q_PROPERTY(QString csdBorderWidth READ csdBorderWidth WRITE setCsdBorderWidth NOTIFY configChanged)
   Q_PROPERTY(QString csdShadowSize READ csdShadowSize WRITE setCsdShadowSize NOTIFY configChanged)
   Q_PROPERTY(bool compactMode READ compactMode WRITE setCompactMode NOTIFY configChanged)
+  Q_PROPERTY(bool floatingStatusBar READ floatingStatusBar WRITE setFloatingStatusBar NOTIFY configChanged)
   Q_PROPERTY(QString windowOpacity READ windowOpacity WRITE setWindowOpacity NOTIFY configChanged)
   Q_PROPERTY(
       bool nativeTextRendering READ nativeTextRendering WRITE setNativeTextRendering NOTIFY configChanged)
   Q_PROPERTY(QString fontSize READ fontSize WRITE setFontSize NOTIFY configChanged)
-  Q_PROPERTY(QVariantList themeItems READ themeItems NOTIFY configChanged)
-  Q_PROPERTY(QVariantList fontItems READ fontItems CONSTANT)
-  Q_PROPERTY(QVariantList iconThemeItems READ iconThemeItems NOTIFY configChanged)
-  Q_PROPERTY(QVariantList faviconServiceItems READ faviconServiceItems NOTIFY configChanged)
-  Q_PROPERTY(QVariantList keybindingSchemeItems READ keybindingSchemeItems NOTIFY configChanged)
+  Q_PROPERTY(CompletionModel *windowMaterialModel READ windowMaterialModel CONSTANT)
+  Q_PROPERTY(QVariant currentWindowMaterial READ currentWindowMaterial NOTIFY configChanged)
+  Q_PROPERTY(CompletionModel *themeModel READ themeModel CONSTANT)
+  Q_PROPERTY(CompletionModel *fontModel READ fontModel CONSTANT)
+  Q_PROPERTY(CompletionModel *iconThemeModel READ iconThemeModel CONSTANT)
+  Q_PROPERTY(CompletionModel *faviconServiceModel READ faviconServiceModel CONSTANT)
+  Q_PROPERTY(CompletionModel *keybindingSchemeModel READ keybindingSchemeModel CONSTANT)
+  Q_PROPERTY(CompletionModel *languageModel READ languageModel CONSTANT)
+  Q_PROPERTY(QVariant currentLanguage READ currentLanguage NOTIFY configChanged)
   Q_PROPERTY(QVariant currentTheme READ currentTheme NOTIFY configChanged)
   Q_PROPERTY(QVariant currentFont READ currentFont NOTIFY configChanged)
   Q_PROPERTY(QVariant currentIconTheme READ currentIconTheme NOTIFY configChanged)
@@ -61,20 +70,26 @@ public:
   void setPopOnBackspace(bool v);
   bool activateOnSingleClick() const;
   void setActivateOnSingleClick(bool v);
+  bool wrapNavigation() const;
+  void setWrapNavigation(bool v);
+  bool encryptSensitiveData() const;
+  void setEncryptSensitiveData(bool v);
   bool telemetrySystemInfo() const;
   void setTelemetrySystemInfo(bool v);
   bool layerShellEnabled() const;
   void setLayerShellEnabled(bool v);
   bool clientSideDecorations() const;
   void setClientSideDecorations(bool v);
-  QString csdRounding() const;
-  void setCsdRounding(const QString &v);
+  QString rounding() const;
+  void setRounding(const QString &v);
   QString csdBorderWidth() const;
   void setCsdBorderWidth(const QString &v);
   QString csdShadowSize() const;
   void setCsdShadowSize(const QString &v);
   bool compactMode() const;
   void setCompactMode(bool v);
+  bool floatingStatusBar() const;
+  void setFloatingStatusBar(bool v);
   QString windowOpacity() const;
   void setWindowOpacity(const QString &v);
   bool nativeTextRendering() const;
@@ -84,11 +99,18 @@ public:
   QString fontSize() const;
   void setFontSize(const QString &v);
 
-  QVariantList themeItems() const;
-  QVariantList fontItems() const;
-  QVariantList iconThemeItems() const;
-  QVariantList faviconServiceItems() const;
-  QVariantList keybindingSchemeItems() const;
+  CompletionModel *windowMaterialModel() { return &m_windowMaterialModel; }
+  CompletionModel *themeModel() { return &m_themeModel; }
+  CompletionModel *fontModel() { return &m_fontModel; }
+  CompletionModel *iconThemeModel() { return &m_iconThemeModel; }
+  CompletionModel *faviconServiceModel() { return &m_faviconServiceModel; }
+  CompletionModel *keybindingSchemeModel() { return &m_keybindingSchemeModel; }
+  CompletionModel *languageModel() { return &m_languageModel; }
+
+  QVariant currentWindowMaterial() const;
+  Q_INVOKABLE void selectWindowMaterial(const QString &id);
+
+  QVariant currentLanguage() const;
   QVariant currentTheme() const;
   QVariant currentFont() const;
   QVariant currentIconTheme() const;
@@ -100,6 +122,7 @@ public:
   Q_INVOKABLE void selectIconTheme(const QString &id);
   Q_INVOKABLE void selectFaviconService(const QString &id);
   Q_INVOKABLE void selectKeybindingScheme(const QString &id);
+  Q_INVOKABLE void selectLanguage(const QString &id);
 
   QString toggleShortcut() const;
   void setToggleShortcut(const QString &shortcut);
@@ -108,5 +131,22 @@ private:
   const config::ConfigValue &cfg() const;
   config::Manager &cfgManager() const;
 
-  mutable QVariantList m_fontItems;
+  QVariantList windowMaterialItems() const;
+  QVariantList themeItems() const;
+  QVariantList fontItems() const;
+  QVariantList iconThemeItems() const;
+  QVariantList faviconServiceItems() const;
+  QVariantList keybindingSchemeItems() const;
+  QVariantList languageItems() const;
+  void refreshDynamicModels();
+
+  CompletionModel m_windowMaterialModel{this};
+  CompletionModel m_themeModel{this};
+  CompletionModel m_fontModel{this};
+  CompletionModel m_iconThemeModel{this};
+  CompletionModel m_faviconServiceModel{this};
+  CompletionModel m_keybindingSchemeModel{this};
+  CompletionModel m_languageModel{this};
+  QVariantList m_themeItems;
+  QVariantList m_iconThemeItems;
 };

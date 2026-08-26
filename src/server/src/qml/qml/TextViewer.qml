@@ -10,6 +10,23 @@ ScrollView {
     clip: true
     contentWidth: availableWidth
 
+    Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
+
+    StatusBarInset {
+        id: statusBarInset
+        target: root
+    }
+
+    Binding {
+        target: root.contentItem
+        property: "bottomMargin"
+        value: statusBarInset.value
+    }
+
+    ViciWheelHandler {
+        target: root.contentItem
+    }
+
     TextEdit {
         width: root.availableWidth
         text: root.text

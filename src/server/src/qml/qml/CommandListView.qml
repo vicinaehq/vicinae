@@ -9,7 +9,7 @@ GenericListView {
     autoWireModel: true
     selectFirstOnReset: cmdModel ? cmdModel.selectFirstOnReset : true
 
-    emptyTitle: cmdModel && cmdModel.emptyTitle || "No results"
+    emptyTitle: cmdModel && cmdModel.emptyTitle || qsTr("No results")
     emptyDescription: (cmdModel && cmdModel.emptyDescription) || ""
     emptyIcon: cmdModel?.emptyIcon?.valid ? cmdModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 
@@ -25,10 +25,7 @@ GenericListView {
         required property string subtitle
         required property string iconSource
         required property var itemAccessory
-        required property string filePath
-        required property string fileUrl
-
-        Component.onCompleted: {}
+        required property bool isDraggable
 
         sourceComponent: isSection ? sectionComponent : itemComponent
 
@@ -51,10 +48,13 @@ GenericListView {
                 itemIsActive: false
                 itemAccessory: delegateLoader.itemAccessory
                 selected: commandListView.currentIndex === delegateLoader.index
+                draggable: delegateLoader.isDraggable
                 onClicked: commandListView.currentIndex = delegateLoader.index
                 onActivated: commandListView.itemActivated(delegateLoader.index)
-                filePath: delegateLoader.filePath
-                fileUrl: delegateLoader.fileUrl
+                onDragRequested: function (source) {
+                    commandListView.currentIndex = delegateLoader.index;
+                    commandListView.cmdModel.startDrag(delegateLoader.index, source);
+                }
             }
         }
     }

@@ -5,6 +5,6 @@
 class RootCommand : public BuiltinViewCommand<RootViewHost> {
   QString id() const override { return "root"; }
   QString name() const override { return ""; }
-  ImageURL iconUrl() const override { return ImageURL::builtin("vicinae"); }
+  ImageURL iconUrl() const override { return ImageURL::builtin(BuiltinIcon::Vicinae); }
   QString navigationTitle() const override { return QString(); }
 };

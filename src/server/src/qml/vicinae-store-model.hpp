@@ -13,7 +13,7 @@ struct VicinaeStoreEntry {
 };
 
 template <> struct fuzzy::FuzzySearchable<VicinaeStoreEntry> {
-  static int score(const VicinaeStoreEntry &entry, std::string_view query) {
+  static fuzzy::Match score(const VicinaeStoreEntry &entry, const fuzzy::Query &query) {
     auto title = entry.extension.title.toStdString();
     auto author = entry.extension.author.name.toStdString();
     auto desc = entry.extension.description.toStdString();
@@ -46,7 +46,7 @@ public:
 protected:
   QString displayTitle(const VicinaeStoreEntry &entry) const override;
   QString displaySubtitle(const VicinaeStoreEntry &entry) const override;
-  QString displayIconSource(const VicinaeStoreEntry &entry) const override;
+  std::optional<ImageURL> displayIcon(const VicinaeStoreEntry &entry) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const VicinaeStoreEntry &entry) const override;
 
 private:

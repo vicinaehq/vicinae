@@ -1,196 +1,140 @@
 #include <QKeySequence>
 #include <QVariantMap>
 #include <qevent.h>
+#include <qnamespace.h>
+#include <ranges>
 #include "keybind-manager.hpp"
 #include "keyboard.hpp"
 
 // clang-format off
-static const std::unordered_map<QString, Qt::Key> keyMap = {
-	{"a", Qt::Key_A},
-	{"b", Qt::Key_B},
-	{"c", Qt::Key_C},
-	{"d", Qt::Key_D},
-	{"e", Qt::Key_E},
-	{"f", Qt::Key_F},
-	{"g", Qt::Key_G},
-	{"h", Qt::Key_H},
-	{"i", Qt::Key_I},
-	{"j", Qt::Key_J},
-	{"k", Qt::Key_K},
-	{"l", Qt::Key_L},
-	{"m", Qt::Key_M},
-	{"n", Qt::Key_N},
-	{"o", Qt::Key_O},
-	{"p", Qt::Key_P},
-	{"q", Qt::Key_Q},
-	{"r", Qt::Key_R},
-	{"s", Qt::Key_S},
-	{"t", Qt::Key_T},
-	{"u", Qt::Key_U},
-	{"v", Qt::Key_V},
-	{"w", Qt::Key_W},
-	{"x", Qt::Key_X},
-	{"y", Qt::Key_Y},
-	{"z", Qt::Key_Z},
+static const std::unordered_map<QString, Qt::Key> keyMap = [](){ 
+	return std::unordered_map<QString, Qt::Key>{
+		{"a", Qt::Key_A},
+		{"b", Qt::Key_B},
+		{"c", Qt::Key_C},
+		{"d", Qt::Key_D},
+		{"e", Qt::Key_E},
+		{"f", Qt::Key_F},
+		{"g", Qt::Key_G},
+		{"h", Qt::Key_H},
+		{"i", Qt::Key_I},
+		{"j", Qt::Key_J},
+		{"k", Qt::Key_K},
+		{"l", Qt::Key_L},
+		{"m", Qt::Key_M},
+		{"n", Qt::Key_N},
+		{"o", Qt::Key_O},
+		{"p", Qt::Key_P},
+		{"q", Qt::Key_Q},
+		{"r", Qt::Key_R},
+		{"s", Qt::Key_S},
+		{"t", Qt::Key_T},
+		{"u", Qt::Key_U},
+		{"v", Qt::Key_V},
+		{"w", Qt::Key_W},
+		{"x", Qt::Key_X},
+		{"y", Qt::Key_Y},
+		{"z", Qt::Key_Z},
 
-	{"0", Qt::Key_0},
-	{"1", Qt::Key_1},
-	{"2", Qt::Key_2},
-	{"3", Qt::Key_3},
-	{"4", Qt::Key_4},
-	{"5", Qt::Key_5},
-	{"6", Qt::Key_6},
-	{"7", Qt::Key_7},
-	{"8", Qt::Key_8},
-	{"9", Qt::Key_9},
+		{"0", Qt::Key_0},
+		{"1", Qt::Key_1},
+		{"2", Qt::Key_2},
+		{"3", Qt::Key_3},
+		{"4", Qt::Key_4},
+		{"5", Qt::Key_5},
+		{"6", Qt::Key_6},
+		{"7", Qt::Key_7},
+		{"8", Qt::Key_8},
+		{"9", Qt::Key_9},
 
-	{".", Qt::Key_Period},
-	{",", Qt::Key_Comma},
-	{";", Qt::Key_Semicolon},
-	{"=", Qt::Key_Equal},
-	{"+", Qt::Key_Plus},
-	{"-", Qt::Key_Minus},
-	{"[", Qt::Key_BracketLeft},
-	{"]", Qt::Key_BracketRight},
-	{"{", Qt::Key_BraceLeft},
-	{"}", Qt::Key_BraceRight},
-	{"(", Qt::Key_ParenLeft},
-	{")", Qt::Key_ParenRight},
-	{"/", Qt::Key_Slash},
-	{"\\", Qt::Key_Backslash},
-	{"'", Qt::Key_Apostrophe},
-	{"`", Qt::Key_QuoteLeft},
-	{"^", Qt::Key_AsciiCircum},
-	{"@", Qt::Key_At},
-	{"$", Qt::Key_Dollar},
+		{".", Qt::Key_Period},
+		{",", Qt::Key_Comma},
+		{";", Qt::Key_Semicolon},
+		{"=", Qt::Key_Equal},
+		{"+", Qt::Key_Plus},
+		{"-", Qt::Key_Minus},
+		{"[", Qt::Key_BracketLeft},
+		{"]", Qt::Key_BracketRight},
+		{"{", Qt::Key_BraceLeft},
+		{"}", Qt::Key_BraceRight},
+		{"(", Qt::Key_ParenLeft},
+		{")", Qt::Key_ParenRight},
+		{"/", Qt::Key_Slash},
+		{"\\", Qt::Key_Backslash},
+		{"'", Qt::Key_Apostrophe},
+		{"`", Qt::Key_QuoteLeft},
+		{"^", Qt::Key_AsciiCircum},
+		{"@", Qt::Key_At},
+		{"$", Qt::Key_Dollar},
 
-	{"return", Qt::Key_Return},
-	{"delete", Qt::Key_Delete},
-	{"deleteForward", Qt::Key_Backspace},
-	{"tab", Qt::Key_Tab},
-	{"arrowup", Qt::Key_Up},
-	{"arrowdown", Qt::Key_Down},
-	{"arrowleft", Qt::Key_Left},
-	{"arrowright", Qt::Key_Right},
-	{"pageup", Qt::Key_PageUp},
-	{"pagedown", Qt::Key_PageDown},
-	{"home", Qt::Key_Home},
-	{"end", Qt::Key_End},
-	{"space", Qt::Key_Space},
-	{"escape", Qt::Key_Escape},
-	{"enter", Qt::Key_Enter},
-	{"backspace", Qt::Key_Backspace},
+		{"return", Qt::Key_Return},
+		{"delete", Qt::Key_Delete},
+		{"deleteForward", Qt::Key_Backspace},
+		{"tab", Qt::Key_Tab},
+		{"arrowup", Qt::Key_Up},
+		{"arrowdown", Qt::Key_Down},
+		{"arrowleft", Qt::Key_Left},
+		{"arrowright", Qt::Key_Right},
+		{"pageup", Qt::Key_PageUp},
+		{"pagedown", Qt::Key_PageDown},
+		{"home", Qt::Key_Home},
+		{"end", Qt::Key_End},
+		{"space", Qt::Key_Space},
+		{"escape", Qt::Key_Escape},
+		{"enter", Qt::Key_Enter},
+		{"backspace", Qt::Key_Backspace},
 
-	{"f1", Qt::Key_F1},
-	{"f2", Qt::Key_F2},
-	{"f3", Qt::Key_F3},
-	{"f4", Qt::Key_F4},
-	{"f5", Qt::Key_F5},
-	{"f6", Qt::Key_F6},
-	{"f7", Qt::Key_F7},
-	{"f8", Qt::Key_F8},
-	{"f9", Qt::Key_F9},
-	{"f10", Qt::Key_F10},
-	{"f11", Qt::Key_F11},
-	{"f12", Qt::Key_F12},
-};
+		{"f1", Qt::Key_F1},
+		{"f2", Qt::Key_F2},
+		{"f3", Qt::Key_F3},
+		{"f4", Qt::Key_F4},
+		{"f5", Qt::Key_F5},
+		{"f6", Qt::Key_F6},
+		{"f7", Qt::Key_F7},
+		{"f8", Qt::Key_F8},
+		{"f9", Qt::Key_F9},
+		{"f10", Qt::Key_F10},
+		{"f11", Qt::Key_F11},
+		{"f12", Qt::Key_F12},
+		{"f13", Qt::Key_F13},
+		{"f14", Qt::Key_F14},
+		{"f15", Qt::Key_F15},
+		{"f16", Qt::Key_F16},
+		{"f17", Qt::Key_F17},
+		{"f18", Qt::Key_F18},
+		{"f19", Qt::Key_F19},
+		{"f20", Qt::Key_F20},
+		{"f21", Qt::Key_F21},
+		{"f22", Qt::Key_F22},
+		{"f23", Qt::Key_F23},
+		{"f24", Qt::Key_F24},
+	};
+}();
 
-static const std::unordered_map<Qt::Key, QString> keyMapReverse{
-	{Qt::Key_A, "a"},
-	{Qt::Key_B, "b"},
-	{Qt::Key_C, "c"},
-	{Qt::Key_D, "d"},
-	{Qt::Key_E, "e"},
-	{Qt::Key_F, "f"},
-	{Qt::Key_G, "g"},
-	{Qt::Key_H, "h"},
-	{Qt::Key_I, "i"},
-	{Qt::Key_J, "j"},
-	{Qt::Key_K, "k"},
-	{Qt::Key_L, "l"},
-	{Qt::Key_M, "m"},
-	{Qt::Key_N, "n"},
-	{Qt::Key_O, "o"},
-	{Qt::Key_P, "p"},
-	{Qt::Key_Q, "q"},
-	{Qt::Key_R, "r"},
-	{Qt::Key_S, "s"},
-	{Qt::Key_T, "t"},
-	{Qt::Key_U, "u"},
-	{Qt::Key_V, "v"},
-	{Qt::Key_W, "w"},
-	{Qt::Key_X, "x"},
-	{Qt::Key_Y, "y"},
-	{Qt::Key_Z, "z"},
-	{Qt::Key_0, "0"},
-	{Qt::Key_1, "1"},
-	{Qt::Key_2, "2"},
-	{Qt::Key_3, "3"},
-	{Qt::Key_4, "4"},
-	{Qt::Key_5, "5"},
-	{Qt::Key_6, "6"},
-	{Qt::Key_7, "7"},
-	{Qt::Key_8, "8"},
-	{Qt::Key_9, "9"},
-	{Qt::Key_Period, "."},
-	{Qt::Key_Comma, ","},
-	{Qt::Key_Semicolon, ";"},
-	{Qt::Key_Equal, "="},
-	{Qt::Key_Plus, "+"},
-	{Qt::Key_Minus, "-"},
-	{Qt::Key_BracketLeft, "["},
-	{Qt::Key_BracketRight, "]"},
-	{Qt::Key_BraceLeft, "{"},
-	{Qt::Key_BraceRight, "}"},
-	{Qt::Key_ParenLeft, "("},
-	{Qt::Key_ParenRight, ")"},
-	{Qt::Key_Slash, "/"},
-	{Qt::Key_Backslash, "\\"},
-	{Qt::Key_Apostrophe, "'"},
-	{Qt::Key_QuoteLeft, "`"},
-	{Qt::Key_AsciiCircum, "^"},
-	{Qt::Key_At, "@"},
-	{Qt::Key_Dollar, "$"},
-	{Qt::Key_Return, "return"},
-	{Qt::Key_Delete, "delete"},
-	{Qt::Key_Tab, "tab"},
-	{Qt::Key_Up, "arrowup"},
-	{Qt::Key_Down, "arrowdown"},
-	{Qt::Key_Left, "arrowleft"},
-	{Qt::Key_Right, "arrowright"},
-	{Qt::Key_PageUp, "pageup"},
-	{Qt::Key_PageDown, "pagedown"},
-	{Qt::Key_Home, "home"},
-	{Qt::Key_End, "end"},
-	{Qt::Key_Space, "space"},
-	{Qt::Key_Escape, "escape"},
-	{Qt::Key_Enter, "enter"},
-	{Qt::Key_Backspace, "backspace"},
 
-	{Qt::Key_F1, "F1"},
-	{Qt::Key_F2, "F2"},
-	{Qt::Key_F3, "F3"},
-	{Qt::Key_F4, "F4"},
-	{Qt::Key_F5, "F5"},
-	{Qt::Key_F6, "F6"},
-	{Qt::Key_F7, "F7"},
-	{Qt::Key_F8, "F8"},
-	{Qt::Key_F9, "F9"},
-	{Qt::Key_F10, "F10"},
-	{Qt::Key_F11, "F11"},
-	{Qt::Key_F12, "F12"},
-};
+static const std::unordered_map<Qt::Key, QString> keyMapReverse = [](){
+	using RP = std::pair<Qt::Key, QString>;
+	return keyMap | std::views::transform([](auto&& pair){ return RP{pair.second, pair.first}; }) | std::ranges::to<std::unordered_map>();
+}();
+
 
 static const std::unordered_map<QString, Qt::KeyboardModifier> modifierMap = {
-	{"cmd", Qt::MetaModifier},
-	{"command", Qt::MetaModifier},
+	// "command" traditionally maps to control on non-macOS systems. We map it to Qt::ControlModifier
+	// as QT automatically translates it to command by default on macOS.
+	{"cmd", Qt::ControlModifier},
+	{"command", Qt::ControlModifier},
+
 	{"super", Qt::MetaModifier},
 	{"meta", Qt::MetaModifier},
+	{"windows", Qt::MetaModifier},
+
 	{"ctrl", Qt::ControlModifier},
 	{"control", Qt::ControlModifier},
+
 	{"option", Qt::AltModifier},
 	{"opt", Qt::AltModifier},
 	{"alt", Qt::AltModifier},
+
 	{"shift", Qt::ShiftModifier},
 };
 
@@ -198,14 +142,35 @@ static const std::unordered_map<QString, Qt::KeyboardModifier> modifierMap = {
 
 namespace Keyboard {
 
+#ifndef Q_OS_MACOS
+Qt::Key normalizeToLatin(Qt::Key key) { return key; }
+#endif
+
+std::optional<QChar> printableCharForKey(Qt::Key key) {
+  const auto code = static_cast<uint32_t>(key);
+  if (code >= 0x10000) return {};
+
+  const QChar ch(static_cast<char16_t>(code));
+  if (!ch.isPrint() || ch.isSpace()) return {};
+
+  return ch;
+}
+
 std::optional<QString> stringForKey(Qt::Key key) {
   if (auto it = keyMapReverse.find(key); it != keyMapReverse.end()) return it->second;
+  if (auto ch = printableCharForKey(key)) return QString(ch->toLower());
   return {};
 }
 
 std::optional<Qt::Key> keyFromString(QStringView key) {
   auto keyString = key.toString().toLower();
   if (auto it = keyMap.find(keyString); it != keyMap.end()) return it->second;
+
+  if (keyString.size() == 1) {
+    const auto candidate = static_cast<Qt::Key>(keyString.front().toUpper().unicode());
+    if (printableCharForKey(candidate)) return candidate;
+  }
+
   return {};
 }
 
@@ -343,7 +308,8 @@ std::vector<DisplayTokenSpec> buildDisplayTokenSpecs(const Shortcut &shortcut) {
 } // namespace
 
 Shortcut::Shortcut(const QKeyEvent *event)
-    : m_key(static_cast<Qt::Key>(event->key())), m_modifiers(event->modifiers()), m_isValid(true) {}
+    : m_key(normalizeToLatin(static_cast<Qt::Key>(event->key()))), m_modifiers(event->modifiers()),
+      m_isValid(true) {}
 
 Shortcut Shortcut::fromKeyPress(const QKeyEvent &event) { return Shortcut(&event); }
 

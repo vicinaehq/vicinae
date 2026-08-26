@@ -1,35 +1,38 @@
 name: API Publish
 
 on:
-  push:
-    tags:
-      - "v*"
-  workflow_dispatch:
+  workflow_call:
     inputs:
       tag:
-        description: 'Release tag (e.g. v1.2.3)'
-        required: false
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+        type: string
+        required: true
 
 jobs:
   publish:
-    runs-on: [self-hosted, Linux, X64, prod]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     defaults:
       run:
         working-directory: ./src/typescript/api
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Update npm (trusted publishing requires >= 11.5.1)
+        run: npm install -g npm@latest && npm --version
 
       - name: Set version from tag
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG_NAME=${{ github.event.inputs.tag }}
-          else
-            TAG_NAME=${GITHUB_REF_NAME}
-          fi
+          TAG_NAME="${{ inputs.tag }}"
 
           if [ -z "$TAG_NAME" ]; then
             echo "Error: No tag specified."
@@ -39,11 +42,21 @@ jobs:
           npm version "$TAG_NAME" --no-git-tag-version
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Build package
         run: npm run build
-      - uses: JS-DevTools/npm-publish@19c28f1ef146469e409470805ea4279d47c3d35c
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          package: ./src/typescript/api
 
+      - name: Check if version is already published
+        id: check
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ -n "$(npm view "@vicinae/api@$VERSION" version 2>/dev/null)" ]; then
+            echo "@vicinae/api@$VERSION already published, skipping."
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish
+        if: steps.check.outputs.published == 'false'
+        run: npm publish

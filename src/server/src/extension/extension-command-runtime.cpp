@@ -2,8 +2,8 @@
 #include "common.hpp"
 #include "common/context.hpp"
 #include "extension-error-view-host.hpp"
-#include "extension-view-host.hpp"
 #include "extension/services/application-service.hpp"
+#include "extension/services/ext-browser-extension-service.hpp"
 #include "extension/services/clipboard-service.hpp"
 #include "extension/services/command-service.hpp"
 #include "extension/services/event-core-service.hpp"
@@ -12,12 +12,15 @@
 #include "extension/services/storage-service.hpp"
 #include "extension/services/ui-service.hpp"
 #include "extension/services/wm-service.hpp"
+#include "extension/services/wallpaper-service.hpp"
 #include "generated/tsapi.hpp"
 #include "glaze-qt.hpp"
 #include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
 #include <glaze/json/generic.hpp>
+#include <glaze/json/prettify.hpp>
+#include <glaze/json/write.hpp>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <ranges>
@@ -46,17 +49,20 @@ void ExtensionCommandRuntime::initialize() {
   auto *eventCore = new ExtEventCoreService(*m_transport);
   auto *app = new ExtApplicationService(*m_transport, *services->appDb());
   auto *ui = new ExtUIService(*m_transport, context()->navigation.get(), m_command, eventCore,
-                              *services->toastService());
+                              *services->toastService(), *services->selectionService());
   auto *wm = new ExtWindowManagementService(*m_transport, *services->windowManager(), *services->appDb(),
-                                            *services->appRuntime());
+                                            *services->appRuntime(), *ctx.navigation);
   auto *clipboard = new ExtClipboardService(*m_transport, *services->clipman(), *services->pasteService());
   auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
-  auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings);
+  auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings,
+                                        *ctx.navigation);
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
+  auto wallpaper = new ExtWallpaperService(*m_transport, *services->wallpaperManager());
+  auto browserExtension = new ExtBrowserExtensionService(*m_transport, *services->browserExtension());
 
-  m_server =
-      new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth, eventCore);
+  m_server = new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth,
+                               wallpaper, browserExtension, eventCore);
   m_server->setLogger(m_logger.get());
   m_server->setParent(this);
 }
@@ -78,29 +84,43 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   if (m_isDevMode) {
     if (!m_headless)
       context()->navigation->setNavigationSuffixIcon(
-          ImageURL::builtin("hammer").setFill(SemanticColor::Green));
+          ImageURL::builtin(BuiltinIcon::Hammer).setFill(SemanticColor::Green));
     opts.env = manager::CommandEnv::Development;
   } else {
     opts.env = manager::CommandEnv::Production;
   }
 
-  opts.entrypoint = m_command->manifest().entrypoint;
+  opts.entrypoint = m_command->manifest().entrypoint.string();
   opts.mode = m_command->mode() == CommandMode::CommandModeView ? manager::CommandMode::View
                                                                 : manager::CommandMode::NoView;
+
+  opts.cwd = props.cwd.transform([](const QString &s) { return s.toStdString(); });
+  opts.fallbackText = props.fallbackText.transform([](const QString &s) { return s.toStdString(); });
   opts.extension_id = m_command->extensionId().toStdString();
-  opts.vicinae_path = Omnicast::dataDir();
+  opts.vicinae_path = Omnicast::dataDir().string();
   opts.command_name = m_command->commandId().toStdString();
   opts.extension_name = m_command->repositoryName().toStdString();
   opts.owner_or_author_name = m_command->author().toStdString();
   opts.is_raycast = m_command->isRaycast();
   opts.preferences = qJsonObjectToGlazeGeneric(preferenceValues);
+  opts.launch_context = props.launchContext;
   opts.arguments = props.arguments |
                    std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {
                      return {pair.first.toStdString(), pair.second.toStdString()};
                    }) |
                    std::ranges::to<std::unordered_map<std::string, std::string>>();
 
-  if (m_headless) {
+  opts.capabilities.browserExtension = !context()->services->browserExtension()->browsers().empty();
+  opts.capabilities.windowManagement = context()->services->windowManager()->isCapable();
+  opts.capabilities.wallpaper = context()->services->wallpaperManager()->canSetWallpaper();
+  opts.capabilities.fileSearch = context()->services->fileService()->isAvailable();
+
+  // FIXME: relying on the presence of props.cwd to infer CommandLine mode is not
+  // very accurate and could break in the future, we probably want to pass the activation
+  // mode in the props at some point and map them to the figura types.
+  if (props.cwd) {
+    opts.launch_type = manager::LaunchType::CommandLine;
+  } else if (m_headless) {
     opts.launch_type = manager::LaunchType::Background;
   } else {
     opts.launch_type = manager::LaunchType::User;

@@ -1,11 +1,13 @@
 #pragma once
 #include "argument.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "common.hpp"
 #include "config/config.hpp"
 #include "common/entrypoint.hpp"
 #include "navigation-controller.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/local-storage/scoped-local-storage.hpp"
+#include "services/root-item-manager/search-history.hpp"
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "preference.hpp"
@@ -15,6 +17,7 @@
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
+#include <qmimedata.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
@@ -54,6 +57,9 @@ public:
   virtual QString title() const = 0;
 
   virtual ImageURL iconUrl() const = 0;
+
+  virtual bool isDraggable() const { return false; }
+  virtual std::unique_ptr<QMimeData> dragMimeData() const { return {}; }
 
   /**
    * Whether the item can be selected as a fallback command or not
@@ -158,6 +164,7 @@ public:
 
   virtual QString uniqueId() const = 0;
   virtual QString displayName() const = 0;
+  virtual QString description() const { return {}; }
   virtual ImageURL icon() const = 0;
   virtual Type type() const = 0;
 
@@ -193,7 +200,7 @@ public:
 struct RootItemMetadata {
   int visitCount = 0;
   bool enabled = true;
-  bool favorite = false;
+  std::optional<std::size_t> favoriteIdx;
   bool fallback = false;
   std::optional<std::uint64_t> lastVisitedAt;
   std::optional<std::string> alias;
@@ -209,6 +216,7 @@ signals:
   void itemsChanged() const;
   void itemRankingReset(const EntrypointId &id) const;
   void itemFavoriteChanged(const EntrypointId &id, bool favorite) const;
+  void favoriteOrderChanged(const EntrypointId &id) const;
   void fallbackEnabled(const EntrypointId &id) const;
   void fallbackOrderChanged(const EntrypointId &id) const;
   void fallbackDisabled(const EntrypointId &id) const;
@@ -233,7 +241,8 @@ public:
     std::vector<std::string> keywords;
     RootItemMetadata *meta = nullptr;
 
-    float fuzzyScore(std::string_view pattern = "") const;
+    double frecency() const;
+    double fuzzyScore(const fuzzy::Query &query) const;
   };
 
   struct ScoredItem {
@@ -287,13 +296,16 @@ public:
   bool moveFallbackUp(const EntrypointId &id);
   bool enableFallback(const EntrypointId &id);
   std::vector<std::shared_ptr<RootItem>> queryFavorites(std::optional<int> limit = {});
+  bool moveFavoriteDown(const EntrypointId &id);
+  bool moveFavoriteUp(const EntrypointId &id);
   bool resetRanking(const EntrypointId &id);
   bool registerVisit(const EntrypointId &id);
+  SearchHistory &searchHistory() { return m_searchHistory; }
   bool setItemAsFavorite(const EntrypointId &item, bool value = true);
   bool setProviderEnabled(const QString &providerId, bool value);
   bool disableItem(const EntrypointId &id);
-
   bool enableItem(const EntrypointId &id);
+  std::size_t favoriteCount() const;
 
   std::vector<RootProvider *> providers() const;
   std::vector<ExtensionRootProvider *> extensions() const;
@@ -358,4 +370,5 @@ private:
   LocalStorageService &m_storage;
   std::vector<SearchableRootItem> m_items;
   VisitTracker m_visitTracker;
+  SearchHistory m_searchHistory;
 };

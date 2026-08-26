@@ -1,9 +1,10 @@
 #include "font-grid-model.hpp"
 #include "clipboard-actions.hpp"
+#include "extend/grid-model.hpp"
 #include "common/context.hpp"
 #include "config/config.hpp"
 #include "font-demo-view-host.hpp"
-#include "fuzzy/fzf.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -11,6 +12,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/url.hpp"
 #include "view-utils.hpp"
+#include <QCoreApplication>
 
 namespace {
 
@@ -24,7 +26,9 @@ class SetAppFont : public AbstractAction {
 
 public:
   SetAppFont(const QString &family)
-      : AbstractAction("Set as vicinae font", ImageURL::builtin("text")), m_family(family) {}
+      : AbstractAction(QCoreApplication::translate("SetAppFont", "Set as vicinae font"),
+                       ImageURL::builtin(BuiltinIcon::Text)),
+        m_family(family) {}
 };
 
 class PreviewFontAction : public AbstractAction {
@@ -37,7 +41,9 @@ class PreviewFontAction : public AbstractAction {
 
 public:
   PreviewFontAction(const QString &family, FontCategory category)
-      : AbstractAction("Preview font", ImageURL::builtin("eye")), m_family(family), m_category(category) {}
+      : AbstractAction(QCoreApplication::translate("PreviewFontAction", "Preview font"),
+                       ImageURL::builtin(BuiltinIcon::Eye)),
+        m_family(family), m_category(category) {}
 };
 
 std::unique_ptr<ActionPanelState> buildFontActionPanel(const FontFamily *family) {
@@ -45,7 +51,8 @@ std::unique_ptr<ActionPanelState> buildFontActionPanel(const FontFamily *family)
 
   auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
-  auto copyFamily = new CopyToClipboardAction(Clipboard::Text(family->name), "Copy font family");
+  auto copyFamily = new CopyToClipboardAction(
+      Clipboard::Text(family->name), QCoreApplication::translate("font-grid-model", "Copy font family"));
   auto preview = new PreviewFontAction(family->family, family->primary);
 
   copyFamily->setShortcut(Keybind::CopyAction);
@@ -82,6 +89,7 @@ void FontGridModel::initialize() {
   connect(this, &SectionGridModel::selectionChanged, this, &FontGridModel::updateNavigationTitle);
   setColumns(6);
   setAspectRatio(1.0);
+  setInset(insetRatio(GridInset::Medium));
   buildFilterOptions();
   rebuildRoot();
   setFilter(QString());
@@ -118,8 +126,11 @@ void FontGridModel::rebuildRoot() {
 
   const int n = static_cast<int>(members.size());
   const QString title =
-      m_categoryFilter ? QStringLiteral("%1 (%2)").arg(FontService::categoryName(*m_categoryFilter)).arg(n)
-                       : QStringLiteral("All Fonts (%1)").arg(n);
+      m_categoryFilter ? QStringLiteral("%1 (%2)")
+                             .arg(QCoreApplication::translate(
+                                 "font-categories", qPrintable(FontService::categoryName(*m_categoryFilter))))
+                             .arg(n)
+                       : tr("All Fonts (%1)").arg(n);
   m_rootSource.setBucket(title, std::move(members));
 }
 
@@ -130,12 +141,11 @@ void FontGridModel::setFilter(const QString &text) {
     m_mode = Mode::Search;
     const auto &all = m_fontService->fontFamilies();
     auto results = m_scorer.score(std::span<const FontFamily>(all), text.toStdString(),
-                                  [this](const FontFamily &f, std::string_view query) {
-                                    if (m_categoryFilter && !f.has(*m_categoryFilter)) return 0;
-                                    return fzf::threadLocalMatcher().fuzzy_match_v2_score_query(
-                                        f.name.toStdString(), query);
+                                  [this](const FontFamily &f, const fuzzy::Query &query) -> fuzzy::Match {
+                                    if (m_categoryFilter && !f.has(*m_categoryFilter)) return {};
+                                    return fuzzy::scoreWeighted({{f.name.toStdString(), 1.0}}, query);
                                   });
-    m_searchSource.setResults(QStringLiteral("Results (%1)").arg(results.size()), results);
+    m_searchSource.setResults(tr("Results (%1)").arg(results.size()), results);
   }
   applyReset();
 }

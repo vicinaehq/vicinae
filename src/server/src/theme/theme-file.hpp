@@ -60,6 +60,7 @@ public:
   std::optional<std::filesystem::path> path() const;
 
   QColor resolve(SemanticColor color) const;
+  QColor resolve(const ColorLike &color) const;
 
   /**
    * Resolve the color and convert it to a string representation
@@ -78,6 +79,7 @@ public:
 
 private:
   static QColor withAlphaF(const QColor &color, float alpha = 1.0f);
+  static QColor mix(const QColor &a, const QColor &b, float t);
 
   /**
    * Derive semantic color from base16 palette

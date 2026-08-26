@@ -32,15 +32,15 @@ Rectangle {
     readonly property string _label: {
         switch (calloutType) {
         case "caution":
-            return "Caution";
+            return qsTr("Caution");
         case "warning":
-            return "Warning";
+            return qsTr("Warning");
         case "important":
-            return "Important";
+            return qsTr("Important");
         case "tip":
-            return "Tip";
+            return qsTr("Tip");
         default:
-            return "Note";
+            return qsTr("Note");
         }
     }
 
@@ -59,12 +59,12 @@ Rectangle {
     }
 
     width: parent?.width ?? 0
-    implicitHeight: _layout.implicitHeight + 16
+    implicitHeight: layout.implicitHeight + 16
     color: Qt.rgba(_alertColor.r, _alertColor.g, _alertColor.b, 0.15)
     radius: 6
 
     ColumnLayout {
-        id: _layout
+        id: layout
         anchors.fill: parent
         anchors.margins: 8
         spacing: 4

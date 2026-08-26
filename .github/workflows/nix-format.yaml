@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   format:
-    runs-on: [self-hosted, Linux, X64, prod]
+    runs-on: depot-ubuntu-24.04
 
     steps:
       - name: Checkout code

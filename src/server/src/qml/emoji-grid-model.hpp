@@ -3,6 +3,7 @@
 #include "grid-source.hpp"
 #include "section-grid-model.hpp"
 #include "services/glyph-service/glyph-service.hpp"
+#include <QCoreApplication>
 #include <optional>
 #include <span>
 
@@ -31,7 +32,9 @@ public:
 
   void setSkinTone(std::optional<emoji::SkinTone> tone) { m_skinTone = tone; }
 
-  QString sectionName() const override { return QStringLiteral("Results (%1)").arg(m_results.size()); }
+  QString sectionName() const override {
+    return QCoreApplication::translate("SearchEmojiGridSource", "Results (%1)").arg(m_results.size());
+  }
   int count() const override { return static_cast<int>(m_results.size()); }
 
   const glyph::Item *emojiAt(int i) const;
@@ -52,7 +55,7 @@ public:
   void initialize();
   void setFilter(const QString &text);
   void setCategoryFilter(std::optional<glyph::Category> category);
-  QString searchPlaceholder() const { return QStringLiteral("Search for emojis and symbols..."); }
+  QString searchPlaceholder() const { return tr("Search for emojis and symbols..."); }
   QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/EmojiGridView.qml")); }
 
   Q_INVOKABLE QString emojiIcon(int section, int item) const;

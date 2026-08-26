@@ -12,6 +12,8 @@
 #include "file-indexer/file-indexer.hpp"
 #elif defined(Q_OS_MACOS)
 #include "macos/spotlight-file-indexer.hpp"
+#elif defined(Q_OS_WIN)
+#include "windows/win-file-indexer.hpp"
 #else
 #include "dummy-file-indexer.hpp"
 #endif
@@ -62,12 +64,13 @@ void FileService::loadRecentFiles() {
   if (!fs::is_regular_file(m_recentFilesPath)) {
     fs::create_directories(m_recentFilesPath.parent_path());
     if (!saveRecentFiles()) {
-      qWarning() << "Unable to create recent files state at" << m_recentFilesPath.c_str();
+      qWarning() << "Unable to create recent files state at" << m_recentFilesPath.string();
     }
   }
 
-  if (const auto error = glz::read_file_json(m_recentFiles, m_recentFilesPath.c_str(), m_recentFilesBuffer)) {
-    qWarning() << "Failed to read recent files state at" << m_recentFilesPath.c_str()
+  if (const auto error =
+          glz::read_file_json(m_recentFiles, m_recentFilesPath.string(), m_recentFilesBuffer)) {
+    qWarning() << "Failed to read recent files state at" << m_recentFilesPath.string()
                << glz::format_error(error).c_str();
     m_recentFiles.clear();
   }
@@ -83,8 +86,8 @@ bool FileService::saveRecentFiles() {
   fs::create_directories(m_recentFilesPath.parent_path());
 
   if (const auto error =
-          glz::write_file_json(m_recentFiles, m_recentFilesPath.c_str(), m_recentFilesBuffer)) {
-    qWarning() << "Failed to save recent files state at" << m_recentFilesPath.c_str()
+          glz::write_file_json(m_recentFiles, m_recentFilesPath.string(), m_recentFilesBuffer)) {
+    qWarning() << "Failed to save recent files state at" << m_recentFilesPath.string()
                << glz::format_error(error).c_str();
     return false;
   }
@@ -142,6 +145,8 @@ void FileService::preferenceValuesChanged(const QJsonObject &preferences) {
   m_indexer->preferenceValuesChanged(preferences);
 }
 
+bool FileService::isAvailable() const { return m_indexer->isAvailable(); }
+
 FileService::FileService(OmniDatabase &db)
     : m_db(db), m_recentFilesPath(Omnicast::stateDir() / RECENT_FILES_NAME) {
   bool const shouldMigrateRecentFiles = !fs::is_regular_file(m_recentFilesPath);
@@ -153,6 +158,8 @@ FileService::FileService(OmniDatabase &db)
   m_indexer = std::make_unique<FileIndexer>();
 #elif defined(Q_OS_MACOS)
   m_indexer = std::make_unique<SpotlightFileIndexer>();
+#elif defined(Q_OS_WIN)
+  m_indexer = std::make_unique<WinFileIndexer>();
 #else
   m_indexer = std::make_unique<DummyFileIndexer>();
 #endif

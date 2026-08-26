@@ -1,0 +1,380 @@
+import QtQuick
+import QtQuick.Layouts
+
+Window {
+    id: root
+
+    property int step: 0
+    readonly property int stepCount: 4
+    readonly property bool accessibilityGranted: Permissions.accessibilityGranted
+
+    function advance() {
+        if (root.step === root.stepCount - 1) {
+            onboarding.finish();
+            return;
+        }
+        root.step += 1;
+    }
+
+    function goBack() {
+        if (root.step > 0)
+            root.step -= 1;
+    }
+
+    component PermissionRow: SettingsRow {
+        id: permissionRow
+
+        property bool granted: false
+        signal grant
+
+        controlWidth: 140
+
+        ViciButton {
+            visible: !permissionRow.granted
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: qsTr("Grant Access")
+            variant: "accent"
+            onClicked: permissionRow.grant()
+        }
+
+        RowLayout {
+            visible: permissionRow.granted
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 6
+
+            ViciImage {
+                source: Img.builtin("check-circle").withFillColor(Theme.toastSuccess)
+                Layout.preferredWidth: 16
+                Layout.preferredHeight: 16
+            }
+
+            Text {
+                text: qsTr("Granted")
+                color: Theme.toastSuccess
+                font.pointSize: Theme.regularFontSize
+            }
+        }
+    }
+
+    width: 700
+    height: 480
+    minimumWidth: 700
+    minimumHeight: 480
+    maximumWidth: 700
+    maximumHeight: 480
+    visible: true
+    color: "transparent"
+    flags: Qt.Window
+    title: qsTr("Welcome to Vicinae")
+
+    WindowMaterial.enabled: Config.blurEnabled
+    WindowMaterial.radius: 10
+
+    Rectangle {
+        id: background
+        anchors.fill: parent
+        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+        clip: true
+        focus: true
+
+        Keys.onReturnPressed: root.advance()
+        Keys.onEscapePressed: root.close()
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 0
+
+            StackLayout {
+                currentIndex: root.step
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                Item {
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        width: 440
+                        spacing: 8
+
+                        ViciImage {
+                            source: Img.builtin("vicinae")
+                            Layout.preferredWidth: 72
+                            Layout.preferredHeight: 72
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.bottomMargin: 12
+                        }
+
+                        Text {
+                            text: qsTr("Welcome to Vicinae")
+                            color: Theme.foreground
+                            font.pointSize: Theme.regularFontSize + 6
+                            font.weight: Font.DemiBold
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                        }
+
+                        Text {
+                            text: qsTr("Let's set it up. It only takes a minute.")
+                            color: Theme.textMuted
+                            font.pointSize: Theme.regularFontSize
+                            wrapMode: Text.Wrap
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+
+                Item {
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        width: 480
+                        spacing: 8
+
+                        Text {
+                            text: qsTr("Permissions")
+                            color: Theme.foreground
+                            font.pointSize: Theme.regularFontSize + 6
+                            font.weight: Font.DemiBold
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                        }
+
+                        Text {
+                            text: qsTr("Vicinae needs additional permissions in order to make the best of your Mac.")
+                            color: Theme.textMuted
+                            font.pointSize: Theme.regularFontSize
+                            wrapMode: Text.Wrap
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: 16
+                        }
+
+                        SettingsGroup {
+                            PermissionRow {
+                                label: qsTr("Accessibility")
+                                description: qsTr("Used to paste, expand snippets, and move windows.")
+                                iconSource: Img.system("accessibility").withFillColor(Theme.foreground)
+                                granted: root.accessibilityGranted
+                                onGrant: Permissions.requestAccessibility()
+                            }
+
+                            PermissionRow {
+                                label: qsTr("Full Disk Access")
+                                description: qsTr("Allows file search to cover your entire disk.")
+                                iconSource: Img.system("internaldrive").withFillColor(Theme.foreground)
+                                showSeparator: Permissions.notificationsSupported
+                                granted: Permissions.fullDiskAccessGranted
+                                onGrant: Permissions.requestFullDiskAccess()
+                            }
+
+                            PermissionRow {
+                                label: qsTr("Notifications")
+                                description: qsTr("Allows extensions to send desktop notifications.")
+                                iconSource: Img.system("bell.badge").withFillColor(Theme.foreground)
+                                showSeparator: false
+                                visible: Permissions.notificationsSupported
+                                granted: Permissions.notificationsGranted
+                                onGrant: Permissions.requestNotifications()
+                            }
+                        }
+
+                        Text {
+                            visible: !root.accessibilityGranted || !Permissions.fullDiskAccessGranted
+                            text: !root.accessibilityGranted ? qsTr("Without accessibility access, paste, snippet expansion, and window management are unavailable.") : qsTr("Full disk access needs to be explicitly enabled if you want file search to cover all your files.")
+                            color: Theme.textMuted
+                            font.pointSize: Theme.smallerFontSize
+                            wrapMode: Text.Wrap
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                            Layout.topMargin: 8
+                        }
+                    }
+                }
+
+                Item {
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        width: 480
+                        spacing: 8
+
+                        Text {
+                            text: qsTr("Make it your own")
+                            color: Theme.foreground
+                            font.pointSize: Theme.regularFontSize + 6
+                            font.weight: Font.DemiBold
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                        }
+
+                        Text {
+                            text: qsTr("You will be able to change these settings later.")
+                            color: Theme.textMuted
+                            font.pointSize: Theme.regularFontSize
+                            wrapMode: Text.Wrap
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: 16
+                        }
+
+                        SettingsGroup {
+                            SettingsRow {
+                                label: qsTr("Theme")
+                                description: qsTr("Shared across the entire app.")
+
+                                SearchableDropdown {
+                                    width: parent.width
+                                    model: onboarding.generalModel.themeModel
+                                    currentItem: onboarding.generalModel.currentTheme
+                                    onActivated: item => onboarding.generalModel.selectTheme(item.id)
+                                }
+                            }
+
+                            SettingsRow {
+                                label: qsTr("Global hotkey")
+                                description: qsTr("Opens the launcher from anywhere.")
+                                showSeparator: onboarding.loginItemSupported
+
+                                ShortcutField {
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    bordered: false
+                                    clearable: false
+                                    shortcutId: GlobalShortcuts.toggleId
+                                    shortcut: onboarding.generalModel.toggleShortcut
+                                    onAccepted: shortcut => onboarding.generalModel.toggleShortcut = shortcut
+                                }
+                            }
+
+                            SettingsRow {
+                                visible: onboarding.loginItemSupported
+                                label: qsTr("Launch at login")
+                                description: qsTr("Starts Vicinae in the background at login.")
+                                showSeparator: false
+
+                                SettingsToggle {
+                                    checked: onboarding.loginItemEnabled
+                                    onToggled: checked => onboarding.loginItemEnabled = checked
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Item {
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        width: 440
+                        spacing: 8
+
+                        Text {
+                            text: qsTr("Setup complete")
+                            color: Theme.foreground
+                            font.pointSize: Theme.regularFontSize + 6
+                            font.weight: Font.DemiBold
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                        }
+
+                        Text {
+                            text: qsTr("Vicinae is running. Open the launcher with:")
+                            color: Theme.textMuted
+                            font.pointSize: Theme.regularFontSize
+                            wrapMode: Text.Wrap
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                        }
+
+                        ShortcutBadge {
+                            visible: onboarding.generalModel.toggleShortcut !== ""
+                            tokens: Keyboard.tokensForString(onboarding.generalModel.toggleShortcut)
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.topMargin: 8
+                            Layout.bottomMargin: 16
+                        }
+
+                        Text {
+                            text: qsTr("Vicinae is open source software.")
+                            color: Theme.textMuted
+                            font.pointSize: Theme.smallerFontSize
+                            wrapMode: Text.Wrap
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                            Layout.topMargin: 16
+                        }
+
+                        RowLayout {
+                            spacing: 8
+                            Layout.alignment: Qt.AlignHCenter
+
+                            ViciButton {
+                                text: "GitHub"
+                                variant: "secondary"
+                                onClicked: onboarding.openUrl("https://github.com/vicinaehq/vicinae")
+                            }
+
+                            ViciButton {
+                                text: qsTr("Sponsor")
+                                variant: "secondary"
+                                onClicked: onboarding.openUrl("https://github.com/sponsors/vicinaehq")
+                            }
+                        }
+                    }
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.margins: 16
+                implicitHeight: nextButton.implicitHeight
+
+                ViciButton {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Back")
+                    visible: root.step > 0
+                    onClicked: root.goBack()
+                }
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 7
+
+                    Repeater {
+                        model: root.stepCount
+
+                        Rectangle {
+                            required property int index
+                            width: 7
+                            height: 7
+                            radius: 3.5
+                            color: index === root.step ? Theme.accent : Config.withAlpha(Theme.foreground, dotArea.containsMouse ? 0.4 : 0.2)
+
+                            MouseArea {
+                                id: dotArea
+                                anchors.fill: parent
+                                anchors.margins: -5
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.step = index
+                            }
+                        }
+                    }
+                }
+
+                ViciButton {
+                    id: nextButton
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    variant: "accent"
+                    text: {
+                        if (root.step === root.stepCount - 1)
+                            return qsTr("Finish");
+                        return qsTr("Continue");
+                    }
+                    onClicked: root.advance()
+                }
+            }
+        }
+    }
+}

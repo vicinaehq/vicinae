@@ -1,6 +1,7 @@
 #include "vicinae-extension.hpp"
 #include "builtin_icon.hpp"
 #include "command-controller.hpp"
+#include "settings-controller/settings-controller.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "extensions/vicinae/list-installed-extensions-command.hpp"
 #include "qml/oauth-token-store-view-host.hpp"
@@ -10,7 +11,6 @@
 #include "navigation-controller.hpp"
 #include "config/config.hpp"
 #include "qml/local-storage-view-host.hpp"
-#include "open-about-command.hpp"
 #include "refresh-apps-command.hpp"
 #include "configure-fallback-command.hpp"
 #include "extensions/vicinae/search-emoji-command.hpp"
@@ -20,68 +20,84 @@
 #include "builtin-url-command.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
-#ifdef Q_OS_LINUX
-#include <malloc.h>
-#endif
-#include <qpixmapcache.h>
+#include <QCoreApplication>
 #include <qurlquery.h>
 
-class OpenDocumentationCommand : public BuiltinUrlCommand {
-  QString id() const override { return "documentation"; }
-  QString name() const override { return "Open Online Documentation"; }
-  QString description() const override { return "Navigate to the official vicinae documentation website."; }
-  ImageURL iconUrl() const override {
-    return ImageURL::builtin("book").setBackgroundTint(Omnicast::ACCENT_COLOR);
-  }
-  QUrl url(const ArgumentValues &values) const override { return Omnicast::DOC_URL; }
-};
-
 class OpenDiscordCommand : public BuiltinUrlCommand {
+  Q_DECLARE_TR_FUNCTIONS(OpenDiscordCommand)
+
   QString id() const override { return "join-discord-server"; }
-  QString name() const override { return "Join the Discord Server"; }
-  QString description() const override { return "Open link to join the official Vicinae discord server."; }
+  QString name() const override { return tr("Join the Discord Server"); }
+  QString description() const override {
+    return tr("Open link to join the official Vicinae discord server.");
+  }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("discord").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Discord).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   std::vector<QString> keywords() const override { return {"help", "support"}; }
   QUrl url(const ArgumentValues &values) const override { return Omnicast::DISCORD_INVITE_LINK; }
 };
 
 class SponsorVicinaeCommand : public BuiltinUrlCommand {
+  Q_DECLARE_TR_FUNCTIONS(SponsorVicinaeCommand)
+
   QString id() const override { return "sponsor"; }
-  QString name() const override { return "Donate to Vicinae"; }
-  QString description() const override { return "Open link to Vicinae's GitHub sponsor page"; }
-  ImageURL iconUrl() const override { return ImageURL::builtin("heart").setFill(SemanticColor::Magenta); }
+  QString name() const override { return tr("Donate to Vicinae"); }
+  QString description() const override { return tr("Open link to Vicinae's GitHub sponsor page"); }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Heart).setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
   std::vector<QString> keywords() const override { return {"sponsor", "donate"}; }
   QUrl url(const ArgumentValues &values) const override { return Omnicast::GH_SPONSOR_LINK; }
 };
 
 class OpenVicinaeConfig : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(OpenVicinaeConfig)
+
   QString id() const override { return "open-config-file"; }
-  QString name() const override { return "Open Config File"; }
-  QString description() const override { return "Open the main vicinae configuration file"; }
+  QString name() const override { return tr("Open Config File"); }
+  QString description() const override { return tr("Open the main vicinae configuration file"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("pencil").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Pencil).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
-    ctx->services->appDb()->openTarget(ctx->services->config()->path().c_str());
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
+    ctx->services->appDb()->openTarget(QString::fromStdString(ctx->services->config()->path().string()));
     ctx->navigation->closeWindow();
     ctx->navigation->clearSearchText();
   }
 };
 
-class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
-  QString id() const override { return "open-default-config"; }
-  QString name() const override { return "Open Default Config File"; }
-  QString description() const override { return "Open the default vicinae configuration file"; }
+class ShowLogs : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(OpenVicinaeConfig)
+
+  QString id() const override { return "show-logs"; }
+  QString name() const override { return tr("Show Log File"); }
+  QString description() const override { return tr("Open the Vicinae log file in your file browser"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("pencil").setBackgroundTint(SemanticColor::Accent);
+    return ImageURL::builtin(BuiltinIcon::Paragraph).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
+    ctx->services->appDb()->showInFileBrowser(Omnicast::stateDir() / "vicinae.log", true);
+    ctx->navigation->closeWindow();
+  }
+};
+
+class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(OpenDefaultVicinaeConfig)
+
+  QString id() const override { return "open-default-config"; }
+  QString name() const override { return tr("Open Default Config File"); }
+  QString description() const override { return tr("Open the default vicinae configuration file"); }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Pencil).setBackgroundTint(SemanticColor::Accent);
+  }
+
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
     auto toast = ctx->services->toastService();
     auto path = Omnicast::runtimeDir() / "default-config.jsonc";
 
@@ -91,12 +107,12 @@ class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
     auto configFile = QFile(":config.jsonc");
 
     if (!file.open(QIODevice::WriteOnly)) {
-      toast->failure("Failed to open temporary file");
+      toast->failure(tr("Failed to open temporary file"));
       return;
     }
 
     if (!configFile.open(QIODevice::ReadOnly)) {
-      toast->failure("Failed to open default config file");
+      toast->failure(tr("Failed to open default config file"));
       return;
     }
 
@@ -109,39 +125,21 @@ class OpenDefaultVicinaeConfig : public BuiltinCallbackCommand {
   }
 };
 
-class PruneMemoryCommand : public BuiltinCallbackCommand {
-  QString id() const override { return "prune-memory"; }
-  QString name() const override { return "Prune Vicinae Memory Usage"; }
-  QString description() const override {
-    return "Try pruning vicinae's memory usage by clearing pixmap cache and calling malloc_trim(). Mostly "
-           "provided for internal testing.";
-  }
-  ImageURL iconUrl() const override {
-    return ImageURL::emoji("🥊").setBackgroundTint(Omnicast::ACCENT_COLOR);
-  }
-
-  void execute(CommandController *controller) const override {
-    QPixmapCache::clear();
-#ifdef Q_OS_LINUX
-    malloc_trim(0);
-#endif
-    controller->context()->services->toastService()->success("Pruned 🥊");
-  }
-};
-
 class OpenSettingsCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(OpenSettingsCommand)
+
   QString id() const override { return "settings"; }
-  QString name() const override { return "Open Vicinae Settings"; }
+  QString name() const override { return tr("Open Vicinae Settings"); }
   QString description() const override {
-    return "Open the vicinae settings window, which is an independent floating window.";
+    return tr("Open the vicinae settings window, which is an independent floating window.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("cog").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Cog).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   std::vector<QString> keywords() const override { return {"preferences"}; }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
 
     ctx->navigation->closeWindow();
     ctx->settings->openWindow();
@@ -149,44 +147,32 @@ class OpenSettingsCommand : public BuiltinCallbackCommand {
 };
 
 class ReloadScriptDirectoriesCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(ReloadScriptDirectoriesCommand)
+
   QString id() const override { return "reload-scripts"; }
-  QString name() const override { return "Reload Script Directories"; }
-  QString description() const override { return "Reload script directories"; }
+  QString name() const override { return tr("Reload Script Directories"); }
+  QString description() const override { return tr("Reload script directories"); }
   ImageURL iconUrl() const override {
     return ImageURL(BuiltinIcon::Code).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
 
     ctx->services->scriptDb()->triggerScan();
-    ctx->services->toastService()->success("New scan triggered, index will update shortly");
-  }
-};
-
-class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
-  QString id() const override { return "keybind-settings"; }
-  QString name() const override { return "Open Vicinae Keybind Settings"; }
-  QString description() const override { return "Open the vicinae keybind settings window"; }
-  ImageURL iconUrl() const override {
-    return ImageURL::builtin("keyboard").setBackgroundTint(Omnicast::ACCENT_COLOR);
-  }
-
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
-
-    ctx->navigation->closeWindow();
-    ctx->settings->openTab("shortcuts");
+    ctx->services->toastService()->success(tr("New scan triggered, index will update shortly"));
   }
 };
 
 class ForgetTelemetryCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(ForgetTelemetryCommand)
+
   QString id() const override { return "forget-telemetry"; }
-  QString name() const override { return "Forget Past Vicinae Telemetry"; }
+  QString name() const override { return tr("Forget Past Vicinae Telemetry"); }
   QString description() const override {
-    return "Asks the vicinae server to anonymize telemetry data that was sent with your vicinae instance ID "
-           "attached. The ID is only linked to your vicinae install, which has no direct relationship with "
-           "your system.";
+    return tr("Asks the vicinae server to anonymize telemetry data that was sent with your vicinae instance "
+              "ID attached. The ID is only linked to your vicinae install, which has no direct relationship "
+              "with your system.");
   }
 
   ImageURL iconUrl() const override {
@@ -195,43 +181,49 @@ class ForgetTelemetryCommand : public BuiltinCallbackCommand {
 
   bool isDefaultDisabled() const override { return true; }
 
-  void execute(CommandController *controller) const override {
-    auto ctx = controller->context();
+  void execute(CommandController &controller) const override {
+    auto ctx = controller.context();
     auto toast = ctx->services->toastService();
     auto telemetry = ctx->services->telemetry();
     auto config = ctx->services->config();
 
     ctx->navigation->showWindow();
     ctx->navigation->setSearchText(">"); // force to exit out of compact mode if it is enabled
-    toast->dynamic("Processing...");
+    toast->dynamic(tr("Processing..."));
     telemetry->forget().then([toast, config](bool ok) {
       if (ok) {
         config->mergeWithUser({.telemetry = config::Partial<config::TelemetryConfig>{.systemInfo = false}});
-        toast->success("Past telemetry was successfully detached from your vicinae user ID.");
+        toast->success(tr("Past telemetry was successfully detached from your vicinae user ID."));
       } else {
-        toast->failure("Failed to forget past telemetry data");
+        toast->failure(tr("Failed to forget past telemetry data"));
       }
     });
   }
 };
 
 class OAuthTokenStoreCommand : public BuiltinViewCommand<OAuthTokenStoreViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(OAuthTokenStoreCommand)
+
   QString id() const override { return "oauth-token-store"; }
-  QString name() const override { return "Manage OAuth Token Sets"; }
+  QString name() const override { return tr("Manage OAuth Token Sets"); }
   QString description() const override {
-    return "Manage OAuth token sets that have been saved by extensions providing OAuth integrations.";
+    return tr("Manage OAuth token sets that have been saved by extensions providing OAuth integrations.");
   }
+  bool isDefaultDisabled() const override { return true; }
   ImageURL iconUrl() const override {
-    auto icon = ImageURL::builtin("key");
+    auto icon = ImageURL::builtin(BuiltinIcon::Key);
     icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
     return icon;
   }
 };
 
 class IconBrowserCommand : public BuiltinViewCommand<BuiltinIconsViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(IconBrowserCommand)
+
   QString id() const override { return "search-builtin-icons"; }
-  QString name() const override { return "Search Builtin Icons"; }
-  QString description() const override { return "Search Vicinae builtin set of icons"; }
+  QString name() const override { return tr("Search Builtin Icons"); }
+  QString description() const override { return tr("Search Vicinae builtin set of icons"); }
+  bool isDefaultDisabled() const override { return true; }
   ImageURL iconUrl() const override {
     ImageURL icon{BuiltinIcon::Box};
     icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
@@ -240,38 +232,39 @@ class IconBrowserCommand : public BuiltinViewCommand<BuiltinIconsViewHost> {
 };
 
 class InspectLocalStorage : public BuiltinViewCommand<LocalStorageViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(InspectLocalStorage)
+
   QString id() const override { return "inspect-local-storage"; }
-  QString name() const override { return "Inspect Local Storage"; }
+  QString name() const override { return tr("Inspect Local Storage"); }
   bool isDefaultDisabled() const override { return true; }
   QString description() const override {
-    return "Browse data stored in Vicinae's local storage. This includes data stored for builtin extensions "
-           "as well as third-party extensions making use of the LocalStorage API.";
+    return tr("Browse data stored in Vicinae's local storage. This includes data stored for builtin "
+              "extensions as well as third-party extensions making use of the LocalStorage API.");
   }
   ImageURL iconUrl() const override {
-    auto icon = ImageURL::builtin("coin");
+    auto icon = ImageURL::builtin(BuiltinIcon::Coin);
     icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
     return icon;
   }
 };
 
 VicinaeExtension::VicinaeExtension() {
-  registerCommand<OpenDocumentationCommand>();
-  registerCommand<OpenAboutCommand>();
   registerCommand<RefreshAppsCommand>();
   registerCommand<ManageFallbackCommand>();
   registerCommand<SearchEmojiCommand>();
   registerCommand<ReportVicinaeBugCommand>();
   registerCommand<OpenSettingsCommand>();
   registerCommand<SponsorVicinaeCommand>();
-  registerCommand<OpenKeybindSettingsCommand>();
   registerCommand<VicinaeStoreCommand>();
   registerCommand<VicinaeListInstalledExtensionsCommand>();
-  registerCommand<OAuthTokenStoreCommand>();
   registerCommand<OpenVicinaeConfig>();
   registerCommand<OpenDefaultVicinaeConfig>();
-  registerCommand<InspectLocalStorage>();
   registerCommand<ReloadScriptDirectoriesCommand>();
-  registerCommand<PruneMemoryCommand>();
-  registerCommand<IconBrowserCommand>();
+  registerCommand<ShowLogs>();
+
+  // disabled by default
   registerCommand<ForgetTelemetryCommand>();
+  registerCommand<IconBrowserCommand>();
+  registerCommand<OAuthTokenStoreCommand>();
+  registerCommand<InspectLocalStorage>();
 }

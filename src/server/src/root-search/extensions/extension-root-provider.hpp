@@ -1,10 +1,13 @@
 #pragma once
 #include "common.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <QCoreApplication>
 #include <qjsonobject.h>
 #include "common/entrypoint.hpp"
 
 class CommandRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(CommandRootItem)
+
   std::shared_ptr<AbstractCmd> m_command;
 
 public:
@@ -44,6 +47,7 @@ public:
   const std::shared_ptr<AbstractCommandRepository> &repository() const { return m_repo; }
   PreferenceList preferences() const override { return m_repo->preferences(); }
   QString displayName() const override { return m_repo->displayName(); }
+  QString description() const override { return m_repo->description(); }
   QString uniqueId() const override { return repositoryId(); }
   ImageURL icon() const override { return m_repo->iconUrl(); };
   Type type() const override { return RootProvider::Type::ExtensionProvider; }

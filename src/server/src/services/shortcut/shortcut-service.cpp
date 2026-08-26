@@ -1,5 +1,6 @@
 #include "services/shortcut/shortcut-service.hpp"
 #include "omni-database.hpp"
+#include "services/app-service/app-service.hpp"
 #include <qlogging.h>
 
 std::shared_ptr<Shortcut> ShortcutService::fromSerialized(const shortcut::SerializedShortcut &s) {
@@ -145,4 +146,11 @@ bool ShortcutService::createShortcut(const QString &name, const QString &icon, c
 ShortcutService::ShortcutService(const std::filesystem::path &path, OmniDatabase *db) : m_db(path) {
   if (db && m_db.shortcuts().empty()) { migrateFromDatabase(*db); }
   loadAll();
+}
+
+std::shared_ptr<AbstractApplication>
+ShortcutService::resolveApp(const AppService &appDb, const QString &appId, const QString &target) {
+  if (appId != Shortcut::defaultAppId()) return appDb.findById(appId);
+  if (auto app = appDb.findDefaultOpener(target)) return app;
+  return appDb.webBrowser();
 }

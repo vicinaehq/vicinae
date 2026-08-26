@@ -12,7 +12,7 @@ void ProviderSearchViewHost::initialize() {
 
   model()->addSource(&m_section);
 
-  setSearchPlaceholderText(QString("Search %1").arg(m_displayName));
+  setSearchPlaceholderText(tr("Search %1").arg(m_displayName));
   setNavigationTitle(m_displayName);
   setNavigationIcon(m_icon);
 

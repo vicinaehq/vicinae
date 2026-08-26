@@ -1,12 +1,13 @@
 #include "settings-window.hpp"
 #include "common/entrypoint.hpp"
 #include "config-bridge.hpp"
-#include "environment.hpp"
 #include "extension-settings-model.hpp"
 #include "general-settings-model.hpp"
 #include "image-source.hpp"
 #include "keyboard-bridge.hpp"
 #include "global-shortcut-bridge.hpp"
+#include "platform-bridge.hpp"
+#include "style-bridge.hpp"
 #include "keybind-settings-model.hpp"
 #include "settings-sidebar-model.hpp"
 #include "theme-bridge.hpp"
@@ -36,10 +37,11 @@ void SettingsWindow::ensureInitialized() {
   m_initialized = true;
 
   m_themeBridge = new ThemeBridge(this);
-  m_configBridge = new ConfigBridge(this);
+  m_configBridge = new ConfigBridge(ConfigBridge::OpaqueSurfaces, this);
   m_imgSource = new ImageSource(this);
   m_keyboardBridge = new KeyboardBridge(this);
   m_globalShortcutBridge = new GlobalShortcutBridge(this);
+  m_platformBridge = new PlatformBridge(this);
   m_generalModel = new GeneralSettingsModel(this);
   m_keybindModel = new KeybindSettingsModel(this);
   m_extensionModel = new ExtensionSettingsModel(this);
@@ -51,6 +53,8 @@ void SettingsWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
   rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
   rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
+  rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
+  rootCtx->setContextProperty(QStringLiteral("Style"), new StyleBridge(this));
   rootCtx->setContextProperty(QStringLiteral("settings"), this);
   rootCtx->setContextProperty(QStringLiteral("FileChooser"),
                               ServiceRegistry::instance()->fileChooserService());
@@ -67,17 +71,36 @@ void SettingsWindow::ensureInitialized() {
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
 
   if (m_window) {
-    connect(m_window, &QQuickWindow::visibleChanged, this, [this](bool visible) {
-      if (!visible) m_ctx.settings->closeWindow();
-    });
+    connect(m_window, &QQuickWindow::closing, this,
+            [this](QQuickCloseEvent *) { m_ctx.settings->closeWindow(); });
   }
 }
 
 void SettingsWindow::setCurrentPage(const QString &page) {
-  if (m_currentPage != page) {
-    m_currentPage = page;
-    emit currentPageChanged();
+  if (m_currentPage == page) return;
+  if (!m_navigatingHistory) {
+    m_backStack.append(m_currentPage);
+    m_forwardStack.clear();
   }
+  m_currentPage = page;
+  emit currentPageChanged();
+  emit historyChanged();
+}
+
+void SettingsWindow::goBack() {
+  if (m_backStack.isEmpty()) return;
+  m_forwardStack.append(m_currentPage);
+  m_navigatingHistory = true;
+  setCurrentPage(m_backStack.takeLast());
+  m_navigatingHistory = false;
+}
+
+void SettingsWindow::goForward() {
+  if (m_forwardStack.isEmpty()) return;
+  m_backStack.append(m_currentPage);
+  m_navigatingHistory = true;
+  setCurrentPage(m_forwardStack.takeLast());
+  m_navigatingHistory = false;
 }
 
 void SettingsWindow::setPendingCommandId(const QString &id) {
@@ -91,13 +114,6 @@ QString SettingsWindow::version() const { return QStringLiteral(VICINAE_GIT_TAG)
 QString SettingsWindow::commitHash() const { return QStringLiteral(VICINAE_GIT_COMMIT_HASH); }
 QString SettingsWindow::buildInfo() const { return QStringLiteral(BUILD_INFO); }
 QString SettingsWindow::headline() const { return Omnicast::HEADLINE; }
-
-bool SettingsWindow::globalShortcutsSupported() const {
-  auto *service = ServiceRegistry::instance()->globalShortcuts();
-  return service && service->isSupported();
-}
-
-bool SettingsWindow::layerShellSupported() const { return Environment::isLayerShellSupported(); }
 
 void SettingsWindow::openUrl(const QString &url) { m_ctx.services->appDb()->openTarget(url); }
 

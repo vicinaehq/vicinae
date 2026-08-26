@@ -32,22 +32,14 @@ void SnippetFormViewHost::initialize() {
   const auto *appDb = context()->services->appDb();
   for (const auto &app : appDb->list({.sortAlphabetically = true})) {
     if (!app->displayable()) continue;
-    QVariantMap entry;
-    entry[QStringLiteral("id")] = app->id();
-    entry[QStringLiteral("displayName")] = app->displayName();
-    entry[QStringLiteral("iconSource")] = qml::imageSourceFor(app->iconUrl());
-    allApps.append(entry);
+    allApps.append(qml::makeDropdownItem(app->id(), app->displayName(), qml::imageSourceFor(app->iconUrl())));
   }
-
-  QVariantMap section;
-  section[QStringLiteral("title")] = QString();
-  section[QStringLiteral("items")] = allApps;
-  m_availableApps.append(section);
+  m_availableAppsModel.setItems(allApps);
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto section2 = panel->createSection();
   auto submitAction =
-      new StaticAction(QStringLiteral("Submit"), ImageURL::builtin("enter-key"), [this]() { submit(); });
+      new StaticAction(tr("Submit"), ImageURL::builtin(BuiltinIcon::EnterKey), [this]() { submit(); });
   section2->addAction(submitAction);
   setActions(std::move(panel));
 
@@ -55,7 +47,7 @@ void SnippetFormViewHost::initialize() {
     const auto &snippet = *m_initialSnippet;
 
     if (m_mode == Mode::Duplicate) {
-      m_name = QString::fromStdString(std::format("Copy of {}", snippet.name));
+      m_name = tr("Copy of %1").arg(QString::fromStdString(snippet.name));
     } else {
       m_name = QString::fromStdString(snippet.name);
     }
@@ -79,9 +71,9 @@ void SnippetFormViewHost::initialize() {
 
   if (m_initialSnippet) {
     if (m_mode == Mode::Edit) {
-      setNavigationTitle(QString("Edit \"%1\"").arg(QString::fromStdString(m_initialSnippet->name)));
+      setNavigationTitle(tr("Edit \"%1\"").arg(QString::fromStdString(m_initialSnippet->name)));
     } else if (m_mode == Mode::Duplicate) {
-      setNavigationTitle(QString("Duplicate \"%1\"").arg(QString::fromStdString(m_initialSnippet->name)));
+      setNavigationTitle(tr("Duplicate \"%1\"").arg(QString::fromStdString(m_initialSnippet->name)));
     }
   }
 }
@@ -96,18 +88,18 @@ void SnippetFormViewHost::submit() {
   bool valid = true;
 
   if (m_name.size() < 2) {
-    m_nameError = QStringLiteral("2 chars min.");
+    m_nameError = tr("2 chars min.");
     valid = false;
   }
   if (m_content.isEmpty()) {
-    m_contentError = QStringLiteral("Content should not be empty");
+    m_contentError = tr("Content should not be empty");
     valid = false;
   } else {
     const auto parsed = PlaceholderString::parseSnippetText(m_content);
     auto cursorCount = std::ranges::count_if(
         parsed.placeholders(), [](const auto &ph) { return ph.id == QStringLiteral("cursor"); });
     if (cursorCount > 1) {
-      m_contentError = QStringLiteral("Only one {cursor} placeholder is allowed");
+      m_contentError = tr("Only one {cursor} placeholder is allowed");
       valid = false;
     }
   }
@@ -121,7 +113,7 @@ void SnippetFormViewHost::submit() {
   emit errorsChanged();
 
   if (!valid) {
-    toast->failure("Validation failed");
+    toast->failure(tr("Validation failed"));
     return;
   }
 
@@ -147,14 +139,14 @@ void SnippetFormViewHost::submit() {
       toast->failure(result.error().c_str());
       return;
     }
-    toast->success("Snippet updated");
+    toast->success(tr("Snippet updated"));
   } else {
     const auto result = m_service->createSnippet(payload);
     if (!result) {
       toast->failure(result.error().c_str());
       return;
     }
-    toast->success("Snippet successfully created");
+    toast->success(tr("Snippet successfully created"));
   }
 
   popSelf();
@@ -165,37 +157,37 @@ bool SnippetFormViewHost::serverRunning() const { return m_service && m_service-
 void SnippetFormViewHost::buildContentCompletions() {
   m_contentCompletions = QVariantList{
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
-          {QStringLiteral("title"), QStringLiteral("Cursor Position")},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))},
+          {QStringLiteral("title"), tr("Cursor Position")},
           {QStringLiteral("value"), QStringLiteral("cursor")},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("copy-clipboard"))},
-          {QStringLiteral("title"), QStringLiteral("Clipboard Text")},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::CopyClipboard))},
+          {QStringLiteral("title"), tr("Clipboard Text")},
           {QStringLiteral("value"), QStringLiteral("clipboard")},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("fingerprint"))},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Fingerprint))},
           {QStringLiteral("title"), QStringLiteral("UUID")},
           {QStringLiteral("value"), QStringLiteral("uuid")},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("calendar"))},
-          {QStringLiteral("title"), QStringLiteral("Date")},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Calendar))},
+          {QStringLiteral("title"), tr("Date")},
           {QStringLiteral("value"), QStringLiteral("date")},
           {QStringLiteral("template"), QStringLiteral("{date format=\"yyyy-MM-dd hh:mm\"}")},
           {QStringLiteral("cursorOffset"), 30},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("text-cursor"))},
-          {QStringLiteral("title"), QStringLiteral("Argument")},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))},
+          {QStringLiteral("title"), tr("Argument")},
           {QStringLiteral("value"), QStringLiteral("argument")},
           {QStringLiteral("template"), QStringLiteral("{argument name=\"\"}")},
           {QStringLiteral("cursorOffset"), 16},
       },
       QVariantMap{
-          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin("terminal"))},
-          {QStringLiteral("title"), QStringLiteral("Shell Command")},
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Terminal))},
+          {QStringLiteral("title"), tr("Shell Command")},
           {QStringLiteral("value"), QStringLiteral("shell")},
           {QStringLiteral("template"), QStringLiteral("{shell code=\"\"}")},
           {QStringLiteral("cursorOffset"), 13},

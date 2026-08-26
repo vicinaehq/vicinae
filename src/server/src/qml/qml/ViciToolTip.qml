@@ -4,7 +4,7 @@ import QtQuick.Controls
 ToolTip {
     id: root
     delay: 500
-    popupType: Popup.Window
+    popupType: Platform.preferItemPopup("tooltip") ? Popup.Item : Popup.Window
     // Centered above the hovered item; Qt's native ToolTip placement would
     // put it at the item's bottom-right corner instead.
     PopupPlacement.alignment: Qt.AlignHCenter | Qt.AlignTop
@@ -16,11 +16,12 @@ ToolTip {
     }
 
     background: Rectangle {
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.95)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
-        radius: 4
-        BackgroundEffect.enabled: Config.blurEnabled
-        BackgroundEffect.radius: 4
+        readonly property bool csd: root.popupType === Popup.Item || Platform.supports("clientSideDecorations")
+        readonly property real bgOpacity: root.popupType === Popup.Window ? Config.popupOpacity : 1
+        radius: csd ? Math.min(Config.borderRounding, 15) : 0
+        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bgOpacity)
+        border.color: Config.withAlpha(Theme.popoverBorder, bgOpacity)
+        border.width: csd ? 1 : 0
+        PopupMaterial {}
     }
 }

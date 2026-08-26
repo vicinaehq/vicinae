@@ -5,6 +5,12 @@ import QtQuick.Layouts
 Item {
     id: root
 
+    readonly property real _bottomInset: statusBarInset.value
+
+    StatusBarInset {
+        id: statusBarInset
+    }
+
     // The backing model — must have Q_INVOKABLE nextSelectableIndex(int, int)
     required property var listModel
 
@@ -22,7 +28,7 @@ Item {
     property real detailRatio: 0.65
     property bool detailVisible: false
 
-    property string emptyTitle: "No results"
+    property string emptyTitle: qsTr("No results")
     property string emptyDescription: ""
     property var emptyIcon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
     property Component emptyViewComponent: null
@@ -48,6 +54,34 @@ Item {
     signal itemActivated(int index)
     signal itemSelected(int index)
 
+    // Infinite-scroll pagination: consumers opt in by setting canLoadMore.
+    // endReached fires at most once per content growth cycle.
+    signal endReached
+    property bool canLoadMore: false
+    property real endReachedThreshold: root.height * 1.5
+    property bool _endArmed: true
+
+    onCanLoadMoreChanged: {
+        if (canLoadMore) {
+            _endArmed = true;
+            Qt.callLater(_maybeFireEnd);
+        }
+    }
+
+    function _maybeFireEnd() {
+        if (!root.canLoadMore || !root._endArmed)
+            return;
+        if (listView.contentHeight <= 0)
+            return;
+        const underfilled = listView.contentHeight <= listView.height;
+        if (!underfilled && listView.atYBeginning)
+            return;
+        if (listView.contentY + listView.height >= listView.contentHeight - root.endReachedThreshold) {
+            root._endArmed = false;
+            root.endReached();
+        }
+    }
+
     function sectionScrollTarget(index, direction) {
         if (!root.listModel || typeof root.listModel.scrollTargetIndex !== "function")
             return index;
@@ -67,12 +101,27 @@ Item {
         return Math.abs(listView.contentY - previousContentY) > 0.5;
     }
 
+    // positionViewAtIndex ignores ListView margins, so Contain can leave the
+    // item within the band covered by the floating status bar.
+    function _liftAboveInset(index) {
+        if (root._bottomInset <= 0)
+            return;
+        const item = listView.itemAtIndex(index);
+        if (!item)
+            return;
+        const usable = listView.height - root._bottomInset;
+        const itemBottom = item.y + item.height;
+        if (listView.contentHeight > usable && itemBottom > listView.contentY + usable)
+            listView.contentY = itemBottom - usable;
+    }
+
     function moveDown() {
         const next = root.listModel.nextSelectableIndex(listView.currentIndex, 1);
         if (next !== listView.currentIndex) {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            _liftAboveInset(next);
         }
         return true;
     }
@@ -86,6 +135,7 @@ Item {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            _liftAboveInset(next);
         }
         return true;
     }
@@ -99,6 +149,7 @@ Item {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            _liftAboveInset(next);
         }
         return true;
     }
@@ -115,6 +166,7 @@ Item {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            _liftAboveInset(next);
         }
         return true;
     }
@@ -139,6 +191,15 @@ Item {
             }
             if (root.listModel)
                 root.listModel.setSelectedIndex(listView.currentIndex);
+        }
+    }
+
+    Connections {
+        target: root.listModel
+        function onModelReset() {
+            root._endArmed = true;
+            listView._lastContentHeight = 0;
+            Qt.callLater(root._maybeFireEnd);
         }
     }
 
@@ -176,11 +237,26 @@ Item {
             clip: true
             reuseItems: true
             cacheBuffer: 200
+            interactive: false
             boundsBehavior: Flickable.StopAtBounds
             highlightMoveDuration: 0
             currentIndex: -1
             topMargin: 4
-            bottomMargin: 4
+            bottomMargin: 4 + root._bottomInset
+
+            property real _lastContentHeight: 0
+
+            onContentYChanged: root._maybeFireEnd()
+            onContentHeightChanged: {
+                if (contentHeight > _lastContentHeight)
+                    root._endArmed = true;
+                _lastContentHeight = contentHeight;
+                root._maybeFireEnd();
+            }
+
+            ViciWheelHandler {
+                target: listView
+            }
 
             onCurrentIndexChanged: root.itemSelected(currentIndex)
             onCountChanged: {

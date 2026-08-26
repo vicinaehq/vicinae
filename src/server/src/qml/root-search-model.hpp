@@ -10,6 +10,7 @@
 class AppService;
 class NewsService;
 class RootItemManager;
+class UpdateService;
 
 namespace config {
 class Manager;
@@ -26,13 +27,13 @@ public:
 
   Q_INVOKABLE void setFilter(const QString &text);
   void setSelectedIndex(int index) override;
-  Q_INVOKABLE bool tryAliasFastTrack();
+
+  const RootItem *selectedRootItem() const;
 
 private:
   void refresh();
   bool rerunSearch();
   void startCalculator();
-  void handleCalculatorFinished();
   void startFileSearch();
   void handleFileSearchFinished();
 
@@ -41,10 +42,12 @@ private:
   RootItemManager *m_manager;
   AppService *m_appDb;
   NewsService *m_newsService;
+  UpdateService *m_updateService;
   CalculatorService *m_calculator;
   FileService *m_fileService;
   config::Manager *m_config;
 
+  RootUpdateSection *m_updateSource;
   RootLinkSection *m_linkSource;
   RootCalculatorSection *m_calcSource;
   RootNewsSection *m_newsSource;
@@ -56,9 +59,7 @@ private:
   std::string m_query;
   QString m_lastCompleterItemId;
 
-  QTimer m_calculatorDebounce;
   QTimer m_fileSearchDebounce;
-  CalculatorWatcher m_calcWatcher;
   FileSearchWatcher m_fileWatcher;
   std::string m_calculatorSearchQuery;
   std::string m_fileSearchQuery;

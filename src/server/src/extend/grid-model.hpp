@@ -6,10 +6,24 @@
 #include "extend/pagination-model.hpp"
 #include "extend/dropdown-model.hpp"
 #include "ui/image/url.hpp"
+#include "services/clipboard/clipboard-content.hpp"
 
 enum GridFit { GridContain, GridFill };
 
 enum class GridInset { None, Small, Medium, Large };
+
+constexpr double insetRatio(GridInset inset) {
+  switch (inset) {
+  case GridInset::Small:
+    return 0.10;
+  case GridInset::Medium:
+    return 0.15;
+  case GridInset::Large:
+    return 0.25;
+  default:
+    return 0.0;
+  }
+}
 
 struct GridItemViewModel {
   using Content = std::variant<ImageLikeModel, ColorLike>;
@@ -21,6 +35,7 @@ struct GridItemViewModel {
   std::optional<std::string> tooltip;
   std::vector<std::string> keywords;
   std::optional<ActionPannelModel> actionPannel;
+  std::optional<Clipboard::Content> dragContent;
 };
 
 struct GridSectionModel {

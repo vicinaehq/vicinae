@@ -8,7 +8,7 @@ class ImageSource : public QObject {
 public:
   explicit ImageSource(QObject *parent = nullptr) : QObject(parent) {}
 
-  Q_INVOKABLE ImageUrl builtin(const QString &name) const { return ImageUrl(ImageURL::builtin(name)); }
+  Q_INVOKABLE ImageUrl builtin(const QString &name) const { return ImageUrl(ImageURL::builtinByName(name)); }
 
   Q_INVOKABLE ImageUrl system(const QString &name) const { return ImageUrl(ImageURL::system(name)); }
 

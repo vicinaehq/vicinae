@@ -12,6 +12,7 @@ class ImageSource;
 class ThemeBridge;
 class KeyboardBridge;
 class GlobalShortcutBridge;
+class PlatformBridge;
 class GeneralSettingsModel;
 class KeybindSettingsModel;
 class ExtensionSettingsModel;
@@ -22,6 +23,8 @@ class SettingsWindow : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
+  Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY historyChanged)
+  Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY historyChanged)
   Q_PROPERTY(
       QString pendingCommandId READ pendingCommandId WRITE setPendingCommandId NOTIFY pendingCommandIdChanged)
   Q_PROPERTY(SettingsSidebarModel *sidebarModel READ sidebarModel CONSTANT)
@@ -29,8 +32,6 @@ class SettingsWindow : public QObject {
   Q_PROPERTY(QString commitHash READ commitHash CONSTANT)
   Q_PROPERTY(QString buildInfo READ buildInfo CONSTANT)
   Q_PROPERTY(QString headline READ headline CONSTANT)
-  Q_PROPERTY(bool globalShortcutsSupported READ globalShortcutsSupported CONSTANT)
-  Q_PROPERTY(bool layerShellSupported READ layerShellSupported CONSTANT)
   Q_PROPERTY(GeneralSettingsModel *generalModel READ generalModel CONSTANT)
   Q_PROPERTY(KeybindSettingsModel *keybindModel READ keybindModel CONSTANT)
   Q_PROPERTY(ExtensionSettingsModel *extensionModel READ extensionModel CONSTANT)
@@ -50,12 +51,15 @@ public:
   QString commitHash() const;
   QString buildInfo() const;
   QString headline() const;
-  bool globalShortcutsSupported() const;
-  bool layerShellSupported() const;
 
   GeneralSettingsModel *generalModel() const { return m_generalModel; }
   KeybindSettingsModel *keybindModel() const { return m_keybindModel; }
   ExtensionSettingsModel *extensionModel() const { return m_extensionModel; }
+
+  bool canGoBack() const { return !m_backStack.isEmpty(); }
+  bool canGoForward() const { return !m_forwardStack.isEmpty(); }
+  Q_INVOKABLE void goBack();
+  Q_INVOKABLE void goForward();
 
   Q_INVOKABLE void openUrl(const QString &url);
   Q_INVOKABLE void close();
@@ -71,6 +75,7 @@ signals:
   void currentPageChanged();
   void pendingCommandIdChanged();
   void defaultFocusRequested();
+  void historyChanged();
 
 private:
   void ensureInitialized();
@@ -82,6 +87,7 @@ private:
   ImageSource *m_imgSource = nullptr;
   KeyboardBridge *m_keyboardBridge = nullptr;
   GlobalShortcutBridge *m_globalShortcutBridge = nullptr;
+  PlatformBridge *m_platformBridge = nullptr;
   GeneralSettingsModel *m_generalModel = nullptr;
   KeybindSettingsModel *m_keybindModel = nullptr;
   ExtensionSettingsModel *m_extensionModel = nullptr;
@@ -89,5 +95,8 @@ private:
   QQuickWindow *m_window = nullptr;
   QString m_currentPage = QStringLiteral("general");
   QString m_pendingCommandId;
+  QStringList m_backStack;
+  QStringList m_forwardStack;
+  bool m_navigatingHistory = false;
   bool m_initialized = false;
 };

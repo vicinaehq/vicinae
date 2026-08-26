@@ -394,11 +394,11 @@
     "platforms": {
       "type": "array",
       "items": {
-        "enum": ["macOS", "Windows"],
+        "enum": ["Linux", "macOS", "Windows"],
         "type": "string"
       },
       "title": "The extension's supported platforms",
-      "description": "Currently only `macOS` and `Windows` are accepted. If not present, the extension is assumed to be available on all platforms.",
+      "description": "Platforms where this extension can run. If not present, the extension is assumed to be available on all platforms.",
       "minItems": 1,
       "uniqueItems": true
     },

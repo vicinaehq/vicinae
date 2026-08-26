@@ -2,6 +2,7 @@
 #include "calc-history-model.hpp"
 #include "list-view-host.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
+#include <QCoreApplication>
 #include <QFutureWatcher>
 #include <QTimer>
 #include <memory>
@@ -9,7 +10,7 @@
 
 class CalculatorService;
 
-class CalcLiveSection : public SectionSource {
+class CalcLiveSection : public SectionSource, QObject {
 public:
   enum CustomRole {
     IsCalculator = Qt::UserRole + 100,
@@ -22,7 +23,9 @@ public:
   void setResult(std::optional<AbstractCalculatorBackend::CalculatorResult> result);
   void clear();
 
-  QString sectionName() const override { return QStringLiteral("Calculator"); }
+  QString sectionName() const override {
+    return QCoreApplication::translate("CalcLiveSection", "Calculator");
+  }
   int count() const override { return m_result ? 1 : 0; }
 
   QHash<int, QByteArray> customRoleNames() const override;
@@ -31,8 +34,7 @@ public:
 
 protected:
   QString itemTitle(int i) const override;
-  QString itemIconSource(int i) const override;
-  QVariantList itemAccessories(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
@@ -51,8 +53,6 @@ public:
   }
 
 private:
-  using CalculatorWatcher = QFutureWatcher<AbstractCalculatorBackend::ComputeResult>;
-
   void refresh();
   void applyGroupedData(CalculatorService::GroupedRecordList data);
   void startCalculator();
@@ -63,6 +63,4 @@ private:
   std::vector<std::unique_ptr<CalcHistorySection>> m_sections;
 
   CalcLiveSection m_liveSection;
-  CalculatorWatcher m_calcWatcher;
-  QTimer m_calculatorDebounce;
 };

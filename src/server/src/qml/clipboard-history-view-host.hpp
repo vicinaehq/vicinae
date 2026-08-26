@@ -1,6 +1,7 @@
 #pragma once
 #include "clipboard-history-model.hpp"
 #include "bridge-view.hpp"
+#include "completion-model.hpp"
 #include "section-list-model.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "view-utils.hpp"
@@ -15,10 +16,11 @@ class ClipboardHistoryViewHost : public ViewHostBase {
   Q_PROPERTY(QString clipboardStatusText READ clipboardStatusText NOTIFY clipboardStatusChanged)
   Q_PROPERTY(QString clipboardStatusIcon READ clipboardStatusIcon NOTIFY clipboardStatusChanged)
   Q_PROPERTY(bool canToggleMonitoring READ canToggleMonitoring CONSTANT)
+  Q_PROPERTY(CompletionModel *kindFilterModel READ kindFilterModel CONSTANT)
   Q_PROPERTY(int currentKindFilter READ currentKindFilter NOTIFY currentKindFilterChanged)
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(bool hasDetailError READ hasDetailError NOTIFY detailChanged)
-  Q_PROPERTY(QString detailMimeType READ detailMimeType NOTIFY detailChanged)
+  Q_PROPERTY(QString detailType READ detailType NOTIFY detailChanged)
   Q_PROPERTY(QString detailTextContent READ detailTextContent NOTIFY detailChanged)
   Q_PROPERTY(QString detailImageSource READ detailImageSource NOTIFY detailChanged)
   Q_PROPERTY(QString detailSize READ detailSize NOTIFY detailChanged)
@@ -44,6 +46,7 @@ public:
   Q_INVOKABLE void setKindFilter(int kind);
 
   QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
+  CompletionModel *kindFilterModel() { return &m_kindFilterModel; }
   QString itemCountText() const { return m_itemCountText; }
   QString clipboardStatusText() const { return m_clipboardStatusText; }
   QString clipboardStatusIcon() const { return m_clipboardStatusIcon; }
@@ -51,7 +54,7 @@ public:
   int currentKindFilter() const { return m_currentKindFilter; }
   bool hasDetail() const { return m_hasDetail; }
   bool hasDetailError() const { return m_hasDetailError; }
-  QString detailMimeType() const { return m_detailMimeType; }
+  QString detailType() const { return m_detailType; }
   QString detailTextContent() const { return m_detailTextContent; }
   QString detailImageSource() const { return m_detailImageSource; }
   QString detailSize() const { return m_detailSize; }
@@ -76,12 +79,13 @@ private:
   std::optional<QString> getSavedDropdownFilter();
 
   SectionListModel m_model{this};
+  CompletionModel m_kindFilterModel{this};
   ClipboardHistorySection m_section;
   ClipboardHistoryController *m_controller = nullptr;
   ClipboardService *m_clipman = nullptr;
   QMimeDatabase m_mimeDb;
 
-  QString m_itemCountText = QStringLiteral("Loading...");
+  QString m_itemCountText = tr("Loading...");
   QString m_clipboardStatusText;
   QString m_clipboardStatusIcon;
   bool m_canToggleMonitoring = false;
@@ -89,7 +93,7 @@ private:
 
   bool m_hasDetail = false;
   bool m_hasDetailError = false;
-  QString m_detailMimeType;
+  QString m_detailType;
   QString m_detailTextContent;
   QString m_detailImageSource;
   QString m_detailSize;

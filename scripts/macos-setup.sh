@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
-# Install Vicinae build + deploy dependencies via Homebrew.
+# Install Vicinae build + deploy dependencies.
+# Qt comes from the official binaries (via aqtinstall) rather than homebrew
 set -euo pipefail
 
 [[ "$(uname -s)" == "Darwin" ]] || { echo "You need to be on a Mac to run this script" >&2; exit 1; }
 command -v brew >/dev/null || { echo "install Homebrew first: https://brew.sh" >&2; exit 1; }
+
+QT_VERSION="${QT_VERSION:-6.11.1}"
+QT_DIR="$HOME/Qt/$QT_VERSION/macos"
 
 brew install \
   cmake \
   ninja \
   pkg-config \
   clang-format \
-  qt \
-  icu4c \
-  openssl@3 \
-  qtkeychain \
+  pipx \
   libqalculate \
-  minizip \
-  dbus \
   dylibbundler \
   ccache	\
-  extra-cmake-modules
+  extra-cmake-modules \
+  catch2
+
+# keyed on the icns plugin so installs predating the qtimageformats module get upgraded
+if [[ ! -f "$QT_DIR/plugins/imageformats/libqicns.dylib" ]]; then
+  echo "==> installing official Qt $QT_VERSION to ~/Qt"
+  pipx run --spec aqtinstall aqt install-qt mac desktop "$QT_VERSION" clang_64 -m qtshadertools qtimageformats -O "$HOME/Qt"
+fi

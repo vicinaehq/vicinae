@@ -17,9 +17,6 @@ struct AppListOptions {
 class AppService : public QObject, NonCopyable {
   Q_OBJECT
 
-public:
-  std::vector<std::filesystem::path> m_additionalSearchPaths;
-
 private:
   QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
   QTimer *m_rescanDebounce = new QTimer(this);
@@ -27,7 +24,6 @@ private:
   std::unique_ptr<AbstractAppDatabase> m_provider;
 
   static std::unique_ptr<AbstractAppDatabase> createLocalProvider();
-  std::vector<std::filesystem::path> mergedPaths() const;
 
   bool reinstallWatches(const std::vector<std::filesystem::path> &paths);
   void handleDirectoryChanged(const QString &path);
@@ -54,8 +50,6 @@ public:
    */
   bool launchRaw(const std::vector<QString> &args);
 
-  std::vector<std::filesystem::path> defaultSearchPaths() const;
-
   /**
    * Returns the default terminal emulator or a null pointer if none is available.
    */
@@ -75,8 +69,8 @@ public:
    */
   std::shared_ptr<AbstractApplication> find(const QString &target) const;
   std::shared_ptr<AbstractApplication> findDefaultOpener(const QString &target) const;
-  void setAdditionalSearchPaths(const std::vector<std::filesystem::path> &paths);
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const;
+  bool openLocation(const AbstractApplication &app) const;
 
   bool openTarget(const QString &target) const;
   bool openTarget(const QUrl &target) const;

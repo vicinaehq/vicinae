@@ -67,6 +67,8 @@ public:
   QString name() const override;
   QString commandId() const override;
 
+  std::vector<QString> keywords() const override;
+
   ImageURL iconUrl() const override;
   QString repositoryDisplayName() const override;
   QString repositoryName() const override;
@@ -88,5 +90,5 @@ public:
 
   CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override;
 
-  ExtensionCommand() {}
+  ExtensionCommand() = default;
 };

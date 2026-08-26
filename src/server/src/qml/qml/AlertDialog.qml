@@ -2,16 +2,20 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Popup {
+ViciPopover {
     id: root
-    anchors.centerIn: parent
+    surface: "dialog"
+    frostedOpacity: 0.7
+    x: Math.round((parent.width - width) / 2)
+    y: Math.round((parent.height - height) / 2)
     width: 400
+    contentWidth: availableWidth
     padding: 20
     focus: true
-    modal: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     property bool _confirmed: false
+    property Item _focusedButton: null
 
     onAboutToShow: {
         _confirmed = false;
@@ -26,64 +30,23 @@ Popup {
             close();
     }
 
-    enter: Transition {
-        ParallelAnimation {
-            NumberAnimation {
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-            NumberAnimation {
-                property: "scale"
-                from: 0.95
-                to: 1
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-        }
-    }
-
-    exit: Transition {
-        ParallelAnimation {
-            NumberAnimation {
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: 100
-                easing.type: Easing.InCubic
-            }
-            NumberAnimation {
-                property: "scale"
-                from: 1
-                to: 0.95
-                duration: 100
-                easing.type: Easing.InCubic
-            }
-        }
-    }
-
-    background: Rectangle {
-        radius: 6
-        color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.95)
-        border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-        border.width: 1
-    }
-
-    Overlay.modal: Rectangle {
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
-    }
-
     contentItem: ColumnLayout {
         spacing: 15
 
-        ViciImage {
+        Rectangle {
             Layout.alignment: Qt.AlignHCenter
-            width: 30
-            height: 30
             visible: launcher.alertModel.iconSource !== ""
-            source: launcher.alertModel.iconSource
+            width: 44
+            height: 44
+            radius: width / 2
+            color: launcher.alertModel.iconBadged ? Config.withAlpha(launcher.alertModel.confirmColor, 0.14) : "transparent"
+
+            ViciImage {
+                anchors.centerIn: parent
+                width: launcher.alertModel.iconBadged ? 22 : 30
+                height: width
+                source: launcher.alertModel.iconSource
+            }
         }
 
         Text {
@@ -113,18 +76,19 @@ Popup {
             ViciButton {
                 id: cancelBtn
                 Layout.fillWidth: true
-                implicitHeight: 30
-                radius: 4
-                variant: "ghost"
-                bordered: true
+                implicitHeight: 32
+                variant: "secondary"
                 text: launcher.alertModel.cancelText
                 foreground: launcher.alertModel.cancelColor
                 focus: true
                 activeFocusOnTab: true
+                showFocus: root._focusedButton === cancelBtn
+                onActiveFocusChanged: if (activeFocus)
+                    root._focusedButton = cancelBtn
                 onClicked: root.close()
                 Keys.onRightPressed: confirmBtn.forceActiveFocus()
                 Keys.onPressed: event => {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                    const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                     if (nav === 4) {
                         confirmBtn.forceActiveFocus();
                         event.accepted = true;
@@ -135,13 +99,14 @@ Popup {
             ViciButton {
                 id: confirmBtn
                 Layout.fillWidth: true
-                implicitHeight: 30
-                radius: 4
-                variant: "ghost"
-                bordered: true
+                implicitHeight: 32
+                variant: "tinted"
                 text: launcher.alertModel.confirmText
                 foreground: launcher.alertModel.confirmColor
                 activeFocusOnTab: true
+                showFocus: root._focusedButton === confirmBtn
+                onActiveFocusChanged: if (activeFocus)
+                    root._focusedButton = confirmBtn
                 onClicked: {
                     root._confirmed = true;
                     launcher.alertModel.confirm();
@@ -149,7 +114,7 @@ Popup {
                 }
                 Keys.onLeftPressed: cancelBtn.forceActiveFocus()
                 Keys.onPressed: event => {
-                    const nav = launcher.matchNavigationKey(event.key, event.modifiers);
+                    const nav = Keyboard.matchNavigation(event.key, event.modifiers);
                     if (nav === 3) {
                         cancelBtn.forceActiveFocus();
                         event.accepted = true;

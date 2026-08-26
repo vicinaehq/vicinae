@@ -11,19 +11,17 @@ void CalcHistorySection::setRecords(const QString &groupName, std::vector<Calcul
 
 QString CalcHistorySection::itemTitle(int i) const { return m_records[i].question; }
 
-QString CalcHistorySection::itemIconSource(int i) const {
+std::optional<ImageURL> CalcHistorySection::itemIcon(int i) const {
   const auto &record = m_records[i];
   switch (record.typeHint) {
   case AbstractCalculatorBackend::CONVERSION:
-    return imageSourceFor(ImageURL::builtin("switch"));
+    return ImageURL::builtin(BuiltinIcon::Switch);
   default:
-    return imageSourceFor(ImageURL::builtin("calculator"));
+    return ImageURL::builtin(BuiltinIcon::Calculator);
   }
 }
 
-QVariantList CalcHistorySection::itemAccessories(int i) const {
-  return qml::textAccessory(m_records[i].answer);
-}
+AccessoryList CalcHistorySection::itemAccessories(int i) const { return {{.text = m_records[i].answer}}; }
 
 std::unique_ptr<ActionPanelState> CalcHistorySection::actionPanel(int i) const {
   const auto &record = m_records[i];
@@ -38,12 +36,12 @@ std::unique_ptr<ActionPanelState> CalcHistorySection::actionPanel(int i) const {
   }
 
   auto *copySection = panel->createSection();
-  auto *copyAnswer = new CopyToClipboardAction(Clipboard::Text(record.answer), "Copy answer");
+  auto *copyAnswer = new CopyToClipboardAction(Clipboard::Text(record.answer), tr("Copy answer"));
   copyAnswer->setPrimary(true);
   copySection->addAction(copyAnswer);
-  copySection->addAction(new CopyToClipboardAction(Clipboard::Text(record.question), "Copy question"));
+  copySection->addAction(new CopyToClipboardAction(Clipboard::Text(record.question), tr("Copy question")));
   copySection->addAction(
-      new CopyToClipboardAction(Clipboard::Text(record.expression()), "Copy question and answer"));
+      new CopyToClipboardAction(Clipboard::Text(record.expression()), tr("Copy question and answer")));
 
   auto *dangerSection = panel->createSection();
   dangerSection->addAction(new RemoveCalculatorHistoryRecordAction(record.id));

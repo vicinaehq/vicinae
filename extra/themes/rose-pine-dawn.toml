@@ -12,7 +12,7 @@ icon = "icons/rose-pine.png"
 background = "#FAF4ED"        # base
 foreground = "#575279"        # text
 secondary_background = "#F2E9E1"  # overlay (fixed: was lighter than bg)
-border = "#CECACD"            # highlight_high (more visible)
+border = "#817E7A"            # highlight_high (more visible)
 accent = "#286983"            # pine
 
 [colors.accents]
@@ -26,8 +26,8 @@ yellow = "#EA9D34"            # gold
 cyan = "#56949F"              # foam
 
 [colors.list.item.selection]
-background = "#DFDAD9"
+background = "#bcb3b0"
 secondary_background = "#DFDAD9"
 
 [colors.grid.item]
-background = "#DFDAD9"
+background = "#ddd7d7"
