@@ -1,6 +1,6 @@
 import { getClient } from "./client";
-import { environment } from "./environment";
-import type { LaunchType } from "./proto/api";
+import { environment, LaunchType } from "./environment";
+import type * as api from "./proto/api";
 
 /**
  * Update the values of properties declared in the manifest of the current command.
@@ -16,22 +16,19 @@ export async function updateCommandMetadata(metadata: {
 	});
 }
 
-export type IntraExtensionLaunchOptions = {
+type LaunchOptionsBase = {
 	name: string;
 	type: LaunchType;
-	arguments?: Record<string, string>;
 	context?: Record<string, string>;
+	arguments?: Record<string, string>;
 	fallbackText?: string;
 };
 
-export type InterExtensionLaunchOptions = {
+export type IntraExtensionLaunchOptions = LaunchOptionsBase;
+
+export type InterExtensionLaunchOptions = LaunchOptionsBase & {
 	extensionName: string;
-	name: string;
 	ownerOrAuthorName: string;
-	type: LaunchType;
-	arguments?: Record<string, string>;
-	context?: Record<string, string>;
-	fallbackText?: string;
 };
 
 export type LaunchOptions =
@@ -62,12 +59,18 @@ export async function launchCommand(options: LaunchOptions) {
 		? options.ownerOrAuthorName
 		: environment.ownerOrAuthorName;
 
+	const transformLaunchType = (type: LaunchType): api.LaunchType => {
+		if (type === LaunchType.UserInitiated) return "User";
+		if (type === LaunchType.Background) return "Background";
+		return "CommandLine";
+	};
+
 	await getClient().Command.launchCommand({
 		extensionName: extensionName,
 		ownerOrAuthorName: ownerOrAuthorName,
 		name: options.name,
 		arguments: options.arguments,
 		context: options.context,
-		type: options.type,
+		type: transformLaunchType(options.type),
 	});
 }
