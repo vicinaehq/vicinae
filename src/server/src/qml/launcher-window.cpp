@@ -140,8 +140,11 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   // Track window activation so toggleWindow() and closeOnFocusLoss work correctly
   if (m_window) {
     nav->setWindow(m_window);
-    connect(m_window, &QQuickWindow::activeChanged, this,
-            [this]() { m_ctx.navigation->setWindowActivated(m_window->isActive()); });
+    connect(m_window, &QQuickWindow::activeChanged, this, [this]() {
+      // losing focus to our own file dialog is not user focus loss
+      if (m_pendingLauncherFileChoice) return;
+      m_ctx.navigation->setWindowActivated(m_window->isActive());
+    });
     m_window->installEventFilter(this);
   }
 
@@ -339,14 +342,20 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(fileChooser, &FileChooserService::dialogOpened, this, [this]() {
     if (!m_window || !m_window->isActive()) return;
     m_pendingLauncherFileChoice = true;
+    emit filePickingChanged();
     setExclusiveFocus(false);
     if (isLayerShellActive()) { m_ctx.navigation->closeWindow({.popToRootType = PopToRootType::Suspended}); }
   });
   connect(fileChooser, &FileChooserService::dialogClosed, this, [this]() {
     if (m_pendingLauncherFileChoice) {
-      setExclusiveFocus(true);
-      if (isLayerShellActive()) { m_ctx.navigation->showWindow(); }
       m_pendingLauncherFileChoice = false;
+      emit filePickingChanged();
+      setExclusiveFocus(true);
+      if (isLayerShellActive()) {
+        m_ctx.navigation->showWindow();
+      } else if (m_window) {
+        m_window->requestActivate();
+      }
     }
   });
   connect(nav, &NavigationController::viewPoped, this, [this, fileChooser](const BaseView *) {
