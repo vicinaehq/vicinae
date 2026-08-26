@@ -97,6 +97,7 @@ public:
 
   void execute(ApplicationContext *ctx) override {
     namespace fs = std::filesystem;
+    auto const files = ctx->services->fileService();
 
     if (m_opts.mkExec) {
       std::error_code ec{};
@@ -109,6 +110,7 @@ public:
 
     if (ctx->services->appDb()->launchRaw({QString::fromStdString(m_path.string())})) {
       ctx->navigation->closeWindow();
+      files->saveAccess(m_path);
     } else {
       ctx->services->toastService()->failure(tr("Failed to start executable"));
     }
