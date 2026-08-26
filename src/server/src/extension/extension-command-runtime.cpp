@@ -53,7 +53,8 @@ void ExtensionCommandRuntime::initialize() {
   auto *clipboard = new ExtClipboardService(*m_transport, *services->clipman(), *services->pasteService());
   auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
-  auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings);
+  auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings,
+                                        *ctx.navigation);
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
   auto wallpaper = new ExtWallpaperService(*m_transport, *services->wallpaperManager());
   auto browserExtension = new ExtBrowserExtensionService(*m_transport, *services->browserExtension());
