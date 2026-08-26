@@ -18,6 +18,8 @@ bool MacFileChooser::open(const FileChooserOptions &options) {
     panel.allowsMultipleSelection = options.allowMultipleSelection;
     panel.showsHiddenFiles = options.showHiddenFiles;
     panel.resolvesAliases = YES;
+    // above the launcher's floating panel level
+    panel.level = NSModalPanelWindowLevel;
 
     if (options.currentFolder) {
       NSString *path = [NSString stringWithUTF8String:options.currentFolder->c_str()];
