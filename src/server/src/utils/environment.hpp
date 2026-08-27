@@ -140,6 +140,12 @@ inline std::optional<std::string> updateVersionOverride() {
 }
 
 /**
+ * Disables automatic exchange rate refreshes (on backend start and periodic).
+ * Rates can still be refreshed manually from the calculator extension.
+ */
+inline bool isAutoRateRefreshDisabled() { return getenv("VICINAE_DISABLE_AUTO_RATE_REFRESH"); }
+
+/**
  * Gets human-readable environment description
  */
 inline QString getEnvironmentDescription() {
