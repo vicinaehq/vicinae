@@ -1,6 +1,7 @@
 #include "services/calculator-service/numen/numen-calculator-backend.hpp"
 #include "numen/numen.hpp"
 #include "services/calculator-service/numen/numen-currency-provider.hpp"
+#include "utils/environment.hpp"
 #include <qfuture.h>
 #include <chrono>
 #include <format>
@@ -26,6 +27,8 @@ std::string formatTimezone(const numen::Timezone &tz) {
 }; // namespace
 
 NumenCalculatorBackend::NumenCalculatorBackend() {
+  if (Environment::isAutoRateRefreshDisabled()) return;
+
   m_rateRefreshTimer.setInterval(std::chrono::hours{1});
   m_rateRefreshTimer.start();
   connect(&m_rateRefreshTimer, &QTimer::timeout, this, [this]() { m_numen.updateRates(); });

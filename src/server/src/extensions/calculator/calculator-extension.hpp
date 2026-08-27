@@ -97,22 +97,7 @@ public:
     backendPref.setTitle(tr("Calculator Backend"));
     backendPref.setDescription(tr("Which backend to use to perform calculations"));
 
-    auto refreshOnStartup = Preference::makeCheckbox("refreshRatesOnStartup");
-
-    refreshOnStartup.setDefaultValue(true);
-    refreshOnStartup.setTitle(tr("Refresh rates on startup"));
-    refreshOnStartup.setDescription(
-        tr("Whether exchange rates should be refreshed every time the vicinae server is started. If the "
-           "current backend does not support it, this is ignored."));
-
-    return {backendPref, refreshOnStartup};
-  }
-
-  void initialized(const QJsonObject &value) const override {
-    auto calc = ServiceRegistry::instance()->calculatorService();
-    bool refreshOnStartup = value.value("refreshRatesOnStartup").toBool();
-
-    if (refreshOnStartup) { calc->backend()->refreshExchangeRates(); }
+    return {backendPref};
   }
 
   void preferenceValuesChanged(const QJsonObject &value) const override {
