@@ -52,7 +52,7 @@ struct TrayServiceWindows::Impl {
       return;
     }
 
-    window = CreateWindowExW(0, WINDOW_CLASS_NAME, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, instance, this);
+    window = CreateWindowExW(0, WINDOW_CLASS_NAME, L"", 0, 0, 0, 0, 0, nullptr, nullptr, instance, this);
     if (!window) {
       qWarning() << "failed to create tray window:" << GetLastError();
       return;
