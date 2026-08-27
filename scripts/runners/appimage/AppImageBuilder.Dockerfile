@@ -69,6 +69,7 @@ RUN ./contrib/download_prerequisites \
         --enable-languages=c,c++ \
         --disable-bootstrap \
         --disable-libstdcxx-pch \
+        --enable-default-pie \
     && make -j$(nproc) \
     && make install \
     && cd / \
@@ -91,10 +92,17 @@ WORKDIR /qt6
 RUN perl init-repository --module-subset=qtbase,qtsvg,qtwayland,qtdeclarative,qttools
 
 # -feature-glib is needed for qtkeychain libsecret backend to not timeout
+# no-direct-extern-access: Qt exports its data with protected visibility and
+# propagates -mno-direct-extern-access to consumers via Qt6::Platform, so
+# executables can never take copy relocations on Qt globals (which Qt binds
+# locally and never interposes — the #1841 startup crash). The linker rejects
+# any violation at build time. x86_64 only: aarch64 GCC lacks the flag and
+# doesn't need it (-fPIE already uses GOT access for extern data there).
 RUN ./configure					\
     -release					\
     -ltcg						\
     -reduce-exports				\
+    $([ "$(uname -m)" = "x86_64" ] && echo "-feature-no-direct-extern-access" || true) \
     -prefix ${INSTALL_DIR}		\
     -xcb						\
     -feature-glib				\
