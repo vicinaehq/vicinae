@@ -177,8 +177,7 @@ TEST_CASE("transliteration: each variant is normalized against its own ceiling")
   REQUIRE(mixed.score == 100);
   REQUIRE(mixed.quality == 100);
 
-  auto const both =
-      fuzzy::scoreWeighted({{"Telegram", 1.0}, {"Телеграм", 1.0}}, fuzzy::Query{"телеграм"});
+  auto const both = fuzzy::scoreWeighted({{"Telegram", 1.0}, {"Телеграм", 1.0}}, fuzzy::Query{"телеграм"});
   REQUIRE(both.score == 100);
   REQUIRE(both.quality == 100);
 

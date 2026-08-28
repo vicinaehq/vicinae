@@ -646,8 +646,8 @@ inline Query::Query(std::string_view text, const Matcher &matcher) : text(text) 
       for (const auto scheme : {TranslitScheme::Primary, TranslitScheme::Alternate}) {
         auto translit = transliterate(word.text, scheme);
         if (!translit) continue;
-        auto const exists = std::ranges::any_of(
-            word.variants, [&](const Word::Variant &v) { return v.text == *translit; });
+        auto const exists =
+            std::ranges::any_of(word.variants, [&](const Word::Variant &v) { return v.text == *translit; });
         if (exists) continue;
         int const self = matcher.match_folded(*translit, *translit).score;
         word.variants.push_back({.text = std::move(*translit), .self = self});
