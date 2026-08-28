@@ -44,8 +44,11 @@ NumenCalculatorBackend::ComputeResult NumenCalculatorBackend::compute(const QStr
                                                                       const ComputeOptions &opts) {
 
   numen::EvalOptions evalOpts{
-      .parseOptions = {.strict = true},
-      .locale = QLocale::system().name().toStdString(),
+      .parseOptions =
+          {
+              .strict = true,
+              .locale = QLocale::system().name().toStdString(),
+          },
   };
 
   return m_numen.compute(question.toStdString(), evalOpts)
