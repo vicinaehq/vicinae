@@ -9,7 +9,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     numen = {
-      url = "github:vicinaehq/numen/v0.5.0";
+      url = "github:vicinaehq/numen/v0.5.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
