@@ -39,6 +39,7 @@ class AbstractSelectionService;
 class TelemetryService;
 class UpdateService;
 class AudioControlService;
+class MediaControlService;
 class AppRuntime;
 class GlobalShortcutService;
 
@@ -86,6 +87,7 @@ public:
   TelemetryService *telemetry() const;
   UpdateService *updateService() const;
   AudioControlService *audioControl() const;
+  MediaControlService *mediaControl() const;
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
 
@@ -126,6 +128,7 @@ public:
   void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
   void setUpdateService(std::unique_ptr<UpdateService> service);
   void setAudioControl(std::unique_ptr<AudioControlService> service);
+  void setMediaControl(std::unique_ptr<MediaControlService> service);
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
 
@@ -166,6 +169,7 @@ private:
   std::unique_ptr<TelemetryService> m_telemetry;
   std::unique_ptr<UpdateService> m_updateService;
   std::unique_ptr<AudioControlService> m_audioControl;
+  std::unique_ptr<MediaControlService> m_mediaControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
 };
