@@ -29,6 +29,7 @@ class AbstractSnippetServer;
 class LinuxInputServer;
 #endif
 class SnippetService;
+class NoteService;
 class BrowserExtensionService;
 class WindowMaterialManager;
 class ShortcutInhibitManager;
@@ -77,6 +78,7 @@ public:
   LinuxInputServer *inputServer() const;
 #endif
   SnippetService *snippetService() const;
+  NoteService *noteService() const;
   PasteService *pasteService() const;
   AbstractSelectionService *selectionService() const;
   FileChooserService *fileChooserService() const;
@@ -117,6 +119,7 @@ public:
 #endif
   void setSnippetServerBackend(std::unique_ptr<AbstractSnippetServer> backend);
   void setSnippetService(std::unique_ptr<SnippetService> service);
+  void setNoteService(std::unique_ptr<NoteService> service);
   void setPasteService(std::unique_ptr<PasteService> service);
   void setSelectionService(std::unique_ptr<AbstractSelectionService> service);
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
@@ -157,6 +160,7 @@ private:
 #endif
   std::unique_ptr<AbstractSnippetServer> m_snippetServerBackend;
   std::unique_ptr<SnippetService> m_snippetService;
+  std::unique_ptr<NoteService> m_noteService;
   std::unique_ptr<PasteService> m_pasteService;
   std::unique_ptr<AbstractSelectionService> m_selectionService;
   std::unique_ptr<FileChooserService> m_fileChooserService;

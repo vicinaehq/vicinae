@@ -19,6 +19,7 @@
 #include "extensions/root/root-command.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
+#include "root-search/notes/note-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
 #ifdef Q_OS_MACOS
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
@@ -65,6 +66,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "services/wallpaper/wallpaper-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
+#include "services/note/note-service.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/global-shortcuts/global-shortcut-backend-factory.hpp"
@@ -303,6 +305,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto glyphService =
         std::make_unique<GlyphService>(Omnicast::dataDir() / "emojis" / "emojis.json", omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
+    auto noteService = std::make_unique<NoteService>(*omniDb.get());
     auto fileService = std::make_unique<FileService>(*omniDb);
     auto oauthService = std::make_unique<OAuthService>(*omniDb);
     auto extensionRegistry = std::make_unique<ExtensionRegistry>(*localStorage);
@@ -340,6 +343,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #endif
     registry->setSnippetServerBackend(std::move(snippetServer));
     registry->setSnippetService(std::move(snippetService));
+    registry->setNoteService(std::move(noteService));
     registry->setWindowManager(std::move(windowManager));
     registry->setAppRuntime(std::move(appRuntime));
     registry->setFontService(std::move(fontService));
@@ -417,6 +421,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     root->loadProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
     root->loadProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
+    root->loadProvider(std::make_unique<NoteRootProvider>(*registry->noteService()));
     root->loadProvider(std::make_unique<ScriptRootProvider>(*registry->scriptDb()));
     root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
 #ifdef Q_OS_MACOS
