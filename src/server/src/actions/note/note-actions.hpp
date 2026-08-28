@@ -86,12 +86,14 @@ public:
   void execute(ApplicationContext *ctx) override {
     const bool pin = !m_note.pinned();
 
+    auto *toast = ctx->services->toastService();
+
     if (const auto res = ctx->services->noteService()->setPinned(m_note.id, pin); !res) {
-      ctx->services->toastService()->failure(res.error().c_str());
+      toast->failure(res.error().c_str());
       return;
     }
 
-    ctx->navigation->showHud(pin ? tr("Pinned note") : tr("Unpinned note"));
+    toast->setToast(pin ? tr("Pinned note") : tr("Unpinned note"));
   }
 
   explicit TogglePinNoteAction(note::Note note)
@@ -109,12 +111,14 @@ class RemoveNoteAction : public AbstractAction {
 
 public:
   void execute(ApplicationContext *ctx) override {
+    auto *toast = ctx->services->toastService();
+
     if (const auto res = ctx->services->noteService()->removeNote(m_note.id); !res) {
-      ctx->services->toastService()->failure(res.error().c_str());
+      toast->failure(res.error().c_str());
       return;
     }
 
-    ctx->navigation->showHud(tr("Removed note"));
+    toast->setToast(tr("Removed note"));
   }
 
   explicit RemoveNoteAction(note::Note note)
