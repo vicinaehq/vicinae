@@ -4,18 +4,13 @@
 #include <qlogging.h>
 #include "qt-wayland-utils.hpp"
 
-WaylandShortcutInhibitManager::WaylandShortcutInhibitManager(
-    zwp_keyboard_shortcuts_inhibit_manager_v1 *manager)
-    : m_manager(manager) {}
-
-WaylandShortcutInhibitManager::~WaylandShortcutInhibitManager() {
-  for (auto &[win, inhibitor] : m_inhibitors) {
-    zwp_keyboard_shortcuts_inhibitor_v1_destroy(inhibitor);
-  }
+KeyboardShortcutsInhibitV1::KeyboardShortcutsInhibitV1() : QWaylandClientExtensionTemplate(1) {
+  initialize();
 }
 
 bool WaylandShortcutInhibitManager::inhibit(QWindow *win) {
   if (m_inhibitors.contains(win)) { return true; }
+  if (!m_manager.isActive()) { return false; }
 
   auto *surface = QtWaylandUtils::getWindowSurface(win);
 
@@ -25,12 +20,12 @@ bool WaylandShortcutInhibitManager::inhibit(QWindow *win) {
   }
 
   auto *seat = qApp->nativeInterface<QNativeInterface::QWaylandApplication>()->seat();
-  auto *inhibitor = zwp_keyboard_shortcuts_inhibit_manager_v1_inhibit_shortcuts(m_manager, surface, seat);
+  auto *inhibitor = m_manager.inhibit_shortcuts(surface, seat);
 
   if (!inhibitor) { return false; }
 
   win->installEventFilter(this);
-  m_inhibitors[win] = inhibitor;
+  m_inhibitors[win] = std::make_unique<Inhibitor>(inhibitor);
 
   return true;
 }
@@ -41,7 +36,6 @@ bool WaylandShortcutInhibitManager::release(QWindow *win) {
   if (it == m_inhibitors.end()) { return false; }
 
   win->removeEventFilter(this);
-  zwp_keyboard_shortcuts_inhibitor_v1_destroy(it->second);
   m_inhibitors.erase(it);
 
   return true;
@@ -53,7 +47,6 @@ bool WaylandShortcutInhibitManager::eventFilter(QObject *sender, QEvent *event) 
 
     if (surfaceEvent->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
       if (auto it = m_inhibitors.find(qobject_cast<QWindow *>(sender)); it != m_inhibitors.end()) {
-        zwp_keyboard_shortcuts_inhibitor_v1_destroy(it->second);
         m_inhibitors.erase(it);
       }
     }

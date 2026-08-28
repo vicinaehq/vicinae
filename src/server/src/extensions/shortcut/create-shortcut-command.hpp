@@ -1,15 +1,1 @@
-#include <QCoreApplication>
-#include "../../ui/image/url.hpp"
-#include "single-view-command-context.hpp"
-#include "qml/shortcut-form-view-host.hpp"
-#include "theme.hpp"
 
-class CreateShortcutCommand : public BuiltinViewCommand<ShortcutFormViewHost> {
-  QString id() const override { return "create"; }
-  QString name() const override {
-    return QCoreApplication::translate("CreateShortcutCommand", "Create Shortcut");
-  }
-  ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Link).setBackgroundTint(Omnicast::ACCENT_COLOR);
-  }
-};

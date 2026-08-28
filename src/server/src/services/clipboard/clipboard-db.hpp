@@ -110,6 +110,7 @@ public:
   void runMigrations();
 
   explicit ClipboardDatabase(std::optional<db::EncryptionKey> key);
+  ClipboardDatabase(ClipboardDatabase &&other) noexcept;
   ~ClipboardDatabase() = default;
 
 private:

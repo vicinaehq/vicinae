@@ -3,7 +3,6 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "common.hpp"
-#include "navigation-controller.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -11,9 +10,6 @@
 #include "services/app-runtime/app-runtime.hpp"
 #include "vicinae.hpp"
 #include "actions/wm/window-actions.hpp"
-#include "utils/environment.hpp"
-#include <qjsonobject.h>
-#include <qkeysequence.h>
 
 double AppRootItem::baseScoreWeight() const { return 1; }
 
@@ -24,7 +20,6 @@ QString AppRootItem::typeDisplayName() const {
 
 std::vector<QString> AppRootItem::keywords() const {
   auto keywords = m_app->keywords();
-  keywords.emplace_back(m_app->description());
 
   if (auto name = m_app->unlocalizedName()) { keywords.emplace_back(name.value()); }
 
@@ -90,7 +85,9 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     }
 
     auto provider = ctx->services->windowManager()->provider();
-    if (provider->supportsSetSticky()) { mainSection->addAction(new PinWindowAction(activeWindows.front())); }
+    if (provider->supports(AbstractWindowManager::Capability::SetSticky)) {
+      mainSection->addAction(new PinWindowAction(activeWindows.front()));
+    }
     if (provider->supportsMoveToWorkspace()) {
       mainSection->addAction(new BringToWorkspaceAction(activeWindows.front()));
     }
@@ -125,7 +122,8 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     lifecycleSection->addAction(new ForceQuitAppAction(m_app));
   }
 
-  for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto &action :
+       RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 
@@ -156,9 +154,6 @@ std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
 
 AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appService) {
   connect(&m_appService, &AppService::appsChanged, this, &AppRootProvider::itemsChanged);
-  if (auto runtime = ServiceRegistry::instance()->appRuntime()) {
-    connect(runtime, &AppRuntime::runningAppsChanged, this, &AppRootProvider::itemsChanged);
-  }
 }
 
 PreferenceList AppRootProvider::preferences() const { return m_appService.provider()->preferences(); }

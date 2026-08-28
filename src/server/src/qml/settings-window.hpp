@@ -23,6 +23,8 @@ class SettingsWindow : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
+  Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY historyChanged)
+  Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY historyChanged)
   Q_PROPERTY(
       QString pendingCommandId READ pendingCommandId WRITE setPendingCommandId NOTIFY pendingCommandIdChanged)
   Q_PROPERTY(SettingsSidebarModel *sidebarModel READ sidebarModel CONSTANT)
@@ -54,6 +56,11 @@ public:
   KeybindSettingsModel *keybindModel() const { return m_keybindModel; }
   ExtensionSettingsModel *extensionModel() const { return m_extensionModel; }
 
+  bool canGoBack() const { return !m_backStack.isEmpty(); }
+  bool canGoForward() const { return !m_forwardStack.isEmpty(); }
+  Q_INVOKABLE void goBack();
+  Q_INVOKABLE void goForward();
+
   Q_INVOKABLE void openUrl(const QString &url);
   Q_INVOKABLE void close();
   Q_INVOKABLE void requestDefaultFocus();
@@ -68,6 +75,7 @@ signals:
   void currentPageChanged();
   void pendingCommandIdChanged();
   void defaultFocusRequested();
+  void historyChanged();
 
 private:
   void ensureInitialized();
@@ -87,5 +95,8 @@ private:
   QQuickWindow *m_window = nullptr;
   QString m_currentPage = QStringLiteral("general");
   QString m_pendingCommandId;
+  QStringList m_backStack;
+  QStringList m_forwardStack;
+  bool m_navigatingHistory = false;
   bool m_initialized = false;
 };

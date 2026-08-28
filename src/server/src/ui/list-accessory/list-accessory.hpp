@@ -3,12 +3,13 @@
 #include "theme.hpp"
 #include <optional>
 #include <qcontainerfwd.h>
+#include <vector>
 
 struct ListAccessory {
   QString text;
   std::optional<ColorLike> color;
   QString tooltip;
-  bool fillBackground;
+  bool fillBackground = false;
   std::optional<ImageURL> icon;
 };
 

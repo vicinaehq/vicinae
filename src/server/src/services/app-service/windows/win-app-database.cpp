@@ -540,7 +540,7 @@ struct UwpPackageWatcher {
 WindowsAppDatabase::WindowsAppDatabase() {
   connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, [this] { Q_EMIT changed(); });
 
-  scan(defaultSearchPaths());
+  scan();
 
   m_rescanTimer.setInterval(APP_PATHS_RESCAN_INTERVAL);
   connect(&m_rescanTimer, &QTimer::timeout, this, [this] { Q_EMIT changed(); });
@@ -770,7 +770,7 @@ void WindowsAppDatabase::refreshUwpCache() {
   }
 }
 
-bool WindowsAppDatabase::scan(const std::vector<fs::path> &paths) {
+bool WindowsAppDatabase::scan() {
   m_apps.clear();
   m_appsById.clear();
   m_appsByAlias.clear();
@@ -778,7 +778,7 @@ bool WindowsAppDatabase::scan(const std::vector<fs::path> &paths) {
 
   ScopedCom com;
   scanUwp(); // first: addShortcut drops shortcuts whose AUMID is already listed
-  scanWin32(paths);
+  scanWin32(searchPaths());
   scanDesktop();
   scanAppPaths();
 

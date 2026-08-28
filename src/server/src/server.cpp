@@ -23,6 +23,9 @@
 #ifdef Q_OS_MACOS
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
 #endif
+#ifdef Q_OS_LINUX
+#include "root-search/kde-settings/kde-settings-root-provider.hpp"
+#endif
 #ifdef Q_OS_WIN
 #include "root-search/control-panel/control-panel-root-provider.hpp"
 #include "root-search/windows-settings/windows-settings-root-provider.hpp"
@@ -76,14 +79,18 @@
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/paste/dummy-paste-service.hpp"
+#include "services/selection/dummy-selection-service.hpp"
 #ifdef Q_OS_LINUX
 #include "services/paste/linux-paste-service.hpp"
+#include "services/selection/linux-selection-service.hpp"
 #endif
 #ifdef Q_OS_MACOS
 #include "services/paste/macos-paste-service.hpp"
+#include "services/selection/macos-selection-service.hpp"
 #endif
 #ifdef Q_OS_WIN
 #include "services/paste/windows-paste-service.hpp"
+#include "services/selection/windows-selection-service.hpp"
 #endif
 #include "settings-controller/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
@@ -162,7 +169,7 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   }
 }
 
-static constexpr QFont::Weight UI_FONT_WEIGHT = QFont::Medium;
+static constexpr QFont::Weight UI_FONT_WEIGHT = QFont::Normal;
 
 static QFont resolveAppFont(const config::FontConfig &fontConfig) {
   QFont font;
@@ -263,15 +270,23 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto snippetServer = std::make_unique<LinuxSnippetServer>(*inputServer);
     auto platformPaste =
         std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*inputServer));
+    auto selectionService =
+        std::unique_ptr<AbstractSelectionService>(std::make_unique<LinuxSelectionService>());
 #elif defined(Q_OS_MACOS)
     auto snippetServer = std::make_unique<MacosSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<MacosPasteService>());
+    auto selectionService =
+        std::unique_ptr<AbstractSelectionService>(std::make_unique<MacosSelectionService>());
 #elif defined(Q_OS_WIN)
     auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<WindowsPasteService>());
+    auto selectionService =
+        std::unique_ptr<AbstractSelectionService>(std::make_unique<WindowsSelectionService>());
 #else
     auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());
+    auto selectionService =
+        std::unique_ptr<AbstractSelectionService>(std::make_unique<DummySelectionService>());
 #endif
     auto snippetService =
         std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json", *snippetServer,
@@ -280,8 +295,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
-    auto globalShortcutService = std::make_unique<GlobalShortcutService>(*configService, *rootItemManager,
-                                                                         createGlobalShortcutBackend());
+    auto globalShortcutService = std::make_unique<GlobalShortcutService>(
+        *configService, *rootItemManager, *appRuntime, createGlobalShortcutBackend());
     auto shortcutService =
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
     auto toastService = std::make_unique<ToastService>();
@@ -319,6 +334,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionManager(std::move(extensionManager));
     registry->setClipman(std::move(clipboardManager));
     registry->setPasteService(std::move(pasteService));
+    registry->setSelectionService(std::move(selectionService));
 #ifdef Q_OS_LINUX
     registry->setInputServer(std::move(inputServer));
 #endif
@@ -354,7 +370,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
 
     auto root = registry->rootItemManager();
-    auto builtinCommandDb = std::make_unique<CommandDatabase>();
+    auto builtinCommandDb = std::make_unique<CommandDatabase>(*registry);
 
     for (const auto &repo : builtinCommandDb->repositories()) {
       root->loadProvider(std::make_unique<ExtensionRootProvider>(repo));
@@ -405,6 +421,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
 #ifdef Q_OS_MACOS
     root->loadProvider(std::make_unique<MacSettingsRootProvider>());
+#endif
+#ifdef Q_OS_LINUX
+    if (Environment::isPlasmaDesktop()) {
+      root->loadProvider(std::make_unique<KdeSettingsRootProvider>(*registry->appDb()));
+    }
 #endif
 #ifdef Q_OS_WIN
     root->loadProvider(std::make_unique<WinSettingsRootProvider>());

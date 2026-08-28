@@ -11,6 +11,8 @@
 #include "utils/utils.hpp"
 #include <QCoreApplication>
 #include <QDateTime>
+#include <chrono>
+#include <qlogging.h>
 
 void ClipboardHistorySection::setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page) {
   m_entries = page.data;
@@ -43,6 +45,17 @@ ImageURL ClipboardHistorySection::iconForEntry(const ClipboardHistoryEntry &entr
   default:
     return ImageURL::builtin(BuiltinIcon::QuestionMarkCircle);
   }
+}
+
+bool ClipboardHistorySection::isDraggable(int idx) const { return true; }
+
+std::unique_ptr<QMimeData> ClipboardHistorySection::dragMimeData(int idx) const {
+  auto clipman = scope().services()->clipman();
+  auto selection = clipman->retrieveSelectionById(m_entries[idx].id);
+
+  if (!selection) return nullptr;
+
+  return clipman->dragMimeDataForSelection(*std::move(selection));
 }
 
 std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) const {

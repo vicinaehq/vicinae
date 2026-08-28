@@ -8,6 +8,8 @@ Flickable {
     contentHeight: outer.implicitHeight
     clip: true
     boundsBehavior: Flickable.StopAtBounds
+    topMargin: Style.contentTopInset
+    Component.onCompleted: contentY = -topMargin
 
     readonly property var model: settings.generalModel
 
@@ -16,13 +18,15 @@ Flickable {
     }
 
     ScrollBar.vertical: ViciScrollBar {
+        topPadding: Style.contentTopInset
+        bottomPadding: 16
         policy: ScrollBar.AsNeeded
     }
 
     ColumnLayout {
         id: outer
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Math.min(root.width - 48, 720)
+        width: Math.min(root.width - 32, 720)
         spacing: 0
 
         SettingsSectionLabel {
@@ -36,7 +40,7 @@ Flickable {
                 label: qsTr("Theme")
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.themeItems
+                    model: root.model.themeModel
                     currentItem: root.model.currentTheme
                     onActivated: item => root.model.selectTheme(item.id)
                 }
@@ -46,7 +50,7 @@ Flickable {
                 label: qsTr("Font")
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.fontItems
+                    model: root.model.fontModel
                     currentItem: root.model.currentFont
                     onActivated: item => root.model.selectFont(item.id)
                 }
@@ -76,7 +80,7 @@ Flickable {
                 showSeparator: false
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.iconThemeItems
+                    model: root.model.iconThemeModel
                     currentItem: root.model.currentIconTheme
                     onActivated: item => root.model.selectIconTheme(item.id)
                 }
@@ -96,7 +100,7 @@ Flickable {
                 description: qsTr("Background material applied to the launcher window. Lower the window opacity to see it.")
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.windowMaterialItems
+                    model: root.model.windowMaterialModel
                     currentItem: root.model.currentWindowMaterial
                     onActivated: item => root.model.selectWindowMaterial(item.id)
                 }
@@ -123,6 +127,15 @@ Flickable {
                 SettingsToggle {
                     checked: root.model.compactMode
                     onToggled: root.model.compactMode = checked
+                }
+            }
+
+            SettingsRow {
+                label: qsTr("Floating status bar")
+                description: qsTr("Let the status bar float over the content, which stays slightly visible under it. Disable to keep the content strictly above the status bar.")
+                SettingsToggle {
+                    checked: root.model.floatingStatusBar
+                    onToggled: checked => root.model.floatingStatusBar = checked
                 }
             }
 

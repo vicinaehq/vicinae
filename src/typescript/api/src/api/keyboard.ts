@@ -97,24 +97,6 @@ export type KeyModifier =
  */
 export namespace Keyboard {
 	export namespace Shortcut {
-		export type Common =
-			| "copy"
-			| "copy-deeplink"
-			| "copy-name"
-			| "copy-path"
-			| "save"
-			| "duplicate"
-			| "edit"
-			| "move-down"
-			| "move-up"
-			| "new"
-			| "open"
-			| "open-with"
-			| "pin"
-			| "refresh"
-			| "remove"
-			| "remove-all";
-
 		export const Common = {
 			Copy: "copy",
 			CopyDeeplink: "copy",

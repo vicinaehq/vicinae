@@ -11,7 +11,7 @@ struct WindowEntry {
 };
 
 template <> struct fuzzy::FuzzySearchable<WindowEntry> {
-  static int score(const WindowEntry &e, std::string_view query) {
+  static fuzzy::Match score(const WindowEntry &e, const fuzzy::Query &query) {
     auto title = e.window->title().toStdString();
     auto wmClass = e.window->wmClass().toStdString();
     if (e.app) {
@@ -31,6 +31,6 @@ protected:
   QString displayTitle(const WindowEntry &e) const override;
   QString displaySubtitle(const WindowEntry &e) const override;
   std::optional<ImageURL> displayIcon(const WindowEntry &e) const override;
-  QVariantList displayAccessories(const WindowEntry &e) const override;
+  AccessoryList displayAccessories(const WindowEntry &e) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const WindowEntry &e) const override;
 };

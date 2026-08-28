@@ -1,5 +1,6 @@
 #pragma once
 #include <QtGlobal>
+#include <qguiapplication.h>
 #ifndef Q_OS_WIN
 #include "xdgpp/env/env.hpp"
 #endif
@@ -15,7 +16,7 @@
 #include <qtenvironmentvariables.h>
 
 #ifdef Q_OS_LINUX
-#include "internal/wayland/globals.hpp"
+#include "internal/wayland/layer-shell.hpp"
 #endif
 
 namespace Environment {
@@ -34,7 +35,10 @@ inline bool isGnomeEnvironment() {
   return desktop.contains("GNOME", Qt::CaseInsensitive) || session.contains("gnome", Qt::CaseInsensitive);
 }
 
-inline bool isWaylandSession() { return QGuiApplication::platformName() == "wayland"; }
+inline bool isWaylandSession() {
+  const auto platform = QGuiApplication::platformName();
+  return platform == "wayland" || platform == "wayland-egl";
+}
 
 inline bool isX11() { return QGuiApplication::platformName() == "xcb"; }
 
@@ -76,7 +80,7 @@ inline bool isLayerShellSupported() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
 #elifdef Q_OS_LINUX
-  return Wayland::Globals::layerShell() && !isCosmicDesktop();
+  return Wayland::hasLayerShell() && !isCosmicDesktop();
 #else
   return false;
 #endif
@@ -134,6 +138,12 @@ inline std::optional<std::string> updateVersionOverride() {
   if (const char *version = getenv("VICINAE_UPDATE_FORCE_VERSION")) { return version; }
   return std::nullopt;
 }
+
+/**
+ * Disables automatic exchange rate refreshes (on backend start and periodic).
+ * Rates can still be refreshed manually from the calculator extension.
+ */
+inline bool isAutoRateRefreshDisabled() { return getenv("VICINAE_DISABLE_AUTO_RATE_REFRESH"); }
 
 /**
  * Gets human-readable environment description

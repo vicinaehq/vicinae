@@ -90,7 +90,6 @@ std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
 std::expected<AbstractCalculatorBackend::CalculatorResult, AbstractCalculatorBackend::CalculatorError>
 SoulverCoreCalculator::compute(const QString &question, const ComputeOptions &opts) {
   const auto fail = [](auto &&reason) { return std::unexpected(CalculatorError{reason}); };
-
   auto soulverRes = calculate(question);
 
   if (!soulverRes) return fail(soulverRes.error());

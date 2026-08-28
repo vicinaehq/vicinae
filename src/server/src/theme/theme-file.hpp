@@ -60,6 +60,7 @@ public:
   std::optional<std::filesystem::path> path() const;
 
   QColor resolve(SemanticColor color) const;
+  QColor resolve(const ColorLike &color) const;
 
   /**
    * Resolve the color and convert it to a string representation

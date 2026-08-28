@@ -20,6 +20,8 @@
 
 NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
 
+void NavigationController::requestCompleterFocus() { emit completerFocusedRequested(); }
+
 void NavigationController::setNavigationTitle(const QString &navigationTitle, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->navigation.title = navigationTitle;
@@ -446,9 +448,8 @@ void NavigationController::executeActionNow(AbstractAction *action) {
     }
   }
 
-  if (action->autoClose()) { closeWindow({.clearRootSearch = true}); }
-
   action->execute(&m_ctx);
+  if (action->autoClose()) { closeWindow({.clearRootSearch = true}); }
   closeActionPanel();
 }
 

@@ -77,7 +77,7 @@ SelectableDelegate {
                 width: Math.min(implicitWidth, Math.max(0, textRow.availableForText - titleText.width - textRow.spacing))
                 text: root.itemSubtitle
                 color: root.selected ? Theme.listItemSecondarySelectionFg : root.hovered ? Theme.listItemSecondaryHoverFg : Theme.textMuted
-                font.pointSize: Theme.smallerFontSize
+                font.pointSize: Theme.regularFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1
             }

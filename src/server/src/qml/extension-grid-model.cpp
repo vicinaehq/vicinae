@@ -10,7 +10,7 @@
 #include "view-utils.hpp"
 
 template <> struct fuzzy::FuzzySearchable<GridItemViewModel> {
-  static int score(const GridItemViewModel &item, std::string_view query) {
+  static fuzzy::Match score(const GridItemViewModel &item, const fuzzy::Query &query) {
     std::vector<fuzzy::WeightedField> fields;
     fields.reserve(2 + item.keywords.size());
     fields.push_back({item.title, 1.0});

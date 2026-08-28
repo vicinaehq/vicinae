@@ -17,6 +17,7 @@ class AlertModel : public QObject {
   Q_PROPERTY(QColor confirmColor READ confirmColor NOTIFY changed)
   Q_PROPERTY(QColor cancelColor READ cancelColor NOTIFY changed)
   Q_PROPERTY(QString iconSource READ iconSource NOTIFY changed)
+  Q_PROPERTY(bool iconBadged READ iconBadged NOTIFY changed)
 
 public:
   explicit AlertModel(NavigationController &nav, QObject *parent = nullptr);
@@ -29,6 +30,7 @@ public:
   QColor confirmColor() const { return m_confirmColor; }
   QColor cancelColor() const { return m_cancelColor; }
   QString iconSource() const { return m_iconSource; }
+  bool iconBadged() const { return m_iconBadged; }
 
   Q_INVOKABLE void confirm();
   Q_INVOKABLE void cancel();
@@ -50,5 +52,6 @@ private:
   QColor m_confirmColor;
   QColor m_cancelColor;
   QString m_iconSource;
+  bool m_iconBadged = false;
   AlertWidget *m_widget = nullptr;
 };

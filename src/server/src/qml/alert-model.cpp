@@ -2,17 +2,8 @@
 #include "view-utils.hpp"
 #include "navigation-controller.hpp"
 #include "ui/alert/alert.hpp"
+#include "theme.hpp"
 #include "theme/theme-file.hpp"
-
-static QColor resolveColorLike(const ColorLike &color) {
-  auto &theme = ThemeService::instance().theme();
-  if (auto *sc = std::get_if<SemanticColor>(&color)) return theme.resolve(*sc);
-  if (auto *qc = std::get_if<QColor>(&color)) return *qc;
-  if (auto *str = std::get_if<QString>(&color)) return QColor(*str);
-  if (auto *dc = std::get_if<DynamicColor>(&color))
-    return theme.isLight() ? QColor(dc->light) : QColor(dc->dark);
-  return {};
-}
 
 AlertModel::AlertModel(NavigationController &nav, QObject *parent) : QObject(parent) {
   connect(&nav, &NavigationController::confirmAlertRequested, this, &AlertModel::handleAlertRequested);
@@ -34,13 +25,15 @@ void AlertModel::handleAlertRequested(DialogContentWidget *widget) {
   m_message = alert->messageText();
   m_confirmText = alert->confirmButtonText();
   m_cancelText = alert->cancelButtonText();
-  m_confirmColor = resolveColorLike(alert->confirmColor());
-  m_cancelColor = resolveColorLike(alert->cancelColor());
+  m_confirmColor = ThemeService::instance().theme().resolve(alert->confirmColor());
+  m_cancelColor = ThemeService::instance().theme().resolve(alert->cancelColor());
 
   if (auto icon = alert->iconUrl()) {
     m_iconSource = qml::imageSourceFor(*icon);
+    m_iconBadged = icon->isBuiltin();
   } else {
     m_iconSource.clear();
+    m_iconBadged = false;
   }
 
   emit changed();

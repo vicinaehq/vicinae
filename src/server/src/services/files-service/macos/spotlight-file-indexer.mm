@@ -12,7 +12,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include "fuzzy/fzf.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 
 namespace {
 
@@ -177,10 +177,10 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
   };
 
   CFIndex const count = MDQueryGetResultCount(mdQuery);
-  const auto &matcher = fzf::threadLocalMatcher();
   std::vector<Scored> scored;
 
   scored.reserve(count);
+  fuzzy::Query const fuzzyQuery{query};
 
   for (CFIndex i = 0; i < count; ++i) {
     auto item = (MDItemRef)MDQueryGetResultAtIndex(mdQuery, i);
@@ -202,11 +202,11 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
         continue;
       }
 
-      int const fuzzyScore = matcher.fuzzy_match_v2_score_query(path.filename().string(), query);
+      auto const m = fuzzy::scoreWeighted({{path.filename().string(), 1.0}}, fuzzyQuery);
 
-      if (fuzzyScore > 0) {
+      if (m.accepted()) {
         scored.emplace_back(Scored{.path = std::move(path),
-                                   .score = fuzzyScore,
+                                   .score = m.score,
                                    .category = category,
                                    .mimeType = mimeTypeForItem(item)});
       }

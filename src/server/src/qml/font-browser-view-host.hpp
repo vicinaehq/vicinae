@@ -1,5 +1,6 @@
 #pragma once
 #include "bridge-view.hpp"
+#include "completion-model.hpp"
 #include "font-grid-model.hpp"
 #include "view-scope.hpp"
 #include <QCoreApplication>
@@ -7,7 +8,7 @@
 
 class FontBrowserViewHost : public ViewHostBase {
   Q_OBJECT
-  Q_PROPERTY(QStringList categoryFilterOptions READ categoryFilterOptions CONSTANT)
+  Q_PROPERTY(CompletionModel *categoryFilterModel READ categoryFilterModel CONSTANT)
   Q_PROPERTY(int currentCategoryFilter READ currentCategoryFilter NOTIFY currentCategoryFilterChanged)
 
 signals:
@@ -28,19 +29,14 @@ public:
     m_model.setScope(ViewScope(context(), this));
     m_model.initialize();
     setSearchPlaceholderText(m_model.searchPlaceholder());
+    m_categoryFilterModel.setStringOptions(categoryFilterOptions());
     restoreCategoryFilter();
   }
 
   void textChanged(const QString &text) override { m_model.setFilter(text); }
   void loadInitialData() override { m_model.setFilter(searchText()); }
 
-  QStringList categoryFilterOptions() const {
-    QStringList options{tr("All")};
-    for (const auto &name : m_model.categoryNames()) {
-      options << QCoreApplication::translate("font-categories", qPrintable(name));
-    }
-    return options;
-  }
+  CompletionModel *categoryFilterModel() { return &m_categoryFilterModel; }
 
   int currentCategoryFilter() const { return m_currentCategoryFilter; }
 
@@ -56,6 +52,14 @@ public:
   }
 
 private:
+  QStringList categoryFilterOptions() const {
+    QStringList options{tr("All")};
+    for (const auto &name : m_model.categoryNames()) {
+      options << QCoreApplication::translate("font-categories", qPrintable(name));
+    }
+    return options;
+  }
+
   QStringList categoryFilterKeys() const {
     QStringList keys{QStringLiteral("All")};
     keys << m_model.categoryNames();
@@ -70,5 +74,6 @@ private:
   }
 
   FontGridModel m_model{this};
+  CompletionModel m_categoryFilterModel{this};
   int m_currentCategoryFilter = 0;
 };

@@ -15,6 +15,7 @@
   gcc15Stdenv,
   wayland,
   glaze,
+  numen,
   swift ? null,
   apple-sdk ? null,
 }: let
@@ -68,6 +69,7 @@ in
       "INSTALL_NODE_MODULES" = "OFF";
       "USE_SYSTEM_CMARK_GFM" = "ON";
       "USE_SYSTEM_GLAZE" = "ON";
+      "USE_SYSTEM_NUMEN" = "ON";
       "USE_SYSTEM_KF6" = "ON";
       "USE_SYSTEM_QT_KEYCHAIN" = "ON";
       "CMAKE_INSTALL_PREFIX" = placeholder "out";
@@ -76,7 +78,6 @@ in
       "CMAKE_INSTALL_LIBDIR" = "lib";
       "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
       "AUTO_ENABLE_AUTOSTART" = "OFF";
-      "ENABLE_ONBOARDING" = "OFF";
       "BUNDLE_SOULVER_CORE" = "OFF";
     };
 
@@ -108,6 +109,7 @@ in
         qt6.qtimageformats
         qt6.qtsvg
         glaze
+        numen
       ]
       ++ lib.optionals isLinux [
         kdePackages.layer-shell-qt

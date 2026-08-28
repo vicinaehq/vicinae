@@ -4,7 +4,7 @@
 #include "common/context.hpp"
 #include "config/config.hpp"
 #include "font-demo-view-host.hpp"
-#include "fuzzy/fzf.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -141,10 +141,9 @@ void FontGridModel::setFilter(const QString &text) {
     m_mode = Mode::Search;
     const auto &all = m_fontService->fontFamilies();
     auto results = m_scorer.score(std::span<const FontFamily>(all), text.toStdString(),
-                                  [this](const FontFamily &f, std::string_view query) {
-                                    if (m_categoryFilter && !f.has(*m_categoryFilter)) return 0;
-                                    return fzf::threadLocalMatcher().fuzzy_match_v2_score_query(
-                                        f.name.toStdString(), query);
+                                  [this](const FontFamily &f, const fuzzy::Query &query) -> fuzzy::Match {
+                                    if (m_categoryFilter && !f.has(*m_categoryFilter)) return {};
+                                    return fuzzy::scoreWeighted({{f.name.toStdString(), 1.0}}, query);
                                   });
     m_searchSource.setResults(tr("Results (%1)").arg(results.size()), results);
   }

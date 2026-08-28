@@ -3,6 +3,7 @@
 #include <format>
 #include <fstream>
 #include <mutex>
+#include <qlogging.h>
 
 namespace fs = std::filesystem;
 
@@ -145,6 +146,10 @@ void subprocessLine(std::string_view source, QStringView level, QStringView mess
   auto const trimmed = message.trimmed();
 
   if (trimmed.isEmpty()) return;
+
+#if defined(QT_NO_DEBUG_OUTPUT)
+  if (level == "debug") return;
+#endif
 
   MessageSink::instance().write(source, levelStyle(level), timestamp(), trimmed.toString().toStdString(), {});
 }

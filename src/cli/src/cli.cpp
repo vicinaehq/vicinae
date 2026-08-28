@@ -1,8 +1,11 @@
 #include <filesystem>
 #include <glaze/core/opts.hpp>
 #include <glaze/core/reflect.hpp>
+#include <ranges>
 #include <system_error>
+#include <unordered_map>
 #include "cli.hpp"
+#include "CLI11/CLI11.hpp"
 #include "config.hpp"
 #include "fs.hpp"
 #include "rang/rang.hpp"
@@ -343,10 +346,22 @@ class DMenuCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Render a list view from stdin"; }
 
   void setup(CLI::App *app) override {
+    const std::unordered_map<std::string, ipc::DMenuOutputFormat> formatMap{
+        {"data", ipc::DMenuOutputFormat::Data},
+        {"index", ipc::DMenuOutputFormat::Index},
+    };
+
+    const auto formatChoices = formatMap | std::views::transform([](auto &&pair) { return pair.first; }) |
+                               std::views::join_with(',') | std::ranges::to<std::string>();
+
     app->add_option("-n,--navigation-title", m_req.navigationTitle, "Set the navigation title");
     app->add_option(
         "-s,--section-title", m_req.sectionTitle,
         "Set the title of the main section. Use the {count} placeholder to render the current count.");
+    app->add_option("-f,--format", m_req.format,
+                    std::format("Control the format of the output ({})", formatChoices))
+        ->transform(CLI::CheckedTransformer(formatMap, CLI::ignore_case))
+        ->default_val(ipc::DMenuOutputFormat::Data);
     app->add_option("-p,--placeholder", m_req.placeholder, "Placeholder text to use in the search bar");
     app->add_option("-q,--query", m_req.query, "Initial search query");
     app->add_option("-W,--width", m_req.width, "Window width in pixels");

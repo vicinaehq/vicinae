@@ -32,6 +32,9 @@ heaptrack*
 .claude/*
 !.claude/CLAUDE.md
 
+# you can symlink AGENTS.md yourself
+/CLAUDE.md
+
 .omx/
 .codex/
 .gitnexus/
@@ -43,3 +46,6 @@ heaptrack*
 
 .worktrees
 .envrc.local
+
+# Local translation tooling (stored, not part of translation PRs)
+BACKUP/

@@ -30,6 +30,7 @@ RUN apt-get -y update &&	\
     libxkbcommon-x11-dev	\
     libfontconfig1-dev		\
     libfreetype6-dev		\
+    libglib2.0-dev			\
     libx11-dev				\
     libxext-dev				\
     libxfixes-dev			\
@@ -68,6 +69,7 @@ RUN ./contrib/download_prerequisites \
         --enable-languages=c,c++ \
         --disable-bootstrap \
         --disable-libstdcxx-pch \
+        --enable-default-pie \
     && make -j$(nproc) \
     && make install \
     && cd / \
@@ -89,12 +91,21 @@ WORKDIR /qt6
 
 RUN perl init-repository --module-subset=qtbase,qtsvg,qtwayland,qtdeclarative,qttools
 
+# -feature-glib is needed for qtkeychain libsecret backend to not timeout
+# no-direct-extern-access: Qt exports its data with protected visibility and
+# propagates -mno-direct-extern-access to consumers via Qt6::Platform, so
+# executables can never take copy relocations on Qt globals (which Qt binds
+# locally and never interposes — the #1841 startup crash). The linker rejects
+# any violation at build time. x86_64 only: aarch64 GCC lacks the flag and
+# doesn't need it (-fPIE already uses GOT access for extern data there).
 RUN ./configure					\
     -release					\
     -ltcg						\
     -reduce-exports				\
+    $([ "$(uname -m)" = "x86_64" ] && echo "-feature-no_direct_extern_access" || true) \
     -prefix ${INSTALL_DIR}		\
     -xcb						\
+    -feature-glib				\
     -feature-wayland-client		\
     -no-feature-wayland-server	\
     -feature-sql				\
@@ -113,7 +124,7 @@ RUN cmake --build . --parallel $(nproc) \
 FROM qt-builder AS deps-builder
 ARG NODE_VERSION=22.19.0
 
-RUN apt-get install -y python3-pip libxml2-dev
+RUN apt-get update && apt-get install -y python3-pip libxml2-dev
 RUN pip install meson
 
 # extra vicinae deps
@@ -185,7 +196,7 @@ RUN git clone https://github.com/zlib-ng/minizip-ng --branch 4.0.10 &&	\
 
 # compile modern libqalculate version, system one would be too old for us
 
-RUN apt-get install -y	\
+RUN apt-get update && apt-get install -y	\
 	autotools-dev		\
 	autoconf			\
 	libtool				\
@@ -200,7 +211,7 @@ RUN cd libqalculate && ./autogen.sh && ./configure --disable-static --enable-com
 
 RUN git clone https://github.com/fcitx/xcb-imdkit.git && cd xcb-imdkit && cmake . && cmake --build . && cmake --install .
 
-RUN apt-get install -y libdbus-1-dev libuv1-dev libcairo2-dev libxkbfile-dev iso-codes nlohmann-json3-dev libpango1.0-dev libgdk-pixbuf-2.0-dev
+RUN apt-get update && apt-get install -y libdbus-1-dev libuv1-dev libcairo2-dev libxkbfile-dev iso-codes nlohmann-json3-dev libpango1.0-dev libgdk-pixbuf-2.0-dev
 
 RUN git clone https://github.com/fcitx/fcitx5 && cd fcitx5 && git checkout 4c7e571a84908839af13e566bd2a8df36ab480b6 && cmake \
 	-DENABLE_WAYLAND=ON . \

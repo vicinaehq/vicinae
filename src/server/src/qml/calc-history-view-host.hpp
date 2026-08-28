@@ -10,7 +10,7 @@
 
 class CalculatorService;
 
-class CalcLiveSection : public SectionSource {
+class CalcLiveSection : public SectionSource, QObject {
 public:
   enum CustomRole {
     IsCalculator = Qt::UserRole + 100,
@@ -35,7 +35,6 @@ public:
 protected:
   QString itemTitle(int i) const override;
   std::optional<ImageURL> itemIcon(int i) const override;
-  QVariantList itemAccessories(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
@@ -54,8 +53,6 @@ public:
   }
 
 private:
-  using CalculatorWatcher = QFutureWatcher<AbstractCalculatorBackend::ComputeResult>;
-
   void refresh();
   void applyGroupedData(CalculatorService::GroupedRecordList data);
   void startCalculator();
@@ -66,6 +63,4 @@ private:
   std::vector<std::unique_ptr<CalcHistorySection>> m_sections;
 
   CalcLiveSection m_liveSection;
-  CalculatorWatcher m_calcWatcher;
-  QTimer m_calculatorDebounce;
 };

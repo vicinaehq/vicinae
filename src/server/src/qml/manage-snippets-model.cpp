@@ -19,8 +19,8 @@ std::optional<ImageURL> ManageSnippetsSection::displayIcon(const snippet::Serial
   return std::visit(visitor, item.data);
 }
 
-QVariantList ManageSnippetsSection::displayAccessories(const snippet::SerializedSnippet &item) const {
-  if (item.expansion) return qml::textAccessory(QString::fromStdString(item.expansion->keyword));
+AccessoryList ManageSnippetsSection::displayAccessories(const snippet::SerializedSnippet &item) const {
+  if (item.expansion) return {{.text = QString::fromStdString(item.expansion->keyword)}};
   return {};
 }
 

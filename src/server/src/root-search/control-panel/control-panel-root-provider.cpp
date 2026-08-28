@@ -202,7 +202,8 @@ WinControlPanelRootItem::newActionPanel(ApplicationContext *ctx, const RootItemM
 
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(target), tr("Copy Path")));
 
-  for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto &action :
+       RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 
@@ -239,7 +240,8 @@ WinControlPanelTaskRootItem::newActionPanel(ApplicationContext *ctx, const RootI
   auto open = new OpenControlPanelTaskAction(tr("Open"), iconUrl(), m_task.pidl);
   mainSection->addAction(open);
 
-  for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto &action :
+       RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 

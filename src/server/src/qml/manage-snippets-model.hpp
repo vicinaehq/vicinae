@@ -4,7 +4,7 @@
 #include <QCoreApplication>
 
 template <> struct fuzzy::FuzzySearchable<snippet::SerializedSnippet> {
-  static int score(const snippet::SerializedSnippet &item, std::string_view query) {
+  static fuzzy::Match score(const snippet::SerializedSnippet &item, const fuzzy::Query &query) {
     auto name = item.name;
     std::string keyword;
     if (item.expansion) keyword = item.expansion->keyword;
@@ -28,7 +28,7 @@ public:
 protected:
   QString displayTitle(const snippet::SerializedSnippet &item) const override;
   std::optional<ImageURL> displayIcon(const snippet::SerializedSnippet &item) const override;
-  QVariantList displayAccessories(const snippet::SerializedSnippet &item) const override;
+  AccessoryList displayAccessories(const snippet::SerializedSnippet &item) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const snippet::SerializedSnippet &item) const override;
 
 private:

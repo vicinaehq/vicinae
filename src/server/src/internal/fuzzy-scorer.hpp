@@ -1,5 +1,6 @@
 #pragma once
 
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "fuzzy/scored.hpp"
 #include <QtConcurrent>
 #include <algorithm>
@@ -18,33 +19,34 @@
  */
 template <typename T> class FuzzyScorer {
 public:
-  using Scorer = std::function<int(const T &item, std::string_view query)>;
+  using Scorer = std::function<fuzzy::Match(const T &item, const fuzzy::Query &query)>;
   static constexpr size_t PARALLEL_THRESHOLD = 1000;
   static constexpr size_t MIN_BATCH = 256;
   using TScored = Scored<const T *>;
 
-  std::span<Scored<const T *>> score(std::span<const T> items, std::string_view query,
+  std::span<Scored<const T *>> score(std::span<const T> items, std::string_view text,
                                      const Scorer &scorer) const {
     m_data.reserve(items.size());
+    fuzzy::Query const query{text};
 
     if (items.size() < PARALLEL_THRESHOLD) { return scoreSync(items, query, scorer); }
     return scoreParallel(items, query, scorer);
   }
 
 private:
-  std::span<Scored<const T *>> scoreSync(std::span<const T> items, std::string_view query,
+  std::span<Scored<const T *>> scoreSync(std::span<const T> items, const fuzzy::Query &query,
                                          const Scorer &scorer) const {
     m_data.clear();
 
     for (auto &item : items) {
-      if (auto score = scorer(item, query)) { m_data.emplace_back(TScored(&item, score)); }
+      if (auto m = scorer(item, query); m.accepted()) { m_data.emplace_back(TScored(&item, m.score)); }
     }
 
     std::ranges::stable_sort(m_data, std::greater{});
     return m_data;
   }
 
-  std::span<Scored<const T *>> scoreParallel(std::span<const T> items, std::string_view query,
+  std::span<Scored<const T *>> scoreParallel(std::span<const T> items, const fuzzy::Query &query,
                                              const Scorer &scorer) const {
     std::vector<QFuture<size_t>> futures;
     const int poolThreads = QThreadPool::globalInstance()->maxThreadCount();
@@ -59,15 +61,15 @@ private:
       const size_t start = i * batchSize;
       const size_t end = std::min(start + batchSize, items.size());
 
-      futures[i] = QtConcurrent::run([this, start, end, &scorer, query, items]() {
+      futures[i] = QtConcurrent::run([this, start, end, &scorer, &query, items]() {
         size_t zeroCount = 0;
 
         for (auto i = start; i != end; ++i) {
           const auto &item = items[i];
 
-          if (auto score = scorer(item, query)) {
+          if (auto m = scorer(item, query); m.accepted()) {
             m_data[i].data = &item;
-            m_data[i].score = score;
+            m_data[i].score = m.score;
           } else {
             m_data[i].score = 0;
             zeroCount += 1;

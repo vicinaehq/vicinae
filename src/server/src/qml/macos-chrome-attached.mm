@@ -1,11 +1,11 @@
 #include "macos-chrome-attached.hpp"
+#include "launcher-window-platform.hpp"
 
 #include <qevent.h>
 #include <qlogging.h>
 #include <QPointer>
 #include <QQuickItem>
 #include <QQuickWindow>
-#include <QTimer>
 
 #import <AppKit/AppKit.h>
 #import <QuartzCore/QuartzCore.h>
@@ -14,6 +14,7 @@
 namespace {
 
 NSString *const EFFECT_VIEW_IDENTIFIER = @"vicinae-effect";
+NSString *const EMPTY_TOOLBAR_IDENTIFIER = @"vicinae-empty-toolbar";
 
 NSView *nsViewFromWinId(WId winId) { return (__bridge NSView *)reinterpret_cast<void *>(winId); }
 
@@ -56,7 +57,7 @@ CGColorRef cgColorFromQColor(const QColor &c) {
 
 void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
                        NSVisualEffectMaterial fallbackMaterial, const QString &appearance, int cornerRadius,
-                       const QColor &borderColor, int borderWidth) {
+                       const QColor &borderColor, int borderWidth, bool followsActiveState) {
   NSView *contentView = nswin.contentView;
   if (!contentView) return;
 
@@ -97,7 +98,6 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
     } else {
       NSVisualEffectView *v = [[NSVisualEffectView alloc] initWithFrame:parent.bounds];
       v.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-      v.state = NSVisualEffectStateActive;
       existing = v;
     }
     existing.identifier = EFFECT_VIEW_IDENTIFIER;
@@ -122,7 +122,9 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
       ((void (*)(id, SEL, double))objc_msgSend)(existing, setCR, (double)cornerRadius);
     }
   } else {
-    ((NSVisualEffectView *)existing).material = fallbackMaterial;
+    NSVisualEffectView *v = (NSVisualEffectView *)existing;
+    v.material = fallbackMaterial;
+    v.state = followsActiveState ? NSVisualEffectStateFollowsWindowActiveState : NSVisualEffectStateActive;
     existing.layer.cornerRadius = cornerRadius;
     existing.layer.masksToBounds = YES;
     existing.layer.borderWidth = borderWidth;
@@ -132,31 +134,24 @@ void installEffectView(NSWindow *nswin, bool enabled, bool wantLiquidGlass,
   }
 }
 
+// Radius the OS gives titled windows (larger on Tahoe); read off NSThemeFrame's SPI
+// so the effect view's clip matches the native frame shape.
+CGFloat nativeTitledCornerRadius(NSWindow *nswin) {
+  NSView *frame = nswin.contentView.superview;
+  SEL sel = sel_registerName("_cornerRadius");
+  if (frame && [frame respondsToSelector:sel]) {
+    CGFloat r = ((CGFloat (*)(id, SEL))objc_msgSend)(frame, sel);
+    if (r > 0) return r;
+  }
+  return 10.0;
+}
+
 NSScreen *cursorScreen() {
   NSPoint mouse = [NSEvent mouseLocation];
   for (NSScreen *candidate in [NSScreen screens]) {
     if (NSPointInRect(mouse, candidate.frame)) return candidate;
   }
   return [NSScreen mainScreen];
-}
-
-void placeWindowOnCursorScreen(QWindow *window, qreal yFraction, qreal referenceHeight) {
-  if (!window) return;
-  NSView *view = nsViewFromWinId(window->winId());
-  if (!view) return;
-  NSWindow *nswin = view.window;
-  if (!nswin) return;
-
-  NSScreen *screen = cursorScreen();
-  if (!screen) return;
-
-  NSRect const vf = screen.visibleFrame;
-  NSSize const size = nswin.frame.size;
-  CGFloat const refHeight = referenceHeight > 0 ? referenceHeight : size.height;
-  CGFloat const x = vf.origin.x + (vf.size.width - size.width) / 2.0;
-  CGFloat const visibleTop = vf.origin.y + vf.size.height;
-  CGFloat const windowTop = visibleTop - (vf.size.height - refHeight) * yFraction;
-  [nswin setFrameOrigin:NSMakePoint(x, windowTop - size.height)];
 }
 
 } // namespace
@@ -227,6 +222,27 @@ void MacOSWindowAttached::setBorderWidth(int value) {
   apply();
 }
 
+void MacOSWindowAttached::setTransparentTitlebar(bool value) {
+  if (m_transparentTitlebar == value) return;
+  m_transparentTitlebar = value;
+  emit transparentTitlebarChanged();
+  apply();
+}
+
+void MacOSWindowAttached::setFollowsWindowActiveState(bool value) {
+  if (m_followsWindowActiveState == value) return;
+  m_followsWindowActiveState = value;
+  emit followsWindowActiveStateChanged();
+  apply();
+}
+
+void MacOSWindowAttached::setMoveToActiveSpace(bool value) {
+  if (m_moveToActiveSpace == value) return;
+  m_moveToActiveSpace = value;
+  emit moveToActiveSpaceChanged();
+  apply();
+}
+
 void MacOSWindowAttached::trackWindow(QWindow *window) {
   m_window = window;
   if (!m_window) return;
@@ -264,6 +280,9 @@ void MacOSWindowAttached::apply() {
     m_snapshot.backgroundColor = (void *)CFBridgingRetain(nswin.backgroundColor);
     m_snapshot.hasShadow = nswin.hasShadow;
     m_snapshot.animationBehavior = (long)nswin.animationBehavior;
+    m_snapshot.styleMask = (unsigned long)nswin.styleMask;
+    m_snapshot.titleVisibility = (long)nswin.titleVisibility;
+    m_snapshot.titlebarAppearsTransparent = nswin.titlebarAppearsTransparent;
   }
 
   nswin.opaque = NO;
@@ -271,9 +290,30 @@ void MacOSWindowAttached::apply() {
   nswin.hasShadow = YES;
   nswin.animationBehavior = NSWindowAnimationBehaviorNone;
 
+  if (m_moveToActiveSpace) nswin.collectionBehavior |= NSWindowCollectionBehaviorMoveToActiveSpace;
+
+  int cornerRadius = m_cornerRadius;
+  if (m_transparentTitlebar) {
+    nswin.styleMask |= NSWindowStyleMaskFullSizeContentView;
+    nswin.titlebarAppearsTransparent = YES;
+    nswin.titleVisibility = NSWindowTitleHidden;
+    // An empty unified toolbar tells AppKit to lay the traffic lights out with the
+    // taller, inset metrics native full-content windows use (System Settings & co).
+    if (!nswin.toolbar) { nswin.toolbar = [[NSToolbar alloc] initWithIdentifier:EMPTY_TOOLBAR_IDENTIFIER]; }
+    nswin.toolbarStyle = NSWindowToolbarStyleUnified;
+    nswin.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
+    // Qt's WindowMaximizeButtonHint doesn't reach the zoom button, which Cocoa
+    // wires to fullscreen; enforce the declared flags here.
+    if (!(m_window->flags() & Qt::WindowMaximizeButtonHint)) {
+      [nswin standardWindowButton:NSWindowZoomButton].enabled = NO;
+      nswin.collectionBehavior |= NSWindowCollectionBehaviorFullScreenNone;
+    }
+    if (cornerRadius <= 0) cornerRadius = (int)nativeTitledCornerRadius(nswin);
+  }
+
   installEffectView(nswin, m_blurEnabled, m_material == QStringLiteral("liquidGlass"),
-                    materialFromString(m_material), m_appearance, m_cornerRadius, m_borderColor,
-                    m_borderWidth);
+                    materialFromString(m_material), m_appearance, cornerRadius, m_borderColor, m_borderWidth,
+                    m_followsWindowActiveState);
 }
 
 void MacOSWindowAttached::revert() {
@@ -284,12 +324,18 @@ void MacOSWindowAttached::revert() {
   if (!nswin) return;
 
   installEffectView(nswin, /*enabled=*/false, /*wantLiquidGlass=*/false, NSVisualEffectMaterialHUDWindow,
-                    QString(), 0, QColor(), 0);
+                    QString(), 0, QColor(), 0, false);
 
   if (m_snapshot.valid) {
     nswin.opaque = m_snapshot.opaque;
     nswin.hasShadow = m_snapshot.hasShadow;
     nswin.animationBehavior = (NSWindowAnimationBehavior)m_snapshot.animationBehavior;
+    // Only the bit this attached type owns; MacOSPanel manages the rest of the mask.
+    nswin.styleMask = (nswin.styleMask & ~NSWindowStyleMaskFullSizeContentView) |
+                      (m_snapshot.styleMask & NSWindowStyleMaskFullSizeContentView);
+    nswin.titleVisibility = (NSWindowTitleVisibility)m_snapshot.titleVisibility;
+    nswin.titlebarAppearsTransparent = m_snapshot.titlebarAppearsTransparent;
+    if ([nswin.toolbar.identifier isEqualToString:EMPTY_TOOLBAR_IDENTIFIER]) nswin.toolbar = nil;
     if (m_snapshot.backgroundColor) {
       NSColor *bg = (NSColor *)CFBridgingRelease(m_snapshot.backgroundColor);
       m_snapshot.backgroundColor = nullptr;
@@ -575,6 +621,19 @@ void macosSetAccessoryActivationPolicy() {
 
 void macosActivateApp() { [NSApp activateIgnoringOtherApps:YES]; }
 
+void LauncherWindowPlatform::prepareOverlayWindow(QWindow *window) {
+  if (!window || !window->handle()) return;
+  NSView *view = nsViewFromWinId(window->winId());
+  if (!view) return;
+  NSWindow *nswin = view.window;
+  if (!nswin) return;
+
+  nswin.level = NSStatusWindowLevel;
+  nswin.collectionBehavior |=
+      NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary;
+  nswin.ignoresMouseEvents = YES;
+}
+
 static void macosClearMenuShortcuts(NSMenu *menu) {
   if (!menu) return;
   NSMenu *servicesMenu = [NSApp servicesMenu];
@@ -592,22 +651,6 @@ static void macosClearMenuShortcuts(NSMenu *menu) {
 void macosReleaseMenuShortcuts() {
   macosClearMenuShortcuts([NSApp mainMenu]);
   dispatch_async(dispatch_get_main_queue(), ^{ macosClearMenuShortcuts([NSApp mainMenu]); });
-}
-
-void MacOSPanelAttached::beginShow(qreal yFraction, qreal referenceHeight) {
-  if (!m_window) return;
-  m_window->setOpacity(0.0);
-  placeWindowOnCursorScreen(m_window, yFraction, referenceHeight);
-}
-
-void MacOSPanelAttached::finishShow(qreal yFraction, qreal referenceHeight) {
-  if (!m_window) return;
-  QPointer<MacOSPanelAttached> self(this);
-  QTimer::singleShot(0, this, [self, yFraction, referenceHeight]() {
-    if (!self || !self->m_window) return;
-    placeWindowOnCursorScreen(self->m_window, yFraction, referenceHeight);
-    self->m_window->setOpacity(1.0);
-  });
 }
 
 void MacOSPanelAttached::placeBottomCenter(qreal bottomMargin) {

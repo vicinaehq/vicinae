@@ -3,6 +3,7 @@
 #include "drag-utils.hpp"
 #include "section-list-model.hpp"
 #include "services/navigation/list-navigation.hpp"
+#include "view-utils.hpp"
 
 SectionListModel::SectionListModel(QObject *parent) : QAbstractListModel(parent) {
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
@@ -108,7 +109,7 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
     if (auto icon = source->itemIcon(flat.itemIdx)) return icon->toString();
     return QString();
   case Accessory:
-    return source->itemAccessories(flat.itemIdx);
+    return qml::accessoriesToVariantList(source->itemAccessories(flat.itemIdx));
   case IsDraggable:
     return source->isDraggable(flat.itemIdx);
   default: {
@@ -340,6 +341,8 @@ void SectionListModel::rebuildFlatList() {
 
   if (newCount == 0) {
     m_selectedIndex = -1;
+  } else if (int restored = indexOfItemId(m_lastSelectedItemId); restored >= 0) {
+    m_selectedIndex = restored;
   } else if (m_selectedIndex >= newCount) {
     m_selectedIndex = nextSelectableIndex(newCount, -1);
   } else if (m_selectedIndex >= 0 && m_flat[m_selectedIndex].kind == FlatItem::SectionHeader) {
@@ -347,4 +350,16 @@ void SectionListModel::rebuildFlatList() {
   }
 
   if (m_selectedIndex != prevSelected) emit selectedIndexChanged();
+}
+
+int SectionListModel::indexOfItemId(const QString &id) const {
+  if (id.isEmpty()) return -1;
+
+  for (int i = 0; std::cmp_less(i, m_flat.size()); ++i) {
+    if (m_flat[i].kind != FlatItem::DataItem) continue;
+    auto *source = m_sources[m_flat[i].sourceIdx];
+    if (source->itemId(m_flat[i].itemIdx) == id) return i;
+  }
+
+  return -1;
 }

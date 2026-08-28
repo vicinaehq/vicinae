@@ -27,6 +27,17 @@ const ThemeFile::Icon &ThemeFile::icon() const { return m_data.icon; }
 bool ThemeFile::isLight() const { return variant() == ThemeVariant::Light; }
 bool ThemeFile::isDark() const { return variant() == ThemeVariant::Dark; }
 
+QColor ThemeFile::resolve(const ColorLike &color) const {
+  return std::visit(
+      overloads{
+          [](const QColor &c) { return c; },
+          [](const QString &s) { return Utils::colorFromString(s); },
+          [this](SemanticColor c) { return resolve(c); },
+          [this](const DynamicColor &d) { return Utils::colorFromString(isLight() ? d.light : d.dark); },
+      },
+      color);
+}
+
 QColor ThemeFile::resolve(SemanticColor color) const {
   if (auto it = m_data.semantics.find(color); it != m_data.semantics.end()) {
     auto visitor = overloads{[](const QColor &color) { return color; },
@@ -152,7 +163,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case ButtonPrimaryHoverForeground:
     return resolve(SemanticColor::ButtonPrimaryBackground);
   case SemanticColor::ButtonPrimaryFocusOutline:
-    return resolve(SemanticColor::Accent);
+    return resolve(SemanticColor::InputBorderFocus);
 
   case SemanticColor::ScrollBarBackground:
     return withAlphaF(resolve(SemanticColor::Foreground), 0.25);
@@ -202,7 +213,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::InputBorder:
     return resolve(SemanticColor::BackgroundBorder);
   case SemanticColor::InputBorderFocus:
-    return resolve(SemanticColor::Accent);
+    return mix(resolve(SemanticColor::InputBorder), resolve(SemanticColor::Foreground), 0.4f);
   case SemanticColor::InputBorderError:
     return resolve(SemanticColor::Red);
   case SemanticColor::TextPlaceholder:

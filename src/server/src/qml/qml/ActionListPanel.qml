@@ -174,7 +174,7 @@ Item {
                             anchors.centerIn: parent
                             width: parent.width - 24
                             height: 1
-                            color: Theme.divider
+                            color: Config.withAlpha(Theme.divider, 0.5)
                         }
                     }
                 }
@@ -207,7 +207,7 @@ Item {
             id: divider
             Layout.fillWidth: true
             implicitHeight: 1
-            color: Theme.divider
+            color: Config.withAlpha(Theme.divider, 0.5)
         }
 
         Item {

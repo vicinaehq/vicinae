@@ -15,7 +15,7 @@ class XdgAppDatabase : public AbstractAppDatabase {
   Q_DECLARE_TR_FUNCTIONS(XdgAppDatabase)
 
 public:
-  bool scan(const std::vector<std::filesystem::path> &paths) override;
+  bool scan() override;
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
   AppPtr findByClass(const QString &name) const override;
   AppPtr findDefaultOpener(const QString &target) const override;
@@ -43,7 +43,8 @@ public:
 
 private:
   bool launchProcess(const QString &prog, const QStringList &args,
-                     const std::optional<std::filesystem::path> &workingDirectory) const;
+                     const std::optional<std::filesystem::path> &workingDirectory,
+                     const QString &appId = {}) const;
 
   xdgpp::DesktopEntry::TerminalExec getTermExec(const XdgApplication &app) const;
   xdgpp::DesktopEntry::TerminalExec inferTermExec(const XdgApplication &app) const;

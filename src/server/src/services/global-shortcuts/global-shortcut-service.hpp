@@ -9,6 +9,7 @@ namespace config {
 class Manager;
 }
 
+class AppRuntime;
 class RootItemManager;
 
 /**
@@ -29,7 +30,7 @@ public:
   // Non-command global shortcuts are prefixed with '@' to avoid colliding with entrypoint ids.
   static constexpr const char *TOGGLE_ID = "@toggle-launcher";
 
-  GlobalShortcutService(config::Manager &config, RootItemManager &rootItemManager,
+  GlobalShortcutService(config::Manager &config, RootItemManager &rootItemManager, AppRuntime &appRuntime,
                         std::unique_ptr<AbstractGlobalShortcutBackend> backend);
 
   AbstractGlobalShortcutBackend *backend() const { return m_backend.get(); }
@@ -63,11 +64,15 @@ private:
   void reconcile();
   void onActivated(const QString &id, quint64 timestamp);
   QString describeCommand(const EntrypointId &id) const;
+  void updateInhibition();
+  bool computeInhibited() const;
 
   config::Manager &m_config;
   RootItemManager &m_rootItemManager;
+  AppRuntime &m_appRuntime;
   std::unique_ptr<AbstractGlobalShortcutBackend> m_backend;
   std::unordered_map<QString, Action> m_actions;
   std::unordered_map<QString, QString> m_appliedTriggers;
   bool m_capturing = false;
+  bool m_inhibited = false;
 };

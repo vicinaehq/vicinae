@@ -4,7 +4,7 @@
 #include <utility>
 
 template <> struct fuzzy::FuzzySearchable<CompletionModel::Item> {
-  static int score(const CompletionModel::Item &item, std::string_view query) {
+  static fuzzy::Match score(const CompletionModel::Item &item, const fuzzy::Query &query) {
     return fuzzy::scoreWeighted({{item.title, 1.0}}, query);
   }
 };
@@ -63,6 +63,56 @@ void CompletionModel::setSections(const QVariantList &sections) {
   rebuildFlatList();
   endResetModel();
   emit countChanged();
+}
+
+void CompletionModel::updateItem(const QVariantMap &item) {
+  const auto id = item.value(QStringLiteral("id")).toString();
+  if (id.isEmpty()) return;
+
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
+    auto &items = m_sections[s].items;
+    for (int i = 0; std::cmp_less(i, items.size()); ++i) {
+      if (items[i].data.value(QStringLiteral("id")).toString() != id) continue;
+
+      auto title = item.value(QStringLiteral("title")).toString();
+      if (title.isEmpty()) title = item.value(QStringLiteral("displayName")).toString();
+      items[i] = {
+          .title = title.toStdString(),
+          .iconSource = item.value(QStringLiteral("iconSource")).toString(),
+          .data = item,
+      };
+
+      for (int f = 0; std::cmp_less(f, m_flat.size()); ++f) {
+        const auto &fi = m_flat[f];
+        if (fi.kind == FlatItem::Entry && fi.sectionIdx == s && fi.itemIdx == i) {
+          const auto idx = index(f);
+          emit dataChanged(idx, idx);
+          break;
+        }
+      }
+      return;
+    }
+  }
+}
+
+QVariantMap CompletionModel::itemDataById(const QString &id) const {
+  for (const auto &section : m_sections) {
+    for (const auto &item : section.items) {
+      if (item.data.value(QStringLiteral("id")).toString() == id) return item.data;
+    }
+  }
+  return {};
+}
+
+void CompletionModel::setStringOptions(const QStringList &options) {
+  QVariantList items;
+  for (qsizetype i = 0; i < options.size(); ++i) {
+    items.append(QVariantMap{
+        {QStringLiteral("id"), QString::number(i)},
+        {QStringLiteral("displayName"), options[i]},
+    });
+  }
+  setItems(items);
 }
 
 void CompletionModel::setFilter(const QString &query) {

@@ -63,7 +63,7 @@ export default async function (data: extensionServer.LaunchEventData) {
 			launchProps={{
 				launchType: environment.launchType,
 				arguments: data.argumentValues,
-				launchContext: data.launch_context,
+				launchContext: data.launch_context || undefined,
 				fallbackText: data.fallbackText,
 				cwd: data.cwd,
 			}}

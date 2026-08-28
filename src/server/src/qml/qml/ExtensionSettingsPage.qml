@@ -6,7 +6,7 @@ Item {
     id: root
     readonly property var extModel: settings.extensionModel
     readonly property string providerId: settings.currentPage
-    readonly property real contentWidth: Math.min(width, 720)
+    readonly property real contentWidth: Math.min(width - 32, 720)
     readonly property real sideMargin: (width - contentWidth) / 2
     property string expandedCommandId: ""
     property string _focusedCommandId: ""
@@ -15,6 +15,13 @@ Item {
         id: focusFlash
         interval: 2000
         onTriggered: root._focusedCommandId = ""
+    }
+
+    // Content above the list lays out async after the initial scroll; re-anchor until settled.
+    Timer {
+        id: scrollSettle
+        interval: 800
+        onTriggered: cmdFlickable.pendingScrollRow = -1
     }
 
     Component.onCompleted: {
@@ -39,6 +46,8 @@ Item {
         root._focusedCommandId = pending;
         focusFlash.restart();
         root.extModel.loadCommandPreferences(pending);
+        cmdFlickable.pendingScrollRow = row;
+        scrollSettle.restart();
         Qt.callLater(() => {
             if (cmdFlickable)
                 cmdFlickable.scrollToIndex(row);
@@ -57,8 +66,16 @@ Item {
         anchors.fill: parent
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        topMargin: Style.contentTopInset
+        Component.onCompleted: contentY = -topMargin
         contentHeight: contentColumn.implicitHeight
         contentWidth: width
+
+        property int pendingScrollRow: -1
+        onContentHeightChanged: {
+            if (pendingScrollRow >= 0)
+                Qt.callLater(() => scrollToIndex(pendingScrollRow));
+        }
 
         ViciWheelHandler {
             target: cmdFlickable
@@ -70,10 +87,12 @@ Item {
                 return;
             // Map into the Flickable content so the header above the list counts.
             const y = item.mapToItem(cmdFlickable.contentItem, 0, 0).y;
-            contentY = Math.max(0, Math.min(y - 24, contentHeight - height));
+            contentY = Math.max(-topMargin, Math.min(y - 24 - topMargin, contentHeight - height));
         }
 
         ScrollBar.vertical: ViciScrollBar {
+            topPadding: Style.contentTopInset
+            bottomPadding: 16
             policy: cmdFlickable.contentHeight > cmdFlickable.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         }
 
@@ -85,8 +104,8 @@ Item {
             ColumnLayout {
                 visible: root.extModel.selectedDescription !== ""
                 Layout.fillWidth: true
-                Layout.leftMargin: root.sideMargin + 20
-                Layout.rightMargin: root.sideMargin + 20
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
                 Layout.topMargin: 24
                 spacing: 0
 
@@ -108,8 +127,8 @@ Item {
             ColumnLayout {
                 visible: root.extModel.hasPreferences
                 Layout.fillWidth: true
-                Layout.leftMargin: root.sideMargin + 20
-                Layout.rightMargin: root.sideMargin + 20
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
                 Layout.topMargin: 24
                 spacing: 0
 
@@ -130,8 +149,8 @@ Item {
                 visible: root.extModel.commandModel.totalCount > 0
                 text: qsTr("Commands")
                 Layout.fillWidth: true
-                Layout.leftMargin: root.sideMargin + 20
-                Layout.rightMargin: root.sideMargin + 20
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
                 Layout.topMargin: 24
                 Layout.bottomMargin: 10
             }
@@ -139,8 +158,8 @@ Item {
             // Command list
             SettingsGroup {
                 visible: root.extModel.commandModel.totalCount > 0
-                Layout.leftMargin: root.sideMargin + 20
-                Layout.rightMargin: root.sideMargin + 20
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
 
                 Repeater {
                     id: cmdRepeater
@@ -211,23 +230,36 @@ Item {
                                     Layout.preferredHeight: 22
                                 }
 
-                                Text {
-                                    text: cmdDelegate.name
-                                    color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
-                                    font.pointSize: Theme.regularFontSize
-                                    elide: Text.ElideRight
-                                    Layout.maximumWidth: cmdRow.width * 0.55
-                                }
-
-                                ViciImage {
-                                    visible: cmdDelegate.hasPreferences
-                                    source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small").withFillColor(Theme.textMuted)
-                                    Layout.preferredWidth: 16
-                                    Layout.preferredHeight: 16
-                                }
-
                                 Item {
+                                    id: titleWrap
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    implicitHeight: titleText.implicitHeight
+
+                                    readonly property real chevronSpace: cmdChevron.visible ? cmdChevron.width + cmdRow.spacing : 0
+
+                                    Text {
+                                        id: titleText
+                                        anchors.left: parent.left
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: Math.min(implicitWidth, titleWrap.width - titleWrap.chevronSpace)
+                                        text: cmdDelegate.name
+                                        color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
+                                        font.pointSize: Theme.regularFontSize
+                                        elide: Text.ElideRight
+                                        maximumLineCount: 1
+                                    }
+
+                                    ViciImage {
+                                        id: cmdChevron
+                                        visible: cmdDelegate.hasPreferences
+                                        source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small").withFillColor(Theme.textMuted)
+                                        anchors.left: titleText.right
+                                        anchors.leftMargin: visible ? cmdRow.spacing : 0
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 16
+                                        height: 16
+                                    }
                                 }
 
                                 ShortcutField {
@@ -322,6 +354,36 @@ Item {
             Item {
                 Layout.preferredHeight: 24
             }
+        }
+    }
+
+    ColumnLayout {
+        anchors.centerIn: parent
+        spacing: 4
+        visible: root.extModel.selectedDescription === "" && !root.extModel.hasPreferences && root.extModel.commandModel.totalCount === 0
+
+        ViciImage {
+            source: root.extModel.selectedIconSource
+            opacity: 0.5
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
+            Layout.alignment: Qt.AlignHCenter
+            Layout.bottomMargin: 8
+        }
+
+        Text {
+            text: qsTr("Nothing to configure")
+            color: Theme.foreground
+            font.pointSize: Theme.regularFontSize + 1
+            font.bold: true
+            Layout.alignment: Qt.AlignHCenter
+        }
+
+        Text {
+            text: qsTr("Commands and preferences will show up here once available.")
+            color: Theme.textMuted
+            font.pointSize: Theme.smallerFontSize
+            Layout.alignment: Qt.AlignHCenter
         }
     }
 }

@@ -5,6 +5,7 @@
 #include "image-source.hpp"
 #include "keyboard-bridge.hpp"
 #include "platform-bridge.hpp"
+#include "style-bridge.hpp"
 #include "theme-bridge.hpp"
 #include "services/app-service/app-service.hpp"
 #include "vicinae.hpp"
@@ -19,7 +20,6 @@
 #include "macos-chrome-attached.hpp"
 #include "services/autostart/macos-login-item.hpp"
 #include "services/permissions/macos-permission-service.hpp"
-#include <ApplicationServices/ApplicationServices.h>
 #endif
 
 struct OnboardingState {
@@ -46,9 +46,7 @@ OnboardingWindow::OnboardingWindow(ApplicationContext &ctx, QObject *parent) : Q
 
 bool OnboardingWindow::shouldShow() {
 #if defined(Q_OS_MACOS) && defined(ENABLE_ONBOARDING)
-  // Accessibility is a hard requirement (global shortcuts, paste, snippets); if it was revoked we
-  // run the onboarding again until it's back.
-  return completedVersion() < ONBOARDING_VERSION || !AXIsProcessTrusted();
+  return completedVersion() < ONBOARDING_VERSION;
 #else
   return false;
 #endif
@@ -86,10 +84,6 @@ void OnboardingWindow::show() {
   ensureInitialized();
   if (!m_window) return;
 
-  // Returning users only ever land here because accessibility went missing: skip the intro.
-  constexpr int PERMISSION_STEP = 1;
-  if (completedVersion() >= ONBOARDING_VERSION) { m_window->setProperty("step", PERMISSION_STEP); }
-
   m_window->show();
   m_window->raise();
   m_window->requestActivate();
@@ -117,6 +111,7 @@ void OnboardingWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
   rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
   rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
+  rootCtx->setContextProperty(QStringLiteral("Style"), new StyleBridge(this));
   rootCtx->setContextProperty(QStringLiteral("onboarding"), this);
 
 #ifdef Q_OS_MACOS

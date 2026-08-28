@@ -1,4 +1,5 @@
 #pragma once
+#include "completion-model.hpp"
 #include "extend/model-parser.hpp"
 #include "extend/pagination-model.hpp"
 #include "extension/extension-action-panel-builder.hpp"
@@ -21,7 +22,7 @@ class ExtensionViewHost : public ViewHostBase {
   Q_PROPERTY(bool suppressEmptyView READ suppressEmptyView NOTIFY suppressEmptyViewChanged)
   Q_PROPERTY(QString linkAccessoryText READ linkAccessoryText NOTIFY linkAccessoryChanged)
   Q_PROPERTY(QString linkAccessoryHref READ linkAccessoryHref NOTIFY linkAccessoryChanged)
-  Q_PROPERTY(QVariantList dropdownItems READ dropdownItems NOTIFY dropdownChanged)
+  Q_PROPERTY(CompletionModel *dropdownModel READ dropdownModel CONSTANT)
   Q_PROPERTY(QVariant dropdownCurrentItem READ dropdownCurrentItem NOTIFY dropdownChanged)
   Q_PROPERTY(QString dropdownPlaceholder READ dropdownPlaceholder NOTIFY dropdownChanged)
   Q_PROPERTY(bool hasMorePages READ hasMorePages NOTIFY paginationChanged)
@@ -51,7 +52,7 @@ public:
   bool suppressEmptyView() const { return m_isLoading && !m_hasSearchText; }
   QString linkAccessoryText() const;
   QString linkAccessoryHref() const;
-  QVariantList dropdownItems() const { return m_dropdownItems; }
+  CompletionModel *dropdownModel() { return &m_dropdownModel; }
   QVariant dropdownCurrentItem() const { return m_dropdownCurrentItem; }
   QString dropdownPlaceholder() const { return m_dropdownPlaceholder; }
 
@@ -117,7 +118,7 @@ private:
   QString m_linkAccessoryText;
   QString m_linkAccessoryHref;
 
-  QVariantList m_dropdownItems;
+  CompletionModel m_dropdownModel{this};
   QVariant m_dropdownCurrentItem;
   QString m_dropdownValue;
   QString m_dropdownPlaceholder;

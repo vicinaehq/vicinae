@@ -6,7 +6,7 @@
 using AppPtr = std::shared_ptr<AbstractApplication>;
 
 template <> struct fuzzy::FuzzySearchable<AppPtr> {
-  static int score(const AppPtr &app, std::string_view query) {
+  static fuzzy::Match score(const AppPtr &app, const fuzzy::Query &query) {
     auto name = app->displayName().toStdString();
     auto desc = app->description().toStdString();
 
@@ -35,6 +35,6 @@ protected:
   QString displayTitle(const AppPtr &app) const override;
   QString displaySubtitle(const AppPtr &app) const override;
   std::optional<ImageURL> displayIcon(const AppPtr &app) const override;
-  QVariantList displayAccessories(const AppPtr &app) const override;
+  AccessoryList displayAccessories(const AppPtr &app) const override;
   std::unique_ptr<ActionPanelState> buildActionPanel(const AppPtr &app) const override;
 };

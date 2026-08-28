@@ -1,3 +1,4 @@
+#include "environment.hpp"
 #include "log/message-handler.hpp"
 #include "pid-file/pid-file.hpp"
 #include "services/clipboard/clipboard-server.hpp"
@@ -12,7 +13,8 @@
 #include <glaze/glaze.hpp>
 #include "data-control-clipboard-server.hpp"
 #include "common/common.hpp"
-#include "wayland/globals.hpp"
+#include <QtWaylandClient/QWaylandClientExtension>
+#include "qwayland-ext-data-control-v1.h"
 #include "common/clipboard-protocol.hpp"
 #include "common/clipboard-formats.hpp"
 
@@ -30,8 +32,19 @@ QString DataControlClipboardServer::id() const { return "data-control"; }
 
 int DataControlClipboardServer::activationPriority() const { return 1; }
 
+namespace {
+class DataControlManagerV1 : public QWaylandClientExtensionTemplate<DataControlManagerV1>,
+                             public QtWayland::ext_data_control_manager_v1 {
+public:
+  DataControlManagerV1() : QWaylandClientExtensionTemplate(1) { initialize(); }
+};
+} // namespace
+
 bool DataControlClipboardServer::isActivatable() const {
-  return Wayland::Globals::dataControlManager() != nullptr;
+  if (!Environment::isWaylandSession()) return false;
+
+  static DataControlManagerV1 manager;
+  return manager.isActive();
 }
 
 // Process must stay alive even when monitoring is off: it handles clipboard writes for snippets.

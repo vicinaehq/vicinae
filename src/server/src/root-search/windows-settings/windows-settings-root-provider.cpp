@@ -204,7 +204,8 @@ WinSettingsPageRootItem::newActionPanel(ApplicationContext *ctx, const RootItemM
 
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_page.url), tr("Copy URL")));
 
-  for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto &action :
+       RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 

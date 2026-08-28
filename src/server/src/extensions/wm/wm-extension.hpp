@@ -1,20 +1,15 @@
 #pragma once
 #include "command-database.hpp"
-#include "../../ui/image/url.hpp"
-#include "theme.hpp"
+#include "service-registry.hpp"
+#include "ui/image/url.hpp"
 #include <qcontainerfwd.h>
-#include "switch-windows-command.hpp"
 #include <QCoreApplication>
 
 class WindowManagementExtension : public BuiltinCommandRepository {
-  QString id() const override { return "wm"; }
-  QString displayName() const override {
-    return QCoreApplication::translate("WindowManagementExtension", "Window Management");
-  }
-  ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::AppWindowList).setBackgroundTint(SemanticColor::Cyan);
-  }
+  QString id() const override;
+  QString displayName() const override;
+  ImageURL iconUrl() const override;
 
 public:
-  WindowManagementExtension() { registerCommand<SwitchWindowsCommand>(); }
+  WindowManagementExtension(const ServiceRegistry &services);
 };

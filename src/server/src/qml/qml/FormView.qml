@@ -8,12 +8,17 @@ Flickable {
     contentHeight: layout.implicitHeight
     clip: true
     boundsBehavior: Flickable.StopAtBounds
-    bottomMargin: root.padding
+    bottomMargin: root.padding + statusBarInset.value
     topMargin: root.padding
 
     default property alias contentData: layout.data
     property real padding: 16
     property real maxContentWidth: Infinity
+
+    StatusBarInset {
+        id: statusBarInset
+        target: root
+    }
 
     ViciWheelHandler {
         target: root
@@ -71,12 +76,12 @@ Flickable {
         let itemTop = mapped.y;
         let itemBottom = itemTop + item.height;
         let viewTop = root.contentY;
-        let viewBottom = viewTop + root.height;
+        let viewBottom = viewTop + root.height - statusBarInset.value;
 
         if (itemTop < viewTop) {
             root.contentY = Math.max(0, itemTop - 8);
         } else if (itemBottom > viewBottom) {
-            root.contentY = Math.min(root.contentHeight - root.height, itemBottom - root.height + 8);
+            root.contentY = Math.min(root.contentHeight - root.height + root.bottomMargin, itemBottom - root.height + statusBarInset.value + 8);
         }
     }
 }

@@ -122,7 +122,7 @@ std::string shellQuote(const QString &arg) {
 
 } // namespace
 
-MacAppDatabase::MacAppDatabase() { scan(defaultSearchPaths()); }
+MacAppDatabase::MacAppDatabase() { scan(); }
 
 std::vector<fs::path> MacAppDatabase::defaultSearchPaths() const {
   std::vector<fs::path> paths;
@@ -134,11 +134,54 @@ std::vector<fs::path> MacAppDatabase::defaultSearchPaths() const {
   return paths;
 }
 
-bool MacAppDatabase::scan(const std::vector<fs::path> &paths) {
+std::vector<fs::path> MacAppDatabase::searchPaths() const {
+  std::vector<fs::path> paths;
+  auto defaults = defaultSearchPaths();
+
+  paths.reserve(defaults.size() + m_extraSearchPaths.size());
+  // User-added paths have the highest priority: apps found there win id conflicts
+  paths.insert(paths.end(), m_extraSearchPaths.begin(), m_extraSearchPaths.end());
+  paths.insert(paths.end(), defaults.begin(), defaults.end());
+
+  return paths;
+}
+
+PreferenceList MacAppDatabase::preferences() const {
+  std::vector<QString> lockedPaths;
+  auto defaults = defaultSearchPaths();
+
+  lockedPaths.reserve(defaults.size());
+  for (const auto &path : defaults) {
+    lockedPaths.emplace_back(QString::fromStdString(path.string()));
+  }
+
+  auto paths = Preference::directories("paths", std::move(lockedPaths));
+  paths.setTitle(tr("Application directories"));
+  paths.setDescription(tr("Directories applications are sourced from. System directories are always "
+                          "scanned and cannot be removed."));
+
+  return {paths};
+}
+
+void MacAppDatabase::applyPreferences(const QJsonObject &preferences) {
+  std::vector<fs::path> extra;
+  const auto arr = preferences.value("paths").toArray();
+
+  extra.reserve(arr.size());
+  for (const auto &entry : arr) {
+    if (auto path = entry.toString(); !path.isEmpty()) { extra.emplace_back(path.toStdString()); }
+  }
+
+  if (extra == m_extraSearchPaths) return;
+  m_extraSearchPaths = std::move(extra);
+  emit changed();
+}
+
+bool MacAppDatabase::scan() {
   m_apps.clear();
   m_appsById.clear();
 
-  auto scanned = collectAppPaths(paths);
+  auto scanned = collectAppPaths(searchPaths());
   m_apps.reserve(scanned.size());
 
   for (const auto &path : scanned) {

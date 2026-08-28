@@ -11,7 +11,7 @@ class SnippetExtension : public BuiltinCommandRepository {
   QString displayName() const override { return tr("Snippets"); }
   QString description() const override { return tr("Text expansion and snippet management"); }
   ImageURL iconUrl() const override {
-    return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL(BuiltinIcon::Snippets).setBackgroundTint(SemanticColor::Orange);
   }
 
   std::vector<Preference> preferences() const override;

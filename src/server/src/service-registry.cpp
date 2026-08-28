@@ -15,6 +15,7 @@
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "services/selection/abstract-selection-service.hpp"
 #include "services/glyph-service/glyph-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
@@ -71,6 +72,7 @@ LinuxInputServer *ServiceRegistry::inputServer() const { return m_inputServer.ge
 SnippetService *ServiceRegistry::snippetService() const { return m_snippetService.get(); }
 
 PasteService *ServiceRegistry::pasteService() const { return m_pasteService.get(); }
+AbstractSelectionService *ServiceRegistry::selectionService() const { return m_selectionService.get(); }
 
 FileChooserService *ServiceRegistry::fileChooserService() const { return m_fileChooserService.get(); }
 
@@ -174,6 +176,10 @@ void ServiceRegistry::setSnippetService(std::unique_ptr<SnippetService> service)
 
 void ServiceRegistry::setPasteService(std::unique_ptr<PasteService> service) {
   m_pasteService = std::move(service);
+}
+
+void ServiceRegistry::setSelectionService(std::unique_ptr<AbstractSelectionService> service) {
+  m_selectionService = std::move(service);
 }
 
 void ServiceRegistry::setFileChooserService(std::unique_ptr<FileChooserService> service) {

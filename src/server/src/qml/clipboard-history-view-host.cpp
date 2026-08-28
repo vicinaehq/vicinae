@@ -68,7 +68,9 @@ static const std::unordered_map<QString, ClipboardOfferKind> savedFilterToKind{
 
 static const char *filterIndexToSavedValue[] = {"all", "text", "image", "link", "file"};
 
-ClipboardHistoryViewHost::ClipboardHistoryViewHost() : ViewHostBase() {}
+ClipboardHistoryViewHost::ClipboardHistoryViewHost() : ViewHostBase() {
+  m_kindFilterModel.setStringOptions({tr("All"), tr("Text"), tr("Images"), tr("Links"), tr("Files")});
+}
 
 QUrl ClipboardHistoryViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/ClipboardHistoryView.qml"));

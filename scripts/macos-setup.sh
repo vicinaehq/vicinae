@@ -18,9 +18,11 @@ brew install \
   libqalculate \
   dylibbundler \
   ccache	\
-  extra-cmake-modules
+  extra-cmake-modules \
+  catch2
 
-if [[ ! -d "$QT_DIR" ]]; then
+# keyed on the icns plugin so installs predating the qtimageformats module get upgraded
+if [[ ! -f "$QT_DIR/plugins/imageformats/libqicns.dylib" ]]; then
   echo "==> installing official Qt $QT_VERSION to ~/Qt"
-  pipx run --spec aqtinstall aqt install-qt mac desktop "$QT_VERSION" clang_64 -m qtshadertools -O "$HOME/Qt"
+  pipx run --spec aqtinstall aqt install-qt mac desktop "$QT_VERSION" clang_64 -m qtshadertools qtimageformats -O "$HOME/Qt"
 fi

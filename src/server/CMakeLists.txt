@@ -9,6 +9,19 @@ if (USE_SYSTEM_KF6 AND NOT WIN32)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
+if (USE_SYSTEM_NUMEN)
+	find_package(numen REQUIRED)
+else()
+	include(FetchContent)
+
+	FetchContent_Declare(numen
+	  GIT_REPOSITORY https://github.com/vicinaehq/numen
+	  GIT_TAG        v0.4.1
+	)
+
+	FetchContent_MakeAvailable(numen)
+endif()
+
 list(APPEND LIBS
 	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
@@ -24,6 +37,7 @@ list(APPEND LIBS
 	vicinae::fuzzy
 	vicinae::crypto
 	sqlcipher
+	numen::numen
 )
 
 if (NOT WIN32)
@@ -31,8 +45,8 @@ if (NOT WIN32)
 endif()
 
 if (UNIX AND NOT APPLE)
-	find_package(Qt6 REQUIRED COMPONENTS DBus)
-	list(APPEND LIBS wayland-client Qt6::DBus)
+	find_package(Qt6 REQUIRED COMPONENTS DBus WaylandClient)
+	list(APPEND LIBS wayland-client Qt6::DBus Qt6::WaylandClient)
 endif()
 
 if (APPLE AND BUNDLE_SOULVER_CORE)
@@ -128,7 +142,7 @@ set(SRCS
 	src/root-search/shortcuts/shortcut-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
-	
+
 	src/extension/manager/extension-manager.hpp
 	src/extension/manager/extension-manager.cpp
 	src/extension/node-runtime/node-runtime.hpp
@@ -200,6 +214,8 @@ set(SRCS
 	src/ui/action-pannel/action-panel-view.hpp
 	src/ui/action-pannel/action-list-view.hpp
 	src/ui/action-pannel/action-list-view.cpp
+	src/ui/action-pannel/shortcut-recorder-panel-view.hpp
+	src/ui/action-pannel/shortcut-recorder-panel-view.cpp
 
 	
 	src/extension/extension-command.hpp
@@ -273,6 +289,9 @@ set(SRCS
 	src/extensions/clipboard/history/clipboard-history-controller.cpp
 	src/extensions/browser/browser-extension.cpp
 
+	src/extensions/wm/wm-extension.hpp
+	src/extensions/wm/wm-extension.cpp
+
 	src/extensions/clipboard/clipboard-extension.hpp
 	src/extensions/clipboard/clipboard-extension.cpp
 
@@ -338,6 +357,11 @@ set(SRCS
 
 	src/services/calculator-service/calculator-service.hpp
 	src/services/calculator-service/calculator-service.cpp
+
+	src/services/calculator-service/numen/numen-currency-provider.hpp
+	src/services/calculator-service/numen/numen-currency-provider.cpp
+	src/services/calculator-service/numen/numen-calculator-backend.hpp
+	src/services/calculator-service/numen/numen-calculator-backend.cpp
 
 	src/services/files-service/abstract-file-indexer.hpp
 	src/services/files-service/dummy-file-indexer.hpp
@@ -417,6 +441,8 @@ set(SRCS
 	src/services/paste/abstract-paste-service.hpp
 	src/services/paste/dummy-paste-service.hpp
 	src/services/paste/paste-service.cpp
+	src/services/selection/abstract-selection-service.hpp
+	src/services/selection/dummy-selection-service.hpp
 	src/services/browser-extension-service.hpp
 
 	src/internal/program-db/program-db.hpp
@@ -545,6 +571,7 @@ set(SRCS
 	src/qml/keyboard-bridge.hpp
 	src/qml/global-shortcut-bridge.hpp
 	src/qml/platform-bridge.hpp
+	src/qml/style-bridge.hpp
 	src/qml/shortcut-conflict.hpp
 	src/qml/shortcut-conflict.cpp
 	src/qml/create-extension-view-host.hpp
@@ -561,6 +588,9 @@ set(SRCS
 	src/qml/switch-windows-model.cpp
 	src/qml/switch-windows-view-host.hpp
 	src/qml/switch-windows-view-host.cpp
+	src/qml/switch-workspaces-model.hpp
+	src/qml/switch-workspaces-view-host.hpp
+	src/qml/switch-workspaces-view-host.cpp
 	src/qml/manage-shortcuts-model.hpp
 	src/qml/manage-shortcuts-model.cpp
 	src/qml/manage-shortcuts-view-host.hpp
@@ -652,6 +682,8 @@ if (APPLE)
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.hpp
 		src/services/paste/macos-paste-service.mm
+		src/services/selection/macos-selection-service.hpp
+		src/services/selection/macos-selection-service.mm
 		src/services/power-manager/macos/macos-power-manager.hpp
 		src/services/power-manager/macos/macos-power-manager.mm
 		src/services/audio-control/macos/coreaudio-audio-control.hpp
@@ -672,6 +704,8 @@ if (APPLE)
 		src/services/autostart/macos-login-item.mm
 		src/services/desktop-notification/macos/macos-notification-client.hpp
 		src/services/desktop-notification/macos/macos-notification-client.mm
+		src/services/file-chooser/macos/mac-file-chooser.hpp
+		src/services/file-chooser/macos/mac-file-chooser.mm
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -684,6 +718,7 @@ if (APPLE)
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.mm
+		src/services/selection/macos-selection-service.mm
 		src/services/power-manager/macos/macos-power-manager.mm
 		src/services/window-manager/macos/macos-window.mm
 		src/services/window-manager/macos/macos-window-manager.mm
@@ -692,6 +727,7 @@ if (APPLE)
 		src/services/permissions/macos-permission-service.mm
 		src/services/autostart/macos-login-item.mm
 		src/services/desktop-notification/macos/macos-notification-client.mm
+		src/services/file-chooser/macos/mac-file-chooser.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications")
 
@@ -709,8 +745,12 @@ elseif (WIN32)
 		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
 		src/services/clipboard/windows/windows-clipboard-server.hpp
 		src/services/clipboard/windows/windows-clipboard-server.cpp
+		src/services/tray/windows/tray-service-windows.hpp
+		src/services/tray/windows/tray-service-windows.cpp
 		src/services/paste/windows-paste-service.hpp
 		src/services/paste/windows-paste-service.cpp
+		src/services/selection/windows-selection-service.hpp
+		src/services/selection/windows-selection-service.cpp
 		src/services/files-service/windows/win-file-indexer.hpp
 		src/services/files-service/windows/win-file-indexer.cpp
 		src/services/window-manager/windows/windows-window.hpp
@@ -729,7 +769,7 @@ elseif (WIN32)
 		src/services/wallpaper/windows/windows-wallpaper-backend.hpp
 		src/services/wallpaper/windows/windows-wallpaper-backend.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp
@@ -794,12 +834,15 @@ if (UNIX AND NOT APPLE)
 		src/services/app-service/xdg/xdg-app-database.hpp
 		src/services/app-service/xdg/xdg-app-database.cpp
 		src/services/app-service/xdg/xdg-app.cpp
+		src/root-search/kde-settings/kde-settings-root-provider.hpp
+		src/root-search/kde-settings/kde-settings-root-provider.cpp
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 		src/services/power-manager/systemd/systemd-power-manager.cpp
 		src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
 
 		src/services/paste/linux-paste-service.cpp
+		src/services/selection/linux-selection-service.cpp
 
 		src/services/input-server/linux-input-server.hpp
 		src/services/input-server/linux-input-server.cpp
@@ -851,25 +894,24 @@ if (UNIX AND NOT APPLE)
 
     include("Wayland")
 
-    wayland_generate_protocol("wlr-foreign-toplevel-management-unstable-v1")
-	wayland_generate_protocol("ext-data-control-v1")
-	wayland_generate_protocol("kde-blur")
-	wayland_generate_protocol("ext-background-effect-v1")
-	wayland_generate_protocol("keyboard-shortcuts-inhibit-unstable-v1")
-	wayland_generate_protocol("wlr-layer-shell-unstable-v1")
-	wayland_generate_protocol("xdg-shell")
-	wayland_generate_protocol("vicinae-hotkey-v1")
+	# only needed to provide the xdg_* interface symbols referenced by the
+	# generated wlr-layer-shell protocol code
+	wayland_system_protocol(XDG_SHELL_XML "stable/xdg-shell/xdg-shell.xml")
+	wayland_generate_protocol(${XDG_SHELL_XML})
+
+	wayland_system_protocol(EXT_BACKGROUND_EFFECT_XML "staging/ext-background-effect/ext-background-effect-v1.xml")
+	wayland_system_protocol(EXT_DATA_CONTROL_XML "staging/ext-data-control/ext-data-control-v1.xml")
+	wayland_system_protocol(KEYBOARD_SHORTCUTS_INHIBIT_XML "unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml")
+	wayland_system_protocol(XDG_ACTIVATION_XML "staging/xdg-activation/xdg-activation-v1.xml")
 
 	list(APPEND LIBS xkbcommon)
 
 	# Common Wayland support files
 	list(APPEND SRCS
-		src/internal/wayland/globals.cpp
-		src/internal/wayland/display.cpp
-		src/internal/wayland/registry.cpp
-		src/internal/wayland/seat.cpp
+		src/internal/wayland/output-tracker.cpp
+		src/internal/wayland/layer-shell.cpp
+		src/internal/wayland/xdg-activation.cpp
 		src/services/window-material/ext-background-effect-v1-manager.cpp
-		src/services/window-material/kde-background-effect-manager.cpp
 		src/services/shortcut-inhibit/wayland-shortcut-inhibit-manager.cpp
 		src/services/clipboard/data-control/data-control-clipboard-server.hpp
 		src/services/clipboard/data-control/data-control-clipboard-server.cpp
@@ -930,6 +972,20 @@ endif()
 
 qt_add_executable(${TARGET} ${SRCS})
 
+if (UNIX AND NOT APPLE)
+	qt6_generate_wayland_protocol_client_sources(${TARGET}
+		PRIVATE_CODE
+		FILES
+			${EXT_BACKGROUND_EFFECT_XML}
+			${EXT_DATA_CONTROL_XML}
+			${KEYBOARD_SHORTCUTS_INHIBIT_XML}
+			${XDG_ACTIVATION_XML}
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/vicinae-hotkey-v1.xml
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-foreign-toplevel-management-unstable-v1.xml
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-layer-shell-unstable-v1.xml
+	)
+endif()
+
 vicinae_enable_utf8(${TARGET})
 
 if(APPLE)
@@ -951,8 +1007,10 @@ set(VICINAE_QML_FILES
 	src/qml/qml/LauncherWindow.qml
 	src/qml/qml/PopupMaterial.qml
 	src/qml/qml/ViciPopover.qml
+	src/qml/qml/PopoverBackground.qml
 	src/qml/qml/SearchBar.qml
 	src/qml/qml/GenericListView.qml
+	src/qml/qml/StatusBarInset.qml
 	src/qml/qml/HoverResetOnModelChange.qml
 	src/qml/qml/HoverResetOnShow.qml
 	src/qml/qml/RootSearchList.qml
@@ -1045,6 +1103,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ScriptOutputText.qml
 	src/qml/qml/ScriptExecutorView.qml
 	src/qml/qml/SettingsWindow.qml
+	src/qml/qml/SettingsScrollEdge.qml
+	src/qml/qml/SettingsNavButtons.qml
 	src/qml/qml/SettingsSidebar.qml
 	src/qml/qml/SettingsRow.qml
 	src/qml/qml/SettingsGroup.qml
@@ -1058,6 +1118,8 @@ set(VICINAE_QML_FILES
 	src/qml/qml/ExtensionSettingsPage.qml
 	src/qml/qml/AboutSettingsPage.qml
 	src/qml/qml/ShortcutRecorderField.qml
+	src/qml/qml/ShortcutRecorderCapture.qml
+	src/qml/qml/ShortcutRecorderPanel.qml
 	src/qml/qml/ShortcutField.qml
 	src/qml/qml/PreferenceFormView.qml
 	src/qml/qml/SettingsPreferenceForm.qml
@@ -1066,10 +1128,6 @@ set(VICINAE_QML_FILES
 	src/qml/qml/HudWindow.qml
 	src/qml/qml/OnboardingWindow.qml
 )
-
-if(CMAKE_BUILD_TYPE MATCHES "Debug")
-	list(APPEND VICINAE_QML_FILES src/qml/qml/ButtonShowcase.qml src/qml/qml/UIShowcase.qml)
-endif()
 
 if(WAYLAND_LAYER_SHELL)
 	list(APPEND VICINAE_QML_FILES
@@ -1085,6 +1143,7 @@ if(APPLE)
 		src/qml/qml/HudWindowMacOS.qml
 		src/qml/qml/CompletionPanelMacOS.qml
 		src/qml/qml/PopupMaterialMacOS.qml
+		src/qml/qml/SettingsWindowMacOS.qml
 	)
 endif()
 
@@ -1203,6 +1262,9 @@ qt_add_translations(${TARGET}
 	TS_FILE_BASE vicinae
 	TS_FILES
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_it.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_ru.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_uk.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_zh_CN.ts
 	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
 	SOURCES ${VICINAE_I18N_SOURCES}
@@ -1231,7 +1293,7 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/calculator-service/qalculate/qalculate-backend.cpp
 		tests/calculator/qalculate-backend.cpp
 	)
-	target_link_libraries(${TEST_TARGET} PRIVATE qalculate Qt6::Concurrent)
+	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common qalculate Qt6::Concurrent)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()

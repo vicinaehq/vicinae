@@ -183,6 +183,11 @@ bool ActionPanelController::tryShortcut(int key, int modifiers) {
   return model->activateByShortcut(key, modifiers);
 }
 
+bool ActionPanelController::capturesAllKeys() const {
+  if (!m_open || !m_currentPanel) return false;
+  return m_currentPanel->property("capturesAllKeys").toBool();
+}
+
 bool ActionPanelController::activateBoundAction(const QKeyEvent *event) {
   auto *root = activeRoot();
   if (!root) return false;

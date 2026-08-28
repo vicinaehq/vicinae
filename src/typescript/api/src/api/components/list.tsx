@@ -355,9 +355,11 @@ const ListItem: React.FC<List.Item.Props> = ({
 	dragContent,
 	icon,
 	accessories,
+	id: propsId,
 	...props
 }) => {
-	const id = useRef(props.id ?? randomUUID());
+	const generatedId = useRef(randomUUID());
+	const id = propsId ?? generatedId.current;
 
 	// Icon
 	let serializedIcon: React.JSX.IntrinsicElements["list-item"]["icon"];
@@ -382,7 +384,7 @@ const ListItem: React.FC<List.Item.Props> = ({
 				dragContent ? Clipboard.serializeContent(dragContent) : undefined
 			}
 			accessories={serializedAccessories}
-			id={id.current}
+			id={id}
 		>
 			{detail}
 			{actions}

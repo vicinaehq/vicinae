@@ -31,10 +31,10 @@ Rectangle {
 
     color: Qt.rgba(_alertColor.r, _alertColor.g, _alertColor.b, 0.15)
     radius: 6
-    implicitHeight: _layout.implicitHeight + 16
+    implicitHeight: layout.implicitHeight + 16
 
     RowLayout {
-        id: _layout
+        id: layout
         anchors.fill: parent
         anchors.margins: 8
         spacing: 8

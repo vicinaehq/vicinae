@@ -7,6 +7,8 @@ Popup {
 
     property var items: []
     property var sections: []
+    property CompletionModel model: null
+    readonly property CompletionModel _model: model ?? internalModel
     property bool showFilter: false
     property string filterPlaceholder: qsTr("Filter...")
     property string currentItemId: ""
@@ -17,11 +19,16 @@ Popup {
 
     popupType: nativePanel && Platform.supports("nativePanels") ? Popup.Window : Popup.Item
 
-    readonly property int count: completionModel.count
+    readonly property int count: _model.count
     readonly property bool hasSelection: _highlightedIndex >= 0
 
-    readonly property real _bgOpacity: popupType === Popup.Window ? Config.popupOpacity : 1
-    readonly property real _fillOpacity: popupType === Popup.Window ? Config.popupSurfaceOpacity : 1
+    onCountChanged: {
+        if (_highlightedIndex >= count)
+            _highlightedIndex = -1;
+    }
+
+    readonly property real _bgOpacity: popupType === Popup.Window ? Config.popupOpacity : 0
+    readonly property real _fillOpacity: Config.popupSurfaceOpacity
 
     signal itemAccepted(var itemData)
 
@@ -40,14 +47,14 @@ Popup {
     }
 
     onItemsChanged: if (items.length > 0)
-        completionModel.setItems(items)
+        internalModel.setItems(items)
     onSectionsChanged: if (sections.length > 0)
-        completionModel.setSections(sections)
+        internalModel.setSections(sections)
 
     onOpened: {
         if (showFilter) {
             filterField.text = "";
-            completionModel.setFilter("");
+            _model.setFilter("");
             _highlightCurrentOrFirst();
             filterField.forceActiveFocus();
         }
@@ -59,34 +66,34 @@ Popup {
 
     function _highlightCurrentOrFirst() {
         if (currentItemId !== "") {
-            const idx = completionModel.indexOfItemId(currentItemId);
+            const idx = _model.indexOfItemId(currentItemId);
             if (idx >= 0) {
                 _highlightedIndex = idx;
                 return;
             }
         }
-        const first = completionModel.nextSelectableIndex(-1, 1);
+        const first = _model.nextSelectableIndex(-1, 1);
         _highlightedIndex = first >= 0 ? first : -1;
     }
 
     function filter(query) {
-        completionModel.setFilter(query);
-        const first = completionModel.nextSelectableIndex(-1, 1);
+        _model.setFilter(query);
+        const first = _model.nextSelectableIndex(-1, 1);
         _highlightedIndex = first >= 0 ? first : -1;
     }
 
     function moveUp() {
-        _highlightedIndex = completionModel.nextSelectableIndex(_highlightedIndex, -1);
+        _highlightedIndex = _model.nextSelectableIndex(_highlightedIndex, -1);
     }
 
     function moveDown() {
-        _highlightedIndex = completionModel.nextSelectableIndex(_highlightedIndex, 1);
+        _highlightedIndex = _model.nextSelectableIndex(_highlightedIndex, 1);
     }
 
     function acceptHighlighted() {
         if (_highlightedIndex < 0)
             return;
-        const data = completionModel.itemDataAt(_highlightedIndex);
+        const data = _model.itemDataAt(_highlightedIndex);
         if (Object.keys(data).length > 0) {
             itemAccepted(data);
             close();
@@ -94,24 +101,16 @@ Popup {
     }
 
     CompletionModel {
-        id: completionModel
-        onCountChanged: {
-            if (root._highlightedIndex >= count)
-                root._highlightedIndex = -1;
-        }
+        id: internalModel
     }
 
     HoverResetOnModelChange {
-        target: completionModel
+        target: root._model
     }
 
-    background: Rectangle {
-        readonly property bool csd: root.popupType === Popup.Item || Platform.supports("clientSideDecorations")
-        readonly property real bgOpacity: root.popupType === Popup.Window ? Config.popupOpacity : 1
-        radius: csd ? Math.min(Config.borderRounding, 15) : 0
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bgOpacity)
-        border.color: Config.withAlpha(Theme.popoverBorder, bgOpacity)
-        border.width: csd ? 1 : 0
+    background: PopoverBackground {
+        popup: root
+
         Loader {
             active: root.nativePanel && Platform.supports("nativePanels")
             source: "qrc:/Vicinae/CompletionPanelMacOS.qml"
@@ -198,7 +197,7 @@ Popup {
             id: completionList
             Layout.fillWidth: true
             Layout.preferredHeight: Math.min(contentHeight, root.showFilter ? 300 : 200)
-            model: completionModel
+            model: root._model
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 

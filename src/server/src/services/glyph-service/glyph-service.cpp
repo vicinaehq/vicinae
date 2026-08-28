@@ -5,6 +5,7 @@
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "fuzzy/fzf.hpp"
 #include "glyph/glyph.hpp"
 #include "omni-database.hpp"
@@ -26,25 +27,6 @@ std::optional<emoji::SkinTone> toneFromId(std::string_view id) {
     if (info.id == id) return info.tone;
   }
   return std::nullopt;
-}
-
-double frecencyBoost(std::uint32_t visitCount, std::optional<std::uint64_t> lastVisitedAt) {
-  constexpr double BOOST_CAP = 25.0;
-  constexpr double FREQ_SCALE = 5.0;
-  constexpr double RECENCY_PEAK = 10.0;
-  constexpr double RECENCY_HALF_LIFE_DAYS = 30.0;
-  constexpr double SECONDS_PER_DAY = 86400.0;
-
-  double const frequencyTerm = FREQ_SCALE * std::log(1 + visitCount * 0.1);
-
-  double recencyTerm = 0.0;
-  if (lastVisitedAt) {
-    double const daysSince =
-        (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*lastVisitedAt)) / SECONDS_PER_DAY;
-    recencyTerm = RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / RECENCY_HALF_LIFE_DAYS);
-  }
-
-  return std::min(BOOST_CAP, frequencyTerm + recencyTerm);
 }
 
 GlyphMetadata toMetadata(const SerializedEmojiMetadata &entry, const glyph::Item *data) {
@@ -134,7 +116,7 @@ SerializedEmojiMetadata &GlyphService::entryFor(std::string_view emoji) {
 }
 
 std::span<Scored<const glyph::Item *>> GlyphService::search(std::string_view query) const {
-  auto score = [this](const glyph::Item &data, std::string_view query) {
+  auto score = [this](const glyph::Item &data, const fuzzy::Query &query) {
     using WS = fzf::WeightedString;
     const auto *entry = findEntry(data.character);
 
@@ -144,11 +126,16 @@ std::span<Scored<const glyph::Item *>> GlyphService::search(std::string_view que
                                         WS{glyph::categoryLabel(data.category), 0.5f}};
 
     auto kws = data.keywords | std::views::transform([](auto &&s) { return WS{s, 0.7f}; });
-    int score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(fields, kws, query);
+    auto const qs = fzf::threadLocalMatcher().score_query(fields, kws, query);
+    fuzzy::Match m{.score = qs.score, .quality = qs.quality};
 
-    if (score > 0 && entry) score += static_cast<int>(frecencyBoost(entry->visitCount, entry->lastVisitedAt));
+    if (entry) {
+      double const f =
+          fuzzy::frecency(entry->visitCount, entry->lastVisitedAt, QDateTime::currentSecsSinceEpoch());
+      m.score += static_cast<int>(std::lround(fuzzy::FRECENCY_WEIGHT * f));
+    }
 
-    return score;
+    return m;
   };
 
   return m_scorer.score(glyph::items(), query, score);

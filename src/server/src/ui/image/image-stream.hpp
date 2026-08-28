@@ -48,6 +48,7 @@ private:
   ImageURL m_url;
   QSize m_size;
   QColor m_fg;
+  QColor m_bg;
   OmniPainter::ImageMaskType m_mask = OmniPainter::NoMask;
   QString m_cacheKey;
   QString m_originalCacheKey;

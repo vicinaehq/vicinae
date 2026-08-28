@@ -8,6 +8,8 @@ Flickable {
     contentHeight: outer.implicitHeight
     clip: true
     boundsBehavior: Flickable.StopAtBounds
+    topMargin: Style.contentTopInset
+    Component.onCompleted: contentY = -topMargin
 
     readonly property var model: settings.generalModel
 
@@ -16,13 +18,15 @@ Flickable {
     }
 
     ScrollBar.vertical: ViciScrollBar {
+        topPadding: Style.contentTopInset
+        bottomPadding: 16
         policy: root.contentHeight > root.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
     }
 
     ColumnLayout {
         id: outer
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Math.min(root.width - 48, 720)
+        width: Math.min(root.width - 32, 720)
         spacing: 0
 
         SettingsSectionLabel {
@@ -74,7 +78,7 @@ Flickable {
                 showSeparator: false
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.keybindingSchemeItems
+                    model: root.model.keybindingSchemeModel
                     currentItem: root.model.currentKeybindingScheme
                     onActivated: item => root.model.selectKeybindingScheme(item.id)
                 }
@@ -103,7 +107,7 @@ Flickable {
                 showSeparator: false
                 SearchableDropdown {
                     width: parent.width
-                    items: root.model.faviconServiceItems
+                    model: root.model.faviconServiceModel
                     currentItem: root.model.currentFaviconService
                     onActivated: item => root.model.selectFaviconService(item.id)
                 }

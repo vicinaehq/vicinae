@@ -52,15 +52,37 @@ Item {
             width: 16
             height: 16
             radius: 4
+            antialiasing: true
             Layout.alignment: Qt.AlignVCenter
-            color: root.checked ? Theme.accent : "transparent"
+            color: "transparent"
+            gradient: root.checked ? boxFill : null
             border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : root.activeFocus ? Theme.inputBorderFocus : root.checked ? Theme.accent : Theme.inputBorder, Config.surfaceOpacity)
             border.width: 1
+
+            function _shifted(c, dh, ds, dl) {
+                const h = (c.hslHue < 0 ? 0 : c.hslHue) + dh;
+                const clamp = v => Math.min(1, Math.max(0, v));
+                return Qt.hsla((h + 1) % 1, clamp(c.hslSaturation + ds), clamp(c.hslLightness + dl), c.a);
+            }
+
+            Gradient {
+                id: boxFill
+                GradientStop {
+                    position: 0
+                    color: box._shifted(Theme.accent, 0.025, -0.03, 0.06)
+                }
+                GradientStop {
+                    position: 1
+                    color: box._shifted(Theme.accent, -0.015, 0.04, -0.04)
+                }
+            }
 
             Text {
                 anchors.centerIn: parent
                 text: "\u2713"
                 color: "#ffffff"
+                style: Text.Raised
+                styleColor: Qt.rgba(0, 0, 0, 0.3)
                 font.pixelSize: 11
                 font.bold: true
                 visible: root.checked

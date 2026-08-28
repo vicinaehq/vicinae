@@ -16,8 +16,28 @@
 #include <QLocale>
 
 GeneralSettingsModel::GeneralSettingsModel(QObject *parent) : QObject(parent) {
-  connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged, this,
-          &GeneralSettingsModel::configChanged);
+  m_windowMaterialModel.setSections(windowMaterialItems());
+  m_fontModel.setSections(fontItems());
+  m_faviconServiceModel.setSections(faviconServiceItems());
+  m_keybindingSchemeModel.setSections(keybindingSchemeItems());
+  m_languageModel.setSections(languageItems());
+  refreshDynamicModels();
+
+  connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged, this, [this]() {
+    refreshDynamicModels();
+    emit configChanged();
+  });
+}
+
+void GeneralSettingsModel::refreshDynamicModels() {
+  if (auto items = themeItems(); items != m_themeItems) {
+    m_themeItems = items;
+    m_themeModel.setSections(items);
+  }
+  if (auto items = iconThemeItems(); items != m_iconThemeItems) {
+    m_iconThemeItems = items;
+    m_iconThemeModel.setSections(items);
+  }
 }
 
 const config::ConfigValue &GeneralSettingsModel::cfg() const {
@@ -125,6 +145,12 @@ void GeneralSettingsModel::setCompactMode(bool v) {
                                   .compactMode = config::Partial<config::WindowCompactMode>{.enabled = v}}});
 }
 
+bool GeneralSettingsModel::floatingStatusBar() const { return cfg().launcherWindow.floatingStatusBar; }
+void GeneralSettingsModel::setFloatingStatusBar(bool v) {
+  cfgManager().mergeWithUser(
+      {.launcherWindow = config::Partial<config::WindowConfig>{.floatingStatusBar = v}});
+}
+
 bool GeneralSettingsModel::inputServerEnabled() const { return cfg().inputServer.enabled; }
 
 void GeneralSettingsModel::setInputServerEnabled(bool v) {
@@ -155,14 +181,7 @@ void GeneralSettingsModel::setFontSize(const QString &v) {
   if (ok) cfgManager().mergeWithUser({.font = config::Partial<config::FontConfig>{.normal{.size = val}}});
 }
 
-static QVariantMap makeDropdownItem(const QString &id, const QString &displayName,
-                                    const QString &iconSource = {}) {
-  QVariantMap m;
-  m[QStringLiteral("id")] = id;
-  m[QStringLiteral("displayName")] = displayName;
-  if (!iconSource.isEmpty()) m[QStringLiteral("iconSource")] = iconSource;
-  return m;
-}
+using qml::makeDropdownItem;
 
 static QVariantList wrapSection(const QString &title, const QVariantList &items) {
   QVariantMap section;
@@ -213,14 +232,11 @@ QVariant GeneralSettingsModel::currentTheme() const {
 }
 
 QVariantList GeneralSettingsModel::fontItems() const {
-  if (m_fontItems.isEmpty()) {
-    QVariantList items;
-    for (const auto &family : ServiceRegistry::instance()->fontService()->families()) {
-      items.append(makeDropdownItem(family, family));
-    }
-    m_fontItems = wrapSection(tr("Fonts"), items);
+  QVariantList items;
+  for (const auto &family : ServiceRegistry::instance()->fontService()->families()) {
+    items.append(makeDropdownItem(family, family));
   }
-  return m_fontItems;
+  return wrapSection(tr("Fonts"), items);
 }
 
 QVariant GeneralSettingsModel::currentFont() const {

@@ -1,6 +1,6 @@
 #include "view-utils.hpp"
-#include "extend/accessory-model.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "theme.hpp"
+#include "theme/theme-file.hpp"
 #include "utils/utils.hpp"
 #include <QFile>
 #include <qcontainerfwd.h>
@@ -39,7 +39,8 @@ QVariantList metadataToVariantList(const MetadataModel &metadata) {
       entry[QStringLiteral("label")] = QString::fromStdString(label->title);
       entry[QStringLiteral("value")] = QString::fromStdString(label->text);
       if (label->icon) entry[QStringLiteral("icon")] = imageSourceFor(ImageURL(*label->icon));
-      if (label->color) entry[QStringLiteral("valueColor")] = OmniPainter::resolveColor(*label->color).name();
+      if (label->color)
+        entry[QStringLiteral("valueColor")] = ThemeService::instance().theme().resolve(*label->color).name();
       result.append(entry);
     } else if (auto *link = std::get_if<MetadataLink>(&child)) {
       QVariantMap entry;
@@ -60,7 +61,8 @@ QVariantList metadataToVariantList(const MetadataModel &metadata) {
       for (const auto &tag : tags->items) {
         QVariantMap t;
         t[QStringLiteral("text")] = QString::fromStdString(tag.text);
-        if (tag.color) t[QStringLiteral("color")] = OmniPainter::resolveColor(*tag.color).name();
+        if (tag.color)
+          t[QStringLiteral("color")] = ThemeService::instance().theme().resolve(*tag.color).name();
         if (tag.icon) t[QStringLiteral("icon")] = imageSourceFor(ImageURL(*tag.icon));
         tagList.append(t);
       }
@@ -71,32 +73,23 @@ QVariantList metadataToVariantList(const MetadataModel &metadata) {
   return result;
 }
 
-QVariantMap accessoryToVariant(const AccessoryModel &acc) {
+QVariantMap accessoryToVariant(const ListAccessory &acc) {
   QVariantMap m;
-  bool fill = false;
 
-  if (auto *tag = std::get_if<AccessoryModel::Tag>(&acc.data)) {
-    m[QStringLiteral("text")] = QString::fromStdString(tag->value);
-    if (tag->color) m[QStringLiteral("color")] = OmniPainter::resolveColor(*tag->color).name();
-    fill = true;
-  } else if (auto *text = std::get_if<AccessoryModel::Text>(&acc.data)) {
-    m[QStringLiteral("text")] = QString::fromStdString(text->value);
-    if (text->color) m[QStringLiteral("color")] = OmniPainter::resolveColor(*text->color).name();
-  }
-
-  m[QStringLiteral("fill")] = fill;
+  m[QStringLiteral("text")] = acc.text;
+  if (acc.color) m[QStringLiteral("color")] = ThemeService::instance().theme().resolve(*acc.color).name();
+  m[QStringLiteral("fill")] = acc.fillBackground;
   if (acc.icon) {
-    auto url = ImageURL(*acc.icon);
-    auto color = std::visit([](const auto &v) { return v.color; }, acc.data);
-    if (color && url.type() == ImageURLType::Builtin) url.setFill(color);
+    auto url = *acc.icon;
+    if (acc.color && url.type() == ImageURLType::Builtin) url.setFill(acc.color);
     m[QStringLiteral("icon")] = imageSourceFor(url);
   }
-  if (acc.tooltip) m[QStringLiteral("tooltip")] = QString::fromStdString(*acc.tooltip);
+  if (!acc.tooltip.isEmpty()) m[QStringLiteral("tooltip")] = acc.tooltip;
 
   return m;
 }
 
-QVariantList accessoriesToVariantList(const std::vector<AccessoryModel> &accessories) {
+QVariantList accessoriesToVariantList(const AccessoryList &accessories) {
   return accessories | std::views::transform(accessoryToVariant) | std::ranges::to<QVariantList>();
 }
 

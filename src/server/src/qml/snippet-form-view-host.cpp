@@ -32,17 +32,9 @@ void SnippetFormViewHost::initialize() {
   const auto *appDb = context()->services->appDb();
   for (const auto &app : appDb->list({.sortAlphabetically = true})) {
     if (!app->displayable()) continue;
-    QVariantMap entry;
-    entry[QStringLiteral("id")] = app->id();
-    entry[QStringLiteral("displayName")] = app->displayName();
-    entry[QStringLiteral("iconSource")] = qml::imageSourceFor(app->iconUrl());
-    allApps.append(entry);
+    allApps.append(qml::makeDropdownItem(app->id(), app->displayName(), qml::imageSourceFor(app->iconUrl())));
   }
-
-  QVariantMap section;
-  section[QStringLiteral("title")] = QString();
-  section[QStringLiteral("items")] = allApps;
-  m_availableApps.append(section);
+  m_availableAppsModel.setItems(allApps);
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto section2 = panel->createSection();

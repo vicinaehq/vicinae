@@ -13,7 +13,7 @@ class ClipboardClearCommand : public BuiltinCallbackCommand {
   QString name() const override { return tr("Clear Current Clipboard Data"); }
   QString description() const override { return tr("Clear the current content of the clipboard"); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::DeleteDocument).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::DeleteDocument).setBackgroundTint(SemanticColor::Red);
   }
   void execute(CommandController &ctrl) const override {
     auto ctx = ctrl.context();
@@ -35,7 +35,7 @@ class ClearClipboardHistoryCommand : public BuiltinCallbackCommand {
   QString name() const override { return tr("Clear Clipboard History"); }
   QString description() const override { return tr("Clear the clipboard history"); }
   ImageURL iconUrl() const override {
-    return ImageURL(BuiltinIcon::Trash).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL(BuiltinIcon::Trash).setBackgroundTint(SemanticColor::Red);
   }
   void execute(CommandController &ctrl) const override {
     auto ctx = ctrl.context();

@@ -1,17 +1,31 @@
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "common/types.hpp"
 #include "config/config.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <algorithm>
 #include <utility>
 
 GlobalShortcutService::GlobalShortcutService(config::Manager &config, RootItemManager &rootItemManager,
+                                             AppRuntime &appRuntime,
                                              std::unique_ptr<AbstractGlobalShortcutBackend> backend)
-    : m_config(config), m_rootItemManager(rootItemManager), m_backend(std::move(backend)) {
+    : m_config(config), m_rootItemManager(rootItemManager), m_appRuntime(appRuntime),
+      m_backend(std::move(backend)) {
   connect(m_backend.get(), &AbstractGlobalShortcutBackend::shortcutActivated, this,
           &GlobalShortcutService::onActivated);
-  connect(m_backend.get(), &AbstractGlobalShortcutBackend::ready, this, &GlobalShortcutService::reconcile);
-  connect(&m_config, &config::Manager::configChanged, this, [this] { reconcile(); });
+  // `ready` may be re-emitted after a backend reset, in which case every binding is replayed
+  connect(m_backend.get(), &AbstractGlobalShortcutBackend::ready, this, [this] {
+    m_appliedTriggers.clear();
+    m_actions.clear();
+    reconcile();
+  });
+  connect(&m_config, &config::Manager::configChanged, this, [this] {
+    updateInhibition();
+    reconcile();
+  });
+  connect(&m_appRuntime, &AppRuntime::frontmostAppChanged, this, &GlobalShortcutService::updateInhibition);
 
+  m_inhibited = computeInhibited();
   m_backend->start();
   reconcile();
 }
@@ -30,7 +44,7 @@ void GlobalShortcutService::setCapturing(bool capturing) {
 }
 
 void GlobalShortcutService::reconcile() {
-  if (m_capturing) { return; }
+  if (m_capturing || m_inhibited) { return; }
   if (!isSupported()) { return; }
 
   const config::ConfigValue &cfg = m_config.value();
@@ -103,6 +117,33 @@ std::optional<QString> GlobalShortcutService::probeBind(const Keyboard::Shortcut
 QString GlobalShortcutService::describeCommand(const EntrypointId &id) const {
   if (auto meta = m_rootItemManager.itemMetadata(id); meta.item) { return meta.item->title(); }
   return QString::fromStdString(id);
+}
+
+void GlobalShortcutService::updateInhibition() {
+  const bool inhibited = computeInhibited();
+  if (inhibited == m_inhibited) { return; }
+
+  m_inhibited = inhibited;
+  if (m_capturing) { return; }
+
+  if (inhibited) {
+    m_backend->unbindAll();
+    m_appliedTriggers.clear();
+    m_actions.clear();
+  } else {
+    reconcile();
+  }
+}
+
+bool GlobalShortcutService::computeInhibited() const {
+  const auto &apps = m_config.value().globalShortcuts.inhibitApps;
+  if (apps.empty()) { return false; }
+
+  const auto app = m_appRuntime.frontmostApp();
+  if (!app) { return false; }
+
+  const std::string id = app->id().toStdString();
+  return std::ranges::contains(apps, id);
 }
 
 void GlobalShortcutService::onActivated(const QString &id, quint64 timestamp) {

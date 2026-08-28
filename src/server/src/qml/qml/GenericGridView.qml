@@ -4,6 +4,12 @@ import QtQuick.Controls
 Item {
     id: root
 
+    readonly property real _bottomInset: statusBarInset.value
+
+    StatusBarInset {
+        id: statusBarInset
+    }
+
     // The backing model — must be a QAbstractListModel with roles:
     //   isSection, sectionName, rowSectionIdx, rowStartItem, rowItemCount
     // AND expose Q_INVOKABLEs for selection/navigation:
@@ -76,12 +82,12 @@ Item {
 
     // Hidden TextMetrics to measure actual line heights from the font
     TextMetrics {
-        id: _titleMetrics
+        id: titleMetrics
         font.pointSize: Theme.smallerFontSize
         text: "Ag"
     }
     TextMetrics {
-        id: _subtitleMetrics
+        id: subtitleMetrics
         font.pointSize: Theme.smallerFontSize - 1
         text: "Ag"
     }
@@ -92,9 +98,9 @@ Item {
             return 0;
         var h = _textGap;
         if (showCellTitle)
-            h += _titleMetrics.height;
+            h += titleMetrics.height;
         if (showCellSubtitle)
-            h += _subtitleMetrics.height;
+            h += subtitleMetrics.height;
         return h;
     }
     readonly property real rowHeight: cellSize + cellTextHeight
@@ -139,11 +145,25 @@ Item {
             return false;
 
         const viewportTop = listView.contentY;
-        const viewportBottom = viewportTop + listView.height;
+        const viewportBottom = viewportTop + listView.height - root._bottomInset;
         const itemTop = item.y;
         const itemBottom = item.y + item.height;
 
         return itemBottom > viewportTop && itemTop < viewportBottom;
+    }
+
+    // positionViewAtIndex ignores ListView margins, so Contain can leave the
+    // row within the band covered by the floating status bar.
+    function _liftAboveInset(row) {
+        if (root._bottomInset <= 0)
+            return;
+        const item = listView.itemAtIndex(row);
+        if (!item)
+            return;
+        const usable = listView.height - root._bottomInset;
+        const itemBottom = item.y + item.height;
+        if (listView.contentHeight > usable && itemBottom > listView.contentY + usable)
+            listView.contentY = itemBottom - usable;
     }
 
     ListView {
@@ -155,7 +175,7 @@ Item {
         interactive: false
         boundsBehavior: Flickable.StopAtBounds
         topMargin: root.cellSpacing
-        bottomMargin: root.cellSpacing
+        bottomMargin: root.cellSpacing + root._bottomInset
         spacing: root.cellSpacing
         reuseItems: true
         cacheBuffer: 200
@@ -242,9 +262,9 @@ Item {
                             return 0;
                         var h = root._textGap;
                         if (rowHasTitle)
-                            h += _titleMetrics.height;
+                            h += titleMetrics.height;
                         if (rowHasSubtitle)
-                            h += _subtitleMetrics.height;
+                            h += subtitleMetrics.height;
                         return h;
                     }
 
@@ -326,13 +346,13 @@ Item {
                                     visible: rowItem.rowHasTitle
                                     y: rowItem.cellHeight + root._textGap
                                     width: rowItem.cellWidth
-                                    height: _titleMetrics.height
+                                    height: titleMetrics.height
                                     text: {
                                         var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
                                         return (root.cmdModel && typeof root.cmdModel.cellTitle === "function") ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
                                     }
                                     color: Theme.textMuted
-                                    font: _titleMetrics.font
+                                    font: titleMetrics.font
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
                                     horizontalAlignment: Text.AlignHCenter
@@ -340,15 +360,15 @@ Item {
 
                                 Text {
                                     visible: rowItem.rowHasSubtitle
-                                    y: rowItem.cellHeight + root._textGap + (rowItem.rowHasTitle ? _titleMetrics.height + root._textGap : 0)
+                                    y: rowItem.cellHeight + root._textGap + (rowItem.rowHasTitle ? titleMetrics.height + root._textGap : 0)
                                     width: rowItem.cellWidth
-                                    height: _subtitleMetrics.height
+                                    height: subtitleMetrics.height
                                     text: {
                                         var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
                                         return (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function") ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
                                     }
                                     color: Theme.textMuted
-                                    font: _subtitleMetrics.font
+                                    font: subtitleMetrics.font
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
                                     horizontalAlignment: Text.AlignHCenter
@@ -409,6 +429,7 @@ Item {
                     mode = ListView.Beginning;
                 }
                 listView.positionViewAtIndex(row, mode);
+                root._liftAboveInset(row);
             }
         }
     }

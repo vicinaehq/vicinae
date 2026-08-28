@@ -21,7 +21,7 @@ class CalculatorHistoryCommand : public BuiltinViewCommand<CalcHistoryViewHost> 
               "in history.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::PlusMinusDivideMultiply).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::PlusMinusDivideMultiply).setBackgroundTint(SemanticColor::Blue);
   }
 };
 
@@ -35,7 +35,7 @@ class CalculatorRefreshRatesCommand : public BuiltinCallbackCommand {
   }
 
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Globe01).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Globe01).setBackgroundTint(SemanticColor::Blue);
   }
 
   void execute(CommandController &ctrl) const override {
@@ -75,7 +75,7 @@ public:
     return tr("Do maths, convert units or search past calculations...");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::PlusMinusDivideMultiply).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::PlusMinusDivideMultiply).setBackgroundTint(SemanticColor::Blue);
   }
 
   CalculatorExtension() {
@@ -93,27 +93,11 @@ public:
 
     auto backendPref = Preference::makeDropdown("backend", backendOptions);
 
+    backendPref.setDefaultValue("numen");
     backendPref.setTitle(tr("Calculator Backend"));
     backendPref.setDescription(tr("Which backend to use to perform calculations"));
 
-    auto refreshOnStartup = Preference::makeCheckbox("refreshRatesOnStartup");
-
-    refreshOnStartup.setDefaultValue(true);
-    refreshOnStartup.setTitle(tr("Refresh rates on startup"));
-    refreshOnStartup.setDescription(
-        tr("Whether exchange rates should be refreshed every time the vicinae server is started. If the "
-           "current backend does not support it, this is ignored."));
-
-    if (!backendOptions.empty()) { backendPref.setDefaultValue(backendOptions.front().value); }
-
-    return {backendPref, refreshOnStartup};
-  }
-
-  void initialized(const QJsonObject &value) const override {
-    auto calc = ServiceRegistry::instance()->calculatorService();
-    bool refreshOnStartup = value.value("refreshRatesOnStartup").toBool();
-
-    if (refreshOnStartup) { calc->backend()->refreshExchangeRates(); }
+    return {backendPref};
   }
 
   void preferenceValuesChanged(const QJsonObject &value) const override {

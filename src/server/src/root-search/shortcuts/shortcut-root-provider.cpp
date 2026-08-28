@@ -4,6 +4,7 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "argument.hpp"
 #include "common.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -39,7 +40,8 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   manageSection->addAction(edit);
   manageSection->addAction(duplicate);
 
-  for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto action :
+       RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 
@@ -100,7 +102,7 @@ ArgumentList RootShortcutItem::arguments() const {
 ImageURL RootShortcutItem::iconUrl() const {
   ImageURL url(m_link->icon());
 
-  if (url.type() == ImageURLType::Builtin) { url.setBackgroundTint(Omnicast::ACCENT_COLOR); }
+  if (url.type() == ImageURLType::Builtin) { url.setBackgroundTint(SemanticColor::Purple); }
 
   return url;
 }
@@ -122,11 +124,7 @@ QString ShortcutRootProvider::displayName() const {
 }
 
 ImageURL ShortcutRootProvider::icon() const {
-  auto icon = ImageURL::builtin(BuiltinIcon::Bolt);
-
-  icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
-
-  return icon;
+  return ImageURL::builtin(BuiltinIcon::Bolt).setBackgroundTint(SemanticColor::Purple);
 }
 
 QString ShortcutRootProvider::uniqueId() const { return "shortcuts"; }

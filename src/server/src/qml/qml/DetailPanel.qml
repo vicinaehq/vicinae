@@ -11,8 +11,13 @@ Item {
 
     readonly property bool _hasMetadata: root.metadata.length > 0
 
+    StatusBarInset {
+        id: statusBarInset
+    }
+
     ColumnLayout {
         anchors.fill: parent
+        anchors.bottomMargin: root._hasMetadata ? statusBarInset.value : 0
         spacing: 0
 
         Item {

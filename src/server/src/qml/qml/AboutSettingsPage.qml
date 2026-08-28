@@ -11,6 +11,8 @@ Item {
         contentHeight: content.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        topMargin: Style.contentTopInset
+        Component.onCompleted: contentY = -topMargin
 
         ViciWheelHandler {
             target: flickable

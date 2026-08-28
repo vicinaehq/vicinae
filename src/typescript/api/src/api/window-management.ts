@@ -33,8 +33,8 @@ const transformWindow = (proto: api.Window): WindowManagement.Window => {
  * Access Vicinae's window management features.
  *
  * @remarks
- * Window management support varies a lot depending on the environment.
- * Right now it is pretty well supported on almost all linux desktop environments except KDE.
+ * Some environments have slightly poorer window management support, but basic stuff such
+ * as window enumeration is available everywhere.
  *
  * @example
  * ```typescript

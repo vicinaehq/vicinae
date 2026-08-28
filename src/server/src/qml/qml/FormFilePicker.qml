@@ -15,6 +15,7 @@ FocusScope {
     property bool hasError: false
     property bool filled: false
     property var selectedPaths: []
+    property var lockedPaths: []
 
     signal pathsChanged(var paths)
 
@@ -38,10 +39,10 @@ FocusScope {
 
     function _openFallbackDialog() {
         if (root._directoriesOnly)
-            _fallbackFolderDialog.open();
+            fallbackFolderDialog.open();
         else {
-            _fallbackFileDialog.fileMode = root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile;
-            _fallbackFileDialog.open();
+            fallbackFileDialog.fileMode = root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile;
+            fallbackFileDialog.open();
         }
     }
 
@@ -80,7 +81,7 @@ FocusScope {
     }
 
     FileDialog {
-        id: _fallbackFileDialog
+        id: fallbackFileDialog
         title: root.multiple ? qsTr("Select files") : qsTr("Select a file")
         onAccepted: {
             root._handleFallbackResult(selectedFiles);
@@ -90,7 +91,7 @@ FocusScope {
     }
 
     FolderDialog {
-        id: _fallbackFolderDialog
+        id: fallbackFolderDialog
         title: qsTr("Select a directory")
         onAccepted: {
             root._handleFallbackResult([selectedFolder]);
@@ -174,6 +175,55 @@ FocusScope {
         anchors.right: parent.right
         spacing: 6
         opacity: root.readOnly ? 0.5 : 1.0
+
+        Repeater {
+            model: root.multiple ? root.lockedPaths : []
+
+            Item {
+                required property var modelData
+
+                Layout.fillWidth: true
+                implicitHeight: 32
+
+                FormInputBackground {
+                    anchors.fill: parent
+                    radius: 6
+                    filled: root.filled
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 6
+                    color: "transparent"
+                    border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
+                    border.width: 1
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 6
+
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        verticalAlignment: Text.AlignVCenter
+                        text: modelData
+                        color: Theme.textMuted
+                        font.pointSize: Theme.regularFontSize
+                        elide: Text.ElideMiddle
+                    }
+
+                    ViciImage {
+                        Layout.preferredWidth: 12
+                        Layout.preferredHeight: 12
+                        Layout.alignment: Qt.AlignVCenter
+                        source: Img.builtin("lock").withFillColor(Theme.textMuted)
+                    }
+                }
+            }
+        }
 
         Repeater {
             model: root.multiple ? root.selectedPaths : []

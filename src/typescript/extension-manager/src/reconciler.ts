@@ -193,18 +193,18 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		insertBefore(parent, child, beforeChild) {
 			if (!parent.children) parent.children = [];
-			const beforeIndex = parent.children.indexOf(beforeChild);
 
 			const selfIdx = parent.children.indexOf(child);
 			if (selfIdx !== -1) parent.children.splice(selfIdx, 1);
 
-			if (beforeIndex !== -1) {
-				parent.children.splice(beforeIndex, 0, child);
-				child._parent = parent;
-				emitDirty(parent);
-			} else {
+			const beforeIndex = parent.children.indexOf(beforeChild);
+			if (beforeIndex === -1) {
 				throw new Error("Unreachable");
 			}
+
+			parent.children.splice(beforeIndex, 0, child);
+			child._parent = parent;
+			emitDirty(parent);
 		},
 
 		insertInContainerBefore(container, child, beforeChild) {

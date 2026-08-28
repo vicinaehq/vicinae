@@ -4,7 +4,7 @@
 class DummyAppDatabase : public AbstractAppDatabase {
 public:
   std::vector<std::filesystem::path> defaultSearchPaths() const override { return {}; }
-  bool scan(const std::vector<std::filesystem::path> &) override { return true; }
+  bool scan() override { return true; }
   bool launch(const AbstractApplication &, const std::vector<QString> & = {}) const override { return false; }
   bool launchTerminalCommand(const std::vector<QString> &,
                              const LaunchTerminalCommandOptions & = {}) const override {

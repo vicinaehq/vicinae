@@ -16,25 +16,25 @@ Popup {
     property int currentIndex: 0
 
     component CircleButton: Rectangle {
-        property alias icon: _btnIcon.source
-        property alias hovered: _btnMouseArea.containsMouse
+        property alias icon: btnIcon.source
+        property alias hovered: btnMouseArea.containsMouse
 
         width: 24
         height: 24
         radius: 12
-        color: _btnMouseArea.containsMouse ? Qt.rgba(1, 1, 1, 0.25) : Qt.rgba(1, 1, 1, 0.1)
+        color: btnMouseArea.containsMouse ? Qt.rgba(1, 1, 1, 0.25) : Qt.rgba(1, 1, 1, 0.1)
 
         signal clicked
 
         ViciImage {
-            id: _btnIcon
+            id: btnIcon
             anchors.centerIn: parent
             width: 12
             height: 12
         }
 
         MouseArea {
-            id: _btnMouseArea
+            id: btnMouseArea
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
@@ -48,7 +48,7 @@ Popup {
         open();
     }
 
-    onOpened: _focusItem.forceActiveFocus()
+    onOpened: focusItem.forceActiveFocus()
 
     enter: Transition {
         NumberAnimation {
@@ -78,7 +78,7 @@ Popup {
     }
 
     contentItem: Item {
-        id: _focusItem
+        id: focusItem
         focus: true
 
         Keys.onPressed: event => {
@@ -97,7 +97,7 @@ Popup {
         }
 
         ViciImage {
-            id: _image
+            id: image
             anchors.centerIn: parent
             width: parent.width - 48
             height: parent.height - 48
@@ -112,7 +112,7 @@ Popup {
 
         BusyIndicator {
             anchors.centerIn: parent
-            running: _image.status === Image.Loading
+            running: image.status === Image.Loading
             visible: running
         }
 
@@ -148,13 +148,13 @@ Popup {
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottomMargin: 10
-            implicitWidth: _counter.implicitWidth + 20
-            implicitHeight: _counter.implicitHeight + 10
+            implicitWidth: counter.implicitWidth + 20
+            implicitHeight: counter.implicitHeight + 10
             radius: 12
             color: Qt.rgba(0, 0, 0, 0.6)
 
             Text {
-                id: _counter
+                id: counter
                 anchors.centerIn: parent
                 text: qsTr("%1 / %2").arg(root.currentIndex + 1).arg(root.sources.length)
                 color: "white"
