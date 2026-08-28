@@ -128,7 +128,6 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   // what a lot of users would expect.
   const auto AUTO_EXECUTABLE_EXTENSIONS = {".AppImage"};
 
-  namespace fs = std::filesystem;
   QMimeDatabase mimeDb;
   auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
@@ -143,18 +142,11 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
     section->addAction(open);
   }
 
-  std::error_code ec{};
-
-  if (!fs::is_directory(path, ec)) {
-    const auto pm = fs::status(path, ec).permissions();
-    const bool isExec =
-        (pm & (fs::perms::owner_exec | fs::perms::group_exec | fs::perms::others_exec)) != fs::perms::none;
+  {
     AbstractAction *action = nullptr;
 
-    if (isExec) {
-      action = new RunExecutableAction(path, {.mkExec = false});
-    } else if (std::ranges::any_of(AUTO_EXECUTABLE_EXTENSIONS,
-                                   [&](auto &&ext) { return path.extension() == ext; })) {
+    if (std::ranges::any_of(AUTO_EXECUTABLE_EXTENSIONS,
+                            [&](auto &&ext) { return path.extension() == ext; })) {
       action = new RunExecutableAction(path, {.mkExec = true});
     }
 
