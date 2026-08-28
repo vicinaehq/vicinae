@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1772542754,
-        "narHash": "sha256-WGV2hy+VIeQsYXpsLjdr4GvHv5eECMISX1zKLTedhdg=",
+        "lastModified": 1787736819,
+        "narHash": "sha256-cV5xEJJK3BvhU8rEd4mC9UsmDi5qscv/kzGPhBRC5WA=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "8c809a146a140c5c8806f13399592dbcb1bb5dc4",
+        "rev": "9fbb54b33e91ee4ca368e35a78e0613c720600b3",
         "type": "github"
       },
       "original": {
@@ -39,16 +39,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1787947726,
-        "narHash": "sha256-VKCOWBfmbXvaDHSUKmEFq1D1Beq9EYsop7Kr72nGxyQ=",
+        "lastModified": 1787953571,
+        "narHash": "sha256-cUly+bzaPwj9fiUmC+Gh7gwKAZjINCKZKGf/gPMhJJg=",
         "owner": "vicinaehq",
         "repo": "numen",
-        "rev": "880920df6c96f16ea91b0e9433604883b2abb2c0",
+        "rev": "7cfed1e8322ac6ebd0db9cbf0db31e27385965bc",
         "type": "github"
       },
       "original": {
         "owner": "vicinaehq",
-        "ref": "v0.5.0",
+        "ref": "v0.5.1",
         "repo": "numen",
         "type": "github"
       }
