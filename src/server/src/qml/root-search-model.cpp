@@ -75,7 +75,6 @@ void RootSearchModel::setFilter(const QString &text) {
   if (!fileSearchApplicable()) {
     m_filesSource->setFiles({});
     m_hasFileResults = false;
-    scope().setLoading(false);
   }
   m_fileSearchDebounce.stop();
 
@@ -104,6 +103,7 @@ bool RootSearchModel::rerunSearch() {
       m_newsSource->setItems({});
       m_favoritesSource->setItems({});
       m_fallbackSource->setItems({});
+      scope().setLoading(false);
       rebuild();
       return true;
     }
@@ -118,6 +118,7 @@ bool RootSearchModel::rerunSearch() {
         m_resultsSource->setQueryEmpty(false);
         m_newsSource->setItems({});
         m_favoritesSource->setItems({});
+        scope().setLoading(false);
         rebuild();
         return true;
       }
@@ -158,6 +159,7 @@ bool RootSearchModel::rerunSearch() {
   m_resultsSource->setItems(std::move(results));
 
   refreshCalculator();
+  scope().setLoading(fileSearchApplicable());
   if (!text.isEmpty()) m_fileSearchDebounce.start();
 
   rebuild();
@@ -239,7 +241,6 @@ void RootSearchModel::startFileSearch() {
   if (!fileSearchApplicable()) return;
   if (m_fileWatcher.isRunning()) { m_fileWatcher.cancel(); }
   m_fileSearchQuery = m_query;
-  scope().setLoading(true);
   m_fileWatcher.setFuture(m_fileService->queryAsync(m_query));
 }
 
