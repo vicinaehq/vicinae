@@ -36,6 +36,8 @@ private:
   void startCalculator();
   void startFileSearch();
   void handleFileSearchFinished();
+  bool fileSearchApplicable() const;
+  void refreshCalculator();
 
   static constexpr int MIN_FS_TEXT_LENGTH = 3;
 
@@ -64,4 +66,5 @@ private:
   std::string m_calculatorSearchQuery;
   std::string m_fileSearchQuery;
   bool m_fileSearchEnabled = false;
+  bool m_hasFileResults = false;
 };

@@ -23,7 +23,7 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
 
   using namespace std::chrono_literals;
 
-  m_fileSearchDebounce.setInterval(200ms);
+  m_fileSearchDebounce.setInterval(50ms);
   m_fileSearchDebounce.setSingleShot(true);
 
   connect(&m_fileSearchDebounce, &QTimer::timeout, this, &RootSearchModel::startFileSearch);
@@ -72,7 +72,11 @@ void RootSearchModel::setFilter(const QString &text) {
   scope().clearActions();
 
   m_calcSource->setResult({});
-  m_filesSource->setFiles({});
+  if (!fileSearchApplicable()) {
+    m_filesSource->setFiles({});
+    m_hasFileResults = false;
+    scope().setLoading(false);
+  }
   m_fileSearchDebounce.stop();
 
   bool const directMatch = rerunSearch();
@@ -136,7 +140,10 @@ bool RootSearchModel::rerunSearch() {
     m_updateSource->setUpdate({});
     m_newsSource->setItems({});
     m_favoritesSource->setItems({});
-    m_fallbackSource->setItems(m_manager->fallbackItems());
+
+    bool const awaitingFiles = fileSearchApplicable() && !m_hasFileResults;
+    m_fallbackSource->setItems(awaitingFiles ? std::vector<std::shared_ptr<RootItem>>{}
+                                             : m_manager->fallbackItems());
   }
 
   std::vector<OwnedResult> results;
@@ -148,25 +155,32 @@ bool RootSearchModel::rerunSearch() {
     });
   }
 
-  bool inhibitCalculator = !results.empty();
-
   m_resultsSource->setItems(std::move(results));
 
-  if (!text.isEmpty()) {
-    if (text.startsWith("=")) {
-      if (auto res = m_calculator->backend()->compute(QString::fromStdString(m_query.substr(1)), {})) {
-        m_calcSource->setResult(res.value());
-      }
-    } else if (!inhibitCalculator && m_query.size() >= CALCULATOR_MIN_CHARS) {
-      if (auto res = m_calculator->backend()->compute(QString::fromStdString(m_query), {})) {
-        m_calcSource->setResult(res.value());
-      }
-    }
-    m_fileSearchDebounce.start();
-  }
+  refreshCalculator();
+  if (!text.isEmpty()) m_fileSearchDebounce.start();
 
   rebuild();
   return false;
+}
+
+void RootSearchModel::refreshCalculator() {
+  m_calcSource->setResult({});
+
+  if (m_query.empty()) return;
+
+  if (m_query.starts_with('=')) {
+    if (auto res = m_calculator->backend()->compute(QString::fromStdString(m_query.substr(1)), {})) {
+      m_calcSource->setResult(res.value());
+    }
+    return;
+  }
+
+  if (m_resultsSource->count() > 0 || m_query.size() < CALCULATOR_MIN_CHARS) return;
+
+  if (auto res = m_calculator->backend()->compute(QString::fromStdString(m_query), {})) {
+    m_calcSource->setResult(res.value());
+  }
 }
 
 void RootSearchModel::setSelectedIndex(int index) {
@@ -217,21 +231,36 @@ const RootItem *RootSearchModel::selectedRootItem() const {
   return section ? section->rootItem(itemIdx) : nullptr;
 }
 
+bool RootSearchModel::fileSearchApplicable() const {
+  return m_fileSearchEnabled && m_query.size() >= MIN_FS_TEXT_LENGTH;
+}
+
 void RootSearchModel::startFileSearch() {
-  if (!m_fileSearchEnabled || m_query.size() < MIN_FS_TEXT_LENGTH) return;
+  if (!fileSearchApplicable()) return;
   if (m_fileWatcher.isRunning()) { m_fileWatcher.cancel(); }
   m_fileSearchQuery = m_query;
+  scope().setLoading(true);
   m_fileWatcher.setFuture(m_fileService->queryAsync(m_query));
 }
 
 void RootSearchModel::handleFileSearchFinished() {
   if (!m_fileWatcher.isFinished() || m_fileSearchQuery != m_query) return;
+  scope().setLoading(false);
   m_filesSource->setFiles(m_fileWatcher.result());
   m_fileSearchQuery.clear();
+  m_hasFileResults = true;
+  m_fallbackSource->setItems(m_manager->fallbackItems());
+
+  bool const atDefault = selectedIndex() < 0 || selectedIndex() == nextSelectableIndex(-1, 1);
 
   auto saved = selectFirstOnReset();
   setSelectFirstOnReset(false);
   rebuild();
   setSelectFirstOnReset(saved);
-  refreshActionPanel();
+
+  if (atDefault) {
+    setSelectedIndex(nextSelectableIndex(-1, 1));
+  } else {
+    refreshActionPanel();
+  }
 }
