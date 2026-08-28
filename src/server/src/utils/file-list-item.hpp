@@ -143,8 +143,9 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
     section->addAction(open);
   }
 
-  {
-    std::error_code ec{};
+  std::error_code ec{};
+
+  if (!fs::is_directory(path, ec)) {
     const auto pm = fs::status(path, ec).permissions();
     const bool isExec =
         (pm & (fs::perms::owner_exec | fs::perms::group_exec | fs::perms::others_exec)) != fs::perms::none;
