@@ -8,9 +8,9 @@
 enum class PlaybackStatus : std::uint8_t { Stopped, Paused, Playing };
 
 struct MediaPlayer {
-  /// Backend specific handle, e.g the MPRIS bus name of the player.
+  /// Backend specific handle, e.g. the MPRIS bus name of the player.
   QString id;
-  /// Name of the program owning the player, e.g "Spotify".
+  /// Name of the program owning the player, e.g. "Spotify".
   QString identity;
   QString title;
   QString artist;
