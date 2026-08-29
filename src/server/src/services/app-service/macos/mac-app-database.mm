@@ -81,7 +81,9 @@ std::vector<fs::path> collectAppPaths(const std::vector<fs::path> &roots) {
     std::error_code ec;
     if (!fs::is_directory(root, ec)) continue;
 
-    fs::recursive_directory_iterator it(root, fs::directory_options::skip_permission_denied, ec);
+    fs::recursive_directory_iterator it(
+        root, fs::directory_options::skip_permission_denied | fs::directory_options::follow_directory_symlink,
+        ec);
     fs::recursive_directory_iterator const end;
     if (ec) continue;
 

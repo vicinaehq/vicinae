@@ -1297,3 +1297,21 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()
+
+if (BUILD_TESTS AND APPLE)
+	set(MAC_APP_TEST_TARGET ${TARGET}-mac-app-tests)
+	find_package(Catch2 3 REQUIRED)
+	add_executable(${MAC_APP_TEST_TARGET}
+		src/services/app-service/abstract-app-db.hpp
+		src/services/app-service/macos/mac-app.mm
+		src/services/app-service/macos/mac-app-database.mm
+		tests/app-service/mac-app-database.cpp
+	)
+	target_include_directories(${MAC_APP_TEST_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+	target_link_libraries(${MAC_APP_TEST_TARGET} PRIVATE
+		Catch2::Catch2WithMain Qt6::Core Qt6::Gui
+		"-framework AppKit" "-framework Foundation" "-framework UniformTypeIdentifiers"
+		"-framework CoreServices" "-framework CoreFoundation")
+	target_compile_options(${MAC_APP_TEST_TARGET} PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
+	target_compile_features(${MAC_APP_TEST_TARGET} PUBLIC cxx_std_23)
+endif()

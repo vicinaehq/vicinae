@@ -74,3 +74,4 @@ jobs:
           ./build/bin/vicinae-fuzzy-tests
           ./build/bin/xdgpp-tests
           ./build/bin/scriptcommand-tests
+          ./build/bin/vicinae-server-mac-app-tests

@@ -84,14 +84,21 @@ strip:
 	strip -s ./build/vicinae/vicinae
 .PHONY: strip
 
+UNAME := $(shell uname)
+
 test:
 	./$(BIN_DIR)/vicinae-glyph-tests
 	./$(BIN_DIR)/vicinae-fuzzy-tests
-	./$(BIN_DIR)/vicinae-server-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
 	./$(BIN_DIR)/vicinae-file-indexer-tests
 	./$(BIN_DIR)/vicinae-crypto-tests
+ifeq ($(UNAME),Linux)
+	./$(BIN_DIR)/vicinae-server-tests
+endif
+ifeq ($(UNAME),Darwin)
+	./$(BIN_DIR)/vicinae-server-mac-app-tests
+endif
 .PHONY: test
 
 static:
