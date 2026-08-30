@@ -2,6 +2,8 @@
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "numen/numen.hpp"
 #include <QTimer>
+#include <optional>
+#include <string>
 
 class NumenCalculatorBackend : public AbstractCalculatorBackend, QObject {
 public:
@@ -19,4 +21,5 @@ public:
 private:
   QTimer m_rateRefreshTimer;
   numen::Numen m_numen{};
+  std::optional<std::string> m_localeName;
 };

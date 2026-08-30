@@ -362,6 +362,7 @@ set(SRCS
 	src/services/calculator-service/numen/numen-currency-provider.cpp
 	src/services/calculator-service/numen/numen-calculator-backend.hpp
 	src/services/calculator-service/numen/numen-calculator-backend.cpp
+	src/services/calculator-service/numen/numen-locale.hpp
 
 	src/services/files-service/abstract-file-indexer.hpp
 	src/services/files-service/dummy-file-indexer.hpp
@@ -1292,6 +1293,7 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	target_sources(${TEST_TARGET} PRIVATE
 		src/services/calculator-service/qalculate/qalculate-backend.cpp
 		tests/calculator/qalculate-backend.cpp
+		tests/calculator/numen-locale.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common qalculate Qt6::Concurrent)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)

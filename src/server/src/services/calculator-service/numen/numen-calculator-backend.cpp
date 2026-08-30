@@ -1,8 +1,11 @@
 #include "services/calculator-service/numen/numen-calculator-backend.hpp"
 #include "numen/numen.hpp"
 #include "services/calculator-service/numen/numen-currency-provider.hpp"
+#include "services/calculator-service/numen/numen-locale.hpp"
 #include "utils/environment.hpp"
+#include <QLocale>
 #include <qfuture.h>
+#include <qlogging.h>
 #include <chrono>
 #include <format>
 
@@ -27,6 +30,13 @@ std::string formatTimezone(const numen::Timezone &tz) {
 }; // namespace
 
 NumenCalculatorBackend::NumenCalculatorBackend() {
+  const auto qtName = QLocale::system().name();
+  m_localeName = calculator::numenLocaleName(qtName.toStdString());
+  if (!m_localeName) {
+    qWarning() << "Numen calculator: system locale" << qtName
+               << "is not a valid C++ locale; falling back to the process locale";
+  }
+
   if (Environment::isAutoRateRefreshDisabled()) return;
 
   m_rateRefreshTimer.setInterval(std::chrono::hours{1});
@@ -47,12 +57,12 @@ NumenCalculatorBackend::ComputeResult NumenCalculatorBackend::compute(const QStr
       .parseOptions =
           {
               .strict = true,
-              .locale = QLocale::system().name().toStdString(),
+              .locale = m_localeName,
           },
   };
 
   return m_numen.compute(question.toStdString(), evalOpts)
-      .transform([&](const numen::ComputedValue &res) -> ComputeResult {
+      .transform([&](const numen::ComputedValue &res) {
         CalculatorResult result{};
 
         if (res.conversion) {
@@ -108,7 +118,8 @@ NumenCalculatorBackend::ComputeResult NumenCalculatorBackend::compute(const QStr
         std::visit(visitor, res.value);
         return result;
       })
-      .value_or(ComputeResult{std::unexpected("Error")});
+      .transform_error(
+          [](const std::string &error) { return CalculatorError(QString::fromStdString(error)); });
 }
 
 QFuture<AbstractCalculatorBackend::RefreshExchangeRatesResult>
