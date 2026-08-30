@@ -26,6 +26,10 @@ Item {
 
     property real _closedTime: 0
 
+    Accessible.role: Accessible.ComboBox
+    Accessible.name: root.currentItem?.displayName ?? root.placeholder ?? ""
+    Accessible.onPressAction: root.open()
+
     function open() {
         if (root.readOnly || completionPopup.visible)
             return;

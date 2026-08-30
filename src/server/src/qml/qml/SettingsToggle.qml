@@ -8,7 +8,14 @@ Item {
     activeFocusOnTab: true
 
     property bool checked: false
+    property string accessibleLabel: ""
     signal toggled(bool checked)
+
+    Accessible.role: Accessible.CheckBox
+    Accessible.name: root.accessibleLabel
+    Accessible.checkable: true
+    Accessible.checked: root.checked
+    Accessible.onToggleAction: root.toggled(!root.checked)
 
     function _shifted(c, dh, ds, dl) {
         const h = (c.hslHue < 0 ? 0 : c.hslHue) + dh;

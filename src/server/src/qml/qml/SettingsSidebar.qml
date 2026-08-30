@@ -179,6 +179,12 @@ Item {
                 readonly property bool _selected: root._activeKey === navItem._key
                 readonly property bool _enabled: navItem.model.enabled !== false
 
+                Accessible.ignored: navItem.model.kind === "divider"
+                Accessible.role: Accessible.ListItem
+                Accessible.name: navItem.model.label ?? ""
+                Accessible.selectable: true
+                Accessible.selected: navItem._selected
+
                 ViciDivider {
                     visible: navItem.model.kind === "divider"
                     anchors.left: parent.left

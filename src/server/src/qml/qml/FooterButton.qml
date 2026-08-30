@@ -10,6 +10,10 @@ Item {
 
     signal clicked
 
+    Accessible.role: Accessible.Button
+    Accessible.name: root.label
+    Accessible.onPressAction: root.clicked()
+
     readonly property bool hovered: mouseArea.containsMouse
     readonly property int horizontalPadding: 8
     readonly property int buttonHeight: 28
