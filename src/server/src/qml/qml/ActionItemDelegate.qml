@@ -16,6 +16,12 @@ Item {
 
     signal clicked
 
+    Accessible.role: Accessible.MenuItem
+    Accessible.name: root.title
+    Accessible.selectable: true
+    Accessible.selected: root.selected
+    Accessible.onPressAction: root.clicked()
+
     readonly property var _win: root.Window.window
     // Qt.Tool contains the Qt.Popup bit, so mask the full window type or the
     // launcher window itself matches for in-scene popups

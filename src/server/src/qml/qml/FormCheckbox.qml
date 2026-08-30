@@ -15,6 +15,12 @@ Item {
 
     signal toggled
 
+    Accessible.role: Accessible.CheckBox
+    Accessible.name: root.label
+    Accessible.checkable: true
+    Accessible.checked: root.checked
+    Accessible.onToggleAction: root.toggle()
+
     function toggle() {
         if (root.readOnly)
             return;

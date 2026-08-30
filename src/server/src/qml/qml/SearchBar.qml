@@ -49,6 +49,8 @@ Item {
 
             TextInput {
                 id: searchInput
+                Accessible.name: "search-input"
+                Accessible.description: launcher.searchPlaceholder
                 anchors.fill: parent
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Theme.fontFamily

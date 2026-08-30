@@ -17,6 +17,7 @@ FocusScope {
     // we usually want that on in settings window but not in form commands
     property bool releaseFocusOnAccept: false
     property alias echoMode: input.echoMode
+    property string accessibleLabel: ""
     readonly property bool editing: input.activeFocus
 
     signal textEdited
@@ -52,6 +53,8 @@ FocusScope {
 
     TextInput {
         id: input
+        Accessible.name: root.accessibleLabel !== "" ? root.accessibleLabel : root.placeholder
+        Accessible.readOnly: root.readOnly
         anchors.fill: parent
         anchors.leftMargin: 10
         anchors.rightMargin: 10

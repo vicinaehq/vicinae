@@ -22,6 +22,10 @@ FocusScope {
     readonly property bool _directoriesOnly: canChooseDirectories && !canChooseFiles
     property bool _waitingForPortal: false
 
+    Accessible.role: Accessible.Button
+    Accessible.name: root.selectedPaths && root.selectedPaths.length > 0 ? root.selectedPaths.join(", ") : (root._directoriesOnly ? qsTr("No directory selected") : qsTr("No file selected"))
+    Accessible.onPressAction: root._openDialog()
+
     function forceActiveFocus() {
         focusItem.forceActiveFocus();
     }

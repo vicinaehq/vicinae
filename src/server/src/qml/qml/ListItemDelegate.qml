@@ -5,6 +5,12 @@ SelectableDelegate {
     id: root
     height: 38
 
+    Accessible.role: Accessible.ListItem
+    Accessible.name: itemTitle
+    Accessible.description: itemSubtitle
+    Accessible.selectable: true
+    Accessible.selected: root.selected
+
     required property string itemTitle
     required property string itemSubtitle
     required property string itemIconSource

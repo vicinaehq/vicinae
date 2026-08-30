@@ -10,6 +10,12 @@ SelectableDelegate {
     required property string calcAnswer
     required property string calcAnswerUnit
 
+    Accessible.role: Accessible.ListItem
+    Accessible.name: root.calcQuestion
+    Accessible.description: root.calcAnswerUnit !== "" ? `${root.calcAnswer} ${root.calcAnswerUnit}` : root.calcAnswer
+    Accessible.selectable: true
+    Accessible.selected: root.selected
+
     // quite naive, but good enough.
     // if we find we need this to be actually accurate, we probably need a per backend
     // way to figure out what token carries operator significance.
