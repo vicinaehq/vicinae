@@ -41,10 +41,10 @@ public:
 
   std::optional<ImageURL> displayIcon(const ItemType &e) const override {
     if (e.status == PlaybackStatus::Playing) {
-      return ImageURL::builtin(BuiltinIcon::PlayFilled).setFill(SemanticColor::Green);
+      return ImageURL::builtin(BuiltinIcon::PauseFilled).setFill(SemanticColor::Green);
     }
 
-    return ImageURL::builtin(BuiltinIcon::PauseFilled);
+    return ImageURL::builtin(BuiltinIcon::PlayFilled);
   }
 
   AccessoryList displayAccessories(const ItemType &e) const override {
