@@ -27,6 +27,8 @@ signals:
 public:
   explicit OnboardingWindow(ApplicationContext &ctx, QObject *parent = nullptr);
 
+  // must run before services create the database for the fresh-install check to mean anything
+  static void captureFreshInstall();
   static bool shouldShow();
 
   GeneralSettingsModel *generalModel() const { return m_generalModel; }
