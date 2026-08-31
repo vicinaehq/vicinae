@@ -56,6 +56,7 @@ SelectableDelegate {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 16
+                width: Math.min(implicitWidth, parent.width)
                 text: root.calcQuestionUnit || qsTr("Expression")
                 contentColor: root.selected ? Theme.listItemSelectionFg : Theme.foreground
             }
@@ -114,6 +115,7 @@ SelectableDelegate {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 16
+                width: Math.min(implicitWidth, parent.width)
                 text: root.calcAnswerUnit || qsTr("Result")
                 contentColor: root.selected ? Theme.listItemSelectionFg : Theme.foreground
             }

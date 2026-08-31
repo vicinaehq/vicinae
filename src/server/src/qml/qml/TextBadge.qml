@@ -31,12 +31,14 @@ Item {
         Text {
             id: badgeLabel
             anchors.centerIn: parent
+            width: Math.min(implicitWidth, parent.width - 12)
             text: root.text
             color: root.contentColor
             font.family: Theme.fontFamily
             font.pointSize: Theme.smallerFontSize - 0.25
             font.weight: Font.Medium
             maximumLineCount: 1
+            elide: Text.ElideRight
         }
     }
 }
