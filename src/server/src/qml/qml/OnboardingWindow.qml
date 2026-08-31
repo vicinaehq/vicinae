@@ -310,16 +310,6 @@ Window {
                             Layout.bottomMargin: 16
                         }
 
-                        ViciButton {
-                            visible: !root.shortcutsAvailable
-                            text: qsTr("Open Docs")
-                            variant: "secondary"
-                            onClicked: onboarding.openUrl("https://docs.vicinae.com/faq")
-                            Layout.alignment: Qt.AlignHCenter
-                            Layout.topMargin: 8
-                            Layout.bottomMargin: 16
-                        }
-
                         Text {
                             text: qsTr("Vicinae is open source software.")
                             color: Theme.textMuted
