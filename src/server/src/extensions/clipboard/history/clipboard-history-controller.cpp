@@ -3,10 +3,6 @@
 ClipboardHistoryController::ClipboardHistoryController(ClipboardService *clipboard, QObject *parent)
     : QObject(parent), m_clipboard(clipboard) {
 
-  m_debounce.setSingleShot(true);
-  m_debounce.setInterval(100);
-  connect(&m_debounce, &QTimer::timeout, this, &ClipboardHistoryController::runQuery);
-
   connect(&m_watcher, &QueryWatcher::finished, this, &ClipboardHistoryController::handleResults);
   connect(clipboard, &ClipboardService::selectionPinStatusChanged, this,
           &ClipboardHistoryController::handleClipboardChanged);
@@ -22,29 +18,42 @@ ClipboardHistoryController::ClipboardHistoryController(ClipboardService *clipboa
 
 void ClipboardHistoryController::setFilter(const QString &query) {
   m_query = query;
-  m_debounce.start();
-}
-
-void ClipboardHistoryController::runQuery() {
-  emit dataLoadingChanged(true);
-  m_watcher.setFuture(m_clipboard->listAll(DEFAULT_PAGE_SIZE, 0, {.query = m_query, .kind = m_kind}));
+  requestQuery();
 }
 
 void ClipboardHistoryController::setKindFilter(std::optional<ClipboardOfferKind> kind) {
   m_kind = kind;
-  reloadSearch();
+  requestQuery();
 }
 
-void ClipboardHistoryController::reloadSearch() {
-  m_debounce.stop();
+void ClipboardHistoryController::reloadSearch() { requestQuery(); }
+
+void ClipboardHistoryController::requestQuery() {
+  if (m_queryRunning) {
+    m_queryPending = true;
+    return;
+  }
+
   runQuery();
+}
+
+void ClipboardHistoryController::runQuery() {
+  m_queryRunning = true;
+  emit dataLoadingChanged(true);
+  m_watcher.setFuture(m_clipboard->listAll(DEFAULT_PAGE_SIZE, 0, {.query = m_query, .kind = m_kind}));
 }
 
 void ClipboardHistoryController::handleResults() {
   if (!m_watcher.isFinished()) return;
+
+  m_queryRunning = false;
   emit dataLoadingChanged(false);
-  auto res = m_watcher.result();
-  emit dataRetrieved(res);
+  emit dataRetrieved(m_watcher.result());
+
+  if (m_queryPending) {
+    m_queryPending = false;
+    runQuery();
+  }
 }
 
 void ClipboardHistoryController::handleClipboardChanged() { reloadSearch(); }

@@ -163,9 +163,8 @@ void ClipboardService::scheduleClipboardRestore(int delayMs) {
 
 QFuture<PaginatedResponse<ClipboardHistoryEntry>>
 ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &opts) const {
-  auto key = m_dbKey;
   return QtConcurrent::run(
-      [opts, limit, offset, key]() { return ClipboardDatabase(key).query(limit, offset, opts); });
+      [db = m_readDb, opts, limit, offset]() { return db->query(limit, offset, opts); });
 }
 
 ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
@@ -665,6 +664,7 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, std::optio
 
   fs::create_directories(m_dataDir);
   openDatabase().runMigrations();
+  m_readDb = std::make_shared<ClipboardDatabase>(m_dbKey);
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);

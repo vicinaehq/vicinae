@@ -100,6 +100,7 @@ private:
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;
   std::optional<db::EncryptionKey> m_dbKey;
+  std::shared_ptr<ClipboardDatabase> m_readDb;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
 
   static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
