@@ -288,8 +288,8 @@ Item {
                                 readonly property bool cellHovered: cellMouseArea.containsMouse && HoverActivation.active
 
                                 Accessible.role: Accessible.Cell
-                                Accessible.name: root.cmdModel ? root.cmdModel.cellTitle(cellSection, cellItem) : ""
-                                Accessible.description: root.cmdModel ? root.cmdModel.cellSubtitle(cellSection, cellItem) : ""
+                                Accessible.name: root.cmdModel && root.showCellTitle ? root.cmdModel.cellTitle(cellSection, cellItem) : ""
+                                Accessible.description: root.cmdModel && root.showCellSubtitle ? root.cmdModel.cellSubtitle(cellSection, cellItem) : ""
                                 Accessible.selectable: true
                                 Accessible.selected: cellWrapper.cellSelected
 
