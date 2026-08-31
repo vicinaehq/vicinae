@@ -86,7 +86,14 @@ bool MacApplication::isTerminalEmulator() const {
   return knownTerminalBundleIds().contains(m_id.toStdString());
 }
 
-ImageURL MacApplication::iconUrl() const { return ImageURL::macBundle(m_bundlePath); }
+ImageURL MacApplication::iconUrl() const {
+  if (!m_iconPath) {
+    std::error_code error;
+    std::filesystem::path const resolvedPath = std::filesystem::canonical(m_bundlePath, error);
+    m_iconPath = error ? m_bundlePath : resolvedPath;
+  }
+  return ImageURL::macBundle(*m_iconPath);
+}
 
 bool MacApplication::matchesWindowClass(const QString &wmClass) const {
   return m_bundleIdentifier && m_bundleIdentifier->compare(wmClass, Qt::CaseInsensitive) == 0;
