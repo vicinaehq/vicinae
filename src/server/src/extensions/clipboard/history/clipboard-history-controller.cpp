@@ -47,13 +47,17 @@ void ClipboardHistoryController::handleResults() {
   if (!m_watcher.isFinished()) return;
 
   m_queryRunning = false;
-  emit dataLoadingChanged(false);
-  emit dataRetrieved(m_watcher.result());
 
+  // results are stale whenever a newer request was conflated while this one ran: rerun
+  // without emitting them, so the view only ever sees data matching the latest input
   if (m_queryPending) {
     m_queryPending = false;
     runQuery();
+    return;
   }
+
+  emit dataLoadingChanged(false);
+  emit dataRetrieved(m_watcher.result());
 }
 
 void ClipboardHistoryController::handleClipboardChanged() { reloadSearch(); }

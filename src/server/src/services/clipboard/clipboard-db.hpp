@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <QString>
+#include <QStringList>
 #include <optional>
 #include <functional>
 #include <vector>
@@ -93,6 +94,8 @@ public:
 
   PaginatedResponse<ClipboardHistoryEntry> query(int limit = 100, int offset = 0,
                                                  const ClipboardListSettings &opts = {}) const;
+
+  static QStringList searchTerms(const QString &query);
 
   bool removeAll();
 

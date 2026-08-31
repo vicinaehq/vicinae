@@ -134,12 +134,20 @@ void ClipboardHistoryViewHost::initialize() {
 
 void ClipboardHistoryViewHost::loadInitialData() {
   m_controller->setFilter(searchText());
-  m_controller->reloadSearch();
+  updateSearchTerms(searchText());
 }
 
 void ClipboardHistoryViewHost::textChanged(const QString &text) {
   m_model.setSelectFirstOnReset(true);
   m_controller->setFilter(text);
+  updateSearchTerms(text);
+}
+
+void ClipboardHistoryViewHost::updateSearchTerms(const QString &text) {
+  auto terms = ClipboardDatabase::searchTerms(text);
+  if (terms == m_searchTerms) return;
+  m_searchTerms = std::move(terms);
+  emit searchTermsChanged();
 }
 
 void ClipboardHistoryViewHost::onReactivated() { m_model.refreshActionPanel(); }

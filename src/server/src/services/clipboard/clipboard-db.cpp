@@ -3,7 +3,24 @@
 #include "vicinae.hpp"
 #include <qlogging.h>
 
+extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
+
 static constexpr qsizetype MAX_INDEXED_CONTENT_SIZE = 1 << 16;
+
+// the fuzzy_trigram tokenizer strips separators, so a term only produces trigrams (and can go
+// through MATCH) if it has a run of at least 3 word characters; anything else ("->>", "a!b")
+// would tokenize to nothing or to whole-short-word tokens and must use the instr scan instead
+static bool hasTrigramRun(const QString &word) {
+  int run = 0;
+
+  for (QChar const c : word) {
+    bool const wordChar = c.unicode() >= 0x80 || c.isLetterOrNumber();
+    run = wordChar ? run + 1 : 0;
+    if (run >= 3) return true;
+  }
+
+  return false;
+}
 
 static constexpr const char *CLIPBOARD_PRAGMAS[] = {
     "PRAGMA journal_mode = WAL", "PRAGMA synchronous = normal", "PRAGMA journal_size_limit = 6144000",
@@ -47,9 +64,8 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
   QStringList matchPhrases;
   QStringList shortTerms;
 
-  for (const QString &word : opts.query.simplified().split(' ', Qt::SkipEmptyParts)) {
-    // trigram tokenization needs at least 3 codepoints, shorter terms fall back to a linear scan
-    if (word.toUcs4().size() >= 3) {
+  for (const QString &word : searchTerms(opts.query)) {
+    if (hasTrigramRun(word)) {
       matchPhrases << '"' + QString(word).replace('"', "\"\"") + '"';
     } else {
       shortTerms << word;
@@ -152,6 +168,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
   response.currentPage = ceil(static_cast<double>(offset) / limit);
 
   return response;
+}
+
+QStringList ClipboardDatabase::searchTerms(const QString &query) {
+  return query.simplified().split(' ', Qt::SkipEmptyParts);
 }
 
 std::optional<QString> ClipboardDatabase::retrieveKeywords(const QString &id) {
@@ -346,6 +366,10 @@ ClipboardDatabase::ClipboardDatabase(std::optional<db::EncryptionKey> key) {
     if (auto keyed = m_db.setKey(*key); !keyed) {
       qFatal("Failed to unlock clipboard database: %s", keyed.error().c_str());
     }
+  }
+
+  if (int rc = vicinaeFuzzyTrigramInit(m_db.handle(), nullptr, nullptr); rc != SQLITE_OK) {
+    qCritical() << "Failed to register fuzzy_trigram tokenizer:" << sqlite3_errstr(rc);
   }
 
   for (const auto &pragma : CLIPBOARD_PRAGMAS) {

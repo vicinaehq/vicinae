@@ -242,6 +242,7 @@ Item {
                 sourceComponent: TextViewer {
                     text: root.host.detailTextContent
                     monospace: true
+                    highlightTerms: root.host.searchTerms
                 }
             }
 

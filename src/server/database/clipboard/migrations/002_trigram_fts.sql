@@ -4,7 +4,7 @@ DROP TRIGGER selection_auk;
 CREATE VIRTUAL TABLE selection_fts_new USING fts5(
 	content,
 	selection_id UNINDEXED,
-	tokenize='trigram remove_diacritics 1'
+	tokenize='fuzzy_trigram remove_diacritics 2'
 );
 
 INSERT INTO selection_fts_new (selection_id, content)

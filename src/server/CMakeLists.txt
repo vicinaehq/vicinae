@@ -99,6 +99,8 @@ include_directories(
 set(SRCS
 	src/main.cpp
 
+	${CMAKE_SOURCE_DIR}/vendor/fuzzy-trigram/register.c
+
 	src/theme.hpp
 	src/theme.cpp
 
@@ -1165,6 +1167,8 @@ set(VICINAE_QML_SOURCES
 	src/qml/vici-image-item.hpp
 	src/qml/hover-activation.hpp
 	src/qml/hover-activation.cpp
+	src/qml/match-highlighter.hpp
+	src/qml/match-highlighter.cpp
 	src/qml/completion-model.hpp
 	src/qml/markdown/markdown-model.hpp
 	src/qml/markdown/text-selection-controller.hpp
@@ -1218,7 +1222,7 @@ if(Qt6_FOUND AND NOT WIN32)
     )
 endif()
 
-target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler)
+target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler ${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
 	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-framework Security" "-F/System/Library/PrivateFrameworks" "-framework login")
