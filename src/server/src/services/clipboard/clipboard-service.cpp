@@ -24,6 +24,7 @@
 #include <QImage>
 #include "clipboard-server-factory.hpp"
 #include <quuid.h>
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/selection-mime-data.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
@@ -161,11 +162,33 @@ void ClipboardService::scheduleClipboardRestore(int delayMs) {
   m_restoreTimer.start();
 }
 
+static void rerankByPreviewMatch(std::vector<ClipboardHistoryEntry> &entries, const QString &queryText) {
+  auto const utf8 = queryText.toUtf8();
+  fuzzy::Query const query{std::string_view(utf8.constData(), static_cast<size_t>(utf8.size()))};
+
+  if (query.empty()) return;
+
+  std::vector<Scored<ClipboardHistoryEntry>> scored;
+  scored.reserve(entries.size());
+
+  for (auto &entry : entries) {
+    auto const preview = entry.textPreview.toUtf8();
+    auto const match = fuzzy::scoreWeighted(
+        {{std::string_view(preview.constData(), static_cast<size_t>(preview.size())), 1.0}}, query);
+    scored.push_back({.data = std::move(entry), .score = match.accepted() ? match.score : -1});
+  }
+
+  std::ranges::stable_sort(scored, std::greater{});
+  std::ranges::transform(scored, entries.begin(), [](auto &s) { return std::move(s.data); });
+}
+
 QFuture<PaginatedResponse<ClipboardHistoryEntry>>
 ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &opts) const {
-  auto key = m_dbKey;
-  return QtConcurrent::run(
-      [opts, limit, offset, key]() { return ClipboardDatabase(key).query(limit, offset, opts); });
+  return QtConcurrent::run([db = m_readDb, opts, limit, offset]() {
+    auto response = db->query(limit, offset, opts);
+    rerankByPreviewMatch(response.data, opts.query);
+    return response;
+  });
 }
 
 ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
@@ -665,6 +688,7 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, std::optio
 
   fs::create_directories(m_dataDir);
   openDatabase().runMigrations();
+  m_readDb = std::make_shared<ClipboardDatabase>(m_dbKey);
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);

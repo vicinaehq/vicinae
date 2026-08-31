@@ -6,6 +6,17 @@ ScrollView {
 
     property alias text: textArea.text
 
+    // required: the StatusBarInset child disables ScrollView's automatic content sizing
+    contentWidth: availableWidth
+    contentHeight: textArea.implicitHeight
+
+    ScrollBar.vertical: ViciScrollBar {
+        parent: root
+        x: root.mirrored ? 0 : root.width - width
+        y: root.topPadding
+        height: root.availableHeight
+    }
+
     Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
 
     StatusBarInset {
@@ -45,6 +56,7 @@ ScrollView {
 
     TextArea {
         id: textArea
+        width: root.availableWidth
         textFormat: TextArea.RichText
         color: Theme.foreground
         readOnly: true

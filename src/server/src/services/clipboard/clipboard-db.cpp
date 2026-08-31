@@ -3,6 +3,24 @@
 #include "vicinae.hpp"
 #include <qlogging.h>
 
+extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
+
+static constexpr qsizetype MAX_INDEXED_CONTENT_SIZE = 1 << 16;
+
+// fuzzy_trigram strips separators: a term without a 3+ run of word chars ("->>", "a!b")
+// yields no trigrams, so MATCH would find nothing and the instr scan must be used instead
+static bool hasTrigramRun(const QString &word) {
+  int run = 0;
+
+  for (QChar const c : word) {
+    bool const wordChar = c.unicode() >= 0x80 || c.isLetterOrNumber();
+    run = wordChar ? run + 1 : 0;
+    if (run >= 3) return true;
+  }
+
+  return false;
+}
+
 static constexpr const char *CLIPBOARD_PRAGMAS[] = {
     "PRAGMA journal_mode = WAL", "PRAGMA synchronous = normal", "PRAGMA journal_size_limit = 6144000",
     "PRAGMA foreign_keys = ON"};
@@ -42,8 +60,19 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
   response.data.reserve(limit);
 
   QString queryString;
+  QStringList matchPhrases;
+  QStringList shortTerms;
 
-  bool const hasFilters = !opts.query.isEmpty() || opts.kind.has_value();
+  for (const QString &word : searchTerms(opts.query)) {
+    if (hasTrigramRun(word)) {
+      matchPhrases << '"' + QString(word).replace('"', "\"\"") + '"';
+    } else {
+      shortTerms << word;
+    }
+  }
+
+  bool const hasQuery = !matchPhrases.isEmpty() || !shortTerms.isEmpty();
+  bool const hasFilters = hasQuery || opts.kind.has_value();
 
   if (!hasFilters) {
     queryString = QString(R"(
@@ -92,19 +121,17 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         AND o.mime_type = selection.preferred_mime_type
     )";
 
-    if (!opts.query.isEmpty()) {
-      queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id ";
-    }
+    if (hasQuery) { queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id "; }
 
-    if (!opts.query.isEmpty()) { queryString += " WHERE selection_fts MATCH '\"" + opts.query + "\"*' "; }
+    QStringList conditions;
 
-    if (opts.kind) {
-      if (opts.query.isEmpty()) {
-        queryString += " WHERE selection.kind = :kind";
-      } else {
-        queryString += " AND selection.kind = :kind";
-      }
+    if (!matchPhrases.isEmpty()) { conditions << "selection_fts MATCH :fts_query"; }
+    for (int i = 0; i != shortTerms.size(); ++i) {
+      conditions << QString("instr(lower(selection_fts.content), lower(:term%1)) > 0").arg(i);
     }
+    if (opts.kind) { conditions << "selection.kind = :kind"; }
+
+    if (!conditions.isEmpty()) { queryString += " WHERE " + conditions.join(" AND "); }
 
     queryString += " GROUP BY selection.id ";
     queryString += " ORDER BY pinned_at DESC, updated_at DESC";
@@ -114,6 +141,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
   auto stmt = m_db.prepare(queryString.toStdString());
 
   if (opts.kind) { stmt.bind(":kind", static_cast<int>(*opts.kind)); }
+  if (!matchPhrases.isEmpty()) { stmt.bind(":fts_query", matchPhrases.join(" AND ")); }
+  for (int i = 0; i != shortTerms.size(); ++i) {
+    stmt.bind(QString(":term%1").arg(i).toUtf8().constData(), shortTerms.at(i));
+  }
 
   while (stmt.step()) {
     ClipboardHistoryEntry dto{.id = stmt.columnQString(0),
@@ -136,6 +167,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
   response.currentPage = ceil(static_cast<double>(offset) / limit);
 
   return response;
+}
+
+QStringList ClipboardDatabase::searchTerms(const QString &query) {
+  return query.simplified().split(' ', Qt::SkipEmptyParts);
 }
 
 std::optional<QString> ClipboardDatabase::retrieveKeywords(const QString &id) {
@@ -277,7 +312,7 @@ bool ClipboardDatabase::indexSelectionContent(const QString &selectionId, const 
     INSERT INTO selection_fts (selection_id, content) VALUES (:selection_id, :content);
   )");
   stmt.bind(":selection_id", selectionId);
-  stmt.bind(":content", content);
+  stmt.bind(":content", content.left(MAX_INDEXED_CONTENT_SIZE));
 
   if (!stmt.exec()) {
     qCritical() << "failed to index text" << stmt.lastError().c_str();
@@ -330,6 +365,10 @@ ClipboardDatabase::ClipboardDatabase(std::optional<db::EncryptionKey> key) {
     if (auto keyed = m_db.setKey(*key); !keyed) {
       qFatal("Failed to unlock clipboard database: %s", keyed.error().c_str());
     }
+  }
+
+  if (int rc = vicinaeFuzzyTrigramInit(m_db.handle(), nullptr, nullptr); rc != SQLITE_OK) {
+    qCritical() << "Failed to register fuzzy_trigram tokenizer:" << sqlite3_errstr(rc);
   }
 
   for (const auto &pragma : CLIPBOARD_PRAGMAS) {
