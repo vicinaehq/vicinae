@@ -162,8 +162,6 @@ void ClipboardService::scheduleClipboardRestore(int delayMs) {
   m_restoreTimer.start();
 }
 
-// entries whose preview fuzzy-matches the query come first, best score first; entries that only
-// matched deeper in their content (or through keywords) keep the pinned/recency order after them
 static void rerankByPreviewMatch(std::vector<ClipboardHistoryEntry> &entries, const QString &queryText) {
   auto const utf8 = queryText.toUtf8();
   fuzzy::Query const query{std::string_view(utf8.constData(), static_cast<size_t>(utf8.size()))};

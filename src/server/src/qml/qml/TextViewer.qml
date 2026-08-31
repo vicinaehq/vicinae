@@ -12,8 +12,7 @@ ScrollView {
 
     clip: true
     contentWidth: availableWidth
-    // StatusBarInset makes this a multi-child ScrollView, which disables automatic
-    // content sizing from the single child's implicit height
+    // required: the StatusBarInset child disables ScrollView's automatic content sizing
     contentHeight: textEdit.implicitHeight
 
     ScrollBar.vertical: ViciScrollBar {

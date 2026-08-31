@@ -48,8 +48,7 @@ void ClipboardHistoryController::handleResults() {
 
   m_queryRunning = false;
 
-  // results are stale whenever a newer request was conflated while this one ran: rerun
-  // without emitting them, so the view only ever sees data matching the latest input
+  // never emit stale results: each delivery consumes the host's one-shot select-first flag
   if (m_queryPending) {
     m_queryPending = false;
     runQuery();

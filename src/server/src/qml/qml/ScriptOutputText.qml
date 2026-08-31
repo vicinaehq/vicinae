@@ -6,8 +6,7 @@ ScrollView {
 
     property alias text: textArea.text
 
-    // StatusBarInset makes this a multi-child ScrollView, which disables automatic
-    // content sizing from the single child's implicit height
+    // required: the StatusBarInset child disables ScrollView's automatic content sizing
     contentWidth: availableWidth
     contentHeight: textArea.implicitHeight
 

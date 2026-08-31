@@ -7,9 +7,8 @@ extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
 
 static constexpr qsizetype MAX_INDEXED_CONTENT_SIZE = 1 << 16;
 
-// the fuzzy_trigram tokenizer strips separators, so a term only produces trigrams (and can go
-// through MATCH) if it has a run of at least 3 word characters; anything else ("->>", "a!b")
-// would tokenize to nothing or to whole-short-word tokens and must use the instr scan instead
+// fuzzy_trigram strips separators: a term without a 3+ run of word chars ("->>", "a!b")
+// yields no trigrams, so MATCH would find nothing and the instr scan must be used instead
 static bool hasTrigramRun(const QString &word) {
   int run = 0;
 
