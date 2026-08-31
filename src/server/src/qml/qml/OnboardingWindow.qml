@@ -5,8 +5,10 @@ Window {
     id: root
 
     property int step: 0
-    readonly property int stepCount: 4
-    readonly property bool accessibilityGranted: Permissions.accessibilityGranted
+    readonly property bool permissionsAvailable: typeof Permissions !== "undefined"
+    readonly property bool shortcutsAvailable: Platform.supports("globalShortcuts")
+    readonly property int stepCount: permissionsAvailable ? 4 : 3
+    readonly property bool accessibilityGranted: permissionsAvailable && Permissions.accessibilityGranted
 
     function advance() {
         if (root.step === root.stepCount - 1) {
@@ -87,7 +89,8 @@ Window {
             spacing: 0
 
             StackLayout {
-                currentIndex: root.step
+                // the permissions page sits at index 1 but is macOS-only
+                currentIndex: root.permissionsAvailable || root.step === 0 ? root.step : root.step + 1
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
@@ -126,68 +129,72 @@ Window {
                 }
 
                 Item {
-                    ColumnLayout {
+                    Loader {
                         anchors.centerIn: parent
-                        width: 480
-                        spacing: 8
+                        active: root.permissionsAvailable
 
-                        Text {
-                            text: qsTr("Permissions")
-                            color: Theme.foreground
-                            font.pointSize: Theme.regularFontSize + 6
-                            font.weight: Font.DemiBold
-                            horizontalAlignment: Text.AlignHCenter
-                            Layout.fillWidth: true
-                        }
+                        sourceComponent: ColumnLayout {
+                            width: 480
+                            spacing: 8
 
-                        Text {
-                            text: qsTr("Vicinae needs additional permissions in order to make the best of your Mac.")
-                            color: Theme.textMuted
-                            font.pointSize: Theme.regularFontSize
-                            wrapMode: Text.Wrap
-                            horizontalAlignment: Text.AlignHCenter
-                            Layout.fillWidth: true
-                            Layout.bottomMargin: 16
-                        }
-
-                        SettingsGroup {
-                            PermissionRow {
-                                label: qsTr("Accessibility")
-                                description: qsTr("Used to paste, expand snippets, and move windows.")
-                                iconSource: Img.system("accessibility").withFillColor(Theme.foreground)
-                                granted: root.accessibilityGranted
-                                onGrant: Permissions.requestAccessibility()
+                            Text {
+                                text: qsTr("Permissions")
+                                color: Theme.foreground
+                                font.pointSize: Theme.regularFontSize + 6
+                                font.weight: Font.DemiBold
+                                horizontalAlignment: Text.AlignHCenter
+                                Layout.fillWidth: true
                             }
 
-                            PermissionRow {
-                                label: qsTr("Full Disk Access")
-                                description: qsTr("Allows file search to cover your entire disk.")
-                                iconSource: Img.system("internaldrive").withFillColor(Theme.foreground)
-                                showSeparator: Permissions.notificationsSupported
-                                granted: Permissions.fullDiskAccessGranted
-                                onGrant: Permissions.requestFullDiskAccess()
+                            Text {
+                                text: qsTr("Vicinae needs additional permissions in order to make the best of your Mac.")
+                                color: Theme.textMuted
+                                font.pointSize: Theme.regularFontSize
+                                wrapMode: Text.Wrap
+                                horizontalAlignment: Text.AlignHCenter
+                                Layout.fillWidth: true
+                                Layout.bottomMargin: 16
                             }
 
-                            PermissionRow {
-                                label: qsTr("Notifications")
-                                description: qsTr("Allows extensions to send desktop notifications.")
-                                iconSource: Img.system("bell.badge").withFillColor(Theme.foreground)
-                                showSeparator: false
-                                visible: Permissions.notificationsSupported
-                                granted: Permissions.notificationsGranted
-                                onGrant: Permissions.requestNotifications()
-                            }
-                        }
+                            SettingsGroup {
+                                PermissionRow {
+                                    label: qsTr("Accessibility")
+                                    description: qsTr("Used to paste, expand snippets, and move windows.")
+                                    iconSource: Img.system("accessibility").withFillColor(Theme.foreground)
+                                    granted: root.accessibilityGranted
+                                    onGrant: Permissions.requestAccessibility()
+                                }
 
-                        Text {
-                            visible: !root.accessibilityGranted || !Permissions.fullDiskAccessGranted
-                            text: !root.accessibilityGranted ? qsTr("Without accessibility access, paste, snippet expansion, and window management are unavailable.") : qsTr("Full disk access needs to be explicitly enabled if you want file search to cover all your files.")
-                            color: Theme.textMuted
-                            font.pointSize: Theme.smallerFontSize
-                            wrapMode: Text.Wrap
-                            horizontalAlignment: Text.AlignHCenter
-                            Layout.fillWidth: true
-                            Layout.topMargin: 8
+                                PermissionRow {
+                                    label: qsTr("Full Disk Access")
+                                    description: qsTr("Allows file search to cover your entire disk.")
+                                    iconSource: Img.system("internaldrive").withFillColor(Theme.foreground)
+                                    showSeparator: Permissions.notificationsSupported
+                                    granted: Permissions.fullDiskAccessGranted
+                                    onGrant: Permissions.requestFullDiskAccess()
+                                }
+
+                                PermissionRow {
+                                    label: qsTr("Notifications")
+                                    description: qsTr("Allows extensions to send desktop notifications.")
+                                    iconSource: Img.system("bell.badge").withFillColor(Theme.foreground)
+                                    showSeparator: false
+                                    visible: Permissions.notificationsSupported
+                                    granted: Permissions.notificationsGranted
+                                    onGrant: Permissions.requestNotifications()
+                                }
+                            }
+
+                            Text {
+                                visible: !root.accessibilityGranted || !Permissions.fullDiskAccessGranted
+                                text: !root.accessibilityGranted ? qsTr("Without accessibility access, paste, snippet expansion, and window management are unavailable.") : qsTr("Full disk access needs to be explicitly enabled if you want file search to cover all your files.")
+                                color: Theme.textMuted
+                                font.pointSize: Theme.smallerFontSize
+                                wrapMode: Text.Wrap
+                                horizontalAlignment: Text.AlignHCenter
+                                Layout.fillWidth: true
+                                Layout.topMargin: 8
+                            }
                         }
                     }
                 }
@@ -232,10 +239,11 @@ Window {
 
                             SettingsRow {
                                 label: qsTr("Global hotkey")
-                                description: qsTr("Opens the launcher from anywhere.")
+                                description: root.shortcutsAvailable ? qsTr("Opens the launcher from anywhere.") : qsTr("Bind a key to \"vicinae toggle\"")
                                 showSeparator: onboarding.loginItemSupported
 
                                 ShortcutField {
+                                    visible: root.shortcutsAvailable
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
                                     bordered: false
@@ -243,6 +251,15 @@ Window {
                                     shortcutId: GlobalShortcuts.toggleId
                                     shortcut: onboarding.generalModel.toggleShortcut
                                     onAccepted: shortcut => onboarding.generalModel.toggleShortcut = shortcut
+                                }
+
+                                ViciButton {
+                                    visible: !root.shortcutsAvailable
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: qsTr("Open Docs")
+                                    variant: "secondary"
+                                    onClicked: onboarding.openUrl("https://docs.vicinae.com/faq#how-to-set-a-keyboard-shortcut-to-open-vicinae")
                                 }
                             }
 
@@ -277,7 +294,7 @@ Window {
                         }
 
                         Text {
-                            text: qsTr("Vicinae is running. Open the launcher with:")
+                            text: root.shortcutsAvailable ? qsTr("Vicinae is running. Open the launcher with:") : qsTr("Vicinae is running. Bind a key to \"vicinae toggle\" to open it from anywhere.")
                             color: Theme.textMuted
                             font.pointSize: Theme.regularFontSize
                             wrapMode: Text.Wrap
@@ -286,7 +303,7 @@ Window {
                         }
 
                         ShortcutBadge {
-                            visible: onboarding.generalModel.toggleShortcut !== ""
+                            visible: root.shortcutsAvailable && onboarding.generalModel.toggleShortcut !== ""
                             tokens: Keyboard.tokensForString(onboarding.generalModel.toggleShortcut)
                             Layout.alignment: Qt.AlignHCenter
                             Layout.topMargin: 8

@@ -240,6 +240,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QQuickStyle::setStyle(QStringLiteral("Basic"));
 
   Omnicast::ensureDirectories();
+  OnboardingWindow::captureFreshInstall();
 
 #ifdef AUTO_ENABLE_AUTOSTART
   vicinae::macos::registerLoginItemOnce();

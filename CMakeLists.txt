@@ -61,7 +61,7 @@ option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
 option(AUTO_INSTALL_BROWSER_MANIFESTS "Install per-user browser native messaging host manifests at server startup" ON)
 option(AUTO_ENABLE_AUTOSTART "Register the app to start at login on first launch (currently macOS only)" ON)
-option(ENABLE_ONBOARDING "Show the onboarding window on first launch (macOS only)" ON)
+option(ENABLE_ONBOARDING "Show the onboarding window on first launch" ON)
 
 set(BUNDLE_SOULVER_CORE_DEFAULT OFF)
 if (APPLE)
