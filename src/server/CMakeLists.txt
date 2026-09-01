@@ -1301,10 +1301,8 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	target_sources(${TEST_TARGET} PRIVATE
 		src/services/calculator-service/qalculate/qalculate-backend.cpp
 		tests/calculator/qalculate-backend.cpp
-		src/services/media-control/mpris/mpris-metadata.cpp
-		tests/media-control/mpris-metadata.cpp
 	)
-	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common qalculate Qt6::Concurrent Qt6::DBus)
+	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common qalculate Qt6::Concurrent)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()
