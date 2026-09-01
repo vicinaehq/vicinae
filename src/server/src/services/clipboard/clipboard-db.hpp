@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <QString>
 #include <QStringList>
+#include <numbers>
 #include <optional>
 #include <functional>
 #include <vector>
@@ -108,7 +109,11 @@ public:
   bool insertOffer(const InsertClipboardOfferPayload &payload);
   bool indexSelectionContent(const QString &selectionId, const QString &content);
   std::vector<QString> removeSelection(const QString &selectionId);
+
   std::optional<PreferredClipboardOfferRecord> findPreferredOffer(const QString &selectionId);
+
+  // return the IDs of the offers that were removed, so that the clipboard service can remove them from disk
+  std::vector<QString> evictOlderThan(std::chrono::seconds secs, bool preservedTagged = true);
 
   void runMigrations();
 

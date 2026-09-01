@@ -6,6 +6,7 @@
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
 #include <QString>
+#include <chrono>
 #include <expected>
 #include <filesystem>
 #include <QJsonObject>
@@ -92,6 +93,12 @@ public:
   void setIgnorePasswords(bool value);
   bool isEncryptionReady() const;
 
+  /**
+   * std::nullopt to disable eviction
+   */
+  void setHistoryEvictionThreshold(std::optional<std::chrono::seconds> threshold,
+                                   bool preserveTaggedSelections = true);
+
 private:
   ClipboardDatabase openDatabase() const { return ClipboardDatabase(m_dbKey); }
 
@@ -124,6 +131,8 @@ private:
 
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
 
+  void scheduleEviction();
+
   void restoreClipboard();
 
   bool m_recordAllOffers = true;
@@ -132,4 +141,7 @@ private:
   std::optional<ClipboardSelection> m_lastSelection;
   QTimer m_restoreTimer;
   QFutureWatcher<std::expected<ClipboardHistoryEntry, QString>> m_indexingSelection;
+  std::optional<std::chrono::seconds> m_evictionThreshold;
+  bool m_preserveTaggedSelections = true;
+  QTimer m_historyEvictionTimer;
 };

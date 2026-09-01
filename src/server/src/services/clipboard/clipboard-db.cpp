@@ -1,7 +1,10 @@
 #include "clipboard-db.hpp"
 #include "utils/migration-manager/migration-manager.hpp"
 #include "vicinae.hpp"
+#include <chrono>
+#include <filesystem>
 #include <qlogging.h>
+#include <sstream>
 
 extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
 
@@ -326,6 +329,54 @@ void ClipboardDatabase::runMigrations() {
   MigrationManager manager(m_db, "clipboard");
 
   manager.runMigrations();
+}
+
+std::vector<QString> ClipboardDatabase::evictOlderThan(std::chrono::seconds secs, bool preserveTagged) {
+  constexpr auto PRESERVE_TAGGED_WHERE = " AND pinned_at IS NULL AND keywords == ''";
+  std::vector<QString> evicted{};
+
+  evicted.reserve(0xF);
+
+  {
+    std::ostringstream oss{};
+    oss << R"(
+  	SELECT o.id 
+	FROM data_offer o
+	JOIN selection s ON s.id = o.selection_id
+	WHERE unixepoch() - s.updated_at > :threshold
+  )";
+
+    if (preserveTagged) { oss << PRESERVE_TAGGED_WHERE; }
+
+    auto stmt = m_db.prepare(oss.str());
+
+    stmt.bind(":threshold", secs.count());
+
+    while (stmt.step()) {
+      evicted.emplace_back(stmt.columnQString(0));
+    }
+  }
+
+  if (evicted.empty()) return evicted;
+
+  {
+    std::ostringstream oss{};
+
+    oss << "DELETE FROM selection WHERE unixepoch() - updated_at > :threshold";
+
+    if (preserveTagged) { oss << PRESERVE_TAGGED_WHERE; }
+
+    auto stmt = m_db.prepare(oss.str());
+
+    stmt.bind(":threshold", secs.count());
+
+    if (!stmt.exec()) {
+      qCritical() << "Failed to evict older selections" << stmt.lastError().c_str();
+      return {};
+    }
+  }
+
+  return evicted;
 }
 
 bool ClipboardDatabase::insertOffer(const InsertClipboardOfferPayload &payload) {

@@ -1,12 +1,14 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
 #include <algorithm>
+#include <cstddef>
 #include <filesystem>
 #include <numeric>
 #include <QGuiApplication>
 #include <qfuturewatcher.h>
 #include <qstandardpaths.h>
 #include <qtconcurrentrun.h>
+#include <qthreadpool.h>
 #include "common/clipboard-formats.hpp"
 #include "common/types.hpp"
 #ifdef Q_OS_LINUX
@@ -106,6 +108,44 @@ void ClipboardService::setEncryptionKey(std::optional<db::EncryptionKey> key) {
 bool ClipboardService::isEncryptionReady() const { return m_encrypter.get(); }
 
 void ClipboardService::setIgnorePasswords(bool value) { m_ignorePasswords = value; }
+
+void ClipboardService::setHistoryEvictionThreshold(std::optional<std::chrono::seconds> threshold,
+                                                   bool preserveTaggedSelections) {
+  if (threshold == m_evictionThreshold) return;
+
+  m_evictionThreshold = threshold;
+  m_preserveTaggedSelections = preserveTaggedSelections;
+  m_historyEvictionTimer.stop();
+  m_historyEvictionTimer.setInterval(60000);
+  m_historyEvictionTimer.start();
+  scheduleEviction();
+}
+
+void ClipboardService::scheduleEviction() {
+  if (m_evictionThreshold) {
+    qDebug() << "scheduling clipboard eviction...";
+
+    // this can be expensive, so we run it in a separate thread
+    QThreadPool::globalInstance()->start(
+        [this, t = *m_evictionThreshold, preserve = m_preserveTaggedSelections]() {
+          const auto evictedIds = openDatabase().evictOlderThan(t, preserve);
+          std::error_code ec{};
+          std::size_t evictedCount = 0;
+
+          for (const auto &evicted : evictedIds) {
+            fs::path path = m_dataDir / evicted.toStdString();
+            if (fs::remove(path, ec)) {
+              qDebug() << "removed" << path << "from disk";
+              ++evictedCount;
+            } else {
+              qWarning() << "failed to remove clipboard offer at" << path;
+            }
+          }
+
+          qInfo() << "evicted" << evictedCount << "clipboard offers";
+        });
+  }
+}
 
 void ClipboardService::setMonitoring(bool value) {
   if (m_monitoring == value) return;
@@ -692,6 +732,7 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, std::optio
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);
+  connect(&m_historyEvictionTimer, &QTimer::timeout, this, &ClipboardService::scheduleEviction);
   connect(&m_indexingSelection, &decltype(m_indexingSelection)::finished, this, [this]() {
     if (m_indexingSelection.isCanceled()) return;
     if (auto result = m_indexingSelection.result()) { emit itemInserted(*result); }

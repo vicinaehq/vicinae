@@ -1,6 +1,8 @@
 #include "extensions/clipboard/clipboard-extension.hpp"
 #include <QCoreApplication>
+#include <chrono>
 #include "builtin_icon.hpp"
+#include "numen/numen.hpp"
 #include "single-view-command-context.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
@@ -68,17 +70,46 @@ void ClipboardExtension::initialized(const QJsonObject &preferences) const {
 }
 
 void ClipboardExtension::preferenceValuesChanged(const QJsonObject &value) const {
+  auto parseEvictionThreshold = [](const QString &text) -> std::optional<std::chrono::seconds> {
+    if (text == "never") return std::nullopt;
+    auto parsed = numen::Numen{}.parse<std::chrono::seconds>(text.toStdString());
+    if (!parsed) return std::nullopt;
+    return *parsed;
+  };
+
   auto clipman = ServiceRegistry::instance()->clipman();
+  auto evictionThreshold = parseEvictionThreshold(value.value("evictionThreshold").toString());
+  auto preservedTaggedSelections = value.value("preserveTagged").toBool();
+
   clipman->setRecordAllOffers(value.value("store-all-offerings").toBool());
   clipman->setMonitoring(value.value("monitoring").toBool());
+  clipman->setHistoryEvictionThreshold(evictionThreshold, preservedTaggedSelections);
+
 #ifndef Q_OS_MACOS
   clipman->setIgnorePasswords(value.value("ignorePasswords").toBool());
 #endif
 }
 
 std::vector<Preference> ClipboardExtension::preferences() const {
+  std::vector<Preference::DropdownData::Option> evictionThresholdPresets = {
+      {tr("Never"), "never"},   {tr("15 minutes"), "15 minutes"}, {tr("1 hour"), "1 hour"},
+      {tr("1 day"), "1 day"},   {tr("1 week"), "1 week"},         {tr("1 month"), "1 month"},
+      {tr("1 year"), "1 year"},
+  };
+
   auto monitoring = Preference::makeCheckbox("monitoring");
+  auto evictionThreshold = Preference::makeDropdown("evictionThreshold", evictionThresholdPresets);
+  auto preserveTaggedSelections = Preference::makeCheckbox("preserveTagged");
   auto eraseOnStartup = Preference::makeCheckbox("eraseOnStartup");
+
+  evictionThreshold.setTitle("Eviction threshold");
+  evictionThreshold.setDescription("Automatically delete selections older than this threshold");
+  evictionThreshold.setDefaultValue("never");
+
+  preserveTaggedSelections.setTitle("Preserve tagged");
+  preserveTaggedSelections.setDescription(
+      "Never evict or mass delete selections that have been explicitly tagged (pinned, custom keyword).");
+  preserveTaggedSelections.setDefaultValue(true);
 
   eraseOnStartup.setTitle(tr("Erase on startup"));
   eraseOnStartup.setDescription(tr("Erase clipboard history every time the vicinae server is started"));
@@ -90,16 +121,14 @@ std::vector<Preference> ClipboardExtension::preferences() const {
   monitoring.setDefaultValue(true);
 
 #ifdef Q_OS_MACOS
-  return {monitoring, eraseOnStartup};
+  return {monitoring, preserveTaggedSelections, evictionThreshold, eraseOnStartup};
 #else
   auto ignorePasswords = Preference::makeCheckbox("ignorePasswords");
   ignorePasswords.setDefaultValue(true);
   ignorePasswords.setTitle(tr("Ignore Passwords"));
   ignorePasswords.setDescription(
-      tr("Ignore selections that can be identified as a password. This relies on the application providing "
-         "an explicit hint that the selection is a password. While most password managers and private "
-         "browser windows do, some might not implement this properly."));
+      tr("Ignore selections that can be identified as a password. This may not work with all apps."));
 
-  return {monitoring, ignorePasswords, eraseOnStartup};
+  return {monitoring, ignorePasswords, preserveTaggedSelections, evictionThreshold, eraseOnStartup};
 #endif
 }
