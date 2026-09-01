@@ -59,6 +59,7 @@ struct ClipboardHistoryEntry {
   QString mimeType;
   QString textPreview;
   uint64_t pinnedAt;
+  QString keywords;
   QString md5sum;
   uint64_t updatedAt;
   uint64_t size;
@@ -97,7 +98,7 @@ public:
 
   static QStringList searchTerms(const QString &query);
 
-  bool removeAll();
+  std::optional<std::vector<QString>> removeAll(bool preserveTagged = false);
 
   bool setKeywords(const QString &id, const QString &keywords);
   std::optional<QString> retrieveKeywords(const QString &id);

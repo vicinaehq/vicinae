@@ -136,8 +136,20 @@ void ClipboardService::armEvictionTimer(std::optional<int64_t> oldestTimestamp) 
   m_historyEvictionTimer.start(duration_cast<milliseconds>(delay));
 }
 
+void ClipboardService::pauseEviction() { m_evictionPaused = true; }
+
+void ClipboardService::resumeEviction() {
+  m_evictionPaused = false;
+  if (std::exchange(m_evictionDeferred, false)) runEvictionPass();
+}
+
 void ClipboardService::runEvictionPass() {
   if (!m_evictionThreshold) return;
+
+  if (m_evictionPaused) {
+    m_evictionDeferred = true;
+    return;
+  }
 
   // this can be expensive, so we run it in a separate thread
   QThreadPool::globalInstance()->start(
@@ -406,7 +418,11 @@ std::optional<QString> ClipboardService::retrieveKeywords(const QString &id) {
 }
 
 bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
-  return openDatabase().setKeywords(id, keywords);
+  if (!openDatabase().setKeywords(id, keywords)) return false;
+
+  emit selectionKeywordsChanged(id, keywords);
+
+  return true;
 }
 
 ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &selection) {
@@ -704,14 +720,23 @@ Clipboard::ReadContent ClipboardService::readContent() {
 
 bool ClipboardService::removeAllSelections() {
   auto db = openDatabase();
+  const auto removedIds = db.removeAll(m_preserveTaggedSelections);
 
-  if (!db.removeAll()) {
+  if (!removedIds) {
     qWarning() << "Failed to remove all clipboard selections";
     return false;
   }
 
-  fs::remove_all(m_dataDir);
-  fs::create_directories(m_dataDir);
+  if (m_preserveTaggedSelections) {
+    std::error_code ec{};
+
+    for (const auto &id : *removedIds) {
+      fs::remove(m_dataDir / id.toStdString(), ec);
+    }
+  } else {
+    fs::remove_all(m_dataDir);
+    fs::create_directories(m_dataDir);
+  }
 
   emit allSelectionsRemoved();
 

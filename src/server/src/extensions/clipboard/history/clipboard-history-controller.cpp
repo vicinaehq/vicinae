@@ -6,6 +6,8 @@ ClipboardHistoryController::ClipboardHistoryController(ClipboardService *clipboa
   connect(&m_watcher, &QueryWatcher::finished, this, &ClipboardHistoryController::handleResults);
   connect(clipboard, &ClipboardService::selectionPinStatusChanged, this,
           &ClipboardHistoryController::handleClipboardChanged);
+  connect(clipboard, &ClipboardService::selectionKeywordsChanged, this,
+          &ClipboardHistoryController::handleClipboardChanged);
   connect(clipboard, &ClipboardService::selectionRemoved, this,
           &ClipboardHistoryController::handleClipboardChanged);
   connect(clipboard, &ClipboardService::allSelectionsRemoved, this,
