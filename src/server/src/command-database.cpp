@@ -57,10 +57,6 @@ CommandDatabase::CommandDatabase(const ServiceRegistry &services) {
 
 #ifdef Q_OS_UNIX
   registerRepository<SystemExtension>();
-#endif
-
-  // only MPRIS is implemented for now, other platforms get the dummy backend
-#ifdef Q_OS_LINUX
   registerRepository<MediaExtension>();
 #endif
 }
