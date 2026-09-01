@@ -126,9 +126,7 @@ class SetDefaultTerminal : public BuiltinViewCommand<SetDefaultTerminalViewHost>
   QString name() const override { return tr("Set Default Terminal"); }
   QString description() const override { return tr("Change the default system terminal"); }
   std::vector<QString> keywords() const override { return {}; }
-  ImageURL iconUrl() const override {
-    return ImageURL::symbol("$").setBackgroundTint(QColor(128, 132, 138));
-  }
+  ImageURL iconUrl() const override { return ImageURL::symbol("$").setBackgroundTint(QColor(128, 132, 138)); }
 };
 #endif
 
