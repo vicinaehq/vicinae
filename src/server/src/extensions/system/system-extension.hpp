@@ -8,7 +8,6 @@
 #include "theme/colors.hpp"
 #include "utils.hpp"
 #include "services/app-service/app-service.hpp"
-#include "services/audio-control/audio-control-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include <QCoreApplication>
 
@@ -119,144 +118,6 @@ class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsViewHost> {
   }
 };
 
-namespace {
-const QColor VOLUME_COMMAND_TINT = QColor(128, 132, 138);
-
-ImageURL volumeIcon(float level) {
-  if (level <= 0.0f) return ImageURL{BuiltinIcon::SpeakerOff};
-  if (level <= 0.33f) return ImageURL{BuiltinIcon::SpeakerLow};
-  if (level <= 0.66f) return ImageURL{BuiltinIcon::SpeakerDown};
-  return ImageURL{BuiltinIcon::SpeakerHigh};
-}
-
-void showVolumeHud(const ApplicationContext *ctx, float level) {
-  auto vol = qRound(level * 100);
-  ctx->navigation->showHud(QCoreApplication::translate("system-extension", "Volume %1%").arg(vol),
-                           volumeIcon(level));
-}
-} // namespace
-
-class VolumeUpCommand : public BuiltinCallbackCommand {
-  Q_DECLARE_TR_FUNCTIONS(VolumeUpCommand)
-
-  QString id() const override { return "volume-up"; }
-  QString name() const override { return tr("Turn Volume Up"); }
-  QString description() const override { return tr("Increase system volume"); }
-  std::vector<QString> keywords() const override { return {"audio", "sound", "louder"}; }
-  ImageURL iconUrl() const override {
-    return ImageURL{BuiltinIcon::SpeakerUp}.setBackgroundTint(VOLUME_COMMAND_TINT);
-  }
-  std::vector<CommandArgument> arguments() const override {
-    return {{.name = "step", .type = CommandArgument::Text, .placeholder = "+5", .required = false}};
-  }
-
-  void execute(CommandController &controller) const override {
-    auto ctx = controller.context();
-    auto audio = ctx->services->audioControl()->provider();
-    auto arg = controller.launchProps().arguments;
-    int step = 5;
-    if (!arg.empty() && !arg.front().second.isEmpty()) {
-      bool ok = false;
-      step = arg.front().second.toInt(&ok);
-      if (!ok) {
-        ctx->services->toastService()->failure(tr("Invalid step value"));
-        return;
-      }
-    }
-    auto result = audio->adjustVolume(static_cast<float>(step) / 100.0f);
-    if (!result) {
-      ctx->services->toastService()->failure(tr("Failed to adjust volume"));
-      return;
-    }
-    showVolumeHud(ctx, *result);
-  }
-};
-
-class VolumeDownCommand : public BuiltinCallbackCommand {
-  Q_DECLARE_TR_FUNCTIONS(VolumeDownCommand)
-
-  QString id() const override { return "volume-down"; }
-  QString name() const override { return tr("Turn Volume Down"); }
-  QString description() const override { return tr("Decrease system volume"); }
-  std::vector<QString> keywords() const override { return {"audio", "sound", "quieter"}; }
-  ImageURL iconUrl() const override {
-    return ImageURL{BuiltinIcon::SpeakerDown}.setBackgroundTint(VOLUME_COMMAND_TINT);
-  }
-  std::vector<CommandArgument> arguments() const override {
-    return {{.name = "step", .type = CommandArgument::Text, .placeholder = "-5", .required = false}};
-  }
-
-  void execute(CommandController &controller) const override {
-    auto ctx = controller.context();
-    auto audio = ctx->services->audioControl()->provider();
-    auto arg = controller.launchProps().arguments;
-    int step = -5;
-    if (!arg.empty() && !arg.front().second.isEmpty()) {
-      bool ok = false;
-      step = arg.front().second.toInt(&ok);
-      if (!ok) {
-        ctx->services->toastService()->failure(tr("Invalid step value"));
-        return;
-      }
-    }
-    auto result = audio->adjustVolume(static_cast<float>(step) / 100.0f);
-    if (!result) {
-      ctx->services->toastService()->failure(tr("Failed to adjust volume"));
-      return;
-    }
-    showVolumeHud(ctx, *result);
-  }
-};
-
-template <int Percent, BuiltinIcon Icon> class SetVolumeCommand : public BuiltinCallbackCommand {
-  Q_DECLARE_TR_FUNCTIONS(SetVolumeCommand)
-
-  static constexpr float LEVEL = static_cast<float>(Percent) / 100.0f;
-
-  QString id() const override { return "volume-" + QString::number(Percent); }
-  QString name() const override { return tr("Set Volume to %1%").arg(Percent); }
-  QString description() const override { return tr("Set system volume to %1%").arg(Percent); }
-  std::vector<QString> keywords() const override { return {"audio", "sound", "volume"}; }
-  ImageURL iconUrl() const override { return ImageURL{Icon}.setBackgroundTint(VOLUME_COMMAND_TINT); }
-
-  void execute(CommandController &controller) const override {
-    auto ctx = controller.context();
-    auto audio = ctx->services->audioControl()->provider();
-    auto result = audio->setVolume(LEVEL);
-    if (!result) {
-      ctx->services->toastService()->failure(tr("Failed to set volume"));
-      return;
-    }
-    showVolumeHud(ctx, *result);
-  }
-};
-
-class ToggleMuteCommand : public BuiltinCallbackCommand {
-  Q_DECLARE_TR_FUNCTIONS(ToggleMuteCommand)
-
-  QString id() const override { return "toggle-mute"; }
-  QString name() const override { return tr("Toggle Mute"); }
-  QString description() const override { return tr("Mute or unmute system audio"); }
-  std::vector<QString> keywords() const override { return {"audio", "sound", "volume", "mute", "unmute"}; }
-  ImageURL iconUrl() const override {
-    return ImageURL{BuiltinIcon::SpeakerOff}.setBackgroundTint(VOLUME_COMMAND_TINT);
-  }
-
-  void execute(CommandController &controller) const override {
-    auto ctx = controller.context();
-    auto audio = ctx->services->audioControl()->provider();
-    if (!audio->toggleMute()) {
-      ctx->services->toastService()->failure(tr("Failed to toggle mute"));
-      return;
-    }
-    if (audio->isMuted()) {
-      ctx->navigation->showHud(tr("Muted"), ImageURL{BuiltinIcon::SpeakerOff});
-    } else {
-      showVolumeHud(ctx, audio->getVolume());
-    }
-  }
-};
-
 #ifdef Q_OS_LINUX
 class SetDefaultTerminal : public BuiltinViewCommand<SetDefaultTerminalViewHost> {
   Q_DECLARE_TR_FUNCTIONS(SetDefaultTerminal)
@@ -265,7 +126,9 @@ class SetDefaultTerminal : public BuiltinViewCommand<SetDefaultTerminalViewHost>
   QString name() const override { return tr("Set Default Terminal"); }
   QString description() const override { return tr("Change the default system terminal"); }
   std::vector<QString> keywords() const override { return {}; }
-  ImageURL iconUrl() const override { return ImageURL::symbol("$").setBackgroundTint(VOLUME_COMMAND_TINT); }
+  ImageURL iconUrl() const override {
+    return ImageURL::symbol("$").setBackgroundTint(QColor(128, 132, 138));
+  }
 };
 #endif
 
@@ -285,14 +148,6 @@ public:
   SystemExtension() {
     registerCommand<SystemRunCommand>();
     registerCommand<SystemBrowseApps>();
-    registerCommand<VolumeUpCommand>();
-    registerCommand<VolumeDownCommand>();
-    registerCommand<SetVolumeCommand<100, BuiltinIcon::SpeakerHigh>>();
-    registerCommand<SetVolumeCommand<75, BuiltinIcon::SpeakerHigh>>();
-    registerCommand<SetVolumeCommand<50, BuiltinIcon::SpeakerLow>>();
-    registerCommand<SetVolumeCommand<25, BuiltinIcon::SpeakerLow>>();
-    registerCommand<SetVolumeCommand<0, BuiltinIcon::SpeakerOff>>();
-    registerCommand<ToggleMuteCommand>();
 
 #ifdef Q_OS_LINUX
     // set default terminal using xdg-terminal-exec

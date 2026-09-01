@@ -77,6 +77,7 @@
 #include "services/snippet/null-snippet-server.hpp"
 #endif
 #include "services/audio-control/audio-control-service.hpp"
+#include "services/media-control/media-control-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/paste/dummy-paste-service.hpp"
 #include "services/selection/dummy-selection-service.hpp"
@@ -352,6 +353,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setPowerManager(std::make_unique<PowerManager>());
     registry->setGlobalShortcuts(std::move(globalShortcutService));
     registry->setAudioControl(std::make_unique<AudioControlService>());
+    registry->setMediaControl(std::make_unique<MediaControlService>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
     registry->setWindowMaterialManager(std::make_unique<WindowMaterialManager>());

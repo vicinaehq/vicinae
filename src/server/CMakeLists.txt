@@ -462,6 +462,10 @@ set(SRCS
 	src/services/audio-control/pactl/pactl-audio-control.cpp
 	src/services/audio-control/dummy-audio-control.hpp
 
+	src/services/media-control/abstract-media-control.hpp
+	src/services/media-control/abstract-media-control.cpp
+	src/services/media-control/dummy-media-control.hpp
+
 	src/config/config.hpp
 	src/config/config.cpp
 
@@ -842,6 +846,11 @@ if (UNIX AND NOT APPLE)
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 		src/services/power-manager/systemd/systemd-power-manager.cpp
 		src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
+
+		src/services/media-control/mpris/mpris-media-control.hpp
+		src/services/media-control/mpris/mpris-media-control.cpp
+		src/services/media-control/mpris/mpris-metadata.hpp
+		src/services/media-control/mpris/mpris-metadata.cpp
 
 		src/services/paste/linux-paste-service.cpp
 		src/services/selection/linux-selection-service.cpp
