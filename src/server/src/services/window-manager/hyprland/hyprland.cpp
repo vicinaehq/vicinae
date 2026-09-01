@@ -1,5 +1,6 @@
 #include <format>
 #include <glaze/glaze.hpp>
+#include <QCoreApplication>
 #include <qprocess.h>
 #include <string_view>
 #include <vector>
@@ -56,6 +57,24 @@ AbstractWindowManager::WindowList HyprlandWindowManager::listWindowsSync() const
   }
 
   return windows;
+}
+
+AbstractWindowManager::WindowPtr HyprlandWindowManager::getFrontmostWindowSync() const {
+  auto clients = parseReply<std::vector<ipc::Window>>(Hyprctl::oneshot("-j/clients"));
+  auto activeWs = parseReply<ipc::Workspace>(Hyprctl::oneshot("-j/activeworkspace"));
+  if (!clients.has_value() || !activeWs.has_value()) { return nullptr; }
+
+  const auto ownPid = QCoreApplication::applicationPid();
+  const ipc::Window *frontmost = nullptr;
+
+  for (const auto &client : *clients) {
+    if (client.pid == ownPid || client.workspace.id != activeWs->id) continue;
+    if (client.focusHistoryId < 0) continue;
+    if (!frontmost || client.focusHistoryId < frontmost->focusHistoryId) frontmost = &client;
+  }
+
+  if (!frontmost) return nullptr;
+  return std::make_shared<HyprlandWindow>(*frontmost);
 }
 
 AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() const {

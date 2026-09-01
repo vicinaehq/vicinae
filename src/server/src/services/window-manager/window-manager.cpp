@@ -1,6 +1,7 @@
 #include "window-manager.hpp"
 #include <algorithm>
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <qnamespace.h>
 #include <ranges>
 #include "dummy-window-manager.hpp"
@@ -64,26 +65,35 @@ AbstractWindowManager::WindowList WindowManager::listWindowsSync() { return m_pr
 
 namespace {
 
-bool isLauncherWindow(const AbstractWindowManager::AbstractWindow &win) {
-  if (auto pid = win.pid(); pid && *pid == QCoreApplication::applicationPid()) return true;
-  const auto &cls = win.wmClass();
-  return cls.compare(Omnicast::APP_ID, Qt::CaseInsensitive) == 0 ||
-         cls.contains(QStringLiteral("vicinae"), Qt::CaseInsensitive);
+bool isOwnWindow(const AbstractWindowManager::AbstractWindow &win) {
+  if (auto pid = win.pid()) return *pid == QCoreApplication::applicationPid();
+  return win.wmClass().compare(Omnicast::APP_ID, Qt::CaseInsensitive) == 0;
 }
 
 } // namespace
 
 AbstractWindowManager::WindowPtr WindowManager::getFocusedWindow() {
-  return m_provider->getFocusedWindowSync();
+  if (m_provider->supportsFrontmostWindow()) return m_provider->getFrontmostWindowSync();
+
+  auto win = m_provider->getFocusedWindowSync();
+  if (win) return isOwnWindow(*win) ? rememberedWindow() : win;
+  return QGuiApplication::focusWindow() ? rememberedWindow() : nullptr;
 }
 
-void WindowManager::capturePasteTarget() {
-  if (auto win = getFocusedWindow(); win && !isLauncherWindow(*win)) { m_pasteTarget = win; }
+AbstractWindowManager::WindowPtr WindowManager::rememberedWindow() {
+  if (m_lastFocusedWindow && !isOnActiveWorkspace(*m_lastFocusedWindow)) m_lastFocusedWindow.reset();
+  return m_lastFocusedWindow;
 }
 
-AbstractWindowManager::WindowPtr WindowManager::pasteTargetWindow() const {
-  if (auto win = m_provider->getFocusedWindowSync(); win && !isLauncherWindow(*win)) return win;
-  return m_pasteTarget;
+void WindowManager::updateFocusMemory() {
+  if (m_provider->supportsFrontmostWindow()) return;
+
+  auto win = m_provider->getFocusedWindowSync();
+  if (win) {
+    if (!isOwnWindow(*win)) m_lastFocusedWindow = win;
+    return;
+  }
+  if (!QGuiApplication::focusWindow()) m_lastFocusedWindow.reset();
 }
 
 const AbstractWindowManager::AbstractWindow *WindowManager::findWindowById(const QString &id) {
@@ -135,15 +145,16 @@ bool WindowManager::isCapable() const { return m_provider->id() != "dummy"; }
 WindowManager::WindowManager() {
   m_provider = createProvider();
   updateWindowCache();
-  capturePasteTarget();
+  updateFocusMemory();
 
   connect(m_provider.get(), &AbstractWindowManager::windowsChanged, this, [this]() {
     updateWindowCache();
+    if (m_lastFocusedWindow && !findWindowById(m_lastFocusedWindow->id())) m_lastFocusedWindow.reset();
     emit windowsChanged();
   });
 
   connect(m_provider.get(), &AbstractWindowManager::focusChanged, this, [this]() {
-    capturePasteTarget();
+    updateFocusMemory();
     emit focusChanged();
   });
 }

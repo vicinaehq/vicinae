@@ -142,13 +142,3 @@ std::shared_ptr<AbstractApplication> MacAppRuntime::frontmostApp() const {
   if (bundleId.isEmpty()) return nullptr;
   return m_appService.findById(bundleId);
 }
-
-QString MacAppRuntime::frontmostAppDisplayName() const {
-  @autoreleasepool {
-    NSRunningApplication *front = [[NSWorkspace sharedWorkspace] frontmostApplication];
-    if (!front || front.processIdentifier == getpid()) return {};
-    if (front.localizedName.length > 0) return QString::fromNSString(front.localizedName);
-    if (front.bundleIdentifier.length > 0) return QString::fromNSString(front.bundleIdentifier);
-  }
-  return {};
-}

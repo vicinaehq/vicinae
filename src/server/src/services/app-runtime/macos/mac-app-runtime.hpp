@@ -19,7 +19,6 @@ public:
 
   bool isRunning(const AbstractApplication &app) const override;
   std::shared_ptr<AbstractApplication> frontmostApp() const override;
-  QString frontmostAppDisplayName() const override;
   bool activate(const AbstractApplication &app) const override;
   bool quit(const AbstractApplication &app) const override;
   bool forceQuit(const AbstractApplication &app) const override;
