@@ -111,40 +111,56 @@ void ClipboardService::setIgnorePasswords(bool value) { m_ignorePasswords = valu
 
 void ClipboardService::setHistoryEvictionThreshold(std::optional<std::chrono::seconds> threshold,
                                                    bool preserveTaggedSelections) {
-  if (threshold == m_evictionThreshold) return;
+  if (threshold == m_evictionThreshold && preserveTaggedSelections == m_preserveTaggedSelections) return;
 
   m_evictionThreshold = threshold;
   m_preserveTaggedSelections = preserveTaggedSelections;
+  constexpr auto MISCONFIGURATION_GRACE_DELAY = std::chrono::seconds(60);
+
   m_historyEvictionTimer.stop();
-  m_historyEvictionTimer.setInterval(60000);
-  m_historyEvictionTimer.start();
-  scheduleEviction();
+
+  if (m_evictionThreshold) m_historyEvictionTimer.start(MISCONFIGURATION_GRACE_DELAY);
 }
 
-void ClipboardService::scheduleEviction() {
-  if (m_evictionThreshold) {
-    qDebug() << "scheduling clipboard eviction...";
+void ClipboardService::armEvictionTimer(std::optional<int64_t> oldestTimestamp) {
+  using namespace std::chrono;
+  using namespace std::chrono_literals;
 
-    // this can be expensive, so we run it in a separate thread
-    QThreadPool::globalInstance()->start(
-        [this, t = *m_evictionThreshold, preserve = m_preserveTaggedSelections]() {
-          const auto evictedIds = openDatabase().evictOlderThan(t, preserve);
-          std::error_code ec{};
-          std::size_t evictedCount = 0;
+  constexpr auto maxDelay = duration_cast<seconds>(6h);
 
-          for (const auto &evicted : evictedIds) {
-            fs::path path = m_dataDir / evicted.toStdString();
-            if (fs::remove(path, ec)) {
-              qDebug() << "removed" << path << "from disk";
-              ++evictedCount;
-            } else {
-              qWarning() << "failed to remove clipboard offer at" << path;
-            }
+  if (!m_evictionThreshold || !oldestTimestamp) return;
+
+  const auto now = duration_cast<seconds>(system_clock::now().time_since_epoch());
+  const auto delay = std::clamp(seconds(*oldestTimestamp) + *m_evictionThreshold - now + 1s, 1s, maxDelay);
+
+  m_historyEvictionTimer.start(duration_cast<milliseconds>(delay));
+}
+
+void ClipboardService::runEvictionPass() {
+  if (!m_evictionThreshold) return;
+
+  // this can be expensive, so we run it in a separate thread
+  QThreadPool::globalInstance()->start(
+      [this, t = *m_evictionThreshold, preserve = m_preserveTaggedSelections]() {
+        auto db = openDatabase();
+        const auto evictedIds = db.evictOlderThan(t, preserve);
+        const auto oldest = db.oldestEvictableTimestamp(preserve);
+        std::error_code ec{};
+        std::size_t evictedCount = 0;
+
+        for (const auto &evicted : evictedIds) {
+          fs::path path = m_dataDir / evicted.toStdString();
+          if (fs::remove(path, ec)) {
+            ++evictedCount;
+          } else {
+            qWarning() << "failed to remove clipboard offer at" << path;
           }
+        }
 
-          qInfo() << "evicted" << evictedCount << "clipboard offers";
-        });
-  }
+        if (evictedCount > 0) qInfo() << "evicted" << evictedCount << "clipboard offers";
+
+        QMetaObject::invokeMethod(this, [this, oldest]() { armEvictionTimer(oldest); });
+      });
 }
 
 void ClipboardService::setMonitoring(bool value) {
@@ -732,9 +748,17 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, std::optio
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);
-  connect(&m_historyEvictionTimer, &QTimer::timeout, this, &ClipboardService::scheduleEviction);
+  m_historyEvictionTimer.setSingleShot(true);
+  m_historyEvictionTimer.setTimerType(Qt::VeryCoarseTimer);
+  connect(&m_historyEvictionTimer, &QTimer::timeout, this, &ClipboardService::runEvictionPass);
   connect(&m_indexingSelection, &decltype(m_indexingSelection)::finished, this, [this]() {
     if (m_indexingSelection.isCanceled()) return;
     if (auto result = m_indexingSelection.result()) { emit itemInserted(*result); }
+
+    if (m_evictionThreshold && !m_historyEvictionTimer.isActive()) {
+      const auto now = std::chrono::duration_cast<std::chrono::seconds>(
+          std::chrono::system_clock::now().time_since_epoch());
+      armEvictionTimer(now.count());
+    }
   });
 }

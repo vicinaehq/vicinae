@@ -379,6 +379,18 @@ std::vector<QString> ClipboardDatabase::evictOlderThan(std::chrono::seconds secs
   return evicted;
 }
 
+std::optional<int64_t> ClipboardDatabase::oldestEvictableTimestamp(bool preserveTagged) {
+  std::string query = "SELECT MIN(updated_at) FROM selection";
+
+  if (preserveTagged) { query += " WHERE pinned_at IS NULL AND keywords == ''"; }
+
+  auto stmt = m_db.prepare(query);
+
+  if (!stmt.step() || stmt.isNull(0)) return std::nullopt;
+
+  return stmt.columnInt64(0);
+}
+
 bool ClipboardDatabase::insertOffer(const InsertClipboardOfferPayload &payload) {
   auto stmt = m_db.prepare(R"(
     INSERT INTO data_offer (id, selection_id, mime_type, text_preview, content_hash_md5, encryption_type, size, kind, url_host)

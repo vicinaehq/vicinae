@@ -131,7 +131,8 @@ private:
 
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
 
-  void scheduleEviction();
+  void runEvictionPass();
+  void armEvictionTimer(std::optional<int64_t> oldestTimestamp);
 
   void restoreClipboard();
 
