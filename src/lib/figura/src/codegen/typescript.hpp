@@ -1,4 +1,5 @@
 #include "../parser.hpp"
+#include "beve-ts.hpp"
 #include <common/enumerate.hpp>
 #include <format>
 #include "codegen.hpp"
@@ -25,6 +26,8 @@ inline std::string_view getTypename(const TypeValue &type) {
       return "string";
     case PrimitiveType::Any:
       return "any";
+    case PrimitiveType::Raw:
+      return "Uint8Array";
     }
   }
 
@@ -159,9 +162,23 @@ interface JsonRpcMessage {
 }
 
 interface ITransport {
-	send(data: string): void;
+	send(data: WireData): void;
 }
 )";
+
+static constexpr const auto jsonWireCode = R"(
+export type WireData = string;
+
+function encodeMessage(msg: JsonRpcMessage): WireData {
+	return JSON.stringify(msg);
+}
+
+function decodeMessage(data: WireData): JsonRpcMessage {
+	return JSON.parse(data) as JsonRpcMessage;
+}
+)";
+
+static constexpr auto beveWireCode = FIGURA_BEVE_TS;
 
 static constexpr const auto serverBoilerplate = R"(
 export class RpcTransport {
@@ -176,7 +193,7 @@ export class RpcTransport {
 	}
 
 	private sendMessage(msg: JsonRpcMessage) {
-		this.transport.send(JSON.stringify(msg));
+		this.transport.send(encodeMessage(msg));
 	}
 };
 
@@ -190,8 +207,8 @@ type EventSubscription = {
 export class RpcTransport {
 	constructor(private readonly transport: ITransport) { }
 
-	dispatchMessage(data: string) {
-		const msg = JSON.parse(data) as JsonRpcMessage;
+	dispatchMessage(data: WireData) {
+		const msg = decodeMessage(data);
 
 		if (msg.id !== undefined) {
 			const handler = this.requestMap.get(msg.id);
@@ -238,7 +255,7 @@ export class RpcTransport {
 	}
 
 	private sendMessage(msg: JsonRpcMessage) {
-		this.transport.send(JSON.stringify(msg));
+		this.transport.send(encodeMessage(msg));
 	}
 
 
@@ -258,6 +275,35 @@ static std::string tab(int n) {
 
 class TypeScriptCodeGenerator : public AbstractCodeGenerator {
   std::string name() const override { return "typescript"; }
+
+  static bool isRaw(const TypeValue &value) {
+    auto ptr = std::get_if<PrimitiveType>(&value.data);
+    return ptr && *ptr == PrimitiveType::Raw;
+  }
+
+  static void validateWire(const Tree &tree, const CodegenOptions &opts) {
+    if (opts.wire == WireFormat::Beve) return;
+
+    auto check = [](const TypeValue &value) {
+      if (isRaw(value)) { throw std::runtime_error("the raw type requires --wire beve"); }
+    };
+
+    for (const auto &s : tree.structs) {
+      for (const auto &f : s->fields)
+        check(f.type);
+    }
+    for (const auto &s : tree.services) {
+      for (const auto &m : s->methods) {
+        check(m.returnType);
+        for (const auto &p : m.params)
+          check(p.type);
+      }
+      for (const auto &e : s->events) {
+        for (const auto &p : e.params)
+          check(p.type);
+      }
+    }
+  }
 
   static bool isVoid(const TypeValue &value) {
     auto const visitor = overloads{[](PrimitiveType type) { return type == PrimitiveType::Void; },
@@ -279,7 +325,9 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
   std::string generateClient(const Tree &tree, const CodegenOptions &opts) override {
     std::ostringstream oss;
 
-    oss << commonCode << busCode << "\n";
+    validateWire(tree, opts);
+
+    oss << commonCode << (opts.wire == WireFormat::Beve ? beveWireCode : jsonWireCode) << busCode << "\n";
 
     generateTypes(oss, tree);
 
@@ -297,7 +345,7 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
     oss << "\t}\n";
 
     oss << R"(
-  	route(msg: string): void { this.transport.dispatchMessage(msg); }
+  	route(msg: WireData): void { this.transport.dispatchMessage(msg); }
   )";
 
     for (auto const &s : tree.services) {
@@ -345,7 +393,9 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
   std::string generateServer(const Tree &ast, const CodegenOptions &opts) override {
     std::ostringstream oss;
 
-    oss << commonCode << serverBoilerplate;
+    validateWire(ast, opts);
+
+    oss << commonCode << (opts.wire == WireFormat::Beve ? beveWireCode : jsonWireCode) << serverBoilerplate;
 
     generateTypes(oss, ast);
 
@@ -393,8 +443,8 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
     oss << "}\n\n";
 
     oss << R"(
-	route(raw: string) {
-		const msg = JSON.parse(raw) as JsonRpcMessage;
+	route(raw: WireData) {
+		const msg = decodeMessage(raw);
 
 		// request
 		if (msg.id !== undefined && msg.method && msg.params) {

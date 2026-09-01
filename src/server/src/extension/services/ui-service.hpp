@@ -43,7 +43,7 @@ public:
     m_command->setSubtitleOverride(subtitle);
   }
 
-  Void::Future render(std::string json) override {
+  Void::Future render(tsapi::raw_t json) override {
     m_renderQueue.push(std::move(json));
     processNextRender();
     return Void::ok();
@@ -214,8 +214,10 @@ private:
     auto json = std::move(m_renderQueue.front());
     m_renderQueue.pop();
 
-    m_modelWatcher.setFuture(QtConcurrent::run(
-        [json = std::move(json)]() -> ParsedRenderData { return parseRenderPayload(json); }));
+    m_modelWatcher.setFuture(QtConcurrent::run([json = std::move(json)]() -> ParsedRenderData {
+      std::string_view view{reinterpret_cast<const char *>(json.data()), json.size()};
+      return parseRenderPayload(view);
+    }));
   }
 
   ExtensionActionPanelBuilder::NotifyFn makeNotifyFn() {
@@ -266,7 +268,7 @@ private:
   }
 
   std::vector<ViewEntry> m_views;
-  std::queue<std::string> m_renderQueue;
+  std::queue<tsapi::raw_t> m_renderQueue;
   QFutureWatcher<ParsedRenderData> m_modelWatcher;
   NavigationController *m_navigation;
   std::shared_ptr<ExtensionCommand> m_command;

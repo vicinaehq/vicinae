@@ -49,10 +49,10 @@ set(EXT_MGR_PROTO_GENERATED
 
 add_custom_command(
     OUTPUT ${EXT_MGR_PROTO_GENERATED}
-    COMMAND ${FIGURA_CC} compile ${FIG_DIR}/manager.fig --server typescript --output ${EXT_PROTO_OUT}/manager.ts
-    COMMAND ${FIGURA_CC} compile ${FIG_DIR}/manager-extension.fig --client typescript --output ${EXT_PROTO_OUT}/manager-extension.ts
-    COMMAND ${FIGURA_CC} compile ${FIG_DIR}/manager-extension.fig --server typescript --output ${EXT_PROTO_OUT}/extension-manager.ts
-    COMMAND ${FIGURA_CC} compile ${FIG_DIR}/tsapi.fig --client typescript --output ${EXT_PROTO_OUT}/api.ts
+    COMMAND ${FIGURA_CC} compile ${FIG_DIR}/manager.fig --server typescript --wire beve --output ${EXT_PROTO_OUT}/manager.ts
+    COMMAND ${FIGURA_CC} compile ${FIG_DIR}/manager-extension.fig --client typescript --wire beve --output ${EXT_PROTO_OUT}/manager-extension.ts
+    COMMAND ${FIGURA_CC} compile ${FIG_DIR}/manager-extension.fig --server typescript --wire beve --output ${EXT_PROTO_OUT}/extension-manager.ts
+    COMMAND ${FIGURA_CC} compile ${FIG_DIR}/tsapi.fig --client typescript --wire beve --output ${EXT_PROTO_OUT}/api.ts
     DEPENDS ${FIGURA_CC} ${FIG_DIR}/manager.fig ${FIG_DIR}/manager-extension.fig ${FIG_DIR}/tsapi.fig
     COMMENT "Figura codegen: extension manager protos (typescript)"
 )

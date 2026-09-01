@@ -68,7 +68,10 @@ ExtensionManager::ExtensionManager() : m_bus(&m_process), m_rpc(m_bus), m_client
   connect(&m_process, &QProcess::finished, this, &ExtensionManager::finished);
   connect(&m_process, &QProcess::started, this, &ExtensionManager::processStarted);
   connect(m_client.manager(), &manager::ManagerService::extensionMessage, this,
-          &ExtensionManager::extensionMessageReceived);
+          [this](const std::string &sessionId, const manager::raw_t &payload) {
+            std::string_view view{reinterpret_cast<const char *>(payload.data()), payload.size()};
+            emit extensionMessageReceived(sessionId, view);
+          });
   connect(m_client.manager(), &manager::ManagerService::extensionCrash, this,
           &ExtensionManager::extensionCrashed);
 

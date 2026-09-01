@@ -944,6 +944,7 @@ figura_compile(
 	LANG glaze-qt
 	NAMESPACE tsapi
 	OUTPUT tsapi.hpp
+	WIRE beve
 )
 
 figura_compile(
@@ -952,6 +953,7 @@ figura_compile(
 	LANG glaze-qt
 	NAMESPACE manager
 	OUTPUT manager.hpp
+	WIRE beve
 )
 
 figura_compile(
@@ -968,6 +970,7 @@ figura_compile(
 	LANG glaze-qt
 	NAMESPACE snippet_gen
 	OUTPUT snippet-client.hpp
+	WIRE beve
 )
 
 if (UNIX AND NOT APPLE)
@@ -977,7 +980,8 @@ if (UNIX AND NOT APPLE)
 		LANG glaze-qt
 		NAMESPACE file_indexer_gen
 		OUTPUT file-indexer-client.hpp
-	)
+		WIRE beve
+)
 endif()
 
 

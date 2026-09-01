@@ -109,7 +109,7 @@ struct DesktopNotificationPayload {
 };
 
 service UI {
-  fn render(json: string) => void;
+  fn render(json: raw) => void;
   fn showToast(id: string, title: string, message: string, style: ToastStyle) => void;
   fn updateToast(id: string, title: string) => void;
   fn hideToast(id: string) => void;

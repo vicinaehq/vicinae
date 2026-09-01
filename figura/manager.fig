@@ -60,8 +60,8 @@ service Manager {
   // extension loads too fast.
   fn ready(session_id: string) => bool;
 
-  fn messageExtension(session_id: string, payload: string) => bool;
+  fn messageExtension(session_id: string, payload: raw) => bool;
 
-  event extensionMessage(session_id: string, payload: string);
+  event extensionMessage(session_id: string, payload: raw);
   event extensionCrash(session_id: string, reason: string);
 }

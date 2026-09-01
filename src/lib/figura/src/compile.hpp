@@ -17,6 +17,7 @@ public:
     app->add_option("--client", m_clients, "");
     app->add_option("--server", m_servers, "");
     app->add_option("--namespace", m_opts.generationNamespace);
+    app->add_option("--wire", m_wire, "")->check(CLI::IsMember({"json", "beve"}));
   }
 
   bool run(CLI::App *app) override {
@@ -39,6 +40,8 @@ public:
     }
 
     auto tree = std::move(result).value();
+
+    m_opts.wire = m_wire == "beve" ? WireFormat::Beve : WireFormat::Json;
 
     std::vector<std::unique_ptr<AbstractCodeGenerator>> generators;
     generators.emplace_back(std::make_unique<TypeScriptCodeGenerator>());
@@ -76,6 +79,7 @@ public:
 private:
   std::string m_proto;
   std::string m_out;
+  std::string m_wire = "json";
   CodegenOptions m_opts;
   std::vector<std::string> m_clients;
   std::vector<std::string> m_servers;
