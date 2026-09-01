@@ -1,7 +1,10 @@
 #include "clipboard-db.hpp"
 #include "utils/migration-manager/migration-manager.hpp"
 #include "vicinae.hpp"
+#include <chrono>
+#include <filesystem>
 #include <qlogging.h>
+#include <sstream>
 
 extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
 
@@ -87,9 +90,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         s.kind,
         o.url_host,
         o.encryption_type,
-        s.total_count
+        s.total_count,
+        s.keywords
       FROM (
-        SELECT id, pinned_at, updated_at, kind, preferred_mime_type,
+        SELECT id, pinned_at, updated_at, kind, preferred_mime_type, keywords,
                COUNT(*) OVER() as total_count
         FROM selection
         ORDER BY pinned_at DESC, updated_at DESC
@@ -114,7 +118,8 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         selection.kind,
         o.url_host,
         o.encryption_type,
-        COUNT(*) OVER() as count
+        COUNT(*) OVER() as count,
+        selection.keywords
       FROM selection
       JOIN data_offer o
         ON o.selection_id = selection.id
@@ -151,6 +156,7 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
                               .mimeType = stmt.columnQString(1),
                               .textPreview = stmt.columnQString(2),
                               .pinnedAt = stmt.columnUInt64(3),
+                              .keywords = stmt.columnQString(11),
                               .md5sum = stmt.columnQString(4),
                               .updatedAt = stmt.columnUInt64(5),
                               .size = stmt.columnUInt64(6),
@@ -197,9 +203,38 @@ bool ClipboardDatabase::setKeywords(const QString &id, const QString &keywords) 
   });
 }
 
-bool ClipboardDatabase::removeAll() {
-  return m_db.exec("DELETE FROM selection_fts") && m_db.exec("DELETE FROM data_offer") &&
-         m_db.exec("DELETE FROM selection");
+std::optional<std::vector<QString>> ClipboardDatabase::removeAll(bool preserveTagged) {
+  auto tx = m_db.transaction();
+
+  if (!preserveTagged) {
+    const bool ok = m_db.exec("DELETE FROM selection_fts") && m_db.exec("DELETE FROM data_offer") &&
+                    m_db.exec("DELETE FROM selection");
+
+    if (!ok) return std::nullopt;
+
+    tx.commit();
+
+    return std::vector<QString>{};
+  }
+
+  std::vector<QString> removed;
+
+  auto stmt = m_db.prepare(R"(
+    SELECT o.id
+    FROM data_offer o
+    JOIN selection s ON s.id = o.selection_id
+    WHERE s.pinned_at IS NULL AND s.keywords == ''
+  )");
+
+  while (stmt.step()) {
+    removed.emplace_back(stmt.columnQString(0));
+  }
+
+  if (!m_db.exec("DELETE FROM selection WHERE pinned_at IS NULL AND keywords == ''")) return std::nullopt;
+
+  tx.commit();
+
+  return removed;
 }
 
 std::vector<QString> ClipboardDatabase::removeSelection(const QString &selectionId) {
@@ -326,6 +361,70 @@ void ClipboardDatabase::runMigrations() {
   MigrationManager manager(m_db, "clipboard");
 
   manager.runMigrations();
+}
+
+std::vector<QString> ClipboardDatabase::evictOlderThan(std::chrono::seconds secs, bool preserveTagged) {
+  constexpr auto PRESERVE_TAGGED_WHERE = " AND pinned_at IS NULL AND keywords == ''";
+  std::vector<QString> evicted{};
+
+  evicted.reserve(0xF);
+
+  auto tx = m_db.transaction();
+
+  {
+    std::ostringstream oss{};
+    oss << R"(
+  	SELECT o.id 
+	FROM data_offer o
+	JOIN selection s ON s.id = o.selection_id
+	WHERE unixepoch() - s.updated_at > :threshold
+  )";
+
+    if (preserveTagged) { oss << PRESERVE_TAGGED_WHERE; }
+
+    auto stmt = m_db.prepare(oss.str());
+
+    stmt.bind(":threshold", secs.count());
+
+    while (stmt.step()) {
+      evicted.emplace_back(stmt.columnQString(0));
+    }
+  }
+
+  if (evicted.empty()) return evicted;
+
+  {
+    std::ostringstream oss{};
+
+    oss << "DELETE FROM selection WHERE unixepoch() - updated_at > :threshold";
+
+    if (preserveTagged) { oss << PRESERVE_TAGGED_WHERE; }
+
+    auto stmt = m_db.prepare(oss.str());
+
+    stmt.bind(":threshold", secs.count());
+
+    if (!stmt.exec()) {
+      qCritical() << "Failed to evict older selections" << stmt.lastError().c_str();
+      return {};
+    }
+  }
+
+  tx.commit();
+
+  return evicted;
+}
+
+std::optional<int64_t> ClipboardDatabase::oldestEvictableTimestamp(bool preserveTagged) {
+  std::string query = "SELECT MIN(updated_at) FROM selection";
+
+  if (preserveTagged) { query += " WHERE pinned_at IS NULL AND keywords == ''"; }
+
+  auto stmt = m_db.prepare(query);
+
+  if (!stmt.step() || stmt.isNull(0)) return std::nullopt;
+
+  return stmt.columnInt64(0);
 }
 
 bool ClipboardDatabase::insertOffer(const InsertClipboardOfferPayload &payload) {

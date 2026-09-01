@@ -6,6 +6,7 @@
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
 #include <QString>
+#include <chrono>
 #include <expected>
 #include <filesystem>
 #include <QJsonObject>
@@ -29,6 +30,7 @@ signals:
   void itemCopied(const InsertClipboardHistoryLine &item) const;
   void itemInserted(const ClipboardHistoryEntry &entry) const;
   void selectionPinStatusChanged(const QString &id, bool pinned) const;
+  void selectionKeywordsChanged(const QString &id, const QString &keywords) const;
   void selectionRemoved(const QString &id) const;
   /**
    * When a selection is copied, its update time is modified which makes it appear on top
@@ -92,6 +94,15 @@ public:
   void setIgnorePasswords(bool value);
   bool isEncryptionReady() const;
 
+  /**
+   * std::nullopt to disable eviction
+   */
+  void setHistoryEvictionThreshold(std::optional<std::chrono::seconds> threshold,
+                                   bool preserveTaggedSelections = true);
+
+  void pauseEviction();
+  void resumeEviction();
+
 private:
   ClipboardDatabase openDatabase() const { return ClipboardDatabase(m_dbKey); }
 
@@ -124,6 +135,9 @@ private:
 
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
 
+  void runEvictionPass();
+  void armEvictionTimer(std::optional<int64_t> oldestTimestamp);
+
   void restoreClipboard();
 
   bool m_recordAllOffers = true;
@@ -132,4 +146,9 @@ private:
   std::optional<ClipboardSelection> m_lastSelection;
   QTimer m_restoreTimer;
   QFutureWatcher<std::expected<ClipboardHistoryEntry, QString>> m_indexingSelection;
+  std::optional<std::chrono::seconds> m_evictionThreshold;
+  bool m_preserveTaggedSelections = true;
+  bool m_evictionPaused = false;
+  bool m_evictionDeferred = false;
+  QTimer m_historyEvictionTimer;
 };

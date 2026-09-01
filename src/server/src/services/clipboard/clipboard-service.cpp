@@ -1,12 +1,14 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
 #include <algorithm>
+#include <cstddef>
 #include <filesystem>
 #include <numeric>
 #include <QGuiApplication>
 #include <qfuturewatcher.h>
 #include <qstandardpaths.h>
 #include <qtconcurrentrun.h>
+#include <qthreadpool.h>
 #include "common/clipboard-formats.hpp"
 #include "common/types.hpp"
 #ifdef Q_OS_LINUX
@@ -106,6 +108,72 @@ void ClipboardService::setEncryptionKey(std::optional<db::EncryptionKey> key) {
 bool ClipboardService::isEncryptionReady() const { return m_encrypter.get(); }
 
 void ClipboardService::setIgnorePasswords(bool value) { m_ignorePasswords = value; }
+
+void ClipboardService::setHistoryEvictionThreshold(std::optional<std::chrono::seconds> threshold,
+                                                   bool preserveTaggedSelections) {
+  if (threshold == m_evictionThreshold && preserveTaggedSelections == m_preserveTaggedSelections) return;
+
+  m_evictionThreshold = threshold;
+  m_preserveTaggedSelections = preserveTaggedSelections;
+  constexpr auto MISCONFIGURATION_GRACE_DELAY = std::chrono::seconds(60);
+
+  m_historyEvictionTimer.stop();
+
+  if (m_evictionThreshold) m_historyEvictionTimer.start(MISCONFIGURATION_GRACE_DELAY);
+}
+
+void ClipboardService::armEvictionTimer(std::optional<int64_t> oldestTimestamp) {
+  using namespace std::chrono;
+  using namespace std::chrono_literals;
+
+  constexpr auto maxDelay = duration_cast<seconds>(6h);
+
+  if (!m_evictionThreshold || !oldestTimestamp) return;
+
+  const auto now = duration_cast<seconds>(system_clock::now().time_since_epoch());
+  const auto delay = std::clamp(seconds(*oldestTimestamp) + *m_evictionThreshold - now + 1s, 1s, maxDelay);
+
+  m_historyEvictionTimer.start(duration_cast<milliseconds>(delay));
+}
+
+void ClipboardService::pauseEviction() { m_evictionPaused = true; }
+
+void ClipboardService::resumeEviction() {
+  m_evictionPaused = false;
+  if (std::exchange(m_evictionDeferred, false)) runEvictionPass();
+}
+
+void ClipboardService::runEvictionPass() {
+  if (!m_evictionThreshold) return;
+
+  if (m_evictionPaused) {
+    m_evictionDeferred = true;
+    return;
+  }
+
+  // this can be expensive, so we run it in a separate thread
+  QThreadPool::globalInstance()->start(
+      [this, t = *m_evictionThreshold, preserve = m_preserveTaggedSelections]() {
+        auto db = openDatabase();
+        const auto evictedIds = db.evictOlderThan(t, preserve);
+        const auto oldest = db.oldestEvictableTimestamp(preserve);
+        std::error_code ec{};
+        std::size_t evictedCount = 0;
+
+        for (const auto &evicted : evictedIds) {
+          fs::path path = m_dataDir / evicted.toStdString();
+          if (fs::remove(path, ec)) {
+            ++evictedCount;
+          } else {
+            qWarning() << "failed to remove clipboard offer at" << path;
+          }
+        }
+
+        if (evictedCount > 0) qInfo() << "evicted" << evictedCount << "clipboard offers";
+
+        QMetaObject::invokeMethod(this, [this, oldest]() { armEvictionTimer(oldest); });
+      });
+}
 
 void ClipboardService::setMonitoring(bool value) {
   if (m_monitoring == value) return;
@@ -350,7 +418,11 @@ std::optional<QString> ClipboardService::retrieveKeywords(const QString &id) {
 }
 
 bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
-  return openDatabase().setKeywords(id, keywords);
+  if (!openDatabase().setKeywords(id, keywords)) return false;
+
+  emit selectionKeywordsChanged(id, keywords);
+
+  return true;
 }
 
 ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &selection) {
@@ -648,14 +720,23 @@ Clipboard::ReadContent ClipboardService::readContent() {
 
 bool ClipboardService::removeAllSelections() {
   auto db = openDatabase();
+  const auto removedIds = db.removeAll(m_preserveTaggedSelections);
 
-  if (!db.removeAll()) {
+  if (!removedIds) {
     qWarning() << "Failed to remove all clipboard selections";
     return false;
   }
 
-  fs::remove_all(m_dataDir);
-  fs::create_directories(m_dataDir);
+  if (m_preserveTaggedSelections) {
+    std::error_code ec{};
+
+    for (const auto &id : *removedIds) {
+      fs::remove(m_dataDir / id.toStdString(), ec);
+    }
+  } else {
+    fs::remove_all(m_dataDir);
+    fs::create_directories(m_dataDir);
+  }
 
   emit allSelectionsRemoved();
 
@@ -692,8 +773,17 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, std::optio
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);
+  m_historyEvictionTimer.setSingleShot(true);
+  m_historyEvictionTimer.setTimerType(Qt::VeryCoarseTimer);
+  connect(&m_historyEvictionTimer, &QTimer::timeout, this, &ClipboardService::runEvictionPass);
   connect(&m_indexingSelection, &decltype(m_indexingSelection)::finished, this, [this]() {
     if (m_indexingSelection.isCanceled()) return;
     if (auto result = m_indexingSelection.result()) { emit itemInserted(*result); }
+
+    if (m_evictionThreshold && !m_historyEvictionTimer.isActive()) {
+      const auto now = std::chrono::duration_cast<std::chrono::seconds>(
+          std::chrono::system_clock::now().time_since_epoch());
+      armEvictionTimer(now.count());
+    }
   });
 }

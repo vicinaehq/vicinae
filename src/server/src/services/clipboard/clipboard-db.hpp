@@ -59,6 +59,7 @@ struct ClipboardHistoryEntry {
   QString mimeType;
   QString textPreview;
   uint64_t pinnedAt;
+  QString keywords;
   QString md5sum;
   uint64_t updatedAt;
   uint64_t size;
@@ -97,7 +98,7 @@ public:
 
   static QStringList searchTerms(const QString &query);
 
-  bool removeAll();
+  std::optional<std::vector<QString>> removeAll(bool preserveTagged = false);
 
   bool setKeywords(const QString &id, const QString &keywords);
   std::optional<QString> retrieveKeywords(const QString &id);
@@ -108,7 +109,13 @@ public:
   bool insertOffer(const InsertClipboardOfferPayload &payload);
   bool indexSelectionContent(const QString &selectionId, const QString &content);
   std::vector<QString> removeSelection(const QString &selectionId);
+
   std::optional<PreferredClipboardOfferRecord> findPreferredOffer(const QString &selectionId);
+
+  // return the IDs of the offers that were removed, so that the clipboard service can remove them from disk
+  std::vector<QString> evictOlderThan(std::chrono::seconds secs, bool preserveTagged = true);
+
+  std::optional<int64_t> oldestEvictableTimestamp(bool preserveTagged = true);
 
   void runMigrations();
 

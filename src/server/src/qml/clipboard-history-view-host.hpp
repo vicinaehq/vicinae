@@ -33,6 +33,7 @@ class ClipboardHistoryViewHost : public ViewHostBase {
 
 public:
   explicit ClipboardHistoryViewHost();
+  ~ClipboardHistoryViewHost() override;
 
   QUrl qmlComponentUrl() const override;
   QUrl qmlSearchAccessoryUrl() const override;

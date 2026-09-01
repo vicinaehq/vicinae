@@ -72,6 +72,10 @@ ClipboardHistoryViewHost::ClipboardHistoryViewHost() : ViewHostBase() {
   m_kindFilterModel.setStringOptions({tr("All"), tr("Text"), tr("Images"), tr("Links"), tr("Files")});
 }
 
+ClipboardHistoryViewHost::~ClipboardHistoryViewHost() {
+  if (m_clipman) m_clipman->resumeEviction();
+}
+
 QUrl ClipboardHistoryViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/ClipboardHistoryView.qml"));
 }
@@ -88,6 +92,7 @@ void ClipboardHistoryViewHost::initialize() {
   BaseView::initialize();
 
   m_clipman = context()->services->clipman();
+  m_clipman->pauseEviction();
   m_model.setScope(ViewScope(context(), this));
 
   m_section.setOnEntrySelected([this](const ClipboardHistoryEntry &e) { loadDetail(e); });
