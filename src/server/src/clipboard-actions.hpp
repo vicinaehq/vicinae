@@ -7,6 +7,7 @@
 #include "ui/image/url.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class CopyToClipboardAction : public AbstractAction {
@@ -37,7 +38,15 @@ class PasteToFocusedWindowAction : public AbstractAction {
 public:
   void setConcealed(bool value = true) { m_concealed = value; }
 
-  QString title() const override { return tr("Paste to active window"); }
+  QString title() const override {
+    if (auto app = frontmostApp()) return tr("Paste to %1").arg(app->displayName());
+    return tr("Paste to active window");
+  }
+
+  std::optional<ImageURL> icon() const override {
+    if (auto app = frontmostApp()) return app->iconUrl();
+    return m_icon;
+  }
 
   PasteToFocusedWindowAction(const Clipboard::Content &content = Clipboard::NoData{})
       : AbstractAction(tr("Copy to focused window"), ImageURL::builtin(BuiltinIcon::CopyClipboard)),
@@ -53,6 +62,11 @@ protected:
   void loadClipboardData(const Clipboard::Content &content) { m_content = content; }
 
 private:
+  static std::shared_ptr<AbstractApplication> frontmostApp() {
+    if (auto *runtime = ServiceRegistry::instance()->appRuntime()) return runtime->frontmostApp();
+    return nullptr;
+  }
+
   Clipboard::Content m_content;
   bool m_concealed = false;
 };

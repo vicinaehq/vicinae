@@ -1,5 +1,7 @@
 #include "action-panel-model.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "service-registry.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "services/navigation/list-navigation.hpp"
 #include "theme.hpp"
 #include <QKeyEvent>
@@ -16,6 +18,12 @@ ActionPanelModel::ActionPanelModel(QObject *parent) : QAbstractListModel(parent)
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
     if (rowCount() > 0) emit dataChanged(index(0), index(rowCount() - 1), {IconSource});
   });
+
+  if (auto *runtime = ServiceRegistry::instance()->appRuntime()) {
+    connect(runtime, &AppRuntime::frontmostAppChanged, this, [this]() {
+      if (rowCount() > 0) emit dataChanged(index(0), index(rowCount() - 1), {Title, IconSource});
+    });
+  }
 }
 
 ActionPanelModel::ActionPanelModel(std::unique_ptr<ActionPanelState> state, QObject *parent)

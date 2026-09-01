@@ -164,6 +164,14 @@ public:
   virtual std::shared_ptr<AbstractWindow> getFocusedWindowSync() const { return nullptr; }
 
   /**
+   * The most recently focused window on the active workspace, ignoring layer shell surfaces and the
+   * launcher's own windows. Only consulted when `supportsFrontmostWindow` returns true.
+   */
+  virtual std::shared_ptr<AbstractWindow> getFrontmostWindowSync() const { return nullptr; }
+
+  virtual bool supportsFrontmostWindow() const { return false; }
+
+  /**
    * Whether the window manager is able to track what window is currently focused.
    * Note that a WM implementation can still implement `focusWindowSync` even if it
    * can't track the currently focused window.
