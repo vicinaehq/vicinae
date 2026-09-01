@@ -16,22 +16,10 @@ namespace ipc = Hyprland::ipc;
 
 namespace {
 
-constexpr glz::opts PARSE_OPTS{.error_on_unknown_keys = false};
-
 bool dispatchLua(std::string_view expr) { return Hyprctl::oneshot(std::format("dispatch {}", expr)) == "ok"; }
 
 std::string windowTarget(const AbstractWindowManager::AbstractWindow &window) {
   return std::format("address:{}", window.id().toStdString());
-}
-
-template <class T> std::optional<T> parseReply(const QByteArray &response) {
-  T value{};
-  auto view = std::string_view(response.constData(), static_cast<std::size_t>(response.size()));
-  if (glz::read<PARSE_OPTS>(value, view)) {
-    qWarning() << "Hyprland: failed to parse hyprctl reply:" << response;
-    return std::nullopt;
-  }
-  return value;
 }
 
 } // namespace
@@ -46,7 +34,7 @@ QString HyprlandWindowManager::id() const { return "hyprland"; }
 QString HyprlandWindowManager::displayName() const { return "Hyprland"; }
 
 AbstractWindowManager::WindowList HyprlandWindowManager::listWindowsSync() const {
-  auto clients = parseReply<std::vector<ipc::Window>>(Hyprctl::oneshot("-j/clients"));
+  auto clients = Hyprctl::oneshot<std::vector<ipc::Window>>("-j/clients");
   if (!clients.has_value()) { return {}; }
 
   WindowList windows;
@@ -60,8 +48,8 @@ AbstractWindowManager::WindowList HyprlandWindowManager::listWindowsSync() const
 }
 
 AbstractWindowManager::WindowPtr HyprlandWindowManager::getFrontmostWindowSync() const {
-  auto clients = parseReply<std::vector<ipc::Window>>(Hyprctl::oneshot("-j/clients"));
-  auto activeWs = parseReply<ipc::Workspace>(Hyprctl::oneshot("-j/activeworkspace"));
+  auto clients = Hyprctl::oneshot<std::vector<ipc::Window>>("-j/clients");
+  auto activeWs = Hyprctl::oneshot<ipc::Workspace>("-j/activeworkspace");
   if (!clients.has_value() || !activeWs.has_value()) { return nullptr; }
 
   const auto ownPid = QCoreApplication::applicationPid();
@@ -78,7 +66,7 @@ AbstractWindowManager::WindowPtr HyprlandWindowManager::getFrontmostWindowSync()
 }
 
 AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() const {
-  auto active = parseReply<ipc::Window>(Hyprctl::oneshot("-j/activewindow"));
+  auto active = Hyprctl::oneshot<ipc::Window>("-j/activewindow");
   if (!active.has_value() || active->address.empty()) { return nullptr; }
 
   return std::make_shared<HyprlandWindow>(*active);
@@ -133,14 +121,14 @@ bool HyprlandWindowManager::ping() const {
 bool HyprlandWindowManager::hasWorkspaces() const { return true; }
 
 AbstractWindowManager::WorkspacePtr HyprlandWindowManager::getActiveWorkspace() const {
-  auto active = parseReply<ipc::Workspace>(Hyprctl::oneshot("-j/activeworkspace"));
+  auto active = Hyprctl::oneshot<ipc::Workspace>("-j/activeworkspace");
   if (!active.has_value()) { return nullptr; }
 
   return std::make_shared<Hyprland::Workspace>(*active);
 }
 
 AbstractWindowManager::WorkspaceList HyprlandWindowManager::listWorkspaces() const {
-  auto parsed = parseReply<std::vector<ipc::Workspace>>(Hyprctl::oneshot("-j/workspaces"));
+  auto parsed = Hyprctl::oneshot<std::vector<ipc::Workspace>>("-j/workspaces");
   if (!parsed.has_value()) { return {}; }
 
   WorkspaceList workspaces;
