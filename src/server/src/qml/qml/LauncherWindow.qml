@@ -316,8 +316,9 @@ Window {
             z: 300
             enabled: launcher.canPositionWindow
             acceptedButtons: Qt.LeftButton
+            readonly property int topGrabHeight: 12
             onPressed: mouse => {
-                if (mouse.modifiers & Qt.ControlModifier) {
+                if ((mouse.modifiers & Qt.ControlModifier) || mouse.y < topGrabHeight) {
                     launcher.beginWindowDrag();
                 } else {
                     mouse.accepted = false;
