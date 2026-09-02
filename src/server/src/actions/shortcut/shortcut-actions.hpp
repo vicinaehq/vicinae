@@ -15,6 +15,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include "theme/colors.hpp"
 #include "ui/toast/toast.hpp"
 #include <memory>
 #include <qclipboard.h>
@@ -212,7 +213,8 @@ public:
     view->setPrefilledValues(m_prefill.link, m_prefill.name, m_prefill.app, m_prefill.icon);
     ctx->navigation->pushView(view);
     ctx->navigation->setNavigationTitle(title());
-    if (auto icon = this->icon()) ctx->navigation->setNavigationIcon(*icon);
+    ctx->navigation->setNavigationIcon(
+        ImageURL::builtin(BuiltinIcon::Bolt).setBackgroundTint(SemanticColor::Purple));
   }
 
   CreateShortcutAction(Prefill prefill, const QString &title = tr("Create shortcut"),
