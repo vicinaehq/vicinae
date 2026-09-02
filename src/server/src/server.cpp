@@ -487,6 +487,51 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   ExtensionIntervalScheduler intervalScheduler(ctx);
   intervalScheduler.rebuild();
 
+  auto tray = createTrayService();
+  if (tray) {
+    tray->setVersion(QStringLiteral(VICINAE_GIT_TAG " [" VICINAE_GIT_COMMIT_HASH "]"));
+    QObject::connect(tray.get(), &TrayService::toggleRequested, [&ctx]() { ctx.navigation->toggleWindow(); });
+    QObject::connect(tray.get(), &TrayService::openSettingsRequested, [&ctx](const QString &tab) {
+      if (tab.isEmpty()) {
+        ctx.settings->openWindow();
+      } else {
+        ctx.settings->openTab(tab);
+      }
+    });
+    auto *updates = ServiceRegistry::instance()->updateService();
+
+    QObject::connect(tray.get(), &TrayService::checkForUpdatesRequested, [&ctx, updates]() {
+      if (updates->available()) {
+        ctx.navigation->popToRoot();
+        ctx.navigation->showWindow();
+      } else {
+        updates->checkNow();
+      }
+    });
+
+    auto syncTrayUpdate = [tray = tray.get(), updates]() {
+      tray->setAvailableUpdate(updates->available() ? updates->available()->tag : QString());
+    };
+    QObject::connect(updates, &UpdateService::updateChanged, tray.get(), syncTrayUpdate);
+    syncTrayUpdate();
+    tray->setCheckForUpdatesVisible(updates->checksSupported());
+    QObject::connect(tray.get(), &TrayService::openLinkRequested, [&ctx](TrayService::Link link) {
+      const QString &url = [link]() -> const QString & {
+        switch (link) {
+        case TrayService::Link::Discord:
+          return Omnicast::DISCORD_INVITE_LINK;
+        case TrayService::Link::Follow:
+          return Omnicast::X_PROFILE_LINK;
+        case TrayService::Link::Sponsor:
+          break;
+        }
+        return Omnicast::GH_SPONSOR_LINK;
+      }();
+      ctx.services->appDb()->openTarget(url);
+    });
+    QObject::connect(tray.get(), &TrayService::quitRequested, []() { QCoreApplication::quit(); });
+  }
+
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();
     auto &nextTheme = next.systemTheme();
@@ -528,6 +573,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #endif
 
     ServiceRegistry::instance()->telemetry()->setEnabled(next.telemetry.systemInfo);
+
+    if (tray) {
+      if (next.tray.enabled) {
+        tray->show();
+      } else {
+        tray->hide();
+      }
+    }
   };
 
   auto cfgService = ServiceRegistry::instance()->config();
@@ -575,52 +628,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QGuiApplication::setFont(resolveAppFont(cfgService->value().font));
 
   configChanged(cfgService->value(), {});
-
-  auto tray = createTrayService();
-  if (tray) {
-    tray->setVersion(QStringLiteral(VICINAE_GIT_TAG " [" VICINAE_GIT_COMMIT_HASH "]"));
-    QObject::connect(tray.get(), &TrayService::toggleRequested, [&ctx]() { ctx.navigation->toggleWindow(); });
-    QObject::connect(tray.get(), &TrayService::openSettingsRequested, [&ctx](const QString &tab) {
-      if (tab.isEmpty()) {
-        ctx.settings->openWindow();
-      } else {
-        ctx.settings->openTab(tab);
-      }
-    });
-    auto *updates = ServiceRegistry::instance()->updateService();
-
-    QObject::connect(tray.get(), &TrayService::checkForUpdatesRequested, [&ctx, updates]() {
-      if (updates->available()) {
-        ctx.navigation->popToRoot();
-        ctx.navigation->showWindow();
-      } else {
-        updates->checkNow();
-      }
-    });
-
-    auto syncTrayUpdate = [tray = tray.get(), updates]() {
-      tray->setAvailableUpdate(updates->available() ? updates->available()->tag : QString());
-    };
-    QObject::connect(updates, &UpdateService::updateChanged, tray.get(), syncTrayUpdate);
-    syncTrayUpdate();
-    tray->setCheckForUpdatesVisible(updates->checksSupported());
-    QObject::connect(tray.get(), &TrayService::openLinkRequested, [&ctx](TrayService::Link link) {
-      const QString &url = [link]() -> const QString & {
-        switch (link) {
-        case TrayService::Link::Discord:
-          return Omnicast::DISCORD_INVITE_LINK;
-        case TrayService::Link::Follow:
-          return Omnicast::X_PROFILE_LINK;
-        case TrayService::Link::Sponsor:
-          break;
-        }
-        return Omnicast::GH_SPONSOR_LINK;
-      }();
-      ctx.services->appDb()->openTarget(url);
-    });
-    QObject::connect(tray.get(), &TrayService::quitRequested, []() { QCoreApplication::quit(); });
-    tray->show();
-  }
 
   LauncherWindow const qmlWindow(ctx);
 
