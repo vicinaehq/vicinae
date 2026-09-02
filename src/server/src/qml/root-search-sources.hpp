@@ -27,7 +27,6 @@ enum RootSearchRole {
   CalcAnswer,
   CalcAnswerUnit,
   IsFile,
-  ShortcutTokens,
 };
 
 struct OwnedResult {
@@ -163,6 +162,7 @@ public:
   QString itemSubtitle(int i) const override;
   std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
+  QVariantList itemShortcutTokens(int i) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
@@ -187,6 +187,7 @@ public:
   QString itemSubtitle(int i) const override;
   std::optional<ImageURL> itemIcon(int i) const override;
   QVariant customData(int i, int role) const override;
+  QVariantList itemShortcutTokens(int i) const override;
   QHash<int, QByteArray> customRoleNames() const override;
   QHash<int, QVariant> customRoleDefaults() const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;

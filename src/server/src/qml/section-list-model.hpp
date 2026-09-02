@@ -30,6 +30,7 @@ public:
     IconSource,
     Accessory,
     IsDraggable,
+    ShortcutTokens,
   };
 
   explicit SectionListModel(QObject *parent = nullptr);
