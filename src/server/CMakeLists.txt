@@ -721,6 +721,10 @@ if (APPLE)
 		src/services/desktop-notification/macos/macos-notification-client.mm
 		src/services/file-chooser/macos/mac-file-chooser.hpp
 		src/services/file-chooser/macos/mac-file-chooser.mm
+		src/services/menu-bar/macos-menu-bar.hpp
+		src/services/menu-bar/macos-menu-bar.mm
+		src/qml/menu-bar-search-view-host.hpp
+		src/extensions/vicinae/search-menu-bar-command.hpp
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -743,6 +747,7 @@ if (APPLE)
 		src/services/autostart/macos-login-item.mm
 		src/services/desktop-notification/macos/macos-notification-client.mm
 		src/services/file-chooser/macos/mac-file-chooser.mm
+		src/services/menu-bar/macos-menu-bar.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications")
 

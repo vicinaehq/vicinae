@@ -5,6 +5,65 @@
 
 namespace Keyboard::macos {
 
+namespace {
+
+struct NamedKey {
+  Qt::Key key;
+  uint16_t keycode;
+};
+
+constexpr std::array<NamedKey, 35> NAMED_KEYS{{
+    {Qt::Key_Space, kVK_Space},
+    {Qt::Key_Return, kVK_Return},
+    {Qt::Key_Enter, kVK_ANSI_KeypadEnter},
+    {Qt::Key_Escape, kVK_Escape},
+    {Qt::Key_Tab, kVK_Tab},
+    {Qt::Key_Backspace, kVK_Delete},
+    {Qt::Key_Delete, kVK_ForwardDelete},
+    {Qt::Key_Home, kVK_Home},
+    {Qt::Key_End, kVK_End},
+    {Qt::Key_PageUp, kVK_PageUp},
+    {Qt::Key_PageDown, kVK_PageDown},
+    {Qt::Key_Left, kVK_LeftArrow},
+    {Qt::Key_Right, kVK_RightArrow},
+    {Qt::Key_Up, kVK_UpArrow},
+    {Qt::Key_Down, kVK_DownArrow},
+    {Qt::Key_F1, kVK_F1},
+    {Qt::Key_F2, kVK_F2},
+    {Qt::Key_F3, kVK_F3},
+    {Qt::Key_F4, kVK_F4},
+    {Qt::Key_F5, kVK_F5},
+    {Qt::Key_F6, kVK_F6},
+    {Qt::Key_F7, kVK_F7},
+    {Qt::Key_F8, kVK_F8},
+    {Qt::Key_F9, kVK_F9},
+    {Qt::Key_F10, kVK_F10},
+    {Qt::Key_F11, kVK_F11},
+    {Qt::Key_F12, kVK_F12},
+    {Qt::Key_F13, kVK_F13},
+    {Qt::Key_F14, kVK_F14},
+    {Qt::Key_F15, kVK_F15},
+    {Qt::Key_F16, kVK_F16},
+    {Qt::Key_F17, kVK_F17},
+    {Qt::Key_F18, kVK_F18},
+    {Qt::Key_F19, kVK_F19},
+    {Qt::Key_F20, kVK_F20},
+}};
+
+} // namespace
+
+std::optional<uint16_t> keycodeForNamedKey(Qt::Key key) {
+  for (const auto &entry : NAMED_KEYS)
+    if (entry.key == key) return entry.keycode;
+  return std::nullopt;
+}
+
+Qt::Key namedKeyForKeycode(uint16_t keycode) {
+  for (const auto &entry : NAMED_KEYS)
+    if (entry.keycode == keycode) return entry.key;
+  return Qt::Key_unknown;
+}
+
 QString translateKeycode(CFDataRef layoutData, uint16_t keycode, bool shifted, uint8_t kbdType) {
   if (!layoutData) { return {}; }
 

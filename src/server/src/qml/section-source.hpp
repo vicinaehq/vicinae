@@ -7,6 +7,7 @@
 #include <optional>
 #include <string_view>
 
+#include "keyboard/keyboard.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include "view-scope.hpp"
 #include "view-utils.hpp"
@@ -27,6 +28,7 @@ public:
   virtual QString itemSubtitle(int) const { return {}; }
   virtual std::optional<ImageURL> itemIcon(int i) const = 0;
   virtual AccessoryList itemAccessories(int) const { return {}; }
+  virtual Keyboard::Shortcut itemShortcut(int) const { return {}; }
 
   virtual bool isDraggable(int) const { return false; }
   virtual std::unique_ptr<QMimeData> dragMimeData(int) const { return {}; }

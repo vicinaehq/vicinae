@@ -85,6 +85,8 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
       return {};
     case IsDraggable:
       return false;
+    case ShortcutTokens:
+      return QVariantList();
     default: {
       auto it = m_customRoleDefaults.find(role);
       return it != m_customRoleDefaults.end() ? it.value() : QVariant{};
@@ -112,6 +114,8 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
     return qml::accessoriesToVariantList(source->itemAccessories(flat.itemIdx));
   case IsDraggable:
     return source->isDraggable(flat.itemIdx);
+  case ShortcutTokens:
+    return source->itemShortcut(flat.itemIdx).toDisplayTokens();
   default: {
     auto v = source->customData(flat.itemIdx, role);
     if (v.isValid()) return v;
@@ -123,10 +127,15 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> SectionListModel::roleNames() const {
   QHash<int, QByteArray> roles = {
-      {IsSection, "isSection"},     {IsSelectable, "isSelectable"},
-      {SectionName, "sectionName"}, {Title, "title"},
-      {Subtitle, "subtitle"},       {IconSource, "iconSource"},
-      {Accessory, "itemAccessory"}, {IsDraggable, "isDraggable"},
+      {IsSection, "isSection"},
+      {IsSelectable, "isSelectable"},
+      {SectionName, "sectionName"},
+      {Title, "title"},
+      {Subtitle, "subtitle"},
+      {IconSource, "iconSource"},
+      {Accessory, "itemAccessory"},
+      {IsDraggable, "isDraggable"},
+      {ShortcutTokens, "shortcutTokens"},
   };
   for (auto *source : m_sources)
     roles.insert(source->customRoleNames());
