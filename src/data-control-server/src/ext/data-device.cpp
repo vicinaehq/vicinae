@@ -37,13 +37,12 @@ void ExtDataDevice::finished(void *data, ext_data_control_device_v1 *) {
   }
 }
 
-void ExtDataDevice::primarySelection(void *data, ext_data_control_device_v1 *, ext_data_control_offer_v1 *) {
+void ExtDataDevice::primarySelection(void *data, ext_data_control_device_v1 *, ext_data_control_offer_v1 *id) {
   auto self = static_cast<ExtDataDevice *>(data);
-
-  if (!self->m_offer) return;
+  ExtDataOffer *offer = (id && self->m_offer && self->m_offer->pointer() == id) ? self->m_offer.get() : nullptr;
 
   for (auto lstn : self->_listeners) {
-    lstn->primarySelection(*self, *self->m_offer);
+    lstn->primarySelection(*self, offer);
   }
 }
 // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)

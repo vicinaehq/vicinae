@@ -1,6 +1,7 @@
 #pragma once
 #include <QCoreApplication>
 #include <QGuiApplication>
+#include <QEventLoop>
 #include "actions/app/app-actions.hpp"
 #include "builtin_icon.hpp"
 #include "common.hpp"
@@ -19,11 +20,13 @@
 #include <qclipboard.h>
 #include <qlogging.h>
 #include <ranges>
+#include "services/selection/abstract-selection-service.hpp"
 
 namespace {
 QString expandShortcut(const Shortcut &sh, std::span<const QString> args) {
   QString expanded;
   size_t argumentIndex = 0;
+  auto selectionService = ServiceRegistry::instance()->selectionService();
 
   for (const auto &part : sh.parts()) {
     if (auto s = std::get_if<QString>(&part)) {
@@ -31,8 +34,12 @@ QString expandShortcut(const Shortcut &sh, std::span<const QString> args) {
     } else if (auto placeholder = std::get_if<Shortcut::ParsedPlaceholder>(&part)) {
       if (placeholder->id == "clipboard") {
         expanded += QGuiApplication::clipboard()->text();
-      } else if (placeholder->id == "selected") {
-        // TODO: selected text
+      } else if (placeholder->id == "selected" || placeholder->id == "selection") {
+        if (auto selected = selectionService->selectedTextSync()) {
+          expanded += *selected;
+        } else {
+          qWarning() << "Failed to get text selection" << selected.error();
+        }
       } else if (placeholder->id == "uuid") {
         expanded += QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
       } else {

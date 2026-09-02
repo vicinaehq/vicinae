@@ -773,6 +773,8 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, std::optio
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);
+  connect(m_clipboardServer.get(), &AbstractClipboardServer::primarySelectionChanged, this,
+          &ClipboardService::primarySelectionChanged);
   m_historyEvictionTimer.setSingleShot(true);
   m_historyEvictionTimer.setTimerType(Qt::VeryCoarseTimer);
   connect(&m_historyEvictionTimer, &QTimer::timeout, this, &ClipboardService::runEvictionPass);
