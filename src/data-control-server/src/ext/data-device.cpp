@@ -37,9 +37,11 @@ void ExtDataDevice::finished(void *data, ext_data_control_device_v1 *) {
   }
 }
 
-void ExtDataDevice::primarySelection(void *data, ext_data_control_device_v1 *, ext_data_control_offer_v1 *id) {
+void ExtDataDevice::primarySelection(void *data, ext_data_control_device_v1 *,
+                                     ext_data_control_offer_v1 *id) {
   auto self = static_cast<ExtDataDevice *>(data);
-  ExtDataOffer *offer = (id && self->m_offer && self->m_offer->pointer() == id) ? self->m_offer.get() : nullptr;
+  ExtDataOffer *offer =
+      (id && self->m_offer && self->m_offer->pointer() == id) ? self->m_offer.get() : nullptr;
 
   for (auto lstn : self->_listeners) {
     lstn->primarySelection(*self, offer);
