@@ -195,6 +195,34 @@ public:
         link(link) {}
 };
 
+class CreateShortcutAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(CreateShortcutAction)
+
+public:
+  struct Prefill {
+    QString link;
+    QString name;
+    QString app;
+    QString icon;
+  };
+
+  void execute(ApplicationContext *ctx) override {
+    auto view = new ShortcutFormViewHost;
+
+    view->setPrefilledValues(m_prefill.link, m_prefill.name, m_prefill.app, m_prefill.icon);
+    ctx->navigation->pushView(view);
+    ctx->navigation->setNavigationTitle(title());
+    if (auto icon = this->icon()) ctx->navigation->setNavigationIcon(*icon);
+  }
+
+  CreateShortcutAction(Prefill prefill, const QString &title = tr("Create shortcut"),
+                       const ImageURL &icon = ImageURL::builtin(BuiltinIcon::Link))
+      : AbstractAction(title, icon), m_prefill(std::move(prefill)) {}
+
+private:
+  Prefill m_prefill;
+};
+
 /**
  * Submenu action to let the user select which app to open the shortcut
  * with. The list of available apps depends on the shortcut url.

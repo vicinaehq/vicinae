@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include "actions/app/app-actions.hpp"
 #include "actions/files/file-actions.hpp"
+#include "actions/shortcut/shortcut-actions.hpp"
 #include "builtin_icon.hpp"
 #include "clipboard-actions.hpp"
 #include "common/context.hpp"
@@ -163,6 +164,11 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   if (mime.name().startsWith("image/") && ctx->services->wallpaperManager()->canSetWallpaper()) {
     section->addAction(new SetWallpaperAction(path));
   }
+
+  section->addAction(new CreateShortcutAction({
+      .link = QString::fromStdString(path.string()),
+      .name = QString::fromStdString(path.filename().string()),
+  }));
 
   auto utils = panel->createSection();
   auto copy = AbstractAction::make<CopyToClipboardAction>(
