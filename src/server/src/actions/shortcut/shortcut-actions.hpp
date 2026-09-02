@@ -15,6 +15,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include "theme/colors.hpp"
 #include "ui/toast/toast.hpp"
 #include <memory>
 #include <qclipboard.h>
@@ -193,6 +194,35 @@ public:
       : AbstractAction(QCoreApplication::translate("DuplicateShortcutAction", "Duplicate link"),
                        ImageURL::builtin(BuiltinIcon::Duplicate)),
         link(link) {}
+};
+
+class CreateShortcutAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(CreateShortcutAction)
+
+public:
+  struct Prefill {
+    QString link;
+    QString name;
+    QString app;
+    QString icon;
+  };
+
+  void execute(ApplicationContext *ctx) override {
+    auto view = new ShortcutFormViewHost;
+
+    view->setPrefilledValues(m_prefill.link, m_prefill.name, m_prefill.app, m_prefill.icon);
+    ctx->navigation->pushView(view);
+    ctx->navigation->setNavigationTitle(title());
+    ctx->navigation->setNavigationIcon(
+        ImageURL::builtin(BuiltinIcon::Bolt).setBackgroundTint(SemanticColor::Purple));
+  }
+
+  CreateShortcutAction(Prefill prefill, const QString &title = tr("Create shortcut"),
+                       const ImageURL &icon = ImageURL::builtin(BuiltinIcon::Link))
+      : AbstractAction(title, icon), m_prefill(std::move(prefill)) {}
+
+private:
+  Prefill m_prefill;
 };
 
 /**
