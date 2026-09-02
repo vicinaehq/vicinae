@@ -37,10 +37,17 @@ const QHash<int, QByteArray> &customRoleNames() {
 
 const QHash<int, QVariant> &customRoleDefaults() {
   static const QHash<int, QVariant> defaults = {
-      {ItemType, QString()},   {Alias, QString()},
-      {IsActive, false},       {AccessoryText, QString()},  {AccessoryColor, QString()},
-      {IsCalculator, false},   {CalcQuestion, QString()},   {CalcQuestionUnit, QString()},
-      {CalcAnswer, QString()}, {CalcAnswerUnit, QString()}, {IsFile, false},
+      {ItemType, QString()},
+      {Alias, QString()},
+      {IsActive, false},
+      {AccessoryText, QString()},
+      {AccessoryColor, QString()},
+      {IsCalculator, false},
+      {CalcQuestion, QString()},
+      {CalcQuestionUnit, QString()},
+      {CalcAnswer, QString()},
+      {CalcAnswerUnit, QString()},
+      {IsFile, false},
   };
   return defaults;
 }

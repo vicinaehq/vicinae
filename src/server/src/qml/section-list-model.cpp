@@ -127,10 +127,14 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> SectionListModel::roleNames() const {
   QHash<int, QByteArray> roles = {
-      {IsSection, "isSection"},     {IsSelectable, "isSelectable"},
-      {SectionName, "sectionName"}, {Title, "title"},
-      {Subtitle, "subtitle"},       {IconSource, "iconSource"},
-      {Accessory, "itemAccessory"}, {IsDraggable, "isDraggable"},
+      {IsSection, "isSection"},
+      {IsSelectable, "isSelectable"},
+      {SectionName, "sectionName"},
+      {Title, "title"},
+      {Subtitle, "subtitle"},
+      {IconSource, "iconSource"},
+      {Accessory, "itemAccessory"},
+      {IsDraggable, "isDraggable"},
       {ShortcutTokens, "shortcutTokens"},
   };
   for (auto *source : m_sources)

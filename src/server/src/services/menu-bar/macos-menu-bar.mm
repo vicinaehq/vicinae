@@ -47,42 +47,78 @@ CFArrayRef arrayValue(CFTypeRef value) {
 
 Qt::Key keyFromVirtualKey(int vk) {
   switch (vk) {
-  case kVK_Return: return Qt::Key_Return;
-  case kVK_ANSI_KeypadEnter: return Qt::Key_Enter;
-  case kVK_Tab: return Qt::Key_Tab;
-  case kVK_Space: return Qt::Key_Space;
-  case kVK_Delete: return Qt::Key_Backspace;
-  case kVK_ForwardDelete: return Qt::Key_Delete;
-  case kVK_Escape: return Qt::Key_Escape;
-  case kVK_Home: return Qt::Key_Home;
-  case kVK_End: return Qt::Key_End;
-  case kVK_PageUp: return Qt::Key_PageUp;
-  case kVK_PageDown: return Qt::Key_PageDown;
-  case kVK_LeftArrow: return Qt::Key_Left;
-  case kVK_RightArrow: return Qt::Key_Right;
-  case kVK_UpArrow: return Qt::Key_Up;
-  case kVK_DownArrow: return Qt::Key_Down;
-  case kVK_F1: return Qt::Key_F1;
-  case kVK_F2: return Qt::Key_F2;
-  case kVK_F3: return Qt::Key_F3;
-  case kVK_F4: return Qt::Key_F4;
-  case kVK_F5: return Qt::Key_F5;
-  case kVK_F6: return Qt::Key_F6;
-  case kVK_F7: return Qt::Key_F7;
-  case kVK_F8: return Qt::Key_F8;
-  case kVK_F9: return Qt::Key_F9;
-  case kVK_F10: return Qt::Key_F10;
-  case kVK_F11: return Qt::Key_F11;
-  case kVK_F12: return Qt::Key_F12;
-  case kVK_F13: return Qt::Key_F13;
-  case kVK_F14: return Qt::Key_F14;
-  case kVK_F15: return Qt::Key_F15;
-  case kVK_F16: return Qt::Key_F16;
-  case kVK_F17: return Qt::Key_F17;
-  case kVK_F18: return Qt::Key_F18;
-  case kVK_F19: return Qt::Key_F19;
-  case kVK_F20: return Qt::Key_F20;
-  default: return Qt::Key_unknown;
+  case kVK_Return:
+    return Qt::Key_Return;
+  case kVK_ANSI_KeypadEnter:
+    return Qt::Key_Enter;
+  case kVK_Tab:
+    return Qt::Key_Tab;
+  case kVK_Space:
+    return Qt::Key_Space;
+  case kVK_Delete:
+    return Qt::Key_Backspace;
+  case kVK_ForwardDelete:
+    return Qt::Key_Delete;
+  case kVK_Escape:
+    return Qt::Key_Escape;
+  case kVK_Home:
+    return Qt::Key_Home;
+  case kVK_End:
+    return Qt::Key_End;
+  case kVK_PageUp:
+    return Qt::Key_PageUp;
+  case kVK_PageDown:
+    return Qt::Key_PageDown;
+  case kVK_LeftArrow:
+    return Qt::Key_Left;
+  case kVK_RightArrow:
+    return Qt::Key_Right;
+  case kVK_UpArrow:
+    return Qt::Key_Up;
+  case kVK_DownArrow:
+    return Qt::Key_Down;
+  case kVK_F1:
+    return Qt::Key_F1;
+  case kVK_F2:
+    return Qt::Key_F2;
+  case kVK_F3:
+    return Qt::Key_F3;
+  case kVK_F4:
+    return Qt::Key_F4;
+  case kVK_F5:
+    return Qt::Key_F5;
+  case kVK_F6:
+    return Qt::Key_F6;
+  case kVK_F7:
+    return Qt::Key_F7;
+  case kVK_F8:
+    return Qt::Key_F8;
+  case kVK_F9:
+    return Qt::Key_F9;
+  case kVK_F10:
+    return Qt::Key_F10;
+  case kVK_F11:
+    return Qt::Key_F11;
+  case kVK_F12:
+    return Qt::Key_F12;
+  case kVK_F13:
+    return Qt::Key_F13;
+  case kVK_F14:
+    return Qt::Key_F14;
+  case kVK_F15:
+    return Qt::Key_F15;
+  case kVK_F16:
+    return Qt::Key_F16;
+  case kVK_F17:
+    return Qt::Key_F17;
+  case kVK_F18:
+    return Qt::Key_F18;
+  case kVK_F19:
+    return Qt::Key_F19;
+  case kVK_F20:
+    return Qt::Key_F20;
+  default:
+    return Qt::Key_unknown;
   }
 }
 

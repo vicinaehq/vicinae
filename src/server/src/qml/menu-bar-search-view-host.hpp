@@ -16,8 +16,8 @@
 
 template <> struct fuzzy::FuzzySearchable<MenuBar::Entry> {
   static fuzzy::Match score(const MenuBar::Entry &entry, const fuzzy::Query &query) {
-    return fuzzy::scoreWeighted(
-        {{entry.title.toStdString(), 1.0}, {entry.path.join(' ').toStdString(), 0.5}}, query);
+    return fuzzy::scoreWeighted({{entry.title.toStdString(), 1.0}, {entry.path.join(' ').toStdString(), 0.5}},
+                                query);
   }
 };
 
@@ -50,9 +50,7 @@ public:
     if (m_mode == Mode::Flat) return entry.path.join(" › ");
     return entry.path.mid(1).join(" › ");
   }
-  QString displayId(const ItemType &entry) const override {
-    return entry.path.join('/') + '/' + entry.title;
-  }
+  QString displayId(const ItemType &entry) const override { return entry.path.join('/') + '/' + entry.title; }
 
   std::optional<ImageURL> displayIcon(const ItemType &) const override {
     if (m_icon) return m_icon;
@@ -66,14 +64,12 @@ public:
   std::unique_ptr<ActionPanelState> buildActionPanel(const ItemType &entry) const override {
     auto panel = std::make_unique<ListActionPanelState>();
     auto section = panel->createSection();
-    section->addAction(new StaticAction(tr("Run Menu Item"), ImageURL::builtin(BuiltinIcon::Bolt),
-                                        [entry](ApplicationContext *ctx) {
-                                          ctx->navigation->closeWindow(
-                                              {.popToRootType = PopToRootType::Immediate});
-                                          MenuBar::pressItem(entry);
-                                        }));
-    section->addAction(new StaticAction(tr("Open in Menu Bar"),
-                                        ImageURL::builtin(BuiltinIcon::AppWindowList),
+    section->addAction(new StaticAction(
+        tr("Run Menu Item"), ImageURL::builtin(BuiltinIcon::Bolt), [entry](ApplicationContext *ctx) {
+          ctx->navigation->closeWindow({.popToRootType = PopToRootType::Immediate});
+          MenuBar::pressItem(entry);
+        }));
+    section->addAction(new StaticAction(tr("Open in Menu Bar"), ImageURL::builtin(BuiltinIcon::AppWindowList),
                                         [entry](ApplicationContext *ctx) {
                                           ctx->navigation->closeWindow(
                                               {.popToRootType = PopToRootType::Immediate});
@@ -96,8 +92,7 @@ public:
     BaseView::initialize();
     initModel();
     setSearchPlaceholderText(tr("Filter by menu item title..."));
-    connect(context()->services->appRuntime(), &AppRuntime::frontmostAppChanged, this,
-            [this] { rescan(); });
+    connect(context()->services->appRuntime(), &AppRuntime::frontmostAppChanged, this, [this] { rescan(); });
   }
 
   void loadInitialData() override { rescan(); }
