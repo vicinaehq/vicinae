@@ -74,6 +74,8 @@ signals:
   void paginationChanged();
 
 private:
+  SectionListModel *quickAccessModel() override { return activeModel<ExtensionListModel>(); }
+
   struct DetailState {
     QString markdown;
     QVariantList metadata;

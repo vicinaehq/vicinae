@@ -30,6 +30,7 @@ public:
     IconSource,
     Accessory,
     IsDraggable,
+    QuickAccessIndex,
   };
 
   explicit SectionListModel(QObject *parent = nullptr);
@@ -56,6 +57,7 @@ public:
   Q_INVOKABLE int nextSelectableIndex(int from, int direction) const;
   Q_INVOKABLE int nextSectionIndex(int from, int direction) const;
   Q_INVOKABLE int scrollTargetIndex(int index, int direction) const;
+  bool activateQuickAccess(int shortcutIndex);
 
   void refreshActionPanel();
   void beforePop();
@@ -79,7 +81,11 @@ private:
 
   void rebuildFlatList();
   void rebuildCustomRoleDefaults();
+  int quickAccessRow(int shortcutIndex) const;
+  int quickAccessIndexForRow(int row) const;
   int indexOfItemId(const QString &id) const;
+
+  static constexpr int QUICK_ACCESS_COUNT = 10;
 
   ViewScope m_scope;
   std::vector<SectionSource *> m_sources;

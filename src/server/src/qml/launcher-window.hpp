@@ -24,6 +24,7 @@ class QQuickWindow;
 class QScreen;
 class BaseView;
 class DialogContentWidget;
+class QKeyEvent;
 
 class LauncherWindow : public QObject {
   Q_OBJECT
@@ -57,6 +58,7 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(int lsLayer READ lsLayer NOTIFY lsChanged)
   Q_PROPERTY(int lsKeyboardInteractivity READ lsKeyboardInteractivity NOTIFY lsChanged)
   Q_PROPERTY(bool canPositionWindow READ canPositionWindow CONSTANT)
+  Q_PROPERTY(bool commandHeld READ commandHeld NOTIFY commandHeldChanged)
   Q_PROPERTY(bool dragOverlayVisible READ dragOverlayVisible NOTIFY dragOverlayChanged)
   Q_PROPERTY(QRect dragOverlayGeometry READ dragOverlayGeometry NOTIFY dragOverlayChanged)
   Q_PROPERTY(QVariantList dragAnchors READ dragAnchors NOTIFY dragOverlayChanged)
@@ -100,6 +102,7 @@ public:
   int lsLayer() const { return m_lsLayer; }
   int lsKeyboardInteractivity() const { return m_lsKeyboardInteractivity; }
   static bool canPositionWindow();
+  bool commandHeld() const { return m_commandHeld; }
 
   Q_INVOKABLE void expand();
   Q_INVOKABLE void forwardSearchText(const QString &text);
@@ -152,6 +155,7 @@ signals:
   void windowSizeOverrideChanged();
   void overlayChanged();
   void lsChanged();
+  void commandHeldChanged();
   void dragOverlayChanged();
   void dragActiveAnchorChanged();
   void filePickingChanged();
@@ -174,6 +178,8 @@ private:
   void setExclusiveFocus(bool exclusive);
   void updateLayerShellProps();
   void buildFooterMenu();
+  void setCommandHeld(bool held);
+  void syncCommandHeld(const QKeyEvent *event);
 
   ApplicationContext &m_ctx;
   ActionPanelController *m_actionPanel;
@@ -238,6 +244,7 @@ private:
   int m_lsLayer = 2;                 // LayerShellQt::Window::LayerTop
   int m_lsKeyboardInteractivity = 2; // LayerShellQt::Window::KeyboardInteractivityOnDemand
   bool m_hasCompleter = false;
+  bool m_commandHeld = false;
   QVariantList m_completerArgs;
   QString m_completerIcon;
   QVariantList m_completerValues;

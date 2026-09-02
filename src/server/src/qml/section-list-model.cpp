@@ -85,6 +85,8 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
       return {};
     case IsDraggable:
       return false;
+    case QuickAccessIndex:
+      return -1;
     default: {
       auto it = m_customRoleDefaults.find(role);
       return it != m_customRoleDefaults.end() ? it.value() : QVariant{};
@@ -112,6 +114,8 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
     return qml::accessoriesToVariantList(source->itemAccessories(flat.itemIdx));
   case IsDraggable:
     return source->isDraggable(flat.itemIdx);
+  case QuickAccessIndex:
+    return quickAccessIndexForRow(index.row());
   default: {
     auto v = source->customData(flat.itemIdx, role);
     if (v.isValid()) return v;
@@ -123,10 +127,15 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> SectionListModel::roleNames() const {
   QHash<int, QByteArray> roles = {
-      {IsSection, "isSection"},     {IsSelectable, "isSelectable"},
-      {SectionName, "sectionName"}, {Title, "title"},
-      {Subtitle, "subtitle"},       {IconSource, "iconSource"},
-      {Accessory, "itemAccessory"}, {IsDraggable, "isDraggable"},
+      {IsSection, "isSection"},
+      {IsSelectable, "isSelectable"},
+      {SectionName, "sectionName"},
+      {Title, "title"},
+      {Subtitle, "subtitle"},
+      {IconSource, "iconSource"},
+      {Accessory, "itemAccessory"},
+      {IsDraggable, "isDraggable"},
+      {QuickAccessIndex, "quickAccessIndex"},
   };
   for (auto *source : m_sources)
     roles.insert(source->customRoleNames());
@@ -185,6 +194,43 @@ int SectionListModel::nextSelectableIndex(int from, int direction) const {
   int const count = static_cast<int>(m_flat.size());
   return ListNavigation::nextIndex(from, direction, count,
                                    [&](int idx) { return m_flat[idx].kind != FlatItem::SectionHeader; });
+}
+
+int SectionListModel::quickAccessRow(int shortcutIndex) const {
+  if (shortcutIndex < 0 || shortcutIndex >= QUICK_ACCESS_COUNT) return -1;
+
+  int currentIndex = 0;
+  for (std::size_t row = 0; row < m_flat.size(); ++row) {
+    if (m_flat[row].kind == FlatItem::SectionHeader) continue;
+    if (currentIndex == shortcutIndex) return static_cast<int>(row);
+    ++currentIndex;
+  }
+
+  return -1;
+}
+
+int SectionListModel::quickAccessIndexForRow(int row) const {
+  if (row < 0 || std::cmp_greater_equal(row, m_flat.size()) || m_flat[row].kind == FlatItem::SectionHeader) {
+    return -1;
+  }
+
+  int shortcutIndex = 0;
+  for (int currentRow = 0; currentRow <= row; ++currentRow) {
+    if (m_flat[currentRow].kind == FlatItem::SectionHeader) continue;
+    if (currentRow == row) return shortcutIndex < QUICK_ACCESS_COUNT ? shortcutIndex : -1;
+    ++shortcutIndex;
+  }
+
+  return -1;
+}
+
+bool SectionListModel::activateQuickAccess(int shortcutIndex) {
+  const int row = quickAccessRow(shortcutIndex);
+  if (row < 0) return false;
+
+  setSelectedIndex(row);
+  activateSelected();
+  return true;
 }
 
 int SectionListModel::nextSectionIndex(int from, int direction) const {

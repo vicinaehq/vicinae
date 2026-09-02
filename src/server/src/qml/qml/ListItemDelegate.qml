@@ -126,6 +126,14 @@ SelectableDelegate {
             Layout.maximumWidth: implicitWidth
             Layout.alignment: Qt.AlignVCenter
             clip: true
+            opacity: root.quickAccessActive ? 0 : 1
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 120
+                    easing.type: Easing.OutCubic
+                }
+            }
         }
     }
 }

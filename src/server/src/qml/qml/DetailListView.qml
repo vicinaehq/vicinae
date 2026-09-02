@@ -40,6 +40,7 @@ Item {
             required property int index
             required property bool isSection
             required property bool isSelectable
+            required property int quickAccessIndex
             required property string sectionName
             required property string title
             required property string subtitle
@@ -66,6 +67,7 @@ Item {
                     itemAlias: ""
                     itemIsActive: false
                     itemAccessory: delegateLoader.itemAccessory
+                    quickAccessIndex: delegateLoader.quickAccessIndex
                     selected: listView.currentIndex === delegateLoader.index
                     onClicked: listView.currentIndex = delegateLoader.index
                     onActivated: listView.itemActivated(delegateLoader.index)

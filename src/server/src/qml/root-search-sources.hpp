@@ -16,8 +16,7 @@ class NewsService;
 struct NewsItem;
 
 enum RootSearchRole {
-  ItemType = Qt::UserRole + 50,
-  Alias,
+  Alias = Qt::UserRole + 50,
   IsActive,
   AccessoryText,
   AccessoryColor,

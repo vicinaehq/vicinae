@@ -15,6 +15,7 @@ GenericListView {
         required property int index
         required property bool isSection
         required property bool isSelectable
+        required property int quickAccessIndex
         required property string sectionName
         required property string title
         required property string subtitle
@@ -53,6 +54,7 @@ GenericListView {
                 paletteColor5: delegateLoader.paletteColor5
                 paletteColor6: delegateLoader.paletteColor6
                 paletteColor7: delegateLoader.paletteColor7
+                quickAccessIndex: delegateLoader.quickAccessIndex
                 selected: themeListView.currentIndex === delegateLoader.index
                 onClicked: themeListView.currentIndex = delegateLoader.index
                 onActivated: themeListView.itemActivated(delegateLoader.index)

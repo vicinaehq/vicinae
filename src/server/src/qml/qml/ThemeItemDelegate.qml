@@ -62,6 +62,14 @@ SelectableDelegate {
         Row {
             spacing: 3
             Layout.alignment: Qt.AlignVCenter
+            opacity: root.quickAccessActive ? 0 : 1
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 120
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             Repeater {
                 model: [root.paletteColor0, root.paletteColor1, root.paletteColor2, root.paletteColor3, root.paletteColor4, root.paletteColor5, root.paletteColor6, root.paletteColor7]

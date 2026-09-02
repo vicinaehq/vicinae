@@ -388,13 +388,15 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
     m_ctx.navigation->closeWindow();
   }
 
-  else if (event->type() == QEvent::KeyPress) {
+  else if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
     auto *ke = static_cast<QKeyEvent *>(event); // NOLINT
     // KeypadModifier marks key origin, not user intent; strip it so numpad
     // arrows compare equal to main-keyboard arrows downstream.
     if (ke->modifiers().testFlag(Qt::KeypadModifier)) {
       ke->setModifiers(ke->modifiers() & ~Qt::KeypadModifier);
     }
+    syncCommandHeld(ke);
+    if (event->type() == QEvent::KeyRelease) { return QObject::eventFilter(obj, event); }
     // the current view host gets first pick at any key press, unless a component
     // that owns the keyboard (overlay, alert, action panel) is up.
     const bool viewOwnsInput =
@@ -440,6 +442,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     if (!isLayerShellActive()) { Wayland::XdgActivation::activateWindow(m_window); }
 #endif
   } else {
+    setCommandHeld(false);
     LauncherWindowPlatform::suppressHeldKeyReleases();
     if (m_dragOverlayVisible) endWindowDrag();
     m_window->hide();
@@ -613,6 +616,18 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
   }
 
   return false;
+}
+
+void LauncherWindow::setCommandHeld(bool held) {
+  if (m_commandHeld == held) return;
+  m_commandHeld = held;
+  emit commandHeldChanged();
+}
+
+void LauncherWindow::syncCommandHeld(const QKeyEvent *event) {
+  bool held = event->modifiers().testFlag(Qt::ControlModifier);
+  if (event->key() == Qt::Key_Control) { held = event->type() == QEvent::KeyPress; }
+  setCommandHeld(held);
 }
 
 void LauncherWindow::goBack() {

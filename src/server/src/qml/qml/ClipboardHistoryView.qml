@@ -96,6 +96,7 @@ Item {
                 required property int index
                 required property bool isSection
                 required property bool isSelectable
+                required property int quickAccessIndex
                 required property string sectionName
                 required property string title
                 required property string subtitle
@@ -121,6 +122,7 @@ Item {
                         id: itemDelegate
                         width: delegateLoader.width
                         height: 50
+                        quickAccessIndex: delegateLoader.quickAccessIndex
                         selected: listView.currentIndex === delegateLoader.index
                         onClicked: listView.currentIndex = delegateLoader.index
                         onActivated: listView.itemActivated(delegateLoader.index)
