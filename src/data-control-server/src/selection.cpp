@@ -1,4 +1,5 @@
 #include "selection.hpp"
+#include <algorithm>
 
 namespace Selection {
 
@@ -67,6 +68,25 @@ void printPrimarySelectionDebug(OfferReceiver &offer) {
     std::cout << std::left << std::setw(30) << mime << data << std::endl;
   }
   std::cout << "********** END PRIMARY SELECTION **********" << std::endl;
+}
+
+clipboard_proto::Selection buildPrimarySelection(OfferReceiver &offer) {
+  constexpr size_t maxSize = 1 << 20;
+  const auto &mimes = offer.mimes();
+  clipboard_proto::Selection selection;
+
+  if (std::ranges::find(mimes, Clipboard::CONCEALED_MIME_TYPE) != mimes.end()) return selection;
+
+  for (std::string_view mime : {"text/plain;charset=utf-8", "text/plain"}) {
+    if (std::ranges::find(mimes, mime) == mimes.end()) continue;
+    auto raw = offer.receive(std::string(mime));
+    if (raw.size() > maxSize) return selection;
+    selection.offers.emplace_back(
+        clipboard_proto::Offer{.mime_type = std::string(mime), .data = {raw.begin(), raw.end()}});
+    break;
+  }
+
+  return selection;
 }
 
 }; // namespace Selection

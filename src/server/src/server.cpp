@@ -274,7 +274,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto platformPaste =
         std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*inputServer));
     auto selectionService =
-        std::unique_ptr<AbstractSelectionService>(std::make_unique<LinuxSelectionService>());
+        std::unique_ptr<AbstractSelectionService>(std::make_unique<LinuxSelectionService>(*clipboardManager));
 #elif defined(Q_OS_MACOS)
     auto snippetServer = std::make_unique<MacosSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<MacosPasteService>());

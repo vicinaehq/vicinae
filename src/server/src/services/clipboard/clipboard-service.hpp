@@ -38,6 +38,7 @@ signals:
    */
   void selectionUpdated() const;
   void monitoringChanged(bool value) const;
+  void primarySelectionChanged(const QString &text) const;
 
 public:
   enum class OfferDecryptionError {
