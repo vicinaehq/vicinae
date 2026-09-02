@@ -276,6 +276,14 @@ template <> struct Partial<InputServer> {
   std::optional<bool> enabled;
 };
 
+struct Tray {
+  bool enabled = true;
+};
+
+template <> struct Partial<Tray> {
+  std::optional<bool> enabled;
+};
+
 struct GlobalShortcuts {
   std::optional<std::string> toggle = "alt+space";
   std::vector<std::string> inhibitApps;
@@ -308,6 +316,7 @@ struct ConfigValue {
   int pixmapCacheMb = 50;
 
   InputServer inputServer;
+  Tray tray;
   GlobalShortcuts globalShortcuts;
 
   FontConfig font;
@@ -363,6 +372,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
   std::optional<Partial<InputServer>> inputServer;
+  std::optional<Partial<Tray>> tray;
   std::optional<Partial<GlobalShortcuts>> globalShortcuts;
 
   std::optional<Partial<FontConfig>> font;

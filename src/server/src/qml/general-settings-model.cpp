@@ -157,6 +157,12 @@ void GeneralSettingsModel::setInputServerEnabled(bool v) {
   cfgManager().mergeWithUser({.inputServer = config::Partial<config::InputServer>{.enabled = v}});
 }
 
+bool GeneralSettingsModel::trayEnabled() const { return cfg().tray.enabled; }
+
+void GeneralSettingsModel::setTrayEnabled(bool v) {
+  cfgManager().mergeWithUser({.tray = config::Partial<config::Tray>{.enabled = v}});
+}
+
 QString GeneralSettingsModel::windowOpacity() const {
   return QString::number(
       cfg().launcherWindow.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),

@@ -116,20 +116,28 @@ Flickable {
 
         SettingsSectionLabel {
             text: qsTr("System")
-            visible: Platform.supports("inputServer")
             Layout.topMargin: 24
             Layout.bottomMargin: 10
         }
 
         SettingsGroup {
-            visible: Platform.supports("inputServer")
             SettingsRow {
+                visible: Platform.supports("inputServer")
                 label: qsTr("Input server")
                 description: qsTr("Whether to spawn the input server at startup. This needs to be enabled in order to support snippets, paste to active window, and other features that require input monitoring or injection.")
-                showSeparator: false
                 SettingsToggle {
                     checked: root.model.inputServerEnabled
                     onToggled: root.model.inputServerEnabled = checked
+                }
+            }
+
+            SettingsRow {
+                label: qsTr("Tray icon")
+                description: qsTr("Show the Vicinae icon in the system tray. You may need to restart Vicinae.")
+                showSeparator: false
+                SettingsToggle {
+                    checked: root.model.trayEnabled
+                    onToggled: root.model.trayEnabled = checked
                 }
             }
         }
