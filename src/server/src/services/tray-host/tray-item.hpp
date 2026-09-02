@@ -16,8 +16,10 @@ struct TrayItem {
   Category category = Category::ApplicationStatus;
   QString iconName;
   QString iconThemePath;
+  QString iconPath;
   QImage iconPixmap;
   QString attentionIconName;
+  QString attentionIconPath;
   QImage attentionIconPixmap;
   QString tooltipTitle;
   QString tooltipDescription;
@@ -26,6 +28,7 @@ struct TrayItem {
 
   QString key() const { return busName + path; }
   bool hasMenu() const { return !menuPath.isEmpty() && menuPath != "/"; }
+  void resolveThemeIcons();
   ImageURL icon() const;
 };
 
@@ -45,9 +48,4 @@ struct TrayMenuItem {
   std::vector<TrayMenuItem> children;
 
   QString plainLabel() const;
-};
-
-struct TrayEntry {
-  TrayItem item;
-  std::vector<TrayMenuItem> menu;
 };

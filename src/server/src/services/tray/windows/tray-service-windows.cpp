@@ -20,6 +20,9 @@ constexpr UINT COMMAND_ABOUT = 2;
 constexpr UINT COMMAND_CHECK_FOR_UPDATES = 3;
 constexpr UINT COMMAND_SETTINGS = 4;
 constexpr UINT COMMAND_QUIT = 5;
+constexpr UINT COMMAND_SPONSOR = 6;
+constexpr UINT COMMAND_DISCORD = 7;
+constexpr UINT COMMAND_FOLLOW = 8;
 
 constexpr GUID TRAY_ICON_GUID = {
     0x58c36f83, 0x24c6, 0x4ed9, {0x91, 0x7c, 0x6b, 0x1f, 0x89, 0xa4, 0xe6, 0x32}};
@@ -166,6 +169,10 @@ struct TrayServiceWindows::Impl {
     }
     appendMenuItem(menu, MF_STRING, COMMAND_SETTINGS, owner.tr("Settings…"));
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+    appendMenuItem(menu, MF_STRING, COMMAND_SPONSOR, owner.tr("Sponsor Vicinae"));
+    appendMenuItem(menu, MF_STRING, COMMAND_DISCORD, owner.tr("Join the Discord"));
+    appendMenuItem(menu, MF_STRING, COMMAND_FOLLOW, owner.tr("Follow on X"));
+    AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     appendMenuItem(menu, MF_STRING, COMMAND_QUIT, owner.tr("Quit Vicinae"));
 
     POINT cursor{};
@@ -188,6 +195,15 @@ struct TrayServiceWindows::Impl {
       break;
     case COMMAND_SETTINGS:
       emit owner.openSettingsRequested(QString());
+      break;
+    case COMMAND_SPONSOR:
+      emit owner.openLinkRequested(TrayService::Link::Sponsor);
+      break;
+    case COMMAND_DISCORD:
+      emit owner.openLinkRequested(TrayService::Link::Discord);
+      break;
+    case COMMAND_FOLLOW:
+      emit owner.openLinkRequested(TrayService::Link::Follow);
       break;
     case COMMAND_QUIT:
       emit owner.quitRequested();

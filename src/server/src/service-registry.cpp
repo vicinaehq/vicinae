@@ -12,7 +12,7 @@
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/power-manager/power-manager.hpp"
-#include "services/status-notifier/system-tray-service.hpp"
+#include "services/tray-host/abstract-tray-host.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -63,7 +63,7 @@ OAuthService *ServiceRegistry::oauthService() const { return m_oauthService.get(
 
 PowerManager *ServiceRegistry::powerManager() const { return m_powerManager.get(); }
 
-SystemTrayService *ServiceRegistry::systemTray() const { return m_systemTray.get(); }
+AbstractTrayHost *ServiceRegistry::trayHost() const { return m_trayHost.get(); }
 
 ScriptCommandService *ServiceRegistry::scriptDb() const { return m_scriptCommandService.get(); }
 
@@ -104,8 +104,8 @@ void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
 }
 
-void ServiceRegistry::setSystemTray(std::unique_ptr<SystemTrayService> service) {
-  m_systemTray = std::move(service);
+void ServiceRegistry::setTrayHost(std::unique_ptr<AbstractTrayHost> service) {
+  m_trayHost = std::move(service);
 }
 
 void ServiceRegistry::setWindowManager(std::unique_ptr<WindowManager> manager) {

@@ -27,15 +27,22 @@ static QString findIconInThemePath(const QString &dir, const QString &name) {
   return best;
 }
 
+void TrayItem::resolveThemeIcons() {
+  auto resolve = [this](const QString &name) {
+    if (QDir::isAbsolutePath(name)) return name;
+    return findIconInThemePath(iconThemePath, name);
+  };
+  iconPath = resolve(iconName);
+  attentionIconPath = resolve(attentionIconName);
+}
+
 ImageURL TrayItem::icon() const {
   const bool attention = status == Status::NeedsAttention;
   const QString &name = attention && !attentionIconName.isEmpty() ? attentionIconName : iconName;
+  const QString &path = attention && !attentionIconPath.isEmpty() ? attentionIconPath : iconPath;
   const QImage &pixmap = attention && !attentionIconPixmap.isNull() ? attentionIconPixmap : iconPixmap;
 
-  if (!name.isEmpty()) {
-    if (QDir::isAbsolutePath(name)) return ImageURL::local(name);
-    if (auto path = findIconInThemePath(iconThemePath, name); !path.isEmpty()) return ImageURL::local(path);
-  }
+  if (!path.isEmpty()) return ImageURL::local(path);
 
   if (!pixmap.isNull()) {
     QByteArray bytes;

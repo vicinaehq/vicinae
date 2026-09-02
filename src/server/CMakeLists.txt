@@ -457,11 +457,12 @@ set(SRCS
 
 	src/services/power-manager/dummy-power-manager.hpp
 
-	src/services/status-notifier/tray-item.hpp
-	src/services/status-notifier/tray-item.cpp
-	src/services/status-notifier/abstract-tray-service.hpp
-	src/services/status-notifier/dummy-tray-service.hpp
-	src/services/status-notifier/system-tray-service.hpp
+	src/services/tray-host/tray-item.hpp
+	src/services/tray-host/tray-item.cpp
+	src/services/tray-host/abstract-tray-host.hpp
+	src/services/tray-host/dummy-tray-host.hpp
+	src/services/tray-host/tray-host.hpp
+	src/services/tray-host/tray-host.cpp
 	src/qml/search-tray-view-host.hpp
 	src/extensions/vicinae/search-tray-command.hpp
 
@@ -853,10 +854,14 @@ if (UNIX AND NOT APPLE)
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 		src/services/power-manager/systemd/systemd-power-manager.cpp
-		src/services/status-notifier/sni/sni-tray-service.hpp
-		src/services/status-notifier/sni/sni-tray-service.cpp
-		src/services/status-notifier/sni/sni-watcher.hpp
-		src/services/status-notifier/sni/sni-watcher.cpp
+		src/services/tray-host/sni/sni-types.hpp
+		src/services/tray-host/sni/sni-types.cpp
+		src/services/tray-host/sni/sni-tray-host.hpp
+		src/services/tray-host/sni/sni-tray-host.cpp
+		src/services/tray-host/sni/sni-watcher.hpp
+		src/services/tray-host/sni/sni-watcher.cpp
+		src/services/tray/linux/tray-service-linux.hpp
+		src/services/tray/linux/tray-service-linux.cpp
 		src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
 
 		src/services/media-control/mpris/mpris-media-control.hpp

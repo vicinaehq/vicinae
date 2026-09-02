@@ -5,131 +5,188 @@
 #include "list-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
-#include "services/status-notifier/system-tray-service.hpp"
+#include "services/tray-host/abstract-tray-host.hpp"
 #include "theme/colors.hpp"
 #include "ui/action-pannel/action-panel-state.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include <QBuffer>
 #include <QCoreApplication>
-#include <QFuture>
-#include <memory>
 
-struct TrayRow {
-  TrayItem item;
-  std::optional<TrayMenuItem> menu;
+static QString trayItemTitle(const TrayItem &item) { return item.title.isEmpty() ? item.id : item.title; }
+
+struct TrayMenuRow {
+  TrayMenuItem entry;
   QString label;
 };
 
-template <> struct fuzzy::FuzzySearchable<TrayRow> {
-  static fuzzy::Match score(const TrayRow &row, const fuzzy::Query &query) {
-    const auto title = row.item.title.isEmpty() ? row.item.id : row.item.title;
-    return fuzzy::scoreWeighted({{row.label.toStdString(), 1.0}, {title.toStdString(), 0.5}}, query);
+template <> struct fuzzy::FuzzySearchable<TrayItem> {
+  static fuzzy::Match score(const TrayItem &item, const fuzzy::Query &query) {
+    return fuzzy::scoreWeighted(
+        {{trayItemTitle(item).toStdString(), 1.0}, {item.tooltipTitle.toStdString(), 0.5}}, query);
   }
 };
 
-class TrayItemSection : public FuzzySection<TrayRow> {
-  Q_DECLARE_TR_FUNCTIONS(TrayItemSection)
+template <> struct fuzzy::FuzzySearchable<TrayMenuRow> {
+  static fuzzy::Match score(const TrayMenuRow &row, const fuzzy::Query &query) {
+    return fuzzy::scoreWeighted({{row.label.toStdString(), 1.0}}, query);
+  }
+};
+
+class TrayMenuSection : public FuzzySection<TrayMenuRow> {
+  Q_DECLARE_TR_FUNCTIONS(TrayMenuSection)
 
 public:
-  explicit TrayItemSection(const TrayEntry &entry) : m_name(itemTitle(entry.item)) {
-    std::vector<TrayRow> rows;
+  explicit TrayMenuSection(TrayItem item) : m_item(std::move(item)) {}
 
-    if (!entry.item.itemIsMenu || entry.menu.empty()) {
-      rows.push_back({.item = entry.item, .label = m_name});
-    }
-    flatten(entry.item, entry.menu, {}, rows);
+  void setMenu(const std::vector<TrayMenuItem> &entries) {
+    std::vector<TrayMenuRow> rows;
+    flatten(entries, {}, rows);
     setItems(std::move(rows));
   }
 
-  QString sectionName() const override { return m_name; }
+  QString sectionName() const override { return trayItemTitle(m_item); }
 
 protected:
-  QString displayTitle(const TrayRow &row) const override { return row.label; }
-  QString displayId(const TrayRow &row) const override {
-    return row.item.key() + (row.menu ? "/" + QString::number(row.menu->id) : QString());
-  }
+  QString displayTitle(const TrayMenuRow &row) const override { return row.label; }
+  QString displayId(const TrayMenuRow &row) const override { return QString::number(row.entry.id); }
 
-  QString displaySubtitle(const TrayRow &row) const override {
-    if (row.menu) return {};
-    if (!row.item.tooltipTitle.isEmpty() && row.item.tooltipTitle != row.label) return row.item.tooltipTitle;
-    return row.item.tooltipDescription;
-  }
-
-  std::optional<ImageURL> displayIcon(const TrayRow &row) const override {
-    if (!row.menu) return row.item.icon();
-    if (!row.menu->iconData.isNull()) {
+  std::optional<ImageURL> displayIcon(const TrayMenuRow &row) const override {
+    if (!row.entry.iconData.isNull()) {
       QByteArray bytes;
       QBuffer buf(&bytes);
       buf.open(QIODevice::WriteOnly);
-      row.menu->iconData.save(&buf, "PNG");
+      row.entry.iconData.save(&buf, "PNG");
       return ImageURL::rawData(bytes, "image/png");
     }
-    if (!row.menu->iconName.isEmpty()) return ImageURL::system(row.menu->iconName);
-    return row.item.icon();
+    if (!row.entry.iconName.isEmpty()) return ImageURL::system(row.entry.iconName);
+    return m_item.icon();
   }
 
-  AccessoryList displayAccessories(const TrayRow &row) const override {
-    if (!row.menu) {
-      if (row.item.status == TrayItem::Status::NeedsAttention) {
-        return {ListAccessory{.text = tr("Attention"), .color = SemanticColor::Orange}};
-      }
-      return {};
-    }
-    if (row.menu->toggleType != TrayMenuItem::ToggleType::None) {
-      auto icon = row.menu->toggleState == 1
-                      ? ImageURL::builtin(BuiltinIcon::CheckCircle).setFill(SemanticColor::Green)
-                      : ImageURL::builtin(BuiltinIcon::Circle);
-      return {ListAccessory{.icon = icon}};
-    }
-    return {};
+  AccessoryList displayAccessories(const TrayMenuRow &row) const override {
+    if (row.entry.toggleType == TrayMenuItem::ToggleType::None) return {};
+    auto icon = row.entry.toggleState == 1
+                    ? ImageURL::builtin(BuiltinIcon::CheckCircle).setFill(SemanticColor::Green)
+                    : ImageURL::builtin(BuiltinIcon::Circle);
+    return {ListAccessory{.icon = icon}};
   }
 
-  std::unique_ptr<ActionPanelState> buildActionPanel(const TrayRow &row) const override {
+  std::unique_ptr<ActionPanelState> buildActionPanel(const TrayMenuRow &row) const override {
     auto panel = std::make_unique<ListActionPanelState>();
-    auto main = panel->createSection();
-
-    if (row.menu) {
-      main->addAction(new StaticAction(tr("Trigger"), ImageURL::builtin(BuiltinIcon::Bolt),
-                                       [item = row.item, id = row.menu->id](ApplicationContext *ctx) {
-                                         tray(ctx)->triggerMenuItem(item, id);
-                                         ctx->navigation->closeWindow();
-                                       }));
-      return panel;
-    }
-
-    main->addAction(new StaticAction(tr("Activate"), ImageURL::builtin(BuiltinIcon::Bolt),
-                                     [item = row.item](ApplicationContext *ctx) {
-                                       tray(ctx)->activate(item);
-                                       ctx->navigation->closeWindow();
-                                     }));
-    main->addAction(new StaticAction(tr("Secondary activate"), ImageURL::builtin(BuiltinIcon::Bolt),
-                                     [item = row.item](ApplicationContext *ctx) {
-                                       tray(ctx)->secondaryActivate(item);
-                                       ctx->navigation->closeWindow();
-                                     }));
+    const bool toggle = row.entry.toggleType != TrayMenuItem::ToggleType::None;
+    panel->createSection()->addAction(
+        new StaticAction(tr("Trigger"), ImageURL::builtin(BuiltinIcon::Bolt),
+                         [item = m_item, id = row.entry.id, toggle](ApplicationContext *ctx) {
+                           ctx->services->trayHost()->triggerMenuItem(item, id);
+                           if (!toggle)
+                             ctx->navigation->closeWindow({.popToRootType = PopToRootType::Immediate});
+                         }));
     return panel;
   }
 
 private:
-  static AbstractTrayService *tray(ApplicationContext *ctx) { return ctx->services->systemTray()->provider(); }
-  static QString itemTitle(const TrayItem &item) { return item.title.isEmpty() ? item.id : item.title; }
-
-  static void flatten(const TrayItem &item, const std::vector<TrayMenuItem> &entries, const QString &prefix,
-                      std::vector<TrayRow> &out) {
+  static void flatten(const std::vector<TrayMenuItem> &entries, const QString &prefix,
+                      std::vector<TrayMenuRow> &out) {
     for (const auto &e : entries) {
       if (!e.visible || e.separator) continue;
       const auto label = prefix.isEmpty() ? e.plainLabel() : prefix + " › " + e.plainLabel();
       if (e.submenu) {
-        flatten(item, e.children, label, out);
+        flatten(e.children, label, out);
         continue;
       }
       if (!e.enabled || label.isEmpty()) continue;
-      out.push_back({.item = item, .menu = e, .label = label});
+      out.push_back({.entry = e, .label = label});
     }
   }
 
-  QString m_name;
+  TrayItem m_item;
+};
+
+class TrayMenuViewHost : public ListViewHost {
+  Q_DECLARE_TR_FUNCTIONS(TrayMenuViewHost)
+
+public:
+  explicit TrayMenuViewHost(TrayItem item) : m_item(std::move(item)), m_section(m_item) {}
+
+  void initialize() override {
+    BaseView::initialize();
+    initModel();
+    setNavigationTitle(trayItemTitle(m_item));
+    setSearchPlaceholderText(tr("Search menu..."));
+    model()->addSource(&m_section);
+    connect(context()->services->trayHost(), &AbstractTrayHost::menuChanged, this,
+            [this](const QString &key) {
+              if (key == m_item.key()) reload();
+            });
+  }
+
+  void loadInitialData() override { reload(); }
+
+private:
+  void reload() {
+    setLoading(true);
+    context()->services->trayHost()->menu(m_item).then(this, [this](std::vector<TrayMenuItem> entries) {
+      m_section.setMenu(entries);
+      setLoading(false);
+    });
+  }
+
+  TrayItem m_item;
+  TrayMenuSection m_section;
+};
+
+class TrayItemSection : public FuzzySection<TrayItem> {
+  Q_DECLARE_TR_FUNCTIONS(TrayItemSection)
+
+public:
+  QString sectionName() const override { return {}; }
+
+protected:
+  QString displayTitle(const TrayItem &item) const override { return trayItemTitle(item); }
+  QString displayId(const TrayItem &item) const override { return item.key(); }
+  std::optional<ImageURL> displayIcon(const TrayItem &item) const override { return item.icon(); }
+
+  QString displaySubtitle(const TrayItem &item) const override {
+    if (!item.tooltipTitle.isEmpty() && item.tooltipTitle != trayItemTitle(item)) return item.tooltipTitle;
+    return item.tooltipDescription;
+  }
+
+  AccessoryList displayAccessories(const TrayItem &item) const override {
+    if (item.status != TrayItem::Status::NeedsAttention) return {};
+    return {ListAccessory{.text = tr("Attention"), .color = SemanticColor::Orange}};
+  }
+
+  std::unique_ptr<ActionPanelState> buildActionPanel(const TrayItem &item) const override {
+    auto panel = std::make_unique<ListActionPanelState>();
+    auto main = panel->createSection();
+
+    auto browse = [item]() {
+      return new StaticAction(
+          tr("Browse Menu"), ImageURL::builtin(BuiltinIcon::BulletPoints),
+          [item](ApplicationContext *ctx) { ctx->navigation->pushView(new TrayMenuViewHost(item)); });
+    };
+    auto activate = [item]() {
+      return new StaticAction(tr("Activate"), ImageURL::builtin(BuiltinIcon::Bolt),
+                              [item](ApplicationContext *ctx) {
+                                ctx->services->trayHost()->activate(item);
+                                ctx->navigation->closeWindow({.popToRootType = PopToRootType::Immediate});
+                              });
+    };
+
+    if (item.itemIsMenu) {
+      if (item.hasMenu()) main->addAction(browse());
+      return panel;
+    }
+
+    main->addAction(activate());
+    if (item.hasMenu()) main->addAction(browse());
+    main->addAction(new StaticAction(
+        tr("Secondary Activate"), ImageURL::builtin(BuiltinIcon::Bolt), [item](ApplicationContext *ctx) {
+          ctx->services->trayHost()->secondaryActivate(item);
+          ctx->navigation->closeWindow({.popToRootType = PopToRootType::Immediate});
+        }));
+    return panel;
+  }
 };
 
 class SearchTrayViewHost : public ListViewHost {
@@ -139,32 +196,15 @@ public:
   void initialize() override {
     BaseView::initialize();
     initModel();
-    setSearchPlaceholderText(tr("Search tray items and menus..."));
-    auto *svc = context()->services->systemTray()->provider();
-    connect(svc, &AbstractTrayService::changed, this, [this]() { reload(); });
+    setSearchPlaceholderText(tr("Search tray items..."));
+    model()->addSource(&m_section);
+    connect(context()->services->trayHost(), &AbstractTrayHost::itemsChanged, this, [this]() { reload(); });
   }
 
   void loadInitialData() override { reload(); }
 
-  void textChanged(const QString &text) override {
-    m_filter = text;
-    ListViewHost::textChanged(text);
-  }
-
 private:
-  void reload() {
-    auto *svc = context()->services->systemTray()->provider();
-    svc->snapshot().then(this, [this](std::vector<TrayEntry> entries) {
-      model()->clearSources();
-      m_sections.clear();
-      for (const auto &entry : entries) {
-        m_sections.push_back(std::make_unique<TrayItemSection>(entry));
-        model()->addSource(m_sections.back().get());
-      }
-      model()->setFilter(m_filter);
-    });
-  }
+  void reload() { m_section.setItems(context()->services->trayHost()->items()); }
 
-  std::vector<std::unique_ptr<TrayItemSection>> m_sections;
-  QString m_filter;
+  TrayItemSection m_section;
 };

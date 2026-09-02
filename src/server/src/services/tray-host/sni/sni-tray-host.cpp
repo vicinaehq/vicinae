@@ -1,76 +1,22 @@
-#include "sni-tray-service.hpp"
+#include "sni-tray-host.hpp"
 #include <QDBusArgument>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
-#include <QDBusMetaType>
 #include <QDBusVariant>
 #include <QDateTime>
 #include <QPromise>
 #include <QtEndian>
 #include <unistd.h>
 
-// NOLINTBEGIN(bugprone-return-const-ref-from-parameter)
-QDBusArgument &operator<<(QDBusArgument &arg, const SniPixmap &pixmap) {
-  arg.beginStructure();
-  arg << pixmap.width << pixmap.height << pixmap.data;
-  arg.endStructure();
-  return arg;
-}
-
-const QDBusArgument &operator>>(const QDBusArgument &arg, SniPixmap &pixmap) {
-  arg.beginStructure();
-  arg >> pixmap.width >> pixmap.height >> pixmap.data;
-  arg.endStructure();
-  return arg;
-}
-
-QDBusArgument &operator<<(QDBusArgument &arg, const SniToolTip &tooltip) {
-  arg.beginStructure();
-  arg << tooltip.iconName << tooltip.pixmaps << tooltip.title << tooltip.description;
-  arg.endStructure();
-  return arg;
-}
-
-const QDBusArgument &operator>>(const QDBusArgument &arg, SniToolTip &tooltip) {
-  arg.beginStructure();
-  arg >> tooltip.iconName >> tooltip.pixmaps >> tooltip.title >> tooltip.description;
-  arg.endStructure();
-  return arg;
-}
-
-QDBusArgument &operator<<(QDBusArgument &arg, const DBusMenuLayout &layout) {
-  arg.beginStructure();
-  arg << layout.id << layout.properties;
-  arg.beginArray(qMetaTypeId<QDBusVariant>());
-  for (const auto &child : layout.children) {
-    arg << QDBusVariant(QVariant::fromValue(child));
-  }
-  arg.endArray();
-  arg.endStructure();
-  return arg;
-}
-
-const QDBusArgument &operator>>(const QDBusArgument &arg, DBusMenuLayout &layout) {
-  QVariantList children;
-  arg.beginStructure();
-  arg >> layout.id >> layout.properties >> children;
-  arg.endStructure();
-  for (const auto &child : children) {
-    layout.children << qdbus_cast<DBusMenuLayout>(child);
-  }
-  return arg;
-}
-// NOLINTEND(bugprone-return-const-ref-from-parameter)
-
 namespace {
 
 QImage toImage(const QList<SniPixmap> &pixmaps) {
   const SniPixmap *best = nullptr;
   for (const auto &p : pixmaps) {
-    if (p.width <= 0 || p.height <= 0 || p.data.size() < p.width * p.height * 4) continue;
+    if (p.width <= 0 || p.height <= 0 || p.data.size() < qint64(p.width) * p.height * 4) continue;
     if (!best || p.width > best->width) best = &p;
   }
   if (!best) return {};
@@ -104,17 +50,28 @@ void applyProperties(TrayItem &item, const QVariantMap &props) {
     const auto &key = it.key();
     const auto &v = it.value();
 
-    if (key == "Id") item.id = v.toString();
-    else if (key == "Title") item.title = v.toString();
-    else if (key == "Status") item.status = parseStatus(v.toString());
-    else if (key == "Category") item.category = parseCategory(v.toString());
-    else if (key == "IconName") item.iconName = v.toString();
-    else if (key == "IconThemePath") item.iconThemePath = v.toString();
-    else if (key == "IconPixmap") item.iconPixmap = toImage(qdbus_cast<QList<SniPixmap>>(v));
-    else if (key == "AttentionIconName") item.attentionIconName = v.toString();
-    else if (key == "AttentionIconPixmap") item.attentionIconPixmap = toImage(qdbus_cast<QList<SniPixmap>>(v));
-    else if (key == "ItemIsMenu") item.itemIsMenu = v.toBool();
-    else if (key == "Menu") item.menuPath = qdbus_cast<QDBusObjectPath>(v).path();
+    if (key == "Id")
+      item.id = v.toString();
+    else if (key == "Title")
+      item.title = v.toString();
+    else if (key == "Status")
+      item.status = parseStatus(v.toString());
+    else if (key == "Category")
+      item.category = parseCategory(v.toString());
+    else if (key == "IconName")
+      item.iconName = v.toString();
+    else if (key == "IconThemePath")
+      item.iconThemePath = v.toString();
+    else if (key == "IconPixmap")
+      item.iconPixmap = toImage(qdbus_cast<QList<SniPixmap>>(v));
+    else if (key == "AttentionIconName")
+      item.attentionIconName = v.toString();
+    else if (key == "AttentionIconPixmap")
+      item.attentionIconPixmap = toImage(qdbus_cast<QList<SniPixmap>>(v));
+    else if (key == "ItemIsMenu")
+      item.itemIsMenu = v.toBool();
+    else if (key == "Menu")
+      item.menuPath = qdbus_cast<QDBusObjectPath>(v).path();
     else if (key == "ToolTip") {
       const auto tooltip = qdbus_cast<SniToolTip>(v);
       item.tooltipTitle = tooltip.title;
@@ -136,8 +93,10 @@ TrayMenuItem toMenuItem(const DBusMenuLayout &layout) {
   item.iconName = props.value("icon-name").toString();
 
   const auto toggle = props.value("toggle-type").toString();
-  if (toggle == "checkmark") item.toggleType = TrayMenuItem::ToggleType::Checkmark;
-  else if (toggle == "radio") item.toggleType = TrayMenuItem::ToggleType::Radio;
+  if (toggle == "checkmark")
+    item.toggleType = TrayMenuItem::ToggleType::Checkmark;
+  else if (toggle == "radio")
+    item.toggleType = TrayMenuItem::ToggleType::Radio;
   if (props.contains("toggle-state")) item.toggleState = props.value("toggle-state").toInt();
 
   if (auto data = props.value("icon-data").toByteArray(); !data.isEmpty()) {
@@ -153,18 +112,14 @@ TrayMenuItem toMenuItem(const DBusMenuLayout &layout) {
 
 } // namespace
 
-SniTrayService::SniTrayService() : m_watcher(WATCHER_SERVICE, QDBusConnection::sessionBus()) {
-  qDBusRegisterMetaType<SniPixmap>();
-  qDBusRegisterMetaType<QList<SniPixmap>>();
-  qDBusRegisterMetaType<SniToolTip>();
-  qDBusRegisterMetaType<DBusMenuLayout>();
+SniTrayHost::SniTrayHost() : m_watcher(WATCHER_SERVICE, QDBusConnection::sessionBus()) {
+  registerSniMetaTypes();
 
-  connect(&m_watcher, &QDBusServiceWatcher::serviceRegistered, this, [this](const QString &) {
-    watcherAppeared();
-  });
+  connect(&m_watcher, &QDBusServiceWatcher::serviceRegistered, this,
+          [this](const QString &) { watcherAppeared(); });
   connect(&m_watcher, &QDBusServiceWatcher::serviceUnregistered, this, [this](const QString &) {
     watcherVanished();
-    m_ownWatcher.tryClaim();
+    if (m_ownWatcher.tryClaim()) watcherAppeared();
   });
 
   auto *iface = QDBusConnection::sessionBus().interface();
@@ -175,20 +130,23 @@ SniTrayService::SniTrayService() : m_watcher(WATCHER_SERVICE, QDBusConnection::s
   }
 }
 
-SniTrayService::~SniTrayService() {
+SniTrayHost::~SniTrayHost() {
   for (const auto &[key, item] : m_items) {
     subscribeItem({item.busName, item.path}, false);
   }
   if (!m_hostName.isEmpty()) QDBusConnection::sessionBus().unregisterService(m_hostName);
 }
 
-SniTrayService::ItemRef SniTrayService::parseItemRef(const QString &ref) {
+SniTrayHost::ItemRef SniTrayHost::parseItemRef(const QString &ref) {
   const auto slash = ref.indexOf('/');
   if (slash < 0) return {ref, "/StatusNotifierItem"};
   return {ref.left(slash), ref.mid(slash)};
 }
 
-void SniTrayService::watcherAppeared() {
+void SniTrayHost::watcherAppeared() {
+  if (m_available) return;
+  m_available = true;
+
   auto bus = QDBusConnection::sessionBus();
 
   bus.connect(WATCHER_SERVICE, WATCHER_PATH, WATCHER_IFACE, "StatusNotifierItemRegistered", this,
@@ -198,14 +156,9 @@ void SniTrayService::watcherAppeared() {
 
   registerHost();
   loadRegisteredItems();
-
-  if (!m_available) {
-    m_available = true;
-    emit availabilityChanged(true);
-  }
 }
 
-void SniTrayService::watcherVanished() {
+void SniTrayHost::watcherVanished() {
   auto bus = QDBusConnection::sessionBus();
   bus.disconnect(WATCHER_SERVICE, WATCHER_PATH, WATCHER_IFACE, "StatusNotifierItemRegistered", this,
                  SLOT(onItemRegistered(QString)));
@@ -219,18 +172,15 @@ void SniTrayService::watcherVanished() {
     if (auto sub = m_menuSubscriptions.find(key); sub != m_menuSubscriptions.end()) {
       subscribeMenu(item.busName, sub->second, false);
     }
-    emit itemRemoved(key);
   }
   m_menuSubscriptions.clear();
-  emit changed();
-
-  if (m_available) {
-    m_available = false;
-    emit availabilityChanged(false);
-  }
+  m_pending.clear();
+  m_owners.clear();
+  m_available = false;
+  emit itemsChanged();
 }
 
-void SniTrayService::registerHost() {
+void SniTrayHost::registerHost() {
   auto bus = QDBusConnection::sessionBus();
 
   if (m_hostName.isEmpty()) {
@@ -247,7 +197,7 @@ void SniTrayService::registerHost() {
   bus.asyncCall(msg);
 }
 
-void SniTrayService::loadRegisteredItems() {
+void SniTrayHost::loadRegisteredItems() {
   auto msg = QDBusMessage::createMethodCall(WATCHER_SERVICE, WATCHER_PATH, PROPERTIES_IFACE, "Get");
   msg << QString(WATCHER_IFACE) << QString("RegisteredStatusNotifierItems");
 
@@ -266,13 +216,30 @@ void SniTrayService::loadRegisteredItems() {
   });
 }
 
-void SniTrayService::addItem(const ItemRef &ref) {
-  if (m_items.contains(ref.busName + ref.path)) return;
+void SniTrayHost::addItem(const ItemRef &ref) {
+  const auto key = ref.busName + ref.path;
+  if (m_items.contains(key) || !m_pending.insert(key).second) return;
+  resolveOwner(ref.busName);
   subscribeItem(ref, true);
   fetchItem(ref);
 }
 
-void SniTrayService::removeItem(const QString &refStr) {
+void SniTrayHost::resolveOwner(const QString &busName) {
+  if (busName.startsWith(':') || m_owners.contains(busName)) return;
+
+  auto msg = QDBusMessage::createMethodCall("org.freedesktop.DBus", "/org/freedesktop/DBus",
+                                            "org.freedesktop.DBus", "GetNameOwner");
+  msg << busName;
+
+  auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(msg), this);
+  connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, busName](QDBusPendingCallWatcher *w) {
+    w->deleteLater();
+    QDBusPendingReply<QString> reply = *w;
+    if (!reply.isError()) m_owners[busName] = reply.value();
+  });
+}
+
+void SniTrayHost::removeItem(const QString &refStr) {
   const auto ref = parseItemRef(refStr);
   const bool hasPath = refStr.contains('/');
 
@@ -288,33 +255,37 @@ void SniTrayService::removeItem(const QString &refStr) {
       subscribeMenu(it->second.busName, sub->second, false);
       m_menuSubscriptions.erase(sub);
     }
+    m_owners.erase(it->second.busName);
     it = m_items.erase(it);
-    emit itemRemoved(key);
-    emit changed();
+    emit itemsChanged();
   }
+  m_pending.erase(ref.busName + ref.path);
 }
 
-void SniTrayService::fetchItem(const ItemRef &ref) {
+void SniTrayHost::fetchItem(const ItemRef &ref) {
   auto msg = QDBusMessage::createMethodCall(ref.busName, ref.path, PROPERTIES_IFACE, "GetAll");
   msg << QString(ITEM_IFACE);
 
   auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(msg), this);
   connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, ref](QDBusPendingCallWatcher *w) {
     w->deleteLater();
+    const auto key = ref.busName + ref.path;
+    m_pending.erase(key);
+
     QDBusPendingReply<QVariantMap> reply = *w;
     if (reply.isError()) {
       qWarning() << "Failed to fetch tray item" << ref.busName << ref.path << reply.error().message();
       return;
     }
 
-    const auto key = ref.busName + ref.path;
-    const bool existed = m_items.contains(key);
     auto &item = m_items[key];
     item.busName = ref.busName;
     item.path = ref.path;
     applyProperties(item, reply.value());
+    item.resolveThemeIcons();
 
-    if (auto sub = m_menuSubscriptions.find(key); sub == m_menuSubscriptions.end() || sub->second != item.menuPath) {
+    if (auto sub = m_menuSubscriptions.find(key);
+        sub == m_menuSubscriptions.end() || sub->second != item.menuPath) {
       if (sub != m_menuSubscriptions.end()) subscribeMenu(item.busName, sub->second, false);
       if (item.hasMenu()) {
         subscribeMenu(item.busName, item.menuPath, true);
@@ -324,60 +295,52 @@ void SniTrayService::fetchItem(const ItemRef &ref) {
       }
     }
 
-    if (existed) emit itemChanged(item);
-    else emit itemAdded(item);
-    emit changed();
+    emit itemsChanged();
   });
 }
 
-void SniTrayService::subscribeMenu(const QString &busName, const QString &menuPath, bool subscribe) {
+void SniTrayHost::subscribeMenu(const QString &busName, const QString &menuPath, bool subscribe) {
   auto bus = QDBusConnection::sessionBus();
   for (const auto *signal : {"LayoutUpdated", "ItemsPropertiesUpdated"}) {
     if (subscribe) {
-      bus.connect(busName, menuPath, MENU_IFACE, signal, this, SLOT(onMenuSignal()));
+      bus.connect(busName, menuPath, MENU_IFACE, signal, this, SLOT(onMenuSignal(QDBusMessage)));
     } else {
-      bus.disconnect(busName, menuPath, MENU_IFACE, signal, this, SLOT(onMenuSignal()));
+      bus.disconnect(busName, menuPath, MENU_IFACE, signal, this, SLOT(onMenuSignal(QDBusMessage)));
     }
   }
 }
 
-bool SniTrayService::isSender(const QString &busName, const QString &sender) const {
+bool SniTrayHost::isSender(const QString &busName, const QString &sender) const {
   if (busName == sender) return true;
-  auto *iface = QDBusConnection::sessionBus().interface();
-  return iface && iface->serviceOwner(busName).value() == sender;
+  auto owner = m_owners.find(busName);
+  return owner != m_owners.end() && owner->second == sender;
 }
 
-void SniTrayService::onMenuSignal() {
-  const auto msg = message();
+void SniTrayHost::onMenuSignal(const QDBusMessage &msg) {
   for (const auto &[key, item] : m_items) {
-    if (item.menuPath == msg.path() && isSender(item.busName, msg.service())) {
-      emit menuChanged(item);
-      emit changed();
-    }
+    if (item.menuPath == msg.path() && isSender(item.busName, msg.service())) emit menuChanged(key);
   }
 }
 
-void SniTrayService::subscribeItem(const ItemRef &ref, bool subscribe) {
+void SniTrayHost::subscribeItem(const ItemRef &ref, bool subscribe) {
   auto bus = QDBusConnection::sessionBus();
-  static const char *signalNames[] = {"NewIcon",        "NewAttentionIcon", "NewTitle",
-                                  "NewStatus",      "NewToolTip",       "NewIconThemePath",
-                                  "NewMenu"};
+  static const char *signalNames[] = {"NewIcon",    "NewAttentionIcon", "NewTitle", "NewStatus",
+                                      "NewToolTip", "NewIconThemePath", "NewMenu"};
 
   for (const auto *signal : signalNames) {
     if (subscribe) {
-      bus.connect(ref.busName, ref.path, ITEM_IFACE, signal, this, SLOT(onItemSignal()));
+      bus.connect(ref.busName, ref.path, ITEM_IFACE, signal, this, SLOT(onItemSignal(QDBusMessage)));
     } else {
-      bus.disconnect(ref.busName, ref.path, ITEM_IFACE, signal, this, SLOT(onItemSignal()));
+      bus.disconnect(ref.busName, ref.path, ITEM_IFACE, signal, this, SLOT(onItemSignal(QDBusMessage)));
     }
   }
 }
 
-void SniTrayService::onItemRegistered(const QString &ref) { addItem(parseItemRef(ref)); }
+void SniTrayHost::onItemRegistered(const QString &ref) { addItem(parseItemRef(ref)); }
 
-void SniTrayService::onItemUnregistered(const QString &ref) { removeItem(ref); }
+void SniTrayHost::onItemUnregistered(const QString &ref) { removeItem(ref); }
 
-void SniTrayService::onItemSignal() {
-  const auto msg = message();
+void SniTrayHost::onItemSignal(const QDBusMessage &msg) {
   const auto sender = msg.service();
   const auto path = msg.path();
 
@@ -386,7 +349,7 @@ void SniTrayService::onItemSignal() {
   }
 }
 
-std::vector<TrayItem> SniTrayService::items() const {
+std::vector<TrayItem> SniTrayHost::items() const {
   std::vector<TrayItem> out;
   out.reserve(m_items.size());
   for (const auto &[key, item] : m_items) {
@@ -395,25 +358,17 @@ std::vector<TrayItem> SniTrayService::items() const {
   return out;
 }
 
-void SniTrayService::callItem(const TrayItem &item, const QString &method, const QVariantList &args) {
+void SniTrayHost::callItem(const TrayItem &item, const QString &method, const QVariantList &args) {
   auto msg = QDBusMessage::createMethodCall(item.busName, item.path, ITEM_IFACE, method);
   msg.setArguments(args);
   QDBusConnection::sessionBus().asyncCall(msg);
 }
 
-void SniTrayService::activate(const TrayItem &item, int x, int y) { callItem(item, "Activate", {x, y}); }
+void SniTrayHost::activate(const TrayItem &item) { callItem(item, "Activate", {0, 0}); }
 
-void SniTrayService::secondaryActivate(const TrayItem &item, int x, int y) {
-  callItem(item, "SecondaryActivate", {x, y});
-}
+void SniTrayHost::secondaryActivate(const TrayItem &item) { callItem(item, "SecondaryActivate", {0, 0}); }
 
-void SniTrayService::contextMenu(const TrayItem &item, int x, int y) { callItem(item, "ContextMenu", {x, y}); }
-
-void SniTrayService::scroll(const TrayItem &item, int delta, bool horizontal) {
-  callItem(item, "Scroll", {delta, QString(horizontal ? "horizontal" : "vertical")});
-}
-
-QFuture<std::vector<TrayMenuItem>> SniTrayService::menu(const TrayItem &item) {
+QFuture<std::vector<TrayMenuItem>> SniTrayHost::menu(const TrayItem &item) {
   auto promise = std::make_shared<QPromise<std::vector<TrayMenuItem>>>();
   auto future = promise->future();
   promise->start();
@@ -434,9 +389,8 @@ QFuture<std::vector<TrayMenuItem>> SniTrayService::menu(const TrayItem &item) {
 
     auto layout = QDBusMessage::createMethodCall(item.busName, item.menuPath, MENU_IFACE, "GetLayout");
     layout << 0 << -1
-           << QStringList{"label",        "enabled",      "visible",   "type",
-                          "toggle-type",  "toggle-state", "icon-name", "icon-data",
-                          "children-display"};
+           << QStringList{"label",     "enabled",   "visible",         "type", "toggle-type", "toggle-state",
+                          "icon-name", "icon-data", "children-display"};
 
     auto *w2 = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(layout), this);
     connect(w2, &QDBusPendingCallWatcher::finished, this, [item, promise](QDBusPendingCallWatcher *w) {
@@ -456,42 +410,7 @@ QFuture<std::vector<TrayMenuItem>> SniTrayService::menu(const TrayItem &item) {
   return future;
 }
 
-QFuture<std::vector<TrayEntry>> SniTrayService::snapshot() {
-  struct State {
-    QPromise<std::vector<TrayEntry>> promise;
-    std::vector<TrayEntry> entries;
-    size_t pending = 0;
-  };
-
-  auto state = std::make_shared<State>();
-  auto future = state->promise.future();
-  state->promise.start();
-
-  for (const auto &[key, item] : m_items) {
-    state->entries.push_back({.item = item});
-  }
-  state->pending = state->entries.size();
-
-  if (state->pending == 0) {
-    state->promise.addResult({});
-    state->promise.finish();
-    return future;
-  }
-
-  for (size_t i = 0; i < state->entries.size(); ++i) {
-    menu(state->entries[i].item).then(this, [state, i](std::vector<TrayMenuItem> entries) {
-      state->entries[i].menu = std::move(entries);
-      if (--state->pending == 0) {
-        state->promise.addResult(std::move(state->entries));
-        state->promise.finish();
-      }
-    });
-  }
-
-  return future;
-}
-
-void SniTrayService::triggerMenuItem(const TrayItem &item, int menuItemId) {
+void SniTrayHost::triggerMenuItem(const TrayItem &item, int menuItemId) {
   if (!item.hasMenu()) return;
   auto msg = QDBusMessage::createMethodCall(item.busName, item.menuPath, MENU_IFACE, "Event");
   msg << menuItemId << QString("clicked") << QVariant::fromValue(QDBusVariant(0))
