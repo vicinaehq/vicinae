@@ -119,14 +119,14 @@ SniTrayHost::SniTrayHost() : m_watcher(WATCHER_SERVICE, QDBusConnection::session
           [this](const QString &) { watcherAppeared(); });
   connect(&m_watcher, &QDBusServiceWatcher::serviceUnregistered, this, [this](const QString &) {
     watcherVanished();
-    if (m_ownWatcher.tryClaim()) watcherAppeared();
+    m_ownWatcher.tryClaim();
   });
 
   auto *iface = QDBusConnection::sessionBus().interface();
   if (iface && iface->isServiceRegistered(WATCHER_SERVICE)) {
     watcherAppeared();
-  } else if (m_ownWatcher.tryClaim()) {
-    watcherAppeared();
+  } else {
+    m_ownWatcher.tryClaim();
   }
 }
 
