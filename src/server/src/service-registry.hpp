@@ -23,6 +23,7 @@ class OAuthService;
 class WindowManager;
 class WallpaperManager;
 class PowerManager;
+class AbstractTrayHost;
 class ScriptCommandService;
 class AbstractSnippetServer;
 #ifdef Q_OS_LINUX
@@ -72,6 +73,7 @@ public:
   ExtensionRegistry *extensionRegistry() const;
   OAuthService *oauthService() const;
   PowerManager *powerManager() const;
+  AbstractTrayHost *trayHost() const;
   ScriptCommandService *scriptDb() const;
   BrowserExtensionService *browserExtension() const;
 #ifdef Q_OS_LINUX
@@ -92,6 +94,7 @@ public:
   GlobalShortcutService *globalShortcuts() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
+  void setTrayHost(std::unique_ptr<AbstractTrayHost> service);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
   void setWallpaperManager(std::unique_ptr<WallpaperManager> manager);
   void setRootItemManager(std::unique_ptr<RootItemManager> manager);
@@ -153,6 +156,7 @@ private:
   std::unique_ptr<ExtensionRegistry> m_extensionRegistry;
   std::unique_ptr<OAuthService> m_oauthService;
   std::unique_ptr<PowerManager> m_powerManager;
+  std::unique_ptr<AbstractTrayHost> m_trayHost;
   std::unique_ptr<ScriptCommandService> m_scriptCommandService;
   std::unique_ptr<BrowserExtensionService> m_browserExtensionService;
 #ifdef Q_OS_LINUX

@@ -49,6 +49,7 @@
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include "services/power-manager/power-manager.hpp"
+#include "services/tray-host/tray-host.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 #include "services/script-command/script-command-service.hpp"
@@ -351,6 +352,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
+    registry->setTrayHost(createTrayHost());
     registry->setGlobalShortcuts(std::move(globalShortcutService));
     registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setMediaControl(std::make_unique<MediaControlService>());
@@ -602,6 +604,20 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     QObject::connect(updates, &UpdateService::updateChanged, tray.get(), syncTrayUpdate);
     syncTrayUpdate();
     tray->setCheckForUpdatesVisible(updates->checksSupported());
+    QObject::connect(tray.get(), &TrayService::openLinkRequested, [&ctx](TrayService::Link link) {
+      const QString &url = [link]() -> const QString & {
+        switch (link) {
+        case TrayService::Link::Discord:
+          return Omnicast::DISCORD_INVITE_LINK;
+        case TrayService::Link::Follow:
+          return Omnicast::X_PROFILE_LINK;
+        case TrayService::Link::Sponsor:
+          break;
+        }
+        return Omnicast::GH_SPONSOR_LINK;
+      }();
+      ctx.services->appDb()->openTarget(url);
+    });
     QObject::connect(tray.get(), &TrayService::quitRequested, []() { QCoreApplication::quit(); });
     tray->show();
   }

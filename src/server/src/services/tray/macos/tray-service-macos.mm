@@ -56,6 +56,15 @@ NSImage *renderTrayImage() {
 - (void)checkForUpdates:(id)sender {
   if (self.owner) self.owner->emitCheckForUpdates();
 }
+- (void)openSponsor:(id)sender {
+  if (self.owner) self.owner->emitOpenLink(TrayService::Link::Sponsor);
+}
+- (void)openDiscord:(id)sender {
+  if (self.owner) self.owner->emitOpenLink(TrayService::Link::Discord);
+}
+- (void)openFollow:(id)sender {
+  if (self.owner) self.owner->emitOpenLink(TrayService::Link::Follow);
+}
 - (void)quit:(id)sender {
   if (self.owner) self.owner->emitQuit();
 }
@@ -111,6 +120,26 @@ TrayServiceMacOS::TrayServiceMacOS(QObject *parent) : TrayService(parent), m_imp
 
   [menu addItem:[NSMenuItem separatorItem]];
 
+  NSMenuItem *sponsorItem = [[NSMenuItem alloc] initWithTitle:@"Sponsor Vicinae"
+                                                       action:@selector(openSponsor:)
+                                                keyEquivalent:@""];
+  sponsorItem.target = m_impl->target;
+  [menu addItem:sponsorItem];
+
+  NSMenuItem *discordItem = [[NSMenuItem alloc] initWithTitle:@"Join the Discord"
+                                                       action:@selector(openDiscord:)
+                                                keyEquivalent:@""];
+  discordItem.target = m_impl->target;
+  [menu addItem:discordItem];
+
+  NSMenuItem *followItem = [[NSMenuItem alloc] initWithTitle:@"Follow on X"
+                                                      action:@selector(openFollow:)
+                                               keyEquivalent:@""];
+  followItem.target = m_impl->target;
+  [menu addItem:followItem];
+
+  [menu addItem:[NSMenuItem separatorItem]];
+
   NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:@"Quit Vicinae"
                                                     action:@selector(quit:)
                                              keyEquivalent:@""];
@@ -153,5 +182,7 @@ void TrayServiceMacOS::emitToggle() { emit toggleRequested(); }
 void TrayServiceMacOS::emitOpenSettings(const QString &tab) { emit openSettingsRequested(tab); }
 
 void TrayServiceMacOS::emitCheckForUpdates() { emit checkForUpdatesRequested(); }
+
+void TrayServiceMacOS::emitOpenLink(Link link) { emit openLinkRequested(link); }
 
 void TrayServiceMacOS::emitQuit() { emit quitRequested(); }
