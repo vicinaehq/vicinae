@@ -57,9 +57,7 @@ public:
     return ImageURL::builtin(BuiltinIcon::AppWindowList);
   }
 
-  QVariantList displayShortcut(const ItemType &entry) const override {
-    return entry.shortcut.toDisplayTokens();
-  }
+  Keyboard::Shortcut displayShortcut(const ItemType &entry) const override { return entry.shortcut; }
 
   std::unique_ptr<ActionPanelState> buildActionPanel(const ItemType &entry) const override {
     auto panel = std::make_unique<ListActionPanelState>();

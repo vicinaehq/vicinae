@@ -115,7 +115,7 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
   case IsDraggable:
     return source->isDraggable(flat.itemIdx);
   case ShortcutTokens:
-    return source->itemShortcutTokens(flat.itemIdx);
+    return source->itemShortcut(flat.itemIdx).toDisplayTokens();
   default: {
     auto v = source->customData(flat.itemIdx, role);
     if (v.isValid()) return v;
