@@ -7,6 +7,7 @@
 #include <chrono>
 #include <future>
 #include <ranges>
+#include <span>
 #include <thread>
 #include <windows.h>
 
@@ -14,8 +15,8 @@ namespace {
 
 constexpr std::size_t MAX_BUFFER_SIZE = 32;
 constexpr std::size_t CLIPBOARD_THRESHOLD = 100;
-constexpr int MODIFIER_RELEASE_TIMEOUT_MS = 500;
-constexpr int MODIFIER_POLL_INTERVAL_MS = 5;
+constexpr int KEY_RELEASE_TIMEOUT_MS = 500;
+constexpr int KEY_POLL_INTERVAL_MS = 5;
 
 // Stamped on every event we inject via SendInput so the hook skips its own output.
 constexpr ULONG_PTR VICINAE_INJECT_TAG = 0x7669636e; // 'vicn'
@@ -100,19 +101,30 @@ void sendPaste() {
   send(inputs);
 }
 
+constexpr WORD MODIFIERS[] = {VK_LSHIFT, VK_RSHIFT, VK_LCONTROL, VK_RCONTROL,
+                              VK_LMENU,  VK_RMENU,  VK_LWIN,     VK_RWIN};
+
+bool anyHeld(std::span<const WORD> keys) {
+  return std::ranges::any_of(keys, [](WORD vk) { return (GetAsyncKeyState(vk) & 0x8000) != 0; });
+}
+
+void waitUntilReleased(std::span<const WORD> keys) {
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(KEY_RELEASE_TIMEOUT_MS);
+  while (anyHeld(keys) && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(KEY_POLL_INTERVAL_MS));
+  }
+}
+
+// the hook sees the key that fired us before it is posted to the app, so injecting right away can land ahead
+// of it. its release is only processed once the press has been delivered.
+void waitForTriggerKeyRelease(WORD vk) {
+  const WORD keys[] = {vk};
+  waitUntilReleased(keys);
+}
+
 // still-held shift/AltGr would turn the backspaces into ctrl+backspace and the paste into ctrl+shift+v
 void waitForModifierRelease() {
-  constexpr WORD MODIFIERS[] = {VK_LSHIFT, VK_RSHIFT, VK_LCONTROL, VK_RCONTROL,
-                                VK_LMENU,  VK_RMENU,  VK_LWIN,     VK_RWIN};
-  const auto anyHeld = [&]() {
-    return std::ranges::any_of(MODIFIERS, [](WORD vk) { return (GetAsyncKeyState(vk) & 0x8000) != 0; });
-  };
-
-  const auto deadline =
-      std::chrono::steady_clock::now() + std::chrono::milliseconds(MODIFIER_RELEASE_TIMEOUT_MS);
-  while (anyHeld() && std::chrono::steady_clock::now() < deadline) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(MODIFIER_POLL_INTERVAL_MS));
-  }
+  waitUntilReleased(MODIFIERS);
 
   std::vector<INPUT> releases;
   for (WORD vk : MODIFIERS) {
@@ -233,6 +245,7 @@ void WindowsSnippetServer::resetContext() {
 
 void WindowsSnippetServer::injectExpand(const std::string &text, unsigned charsToDelete, unsigned, bool,
                                         unsigned cursorLeftMoves, bool viaClipboard) {
+  waitForTriggerKeyRelease(static_cast<WORD>(m_triggerVk.load()));
   waitForModifierRelease();
   sendRepeatedVk(VK_BACK, charsToDelete);
 
@@ -246,6 +259,7 @@ void WindowsSnippetServer::injectExpand(const std::string &text, unsigned charsT
 }
 
 void WindowsSnippetServer::injectUndo(unsigned backspaceCount, const std::string &trigger) {
+  waitForTriggerKeyRelease(VK_BACK);
   waitForModifierRelease();
   sendRepeatedVk(VK_BACK, backspaceCount);
   sendText(trigger);
@@ -292,20 +306,21 @@ void WindowsSnippetServer::onKey(unsigned vk, const std::string &utf8, bool bloc
     if (snippet.mode == snippet_gen::ExpansionMode::Keydown) {
       if (snippet.trigger.size() > m_text.size()) { continue; }
       if (m_text.ends_with(snippet.trigger)) {
-        emitExpansionLocked(snippet);
+        emitExpansionLocked(snippet, vk);
         break;
       }
     } else if (wordSep) {
       if (snippet.trigger.size() + 1 > m_text.size()) { continue; }
       if (std::string_view(m_text).substr(0, m_text.size() - 1).ends_with(snippet.trigger)) {
-        emitExpansionLocked(snippet);
+        emitExpansionLocked(snippet, vk);
         break;
       }
     }
   }
 }
 
-void WindowsSnippetServer::emitExpansionLocked(const Snippet &snippet) {
+void WindowsSnippetServer::emitExpansionLocked(const Snippet &snippet, unsigned vk) {
+  m_triggerVk = vk;
   m_text.clear();
 
   const std::string trigger = snippet.trigger;

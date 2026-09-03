@@ -38,7 +38,7 @@ private:
   };
 
   void startHookThread();
-  void emitExpansionLocked(const Snippet &snippet);
+  void emitExpansionLocked(const Snippet &snippet, unsigned vk);
 
   std::vector<Snippet> m_snippets;
   std::string m_text;
@@ -48,4 +48,5 @@ private:
   std::thread m_thread;
   unsigned long m_hookThreadId = 0;
   std::atomic_bool m_running{false};
+  std::atomic_uint m_triggerVk{0};
 };
