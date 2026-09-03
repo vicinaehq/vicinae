@@ -115,19 +115,14 @@ TrayMenuItem toMenuItem(const DBusMenuLayout &layout) {
 SniTrayHost::SniTrayHost() : m_watcher(WATCHER_SERVICE, QDBusConnection::sessionBus()) {
   registerSniMetaTypes();
 
-  connect(&m_watcher, &QDBusServiceWatcher::serviceRegistered, this,
-          [this](const QString &) { watcherAppeared(); });
-  connect(&m_watcher, &QDBusServiceWatcher::serviceUnregistered, this, [this](const QString &) {
-    watcherVanished();
-    m_ownWatcher.tryClaim();
-  });
+  connect(&m_watcher, &QDBusServiceWatcher::serviceOwnerChanged, this,
+          [this](const QString &, const QString &, const QString &newOwner) {
+            if (m_available) watcherVanished();
+            if (!newOwner.isEmpty()) watcherAppeared();
+          });
 
   auto *iface = QDBusConnection::sessionBus().interface();
-  if (iface && iface->isServiceRegistered(WATCHER_SERVICE)) {
-    watcherAppeared();
-  } else {
-    m_ownWatcher.tryClaim();
-  }
+  if (iface && iface->isServiceRegistered(WATCHER_SERVICE)) watcherAppeared();
 }
 
 SniTrayHost::~SniTrayHost() {
