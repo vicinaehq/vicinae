@@ -47,10 +47,6 @@ bool isCaretMove(unsigned vk) {
   }
 }
 
-void sleepUs(int us) {
-  if (us > 0) { std::this_thread::sleep_for(std::chrono::microseconds(us)); }
-}
-
 INPUT vkInput(WORD vk, bool down) {
   INPUT in{};
   in.type = INPUT_KEYBOARD;
@@ -75,40 +71,27 @@ void send(std::vector<INPUT> &inputs) {
   if (!inputs.empty()) { SendInput(static_cast<UINT>(inputs.size()), inputs.data(), sizeof(INPUT)); }
 }
 
-// one SendInput call for the whole sequence unless the user configured a key delay
-void sendPresses(const std::vector<INPUT> &presses, int delayUs) {
-  if (delayUs <= 0) {
-    std::vector<INPUT> inputs;
-    inputs.reserve(presses.size() * 2);
-    for (INPUT in : presses) {
-      inputs.push_back(in);
-      in.ki.dwFlags |= KEYEVENTF_KEYUP;
-      inputs.push_back(in);
-    }
-    send(inputs);
-    return;
-  }
-
+void sendPresses(const std::vector<INPUT> &presses) {
+  std::vector<INPUT> inputs;
+  inputs.reserve(presses.size() * 2);
   for (INPUT in : presses) {
-    SendInput(1, &in, sizeof(INPUT));
+    inputs.push_back(in);
     in.ki.dwFlags |= KEYEVENTF_KEYUP;
-    SendInput(1, &in, sizeof(INPUT));
-    sleepUs(delayUs);
+    inputs.push_back(in);
   }
+  send(inputs);
 }
 
-void sendRepeatedVk(WORD vk, unsigned count, int delayUs) {
-  sendPresses(std::vector<INPUT>(count, vkInput(vk, true)), delayUs);
-}
+void sendRepeatedVk(WORD vk, unsigned count) { sendPresses(std::vector<INPUT>(count, vkInput(vk, true))); }
 
-void sendText(const std::string &text, int delayUs) {
+void sendText(const std::string &text) {
   const QString qtext = QString::fromStdString(text);
   std::vector<INPUT> presses;
   presses.reserve(qtext.size());
   for (const QChar c : qtext) {
     presses.push_back(unitInput(c.unicode(), true));
   }
-  sendPresses(presses, delayUs);
+  sendPresses(presses);
 }
 
 void sendPaste() {
@@ -248,33 +231,27 @@ void WindowsSnippetServer::resetContext() {
   m_undoTrigger.reset();
 }
 
-void WindowsSnippetServer::injectExpand(const std::string &text, unsigned charsToDelete,
-                                        unsigned prePasteDelayUs, bool, unsigned cursorLeftMoves,
-                                        bool viaClipboard) {
-  const int delay = m_keyDelayUs.load();
-
+void WindowsSnippetServer::injectExpand(const std::string &text, unsigned charsToDelete, unsigned, bool,
+                                        unsigned cursorLeftMoves, bool viaClipboard) {
   waitForModifierRelease();
-  sendRepeatedVk(VK_BACK, charsToDelete, delay);
+  sendRepeatedVk(VK_BACK, charsToDelete);
 
   if (viaClipboard) {
-    sleepUs(static_cast<int>(prePasteDelayUs));
     sendPaste();
   } else {
-    sendText(text, delay);
+    sendText(text);
   }
 
-  sendRepeatedVk(VK_LEFT, cursorLeftMoves, delay);
+  sendRepeatedVk(VK_LEFT, cursorLeftMoves);
 }
 
 void WindowsSnippetServer::injectUndo(unsigned backspaceCount, const std::string &trigger) {
-  const int delay = m_keyDelayUs.load();
-
   waitForModifierRelease();
-  sendRepeatedVk(VK_BACK, backspaceCount, delay);
-  sendText(trigger, delay);
+  sendRepeatedVk(VK_BACK, backspaceCount);
+  sendText(trigger);
 }
 
-void WindowsSnippetServer::setKeyDelay(int us) { m_keyDelayUs = us; }
+void WindowsSnippetServer::setKeyDelay(int) {}
 
 bool WindowsSnippetServer::usesClipboard(std::size_t expandedLength) const {
   return expandedLength > CLIPBOARD_THRESHOLD;
