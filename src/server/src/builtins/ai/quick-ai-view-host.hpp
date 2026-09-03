@@ -48,7 +48,7 @@ public:
 
   QString initialNavigationTitle() const override { return QStringLiteral("Quick AI"); }
   ImageURL initialNavigationIcon() const override {
-    return ImageURL::builtin("stars").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::Stars).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
   QVariantList exchanges() const { return m_exchanges; }
