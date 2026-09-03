@@ -641,6 +641,16 @@ set(SRCS
 	src/qml/edit-keywords-view-host.cpp
 	src/qml/hud-bridge.hpp
 	src/qml/hud-bridge.cpp
+	src/qml/bar/bar-host.hpp
+	src/qml/bar/bar-host.cpp
+	src/qml/bar/bar-screen.hpp
+	src/qml/bar/bar-screen.cpp
+	src/qml/bar/bar-tray-model.hpp
+	src/qml/bar/bar-tray-model.cpp
+	src/qml/bar/bar-menu-model.hpp
+	src/qml/bar/bar-menu-model.cpp
+	src/qml/bar/bar-controller.hpp
+	src/qml/bar/bar-controller.cpp
 
 	src/qml/settings-window.hpp
 	src/qml/settings-window.cpp
@@ -1160,12 +1170,25 @@ set(VICINAE_QML_FILES
 	src/qml/qml/OAuthOverlayView.qml
 	src/qml/qml/HudWindow.qml
 	src/qml/qml/OnboardingWindow.qml
+	src/qml/qml/BarPill.qml
+	src/qml/qml/BarPopover.qml
+	src/qml/qml/BarMenuRow.qml
+	src/qml/qml/BarLauncherButton.qml
+	src/qml/qml/BarWorkspaces.qml
+	src/qml/qml/BarFocusedWindow.qml
+	src/qml/qml/BarClock.qml
+	src/qml/qml/BarMedia.qml
+	src/qml/qml/BarTray.qml
+	src/qml/qml/BarTrayMenu.qml
+	src/qml/qml/BarVolume.qml
+	src/qml/qml/BarPower.qml
 )
 
 if(WAYLAND_LAYER_SHELL)
 	list(APPEND VICINAE_QML_FILES
 		src/qml/qml/LauncherWindowLayerShell.qml
 		src/qml/qml/HudWindowLayerShell.qml
+		src/qml/qml/BarWindow.qml
 	)
 endif()
 

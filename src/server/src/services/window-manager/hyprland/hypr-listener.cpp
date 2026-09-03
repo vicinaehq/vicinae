@@ -1,4 +1,7 @@
 #include <unistd.h>
+#include <algorithm>
+#include <array>
+#include <string_view>
 #include "hypr-listener.hpp"
 #include "utils.hpp"
 #include <qlogging.h>
@@ -52,6 +55,15 @@ bool EventListener::start() {
   return true;
 }
 
+namespace {
+
+constexpr auto WORKSPACE_EVENTS = std::to_array<std::string_view>(
+    {"workspace", "workspacev2", "focusedmon", "focusedmonv2", "createworkspace", "createworkspacev2",
+     "destroyworkspace", "destroyworkspacev2", "renameworkspace", "moveworkspace", "moveworkspacev2",
+     "movewindow", "movewindowv2", "fullscreen", "urgent"});
+
+} // namespace
+
 void EventListener::processEvent(const std::string &event) {
   auto ss = ranges_to<std::vector>(std::views::split(event, std::string_view(">>")));
 
@@ -69,6 +81,10 @@ void EventListener::processEvent(const std::string &event) {
     emit closewindow("");
   } else if (name == "activewindow" || name == "activewindowv2") {
     emit activewindowchanged();
+  } else if (name == "windowtitle" || name == "windowtitlev2") {
+    emit windowtitlechanged();
+  } else if (std::ranges::contains(WORKSPACE_EVENTS, name)) {
+    emit workspacechanged();
   }
 }
 

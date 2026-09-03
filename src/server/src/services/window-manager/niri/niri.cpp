@@ -107,7 +107,20 @@ struct ToggleOverview {
   std::map<std::string_view, std::uint64_t> toggleOverview;
 };
 
-using Action = std::variant<FocusWindow, CloseWindow, FullscreenWindow, ToggleWindowFloating, ToggleOverview>;
+struct WorkspaceIdRef {
+  WorkspaceHandle id = 0;
+};
+
+struct WorkspaceRefArg {
+  WorkspaceIdRef reference;
+};
+
+struct FocusWorkspace {
+  WorkspaceRefArg focusWorkspace;
+};
+
+using Action = std::variant<FocusWindow, CloseWindow, FullscreenWindow, ToggleWindowFloating, ToggleOverview,
+                            FocusWorkspace>;
 
 struct ActionRequest {
   Action action;
@@ -127,6 +140,9 @@ template <> struct glz::meta<Niri::ipc::CloseWindow> : glz::pascal_case {};
 template <> struct glz::meta<Niri::ipc::FullscreenWindow> : glz::pascal_case {};
 template <> struct glz::meta<Niri::ipc::ToggleWindowFloating> : glz::pascal_case {};
 template <> struct glz::meta<Niri::ipc::ToggleOverview> : glz::pascal_case {};
+template <> struct glz::meta<Niri::ipc::WorkspaceIdRef> : glz::pascal_case {};
+template <> struct glz::meta<Niri::ipc::WorkspaceRefArg> : glz::snake_case {};
+template <> struct glz::meta<Niri::ipc::FocusWorkspace> : glz::pascal_case {};
 template <> struct glz::meta<Niri::ipc::ActionRequest> : glz::pascal_case {};
 
 namespace Niri {
@@ -335,6 +351,15 @@ AbstractWindowManager::WorkspacePtr WindowManager::getActiveWorkspace() const {
   }
 
   return nullptr;
+}
+
+void WindowManager::focusWorkspaceSync(const AbstractWorkspace &workspace) const {
+  bool ok = false;
+  const auto id = workspace.id().toULongLong(&ok);
+  if (!ok) { return; }
+  if (!sendAction(ipc::FocusWorkspace{{{id}}})) {
+    qWarning() << "niri: failed to focus workspace" << workspace.id();
+  }
 }
 
 void WindowManager::focusWindowSync(const AbstractWindow &window) const {

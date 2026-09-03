@@ -11,6 +11,7 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool searchFilesInRoot READ searchFilesInRoot WRITE setSearchFilesInRoot NOTIFY configChanged)
   Q_PROPERTY(bool inputServerEnabled READ inputServerEnabled WRITE setInputServerEnabled NOTIFY configChanged)
   Q_PROPERTY(bool trayEnabled READ trayEnabled WRITE setTrayEnabled NOTIFY configChanged)
+  Q_PROPERTY(bool barEnabled READ barEnabled WRITE setBarEnabled NOTIFY configChanged)
   Q_PROPERTY(bool closeOnFocusLoss READ closeOnFocusLoss WRITE setCloseOnFocusLoss NOTIFY configChanged)
   Q_PROPERTY(bool closeOnEscape READ closeOnEscape WRITE setCloseOnEscape NOTIFY configChanged)
   Q_PROPERTY(bool considerPreedit READ considerPreedit WRITE setConsiderPreedit NOTIFY configChanged)
@@ -99,6 +100,8 @@ public:
   void setInputServerEnabled(bool v);
   bool trayEnabled() const;
   void setTrayEnabled(bool v);
+  bool barEnabled() const;
+  void setBarEnabled(bool v);
   QString fontSize() const;
   void setFontSize(const QString &v);
 

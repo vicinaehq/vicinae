@@ -28,14 +28,19 @@ QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QC
 QImage decodeImageData(QIODevice *device, const QSize &size);
 QImage decodeImageData(const QByteArray &data, const QSize &size);
 QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColor &fg = {},
-                          const QColor &bg = {}, OmniPainter::ImageMaskType mask = OmniPainter::NoMask);
+                          const QColor &bg = {}, OmniPainter::ImageMaskType mask = OmniPainter::NoMask,
+                          bool templateFill = false);
 
 // Size content should be rendered at when it will be composed onto a backdrop
 // tile of the given full size.
 QSize backdropContentSize(const QSize &size);
 
+// Template fills are computed on a supersampled render and scaled down afterwards, so the
+// mask's edges come from a clean alpha resample rather than from the luminance of blended pixels.
+QSize templateRenderSize(const QSize &size);
+
 void applyPostTransforms(QImage &image, const QColor &fg, const QColor &bg, const QSize &size,
-                         OmniPainter::ImageMaskType mask);
+                         OmniPainter::ImageMaskType mask, bool templateFill = false);
 void applySafetyMargins(QImage &image);
 
 QThreadPool &decodingPool();

@@ -14,6 +14,9 @@
 #include "ui/image/win-file-icon-loader.hpp"
 #endif
 #include <QBuffer>
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <QCoreApplication>
 #include <QFontMetricsF>
 #include <QFutureWatcher>
@@ -162,17 +165,103 @@ QImage renderSystemIcon(const QString &name, const QSize &size) {
   return icon.pixmap(logicalSize, dpr).toImage();
 }
 
+// QPainter scales sources by their device pixel ratio; paint through a DPR-neutral copy so
+// high-DPR renders keep their pixel size.
 static void applyFillColor(QImage &image, const QColor &fg) {
   if (!fg.isValid()) return;
+  QImage source = image;
+  source.setDevicePixelRatio(1.0);
   QImage tinted(image.size(), QImage::Format_ARGB32_Premultiplied);
   tinted.fill(Qt::transparent);
   QPainter painter(&tinted);
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-  painter.drawImage(0, 0, image);
+  painter.drawImage(0, 0, source);
   painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
   painter.fillRect(tinted.rect(), fg);
+  painter.end();
+  tinted.setDevicePixelRatio(image.devicePixelRatio());
   image = tinted;
+}
+
+// Luminance becomes the mask: on a light fill, bright pixels are ink; on a dark fill,
+// dark pixels are. Contrast is stretched between the 3rd and 97th luminance percentiles and
+// pushed through an S-curve so a glyph on a solid disc still reads and anti-aliased edges
+// don't smear into halos. Single-tone glyphs have nothing to stretch and get the silhouette.
+static void applyTemplateFill(QImage &image, const QColor &fg) {
+  if (!fg.isValid() || image.isNull()) return;
+
+  constexpr float MIN_TONAL_RANGE = 0.12F;
+  constexpr int MIN_SAMPLE_ALPHA = 128;
+  constexpr int MIN_OUT_ALPHA = 10;
+  constexpr std::size_t BINS = 64;
+  constexpr float LOW_PERCENTILE = 0.03F;
+  constexpr float HIGH_PERCENTILE = 0.97F;
+  constexpr float CURVE_LOW = 0.18F;
+  constexpr float CURVE_HIGH = 0.82F;
+
+  QImage source = image.convertToFormat(QImage::Format_ARGB32);
+  auto luminance = [](QRgb px) {
+    return (0.2126F * qRed(px) + 0.7152F * qGreen(px) + 0.0722F * qBlue(px)) / 255.0F;
+  };
+
+  std::array<std::size_t, BINS> histogram{};
+  std::size_t samples = 0;
+  for (int y = 0; y < source.height(); ++y) {
+    const auto *row = reinterpret_cast<const QRgb *>(source.constScanLine(y));
+    for (int x = 0; x < source.width(); ++x) {
+      if (qAlpha(row[x]) < MIN_SAMPLE_ALPHA) continue;
+      const auto bin = std::min(BINS - 1, static_cast<std::size_t>(luminance(row[x]) * BINS));
+      histogram[bin]++;
+      samples++;
+    }
+  }
+  if (samples == 0) return;
+
+  auto percentile = [&](float p) {
+    const auto target = static_cast<std::size_t>(p * static_cast<float>(samples));
+    std::size_t seen = 0;
+    for (std::size_t i = 0; i < BINS; ++i) {
+      seen += histogram[i];
+      if (seen > target) return (static_cast<float>(i) + 0.5F) / BINS;
+    }
+    return 1.0F;
+  };
+  const float lo = percentile(LOW_PERCENTILE);
+  const float hi = percentile(HIGH_PERCENTILE);
+
+  if (hi - lo < MIN_TONAL_RANGE) {
+    applyFillColor(image, fg);
+    return;
+  }
+
+  const bool lightInk = fg.lightnessF() > 0.5F;
+  const float range = hi - lo;
+  auto curve = [](float t) {
+    t = std::clamp((t - CURVE_LOW) / (CURVE_HIGH - CURVE_LOW), 0.0F, 1.0F);
+    return t * t * (3.0F - 2.0F * t);
+  };
+
+  QImage out(source.size(), QImage::Format_ARGB32);
+  for (int y = 0; y < source.height(); ++y) {
+    const auto *in = reinterpret_cast<const QRgb *>(source.constScanLine(y));
+    auto *dst = reinterpret_cast<QRgb *>(out.scanLine(y));
+    for (int x = 0; x < source.width(); ++x) {
+      const int alpha = qAlpha(in[x]);
+      if (alpha == 0) {
+        dst[x] = 0;
+        continue;
+      }
+      float ink = std::clamp((luminance(in[x]) - lo) / range, 0.0F, 1.0F);
+      if (!lightInk) ink = 1.0F - ink;
+      ink = curve(ink);
+      int outAlpha = static_cast<int>(std::lround(alpha * ink * fg.alphaF()));
+      if (outAlpha < MIN_OUT_ALPHA) outAlpha = 0;
+      dst[x] = qRgba(fg.red(), fg.green(), fg.blue(), std::clamp(outAlpha, 0, 255));
+    }
+  }
+  out.setDevicePixelRatio(image.devicePixelRatio());
+  image = out.convertToFormat(QImage::Format_ARGB32_Premultiplied);
 }
 
 QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg) {
@@ -348,8 +437,57 @@ static void applyBackdrop(QImage &image, const QSize &size, const QColor &tile) 
   image = canvas;
 }
 
+// Icons pad their glyph very differently; trimming to the visible bounds and re-centering in a
+// square with a uniform margin gives a row of template icons one optical size.
+static void normalizeTemplateBounds(QImage &image) {
+  constexpr int VISIBLE_ALPHA = 24;
+  constexpr float MARGIN = 0.08F;
+
+  QImage src = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+  src.setDevicePixelRatio(1.0);
+  int left = src.width();
+  int top = src.height();
+  int right = -1;
+  int bottom = -1;
+  for (int y = 0; y < src.height(); ++y) {
+    const auto *row = reinterpret_cast<const QRgb *>(src.constScanLine(y));
+    for (int x = 0; x < src.width(); ++x) {
+      if (qAlpha(row[x]) < VISIBLE_ALPHA) continue;
+      left = std::min(left, x);
+      right = std::max(right, x);
+      top = std::min(top, y);
+      bottom = std::max(bottom, y);
+    }
+  }
+  if (right < left || bottom < top) return;
+
+  QRect const bounds(left, top, right - left + 1, bottom - top + 1);
+  int const side = std::max(bounds.width(), bounds.height());
+  int const margin = static_cast<int>(std::lround(side * MARGIN));
+  int const canvas = side + 2 * margin;
+
+  QImage out(canvas, canvas, QImage::Format_ARGB32_Premultiplied);
+  out.fill(Qt::transparent);
+  QPainter painter(&out);
+  painter.drawImage(QPoint(margin + (side - bounds.width()) / 2, margin + (side - bounds.height()) / 2), src,
+                    bounds);
+  painter.end();
+  out.setDevicePixelRatio(image.devicePixelRatio());
+  image = out;
+}
+
+QSize templateRenderSize(const QSize &size) {
+  constexpr int SUPERSAMPLE = 4;
+  constexpr int MAX_SIDE = 512;
+  if (!size.isValid()) return size;
+  QSize out = size * SUPERSAMPLE;
+  if (out.width() > MAX_SIDE || out.height() > MAX_SIDE)
+    out = out.scaled(MAX_SIDE, MAX_SIDE, Qt::KeepAspectRatio);
+  return out;
+}
+
 void applyPostTransforms(QImage &image, const QColor &fg, const QColor &bg, const QSize &size,
-                         OmniPainter::ImageMaskType mask) {
+                         OmniPainter::ImageMaskType mask, bool templateFill) {
   if (image.isNull()) return;
   bool const hasBg = hasBackdrop(bg) && size.isValid();
   QColor const tile = hasBg ? clampTileTone(bg) : QColor();
@@ -358,7 +496,18 @@ void applyPostTransforms(QImage &image, const QColor &fg, const QColor &bg, cons
   // requested one; untinted content (emoji, raster) keeps its own colors.
   QColor fill = fg;
   if (hasBg && fg.isValid()) fill = ContrastHelper::getTonalContrastColor(tile, 5, 0.1);
-  if (fill.isValid()) applyFillColor(image, fill);
+  if (fill.isValid()) {
+    if (templateFill) {
+      applyTemplateFill(image, fill);
+      normalizeTemplateBounds(image);
+      QSize const target = hasBg ? backdropContentSize(size) : size;
+      if (target.isValid() && image.size() != target) {
+        image = image.scaled(target, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+      }
+    } else {
+      applyFillColor(image, fill);
+    }
+  }
   if (hasBg) applyBackdrop(image, size, tile);
 
   switch (mask) {
@@ -414,8 +563,9 @@ QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QC
 }
 
 QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColor &fg, const QColor &bg,
-                          OmniPainter::ImageMaskType mask) {
-  QSize const contentSize = hasBackdrop(bg) ? backdropContentSize(size) : size;
+                          OmniPainter::ImageMaskType mask, bool templateFill) {
+  QSize contentSize = hasBackdrop(bg) ? backdropContentSize(size) : size;
+  if (templateFill) contentSize = templateRenderSize(contentSize);
   QImage img;
 
   if (data.trimmed().startsWith("<?xml") || data.trimmed().startsWith("<svg")) {
@@ -433,7 +583,7 @@ QImage decodeAndTransform(const QByteArray &data, const QSize &size, const QColo
     img = decodeImageData(data, contentSize);
   }
 
-  applyPostTransforms(img, fg, bg, size, mask);
+  applyPostTransforms(img, fg, bg, size, mask, templateFill);
   return img;
 }
 

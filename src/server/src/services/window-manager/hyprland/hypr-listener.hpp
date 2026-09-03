@@ -16,6 +16,8 @@ signals:
                   const QString &title) const;
   void closewindow(const WindowAddress &addr) const;
   void activewindowchanged() const;
+  void workspacechanged() const;
+  void windowtitlechanged() const;
 
 public:
   EventListener();

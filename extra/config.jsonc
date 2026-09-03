@@ -32,6 +32,12 @@
 		"enabled": true
 	},
 
+	// Show the Vicinae bar at the top of every screen: workspaces, focused window, clock, media,
+	// tray icons, volume and power. Off by default. Requires a Wayland compositor with layer shell support.
+	"bar": {
+		"enabled": false
+	},
+
 	// Whether root search should also search files directly.
 	// File search is performed asynchrounously: files may take an instant to appear after a query is entered.
 	// Turning this on results in an increase in CPU usage when searching.

@@ -102,6 +102,7 @@ ImageStream::ImageStream(const ImageURL &url, const QSize &size, ImageStreamOpti
   if (auto fill = m_url.fillColor()) m_fg = ThemeService::instance().theme().resolve(*fill);
   m_bg = resolveBackgroundTint(m_url);
   m_mask = m_url.mask();
+  m_template = m_url.isTemplate();
   m_cacheKey = makeCacheKey(m_url, size, m_opts.safetyMargins);
   m_originalCacheKey = m_cacheKey;
   m_latestCacheKey = makeLatestCacheKey(m_url);
@@ -158,6 +159,7 @@ void ImageStream::tryFallback() {
   if (auto fill = m_url.fillColor()) m_fg = ThemeService::instance().theme().resolve(*fill);
   m_bg = resolveBackgroundTint(m_url);
   m_mask = m_url.mask();
+  m_template = m_url.isTemplate();
   m_cacheKey = makeCacheKey(m_url, m_size, m_opts.safetyMargins);
   m_latestCacheKey = makeLatestCacheKey(m_url);
 
@@ -183,16 +185,18 @@ void ImageStream::startStatic() {
   const QString name = m_url.name();
   // With a backdrop, content renders at the inset size and the post stage
   // composes it onto the full-size tile.
-  const QSize renderSize = m_bg.isValid() ? ImageRendering::backdropContentSize(m_size) : m_size;
+  QSize renderSize = m_bg.isValid() ? ImageRendering::backdropContentSize(m_size) : m_size;
+  if (m_template) renderSize = ImageRendering::templateRenderSize(renderSize);
 
   auto canceled = m_canceled;
   auto runInPool = [this, canceled](auto renderFn, const QColor &postFg) {
     handleStaticFuture(QtConcurrent::run(&ImageRendering::decodingPool(),
                                          [renderFn = std::move(renderFn), postFg, bg = m_bg, size = m_size,
-                                          mask = m_mask, canceled]() -> QImage {
+                                          mask = m_mask, tmpl = m_template, canceled]() -> QImage {
                                            if (canceled->load(std::memory_order_relaxed)) return {};
                                            QImage img = renderFn();
-                                           ImageRendering::applyPostTransforms(img, postFg, bg, size, mask);
+                                           ImageRendering::applyPostTransforms(img, postFg, bg, size, mask,
+                                                                               tmpl);
                                            return img;
                                          }));
   };
@@ -255,7 +259,8 @@ void ImageStream::startFetchable() {
     auto canceled = m_canceled;
     auto future = QtConcurrent::run(
         &ImageRendering::decodingPool(),
-        [name, canceled, size = m_size, fg = m_fg, bg = m_bg, mask = m_mask]() -> DecodeResult {
+        [name, canceled, size = m_size, fg = m_fg, bg = m_bg, mask = m_mask,
+         tmpl = m_template]() -> DecodeResult {
           if (canceled->load(std::memory_order_relaxed)) return QImage{};
           QFile f(name);
           if (!f.open(QIODevice::ReadOnly)) return QImage{};
@@ -264,17 +269,18 @@ void ImageStream::startFetchable() {
           if (isGif(f.peek(6))) {
             QByteArray data = f.readAll();
             if (isMultiFrameGif(data)) return data;
-            return ImageRendering::decodeAndTransform(data, size, fg, bg, mask);
+            return ImageRendering::decodeAndTransform(data, size, fg, bg, mask, tmpl);
           }
 
           // SVG can't be read by QImageReader; fall back to the bytes path.
           if (name.endsWith(QStringLiteral(".svg"), Qt::CaseInsensitive))
-            return ImageRendering::decodeAndTransform(f.readAll(), size, fg, bg, mask);
+            return ImageRendering::decodeAndTransform(f.readAll(), size, fg, bg, mask, tmpl);
 
           // Raster: stream-decode directly from the file (no intermediate QByteArray).
-          QSize const decodeSize = bg.isValid() ? ImageRendering::backdropContentSize(size) : size;
+          QSize decodeSize = bg.isValid() ? ImageRendering::backdropContentSize(size) : size;
+          if (tmpl) decodeSize = ImageRendering::templateRenderSize(decodeSize);
           QImage img = ImageRendering::decodeImageData(&f, decodeSize);
-          ImageRendering::applyPostTransforms(img, fg, bg, size, mask);
+          ImageRendering::applyPostTransforms(img, fg, bg, size, mask, tmpl);
           return img;
         });
     auto *watcher = new QFutureWatcher<DecodeResult>(this);
@@ -338,13 +344,13 @@ void ImageStream::onDataReceived(const QByteArray &data) {
     bytesCache().insert(m_url.name(), new QByteArray(data), data.size());
 
   auto canceled = m_canceled;
-  auto future = QtConcurrent::run(
-      &ImageRendering::decodingPool(),
-      [data, size = m_size, fg = m_fg, bg = m_bg, mask = m_mask, canceled]() -> DecodeResult {
-        if (canceled->load(std::memory_order_relaxed)) return QImage{};
-        if (isMultiFrameGif(data)) return data;
-        return ImageRendering::decodeAndTransform(data, size, fg, bg, mask);
-      });
+  auto future = QtConcurrent::run(&ImageRendering::decodingPool(),
+                                  [data, size = m_size, fg = m_fg, bg = m_bg, mask = m_mask,
+                                   tmpl = m_template, canceled]() -> DecodeResult {
+                                    if (canceled->load(std::memory_order_relaxed)) return QImage{};
+                                    if (isMultiFrameGif(data)) return data;
+                                    return ImageRendering::decodeAndTransform(data, size, fg, bg, mask, tmpl);
+                                  });
   auto *watcher = new QFutureWatcher<DecodeResult>(this);
   connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
     auto result = watcher->result();
@@ -360,12 +366,12 @@ void ImageStream::onDataReceived(const QByteArray &data) {
 
 void ImageStream::decodeStatic(const QByteArray &data) {
   auto canceled = m_canceled;
-  auto future =
-      QtConcurrent::run(&ImageRendering::decodingPool(),
-                        [data, size = m_size, fg = m_fg, bg = m_bg, mask = m_mask, canceled]() -> QImage {
-                          if (canceled->load(std::memory_order_relaxed)) return {};
-                          return ImageRendering::decodeAndTransform(data, size, fg, bg, mask);
-                        });
+  auto future = QtConcurrent::run(
+      &ImageRendering::decodingPool(),
+      [data, size = m_size, fg = m_fg, bg = m_bg, mask = m_mask, tmpl = m_template, canceled]() -> QImage {
+        if (canceled->load(std::memory_order_relaxed)) return {};
+        return ImageRendering::decodeAndTransform(data, size, fg, bg, mask, tmpl);
+      });
   auto *watcher = new QFutureWatcher<QImage>(this);
   connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
     watcher->deleteLater();

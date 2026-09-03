@@ -33,3 +33,10 @@ ImageUrl ImageUrl::withFillColor(const QColor &color) const {
   copy.setFill(color);
   return ImageUrl(std::move(copy));
 }
+
+ImageUrl ImageUrl::withTemplateFill(const QColor &color) const {
+  ImageURL copy = m_url;
+  copy.setFill(color);
+  copy.setTemplate(true);
+  return ImageUrl(std::move(copy));
+}

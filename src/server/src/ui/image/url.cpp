@@ -20,6 +20,11 @@ ImageURL &ImageURL::setFill(const std::optional<ColorLike> &color) {
   return *this;
 }
 
+ImageURL &ImageURL::setTemplate(bool enabled) {
+  _template = enabled;
+  return *this;
+}
+
 ImageURL &ImageURL::setMask(OmniPainter::ImageMaskType mask) {
   _mask = mask;
   return *this;
@@ -76,6 +81,7 @@ QUrl ImageURL::url() const {
   if (_fallback) query.addQueryItem("fallback", *_fallback);
   if (_bgTint) query.addQueryItem("bg_tint", OmniPainter::serializeColor(*_bgTint));
   if (_fillColor) query.addQueryItem("fill", OmniPainter::serializeColor(_fillColor.value()));
+  if (_template) query.addQueryItem("template", "1");
   if (_mask == OmniPainter::CircleMask)
     query.addQueryItem("mask", "circle");
   else if (_mask == OmniPainter::RoundedRectangleMask)
@@ -117,6 +123,7 @@ ImageURL::ImageURL(const QUrl &url) {
       _fillColor = QColor(fill);
   }
   if (auto fallback = query.queryItemValue("fallback"); !fallback.isEmpty()) { _fallback = fallback; }
+  _template = query.queryItemValue("template") == "1";
   if (auto mask = query.queryItemValue("mask"); !mask.isEmpty()) {
     if (mask == "circle")
       _mask = OmniPainter::ImageMaskType::CircleMask;

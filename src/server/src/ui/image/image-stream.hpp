@@ -50,6 +50,7 @@ private:
   QColor m_fg;
   QColor m_bg;
   OmniPainter::ImageMaskType m_mask = OmniPainter::NoMask;
+  bool m_template = false;
   QString m_cacheKey;
   QString m_originalCacheKey;
   QString m_latestCacheKey;

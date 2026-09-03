@@ -28,6 +28,8 @@ HyprlandWindowManager::HyprlandWindowManager() {
   connect(&m_ev, &Hyprland::EventListener::openwindow, this, [this]() { emit windowsChanged(); });
   connect(&m_ev, &Hyprland::EventListener::closewindow, this, [this]() { emit windowsChanged(); });
   connect(&m_ev, &Hyprland::EventListener::activewindowchanged, this, [this]() { emit focusChanged(); });
+  connect(&m_ev, &Hyprland::EventListener::windowtitlechanged, this, [this]() { emit focusChanged(); });
+  connect(&m_ev, &Hyprland::EventListener::workspacechanged, this, [this]() { emit windowsChanged(); });
 }
 
 QString HyprlandWindowManager::id() const { return "hyprland"; }

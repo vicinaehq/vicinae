@@ -116,12 +116,15 @@ public:
   std::optional<ColorLike> backgroundTint() const;
   const std::optional<ColorLike> &fillColor() const;
   OmniPainter::ImageMaskType mask() const;
+  bool isTemplate() const { return _template; }
 
   void setType(ImageURLType type);
   void setName(const QString &name);
 
   ImageURL &setFill(const std::optional<ColorLike> &color);
   ImageURL &setMask(OmniPainter::ImageMaskType mask);
+  // Render the image's luminance as a mask filled with `fillColor()`, like a macOS template icon.
+  ImageURL &setTemplate(bool enabled);
   ImageURL &setBackgroundTint(const ColorLike &tint);
 
   // Returns a copy with colors resolved against the current theme (SemanticColor/DynamicColor
@@ -161,4 +164,5 @@ private:
   OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
   std::optional<QString> _fallback;
   std::optional<ColorLike> _fillColor = std::nullopt;
+  bool _template = false;
 };

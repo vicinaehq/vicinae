@@ -50,6 +50,7 @@
 #include "services/oauth/oauth-service.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/tray-host/tray-host.hpp"
+#include "qml/bar/bar-controller.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 #include "services/script-command/script-command-service.hpp"
@@ -532,6 +533,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     QObject::connect(tray.get(), &TrayService::quitRequested, []() { QCoreApplication::quit(); });
   }
 
+  std::unique_ptr<BarController> bar;
+
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();
     auto &nextTheme = next.systemTheme();
@@ -580,6 +583,13 @@ int startServer(const ServerLaunchOptions &launchOpts) {
       } else {
         tray->hide();
       }
+    }
+
+    const bool wantsBar = next.bar.enabled && Environment::isLayerShellSupported();
+    if (wantsBar && !bar) {
+      bar = std::make_unique<BarController>(ctx);
+    } else if (!wantsBar && bar) {
+      bar.reset();
     }
   };
 

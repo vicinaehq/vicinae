@@ -284,6 +284,14 @@ template <> struct Partial<Tray> {
   std::optional<bool> enabled;
 };
 
+struct Bar {
+  bool enabled = false;
+};
+
+template <> struct Partial<Bar> {
+  std::optional<bool> enabled;
+};
+
 struct GlobalShortcuts {
   std::optional<std::string> toggle = "alt+space";
   std::vector<std::string> inhibitApps;
@@ -317,6 +325,7 @@ struct ConfigValue {
 
   InputServer inputServer;
   Tray tray;
+  Bar bar;
   GlobalShortcuts globalShortcuts;
 
   FontConfig font;
@@ -373,6 +382,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> searchFilesInRoot;
   std::optional<Partial<InputServer>> inputServer;
   std::optional<Partial<Tray>> tray;
+  std::optional<Partial<Bar>> bar;
   std::optional<Partial<GlobalShortcuts>> globalShortcuts;
 
   std::optional<Partial<FontConfig>> font;

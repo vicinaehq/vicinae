@@ -163,6 +163,12 @@ void GeneralSettingsModel::setTrayEnabled(bool v) {
   cfgManager().mergeWithUser({.tray = config::Partial<config::Tray>{.enabled = v}});
 }
 
+bool GeneralSettingsModel::barEnabled() const { return cfg().bar.enabled; }
+
+void GeneralSettingsModel::setBarEnabled(bool v) {
+  cfgManager().mergeWithUser({.bar = config::Partial<config::Bar>{.enabled = v}});
+}
+
 QString GeneralSettingsModel::windowOpacity() const {
   return QString::number(
       cfg().launcherWindow.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),

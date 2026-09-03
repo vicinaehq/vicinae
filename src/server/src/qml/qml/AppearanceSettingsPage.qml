@@ -227,6 +227,26 @@ Flickable {
             }
         }
 
+        SettingsSectionLabel {
+            visible: Platform.supports("layerShell")
+            text: qsTr("Bar")
+            Layout.topMargin: 24
+            Layout.bottomMargin: 10
+        }
+
+        SettingsGroup {
+            visible: Platform.supports("layerShell")
+            SettingsRow {
+                label: qsTr("Show the Vicinae bar")
+                description: qsTr("A bar at the top of every screen with your workspaces, the focused window, the clock, now playing, tray icons, volume and power controls. Fullscreen windows cover it.")
+                showSeparator: false
+                SettingsToggle {
+                    checked: root.model.barEnabled
+                    onToggled: checked => root.model.barEnabled = checked
+                }
+            }
+        }
+
         Item {
             Layout.preferredHeight: 24
         }

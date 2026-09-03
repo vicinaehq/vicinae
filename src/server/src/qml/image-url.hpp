@@ -15,6 +15,7 @@ public:
   Q_INVOKABLE ImageUrl withFallback(const ImageUrl &fb) const;
   Q_INVOKABLE ImageUrl withBackgroundTint(const QString &tint) const;
   Q_INVOKABLE ImageUrl withFillColor(const QColor &color) const;
+  Q_INVOKABLE ImageUrl withTemplateFill(const QColor &color) const;
 
   const ImageURL &imageUrl() const;
   bool isValid() const;
