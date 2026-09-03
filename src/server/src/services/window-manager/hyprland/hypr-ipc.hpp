@@ -15,6 +15,7 @@ struct Window {
   std::string wmClass;
   WorkspaceRef workspace;
   int pid = 0;
+  int focusHistoryId = -1;
   std::array<int, 2> at{};
   std::array<int, 2> size{};
 };
@@ -33,7 +34,7 @@ template <> struct glz::meta<Hyprland::ipc::Window> {
   using T = Hyprland::ipc::Window;
   static constexpr auto value =
       object("address", &T::address, "title", &T::title, "class", &T::wmClass, "workspace", &T::workspace,
-             "pid", &T::pid, "at", &T::at, "size", &T::size);
+             "pid", &T::pid, "focusHistoryID", &T::focusHistoryId, "at", &T::at, "size", &T::size);
 };
 
 template <> struct glz::meta<Hyprland::ipc::Workspace> {

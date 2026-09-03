@@ -30,6 +30,7 @@ public:
     IconSource,
     Accessory,
     IsDraggable,
+    ShortcutTokens,
   };
 
   explicit SectionListModel(QObject *parent = nullptr);
@@ -79,6 +80,7 @@ private:
 
   void rebuildFlatList();
   void rebuildCustomRoleDefaults();
+  int indexOfItemId(const QString &id) const;
 
   ViewScope m_scope;
   std::vector<SectionSource *> m_sources;

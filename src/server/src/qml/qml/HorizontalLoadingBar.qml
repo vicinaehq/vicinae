@@ -31,9 +31,11 @@ Item {
         running: root._active
     }
 
+    property int showDelay: 250
+    property int hideDelay: 100
+
     Timer {
         id: debounce
-        interval: 100
         onTriggered: {
             if (root.loading) {
                 bar.x = -bar.width;
@@ -44,5 +46,8 @@ Item {
         }
     }
 
-    onLoadingChanged: debounce.restart()
+    onLoadingChanged: {
+        debounce.interval = loading ? root.showDelay : root.hideDelay;
+        debounce.restart();
+    }
 }

@@ -102,6 +102,7 @@ Item {
                 required property string iconSource
                 required property var itemAccessory
                 required property bool isPinned
+                required property bool isTagged
                 required property bool isDraggable
 
                 sourceComponent: isSection ? sectionComponent : itemComponent
@@ -162,6 +163,14 @@ Item {
                                     ViciImage {
                                         visible: delegateLoader.isPinned
                                         source: Img.builtin("pin").withFillColor(Theme.danger)
+                                        sourceSize.width: 14
+                                        sourceSize.height: 14
+                                        Layout.preferredWidth: 14
+                                        Layout.preferredHeight: 14
+                                    }
+                                    ViciImage {
+                                        visible: delegateLoader.isTagged && !delegateLoader.isPinned
+                                        source: Img.builtin("tag").withFillColor(Theme.accent)
                                         sourceSize.width: 14
                                         sourceSize.height: 14
                                         Layout.preferredWidth: 14
@@ -242,6 +251,7 @@ Item {
                 sourceComponent: TextViewer {
                     text: root.host.detailTextContent
                     monospace: true
+                    highlightTerms: root.host.searchTerms
                 }
             }
 

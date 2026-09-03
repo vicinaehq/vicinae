@@ -29,9 +29,11 @@ class ClipboardHistoryViewHost : public ViewHostBase {
   Q_PROPERTY(QString detailEncryptionIcon READ detailEncryptionIcon NOTIFY detailChanged)
   Q_PROPERTY(QString detailErrorTitle READ detailErrorTitle NOTIFY detailChanged)
   Q_PROPERTY(QString detailErrorDescription READ detailErrorDescription NOTIFY detailChanged)
+  Q_PROPERTY(QStringList searchTerms READ searchTerms NOTIFY searchTermsChanged)
 
 public:
   explicit ClipboardHistoryViewHost();
+  ~ClipboardHistoryViewHost() override;
 
   QUrl qmlComponentUrl() const override;
   QUrl qmlSearchAccessoryUrl() const override;
@@ -63,15 +65,18 @@ public:
   QString detailEncryptionIcon() const { return m_detailEncryptionIcon; }
   QString detailErrorTitle() const { return m_detailErrorTitle; }
   QString detailErrorDescription() const { return m_detailErrorDescription; }
+  QStringList searchTerms() const { return m_searchTerms; }
 
 signals:
   void itemCountTextChanged();
   void clipboardStatusChanged();
   void currentKindFilterChanged();
   void detailChanged();
+  void searchTermsChanged();
 
 private:
   void handleMonitoringChanged(bool monitoring);
+  void updateSearchTerms(const QString &text);
   void handleDataRetrieved(int totalCount);
   void loadDetail(const ClipboardHistoryEntry &entry);
   void clearDetail();
@@ -102,4 +107,5 @@ private:
   QString m_detailEncryptionIcon;
   QString m_detailErrorTitle;
   QString m_detailErrorDescription;
+  QStringList m_searchTerms;
 };

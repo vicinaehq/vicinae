@@ -72,6 +72,10 @@ ClipboardHistoryViewHost::ClipboardHistoryViewHost() : ViewHostBase() {
   m_kindFilterModel.setStringOptions({tr("All"), tr("Text"), tr("Images"), tr("Links"), tr("Files")});
 }
 
+ClipboardHistoryViewHost::~ClipboardHistoryViewHost() {
+  if (m_clipman) m_clipman->resumeEviction();
+}
+
 QUrl ClipboardHistoryViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/ClipboardHistoryView.qml"));
 }
@@ -88,6 +92,7 @@ void ClipboardHistoryViewHost::initialize() {
   BaseView::initialize();
 
   m_clipman = context()->services->clipman();
+  m_clipman->pauseEviction();
   m_model.setScope(ViewScope(context(), this));
 
   m_section.setOnEntrySelected([this](const ClipboardHistoryEntry &e) { loadDetail(e); });
@@ -134,12 +139,20 @@ void ClipboardHistoryViewHost::initialize() {
 
 void ClipboardHistoryViewHost::loadInitialData() {
   m_controller->setFilter(searchText());
-  m_controller->reloadSearch();
+  updateSearchTerms(searchText());
 }
 
 void ClipboardHistoryViewHost::textChanged(const QString &text) {
   m_model.setSelectFirstOnReset(true);
   m_controller->setFilter(text);
+  updateSearchTerms(text);
+}
+
+void ClipboardHistoryViewHost::updateSearchTerms(const QString &text) {
+  auto terms = ClipboardDatabase::searchTerms(text);
+  if (terms == m_searchTerms) return;
+  m_searchTerms = std::move(terms);
+  emit searchTermsChanged();
 }
 
 void ClipboardHistoryViewHost::onReactivated() { m_model.refreshActionPanel(); }

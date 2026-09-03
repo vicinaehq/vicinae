@@ -131,6 +131,15 @@ Flickable {
             }
 
             SettingsRow {
+                label: qsTr("Floating status bar")
+                description: qsTr("Let the status bar float over the content, which stays slightly visible under it. Disable to keep the content strictly above the status bar.")
+                SettingsToggle {
+                    checked: root.model.floatingStatusBar
+                    onToggled: checked => root.model.floatingStatusBar = checked
+                }
+            }
+
+            SettingsRow {
                 visible: Platform.supports("layerShell")
                 label: qsTr("Use layer shell")
                 description: qsTr("Anchor the launcher as a Wayland layer surface (wlr-layer-shell) instead of a regular window. May require reopening Vicinae to fully apply.")

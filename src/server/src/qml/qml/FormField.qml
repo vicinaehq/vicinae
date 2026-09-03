@@ -46,6 +46,10 @@ ColumnLayout {
                         children[i].filled = Qt.binding(function () {
                             return root.filled;
                         });
+                    if (children[i].accessibleLabel !== undefined)
+                        children[i].accessibleLabel = Qt.binding(function () {
+                            return root.label;
+                        });
                 }
             }
         }

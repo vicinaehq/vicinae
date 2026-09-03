@@ -78,6 +78,11 @@ in
       "CMAKE_INSTALL_LIBDIR" = "lib";
       "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
       "AUTO_ENABLE_AUTOSTART" = "OFF";
+      # nix users configure declaratively; keep onboarding on darwin for the permission prompts
+      "ENABLE_ONBOARDING" =
+        if isLinux
+        then "OFF"
+        else "ON";
       "BUNDLE_SOULVER_CORE" = "OFF";
     };
 

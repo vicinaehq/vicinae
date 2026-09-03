@@ -1,8 +1,10 @@
 #include "clipboard-history-model.hpp"
+#include "actions/app/app-actions.hpp"
 #include "common/context.hpp"
 #include "extensions/clipboard/history/clipboard-history-actions.hpp"
 #include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
+#include "services/clipboard/clipboard-db.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -10,8 +12,8 @@
 #include "utils/utils.hpp"
 #include <QCoreApplication>
 #include <QDateTime>
-#include <chrono>
 #include <qlogging.h>
+#include <qnamespace.h>
 
 void ClipboardHistorySection::setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page) {
   m_entries = page.data;
@@ -62,6 +64,7 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
   auto panel = std::make_unique<ListActionPanelState>();
   auto clipman = scope().services()->clipman();
   auto mainSection = panel->createSection();
+  auto appDb = scope().services()->appDb();
   bool const isCopyable = entry.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
 
   if (!isCopyable) {
@@ -95,6 +98,41 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
     } else {
       mainSection->addAction(paste);
       mainSection->addAction(copy);
+    }
+  }
+
+  {
+    if (entry.kind == ClipboardOfferKind::File) {
+      if (const auto data = clipman->getMainOfferData(entry.id)) {
+        auto urls = QString{*data}.split("\r\n", Qt::SkipEmptyParts);
+        if (urls.size() == 1) {
+          if (QUrl url{urls.front()}; QFile::exists(url.path())) {
+            if (auto app = appDb->findDefaultOpener(url.path())) {
+              auto open = new OpenAppAction(app, "Open", {url.path()});
+              open->setShortcut(Keybind::OpenAction);
+              mainSection->addAction(open);
+            }
+
+            auto openWith = new OpenWithAction(url.path());
+            openWith->setShortcut(Keyboard::Shortcut(Qt::Key_O, Qt::ControlModifier).shifted());
+            mainSection->addAction(openWith);
+          }
+        }
+      }
+    }
+
+    else if (entry.kind == ClipboardOfferKind::Link) {
+      if (const auto data = clipman->getMainOfferData(entry.id)) {
+        if (auto app = appDb->findDefaultOpener(*data)) {
+          auto open = new OpenAppAction(app, "Open", {*data});
+          open->setShortcut(Keybind::OpenAction);
+          mainSection->addAction(open);
+        }
+
+        auto openWith = new OpenWithAction(*data);
+        openWith->setShortcut(Keyboard::Shortcut(Qt::Key_O, Qt::ControlModifier).shifted());
+        mainSection->addAction(openWith);
+      }
     }
   }
 

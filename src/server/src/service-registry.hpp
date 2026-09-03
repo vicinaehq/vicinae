@@ -23,6 +23,7 @@ class OAuthService;
 class WindowManager;
 class WallpaperManager;
 class PowerManager;
+class AbstractTrayHost;
 class ScriptCommandService;
 class AbstractSnippetServer;
 #ifdef Q_OS_LINUX
@@ -39,6 +40,7 @@ class AbstractSelectionService;
 class TelemetryService;
 class UpdateService;
 class AudioControlService;
+class MediaControlService;
 class AppRuntime;
 class GlobalShortcutService;
 
@@ -71,6 +73,7 @@ public:
   ExtensionRegistry *extensionRegistry() const;
   OAuthService *oauthService() const;
   PowerManager *powerManager() const;
+  AbstractTrayHost *trayHost() const;
   ScriptCommandService *scriptDb() const;
   BrowserExtensionService *browserExtension() const;
 #ifdef Q_OS_LINUX
@@ -86,10 +89,12 @@ public:
   TelemetryService *telemetry() const;
   UpdateService *updateService() const;
   AudioControlService *audioControl() const;
+  MediaControlService *mediaControl() const;
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
+  void setTrayHost(std::unique_ptr<AbstractTrayHost> service);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
   void setWallpaperManager(std::unique_ptr<WallpaperManager> manager);
   void setRootItemManager(std::unique_ptr<RootItemManager> manager);
@@ -126,6 +131,7 @@ public:
   void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
   void setUpdateService(std::unique_ptr<UpdateService> service);
   void setAudioControl(std::unique_ptr<AudioControlService> service);
+  void setMediaControl(std::unique_ptr<MediaControlService> service);
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
 
@@ -150,6 +156,7 @@ private:
   std::unique_ptr<ExtensionRegistry> m_extensionRegistry;
   std::unique_ptr<OAuthService> m_oauthService;
   std::unique_ptr<PowerManager> m_powerManager;
+  std::unique_ptr<AbstractTrayHost> m_trayHost;
   std::unique_ptr<ScriptCommandService> m_scriptCommandService;
   std::unique_ptr<BrowserExtensionService> m_browserExtensionService;
 #ifdef Q_OS_LINUX
@@ -166,6 +173,7 @@ private:
   std::unique_ptr<TelemetryService> m_telemetry;
   std::unique_ptr<UpdateService> m_updateService;
   std::unique_ptr<AudioControlService> m_audioControl;
+  std::unique_ptr<MediaControlService> m_mediaControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
 };

@@ -1,5 +1,7 @@
 #include "action-panel-controller.hpp"
 #include "action-panel-model.hpp"
+#include "service-registry.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "extension/extension-action-list-view.hpp"
 #include "internal/keyboard/keyboard.hpp"
 #include "navigation-controller.hpp"
@@ -15,7 +17,11 @@ constexpr qint64 REOPEN_GUARD_MS = 300;
 } // namespace
 
 ActionPanelController::ActionPanelController(ApplicationContext &ctx, QObject *parent)
-    : QObject(parent), m_ctx(ctx) {}
+    : QObject(parent), m_ctx(ctx) {
+  if (auto *runtime = ctx.services->appRuntime()) {
+    connect(runtime, &AppRuntime::frontmostAppChanged, this, &ActionPanelController::primaryActionChanged);
+  }
+}
 
 bool ActionPanelController::hasActions() const {
   auto *r = activeRoot();

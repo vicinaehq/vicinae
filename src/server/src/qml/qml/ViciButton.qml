@@ -15,6 +15,10 @@ Rectangle {
 
     signal clicked
 
+    Accessible.role: Accessible.Button
+    Accessible.name: root.text !== "" ? root.text : root.icon
+    Accessible.onPressAction: root.clicked()
+
     readonly property bool hovered: mouseArea.containsMouse
     readonly property bool _hasIcon: root.icon !== "" || root.iconSource !== undefined
     readonly property bool _hasText: root.text !== ""

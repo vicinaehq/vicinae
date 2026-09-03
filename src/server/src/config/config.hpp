@@ -127,7 +127,7 @@ template <> struct Partial<ClockConfig> {
 struct WindowConfig {
   static constexpr float OPAQUE_OPACITY = 1.0F;
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
-  static constexpr float ACRYLIC_OPACITY = 0.9F;
+  static constexpr float BLUR_OPACITY = 0.9F;
   static constexpr float GLASS_POPUP_OPACITY = 0.2F;
   static constexpr float SURFACE_OPACITY_LIFT = 0.65F;
 
@@ -138,6 +138,7 @@ struct WindowConfig {
   std::string screen;
   BlurConfig blur;
   WindowCompactMode compactMode;
+  bool floatingStatusBar = true;
   LayerShellConfig layerShell;
   ClockConfig clock;
 
@@ -158,9 +159,7 @@ struct WindowConfig {
     if (opacity) return *opacity;
     const std::string material = resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable);
     if (material == "liquid_glass") return TRANSLUCENT_OPACITY;
-#ifdef Q_OS_WIN
-    if (material == "blur") return ACRYLIC_OPACITY;
-#endif
+    if (material == "blur") return BLUR_OPACITY;
     return OPAQUE_OPACITY;
   }
 
@@ -196,6 +195,7 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<Size>> size;
   std::optional<Partial<BlurConfig>> blur;
   std::optional<Partial<WindowCompactMode>> compactMode;
+  std::optional<bool> floatingStatusBar;
   std::optional<Partial<LayerShellConfig>> layerShell;
   std::optional<std::string> material;
   std::optional<ClockConfig> clock;
@@ -276,12 +276,16 @@ template <> struct Partial<InputServer> {
   std::optional<bool> enabled;
 };
 
+struct Tray {
+  bool enabled = true;
+};
+
+template <> struct Partial<Tray> {
+  std::optional<bool> enabled;
+};
+
 struct GlobalShortcuts {
-#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
   std::optional<std::string> toggle = "alt+space";
-#else
-  std::optional<std::string> toggle = "super+control+space";
-#endif
   std::vector<std::string> inhibitApps;
 };
 
@@ -312,6 +316,7 @@ struct ConfigValue {
   int pixmapCacheMb = 50;
 
   InputServer inputServer;
+  Tray tray;
   GlobalShortcuts globalShortcuts;
 
   FontConfig font;
@@ -367,6 +372,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
   std::optional<Partial<InputServer>> inputServer;
+  std::optional<Partial<Tray>> tray;
   std::optional<Partial<GlobalShortcuts>> globalShortcuts;
 
   std::optional<Partial<FontConfig>> font;

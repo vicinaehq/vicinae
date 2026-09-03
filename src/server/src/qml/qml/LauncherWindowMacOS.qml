@@ -1,6 +1,4 @@
 LauncherWindow {
-    readonly property real placementFraction: 1 / 3
-
     nativeChrome: true
     color: "transparent"
     shadowPadding: 0
@@ -11,8 +9,8 @@ LauncherWindow {
     minimumHeight: _contentH
     maximumHeight: _contentH
 
-    onAboutToShow: MacOSPanel.beginShow(placementFraction, _h)
-    onShown: MacOSPanel.finishShow(placementFraction, _h)
+    onAboutToShow: launcher.prepareShow()
+    onShown: launcher.finalizeShow()
 
     MacOSWindow.enabled: true
     MacOSWindow.cornerRadius: cornerRadius
@@ -23,6 +21,7 @@ LauncherWindow {
     MacOSWindow.borderWidth: Config.borderWidth
 
     MacOSPanel.enabled: true
-    MacOSPanel.windowLevel: MacOSPanel.Status
-    MacOSPanel.onResignKey: Nav.closeWindow()
+    MacOSPanel.windowLevel: launcher.filePicking ? MacOSPanel.Floating : MacOSPanel.Status
+    MacOSPanel.onResignKey: if (!launcher.filePicking)
+        Nav.closeWindow()
 }

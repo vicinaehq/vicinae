@@ -4,7 +4,7 @@
 #include "services/window-material/null-window-material-backend.hpp"
 #include "services/window-material/window-material-backend.hpp"
 #ifdef Q_OS_LINUX
-#include <QGuiApplication>
+#include "environment.hpp"
 #include "services/window-material/ext-background-effect-v1-manager.hpp"
 #endif
 
@@ -26,9 +26,7 @@ public:
 private:
   static std::unique_ptr<WindowMaterialBackend> createBackend() {
 #ifdef Q_OS_LINUX
-    if (QGuiApplication::platformName() == "wayland") {
-      return std::make_unique<ExtBackgroundEffectV1Manager>();
-    }
+    if (Environment::isWaylandSession()) { return std::make_unique<ExtBackgroundEffectV1Manager>(); }
 #endif
     return std::make_unique<NullWindowMaterialBackend>();
   }

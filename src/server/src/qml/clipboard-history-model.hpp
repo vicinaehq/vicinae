@@ -6,7 +6,7 @@
 
 class ClipboardHistorySection : public SectionSource {
 public:
-  enum ExtraRole { IsPinned = 100 };
+  enum ExtraRole { IsPinned = 100, IsTagged };
   enum class DefaultAction { Copy, Paste };
 
   void setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page);
@@ -29,10 +29,13 @@ public:
 
   QVariant customData(int i, int role) const override {
     if (role == IsPinned) return m_entries[i].pinnedAt != 0;
+    if (role == IsTagged) return !m_entries[i].keywords.isEmpty();
     return {};
   }
 
-  QHash<int, QByteArray> customRoleNames() const override { return {{IsPinned, "isPinned"}}; }
+  QHash<int, QByteArray> customRoleNames() const override {
+    return {{IsPinned, "isPinned"}, {IsTagged, "isTagged"}};
+  }
 
 protected:
   QString itemId(int i) const override;

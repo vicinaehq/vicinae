@@ -21,6 +21,18 @@ cp extra/vicinae.png ${APPDIR}
 # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57
 cp /usr/lib/$(uname -m)-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
 
+# Our GCC toolchain is newer than the libstdc++ shipped by LTS distros, so the
+# binaries can reference GLIBCXX versions the host doesn't have. linuxdeploy
+# excludelists the GCC runtime, so bundle it ourselves; RUNPATH ($ORIGIN/../lib)
+# makes our binaries prefer it over the host copy (#1841).
+for lib in libstdc++.so.6 libgcc_s.so.1; do
+	src=$(${CXX:-g++} -print-file-name=$lib)
+	case "$src" in
+		/*) cp -L "$src" ${APPDIR}/usr/lib/ ;;
+		*) die "$lib not found in toolchain" ;;
+	esac
+done
+
 # qtkeychain dlopens libsecret instead of linking it, so linuxdeploy can't see it in the
 # dependency tree and the host copy can't be loaded next to our bundled glib/openssl.
 # Without it qtkeychain silently falls back to kwallet or errors out (#1632).

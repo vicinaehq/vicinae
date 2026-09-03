@@ -26,6 +26,7 @@ GenericListView {
         required property string iconSource
         required property var itemAccessory
         required property bool isDraggable
+        required property var shortcutTokens
 
         sourceComponent: isSection ? sectionComponent : itemComponent
 
@@ -47,6 +48,7 @@ GenericListView {
                 itemAlias: ""
                 itemIsActive: false
                 itemAccessory: delegateLoader.itemAccessory
+                itemShortcutTokens: delegateLoader.shortcutTokens
                 selected: commandListView.currentIndex === delegateLoader.index
                 draggable: delegateLoader.isDraggable
                 onClicked: commandListView.currentIndex = delegateLoader.index

@@ -6,10 +6,15 @@
 class TrayService : public QObject {
   Q_OBJECT
 
+public:
+  enum class Link { Sponsor, Discord, Follow };
+  Q_ENUM(Link)
+
 signals:
   void toggleRequested();
   void openSettingsRequested(const QString &tab);
   void checkForUpdatesRequested();
+  void openLinkRequested(Link link);
   void quitRequested();
 
 public:

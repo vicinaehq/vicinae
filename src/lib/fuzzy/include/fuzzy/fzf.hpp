@@ -66,13 +66,20 @@ enum class Scheme { Default, Path, History };
 class Matcher;
 inline const Matcher &threadLocalMatcher();
 
-// A query prepared for scoring many items: split into words, each with the best score it can
-// reach (`self`, the word matched against itself), so per-item scoring never recomputes it.
+// A query prepared for scoring many items: split into words, each expanded into its matchable
+// variants (the word itself, then its transliterations), each with the best score it can reach
+// (`self`, the variant matched against itself — transliterations are byte-shorter than their
+// source script, so each needs its own ceiling, #1859).
 // Ceilings depend on the matcher scheme; the default matcher is used unless one is given.
 struct Query {
   struct Word {
+    struct Variant {
+      std::string text;
+      int self = 0;
+    };
+
     std::string text;
-    int self = 0;
+    std::vector<Variant> variants;
   };
 
   std::string text;
@@ -146,23 +153,40 @@ public:
     int minQuality = 100;
 
     for (const auto &word : query.words) {
-      int maxWeighted = 0;
-      int maxRaw = 0;
-      auto score = [&](const WeightedString &str) {
-        auto const r = match(str.str, word.text);
-        if (r.coherent) { maxRaw = std::max(maxRaw, r.score); }
-        maxWeighted = std::max(maxWeighted, static_cast<int>(r.score * str.weight));
-      };
-      for (const auto &s : range1)
-        score(s);
-      for (const auto &s : range2)
-        score(s);
+      int bestWeighted = 0;
+      int bestWeightedRatio = 0;
+      int bestSelf = 0;
+      int quality = 0;
 
-      if (!maxWeighted) return {};
+      for (const auto &variant : word.variants) {
+        if (variant.self <= 0) continue;
 
-      minQuality = std::min(minQuality, word.self > 0 ? maxRaw * 100 / word.self : 0);
-      weightedSum += maxWeighted;
-      selfSum += word.self;
+        int maxWeighted = 0;
+        int maxRaw = 0;
+        auto score = [&](const WeightedString &str) {
+          auto const r = match_folded(str.str, variant.text);
+          if (r.coherent) { maxRaw = std::max(maxRaw, r.score); }
+          maxWeighted = std::max(maxWeighted, static_cast<int>(r.score * str.weight));
+        };
+        for (const auto &s : range1)
+          score(s);
+        for (const auto &s : range2)
+          score(s);
+
+        int const weightedRatio = maxWeighted * 100 / variant.self;
+        if (maxWeighted && (bestWeighted == 0 || weightedRatio > bestWeightedRatio)) {
+          bestWeighted = maxWeighted;
+          bestWeightedRatio = weightedRatio;
+          bestSelf = variant.self;
+        }
+        quality = std::max(quality, maxRaw * 100 / variant.self);
+      }
+
+      if (!bestWeighted) return {};
+
+      minQuality = std::min(minQuality, quality);
+      weightedSum += bestWeighted;
+      selfSum += bestSelf;
     }
 
     if (query.words.empty() || selfSum == 0) return {};
@@ -183,37 +207,35 @@ public:
   }
 
   Result match(std::string_view text, std::string_view pattern, bool with_pos = false) const {
-    const auto match = [&](std::string_view candidate) {
-      if (!has_non_ascii(text) && !has_non_ascii(candidate)) {
-        return match_ascii(text, candidate, with_pos);
-      }
-
-      fold_text(text);
-      const std::string_view ftext{m_fold_text.data(), m_fold_text.size()};
-      const std::string_view fpat = fold_pattern(candidate);
-
-      Result result = match_ascii(ftext, fpat, with_pos);
-      if (result.matched()) {
-        result.start = m_fold_off[result.start];
-        result.end = m_fold_off[result.end];
-        for (int &position : result.positions) {
-          position = m_fold_off[position];
-        }
-      }
-      return result;
-    };
-
-    Result best = match(pattern);
+    Result best = match_folded(text, pattern, with_pos);
     if (!has_non_ascii(pattern) || !needsTransliteration(pattern)) { return best; }
 
     for (const auto scheme : {TranslitScheme::Primary, TranslitScheme::Alternate}) {
       if (!transliterate(pattern, m_translit_pattern, scheme) || m_translit_pattern == pattern) { continue; }
 
-      Result candidate = match(m_translit_pattern);
+      Result candidate = match_folded(text, m_translit_pattern, with_pos);
       if (candidate.score > best.score) { best = std::move(candidate); }
     }
 
     return best;
+  }
+
+  Result match_folded(std::string_view text, std::string_view pattern, bool with_pos = false) const {
+    if (!has_non_ascii(text) && !has_non_ascii(pattern)) { return match_ascii(text, pattern, with_pos); }
+
+    fold_text(text);
+    const std::string_view ftext{m_fold_text.data(), m_fold_text.size()};
+    const std::string_view fpat = fold_pattern(pattern);
+
+    Result result = match_ascii(ftext, fpat, with_pos);
+    if (result.matched()) {
+      result.start = m_fold_off[result.start];
+      result.end = m_fold_off[result.end];
+      for (int &position : result.positions) {
+        position = m_fold_off[position];
+      }
+    }
+    return result;
   }
 
   Result match_ascii(std::string_view text, std::string_view pattern, bool with_pos = false) const {
@@ -614,9 +636,25 @@ inline const Matcher &threadLocalMatcher() {
 
 inline Query::Query(std::string_view text, const Matcher &matcher) : text(text) {
   for (auto &&part : std::views::split(std::string_view{this->text}, std::string_view{" "})) {
-    std::string_view const word{part};
-    if (word.empty()) continue;
-    words.push_back({.text = std::string(word), .self = matcher.match(word, word).score});
+    std::string_view const wordText{part};
+    if (wordText.empty()) continue;
+
+    Word word{.text = std::string(wordText)};
+    word.variants.push_back({.text = word.text, .self = matcher.match_folded(word.text, word.text).score});
+
+    if (needsTransliteration(word.text)) {
+      for (const auto scheme : {TranslitScheme::Primary, TranslitScheme::Alternate}) {
+        auto translit = transliterate(word.text, scheme);
+        if (!translit) continue;
+        auto const exists =
+            std::ranges::any_of(word.variants, [&](const Word::Variant &v) { return v.text == *translit; });
+        if (exists) continue;
+        int const self = matcher.match_folded(*translit, *translit).score;
+        word.variants.push_back({.text = std::move(*translit), .self = self});
+      }
+    }
+
+    words.push_back(std::move(word));
   }
 }
 

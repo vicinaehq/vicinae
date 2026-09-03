@@ -30,4 +30,5 @@ private:
   std::optional<QString> m_bundleIdentifier;
   QString m_displayName;
   QString m_executable;
+  mutable std::optional<std::filesystem::path> m_iconPath;
 };

@@ -49,6 +49,8 @@ Item {
 
             TextInput {
                 id: searchInput
+                Accessible.name: "search-input"
+                Accessible.description: launcher.searchPlaceholder
                 anchors.fill: parent
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Theme.fontFamily
@@ -357,6 +359,10 @@ Item {
             if (!launcher.hasCompleter && !searchInput.activeFocus) {
                 searchInput.forceActiveFocus();
             }
+        }
+        function onCompleterFocusRequested() {
+            if (launcher.hasCompleter)
+                argCompleter.focusFirst();
         }
         function onCompleterValidationFailed() {
             argCompleter.validate();

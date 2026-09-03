@@ -43,6 +43,7 @@ export {
 	trash,
 	updateCommandMetadata,
 	useNavigation,
+	launchCommand,
 } from "@vicinae/api";
 export { Clipboard } from "./clipboard.js";
 export { BrowserExtension } from "./browser.js";
@@ -57,7 +58,6 @@ export {
 	showInFinder,
 } from "./system.js";
 export {
-	launchCommand,
 	MenuBarExtra,
 	unsupported,
 } from "./unsupported.js";

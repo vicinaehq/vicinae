@@ -223,6 +223,11 @@ Popup {
                 readonly property bool _isHighlighted: index === root._highlightedIndex
                 readonly property bool _isSelected: itemType === "item" && root.currentItemId !== "" && itemData && itemData.id === root.currentItemId
 
+                Accessible.role: del.itemType === "item" ? Accessible.ListItem : Accessible.Heading
+                Accessible.name: del.title
+                Accessible.selectable: del.itemType === "item"
+                Accessible.selected: del._isSelected || del._isHighlighted
+
                 RowLayout {
                     id: sectionRow
                     visible: del.itemType === "section"

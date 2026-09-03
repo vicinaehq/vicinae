@@ -23,6 +23,9 @@
 #ifdef Q_OS_MACOS
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
 #endif
+#ifdef Q_OS_LINUX
+#include "root-search/kde-settings/kde-settings-root-provider.hpp"
+#endif
 #ifdef Q_OS_WIN
 #include "root-search/control-panel/control-panel-root-provider.hpp"
 #include "root-search/windows-settings/windows-settings-root-provider.hpp"
@@ -46,6 +49,7 @@
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include "services/power-manager/power-manager.hpp"
+#include "services/tray-host/tray-host.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 #include "services/script-command/script-command-service.hpp"
@@ -74,6 +78,7 @@
 #include "services/snippet/null-snippet-server.hpp"
 #endif
 #include "services/audio-control/audio-control-service.hpp"
+#include "services/media-control/media-control-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/paste/dummy-paste-service.hpp"
 #include "services/selection/dummy-selection-service.hpp"
@@ -237,6 +242,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QQuickStyle::setStyle(QStringLiteral("Basic"));
 
   Omnicast::ensureDirectories();
+  OnboardingWindow::captureFreshInstall();
 
 #ifdef AUTO_ENABLE_AUTOSTART
   vicinae::macos::registerLoginItemOnce();
@@ -268,7 +274,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto platformPaste =
         std::unique_ptr<AbstractPasteService>(std::make_unique<LinuxPasteService>(*inputServer));
     auto selectionService =
-        std::unique_ptr<AbstractSelectionService>(std::make_unique<LinuxSelectionService>());
+        std::unique_ptr<AbstractSelectionService>(std::make_unique<LinuxSelectionService>(*clipboardManager));
 #elif defined(Q_OS_MACOS)
     auto snippetServer = std::make_unique<MacosSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<MacosPasteService>());
@@ -346,8 +352,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
+    registry->setTrayHost(createTrayHost());
     registry->setGlobalShortcuts(std::move(globalShortcutService));
     registry->setAudioControl(std::make_unique<AudioControlService>());
+    registry->setMediaControl(std::make_unique<MediaControlService>());
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
     registry->setWindowMaterialManager(std::make_unique<WindowMaterialManager>());
@@ -419,6 +427,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #ifdef Q_OS_MACOS
     root->loadProvider(std::make_unique<MacSettingsRootProvider>());
 #endif
+#ifdef Q_OS_LINUX
+    if (Environment::isPlasmaDesktop()) {
+      root->loadProvider(std::make_unique<KdeSettingsRootProvider>(*registry->appDb()));
+    }
+#endif
 #ifdef Q_OS_WIN
     root->loadProvider(std::make_unique<WinSettingsRootProvider>());
     root->loadProvider(std::make_unique<WinControlPanelRootProvider>());
@@ -474,6 +487,51 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   ExtensionIntervalScheduler intervalScheduler(ctx);
   intervalScheduler.rebuild();
 
+  auto tray = createTrayService();
+  if (tray) {
+    tray->setVersion(QStringLiteral(VICINAE_GIT_TAG " [" VICINAE_GIT_COMMIT_HASH "]"));
+    QObject::connect(tray.get(), &TrayService::toggleRequested, [&ctx]() { ctx.navigation->toggleWindow(); });
+    QObject::connect(tray.get(), &TrayService::openSettingsRequested, [&ctx](const QString &tab) {
+      if (tab.isEmpty()) {
+        ctx.settings->openWindow();
+      } else {
+        ctx.settings->openTab(tab);
+      }
+    });
+    auto *updates = ServiceRegistry::instance()->updateService();
+
+    QObject::connect(tray.get(), &TrayService::checkForUpdatesRequested, [&ctx, updates]() {
+      if (updates->available()) {
+        ctx.navigation->popToRoot();
+        ctx.navigation->showWindow();
+      } else {
+        updates->checkNow();
+      }
+    });
+
+    auto syncTrayUpdate = [tray = tray.get(), updates]() {
+      tray->setAvailableUpdate(updates->available() ? updates->available()->tag : QString());
+    };
+    QObject::connect(updates, &UpdateService::updateChanged, tray.get(), syncTrayUpdate);
+    syncTrayUpdate();
+    tray->setCheckForUpdatesVisible(updates->checksSupported());
+    QObject::connect(tray.get(), &TrayService::openLinkRequested, [&ctx](TrayService::Link link) {
+      const QString &url = [link]() -> const QString & {
+        switch (link) {
+        case TrayService::Link::Discord:
+          return Omnicast::DISCORD_INVITE_LINK;
+        case TrayService::Link::Follow:
+          return Omnicast::X_PROFILE_LINK;
+        case TrayService::Link::Sponsor:
+          break;
+        }
+        return Omnicast::GH_SPONSOR_LINK;
+      }();
+      ctx.services->appDb()->openTarget(url);
+    });
+    QObject::connect(tray.get(), &TrayService::quitRequested, []() { QCoreApplication::quit(); });
+  }
+
   auto configChanged = [&](const config::ConfigValue &next, const config::ConfigValue &prev) {
     auto &theme = ThemeService::instance();
     auto &nextTheme = next.systemTheme();
@@ -515,6 +573,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #endif
 
     ServiceRegistry::instance()->telemetry()->setEnabled(next.telemetry.systemInfo);
+
+    if (tray) {
+      if (next.tray.enabled) {
+        tray->show();
+      } else {
+        tray->hide();
+      }
+    }
   };
 
   auto cfgService = ServiceRegistry::instance()->config();
@@ -562,38 +628,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QGuiApplication::setFont(resolveAppFont(cfgService->value().font));
 
   configChanged(cfgService->value(), {});
-
-  auto tray = createTrayService();
-  if (tray) {
-    tray->setVersion(QStringLiteral(VICINAE_GIT_TAG " [" VICINAE_GIT_COMMIT_HASH "]"));
-    QObject::connect(tray.get(), &TrayService::toggleRequested, [&ctx]() { ctx.navigation->toggleWindow(); });
-    QObject::connect(tray.get(), &TrayService::openSettingsRequested, [&ctx](const QString &tab) {
-      if (tab.isEmpty()) {
-        ctx.settings->openWindow();
-      } else {
-        ctx.settings->openTab(tab);
-      }
-    });
-    auto *updates = ServiceRegistry::instance()->updateService();
-
-    QObject::connect(tray.get(), &TrayService::checkForUpdatesRequested, [&ctx, updates]() {
-      if (updates->available()) {
-        ctx.navigation->popToRoot();
-        ctx.navigation->showWindow();
-      } else {
-        updates->checkNow();
-      }
-    });
-
-    auto syncTrayUpdate = [tray = tray.get(), updates]() {
-      tray->setAvailableUpdate(updates->available() ? updates->available()->tag : QString());
-    };
-    QObject::connect(updates, &UpdateService::updateChanged, tray.get(), syncTrayUpdate);
-    syncTrayUpdate();
-    tray->setCheckForUpdatesVisible(updates->checksSupported());
-    QObject::connect(tray.get(), &TrayService::quitRequested, []() { QCoreApplication::quit(); });
-    tray->show();
-  }
 
   LauncherWindow const qmlWindow(ctx);
 

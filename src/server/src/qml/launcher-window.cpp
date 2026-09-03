@@ -44,11 +44,29 @@
 #include <QKeyEvent>
 #include <qcoreevent.h>
 #include <qlogging.h>
+#include <algorithm>
+#include <filesystem>
 #include <memory>
+#include <glaze/glaze.hpp>
 
 #ifdef __GLIBC__
 #include <malloc.h>
 #endif
+
+struct SavedWindowPosition {
+  std::string screen;
+  int x = 0;
+  int y = 0;
+};
+
+namespace {
+
+constexpr int DRAG_SNAP_DISTANCE = 32;
+constexpr int MIN_VISIBLE_ON_RESTORE = 40;
+
+std::filesystem::path windowPositionPath() { return Omnicast::stateDir() / "launcher-window.json"; }
+
+} // namespace
 
 LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)),
@@ -122,8 +140,11 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   // Track window activation so toggleWindow() and closeOnFocusLoss work correctly
   if (m_window) {
     nav->setWindow(m_window);
-    connect(m_window, &QQuickWindow::activeChanged, this,
-            [this]() { m_ctx.navigation->setWindowActivated(m_window->isActive()); });
+    connect(m_window, &QQuickWindow::activeChanged, this, [this]() {
+      // losing focus to our own file dialog is not user focus loss
+      if (m_pendingLauncherFileChoice) return;
+      m_ctx.navigation->setWindowActivated(m_window->isActive());
+    });
     m_window->installEventFilter(this);
   }
 
@@ -240,6 +261,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
             emit navigationStatusChanged();
           });
 
+  connect(nav, &NavigationController::completerFocusedRequested, this,
+          &LauncherWindow::completerFocusRequested);
   connect(nav, &NavigationController::completionCreated, this, [this](const CompleterState &state) {
     m_hasCompleter = true;
     m_completerArgs.clear();
@@ -319,14 +342,20 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(fileChooser, &FileChooserService::dialogOpened, this, [this]() {
     if (!m_window || !m_window->isActive()) return;
     m_pendingLauncherFileChoice = true;
+    emit filePickingChanged();
     setExclusiveFocus(false);
     if (isLayerShellActive()) { m_ctx.navigation->closeWindow({.popToRootType = PopToRootType::Suspended}); }
   });
   connect(fileChooser, &FileChooserService::dialogClosed, this, [this]() {
     if (m_pendingLauncherFileChoice) {
-      setExclusiveFocus(true);
-      if (isLayerShellActive()) { m_ctx.navigation->showWindow(); }
       m_pendingLauncherFileChoice = false;
+      emit filePickingChanged();
+      setExclusiveFocus(true);
+      if (isLayerShellActive()) {
+        m_ctx.navigation->showWindow();
+      } else if (m_window) {
+        m_window->requestActivate();
+      }
     }
   });
   connect(nav, &NavigationController::viewPoped, this, [this, fileChooser](const BaseView *) {
@@ -387,7 +416,9 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
   else if (event->type() == QEvent::MouseMove && m_closeOnFocusLoss) {
     auto *me = static_cast<QMouseEvent *>(event); // NOLINT
     QRect const contentRect(0, 0, m_window->width(), m_window->height());
-    if (!contentRect.contains(me->position().toPoint())) { m_ctx.navigation->closeWindow(); }
+    if (me->buttons() == Qt::NoButton && !contentRect.contains(me->position().toPoint())) {
+      m_ctx.navigation->closeWindow();
+    }
   }
 
   return QObject::eventFilter(obj, event);
@@ -410,6 +441,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
 #endif
   } else {
     LauncherWindowPlatform::suppressHeldKeyReleases();
+    if (m_dragOverlayVisible) endWindowDrag();
     m_window->hide();
     updateWindowTitle();
     m_cacheEvictionTimer.start();
@@ -622,9 +654,155 @@ bool LauncherWindow::canPositionWindow() { return Environment::supportsArbitrary
 
 void LauncherWindow::positionOnCursorScreen() {
   if (!m_window || !canPositionWindow()) return;
-  const QRect g = cursorScreenGeometry();
-  m_window->setX(g.x() + (g.width() - m_window->width()) / 2);
-  m_window->setY(g.y() + (g.height() - m_window->height()) / 3);
+  auto *screen = QGuiApplication::screenAt(QCursor::pos());
+  if (!screen) screen = QGuiApplication::primaryScreen();
+  if (!screen) return;
+
+  // place as if fully expanded so compact mode keeps the same top edge
+  const QRect avail = screen->availableGeometry();
+  const int refHeight =
+      m_overrideHeight ? m_overrideHeight : m_ctx.services->config()->value().launcherWindow.size.height;
+  m_window->setPosition(avail.left() + (avail.width() - m_window->width()) / 2,
+                        avail.top() + (avail.height() - refHeight) / 3);
+}
+
+bool LauncherWindow::restoreWindowPosition() {
+  if (!m_window || !canPositionWindow()) return false;
+
+  SavedWindowPosition saved;
+  std::string buf;
+  if (glz::read_file_json(saved, windowPositionPath().string(), buf)) return false;
+
+  const auto screens = QGuiApplication::screens();
+  auto it = std::ranges::find(screens, QString::fromStdString(saved.screen), &QScreen::name);
+  if (it == screens.end()) return false;
+
+  // exact restore, deliberately unclamped: partial-offscreen placements are legitimate
+  const QPoint pos = (*it)->geometry().topLeft() + QPoint(saved.x, saved.y);
+  const QRect winRect(pos, m_window->size());
+  const QRect visible = winRect & (*it)->virtualGeometry();
+  if (visible.width() < MIN_VISIBLE_ON_RESTORE || visible.height() < MIN_VISIBLE_ON_RESTORE) return false;
+
+  m_window->setPosition(pos);
+  return true;
+}
+
+void LauncherWindow::applyShowPlacement() {
+  if (!restoreWindowPosition()) positionOnCursorScreen();
+}
+
+// AppKit shifts this panel ~40px upward after orderFront (source unidentified, immune to
+// animationBehavior=None), hence: show at opacity 0, re-assert placement next tick, reveal.
+void LauncherWindow::prepareShow() {
+  if (!m_window) return;
+  m_window->setOpacity(0.0);
+  applyShowPlacement();
+}
+
+void LauncherWindow::finalizeShow() {
+  QTimer::singleShot(0, this, [this]() {
+    if (!m_window) return;
+    applyShowPlacement();
+    m_window->setOpacity(1.0);
+  });
+}
+
+void LauncherWindow::beginWindowDrag() {
+  if (!m_window || !canPositionWindow() || m_dragOverlayVisible) return;
+
+  m_dragOffset = QCursor::pos() - m_window->position();
+  auto *screen = QGuiApplication::screenAt(QCursor::pos());
+  if (!screen) screen = m_window->screen();
+  computeDragAnchors(screen);
+  updateActiveDragAnchor(m_window->position());
+  m_dragOverlayVisible = true;
+  emit dragOverlayChanged();
+  LauncherWindowPlatform::prepareOverlayWindow(m_dragOverlayWindow);
+}
+
+void LauncherWindow::registerDragOverlay(QQuickWindow *window) { m_dragOverlayWindow = window; }
+
+void LauncherWindow::updateWindowDrag() {
+  if (!m_window || !m_dragOverlayVisible) return;
+
+  const QPoint cursor = QCursor::pos();
+  const QPoint pos = cursor - m_dragOffset;
+  auto *screen = QGuiApplication::screenAt(cursor);
+  if (screen && screen != m_dragScreen) computeDragAnchors(screen);
+  m_window->setPosition(pos);
+  updateActiveDragAnchor(pos);
+}
+
+void LauncherWindow::endWindowDrag() {
+  if (!m_dragOverlayVisible) return;
+
+  if (m_dragActiveAnchor >= 0) m_window->setPosition(m_dragAnchorTargets[m_dragActiveAnchor]);
+  saveWindowPosition();
+  m_dragOverlayVisible = false;
+  emit dragOverlayChanged();
+  if (m_dragActiveAnchor != -1) {
+    m_dragActiveAnchor = -1;
+    emit dragActiveAnchorChanged();
+  }
+}
+
+void LauncherWindow::computeDragAnchors(QScreen *screen) {
+  m_dragScreen = screen;
+  m_dragAnchorTargets.clear();
+  m_dragAnchors.clear();
+  m_dragGuideXs.clear();
+  m_dragGuideYs.clear();
+  if (!screen || !m_window) return;
+
+  const QRect avail = screen->availableGeometry();
+  const int w = m_window->width();
+  const int h = m_window->height();
+  const int xs[] = {avail.left(), avail.left() + (avail.width() - w) / 2, avail.left() + avail.width() - w};
+  const int ys[] = {avail.top(), avail.top() + (avail.height() - h) / 2, avail.top() + avail.height() - h};
+
+  for (int y : ys) {
+    for (int x : xs) {
+      m_dragAnchorTargets.push_back(QPoint(x, y));
+      const QPoint center = QPoint(x, y) - screen->geometry().topLeft() + QPoint(w / 2, h / 2);
+      m_dragAnchors.push_back(
+          QVariantMap{{QStringLiteral("x"), center.x()}, {QStringLiteral("y"), center.y()}});
+      if (!m_dragGuideXs.contains(center.x())) m_dragGuideXs.push_back(center.x());
+      if (!m_dragGuideYs.contains(center.y())) m_dragGuideYs.push_back(center.y());
+    }
+  }
+
+  m_dragOverlayGeometry = screen->geometry();
+  emit dragOverlayChanged();
+}
+
+void LauncherWindow::updateActiveDragAnchor(QPoint windowPos) {
+  int best = -1;
+  int bestDist = DRAG_SNAP_DISTANCE * DRAG_SNAP_DISTANCE;
+  for (int i = 0; i < m_dragAnchorTargets.size(); ++i) {
+    const QPoint d = windowPos - m_dragAnchorTargets[i];
+    const int dist = d.x() * d.x() + d.y() * d.y();
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = i;
+    }
+  }
+  if (m_dragActiveAnchor != best) {
+    m_dragActiveAnchor = best;
+    emit dragActiveAnchorChanged();
+  }
+}
+
+void LauncherWindow::saveWindowPosition() {
+  if (!m_window) return;
+  QScreen *screen = m_window->screen();
+  if (!screen) return;
+
+  const QPoint rel = m_window->position() - screen->geometry().topLeft();
+  const SavedWindowPosition saved{.screen = screen->name().toStdString(), .x = rel.x(), .y = rel.y()};
+  std::string buf;
+  if (auto const error = glz::write_file_json(saved, windowPositionPath().string(), buf)) {
+    qWarning() << "Failed to write launcher window position" << windowPositionPath().string();
+  }
 }
 
 void LauncherWindow::openFooterMenu() { m_footerPanel->toggle(true); }
@@ -646,8 +824,8 @@ void LauncherWindow::buildFooterMenu() {
                                            ctx->navigation->closeWindow();
                                            ctx->settings->openTab(QStringLiteral("shortcuts"));
                                          }));
-  appSection->addAction(new StaticAction(QStringLiteral("Extension Store"),
-                                         ImageURL::builtin(BuiltinIcon::Cart), [](ApplicationContext *ctx) {
+  appSection->addAction(new StaticAction(tr("Extension Store"), ImageURL::builtin(BuiltinIcon::Cart),
+                                         [](ApplicationContext *ctx) {
                                            ctx->navigation->popToRoot();
                                            ctx->navigation->clearSearchText();
                                            ctx->navigation->pushView(new VicinaeStoreViewHost);

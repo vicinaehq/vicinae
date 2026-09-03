@@ -22,7 +22,6 @@ const QHash<int, QByteArray> &customRoleNames() {
   static const QHash<int, QByteArray> roles = {
       {ItemType, "itemType"},
       {Alias, "alias"},
-      {ShortcutTokens, "shortcutTokens"},
       {IsActive, "isActive"},
       {AccessoryText, "accessoryText"},
       {AccessoryColor, "accessoryColor"},
@@ -38,10 +37,17 @@ const QHash<int, QByteArray> &customRoleNames() {
 
 const QHash<int, QVariant> &customRoleDefaults() {
   static const QHash<int, QVariant> defaults = {
-      {ItemType, QString()},   {Alias, QString()},          {ShortcutTokens, QVariantList()},
-      {IsActive, false},       {AccessoryText, QString()},  {AccessoryColor, QString()},
-      {IsCalculator, false},   {CalcQuestion, QString()},   {CalcQuestionUnit, QString()},
-      {CalcAnswer, QString()}, {CalcAnswerUnit, QString()}, {IsFile, false},
+      {ItemType, QString()},
+      {Alias, QString()},
+      {IsActive, false},
+      {AccessoryText, QString()},
+      {AccessoryColor, QString()},
+      {IsCalculator, false},
+      {CalcQuestion, QString()},
+      {CalcQuestionUnit, QString()},
+      {CalcAnswer, QString()},
+      {CalcAnswerUnit, QString()},
+      {IsFile, false},
   };
   return defaults;
 }
@@ -80,11 +86,11 @@ QVariant rootItemAccessoryData(const RootItem *item, int role) {
   return {};
 }
 
-QVariantList shortcutTokensFor(const RootItemMetadata &meta) {
+Keyboard::Shortcut shortcutFor(const RootItemMetadata &meta) {
   if (!meta.shortcut || meta.shortcut->empty()) return {};
   auto *service = ServiceRegistry::instance()->globalShortcuts();
   if (!service || !service->isSupported()) return {};
-  return Keyboard::Shortcut::fromString(QString::fromStdString(*meta.shortcut)).toDisplayTokens();
+  return Keyboard::Shortcut::fromString(QString::fromStdString(*meta.shortcut));
 }
 
 } // namespace
@@ -296,8 +302,6 @@ QVariant RootFavoritesSection::customData(int i, int role) const {
     auto meta = m_manager->itemMetadata(m_items[i]->uniqueId());
     return QString::fromStdString(meta.alias.value_or(""));
   }
-  case ShortcutTokens:
-    return shortcutTokensFor(m_manager->itemMetadata(m_items[i]->uniqueId()));
   case IsActive:
     return m_items[i]->isActive();
   case AccessoryText:
@@ -306,6 +310,11 @@ QVariant RootFavoritesSection::customData(int i, int role) const {
   default:
     return {};
   }
+}
+
+Keyboard::Shortcut RootFavoritesSection::itemShortcut(int i) const {
+  if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
+  return shortcutFor(m_manager->itemMetadata(m_items[i]->uniqueId()));
 }
 
 QHash<int, QByteArray> RootFavoritesSection::customRoleNames() const {
@@ -356,8 +365,6 @@ QVariant RootResultsSection::customData(int i, int role) const {
   switch (role) {
   case Alias:
     return QString::fromStdString(m_items[i].meta.alias.value_or(""));
-  case ShortcutTokens:
-    return shortcutTokensFor(m_items[i].meta);
   case IsActive:
     return m_items[i].item->isActive();
   case AccessoryText:
@@ -366,6 +373,11 @@ QVariant RootResultsSection::customData(int i, int role) const {
   default:
     return {};
   }
+}
+
+Keyboard::Shortcut RootResultsSection::itemShortcut(int i) const {
+  if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i].item) return {};
+  return shortcutFor(m_items[i].meta);
 }
 
 QHash<int, QByteArray> RootResultsSection::customRoleNames() const { return root_search::customRoleNames(); }

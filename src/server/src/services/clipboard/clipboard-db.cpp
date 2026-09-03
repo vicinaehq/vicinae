@@ -1,7 +1,28 @@
 #include "clipboard-db.hpp"
 #include "utils/migration-manager/migration-manager.hpp"
 #include "vicinae.hpp"
+#include <chrono>
+#include <filesystem>
 #include <qlogging.h>
+#include <sstream>
+
+extern "C" int vicinaeFuzzyTrigramInit(sqlite3 *, char **, const void *);
+
+static constexpr qsizetype MAX_INDEXED_CONTENT_SIZE = 1 << 16;
+
+// fuzzy_trigram strips separators: a term without a 3+ run of word chars ("->>", "a!b")
+// yields no trigrams, so MATCH would find nothing and the instr scan must be used instead
+static bool hasTrigramRun(const QString &word) {
+  int run = 0;
+
+  for (QChar const c : word) {
+    bool const wordChar = c.unicode() >= 0x80 || c.isLetterOrNumber();
+    run = wordChar ? run + 1 : 0;
+    if (run >= 3) return true;
+  }
+
+  return false;
+}
 
 static constexpr const char *CLIPBOARD_PRAGMAS[] = {
     "PRAGMA journal_mode = WAL", "PRAGMA synchronous = normal", "PRAGMA journal_size_limit = 6144000",
@@ -42,8 +63,19 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
   response.data.reserve(limit);
 
   QString queryString;
+  QStringList matchPhrases;
+  QStringList shortTerms;
 
-  bool const hasFilters = !opts.query.isEmpty() || opts.kind.has_value();
+  for (const QString &word : searchTerms(opts.query)) {
+    if (hasTrigramRun(word)) {
+      matchPhrases << '"' + QString(word).replace('"', "\"\"") + '"';
+    } else {
+      shortTerms << word;
+    }
+  }
+
+  bool const hasQuery = !matchPhrases.isEmpty() || !shortTerms.isEmpty();
+  bool const hasFilters = hasQuery || opts.kind.has_value();
 
   if (!hasFilters) {
     queryString = QString(R"(
@@ -58,9 +90,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         s.kind,
         o.url_host,
         o.encryption_type,
-        s.total_count
+        s.total_count,
+        s.keywords
       FROM (
-        SELECT id, pinned_at, updated_at, kind, preferred_mime_type,
+        SELECT id, pinned_at, updated_at, kind, preferred_mime_type, keywords,
                COUNT(*) OVER() as total_count
         FROM selection
         ORDER BY pinned_at DESC, updated_at DESC
@@ -85,26 +118,25 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
         selection.kind,
         o.url_host,
         o.encryption_type,
-        COUNT(*) OVER() as count
+        COUNT(*) OVER() as count,
+        selection.keywords
       FROM selection
       JOIN data_offer o
         ON o.selection_id = selection.id
         AND o.mime_type = selection.preferred_mime_type
     )";
 
-    if (!opts.query.isEmpty()) {
-      queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id ";
-    }
+    if (hasQuery) { queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id "; }
 
-    if (!opts.query.isEmpty()) { queryString += " WHERE selection_fts MATCH '\"" + opts.query + "\"*' "; }
+    QStringList conditions;
 
-    if (opts.kind) {
-      if (opts.query.isEmpty()) {
-        queryString += " WHERE selection.kind = :kind";
-      } else {
-        queryString += " AND selection.kind = :kind";
-      }
+    if (!matchPhrases.isEmpty()) { conditions << "selection_fts MATCH :fts_query"; }
+    for (int i = 0; i != shortTerms.size(); ++i) {
+      conditions << QString("instr(lower(selection_fts.content), lower(:term%1)) > 0").arg(i);
     }
+    if (opts.kind) { conditions << "selection.kind = :kind"; }
+
+    if (!conditions.isEmpty()) { queryString += " WHERE " + conditions.join(" AND "); }
 
     queryString += " GROUP BY selection.id ";
     queryString += " ORDER BY pinned_at DESC, updated_at DESC";
@@ -114,12 +146,17 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
   auto stmt = m_db.prepare(queryString.toStdString());
 
   if (opts.kind) { stmt.bind(":kind", static_cast<int>(*opts.kind)); }
+  if (!matchPhrases.isEmpty()) { stmt.bind(":fts_query", matchPhrases.join(" AND ")); }
+  for (int i = 0; i != shortTerms.size(); ++i) {
+    stmt.bind(QString(":term%1").arg(i).toUtf8().constData(), shortTerms.at(i));
+  }
 
   while (stmt.step()) {
     ClipboardHistoryEntry dto{.id = stmt.columnQString(0),
                               .mimeType = stmt.columnQString(1),
                               .textPreview = stmt.columnQString(2),
                               .pinnedAt = stmt.columnUInt64(3),
+                              .keywords = stmt.columnQString(11),
                               .md5sum = stmt.columnQString(4),
                               .updatedAt = stmt.columnUInt64(5),
                               .size = stmt.columnUInt64(6),
@@ -136,6 +173,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::query(int limit, int
   response.currentPage = ceil(static_cast<double>(offset) / limit);
 
   return response;
+}
+
+QStringList ClipboardDatabase::searchTerms(const QString &query) {
+  return query.simplified().split(' ', Qt::SkipEmptyParts);
 }
 
 std::optional<QString> ClipboardDatabase::retrieveKeywords(const QString &id) {
@@ -162,9 +203,38 @@ bool ClipboardDatabase::setKeywords(const QString &id, const QString &keywords) 
   });
 }
 
-bool ClipboardDatabase::removeAll() {
-  return m_db.exec("DELETE FROM selection_fts") && m_db.exec("DELETE FROM data_offer") &&
-         m_db.exec("DELETE FROM selection");
+std::optional<std::vector<QString>> ClipboardDatabase::removeAll(bool preserveTagged) {
+  auto tx = m_db.transaction();
+
+  if (!preserveTagged) {
+    const bool ok = m_db.exec("DELETE FROM selection_fts") && m_db.exec("DELETE FROM data_offer") &&
+                    m_db.exec("DELETE FROM selection");
+
+    if (!ok) return std::nullopt;
+
+    tx.commit();
+
+    return std::vector<QString>{};
+  }
+
+  std::vector<QString> removed;
+
+  auto stmt = m_db.prepare(R"(
+    SELECT o.id
+    FROM data_offer o
+    JOIN selection s ON s.id = o.selection_id
+    WHERE s.pinned_at IS NULL AND s.keywords == ''
+  )");
+
+  while (stmt.step()) {
+    removed.emplace_back(stmt.columnQString(0));
+  }
+
+  if (!m_db.exec("DELETE FROM selection WHERE pinned_at IS NULL AND keywords == ''")) return std::nullopt;
+
+  tx.commit();
+
+  return removed;
 }
 
 std::vector<QString> ClipboardDatabase::removeSelection(const QString &selectionId) {
@@ -277,7 +347,7 @@ bool ClipboardDatabase::indexSelectionContent(const QString &selectionId, const 
     INSERT INTO selection_fts (selection_id, content) VALUES (:selection_id, :content);
   )");
   stmt.bind(":selection_id", selectionId);
-  stmt.bind(":content", content);
+  stmt.bind(":content", content.left(MAX_INDEXED_CONTENT_SIZE));
 
   if (!stmt.exec()) {
     qCritical() << "failed to index text" << stmt.lastError().c_str();
@@ -291,6 +361,70 @@ void ClipboardDatabase::runMigrations() {
   MigrationManager manager(m_db, "clipboard");
 
   manager.runMigrations();
+}
+
+std::vector<QString> ClipboardDatabase::evictOlderThan(std::chrono::seconds secs, bool preserveTagged) {
+  constexpr auto PRESERVE_TAGGED_WHERE = " AND pinned_at IS NULL AND keywords == ''";
+  std::vector<QString> evicted{};
+
+  evicted.reserve(0xF);
+
+  auto tx = m_db.transaction();
+
+  {
+    std::ostringstream oss{};
+    oss << R"(
+  	SELECT o.id 
+	FROM data_offer o
+	JOIN selection s ON s.id = o.selection_id
+	WHERE unixepoch() - s.updated_at > :threshold
+  )";
+
+    if (preserveTagged) { oss << PRESERVE_TAGGED_WHERE; }
+
+    auto stmt = m_db.prepare(oss.str());
+
+    stmt.bind(":threshold", secs.count());
+
+    while (stmt.step()) {
+      evicted.emplace_back(stmt.columnQString(0));
+    }
+  }
+
+  if (evicted.empty()) return evicted;
+
+  {
+    std::ostringstream oss{};
+
+    oss << "DELETE FROM selection WHERE unixepoch() - updated_at > :threshold";
+
+    if (preserveTagged) { oss << PRESERVE_TAGGED_WHERE; }
+
+    auto stmt = m_db.prepare(oss.str());
+
+    stmt.bind(":threshold", secs.count());
+
+    if (!stmt.exec()) {
+      qCritical() << "Failed to evict older selections" << stmt.lastError().c_str();
+      return {};
+    }
+  }
+
+  tx.commit();
+
+  return evicted;
+}
+
+std::optional<int64_t> ClipboardDatabase::oldestEvictableTimestamp(bool preserveTagged) {
+  std::string query = "SELECT MIN(updated_at) FROM selection";
+
+  if (preserveTagged) { query += " WHERE pinned_at IS NULL AND keywords == ''"; }
+
+  auto stmt = m_db.prepare(query);
+
+  if (!stmt.step() || stmt.isNull(0)) return std::nullopt;
+
+  return stmt.columnInt64(0);
 }
 
 bool ClipboardDatabase::insertOffer(const InsertClipboardOfferPayload &payload) {
@@ -330,6 +464,10 @@ ClipboardDatabase::ClipboardDatabase(std::optional<db::EncryptionKey> key) {
     if (auto keyed = m_db.setKey(*key); !keyed) {
       qFatal("Failed to unlock clipboard database: %s", keyed.error().c_str());
     }
+  }
+
+  if (int rc = vicinaeFuzzyTrigramInit(m_db.handle(), nullptr, nullptr); rc != SQLITE_OK) {
+    qCritical() << "Failed to register fuzzy_trigram tokenizer:" << sqlite3_errstr(rc);
   }
 
   for (const auto &pragma : CLIPBOARD_PRAGMAS) {

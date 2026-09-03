@@ -14,6 +14,10 @@
 #include "refresh-apps-command.hpp"
 #include "configure-fallback-command.hpp"
 #include "extensions/vicinae/search-emoji-command.hpp"
+#include "extensions/vicinae/search-tray-command.hpp"
+#ifdef Q_OS_MACOS
+#include "extensions/vicinae/search-menu-bar-command.hpp"
+#endif
 #include "extensions/vicinae/vicinae-store-command.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
@@ -252,6 +256,12 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<RefreshAppsCommand>();
   registerCommand<ManageFallbackCommand>();
   registerCommand<SearchEmojiCommand>();
+#ifdef Q_OS_LINUX
+  registerCommand<SearchTrayCommand>();
+#endif
+#ifdef Q_OS_MACOS
+  registerCommand<SearchMenuBarCommand>();
+#endif
   registerCommand<ReportVicinaeBugCommand>();
   registerCommand<OpenSettingsCommand>();
   registerCommand<SponsorVicinaeCommand>();

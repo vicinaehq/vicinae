@@ -132,7 +132,7 @@ void ShortcutFormViewHost::buildLinkCompletions() {
       QVariantMap{
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::TextCursor))},
           {QStringLiteral("title"), tr("Selected Text")},
-          {QStringLiteral("value"), QStringLiteral("selected")},
+          {QStringLiteral("value"), QStringLiteral("selection")},
       },
       QVariantMap{
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::CopyClipboard))},

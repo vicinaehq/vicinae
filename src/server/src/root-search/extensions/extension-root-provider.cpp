@@ -38,7 +38,8 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
 
   mainSection->addAction(open);
 
-  for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto action :
+       RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 

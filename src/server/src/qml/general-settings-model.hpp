@@ -10,6 +10,7 @@ class GeneralSettingsModel : public QObject {
 
   Q_PROPERTY(bool searchFilesInRoot READ searchFilesInRoot WRITE setSearchFilesInRoot NOTIFY configChanged)
   Q_PROPERTY(bool inputServerEnabled READ inputServerEnabled WRITE setInputServerEnabled NOTIFY configChanged)
+  Q_PROPERTY(bool trayEnabled READ trayEnabled WRITE setTrayEnabled NOTIFY configChanged)
   Q_PROPERTY(bool closeOnFocusLoss READ closeOnFocusLoss WRITE setCloseOnFocusLoss NOTIFY configChanged)
   Q_PROPERTY(bool closeOnEscape READ closeOnEscape WRITE setCloseOnEscape NOTIFY configChanged)
   Q_PROPERTY(bool considerPreedit READ considerPreedit WRITE setConsiderPreedit NOTIFY configChanged)
@@ -29,6 +30,7 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(QString csdBorderWidth READ csdBorderWidth WRITE setCsdBorderWidth NOTIFY configChanged)
   Q_PROPERTY(QString csdShadowSize READ csdShadowSize WRITE setCsdShadowSize NOTIFY configChanged)
   Q_PROPERTY(bool compactMode READ compactMode WRITE setCompactMode NOTIFY configChanged)
+  Q_PROPERTY(bool floatingStatusBar READ floatingStatusBar WRITE setFloatingStatusBar NOTIFY configChanged)
   Q_PROPERTY(QString windowOpacity READ windowOpacity WRITE setWindowOpacity NOTIFY configChanged)
   Q_PROPERTY(
       bool nativeTextRendering READ nativeTextRendering WRITE setNativeTextRendering NOTIFY configChanged)
@@ -87,12 +89,16 @@ public:
   void setCsdShadowSize(const QString &v);
   bool compactMode() const;
   void setCompactMode(bool v);
+  bool floatingStatusBar() const;
+  void setFloatingStatusBar(bool v);
   QString windowOpacity() const;
   void setWindowOpacity(const QString &v);
   bool nativeTextRendering() const;
   void setNativeTextRendering(bool v);
   bool inputServerEnabled() const;
   void setInputServerEnabled(bool v);
+  bool trayEnabled() const;
+  void setTrayEnabled(bool v);
   QString fontSize() const;
   void setFontSize(const QString &v);
 

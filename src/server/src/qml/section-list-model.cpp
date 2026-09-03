@@ -85,6 +85,8 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
       return {};
     case IsDraggable:
       return false;
+    case ShortcutTokens:
+      return QVariantList();
     default: {
       auto it = m_customRoleDefaults.find(role);
       return it != m_customRoleDefaults.end() ? it.value() : QVariant{};
@@ -112,6 +114,8 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
     return qml::accessoriesToVariantList(source->itemAccessories(flat.itemIdx));
   case IsDraggable:
     return source->isDraggable(flat.itemIdx);
+  case ShortcutTokens:
+    return source->itemShortcut(flat.itemIdx).toDisplayTokens();
   default: {
     auto v = source->customData(flat.itemIdx, role);
     if (v.isValid()) return v;
@@ -123,10 +127,15 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> SectionListModel::roleNames() const {
   QHash<int, QByteArray> roles = {
-      {IsSection, "isSection"},     {IsSelectable, "isSelectable"},
-      {SectionName, "sectionName"}, {Title, "title"},
-      {Subtitle, "subtitle"},       {IconSource, "iconSource"},
-      {Accessory, "itemAccessory"}, {IsDraggable, "isDraggable"},
+      {IsSection, "isSection"},
+      {IsSelectable, "isSelectable"},
+      {SectionName, "sectionName"},
+      {Title, "title"},
+      {Subtitle, "subtitle"},
+      {IconSource, "iconSource"},
+      {Accessory, "itemAccessory"},
+      {IsDraggable, "isDraggable"},
+      {ShortcutTokens, "shortcutTokens"},
   };
   for (auto *source : m_sources)
     roles.insert(source->customRoleNames());
@@ -341,6 +350,8 @@ void SectionListModel::rebuildFlatList() {
 
   if (newCount == 0) {
     m_selectedIndex = -1;
+  } else if (int restored = indexOfItemId(m_lastSelectedItemId); restored >= 0) {
+    m_selectedIndex = restored;
   } else if (m_selectedIndex >= newCount) {
     m_selectedIndex = nextSelectableIndex(newCount, -1);
   } else if (m_selectedIndex >= 0 && m_flat[m_selectedIndex].kind == FlatItem::SectionHeader) {
@@ -348,4 +359,16 @@ void SectionListModel::rebuildFlatList() {
   }
 
   if (m_selectedIndex != prevSelected) emit selectedIndexChanged();
+}
+
+int SectionListModel::indexOfItemId(const QString &id) const {
+  if (id.isEmpty()) return -1;
+
+  for (int i = 0; std::cmp_less(i, m_flat.size()); ++i) {
+    if (m_flat[i].kind != FlatItem::DataItem) continue;
+    auto *source = m_sources[m_flat[i].sourceIdx];
+    if (source->itemId(m_flat[i].itemIdx) == id) return i;
+  }
+
+  return -1;
 }

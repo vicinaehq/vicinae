@@ -16,7 +16,7 @@ else()
 
 	FetchContent_Declare(numen
 	  GIT_REPOSITORY https://github.com/vicinaehq/numen
-	  GIT_TAG        v0.4.1
+	  GIT_TAG        v0.6.1
 	)
 
 	FetchContent_MakeAvailable(numen)
@@ -98,6 +98,8 @@ include_directories(
 
 set(SRCS
 	src/main.cpp
+
+	${CMAKE_SOURCE_DIR}/vendor/fuzzy-trigram/register.c
 
 	src/theme.hpp
 	src/theme.cpp
@@ -455,10 +457,23 @@ set(SRCS
 
 	src/services/power-manager/dummy-power-manager.hpp
 
+	src/services/tray-host/tray-item.hpp
+	src/services/tray-host/tray-item.cpp
+	src/services/tray-host/abstract-tray-host.hpp
+	src/services/tray-host/dummy-tray-host.hpp
+	src/services/tray-host/tray-host.hpp
+	src/services/tray-host/tray-host.cpp
+	src/qml/search-tray-view-host.hpp
+	src/extensions/vicinae/search-tray-command.hpp
+
 	src/services/desktop-notification/dummy-desktop-notification-client.hpp
 
 	src/services/audio-control/pactl/pactl-audio-control.cpp
 	src/services/audio-control/dummy-audio-control.hpp
+
+	src/services/media-control/abstract-media-control.hpp
+	src/services/media-control/abstract-media-control.cpp
+	src/services/media-control/dummy-media-control.hpp
 
 	src/config/config.hpp
 	src/config/config.cpp
@@ -704,6 +719,12 @@ if (APPLE)
 		src/services/autostart/macos-login-item.mm
 		src/services/desktop-notification/macos/macos-notification-client.hpp
 		src/services/desktop-notification/macos/macos-notification-client.mm
+		src/services/file-chooser/macos/mac-file-chooser.hpp
+		src/services/file-chooser/macos/mac-file-chooser.mm
+		src/services/menu-bar/macos-menu-bar.hpp
+		src/services/menu-bar/macos-menu-bar.mm
+		src/qml/menu-bar-search-view-host.hpp
+		src/extensions/vicinae/search-menu-bar-command.hpp
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -725,6 +746,8 @@ if (APPLE)
 		src/services/permissions/macos-permission-service.mm
 		src/services/autostart/macos-login-item.mm
 		src/services/desktop-notification/macos/macos-notification-client.mm
+		src/services/file-chooser/macos/mac-file-chooser.mm
+		src/services/menu-bar/macos-menu-bar.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications")
 
@@ -742,6 +765,8 @@ elseif (WIN32)
 		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
 		src/services/clipboard/windows/windows-clipboard-server.hpp
 		src/services/clipboard/windows/windows-clipboard-server.cpp
+		src/services/tray/windows/tray-service-windows.hpp
+		src/services/tray/windows/tray-service-windows.cpp
 		src/services/paste/windows-paste-service.hpp
 		src/services/paste/windows-paste-service.cpp
 		src/services/selection/windows-selection-service.hpp
@@ -829,10 +854,25 @@ if (UNIX AND NOT APPLE)
 		src/services/app-service/xdg/xdg-app-database.hpp
 		src/services/app-service/xdg/xdg-app-database.cpp
 		src/services/app-service/xdg/xdg-app.cpp
+		src/root-search/kde-settings/kde-settings-root-provider.hpp
+		src/root-search/kde-settings/kde-settings-root-provider.cpp
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 		src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 		src/services/power-manager/systemd/systemd-power-manager.cpp
+		src/services/tray-host/sni/sni-types.hpp
+		src/services/tray-host/sni/sni-types.cpp
+		src/services/tray-host/sni/sni-tray-host.hpp
+		src/services/tray-host/sni/sni-tray-host.cpp
+		src/services/tray-host/sni/sni-watcher.hpp
+		src/services/tray-host/sni/sni-watcher.cpp
+		src/services/tray/linux/tray-service-linux.hpp
+		src/services/tray/linux/tray-service-linux.cpp
 		src/services/desktop-notification/freedesktop/freedesktop-notification-client.cpp
+
+		src/services/media-control/mpris/mpris-media-control.hpp
+		src/services/media-control/mpris/mpris-media-control.cpp
+		src/services/media-control/mpris/mpris-metadata.hpp
+		src/services/media-control/mpris/mpris-metadata.cpp
 
 		src/services/paste/linux-paste-service.cpp
 		src/services/selection/linux-selection-service.cpp
@@ -1158,6 +1198,8 @@ set(VICINAE_QML_SOURCES
 	src/qml/vici-image-item.hpp
 	src/qml/hover-activation.hpp
 	src/qml/hover-activation.cpp
+	src/qml/match-highlighter.hpp
+	src/qml/match-highlighter.cpp
 	src/qml/completion-model.hpp
 	src/qml/markdown/markdown-model.hpp
 	src/qml/markdown/text-selection-controller.hpp
@@ -1211,7 +1253,7 @@ if(Qt6_FOUND AND NOT WIN32)
     )
 endif()
 
-target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler)
+target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler ${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
 	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-framework Security" "-F/System/Library/PrivateFrameworks" "-framework login")
@@ -1254,8 +1296,11 @@ qt_add_translations(${TARGET}
 	SOURCE_TARGETS ${TARGET}
 	TS_FILE_BASE vicinae
 	TS_FILES
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_de.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_it.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_ru.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_uk.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_zh_CN.ts
 	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
 	SOURCES ${VICINAE_I18N_SOURCES}

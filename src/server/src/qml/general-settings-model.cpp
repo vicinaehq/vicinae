@@ -145,10 +145,22 @@ void GeneralSettingsModel::setCompactMode(bool v) {
                                   .compactMode = config::Partial<config::WindowCompactMode>{.enabled = v}}});
 }
 
+bool GeneralSettingsModel::floatingStatusBar() const { return cfg().launcherWindow.floatingStatusBar; }
+void GeneralSettingsModel::setFloatingStatusBar(bool v) {
+  cfgManager().mergeWithUser(
+      {.launcherWindow = config::Partial<config::WindowConfig>{.floatingStatusBar = v}});
+}
+
 bool GeneralSettingsModel::inputServerEnabled() const { return cfg().inputServer.enabled; }
 
 void GeneralSettingsModel::setInputServerEnabled(bool v) {
   cfgManager().mergeWithUser({.inputServer = config::Partial<config::InputServer>{.enabled = v}});
+}
+
+bool GeneralSettingsModel::trayEnabled() const { return cfg().tray.enabled; }
+
+void GeneralSettingsModel::setTrayEnabled(bool v) {
+  cfgManager().mergeWithUser({.tray = config::Partial<config::Tray>{.enabled = v}});
 }
 
 QString GeneralSettingsModel::windowOpacity() const {

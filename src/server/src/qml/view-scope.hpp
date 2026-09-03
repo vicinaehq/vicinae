@@ -13,6 +13,7 @@ public:
   }
   void clearActions() const { nav()->clearActions(m_owner); }
   void setNavigationTitle(const QString &title) const { nav()->setNavigationTitle(title, m_owner); }
+  void setLoading(bool value) const { nav()->setLoading(value, m_owner); }
 
   bool executePrimaryAction() const { return nav()->executePrimaryAction(); }
   void closeWindow(const CloseWindowOptions &opts = {}) const { nav()->closeWindow(opts); }

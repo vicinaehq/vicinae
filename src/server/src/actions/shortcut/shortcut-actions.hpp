@@ -1,6 +1,7 @@
 #pragma once
 #include <QCoreApplication>
 #include <QGuiApplication>
+#include <QEventLoop>
 #include "actions/app/app-actions.hpp"
 #include "builtin_icon.hpp"
 #include "common.hpp"
@@ -14,16 +15,19 @@
 #include "ui/action-pannel/action.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include "theme/colors.hpp"
 #include "ui/toast/toast.hpp"
 #include <memory>
 #include <qclipboard.h>
 #include <qlogging.h>
 #include <ranges>
+#include "services/selection/abstract-selection-service.hpp"
 
 namespace {
 QString expandShortcut(const Shortcut &sh, std::span<const QString> args) {
   QString expanded;
   size_t argumentIndex = 0;
+  auto selectionService = ServiceRegistry::instance()->selectionService();
 
   for (const auto &part : sh.parts()) {
     if (auto s = std::get_if<QString>(&part)) {
@@ -31,8 +35,12 @@ QString expandShortcut(const Shortcut &sh, std::span<const QString> args) {
     } else if (auto placeholder = std::get_if<Shortcut::ParsedPlaceholder>(&part)) {
       if (placeholder->id == "clipboard") {
         expanded += QGuiApplication::clipboard()->text();
-      } else if (placeholder->id == "selected") {
-        // TODO: selected text
+      } else if (placeholder->id == "selected" || placeholder->id == "selection") {
+        if (auto selected = selectionService->selectedTextSync()) {
+          expanded += *selected;
+        } else {
+          qWarning() << "Failed to get text selection" << selected.error();
+        }
       } else if (placeholder->id == "uuid") {
         expanded += QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
       } else {
@@ -186,6 +194,35 @@ public:
       : AbstractAction(QCoreApplication::translate("DuplicateShortcutAction", "Duplicate link"),
                        ImageURL::builtin(BuiltinIcon::Duplicate)),
         link(link) {}
+};
+
+class CreateShortcutAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(CreateShortcutAction)
+
+public:
+  struct Prefill {
+    QString link;
+    QString name;
+    QString app;
+    QString icon;
+  };
+
+  void execute(ApplicationContext *ctx) override {
+    auto view = new ShortcutFormViewHost;
+
+    view->setPrefilledValues(m_prefill.link, m_prefill.name, m_prefill.app, m_prefill.icon);
+    ctx->navigation->pushView(view);
+    ctx->navigation->setNavigationTitle(title());
+    ctx->navigation->setNavigationIcon(
+        ImageURL::builtin(BuiltinIcon::Bolt).setBackgroundTint(SemanticColor::Purple));
+  }
+
+  CreateShortcutAction(Prefill prefill, const QString &title = tr("Create shortcut"),
+                       const ImageURL &icon = ImageURL::builtin(BuiltinIcon::Link))
+      : AbstractAction(title, icon), m_prefill(std::move(prefill)) {}
+
+private:
+  Prefill m_prefill;
 };
 
 /**

@@ -16,7 +16,7 @@ Item {
     property bool _autoScroll: false
     focus: true
 
-    readonly property var _controller: selectionController ?? _internalController
+    readonly property var _controller: selectionController ?? internalController
 
     function scrollUp() {
         flickable.flick(0, 800);
@@ -40,7 +40,7 @@ Item {
     }
 
     TextSelectionController {
-        id: _internalController
+        id: internalController
         container: col
         flickable: flickable
         mdModel: root.model

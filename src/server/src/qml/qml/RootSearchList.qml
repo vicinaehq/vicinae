@@ -8,6 +8,7 @@ GenericListView {
     listModel: cmdModel
     autoWireModel: true
     selectFirstOnReset: cmdModel.selectFirstOnReset
+    suppressEmpty: launcher.isLoading
 
     delegate: Loader {
         id: delegateLoader

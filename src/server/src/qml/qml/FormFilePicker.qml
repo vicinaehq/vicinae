@@ -22,6 +22,10 @@ FocusScope {
     readonly property bool _directoriesOnly: canChooseDirectories && !canChooseFiles
     property bool _waitingForPortal: false
 
+    Accessible.role: Accessible.Button
+    Accessible.name: root.selectedPaths && root.selectedPaths.length > 0 ? root.selectedPaths.join(", ") : (root._directoriesOnly ? qsTr("No directory selected") : qsTr("No file selected"))
+    Accessible.onPressAction: root._openDialog()
+
     function forceActiveFocus() {
         focusItem.forceActiveFocus();
     }
@@ -39,10 +43,10 @@ FocusScope {
 
     function _openFallbackDialog() {
         if (root._directoriesOnly)
-            _fallbackFolderDialog.open();
+            fallbackFolderDialog.open();
         else {
-            _fallbackFileDialog.fileMode = root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile;
-            _fallbackFileDialog.open();
+            fallbackFileDialog.fileMode = root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile;
+            fallbackFileDialog.open();
         }
     }
 
@@ -81,7 +85,7 @@ FocusScope {
     }
 
     FileDialog {
-        id: _fallbackFileDialog
+        id: fallbackFileDialog
         title: root.multiple ? qsTr("Select files") : qsTr("Select a file")
         onAccepted: {
             root._handleFallbackResult(selectedFiles);
@@ -91,7 +95,7 @@ FocusScope {
     }
 
     FolderDialog {
-        id: _fallbackFolderDialog
+        id: fallbackFolderDialog
         title: qsTr("Select a directory")
         onAccepted: {
             root._handleFallbackResult([selectedFolder]);

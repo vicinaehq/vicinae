@@ -3,6 +3,7 @@
 #include "services/input-server/linux-input-server.hpp"
 #endif
 #include "services/audio-control/audio-control-service.hpp"
+#include "services/media-control/media-control-service.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "font-service.hpp"
 #include "omni-database.hpp"
@@ -11,6 +12,7 @@
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/power-manager/power-manager.hpp"
+#include "services/tray-host/abstract-tray-host.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -61,6 +63,8 @@ OAuthService *ServiceRegistry::oauthService() const { return m_oauthService.get(
 
 PowerManager *ServiceRegistry::powerManager() const { return m_powerManager.get(); }
 
+AbstractTrayHost *ServiceRegistry::trayHost() const { return m_trayHost.get(); }
+
 ScriptCommandService *ServiceRegistry::scriptDb() const { return m_scriptCommandService.get(); }
 
 BrowserExtensionService *ServiceRegistry::browserExtension() const { return m_browserExtensionService.get(); }
@@ -92,10 +96,16 @@ UpdateService *ServiceRegistry::updateService() const { return m_updateService.g
 
 AudioControlService *ServiceRegistry::audioControl() const { return m_audioControl.get(); }
 
+MediaControlService *ServiceRegistry::mediaControl() const { return m_mediaControl.get(); }
+
 AppRuntime *ServiceRegistry::appRuntime() const { return m_appRuntime.get(); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
+}
+
+void ServiceRegistry::setTrayHost(std::unique_ptr<AbstractTrayHost> service) {
+  m_trayHost = std::move(service);
 }
 
 void ServiceRegistry::setWindowManager(std::unique_ptr<WindowManager> manager) {
@@ -208,6 +218,10 @@ void ServiceRegistry::setUpdateService(std::unique_ptr<UpdateService> service) {
 
 void ServiceRegistry::setAudioControl(std::unique_ptr<AudioControlService> service) {
   m_audioControl = std::move(service);
+}
+
+void ServiceRegistry::setMediaControl(std::unique_ptr<MediaControlService> service) {
+  m_mediaControl = std::move(service);
 }
 
 void ServiceRegistry::setAppRuntime(std::unique_ptr<AppRuntime> service) {

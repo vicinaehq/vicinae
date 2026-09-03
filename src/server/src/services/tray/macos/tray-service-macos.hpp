@@ -18,6 +18,7 @@ public:
   void emitToggle();
   void emitOpenSettings(const QString &tab);
   void emitCheckForUpdates();
+  void emitOpenLink(Link link);
   void emitQuit();
 
 private:

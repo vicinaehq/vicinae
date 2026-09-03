@@ -5,6 +5,7 @@
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/calculator-service/numen/numen-calculator-backend.hpp"
+#include "utils/environment.hpp"
 #include <ranges>
 #include <qdatetime.h>
 #include <qlogging.h>
@@ -32,6 +33,10 @@ bool CalculatorService::setBackend(AbstractCalculatorBackend *newBackend) {
   }
 
   qInfo() << "Started" << newBackend->displayName() << "calculator backend";
+
+  if (newBackend->supportsRefreshExchangeRates() && !Environment::isAutoRateRefreshDisabled()) {
+    newBackend->refreshExchangeRates();
+  }
 
   if (m_backend) { m_backend->stop(); }
 

@@ -1,3 +1,4 @@
+#include "environment.hpp"
 #include "log/message-handler.hpp"
 #include "pid-file/pid-file.hpp"
 #include "services/clipboard/clipboard-server.hpp"
@@ -40,7 +41,7 @@ public:
 } // namespace
 
 bool DataControlClipboardServer::isActivatable() const {
-  if (QGuiApplication::platformName() != "wayland") { return false; }
+  if (!Environment::isWaylandSession()) return false;
 
   static DataControlManagerV1 manager;
   return manager.isActive();
@@ -131,6 +132,19 @@ void DataControlClipboardServer::handleRead() {
 
             emit selectionAdded(cs);
           }
+        }
+      } else if (tag == clipboard_proto::Command::PrimarySelectionNotification) {
+        clipboard_proto::Selection selection;
+
+        if (auto err = glz::read_beve(selection, payload)) {
+          qWarning() << "Failed to parse primary selection";
+        } else {
+          QString text;
+          if (!selection.offers.empty()) {
+            const auto &data = selection.offers.front().data;
+            text = QString::fromUtf8(reinterpret_cast<const char *>(data.data()), data.size());
+          }
+          emit primarySelectionChanged(text);
         }
       } else {
         qWarning() << "Unknown command tag from data-control-server:" << static_cast<int>(tag);
