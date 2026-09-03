@@ -181,7 +181,7 @@ void MacosSnippetServer::resetContext() {
 }
 
 void MacosSnippetServer::injectExpand(const std::string &text, unsigned charsToDelete, unsigned, bool,
-                                      unsigned cursorLeftMoves) {
+                                      unsigned cursorLeftMoves, bool) {
   const int delay = m_keyDelayUs.load();
 
   // delete the trigger with backspaces, then type the expansion as unicode key events. typing

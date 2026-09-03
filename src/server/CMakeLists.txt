@@ -771,6 +771,8 @@ elseif (WIN32)
 		src/services/paste/windows-paste-service.cpp
 		src/services/selection/windows-selection-service.hpp
 		src/services/selection/windows-selection-service.cpp
+		src/services/snippet/windows-snippet-server.hpp
+		src/services/snippet/windows-snippet-server.cpp
 		src/services/files-service/windows/win-file-indexer.hpp
 		src/services/files-service/windows/win-file-indexer.cpp
 		src/services/window-manager/windows/windows-window.hpp

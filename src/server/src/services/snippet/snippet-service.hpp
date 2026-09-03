@@ -179,7 +179,7 @@ private:
 
     if (snippet->expansion->word) { expanded.append(' '); }
 
-    const bool usesClipboard = m_server.usesClipboard();
+    const bool usesClipboard = m_server.usesClipboard(expanded.size());
 
     if (usesClipboard) { m_clipboard.copyText(expanded, {.concealed = true}); }
 
@@ -196,7 +196,7 @@ private:
     }
 
     m_server.injectExpand(expanded.toStdString(), charsToDelete, m_prePasteDelay * 1000, terminal,
-                          cursorLeftMoves);
+                          cursorLeftMoves, usesClipboard);
 
     if (usesClipboard) {
       QTimer::singleShot(0, this, [this]() { m_clipboard.scheduleClipboardRestore(); });

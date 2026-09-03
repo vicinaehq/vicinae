@@ -1,6 +1,5 @@
 #pragma once
 #include "abstract-snippet-server.hpp"
-#include <QTimer>
 #include <atomic>
 #include <mutex>
 #include <optional>
@@ -8,12 +7,12 @@
 #include <thread>
 #include <vector>
 
-class MacosSnippetServer : public AbstractSnippetServer {
+class WindowsSnippetServer : public AbstractSnippetServer {
   Q_OBJECT
 
 public:
-  MacosSnippetServer();
-  ~MacosSnippetServer() override;
+  WindowsSnippetServer();
+  ~WindowsSnippetServer() override;
 
   void registerSnippet(snippet_gen::CreateSnippetRequest payload) override;
   void unregisterSnippet(std::string_view keyword) override;
@@ -24,16 +23,13 @@ public:
                     unsigned cursorLeftMoves, bool viaClipboard) override;
   void injectUndo(unsigned backspaceCount, const std::string &trigger) override;
   void setKeyDelay(int us) override;
-  bool supportsKeyInjection() const override;
-  bool usesClipboard(std::size_t) const override { return false; }
+  bool supportsKeyInjection() const override { return true; }
+  bool usesClipboard(std::size_t expandedLength) const override;
 
   bool isRunning() const override;
 
-  void ensureTapRunning();
-
-  // called from the CGEventTap thread
-  void onKey(int keycode, const std::string &utf8, bool blockingMods);
-  void reenableTap();
+  // called from the low-level keyboard hook thread
+  void onKey(unsigned vk, const std::string &utf8, bool blockingMods);
 
 private:
   struct Snippet {
@@ -41,8 +37,7 @@ private:
     snippet_gen::ExpansionMode mode;
   };
 
-  void startTapThread();
-  void runTap();
+  void startHookThread();
   void emitExpansionLocked(const Snippet &snippet);
 
   std::vector<Snippet> m_snippets;
@@ -50,12 +45,8 @@ private:
   std::optional<std::string> m_undoTrigger;
   std::mutex m_mutex;
 
-  QTimer m_permissionRetryTimer;
   std::thread m_thread;
-  std::atomic<void *> m_runLoop{nullptr};
-  std::atomic_bool m_tapThreadDone{false};
-  void *m_tap = nullptr;
-  void *m_source = nullptr;
+  unsigned long m_hookThreadId = 0;
   std::atomic_bool m_running{false};
-  std::atomic_int m_keyDelayUs{5000};
+  std::atomic_int m_keyDelayUs{2000};
 };
