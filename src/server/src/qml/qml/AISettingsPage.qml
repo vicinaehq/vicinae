@@ -49,8 +49,16 @@ Item {
         contentHeight: listCol.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        topMargin: Style.contentTopInset
+        Component.onCompleted: contentY = -topMargin
+
+        ViciWheelHandler {
+            target: listFlick
+        }
 
         ScrollBar.vertical: ViciScrollBar {
+            topPadding: Style.contentTopInset
+            bottomPadding: 16
             policy: listFlick.contentHeight > listFlick.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         }
 
@@ -59,30 +67,24 @@ Item {
             width: listFlick.width
             spacing: 0
 
-            readonly property real contentWidth: Math.min(width, 680)
+            readonly property real contentWidth: Math.min(width - 32, 720)
             readonly property real sideMargin: (width - contentWidth) / 2
-
-            Item {
-                implicitHeight: 16
-            }
 
             RowLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: listCol.sideMargin + 20
-                Layout.rightMargin: listCol.sideMargin + 20
+                Layout.leftMargin: listCol.sideMargin
+                Layout.rightMargin: listCol.sideMargin
+                Layout.topMargin: 24
+                Layout.bottomMargin: 10
                 spacing: 8
 
-                Text {
-                    text: "Providers"
-                    color: Theme.foreground
-                    font.pointSize: Theme.regularFontSize
-                    font.bold: true
-                    Layout.fillWidth: true
+                SettingsSectionLabel {
+                    text: qsTr("Providers")
                 }
 
                 SearchableDropdown {
                     compact: true
-                    placeholder: "Add Provider"
+                    placeholder: qsTr("Add Provider")
                     items: root._dropdownItems
                     minimumWidth: 120
                     onActivated: item => {
@@ -95,123 +97,114 @@ Item {
                 }
             }
 
-            Item {
-                implicitHeight: 12
-            }
+            SettingsGroup {
+                Layout.leftMargin: listCol.sideMargin
+                Layout.rightMargin: listCol.sideMargin
 
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: listCol.sideMargin + 20
-                Layout.rightMargin: listCol.sideMargin + 20
-                height: 1
-                color: Theme.divider
-            }
-
-            // Empty state
-            Item {
-                visible: !root.model.hasProviders
-                Layout.fillWidth: true
-                Layout.preferredHeight: 140
-
-                ColumnLayout {
-                    anchors.centerIn: parent
-                    spacing: 8
-
-                    ViciImage {
-                        source: Img.builtin("computer-chip").withFillColor(Theme.textMuted)
-                        Layout.preferredWidth: 32
-                        Layout.preferredHeight: 32
-                        Layout.alignment: Qt.AlignHCenter
-                        opacity: 0.5
-                    }
-
-                    Text {
-                        text: "No AI providers configured"
-                        color: Theme.textMuted
-                        font.pointSize: Theme.regularFontSize
-                        horizontalAlignment: Text.AlignHCenter
-                        Layout.alignment: Qt.AlignHCenter
-                    }
-
-                    Text {
-                        text: "Add a provider to get started with AI features."
-                        color: Theme.textPlaceholder
-                        font.pointSize: Theme.smallerFontSize
-                        horizontalAlignment: Text.AlignHCenter
-                        Layout.alignment: Qt.AlignHCenter
-                    }
-                }
-            }
-
-            // Provider rows
-            Repeater {
-                model: root.model
-
-                delegate: Column {
-                    id: listDelegate
+                Item {
+                    visible: !root.model.hasProviders
                     Layout.fillWidth: true
+                    Layout.preferredHeight: 140
 
-                    required property int index
-                    required property string providerId
-                    required property string typeLabel
-                    required property string icon
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 8
 
-                    Rectangle {
-                        width: parent.width
-                        height: 44
-                        color: listDelegateHover.hovered ? Theme.listItemHoverBg : "transparent"
-
-                        HoverHandler {
-                            id: listDelegateHover
-                        }
-                        TapHandler {
-                            onTapped: root.selectedRow = listDelegate.index
+                        ViciImage {
+                            source: Img.builtin("computer-chip").withFillColor(Theme.textMuted)
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 32
+                            Layout.alignment: Qt.AlignHCenter
+                            opacity: 0.5
                         }
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: listCol.sideMargin + 20
-                            anchors.rightMargin: listCol.sideMargin + 20
-                            spacing: 10
+                        Text {
+                            text: qsTr("No AI providers configured")
+                            color: Theme.textMuted
+                            font.pointSize: Theme.regularFontSize
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.alignment: Qt.AlignHCenter
+                        }
 
-                            ViciImage {
-                                source: Img.builtin(listDelegate.icon).withFillColor(Theme.textMuted)
-                                Layout.preferredWidth: 20
-                                Layout.preferredHeight: 20
-                            }
-
-                            Text {
-                                text: listDelegate.providerId
-                                color: Theme.foreground
-                                font.pointSize: Theme.regularFontSize
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-
-                            Text {
-                                text: listDelegate.typeLabel
-                                color: Theme.textMuted
-                                font.pointSize: Theme.smallerFontSize
-                            }
-
-                            ViciImage {
-                                source: Img.builtin("chevron-right-small").withFillColor(Theme.textMuted)
-                                Layout.preferredWidth: 16
-                                Layout.preferredHeight: 16
-                            }
+                        Text {
+                            text: qsTr("Add a provider to get started with AI features.")
+                            color: Theme.textPlaceholder
+                            font.pointSize: Theme.smallerFontSize
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.alignment: Qt.AlignHCenter
                         }
                     }
+                }
 
-                    Rectangle {
-                        width: parent.width
-                        height: 1
-                        color: Theme.divider
+                Repeater {
+                    id: providerRepeater
+                    model: root.model
+
+                    delegate: Column {
+                        id: listDelegate
+                        Layout.fillWidth: true
+
+                        required property int index
+                        required property string providerId
+                        required property string typeLabel
+                        required property string icon
+
+                        Item {
+                            width: parent.width
+                            height: providerRow.implicitHeight + 16
+
+                            TapHandler {
+                                onTapped: root.selectedRow = listDelegate.index
+                            }
+
+                            RowLayout {
+                                id: providerRow
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
+                                spacing: 12
+
+                                ViciImage {
+                                    source: Img.builtin(listDelegate.icon).withFillColor(Theme.textMuted)
+                                    Layout.preferredWidth: 22
+                                    Layout.preferredHeight: 22
+                                }
+
+                                Text {
+                                    text: listDelegate.providerId
+                                    color: Theme.foreground
+                                    font.pointSize: Theme.regularFontSize
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: listDelegate.typeLabel
+                                    color: Theme.textMuted
+                                    font.pointSize: Theme.smallerFontSize
+                                }
+
+                                ViciImage {
+                                    source: Img.builtin("chevron-right-small").withFillColor(Theme.textMuted)
+                                    Layout.preferredWidth: 16
+                                    Layout.preferredHeight: 16
+                                }
+                            }
+                        }
+
+                        ViciDivider {
+                            visible: listDelegate.index < providerRepeater.count - 1
+                            x: 16
+                            width: parent.width - 32
+                        }
                     }
                 }
             }
 
             Item {
-                implicitHeight: 24
+                Layout.preferredHeight: 24
             }
         }
     }
@@ -225,8 +218,16 @@ Item {
         contentHeight: detailCol.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        topMargin: Style.contentTopInset
+        Component.onCompleted: contentY = -topMargin
+
+        ViciWheelHandler {
+            target: detailFlick
+        }
 
         ScrollBar.vertical: ViciScrollBar {
+            topPadding: Style.contentTopInset
+            bottomPadding: 16
             policy: detailFlick.contentHeight > detailFlick.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         }
 
