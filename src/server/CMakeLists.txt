@@ -832,8 +832,10 @@ elseif (WIN32)
 		src/services/power-manager/windows/windows-power-manager.cpp
 		src/utils/win-chassis.hpp
 		src/utils/win-chassis.cpp
+		src/services/update/windows-update-installer.hpp
+		src/services/update/windows-update-installer.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore powrprof everything-sdk3)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore powrprof everything-sdk3 wintrust crypt32)
 	add_compile_definitions(VICINAE_BUNDLE_ID="${VICINAE_BUNDLE_ID}")
 else()
 	list(APPEND SRCS
