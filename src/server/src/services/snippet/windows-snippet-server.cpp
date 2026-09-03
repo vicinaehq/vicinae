@@ -115,13 +115,6 @@ void waitUntilReleased(std::span<const WORD> keys) {
   }
 }
 
-// the hook sees the key that fired us before it is posted to the app, so injecting right away can land ahead
-// of it. its release is only processed once the press has been delivered.
-void waitForTriggerKeyRelease(WORD vk) {
-  const WORD keys[] = {vk};
-  waitUntilReleased(keys);
-}
-
 // still-held shift/AltGr would turn the backspaces into ctrl+backspace and the paste into ctrl+shift+v
 void waitForModifierRelease() {
   waitUntilReleased(MODIFIERS);
@@ -174,10 +167,14 @@ LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
   if (nCode == HC_ACTION && g_snippetServer) {
     const auto *k = reinterpret_cast<KBDLLHOOKSTRUCT *>(lParam);
     const bool down = wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN;
-    if (down && k->dwExtraInfo != VICINAE_INJECT_TAG) {
-      bool blocking = false;
-      const std::string utf8 = translateKey(k->vkCode, k->scanCode, blocking);
-      g_snippetServer->onKey(k->vkCode, utf8, blocking);
+    if (k->dwExtraInfo != VICINAE_INJECT_TAG) {
+      if (down) {
+        bool blocking = false;
+        const std::string utf8 = translateKey(k->vkCode, k->scanCode, blocking);
+        g_snippetServer->onKey(k->vkCode, utf8, blocking);
+      } else {
+        g_snippetServer->onKeyUp(k->vkCode);
+      }
     }
   }
   return CallNextHookEx(nullptr, nCode, wParam, lParam);
@@ -241,11 +238,11 @@ void WindowsSnippetServer::resetContext() {
   std::lock_guard lock(m_mutex);
   m_text.clear();
   m_undoTrigger.reset();
+  m_undoPending = false;
 }
 
 void WindowsSnippetServer::injectExpand(const std::string &text, unsigned charsToDelete, unsigned, bool,
                                         unsigned cursorLeftMoves, bool viaClipboard) {
-  waitForTriggerKeyRelease(static_cast<WORD>(m_triggerVk.load()));
   waitForModifierRelease();
   sendRepeatedVk(VK_BACK, charsToDelete);
 
@@ -259,7 +256,6 @@ void WindowsSnippetServer::injectExpand(const std::string &text, unsigned charsT
 }
 
 void WindowsSnippetServer::injectUndo(unsigned backspaceCount, const std::string &trigger) {
-  waitForTriggerKeyRelease(VK_BACK);
   waitForModifierRelease();
   sendRepeatedVk(VK_BACK, backspaceCount);
   sendText(trigger);
@@ -278,13 +274,13 @@ void WindowsSnippetServer::onKey(unsigned vk, const std::string &utf8, bool bloc
 
   if (m_undoTrigger) {
     if (vk == VK_BACK && !blockingMods) {
-      const std::string trigger = *m_undoTrigger;
-      m_undoTrigger.reset();
-      QMetaObject::invokeMethod(
-          this, [this, trigger]() { emit undoTriggered(trigger); }, Qt::QueuedConnection);
-      return;
+      // fired on release: the hook sees this press before it is posted to the app, so injecting now could
+      // land ahead of it. a repeat press while pending means the key is held and the app keeps deleting.
+      m_undoPending = !m_undoPending;
+      if (m_undoPending) { return; }
     }
     m_undoTrigger.reset();
+    m_undoPending = false;
   }
 
   if (isCaretMove(vk)) {
@@ -306,25 +302,34 @@ void WindowsSnippetServer::onKey(unsigned vk, const std::string &utf8, bool bloc
     if (snippet.mode == snippet_gen::ExpansionMode::Keydown) {
       if (snippet.trigger.size() > m_text.size()) { continue; }
       if (m_text.ends_with(snippet.trigger)) {
-        emitExpansionLocked(snippet, vk);
+        emitExpansionLocked(snippet);
         break;
       }
     } else if (wordSep) {
       if (snippet.trigger.size() + 1 > m_text.size()) { continue; }
       if (std::string_view(m_text).substr(0, m_text.size() - 1).ends_with(snippet.trigger)) {
-        emitExpansionLocked(snippet, vk);
+        emitExpansionLocked(snippet);
         break;
       }
     }
   }
 }
 
-void WindowsSnippetServer::emitExpansionLocked(const Snippet &snippet, unsigned vk) {
-  m_triggerVk = vk;
+void WindowsSnippetServer::emitExpansionLocked(const Snippet &snippet) {
   m_text.clear();
 
   const std::string trigger = snippet.trigger;
   QMetaObject::invokeMethod(
       this, [this, trigger]() { emit keywordTriggered(trigger); }, Qt::QueuedConnection);
   m_undoTrigger = trigger;
+}
+
+void WindowsSnippetServer::onKeyUp(unsigned vk) {
+  std::lock_guard lock(m_mutex);
+  if (vk != VK_BACK || !m_undoPending) { return; }
+
+  const std::string trigger = *m_undoTrigger;
+  m_undoTrigger.reset();
+  m_undoPending = false;
+  QMetaObject::invokeMethod(this, [this, trigger]() { emit undoTriggered(trigger); }, Qt::QueuedConnection);
 }
