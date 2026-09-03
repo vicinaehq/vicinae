@@ -156,10 +156,7 @@ public:
   virtual bool launchTerminalCommand(const std::vector<QString> &cmdline,
                                      const LaunchTerminalCommandOptions &opts = {}) const = 0;
 
-  /**
-   * Unstarted process that runs `code` in the platform's default shell. The caller starts it and owns
-   * timeout and output handling; create it on the thread that will run it.
-   */
+  // unstarted; create it on the thread that will run it
   virtual std::unique_ptr<QProcess> shellProcess(const QString &code) const {
     auto proc = std::make_unique<QProcess>();
     proc->setProgram(qEnvironmentVariable("SHELL", QStringLiteral("/bin/sh")));

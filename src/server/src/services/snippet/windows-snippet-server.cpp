@@ -274,8 +274,7 @@ void WindowsSnippetServer::onKey(unsigned vk, const std::string &utf8, bool bloc
 
   if (m_undoTrigger) {
     if (vk == VK_BACK && !blockingMods) {
-      // fired on release: the hook sees this press before it is posted to the app, so injecting now could
-      // land ahead of it. a repeat press while pending means the key is held and the app keeps deleting.
+      // fired on release, since the hook sees the press before it is posted to the app
       m_undoPending = !m_undoPending;
       if (m_undoPending) { return; }
     }
