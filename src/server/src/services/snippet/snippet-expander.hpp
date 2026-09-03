@@ -145,9 +145,7 @@ private:
       proc->start();
       if (proc->waitForFinished(timeout) && proc->exitStatus() == QProcess::NormalExit &&
           proc->exitCode() == 0) {
-        auto output = QString::fromUtf8(proc->readAllStandardOutput());
-        if (output.endsWith('\n')) output.chop(1);
-        return output;
+        return QString::fromUtf8(proc->readAllStandardOutput()).trimmed();
       }
       qWarning() << "Shell placeholder failed:" << cmd.code << proc->errorString();
       return {};

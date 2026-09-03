@@ -85,12 +85,19 @@ void sendPresses(const std::vector<INPUT> &presses) {
 
 void sendRepeatedVk(WORD vk, unsigned count) { sendPresses(std::vector<INPUT>(count, vkInput(vk, true))); }
 
+// line breaks are pressed as enter, apps do not accept them as typed characters
 void sendText(const std::string &text) {
   const QString qtext = QString::fromStdString(text);
   std::vector<INPUT> presses;
   presses.reserve(qtext.size());
-  for (const QChar c : qtext) {
-    presses.push_back(unitInput(c.unicode(), true));
+  for (int i = 0; i < qtext.size(); ++i) {
+    const QChar c = qtext.at(i);
+    if (c == u'\r' || c == u'\n') {
+      if (c == u'\r' && i + 1 < qtext.size() && qtext.at(i + 1) == u'\n') { ++i; }
+      presses.push_back(vkInput(VK_RETURN, true));
+    } else {
+      presses.push_back(unitInput(c.unicode(), true));
+    }
   }
   sendPresses(presses);
 }
