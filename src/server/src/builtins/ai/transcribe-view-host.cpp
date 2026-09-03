@@ -114,7 +114,7 @@ void TranscribeViewHost::togglePause() {
 }
 
 void TranscribeViewHost::updateActions() {
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   auto *section = panel->createSection();
 
   if (m_transcribing) {
@@ -124,14 +124,14 @@ void TranscribeViewHost::updateActions() {
 
   auto state = m_recorder->state();
   if (state == Audio::Recorder::State::Recording || state == Audio::Recorder::State::Paused) {
-    auto *stop = new StaticAction(QStringLiteral("Stop & Transcribe"), ImageURL::builtin("stop-circle"),
+    auto *stop = new StaticAction(QStringLiteral("Stop & Transcribe"), ImageURL::builtin(BuiltinIcon::Stop),
                                   [this]() { stopAndTranscribe(); });
     stop->setPrimary(true);
     section->addAction(stop);
 
     auto pauseLabel =
         state == Audio::Recorder::State::Paused ? QStringLiteral("Resume") : QStringLiteral("Pause");
-    auto pauseIcon = state == Audio::Recorder::State::Paused ? "play-circle" : "pause-circle";
+    auto pauseIcon = state == Audio::Recorder::State::Paused ? BuiltinIcon::Play : BuiltinIcon::Pause;
     section->addAction(
         new StaticAction(pauseLabel, ImageURL::builtin(pauseIcon), [this]() { togglePause(); }));
   }
