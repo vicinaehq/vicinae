@@ -15,6 +15,8 @@ public:
   AbstractWindowManager *provider() const;
   AbstractWindowManager::WindowList listWindowsSync();
   AbstractWindowManager::WindowPtr getFocusedWindow();
+  // raw provider result: null while the launcher holds focus, never the remembered window
+  AbstractWindowManager::WindowPtr focusedForeignWindow() const;
 
   AbstractWindowManager::WindowList findAppWindows(const AbstractApplication &app) const;
   const AbstractWindowManager::WindowList &listWindows() const;
