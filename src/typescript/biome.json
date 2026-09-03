@@ -4,6 +4,7 @@
 			"api/**",
 			"extension-manager/**",
 			"raycast-api-compat/**",
+			"utils/**",
 			"!api/src/proto/**",
 			"!api/src/api/proto/**",
 			"!extension-manager/src/proto/**"
