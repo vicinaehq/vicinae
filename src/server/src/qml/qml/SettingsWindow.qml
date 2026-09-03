@@ -53,6 +53,11 @@ Window {
     flags: Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint
     title: qsTr("Vicinae Settings")
 
+    Shortcut {
+        sequence: StandardKey.Close
+        onActivated: root.close()
+    }
+
     Rectangle {
         id: background
         anchors.fill: parent

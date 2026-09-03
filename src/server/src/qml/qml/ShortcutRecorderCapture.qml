@@ -46,6 +46,8 @@ FocusScope {
     }
     Component.onDestruction: GlobalShortcuts.setCapturing(false)
 
+    Keys.onShortcutOverride: event => event.accepted = capture.capturing
+
     Keys.onPressed: event => {
         event.accepted = true;
         capture.activity();
