@@ -295,7 +295,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #endif
     auto snippetService =
         std::make_unique<SnippetService>(Omnicast::dataDir() / "snippets" / "snippets.json", *snippetServer,
-                                         *windowManager, *appRuntime, *clipboardManager);
+                                         *windowManager, *appRuntime, *appService, *clipboardManager);
     auto pasteService = std::make_unique<PasteService>(*clipboardManager, *windowManager, *appService,
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();

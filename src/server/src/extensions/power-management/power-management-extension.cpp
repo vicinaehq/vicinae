@@ -6,6 +6,7 @@
 #include "preference.hpp"
 #include "single-view-command-context.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include <QCoreApplication>
@@ -36,7 +37,7 @@ public:
       auto program = Preference::makeText("customProgram");
       program.setRequired(false);
       program.setTitle(tr("Custom program"));
-      program.setDescription(tr("Custom POSIX shell command to run instead of the default implementation"));
+      program.setDescription(tr("Custom shell command to run instead of the default implementation"));
       preferences.emplace_back(program);
     }
 
@@ -55,14 +56,9 @@ public:
       auto toast = ctx->services->toastService();
 
       if (customProgram) {
-        QProcess process;
-        QStringList args;
-
-        process.setProgram("/bin/sh");
-        args << "-c" << *customProgram;
-        process.setArguments(std::move(args));
-        process.start();
-        if (!process.waitForFinished(-1)) {
+        auto process = ctx->services->appDb()->shellProcess(*customProgram);
+        process->start();
+        if (!process->waitForFinished(-1)) {
           toast->failure(tr("Failed to execute custom program %1").arg(*customProgram));
         }
       } else {

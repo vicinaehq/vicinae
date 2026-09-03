@@ -2,6 +2,8 @@
 #include "preference.hpp"
 #include "ui/image/url.hpp"
 #include <QJsonObject>
+#include <QProcess>
+#include <memory>
 #include <QString>
 #include <optional>
 #include <qmimetype.h>
@@ -153,6 +155,17 @@ public:
    */
   virtual bool launchTerminalCommand(const std::vector<QString> &cmdline,
                                      const LaunchTerminalCommandOptions &opts = {}) const = 0;
+
+  /**
+   * Unstarted process that runs `code` in the platform's default shell. The caller starts it and owns
+   * timeout and output handling; create it on the thread that will run it.
+   */
+  virtual std::unique_ptr<QProcess> shellProcess(const QString &code) const {
+    auto proc = std::make_unique<QProcess>();
+    proc->setProgram(qEnvironmentVariable("SHELL", QStringLiteral("/bin/sh")));
+    proc->setArguments({QStringLiteral("-c"), code});
+    return proc;
+  }
 
   /**
    * Preferences that are specific to this provider (e.g. launch prefix on XDG).
