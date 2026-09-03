@@ -1,5 +1,6 @@
 #pragma once
 #include "abstract-file-chooser.hpp"
+#include <QUrl>
 #include <qobject.h>
 #include <qtmetamacros.h>
 
@@ -21,6 +22,9 @@ public:
 
   /// Called when the QML fallback dialog completes (accepted or rejected).
   Q_INVOKABLE void notifyFallbackDone();
+
+  /// Converts a fallback dialog URL into a native local path.
+  Q_INVOKABLE QString toLocalPath(const QUrl &url) const;
 
   void cancel();
   bool isActive() const;
