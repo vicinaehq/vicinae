@@ -94,7 +94,7 @@ Item {
                 variant: "secondary"
                 radius: 8
                 implicitWidth: 200
-                onClicked: settings.openUrl("https://github.com/vicinaehq/vicinae/issues/new")
+                onClicked: settings.reportBug()
                 Layout.alignment: Qt.AlignHCenter
             }
 

@@ -62,6 +62,7 @@ public:
   Q_INVOKABLE void goForward();
 
   Q_INVOKABLE void openUrl(const QString &url);
+  Q_INVOKABLE void reportBug();
   Q_INVOKABLE void close();
   Q_INVOKABLE void requestDefaultFocus();
 
