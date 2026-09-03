@@ -57,8 +57,10 @@
 #include "services/news/news-service.hpp"
 #include "services/telemetry/telemetry-service.hpp"
 #include "services/update/update-service.hpp"
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
 #include "services/update/macos-update-installer.hpp"
+#elif defined(Q_OS_WIN)
+#include "services/update/windows-update-installer.hpp"
 #else
 #include "services/update/null-update-installer.hpp"
 #endif
@@ -365,8 +367,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setFileChooserService(std::make_unique<FileChooserService>());
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
     auto updateInstaller = std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<MacosUpdateInstaller>());
+#elif defined(Q_OS_WIN)
+    auto updateInstaller =
+        std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<WindowsUpdateInstaller>());
 #else
     auto updateInstaller = std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<NullUpdateInstaller>());
 #endif
