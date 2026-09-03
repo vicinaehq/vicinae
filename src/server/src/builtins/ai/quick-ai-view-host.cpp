@@ -123,14 +123,14 @@ void QuickAIViewHost::updateActions() {
   auto *section = panel->createSection();
 
   if (m_streaming) {
-    auto *cancel = new StaticAction(QStringLiteral("Cancel"), ImageURL::builtin("x-circle"), [this]() {
+    auto *cancel = new StaticAction(QStringLiteral("Cancel"), ImageURL::builtin(BuiltinIcon::XMarkCircle), [this]() {
       if (m_stream) m_stream->abort();
     });
     cancel->setPrimary(true);
     section->addAction(cancel);
   } else if (!m_followUpText.isEmpty()) {
     auto *followUp =
-        new StaticAction(QStringLiteral("Send Follow-up"), ImageURL::builtin("arrow-up"), [this]() {
+        new StaticAction(QStringLiteral("Send Follow-up"), ImageURL::builtin(BuiltinIcon::ArrowUp), [this]() {
           auto query = m_followUpText.toStdString();
           m_followUpText.clear();
           clearSearchText();
@@ -139,11 +139,11 @@ void QuickAIViewHost::updateActions() {
     followUp->setPrimary(true);
     section->addAction(followUp);
 
-    auto *paste = new StaticAction(QStringLiteral("Paste to App"), ImageURL::builtin("clipboard-text"),
+    auto *paste = new StaticAction(QStringLiteral("Paste to App"), ImageURL::builtin(BuiltinIcon::CopyClipboard),
                                    [this]() { pasteLastResponse(); });
     section->addAction(paste);
   } else {
-    auto *paste = new StaticAction(QStringLiteral("Paste to App"), ImageURL::builtin("clipboard-text"),
+    auto *paste = new StaticAction(QStringLiteral("Paste to App"), ImageURL::builtin(BuiltinIcon::CopyClipboard),
                                    [this]() { pasteLastResponse(); });
     paste->setPrimary(true);
     section->addAction(paste);
