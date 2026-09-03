@@ -60,7 +60,7 @@ Item {
 
             FormTextInput {
                 text: root.host.location
-                placeholder: "~/code/vicinae-extensions"
+                placeholder: root.host.locationPlaceholder
                 hasError: locationField.error !== ""
                 onTextEdited: root.host.location = text
             }

@@ -14,6 +14,7 @@
 #include "view-utils.hpp"
 #include "config/config.hpp"
 #include "extension/extension.hpp"
+#include "extensions/vicinae/bug-report-url.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
@@ -116,6 +117,8 @@ QString SettingsWindow::buildInfo() const { return QStringLiteral(BUILD_INFO); }
 QString SettingsWindow::headline() const { return Omnicast::HEADLINE; }
 
 void SettingsWindow::openUrl(const QString &url) { m_ctx.services->appDb()->openTarget(url); }
+
+void SettingsWindow::reportBug() { openUrl(makeVicinaeBugReportUrl().toString(QUrl::FullyEncoded)); }
 
 void SettingsWindow::close() {
   if (m_window) m_window->hide();

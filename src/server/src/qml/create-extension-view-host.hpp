@@ -11,6 +11,7 @@ class CreateExtensionViewHost : public FormViewBase {
   Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY formChanged)
   Q_PROPERTY(QString description READ description WRITE setDescription NOTIFY formChanged)
   Q_PROPERTY(QString location READ location WRITE setLocation NOTIFY formChanged)
+  Q_PROPERTY(QString locationPlaceholder READ locationPlaceholder CONSTANT)
 
   Q_PROPERTY(QString commandTitle READ commandTitle WRITE setCommandTitle NOTIFY formChanged)
   Q_PROPERTY(QString commandSubtitle READ commandSubtitle WRITE setCommandSubtitle NOTIFY formChanged)
@@ -39,6 +40,7 @@ public:
   QString title() const { return m_title; }
   QString description() const { return m_description; }
   QString location() const { return m_location; }
+  QString locationPlaceholder() const;
 
   QString commandTitle() const { return m_commandTitle; }
   QString commandSubtitle() const { return m_commandSubtitle; }

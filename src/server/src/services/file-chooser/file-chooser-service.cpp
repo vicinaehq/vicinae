@@ -1,5 +1,6 @@
 #include "file-chooser-service.hpp"
 #include "file-chooser.hpp"
+#include <QDir>
 
 FileChooserService::FileChooserService(QObject *parent) : QObject(parent) {}
 
@@ -39,6 +40,12 @@ bool FileChooserService::openDialog(bool canChooseFiles, bool canChooseDirectori
 
   m_activeChooser->open(opts);
   return true;
+}
+
+QString FileChooserService::toLocalPath(const QUrl &url) const {
+  QString path = url.toLocalFile();
+  if (path.length() > 1 && path.endsWith('/') && !path.endsWith(":/")) path.chop(1);
+  return QDir::toNativeSeparators(path);
 }
 
 void FileChooserService::notifyFallbackDone() {

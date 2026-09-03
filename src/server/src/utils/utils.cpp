@@ -17,11 +17,9 @@
 namespace fs = std::filesystem;
 
 std::filesystem::path homeDir() {
-  const char *env = getenv("HOME");
-
-  if (!env) return {};
-
-  return env;
+  if (const char *env = getenv("HOME")) return env;
+  if (const char *env = getenv("USERPROFILE")) return env;
+  return {};
 }
 
 fs::path compressPath(const fs::path &path) {

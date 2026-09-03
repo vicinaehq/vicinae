@@ -67,7 +67,7 @@ FocusScope {
     function _handleFallbackResult(urls) {
         let newPaths = [];
         for (let i = 0; i < urls.length; i++)
-            newPaths.push(urls[i].toString().replace("file://", ""));
+            newPaths.push(FileChooser.toLocalPath(urls[i]));
         root._applyResult(newPaths);
     }
 
