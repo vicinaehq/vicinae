@@ -48,5 +48,4 @@ private:
   std::thread m_thread;
   unsigned long m_hookThreadId = 0;
   std::atomic_bool m_running{false};
-  std::atomic_int m_keyDelayUs{0};
 };
