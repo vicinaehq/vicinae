@@ -51,14 +51,70 @@ void sleepUs(int us) {
   if (us > 0) { std::this_thread::sleep_for(std::chrono::microseconds(us)); }
 }
 
-void sendVk(WORD vk, bool down) {
+INPUT vkInput(WORD vk, bool down) {
   INPUT in{};
   in.type = INPUT_KEYBOARD;
   in.ki.wVk = vk;
   in.ki.wScan = static_cast<WORD>(MapVirtualKeyW(vk, MAPVK_VK_TO_VSC));
   in.ki.dwFlags = down ? 0 : KEYEVENTF_KEYUP;
   in.ki.dwExtraInfo = VICINAE_INJECT_TAG;
-  SendInput(1, &in, sizeof(INPUT));
+  return in;
+}
+
+// surrogate pairs are sent as two consecutive units and recombined by the target app
+INPUT unitInput(char16_t unit, bool down) {
+  INPUT in{};
+  in.type = INPUT_KEYBOARD;
+  in.ki.wScan = unit;
+  in.ki.dwFlags = KEYEVENTF_UNICODE | (down ? 0 : KEYEVENTF_KEYUP);
+  in.ki.dwExtraInfo = VICINAE_INJECT_TAG;
+  return in;
+}
+
+void send(std::vector<INPUT> &inputs) {
+  if (!inputs.empty()) { SendInput(static_cast<UINT>(inputs.size()), inputs.data(), sizeof(INPUT)); }
+}
+
+// one SendInput call for the whole sequence unless the user configured a key delay
+void sendPresses(const std::vector<INPUT> &presses, int delayUs) {
+  if (delayUs <= 0) {
+    std::vector<INPUT> inputs;
+    inputs.reserve(presses.size() * 2);
+    for (INPUT in : presses) {
+      inputs.push_back(in);
+      in.ki.dwFlags |= KEYEVENTF_KEYUP;
+      inputs.push_back(in);
+    }
+    send(inputs);
+    return;
+  }
+
+  for (INPUT in : presses) {
+    SendInput(1, &in, sizeof(INPUT));
+    in.ki.dwFlags |= KEYEVENTF_KEYUP;
+    SendInput(1, &in, sizeof(INPUT));
+    sleepUs(delayUs);
+  }
+}
+
+void sendRepeatedVk(WORD vk, unsigned count, int delayUs) {
+  sendPresses(std::vector<INPUT>(count, vkInput(vk, true)), delayUs);
+}
+
+void sendText(const std::string &text, int delayUs) {
+  const QString qtext = QString::fromStdString(text);
+  std::vector<INPUT> presses;
+  presses.reserve(qtext.size());
+  for (const QChar c : qtext) {
+    presses.push_back(unitInput(c.unicode(), true));
+  }
+  sendPresses(presses, delayUs);
+}
+
+void sendPaste() {
+  std::vector<INPUT> inputs = {vkInput(VK_CONTROL, true), vkInput('V', true), vkInput('V', false),
+                               vkInput(VK_CONTROL, false)};
+  send(inputs);
 }
 
 // still-held shift/AltGr would turn the backspaces into ctrl+backspace and the paste into ctrl+shift+v
@@ -75,46 +131,11 @@ void waitForModifierRelease() {
     std::this_thread::sleep_for(std::chrono::milliseconds(MODIFIER_POLL_INTERVAL_MS));
   }
 
+  std::vector<INPUT> releases;
   for (WORD vk : MODIFIERS) {
-    if (GetAsyncKeyState(vk) & 0x8000) { sendVk(vk, false); }
+    if (GetAsyncKeyState(vk) & 0x8000) { releases.push_back(vkInput(vk, false)); }
   }
-}
-
-void sendBackspaces(unsigned count, int delayUs) {
-  for (unsigned i = 0; i < count; ++i) {
-    sendVk(VK_BACK, true);
-    sendVk(VK_BACK, false);
-    sleepUs(delayUs);
-  }
-}
-
-// injects a single UTF-16 code unit; surrogate pairs are sent as two consecutive units and recombined
-// by the target app
-void sendUnit(char16_t unit, bool down) {
-  INPUT in{};
-  in.type = INPUT_KEYBOARD;
-  in.ki.wScan = unit;
-  in.ki.dwFlags = KEYEVENTF_UNICODE | (down ? 0 : KEYEVENTF_KEYUP);
-  in.ki.dwExtraInfo = VICINAE_INJECT_TAG;
-  SendInput(1, &in, sizeof(INPUT));
-}
-
-void sendText(const std::string &text, int delayUs) {
-  const QString qtext = QString::fromStdString(text);
-  const ushort *units = qtext.utf16();
-  for (int i = 0; i < qtext.size(); ++i) {
-    sendUnit(units[i], true);
-    sendUnit(units[i], false);
-    sleepUs(delayUs);
-  }
-}
-
-void sendLeftArrows(unsigned count, int delayUs) {
-  for (unsigned i = 0; i < count; ++i) {
-    sendVk(VK_LEFT, true);
-    sendVk(VK_LEFT, false);
-    sleepUs(delayUs);
-  }
+  send(releases);
 }
 
 // translates a physical key press to the text it produces under the foreground window's layout, and reports
@@ -233,26 +254,23 @@ void WindowsSnippetServer::injectExpand(const std::string &text, unsigned charsT
   const int delay = m_keyDelayUs.load();
 
   waitForModifierRelease();
-  sendBackspaces(charsToDelete, delay);
+  sendRepeatedVk(VK_BACK, charsToDelete, delay);
 
   if (viaClipboard) {
     sleepUs(static_cast<int>(prePasteDelayUs));
-    sendVk(VK_CONTROL, true);
-    sendVk('V', true);
-    sendVk('V', false);
-    sendVk(VK_CONTROL, false);
+    sendPaste();
   } else {
     sendText(text, delay);
   }
 
-  sendLeftArrows(cursorLeftMoves, delay);
+  sendRepeatedVk(VK_LEFT, cursorLeftMoves, delay);
 }
 
 void WindowsSnippetServer::injectUndo(unsigned backspaceCount, const std::string &trigger) {
   const int delay = m_keyDelayUs.load();
 
   waitForModifierRelease();
-  sendBackspaces(backspaceCount, delay);
+  sendRepeatedVk(VK_BACK, backspaceCount, delay);
   sendText(trigger, delay);
 }
 
