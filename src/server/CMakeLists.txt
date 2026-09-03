@@ -22,6 +22,15 @@ else()
 	FetchContent_MakeAvailable(numen)
 endif()
 
+include(FetchContent)
+
+FetchContent_Declare(whisper
+  GIT_REPOSITORY https://github.com/ggml-org/whisper.cpp
+  GIT_TAG        b4938
+)
+
+FetchContent_MakeAvailable(whisper)
+
 list(APPEND LIBS
 	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
@@ -38,6 +47,7 @@ list(APPEND LIBS
 	vicinae::crypto
 	sqlcipher
 	numen::numen
+	whisper
 )
 
 if (NOT WIN32)
