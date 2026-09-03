@@ -45,7 +45,6 @@ private:
 
   ManageSnippetsSection m_section;
   SnippetService *m_snippetService = nullptr;
-  SnippetExpander m_expander;
 
   std::optional<snippet::SerializedSnippet> m_currentSnippet;
   bool m_hasDetail = false;

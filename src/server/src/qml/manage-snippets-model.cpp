@@ -32,7 +32,7 @@ ManageSnippetsSection::buildActionPanel(const snippet::SerializedSnippet &item) 
   auto copy =
       new StaticAction(tr("Copy to clipboard"), BuiltinIcon::CopyClipboard, [item](ApplicationContext *ctx) {
         auto clipman = ctx->services->clipman();
-        if (SnippetCopy::copyToClipboard(item, ctx->navigation->completionValues(), *clipman)) {
+        if (SnippetCopy::copyToClipboard(item, ctx->navigation->completionValues(), *ctx->services->appDb(), *clipman)) {
           ctx->navigation->showHud(tr("Copied to clipboard"));
         } else {
           ctx->services->toastService()->failure(tr("Failed to copy to clipboard"));

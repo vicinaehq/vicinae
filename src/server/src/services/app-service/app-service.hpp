@@ -41,6 +41,7 @@ public:
    */
   bool launch(const AbstractApplication &app, const std::vector<QString> &args = {}) const;
 
+  std::unique_ptr<QProcess> shellProcess(const QString &code) const;
   bool launchTerminalCommand(const std::vector<QString> &cmdLine,
                              const LaunchTerminalCommandOptions &opts = {});
 
