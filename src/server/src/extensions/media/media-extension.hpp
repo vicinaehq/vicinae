@@ -7,7 +7,8 @@
 #include "single-view-command-context.hpp"
 #include "theme/colors.hpp"
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
+#include "extensions/media/player-app.hpp"
 #include "qml/now-playing-view-host.hpp"
 #include "services/media-control/media-control-service.hpp"
 #endif
@@ -16,7 +17,7 @@ namespace {
 
 const QColor MEDIA_COMMAND_TINT = QColor(128, 132, 138);
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
 
 QString playerQuery(const CommandController &controller) {
   const auto &args = controller.launchProps().arguments;
@@ -31,10 +32,18 @@ QString trackLabel(const MediaPlayer &player) {
   return QCoreApplication::translate("media-extension", "%1 — %2").arg(player.title, player.artist);
 }
 
-std::optional<MediaPlayer> findPlayer(const AbstractMediaControl *media, const QString &query) {
-  if (query.isEmpty()) return media->defaultPlayer();
+std::optional<MediaPlayer> findPlayer(const ApplicationContext *ctx, const QString &query) {
+  auto media = ctx->services->mediaControl()->provider();
+
+  if (query.isEmpty()) {
+    auto player = media->defaultPlayer();
+    if (player) resolvePlayerIdentity(ctx, *player);
+    return player;
+  }
 
   auto all = media->players();
+  resolvePlayerIdentities(ctx, all);
+
   const auto text = query.toStdString();
   std::vector<Scored<int>> filtered;
 
@@ -49,7 +58,7 @@ std::optional<MediaPlayer> findPlayer(const AbstractMediaControl *media, const Q
  * Player the command should act on, notifying the user when there is none.
  */
 std::optional<MediaPlayer> resolvePlayer(const ApplicationContext *ctx, const QString &query) {
-  auto player = findPlayer(ctx->services->mediaControl()->provider(), query);
+  auto player = findPlayer(ctx, query);
 
   if (player) return player;
 
@@ -327,7 +336,7 @@ class MediaExtension : public BuiltinCommandRepository {
 public:
   MediaExtension() {
     // only MPRIS is implemented for now, other platforms get the dummy backend
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
     registerCommand<NowPlayingCommand>();
     registerCommand<PlayPauseCommand>();
     registerCommand<NextTrackCommand>();

@@ -12,6 +12,7 @@ struct MediaPlayer {
   QString id;
   /// Name of the program owning the player, e.g. "Spotify".
   QString identity;
+  QString appId;
   QString title;
   QString artist;
   PlaybackStatus status = PlaybackStatus::Stopped;

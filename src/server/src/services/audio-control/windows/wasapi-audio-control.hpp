@@ -1,7 +1,7 @@
 #pragma once
-#include "../abstract-audio-control.hpp"
+#include "services/audio-control/abstract-audio-control.hpp"
 
-class CoreAudioControl : public AbstractAudioControl {
+class WasapiAudioControl : public AbstractAudioControl {
 public:
   QString id() const override;
 

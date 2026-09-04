@@ -790,6 +790,10 @@ elseif (WIN32)
 		src/services/url-scheme/win-url-scheme-registrar.cpp
 		src/services/wallpaper/windows/windows-wallpaper-backend.hpp
 		src/services/wallpaper/windows/windows-wallpaper-backend.cpp
+		src/services/audio-control/windows/wasapi-audio-control.hpp
+		src/services/audio-control/windows/wasapi-audio-control.cpp
+		src/services/media-control/windows/windows-media-control.hpp
+		src/services/media-control/windows/windows-media-control.cpp
 	)
 	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore)
 else()

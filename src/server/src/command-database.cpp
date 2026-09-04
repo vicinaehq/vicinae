@@ -55,8 +55,9 @@ CommandDatabase::CommandDatabase(const ServiceRegistry &services) {
   registerRepository<InternalExtension>();
 #endif
 
+  registerRepository<MediaExtension>();
+
 #ifdef Q_OS_UNIX
   registerRepository<SystemExtension>();
-  registerRepository<MediaExtension>();
 #endif
 }
