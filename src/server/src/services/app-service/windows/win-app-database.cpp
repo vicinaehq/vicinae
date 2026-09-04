@@ -27,6 +27,7 @@
 #include "utils/scoped-com.hpp"
 
 #include <QDebug>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <array>
 #include <chrono>
@@ -602,8 +603,13 @@ void WindowsAppDatabase::indexAliases(const std::shared_ptr<WindowsApplication> 
       [&](const Win32ShortcutApp &s) {
         add(s.aumid);
         add(s.program);
+        add(QFileInfo(s.program).fileName());
       },
-      [&](const Win32ExeApp &e) { add(toQString(e.exe)); }, [&](const PackagedApp &p) { add(p.aumid); },
+      [&](const Win32ExeApp &e) {
+        add(toQString(e.exe));
+        add(toQString(e.exe.filename()));
+      },
+      [&](const PackagedApp &p) { add(p.aumid); },
       [](const auto &) {});
 }
 

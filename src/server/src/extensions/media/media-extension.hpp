@@ -8,6 +8,7 @@
 #include "theme/colors.hpp"
 
 #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
+#include "extensions/media/player-app.hpp"
 #include "qml/now-playing-view-host.hpp"
 #include "services/media-control/media-control-service.hpp"
 #endif
@@ -31,10 +32,18 @@ QString trackLabel(const MediaPlayer &player) {
   return QCoreApplication::translate("media-extension", "%1 — %2").arg(player.title, player.artist);
 }
 
-std::optional<MediaPlayer> findPlayer(const AbstractMediaControl *media, const QString &query) {
-  if (query.isEmpty()) return media->defaultPlayer();
+std::optional<MediaPlayer> findPlayer(const ApplicationContext *ctx, const QString &query) {
+  auto media = ctx->services->mediaControl()->provider();
+
+  if (query.isEmpty()) {
+    auto player = media->defaultPlayer();
+    if (player) resolvePlayerIdentity(ctx, *player);
+    return player;
+  }
 
   auto all = media->players();
+  resolvePlayerIdentities(ctx, all);
+
   const auto text = query.toStdString();
   std::vector<Scored<int>> filtered;
 
@@ -49,7 +58,7 @@ std::optional<MediaPlayer> findPlayer(const AbstractMediaControl *media, const Q
  * Player the command should act on, notifying the user when there is none.
  */
 std::optional<MediaPlayer> resolvePlayer(const ApplicationContext *ctx, const QString &query) {
-  auto player = findPlayer(ctx->services->mediaControl()->provider(), query);
+  auto player = findPlayer(ctx, query);
 
   if (player) return player;
 

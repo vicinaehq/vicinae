@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include "builtin_icon.hpp"
 #include "common/context.hpp"
+#include "extensions/media/player-app.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "mono-list-view-host.hpp"
 #include "services/media-control/media-control-service.hpp"
@@ -40,17 +41,23 @@ public:
   QString displaySubtitle(const ItemType &e) const override { return e.artist; }
 
   std::optional<ImageURL> displayIcon(const ItemType &e) const override {
-    if (e.status == PlaybackStatus::Playing) {
-      return ImageURL::builtin(BuiltinIcon::PauseFilled).setFill(SemanticColor::Green);
-    }
+    if (auto app = playerApp(context(), e)) return app->iconUrl();
 
-    return ImageURL::builtin(BuiltinIcon::PlayFilled);
+    return ImageURL::builtin(BuiltinIcon::Music);
   }
 
   AccessoryList displayAccessories(const ItemType &e) const override {
-    if (e.title.isEmpty()) return {};
+    if (e.status == PlaybackStatus::Playing) {
+      return {{.text = tr("Playing"),
+               .color = SemanticColor::Green,
+               .icon = ImageURL::builtin(BuiltinIcon::PlayFilled).setFill(SemanticColor::Green)}};
+    }
 
-    return {ListAccessory{.text = e.identity}};
+    if (e.status == PlaybackStatus::Paused) {
+      return {{.text = tr("Paused"), .icon = ImageURL::builtin(BuiltinIcon::PauseFilled)}};
+    }
+
+    return {};
   }
 
   std::unique_ptr<ActionPanelState> buildActionPanel(const ItemType &e) const override {
@@ -79,5 +86,9 @@ public:
   }
 
 private:
-  void reload() { setItems(context()->services->mediaControl()->provider()->players()); }
+  void reload() {
+    auto players = context()->services->mediaControl()->provider()->players();
+    resolvePlayerIdentities(context(), players);
+    setItems(std::move(players));
+  }
 };

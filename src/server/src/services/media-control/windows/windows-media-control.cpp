@@ -77,6 +77,7 @@ struct WindowsMediaControl::Impl {
     for (const auto &session : manager.GetSessions()) {
       MediaPlayer player{.id = fromHString(session.SourceAppUserModelId())};
       player.identity = identityFor(player.id);
+      player.appId = player.id;
 
       const auto info = session.GetPlaybackInfo();
       player.status = toStatus(info.PlaybackStatus());
