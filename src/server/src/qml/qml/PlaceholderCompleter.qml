@@ -64,7 +64,6 @@ Item {
         nativePanel: true
         focus: false
         x: 0
-        y: root.height + 4
         width: Math.max(200, root.width)
         items: root.completions
 

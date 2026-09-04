@@ -19,6 +19,43 @@ Popup {
 
     popupType: nativePanel && Platform.supports("nativePanels") ? Popup.Window : Popup.Item
 
+    // In-scene popups can't extend past the window, so the popup opens below
+    // `anchorItem`, flips above it when that side has more room, and caps its
+    // list to whatever fits on the chosen side.
+    property Item anchorItem: parent
+    property int anchorGap: 4
+    property int maxListHeight: showFilter ? 300 : 200
+
+    readonly property int itemRowHeight: 30
+    readonly property int sectionRowHeight: 24
+    readonly property int filterRowHeight: 28
+    readonly property int filterRowMargin: 4
+    readonly property int windowEdgeMargin: 8
+    readonly property int minListHeight: 60
+
+    property bool _above: false
+    property real _listCap: maxListHeight
+    readonly property real _chromeHeight: topPadding + bottomPadding + (showFilter ? filterRowHeight + filterRowMargin : 0)
+
+    y: _above ? -height - anchorGap : (anchorItem ? anchorItem.height + anchorGap : 0)
+
+    function _updatePlacement() {
+        _above = false;
+        _listCap = maxListHeight;
+        const win = content.hostWindow;
+        if (popupType !== Popup.Item || !anchorItem || !win)
+            return;
+        const pad = (win.shadowPadding ?? 0) + windowEdgeMargin;
+        const anchorTop = anchorItem.mapToItem(null, 0, 0).y;
+        const below = win.height - pad - (anchorTop + anchorItem.height + anchorGap);
+        const above = anchorTop - anchorGap - pad;
+        const sections = _model.sectionCount;
+        const natural = sections * sectionRowHeight + (count - sections) * itemRowHeight;
+        const wanted = Math.min(natural, maxListHeight) + _chromeHeight;
+        _above = wanted > below && above > below;
+        _listCap = Math.max(minListHeight, Math.min(maxListHeight, (_above ? above : below) - _chromeHeight));
+    }
+
     readonly property int count: _model.count
     readonly property bool hasSelection: _highlightedIndex >= 0
 
@@ -51,10 +88,15 @@ Popup {
     onSectionsChanged: if (sections.length > 0)
         internalModel.setSections(sections)
 
-    onOpened: {
+    onAboutToShow: {
         if (showFilter) {
             filterField.text = "";
             _model.setFilter("");
+        }
+        _updatePlacement();
+    }
+    onOpened: {
+        if (showFilter) {
             _highlightCurrentOrFirst();
             filterField.forceActiveFocus();
         }
@@ -120,13 +162,16 @@ Popup {
     }
 
     contentItem: ColumnLayout {
+        id: content
         spacing: 0
+
+        readonly property var hostWindow: Window.window
 
         Item {
             visible: root.showFilter
             Layout.fillWidth: true
-            Layout.preferredHeight: 28
-            Layout.bottomMargin: 4
+            Layout.preferredHeight: root.filterRowHeight
+            Layout.bottomMargin: root.filterRowMargin
 
             RowLayout {
                 anchors.fill: parent
@@ -196,7 +241,7 @@ Popup {
         ListView {
             id: completionList
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(contentHeight, root.showFilter ? 300 : 200)
+            Layout.preferredHeight: Math.min(contentHeight, root._listCap)
             model: root._model
             clip: true
             boundsBehavior: Flickable.StopAtBounds
@@ -235,7 +280,7 @@ Popup {
                     anchors.right: parent.right
                     anchors.leftMargin: 8
                     anchors.rightMargin: 8
-                    height: visible ? 24 : 0
+                    height: visible ? root.sectionRowHeight : 0
 
                     Text {
                         text: del.title
@@ -250,7 +295,7 @@ Popup {
                     visible: del.itemType === "item"
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    height: visible ? 30 : 0
+                    height: visible ? root.itemRowHeight : 0
 
                     SourceBlendRect {
                         anchors.fill: parent

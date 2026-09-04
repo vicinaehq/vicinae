@@ -118,23 +118,12 @@ Item {
         // PopupPlacement anchor; x/y only apply on other platforms.
         PopupPlacement.alignment: root.compact ? Qt.AlignRight : Qt.AlignLeft
         x: root.popupX()
-        y: triggerButton.height + 4
         width: Math.max(compact ? 200 : 250, root.width)
         focus: true
         sections: root.items
         model: root.model
         showFilter: true
         currentItemId: root.currentItem ? root.currentItem.id : ""
-
-        background: Rectangle {
-            readonly property bool csd: completionPopup.popupType === Popup.Item || Platform.supports("clientSideDecorations")
-            readonly property real bgOpacity: completionPopup.popupType === Popup.Window ? Config.popupOpacity : 1
-            radius: csd ? Math.min(Config.borderRounding, 15) : 0
-            color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bgOpacity)
-            border.color: Config.withAlpha(Theme.popoverBorder, bgOpacity)
-            border.width: csd ? 1 : 0
-            PopupMaterial {}
-        }
 
         onClosed: {
             root._closedTime = Date.now();
