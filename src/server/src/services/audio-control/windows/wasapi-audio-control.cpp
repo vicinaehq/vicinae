@@ -14,7 +14,8 @@ ComPtr<IAudioEndpointVolume> defaultEndpointVolume() {
   ComPtr<IMMDevice> device;
   ComPtr<IAudioEndpointVolume> volume;
 
-  if (FAILED(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL, IID_PPV_ARGS(&enumerator))) ||
+  if (FAILED(
+          CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL, IID_PPV_ARGS(&enumerator))) ||
       FAILED(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device))) {
     return nullptr;
   }

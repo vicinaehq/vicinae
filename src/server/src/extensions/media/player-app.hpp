@@ -5,7 +5,8 @@
 #include "services/app-service/app-service.hpp"
 #include "services/media-control/abstract-media-control.hpp"
 
-inline std::shared_ptr<AbstractApplication> playerApp(const ApplicationContext *ctx, const MediaPlayer &player) {
+inline std::shared_ptr<AbstractApplication> playerApp(const ApplicationContext *ctx,
+                                                      const MediaPlayer &player) {
   if (player.appId.isEmpty()) return nullptr;
   return ctx->services->appDb()->find(player.appId);
 }

@@ -55,8 +55,7 @@ struct WindowsMediaControl::Impl {
                    << fromHString(e.message());
         return;
       }
-      sessionsRevoker =
-          manager.SessionsChanged(winrt::auto_revoke, [this](auto &&, auto &&) { refresh(); });
+      sessionsRevoker = manager.SessionsChanged(winrt::auto_revoke, [this](auto &&, auto &&) { refresh(); });
       refresh();
     });
   }
@@ -110,9 +109,8 @@ struct WindowsMediaControl::Impl {
 
   std::optional<Session> find(const QString &playerId) const {
     std::lock_guard lock(cacheMutex);
-    const auto it = std::ranges::find_if(entries, [&](const Entry &e) {
-      return fromHString(e.session.SourceAppUserModelId()) == playerId;
-    });
+    const auto it = std::ranges::find_if(
+        entries, [&](const Entry &e) { return fromHString(e.session.SourceAppUserModelId()) == playerId; });
     if (it == entries.end()) return std::nullopt;
     return it->session;
   }
