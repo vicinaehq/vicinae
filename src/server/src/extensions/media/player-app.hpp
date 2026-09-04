@@ -11,9 +11,6 @@ inline std::shared_ptr<AbstractApplication> playerApp(const ApplicationContext *
   return ctx->services->appDb()->find(player.appId);
 }
 
-/**
- * Replaces the backend's best-effort identity with the installed app's name when it can be resolved.
- */
 inline void resolvePlayerIdentity(const ApplicationContext *ctx, MediaPlayer &player) {
   if (auto app = playerApp(ctx, player)) player.identity = app->displayName();
 }

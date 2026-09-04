@@ -25,7 +25,6 @@ PlaybackStatus toStatus(GlobalSystemMediaTransportControlsSessionPlaybackStatus 
   }
 }
 
-// Packaged apps report "Publisher.App_hash!Entry", classic ones usually just "app.exe" or a custom id.
 QString identityFor(const QString &aumid) {
   if (auto bang = aumid.lastIndexOf('!'); bang != -1) return aumid.mid(bang + 1);
   if (aumid.endsWith(".exe", Qt::CaseInsensitive)) return QFileInfo(aumid).completeBaseName();
@@ -67,7 +66,6 @@ struct WindowsMediaControl::Impl {
     entries.clear();
   }
 
-  // Runs on WinRT threads: blocking on the async property fetch is fine there.
   void refresh() {
     std::lock_guard refreshLock(refreshMutex);
     std::vector<MediaPlayer> players;
@@ -87,9 +85,7 @@ struct WindowsMediaControl::Impl {
         const auto props = session.TryGetMediaPropertiesAsync().get();
         player.title = fromHString(props.Title());
         player.artist = fromHString(props.Artist());
-      } catch (const winrt::hresult_error &) {
-        // the player went away mid-query, the sessions changed event will follow
-      }
+      } catch (const winrt::hresult_error &) {}
 
       auto onChange = [this](auto &&, auto &&) { refresh(); };
       fresh.push_back({.session = session,
@@ -136,7 +132,6 @@ std::vector<MediaPlayer> WindowsMediaControl::players() const {
   return m_impl->cache;
 }
 
-// The async results are dropped on purpose: waiting on them would block the UI thread.
 bool WindowsMediaControl::playPause(const QString &playerId) {
   auto session = m_impl->find(playerId);
   if (!session) return false;

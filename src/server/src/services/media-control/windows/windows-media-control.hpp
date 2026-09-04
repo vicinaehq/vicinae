@@ -2,10 +2,6 @@
 #include <memory>
 #include "services/media-control/abstract-media-control.hpp"
 
-/**
- * Media control through the system media transport controls, the same sessions the Windows
- * media flyout shows. Players are identified by their AppUserModelId.
- */
 class WindowsMediaControl : public AbstractMediaControl {
   Q_OBJECT
 
