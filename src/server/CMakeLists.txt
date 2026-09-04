@@ -794,8 +794,10 @@ elseif (WIN32)
 		src/services/audio-control/windows/wasapi-audio-control.cpp
 		src/services/media-control/windows/windows-media-control.hpp
 		src/services/media-control/windows/windows-media-control.cpp
+		src/services/power-manager/windows/windows-power-manager.hpp
+		src/services/power-manager/windows/windows-power-manager.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore powrprof)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp
