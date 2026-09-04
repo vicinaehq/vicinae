@@ -186,8 +186,13 @@ void SnippetFormViewHost::buildContentCompletions() {
           {QStringLiteral("cursorOffset"), 16},
       },
       QVariantMap{
+#ifdef Q_OS_WIN
+          {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Powershell))},
+          {QStringLiteral("title"), tr("PowerShell Command")},
+#else
           {QStringLiteral("iconSource"), qml::imageSourceFor(ImageURL::builtin(BuiltinIcon::Terminal))},
           {QStringLiteral("title"), tr("Shell Command")},
+#endif
           {QStringLiteral("value"), QStringLiteral("shell")},
           {QStringLiteral("template"), QStringLiteral("{shell code=\"\"}")},
           {QStringLiteral("cursorOffset"), 13},

@@ -9,10 +9,10 @@ class SnippetCopy {
 public:
   static bool copyToClipboard(const snippet::SerializedSnippet &snippet,
                               const std::vector<std::pair<QString, QString>> &args,
-                              ClipboardService &clipman) {
+                              const AppService &appService, ClipboardService &clipman) {
     const auto visitor = overloads{
         [&](const snippet::TextSnippet &text) {
-          SnippetExpander expander;
+          SnippetExpander expander(appService);
           auto expanded = expander.expand(text.text.c_str(), args);
           QString expandedText = expanded.parts |
                                  std::views::transform([](auto &&part) { return part.text; }) |

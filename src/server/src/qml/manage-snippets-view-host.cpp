@@ -133,7 +133,8 @@ void ManageSnippetsViewHost::updateExpandedText() {
 
   if (const auto *text = std::get_if<snippet::TextSnippet>(&m_currentSnippet->data)) {
     const auto values = context()->navigation->completionValues();
-    const auto result = m_expander.expand(text->text.c_str(), values, {.executeShell = false});
+    const SnippetExpander expander(*context()->services->appDb());
+    const auto result = expander.expand(text->text.c_str(), values, {.executeShell = false});
     m_detailContent = result.parts | std::views::transform([](auto &&r) { return r.text; }) |
                       std::views::join | std::ranges::to<QString>();
   }

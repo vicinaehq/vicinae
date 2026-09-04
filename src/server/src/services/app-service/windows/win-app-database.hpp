@@ -26,6 +26,7 @@ public:
   bool scan() override;
 
   bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const override;
+  std::unique_ptr<QProcess> shellProcess(const QString &code) const override;
   bool launchTerminalCommand(const std::vector<QString> &cmdline,
                              const LaunchTerminalCommandOptions &opts = {}) const override;
 

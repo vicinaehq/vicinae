@@ -928,6 +928,18 @@ bool WindowsAppDatabase::launch(const AbstractApplication &app, const std::vecto
       });
 }
 
+// -EncodedCommand sidesteps powershell's command-line quoting entirely
+std::unique_ptr<QProcess> WindowsAppDatabase::shellProcess(const QString &code) const {
+  const fs::path shell = searchExecutable(L"pwsh.exe").value_or(L"powershell.exe");
+  const QByteArray utf16(reinterpret_cast<const char *>(code.utf16()), code.size() * 2);
+
+  auto proc = std::make_unique<QProcess>();
+  proc->setProgram(toQString(shell));
+  proc->setArguments({QStringLiteral("-NoProfile"), QStringLiteral("-NonInteractive"),
+                      QStringLiteral("-EncodedCommand"), QString::fromLatin1(utf16.toBase64())});
+  return proc;
+}
+
 bool WindowsAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
                                                const LaunchTerminalCommandOptions &opts) const {
   if (cmdline.empty()) return false;

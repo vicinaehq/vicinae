@@ -10,6 +10,7 @@
 #include <ranges>
 #include "common/types.hpp"
 #include "placeholder.hpp"
+#include "services/app-service/app-service.hpp"
 
 class SnippetExpander {
 public:
@@ -30,7 +31,8 @@ public:
     bool executeShell = true;
   };
 
-  SnippetExpander() : m_uuid(QUuid::createUuid().toString(QUuid::WithoutBraces)) {}
+  explicit SnippetExpander(const AppService &appService)
+      : m_appService(&appService), m_uuid(QUuid::createUuid().toString(QUuid::WithoutBraces)) {}
 
   QString expandToString(const QString &text,
                          const std::vector<std::pair<QString, QString>> &arguments) const {
@@ -107,8 +109,8 @@ private:
   // FIXME: maybe we should execute this in a fully asynchronous manner, meaning the expansion itself
   // should be asynchronous. For most use cases it's fine to block, even if it timeouts it will only lock down
   // the UI for a brief moment (2s by default).
-  static std::vector<QString> executeShellPlaceholdersSync(const PlaceholderString &parsed,
-                                                           int timeout = SHELL_TIMEOUT_MS) {
+  std::vector<QString> executeShellPlaceholdersSync(const PlaceholderString &parsed,
+                                                    int timeout = SHELL_TIMEOUT_MS) const {
     struct ShellCommand {
       QString code;
       QString exec;
@@ -123,26 +125,29 @@ private:
         if (ph->id != "shell") continue;
         ShellCommand cmd;
         if (auto it = ph->args.find("code"); it != ph->args.end()) cmd.code = it->second;
-        if (auto it = ph->args.find("exec"); it != ph->args.end())
-          cmd.exec = it->second;
-        else
-          cmd.exec = qEnvironmentVariable("SHELL", QStringLiteral("/bin/sh"));
+        if (auto it = ph->args.find("exec"); it != ph->args.end()) cmd.exec = it->second;
         commands.push_back(std::move(cmd));
       }
     }
 
     if (commands.empty()) return {};
 
-    const auto runCommand = [timeout](const ShellCommand &cmd) -> QString {
-      QProcess proc;
-      proc.start(cmd.exec, {QStringLiteral("-c"), cmd.code});
-      if (proc.waitForFinished(timeout) && proc.exitStatus() == QProcess::NormalExit &&
-          proc.exitCode() == 0) {
-        auto output = QString::fromUtf8(proc.readAllStandardOutput());
-        if (output.endsWith('\n')) output.chop(1);
-        return output;
+    const auto runCommand = [this, timeout](const ShellCommand &cmd) -> QString {
+      std::unique_ptr<QProcess> proc;
+      if (cmd.exec.isEmpty()) {
+        proc = m_appService->shellProcess(cmd.code);
+      } else {
+        proc = std::make_unique<QProcess>();
+        proc->setProgram(cmd.exec);
+        proc->setArguments({QStringLiteral("-c"), cmd.code});
       }
-      qWarning() << "Shell placeholder failed:" << cmd.code << proc.errorString();
+
+      proc->start();
+      if (proc->waitForFinished(timeout) && proc->exitStatus() == QProcess::NormalExit &&
+          proc->exitCode() == 0) {
+        return QString::fromUtf8(proc->readAllStandardOutput()).trimmed();
+      }
+      qWarning() << "Shell placeholder failed:" << cmd.code << proc->errorString();
       return {};
     };
 
@@ -162,6 +167,7 @@ private:
     return results;
   }
 
+  const AppService *m_appService;
   QString m_uuid; // we generate it once to keep it stable across expansions, useful when presenting in list
                   // detail
 };

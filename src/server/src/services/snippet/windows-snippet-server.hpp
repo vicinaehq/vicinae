@@ -30,6 +30,7 @@ public:
 
   // called from the low-level keyboard hook thread
   void onKey(unsigned vk, const std::string &utf8, bool blockingMods);
+  void onKeyUp(unsigned vk);
 
 private:
   struct Snippet {
@@ -43,10 +44,10 @@ private:
   std::vector<Snippet> m_snippets;
   std::string m_text;
   std::optional<std::string> m_undoTrigger;
+  bool m_undoPending = false;
   std::mutex m_mutex;
 
   std::thread m_thread;
   unsigned long m_hookThreadId = 0;
   std::atomic_bool m_running{false};
-  std::atomic_int m_keyDelayUs{2000};
 };

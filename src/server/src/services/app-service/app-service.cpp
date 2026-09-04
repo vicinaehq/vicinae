@@ -40,6 +40,10 @@ std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #endif
 }
 
+std::unique_ptr<QProcess> AppService::shellProcess(const QString &code) const {
+  return m_provider->shellProcess(code);
+}
+
 std::shared_ptr<AbstractApplication> AppService::terminalEmulator() const {
   return m_provider->terminalEmulator();
 }

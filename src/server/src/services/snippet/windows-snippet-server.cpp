@@ -7,6 +7,7 @@
 #include <chrono>
 #include <future>
 #include <ranges>
+#include <span>
 #include <thread>
 #include <windows.h>
 
@@ -14,8 +15,8 @@ namespace {
 
 constexpr std::size_t MAX_BUFFER_SIZE = 32;
 constexpr std::size_t CLIPBOARD_THRESHOLD = 100;
-constexpr int MODIFIER_RELEASE_TIMEOUT_MS = 500;
-constexpr int MODIFIER_POLL_INTERVAL_MS = 5;
+constexpr int KEY_RELEASE_TIMEOUT_MS = 500;
+constexpr int KEY_POLL_INTERVAL_MS = 5;
 
 // Stamped on every event we inject via SendInput so the hook skips its own output.
 constexpr ULONG_PTR VICINAE_INJECT_TAG = 0x7669636e; // 'vicn'
@@ -47,74 +48,89 @@ bool isCaretMove(unsigned vk) {
   }
 }
 
-void sleepUs(int us) {
-  if (us > 0) { std::this_thread::sleep_for(std::chrono::microseconds(us)); }
-}
-
-void sendVk(WORD vk, bool down) {
+INPUT vkInput(WORD vk, bool down) {
   INPUT in{};
   in.type = INPUT_KEYBOARD;
   in.ki.wVk = vk;
   in.ki.wScan = static_cast<WORD>(MapVirtualKeyW(vk, MAPVK_VK_TO_VSC));
   in.ki.dwFlags = down ? 0 : KEYEVENTF_KEYUP;
   in.ki.dwExtraInfo = VICINAE_INJECT_TAG;
-  SendInput(1, &in, sizeof(INPUT));
+  return in;
 }
 
-// still-held shift/AltGr would turn the backspaces into ctrl+backspace and the paste into ctrl+shift+v
-void waitForModifierRelease() {
-  constexpr WORD MODIFIERS[] = {VK_LSHIFT, VK_RSHIFT, VK_LCONTROL, VK_RCONTROL,
-                                VK_LMENU,  VK_RMENU,  VK_LWIN,     VK_RWIN};
-  const auto anyHeld = [&]() {
-    return std::ranges::any_of(MODIFIERS, [](WORD vk) { return (GetAsyncKeyState(vk) & 0x8000) != 0; });
-  };
-
-  const auto deadline =
-      std::chrono::steady_clock::now() + std::chrono::milliseconds(MODIFIER_RELEASE_TIMEOUT_MS);
-  while (anyHeld() && std::chrono::steady_clock::now() < deadline) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(MODIFIER_POLL_INTERVAL_MS));
-  }
-
-  for (WORD vk : MODIFIERS) {
-    if (GetAsyncKeyState(vk) & 0x8000) { sendVk(vk, false); }
-  }
-}
-
-void sendBackspaces(unsigned count, int delayUs) {
-  for (unsigned i = 0; i < count; ++i) {
-    sendVk(VK_BACK, true);
-    sendVk(VK_BACK, false);
-    sleepUs(delayUs);
-  }
-}
-
-// injects a single UTF-16 code unit; surrogate pairs are sent as two consecutive units and recombined
-// by the target app
-void sendUnit(char16_t unit, bool down) {
+// surrogate pairs are sent as two consecutive units and recombined by the target app
+INPUT unitInput(char16_t unit, bool down) {
   INPUT in{};
   in.type = INPUT_KEYBOARD;
   in.ki.wScan = unit;
   in.ki.dwFlags = KEYEVENTF_UNICODE | (down ? 0 : KEYEVENTF_KEYUP);
   in.ki.dwExtraInfo = VICINAE_INJECT_TAG;
-  SendInput(1, &in, sizeof(INPUT));
+  return in;
 }
 
-void sendText(const std::string &text, int delayUs) {
+void send(std::vector<INPUT> &inputs) {
+  if (!inputs.empty()) { SendInput(static_cast<UINT>(inputs.size()), inputs.data(), sizeof(INPUT)); }
+}
+
+void sendPresses(const std::vector<INPUT> &presses) {
+  std::vector<INPUT> inputs;
+  inputs.reserve(presses.size() * 2);
+  for (INPUT in : presses) {
+    inputs.push_back(in);
+    in.ki.dwFlags |= KEYEVENTF_KEYUP;
+    inputs.push_back(in);
+  }
+  send(inputs);
+}
+
+void sendRepeatedVk(WORD vk, unsigned count) { sendPresses(std::vector<INPUT>(count, vkInput(vk, true))); }
+
+// line breaks are pressed as enter, apps do not accept them as typed characters
+void sendText(const std::string &text) {
   const QString qtext = QString::fromStdString(text);
-  const ushort *units = qtext.utf16();
+  std::vector<INPUT> presses;
+  presses.reserve(qtext.size());
   for (int i = 0; i < qtext.size(); ++i) {
-    sendUnit(units[i], true);
-    sendUnit(units[i], false);
-    sleepUs(delayUs);
+    const QChar c = qtext.at(i);
+    if (c == u'\r' || c == u'\n') {
+      if (c == u'\r' && i + 1 < qtext.size() && qtext.at(i + 1) == u'\n') { ++i; }
+      presses.push_back(vkInput(VK_RETURN, true));
+    } else {
+      presses.push_back(unitInput(c.unicode(), true));
+    }
+  }
+  sendPresses(presses);
+}
+
+void sendPaste() {
+  std::vector<INPUT> inputs = {vkInput(VK_CONTROL, true), vkInput('V', true), vkInput('V', false),
+                               vkInput(VK_CONTROL, false)};
+  send(inputs);
+}
+
+constexpr WORD MODIFIERS[] = {VK_LSHIFT, VK_RSHIFT, VK_LCONTROL, VK_RCONTROL,
+                              VK_LMENU,  VK_RMENU,  VK_LWIN,     VK_RWIN};
+
+bool anyHeld(std::span<const WORD> keys) {
+  return std::ranges::any_of(keys, [](WORD vk) { return (GetAsyncKeyState(vk) & 0x8000) != 0; });
+}
+
+void waitUntilReleased(std::span<const WORD> keys) {
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(KEY_RELEASE_TIMEOUT_MS);
+  while (anyHeld(keys) && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(KEY_POLL_INTERVAL_MS));
   }
 }
 
-void sendLeftArrows(unsigned count, int delayUs) {
-  for (unsigned i = 0; i < count; ++i) {
-    sendVk(VK_LEFT, true);
-    sendVk(VK_LEFT, false);
-    sleepUs(delayUs);
+// still-held shift/AltGr would turn the backspaces into ctrl+backspace and the paste into ctrl+shift+v
+void waitForModifierRelease() {
+  waitUntilReleased(MODIFIERS);
+
+  std::vector<INPUT> releases;
+  for (WORD vk : MODIFIERS) {
+    if (GetAsyncKeyState(vk) & 0x8000) { releases.push_back(vkInput(vk, false)); }
   }
+  send(releases);
 }
 
 // translates a physical key press to the text it produces under the foreground window's layout, and reports
@@ -158,10 +174,14 @@ LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
   if (nCode == HC_ACTION && g_snippetServer) {
     const auto *k = reinterpret_cast<KBDLLHOOKSTRUCT *>(lParam);
     const bool down = wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN;
-    if (down && k->dwExtraInfo != VICINAE_INJECT_TAG) {
-      bool blocking = false;
-      const std::string utf8 = translateKey(k->vkCode, k->scanCode, blocking);
-      g_snippetServer->onKey(k->vkCode, utf8, blocking);
+    if (k->dwExtraInfo != VICINAE_INJECT_TAG) {
+      if (down) {
+        bool blocking = false;
+        const std::string utf8 = translateKey(k->vkCode, k->scanCode, blocking);
+        g_snippetServer->onKey(k->vkCode, utf8, blocking);
+      } else {
+        g_snippetServer->onKeyUp(k->vkCode);
+      }
     }
   }
   return CallNextHookEx(nullptr, nCode, wParam, lParam);
@@ -225,38 +245,30 @@ void WindowsSnippetServer::resetContext() {
   std::lock_guard lock(m_mutex);
   m_text.clear();
   m_undoTrigger.reset();
+  m_undoPending = false;
 }
 
-void WindowsSnippetServer::injectExpand(const std::string &text, unsigned charsToDelete,
-                                        unsigned prePasteDelayUs, bool, unsigned cursorLeftMoves,
-                                        bool viaClipboard) {
-  const int delay = m_keyDelayUs.load();
-
+void WindowsSnippetServer::injectExpand(const std::string &text, unsigned charsToDelete, unsigned, bool,
+                                        unsigned cursorLeftMoves, bool viaClipboard) {
   waitForModifierRelease();
-  sendBackspaces(charsToDelete, delay);
+  sendRepeatedVk(VK_BACK, charsToDelete);
 
   if (viaClipboard) {
-    sleepUs(static_cast<int>(prePasteDelayUs));
-    sendVk(VK_CONTROL, true);
-    sendVk('V', true);
-    sendVk('V', false);
-    sendVk(VK_CONTROL, false);
+    sendPaste();
   } else {
-    sendText(text, delay);
+    sendText(text);
   }
 
-  sendLeftArrows(cursorLeftMoves, delay);
+  sendRepeatedVk(VK_LEFT, cursorLeftMoves);
 }
 
 void WindowsSnippetServer::injectUndo(unsigned backspaceCount, const std::string &trigger) {
-  const int delay = m_keyDelayUs.load();
-
   waitForModifierRelease();
-  sendBackspaces(backspaceCount, delay);
-  sendText(trigger, delay);
+  sendRepeatedVk(VK_BACK, backspaceCount);
+  sendText(trigger);
 }
 
-void WindowsSnippetServer::setKeyDelay(int us) { m_keyDelayUs = us; }
+void WindowsSnippetServer::setKeyDelay(int) {}
 
 bool WindowsSnippetServer::usesClipboard(std::size_t expandedLength) const {
   return expandedLength > CLIPBOARD_THRESHOLD;
@@ -269,13 +281,12 @@ void WindowsSnippetServer::onKey(unsigned vk, const std::string &utf8, bool bloc
 
   if (m_undoTrigger) {
     if (vk == VK_BACK && !blockingMods) {
-      const std::string trigger = *m_undoTrigger;
-      m_undoTrigger.reset();
-      QMetaObject::invokeMethod(
-          this, [this, trigger]() { emit undoTriggered(trigger); }, Qt::QueuedConnection);
-      return;
+      // fired on release, since the hook sees the press before it is posted to the app
+      m_undoPending = !m_undoPending;
+      if (m_undoPending) { return; }
     }
     m_undoTrigger.reset();
+    m_undoPending = false;
   }
 
   if (isCaretMove(vk)) {
@@ -317,4 +328,14 @@ void WindowsSnippetServer::emitExpansionLocked(const Snippet &snippet) {
   QMetaObject::invokeMethod(
       this, [this, trigger]() { emit keywordTriggered(trigger); }, Qt::QueuedConnection);
   m_undoTrigger = trigger;
+}
+
+void WindowsSnippetServer::onKeyUp(unsigned vk) {
+  std::lock_guard lock(m_mutex);
+  if (vk != VK_BACK || !m_undoPending) { return; }
+
+  const std::string trigger = *m_undoTrigger;
+  m_undoTrigger.reset();
+  m_undoPending = false;
+  QMetaObject::invokeMethod(this, [this, trigger]() { emit undoTriggered(trigger); }, Qt::QueuedConnection);
 }
