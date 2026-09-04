@@ -5,6 +5,7 @@
 #include <appmodel.h>
 
 #include "windows-clipboard-server.hpp"
+#include "windows-image-mime.hpp"
 #include "services/clipboard/clipboard-mime.hpp"
 
 namespace {
@@ -17,6 +18,13 @@ bool isDwordZero(const QByteArray &data) {
   return data.size() >= 4 && qFromLittleEndian<quint32>(data.constData()) == 0;
 }
 } // namespace
+
+WindowsClipboardServer::WindowsClipboardServer() {
+  // the converter registers itself with the windows QPA plugin on construction
+  if (isActivatable()) m_imageMime = std::make_unique<WindowsImageMime>();
+}
+
+WindowsClipboardServer::~WindowsClipboardServer() = default;
 
 bool WindowsClipboardServer::start() {
   connect(QGuiApplication::clipboard(), &QClipboard::dataChanged, this, [this]() { handleChange(false); });

@@ -767,6 +767,8 @@ elseif (WIN32)
 		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
 		src/services/clipboard/windows/windows-clipboard-server.hpp
 		src/services/clipboard/windows/windows-clipboard-server.cpp
+		src/services/clipboard/windows/windows-image-mime.hpp
+		src/services/clipboard/windows/windows-image-mime.cpp
 		src/services/tray/windows/tray-service-windows.hpp
 		src/services/tray/windows/tray-service-windows.cpp
 		src/services/paste/windows-paste-service.hpp
