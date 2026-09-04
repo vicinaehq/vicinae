@@ -5,7 +5,7 @@ set(TARGET vicinae-server)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools)
 
-if (USE_SYSTEM_KF6 AND NOT WIN32)
+if (USE_SYSTEM_KF6)
 	find_package(KF6SyntaxHighlighting REQUIRED)
 endif()
 
@@ -40,8 +40,10 @@ list(APPEND LIBS
 	numen::numen
 )
 
+list(APPEND LIBS KF6::SyntaxHighlighting)
+
 if (NOT WIN32)
-	list(APPEND LIBS KF6::SyntaxHighlighting vicinae::xdgpp)
+	list(APPEND LIBS vicinae::xdgpp)
 endif()
 
 if (UNIX AND NOT APPLE)

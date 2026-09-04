@@ -141,7 +141,7 @@ if (NOT USE_SYSTEM_GLAZE)
 	import_glaze()
 endif()
 
-if (NOT USE_SYSTEM_KF6 AND NOT WIN32)
+if (NOT USE_SYSTEM_KF6)
 	include(KF6)
 	import_kf6()
 endif()
