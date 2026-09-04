@@ -16,7 +16,7 @@ class PowerManagementCommand : public BuiltinCallbackCommand {
 public:
   virtual bool requiresDefaultConfirmation() const { return true; }
   virtual bool supportsCustomProgram() const {
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
     return false;
 #else
     return true;
@@ -323,7 +323,9 @@ PowerManagementExtension::PowerManagementExtension() {
   registerCommand<SleepCommand>();
   registerCommand<LockCommand>();
   registerCommand<LogOutCommand>();
-#ifndef Q_OS_MACOS
+#ifdef Q_OS_WIN
+  registerCommand<HibernateCommand>();
+#elif !defined(Q_OS_MACOS)
   registerCommand<SuspendCommand>();
   registerCommand<HibernateCommand>();
   registerCommand<SoftRebootCommand>();
