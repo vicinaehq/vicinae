@@ -1,7 +1,10 @@
 #pragma once
-#include "../abstract-audio-control.hpp"
+#include "services/audio-control/abstract-audio-control.hpp"
 
-class CoreAudioControl : public AbstractAudioControl {
+/**
+ * System audio control through WASAPI endpoint volume, acting on the default render device.
+ */
+class WasapiAudioControl : public AbstractAudioControl {
 public:
   QString id() const override;
 
