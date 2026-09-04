@@ -1,4 +1,4 @@
-; iscc /DStageDir=<staged tree> /DAppVersion=<x.y.z> vicinae.iss
+; iscc /DStageDir=<staged tree> /DAppVersion=<x.y.z> [/DSign "/Ssign=<signtool command> $f"] vicinae.iss
 
 #ifndef StageDir
   #error Pass /DStageDir=<path to a tree staged with cmake --install>
@@ -14,6 +14,12 @@
 AppId={{C698C8E4-B6C9-4C86-A9AA-520A6D2E45A1}
 AppName=Vicinae
 AppVersion={#AppVersion}
+; the self updater checks this against the version announced by the release feed
+VersionInfoVersion={#AppVersion}
+#ifdef Sign
+SignTool=sign
+SignedUninstaller=yes
+#endif
 AppPublisher=Vicinae
 AppPublisherURL=https://vicinae.com
 AppSupportURL=https://github.com/vicinaehq/vicinae
@@ -29,6 +35,7 @@ SolidCompression=yes
 WizardStyle=modern
 SetupIconFile=vicinae.ico
 CloseApplications=force
+RestartApplications=no
 UninstallDisplayName=Vicinae
 UninstallDisplayIcon={app}\bin\vicinae-server.exe
 
@@ -60,6 +67,14 @@ Name: "{userstartup}\Vicinae"; Filename: "{app}\bin\vicinae-server.exe"; Tasks: 
 
 [Run]
 Filename: "{app}\bin\vicinae-server.exe"; Description: "Launch Vicinae"; Flags: nowait postinstall skipifsilent
+; relaunch after a self update (the server runs setup with /AUTOUPDATE=1)
+Filename: "{app}\bin\vicinae-server.exe"; Flags: nowait; Check: IsAutoUpdate
 
 [UninstallRun]
 Filename: "{sys}\taskkill.exe"; Parameters: "/f /im vicinae-server.exe"; Flags: runhidden; RunOnceId: "KillServer"
+
+[Code]
+function IsAutoUpdate: Boolean;
+begin
+  Result := ExpandConstant('{param:AUTOUPDATE|0}') = '1';
+end;

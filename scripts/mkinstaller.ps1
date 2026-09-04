@@ -1,8 +1,12 @@
-# Usage: scripts/mkinstaller.ps1 [-BuildDir build-release] [-OutDir <BuildDir>]
+# Usage: scripts/mkinstaller.ps1 [-BuildDir build-release] [-OutDir <BuildDir>] [-Version x.y.z]
+#        [-SignCommand 'signtool sign /fd SHA256 /tr <url> /td SHA256 ... $f']
+# -SignCommand is run on every staged exe and, through ISCC, on the installer and uninstaller.
 param(
     [string]$BuildDir = "build-release",
     [string]$OutDir = "",
-    [string]$Arch = "x64"
+    [string]$Arch = "x64",
+    [string]$Version = "",
+    [string]$SignCommand = ""
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot
@@ -22,10 +26,13 @@ else {
 }
 if (-not $iscc) { throw "ISCC.exe not found (winget install JRSoftware.InnoSetup)" }
 
-try { $version = git -C $root describe --tags --abbrev=0 2>$null } catch { $version = $null }
-if ($version) { $version = $version -replace '^v', '' } else { $version = "0.0.0" }
+if (-not $Version) {
+    try { $Version = git -C $root describe --tags --abbrev=0 2>$null } catch { $Version = $null }
+}
+if ($Version) { $Version = $Version -replace '^v', '' } else { $Version = "0.0.0" }
+if ($Version -notmatch '^\d+(\.\d+){0,3}$') { throw "version '$Version' is not numeric x.y.z" }
 
-cmake --build $BuildDir --target vicinae-server vicinae
+cmake --build $BuildDir
 if ($LASTEXITCODE -ne 0) { throw "cmake --build failed" }
 
 $stage = Join-Path $BuildDir "stage"
@@ -38,9 +45,17 @@ foreach ($f in "bin\vicinae-server.exe", "bin\qt.conf", "plugins\platforms\qwind
     }
 }
 
+$isccArgs = @("/DStageDir=$stage", "/DAppVersion=$Version", "/DArch=$Arch")
+if ($SignCommand) {
+    foreach ($exe in Get-ChildItem (Join-Path $stage "bin") -Filter "*.exe") {
+        Invoke-Expression ($SignCommand -replace '\$f', "`"$($exe.FullName)`"")
+        if ($LASTEXITCODE -ne 0) { throw "signing $($exe.Name) failed" }
+    }
+    $isccArgs += @("/DSign", "/Ssign=$SignCommand")
+}
+
 if ($OutDir) { $OutDir = Join-Path $root $OutDir } else { $OutDir = $BuildDir }
-& $iscc "/DStageDir=$stage" "/DAppVersion=$version" "/DArch=$Arch" "/O$OutDir" `
-    (Join-Path $root "extra\windows\vicinae.iss")
+& $iscc @isccArgs "/O$OutDir" (Join-Path $root "extra\windows\vicinae.iss")
 if ($LASTEXITCODE -ne 0) { throw "iscc failed" }
 
 Get-ChildItem $OutDir -Filter "vicinae-$Arch-setup.exe" | ForEach-Object {

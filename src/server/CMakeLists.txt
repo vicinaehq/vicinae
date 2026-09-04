@@ -790,8 +790,10 @@ elseif (WIN32)
 		src/services/url-scheme/win-url-scheme-registrar.cpp
 		src/services/wallpaper/windows/windows-wallpaper-backend.hpp
 		src/services/wallpaper/windows/windows-wallpaper-backend.cpp
+		src/services/update/windows-update-installer.hpp
+		src/services/update/windows-update-installer.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore wintrust crypt32)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp

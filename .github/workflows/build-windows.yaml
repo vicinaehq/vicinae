@@ -6,6 +6,19 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      sign:
+        description: "Sign the build with Azure Artifact Signing"
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        default: ""
+      commit:
+        type: string
+        default: ""
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -15,6 +28,10 @@ jobs:
   build:
     runs-on: depot-windows-2022-16
     name: Build (Windows / MSVC x64)
+    env:
+      # tagged releases (and manual runs with sign checked) are signed through
+      # Azure Artifact Signing when the AZURE_* secrets are present
+      SIGNING: ${{ (inputs.tag != '' || inputs.sign == true) && secrets.AZURE_CLIENT_SECRET != '' }}
 
     steps:
       - name: Checkout code
@@ -22,6 +39,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+          ref: ${{ inputs.tag }}
 
       - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
@@ -45,18 +63,63 @@ jobs:
           key: windows-ci
 
       - name: Configure
-        run: >
-          cmake --preset windows-ci
-          -DCMAKE_C_COMPILER_LAUNCHER=sccache
-          -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+        run: |
+          $flags = @()
+          if ("${{ inputs.tag }}") {
+            $flags += "-DVICINAE_GIT_TAG=${{ inputs.tag }}"
+            $flags += "-DVICINAE_GIT_COMMIT_HASH=${{ inputs.commit }}"
+            $flags += "-DVICINAE_PROVENANCE=inno"
+          }
+          cmake --preset windows-ci `
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+            @flags
 
       - name: Build
         run: cmake --build --preset windows-ci
 
+      - name: Set up Artifact Signing client
+        if: env.SIGNING == 'true'
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "signing"
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          foreach ($pkg in "Microsoft.ArtifactSigning.Client", "Microsoft.Windows.SDK.BuildTools") {
+            Invoke-WebRequest "https://www.nuget.org/api/v2/package/$pkg" -OutFile "$dir\$pkg.zip"
+            Expand-Archive "$dir\$pkg.zip" -DestinationPath "$dir\$pkg"
+          }
+          $signtool = (Get-ChildItem "$dir\Microsoft.Windows.SDK.BuildTools\bin\*\x64\signtool.exe" | Select-Object -Last 1).FullName
+          $dlib = "$dir\Microsoft.ArtifactSigning.Client\bin\x64\Azure.CodeSigning.Dlib.dll"
+          @{
+            Endpoint = "https://eus.codesigning.azure.net"
+            CodeSigningAccountName = "vicinae"
+            CertificateProfileName = "vicinae"
+            ExcludeCredentials = @(
+              "ManagedIdentityCredential", "WorkloadIdentityCredential", "SharedTokenCacheCredential",
+              "VisualStudioCredential", "VisualStudioCodeCredential", "AzureCliCredential",
+              "AzurePowerShellCredential", "AzureDeveloperCliCredential", "InteractiveBrowserCredential"
+            )
+          } | ConvertTo-Json | Set-Content "$dir\metadata.json"
+          "SIGNTOOL=$signtool" >> $env:GITHUB_ENV
+          "SIGN_COMMAND=$signtool sign /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlib /dmdf $dir\metadata.json `$f" >> $env:GITHUB_ENV
+
       - name: Package (stage + installer)
-        run: ./scripts/mkinstaller.ps1 -BuildDir build
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          $sign = @()
+          if ($env:SIGN_COMMAND) { $sign = @("-SignCommand", $env:SIGN_COMMAND) }
+          ./scripts/mkinstaller.ps1 -BuildDir build -Version "${{ inputs.tag }}" @sign
+
+      - name: Verify signature
+        if: env.SIGNING == 'true'
+        run: |
+          & $env:SIGNTOOL verify /pa /v build\vicinae-x64-setup.exe
+          & $env:SIGNTOOL verify /pa /v build\stage\bin\vicinae-server.exe
 
       - name: Upload portable build
+        if: inputs.tag == ''
         uses: actions/upload-artifact@v4
         with:
           name: vicinae-windows-x64-portable
@@ -67,6 +130,7 @@ jobs:
         with:
           name: vicinae-windows-x64-setup
           path: build/vicinae-*-setup.exe
+          if-no-files-found: error
 
       - name: sccache stats
         if: always()
