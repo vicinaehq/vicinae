@@ -74,6 +74,8 @@
 #include "services/snippet/linux-snippet-server.hpp"
 #elif defined(Q_OS_MACOS)
 #include "services/snippet/macos-snippet-server.hpp"
+#elif defined(Q_OS_WIN)
+#include "services/snippet/windows-snippet-server.hpp"
 #else
 #include "services/snippet/null-snippet-server.hpp"
 #endif
@@ -281,7 +283,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto selectionService =
         std::unique_ptr<AbstractSelectionService>(std::make_unique<MacosSelectionService>());
 #elif defined(Q_OS_WIN)
-    auto snippetServer = std::make_unique<NullSnippetServer>();
+    auto snippetServer = std::make_unique<WindowsSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<WindowsPasteService>());
     auto selectionService =
         std::unique_ptr<AbstractSelectionService>(std::make_unique<WindowsSelectionService>());
