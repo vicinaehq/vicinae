@@ -1,5 +1,6 @@
 #pragma once
 #include <QCoreApplication>
+#include <qnamespace.h>
 #include "common.hpp"
 #include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
@@ -7,11 +8,31 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include "clipboard-actions.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/action-pannel/action-panel-state.hpp"
 #include "ui/toast/toast.hpp"
 #include "navigation-controller.hpp"
 #include "ui/views/base-view.hpp"
-#include <qnamespace.h>
+
+void addCalculatorPasteCopyActions(ActionPanelSectionState *section, AbstractAction *paste,
+                                   AbstractAction *copy);
+
+class PasteCalculatorAnswerAction : public PasteToFocusedWindowAction {
+  AbstractCalculatorBackend::CalculatorResult m_item;
+  bool m_addToHistory = true;
+
+  void execute(ApplicationContext *ctx) override {
+    if (m_addToHistory) { ctx->services->calculatorService()->addRecord(m_item); }
+    loadClipboardData(Clipboard::Text(m_item.answer.text));
+    PasteToFocusedWindowAction::execute(ctx);
+  }
+
+public:
+  PasteCalculatorAnswerAction(const AbstractCalculatorBackend::CalculatorResult &item,
+                              bool addToHistory = true)
+      : m_item(item), m_addToHistory(addToHistory) {}
+};
 
 class CopyCalculatorAnswerAction : public AbstractAction {
   Q_DECLARE_TR_FUNCTIONS(CopyCalculatorAnswerAction)

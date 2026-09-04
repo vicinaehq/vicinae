@@ -1,11 +1,30 @@
 #include "manage-snippets-model.hpp"
 #include "builtin_icon.hpp"
+#include "clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
+#include "navigation-controller.hpp"
 #include "snippet-form-view-host.hpp"
 #include "service-registry.hpp"
 #include "services/snippet/snippet-copy.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include "ui/views/base-view.hpp"
+
+namespace {
+
+class PasteSnippetAction : public PasteToFocusedWindowAction {
+  snippet::SerializedSnippet m_item;
+
+  void execute(ApplicationContext *ctx) override {
+    loadClipboardData(SnippetCopy::content(m_item, ctx->navigation->completionValues()));
+    PasteToFocusedWindowAction::execute(ctx);
+  }
+
+public:
+  PasteSnippetAction(snippet::SerializedSnippet item) : m_item(std::move(item)) {}
+};
+
+} // namespace
 
 QString ManageSnippetsSection::displayTitle(const snippet::SerializedSnippet &item) const {
   return QString::fromStdString(item.name);
@@ -38,6 +57,24 @@ ManageSnippetsSection::buildActionPanel(const snippet::SerializedSnippet &item) 
           ctx->services->toastService()->failure(tr("Failed to copy to clipboard"));
         }
       });
+  copy->addShortcut(Keybind::CopyAction);
+
+  auto paste = new PasteSnippetAction(item);
+  paste->addShortcut(Keybind::PasteAction);
+
+  QString defaultAction;
+  if (auto *state = scope().topState(); state && state->sender) {
+    if (auto *cmd = state->sender->command())
+      defaultAction = cmd->preferenceValues().value("defaultAction").toString();
+  }
+
+  if (defaultAction == "copy") {
+    section->addAction(copy);
+    section->addAction(paste);
+  } else {
+    section->addAction(paste);
+    section->addAction(copy);
+  }
 
   auto edit = new StaticAction(tr("Edit snippet"), BuiltinIcon::Pencil, [item](ApplicationContext *ctx) {
     ctx->navigation->pushView(new SnippetFormViewHost(item, SnippetFormViewHost::Mode::Edit));
@@ -58,7 +95,6 @@ ManageSnippetsSection::buildActionPanel(const snippet::SerializedSnippet &item) 
   duplicate->setShortcut(Keybind::DuplicateAction);
   remove->setShortcut(Keybind::RemoveAction);
 
-  section->addAction(copy);
   section->addAction(edit);
   section->addAction(duplicate);
   section->addAction(remove);

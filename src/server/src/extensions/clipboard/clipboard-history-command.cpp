@@ -1,30 +1,14 @@
 #include "clipboard-history-command.hpp"
-#include "service-registry.hpp"
-#include <qjsonobject.h>
-#include "services/paste/paste-service.hpp"
+#include "preference.hpp"
 
 void ClipboardHistoryCommand::preferenceValuesChanged(const QJsonObject &value) const {}
 
 std::vector<Preference> ClipboardHistoryCommand::preferences() const {
-  auto paste = ServiceRegistry::instance()->pasteService();
-  std::vector<Preference> preferences;
-
-  std::vector<Preference::DropdownData::Option> defaultActionOptions;
-  QString dflt = "copy";
-
-  if (paste->supportsPaste()) {
-    defaultActionOptions.emplace_back(Preference::DropdownData::Option{tr("Paste"), "paste"});
-    dflt = "paste";
-  }
-  defaultActionOptions.emplace_back(Preference::DropdownData::Option{tr("Copy"), "copy"});
-
-  auto defaultAction = Preference::makeDropdown("defaultAction", defaultActionOptions);
-
-  defaultAction.setDefaultValue(dflt);
+  using Opt = Preference::DropdownData::Option;
+  auto defaultAction =
+      Preference::makeDropdown("defaultAction", {Opt(tr("Paste"), "paste"), Opt(tr("Copy"), "copy")});
+  defaultAction.setDefaultValue("paste");
   defaultAction.setTitle(tr("Default Action"));
-  defaultAction.setDescription(tr("The default action to perform on pressing return. Paste is only "
-                                  "available if your environment supports it."));
-  preferences.emplace_back(defaultAction);
-
-  return preferences;
+  defaultAction.setDescription(tr("The default action to perform on pressing return."));
+  return {defaultAction};
 }

@@ -17,8 +17,7 @@ class CalculatorHistoryCommand : public BuiltinViewCommand<CalcHistoryViewHost> 
   QString id() const override { return "history"; }
   QString name() const override { return tr("Calculator history"); }
   QString description() const override {
-    return tr("Browse past calculations. You need to copy the result of a calculation for it to be saved "
-              "in history.");
+    return tr("Browse past calculations. Copying or pasting a result saves it in history.");
   }
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::PlusMinusDivideMultiply).setBackgroundTint(SemanticColor::Blue);
@@ -97,7 +96,13 @@ public:
     backendPref.setTitle(tr("Calculator Backend"));
     backendPref.setDescription(tr("Which backend to use to perform calculations"));
 
-    return {backendPref};
+    auto defaultAction =
+        Preference::makeDropdown("defaultAction", {{tr("Paste"), "paste"}, {tr("Copy"), "copy"}});
+    defaultAction.setDefaultValue("paste");
+    defaultAction.setTitle(tr("Default Action"));
+    defaultAction.setDescription(tr("The default action to perform on pressing return."));
+
+    return {defaultAction, backendPref};
   }
 
   void preferenceValuesChanged(const QJsonObject &value) const override {

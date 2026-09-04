@@ -46,19 +46,33 @@ public:
         m_family(family), m_category(category) {}
 };
 
-std::unique_ptr<ActionPanelState> buildFontActionPanel(const FontFamily *family) {
+std::unique_ptr<ActionPanelState> buildFontActionPanel(const FontFamily *family, const ViewScope &scope) {
   if (!family) return nullptr;
 
   auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
+  auto pasteFamily = new PasteToFocusedWindowAction(Clipboard::Text(family->name));
   auto copyFamily = new CopyToClipboardAction(
       Clipboard::Text(family->name), QCoreApplication::translate("font-grid-model", "Copy font family"));
   auto preview = new PreviewFontAction(family->family, family->primary);
 
-  copyFamily->setShortcut(Keybind::CopyAction);
-  preview->setPrimary(true);
+  pasteFamily->addShortcut(Keybind::PasteAction);
+  copyFamily->addShortcut(Keybind::CopyAction);
+
+  QString defaultAction;
+  if (auto *state = scope.topState(); state && state->sender) {
+    if (auto *cmd = state->sender->command())
+      defaultAction = cmd->preferenceValues().value("defaultAction").toString();
+  }
+
+  if (defaultAction == "copy") {
+    section->addAction(copyFamily);
+    section->addAction(pasteFamily);
+  } else {
+    section->addAction(pasteFamily);
+    section->addAction(copyFamily);
+  }
   section->addAction(preview);
-  section->addAction(copyFamily);
   section->addAction(new SetAppFont(family->family));
 
   return panel;
@@ -79,7 +93,7 @@ void FontGridSource::setResults(QString name, std::span<Scored<const FontFamily 
 }
 
 std::unique_ptr<ActionPanelState> FontGridSource::actionPanel(int i) const {
-  return buildFontActionPanel(familyAt(i));
+  return buildFontActionPanel(familyAt(i), scope());
 }
 
 FontGridModel::FontGridModel(QObject *parent) : SectionGridModel(parent) {}

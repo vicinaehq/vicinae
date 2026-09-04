@@ -102,8 +102,8 @@ void ClipboardHistoryViewHost::initialize() {
 
   auto preferences = command()->preferenceValues();
   auto defaultActionStr = preferences.value("defaultAction").toString();
-  m_section.setDefaultAction(defaultActionStr == "paste" ? ClipboardHistorySection::DefaultAction::Paste
-                                                         : ClipboardHistorySection::DefaultAction::Copy);
+  m_section.setDefaultAction(defaultActionStr == "copy" ? ClipboardHistorySection::DefaultAction::Copy
+                                                        : ClipboardHistorySection::DefaultAction::Paste);
 
   setSearchPlaceholderText(tr("Browse clipboard history..."));
 

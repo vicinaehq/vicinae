@@ -134,7 +134,6 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   auto section = panel->createSection();
   auto mime = mimeDb.mimeTypeForFile(QString::fromStdString(path.string()));
   auto appDb = ctx->services->appDb();
-  auto pasteService = ctx->services->pasteService();
   auto openers = appDb->findCuratedOpeners(QString::fromStdString(path.string()));
   auto fileBrowser = appDb->fileBrowser();
 
@@ -179,19 +178,16 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   auto copyFileName = AbstractAction::make<CopyToClipboardAction>(
       Clipboard::Text(QString::fromStdString(path.filename().string())),
       QCoreApplication::translate("file-list-item", "Copy file name"));
+  auto paste = AbstractAction::make<PasteToFocusedWindowAction>(Clipboard::File(path));
 
   copy->setShortcut(Keybind::CopyAction);
-
-  if (pasteService->supportsPaste()) {
-    auto paste = AbstractAction::make<PasteToFocusedWindowAction>(Clipboard::File(path));
-    paste->setShortcut(Keyboard::Shortcut::osPaste().shifted());
-    utils->addAction(std::move(paste));
-  }
+  paste->setShortcut(Keyboard::Shortcut::osPaste().shifted());
 
   // TODO: for some reason those are broken, we need to investigate why
   // copyPath->setShortcut(Keybind::CopyPathAction);
   // copyFileName->setShortcut(Keybind::CopyNameAction);
 
+  utils->addAction(std::move(paste));
   utils->addAction(std::move(copy));
   utils->addAction(std::move(copyPath));
   utils->addAction(std::move(copyFileName));
