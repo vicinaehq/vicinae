@@ -4,7 +4,9 @@
 #include <filesystem>
 #include <iosfwd>
 #include <optional>
+#include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace script_command {
@@ -46,6 +48,7 @@ struct TerminalOptions {
 
 struct ScriptCommand {
   std::vector<std::string> exec;
+  std::vector<std::string> shebang;
   std::string schemaVersion;
   std::string title;
   OutputMode mode = OutputMode::Full;
@@ -68,5 +71,8 @@ struct ScriptCommand {
 };
 
 std::ostream &operator<<(std::ostream &ofs, const ScriptCommand &cmd);
+
+std::vector<std::string> shebangInterpreter(std::span<const std::string> shebang);
+std::vector<std::string> interpreterForExtension(std::string_view extension);
 
 } // namespace script_command

@@ -1,4 +1,7 @@
+#include <array>
 #include <ranges>
+#include <QDebug>
+#include <QStandardPaths>
 #include "script/script-command-file.hpp"
 #include "glyph/emoji.hpp"
 #include "services/script-command/script-command-service.hpp"
@@ -46,6 +49,44 @@ std::string ScriptCommandFile::packageName() const {
   return m_data.packageName.value_or(m_path.parent_path().filename().string());
 }
 
+#ifdef Q_OS_WIN
+std::vector<QString> ScriptCommandFile::interpreter() const {
+  static constexpr auto ALIASES = std::to_array<std::pair<std::string_view, std::string_view>>({
+      {"python3", "python"},
+      {"pwsh", "powershell"},
+      {"sh", "bash"},
+  });
+
+  auto argv = script_command::shebangInterpreter(data().shebang);
+  if (argv.empty()) argv = script_command::interpreterForExtension(path().extension().string());
+  if (argv.empty()) return {};
+
+  const std::string_view name = argv.front();
+  const QString wanted = QString::fromUtf8(name.data(), name.size());
+  QString program = QStandardPaths::findExecutable(wanted);
+  if (program.isEmpty()) {
+    const auto alias =
+        std::ranges::find(ALIASES, name, &std::pair<std::string_view, std::string_view>::first);
+    if (alias != ALIASES.end()) {
+      program = QStandardPaths::findExecutable(QString::fromUtf8(alias->second.data(), alias->second.size()));
+    }
+  }
+  if (program.isEmpty()) {
+    qWarning() << "No interpreter found for script" << path().c_str() << "(wanted" << wanted << ")";
+    program = wanted;
+  }
+
+  std::vector<QString> cmdline;
+  cmdline.reserve(argv.size());
+  cmdline.emplace_back(std::move(program));
+  for (const auto &arg : argv | std::views::drop(1)) {
+    cmdline.emplace_back(QString::fromStdString(arg));
+  }
+
+  return cmdline;
+}
+#endif
+
 std::vector<QString> ScriptCommandFile::createCommandLine(std::span<const QString> args) const {
   std::vector<QString> cmdline;
 
@@ -54,6 +95,11 @@ std::vector<QString> ScriptCommandFile::createCommandLine(std::span<const QStrin
       cmdline.emplace_back(exec.c_str());
     }
   }
+#ifdef Q_OS_WIN
+  else {
+    cmdline = interpreter();
+  }
+#endif
 
   cmdline.emplace_back(path().c_str());
 

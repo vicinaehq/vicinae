@@ -1,5 +1,6 @@
 #include "script-command.hpp"
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <common/enumerate.hpp>
 #include <format>
@@ -200,8 +201,18 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
 
   data.arguments.reserve(3);
 
+  if (str.starts_with("#!")) {
+    const auto firstLine = str.substr(2, str.find('\n') - 2);
+    for (const auto word : std::views::split(firstLine, ' ')) {
+      std::string_view s{word};
+      trim(s, '\r');
+      if (!s.empty()) data.shebang.emplace_back(s);
+    }
+  }
+
   for (const auto &line : std::views::split(str, std::string_view{"\n"})) {
     std::string_view s{line};
+    trim(s, '\r');
     trim(s);
 
     auto marker =
@@ -301,6 +312,52 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
   }
 
   return data;
+}
+
+std::vector<std::string> shebangInterpreter(std::span<const std::string> shebang) {
+  static constexpr std::string_view ENV_WRAPPER = "env";
+  static constexpr std::string_view ENV_SPLIT_FLAG = "-S";
+
+  auto words = shebang | std::views::transform([](const std::string &w) { return std::string_view{w}; }) |
+               std::ranges::to<std::vector>();
+  auto it = words.begin();
+
+  if (it == words.end()) return {};
+  if (std::filesystem::path(*it).filename().string() == ENV_WRAPPER) {
+    ++it;
+    if (it != words.end() && *it == ENV_SPLIT_FLAG) ++it;
+    if (it == words.end()) return {};
+  }
+
+  std::vector<std::string> argv;
+  argv.reserve(static_cast<std::size_t>(words.end() - it));
+  argv.emplace_back(std::filesystem::path(*it).filename().string());
+  for (++it; it != words.end(); ++it) {
+    argv.emplace_back(*it);
+  }
+
+  return argv;
+}
+
+std::vector<std::string> interpreterForExtension(std::string_view extension) {
+  static const auto INTERPRETERS = std::to_array<std::pair<std::string_view, std::vector<std::string>>>({
+      {".py", {"python"}},
+      {".js", {"node"}},
+      {".mjs", {"node"}},
+      {".cjs", {"node"}},
+      {".sh", {"bash"}},
+      {".bash", {"bash"}},
+      {".ps1", {"pwsh", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"}},
+      {".rb", {"ruby"}},
+      {".pl", {"perl"}},
+      {".lua", {"lua"}},
+      {".php", {"php"}},
+  });
+
+  const auto it = std::ranges::find(INTERPRETERS, extension,
+                                    &std::pair<std::string_view, std::vector<std::string>>::first);
+  if (it == INTERPRETERS.end()) return {};
+  return it->second;
 }
 
 std::expected<ScriptCommand, std::string> ScriptCommand::fromFile(const std::filesystem::path &path) {
