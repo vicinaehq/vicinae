@@ -7,7 +7,7 @@
 #include "single-view-command-context.hpp"
 #include "theme/colors.hpp"
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
 #include "qml/now-playing-view-host.hpp"
 #include "services/media-control/media-control-service.hpp"
 #endif
@@ -16,7 +16,7 @@ namespace {
 
 const QColor MEDIA_COMMAND_TINT = QColor(128, 132, 138);
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
 
 QString playerQuery(const CommandController &controller) {
   const auto &args = controller.launchProps().arguments;
@@ -327,7 +327,7 @@ class MediaExtension : public BuiltinCommandRepository {
 public:
   MediaExtension() {
     // only MPRIS is implemented for now, other platforms get the dummy backend
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
     registerCommand<NowPlayingCommand>();
     registerCommand<PlayPauseCommand>();
     registerCommand<NextTrackCommand>();
