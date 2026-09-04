@@ -11,6 +11,7 @@ class CompletionModel : public QAbstractListModel {
   QML_ELEMENT
 
   Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
+  Q_PROPERTY(int sectionCount READ sectionCount NOTIFY countChanged)
 
 public:
   enum Role {
@@ -34,6 +35,7 @@ public:
   Q_INVOKABLE QVariantMap itemDataAt(int index) const;
 
   int rowCount(const QModelIndex &parent = {}) const override;
+  int sectionCount() const;
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
 

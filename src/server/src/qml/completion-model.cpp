@@ -1,6 +1,7 @@
 #include "completion-model.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "services/navigation/list-navigation.hpp"
+#include <algorithm>
 #include <utility>
 
 template <> struct fuzzy::FuzzySearchable<CompletionModel::Item> {
@@ -153,6 +154,11 @@ QVariantMap CompletionModel::itemDataAt(int index) const {
 int CompletionModel::rowCount(const QModelIndex &parent) const {
   if (parent.isValid()) return 0;
   return static_cast<int>(m_flat.size());
+}
+
+int CompletionModel::sectionCount() const {
+  return static_cast<int>(std::count_if(m_flat.begin(), m_flat.end(),
+                                        [](const auto &f) { return f.kind == FlatItem::SectionHeader; }));
 }
 
 QVariant CompletionModel::data(const QModelIndex &index, int role) const {
