@@ -6,7 +6,7 @@
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 
 QString shortcut_conflict::validate(const Keyboard::Shortcut &shortcut, const QString &excludeId) {
-  if (!shortcut.hasMods() && !shortcut.isFunctionKey()) {
+  if (!shortcut.hasMods() && !shortcut.isFunctionKey() && !shortcut.isModifierOnly()) {
     return QCoreApplication::translate("shortcut-conflict", "Modifier required");
   }
 

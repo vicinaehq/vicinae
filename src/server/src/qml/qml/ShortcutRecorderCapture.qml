@@ -26,6 +26,10 @@ FocusScope {
     property string _statusText: qsTr("Recording...")
     property color _statusColor: Theme.foreground
 
+    property int _heldMods: 0
+    property int _chordMods: 0
+    property bool _chordConsumed: false
+
     readonly property var _visibleTokens: _currentShortcutTokens.length > 0 ? _currentShortcutTokens : initialTokens
 
     implicitWidth: layout.implicitWidth
@@ -35,6 +39,27 @@ FocusScope {
         _currentShortcutTokens = [];
         _statusText = qsTr("Recording...");
         _statusColor = Theme.foreground;
+        _resetChord();
+    }
+
+    function _resetChord() {
+        _heldMods = 0;
+        _chordMods = 0;
+        _chordConsumed = false;
+    }
+
+    function _modifierForKey(key) {
+        switch (key) {
+        case Qt.Key_Shift:
+            return Qt.ShiftModifier;
+        case Qt.Key_Control:
+            return Qt.ControlModifier;
+        case Qt.Key_Alt:
+            return Qt.AltModifier;
+        case Qt.Key_Meta:
+            return Qt.MetaModifier;
+        }
+        return 0;
     }
 
     ShortcutInhibitor.enabled: capture.capturing
@@ -46,31 +71,73 @@ FocusScope {
     }
     Component.onDestruction: GlobalShortcuts.setCapturing(false)
 
+    onActiveFocusChanged: if (!activeFocus)
+        _resetChord()
+
     Keys.onShortcutOverride: event => event.accepted = capture.capturing
 
     Keys.onPressed: event => {
         event.accepted = true;
-        capture.activity();
+        capture.handleKey(Keyboard.normalizeKey(event.key), event.modifiers, true);
+    }
 
-        const key = Keyboard.normalizeKey(event.key);
-        const mods = event.modifiers;
+    Keys.onReleased: event => {
+        event.accepted = true;
+        capture.handleKey(Keyboard.normalizeKey(event.key), event.modifiers, false);
+    }
 
-        const isModKey = key === Qt.Key_Shift || key === Qt.Key_Control || key === Qt.Key_Alt || key === Qt.Key_Meta;
-        const isDismissKey = key === Qt.Key_Escape || key === Qt.Key_Backspace;
+    Connections {
+        target: GlobalShortcuts
+        enabled: capture.capturing
+        function onKeyCaptured(key, modifiers, down) {
+            capture.handleKey(key, modifiers, down);
+        }
+    }
 
-        if (!isModKey && isDismissKey && mods === Qt.NoModifier) {
-            capture.dismissRequested(key);
+    function handleKey(key, mods, down) {
+        const modKey = _modifierForKey(key);
+
+        if (!down) {
+            if (!modKey)
+                return;
+            _heldMods &= ~modKey;
+            if (_heldMods !== 0)
+                return;
+            const chord = _chordMods;
+            const consumed = _chordConsumed;
+            _resetChord();
+            if (!consumed)
+                _commit(key, chord & ~modKey);
             return;
         }
 
-        if (capture.shortcutDisplayProvider)
-            capture._currentShortcutTokens = capture.shortcutDisplayProvider(key, mods);
+        capture.activity();
 
-        if (isModKey) {
+        if (modKey) {
+            _heldMods |= modKey;
+            _chordMods |= modKey;
+            if (capture.shortcutDisplayProvider)
+                capture._currentShortcutTokens = capture.shortcutDisplayProvider(key, _chordMods & ~modKey);
             capture._statusText = qsTr("Recording...");
             capture._statusColor = Theme.foreground;
             return;
         }
+
+        if (_heldMods !== 0)
+            _chordConsumed = true;
+
+        const isDismissKey = key === Qt.Key_Escape || key === Qt.Key_Backspace;
+        if (isDismissKey && mods === Qt.NoModifier) {
+            capture.dismissRequested(key);
+            return;
+        }
+
+        _commit(key, mods);
+    }
+
+    function _commit(key, mods) {
+        if (capture.shortcutDisplayProvider)
+            capture._currentShortcutTokens = capture.shortcutDisplayProvider(key, mods);
 
         if (capture.validateShortcut) {
             const error = capture.validateShortcut(key, mods);

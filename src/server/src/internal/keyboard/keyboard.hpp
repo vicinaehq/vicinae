@@ -22,6 +22,8 @@ std::optional<QString> stringForKey(Qt::Key key);
 std::optional<Qt::Key> keyFromString(QStringView key);
 std::optional<Qt::KeyboardModifier> modifierFromString(QStringView modifier);
 
+std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key);
+
 class Shortcut {
 public:
   static Shortcut osCopy() { return Shortcut(Qt::Key_C, Qt::ControlModifier); }
@@ -56,6 +58,7 @@ public:
 
   bool isValidKey() const { return stringForKey(m_key).has_value(); }
   bool isFunctionKey() const { return m_key >= Qt::Key_F1 && m_key <= Qt::Key_F24; }
+  bool isModifierOnly() const { return modifierForKey(m_key).has_value(); }
 
   // The keyboard shortcut as a string.
   // This form is used to serialize shortcut data in config files/database.

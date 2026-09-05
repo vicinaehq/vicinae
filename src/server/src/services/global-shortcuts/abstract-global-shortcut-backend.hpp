@@ -19,6 +19,7 @@ class AbstractGlobalShortcutBackend : public QObject {
 signals:
   void shortcutActivated(const QString &id, quint64 timestamp);
   void ready();
+  void keyCaptured(int key, int modifiers, bool down);
 
 public:
   ~AbstractGlobalShortcutBackend() override = default;
@@ -36,4 +37,6 @@ public:
   virtual std::expected<void, QString> bindShortcut(const GlobalShortcutRequest &request) = 0;
   virtual void unbindShortcut(const QString &id) = 0;
   virtual void unbindAll() = 0;
+
+  virtual void setCapturing(bool) {}
 };

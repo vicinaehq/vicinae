@@ -33,6 +33,7 @@ GlobalShortcutService::GlobalShortcutService(config::Manager &config, RootItemMa
 void GlobalShortcutService::setCapturing(bool capturing) {
   if (m_capturing == capturing) { return; }
   m_capturing = capturing;
+  m_backend->setCapturing(capturing);
 
   if (capturing) {
     m_backend->unbindAll();

@@ -114,7 +114,9 @@ static const std::unordered_map<QString, Qt::Key> keyMap = [](){
 
 static const std::unordered_map<Qt::Key, QString> keyMapReverse = [](){
 	using RP = std::pair<Qt::Key, QString>;
-	return keyMap | std::views::transform([](auto&& pair){ return RP{pair.second, pair.first}; }) | std::ranges::to<std::unordered_map>();
+	auto map = keyMap | std::views::transform([](auto&& pair){ return RP{pair.second, pair.first}; }) | std::ranges::to<std::unordered_map>();
+	map.insert({{Qt::Key_Meta, "super"}, {Qt::Key_Control, "control"}, {Qt::Key_Alt, "alt"}, {Qt::Key_Shift, "shift"}});
+	return map;
 }();
 
 
@@ -180,14 +182,6 @@ std::optional<Qt::KeyboardModifier> modifierFromString(QStringView modifier) {
   return {};
 }
 
-namespace {
-
-struct DisplayTokenSpec {
-  QString text;
-  QString icon;
-  QString label;
-};
-
 std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key) {
   switch (key) {
   case Qt::Key_Meta:
@@ -202,6 +196,29 @@ std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key) {
     return std::nullopt;
   }
 }
+
+namespace {
+
+Qt::Key keyForModifier(Qt::KeyboardModifier modifier) {
+  switch (modifier) {
+  case Qt::MetaModifier:
+    return Qt::Key_Meta;
+  case Qt::ControlModifier:
+    return Qt::Key_Control;
+  case Qt::AltModifier:
+    return Qt::Key_Alt;
+  case Qt::ShiftModifier:
+    return Qt::Key_Shift;
+  default:
+    return Qt::Key_unknown;
+  }
+}
+
+struct DisplayTokenSpec {
+  QString text;
+  QString icon;
+  QString label;
+};
 
 DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
 #ifdef Q_OS_MACOS
@@ -329,10 +346,12 @@ Shortcut::Shortcut(const QString &str) {
   }
 
   bool gotKey = false;
+  std::optional<Qt::KeyboardModifier> lastModifier;
 
   for (const auto &str : tokens) {
     if (auto modifier = modifierFromString(str)) {
       m_modifiers.setFlag(*modifier);
+      lastModifier = modifier;
     } else if (auto key = keyFromString(str)) {
       gotKey = true;
       m_key = *key;
@@ -340,6 +359,12 @@ Shortcut::Shortcut(const QString &str) {
       m_isValid = false;
       return;
     }
+  }
+
+  if (!gotKey && lastModifier) {
+    m_key = keyForModifier(*lastModifier);
+    m_modifiers.setFlag(*lastModifier, false);
+    gotKey = true;
   }
 
   m_isValid = gotKey;

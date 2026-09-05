@@ -11,8 +11,16 @@ class GlobalShortcutBridge : public QObject {
 
   Q_PROPERTY(QString toggleId READ toggleId CONSTANT)
 
+signals:
+  void keyCaptured(int key, int modifiers, bool down);
+
 public:
-  using QObject::QObject;
+  explicit GlobalShortcutBridge(QObject *parent = nullptr) : QObject(parent) {
+    if (auto *service = ServiceRegistry::instance()->globalShortcuts()) {
+      connect(service->backend(), &AbstractGlobalShortcutBackend::keyCaptured, this,
+              &GlobalShortcutBridge::keyCaptured);
+    }
+  }
 
   QString toggleId() const { return QString::fromUtf8(GlobalShortcutService::TOGGLE_ID); }
 

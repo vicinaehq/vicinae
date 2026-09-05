@@ -5,66 +5,67 @@
 
 namespace {
 
+constexpr ULONG_PTR VICINAE_INJECT_TAG = 0x7669636e;
+constexpr UINT START_MENU_SUPPRESS_VK = 0xFF;
+constexpr UINT CHORD_BROKEN = ~0u;
+
+constexpr std::pair<Qt::Key, UINT> KEY_TABLE[] = {
+    {Qt::Key_Space, VK_SPACE},       {Qt::Key_Return, VK_RETURN},
+    {Qt::Key_Enter, VK_RETURN},      {Qt::Key_Escape, VK_ESCAPE},
+    {Qt::Key_Tab, VK_TAB},           {Qt::Key_Backspace, VK_BACK},
+    {Qt::Key_Delete, VK_DELETE},     {Qt::Key_Home, VK_HOME},
+    {Qt::Key_End, VK_END},           {Qt::Key_PageUp, VK_PRIOR},
+    {Qt::Key_PageDown, VK_NEXT},     {Qt::Key_Left, VK_LEFT},
+    {Qt::Key_Right, VK_RIGHT},       {Qt::Key_Up, VK_UP},
+    {Qt::Key_Down, VK_DOWN},         {Qt::Key_Minus, VK_OEM_MINUS},
+    {Qt::Key_Equal, VK_OEM_PLUS},    {Qt::Key_Plus, VK_OEM_PLUS},
+    {Qt::Key_BracketLeft, VK_OEM_4}, {Qt::Key_BracketRight, VK_OEM_6},
+    {Qt::Key_Backslash, VK_OEM_5},   {Qt::Key_Semicolon, VK_OEM_1},
+    {Qt::Key_Apostrophe, VK_OEM_7},  {Qt::Key_Comma, VK_OEM_COMMA},
+    {Qt::Key_Period, VK_OEM_PERIOD}, {Qt::Key_Slash, VK_OEM_2},
+    {Qt::Key_QuoteLeft, VK_OEM_3},   {Qt::Key_Meta, VK_LWIN},
+    {Qt::Key_Meta, VK_RWIN},         {Qt::Key_Control, VK_LCONTROL},
+    {Qt::Key_Control, VK_RCONTROL},  {Qt::Key_Alt, VK_LMENU},
+    {Qt::Key_Alt, VK_RMENU},         {Qt::Key_Shift, VK_LSHIFT},
+    {Qt::Key_Shift, VK_RSHIFT},
+};
+
 std::optional<UINT> vkForQtKey(Qt::Key key) {
   if (key >= Qt::Key_A && key <= Qt::Key_Z) { return 'A' + (key - Qt::Key_A); }
   if (key >= Qt::Key_0 && key <= Qt::Key_9) { return '0' + (key - Qt::Key_0); }
   if (key >= Qt::Key_F1 && key <= Qt::Key_F12) { return VK_F1 + (key - Qt::Key_F1); }
+  for (const auto &[qt, vk] : KEY_TABLE) {
+    if (qt == key) return vk;
+  }
+  return std::nullopt;
+}
 
-  switch (key) {
-  case Qt::Key_Space:
-    return VK_SPACE;
-  case Qt::Key_Return:
-  case Qt::Key_Enter:
-    return VK_RETURN;
-  case Qt::Key_Escape:
-    return VK_ESCAPE;
-  case Qt::Key_Tab:
-    return VK_TAB;
-  case Qt::Key_Backspace:
-    return VK_BACK;
-  case Qt::Key_Delete:
-    return VK_DELETE;
-  case Qt::Key_Home:
-    return VK_HOME;
-  case Qt::Key_End:
-    return VK_END;
-  case Qt::Key_PageUp:
-    return VK_PRIOR;
-  case Qt::Key_PageDown:
-    return VK_NEXT;
-  case Qt::Key_Left:
-    return VK_LEFT;
-  case Qt::Key_Right:
-    return VK_RIGHT;
-  case Qt::Key_Up:
-    return VK_UP;
-  case Qt::Key_Down:
-    return VK_DOWN;
-  case Qt::Key_Minus:
-    return VK_OEM_MINUS;
-  case Qt::Key_Plus:
-  case Qt::Key_Equal:
-    return VK_OEM_PLUS;
-  case Qt::Key_BracketLeft:
-    return VK_OEM_4;
-  case Qt::Key_BracketRight:
-    return VK_OEM_6;
-  case Qt::Key_Backslash:
-    return VK_OEM_5;
-  case Qt::Key_Semicolon:
-    return VK_OEM_1;
-  case Qt::Key_Apostrophe:
-    return VK_OEM_7;
-  case Qt::Key_Comma:
-    return VK_OEM_COMMA;
-  case Qt::Key_Period:
-    return VK_OEM_PERIOD;
-  case Qt::Key_Slash:
-    return VK_OEM_2;
-  case Qt::Key_QuoteLeft:
-    return VK_OEM_3;
+Qt::Key qtKeyForVk(UINT vk) {
+  if (vk >= 'A' && vk <= 'Z') { return static_cast<Qt::Key>(Qt::Key_A + (vk - 'A')); }
+  if (vk >= '0' && vk <= '9') { return static_cast<Qt::Key>(Qt::Key_0 + (vk - '0')); }
+  if (vk >= VK_F1 && vk <= VK_F12) { return static_cast<Qt::Key>(Qt::Key_F1 + (vk - VK_F1)); }
+  for (const auto &[qt, entry] : KEY_TABLE) {
+    if (entry == vk) return qt;
+  }
+  return Qt::Key_unknown;
+}
+
+UINT modBitForVk(UINT vk) {
+  switch (vk) {
+  case VK_LCONTROL:
+  case VK_RCONTROL:
+    return MOD_CONTROL;
+  case VK_LMENU:
+  case VK_RMENU:
+    return MOD_ALT;
+  case VK_LSHIFT:
+  case VK_RSHIFT:
+    return MOD_SHIFT;
+  case VK_LWIN:
+  case VK_RWIN:
+    return MOD_WIN;
   default:
-    return std::nullopt;
+    return 0;
   }
 }
 
@@ -77,7 +78,17 @@ UINT winModifiers(Qt::KeyboardModifiers mods) {
   return win;
 }
 
+Qt::KeyboardModifiers qtModifiers(UINT win) {
+  Qt::KeyboardModifiers mods;
+  if (win & MOD_CONTROL) { mods |= Qt::ControlModifier; }
+  if (win & MOD_ALT) { mods |= Qt::AltModifier; }
+  if (win & MOD_SHIFT) { mods |= Qt::ShiftModifier; }
+  if (win & MOD_WIN) { mods |= Qt::MetaModifier; }
+  return mods;
+}
+
 WindowsGlobalShortcutBackend *g_backend = nullptr;
+UINT g_heldMods = 0;
 
 // One-shot key up suppressions, armed when the launcher hides while keys are still
 // physically held (escape, return...). Without this the window regaining foreground
@@ -116,6 +127,23 @@ UINT currentModifiers() {
   return mods;
 }
 
+void suppressStartMenu() {
+  INPUT inputs[2]{};
+  for (auto &input : inputs) {
+    input.type = INPUT_KEYBOARD;
+    input.ki.wVk = START_MENU_SUPPRESS_VK;
+    input.ki.dwExtraInfo = VICINAE_INJECT_TAG;
+  }
+  inputs[1].ki.dwFlags = KEYEVENTF_KEYUP;
+  SendInput(2, inputs, sizeof(INPUT));
+}
+
+bool isForegroundOurs() {
+  DWORD pid = 0;
+  GetWindowThreadProcessId(GetForegroundWindow(), &pid);
+  return pid == GetCurrentProcessId();
+}
+
 // We use a low level keyboard hook because the registered hotkey doesn't fire correctly
 // under some circumstances.
 // Typically, switching virtual workspaces and then immediately pressing the registered hotkey
@@ -124,9 +152,18 @@ UINT currentModifiers() {
 LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
   if (nCode == HC_ACTION) {
     const auto *k = reinterpret_cast<KBDLLHOOKSTRUCT *>(lParam);
+    if (k->dwExtraInfo == VICINAE_INJECT_TAG) { return CallNextHookEx(nullptr, nCode, wParam, lParam); }
+
     const bool down = wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN;
+    const UINT bit = modBitForVk(k->vkCode);
+    if (down) {
+      g_heldMods |= bit;
+    } else {
+      g_heldMods &= ~bit;
+    }
+    const UINT mods = (currentModifiers() | g_heldMods) & (down ? ~0u : ~bit);
     // both must run on every event so their internal states stay consistent
-    const bool shortcutEaten = g_backend && g_backend->dispatchKey(k->vkCode, currentModifiers(), down);
+    const bool shortcutEaten = g_backend && g_backend->dispatchKey(k->vkCode, mods, down);
     const bool suppressionEaten = consumeSuppressedKeyUp(k->vkCode, down);
     if (shortcutEaten || suppressionEaten) { return 1; }
   }
@@ -174,9 +211,27 @@ bool WindowsGlobalShortcutBackend::start() {
   return true;
 }
 
+void WindowsGlobalShortcutBackend::activate(const QString &id) {
+  QMetaObject::invokeMethod(
+      this, [this, id]() { emit shortcutActivated(id, GetTickCount64()); }, Qt::QueuedConnection);
+}
+
 bool WindowsGlobalShortcutBackend::dispatchKey(unsigned int vk, unsigned int mods, bool down) {
   std::scoped_lock lock(m_targetsMutex);
+
+  if (m_capturing && isForegroundOurs()) {
+    const auto key = qtKeyForVk(vk);
+    const int qtMods = qtModifiers(mods).toInt();
+    QMetaObject::invokeMethod(
+        this, [this, key, qtMods, down]() { emit keyCaptured(key, qtMods, down); }, Qt::QueuedConnection);
+    return true;
+  }
+
+  if (modBitForVk(vk)) { return dispatchModifier(mods, down); }
+
   bool eaten = false;
+
+  if (down && mods) { m_chord = CHORD_BROKEN; }
 
   for (auto &target : m_targets) {
     if (target.vk != vk) continue;
@@ -190,14 +245,37 @@ bool WindowsGlobalShortcutBackend::dispatchKey(unsigned int vk, unsigned int mod
     if (mods == target.mods) {
       if (!target.down) {
         target.down = true;
-        QMetaObject::invokeMethod(
-            this, [this, id = target.id]() { emit shortcutActivated(id, GetTickCount64()); },
-            Qt::QueuedConnection);
+        if (mods & MOD_WIN) { suppressStartMenu(); }
+        activate(target.id);
       }
       eaten = true;
     }
   }
   return eaten;
+}
+
+bool WindowsGlobalShortcutBackend::dispatchModifier(unsigned int mods, bool down) {
+  if (down) {
+    m_chord |= mods;
+    return false;
+  }
+
+  for (const auto &target : m_targets) {
+    if (!modBitForVk(target.vk) || target.mods != m_chord) continue;
+    if (m_chord & MOD_WIN) { suppressStartMenu(); }
+    activate(target.id);
+    m_chord = CHORD_BROKEN;
+    break;
+  }
+
+  if (mods == 0) { m_chord = 0; }
+  return false;
+}
+
+void WindowsGlobalShortcutBackend::setCapturing(bool capturing) {
+  std::scoped_lock lock(m_targetsMutex);
+  m_capturing = capturing;
+  m_chord = 0;
 }
 
 void WindowsGlobalShortcutBackend::suppressNextKeyUp(unsigned int vk) {
@@ -215,18 +293,20 @@ WindowsGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request)
   if (!vk) { return std::unexpected(tr("unsupported or invalid trigger")); }
 
   const UINT mods = winModifiers(request.trigger.mods());
-  const int regId = m_nextRegistrationId++;
 
-  // The source of truth to activate shortcuts is the keyboard hook but we still want
-  // to register the global shortcut so that no other application can steal it.
-  if (!RegisterHotKey(nullptr, regId, mods, *vk)) {
-    if (GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED) {
-      return std::unexpected(tr("already registered by another application"));
-    }
+  if (const UINT bit = modBitForVk(*vk)) {
+    std::scoped_lock lock(m_targetsMutex);
+    m_targets.push_back({*vk, mods | bit, 0, request.id, false});
+    return {};
   }
 
+  const int regId = m_nextRegistrationId++;
+
+  // The hook activates shortcuts; the registration only keeps other apps from claiming the combo.
+  const bool registered = RegisterHotKey(nullptr, regId, mods, *vk);
+
   std::scoped_lock lock(m_targetsMutex);
-  m_targets.push_back({*vk, mods, regId, request.id, false});
+  m_targets.push_back({*vk, mods, registered ? regId : 0, request.id, false});
   return {};
 }
 
@@ -234,7 +314,7 @@ void WindowsGlobalShortcutBackend::unbindShortcut(const QString &id) {
   std::scoped_lock lock(m_targetsMutex);
   std::erase_if(m_targets, [&](const HookTarget &t) {
     if (t.id != id) return false;
-    UnregisterHotKey(nullptr, t.regId);
+    if (t.regId) UnregisterHotKey(nullptr, t.regId);
     return true;
   });
 }
@@ -242,7 +322,7 @@ void WindowsGlobalShortcutBackend::unbindShortcut(const QString &id) {
 void WindowsGlobalShortcutBackend::unbindAll() {
   std::scoped_lock lock(m_targetsMutex);
   for (const auto &target : m_targets) {
-    UnregisterHotKey(nullptr, target.regId);
+    if (target.regId) UnregisterHotKey(nullptr, target.regId);
   }
   m_targets.clear();
 }
