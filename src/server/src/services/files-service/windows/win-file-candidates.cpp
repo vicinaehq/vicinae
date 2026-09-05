@@ -9,6 +9,11 @@ namespace {
 constexpr int MIN_CANDIDATE_LIMIT = 250;
 constexpr int CANDIDATE_LIMIT_MULTIPLIER = 20;
 
+vicinae::FileCategory categoryOf(const WinFileCandidate &candidate) {
+  return candidate.isDirectory ? vicinae::FileCategory::Directory
+                               : vicinae::fileCategoryFor(candidate.path, false);
+}
+
 } // namespace
 
 int winFileCandidateLimit(int limit) {
@@ -32,8 +37,7 @@ std::vector<IndexerFileResult> rankWinFileCandidates(std::vector<WinFileCandidat
   scored.reserve(candidates.size());
 
   for (WinFileCandidate &candidate : candidates) {
-    auto category = candidate.isDirectory ? vicinae::FileCategory::Directory
-                                          : vicinae::fileCategoryFor(candidate.path, false);
+    auto const category = categoryOf(candidate);
 
     if (params.category && *params.category != category) { continue; }
 
@@ -62,6 +66,26 @@ std::vector<IndexerFileResult> rankWinFileCandidates(std::vector<WinFileCandidat
                                            .rank = static_cast<double>(item.score),
                                            .category = item.category,
                                            .mimeType = std::move(item.mimeType)});
+  }
+
+  return results;
+}
+
+std::vector<IndexerFileResult> orderedWinFileResults(std::vector<WinFileCandidate> candidates,
+                                                     const IndexerQueryParams &params) {
+  std::vector<IndexerFileResult> results;
+
+  results.reserve(candidates.size());
+
+  for (WinFileCandidate &candidate : candidates) {
+    auto const category = categoryOf(candidate);
+
+    if (params.category && *params.category != category) { continue; }
+
+    results.emplace_back(IndexerFileResult{.path = std::move(candidate.path),
+                                           .rank = static_cast<double>(candidates.size() - results.size()),
+                                           .category = category,
+                                           .mimeType = std::move(candidate.mimeType)});
   }
 
   return results;

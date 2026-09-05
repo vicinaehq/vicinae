@@ -11,6 +11,17 @@
 #include <utility>
 
 constexpr auto CALCULATOR_MIN_CHARS = 3;
+// single letters are drive letters, not schemes
+constexpr auto MIN_SCHEME_LENGTH = 2;
+
+namespace {
+
+bool isAbsolutePathLike(const QString &text) {
+  if (text.startsWith('/')) return true;
+  return text.size() >= 3 && text[0].isLetter() && text[1] == ':' && (text[2] == '\\' || text[2] == '/');
+}
+
+} // namespace
 
 RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
     : SectionListModel(parent), m_manager(scope.services()->rootItemManager()),
@@ -92,7 +103,7 @@ void RootSearchModel::refresh() {
 bool RootSearchModel::rerunSearch() {
   auto text = QString::fromStdString(m_query);
 
-  if (!text.isEmpty() && text.startsWith('/')) {
+  if (isAbsolutePathLike(text)) {
     std::error_code ec;
     if (std::filesystem::exists(m_query, ec)) {
       m_updateSource->setUpdate({});
@@ -109,23 +120,14 @@ bool RootSearchModel::rerunSearch() {
     }
   }
 
-  if (!text.isEmpty()) {
-    if (auto url = QUrl(text); url.isValid() && !url.scheme().isEmpty()) {
-      if (auto app = m_appDb->findDefaultOpener(text)) {
-        m_updateSource->setUpdate({});
-        m_linkSource->setLink(LinkItem{.app = app, .url = text});
-        m_resultsSource->setItems({});
-        m_resultsSource->setQueryEmpty(false);
-        m_newsSource->setItems({});
-        m_favoritesSource->setItems({});
-        scope().setLoading(false);
-        rebuild();
-        return true;
-      }
-    }
+  // a link is shown on top of the regular results, it does not replace them
+  std::optional<LinkItem> link;
+
+  if (auto url = QUrl(text); url.isValid() && url.scheme().size() >= MIN_SCHEME_LENGTH) {
+    if (auto app = m_appDb->findDefaultOpener(text)) { link = LinkItem{.app = app, .url = text}; }
   }
 
-  m_linkSource->setLink({});
+  m_linkSource->setLink(std::move(link));
   m_resultsSource->setQueryEmpty(m_query.empty());
   m_fallbackSource->setQuery(m_query);
 

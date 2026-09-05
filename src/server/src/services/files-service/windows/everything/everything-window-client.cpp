@@ -77,7 +77,6 @@ bool registerReplyClass() {
   return registered;
 }
 
-// Everything replies with SendMessage, so this thread has to pump until the reply lands.
 bool waitForReply(const ReplyState &state) {
   ULONGLONG const deadline = GetTickCount64() + REPLY_TIMEOUT_MS;
 

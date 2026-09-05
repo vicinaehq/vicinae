@@ -1,6 +1,7 @@
 #include <QtConcurrent/QtConcurrentRun>
 #include <qstring.h>
 #include <optional>
+#include <span>
 #include <string_view>
 #include <common/file-category.hpp>
 #include "everything-file-indexer.hpp"
@@ -9,33 +10,33 @@
 
 namespace {
 
-// Flow Launcher convention, kept for muscle memory. Everything's own `regex:` prefix works too.
 constexpr char REGEX_PREFIX = '@';
 
 std::optional<std::wstring> categoryFilter(vicinae::FileCategory category) {
-  if (category == vicinae::FileCategory::Directory) { return L"folder:"; }
+  using vicinae::FileCategory;
 
-  auto extensions = vicinae::extensionsForCategory(category);
-  if (extensions.empty()) { return std::nullopt; }
+  if (category == FileCategory::Directory) { return L"folder:"; }
 
-  std::wstring filter = L"ext:";
+  bool const other = category == FileCategory::Other;
+  std::span<const FileCategory> const categories =
+      other ? std::span<const FileCategory>{vicinae::EXTENSION_CATEGORIES}
+            : std::span<const FileCategory>{&category, 1};
+  std::wstring filter = other ? L"file: !ext:" : L"ext:";
+  bool first = true;
 
-  for (std::string_view ext : extensions) {
-    if (filter.back() != L':') { filter += L';'; }
-    filter += std::wstring{ext.begin(), ext.end()};
+  for (FileCategory c : categories) {
+    for (std::string_view ext : vicinae::extensionsForCategory(c)) {
+      if (!first) { filter += L';'; }
+      first = false;
+      filter += std::wstring{ext.begin(), ext.end()};
+    }
   }
+
+  if (first) { return std::nullopt; }
 
   return filter;
 }
 
-vicinae::FileCategory categoryOf(const WinFileCandidate &candidate) {
-  return candidate.isDirectory ? vicinae::FileCategory::Directory
-                               : vicinae::fileCategoryFor(candidate.path, false);
-}
-
-// The query goes to Everything as typed so its search syntax and wildcards keep working. A regex
-// covers the whole search text, so the category filter cannot be spliced in and is applied to the
-// results instead.
 EverythingSearch buildSearch(std::string_view query, const IndexerQueryParams &params) {
   EverythingSearch search{.maxResults = params.limit};
 
@@ -47,10 +48,12 @@ EverythingSearch buildSearch(std::string_view query, const IndexerQueryParams &p
   search.text =
       QString::fromUtf8(query.data(), static_cast<qsizetype>(query.size())).trimmed().toStdWString();
 
-  if (search.text.empty()) { return search; }
+  if (search.text.empty()) { search.regex = false; }
 
   if (params.category && !search.regex) {
-    if (auto filter = categoryFilter(*params.category)) { search.text = *filter + L' ' + search.text; }
+    if (auto filter = categoryFilter(*params.category)) {
+      search.text = search.text.empty() ? *filter : *filter + L' ' + search.text;
+    }
   }
 
   return search;
@@ -110,23 +113,7 @@ std::vector<IndexerFileResult> EverythingFileIndexer::runQuery(const std::string
     candidates = std::move(*found);
   }
 
-  std::vector<IndexerFileResult> results;
-
-  results.reserve(candidates.size());
-
-  // Everything already sorted, rank only mirrors that order.
-  for (WinFileCandidate &candidate : candidates) {
-    auto const category = categoryOf(candidate);
-
-    if (params.category && *params.category != category) { continue; }
-
-    results.emplace_back(IndexerFileResult{.path = std::move(candidate.path),
-                                           .rank = static_cast<double>(candidates.size() - results.size()),
-                                           .category = category,
-                                           .mimeType = std::move(candidate.mimeType)});
-  }
-
-  return results;
+  return orderedWinFileResults(std::move(candidates), params);
 }
 
 QFuture<std::vector<IndexerFileResult>> EverythingFileIndexer::queryAsync(std::string_view query,

@@ -5,13 +5,13 @@
 #include "everything-client.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 
-// Query-only indexer backed by a running Everything (voidtools) instance.
 class EverythingFileIndexer : public AbstractFileIndexer {
 public:
   void start() override {}
   void rebuildIndex() override {}
   void preferenceValuesChanged(const QJsonObject &) override {}
   bool isAvailable() const override;
+  std::chrono::milliseconds queryDebounce() const override { return std::chrono::milliseconds{0}; }
 
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view query,
                                                      const IndexerQueryParams &params = {}) override;

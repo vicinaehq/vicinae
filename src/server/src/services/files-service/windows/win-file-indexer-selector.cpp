@@ -55,6 +55,8 @@ const AbstractFileIndexer &WinFileIndexerSelector::active() const {
 
 bool WinFileIndexerSelector::isAvailable() const { return active().isAvailable(); }
 
+std::chrono::milliseconds WinFileIndexerSelector::queryDebounce() const { return active().queryDebounce(); }
+
 QFuture<std::vector<IndexerFileResult>> WinFileIndexerSelector::queryAsync(std::string_view query,
                                                                            const IndexerQueryParams &params) {
   return active().queryAsync(query, params);

@@ -1,15 +1,15 @@
 #pragma once
-#include "everything-file-indexer.hpp"
+#include "everything/everything-file-indexer.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
-#include "win-file-indexer.hpp"
+#include "wsearch/win-file-indexer.hpp"
 
-// Picks between Windows Search and Everything according to the file extension preferences.
 class WinFileIndexerSelector : public AbstractFileIndexer {
 public:
   void start() override {}
   void rebuildIndex() override {}
   void preferenceValuesChanged(const QJsonObject &preferences) override;
   bool isAvailable() const override;
+  std::chrono::milliseconds queryDebounce() const override;
 
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view query,
                                                      const IndexerQueryParams &params = {}) override;

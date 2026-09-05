@@ -11,8 +11,9 @@ struct WinFileCandidate {
   bool isDirectory = false;
 };
 
-// Windows backends only generate candidates, the ranking is shared and done by the fuzzy matcher.
 int winFileCandidateLimit(int limit);
 std::vector<IndexerFileResult> rankWinFileCandidates(std::vector<WinFileCandidate> candidates,
                                                      const std::string &query,
+                                                     const IndexerQueryParams &params);
+std::vector<IndexerFileResult> orderedWinFileResults(std::vector<WinFileCandidate> candidates,
                                                      const IndexerQueryParams &params);

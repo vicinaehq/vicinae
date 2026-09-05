@@ -3,7 +3,6 @@
 
 struct _everything3_client_s;
 
-// Everything 1.5 (SDK 3) transport: named pipe through the vendored voidtools client library.
 class EverythingPipeClient : public EverythingClient {
 public:
   static std::unique_ptr<EverythingPipeClient> connect(const std::wstring &instanceName);

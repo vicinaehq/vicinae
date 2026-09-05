@@ -11,8 +11,6 @@ using namespace std::chrono_literals;
 
 namespace fs = std::filesystem;
 
-constexpr auto FILE_SEARCH_DEBOUNCE = 100ms;
-
 namespace {
 
 bool isExplicitPathQuery(QStringView text) {
@@ -61,20 +59,18 @@ void SearchFilesViewHost::initialize() {
   restoreCategoryFilter();
 
   m_debounce.setSingleShot(true);
-  m_debounce.setInterval(FILE_SEARCH_DEBOUNCE);
   connect(&m_debounce, &QTimer::timeout, this, &SearchFilesViewHost::handleDebounce);
   connect(&m_pendingResults, &Watcher::finished, this, &SearchFilesViewHost::handleSearchResults);
 }
 
-void SearchFilesViewHost::loadInitialData() { renderRecentFiles(); }
+void SearchFilesViewHost::loadInitialData() { renderEmptyQuery(); }
 
 void SearchFilesViewHost::textChanged(const QString &text) {
   if (m_pendingResults.isRunning()) m_pendingResults.cancel();
 
   if (text.isEmpty()) {
     m_debounce.stop();
-    m_resultMode = ResultMode::Recent;
-    renderRecentFiles();
+    renderEmptyQuery();
     return;
   }
 
@@ -95,7 +91,14 @@ void SearchFilesViewHost::textChanged(const QString &text) {
     return;
   }
 
-  m_debounce.start();
+  auto const debounce = context()->services->fileService()->indexer()->queryDebounce();
+
+  if (debounce == 0ms) {
+    handleDebounce();
+    return;
+  }
+
+  m_debounce.start(debounce);
 }
 
 void SearchFilesViewHost::renderRecentFiles() {
@@ -112,22 +115,36 @@ void SearchFilesViewHost::renderRecentFiles() {
   m_section.setFiles(std::move(recentFiles), tr("Recently Accessed"));
 }
 
-void SearchFilesViewHost::handleDebounce() {
-  auto fileService = context()->services->fileService();
-  QString const query = searchText();
-
-  if (m_pendingResults.isRunning()) m_pendingResults.cancel();
-
-  if (query.isEmpty()) {
-    m_resultMode = ResultMode::Recent;
-    setLoading(false);
+void SearchFilesViewHost::renderEmptyQuery() {
+  if (selectedCategory()) {
+    startIndexedSearch({});
     return;
   }
+
+  m_resultMode = ResultMode::Recent;
+  renderRecentFiles();
+}
+
+void SearchFilesViewHost::startIndexedSearch(const QString &query) {
+  auto fileService = context()->services->fileService();
+
+  if (m_pendingResults.isRunning()) m_pendingResults.cancel();
 
   m_lastSearchText = query;
   m_resultMode = ResultMode::IndexedSearch;
   setLoading(true);
   m_pendingResults.setFuture(fileService->queryAsync(query.toStdString(), {.category = selectedCategory()}));
+}
+
+void SearchFilesViewHost::handleDebounce() {
+  QString const query = searchText();
+
+  if (query.isEmpty()) {
+    renderEmptyQuery();
+    return;
+  }
+
+  startIndexedSearch(query);
 }
 
 void SearchFilesViewHost::handleSearchResults() {
@@ -139,7 +156,7 @@ void SearchFilesViewHost::handleSearchResults() {
   auto results = m_pendingResults.result();
   auto paths =
       results | std::views::transform([](auto &&f) { return f.path; }) | std::ranges::to<std::vector>();
-  m_section.setFiles(std::move(paths), tr("Results"));
+  m_section.setFiles(std::move(paths), m_lastSearchText.isEmpty() ? tr("Recently Changed") : tr("Results"));
 }
 
 void SearchFilesViewHost::loadDetail(const fs::path &path) {
@@ -193,7 +210,7 @@ void SearchFilesViewHost::setCategoryFilter(int index) {
   command()->storage().setItem("fileCategory", categoryFilterKeys().value(index));
 
   if (searchText().isEmpty()) {
-    renderRecentFiles();
+    renderEmptyQuery();
   } else {
     textChanged(searchText());
   }
@@ -204,7 +221,10 @@ void SearchFilesViewHost::restoreCategoryFilter() {
   if (saved.isUndefined() || saved.isNull()) return;
 
   const int index = categoryFilterKeys().indexOf(saved.toString());
-  if (index > 0) setCategoryFilter(index);
+  if (index <= 0) return;
+
+  m_currentCategoryFilter = index;
+  emit currentCategoryFilterChanged();
 }
 
 std::optional<vicinae::FileCategory> SearchFilesViewHost::selectedCategory() const {

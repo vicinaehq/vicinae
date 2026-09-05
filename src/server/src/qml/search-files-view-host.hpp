@@ -47,6 +47,8 @@ public:
 private:
   QStringList categoryFilterOptions() const;
   void renderRecentFiles();
+  void renderEmptyQuery();
+  void startIndexedSearch(const QString &query);
   void handleDebounce();
   void handleSearchResults();
   void loadDetail(const std::filesystem::path &path);

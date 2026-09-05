@@ -405,6 +405,13 @@ std::optional<fs::path> defaultHandlerExe(const std::wstring &assoc) {
   return assocQueryString(ASSOCSTR_EXECUTABLE, assoc);
 }
 
+// A scheme is registered when HKCR\<scheme> carries a "URL Protocol" value, UWP handlers included.
+bool isRegisteredProtocol(const std::wstring &scheme) {
+  DWORD size = 0;
+  return RegGetValueW(HKEY_CLASSES_ROOT, scheme.c_str(), L"URL Protocol", RRF_RT_ANY, nullptr, nullptr,
+                      &size) == ERROR_SUCCESS;
+}
+
 std::vector<std::pair<fs::path, QString>> enumExtensionHandlers(const std::wstring &ext,
                                                                 ASSOC_FILTER filter) {
   std::vector<std::pair<fs::path, QString>> result;
@@ -1031,6 +1038,7 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::findDefaultOpener(const Target &t
   const auto assoc = classifyTarget(target);
   if (!assoc) return nullptr;
   if (assoc->kind == AssocKind::Directory) return fileBrowser();
+  if (assoc->kind == AssocKind::Protocol && !isRegisteredProtocol(assoc->value)) return nullptr;
 
   ScopedCom com;
   if (auto exe = defaultHandlerExe(assoc->value))

@@ -9,12 +9,13 @@
 #include <qlogging.h>
 #include <qstring.h>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <common/file-category.hpp>
 #include "utils/scoped-com.hpp"
-#include "win-file-candidates.hpp"
+#include "services/files-service/windows/win-file-candidates.hpp"
 #include "win-file-indexer.hpp"
 
 namespace {
@@ -27,7 +28,6 @@ constexpr size_t MIME_BUFFER_CHARS = 256;
 constexpr const wchar_t *CONNECTION_STRING =
     L"Provider=Search.CollatorDSO;Extended Properties='Application=Windows'";
 
-// Quotes are doubled, LIKE wildcards neutralized with bracket classes.
 std::wstring escapeLikeTerm(QStringView word) {
   std::wstring escaped;
   escaped.reserve(word.size());
@@ -56,24 +56,35 @@ std::wstring escapeLikeTerm(QStringView word) {
 }
 
 std::optional<std::wstring> categoryPredicate(vicinae::FileCategory category) {
-  if (category == vicinae::FileCategory::Directory) { return L"System.ItemType = 'Directory'"; }
+  using vicinae::FileCategory;
 
-  auto extensions = vicinae::extensionsForCategory(category);
-  if (extensions.empty()) { return std::nullopt; }
+  if (category == FileCategory::Directory) { return L"System.ItemType = 'Directory'"; }
 
+  bool const other = category == FileCategory::Other;
+  std::span<const FileCategory> const categories =
+      other ? std::span<const FileCategory>{vicinae::EXTENSION_CATEGORIES}
+            : std::span<const FileCategory>{&category, 1};
   std::wstring predicate;
 
-  for (std::string_view ext : extensions) {
-    if (!predicate.empty()) { predicate += L" OR "; }
-    predicate += L"System.ItemType = '." + std::wstring{ext.begin(), ext.end()} + L"'";
+  for (FileCategory c : categories) {
+    for (std::string_view ext : vicinae::extensionsForCategory(c)) {
+      if (!predicate.empty()) { predicate += L" OR "; }
+      predicate += L"System.ItemType = '." + std::wstring{ext.begin(), ext.end()} + L"'";
+    }
   }
+
+  if (predicate.empty()) { return std::nullopt; }
+  if (other) { return L"(System.ItemType <> 'Directory' AND NOT (" + predicate + L"))"; }
 
   return L"(" + predicate + L")";
 }
 
-// Candidate generation only, the real ranking is done by the fuzzy matcher.
-// SCOPE='file:' keeps non-file items (emails, contacts) out.
-std::wstring buildQuerySql(const std::string &query, const IndexerQueryParams &params, int candidateLimit) {
+struct QuerySql {
+  std::wstring text;
+  bool listing = false;
+};
+
+QuerySql buildQuerySql(const std::string &query, const IndexerQueryParams &params) {
   std::wstring predicate;
 
   for (QStringView word : QStringTokenizer{QString::fromUtf8(query), u' ', Qt::SkipEmptyParts}) {
@@ -81,18 +92,23 @@ std::wstring buildQuerySql(const std::string &query, const IndexerQueryParams &p
     predicate += L"System.FileName LIKE '%" + escapeLikeTerm(word) + L"%'";
   }
 
-  if (predicate.empty()) { return {}; }
+  std::optional<std::wstring> const categoryFilter =
+      params.category ? categoryPredicate(*params.category) : std::nullopt;
+  std::wstring const columns = L" System.ItemPathDisplay, System.MIMEType, System.FileAttributes"
+                               L" FROM SystemIndex WHERE SCOPE='file:' AND ";
 
-  if (params.category) {
-    if (auto categoryFilter = categoryPredicate(*params.category)) {
-      predicate = L"(" + predicate + L") AND " + *categoryFilter;
-    }
+  if (predicate.empty()) {
+    if (!categoryFilter) { return {}; }
+
+    return {.text = L"SELECT TOP " + std::to_wstring(params.limit) + columns + *categoryFilter +
+                    L" ORDER BY System.DateModified DESC",
+            .listing = true};
   }
 
-  return L"SELECT TOP " + std::to_wstring(candidateLimit) +
-         L" System.ItemPathDisplay, System.MIMEType, System.FileAttributes"
-         L" FROM SystemIndex WHERE SCOPE='file:' AND " +
-         predicate;
+  if (categoryFilter) { predicate = L"(" + predicate + L") AND " + *categoryFilter; }
+
+  return {.text =
+              L"SELECT TOP " + std::to_wstring(winFileCandidateLimit(params.limit)) + columns + predicate};
 }
 
 struct RowBuffer {
@@ -225,17 +241,17 @@ std::vector<WinFileCandidate> fetchCandidates(const std::wstring &sql, int candi
 }
 
 std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQueryParams &params) {
-  int const candidateLimit = winFileCandidateLimit(params.limit);
+  if (params.limit <= 0) { return {}; }
 
-  if (candidateLimit == 0) { return {}; }
+  QuerySql const sql = buildQuerySql(query, params);
 
-  std::wstring const sql = buildQuerySql(query, params, candidateLimit);
-
-  if (sql.empty()) { return {}; }
+  if (sql.text.empty()) { return {}; }
 
   ScopedCom com(COINIT_MULTITHREADED);
 
-  return rankWinFileCandidates(fetchCandidates(sql, candidateLimit), query, params);
+  if (sql.listing) { return orderedWinFileResults(fetchCandidates(sql.text, params.limit), params); }
+
+  return rankWinFileCandidates(fetchCandidates(sql.text, winFileCandidateLimit(params.limit)), query, params);
 }
 
 } // namespace

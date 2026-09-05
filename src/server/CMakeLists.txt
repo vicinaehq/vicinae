@@ -779,15 +779,15 @@ elseif (WIN32)
 		src/services/snippet/windows-snippet-server.cpp
 		src/services/files-service/windows/win-file-candidates.hpp
 		src/services/files-service/windows/win-file-candidates.cpp
-		src/services/files-service/windows/win-file-indexer.hpp
-		src/services/files-service/windows/win-file-indexer.cpp
-		src/services/files-service/windows/everything-client.hpp
-		src/services/files-service/windows/everything-window-client.hpp
-		src/services/files-service/windows/everything-window-client.cpp
-		src/services/files-service/windows/everything-pipe-client.hpp
-		src/services/files-service/windows/everything-pipe-client.cpp
-		src/services/files-service/windows/everything-file-indexer.hpp
-		src/services/files-service/windows/everything-file-indexer.cpp
+		src/services/files-service/windows/wsearch/win-file-indexer.hpp
+		src/services/files-service/windows/wsearch/win-file-indexer.cpp
+		src/services/files-service/windows/everything/everything-client.hpp
+		src/services/files-service/windows/everything/everything-window-client.hpp
+		src/services/files-service/windows/everything/everything-window-client.cpp
+		src/services/files-service/windows/everything/everything-pipe-client.hpp
+		src/services/files-service/windows/everything/everything-pipe-client.cpp
+		src/services/files-service/windows/everything/everything-file-indexer.hpp
+		src/services/files-service/windows/everything/everything-file-indexer.cpp
 		src/services/files-service/windows/win-file-indexer-selector.hpp
 		src/services/files-service/windows/win-file-indexer-selector.cpp
 		src/services/window-manager/windows/windows-window.hpp

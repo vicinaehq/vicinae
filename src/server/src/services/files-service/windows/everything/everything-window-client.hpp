@@ -1,7 +1,6 @@
 #pragma once
 #include "everything-client.hpp"
 
-// Everything 1.4 (SDK 2) transport: WM_COPYDATA queries against the Everything IPC window.
 class EverythingWindowClient : public EverythingClient {
 public:
   static std::unique_ptr<EverythingWindowClient> connect();
