@@ -23,9 +23,7 @@ public:
   std::string_view id() const { return m_id; }
 
 private:
-#ifdef Q_OS_WIN
   std::vector<QString> interpreter() const;
-#endif
 
   std::filesystem::path m_path;
   std::string m_id;

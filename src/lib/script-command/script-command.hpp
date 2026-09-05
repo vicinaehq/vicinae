@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <expected>
 #include <filesystem>
+#include <functional>
 #include <iosfwd>
 #include <optional>
 #include <span>
@@ -72,7 +73,12 @@ struct ScriptCommand {
 
 std::ostream &operator<<(std::ostream &ofs, const ScriptCommand &cmd);
 
+using ExecutableLookup = std::function<std::optional<std::string>(std::string_view name)>;
+
 std::vector<std::string> shebangInterpreter(std::span<const std::string> shebang);
 std::vector<std::string> interpreterForExtension(std::string_view extension);
+std::expected<std::vector<std::string>, std::string> resolveInterpreter(const ScriptCommand &cmd,
+                                                                        const std::filesystem::path &script,
+                                                                        const ExecutableLookup &lookup);
 
 } // namespace script_command
