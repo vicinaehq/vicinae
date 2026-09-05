@@ -156,7 +156,7 @@ void SearchFilesViewHost::handleSearchResults() {
   auto results = m_pendingResults.result();
   auto paths =
       results | std::views::transform([](auto &&f) { return f.path; }) | std::ranges::to<std::vector>();
-  m_section.setFiles(std::move(paths), m_lastSearchText.isEmpty() ? tr("Recently Changed") : tr("Results"));
+  m_section.setFiles(std::move(paths), m_lastSearchText.isEmpty() ? tr("Recently Modified") : tr("Results"));
 }
 
 void SearchFilesViewHost::loadDetail(const fs::path &path) {

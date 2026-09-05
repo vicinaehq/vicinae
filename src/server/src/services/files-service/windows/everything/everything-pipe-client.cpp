@@ -40,7 +40,8 @@ std::optional<std::vector<WinFileCandidate>> EverythingPipeClient::search(const 
 
   Everything3_SetSearchTextW(state.get(), search.text.c_str());
   Everything3_SetSearchRegex(state.get(), search.regex ? TRUE : FALSE);
-  Everything3_AddSearchSort(state.get(), EVERYTHING3_PROPERTY_ID_DATE_RECENTLY_CHANGED, FALSE);
+  Everything3_AddSearchSort(state.get(), EVERYTHING3_PROPERTY_ID_DATE_MODIFIED, FALSE);
+  Everything3_SetSearchSortMix(state.get(), TRUE);
   Everything3_SetSearchViewportOffset(state.get(), 0);
   Everything3_SetSearchViewportCount(state.get(), static_cast<EVERYTHING3_SIZE_T>(search.maxResults));
   Everything3_AddSearchPropertyRequest(state.get(), EVERYTHING3_PROPERTY_ID_PATH_AND_NAME);
@@ -51,6 +52,11 @@ std::optional<std::vector<WinFileCandidate>> EverythingPipeClient::search(const 
   if (!results) {
     qWarning() << "EverythingPipeClient: search failed" << Qt::hex << Everything3_GetLastError();
     return std::nullopt;
+  }
+
+  if (Everything3_GetResultListSortCount(results.get()) == 0 ||
+      Everything3_GetResultListSortPropertyId(results.get(), 0) != EVERYTHING3_PROPERTY_ID_DATE_MODIFIED) {
+    qWarning() << "EverythingPipeClient: Everything did not apply the requested sort";
   }
 
   EVERYTHING3_SIZE_T const count = Everything3_GetResultListViewportCount(results.get());

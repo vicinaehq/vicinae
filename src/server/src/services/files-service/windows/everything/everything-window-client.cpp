@@ -14,7 +14,7 @@ constexpr DWORD COPYDATA_QUERY2W = 18;
 constexpr DWORD REPLY_COPYDATA_ID = 0x56494349;
 constexpr DWORD REQUEST_FULL_PATH_AND_NAME = 0x00000004;
 constexpr DWORD SEARCH_REGEX = 0x00000008;
-constexpr DWORD SORT_DATE_RECENTLY_CHANGED_DESCENDING = 22;
+constexpr DWORD SORT_DATE_MODIFIED_DESCENDING = 14;
 constexpr DWORD ITEM_FOLDER = 0x00000001;
 constexpr DWORD REPLY_TIMEOUT_MS = 5000;
 
@@ -115,6 +115,10 @@ std::vector<WinFileCandidate> parseList(std::span<const std::byte> data) {
 
   if (!header) { return candidates; }
 
+  if (header->sortType != SORT_DATE_MODIFIED_DESCENDING) {
+    qWarning() << "EverythingWindowClient: Everything did not apply the requested sort";
+  }
+
   candidates.reserve(header->numItems);
 
   for (DWORD i = 0; i < header->numItems; ++i) {
@@ -173,7 +177,7 @@ std::optional<std::vector<WinFileCandidate>> EverythingWindowClient::search(cons
                             .offset = 0,
                             .maxResults = static_cast<DWORD>(search.maxResults),
                             .requestFlags = REQUEST_FULL_PATH_AND_NAME,
-                            .sortType = SORT_DATE_RECENTLY_CHANGED_DESCENDING};
+                            .sortType = SORT_DATE_MODIFIED_DESCENDING};
 
   std::memcpy(query.data(), &header, sizeof(header));
   std::memcpy(query.data() + sizeof(header), search.text.c_str(), textBytes);
