@@ -701,11 +701,14 @@ void WindowsAppDatabase::scanAppPaths() {
   fs::path windowsApps; // packaged apps register execution aliases here; scanUwp already lists them
   if (auto programFiles = envPath(L"ProgramW6432")) windowsApps = *programFiles / L"WindowsApps";
 
-  for (const auto &exe : enumerateAppPaths()) {
+  for (const auto &rawExe : enumerateAppPaths()) {
+    const fs::path exe = rawExe.lexically_normal();
     std::error_code ec;
     if (!fs::exists(exe, ec) || looksLikeUninstaller(exe)) continue;
     if (!systemRoot.empty() && isUnderDirectory(exe, systemRoot)) continue;
     if (!windowsApps.empty() && isUnderDirectory(exe, windowsApps)) continue;
+    // already reachable through a Start Menu or desktop shortcut
+    if (m_appsByAlias.contains(toQString(exe).toLower())) continue;
 
     // nameless exes are almost always helper binaries
     const QString description = exeFileDescription(exe);
