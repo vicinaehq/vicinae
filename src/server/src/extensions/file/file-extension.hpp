@@ -111,8 +111,7 @@ public:
 
     backend.setTitle(tr("Search backend"));
     backend.setDescription(
-        tr("Automatic uses Everything when it is running and falls back to Windows Search otherwise. "
-           "Everything queries use its own search syntax, prefix with @ for a regular expression."));
+        tr("Automatic uses Everything when it is running and falls back to Windows Search otherwise."));
     backend.setDefaultValue("auto");
 
     auto instance = Preference::makeText("everythingInstance");
