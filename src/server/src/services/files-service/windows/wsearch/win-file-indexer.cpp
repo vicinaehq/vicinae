@@ -8,12 +8,16 @@
 #include <QtConcurrent/QtConcurrentRun>
 #include <qlogging.h>
 #include <qstring.h>
+#include <algorithm>
+#include <filesystem>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <common/file-category.hpp>
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "utils/scoped-com.hpp"
 #include "services/files-service/windows/win-file-candidates.hpp"
 #include "win-file-indexer.hpp"
@@ -27,6 +31,10 @@ constexpr size_t PATH_BUFFER_CHARS = 2048;
 constexpr size_t MIME_BUFFER_CHARS = 256;
 constexpr const wchar_t *CONNECTION_STRING =
     L"Provider=Search.CollatorDSO;Extended Properties='Application=Windows'";
+constexpr int MIN_CANDIDATE_LIMIT = 250;
+constexpr int CANDIDATE_LIMIT_MULTIPLIER = 20;
+
+int candidateLimit(int limit) { return std::max(MIN_CANDIDATE_LIMIT, limit * CANDIDATE_LIMIT_MULTIPLIER); }
 
 std::wstring escapeLikeTerm(QStringView word) {
   std::wstring escaped;
@@ -107,8 +115,7 @@ QuerySql buildQuerySql(const std::string &query, const IndexerQueryParams &param
 
   if (categoryFilter) { predicate = L"(" + predicate + L") AND " + *categoryFilter; }
 
-  return {.text =
-              L"SELECT TOP " + std::to_wstring(winFileCandidateLimit(params.limit)) + columns + predicate};
+  return {.text = L"SELECT TOP " + std::to_wstring(candidateLimit(params.limit)) + columns + predicate};
 }
 
 struct RowBuffer {
@@ -140,7 +147,7 @@ DBBINDING columnBinding(DBORDINAL ordinal, DBTYPE type, size_t obStatus, size_t 
   return binding;
 }
 
-std::vector<WinFileCandidate> fetchCandidates(const std::wstring &sql, int candidateLimit) {
+std::vector<WinFileCandidate> fetchCandidates(const std::wstring &sql, int limit) {
   std::vector<WinFileCandidate> candidates;
   ComPtr<IDataInitialize> dataInit;
 
@@ -203,7 +210,7 @@ std::vector<WinFileCandidate> fetchCandidates(const std::wstring &sql, int candi
     return candidates;
   }
 
-  candidates.reserve(candidateLimit);
+  candidates.reserve(limit);
 
   while (true) {
     HROW rowHandles[ROW_BATCH_SIZE];
@@ -240,6 +247,55 @@ std::vector<WinFileCandidate> fetchCandidates(const std::wstring &sql, int candi
   return candidates;
 }
 
+std::vector<IndexerFileResult> rankCandidates(std::vector<WinFileCandidate> candidates,
+                                              const std::string &query, const IndexerQueryParams &params) {
+  struct Scored {
+    std::filesystem::path path;
+    int score = 0;
+    vicinae::FileCategory category = vicinae::FileCategory::Other;
+    std::optional<std::string> mimeType;
+  };
+
+  std::vector<Scored> scored;
+  fuzzy::Query const fuzzyQuery{query};
+
+  scored.reserve(candidates.size());
+
+  for (WinFileCandidate &candidate : candidates) {
+    auto const category = winFileCategory(candidate);
+
+    if (params.category && *params.category != category) { continue; }
+
+    auto const m = fuzzy::scoreWeighted({{candidate.path.filename().string(), 1.0}}, fuzzyQuery);
+
+    if (m.accepted()) {
+      scored.emplace_back(Scored{.path = std::move(candidate.path),
+                                 .score = m.score,
+                                 .category = category,
+                                 .mimeType = std::move(candidate.mimeType)});
+    }
+  }
+
+  std::ranges::stable_sort(scored, [](const Scored &a, const Scored &b) {
+    if (a.score != b.score) { return a.score > b.score; }
+    return a.path < b.path;
+  });
+
+  std::vector<IndexerFileResult> results;
+  size_t const end = std::min(static_cast<size_t>(params.limit), scored.size());
+
+  results.reserve(end);
+
+  for (Scored &item : scored | std::views::take(end)) {
+    results.emplace_back(IndexerFileResult{.path = std::move(item.path),
+                                           .rank = static_cast<double>(item.score),
+                                           .category = item.category,
+                                           .mimeType = std::move(item.mimeType)});
+  }
+
+  return results;
+}
+
 std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQueryParams &params) {
   if (params.limit <= 0) { return {}; }
 
@@ -251,7 +307,7 @@ std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQ
 
   if (sql.listing) { return orderedWinFileResults(fetchCandidates(sql.text, params.limit), params); }
 
-  return rankWinFileCandidates(fetchCandidates(sql.text, winFileCandidateLimit(params.limit)), query, params);
+  return rankCandidates(fetchCandidates(sql.text, candidateLimit(params.limit)), query, params);
 }
 
 } // namespace

@@ -3,6 +3,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <common/file-category.hpp>
 #include "services/files-service/abstract-file-indexer.hpp"
 
 struct WinFileCandidate {
@@ -11,9 +12,6 @@ struct WinFileCandidate {
   bool isDirectory = false;
 };
 
-int winFileCandidateLimit(int limit);
-std::vector<IndexerFileResult> rankWinFileCandidates(std::vector<WinFileCandidate> candidates,
-                                                     const std::string &query,
-                                                     const IndexerQueryParams &params);
+vicinae::FileCategory winFileCategory(const WinFileCandidate &candidate);
 std::vector<IndexerFileResult> orderedWinFileResults(std::vector<WinFileCandidate> candidates,
                                                      const IndexerQueryParams &params);
