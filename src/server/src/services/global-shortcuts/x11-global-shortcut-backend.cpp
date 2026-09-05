@@ -133,6 +133,8 @@ void X11GlobalShortcutBackend::ungrab(xcb_keycode_t keycode, uint16_t mods) {
 }
 
 std::expected<void, QString> X11GlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request) {
+  if (request.trigger.isModifierOnly()) { return std::unexpected(tr("Modifier-only shortcuts are not supported")); }
+
   auto keysym = global_shortcuts::xkbKeysymForQtKey(request.trigger.key());
   if (!keysym) {
     qWarning() << "X11GlobalShortcutBackend: no xkb keysym for qt key" << request.trigger.key();
