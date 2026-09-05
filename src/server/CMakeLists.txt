@@ -69,7 +69,7 @@ endif()
 configure_file(resources-core.qrc.in resources-core.qrc)
 configure_file(resources-extensions.qrc.in resources-extensions.qrc)
 
-if (CMAKE_BUILD_TYPE MATCHES "Debug")
+if (CMAKE_BUILD_TYPE MATCHES "Debug" AND NOT WIN32)
 	add_compile_definitions(LOCAL_THEME_DIR="${THEME_DIR}")
 endif()
 

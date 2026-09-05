@@ -22,6 +22,11 @@ function(vicinae_windows_deploy target)
 	file(RELATIVE_PATH VICINAE_DATA_ROOT_REL
 		"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}" "${CMAKE_INSTALL_PREFIX}")
 	target_compile_definitions(${target} PRIVATE VICINAE_DATA_ROOT_REL="${VICINAE_DATA_ROOT_REL}")
+	add_custom_command(TARGET ${target} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_directory "${THEME_DIR}"
+			"$<TARGET_FILE_DIR:${target}>/${VICINAE_DATA_ROOT_REL}/themes"
+		VERBATIM
+	)
 	qt_generate_deploy_qml_app_script(
 		TARGET ${target}
 		OUTPUT_SCRIPT VICINAE_QT_DEPLOY_SCRIPT
