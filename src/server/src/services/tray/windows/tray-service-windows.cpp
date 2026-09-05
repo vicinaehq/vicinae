@@ -157,23 +157,23 @@ struct TrayServiceWindows::Impl {
       return;
     }
 
-    appendMenuItem(menu, MF_STRING, COMMAND_TOGGLE, owner.tr("Toggle Vicinae"));
+    appendMenuItem(menu, MF_STRING, COMMAND_TOGGLE, TrayService::toggleLabel());
     appendMenuItem(menu, MF_STRING | MF_DISABLED, 0,
                    version.isEmpty() ? QStringLiteral("Vicinae") : QStringLiteral("Vicinae %1").arg(version));
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
-    appendMenuItem(menu, MF_STRING, COMMAND_ABOUT, owner.tr("About Vicinae"));
+    appendMenuItem(menu, MF_STRING, COMMAND_ABOUT, TrayService::aboutLabel());
     if (checkForUpdatesVisible) {
       appendMenuItem(menu, MF_STRING, COMMAND_CHECK_FOR_UPDATES,
-                     availableUpdate.isEmpty() ? owner.tr("Check for Updates…")
-                                               : owner.tr("Update Available: %1").arg(availableUpdate));
+                     availableUpdate.isEmpty() ? TrayService::checkForUpdatesLabel()
+                                               : TrayService::updateAvailableLabel(availableUpdate));
     }
-    appendMenuItem(menu, MF_STRING, COMMAND_SETTINGS, owner.tr("Settings…"));
+    appendMenuItem(menu, MF_STRING, COMMAND_SETTINGS, TrayService::settingsLabel());
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
-    appendMenuItem(menu, MF_STRING, COMMAND_SPONSOR, owner.tr("Sponsor Vicinae"));
-    appendMenuItem(menu, MF_STRING, COMMAND_DISCORD, owner.tr("Join the Discord"));
-    appendMenuItem(menu, MF_STRING, COMMAND_FOLLOW, owner.tr("Follow on X"));
+    appendMenuItem(menu, MF_STRING, COMMAND_SPONSOR, TrayService::sponsorLabel());
+    appendMenuItem(menu, MF_STRING, COMMAND_DISCORD, TrayService::discordLabel());
+    appendMenuItem(menu, MF_STRING, COMMAND_FOLLOW, TrayService::followLabel());
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
-    appendMenuItem(menu, MF_STRING, COMMAND_QUIT, owner.tr("Quit Vicinae"));
+    appendMenuItem(menu, MF_STRING, COMMAND_QUIT, TrayService::quitLabel());
 
     POINT cursor{};
     GetCursorPos(&cursor);

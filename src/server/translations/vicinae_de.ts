@@ -7225,4 +7225,47 @@ Wenn Sie Ihre eigene Erweiterung erstellen möchten, werfen Sie einen Blick auf 
         <translation>Desktop %1</translation>
     </message>
 </context>
+<context>
+    <name>TrayService</name>
+    <message>
+        <source>Toggle Vicinae</source>
+        <translation>Vicinae ein-/ausblenden</translation>
+    </message>
+    <message>
+        <source>About Vicinae</source>
+        <translation>Über Vicinae</translation>
+    </message>
+    <message>
+        <source>Check for Updates…</source>
+        <translation>Nach Updates suchen…</translation>
+    </message>
+    <message>
+        <source>Update Available: %1</source>
+        <translation>Update verfügbar: %1</translation>
+    </message>
+    <message>
+        <source>Settings…</source>
+        <translation>Einstellungen…</translation>
+    </message>
+    <message>
+        <source>Preferences…</source>
+        <translation>Einstellungen…</translation>
+    </message>
+    <message>
+        <source>Sponsor Vicinae</source>
+        <translation>Vicinae unterstützen</translation>
+    </message>
+    <message>
+        <source>Join the Discord</source>
+        <translation>Discord-Server beitreten</translation>
+    </message>
+    <message>
+        <source>Follow on X</source>
+        <translation>Auf X folgen</translation>
+    </message>
+    <message>
+        <source>Quit Vicinae</source>
+        <translation>Vicinae beenden</translation>
+    </message>
+</context>
 </TS>
