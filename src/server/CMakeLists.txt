@@ -144,6 +144,8 @@ set(SRCS
 	src/root-search/extensions/extension-root-provider.cpp
 	src/root-search/shortcuts/shortcut-root-provider.hpp
 	src/root-search/shortcuts/shortcut-root-provider.cpp
+	src/root-search/notes/note-root-provider.hpp
+	src/root-search/notes/note-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
 
@@ -300,6 +302,8 @@ set(SRCS
 	src/extensions/clipboard/clipboard-extension.cpp
 
 	src/extensions/snippet/snippet-extension.cpp
+
+	src/extensions/note/note-extension.hpp
 
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
@@ -508,6 +512,11 @@ set(SRCS
 	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
 
+	src/services/note/note-service.hpp
+	src/services/note/note-db.hpp
+	src/services/note/note-db.cpp
+	src/actions/note/note-actions.hpp
+
 	# QML frontend
 	src/qml/keybind-bridge.hpp
 	src/qml/launcher-window.hpp
@@ -616,6 +625,12 @@ set(SRCS
 	src/qml/manage-snippets-model.cpp
 	src/qml/manage-snippets-view-host.hpp
 	src/qml/manage-snippets-view-host.cpp
+	src/qml/manage-notes-model.hpp
+	src/qml/manage-notes-model.cpp
+	src/qml/manage-notes-view-host.hpp
+	src/qml/manage-notes-view-host.cpp
+	src/qml/note-form-view-host.hpp
+	src/qml/note-form-view-host.cpp
 	src/qml/raycast-store-model.hpp
 	src/qml/raycast-store-model.cpp
 	src/qml/raycast-store-view-host.hpp
@@ -1106,6 +1121,7 @@ set(VICINAE_QML_FILES
 	src/qml/qml/FormCheckbox.qml
 	src/qml/qml/FormSeparator.qml
 	src/qml/qml/SnippetFormView.qml
+	src/qml/qml/NoteFormView.qml
 	src/qml/qml/AliasFormView.qml
 	src/qml/qml/ShortcutFormView.qml
 	src/qml/qml/FormCompletedInput.qml
@@ -1342,8 +1358,13 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	target_sources(${TEST_TARGET} PRIVATE
 		src/services/calculator-service/qalculate/qalculate-backend.cpp
 		tests/calculator/qalculate-backend.cpp
+
+		./database/vicinae/migrations.qrc
+		src/utils/migration-manager/migration-manager.cpp
+		src/services/note/note-db.cpp
+		tests/note/note-db.cpp
 	)
-	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common qalculate Qt6::Concurrent)
+	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common vicinae::fuzzy qalculate sqlcipher Qt6::Concurrent)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()

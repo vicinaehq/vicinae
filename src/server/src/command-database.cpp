@@ -8,6 +8,7 @@
 #include "extensions/power-management/power-management-extension.hpp"
 #include "extensions/shortcut/shortcut-extension.hpp"
 #include "extensions/font/font-extension.hpp"
+#include "extensions/note/note-extension.hpp"
 #include "extensions/snippet/snippet-extension.hpp"
 #include "extensions/theme/theme-extension.hpp"
 #include "extensions/developer/developer-extension.hpp"
@@ -50,6 +51,7 @@ CommandDatabase::CommandDatabase(const ServiceRegistry &services) {
   registerRepository<DeveloperExtension>();
 
   registerRepository<SnippetExtension>();
+  registerRepository<NoteExtension>();
 
 #ifdef QT_DEBUG
   registerRepository<InternalExtension>();
