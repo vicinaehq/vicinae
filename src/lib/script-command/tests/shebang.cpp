@@ -52,25 +52,25 @@ TEST_CASE("Interpreter is derived from the extension") {
 
 TEST_CASE("Interpreter resolution goes through the lookup with alias fallback") {
   const auto lookup = [](std::string_view name) -> std::optional<std::string> {
-    if (name == "python") return "C:/python/python.exe";
-    if (name == "powershell") return "C:/win/powershell.exe";
+    if (name == "python") return "/resolved/python";
+    if (name == "powershell") return "/resolved/powershell";
     return std::nullopt;
   };
 
   ScriptCommand withShebang;
-  withShebang.shebang = {"/usr/bin/env", "python3"};
+  withShebang.shebang = {"/nonexistent/env", "python3"};
   auto resolved = resolveInterpreter(withShebang, "script", lookup);
   REQUIRE(resolved.has_value());
-  REQUIRE(*resolved == Argv{"C:/python/python.exe"});
+  REQUIRE(*resolved == Argv{"/resolved/python"});
 
   ScriptCommand byExtension;
   resolved = resolveInterpreter(byExtension, "script.ps1", lookup);
   REQUIRE(resolved.has_value());
-  REQUIRE(resolved->front() == "C:/win/powershell.exe");
+  REQUIRE(resolved->front() == "/resolved/powershell");
   REQUIRE(resolved->back() == "-File");
 
   ScriptCommand missing;
-  missing.shebang = {"/usr/bin/ruby"};
+  missing.shebang = {"/nonexistent/ruby"};
   REQUIRE(!resolveInterpreter(missing, "script", lookup).has_value());
 
   ScriptCommand direct;
