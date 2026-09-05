@@ -153,9 +153,13 @@ private:
   int m_lastOffset = 0;
 };
 
-inline QString highlight(const QString &code, const QString &language, const StyleMap &styles, bool isDark) {
-  auto wrapPre = [](const QString &inner) {
-    return QStringLiteral("<pre>") + inner + QStringLiteral("</pre>");
+inline QString highlight(const QString &code, const QString &language, const StyleMap &styles, bool isDark,
+                         const QString &monoFamily) {
+  // Qt's HTML importer gives <pre> the platform fixed font (Courier New on Windows), overriding the
+  // TextEdit font; an inline style wins over that default.
+  auto wrapPre = [&monoFamily](const QString &inner) {
+    return QStringLiteral("<pre style=\"font-family:'%1',monospace;\">").arg(monoFamily) + inner +
+           QStringLiteral("</pre>");
   };
 
   if (language.isEmpty()) return wrapPre(code.toHtmlEscaped());

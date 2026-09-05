@@ -425,7 +425,8 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       QString const language = lang ? QString::fromUtf8(lang) : QString();
       data[QStringLiteral("language")] = language;
       bool const isDark = ThemeService::instance().theme().isDark();
-      data[QStringLiteral("highlightedHtml")] = syntax::highlight(code, language, m_syntaxStyles, isDark);
+      data[QStringLiteral("highlightedHtml")] =
+          syntax::highlight(code, language, m_syntaxStyles, isDark, m_monoFamily);
       blocks.push_back({MdBlockType::CodeBlock, data});
       break;
     }
