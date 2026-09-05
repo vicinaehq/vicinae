@@ -121,7 +121,7 @@ void SettingsWindow::openUrl(const QString &url) { m_ctx.services->appDb()->open
 void SettingsWindow::reportBug() { openUrl(makeVicinaeBugReportUrl().toString(QUrl::FullyEncoded)); }
 
 void SettingsWindow::close() {
-  if (m_window) m_window->hide();
+  if (m_window) m_window->close();
 }
 
 void SettingsWindow::requestDefaultFocus() { emit defaultFocusRequested(); }
