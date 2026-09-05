@@ -147,7 +147,10 @@ bool VirtualDesktops::moveOwnWindowToDesktop(HWND hwnd, const QString &desktopId
 
   GUID guid{};
   if (FAILED(CLSIDFromString(desktopId.toStdWString().c_str(), &guid))) return false;
-  return SUCCEEDED(m_manager->MoveWindowToDesktop(hwnd, guid));
+
+  const HRESULT hr = m_manager->MoveWindowToDesktop(hwnd, guid);
+  if (FAILED(hr)) qWarning() << "VirtualDesktops: MoveWindowToDesktop failed" << Qt::hex << hr;
+  return SUCCEEDED(hr);
 }
 
 } // namespace Win

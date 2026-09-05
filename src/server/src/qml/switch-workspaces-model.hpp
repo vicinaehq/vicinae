@@ -68,7 +68,12 @@ protected:
   std::unique_ptr<ActionPanelState> buildActionPanel(const WorkspaceInfo &e) const override {
     auto panel = std::make_unique<ListActionPanelState>();
     auto main = panel->createSection();
-    auto focus = new StaticAction(tr("Switch to workspace"), ImageURL::builtin(BuiltinIcon::SwitchWindows),
+#ifdef Q_OS_WIN
+    const QString label = tr("Switch to desktop");
+#else
+    const QString label = tr("Switch to workspace");
+#endif
+    auto focus = new StaticAction(label, ImageURL::builtin(BuiltinIcon::SwitchWindows),
                                   [w = e.workspace](ApplicationContext *ctx) {
                                     ctx->services->windowManager()->provider()->focusWorkspaceSync(*w);
                                     ctx->navigation->closeWindow();

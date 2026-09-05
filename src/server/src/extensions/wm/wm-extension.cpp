@@ -96,7 +96,14 @@ class SwitchWindowsCommand : public BuiltinViewCommand<SwitchWindowsViewHost> {
 class SwitchWorkspacesCommand : public BuiltinViewCommand<SwitchWorkspacesViewHost> {
   QString id() const override { return "switch-workspaces"; }
   QString name() const override {
+#ifdef Q_OS_WIN
+    return QCoreApplication::translate("SwitchWorkspacesCommand", "Switch Desktops");
+#else
     return QCoreApplication::translate("SwitchWorkspacesCommand", "Switch Workspaces");
+#endif
+  }
+  std::vector<QString> keywords() const override {
+    return {"workspaces", "desktops", "virtual desktops", "spaces"};
   }
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::Carousel).setBackgroundTint(COLOR);

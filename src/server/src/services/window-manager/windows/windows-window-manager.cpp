@@ -1,11 +1,13 @@
 #include "windows-window-manager.hpp"
 #include "qml/launcher-window-platform.hpp"
+#include <QDebug>
 #include <QTimer>
 #include <algorithm>
 #include <appmodel.h>
 #include <dwmapi.h>
 #include <propkey.h>
 #include <shellapi.h>
+#include <shldisp.h>
 #include <wrl/client.h>
 
 static constexpr int REBUILD_DEBOUNCE_MS = 150;
@@ -374,25 +376,56 @@ HWND WindowManager::ensureHelperWindow() const {
   wc.lpszClassName = HELPER_CLASS_NAME;
   RegisterClassW(&wc);
 
-  m_helper = CreateWindowExW(WS_EX_TOOLWINDOW, HELPER_CLASS_NAME, L"", WS_POPUP, -32000, -32000, 1, 1,
-                             nullptr, nullptr, wc.hInstance, nullptr);
+  // tool windows are not shell views and cannot be moved across desktops
+  m_helper = CreateWindowExW(0, HELPER_CLASS_NAME, L"", WS_POPUP, -32000, -32000, 1, 1, nullptr, nullptr,
+                             wc.hInstance, nullptr);
   return m_helper;
 }
 
 bool WindowManager::activateWorkspace(const QString &workspaceId) const {
   if (!hasWorkspaces()) return false;
 
-  // no stable API to switch desktops; focusing our helper window planted there makes the shell do it
+  // There is no official Windows API to switch to a different desktop, so we use the
+  // standard trick of focusing a window that is on the target desktop to make the shell
+  // change the active desktop.
+  // If there is no window on the target desktop, then we just create a helper window
+  // as a dummy target.
+
+  for (const auto &win : m_cache) {
+    const auto &window = static_cast<const Window &>(*win);
+    const auto workspace = window.workspace();
+    if (!workspace || workspace->compare(workspaceId, Qt::CaseInsensitive) != 0) continue;
+    if (IsIconic(window.hwnd())) continue;
+
+    focusWindowSync(window);
+    return true;
+  }
+
   HWND helper = ensureHelperWindow();
   if (!helper) return false;
-  if (!m_desktops->moveOwnWindowToDesktop(helper, workspaceId)) return false;
 
-  ShowWindow(helper, SW_SHOW);
+  ShowWindow(helper, SW_SHOWNOACTIVATE);
+  if (!m_desktops->moveOwnWindowToDesktop(helper, workspaceId)) {
+    ShowWindow(helper, SW_HIDE);
+    return false;
+  }
+
   LauncherWindowPlatform::grantForeground();
-  SetForegroundWindow(helper);
+  if (!SetForegroundWindow(helper)) {
+    qWarning() << "activateWorkspace: SetForegroundWindow failed" << GetLastError();
+  }
   QTimer::singleShot(WORKSPACE_SWITCH_HIDE_DELAY_MS, [helper]() { ShowWindow(helper, SW_HIDE); });
 
   return true;
+}
+
+bool WindowManager::toggleOverview() {
+  Microsoft::WRL::ComPtr<IShellDispatch5> shell;
+  if (FAILED(
+          CoCreateInstance(CLSID_Shell, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(shell.GetAddressOf())))) {
+    return false;
+  }
+  return SUCCEEDED(shell->WindowSwitcher());
 }
 
 } // namespace Win
