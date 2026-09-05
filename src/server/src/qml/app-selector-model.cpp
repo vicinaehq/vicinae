@@ -20,12 +20,13 @@ void AppSelectorModel::buildItems() {
   }
 
   for (const auto &app : m_appDb->list()) {
-    if (!app->displayable()) continue;
+    if (!app->displayable() || !app->isOpener()) continue;
 
     allApps.append(
         qml::makeDropdownItem(app->id(), app->fullyQualifiedName(), qml::imageSourceFor(app->iconUrl())));
 
     for (const auto &action : app->actions()) {
+      if (!action->isOpener()) continue;
       allApps.append(qml::makeDropdownItem(action->id(), action->fullyQualifiedName(),
                                            qml::imageSourceFor(action->iconUrl())));
     }
