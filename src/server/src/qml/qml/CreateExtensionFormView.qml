@@ -58,11 +58,12 @@ Item {
             label: qsTr("Location")
             error: root.host.locationError
 
-            FormTextInput {
-                text: root.host.location
-                placeholder: root.host.locationPlaceholder
+            FormFilePicker {
+                canChooseFiles: false
+                canChooseDirectories: true
                 hasError: locationField.error !== ""
-                onTextEdited: root.host.location = text
+                selectedPaths: root.host.location ? [root.host.location] : []
+                onPathsChanged: paths => root.host.location = paths.length > 0 ? paths[0] : ""
             }
         }
 

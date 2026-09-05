@@ -7,7 +7,6 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "utils/utils.hpp"
-#include <QDir>
 #include <QUrl>
 #include <filesystem>
 
@@ -15,14 +14,6 @@ CreateExtensionViewHost::CreateExtensionViewHost() : FormViewBase() {}
 
 QUrl CreateExtensionViewHost::qmlComponentUrl() const {
   return QUrl(QStringLiteral("qrc:/Vicinae/CreateExtensionFormView.qml"));
-}
-
-QString CreateExtensionViewHost::locationPlaceholder() const {
-#ifdef Q_OS_WIN
-  return QDir::toNativeSeparators(QDir::home().filePath("code/vicinae-extensions"));
-#else
-  return QStringLiteral("~/code/vicinae-extensions");
-#endif
 }
 
 QVariantMap CreateExtensionViewHost::qmlProperties() {

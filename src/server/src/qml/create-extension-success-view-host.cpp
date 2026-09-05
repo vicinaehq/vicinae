@@ -12,7 +12,7 @@ Your new extension %1 has been succesfully created at `%2`.
 For commands from this extension to be picked up by Vicinae, you need to run your extension in development mode at least once:
 
 ```bash
-cd %2
+cd '%2'
 npm install
 npm run dev
 ```
