@@ -14,7 +14,8 @@ Item {
 
             FooterNavStatus {
                 visible: !launcher.toastActive
-                clickable: launcher.atRoot
+                clickable: launcher.footerStatusClickable
+                rootMode: launcher.atRoot
                 availableWidth: parent.width
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: launcher.openFooterMenu()
