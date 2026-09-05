@@ -4,14 +4,18 @@
 #include "script/script-output-tokenizer.hpp"
 #include "script/script-process.hpp"
 #include "service-registry.hpp"
+#include "font-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 
 static QString tokenToHtml(const QString &rawOutput) {
   ScriptOutputTokenizer tokenizer(rawOutput);
+  const QString monoFamily = ServiceRegistry::instance()->fontService()->builtinMonoFontFamily();
   QString html;
   html.reserve(rawOutput.size() * 2);
-  html += QStringLiteral("<pre style=\"font-size:10.5pt; white-space:pre-wrap; margin:0;\">");
+  html += QStringLiteral(
+              "<pre style=\"font-family:'%1',monospace; font-size:10.5pt; white-space:pre-wrap; margin:0;\">")
+              .arg(monoFamily);
 
   bool inSpan = false;
 
