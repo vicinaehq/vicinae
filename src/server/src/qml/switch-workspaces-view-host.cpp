@@ -9,7 +9,11 @@ void SwitchWorkspacesViewHost::initialize() {
   initModel();
 
   model()->addSource(&m_section);
+#ifdef Q_OS_WIN
+  setSearchPlaceholderText(tr("Search desktops..."));
+#else
   setSearchPlaceholderText(tr("Search workspaces..."));
+#endif
 
   auto wm = context()->services->windowManager();
   wm->provider()->refresh();
@@ -41,9 +45,9 @@ void SwitchWorkspacesViewHost::refreshWindows() {
         }
 
         for (const auto &win : windows) {
-          if (auto app = appDb->findById(win->wmClass()); app && !std::ranges::contains(info.apps, app)) {
-            info.apps.emplace_back(std::move(app));
-          }
+          auto app = appDb->findByClass(win->wmClass());
+          if (!app) app = appDb->findById(win->wmClass());
+          if (app && !std::ranges::contains(info.apps, app)) info.apps.emplace_back(std::move(app));
         }
 
         return info;
