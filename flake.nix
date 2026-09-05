@@ -99,14 +99,12 @@
             clang-tools
           ];
 
-          shellHook = pkgs.lib.optionalString isLinux ''
-            export CC=${pkgs.gcc15}/bin/gcc
-            export CXX=${pkgs.gcc15}/bin/g++
-            export CMAKE_C_COMPILER=$CC
-            export CMAKE_CXX_COMPILER=$CXX
-
-            export QML2_IMPORT_PATH=${pkgs.qt6.qtdeclarative}/lib/qt-6/qml
-            export QML_IMPORT_PATH=${pkgs.qt6.qtdeclarative}/lib/qt-6/qml
+          # qmlls discovers QML modules through these, so point them at the
+          # aggregate env: qtdeclarative alone hides LayerShellQt and the
+          # modules shipped by the other Qt packages.
+          shellHook = ''
+            export QML2_IMPORT_PATH=${qtEnv}/lib/qt-6/qml
+            export QML_IMPORT_PATH=${qtEnv}/lib/qt-6/qml
           '';
         };
       }
