@@ -5,6 +5,8 @@
 #include "freedesktop/freedesktop-notification-client.hpp"
 #elif defined(Q_OS_MACOS)
 #include "macos/macos-notification-client.hpp"
+#elif defined(Q_OS_WIN)
+#include "windows/windows-notification-client.hpp"
 #else
 #include "dummy-desktop-notification-client.hpp"
 #endif
@@ -17,6 +19,8 @@ public:
     m_client = std::make_unique<FreedesktopNotificationClient>();
 #elif defined(Q_OS_MACOS)
     m_client = std::make_unique<MacosNotificationClient>();
+#elif defined(Q_OS_WIN)
+    m_client = std::make_unique<WindowsNotificationClient>();
 #else
     m_client = std::make_unique<DummyDesktopNotificationClient>();
 #endif

@@ -803,6 +803,8 @@ elseif (WIN32)
 		src/root-search/control-panel/control-panel-root-provider.cpp
 		src/services/url-scheme/win-url-scheme-registrar.hpp
 		src/services/url-scheme/win-url-scheme-registrar.cpp
+		src/services/desktop-notification/windows/windows-notification-client.hpp
+		src/services/desktop-notification/windows/windows-notification-client.cpp
 		src/services/wallpaper/windows/windows-wallpaper-backend.hpp
 		src/services/wallpaper/windows/windows-wallpaper-backend.cpp
 		src/services/audio-control/windows/wasapi-audio-control.hpp
@@ -815,6 +817,7 @@ elseif (WIN32)
 		src/utils/win-chassis.cpp
 	)
 	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore powrprof everything-sdk3)
+	add_compile_definitions(VICINAE_BUNDLE_ID="${VICINAE_BUNDLE_ID}")
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp
