@@ -21,6 +21,17 @@ public:
   explicit TrayService(QObject *parent = nullptr) : QObject(parent) {}
   ~TrayService() override = default;
 
+  static QString toggleLabel();
+  static QString aboutLabel();
+  static QString checkForUpdatesLabel();
+  static QString updateAvailableLabel(const QString &tag);
+  static QString settingsLabel();
+  static QString preferencesLabel();
+  static QString sponsorLabel();
+  static QString discordLabel();
+  static QString followLabel();
+  static QString quitLabel();
+
   virtual void setVersion(const QString &version) = 0;
   virtual void setCheckForUpdatesVisible(bool visible) = 0;
   virtual void setAvailableUpdate(const QString &tag) = 0;

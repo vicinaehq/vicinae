@@ -87,7 +87,7 @@ TrayServiceMacOS::TrayServiceMacOS(QObject *parent) : TrayService(parent), m_imp
 
   NSMenu *menu = [[NSMenu alloc] init];
 
-  NSMenuItem *toggleItem = [[NSMenuItem alloc] initWithTitle:@"Toggle Vicinae"
+  NSMenuItem *toggleItem = [[NSMenuItem alloc] initWithTitle:toggleLabel().toNSString()
                                                       action:@selector(toggle:)
                                                keyEquivalent:@""];
   toggleItem.target = m_impl->target;
@@ -98,20 +98,20 @@ TrayServiceMacOS::TrayServiceMacOS(QObject *parent) : TrayService(parent), m_imp
 
   [menu addItem:[NSMenuItem separatorItem]];
 
-  NSMenuItem *aboutItem = [[NSMenuItem alloc] initWithTitle:@"About Vicinae"
+  NSMenuItem *aboutItem = [[NSMenuItem alloc] initWithTitle:aboutLabel().toNSString()
                                                      action:@selector(openAbout:)
                                               keyEquivalent:@""];
   aboutItem.target = m_impl->target;
   [menu addItem:aboutItem];
 
-  m_impl->checkForUpdatesItem = [[NSMenuItem alloc] initWithTitle:@"Check for Updates…"
+  m_impl->checkForUpdatesItem = [[NSMenuItem alloc] initWithTitle:checkForUpdatesLabel().toNSString()
                                                            action:@selector(checkForUpdates:)
                                                     keyEquivalent:@""];
   m_impl->checkForUpdatesItem.target = m_impl->target;
   m_impl->checkForUpdatesItem.hidden = YES;
   [menu addItem:m_impl->checkForUpdatesItem];
 
-  NSMenuItem *prefsItem = [[NSMenuItem alloc] initWithTitle:@"Preferences…"
+  NSMenuItem *prefsItem = [[NSMenuItem alloc] initWithTitle:preferencesLabel().toNSString()
                                                      action:@selector(openPreferences:)
                                               keyEquivalent:@","];
   prefsItem.keyEquivalentModifierMask = NSEventModifierFlagCommand;
@@ -120,19 +120,19 @@ TrayServiceMacOS::TrayServiceMacOS(QObject *parent) : TrayService(parent), m_imp
 
   [menu addItem:[NSMenuItem separatorItem]];
 
-  NSMenuItem *sponsorItem = [[NSMenuItem alloc] initWithTitle:@"Sponsor Vicinae"
+  NSMenuItem *sponsorItem = [[NSMenuItem alloc] initWithTitle:sponsorLabel().toNSString()
                                                        action:@selector(openSponsor:)
                                                 keyEquivalent:@""];
   sponsorItem.target = m_impl->target;
   [menu addItem:sponsorItem];
 
-  NSMenuItem *discordItem = [[NSMenuItem alloc] initWithTitle:@"Join the Discord"
+  NSMenuItem *discordItem = [[NSMenuItem alloc] initWithTitle:discordLabel().toNSString()
                                                        action:@selector(openDiscord:)
                                                 keyEquivalent:@""];
   discordItem.target = m_impl->target;
   [menu addItem:discordItem];
 
-  NSMenuItem *followItem = [[NSMenuItem alloc] initWithTitle:@"Follow on X"
+  NSMenuItem *followItem = [[NSMenuItem alloc] initWithTitle:followLabel().toNSString()
                                                       action:@selector(openFollow:)
                                                keyEquivalent:@""];
   followItem.target = m_impl->target;
@@ -140,7 +140,7 @@ TrayServiceMacOS::TrayServiceMacOS(QObject *parent) : TrayService(parent), m_imp
 
   [menu addItem:[NSMenuItem separatorItem]];
 
-  NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:@"Quit Vicinae"
+  NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:quitLabel().toNSString()
                                                     action:@selector(quit:)
                                              keyEquivalent:@""];
   quitItem.target = m_impl->target;
@@ -167,9 +167,9 @@ void TrayServiceMacOS::setAvailableUpdate(const QString &tag) {
   if (!m_impl->checkForUpdatesItem) return;
 
   if (tag.isEmpty()) {
-    m_impl->checkForUpdatesItem.title = @"Check for Updates…";
+    m_impl->checkForUpdatesItem.title = checkForUpdatesLabel().toNSString();
   } else {
-    m_impl->checkForUpdatesItem.title = [NSString stringWithFormat:@"Update Available: %@", tag.toNSString()];
+    m_impl->checkForUpdatesItem.title = updateAvailableLabel(tag).toNSString();
   }
 }
 
