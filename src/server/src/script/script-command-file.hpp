@@ -23,6 +23,8 @@ public:
   std::string_view id() const { return m_id; }
 
 private:
+  std::vector<QString> interpreter() const;
+
   std::filesystem::path m_path;
   std::string m_id;
   script_command::ScriptCommand m_data;
