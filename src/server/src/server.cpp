@@ -121,6 +121,7 @@
 #endif
 
 #ifdef Q_OS_WIN
+#include "services/desktop-notification/windows/windows-notification-client.hpp"
 #include "services/url-scheme/win-url-scheme-registrar.hpp"
 #endif
 
@@ -245,6 +246,10 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   Omnicast::ensureDirectories();
   OnboardingWindow::captureFreshInstall();
+
+#ifdef Q_OS_WIN
+  WindowsNotificationClient::registerAppIdentity();
+#endif
 
 #ifdef AUTO_ENABLE_AUTOSTART
   vicinae::macos::registerLoginItemOnce();
