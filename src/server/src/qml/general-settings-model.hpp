@@ -35,9 +35,13 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(
       bool nativeTextRendering READ nativeTextRendering WRITE setNativeTextRendering NOTIFY configChanged)
   Q_PROPERTY(QString fontSize READ fontSize WRITE setFontSize NOTIFY configChanged)
+  Q_PROPERTY(bool followSystemAppearance READ followSystemAppearance WRITE setFollowSystemAppearance NOTIFY
+                 configChanged)
   Q_PROPERTY(CompletionModel *windowMaterialModel READ windowMaterialModel CONSTANT)
   Q_PROPERTY(QVariant currentWindowMaterial READ currentWindowMaterial NOTIFY configChanged)
   Q_PROPERTY(CompletionModel *themeModel READ themeModel CONSTANT)
+  Q_PROPERTY(CompletionModel *lightThemeModel READ lightThemeModel CONSTANT)
+  Q_PROPERTY(CompletionModel *darkThemeModel READ darkThemeModel CONSTANT)
   Q_PROPERTY(CompletionModel *fontModel READ fontModel CONSTANT)
   Q_PROPERTY(CompletionModel *iconThemeModel READ iconThemeModel CONSTANT)
   Q_PROPERTY(CompletionModel *faviconServiceModel READ faviconServiceModel CONSTANT)
@@ -45,6 +49,8 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(CompletionModel *languageModel READ languageModel CONSTANT)
   Q_PROPERTY(QVariant currentLanguage READ currentLanguage NOTIFY configChanged)
   Q_PROPERTY(QVariant currentTheme READ currentTheme NOTIFY configChanged)
+  Q_PROPERTY(QVariant currentLightTheme READ currentLightTheme NOTIFY configChanged)
+  Q_PROPERTY(QVariant currentDarkTheme READ currentDarkTheme NOTIFY configChanged)
   Q_PROPERTY(QVariant currentFont READ currentFont NOTIFY configChanged)
   Q_PROPERTY(QVariant currentIconTheme READ currentIconTheme NOTIFY configChanged)
   Q_PROPERTY(QVariant currentFaviconService READ currentFaviconService NOTIFY configChanged)
@@ -101,9 +107,13 @@ public:
   void setTrayEnabled(bool v);
   QString fontSize() const;
   void setFontSize(const QString &v);
+  bool followSystemAppearance() const;
+  void setFollowSystemAppearance(bool v);
 
   CompletionModel *windowMaterialModel() { return &m_windowMaterialModel; }
   CompletionModel *themeModel() { return &m_themeModel; }
+  CompletionModel *lightThemeModel() { return &m_lightThemeModel; }
+  CompletionModel *darkThemeModel() { return &m_darkThemeModel; }
   CompletionModel *fontModel() { return &m_fontModel; }
   CompletionModel *iconThemeModel() { return &m_iconThemeModel; }
   CompletionModel *faviconServiceModel() { return &m_faviconServiceModel; }
@@ -115,12 +125,16 @@ public:
 
   QVariant currentLanguage() const;
   QVariant currentTheme() const;
+  QVariant currentLightTheme() const;
+  QVariant currentDarkTheme() const;
   QVariant currentFont() const;
   QVariant currentIconTheme() const;
   QVariant currentFaviconService() const;
   QVariant currentKeybindingScheme() const;
 
   Q_INVOKABLE void selectTheme(const QString &id);
+  Q_INVOKABLE void selectLightTheme(const QString &id);
+  Q_INVOKABLE void selectDarkTheme(const QString &id);
   Q_INVOKABLE void selectFont(const QString &id);
   Q_INVOKABLE void selectIconTheme(const QString &id);
   Q_INVOKABLE void selectFaviconService(const QString &id);
@@ -145,11 +159,15 @@ private:
 
   CompletionModel m_windowMaterialModel{this};
   CompletionModel m_themeModel{this};
+  CompletionModel m_lightThemeModel{this};
+  CompletionModel m_darkThemeModel{this};
   CompletionModel m_fontModel{this};
   CompletionModel m_iconThemeModel{this};
   CompletionModel m_faviconServiceModel{this};
   CompletionModel m_keybindingSchemeModel{this};
   CompletionModel m_languageModel{this};
   QVariantList m_themeItems;
+  QVariantList m_lightThemeItems;
+  QVariantList m_darkThemeItems;
   QVariantList m_iconThemeItems;
 };

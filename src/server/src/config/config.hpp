@@ -2,6 +2,7 @@
 #include <expected>
 #include <filesystem>
 #include "common/entrypoint.hpp"
+#include "theme/theme-variant.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
@@ -37,6 +38,7 @@ struct SystemThemeConfig {
 };
 
 struct ThemeConfig {
+  std::string appearance = "system";
   SystemThemeConfig light;
   SystemThemeConfig dark;
 };
@@ -47,6 +49,7 @@ template <> struct Partial<SystemThemeConfig> {
 };
 
 template <> struct Partial<ThemeConfig> {
+  std::optional<std::string> appearance;
   std::optional<Partial<SystemThemeConfig>> light;
   std::optional<Partial<SystemThemeConfig>> dark;
 };
@@ -350,6 +353,8 @@ struct ConfigValue {
     return std::nullopt;
   }
 
+  bool followsSystemAppearance() const;
+  ThemeVariant activeAppearance() const;
   const SystemThemeConfig &systemTheme() const;
 };
 
