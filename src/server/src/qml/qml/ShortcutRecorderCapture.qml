@@ -106,7 +106,7 @@ FocusScope {
             const chord = _chordMods;
             const consumed = _chordConsumed;
             _resetChord();
-            if (!consumed)
+            if (!consumed && chord !== 0)
                 _commit(key, chord & ~modKey);
             return;
         }
