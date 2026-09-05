@@ -8,33 +8,24 @@
 #include <QtConcurrent/QtConcurrentRun>
 #include <qlogging.h>
 #include <qstring.h>
-#include <algorithm>
-#include <filesystem>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <common/file-category.hpp>
-#include "fuzzy/fuzzy-searchable.hpp"
 #include "utils/scoped-com.hpp"
+#include "win-file-candidates.hpp"
 #include "win-file-indexer.hpp"
 
 namespace {
 
 using Microsoft::WRL::ComPtr;
 
-constexpr int MIN_CANDIDATE_LIMIT = 250;
-constexpr int CANDIDATE_LIMIT_MULTIPLIER = 20;
 constexpr DBCOUNTITEM ROW_BATCH_SIZE = 64;
 constexpr size_t PATH_BUFFER_CHARS = 2048;
 constexpr size_t MIME_BUFFER_CHARS = 256;
 constexpr const wchar_t *CONNECTION_STRING =
     L"Provider=Search.CollatorDSO;Extended Properties='Application=Windows'";
-
-int candidateLimitFor(int limit) {
-  if (limit <= 0) { return 0; }
-  return std::max(MIN_CANDIDATE_LIMIT, limit * CANDIDATE_LIMIT_MULTIPLIER);
-}
 
 // Quotes are doubled, LIKE wildcards neutralized with bracket classes.
 std::wstring escapeLikeTerm(QStringView word) {
@@ -104,12 +95,6 @@ std::wstring buildQuerySql(const std::string &query, const IndexerQueryParams &p
          predicate;
 }
 
-struct Candidate {
-  std::wstring path;
-  std::optional<std::string> mimeType;
-  bool isDirectory = false;
-};
-
 struct RowBuffer {
   DBSTATUS pathStatus;
   DBLENGTH pathLength;
@@ -139,8 +124,8 @@ DBBINDING columnBinding(DBORDINAL ordinal, DBTYPE type, size_t obStatus, size_t 
   return binding;
 }
 
-std::vector<Candidate> fetchCandidates(const std::wstring &sql, int candidateLimit) {
-  std::vector<Candidate> candidates;
+std::vector<WinFileCandidate> fetchCandidates(const std::wstring &sql, int candidateLimit) {
+  std::vector<WinFileCandidate> candidates;
   ComPtr<IDataInitialize> dataInit;
 
   if (HRESULT hr =
@@ -219,7 +204,7 @@ std::vector<Candidate> fetchCandidates(const std::wstring &sql, int candidateLim
       if (FAILED(rowset->GetData(rowHandles[i], hAccessor, &row))) { continue; }
       if (row.pathStatus != DBSTATUS_S_OK) { continue; }
 
-      Candidate candidate{.path = row.path};
+      WinFileCandidate candidate{.path = std::wstring_view{row.path}};
 
       if (row.mimeStatus == DBSTATUS_S_OK && row.mime[0]) {
         candidate.mimeType = QString::fromWCharArray(row.mime).toStdString();
@@ -240,62 +225,17 @@ std::vector<Candidate> fetchCandidates(const std::wstring &sql, int candidateLim
 }
 
 std::vector<IndexerFileResult> runQuery(const std::string &query, const IndexerQueryParams &params) {
-  std::vector<IndexerFileResult> results;
-  int const candidateLimit = candidateLimitFor(params.limit);
+  int const candidateLimit = winFileCandidateLimit(params.limit);
 
-  if (candidateLimit == 0) { return results; }
+  if (candidateLimit == 0) { return {}; }
 
   std::wstring const sql = buildQuerySql(query, params, candidateLimit);
 
-  if (sql.empty()) { return results; }
+  if (sql.empty()) { return {}; }
 
   ScopedCom com(COINIT_MULTITHREADED);
 
-  struct Scored {
-    std::filesystem::path path;
-    int score = 0;
-    vicinae::FileCategory category = vicinae::FileCategory::Other;
-    std::optional<std::string> mimeType;
-  };
-
-  std::vector<Scored> scored;
-  fuzzy::Query const fuzzyQuery{query};
-
-  for (Candidate &candidate : fetchCandidates(sql, candidateLimit)) {
-    std::filesystem::path path{std::move(candidate.path)};
-    auto category =
-        candidate.isDirectory ? vicinae::FileCategory::Directory : vicinae::fileCategoryFor(path, false);
-
-    if (params.category && *params.category != category) { continue; }
-
-    auto const m = fuzzy::scoreWeighted({{path.filename().string(), 1.0}}, fuzzyQuery);
-
-    if (m.accepted()) {
-      scored.emplace_back(Scored{.path = std::move(path),
-                                 .score = m.score,
-                                 .category = category,
-                                 .mimeType = std::move(candidate.mimeType)});
-    }
-  }
-
-  std::ranges::stable_sort(scored, [](const Scored &a, const Scored &b) {
-    if (a.score != b.score) { return a.score > b.score; }
-    return a.path < b.path;
-  });
-
-  int const limit = std::max(0, params.limit);
-  size_t const end = std::min(static_cast<size_t>(limit), scored.size());
-
-  results.reserve(end);
-
-  for (size_t i = 0; i < end; ++i) {
-    results.emplace_back(IndexerFileResult{.path = std::move(scored[i].path),
-                                           .rank = static_cast<double>(scored[i].score),
-                                           .category = scored[i].category,
-                                           .mimeType = std::move(scored[i].mimeType)});
-  }
-
-  return results;
+  return rankWinFileCandidates(fetchCandidates(sql, candidateLimit), query, params);
 }
 
 } // namespace

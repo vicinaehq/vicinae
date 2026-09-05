@@ -777,8 +777,19 @@ elseif (WIN32)
 		src/services/selection/windows-selection-service.cpp
 		src/services/snippet/windows-snippet-server.hpp
 		src/services/snippet/windows-snippet-server.cpp
+		src/services/files-service/windows/win-file-candidates.hpp
+		src/services/files-service/windows/win-file-candidates.cpp
 		src/services/files-service/windows/win-file-indexer.hpp
 		src/services/files-service/windows/win-file-indexer.cpp
+		src/services/files-service/windows/everything-client.hpp
+		src/services/files-service/windows/everything-window-client.hpp
+		src/services/files-service/windows/everything-window-client.cpp
+		src/services/files-service/windows/everything-pipe-client.hpp
+		src/services/files-service/windows/everything-pipe-client.cpp
+		src/services/files-service/windows/everything-file-indexer.hpp
+		src/services/files-service/windows/everything-file-indexer.cpp
+		src/services/files-service/windows/win-file-indexer-selector.hpp
+		src/services/files-service/windows/win-file-indexer-selector.cpp
 		src/services/window-manager/windows/windows-window.hpp
 		src/services/window-manager/windows/virtual-desktops.hpp
 		src/services/window-manager/windows/virtual-desktops.cpp
@@ -803,7 +814,7 @@ elseif (WIN32)
 		src/utils/win-chassis.hpp
 		src/utils/win-chassis.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore powrprof)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore powrprof everything-sdk3)
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp

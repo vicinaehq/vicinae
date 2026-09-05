@@ -184,6 +184,10 @@ add_subdirectory(${VENDOR_DIR}/sqlcipher)
 add_subdirectory(${VENDOR_DIR}/pugixml)
 add_subdirectory(${VENDOR_DIR}/zip)
 
+if (WIN32)
+	add_subdirectory(${VENDOR_DIR}/everything-sdk3)
+endif()
+
 if (UNIX AND NOT APPLE)
 	add_subdirectory(${LIB_DIR}/linux-utils)
 	add_subdirectory(src/snippet)
