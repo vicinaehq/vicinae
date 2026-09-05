@@ -433,6 +433,7 @@ class LogsCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Show the vicinae server logs"; }
 
   void setup(CLI::App *app) override {
+    app->add_option("--lines,-n", m_lines, "Number of trailing lines to print")->default_val(DEFAULT_LINES);
     app->add_flag("--follow,-f", m_follow, "Keep printing new log lines as they are written");
   }
 
@@ -445,7 +446,7 @@ class LogsCommand : public AbstractCommandLineCommand {
       return false;
     }
 
-    tailer.drain(std::cout);
+    tailer.tail(m_lines, std::cout);
 
     if (m_follow) tailer.follow(std::cout);
 
@@ -453,6 +454,9 @@ class LogsCommand : public AbstractCommandLineCommand {
   }
 
 private:
+  static constexpr std::size_t DEFAULT_LINES = 50;
+
+  std::size_t m_lines = DEFAULT_LINES;
   bool m_follow = false;
 };
 
