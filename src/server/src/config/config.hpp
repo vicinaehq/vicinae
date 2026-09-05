@@ -202,7 +202,7 @@ template <> struct Partial<WindowConfig> {
 };
 
 struct FontConfig {
-#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
+#ifdef Q_OS_MACOS
   std::string rendering = "native";
 #else
   std::string rendering = "qt";

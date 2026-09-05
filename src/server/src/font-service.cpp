@@ -1,5 +1,6 @@
 #include "font-service.hpp"
 #include <algorithm>
+#include <iterator>
 #include <QCoreApplication>
 #include <optional>
 #include <qfontdatabase.h>
@@ -63,6 +64,20 @@ FontService::FontService() {
     if (!families.isEmpty()) m_builtinMonoFamily = families.first();
   } else {
     qWarning() << "Failed to load bundled Geist Mono font";
+  }
+#endif
+
+#ifdef Q_OS_WIN
+  static constexpr const char *WINDOWS_UI_FONT_CANDIDATES[] = {"Segoe UI Variable", "Segoe UI"};
+  static constexpr const char *WINDOWS_MONO_FONT_CANDIDATES[] = {"Cascadia Mono", "Consolas"};
+
+  if (auto it = std::ranges::find_if(WINDOWS_UI_FONT_CANDIDATES, QFontDatabase::hasFamily);
+      it != std::end(WINDOWS_UI_FONT_CANDIDATES)) {
+    m_builtinFamily = *it;
+  }
+  if (auto it = std::ranges::find_if(WINDOWS_MONO_FONT_CANDIDATES, QFontDatabase::hasFamily);
+      it != std::end(WINDOWS_MONO_FONT_CANDIDATES)) {
+    m_builtinMonoFamily = *it;
   }
 #endif
 
