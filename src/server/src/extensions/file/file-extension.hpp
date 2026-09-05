@@ -70,7 +70,7 @@ class FileExtension : public BuiltinCommandRepository {
 
 public:
   void initialized(const QJsonObject &preferences) const override {
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
     ServiceRegistry::instance()->fileService()->preferenceValuesChanged(preferences);
 #endif
   }
@@ -104,13 +104,33 @@ public:
     excludedPaths.setDefaultValue(QJsonArray{});
 
     return {indexing, paths, excludedPaths};
+#elif defined(Q_OS_WIN)
+    auto backend = Preference::makeDropdown("searchBackend", {{tr("Automatic"), "auto"},
+                                                              {tr("Windows Search"), "windows-search"},
+                                                              {tr("Everything"), "everything"}});
+
+    backend.setTitle(tr("Search backend"));
+    backend.setDescription(
+        tr("Automatic uses Everything when it is running and falls back to Windows Search otherwise. "
+           "Everything queries use its own search syntax, prefix with @ for a regular expression."));
+    backend.setDefaultValue("auto");
+
+    auto instance = Preference::makeText("everythingInstance");
+
+    instance.setTitle(tr("Everything instance"));
+    instance.setDescription(tr("Name of the Everything instance to connect to. Leave empty for the default "
+                               "instance, the Everything 1.5 alpha runs as \"1.5a\"."));
+    instance.setDefaultValue("");
+    instance.setRequired(false);
+
+    return {backend, instance};
 #else
     return {};
 #endif
   }
 
   void preferenceValuesChanged(const QJsonObject &preferences) const override {
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
     ServiceRegistry::instance()->fileService()->preferenceValuesChanged(preferences);
 #endif
   }

@@ -3,6 +3,7 @@
 #include <qfuture.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
+#include <chrono>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -54,6 +55,10 @@ public:
   virtual QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
                                                              const IndexerQueryParams &params = {}) = 0;
   virtual bool isAvailable() const = 0;
+  virtual std::chrono::milliseconds queryDebounce() const { return DEFAULT_QUERY_DEBOUNCE; }
 
   virtual ~AbstractFileIndexer() = default;
+
+private:
+  static constexpr std::chrono::milliseconds DEFAULT_QUERY_DEBOUNCE{100};
 };
