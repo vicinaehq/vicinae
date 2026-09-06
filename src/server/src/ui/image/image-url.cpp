@@ -1,5 +1,5 @@
 #include "ui/image/image-url.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "ui/image/omni-painter.hpp"
 
 ImageUrl::ImageUrl(ImageURL url) : m_url(std::move(url)) {}
 

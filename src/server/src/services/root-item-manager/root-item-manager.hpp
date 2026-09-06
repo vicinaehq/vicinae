@@ -11,7 +11,7 @@
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "command/preference.hpp"
-#include "ui/list-accessory/list-accessory.hpp"
+#include "ui/views/list-accessory.hpp"
 #include <cstdint>
 #include <qdnslookup.h>
 #include <qjsonobject.h>

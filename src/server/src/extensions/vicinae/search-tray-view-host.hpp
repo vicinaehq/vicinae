@@ -9,7 +9,7 @@
 #include "theme/colors.hpp"
 #include "ui/action-panel/action-panel-state.hpp"
 #include "ui/action-panel/action.hpp"
-#include "ui/list-accessory/list-accessory.hpp"
+#include "ui/views/list-accessory.hpp"
 #include <QBuffer>
 #include <QCoreApplication>
 

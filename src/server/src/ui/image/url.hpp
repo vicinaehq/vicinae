@@ -2,7 +2,7 @@
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "extend/image-model.hpp"
 #include "theme/theme.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "ui/image/omni-painter.hpp"
 #include <QUrl>
 #include <cstdint>
 #include <filesystem>

@@ -16,7 +16,7 @@
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "theme/colors.hpp"
-#include "ui/toast/toast.hpp"
+#include "services/toast/toast.hpp"
 #include <memory>
 #include <qclipboard.h>
 #include <qlogging.h>

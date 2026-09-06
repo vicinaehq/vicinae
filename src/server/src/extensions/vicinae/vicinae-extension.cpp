@@ -1,7 +1,7 @@
 #include "vicinae-extension.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "command/command-controller.hpp"
-#include "settings-controller/settings-controller.hpp"
+#include "ui/settings/settings-controller.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "extensions/vicinae/list-installed-extensions-command.hpp"
 #include "extensions/vicinae/oauth-token-store-view-host.hpp"

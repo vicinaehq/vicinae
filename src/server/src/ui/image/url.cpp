@@ -3,7 +3,7 @@
 #include "extend/image-model.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "theme/theme.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "ui/image/omni-painter.hpp"
 #include "theme/theme-file.hpp"
 #include <qdir.h>
 #include <qstringview.h>

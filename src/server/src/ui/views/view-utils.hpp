@@ -3,7 +3,7 @@
 #include "extend/metadata-model.hpp"
 #include "ui/image/image-url.hpp"
 #include "ui/image/url.hpp"
-#include "ui/list-accessory/list-accessory.hpp"
+#include "ui/views/list-accessory.hpp"
 #include <QMimeDatabase>
 #include <QString>
 #include <QVariantList>

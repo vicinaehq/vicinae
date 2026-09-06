@@ -8,7 +8,7 @@
 #include <string_view>
 
 #include "keyboard/keyboard.hpp"
-#include "ui/list-accessory/list-accessory.hpp"
+#include "ui/views/list-accessory.hpp"
 #include "ui/views/view-scope.hpp"
 #include "ui/views/view-utils.hpp"
 class ActionPanelState;

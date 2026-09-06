@@ -5,7 +5,7 @@
 #include "navigation-controller.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "ui/list-accessory/list-accessory.hpp"
+#include "ui/views/list-accessory.hpp"
 #include <QCoreApplication>
 #include <qjsonobject.h>
 #include <qstringliteral.h>

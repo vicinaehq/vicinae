@@ -30,7 +30,7 @@
 #include "internal/keyboard/keyboard.hpp"
 #include "theme/theme.hpp"
 #include "ui/image/url.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "ui/image/omni-painter.hpp"
 
 static constexpr std::string_view TAG = "$t";
 static constexpr glz::opts PARSE_OPTS{.error_on_unknown_keys = false, .minified = true};

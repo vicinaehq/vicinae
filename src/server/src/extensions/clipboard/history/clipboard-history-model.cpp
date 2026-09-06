@@ -5,7 +5,7 @@
 #include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "services/clipboard/clipboard-db.hpp"
-#include "settings-controller/settings-controller.hpp"
+#include "ui/settings/settings-controller.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/paste/paste-service.hpp"

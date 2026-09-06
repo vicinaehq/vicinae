@@ -26,7 +26,7 @@
 #include <ranges>
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
-#include "ui/toast/toast.hpp"
+#include "services/toast/toast.hpp"
 #include "vicinae.hpp"
 #include "generated/manager.hpp"
 

@@ -4,7 +4,7 @@
 #include "generated/tsapi.hpp"
 #include "navigation-controller.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "settings-controller/settings-controller.hpp"
+#include "ui/settings/settings-controller.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "command/command.hpp"
 #include <qlogging.h>

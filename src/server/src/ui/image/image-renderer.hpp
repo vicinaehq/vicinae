@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/omni-painter/omni-painter.hpp"
+#include "ui/image/omni-painter.hpp"
 #include <QFuture>
 #include <QImage>
 #include <QSize>

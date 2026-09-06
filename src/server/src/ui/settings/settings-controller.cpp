@@ -1,4 +1,4 @@
-#include "settings-controller/settings-controller.hpp"
+#include "ui/settings/settings-controller.hpp"
 #include "command/command-types.hpp"
 #include "ui/windows/settings-window.hpp"
 #include <QTimer>

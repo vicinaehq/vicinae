@@ -21,7 +21,7 @@
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "settings-controller/settings-controller.hpp"
+#include "ui/settings/settings-controller.hpp"
 #include "vicinae.hpp"
 #include "generated/version.h"
 #include "fuzzy/fuzzy-searchable.hpp"

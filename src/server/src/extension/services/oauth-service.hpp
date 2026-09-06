@@ -2,7 +2,7 @@
 #include "common/context.hpp"
 #include "service-registry.hpp"
 #include "generated/tsapi.hpp"
-#include "overlay-controller/overlay-controller.hpp"
+#include "ui/windows/overlay-controller.hpp"
 #include "extension/views/oauth-overlay-host.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include <QFutureWatcher>

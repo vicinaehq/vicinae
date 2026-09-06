@@ -7,7 +7,7 @@
 #include "theme/theme-db.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
-#include "settings-controller/settings-controller.hpp"
+#include "ui/settings/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include <algorithm>
 #include <QGuiApplication>
@@ -27,7 +27,7 @@
 #include "extensions/root/provider-search-view-host.hpp"
 #include "extensions/raycast/raycast-store-detail-host.hpp"
 #include "extensions/vicinae/vicinae-store-detail-host.hpp"
-#include "ui/toast/toast.hpp"
+#include "services/toast/toast.hpp"
 #include "vicinae.hpp"
 
 std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {

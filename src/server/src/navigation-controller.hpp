@@ -7,7 +7,7 @@
 #include "command/command-types.hpp"
 #include "ui/action-panel/action.hpp"
 #include "ui/action-panel/action-panel-state.hpp"
-#include "ui/dialog/dialog.hpp"
+#include "ui/alert/dialog.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
 #include <chrono>

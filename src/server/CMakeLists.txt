@@ -201,8 +201,8 @@ set(SRCS
 
 	src/services/local-storage/scoped-local-storage.cpp
 
-	src/settings-controller/settings-controller.hpp
-	src/settings-controller/settings-controller.cpp
+	src/ui/settings/settings-controller.hpp
+	src/ui/settings/settings-controller.cpp
 
 	src/services/toast/toast-service.hpp
 
@@ -237,8 +237,8 @@ set(SRCS
 
 
 
-	src/ui/omni-painter/omni-painter.hpp
-	src/ui/omni-painter/omni-painter.cpp
+	src/ui/image/omni-painter.hpp
+	src/ui/image/omni-painter.cpp
 
 	src/ui/image/url.cpp
 	src/ui/image/image-renderer.hpp
@@ -422,7 +422,7 @@ set(SRCS
 	src/services/raycast/raycast-store.cpp
 	src/services/extension-store/vicinae-store.cpp
 
-	src/overlay-controller/overlay-controller.hpp
+	src/ui/windows/overlay-controller.hpp
 
 
 	src/internal/zip/unzip.cpp
@@ -432,8 +432,8 @@ set(SRCS
 	src/ui/alert/alert.hpp
 	src/ui/alert/alert.cpp
 
-	src/ui/dialog/dialog.hpp
-	src/ui/dialog/dialog.cpp
+	src/ui/alert/dialog.hpp
+	src/ui/alert/dialog.cpp
 
 	src/internal/os-release.cpp
 

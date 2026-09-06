@@ -17,7 +17,7 @@
 #include "keyboard/layout-resolver.hpp"
 #include "common/common.hpp"
 #include "log/message-handler.hpp"
-#include "overlay-controller/overlay-controller.hpp"
+#include "ui/windows/overlay-controller.hpp"
 #include "extensions/root/root-command.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
@@ -98,7 +98,7 @@
 #include "services/paste/windows-paste-service.hpp"
 #include "services/selection/windows-selection-service.hpp"
 #endif
-#include "settings-controller/settings-controller.hpp"
+#include "ui/settings/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "ui/windows/launcher-window.hpp"
 #include "ui/windows/onboarding-window.hpp"

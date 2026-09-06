@@ -1,6 +1,6 @@
 #pragma once
 #include "extend/image-model.hpp"
-#include "ui/list-accessory/list-accessory.hpp"
+#include "ui/views/list-accessory.hpp"
 #include <optional>
 #include <string>
 #include <variant>

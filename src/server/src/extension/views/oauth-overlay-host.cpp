@@ -2,7 +2,7 @@
 #include "ui/views/view-utils.hpp"
 #include "extension/services/tsapi-image.hpp"
 #include "navigation-controller.hpp"
-#include "overlay-controller/overlay-controller.hpp"
+#include "ui/windows/overlay-controller.hpp"
 #include "service-registry.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/app-service/app-service.hpp"

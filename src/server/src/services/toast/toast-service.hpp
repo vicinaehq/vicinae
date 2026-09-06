@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/toast/toast.hpp"
+#include "services/toast/toast.hpp"
 #include <qstring.h>
 #include <qtimer.h>
 #include "common/qt.hpp"

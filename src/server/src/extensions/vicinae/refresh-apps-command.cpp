@@ -4,7 +4,7 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/toast/toast.hpp"
+#include "services/toast/toast.hpp"
 
 void RefreshAppsCommand::execute(CommandController &controller) const {
   auto ctx = controller.context();
