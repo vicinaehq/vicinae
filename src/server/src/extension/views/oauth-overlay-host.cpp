@@ -1,6 +1,6 @@
 #include "extension/views/oauth-overlay-host.hpp"
 #include "ui/views/view-utils.hpp"
-#include "extension/services/tsapi-image.hpp"
+#include "extension/api/tsapi-image.hpp"
 #include "navigation-controller.hpp"
 #include "ui/windows/overlay-controller.hpp"
 #include "service-registry.hpp"

@@ -256,9 +256,9 @@ set(SRCS
 	src/services/builtin-icon/builtin-icon.cpp
 
 
-	src/extend/accessory-model.cpp
-	src/extend/model-deser.cpp
-	src/extend/form-model.hpp
+	src/extension/model/accessory-model.cpp
+	src/extension/model/model-deser.cpp
+	src/extension/model/form-model.hpp
 
 	src/services/image-fetcher/image-fetcher.hpp
 
@@ -290,51 +290,51 @@ set(SRCS
 	src/theme/theme-db.hpp
 	src/theme/theme-db.cpp
 
-	src/extensions/clipboard/clipboard-history-command.cpp
-	src/extensions/clipboard/history/clipboard-history-controller.hpp
-	src/extensions/clipboard/history/clipboard-history-controller.cpp
-	src/extensions/browser/browser-extension.cpp
+	src/builtins/clipboard/clipboard-history-command.cpp
+	src/builtins/clipboard/history/clipboard-history-controller.hpp
+	src/builtins/clipboard/history/clipboard-history-controller.cpp
+	src/builtins/browser/browser-extension.cpp
 
-	src/extensions/wm/wm-extension.hpp
-	src/extensions/wm/wm-extension.cpp
+	src/builtins/wm/wm-extension.hpp
+	src/builtins/wm/wm-extension.cpp
 
-	src/extensions/clipboard/clipboard-extension.hpp
-	src/extensions/clipboard/clipboard-extension.cpp
+	src/builtins/clipboard/clipboard-extension.hpp
+	src/builtins/clipboard/clipboard-extension.cpp
 
-	src/extensions/snippet/snippet-extension.cpp
+	src/builtins/snippet/snippet-extension.cpp
 
-	src/extensions/vicinae/refresh-apps-command.hpp
-	src/extensions/vicinae/refresh-apps-command.cpp
-	src/extensions/power-management/power-management-extension.cpp
+	src/builtins/vicinae/refresh-apps-command.hpp
+	src/builtins/vicinae/refresh-apps-command.cpp
+	src/builtins/power-management/power-management-extension.cpp
 
-	src/extensions/system/browse-apps-model.hpp
-	src/extensions/system/browse-apps-model.cpp
-	src/extensions/system/browse-apps-view-host.hpp
-	src/extensions/system/browse-apps-view-host.cpp
-	src/extensions/browser/browser-tabs-model.hpp
-	src/extensions/browser/browser-tabs-model.cpp
-	src/extensions/browser/browser-tabs-view-host.hpp
-	src/extensions/browser/browser-tabs-view-host.cpp
-	src/extensions/vicinae/builtin-icons-model.hpp
-	src/extensions/vicinae/builtin-icons-model.cpp
-	src/extensions/vicinae/builtin-icons-view-host.hpp
-	src/extensions/vicinae/builtin-icons-view-host.cpp
-	src/extensions/vicinae/manage-fallback-model.hpp
-	src/extensions/vicinae/manage-fallback-model.cpp
-	src/extensions/vicinae/manage-fallback-view-host.hpp
-	src/extensions/vicinae/manage-fallback-view-host.cpp
-	src/extensions/system/system-run-model.hpp
-	src/extensions/system/system-run-model.cpp
-	src/extensions/system/system-run-view-host.hpp
-	src/extensions/system/system-run-view-host.cpp
-	src/extensions/developer/create-extension-success-view-host.hpp
-	src/extensions/developer/create-extension-success-view-host.cpp
+	src/builtins/system/browse-apps-model.hpp
+	src/builtins/system/browse-apps-model.cpp
+	src/builtins/system/browse-apps-view-host.hpp
+	src/builtins/system/browse-apps-view-host.cpp
+	src/builtins/browser/browser-tabs-model.hpp
+	src/builtins/browser/browser-tabs-model.cpp
+	src/builtins/browser/browser-tabs-view-host.hpp
+	src/builtins/browser/browser-tabs-view-host.cpp
+	src/builtins/vicinae/builtin-icons-model.hpp
+	src/builtins/vicinae/builtin-icons-model.cpp
+	src/builtins/vicinae/builtin-icons-view-host.hpp
+	src/builtins/vicinae/builtin-icons-view-host.cpp
+	src/builtins/vicinae/manage-fallback-model.hpp
+	src/builtins/vicinae/manage-fallback-model.cpp
+	src/builtins/vicinae/manage-fallback-view-host.hpp
+	src/builtins/vicinae/manage-fallback-view-host.cpp
+	src/builtins/system/system-run-model.hpp
+	src/builtins/system/system-run-model.cpp
+	src/builtins/system/system-run-view-host.hpp
+	src/builtins/system/system-run-view-host.cpp
+	src/builtins/developer/create-extension-success-view-host.hpp
+	src/builtins/developer/create-extension-success-view-host.cpp
 	src/script/script-executor-view-host.hpp
 	src/script/script-executor-view-host.cpp
-	src/extensions/root/provider-search-model.hpp
-	src/extensions/root/provider-search-model.cpp
-	src/extensions/root/provider-search-view-host.hpp
-	src/extensions/root/provider-search-view-host.cpp
+	src/builtins/root/provider-search-model.hpp
+	src/builtins/root/provider-search-model.cpp
+	src/builtins/root/provider-search-view-host.hpp
+	src/builtins/root/provider-search-view-host.cpp
 
 	src/server.cpp
 
@@ -409,15 +409,15 @@ set(SRCS
 	src/log/message-handler.cpp
 
 	src/extension/extension-command-runtime.cpp
-	src/extension/services/ui-service.hpp
-	src/extension/services/wallpaper-service.hpp
+	src/extension/api/ui-service.hpp
+	src/extension/api/wallpaper-service.hpp
 
-	src/extensions/vicinae/vicinae-extension.cpp
+	src/builtins/vicinae/vicinae-extension.cpp
 
-	src/extensions/file/search-files-model.hpp
-	src/extensions/file/search-files-model.cpp
-	src/extensions/file/search-files-view-host.hpp
-	src/extensions/file/search-files-view-host.cpp
+	src/builtins/file/search-files-model.hpp
+	src/builtins/file/search-files-model.cpp
+	src/builtins/file/search-files-view-host.hpp
+	src/builtins/file/search-files-view-host.cpp
 
 	src/services/raycast/raycast-store.cpp
 	src/services/extension-store/vicinae-store.cpp
@@ -467,8 +467,8 @@ set(SRCS
 	src/services/tray-host/dummy-tray-host.hpp
 	src/services/tray-host/tray-host.hpp
 	src/services/tray-host/tray-host.cpp
-	src/extensions/vicinae/search-tray-view-host.hpp
-	src/extensions/vicinae/search-tray-command.hpp
+	src/builtins/vicinae/search-tray-view-host.hpp
+	src/builtins/vicinae/search-tray-command.hpp
 
 	src/services/desktop-notification/dummy-desktop-notification-client.hpp
 
@@ -482,10 +482,10 @@ set(SRCS
 	src/config/config.hpp
 	src/config/config.cpp
 
-	src/extensions/vicinae/local-storage-model.hpp
-	src/extensions/vicinae/local-storage-model.cpp
-	src/extensions/vicinae/local-storage-view-host.hpp
-	src/extensions/vicinae/local-storage-view-host.cpp
+	src/builtins/vicinae/local-storage-model.hpp
+	src/builtins/vicinae/local-storage-model.cpp
+	src/builtins/vicinae/local-storage-view-host.hpp
+	src/builtins/vicinae/local-storage-view-host.cpp
 
 	src/ui/views/dmenu-model.hpp
 	src/ui/views/dmenu-model.cpp
@@ -514,12 +514,12 @@ set(SRCS
 	src/ui/bridges/keybind-bridge.hpp
 	src/ui/windows/launcher-window.hpp
 	src/ui/windows/launcher-window.cpp
-	src/extensions/root/root-view-host.hpp
-	src/extensions/root/root-view-host.cpp
-	src/extensions/root/root-search-model.hpp
-	src/extensions/root/root-search-model.cpp
-	src/extensions/root/root-search-sources.hpp
-	src/extensions/root/root-search-sources.cpp
+	src/builtins/root/root-view-host.hpp
+	src/builtins/root/root-view-host.cpp
+	src/builtins/root/root-search-model.hpp
+	src/builtins/root/root-search-model.cpp
+	src/builtins/root/root-search-sources.hpp
+	src/builtins/root/root-search-sources.cpp
 	src/ui/views/drag-utils.hpp
 	src/ui/views/drag-utils.cpp
 	src/ui/views/section-source.hpp
@@ -536,20 +536,20 @@ set(SRCS
 	src/ui/alert/alert-model.hpp
 	src/ui/alert/alert-model.cpp
 	src/ui/views/bridge-view.hpp
-	src/extensions/calculator/calc-history-model.hpp
-	src/extensions/calculator/calc-history-model.cpp
-	src/extensions/calculator/calc-history-view-host.hpp
-	src/extensions/calculator/calc-history-view-host.cpp
-	src/extensions/theme/theme-list-model.hpp
-	src/extensions/theme/theme-list-model.cpp
-	src/extensions/theme/theme-view-host.hpp
-	src/extensions/theme/theme-view-host.cpp
+	src/builtins/calculator/calc-history-model.hpp
+	src/builtins/calculator/calc-history-model.cpp
+	src/builtins/calculator/calc-history-view-host.hpp
+	src/builtins/calculator/calc-history-view-host.cpp
+	src/builtins/theme/theme-list-model.hpp
+	src/builtins/theme/theme-list-model.cpp
+	src/builtins/theme/theme-view-host.hpp
+	src/builtins/theme/theme-view-host.cpp
 	src/ui/views/grid-source.hpp
 	src/ui/views/section-grid-model.hpp
 	src/ui/views/section-grid-model.cpp
-	src/extensions/vicinae/emoji-grid-model.hpp
-	src/extensions/vicinae/emoji-grid-model.cpp
-	src/extensions/vicinae/emoji-grid-view-host.hpp
+	src/builtins/vicinae/emoji-grid-model.hpp
+	src/builtins/vicinae/emoji-grid-model.cpp
+	src/builtins/vicinae/emoji-grid-view-host.hpp
 	src/ui/views/view-utils.cpp
 	src/extension/views/extension-view-host.hpp
 	src/extension/views/extension-view-host.cpp
@@ -561,18 +561,18 @@ set(SRCS
 	src/extension/views/missing-preference-view-host.cpp
 	src/extension/views/extension-form-model.hpp
 	src/extension/views/extension-form-model.cpp
-	src/extensions/clipboard/history/clipboard-history-model.hpp
-	src/extensions/clipboard/history/clipboard-history-model.cpp
-	src/extensions/clipboard/history/clipboard-history-view-host.hpp
-	src/extensions/clipboard/history/clipboard-history-view-host.cpp
-	src/extensions/snippet/snippet-form-view-host.hpp
-	src/extensions/snippet/snippet-form-view-host.cpp
-	src/extensions/root/alias-form-view-host.hpp
-	src/extensions/root/alias-form-view-host.cpp
+	src/builtins/clipboard/history/clipboard-history-model.hpp
+	src/builtins/clipboard/history/clipboard-history-model.cpp
+	src/builtins/clipboard/history/clipboard-history-view-host.hpp
+	src/builtins/clipboard/history/clipboard-history-view-host.cpp
+	src/builtins/snippet/snippet-form-view-host.hpp
+	src/builtins/snippet/snippet-form-view-host.cpp
+	src/builtins/root/alias-form-view-host.hpp
+	src/builtins/root/alias-form-view-host.cpp
 	src/ui/views/app-selector-model.hpp
 	src/ui/views/app-selector-model.cpp
-	src/extensions/shortcut/shortcut-form-view-host.hpp
-	src/extensions/shortcut/shortcut-form-view-host.cpp
+	src/builtins/shortcut/shortcut-form-view-host.hpp
+	src/builtins/shortcut/shortcut-form-view-host.cpp
 	src/extension/views/extension-list-model.hpp
 	src/extension/views/extension-list-model.cpp
 	src/extension/views/extension-grid-model.hpp
@@ -593,54 +593,54 @@ set(SRCS
 	src/ui/bridges/style-bridge.hpp
 	src/ui/settings/shortcut-conflict.hpp
 	src/ui/settings/shortcut-conflict.cpp
-	src/extensions/developer/create-extension-view-host.hpp
-	src/extensions/developer/create-extension-view-host.cpp
-	src/extensions/vicinae/installed-extensions-model.hpp
-	src/extensions/vicinae/installed-extensions-model.cpp
-	src/extensions/vicinae/installed-extensions-view-host.hpp
-	src/extensions/vicinae/installed-extensions-view-host.cpp
-	src/extensions/vicinae/oauth-token-store-model.hpp
-	src/extensions/vicinae/oauth-token-store-model.cpp
-	src/extensions/vicinae/oauth-token-store-view-host.hpp
-	src/extensions/vicinae/oauth-token-store-view-host.cpp
-	src/extensions/wm/switch-windows-model.hpp
-	src/extensions/wm/switch-windows-model.cpp
-	src/extensions/wm/switch-windows-view-host.hpp
-	src/extensions/wm/switch-windows-view-host.cpp
-	src/extensions/wm/switch-workspaces-model.hpp
-	src/extensions/wm/switch-workspaces-view-host.hpp
-	src/extensions/wm/switch-workspaces-view-host.cpp
-	src/extensions/shortcut/manage-shortcuts-model.hpp
-	src/extensions/shortcut/manage-shortcuts-model.cpp
-	src/extensions/shortcut/manage-shortcuts-view-host.hpp
-	src/extensions/shortcut/manage-shortcuts-view-host.cpp
-	src/extensions/snippet/manage-snippets-model.hpp
-	src/extensions/snippet/manage-snippets-model.cpp
-	src/extensions/snippet/manage-snippets-view-host.hpp
-	src/extensions/snippet/manage-snippets-view-host.cpp
-	src/extensions/raycast/raycast-store-model.hpp
-	src/extensions/raycast/raycast-store-model.cpp
-	src/extensions/raycast/raycast-store-view-host.hpp
-	src/extensions/raycast/raycast-store-view-host.cpp
-	src/extensions/vicinae/vicinae-store-model.hpp
-	src/extensions/vicinae/vicinae-store-model.cpp
-	src/extensions/vicinae/vicinae-store-view-host.hpp
-	src/extensions/vicinae/vicinae-store-view-host.cpp
-	src/extensions/raycast/raycast-store-detail-host.hpp
-	src/extensions/raycast/raycast-store-detail-host.cpp
-	src/extensions/vicinae/vicinae-store-detail-host.hpp
-	src/extensions/vicinae/vicinae-store-detail-host.cpp
+	src/builtins/developer/create-extension-view-host.hpp
+	src/builtins/developer/create-extension-view-host.cpp
+	src/builtins/vicinae/installed-extensions-model.hpp
+	src/builtins/vicinae/installed-extensions-model.cpp
+	src/builtins/vicinae/installed-extensions-view-host.hpp
+	src/builtins/vicinae/installed-extensions-view-host.cpp
+	src/builtins/vicinae/oauth-token-store-model.hpp
+	src/builtins/vicinae/oauth-token-store-model.cpp
+	src/builtins/vicinae/oauth-token-store-view-host.hpp
+	src/builtins/vicinae/oauth-token-store-view-host.cpp
+	src/builtins/wm/switch-windows-model.hpp
+	src/builtins/wm/switch-windows-model.cpp
+	src/builtins/wm/switch-windows-view-host.hpp
+	src/builtins/wm/switch-windows-view-host.cpp
+	src/builtins/wm/switch-workspaces-model.hpp
+	src/builtins/wm/switch-workspaces-view-host.hpp
+	src/builtins/wm/switch-workspaces-view-host.cpp
+	src/builtins/shortcut/manage-shortcuts-model.hpp
+	src/builtins/shortcut/manage-shortcuts-model.cpp
+	src/builtins/shortcut/manage-shortcuts-view-host.hpp
+	src/builtins/shortcut/manage-shortcuts-view-host.cpp
+	src/builtins/snippet/manage-snippets-model.hpp
+	src/builtins/snippet/manage-snippets-model.cpp
+	src/builtins/snippet/manage-snippets-view-host.hpp
+	src/builtins/snippet/manage-snippets-view-host.cpp
+	src/builtins/raycast/raycast-store-model.hpp
+	src/builtins/raycast/raycast-store-model.cpp
+	src/builtins/raycast/raycast-store-view-host.hpp
+	src/builtins/raycast/raycast-store-view-host.cpp
+	src/builtins/vicinae/vicinae-store-model.hpp
+	src/builtins/vicinae/vicinae-store-model.cpp
+	src/builtins/vicinae/vicinae-store-view-host.hpp
+	src/builtins/vicinae/vicinae-store-view-host.cpp
+	src/builtins/raycast/raycast-store-detail-host.hpp
+	src/builtins/raycast/raycast-store-detail-host.cpp
+	src/builtins/vicinae/vicinae-store-detail-host.hpp
+	src/builtins/vicinae/vicinae-store-detail-host.cpp
 	src/ui/quick/markdown-model.hpp
 	src/ui/quick/markdown-model.cpp
 	src/ui/quick/text-selection-controller.hpp
 	src/ui/quick/text-selection-controller.cpp
-	src/extensions/vicinae/store-intro-view-host.hpp
-	src/extensions/vicinae/store-intro-view-host.cpp
-	src/extensions/font/font-browser-view-host.hpp
-	src/extensions/font/font-grid-model.hpp
-	src/extensions/font/font-grid-model.cpp
-	src/extensions/font/font-demo-view-host.hpp
-	src/extensions/font/font-demo-view-host.cpp
+	src/builtins/vicinae/store-intro-view-host.hpp
+	src/builtins/vicinae/store-intro-view-host.cpp
+	src/builtins/font/font-browser-view-host.hpp
+	src/builtins/font/font-grid-model.hpp
+	src/builtins/font/font-grid-model.cpp
+	src/builtins/font/font-demo-view-host.hpp
+	src/builtins/font/font-demo-view-host.cpp
 	src/ui/views/edit-keywords-view-host.hpp
 	src/ui/views/edit-keywords-view-host.cpp
 	src/ui/windows/hud-bridge.hpp
@@ -663,7 +663,7 @@ set(SRCS
 	src/ui/settings/provider-command-model.hpp
 	src/ui/settings/provider-command-model.cpp
 
-	src/extensions/internal/markdown-showcase-command.hpp
+	src/builtins/internal/markdown-showcase-command.hpp
 
 )
 
@@ -727,8 +727,8 @@ if (APPLE)
 		src/services/file-chooser/macos/mac-file-chooser.mm
 		src/services/menu-bar/macos-menu-bar.hpp
 		src/services/menu-bar/macos-menu-bar.mm
-		src/extensions/vicinae/menu-bar-search-view-host.hpp
-		src/extensions/vicinae/search-menu-bar-command.hpp
+		src/builtins/vicinae/menu-bar-search-view-host.hpp
+		src/builtins/vicinae/search-menu-bar-command.hpp
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -1317,7 +1317,7 @@ target_compile_features(${TARGET} PUBLIC cxx_std_23)
 # whose fields contain variants. Compile this file in C++26 mode on Apple so
 # libc++'s SFINAE on variant::operator< makes the synthesis short-circuit.
 if(APPLE)
-	set_source_files_properties(src/extend/model-deser.cpp
+	set_source_files_properties(src/extension/model/model-deser.cpp
 		PROPERTIES COMPILE_OPTIONS "-std=gnu++26")
 endif()
 

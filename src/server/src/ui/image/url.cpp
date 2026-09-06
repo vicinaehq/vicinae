@@ -1,6 +1,6 @@
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "glyph/emoji.hpp"
-#include "extend/image-model.hpp"
+#include "extension/model/image-model.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "theme/theme.hpp"
 #include "ui/image/omni-painter.hpp"

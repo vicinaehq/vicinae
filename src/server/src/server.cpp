@@ -18,7 +18,7 @@
 #include "common/common.hpp"
 #include "log/message-handler.hpp"
 #include "ui/windows/overlay-controller.hpp"
-#include "extensions/root/root-command.hpp"
+#include "builtins/root/root-command.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"

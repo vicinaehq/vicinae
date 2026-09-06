@@ -14,7 +14,7 @@
 #include "ui/views/view-utils.hpp"
 #include "config/config.hpp"
 #include "extension/extension.hpp"
-#include "extensions/vicinae/bug-report-url.hpp"
+#include "builtins/vicinae/bug-report-url.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"

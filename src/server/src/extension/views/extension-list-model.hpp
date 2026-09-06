@@ -1,5 +1,5 @@
 #pragma once
-#include "extend/list-model.hpp"
+#include "extension/model/list-model.hpp"
 #include "ui/image/image-url.hpp"
 #include "extension/extension-action-panel-builder.hpp"
 #include "fuzzy/scored.hpp"

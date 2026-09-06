@@ -9,7 +9,7 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "navigation-controller.hpp"
 #include "services/shortcut/shortcut-service.hpp"
-#include "extensions/shortcut/shortcut-form-view-host.hpp"
+#include "builtins/shortcut/shortcut-form-view-host.hpp"
 #include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-panel/action.hpp"

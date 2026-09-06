@@ -1,5 +1,5 @@
 #pragma once
-#include "extend/grid-model.hpp"
+#include "extension/model/grid-model.hpp"
 #include "ui/image/image-url.hpp"
 #include "extension/extension-action-panel-builder.hpp"
 #include "fuzzy/scored.hpp"

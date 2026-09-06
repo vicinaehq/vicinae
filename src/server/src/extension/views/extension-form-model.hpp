@@ -1,6 +1,6 @@
 #pragma once
 #include "ui/quick/completion-model.hpp"
-#include "extend/form-model.hpp"
+#include "extension/model/form-model.hpp"
 #include "services/file-chooser/abstract-file-chooser.hpp"
 #include <QAbstractListModel>
 #include <QJsonValue>

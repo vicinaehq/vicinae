@@ -1,7 +1,7 @@
 #pragma once
 #include "ui/quick/completion-model.hpp"
-#include "extend/model-parser.hpp"
-#include "extend/pagination-model.hpp"
+#include "extension/model/model-parser.hpp"
+#include "extension/model/pagination-model.hpp"
 #include "extension/extension-action-panel-builder.hpp"
 #include "ui/views/bridge-view.hpp"
 #include "extension/views/extension-form-model.hpp"

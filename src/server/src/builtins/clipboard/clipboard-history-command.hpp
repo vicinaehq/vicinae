@@ -1,0 +1,20 @@
+#pragma once
+#include <QCoreApplication>
+#include "builtins/clipboard/history/clipboard-history-view-host.hpp"
+#include "command/single-view-command-context.hpp"
+#include "vicinae.hpp"
+#include <qjsonobject.h>
+
+class ClipboardHistoryCommand : public BuiltinViewCommand<ClipboardHistoryViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(ClipboardHistoryCommand)
+  QString id() const override { return "history"; }
+  QString name() const override { return tr("Clipboard History"); }
+  QString description() const override {
+    return tr("Browse your clipboard's history, pin, edit and remove entries.");
+  }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::CopyClipboard).setBackgroundTint(SemanticColor::Red);
+  }
+  std::vector<Preference> preferences() const override;
+  void preferenceValuesChanged(const QJsonObject &value) const override;
+};

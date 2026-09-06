@@ -1,6 +1,6 @@
 #pragma once
-#include "extend/dropdown-model.hpp"
-#include "extend/metadata-model.hpp"
+#include "extension/model/dropdown-model.hpp"
+#include "extension/model/metadata-model.hpp"
 #include "ui/image/image-url.hpp"
 #include "ui/image/url.hpp"
 #include "ui/views/list-accessory.hpp"
