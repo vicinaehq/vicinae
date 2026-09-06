@@ -84,6 +84,11 @@ static const std::unordered_map<QString, Qt::Key> keyMap = [](){
 		{"enter", Qt::Key_Enter},
 		{"backspace", Qt::Key_Backspace},
 
+		{"super", Qt::Key_Meta},
+		{"control", Qt::Key_Control},
+		{"alt", Qt::Key_Alt},
+		{"shift", Qt::Key_Shift},
+
 		{"f1", Qt::Key_F1},
 		{"f2", Qt::Key_F2},
 		{"f3", Qt::Key_F3},
@@ -114,9 +119,7 @@ static const std::unordered_map<QString, Qt::Key> keyMap = [](){
 
 static const std::unordered_map<Qt::Key, QString> keyMapReverse = [](){
 	using RP = std::pair<Qt::Key, QString>;
-	auto map = keyMap | std::views::transform([](auto&& pair){ return RP{pair.second, pair.first}; }) | std::ranges::to<std::unordered_map>();
-	map.insert({{Qt::Key_Meta, "super"}, {Qt::Key_Control, "control"}, {Qt::Key_Alt, "alt"}, {Qt::Key_Shift, "shift"}});
-	return map;
+	return keyMap | std::views::transform([](auto&& pair){ return RP{pair.second, pair.first}; }) | std::ranges::to<std::unordered_map>();
 }();
 
 
