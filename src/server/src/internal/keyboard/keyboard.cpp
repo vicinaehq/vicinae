@@ -241,7 +241,11 @@ DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
 #else
   switch (modifier) {
   case Qt::MetaModifier:
+#ifdef Q_OS_WIN
+    return {.icon = QStringLiteral("windows11"), .label = QStringLiteral("Win")};
+#else
     return {.text = QStringLiteral("◈"), .label = QStringLiteral("Super")};
+#endif
   case Qt::ControlModifier:
     return {.text = QStringLiteral("Ctrl"), .label = QStringLiteral("Ctrl")};
   case Qt::AltModifier:
