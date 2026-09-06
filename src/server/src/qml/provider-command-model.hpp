@@ -19,6 +19,7 @@ public:
     TypeRole,
     IconSourceRole,
     EnabledRole,
+    FavoriteRole,
     AliasRole,
     EntrypointIdRole,
     DescriptionRole,
@@ -32,6 +33,7 @@ public:
     QString iconSource;
     QString description;
     bool enabled;
+    bool favorite;
     bool hasPreferences;
     QString alias;
     QString entrypointId;
@@ -51,6 +53,7 @@ public:
   void clear();
 
   bool setEnabled(const QString &entrypointId, bool value);
+  bool setFavorite(const QString &entrypointId, bool value);
   void setAllEnabled(bool value);
   bool setAlias(const QString &entrypointId, const QString &alias);
   bool setShortcut(const QString &entrypointId, const QString &shortcut);

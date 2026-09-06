@@ -175,6 +175,7 @@ Item {
                         required property string iconSource
                         required property string description
                         required property bool enabled
+                        required property bool favorite
                         required property string alias
                         required property string entrypointId
                         required property bool hasPreferences
@@ -301,6 +302,20 @@ Item {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: root.extModel.setEnabledByEntrypointId(cmdDelegate.entrypointId, !cmdDelegate.enabled)
+                                    }
+                                }
+
+                                // Favorite toggle
+                                ViciImage {
+                                    source: cmdDelegate.favorite ? Img.builtin("star").withFillColor(Theme.accent) : Img.builtin("star-disabled").withFillColor(Theme.textMuted)
+                                    // source: Img.builtin(cmdDelegate.favorite ? "star" : "star-disabled").withFillColor(Theme.textMuted)
+                                    Layout.preferredWidth: 16
+                                    Layout.preferredHeight: 16
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.extModel.setFavoriteByEntrypointId(cmdDelegate.entrypointId, !cmdDelegate.favorite)
                                     }
                                 }
                             }

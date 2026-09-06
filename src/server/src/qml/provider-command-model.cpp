@@ -20,6 +20,8 @@ QVariant ProviderCommandModel::data(const QModelIndex &index, int role) const {
     return cmd.iconSource;
   case EnabledRole:
     return cmd.enabled;
+  case FavoriteRole:
+    return cmd.favorite;
   case AliasRole:
     return cmd.alias;
   case EntrypointIdRole:
@@ -40,6 +42,7 @@ QHash<int, QByteArray> ProviderCommandModel::roleNames() const {
           {TypeRole, "type"},
           {IconSourceRole, "iconSource"},
           {EnabledRole, "enabled"},
+          {FavoriteRole, "favorite"},
           {AliasRole, "alias"},
           {EntrypointIdRole, "entrypointId"},
           {DescriptionRole, "description"},
@@ -100,6 +103,20 @@ bool ProviderCommandModel::setEnabled(const QString &entrypointId, bool value) {
     if (row >= 0) {
       auto idx = index(row);
       emit dataChanged(idx, idx, {EnabledRole});
+    }
+    return true;
+  }
+  return false;
+}
+
+bool ProviderCommandModel::setFavorite(const QString &entrypointId, bool value) {
+  for (int i = 0; std::cmp_less(i, m_allCommands.size()); ++i) {
+    if (m_allCommands[i].entrypointId != entrypointId) continue;
+    m_allCommands[i].favorite = value;
+    int const row = visibleRowFor(i);
+    if (row >= 0) {
+      auto idx = index(row);
+      emit dataChanged(idx, idx, {FavoriteRole});
     }
     return true;
   }
