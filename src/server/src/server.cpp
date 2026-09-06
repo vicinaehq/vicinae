@@ -285,8 +285,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #elif defined(Q_OS_WIN)
     auto snippetServer = std::make_unique<WindowsSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<WindowsPasteService>());
-    auto selectionService =
-        std::unique_ptr<AbstractSelectionService>(std::make_unique<WindowsSelectionService>());
+    auto selectionService = std::unique_ptr<AbstractSelectionService>(
+        std::make_unique<WindowsSelectionService>(*clipboardManager, *windowManager));
 #else
     auto snippetServer = std::make_unique<NullSnippetServer>();
     auto platformPaste = std::unique_ptr<AbstractPasteService>(std::make_unique<DummyPasteService>());

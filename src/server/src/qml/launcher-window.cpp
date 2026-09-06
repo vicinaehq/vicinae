@@ -141,8 +141,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   if (m_window) {
     nav->setWindow(m_window);
     connect(m_window, &QQuickWindow::activeChanged, this, [this]() {
-      // losing focus to our own file dialog is not user focus loss
-      if (m_pendingLauncherFileChoice) return;
+      // losing focus to our own file dialog or to a selection capture is not user focus loss
+      if (m_pendingLauncherFileChoice || LauncherWindowPlatform::foregroundLent()) return;
       m_ctx.navigation->setWindowActivated(m_window->isActive());
     });
     m_window->installEventFilter(this);

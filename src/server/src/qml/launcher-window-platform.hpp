@@ -21,9 +21,13 @@ void grantForeground();
 // Called right before hiding: the release of keys still held (escape, return,
 // the hotkey key) would otherwise leak to the window regaining foreground.
 void suppressHeldKeyReleases();
+// The selection service lends the foreground to the target app to send it a copy
+// chord; the deactivation that causes is not user focus loss.
+bool foregroundLent();
 #else
 inline void grantForeground() {}
 inline void suppressHeldKeyReleases() {}
+inline bool foregroundLent() { return false; }
 #endif
 
 } // namespace LauncherWindowPlatform

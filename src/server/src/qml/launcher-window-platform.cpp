@@ -1,5 +1,6 @@
 #include "launcher-window-platform.hpp"
 #include "services/global-shortcuts/windows-global-shortcut-backend.hpp"
+#include "services/selection/windows-selection-service.hpp"
 #include <windows.h>
 
 namespace LauncherWindowPlatform {
@@ -32,5 +33,7 @@ void suppressHeldKeyReleases() {
     if (GetAsyncKeyState(static_cast<int>(vk)) < 0) { WindowsGlobalShortcutBackend::suppressNextKeyUp(vk); }
   }
 }
+
+bool foregroundLent() { return WindowsSelectionService::isLendingForeground(); }
 
 } // namespace LauncherWindowPlatform
