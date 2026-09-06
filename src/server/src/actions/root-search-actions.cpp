@@ -1,4 +1,4 @@
-#include "actions/root-search/root-search-actions.hpp"
+#include "actions/root-search-actions.hpp"
 #include "builtins/root/alias-form-view-host.hpp"
 #include "keyboard/keybind.hpp"
 #include "ui/action-panel/shortcut-recorder-panel-view.hpp"

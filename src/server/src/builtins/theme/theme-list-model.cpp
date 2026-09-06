@@ -1,6 +1,6 @@
 #include "builtins/theme/theme-list-model.hpp"
-#include "actions/app/app-actions.hpp"
-#include "actions/theme/theme-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/theme-actions.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "fuzzy/scored.hpp"

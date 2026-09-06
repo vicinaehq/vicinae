@@ -1,4 +1,4 @@
-#include "actions/app/app-actions.hpp"
+#include "actions/app-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/abstract-app-db.hpp"

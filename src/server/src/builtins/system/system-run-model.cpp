@@ -1,5 +1,5 @@
 #include "builtins/system/system-run-model.hpp"
-#include "actions/app/app-actions.hpp"
+#include "actions/app-actions.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "service-registry.hpp"
 #include "utils/utils.hpp"

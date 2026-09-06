@@ -1,6 +1,6 @@
 #include "builtins/wm/switch-windows-model.hpp"
-#include "actions/app/app-actions.hpp"
-#include "actions/wm/window-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/window-actions.hpp"
 
 QString SwitchWindowsSection::displayTitle(const WindowEntry &e) const { return e.window->title(); }
 

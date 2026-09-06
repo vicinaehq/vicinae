@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "actions/app/app-actions.hpp"
+#include "actions/app-actions.hpp"
 #include "service-registry.hpp"
 #include "services/files-service/file-service.hpp"
 

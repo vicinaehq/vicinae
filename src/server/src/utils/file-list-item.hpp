@@ -1,8 +1,8 @@
 #pragma once
 #include <QCoreApplication>
-#include "actions/app/app-actions.hpp"
-#include "actions/files/file-actions.hpp"
-#include "actions/shortcut/shortcut-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/file-actions.hpp"
+#include "actions/shortcut-actions.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"

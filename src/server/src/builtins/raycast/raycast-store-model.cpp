@@ -1,5 +1,5 @@
 #include "builtins/raycast/raycast-store-model.hpp"
-#include "actions/extension/extension-actions.hpp"
+#include "actions/extension-actions.hpp"
 #include "builtins/raycast/raycast-store-detail-host.hpp"
 #include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"

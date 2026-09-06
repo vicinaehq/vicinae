@@ -1,6 +1,6 @@
 #pragma once
-#include "actions/files/file-actions.hpp"
-#include "actions/root-search/root-search-actions.hpp"
+#include "actions/file-actions.hpp"
+#include "actions/root-search-actions.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "script-command.hpp"
 #include "script/script-actions.hpp"

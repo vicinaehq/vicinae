@@ -1,5 +1,5 @@
 #include "builtins/clipboard/history/clipboard-history-model.hpp"
-#include "actions/app/app-actions.hpp"
+#include "actions/app-actions.hpp"
 #include "common/context.hpp"
 #include "builtins/clipboard/history/clipboard-history-actions.hpp"
 #include "internal/keyboard/keybind.hpp"

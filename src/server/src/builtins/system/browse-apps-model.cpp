@@ -1,8 +1,8 @@
 #include "builtins/system/browse-apps-model.hpp"
 
 #include <utility>
-#include "actions/app/app-actions.hpp"
-#include "actions/wm/window-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/window-actions.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"

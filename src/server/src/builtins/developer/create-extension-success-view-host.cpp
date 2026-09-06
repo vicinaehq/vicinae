@@ -1,5 +1,5 @@
 #include "builtins/developer/create-extension-success-view-host.hpp"
-#include "actions/app/app-actions.hpp"
+#include "actions/app-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"

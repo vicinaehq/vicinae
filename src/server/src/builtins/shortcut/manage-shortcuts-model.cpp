@@ -1,6 +1,6 @@
 #include "builtins/shortcut/manage-shortcuts-model.hpp"
 #include <QGuiApplication>
-#include "actions/shortcut/shortcut-actions.hpp"
+#include "actions/shortcut-actions.hpp"
 #include "keyboard/keybind.hpp"
 
 QString ManageShortcutsSection::displayTitle(const std::shared_ptr<Shortcut> &item) const {

@@ -160,19 +160,19 @@ set(SRCS
 	src/services/shortcut/shortcut.hpp
 	src/services/shortcut/shortcut.cpp
 
-	src/actions/theme/theme-actions.hpp
-	src/actions/theme/theme-actions.cpp
+	src/actions/theme-actions.hpp
+	src/actions/theme-actions.cpp
 
-	src/actions/calculator/calculator-actions.hpp
-	src/actions/calculator/calculator-actions.cpp
+	src/actions/calculator-actions.hpp
+	src/actions/calculator-actions.cpp
 
-	src/actions/root-search/root-search-actions.hpp
-	src/actions/root-search/root-search-actions.cpp
+	src/actions/root-search-actions.hpp
+	src/actions/root-search-actions.cpp
 
-	src/actions/extension/extension-actions.cpp
+	src/actions/extension-actions.cpp
 
-	src/actions/app/app-actions.hpp
-	src/actions/app/app-actions.cpp
+	src/actions/app-actions.hpp
+	src/actions/app-actions.cpp
 	
 	src/service-registry.cpp
 

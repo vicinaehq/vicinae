@@ -1,6 +1,6 @@
 #include "builtins/root/root-search-sources.hpp"
-#include "actions/app/app-actions.hpp"
-#include "actions/calculator/calculator-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/calculator-actions.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "theme/colors.hpp"

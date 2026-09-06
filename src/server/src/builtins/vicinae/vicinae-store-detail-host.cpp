@@ -1,5 +1,5 @@
 #include "builtins/vicinae/vicinae-store-detail-host.hpp"
-#include "actions/extension/extension-actions.hpp"
+#include "actions/extension-actions.hpp"
 #include "ui/views/empty-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "vicinae.hpp"

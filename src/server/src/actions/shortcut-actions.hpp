@@ -2,7 +2,7 @@
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <QEventLoop>
-#include "actions/app/app-actions.hpp"
+#include "actions/app-actions.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "command/command-types.hpp"
 #include "common/context.hpp"

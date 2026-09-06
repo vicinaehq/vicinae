@@ -3,7 +3,7 @@
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"
-#include "actions/shortcut/shortcut-actions.hpp"
+#include "actions/shortcut-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"

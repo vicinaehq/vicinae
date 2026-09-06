@@ -1,5 +1,5 @@
 #include "browser-extension.hpp"
-#include "actions/app/app-actions.hpp"
+#include "actions/app-actions.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "builtins/browser/browser-tabs-view-host.hpp"
 #include "ui/views/empty-view-host.hpp"

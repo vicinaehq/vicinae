@@ -1,6 +1,6 @@
 #include "extension-action-panel-builder.hpp"
 #include "extension-action-list-view.hpp"
-#include "actions/shortcut/shortcut-actions.hpp"
+#include "actions/shortcut-actions.hpp"
 #include "ui/action-panel/action.hpp"
 #include "ui/image/url.hpp"
 #include <qjsonobject.h>
