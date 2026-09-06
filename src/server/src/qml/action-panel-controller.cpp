@@ -177,7 +177,7 @@ void ActionPanelController::onPanelPopped(QObject *currentPanel) {
   emit depthChanged();
 }
 
-bool ActionPanelController::tryShortcut(int key, int modifiers) {
+bool ActionPanelController::tryShortcut(int key, int modifiers, int scanCode) {
   if (!m_open || !m_currentPanel) return false;
 
   auto val = m_currentPanel->property("boundActions");
@@ -186,7 +186,8 @@ bool ActionPanelController::tryShortcut(int key, int modifiers) {
   auto *model = qobject_cast<ActionPanelModel *>(val.value<QObject *>());
   if (!model) return false;
 
-  return model->activateByShortcut(key, modifiers);
+  const auto resolved = Keyboard::resolveKey(static_cast<Qt::Key>(key), static_cast<quint32>(scanCode));
+  return model->activateByShortcut(static_cast<int>(resolved), modifiers);
 }
 
 bool ActionPanelController::capturesAllKeys() const {

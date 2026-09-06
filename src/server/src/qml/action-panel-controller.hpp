@@ -58,7 +58,7 @@ public:
   Q_INVOKABLE void onPanelPushed(QObject *panel);
   Q_INVOKABLE void onPanelPopped(QObject *currentPanel);
 
-  Q_INVOKABLE bool tryShortcut(int key, int modifiers);
+  Q_INVOKABLE bool tryShortcut(int key, int modifiers, int scanCode);
 
   /**
    * Whether the currently displayed panel wants every keypress delivered to it

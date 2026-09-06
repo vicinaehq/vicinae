@@ -271,7 +271,7 @@ Item {
                             if (root.controller.depth > 1)
                                 root.navigateBack();
                             event.accepted = true;
-                        } else if ((event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) && root.controller.tryShortcut(event.key, event.modifiers)) {
+                        } else if ((event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) && root.controller.tryShortcut(event.key, event.modifiers, event.nativeScanCode)) {
                             event.accepted = true;
                         }
                     }
