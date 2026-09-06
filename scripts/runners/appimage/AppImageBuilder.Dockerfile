@@ -271,6 +271,7 @@ RUN apt-get update \
 		libxkbcommon-dev	\
         libxkbcommon0 \
         libxkbcommon-x11-0 \
+        libxkbcommon-x11-dev \
         libfontconfig1 \
         libfreetype6 \
         libx11-6 \
@@ -292,6 +293,7 @@ RUN apt-get update \
         libxcb-render-util0 \
         libxcb-xinerama0 \
         libxcb-xkb1 \
+        libxcb-xkb-dev \
         libwayland-client0 \
         libwayland-egl1 \
     	libssl-dev		\
