@@ -29,8 +29,8 @@ X11LayoutResolver::X11LayoutResolver() {
   m_device = xkb_x11_get_core_keyboard_device_id(m_connection);
   if (m_device == -1) return;
 
-  const uint16_t events =
-      XCB_XKB_EVENT_TYPE_NEW_KEYBOARD_NOTIFY | XCB_XKB_EVENT_TYPE_MAP_NOTIFY | XCB_XKB_EVENT_TYPE_STATE_NOTIFY;
+  const uint16_t events = XCB_XKB_EVENT_TYPE_NEW_KEYBOARD_NOTIFY | XCB_XKB_EVENT_TYPE_MAP_NOTIFY |
+                          XCB_XKB_EVENT_TYPE_STATE_NOTIFY;
   const uint16_t mapParts = XCB_XKB_MAP_PART_KEY_TYPES | XCB_XKB_MAP_PART_KEY_SYMS |
                             XCB_XKB_MAP_PART_MODIFIER_MAP | XCB_XKB_MAP_PART_EXPLICIT_COMPONENTS |
                             XCB_XKB_MAP_PART_KEY_ACTIONS | XCB_XKB_MAP_PART_VIRTUAL_MODS |
@@ -50,7 +50,8 @@ X11LayoutResolver::~X11LayoutResolver() {
 }
 
 void X11LayoutResolver::reload() {
-  auto *keymap = xkb_x11_keymap_new_from_device(m_context, m_connection, m_device, XKB_KEYMAP_COMPILE_NO_FLAGS);
+  auto *keymap =
+      xkb_x11_keymap_new_from_device(m_context, m_connection, m_device, XKB_KEYMAP_COMPILE_NO_FLAGS);
   if (!keymap) return;
   setKeymap(keymap, xkb_x11_state_new_from_device(keymap, m_connection, m_device));
 }
