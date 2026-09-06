@@ -1,7 +1,7 @@
 #pragma once
 #include <QCoreApplication>
 #include <QTimer>
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "ui/image/url.hpp"

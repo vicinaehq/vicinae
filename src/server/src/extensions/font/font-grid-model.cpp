@@ -1,5 +1,5 @@
 #include "extensions/font/font-grid-model.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "extend/grid-model.hpp"
 #include "common/context.hpp"
 #include "config/config.hpp"

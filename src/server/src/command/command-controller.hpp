@@ -1,6 +1,6 @@
 #pragma once
 #include "services/local-storage/scoped-local-storage.hpp"
-#include "command.hpp"
+#include "command/command.hpp"
 
 class CommandController {
 public:

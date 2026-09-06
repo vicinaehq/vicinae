@@ -1,6 +1,6 @@
 #include "extensions/vicinae/installed-extensions-model.hpp"
 #include "actions/extension/extension-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "theme/colors.hpp"

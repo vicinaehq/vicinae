@@ -1,6 +1,6 @@
 #pragma once
 #include "ui/quick/completion-model.hpp"
-#include "preference.hpp"
+#include "command/preference.hpp"
 #include "common/entrypoint.hpp"
 #include <QAbstractListModel>
 #include <QJsonObject>

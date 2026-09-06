@@ -3,12 +3,12 @@
 #include "extensions/calculator/calc-history-view-host.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include "ui/image/url.hpp"
-#include "preference.hpp"
+#include "command/preference.hpp"
 #include "services/toast/toast-service.hpp"
 #include "service-registry.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <qfuturewatcher.h>
 

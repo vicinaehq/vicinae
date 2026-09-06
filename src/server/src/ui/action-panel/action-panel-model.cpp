@@ -3,7 +3,7 @@
 #include "service-registry.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/navigation/list-navigation.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include <QKeyEvent>
 #include <utility>
 

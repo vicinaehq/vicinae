@@ -1,10 +1,10 @@
 #include "power-management-extension.hpp"
-#include "command-controller.hpp"
+#include "command/command-controller.hpp"
 #include <qcontainerfwd.h>
 #include <qprocess.h>
 #include "common/context.hpp"
-#include "preference.hpp"
-#include "single-view-command-context.hpp"
+#include "command/preference.hpp"
+#include "command/single-view-command-context.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/power-manager/power-manager.hpp"

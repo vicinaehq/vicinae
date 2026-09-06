@@ -1,6 +1,6 @@
 #pragma once
 #include "bug-report-url.hpp"
-#include "builtin-url-command.hpp"
+#include "command/builtin-url-command.hpp"
 #include <QCoreApplication>
 
 class ReportVicinaeBugCommand : public BuiltinUrlCommand {

@@ -1,5 +1,5 @@
 #include "extension/views/extension-error-view-host.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "navigation-controller.hpp"
 
 ExtensionErrorViewHost::ExtensionErrorViewHost(const QString &errorText) : m_errorText(errorText.trimmed()) {

@@ -1,5 +1,5 @@
-#include "ipc-command-handler.hpp"
-#include "common.hpp"
+#include "ipc/ipc-command-handler.hpp"
+#include "command/command-types.hpp"
 #include <QDebug>
 #include <QFutureWatcher>
 #include "common/entrypoint.hpp"
@@ -23,7 +23,7 @@
 #include <qjsonarray.h>
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "extensions/root/provider-search-view-host.hpp"
 #include "extensions/raycast/raycast-store-detail-host.hpp"
 #include "extensions/vicinae/vicinae-store-detail-host.hpp"

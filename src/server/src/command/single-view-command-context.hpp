@@ -1,8 +1,8 @@
 #pragma once
-#include "command-controller.hpp"
-#include "command-database.hpp"
-#include "command.hpp"
-#include "common.hpp"
+#include "command/command-controller.hpp"
+#include "command/command-database.hpp"
+#include "command/command.hpp"
+#include "command/command-types.hpp"
 #include "ui/views/base-view.hpp"
 #include "navigation-controller.hpp"
 #include <concepts>

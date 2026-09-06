@@ -1,5 +1,5 @@
 #include "ui/quick/markdown-model.hpp"
-#include "font-service.hpp"
+#include "services/font-service/font-service.hpp"
 #include "ui/image/image-url.hpp"
 #include "ui/quick/syntax-highlighter.hpp"
 #include "service-registry.hpp"

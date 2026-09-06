@@ -1,6 +1,6 @@
 #include "extensions/snippet/snippet-form-view-host.hpp"
 #include "navigation-controller.hpp"
-#include "placeholder.hpp"
+#include "utils/placeholder.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-service.hpp"

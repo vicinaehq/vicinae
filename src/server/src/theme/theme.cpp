@@ -1,4 +1,4 @@
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/colors.hpp"
 #include "theme/theme-db.hpp"
 #include "theme/theme-file.hpp"

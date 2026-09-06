@@ -1,5 +1,5 @@
 #pragma once
-#include "font-service.hpp"
+#include "services/font-service/font-service.hpp"
 #include "fuzzy-scorer.hpp"
 #include "fuzzy/scored.hpp"
 #include "ui/views/grid-source.hpp"

@@ -1,5 +1,5 @@
 #pragma once
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include "service-registry.hpp"
 #include "ui/image/url.hpp"
 #include <qcontainerfwd.h>

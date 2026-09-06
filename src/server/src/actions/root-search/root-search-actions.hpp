@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "clipboard-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"
 #include "common/entrypoint.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"

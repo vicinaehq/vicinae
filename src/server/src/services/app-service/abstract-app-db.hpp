@@ -1,5 +1,5 @@
 #pragma once
-#include "preference.hpp"
+#include "command/preference.hpp"
 #include "ui/image/url.hpp"
 #include <QJsonObject>
 #include <QProcess>

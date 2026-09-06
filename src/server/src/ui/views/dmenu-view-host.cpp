@@ -1,6 +1,6 @@
 #include "ui/views/dmenu-view-host.hpp"
-#include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 #include "utils/utils.hpp"
 #include "ui/views/view-utils.hpp"

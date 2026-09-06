@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include "ui/image/url.hpp"
 #include "vicinae.hpp"
 #include <qlogging.h>

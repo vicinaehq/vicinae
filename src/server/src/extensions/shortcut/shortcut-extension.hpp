@@ -1,9 +1,9 @@
 #pragma once
 #include <QCoreApplication>
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include "extensions/shortcut/manage-shortcuts-view-host.hpp"
 #include "ui/image/url.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "extensions/shortcut/shortcut-form-view-host.hpp"
 
 namespace {

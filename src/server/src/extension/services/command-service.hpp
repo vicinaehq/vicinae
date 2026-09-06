@@ -1,12 +1,12 @@
 #pragma once
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "extension/extension-command.hpp"
 #include "generated/tsapi.hpp"
 #include "navigation-controller.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "command.hpp"
+#include "command/command.hpp"
 #include <qlogging.h>
 
 namespace {

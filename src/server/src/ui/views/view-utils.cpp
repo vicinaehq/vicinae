@@ -1,5 +1,5 @@
 #include "ui/views/view-utils.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include "utils/utils.hpp"
 #include <QFile>

@@ -1,6 +1,6 @@
 #pragma once
 #include "ui/image/url.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "extensions/vicinae/manage-fallback-view-host.hpp"
 #include <QCoreApplication>
 

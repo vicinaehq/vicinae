@@ -1,5 +1,5 @@
-#include "command-controller.hpp"
-#include "common.hpp"
+#include "command/command-controller.hpp"
+#include "command/command-types.hpp"
 #include "service-registry.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"

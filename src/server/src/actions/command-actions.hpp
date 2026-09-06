@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "command.hpp"
+#include "command/command.hpp"
 #include "ui/action-panel/action.hpp"
 
 struct OpenBuiltinCommandAction : public AbstractAction {

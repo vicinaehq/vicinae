@@ -2,7 +2,7 @@
 #include "common/types.hpp"
 #include <algorithm>
 #include <expected>
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/colors.hpp"
 #include "utils.hpp"
 #include <filesystem>

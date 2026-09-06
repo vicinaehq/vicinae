@@ -1,4 +1,4 @@
-#include "font-service.hpp"
+#include "services/font-service/font-service.hpp"
 #include <algorithm>
 #include <iterator>
 #include <QCoreApplication>

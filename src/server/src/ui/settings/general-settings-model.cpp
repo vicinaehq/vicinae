@@ -3,10 +3,10 @@
 #include "config/config.hpp"
 #include "ui/views/view-utils.hpp"
 #include "service-registry.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include "favicon/favicon-service.hpp"
-#include "font-service.hpp"
+#include "services/font-service/font-service.hpp"
 #ifdef Q_OS_LINUX
 #include "internal/icon-theme-db/icon-theme-db.hpp"
 #endif

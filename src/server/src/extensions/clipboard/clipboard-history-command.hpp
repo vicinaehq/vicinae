@@ -1,7 +1,7 @@
 #pragma once
 #include <QCoreApplication>
 #include "extensions/clipboard/history/clipboard-history-view-host.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <qjsonobject.h>
 

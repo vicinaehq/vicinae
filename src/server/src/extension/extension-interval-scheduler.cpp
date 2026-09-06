@@ -1,4 +1,4 @@
-#include "extension-interval-scheduler.hpp"
+#include "extension/extension-interval-scheduler.hpp"
 #include <algorithm>
 #include <format>
 #include <unordered_set>

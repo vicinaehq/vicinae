@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "common/context.hpp"
 #include "extensions/media/player-app.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"

@@ -1,5 +1,5 @@
 #pragma once
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include <qstring.h>
 
 struct ColorStringModel {

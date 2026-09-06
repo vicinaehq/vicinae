@@ -1,5 +1,5 @@
 #include "extensions/snippet/manage-snippets-model.hpp"
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "keyboard/keybind.hpp"
 #include "extensions/snippet/snippet-form-view-host.hpp"
 #include "service-registry.hpp"

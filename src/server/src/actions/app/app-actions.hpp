@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/app-service/app-service.hpp"
 #include "ui/action-panel/action.hpp"

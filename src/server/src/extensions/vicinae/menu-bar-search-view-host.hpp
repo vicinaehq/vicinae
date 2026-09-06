@@ -1,5 +1,5 @@
 #pragma once
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "common/context.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "ui/views/fuzzy-section.hpp"

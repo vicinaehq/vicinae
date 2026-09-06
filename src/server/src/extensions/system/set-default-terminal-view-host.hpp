@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <ranges>
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "common/context.hpp"
 #include "ui/views/mono-list-view-host.hpp"
 #include "services/app-service/abstract-app-db.hpp"

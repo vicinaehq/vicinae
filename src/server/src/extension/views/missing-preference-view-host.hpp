@@ -1,7 +1,7 @@
 #pragma once
 #include "common/entrypoint.hpp"
 #include "ui/quick/completion-model.hpp"
-#include "preference.hpp"
+#include "command/preference.hpp"
 #include "ui/views/bridge-view.hpp"
 #include <QAbstractListModel>
 #include <QJsonObject>

@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "common/qt.hpp"
 #include <qobject.h>
 

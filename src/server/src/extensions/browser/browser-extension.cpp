@@ -1,13 +1,13 @@
 #include "browser-extension.hpp"
 #include "actions/app/app-actions.hpp"
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "extensions/browser/browser-tabs-view-host.hpp"
 #include "ui/views/empty-view-host.hpp"
 #include "extensions/shortcut/shortcut-form-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/browser-extension-service.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "theme/colors.hpp"
 #include <QCoreApplication>
 

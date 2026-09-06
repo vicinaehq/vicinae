@@ -1,6 +1,6 @@
 #include "navigation-controller.hpp"
 #include <QTimer>
-#include "command-controller.hpp"
+#include "command/command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
 #include "extension/views/missing-preference-view-host.hpp"

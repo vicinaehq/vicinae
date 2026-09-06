@@ -1,6 +1,6 @@
 #pragma once
 #include "extensions/theme/theme-view-host.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "ui/image/url.hpp"
 #include <QCoreApplication>
 

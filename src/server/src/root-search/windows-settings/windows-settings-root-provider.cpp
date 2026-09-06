@@ -1,6 +1,6 @@
 #include "root-search/windows-settings/windows-settings-root-provider.hpp"
 #include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"

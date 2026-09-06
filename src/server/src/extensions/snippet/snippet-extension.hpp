@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include "ui/image/url.hpp"
 #include "create-snippet-command.hpp"
 #include "manage-snippets-command.hpp"

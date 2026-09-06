@@ -1,7 +1,7 @@
 #pragma once
-#include "argument.hpp"
-#include "command-controller.hpp"
-#include "common.hpp"
+#include "command/argument.hpp"
+#include "command/command-controller.hpp"
+#include "command/command-types.hpp"
 #include "ui/action-panel/action.hpp"
 #include <QObject>
 #include <vector>

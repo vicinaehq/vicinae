@@ -1,7 +1,7 @@
 #pragma once
 
 #include "extensions/vicinae/installed-extensions-view-host.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include <QCoreApplication>
 
 class VicinaeListInstalledExtensionsCommand : public BuiltinViewCommand<InstalledExtensionsViewHost> {

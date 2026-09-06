@@ -1,4 +1,4 @@
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include "extensions/browser/browser-extension.hpp"
 #include "extensions/clipboard/clipboard-extension.hpp"
 #include "extensions/calculator/calculator-extension.hpp"

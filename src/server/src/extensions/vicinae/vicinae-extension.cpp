@@ -1,6 +1,6 @@
 #include "vicinae-extension.hpp"
-#include "builtin_icon.hpp"
-#include "command-controller.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "command/command-controller.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "extensions/vicinae/list-installed-extensions-command.hpp"
@@ -21,8 +21,8 @@
 #include "extensions/vicinae/vicinae-store-command.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
-#include "builtin-url-command.hpp"
-#include "single-view-command-context.hpp"
+#include "command/builtin-url-command.hpp"
+#include "command/single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <QCoreApplication>
 #include <qurlquery.h>

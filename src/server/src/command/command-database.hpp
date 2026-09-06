@@ -1,6 +1,6 @@
 #pragma once
-#include "argument.hpp"
-#include "command.hpp"
+#include "command/argument.hpp"
+#include "command/command.hpp"
 #include "service-registry.hpp"
 #include "ui/image/url.hpp"
 #include <QKeyEvent>
@@ -10,7 +10,7 @@
 #include <qicon.h>
 #include <qlist.h>
 #include <qlogging.h>
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "vicinae.hpp"
 
 class AppWindow;

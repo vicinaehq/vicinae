@@ -1,5 +1,5 @@
 #pragma once
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "ui/views/list-view-host.hpp"
 #include "extensions/snippet/manage-snippets-model.hpp"
 #include "services/snippet/snippet-expander.hpp"

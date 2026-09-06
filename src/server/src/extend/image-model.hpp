@@ -1,5 +1,5 @@
 #pragma once
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <filesystem>
 #include <qstring.h>

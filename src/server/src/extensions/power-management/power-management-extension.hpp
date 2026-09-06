@@ -1,4 +1,4 @@
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include <QCoreApplication>
 
 class PowerManagementExtension : public BuiltinCommandRepository {

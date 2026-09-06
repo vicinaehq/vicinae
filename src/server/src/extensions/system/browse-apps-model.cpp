@@ -3,7 +3,7 @@
 #include <utility>
 #include "actions/app/app-actions.hpp"
 #include "actions/wm/window-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"

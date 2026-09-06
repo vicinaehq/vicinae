@@ -1,7 +1,7 @@
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include "../../ui/image/url.hpp"
 #include "set-theme-command.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include <QCoreApplication>
 
 class ThemeExtension : public BuiltinCommandRepository {

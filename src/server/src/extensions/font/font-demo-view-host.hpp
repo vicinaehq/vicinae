@@ -1,6 +1,6 @@
 #pragma once
 #include "ui/views/bridge-view.hpp"
-#include "font-service.hpp"
+#include "services/font-service/font-service.hpp"
 
 class FontDemoViewHost : public ViewHostBase {
   Q_OBJECT

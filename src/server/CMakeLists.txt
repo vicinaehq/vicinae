@@ -103,8 +103,8 @@ set(SRCS
 
 	${CMAKE_SOURCE_DIR}/vendor/fuzzy-trigram/register.c
 
-	src/theme.hpp
-	src/theme.cpp
+	src/theme/theme.hpp
+	src/theme/theme.cpp
 
 	src/script/script-command-file.cpp
 	src/script/script-output-tokenizer.cpp
@@ -114,11 +114,11 @@ set(SRCS
 	src/services/script-command/script-command-service.hpp
 	src/services/script-command/script-command-service.cpp
 
-	src/placeholder.cpp
+	src/utils/placeholder.cpp
 
 
-	src/font-service.hpp
-	src/font-service.cpp
+	src/services/font-service/font-service.hpp
+	src/services/font-service/font-service.cpp
 
 	src/internal/template-engine/template-engine.cpp
 	src/internal/glaze-qt.cpp
@@ -138,7 +138,7 @@ set(SRCS
 	src/favicon/cached-favicon-request.cpp
 
 
-	src/command-actions.cpp
+	src/actions/command-actions.cpp
 
 	src/root-search/extensions/extension-root-provider.hpp
 	src/root-search/extensions/extension-root-provider.cpp
@@ -176,8 +176,8 @@ set(SRCS
 	
 	src/service-registry.cpp
 
-	src/color-formatter.hpp
-	src/color-formatter.cpp
+	src/utils/color-formatter.hpp
+	src/utils/color-formatter.cpp
 
 	src/services/clipboard/clipboard-server.hpp
 	src/services/clipboard/clipboard-content.hpp
@@ -246,24 +246,24 @@ set(SRCS
 	src/ui/image/image-stream.hpp
 	src/ui/image/image-stream.cpp
 
-	src/command-database.hpp
-	src/command-database.cpp
+	src/command/command-database.hpp
+	src/command/command-database.cpp
 
 		src/ui/image/url.hpp
 
 
 
-	src/builtin_icon.cpp
+	src/services/builtin-icon/builtin-icon.cpp
 
 
 	src/extend/accessory-model.cpp
 	src/extend/model-deser.cpp
 	src/extend/form-model.hpp
 
-	src/image-fetcher.hpp
+	src/services/image-fetcher/image-fetcher.hpp
 
 
-	src/command.hpp
+	src/command/command.hpp
 	
 
 	src/vicinae.hpp
@@ -395,16 +395,16 @@ set(SRCS
 
 	src/ui/views/base-view.cpp
 
-	src/command-controller.hpp
-	src/command-controller.cpp
+	src/command/command-controller.hpp
+	src/command/command-controller.cpp
 
-	src/ipc-command-server.hpp
-	src/ipc-command-server.cpp
-	src/ipc-command-handler.hpp
-	src/ipc-command-handler.cpp
+	src/ipc/ipc-command-server.hpp
+	src/ipc/ipc-command-server.cpp
+	src/ipc/ipc-command-handler.hpp
+	src/ipc/ipc-command-handler.cpp
 
-	src/extension-interval-scheduler.hpp
-	src/extension-interval-scheduler.cpp
+	src/extension/extension-interval-scheduler.hpp
+	src/extension/extension-interval-scheduler.cpp
 
 	src/log/message-handler.cpp
 

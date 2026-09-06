@@ -1,5 +1,5 @@
 #include "extensions/vicinae/builtin-icons-model.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 
 QString BuiltinIconsSection::displayTitle(const IconEntry &e) const { return QString::fromStdString(e.name); }

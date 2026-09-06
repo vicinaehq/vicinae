@@ -1,10 +1,10 @@
 #pragma once
 #include <QCoreApplication>
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include "common/context.hpp"
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/toast/toast-service.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "theme/colors.hpp"
 
 #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)

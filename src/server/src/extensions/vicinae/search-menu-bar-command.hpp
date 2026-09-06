@@ -1,6 +1,6 @@
 #pragma once
 #include "extensions/vicinae/menu-bar-search-view-host.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "theme/colors.hpp"
 #include <QCoreApplication>
 

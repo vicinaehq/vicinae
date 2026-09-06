@@ -28,7 +28,7 @@
 #include "extend/tag-model.hpp"
 #include "glaze-qt.hpp"
 #include "internal/keyboard/keyboard.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "ui/image/url.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 

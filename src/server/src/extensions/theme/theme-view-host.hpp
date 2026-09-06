@@ -2,7 +2,7 @@
 #include "ui/views/bridge-view.hpp"
 #include "config/config.hpp"
 #include "ui/views/section-list-model.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "extensions/theme/theme-list-model.hpp"
 
 class ThemeViewHost : public ViewHostBase {

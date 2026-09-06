@@ -6,7 +6,7 @@
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/news/news-service.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include <filesystem>
 #include <utility>
 

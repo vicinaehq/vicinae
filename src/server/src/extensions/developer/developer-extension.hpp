@@ -1,7 +1,7 @@
-#include "command-database.hpp"
-#include "single-view-command-context.hpp"
+#include "command/command-database.hpp"
+#include "command/single-view-command-context.hpp"
 #include "extensions/developer/create-extension-view-host.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include <QCoreApplication>
 
 class CreateExtensionCommand : public BuiltinViewCommand<CreateExtensionViewHost> {

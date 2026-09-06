@@ -1,7 +1,7 @@
 #pragma once
-#include "argument.hpp"
+#include "command/argument.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "config/config.hpp"
 #include "common/entrypoint.hpp"
 #include "navigation-controller.hpp"
@@ -10,7 +10,7 @@
 #include "services/root-item-manager/search-history.hpp"
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
-#include "preference.hpp"
+#include "command/preference.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include <cstdint>
 #include <qdnslookup.h>

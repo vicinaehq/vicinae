@@ -1,5 +1,5 @@
 #include "ui/omni-painter/omni-painter.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
 #include "utils.hpp"

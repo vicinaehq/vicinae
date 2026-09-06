@@ -1,6 +1,6 @@
 #pragma once
 #include "extensions/vicinae/search-tray-view-host.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include <QCoreApplication>
 
 class SearchTrayCommand : public BuiltinViewCommand<SearchTrayViewHost> {

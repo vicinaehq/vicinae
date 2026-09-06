@@ -6,12 +6,12 @@
 #include "root-search/scripts/script-root-provider.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
-#include "font-service.hpp"
+#include "services/font-service/font-service.hpp"
 #ifdef Q_OS_LINUX
 #include "icon-theme-db/icon-theme-db.hpp"
 #endif
-#include "extension-interval-scheduler.hpp"
-#include "ipc-command-server.hpp"
+#include "extension/extension-interval-scheduler.hpp"
+#include "ipc/ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
 #include "keyboard/layout-resolver.hpp"
@@ -117,7 +117,7 @@
 #include "server.hpp"
 
 #ifdef Q_OS_MACOS
-#include "ipc-command-handler.hpp"
+#include "ipc/ipc-command-handler.hpp"
 #include "ui/quick/macos-chrome-attached.hpp"
 #include <QFileOpenEvent>
 #endif

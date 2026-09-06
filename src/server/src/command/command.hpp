@@ -1,7 +1,7 @@
 #pragma once
-#include "argument.hpp"
-#include "common.hpp"
-#include "preference.hpp"
+#include "command/argument.hpp"
+#include "command/command-types.hpp"
+#include "command/preference.hpp"
 #include "ui/action-panel/action.hpp"
 #include <qobject.h>
 #include <qdebug.h>

@@ -1,8 +1,8 @@
 #include <QCoreApplication>
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "extensions/snippet/manage-snippets-view-host.hpp"
 #include "ui/image/url.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 
 class ManageSnippetsCommand : public BuiltinViewCommand<ManageSnippetsViewHost> {
   QString id() const override { return "manage"; }

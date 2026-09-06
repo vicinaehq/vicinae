@@ -8,7 +8,7 @@
 #include <qtmetamacros.h>
 #include "abstract-app-db.hpp"
 #include "common/types.hpp"
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 
 struct AppListOptions {
   bool sortAlphabetically = true;

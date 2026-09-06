@@ -1,7 +1,7 @@
 #include <QCoreApplication>
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "ui/image/url.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "extensions/snippet/snippet-form-view-host.hpp"
 
 class CreateSnippetCommand : public BuiltinViewCommand<SnippetFormViewHost> {

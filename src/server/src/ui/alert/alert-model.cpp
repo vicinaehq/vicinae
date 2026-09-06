@@ -2,7 +2,7 @@
 #include "ui/views/view-utils.hpp"
 #include "navigation-controller.hpp"
 #include "ui/alert/alert.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 
 AlertModel::AlertModel(NavigationController &nav, QObject *parent) : QObject(parent) {

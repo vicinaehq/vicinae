@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "ui/views/section-source.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "ui/views/view-scope.hpp"
 class SectionListModel : public QAbstractListModel {
   Q_OBJECT

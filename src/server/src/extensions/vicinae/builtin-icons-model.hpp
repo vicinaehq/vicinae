@@ -1,5 +1,5 @@
 #pragma once
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "ui/views/fuzzy-section.hpp"
 #include <QCoreApplication>
 

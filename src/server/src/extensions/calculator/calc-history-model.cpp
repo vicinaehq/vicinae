@@ -1,6 +1,6 @@
 #include "extensions/calculator/calc-history-model.hpp"
 #include "actions/calculator/calculator-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "navigation-controller.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <QCoreApplication>
-#include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "ui/views/edit-keywords-view-host.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"

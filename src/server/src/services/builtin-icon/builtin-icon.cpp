@@ -1,4 +1,4 @@
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 
 const BuiltinIconService::Mapping &BuiltinIconService::mapping() {
   static const std::unordered_map<BuiltinIcon, const char *> iconMap = {

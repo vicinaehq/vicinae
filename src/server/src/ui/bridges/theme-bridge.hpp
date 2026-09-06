@@ -1,7 +1,7 @@
 #pragma once
-#include "font-service.hpp"
+#include "services/font-service/font-service.hpp"
 #include "service-registry.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include <QColor>
 #include <QEvent>

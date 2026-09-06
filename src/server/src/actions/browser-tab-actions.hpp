@@ -1,7 +1,7 @@
 #pragma once
 #include <QCoreApplication>
-#include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"
 #include "actions/shortcut/shortcut-actions.hpp"
 #include "navigation-controller.hpp"

@@ -4,7 +4,7 @@
 #include "common/types.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "services/clipboard/clipboard-mime.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
 #include "ui/views/view-utils.hpp"

@@ -1,5 +1,5 @@
 #include "extensions/shortcut/shortcut-form-view-host.hpp"
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "favicon/favicon-service.hpp"
 #include "navigation-controller.hpp"
 #include "ui/views/view-utils.hpp"

@@ -1,8 +1,8 @@
 #pragma once
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include "common/context.hpp"
 #include "extensions/system/browse-apps-view-host.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "extensions/system/system-run-model.hpp"
 #include "extensions/system/system-run-view-host.hpp"
 #include "theme/colors.hpp"

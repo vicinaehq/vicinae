@@ -1,5 +1,5 @@
 #pragma once
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "extensions/root/root-view-host.hpp"
 
 class RootCommand : public BuiltinViewCommand<RootViewHost> {

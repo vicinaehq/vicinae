@@ -1,5 +1,5 @@
 #include "extensions/vicinae/oauth-token-store-model.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "services/oauth/oauth-service.hpp"

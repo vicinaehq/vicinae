@@ -1,10 +1,10 @@
 #include "script/script-executor-view-host.hpp"
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "navigation-controller.hpp"
 #include "script/script-output-tokenizer.hpp"
 #include "script/script-process.hpp"
 #include "service-registry.hpp"
-#include "font-service.hpp"
+#include "services/font-service/font-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-panel/action.hpp"
 

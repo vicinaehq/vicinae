@@ -1,7 +1,7 @@
 #pragma once
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "navigation-controller.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"

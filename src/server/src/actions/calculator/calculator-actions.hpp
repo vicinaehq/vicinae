@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"

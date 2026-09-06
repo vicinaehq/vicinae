@@ -1,8 +1,8 @@
 #include "extensions/clipboard/clipboard-extension.hpp"
 #include <QCoreApplication>
 #include <chrono>
-#include "builtin_icon.hpp"
-#include "single-view-command-context.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "command/single-view-command-context.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "extensions/clipboard/clipboard-history-command.hpp"

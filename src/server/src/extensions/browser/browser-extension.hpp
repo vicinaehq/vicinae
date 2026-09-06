@@ -1,6 +1,6 @@
 #pragma once
-#include "builtin_icon.hpp"
-#include "command-database.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "command/command-database.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 #include <QCoreApplication>

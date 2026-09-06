@@ -1,8 +1,8 @@
 #pragma once
 #include "../../ui/image/url.hpp"
-#include "command-controller.hpp"
-#include "common.hpp"
-#include "single-view-command-context.hpp"
+#include "command/command-controller.hpp"
+#include "command/command-types.hpp"
+#include "command/single-view-command-context.hpp"
 #include <QCoreApplication>
 
 class RefreshAppsCommand : public BuiltinCallbackCommand {

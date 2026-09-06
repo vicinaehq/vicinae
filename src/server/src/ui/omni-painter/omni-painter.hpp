@@ -1,6 +1,6 @@
 #pragma once
 #include <QPainter>
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include <cstdint>
 
 class OmniPainter : public QPainter {

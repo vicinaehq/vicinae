@@ -1,6 +1,6 @@
 #pragma once
 #include "../image/url.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include <optional>
 #include <qcontainerfwd.h>
 #include <vector>

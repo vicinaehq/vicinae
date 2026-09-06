@@ -3,8 +3,8 @@
 #include <QGuiApplication>
 #include <QEventLoop>
 #include "actions/app/app-actions.hpp"
-#include "builtin_icon.hpp"
-#include "common.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "command/command-types.hpp"
 #include "common/context.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "navigation-controller.hpp"

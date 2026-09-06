@@ -1,6 +1,6 @@
 #include "extensions/vicinae/refresh-apps-command.hpp"
-#include "command-controller.hpp"
-#include "common.hpp"
+#include "command/command-controller.hpp"
+#include "command/command-types.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"

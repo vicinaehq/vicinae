@@ -1,7 +1,7 @@
 #include <QRegularExpression>
 #include <QStringList>
 #include <cmath>
-#include "color-formatter.hpp"
+#include "utils/color-formatter.hpp"
 
 QString ColorFormatter::format(const QColor &color, ColorFormat format) {
   if (!color.isValid()) { return QString(); }

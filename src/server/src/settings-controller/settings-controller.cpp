@@ -1,5 +1,5 @@
 #include "settings-controller/settings-controller.hpp"
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "ui/windows/settings-window.hpp"
 #include <QTimer>
 

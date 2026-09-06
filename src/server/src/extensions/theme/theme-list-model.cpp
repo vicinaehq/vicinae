@@ -1,7 +1,7 @@
 #include "extensions/theme/theme-list-model.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/theme/theme-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "fuzzy/scored.hpp"
 #include "keyboard/keybind.hpp"

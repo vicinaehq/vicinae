@@ -1,9 +1,9 @@
 #pragma once
-#include "command-database.hpp"
-#include "preference.hpp"
+#include "command/command-database.hpp"
+#include "command/preference.hpp"
 #include "services/files-service/file-service.hpp"
 #include "extensions/file/search-files-view-host.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "ui/alert/alert.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"

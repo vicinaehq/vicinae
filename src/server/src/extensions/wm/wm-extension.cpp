@@ -1,5 +1,5 @@
 #include "wm-extension.hpp"
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "service-registry.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -7,8 +7,8 @@
 #include "extensions/wm/switch-windows-view-host.hpp"
 #include "extensions/wm/switch-workspaces-view-host.hpp"
 #include "ui/image/url.hpp"
-#include "single-view-command-context.hpp"
-#include "theme.hpp"
+#include "command/single-view-command-context.hpp"
+#include "theme/theme.hpp"
 #include <qcontainerfwd.h>
 #include "theme/colors.hpp"
 #include <QCoreApplication>

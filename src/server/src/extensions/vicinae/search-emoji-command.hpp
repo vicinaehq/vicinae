@@ -1,9 +1,9 @@
 #pragma once
 #include "glyph/emoji.hpp"
-#include "preference.hpp"
+#include "command/preference.hpp"
 #include "extensions/vicinae/emoji-grid-view-host.hpp"
 #include "ui/image/url.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include "services/paste/paste-service.hpp"
 #include "utils.hpp"
 #include <QCoreApplication>

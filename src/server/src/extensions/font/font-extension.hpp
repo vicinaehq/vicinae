@@ -1,6 +1,6 @@
-#include "command-database.hpp"
+#include "command/command-database.hpp"
 #include "../../ui/image/url.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "browse-fonts-command.hpp"
 #include <QCoreApplication>
 

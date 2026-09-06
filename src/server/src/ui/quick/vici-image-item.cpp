@@ -1,5 +1,5 @@
 #include "ui/quick/vici-image-item.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "ui/image/image-stream.hpp"
 #include <QGuiApplication>
 #include <QQuickWindow>

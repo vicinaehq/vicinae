@@ -1,6 +1,6 @@
 #pragma once
 #include "extensions/font/font-browser-view-host.hpp"
-#include "single-view-command-context.hpp"
+#include "command/single-view-command-context.hpp"
 #include <QCoreApplication>
 
 class BrowseFontsCommand : public BuiltinViewCommand<FontBrowserViewHost> {

@@ -1,6 +1,6 @@
 #pragma once
-#include "command-database.hpp"
-#include "single-view-command-context.hpp"
+#include "command/command-database.hpp"
+#include "command/single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include "markdown-showcase-command.hpp"
 #include <QCoreApplication>

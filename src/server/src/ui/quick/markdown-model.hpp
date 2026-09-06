@@ -1,6 +1,6 @@
 #pragma once
 #include "ui/quick/syntax-highlighter.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include <QAbstractListModel>
 #include <QVariantList>
 #include <QVariantMap>

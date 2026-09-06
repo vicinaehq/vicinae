@@ -1,7 +1,7 @@
 #include "vicinae-store.hpp"
 #include "generated/version.h"
 #include "environment.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include "utils/capabilities.hpp"
 #include <algorithm>

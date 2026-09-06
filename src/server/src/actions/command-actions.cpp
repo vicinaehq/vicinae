@@ -1,4 +1,4 @@
-#include "command-actions.hpp"
+#include "actions/command-actions.hpp"
 #include "navigation-controller.hpp"
 
 void OpenBuiltinCommandAction::execute(ApplicationContext *context) {

@@ -1,5 +1,5 @@
 #include "extensions/snippet/manage-snippets-view-host.hpp"
-#include "placeholder.hpp"
+#include "utils/placeholder.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-service.hpp"
