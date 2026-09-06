@@ -20,6 +20,9 @@ Popup {
     property bool _below: false
     property bool _justClosed: false
 
+    readonly property int anchorGap: 10
+    readonly property int windowEdgeMargin: 8
+
     Timer {
         id: closeTimer
         interval: 2000
@@ -44,7 +47,22 @@ Popup {
         recorder._below = !!below;
         recorder.parent = targetItem;
         recorder.x = targetItem.width / 2 - recorder.width / 2;
-        recorder.y = below ? targetItem.height + 10 : -recorder.height - 10;
+
+        const overlay = recorder.Overlay.overlay;
+        if (recorder.popupType === Popup.Item && overlay) {
+            const pad = (capture.hostWindow?.shadowPadding ?? 0) + recorder.windowEdgeMargin;
+            const pos = targetItem.mapToItem(null, 0, 0);
+            const spaceBelow = overlay.height - pad - (pos.y + targetItem.height + recorder.anchorGap);
+            const spaceAbove = pos.y - recorder.anchorGap - pad;
+            const preferred = recorder._below ? spaceBelow : spaceAbove;
+            const other = recorder._below ? spaceAbove : spaceBelow;
+            if (preferred < recorder.height && other > preferred)
+                recorder._below = !recorder._below;
+            const sceneX = Math.max(pad, Math.min(pos.x + recorder.x, overlay.width - pad - recorder.width));
+            recorder.x = sceneX - pos.x;
+        }
+
+        recorder.y = recorder._below ? targetItem.height + recorder.anchorGap : -recorder.height - recorder.anchorGap;
         recorder.open();
         return true;
     }
@@ -64,6 +82,7 @@ Popup {
 
     contentItem: ShortcutRecorderCapture {
         id: capture
+        readonly property var hostWindow: Window.window
         focus: true
         capturing: recorder.opened
         validateShortcut: recorder.validateShortcut
