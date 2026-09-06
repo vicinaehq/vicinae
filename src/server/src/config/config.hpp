@@ -304,7 +304,7 @@ struct ConfigValue {
   bool popOnBackspace = true;
   bool activateOnSingleClick = false;
   bool wrapNavigation = false;
-#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
+#ifdef Q_OS_LINUX
   bool encryptSensitiveData = false;
 #else
   bool encryptSensitiveData = true;
