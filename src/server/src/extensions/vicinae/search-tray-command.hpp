@@ -1,5 +1,5 @@
 #pragma once
-#include "qml/search-tray-view-host.hpp"
+#include "extensions/vicinae/search-tray-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include <QCoreApplication>
 

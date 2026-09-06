@@ -24,9 +24,9 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
-#include "qml/provider-search-view-host.hpp"
-#include "qml/raycast-store-detail-host.hpp"
-#include "qml/vicinae-store-detail-host.hpp"
+#include "extensions/root/provider-search-view-host.hpp"
+#include "extensions/raycast/raycast-store-detail-host.hpp"
+#include "extensions/vicinae/vicinae-store-detail-host.hpp"
 #include "ui/toast/toast.hpp"
 #include "vicinae.hpp"
 

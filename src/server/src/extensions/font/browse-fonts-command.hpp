@@ -1,5 +1,5 @@
 #pragma once
-#include "qml/font-browser-view-host.hpp"
+#include "extensions/font/font-browser-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include <QCoreApplication>
 

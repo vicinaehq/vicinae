@@ -9,7 +9,7 @@
 
 #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
 #include "extensions/media/player-app.hpp"
-#include "qml/now-playing-view-host.hpp"
+#include "extensions/media/now-playing-view-host.hpp"
 #include "services/media-control/media-control-service.hpp"
 #endif
 

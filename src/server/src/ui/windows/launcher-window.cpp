@@ -22,7 +22,7 @@
 #include "navigation-controller.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "extensions/vicinae/bug-report-url.hpp"
-#include "qml/vicinae-store-view-host.hpp"
+#include "extensions/vicinae/vicinae-store-view-host.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "config/config.hpp"

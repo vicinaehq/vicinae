@@ -2,7 +2,7 @@
 #include "command-database.hpp"
 #include "preference.hpp"
 #include "services/files-service/file-service.hpp"
-#include "qml/search-files-view-host.hpp"
+#include "extensions/file/search-files-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "ui/alert/alert.hpp"
 #include "utils.hpp"

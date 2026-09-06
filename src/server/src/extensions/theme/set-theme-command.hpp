@@ -1,5 +1,5 @@
 #pragma once
-#include "qml/theme-view-host.hpp"
+#include "extensions/theme/theme-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "ui/image/url.hpp"
 #include <QCoreApplication>

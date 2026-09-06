@@ -1,6 +1,6 @@
 #include "command-database.hpp"
 #include "single-view-command-context.hpp"
-#include "qml/create-extension-view-host.hpp"
+#include "extensions/developer/create-extension-view-host.hpp"
 #include "theme.hpp"
 #include <QCoreApplication>
 

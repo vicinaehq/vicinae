@@ -1,5 +1,5 @@
 #pragma once
-#include "qml/menu-bar-search-view-host.hpp"
+#include "extensions/vicinae/menu-bar-search-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "theme/colors.hpp"
 #include <QCoreApplication>

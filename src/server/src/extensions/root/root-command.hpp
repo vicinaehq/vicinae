@@ -1,6 +1,6 @@
 #pragma once
 #include "single-view-command-context.hpp"
-#include "qml/root-view-host.hpp"
+#include "extensions/root/root-view-host.hpp"
 
 class RootCommand : public BuiltinViewCommand<RootViewHost> {
   QString id() const override { return "root"; }

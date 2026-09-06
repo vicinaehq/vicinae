@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "qml/clipboard-history-view-host.hpp"
+#include "extensions/clipboard/history/clipboard-history-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <qjsonobject.h>

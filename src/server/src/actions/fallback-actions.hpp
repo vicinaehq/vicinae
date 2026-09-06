@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "qml/manage-fallback-view-host.hpp"
+#include "extensions/vicinae/manage-fallback-view-host.hpp"
 #include "ui/action-panel/action.hpp"
 
 class ManageFallbackActions : public AbstractAction {

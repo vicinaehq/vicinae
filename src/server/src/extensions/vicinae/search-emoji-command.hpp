@@ -1,7 +1,7 @@
 #pragma once
 #include "glyph/emoji.hpp"
 #include "preference.hpp"
-#include "qml/emoji-grid-view-host.hpp"
+#include "extensions/vicinae/emoji-grid-view-host.hpp"
 #include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
 #include "services/paste/paste-service.hpp"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "qml/installed-extensions-view-host.hpp"
+#include "extensions/vicinae/installed-extensions-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include <QCoreApplication>
 

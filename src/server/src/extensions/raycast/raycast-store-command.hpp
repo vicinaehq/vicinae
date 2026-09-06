@@ -1,5 +1,5 @@
-#include "qml/raycast-store-view-host.hpp"
-#include "qml/store-intro-view-host.hpp"
+#include "extensions/raycast/raycast-store-view-host.hpp"
+#include "extensions/vicinae/store-intro-view-host.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "single-view-command-context.hpp"
 #include "theme.hpp"

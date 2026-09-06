@@ -1,6 +1,6 @@
 #pragma once
-#include "qml/store-intro-view-host.hpp"
-#include "qml/vicinae-store-view-host.hpp"
+#include "extensions/vicinae/store-intro-view-host.hpp"
+#include "extensions/vicinae/vicinae-store-view-host.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <QCoreApplication>

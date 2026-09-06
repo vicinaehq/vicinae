@@ -1,10 +1,10 @@
 #pragma once
 #include "command-database.hpp"
 #include "common/context.hpp"
-#include "qml/browse-apps-view-host.hpp"
+#include "extensions/system/browse-apps-view-host.hpp"
 #include "single-view-command-context.hpp"
-#include "qml/system-run-model.hpp"
-#include "qml/system-run-view-host.hpp"
+#include "extensions/system/system-run-model.hpp"
+#include "extensions/system/system-run-view-host.hpp"
 #include "theme/colors.hpp"
 #include "utils.hpp"
 #include "services/app-service/app-service.hpp"
@@ -13,7 +13,7 @@
 
 #ifndef Q_OS_WIN
 #include "xdgpp/desktop-entry/exec.hpp"
-#include "qml/set-default-terminal-view-host.hpp"
+#include "extensions/system/set-default-terminal-view-host.hpp"
 #endif
 
 namespace {

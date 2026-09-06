@@ -1,7 +1,7 @@
 #pragma once
 #include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
-#include "qml/manage-fallback-view-host.hpp"
+#include "extensions/vicinae/manage-fallback-view-host.hpp"
 #include <QCoreApplication>
 
 class ManageFallbackCommand : public BuiltinViewCommand<ManageFallbackViewHost> {

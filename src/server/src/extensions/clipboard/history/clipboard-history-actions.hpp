@@ -2,7 +2,7 @@
 #include <QCoreApplication>
 #include "builtin_icon.hpp"
 #include "clipboard-actions.hpp"
-#include "qml/edit-keywords-view-host.hpp"
+#include "ui/views/edit-keywords-view-host.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/alert/alert.hpp"
