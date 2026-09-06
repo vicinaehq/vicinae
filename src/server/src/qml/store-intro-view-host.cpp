@@ -1,7 +1,7 @@
-#include "store-intro-view-host.hpp"
+#include "qml/store-intro-view-host.hpp"
 #include "navigation-controller.hpp"
-#include "view-utils.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/views/view-utils.hpp"
+#include "ui/action-panel/action.hpp"
 
 StoreIntroViewHost::StoreIntroViewHost(const QString &markdown, const ImageURL &icon,
                                        const QString &actionLabel, std::function<void()> continueAction)

@@ -1,5 +1,5 @@
 #pragma once
-#include "section-source.hpp"
+#include "ui/views/section-source.hpp"
 #include "services/raycast/raycast-store.hpp"
 
 class ExtensionRegistry;

@@ -1,5 +1,5 @@
-#include "system-run-view-host.hpp"
-#include "system-run-model.hpp"
+#include "qml/system-run-view-host.hpp"
+#include "qml/system-run-model.hpp"
 #include <sstream>
 #ifndef Q_OS_WIN
 #include "xdgpp/desktop-entry/exec.hpp"

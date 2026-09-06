@@ -1,11 +1,11 @@
-#include "create-extension-view-host.hpp"
-#include "create-extension-success-view-host.hpp"
-#include "view-utils.hpp"
+#include "qml/create-extension-view-host.hpp"
+#include "qml/create-extension-success-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include "utils/utils.hpp"
 #include <QUrl>
 #include <filesystem>

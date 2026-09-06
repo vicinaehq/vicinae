@@ -5,7 +5,7 @@
 #include "generated/tsapi.hpp"
 #include "glaze-qt.hpp"
 #include "navigation-controller.hpp"
-#include "qml/extension-view-host.hpp"
+#include "extension/views/extension-view-host.hpp"
 #include "services/desktop-notification/desktop-notification-client.hpp"
 #include "services/selection/abstract-selection-service.hpp"
 #include "services/toast/toast-service.hpp"

@@ -1,4 +1,4 @@
-#include "builtin-icons-model.hpp"
+#include "qml/builtin-icons-model.hpp"
 #include "clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 

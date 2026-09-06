@@ -1,5 +1,5 @@
 #pragma once
-#include "qml/bridge-view.hpp"
+#include "ui/views/bridge-view.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <QCoreApplication>

@@ -1,7 +1,7 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
 #include "common/context.hpp"
-#include "extension-error-view-host.hpp"
+#include "extension/views/extension-error-view-host.hpp"
 #include "extension/services/application-service.hpp"
 #include "extension/services/ext-browser-extension-service.hpp"
 #include "extension/services/clipboard-service.hpp"

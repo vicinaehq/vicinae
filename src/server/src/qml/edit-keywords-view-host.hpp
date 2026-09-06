@@ -1,5 +1,5 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "ui/views/bridge-view.hpp"
 #include <functional>
 
 class EditKeywordsViewHost : public FormViewBase {

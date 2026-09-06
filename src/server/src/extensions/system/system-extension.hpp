@@ -13,7 +13,7 @@
 
 #ifndef Q_OS_WIN
 #include "xdgpp/desktop-entry/exec.hpp"
-#include "set-default-terminal-view-host.hpp"
+#include "qml/set-default-terminal-view-host.hpp"
 #endif
 
 namespace {

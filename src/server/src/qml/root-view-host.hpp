@@ -1,6 +1,6 @@
 #pragma once
-#include "bridge-view.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/views/bridge-view.hpp"
+#include "ui/action-panel/action.hpp"
 #include <qtimer.h>
 
 class RootSearchModel;

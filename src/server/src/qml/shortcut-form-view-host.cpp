@@ -1,14 +1,14 @@
-#include "shortcut-form-view-host.hpp"
+#include "qml/shortcut-form-view-host.hpp"
 #include "builtin_icon.hpp"
 #include "favicon/favicon-service.hpp"
 #include "navigation-controller.hpp"
-#include "view-utils.hpp"
+#include "ui/views/view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/shortcut/shortcut.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <QFutureWatcher>
 #include <QUrl>
 

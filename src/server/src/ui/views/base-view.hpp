@@ -2,7 +2,7 @@
 #include "argument.hpp"
 #include "command-controller.hpp"
 #include "common.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <QObject>
 #include <vector>
 

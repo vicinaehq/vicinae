@@ -1,6 +1,6 @@
 #pragma once
-#include "browse-apps-model.hpp"
-#include "list-view-host.hpp"
+#include "qml/browse-apps-model.hpp"
+#include "ui/views/list-view-host.hpp"
 
 class BrowseAppsViewHost : public ListViewHost {
   Q_OBJECT

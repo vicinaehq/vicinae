@@ -1,4 +1,4 @@
-#include "local-storage-view-host.hpp"
+#include "qml/local-storage-view-host.hpp"
 #include "service-registry.hpp"
 
 void LocalStorageViewHost::initialize() {

@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <qobject.h>
 
 class SetThemeAction : public AbstractAction {

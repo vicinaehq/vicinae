@@ -2,7 +2,7 @@
 #include "argument.hpp"
 #include "common.hpp"
 #include "preference.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <qobject.h>
 #include <qdebug.h>
 #include "common/entrypoint.hpp"

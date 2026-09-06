@@ -1,7 +1,7 @@
 #pragma once
-#include "completion-model.hpp"
-#include "list-view-host.hpp"
-#include "search-files-model.hpp"
+#include "ui/quick/completion-model.hpp"
+#include "ui/views/list-view-host.hpp"
+#include "qml/search-files-model.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include <QStringList>
 #include <QTimer>

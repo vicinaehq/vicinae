@@ -1,7 +1,7 @@
 #pragma once
 #include <QCoreApplication>
 #include <qstring.h>
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include "ui/image/url.hpp"
 
 class UninstallExtensionAction : public AbstractAction {

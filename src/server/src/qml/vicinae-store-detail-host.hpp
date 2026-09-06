@@ -1,5 +1,5 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "ui/views/bridge-view.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 #include <QVariantList>
 #include <QVariantMap>

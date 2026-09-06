@@ -1,9 +1,9 @@
 #pragma once
 #include "builtin_icon.hpp"
-#include "list-view-host.hpp"
-#include "manage-snippets-model.hpp"
+#include "ui/views/list-view-host.hpp"
+#include "qml/manage-snippets-model.hpp"
 #include "services/snippet/snippet-expander.hpp"
-#include "view-utils.hpp"
+#include "ui/views/view-utils.hpp"
 #include <QVariantList>
 
 class SnippetService;

@@ -2,7 +2,7 @@
 #include "services/app-service/app-service.hpp"
 #include <algorithm>
 #include <ranges>
-#include "switch-workspaces-view-host.hpp"
+#include "qml/switch-workspaces-view-host.hpp"
 
 void SwitchWorkspacesViewHost::initialize() {
   BaseView::initialize();

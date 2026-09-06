@@ -2,7 +2,7 @@
 #include "actions/app/app-actions.hpp"
 #include "builtin_icon.hpp"
 #include "qml/browser-tabs-view-host.hpp"
-#include "qml/empty-view-host.hpp"
+#include "ui/views/empty-view-host.hpp"
 #include "qml/shortcut-form-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "services/toast/toast-service.hpp"

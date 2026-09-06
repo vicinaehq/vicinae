@@ -12,7 +12,7 @@
 #include "qml/shortcut-form-view-host.hpp"
 #include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "theme/colors.hpp"

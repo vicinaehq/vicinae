@@ -1,7 +1,7 @@
 #pragma once
 #include <QCoreApplication>
 #include "command-database.hpp"
-#include "manage-shortcuts-view-host.hpp"
+#include "qml/manage-shortcuts-view-host.hpp"
 #include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
 #include "qml/shortcut-form-view-host.hpp"

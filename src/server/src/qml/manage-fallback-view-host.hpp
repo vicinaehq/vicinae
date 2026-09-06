@@ -1,6 +1,6 @@
 #pragma once
-#include "manage-fallback-model.hpp"
-#include "list-view-host.hpp"
+#include "qml/manage-fallback-model.hpp"
+#include "ui/views/list-view-host.hpp"
 
 class ManageFallbackViewHost : public ListViewHost {
   Q_OBJECT

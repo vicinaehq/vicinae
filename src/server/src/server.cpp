@@ -34,9 +34,9 @@
 #endif
 #include "service-registry.hpp"
 #include "services/window-material/window-material-manager.hpp"
-#include "qml/window-material-attached.hpp"
+#include "ui/quick/window-material-attached.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
-#include "qml/shortcut-inhibitor-attached.hpp"
+#include "ui/quick/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/browser-extension-service.hpp"
 #ifdef AUTO_INSTALL_BROWSER_MANIFESTS
@@ -100,8 +100,8 @@
 #endif
 #include "settings-controller/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
-#include "qml/launcher-window.hpp"
-#include "qml/onboarding-window.hpp"
+#include "ui/windows/launcher-window.hpp"
+#include "ui/windows/onboarding-window.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include "generated/version.h"
@@ -118,7 +118,7 @@
 
 #ifdef Q_OS_MACOS
 #include "ipc-command-handler.hpp"
-#include "qml/macos-chrome-attached.hpp"
+#include "ui/quick/macos-chrome-attached.hpp"
 #include <QFileOpenEvent>
 #endif
 

@@ -1,4 +1,4 @@
-#include "calc-history-view-host.hpp"
+#include "qml/calc-history-view-host.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "service-registry.hpp"

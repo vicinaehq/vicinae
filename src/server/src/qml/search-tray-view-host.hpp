@@ -2,13 +2,13 @@
 #include "builtin_icon.hpp"
 #include "common/context.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
-#include "mono-list-view-host.hpp"
+#include "ui/views/mono-list-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/tray-host/abstract-tray-host.hpp"
 #include "theme/colors.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
+#include "ui/action-panel/action.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include <QBuffer>
 #include <QCoreApplication>

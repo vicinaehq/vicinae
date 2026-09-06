@@ -1,11 +1,11 @@
-#include "raycast-store-model.hpp"
+#include "qml/raycast-store-model.hpp"
 #include "actions/extension/extension-actions.hpp"
-#include "raycast-store-detail-host.hpp"
+#include "qml/raycast-store-detail-host.hpp"
 #include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
-#include "view-utils.hpp"
+#include "ui/views/view-utils.hpp"
 #include <QCoreApplication>
 
 void RaycastStoreSection::setEntries(const std::vector<Raycast::Extension> &extensions,

@@ -1,4 +1,4 @@
-#include "oauth-token-store-model.hpp"
+#include "qml/oauth-token-store-model.hpp"
 #include "clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"

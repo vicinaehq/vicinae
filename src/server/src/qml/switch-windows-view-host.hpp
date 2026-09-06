@@ -1,6 +1,6 @@
 #pragma once
-#include "list-view-host.hpp"
-#include "switch-windows-model.hpp"
+#include "ui/views/list-view-host.hpp"
+#include "qml/switch-windows-model.hpp"
 
 class SwitchWindowsViewHost : public ListViewHost {
   Q_OBJECT

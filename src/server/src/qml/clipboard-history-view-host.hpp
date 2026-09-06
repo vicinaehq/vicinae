@@ -1,10 +1,10 @@
 #pragma once
-#include "clipboard-history-model.hpp"
-#include "bridge-view.hpp"
-#include "completion-model.hpp"
-#include "section-list-model.hpp"
+#include "qml/clipboard-history-model.hpp"
+#include "ui/views/bridge-view.hpp"
+#include "ui/quick/completion-model.hpp"
+#include "ui/views/section-list-model.hpp"
 #include "services/clipboard/clipboard-db.hpp"
-#include "view-utils.hpp"
+#include "ui/views/view-utils.hpp"
 
 class ClipboardHistoryController;
 class ClipboardService;

@@ -1,5 +1,5 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "ui/views/bridge-view.hpp"
 #include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
 #include <filesystem>
 

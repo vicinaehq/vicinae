@@ -1,6 +1,6 @@
 #pragma once
-#include "calc-history-model.hpp"
-#include "list-view-host.hpp"
+#include "qml/calc-history-model.hpp"
+#include "ui/views/list-view-host.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include <QCoreApplication>
 #include <QFutureWatcher>

@@ -1,8 +1,8 @@
 #pragma once
-#include "bridge-view.hpp"
-#include "completion-model.hpp"
-#include "font-grid-model.hpp"
-#include "view-scope.hpp"
+#include "ui/views/bridge-view.hpp"
+#include "ui/quick/completion-model.hpp"
+#include "qml/font-grid-model.hpp"
+#include "ui/views/view-scope.hpp"
 #include <QCoreApplication>
 #include <QStringList>
 

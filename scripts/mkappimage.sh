@@ -39,7 +39,7 @@ done
 LIBSECRET=/usr/lib/$(uname -m)-linux-gnu/libsecret-1.so.0
 [ -e "$LIBSECRET" ] || die "$LIBSECRET not found: install libsecret-1-dev in the build image"
 
-export QML_SOURCES_PATHS=$PWD/src/server/src/qml/qml
+export QML_SOURCES_PATHS=$PWD/src/server/src/ui/qml
 export EXTRA_PLATFORM_PLUGINS=libqwayland.so
 export EXTRA_QT_PLUGINS=waylandcompositor
 

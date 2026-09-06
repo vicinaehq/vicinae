@@ -1,9 +1,9 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "ui/views/bridge-view.hpp"
 #include "config/config.hpp"
-#include "section-list-model.hpp"
+#include "ui/views/section-list-model.hpp"
 #include "theme.hpp"
-#include "theme-list-model.hpp"
+#include "qml/theme-list-model.hpp"
 
 class ThemeViewHost : public ViewHostBase {
   Q_OBJECT

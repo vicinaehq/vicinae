@@ -1,6 +1,6 @@
 #pragma once
 #include "builtin_icon.hpp"
-#include "fuzzy-section.hpp"
+#include "ui/views/fuzzy-section.hpp"
 #include <QCoreApplication>
 
 struct IconEntry {

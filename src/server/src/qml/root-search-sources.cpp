@@ -1,4 +1,4 @@
-#include "root-search-sources.hpp"
+#include "qml/root-search-sources.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "builtin_icon.hpp"

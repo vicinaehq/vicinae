@@ -1,5 +1,5 @@
 #pragma once
-#include "section-source.hpp"
+#include "ui/views/section-source.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"

@@ -1,7 +1,7 @@
 #pragma once
-#include "app-selector-model.hpp"
-#include "bridge-view.hpp"
-#include "completion-model.hpp"
+#include "ui/views/app-selector-model.hpp"
+#include "ui/views/bridge-view.hpp"
+#include "ui/quick/completion-model.hpp"
 #include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>

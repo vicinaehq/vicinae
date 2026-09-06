@@ -1,12 +1,12 @@
-#include "snippet-form-view-host.hpp"
+#include "qml/snippet-form-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "placeholder.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action.hpp"
-#include "view-utils.hpp"
+#include "ui/action-panel/action.hpp"
+#include "ui/views/view-utils.hpp"
 #include <QUrl>
 
 SnippetFormViewHost::SnippetFormViewHost() : FormViewBase() {}

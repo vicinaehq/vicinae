@@ -4,7 +4,7 @@
 #include "github-release.hpp"
 #include "http-client.hpp"
 #include "semver.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <QCoreApplication>
 #include <QObject>
 #include <QTimer>

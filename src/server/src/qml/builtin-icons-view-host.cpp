@@ -1,5 +1,5 @@
-#include "builtin-icons-view-host.hpp"
-#include "builtin-icons-model.hpp"
+#include "qml/builtin-icons-view-host.hpp"
+#include "qml/builtin-icons-model.hpp"
 
 void BuiltinIconsViewHost::initialize() {
   BaseView::initialize();

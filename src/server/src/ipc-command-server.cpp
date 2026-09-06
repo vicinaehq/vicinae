@@ -10,7 +10,7 @@
 #include "services/browser-extension-service.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/files-service/file-service.hpp"
-#include "qml/dmenu-view-host.hpp"
+#include "ui/views/dmenu-view-host.hpp"
 #include "utils.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include <algorithm>

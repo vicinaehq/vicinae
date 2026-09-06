@@ -1,4 +1,4 @@
-#include "browse-apps-model.hpp"
+#include "qml/browse-apps-model.hpp"
 
 #include <utility>
 #include "actions/app/app-actions.hpp"

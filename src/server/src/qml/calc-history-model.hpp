@@ -1,5 +1,5 @@
 #pragma once
-#include "section-source.hpp"
+#include "ui/views/section-source.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include <QCoreApplication>
 #include <vector>

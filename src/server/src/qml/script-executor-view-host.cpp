@@ -1,4 +1,4 @@
-#include "script-executor-view-host.hpp"
+#include "qml/script-executor-view-host.hpp"
 #include "builtin_icon.hpp"
 #include "navigation-controller.hpp"
 #include "script/script-output-tokenizer.hpp"
@@ -6,7 +6,7 @@
 #include "service-registry.hpp"
 #include "font-service.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 static QString tokenToHtml(const QString &rawOutput) {
   ScriptOutputTokenizer tokenizer(rawOutput);

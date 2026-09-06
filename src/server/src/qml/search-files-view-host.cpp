@@ -1,8 +1,8 @@
-#include "search-files-view-host.hpp"
+#include "qml/search-files-view-host.hpp"
 #include "service-registry.hpp"
 #include "services/files-service/file-service.hpp"
 #include "utils/utils.hpp"
-#include "view-utils.hpp"
+#include "ui/views/view-utils.hpp"
 #include <common/file-category.hpp>
 #include <QFileInfo>
 #include <ranges>

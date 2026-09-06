@@ -1,5 +1,5 @@
 #pragma once
-#include "fuzzy-section.hpp"
+#include "ui/views/fuzzy-section.hpp"
 #include "services/shortcut/shortcut.hpp"
 #include <QCoreApplication>
 #include <memory>

@@ -2,7 +2,7 @@
 #include <QCoreApplication>
 #include "service-registry.hpp"
 #include "services/window-manager/window-manager.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include "ui/image/url.hpp"
 
 class FocusWindowAction : public AbstractAction {

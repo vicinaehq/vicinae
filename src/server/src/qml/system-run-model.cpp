@@ -1,4 +1,4 @@
-#include "system-run-model.hpp"
+#include "qml/system-run-model.hpp"
 #include "actions/app/app-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "service-registry.hpp"

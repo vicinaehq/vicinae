@@ -1,17 +1,17 @@
-#include "font-grid-model.hpp"
+#include "qml/font-grid-model.hpp"
 #include "clipboard-actions.hpp"
 #include "extend/grid-model.hpp"
 #include "common/context.hpp"
 #include "config/config.hpp"
-#include "font-demo-view-host.hpp"
+#include "qml/font-demo-view-host.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
+#include "ui/action-panel/action.hpp"
 #include "ui/image/url.hpp"
-#include "view-utils.hpp"
+#include "ui/views/view-utils.hpp"
 #include <QCoreApplication>
 
 namespace {

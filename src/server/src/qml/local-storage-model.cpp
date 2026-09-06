@@ -1,8 +1,8 @@
-#include "local-storage-model.hpp"
-#include "local-storage-view-host.hpp"
+#include "qml/local-storage-model.hpp"
+#include "qml/local-storage-view-host.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 std::optional<ImageURL> LocalStorageNamespaceSection::displayIcon(const QString &) const {
   return ImageURL::builtin(BuiltinIcon::Coin);

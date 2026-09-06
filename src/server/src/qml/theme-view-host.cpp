@@ -1,4 +1,4 @@
-#include "theme-view-host.hpp"
+#include "qml/theme-view-host.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "fuzzy/scored.hpp"
 #include "service-registry.hpp"

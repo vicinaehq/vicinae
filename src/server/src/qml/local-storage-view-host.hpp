@@ -1,6 +1,6 @@
 #pragma once
-#include "list-view-host.hpp"
-#include "local-storage-model.hpp"
+#include "ui/views/list-view-host.hpp"
+#include "qml/local-storage-model.hpp"
 
 class LocalStorageViewHost : public ListViewHost {
   Q_OBJECT

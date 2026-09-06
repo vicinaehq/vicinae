@@ -1,4 +1,4 @@
-#include "theme-list-model.hpp"
+#include "qml/theme-list-model.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/theme/theme-actions.hpp"
 #include "clipboard-actions.hpp"

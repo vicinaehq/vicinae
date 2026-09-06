@@ -1,5 +1,5 @@
-#include "manage-fallback-view-host.hpp"
-#include "manage-fallback-model.hpp"
+#include "qml/manage-fallback-view-host.hpp"
+#include "qml/manage-fallback-model.hpp"
 #include "service-registry.hpp"
 
 void ManageFallbackViewHost::initialize() {

@@ -1,6 +1,6 @@
 #pragma once
-#include "oauth-token-store-model.hpp"
-#include "list-view-host.hpp"
+#include "qml/oauth-token-store-model.hpp"
+#include "ui/views/list-view-host.hpp"
 
 class OAuthTokenStoreViewHost : public ListViewHost {
   Q_OBJECT

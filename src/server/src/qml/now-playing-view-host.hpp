@@ -4,11 +4,11 @@
 #include "common/context.hpp"
 #include "extensions/media/player-app.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
-#include "mono-list-view-host.hpp"
+#include "ui/views/mono-list-view-host.hpp"
 #include "services/media-control/media-control-service.hpp"
 #include "theme/colors.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
+#include "ui/action-panel/action.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 
 template <> struct fuzzy::FuzzySearchable<MediaPlayer> {

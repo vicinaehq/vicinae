@@ -1,5 +1,5 @@
-#include "installed-extensions-view-host.hpp"
-#include "installed-extensions-model.hpp"
+#include "qml/installed-extensions-view-host.hpp"
+#include "qml/installed-extensions-model.hpp"
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 

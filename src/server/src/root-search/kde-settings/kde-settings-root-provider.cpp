@@ -3,7 +3,7 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "service-registry.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
 #include "ui/image/url.hpp"
 
 static const QString KCM_ID_PREFIX = QStringLiteral("kcm_");

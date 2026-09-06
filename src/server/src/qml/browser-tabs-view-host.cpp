@@ -1,5 +1,5 @@
-#include "browser-tabs-view-host.hpp"
-#include "browser-tabs-model.hpp"
+#include "qml/browser-tabs-view-host.hpp"
+#include "qml/browser-tabs-model.hpp"
 #include "service-registry.hpp"
 
 void BrowserTabsViewHost::initialize() {

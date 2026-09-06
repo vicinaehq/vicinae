@@ -1,4 +1,4 @@
-#include "vicinae-store-view-host.hpp"
+#include "qml/vicinae-store-view-host.hpp"
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"

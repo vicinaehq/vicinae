@@ -1,4 +1,4 @@
-#include "switch-windows-view-host.hpp"
+#include "qml/switch-windows-view-host.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/window-manager/window-manager.hpp"

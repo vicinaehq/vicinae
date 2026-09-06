@@ -1,6 +1,6 @@
 #pragma once
-#include "root-search-sources.hpp"
-#include "section-list-model.hpp"
+#include "qml/root-search-sources.hpp"
+#include "ui/views/section-list-model.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include <QFutureWatcher>

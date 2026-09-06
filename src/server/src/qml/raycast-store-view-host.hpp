@@ -1,7 +1,7 @@
 #pragma once
-#include "raycast-store-model.hpp"
-#include "section-list-model.hpp"
-#include "bridge-view.hpp"
+#include "qml/raycast-store-model.hpp"
+#include "ui/views/section-list-model.hpp"
+#include "ui/views/bridge-view.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include <QFutureWatcher>
 #include <QTimer>

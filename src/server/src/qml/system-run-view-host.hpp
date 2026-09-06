@@ -1,7 +1,7 @@
 #pragma once
 #include "program-db/program-db.hpp"
-#include "system-run-model.hpp"
-#include "list-view-host.hpp"
+#include "qml/system-run-model.hpp"
+#include "ui/views/list-view-host.hpp"
 
 class SystemRunViewHost : public ListViewHost {
   Q_OBJECT

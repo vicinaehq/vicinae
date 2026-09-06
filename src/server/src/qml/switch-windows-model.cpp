@@ -1,4 +1,4 @@
-#include "switch-windows-model.hpp"
+#include "qml/switch-windows-model.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/wm/window-actions.hpp"
 

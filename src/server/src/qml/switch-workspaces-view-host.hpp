@@ -1,6 +1,6 @@
 #pragma once
-#include "list-view-host.hpp"
-#include "switch-workspaces-model.hpp"
+#include "ui/views/list-view-host.hpp"
+#include "qml/switch-workspaces-model.hpp"
 
 class SwitchWorkspacesViewHost : public ListViewHost {
   Q_OBJECT

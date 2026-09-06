@@ -1,5 +1,5 @@
-#include "browse-apps-view-host.hpp"
-#include "browse-apps-model.hpp"
+#include "qml/browse-apps-view-host.hpp"
+#include "qml/browse-apps-model.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 

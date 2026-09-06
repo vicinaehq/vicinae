@@ -1,10 +1,10 @@
-#include "root-view-host.hpp"
+#include "qml/root-view-host.hpp"
 #include "lib/figura/src/utils.hpp"
-#include "root-search-model.hpp"
-#include "section-source.hpp"
+#include "qml/root-search-model.hpp"
+#include "ui/views/section-source.hpp"
 #include "service-registry.hpp"
 #include "services/keybinding/keybinding-service.hpp"
-#include "view-scope.hpp"
+#include "ui/views/view-scope.hpp"
 #include <algorithm>
 #include <qevent.h>
 

@@ -1,6 +1,6 @@
 #pragma once
-#include "installed-extensions-model.hpp"
-#include "list-view-host.hpp"
+#include "qml/installed-extensions-model.hpp"
+#include "ui/views/list-view-host.hpp"
 
 class InstalledExtensionsViewHost : public ListViewHost {
   Q_OBJECT

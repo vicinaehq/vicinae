@@ -1,6 +1,6 @@
 #include "settings-controller/settings-controller.hpp"
 #include "common.hpp"
-#include "qml/settings-window.hpp"
+#include "ui/windows/settings-window.hpp"
 #include <QTimer>
 
 SettingsController::SettingsController(ApplicationContext &ctx) : m_ctx(ctx) {}

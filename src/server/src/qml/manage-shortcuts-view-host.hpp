@@ -1,6 +1,6 @@
 #pragma once
-#include "list-view-host.hpp"
-#include "manage-shortcuts-model.hpp"
+#include "ui/views/list-view-host.hpp"
+#include "qml/manage-shortcuts-model.hpp"
 #include <QVariantList>
 #include <memory>
 

@@ -1,4 +1,4 @@
-#include "raycast-store-view-host.hpp"
+#include "qml/raycast-store-view-host.hpp"
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"

@@ -1,5 +1,5 @@
-#include "provider-search-view-host.hpp"
-#include "provider-search-model.hpp"
+#include "qml/provider-search-view-host.hpp"
+#include "qml/provider-search-model.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 

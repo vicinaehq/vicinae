@@ -1,4 +1,4 @@
-#include "calc-history-model.hpp"
+#include "qml/calc-history-model.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "navigation-controller.hpp"

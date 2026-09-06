@@ -1,4 +1,4 @@
-#include "clipboard-history-model.hpp"
+#include "qml/clipboard-history-model.hpp"
 #include "actions/app/app-actions.hpp"
 #include "common/context.hpp"
 #include "extensions/clipboard/history/clipboard-history-actions.hpp"
@@ -9,7 +9,7 @@
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/paste/paste-service.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include "utils/utils.hpp"
 #include <QCoreApplication>
 #include <QDateTime>

@@ -4,7 +4,7 @@
 #include "common/context.hpp"
 #include "common/entrypoint.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include "utils/capabilities.hpp"
 
 class DisableItemAction : public AbstractAction {

@@ -1,6 +1,6 @@
 #pragma once
-#include "bridge-view.hpp"
-#include "completion-model.hpp"
+#include "ui/views/bridge-view.hpp"
+#include "ui/quick/completion-model.hpp"
 #include "services/snippet/snippet-db.hpp"
 #include <optional>
 

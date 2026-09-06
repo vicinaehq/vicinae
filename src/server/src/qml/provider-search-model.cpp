@@ -1,4 +1,4 @@
-#include "provider-search-model.hpp"
+#include "qml/provider-search-model.hpp"
 #include "service-registry.hpp"
 
 void ProviderSearchSection::setItems(std::vector<RootItemManager::ScoredItem> items) {

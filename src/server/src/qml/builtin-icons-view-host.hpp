@@ -1,6 +1,6 @@
 #pragma once
-#include "builtin-icons-model.hpp"
-#include "list-view-host.hpp"
+#include "qml/builtin-icons-model.hpp"
+#include "ui/views/list-view-host.hpp"
 
 class BuiltinIconsViewHost : public ListViewHost {
   Q_OBJECT

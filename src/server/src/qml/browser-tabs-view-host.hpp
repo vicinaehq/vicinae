@@ -1,6 +1,6 @@
 #pragma once
-#include "browser-tabs-model.hpp"
-#include "list-view-host.hpp"
+#include "qml/browser-tabs-model.hpp"
+#include "ui/views/list-view-host.hpp"
 
 class BrowserTabsViewHost : public ListViewHost {
   Q_OBJECT

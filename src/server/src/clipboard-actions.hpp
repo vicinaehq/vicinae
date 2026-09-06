@@ -8,7 +8,7 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/app-runtime/app-runtime.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 class CopyToClipboardAction : public AbstractAction {
   Q_DECLARE_TR_FUNCTIONS(CopyToClipboardAction)

@@ -3,7 +3,7 @@
 #include "service-registry.hpp"
 #include "generated/tsapi.hpp"
 #include "overlay-controller/overlay-controller.hpp"
-#include "qml/oauth-overlay-host.hpp"
+#include "extension/views/oauth-overlay-host.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include <QFutureWatcher>
 #include <QPointer>

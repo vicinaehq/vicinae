@@ -1,7 +1,7 @@
 #pragma once
 #include <QCoreApplication>
 #include "qml/manage-fallback-view-host.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 class ManageFallbackActions : public AbstractAction {
   void execute(ApplicationContext *ctx) override {

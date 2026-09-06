@@ -1,4 +1,4 @@
-#include "browser-tabs-model.hpp"
+#include "qml/browser-tabs-model.hpp"
 #include "actions/browser-tab-actions.hpp"
 
 QString BrowserTabsSection::displayTitle(const BrowserTab &tab) const { return tab.host(); }

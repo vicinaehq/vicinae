@@ -1,6 +1,6 @@
 #pragma once
 #include "common/paginated.hpp"
-#include "section-source.hpp"
+#include "ui/views/section-source.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include <functional>
 

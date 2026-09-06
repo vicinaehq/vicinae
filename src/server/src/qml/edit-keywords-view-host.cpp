@@ -1,8 +1,8 @@
-#include "edit-keywords-view-host.hpp"
+#include "qml/edit-keywords-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 EditKeywordsViewHost::EditKeywordsViewHost(LoadFn loadKeywords, SaveFn saveKeywords, const QString &infoText)
     : FormViewBase(), m_loadKeywords(std::move(loadKeywords)), m_saveKeywords(std::move(saveKeywords)),

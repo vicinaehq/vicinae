@@ -3,7 +3,7 @@
 #include "builtin_icon.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/app-service/app-service.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 class OpenAppAction : public AbstractAction {
 

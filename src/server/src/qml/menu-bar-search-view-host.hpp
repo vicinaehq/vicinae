@@ -2,15 +2,15 @@
 #include "builtin_icon.hpp"
 #include "common/context.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
-#include "fuzzy-section.hpp"
-#include "list-view-host.hpp"
+#include "ui/views/fuzzy-section.hpp"
+#include "ui/views/list-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/menu-bar/macos-menu-bar.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
+#include "ui/action-panel/action.hpp"
 #include <QCoreApplication>
 #include <algorithm>
 

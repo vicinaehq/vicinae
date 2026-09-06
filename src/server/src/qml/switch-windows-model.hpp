@@ -1,5 +1,5 @@
 #pragma once
-#include "fuzzy-section.hpp"
+#include "ui/views/fuzzy-section.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include <QCoreApplication>

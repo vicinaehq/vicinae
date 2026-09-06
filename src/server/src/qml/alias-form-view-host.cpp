@@ -1,9 +1,9 @@
-#include "alias-form-view-host.hpp"
+#include "qml/alias-form-view-host.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <QUrl>
 
 AliasFormViewHost::AliasFormViewHost(EntrypointId id) : FormViewBase(), m_id(std::move(id)) {}

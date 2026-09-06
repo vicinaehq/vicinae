@@ -1,5 +1,5 @@
 #pragma once
-#include "fuzzy-section.hpp"
+#include "ui/views/fuzzy-section.hpp"
 #include <QCoreApplication>
 
 class LocalStorageNamespaceSection : public FuzzySection<QString> {

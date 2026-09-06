@@ -1,13 +1,13 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "common/context.hpp"
-#include "fuzzy-section.hpp"
+#include "ui/views/fuzzy-section.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
+#include "ui/action-panel/action.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include <QCoreApplication>
 #include <ranges>

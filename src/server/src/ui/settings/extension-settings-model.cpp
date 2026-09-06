@@ -1,0 +1,480 @@
+#include "ui/settings/extension-settings-model.hpp"
+#include "ui/settings/provider-command-model.hpp"
+#include "ui/views/view-utils.hpp"
+#include "config/config.hpp"
+#include "extension/extension.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
+#include "service-registry.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
+#include <algorithm>
+#include <unordered_set>
+#include <utility>
+
+ExtensionSettingsModel::ExtensionSettingsModel(QObject *parent)
+    : QAbstractListModel(parent), m_prefModel(new PreferenceFormModel(this)),
+      m_cmdPrefModel(new PreferenceFormModel(this)), m_commandModel(new ProviderCommandModel(this)) {
+
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
+  connect(manager, &RootItemManager::itemsChanged, this, [this]() { rebuild(m_filter); });
+  rebuild({});
+}
+
+int ExtensionSettingsModel::rowCount(const QModelIndex &) const {
+  return static_cast<int>(m_visibleIndices.size());
+}
+
+QVariant ExtensionSettingsModel::data(const QModelIndex &index, int role) const {
+  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_visibleIndices.size()))
+    return {};
+  const auto &e = m_allEntries[m_visibleIndices[index.row()]];
+  switch (role) {
+  case NameRole:
+    return e.name;
+  case TypeRole:
+    return e.type;
+  case IconSourceRole:
+    return e.iconSource;
+  case IsProviderRole:
+    return e.isProvider;
+  case IndentRole:
+    return e.indent;
+  case EnabledRole:
+    return e.enabled;
+  case AliasRole:
+    return e.alias;
+  case EntrypointIdRole:
+    return e.isProvider ? e.providerId : QString::fromStdString(e.entrypointId);
+  case ExpandedRole:
+    return e.expanded;
+  case ExpandableRole:
+    return e.isProvider && e.childCount > 0;
+  case DescriptionRole:
+    return e.description;
+  case ProvenanceRole:
+    return e.provenance;
+  default:
+    return {};
+  }
+}
+
+QHash<int, QByteArray> ExtensionSettingsModel::roleNames() const {
+  return {{NameRole, "name"},
+          {TypeRole, "type"},
+          {IconSourceRole, "iconSource"},
+          {IsProviderRole, "isProvider"},
+          {IndentRole, "indent"},
+          {EnabledRole, "enabled"},
+          {AliasRole, "alias"},
+          {EntrypointIdRole, "entrypointId"},
+          {ExpandedRole, "expanded"},
+          {ExpandableRole, "expandable"},
+          {DescriptionRole, "description"},
+          {ProvenanceRole, "provenance"}};
+}
+
+QString ExtensionSettingsModel::selectedTitle() const {
+  if (!hasSelection()) return {};
+  return m_allEntries[m_visibleIndices[m_selectedRow]].name;
+}
+
+QString ExtensionSettingsModel::selectedIconSource() const {
+  if (!hasSelection()) return {};
+  return m_allEntries[m_visibleIndices[m_selectedRow]].iconSource;
+}
+
+QString ExtensionSettingsModel::selectedDescription() const {
+  if (!hasSelection()) return {};
+  return m_allEntries[m_visibleIndices[m_selectedRow]].description;
+}
+
+bool ExtensionSettingsModel::hasSelection() const {
+  return m_selectedRow >= 0 && std::cmp_less(m_selectedRow, m_visibleIndices.size());
+}
+
+bool ExtensionSettingsModel::hasPreferences() const { return hasSelection() && m_prefModel->rowCount() > 0; }
+
+bool ExtensionSettingsModel::selectedIsProvider() const {
+  return hasSelection() && m_allEntries[m_visibleIndices[m_selectedRow]].isProvider;
+}
+
+bool ExtensionSettingsModel::selectedEnabled() const {
+  return hasSelection() && m_allEntries[m_visibleIndices[m_selectedRow]].enabled;
+}
+
+QString ExtensionSettingsModel::selectedAlias() const {
+  return hasSelection() ? m_allEntries[m_visibleIndices[m_selectedRow]].alias : QString();
+}
+
+void ExtensionSettingsModel::setFilter(const QString &text) {
+  if (m_filter == text) return;
+  m_filter = text;
+  rebuild(text);
+}
+
+void ExtensionSettingsModel::select(int row) {
+  if (row == m_selectedRow) return;
+  if (row < 0 || std::cmp_greater_equal(row, m_visibleIndices.size())) row = -1;
+  m_selectedRow = row;
+
+  if (hasSelection()) {
+    auto &e = m_allEntries[m_visibleIndices[m_selectedRow]];
+    auto *manager = ServiceRegistry::instance()->rootItemManager();
+    if (e.isProvider) {
+      auto *provider = manager->provider(e.providerId.toStdString());
+      if (provider)
+        m_prefModel->loadProvider(e.providerId, provider->preferences());
+      else
+        m_prefModel->loadProvider(e.providerId, {});
+      loadCommandsForProvider(e.providerId);
+    } else {
+      auto *item = manager->findItemById(e.entrypointId);
+      m_prefModel->load(e.entrypointId, item ? item->preferences() : std::vector<Preference>{});
+    }
+  }
+
+  emit selectedChanged();
+}
+
+void ExtensionSettingsModel::setEnabled(int row, bool value) {
+  if (row < 0 || std::cmp_greater_equal(row, m_visibleIndices.size())) return;
+  auto &e = m_allEntries[m_visibleIndices[row]];
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
+
+  if (e.isProvider) {
+    manager->setProviderEnabled(e.providerId, value);
+    e.enabled = value;
+    auto idx = index(row);
+    emit dataChanged(idx, idx, {EnabledRole});
+
+    int const allIdx = m_visibleIndices[row];
+    for (int i = allIdx + 1; std::cmp_less(i, m_allEntries.size()) && !m_allEntries[i].isProvider; ++i) {
+      m_allEntries[i].enabled = value;
+    }
+    for (int i = row + 1; std::cmp_less(i, m_visibleIndices.size()); ++i) {
+      auto &child = m_allEntries[m_visibleIndices[i]];
+      if (child.isProvider) break;
+      auto childIdx = index(i);
+      emit dataChanged(childIdx, childIdx, {EnabledRole});
+    }
+    m_commandModel->setAllEnabled(value);
+    emit providerEnabledChanged(e.providerId, value);
+  } else {
+    manager->setItemEnabled(e.entrypointId, value);
+    e.enabled = value;
+    auto idx = index(row);
+    emit dataChanged(idx, idx, {EnabledRole});
+  }
+
+  if (row == m_selectedRow) emit selectedChanged();
+}
+
+void ExtensionSettingsModel::setAlias(int row, const QString &alias) {
+  if (row < 0 || std::cmp_greater_equal(row, m_visibleIndices.size())) return;
+  auto &e = m_allEntries[m_visibleIndices[row]];
+  if (e.isProvider || e.alias == alias) return;
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
+  manager->setAlias(e.entrypointId, alias.toStdString());
+  e.alias = alias;
+  auto idx = index(row);
+  emit dataChanged(idx, idx, {AliasRole});
+  if (row == m_selectedRow) emit selectedChanged();
+}
+
+void ExtensionSettingsModel::toggleExpanded(int row) {
+  if (row < 0 || std::cmp_greater_equal(row, m_visibleIndices.size())) return;
+  int const allIdx = m_visibleIndices[row];
+  auto &e = m_allEntries[allIdx];
+  if (!e.isProvider) return;
+
+  e.expanded = !e.expanded;
+
+  if (e.expanded) {
+    m_expandedProviders.insert(e.providerId);
+  } else {
+    m_expandedProviders.erase(e.providerId);
+  }
+
+  int childrenVisible = 0;
+  for (int i = row + 1; std::cmp_less(i, m_visibleIndices.size()); ++i) {
+    if (m_allEntries[m_visibleIndices[i]].isProvider) break;
+    ++childrenVisible;
+  }
+
+  if (e.expanded) {
+    std::vector<int> toInsert;
+    for (int i = allIdx + 1; std::cmp_less(i, m_allEntries.size()) && !m_allEntries[i].isProvider; ++i) {
+      toInsert.push_back(i);
+    }
+    if (!toInsert.empty()) {
+      beginInsertRows({}, row + 1, row + static_cast<int>(toInsert.size()));
+      m_visibleIndices.insert(m_visibleIndices.begin() + row + 1, toInsert.begin(), toInsert.end());
+      endInsertRows();
+    }
+  } else {
+    if (childrenVisible > 0) {
+      if (m_selectedRow > row && m_selectedRow <= row + childrenVisible) {
+        m_selectedRow = row;
+        emit selectedChanged();
+      } else if (m_selectedRow > row + childrenVisible) {
+        m_selectedRow -= childrenVisible;
+      }
+      beginRemoveRows({}, row + 1, row + childrenVisible);
+      m_visibleIndices.erase(m_visibleIndices.begin() + row + 1,
+                             m_visibleIndices.begin() + row + 1 + childrenVisible);
+      endRemoveRows();
+    }
+  }
+
+  auto idx = index(row);
+  emit dataChanged(idx, idx, {ExpandedRole});
+}
+
+void ExtensionSettingsModel::moveUp() {
+  if (m_selectedRow > 0) select(m_selectedRow - 1);
+}
+
+void ExtensionSettingsModel::moveDown() {
+  if (m_selectedRow < rowCount() - 1) select(m_selectedRow + 1);
+}
+
+void ExtensionSettingsModel::activate() {
+  if (hasSelection() && m_allEntries[m_visibleIndices[m_selectedRow]].isProvider)
+    toggleExpanded(m_selectedRow);
+}
+
+void ExtensionSettingsModel::rebuild(const QString &filter) {
+  beginResetModel();
+  m_allEntries.clear();
+  m_visibleIndices.clear();
+
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
+  RootItemPrefixSearchOptions opts;
+  opts.includeDisabled = true;
+
+  std::vector<std::pair<std::string, std::vector<std::shared_ptr<RootItem>>>> providerMap;
+
+  for (const auto &scored : manager->search(filter, opts)) {
+    auto &itemPtr = scored.item.get();
+    auto id = itemPtr->uniqueId();
+    auto pred = [&](auto &&pair) { return pair.first == id.provider; };
+    if (auto it = std::ranges::find_if(providerMap, pred); it != providerMap.end()) {
+      it->second.emplace_back(itemPtr);
+    } else {
+      providerMap.push_back({id.provider, {itemPtr}});
+    }
+  }
+
+  bool const isFiltering = !filter.isEmpty();
+
+  auto &cfg = ServiceRegistry::instance()->config()->value();
+
+  auto makeProviderEntry = [&](auto *provider, int childCount) {
+    auto id = provider->uniqueId().toStdString();
+    bool enabled = true;
+    if (auto it = cfg.providers.find(id); it != cfg.providers.end()) {
+      enabled = it->second.enabled.value_or(true);
+    }
+
+    Entry pe;
+    pe.name = provider->displayName();
+    pe.type = provider->typeAsString();
+    pe.iconSource = qml::imageSourceFor(provider->icon());
+    pe.isProvider = true;
+    pe.indent = 0;
+    pe.enabled = enabled;
+    pe.providerId = provider->uniqueId();
+    pe.childCount = childCount;
+    pe.expanded = isFiltering || m_expandedProviders.contains(pe.providerId);
+    pe.provenance = provenanceForProvider(provider);
+    pe.description = provider->description();
+
+    return pe;
+  };
+
+  std::unordered_set<std::string> seenProviders;
+
+  for (const auto &[providerId, items] : providerMap) {
+    auto *provider = manager->provider(providerId);
+    if (!provider || provider->isTransient()) continue;
+
+    seenProviders.insert(providerId);
+    m_allEntries.push_back(makeProviderEntry(provider, static_cast<int>(items.size())));
+
+    for (const auto &item : items) {
+      auto metadata = manager->itemMetadata(item->uniqueId());
+      Entry ie;
+      ie.name = item->title();
+      ie.type = item->typeDisplayName();
+      ie.iconSource = qml::imageSourceFor(item->iconUrl());
+      ie.isProvider = false;
+      ie.indent = 1;
+      ie.enabled = metadata.enabled;
+      ie.alias = QString::fromStdString(metadata.alias.value_or(""));
+      ie.shortcut = QString::fromStdString(metadata.shortcut.value_or(""));
+      ie.entrypointId = item->uniqueId();
+      ie.providerId = provider->uniqueId();
+      ie.description = item->settingsDescription();
+      m_allEntries.push_back(std::move(ie));
+    }
+  }
+
+  // Include providers with zero items
+  if (!isFiltering) {
+    for (auto *provider : manager->providers()) {
+      if (provider->isTransient()) continue;
+      if (seenProviders.contains(provider->uniqueId().toStdString())) continue;
+      m_allEntries.push_back(makeProviderEntry(provider, 0));
+    }
+  }
+
+  rebuildVisible();
+
+  endResetModel();
+
+  int newRow = !filter.isEmpty() ? 0 : m_selectedRow;
+  if (std::cmp_greater_equal(newRow, m_visibleIndices.size())) newRow = m_visibleIndices.empty() ? -1 : 0;
+
+  bool const sameProvider = newRow >= 0 && newRow == m_selectedRow &&
+                            std::cmp_less(newRow, m_visibleIndices.size()) &&
+                            m_allEntries[m_visibleIndices[newRow]].providerId == selectedProviderId();
+
+  m_selectedRow = -1;
+  if (sameProvider) {
+    m_selectedRow = newRow;
+  } else if (newRow == -1) {
+    emit selectedChanged();
+  } else {
+    select(newRow);
+  }
+}
+
+void ExtensionSettingsModel::rebuildVisible() {
+  m_visibleIndices.clear();
+  bool skipChildren = false;
+  for (int i = 0; std::cmp_less(i, m_allEntries.size()); ++i) {
+    auto &e = m_allEntries[i];
+    if (e.isProvider) {
+      m_visibleIndices.push_back(i);
+      skipChildren = !e.expanded;
+    } else {
+      if (!skipChildren) m_visibleIndices.push_back(i);
+    }
+  }
+}
+
+QString ExtensionSettingsModel::selectedProviderId() const {
+  if (!hasSelection()) return {};
+  return m_allEntries[m_visibleIndices[m_selectedRow]].providerId;
+}
+
+QString ExtensionSettingsModel::selectedProvenance() const {
+  if (!hasSelection()) return {};
+  return m_allEntries[m_visibleIndices[m_selectedRow]].provenance;
+}
+
+QString ExtensionSettingsModel::provenanceForProvider(RootProvider *provider) {
+  auto *ext = dynamic_cast<ExtensionRootProvider *>(provider);
+  if (!ext) return QStringLiteral("Built-in");
+  if (ext->isBuiltin()) return QStringLiteral("Built-in");
+
+  auto *extension = dynamic_cast<const Extension *>(ext->repository().get());
+  if (!extension) return QStringLiteral("Built-in");
+
+  if (extension->manifest().isFromRaycastStore()) return QStringLiteral("Raycast");
+  if (extension->manifest().isFromVicinaeStore()) return QStringLiteral("Vicinae");
+  return QStringLiteral("Local");
+}
+
+void ExtensionSettingsModel::loadCommandsForProvider(const QString &providerId) {
+  std::vector<ProviderCommandModel::Command> commands;
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
+
+  for (int i = 0; std::cmp_less(i, m_allEntries.size()); ++i) {
+    if (m_allEntries[i].isProvider && m_allEntries[i].providerId == providerId) {
+      for (int j = i + 1; std::cmp_less(j, m_allEntries.size()) && !m_allEntries[j].isProvider; ++j) {
+        const auto &e = m_allEntries[j];
+        auto *item = manager->findItemById(e.entrypointId);
+        bool const hasPrefs = item && !item->preferences().empty();
+        commands.push_back({e.name, e.type, e.iconSource, e.description, e.enabled, hasPrefs, e.alias,
+                            QString::fromStdString(e.entrypointId), e.shortcut});
+      }
+      break;
+    }
+  }
+
+  m_commandModel->load(std::move(commands));
+}
+
+void ExtensionSettingsModel::selectProviderById(const QString &providerId) {
+  for (int i = 0; std::cmp_less(i, m_visibleIndices.size()); ++i) {
+    auto &e = m_allEntries[m_visibleIndices[i]];
+    if (e.isProvider && e.providerId == providerId) {
+      select(i);
+      if (!e.expanded) toggleExpanded(i);
+      return;
+    }
+  }
+  for (int i = 0; std::cmp_less(i, m_allEntries.size()); ++i) {
+    auto &e = m_allEntries[i];
+    if (e.isProvider && e.providerId == providerId) {
+      for (int k = 0; std::cmp_less(k, m_visibleIndices.size()); ++k) {
+        if (m_visibleIndices[k] == i) {
+          select(k);
+          if (!e.expanded) toggleExpanded(k);
+          return;
+        }
+      }
+      return;
+    }
+  }
+}
+
+void ExtensionSettingsModel::setEnabledByEntrypointId(const QString &id, bool value) {
+  int const row = findVisibleEntryByEntrypointId(id);
+  if (row >= 0) {
+    setEnabled(row, value);
+    m_commandModel->setEnabled(id, value);
+  }
+}
+
+void ExtensionSettingsModel::setAliasByEntrypointId(const QString &id, const QString &alias) {
+  int const row = findVisibleEntryByEntrypointId(id);
+  if (row >= 0) {
+    setAlias(row, alias);
+    m_commandModel->setAlias(id, alias);
+  }
+}
+
+void ExtensionSettingsModel::setShortcutByEntrypointId(const QString &id, const QString &shortcut) {
+  ServiceRegistry::instance()->rootItemManager()->setShortcut(EntrypointId::fromSerialized(id.toStdString()),
+                                                              shortcut.toStdString());
+
+  if (int const row = findVisibleEntryByEntrypointId(id); row >= 0) {
+    m_allEntries[m_visibleIndices[row]].shortcut = shortcut;
+  }
+  m_commandModel->setShortcut(id, shortcut);
+}
+
+void ExtensionSettingsModel::clearShortcutByEntrypointId(const QString &id) {
+  setShortcutByEntrypointId(id, "");
+}
+
+int ExtensionSettingsModel::findVisibleEntryByEntrypointId(const QString &id) const {
+  for (int i = 0; std::cmp_less(i, m_visibleIndices.size()); ++i) {
+    auto &e = m_allEntries[m_visibleIndices[i]];
+    if (!e.isProvider && QString::fromStdString(e.entrypointId) == id) return i;
+  }
+  return -1;
+}
+
+void ExtensionSettingsModel::loadCommandPreferences(const QString &entrypointId) {
+  auto *manager = ServiceRegistry::instance()->rootItemManager();
+
+  for (auto &e : m_allEntries) {
+    if (!e.isProvider && QString::fromStdString(e.entrypointId) == entrypointId) {
+      auto *item = manager->findItemById(e.entrypointId);
+      m_cmdPrefModel->load(e.entrypointId, item ? item->preferences() : std::vector<Preference>{});
+      return;
+    }
+  }
+}

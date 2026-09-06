@@ -1,5 +1,5 @@
 #pragma once
-#include "section-source.hpp"
+#include "ui/views/section-source.hpp"
 #include "theme/theme-file.hpp"
 #include <QCoreApplication>
 #include <functional>

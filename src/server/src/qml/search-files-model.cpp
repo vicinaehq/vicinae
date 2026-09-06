@@ -1,6 +1,6 @@
 #include <QUrl>
 
-#include "search-files-model.hpp"
+#include "qml/search-files-model.hpp"
 #include "utils/file-list-item.hpp"
 #include "utils/utils.hpp"
 

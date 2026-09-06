@@ -9,7 +9,7 @@
 #include "services/browser-extension-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "theme/colors.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 struct BrowserTabActionGenerator {
   Q_DECLARE_TR_FUNCTIONS(BrowserTabActionGenerator)

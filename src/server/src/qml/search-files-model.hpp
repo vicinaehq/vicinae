@@ -1,5 +1,5 @@
 #pragma once
-#include "section-list-model.hpp"
+#include "ui/views/section-list-model.hpp"
 #include <filesystem>
 #include <functional>
 

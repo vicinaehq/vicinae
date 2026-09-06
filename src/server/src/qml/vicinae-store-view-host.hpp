@@ -1,7 +1,7 @@
 #pragma once
-#include "section-list-model.hpp"
-#include "vicinae-store-model.hpp"
-#include "bridge-view.hpp"
+#include "ui/views/section-list-model.hpp"
+#include "qml/vicinae-store-model.hpp"
+#include "ui/views/bridge-view.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 #include "ui/image/url.hpp"
 #include <QFutureWatcher>

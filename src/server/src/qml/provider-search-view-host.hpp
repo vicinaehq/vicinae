@@ -1,6 +1,6 @@
 #pragma once
-#include "provider-search-model.hpp"
-#include "list-view-host.hpp"
+#include "qml/provider-search-model.hpp"
+#include "ui/views/list-view-host.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 
 class ProviderSearchViewHost : public ListViewHost {

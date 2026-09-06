@@ -1,5 +1,5 @@
-#include "oauth-token-store-view-host.hpp"
-#include "oauth-token-store-model.hpp"
+#include "qml/oauth-token-store-view-host.hpp"
+#include "qml/oauth-token-store-model.hpp"
 #include "service-registry.hpp"
 #include "services/oauth/oauth-service.hpp"
 

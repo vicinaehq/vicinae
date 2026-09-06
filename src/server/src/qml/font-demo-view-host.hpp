@@ -1,5 +1,5 @@
 #pragma once
-#include "bridge-view.hpp"
+#include "ui/views/bridge-view.hpp"
 #include "font-service.hpp"
 
 class FontDemoViewHost : public ViewHostBase {

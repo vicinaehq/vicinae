@@ -1,4 +1,4 @@
-#include "root-search-model.hpp"
+#include "qml/root-search-model.hpp"
 #include "config/config.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "service-registry.hpp"

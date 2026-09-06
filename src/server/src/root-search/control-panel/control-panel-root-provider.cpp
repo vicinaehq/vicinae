@@ -4,7 +4,7 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
 #include "ui/image/url.hpp"
 #include "utils/scoped-com.hpp"
 

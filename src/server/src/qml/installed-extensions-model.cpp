@@ -1,11 +1,11 @@
-#include "installed-extensions-model.hpp"
+#include "qml/installed-extensions-model.hpp"
 #include "actions/extension/extension-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
-#include "view-utils.hpp"
+#include "ui/views/view-utils.hpp"
 
 QString InstalledExtensionsSection::displayTitle(const ExtensionManifest &m) const { return m.title; }
 

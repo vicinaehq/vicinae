@@ -1,6 +1,6 @@
-#include "clipboard-history-view-host.hpp"
+#include "qml/clipboard-history-view-host.hpp"
 #include "extensions/clipboard/history/clipboard-history-controller.hpp"
-#include "view-utils.hpp"
+#include "ui/views/view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "utils/utils.hpp"

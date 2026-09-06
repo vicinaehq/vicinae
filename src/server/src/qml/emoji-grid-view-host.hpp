@@ -1,7 +1,7 @@
 #pragma once
-#include "bridge-view.hpp"
-#include "completion-model.hpp"
-#include "emoji-grid-model.hpp"
+#include "ui/views/bridge-view.hpp"
+#include "ui/quick/completion-model.hpp"
+#include "qml/emoji-grid-model.hpp"
 #include "glyph/glyph.hpp"
 #include <QCoreApplication>
 #include <QStringList>

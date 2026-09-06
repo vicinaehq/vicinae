@@ -1,7 +1,7 @@
 #pragma once
 #include <QCoreApplication>
 #include "command.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 struct OpenBuiltinCommandAction : public AbstractAction {
   std::shared_ptr<AbstractCmd> cmd;

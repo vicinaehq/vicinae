@@ -14,7 +14,7 @@
 #include "internal/keyboard/keyboard.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/wallpaper/wallpaper-manager.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <algorithm>
 #include <qmimedatabase.h>
 #include <filesystem>

@@ -1,7 +1,7 @@
 #pragma once
 #include "glyph/emoji.hpp"
-#include "grid-source.hpp"
-#include "section-grid-model.hpp"
+#include "ui/views/grid-source.hpp"
+#include "ui/views/section-grid-model.hpp"
 #include "services/glyph-service/glyph-service.hpp"
 #include <QCoreApplication>
 #include <optional>

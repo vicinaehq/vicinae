@@ -1,5 +1,5 @@
-#include "manage-shortcuts-view-host.hpp"
-#include "view-utils.hpp"
+#include "qml/manage-shortcuts-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/app-service/app-service.hpp"

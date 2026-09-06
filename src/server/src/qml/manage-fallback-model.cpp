@@ -1,6 +1,6 @@
-#include "manage-fallback-model.hpp"
+#include "qml/manage-fallback-model.hpp"
 #include "service-registry.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 // --- EnabledFallbackSection ---
 

@@ -2,7 +2,7 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/abstract-app-db.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"

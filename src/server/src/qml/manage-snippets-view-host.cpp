@@ -1,10 +1,10 @@
-#include "manage-snippets-view-host.hpp"
+#include "qml/manage-snippets-view-host.hpp"
 #include "placeholder.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-service.hpp"
-#include "snippet-form-view-host.hpp"
-#include "view-utils.hpp"
+#include "qml/snippet-form-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include <QDateTime>
 #include <ranges>
 

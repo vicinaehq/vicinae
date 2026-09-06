@@ -212,14 +212,14 @@ set(SRCS
 
 	# end app-database
 
-	src/ui/action-pannel/action.hpp
-	src/ui/action-pannel/action.cpp
-	src/ui/action-pannel/action-panel-state.hpp
-	src/ui/action-pannel/action-panel-view.hpp
-	src/ui/action-pannel/action-list-view.hpp
-	src/ui/action-pannel/action-list-view.cpp
-	src/ui/action-pannel/shortcut-recorder-panel-view.hpp
-	src/ui/action-pannel/shortcut-recorder-panel-view.cpp
+	src/ui/action-panel/action.hpp
+	src/ui/action-panel/action.cpp
+	src/ui/action-panel/action-panel-state.hpp
+	src/ui/action-panel/action-panel-view.hpp
+	src/ui/action-panel/action-list-view.hpp
+	src/ui/action-panel/action-list-view.cpp
+	src/ui/action-panel/shortcut-recorder-panel-view.hpp
+	src/ui/action-panel/shortcut-recorder-panel-view.cpp
 
 	
 	src/extension/extension-command.hpp
@@ -382,8 +382,8 @@ set(SRCS
 	src/services/oauth/oauth-token-store.hpp
 	src/services/oauth/oauth-token-store.cpp
 
-	src/qml/oauth-overlay-host.hpp
-	src/qml/oauth-overlay-host.cpp
+	src/extension/views/oauth-overlay-host.hpp
+	src/extension/views/oauth-overlay-host.cpp
 
 
 
@@ -487,10 +487,10 @@ set(SRCS
 	src/qml/local-storage-view-host.hpp
 	src/qml/local-storage-view-host.cpp
 
-	src/qml/dmenu-model.hpp
-	src/qml/dmenu-model.cpp
-	src/qml/dmenu-view-host.hpp
-	src/qml/dmenu-view-host.cpp
+	src/ui/views/dmenu-model.hpp
+	src/ui/views/dmenu-model.cpp
+	src/ui/views/dmenu-view-host.hpp
+	src/ui/views/dmenu-view-host.cpp
 
 	src/services/news/news-service.hpp
 	src/services/news/news-service.cpp
@@ -511,31 +511,31 @@ set(SRCS
 	src/services/snippet/snippet-db.cpp
 
 	# QML frontend
-	src/qml/keybind-bridge.hpp
-	src/qml/launcher-window.hpp
-	src/qml/launcher-window.cpp
+	src/ui/bridges/keybind-bridge.hpp
+	src/ui/windows/launcher-window.hpp
+	src/ui/windows/launcher-window.cpp
 	src/qml/root-view-host.hpp
 	src/qml/root-view-host.cpp
 	src/qml/root-search-model.hpp
 	src/qml/root-search-model.cpp
 	src/qml/root-search-sources.hpp
 	src/qml/root-search-sources.cpp
-	src/qml/drag-utils.hpp
-	src/qml/drag-utils.cpp
-	src/qml/section-source.hpp
-	src/qml/section-list-model.hpp
-	src/qml/section-list-model.cpp
-	src/qml/fuzzy-section.hpp
-	src/qml/list-view-host.hpp
-	src/qml/action-panel-model.hpp
-	src/qml/action-panel-model.cpp
-	src/qml/completion-model.hpp
-	src/qml/completion-model.cpp
-	src/qml/action-panel-controller.hpp
-	src/qml/action-panel-controller.cpp
-	src/qml/alert-model.hpp
-	src/qml/alert-model.cpp
-	src/qml/bridge-view.hpp
+	src/ui/views/drag-utils.hpp
+	src/ui/views/drag-utils.cpp
+	src/ui/views/section-source.hpp
+	src/ui/views/section-list-model.hpp
+	src/ui/views/section-list-model.cpp
+	src/ui/views/fuzzy-section.hpp
+	src/ui/views/list-view-host.hpp
+	src/ui/action-panel/action-panel-model.hpp
+	src/ui/action-panel/action-panel-model.cpp
+	src/ui/quick/completion-model.hpp
+	src/ui/quick/completion-model.cpp
+	src/ui/action-panel/action-panel-controller.hpp
+	src/ui/action-panel/action-panel-controller.cpp
+	src/ui/alert/alert-model.hpp
+	src/ui/alert/alert-model.cpp
+	src/ui/views/bridge-view.hpp
 	src/qml/calc-history-model.hpp
 	src/qml/calc-history-model.cpp
 	src/qml/calc-history-view-host.hpp
@@ -544,23 +544,23 @@ set(SRCS
 	src/qml/theme-list-model.cpp
 	src/qml/theme-view-host.hpp
 	src/qml/theme-view-host.cpp
-	src/qml/grid-source.hpp
-	src/qml/section-grid-model.hpp
-	src/qml/section-grid-model.cpp
+	src/ui/views/grid-source.hpp
+	src/ui/views/section-grid-model.hpp
+	src/ui/views/section-grid-model.cpp
 	src/qml/emoji-grid-model.hpp
 	src/qml/emoji-grid-model.cpp
 	src/qml/emoji-grid-view-host.hpp
-	src/qml/view-utils.cpp
-	src/qml/extension-view-host.hpp
-	src/qml/extension-view-host.cpp
-	src/qml/extension-error-view-host.hpp
-	src/qml/extension-error-view-host.cpp
-	src/qml/empty-view-host.hpp
-	src/qml/empty-view-host.cpp
-	src/qml/missing-preference-view-host.hpp
-	src/qml/missing-preference-view-host.cpp
-	src/qml/extension-form-model.hpp
-	src/qml/extension-form-model.cpp
+	src/ui/views/view-utils.cpp
+	src/extension/views/extension-view-host.hpp
+	src/extension/views/extension-view-host.cpp
+	src/extension/views/extension-error-view-host.hpp
+	src/extension/views/extension-error-view-host.cpp
+	src/ui/views/empty-view-host.hpp
+	src/ui/views/empty-view-host.cpp
+	src/extension/views/missing-preference-view-host.hpp
+	src/extension/views/missing-preference-view-host.cpp
+	src/extension/views/extension-form-model.hpp
+	src/extension/views/extension-form-model.cpp
 	src/qml/clipboard-history-model.hpp
 	src/qml/clipboard-history-model.cpp
 	src/qml/clipboard-history-view-host.hpp
@@ -569,30 +569,30 @@ set(SRCS
 	src/qml/snippet-form-view-host.cpp
 	src/qml/alias-form-view-host.hpp
 	src/qml/alias-form-view-host.cpp
-	src/qml/app-selector-model.hpp
-	src/qml/app-selector-model.cpp
+	src/ui/views/app-selector-model.hpp
+	src/ui/views/app-selector-model.cpp
 	src/qml/shortcut-form-view-host.hpp
 	src/qml/shortcut-form-view-host.cpp
-	src/qml/extension-list-model.hpp
-	src/qml/extension-list-model.cpp
-	src/qml/extension-grid-model.hpp
-	src/qml/extension-grid-model.cpp
-	src/qml/source-blend-rect.hpp
-	src/qml/source-blend-rect.cpp
-	src/qml/image-url.hpp
-	src/qml/image-url.cpp
-	src/qml/image-source.hpp
-	src/qml/image-source.cpp
-	src/qml/vici-image-item.hpp
-	src/qml/vici-image-item.cpp
-	src/qml/config-bridge.hpp
-	src/qml/theme-bridge.hpp
-	src/qml/keyboard-bridge.hpp
-	src/qml/global-shortcut-bridge.hpp
-	src/qml/platform-bridge.hpp
-	src/qml/style-bridge.hpp
-	src/qml/shortcut-conflict.hpp
-	src/qml/shortcut-conflict.cpp
+	src/extension/views/extension-list-model.hpp
+	src/extension/views/extension-list-model.cpp
+	src/extension/views/extension-grid-model.hpp
+	src/extension/views/extension-grid-model.cpp
+	src/ui/quick/source-blend-rect.hpp
+	src/ui/quick/source-blend-rect.cpp
+	src/ui/image/image-url.hpp
+	src/ui/image/image-url.cpp
+	src/ui/image/image-source.hpp
+	src/ui/image/image-source.cpp
+	src/ui/quick/vici-image-item.hpp
+	src/ui/quick/vici-image-item.cpp
+	src/ui/bridges/config-bridge.hpp
+	src/ui/bridges/theme-bridge.hpp
+	src/ui/bridges/keyboard-bridge.hpp
+	src/ui/bridges/global-shortcut-bridge.hpp
+	src/ui/bridges/platform-bridge.hpp
+	src/ui/bridges/style-bridge.hpp
+	src/ui/settings/shortcut-conflict.hpp
+	src/ui/settings/shortcut-conflict.cpp
 	src/qml/create-extension-view-host.hpp
 	src/qml/create-extension-view-host.cpp
 	src/qml/installed-extensions-model.hpp
@@ -630,10 +630,10 @@ set(SRCS
 	src/qml/raycast-store-detail-host.cpp
 	src/qml/vicinae-store-detail-host.hpp
 	src/qml/vicinae-store-detail-host.cpp
-	src/qml/markdown/markdown-model.hpp
-	src/qml/markdown/markdown-model.cpp
-	src/qml/markdown/text-selection-controller.hpp
-	src/qml/markdown/text-selection-controller.cpp
+	src/ui/quick/markdown-model.hpp
+	src/ui/quick/markdown-model.cpp
+	src/ui/quick/text-selection-controller.hpp
+	src/ui/quick/text-selection-controller.cpp
 	src/qml/store-intro-view-host.hpp
 	src/qml/store-intro-view-host.cpp
 	src/qml/font-browser-view-host.hpp
@@ -643,25 +643,25 @@ set(SRCS
 	src/qml/font-demo-view-host.cpp
 	src/qml/edit-keywords-view-host.hpp
 	src/qml/edit-keywords-view-host.cpp
-	src/qml/hud-bridge.hpp
-	src/qml/hud-bridge.cpp
+	src/ui/windows/hud-bridge.hpp
+	src/ui/windows/hud-bridge.cpp
 
-	src/qml/settings-window.hpp
-	src/qml/settings-window.cpp
-	src/qml/onboarding-window.hpp
-	src/qml/onboarding-window.cpp
-	src/qml/general-settings-model.hpp
-	src/qml/general-settings-model.cpp
-	src/qml/keybind-settings-model.hpp
-	src/qml/keybind-settings-model.cpp
-	src/qml/settings-sidebar-model.hpp
-	src/qml/settings-sidebar-model.cpp
-	src/qml/extension-settings-model.hpp
-	src/qml/extension-settings-model.cpp
-	src/qml/preference-form-model.hpp
-	src/qml/preference-form-model.cpp
-	src/qml/provider-command-model.hpp
-	src/qml/provider-command-model.cpp
+	src/ui/windows/settings-window.hpp
+	src/ui/windows/settings-window.cpp
+	src/ui/windows/onboarding-window.hpp
+	src/ui/windows/onboarding-window.cpp
+	src/ui/settings/general-settings-model.hpp
+	src/ui/settings/general-settings-model.cpp
+	src/ui/settings/keybind-settings-model.hpp
+	src/ui/settings/keybind-settings-model.cpp
+	src/ui/settings/settings-sidebar-model.hpp
+	src/ui/settings/settings-sidebar-model.cpp
+	src/ui/settings/extension-settings-model.hpp
+	src/ui/settings/extension-settings-model.cpp
+	src/ui/settings/preference-form-model.hpp
+	src/ui/settings/preference-form-model.cpp
+	src/ui/settings/provider-command-model.hpp
+	src/ui/settings/provider-command-model.cpp
 
 	src/extensions/internal/markdown-showcase-command.hpp
 
@@ -1076,153 +1076,153 @@ if(APPLE)
 endif()
 
 set(VICINAE_QML_FILES
-	src/qml/qml/LauncherWindow.qml
-	src/qml/qml/PopupMaterial.qml
-	src/qml/qml/ViciPopover.qml
-	src/qml/qml/PopoverBackground.qml
-	src/qml/qml/SearchBar.qml
-	src/qml/qml/GenericListView.qml
-	src/qml/qml/StatusBarInset.qml
-	src/qml/qml/HoverResetOnModelChange.qml
-	src/qml/qml/HoverResetOnShow.qml
-	src/qml/qml/RootSearchList.qml
-	src/qml/qml/ListItemDelegate.qml
-	src/qml/qml/ListAccessory.qml
-	src/qml/qml/ListAccessoryRow.qml
-	src/qml/qml/SelectableDelegate.qml
-	src/qml/qml/DraggableMouseArea.qml
-	src/qml/qml/SectionHeader.qml
-	src/qml/qml/Footer.qml
-	src/qml/qml/FooterButton.qml
-	src/qml/qml/FooterNavStatus.qml
-	src/qml/qml/FooterToast.qml
-	src/qml/qml/ShortcutBadge.qml
-	src/qml/qml/TextBadge.qml
-	src/qml/qml/CommandListView.qml
-	src/qml/qml/CalcHistoryListView.qml
-	src/qml/qml/CalculatorResultDelegate.qml
-	src/qml/qml/ThemeListView.qml
-	src/qml/qml/ThemeItemDelegate.qml
-	src/qml/qml/GenericGridView.qml
-	src/qml/qml/EmptyView.qml
-	src/qml/qml/EmojiGridView.qml
-	src/qml/qml/ViciButton.qml
-	src/qml/qml/ViciScrollBar.qml
-	src/qml/qml/ViciDivider.qml
-	src/qml/qml/ViciToolTip.qml
-	src/qml/qml/ExtensionView.qml
-	src/qml/qml/MarkdownDetailView.qml
-	src/qml/qml/ExtensionGridView.qml
-	src/qml/qml/ActionPanelPopover.qml
-	src/qml/qml/ActionListPanel.qml
-	src/qml/qml/ActionItemDelegate.qml
-	src/qml/qml/SearchableDropdown.qml
-	src/qml/qml/ClipboardHistoryView.qml
-	src/qml/qml/ClipboardFilterAccessory.qml
-	src/qml/qml/EmojiCategoryFilterAccessory.qml
-	src/qml/qml/DetailPanel.qml
-	src/qml/qml/MetadataBar.qml
-	src/qml/qml/AlertDialog.qml
-	src/qml/qml/FormView.qml
-	src/qml/qml/FormField.qml
-	src/qml/qml/FormInputBackground.qml
-	src/qml/qml/FormTextInput.qml
-	src/qml/qml/FormTextArea.qml
-	src/qml/qml/FormCheckbox.qml
-	src/qml/qml/FormSeparator.qml
-	src/qml/qml/SnippetFormView.qml
-	src/qml/qml/AliasFormView.qml
-	src/qml/qml/ShortcutFormView.qml
-	src/qml/qml/FormCompletedInput.qml
-	src/qml/qml/FormCompletedTextArea.qml
-	src/qml/qml/PlaceholderCompleter.qml
-	src/qml/qml/CompletionPopup.qml
-	src/qml/qml/CreateExtensionFormView.qml
-	src/qml/qml/ArgCompleter.qml
-	src/qml/qml/DetailListView.qml
-	src/qml/qml/StoreListingView.qml
-	src/qml/qml/AlertBanner.qml
-	src/qml/qml/StoreDetailView.qml
-	src/qml/qml/StoreIntroView.qml
-	src/qml/qml/ImageViewer.qml
-	src/qml/qml/markdown/MarkdownView.qml
-	src/qml/qml/markdown/MarkdownText.qml
-	src/qml/qml/markdown/MdHeading.qml
-	src/qml/qml/markdown/MdParagraph.qml
-	src/qml/qml/markdown/MdCodeBlock.qml
-	src/qml/qml/markdown/MdList.qml
-	src/qml/qml/markdown/MdTable.qml
-	src/qml/qml/markdown/MdImage.qml
-	src/qml/qml/markdown/MdHorizontalRule.qml
-	src/qml/qml/markdown/MdHtmlBlock.qml
-	src/qml/qml/markdown/MdBlockquote.qml
-	src/qml/qml/markdown/MdCallout.qml
-	src/qml/qml/BrowseFontsView.qml
-	src/qml/qml/FontDemoView.qml
-	src/qml/qml/CategoryFilterAccessory.qml
-	src/qml/qml/ExtensionFormView.qml
-	src/qml/qml/FormFilePicker.qml
-	src/qml/qml/FormAppSelector.qml
-	src/qml/qml/FormDateInput.qml
-	src/qml/qml/FormLinkAccessory.qml
-	src/qml/qml/ExtensionDropdownAccessory.qml
-	src/qml/qml/EditKeywordsFormView.qml
-	src/qml/qml/HorizontalLoadingBar.qml
-	src/qml/qml/SearchFilesView.qml
-	src/qml/qml/TextViewer.qml
-	src/qml/qml/FilePreview.qml
-	src/qml/qml/DMenuView.qml
-	src/qml/qml/ScriptOutputText.qml
-	src/qml/qml/ScriptExecutorView.qml
-	src/qml/qml/SettingsWindow.qml
-	src/qml/qml/SettingsScrollEdge.qml
-	src/qml/qml/SettingsNavButtons.qml
-	src/qml/qml/SettingsSidebar.qml
-	src/qml/qml/SettingsRow.qml
-	src/qml/qml/SettingsGroup.qml
-	src/qml/qml/SettingsSectionLabel.qml
-	src/qml/qml/InlineEditableText.qml
-	src/qml/qml/SettingsToggle.qml
-	src/qml/qml/GeneralSettingsPage.qml
-	src/qml/qml/AppearanceSettingsPage.qml
-	src/qml/qml/AdvancedSettingsPage.qml
-	src/qml/qml/ShortcutsSettingsPage.qml
-	src/qml/qml/ExtensionSettingsPage.qml
-	src/qml/qml/AboutSettingsPage.qml
-	src/qml/qml/ShortcutRecorderField.qml
-	src/qml/qml/ShortcutRecorderCapture.qml
-	src/qml/qml/ShortcutRecorderPanel.qml
-	src/qml/qml/ShortcutField.qml
-	src/qml/qml/PreferenceFormView.qml
-	src/qml/qml/SettingsPreferenceForm.qml
-	src/qml/qml/MissingPreferenceView.qml
-	src/qml/qml/OAuthOverlayView.qml
-	src/qml/qml/HudWindow.qml
-	src/qml/qml/OnboardingWindow.qml
+	src/ui/qml/LauncherWindow.qml
+	src/ui/qml/PopupMaterial.qml
+	src/ui/qml/ViciPopover.qml
+	src/ui/qml/PopoverBackground.qml
+	src/ui/qml/SearchBar.qml
+	src/ui/qml/GenericListView.qml
+	src/ui/qml/StatusBarInset.qml
+	src/ui/qml/HoverResetOnModelChange.qml
+	src/ui/qml/HoverResetOnShow.qml
+	src/ui/qml/RootSearchList.qml
+	src/ui/qml/ListItemDelegate.qml
+	src/ui/qml/ListAccessory.qml
+	src/ui/qml/ListAccessoryRow.qml
+	src/ui/qml/SelectableDelegate.qml
+	src/ui/qml/DraggableMouseArea.qml
+	src/ui/qml/SectionHeader.qml
+	src/ui/qml/Footer.qml
+	src/ui/qml/FooterButton.qml
+	src/ui/qml/FooterNavStatus.qml
+	src/ui/qml/FooterToast.qml
+	src/ui/qml/ShortcutBadge.qml
+	src/ui/qml/TextBadge.qml
+	src/ui/qml/CommandListView.qml
+	src/ui/qml/CalcHistoryListView.qml
+	src/ui/qml/CalculatorResultDelegate.qml
+	src/ui/qml/ThemeListView.qml
+	src/ui/qml/ThemeItemDelegate.qml
+	src/ui/qml/GenericGridView.qml
+	src/ui/qml/EmptyView.qml
+	src/ui/qml/EmojiGridView.qml
+	src/ui/qml/ViciButton.qml
+	src/ui/qml/ViciScrollBar.qml
+	src/ui/qml/ViciDivider.qml
+	src/ui/qml/ViciToolTip.qml
+	src/ui/qml/ExtensionView.qml
+	src/ui/qml/MarkdownDetailView.qml
+	src/ui/qml/ExtensionGridView.qml
+	src/ui/qml/ActionPanelPopover.qml
+	src/ui/qml/ActionListPanel.qml
+	src/ui/qml/ActionItemDelegate.qml
+	src/ui/qml/SearchableDropdown.qml
+	src/ui/qml/ClipboardHistoryView.qml
+	src/ui/qml/ClipboardFilterAccessory.qml
+	src/ui/qml/EmojiCategoryFilterAccessory.qml
+	src/ui/qml/DetailPanel.qml
+	src/ui/qml/MetadataBar.qml
+	src/ui/qml/AlertDialog.qml
+	src/ui/qml/FormView.qml
+	src/ui/qml/FormField.qml
+	src/ui/qml/FormInputBackground.qml
+	src/ui/qml/FormTextInput.qml
+	src/ui/qml/FormTextArea.qml
+	src/ui/qml/FormCheckbox.qml
+	src/ui/qml/FormSeparator.qml
+	src/ui/qml/SnippetFormView.qml
+	src/ui/qml/AliasFormView.qml
+	src/ui/qml/ShortcutFormView.qml
+	src/ui/qml/FormCompletedInput.qml
+	src/ui/qml/FormCompletedTextArea.qml
+	src/ui/qml/PlaceholderCompleter.qml
+	src/ui/qml/CompletionPopup.qml
+	src/ui/qml/CreateExtensionFormView.qml
+	src/ui/qml/ArgCompleter.qml
+	src/ui/qml/DetailListView.qml
+	src/ui/qml/StoreListingView.qml
+	src/ui/qml/AlertBanner.qml
+	src/ui/qml/StoreDetailView.qml
+	src/ui/qml/StoreIntroView.qml
+	src/ui/qml/ImageViewer.qml
+	src/ui/qml/markdown/MarkdownView.qml
+	src/ui/qml/markdown/MarkdownText.qml
+	src/ui/qml/markdown/MdHeading.qml
+	src/ui/qml/markdown/MdParagraph.qml
+	src/ui/qml/markdown/MdCodeBlock.qml
+	src/ui/qml/markdown/MdList.qml
+	src/ui/qml/markdown/MdTable.qml
+	src/ui/qml/markdown/MdImage.qml
+	src/ui/qml/markdown/MdHorizontalRule.qml
+	src/ui/qml/markdown/MdHtmlBlock.qml
+	src/ui/qml/markdown/MdBlockquote.qml
+	src/ui/qml/markdown/MdCallout.qml
+	src/ui/qml/BrowseFontsView.qml
+	src/ui/qml/FontDemoView.qml
+	src/ui/qml/CategoryFilterAccessory.qml
+	src/ui/qml/ExtensionFormView.qml
+	src/ui/qml/FormFilePicker.qml
+	src/ui/qml/FormAppSelector.qml
+	src/ui/qml/FormDateInput.qml
+	src/ui/qml/FormLinkAccessory.qml
+	src/ui/qml/ExtensionDropdownAccessory.qml
+	src/ui/qml/EditKeywordsFormView.qml
+	src/ui/qml/HorizontalLoadingBar.qml
+	src/ui/qml/SearchFilesView.qml
+	src/ui/qml/TextViewer.qml
+	src/ui/qml/FilePreview.qml
+	src/ui/qml/DMenuView.qml
+	src/ui/qml/ScriptOutputText.qml
+	src/ui/qml/ScriptExecutorView.qml
+	src/ui/qml/SettingsWindow.qml
+	src/ui/qml/SettingsScrollEdge.qml
+	src/ui/qml/SettingsNavButtons.qml
+	src/ui/qml/SettingsSidebar.qml
+	src/ui/qml/SettingsRow.qml
+	src/ui/qml/SettingsGroup.qml
+	src/ui/qml/SettingsSectionLabel.qml
+	src/ui/qml/InlineEditableText.qml
+	src/ui/qml/SettingsToggle.qml
+	src/ui/qml/GeneralSettingsPage.qml
+	src/ui/qml/AppearanceSettingsPage.qml
+	src/ui/qml/AdvancedSettingsPage.qml
+	src/ui/qml/ShortcutsSettingsPage.qml
+	src/ui/qml/ExtensionSettingsPage.qml
+	src/ui/qml/AboutSettingsPage.qml
+	src/ui/qml/ShortcutRecorderField.qml
+	src/ui/qml/ShortcutRecorderCapture.qml
+	src/ui/qml/ShortcutRecorderPanel.qml
+	src/ui/qml/ShortcutField.qml
+	src/ui/qml/PreferenceFormView.qml
+	src/ui/qml/SettingsPreferenceForm.qml
+	src/ui/qml/MissingPreferenceView.qml
+	src/ui/qml/OAuthOverlayView.qml
+	src/ui/qml/HudWindow.qml
+	src/ui/qml/OnboardingWindow.qml
 )
 
 if(WAYLAND_LAYER_SHELL)
 	list(APPEND VICINAE_QML_FILES
-		src/qml/qml/LauncherWindowLayerShell.qml
-		src/qml/qml/HudWindowLayerShell.qml
+		src/ui/qml/LauncherWindowLayerShell.qml
+		src/ui/qml/HudWindowLayerShell.qml
 	)
 endif()
 
 if(APPLE)
 	list(APPEND VICINAE_QML_FILES
-		src/qml/qml/LauncherWindowMacOS.qml
-		src/qml/qml/OnboardingWindowMacOS.qml
-		src/qml/qml/HudWindowMacOS.qml
-		src/qml/qml/CompletionPanelMacOS.qml
-		src/qml/qml/PopupMaterialMacOS.qml
-		src/qml/qml/SettingsWindowMacOS.qml
+		src/ui/qml/LauncherWindowMacOS.qml
+		src/ui/qml/OnboardingWindowMacOS.qml
+		src/ui/qml/HudWindowMacOS.qml
+		src/ui/qml/CompletionPanelMacOS.qml
+		src/ui/qml/PopupMaterialMacOS.qml
+		src/ui/qml/SettingsWindowMacOS.qml
 	)
 endif()
 
 if(WIN32)
 	list(APPEND VICINAE_QML_FILES
-		src/qml/qml/LauncherWindowWindows.qml
-		src/qml/qml/HudWindowWindows.qml
+		src/ui/qml/LauncherWindowWindows.qml
+		src/ui/qml/HudWindowWindows.qml
 	)
 endif()
 
@@ -1233,37 +1233,37 @@ foreach(qml_file IN LISTS VICINAE_QML_FILES)
 endforeach()
 
 set(VICINAE_QML_SOURCES
-	src/qml/source-blend-rect.hpp
-	src/qml/vici-image-item.hpp
-	src/qml/hover-activation.hpp
-	src/qml/hover-activation.cpp
-	src/qml/match-highlighter.hpp
-	src/qml/match-highlighter.cpp
-	src/qml/completion-model.hpp
-	src/qml/markdown/markdown-model.hpp
-	src/qml/markdown/text-selection-controller.hpp
-	src/qml/window-material-attached.hpp
-	src/qml/window-material-attached.cpp
-	src/qml/popup-placement-attached.hpp
-	src/qml/popup-placement-attached.cpp
-	src/qml/shortcut-inhibitor-attached.hpp
-	src/qml/shortcut-inhibitor-attached.cpp
+	src/ui/quick/source-blend-rect.hpp
+	src/ui/quick/vici-image-item.hpp
+	src/ui/quick/hover-activation.hpp
+	src/ui/quick/hover-activation.cpp
+	src/ui/quick/match-highlighter.hpp
+	src/ui/quick/match-highlighter.cpp
+	src/ui/quick/completion-model.hpp
+	src/ui/quick/markdown-model.hpp
+	src/ui/quick/text-selection-controller.hpp
+	src/ui/quick/window-material-attached.hpp
+	src/ui/quick/window-material-attached.cpp
+	src/ui/quick/popup-placement-attached.hpp
+	src/ui/quick/popup-placement-attached.cpp
+	src/ui/quick/shortcut-inhibitor-attached.hpp
+	src/ui/quick/shortcut-inhibitor-attached.cpp
 	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler/wheelhandler.h
 	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler/wheelhandler.cpp
 )
 
 if(APPLE)
 	list(APPEND VICINAE_QML_SOURCES
-		src/qml/macos-chrome-attached.hpp
-		src/qml/macos-chrome-attached.mm
+		src/ui/quick/macos-chrome-attached.hpp
+		src/ui/quick/macos-chrome-attached.mm
 	)
 endif()
 
 if(WIN32)
 	list(APPEND VICINAE_QML_SOURCES
-		src/qml/windows-chrome-attached.hpp
-		src/qml/windows-chrome-attached.cpp
-		src/qml/launcher-window-platform.cpp
+		src/ui/quick/windows-chrome-attached.hpp
+		src/ui/quick/windows-chrome-attached.cpp
+		src/ui/windows/launcher-window-platform.cpp
 	)
 endif()
 
@@ -1277,13 +1277,15 @@ qt_add_qml_module(${TARGET}
 	NO_PLUGIN
 )
 
+# BASE keeps the resource path at :/shaders/<name>.qsb instead of mirroring the source tree.
 qt6_add_shaders(${TARGET} "sourceblend_shaders"
 	BATCHABLE
 	PREFIX "/shaders"
+	BASE "src/ui/quick/shaders"
 	GLSL "100es,120,150,330,440"
 	FILES
-		src/qml/shaders/sourceblend.vert
-		src/qml/shaders/sourceblend.frag
+		src/ui/quick/shaders/sourceblend.vert
+		src/ui/quick/shaders/sourceblend.frag
 )
 
 if(Qt6_FOUND AND NOT WIN32)
@@ -1292,7 +1294,9 @@ if(Qt6_FOUND AND NOT WIN32)
     )
 endif()
 
-target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler ${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
+# src/ui/quick holds the C++ types registered into the Vicinae QML module. It must be on the
+# include path because the generated type registration file includes those headers by basename.
+target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/quick ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler ${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
 	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-framework Security" "-F/System/Library/PrivateFrameworks" "-framework login")

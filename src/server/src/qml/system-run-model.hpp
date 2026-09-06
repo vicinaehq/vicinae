@@ -1,6 +1,6 @@
 #pragma once
 #include "fuzzy/scored.hpp"
-#include "section-source.hpp"
+#include "ui/views/section-source.hpp"
 #include <QCoreApplication>
 #include <filesystem>
 #include <vector>

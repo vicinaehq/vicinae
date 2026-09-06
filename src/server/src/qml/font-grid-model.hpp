@@ -2,8 +2,8 @@
 #include "font-service.hpp"
 #include "fuzzy-scorer.hpp"
 #include "fuzzy/scored.hpp"
-#include "grid-source.hpp"
-#include "section-grid-model.hpp"
+#include "ui/views/grid-source.hpp"
+#include "ui/views/section-grid-model.hpp"
 #include <QString>
 #include <QStringList>
 #include <optional>

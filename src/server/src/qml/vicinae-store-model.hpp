@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include "fuzzy-section.hpp"
+#include "ui/views/fuzzy-section.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "services/extension-store/vicinae-store.hpp"
 
