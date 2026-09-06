@@ -34,6 +34,7 @@
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "services/note/note-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/news/news-service.hpp"
@@ -74,6 +75,8 @@ LinuxInputServer *ServiceRegistry::inputServer() const { return m_inputServer.ge
 #endif
 
 SnippetService *ServiceRegistry::snippetService() const { return m_snippetService.get(); }
+
+NoteService *ServiceRegistry::noteService() const { return m_noteService.get(); }
 
 PasteService *ServiceRegistry::pasteService() const { return m_pasteService.get(); }
 AbstractSelectionService *ServiceRegistry::selectionService() const { return m_selectionService.get(); }
@@ -182,6 +185,10 @@ void ServiceRegistry::setSnippetServerBackend(std::unique_ptr<AbstractSnippetSer
 
 void ServiceRegistry::setSnippetService(std::unique_ptr<SnippetService> service) {
   m_snippetService = std::move(service);
+}
+
+void ServiceRegistry::setNoteService(std::unique_ptr<NoteService> service) {
+  m_noteService = std::move(service);
 }
 
 void ServiceRegistry::setPasteService(std::unique_ptr<PasteService> service) {
