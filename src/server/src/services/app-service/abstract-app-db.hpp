@@ -188,6 +188,17 @@ public:
    */
   virtual AppPtr findDefaultOpener(const Target &target) const = 0;
 
+  /**
+   * Make `app` the default opener for the given mime type.
+   * Returns false if the platform does not support it or if the change could not be applied.
+   */
+  virtual bool setDefaultOpener(const QString &mime, const AbstractApplication &app) { return false; }
+
+  /**
+   * Make `app` the preferred web browser on this system.
+   */
+  virtual bool setWebBrowser(const AbstractApplication &app) { return false; }
+
   virtual AppPtr findById(const QString &id) const = 0;
 
   /**

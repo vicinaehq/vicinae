@@ -9,6 +9,7 @@
 #include <qmimetype.h>
 #include <qobjectdefs.h>
 #include <qprocess.h>
+#include <span>
 #include <xdgpp/xdgpp.hpp>
 
 class XdgAppDatabase : public AbstractAppDatabase {
@@ -35,6 +36,8 @@ public:
   AppPtr fileBrowser() const override;
   AppPtr genericTextEditor() const override;
   AppPtr webBrowser() const override;
+  bool setDefaultOpener(const QString &mime, const AbstractApplication &app) override;
+  bool setWebBrowser(const AbstractApplication &app) override;
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const override;
   bool openLocation(const AbstractApplication &app) const override;
   AppPtr locationOpener(const AbstractApplication &app) const override;
@@ -55,6 +58,7 @@ private:
   AppPtr findDefaultTerminalFromSpec() const;
 
   AppPtr defaultForMime(const QString &mime) const;
+  bool setDefaultForMimes(std::span<const std::string_view> mimes, const AbstractApplication &app);
   std::vector<AppPtr> findAssociations(const QString &mime) const;
   QString mimeNameForTarget(const QString &target) const;
   AppPtr findByCategory(const QString &category) const;

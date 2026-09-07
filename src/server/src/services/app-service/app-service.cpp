@@ -87,6 +87,7 @@ std::shared_ptr<AbstractApplication> AppService::textEditor() const {
 }
 
 std::shared_ptr<AbstractApplication> AppService::webBrowser() const { return m_provider->webBrowser(); }
+bool AppService::setWebBrowser(const AbstractApplication &app) { return m_provider->setWebBrowser(app); }
 std::shared_ptr<AbstractApplication> AppService::fileBrowser() const { return m_provider->fileBrowser(); }
 
 std::vector<std::shared_ptr<AbstractApplication>> AppService::list(const AppListOptions &opts) const {

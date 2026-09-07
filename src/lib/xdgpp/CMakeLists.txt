@@ -19,6 +19,7 @@ add_library(vicinae-xdgpp STATIC
 	xdgpp/env/env.cpp
 	xdgpp/mime/iterator.cpp
 	xdgpp/mime/mime-apps-list.cpp
+	xdgpp/mime/mime-apps-list-writer.cpp
 	xdgpp/uri/file-uri.cpp
 	xdgpp/bookmark/bookmark-file.cpp
 )
