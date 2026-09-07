@@ -1,6 +1,6 @@
 #pragma once
 #include "ui/image/url.hpp"
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include <expected>
 #include "oauth-token-store.hpp"
 #include <qfuture.h>

@@ -1,6 +1,6 @@
 #pragma once
 #include <expected>
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "script-command.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"

@@ -1,5 +1,6 @@
 #pragma once
 // We use our own shortcut stuff by design, instead of using QShortcut and the likes.
+#include <memory>
 #include <optional>
 #include <vector>
 #include <QChar>
@@ -14,6 +15,11 @@ namespace Keyboard {
 // Maps a non-Latin character key (e.g Cyrillic) to the Latin key at the same physical position,
 // so recorded shortcuts stay layout-independent. Identity for Latin keys and non-macOS platforms.
 Qt::Key normalizeToLatin(Qt::Key key);
+
+class LayoutResolver;
+void setLayoutResolver(std::unique_ptr<LayoutResolver> resolver);
+
+Qt::Key resolveKey(Qt::Key key, quint32 scanCode);
 
 // Typed character for keys whose Qt::Key value is its uppercase code point, nullopt for named keys.
 std::optional<QChar> printableCharForKey(Qt::Key key);

@@ -1,6 +1,6 @@
 #pragma once
 #include "ui/image/url.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "ui/image/omni-painter.hpp"
 #include <QFuture>
 #include <QImage>
 #include <QObject>

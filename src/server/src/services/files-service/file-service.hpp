@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include <QDateTime>
 #include <cstdint>

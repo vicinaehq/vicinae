@@ -7,9 +7,9 @@ namespace Crypto::AES256GCM {
 static constexpr std::size_t IV_SIZE = 12;
 static constexpr std::size_t TAG_SIZE = 16;
 
-std::array<std::byte, KEY_SIZE> generateKey() {
+std::optional<std::array<std::byte, KEY_SIZE>> generateKey() {
   std::array<std::byte, KEY_SIZE> key{};
-  detail::randomBytes(key);
+  if (!detail::randomBytes(key)) return std::nullopt;
   return key;
 }
 

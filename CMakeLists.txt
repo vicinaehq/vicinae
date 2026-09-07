@@ -74,7 +74,7 @@ option(
 	${BUNDLE_SOULVER_CORE_DEFAULT}
 )
 
-set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "macOS app bundle identifier")
+set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "App identifier (macOS bundle id, Windows AppUserModelID)")
 
 set(NATIVE_MESSAGING_HOST "com.vicinae.vicinae")
 set(CHROME_EXTENSION_ID "kcmipingpfbohfjckomimmahknoddnke") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke

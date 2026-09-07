@@ -1,5 +1,6 @@
 #include <QKeySequence>
 #include <QVariantMap>
+#include "layout-resolver.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
 #include <ranges>
@@ -150,6 +151,17 @@ namespace Keyboard {
 #ifndef Q_OS_MACOS
 Qt::Key normalizeToLatin(Qt::Key key) { return key; }
 #endif
+
+namespace {
+std::unique_ptr<LayoutResolver> g_layoutResolver;
+} // namespace
+
+void setLayoutResolver(std::unique_ptr<LayoutResolver> resolver) { g_layoutResolver = std::move(resolver); }
+
+Qt::Key resolveKey(Qt::Key key, quint32 scanCode) {
+  if (g_layoutResolver && printableCharForKey(key)) key = g_layoutResolver->unshift(key, scanCode);
+  return normalizeToLatin(key);
+}
 
 std::optional<QChar> printableCharForKey(Qt::Key key) {
   const auto code = static_cast<uint32_t>(key);
@@ -332,8 +344,8 @@ std::vector<DisplayTokenSpec> buildDisplayTokenSpecs(const Shortcut &shortcut) {
 } // namespace
 
 Shortcut::Shortcut(const QKeyEvent *event)
-    : m_key(normalizeToLatin(static_cast<Qt::Key>(event->key()))), m_modifiers(event->modifiers()),
-      m_isValid(true) {}
+    : m_key(resolveKey(static_cast<Qt::Key>(event->key()), event->nativeScanCode())),
+      m_modifiers(event->modifiers()), m_isValid(true) {}
 
 Shortcut Shortcut::fromKeyPress(const QKeyEvent &event) { return Shortcut(&event); }
 

@@ -1,0 +1,72 @@
+#pragma once
+#include "ui/quick/completion-model.hpp"
+#include "command/preference.hpp"
+#include "common/entrypoint.hpp"
+#include <QAbstractListModel>
+#include <QJsonObject>
+#include <QTimer>
+#include <vector>
+
+class PreferenceFormModel : public QAbstractListModel {
+  Q_OBJECT
+
+public:
+  enum Role {
+    TypeRole = Qt::UserRole + 1,
+    FieldIdRole,
+    LabelRole,
+    CheckboxLabelRole,
+    DescriptionRole,
+    PlaceholderRole,
+    ValueRole,
+    DropdownModelRole,
+    CurrentDropdownItemRole,
+    ReadOnlyRole,
+    MultipleRole,
+    CanChooseFilesRole,
+    CanChooseDirectoriesRole,
+    LockedPathsRole
+  };
+
+  explicit PreferenceFormModel(QObject *parent = nullptr);
+  ~PreferenceFormModel() override;
+
+  int rowCount(const QModelIndex &parent = {}) const override;
+  QVariant data(const QModelIndex &index, int role) const override;
+  QHash<int, QByteArray> roleNames() const override;
+
+  void load(const EntrypointId &id, const std::vector<Preference> &preferences);
+  void loadProvider(const QString &providerId, const std::vector<Preference> &preferences);
+
+  Q_INVOKABLE void setFieldValue(int row, const QVariant &value);
+
+private:
+  void save();
+
+  struct Field {
+    QString type;
+    QString id;
+    QString label;
+    QString checkboxLabel;
+    QString description;
+    QString placeholder;
+    QVariant value;
+    CompletionModel *dropdownModel = nullptr;
+    bool readOnly = false;
+    bool multiple = false;
+    bool canChooseFiles = true;
+    bool canChooseDirectories = false;
+    QStringList lockedPaths;
+  };
+
+  Field createField(const Preference &pref);
+  void clearFields();
+  static QVariant currentDropdownItem(const Field &f);
+
+  std::vector<Field> m_fields;
+  QJsonObject m_values;
+  EntrypointId m_itemId;
+  QString m_providerId;
+  bool m_isProvider = false;
+  QTimer m_saveTimer;
+};

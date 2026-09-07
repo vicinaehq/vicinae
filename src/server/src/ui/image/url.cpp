@@ -1,9 +1,9 @@
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "glyph/emoji.hpp"
-#include "extend/image-model.hpp"
+#include "extension/model/image-model.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
-#include "theme.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "theme/theme.hpp"
+#include "ui/image/omni-painter.hpp"
 #include "theme/theme-file.hpp"
 #include <qdir.h>
 #include <qstringview.h>

@@ -1,5 +1,5 @@
 #include "windows-window-manager.hpp"
-#include "qml/launcher-window-platform.hpp"
+#include "ui/windows/launcher-window-platform.hpp"
 #include <QDebug>
 #include <QTimer>
 #include <algorithm>

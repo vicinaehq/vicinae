@@ -103,8 +103,8 @@ set(SRCS
 
 	${CMAKE_SOURCE_DIR}/vendor/fuzzy-trigram/register.c
 
-	src/theme.hpp
-	src/theme.cpp
+	src/theme/theme.hpp
+	src/theme/theme.cpp
 
 	src/script/script-command-file.cpp
 	src/script/script-output-tokenizer.cpp
@@ -114,11 +114,11 @@ set(SRCS
 	src/services/script-command/script-command-service.hpp
 	src/services/script-command/script-command-service.cpp
 
-	src/placeholder.cpp
+	src/utils/placeholder.cpp
 
 
-	src/font-service.hpp
-	src/font-service.cpp
+	src/services/font-service/font-service.hpp
+	src/services/font-service/font-service.cpp
 
 	src/internal/template-engine/template-engine.cpp
 	src/internal/glaze-qt.cpp
@@ -138,7 +138,7 @@ set(SRCS
 	src/favicon/cached-favicon-request.cpp
 
 
-	src/command-actions.cpp
+	src/actions/command-actions.cpp
 
 	src/root-search/extensions/extension-root-provider.hpp
 	src/root-search/extensions/extension-root-provider.cpp
@@ -160,24 +160,24 @@ set(SRCS
 	src/services/shortcut/shortcut.hpp
 	src/services/shortcut/shortcut.cpp
 
-	src/actions/theme/theme-actions.hpp
-	src/actions/theme/theme-actions.cpp
+	src/actions/theme-actions.hpp
+	src/actions/theme-actions.cpp
 
-	src/actions/calculator/calculator-actions.hpp
-	src/actions/calculator/calculator-actions.cpp
+	src/actions/calculator-actions.hpp
+	src/actions/calculator-actions.cpp
 
-	src/actions/root-search/root-search-actions.hpp
-	src/actions/root-search/root-search-actions.cpp
+	src/actions/root-search-actions.hpp
+	src/actions/root-search-actions.cpp
 
-	src/actions/extension/extension-actions.cpp
+	src/actions/extension-actions.cpp
 
-	src/actions/app/app-actions.hpp
-	src/actions/app/app-actions.cpp
+	src/actions/app-actions.hpp
+	src/actions/app-actions.cpp
 	
 	src/service-registry.cpp
 
-	src/color-formatter.hpp
-	src/color-formatter.cpp
+	src/utils/color-formatter.hpp
+	src/utils/color-formatter.cpp
 
 	src/services/clipboard/clipboard-server.hpp
 	src/services/clipboard/clipboard-content.hpp
@@ -201,8 +201,8 @@ set(SRCS
 
 	src/services/local-storage/scoped-local-storage.cpp
 
-	src/settings-controller/settings-controller.hpp
-	src/settings-controller/settings-controller.cpp
+	src/ui/settings/settings-controller.hpp
+	src/ui/settings/settings-controller.cpp
 
 	src/services/toast/toast-service.hpp
 
@@ -212,14 +212,14 @@ set(SRCS
 
 	# end app-database
 
-	src/ui/action-pannel/action.hpp
-	src/ui/action-pannel/action.cpp
-	src/ui/action-pannel/action-panel-state.hpp
-	src/ui/action-pannel/action-panel-view.hpp
-	src/ui/action-pannel/action-list-view.hpp
-	src/ui/action-pannel/action-list-view.cpp
-	src/ui/action-pannel/shortcut-recorder-panel-view.hpp
-	src/ui/action-pannel/shortcut-recorder-panel-view.cpp
+	src/ui/action-panel/action.hpp
+	src/ui/action-panel/action.cpp
+	src/ui/action-panel/action-panel-state.hpp
+	src/ui/action-panel/action-panel-view.hpp
+	src/ui/action-panel/action-list-view.hpp
+	src/ui/action-panel/action-list-view.cpp
+	src/ui/action-panel/shortcut-recorder-panel-view.hpp
+	src/ui/action-panel/shortcut-recorder-panel-view.cpp
 
 	
 	src/extension/extension-command.hpp
@@ -237,8 +237,8 @@ set(SRCS
 
 
 
-	src/ui/omni-painter/omni-painter.hpp
-	src/ui/omni-painter/omni-painter.cpp
+	src/ui/image/omni-painter.hpp
+	src/ui/image/omni-painter.cpp
 
 	src/ui/image/url.cpp
 	src/ui/image/image-renderer.hpp
@@ -246,24 +246,24 @@ set(SRCS
 	src/ui/image/image-stream.hpp
 	src/ui/image/image-stream.cpp
 
-	src/command-database.hpp
-	src/command-database.cpp
+	src/command/command-database.hpp
+	src/command/command-database.cpp
 
 		src/ui/image/url.hpp
 
 
 
-	src/builtin_icon.cpp
+	src/services/builtin-icon/builtin-icon.cpp
 
 
-	src/extend/accessory-model.cpp
-	src/extend/model-deser.cpp
-	src/extend/form-model.hpp
+	src/extension/model/accessory-model.cpp
+	src/extension/model/model-deser.cpp
+	src/extension/model/form-model.hpp
 
-	src/image-fetcher.hpp
+	src/services/image-fetcher/image-fetcher.hpp
 
 
-	src/command.hpp
+	src/command/command.hpp
 	
 
 	src/vicinae.hpp
@@ -281,6 +281,8 @@ set(SRCS
 	src/internal/keyboard/keybind-manager.hpp
 	src/internal/keyboard/keybind-manager.cpp
 	src/internal/keyboard/keyboard.cpp
+	src/internal/keyboard/layout-resolver.hpp
+	src/internal/keyboard/layout-resolver.cpp
 
 	src/theme/theme-file.hpp
 	src/theme/theme-file.cpp
@@ -288,51 +290,51 @@ set(SRCS
 	src/theme/theme-db.hpp
 	src/theme/theme-db.cpp
 
-	src/extensions/clipboard/clipboard-history-command.cpp
-	src/extensions/clipboard/history/clipboard-history-controller.hpp
-	src/extensions/clipboard/history/clipboard-history-controller.cpp
-	src/extensions/browser/browser-extension.cpp
+	src/builtins/clipboard/clipboard-history-command.cpp
+	src/builtins/clipboard/history/clipboard-history-controller.hpp
+	src/builtins/clipboard/history/clipboard-history-controller.cpp
+	src/builtins/browser/browser-extension.cpp
 
-	src/extensions/wm/wm-extension.hpp
-	src/extensions/wm/wm-extension.cpp
+	src/builtins/wm/wm-extension.hpp
+	src/builtins/wm/wm-extension.cpp
 
-	src/extensions/clipboard/clipboard-extension.hpp
-	src/extensions/clipboard/clipboard-extension.cpp
+	src/builtins/clipboard/clipboard-extension.hpp
+	src/builtins/clipboard/clipboard-extension.cpp
 
-	src/extensions/snippet/snippet-extension.cpp
+	src/builtins/snippet/snippet-extension.cpp
 
-	src/extensions/vicinae/refresh-apps-command.hpp
-	src/extensions/vicinae/refresh-apps-command.cpp
-	src/extensions/power-management/power-management-extension.cpp
+	src/builtins/vicinae/refresh-apps-command.hpp
+	src/builtins/vicinae/refresh-apps-command.cpp
+	src/builtins/power-management/power-management-extension.cpp
 
-	src/qml/browse-apps-model.hpp
-	src/qml/browse-apps-model.cpp
-	src/qml/browse-apps-view-host.hpp
-	src/qml/browse-apps-view-host.cpp
-	src/qml/browser-tabs-model.hpp
-	src/qml/browser-tabs-model.cpp
-	src/qml/browser-tabs-view-host.hpp
-	src/qml/browser-tabs-view-host.cpp
-	src/qml/builtin-icons-model.hpp
-	src/qml/builtin-icons-model.cpp
-	src/qml/builtin-icons-view-host.hpp
-	src/qml/builtin-icons-view-host.cpp
-	src/qml/manage-fallback-model.hpp
-	src/qml/manage-fallback-model.cpp
-	src/qml/manage-fallback-view-host.hpp
-	src/qml/manage-fallback-view-host.cpp
-	src/qml/system-run-model.hpp
-	src/qml/system-run-model.cpp
-	src/qml/system-run-view-host.hpp
-	src/qml/system-run-view-host.cpp
-	src/qml/create-extension-success-view-host.hpp
-	src/qml/create-extension-success-view-host.cpp
-	src/qml/script-executor-view-host.hpp
-	src/qml/script-executor-view-host.cpp
-	src/qml/provider-search-model.hpp
-	src/qml/provider-search-model.cpp
-	src/qml/provider-search-view-host.hpp
-	src/qml/provider-search-view-host.cpp
+	src/builtins/system/browse-apps-model.hpp
+	src/builtins/system/browse-apps-model.cpp
+	src/builtins/system/browse-apps-view-host.hpp
+	src/builtins/system/browse-apps-view-host.cpp
+	src/builtins/browser/browser-tabs-model.hpp
+	src/builtins/browser/browser-tabs-model.cpp
+	src/builtins/browser/browser-tabs-view-host.hpp
+	src/builtins/browser/browser-tabs-view-host.cpp
+	src/builtins/vicinae/builtin-icons-model.hpp
+	src/builtins/vicinae/builtin-icons-model.cpp
+	src/builtins/vicinae/builtin-icons-view-host.hpp
+	src/builtins/vicinae/builtin-icons-view-host.cpp
+	src/builtins/vicinae/manage-fallback-model.hpp
+	src/builtins/vicinae/manage-fallback-model.cpp
+	src/builtins/vicinae/manage-fallback-view-host.hpp
+	src/builtins/vicinae/manage-fallback-view-host.cpp
+	src/builtins/system/system-run-model.hpp
+	src/builtins/system/system-run-model.cpp
+	src/builtins/system/system-run-view-host.hpp
+	src/builtins/system/system-run-view-host.cpp
+	src/builtins/developer/create-extension-success-view-host.hpp
+	src/builtins/developer/create-extension-success-view-host.cpp
+	src/script/script-executor-view-host.hpp
+	src/script/script-executor-view-host.cpp
+	src/builtins/root/provider-search-model.hpp
+	src/builtins/root/provider-search-model.cpp
+	src/builtins/root/provider-search-view-host.hpp
+	src/builtins/root/provider-search-view-host.cpp
 
 	src/server.cpp
 
@@ -380,8 +382,8 @@ set(SRCS
 	src/services/oauth/oauth-token-store.hpp
 	src/services/oauth/oauth-token-store.cpp
 
-	src/qml/oauth-overlay-host.hpp
-	src/qml/oauth-overlay-host.cpp
+	src/extension/views/oauth-overlay-host.hpp
+	src/extension/views/oauth-overlay-host.cpp
 
 
 
@@ -393,34 +395,34 @@ set(SRCS
 
 	src/ui/views/base-view.cpp
 
-	src/command-controller.hpp
-	src/command-controller.cpp
+	src/command/command-controller.hpp
+	src/command/command-controller.cpp
 
-	src/ipc-command-server.hpp
-	src/ipc-command-server.cpp
-	src/ipc-command-handler.hpp
-	src/ipc-command-handler.cpp
+	src/ipc/ipc-command-server.hpp
+	src/ipc/ipc-command-server.cpp
+	src/ipc/ipc-command-handler.hpp
+	src/ipc/ipc-command-handler.cpp
 
-	src/extension-interval-scheduler.hpp
-	src/extension-interval-scheduler.cpp
+	src/extension/extension-interval-scheduler.hpp
+	src/extension/extension-interval-scheduler.cpp
 
 	src/log/message-handler.cpp
 
 	src/extension/extension-command-runtime.cpp
-	src/extension/services/ui-service.hpp
-	src/extension/services/wallpaper-service.hpp
+	src/extension/api/ui-service.hpp
+	src/extension/api/wallpaper-service.hpp
 
-	src/extensions/vicinae/vicinae-extension.cpp
+	src/builtins/vicinae/vicinae-extension.cpp
 
-	src/qml/search-files-model.hpp
-	src/qml/search-files-model.cpp
-	src/qml/search-files-view-host.hpp
-	src/qml/search-files-view-host.cpp
+	src/builtins/file/search-files-model.hpp
+	src/builtins/file/search-files-model.cpp
+	src/builtins/file/search-files-view-host.hpp
+	src/builtins/file/search-files-view-host.cpp
 
 	src/services/raycast/raycast-store.cpp
 	src/services/extension-store/vicinae-store.cpp
 
-	src/overlay-controller/overlay-controller.hpp
+	src/ui/windows/overlay-controller.hpp
 
 
 	src/internal/zip/unzip.cpp
@@ -430,8 +432,8 @@ set(SRCS
 	src/ui/alert/alert.hpp
 	src/ui/alert/alert.cpp
 
-	src/ui/dialog/dialog.hpp
-	src/ui/dialog/dialog.cpp
+	src/ui/alert/dialog.hpp
+	src/ui/alert/dialog.cpp
 
 	src/internal/os-release.cpp
 
@@ -465,8 +467,8 @@ set(SRCS
 	src/services/tray-host/dummy-tray-host.hpp
 	src/services/tray-host/tray-host.hpp
 	src/services/tray-host/tray-host.cpp
-	src/qml/search-tray-view-host.hpp
-	src/extensions/vicinae/search-tray-command.hpp
+	src/builtins/vicinae/search-tray-view-host.hpp
+	src/builtins/vicinae/search-tray-command.hpp
 
 	src/services/desktop-notification/dummy-desktop-notification-client.hpp
 
@@ -480,15 +482,15 @@ set(SRCS
 	src/config/config.hpp
 	src/config/config.cpp
 
-	src/qml/local-storage-model.hpp
-	src/qml/local-storage-model.cpp
-	src/qml/local-storage-view-host.hpp
-	src/qml/local-storage-view-host.cpp
+	src/builtins/vicinae/local-storage-model.hpp
+	src/builtins/vicinae/local-storage-model.cpp
+	src/builtins/vicinae/local-storage-view-host.hpp
+	src/builtins/vicinae/local-storage-view-host.cpp
 
-	src/qml/dmenu-model.hpp
-	src/qml/dmenu-model.cpp
-	src/qml/dmenu-view-host.hpp
-	src/qml/dmenu-view-host.cpp
+	src/ui/views/dmenu-model.hpp
+	src/ui/views/dmenu-model.cpp
+	src/ui/views/dmenu-view-host.hpp
+	src/ui/views/dmenu-view-host.cpp
 
 	src/services/news/news-service.hpp
 	src/services/news/news-service.cpp
@@ -508,160 +510,160 @@ set(SRCS
 	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
 
-	# QML frontend
-	src/qml/keybind-bridge.hpp
-	src/qml/launcher-window.hpp
-	src/qml/launcher-window.cpp
-	src/qml/root-view-host.hpp
-	src/qml/root-view-host.cpp
-	src/qml/root-search-model.hpp
-	src/qml/root-search-model.cpp
-	src/qml/root-search-sources.hpp
-	src/qml/root-search-sources.cpp
-	src/qml/drag-utils.hpp
-	src/qml/drag-utils.cpp
-	src/qml/section-source.hpp
-	src/qml/section-list-model.hpp
-	src/qml/section-list-model.cpp
-	src/qml/fuzzy-section.hpp
-	src/qml/list-view-host.hpp
-	src/qml/action-panel-model.hpp
-	src/qml/action-panel-model.cpp
-	src/qml/completion-model.hpp
-	src/qml/completion-model.cpp
-	src/qml/action-panel-controller.hpp
-	src/qml/action-panel-controller.cpp
-	src/qml/alert-model.hpp
-	src/qml/alert-model.cpp
-	src/qml/bridge-view.hpp
-	src/qml/calc-history-model.hpp
-	src/qml/calc-history-model.cpp
-	src/qml/calc-history-view-host.hpp
-	src/qml/calc-history-view-host.cpp
-	src/qml/theme-list-model.hpp
-	src/qml/theme-list-model.cpp
-	src/qml/theme-view-host.hpp
-	src/qml/theme-view-host.cpp
-	src/qml/grid-source.hpp
-	src/qml/section-grid-model.hpp
-	src/qml/section-grid-model.cpp
-	src/qml/emoji-grid-model.hpp
-	src/qml/emoji-grid-model.cpp
-	src/qml/emoji-grid-view-host.hpp
-	src/qml/view-utils.cpp
-	src/qml/extension-view-host.hpp
-	src/qml/extension-view-host.cpp
-	src/qml/extension-error-view-host.hpp
-	src/qml/extension-error-view-host.cpp
-	src/qml/empty-view-host.hpp
-	src/qml/empty-view-host.cpp
-	src/qml/missing-preference-view-host.hpp
-	src/qml/missing-preference-view-host.cpp
-	src/qml/extension-form-model.hpp
-	src/qml/extension-form-model.cpp
-	src/qml/clipboard-history-model.hpp
-	src/qml/clipboard-history-model.cpp
-	src/qml/clipboard-history-view-host.hpp
-	src/qml/clipboard-history-view-host.cpp
-	src/qml/snippet-form-view-host.hpp
-	src/qml/snippet-form-view-host.cpp
-	src/qml/alias-form-view-host.hpp
-	src/qml/alias-form-view-host.cpp
-	src/qml/app-selector-model.hpp
-	src/qml/app-selector-model.cpp
-	src/qml/shortcut-form-view-host.hpp
-	src/qml/shortcut-form-view-host.cpp
-	src/qml/extension-list-model.hpp
-	src/qml/extension-list-model.cpp
-	src/qml/extension-grid-model.hpp
-	src/qml/extension-grid-model.cpp
-	src/qml/source-blend-rect.hpp
-	src/qml/source-blend-rect.cpp
-	src/qml/image-url.hpp
-	src/qml/image-url.cpp
-	src/qml/image-source.hpp
-	src/qml/image-source.cpp
-	src/qml/vici-image-item.hpp
-	src/qml/vici-image-item.cpp
-	src/qml/config-bridge.hpp
-	src/qml/theme-bridge.hpp
-	src/qml/keyboard-bridge.hpp
-	src/qml/global-shortcut-bridge.hpp
-	src/qml/platform-bridge.hpp
-	src/qml/style-bridge.hpp
-	src/qml/shortcut-conflict.hpp
-	src/qml/shortcut-conflict.cpp
-	src/qml/create-extension-view-host.hpp
-	src/qml/create-extension-view-host.cpp
-	src/qml/installed-extensions-model.hpp
-	src/qml/installed-extensions-model.cpp
-	src/qml/installed-extensions-view-host.hpp
-	src/qml/installed-extensions-view-host.cpp
-	src/qml/oauth-token-store-model.hpp
-	src/qml/oauth-token-store-model.cpp
-	src/qml/oauth-token-store-view-host.hpp
-	src/qml/oauth-token-store-view-host.cpp
-	src/qml/switch-windows-model.hpp
-	src/qml/switch-windows-model.cpp
-	src/qml/switch-windows-view-host.hpp
-	src/qml/switch-windows-view-host.cpp
-	src/qml/switch-workspaces-model.hpp
-	src/qml/switch-workspaces-view-host.hpp
-	src/qml/switch-workspaces-view-host.cpp
-	src/qml/manage-shortcuts-model.hpp
-	src/qml/manage-shortcuts-model.cpp
-	src/qml/manage-shortcuts-view-host.hpp
-	src/qml/manage-shortcuts-view-host.cpp
-	src/qml/manage-snippets-model.hpp
-	src/qml/manage-snippets-model.cpp
-	src/qml/manage-snippets-view-host.hpp
-	src/qml/manage-snippets-view-host.cpp
-	src/qml/raycast-store-model.hpp
-	src/qml/raycast-store-model.cpp
-	src/qml/raycast-store-view-host.hpp
-	src/qml/raycast-store-view-host.cpp
-	src/qml/vicinae-store-model.hpp
-	src/qml/vicinae-store-model.cpp
-	src/qml/vicinae-store-view-host.hpp
-	src/qml/vicinae-store-view-host.cpp
-	src/qml/raycast-store-detail-host.hpp
-	src/qml/raycast-store-detail-host.cpp
-	src/qml/vicinae-store-detail-host.hpp
-	src/qml/vicinae-store-detail-host.cpp
-	src/qml/markdown/markdown-model.hpp
-	src/qml/markdown/markdown-model.cpp
-	src/qml/markdown/text-selection-controller.hpp
-	src/qml/markdown/text-selection-controller.cpp
-	src/qml/store-intro-view-host.hpp
-	src/qml/store-intro-view-host.cpp
-	src/qml/font-browser-view-host.hpp
-	src/qml/font-grid-model.hpp
-	src/qml/font-grid-model.cpp
-	src/qml/font-demo-view-host.hpp
-	src/qml/font-demo-view-host.cpp
-	src/qml/edit-keywords-view-host.hpp
-	src/qml/edit-keywords-view-host.cpp
-	src/qml/hud-bridge.hpp
-	src/qml/hud-bridge.cpp
+	# UI
+	src/ui/bridges/keybind-bridge.hpp
+	src/ui/windows/launcher-window.hpp
+	src/ui/windows/launcher-window.cpp
+	src/builtins/root/root-view-host.hpp
+	src/builtins/root/root-view-host.cpp
+	src/builtins/root/root-search-model.hpp
+	src/builtins/root/root-search-model.cpp
+	src/builtins/root/root-search-sources.hpp
+	src/builtins/root/root-search-sources.cpp
+	src/ui/views/drag-utils.hpp
+	src/ui/views/drag-utils.cpp
+	src/ui/views/section-source.hpp
+	src/ui/views/section-list-model.hpp
+	src/ui/views/section-list-model.cpp
+	src/ui/views/fuzzy-section.hpp
+	src/ui/views/list-view-host.hpp
+	src/ui/action-panel/action-panel-model.hpp
+	src/ui/action-panel/action-panel-model.cpp
+	src/ui/quick/completion-model.hpp
+	src/ui/quick/completion-model.cpp
+	src/ui/action-panel/action-panel-controller.hpp
+	src/ui/action-panel/action-panel-controller.cpp
+	src/ui/alert/alert-model.hpp
+	src/ui/alert/alert-model.cpp
+	src/ui/views/bridge-view.hpp
+	src/builtins/calculator/calc-history-model.hpp
+	src/builtins/calculator/calc-history-model.cpp
+	src/builtins/calculator/calc-history-view-host.hpp
+	src/builtins/calculator/calc-history-view-host.cpp
+	src/builtins/theme/theme-list-model.hpp
+	src/builtins/theme/theme-list-model.cpp
+	src/builtins/theme/theme-view-host.hpp
+	src/builtins/theme/theme-view-host.cpp
+	src/ui/views/grid-source.hpp
+	src/ui/views/section-grid-model.hpp
+	src/ui/views/section-grid-model.cpp
+	src/builtins/vicinae/emoji-grid-model.hpp
+	src/builtins/vicinae/emoji-grid-model.cpp
+	src/builtins/vicinae/emoji-grid-view-host.hpp
+	src/ui/views/view-utils.cpp
+	src/extension/views/extension-view-host.hpp
+	src/extension/views/extension-view-host.cpp
+	src/extension/views/extension-error-view-host.hpp
+	src/extension/views/extension-error-view-host.cpp
+	src/ui/views/empty-view-host.hpp
+	src/ui/views/empty-view-host.cpp
+	src/extension/views/missing-preference-view-host.hpp
+	src/extension/views/missing-preference-view-host.cpp
+	src/extension/views/extension-form-model.hpp
+	src/extension/views/extension-form-model.cpp
+	src/builtins/clipboard/history/clipboard-history-model.hpp
+	src/builtins/clipboard/history/clipboard-history-model.cpp
+	src/builtins/clipboard/history/clipboard-history-view-host.hpp
+	src/builtins/clipboard/history/clipboard-history-view-host.cpp
+	src/builtins/snippet/snippet-form-view-host.hpp
+	src/builtins/snippet/snippet-form-view-host.cpp
+	src/builtins/root/alias-form-view-host.hpp
+	src/builtins/root/alias-form-view-host.cpp
+	src/ui/views/app-selector-model.hpp
+	src/ui/views/app-selector-model.cpp
+	src/builtins/shortcut/shortcut-form-view-host.hpp
+	src/builtins/shortcut/shortcut-form-view-host.cpp
+	src/extension/views/extension-list-model.hpp
+	src/extension/views/extension-list-model.cpp
+	src/extension/views/extension-grid-model.hpp
+	src/extension/views/extension-grid-model.cpp
+	src/ui/quick/source-blend-rect.hpp
+	src/ui/quick/source-blend-rect.cpp
+	src/ui/image/image-url.hpp
+	src/ui/image/image-url.cpp
+	src/ui/image/image-source.hpp
+	src/ui/image/image-source.cpp
+	src/ui/quick/vici-image-item.hpp
+	src/ui/quick/vici-image-item.cpp
+	src/ui/bridges/config-bridge.hpp
+	src/ui/bridges/theme-bridge.hpp
+	src/ui/bridges/keyboard-bridge.hpp
+	src/ui/bridges/global-shortcut-bridge.hpp
+	src/ui/bridges/platform-bridge.hpp
+	src/ui/bridges/style-bridge.hpp
+	src/ui/settings/shortcut-conflict.hpp
+	src/ui/settings/shortcut-conflict.cpp
+	src/builtins/developer/create-extension-view-host.hpp
+	src/builtins/developer/create-extension-view-host.cpp
+	src/builtins/vicinae/installed-extensions-model.hpp
+	src/builtins/vicinae/installed-extensions-model.cpp
+	src/builtins/vicinae/installed-extensions-view-host.hpp
+	src/builtins/vicinae/installed-extensions-view-host.cpp
+	src/builtins/vicinae/oauth-token-store-model.hpp
+	src/builtins/vicinae/oauth-token-store-model.cpp
+	src/builtins/vicinae/oauth-token-store-view-host.hpp
+	src/builtins/vicinae/oauth-token-store-view-host.cpp
+	src/builtins/wm/switch-windows-model.hpp
+	src/builtins/wm/switch-windows-model.cpp
+	src/builtins/wm/switch-windows-view-host.hpp
+	src/builtins/wm/switch-windows-view-host.cpp
+	src/builtins/wm/switch-workspaces-model.hpp
+	src/builtins/wm/switch-workspaces-view-host.hpp
+	src/builtins/wm/switch-workspaces-view-host.cpp
+	src/builtins/shortcut/manage-shortcuts-model.hpp
+	src/builtins/shortcut/manage-shortcuts-model.cpp
+	src/builtins/shortcut/manage-shortcuts-view-host.hpp
+	src/builtins/shortcut/manage-shortcuts-view-host.cpp
+	src/builtins/snippet/manage-snippets-model.hpp
+	src/builtins/snippet/manage-snippets-model.cpp
+	src/builtins/snippet/manage-snippets-view-host.hpp
+	src/builtins/snippet/manage-snippets-view-host.cpp
+	src/builtins/raycast/raycast-store-model.hpp
+	src/builtins/raycast/raycast-store-model.cpp
+	src/builtins/raycast/raycast-store-view-host.hpp
+	src/builtins/raycast/raycast-store-view-host.cpp
+	src/builtins/vicinae/vicinae-store-model.hpp
+	src/builtins/vicinae/vicinae-store-model.cpp
+	src/builtins/vicinae/vicinae-store-view-host.hpp
+	src/builtins/vicinae/vicinae-store-view-host.cpp
+	src/builtins/raycast/raycast-store-detail-host.hpp
+	src/builtins/raycast/raycast-store-detail-host.cpp
+	src/builtins/vicinae/vicinae-store-detail-host.hpp
+	src/builtins/vicinae/vicinae-store-detail-host.cpp
+	src/ui/quick/markdown-model.hpp
+	src/ui/quick/markdown-model.cpp
+	src/ui/quick/text-selection-controller.hpp
+	src/ui/quick/text-selection-controller.cpp
+	src/builtins/vicinae/store-intro-view-host.hpp
+	src/builtins/vicinae/store-intro-view-host.cpp
+	src/builtins/font/font-browser-view-host.hpp
+	src/builtins/font/font-grid-model.hpp
+	src/builtins/font/font-grid-model.cpp
+	src/builtins/font/font-demo-view-host.hpp
+	src/builtins/font/font-demo-view-host.cpp
+	src/ui/views/edit-keywords-view-host.hpp
+	src/ui/views/edit-keywords-view-host.cpp
+	src/ui/windows/hud-bridge.hpp
+	src/ui/windows/hud-bridge.cpp
 
-	src/qml/settings-window.hpp
-	src/qml/settings-window.cpp
-	src/qml/onboarding-window.hpp
-	src/qml/onboarding-window.cpp
-	src/qml/general-settings-model.hpp
-	src/qml/general-settings-model.cpp
-	src/qml/keybind-settings-model.hpp
-	src/qml/keybind-settings-model.cpp
-	src/qml/settings-sidebar-model.hpp
-	src/qml/settings-sidebar-model.cpp
-	src/qml/extension-settings-model.hpp
-	src/qml/extension-settings-model.cpp
-	src/qml/preference-form-model.hpp
-	src/qml/preference-form-model.cpp
-	src/qml/provider-command-model.hpp
-	src/qml/provider-command-model.cpp
+	src/ui/windows/settings-window.hpp
+	src/ui/windows/settings-window.cpp
+	src/ui/windows/onboarding-window.hpp
+	src/ui/windows/onboarding-window.cpp
+	src/ui/settings/general-settings-model.hpp
+	src/ui/settings/general-settings-model.cpp
+	src/ui/settings/keybind-settings-model.hpp
+	src/ui/settings/keybind-settings-model.cpp
+	src/ui/settings/settings-sidebar-model.hpp
+	src/ui/settings/settings-sidebar-model.cpp
+	src/ui/settings/extension-settings-model.hpp
+	src/ui/settings/extension-settings-model.cpp
+	src/ui/settings/preference-form-model.hpp
+	src/ui/settings/preference-form-model.cpp
+	src/ui/settings/provider-command-model.hpp
+	src/ui/settings/provider-command-model.cpp
 
-	src/extensions/internal/markdown-showcase-command.hpp
+	src/builtins/internal/markdown-showcase-command.hpp
 
 )
 
@@ -725,8 +727,8 @@ if (APPLE)
 		src/services/file-chooser/macos/mac-file-chooser.mm
 		src/services/menu-bar/macos-menu-bar.hpp
 		src/services/menu-bar/macos-menu-bar.mm
-		src/qml/menu-bar-search-view-host.hpp
-		src/extensions/vicinae/search-menu-bar-command.hpp
+		src/builtins/vicinae/menu-bar-search-view-host.hpp
+		src/builtins/vicinae/search-menu-bar-command.hpp
 	)
 	set_source_files_properties(
 		src/ui/image/mac-file-icon-loader.mm
@@ -765,6 +767,8 @@ elseif (WIN32)
 		src/services/app-service/windows/win-app-database.cpp
 		src/services/global-shortcuts/windows-global-shortcut-backend.hpp
 		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
+		src/internal/keyboard/windows-layout-resolver.hpp
+		src/internal/keyboard/windows-layout-resolver.cpp
 		src/services/clipboard/windows/windows-clipboard-server.hpp
 		src/services/clipboard/windows/windows-clipboard-server.cpp
 		src/services/clipboard/windows/windows-image-mime.hpp
@@ -803,6 +807,8 @@ elseif (WIN32)
 		src/root-search/control-panel/control-panel-root-provider.cpp
 		src/services/url-scheme/win-url-scheme-registrar.hpp
 		src/services/url-scheme/win-url-scheme-registrar.cpp
+		src/services/desktop-notification/windows/windows-notification-client.hpp
+		src/services/desktop-notification/windows/windows-notification-client.cpp
 		src/services/wallpaper/windows/windows-wallpaper-backend.hpp
 		src/services/wallpaper/windows/windows-wallpaper-backend.cpp
 		src/services/audio-control/windows/wasapi-audio-control.hpp
@@ -815,6 +821,7 @@ elseif (WIN32)
 		src/utils/win-chassis.cpp
 	)
 	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore powrprof everything-sdk3)
+	add_compile_definitions(VICINAE_BUNDLE_ID="${VICINAE_BUNDLE_ID}")
 else()
 	list(APPEND SRCS
 		src/services/app-runtime/linux/linux-app-runtime.hpp
@@ -946,7 +953,7 @@ if (UNIX AND NOT APPLE)
 	# Add XCB (X11 C Bindings) library for X11 window manager support
 	find_package(X11 REQUIRED)
 	if (X11_FOUND)
-		list(APPEND LIBS X11::xcb X11::xcb_keysyms)
+		list(APPEND LIBS X11::xcb X11::xcb_keysyms X11::xcb_xkb)
 		message(STATUS "XCB library found for X11 window manager support")
 	endif()
 
@@ -962,7 +969,7 @@ if (UNIX AND NOT APPLE)
 	wayland_system_protocol(KEYBOARD_SHORTCUTS_INHIBIT_XML "unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml")
 	wayland_system_protocol(XDG_ACTIVATION_XML "staging/xdg-activation/xdg-activation-v1.xml")
 
-	list(APPEND LIBS xkbcommon)
+	list(APPEND LIBS xkbcommon xkbcommon-x11)
 
 	# Common Wayland support files
 	list(APPEND SRCS
@@ -976,6 +983,13 @@ if (UNIX AND NOT APPLE)
 
 		src/services/global-shortcuts/vicinae-hotkey-global-shortcut-backend.hpp
 		src/services/global-shortcuts/vicinae-hotkey-global-shortcut-backend.cpp
+
+		src/internal/keyboard/xkb-layout-resolver.hpp
+		src/internal/keyboard/xkb-layout-resolver.cpp
+		src/internal/keyboard/wayland-layout-resolver.hpp
+		src/internal/keyboard/wayland-layout-resolver.cpp
+		src/internal/keyboard/x11-layout-resolver.hpp
+		src/internal/keyboard/x11-layout-resolver.cpp
 
 		src/services/files-service/file-indexer/file-indexer.hpp
 		src/services/files-service/file-indexer/file-indexer.cpp
@@ -1062,153 +1076,153 @@ if(APPLE)
 endif()
 
 set(VICINAE_QML_FILES
-	src/qml/qml/LauncherWindow.qml
-	src/qml/qml/PopupMaterial.qml
-	src/qml/qml/ViciPopover.qml
-	src/qml/qml/PopoverBackground.qml
-	src/qml/qml/SearchBar.qml
-	src/qml/qml/GenericListView.qml
-	src/qml/qml/StatusBarInset.qml
-	src/qml/qml/HoverResetOnModelChange.qml
-	src/qml/qml/HoverResetOnShow.qml
-	src/qml/qml/RootSearchList.qml
-	src/qml/qml/ListItemDelegate.qml
-	src/qml/qml/ListAccessory.qml
-	src/qml/qml/ListAccessoryRow.qml
-	src/qml/qml/SelectableDelegate.qml
-	src/qml/qml/DraggableMouseArea.qml
-	src/qml/qml/SectionHeader.qml
-	src/qml/qml/Footer.qml
-	src/qml/qml/FooterButton.qml
-	src/qml/qml/FooterNavStatus.qml
-	src/qml/qml/FooterToast.qml
-	src/qml/qml/ShortcutBadge.qml
-	src/qml/qml/TextBadge.qml
-	src/qml/qml/CommandListView.qml
-	src/qml/qml/CalcHistoryListView.qml
-	src/qml/qml/CalculatorResultDelegate.qml
-	src/qml/qml/ThemeListView.qml
-	src/qml/qml/ThemeItemDelegate.qml
-	src/qml/qml/GenericGridView.qml
-	src/qml/qml/EmptyView.qml
-	src/qml/qml/EmojiGridView.qml
-	src/qml/qml/ViciButton.qml
-	src/qml/qml/ViciScrollBar.qml
-	src/qml/qml/ViciDivider.qml
-	src/qml/qml/ViciToolTip.qml
-	src/qml/qml/ExtensionView.qml
-	src/qml/qml/MarkdownDetailView.qml
-	src/qml/qml/ExtensionGridView.qml
-	src/qml/qml/ActionPanelPopover.qml
-	src/qml/qml/ActionListPanel.qml
-	src/qml/qml/ActionItemDelegate.qml
-	src/qml/qml/SearchableDropdown.qml
-	src/qml/qml/ClipboardHistoryView.qml
-	src/qml/qml/ClipboardFilterAccessory.qml
-	src/qml/qml/EmojiCategoryFilterAccessory.qml
-	src/qml/qml/DetailPanel.qml
-	src/qml/qml/MetadataBar.qml
-	src/qml/qml/AlertDialog.qml
-	src/qml/qml/FormView.qml
-	src/qml/qml/FormField.qml
-	src/qml/qml/FormInputBackground.qml
-	src/qml/qml/FormTextInput.qml
-	src/qml/qml/FormTextArea.qml
-	src/qml/qml/FormCheckbox.qml
-	src/qml/qml/FormSeparator.qml
-	src/qml/qml/SnippetFormView.qml
-	src/qml/qml/AliasFormView.qml
-	src/qml/qml/ShortcutFormView.qml
-	src/qml/qml/FormCompletedInput.qml
-	src/qml/qml/FormCompletedTextArea.qml
-	src/qml/qml/PlaceholderCompleter.qml
-	src/qml/qml/CompletionPopup.qml
-	src/qml/qml/CreateExtensionFormView.qml
-	src/qml/qml/ArgCompleter.qml
-	src/qml/qml/DetailListView.qml
-	src/qml/qml/StoreListingView.qml
-	src/qml/qml/AlertBanner.qml
-	src/qml/qml/StoreDetailView.qml
-	src/qml/qml/StoreIntroView.qml
-	src/qml/qml/ImageViewer.qml
-	src/qml/qml/markdown/MarkdownView.qml
-	src/qml/qml/markdown/MarkdownText.qml
-	src/qml/qml/markdown/MdHeading.qml
-	src/qml/qml/markdown/MdParagraph.qml
-	src/qml/qml/markdown/MdCodeBlock.qml
-	src/qml/qml/markdown/MdList.qml
-	src/qml/qml/markdown/MdTable.qml
-	src/qml/qml/markdown/MdImage.qml
-	src/qml/qml/markdown/MdHorizontalRule.qml
-	src/qml/qml/markdown/MdHtmlBlock.qml
-	src/qml/qml/markdown/MdBlockquote.qml
-	src/qml/qml/markdown/MdCallout.qml
-	src/qml/qml/BrowseFontsView.qml
-	src/qml/qml/FontDemoView.qml
-	src/qml/qml/CategoryFilterAccessory.qml
-	src/qml/qml/ExtensionFormView.qml
-	src/qml/qml/FormFilePicker.qml
-	src/qml/qml/FormAppSelector.qml
-	src/qml/qml/FormDateInput.qml
-	src/qml/qml/FormLinkAccessory.qml
-	src/qml/qml/ExtensionDropdownAccessory.qml
-	src/qml/qml/EditKeywordsFormView.qml
-	src/qml/qml/HorizontalLoadingBar.qml
-	src/qml/qml/SearchFilesView.qml
-	src/qml/qml/TextViewer.qml
-	src/qml/qml/FilePreview.qml
-	src/qml/qml/DMenuView.qml
-	src/qml/qml/ScriptOutputText.qml
-	src/qml/qml/ScriptExecutorView.qml
-	src/qml/qml/SettingsWindow.qml
-	src/qml/qml/SettingsScrollEdge.qml
-	src/qml/qml/SettingsNavButtons.qml
-	src/qml/qml/SettingsSidebar.qml
-	src/qml/qml/SettingsRow.qml
-	src/qml/qml/SettingsGroup.qml
-	src/qml/qml/SettingsSectionLabel.qml
-	src/qml/qml/InlineEditableText.qml
-	src/qml/qml/SettingsToggle.qml
-	src/qml/qml/GeneralSettingsPage.qml
-	src/qml/qml/AppearanceSettingsPage.qml
-	src/qml/qml/AdvancedSettingsPage.qml
-	src/qml/qml/ShortcutsSettingsPage.qml
-	src/qml/qml/ExtensionSettingsPage.qml
-	src/qml/qml/AboutSettingsPage.qml
-	src/qml/qml/ShortcutRecorderField.qml
-	src/qml/qml/ShortcutRecorderCapture.qml
-	src/qml/qml/ShortcutRecorderPanel.qml
-	src/qml/qml/ShortcutField.qml
-	src/qml/qml/PreferenceFormView.qml
-	src/qml/qml/SettingsPreferenceForm.qml
-	src/qml/qml/MissingPreferenceView.qml
-	src/qml/qml/OAuthOverlayView.qml
-	src/qml/qml/HudWindow.qml
-	src/qml/qml/OnboardingWindow.qml
+	src/ui/qml/launcher/LauncherWindow.qml
+	src/ui/qml/controls/PopupMaterial.qml
+	src/ui/qml/controls/ViciPopover.qml
+	src/ui/qml/controls/PopoverBackground.qml
+	src/ui/qml/launcher/SearchBar.qml
+	src/ui/qml/views/GenericListView.qml
+	src/ui/qml/controls/StatusBarInset.qml
+	src/ui/qml/list/HoverResetOnModelChange.qml
+	src/ui/qml/list/HoverResetOnShow.qml
+	src/ui/qml/views/RootSearchList.qml
+	src/ui/qml/list/ListItemDelegate.qml
+	src/ui/qml/list/ListAccessory.qml
+	src/ui/qml/list/ListAccessoryRow.qml
+	src/ui/qml/list/SelectableDelegate.qml
+	src/ui/qml/list/DraggableMouseArea.qml
+	src/ui/qml/list/SectionHeader.qml
+	src/ui/qml/launcher/Footer.qml
+	src/ui/qml/launcher/FooterButton.qml
+	src/ui/qml/launcher/FooterNavStatus.qml
+	src/ui/qml/launcher/FooterToast.qml
+	src/ui/qml/controls/ShortcutBadge.qml
+	src/ui/qml/controls/TextBadge.qml
+	src/ui/qml/views/CommandListView.qml
+	src/ui/qml/views/CalcHistoryListView.qml
+	src/ui/qml/list/CalculatorResultDelegate.qml
+	src/ui/qml/views/ThemeListView.qml
+	src/ui/qml/list/ThemeItemDelegate.qml
+	src/ui/qml/views/GenericGridView.qml
+	src/ui/qml/views/EmptyView.qml
+	src/ui/qml/views/EmojiGridView.qml
+	src/ui/qml/controls/ViciButton.qml
+	src/ui/qml/controls/ViciScrollBar.qml
+	src/ui/qml/controls/ViciDivider.qml
+	src/ui/qml/controls/ViciToolTip.qml
+	src/ui/qml/views/ExtensionView.qml
+	src/ui/qml/views/MarkdownDetailView.qml
+	src/ui/qml/views/ExtensionGridView.qml
+	src/ui/qml/actions/ActionPanelPopover.qml
+	src/ui/qml/actions/ActionListPanel.qml
+	src/ui/qml/actions/ActionItemDelegate.qml
+	src/ui/qml/controls/SearchableDropdown.qml
+	src/ui/qml/views/ClipboardHistoryView.qml
+	src/ui/qml/accessories/ClipboardFilterAccessory.qml
+	src/ui/qml/accessories/EmojiCategoryFilterAccessory.qml
+	src/ui/qml/detail/DetailPanel.qml
+	src/ui/qml/detail/MetadataBar.qml
+	src/ui/qml/launcher/AlertDialog.qml
+	src/ui/qml/form/FormView.qml
+	src/ui/qml/form/FormField.qml
+	src/ui/qml/form/FormInputBackground.qml
+	src/ui/qml/form/FormTextInput.qml
+	src/ui/qml/form/FormTextArea.qml
+	src/ui/qml/form/FormCheckbox.qml
+	src/ui/qml/form/FormSeparator.qml
+	src/ui/qml/views/SnippetFormView.qml
+	src/ui/qml/views/AliasFormView.qml
+	src/ui/qml/views/ShortcutFormView.qml
+	src/ui/qml/form/FormCompletedInput.qml
+	src/ui/qml/form/FormCompletedTextArea.qml
+	src/ui/qml/form/PlaceholderCompleter.qml
+	src/ui/qml/controls/CompletionPopup.qml
+	src/ui/qml/views/CreateExtensionFormView.qml
+	src/ui/qml/launcher/ArgCompleter.qml
+	src/ui/qml/views/DetailListView.qml
+	src/ui/qml/views/StoreListingView.qml
+	src/ui/qml/launcher/AlertBanner.qml
+	src/ui/qml/views/StoreDetailView.qml
+	src/ui/qml/views/StoreIntroView.qml
+	src/ui/qml/detail/ImageViewer.qml
+	src/ui/qml/markdown/MarkdownView.qml
+	src/ui/qml/markdown/MarkdownText.qml
+	src/ui/qml/markdown/MdHeading.qml
+	src/ui/qml/markdown/MdParagraph.qml
+	src/ui/qml/markdown/MdCodeBlock.qml
+	src/ui/qml/markdown/MdList.qml
+	src/ui/qml/markdown/MdTable.qml
+	src/ui/qml/markdown/MdImage.qml
+	src/ui/qml/markdown/MdHorizontalRule.qml
+	src/ui/qml/markdown/MdHtmlBlock.qml
+	src/ui/qml/markdown/MdBlockquote.qml
+	src/ui/qml/markdown/MdCallout.qml
+	src/ui/qml/views/BrowseFontsView.qml
+	src/ui/qml/views/FontDemoView.qml
+	src/ui/qml/accessories/CategoryFilterAccessory.qml
+	src/ui/qml/views/ExtensionFormView.qml
+	src/ui/qml/form/FormFilePicker.qml
+	src/ui/qml/form/FormAppSelector.qml
+	src/ui/qml/form/FormDateInput.qml
+	src/ui/qml/form/FormLinkAccessory.qml
+	src/ui/qml/accessories/ExtensionDropdownAccessory.qml
+	src/ui/qml/views/EditKeywordsFormView.qml
+	src/ui/qml/launcher/HorizontalLoadingBar.qml
+	src/ui/qml/views/SearchFilesView.qml
+	src/ui/qml/detail/TextViewer.qml
+	src/ui/qml/detail/FilePreview.qml
+	src/ui/qml/views/DMenuView.qml
+	src/ui/qml/views/ScriptOutputText.qml
+	src/ui/qml/views/ScriptExecutorView.qml
+	src/ui/qml/settings/SettingsWindow.qml
+	src/ui/qml/settings/SettingsScrollEdge.qml
+	src/ui/qml/settings/SettingsNavButtons.qml
+	src/ui/qml/settings/SettingsSidebar.qml
+	src/ui/qml/settings/SettingsRow.qml
+	src/ui/qml/settings/SettingsGroup.qml
+	src/ui/qml/settings/SettingsSectionLabel.qml
+	src/ui/qml/settings/InlineEditableText.qml
+	src/ui/qml/settings/SettingsToggle.qml
+	src/ui/qml/settings/GeneralSettingsPage.qml
+	src/ui/qml/settings/AppearanceSettingsPage.qml
+	src/ui/qml/settings/AdvancedSettingsPage.qml
+	src/ui/qml/settings/ShortcutsSettingsPage.qml
+	src/ui/qml/settings/ExtensionSettingsPage.qml
+	src/ui/qml/settings/AboutSettingsPage.qml
+	src/ui/qml/form/ShortcutRecorderField.qml
+	src/ui/qml/form/ShortcutRecorderCapture.qml
+	src/ui/qml/actions/ShortcutRecorderPanel.qml
+	src/ui/qml/form/ShortcutField.qml
+	src/ui/qml/views/PreferenceFormView.qml
+	src/ui/qml/settings/SettingsPreferenceForm.qml
+	src/ui/qml/views/MissingPreferenceView.qml
+	src/ui/qml/views/OAuthOverlayView.qml
+	src/ui/qml/hud/HudWindow.qml
+	src/ui/qml/onboarding/OnboardingWindow.qml
 )
 
 if(WAYLAND_LAYER_SHELL)
 	list(APPEND VICINAE_QML_FILES
-		src/qml/qml/LauncherWindowLayerShell.qml
-		src/qml/qml/HudWindowLayerShell.qml
+		src/ui/qml/launcher/LauncherWindowLayerShell.qml
+		src/ui/qml/hud/HudWindowLayerShell.qml
 	)
 endif()
 
 if(APPLE)
 	list(APPEND VICINAE_QML_FILES
-		src/qml/qml/LauncherWindowMacOS.qml
-		src/qml/qml/OnboardingWindowMacOS.qml
-		src/qml/qml/HudWindowMacOS.qml
-		src/qml/qml/CompletionPanelMacOS.qml
-		src/qml/qml/PopupMaterialMacOS.qml
-		src/qml/qml/SettingsWindowMacOS.qml
+		src/ui/qml/launcher/LauncherWindowMacOS.qml
+		src/ui/qml/onboarding/OnboardingWindowMacOS.qml
+		src/ui/qml/hud/HudWindowMacOS.qml
+		src/ui/qml/controls/CompletionPanelMacOS.qml
+		src/ui/qml/controls/PopupMaterialMacOS.qml
+		src/ui/qml/settings/SettingsWindowMacOS.qml
 	)
 endif()
 
 if(WIN32)
 	list(APPEND VICINAE_QML_FILES
-		src/qml/qml/LauncherWindowWindows.qml
-		src/qml/qml/HudWindowWindows.qml
+		src/ui/qml/launcher/LauncherWindowWindows.qml
+		src/ui/qml/hud/HudWindowWindows.qml
 	)
 endif()
 
@@ -1219,37 +1233,37 @@ foreach(qml_file IN LISTS VICINAE_QML_FILES)
 endforeach()
 
 set(VICINAE_QML_SOURCES
-	src/qml/source-blend-rect.hpp
-	src/qml/vici-image-item.hpp
-	src/qml/hover-activation.hpp
-	src/qml/hover-activation.cpp
-	src/qml/match-highlighter.hpp
-	src/qml/match-highlighter.cpp
-	src/qml/completion-model.hpp
-	src/qml/markdown/markdown-model.hpp
-	src/qml/markdown/text-selection-controller.hpp
-	src/qml/window-material-attached.hpp
-	src/qml/window-material-attached.cpp
-	src/qml/popup-placement-attached.hpp
-	src/qml/popup-placement-attached.cpp
-	src/qml/shortcut-inhibitor-attached.hpp
-	src/qml/shortcut-inhibitor-attached.cpp
+	src/ui/quick/source-blend-rect.hpp
+	src/ui/quick/vici-image-item.hpp
+	src/ui/quick/hover-activation.hpp
+	src/ui/quick/hover-activation.cpp
+	src/ui/quick/match-highlighter.hpp
+	src/ui/quick/match-highlighter.cpp
+	src/ui/quick/completion-model.hpp
+	src/ui/quick/markdown-model.hpp
+	src/ui/quick/text-selection-controller.hpp
+	src/ui/quick/window-material-attached.hpp
+	src/ui/quick/window-material-attached.cpp
+	src/ui/quick/popup-placement-attached.hpp
+	src/ui/quick/popup-placement-attached.cpp
+	src/ui/quick/shortcut-inhibitor-attached.hpp
+	src/ui/quick/shortcut-inhibitor-attached.cpp
 	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler/wheelhandler.h
 	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler/wheelhandler.cpp
 )
 
 if(APPLE)
 	list(APPEND VICINAE_QML_SOURCES
-		src/qml/macos-chrome-attached.hpp
-		src/qml/macos-chrome-attached.mm
+		src/ui/quick/macos-chrome-attached.hpp
+		src/ui/quick/macos-chrome-attached.mm
 	)
 endif()
 
 if(WIN32)
 	list(APPEND VICINAE_QML_SOURCES
-		src/qml/windows-chrome-attached.hpp
-		src/qml/windows-chrome-attached.cpp
-		src/qml/launcher-window-platform.cpp
+		src/ui/quick/windows-chrome-attached.hpp
+		src/ui/quick/windows-chrome-attached.cpp
+		src/ui/windows/launcher-window-platform.cpp
 	)
 endif()
 
@@ -1263,13 +1277,15 @@ qt_add_qml_module(${TARGET}
 	NO_PLUGIN
 )
 
+# BASE keeps the resource path at :/shaders/<name>.qsb instead of mirroring the source tree.
 qt6_add_shaders(${TARGET} "sourceblend_shaders"
 	BATCHABLE
 	PREFIX "/shaders"
+	BASE "src/ui/quick/shaders"
 	GLSL "100es,120,150,330,440"
 	FILES
-		src/qml/shaders/sourceblend.vert
-		src/qml/shaders/sourceblend.frag
+		src/ui/quick/shaders/sourceblend.vert
+		src/ui/quick/shaders/sourceblend.frag
 )
 
 if(Qt6_FOUND AND NOT WIN32)
@@ -1278,7 +1294,9 @@ if(Qt6_FOUND AND NOT WIN32)
     )
 endif()
 
-target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/qml ${CMAKE_CURRENT_SOURCE_DIR}/src/qml/markdown ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler ${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
+# src/ui/quick holds the C++ types registered into the Vicinae QML module. It must be on the
+# include path because the generated type registration file includes those headers by basename.
+target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/quick ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler ${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
 	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-framework Security" "-F/System/Library/PrivateFrameworks" "-framework login")
@@ -1299,7 +1317,7 @@ target_compile_features(${TARGET} PUBLIC cxx_std_23)
 # whose fields contain variants. Compile this file in C++26 mode on Apple so
 # libc++'s SFINAE on variant::operator< makes the synthesis short-circuit.
 if(APPLE)
-	set_source_files_properties(src/extend/model-deser.cpp
+	set_source_files_properties(src/extension/model/model-deser.cpp
 		PROPERTIES COMPILE_OPTIONS "-std=gnu++26")
 endif()
 

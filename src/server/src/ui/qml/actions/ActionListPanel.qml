@@ -1,0 +1,307 @@
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+
+Item {
+    id: root
+
+    required property var model
+    property var boundActions: root.model
+    property var controller: actionPanel
+
+    signal navigateBack
+
+    function sectionScrollTarget(index, direction) {
+        if (!root.model || typeof root.model.scrollTargetIndex !== "function")
+            return index;
+        return root.model.scrollTargetIndex(index, direction);
+    }
+
+    function revealCurrentSectionHeaderIfHidden() {
+        if (listView.currentIndex < 0)
+            return false;
+
+        const scrollTarget = sectionScrollTarget(listView.currentIndex, -1);
+        if (scrollTarget === listView.currentIndex)
+            return false;
+
+        const previousContentY = listView.contentY;
+        listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        return Math.abs(listView.contentY - previousContentY) > 0.5;
+    }
+
+    function moveUp() {
+        if (revealCurrentSectionHeaderIfHidden())
+            return;
+        const next = root.model.nextSelectableIndex(listView.currentIndex, -1);
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        }
+    }
+
+    function moveDown() {
+        const next = root.model.nextSelectableIndex(listView.currentIndex, 1);
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        }
+    }
+
+    function moveSectionUp() {
+        if (typeof root.model.nextSectionIndex !== "function") {
+            moveUp();
+            return;
+        }
+        if (revealCurrentSectionHeaderIfHidden())
+            return;
+        const next = root.model.nextSectionIndex(listView.currentIndex, -1);
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        }
+    }
+
+    function moveSectionDown() {
+        if (typeof root.model.nextSectionIndex !== "function") {
+            moveDown();
+            return;
+        }
+        const next = root.model.nextSectionIndex(listView.currentIndex, 1);
+        if (next !== listView.currentIndex) {
+            listView.currentIndex = next;
+            const scrollTarget = sectionScrollTarget(next, -1);
+            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        }
+    }
+
+    function activateCurrent() {
+        if (listView.currentIndex >= 0)
+            root.model.activate(listView.currentIndex);
+    }
+
+    function focusFilter() {
+        filterInput.forceActiveFocus();
+    }
+
+    readonly property int listPadding: 6
+
+    readonly property bool _empty: listView.count === 0
+
+    readonly property int emptyPadding: 32
+
+    implicitHeight: (_empty ? emptyLabel.implicitHeight + 2 * emptyPadding : listView.contentHeight + listView.topMargin + listView.bottomMargin) + filterBar.height + divider.height
+
+    HoverResetOnModelChange {
+        target: root.model
+    }
+
+    HoverResetOnShow {
+        target: root
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        Text {
+            id: emptyLabel
+            visible: root._empty
+            text: qsTr("No matching actions")
+            color: Theme.textMuted
+            font.pointSize: Theme.smallerFontSize
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.topMargin: root.emptyPadding
+            Layout.bottomMargin: root.emptyPadding
+        }
+
+        ListView {
+            id: listView
+            visible: !root._empty
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            topMargin: root.listPadding
+            bottomMargin: root.listPadding
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            highlightMoveDuration: 0
+            model: root.model
+
+            ViciWheelHandler {
+                target: listView
+            }
+
+            delegate: Loader {
+                id: delegateLoader
+                width: listView.width
+                required property int index
+                required property string itemType
+                required property string title
+                required property string iconSource
+                required property var shortcutTokens
+                required property bool isSubmenu
+                required property bool isPrimary
+                required property bool isDanger
+
+                sourceComponent: {
+                    if (itemType === "section")
+                        return sectionComponent;
+                    if (itemType === "divider")
+                        return dividerComponent;
+                    return actionComponent;
+                }
+
+                Component {
+                    id: sectionComponent
+                    SectionHeader {
+                        width: delegateLoader.width
+                        text: delegateLoader.title
+                    }
+                }
+
+                Component {
+                    id: dividerComponent
+                    Item {
+                        width: delegateLoader.width
+                        height: 9
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: parent.width - 24
+                            height: 1
+                            color: Config.withAlpha(Theme.divider, 0.5)
+                        }
+                    }
+                }
+
+                Component {
+                    id: actionComponent
+                    ActionItemDelegate {
+                        width: delegateLoader.width
+                        title: delegateLoader.title
+                        iconSource: delegateLoader.iconSource
+                        shortcutTokens: delegateLoader.shortcutTokens
+                        isSubmenu: delegateLoader.isSubmenu
+                        isDanger: delegateLoader.isDanger
+                        selected: listView.currentIndex === delegateLoader.index
+
+                        onClicked: {
+                            listView.currentIndex = delegateLoader.index;
+                            root.model.activate(delegateLoader.index);
+                        }
+                    }
+                }
+            }
+
+            ScrollBar.vertical: ViciScrollBar {
+                policy: listView.contentHeight > listView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            }
+        }
+
+        Rectangle {
+            id: divider
+            Layout.fillWidth: true
+            implicitHeight: 1
+            color: Config.withAlpha(Theme.divider, 0.5)
+        }
+
+        Item {
+            id: filterBar
+            Layout.fillWidth: true
+            Layout.preferredHeight: 36
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+                spacing: 8
+
+                ViciImage {
+                    source: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+                    sourceSize.width: 14
+                    sourceSize.height: 14
+                    Layout.preferredWidth: 14
+                    Layout.preferredHeight: 14
+                    Layout.alignment: Qt.AlignVCenter
+                    opacity: 0.5
+                }
+
+                TextInput {
+                    id: filterInput
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    verticalAlignment: TextInput.AlignVCenter
+                    font.pointSize: Theme.smallerFontSize
+                    color: Theme.foreground
+                    selectionColor: Theme.textSelectionBg
+                    selectedTextColor: Theme.textSelectionFg
+                    clip: true
+
+                    Text {
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        text: qsTr("Filter actions...")
+                        color: Theme.textPlaceholder
+                        font: filterInput.font
+                        visible: !filterInput.text
+                    }
+
+                    Timer {
+                        id: filterDebounce
+                        interval: 16
+                        onTriggered: root.model.setFilter(filterInput.text)
+                    }
+
+                    onTextEdited: filterDebounce.restart()
+
+                    Keys.onPressed: function (event) {
+                        const nav = Keyboard.matchNavigation(event.key, event.modifiers);
+                        if (nav === 1) {
+                            root.moveUp();
+                            event.accepted = true;
+                        } else if (nav === 2) {
+                            root.moveDown();
+                            event.accepted = true;
+                        } else if (nav === 3) {
+                            if (root.controller.depth > 1)
+                                root.navigateBack();
+                            event.accepted = true;
+                        } else if ((event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) && root.controller.tryShortcut(event.key, event.modifiers, event.nativeScanCode)) {
+                            event.accepted = true;
+                        }
+                    }
+                    Keys.onUpPressed: event => {
+                        (event.modifiers & Qt.ControlModifier) ? root.moveSectionUp() : root.moveUp();
+                    }
+                    Keys.onDownPressed: event => {
+                        (event.modifiers & Qt.ControlModifier) ? root.moveSectionDown() : root.moveDown();
+                    }
+                    Keys.onReturnPressed: root.activateCurrent()
+                    Keys.onEnterPressed: root.activateCurrent()
+                }
+            }
+        }
+    }
+
+    // Auto-select first selectable item on creation and after filter changes
+    Connections {
+        target: root.model
+        function onModelReset() {
+            var first = root.model.nextSelectableIndex(-1, 1);
+            listView.currentIndex = first >= 0 ? first : -1;
+        }
+    }
+
+    Component.onCompleted: {
+        if (root.model) {
+            var first = root.model.nextSelectableIndex(-1, 1);
+            if (first >= 0)
+                listView.currentIndex = first;
+        }
+    }
+}
