@@ -35,7 +35,6 @@ public:
 
   void execute(ApplicationContext *ctx) override {
     auto const appDb = ctx->services->appDb();
-    auto const files = ctx->services->fileService();
     auto const toast = ctx->services->toastService();
 
     bool const success = appDb->showInFileBrowser(m_path, true);
@@ -45,7 +44,6 @@ public:
       return;
     }
 
-    files->saveAccess(m_path);
     ctx->navigation->closeWindow();
   }
 
@@ -111,7 +109,7 @@ public:
 
     if (ctx->services->appDb()->launchRaw({QString::fromStdString(m_path.string())})) {
       ctx->navigation->closeWindow();
-      files->saveAccess(m_path);
+      files->recordAccess(m_path);
     } else {
       ctx->services->toastService()->failure(tr("Failed to start executable"));
     }

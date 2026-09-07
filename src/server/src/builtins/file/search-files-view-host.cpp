@@ -61,12 +61,14 @@ void SearchFilesViewHost::initialize() {
   m_debounce.setSingleShot(true);
   connect(&m_debounce, &QTimer::timeout, this, &SearchFilesViewHost::handleDebounce);
   connect(&m_pendingResults, &Watcher::finished, this, &SearchFilesViewHost::handleSearchResults);
+  connect(&m_pendingRecent, &RecentWatcher::finished, this, &SearchFilesViewHost::handleRecentFiles);
 }
 
 void SearchFilesViewHost::loadInitialData() { renderEmptyQuery(); }
 
 void SearchFilesViewHost::textChanged(const QString &text) {
   if (m_pendingResults.isRunning()) m_pendingResults.cancel();
+  if (m_pendingRecent.isRunning()) m_pendingRecent.cancel();
 
   if (text.isEmpty()) {
     m_debounce.stop();
@@ -104,24 +106,36 @@ void SearchFilesViewHost::textChanged(const QString &text) {
 void SearchFilesViewHost::renderRecentFiles() {
   auto fileService = context()->services->fileService();
 
-  setLoading(false);
-  auto recentFiles = fileService->getRecentlyAccessed() |
-                     std::views::transform([](auto &&f) { return f.path; }) |
-                     std::views::filter([&](const auto &path) {
-                       auto category = selectedCategory();
-                       return !category || categoryForPath(path) == *category;
-                     }) |
-                     std::ranges::to<std::vector>();
-  m_section.setFiles(std::move(recentFiles), tr("Recently Accessed"));
+  if (m_pendingRecent.isRunning()) m_pendingRecent.cancel();
+
+  m_resultMode = ResultMode::Recent;
+  setLoading(true);
+  m_pendingRecent.setFuture(
+      fileService->recentFilesAsync({.limit = RECENT_FILES_LIMIT, .category = selectedCategory()}));
 }
 
-void SearchFilesViewHost::renderEmptyQuery() {
-  if (selectedCategory()) {
+void SearchFilesViewHost::handleRecentFiles() {
+  if (!m_pendingRecent.isFinished() || m_pendingRecent.isCanceled()) return;
+  if (m_resultMode != ResultMode::Recent) return;
+  if (!searchText().isEmpty()) return;
+
+  auto recentFiles = m_pendingRecent.result();
+
+  if (recentFiles.empty()) {
     startIndexedSearch({});
     return;
   }
 
-  m_resultMode = ResultMode::Recent;
+  setLoading(false);
+  m_section.setFiles(std::move(recentFiles), tr("Recently Accessed"));
+}
+
+void SearchFilesViewHost::renderEmptyQuery() {
+  if (!context()->services->fileService()->recentFiles()->isAvailable()) {
+    startIndexedSearch({});
+    return;
+  }
+
   renderRecentFiles();
 }
 

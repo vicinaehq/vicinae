@@ -47,6 +47,7 @@ public:
 private:
   QStringList categoryFilterOptions() const;
   void renderRecentFiles();
+  void handleRecentFiles();
   void renderEmptyQuery();
   void startIndexedSearch(const QString &query);
   void handleDebounce();
@@ -59,10 +60,14 @@ private:
   enum class ResultMode { Recent, DirectPath, IndexedSearch };
 
   using Watcher = QFutureWatcher<std::vector<IndexerFileResult>>;
+  using RecentWatcher = QFutureWatcher<std::vector<std::filesystem::path>>;
+
+  static constexpr int RECENT_FILES_LIMIT = 50;
 
   SearchFilesSection m_section;
   QTimer m_debounce;
   Watcher m_pendingResults;
+  RecentWatcher m_pendingRecent;
   QString m_lastSearchText;
   QMimeDatabase m_mimeDb;
   ResultMode m_resultMode = ResultMode::Recent;

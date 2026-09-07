@@ -10,7 +10,7 @@ public:
     auto files = ctx->services->fileService();
 
     OpenAppAction::execute(ctx);
-    files->saveAccess(m_path);
+    files->recordAccess(m_path);
   }
 
   OpenFileAction(const std::filesystem::path &path, const std::shared_ptr<AbstractApplication> &app)
@@ -31,7 +31,7 @@ public:
     auto files = ctx->services->fileService();
 
     OpenAppAction::execute(ctx);
-    files->saveAccess(m_path);
+    files->recordAccess(m_path);
   }
 
   OpenFileInAppAction(const std::filesystem::path &path, const std::shared_ptr<AbstractApplication> &app,
