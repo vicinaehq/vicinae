@@ -426,6 +426,7 @@ set(SRCS
 	src/extension/extension-command-runtime.cpp
 	src/extension/api/ui-service.hpp
 	src/extension/api/wallpaper-service.hpp
+	src/extension/api/ai-service.hpp
 
 	src/builtins/vicinae/vicinae-extension.cpp
 
