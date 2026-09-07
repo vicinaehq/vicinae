@@ -184,13 +184,31 @@ strip -x "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli" \
       "$BUNDLE/Contents/MacOS/vicinae-browser-link"
 
 echo "==> signing bundle"
-sign_args=(--force --deep --sign "$SIGN_IDENTITY")
+sign_args=(--force --sign "$SIGN_IDENTITY")
 
 if [[ "$SIGN_IDENTITY" != "-" ]]; then
   sign_args+=(--options runtime --timestamp)
 fi
 
-codesign "${sign_args[@]}" "$BUNDLE" 2>&1 | tail -3
+sign() {
+  local out
+  if ! out="$(codesign "${sign_args[@]}" "$@" 2>&1)"; then
+    echo "$out" >&2
+    return 1
+  fi
+}
+
+# Signed inside out: nested code first, then the app itself with its
+# entitlements. `codesign --deep --entitlements` would stamp the app's
+# entitlements onto every nested framework, plugin and helper.
+while IFS= read -r -d '' item; do
+  sign "$item"
+done < <(find "$BUNDLE/Contents" -type f \( -name "*.dylib" -o -name "*.so" \) -print0)
+while IFS= read -r -d '' item; do
+  sign "$item"
+done < <(find "$BUNDLE/Contents/Frameworks" -maxdepth 1 -name "*.framework" -print0)
+sign "$BUNDLE/Contents/MacOS/vicinae-cli" "$BUNDLE/Contents/MacOS/vicinae-browser-link"
+sign --entitlements "$SRC_DIR/extra/Vicinae.entitlements" "$BUNDLE"
 
 echo "==> audit"
 fail=0

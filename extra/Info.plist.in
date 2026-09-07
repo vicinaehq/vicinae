@@ -51,6 +51,16 @@
 	<string>NSApplication</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Vicinae uses Apple Events to perform system power actions such as restart, shut down, and log out.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Vicinae extensions can read and manage your calendar events.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Vicinae extensions can read and manage your calendar events.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Vicinae extensions can read and manage your reminders.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Vicinae extensions can read and manage your reminders.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Vicinae extensions can read your contacts.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © Vicinae contributors. Licensed under GPL-3.0.</string>
 </dict>
