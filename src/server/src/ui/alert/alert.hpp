@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ui/dialog/dialog.hpp"
+#include "ui/alert/dialog.hpp"
 #include "ui/image/url.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include <functional>
 
 class AlertWidget : public DialogContentWidget {

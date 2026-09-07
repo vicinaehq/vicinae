@@ -1,5 +1,5 @@
 #include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "utils/utils.hpp"
 #include "generated/version.h"
 #include <filesystem>

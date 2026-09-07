@@ -1,0 +1,262 @@
+#include "builtins/raycast/raycast-store-detail-host.hpp"
+#include "actions/extension-actions.hpp"
+#include "ui/views/empty-view-host.hpp"
+#include "navigation-controller.hpp"
+#include "vicinae.hpp"
+#include "ui/views/view-utils.hpp"
+#include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
+#include "services/extension-registry/extension-registry.hpp"
+#include "services/toast/toast-service.hpp"
+#include "utils/utils.hpp"
+#include <QFutureWatcher>
+#include <utility>
+
+RaycastStoreDetailHost::RaycastStoreDetailHost(const Raycast::Extension &extension) : m_ext(extension) {}
+
+RaycastStoreDetailHost::RaycastStoreDetailHost(const QString &authorHandle, const QString &extensionName)
+    : m_authorHandle(authorHandle), m_extensionName(extensionName) {}
+
+QUrl RaycastStoreDetailHost::qmlComponentUrl() const {
+  return QUrl(QStringLiteral("qrc:/Vicinae/StoreDetailView.qml"));
+}
+
+QVariantMap RaycastStoreDetailHost::qmlProperties() {
+  return {{QStringLiteral("host"), QVariant::fromValue(this)}};
+}
+
+void RaycastStoreDetailHost::initialize() {
+  BaseView::initialize();
+
+  if (!m_extensionName.isEmpty()) {
+    setLoading(true);
+    auto store = context()->services->raycastStore();
+    auto *watcher = new QFutureWatcher<Raycast::ExtensionResult>(this);
+    watcher->setFuture(store->fetchExtension(m_authorHandle, m_extensionName));
+
+    connect(watcher, &QFutureWatcher<Raycast::ExtensionResult>::finished, this, [this, watcher]() {
+      watcher->deleteLater();
+      auto result = watcher->result();
+      if (!result) {
+        auto id = QString("%1/%2").arg(m_authorHandle, m_extensionName);
+        context()->navigation->replaceView(new EmptyViewHost(
+            tr("Failed to load extension"),
+            tr("The extension \"%1\" could not be loaded. It may not exist or the store may be "
+               "unreachable.")
+                .arg(id),
+            ImageURL(BuiltinIcon::Exclamationmark).setFill(SemanticColor::Red)));
+        return;
+      }
+
+      hydrate(*result);
+      setLoading(false);
+    });
+    return;
+  }
+
+  hydrate(m_ext);
+}
+
+void RaycastStoreDetailHost::hydrate(const Raycast::Extension &extension) {
+  m_ext = extension;
+  m_isReady = true;
+
+  auto registry = context()->services->extensionRegistry();
+  m_isInstalled = registry->isInstalled(m_ext.id);
+
+  buildAlert();
+
+  auto icon = m_ext.themedIcon();
+  setNavigationIcon(icon);
+  setNavigationTitle(tr("Extension Store - %1").arg(m_ext.title));
+  createActions();
+  emit extensionChanged();
+
+  connect(registry, &ExtensionRegistry::extensionAdded, this, [this](const QString &id) {
+    if (id != m_ext.id) return;
+    m_isInstalled = true;
+    emit extensionChanged();
+    createActions();
+  });
+
+  connect(registry, &ExtensionRegistry::extensionUninstalled, this, [this](const QString &id) {
+    if (id != m_ext.id) return;
+    m_isInstalled = false;
+    emit extensionChanged();
+    createActions();
+  });
+}
+
+void RaycastStoreDetailHost::buildAlert() {
+  if constexpr (!Raycast::hasCompatSheet()) return;
+
+  const auto &compat = context()->services->raycastStore()->compatMap();
+  if (auto it = compat.find(m_ext.name.toStdString()); it != compat.end()) {
+    auto tier = Raycast::compatTierFromInfo(it->second);
+    QString type;
+    QString message;
+
+    switch (tier) {
+    case Raycast::CompatTier::Compatible:
+      type = QStringLiteral("success");
+      message = tr("This extension should be fully compatible.");
+      break;
+    case Raycast::CompatTier::Partial:
+      type = QStringLiteral("warning");
+      message = tr("This extension works but has a few quirks.");
+      break;
+    case Raycast::CompatTier::Incompatible:
+      type = QStringLiteral("danger");
+      message = tr("This extension is not compatible.");
+      break;
+    case Raycast::CompatTier::Unknown:
+      type = QStringLiteral("muted");
+      message = tr("No compatibility data is available for this extension.");
+      break;
+    }
+
+    QStringList notes;
+    if (it->second.notes) {
+      notes.reserve(it->second.notes->size());
+      for (const auto &note : *it->second.notes) {
+        notes.append(QString::fromStdString(note));
+      }
+    }
+
+    m_alert = {
+        {QStringLiteral("type"), type},
+        {QStringLiteral("message"), message},
+        {QStringLiteral("notes"), notes},
+    };
+  } else {
+    m_alert = {
+        {QStringLiteral("type"), QStringLiteral("muted")},
+        {QStringLiteral("message"),
+         tr("No compatibility data is available — this extension may or may not work.")},
+    };
+  }
+}
+
+QString RaycastStoreDetailHost::title() const { return m_ext.title; }
+QString RaycastStoreDetailHost::description() const { return m_ext.description; }
+
+QString RaycastStoreDetailHost::iconSource() const { return qml::imageSourceFor(m_ext.themedIcon()); }
+
+QString RaycastStoreDetailHost::authorName() const { return m_ext.author.name; }
+
+QString RaycastStoreDetailHost::authorAvatar() const {
+  return qml::imageSourceFor(m_ext.author.validUserIcon().circle());
+}
+
+QString RaycastStoreDetailHost::downloadCount() const { return formatCount(m_ext.download_count); }
+
+QStringList RaycastStoreDetailHost::platforms() const {
+  if (!m_ext.platforms) return {};
+  return QStringList(m_ext.platforms->begin(), m_ext.platforms->end());
+}
+
+bool RaycastStoreDetailHost::isReady() const { return m_isReady; }
+bool RaycastStoreDetailHost::isInstalled() const { return m_isInstalled; }
+bool RaycastStoreDetailHost::hasScreenshots() const { return m_ext.metadata_count > 0; }
+
+QStringList RaycastStoreDetailHost::screenshots() const {
+  QStringList urls;
+  for (const auto &url : m_ext.screenshots()) {
+    urls.append(qml::imageSourceFor(ImageURL::http(url)));
+  }
+  return urls;
+}
+
+QVariantList RaycastStoreDetailHost::commands() const {
+  QVariantList list;
+  for (const auto &cmd : m_ext.commands) {
+    list.append(QVariantMap{
+        {QStringLiteral("title"), cmd.title},
+        {QStringLiteral("description"), cmd.description},
+        {QStringLiteral("iconSource"), qml::imageSourceFor(cmd.themedIcon())},
+    });
+  }
+  return list;
+}
+
+QString RaycastStoreDetailHost::readmeUrl() const { return m_ext.readme_assets_path; }
+QString RaycastStoreDetailHost::sourceUrl() const { return m_ext.source_url; }
+
+QString RaycastStoreDetailHost::lastUpdate() const {
+  return getRelativeTimeString(m_ext.updatedAtDateTime());
+}
+
+QVariantList RaycastStoreDetailHost::contributors() const {
+  QVariantList list;
+  for (const auto &user : m_ext.contributors) {
+    QString avatar;
+    avatar = qml::imageSourceFor(user.validUserIcon().circle());
+
+    list.append(QVariantMap{
+        {QStringLiteral("name"), user.name},
+        {QStringLiteral("avatar"), avatar},
+    });
+  }
+  return list;
+}
+
+QStringList RaycastStoreDetailHost::categories() const { return {}; }
+QVariantMap RaycastStoreDetailHost::alert() const { return m_alert; }
+
+void RaycastStoreDetailHost::openUrl(const QString &url) {
+  ServiceRegistry::instance()->appDb()->openTarget(url);
+}
+
+QString RaycastStoreDetailHost::initialNavigationTitle() const { return tr("Extension Store"); }
+
+void RaycastStoreDetailHost::createActions() {
+  auto panel = std::make_unique<ListActionPanelState>();
+  auto main = panel->createSection();
+
+  if (!m_isInstalled) {
+    auto install = new StaticAction(
+        tr("Install extension"), m_ext.themedIcon(), [ext = m_ext](const ApplicationContext *ctx) {
+          using Watcher = QFutureWatcher<Raycast::DownloadExtensionResult>;
+          auto store = ctx->services->raycastStore();
+          auto watcher = new Watcher;
+          auto toast = ctx->services->toastService();
+          auto registry = ctx->services->extensionRegistry();
+
+          toast->dynamic(tr("Downloading extension..."));
+
+          QObject::connect(watcher, &Watcher::finished, [ctx, registry, toast, ext, watcher]() {
+            auto result = watcher->result();
+            watcher->deleteLater();
+
+            if (!result) {
+              toast->failure(tr("Failed to download extension"));
+              return;
+            }
+
+            registry->installFromZip(QString("store.raycast.%1").arg(ext.name), result->toStdString(),
+                                     [toast](bool ok) {
+                                       if (!ok) {
+                                         toast->failure(tr("Failed to extract extension archive"));
+                                         return;
+                                       }
+                                       toast->success(tr("Extension installed"));
+                                     });
+          });
+
+          auto downloadResult = store->downloadExtension(ext.download_url);
+          watcher->setFuture(downloadResult);
+        });
+    main->addAction(install);
+  } else {
+    auto uninstall = new UninstallExtensionAction(m_ext.id);
+    main->addAction(uninstall);
+  }
+
+  auto reportIssue = new StaticAction(
+      tr("Report issue"), ImageURL::builtin(BuiltinIcon::Bug), [](const ApplicationContext *ctx) {
+        ctx->services->appDb()->openTarget(Omnicast::GH_EXTENSIONS_CREATE_ISSUE);
+      });
+  main->addAction(reportIssue);
+
+  setActions(std::move(panel));
+}

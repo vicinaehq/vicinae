@@ -1,7 +1,7 @@
 #include "calculator-service.hpp"
 #include <quuid.h>
 #include "fuzzy/fuzzy-searchable.hpp"
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/calculator-service/numen/numen-calculator-backend.hpp"

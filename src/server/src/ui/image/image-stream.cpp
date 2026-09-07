@@ -1,8 +1,8 @@
 #include "image-stream.hpp"
 #include "data-uri/data-uri.hpp"
-#include "image-fetcher.hpp"
+#include "services/image-fetcher/image-fetcher.hpp"
 #include "image-renderer.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #ifdef Q_OS_MACOS
 #include "ui/image/mac-file-icon-loader.hpp"

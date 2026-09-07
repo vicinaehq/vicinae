@@ -9,7 +9,7 @@
 #include <quuid.h>
 #include <ranges>
 #include "common/types.hpp"
-#include "placeholder.hpp"
+#include "utils/placeholder.hpp"
 #include "services/app-service/app-service.hpp"
 
 class SnippetExpander {

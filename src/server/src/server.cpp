@@ -6,19 +6,19 @@
 #include "root-search/scripts/script-root-provider.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
-#include "font-service.hpp"
+#include "services/font-service/font-service.hpp"
 #ifdef Q_OS_LINUX
 #include "icon-theme-db/icon-theme-db.hpp"
 #endif
-#include "extension-interval-scheduler.hpp"
-#include "ipc-command-server.hpp"
+#include "extension/extension-interval-scheduler.hpp"
+#include "ipc/ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
 #include "keyboard/layout-resolver.hpp"
 #include "common/common.hpp"
 #include "log/message-handler.hpp"
-#include "overlay-controller/overlay-controller.hpp"
-#include "extensions/root/root-command.hpp"
+#include "ui/windows/overlay-controller.hpp"
+#include "builtins/root/root-command.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
@@ -34,9 +34,9 @@
 #endif
 #include "service-registry.hpp"
 #include "services/window-material/window-material-manager.hpp"
-#include "qml/window-material-attached.hpp"
+#include "ui/quick/window-material-attached.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
-#include "qml/shortcut-inhibitor-attached.hpp"
+#include "ui/quick/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/browser-extension-service.hpp"
 #ifdef AUTO_INSTALL_BROWSER_MANIFESTS
@@ -98,10 +98,10 @@
 #include "services/paste/windows-paste-service.hpp"
 #include "services/selection/windows-selection-service.hpp"
 #endif
-#include "settings-controller/settings-controller.hpp"
+#include "ui/settings/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
-#include "qml/launcher-window.hpp"
-#include "qml/onboarding-window.hpp"
+#include "ui/windows/launcher-window.hpp"
+#include "ui/windows/onboarding-window.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include "generated/version.h"
@@ -117,8 +117,8 @@
 #include "server.hpp"
 
 #ifdef Q_OS_MACOS
-#include "ipc-command-handler.hpp"
-#include "qml/macos-chrome-attached.hpp"
+#include "ipc/ipc-command-handler.hpp"
+#include "ui/quick/macos-chrome-attached.hpp"
 #include <QFileOpenEvent>
 #endif
 

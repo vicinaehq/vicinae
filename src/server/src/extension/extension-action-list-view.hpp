@@ -1,7 +1,7 @@
 #pragma once
 #include "extension/extension-action-panel-builder.hpp"
-#include "ui/action-pannel/action.hpp"
-#include "ui/action-pannel/action-list-view.hpp"
+#include "ui/action-panel/action.hpp"
+#include "ui/action-panel/action-list-view.hpp"
 
 class ExtensionActionListView : public ActionListView {
   Q_OBJECT

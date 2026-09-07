@@ -1,5 +1,5 @@
 #include "app-service.hpp"
-#include "timer.hpp"
+#include "utils/timer.hpp"
 #include <chrono>
 #include <qlogging.h>
 #include <qnumeric.h>
@@ -10,7 +10,7 @@
 #else
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #endif
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include <QProcess>
 #include <filesystem>
 #include <qcontainerfwd.h>

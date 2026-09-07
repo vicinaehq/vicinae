@@ -1,8 +1,8 @@
 #pragma once
-#include "builtin_icon.hpp"
-#include "extend/image-model.hpp"
-#include "theme.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "extension/model/image-model.hpp"
+#include "theme/theme.hpp"
+#include "ui/image/omni-painter.hpp"
 #include <QUrl>
 #include <cstdint>
 #include <filesystem>

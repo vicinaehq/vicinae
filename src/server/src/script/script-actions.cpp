@@ -8,7 +8,7 @@
 #include "services/script-command/script-command-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "navigation-controller.hpp"
-#include "qml/script-executor-view-host.hpp"
+#include "script/script-executor-view-host.hpp"
 #include "utils.hpp"
 
 ScriptExecutorAction::ScriptExecutorAction(const std::shared_ptr<ScriptCommandFile> &file,

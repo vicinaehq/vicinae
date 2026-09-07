@@ -1,10 +1,10 @@
 #pragma once
 #include <QCoreApplication>
-#include "actions/app/app-actions.hpp"
-#include "actions/files/file-actions.hpp"
-#include "actions/shortcut/shortcut-actions.hpp"
-#include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/file-actions.hpp"
+#include "actions/shortcut-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"
 #include "keyboard/keybind.hpp"
 #include "keyboard/keyboard.hpp"
@@ -14,7 +14,7 @@
 #include "internal/keyboard/keyboard.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/wallpaper/wallpaper-manager.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <algorithm>
 #include <qmimedatabase.h>
 #include <filesystem>

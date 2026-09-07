@@ -1,15 +1,15 @@
 #include "root-search/apps/app-root-provider.hpp"
-#include "actions/app/app-actions.hpp"
-#include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
-#include "common.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/root-search-actions.hpp"
+#include "actions/clipboard-actions.hpp"
+#include "command/command-types.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "vicinae.hpp"
-#include "actions/wm/window-actions.hpp"
+#include "actions/window-actions.hpp"
 
 double AppRootItem::baseScoreWeight() const { return 1; }
 

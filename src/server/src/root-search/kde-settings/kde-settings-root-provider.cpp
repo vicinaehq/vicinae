@@ -1,9 +1,9 @@
 #include "root-search/kde-settings/kde-settings-root-provider.hpp"
-#include "actions/app/app-actions.hpp"
-#include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/root-search-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "service-registry.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
 #include "ui/image/url.hpp"
 
 static const QString KCM_ID_PREFIX = QStringLiteral("kcm_");

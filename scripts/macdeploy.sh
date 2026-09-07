@@ -80,7 +80,7 @@ bundle_soulver_core() {
 bundle_soulver_core
 
 echo "==> macdeployqt"
-macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/qml" -verbose=2
+macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/ui/qml" -verbose=2
 
 # we prune all the frameworks and modules we don't need
 # in particular, we prune the default openssl-backed tls backend because we want to force QT to use SecureTransport

@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "common/types.hpp"
 #include "services/clipboard/clipboard-content.hpp"
 #include "services/clipboard/clipboard-db.hpp"
