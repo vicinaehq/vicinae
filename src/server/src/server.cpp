@@ -314,7 +314,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto glyphService =
         std::make_unique<GlyphService>(Omnicast::dataDir() / "emojis" / "emojis.json", omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
-    auto fileService = std::make_unique<FileService>(*omniDb);
+    auto fileService = std::make_unique<FileService>();
     auto oauthService = std::make_unique<OAuthService>(*omniDb);
     auto extensionRegistry = std::make_unique<ExtensionRegistry>(*localStorage);
     auto raycastStore = std::make_unique<RaycastStoreService>();

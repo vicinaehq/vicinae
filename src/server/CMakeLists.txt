@@ -371,6 +371,8 @@ set(SRCS
 
 	src/services/files-service/abstract-file-indexer.hpp
 	src/services/files-service/dummy-file-indexer.hpp
+	src/services/files-service/abstract-recent-files-provider.hpp
+	src/services/files-service/dummy-recent-files-provider.hpp
 	src/services/files-service/file-service.hpp
 	src/services/files-service/file-service.cpp
 
@@ -697,6 +699,8 @@ if (APPLE)
 		src/internal/keyboard/keyboard-macos.cpp
 		src/services/files-service/macos/spotlight-file-indexer.hpp
 		src/services/files-service/macos/spotlight-file-indexer.mm
+		src/services/files-service/macos/spotlight-recent-files-provider.hpp
+		src/services/files-service/macos/spotlight-recent-files-provider.mm
 		src/services/tray/macos/tray-service-macos.hpp
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.hpp
@@ -739,6 +743,7 @@ if (APPLE)
 		src/services/clipboard/macos/macos-clipboard-server.mm
 		src/root-search/macos-settings/macos-settings-root-provider.mm
 		src/services/files-service/macos/spotlight-file-indexer.mm
+		src/services/files-service/macos/spotlight-recent-files-provider.mm
 		src/services/tray/macos/tray-service-macos.mm
 		src/services/paste/macos-paste-service.mm
 		src/services/selection/macos-selection-service.mm
@@ -794,6 +799,8 @@ elseif (WIN32)
 		src/services/files-service/windows/everything/everything-file-indexer.cpp
 		src/services/files-service/windows/win-file-indexer-selector.hpp
 		src/services/files-service/windows/win-file-indexer-selector.cpp
+		src/services/files-service/windows/win-recent-files-provider.hpp
+		src/services/files-service/windows/win-recent-files-provider.cpp
 		src/services/window-manager/windows/windows-window.hpp
 		src/services/window-manager/windows/virtual-desktops.hpp
 		src/services/window-manager/windows/virtual-desktops.cpp
@@ -993,6 +1000,8 @@ if (UNIX AND NOT APPLE)
 
 		src/services/files-service/file-indexer/file-indexer.hpp
 		src/services/files-service/file-indexer/file-indexer.cpp
+		src/services/files-service/linux/xbel-recent-files-provider.hpp
+		src/services/files-service/linux/xbel-recent-files-provider.cpp
 	)
 
 endif()

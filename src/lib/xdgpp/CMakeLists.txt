@@ -20,9 +20,19 @@ add_library(vicinae-xdgpp STATIC
 	xdgpp/env/env.cpp
 	xdgpp/mime/iterator.cpp
 	xdgpp/mime/mime-apps-list.cpp
+	xdgpp/uri/file-uri.cpp
+	xdgpp/bookmark/bookmark-file.cpp
 )
 add_library(vicinae::xdgpp ALIAS vicinae-xdgpp)
 set(PROJECT_NAME vicinae-xdgpp)
+
+if (TARGET pugixml)
+	target_link_libraries(${PROJECT_NAME} PRIVATE pugixml)
+	target_include_directories(${PROJECT_NAME} PRIVATE $<TARGET_PROPERTY:pugixml,SOURCE_DIR>)
+else()
+	find_package(pugixml REQUIRED)
+	target_link_libraries(${PROJECT_NAME} PRIVATE pugixml::pugixml)
+endif()
 
 add_compile_definitions(XDGPP_GROUP="xdgpp")
 
@@ -53,7 +63,7 @@ if (BUILD_TESTS)
 	set(FIXTURE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/fixtures)
 	find_package(Catch2 3 REQUIRED)
 	add_compile_options(-g3)
-	add_executable(${TEST_TARGET} tests/main.cpp tests/entry.cpp tests/env.cpp tests/locale.cpp tests/mime.cpp tests/file.cpp tests/special.cpp tests/xdg-terminal-exec.cpp)
+	add_executable(${TEST_TARGET} tests/main.cpp tests/entry.cpp tests/env.cpp tests/locale.cpp tests/mime.cpp tests/file.cpp tests/special.cpp tests/xdg-terminal-exec.cpp tests/bookmark.cpp tests/file-uri.cpp)
 	target_compile_definitions(${TEST_TARGET} PRIVATE
 		XDGPP_FIXTURE_DIR="${FIXTURE_DIR}"
 	)

@@ -11,6 +11,7 @@ The goal of this library is to provide high-level interfaces to deal with variou
 For now, this library (roughly) implements:
 - [mime-apps](https://specifications.freedesktop.org/mime-apps-spec/latest/)
 - [desktop-entry](https://specifications.freedesktop.org/desktop-entry-spec/latest/)
+- [desktop-bookmark](https://www.freedesktop.org/wiki/Specifications/desktop-bookmark-spec/) (`recently-used.xbel`)
 
 # Build and install
 
