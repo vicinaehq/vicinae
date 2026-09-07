@@ -58,4 +58,5 @@ private:
   QStringList m_items;
   QStringList m_hosts;
   bool m_owned = false;
+  bool m_sawForeignOwner = false;
 };
