@@ -1,4 +1,4 @@
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "common/qt.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "internal/http-client.hpp"
