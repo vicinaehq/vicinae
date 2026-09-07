@@ -25,7 +25,11 @@ SniWatcher::SniWatcher(QObject *parent)
   connect(&m_queuePoll, &QTimer::timeout, this, &SniWatcher::pollQueuedOwners);
 
   auto *iface = QDBusConnection::sessionBus().interface();
-  if (!iface || !iface->isServiceRegistered(WATCHER_SERVICE)) m_claimTimer.start();
+  if (iface && iface->isServiceRegistered(WATCHER_SERVICE)) {
+    m_sawForeignOwner = true;
+  } else {
+    m_claimTimer.start();
+  }
 }
 
 SniWatcher::~SniWatcher() { release(); }
@@ -38,14 +42,17 @@ void SniWatcher::onNameOwnerChanged(const QString &, const QString &, const QStr
       qInfo() << "Lost StatusNotifierWatcher name";
       dropped();
     }
-    m_claimTimer.start();
+    if (!m_sawForeignOwner) m_claimTimer.start();
     return;
   }
 
   m_claimTimer.stop();
-  if (m_owned && !ours) {
-    qInfo() << "StatusNotifierWatcher taken over by" << newOwner;
-    dropped();
+  if (!ours) {
+    m_sawForeignOwner = true;
+    if (m_owned) {
+      qInfo() << "StatusNotifierWatcher taken over by" << newOwner;
+      dropped();
+    }
   }
 }
 
