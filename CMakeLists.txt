@@ -163,6 +163,14 @@ include_directories(
 
 find_package(glaze)
 
+add_subdirectory(${VENDOR_DIR}/sqlcipher)
+add_subdirectory(${VENDOR_DIR}/pugixml)
+add_subdirectory(${VENDOR_DIR}/zip)
+
+if (WIN32)
+	add_subdirectory(${VENDOR_DIR}/everything-sdk3)
+endif()
+
 add_subdirectory(src/browser-extension)
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
@@ -176,16 +184,6 @@ add_subdirectory(${LIB_DIR}/crypto)
 
 if (APPLE AND BUNDLE_SOULVER_CORE)
 	add_subdirectory(${LIB_DIR}/soulver)
-endif()
-
-# statically linked vendored libs.
-# Most of the other vendored libs are header only so no need for a CMakeLists.txt
-add_subdirectory(${VENDOR_DIR}/sqlcipher)
-add_subdirectory(${VENDOR_DIR}/pugixml)
-add_subdirectory(${VENDOR_DIR}/zip)
-
-if (WIN32)
-	add_subdirectory(${VENDOR_DIR}/everything-sdk3)
 endif()
 
 if (UNIX AND NOT APPLE)
