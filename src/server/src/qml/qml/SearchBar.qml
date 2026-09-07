@@ -230,7 +230,7 @@ Item {
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
                         event.accepted = ctrl ? (typeof commandStack.currentItem.moveSectionUp === "function" && commandStack.currentItem.moveSectionUp()) : commandStack.currentItem.moveUp();
                     } else {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                        event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
                 }
                 Keys.onDownPressed: event => {
@@ -245,7 +245,7 @@ Item {
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
                         event.accepted = ctrl ? (typeof commandStack.currentItem.moveSectionDown === "function" && commandStack.currentItem.moveSectionDown()) : commandStack.currentItem.moveDown();
                     } else {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                        event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
                 }
                 Keys.onLeftPressed: event => {
@@ -259,7 +259,7 @@ Item {
                     if (navigatable && event.modifiers == Qt.NoModifier) {
                         event.accepted = commandStack.currentItem.moveLeft();
                     } else {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                        event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
                 }
                 Keys.onRightPressed: event => {
@@ -273,7 +273,7 @@ Item {
                     if (navigatable && event.modifiers == Qt.NoModifier) {
                         event.accepted = commandStack.currentItem.moveRight();
                     } else {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers);
+                        event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
                 }
                 Keys.onBacktabPressed: event => {
@@ -287,7 +287,7 @@ Item {
                     } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && launcher.showBackButton && launcher.popOnBackspace) {
                         launcher.goBack();
                         event.accepted = true;
-                    } else if (launcher.forwardKey(event.key, event.modifiers)) {
+                    } else if (launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode)) {
                         if (launcher.compacted)
                             launcher.expand();
                         event.accepted = true;

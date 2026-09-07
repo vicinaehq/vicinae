@@ -13,6 +13,8 @@
 #include "extension-interval-scheduler.hpp"
 #include "ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
+#include "keyboard/keyboard.hpp"
+#include "keyboard/layout-resolver.hpp"
 #include "common/common.hpp"
 #include "log/message-handler.hpp"
 #include "overlay-controller/overlay-controller.hpp"
@@ -464,6 +466,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   UrlSchemeOpenFilter urlSchemeOpenFilter(ctx);
   qApp->installEventFilter(&urlSchemeOpenFilter);
 #endif
+
+  Keyboard::setLayoutResolver(Keyboard::createLayoutResolver());
 
   QObject::connect(
       ctx.services->fileService()->indexer(), &AbstractFileIndexer::scanStatusChanged,

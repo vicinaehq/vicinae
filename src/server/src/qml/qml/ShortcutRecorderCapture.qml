@@ -78,12 +78,12 @@ FocusScope {
 
     Keys.onPressed: event => {
         event.accepted = true;
-        capture.handleKey(Keyboard.normalizeKey(event.key), event.modifiers, true);
+        capture.handleKey(Keyboard.resolveKey(event.key, event.nativeScanCode), event.modifiers, true);
     }
 
     Keys.onReleased: event => {
         event.accepted = true;
-        capture.handleKey(Keyboard.normalizeKey(event.key), event.modifiers, false);
+        capture.handleKey(Keyboard.resolveKey(event.key, event.nativeScanCode), event.modifiers, false);
     }
 
     Connections {

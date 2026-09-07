@@ -281,6 +281,8 @@ set(SRCS
 	src/internal/keyboard/keybind-manager.hpp
 	src/internal/keyboard/keybind-manager.cpp
 	src/internal/keyboard/keyboard.cpp
+	src/internal/keyboard/layout-resolver.hpp
+	src/internal/keyboard/layout-resolver.cpp
 
 	src/theme/theme-file.hpp
 	src/theme/theme-file.cpp
@@ -765,6 +767,8 @@ elseif (WIN32)
 		src/services/app-service/windows/win-app-database.cpp
 		src/services/global-shortcuts/windows-global-shortcut-backend.hpp
 		src/services/global-shortcuts/windows-global-shortcut-backend.cpp
+		src/internal/keyboard/windows-layout-resolver.hpp
+		src/internal/keyboard/windows-layout-resolver.cpp
 		src/services/clipboard/windows/windows-clipboard-server.hpp
 		src/services/clipboard/windows/windows-clipboard-server.cpp
 		src/services/clipboard/windows/windows-image-mime.hpp
@@ -949,7 +953,7 @@ if (UNIX AND NOT APPLE)
 	# Add XCB (X11 C Bindings) library for X11 window manager support
 	find_package(X11 REQUIRED)
 	if (X11_FOUND)
-		list(APPEND LIBS X11::xcb X11::xcb_keysyms)
+		list(APPEND LIBS X11::xcb X11::xcb_keysyms X11::xcb_xkb)
 		message(STATUS "XCB library found for X11 window manager support")
 	endif()
 
@@ -965,7 +969,7 @@ if (UNIX AND NOT APPLE)
 	wayland_system_protocol(KEYBOARD_SHORTCUTS_INHIBIT_XML "unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml")
 	wayland_system_protocol(XDG_ACTIVATION_XML "staging/xdg-activation/xdg-activation-v1.xml")
 
-	list(APPEND LIBS xkbcommon)
+	list(APPEND LIBS xkbcommon xkbcommon-x11)
 
 	# Common Wayland support files
 	list(APPEND SRCS
@@ -979,6 +983,13 @@ if (UNIX AND NOT APPLE)
 
 		src/services/global-shortcuts/vicinae-hotkey-global-shortcut-backend.hpp
 		src/services/global-shortcuts/vicinae-hotkey-global-shortcut-backend.cpp
+
+		src/internal/keyboard/xkb-layout-resolver.hpp
+		src/internal/keyboard/xkb-layout-resolver.cpp
+		src/internal/keyboard/wayland-layout-resolver.hpp
+		src/internal/keyboard/wayland-layout-resolver.cpp
+		src/internal/keyboard/x11-layout-resolver.hpp
+		src/internal/keyboard/x11-layout-resolver.cpp
 
 		src/services/files-service/file-indexer/file-indexer.hpp
 		src/services/files-service/file-indexer/file-indexer.cpp

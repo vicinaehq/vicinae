@@ -563,10 +563,11 @@ void LauncherWindow::forwardSearchText(const QString &text) {
   tryCompaction();
 }
 
-bool LauncherWindow::forwardKey(int key, int modifiers) {
+bool LauncherWindow::forwardKey(int rawKey, int modifiers, int scanCode) {
   if (m_actionPanel->capturesAllKeys()) return false;
 
   auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
+  const int key = Keyboard::resolveKey(static_cast<Qt::Key>(rawKey), static_cast<quint32>(scanCode));
   const bool isReturn = key == Qt::Key_Return || key == Qt::Key_Enter;
   const bool unmodified = (mods & ~Qt::KeypadModifier) == Qt::NoModifier;
 
