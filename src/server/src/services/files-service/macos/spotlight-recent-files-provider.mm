@@ -2,14 +2,38 @@
 #include <CoreServices/CoreServices.h>
 #include <QtConcurrent/QtConcurrentRun>
 #include <climits>
+#include <string>
 #include <common/file-category.hpp>
 
 namespace fs = std::filesystem;
 
 namespace {
 
-constexpr auto PREDICATE = "kMDItemLastUsedDate > $time.today(-365) && "
-                           "!(kMDItemContentTypeTree == \"com.apple.application-bundle\")";
+constexpr auto LAST_USED = "kMDItemLastUsedDate > $time.today(-365)";
+constexpr auto FOLDER = "kMDItemContentTypeTree == \"public.folder\"";
+constexpr auto APP_BUNDLE = "kMDItemContentTypeTree == \"com.apple.application-bundle\"";
+
+/**
+ * Finder, file panels and system daemons all refresh a folder's last-used date, so folders and
+ * bundles only make sense when they are explicitly asked for.
+ */
+std::string predicateFor(const RecentFilesParams &params) {
+  using vicinae::FileCategory;
+
+  if (params.category == FileCategory::Directory) return std::string(LAST_USED) + " && " + FOLDER;
+  if (params.category == FileCategory::Application) return std::string(LAST_USED) + " && " + APP_BUNDLE;
+  return std::string(LAST_USED) + " && !(" + FOLDER + ") && !(" + APP_BUNDLE + ")";
+}
+
+CFArrayRef scopeFor(const RecentFilesParams &params) {
+  if (params.category == vicinae::FileCategory::Application) {
+    CFStringRef scopes[] = {kMDQueryScopeHome, CFSTR("/Applications")};
+    return CFArrayCreate(kCFAllocatorDefault, (const void **)scopes, 2, &kCFTypeArrayCallBacks);
+  }
+
+  CFStringRef scopes[] = {kMDQueryScopeHome};
+  return CFArrayCreate(kCFAllocatorDefault, (const void **)scopes, 1, &kCFTypeArrayCallBacks);
+}
 
 bool matchesCategory(const fs::path &path, const RecentFilesParams &params) {
   if (!params.category) return true;
@@ -24,7 +48,9 @@ std::vector<fs::path> listRecent(const RecentFilesParams &params) {
   std::vector<fs::path> result;
   if (params.limit <= 0) return result;
 
-  CFStringRef queryString = CFStringCreateWithCString(kCFAllocatorDefault, PREDICATE, kCFStringEncodingUTF8);
+  auto const predicate = predicateFor(params);
+  CFStringRef queryString =
+      CFStringCreateWithCString(kCFAllocatorDefault, predicate.c_str(), kCFStringEncodingUTF8);
   if (!queryString) return result;
 
   CFStringRef sortKeys[] = {kMDItemLastUsedDate};
@@ -37,6 +63,10 @@ std::vector<fs::path> listRecent(const RecentFilesParams &params) {
   if (!query) return result;
 
   MDQuerySetSortOptionFlagsForAttribute(query, kMDItemLastUsedDate, kMDQueryReverseSortOrderFlag);
+
+  CFArrayRef scope = scopeFor(params);
+  MDQuerySetSearchScope(query, scope, 0);
+  CFRelease(scope);
 
   if (!MDQueryExecute(query, kMDQuerySynchronous)) {
     CFRelease(query);
