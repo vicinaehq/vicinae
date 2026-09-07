@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <format>
 #include <ranges>
-#include "image-url.hpp"
+#include "ui/image/image-url.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-config.hpp"
 #include "services/ai/ai-provider.hpp"

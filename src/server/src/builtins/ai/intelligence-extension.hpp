@@ -1,5 +1,5 @@
 #pragma once
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "command/command-database.hpp"
 #include "command/single-view-command-context.hpp"
 #include "builtins/ai/transcribe-view-host.hpp"
