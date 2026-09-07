@@ -40,6 +40,13 @@ TEST_CASE("XDG_DATA_HOME should provide a spec-compliant default", XDGPP_GROUP) 
   REQUIRE(xdgpp::dataHome() == homeDir() / ".local" / "share");
 }
 
+TEST_CASE("commonDataDirs should start with XDG_DATA_HOME", XDGPP_GROUP) {
+  auto dirs = xdgpp::commonDataDirs();
+
+  REQUIRE_FALSE(dirs.empty());
+  REQUIRE(dirs.front() == xdgpp::dataHome());
+}
+
 TEST_CASE("should return nullopt if no XDG_RUNTIME_DIR is set", XDGPP_GROUP) {
   unsetenv("XDG_RUNTIME_DIR");
   REQUIRE_FALSE(xdgpp::runtimeDir().has_value());

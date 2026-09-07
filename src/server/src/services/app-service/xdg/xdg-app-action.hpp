@@ -15,7 +15,7 @@ public:
   bool isAction() const override { return true; }
 
   ImageURL iconUrl() const override {
-    if (auto icon = m_data.icon()) { return ImageURL::system(icon.value().c_str()); }
+    if (auto icon = m_data.icon()) { return urlForDesktopIcon(QString::fromStdString(*icon)); }
 
     return XdgApplication::iconUrl();
   }
