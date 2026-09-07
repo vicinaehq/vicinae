@@ -1,7 +1,7 @@
 #pragma once
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "common/qt.hpp"
-#include "image-url.hpp"
+#include "ui/image/image-url.hpp"
 #include "services/ai/ai-config.hpp"
 #include "services/ai/ai-provider.hpp"
 #include <cstdint>
