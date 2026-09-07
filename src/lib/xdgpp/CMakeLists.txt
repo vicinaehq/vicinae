@@ -20,6 +20,7 @@ add_library(vicinae-xdgpp STATIC
 	xdgpp/env/env.cpp
 	xdgpp/mime/iterator.cpp
 	xdgpp/mime/mime-apps-list.cpp
+	xdgpp/mime/mime-apps-list-writer.cpp
 )
 add_library(vicinae::xdgpp ALIAS vicinae-xdgpp)
 set(PROJECT_NAME vicinae-xdgpp)

@@ -13,6 +13,7 @@
 
 #ifndef Q_OS_WIN
 #include "xdgpp/desktop-entry/exec.hpp"
+#include "builtins/system/set-default-browser-view-host.hpp"
 #include "builtins/system/set-default-terminal-view-host.hpp"
 #endif
 
@@ -128,6 +129,18 @@ class SetDefaultTerminal : public BuiltinViewCommand<SetDefaultTerminalViewHost>
   std::vector<QString> keywords() const override { return {}; }
   ImageURL iconUrl() const override { return ImageURL::symbol("$").setBackgroundTint(QColor(128, 132, 138)); }
 };
+
+class SetDefaultBrowser : public BuiltinViewCommand<SetDefaultBrowserViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(SetDefaultBrowser)
+
+  QString id() const override { return "set-default-browser"; }
+  QString name() const override { return tr("Set Default Browser"); }
+  QString description() const override { return tr("Change the default system web browser"); }
+  std::vector<QString> keywords() const override { return {}; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Globe01).setBackgroundTint(QColor(128, 132, 138));
+  }
+};
 #endif
 
 } // namespace
@@ -150,6 +163,7 @@ public:
 #ifdef Q_OS_LINUX
     // set default terminal using xdg-terminal-exec
     registerCommand<SetDefaultTerminal>();
+    registerCommand<SetDefaultBrowser>();
 #endif
   }
 

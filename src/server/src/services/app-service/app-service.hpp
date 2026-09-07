@@ -57,6 +57,7 @@ public:
   std::shared_ptr<AbstractApplication> terminalEmulator() const;
   std::shared_ptr<AbstractApplication> textEditor() const;
   std::shared_ptr<AbstractApplication> webBrowser() const;
+  bool setWebBrowser(const AbstractApplication &app);
   std::shared_ptr<AbstractApplication> fileBrowser() const;
 
   std::shared_ptr<AbstractApplication> findById(const QString &id) const;
