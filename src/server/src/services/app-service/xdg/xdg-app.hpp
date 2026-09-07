@@ -57,8 +57,7 @@ public:
   }
 
   ImageURL iconUrl() const override {
-    auto icon = QString::fromStdString(m_entry.icon().value_or(""));
-    return ImageURL::system(icon);
+    return urlForDesktopIcon(QString::fromStdString(m_entry.icon().value_or("")));
   }
 
   std::vector<std::shared_ptr<AbstractApplication>> actions() const override;
@@ -71,4 +70,11 @@ public:
   }
 
   XdgApplication(const xdgpp::DesktopFile &file) : m_entry(file) {}
+
+protected:
+  static ImageURL urlForDesktopIcon(const QString &icon) {
+    // Desktop Entry spec: an absolute Icon= path is a file, not a theme name.
+    if (icon.startsWith(QLatin1Char('/'))) return ImageURL::local(icon);
+    return ImageURL::system(icon);
+  }
 };

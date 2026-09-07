@@ -112,7 +112,9 @@ inline std::optional<std::filesystem::path> nodeBinaryOverride() {
 
 inline QStringList fallbackIconSearchPaths() {
   QStringList list;
-  auto dirs = platformDataDirs();
+#ifndef Q_OS_WIN
+  // Includes XDG_DATA_HOME so unthemed icons like $XDG_DATA_HOME/icons/foo.png resolve.
+  auto dirs = xdgpp::commonDataDirs();
 
   list.reserve(dirs.size() * 2);
 
@@ -123,7 +125,7 @@ inline QStringList fallbackIconSearchPaths() {
   for (const auto &dir : dirs) {
     list << QString::fromStdString((dir / "icons").string());
   }
-
+#endif
   return list;
 }
 
