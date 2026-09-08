@@ -136,6 +136,8 @@ endif()
 # the Qt deploy API registers its support files on the first Qt6::Core scope seen
 find_package(Qt6 6.9 REQUIRED COMPONENTS Core Qml)
 
+set(QT_QML_GENERATE_QMLLS_INI ON)
+
 if (NOT USE_SYSTEM_GLAZE)
 	include(Glaze)
 	import_glaze()
