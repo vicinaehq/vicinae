@@ -22,14 +22,45 @@ else()
 	FetchContent_MakeAvailable(numen)
 endif()
 
-include(FetchContent)
+function(vicinae_fetch_whisper)
+	include(FetchContent)
 
-FetchContent_Declare(whisper
-  GIT_REPOSITORY https://github.com/ggml-org/whisper.cpp
-  GIT_TAG        b4938
-)
+	set(BUILD_SHARED_LIBS OFF)
+	set(WHISPER_BUILD_TESTS OFF)
+	set(WHISPER_BUILD_EXAMPLES OFF)
 
-FetchContent_MakeAvailable(whisper)
+	set(GGML_NATIVE OFF)
+	set(GGML_VULKAN ${WHISPER_VULKAN})
+
+	if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+		set(GGML_SSE42 ON)
+		set(GGML_AVX ON)
+		set(GGML_AVX2 ON)
+		set(GGML_FMA ON)
+		set(GGML_F16C ON)
+		set(GGML_BMI2 ON)
+		set(GGML_AVX512 OFF)
+	endif()
+
+	set(EXCLUDE_ARG)
+	if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
+		set(EXCLUDE_ARG EXCLUDE_FROM_ALL)
+	endif()
+
+	FetchContent_Declare(whisper
+	  GIT_REPOSITORY https://github.com/ggml-org/whisper.cpp
+	  GIT_TAG        v1.9.3
+	  ${EXCLUDE_ARG}
+	)
+
+	FetchContent_MakeAvailable(whisper)
+endfunction()
+
+if (USE_SYSTEM_WHISPER)
+	find_package(whisper REQUIRED)
+else()
+	vicinae_fetch_whisper()
+endif()
 
 list(APPEND LIBS
 	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
