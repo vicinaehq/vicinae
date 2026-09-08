@@ -4,7 +4,7 @@ import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property ExtensionViewHost host
     required property var formModel
 
     property bool _autoFocusDone: false

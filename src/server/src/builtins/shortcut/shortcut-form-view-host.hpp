@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/app-selector-model.hpp"
 #include "ui/views/bridge-view.hpp"
 #include "ui/quick/completion-model.hpp"
@@ -12,6 +13,8 @@ class Shortcut;
 
 class ShortcutFormViewHost : public FormViewBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(ShortcutFormViewHost)
+  QML_UNCREATABLE("")
 
 public:
   enum class Mode { Create, Edit, Duplicate };

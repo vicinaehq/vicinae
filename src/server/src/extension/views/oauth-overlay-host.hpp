@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "common/context.hpp"
 #include "generated/tsapi.hpp"
 #include <QObject>
@@ -6,6 +7,8 @@
 
 class OAuthOverlayHost : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(OAuthOverlayHost)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(QUrl qmlComponentUrl READ qmlComponentUrl CONSTANT)
   Q_PROPERTY(QString providerName READ providerName NOTIFY stateChanged)

@@ -8,12 +8,13 @@
 
 class EmojiGridViewHost : public ViewHostBase {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
   Q_PROPERTY(CompletionModel *categoryFilterModel READ categoryFilterModel CONSTANT)
   Q_PROPERTY(int currentCategoryFilter READ currentCategoryFilter NOTIFY currentCategoryFilterChanged)
 
 public:
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EmojiGridView.qml")); }
+  QUrl qmlComponentUrl() const override {
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EmojiGridView.qml"));
+  }
   QUrl qmlSearchAccessoryUrl() const override {
     return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EmojiCategoryFilterAccessory.qml"));
   }
@@ -35,8 +36,6 @@ public:
   void beforePop() override { m_model.beforePop(); }
   void onReactivated() override { m_model.refreshActionPanel(); }
   void loadInitialData() override { m_model.setFilter(searchText()); }
-
-  QObject *listModel() const { return const_cast<EmojiGridModel *>(&m_model); }
 
   CompletionModel *categoryFilterModel() { return &m_categoryFilterModel; }
 

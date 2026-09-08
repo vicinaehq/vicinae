@@ -1,20 +1,13 @@
 #pragma once
-#include "ui/views/list-view-host.hpp"
+#include "ui/views/detail-list-view-host.hpp"
 #include "builtins/shortcut/manage-shortcuts-model.hpp"
 #include <QVariantList>
 #include <memory>
 
 class ShortcutService;
 
-class ManageShortcutsViewHost : public ListViewHost {
+class ManageShortcutsViewHost : public DetailListViewHost {
   Q_OBJECT
-
-  Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
-  Q_PROPERTY(QString detailContent READ detailContent NOTIFY detailChanged)
-  Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailChanged)
-
-signals:
-  void detailChanged();
 
 public:
   QUrl qmlComponentUrl() const override;
@@ -23,9 +16,9 @@ public:
   void loadInitialData() override;
   void beforePop() override;
 
-  bool hasDetail() const { return m_hasDetail; }
-  QString detailContent() const { return m_detailContent; }
-  QVariantList detailMetadata() const { return m_detailMetadata; }
+  bool hasDetail() const override { return m_hasDetail; }
+  QString detailContent() const override { return m_detailContent; }
+  QVariantList detailMetadata() const override { return m_detailMetadata; }
 
 private:
   void loadDetail(const std::shared_ptr<Shortcut> &shortcut);

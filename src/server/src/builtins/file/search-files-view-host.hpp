@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/quick/completion-model.hpp"
 #include "ui/views/list-view-host.hpp"
 #include "builtins/file/search-files-model.hpp"
@@ -10,6 +11,8 @@
 
 class SearchFilesViewHost : public ListViewHost {
   Q_OBJECT
+  QML_NAMED_ELEMENT(SearchFilesViewHost)
+  QML_UNCREATABLE("")
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(QString detailName READ detailName NOTIFY detailChanged)
   Q_PROPERTY(QString detailPath READ detailPath NOTIFY detailChanged)

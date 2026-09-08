@@ -4,7 +4,7 @@ import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property OAuthOverlayHost host
 
     focus: true
     Keys.onEscapePressed: root.host.abort()

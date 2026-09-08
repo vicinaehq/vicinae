@@ -3,7 +3,7 @@ import Vicinae
 
 ScriptOutputText {
     id: root
-    required property var host
+    required property ScriptExecutorViewHost host
 
     text: root.host.outputHtml
 

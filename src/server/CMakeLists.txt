@@ -1255,6 +1255,8 @@ set(VICINAE_QML_SOURCES
 	src/ui/quick/match-highlighter.hpp
 	src/ui/quick/match-highlighter.cpp
 	src/ui/quick/completion-model.hpp
+	src/ui/views/detail-list-view-host.hpp
+	src/ui/views/store-detail-host.hpp
 	src/ui/quick/markdown-model.hpp
 	src/ui/quick/text-selection-controller.hpp
 	src/ui/quick/window-material-attached.hpp
@@ -1322,6 +1324,17 @@ target_include_directories(${TARGET} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/alert
 	${CMAKE_CURRENT_SOURCE_DIR}/src/services/file-chooser
 	${CMAKE_CURRENT_SOURCE_DIR}/src/services/permissions
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/views
+	${CMAKE_CURRENT_SOURCE_DIR}/src/script
+	${CMAKE_CURRENT_SOURCE_DIR}/src/extension/views
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/shortcut
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/vicinae
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/clipboard/history
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/file
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/font
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/developer
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/snippet
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/root
 	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler
 	${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})

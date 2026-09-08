@@ -1,9 +1,12 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
 #include "common/entrypoint.hpp"
 
 class AliasFormViewHost : public FormViewBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(AliasFormViewHost)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(QString alias READ alias WRITE setAlias NOTIFY formChanged)
   Q_PROPERTY(QString aliasError READ aliasError NOTIFY errorsChanged)

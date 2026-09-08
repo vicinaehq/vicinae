@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
 #include "ui/quick/completion-model.hpp"
 #include "services/snippet/snippet-db.hpp"
@@ -8,6 +9,8 @@ class SnippetService;
 
 class SnippetFormViewHost : public FormViewBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(SnippetFormViewHost)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(QString name READ name WRITE setName NOTIFY formChanged)
   Q_PROPERTY(QString content READ content WRITE setContent NOTIFY formChanged)

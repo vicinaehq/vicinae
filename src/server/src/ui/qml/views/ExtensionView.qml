@@ -4,7 +4,7 @@ import Vicinae
 
 Item {
     id: root
-    required property var host // ExtensionViewHost*
+    required property ExtensionViewHost host
 
     StackView.onActivated: {
         if (contentLoader.item && typeof contentLoader.item.restoreFocus === "function")

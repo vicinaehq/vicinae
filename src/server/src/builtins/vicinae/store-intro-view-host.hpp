@@ -1,10 +1,13 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
 #include "ui/image/url.hpp"
 #include <functional>
 
 class StoreIntroViewHost : public FormViewBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(StoreIntroViewHost)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(QString introMarkdown READ introMarkdown CONSTANT)
 

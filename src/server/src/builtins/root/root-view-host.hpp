@@ -4,10 +4,10 @@
 #include <qtimer.h>
 
 class RootSearchModel;
+class SectionListModel;
 
 class RootViewHost : public ViewHostBase {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
   QUrl qmlComponentUrl() const override;
@@ -20,7 +20,7 @@ public:
   void onReactivated() override;
   void beforePop() override;
 
-  QObject *listModel() const;
+  SectionListModel *listModel() const override;
 
 protected:
   bool inputFilter(QKeyEvent *) override;

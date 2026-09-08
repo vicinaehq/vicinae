@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include <QAbstractListModel>
 
 #include <memory>
@@ -9,6 +10,8 @@
 #include "ui/views/view-scope.hpp"
 class SectionListModel : public QAbstractListModel {
   Q_OBJECT
+  QML_NAMED_ELEMENT(SectionListModel)
+  QML_UNCREATABLE("")
   Q_PROPERTY(bool selectFirstOnReset READ selectFirstOnReset NOTIFY selectFirstOnResetChanged)
   Q_PROPERTY(bool awaitingData READ awaitingData NOTIFY awaitingDataChanged)
   Q_PROPERTY(int selectedIndex READ selectedIndex NOTIFY selectedIndexChanged)
@@ -61,7 +64,9 @@ public:
   void refreshActionPanel();
   void beforePop();
 
-  virtual QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CommandListView.qml")); }
+  virtual QUrl qmlComponentUrl() const {
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CommandListView.qml"));
+  }
 
 protected:
   virtual void onSelectionCleared();

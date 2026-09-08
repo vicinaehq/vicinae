@@ -5,7 +5,7 @@ import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property SearchFilesViewHost host
 
     function moveUp() {
         return listView.moveUp();

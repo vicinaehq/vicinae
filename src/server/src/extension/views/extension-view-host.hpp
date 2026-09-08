@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/quick/completion-model.hpp"
 #include "extension/model/model-parser.hpp"
 #include "extension/model/pagination-model.hpp"
@@ -13,6 +14,8 @@
 
 class ExtensionViewHost : public ViewHostBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(ExtensionViewHost)
+  QML_UNCREATABLE("")
   Q_PROPERTY(QString viewType READ viewType NOTIFY viewTypeChanged)
   Q_PROPERTY(QObject *contentModel READ contentModel NOTIFY viewTypeChanged)
   Q_PROPERTY(bool isExtLoading READ isExtLoading NOTIFY isLoadingChanged)

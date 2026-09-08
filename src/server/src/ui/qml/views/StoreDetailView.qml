@@ -4,7 +4,7 @@ import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property StoreDetailHost host
 
     readonly property var _alert: root.host.alert ?? ({})
     readonly property bool _hasAlert: Object.keys(_alert).length > 0

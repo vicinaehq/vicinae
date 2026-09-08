@@ -8,7 +8,6 @@
  * Does not require creating a separate model, much simpler way to create new views.
  */
 template <typename T> class MonoListViewHost : public ViewHostBase, public FuzzySection<T> {
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
   using ItemType = T;
@@ -43,7 +42,7 @@ private:
     onMount();
   }
 
-  QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
+  SectionListModel *listModel() const override { return const_cast<SectionListModel *>(&m_model); }
 
   SectionListModel *model() { return &m_model; }
 

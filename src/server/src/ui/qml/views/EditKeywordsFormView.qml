@@ -4,7 +4,7 @@ import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property EditKeywordsViewHost host
 
     FormView {
         id: formView

@@ -16,8 +16,7 @@ Item {
 		console.log('mounted now5!');
 	}
 
-    // The backing model — must have Q_INVOKABLE nextSelectableIndex(int, int)
-    required property var listModel
+    required property SectionListModel listModel
 
     property alias model: listView.model
     property alias delegate: listView.delegate

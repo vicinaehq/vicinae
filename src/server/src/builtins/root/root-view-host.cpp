@@ -62,7 +62,9 @@ void RootViewHost::scheduleNextClockTick() {
   m_clockTimer->start();
 }
 
-QUrl RootViewHost::qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/RootSearchList.qml")); }
+QUrl RootViewHost::qmlComponentUrl() const {
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/RootSearchList.qml"));
+}
 
 void RootViewHost::beforeActionExecuted(const AbstractAction *action) {
   auto manager = context()->services->rootItemManager();
@@ -165,4 +167,4 @@ void RootViewHost::beforePop() {
   if (m_model) m_model->beforePop();
 }
 
-QObject *RootViewHost::listModel() const { return m_model; }
+SectionListModel *RootViewHost::listModel() const { return m_model; }
