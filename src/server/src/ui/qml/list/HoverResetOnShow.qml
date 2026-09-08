@@ -1,14 +1,17 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Vicinae
 
 Connections {
     ignoreUnknownSignals: true
     function onVisibleChanged() {
-        if (target && target.visible)
+        const item = target as Item;
+        if (item && item.visible)
             HoverActivation.reset();
     }
     Component.onCompleted: {
-        if (target && target.visible)
+        const item = target as Item;
+        if (item && item.visible)
             HoverActivation.reset();
     }
 }

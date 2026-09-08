@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "extension/model/grid-model.hpp"
 #include "ui/image/image-url.hpp"
 #include "extension/extension-action-panel-builder.hpp"
@@ -52,11 +53,9 @@ private:
 
 class ExtensionGridModel : public SectionGridModel {
   Q_OBJECT
-  Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
-  Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
-  Q_PROPERTY(ImageUrl emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
+  QML_NAMED_ELEMENT(ExtensionGridModel)
+  QML_UNCREATABLE("")
   Q_PROPERTY(int fit READ fit NOTIFY fitChanged)
-  Q_PROPERTY(int dataRevision READ dataRevision NOTIFY dataRevisionChanged)
 
 public:
   using NotifyFn = std::function<void(const QString &handler, const QJsonArray &args)>;
@@ -68,22 +67,20 @@ public:
   QString searchPlaceholder() const;
   QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ExtensionGridView.qml")); }
 
-  Q_INVOKABLE QString cellTitle(int section, int item) const;
+  QString cellTitle(int section, int item) const override;
   Q_INVOKABLE QString cellIcon(int section, int item) const;
-  Q_INVOKABLE QString cellSubtitle(int section, int item) const;
-  Q_INVOKABLE QString cellTooltip(int section, int item) const;
+  QString cellSubtitle(int section, int item) const override;
+  QString cellTooltip(int section, int item) const override;
   Q_INVOKABLE QString cellColor(int section, int item) const;
 
-  QString emptyTitle() const;
-  QString emptyDescription() const;
-  ImageUrl emptyIcon() const;
+  QString emptyTitle() const override;
+  QString emptyDescription() const override;
+  ImageUrl emptyIcon() const override;
   int fit() const { return static_cast<int>(m_fit); }
-  int dataRevision() const { return m_dataRevision; }
+  int dataRevision() const override { return m_dataRevision; }
 
 signals:
-  void emptyViewChanged();
   void fitChanged();
-  void dataRevisionChanged();
 
 protected:
   void onSelectionCleared() override;

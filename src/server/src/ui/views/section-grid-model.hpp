@@ -1,4 +1,6 @@
 #pragma once
+#include "ui/image/image-url.hpp"
+#include <QtQml/qqmlregistration.h>
 #include <QAbstractListModel>
 
 #include <cstdint>
@@ -11,12 +13,18 @@ class ActionPanelState;
 
 class SectionGridModel : public QAbstractListModel {
   Q_OBJECT
+  QML_NAMED_ELEMENT(SectionGridModel)
+  QML_UNCREATABLE("")
   Q_PROPERTY(int selectedSection READ selectedSection NOTIFY selectionChanged)
   Q_PROPERTY(int selectedItem READ selectedItem NOTIFY selectionChanged)
   Q_PROPERTY(int columns READ columns WRITE setColumns NOTIFY columnsChanged)
   Q_PROPERTY(double aspectRatio READ aspectRatio WRITE setAspectRatio NOTIFY aspectRatioChanged)
   Q_PROPERTY(double inset READ inset WRITE setInset NOTIFY insetChanged)
   Q_PROPERTY(bool awaitingData READ awaitingData NOTIFY awaitingDataChanged)
+  Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
+  Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
+  Q_PROPERTY(ImageUrl emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
+  Q_PROPERTY(int dataRevision READ dataRevision NOTIFY dataRevisionChanged)
 
 public:
   enum Role : std::uint16_t {
@@ -55,6 +63,14 @@ public:
   void setInset(double inset);
   void setSelectFirstOnReset(bool value) { m_selectFirstOnReset = value; }
 
+  Q_INVOKABLE virtual QString cellTitle(int section, int item) const { return {}; }
+  Q_INVOKABLE virtual QString cellSubtitle(int section, int item) const { return {}; }
+  Q_INVOKABLE virtual QString cellTooltip(int section, int item) const { return {}; }
+  virtual QString emptyTitle() const { return {}; }
+  virtual QString emptyDescription() const { return {}; }
+  virtual ImageUrl emptyIcon() const { return {}; }
+  virtual int dataRevision() const { return 0; }
+
   Q_INVOKABLE void select(int section, int item);
   Q_INVOKABLE bool isDraggable(int section, int item) const;
   Q_INVOKABLE void startDrag(int section, int item, QObject *source);
@@ -74,6 +90,8 @@ public:
 
 signals:
   void selectionChanged();
+  void emptyViewChanged();
+  void dataRevisionChanged();
   void columnsChanged();
   void aspectRatioChanged();
   void insetChanged();

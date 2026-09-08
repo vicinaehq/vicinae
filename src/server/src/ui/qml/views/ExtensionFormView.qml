@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
@@ -55,54 +56,56 @@ Item {
             id: repeater
             model: root.formModel
 
-            delegate: Loader {
-                id: fieldLoader
-                Layout.fillWidth: true
+            delegate: FieldHost {}
+        }
+    }
 
-                required property int index
-                required property string type
-                required property string fieldId
-                required property string label
-                required property string error
-                required property string info
-                required property string placeholder
-                required property var value
-                required property bool autoFocus
-                required property var fieldData
-                required property CompletionModel dropdownModel
-                required property var currentDropdownItem
+    component FieldHost: Loader {
+        id: fieldLoader
+        Layout.fillWidth: true
 
-                readonly property bool isField: type !== "separator" && type !== "description"
+        required property int index
+        required property string type
+        required property string fieldId
+        required property string label
+        required property string error
+        required property string info
+        required property string placeholder
+        required property var value
+        required property bool autoFocus
+        required property var fieldData
+        required property CompletionModel dropdownModel
+        required property var currentDropdownItem
 
-                function focusField() {
-                    if (item && typeof item.focusField === "function")
-                        item.focusField();
-                }
+        readonly property bool isField: type !== "separator" && type !== "description"
 
-                sourceComponent: {
-                    switch (type) {
-                    case "text":
-                        return textFieldComp;
-                    case "password":
-                        return passwordFieldComp;
-                    case "textarea":
-                        return textareaFieldComp;
-                    case "checkbox":
-                        return checkboxFieldComp;
-                    case "dropdown":
-                        return dropdownFieldComp;
-                    case "filepicker":
-                        return filepickerFieldComp;
-                    case "datepicker":
-                        return datepickerFieldComp;
-                    case "description":
-                        return descriptionFieldComp;
-                    case "separator":
-                        return separatorFieldComp;
-                    default:
-                        return null;
-                    }
-                }
+        function focusField() {
+            if (item && typeof item.focusField === "function")
+                item.focusField();
+        }
+
+        sourceComponent: {
+            switch (type) {
+            case "text":
+                return textFieldComp;
+            case "password":
+                return passwordFieldComp;
+            case "textarea":
+                return textareaFieldComp;
+            case "checkbox":
+                return checkboxFieldComp;
+            case "dropdown":
+                return dropdownFieldComp;
+            case "filepicker":
+                return filepickerFieldComp;
+            case "datepicker":
+                return datepickerFieldComp;
+            case "description":
+                return descriptionFieldComp;
+            case "separator":
+                return separatorFieldComp;
+            default:
+                return null;
             }
         }
     }
@@ -111,9 +114,10 @@ Item {
         id: textFieldComp
         FormField {
             id: field
-            label: parent.label
-            error: parent.error
-            info: parent.info
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            error: field.host.error
+            info: field.host.info
 
             function focusField() {
                 textInput.forceActiveFocus();
@@ -121,15 +125,15 @@ Item {
 
             FormTextInput {
                 id: textInput
-                text: field.parent.value != null ? String(field.parent.value) : ""
-                placeholder: field.parent.placeholder
+                text: field.host.value != null ? String(field.host.value) : ""
+                placeholder: field.host.placeholder
                 hasError: field.error !== ""
-                onTextEdited: root.formModel.setFieldValue(field.parent.index, text)
+                onTextEdited: root.formModel.setFieldValue(field.host.index, text)
                 onActiveFocusChanged: {
                     if (activeFocus)
-                        root.formModel.fieldFocused(field.parent.index);
+                        root.formModel.fieldFocused(field.host.index);
                     else
-                        root.formModel.fieldBlurred(field.parent.index);
+                        root.formModel.fieldBlurred(field.host.index);
                 }
             }
         }
@@ -139,9 +143,10 @@ Item {
         id: passwordFieldComp
         FormField {
             id: field
-            label: parent.label
-            error: parent.error
-            info: parent.info
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            error: field.host.error
+            info: field.host.info
 
             function focusField() {
                 passwordInput.forceActiveFocus();
@@ -149,16 +154,16 @@ Item {
 
             FormTextInput {
                 id: passwordInput
-                text: field.parent.value != null ? String(field.parent.value) : ""
-                placeholder: field.parent.placeholder
+                text: field.host.value != null ? String(field.host.value) : ""
+                placeholder: field.host.placeholder
                 hasError: field.error !== ""
                 echoMode: TextInput.Password
-                onTextEdited: root.formModel.setFieldValue(field.parent.index, text)
+                onTextEdited: root.formModel.setFieldValue(field.host.index, text)
                 onActiveFocusChanged: {
                     if (activeFocus)
-                        root.formModel.fieldFocused(field.parent.index);
+                        root.formModel.fieldFocused(field.host.index);
                     else
-                        root.formModel.fieldBlurred(field.parent.index);
+                        root.formModel.fieldBlurred(field.host.index);
                 }
             }
         }
@@ -168,9 +173,10 @@ Item {
         id: textareaFieldComp
         FormField {
             id: field
-            label: parent.label
-            error: parent.error
-            info: parent.info
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            error: field.host.error
+            info: field.host.info
             topAlignLabel: true
 
             function focusField() {
@@ -179,17 +185,17 @@ Item {
 
             FormTextArea {
                 id: textArea
-                text: field.parent.value != null ? String(field.parent.value) : ""
-                placeholder: field.parent.placeholder
+                text: field.host.value != null ? String(field.host.value) : ""
+                placeholder: field.host.placeholder
                 hasError: field.error !== ""
-                onTextEdited: root.formModel.setFieldValue(field.parent.index, text)
+                onTextEdited: root.formModel.setFieldValue(field.host.index, text)
                 // FormTextArea doesn't expose activeFocusChanged directly on the TextEdit,
                 // so we track focus on the wrapper
                 onActiveFocusChanged: {
                     if (activeFocus)
-                        root.formModel.fieldFocused(field.parent.index);
+                        root.formModel.fieldFocused(field.host.index);
                     else
-                        root.formModel.fieldBlurred(field.parent.index);
+                        root.formModel.fieldBlurred(field.host.index);
                 }
             }
         }
@@ -199,9 +205,10 @@ Item {
         id: checkboxFieldComp
         FormField {
             id: field
-            label: parent.label
-            error: parent.error
-            info: parent.info
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            error: field.host.error
+            info: field.host.info
 
             function focusField() {
                 checkbox.forceActiveFocus();
@@ -209,15 +216,15 @@ Item {
 
             FormCheckbox {
                 id: checkbox
-                checked: field.parent.value === true
+                checked: field.host.value === true
                 hasError: field.error !== ""
-                label: field.parent.fieldData && field.parent.fieldData.label ? field.parent.fieldData.label : ""
-                onToggled: root.formModel.setFieldValue(field.parent.index, checked)
+                label: field.host.fieldData && field.host.fieldData.label ? field.host.fieldData.label : ""
+                onToggled: root.formModel.setFieldValue(field.host.index, checked)
                 onActiveFocusChanged: {
                     if (activeFocus)
-                        root.formModel.fieldFocused(field.parent.index);
+                        root.formModel.fieldFocused(field.host.index);
                     else
-                        root.formModel.fieldBlurred(field.parent.index);
+                        root.formModel.fieldBlurred(field.host.index);
                 }
             }
         }
@@ -227,30 +234,31 @@ Item {
         id: dropdownFieldComp
         FormField {
             id: field
-            label: parent.label
-            error: parent.error
-            info: parent.info
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            error: field.host.error
+            info: field.host.info
 
             function focusField() {
                 dropdown.forceActiveFocus();
             }
 
-            readonly property var _fd: parent.fieldData || ({})
+            readonly property var _fd: field.host.fieldData || ({})
 
             SearchableDropdown {
                 id: dropdown
-                model: field.parent.dropdownModel
+                model: field.host.dropdownModel
                 hasError: field.error !== ""
-                currentItem: field.parent.currentDropdownItem
-                placeholder: field._fd.placeholder || field.parent.placeholder || ""
+                currentItem: field.host.currentDropdownItem
+                placeholder: field._fd.placeholder || field.host.placeholder || ""
                 onActivated: item => {
-                    root.formModel.setFieldValue(field.parent.index, item.id);
+                    root.formModel.setFieldValue(field.host.index, item.id);
                 }
                 onActiveFocusChanged: {
                     if (activeFocus)
-                        root.formModel.fieldFocused(field.parent.index);
+                        root.formModel.fieldFocused(field.host.index);
                     else
-                        root.formModel.fieldBlurred(field.parent.index);
+                        root.formModel.fieldBlurred(field.host.index);
                 }
             }
         }
@@ -260,15 +268,16 @@ Item {
         id: filepickerFieldComp
         FormField {
             id: field
-            label: parent.label
-            error: parent.error
-            info: parent.info
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            error: field.host.error
+            info: field.host.info
 
             function focusField() {
                 filePicker.forceActiveFocus();
             }
 
-            readonly property var _fd: parent.fieldData || ({})
+            readonly property var _fd: field.host.fieldData || ({})
             topAlignLabel: filePicker.multiple
 
             FormFilePicker {
@@ -279,13 +288,13 @@ Item {
                 canChooseDirectories: field._fd.canChooseDirectories || false
 
                 selectedPaths: {
-                    const v = field.parent.value;
+                    const v = field.host.value;
                     if (!v || !v.length)
                         return [];
                     return Array.from(v);
                 }
                 onPathsChanged: paths => {
-                    root.formModel.setFilePaths(field.parent.index, paths);
+                    root.formModel.setFilePaths(field.host.index, paths);
                 }
             }
         }
@@ -295,29 +304,30 @@ Item {
         id: datepickerFieldComp
         FormField {
             id: field
-            label: parent.label
-            error: parent.error
-            info: parent.info
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            error: field.host.error
+            info: field.host.info
 
             function focusField() {
                 dateInput.forceActiveFocus();
             }
 
-            readonly property var _fd: parent.fieldData || ({})
+            readonly property var _fd: field.host.fieldData || ({})
 
             FormDateInput {
                 id: dateInput
-                text: field.parent.value != null ? String(field.parent.value) : ""
+                text: field.host.value != null ? String(field.host.value) : ""
                 hasError: field.error !== ""
                 includeTime: field._fd.includeTime || false
                 minDate: field._fd.min || ""
                 maxDate: field._fd.max || ""
-                onTextEdited: root.formModel.setFieldValue(field.parent.index, text)
+                onTextEdited: root.formModel.setFieldValue(field.host.index, text)
                 onActiveFocusChanged: {
                     if (activeFocus)
-                        root.formModel.fieldFocused(field.parent.index);
+                        root.formModel.fieldFocused(field.host.index);
                     else
-                        root.formModel.fieldBlurred(field.parent.index);
+                        root.formModel.fieldBlurred(field.host.index);
                 }
             }
         }
@@ -326,15 +336,17 @@ Item {
     Component {
         id: descriptionFieldComp
         FormField {
-            label: parent.label
+            id: field
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
             error: ""
             info: ""
 
-            readonly property var _fd: parent.fieldData || ({})
+            readonly property var _fd: field.host.fieldData || ({})
 
             Text {
                 Layout.fillWidth: true
-                text: _fd.text || ""
+                text: field._fd.text || ""
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 wrapMode: Text.Wrap

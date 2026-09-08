@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
@@ -23,14 +24,14 @@ Window {
 
     readonly property int _w: Launcher.overrideWidth || Config.windowWidth
     readonly property int _h: Launcher.overrideHeight || Config.windowHeight
-    readonly property int _contentH: Launcher.compacted ? 60 + 2 * Config.borderWidth : _h
+    readonly property int _contentH: Launcher.compacted ? 60 + 2 * Config.borderWidth : root._h
 
-    width: _w + 2 * shadowPadding
-    height: _h + 2 * shadowPadding
-    minimumWidth: _w + 2 * shadowPadding
-    maximumWidth: _w + 2 * shadowPadding
-    minimumHeight: _h + 2 * shadowPadding
-    maximumHeight: _h + 2 * shadowPadding
+    width: root._w + 2 * shadowPadding
+    height: root._h + 2 * shadowPadding
+    minimumWidth: root._w + 2 * shadowPadding
+    maximumWidth: root._w + 2 * shadowPadding
+    minimumHeight: root._h + 2 * shadowPadding
+    maximumHeight: root._h + 2 * shadowPadding
     title: qsTr("Vicinae Launcher")
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
@@ -38,7 +39,7 @@ Window {
 
     WindowMaterial.enabled: root.blurEnabled && !root.nativeChrome
     WindowMaterial.radius: root.cornerRadius
-    WindowMaterial.region: Qt.rect(shadowPadding, shadowPadding, _w, Launcher.compacted ? _contentH : _h)
+    WindowMaterial.region: Qt.rect(shadowPadding, shadowPadding, root._w, Launcher.compacted ? root._contentH : root._h)
 
     Item {
         id: shadowMask
@@ -50,8 +51,8 @@ Window {
         Rectangle {
             x: root.shadowPadding
             y: root.shadowPadding
-            width: _w
-            height: _contentH
+            width: root._w
+            height: root._contentH
             radius: Config.borderRounding
             color: "white"
         }
@@ -65,8 +66,8 @@ Window {
         RectangularShadow {
             x: root.shadowPadding
             y: root.shadowPadding
-            width: _w
-            height: _contentH
+            width: root._w
+            height: root._contentH
             radius: root.cornerRadius
             blur: root.shadowPadding
             color: Qt.rgba(0, 0, 0, 0.3)
@@ -84,12 +85,12 @@ Window {
         id: content
         x: root.shadowPadding
         y: root.shadowPadding
-        width: _w
-        height: _h
+        width: root._w
+        height: root._h
 
         Rectangle {
             visible: Launcher.compacted
-            width: _w
+            width: root._w
             height: 60 + 2 * Config.borderWidth
             radius: root.cornerRadius
             color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
@@ -97,7 +98,7 @@ Window {
 
         SourceBlendRect {
             visible: Launcher.compacted && !root.nativeChrome
-            width: _w
+            width: root._w
             height: 60 + 2 * Config.borderWidth
             radius: root.cornerRadius
             overlay: true
@@ -107,8 +108,8 @@ Window {
 
         Rectangle {
             visible: !Launcher.compacted
-            width: _w
-            height: _h
+            width: root._w
+            height: root._h
             radius: root.cornerRadius
             color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
         }
@@ -121,6 +122,7 @@ Window {
 
             SearchBar {
                 id: searchBar
+                commandStack: commandStack
                 Layout.fillWidth: true
                 Layout.preferredHeight: Launcher.searchVisible ? 60 : 0
                 visible: Launcher.searchVisible
@@ -202,8 +204,8 @@ Window {
             }
 
             Rectangle {
-                width: _w
-                height: _h
+                width: root._w
+                height: root._h
                 anchors.bottom: parent.bottom
                 radius: root.cornerRadius
                 color: Config.withAlpha(Theme.statusBarBackground, (Config.floatingStatusBar ? 0.78 : 1.0) * Config.windowOpacity)
@@ -237,8 +239,8 @@ Window {
             layer.enabled: true
 
             Rectangle {
-                width: _w
-                height: _h
+                width: root._w
+                height: root._h
                 anchors.bottom: parent.bottom
                 radius: root.cornerRadius
                 color: "white"
@@ -368,6 +370,7 @@ Window {
     }
 
     component GuideLine: Shape {
+        id: guide
         property bool active: false
         property bool vertical: false
 
@@ -375,14 +378,14 @@ Window {
             strokeStyle: ShapePath.DashLine
             dashPattern: [3, 3]
             strokeWidth: 2
-            strokeColor: active ? Theme.accent : Config.withAlpha(Theme.foreground, 0.45)
+            strokeColor: guide.active ? Theme.accent : Config.withAlpha(Theme.foreground, 0.45)
             fillColor: "transparent"
             startX: 0
             startY: 0
 
             PathLine {
-                x: vertical ? 0 : anchorOverlay.width
-                y: vertical ? anchorOverlay.height : 0
+                x: guide.vertical ? 0 : anchorOverlay.width
+                y: guide.vertical ? anchorOverlay.height : 0
             }
         }
     }

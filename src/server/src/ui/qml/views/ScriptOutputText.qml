@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Vicinae
@@ -6,6 +7,7 @@ ScrollView {
     id: root
 
     property alias text: textArea.text
+    readonly property Flickable flick: contentItem as Flickable
 
     // required: the StatusBarInset child disables ScrollView's automatic content sizing
     contentWidth: availableWidth
@@ -36,10 +38,10 @@ ScrollView {
     }
 
     function moveUp() {
-        contentItem.contentY = Math.max(0, contentItem.contentY - 40);
+        root.flick.contentY = Math.max(0, root.flick.contentY - 40);
     }
     function moveDown() {
-        contentItem.contentY = Math.min(contentItem.contentHeight - height + contentItem.bottomMargin, contentItem.contentY + 40);
+        root.flick.contentY = Math.min(root.flick.contentHeight - height + root.flick.bottomMargin, root.flick.contentY + 40);
     }
     function moveSectionUp() {
         moveUp();
@@ -51,8 +53,7 @@ ScrollView {
         textArea.forceActiveFocus();
     }
     function scrollToBottom() {
-        let flick = contentItem;
-        flick.contentY = Math.max(0, flick.contentHeight - root.height + flick.bottomMargin);
+        root.flick.contentY = Math.max(0, root.flick.contentHeight - root.height + root.flick.bottomMargin);
     }
 
     TextArea {

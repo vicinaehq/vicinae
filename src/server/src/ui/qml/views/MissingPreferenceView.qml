@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
@@ -48,45 +49,47 @@ Item {
             id: missingRepeater
             model: root.host.prefModel
 
-            delegate: Loader {
-                id: fieldLoader
-                Layout.fillWidth: true
+            delegate: FieldHost {}
+        }
+    }
 
-                required property int index
-                required property string type
-                required property string fieldId
-                required property string label
-                required property string checkboxLabel
-                required property string description
-                required property string placeholder
-                required property var value
-                required property var dropdownModel
-                required property var currentDropdownItem
-                required property bool readOnly
-                required property bool multiple
-                required property bool canChooseFiles
-                required property bool canChooseDirectories
+    component FieldHost: Loader {
+        id: fieldLoader
+        Layout.fillWidth: true
 
-                onLoaded: if (index === 0)
-                    Qt.callLater(formView.focusFirst)
+        required property int index
+        required property string type
+        required property string fieldId
+        required property string label
+        required property string checkboxLabel
+        required property string description
+        required property string placeholder
+        required property var value
+        required property CompletionModel dropdownModel
+        required property var currentDropdownItem
+        required property bool readOnly
+        required property bool multiple
+        required property bool canChooseFiles
+        required property bool canChooseDirectories
 
-                sourceComponent: {
-                    switch (type) {
-                    case "text":
-                        return textComp;
-                    case "password":
-                        return passwordComp;
-                    case "checkbox":
-                        return checkboxComp;
-                    case "dropdown":
-                        return dropdownComp;
-                    case "filepicker":
-                    case "directorypicker":
-                        return filepickerComp;
-                    default:
-                        return null;
-                    }
-                }
+        onLoaded: if (index === 0)
+            Qt.callLater(formView.focusFirst)
+
+        sourceComponent: {
+            switch (type) {
+            case "text":
+                return textComp;
+            case "password":
+                return passwordComp;
+            case "checkbox":
+                return checkboxComp;
+            case "dropdown":
+                return dropdownComp;
+            case "filepicker":
+            case "directorypicker":
+                return filepickerComp;
+            default:
+                return null;
             }
         }
     }
@@ -95,12 +98,13 @@ Item {
         id: textComp
         FormField {
             id: field
-            label: parent.label
-            info: parent.description
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            info: field.host.description
             FormTextInput {
-                text: field.parent.value != null ? String(field.parent.value) : ""
-                placeholder: field.parent.placeholder
-                onTextEdited: root.host.prefModel.setFieldValue(field.parent.index, text)
+                text: field.host.value != null ? String(field.host.value) : ""
+                placeholder: field.host.placeholder
+                onTextEdited: root.host.prefModel.setFieldValue(field.host.index, text)
             }
         }
     }
@@ -109,13 +113,14 @@ Item {
         id: passwordComp
         FormField {
             id: field
-            label: parent.label
-            info: parent.description
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            info: field.host.description
             FormTextInput {
-                text: field.parent.value != null ? String(field.parent.value) : ""
-                placeholder: field.parent.placeholder
+                text: field.host.value != null ? String(field.host.value) : ""
+                placeholder: field.host.placeholder
                 echoMode: TextInput.Password
-                onTextEdited: root.host.prefModel.setFieldValue(field.parent.index, text)
+                onTextEdited: root.host.prefModel.setFieldValue(field.host.index, text)
             }
         }
     }
@@ -124,11 +129,12 @@ Item {
         id: checkboxComp
         FormField {
             id: field
-            label: parent.label
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
             FormCheckbox {
-                checked: field.parent.value === true
-                label: field.parent.checkboxLabel
-                onToggled: root.host.prefModel.setFieldValue(field.parent.index, checked)
+                checked: field.host.value === true
+                label: field.host.checkboxLabel
+                onToggled: root.host.prefModel.setFieldValue(field.host.index, checked)
             }
         }
     }
@@ -137,13 +143,14 @@ Item {
         id: dropdownComp
         FormField {
             id: field
-            label: parent.label
-            info: parent.description
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            info: field.host.description
 
             SearchableDropdown {
-                model: field.parent.dropdownModel
-                currentItem: field.parent.currentDropdownItem
-                onActivated: item => root.host.prefModel.setFieldValue(field.parent.index, item.id)
+                model: field.host.dropdownModel
+                currentItem: field.host.currentDropdownItem
+                onActivated: item => root.host.prefModel.setFieldValue(field.host.index, item.id)
             }
         }
     }
@@ -152,17 +159,18 @@ Item {
         id: filepickerComp
         FormField {
             id: field
-            label: parent.label
-            info: parent.description
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            info: field.host.description
             topAlignLabel: missingFilePicker.multiple
 
             FormFilePicker {
                 id: missingFilePicker
-                multiple: field.parent.multiple
-                canChooseFiles: field.parent.canChooseFiles
-                canChooseDirectories: field.parent.canChooseDirectories
+                multiple: field.host.multiple
+                canChooseFiles: field.host.canChooseFiles
+                canChooseDirectories: field.host.canChooseDirectories
                 selectedPaths: {
-                    var v = field.parent.value;
+                    var v = field.host.value;
                     if (Array.isArray(v))
                         return v;
                     if (typeof v === "string" && v !== "")
@@ -170,10 +178,10 @@ Item {
                     return [];
                 }
                 onPathsChanged: paths => {
-                    if (field.parent.multiple)
-                        root.host.prefModel.setFieldValue(field.parent.index, paths);
+                    if (field.host.multiple)
+                        root.host.prefModel.setFieldValue(field.host.index, paths);
                     else
-                        root.host.prefModel.setFieldValue(field.parent.index, paths.length > 0 ? paths[0] : "");
+                        root.host.prefModel.setFieldValue(field.host.index, paths.length > 0 ? paths[0] : "");
                 }
             }
         }

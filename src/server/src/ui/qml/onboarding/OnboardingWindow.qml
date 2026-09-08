@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
@@ -362,6 +363,7 @@ Window {
                         model: root.stepCount
 
                         Rectangle {
+                            id: stepDot
                             required property int index
                             width: 7
                             height: 7
@@ -374,7 +376,7 @@ Window {
                                 anchors.margins: -5
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.step = index
+                                onClicked: root.step = stepDot.index
                             }
                         }
                     }

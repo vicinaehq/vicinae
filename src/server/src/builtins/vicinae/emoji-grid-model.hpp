@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "glyph/emoji.hpp"
 #include "ui/views/grid-source.hpp"
 #include "ui/views/section-grid-model.hpp"
@@ -48,6 +49,8 @@ private:
 
 class EmojiGridModel : public SectionGridModel {
   Q_OBJECT
+  QML_NAMED_ELEMENT(EmojiGridModel)
+  QML_UNCREATABLE("")
 
 public:
   explicit EmojiGridModel(QObject *parent = nullptr);
@@ -60,7 +63,7 @@ public:
 
   Q_INVOKABLE QString emojiIcon(int section, int item) const;
   Q_INVOKABLE QString emojiName(int section, int item) const;
-  Q_INVOKABLE QString cellTooltip(int section, int item) const;
+  QString cellTooltip(int section, int item) const override;
 
 private:
   enum class DisplayMode { Root, Search };

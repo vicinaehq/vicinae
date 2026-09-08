@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
@@ -143,11 +144,14 @@ Item {
                             model: root.host.platforms
 
                             Row {
+                                id: platformRow
+                                required property string modelData
+                                required property int index
                                 spacing: 0
-                                visible: (root.platformIcons[modelData] || "") !== ""
+                                visible: (root.platformIcons[platformRow.modelData] || "") !== ""
 
                                 Rectangle {
-                                    visible: index === 0
+                                    visible: platformRow.index === 0
                                     width: 1
                                     height: 14
                                     color: Theme.divider
@@ -155,7 +159,7 @@ Item {
                                 }
 
                                 Item {
-                                    width: index === 0 ? 10 : 5
+                                    width: platformRow.index === 0 ? 10 : 5
                                     height: 1
                                 }
 
@@ -164,7 +168,7 @@ Item {
                                     height: 14
                                     anchors.verticalCenter: parent.verticalCenter
                                     source: {
-                                        var iconName = root.platformIcons[modelData] || "";
+                                        var iconName = root.platformIcons[platformRow.modelData] || "";
                                         if (iconName === "")
                                             return null;
                                         return Img.builtin(iconName).withFillColor(Theme.textMuted);
@@ -275,6 +279,8 @@ Item {
                             model: root._alert.notes ?? []
 
                             RowLayout {
+                                id: noteRow
+                                required property string modelData
                                 Layout.fillWidth: true
                                 spacing: 6
 
@@ -285,7 +291,7 @@ Item {
                                 }
 
                                 Text {
-                                    text: modelData
+                                    text: noteRow.modelData
                                     color: Theme.textMuted
                                     font.pointSize: Theme.smallerFontSize
                                     wrapMode: Text.WordWrap
@@ -315,12 +321,15 @@ Item {
                         model: root.host.screenshots
 
                         Item {
+                            id: shotItem
+                            required property string modelData
+                            required property int index
                             width: 240
                             height: 150
 
                             ViciImage {
                                 anchors.fill: parent
-                                source: modelData
+                                source: shotItem.modelData
                                 fillMode: Image.PreserveAspectCrop
                             }
 
@@ -335,7 +344,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: imageViewer.showImage(index, root.host.screenshots)
+                                onClicked: imageViewer.showImage(shotItem.index, root.host.screenshots)
                             }
                         }
                     }
@@ -400,6 +409,9 @@ Item {
                             model: root.host.commands
 
                             ColumnLayout {
+                                id: commandItem
+                                required property var modelData
+                                required property int index
                                 Layout.fillWidth: true
                                 spacing: 0
 
@@ -413,18 +425,18 @@ Item {
                                         ViciImage {
                                             Layout.preferredWidth: 20
                                             Layout.preferredHeight: 20
-                                            source: modelData.iconSource
+                                            source: commandItem.modelData.iconSource
                                         }
 
                                         Text {
-                                            text: modelData.title
+                                            text: commandItem.modelData.title
                                             color: Theme.foreground
                                             font.pointSize: Theme.regularFontSize
                                         }
                                     }
 
                                     Text {
-                                        text: modelData.description
+                                        text: commandItem.modelData.description
                                         color: Theme.textMuted
                                         font.pointSize: Theme.smallerFontSize
                                         wrapMode: Text.WordWrap
@@ -434,7 +446,7 @@ Item {
                                 }
 
                                 Rectangle {
-                                    visible: index < root.host.commands.length - 1
+                                    visible: commandItem.index < root.host.commands.length - 1
                                     Layout.fillWidth: true
                                     Layout.topMargin: 15
                                     height: 1
@@ -495,16 +507,18 @@ Item {
                             model: root.host.contributors
 
                             RowLayout {
+                                id: contributorRow
+                                required property var modelData
                                 spacing: 8
 
                                 ViciImage {
                                     Layout.preferredWidth: 16
                                     Layout.preferredHeight: 16
-                                    source: modelData.avatar
+                                    source: contributorRow.modelData.avatar
                                 }
 
                                 Text {
-                                    text: modelData.name
+                                    text: contributorRow.modelData.name
                                     color: Theme.foreground
                                     font.pointSize: Theme.smallerFontSize
                                 }
@@ -524,6 +538,7 @@ Item {
                             model: root.host.categories
 
                             Text {
+                                required property string modelData
                                 text: modelData
                                 color: Theme.foreground
                                 font.pointSize: Theme.regularFontSize

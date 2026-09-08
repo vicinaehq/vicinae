@@ -1,9 +1,12 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
 
 Item {
     id: root
+    required property StackView commandStack
 
     function focusInput() {
         if (!Launcher.searchInteractive)
@@ -206,15 +209,15 @@ Item {
                     }
 
                     if (nav === 1) {
-                        commandStack.currentItem.moveUp();
+                        root.commandStack.currentItem.moveUp();
                     } else if (nav === 2) {
-                        commandStack.currentItem.moveDown();
+                        root.commandStack.currentItem.moveDown();
                     } else if (nav === 3) {
-                        if (commandStack.currentItem && typeof commandStack.currentItem.moveLeft === "function")
-                            commandStack.currentItem.moveLeft();
+                        if (root.commandStack.currentItem && typeof root.commandStack.currentItem.moveLeft === "function")
+                            root.commandStack.currentItem.moveLeft();
                     } else if (nav === 4) {
-                        if (commandStack.currentItem && typeof commandStack.currentItem.moveRight === "function")
-                            commandStack.currentItem.moveRight();
+                        if (root.commandStack.currentItem && typeof root.commandStack.currentItem.moveRight === "function")
+                            root.commandStack.currentItem.moveRight();
                     }
                     return true;
                 }
@@ -226,10 +229,10 @@ Item {
                     }
 
                     const ctrl = event.modifiers == Qt.ControlModifier;
-                    const navigatable = typeof commandStack.currentItem.moveUp === "function";
+                    const navigatable = typeof root.commandStack.currentItem.moveUp === "function";
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
-                        event.accepted = ctrl ? (typeof commandStack.currentItem.moveSectionUp === "function" && commandStack.currentItem.moveSectionUp()) : commandStack.currentItem.moveUp();
+                        event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionUp === "function" && root.commandStack.currentItem.moveSectionUp()) : root.commandStack.currentItem.moveUp();
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
@@ -240,11 +243,11 @@ Item {
                         return;
                     }
 
-                    const navigatable = typeof commandStack.currentItem.moveDown === "function";
+                    const navigatable = typeof root.commandStack.currentItem.moveDown === "function";
                     const ctrl = event.modifiers == Qt.ControlModifier;
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
-                        event.accepted = ctrl ? (typeof commandStack.currentItem.moveSectionDown === "function" && commandStack.currentItem.moveSectionDown()) : commandStack.currentItem.moveDown();
+                        event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionDown === "function" && root.commandStack.currentItem.moveSectionDown()) : root.commandStack.currentItem.moveDown();
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
@@ -255,10 +258,10 @@ Item {
                         return;
                     }
 
-                    const navigatable = typeof commandStack.currentItem.moveLeft === "function";
+                    const navigatable = typeof root.commandStack.currentItem.moveLeft === "function";
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
-                        event.accepted = commandStack.currentItem.moveLeft();
+                        event.accepted = root.commandStack.currentItem.moveLeft();
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
@@ -269,10 +272,10 @@ Item {
                         return;
                     }
 
-                    const navigatable = typeof commandStack.currentItem.moveRight === "function";
+                    const navigatable = typeof root.commandStack.currentItem.moveRight === "function";
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
-                        event.accepted = commandStack.currentItem.moveRight();
+                        event.accepted = root.commandStack.currentItem.moveRight();
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
@@ -299,6 +302,7 @@ Item {
 
         ArgCompleter {
             id: argCompleter
+            commandStack: root.commandStack
             visible: Launcher.hasCompleter
             args: Launcher.completerArgs
             icon: Launcher.completerIcon

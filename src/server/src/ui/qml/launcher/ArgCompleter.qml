@@ -1,10 +1,13 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
 
 RowLayout {
     id: root
 
+    required property StackView commandStack
     required property var args
     required property string icon
 
@@ -17,13 +20,13 @@ RowLayout {
     spacing: 4
 
     function focusFirst() {
-        argRepeater.itemAt(0)?.item?.forceActiveFocus();
+        (argRepeater.itemAt(0) as Loader)?.item?.forceActiveFocus();
     }
 
     function validate() {
         var firstRequired = -1;
         for (var i = 0; i < argRepeater.count; i++) {
-            var loader = argRepeater.itemAt(i);
+            var loader = argRepeater.itemAt(i) as Loader;
             if (!loader || !loader.item)
                 continue;
             var arg = root.visibleArgs[i];
@@ -39,7 +42,7 @@ RowLayout {
 
     function setValues(values) {
         for (var i = 0; i < argRepeater.count && i < values.length; i++) {
-            var loader = argRepeater.itemAt(i);
+            var loader = argRepeater.itemAt(i) as Loader;
             if (!loader || !loader.item)
                 continue;
             var val = values[i].value;
@@ -132,10 +135,10 @@ RowLayout {
                         }
 
                         Keys.onUpPressed: {
-                            commandStack.currentItem.moveUp();
+                            root.commandStack.currentItem.moveUp();
                         }
                         Keys.onDownPressed: {
-                            commandStack.currentItem.moveDown();
+                            root.commandStack.currentItem.moveDown();
                         }
                         Keys.onTabPressed: event => {
                             if (argLoader.isLast) {

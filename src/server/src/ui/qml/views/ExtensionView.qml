@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Vicinae
@@ -86,8 +87,9 @@ Item {
 
             GenericListView {
                 id: listView
+                readonly property ExtensionListModel extModel: root.host.contentModel as ExtensionListModel
                 anchors.fill: parent
-                listModel: root.host.contentModel
+                listModel: extModel
                 model: root.host.contentModel
                 canLoadMore: root.host.hasMorePages
                 onEndReached: root.host.onLoadMore()
@@ -96,12 +98,12 @@ Item {
                 selectFirstOnReset: root.host.selectFirstOnReset
                 suppressEmpty: root.host.suppressEmptyView
 
-                emptyTitle: root.host.contentModel.emptyTitle || qsTr("No results")
-                emptyDescription: root.host.contentModel.emptyDescription || ""
-                emptyIcon: root.host.contentModel.emptyIcon?.valid ? root.host.contentModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+                emptyTitle: listView.extModel?.emptyTitle || qsTr("No results")
+                emptyDescription: listView.extModel?.emptyDescription || ""
+                emptyIcon: listView.extModel?.emptyIcon.valid ? listView.extModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
 
                 detailComponent: detailPanel
-                detailVisible: root.host.contentModel.isShowingDetail
+                detailVisible: listView.extModel?.isShowingDetail ?? false
 
                 delegate: Loader {
                     id: delegateLoader
@@ -143,7 +145,7 @@ Item {
                             onActivated: listView.itemActivated(delegateLoader.index)
                             onDragRequested: function (source) {
                                 listView.currentIndex = delegateLoader.index;
-                                root.host.contentModel.startDrag(delegateLoader.index, source);
+                                listView.extModel?.startDrag(delegateLoader.index, source);
                             }
                         }
                     }
@@ -153,13 +155,13 @@ Item {
             Component {
                 id: detailPanel
                 DetailPanel {
-                    hasContent: root.host.contentModel.detailMarkdown !== ""
-                    metadata: root.host.contentModel.detailMetadata
+                    hasContent: (listView.extModel?.detailMarkdown ?? "") !== ""
+                    metadata: listView.extModel?.detailMetadata ?? []
 
                     MarkdownText {
                         anchors.fill: parent
                         topPadding: 6
-                        markdown: root.host.contentModel.detailMarkdown
+                        markdown: listView.extModel?.detailMarkdown ?? ""
                     }
                 }
             }
@@ -170,7 +172,7 @@ Item {
         id: gridComponent
         ExtensionGridView {
             anchors.fill: parent
-            cmdModel: root.host.contentModel
+            cmdModel: root.host.contentModel as SectionGridModel
             suppressEmpty: root.host.suppressEmptyView
             canLoadMore: root.host.hasMorePages
             onEndReached: root.host.onLoadMore()
@@ -191,7 +193,7 @@ Item {
         ExtensionFormView {
             anchors.fill: parent
             host: root.host
-            formModel: root.host.contentModel
+            formModel: root.host.contentModel as ExtensionFormModel
         }
     }
 }

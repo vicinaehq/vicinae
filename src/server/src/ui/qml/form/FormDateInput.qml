@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
@@ -69,7 +70,7 @@ FocusScope {
 
             onActiveFocusChanged: {
                 if (!activeFocus)
-                    _validate();
+                    root._validate();
             }
         }
     }

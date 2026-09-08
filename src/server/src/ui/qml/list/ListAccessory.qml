@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Vicinae
 
@@ -37,12 +38,13 @@ Rectangle {
     }
 
     MouseArea {
+        id: hoverArea
         anchors.fill: parent
         hoverEnabled: root.tooltip !== ""
         acceptedButtons: Qt.NoButton
 
         ViciToolTip {
-            visible: parent.containsMouse && HoverActivation.active && root.tooltip !== ""
+            visible: hoverArea.containsMouse && HoverActivation.active && root.tooltip !== ""
             text: root.tooltip
         }
     }

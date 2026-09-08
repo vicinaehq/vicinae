@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -63,12 +64,12 @@ Item {
         id: triggerButton
         opacity: root.readOnly ? 0.5 : 1.0
         implicitWidth: buttonRow.implicitWidth + 20
-        anchors.fill: compact ? null : parent
-        width: compact ? root.width : implicitWidth
-        height: compact ? 28 : implicitHeight
-        radius: compact ? 6 : 8
+        anchors.fill: root.compact ? null : parent
+        width: root.compact ? root.width : implicitWidth
+        height: root.compact ? 28 : implicitHeight
+        radius: root.compact ? 6 : 8
         color: "transparent"
-        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (compact ? Theme.divider : Theme.inputBorder)), Config.surfaceOpacity)
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (root.compact ? Theme.divider : Theme.inputBorder)), Config.surfaceOpacity)
         border.width: 1
 
         RowLayout {
@@ -88,8 +89,8 @@ Item {
 
             Text {
                 text: root.currentItem?.displayName ?? root.placeholder ?? ""
-                color: !compact && !root.currentItem ? Theme.textPlaceholder : Theme.foreground
-                font.pointSize: compact ? Theme.smallerFontSize : Theme.regularFontSize
+                color: !root.compact && !root.currentItem ? Theme.textPlaceholder : Theme.foreground
+                font.pointSize: root.compact ? Theme.smallerFontSize : Theme.regularFontSize
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
@@ -119,7 +120,7 @@ Item {
         // PopupPlacement anchor; x/y only apply on other platforms.
         PopupPlacement.alignment: root.compact ? Qt.AlignRight : Qt.AlignLeft
         x: root.popupX()
-        width: Math.max(compact ? 200 : 250, root.width)
+        width: Math.max(root.compact ? 200 : 250, root.width)
         focus: true
         sections: root.items
         model: root.model

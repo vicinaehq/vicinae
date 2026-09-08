@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -59,7 +60,7 @@ Flickable {
             let focused = root.Window.window ? root.Window.window.activeFocusItem : null;
             if (!focused)
                 return;
-            _ensureVisible(focused);
+            root._ensureVisible(focused);
         }
     }
 

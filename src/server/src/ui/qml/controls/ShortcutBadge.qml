@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Vicinae
 
@@ -21,6 +22,7 @@ Item {
             model: root.tokens || []
 
             delegate: Item {
+                id: tokenItem
                 required property var modelData
 
                 readonly property var token: modelData || ({})
@@ -47,8 +49,8 @@ Item {
 
                     ViciImage {
                         id: tokenIconItem
-                        visible: tokenIcon !== ""
-                        source: visible ? Img.builtin(tokenIcon).withFillColor(root.contentColor) : ""
+                        visible: tokenItem.tokenIcon !== ""
+                        source: visible ? Img.builtin(tokenItem.tokenIcon).withFillColor(root.contentColor) : ""
                         width: 11
                         height: 11
                         anchors.centerIn: parent
@@ -56,8 +58,8 @@ Item {
 
                     Text {
                         id: tokenLabel
-                        visible: tokenIcon === ""
-                        text: tokenText
+                        visible: tokenItem.tokenIcon === ""
+                        text: tokenItem.tokenText
                         color: root.contentColor
                         font.family: Theme.fontFamily
                         font.pointSize: Theme.smallerFontSize - 0.25

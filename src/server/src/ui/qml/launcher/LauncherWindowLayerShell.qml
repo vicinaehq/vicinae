@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import org.kde.layershell as LayerShell
 import Vicinae
 

@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Dialogs
 import QtQuick.Layouts
@@ -185,7 +186,8 @@ FocusScope {
             model: root.multiple ? root.lockedPaths : []
 
             Item {
-                required property var modelData
+                id: lockedPath
+                required property string modelData
 
                 Layout.fillWidth: true
                 implicitHeight: 32
@@ -214,7 +216,7 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         verticalAlignment: Text.AlignVCenter
-                        text: modelData
+                        text: lockedPath.modelData
                         color: Theme.textMuted
                         font.pointSize: Theme.regularFontSize
                         elide: Text.ElideMiddle
@@ -234,8 +236,9 @@ FocusScope {
             model: root.multiple ? root.selectedPaths : []
 
             Item {
+                id: selectedPath
                 required property int index
-                required property var modelData
+                required property string modelData
 
                 Layout.fillWidth: true
                 implicitHeight: 32
@@ -264,7 +267,7 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         verticalAlignment: Text.AlignVCenter
-                        text: modelData
+                        text: selectedPath.modelData
                         color: Theme.foreground
                         font.pointSize: Theme.regularFontSize
                         elide: Text.ElideMiddle
@@ -280,7 +283,7 @@ FocusScope {
                         iconSize: 10
                         variant: "ghost"
                         onClicked: {
-                            const idx = index;
+                            const idx = selectedPath.index;
                             let copy = [];
                             for (let i = 0; i < root.selectedPaths.length; i++) {
                                 if (i !== idx)
