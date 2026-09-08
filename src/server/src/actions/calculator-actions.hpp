@@ -154,28 +154,7 @@ public:
 
 class RemoveAllCalculatorHistoryRecordsAction : public AbstractAction {
   /*
-class ConfirmAlert : public AlertWidget {
-void confirm() const override {
-auto ui = ServiceRegistry::instance()->UI();
-auto calculator = ServiceRegistry::instance()->calculatorService();
-
-if (calculator->removeAll()) {
-  ui->setToast("All entries were deleted");
-} else {
-  ui->setToast("Failed to delete all entries", ToastPriority::Danger);
-}
-}
-
-void canceled() const override {}
-
-public:
-ConfirmAlert() {
-setTitle("Are you sure?");
-setMessage("The current calculator history will be lost forever.");
-setConfirmText("Remove entries", SemanticColor::Red);
-}
-};
-*/
+   */
 
   void execute(ApplicationContext *ctx) override {}
 

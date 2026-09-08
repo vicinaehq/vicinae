@@ -48,10 +48,6 @@ signals:
   void messageReceived(const QByteArray &msg);
 };
 
-struct PendingManagerRequestInfo {
-  QString sessionId;
-};
-
 class ExtensionManager : public QObject {
   Q_OBJECT
 

@@ -1,5 +1,4 @@
 #pragma once
-#include "extension/model/color-model.hpp"
 #include "extension/model/image-model.hpp"
 #include <optional>
 #include <string>

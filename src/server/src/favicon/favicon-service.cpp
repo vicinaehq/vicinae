@@ -1,5 +1,4 @@
 #include "favicon/favicon-service.hpp"
-#include "favicon/cached-favicon-request.hpp"
 #include "favicon/dummy-favicon-request.hpp"
 #include "favicon/google-favicon-request.hpp"
 #include "favicon/twenty-favicon-request.hpp"

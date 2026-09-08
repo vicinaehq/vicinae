@@ -138,8 +138,6 @@ set(SRCS
 	src/favicon/twenty-favicon-request.cpp
 	src/favicon/dummy-favicon-request.hpp
 	src/favicon/dummy-favicon-request.cpp
-	src/favicon/cached-favicon-request.hpp
-	src/favicon/cached-favicon-request.cpp
 
 
 	src/actions/command-actions.cpp
@@ -180,8 +178,6 @@ set(SRCS
 	
 	src/service-registry.cpp
 
-	src/utils/color-formatter.hpp
-	src/utils/color-formatter.cpp
 
 	src/services/clipboard/clipboard-server.hpp
 	src/services/clipboard/clipboard-content.hpp
@@ -212,7 +208,6 @@ set(SRCS
 
 	# begin app-database
 	src/services/app-service/abstract-app-db.hpp
-	src/services/app-service/dummy-app-database.hpp
 
 	# end app-database
 
@@ -1156,7 +1151,6 @@ set(VICINAE_QML_FILES
 	src/ui/qml/launcher/ArgCompleter.qml
 	src/ui/qml/views/DetailListView.qml
 	src/ui/qml/views/StoreListingView.qml
-	src/ui/qml/launcher/AlertBanner.qml
 	src/ui/qml/views/StoreDetailView.qml
 	src/ui/qml/views/StoreIntroView.qml
 	src/ui/qml/detail/ImageViewer.qml
@@ -1208,7 +1202,6 @@ set(VICINAE_QML_FILES
 	src/ui/qml/form/ShortcutRecorderCapture.qml
 	src/ui/qml/actions/ShortcutRecorderPanel.qml
 	src/ui/qml/form/ShortcutField.qml
-	src/ui/qml/views/PreferenceFormView.qml
 	src/ui/qml/settings/SettingsPreferenceForm.qml
 	src/ui/qml/views/MissingPreferenceView.qml
 	src/ui/qml/views/OAuthOverlayView.qml

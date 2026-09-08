@@ -7,14 +7,6 @@ class ThemeDatabase;
 
 enum TextSize { TextRegular, TextTitle, TextSmaller };
 
-struct ThemeLinearGradient {
-  std::vector<QColor> points;
-};
-
-struct ThemeRadialGradient {
-  std::vector<QColor> points;
-};
-
 class ThemeService : public QObject {
   Q_OBJECT
 
