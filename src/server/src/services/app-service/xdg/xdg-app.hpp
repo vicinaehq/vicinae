@@ -47,10 +47,14 @@ public:
   }
 
   std::vector<QString> keywords() const override {
-    std::vector<QString> strs;
+    std::vector<QString> strs{};
 
-    for (const auto &kw : m_entry.keywords()) {
-      strs.emplace_back(QString::fromStdString(kw));
+    strs.reserve(m_entry.categories().size() + m_entry.keywords().size());
+
+    for (const auto &l : {m_entry.categories(), m_entry.keywords()}) {
+      for (const auto &s : l) {
+        strs.emplace_back(QString::fromStdString(s));
+      }
     }
 
     return strs;
