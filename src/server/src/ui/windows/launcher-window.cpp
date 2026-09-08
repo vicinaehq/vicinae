@@ -29,7 +29,6 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
-#include "services/window-manager/window-manager.hpp"
 #include "environment.hpp"
 #include "vicinae.hpp"
 #include "internal/keyboard/keyboard.hpp"
@@ -48,10 +47,6 @@
 #include <filesystem>
 #include <memory>
 #include <glaze/glaze.hpp>
-
-#ifdef __GLIBC__
-#include <malloc.h>
-#endif
 
 struct SavedWindowPosition {
   std::string screen;
@@ -147,24 +142,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     });
     m_window->installEventFilter(this);
   }
-
-  using namespace std::chrono_literals;
-
-  // Sometime after we close the window, we release some of our cached resources to lower
-  // memory usage.
-  static constexpr auto CACHE_EVICTION_DELAY = 10s;
-
-  m_cacheEvictionTimer.setSingleShot(true);
-  m_cacheEvictionTimer.setInterval(CACHE_EVICTION_DELAY);
-
-  connect(&m_cacheEvictionTimer, &QTimer::timeout, this, [this]() {
-    if (m_window) m_window->releaseResources();
-    m_engine.trimComponentCache();
-    ImageRendering::clearCache();
-#ifdef __GLIBC__
-    malloc_trim(0);
-#endif
-  });
 
   m_closeOnFocusLoss = ctx.services->config()->value().closeOnFocusLoss;
 
