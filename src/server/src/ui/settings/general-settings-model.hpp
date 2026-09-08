@@ -8,7 +8,8 @@
 
 class GeneralSettingsModel : public QObject {
   Q_OBJECT
-  QML_ANONYMOUS
+  QML_NAMED_ELEMENT(GeneralSettingsModel)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(bool searchFilesInRoot READ searchFilesInRoot WRITE setSearchFilesInRoot NOTIFY configChanged)
   Q_PROPERTY(bool inputServerEnabled READ inputServerEnabled WRITE setInputServerEnabled NOTIFY configChanged)

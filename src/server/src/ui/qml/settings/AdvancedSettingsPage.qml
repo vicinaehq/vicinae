@@ -12,7 +12,7 @@ Flickable {
     topMargin: Style.contentTopInset
     Component.onCompleted: contentY = -topMargin
 
-    readonly property var model: Settings.generalModel
+    readonly property GeneralSettingsModel model: Settings.generalModel
 
     ViciWheelHandler {
         target: root

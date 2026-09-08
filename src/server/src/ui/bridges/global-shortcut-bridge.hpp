@@ -24,7 +24,7 @@ signals:
   void keyCaptured(int key, int modifiers, bool down);
 
 public:
-  explicit GlobalShortcutBridge(QObject *parent = nullptr) : QObject(parent) {
+  explicit GlobalShortcutBridge(QObject *parent) : QObject(parent) {
     if (auto *service = ServiceRegistry::instance()->globalShortcuts()) {
       connect(service->backend(), &AbstractGlobalShortcutBackend::keyCaptured, this,
               &GlobalShortcutBridge::keyCaptured);

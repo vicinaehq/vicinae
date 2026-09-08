@@ -8,8 +8,8 @@ import Vicinae
 Item {
     id: root
 
-    required property var view
-    property var controller: Launcher.actionPanel
+    required property ShortcutRecorderPanelView view
+    property ActionPanelController controller: Launcher.actionPanel
 
     // Tells the window-level key routing to deliver every keypress here
     // instead of matching bound actions or app keybinds.

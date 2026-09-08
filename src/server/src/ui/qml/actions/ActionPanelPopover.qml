@@ -5,7 +5,7 @@ import Vicinae
 ViciPopover {
     id: root
 
-    required property var controller
+    required property ActionPanelController controller
     property bool alignLeft: false
     property int maxHeight: 400
 

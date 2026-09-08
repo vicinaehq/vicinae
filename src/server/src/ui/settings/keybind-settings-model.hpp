@@ -6,7 +6,8 @@
 
 class KeybindSettingsModel : public QAbstractListModel {
   Q_OBJECT
-  QML_ANONYMOUS
+  QML_NAMED_ELEMENT(KeybindSettingsModel)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(QString selectedName READ selectedName NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedDescription READ selectedDescription NOTIFY selectedChanged)

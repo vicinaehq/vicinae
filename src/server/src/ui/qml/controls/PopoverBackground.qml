@@ -10,7 +10,7 @@ import Vicinae
 Item {
     id: bg
 
-    required property var popup
+    required property Popup popup
     property real backgroundOpacity: nativeWindow ? Config.popupOpacity : 1
     property real frostedOpacity: 0.85
 

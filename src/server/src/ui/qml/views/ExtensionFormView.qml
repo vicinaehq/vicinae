@@ -5,7 +5,7 @@ import Vicinae
 Item {
     id: root
     required property ExtensionViewHost host
-    required property var formModel
+    required property ExtensionFormModel formModel
 
     property bool _autoFocusDone: false
 
@@ -69,7 +69,7 @@ Item {
                 required property var value
                 required property bool autoFocus
                 required property var fieldData
-                required property var dropdownModel
+                required property CompletionModel dropdownModel
                 required property var currentDropdownItem
 
                 readonly property bool isField: type !== "separator" && type !== "description"

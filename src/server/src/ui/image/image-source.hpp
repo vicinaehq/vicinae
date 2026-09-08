@@ -13,7 +13,7 @@ public:
 
 private:
 public:
-  explicit ImageSource(QObject *parent = nullptr) : QObject(parent) {}
+  explicit ImageSource(QObject *parent) : QObject(parent) {}
 
   Q_INVOKABLE ImageUrl builtin(const QString &name) const { return ImageUrl(ImageURL::builtinByName(name)); }
 

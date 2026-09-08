@@ -22,7 +22,7 @@ public:
   Q_PROPERTY(QVariantList toggleActionPanelTokens READ toggleActionPanelTokens NOTIFY keybindsChanged)
   Q_PROPERTY(QString openSearchAccessorySequence READ openSearchAccessorySequence NOTIFY keybindsChanged)
   Q_PROPERTY(QVariantList openSearchAccessoryTokens READ openSearchAccessoryTokens NOTIFY keybindsChanged)
-  explicit KeybindBridge(QObject *parent = nullptr) : QObject(parent) {
+  explicit KeybindBridge(QObject *parent) : QObject(parent) {
     connect(KeybindManager::instance(), &KeybindManager::keybindChanged, this,
             &KeybindBridge::keybindsChanged);
   }

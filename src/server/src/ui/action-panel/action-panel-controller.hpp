@@ -19,7 +19,8 @@ class SubmenuAction;
 
 class ActionPanelController : public QObject {
   Q_OBJECT
-  QML_ANONYMOUS
+  QML_NAMED_ELEMENT(ActionPanelController)
+  QML_UNCREATABLE("")
   Q_PROPERTY(bool open READ isOpen NOTIFY openChanged)
   Q_PROPERTY(bool hasActions READ hasActions NOTIFY actionsChanged)
   Q_PROPERTY(bool hasMultipleActions READ hasMultipleActions NOTIFY actionsChanged)

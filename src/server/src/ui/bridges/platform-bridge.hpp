@@ -20,7 +20,7 @@ public:
 
 private:
 public:
-  explicit PlatformBridge(QObject *parent = nullptr) : QObject(parent) {}
+  explicit PlatformBridge(QObject *parent) : QObject(parent) {}
 
   Q_INVOKABLE bool supports(const QString &capability) const {
     return platform::supports(capability.toStdString());

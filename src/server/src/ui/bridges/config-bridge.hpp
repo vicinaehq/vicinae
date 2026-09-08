@@ -46,7 +46,7 @@ public:
   // configured translucency.
   enum SurfaceMode { TranslucentSurfaces, OpaqueSurfaces };
 
-  explicit ConfigBridge(QObject *parent = nullptr) : ConfigBridge(TranslucentSurfaces, parent) {}
+  explicit ConfigBridge(QObject *parent) : ConfigBridge(TranslucentSurfaces, parent) {}
 
   explicit ConfigBridge(SurfaceMode mode, QObject *parent = nullptr)
       : QObject(parent), m_opaqueSurfaces(mode == OpaqueSurfaces) {

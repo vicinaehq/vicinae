@@ -6,9 +6,9 @@ import Vicinae
 Item {
     id: root
 
-    required property var model
+    required property ActionPanelModel model
     property var boundActions: root.model
-    property var controller: Launcher.actionPanel
+    property ActionPanelController controller: Launcher.actionPanel
 
     signal navigateBack
 

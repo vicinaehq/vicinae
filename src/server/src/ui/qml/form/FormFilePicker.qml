@@ -16,7 +16,7 @@ FocusScope {
     property bool hasError: false
     property bool filled: false
     property var selectedPaths: []
-    property var lockedPaths: []
+    property list<string> lockedPaths
 
     signal pathsChanged(var paths)
 

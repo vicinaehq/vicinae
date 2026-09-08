@@ -7,7 +7,7 @@ import Vicinae
 Item {
     id: root
 
-    required property var model
+    required property MarkdownModel model
     property int contentPadding: 12
     property int topPadding: contentPadding
     property string fontFamily: ""

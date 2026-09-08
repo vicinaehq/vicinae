@@ -23,7 +23,7 @@ private:
   Q_PROPERTY(bool hasIcon READ hasIcon NOTIFY contentChanged)
 
 public:
-  explicit HudBridge(QObject *parent = nullptr);
+  explicit HudBridge(QObject *parent);
 
   bool visible() const { return m_visible; }
   QString text() const { return m_text; }

@@ -26,7 +26,7 @@ private:
   Q_PROPERTY(qreal sidebarContentInset READ sidebarContentInset CONSTANT)
 
 public:
-  explicit StyleBridge(QObject *parent = nullptr) : QObject(parent) {}
+  explicit StyleBridge(QObject *parent) : QObject(parent) {}
 
   qreal contentTopInset() const { return 44; }
 

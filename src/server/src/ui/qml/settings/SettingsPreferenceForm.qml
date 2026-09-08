@@ -5,7 +5,7 @@ import Vicinae
 
 ColumnLayout {
     id: root
-    required property var prefModel
+    required property PreferenceFormModel prefModel
     // Shared width for every field's control, so the label/description column
     // is the same width across all rows regardless of control type.
     property real fieldControlWidth: 300
@@ -26,13 +26,13 @@ ColumnLayout {
             required property string description
             required property string placeholder
             required property var value
-            required property var dropdownModel
+            required property CompletionModel dropdownModel
             required property var currentDropdownItem
             required property bool readOnly
             required property bool multiple
             required property bool canChooseFiles
             required property bool canChooseDirectories
-            required property var lockedPaths
+            required property list<string> lockedPaths
 
             sourceComponent: {
                 switch (type) {

@@ -5,7 +5,7 @@ import Vicinae
 
 Item {
     id: root
-    readonly property var model: Settings.keybindModel
+    readonly property KeybindSettingsModel model: Settings.keybindModel
     readonly property real contentWidth: Math.min(width - 32, 720)
     readonly property real sideMargin: (width - contentWidth) / 2
 

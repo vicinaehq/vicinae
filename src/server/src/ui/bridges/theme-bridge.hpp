@@ -67,7 +67,7 @@ signals:
   void fontFamilyChanged();
 
 public:
-  explicit ThemeBridge(QObject *parent = nullptr) : QObject(parent) {
+  explicit ThemeBridge(QObject *parent) : QObject(parent) {
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, &ThemeBridge::changed);
     qApp->installEventFilter(this);
   }
