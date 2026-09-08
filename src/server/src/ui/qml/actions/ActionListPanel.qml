@@ -8,7 +8,7 @@ Item {
 
     required property var model
     property var boundActions: root.model
-    property var controller: actionPanel
+    property var controller: Launcher.actionPanel
 
     signal navigateBack
 

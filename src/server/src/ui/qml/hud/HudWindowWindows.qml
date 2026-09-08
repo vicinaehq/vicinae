@@ -19,7 +19,7 @@ HudWindow {
     function reposition() {
         if (!visible)
             return;
-        const g = launcher.cursorScreenGeometry();
+        const g = Launcher.cursorScreenGeometry();
         x = g.x + (g.width - width) / 2;
         y = g.y + g.height - height - bottomMargin;
     }

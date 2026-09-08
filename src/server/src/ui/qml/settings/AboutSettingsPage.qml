@@ -48,7 +48,7 @@ Item {
             }
 
             Text {
-                text: settings.headline
+                text: Settings.headline
                 color: Theme.foreground
                 font.pointSize: Theme.regularFontSize
                 horizontalAlignment: Text.AlignHCenter
@@ -57,7 +57,7 @@ Item {
             }
 
             Text {
-                text: qsTr("Version %1 - Commit %2\n(%3)").arg(settings.version).arg(settings.commitHash).arg(settings.buildInfo)
+                text: qsTr("Version %1 - Commit %2\n(%3)").arg(Settings.version).arg(Settings.commitHash).arg(Settings.buildInfo)
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 horizontalAlignment: Text.AlignHCenter
@@ -75,7 +75,7 @@ Item {
                 variant: "secondary"
                 radius: 8
                 implicitWidth: 200
-                onClicked: settings.openUrl("https://github.com/vicinaehq/vicinae")
+                onClicked: Settings.openUrl("https://github.com/vicinaehq/vicinae")
                 Layout.alignment: Qt.AlignHCenter
             }
 
@@ -85,7 +85,7 @@ Item {
                 variant: "secondary"
                 radius: 8
                 implicitWidth: 200
-                onClicked: settings.openUrl("https://docs.vicinae.com")
+                onClicked: Settings.openUrl("https://docs.vicinae.com")
                 Layout.alignment: Qt.AlignHCenter
             }
 
@@ -95,7 +95,7 @@ Item {
                 variant: "secondary"
                 radius: 8
                 implicitWidth: 200
-                onClicked: settings.reportBug()
+                onClicked: Settings.reportBug()
                 Layout.alignment: Qt.AlignHCenter
             }
 

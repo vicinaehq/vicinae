@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/quick/completion-model.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
@@ -7,6 +8,7 @@
 
 class GeneralSettingsModel : public QObject {
   Q_OBJECT
+  QML_ANONYMOUS
 
   Q_PROPERTY(bool searchFilesInRoot READ searchFilesInRoot WRITE setSearchFilesInRoot NOTIFY configChanged)
   Q_PROPERTY(bool inputServerEnabled READ inputServerEnabled WRITE setInputServerEnabled NOTIFY configChanged)

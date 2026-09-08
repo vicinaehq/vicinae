@@ -1,10 +1,12 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include <vector>
 #include <QAbstractListModel>
 #include <QVariantList>
 
 class KeybindSettingsModel : public QAbstractListModel {
   Q_OBJECT
+  QML_ANONYMOUS
 
   Q_PROPERTY(QString selectedName READ selectedName NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedDescription READ selectedDescription NOTIFY selectedChanged)

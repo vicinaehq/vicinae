@@ -12,8 +12,8 @@ LauncherWindow {
     minimumHeight: _contentH
     maximumHeight: _contentH
 
-    onAboutToShow: launcher.prepareShow()
-    onShown: launcher.finalizeShow()
+    onAboutToShow: Launcher.prepareShow()
+    onShown: Launcher.finalizeShow()
 
     MacOSWindow.enabled: true
     MacOSWindow.cornerRadius: cornerRadius
@@ -24,7 +24,7 @@ LauncherWindow {
     MacOSWindow.borderWidth: Config.borderWidth
 
     MacOSPanel.enabled: true
-    MacOSPanel.windowLevel: launcher.filePicking ? MacOSPanel.Floating : MacOSPanel.Status
-    MacOSPanel.onResignKey: if (!launcher.filePicking)
-        Nav.closeWindow()
+    MacOSPanel.windowLevel: Launcher.filePicking ? MacOSPanel.Floating : MacOSPanel.Status
+    MacOSPanel.onResignKey: if (!Launcher.filePicking)
+        Launcher.nav.closeWindow()
 }

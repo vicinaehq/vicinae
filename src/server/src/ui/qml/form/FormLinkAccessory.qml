@@ -9,7 +9,7 @@ Item {
     Text {
         id: linkText
         anchors.centerIn: parent
-        text: launcher.commandViewHost ? launcher.commandViewHost.linkAccessoryText : ""
+        text: Launcher.commandViewHost ? Launcher.commandViewHost.linkAccessoryText : ""
         color: Theme.linkColor
         font.pointSize: Theme.smallerFontSize
 
@@ -17,8 +17,8 @@ Item {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-                if (launcher.commandViewHost)
-                    Qt.openUrlExternally(launcher.commandViewHost.linkAccessoryHref);
+                if (Launcher.commandViewHost)
+                    Qt.openUrlExternally(Launcher.commandViewHost.linkAccessoryHref);
             }
         }
     }

@@ -1,6 +1,7 @@
 #include "ui/windows/onboarding-window.hpp"
 #include "ui/bridges/config-bridge.hpp"
 #include "ui/qml-dev-loader.hpp"
+#include "ui/qml-engine-scope.hpp"
 #include "ui/settings/general-settings-model.hpp"
 #include "ui/bridges/global-shortcut-bridge.hpp"
 #include "ui/image/image-source.hpp"
@@ -97,33 +98,20 @@ void OnboardingWindow::ensureInitialized() {
   if (m_initialized) return;
   m_initialized = true;
 
-  m_themeBridge = new ThemeBridge(this);
 #ifdef Q_OS_WIN
   m_configBridge = new ConfigBridge(ConfigBridge::OpaqueSurfaces, this);
 #else
   m_configBridge = new ConfigBridge(this);
 #endif
-  m_imgSource = new ImageSource(this);
-  m_keyboardBridge = new KeyboardBridge(this);
-  m_globalShortcutBridge = new GlobalShortcutBridge(this);
-  m_platformBridge = new PlatformBridge(this);
   m_generalModel = new GeneralSettingsModel(this);
 
   QmlDevLoader::attach(&m_engine, [this]() { reloadRoot(); });
-  auto *rootCtx = m_engine.rootContext();
-  rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
-  rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
-  rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
-  rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
-  rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
-  rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
-  rootCtx->setContextProperty(QStringLiteral("Style"), new StyleBridge(this));
-  rootCtx->setContextProperty(QStringLiteral("onboarding"), this);
+  QmlEngineScope::set(&m_engine, this);
+  QmlEngineScope::set(&m_engine, m_configBridge);
 
 #ifdef Q_OS_MACOS
   m_loginItemEnabled = vicinae::macos::isLoginItemEnabled();
   m_permissions = new MacosPermissionService(this);
-  rootCtx->setContextProperty(QStringLiteral("Permissions"), m_permissions);
 #endif
 
   loadRoot();
@@ -155,7 +143,8 @@ void OnboardingWindow::reloadRoot() {
   const QRect geometry = m_window ? m_window->geometry() : QRect();
   m_window = nullptr;
   const auto roots = m_engine.rootObjects();
-  for (auto *root : roots) delete root;
+  for (auto *root : roots)
+    delete root;
 
   loadRoot();
   if (!wasVisible || !m_window) return;

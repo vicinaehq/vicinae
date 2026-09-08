@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "common/context.hpp"
 #include "ui/image/image-url.hpp"
 #include <QObject>
@@ -11,6 +12,7 @@
 
 class ActionPanelController;
 class AlertModel;
+class NavigationController;
 class ConfigBridge;
 class GlobalShortcutBridge;
 class HudBridge;
@@ -27,6 +29,15 @@ class DialogContentWidget;
 
 class LauncherWindow : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Launcher)
+  QML_SINGLETON
+
+public:
+  static LauncherWindow *create(QQmlEngine *engine, QJSEngine *) {
+    return QmlEngineScope::get<LauncherWindow>(engine);
+  }
+
+private:
   Q_PROPERTY(bool atRoot READ atRoot NOTIFY atRootChanged)
   Q_PROPERTY(bool showBackButton READ showBackButton NOTIFY showBackButtonChanged)
   Q_PROPERTY(QString searchPlaceholder READ searchPlaceholder NOTIFY searchPlaceholderChanged)
@@ -39,6 +50,9 @@ class LauncherWindow : public QObject {
   Q_PROPERTY(QString toastMessage READ toastMessage NOTIFY toastChanged)
   Q_PROPERTY(int toastStyle READ toastStyle NOTIFY toastChanged)
   Q_PROPERTY(AlertModel *alertModel READ alertModel CONSTANT)
+  Q_PROPERTY(NavigationController *nav READ nav CONSTANT)
+  Q_PROPERTY(ActionPanelController *actionPanel READ actionPanel CONSTANT)
+  Q_PROPERTY(ActionPanelController *footerPanel READ footerPanel CONSTANT)
   Q_PROPERTY(bool isLoading READ isLoading NOTIFY isLoadingChanged)
   Q_PROPERTY(bool searchVisible READ searchVisible NOTIFY searchVisibleChanged)
   Q_PROPERTY(bool searchInteractive READ searchInteractive NOTIFY searchInteractiveChanged)
@@ -81,6 +95,9 @@ public:
   QString toastMessage() const { return m_toastMessage; }
   int toastStyle() const { return m_toastStyle; }
   AlertModel *alertModel() const { return m_alertModel; }
+  NavigationController *nav() const;
+  ActionPanelController *actionPanel() const { return m_actionPanel; }
+  ActionPanelController *footerPanel() const { return m_footerPanel; }
   bool isLoading() const { return m_isLoading; }
   bool searchVisible() const { return m_searchVisible; }
   bool searchInteractive() const { return m_searchInteractive; }
@@ -184,12 +201,6 @@ private:
   ActionPanelController *m_footerPanel;
   AlertModel *m_alertModel = nullptr;
   ConfigBridge *m_configBridge;
-  ImageSource *m_imgSource;
-  KeybindBridge *m_keybindProxy;
-  KeyboardBridge *m_keyboardBridge;
-  GlobalShortcutBridge *m_globalShortcutBridge;
-  PlatformBridge *m_platformBridge;
-  ThemeBridge *m_themeBridge;
 
   QQmlApplicationEngine m_engine;
   QQuickWindow *m_window = nullptr;

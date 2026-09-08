@@ -1,6 +1,7 @@
 #include "ui/windows/launcher-window.hpp"
 #include "ui/windows/launcher-window-platform.hpp"
 #include "ui/qml-dev-loader.hpp"
+#include "ui/qml-engine-scope.hpp"
 #ifdef Q_OS_LINUX
 #include "internal/wayland/xdg-activation.hpp"
 #endif
@@ -67,10 +68,7 @@ std::filesystem::path windowPositionPath() { return Omnicast::stateDir() / "laun
 LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_actionPanel(new ActionPanelController(ctx, this)),
       m_footerPanel(new ActionPanelController(ctx, this)),
-      m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)),
-      m_imgSource(new ImageSource(this)), m_keybindProxy(new KeybindBridge(this)),
-      m_keyboardBridge(new KeyboardBridge(this)), m_globalShortcutBridge(new GlobalShortcutBridge(this)),
-      m_platformBridge(new PlatformBridge(this)), m_themeBridge(new ThemeBridge(this)) {
+      m_alertModel(new AlertModel(*ctx.navigation, this)), m_configBridge(new ConfigBridge(this)) {
 
 #ifndef Q_OS_MACOS
   // Ensure Wayland app_id / X11 WM_CLASS is "vicinae"
@@ -80,28 +78,15 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   qRegisterMetaType<ImageUrl>("ImageUrl");
 
   QmlDevLoader::attach(&m_engine, [this]() { reloadRoot(); });
-  auto *rootCtx = m_engine.rootContext();
-  rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
-  rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
-  rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
-  rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
-  rootCtx->setContextProperty(QStringLiteral("Style"), new StyleBridge(this));
-  rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
-
-  rootCtx->setContextProperty(QStringLiteral("launcher"), this);
-  rootCtx->setContextProperty(QStringLiteral("actionPanel"), m_actionPanel);
-  rootCtx->setContextProperty(QStringLiteral("footerPanel"), m_footerPanel);
-  rootCtx->setContextProperty(QStringLiteral("Keybinds"), m_keybindProxy);
-  rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
-  rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
-  rootCtx->setContextProperty(QStringLiteral("FileChooser"), ctx.services->fileChooserService());
+  QmlEngineScope::set(&m_engine, this);
+  QmlEngineScope::set(&m_engine, m_configBridge);
 
   updateLayerShellProps();
   buildFooterMenu();
 
   if (!Environment::isHudDisabled()) {
     m_hudBridge = new HudBridge(this);
-    rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
+    QmlEngineScope::set(&m_engine, m_hudBridge);
   }
 
   loadRoot();
@@ -930,3 +915,5 @@ void LauncherWindow::updateLayerShellProps() {
   }
   if (changed) emit lsChanged();
 }
+
+NavigationController *LauncherWindow::nav() const { return m_ctx.navigation.get(); }

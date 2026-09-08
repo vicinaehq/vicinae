@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "ui/image/image-url.hpp"
 #include <QObject>
 #include <QPointer>
@@ -9,6 +10,13 @@ class QQuickWindow;
 
 class HudBridge : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Hud)
+  QML_SINGLETON
+
+public:
+  static HudBridge *create(QQmlEngine *engine, QJSEngine *) { return QmlEngineScope::get<HudBridge>(engine); }
+
+private:
   Q_PROPERTY(bool visible READ visible NOTIFY visibleChanged)
   Q_PROPERTY(QString text READ text NOTIFY contentChanged)
   Q_PROPERTY(ImageUrl icon READ icon NOTIFY contentChanged)

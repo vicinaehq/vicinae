@@ -1,10 +1,17 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "ui/image/image-url.hpp"
 #include <QObject>
 
 class ImageSource : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Img)
+  QML_SINGLETON
 
+public:
+  static ImageSource *create(QQmlEngine *, QJSEngine *) { return QmlEngineScope::global<ImageSource>(); }
+
+private:
 public:
   explicit ImageSource(QObject *parent = nullptr) : QObject(parent) {}
 

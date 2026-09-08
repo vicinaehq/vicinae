@@ -5,8 +5,8 @@ import Vicinae
 
 Item {
     id: root
-    readonly property var extModel: settings.extensionModel
-    readonly property string providerId: settings.currentPage
+    readonly property var extModel: Settings.extensionModel
+    readonly property string providerId: Settings.currentPage
     readonly property real contentWidth: Math.min(width - 32, 720)
     readonly property real sideMargin: (width - contentWidth) / 2
     property string expandedCommandId: ""
@@ -36,13 +36,13 @@ Item {
     }
 
     function _handlePendingCommand() {
-        const pending = settings.pendingCommandId;
+        const pending = Settings.pendingCommandId;
         if (!pending)
             return;
         const row = root.extModel.commandModel.findByEntrypointId(pending);
         if (row < 0)
             return;
-        settings.pendingCommandId = "";
+        Settings.pendingCommandId = "";
         root.expandedCommandId = pending;
         root._focusedCommandId = pending;
         focusFlash.restart();
@@ -56,7 +56,7 @@ Item {
     }
 
     Connections {
-        target: settings
+        target: Settings
         function onPendingCommandIdChanged() {
             root._handlePendingCommand();
         }

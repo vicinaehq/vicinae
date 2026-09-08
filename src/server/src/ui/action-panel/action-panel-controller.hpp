@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "common/context.hpp"
 #include <QElapsedTimer>
 #include <QObject>
@@ -18,6 +19,7 @@ class SubmenuAction;
 
 class ActionPanelController : public QObject {
   Q_OBJECT
+  QML_ANONYMOUS
   Q_PROPERTY(bool open READ isOpen NOTIFY openChanged)
   Q_PROPERTY(bool hasActions READ hasActions NOTIFY actionsChanged)
   Q_PROPERTY(bool hasMultipleActions READ hasMultipleActions NOTIFY actionsChanged)

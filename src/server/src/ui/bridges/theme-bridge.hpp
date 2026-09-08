@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "services/font-service/font-service.hpp"
 #include "service-registry.hpp"
 #include "theme/theme.hpp"
@@ -10,7 +11,13 @@
 
 class ThemeBridge : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Theme)
+  QML_SINGLETON
 
+public:
+  static ThemeBridge *create(QQmlEngine *, QJSEngine *) { return QmlEngineScope::global<ThemeBridge>(); }
+
+private:
   Q_PROPERTY(bool isDark READ isDark NOTIFY changed)
   Q_PROPERTY(QColor background READ background NOTIFY changed)
   Q_PROPERTY(QColor foreground READ foreground NOTIFY changed)

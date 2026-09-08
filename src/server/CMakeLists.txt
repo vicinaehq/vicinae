@@ -1311,7 +1311,19 @@ endif()
 
 # src/ui/quick holds the C++ types registered into the Vicinae QML module. It must be on the
 # include path because the generated type registration file includes those headers by basename.
-target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/quick ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler ${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
+target_include_directories(${TARGET} PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}/src
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/quick
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/bridges
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/windows
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/image
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/action-panel
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/settings
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/alert
+	${CMAKE_CURRENT_SOURCE_DIR}/src/services/file-chooser
+	${CMAKE_CURRENT_SOURCE_DIR}/src/services/permissions
+	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler
+	${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
 	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-framework Security" "-F/System/Library/PrivateFrameworks" "-framework login")

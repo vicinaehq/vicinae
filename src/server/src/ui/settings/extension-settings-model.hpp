@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "common/entrypoint.hpp"
 #include "ui/settings/preference-form-model.hpp"
 #include "ui/settings/provider-command-model.hpp"
@@ -12,6 +13,7 @@ class RootItemManager;
 
 class ExtensionSettingsModel : public QAbstractListModel {
   Q_OBJECT
+  QML_ANONYMOUS
 
   Q_PROPERTY(QString selectedTitle READ selectedTitle NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedIconSource READ selectedIconSource NOTIFY selectedChanged)

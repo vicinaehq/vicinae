@@ -24,7 +24,7 @@ Rectangle {
                 topLeftRadius: height / 2
                 bottomLeftRadius: height / 2
                 color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.07)
-                visible: backHover.hovered && settings.canGoBack
+                visible: backHover.hovered && Settings.canGoBack
             }
 
             ViciImage {
@@ -32,15 +32,15 @@ Rectangle {
                 source: Img.builtin("chevron-left").withFillColor(Theme.foreground)
                 width: 20
                 height: 20
-                opacity: settings.canGoBack ? 1 : 0.35
+                opacity: Settings.canGoBack ? 1 : 0.35
             }
 
             HoverHandler {
                 id: backHover
             }
             TapHandler {
-                enabled: settings.canGoBack
-                onTapped: settings.goBack()
+                enabled: Settings.canGoBack
+                onTapped: Settings.goBack()
             }
         }
 
@@ -49,7 +49,7 @@ Rectangle {
             Layout.topMargin: 6
             Layout.bottomMargin: 6
             Layout.fillHeight: true
-            opacity: (backHover.hovered && settings.canGoBack) || (forwardHover.hovered && settings.canGoForward) ? 0 : 1
+            opacity: (backHover.hovered && Settings.canGoBack) || (forwardHover.hovered && Settings.canGoForward) ? 0 : 1
             color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.12)
         }
 
@@ -62,7 +62,7 @@ Rectangle {
                 topRightRadius: height / 2
                 bottomRightRadius: height / 2
                 color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.07)
-                visible: forwardHover.hovered && settings.canGoForward
+                visible: forwardHover.hovered && Settings.canGoForward
             }
 
             ViciImage {
@@ -70,15 +70,15 @@ Rectangle {
                 source: Img.builtin("chevron-right").withFillColor(Theme.foreground)
                 width: 20
                 height: 20
-                opacity: settings.canGoForward ? 1 : 0.35
+                opacity: Settings.canGoForward ? 1 : 0.35
             }
 
             HoverHandler {
                 id: forwardHover
             }
             TapHandler {
-                enabled: settings.canGoForward
-                onTapped: settings.goForward()
+                enabled: Settings.canGoForward
+                onTapped: Settings.goForward()
             }
         }
     }

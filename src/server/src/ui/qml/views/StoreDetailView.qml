@@ -553,7 +553,7 @@ Item {
     }
 
     Connections {
-        target: Nav
+        target: Launcher.nav
         function onWindowVisiblityChanged(visible) {
             if (!visible)
                 imageViewer.close();

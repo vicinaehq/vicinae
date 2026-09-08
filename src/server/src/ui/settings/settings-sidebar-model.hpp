@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include <string>
 #include <vector>
 #include <QAbstractListModel>
@@ -10,6 +11,7 @@ class ExtensionSettingsModel;
 // provider, plus divider rows. Filtering happens in C++ via setQuery().
 class SettingsSidebarModel : public QAbstractListModel {
   Q_OBJECT
+  QML_ANONYMOUS
 
 public:
   enum Role {

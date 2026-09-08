@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "common/qt.hpp"
 #include "common/entrypoint.hpp"
 #include "command/argument.hpp"
@@ -56,6 +57,7 @@ struct GoBackOptions {
 
 class NavigationController : public QObject, NonCopyable {
   Q_OBJECT
+  QML_ANONYMOUS
 
 public:
   struct CommandFrame {

@@ -15,29 +15,29 @@ Item {
 
     property string _selectedKey: ""
     readonly property bool _searching: extSearchField.text.length > 0
-    readonly property string _activeKey: _searching ? _selectedKey : settings.currentPage
+    readonly property string _activeKey: _searching ? _selectedKey : Settings.currentPage
 
     function _activate(key) {
-        const model = settings.sidebarModel;
+        const model = Settings.sidebarModel;
         const idx = model.indexOfKey(key);
         if (idx < 0)
             return;
         const wasSearching = _searching;
         if (model.kindAt(idx) === "command")
-            settings.selectExtension(key);
+            Settings.selectExtension(key);
         else
-            settings.currentPage = key;
+            Settings.currentPage = key;
         extSearchField.text = "";
         if (wasSearching)
             Qt.callLater(() => {
-                const i = settings.sidebarModel.indexOfKey(settings.currentPage);
+                const i = Settings.sidebarModel.indexOfKey(Settings.currentPage);
                 if (i >= 0)
                     navList.positionViewAtIndex(i, ListView.Beginning);
             });
     }
 
     function _move(delta) {
-        const model = settings.sidebarModel;
+        const model = Settings.sidebarModel;
         const next = model.stepRow(model.indexOfKey(_activeKey), delta);
         if (next < 0)
             return;
@@ -45,7 +45,7 @@ Item {
         if (root._searching)
             root._selectedKey = key;
         else
-            settings.currentPage = key;
+            Settings.currentPage = key;
         navList.positionViewAtIndex(next, ListView.Contain);
     }
 
@@ -113,7 +113,7 @@ Item {
                         activeFocusOnTab: true
 
                         Connections {
-                            target: settings
+                            target: Settings
                             function onDefaultFocusRequested() {
                                 extSearchField.forceActiveFocus();
                             }
@@ -130,8 +130,8 @@ Item {
 
                         onTextChanged: {
                             HoverActivation.reset();
-                            settings.sidebarModel.setQuery(text);
-                            root._selectedKey = text.length > 0 ? settings.sidebarModel.keyAt(settings.sidebarModel.firstSelectableRow()) : "";
+                            Settings.sidebarModel.setQuery(text);
+                            root._selectedKey = text.length > 0 ? Settings.sidebarModel.keyAt(Settings.sidebarModel.firstSelectableRow()) : "";
                         }
 
                         Keys.onUpPressed: root._move(-1)
@@ -158,7 +158,7 @@ Item {
             topMargin: root.nativeSurface ? 10 : 2
             displayMarginBeginning: root.nativeSurface ? root._edgeHeight : 0
             boundsBehavior: Flickable.StopAtBounds
-            model: settings.sidebarModel
+            model: Settings.sidebarModel
 
             ViciWheelHandler {
                 target: navList

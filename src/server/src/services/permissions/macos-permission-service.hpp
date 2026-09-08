@@ -1,9 +1,11 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include <QObject>
 #include <QTimer>
 
 class MacosPermissionService : public QObject {
   Q_OBJECT
+  QML_ANONYMOUS
   Q_PROPERTY(bool accessibilityGranted READ accessibilityGranted NOTIFY accessibilityGrantedChanged)
   Q_PROPERTY(bool fullDiskAccessGranted READ fullDiskAccessGranted NOTIFY fullDiskAccessGrantedChanged)
   Q_PROPERTY(bool notificationsGranted READ notificationsGranted NOTIFY notificationsGrantedChanged)

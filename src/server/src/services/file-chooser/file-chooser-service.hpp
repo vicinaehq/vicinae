@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "abstract-file-chooser.hpp"
 #include <QUrl>
 #include <qobject.h>
@@ -6,6 +7,13 @@
 
 class FileChooserService : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(FileChooser)
+  QML_SINGLETON
+
+public:
+  static FileChooserService *create(QQmlEngine *, QJSEngine *);
+
+private:
   Q_PROPERTY(bool active READ isActive NOTIFY activeChanged)
 
 signals:

@@ -21,9 +21,9 @@ Window {
     signal aboutToShow
     signal shown
 
-    readonly property int _w: launcher.overrideWidth || Config.windowWidth
-    readonly property int _h: launcher.overrideHeight || Config.windowHeight
-    readonly property int _contentH: launcher.compacted ? 60 + 2 * Config.borderWidth : _h
+    readonly property int _w: Launcher.overrideWidth || Config.windowWidth
+    readonly property int _h: Launcher.overrideHeight || Config.windowHeight
+    readonly property int _contentH: Launcher.compacted ? 60 + 2 * Config.borderWidth : _h
 
     width: _w + 2 * shadowPadding
     height: _h + 2 * shadowPadding
@@ -38,7 +38,7 @@ Window {
 
     WindowMaterial.enabled: root.blurEnabled && !root.nativeChrome
     WindowMaterial.radius: root.cornerRadius
-    WindowMaterial.region: Qt.rect(shadowPadding, shadowPadding, _w, launcher.compacted ? _contentH : _h)
+    WindowMaterial.region: Qt.rect(shadowPadding, shadowPadding, _w, Launcher.compacted ? _contentH : _h)
 
     Item {
         id: shadowMask
@@ -88,7 +88,7 @@ Window {
         height: _h
 
         Rectangle {
-            visible: launcher.compacted
+            visible: Launcher.compacted
             width: _w
             height: 60 + 2 * Config.borderWidth
             radius: root.cornerRadius
@@ -96,7 +96,7 @@ Window {
         }
 
         SourceBlendRect {
-            visible: launcher.compacted && !root.nativeChrome
+            visible: Launcher.compacted && !root.nativeChrome
             width: _w
             height: 60 + 2 * Config.borderWidth
             radius: root.cornerRadius
@@ -106,7 +106,7 @@ Window {
         }
 
         Rectangle {
-            visible: !launcher.compacted
+            visible: !Launcher.compacted
             width: _w
             height: _h
             radius: root.cornerRadius
@@ -117,21 +117,21 @@ Window {
             anchors.fill: parent
             anchors.margins: Config.borderWidth
             spacing: 0
-            visible: !launcher.hasOverlay
+            visible: !Launcher.hasOverlay
 
             SearchBar {
                 id: searchBar
                 Layout.fillWidth: true
-                Layout.preferredHeight: launcher.searchVisible ? 60 : 0
-                visible: launcher.searchVisible
-                enabled: !launcher.alertModel.visible
+                Layout.preferredHeight: Launcher.searchVisible ? 60 : 0
+                visible: Launcher.searchVisible
+                enabled: !Launcher.alertModel.visible
             }
 
             HorizontalLoadingBar {
                 Layout.fillWidth: true
-                implicitHeight: launcher.searchVisible ? 1 : 0
-                visible: launcher.searchVisible && !launcher.compacted
-                loading: launcher.isLoading
+                implicitHeight: Launcher.searchVisible ? 1 : 0
+                visible: Launcher.searchVisible && !Launcher.compacted
+                loading: Launcher.isLoading
             }
 
             Item {
@@ -153,7 +153,7 @@ Window {
                         StackView {
                             id: commandStack
                             anchors.fill: parent
-                            visible: !launcher.compacted
+                            visible: !Launcher.compacted
                         }
                     }
                 }
@@ -162,7 +162,7 @@ Window {
 
         Item {
             id: floatingStatusBar
-            visible: !launcher.compacted && !launcher.hasOverlay && launcher.statusBarVisible
+            visible: !Launcher.compacted && !Launcher.hasOverlay && Launcher.statusBarVisible
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
@@ -246,7 +246,7 @@ Window {
         }
 
         SourceBlendRect {
-            visible: !launcher.compacted && !root.nativeChrome
+            visible: !Launcher.compacted && !root.nativeChrome
             anchors.fill: parent
             radius: root.cornerRadius
             overlay: true
@@ -258,7 +258,7 @@ Window {
             id: overlayLoader
             anchors.fill: parent
             anchors.margins: Config.borderWidth
-            visible: launcher.hasOverlay
+            visible: Launcher.hasOverlay
 
             onLoaded: if (item)
                 item.forceActiveFocus()
@@ -267,14 +267,14 @@ Window {
         ActionPanelPopover {
             id: actionPanelPopover
             parent: footer
-            controller: actionPanel
+            controller: Launcher.actionPanel
             maxHeight: Math.round(root.height * 0.55)
         }
 
         ActionPanelPopover {
             id: footerMenuPopover
             parent: footer
-            controller: footerPanel
+            controller: Launcher.footerPanel
             alignLeft: true
             maxHeight: Math.round(root.height * 0.55)
         }
@@ -283,7 +283,7 @@ Window {
             id: modalScrim
             anchors.fill: parent
             z: 200
-            enabled: launcher.alertModel.visible
+            enabled: Launcher.alertModel.visible
             visible: dim.opacity > 0
             hoverEnabled: true
             acceptedButtons: Qt.AllButtons
@@ -297,7 +297,7 @@ Window {
                 anchors.fill: parent
                 radius: Config.borderRounding
                 color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.5)
-                opacity: launcher.alertModel.visible ? 1 : 0
+                opacity: Launcher.alertModel.visible ? 1 : 0
 
                 Behavior on opacity {
                     NumberAnimation {
@@ -315,38 +315,38 @@ Window {
         MouseArea {
             anchors.fill: parent
             z: 300
-            enabled: launcher.canPositionWindow
+            enabled: Launcher.canPositionWindow
             acceptedButtons: Qt.LeftButton
             readonly property int topGrabHeight: 12
             onPressed: mouse => {
                 if ((mouse.modifiers & Qt.ControlModifier) || mouse.y < topGrabHeight) {
-                    launcher.beginWindowDrag();
+                    Launcher.beginWindowDrag();
                 } else {
                     mouse.accepted = false;
                 }
             }
-            onPositionChanged: launcher.updateWindowDrag()
-            onReleased: launcher.endWindowDrag()
-            onCanceled: launcher.endWindowDrag()
+            onPositionChanged: Launcher.updateWindowDrag()
+            onReleased: Launcher.endWindowDrag()
+            onCanceled: Launcher.endWindowDrag()
         }
     }
 
     Window {
         id: anchorOverlay
-        visible: launcher.dragOverlayVisible
-        x: launcher.dragOverlayGeometry.x
-        y: launcher.dragOverlayGeometry.y
-        width: launcher.dragOverlayGeometry.width
-        height: launcher.dragOverlayGeometry.height
+        visible: Launcher.dragOverlayVisible
+        x: Launcher.dragOverlayGeometry.x
+        y: Launcher.dragOverlayGeometry.y
+        width: Launcher.dragOverlayGeometry.width
+        height: Launcher.dragOverlayGeometry.height
         flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus
         color: "transparent"
 
-        Component.onCompleted: launcher.registerDragOverlay(anchorOverlay)
+        Component.onCompleted: Launcher.registerDragOverlay(anchorOverlay)
 
-        readonly property var activeAnchor: launcher.dragActiveAnchor >= 0 ? launcher.dragAnchors[launcher.dragActiveAnchor] : null
+        readonly property var activeAnchor: Launcher.dragActiveAnchor >= 0 ? Launcher.dragAnchors[Launcher.dragActiveAnchor] : null
 
         Repeater {
-            model: launcher.dragGuideXs
+            model: Launcher.dragGuideXs
 
             GuideLine {
                 required property var modelData
@@ -357,7 +357,7 @@ Window {
         }
 
         Repeater {
-            model: launcher.dragGuideYs
+            model: Launcher.dragGuideYs
 
             GuideLine {
                 required property var modelData
@@ -388,9 +388,9 @@ Window {
     }
 
     Connections {
-        target: launcher.alertModel
+        target: Launcher.alertModel
         function onVisibleChanged() {
-            if (launcher.alertModel.visible) {
+            if (Launcher.alertModel.visible) {
                 alertDialog.open();
             } else {
                 if (alertDialog.visible)
@@ -401,7 +401,7 @@ Window {
     }
 
     Connections {
-        target: launcher
+        target: Launcher
         function onCommandViewPushed(componentUrl, properties) {
             commandStack.push(componentUrl, properties, StackView.Immediate);
         }
@@ -413,9 +413,9 @@ Window {
                 commandStack.pop(StackView.Immediate);
         }
         function onOverlayChanged() {
-            if (launcher.hasOverlay) {
-                overlayLoader.setSource(launcher.overlayUrl, {
-                    host: launcher.overlayHost
+            if (Launcher.hasOverlay) {
+                overlayLoader.setSource(Launcher.overlayUrl, {
+                    host: Launcher.overlayHost
                 });
             } else {
                 overlayLoader.source = "";
@@ -425,12 +425,12 @@ Window {
     }
 
     Connections {
-        target: Nav
+        target: Launcher.nav
         function onWindowVisiblityChanged(visible) {
             if (visible) {
                 root.aboutToShow();
-                if (root.autoPlaceOnShow && !launcher.restoreWindowPosition())
-                    launcher.positionOnCursorScreen();
+                if (root.autoPlaceOnShow && !Launcher.restoreWindowPosition())
+                    Launcher.positionOnCursorScreen();
                 root.visible = true;
                 root.raise();
                 root.requestActivate();
@@ -444,40 +444,40 @@ Window {
 
     Shortcut {
         sequence: "Escape"
-        enabled: !launcher.alertModel.visible && !actionPanel.open && !footerPanel.open && !launcher.hasOverlay
-        onActivated: launcher.handleEscape()
+        enabled: !Launcher.alertModel.visible && !Launcher.actionPanel.open && !Launcher.footerPanel.open && !Launcher.hasOverlay
+        onActivated: Launcher.handleEscape()
     }
 
     Shortcut {
         sequence: "Shift+Escape"
-        enabled: !launcher.alertModel.visible
-        onActivated: launcher.popToRoot()
+        enabled: !Launcher.alertModel.visible
+        onActivated: Launcher.popToRoot()
     }
 
     Shortcut {
         sequence: Keybinds.toggleActionPanelSequence
-        enabled: !launcher.alertModel.visible
+        enabled: !Launcher.alertModel.visible
         onActivated: {
-            if (launcher.compacted)
-                launcher.expand();
-            actionPanel.toggle();
+            if (Launcher.compacted)
+                Launcher.expand();
+            Launcher.actionPanel.toggle();
         }
     }
 
     onWidthChanged: {
-        if (launcher.canPositionWindow && root.autoPlaceOnShow)
+        if (Launcher.canPositionWindow && root.autoPlaceOnShow)
             root.x = Screen.virtualX + (Screen.width - root.width) / 2;
     }
     onHeightChanged: {
-        if (launcher.canPositionWindow && root.autoPlaceOnShow)
+        if (Launcher.canPositionWindow && root.autoPlaceOnShow)
             root.y = Screen.virtualY + (Screen.height - root.height) / 3;
     }
 
     Component.onCompleted: {
-        if (launcher.canPositionWindow && root.autoPlaceOnShow) {
+        if (Launcher.canPositionWindow && root.autoPlaceOnShow) {
             root.x = Screen.virtualX + (Screen.width - root.width) / 2;
             root.y = Screen.virtualY + (Screen.height - root.height) / 3;
-            launcher.positionOnCursorScreen();
+            Launcher.positionOnCursorScreen();
         }
     }
 }

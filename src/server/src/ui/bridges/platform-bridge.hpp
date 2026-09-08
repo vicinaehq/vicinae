@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "capabilities.hpp"
 #include <QObject>
 #include <QString>
@@ -9,7 +10,15 @@
  */
 class PlatformBridge : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Platform)
+  QML_SINGLETON
 
+public:
+  static PlatformBridge *create(QQmlEngine *, QJSEngine *) {
+    return QmlEngineScope::global<PlatformBridge>();
+  }
+
+private:
 public:
   explicit PlatformBridge(QObject *parent = nullptr) : QObject(parent) {}
 

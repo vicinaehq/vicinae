@@ -146,7 +146,7 @@ RowLayout {
                             }
                         }
                         Keys.onPressed: event => {
-                            event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                            event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                         }
                     }
                 }
@@ -233,7 +233,7 @@ RowLayout {
                             }
                         }
                         Keys.onPressed: event => {
-                            event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                            event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                         }
                     }
                 }

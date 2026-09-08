@@ -7,6 +7,6 @@ LauncherWindow {
     LayerShell.Window.anchors: LayerShell.Window.AnchorNone
     LayerShell.Window.scope: "vicinae"
     LayerShell.Window.wantsToBeOnActiveScreen: true
-    LayerShell.Window.layer: launcher.lsLayer
-    LayerShell.Window.keyboardInteractivity: launcher.lsKeyboardInteractivity
+    LayerShell.Window.layer: Launcher.lsLayer
+    LayerShell.Window.keyboardInteractivity: Launcher.lsKeyboardInteractivity
 }

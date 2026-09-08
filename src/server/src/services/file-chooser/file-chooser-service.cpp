@@ -1,4 +1,6 @@
 #include "file-chooser-service.hpp"
+#include "service-registry.hpp"
+#include <QJSEngine>
 #include "file-chooser.hpp"
 #include <QDir>
 
@@ -71,4 +73,10 @@ void FileChooserService::finish(const QStringList *paths) {
 
   emit activeChanged();
   emit dialogClosed();
+}
+
+FileChooserService *FileChooserService::create(QQmlEngine *, QJSEngine *) {
+  auto *service = ServiceRegistry::instance()->fileChooserService();
+  QJSEngine::setObjectOwnership(service, QJSEngine::CppOwnership);
+  return service;
 }

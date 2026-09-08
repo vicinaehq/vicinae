@@ -15,7 +15,7 @@ Item {
     implicitHeight: Math.max(row.implicitHeight, clickable ? 26 : 0)
 
     Rectangle {
-        visible: root.clickable && (mouseArea.containsMouse || footerPanel.open)
+        visible: root.clickable && (mouseArea.containsMouse || Launcher.footerPanel.open)
         x: -Math.round((root.buttonSize - root.width) / 2)
         anchors.verticalCenter: parent.verticalCenter
         width: root.buttonSize
@@ -34,20 +34,20 @@ Item {
             id: navIcon
             width: 20
             height: 20
-            source: root.clickable ? Img.builtin("vicinae").withFillColor(Theme.textMuted) : launcher.navigationIcon
-            visible: root.clickable || launcher.navigationIcon.valid
+            source: root.clickable ? Img.builtin("vicinae").withFillColor(Theme.textMuted) : Launcher.navigationIcon
+            visible: root.clickable || Launcher.navigationIcon.valid
             anchors.verticalCenter: parent.verticalCenter
         }
 
         Text {
-            text: launcher.navigationTitle
+            text: Launcher.navigationTitle
             color: Theme.textMuted
             font.family: Theme.fontFamily
             font.pointSize: Theme.smallerFontSize
             elide: Text.ElideRight
             width: Math.max(0, root.availableWidth - (navIcon.visible ? navIcon.width + row.spacing : 0))
             anchors.verticalCenter: parent.verticalCenter
-            visible: launcher.navigationTitle !== ""
+            visible: Launcher.navigationTitle !== ""
         }
     }
 

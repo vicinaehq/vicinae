@@ -6,12 +6,12 @@ SearchableDropdown {
     compact: true
     minimumWidth: 100
 
-    model: launcher.commandViewHost?.dropdownModel ?? null
-    currentItem: launcher.commandViewHost?.dropdownCurrentItem ?? null
-    placeholder: launcher.commandViewHost?.dropdownPlaceholder ?? ""
+    model: Launcher.commandViewHost?.dropdownModel ?? null
+    currentItem: Launcher.commandViewHost?.dropdownCurrentItem ?? null
+    placeholder: Launcher.commandViewHost?.dropdownPlaceholder ?? ""
 
     onActivated: item => {
-        if (launcher.commandViewHost)
-            launcher.commandViewHost.setDropdownValue(item.id);
+        if (Launcher.commandViewHost)
+            Launcher.commandViewHost.setDropdownValue(item.id);
     }
 }

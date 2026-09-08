@@ -16,7 +16,7 @@ LauncherWindow {
     WindowsWindow.borderColor: Theme.mainWindowBorder
 
     onActiveChanged: {
-        if (!active && visible && !launcher.filePicking)
-            Nav.closeWindow();
+        if (!active && visible && !Launcher.filePicking)
+            Launcher.nav.closeWindow();
     }
 }
