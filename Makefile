@@ -27,9 +27,19 @@ relwithdebinfo:
 	cmake --build $(BUILD_DIR)
 .PHONY: relwithdebinfo
 
-dev:
+dev-configure:
 	cmake --preset linux-dev -B $(BUILD_DIR)
+.PHONY: dev-configure
+
+dev-build: dev-configure
 	cmake --build $(BUILD_DIR)
+.PHONY: dev-build
+
+dev-run: dev-build
+	$(BUILD_DIR)/bin/vicinae server --replace --open
+.PHONY: dev-run
+
+dev: dev-run
 .PHONY: dev
 
 preview:

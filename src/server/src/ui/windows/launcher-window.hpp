@@ -158,6 +158,10 @@ signals:
 
 private:
   bool eventFilter(QObject *obj, QEvent *event) override;
+  void loadRoot();
+  void unloadRoot();
+  void reloadRoot();
+  void replayViewStack();
   void handleVisibilityChanged(bool visible);
   void handleCurrentViewChanged();
   void handleViewPoped(const BaseView *view);

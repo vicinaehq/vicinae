@@ -252,6 +252,7 @@ public:
   template <typename T> void replaceView() { replaceView(new T); }
 
   size_t viewStackSize() const;
+  const std::vector<std::unique_ptr<ViewState>> &viewStack() const { return m_views; }
   bool isRootSearch() const;
   const ViewState *topState() const;
   ViewState *topState();

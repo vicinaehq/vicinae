@@ -43,6 +43,8 @@ public:
 
 private:
   void ensureInitialized();
+  void loadRoot();
+  void reloadRoot();
   void markCompleted();
 
   ApplicationContext &m_ctx;

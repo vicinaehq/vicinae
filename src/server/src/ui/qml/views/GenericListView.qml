@@ -12,6 +12,9 @@ Item {
         id: statusBarInset
 	}
 
+	Component.onCompleted: {
+		console.log('mounted now5!');
+	}
 
     // The backing model — must have Q_INVOKABLE nextSelectableIndex(int, int)
     required property var listModel

@@ -109,7 +109,7 @@ void OnboardingWindow::ensureInitialized() {
   m_platformBridge = new PlatformBridge(this);
   m_generalModel = new GeneralSettingsModel(this);
 
-  QmlDevLoader::attach(&m_engine);
+  QmlDevLoader::attach(&m_engine, [this]() { reloadRoot(); });
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
@@ -126,6 +126,10 @@ void OnboardingWindow::ensureInitialized() {
   rootCtx->setContextProperty(QStringLiteral("Permissions"), m_permissions);
 #endif
 
+  loadRoot();
+}
+
+void OnboardingWindow::loadRoot() {
   m_engine.load(QUrl(
 #ifdef Q_OS_MACOS
       QStringLiteral("qrc:/qt/qml/Vicinae/OnboardingWindowMacOS.qml")
@@ -144,6 +148,19 @@ void OnboardingWindow::ensureInitialized() {
     m_permissions->setWatching(m_window->isVisible());
   }
 #endif
+}
+
+void OnboardingWindow::reloadRoot() {
+  const bool wasVisible = m_window && m_window->isVisible();
+  const QRect geometry = m_window ? m_window->geometry() : QRect();
+  m_window = nullptr;
+  const auto roots = m_engine.rootObjects();
+  for (auto *root : roots) delete root;
+
+  loadRoot();
+  if (!wasVisible || !m_window) return;
+  m_window->setGeometry(geometry);
+  show();
 }
 
 void OnboardingWindow::markCompleted() {

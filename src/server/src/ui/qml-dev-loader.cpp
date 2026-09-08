@@ -12,13 +12,14 @@ QmlDevLoader *QmlDevLoader::instance() {
 }
 #endif
 
-void QmlDevLoader::attach(QQmlEngine *engine) {
+void QmlDevLoader::attach(QQmlEngine *engine, std::function<void()> reloadRoot) {
 #ifdef VICINAE_QML_SOURCE_DIR
   auto *loader = instance();
-  loader->m_engines.emplace_back(engine);
+  loader->m_targets.push_back({engine, std::move(reloadRoot)});
   engine->addUrlInterceptor(loader);
 #else
   Q_UNUSED(engine);
+  Q_UNUSED(reloadRoot);
 #endif
 }
 
@@ -75,8 +76,11 @@ void QmlDevLoader::rescan() {
 }
 
 void QmlDevLoader::reload() {
-  for (auto &engine : m_engines) {
-    if (engine) engine->clearComponentCache();
+  for (auto &target : m_targets) {
+    if (target.engine) target.engine->clearComponentCache();
   }
-  qInfo() << "QML dev mode: component cache cleared, next view load picks up changes";
+  for (auto &target : m_targets) {
+    if (target.engine && target.reloadRoot) target.reloadRoot();
+  }
+  qInfo() << "QML dev mode: reloaded";
 }

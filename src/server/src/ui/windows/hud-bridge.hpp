@@ -1,6 +1,7 @@
 #pragma once
 #include "ui/image/image-url.hpp"
 #include <QObject>
+#include <QPointer>
 #include <QTimer>
 #include <optional>
 
@@ -37,5 +38,5 @@ private:
   QString m_text;
   ImageUrl m_icon;
   QTimer m_timer;
-  QQuickWindow *m_window = nullptr;
+  QPointer<QQuickWindow> m_window;
 };

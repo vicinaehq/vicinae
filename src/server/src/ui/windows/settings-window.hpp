@@ -80,6 +80,8 @@ signals:
 
 private:
   void ensureInitialized();
+  void loadRoot();
+  void reloadRoot();
 
   ApplicationContext &m_ctx;
   QQmlApplicationEngine m_engine;

@@ -79,7 +79,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   qRegisterMetaType<ImageUrl>("ImageUrl");
 
-  QmlDevLoader::attach(&m_engine);
+  QmlDevLoader::attach(&m_engine, [this]() { reloadRoot(); });
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
@@ -99,51 +99,14 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   updateLayerShellProps();
   buildFooterMenu();
 
-  m_engine.load(QUrl(
-#if defined(Q_OS_MACOS)
-      QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowMacOS.qml")
-#elif defined(Q_OS_WIN)
-      QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowWindows.qml")
-#else
-      isLayerShellActive() ? QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowLayerShell.qml")
-                           : QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindow.qml")
-#endif
-          ));
-
-  auto rootObjects = m_engine.rootObjects();
-  if (!rootObjects.isEmpty()) {
-    m_window = qobject_cast<QQuickWindow *>(rootObjects.first());
-    if (m_window) { m_defaultWindowTitle = m_window->title(); }
-  }
-
-  applyWindowConfig();
-
   if (!Environment::isHudDisabled()) {
     m_hudBridge = new HudBridge(this);
     rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
-    m_engine.load(QUrl(
-#if defined(Q_OS_MACOS)
-        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowMacOS.qml")
-#elif defined(Q_OS_WIN)
-        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowWindows.qml")
-#else
-        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowLayerShell.qml")
-#endif
-            ));
   }
+
+  loadRoot();
 
   auto *nav = ctx.navigation.get();
-
-  // Track window activation so toggleWindow() and closeOnFocusLoss work correctly
-  if (m_window) {
-    nav->setWindow(m_window);
-    connect(m_window, &QQuickWindow::activeChanged, this, [this]() {
-      // losing focus to our own file dialog or to a selection capture is not user focus loss
-      if (m_pendingLauncherFileChoice || LauncherWindowPlatform::foregroundLent()) return;
-      m_ctx.navigation->setWindowActivated(m_window->isActive());
-    });
-    m_window->installEventFilter(this);
-  }
 
   m_closeOnFocusLoss = ctx.services->config()->value().closeOnFocusLoss;
 
@@ -425,6 +388,80 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     updateWindowTitle();
     m_cacheEvictionTimer.start();
   }
+}
+
+void LauncherWindow::loadRoot() {
+  m_engine.load(QUrl(
+#if defined(Q_OS_MACOS)
+      QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowMacOS.qml")
+#elif defined(Q_OS_WIN)
+      QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowWindows.qml")
+#else
+      isLayerShellActive() ? QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowLayerShell.qml")
+                           : QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindow.qml")
+#endif
+          ));
+
+  auto rootObjects = m_engine.rootObjects();
+  if (!rootObjects.isEmpty()) {
+    m_window = qobject_cast<QQuickWindow *>(rootObjects.first());
+    if (m_window) { m_defaultWindowTitle = m_window->title(); }
+  }
+
+  applyWindowConfig();
+
+  if (m_hudBridge) {
+    m_engine.load(QUrl(
+#if defined(Q_OS_MACOS)
+        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowMacOS.qml")
+#elif defined(Q_OS_WIN)
+        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowWindows.qml")
+#else
+        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowLayerShell.qml")
+#endif
+            ));
+  }
+
+  // Track window activation so toggleWindow() and closeOnFocusLoss work correctly
+  if (m_window) {
+    m_ctx.navigation->setWindow(m_window);
+    connect(m_window, &QQuickWindow::activeChanged, this, [this]() {
+      // losing focus to our own file dialog or to a selection capture is not user focus loss
+      if (m_pendingLauncherFileChoice || LauncherWindowPlatform::foregroundLent()) return;
+      m_ctx.navigation->setWindowActivated(m_window->isActive());
+    });
+    m_window->installEventFilter(this);
+  }
+}
+
+void LauncherWindow::unloadRoot() {
+  if (m_dragOverlayVisible) endWindowDrag();
+  m_ctx.navigation->setWindow(nullptr);
+  m_window = nullptr;
+  m_dragOverlayWindow = nullptr;
+  const auto roots = m_engine.rootObjects();
+  for (auto *root : roots)
+    delete root;
+}
+
+void LauncherWindow::reloadRoot() {
+  const bool wasVisible = m_ctx.navigation->isWindowOpened();
+  unloadRoot();
+  loadRoot();
+  replayViewStack();
+  if (wasVisible) emit m_ctx.navigation->windowVisiblityChanged(true);
+}
+
+void LauncherWindow::replayViewStack() {
+  auto *nav = m_ctx.navigation.get();
+  for (const auto &state : nav->viewStack()) {
+    auto *bridge = dynamic_cast<ViewHostBase *>(state->sender);
+    if (!bridge) continue;
+    emit commandViewPushed(bridge->qmlComponentUrl(), bridge->qmlProperties());
+  }
+  emit searchTextUpdated(nav->searchText());
+  if (m_hasOverlay) emit overlayChanged();
+  tryCompaction();
 }
 
 void LauncherWindow::handleViewPoped(const BaseView *view) {

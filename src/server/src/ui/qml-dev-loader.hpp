@@ -5,18 +5,17 @@
 #include <QPointer>
 #include <QQmlAbstractUrlInterceptor>
 #include <QTimer>
+#include <functional>
 #include <vector>
 
 class QQmlEngine;
 
-// Dev-mode only (VICINAE_DEV_MODE): serves the Vicinae QML module from the source tree instead
-// of the embedded copies, and clears the component cache when a file changes so the next
-// component load picks up the edit. Root windows still need a restart.
+// VICINAE_DEV_MODE only: serves the Vicinae module from the source tree and reloads on change
 class QmlDevLoader : public QObject, public QQmlAbstractUrlInterceptor {
   Q_OBJECT
 
 public:
-  static void attach(QQmlEngine *engine);
+  static void attach(QQmlEngine *engine, std::function<void()> reloadRoot = {});
 
   QUrl intercept(const QUrl &url, DataType type) override;
 
@@ -31,5 +30,9 @@ private:
   QHash<QString, QString> m_files;
   QFileSystemWatcher m_watcher;
   QTimer m_debounce;
-  std::vector<QPointer<QQmlEngine>> m_engines;
+  struct Target {
+    QPointer<QQmlEngine> engine;
+    std::function<void()> reloadRoot;
+  };
+  std::vector<Target> m_targets;
 };
