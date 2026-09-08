@@ -355,7 +355,6 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
   if (!m_window) return;
 
   if (visible) {
-    m_cacheEvictionTimer.stop();
     applyWindowConfig();
     tryCompaction();
     m_window->show();
@@ -371,7 +370,6 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     if (m_dragOverlayVisible) endWindowDrag();
     m_window->hide();
     updateWindowTitle();
-    m_cacheEvictionTimer.start();
   }
 }
 
