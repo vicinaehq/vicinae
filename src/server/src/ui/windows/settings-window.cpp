@@ -1,6 +1,7 @@
 #include "ui/windows/settings-window.hpp"
 #include "common/entrypoint.hpp"
 #include "ui/bridges/config-bridge.hpp"
+#include "ui/qml-dev-loader.hpp"
 #include "ui/settings/extension-settings-model.hpp"
 #include "ui/settings/general-settings-model.hpp"
 #include "ui/image/image-source.hpp"
@@ -48,6 +49,7 @@ void SettingsWindow::ensureInitialized() {
   m_extensionModel = new ExtensionSettingsModel(this);
   m_sidebarModel = new SettingsSidebarModel(m_extensionModel, this);
 
+  QmlDevLoader::attach(&m_engine);
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
   rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
@@ -62,9 +64,9 @@ void SettingsWindow::ensureInitialized() {
 
   m_engine.load(QUrl(
 #ifdef Q_OS_MACOS
-      QStringLiteral("qrc:/Vicinae/SettingsWindowMacOS.qml")
+      QStringLiteral("qrc:/qt/qml/Vicinae/SettingsWindowMacOS.qml")
 #else
-      QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")
+      QStringLiteral("qrc:/qt/qml/Vicinae/SettingsWindow.qml")
 #endif
           ));
 

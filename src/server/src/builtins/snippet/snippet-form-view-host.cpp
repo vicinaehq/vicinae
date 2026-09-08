@@ -15,7 +15,7 @@ SnippetFormViewHost::SnippetFormViewHost(snippet::SerializedSnippet snippet, Mod
     : FormViewBase(), m_mode(mode), m_initialSnippet(std::move(snippet)) {}
 
 QUrl SnippetFormViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/SnippetFormView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/SnippetFormView.qml"));
 }
 
 QVariantMap SnippetFormViewHost::qmlProperties() {

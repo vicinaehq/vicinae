@@ -1,4 +1,5 @@
 import QtQuick
+import Vicinae
 
 Item {
     id: root
@@ -17,6 +18,6 @@ Item {
     Loader {
         id: macLoader
         active: Platform.supports("nativePanels")
-        source: "qrc:/Vicinae/PopupMaterialMacOS.qml"
+        source: "qrc:/qt/qml/Vicinae/PopupMaterialMacOS.qml"
     }
 }

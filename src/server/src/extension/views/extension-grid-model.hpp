@@ -66,7 +66,7 @@ public:
   void setExtensionData(const GridModel &model, bool resetSelection = true);
   void setFilter(const QString &text);
   QString searchPlaceholder() const;
-  QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionGridView.qml")); }
+  QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ExtensionGridView.qml")); }
 
   Q_INVOKABLE QString cellTitle(int section, int item) const;
   Q_INVOKABLE QString cellIcon(int section, int item) const;

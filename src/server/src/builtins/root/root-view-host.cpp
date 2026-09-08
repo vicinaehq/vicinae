@@ -62,7 +62,7 @@ void RootViewHost::scheduleNextClockTick() {
   m_clockTimer->start();
 }
 
-QUrl RootViewHost::qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/RootSearchList.qml")); }
+QUrl RootViewHost::qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/RootSearchList.qml")); }
 
 void RootViewHost::beforeActionExecuted(const AbstractAction *action) {
   auto manager = context()->services->rootItemManager();

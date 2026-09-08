@@ -1,4 +1,5 @@
 import QtQuick
+import Vicinae
 
 HudWindow {
     id: root

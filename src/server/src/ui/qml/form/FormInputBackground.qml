@@ -1,4 +1,5 @@
 import QtQuick
+import Vicinae
 
 SourceBlendRect {
     property bool filled: false

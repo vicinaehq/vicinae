@@ -20,7 +20,7 @@ OAuthOverlayHost::OAuthOverlayHost(const ApplicationContext *ctx, const tsapi::A
 }
 
 QUrl OAuthOverlayHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/OAuthOverlayView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/OAuthOverlayView.qml"));
 }
 
 QString OAuthOverlayHost::providerName() const { return m_providerName; }

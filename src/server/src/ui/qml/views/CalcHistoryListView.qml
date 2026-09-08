@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import Vicinae
 
 GenericListView {
     id: calcHistoryView

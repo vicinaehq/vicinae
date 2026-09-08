@@ -1,4 +1,5 @@
 import QtQuick
+import Vicinae
 
 Item {
     MacOSWindow.enabled: Config.blurEnabled

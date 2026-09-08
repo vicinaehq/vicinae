@@ -49,7 +49,7 @@ public:
   void loadInitialData() override;
   void textChanged(const QString &text) override;
   QUrl qmlComponentUrl() const override {
-    return QUrl(QStringLiteral("qrc:/Vicinae/CalcHistoryListView.qml"));
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CalcHistoryListView.qml"));
   }
 
 private:

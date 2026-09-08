@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 Popup {
     id: root
@@ -155,7 +156,7 @@ Popup {
 
         Loader {
             active: root.nativePanel && Platform.supports("nativePanels")
-            source: "qrc:/Vicinae/CompletionPanelMacOS.qml"
+            source: "qrc:/qt/qml/Vicinae/CompletionPanelMacOS.qml"
         }
 
         PopupMaterial {}

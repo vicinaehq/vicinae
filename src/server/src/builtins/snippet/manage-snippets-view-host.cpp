@@ -9,7 +9,7 @@
 #include <ranges>
 
 QUrl ManageSnippetsViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/DetailListView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/DetailListView.qml"));
 }
 
 QVariantMap ManageSnippetsViewHost::qmlProperties() {

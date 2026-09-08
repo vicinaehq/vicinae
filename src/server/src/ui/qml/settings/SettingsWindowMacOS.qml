@@ -1,3 +1,6 @@
+import QtQuick
+import Vicinae
+
 SettingsWindow {
     nativeChrome: true
 

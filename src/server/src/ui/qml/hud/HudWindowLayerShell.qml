@@ -1,5 +1,6 @@
 import QtQuick
 import org.kde.layershell as LayerShell
+import Vicinae
 
 HudWindow {
     LayerShell.Window.layer: LayerShell.Window.LayerTop

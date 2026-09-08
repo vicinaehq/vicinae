@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
@@ -9,7 +10,8 @@ Item {
 
     StatusBarInset {
         id: statusBarInset
-    }
+	}
+
 
     // The backing model — must have Q_INVOKABLE nextSelectableIndex(int, int)
     required property var listModel

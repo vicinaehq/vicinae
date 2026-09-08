@@ -1,5 +1,6 @@
 #include "ui/windows/launcher-window.hpp"
 #include "ui/windows/launcher-window-platform.hpp"
+#include "ui/qml-dev-loader.hpp"
 #ifdef Q_OS_LINUX
 #include "internal/wayland/xdg-activation.hpp"
 #endif
@@ -78,6 +79,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   qRegisterMetaType<ImageUrl>("ImageUrl");
 
+  QmlDevLoader::attach(&m_engine);
   auto *rootCtx = m_engine.rootContext();
   rootCtx->setContextProperty(QStringLiteral("Nav"), ctx.navigation.get());
   rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
@@ -99,12 +101,12 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   m_engine.load(QUrl(
 #if defined(Q_OS_MACOS)
-      QStringLiteral("qrc:/Vicinae/LauncherWindowMacOS.qml")
+      QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowMacOS.qml")
 #elif defined(Q_OS_WIN)
-      QStringLiteral("qrc:/Vicinae/LauncherWindowWindows.qml")
+      QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowWindows.qml")
 #else
-      isLayerShellActive() ? QStringLiteral("qrc:/Vicinae/LauncherWindowLayerShell.qml")
-                           : QStringLiteral("qrc:/Vicinae/LauncherWindow.qml")
+      isLayerShellActive() ? QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowLayerShell.qml")
+                           : QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindow.qml")
 #endif
           ));
 
@@ -121,11 +123,11 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     rootCtx->setContextProperty(QStringLiteral("hud"), m_hudBridge);
     m_engine.load(QUrl(
 #if defined(Q_OS_MACOS)
-        QStringLiteral("qrc:/Vicinae/HudWindowMacOS.qml")
+        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowMacOS.qml")
 #elif defined(Q_OS_WIN)
-        QStringLiteral("qrc:/Vicinae/HudWindowWindows.qml")
+        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowWindows.qml")
 #else
-        QStringLiteral("qrc:/Vicinae/HudWindowLayerShell.qml")
+        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowLayerShell.qml")
 #endif
             ));
   }

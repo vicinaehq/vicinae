@@ -1,3 +1,6 @@
+import QtQuick
+import Vicinae
+
 LauncherWindow {
     nativeChrome: true
     cornerRadius: WindowsWindow.nativeCornerRadius

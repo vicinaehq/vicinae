@@ -1,4 +1,5 @@
 import org.kde.layershell as LayerShell
+import Vicinae
 
 LauncherWindow {
     shadowPadding: WindowMaterial.supportsRegionalBlur ? Config.shadowSize : 0

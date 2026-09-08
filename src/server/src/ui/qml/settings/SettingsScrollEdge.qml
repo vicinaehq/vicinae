@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Effects
+import Vicinae
 
 // Blurs the strip of flickable content just scrolled out of its clipped viewport,
 // without painting over whatever sits behind this item.

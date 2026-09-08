@@ -1,4 +1,5 @@
 import QtQuick
+import Vicinae
 
 // Click-to-edit text cell that builds its input lazily (cheap in dense lists).
 Rectangle {

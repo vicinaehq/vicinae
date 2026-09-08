@@ -13,13 +13,13 @@ ExtensionViewHost::ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notif
 }
 
 QUrl ExtensionViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ExtensionView.qml"));
 }
 
 QUrl ExtensionViewHost::qmlSearchAccessoryUrl() const {
   if (m_dropdownModel.rowCount() > 0)
-    return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionDropdownAccessory.qml"));
-  if (!m_linkAccessoryText.isEmpty()) return QUrl(QStringLiteral("qrc:/Vicinae/FormLinkAccessory.qml"));
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ExtensionDropdownAccessory.qml"));
+  if (!m_linkAccessoryText.isEmpty()) return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/FormLinkAccessory.qml"));
   return {};
 }
 

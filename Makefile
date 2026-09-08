@@ -27,6 +27,11 @@ relwithdebinfo:
 	cmake --build $(BUILD_DIR)
 .PHONY: relwithdebinfo
 
+dev:
+	cmake --preset linux-dev -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: dev
+
 preview:
 	cmake --preset $(PRESET_OS)-preview
 	cmake --build --preset $(PRESET_OS)-preview

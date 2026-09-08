@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 // Action panel page that records a shortcut in place. Backed by a
 // ShortcutRecorderPanelView exposed as `view`.

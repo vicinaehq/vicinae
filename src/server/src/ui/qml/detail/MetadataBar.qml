@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 /// Displays key-value metadata rows with labels left-aligned and values right-aligned.
 /// Each entry in `model` is an object with a `type` field:

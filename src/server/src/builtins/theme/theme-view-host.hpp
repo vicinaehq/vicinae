@@ -10,7 +10,7 @@ class ThemeViewHost : public ViewHostBase {
   Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/ThemeListView.qml")); }
+  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ThemeListView.qml")); }
 
   QVariantMap qmlProperties() override {
     return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(&m_model))}};

@@ -26,7 +26,7 @@ CreateExtensionSuccessViewHost::CreateExtensionSuccessViewHost(const ExtensionBo
       m_path(location) {}
 
 QUrl CreateExtensionSuccessViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/MarkdownDetailView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/MarkdownDetailView.qml"));
 }
 
 QVariantMap CreateExtensionSuccessViewHost::qmlProperties() {

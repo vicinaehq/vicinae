@@ -1,4 +1,5 @@
 import QtQuick
+import Vicinae
 
 ScriptOutputText {
     id: root

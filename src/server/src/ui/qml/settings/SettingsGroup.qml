@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 // Grouped "inset card" container for settings rows.
 SourceBlendRect {

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
+import Vicinae
 
 /// Popover background with a frosted-glass effect for in-scene popups.
 /// Assign to a Popup's `background` and bind `popup` to it. Falls back to the

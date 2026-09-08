@@ -11,7 +11,7 @@ public:
   FontDemoViewHost(QString family, FontCategory category)
       : m_family(std::move(family)), m_category(category) {}
 
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/FontDemoView.qml")); }
+  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/FontDemoView.qml")); }
   QVariantMap qmlProperties() override { return {{QStringLiteral("host"), QVariant::fromValue(this)}}; }
   QString initialNavigationTitle() const override { return m_family; }
   bool searchInteractive() const override { return false; }

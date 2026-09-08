@@ -1,4 +1,5 @@
 import QtQuick
+import Vicinae
 
 MouseArea {
     id: root

@@ -13,9 +13,9 @@ class EmojiGridViewHost : public ViewHostBase {
   Q_PROPERTY(int currentCategoryFilter READ currentCategoryFilter NOTIFY currentCategoryFilterChanged)
 
 public:
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/EmojiGridView.qml")); }
+  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EmojiGridView.qml")); }
   QUrl qmlSearchAccessoryUrl() const override {
-    return QUrl(QStringLiteral("qrc:/Vicinae/EmojiCategoryFilterAccessory.qml"));
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EmojiCategoryFilterAccessory.qml"));
   }
 
   QVariantMap qmlProperties() override {

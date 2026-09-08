@@ -9,7 +9,7 @@
 AliasFormViewHost::AliasFormViewHost(EntrypointId id) : FormViewBase(), m_id(std::move(id)) {}
 
 QUrl AliasFormViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/AliasFormView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/AliasFormView.qml"));
 }
 
 QVariantMap AliasFormViewHost::qmlProperties() {

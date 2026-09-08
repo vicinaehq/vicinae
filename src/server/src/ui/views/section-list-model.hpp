@@ -61,7 +61,7 @@ public:
   void refreshActionPanel();
   void beforePop();
 
-  virtual QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/CommandListView.qml")); }
+  virtual QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CommandListView.qml")); }
 
 protected:
   virtual void onSelectionCleared();

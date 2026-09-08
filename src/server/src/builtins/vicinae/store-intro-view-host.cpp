@@ -12,7 +12,7 @@ StoreIntroViewHost::StoreIntroViewHost(const QString &markdown, const ImageURL &
 }
 
 QUrl StoreIntroViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/StoreIntroView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/StoreIntroView.qml"));
 }
 
 QVariantMap StoreIntroViewHost::qmlProperties() {

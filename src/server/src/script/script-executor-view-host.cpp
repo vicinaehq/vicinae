@@ -56,7 +56,7 @@ ScriptExecutorViewHost::ScriptExecutorViewHost(ScriptProcess *process) : m_proce
 }
 
 QUrl ScriptExecutorViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/ScriptExecutorView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ScriptExecutorView.qml"));
 }
 
 QVariantMap ScriptExecutorViewHost::qmlProperties() {

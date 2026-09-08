@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import Vicinae
 
 FocusScope {
     id: root

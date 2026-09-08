@@ -4,7 +4,7 @@
 EmptyViewHost::EmptyViewHost(const QString &title, const QString &description, const ImageURL &icon)
     : m_title(title), m_description(description), m_icon(icon) {}
 
-QUrl EmptyViewHost::qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/EmptyView.qml")); }
+QUrl EmptyViewHost::qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EmptyView.qml")); }
 
 QVariantMap EmptyViewHost::qmlProperties() {
   QVariantMap props;

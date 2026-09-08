@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Window
+import Vicinae
 
 /// Measures how much of `target`'s bottom edge is covered by the window's
 /// floating status bar. Bind the result to a Flickable's bottomMargin so

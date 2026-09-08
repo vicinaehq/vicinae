@@ -36,11 +36,11 @@ vicinae::FileCategory categoryForPath(const fs::path &path) {
 } // namespace
 
 QUrl SearchFilesViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/SearchFilesView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/SearchFilesView.qml"));
 }
 
 QUrl SearchFilesViewHost::qmlSearchAccessoryUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/CategoryFilterAccessory.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CategoryFilterAccessory.qml"));
 }
 
 QVariantMap SearchFilesViewHost::qmlProperties() {

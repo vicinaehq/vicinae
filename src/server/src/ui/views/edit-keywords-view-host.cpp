@@ -9,7 +9,7 @@ EditKeywordsViewHost::EditKeywordsViewHost(LoadFn loadKeywords, SaveFn saveKeywo
       m_infoText(infoText) {}
 
 QUrl EditKeywordsViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/EditKeywordsFormView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EditKeywordsFormView.qml"));
 }
 
 QVariantMap EditKeywordsViewHost::qmlProperties() {

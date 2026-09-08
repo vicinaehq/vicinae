@@ -10,7 +10,7 @@ ShortcutRecorderPanelView::ShortcutRecorderPanelView(const QString &title, const
 }
 
 QUrl ShortcutRecorderPanelView::componentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/ShortcutRecorderPanel.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ShortcutRecorderPanel.qml"));
 }
 
 QVariantMap ShortcutRecorderPanelView::componentProps() {

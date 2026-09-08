@@ -69,8 +69,12 @@ endif()
 configure_file(resources-core.qrc.in resources-core.qrc)
 configure_file(resources-extensions.qrc.in resources-extensions.qrc)
 
-if (CMAKE_BUILD_TYPE MATCHES "Debug" AND NOT WIN32)
+if ((CMAKE_BUILD_TYPE MATCHES "Debug" OR VICINAE_DEV_MODE) AND NOT WIN32)
 	add_compile_definitions(LOCAL_THEME_DIR="${THEME_DIR}")
+endif()
+
+if (VICINAE_DEV_MODE)
+	add_compile_definitions(VICINAE_QML_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/ui/qml")
 endif()
 
 if (WAYLAND_LAYER_SHELL)
@@ -84,7 +88,7 @@ if (WAYLAND_LAYER_SHELL)
 	add_compile_definitions(WAYLAND_LAYER_SHELL)
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR VICINAE_DEV_MODE)
 	add_compile_definitions(QT_MESSAGELOGCONTEXT)
 else()
 	add_compile_definitions(QT_NO_DEBUG_OUTPUT)
@@ -516,6 +520,8 @@ set(SRCS
 	src/ui/bridges/keybind-bridge.hpp
 	src/ui/windows/launcher-window.hpp
 	src/ui/windows/launcher-window.cpp
+	src/ui/qml-dev-loader.hpp
+	src/ui/qml-dev-loader.cpp
 	src/builtins/root/root-view-host.hpp
 	src/builtins/root/root-view-host.cpp
 	src/builtins/root/root-search-model.hpp
@@ -1279,7 +1285,7 @@ endif()
 qt_add_qml_module(${TARGET}
 	URI Vicinae
 	VERSION 1.0
-	RESOURCE_PREFIX /
+	RESOURCE_PREFIX /qt/qml
 	QML_FILES ${VICINAE_QML_FILES}
 	SOURCES ${VICINAE_QML_SOURCES}
 	DEPENDENCIES QtQuick
