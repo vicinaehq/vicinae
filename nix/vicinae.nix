@@ -16,6 +16,7 @@
   wayland,
   glaze,
   numen,
+  whisper-cpp,
   pulseaudio ? null,
   swift ? null,
   apple-sdk ? null,
@@ -38,6 +39,12 @@
     extra-cmake-modules = addDarwinPlatform prev.extra-cmake-modules;
   });
   syntax-highlighting = addDarwinPlatform kdeScope.syntax-highlighting;
+
+  whisper = whisper-cpp.override {
+    vulkanSupport = isLinux;
+    withSDL = false;
+    withFFmpegSupport = false;
+  };
 
   manifestRaw = builtins.readFile ../manifest.yaml;
   manifestGet = key: let
@@ -71,6 +78,7 @@ in
       "USE_SYSTEM_CMARK_GFM" = "ON";
       "USE_SYSTEM_GLAZE" = "ON";
       "USE_SYSTEM_NUMEN" = "ON";
+      "USE_SYSTEM_WHISPER" = "ON";
       "USE_SYSTEM_KF6" = "ON";
       "USE_SYSTEM_QT_KEYCHAIN" = "ON";
       "CMAKE_INSTALL_PREFIX" = placeholder "out";
@@ -113,9 +121,11 @@ in
         qt6.qtbase
         qt6.qtdeclarative
         qt6.qtimageformats
+        qt6.qtmultimedia
         qt6.qtsvg
         glaze
         numen
+        whisper
       ]
       ++ lib.optionals isLinux [
         kdePackages.layer-shell-qt
