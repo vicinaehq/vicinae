@@ -35,6 +35,7 @@ Item {
                 text: root.host.content
                 placeholder: "€"
                 completions: root.host.contentCompletions
+                highlighter: PlaceholderHighlight {}
                 hasError: contentField.error !== ""
                 onTextEdited: root.host.content = text
             }

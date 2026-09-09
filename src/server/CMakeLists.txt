@@ -1155,6 +1155,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/AliasFormView.qml
 	src/ui/qml/views/ShortcutFormView.qml
 	src/ui/qml/form/PlaceholderCompleter.qml
+	src/ui/qml/form/PlaceholderHighlight.qml
 	src/ui/qml/controls/CompletionPopup.qml
 	src/ui/qml/views/CreateExtensionFormView.qml
 	src/ui/qml/launcher/ArgCompleter.qml
@@ -1254,6 +1255,8 @@ set(VICINAE_QML_SOURCES
 	src/ui/quick/vici-image-item.hpp
 	src/ui/quick/hover-activation.hpp
 	src/ui/quick/hover-activation.cpp
+	src/ui/quick/document-highlighter.hpp
+	src/ui/quick/document-highlighter.cpp
 	src/ui/quick/match-highlighter.hpp
 	src/ui/quick/match-highlighter.cpp
 	src/ui/quick/placeholder-highlighter.hpp

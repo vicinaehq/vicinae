@@ -10,6 +10,8 @@ FocusScope {
     activeFocusOnTab: !readOnly
 
     property alias text: editor.text
+    property alias textDocument: editor.textDocument
+    property alias highlighter: editor.highlighter
     property alias cursorPosition: editor.cursorPosition
     property alias placeholder: editor.placeholder
     property alias readOnly: editor.readOnly

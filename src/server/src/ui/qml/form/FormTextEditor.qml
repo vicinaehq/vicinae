@@ -14,6 +14,7 @@ Item {
     property bool readOnly: false
     property bool multiline: false
     property string accessibleLabel: ""
+    property DocumentHighlighter highlighter: null
 
     // [{iconSource, title, value, template?, cursorOffset?}]
     property var completions: []
@@ -51,6 +52,13 @@ Item {
             root.accepted();
     }
 
+    Binding {
+        target: root.highlighter
+        property: "textDocument"
+        value: edit.textDocument
+        when: root.highlighter !== null
+    }
+
     Flickable {
         id: flickable
         anchors.fill: parent
@@ -84,14 +92,6 @@ Item {
             cursorDelegate: ViciTextCursor {}
             readOnly: root.readOnly
             activeFocusOnTab: false
-
-            PlaceholderHighlighter {
-                textDocument: root.completions.length > 0 ? edit.textDocument : null
-                braceColor: Theme.textMuted
-                nameColor: Theme.accent
-                keyColor: Theme.foreground
-                stringColor: Theme.toastSuccess
-            }
 
             Text {
                 anchors.top: parent.top

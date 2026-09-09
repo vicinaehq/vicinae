@@ -32,6 +32,7 @@ Item {
                 text: root.host.link
                 placeholder: "https://google.com/search?q={argument}"
                 completions: root.host.linkCompletions
+                highlighter: PlaceholderHighlight {}
                 hasError: urlField.error !== ""
 
                 onTextEdited: root.host.link = text

@@ -9,6 +9,8 @@ FocusScope {
     activeFocusOnTab: true
 
     property alias text: editor.text
+    property alias textDocument: editor.textDocument
+    property alias highlighter: editor.highlighter
     property alias placeholder: editor.placeholder
     property alias completions: editor.completions
     property alias triggerChar: editor.triggerChar
