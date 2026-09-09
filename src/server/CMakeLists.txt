@@ -1408,6 +1408,8 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	add_executable(${TEST_TARGET}
 		src/internal/keyboard/keyboard.cpp
 		src/internal/keyboard/keybind-manager.cpp
+		src/services/builtin-icon/builtin-icon.hpp
+		src/services/builtin-icon/builtin-icon.cpp
 	)
 	target_sources(${TEST_TARGET} PRIVATE
 		src/services/calculator-service/qalculate/qalculate-backend.cpp
