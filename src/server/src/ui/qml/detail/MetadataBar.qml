@@ -47,24 +47,24 @@ Item {
     }
 
     component EntryHost: Loader {
-                    Layout.fillWidth: true
-                    required property var modelData
-                    readonly property var entry: modelData
-                    sourceComponent: {
-                        var t = (entry && entry.type) || "label";
-                        switch (t) {
-                        case "separator":
-                            return separatorComponent;
-                        case "link":
-                            return linkComponent;
-                        case "tags":
-                            return tagsComponent;
-                        case "icons":
-                            return iconsComponent;
-                        default:
-                            return labelComponent;
-                        }
-                    }
+        Layout.fillWidth: true
+        required property var modelData
+        readonly property var entry: modelData
+        sourceComponent: {
+            var t = (entry && entry.type) || "label";
+            switch (t) {
+            case "separator":
+                return separatorComponent;
+            case "link":
+                return linkComponent;
+            case "tags":
+                return tagsComponent;
+            case "icons":
+                return iconsComponent;
+            default:
+                return labelComponent;
+            }
+        }
     }
 
     Component {

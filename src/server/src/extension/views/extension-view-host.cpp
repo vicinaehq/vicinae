@@ -19,7 +19,8 @@ QUrl ExtensionViewHost::qmlComponentUrl() const {
 QUrl ExtensionViewHost::qmlSearchAccessoryUrl() const {
   if (m_dropdownModel.rowCount() > 0)
     return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ExtensionDropdownAccessory.qml"));
-  if (!m_linkAccessoryText.isEmpty()) return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/FormLinkAccessory.qml"));
+  if (!m_linkAccessoryText.isEmpty())
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/FormLinkAccessory.qml"));
   return {};
 }
 

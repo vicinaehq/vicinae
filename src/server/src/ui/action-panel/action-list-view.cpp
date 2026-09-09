@@ -27,7 +27,9 @@ void ActionListView::adoptState(std::unique_ptr<ActionPanelState> state) {
   emit contentChanged();
 }
 
-QUrl ActionListView::componentUrl() const { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ActionListPanel.qml")); }
+QUrl ActionListView::componentUrl() const {
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ActionListPanel.qml"));
+}
 
 QVariantMap ActionListView::componentProps() {
   QVariantMap props;

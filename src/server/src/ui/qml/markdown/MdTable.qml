@@ -135,13 +135,12 @@ Rectangle {
                         model: tableRow.modelData
 
                         Rectangle {
+                            id: cell
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.minimumWidth: 40
                             color: "transparent"
                             implicitHeight: cellText.implicitHeight + 16
-
-                            id: cell
                             required property int index
                             required property var modelData
 

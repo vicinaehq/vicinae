@@ -236,7 +236,7 @@ Item {
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
                         event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionUp === "function" && root.commandStack.currentItem.moveSectionUp()) : root.commandStack.currentItem.moveUp();
-                    // qmllint enable missing-property
+                        // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
@@ -271,7 +271,7 @@ Item {
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
                         event.accepted = root.commandStack.currentItem.moveLeft();
-                    // qmllint enable missing-property
+                        // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
@@ -287,7 +287,7 @@ Item {
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
                         event.accepted = root.commandStack.currentItem.moveRight();
-                    // qmllint enable missing-property
+                        // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }

@@ -27,7 +27,7 @@ Popup {
         popupMaterial.macImpl.animateIn(root.animationAnchorX, root.animationAnchorY)
     onAboutToHide: if (popupMaterial.macImpl)
         popupMaterial.macImpl.animateOut(root.animationAnchorX, root.animationAnchorY)
-        // qmllint enable missing-property
+    // qmllint enable missing-property
 
     enter: root.isNativeWindow || !root.itemAnimationEnabled ? null : _itemEnter
     exit: root.hasNativeAnimation ? _holdExit : (root.isNativeWindow || !root.itemAnimationEnabled ? null : _itemExit)

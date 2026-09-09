@@ -11,11 +11,11 @@ Item {
 
     StatusBarInset {
         id: statusBarInset
-	}
+    }
 
-	Component.onCompleted: {
-		console.log('mounted now5!');
-	}
+    Component.onCompleted: {
+        console.log('mounted now5!');
+    }
 
     required property SectionListModel listModel
 

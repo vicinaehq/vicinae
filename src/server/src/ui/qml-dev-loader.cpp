@@ -42,7 +42,8 @@ QmlDevLoader::QmlDevLoader(QString sourceDir)
 
 QUrl QmlDevLoader::intercept(const QUrl &url, DataType type) {
   if (type != QmlFile && type != JavaScriptFile) return url;
-  if (url.scheme() != QLatin1String("qrc") || !url.path().startsWith(QLatin1String("/qt/qml/Vicinae/"))) return url;
+  if (url.scheme() != QLatin1String("qrc") || !url.path().startsWith(QLatin1String("/qt/qml/Vicinae/")))
+    return url;
 
   auto it = m_files.constFind(url.fileName());
   if (it == m_files.constEnd()) return url;

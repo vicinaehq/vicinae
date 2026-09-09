@@ -18,7 +18,7 @@ Item {
         // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveUp === "function") {
             return contentLoader.item.moveUp();
-        // qmllint enable missing-property
+            // qmllint enable missing-property
         }
         return false;
     }
@@ -26,7 +26,7 @@ Item {
         // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveDown === "function") {
             return contentLoader.item.moveDown();
-        // qmllint enable missing-property
+            // qmllint enable missing-property
         }
         return false;
     }
@@ -34,7 +34,7 @@ Item {
         // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveSectionUp === "function") {
             return contentLoader.item.moveSectionUp();
-        // qmllint enable missing-property
+            // qmllint enable missing-property
         } else {
             return moveUp();
         }
@@ -43,15 +43,15 @@ Item {
         // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveSectionDown === "function")
             return contentLoader.item.moveSectionDown();
-        // qmllint enable missing-property
         else
+            // qmllint enable missing-property
             return moveDown();
     }
     function moveLeft() {
         // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveLeft === "function") {
             return contentLoader.item.moveLeft();
-        // qmllint enable missing-property
+            // qmllint enable missing-property
         }
         return false;
     }
@@ -59,7 +59,7 @@ Item {
         // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveRight === "function") {
             return contentLoader.item.moveRight();
-        // qmllint enable missing-property
+            // qmllint enable missing-property
         }
         return false;
     }
