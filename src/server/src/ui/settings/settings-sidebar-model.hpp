@@ -1,4 +1,5 @@
 #pragma once
+#include "services/builtin-icon/builtin-icon.hpp"
 #include <QtQml/qqmlregistration.h>
 #include <string>
 #include <vector>
@@ -43,7 +44,7 @@ private:
     QString key;
     QString kind;
     QString label;
-    QString icon;
+    BuiltinIcon icon = BuiltinIcon::QuestionMarkCircle;
     QString iconSource;
     bool enabled = true;
   };

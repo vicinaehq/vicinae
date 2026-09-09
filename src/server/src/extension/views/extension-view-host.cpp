@@ -290,13 +290,6 @@ QString ExtensionViewHost::viewType() const {
   return QStringLiteral("loading");
 }
 
-QObject *ExtensionViewHost::contentModel() const {
-  if (auto *list = activeModel<ExtensionListModel>()) return list;
-  if (auto *grid = activeModel<ExtensionGridModel>()) return grid;
-  if (auto *form = activeModel<ExtensionFormModel>()) return form;
-  return nullptr;
-}
-
 bool ExtensionViewHost::isExtLoading() const { return m_isLoading; }
 
 QString ExtensionViewHost::detailMarkdown() const {

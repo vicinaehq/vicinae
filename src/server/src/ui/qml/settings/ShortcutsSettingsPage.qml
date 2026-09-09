@@ -80,7 +80,7 @@ Item {
 
                         required property int index
                         required property string name
-                        required property string icon
+                        required property int icon
                         required property var shortcutTokens
 
                         readonly property bool isRecording: index === root._recordingRow
@@ -115,7 +115,7 @@ Item {
                                 spacing: 12
 
                                 ViciImage {
-                                    source: rowItem.icon ? Img.builtin(rowItem.icon).withBackgroundTint("accent") : ""
+                                    source: Img.icon(rowItem.icon).withBackgroundTint("accent")
                                     Layout.preferredWidth: 22
                                     Layout.preferredHeight: 22
                                     visible: rowItem.icon !== ""

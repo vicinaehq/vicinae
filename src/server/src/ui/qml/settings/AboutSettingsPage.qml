@@ -71,7 +71,7 @@ Item {
             }
 
             ViciButton {
-                icon: "github"
+                iconSource: Img.icon(BuiltinIcon.Github)
                 text: "GitHub"
                 variant: "secondary"
                 radius: 8
@@ -81,7 +81,7 @@ Item {
             }
 
             ViciButton {
-                icon: "book"
+                iconSource: Img.icon(BuiltinIcon.Book)
                 text: qsTr("Documentation")
                 variant: "secondary"
                 radius: 8
@@ -91,7 +91,7 @@ Item {
             }
 
             ViciButton {
-                icon: "bug"
+                iconSource: Img.icon(BuiltinIcon.Bug)
                 text: qsTr("Report a Bug")
                 variant: "secondary"
                 radius: 8

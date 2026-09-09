@@ -25,7 +25,8 @@ Item {
             Layout.preferredWidth: 25
             Layout.preferredHeight: 25
             radius: 4
-            icon: "arrow-left"
+            iconSource: Img.icon(BuiltinIcon.ArrowLeft)
+            accessibleName: qsTr("Back")
             variant: "ghost"
             onClicked: root.host.abort()
         }

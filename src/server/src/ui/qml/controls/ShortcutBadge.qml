@@ -27,8 +27,8 @@ Item {
 
                 readonly property var token: modelData || ({})
                 readonly property string tokenText: token["text"] || ""
-                readonly property string tokenIcon: token["icon"] || ""
-                readonly property bool compact: tokenIcon !== "" || tokenText.length <= 2
+                readonly property int tokenIcon: token["icon"] ?? -1
+                readonly property bool compact: tokenIcon >= 0 || tokenText.length <= 2
 
                 implicitHeight: 20
                 implicitWidth: Math.max(compact ? implicitHeight : 0, tokenContent.implicitWidth + (compact ? 10 : 12))
@@ -49,8 +49,8 @@ Item {
 
                     ViciImage {
                         id: tokenIconItem
-                        visible: tokenItem.tokenIcon !== ""
-                        source: visible ? Img.builtin(tokenItem.tokenIcon).withFillColor(root.contentColor) : ""
+                        visible: tokenItem.tokenIcon >= 0
+                        source: visible ? Img.icon(tokenItem.tokenIcon).withFillColor(root.contentColor) : ""
                         width: 11
                         height: 11
                         anchors.centerIn: parent
@@ -58,7 +58,7 @@ Item {
 
                     Text {
                         id: tokenLabel
-                        visible: tokenItem.tokenIcon === ""
+                        visible: tokenItem.tokenIcon < 0
                         text: tokenItem.tokenText
                         color: root.contentColor
                         font.family: Theme.fontFamily

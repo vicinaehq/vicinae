@@ -11,11 +11,11 @@ Item {
     readonly property bool _hasAlert: Object.keys(_alert).length > 0
 
     readonly property var platformIcons: ({
-            "linux": "linux",
-            "macOS": "apple",
-            "macOS ": "apple",
-            "Windows": "windows11",
-            "windows": "windows11"
+            "linux": BuiltinIcon.Linux,
+            "macOS": BuiltinIcon.Apple,
+            "macOS ": BuiltinIcon.Apple,
+            "Windows": BuiltinIcon.Windows11,
+            "windows": BuiltinIcon.Windows11
         })
 
     component TextLink: RowLayout {
@@ -150,7 +150,7 @@ Item {
                                 required property string modelData
                                 required property int index
                                 spacing: 0
-                                visible: (root.platformIcons[platformRow.modelData] || "") !== ""
+                                visible: root.platformIcons[platformRow.modelData] !== undefined
 
                                 Rectangle {
                                     visible: platformRow.index === 0
@@ -170,10 +170,8 @@ Item {
                                     height: 14
                                     anchors.verticalCenter: parent.verticalCenter
                                     source: {
-                                        var iconName = root.platformIcons[platformRow.modelData] || "";
-                                        if (iconName === "")
-                                            return null;
-                                        return Img.builtin(iconName).withFillColor(Theme.textMuted);
+                                        const icon = root.platformIcons[platformRow.modelData];
+                                        return icon === undefined ? null : Img.icon(icon).withFillColor(Theme.textMuted);
                                     }
                                 }
                             }
@@ -242,14 +240,14 @@ Item {
                     return colors[root._alert.type] ?? Theme.textMuted;
                 }
 
-                readonly property string _alertIcon: {
+                readonly property int _alertIcon: {
                     const icons = {
-                        "success": "check-circle",
-                        "warning": "warning",
-                        "danger": "x-mark-circle",
-                        "muted": "question-mark-circle"
+                        "success": BuiltinIcon.CheckCircle,
+                        "warning": BuiltinIcon.Warning,
+                        "danger": BuiltinIcon.XMarkCircle,
+                        "muted": BuiltinIcon.QuestionMarkCircle
                     };
-                    return icons[root._alert.type] ?? "question-mark-circle";
+                    return icons[root._alert.type] ?? BuiltinIcon.QuestionMarkCircle;
                 }
 
                 RowLayout {
@@ -262,7 +260,7 @@ Item {
                         Layout.preferredWidth: 18
                         Layout.preferredHeight: 18
                         Layout.alignment: Qt.AlignTop
-                        source: Img.builtin(alertBox._alertIcon).withFillColor(alertBox._alertColor)
+                        source: Img.icon(alertBox._alertIcon).withFillColor(alertBox._alertColor)
                     }
 
                     ColumnLayout {

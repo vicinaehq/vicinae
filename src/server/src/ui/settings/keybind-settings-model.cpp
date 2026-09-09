@@ -17,7 +17,7 @@ QVariant KeybindSettingsModel::data(const QModelIndex &index, int role) const {
   case NameRole:
     return e.name;
   case IconRole:
-    return e.icon;
+    return QVariant::fromValue(e.icon);
   case DescriptionRole:
     return e.description;
   case ShortcutTokensRole:
@@ -49,10 +49,10 @@ QString KeybindSettingsModel::selectedDescription() const {
              : QString();
 }
 
-QString KeybindSettingsModel::selectedIcon() const {
+BuiltinIcon KeybindSettingsModel::selectedIcon() const {
   return (m_selectedRow >= 0 && std::cmp_less(m_selectedRow, m_entries.size()))
              ? m_entries[m_selectedRow].icon
-             : QString();
+             : BuiltinIcon::QuestionMarkCircle;
 }
 
 bool KeybindSettingsModel::hasSelection() const {

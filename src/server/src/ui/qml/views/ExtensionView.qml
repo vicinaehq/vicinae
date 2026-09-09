@@ -101,10 +101,10 @@ Item {
 
             GenericListView {
                 id: listView
-                readonly property ExtensionListModel extModel: root.host.contentModel as ExtensionListModel
+                readonly property ExtensionListModel extModel: root.host.listContent
                 anchors.fill: parent
                 listModel: extModel
-                model: root.host.contentModel
+                model: root.host.listContent
                 canLoadMore: root.host.hasMorePages
                 onEndReached: root.host.onLoadMore()
 
@@ -186,7 +186,7 @@ Item {
         id: gridComponent
         ExtensionGridView {
             anchors.fill: parent
-            cmdModel: root.host.contentModel as SectionGridModel
+            cmdModel: root.host.gridContent
             suppressEmpty: root.host.suppressEmptyView
             canLoadMore: root.host.hasMorePages
             onEndReached: root.host.onLoadMore()
@@ -207,7 +207,7 @@ Item {
         ExtensionFormView {
             anchors.fill: parent
             host: root.host
-            formModel: root.host.contentModel as ExtensionFormModel
+            formModel: root.host.formContent
         }
     }
 }

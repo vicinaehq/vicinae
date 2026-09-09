@@ -6,8 +6,8 @@ Rectangle {
     id: root
 
     property string text: ""
-    property string icon: ""
     property var iconSource
+    property string accessibleName: ""
     property string variant: "ghost"
     property bool bordered: false
     property color foreground: root.variant === "accent" ? Theme.listItemSelectionFg : Theme.foreground
@@ -18,11 +18,11 @@ Rectangle {
     signal clicked
 
     Accessible.role: Accessible.Button
-    Accessible.name: root.text !== "" ? root.text : root.icon
+    Accessible.name: root.text !== "" ? root.text : root.accessibleName
     Accessible.onPressAction: root.clicked()
 
     readonly property bool hovered: mouseArea.containsMouse
-    readonly property bool _hasIcon: root.icon !== "" || root.iconSource !== undefined
+    readonly property bool _hasIcon: root.iconSource !== undefined
     readonly property bool _hasText: root.text !== ""
 
     implicitWidth: root._hasIcon && !root._hasText ? implicitHeight : contentRow.implicitWidth + 2 * root.horizontalPadding
@@ -68,7 +68,7 @@ Rectangle {
 
         ViciImage {
             visible: root._hasIcon
-            source: root.iconSource !== undefined ? root.iconSource : (root.icon !== "" ? Img.builtin(root.icon) : "")
+            source: root.iconSource ?? ""
             width: root.iconSize
             height: root.iconSize
             anchors.verticalCenter: parent.verticalCenter

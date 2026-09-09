@@ -106,7 +106,8 @@ ColumnLayout {
                     Layout.preferredHeight: 20
                     Layout.alignment: Qt.AlignVCenter
                     radius: 4
-                    icon: "xmark"
+                    iconSource: Img.icon(BuiltinIcon.Xmark)
+                    accessibleName: qsTr("Remove")
                     iconSize: 10
                     variant: "ghost"
                     onClicked: root.remove(appRow.modelData)

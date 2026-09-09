@@ -223,7 +223,7 @@ Item {
                         opacity: navItem._enabled ? 1.0 : 0.5
 
                         ViciImage {
-                            source: navItem.model.kind === "core" ? Img.builtin(navItem.model.icon).withFillColor(navItem._selected ? Theme.listItemSelectionFg : Theme.textMuted) : navItem.model.iconSource
+                            source: navItem.model.kind === "core" ? Img.icon(navItem.model.icon).withFillColor(navItem._selected ? Theme.listItemSelectionFg : Theme.textMuted) : navItem.model.iconSource
                             Layout.preferredWidth: navItem._isCommand ? 16 : 18
                             Layout.preferredHeight: navItem._isCommand ? 16 : 18
                         }
