@@ -1,5 +1,6 @@
 #pragma once
 #include "ui/views/bridge-view.hpp"
+#include "ui/views/view-utils.hpp"
 #include "config/config.hpp"
 #include "ui/views/section-list-model.hpp"
 #include "theme/theme.hpp"
@@ -9,9 +10,7 @@ class ThemeViewHost : public ViewHostBase {
   Q_OBJECT
 
 public:
-  QUrl qmlComponentUrl() const override {
-    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ThemeListView.qml"));
-  }
+  QUrl qmlComponentUrl() const override { return qml::componentUrl(u"ThemeListView"); }
 
   QVariantMap qmlProperties() override {
     return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(&m_model))}};

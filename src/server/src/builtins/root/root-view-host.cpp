@@ -1,4 +1,5 @@
 #include "builtins/root/root-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "lib/figura/src/utils.hpp"
 #include "builtins/root/root-search-model.hpp"
 #include "ui/views/section-source.hpp"
@@ -62,9 +63,7 @@ void RootViewHost::scheduleNextClockTick() {
   m_clockTimer->start();
 }
 
-QUrl RootViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/RootSearchList.qml"));
-}
+QUrl RootViewHost::qmlComponentUrl() const { return qml::componentUrl(u"RootSearchList"); }
 
 void RootViewHost::beforeActionExecuted(const AbstractAction *action) {
   auto manager = context()->services->rootItemManager();

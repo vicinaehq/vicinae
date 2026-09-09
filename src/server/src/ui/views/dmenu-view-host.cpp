@@ -9,8 +9,8 @@
 namespace fs = std::filesystem;
 
 QUrl DMenuViewHost::qmlComponentUrl() const {
-  if (m_data.noQuickLook) { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CommandListView.qml")); }
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/DMenuView.qml"));
+  if (m_data.noQuickLook) { return qml::componentUrl(u"CommandListView"); }
+  return qml::componentUrl(u"DMenuView");
 }
 
 QVariantMap DMenuViewHost::qmlProperties() {

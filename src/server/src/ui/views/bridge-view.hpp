@@ -29,6 +29,8 @@ public:
 };
 
 class FormViewBase : public ViewHostBase {
+  Q_OBJECT
+
 public:
   bool searchInteractive() const override { return false; }
 };

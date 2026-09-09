@@ -17,9 +17,7 @@ RaycastStoreDetailHost::RaycastStoreDetailHost(const Raycast::Extension &extensi
 RaycastStoreDetailHost::RaycastStoreDetailHost(const QString &authorHandle, const QString &extensionName)
     : m_authorHandle(authorHandle), m_extensionName(extensionName) {}
 
-QUrl RaycastStoreDetailHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/StoreDetailView.qml"));
-}
+QUrl RaycastStoreDetailHost::qmlComponentUrl() const { return qml::componentUrl(u"StoreDetailView"); }
 
 QVariantMap RaycastStoreDetailHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};

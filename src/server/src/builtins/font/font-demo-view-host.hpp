@@ -1,5 +1,6 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
+#include "ui/views/view-utils.hpp"
 #include "ui/views/bridge-view.hpp"
 #include "services/font-service/font-service.hpp"
 
@@ -14,9 +15,7 @@ public:
   FontDemoViewHost(QString family, FontCategory category)
       : m_family(std::move(family)), m_category(category) {}
 
-  QUrl qmlComponentUrl() const override {
-    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/FontDemoView.qml"));
-  }
+  QUrl qmlComponentUrl() const override { return qml::componentUrl(u"FontDemoView"); }
   QVariantMap qmlProperties() override { return {{QStringLiteral("host"), QVariant::fromValue(this)}}; }
   QString initialNavigationTitle() const override { return m_family; }
   bool searchInteractive() const override { return false; }

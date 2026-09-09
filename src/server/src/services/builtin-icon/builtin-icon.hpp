@@ -9,7 +9,7 @@ namespace BuiltinIcons {
 Q_NAMESPACE
 QML_NAMED_ELEMENT(BuiltinIcon)
 
-enum class BuiltinIcon : std::uint16_t {
+enum class BuiltinIcon : quint16 {
   Aarch64,
   AddPerson,
   Adonisjs,

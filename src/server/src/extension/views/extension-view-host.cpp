@@ -12,15 +12,11 @@ ExtensionViewHost::ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notif
   connect(m_searchDebounce, &QTimer::timeout, this, &ExtensionViewHost::handleDebouncedSearch);
 }
 
-QUrl ExtensionViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ExtensionView.qml"));
-}
+QUrl ExtensionViewHost::qmlComponentUrl() const { return qml::componentUrl(u"ExtensionView"); }
 
 QUrl ExtensionViewHost::qmlSearchAccessoryUrl() const {
-  if (m_dropdownModel.rowCount() > 0)
-    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ExtensionDropdownAccessory.qml"));
-  if (!m_linkAccessoryText.isEmpty())
-    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/FormLinkAccessory.qml"));
+  if (m_dropdownModel.rowCount() > 0) return qml::componentUrl(u"ExtensionDropdownAccessory");
+  if (!m_linkAccessoryText.isEmpty()) return qml::componentUrl(u"FormLinkAccessory");
   return {};
 }
 

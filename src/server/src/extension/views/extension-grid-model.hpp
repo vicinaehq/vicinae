@@ -1,5 +1,6 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
+#include "ui/views/view-utils.hpp"
 #include "extension/model/grid-model.hpp"
 #include "ui/image/image-url.hpp"
 #include "extension/extension-action-panel-builder.hpp"
@@ -65,7 +66,7 @@ public:
   void setExtensionData(const GridModel &model, bool resetSelection = true);
   void setFilter(const QString &text);
   QString searchPlaceholder() const;
-  QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ExtensionGridView.qml")); }
+  QUrl qmlComponentUrl() const { return qml::componentUrl(u"ExtensionGridView"); }
 
   QString cellTitle(int section, int item) const override;
   Q_INVOKABLE QString cellIcon(int section, int item) const;

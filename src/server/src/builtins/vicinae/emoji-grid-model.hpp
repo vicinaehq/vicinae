@@ -1,5 +1,6 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
+#include "ui/views/view-utils.hpp"
 #include "glyph/emoji.hpp"
 #include "ui/views/grid-source.hpp"
 #include "ui/views/section-grid-model.hpp"
@@ -59,7 +60,7 @@ public:
   void setFilter(const QString &text);
   void setCategoryFilter(std::optional<glyph::Category> category);
   QString searchPlaceholder() const { return tr("Search for emojis and symbols..."); }
-  QUrl qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EmojiGridView.qml")); }
+  QUrl qmlComponentUrl() const { return qml::componentUrl(u"EmojiGridView"); }
 
   Q_INVOKABLE QString emojiIcon(int section, int item) const;
   Q_INVOKABLE QString emojiName(int section, int item) const;

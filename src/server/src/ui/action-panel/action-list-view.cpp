@@ -1,4 +1,5 @@
 #include "ui/action-panel/action-list-view.hpp"
+#include "ui/views/view-utils.hpp"
 #include "ui/action-panel/action-panel-model.hpp"
 #include "ui/action-panel/action.hpp"
 #include "ui/action-panel/action-panel-state.hpp"
@@ -27,9 +28,7 @@ void ActionListView::adoptState(std::unique_ptr<ActionPanelState> state) {
   emit contentChanged();
 }
 
-QUrl ActionListView::componentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ActionListPanel.qml"));
-}
+QUrl ActionListView::componentUrl() const { return qml::componentUrl(u"ActionListPanel"); }
 
 QVariantMap ActionListView::componentProps() {
   QVariantMap props;

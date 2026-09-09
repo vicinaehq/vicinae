@@ -17,9 +17,7 @@ ShortcutFormViewHost::ShortcutFormViewHost() : FormViewBase() {}
 ShortcutFormViewHost::ShortcutFormViewHost(std::shared_ptr<Shortcut> shortcut, Mode mode)
     : FormViewBase(), m_mode(mode), m_initialShortcut(std::move(shortcut)) {}
 
-QUrl ShortcutFormViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ShortcutFormView.qml"));
-}
+QUrl ShortcutFormViewHost::qmlComponentUrl() const { return qml::componentUrl(u"ShortcutFormView"); }
 
 QVariantMap ShortcutFormViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};

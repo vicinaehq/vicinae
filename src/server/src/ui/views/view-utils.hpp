@@ -11,7 +11,13 @@
 #include <filesystem>
 #include <vector>
 
+#include <QUrl>
+
 namespace qml {
+
+inline QUrl componentUrl(QStringView name) {
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/") + name + QStringLiteral(".qml"));
+}
 
 inline constexpr int64_t MAX_PREVIEW_SIZE = 2 * 1024 * 1024;
 

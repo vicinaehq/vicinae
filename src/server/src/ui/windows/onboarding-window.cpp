@@ -1,4 +1,5 @@
 #include "ui/windows/onboarding-window.hpp"
+#include "ui/views/view-utils.hpp"
 #include "ui/bridges/config-bridge.hpp"
 #include "ui/qml-dev-loader.hpp"
 #include "services/permissions/macos-permission-service.hpp"
@@ -118,13 +119,13 @@ void OnboardingWindow::ensureInitialized() {
 }
 
 void OnboardingWindow::loadRoot() {
-  m_engine.load(QUrl(
+  m_engine.load(
 #ifdef Q_OS_MACOS
-      QStringLiteral("qrc:/qt/qml/Vicinae/OnboardingWindowMacOS.qml")
+      qml::componentUrl(u"OnboardingWindowMacOS")
 #else
-      QStringLiteral("qrc:/qt/qml/Vicinae/OnboardingWindow.qml")
+      qml::componentUrl(u"OnboardingWindow")
 #endif
-          ));
+  );
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }

@@ -1,4 +1,5 @@
 #include "builtins/raycast/raycast-store-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"
@@ -18,9 +19,7 @@ RaycastStoreViewHost::RaycastStoreViewHost() {
           &RaycastStoreViewHost::handleFinishedCompat);
 }
 
-QUrl RaycastStoreViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/StoreListingView.qml"));
-}
+QUrl RaycastStoreViewHost::qmlComponentUrl() const { return qml::componentUrl(u"StoreListingView"); }
 
 QVariantMap RaycastStoreViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};

@@ -1,4 +1,5 @@
 #include "builtins/vicinae/vicinae-store-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"
@@ -8,9 +9,7 @@ VicinaeStoreViewHost::VicinaeStoreViewHost() {
           &VicinaeStoreViewHost::handleFinished);
 }
 
-QUrl VicinaeStoreViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/StoreListingView.qml"));
-}
+QUrl VicinaeStoreViewHost::qmlComponentUrl() const { return qml::componentUrl(u"StoreListingView"); }
 
 QVariantMap VicinaeStoreViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};

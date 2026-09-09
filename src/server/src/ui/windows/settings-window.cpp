@@ -53,13 +53,13 @@ void SettingsWindow::ensureInitialized() {
 }
 
 void SettingsWindow::loadRoot() {
-  m_engine.load(QUrl(
+  m_engine.load(
 #ifdef Q_OS_MACOS
-      QStringLiteral("qrc:/qt/qml/Vicinae/SettingsWindowMacOS.qml")
+      qml::componentUrl(u"SettingsWindowMacOS")
 #else
-      QStringLiteral("qrc:/qt/qml/Vicinae/SettingsWindow.qml")
+      qml::componentUrl(u"SettingsWindow")
 #endif
-          ));
+  );
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }

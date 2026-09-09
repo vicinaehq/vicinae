@@ -1,5 +1,6 @@
 #pragma once
 #include "builtins/calculator/calc-history-model.hpp"
+#include "ui/views/view-utils.hpp"
 #include "ui/views/list-view-host.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include <QCoreApplication>
@@ -48,9 +49,7 @@ public:
   void initialize() override;
   void loadInitialData() override;
   void textChanged(const QString &text) override;
-  QUrl qmlComponentUrl() const override {
-    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CalcHistoryListView.qml"));
-  }
+  QUrl qmlComponentUrl() const override { return qml::componentUrl(u"CalcHistoryListView"); }
 
 private:
   void refresh();

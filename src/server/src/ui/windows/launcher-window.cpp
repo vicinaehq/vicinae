@@ -374,16 +374,16 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
 }
 
 void LauncherWindow::loadRoot() {
-  m_engine.load(QUrl(
+  m_engine.load(
 #if defined(Q_OS_MACOS)
-      QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowMacOS.qml")
+      qml::componentUrl(u"LauncherWindowMacOS")
 #elif defined(Q_OS_WIN)
-      QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowWindows.qml")
+      qml::componentUrl(u"LauncherWindowWindows")
 #else
-      isLayerShellActive() ? QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindowLayerShell.qml")
-                           : QStringLiteral("qrc:/qt/qml/Vicinae/LauncherWindow.qml")
+      isLayerShellActive() ? qml::componentUrl(u"LauncherWindowLayerShell")
+                           : qml::componentUrl(u"LauncherWindow")
 #endif
-          ));
+  );
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) {
@@ -394,15 +394,15 @@ void LauncherWindow::loadRoot() {
   applyWindowConfig();
 
   if (m_hudBridge) {
-    m_engine.load(QUrl(
+    m_engine.load(
 #if defined(Q_OS_MACOS)
-        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowMacOS.qml")
+        qml::componentUrl(u"HudWindowMacOS")
 #elif defined(Q_OS_WIN)
-        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowWindows.qml")
+        qml::componentUrl(u"HudWindowWindows")
 #else
-        QStringLiteral("qrc:/qt/qml/Vicinae/HudWindowLayerShell.qml")
+        qml::componentUrl(u"HudWindowLayerShell")
 #endif
-            ));
+    );
   }
 
   // Track window activation so toggleWindow() and closeOnFocusLoss work correctly

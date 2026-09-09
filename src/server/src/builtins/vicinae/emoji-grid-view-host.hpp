@@ -1,5 +1,6 @@
 #pragma once
 #include "ui/views/bridge-view.hpp"
+#include "ui/views/view-utils.hpp"
 #include "ui/quick/completion-model.hpp"
 #include "builtins/vicinae/emoji-grid-model.hpp"
 #include "glyph/glyph.hpp"
@@ -12,12 +13,8 @@ class EmojiGridViewHost : public ViewHostBase {
   Q_PROPERTY(int currentCategoryFilter READ currentCategoryFilter NOTIFY currentCategoryFilterChanged)
 
 public:
-  QUrl qmlComponentUrl() const override {
-    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EmojiGridView.qml"));
-  }
-  QUrl qmlSearchAccessoryUrl() const override {
-    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EmojiCategoryFilterAccessory.qml"));
-  }
+  QUrl qmlComponentUrl() const override { return qml::componentUrl(u"EmojiGridView"); }
+  QUrl qmlSearchAccessoryUrl() const override { return qml::componentUrl(u"EmojiCategoryFilterAccessory"); }
 
   QVariantMap qmlProperties() override {
     return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(&m_model))}};

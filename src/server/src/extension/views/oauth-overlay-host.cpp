@@ -19,9 +19,7 @@ OAuthOverlayHost::OAuthOverlayHost(const ApplicationContext *ctx, const tsapi::A
   if (req.client.icon) { m_providerIconSource = qml::imageSourceFor(TsapiImage::parse(*req.client.icon)); }
 }
 
-QUrl OAuthOverlayHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/OAuthOverlayView.qml"));
-}
+QUrl OAuthOverlayHost::qmlComponentUrl() const { return qml::componentUrl(u"OAuthOverlayView"); }
 
 QString OAuthOverlayHost::providerName() const { return m_providerName; }
 QString OAuthOverlayHost::providerDescription() const { return m_providerDescription; }

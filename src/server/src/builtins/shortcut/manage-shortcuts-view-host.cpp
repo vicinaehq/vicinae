@@ -8,9 +8,7 @@
 #include <QDateTime>
 #include <QUuid>
 
-QUrl ManageShortcutsViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/DetailListView.qml"));
-}
+QUrl ManageShortcutsViewHost::qmlComponentUrl() const { return qml::componentUrl(u"DetailListView"); }
 
 QVariantMap ManageShortcutsViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};

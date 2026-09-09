@@ -197,7 +197,7 @@ MissingPreferenceViewHost::MissingPreferenceViewHost(std::shared_ptr<ExtensionCo
 }
 
 QUrl MissingPreferenceViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/MissingPreferenceView.qml"));
+  return qml::componentUrl(u"MissingPreferenceView");
 }
 
 QVariantMap MissingPreferenceViewHost::qmlProperties() {

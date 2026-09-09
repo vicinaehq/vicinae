@@ -1,4 +1,5 @@
 #include "script/script-executor-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "navigation-controller.hpp"
 #include "script/script-output-tokenizer.hpp"
@@ -55,9 +56,7 @@ ScriptExecutorViewHost::ScriptExecutorViewHost(ScriptProcess *process) : m_proce
   process->setParent(this);
 }
 
-QUrl ScriptExecutorViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ScriptExecutorView.qml"));
-}
+QUrl ScriptExecutorViewHost::qmlComponentUrl() const { return qml::componentUrl(u"ScriptExecutorView"); }
 
 QVariantMap ScriptExecutorViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};

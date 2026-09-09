@@ -1,4 +1,5 @@
 #include "builtins/root/alias-form-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -8,9 +9,7 @@
 
 AliasFormViewHost::AliasFormViewHost(EntrypointId id) : FormViewBase(), m_id(std::move(id)) {}
 
-QUrl AliasFormViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/AliasFormView.qml"));
-}
+QUrl AliasFormViewHost::qmlComponentUrl() const { return qml::componentUrl(u"AliasFormView"); }
 
 QVariantMap AliasFormViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};

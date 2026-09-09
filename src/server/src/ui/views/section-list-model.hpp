@@ -1,5 +1,6 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
+#include "ui/views/view-utils.hpp"
 #include <QAbstractListModel>
 
 #include <memory>
@@ -64,9 +65,7 @@ public:
   void refreshActionPanel();
   void beforePop();
 
-  virtual QUrl qmlComponentUrl() const {
-    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CommandListView.qml"));
-  }
+  virtual QUrl qmlComponentUrl() const { return qml::componentUrl(u"CommandListView"); }
 
 protected:
   virtual void onSelectionCleared();

@@ -1,4 +1,5 @@
 #include "builtins/developer/create-extension-success-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "actions/app-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -26,7 +27,7 @@ CreateExtensionSuccessViewHost::CreateExtensionSuccessViewHost(const ExtensionBo
       m_path(location) {}
 
 QUrl CreateExtensionSuccessViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/MarkdownDetailView.qml"));
+  return qml::componentUrl(u"MarkdownDetailView");
 }
 
 QVariantMap CreateExtensionSuccessViewHost::qmlProperties() {

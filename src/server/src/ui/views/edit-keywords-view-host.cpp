@@ -1,4 +1,5 @@
 #include "ui/views/edit-keywords-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
@@ -8,9 +9,7 @@ EditKeywordsViewHost::EditKeywordsViewHost(LoadFn loadKeywords, SaveFn saveKeywo
     : FormViewBase(), m_loadKeywords(std::move(loadKeywords)), m_saveKeywords(std::move(saveKeywords)),
       m_infoText(infoText) {}
 
-QUrl EditKeywordsViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/EditKeywordsFormView.qml"));
-}
+QUrl EditKeywordsViewHost::qmlComponentUrl() const { return qml::componentUrl(u"EditKeywordsFormView"); }
 
 QVariantMap EditKeywordsViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};

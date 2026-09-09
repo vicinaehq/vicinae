@@ -1,4 +1,5 @@
 #include "ui/action-panel/shortcut-recorder-panel-view.hpp"
+#include "ui/views/view-utils.hpp"
 #include "internal/keyboard/keyboard.hpp"
 
 ShortcutRecorderPanelView::ShortcutRecorderPanelView(const QString &title, const ImageURL &icon,
@@ -9,9 +10,7 @@ ShortcutRecorderPanelView::ShortcutRecorderPanelView(const QString &title, const
   setId(shortcutId);
 }
 
-QUrl ShortcutRecorderPanelView::componentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ShortcutRecorderPanel.qml"));
-}
+QUrl ShortcutRecorderPanelView::componentUrl() const { return qml::componentUrl(u"ShortcutRecorderPanel"); }
 
 QVariantMap ShortcutRecorderPanelView::componentProps() {
   QVariantMap props;

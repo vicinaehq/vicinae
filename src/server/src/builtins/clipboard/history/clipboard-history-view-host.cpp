@@ -76,12 +76,10 @@ ClipboardHistoryViewHost::~ClipboardHistoryViewHost() {
   if (m_clipman) m_clipman->resumeEviction();
 }
 
-QUrl ClipboardHistoryViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ClipboardHistoryView.qml"));
-}
+QUrl ClipboardHistoryViewHost::qmlComponentUrl() const { return qml::componentUrl(u"ClipboardHistoryView"); }
 
 QUrl ClipboardHistoryViewHost::qmlSearchAccessoryUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ClipboardFilterAccessory.qml"));
+  return qml::componentUrl(u"ClipboardFilterAccessory");
 }
 
 QVariantMap ClipboardHistoryViewHost::qmlProperties() {

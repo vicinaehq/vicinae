@@ -13,7 +13,7 @@
 CreateExtensionViewHost::CreateExtensionViewHost() : FormViewBase() {}
 
 QUrl CreateExtensionViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CreateExtensionFormView.qml"));
+  return qml::componentUrl(u"CreateExtensionFormView");
 }
 
 QVariantMap CreateExtensionViewHost::qmlProperties() {

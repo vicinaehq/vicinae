@@ -1,4 +1,5 @@
 #include "extension/views/extension-error-view-host.hpp"
+#include "ui/views/view-utils.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "navigation-controller.hpp"
 
@@ -10,9 +11,7 @@ ExtensionErrorViewHost::ExtensionErrorViewHost(const QString &errorText) : m_err
                    .arg(m_errorText);
 }
 
-QUrl ExtensionErrorViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/MarkdownDetailView.qml"));
-}
+QUrl ExtensionErrorViewHost::qmlComponentUrl() const { return qml::componentUrl(u"MarkdownDetailView"); }
 
 QVariantMap ExtensionErrorViewHost::qmlProperties() { return {{QStringLiteral("markdown"), m_markdown}}; }
 

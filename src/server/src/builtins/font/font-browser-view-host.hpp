@@ -1,5 +1,6 @@
 #pragma once
 #include "ui/views/bridge-view.hpp"
+#include "ui/views/view-utils.hpp"
 #include "ui/quick/completion-model.hpp"
 #include "builtins/font/font-grid-model.hpp"
 #include "ui/views/view-scope.hpp"
@@ -15,12 +16,8 @@ signals:
   void currentCategoryFilterChanged();
 
 public:
-  QUrl qmlComponentUrl() const override {
-    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/BrowseFontsView.qml"));
-  }
-  QUrl qmlSearchAccessoryUrl() const override {
-    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CategoryFilterAccessory.qml"));
-  }
+  QUrl qmlComponentUrl() const override { return qml::componentUrl(u"BrowseFontsView"); }
+  QUrl qmlSearchAccessoryUrl() const override { return qml::componentUrl(u"CategoryFilterAccessory"); }
 
   QVariantMap qmlProperties() override {
     return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(&m_model))}};
