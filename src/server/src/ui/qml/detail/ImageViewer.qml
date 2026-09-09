@@ -123,7 +123,7 @@ Popup {
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
             anchors.leftMargin: 8
-            icon: Img.builtin("chevron-left-small").withFillColor("white")
+            icon: Img.icon(BuiltinIcon.ChevronLeftSmall).withFillColor("white")
             onClicked: root.currentIndex--
         }
 
@@ -132,7 +132,7 @@ Popup {
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
             anchors.rightMargin: 8
-            icon: Img.builtin("chevron-right-small").withFillColor("white")
+            icon: Img.icon(BuiltinIcon.ChevronRightSmall).withFillColor("white")
             onClicked: root.currentIndex++
         }
 
@@ -141,7 +141,7 @@ Popup {
             anchors.right: parent.right
             anchors.topMargin: 8
             anchors.rightMargin: 8
-            icon: Img.builtin("xmark").withFillColor("white")
+            icon: Img.icon(BuiltinIcon.Xmark).withFillColor("white")
             onClicked: root.close()
         }
 

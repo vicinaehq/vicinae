@@ -12,7 +12,7 @@ GenericListView {
 
     emptyTitle: cmdModel && cmdModel.emptyTitle || qsTr("No results")
     emptyDescription: (cmdModel && cmdModel.emptyDescription) || ""
-    emptyIcon: cmdModel?.emptyIcon?.valid ? cmdModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+    emptyIcon: cmdModel?.emptyIcon?.valid ? cmdModel.emptyIcon : Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
 
     delegate: Loader {
         id: delegateLoader

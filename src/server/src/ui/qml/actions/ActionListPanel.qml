@@ -224,7 +224,7 @@ Item {
                 spacing: 8
 
                 ViciImage {
-                    source: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+                    source: Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
                     sourceSize.width: 14
                     sourceSize.height: 14
                     Layout.preferredWidth: 14

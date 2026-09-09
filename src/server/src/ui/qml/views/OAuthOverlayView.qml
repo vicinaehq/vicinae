@@ -117,7 +117,7 @@ Item {
                 ViciImage {
                     Layout.preferredWidth: 40
                     Layout.preferredHeight: 40
-                    source: Img.builtin("check-circle").withFillColor(Theme.toastSuccess)
+                    source: Img.icon(BuiltinIcon.CheckCircle).withFillColor(Theme.toastSuccess)
                 }
             }
 

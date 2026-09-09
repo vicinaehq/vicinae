@@ -226,7 +226,7 @@ FocusScope {
                         Layout.preferredWidth: 12
                         Layout.preferredHeight: 12
                         Layout.alignment: Qt.AlignVCenter
-                        source: Img.builtin("lock").withFillColor(Theme.textMuted)
+                        source: Img.icon(BuiltinIcon.Lock).withFillColor(Theme.textMuted)
                     }
                 }
             }

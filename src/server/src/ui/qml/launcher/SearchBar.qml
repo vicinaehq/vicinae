@@ -27,7 +27,7 @@ Item {
             Layout.preferredWidth: 22
             Layout.preferredHeight: 22
             Layout.alignment: Qt.AlignVCenter
-            source: Img.builtin("chevron-left").withFillColor(Theme.textMuted)
+            source: Img.icon(BuiltinIcon.ChevronLeft).withFillColor(Theme.textMuted)
             opacity: backHover.hovered ? 0.6 : 1.0
 
             HoverHandler {

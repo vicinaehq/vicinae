@@ -107,7 +107,7 @@ ColumnLayout {
                     Layout.preferredWidth: 36
                     Layout.preferredHeight: 36
                     radius: 8
-                    iconSource: Img.builtin(field.revealed ? "eye-disabled" : "eye").withFillColor(Theme.textMuted)
+                    iconSource: Img.icon(field.revealed ? BuiltinIcon.EyeDisabled : BuiltinIcon.Eye).withFillColor(Theme.textMuted)
                     variant: "ghost"
                     border.width: revealBtn.hovered ? 1 : 0
                     border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)

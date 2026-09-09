@@ -182,7 +182,7 @@ Popup {
                 spacing: 6
 
                 ViciImage {
-                    source: Img.builtin("magnifying-glass").withFillColor(Theme.textMuted)
+                    source: Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.textMuted)
                     sourceSize.width: 12
                     sourceSize.height: 12
                     Layout.preferredWidth: 12

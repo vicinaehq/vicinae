@@ -233,11 +233,11 @@ Window {
                             source: {
                                 const p = root.extModel.selectedProvenance;
                                 if (p === "Raycast")
-                                    return Img.builtin("raycast").withFillColor(Theme.toastDanger);
+                                    return Img.icon(BuiltinIcon.Raycast).withFillColor(Theme.toastDanger);
                                 if (p === "Vicinae")
-                                    return Img.builtin("vicinae").withFillColor(Theme.toastWarning);
+                                    return Img.icon(BuiltinIcon.Vicinae).withFillColor(Theme.toastWarning);
                                 if (p === "Local")
-                                    return Img.builtin("box").withFillColor(Theme.toastInfo);
+                                    return Img.icon(BuiltinIcon.Box).withFillColor(Theme.toastInfo);
                                 return "";
                             }
                             Layout.preferredWidth: 16

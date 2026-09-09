@@ -116,7 +116,7 @@ Item {
                             Layout.preferredWidth: 20
                             Layout.preferredHeight: 20
                             Layout.alignment: Qt.AlignVCenter
-                            source: Img.builtin("check-circle").withFillColor(Theme.toastSuccess)
+                            source: Img.icon(BuiltinIcon.CheckCircle).withFillColor(Theme.toastSuccess)
                         }
 
                         RowLayout {
@@ -126,7 +126,7 @@ Item {
                             ViciImage {
                                 Layout.preferredWidth: 14
                                 Layout.preferredHeight: 14
-                                source: Img.builtin("arrow-down-circle").withFillColor(Theme.textMuted)
+                                source: Img.icon(BuiltinIcon.ArrowDownCircle).withFillColor(Theme.textMuted)
                             }
 
                             Text {

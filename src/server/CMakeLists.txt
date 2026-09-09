@@ -1324,6 +1324,7 @@ target_include_directories(${TARGET} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/alert
 	${CMAKE_CURRENT_SOURCE_DIR}/src/services/file-chooser
 	${CMAKE_CURRENT_SOURCE_DIR}/src/services/permissions
+	${CMAKE_CURRENT_SOURCE_DIR}/src/services/builtin-icon
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/views
 	${CMAKE_CURRENT_SOURCE_DIR}/src/script
 	${CMAKE_CURRENT_SOURCE_DIR}/src/extension/views

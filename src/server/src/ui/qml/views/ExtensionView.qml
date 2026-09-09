@@ -114,7 +114,7 @@ Item {
 
                 emptyTitle: listView.extModel?.emptyTitle || qsTr("No results")
                 emptyDescription: listView.extModel?.emptyDescription || ""
-                emptyIcon: listView.extModel?.emptyIcon.valid ? listView.extModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+                emptyIcon: listView.extModel?.emptyIcon.valid ? listView.extModel.emptyIcon : Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
 
                 detailComponent: detailPanel
                 detailVisible: listView.extModel?.isShowingDetail ?? false

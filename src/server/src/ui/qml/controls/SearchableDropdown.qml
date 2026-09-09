@@ -96,7 +96,7 @@ Item {
             }
 
             ViciImage {
-                source: completionPopup.visible ? Img.builtin("chevron-up") : Img.builtin("chevron-down")
+                source: completionPopup.visible ? Img.icon(BuiltinIcon.ChevronUp) : Img.icon(BuiltinIcon.ChevronDown)
                 opacity: completionPopup.visible || (buttonMouseArea.containsMouse && !root.readOnly) ? 1.0 : 0.5
                 Layout.preferredWidth: 10
                 Layout.preferredHeight: 10

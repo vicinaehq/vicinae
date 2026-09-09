@@ -16,6 +16,7 @@ public:
   explicit ImageSource(QObject *parent) : QObject(parent) {}
 
   Q_INVOKABLE ImageUrl builtin(const QString &name) const { return ImageUrl(ImageURL::builtinByName(name)); }
+  Q_INVOKABLE ImageUrl icon(BuiltinIcon icon) const { return ImageUrl(ImageURL::builtin(icon)); }
 
   Q_INVOKABLE ImageUrl system(const QString &name) const { return ImageUrl(ImageURL::system(name)); }
 

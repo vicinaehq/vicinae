@@ -30,7 +30,7 @@ Rectangle {
 
             ViciImage {
                 anchors.centerIn: parent
-                source: Img.builtin("chevron-left").withFillColor(Theme.foreground)
+                source: Img.icon(BuiltinIcon.ChevronLeft).withFillColor(Theme.foreground)
                 width: 20
                 height: 20
                 opacity: Settings.canGoBack ? 1 : 0.35
@@ -68,7 +68,7 @@ Rectangle {
 
             ViciImage {
                 anchors.centerIn: parent
-                source: Img.builtin("chevron-right").withFillColor(Theme.foreground)
+                source: Img.icon(BuiltinIcon.ChevronRight).withFillColor(Theme.foreground)
                 width: 20
                 height: 20
                 opacity: Settings.canGoForward ? 1 : 0.35

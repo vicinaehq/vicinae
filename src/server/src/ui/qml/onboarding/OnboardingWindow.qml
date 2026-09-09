@@ -49,7 +49,7 @@ Window {
             spacing: 6
 
             ViciImage {
-                source: Img.builtin("check-circle").withFillColor(Theme.toastSuccess)
+                source: Img.icon(BuiltinIcon.CheckCircle).withFillColor(Theme.toastSuccess)
                 Layout.preferredWidth: 16
                 Layout.preferredHeight: 16
             }
@@ -103,7 +103,7 @@ Window {
                         spacing: 8
 
                         ViciImage {
-                            source: Img.builtin("vicinae")
+                            source: Img.icon(BuiltinIcon.Vicinae)
                             Layout.preferredWidth: 72
                             Layout.preferredHeight: 72
                             Layout.alignment: Qt.AlignHCenter

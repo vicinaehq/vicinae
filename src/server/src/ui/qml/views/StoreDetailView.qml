@@ -34,7 +34,7 @@ Item {
         ViciImage {
             Layout.preferredWidth: 14
             Layout.preferredHeight: 14
-            source: Img.builtin("arrow-ne").withFillColor(linkHover.hovered ? Theme.accent : Theme.textMuted)
+            source: Img.icon(BuiltinIcon.ArrowNe).withFillColor(linkHover.hovered ? Theme.accent : Theme.textMuted)
         }
 
         HoverHandler {
@@ -132,7 +132,7 @@ Item {
                             ViciImage {
                                 Layout.preferredWidth: 14
                                 Layout.preferredHeight: 14
-                                source: Img.builtin("arrow-down-circle").withFillColor(Theme.textMuted)
+                                source: Img.icon(BuiltinIcon.ArrowDownCircle).withFillColor(Theme.textMuted)
                             }
 
                             Text {
@@ -201,7 +201,7 @@ Item {
                         ViciImage {
                             Layout.preferredWidth: 14
                             Layout.preferredHeight: 14
-                            source: Img.builtin("check-circle").withFillColor(Theme.toastSuccess)
+                            source: Img.icon(BuiltinIcon.CheckCircle).withFillColor(Theme.toastSuccess)
                         }
 
                         Text {

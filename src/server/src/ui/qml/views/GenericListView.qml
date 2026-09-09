@@ -35,7 +35,7 @@ Item {
 
     property string emptyTitle: qsTr("No results")
     property string emptyDescription: ""
-    property var emptyIcon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+    property var emptyIcon: Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
     property Component emptyViewComponent: null
 
     property bool suppressEmpty: false

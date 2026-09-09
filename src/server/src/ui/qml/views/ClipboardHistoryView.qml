@@ -163,7 +163,7 @@ Item {
                                     spacing: 5
                                     ViciImage {
                                         visible: delegateLoader.isPinned
-                                        source: Img.builtin("pin").withFillColor(Theme.danger)
+                                        source: Img.icon(BuiltinIcon.Pin).withFillColor(Theme.danger)
                                         sourceSize.width: 14
                                         sourceSize.height: 14
                                         Layout.preferredWidth: 14
@@ -171,7 +171,7 @@ Item {
                                     }
                                     ViciImage {
                                         visible: delegateLoader.isTagged && !delegateLoader.isPinned
-                                        source: Img.builtin("tag").withFillColor(Theme.accent)
+                                        source: Img.icon(BuiltinIcon.Tag).withFillColor(Theme.accent)
                                         sourceSize.width: 14
                                         sourceSize.height: 14
                                         Layout.preferredWidth: 14
@@ -225,7 +225,7 @@ Item {
                 sourceComponent: EmptyView {
                     title: root.host.detailErrorTitle
                     description: root.host.detailErrorDescription
-                    icon: Img.builtin("key").withFillColor(Theme.danger)
+                    icon: Img.icon(BuiltinIcon.Key).withFillColor(Theme.danger)
                 }
             }
 

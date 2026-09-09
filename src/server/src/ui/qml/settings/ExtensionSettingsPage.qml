@@ -255,7 +255,7 @@ Item {
                                     ViciImage {
                                         id: cmdChevron
                                         visible: cmdDelegate.hasPreferences
-                                        source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small").withFillColor(Theme.textMuted)
+                                        source: Img.icon(cmdDelegate.isExpanded ? BuiltinIcon.ChevronDownSmall : BuiltinIcon.ChevronRightSmall).withFillColor(Theme.textMuted)
                                         anchors.left: titleText.right
                                         anchors.leftMargin: visible ? cmdRow.spacing : 0
                                         anchors.verticalCenter: parent.verticalCenter

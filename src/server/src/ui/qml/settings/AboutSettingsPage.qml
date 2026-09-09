@@ -31,7 +31,7 @@ Item {
             }
 
             ViciImage {
-                source: Img.builtin("vicinae")
+                source: Img.icon(BuiltinIcon.Vicinae)
                 Layout.preferredWidth: 64
                 Layout.preferredHeight: 64
                 Layout.alignment: Qt.AlignHCenter
