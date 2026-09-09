@@ -147,12 +147,11 @@ Item {
 
             focusTarget: passwordInput
 
-            FormTextInput {
+            FormPasswordInput {
                 id: passwordInput
                 text: field.host.value != null ? String(field.host.value) : ""
                 placeholder: field.host.placeholder
                 hasError: field.error !== ""
-                echoMode: TextInput.Password
                 onTextEdited: root.formModel.setFieldValue(field.host.index, text)
                 onActiveFocusChanged: {
                     if (activeFocus)

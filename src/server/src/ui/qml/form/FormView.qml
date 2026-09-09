@@ -17,6 +17,8 @@ Flickable {
     property real padding: 16
     property real maxContentWidth: Infinity
 
+    Component.onCompleted: contentY = -topMargin
+
     StatusBarInset {
         id: statusBarInset
         target: root
@@ -72,18 +74,21 @@ Flickable {
     }
 
     function _ensureVisible(item) {
-        if (!_isDescendantOf(item, root.contentItem))
+        if (root.height <= 0 || !_isDescendantOf(item, root.contentItem))
             return;
-        let mapped = item.mapToItem(root.contentItem, 0, 0);
-        let itemTop = mapped.y;
-        let itemBottom = itemTop + item.height;
-        let viewTop = root.contentY;
-        let viewBottom = viewTop + root.height - statusBarInset.value;
+        const mapped = item.mapToItem(root.contentItem, 0, 0);
+        const itemTop = mapped.y;
+        const itemBottom = itemTop + item.height;
+        const viewTop = root.contentY;
+        const viewBottom = viewTop + root.height - statusBarInset.value;
+        const minY = -root.topMargin;
+        const maxY = Math.max(minY, root.contentHeight - root.height + root.bottomMargin);
+        const gap = root.padding * 2;
 
         if (itemTop < viewTop) {
-            root.contentY = Math.max(0, itemTop - 8);
+            root.contentY = Math.max(minY, itemTop - gap);
         } else if (itemBottom > viewBottom) {
-            root.contentY = Math.min(root.contentHeight - root.height + root.bottomMargin, itemBottom - root.height + statusBarInset.value + 8);
+            root.contentY = Math.min(maxY, itemBottom - root.height + statusBarInset.value + gap);
         }
     }
 }

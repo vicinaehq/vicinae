@@ -116,10 +116,9 @@ Item {
             readonly property FieldHost host: parent as FieldHost
             label: field.host.label
             info: field.host.description
-            FormTextInput {
+            FormPasswordInput {
                 text: field.host.value != null ? String(field.host.value) : ""
                 placeholder: field.host.placeholder
-                echoMode: TextInput.Password
                 onTextEdited: root.host.prefModel.setFieldValue(field.host.index, text)
             }
         }

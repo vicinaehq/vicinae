@@ -27,11 +27,12 @@ Item {
             error: root.host.linkError
             info: qsTr("The URL that will be opened by the specified app. You can make it dynamic by using placeholders such as {argument}.")
 
-            FormCompletedInput {
+            FormTextInput {
                 id: linkInput
                 text: root.host.link
                 placeholder: "https://google.com/search?q={argument}"
                 completions: root.host.linkCompletions
+                highlighter: PlaceholderHighlight {}
                 hasError: urlField.error !== ""
 
                 onTextEdited: root.host.link = text

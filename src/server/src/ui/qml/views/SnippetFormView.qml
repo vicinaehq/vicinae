@@ -31,10 +31,11 @@ Item {
             info: qsTr("You can use {dynamic placeholders} to make the content dynamic: <a href=\"https://docs.vicinae.com/snippets\">learn more</a>.")
             topAlignLabel: true
 
-            FormCompletedTextArea {
+            FormTextArea {
                 text: root.host.content
                 placeholder: "€"
                 completions: root.host.contentCompletions
+                highlighter: PlaceholderHighlight {}
                 hasError: contentField.error !== ""
                 onTextEdited: root.host.content = text
             }

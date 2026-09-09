@@ -18,24 +18,12 @@ static QString foldForMatch(QStringView text) {
   return out;
 }
 
-MatchHighlighter::MatchHighlighter(QObject *parent) : QSyntaxHighlighter(parent) {}
+MatchHighlighter::MatchHighlighter(QObject *parent) : DocumentHighlighter(parent) {}
 
-void MatchHighlighter::setTextDocument(QQuickTextDocument *document) {
-  if (m_textDocument == document) return;
-
-  if (m_textDocument && m_textDocument->textDocument()) {
-    disconnect(m_textDocument->textDocument(), nullptr, this, nullptr);
-  }
-
-  m_textDocument = document;
-  auto *doc = document ? document->textDocument() : nullptr;
-  setDocument(doc);
-
-  if (doc) {
+void MatchHighlighter::documentChanged() {
+  if (auto *doc = document()) {
     connect(doc, &QTextDocument::contentsChanged, this, &MatchHighlighter::updateFirstMatchPosition);
   }
-
-  emit textDocumentChanged();
   updateFirstMatchPosition();
 }
 
