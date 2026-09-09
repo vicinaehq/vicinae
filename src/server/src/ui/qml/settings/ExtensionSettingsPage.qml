@@ -176,7 +176,7 @@ Item {
                         required property string type
                         required property string iconSource
                         required property string description
-                        required property bool enabled
+                        required property bool isEnabled
                         required property string alias
                         required property string entrypointId
                         required property bool hasPreferences
@@ -246,7 +246,7 @@ Item {
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: Math.min(implicitWidth, titleWrap.width - titleWrap.chevronSpace)
                                         text: cmdDelegate.name
-                                        color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
+                                        color: !cmdDelegate.isEnabled ? Theme.textMuted : Theme.foreground
                                         font.pointSize: Theme.regularFontSize
                                         elide: Text.ElideRight
                                         maximumLineCount: 1
@@ -286,8 +286,8 @@ Item {
                                     Layout.preferredWidth: 20
                                     Layout.preferredHeight: 20
                                     radius: 4
-                                    color: cmdDelegate.enabled ? Theme.accent : "transparent"
-                                    border.color: Config.withAlpha(cmdDelegate.enabled ? Theme.accent : Theme.inputBorder, Config.surfaceOpacity)
+                                    color: cmdDelegate.isEnabled ? Theme.accent : "transparent"
+                                    border.color: Config.withAlpha(cmdDelegate.isEnabled ? Theme.accent : Theme.inputBorder, Config.surfaceOpacity)
                                     border.width: 1
 
                                     Text {
@@ -296,13 +296,13 @@ Item {
                                         color: "#ffffff"
                                         font.pixelSize: 13
                                         font.bold: true
-                                        visible: cmdDelegate.enabled
+                                        visible: cmdDelegate.isEnabled
                                     }
 
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.extModel.setEnabledByEntrypointId(cmdDelegate.entrypointId, !cmdDelegate.enabled)
+                                        onClicked: root.extModel.setEnabledByEntrypointId(cmdDelegate.entrypointId, !cmdDelegate.isEnabled)
                                     }
                                 }
                             }

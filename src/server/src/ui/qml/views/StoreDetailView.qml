@@ -19,6 +19,7 @@ Item {
         })
 
     component TextLink: RowLayout {
+        id: textLink
         property string label: ""
         property string url: ""
 
@@ -26,22 +27,23 @@ Item {
 
         Text {
             text: parent.label
-            color: linkArea.containsMouse ? Theme.accent : Theme.foreground
+            color: linkHover.hovered ? Theme.accent : Theme.foreground
             font.pointSize: Theme.regularFontSize
         }
 
         ViciImage {
             Layout.preferredWidth: 14
             Layout.preferredHeight: 14
-            source: Img.builtin("arrow-ne").withFillColor(linkArea.containsMouse ? Theme.accent : Theme.textMuted)
+            source: Img.builtin("arrow-ne").withFillColor(linkHover.hovered ? Theme.accent : Theme.textMuted)
         }
 
-        MouseArea {
-            id: linkArea
-            anchors.fill: parent
-            hoverEnabled: true
+        HoverHandler {
+            id: linkHover
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.host.openUrl(parent.url)
+        }
+
+        TapHandler {
+            onTapped: root.host.openUrl(textLink.url)
         }
     }
 
@@ -119,8 +121,8 @@ Item {
                         }
 
                         Rectangle {
-                            width: 1
-                            height: 14
+                            Layout.preferredWidth: 1
+                            Layout.preferredHeight: 14
                             color: Theme.divider
                         }
 
@@ -214,7 +216,7 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
+                Layout.preferredHeight: 1
                 color: Theme.divider
             }
 
@@ -354,7 +356,7 @@ Item {
             Rectangle {
                 visible: root.host.hasScreenshots
                 Layout.fillWidth: true
-                height: 1
+                Layout.preferredHeight: 1
                 color: Theme.divider
             }
 
@@ -391,7 +393,7 @@ Item {
 
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 1
+                        Layout.preferredHeight: 1
                         color: Theme.divider
                     }
 
@@ -449,7 +451,7 @@ Item {
                                     visible: commandItem.index < root.host.commands.length - 1
                                     Layout.fillWidth: true
                                     Layout.topMargin: 15
-                                    height: 1
+                                    Layout.preferredHeight: 1
                                     color: Theme.divider
                                 }
                             }
@@ -459,7 +461,7 @@ Item {
 
                 Rectangle {
                     Layout.fillHeight: true
-                    width: 1
+                    Layout.preferredWidth: 1
                     color: Theme.divider
                 }
 

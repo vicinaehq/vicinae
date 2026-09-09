@@ -262,8 +262,7 @@ Window {
             anchors.margins: Config.borderWidth
             visible: Launcher.hasOverlay
 
-            onLoaded: if (item)
-                item.forceActiveFocus()
+            onLoaded: (item as Item)?.forceActiveFocus()
         }
 
         ActionPanelPopover {

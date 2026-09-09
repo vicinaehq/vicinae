@@ -7,7 +7,7 @@ Window {
     id: root
 
     property int step: 0
-    readonly property bool permissionsAvailable: typeof Permissions !== "undefined"
+    readonly property bool permissionsAvailable: Onboarding.permissions.supported
     readonly property bool shortcutsAvailable: Platform.supports("globalShortcuts")
     readonly property int stepCount: permissionsAvailable ? 4 : 3
     readonly property bool accessibilityGranted: permissionsAvailable && Onboarding.permissions.accessibilityGranted

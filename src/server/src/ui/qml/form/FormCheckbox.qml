@@ -57,8 +57,8 @@ Item {
 
         Rectangle {
             id: box
-            width: 16
-            height: 16
+            Layout.preferredWidth: 16
+            Layout.preferredHeight: 16
             radius: 4
             antialiasing: true
             Layout.alignment: Qt.AlignVCenter

@@ -515,6 +515,7 @@ set(SRCS
 	src/ui/bridges/keybind-bridge.hpp
 	src/ui/windows/launcher-window.hpp
 	src/ui/windows/launcher-window.cpp
+	src/services/permissions/macos-permission-service.hpp
 	src/ui/qml-dev-loader.hpp
 	src/ui/qml-dev-loader.cpp
 	src/builtins/root/root-view-host.hpp
@@ -722,7 +723,6 @@ if (APPLE)
 		src/services/snippet/macos-snippet-server.mm
 		src/services/update/macos-update-installer.hpp
 		src/services/update/macos-update-installer.mm
-		src/services/permissions/macos-permission-service.hpp
 		src/services/permissions/macos-permission-service.mm
 		src/services/autostart/macos-login-item.hpp
 		src/services/autostart/macos-login-item.mm
@@ -764,6 +764,7 @@ if (APPLE)
 	if (AUTO_ENABLE_AUTOSTART)
 		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
 	endif()
+
 elseif (WIN32)
 	list(APPEND SRCS
 		src/ui/image/win-file-icon-loader.hpp
@@ -835,6 +836,10 @@ else()
 		src/services/app-runtime/linux/linux-app-runtime.hpp
 		src/services/app-runtime/linux/linux-app-runtime.cpp
 	)
+endif()
+
+if(NOT APPLE)
+	list(APPEND SRCS src/services/permissions/permission-service-stub.cpp)
 endif()
 
 if (ENABLE_ONBOARDING)
@@ -1085,7 +1090,156 @@ if(APPLE)
 	)
 endif()
 
-file(GLOB_RECURSE VICINAE_QML_FILES CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/ui/qml/*.qml)
+set(VICINAE_QML_FILES
+	src/ui/qml/launcher/LauncherWindow.qml
+	src/ui/qml/controls/PopupMaterial.qml
+	src/ui/qml/controls/ViciPopover.qml
+	src/ui/qml/controls/PopoverBackground.qml
+	src/ui/qml/launcher/SearchBar.qml
+	src/ui/qml/views/GenericListView.qml
+	src/ui/qml/controls/StatusBarInset.qml
+	src/ui/qml/list/HoverResetOnModelChange.qml
+	src/ui/qml/list/HoverResetOnShow.qml
+	src/ui/qml/views/RootSearchList.qml
+	src/ui/qml/list/ListItemDelegate.qml
+	src/ui/qml/list/ListAccessory.qml
+	src/ui/qml/list/ListAccessoryRow.qml
+	src/ui/qml/list/SelectableDelegate.qml
+	src/ui/qml/list/DraggableMouseArea.qml
+	src/ui/qml/list/SectionHeader.qml
+	src/ui/qml/launcher/Footer.qml
+	src/ui/qml/launcher/FooterButton.qml
+	src/ui/qml/launcher/FooterNavStatus.qml
+	src/ui/qml/launcher/FooterToast.qml
+	src/ui/qml/controls/ShortcutBadge.qml
+	src/ui/qml/controls/TextBadge.qml
+	src/ui/qml/views/CommandListView.qml
+	src/ui/qml/views/CalcHistoryListView.qml
+	src/ui/qml/list/CalculatorResultDelegate.qml
+	src/ui/qml/views/ThemeListView.qml
+	src/ui/qml/list/ThemeItemDelegate.qml
+	src/ui/qml/views/GenericGridView.qml
+	src/ui/qml/views/GridCell.qml
+	src/ui/qml/views/GridCell.qml
+	src/ui/qml/views/EmptyView.qml
+	src/ui/qml/views/EmojiGridView.qml
+	src/ui/qml/controls/ViciButton.qml
+	src/ui/qml/controls/ViciScrollBar.qml
+	src/ui/qml/controls/ViciDivider.qml
+	src/ui/qml/controls/ViciToolTip.qml
+	src/ui/qml/views/ExtensionView.qml
+	src/ui/qml/views/MarkdownDetailView.qml
+	src/ui/qml/views/ExtensionGridView.qml
+	src/ui/qml/actions/ActionPanelPopover.qml
+	src/ui/qml/actions/ActionListPanel.qml
+	src/ui/qml/actions/ActionItemDelegate.qml
+	src/ui/qml/controls/SearchableDropdown.qml
+	src/ui/qml/views/ClipboardHistoryView.qml
+	src/ui/qml/accessories/ClipboardFilterAccessory.qml
+	src/ui/qml/accessories/EmojiCategoryFilterAccessory.qml
+	src/ui/qml/detail/DetailPanel.qml
+	src/ui/qml/detail/MetadataBar.qml
+	src/ui/qml/launcher/AlertDialog.qml
+	src/ui/qml/form/FormView.qml
+	src/ui/qml/form/FormField.qml
+	src/ui/qml/form/FormInputBackground.qml
+	src/ui/qml/form/FormTextInput.qml
+	src/ui/qml/form/FormTextArea.qml
+	src/ui/qml/form/FormCheckbox.qml
+	src/ui/qml/form/FormSeparator.qml
+	src/ui/qml/views/SnippetFormView.qml
+	src/ui/qml/views/AliasFormView.qml
+	src/ui/qml/views/ShortcutFormView.qml
+	src/ui/qml/form/FormCompletedInput.qml
+	src/ui/qml/form/FormCompletedTextArea.qml
+	src/ui/qml/form/PlaceholderCompleter.qml
+	src/ui/qml/controls/CompletionPopup.qml
+	src/ui/qml/views/CreateExtensionFormView.qml
+	src/ui/qml/launcher/ArgCompleter.qml
+	src/ui/qml/views/DetailListView.qml
+	src/ui/qml/views/StoreListingView.qml
+	src/ui/qml/views/StoreDetailView.qml
+	src/ui/qml/views/StoreIntroView.qml
+	src/ui/qml/detail/ImageViewer.qml
+	src/ui/qml/markdown/MarkdownView.qml
+	src/ui/qml/markdown/MarkdownText.qml
+	src/ui/qml/markdown/MdHeading.qml
+	src/ui/qml/markdown/MdParagraph.qml
+	src/ui/qml/markdown/MdCodeBlock.qml
+	src/ui/qml/markdown/MdList.qml
+	src/ui/qml/markdown/MdTable.qml
+	src/ui/qml/markdown/MdImage.qml
+	src/ui/qml/markdown/MdHorizontalRule.qml
+	src/ui/qml/markdown/MdHtmlBlock.qml
+	src/ui/qml/markdown/MdBlockquote.qml
+	src/ui/qml/markdown/MdCallout.qml
+	src/ui/qml/views/BrowseFontsView.qml
+	src/ui/qml/views/FontDemoView.qml
+	src/ui/qml/accessories/CategoryFilterAccessory.qml
+	src/ui/qml/views/ExtensionFormView.qml
+	src/ui/qml/form/FormFilePicker.qml
+	src/ui/qml/form/FormAppSelector.qml
+	src/ui/qml/form/FormDateInput.qml
+	src/ui/qml/form/FormLinkAccessory.qml
+	src/ui/qml/accessories/ExtensionDropdownAccessory.qml
+	src/ui/qml/views/EditKeywordsFormView.qml
+	src/ui/qml/launcher/HorizontalLoadingBar.qml
+	src/ui/qml/views/SearchFilesView.qml
+	src/ui/qml/detail/TextViewer.qml
+	src/ui/qml/detail/FilePreview.qml
+	src/ui/qml/views/DMenuView.qml
+	src/ui/qml/views/ScriptOutputText.qml
+	src/ui/qml/views/ScriptExecutorView.qml
+	src/ui/qml/settings/SettingsWindow.qml
+	src/ui/qml/settings/SettingsScrollEdge.qml
+	src/ui/qml/settings/SettingsNavButtons.qml
+	src/ui/qml/settings/SettingsSidebar.qml
+	src/ui/qml/settings/SettingsRow.qml
+	src/ui/qml/settings/SettingsGroup.qml
+	src/ui/qml/settings/SettingsSectionLabel.qml
+	src/ui/qml/settings/InlineEditableText.qml
+	src/ui/qml/settings/SettingsToggle.qml
+	src/ui/qml/settings/GeneralSettingsPage.qml
+	src/ui/qml/settings/AppearanceSettingsPage.qml
+	src/ui/qml/settings/AdvancedSettingsPage.qml
+	src/ui/qml/settings/ShortcutsSettingsPage.qml
+	src/ui/qml/settings/ExtensionSettingsPage.qml
+	src/ui/qml/settings/AboutSettingsPage.qml
+	src/ui/qml/form/ShortcutRecorderField.qml
+	src/ui/qml/form/ShortcutRecorderCapture.qml
+	src/ui/qml/actions/ShortcutRecorderPanel.qml
+	src/ui/qml/form/ShortcutField.qml
+	src/ui/qml/settings/SettingsPreferenceForm.qml
+	src/ui/qml/views/MissingPreferenceView.qml
+	src/ui/qml/views/OAuthOverlayView.qml
+	src/ui/qml/hud/HudWindow.qml
+	src/ui/qml/onboarding/OnboardingWindow.qml
+)
+
+if(WAYLAND_LAYER_SHELL)
+	list(APPEND VICINAE_QML_FILES
+		src/ui/qml/launcher/LauncherWindowLayerShell.qml
+		src/ui/qml/hud/HudWindowLayerShell.qml
+	)
+endif()
+
+if(APPLE)
+	list(APPEND VICINAE_QML_FILES
+		src/ui/qml/launcher/LauncherWindowMacOS.qml
+		src/ui/qml/onboarding/OnboardingWindowMacOS.qml
+		src/ui/qml/hud/HudWindowMacOS.qml
+		src/ui/qml/controls/CompletionPanelMacOS.qml
+		src/ui/qml/controls/PopupMaterialMacOS.qml
+		src/ui/qml/settings/SettingsWindowMacOS.qml
+	)
+endif()
+
+if(WIN32)
+	list(APPEND VICINAE_QML_FILES
+		src/ui/qml/launcher/LauncherWindowWindows.qml
+		src/ui/qml/hud/HudWindowWindows.qml
+	)
+endif()
 
 # Strip directory prefix so resources are qrc:/Vicinae/Foo.qml
 foreach(qml_file IN LISTS VICINAE_QML_FILES)

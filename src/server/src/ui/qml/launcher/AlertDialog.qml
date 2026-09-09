@@ -38,8 +38,8 @@ ViciPopover {
         Rectangle {
             Layout.alignment: Qt.AlignHCenter
             visible: Launcher.alertModel.iconSource !== ""
-            width: 44
-            height: 44
+            Layout.preferredWidth: 44
+            Layout.preferredHeight: 44
             radius: width / 2
             color: Launcher.alertModel.iconBadged ? Config.withAlpha(Launcher.alertModel.confirmColor, 0.14) : "transparent"
 

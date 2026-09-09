@@ -209,6 +209,7 @@ Item {
                     }
 
                     if (nav === 1) {
+                        // qmllint disable missing-property
                         root.commandStack.currentItem.moveUp();
                     } else if (nav === 2) {
                         root.commandStack.currentItem.moveDown();
@@ -218,6 +219,7 @@ Item {
                     } else if (nav === 4) {
                         if (root.commandStack.currentItem && typeof root.commandStack.currentItem.moveRight === "function")
                             root.commandStack.currentItem.moveRight();
+                        // qmllint enable missing-property
                     }
                     return true;
                 }
@@ -229,10 +231,12 @@ Item {
                     }
 
                     const ctrl = event.modifiers == Qt.ControlModifier;
+                    // qmllint disable missing-property
                     const navigatable = typeof root.commandStack.currentItem.moveUp === "function";
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
                         event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionUp === "function" && root.commandStack.currentItem.moveSectionUp()) : root.commandStack.currentItem.moveUp();
+                    // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
@@ -243,11 +247,15 @@ Item {
                         return;
                     }
 
+                    // qmllint disable missing-property
                     const navigatable = typeof root.commandStack.currentItem.moveDown === "function";
+                    // qmllint enable missing-property
                     const ctrl = event.modifiers == Qt.ControlModifier;
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
+                        // qmllint disable missing-property
                         event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionDown === "function" && root.commandStack.currentItem.moveSectionDown()) : root.commandStack.currentItem.moveDown();
+                        // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
@@ -258,10 +266,12 @@ Item {
                         return;
                     }
 
+                    // qmllint disable missing-property
                     const navigatable = typeof root.commandStack.currentItem.moveLeft === "function";
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
                         event.accepted = root.commandStack.currentItem.moveLeft();
+                    // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
@@ -272,10 +282,12 @@ Item {
                         return;
                     }
 
+                    // qmllint disable missing-property
                     const navigatable = typeof root.commandStack.currentItem.moveRight === "function";
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
                         event.accepted = root.commandStack.currentItem.moveRight();
+                    // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
@@ -328,10 +340,7 @@ Item {
         Shortcut {
             sequence: Keybinds.openSearchAccessorySequence
             enabled: !!accessoryLoader.item
-            onActivated: {
-                if (typeof accessoryLoader.item.open === "function")
-                    accessoryLoader.item.open();
-            }
+            onActivated: (accessoryLoader.item as SearchableDropdown)?.open()
         }
 
         Connections {

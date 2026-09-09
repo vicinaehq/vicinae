@@ -80,8 +80,7 @@ Item {
         readonly property bool isField: type !== "separator" && type !== "description"
 
         function focusField() {
-            if (item && typeof item.focusField === "function")
-                item.focusField();
+            (item as FormField)?.focusField();
         }
 
         sourceComponent: {
@@ -119,9 +118,7 @@ Item {
             error: field.host.error
             info: field.host.info
 
-            function focusField() {
-                textInput.forceActiveFocus();
-            }
+            focusTarget: textInput
 
             FormTextInput {
                 id: textInput
@@ -148,9 +145,7 @@ Item {
             error: field.host.error
             info: field.host.info
 
-            function focusField() {
-                passwordInput.forceActiveFocus();
-            }
+            focusTarget: passwordInput
 
             FormTextInput {
                 id: passwordInput
@@ -179,9 +174,7 @@ Item {
             info: field.host.info
             topAlignLabel: true
 
-            function focusField() {
-                textArea.forceActiveFocus();
-            }
+            focusTarget: textArea
 
             FormTextArea {
                 id: textArea
@@ -210,9 +203,7 @@ Item {
             error: field.host.error
             info: field.host.info
 
-            function focusField() {
-                checkbox.forceActiveFocus();
-            }
+            focusTarget: checkbox
 
             FormCheckbox {
                 id: checkbox
@@ -239,9 +230,7 @@ Item {
             error: field.host.error
             info: field.host.info
 
-            function focusField() {
-                dropdown.forceActiveFocus();
-            }
+            focusTarget: dropdown
 
             readonly property var _fd: field.host.fieldData || ({})
 
@@ -273,9 +262,7 @@ Item {
             error: field.host.error
             info: field.host.info
 
-            function focusField() {
-                filePicker.forceActiveFocus();
-            }
+            focusTarget: filePicker
 
             readonly property var _fd: field.host.fieldData || ({})
             topAlignLabel: filePicker.multiple
@@ -309,9 +296,7 @@ Item {
             error: field.host.error
             info: field.host.info
 
-            function focusField() {
-                dateInput.forceActiveFocus();
-            }
+            focusTarget: dateInput
 
             readonly property var _fd: field.host.fieldData || ({})
 

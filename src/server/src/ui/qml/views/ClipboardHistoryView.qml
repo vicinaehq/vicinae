@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
 import Vicinae
 
 Item {
@@ -53,8 +52,8 @@ Item {
 
             Item {
                 visible: root.host.clipboardStatusIcon !== ""
-                width: 20
-                height: 20
+                Layout.preferredWidth: 20
+                Layout.preferredHeight: 20
                 opacity: statusMouseArea.containsMouse ? 1.0 : 0.6
 
                 ViciImage {

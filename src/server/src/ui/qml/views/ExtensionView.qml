@@ -8,44 +8,58 @@ Item {
     required property ExtensionViewHost host
 
     StackView.onActivated: {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.restoreFocus === "function")
             contentLoader.item.restoreFocus();
+        // qmllint enable missing-property
     }
 
     function moveUp() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveUp === "function") {
             return contentLoader.item.moveUp();
+        // qmllint enable missing-property
         }
         return false;
     }
     function moveDown() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveDown === "function") {
             return contentLoader.item.moveDown();
+        // qmllint enable missing-property
         }
         return false;
     }
     function moveSectionUp() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveSectionUp === "function") {
             return contentLoader.item.moveSectionUp();
+        // qmllint enable missing-property
         } else {
             return moveUp();
         }
     }
     function moveSectionDown() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveSectionDown === "function")
             return contentLoader.item.moveSectionDown();
+        // qmllint enable missing-property
         else
             return moveDown();
     }
     function moveLeft() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveLeft === "function") {
             return contentLoader.item.moveLeft();
+        // qmllint enable missing-property
         }
         return false;
     }
     function moveRight() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveRight === "function") {
             return contentLoader.item.moveRight();
+        // qmllint enable missing-property
         }
         return false;
     }

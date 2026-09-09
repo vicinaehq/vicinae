@@ -39,13 +39,8 @@ public:
   static bool shouldShow();
 
   GeneralSettingsModel *generalModel() const { return m_generalModel; }
-#ifdef Q_OS_MACOS
   Q_PROPERTY(MacosPermissionService *permissions READ permissions CONSTANT)
   MacosPermissionService *permissions() const { return m_permissions; }
-#else
-  Q_PROPERTY(QObject *permissions READ permissions CONSTANT)
-  QObject *permissions() const { return nullptr; }
-#endif
 
   bool loginItemEnabled() const { return m_loginItemEnabled; }
   void setLoginItemEnabled(bool enabled);

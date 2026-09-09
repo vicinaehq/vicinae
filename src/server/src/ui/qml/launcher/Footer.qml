@@ -42,8 +42,8 @@ Item {
         Rectangle {
             visible: primaryButton.visible && actionsButton.visible
             Layout.alignment: Qt.AlignVCenter
-            width: 1
-            height: 12
+            Layout.preferredWidth: 1
+            Layout.preferredHeight: 12
             opacity: primaryButton.hovered || actionsButton.hovered || actionsButton.backgrounded ? 0 : 0.35
             color: Config.withAlpha(Theme.textMuted, Config.windowOpacity)
 

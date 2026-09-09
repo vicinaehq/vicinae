@@ -22,8 +22,8 @@ Item {
 
         ViciButton {
             id: backBtn
-            width: 25
-            height: 25
+            Layout.preferredWidth: 25
+            Layout.preferredHeight: 25
             radius: 4
             icon: "arrow-left"
             variant: "ghost"

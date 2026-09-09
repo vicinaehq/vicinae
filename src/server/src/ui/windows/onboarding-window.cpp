@@ -1,6 +1,7 @@
 #include "ui/windows/onboarding-window.hpp"
 #include "ui/bridges/config-bridge.hpp"
 #include "ui/qml-dev-loader.hpp"
+#include "services/permissions/macos-permission-service.hpp"
 #include "ui/qml-engine-scope.hpp"
 #include "ui/settings/general-settings-model.hpp"
 #include "ui/bridges/global-shortcut-bridge.hpp"
@@ -21,7 +22,6 @@
 #ifdef Q_OS_MACOS
 #include "ui/quick/macos-chrome-attached.hpp"
 #include "services/autostart/macos-login-item.hpp"
-#include "services/permissions/macos-permission-service.hpp"
 #endif
 
 struct OnboardingState {
@@ -109,9 +109,9 @@ void OnboardingWindow::ensureInitialized() {
   QmlEngineScope::set(&m_engine, this);
   QmlEngineScope::set(&m_engine, m_configBridge);
 
+  m_permissions = new MacosPermissionService(this);
 #ifdef Q_OS_MACOS
   m_loginItemEnabled = vicinae::macos::isLoginItemEnabled();
-  m_permissions = new MacosPermissionService(this);
 #endif
 
   loadRoot();
@@ -129,13 +129,11 @@ void OnboardingWindow::loadRoot() {
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
 
-#ifdef Q_OS_MACOS
   if (m_window) {
     connect(m_window, &QQuickWindow::visibleChanged, m_permissions,
             [this](bool visible) { m_permissions->setWatching(visible); });
     m_permissions->setWatching(m_window->isVisible());
   }
-#endif
 }
 
 void OnboardingWindow::reloadRoot() {

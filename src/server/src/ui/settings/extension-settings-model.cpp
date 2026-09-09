@@ -63,7 +63,7 @@ QHash<int, QByteArray> ExtensionSettingsModel::roleNames() const {
           {IconSourceRole, "iconSource"},
           {IsProviderRole, "isProvider"},
           {IndentRole, "indent"},
-          {EnabledRole, "enabled"},
+          {EnabledRole, "isEnabled"},
           {AliasRole, "alias"},
           {EntrypointIdRole, "entrypointId"},
           {ExpandedRole, "expanded"},

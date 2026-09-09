@@ -111,7 +111,7 @@ Rectangle {
 
         Rectangle {
             Layout.fillWidth: true
-            height: 1
+            Layout.preferredHeight: 1
             color: Theme.divider
             visible: root.headers.length > 0
         }
