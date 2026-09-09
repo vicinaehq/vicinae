@@ -4,7 +4,7 @@ It uses QML for presentation and C++ for business logic.
 React/Typescript is used to power the extension API.
 
 For development: 
-- On UNIXes, use `make debug`.
+- On UNIXes, use `make dev`.
 - On Windows use `cmake --preset windows-relwithdebinfo` (full debug builds only when needed)
 
 ## Separation of concerns

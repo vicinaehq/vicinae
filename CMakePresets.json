@@ -92,7 +92,8 @@
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "LTO": "OFF",
         "VICINAE_DEV_MODE": "ON",
-        "VICINAE_NODE_RUNTIME_DOWNLOAD": "ON"
+        "VICINAE_NODE_RUNTIME_DOWNLOAD": "ON",
+        "BUILD_TESTS": "ON"
       }
     },
     {
