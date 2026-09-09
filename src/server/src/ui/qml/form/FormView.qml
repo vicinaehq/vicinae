@@ -17,6 +17,8 @@ Flickable {
     property real padding: 16
     property real maxContentWidth: Infinity
 
+    Component.onCompleted: contentY = -topMargin
+
     StatusBarInset {
         id: statusBarInset
         target: root
