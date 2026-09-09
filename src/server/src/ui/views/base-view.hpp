@@ -16,7 +16,6 @@ class QKeyEvent;
 class BaseView : public QObject {
   Q_OBJECT
 
-
 public:
   void createInitialize();
   bool isInitialized();
