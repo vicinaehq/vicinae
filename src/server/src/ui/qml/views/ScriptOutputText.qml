@@ -39,15 +39,17 @@ ScrollView {
 
     function moveUp() {
         root.flick.contentY = Math.max(0, root.flick.contentY - 40);
+        return true;
     }
     function moveDown() {
         root.flick.contentY = Math.min(root.flick.contentHeight - height + root.flick.bottomMargin, root.flick.contentY + 40);
+        return true;
     }
     function moveSectionUp() {
-        moveUp();
+        return moveUp();
     }
     function moveSectionDown() {
-        moveDown();
+        return moveDown();
     }
     function focusText() {
         textArea.forceActiveFocus();

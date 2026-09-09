@@ -60,7 +60,7 @@ ScrollView {
         textFormat: TextEdit.PlainText
         color: Theme.foreground
         font.pointSize: Theme.smallerFontSize
-        font.family: root.monospace ? Theme.monoFontFamily : undefined
+        font.family: root.monospace ? Theme.monoFontFamily : Theme.fontFamily
         wrapMode: TextEdit.WrapAtWordBoundaryOrAnywhere
         padding: 12
         readOnly: true

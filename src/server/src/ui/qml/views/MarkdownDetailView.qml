@@ -14,15 +14,17 @@ RowLayout {
 
     function moveUp() {
         mdContent.scrollUp();
+        return true;
     }
     function moveDown() {
         mdContent.scrollDown();
+        return true;
     }
     function moveSectionUp() {
-        moveUp();
+        return moveUp();
     }
     function moveSectionDown() {
-        moveDown();
+        return moveDown();
     }
 
     spacing: 0
