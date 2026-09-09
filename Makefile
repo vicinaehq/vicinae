@@ -52,6 +52,10 @@ debug:
 	cmake --build --preset $(PRESET_OS)-debug
 .PHONY: debug
 
+qmllint:
+	cmake --build $(BUILD_DIR) --target all_qmllint
+.PHONY: qmllint
+
 update-translations:
 	cmake --preset $(PRESET_OS)-debug
 	cmake --build --preset $(PRESET_OS)-debug --target update_translations

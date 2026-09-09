@@ -60,6 +60,8 @@ All our code is also linted with `clang-tidy` in order to make detecting common 
 
 ## QML rules
 
+QML code should pass the linter, which you can run using `make qmllint`.
+
 When writing JavaScript inside QML files, use ES6 syntax to the largest extent possible.
 
 Try to keep the amount of logic in these files small. Logic in QML is only for presentation concerns: metrics computation, hover on signal, etc...
