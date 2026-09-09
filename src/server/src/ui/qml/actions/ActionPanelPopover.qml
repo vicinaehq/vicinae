@@ -1,10 +1,12 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import Vicinae
 
 ViciPopover {
     id: root
 
-    required property var controller
+    required property ActionPanelController controller
     property bool alignLeft: false
     property int maxHeight: 400
 
@@ -50,24 +52,30 @@ ViciPopover {
             } else if (event.key === Qt.Key_Up || nav === 1) {
                 if (stack.currentItem) {
                     const ctrl = (event.modifiers & Qt.ControlModifier);
+                    // qmllint disable missing-property
                     if (ctrl && typeof stack.currentItem.moveSectionUp === "function")
                         stack.currentItem.moveSectionUp();
                     else if (typeof stack.currentItem.moveUp === "function")
                         stack.currentItem.moveUp();
+                    // qmllint enable missing-property
                 }
                 event.accepted = true;
             } else if (event.key === Qt.Key_Down || nav === 2) {
                 if (stack.currentItem) {
                     const ctrl = (event.modifiers & Qt.ControlModifier);
+                    // qmllint disable missing-property
                     if (ctrl && typeof stack.currentItem.moveSectionDown === "function")
                         stack.currentItem.moveSectionDown();
                     else if (typeof stack.currentItem.moveDown === "function")
                         stack.currentItem.moveDown();
+                    // qmllint enable missing-property
                 }
                 event.accepted = true;
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                // qmllint disable missing-property
                 if (stack.currentItem && typeof stack.currentItem.activateCurrent === "function")
                     stack.currentItem.activateCurrent();
+                // qmllint enable missing-property
                 event.accepted = true;
             }
         }
@@ -105,14 +113,18 @@ ViciPopover {
             stack.push(componentUrl, properties, StackView.Immediate);
             stack.currentItem.controller = root.controller;
             root.controller.onPanelPushed(stack.currentItem);
+            // qmllint disable missing-property
             if (typeof stack.currentItem.focusFilter === "function")
                 stack.currentItem.focusFilter();
+            // qmllint enable missing-property
         }
         function onPanelPopRequested() {
             stack.pop();
             root.controller.onPanelPopped(stack.currentItem);
+            // qmllint disable missing-property
             if (stack.currentItem && typeof stack.currentItem.focusFilter === "function")
                 stack.currentItem.focusFilter();
+            // qmllint enable missing-property
         }
     }
 

@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import Vicinae
 
 Popup {
     id: root
@@ -21,9 +23,11 @@ Popup {
     padding: 1
 
     onAboutToShow: if (popupMaterial.macImpl)
+        // qmllint disable missing-property
         popupMaterial.macImpl.animateIn(root.animationAnchorX, root.animationAnchorY)
     onAboutToHide: if (popupMaterial.macImpl)
         popupMaterial.macImpl.animateOut(root.animationAnchorX, root.animationAnchorY)
+    // qmllint enable missing-property
 
     enter: root.isNativeWindow || !root.itemAnimationEnabled ? null : _itemEnter
     exit: root.hasNativeAnimation ? _holdExit : (root.isNativeWindow || !root.itemAnimationEnabled ? null : _itemExit)

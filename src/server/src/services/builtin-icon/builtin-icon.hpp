@@ -1,7 +1,13 @@
 #pragma once
+#include <QObject>
+#include <QtQml/qqmlregistration.h>
 #include <string>
 #include <format>
 #include <unordered_map>
+
+namespace BuiltinIcons {
+Q_NAMESPACE
+QML_NAMED_ELEMENT(BuiltinIcon)
 
 enum class BuiltinIcon : std::uint16_t {
   Aarch64,
@@ -857,6 +863,10 @@ enum class BuiltinIcon : std::uint16_t {
   Zendesk,
   Zig
 };
+Q_ENUM_NS(BuiltinIcon)
+} // namespace BuiltinIcons
+
+using BuiltinIcons::BuiltinIcon;
 
 class BuiltinIconService {
 public:

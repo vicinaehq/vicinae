@@ -1,14 +1,16 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 // Action panel page that records a shortcut in place. Backed by a
 // ShortcutRecorderPanelView exposed as `view`.
 Item {
     id: root
 
-    required property var view
-    property var controller: actionPanel
+    required property ShortcutRecorderPanelView view
+    property ActionPanelController controller: Launcher.actionPanel
 
     // Tells the window-level key routing to deliver every keypress here
     // instead of matching bound actions or app keybinds.

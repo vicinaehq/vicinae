@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
@@ -29,7 +31,7 @@ Item {
             }
 
             ViciImage {
-                source: Img.builtin("vicinae")
+                source: Img.icon(BuiltinIcon.Vicinae)
                 Layout.preferredWidth: 64
                 Layout.preferredHeight: 64
                 Layout.alignment: Qt.AlignHCenter
@@ -47,7 +49,7 @@ Item {
             }
 
             Text {
-                text: settings.headline
+                text: Settings.headline
                 color: Theme.foreground
                 font.pointSize: Theme.regularFontSize
                 horizontalAlignment: Text.AlignHCenter
@@ -56,7 +58,7 @@ Item {
             }
 
             Text {
-                text: qsTr("Version %1 - Commit %2\n(%3)").arg(settings.version).arg(settings.commitHash).arg(settings.buildInfo)
+                text: qsTr("Version %1 - Commit %2\n(%3)").arg(Settings.version).arg(Settings.commitHash).arg(Settings.buildInfo)
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 horizontalAlignment: Text.AlignHCenter
@@ -69,32 +71,32 @@ Item {
             }
 
             ViciButton {
-                icon: "github"
+                iconSource: Img.icon(BuiltinIcon.Github)
                 text: "GitHub"
                 variant: "secondary"
                 radius: 8
                 implicitWidth: 200
-                onClicked: settings.openUrl("https://github.com/vicinaehq/vicinae")
+                onClicked: Settings.openUrl("https://github.com/vicinaehq/vicinae")
                 Layout.alignment: Qt.AlignHCenter
             }
 
             ViciButton {
-                icon: "book"
+                iconSource: Img.icon(BuiltinIcon.Book)
                 text: qsTr("Documentation")
                 variant: "secondary"
                 radius: 8
                 implicitWidth: 200
-                onClicked: settings.openUrl("https://docs.vicinae.com")
+                onClicked: Settings.openUrl("https://docs.vicinae.com")
                 Layout.alignment: Qt.AlignHCenter
             }
 
             ViciButton {
-                icon: "bug"
+                iconSource: Img.icon(BuiltinIcon.Bug)
                 text: qsTr("Report a Bug")
                 variant: "secondary"
                 radius: 8
                 implicitWidth: 200
-                onClicked: settings.reportBug()
+                onClicked: Settings.reportBug()
                 Layout.alignment: Qt.AlignHCenter
             }
 

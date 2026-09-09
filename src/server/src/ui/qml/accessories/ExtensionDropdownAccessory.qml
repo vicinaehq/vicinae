@@ -1,16 +1,19 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import Vicinae
 
 SearchableDropdown {
     id: root
+    readonly property ExtensionViewHost host: Launcher.commandViewHost as ExtensionViewHost
     compact: true
     minimumWidth: 100
 
-    model: launcher.commandViewHost?.dropdownModel ?? null
-    currentItem: launcher.commandViewHost?.dropdownCurrentItem ?? null
-    placeholder: launcher.commandViewHost?.dropdownPlaceholder ?? ""
+    model: root.host?.dropdownModel ?? null
+    currentItem: root.host?.dropdownCurrentItem ?? null
+    placeholder: root.host?.dropdownPlaceholder ?? ""
 
     onActivated: item => {
-        if (launcher.commandViewHost)
-            launcher.commandViewHost.setDropdownValue(item.id);
+        if (root.host)
+            root.host.setDropdownValue(item.id);
     }
 }

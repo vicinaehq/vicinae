@@ -1,35 +1,13 @@
 #pragma once
-#include "ui/views/bridge-view.hpp"
+#include "ui/views/store-detail-host.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include <QVariantList>
 #include <QVariantMap>
 
-class RaycastStoreDetailHost : public FormViewBase {
+class RaycastStoreDetailHost : public StoreDetailHost {
   Q_OBJECT
 
-signals:
-  void extensionChanged();
-
 public:
-  Q_PROPERTY(QString title READ title NOTIFY extensionChanged)
-  Q_PROPERTY(QString description READ description NOTIFY extensionChanged)
-  Q_PROPERTY(QString iconSource READ iconSource NOTIFY extensionChanged)
-  Q_PROPERTY(QString authorName READ authorName NOTIFY extensionChanged)
-  Q_PROPERTY(QString authorAvatar READ authorAvatar NOTIFY extensionChanged)
-  Q_PROPERTY(QString downloadCount READ downloadCount NOTIFY extensionChanged)
-  Q_PROPERTY(QStringList platforms READ platforms NOTIFY extensionChanged)
-  Q_PROPERTY(bool isInstalled READ isInstalled NOTIFY extensionChanged)
-  Q_PROPERTY(bool hasScreenshots READ hasScreenshots NOTIFY extensionChanged)
-  Q_PROPERTY(QStringList screenshots READ screenshots NOTIFY extensionChanged)
-  Q_PROPERTY(QVariantList commands READ commands NOTIFY extensionChanged)
-  Q_PROPERTY(QString readmeUrl READ readmeUrl NOTIFY extensionChanged)
-  Q_PROPERTY(QString sourceUrl READ sourceUrl NOTIFY extensionChanged)
-  Q_PROPERTY(QString lastUpdate READ lastUpdate NOTIFY extensionChanged)
-  Q_PROPERTY(QVariantList contributors READ contributors NOTIFY extensionChanged)
-  Q_PROPERTY(QStringList categories READ categories NOTIFY extensionChanged)
-  Q_PROPERTY(QVariantMap alert READ alert NOTIFY extensionChanged)
-  Q_PROPERTY(bool isReady READ isReady NOTIFY extensionChanged)
-
   explicit RaycastStoreDetailHost(const Raycast::Extension &extension);
   RaycastStoreDetailHost(const QString &authorHandle, const QString &extensionName);
 
@@ -37,26 +15,26 @@ public:
   QVariantMap qmlProperties() override;
   void initialize() override;
 
-  QString title() const;
-  QString description() const;
-  QString iconSource() const;
-  QString authorName() const;
-  QString authorAvatar() const;
-  QString downloadCount() const;
-  QStringList platforms() const;
-  bool isReady() const;
-  bool isInstalled() const;
-  bool hasScreenshots() const;
-  QStringList screenshots() const;
-  QVariantList commands() const;
-  QString readmeUrl() const;
-  QString sourceUrl() const;
-  QString lastUpdate() const;
-  QVariantList contributors() const;
-  QStringList categories() const;
-  QVariantMap alert() const;
+  QString title() const override;
+  QString description() const override;
+  QString iconSource() const override;
+  QString authorName() const override;
+  QString authorAvatar() const override;
+  QString downloadCount() const override;
+  QStringList platforms() const override;
+  bool isReady() const override;
+  bool isInstalled() const override;
+  bool hasScreenshots() const override;
+  QStringList screenshots() const override;
+  QVariantList commands() const override;
+  QString readmeUrl() const override;
+  QString sourceUrl() const override;
+  QString lastUpdate() const override;
+  QVariantList contributors() const override;
+  QStringList categories() const override;
+  QVariantMap alert() const override;
 
-  Q_INVOKABLE void openUrl(const QString &url);
+  void openUrl(const QString &url) override;
 
 private:
   QString initialNavigationTitle() const override;

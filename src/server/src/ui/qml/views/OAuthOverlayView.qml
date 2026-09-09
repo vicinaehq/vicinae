@@ -1,9 +1,11 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property OAuthOverlayHost host
 
     focus: true
     Keys.onEscapePressed: root.host.abort()
@@ -20,10 +22,11 @@ Item {
 
         ViciButton {
             id: backBtn
-            width: 25
-            height: 25
+            Layout.preferredWidth: 25
+            Layout.preferredHeight: 25
             radius: 4
-            icon: "arrow-left"
+            iconSource: Img.icon(BuiltinIcon.ArrowLeft)
+            accessibleName: qsTr("Back")
             variant: "ghost"
             onClicked: root.host.abort()
         }
@@ -115,7 +118,7 @@ Item {
                 ViciImage {
                     Layout.preferredWidth: 40
                     Layout.preferredHeight: 40
-                    source: Img.builtin("check-circle").withFillColor(Theme.toastSuccess)
+                    source: Img.icon(BuiltinIcon.CheckCircle).withFillColor(Theme.toastSuccess)
                 }
             }
 

@@ -1,10 +1,12 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
-    readonly property var model: settings.keybindModel
+    readonly property KeybindSettingsModel model: Settings.keybindModel
     readonly property real contentWidth: Math.min(width - 32, 720)
     readonly property real sideMargin: (width - contentWidth) / 2
 
@@ -78,7 +80,7 @@ Item {
 
                         required property int index
                         required property string name
-                        required property string icon
+                        required property int icon
                         required property var shortcutTokens
 
                         readonly property bool isRecording: index === root._recordingRow
@@ -113,7 +115,7 @@ Item {
                                 spacing: 12
 
                                 ViciImage {
-                                    source: rowItem.icon ? Img.builtin(rowItem.icon).withBackgroundTint("accent") : ""
+                                    source: Img.icon(rowItem.icon).withBackgroundTint("accent")
                                     Layout.preferredWidth: 22
                                     Layout.preferredHeight: 22
                                     visible: rowItem.icon !== ""

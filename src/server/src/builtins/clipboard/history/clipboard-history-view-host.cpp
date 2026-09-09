@@ -77,11 +77,11 @@ ClipboardHistoryViewHost::~ClipboardHistoryViewHost() {
 }
 
 QUrl ClipboardHistoryViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/ClipboardHistoryView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ClipboardHistoryView.qml"));
 }
 
 QUrl ClipboardHistoryViewHost::qmlSearchAccessoryUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/ClipboardFilterAccessory.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ClipboardFilterAccessory.qml"));
 }
 
 QVariantMap ClipboardHistoryViewHost::qmlProperties() {

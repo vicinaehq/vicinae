@@ -47,6 +47,8 @@ MacosPermissionService::MacosPermissionService(QObject *parent) : QObject(parent
   refreshNotifications();
 }
 
+bool MacosPermissionService::supported() const { return true; }
+
 void MacosPermissionService::setWatching(bool value) {
   if (value == m_pollTimer.isActive()) return;
   if (value) {

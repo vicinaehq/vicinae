@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
+import Vicinae
 
 /// Measures how much of `target`'s bottom edge is covered by the window's
 /// floating status bar. Bind the result to a Flickable's bottomMargin so
@@ -10,7 +12,7 @@ Item {
     visible: false
 
     readonly property real value: {
-        const win = Window.window;
+        const win = Window.window as LauncherWindow;
         if (!win || !(win.statusBarOverlap > 0) || !target || target.height <= 0)
             return 0;
         const bottom = target.mapToItem(null, 0, target.height).y;

@@ -1,5 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
+import Vicinae
 
 SelectableDelegate {
     id: root
@@ -77,7 +78,7 @@ SelectableDelegate {
             width: 20
             height: 20
             anchors.centerIn: parent
-            source: Img.builtin("arrow-right").withFillColor(Theme.textMuted)
+            source: Img.icon(BuiltinIcon.ArrowRight).withFillColor(Theme.textMuted)
         }
 
         Rectangle {

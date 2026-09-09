@@ -1,4 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import Vicinae
 
 SourceBlendRect {
     property bool vertical: false

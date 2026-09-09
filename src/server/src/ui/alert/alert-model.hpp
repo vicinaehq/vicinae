@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include <QColor>
 #include <QObject>
 #include <QString>
@@ -9,6 +10,7 @@ class NavigationController;
 
 class AlertModel : public QObject {
   Q_OBJECT
+  QML_ANONYMOUS
   Q_PROPERTY(bool visible READ visible NOTIFY visibleChanged)
   Q_PROPERTY(QString title READ title NOTIFY changed)
   Q_PROPERTY(QString message READ message NOTIFY changed)

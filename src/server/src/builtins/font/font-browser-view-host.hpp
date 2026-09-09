@@ -15,9 +15,11 @@ signals:
   void currentCategoryFilterChanged();
 
 public:
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/BrowseFontsView.qml")); }
+  QUrl qmlComponentUrl() const override {
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/BrowseFontsView.qml"));
+  }
   QUrl qmlSearchAccessoryUrl() const override {
-    return QUrl(QStringLiteral("qrc:/Vicinae/CategoryFilterAccessory.qml"));
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/CategoryFilterAccessory.qml"));
   }
 
   QVariantMap qmlProperties() override {

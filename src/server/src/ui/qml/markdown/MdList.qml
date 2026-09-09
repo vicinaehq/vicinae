@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
@@ -18,7 +19,7 @@ ColumnLayout {
     spacing: 2
 
     Repeater {
-        model: blockData.items ?? []
+        model: root.blockData.items ?? []
 
         ColumnLayout {
             id: itemDelegate
@@ -82,11 +83,11 @@ ColumnLayout {
                         item.fontFamily = Qt.binding(function () {
                             return root.fontFamily;
                         });
-                        item.ordered = modelData.ordered ?? false;
-                        item.startNumber = modelData.startNumber ?? 1;
+                        item.ordered = itemDelegate.modelData.ordered ?? false;
+                        item.startNumber = itemDelegate.modelData.startNumber ?? 1;
                         item.depth = root.depth + 1;
                         item.blockData = {
-                            items: modelData.items ?? []
+                            items: itemDelegate.modelData.items ?? []
                         };
                     }
                 }

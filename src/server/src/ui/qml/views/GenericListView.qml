@@ -1,6 +1,8 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
@@ -11,8 +13,11 @@ Item {
         id: statusBarInset
     }
 
-    // The backing model — must have Q_INVOKABLE nextSelectableIndex(int, int)
-    required property var listModel
+    Component.onCompleted: {
+        console.log('mounted now5!');
+    }
+
+    required property SectionListModel listModel
 
     property alias model: listView.model
     property alias delegate: listView.delegate
@@ -30,7 +35,7 @@ Item {
 
     property string emptyTitle: qsTr("No results")
     property string emptyDescription: ""
-    property var emptyIcon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+    property var emptyIcon: Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
     property Component emptyViewComponent: null
 
     property bool suppressEmpty: false

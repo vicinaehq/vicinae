@@ -1,10 +1,12 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/image/url.hpp"
 #include <QMetaType>
 #include <QString>
 
 class ImageUrl {
   Q_GADGET
+  QML_VALUE_TYPE(imageUrl)
   Q_PROPERTY(bool valid READ isValid)
   Q_PROPERTY(bool isThemeSensitive READ isThemeSensitive)
 

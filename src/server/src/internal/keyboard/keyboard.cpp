@@ -1,5 +1,7 @@
 #include <QKeySequence>
 #include <QVariantMap>
+#include <optional>
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "layout-resolver.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
@@ -231,7 +233,7 @@ Qt::Key keyForModifier(Qt::KeyboardModifier modifier) {
 
 struct DisplayTokenSpec {
   QString text;
-  QString icon;
+  std::optional<BuiltinIcon> icon;
   QString label;
 };
 
@@ -254,7 +256,7 @@ DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
   switch (modifier) {
   case Qt::MetaModifier:
 #ifdef Q_OS_WIN
-    return {.icon = QStringLiteral("windows11"), .label = QStringLiteral("Win")};
+    return {.icon = BuiltinIcon::Windows11, .label = QStringLiteral("Win")};
 #else
     return {.text = QStringLiteral("◈"), .label = QStringLiteral("Super")};
 #endif
@@ -263,7 +265,7 @@ DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
   case Qt::AltModifier:
     return {.text = QStringLiteral("Alt"), .label = QStringLiteral("Alt")};
   case Qt::ShiftModifier:
-    return {.icon = QStringLiteral("keyboard-shift"), .label = QStringLiteral("Shift")};
+    return {.icon = BuiltinIcon::KeyboardShift, .label = QStringLiteral("Shift")};
   default:
     return {};
   }
@@ -274,11 +276,11 @@ std::optional<DisplayTokenSpec> keyToken(Qt::Key key) {
   switch (key) {
   case Qt::Key_Return:
   case Qt::Key_Enter:
-    return DisplayTokenSpec{.icon = QStringLiteral("enter-key"), .label = QStringLiteral("Enter")};
+    return DisplayTokenSpec{.icon = BuiltinIcon::EnterKey, .label = QStringLiteral("Enter")};
   case Qt::Key_Tab:
-    return DisplayTokenSpec{.icon = QStringLiteral("tab-key"), .label = QStringLiteral("Tab")};
+    return DisplayTokenSpec{.icon = BuiltinIcon::TabKey, .label = QStringLiteral("Tab")};
   case Qt::Key_Space:
-    return DisplayTokenSpec{.icon = QStringLiteral("space-key"), .label = QStringLiteral("Space")};
+    return DisplayTokenSpec{.icon = BuiltinIcon::SpaceKey, .label = QStringLiteral("Space")};
   case Qt::Key_Backspace:
     return DisplayTokenSpec{.text = QStringLiteral("⌫"), .label = QStringLiteral("Backspace")};
   case Qt::Key_Delete:
@@ -435,7 +437,7 @@ QVariantList Shortcut::toDisplayTokens() const {
   for (const auto &token : buildDisplayTokenSpecs(*this)) {
     QVariantMap entry;
     entry.insert(QStringLiteral("text"), token.text);
-    entry.insert(QStringLiteral("icon"), token.icon);
+    if (token.icon) entry.insert(QStringLiteral("icon"), QVariant::fromValue(*token.icon));
     tokens.append(entry);
   }
 

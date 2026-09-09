@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
 #include "ui/quick/completion-model.hpp"
 #include <QVariantList>
@@ -6,6 +7,8 @@
 
 class CreateExtensionViewHost : public FormViewBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(CreateExtensionViewHost)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(QString author READ author WRITE setAuthor NOTIFY formChanged)
   Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY formChanged)

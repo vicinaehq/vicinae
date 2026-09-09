@@ -216,11 +216,14 @@ inline std::string chassisType() {
 
 inline std::optional<QString> detectAppLauncher() {
 #ifdef Q_OS_LINUX
-  QProcess proc;
-  proc.start("uwsm", {"check", "is-active"});
-  if (!proc.waitForFinished(1000) || proc.exitCode() != 0) return std::nullopt;
-  if (!QStandardPaths::findExecutable("uwsm-app").isEmpty()) return "uwsm-app --";
-  return "uwsm app --";
+  static const std::optional<QString> detected = []() -> std::optional<QString> {
+    QProcess proc;
+    proc.start("uwsm", {"check", "is-active"});
+    if (!proc.waitForFinished(1000) || proc.exitCode() != 0) return std::nullopt;
+    if (!QStandardPaths::findExecutable("uwsm-app").isEmpty()) return "uwsm-app --";
+    return "uwsm app --";
+  }();
+  return detected;
 #else
   return std::nullopt;
 #endif

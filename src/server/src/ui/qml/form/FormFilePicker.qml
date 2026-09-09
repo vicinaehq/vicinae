@@ -1,6 +1,8 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import Vicinae
 
 FocusScope {
     id: root
@@ -15,7 +17,7 @@ FocusScope {
     property bool hasError: false
     property bool filled: false
     property var selectedPaths: []
-    property var lockedPaths: []
+    property list<string> lockedPaths
 
     signal pathsChanged(var paths)
 
@@ -154,7 +156,8 @@ FocusScope {
                     Layout.preferredHeight: 20
                     Layout.alignment: Qt.AlignVCenter
                     radius: 4
-                    icon: "xmark"
+                    iconSource: Img.icon(BuiltinIcon.Xmark)
+                    accessibleName: qsTr("Remove")
                     iconSize: 10
                     variant: "ghost"
                     onClicked: root.pathsChanged([])
@@ -184,7 +187,8 @@ FocusScope {
             model: root.multiple ? root.lockedPaths : []
 
             Item {
-                required property var modelData
+                id: lockedPath
+                required property string modelData
 
                 Layout.fillWidth: true
                 implicitHeight: 32
@@ -213,7 +217,7 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         verticalAlignment: Text.AlignVCenter
-                        text: modelData
+                        text: lockedPath.modelData
                         color: Theme.textMuted
                         font.pointSize: Theme.regularFontSize
                         elide: Text.ElideMiddle
@@ -223,7 +227,7 @@ FocusScope {
                         Layout.preferredWidth: 12
                         Layout.preferredHeight: 12
                         Layout.alignment: Qt.AlignVCenter
-                        source: Img.builtin("lock").withFillColor(Theme.textMuted)
+                        source: Img.icon(BuiltinIcon.Lock).withFillColor(Theme.textMuted)
                     }
                 }
             }
@@ -233,8 +237,9 @@ FocusScope {
             model: root.multiple ? root.selectedPaths : []
 
             Item {
+                id: selectedPath
                 required property int index
-                required property var modelData
+                required property string modelData
 
                 Layout.fillWidth: true
                 implicitHeight: 32
@@ -263,7 +268,7 @@ FocusScope {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         verticalAlignment: Text.AlignVCenter
-                        text: modelData
+                        text: selectedPath.modelData
                         color: Theme.foreground
                         font.pointSize: Theme.regularFontSize
                         elide: Text.ElideMiddle
@@ -275,11 +280,12 @@ FocusScope {
                         Layout.preferredHeight: 20
                         Layout.alignment: Qt.AlignVCenter
                         radius: 4
-                        icon: "xmark"
+                        iconSource: Img.icon(BuiltinIcon.Xmark)
+                        accessibleName: qsTr("Remove")
                         iconSize: 10
                         variant: "ghost"
                         onClicked: {
-                            const idx = index;
+                            const idx = selectedPath.index;
                             let copy = [];
                             for (let i = 0; i < root.selectedPaths.length; i++) {
                                 if (i !== idx)

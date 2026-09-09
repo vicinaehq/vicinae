@@ -1,10 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls
+import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property SearchFilesViewHost host
 
     function moveUp() {
         return listView.moveUp();

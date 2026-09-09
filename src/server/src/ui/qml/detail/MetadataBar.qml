@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 /// Displays key-value metadata rows with labels left-aligned and values right-aligned.
 /// Each entry in `model` is an object with a `type` field:
@@ -39,25 +41,28 @@ Item {
             Repeater {
                 model: root.model
 
-                delegate: Loader {
-                    Layout.fillWidth: true
-                    property var entry: modelData
-                    sourceComponent: {
-                        var t = (entry && entry.type) || "label";
-                        switch (t) {
-                        case "separator":
-                            return separatorComponent;
-                        case "link":
-                            return linkComponent;
-                        case "tags":
-                            return tagsComponent;
-                        case "icons":
-                            return iconsComponent;
-                        default:
-                            return labelComponent;
-                        }
-                    }
-                }
+                delegate: EntryHost {}
+            }
+        }
+    }
+
+    component EntryHost: Loader {
+        Layout.fillWidth: true
+        required property var modelData
+        readonly property var entry: modelData
+        sourceComponent: {
+            var t = (entry && entry.type) || "label";
+            switch (t) {
+            case "separator":
+                return separatorComponent;
+            case "link":
+                return linkComponent;
+            case "tags":
+                return tagsComponent;
+            case "icons":
+                return iconsComponent;
+            default:
+                return labelComponent;
             }
         }
     }
@@ -65,10 +70,12 @@ Item {
     Component {
         id: labelComponent
         RowLayout {
+            id: row
+            readonly property EntryHost host: parent as EntryHost
             spacing: 10
 
             Text {
-                text: entry.label || ""
+                text: row.host.entry.label || ""
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
             }
@@ -78,15 +85,15 @@ Item {
             }
 
             ViciImage {
-                visible: (entry.icon || "") !== ""
-                source: entry.icon || ""
+                visible: (row.host.entry.icon || "") !== ""
+                source: row.host.entry.icon || ""
                 Layout.preferredWidth: 14
                 Layout.preferredHeight: 14
             }
 
             Text {
-                text: entry.value || ""
-                color: entry.valueColor || Theme.foreground
+                text: row.host.entry.value || ""
+                color: row.host.entry.valueColor || Theme.foreground
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideMiddle
                 Layout.maximumWidth: root.width * 0.65
@@ -97,10 +104,12 @@ Item {
     Component {
         id: linkComponent
         RowLayout {
+            id: row
+            readonly property EntryHost host: parent as EntryHost
             spacing: 10
 
             Text {
-                text: entry.label || ""
+                text: row.host.entry.label || ""
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
             }
@@ -110,7 +119,7 @@ Item {
             }
 
             Text {
-                text: "<a href=\"" + (entry.url || "") + "\" style=\"color:" + Theme.linkColor + ";\">" + (entry.value || "") + "</a>"
+                text: "<a href=\"" + (row.host.entry.url || "") + "\" style=\"color:" + Theme.linkColor + ";\">" + (row.host.entry.value || "") + "</a>"
                 color: Theme.linkColor
                 linkColor: Theme.linkColor
                 font.pointSize: Theme.smallerFontSize
@@ -133,10 +142,12 @@ Item {
     Component {
         id: tagsComponent
         RowLayout {
+            id: row
+            readonly property EntryHost host: parent as EntryHost
             spacing: 10
 
             Text {
-                text: entry.label || ""
+                text: row.host.entry.label || ""
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 Layout.alignment: Qt.AlignTop
@@ -152,9 +163,10 @@ Item {
                 spacing: 4
 
                 Repeater {
-                    model: entry.tags || []
+                    model: row.host.entry.tags || []
 
                     delegate: Rectangle {
+                        id: tag
                         required property var modelData
                         width: tagRow.implicitWidth + 12
                         height: tagRow.implicitHeight + 6
@@ -167,15 +179,15 @@ Item {
                             spacing: 4
 
                             ViciImage {
-                                visible: (modelData.icon || "") !== ""
-                                source: modelData.icon || ""
+                                visible: (tag.modelData.icon || "") !== ""
+                                source: tag.modelData.icon || ""
                                 Layout.preferredWidth: 12
                                 Layout.preferredHeight: 12
                             }
 
                             Text {
-                                text: modelData.text || ""
-                                color: modelData.color || Theme.foreground
+                                text: tag.modelData.text || ""
+                                color: tag.modelData.color || Theme.foreground
                                 font.pointSize: Theme.smallerFontSize
                             }
                         }
@@ -188,10 +200,12 @@ Item {
     Component {
         id: iconsComponent
         RowLayout {
+            id: row
+            readonly property EntryHost host: parent as EntryHost
             spacing: 10
 
             Text {
-                text: entry.label || ""
+                text: row.host.entry.label || ""
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
             }
@@ -206,20 +220,21 @@ Item {
                 Layout.alignment: Qt.AlignRight
 
                 readonly property int maxVisible: 6
-                readonly property var icons: entry.icons || []
+                readonly property var icons: row.host.entry.icons || []
                 readonly property int overflow: Math.max(0, icons.length - maxVisible)
 
                 Repeater {
                     model: iconsRow.icons.slice(0, iconsRow.maxVisible)
 
                     delegate: Item {
+                        id: iconItem
                         required property var modelData
                         width: 16
                         height: 16
 
                         ViciImage {
                             anchors.fill: parent
-                            source: modelData.icon || ""
+                            source: iconItem.modelData.icon || ""
                         }
 
                         HoverHandler {
@@ -228,7 +243,7 @@ Item {
 
                         ViciToolTip {
                             visible: iconHover.hovered
-                            text: modelData.tooltip || ""
+                            text: iconItem.modelData.tooltip || ""
                         }
                     }
                 }

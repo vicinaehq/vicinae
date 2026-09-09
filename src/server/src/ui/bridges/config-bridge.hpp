@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "capabilities.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
@@ -12,7 +13,15 @@
 
 class ConfigBridge : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Config)
+  QML_SINGLETON
 
+public:
+  static ConfigBridge *create(QQmlEngine *engine, QJSEngine *) {
+    return QmlEngineScope::get<ConfigBridge>(engine);
+  }
+
+private:
   Q_PROPERTY(qreal windowOpacity READ windowOpacity NOTIFY changed)
   Q_PROPERTY(qreal popupOpacity READ popupOpacity NOTIFY changed)
   Q_PROPERTY(qreal surfaceOpacity READ surfaceOpacity NOTIFY changed)
@@ -37,7 +46,7 @@ public:
   // configured translucency.
   enum SurfaceMode { TranslucentSurfaces, OpaqueSurfaces };
 
-  explicit ConfigBridge(QObject *parent = nullptr) : ConfigBridge(TranslucentSurfaces, parent) {}
+  explicit ConfigBridge(QObject *parent) : ConfigBridge(TranslucentSurfaces, parent) {}
 
   explicit ConfigBridge(SurfaceMode mode, QObject *parent = nullptr)
       : QObject(parent), m_opaqueSurfaces(mode == OpaqueSurfaces) {

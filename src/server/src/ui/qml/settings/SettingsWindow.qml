@@ -1,10 +1,12 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
+import Vicinae
 
 Window {
     id: root
-    readonly property var extModel: settings.extensionModel
+    readonly property var extModel: Settings.extensionModel
     // Single source of truth for the built-in (non-extension) pages.
     readonly property var corePages: ({
             "general": {
@@ -28,7 +30,7 @@ Window {
                 "page": aboutPage
             }
         })
-    readonly property var coreMeta: root.corePages[settings.currentPage] ?? null
+    readonly property var coreMeta: root.corePages[Settings.currentPage] ?? null
     readonly property bool isExtensionPage: root.coreMeta === null
     readonly property string topbarTitle: root.isExtensionPage ? root.extModel.selectedTitle : root.coreMeta.title
     readonly property var topbarIconSource: root.isExtensionPage ? root.extModel.selectedIconSource : ""
@@ -61,7 +63,7 @@ Window {
     Rectangle {
         id: background
         anchors.fill: parent
-        Keys.onEscapePressed: settings.close()
+        Keys.onEscapePressed: Settings.close()
         color: root.nativeChrome ? "transparent" : Theme.background
         clip: true
 
@@ -231,11 +233,11 @@ Window {
                             source: {
                                 const p = root.extModel.selectedProvenance;
                                 if (p === "Raycast")
-                                    return Img.builtin("raycast").withFillColor(Theme.toastDanger);
+                                    return Img.icon(BuiltinIcon.Raycast).withFillColor(Theme.toastDanger);
                                 if (p === "Vicinae")
-                                    return Img.builtin("vicinae").withFillColor(Theme.toastWarning);
+                                    return Img.icon(BuiltinIcon.Vicinae).withFillColor(Theme.toastWarning);
                                 if (p === "Local")
-                                    return Img.builtin("box").withFillColor(Theme.toastInfo);
+                                    return Img.icon(BuiltinIcon.Box).withFillColor(Theme.toastInfo);
                                 return "";
                             }
                             Layout.preferredWidth: 16
@@ -285,22 +287,22 @@ Window {
                     id: pageLoader
                     anchors.fill: parent
 
-                    Component.onCompleted: _loadPage(settings.currentPage)
+                    Component.onCompleted: _loadPage(Settings.currentPage)
 
                     function _loadPage(page) {
                         active = false;
                         const meta = root.corePages[page] ?? null;
                         if (!meta)
-                            settings.extensionModel.selectProviderById(page);
+                            Settings.extensionModel.selectProviderById(page);
                         sourceComponent = meta ? meta.page : extensionPage;
                         active = true;
                     }
 
                     Connections {
-                        target: settings
+                        target: Settings
                         function onCurrentPageChanged() {
                             HoverActivation.reset();
-                            pageLoader._loadPage(settings.currentPage);
+                            pageLoader._loadPage(Settings.currentPage);
                         }
                     }
                 }

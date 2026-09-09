@@ -1,10 +1,12 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
 #include "ui/views/section-list-model.hpp"
 
 class ListViewHost : public ViewHostBase {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
+  QML_NAMED_ELEMENT(ListViewHost)
+  QML_UNCREATABLE("")
 
 public:
   QUrl qmlComponentUrl() const override { return m_model.qmlComponentUrl(); }
@@ -17,7 +19,7 @@ public:
   void onReactivated() override { m_model.refreshActionPanel(); }
   void beforePop() override { m_model.beforePop(); }
 
-  QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
+  SectionListModel *listModel() const override { return const_cast<SectionListModel *>(&m_model); }
 
 protected:
   SectionListModel *model() { return &m_model; }

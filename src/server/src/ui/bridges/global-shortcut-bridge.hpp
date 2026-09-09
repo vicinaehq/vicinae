@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include <QObject>
 #include "keyboard/keyboard.hpp"
 #include "service-registry.hpp"
@@ -8,14 +9,22 @@
 // Exposes global-shortcut control to QML. Registered as the "GlobalShortcuts" context property.
 class GlobalShortcutBridge : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(GlobalShortcuts)
+  QML_SINGLETON
 
+public:
+  static GlobalShortcutBridge *create(QQmlEngine *, QJSEngine *) {
+    return QmlEngineScope::global<GlobalShortcutBridge>();
+  }
+
+private:
   Q_PROPERTY(QString toggleId READ toggleId CONSTANT)
 
 signals:
   void keyCaptured(int key, int modifiers, bool down);
 
 public:
-  explicit GlobalShortcutBridge(QObject *parent = nullptr) : QObject(parent) {
+  explicit GlobalShortcutBridge(QObject *parent) : QObject(parent) {
     if (auto *service = ServiceRegistry::instance()->globalShortcuts()) {
       connect(service->backend(), &AbstractGlobalShortcutBackend::keyCaptured, this,
               &GlobalShortcutBridge::keyCaptured);

@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include <QObject>
 #include <QVariantList>
 #include "keyboard/keyboard.hpp"
@@ -12,11 +13,19 @@
  */
 class KeyboardBridge : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Keyboard)
+  QML_SINGLETON
+
+public:
+  explicit KeyboardBridge(QObject *parent) : QObject(parent) {}
+  static KeyboardBridge *create(QQmlEngine *, QJSEngine *) {
+    return QmlEngineScope::global<KeyboardBridge>();
+  }
+
+private:
   Q_PROPERTY(int physicalCtrlModifier READ physicalCtrlModifier CONSTANT)
 
 public:
-  using QObject::QObject;
-
   int physicalCtrlModifier() const { return static_cast<int>(KeyBindingService::PHYSICAL_CTRL); }
 
   Q_INVOKABLE int resolveKey(int key, int scanCode) const {

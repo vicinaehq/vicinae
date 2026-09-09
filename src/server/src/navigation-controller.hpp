@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "common/qt.hpp"
 #include "common/entrypoint.hpp"
 #include "command/argument.hpp"
@@ -56,6 +57,7 @@ struct GoBackOptions {
 
 class NavigationController : public QObject, NonCopyable {
   Q_OBJECT
+  QML_ANONYMOUS
 
 public:
   struct CommandFrame {
@@ -252,6 +254,7 @@ public:
   template <typename T> void replaceView() { replaceView(new T); }
 
   size_t viewStackSize() const;
+  const std::vector<std::unique_ptr<ViewState>> &viewStack() const { return m_views; }
   bool isRootSearch() const;
   const ViewState *topState() const;
   ViewState *topState();

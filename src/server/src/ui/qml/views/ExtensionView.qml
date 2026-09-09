@@ -1,50 +1,65 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Vicinae
 
 Item {
     id: root
-    required property var host // ExtensionViewHost*
+    required property ExtensionViewHost host
 
     StackView.onActivated: {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.restoreFocus === "function")
             contentLoader.item.restoreFocus();
+        // qmllint enable missing-property
     }
 
     function moveUp() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveUp === "function") {
             return contentLoader.item.moveUp();
+            // qmllint enable missing-property
         }
         return false;
     }
     function moveDown() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveDown === "function") {
             return contentLoader.item.moveDown();
+            // qmllint enable missing-property
         }
         return false;
     }
     function moveSectionUp() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveSectionUp === "function") {
             return contentLoader.item.moveSectionUp();
+            // qmllint enable missing-property
         } else {
             return moveUp();
         }
     }
     function moveSectionDown() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveSectionDown === "function")
             return contentLoader.item.moveSectionDown();
         else
+            // qmllint enable missing-property
             return moveDown();
     }
     function moveLeft() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveLeft === "function") {
             return contentLoader.item.moveLeft();
+            // qmllint enable missing-property
         }
         return false;
     }
     function moveRight() {
+        // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.moveRight === "function") {
             return contentLoader.item.moveRight();
+            // qmllint enable missing-property
         }
         return false;
     }
@@ -86,9 +101,10 @@ Item {
 
             GenericListView {
                 id: listView
+                readonly property ExtensionListModel extModel: root.host.listContent
                 anchors.fill: parent
-                listModel: root.host.contentModel
-                model: root.host.contentModel
+                listModel: extModel
+                model: root.host.listContent
                 canLoadMore: root.host.hasMorePages
                 onEndReached: root.host.onLoadMore()
 
@@ -96,12 +112,12 @@ Item {
                 selectFirstOnReset: root.host.selectFirstOnReset
                 suppressEmpty: root.host.suppressEmptyView
 
-                emptyTitle: root.host.contentModel.emptyTitle || qsTr("No results")
-                emptyDescription: root.host.contentModel.emptyDescription || ""
-                emptyIcon: root.host.contentModel.emptyIcon?.valid ? root.host.contentModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+                emptyTitle: listView.extModel?.emptyTitle || qsTr("No results")
+                emptyDescription: listView.extModel?.emptyDescription || ""
+                emptyIcon: listView.extModel?.emptyIcon.valid ? listView.extModel.emptyIcon : Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
 
                 detailComponent: detailPanel
-                detailVisible: root.host.contentModel.isShowingDetail
+                detailVisible: listView.extModel?.isShowingDetail ?? false
 
                 delegate: Loader {
                     id: delegateLoader
@@ -143,7 +159,7 @@ Item {
                             onActivated: listView.itemActivated(delegateLoader.index)
                             onDragRequested: function (source) {
                                 listView.currentIndex = delegateLoader.index;
-                                root.host.contentModel.startDrag(delegateLoader.index, source);
+                                listView.extModel?.startDrag(delegateLoader.index, source);
                             }
                         }
                     }
@@ -153,13 +169,13 @@ Item {
             Component {
                 id: detailPanel
                 DetailPanel {
-                    hasContent: root.host.contentModel.detailMarkdown !== ""
-                    metadata: root.host.contentModel.detailMetadata
+                    hasContent: (listView.extModel?.detailMarkdown ?? "") !== ""
+                    metadata: listView.extModel?.detailMetadata ?? []
 
                     MarkdownText {
                         anchors.fill: parent
                         topPadding: 6
-                        markdown: root.host.contentModel.detailMarkdown
+                        markdown: listView.extModel?.detailMarkdown ?? ""
                     }
                 }
             }
@@ -170,7 +186,7 @@ Item {
         id: gridComponent
         ExtensionGridView {
             anchors.fill: parent
-            cmdModel: root.host.contentModel
+            cmdModel: root.host.gridContent
             suppressEmpty: root.host.suppressEmptyView
             canLoadMore: root.host.hasMorePages
             onEndReached: root.host.onLoadMore()
@@ -191,7 +207,7 @@ Item {
         ExtensionFormView {
             anchors.fill: parent
             host: root.host
-            formModel: root.host.contentModel
+            formModel: root.host.formContent
         }
     }
 }

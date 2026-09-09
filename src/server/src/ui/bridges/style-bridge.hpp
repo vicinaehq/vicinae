@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include <QObject>
 
 /**
@@ -8,7 +9,13 @@
  */
 class StyleBridge : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Style)
+  QML_SINGLETON
 
+public:
+  static StyleBridge *create(QQmlEngine *, QJSEngine *) { return QmlEngineScope::global<StyleBridge>(); }
+
+private:
   // Space pages reserve for the overlaid window header.
   Q_PROPERTY(qreal contentTopInset READ contentTopInset CONSTANT)
   Q_PROPERTY(qreal switchKnobWidth READ switchKnobWidth CONSTANT)
@@ -19,7 +26,7 @@ class StyleBridge : public QObject {
   Q_PROPERTY(qreal sidebarContentInset READ sidebarContentInset CONSTANT)
 
 public:
-  explicit StyleBridge(QObject *parent = nullptr) : QObject(parent) {}
+  explicit StyleBridge(QObject *parent) : QObject(parent) {}
 
   qreal contentTopInset() const { return 44; }
 

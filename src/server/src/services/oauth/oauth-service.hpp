@@ -52,13 +52,6 @@ struct OAuthRequestData {
   }
 };
 
-struct OAuthClient {
-  std::optional<QString> id;
-  std::optional<QString> description;
-  QString name;
-  ImageURL icon;
-};
-
 struct OAuthResponseData {
   QString code;
 };

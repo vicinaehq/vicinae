@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 // Shared key-capture core for shortcut recorders: key normalization, validation,
 // status feedback, and the capture lifecycle (global shortcut suspension +

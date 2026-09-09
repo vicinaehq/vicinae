@@ -1,6 +1,6 @@
 #pragma once
 #include "services/builtin-icon/builtin-icon.hpp"
-#include "ui/views/list-view-host.hpp"
+#include "ui/views/detail-list-view-host.hpp"
 #include "builtins/snippet/manage-snippets-model.hpp"
 #include "services/snippet/snippet-expander.hpp"
 #include "ui/views/view-utils.hpp"
@@ -8,29 +8,21 @@
 
 class SnippetService;
 
-class ManageSnippetsViewHost : public ListViewHost {
+class ManageSnippetsViewHost : public DetailListViewHost {
   Q_OBJECT
 
-  Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
-  Q_PROPERTY(QString detailContent READ detailContent NOTIFY detailChanged)
-  Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailChanged)
-  Q_PROPERTY(QString emptyTitle MEMBER m_emptyTitle CONSTANT)
-  Q_PROPERTY(QString emptyDescription MEMBER m_emptyDescription CONSTANT)
-  Q_PROPERTY(ImageUrl emptyIcon MEMBER m_emptyIcon CONSTANT)
-
-signals:
-  void detailChanged();
-
 public:
+  ManageSnippetsViewHost();
+
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
   void beforePop() override;
 
-  bool hasDetail() const { return m_hasDetail; }
-  QString detailContent() const { return m_detailContent; }
-  QVariantList detailMetadata() const { return m_detailMetadata; }
+  bool hasDetail() const override { return m_hasDetail; }
+  QString detailContent() const override { return m_detailContent; }
+  QVariantList detailMetadata() const override { return m_detailMetadata; }
 
   Q_INVOKABLE void createSnippet();
 
@@ -50,7 +42,4 @@ private:
   bool m_hasDetail = false;
   QString m_detailContent;
   QVariantList m_detailMetadata;
-  QString m_emptyTitle = tr("No snippets");
-  QString m_emptyDescription = tr("Create a snippet to get started");
-  ImageUrl m_emptyIcon = ImageUrl(ImageURL(BuiltinIcon::Snippets));
 };

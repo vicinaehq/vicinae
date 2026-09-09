@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "common/context.hpp"
 #include <QObject>
 #include <QQmlApplicationEngine>
@@ -21,7 +22,15 @@ class QQuickWindow;
 
 class SettingsWindow : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Settings)
+  QML_SINGLETON
 
+public:
+  static SettingsWindow *create(QQmlEngine *engine, QJSEngine *) {
+    return QmlEngineScope::get<SettingsWindow>(engine);
+  }
+
+private:
   Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
   Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY historyChanged)
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY historyChanged)
@@ -80,15 +89,12 @@ signals:
 
 private:
   void ensureInitialized();
+  void loadRoot();
+  void reloadRoot();
 
   ApplicationContext &m_ctx;
   QQmlApplicationEngine m_engine;
-  ThemeBridge *m_themeBridge = nullptr;
   ConfigBridge *m_configBridge = nullptr;
-  ImageSource *m_imgSource = nullptr;
-  KeyboardBridge *m_keyboardBridge = nullptr;
-  GlobalShortcutBridge *m_globalShortcutBridge = nullptr;
-  PlatformBridge *m_platformBridge = nullptr;
   GeneralSettingsModel *m_generalModel = nullptr;
   KeybindSettingsModel *m_keybindModel = nullptr;
   ExtensionSettingsModel *m_extensionModel = nullptr;

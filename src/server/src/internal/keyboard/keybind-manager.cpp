@@ -8,7 +8,7 @@ static const std::unordered_map<Keybind, KeybindInfo> &keybindInfos() {
 		.id = "toggle-action-panel",
 		.name = QCoreApplication::translate("keybind-manager", "Toggle action panel"),
 		.description = QCoreApplication::translate("keybind-manager", "Toggle the action panel to access and filter through the list of available actions for the currently selected item"),
-		.icon = "switch",
+		.icon = BuiltinIcon::Switch,
 #ifdef Q_OS_MACOS
 		.dflt = Keyboard::Shortcut(Qt::Key_K, Qt::ControlModifier)
 #else
@@ -19,119 +19,119 @@ static const std::unordered_map<Keybind, KeybindInfo> &keybindInfos() {
 		.id = "open-search-filter",
 		.name = QCoreApplication::translate("keybind-manager", "Open Search Filter"),
 		.description = QCoreApplication::translate("keybind-manager", "Open the search filter selector if present"),
-		.icon = "arrow-up",
+		.icon = BuiltinIcon::ArrowUp,
 		.dflt = Keyboard::Shortcut(Qt::Key_P, Qt::ControlModifier)
 	}},
 	{Keybind::OpenSettings, KeybindInfo{
 		.id = "open-settings",
 		.name = QCoreApplication::translate("keybind-manager", "Open settings window"),
 		.description = QCoreApplication::translate("keybind-manager", "Open this settings window from the launcher window"),
-		.icon = "cog",
+		.icon = BuiltinIcon::Cog,
 		.dflt = Keyboard::Shortcut(Qt::Key_Comma, Qt::ControlModifier)
 	}},
 	{Keybind::OpenAction, KeybindInfo{
 		.id = "action.open",
 		.name = QCoreApplication::translate("keybind-manager", "Generic Open Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can open the selected item"),
-		.icon = "arrow-up",
+		.icon = BuiltinIcon::ArrowUp,
 		.dflt = Keyboard::Shortcut(Qt::Key_O, Qt::ControlModifier)
 	}},
 	{Keybind::CopyAction, KeybindInfo{
 		.id = "action.copy",
 		.name = QCoreApplication::translate("keybind-manager", "Generic Copy Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can copy the selected item"),
-		.icon = "copy-clipboard",
+		.icon = BuiltinIcon::CopyClipboard,
 		.dflt = Keyboard::Shortcut(Qt::Key_C, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::CopyNameAction, KeybindInfo{
 		.id = "action.copy-name",
 		.name = QCoreApplication::translate("keybind-manager", "Copy Name Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can copy the name of the selected item"),
-		.icon = "copy-clipboard",
+		.icon = BuiltinIcon::CopyClipboard,
 		.dflt = Keyboard::Shortcut(Qt::Key_Period, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::CopyPathAction, KeybindInfo{
 		.id = "action.copy-path",
 		.name = QCoreApplication::translate("keybind-manager", "Copy Path Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can copy the path of the selected item"),
-		.icon = "copy-clipboard",
+		.icon = BuiltinIcon::CopyClipboard,
 		.dflt = Keyboard::Shortcut(Qt::Key_Comma, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::SaveAction, KeybindInfo{
 		.id = "action.save",
 		.name = QCoreApplication::translate("keybind-manager", "Save Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can save the selected item"),
-		.icon = "save-document",
+		.icon = BuiltinIcon::SaveDocument,
 		.dflt = Keyboard::Shortcut(Qt::Key_S, Qt::ControlModifier)
 	}},
 	{Keybind::DuplicateAction, KeybindInfo{
 		.id = "action.duplicate",
 		.name = QCoreApplication::translate("keybind-manager", "Duplicate Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can duplicate the selected item"),
-		.icon = "duplicate",
+		.icon = BuiltinIcon::Duplicate,
 		.dflt = Keyboard::Shortcut(Qt::Key_D, Qt::ControlModifier)
 	}},
 	{Keybind::NewAction, KeybindInfo{
 			.id = "action.new",
 			.name = QCoreApplication::translate("keybind-manager", "Generic New Action"),
 			.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that create something"),
-			 .icon = "new-document",
+			 .icon = BuiltinIcon::NewDocument,
 			.dflt = Keyboard::Shortcut(Qt::Key_N, Qt::ControlModifier)
 	}},
 	{Keybind::MoveUpAction, KeybindInfo{
 			.id = "action.move-up",
 			.name = QCoreApplication::translate("keybind-manager", "Generic Move Up Action"),
 			.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can move up the selected item. This does not affect list navigation controls."),
-			 .icon = "arrow-up",
+			 .icon = BuiltinIcon::ArrowUp,
 			.dflt = Keyboard::Shortcut(Qt::Key_Up, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::MoveDownAction, KeybindInfo{
 			.id = "action.move-down",
 			.name = QCoreApplication::translate("keybind-manager", "Generic Move Down Action"),
 			.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can move down the selected item. This does not affect list navigation controls."),
-			 .icon = "arrow-down",
+			 .icon = BuiltinIcon::ArrowDown,
 			.dflt = Keyboard::Shortcut(Qt::Key_Down, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::RefreshAction, KeybindInfo{
 			.id = "action.refresh",
 			.name = QCoreApplication::translate("keybind-manager", "Generic Refresh Action"),
 			.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can refresh the selected item"),
-			 .icon = "arrow-clockwise",
+			 .icon = BuiltinIcon::ArrowClockwise,
 			.dflt = Keyboard::Shortcut(Qt::Key_R, Qt::ControlModifier)
 	}},
 	{Keybind::PinAction, KeybindInfo{
 		.id = "action.pin",
 		.name = QCoreApplication::translate("keybind-manager", "Generic Pin Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can pin the selected item"),
-		.icon = "pin",
+		.icon = BuiltinIcon::Pin,
 		.dflt = Keyboard::Shortcut(Qt::Key_P, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::RemoveAction, KeybindInfo{
 		.id = "action.remove",
 		.name = QCoreApplication::translate("keybind-manager", "Remove Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can remove the selected item. This is normally used for small, not too impactful removals."),
-		.icon = "trash",
+		.icon = BuiltinIcon::Trash,
 		.dflt = Keyboard::Shortcut(Qt::Key_X, Qt::ControlModifier)
 	}},
 	{Keybind::DangerousRemoveAction, KeybindInfo{
 		.id = "action.dangerous-remove",
 		.name = QCoreApplication::translate("keybind-manager", "Dangerous Remove Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that perform an impactful removal, generally accompanied by a confirmation dialog."),
-		.icon = "trash",
+		.icon = BuiltinIcon::Trash,
 		.dflt = Keyboard::Shortcut(Qt::Key_X, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
 	{Keybind::EditAction, KeybindInfo{
 		.id = "action.edit",
 		.name = QCoreApplication::translate("keybind-manager", "Edit Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can edit the currently selected item"),
-		.icon = "pencil",
+		.icon = BuiltinIcon::Pencil,
 		.dflt = Keyboard::Shortcut(Qt::Key_E, Qt::ControlModifier)
 	}},
 	{Keybind::EditSecondaryAction, KeybindInfo{
 		.id = "action.edit-secondary",
 		.name = QCoreApplication::translate("keybind-manager", "Edit Secondary Action"),
 		.description = QCoreApplication::translate("keybind-manager", "Can be used by actions that can edit a secondary characteristic of the currently selected item"),
-		.icon = "pencil",
+		.icon = BuiltinIcon::Pencil,
 		.dflt = Keyboard::Shortcut(Qt::Key_E, Qt::ControlModifier | Qt::ShiftModifier)
 	}}
 	};

@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 SelectableDelegate {
     id: root
@@ -66,6 +68,8 @@ SelectableDelegate {
             Repeater {
                 model: [root.paletteColor0, root.paletteColor1, root.paletteColor2, root.paletteColor3, root.paletteColor4, root.paletteColor5, root.paletteColor6, root.paletteColor7]
                 delegate: Item {
+                    id: swatch
+                    required property color modelData
                     width: 16
                     height: 16
                     Rectangle {
@@ -78,7 +82,7 @@ SelectableDelegate {
                         anchors.fill: parent
                         anchors.margins: 1
                         radius: width / 2
-                        color: modelData
+                        color: swatch.modelData
                         antialiasing: true
                     }
                 }

@@ -9,7 +9,7 @@
 #include <QUuid>
 
 QUrl ManageShortcutsViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/DetailListView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/DetailListView.qml"));
 }
 
 QVariantMap ManageShortcutsViewHost::qmlProperties() {

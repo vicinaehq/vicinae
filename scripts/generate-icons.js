@@ -28,13 +28,23 @@ const generateSources = (files) => {
 	const serializedFileNames = files.map(file => `"${file.split('.')[0]}"`);
 	const enumNames = files.map(file => toEnumType(`${file.split('.')[0]}`));
 	const header = `#pragma once
+#include <QObject>
+#include <QtQml/qqmlregistration.h>
 #include <string>
 #include <format>
 #include <unordered_map>
 
-enum class BuiltinIcon: std::uint16_t {
+namespace BuiltinIcons {
+Q_NAMESPACE
+QML_NAMED_ELEMENT(BuiltinIcon)
+
+enum class BuiltinIcon : std::uint16_t {
 	${enumNames.join(',\n\t')}
 };
+Q_ENUM_NS(BuiltinIcon)
+} // namespace BuiltinIcons
+
+using BuiltinIcons::BuiltinIcon;
 
 class BuiltinIconService {
 public:

@@ -21,13 +21,6 @@ struct IndexerQueryParams {
   std::optional<vicinae::FileCategory> category;
 };
 
-struct IndexerAsyncQuery : public QObject {
-  Q_OBJECT
-
-signals:
-  void finished(const std::vector<IndexerFileResult> &results) const;
-};
-
 class AbstractFileIndexer : public QObject {
   Q_OBJECT
 

@@ -1,14 +1,18 @@
 #pragma once
+#include "services/builtin-icon/builtin-icon.hpp"
+#include <QtQml/qqmlregistration.h>
 #include <vector>
 #include <QAbstractListModel>
 #include <QVariantList>
 
 class KeybindSettingsModel : public QAbstractListModel {
   Q_OBJECT
+  QML_NAMED_ELEMENT(KeybindSettingsModel)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(QString selectedName READ selectedName NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedDescription READ selectedDescription NOTIFY selectedChanged)
-  Q_PROPERTY(QString selectedIcon READ selectedIcon NOTIFY selectedChanged)
+  Q_PROPERTY(BuiltinIcon selectedIcon READ selectedIcon NOTIFY selectedChanged)
   Q_PROPERTY(bool hasSelection READ hasSelection NOTIFY selectedChanged)
   Q_PROPERTY(int selectedRow READ selectedRow NOTIFY selectedChanged)
 
@@ -26,7 +30,7 @@ public:
 
   QString selectedName() const;
   QString selectedDescription() const;
-  QString selectedIcon() const;
+  BuiltinIcon selectedIcon() const;
   bool hasSelection() const;
   int selectedRow() const { return m_selectedRow; }
 
@@ -43,7 +47,7 @@ private:
   struct Entry {
     int keybindId;
     QString name;
-    QString icon;
+    BuiltinIcon icon = BuiltinIcon::QuestionMarkCircle;
     QString description;
     QVariantList shortcutTokens;
   };

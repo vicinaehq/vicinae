@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "common/entrypoint.hpp"
 #include "ui/quick/completion-model.hpp"
 #include "command/preference.hpp"
@@ -12,6 +13,7 @@ class ExtensionCommand;
 
 class MissingPreferenceFormModel : public QAbstractListModel {
   Q_OBJECT
+  QML_ANONYMOUS
 
 public:
   enum Role {
@@ -72,6 +74,8 @@ private:
 
 class MissingPreferenceViewHost : public FormViewBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(MissingPreferenceViewHost)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(QString commandName READ commandName CONSTANT)
   Q_PROPERTY(QString commandIconSource READ commandIconSource CONSTANT)

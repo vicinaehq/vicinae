@@ -1,6 +1,8 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 Flickable {
     id: root
@@ -11,7 +13,7 @@ Flickable {
     topMargin: Style.contentTopInset
     Component.onCompleted: contentY = -topMargin
 
-    readonly property var model: settings.generalModel
+    readonly property GeneralSettingsModel model: Settings.generalModel
 
     ViciWheelHandler {
         target: root

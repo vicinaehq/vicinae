@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "services/font-service/font-service.hpp"
 #include "fuzzy-scorer.hpp"
 #include "fuzzy/scored.hpp"
@@ -36,6 +37,8 @@ private:
 
 class FontGridModel : public SectionGridModel {
   Q_OBJECT
+  QML_NAMED_ELEMENT(FontGridModel)
+  QML_UNCREATABLE("")
 
 public:
   explicit FontGridModel(QObject *parent = nullptr);
@@ -46,9 +49,9 @@ public:
   const QStringList &categoryNames() const { return m_categoryNames; }
   QString searchPlaceholder() const { return tr("Search fonts..."); }
 
-  Q_INVOKABLE QString cellTitle(int section, int item) const;
+  QString cellTitle(int section, int item) const override;
   Q_INVOKABLE QString fontIcon(int section, int item) const;
-  Q_INVOKABLE QString cellTooltip(int section, int item) const;
+  QString cellTooltip(int section, int item) const override;
 
 private:
   enum class Mode : std::uint8_t { Root, Search };

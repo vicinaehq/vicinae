@@ -1,12 +1,14 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
 
     property string title: qsTr("No results")
     property string description: ""
-    property var icon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+    property var icon: Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
 
     ColumnLayout {
         anchors.centerIn: parent

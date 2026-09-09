@@ -1,6 +1,8 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 Popup {
     id: root
@@ -155,7 +157,7 @@ Popup {
 
         Loader {
             active: root.nativePanel && Platform.supports("nativePanels")
-            source: "qrc:/Vicinae/CompletionPanelMacOS.qml"
+            source: "qrc:/qt/qml/Vicinae/CompletionPanelMacOS.qml"
         }
 
         PopupMaterial {}
@@ -180,7 +182,7 @@ Popup {
                 spacing: 6
 
                 ViciImage {
-                    source: Img.builtin("magnifying-glass").withFillColor(Theme.textMuted)
+                    source: Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.textMuted)
                     sourceSize.width: 12
                     sourceSize.height: 12
                     Layout.preferredWidth: 12

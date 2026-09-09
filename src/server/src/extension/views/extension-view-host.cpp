@@ -13,13 +13,14 @@ ExtensionViewHost::ExtensionViewHost(ExtensionActionPanelBuilder::NotifyFn notif
 }
 
 QUrl ExtensionViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ExtensionView.qml"));
 }
 
 QUrl ExtensionViewHost::qmlSearchAccessoryUrl() const {
   if (m_dropdownModel.rowCount() > 0)
-    return QUrl(QStringLiteral("qrc:/Vicinae/ExtensionDropdownAccessory.qml"));
-  if (!m_linkAccessoryText.isEmpty()) return QUrl(QStringLiteral("qrc:/Vicinae/FormLinkAccessory.qml"));
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ExtensionDropdownAccessory.qml"));
+  if (!m_linkAccessoryText.isEmpty())
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/FormLinkAccessory.qml"));
   return {};
 }
 
@@ -287,13 +288,6 @@ QString ExtensionViewHost::viewType() const {
   if (activeModel<ExtensionFormModel>()) return QStringLiteral("form");
   if (std::holds_alternative<DetailState>(m_model)) return QStringLiteral("detail");
   return QStringLiteral("loading");
-}
-
-QObject *ExtensionViewHost::contentModel() const {
-  if (auto *list = activeModel<ExtensionListModel>()) return list;
-  if (auto *grid = activeModel<ExtensionGridModel>()) return grid;
-  if (auto *form = activeModel<ExtensionFormModel>()) return form;
-  return nullptr;
 }
 
 bool ExtensionViewHost::isExtLoading() const { return m_isLoading; }

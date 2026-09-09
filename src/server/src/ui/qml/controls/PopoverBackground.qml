@@ -1,6 +1,8 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Effects
+import Vicinae
 
 /// Popover background with a frosted-glass effect for in-scene popups.
 /// Assign to a Popup's `background` and bind `popup` to it. Falls back to the
@@ -9,14 +11,14 @@ import QtQuick.Effects
 Item {
     id: bg
 
-    required property var popup
+    required property T.Popup popup
     property real backgroundOpacity: nativeWindow ? Config.popupOpacity : 1
     property real frostedOpacity: 0.85
 
-    readonly property bool nativeWindow: popup.popupType === Popup.Window
+    readonly property bool nativeWindow: popup.popupType === T.Popup.Window
     readonly property bool csd: !nativeWindow || Platform.supports("clientSideDecorations")
     readonly property real cornerRadius: csd ? Math.min(Config.borderRounding, 15) : 0
-    readonly property Item backdrop: bg.Window.window?.popupBackdrop ?? null
+    readonly property Item backdrop: (bg.Window.window as LauncherWindow)?.popupBackdrop ?? null
     readonly property bool frosted: !nativeWindow && backdrop !== null
     readonly property int backdropPad: 96
 

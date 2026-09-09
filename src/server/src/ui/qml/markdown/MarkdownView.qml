@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -7,11 +8,11 @@ import Vicinae
 Item {
     id: root
 
-    required property var model
+    required property MarkdownModel model
     property int contentPadding: 12
     property int topPadding: contentPadding
     property string fontFamily: ""
-    property alias contentHeight: flickable.contentHeight
+    property alias contentHeight: flick.contentHeight
     property var selectionController: null
     property bool _autoScroll: false
     focus: true
@@ -19,22 +20,22 @@ Item {
     readonly property var _controller: selectionController ?? internalController
 
     function scrollUp() {
-        flickable.flick(0, 800);
+        flick.flick(0, 800);
     }
     function scrollDown() {
-        flickable.flick(0, -800);
+        flick.flick(0, -800);
     }
 
-    onFontFamilyChanged: flickable.contentY = 0
+    onFontFamilyChanged: flick.contentY = 0
 
     Keys.onUpPressed: scrollUp()
     Keys.onDownPressed: scrollDown()
     Keys.onPressed: event => {
         if (event.key === Qt.Key_PageUp) {
-            flickable.flick(0, 2400);
+            flick.flick(0, 2400);
             event.accepted = true;
         } else if (event.key === Qt.Key_PageDown) {
-            flickable.flick(0, -2400);
+            flick.flick(0, -2400);
             event.accepted = true;
         }
     }
@@ -42,7 +43,7 @@ Item {
     TextSelectionController {
         id: internalController
         container: col
-        flickable: flickable
+        flickable: flick
         mdModel: root.model
     }
 
@@ -64,7 +65,7 @@ Item {
     // own flick handling. Interactive children (e.g. copy button) receive
     // events directly from the scene graph, bypassing the filter.
     Flickable {
-        id: flickable
+        id: flick
         anchors.fill: parent
         contentWidth: width
         contentHeight: col.implicitHeight + root.topPadding + root.contentPadding
@@ -73,7 +74,7 @@ Item {
         bottomMargin: statusBarInset.value
 
         ViciWheelHandler {
-            target: flickable
+            target: flick
         }
 
         onContentHeightChanged: {
@@ -91,7 +92,7 @@ Item {
             id: col
             x: root.contentPadding
             y: root.topPadding
-            width: flickable.width - root.contentPadding * 2
+            width: flick.width - root.contentPadding * 2
             spacing: 8
 
             Repeater {
@@ -310,12 +311,12 @@ Item {
     Connections {
         target: root.model
         function onBlocksAppended() {
-            let atBottom = flickable.contentHeight <= flickable.height || flickable.contentY + flickable.height >= flickable.contentHeight - 2;
+            let atBottom = flick.contentHeight <= flick.height || flick.contentY + flick.height >= flick.contentHeight - 2;
             root._autoScroll = atBottom;
         }
         function onModelReset() {
             root._controller.clearSelection();
-            flickable.contentY = 0;
+            flick.contentY = 0;
             root._autoScroll = false;
         }
     }

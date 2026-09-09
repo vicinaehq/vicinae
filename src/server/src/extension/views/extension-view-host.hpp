@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/quick/completion-model.hpp"
 #include "extension/model/model-parser.hpp"
 #include "extension/model/pagination-model.hpp"
@@ -13,8 +14,12 @@
 
 class ExtensionViewHost : public ViewHostBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(ExtensionViewHost)
+  QML_UNCREATABLE("")
   Q_PROPERTY(QString viewType READ viewType NOTIFY viewTypeChanged)
-  Q_PROPERTY(QObject *contentModel READ contentModel NOTIFY viewTypeChanged)
+  Q_PROPERTY(ExtensionListModel *listContent READ listContent NOTIFY viewTypeChanged)
+  Q_PROPERTY(ExtensionGridModel *gridContent READ gridContent NOTIFY viewTypeChanged)
+  Q_PROPERTY(ExtensionFormModel *formContent READ formContent NOTIFY viewTypeChanged)
   Q_PROPERTY(bool isExtLoading READ isExtLoading NOTIFY isLoadingChanged)
   Q_PROPERTY(bool selectFirstOnReset READ selectFirstOnReset NOTIFY selectFirstOnResetChanged)
   Q_PROPERTY(QString detailMarkdown READ detailMarkdown NOTIFY detailContentChanged)
@@ -44,7 +49,9 @@ public:
   void beforePop() override;
 
   QString viewType() const;
-  QObject *contentModel() const;
+  ExtensionListModel *listContent() const { return activeModel<ExtensionListModel>(); }
+  ExtensionGridModel *gridContent() const { return activeModel<ExtensionGridModel>(); }
+  ExtensionFormModel *formContent() const { return activeModel<ExtensionFormModel>(); }
   bool isExtLoading() const;
   bool selectFirstOnReset() const { return m_selectFirstOnReset; }
   QString detailMarkdown() const;

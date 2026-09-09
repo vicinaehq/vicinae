@@ -1,11 +1,15 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
+    required property StackView commandStack
 
     function focusInput() {
-        if (!launcher.searchInteractive)
+        if (!Launcher.searchInteractive)
             return;
         searchInput.forceActiveFocus();
         searchInput.selectAll();
@@ -15,15 +19,15 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 16
         anchors.rightMargin: 16
-        spacing: launcher.hasCompleter ? 4 : 12
+        spacing: Launcher.hasCompleter ? 4 : 12
 
         ViciImage {
             id: backButton
-            visible: launcher.showBackButton
+            visible: Launcher.showBackButton
             Layout.preferredWidth: 22
             Layout.preferredHeight: 22
             Layout.alignment: Qt.AlignVCenter
-            source: Img.builtin("chevron-left").withFillColor(Theme.textMuted)
+            source: Img.icon(BuiltinIcon.ChevronLeft).withFillColor(Theme.textMuted)
             opacity: backHover.hovered ? 0.6 : 1.0
 
             HoverHandler {
@@ -31,14 +35,14 @@ Item {
             }
 
             TapHandler {
-                onTapped: launcher.goBack()
+                onTapped: Launcher.goBack()
             }
         }
 
         Item {
             id: searchInputContainer
-            Layout.fillWidth: !launcher.hasCompleter
-            Layout.preferredWidth: launcher.hasCompleter ? searchInputMetrics.advanceWidth : -1
+            Layout.fillWidth: !Launcher.hasCompleter
+            Layout.preferredWidth: Launcher.hasCompleter ? searchInputMetrics.advanceWidth : -1
             Layout.fillHeight: true
 
             TextMetrics {
@@ -50,7 +54,7 @@ Item {
             TextInput {
                 id: searchInput
                 Accessible.name: "search-input"
-                Accessible.description: launcher.searchPlaceholder
+                Accessible.description: Launcher.searchPlaceholder
                 anchors.fill: parent
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Theme.fontFamily
@@ -59,7 +63,7 @@ Item {
                 selectionColor: Theme.textSelectionBg
                 selectedTextColor: Theme.textSelectionFg
                 clip: true
-                readOnly: !launcher.searchInteractive
+                readOnly: !Launcher.searchInteractive
 
                 HoverHandler {
                     cursorShape: Qt.IBeamCursor
@@ -68,10 +72,10 @@ Item {
                 Text {
                     anchors.fill: parent
                     verticalAlignment: Text.AlignVCenter
-                    text: launcher.hasCompleter ? "..." : launcher.searchPlaceholder
+                    text: Launcher.hasCompleter ? "..." : Launcher.searchPlaceholder
                     color: Theme.textPlaceholder
                     font: searchInput.font
-                    visible: !searchInput.displayText && launcher.searchInteractive
+                    visible: !searchInput.displayText && Launcher.searchInteractive
                 }
 
                 Timer {
@@ -114,7 +118,7 @@ Item {
 
                 function _syncSearchText() {
                     const value = Config.considerPreedit ? searchInput.displayText : searchInput.text;
-                    launcher.forwardSearchText(value);
+                    Launcher.forwardSearchText(value);
                 }
 
                 function _handleEmacsEditing(event) {
@@ -199,81 +203,93 @@ Item {
                     if (nav === 0)
                         return false;
 
-                    if (launcher.compacted) {
-                        launcher.expand();
+                    if (Launcher.compacted) {
+                        Launcher.expand();
                         return true;
                     }
 
                     if (nav === 1) {
-                        commandStack.currentItem.moveUp();
+                        // qmllint disable missing-property
+                        root.commandStack.currentItem.moveUp();
                     } else if (nav === 2) {
-                        commandStack.currentItem.moveDown();
+                        root.commandStack.currentItem.moveDown();
                     } else if (nav === 3) {
-                        if (commandStack.currentItem && typeof commandStack.currentItem.moveLeft === "function")
-                            commandStack.currentItem.moveLeft();
+                        if (root.commandStack.currentItem && typeof root.commandStack.currentItem.moveLeft === "function")
+                            root.commandStack.currentItem.moveLeft();
                     } else if (nav === 4) {
-                        if (commandStack.currentItem && typeof commandStack.currentItem.moveRight === "function")
-                            commandStack.currentItem.moveRight();
+                        if (root.commandStack.currentItem && typeof root.commandStack.currentItem.moveRight === "function")
+                            root.commandStack.currentItem.moveRight();
+                        // qmllint enable missing-property
                     }
                     return true;
                 }
 
                 Keys.onUpPressed: event => {
-                    if (launcher.compacted) {
-                        launcher.expand();
+                    if (Launcher.compacted) {
+                        Launcher.expand();
                         return;
                     }
 
                     const ctrl = event.modifiers == Qt.ControlModifier;
-                    const navigatable = typeof commandStack.currentItem.moveUp === "function";
+                    // qmllint disable missing-property
+                    const navigatable = typeof root.commandStack.currentItem.moveUp === "function";
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
-                        event.accepted = ctrl ? (typeof commandStack.currentItem.moveSectionUp === "function" && commandStack.currentItem.moveSectionUp()) : commandStack.currentItem.moveUp();
+                        event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionUp === "function" && root.commandStack.currentItem.moveSectionUp()) : root.commandStack.currentItem.moveUp();
+                        // qmllint enable missing-property
                     } else {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                        event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
                 }
                 Keys.onDownPressed: event => {
-                    if (launcher.compacted) {
-                        launcher.expand();
+                    if (Launcher.compacted) {
+                        Launcher.expand();
                         return;
                     }
 
-                    const navigatable = typeof commandStack.currentItem.moveDown === "function";
+                    // qmllint disable missing-property
+                    const navigatable = typeof root.commandStack.currentItem.moveDown === "function";
+                    // qmllint enable missing-property
                     const ctrl = event.modifiers == Qt.ControlModifier;
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
-                        event.accepted = ctrl ? (typeof commandStack.currentItem.moveSectionDown === "function" && commandStack.currentItem.moveSectionDown()) : commandStack.currentItem.moveDown();
+                        // qmllint disable missing-property
+                        event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionDown === "function" && root.commandStack.currentItem.moveSectionDown()) : root.commandStack.currentItem.moveDown();
+                        // qmllint enable missing-property
                     } else {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                        event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
                 }
                 Keys.onLeftPressed: event => {
-                    if (launcher.compacted) {
-                        launcher.expand();
+                    if (Launcher.compacted) {
+                        Launcher.expand();
                         return;
                     }
 
-                    const navigatable = typeof commandStack.currentItem.moveLeft === "function";
+                    // qmllint disable missing-property
+                    const navigatable = typeof root.commandStack.currentItem.moveLeft === "function";
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
-                        event.accepted = commandStack.currentItem.moveLeft();
+                        event.accepted = root.commandStack.currentItem.moveLeft();
+                        // qmllint enable missing-property
                     } else {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                        event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
                 }
                 Keys.onRightPressed: event => {
-                    if (launcher.compacted) {
-                        launcher.expand();
+                    if (Launcher.compacted) {
+                        Launcher.expand();
                         return;
                     }
 
-                    const navigatable = typeof commandStack.currentItem.moveRight === "function";
+                    // qmllint disable missing-property
+                    const navigatable = typeof root.commandStack.currentItem.moveRight === "function";
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
-                        event.accepted = commandStack.currentItem.moveRight();
+                        event.accepted = root.commandStack.currentItem.moveRight();
+                        // qmllint enable missing-property
                     } else {
-                        event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                        event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                     }
                 }
                 Keys.onBacktabPressed: event => {
@@ -284,12 +300,12 @@ Item {
                         event.accepted = true;
                     } else if (_handleNavigation(event)) {
                         event.accepted = true;
-                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && launcher.showBackButton && launcher.popOnBackspace) {
-                        launcher.goBack();
+                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && Launcher.showBackButton && Launcher.popOnBackspace) {
+                        Launcher.goBack();
                         event.accepted = true;
-                    } else if (launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode)) {
-                        if (launcher.compacted)
-                            launcher.expand();
+                    } else if (Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode)) {
+                        if (Launcher.compacted)
+                            Launcher.expand();
                         event.accepted = true;
                     }
                 }
@@ -298,23 +314,24 @@ Item {
 
         ArgCompleter {
             id: argCompleter
-            visible: launcher.hasCompleter
-            args: launcher.completerArgs
-            icon: launcher.completerIcon
+            commandStack: root.commandStack
+            visible: Launcher.hasCompleter
+            args: Launcher.completerArgs
+            icon: Launcher.completerIcon
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignVCenter
 
             onValueChanged: (index, value) => {
-                launcher.setCompleterValue(index, value);
+                Launcher.setCompleterValue(index, value);
             }
             onFocusSearchInput: searchInput.forceActiveFocus()
         }
 
         Loader {
             id: accessoryLoader
-            active: launcher.searchAccessoryUrl.toString() !== ""
-            source: launcher.searchAccessoryUrl
+            active: Launcher.searchAccessoryUrl.toString() !== ""
+            source: Launcher.searchAccessoryUrl
             visible: active
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredWidth: 200
@@ -323,10 +340,7 @@ Item {
         Shortcut {
             sequence: Keybinds.openSearchAccessorySequence
             enabled: !!accessoryLoader.item
-            onActivated: {
-                if (typeof accessoryLoader.item.open === "function")
-                    accessoryLoader.item.open();
-            }
+            onActivated: (accessoryLoader.item as SearchableDropdown)?.open()
         }
 
         Connections {
@@ -339,13 +353,13 @@ Item {
     }
 
     Connections {
-        target: launcher
+        target: Launcher
         function onSearchVisibleChanged() {
-            if (launcher.searchVisible && launcher.searchInteractive)
+            if (Launcher.searchVisible && Launcher.searchInteractive)
                 searchInput.forceActiveFocus();
         }
         function onSearchInteractiveChanged() {
-            if (launcher.searchInteractive && launcher.searchVisible)
+            if (Launcher.searchInteractive && Launcher.searchVisible)
                 searchInput.forceActiveFocus();
         }
         function onSearchTextUpdated(text) {
@@ -356,20 +370,20 @@ Item {
             root.focusInput();
         }
         function onCompleterChanged() {
-            if (!launcher.hasCompleter && !searchInput.activeFocus) {
+            if (!Launcher.hasCompleter && !searchInput.activeFocus) {
                 searchInput.forceActiveFocus();
             }
         }
         function onCompleterFocusRequested() {
-            if (launcher.hasCompleter)
+            if (Launcher.hasCompleter)
                 argCompleter.focusFirst();
         }
         function onCompleterValidationFailed() {
             argCompleter.validate();
         }
         function onCompleterValuesChanged() {
-            if (launcher.hasCompleter)
-                argCompleter.setValues(launcher.completerValues);
+            if (Launcher.hasCompleter)
+                argCompleter.setValues(Launcher.completerValues);
         }
     }
 }

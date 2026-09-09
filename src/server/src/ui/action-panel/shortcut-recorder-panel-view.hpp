@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/image/image-url.hpp"
 #include "ui/action-panel/action-panel-view.hpp"
 #include "ui/image/url.hpp"
@@ -11,6 +12,8 @@
  */
 class ShortcutRecorderPanelView : public ActionPanelView {
   Q_OBJECT
+  QML_NAMED_ELEMENT(ShortcutRecorderPanelView)
+  QML_UNCREATABLE("")
   Q_PROPERTY(QString title READ title CONSTANT)
   Q_PROPERTY(ImageUrl icon READ icon CONSTANT)
   Q_PROPERTY(QString shortcutId READ shortcutId CONSTANT)

@@ -1,6 +1,8 @@
 #include "ui/windows/settings-window.hpp"
 #include "common/entrypoint.hpp"
 #include "ui/bridges/config-bridge.hpp"
+#include "ui/qml-dev-loader.hpp"
+#include "ui/qml-engine-scope.hpp"
 #include "ui/settings/extension-settings-model.hpp"
 #include "ui/settings/general-settings-model.hpp"
 #include "ui/image/image-source.hpp"
@@ -37,34 +39,25 @@ void SettingsWindow::ensureInitialized() {
   if (m_initialized) return;
   m_initialized = true;
 
-  m_themeBridge = new ThemeBridge(this);
   m_configBridge = new ConfigBridge(ConfigBridge::OpaqueSurfaces, this);
-  m_imgSource = new ImageSource(this);
-  m_keyboardBridge = new KeyboardBridge(this);
-  m_globalShortcutBridge = new GlobalShortcutBridge(this);
-  m_platformBridge = new PlatformBridge(this);
   m_generalModel = new GeneralSettingsModel(this);
   m_keybindModel = new KeybindSettingsModel(this);
   m_extensionModel = new ExtensionSettingsModel(this);
   m_sidebarModel = new SettingsSidebarModel(m_extensionModel, this);
 
-  auto *rootCtx = m_engine.rootContext();
-  rootCtx->setContextProperty(QStringLiteral("Theme"), m_themeBridge);
-  rootCtx->setContextProperty(QStringLiteral("Config"), m_configBridge);
-  rootCtx->setContextProperty(QStringLiteral("Img"), m_imgSource);
-  rootCtx->setContextProperty(QStringLiteral("Keyboard"), m_keyboardBridge);
-  rootCtx->setContextProperty(QStringLiteral("GlobalShortcuts"), m_globalShortcutBridge);
-  rootCtx->setContextProperty(QStringLiteral("Platform"), m_platformBridge);
-  rootCtx->setContextProperty(QStringLiteral("Style"), new StyleBridge(this));
-  rootCtx->setContextProperty(QStringLiteral("settings"), this);
-  rootCtx->setContextProperty(QStringLiteral("FileChooser"),
-                              ServiceRegistry::instance()->fileChooserService());
+  QmlDevLoader::attach(&m_engine, [this]() { reloadRoot(); });
+  QmlEngineScope::set(&m_engine, this);
+  QmlEngineScope::set(&m_engine, m_configBridge);
 
+  loadRoot();
+}
+
+void SettingsWindow::loadRoot() {
   m_engine.load(QUrl(
 #ifdef Q_OS_MACOS
-      QStringLiteral("qrc:/Vicinae/SettingsWindowMacOS.qml")
+      QStringLiteral("qrc:/qt/qml/Vicinae/SettingsWindowMacOS.qml")
 #else
-      QStringLiteral("qrc:/Vicinae/SettingsWindow.qml")
+      QStringLiteral("qrc:/qt/qml/Vicinae/SettingsWindow.qml")
 #endif
           ));
 
@@ -75,6 +68,20 @@ void SettingsWindow::ensureInitialized() {
     connect(m_window, &QQuickWindow::closing, this,
             [this](QQuickCloseEvent *) { m_ctx.settings->closeWindow(); });
   }
+}
+
+void SettingsWindow::reloadRoot() {
+  const bool wasVisible = m_window && m_window->isVisible();
+  const QRect geometry = m_window ? m_window->geometry() : QRect();
+  m_window = nullptr;
+  const auto roots = m_engine.rootObjects();
+  for (auto *root : roots)
+    delete root;
+
+  loadRoot();
+  if (!wasVisible || !m_window) return;
+  m_window->setGeometry(geometry);
+  show();
 }
 
 void SettingsWindow::setCurrentPage(const QString &page) {

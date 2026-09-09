@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
@@ -48,13 +49,13 @@ Rectangle {
         switch (calloutType) {
         case "caution":
         case "warning":
-            return Img.builtin("warning").withFillColor(root._alertColor);
+            return Img.icon(BuiltinIcon.Warning).withFillColor(root._alertColor);
         case "important":
-            return Img.builtin("important-01").withFillColor(root._alertColor);
+            return Img.icon(BuiltinIcon.Important01).withFillColor(root._alertColor);
         case "tip":
-            return Img.builtin("light-bulb").withFillColor(root._alertColor);
+            return Img.icon(BuiltinIcon.LightBulb).withFillColor(root._alertColor);
         default:
-            return Img.builtin("info-01").withFillColor(root._alertColor);
+            return Img.icon(BuiltinIcon.Info01).withFillColor(root._alertColor);
         }
     }
 

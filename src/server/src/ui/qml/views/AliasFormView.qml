@@ -1,9 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property AliasFormViewHost host
 
     FormView {
         id: formView

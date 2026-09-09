@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/view-utils.hpp"
 #include "navigation-controller.hpp"
 #include <QAbstractListModel>
@@ -11,6 +12,8 @@ class SubmenuAction;
 
 class ActionPanelModel : public QAbstractListModel {
   Q_OBJECT
+  QML_NAMED_ELEMENT(ActionPanelModel)
+  QML_UNCREATABLE("")
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
 
 public:

@@ -1,9 +1,12 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
 #include <functional>
 
 class EditKeywordsViewHost : public FormViewBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(EditKeywordsViewHost)
+  QML_UNCREATABLE("")
 
 signals:
   void formChanged();

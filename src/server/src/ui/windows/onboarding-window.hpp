@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "common/context.hpp"
 #include <QObject>
 #include <QQmlApplicationEngine>
@@ -15,7 +16,15 @@ class QQuickWindow;
 
 class OnboardingWindow : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Onboarding)
+  QML_SINGLETON
 
+public:
+  static OnboardingWindow *create(QQmlEngine *engine, QJSEngine *) {
+    return QmlEngineScope::get<OnboardingWindow>(engine);
+  }
+
+private:
   Q_PROPERTY(GeneralSettingsModel *generalModel READ generalModel CONSTANT)
   Q_PROPERTY(
       bool loginItemEnabled READ loginItemEnabled WRITE setLoginItemEnabled NOTIFY loginItemEnabledChanged)
@@ -30,6 +39,8 @@ public:
   static bool shouldShow();
 
   GeneralSettingsModel *generalModel() const { return m_generalModel; }
+  Q_PROPERTY(MacosPermissionService *permissions READ permissions CONSTANT)
+  MacosPermissionService *permissions() const { return m_permissions; }
 
   bool loginItemEnabled() const { return m_loginItemEnabled; }
   void setLoginItemEnabled(bool enabled);
@@ -43,16 +54,13 @@ public:
 
 private:
   void ensureInitialized();
+  void loadRoot();
+  void reloadRoot();
   void markCompleted();
 
   ApplicationContext &m_ctx;
   QQmlApplicationEngine m_engine;
-  ThemeBridge *m_themeBridge = nullptr;
   ConfigBridge *m_configBridge = nullptr;
-  ImageSource *m_imgSource = nullptr;
-  KeyboardBridge *m_keyboardBridge = nullptr;
-  GlobalShortcutBridge *m_globalShortcutBridge = nullptr;
-  PlatformBridge *m_platformBridge = nullptr;
   GeneralSettingsModel *m_generalModel = nullptr;
   MacosPermissionService *m_permissions = nullptr;
   QQuickWindow *m_window = nullptr;

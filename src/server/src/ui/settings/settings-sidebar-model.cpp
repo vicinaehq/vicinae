@@ -47,7 +47,7 @@ QVariant SettingsSidebarModel::data(const QModelIndex &index, int role) const {
   case LabelRole:
     return row.label;
   case IconRole:
-    return row.icon;
+    return QVariant::fromValue(row.icon);
   case IconSourceRole:
     return row.iconSource;
   case EnabledRole:
@@ -84,14 +84,14 @@ void SettingsSidebarModel::rebuildRows() {
   struct CorePage {
     QString id;
     QString label;
-    QString icon;
+    BuiltinIcon icon;
   };
   const std::array<CorePage, 5> corePages = {{
-      {QStringLiteral("general"), tr("General"), QStringLiteral("cog")},
-      {QStringLiteral("appearance"), tr("Appearance"), QStringLiteral("swatch")},
-      {QStringLiteral("keybindings"), tr("Keybindings"), QStringLiteral("keyboard")},
-      {QStringLiteral("advanced"), tr("Advanced"), QStringLiteral("wrench-screwdriver")},
-      {QStringLiteral("about"), tr("About"), QStringLiteral("vicinae")},
+      {QStringLiteral("general"), tr("General"), BuiltinIcon::Cog},
+      {QStringLiteral("appearance"), tr("Appearance"), BuiltinIcon::Swatch},
+      {QStringLiteral("keybindings"), tr("Keybindings"), BuiltinIcon::Keyboard},
+      {QStringLiteral("advanced"), tr("Advanced"), BuiltinIcon::WrenchScrewdriver},
+      {QStringLiteral("about"), tr("About"), BuiltinIcon::Vicinae},
   }};
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();

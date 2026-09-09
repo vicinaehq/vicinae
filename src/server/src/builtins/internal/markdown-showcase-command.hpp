@@ -1,20 +1,19 @@
 #pragma once
-#include "ui/views/bridge-view.hpp"
+#include "builtins/vicinae/store-intro-view-host.hpp"
 #include "command/single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <QCoreApplication>
 
-class MarkdownShowcaseView : public FormViewBase {
+class MarkdownShowcaseView : public StoreIntroViewHost {
   Q_OBJECT
 
-  Q_PROPERTY(QString introMarkdown READ introMarkdown CONSTANT)
-
 public:
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/StoreIntroView.qml")); }
+  MarkdownShowcaseView()
+      : StoreIntroViewHost(showcase(), ImageURL::builtin(BuiltinIcon::Text), tr("Close"),
+                           [this] { popSelf(); }) {}
 
-  QVariantMap qmlProperties() override { return {{QStringLiteral("host"), QVariant::fromValue(this)}}; }
-
-  QString introMarkdown() const {
+private:
+  static QString showcase() {
     return QStringLiteral(R"(# Heading 1
 
 ## Heading 2

@@ -1,4 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import Vicinae
 
 /// Reusable delegate base for list items.  Provides a Source-blended
 /// rounded-rect background that highlights on selection/hover, a MouseArea

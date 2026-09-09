@@ -27,6 +27,21 @@ relwithdebinfo:
 	cmake --build $(BUILD_DIR)
 .PHONY: relwithdebinfo
 
+dev-configure:
+	cmake --preset linux-dev -B $(BUILD_DIR)
+.PHONY: dev-configure
+
+dev-build: dev-configure
+	cmake --build $(BUILD_DIR)
+.PHONY: dev-build
+
+dev-run: dev-build
+	$(BUILD_DIR)/bin/vicinae server --replace --open
+.PHONY: dev-run
+
+dev: dev-run
+.PHONY: dev
+
 preview:
 	cmake --preset $(PRESET_OS)-preview
 	cmake --build --preset $(PRESET_OS)-preview
@@ -36,6 +51,10 @@ debug:
 	cmake --preset $(PRESET_OS)-debug
 	cmake --build --preset $(PRESET_OS)-debug
 .PHONY: debug
+
+qmllint:
+	cmake --build $(BUILD_DIR) --target all_qmllint
+.PHONY: qmllint
 
 update-translations:
 	cmake --preset $(PRESET_OS)-debug

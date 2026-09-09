@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 // Reusable shortcut recorder field. Works with serialized shortcut strings; key/modifier
 // conversion is delegated to the `Keyboard` bridge so callers don't reimplement it.

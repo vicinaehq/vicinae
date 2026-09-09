@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/quick/completion-model.hpp"
 #include "command/preference.hpp"
 #include "common/entrypoint.hpp"
@@ -9,6 +10,8 @@
 
 class PreferenceFormModel : public QAbstractListModel {
   Q_OBJECT
+  QML_NAMED_ELEMENT(PreferenceFormModel)
+  QML_UNCREATABLE("")
 
 public:
   enum Role {

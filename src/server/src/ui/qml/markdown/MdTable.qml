@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
@@ -62,6 +63,9 @@ Rectangle {
                     model: root.headers
 
                     Rectangle {
+                        id: headerCell
+                        required property var modelData
+                        required property int index
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.minimumWidth: 40
@@ -72,7 +76,7 @@ Rectangle {
                             anchors.right: parent.right
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
-                            width: index < root.columnCount - 1 ? 1 : 0
+                            width: headerCell.index < root.columnCount - 1 ? 1 : 0
                             color: Theme.divider
                         }
 
@@ -92,11 +96,11 @@ Rectangle {
                                 value: root.fontFamily
                                 when: root.fontFamily !== ""
                             }
-                            horizontalAlignment: root.textAlignment(index)
-                            text: modelData.html ?? ""
+                            horizontalAlignment: root.textAlignment(headerCell.index)
+                            text: headerCell.modelData.html ?? ""
 
                             Component.onCompleted: if (root.selectionController)
-                                root.selectionController.registerSelectable(headerText, root.blockIndex * 10000 + index, true)
+                                root.selectionController.registerSelectable(headerText, root.blockIndex * 10000 + headerCell.index, true)
                             Component.onDestruction: if (root.selectionController)
                                 root.selectionController.unregisterSelectable(headerText)
                         }
@@ -107,7 +111,7 @@ Rectangle {
 
         Rectangle {
             Layout.fillWidth: true
-            height: 1
+            Layout.preferredHeight: 1
             color: Theme.divider
             visible: root.headers.length > 0
         }
@@ -116,6 +120,7 @@ Rectangle {
             model: root.rows
 
             Column {
+                id: tableRow
                 Layout.fillWidth: true
                 required property var modelData
                 required property int index
@@ -127,15 +132,15 @@ Rectangle {
                     spacing: 0
 
                     Repeater {
-                        model: modelData
+                        model: tableRow.modelData
 
                         Rectangle {
+                            id: cell
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.minimumWidth: 40
                             color: "transparent"
                             implicitHeight: cellText.implicitHeight + 16
-
                             required property int index
                             required property var modelData
 
@@ -143,7 +148,7 @@ Rectangle {
                                 anchors.right: parent.right
                                 anchors.top: parent.top
                                 anchors.bottom: parent.bottom
-                                width: index < root.columnCount - 1 ? 1 : 0
+                                width: cell.index < root.columnCount - 1 ? 1 : 0
                                 color: Theme.divider
                             }
 
@@ -162,11 +167,11 @@ Rectangle {
                                     value: root.fontFamily
                                     when: root.fontFamily !== ""
                                 }
-                                horizontalAlignment: root.textAlignment(index)
-                                text: modelData.html ?? ""
+                                horizontalAlignment: root.textAlignment(cell.index)
+                                text: cell.modelData.html ?? ""
 
                                 Component.onCompleted: if (root.selectionController)
-                                    root.selectionController.registerSelectable(cellText, root.blockIndex * 10000 + 100 + rowIdx * root.columnCount + index, true)
+                                    root.selectionController.registerSelectable(cellText, root.blockIndex * 10000 + 100 + tableRow.rowIdx * root.columnCount + cell.index, true)
                                 Component.onDestruction: if (root.selectionController)
                                     root.selectionController.unregisterSelectable(cellText)
                             }
@@ -178,7 +183,7 @@ Rectangle {
                     width: parent.width
                     height: 1
                     color: Theme.divider
-                    visible: index < root.rows.length - 1
+                    visible: tableRow.index < root.rows.length - 1
                 }
             }
         }

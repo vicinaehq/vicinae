@@ -69,8 +69,12 @@ endif()
 configure_file(resources-core.qrc.in resources-core.qrc)
 configure_file(resources-extensions.qrc.in resources-extensions.qrc)
 
-if (CMAKE_BUILD_TYPE MATCHES "Debug" AND NOT WIN32)
+if ((CMAKE_BUILD_TYPE MATCHES "Debug" OR VICINAE_DEV_MODE) AND NOT WIN32)
 	add_compile_definitions(LOCAL_THEME_DIR="${THEME_DIR}")
+endif()
+
+if (VICINAE_DEV_MODE)
+	add_compile_definitions(VICINAE_QML_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/ui/qml")
 endif()
 
 if (WAYLAND_LAYER_SHELL)
@@ -84,7 +88,7 @@ if (WAYLAND_LAYER_SHELL)
 	add_compile_definitions(WAYLAND_LAYER_SHELL)
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR VICINAE_DEV_MODE)
 	add_compile_definitions(QT_MESSAGELOGCONTEXT)
 else()
 	add_compile_definitions(QT_NO_DEBUG_OUTPUT)
@@ -134,8 +138,6 @@ set(SRCS
 	src/favicon/twenty-favicon-request.cpp
 	src/favicon/dummy-favicon-request.hpp
 	src/favicon/dummy-favicon-request.cpp
-	src/favicon/cached-favicon-request.hpp
-	src/favicon/cached-favicon-request.cpp
 
 
 	src/actions/command-actions.cpp
@@ -176,8 +178,6 @@ set(SRCS
 	
 	src/service-registry.cpp
 
-	src/utils/color-formatter.hpp
-	src/utils/color-formatter.cpp
 
 	src/services/clipboard/clipboard-server.hpp
 	src/services/clipboard/clipboard-content.hpp
@@ -208,7 +208,6 @@ set(SRCS
 
 	# begin app-database
 	src/services/app-service/abstract-app-db.hpp
-	src/services/app-service/dummy-app-database.hpp
 
 	# end app-database
 
@@ -516,6 +515,9 @@ set(SRCS
 	src/ui/bridges/keybind-bridge.hpp
 	src/ui/windows/launcher-window.hpp
 	src/ui/windows/launcher-window.cpp
+	src/services/permissions/macos-permission-service.hpp
+	src/ui/qml-dev-loader.hpp
+	src/ui/qml-dev-loader.cpp
 	src/builtins/root/root-view-host.hpp
 	src/builtins/root/root-view-host.cpp
 	src/builtins/root/root-search-model.hpp
@@ -721,7 +723,6 @@ if (APPLE)
 		src/services/snippet/macos-snippet-server.mm
 		src/services/update/macos-update-installer.hpp
 		src/services/update/macos-update-installer.mm
-		src/services/permissions/macos-permission-service.hpp
 		src/services/permissions/macos-permission-service.mm
 		src/services/autostart/macos-login-item.hpp
 		src/services/autostart/macos-login-item.mm
@@ -763,6 +764,7 @@ if (APPLE)
 	if (AUTO_ENABLE_AUTOSTART)
 		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
 	endif()
+
 elseif (WIN32)
 	list(APPEND SRCS
 		src/ui/image/win-file-icon-loader.hpp
@@ -834,6 +836,10 @@ else()
 		src/services/app-runtime/linux/linux-app-runtime.hpp
 		src/services/app-runtime/linux/linux-app-runtime.cpp
 	)
+endif()
+
+if(NOT APPLE)
+	list(APPEND SRCS src/services/permissions/permission-service-stub.cpp)
 endif()
 
 if (ENABLE_ONBOARDING)
@@ -1113,6 +1119,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/ThemeListView.qml
 	src/ui/qml/list/ThemeItemDelegate.qml
 	src/ui/qml/views/GenericGridView.qml
+	src/ui/qml/views/GridCell.qml
+	src/ui/qml/views/GridCell.qml
 	src/ui/qml/views/EmptyView.qml
 	src/ui/qml/views/EmojiGridView.qml
 	src/ui/qml/controls/ViciButton.qml
@@ -1150,7 +1158,6 @@ set(VICINAE_QML_FILES
 	src/ui/qml/launcher/ArgCompleter.qml
 	src/ui/qml/views/DetailListView.qml
 	src/ui/qml/views/StoreListingView.qml
-	src/ui/qml/launcher/AlertBanner.qml
 	src/ui/qml/views/StoreDetailView.qml
 	src/ui/qml/views/StoreIntroView.qml
 	src/ui/qml/detail/ImageViewer.qml
@@ -1202,7 +1209,6 @@ set(VICINAE_QML_FILES
 	src/ui/qml/form/ShortcutRecorderCapture.qml
 	src/ui/qml/actions/ShortcutRecorderPanel.qml
 	src/ui/qml/form/ShortcutField.qml
-	src/ui/qml/views/PreferenceFormView.qml
 	src/ui/qml/settings/SettingsPreferenceForm.qml
 	src/ui/qml/views/MissingPreferenceView.qml
 	src/ui/qml/views/OAuthOverlayView.qml
@@ -1249,6 +1255,8 @@ set(VICINAE_QML_SOURCES
 	src/ui/quick/match-highlighter.hpp
 	src/ui/quick/match-highlighter.cpp
 	src/ui/quick/completion-model.hpp
+	src/ui/views/detail-list-view-host.hpp
+	src/ui/views/store-detail-host.hpp
 	src/ui/quick/markdown-model.hpp
 	src/ui/quick/text-selection-controller.hpp
 	src/ui/quick/window-material-attached.hpp
@@ -1279,7 +1287,7 @@ endif()
 qt_add_qml_module(${TARGET}
 	URI Vicinae
 	VERSION 1.0
-	RESOURCE_PREFIX /
+	RESOURCE_PREFIX /qt/qml
 	QML_FILES ${VICINAE_QML_FILES}
 	SOURCES ${VICINAE_QML_SOURCES}
 	DEPENDENCIES QtQuick
@@ -1305,7 +1313,31 @@ endif()
 
 # src/ui/quick holds the C++ types registered into the Vicinae QML module. It must be on the
 # include path because the generated type registration file includes those headers by basename.
-target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/quick ${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler ${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
+target_include_directories(${TARGET} PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}/src
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/quick
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/bridges
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/windows
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/image
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/action-panel
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/settings
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/alert
+	${CMAKE_CURRENT_SOURCE_DIR}/src/services/file-chooser
+	${CMAKE_CURRENT_SOURCE_DIR}/src/services/permissions
+	${CMAKE_CURRENT_SOURCE_DIR}/src/services/builtin-icon
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/views
+	${CMAKE_CURRENT_SOURCE_DIR}/src/script
+	${CMAKE_CURRENT_SOURCE_DIR}/src/extension/views
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/shortcut
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/vicinae
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/clipboard/history
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/file
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/font
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/developer
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/snippet
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/root
+	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler
+	${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
 	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-framework Security" "-F/System/Library/PrivateFrameworks" "-framework login")
@@ -1376,6 +1408,8 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	add_executable(${TEST_TARGET}
 		src/internal/keyboard/keyboard.cpp
 		src/internal/keyboard/keybind-manager.cpp
+		src/services/builtin-icon/builtin-icon.hpp
+		src/services/builtin-icon/builtin-icon.cpp
 	)
 	target_sources(${TEST_TARGET} PRIVATE
 		src/services/calculator-service/qalculate/qalculate-backend.cpp

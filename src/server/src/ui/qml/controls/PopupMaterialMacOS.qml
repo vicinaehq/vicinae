@@ -1,4 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import Vicinae
 
 Item {
     MacOSWindow.enabled: Config.blurEnabled

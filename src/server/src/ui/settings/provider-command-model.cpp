@@ -39,7 +39,7 @@ QHash<int, QByteArray> ProviderCommandModel::roleNames() const {
   return {{NameRole, "name"},
           {TypeRole, "type"},
           {IconSourceRole, "iconSource"},
-          {EnabledRole, "enabled"},
+          {EnabledRole, "isEnabled"},
           {AliasRole, "alias"},
           {EntrypointIdRole, "entrypointId"},
           {DescriptionRole, "description"},

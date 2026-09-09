@@ -1,11 +1,13 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
-    readonly property var extModel: settings.extensionModel
-    readonly property string providerId: settings.currentPage
+    readonly property var extModel: Settings.extensionModel
+    readonly property string providerId: Settings.currentPage
     readonly property real contentWidth: Math.min(width - 32, 720)
     readonly property real sideMargin: (width - contentWidth) / 2
     property string expandedCommandId: ""
@@ -35,13 +37,13 @@ Item {
     }
 
     function _handlePendingCommand() {
-        const pending = settings.pendingCommandId;
+        const pending = Settings.pendingCommandId;
         if (!pending)
             return;
         const row = root.extModel.commandModel.findByEntrypointId(pending);
         if (row < 0)
             return;
-        settings.pendingCommandId = "";
+        Settings.pendingCommandId = "";
         root.expandedCommandId = pending;
         root._focusedCommandId = pending;
         focusFlash.restart();
@@ -55,7 +57,7 @@ Item {
     }
 
     Connections {
-        target: settings
+        target: Settings
         function onPendingCommandIdChanged() {
             root._handlePendingCommand();
         }
@@ -174,7 +176,7 @@ Item {
                         required property string type
                         required property string iconSource
                         required property string description
-                        required property bool enabled
+                        required property bool isEnabled
                         required property string alias
                         required property string entrypointId
                         required property bool hasPreferences
@@ -244,7 +246,7 @@ Item {
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: Math.min(implicitWidth, titleWrap.width - titleWrap.chevronSpace)
                                         text: cmdDelegate.name
-                                        color: !cmdDelegate.enabled ? Theme.textMuted : Theme.foreground
+                                        color: !cmdDelegate.isEnabled ? Theme.textMuted : Theme.foreground
                                         font.pointSize: Theme.regularFontSize
                                         elide: Text.ElideRight
                                         maximumLineCount: 1
@@ -253,7 +255,7 @@ Item {
                                     ViciImage {
                                         id: cmdChevron
                                         visible: cmdDelegate.hasPreferences
-                                        source: Img.builtin(cmdDelegate.isExpanded ? "chevron-down-small" : "chevron-right-small").withFillColor(Theme.textMuted)
+                                        source: Img.icon(cmdDelegate.isExpanded ? BuiltinIcon.ChevronDownSmall : BuiltinIcon.ChevronRightSmall).withFillColor(Theme.textMuted)
                                         anchors.left: titleText.right
                                         anchors.leftMargin: visible ? cmdRow.spacing : 0
                                         anchors.verticalCenter: parent.verticalCenter
@@ -284,8 +286,8 @@ Item {
                                     Layout.preferredWidth: 20
                                     Layout.preferredHeight: 20
                                     radius: 4
-                                    color: cmdDelegate.enabled ? Theme.accent : "transparent"
-                                    border.color: Config.withAlpha(cmdDelegate.enabled ? Theme.accent : Theme.inputBorder, Config.surfaceOpacity)
+                                    color: cmdDelegate.isEnabled ? Theme.accent : "transparent"
+                                    border.color: Config.withAlpha(cmdDelegate.isEnabled ? Theme.accent : Theme.inputBorder, Config.surfaceOpacity)
                                     border.width: 1
 
                                     Text {
@@ -294,13 +296,13 @@ Item {
                                         color: "#ffffff"
                                         font.pixelSize: 13
                                         font.bold: true
-                                        visible: cmdDelegate.enabled
+                                        visible: cmdDelegate.isEnabled
                                     }
 
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.extModel.setEnabledByEntrypointId(cmdDelegate.entrypointId, !cmdDelegate.enabled)
+                                        onClicked: root.extModel.setEnabledByEntrypointId(cmdDelegate.entrypointId, !cmdDelegate.isEnabled)
                                     }
                                 }
                             }

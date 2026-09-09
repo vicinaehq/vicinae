@@ -1,6 +1,8 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 ViciPopover {
     id: root
@@ -23,7 +25,7 @@ ViciPopover {
     }
     onClosed: {
         if (!_confirmed)
-            launcher.alertModel.cancel();
+            Launcher.alertModel.cancel();
     }
     onActiveFocusChanged: {
         if (!activeFocus && opened)
@@ -35,23 +37,23 @@ ViciPopover {
 
         Rectangle {
             Layout.alignment: Qt.AlignHCenter
-            visible: launcher.alertModel.iconSource !== ""
-            width: 44
-            height: 44
+            visible: Launcher.alertModel.iconSource !== ""
+            Layout.preferredWidth: 44
+            Layout.preferredHeight: 44
             radius: width / 2
-            color: launcher.alertModel.iconBadged ? Config.withAlpha(launcher.alertModel.confirmColor, 0.14) : "transparent"
+            color: Launcher.alertModel.iconBadged ? Config.withAlpha(Launcher.alertModel.confirmColor, 0.14) : "transparent"
 
             ViciImage {
                 anchors.centerIn: parent
-                width: launcher.alertModel.iconBadged ? 22 : 30
+                width: Launcher.alertModel.iconBadged ? 22 : 30
                 height: width
-                source: launcher.alertModel.iconSource
+                source: Launcher.alertModel.iconSource
             }
         }
 
         Text {
             Layout.fillWidth: true
-            text: launcher.alertModel.title
+            text: Launcher.alertModel.title
             color: Theme.foreground
             font.pointSize: Theme.regularFontSize + 2
             font.bold: true
@@ -61,7 +63,7 @@ ViciPopover {
 
         Text {
             Layout.fillWidth: true
-            text: launcher.alertModel.message
+            text: Launcher.alertModel.message
             color: Theme.textMuted
             font.pointSize: Theme.regularFontSize
             horizontalAlignment: Text.AlignHCenter
@@ -78,8 +80,8 @@ ViciPopover {
                 Layout.fillWidth: true
                 implicitHeight: 32
                 variant: "secondary"
-                text: launcher.alertModel.cancelText
-                foreground: launcher.alertModel.cancelColor
+                text: Launcher.alertModel.cancelText
+                foreground: Launcher.alertModel.cancelColor
                 focus: true
                 activeFocusOnTab: true
                 showFocus: root._focusedButton === cancelBtn
@@ -101,15 +103,15 @@ ViciPopover {
                 Layout.fillWidth: true
                 implicitHeight: 32
                 variant: "tinted"
-                text: launcher.alertModel.confirmText
-                foreground: launcher.alertModel.confirmColor
+                text: Launcher.alertModel.confirmText
+                foreground: Launcher.alertModel.confirmColor
                 activeFocusOnTab: true
                 showFocus: root._focusedButton === confirmBtn
                 onActiveFocusChanged: if (activeFocus)
                     root._focusedButton = confirmBtn
                 onClicked: {
                     root._confirmed = true;
-                    launcher.alertModel.confirm();
+                    Launcher.alertModel.confirm();
                     root.close();
                 }
                 Keys.onLeftPressed: cancelBtn.forceActiveFocus()

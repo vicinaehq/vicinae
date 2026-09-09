@@ -1,3 +1,7 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import Vicinae
+
 SettingsWindow {
     nativeChrome: true
 

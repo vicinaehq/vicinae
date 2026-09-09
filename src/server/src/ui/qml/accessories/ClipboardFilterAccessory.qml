@@ -1,11 +1,13 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import Vicinae
 
 SearchableDropdown {
     id: root
     compact: true
     minimumWidth: 100
 
-    readonly property var _host: launcher.commandViewHost
+    readonly property var _host: Launcher.commandViewHost
 
     model: _host?.kindFilterModel ?? null
 

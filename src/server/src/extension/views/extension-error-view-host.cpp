@@ -11,7 +11,7 @@ ExtensionErrorViewHost::ExtensionErrorViewHost(const QString &errorText) : m_err
 }
 
 QUrl ExtensionErrorViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/MarkdownDetailView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/MarkdownDetailView.qml"));
 }
 
 QVariantMap ExtensionErrorViewHost::qmlProperties() { return {{QStringLiteral("markdown"), m_markdown}}; }

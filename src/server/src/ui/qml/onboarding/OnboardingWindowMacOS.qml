@@ -1,3 +1,7 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import Vicinae
+
 OnboardingWindow {
     MacOSWindow.enabled: true
     MacOSWindow.blurEnabled: true

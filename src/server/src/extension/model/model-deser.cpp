@@ -11,7 +11,6 @@
 
 #include "common/types.hpp"
 #include "extension/model/action-model.hpp"
-#include "extension/model/color-model.hpp"
 #include "extension/model/detail-model.hpp"
 #include "extension/model/dropdown-model.hpp"
 #include "extension/model/empty-view-model.hpp"

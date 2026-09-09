@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 /// Reusable detail panel with arbitrary content on top and optional metadata at the bottom.
 /// Place child items inside to fill the content area. Set `metadata` to show a MetadataBar.

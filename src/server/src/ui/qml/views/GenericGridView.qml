@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import Vicinae
 
 Item {
     id: root
@@ -16,7 +18,7 @@ Item {
     //   selectedSection, selectedItem, select(), activateSelected(),
     //   navigateUp/Down/Left/Right(), navigateSectionUp/Down(),
     //   flatRowForSelection()
-    property var cmdModel: null
+    property SectionGridModel cmdModel: null
 
     // Cell delegate component — instantiated per cell.
     // The Loader parent exposes context properties:
@@ -38,7 +40,7 @@ Item {
 
     property string emptyTitle: qsTr("No results")
     property string emptyDescription: ""
-    property var emptyIcon: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+    property var emptyIcon: Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
     property Component emptyViewComponent: null
 
     property bool suppressEmpty: false
@@ -311,20 +313,20 @@ Item {
                                     }
                                 }
 
-                                Loader {
+                                GridCell {
                                     x: rowItem.cellWidth * rowItem.effectiveInset
                                     y: rowItem.cellHeight * rowItem.effectiveInset
                                     width: rowItem.cellWidth * (1 - 2 * rowItem.effectiveInset)
                                     height: rowItem.cellHeight * (1 - 2 * rowItem.effectiveInset)
                                     sourceComponent: root.cellDelegate
-                                    property int cellSection: cellWrapper.cellSection
-                                    property int cellItem: cellWrapper.cellItem
-                                    property bool cellSelected: cellWrapper.cellSelected
-                                    property bool cellHovered: cellWrapper.cellHovered
-                                    property real cellSize: rowItem.cellWidth
-                                    property real cellWidth: rowItem.cellWidth
-                                    property real cellHeight: rowItem.cellHeight
-                                    property var cmdModel: root.cmdModel
+                                    cellSection: cellWrapper.cellSection
+                                    cellItem: cellWrapper.cellItem
+                                    cellSelected: cellWrapper.cellSelected
+                                    cellHovered: cellWrapper.cellHovered
+                                    cellSize: rowItem.cellWidth
+                                    cellWidth: rowItem.cellWidth
+                                    cellHeight: rowItem.cellHeight
+                                    cmdModel: root.cmdModel
                                 }
 
                                 SourceBlendRect {

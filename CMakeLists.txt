@@ -58,6 +58,7 @@ option(USE_SYSTEM_NUMEN "Use system version of the numen calculator backend, ins
 
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
+option(VICINAE_DEV_MODE "Developer build: load QML from the source tree with live reload, use the local theme dir, keep debug output. Never enable for packaged builds." OFF)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
 option(AUTO_INSTALL_BROWSER_MANIFESTS "Install per-user browser native messaging host manifests at server startup" ON)
 option(AUTO_ENABLE_AUTOSTART "Register the app to start at login on first launch (currently macOS only)" ON)
@@ -334,7 +335,7 @@ if (ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
 	add_compile_definitions(DEBUG=1)
 endif()
 
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release RelWithDebInfo ReleaseHost)
 
 if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
 	add_compile_definitions(DEBUG=1)

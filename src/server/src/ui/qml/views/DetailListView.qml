@@ -1,10 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls
+import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property DetailListViewHost host
 
     function moveUp() {
         listView.moveUp();
@@ -29,8 +29,8 @@ Item {
         detailComponent: detailPanel
         detailVisible: root.host.hasDetail
 
-        emptyTitle: root.host.emptyTitle ?? qsTr("No results")
-        emptyDescription: root.host.emptyDescription ?? ""
+        emptyTitle: root.host.emptyTitle || qsTr("No results")
+        emptyDescription: root.host.emptyDescription
         emptyIcon: root.host.emptyIcon
 
         delegate: Loader {

@@ -370,7 +370,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     WindowMaterial::setManager(registry->windowMaterialManager());
     registry->setShortcutInhibitManager(std::make_unique<ShortcutInhibitManager>());
     ShortcutInhibitor::setManager(registry->shortcutInhibitManager());
-    registry->setFileChooserService(std::make_unique<FileChooserService>());
+    registry->setFileChooserService(std::make_unique<FileChooserService>(nullptr));
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
 #ifdef Q_OS_MACOS

@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/quick/completion-model.hpp"
 #include "extension/model/form-model.hpp"
 #include "services/file-chooser/abstract-file-chooser.hpp"
@@ -12,6 +13,8 @@
 
 class ExtensionFormModel : public QAbstractListModel {
   Q_OBJECT
+  QML_NAMED_ELEMENT(ExtensionFormModel)
+  QML_UNCREATABLE("")
 
 signals:
   void autoFocusRequested(int index);

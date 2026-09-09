@@ -1,9 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property FontDemoViewHost host
 
     function moveUp() {
         mdContent.scrollUp();

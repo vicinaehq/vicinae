@@ -1,9 +1,13 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 RowLayout {
     id: root
 
+    required property StackView commandStack
     required property var args
     required property string icon
 
@@ -15,22 +19,27 @@ RowLayout {
 
     spacing: 4
 
+    component ArgField: Rectangle {
+        property string currentValue: ""
+        property bool showError: false
+    }
+
     function focusFirst() {
-        argRepeater.itemAt(0)?.item?.forceActiveFocus();
+        ((argRepeater.itemAt(0) as Loader)?.item as Item)?.forceActiveFocus();
     }
 
     function validate() {
         var firstRequired = -1;
         for (var i = 0; i < argRepeater.count; i++) {
-            var loader = argRepeater.itemAt(i);
-            if (!loader || !loader.item)
+            var field = (argRepeater.itemAt(i) as Loader)?.item as ArgField;
+            if (!field)
                 continue;
             var arg = root.visibleArgs[i];
-            if (arg.required && loader.item.currentValue === "") {
-                loader.item.showError = true;
+            if (arg.required && field.currentValue === "") {
+                field.showError = true;
                 if (firstRequired === -1) {
                     firstRequired = i;
-                    loader.item.forceActiveFocus();
+                    field.forceActiveFocus();
                 }
             }
         }
@@ -38,12 +47,12 @@ RowLayout {
 
     function setValues(values) {
         for (var i = 0; i < argRepeater.count && i < values.length; i++) {
-            var loader = argRepeater.itemAt(i);
-            if (!loader || !loader.item)
+            var field = (argRepeater.itemAt(i) as Loader)?.item as ArgField;
+            if (!field)
                 continue;
             var val = values[i].value;
-            if (loader.item.currentValue !== val)
-                loader.item.currentValue = val;
+            if (field.currentValue !== val)
+                field.currentValue = val;
         }
     }
 
@@ -76,10 +85,9 @@ RowLayout {
             Component {
                 id: textDelegate
 
-                Rectangle {
+                ArgField {
                     id: textDel
-                    property string currentValue: textField.text
-                    property bool showError: false
+                    currentValue: textField.text
 
                     implicitWidth: Math.min((textField.text ? textField.contentWidth : textMetrics.advanceWidth) + 16, argLoader.maxArgWidth)
                     implicitHeight: 26
@@ -131,10 +139,12 @@ RowLayout {
                         }
 
                         Keys.onUpPressed: {
-                            commandStack.currentItem.moveUp();
+                            // qmllint disable missing-property
+                            root.commandStack.currentItem.moveUp();
                         }
                         Keys.onDownPressed: {
-                            commandStack.currentItem.moveDown();
+                            root.commandStack.currentItem.moveDown();
+                            // qmllint enable missing-property
                         }
                         Keys.onTabPressed: event => {
                             if (argLoader.isLast) {
@@ -145,7 +155,7 @@ RowLayout {
                             }
                         }
                         Keys.onPressed: event => {
-                            event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                            event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                         }
                     }
                 }
@@ -154,10 +164,8 @@ RowLayout {
             Component {
                 id: dropdownDelegate
 
-                Rectangle {
+                ArgField {
                     id: dropdownDel
-                    property string currentValue: ""
-                    property bool showError: false
 
                     implicitWidth: Math.min(Math.max(dropdownMetrics.advanceWidth + 36, 80), argLoader.maxArgWidth)
                     implicitHeight: 26
@@ -232,7 +240,7 @@ RowLayout {
                             }
                         }
                         Keys.onPressed: event => {
-                            event.accepted = launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                            event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                         }
                     }
                 }

@@ -1,5 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import Vicinae
 
 GenericListView {
     id: searchListView
@@ -8,7 +9,7 @@ GenericListView {
     listModel: cmdModel
     autoWireModel: true
     selectFirstOnReset: cmdModel.selectFirstOnReset
-    suppressEmpty: launcher.isLoading
+    suppressEmpty: Launcher.isLoading
 
     delegate: Loader {
         id: delegateLoader

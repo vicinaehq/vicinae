@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 // Grouped "inset card" container for settings rows.
 SourceBlendRect {
@@ -10,8 +12,8 @@ SourceBlendRect {
     implicitHeight: inner.implicitHeight
 
     radius: 12
-    backgroundColor: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
-    color: Config.withAlpha(Theme.secondaryBackground, Config.windowOpacity)
+    backgroundColor: Theme.background
+    color: Theme.secondaryBackground
 
     ColumnLayout {
         id: inner

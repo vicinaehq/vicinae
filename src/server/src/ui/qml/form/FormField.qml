@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 ColumnLayout {
     id: root
@@ -12,6 +14,11 @@ ColumnLayout {
     property bool topAlignLabel: false
     property real topAlignLabelTopPadding: 8
     property bool filled: true
+    property Item focusTarget: null
+
+    function focusField() {
+        focusTarget?.forceActiveFocus();
+    }
     default property alias contentData: contentSlot.data
 
     RowLayout {

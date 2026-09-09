@@ -7,10 +7,11 @@
 
 class ThemeViewHost : public ViewHostBase {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 public:
-  QUrl qmlComponentUrl() const override { return QUrl(QStringLiteral("qrc:/Vicinae/ThemeListView.qml")); }
+  QUrl qmlComponentUrl() const override {
+    return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/ThemeListView.qml"));
+  }
 
   QVariantMap qmlProperties() override {
     return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(&m_model))}};
@@ -21,7 +22,7 @@ public:
   void onReactivated() override { m_model.refreshActionPanel(); }
   void beforePop() override;
 
-  QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
+  SectionListModel *listModel() const override { return const_cast<SectionListModel *>(&m_model); }
 
 private:
   void regenerateThemes();

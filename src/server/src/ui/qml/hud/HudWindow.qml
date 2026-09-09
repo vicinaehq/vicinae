@@ -1,6 +1,8 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
+import Vicinae
 
 Window {
     id: root
@@ -21,7 +23,7 @@ Window {
     onVisibleChanged: if (visible)
         shown()
 
-    Component.onCompleted: hud.registerWindow(root)
+    Component.onCompleted: Hud.registerWindow(root)
 
     Rectangle {
         id: pill
@@ -38,15 +40,15 @@ Window {
             spacing: 5
 
             ViciImage {
-                visible: hud.hasIcon
-                source: hud.icon
+                visible: Hud.hasIcon
+                source: Hud.icon
                 Layout.preferredWidth: 16
                 Layout.preferredHeight: 16
                 sourceSize: Qt.size(16, 16)
             }
 
             Text {
-                text: hud.text
+                text: Hud.text
                 color: Theme.foreground
                 font.family: Theme.fontFamily
                 font.pointSize: Theme.smallerFontSize

@@ -1,6 +1,8 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "ui/image/image-url.hpp"
 #include <QObject>
+#include <QPointer>
 #include <QTimer>
 #include <optional>
 
@@ -8,13 +10,20 @@ class QQuickWindow;
 
 class HudBridge : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Hud)
+  QML_SINGLETON
+
+public:
+  static HudBridge *create(QQmlEngine *engine, QJSEngine *) { return QmlEngineScope::get<HudBridge>(engine); }
+
+private:
   Q_PROPERTY(bool visible READ visible NOTIFY visibleChanged)
   Q_PROPERTY(QString text READ text NOTIFY contentChanged)
   Q_PROPERTY(ImageUrl icon READ icon NOTIFY contentChanged)
   Q_PROPERTY(bool hasIcon READ hasIcon NOTIFY contentChanged)
 
 public:
-  explicit HudBridge(QObject *parent = nullptr);
+  explicit HudBridge(QObject *parent);
 
   bool visible() const { return m_visible; }
   QString text() const { return m_text; }
@@ -37,5 +46,5 @@ private:
   QString m_text;
   ImageUrl m_icon;
   QTimer m_timer;
-  QQuickWindow *m_window = nullptr;
+  QPointer<QQuickWindow> m_window;
 };

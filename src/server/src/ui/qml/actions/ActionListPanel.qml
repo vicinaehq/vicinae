@@ -1,13 +1,15 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Vicinae
 
 Item {
     id: root
 
-    required property var model
+    required property ActionPanelModel model
     property var boundActions: root.model
-    property var controller: actionPanel
+    property ActionPanelController controller: Launcher.actionPanel
 
     signal navigateBack
 
@@ -222,7 +224,7 @@ Item {
                 spacing: 8
 
                 ViciImage {
-                    source: Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+                    source: Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
                     sourceSize.width: 14
                     sourceSize.height: 14
                     Layout.preferredWidth: 14

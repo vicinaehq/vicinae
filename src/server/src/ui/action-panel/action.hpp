@@ -142,17 +142,6 @@ public:
       : AbstractAction(title, url), m_fn(fn) {}
 };
 
-class SubmitAction : public AbstractAction {
-  std::function<void(void)> m_fn;
-
-  void execute(ApplicationContext *) override {
-    if (m_fn) m_fn();
-  }
-
-public:
-  SubmitAction(const std::function<void(void)> &fn) : m_fn(fn) {}
-};
-
 class ActionPanelState;
 class ActionPanelView;
 

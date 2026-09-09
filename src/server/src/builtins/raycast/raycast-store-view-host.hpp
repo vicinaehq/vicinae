@@ -8,7 +8,6 @@
 
 class RaycastStoreViewHost : public ViewHostBase {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 signals:
 
@@ -22,7 +21,7 @@ public:
   void textChanged(const QString &text) override;
   void onReactivated() override;
 
-  QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
+  SectionListModel *listModel() const override { return const_cast<SectionListModel *>(&m_model); }
 
 private:
   void fetchExtensions();

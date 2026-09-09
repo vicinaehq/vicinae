@@ -1,18 +1,20 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 Window {
     id: root
 
     property int step: 0
-    readonly property bool permissionsAvailable: typeof Permissions !== "undefined"
+    readonly property bool permissionsAvailable: Onboarding.permissions.supported
     readonly property bool shortcutsAvailable: Platform.supports("globalShortcuts")
     readonly property int stepCount: permissionsAvailable ? 4 : 3
-    readonly property bool accessibilityGranted: permissionsAvailable && Permissions.accessibilityGranted
+    readonly property bool accessibilityGranted: permissionsAvailable && Onboarding.permissions.accessibilityGranted
 
     function advance() {
         if (root.step === root.stepCount - 1) {
-            onboarding.finish();
+            Onboarding.finish();
             return;
         }
         root.step += 1;
@@ -47,7 +49,7 @@ Window {
             spacing: 6
 
             ViciImage {
-                source: Img.builtin("check-circle").withFillColor(Theme.toastSuccess)
+                source: Img.icon(BuiltinIcon.CheckCircle).withFillColor(Theme.toastSuccess)
                 Layout.preferredWidth: 16
                 Layout.preferredHeight: 16
             }
@@ -101,7 +103,7 @@ Window {
                         spacing: 8
 
                         ViciImage {
-                            source: Img.builtin("vicinae")
+                            source: Img.icon(BuiltinIcon.Vicinae)
                             Layout.preferredWidth: 72
                             Layout.preferredHeight: 72
                             Layout.alignment: Qt.AlignHCenter
@@ -162,16 +164,16 @@ Window {
                                     description: qsTr("Used to paste, expand snippets, and move windows.")
                                     iconSource: Img.system("accessibility").withFillColor(Theme.foreground)
                                     granted: root.accessibilityGranted
-                                    onGrant: Permissions.requestAccessibility()
+                                    onGrant: Onboarding.permissions.requestAccessibility()
                                 }
 
                                 PermissionRow {
                                     label: qsTr("Full Disk Access")
                                     description: qsTr("Allows file search to cover your entire disk.")
                                     iconSource: Img.system("internaldrive").withFillColor(Theme.foreground)
-                                    showSeparator: Permissions.notificationsSupported
-                                    granted: Permissions.fullDiskAccessGranted
-                                    onGrant: Permissions.requestFullDiskAccess()
+                                    showSeparator: Onboarding.permissions.notificationsSupported
+                                    granted: Onboarding.permissions.fullDiskAccessGranted
+                                    onGrant: Onboarding.permissions.requestFullDiskAccess()
                                 }
 
                                 PermissionRow {
@@ -179,14 +181,14 @@ Window {
                                     description: qsTr("Allows extensions to send desktop notifications.")
                                     iconSource: Img.system("bell.badge").withFillColor(Theme.foreground)
                                     showSeparator: false
-                                    visible: Permissions.notificationsSupported
-                                    granted: Permissions.notificationsGranted
-                                    onGrant: Permissions.requestNotifications()
+                                    visible: Onboarding.permissions.notificationsSupported
+                                    granted: Onboarding.permissions.notificationsGranted
+                                    onGrant: Onboarding.permissions.requestNotifications()
                                 }
                             }
 
                             Text {
-                                visible: !root.accessibilityGranted || !Permissions.fullDiskAccessGranted
+                                visible: !root.accessibilityGranted || !Onboarding.permissions.fullDiskAccessGranted
                                 text: !root.accessibilityGranted ? qsTr("Without accessibility access, paste, snippet expansion, and window management are unavailable.") : qsTr("Full disk access needs to be explicitly enabled if you want file search to cover all your files.")
                                 color: Theme.textMuted
                                 font.pointSize: Theme.smallerFontSize
@@ -231,16 +233,16 @@ Window {
 
                                 SearchableDropdown {
                                     width: parent.width
-                                    model: onboarding.generalModel.themeModel
-                                    currentItem: onboarding.generalModel.currentTheme
-                                    onActivated: item => onboarding.generalModel.selectTheme(item.id)
+                                    model: Onboarding.generalModel.themeModel
+                                    currentItem: Onboarding.generalModel.currentTheme
+                                    onActivated: item => Onboarding.generalModel.selectTheme(item.id)
                                 }
                             }
 
                             SettingsRow {
                                 label: qsTr("Global hotkey")
                                 description: root.shortcutsAvailable ? qsTr("Opens the launcher from anywhere.") : qsTr("Bind a key to \"vicinae toggle\"")
-                                showSeparator: onboarding.loginItemSupported
+                                showSeparator: Onboarding.loginItemSupported
 
                                 ShortcutField {
                                     visible: root.shortcutsAvailable
@@ -249,8 +251,8 @@ Window {
                                     bordered: false
                                     clearable: false
                                     shortcutId: GlobalShortcuts.toggleId
-                                    shortcut: onboarding.generalModel.toggleShortcut
-                                    onAccepted: shortcut => onboarding.generalModel.toggleShortcut = shortcut
+                                    shortcut: Onboarding.generalModel.toggleShortcut
+                                    onAccepted: shortcut => Onboarding.generalModel.toggleShortcut = shortcut
                                 }
 
                                 ViciButton {
@@ -259,19 +261,19 @@ Window {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: qsTr("Open Docs")
                                     variant: "secondary"
-                                    onClicked: onboarding.openUrl("https://docs.vicinae.com/faq#how-to-set-a-keyboard-shortcut-to-open-vicinae")
+                                    onClicked: Onboarding.openUrl("https://docs.vicinae.com/faq#how-to-set-a-keyboard-shortcut-to-open-vicinae")
                                 }
                             }
 
                             SettingsRow {
-                                visible: onboarding.loginItemSupported
+                                visible: Onboarding.loginItemSupported
                                 label: qsTr("Launch at login")
                                 description: qsTr("Starts Vicinae in the background at login.")
                                 showSeparator: false
 
                                 SettingsToggle {
-                                    checked: onboarding.loginItemEnabled
-                                    onToggled: checked => onboarding.loginItemEnabled = checked
+                                    checked: Onboarding.loginItemEnabled
+                                    onToggled: checked => Onboarding.loginItemEnabled = checked
                                 }
                             }
                         }
@@ -303,8 +305,8 @@ Window {
                         }
 
                         ShortcutBadge {
-                            visible: root.shortcutsAvailable && onboarding.generalModel.toggleShortcut !== ""
-                            tokens: Keyboard.tokensForString(onboarding.generalModel.toggleShortcut)
+                            visible: root.shortcutsAvailable && Onboarding.generalModel.toggleShortcut !== ""
+                            tokens: Keyboard.tokensForString(Onboarding.generalModel.toggleShortcut)
                             Layout.alignment: Qt.AlignHCenter
                             Layout.topMargin: 8
                             Layout.bottomMargin: 16
@@ -327,13 +329,13 @@ Window {
                             ViciButton {
                                 text: "GitHub"
                                 variant: "secondary"
-                                onClicked: onboarding.openUrl("https://github.com/vicinaehq/vicinae")
+                                onClicked: Onboarding.openUrl("https://github.com/vicinaehq/vicinae")
                             }
 
                             ViciButton {
                                 text: qsTr("Sponsor")
                                 variant: "secondary"
-                                onClicked: onboarding.openUrl("https://github.com/sponsors/vicinaehq")
+                                onClicked: Onboarding.openUrl("https://github.com/sponsors/vicinaehq")
                             }
                         }
                     }
@@ -361,6 +363,7 @@ Window {
                         model: root.stepCount
 
                         Rectangle {
+                            id: stepDot
                             required property int index
                             width: 7
                             height: 7
@@ -373,7 +376,7 @@ Window {
                                 anchors.margins: -5
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.step = index
+                                onClicked: root.step = stepDot.index
                             }
                         }
                     }

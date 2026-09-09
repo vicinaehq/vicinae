@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
 #include <QTimer>
 #include <optional>
@@ -7,6 +8,8 @@ class ScriptProcess;
 
 class ScriptExecutorViewHost : public FormViewBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(ScriptExecutorViewHost)
+  QML_UNCREATABLE("")
   Q_PROPERTY(QString outputHtml READ outputHtml NOTIFY outputChanged)
   Q_PROPERTY(bool running READ running NOTIFY runningChanged)
 

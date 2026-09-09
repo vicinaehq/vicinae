@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "builtins/clipboard/history/clipboard-history-model.hpp"
 #include "ui/views/bridge-view.hpp"
 #include "ui/quick/completion-model.hpp"
@@ -11,7 +12,8 @@ class ClipboardService;
 
 class ClipboardHistoryViewHost : public ViewHostBase {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
+  QML_NAMED_ELEMENT(ClipboardHistoryViewHost)
+  QML_UNCREATABLE("")
   Q_PROPERTY(QString itemCountText READ itemCountText NOTIFY itemCountTextChanged)
   Q_PROPERTY(QString clipboardStatusText READ clipboardStatusText NOTIFY clipboardStatusChanged)
   Q_PROPERTY(QString clipboardStatusIcon READ clipboardStatusIcon NOTIFY clipboardStatusChanged)
@@ -47,7 +49,7 @@ public:
   Q_INVOKABLE void toggleMonitoring();
   Q_INVOKABLE void setKindFilter(int kind);
 
-  QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
+  SectionListModel *listModel() const override { return const_cast<SectionListModel *>(&m_model); }
   CompletionModel *kindFilterModel() { return &m_kindFilterModel; }
   QString itemCountText() const { return m_itemCountText; }
   QString clipboardStatusText() const { return m_clipboardStatusText; }

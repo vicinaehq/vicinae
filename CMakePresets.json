@@ -86,6 +86,17 @@
       }
     },
     {
+      "name": "dev-flags",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "LTO": "OFF",
+        "VICINAE_DEV_MODE": "ON",
+        "VICINAE_NODE_RUNTIME_DOWNLOAD": "ON",
+        "BUILD_TESTS": "ON"
+      }
+    },
+    {
       "name": "preview-flags",
       "hidden": true,
       "cacheVariables": {
@@ -104,6 +115,11 @@
       "inherits": ["release-flags", "linux-base"]
     },
     {
+      "name": "linux-dev",
+      "displayName": "Linux (RelWithDebInfo, QML from source)",
+      "inherits": ["dev-flags", "linux-base"]
+    },
+    {
       "name": "linux-preview",
       "displayName": "Linux (Release, preview features)",
       "inherits": ["preview-flags", "linux-base"]
@@ -119,6 +135,11 @@
       "inherits": ["release-flags", "macos-base"]
     },
     {
+      "name": "macos-dev",
+      "displayName": "macOS (RelWithDebInfo, QML from source)",
+      "inherits": ["dev-flags", "macos-base"]
+    },
+    {
       "name": "macos-preview",
       "displayName": "macOS (Release, preview features)",
       "inherits": ["preview-flags", "macos-base"]
@@ -131,9 +152,11 @@
     { "name": "windows-ci", "configurePreset": "windows-ci" },
     { "name": "linux-debug", "configurePreset": "linux-debug" },
     { "name": "linux-release", "configurePreset": "linux-release" },
+    { "name": "linux-dev", "configurePreset": "linux-dev" },
     { "name": "linux-preview", "configurePreset": "linux-preview" },
     { "name": "macos-debug", "configurePreset": "macos-debug" },
     { "name": "macos-release", "configurePreset": "macos-release" },
+    { "name": "macos-dev", "configurePreset": "macos-dev" },
     { "name": "macos-preview", "configurePreset": "macos-preview" }
   ]
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/dmenu-model.hpp"
 #include "generated/ipc-server.hpp"
 #include "ui/views/list-view-host.hpp"
@@ -6,6 +7,8 @@
 
 class DMenuViewHost : public ListViewHost {
   Q_OBJECT
+  QML_NAMED_ELEMENT(DMenuViewHost)
+  QML_UNCREATABLE("")
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(QString detailName READ detailName NOTIFY detailChanged)
   Q_PROPERTY(QString detailPath READ detailPath NOTIFY detailChanged)

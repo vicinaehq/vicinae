@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "extension/model/list-model.hpp"
 #include "ui/image/image-url.hpp"
 #include "extension/extension-action-panel-builder.hpp"
@@ -51,6 +52,8 @@ private:
 
 class ExtensionListModel : public SectionListModel {
   Q_OBJECT
+  QML_NAMED_ELEMENT(ExtensionListModel)
+  QML_UNCREATABLE("")
   Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
   Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
   Q_PROPERTY(ImageUrl emptyIcon READ emptyIcon NOTIFY emptyViewChanged)

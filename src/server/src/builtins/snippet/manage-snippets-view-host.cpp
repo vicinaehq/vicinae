@@ -8,8 +8,14 @@
 #include <QDateTime>
 #include <ranges>
 
+ManageSnippetsViewHost::ManageSnippetsViewHost() {
+  m_emptyTitle = tr("No snippets");
+  m_emptyDescription = tr("Create a snippet to get started");
+  m_emptyIcon = ImageUrl(ImageURL(BuiltinIcon::Snippets));
+}
+
 QUrl ManageSnippetsViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/DetailListView.qml"));
+  return QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/DetailListView.qml"));
 }
 
 QVariantMap ManageSnippetsViewHost::qmlProperties() {

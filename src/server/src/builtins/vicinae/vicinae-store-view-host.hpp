@@ -8,7 +8,6 @@
 
 class VicinaeStoreViewHost : public ViewHostBase {
   Q_OBJECT
-  Q_PROPERTY(QObject *listModel READ listModel CONSTANT)
 
 signals:
 
@@ -24,7 +23,7 @@ public:
   QString initialNavigationTitle() const override;
   ImageURL initialNavigationIcon() const override;
 
-  QObject *listModel() const { return const_cast<SectionListModel *>(&m_model); }
+  SectionListModel *listModel() const override { return const_cast<SectionListModel *>(&m_model); }
 
 private:
   void fetchExtensions();

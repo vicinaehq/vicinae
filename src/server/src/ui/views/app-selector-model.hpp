@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/quick/completion-model.hpp"
 #include <QObject>
 #include <QVariantList>
@@ -10,6 +11,7 @@ class AppService;
 
 class AppSelectorModel : public QObject {
   Q_OBJECT
+  QML_ANONYMOUS
   Q_PROPERTY(CompletionModel *model READ model CONSTANT)
   Q_PROPERTY(QVariantMap currentItem READ currentItem NOTIFY currentItemChanged)
 

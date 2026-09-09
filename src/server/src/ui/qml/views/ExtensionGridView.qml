@@ -1,4 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import Vicinae
 
 GenericGridView {
     columns: cmdModel ? cmdModel.columns : 8
@@ -8,14 +10,15 @@ GenericGridView {
 
     emptyTitle: cmdModel && cmdModel.emptyTitle ? cmdModel.emptyTitle : qsTr("No results")
     emptyDescription: cmdModel ? cmdModel.emptyDescription : ""
-    emptyIcon: cmdModel?.emptyIcon?.valid ? cmdModel.emptyIcon : Img.builtin("magnifying-glass").withFillColor(Theme.foreground)
+    emptyIcon: cmdModel?.emptyIcon.valid ? cmdModel.emptyIcon : Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
 
     cellDelegate: Component {
         Item {
             id: cellRoot
-            readonly property var model: parent ? parent.cmdModel : null
-            readonly property int sec: parent ? parent.cellSection : 0
-            readonly property int itm: parent ? parent.cellItem : 0
+            readonly property GridCell host: parent as GridCell
+            readonly property ExtensionGridModel model: host ? (host.cmdModel as ExtensionGridModel) : null
+            readonly property int sec: host ? host.cellSection : 0
+            readonly property int itm: host ? host.cellItem : 0
             readonly property string _cellColor: {
                 var _rev = cellRoot.model ? cellRoot.model.dataRevision : 0;
                 return cellRoot.model ? cellRoot.model.cellColor(cellRoot.sec, cellRoot.itm) : "";
@@ -27,7 +30,7 @@ GenericGridView {
                 return cellRoot.model ? cellRoot.model.cellIcon(cellRoot.sec, cellRoot.itm) : "";
             }
 
-            readonly property size _sourceSize: Qt.size(cellRoot.parent ? cellRoot.parent.cellWidth : width, cellRoot.parent ? cellRoot.parent.cellHeight : height)
+            readonly property size _sourceSize: Qt.size(cellRoot.host ? cellRoot.host.cellWidth : width, cellRoot.host ? cellRoot.host.cellHeight : height)
 
             Rectangle {
                 visible: cellRoot._cellColor !== ""

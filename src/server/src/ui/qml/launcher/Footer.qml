@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     RowLayout {
@@ -13,15 +15,15 @@ Item {
             Layout.fillHeight: true
 
             FooterNavStatus {
-                visible: !launcher.toastActive
-                clickable: launcher.atRoot
+                visible: !Launcher.toastActive
+                clickable: Launcher.atRoot
                 availableWidth: parent.width
                 anchors.verticalCenter: parent.verticalCenter
-                onClicked: launcher.openFooterMenu()
+                onClicked: Launcher.openFooterMenu()
             }
 
             FooterToast {
-                visible: launcher.toastActive
+                visible: Launcher.toastActive
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width
             }
@@ -29,19 +31,19 @@ Item {
 
         FooterButton {
             id: primaryButton
-            visible: actionPanel.primaryActionTitle !== ""
+            visible: Launcher.actionPanel.primaryActionTitle !== ""
             Layout.alignment: Qt.AlignVCenter
-            label: actionPanel.primaryActionTitle
-            shortcutTokens: actionPanel.primaryActionShortcutTokens
+            label: Launcher.actionPanel.primaryActionTitle
+            shortcutTokens: Launcher.actionPanel.primaryActionShortcutTokens
             highlighted: true
-            onClicked: actionPanel.executePrimaryAction()
+            onClicked: Launcher.actionPanel.executePrimaryAction()
         }
 
         Rectangle {
             visible: primaryButton.visible && actionsButton.visible
             Layout.alignment: Qt.AlignVCenter
-            width: 1
-            height: 12
+            Layout.preferredWidth: 1
+            Layout.preferredHeight: 12
             opacity: primaryButton.hovered || actionsButton.hovered || actionsButton.backgrounded ? 0 : 0.35
             color: Config.withAlpha(Theme.textMuted, Config.windowOpacity)
 
@@ -55,13 +57,13 @@ Item {
 
         FooterButton {
             id: actionsButton
-            visible: actionPanel.hasMultipleActions
+            visible: Launcher.actionPanel.hasMultipleActions
             Layout.alignment: Qt.AlignVCenter
             label: qsTr("Actions")
             shortcutTokens: Keybinds.toggleActionPanelTokens
-            highlighted: actionPanel.open
-            backgrounded: actionPanel.open
-            onClicked: actionPanel.toggle(true)
+            highlighted: Launcher.actionPanel.open
+            backgrounded: Launcher.actionPanel.open
+            onClicked: Launcher.actionPanel.toggle(true)
         }
     }
 }

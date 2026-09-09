@@ -1,14 +1,21 @@
 #pragma once
+#include "ui/qml-engine-scope.hpp"
 #include "ui/image/image-url.hpp"
 #include <QObject>
 
 class ImageSource : public QObject {
   Q_OBJECT
+  QML_NAMED_ELEMENT(Img)
+  QML_SINGLETON
 
 public:
-  explicit ImageSource(QObject *parent = nullptr) : QObject(parent) {}
+  static ImageSource *create(QQmlEngine *, QJSEngine *) { return QmlEngineScope::global<ImageSource>(); }
 
-  Q_INVOKABLE ImageUrl builtin(const QString &name) const { return ImageUrl(ImageURL::builtinByName(name)); }
+private:
+public:
+  explicit ImageSource(QObject *parent) : QObject(parent) {}
+
+  Q_INVOKABLE ImageUrl icon(BuiltinIcon icon) const { return ImageUrl(ImageURL::builtin(icon)); }
 
   Q_INVOKABLE ImageUrl system(const QString &name) const { return ImageUrl(ImageURL::system(name)); }
 

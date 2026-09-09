@@ -1,4 +1,6 @@
 #pragma once
+#include "services/builtin-icon/builtin-icon.hpp"
+#include <QtQml/qqmlregistration.h>
 #include <string>
 #include <vector>
 #include <QAbstractListModel>
@@ -10,6 +12,7 @@ class ExtensionSettingsModel;
 // provider, plus divider rows. Filtering happens in C++ via setQuery().
 class SettingsSidebarModel : public QAbstractListModel {
   Q_OBJECT
+  QML_ANONYMOUS
 
 public:
   enum Role {
@@ -41,7 +44,7 @@ private:
     QString key;
     QString kind;
     QString label;
-    QString icon;
+    BuiltinIcon icon = BuiltinIcon::QuestionMarkCircle;
     QString iconSource;
     bool enabled = true;
   };

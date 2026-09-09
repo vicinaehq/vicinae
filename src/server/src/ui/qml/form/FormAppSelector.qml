@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Vicinae
 
 ColumnLayout {
     id: root
@@ -53,6 +55,7 @@ ColumnLayout {
         model: root.model
 
         Item {
+            id: appRow
             required property int index
             required property var modelData
 
@@ -82,7 +85,7 @@ ColumnLayout {
                 spacing: 6
 
                 ViciImage {
-                    source: info.iconSource ?? ""
+                    source: appRow.info.iconSource ?? ""
                     visible: source !== ""
                     Layout.preferredWidth: 16
                     Layout.preferredHeight: 16
@@ -92,7 +95,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     verticalAlignment: Text.AlignVCenter
-                    text: info.displayName ?? modelData
+                    text: appRow.info.displayName ?? appRow.modelData
                     color: Theme.foreground
                     font.pointSize: Theme.regularFontSize
                     elide: Text.ElideRight
@@ -103,10 +106,11 @@ ColumnLayout {
                     Layout.preferredHeight: 20
                     Layout.alignment: Qt.AlignVCenter
                     radius: 4
-                    icon: "xmark"
+                    iconSource: Img.icon(BuiltinIcon.Xmark)
+                    accessibleName: qsTr("Remove")
                     iconSize: 10
                     variant: "ghost"
-                    onClicked: root.remove(modelData)
+                    onClicked: root.remove(appRow.modelData)
                 }
             }
         }
