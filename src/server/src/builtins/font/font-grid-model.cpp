@@ -78,6 +78,25 @@ void FontGridSource::setResults(QString name, std::span<Scored<const FontFamily 
   m_search = true;
 }
 
+QString FontGridSource::itemTitle(int i) const {
+  const FontFamily *family = familyAt(i);
+  return family ? family->name : QString{};
+}
+
+QString FontGridSource::itemTooltip(int i) const { return itemTitle(i); }
+
+std::optional<ImageURL> FontGridSource::itemIcon(int i) const {
+  const FontFamily *family = familyAt(i);
+  if (!family) return std::nullopt;
+
+  if (family->glyph.isEmpty())
+    return ImageURL::fontPreview(QString(), QStringLiteral("?")).setFill(SemanticColor::Foreground);
+
+  auto url = ImageURL::fontPreview(family->family, family->glyph);
+  if (!family->color) url.setFill(SemanticColor::Foreground);
+  return url;
+}
+
 std::unique_ptr<ActionPanelState> FontGridSource::actionPanel(int i) const {
   return buildFontActionPanel(familyAt(i));
 }
@@ -178,27 +197,4 @@ const FontFamily *FontGridModel::familyAt(int section, int item) const {
   if (!resolveSelection(section, item, sourceIdx, itemIdx)) return nullptr;
   auto *src = dynamic_cast<FontGridSource *>(sources()[sourceIdx]);
   return src ? src->familyAt(itemIdx) : nullptr;
-}
-
-QString FontGridModel::cellTitle(int section, int item) const {
-  const FontFamily *family = familyAt(section, item);
-  return family ? family->name : QString{};
-}
-
-QString FontGridModel::cellTooltip(int section, int item) const {
-  const FontFamily *family = familyAt(section, item);
-  return family ? family->name : QString{};
-}
-
-QString FontGridModel::fontIcon(int section, int item) const {
-  const FontFamily *family = familyAt(section, item);
-  if (!family) return {};
-
-  if (family->glyph.isEmpty())
-    return qml::imageSourceFor(
-        ImageURL::fontPreview(QString(), QStringLiteral("?")).setFill(SemanticColor::Foreground));
-
-  auto url = ImageURL::fontPreview(family->family, family->glyph);
-  if (!family->color) url.setFill(SemanticColor::Foreground);
-  return qml::imageSourceFor(url);
 }

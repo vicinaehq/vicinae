@@ -9,43 +9,49 @@
 #include <optional>
 #include <span>
 
-class EmojiGridSource : public GridSource {
+using GlyphMetadataMap = std::unordered_map<const glyph::Item *, GlyphMetadata, GlyphItemHash>;
+
+class EmojiSourceBase : public GridSource {
+public:
+  void setSkinTone(std::optional<emoji::SkinTone> tone) { m_skinTone = tone; }
+  void setMetadata(const GlyphMetadataMap *metadata) { m_metadata = metadata; }
+
+  virtual const glyph::Item *emojiAt(int i) const = 0;
+
+  QString itemTooltip(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
+
+private:
+  std::optional<emoji::SkinTone> m_skinTone;
+  const GlyphMetadataMap *m_metadata = nullptr;
+};
+
+class EmojiGridSource : public EmojiSourceBase {
 public:
   void setEmojis(const QString &name, std::span<const glyph::Item *const> emojis);
 
-  void setSkinTone(std::optional<emoji::SkinTone> tone) { m_skinTone = tone; }
-
   QString sectionName() const override { return m_name; }
   int count() const override { return static_cast<int>(m_emojis.size()); }
-
-  const glyph::Item *emojiAt(int i) const;
-
-  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
+  const glyph::Item *emojiAt(int i) const override;
 
 private:
   QString m_name;
   std::vector<const glyph::Item *> m_emojis;
-  std::optional<emoji::SkinTone> m_skinTone;
 };
 
-class SearchEmojiGridSource : public GridSource {
+class SearchEmojiGridSource : public EmojiSourceBase {
 public:
   void setResults(std::span<Scored<const glyph::Item *>> results);
-
-  void setSkinTone(std::optional<emoji::SkinTone> tone) { m_skinTone = tone; }
 
   QString sectionName() const override {
     return QCoreApplication::translate("SearchEmojiGridSource", "Results (%1)").arg(m_results.size());
   }
   int count() const override { return static_cast<int>(m_results.size()); }
-
-  const glyph::Item *emojiAt(int i) const;
-
-  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
+  const glyph::Item *emojiAt(int i) const override;
 
 private:
   std::span<Scored<const glyph::Item *>> m_results;
-  std::optional<emoji::SkinTone> m_skinTone;
 };
 
 class EmojiGridModel : public SectionGridModel {
@@ -62,14 +68,11 @@ public:
   QString searchPlaceholder() const { return tr("Search for emojis and symbols..."); }
   QUrl qmlComponentUrl() const { return qml::componentUrl(u"EmojiGridView"); }
 
-  Q_INVOKABLE QString emojiIcon(int section, int item) const;
-  Q_INVOKABLE QString emojiName(int section, int item) const;
-  QString cellTooltip(int section, int item) const override;
-
 private:
   enum class DisplayMode { Root, Search };
 
   const glyph::Item *emojiAt(int section, int item) const;
+  QString emojiName(int section, int item) const;
   void refreshMetadataCache();
   void regenerateMetaSections();
   void rebuildSections();
@@ -89,7 +92,7 @@ private:
   std::vector<const glyph::Item *> m_pinned;
   std::vector<const glyph::Item *> m_recent;
   std::span<const glyph::Section> m_sections;
-  std::unordered_map<const glyph::Item *, GlyphMetadata, GlyphItemHash> m_metadataCache;
+  GlyphMetadataMap m_metadataCache;
   std::vector<Scored<const glyph::Item *>> m_searchResultsStorage;
   std::span<Scored<const glyph::Item *>> m_searchResults;
 };

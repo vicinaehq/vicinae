@@ -1,9 +1,16 @@
 #include <algorithm>
 
+#include "theme/theme.hpp"
 #include "ui/views/drag-utils.hpp"
 #include "ui/views/section-grid-model.hpp"
 #include "services/navigation/list-navigation.hpp"
-SectionGridModel::SectionGridModel(QObject *parent) : QAbstractListModel(parent) {}
+
+SectionGridModel::SectionGridModel(QObject *parent) : QAbstractListModel(parent) {
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
+    if (m_rows.empty()) return;
+    emit dataChanged(index(0), index(static_cast<int>(m_rows.size()) - 1), {RowCellsRole});
+  });
+}
 
 void SectionGridModel::addSource(GridSource *source) {
   m_sources.push_back(source);
@@ -121,9 +128,29 @@ QVariant SectionGridModel::data(const QModelIndex &index, int role) const {
     return r.aspectRatio;
   case RowInsetRole:
     return r.inset;
+  case RowCellsRole:
+    return QVariant::fromValue(r.kind == FlatRow::ItemRow ? rowCells(r) : QList<GridCellData>{});
   default:
     return {};
   }
+}
+
+QList<GridCellData> SectionGridModel::rowCells(const FlatRow &row) const {
+  auto *source = m_sources[m_sections[row.sectionIdx].sourceIdx];
+  QList<GridCellData> cells;
+  cells.reserve(row.itemCount);
+
+  for (int i = row.startItem; i < row.startItem + row.itemCount; ++i) {
+    GridCellData cell{.title = source->itemTitle(i),
+                      .subtitle = source->itemSubtitle(i),
+                      .tooltip = source->itemTooltip(i),
+                      .draggable = source->isDraggable(i)};
+    if (auto icon = source->itemIcon(i)) cell.icon = qml::imageSourceFor(*icon);
+    if (auto color = source->itemColor(i)) cell.color = std::move(*color);
+    cells.push_back(std::move(cell));
+  }
+
+  return cells;
 }
 
 QHash<int, QByteArray> SectionGridModel::roleNames() const {
@@ -136,6 +163,7 @@ QHash<int, QByteArray> SectionGridModel::roleNames() const {
       {RowColumnsRole, "rowColumns"},
       {RowAspectRatioRole, "rowAspectRatio"},
       {RowInsetRole, "rowInset"},
+      {RowCellsRole, "rowCells"},
   };
 }
 
@@ -215,12 +243,6 @@ void SectionGridModel::select(int section, int item) {
       m_scope.clearActions();
     }
   }
-}
-
-bool SectionGridModel::isDraggable(int section, int item) const {
-  int sourceIdx;
-  int itemIdx;
-  return resolveSelection(section, item, sourceIdx, itemIdx) && m_sources[sourceIdx]->isDraggable(itemIdx);
 }
 
 void SectionGridModel::startDrag(int section, int item, QObject *dragSource) {

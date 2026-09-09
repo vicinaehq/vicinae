@@ -26,6 +26,9 @@ public:
     return m_search ? m_results[i].data : m_families[i];
   }
 
+  QString itemTitle(int i) const override;
+  QString itemTooltip(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
 
 private:
@@ -48,10 +51,6 @@ public:
   void setCategoryFilter(std::optional<int> index);
   const QStringList &categoryNames() const { return m_categoryNames; }
   QString searchPlaceholder() const { return tr("Search fonts..."); }
-
-  QString cellTitle(int section, int item) const override;
-  Q_INVOKABLE QString fontIcon(int section, int item) const;
-  QString cellTooltip(int section, int item) const override;
 
 private:
   enum class Mode : std::uint8_t { Root, Search };

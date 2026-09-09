@@ -34,7 +34,11 @@ public:
   const GridItemViewModel *itemAt(int i) const;
 
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
+  QString itemTitle(int i) const override;
+  QString itemSubtitle(int i) const override;
+  QString itemTooltip(int i) const override;
   std::optional<ImageURL> itemIcon(int i) const override;
+  std::optional<QString> itemColor(int i) const override;
   bool isDraggable(int i) const override;
   std::unique_ptr<QMimeData> dragMimeData(int i) const override;
 
@@ -68,17 +72,10 @@ public:
   QString searchPlaceholder() const;
   QUrl qmlComponentUrl() const { return qml::componentUrl(u"ExtensionGridView"); }
 
-  QString cellTitle(int section, int item) const override;
-  Q_INVOKABLE QString cellIcon(int section, int item) const;
-  QString cellSubtitle(int section, int item) const override;
-  QString cellTooltip(int section, int item) const override;
-  Q_INVOKABLE QString cellColor(int section, int item) const;
-
   QString emptyTitle() const override;
   QString emptyDescription() const override;
   ImageUrl emptyIcon() const override;
   int fit() const { return static_cast<int>(m_fit); }
-  int dataRevision() const override { return m_dataRevision; }
 
 signals:
   void fitChanged();
@@ -87,7 +84,6 @@ protected:
   void onSelectionCleared() override;
 
 private:
-  const GridItemViewModel *resolveItem(int section, int item) const;
   void rebuildFromSections(bool resetSelection);
 
   NotifyFn m_notify;
@@ -96,5 +92,4 @@ private:
   ObjectFit m_fit = ObjectFit::Contain;
   QString m_filter;
   QString m_placeholder;
-  int m_dataRevision = 0;
 };

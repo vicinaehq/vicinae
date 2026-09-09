@@ -17,18 +17,8 @@ GenericGridView {
             id: cellRoot
             readonly property GridCell host: parent as GridCell
             readonly property ExtensionGridModel model: host ? (host.cmdModel as ExtensionGridModel) : null
-            readonly property int sec: host ? host.cellSection : 0
-            readonly property int itm: host ? host.cellItem : 0
-            readonly property string _cellColor: {
-                var _rev = cellRoot.model ? cellRoot.model.dataRevision : 0;
-                return cellRoot.model ? cellRoot.model.cellColor(cellRoot.sec, cellRoot.itm) : "";
-            }
-
-            readonly property string _imageSource: {
-                var _ = Theme.foreground;
-                var _rev = cellRoot.model ? cellRoot.model.dataRevision : 0;
-                return cellRoot.model ? cellRoot.model.cellIcon(cellRoot.sec, cellRoot.itm) : "";
-            }
+            readonly property string _cellColor: host?.cell?.color ?? ""
+            readonly property string _imageSource: host?.cell?.icon ?? ""
 
             readonly property size _sourceSize: Qt.size(cellRoot.host ? cellRoot.host.cellWidth : width, cellRoot.host ? cellRoot.host.cellHeight : height)
 

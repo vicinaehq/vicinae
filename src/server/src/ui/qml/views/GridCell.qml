@@ -10,5 +10,6 @@ Loader {
     property real cellSize
     property real cellWidth
     property real cellHeight
+    property var cell
     property SectionGridModel cmdModel
 }

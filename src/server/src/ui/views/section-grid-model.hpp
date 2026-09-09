@@ -11,6 +11,25 @@
 #include "ui/views/view-scope.hpp"
 class ActionPanelState;
 
+class GridCellData {
+  Q_GADGET
+  QML_VALUE_TYPE(gridCellData)
+  Q_PROPERTY(QString title MEMBER title)
+  Q_PROPERTY(QString subtitle MEMBER subtitle)
+  Q_PROPERTY(QString tooltip MEMBER tooltip)
+  Q_PROPERTY(QString icon MEMBER icon)
+  Q_PROPERTY(QString color MEMBER color)
+  Q_PROPERTY(bool draggable MEMBER draggable)
+
+public:
+  QString title;
+  QString subtitle;
+  QString tooltip;
+  QString icon;
+  QString color;
+  bool draggable = false;
+};
+
 class SectionGridModel : public QAbstractListModel {
   Q_OBJECT
   QML_NAMED_ELEMENT(SectionGridModel)
@@ -24,7 +43,6 @@ class SectionGridModel : public QAbstractListModel {
   Q_PROPERTY(QString emptyTitle READ emptyTitle NOTIFY emptyViewChanged)
   Q_PROPERTY(QString emptyDescription READ emptyDescription NOTIFY emptyViewChanged)
   Q_PROPERTY(ImageUrl emptyIcon READ emptyIcon NOTIFY emptyViewChanged)
-  Q_PROPERTY(int dataRevision READ dataRevision NOTIFY dataRevisionChanged)
 
 public:
   enum Role : std::uint16_t {
@@ -36,6 +54,7 @@ public:
     RowColumnsRole,
     RowAspectRatioRole,
     RowInsetRole,
+    RowCellsRole,
   };
 
   explicit SectionGridModel(QObject *parent = nullptr);
@@ -63,16 +82,11 @@ public:
   void setInset(double inset);
   void setSelectFirstOnReset(bool value) { m_selectFirstOnReset = value; }
 
-  Q_INVOKABLE virtual QString cellTitle(int section, int item) const { return {}; }
-  Q_INVOKABLE virtual QString cellSubtitle(int section, int item) const { return {}; }
-  Q_INVOKABLE virtual QString cellTooltip(int section, int item) const { return {}; }
   virtual QString emptyTitle() const { return {}; }
   virtual QString emptyDescription() const { return {}; }
   virtual ImageUrl emptyIcon() const { return {}; }
-  virtual int dataRevision() const { return 0; }
 
   Q_INVOKABLE void select(int section, int item);
-  Q_INVOKABLE bool isDraggable(int section, int item) const;
   Q_INVOKABLE void startDrag(int section, int item, QObject *source);
   Q_INVOKABLE void activateSelected();
   Q_INVOKABLE void navigateUp();
@@ -91,7 +105,6 @@ public:
 signals:
   void selectionChanged();
   void emptyViewChanged();
-  void dataRevisionChanged();
   void columnsChanged();
   void aspectRatioChanged();
   void insetChanged();
@@ -127,6 +140,7 @@ private:
   };
 
   void rebuildFromSources();
+  QList<GridCellData> rowCells(const FlatRow &row) const;
   std::vector<FlatRow> buildFlatList() const;
   void rebuildRows();
   int sectionColumns(int sectionIdx) const;

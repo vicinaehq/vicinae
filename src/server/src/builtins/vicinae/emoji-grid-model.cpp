@@ -247,7 +247,31 @@ const glyph::Item *EmojiGridSource::emojiAt(int i) const {
   return m_emojis[i];
 }
 
-std::unique_ptr<ActionPanelState> EmojiGridSource::actionPanel(int i) const {
+// --- EmojiSourceBase ---
+
+QString EmojiSourceBase::itemTooltip(int i) const {
+  const auto *data = emojiAt(i);
+  return data ? qStringFromStdView(data->name) : QString{};
+}
+
+std::optional<ImageURL> EmojiSourceBase::itemIcon(int i) const {
+  const auto *data = emojiAt(i);
+  if (!data) return std::nullopt;
+
+  if (data->kind == glyph::Kind::Symbol) return ImageURL::symbol(qStringFromStdView(data->character));
+
+  if (data->skinnable) {
+    auto tone = m_skinTone.value_or(emoji::SkinTone::Default);
+    if (m_metadata) {
+      if (auto it = m_metadata->find(data); it != m_metadata->end() && it->second.tone)
+        tone = *it->second.tone;
+    }
+    return ImageURL::emoji(emoji::applySkinTone(data->character, tone).c_str());
+  }
+  return ImageURL::emoji(qStringFromStdView(data->character));
+}
+
+std::unique_ptr<ActionPanelState> EmojiSourceBase::actionPanel(int i) const {
   return buildEmojiActionPanel(emojiAt(i), m_skinTone, scope());
 }
 
@@ -261,10 +285,6 @@ void SearchEmojiGridSource::setResults(std::span<Scored<const glyph::Item *>> re
 const glyph::Item *SearchEmojiGridSource::emojiAt(int i) const {
   if (i < 0 || std::cmp_greater_equal(i, m_results.size())) return nullptr;
   return m_results[i].data;
-}
-
-std::unique_ptr<ActionPanelState> SearchEmojiGridSource::actionPanel(int i) const {
-  return buildEmojiActionPanel(emojiAt(i), m_skinTone, scope());
 }
 
 // --- EmojiGridModel ---
@@ -287,9 +307,10 @@ void EmojiGridModel::initialize() {
     }
   }
 
-  m_pinnedSource.setSkinTone(m_skinTone);
-  m_recentSource.setSkinTone(m_skinTone);
-  m_searchSource.setSkinTone(m_skinTone);
+  for (auto *source : std::array<EmojiSourceBase *, 3>{&m_pinnedSource, &m_recentSource, &m_searchSource}) {
+    source->setSkinTone(m_skinTone);
+    source->setMetadata(&m_metadataCache);
+  }
 
   connect(this, &SectionGridModel::selectionChanged, this, &EmojiGridModel::updateNavigationTitle);
 
@@ -393,6 +414,7 @@ void EmojiGridModel::rebuildSections() {
       if (m_categoryFilter && section.category != *m_categoryFilter) continue;
       auto &src = m_groupSources.emplace_back();
       src.setSkinTone(m_skinTone);
+      src.setMetadata(&m_metadataCache);
       std::vector<const glyph::Item *> items;
       items.reserve(section.members.size());
       for (const auto &item : section.members)
@@ -443,37 +465,14 @@ const glyph::Item *EmojiGridModel::emojiAt(int section, int item) const {
   int sourceIdx, itemIdx;
   if (!resolveSelection(section, item, sourceIdx, itemIdx)) return nullptr;
 
-  auto *source = sources()[sourceIdx];
-  if (auto *emoji = dynamic_cast<EmojiGridSource *>(source)) return emoji->emojiAt(itemIdx);
-  if (auto *search = dynamic_cast<SearchEmojiGridSource *>(source)) return search->emojiAt(itemIdx);
-  return nullptr;
-}
-
-QString EmojiGridModel::emojiIcon(int section, int item) const {
-  const auto *data = emojiAt(section, item);
-  if (!data) return {};
-
-  if (data->kind == glyph::Kind::Symbol)
-    return qml::imageSourceFor(ImageURL::symbol(qStringFromStdView(data->character)));
-
-  if (data->skinnable) {
-    auto tone = m_skinTone;
-    if (auto it = m_metadataCache.find(data); it != m_metadataCache.end() && it->second.tone) {
-      tone = it->second.tone.value();
-    }
-
-    auto toned = emoji::applySkinTone(data->character, tone);
-    return qml::imageSourceFor(ImageURL::emoji(toned.c_str()));
-  }
-  return qml::imageSourceFor(ImageURL::emoji(qStringFromStdView(data->character)));
+  auto *source = dynamic_cast<EmojiSourceBase *>(sources()[sourceIdx]);
+  return source ? source->emojiAt(itemIdx) : nullptr;
 }
 
 QString EmojiGridModel::emojiName(int section, int item) const {
   const auto *data = emojiAt(section, item);
   return data ? qStringFromStdView(data->name) : QString{};
 }
-
-QString EmojiGridModel::cellTooltip(int section, int item) const { return emojiName(section, item); }
 
 void EmojiGridModel::updateNavigationTitle() {
   auto name = emojiName(selectedSection(), selectedItem());

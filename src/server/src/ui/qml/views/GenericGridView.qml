@@ -12,19 +12,10 @@ Item {
         id: statusBarInset
     }
 
-    // The backing model — must be a QAbstractListModel with roles:
-    //   isSection, sectionName, rowSectionIdx, rowStartItem, rowItemCount
-    // AND expose Q_INVOKABLEs for selection/navigation:
-    //   selectedSection, selectedItem, select(), activateSelected(),
-    //   navigateUp/Down/Left/Right(), navigateSectionUp/Down(),
-    //   flatRowForSelection()
     property SectionGridModel cmdModel: null
 
-    // Cell delegate component — instantiated per cell.
-    // The Loader parent exposes context properties:
-    //   cellSection (int), cellItem (int), cellSelected (bool),
-    //   cellHovered (bool), cellSize (real), cellWidth (real),
-    //   cellHeight (real), cmdModel (var)
+    // Cell delegate component, instantiated per cell inside a GridCell loader
+    // that exposes the cell's data and geometry.
     property Component cellDelegate: null
 
     property int columns: 8
@@ -32,9 +23,6 @@ Item {
     property real cellSpacing: 10
     property real horizontalPadding: 20
 
-    // Optional title/subtitle below each cell.
-    // When enabled, the model must provide Q_INVOKABLE cellTitle(section, item)
-    // and/or cellSubtitle(section, item).
     property bool showCellTitle: false
     property bool showCellSubtitle: false
 
@@ -213,6 +201,7 @@ Item {
             required property int rowColumns
             required property double rowAspectRatio
             required property double rowInset
+            required property var rowCells
 
             sourceComponent: isSection ? sectionComponent : rowComponent
 
@@ -237,27 +226,8 @@ Item {
                     readonly property real cellWidth: Math.floor((root.width - root.horizontalPadding * 2 - root.cellSpacing * (effectiveCols - 1)) / effectiveCols)
                     readonly property real cellHeight: Math.floor(cellWidth / effectiveAspectRatio)
 
-                    readonly property bool rowHasTitle: {
-                        if (!root.showCellTitle || !root.cmdModel || typeof root.cmdModel.cellTitle !== "function")
-                            return false;
-                        var _rev = root.cmdModel.dataRevision;
-                        for (var i = 0; i < delegateLoader.rowItemCount; i++) {
-                            if (root.cmdModel.cellTitle(delegateLoader.rowSectionIdx, delegateLoader.rowStartItem + i) !== "")
-                                return true;
-                        }
-                        return false;
-                    }
-
-                    readonly property bool rowHasSubtitle: {
-                        if (!root.showCellSubtitle || !root.cmdModel || typeof root.cmdModel.cellSubtitle !== "function")
-                            return false;
-                        var _rev = root.cmdModel.dataRevision;
-                        for (var i = 0; i < delegateLoader.rowItemCount; i++) {
-                            if (root.cmdModel.cellSubtitle(delegateLoader.rowSectionIdx, delegateLoader.rowStartItem + i) !== "")
-                                return true;
-                        }
-                        return false;
-                    }
+                    readonly property bool rowHasTitle: root.showCellTitle && delegateLoader.rowCells.some(cell => cell.title !== "")
+                    readonly property bool rowHasSubtitle: root.showCellSubtitle && delegateLoader.rowCells.some(cell => cell.subtitle !== "")
 
                     readonly property real cellTextHeight: {
                         if (!rowHasTitle && !rowHasSubtitle)
@@ -286,12 +256,13 @@ Item {
 
                                 readonly property int cellSection: delegateLoader.rowSectionIdx
                                 readonly property int cellItem: delegateLoader.rowStartItem + index
+                                readonly property var cell: delegateLoader.rowCells[index]
                                 readonly property bool cellSelected: root.cmdModel && root.cmdModel.selectedSection === cellSection && root.cmdModel.selectedItem === cellItem
                                 readonly property bool cellHovered: cellMouseArea.containsMouse && HoverActivation.active
 
                                 Accessible.role: Accessible.Cell
-                                Accessible.name: root.cmdModel && root.showCellTitle ? root.cmdModel.cellTitle(cellSection, cellItem) : ""
-                                Accessible.description: root.cmdModel && root.showCellSubtitle ? root.cmdModel.cellSubtitle(cellSection, cellItem) : ""
+                                Accessible.name: root.showCellTitle ? (cellWrapper.cell?.title ?? "") : ""
+                                Accessible.description: root.showCellSubtitle ? (cellWrapper.cell?.subtitle ?? "") : ""
                                 Accessible.selectable: true
                                 Accessible.selected: cellWrapper.cellSelected
 
@@ -326,6 +297,7 @@ Item {
                                     cellSize: rowItem.cellWidth
                                     cellWidth: rowItem.cellWidth
                                     cellHeight: rowItem.cellHeight
+                                    cell: cellWrapper.cell
                                     cmdModel: root.cmdModel
                                 }
 
@@ -355,10 +327,7 @@ Item {
                                     y: rowItem.cellHeight + root._textGap
                                     width: rowItem.cellWidth
                                     height: titleMetrics.height
-                                    text: {
-                                        var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
-                                        return (root.cmdModel && typeof root.cmdModel.cellTitle === "function") ? root.cmdModel.cellTitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
-                                    }
+                                    text: cellWrapper.cell?.title ?? ""
                                     color: Theme.textMuted
                                     font: titleMetrics.font
                                     elide: Text.ElideRight
@@ -371,10 +340,7 @@ Item {
                                     y: rowItem.cellHeight + root._textGap + (rowItem.rowHasTitle ? titleMetrics.height + root._textGap : 0)
                                     width: rowItem.cellWidth
                                     height: subtitleMetrics.height
-                                    text: {
-                                        var _rev = root.cmdModel ? root.cmdModel.dataRevision : 0;
-                                        return (root.cmdModel && typeof root.cmdModel.cellSubtitle === "function") ? root.cmdModel.cellSubtitle(cellWrapper.cellSection, cellWrapper.cellItem) : "";
-                                    }
+                                    text: cellWrapper.cell?.subtitle ?? ""
                                     color: Theme.textMuted
                                     font: subtitleMetrics.font
                                     elide: Text.ElideRight
@@ -387,7 +353,7 @@ Item {
                                     id: cellMouseArea
                                     anchors.fill: parent
                                     hoverEnabled: true
-                                    draggable: root.cmdModel && root.cmdModel.isDraggable(cellWrapper.cellSection, cellWrapper.cellItem)
+                                    draggable: cellWrapper.cell?.draggable ?? false
                                     onItemClicked: {
                                         if (root.cmdModel) {
                                             root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
@@ -410,7 +376,7 @@ Item {
                                 }
 
                                 ViciToolTip {
-                                    readonly property string tooltipText: root.cmdModel ? root.cmdModel.cellTooltip(cellWrapper.cellSection, cellWrapper.cellItem) : ""
+                                    readonly property string tooltipText: cellWrapper.cell?.tooltip ?? ""
                                     visible: cellWrapper.cellHovered && tooltipText !== ""
                                     text: tooltipText
                                 }

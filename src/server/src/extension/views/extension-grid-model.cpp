@@ -67,6 +67,38 @@ std::optional<ImageURL> ExtensionGridSection::itemIcon(int i) const {
   return std::nullopt;
 }
 
+QString ExtensionGridSection::itemTitle(int i) const {
+  auto *item = itemAt(i);
+  return item ? QString::fromStdString(item->title) : QString{};
+}
+
+QString ExtensionGridSection::itemSubtitle(int i) const {
+  auto *item = itemAt(i);
+  return item ? QString::fromStdString(item->subtitle) : QString{};
+}
+
+QString ExtensionGridSection::itemTooltip(int i) const {
+  auto *item = itemAt(i);
+  return item && item->tooltip ? QString::fromStdString(*item->tooltip) : QString{};
+}
+
+std::optional<QString> ExtensionGridSection::itemColor(int i) const {
+  auto *item = itemAt(i);
+  if (!item) return std::nullopt;
+  auto *color = std::get_if<ColorLike>(&item->content);
+  if (!color) return std::nullopt;
+
+  const auto &theme = ThemeService::instance().theme();
+  return std::visit(
+      overloads{
+          [](const QColor &c) -> QString { return c.name(QColor::HexArgb); },
+          [](const QString &c) -> QString { return c; },
+          [&](const SemanticColor &c) -> QString { return theme.resolve(c).name(QColor::HexArgb); },
+          [&](const DynamicColor &c) -> QString { return theme.isLight() ? c.light : c.dark; },
+      },
+      *color);
+}
+
 bool ExtensionGridSection::isDraggable(int i) const {
   auto *item = itemAt(i);
   return item && item->dragContent.has_value();
@@ -185,9 +217,6 @@ void ExtensionGridModel::rebuildFromSections(bool resetSelection) {
   } else {
     selectFirst();
   }
-
-  ++m_dataRevision;
-  emit dataRevisionChanged();
 }
 
 void ExtensionGridModel::setFilter(const QString &text) {
@@ -202,53 +231,6 @@ void ExtensionGridModel::setFilter(const QString &text) {
 
 QString ExtensionGridModel::searchPlaceholder() const {
   return m_placeholder.isEmpty() ? tr("Search...") : m_placeholder;
-}
-
-const GridItemViewModel *ExtensionGridModel::resolveItem(int section, int item) const {
-  int sourceIdx, itemIdx;
-  if (!resolveSelection(section, item, sourceIdx, itemIdx)) return nullptr;
-  return m_ownedSections[sourceIdx]->itemAt(itemIdx);
-}
-
-QString ExtensionGridModel::cellTitle(int section, int item) const {
-  if (auto *it = resolveItem(section, item)) return QString::fromStdString(it->title);
-  return {};
-}
-
-QString ExtensionGridModel::cellIcon(int section, int item) const {
-  if (auto *it = resolveItem(section, item)) {
-    if (auto img = std::get_if<ImageLikeModel>(&it->content)) { return qml::imageSourceFor(ImageURL(*img)); }
-  }
-  return {};
-}
-
-QString ExtensionGridModel::cellSubtitle(int section, int item) const {
-  if (auto *it = resolveItem(section, item)) return QString::fromStdString(it->subtitle);
-  return {};
-}
-
-QString ExtensionGridModel::cellTooltip(int section, int item) const {
-  if (auto *it = resolveItem(section, item)) {
-    if (it->tooltip) return QString::fromStdString(*it->tooltip);
-  }
-  return {};
-}
-
-QString ExtensionGridModel::cellColor(int section, int item) const {
-  if (auto *it = resolveItem(section, item)) {
-    if (auto *color = std::get_if<ColorLike>(&it->content)) {
-      const auto &theme = ThemeService::instance().theme();
-      return std::visit(
-          overloads{
-              [](const QColor &c) -> QString { return c.name(QColor::HexArgb); },
-              [](const QString &c) -> QString { return c; },
-              [&](const SemanticColor &c) -> QString { return theme.resolve(c).name(QColor::HexArgb); },
-              [&](const DynamicColor &c) -> QString { return theme.isLight() ? c.light : c.dark; },
-          },
-          *color);
-    }
-  }
-  return {};
 }
 
 QString ExtensionGridModel::emptyTitle() const {
