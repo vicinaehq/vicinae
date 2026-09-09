@@ -9,89 +9,62 @@ FocusScope {
     Layout.fillWidth: true
     activeFocusOnTab: !readOnly
 
-    property alias text: input.text
-    property alias cursorPosition: input.cursorPosition
-    property string placeholder: ""
-    property bool readOnly: false
+    property alias text: editor.text
+    property alias cursorPosition: editor.cursorPosition
+    property alias placeholder: editor.placeholder
+    property alias readOnly: editor.readOnly
+    property alias accessibleLabel: editor.accessibleLabel
+    property alias completions: editor.completions
+    property alias triggerChar: editor.triggerChar
     property bool hasError: false
     property bool filled: false
     // if set to true, pressing escape or enter/return will defocus the input field
     // we usually want that on in settings window but not in form commands
     property bool releaseFocusOnAccept: false
-    property alias echoMode: input.echoMode
-    property string accessibleLabel: ""
-    readonly property bool editing: input.activeFocus
+    readonly property bool editing: editor.editing
 
     signal textEdited
     signal accepted
 
     function forceActiveFocus() {
-        input.forceActiveFocus();
+        editor.forceActiveFocus();
     }
     function selectAll() {
-        input.selectAll();
+        editor.selectAll();
     }
 
     onActiveFocusChanged: {
         if (activeFocus && !readOnly)
-            input.forceActiveFocus();
+            editor.forceActiveFocus();
     }
 
-    FormInputBackground {
+    FormInputFrame {
         anchors.fill: parent
-        radius: 8
         filled: root.filled
-        opacity: root.readOnly ? 0.5 : 1.0
+        hasError: root.hasError
+        focused: editor.editing && !root.readOnly
+        dimmed: root.readOnly
     }
 
-    Rectangle {
-        anchors.fill: parent
-        radius: 8
-        color: "transparent"
-        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus && !root.readOnly ? Theme.inputBorderFocus : Theme.inputBorder, Config.surfaceOpacity)
-        border.width: 1
-        opacity: root.readOnly ? 0.5 : 1.0
-    }
-
-    TextInput {
-        id: input
-        Accessible.name: root.accessibleLabel !== "" ? root.accessibleLabel : root.placeholder
-        Accessible.readOnly: root.readOnly
-        anchors.fill: parent
+    FormTextEditor {
+        id: editor
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
         anchors.leftMargin: 10
         anchors.rightMargin: 10
+        height: implicitHeight
         opacity: root.readOnly ? 0.5 : 1.0
-        verticalAlignment: TextInput.AlignVCenter
-        font.pointSize: Theme.regularFontSize
-        color: Theme.foreground
-        selectionColor: Theme.textSelectionBg
-        selectedTextColor: Theme.textSelectionFg
-        readOnly: root.readOnly
-        activeFocusOnTab: !root.readOnly
-        clip: true
-
-        Text {
-            anchors.fill: parent
-            verticalAlignment: Text.AlignVCenter
-            text: root.placeholder
-            color: Theme.textPlaceholder
-            font: input.font
-            visible: !input.text && !input.preeditText
-        }
 
         onTextEdited: root.textEdited()
-
-        Keys.onEscapePressed: ev => {
-            if (root.releaseFocusOnAccept) {
-                input.focus = false;
-                ev.accepted = true;
-            }
-        }
-
         onAccepted: {
             root.accepted();
             if (root.releaseFocusOnAccept)
-                input.focus = false;
+                editor.releaseFocus();
+        }
+        onEscaped: {
+            if (root.releaseFocusOnAccept)
+                editor.releaseFocus();
         }
     }
 }

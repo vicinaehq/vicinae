@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
 
@@ -9,26 +8,27 @@ FocusScope {
     Layout.fillWidth: true
     activeFocusOnTab: true
 
-    property alias text: edit.text
-    property string placeholder: ""
+    property alias text: editor.text
+    property alias placeholder: editor.placeholder
+    property alias completions: editor.completions
+    property alias triggerChar: editor.triggerChar
     property int minRows: 3
     property int maxRows: 10
-
     property bool hasError: false
     property bool filled: false
 
     signal textEdited
 
     function forceActiveFocus() {
-        edit.forceActiveFocus();
+        editor.forceActiveFocus();
     }
     function selectAll() {
-        edit.selectAll();
+        editor.selectAll();
     }
 
     onActiveFocusChanged: {
         if (activeFocus)
-            edit.forceActiveFocus();
+            editor.forceActiveFocus();
     }
 
     readonly property real _lineHeight: Math.ceil(fontMetrics.height)
@@ -36,93 +36,28 @@ FocusScope {
     readonly property real _minHeight: _lineHeight * minRows + _verticalPadding * 2
     readonly property real _maxHeight: _lineHeight * maxRows + _verticalPadding * 2
 
-    implicitHeight: Math.max(_minHeight, Math.min(edit.contentHeight + _verticalPadding * 2, _maxHeight))
+    implicitHeight: Math.max(_minHeight, Math.min(editor.contentHeight + _verticalPadding * 2, _maxHeight))
 
     FontMetrics {
         id: fontMetrics
-        font: edit.font
+        font: editor.font
     }
 
-    FormInputBackground {
+    FormInputFrame {
         anchors.fill: parent
-        radius: 8
         filled: root.filled
+        hasError: root.hasError
+        focused: editor.editing
     }
 
-    Rectangle {
-        id: border
+    FormTextEditor {
+        id: editor
         anchors.fill: parent
-        radius: 8
-        color: "transparent"
-        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : edit.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.surfaceOpacity)
-        border.width: 1
+        anchors.margins: root._verticalPadding
+        anchors.leftMargin: 10
+        anchors.rightMargin: 10
+        multiline: true
 
-        MouseArea {
-            anchors.fill: parent
-            anchors.margins: root._verticalPadding
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
-            acceptedButtons: Qt.NoButton
-
-            Flickable {
-                id: flickable
-                anchors.fill: parent
-                contentWidth: width
-                contentHeight: edit.height
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
-
-                ViciWheelHandler {
-                    target: flickable
-                    blockTargetWheel: false
-                }
-
-                ScrollBar.vertical: ViciScrollBar {
-                    policy: flickable.contentHeight > flickable.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
-                }
-
-                TextEdit {
-                    id: edit
-                    width: flickable.width
-                    height: Math.max(contentHeight, flickable.height)
-                    font.pointSize: Theme.regularFontSize
-                    color: Theme.foreground
-                    selectionColor: Theme.textSelectionBg
-                    selectedTextColor: Theme.textSelectionFg
-                    wrapMode: TextEdit.Wrap
-                    activeFocusOnTab: false
-
-                    Text {
-                        anchors.top: parent.top
-                        width: parent.width
-                        text: root.placeholder
-                        color: Theme.textPlaceholder
-                        font: edit.font
-                        wrapMode: Text.Wrap
-                        visible: !edit.text && !edit.preeditText
-                    }
-
-                    onTextChanged: root.textEdited()
-
-                    onCursorRectangleChanged: {
-                        const rect = cursorRectangle;
-                        if (rect.y < flickable.contentY)
-                            flickable.contentY = rect.y;
-                        else if (rect.y + rect.height > flickable.contentY + flickable.height)
-                            flickable.contentY = rect.y + rect.height - flickable.height;
-                    }
-
-                    Keys.onTabPressed: event => {
-                        event.accepted = true;
-                        nextItemInFocusChain()?.forceActiveFocus(Qt.TabFocusReason);
-                    }
-                    Keys.onBacktabPressed: event => {
-                        event.accepted = true;
-                        nextItemInFocusChain(false)?.forceActiveFocus(Qt.BacktabFocusReason);
-                    }
-                    Keys.onReturnPressed: edit.insert(edit.cursorPosition, "\n")
-                }
-            }
-        }
+        onTextEdited: root.textEdited()
     }
 }

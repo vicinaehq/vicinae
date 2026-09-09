@@ -1125,6 +1125,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/EmojiGridView.qml
 	src/ui/qml/controls/ViciButton.qml
 	src/ui/qml/controls/ViciScrollBar.qml
+	src/ui/qml/controls/ViciTextCursor.qml
 	src/ui/qml/controls/ViciDivider.qml
 	src/ui/qml/controls/ViciToolTip.qml
 	src/ui/qml/views/ExtensionView.qml
@@ -1143,15 +1144,16 @@ set(VICINAE_QML_FILES
 	src/ui/qml/form/FormView.qml
 	src/ui/qml/form/FormField.qml
 	src/ui/qml/form/FormInputBackground.qml
+	src/ui/qml/form/FormInputFrame.qml
+	src/ui/qml/form/FormTextEditor.qml
 	src/ui/qml/form/FormTextInput.qml
+	src/ui/qml/form/FormPasswordInput.qml
 	src/ui/qml/form/FormTextArea.qml
 	src/ui/qml/form/FormCheckbox.qml
 	src/ui/qml/form/FormSeparator.qml
 	src/ui/qml/views/SnippetFormView.qml
 	src/ui/qml/views/AliasFormView.qml
 	src/ui/qml/views/ShortcutFormView.qml
-	src/ui/qml/form/FormCompletedInput.qml
-	src/ui/qml/form/FormCompletedTextArea.qml
 	src/ui/qml/form/PlaceholderCompleter.qml
 	src/ui/qml/controls/CompletionPopup.qml
 	src/ui/qml/views/CreateExtensionFormView.qml
@@ -1254,6 +1256,10 @@ set(VICINAE_QML_SOURCES
 	src/ui/quick/hover-activation.cpp
 	src/ui/quick/match-highlighter.hpp
 	src/ui/quick/match-highlighter.cpp
+	src/ui/quick/placeholder-highlighter.hpp
+	src/ui/quick/placeholder-highlighter.cpp
+	src/ui/quick/text-document-edit.hpp
+	src/ui/quick/text-document-edit.cpp
 	src/ui/quick/completion-model.hpp
 	src/ui/views/detail-list-view-host.hpp
 	src/ui/views/store-detail-host.hpp

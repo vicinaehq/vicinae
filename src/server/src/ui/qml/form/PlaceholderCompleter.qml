@@ -12,7 +12,7 @@ Item {
 
     readonly property bool active: completionPopup.visible
 
-    signal completionAccepted(string newText, int newCursorPos)
+    signal completionAccepted(int start, int end, string replacement, int newCursorPos)
 
     function _findTriggerStart(txt, pos) {
         for (let i = pos - 1; i >= 0; i--) {
@@ -75,7 +75,6 @@ Item {
             if (triggerIdx < 0)
                 return;
 
-            const before = txt.substring(0, triggerIdx);
             const template = itemData.template ?? (root.triggerChar + itemData.value + "}");
             const cursorOffset = itemData.cursorOffset ?? template.length;
 
@@ -85,8 +84,7 @@ Item {
             if (endIdx < txt.length && txt.charAt(endIdx) === "}")
                 endIdx++;
 
-            const after = txt.substring(endIdx);
-            root.completionAccepted(before + template + after, before.length + cursorOffset);
+            root.completionAccepted(triggerIdx, endIdx, template, triggerIdx + cursorOffset);
         }
     }
 }
