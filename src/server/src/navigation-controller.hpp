@@ -10,6 +10,7 @@
 #include "ui/action-panel/action-panel-state.hpp"
 #include "ui/alert/dialog.hpp"
 #include "ui/image/url.hpp"
+#include <QElapsedTimer>
 #include <QString>
 #include <chrono>
 #include <cstdint>
@@ -147,6 +148,7 @@ public:
   QWindow *window() const { return m_window; }
 
   void setPopToRootOnClose(bool value);
+  void setPopToRootOnCloseDelay(int seconds);
 
   bool hasCompleter() const;
 
@@ -283,6 +285,8 @@ private:
   bool m_windowActivated = false;
   bool m_isPanelOpened = false;
   bool m_popToRootOnClose = false;
+  int m_popToRootOnCloseDelay = 0; // seconds; > 0 keeps state when reopened within the delay
+  QElapsedTimer m_closedAt;
   bool m_instantDismiss = false;
   bool m_closeOnFocusLoss = false;
   QWindow *m_window = nullptr;
