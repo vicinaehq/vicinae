@@ -13,10 +13,6 @@ Item {
         id: statusBarInset
     }
 
-    Component.onCompleted: {
-        console.log('mounted now5!');
-    }
-
     required property SectionListModel listModel
 
     property alias model: listView.model
