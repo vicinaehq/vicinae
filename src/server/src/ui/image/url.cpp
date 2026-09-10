@@ -30,11 +30,22 @@ ImageURL &ImageURL::setBackgroundTint(const ColorLike &tint) {
   return *this;
 }
 
+ImageURL &ImageURL::setBadge(BuiltinIcon icon) {
+  if (const auto *name = BuiltinIconService::nameForIcon(icon)) _badge = QString::fromLatin1(name);
+  return *this;
+}
+
+ImageURL &ImageURL::setBadge(const QString &builtinName) {
+  _badge = builtinName;
+  return *this;
+}
+
 ImageURLType ImageURL::type() const { return _type; }
 const QString &ImageURL::name() const { return _name; }
 std::optional<ColorLike> ImageURL::backgroundTint() const { return _bgTint; }
 const std::optional<ColorLike> &ImageURL::fillColor() const { return _fillColor; }
 OmniPainter::ImageMaskType ImageURL::mask() const { return _mask; }
+const std::optional<QString> &ImageURL::badge() const { return _badge; }
 
 ImageURL &ImageURL::withFallback(const ImageURL &fallback) {
   _fallback = fallback.toString();
@@ -76,6 +87,7 @@ QUrl ImageURL::url() const {
   if (_fallback) query.addQueryItem("fallback", *_fallback);
   if (_bgTint) query.addQueryItem("bg_tint", OmniPainter::serializeColor(*_bgTint));
   if (_fillColor) query.addQueryItem("fill", OmniPainter::serializeColor(_fillColor.value()));
+  if (_badge) query.addQueryItem("badge", *_badge);
   if (_mask == OmniPainter::CircleMask)
     query.addQueryItem("mask", "circle");
   else if (_mask == OmniPainter::RoundedRectangleMask)
@@ -117,6 +129,7 @@ ImageURL::ImageURL(const QUrl &url) {
       _fillColor = QColor(fill);
   }
   if (auto fallback = query.queryItemValue("fallback"); !fallback.isEmpty()) { _fallback = fallback; }
+  if (auto badge = query.queryItemValue("badge"); !badge.isEmpty()) { _badge = badge; }
   if (auto mask = query.queryItemValue("mask"); !mask.isEmpty()) {
     if (mask == "circle")
       _mask = OmniPainter::ImageMaskType::CircleMask;

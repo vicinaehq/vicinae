@@ -47,7 +47,7 @@ class CreateShortcutFromActiveBrowserTabCommand : public GuardedBuiltinCallbackC
               "results if many browsers are connected at once.");
   }
   ImageURL iconUrl() const override {
-    return ImageURL(BuiltinIcon::Link).setBackgroundTint(SemanticColor::Red);
+    return ImageURL(BuiltinIcon::Link).setBackgroundTint(SemanticColor::Red).setBadge(BuiltinIcon::Plus);
   }
 
   void execute(CommandController &controller) const override {

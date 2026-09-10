@@ -14,9 +14,9 @@ class VicinaeStoreCommand : public BuiltinCallbackCommand {
   QString extensionId() const override { return "vicinae"; }
   QString commandId() const override { return "store"; }
   ImageURL iconUrl() const override {
-    auto icon = ImageURL::builtin(BuiltinIcon::Cart);
-    icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
-    return icon;
+    return ImageURL::builtin(BuiltinIcon::Cart)
+        .setBackgroundTint(Omnicast::ACCENT_COLOR)
+        .setBadge(BuiltinIcon::ArrowDown);
   }
   std::vector<Preference> preferences() const override {
     auto alwaysShowIntro = Preference::makeCheckbox("alwaysShowIntro", tr("Always show intro"));

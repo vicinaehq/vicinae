@@ -14,7 +14,9 @@ class CreateShortcutCommand : public BuiltinViewCommand<ShortcutFormViewHost> {
   }
 
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Bolt).setBackgroundTint(SemanticColor::Purple);
+    return ImageURL::builtin(BuiltinIcon::Bolt)
+        .setBackgroundTint(SemanticColor::Purple)
+        .setBadge(BuiltinIcon::Plus);
   }
 };
 

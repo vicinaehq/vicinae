@@ -116,6 +116,8 @@ public:
   std::optional<ColorLike> backgroundTint() const;
   const std::optional<ColorLike> &fillColor() const;
   OmniPainter::ImageMaskType mask() const;
+  // Builtin icon name overlaid as a small badge in the bottom-right corner.
+  const std::optional<QString> &badge() const;
 
   void setType(ImageURLType type);
   void setName(const QString &name);
@@ -123,6 +125,8 @@ public:
   ImageURL &setFill(const std::optional<ColorLike> &color);
   ImageURL &setMask(OmniPainter::ImageMaskType mask);
   ImageURL &setBackgroundTint(const ColorLike &tint);
+  ImageURL &setBadge(BuiltinIcon icon);
+  ImageURL &setBadge(const QString &builtinName);
 
   // Returns a copy with colors resolved against the current theme (SemanticColor/DynamicColor
   // become QColor; Builtin without fill gets Foreground) and local paths substituted with their
@@ -161,4 +165,5 @@ private:
   OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
   std::optional<QString> _fallback;
   std::optional<ColorLike> _fillColor = std::nullopt;
+  std::optional<QString> _badge;
 };

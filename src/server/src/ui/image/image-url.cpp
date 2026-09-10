@@ -33,3 +33,9 @@ ImageUrl ImageUrl::withFillColor(const QColor &color) const {
   copy.setFill(color);
   return ImageUrl(std::move(copy));
 }
+
+ImageUrl ImageUrl::withBadge(BuiltinIcon icon) const {
+  ImageURL copy = m_url;
+  copy.setBadge(icon);
+  return ImageUrl(std::move(copy));
+}
