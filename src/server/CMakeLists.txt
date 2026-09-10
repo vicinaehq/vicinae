@@ -770,6 +770,7 @@ if (APPLE)
 
 elseif (WIN32)
 	list(APPEND SRCS
+		src/app-platform.cpp
 		src/ui/image/win-file-icon-loader.hpp
 		src/ui/image/win-file-icon-loader.cpp
 		src/services/app-service/windows/win-app.hpp
@@ -836,6 +837,7 @@ elseif (WIN32)
 	add_compile_definitions(VICINAE_BUNDLE_ID="${VICINAE_BUNDLE_ID}")
 else()
 	list(APPEND SRCS
+		src/app-platform.cpp
 		src/services/app-runtime/linux/linux-app-runtime.hpp
 		src/services/app-runtime/linux/linux-app-runtime.cpp
 	)
