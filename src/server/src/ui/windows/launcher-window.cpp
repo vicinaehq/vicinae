@@ -409,6 +409,9 @@ void LauncherWindow::loadRoot() {
   if (m_window) {
     m_ctx.navigation->setWindow(m_window);
     connect(m_window, &QQuickWindow::activeChanged, this, [this]() {
+      // unloadRoot() nulls m_window before deleting the underlying window, whose
+      // teardown synchronously resigns key and re-enters here.
+      if (!m_window) return;
       // losing focus to our own file dialog or to a selection capture is not user focus loss
       if (m_pendingLauncherFileChoice || LauncherWindowPlatform::foregroundLent()) return;
       m_ctx.navigation->setWindowActivated(m_window->isActive());
