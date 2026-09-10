@@ -10,7 +10,9 @@ class CreateExtensionCommand : public BuiltinViewCommand<CreateExtensionViewHost
     return QCoreApplication::translate("CreateExtensionCommand", "Create Extension");
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Hammer).setBackgroundTint(SemanticColor::Green);
+    return ImageURL::builtin(BuiltinIcon::Hammer)
+        .setBackgroundTint(SemanticColor::Green)
+        .setBadge(BuiltinIcon::Plus);
   }
 };
 

@@ -102,6 +102,7 @@ ImageStream::ImageStream(const ImageURL &url, const QSize &size, ImageStreamOpti
   if (auto fill = m_url.fillColor()) m_fg = ThemeService::instance().theme().resolve(*fill);
   m_bg = resolveBackgroundTint(m_url);
   m_mask = m_url.mask();
+  m_badge = m_url.badge();
   m_cacheKey = makeCacheKey(m_url, size, m_opts.safetyMargins);
   m_originalCacheKey = m_cacheKey;
   m_latestCacheKey = makeLatestCacheKey(m_url);
@@ -374,13 +375,18 @@ void ImageStream::decodeStatic(const QByteArray &data) {
   watcher->setFuture(future);
 }
 
+void ImageStream::applyOverlays(QImage &img) const {
+  if (m_opts.safetyMargins && m_url.type() != ImageURLType::MacBundle)
+    ImageRendering::applySafetyMargins(img);
+  if (m_badge) ImageRendering::applyBadge(img, *m_badge);
+}
+
 void ImageStream::emitStaticFrame(QImage img) {
   if (img.isNull()) {
     tryFallback();
     return;
   }
-  if (m_opts.safetyMargins && m_url.type() != ImageURLType::MacBundle)
-    ImageRendering::applySafetyMargins(img);
+  applyOverlays(img);
   if (m_opts.cache) {
     auto cost = static_cast<int>(img.sizeInBytes());
     imageCache().insert(m_cacheKey, new QImage(img), cost);
@@ -415,8 +421,9 @@ void ImageStream::startAnimation(QByteArray data) {
   auto mask = m_mask;
   auto canceled = m_canceled;
   auto safetyMargins = m_opts.safetyMargins;
+  auto badge = m_badge;
 
-  connect(movie, &QMovie::updated, worker, [movie, worker, mask, canceled, safetyMargins]() {
+  connect(movie, &QMovie::updated, worker, [movie, worker, mask, canceled, safetyMargins, badge]() {
     if (canceled->load(std::memory_order_relaxed)) {
       movie->stop();
       return;
@@ -425,6 +432,7 @@ void ImageStream::startAnimation(QByteArray data) {
     if (frame.isNull()) return;
     ImageRendering::applyPostTransforms(frame, QColor(), QColor(), QSize(), mask);
     if (safetyMargins) ImageRendering::applySafetyMargins(frame);
+    if (badge) ImageRendering::applyBadge(frame, *badge);
     emit worker->frameReady(frame);
   });
 

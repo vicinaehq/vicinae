@@ -217,15 +217,15 @@ Item {
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 8 + (navItem._isCommand ? 12 : 0)
+                        anchors.leftMargin: 8 + (navItem._isCommand ? 8 : 0)
                         anchors.rightMargin: 8
                         spacing: 10
                         opacity: navItem._enabled ? 1.0 : 0.5
 
                         ViciImage {
                             source: navItem.model.kind === "core" ? Img.icon(navItem.model.icon).withFillColor(navItem._selected ? Theme.listItemSelectionFg : Theme.textMuted) : navItem.model.iconSource
-                            Layout.preferredWidth: navItem._isCommand ? 16 : 18
-                            Layout.preferredHeight: navItem._isCommand ? 16 : 18
+                            Layout.preferredWidth: 18
+                            Layout.preferredHeight: 18
                         }
 
                         Text {

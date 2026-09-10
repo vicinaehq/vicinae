@@ -13,11 +13,11 @@ class RaycastStoreCommand : public BuiltinCallbackCommand {
   QString description() const override { return tr("Install compatible extensions from the Raycast store"); }
   QString extensionId() const override { return "raycast-compat"; }
   QString commandId() const override { return "store"; }
-  ImageURL iconUrl() const override {
-    auto icon = ImageURL::builtin(BuiltinIcon::Raycast);
-    icon.setBackgroundTint(SemanticColor::Red);
-    return icon;
+  static ImageURL plainIcon() {
+    return ImageURL::builtin(BuiltinIcon::Raycast).setBackgroundTint(SemanticColor::Red);
   }
+
+  ImageURL iconUrl() const override { return plainIcon().setBadge(BuiltinIcon::ArrowDown); }
   std::vector<Preference> preferences() const override {
     auto alwaysShowIntro = Preference::makeCheckbox("alwaysShowIntro", tr("Always show intro"));
     alwaysShowIntro.setDefaultValue(false);
@@ -48,7 +48,7 @@ Vicinae also has its own [extension store](vicinae://launch/core/store).
         }
         return intro;
       }();
-      auto icon = iconUrl();
+      auto icon = plainIcon();
       auto storage = ctrl.storage();
       ctx->navigation->pushView(
           new StoreIntroViewHost(INTRO, icon, tr("Continue to store"), [storage, ctx]() mutable {
