@@ -351,11 +351,8 @@ class DMenuCommand : public AbstractCommandLineCommand {
         {"index", ipc::DMenuOutputFormat::Index},
     };
 
-    std::string formatChoices;
-    for (const auto &pair : formatMap) {
-      if (!formatChoices.empty()) { formatChoices += ','; }
-      formatChoices += pair.first;
-    }
+    const auto formatChoices = formatMap | std::views::transform([](auto &&pair) { return pair.first; }) |
+                               std::views::join_with(',') | std::ranges::to<std::string>();
 
     app->add_option("-n,--navigation-title", m_req.navigationTitle, "Set the navigation title");
     app->add_option(

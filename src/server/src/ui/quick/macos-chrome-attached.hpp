@@ -174,8 +174,6 @@ private:
   void onWindowChanged(QQuickWindow *window);
   void installResignKeyObserver(void *nswin);
   void removeResignKeyObserver();
-  void installCapsLockMonitor(void *nswin);
-  void removeCapsLockMonitor();
   bool eventFilter(QObject *obj, QEvent *event) override;
 
   QQuickItem *m_item = nullptr;
@@ -185,7 +183,6 @@ private:
   int m_windowLevel = 0;
   void *m_resignKeyObserver = nullptr;
   void *m_observedNSWindow = nullptr;
-  void *m_capsLockMonitor = nullptr;
   Snapshot m_snapshot;
 };
 
@@ -203,9 +200,7 @@ public:
   static MacOSPanelAttached *qmlAttachedProperties(QObject *object) { return new MacOSPanelAttached(object); }
 };
 
-void macosSetAccessoryActivationPolicy();
 void macosActivateApp();
-void macosReleaseMenuShortcuts();
 
 // True when NSGlassEffectView is available (macOS 26 Tahoe and later).
 bool macosLiquidGlassAvailable();

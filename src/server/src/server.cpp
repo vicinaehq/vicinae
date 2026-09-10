@@ -115,10 +115,10 @@
 #include <qlogging.h>
 #include <QtQuickControls2/QQuickStyle>
 #include "server.hpp"
+#include "app-platform.hpp"
 
 #ifdef Q_OS_MACOS
 #include "ipc/ipc-command-handler.hpp"
-#include "ui/quick/macos-chrome-attached.hpp"
 #include <QFileOpenEvent>
 #endif
 
@@ -224,6 +224,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
+  AppPlatform::beforeGuiApplication();
   QGuiApplication const qapp(argc, argv);
   QGuiApplication::setApplicationName("vicinae");
   QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
@@ -232,10 +233,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   // is a plain Item delegating focus inward.
   QGuiApplication::styleHints()->setTabFocusBehavior(Qt::TabFocusAllControls);
 
-#ifdef Q_OS_MACOS
-  macosSetAccessoryActivationPolicy();
-  macosReleaseMenuShortcuts();
-#endif
+  AppPlatform::afterGuiApplication();
 
   auto m_config = launchOpts.config.empty() ? Omnicast::configDir() / "settings.json"
                                             : std::filesystem::path{launchOpts.config};
