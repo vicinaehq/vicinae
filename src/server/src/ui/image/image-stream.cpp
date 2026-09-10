@@ -375,10 +375,11 @@ void ImageStream::decodeStatic(const QByteArray &data) {
   watcher->setFuture(future);
 }
 
+// The badge is part of the icon, so it is drawn before the margin inset and shrinks with it.
 void ImageStream::applyOverlays(QImage &img) const {
+  if (m_badge) ImageRendering::applyBadge(img, *m_badge);
   if (m_opts.safetyMargins && m_url.type() != ImageURLType::MacBundle)
     ImageRendering::applySafetyMargins(img);
-  if (m_badge) ImageRendering::applyBadge(img, *m_badge);
 }
 
 void ImageStream::emitStaticFrame(QImage img) {
@@ -431,8 +432,8 @@ void ImageStream::startAnimation(QByteArray data) {
     QImage frame = movie->currentImage();
     if (frame.isNull()) return;
     ImageRendering::applyPostTransforms(frame, QColor(), QColor(), QSize(), mask);
-    if (safetyMargins) ImageRendering::applySafetyMargins(frame);
     if (badge) ImageRendering::applyBadge(frame, *badge);
+    if (safetyMargins) ImageRendering::applySafetyMargins(frame);
     emit worker->frameReady(frame);
   });
 

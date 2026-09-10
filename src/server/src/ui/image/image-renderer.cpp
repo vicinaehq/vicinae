@@ -300,11 +300,14 @@ static qreal inkRadius(const QImage &image) {
 void applyBadge(QImage &image, const QString &builtinName) {
   if (image.isNull()) return;
 
-  constexpr qreal BADGE_SCALE = 0.4;
+  constexpr qreal BADGE_SCALE = 0.44;
   constexpr qreal BADGE_GLYPH_REACH = 0.56;
+  constexpr qreal BADGE_INSET_SCALE = 0.04;
 
   qreal const diameter = image.height() * BADGE_SCALE;
-  QRectF const badgeRect(image.width() - diameter, image.height() - diameter, diameter, diameter);
+  qreal const inset = image.height() * BADGE_INSET_SCALE;
+  QRectF const badgeRect(image.width() - diameter - inset, image.height() - diameter - inset, diameter,
+                         diameter);
 
   int const renderSide = std::max(1, qRound(diameter));
   QImage glyph = renderBuiltinSvg(builtinName, QSize(renderSide, renderSide));
