@@ -1001,6 +1001,8 @@ if (UNIX AND NOT APPLE)
 
 		src/services/global-shortcuts/vicinae-hotkey-global-shortcut-backend.hpp
 		src/services/global-shortcuts/vicinae-hotkey-global-shortcut-backend.cpp
+		src/services/global-shortcuts/xx-hotkey-global-shortcut-backend.hpp
+		src/services/global-shortcuts/xx-hotkey-global-shortcut-backend.cpp
 
 		src/internal/keyboard/xkb-layout-resolver.hpp
 		src/internal/keyboard/xkb-layout-resolver.cpp
@@ -1073,6 +1075,7 @@ if (UNIX AND NOT APPLE)
 			${KEYBOARD_SHORTCUTS_INHIBIT_XML}
 			${XDG_ACTIVATION_XML}
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/vicinae-hotkey-v1.xml
+			${CMAKE_SOURCE_DIR}/src/wayland-protocols/xx-hotkey-v1.xml
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-foreign-toplevel-management-unstable-v1.xml
 			${CMAKE_SOURCE_DIR}/src/wayland-protocols/wlr-layer-shell-unstable-v1.xml
 	)
