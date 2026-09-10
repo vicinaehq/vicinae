@@ -163,7 +163,11 @@ get_latest_release_info() {
 	local api_url="https://api.github.com/repos/$REPO/releases/latest"
 
 	local response
-	response=$(curl -s "$api_url")
+	if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+		response=$(curl -s --header "Authorization: Bearer $GITHUB_TOKEN" "$api_url")
+	else
+		response=$(curl -s "$api_url")
+	fi
 
 	local tag_name
 	tag_name=$(echo "$response" | jq -r '.tag_name')
@@ -591,11 +595,13 @@ show_usage() {
 	echo "Options:"
 	echo "  --prefix PATH    Installation prefix (default: /usr/local)"
 	echo "  --appimage PATH  Install from a local AppImage instead of downloading the latest release"
+	echo "  --token TOKEN    GitHub token for the release API call (avoids rate limiting)"
 	echo "  --uninstall      Uninstall Vicinae"
 	echo "  --help, -h       Show this help message"
 	echo ""
 	echo "Environment variables:"
 	echo "  PREFIX         Installation prefix (overridden by --prefix)"
+	echo "  GITHUB_TOKEN   GitHub token for the release API call (overridden by --token)"
 	echo ""
 	echo "Without options, the script will install or update Vicinae to the latest version."
 	echo ""
@@ -603,6 +609,7 @@ show_usage() {
 	echo "  $0                           # Install to /usr/local (requires sudo)"
 	echo "  $0 --prefix ~/.local         # Install to ~/.local (user install)"
 	echo "  PREFIX=/opt/vicinae $0       # Install to /opt/vicinae"
+	echo "  GITHUB_TOKEN=ghp_xxx $0      # Use a GitHub token (avoids API rate limiting)"
 }
 
 # we need the script stored on disk to re-execute it with privilege elevation, if needed.
@@ -659,6 +666,15 @@ main() {
 			THEMES_DIR="$PREFIX/share/vicinae/themes"
 			APPLICATIONS_DIR="$PREFIX/share/applications"
 			SYSTEMD_USER_DIR="$PREFIX/lib/systemd/user"
+			shift 2
+			;;
+		--token)
+			if [[ -z "${2:-}" ]]; then
+				echo "Error: --token requires a GitHub token argument"
+				show_usage
+				exit 1
+			fi
+			export GITHUB_TOKEN="$2"
 			shift 2
 			;;
 		--uninstall)
