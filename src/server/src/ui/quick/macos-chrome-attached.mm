@@ -8,6 +8,7 @@
 #include <QQuickWindow>
 
 #import <AppKit/AppKit.h>
+#import <Carbon/Carbon.h>
 #import <QuartzCore/QuartzCore.h>
 #import <objc/message.h>
 
@@ -152,6 +153,54 @@ NSScreen *cursorScreen() {
     if (NSPointInRect(mouse, candidate.frame)) return candidate;
   }
   return [NSScreen mainScreen];
+}
+
+// Nonactivating panels never become the "active" app, and macOS's built-in
+// "Use the Caps Lock key to switch to and from ABC" only fires for the active
+// app (verified: the same shortcut works fine in our regular, activating
+// Settings window). So the panel has to replicate the switch itself instead
+// of relying on TextInputMenuAgent.
+bool isASCIICapableInputSource(TISInputSourceRef source) {
+  auto *value = static_cast<CFBooleanRef>(TISGetInputSourceProperty(source, kTISPropertyInputSourceIsASCIICapable));
+  return value && CFBooleanGetValue(value);
+}
+
+NSArray<id> *selectableKeyboardLayoutSources() {
+  NSDictionary *filter = @{
+    (__bridge NSString *)kTISPropertyInputSourceCategory : (__bridge NSString *)kTISCategoryKeyboardInputSource,
+    (__bridge NSString *)kTISPropertyInputSourceIsSelectCapable : @YES,
+  };
+  CFArrayRef list = TISCreateInputSourceList((__bridge CFDictionaryRef)filter, false);
+  if (!list) { return @[]; }
+  NSArray<id> *sources = CFBridgingRelease(list);
+  return sources;
+}
+
+// Mirrors the native toggle: switch to the enabled non-Latin layout if we're
+// currently on a Latin one, or back to the Latin layout otherwise. Only acts
+// when there's exactly one of each, matching the setup macOS itself requires
+// before it offers the "switch via Caps Lock" preference in the first place.
+void toggleCapsLockInputSource() {
+  NSArray<id> *sources = selectableKeyboardLayoutSources();
+  NSMutableArray<id> *asciiSources = [NSMutableArray array];
+  NSMutableArray<id> *nonAsciiSources = [NSMutableArray array];
+  for (id source in sources) {
+    auto ref = (__bridge TISInputSourceRef)source;
+    if (isASCIICapableInputSource(ref)) {
+      [asciiSources addObject:source];
+    } else {
+      [nonAsciiSources addObject:source];
+    }
+  }
+  if (asciiSources.count != 1 || nonAsciiSources.count != 1) { return; }
+
+  TISInputSourceRef current = TISCopyCurrentKeyboardInputSource();
+  if (!current) { return; }
+  const bool currentIsAscii = isASCIICapableInputSource(current);
+  CFRelease(current);
+
+  id target = currentIsAscii ? nonAsciiSources.firstObject : asciiSources.firstObject;
+  TISSelectInputSource((__bridge TISInputSourceRef)target);
 }
 
 } // namespace
@@ -437,7 +486,10 @@ MacOSPanelAttached::MacOSPanelAttached(QObject *parent) : QObject(parent) {
   }
 }
 
-MacOSPanelAttached::~MacOSPanelAttached() { removeResignKeyObserver(); }
+MacOSPanelAttached::~MacOSPanelAttached() {
+  removeResignKeyObserver();
+  removeCapsLockMonitor();
+}
 
 void MacOSPanelAttached::setEnabled(bool value) {
   if (m_enabled == value) return;
@@ -448,6 +500,7 @@ void MacOSPanelAttached::setEnabled(bool value) {
   } else {
     revert();
     removeResignKeyObserver();
+    removeCapsLockMonitor();
   }
 }
 
@@ -471,6 +524,7 @@ void MacOSPanelAttached::onWindowChanged(QQuickWindow *window) {
     m_surfaceReady = false;
     m_snapshot = {};
     removeResignKeyObserver();
+    removeCapsLockMonitor();
   }
   if (window) {
     trackWindow(window);
@@ -502,6 +556,31 @@ void MacOSPanelAttached::removeResignKeyObserver() {
   [[NSNotificationCenter defaultCenter] removeObserver:token];
   m_resignKeyObserver = nullptr;
   m_observedNSWindow = nullptr;
+}
+
+void MacOSPanelAttached::installCapsLockMonitor(void *nswinPtr) {
+  if (m_capsLockMonitor) return;
+
+  NSWindow *nswin = (__bridge NSWindow *)nswinPtr;
+  id monitor = [NSEvent
+      addLocalMonitorForEventsMatchingMask:NSEventMaskFlagsChanged
+                                    handler:^NSEvent *(NSEvent *event) {
+                                      if (event.keyCode != kVK_CapsLock) { return event; }
+                                      if (NSApp.keyWindow != nswin) { return event; }
+                                      // Fires on both the press and the auto-release; only
+                                      // act on the rising edge to avoid toggling twice.
+                                      if (!(event.modifierFlags & NSEventModifierFlagCapsLock)) { return event; }
+                                      toggleCapsLockInputSource();
+                                      return event;
+                                    }];
+  m_capsLockMonitor = (void *)CFBridgingRetain(monitor);
+}
+
+void MacOSPanelAttached::removeCapsLockMonitor() {
+  if (!m_capsLockMonitor) return;
+  id monitor = CFBridgingRelease(m_capsLockMonitor);
+  [NSEvent removeMonitor:monitor];
+  m_capsLockMonitor = nullptr;
 }
 
 void MacOSPanelAttached::apply() {
@@ -567,6 +646,7 @@ void MacOSPanelAttached::apply() {
   nswin.level = m_windowLevel;
 
   installResignKeyObserver((__bridge void *)nswin);
+  installCapsLockMonitor((__bridge void *)nswin);
 }
 
 void MacOSPanelAttached::revert() {
@@ -608,6 +688,7 @@ bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
     } else if (se->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
       m_surfaceReady = false;
       removeResignKeyObserver();
+      removeCapsLockMonitor();
     }
   }
   return QObject::eventFilter(obj, event);

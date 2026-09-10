@@ -174,6 +174,8 @@ private:
   void onWindowChanged(QQuickWindow *window);
   void installResignKeyObserver(void *nswin);
   void removeResignKeyObserver();
+  void installCapsLockMonitor(void *nswin);
+  void removeCapsLockMonitor();
   bool eventFilter(QObject *obj, QEvent *event) override;
 
   QQuickItem *m_item = nullptr;
@@ -183,6 +185,7 @@ private:
   int m_windowLevel = 0;
   void *m_resignKeyObserver = nullptr;
   void *m_observedNSWindow = nullptr;
+  void *m_capsLockMonitor = nullptr;
   Snapshot m_snapshot;
 };
 
