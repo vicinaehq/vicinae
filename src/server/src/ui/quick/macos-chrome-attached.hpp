@@ -200,9 +200,7 @@ public:
   static MacOSPanelAttached *qmlAttachedProperties(QObject *object) { return new MacOSPanelAttached(object); }
 };
 
-void macosSetAccessoryActivationPolicy();
 void macosActivateApp();
-void macosReleaseMenuShortcuts();
 
 // True when NSGlassEffectView is available (macOS 26 Tahoe and later).
 bool macosLiquidGlassAvailable();

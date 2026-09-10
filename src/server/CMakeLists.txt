@@ -732,6 +732,8 @@ if (APPLE)
 		src/services/file-chooser/macos/mac-file-chooser.mm
 		src/services/menu-bar/macos-menu-bar.hpp
 		src/services/menu-bar/macos-menu-bar.mm
+		src/app-platform.hpp
+		src/app-platform-macos.mm
 		src/builtins/vicinae/menu-bar-search-view-host.hpp
 		src/builtins/vicinae/search-menu-bar-command.hpp
 	)
@@ -758,6 +760,7 @@ if (APPLE)
 		src/services/desktop-notification/macos/macos-notification-client.mm
 		src/services/file-chooser/macos/mac-file-chooser.mm
 		src/services/menu-bar/macos-menu-bar.mm
+		src/app-platform-macos.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications")
 
@@ -767,6 +770,7 @@ if (APPLE)
 
 elseif (WIN32)
 	list(APPEND SRCS
+		src/app-platform.cpp
 		src/ui/image/win-file-icon-loader.hpp
 		src/ui/image/win-file-icon-loader.cpp
 		src/services/app-service/windows/win-app.hpp
@@ -833,6 +837,7 @@ elseif (WIN32)
 	add_compile_definitions(VICINAE_BUNDLE_ID="${VICINAE_BUNDLE_ID}")
 else()
 	list(APPEND SRCS
+		src/app-platform.cpp
 		src/services/app-runtime/linux/linux-app-runtime.hpp
 		src/services/app-runtime/linux/linux-app-runtime.cpp
 	)

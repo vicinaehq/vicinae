@@ -615,10 +615,6 @@ bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
 
 bool macosLiquidGlassAvailable() { return liquidGlassClass() != nil; }
 
-void macosSetAccessoryActivationPolicy() {
-  [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
-}
-
 void macosActivateApp() { [NSApp activateIgnoringOtherApps:YES]; }
 
 void LauncherWindowPlatform::prepareOverlayWindow(QWindow *window) {
@@ -632,25 +628,6 @@ void LauncherWindowPlatform::prepareOverlayWindow(QWindow *window) {
   nswin.collectionBehavior |=
       NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary;
   nswin.ignoresMouseEvents = YES;
-}
-
-static void macosClearMenuShortcuts(NSMenu *menu) {
-  if (!menu) return;
-  NSMenu *servicesMenu = [NSApp servicesMenu];
-  for (NSMenuItem *topItem in menu.itemArray) {
-    NSMenu *submenu = topItem.submenu;
-    if (!submenu) continue;
-    for (NSMenuItem *item in submenu.itemArray) {
-      if (item.submenu == servicesMenu) continue;
-      item.keyEquivalent = @"";
-      item.keyEquivalentModifierMask = 0;
-    }
-  }
-}
-
-void macosReleaseMenuShortcuts() {
-  macosClearMenuShortcuts([NSApp mainMenu]);
-  dispatch_async(dispatch_get_main_queue(), ^{ macosClearMenuShortcuts([NSApp mainMenu]); });
 }
 
 void MacOSPanelAttached::placeBottomCenter(qreal bottomMargin) {
