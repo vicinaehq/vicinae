@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <unordered_set>
 #include <qfuture.h>
 #include <qimage.h>
 #include <qlogging.h>
@@ -9,6 +10,7 @@
 #include "ai-provider.hpp"
 #include "common/types.hpp"
 #include "services/ai/ai-config.hpp"
+#include "services/ai/local-speech/local-speech-provider.hpp"
 #include "vicinae.hpp"
 
 namespace AI {
@@ -19,7 +21,9 @@ signals:
   void modelsChanged() const;
 
 public:
-  Service() : m_registry(makeBuiltinRegistry()), m_configManager(Omnicast::configDir() / "ai.json") {
+  explicit Service(LocalSpeechModelRegistry &speechModels)
+      : m_registry(makeBuiltinRegistry()), m_configManager(Omnicast::configDir() / "ai.json") {
+    addBuiltinProvider(std::make_unique<LocalSpeechProvider>(speechModels));
     connect(&m_configManager, &ConfigManager::configChanged, this, &Service::reconcileProviders);
     m_configManager.load();
   }
@@ -113,12 +117,21 @@ private:
     return nullptr;
   }
 
+  void addBuiltinProvider(std::unique_ptr<AbstractProvider> provider) {
+    auto id = provider->id();
+    connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
+    provider->start();
+    m_builtinProviders.insert(id);
+    m_providers[std::move(id)] = std::move(provider);
+  }
+
   void reconcileProviders(const ConfigValue &current, const ConfigValue &previous) {
     auto const &newProviders = current.providers;
     auto const &oldProviders = previous.providers;
 
     std::erase_if(m_providers, [&](const auto &entry) {
       auto const &[id, provider] = entry;
+      if (m_builtinProviders.contains(id)) return false;
       auto it = newProviders.find(id);
       if (it == newProviders.end()) return true;
       auto oldIt = oldProviders.find(id);
@@ -143,6 +156,7 @@ private:
 
   ProviderRegistry m_registry;
   std::unordered_map<std::string, std::unique_ptr<AI::AbstractProvider>> m_providers;
+  std::unordered_set<std::string> m_builtinProviders;
   ConfigManager m_configManager;
 };
 }; // namespace AI
