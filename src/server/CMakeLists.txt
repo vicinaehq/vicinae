@@ -365,6 +365,7 @@ set(SRCS
 	src/builtins/vicinae/manage-fallback-view-host.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
+	src/builtins/dictation/dictation-models-view-host.hpp
 	src/builtins/dictation/transcribe-view-host.hpp
 	src/builtins/dictation/transcribe-view-host.cpp
 	src/builtins/system/system-run-model.hpp
@@ -568,6 +569,12 @@ set(SRCS
 	src/services/ai/ai-provider-registry.hpp
 	src/services/ai/ai-provider-registry.cpp
 	src/services/ai/agentic-loop.hpp
+	src/services/ai/local-speech/local-speech-provider.hpp
+	src/services/local-speech-model-registry/speech-model-catalogue.hpp
+	src/services/local-speech-model-registry/model-download.hpp
+	src/services/local-speech-model-registry/model-download.cpp
+	src/services/local-speech-model-registry/local-speech-model-registry.hpp
+	src/services/local-speech-model-registry/local-speech-model-registry.cpp
 
 	# UI
 	src/ui/bridges/keybind-bridge.hpp

@@ -38,6 +38,7 @@
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/news/news-service.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/local-speech-model-registry/local-speech-model-registry.hpp"
 #include "config/config.hpp"
 
 ServiceRegistry::~ServiceRegistry() = default;
@@ -95,6 +96,12 @@ TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get();
 AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
 
 void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
+
+LocalSpeechModelRegistry *ServiceRegistry::speechModels() const { return m_speechModels.get(); }
+
+void ServiceRegistry::setSpeechModels(std::unique_ptr<LocalSpeechModelRegistry> registry) {
+  m_speechModels = std::move(registry);
+}
 
 UpdateService *ServiceRegistry::updateService() const { return m_updateService.get(); }
 

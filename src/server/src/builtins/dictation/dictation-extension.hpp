@@ -2,6 +2,7 @@
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "command/command-database.hpp"
 #include "command/single-view-command-context.hpp"
+#include "builtins/dictation/dictation-models-view-host.hpp"
 #include "builtins/dictation/transcribe-view-host.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
@@ -24,6 +25,19 @@ class TranscribeCommand : public BuiltinViewCommand<TranscribeViewHost> {
   QString name() const override { return tr("Transcribe"); }
   ImageURL iconUrl() const override { return DICTATION_ICON; }
   std::vector<QString> keywords() const override { return {"dictate"}; }
+};
+
+class ManageModelsCommand : public BuiltinViewCommand<DictationModelsViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(ManageModelsCommand)
+
+  QString id() const override { return "models"; }
+  QString name() const override { return tr("Manage Dictation Models"); }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Microphone)
+        .setBackgroundTint(COLOR)
+        .setBadge(BuiltinIcon::Download);
+  }
+  std::vector<QString> keywords() const override { return {"whisper", "parakeet", "speech"}; }
 };
 
 class AddVocabCommand : public UnimplementedCommand {
@@ -73,6 +87,7 @@ class DictationExtension : public BuiltinCommandRepository {
 public:
   DictationExtension() {
     registerCommand<TranscribeCommand>();
+    registerCommand<ManageModelsCommand>();
     registerCommand<VocabularyCommand>();
     registerCommand<AddVocabCommand>();
     registerCommand<DictationHistoryCommand>();
