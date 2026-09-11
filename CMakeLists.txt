@@ -55,9 +55,10 @@ option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown c
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_NUMEN "Use system version of the numen calculator backend, instead of fetching it" OFF)
-option(USE_SYSTEM_WHISPER "Use system whisper.cpp instead of fetching and building it" OFF)
+option(USE_SYSTEM_WHISPER "Use system whisper.cpp instead of fetching and building it" ${USE_SYSTEM_DEFAULT})
 
 set(WHISPER_VULKAN_DEFAULT ON)
+
 if (APPLE OR WIN32)
 	set(WHISPER_VULKAN_DEFAULT OFF)
 endif()
