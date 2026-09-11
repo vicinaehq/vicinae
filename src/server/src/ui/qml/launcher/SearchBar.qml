@@ -338,8 +338,9 @@ Item {
 
         Row {
             id: tabHint
-            visible: {
-                return Launcher.atRoot && !Launcher.hasCompleter && searchInput.text.length > 5;
+			visible: {
+				// disabled for now, we are focusing on dictation first
+                return false && Launcher.atRoot && !Launcher.hasCompleter && searchInput.text.length > 5;
             }
 
             spacing: 6
