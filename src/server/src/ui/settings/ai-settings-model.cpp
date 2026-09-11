@@ -40,8 +40,8 @@ QVariant AISettingsModel::data(const QModelIndex &index, int role) const {
     if (typeInfo) return QString::fromUtf8(typeInfo->label.data(), typeInfo->label.size());
     return QString::fromStdString(entry.type);
   case IconRole:
-    if (typeInfo) return QString::fromUtf8(typeInfo->icon.data(), typeInfo->icon.size());
-    return QStringLiteral("computer-chip");
+    return QVariant::fromValue(
+        ImageUrl(ImageURL::builtin(typeInfo ? typeInfo->icon : BuiltinIcon::ComputerChip)));
   case DescriptionRole: {
     auto *provider = m_aiService->getProviderById(entry.id);
     if (provider) {
@@ -82,7 +82,7 @@ QVariantList AISettingsModel::availableTypes() const {
     QVariantMap entry;
     entry[QStringLiteral("type")] = QString::fromUtf8(info.type.data(), info.type.size());
     entry[QStringLiteral("label")] = QString::fromUtf8(info.label.data(), info.label.size());
-    entry[QStringLiteral("icon")] = QString::fromUtf8(info.icon.data(), info.icon.size());
+    entry[QStringLiteral("icon")] = QVariant::fromValue(ImageUrl(ImageURL::builtin(info.icon)));
     result.append(entry);
   }
   return result;
