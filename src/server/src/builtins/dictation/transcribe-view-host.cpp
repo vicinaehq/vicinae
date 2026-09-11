@@ -6,10 +6,9 @@
 #include "services/paste/paste-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-panel/action.hpp"
+#include "view-utils.hpp"
 
-QUrl TranscribeViewHost::qmlComponentUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/TranscribeView.qml"));
-}
+QUrl TranscribeViewHost::qmlComponentUrl() const { return qml::componentUrl(u"TranscribeView"); }
 
 QVariantMap TranscribeViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};

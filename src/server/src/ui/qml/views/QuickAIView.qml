@@ -1,8 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property QuickAIViewHost host
 
     function moveUp() {
         flickable.flick(0, 800);
@@ -33,9 +35,10 @@ Item {
 
             // completed exchanges
             Repeater {
-                model: host.exchanges
+                model: root.host.exchanges
 
                 delegate: Rectangle {
+                    id: ex
                     required property var modelData
                     width: mainCol.width
                     height: cardCol.height + 24
@@ -53,7 +56,7 @@ Item {
 
                         Text {
                             width: parent.width
-                            text: modelData.query
+                            text: ex.modelData.query
                             wrapMode: Text.Wrap
                             color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.5)
                             font.family: Theme.fontFamily
@@ -63,7 +66,7 @@ Item {
                         MarkdownInline {
                             width: parent.width
                             height: implicitHeight
-                            markdown: modelData.response
+                            markdown: ex.modelData.response
                             activeFocusOnTab: false
                         }
                     }
@@ -72,7 +75,7 @@ Item {
 
             // streaming card
             Rectangle {
-                visible: host.streaming
+                visible: root.host.streaming
                 width: mainCol.width
                 height: streamCol.height + 24
                 radius: 8
@@ -89,7 +92,7 @@ Item {
 
                     Text {
                         width: parent.width
-                        text: host.streamingQuery
+                        text: root.host.streamingQuery
                         wrapMode: Text.Wrap
                         color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.5)
                         font.family: Theme.fontFamily
@@ -99,7 +102,7 @@ Item {
                     Item {
                         width: parent.width
                         height: visible ? 24 : 0
-                        visible: host.streaming && host.streamingContent.length === 0
+                        visible: root.host.streaming && root.host.streamingContent.length === 0
 
                         PulsingDots {
                             active: parent.visible
@@ -110,8 +113,8 @@ Item {
                     MarkdownInline {
                         width: parent.width
                         height: implicitHeight
-                        markdown: host.streamingContent
-                        visible: host.streamingContent.length > 0
+                        markdown: root.host.streamingContent
+                        visible: root.host.streamingContent.length > 0
                         enabled: false
                     }
                 }
@@ -119,22 +122,22 @@ Item {
 
             // model label (only shown after generation completes)
             Row {
-                visible: !host.streaming && host.modelLabel.length > 0
+                visible: !root.host.streaming && root.host.modelLabel.length > 0
                 spacing: 6
 
                 ViciImage {
-                    visible: host.modelIcon.valid
-                    source: host.modelIcon
+                    visible: root.host.modelIcon.valid
+                    source: root.host.modelIcon
                     width: 20
                     height: 20
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
                 Text {
-                    text: host.modelLabel
+                    text: root.host.modelLabel
                     color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.35)
                     font.family: Theme.fontFamily
-                    font.pointSize: Theme.smallFontSize
+                    font.pointSize: Theme.smallerFontSize
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -142,9 +145,9 @@ Item {
     }
 
     Connections {
-        target: host
+        target: root.host
         function onStreamingChanged() {
-            if (host.streaming)
+            if (root.host.streaming)
                 Qt.callLater(flickable.scrollToBottom);
         }
         function onStreamingContentChanged() {

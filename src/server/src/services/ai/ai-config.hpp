@@ -1,5 +1,6 @@
 #pragma once
 #include <QDebug>
+#include "services/builtin-icon/builtin-icon.hpp"
 #include <filesystem>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/read.hpp>
@@ -54,7 +55,7 @@ struct ConfigValue {
 struct ProviderTypeInfo {
   std::string_view type;
   std::string_view label;
-  std::string_view icon;
+  BuiltinIcon icon;
   std::string_view description;
   bool allowMultiple;
 
@@ -70,14 +71,14 @@ inline constexpr ProviderTypeInfo kProviderTypes[] = {
     {
         .type = "ollama",
         .label = "Ollama",
-        .icon = "ollama",
+        .icon = BuiltinIcon::Ollama,
         .description = "Connect to a local or remote Ollama instance.",
         .allowMultiple = true,
     },
     {
         .type = "mistral",
         .label = "Mistral",
-        .icon = "mistral",
+        .icon = BuiltinIcon::Mistral,
         .description = "Mistral AI cloud API. Provides transcription and language models.",
         .allowMultiple = false,
     },

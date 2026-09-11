@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
 #include <QTimer>
 
@@ -12,6 +13,8 @@ class Service;
 
 class TranscribeViewHost : public FormViewBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(TranscribeViewHost)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(float audioLevel READ audioLevel NOTIFY audioLevelChanged)
   Q_PROPERTY(QString elapsedTime READ elapsedTime NOTIFY elapsedTimeChanged)
