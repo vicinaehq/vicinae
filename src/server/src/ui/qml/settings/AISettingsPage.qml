@@ -1,11 +1,13 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Vicinae
 
 Item {
     id: root
 
-    readonly property var model: Settings.aiModel
+    readonly property AISettingsModel model: Settings.aiModel
     property int selectedRow: -1
     property int _refreshKey: 0
 
@@ -17,7 +19,7 @@ Item {
             items.push({
                 id: t.type,
                 displayName: t.label,
-                iconSource: "image://vicinae/builtin:" + t.icon + "?fg=" + Theme.foreground
+                iconSource: t.icon.withFillColor(Theme.foreground)
             });
         }
         return [
@@ -111,7 +113,7 @@ Item {
                         spacing: 8
 
                         ViciImage {
-                            source: Img.builtin("computer-chip").withFillColor(Theme.textMuted)
+                            source: Img.icon(BuiltinIcon.ComputerChip).withFillColor(Theme.textMuted)
                             Layout.preferredWidth: 32
                             Layout.preferredHeight: 32
                             Layout.alignment: Qt.AlignHCenter
@@ -147,7 +149,7 @@ Item {
                         required property int index
                         required property string providerId
                         required property string typeLabel
-                        required property string icon
+                        required property var icon
 
                         Item {
                             width: parent.width
@@ -167,7 +169,7 @@ Item {
                                 spacing: 12
 
                                 ViciImage {
-                                    source: Img.builtin(listDelegate.icon).withFillColor(Theme.textMuted)
+                                    source: listDelegate.icon.withFillColor(Theme.textMuted)
                                     Layout.preferredWidth: 22
                                     Layout.preferredHeight: 22
                                 }
@@ -187,7 +189,7 @@ Item {
                                 }
 
                                 ViciImage {
-                                    source: Img.builtin("chevron-right-small").withFillColor(Theme.textMuted)
+                                    source: Img.icon(BuiltinIcon.ChevronRightSmall).withFillColor(Theme.textMuted)
                                     Layout.preferredWidth: 16
                                     Layout.preferredHeight: 16
                                 }
@@ -276,7 +278,7 @@ Item {
                         spacing: 4
 
                         ViciImage {
-                            source: Img.builtin("chevron-right-small").withFillColor(Theme.textMuted)
+                            source: Img.icon(BuiltinIcon.ChevronRightSmall).withFillColor(Theme.textMuted)
                             Layout.preferredWidth: 14
                             Layout.preferredHeight: 14
                             rotation: 180
@@ -314,7 +316,7 @@ Item {
                         spacing: 4
 
                         ViciImage {
-                            source: Img.builtin("trash").withFillColor(removeHover.hovered ? Theme.danger : Theme.textMuted)
+                            source: Img.icon(BuiltinIcon.Trash).withFillColor(removeHover.hovered ? Theme.danger : Theme.textMuted)
                             Layout.preferredWidth: 14
                             Layout.preferredHeight: 14
                         }
@@ -352,7 +354,7 @@ Item {
                 spacing: 12
 
                 ViciImage {
-                    source: Img.builtin(detailFlick.details.icon ?? "computer-chip").withFillColor(Theme.foreground)
+                    source: (detailFlick.details.icon ?? Img.icon(BuiltinIcon.ComputerChip)).withFillColor(Theme.foreground)
                     Layout.preferredWidth: 28
                     Layout.preferredHeight: 28
                     Layout.alignment: Qt.AlignTop
@@ -448,7 +450,7 @@ Item {
                             font.pointSize: Theme.smallerFontSize
                         }
 
-                        FormSecretInput {
+                        FormPasswordInput {
                             text: detailFlick.details.apiKey ?? ""
                             placeholder: "sk-..."
                             onAccepted: root.model.setField(root.selectedRow, "apiKey", text.trim())
@@ -546,7 +548,7 @@ Item {
                                     spacing: 10
 
                                     ViciImage {
-                                        source: modelDelegate.modelData.icon ?? Img.builtin("computer-chip").withFillColor(Theme.textMuted)
+                                        source: modelDelegate.modelData.icon ?? Img.icon(BuiltinIcon.ComputerChip).withFillColor(Theme.textMuted)
                                         Layout.preferredWidth: 18
                                         Layout.preferredHeight: 18
                                         opacity: modelDelegate.modelData.enabled ? 1.0 : 0.4
@@ -568,6 +570,7 @@ Item {
                                             model: modelDelegate.modelData.capabilities
 
                                             delegate: Rectangle {
+                                                id: capBadge
                                                 required property string modelData
                                                 width: capText.implicitWidth + 10
                                                 height: capText.implicitHeight + 4
@@ -577,7 +580,7 @@ Item {
                                                 Text {
                                                     id: capText
                                                     anchors.centerIn: parent
-                                                    text: modelData
+                                                    text: capBadge.modelData
                                                     color: Theme.textMuted
                                                     font.pointSize: Theme.smallerFontSize - 1
                                                 }
@@ -592,7 +595,7 @@ Item {
                                         SettingsToggle {
                                             anchors.right: parent.right
                                             checked: modelDelegate.modelData.enabled
-                                            onToggled: root.model.setModelEnabled(root.selectedRow, modelDelegate.modelData.id, checked)
+                                            onToggled: checked => root.model.setModelEnabled(root.selectedRow, modelDelegate.modelData.id, checked)
                                         }
                                     }
                                 }
@@ -611,13 +614,13 @@ Item {
     // ── Add provider modal ──
     ViciModal {
         id: addModal
-        parent: root.Window.contentItem
+        parent: Overlay.overlay
         width: Math.min(parent.width - 40, 480)
         padding: 24
 
         property string _providerType: ""
         property string _providerLabel: ""
-        property string _providerIcon: ""
+        property var _providerIcon: null
 
         function _reset() {
             modalIdField.text = _providerType === "ollama" ? root.model.nextProviderId(_providerType) : "";
@@ -753,7 +756,7 @@ Item {
                     Layout.fillWidth: true
                 }
 
-                FormSecretInput {
+                FormPasswordInput {
                     id: modalApiKeyField
                     placeholder: "sk-..."
                     onAccepted: addModal._submit()

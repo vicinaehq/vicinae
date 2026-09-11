@@ -1,4 +1,5 @@
 import QtQuick
+import Vicinae
 
 MarkdownText {
     anchors.fill: parent

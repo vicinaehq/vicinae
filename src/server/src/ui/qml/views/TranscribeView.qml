@@ -1,8 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import Vicinae
 
 Item {
     id: root
-    required property var host
+    required property TranscribeViewHost host
 
     Column {
         anchors.centerIn: parent
@@ -36,7 +38,7 @@ Item {
             text: root.host.errorMessage
             color: Qt.rgba(1, 0.3, 0.3, 0.9)
             font.family: Theme.fontFamily
-            font.pointSize: Theme.smallFontSize
+            font.pointSize: Theme.smallerFontSize
             wrapMode: Text.Wrap
             width: parent.width
             horizontalAlignment: Text.AlignHCenter

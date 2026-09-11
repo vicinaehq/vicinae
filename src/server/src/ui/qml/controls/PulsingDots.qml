@@ -1,4 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import Vicinae
 
 Row {
     id: root
@@ -8,6 +10,7 @@ Row {
     Repeater {
         model: 3
         Rectangle {
+            id: dot
             required property int index
             width: 6
             height: 6
@@ -19,7 +22,7 @@ Row {
                 running: root.active
                 loops: Animation.Infinite
                 PauseAnimation {
-                    duration: index * 200
+                    duration: dot.index * 200
                 }
                 NumberAnimation {
                     to: 0.8
@@ -32,7 +35,7 @@ Row {
                     easing.type: Easing.InOutQuad
                 }
                 PauseAnimation {
-                    duration: (2 - index) * 200
+                    duration: (2 - dot.index) * 200
                 }
             }
         }

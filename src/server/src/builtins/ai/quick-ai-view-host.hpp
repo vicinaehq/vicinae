@@ -1,4 +1,5 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
 #include "ui/image/image-url.hpp"
 #include "services/ai/ai-provider.hpp"
@@ -17,6 +18,8 @@ class Service;
 
 class QuickAIViewHost : public ViewHostBase {
   Q_OBJECT
+  QML_NAMED_ELEMENT(QuickAIViewHost)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(QVariantList exchanges READ exchanges NOTIFY exchangesChanged)
   Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
