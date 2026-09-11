@@ -1,5 +1,6 @@
 #pragma once
 #include <QAbstractListModel>
+#include <QtQml/qqmlregistration.h>
 #include <QString>
 #include <QVariantList>
 #include <vector>
@@ -10,6 +11,8 @@ class Service;
 
 class AISettingsModel : public QAbstractListModel {
   Q_OBJECT
+  QML_NAMED_ELEMENT(AISettingsModel)
+  QML_UNCREATABLE("")
 
   Q_PROPERTY(bool hasProviders READ hasProviders NOTIFY providersChanged)
   Q_PROPERTY(QVariantList availableTypes READ availableTypes NOTIFY providersChanged)

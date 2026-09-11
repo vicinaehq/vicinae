@@ -3,19 +3,17 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
-#include "services/clipboard/clipboard-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "ui/action-panel/action-panel-state.hpp"
 #include "ui/action-panel/action.hpp"
 #include "ui/image/url.hpp"
+#include "view-utils.hpp"
 
 QuickAIViewHost::QuickAIViewHost(QString initialQuery) : m_initialQuery(std::move(initialQuery)) {}
 
-QUrl QuickAIViewHost::qmlComponentUrl() const { return QUrl(QStringLiteral("qrc:/Vicinae/QuickAIView.qml")); }
+QUrl QuickAIViewHost::qmlComponentUrl() const { return qml::componentUrl(u"QuickAIView"); }
 
-QUrl QuickAIViewHost::qmlSearchAccessoryUrl() const {
-  return QUrl(QStringLiteral("qrc:/Vicinae/QuickAIModelAccessory.qml"));
-}
+QUrl QuickAIViewHost::qmlSearchAccessoryUrl() const { return qml::componentUrl(u"QuickAIModelAccessory"); }
 
 QVariantMap QuickAIViewHost::qmlProperties() { return {{QStringLiteral("host"), QVariant::fromValue(this)}}; }
 
@@ -123,9 +121,10 @@ void QuickAIViewHost::updateActions() {
   auto *section = panel->createSection();
 
   if (m_streaming) {
-    auto *cancel = new StaticAction(QStringLiteral("Cancel"), ImageURL::builtin(BuiltinIcon::XMarkCircle), [this]() {
-      if (m_stream) m_stream->abort();
-    });
+    auto *cancel =
+        new StaticAction(QStringLiteral("Cancel"), ImageURL::builtin(BuiltinIcon::XMarkCircle), [this]() {
+          if (m_stream) m_stream->abort();
+        });
     cancel->setPrimary(true);
     section->addAction(cancel);
   } else if (!m_followUpText.isEmpty()) {
@@ -139,12 +138,14 @@ void QuickAIViewHost::updateActions() {
     followUp->setPrimary(true);
     section->addAction(followUp);
 
-    auto *paste = new StaticAction(QStringLiteral("Paste to App"), ImageURL::builtin(BuiltinIcon::CopyClipboard),
-                                   [this]() { pasteLastResponse(); });
+    auto *paste =
+        new StaticAction(QStringLiteral("Paste to App"), ImageURL::builtin(BuiltinIcon::CopyClipboard),
+                         [this]() { pasteLastResponse(); });
     section->addAction(paste);
   } else {
-    auto *paste = new StaticAction(QStringLiteral("Paste to App"), ImageURL::builtin(BuiltinIcon::CopyClipboard),
-                                   [this]() { pasteLastResponse(); });
+    auto *paste =
+        new StaticAction(QStringLiteral("Paste to App"), ImageURL::builtin(BuiltinIcon::CopyClipboard),
+                         [this]() { pasteLastResponse(); });
     paste->setPrimary(true);
     section->addAction(paste);
   }

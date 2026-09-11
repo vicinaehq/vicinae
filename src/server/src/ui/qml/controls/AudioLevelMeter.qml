@@ -1,4 +1,5 @@
 import QtQuick
+import Vicinae
 
 Rectangle {
     id: root
