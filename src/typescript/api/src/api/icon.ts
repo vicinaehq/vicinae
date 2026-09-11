@@ -1,5 +1,6 @@
+
 export enum Icon {
-	Aarch64 = "aarch64",
+Aarch64 = "aarch64",
 	AddPerson = "add-person",
 	Adonisjs = "adonisjs",
 	Aftereffects = "aftereffects",
@@ -98,6 +99,7 @@ export enum Icon {
 	Bold = "bold",
 	BoltDisabled = "bolt-disabled",
 	Bolt = "bolt",
+	BookAntique = "book-antique",
 	Book = "book",
 	Bookmark = "bookmark",
 	Bootstrap = "bootstrap",
@@ -850,5 +852,5 @@ export enum Icon {
 	Yunohost = "yunohost",
 	Zend = "zend",
 	Zendesk = "zendesk",
-	Zig = "zig",
+	Zig = "zig"
 }
