@@ -16,6 +16,7 @@
 #include <qfuture.h>
 #include <qfuturewatcher.h>
 #include <QPromise>
+#include <QNetworkProxyFactory>
 #include <QNetworkReply>
 #include <qhashfunctions.h>
 #include <qhttpmultipart.h>
@@ -33,6 +34,7 @@ namespace http {
 
 inline QNetworkAccessManager *networkManager() {
   static auto *mgr = [] {
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
     auto *m = new QNetworkAccessManager;
     auto *cache = new QNetworkDiskCache(m);
     const QString cacheDir = QString::fromStdString((Omnicast::cacheDir() / "http").string());

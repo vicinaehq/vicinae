@@ -88,7 +88,7 @@ Item {
 
             Loader {
                 anchors.fill: parent
-                sourceComponent: root._hasCustomDetail ? null : (panel.hasContent ? defaultTextContent : null)
+                sourceComponent: root._hasCustomDetail ? null : (panel.hasContent ? (root.host.detailMarkdown ? defaultMarkdownContent : defaultTextContent) : null)
                 source: root._hasCustomDetail ? root.host.detailContentUrl : ""
             }
         }
@@ -98,6 +98,14 @@ Item {
         id: defaultTextContent
         TextViewer {
             text: root.host.detailContent
+        }
+    }
+
+    Component {
+        id: defaultMarkdownContent
+        MarkdownText {
+            markdown: root.host.detailContent
+            contentPadding: 16
         }
     }
 }
