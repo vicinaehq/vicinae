@@ -1,18 +1,32 @@
 #pragma once
-#include "ui/views/bridge-view.hpp"
+#include <optional>
+#include <QString>
+#include <QVariantList>
+#include "ui/views/detail-list-view-host.hpp"
 #include "ui/views/fuzzy-section.hpp"
-#include "ui/views/section-list-model.hpp"
+#include "ui/views/view-utils.hpp"
+
+struct ListItemDetail {
+  QVariantList metadata;
+  QString markdown;
+};
 
 /**
  * A list view with a single section.
  * Does not require creating a separate model, much simpler way to create new views.
+ * Override `hasDetailPane` and `displayDetail` to show a metadata + markdown panel for the selected item.
  */
-template <typename T> class MonoListViewHost : public ViewHostBase, public FuzzySection<T> {
+template <typename T> class MonoListViewHost : public DetailListViewHost, public FuzzySection<T> {
 
 public:
   using ItemType = T;
 
-  virtual void onMount() { initialize(); }
+  virtual void onMount() {}
+
+  bool hasDetail() const final { return m_detail.has_value(); }
+  QString detailContent() const final { return m_detail ? m_detail->markdown : QString(); }
+  QVariantList detailMetadata() const final { return m_detail ? m_detail->metadata : QVariantList(); }
+  bool detailMarkdown() const final { return true; }
 
 protected:
   QString sectionName() const override { return ""; }
@@ -23,47 +37,46 @@ protected:
   AccessoryList displayAccessories(const T &e) const override = 0;
   std::unique_ptr<ActionPanelState> buildActionPanel(const T &e) const override = 0;
 
-  void textChanged(const QString &text) override { m_model.setFilter(text); }
-  void onReactivated() override { m_model.refreshActionPanel(); }
-  void beforePop() override { m_model.beforePop(); }
+  virtual bool hasDetailPane() const { return false; }
+  virtual std::optional<ListItemDetail> displayDetail(const T &) const { return std::nullopt; }
 
-  SectionListModel m_model{this};
+  void refreshDetail() {
+    if (!hasDetailPane()) return;
+    const bool valid = m_selected && *m_selected >= 0 && *m_selected < this->count();
+    m_detail = valid ? displayDetail(this->at(*m_selected)) : std::nullopt;
+    emit detailChanged();
+  }
 
 private:
-  QUrl qmlComponentUrl() const final { return m_model.qmlComponentUrl(); }
+  QUrl qmlComponentUrl() const final {
+    return hasDetailPane() ? qml::componentUrl(u"DetailListView") : listModel()->qmlComponentUrl();
+  }
 
   QVariantMap qmlProperties() final {
-    return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(&m_model))}};
+    return {
+        {QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(listModel()))},
+        {QStringLiteral("host"), QVariant::fromValue(static_cast<DetailListViewHost *>(this))},
+    };
   }
 
   void initialize() final {
     BaseView::initialize();
     initModel();
+    model()->addSource(this);
+
+    connect(model(), &SectionListModel::itemSelected, this, [this](SectionSource *source, int itemIdx) {
+      if (source != this) return;
+      m_selected = itemIdx;
+      refreshDetail();
+    });
+    connect(model(), &SectionListModel::selectionCleared, this, [this]() {
+      m_selected.reset();
+      refreshDetail();
+    });
+
     onMount();
   }
 
-  SectionListModel *listModel() const override { return const_cast<SectionListModel *>(&m_model); }
-
-  SectionListModel *model() { return &m_model; }
-
-  void initModel() {
-    m_model.setScope(ViewScope(context(), this));
-    m_model.addSource(this);
-
-    connect(&m_model, &SectionListModel::itemSelected, this, [this](SectionSource *source, int itemIdx) {
-      if (auto panel = source->actionPanel(itemIdx))
-        setActions(std::move(panel));
-      else
-        clearActions();
-    });
-
-    connect(&m_model, &SectionListModel::selectionCleared, this, [this]() {
-      if (auto panel = emptyActionPanel())
-        setActions(std::move(panel));
-      else
-        clearActions();
-    });
-  }
-
-  virtual std::unique_ptr<ActionPanelState> emptyActionPanel() { return nullptr; }
+  std::optional<int> m_selected;
+  std::optional<ListItemDetail> m_detail;
 };

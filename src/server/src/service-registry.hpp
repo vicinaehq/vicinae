@@ -43,6 +43,7 @@ class AudioControlService;
 class MediaControlService;
 class AppRuntime;
 class GlobalShortcutService;
+class LocalSpeechModelRegistry;
 
 namespace config {
 class Manager;
@@ -97,6 +98,7 @@ public:
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
   AI::Service *ai() const;
+  LocalSpeechModelRegistry *speechModels() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setTrayHost(std::unique_ptr<AbstractTrayHost> service);
@@ -140,6 +142,7 @@ public:
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
   void setAI(std::unique_ptr<AI::Service>);
+  void setSpeechModels(std::unique_ptr<LocalSpeechModelRegistry> registry);
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
@@ -182,5 +185,6 @@ private:
   std::unique_ptr<MediaControlService> m_mediaControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
+  std::unique_ptr<LocalSpeechModelRegistry> m_speechModels;
   std::unique_ptr<AI::Service> m_ai;
 };
