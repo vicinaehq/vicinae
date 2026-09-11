@@ -16,6 +16,7 @@
 #include "builtins/vicinae/vicinae-extension.hpp"
 #include "builtins/system/system-extension.hpp"
 #include "builtins/ai/intelligence-extension.hpp"
+#include "builtins/dictation/dictation-extension.hpp"
 #include "service-registry.hpp"
 #include <memory>
 
@@ -52,6 +53,7 @@ CommandDatabase::CommandDatabase(const ServiceRegistry &services) {
 
   registerRepository<SnippetExtension>();
 
+  registerRepository<DictationExtension>();
   registerRepository<IntelligenceExtension>();
 
 #ifdef QT_DEBUG

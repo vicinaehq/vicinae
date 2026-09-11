@@ -365,8 +365,8 @@ set(SRCS
 	src/builtins/vicinae/manage-fallback-view-host.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
-	src/builtins/ai/transcribe-view-host.hpp
-	src/builtins/ai/transcribe-view-host.cpp
+	src/builtins/dictation/transcribe-view-host.hpp
+	src/builtins/dictation/transcribe-view-host.cpp
 	src/builtins/system/system-run-model.hpp
 	src/builtins/system/system-run-model.cpp
 	src/builtins/system/system-run-view-host.hpp
@@ -1208,7 +1208,6 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ViciModal.qml
 	src/ui/qml/controls/AudioLevelMeter.qml
 	src/ui/qml/views/TranscribeView.qml
-	src/ui/qml/form/FormSecretInput.qml
 	src/ui/qml/views/ExtensionGridView.qml
 	src/ui/qml/actions/ActionPanelPopover.qml
 	src/ui/qml/actions/ActionListPanel.qml
@@ -1425,6 +1424,8 @@ target_include_directories(${TARGET} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/developer
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/snippet
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/root
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/ai
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/dictation
 	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler
 	${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})

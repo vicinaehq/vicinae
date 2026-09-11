@@ -296,8 +296,8 @@ Item {
                     event.accepted = false;
                 }
                 Keys.onTabPressed: event => {
-                    if (launcher.atRoot && searchInput.text.length > 5) {
-                        launcher.handleTab();
+                    if (Launcher.atRoot && searchInput.text.length > 5) {
+                        Launcher.handleTab();
                         event.accepted = true;
                     } else {
                         event.accepted = false;
@@ -339,7 +339,7 @@ Item {
         Row {
             id: tabHint
             visible: {
-                return launcher.atRoot && !launcher.hasCompleter && searchInput.text.length > 5;
+                return Launcher.atRoot && !Launcher.hasCompleter && searchInput.text.length > 5;
             }
 
             spacing: 6
