@@ -12,6 +12,7 @@
 #include "common/types.hpp"
 #include "services/ai/ai-config.hpp"
 #include "services/ai/local-speech/local-speech-provider.hpp"
+#include "services/audio/audio-recorder.hpp"
 #include "vicinae.hpp"
 
 namespace AI {
@@ -38,34 +39,25 @@ public:
     return completion;
   }
 
-  QFuture<AI::Result<TranscriptionResponse>> transcribe(QIODevice *device, const QString &mime) {
-    if (!device->isOpen() && !device->open(QIODevice::ReadOnly)) {
-      return QtFuture::makeReadyValueFuture<AI::Result<TranscriptionResponse>>(
-          std::unexpected("Failed to open IO device for transcription"));
-    }
+  QFuture<AI::Result<TranscriptionResponse>> transcribe(Audio::Recording recording, const QString &mime) {
 
     for (const auto &[id, provider] : m_providers) {
       if (const auto model = provider->findBestModel(Capability::Transcription)) {
         if (!isModelEnabled(ModelRef{id, model->id})) continue;
-        return provider->transcribe(device, {.mime = mime.toStdString()});
+        return provider->transcribe(std::move(recording));
       }
     }
 
     return {};
   }
 
-  QFuture<AI::Result<TranscriptionResponse>> transcribe(const ModelRef &ref, QIODevice *device,
-                                                        const QString &mime) {
+  QFuture<AI::Result<TranscriptionResponse>> transcribe(const ModelRef &ref, Audio::Recording recording) {
     auto *provider = getProviderById(ref.provider);
     if (!provider) {
       return QtFuture::makeReadyValueFuture<AI::Result<TranscriptionResponse>>(
           std::unexpected(std::format("Unknown AI provider '{}'", ref.provider)));
     }
-    if (!device->isOpen() && !device->open(QIODevice::ReadOnly)) {
-      return QtFuture::makeReadyValueFuture<AI::Result<TranscriptionResponse>>(
-          std::unexpected("Failed to open IO device for transcription"));
-    }
-    return provider->transcribe(device, {.mime = mime.toStdString(), .model = ref.id});
+    return provider->transcribe(std::move(recording), {.model = ref.id});
   }
 
   AbstractProvider *getProviderById(std::string_view id) {

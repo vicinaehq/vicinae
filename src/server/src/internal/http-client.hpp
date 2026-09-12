@@ -75,12 +75,16 @@ public:
 
   void addFile(QIODevice *file, const QString &contentType, const QString &fieldName = "file",
                const QString &fileName = "file") {
-    QHttpPart part;
-    part.setHeader(QNetworkRequest::ContentTypeHeader, contentType);
-    part.setHeader(QNetworkRequest::ContentDispositionHeader,
-                   QString("form-data; name=\"%1\"; filename=\"%2\"").arg(fieldName).arg(fileName));
+    auto part = makeFilePart(contentType, fieldName, fileName);
     part.setBodyDevice(file);
     file->setParent(m_mp);
+    m_mp->append(part);
+  }
+
+  void addFile(const QByteArray &data, const QString &contentType, const QString &fieldName = "file",
+               const QString &fileName = "file") {
+    auto part = makeFilePart(contentType, fieldName, fileName);
+    part.setBody(data);
     m_mp->append(part);
   }
 
@@ -94,6 +98,14 @@ public:
   QHttpMultiPart *multipart() const { return m_mp; }
 
 private:
+  QHttpPart makeFilePart(const QString &contentType, const QString &fieldName, const QString &fileName) {
+    QHttpPart part;
+    part.setHeader(QNetworkRequest::ContentTypeHeader, contentType);
+    part.setHeader(QNetworkRequest::ContentDispositionHeader,
+                   QString("form-data; name=\"%1\"; filename=\"%2\"").arg(fieldName).arg(fileName));
+    return part;
+  }
+
   QHttpMultiPart *m_mp;
 };
 

@@ -1,3 +1,4 @@
+#include "services/audio/audio-recorder.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "common/qt.hpp"
 #include "services/ai/ai-provider.hpp"
@@ -133,11 +134,12 @@ public:
     return std::nullopt;
   }
 
-  QFuture<TranscriptionResult> transcribe(QIODevice *device, const TranscriptionOptions &opts) override {
+  QFuture<TranscriptionResult> transcribe(Audio::Recording recording,
+                                          const TranscriptionOptions &opts) override {
     auto formData = new http::FormData;
 
     formData->addField("model", QByteArray::fromStdString(opts.model.value_or("voxtral-mini-2507")));
-    formData->addFile(device, opts.mime.c_str());
+    formData->addFile(recording.toWav(), "audio/wav");
 
     return m_client.post<TranscriptionResponse>("/audio/transcriptions", formData)
         .then([](AI::Result<TranscriptionResponse> res) -> TranscriptionResult {

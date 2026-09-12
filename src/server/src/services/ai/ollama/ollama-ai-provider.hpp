@@ -1,4 +1,5 @@
 #pragma once
+#include "services/audio/audio-recorder.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "common/qt.hpp"
 #include "ui/image/image-url.hpp"
@@ -250,7 +251,8 @@ class OllamaProvider : public AbstractProvider {
         QObjectDeleter{});
   }
 
-  QFuture<TranscriptionResult> transcribe(QIODevice *device, const TranscriptionOptions &opts = {}) override {
+  QFuture<TranscriptionResult> transcribe(Audio::Recording recording,
+                                          const TranscriptionOptions &opts = {}) override {
     return QtFuture::makeReadyValueFuture<TranscriptionResult>(
         std::unexpected("Transcription is not supported"));
   }
