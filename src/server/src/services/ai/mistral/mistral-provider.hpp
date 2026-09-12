@@ -139,6 +139,7 @@ public:
     auto formData = new http::FormData;
 
     formData->addField("model", QByteArray::fromStdString(opts.model.value_or("voxtral-mini-2507")));
+    if (opts.language) formData->addField("language", QByteArray::fromStdString(*opts.language));
     formData->addFile(recording.toWav(), "audio/wav");
 
     return m_client.post<TranscriptionResponse>("/audio/transcriptions", formData)

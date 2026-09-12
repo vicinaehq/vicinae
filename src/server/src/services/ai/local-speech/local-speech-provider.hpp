@@ -115,11 +115,12 @@ public:
       return QtConcurrent::run(
           [recording = std::move(recording), opts, path = std::move(path)]() -> TranscriptionResult {
             whisper_context_params params = whisper_context_default_params();
+            params.use_gpu = opts.useGpu;
+
             whisper_context *ctx = whisper_init_from_file_with_params(path.string().c_str(), params);
             whisper_full_params fparams =
                 whisper_full_default_params(whisper_sampling_strategy::WHISPER_SAMPLING_GREEDY);
-
-            params.use_gpu = opts.useGpu;
+            fparams.language = opts.language ? opts.language->c_str() : "auto";
 
             qDebug() << "transcribing using whisper full, model" << path;
 

@@ -13,8 +13,9 @@ namespace {
 constexpr int MESSAGE_DURATION_MS = 1500;
 }
 
-DictationSession::DictationSession(const ApplicationContext *ctx, AI::ModelRef model, QObject *parent)
-    : QObject(parent), m_ctx(ctx), m_model(std::move(model)) {
+DictationSession::DictationSession(const ApplicationContext *ctx, AI::ModelRef model,
+                                   AI::TranscriptionOptions options, QObject *parent)
+    : QObject(parent), m_ctx(ctx), m_model(std::move(model)), m_options(std::move(options)) {
   m_elapsedTimer.setInterval(1000);
   connect(&m_elapsedTimer, &QTimer::timeout, this, &DictationSession::elapsedTimeChanged);
   connect(&m_recorder, &Audio::Recorder::levelChanged, this, &DictationSession::audioLevelChanged);
@@ -53,7 +54,7 @@ void DictationSession::accept() {
   emit stateChanged();
 
   m_ctx->services->ai()
-      ->transcribe(m_model, m_recorder.finish())
+      ->transcribe(m_model, m_recorder.finish(), m_options)
       .then(this, [this](const AI::TranscriptionResult &result) {
         m_transcribing = false;
         emit stateChanged();

@@ -31,7 +31,8 @@ signals:
   void finished();
 
 public:
-  DictationSession(const ApplicationContext *ctx, AI::ModelRef model, QObject *parent = nullptr);
+  DictationSession(const ApplicationContext *ctx, AI::ModelRef model, AI::TranscriptionOptions options = {},
+                   QObject *parent = nullptr);
 
   bool start();
   Q_INVOKABLE void accept();
@@ -50,6 +51,7 @@ private:
 
   const ApplicationContext *m_ctx;
   AI::ModelRef m_model;
+  AI::TranscriptionOptions m_options;
   Audio::Recorder m_recorder;
   QTimer m_elapsedTimer;
   bool m_transcribing = false;
