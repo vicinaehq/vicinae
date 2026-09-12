@@ -5,12 +5,30 @@
 #include <QMediaDevices>
 #include <QObject>
 #include <cstdint>
-#include <filesystem>
 #include <memory>
-#include <optional>
+#include <qaudioformat.h>
+#include <qstringview.h>
 #include <vector>
 
 namespace Audio {
+
+// Wrapper around the resulting audio stream, in PCMF32 format
+// Has convenience methods to convert to pcmint16, wav, etc...
+class Recording {
+public:
+  using PCMF32 = std::vector<float>;
+
+  explicit Recording(PCMF32 data, QAudioFormat format);
+
+  std::vector<std::int16_t> toInt16() const;
+  std::span<const float> toF32() const;
+  QByteArray toWav() const;
+  QAudioFormat format() const;
+
+private:
+  PCMF32 m_data;
+  QAudioFormat m_format;
+};
 
 class Recorder : public QObject {
   Q_OBJECT
@@ -36,7 +54,8 @@ public:
   float level() const { return m_level; }
   qint64 elapsedMs() const;
 
-  std::optional<std::filesystem::path> outputPath() const { return m_outputPath; }
+  // mark the recording as finished and move the data out of the recorder
+  Recording finish() const;
 
 private:
   void processAudioData();
@@ -47,11 +66,10 @@ private:
   QElapsedTimer m_elapsed;
   qint64 m_pausedElapsed = 0;
 
-  std::vector<std::int16_t> m_pcmBuffer;
+  std::vector<float> m_pcmBuffer;
   QAudioFormat m_format;
   float m_level = 0.0f;
   State m_state = State::Idle;
-  std::optional<std::filesystem::path> m_outputPath;
 };
 
 } // namespace Audio
