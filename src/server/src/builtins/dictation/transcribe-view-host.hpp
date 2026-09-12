@@ -29,7 +29,7 @@ signals:
   void errorMessageChanged();
 
 public:
-  explicit TranscribeViewHost(AI::ModelRef model);
+  explicit TranscribeViewHost(AI::ModelRef model, AI::TranscriptionOptions options = {});
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
@@ -51,6 +51,7 @@ private:
   void updateNavigationTitle();
 
   AI::ModelRef m_model;
+  AI::TranscriptionOptions m_options;
   Audio::Recorder *m_recorder = nullptr;
   AI::Service *m_aiService = nullptr;
   QTimer m_elapsedTimer;

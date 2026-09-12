@@ -51,13 +51,15 @@ public:
     return {};
   }
 
-  QFuture<AI::Result<TranscriptionResponse>> transcribe(const ModelRef &ref, Audio::Recording recording) {
+  QFuture<AI::Result<TranscriptionResponse>> transcribe(const ModelRef &ref, Audio::Recording recording,
+                                                        TranscriptionOptions opts = {}) {
     auto *provider = getProviderById(ref.provider);
     if (!provider) {
       return QtFuture::makeReadyValueFuture<AI::Result<TranscriptionResponse>>(
           std::unexpected(std::format("Unknown AI provider '{}'", ref.provider)));
     }
-    return provider->transcribe(std::move(recording), {.model = ref.id});
+    opts.model = ref.id;
+    return provider->transcribe(std::move(recording), opts);
   }
 
   AbstractProvider *getProviderById(std::string_view id) {

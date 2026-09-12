@@ -14,6 +14,8 @@ namespace Dictation {
 constexpr auto REPOSITORY_ID = std::string_view("dictation");
 constexpr auto MODEL_PREFERENCE = std::string_view("model");
 constexpr auto NO_MODEL = std::string_view("none");
+constexpr auto LANGUAGE_PREFERENCE = std::string_view("language");
+constexpr auto AUTO_LANGUAGE = std::string_view("auto");
 constexpr auto COLOR = SemanticColor::Blue;
 
 inline const auto ICON = ImageURL::builtin(BuiltinIcon::Microphone).setBackgroundTint(COLOR);
