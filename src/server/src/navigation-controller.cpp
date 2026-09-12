@@ -91,6 +91,10 @@ void NavigationController::showHud(const QString &title, const std::optional<Ima
   emit showHudRequested(title, icon);
 }
 
+void NavigationController::showDictationHud(DictationSession *session) {
+  emit dictationHudRequested(session);
+}
+
 void NavigationController::applyPopToRoot(const PendingPopToRoot &settings) {
   auto resolveApplicablePopToRoot = [&]() {
     if (settings.type == PopToRootType::Default)
