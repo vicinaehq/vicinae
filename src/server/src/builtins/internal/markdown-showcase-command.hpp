@@ -1,15 +1,15 @@
 #pragma once
-#include "builtins/vicinae/store-intro-view-host.hpp"
+#include "ui/views/intro-view-host.hpp"
 #include "command/single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <QCoreApplication>
 
-class MarkdownShowcaseView : public StoreIntroViewHost {
+class MarkdownShowcaseView : public IntroViewHost {
   Q_OBJECT
 
 public:
   MarkdownShowcaseView()
-      : StoreIntroViewHost(showcase(), ImageURL::builtin(BuiltinIcon::Text), tr("Close"),
+      : IntroViewHost(showcase(), ImageURL::builtin(BuiltinIcon::Text), tr("Close"),
                            [this] { popSelf(); }) {}
 
 private:

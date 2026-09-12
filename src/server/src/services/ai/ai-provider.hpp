@@ -162,6 +162,7 @@ struct ChatCompletionPayload {
 
 struct TranscriptionOptions {
   std::string mime;
+  std::optional<std::string> model;
 };
 
 struct TranscriptionResponse {
