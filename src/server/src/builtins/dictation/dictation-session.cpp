@@ -49,17 +49,11 @@ void DictationSession::accept() {
   m_elapsedTimer.stop();
   m_recorder.stop();
 
-  const auto path = m_recorder.outputPath();
-  if (!path) {
-    finishWithMessage(tr("Recording failed"));
-    return;
-  }
-
   m_transcribing = true;
   emit stateChanged();
 
   m_ctx->services->ai()
-      ->transcribe(m_model, new QFile(QString::fromStdString(path->string())), QStringLiteral("audio/wav"))
+      ->transcribe(m_model, m_recorder.finish())
       .then(this, [this](const AI::TranscriptionResult &result) {
         m_transcribing = false;
         emit stateChanged();
