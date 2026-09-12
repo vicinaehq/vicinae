@@ -79,6 +79,7 @@ list(APPEND LIBS
 	sqlcipher
 	numen::numen
 	whisper
+	parakeet
 )
 
 list(APPEND LIBS KF6::SyntaxHighlighting)
@@ -564,8 +565,6 @@ set(SRCS
 	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
 
-	src/services/audio/wav-writer.hpp
-	src/services/audio/wav-writer.cpp
 	src/services/audio/audio-recorder.hpp
 	src/services/audio/audio-recorder.cpp
 

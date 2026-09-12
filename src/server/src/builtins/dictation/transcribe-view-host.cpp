@@ -67,15 +67,8 @@ QString TranscribeViewHost::elapsedTime() const {
 void TranscribeViewHost::stopAndTranscribe() {
   m_elapsedTimer.stop();
   m_recorder->stop();
-
-  auto path = m_recorder->outputPath();
-  if (!path) {
-    m_errorMessage = "Recording failed";
-    emit errorMessageChanged();
-    return;
-  }
-
   m_transcribing = true;
+
   emit transcribingChanged();
   updateNavigationTitle();
   updateActions();
@@ -84,7 +77,7 @@ void TranscribeViewHost::stopAndTranscribe() {
   toast->dynamic("Transcribing...");
 
   auto ctx = context();
-  m_aiService->transcribe(m_model, new QFile(path.value()), "audio/wav")
+  m_aiService->transcribe(m_model, m_recorder->finish())
       .then([this, ctx, toast](const AI::TranscriptionResult &result) {
         m_transcribing = false;
         emit transcribingChanged();

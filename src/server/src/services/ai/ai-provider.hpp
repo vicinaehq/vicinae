@@ -17,6 +17,7 @@
 #include "common/context.hpp"
 #include "common/qt.hpp"
 #include "http-client.hpp"
+#include "services/audio/audio-recorder.hpp"
 #include "ui/image/image-url.hpp"
 
 class AbstractTool;
@@ -161,8 +162,11 @@ struct ChatCompletionPayload {
 };
 
 struct TranscriptionOptions {
-  std::string mime;
   std::optional<std::string> model;
+
+  // Use gpu backend if available.
+  // Only applies to local transcription.
+  bool useGpu = true;
 };
 
 struct TranscriptionResponse {
@@ -219,7 +223,7 @@ public:
   virtual std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) = 0;
 
-  virtual QFuture<TranscriptionResult> transcribe(QIODevice *device,
+  virtual QFuture<TranscriptionResult> transcribe(Audio::Recording recording,
                                                   const TranscriptionOptions &opts = {}) = 0;
 };
 
