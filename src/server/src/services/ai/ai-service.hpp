@@ -1,4 +1,5 @@
 #pragma once
+#include <format>
 #include <memory>
 #include <unordered_set>
 #include <qfuture.h>
@@ -51,6 +52,20 @@ public:
     }
 
     return {};
+  }
+
+  QFuture<AI::Result<TranscriptionResponse>> transcribe(const ModelRef &ref, QIODevice *device,
+                                                        const QString &mime) {
+    auto *provider = getProviderById(ref.provider);
+    if (!provider) {
+      return QtFuture::makeReadyValueFuture<AI::Result<TranscriptionResponse>>(
+          std::unexpected(std::format("Unknown AI provider '{}'", ref.provider)));
+    }
+    if (!device->isOpen() && !device->open(QIODevice::ReadOnly)) {
+      return QtFuture::makeReadyValueFuture<AI::Result<TranscriptionResponse>>(
+          std::unexpected("Failed to open IO device for transcription"));
+    }
+    return provider->transcribe(device, {.mime = mime.toStdString(), .model = ref.id});
   }
 
   AbstractProvider *getProviderById(std::string_view id) {

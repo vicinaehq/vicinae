@@ -132,7 +132,7 @@ protected:
     row(tr("Engine"), engineName(info.engine));
     row(tr("Vendor"), vendorName(info.vendor));
     row(tr("Languages"),
-        QCoreApplication::translate(SpeechModelCatalogue::TRANSLATION_CONTEXT, info.languages.data()));
+        QCoreApplication::translate(SpeechModelCatalogue::TRANSLATION_CONTEXT, info.languages));
     row(tr("Precision"), QString::fromUtf8(info.quantization));
     row(tr("Size"), formatSize(info.size));
     row(tr("File"), QString::fromUtf8(info.file));
