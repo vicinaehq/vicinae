@@ -1,5 +1,5 @@
 #pragma once
-#include "builtins/vicinae/store-intro-view-host.hpp"
+#include "ui/views/intro-view-host.hpp"
 #include "builtins/vicinae/vicinae-store-view-host.hpp"
 #include "command/single-view-command-context.hpp"
 #include "vicinae.hpp"
@@ -42,7 +42,7 @@ If you're looking to build your own extension, take a look at the [documentation
       icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
       auto storage = ctrl.storage();
       ctx->navigation->pushView(
-          new StoreIntroViewHost(INTRO, icon, tr("Continue to store"), [storage, ctx]() mutable {
+          new IntroViewHost(INTRO, icon, tr("Continue to store"), [storage, ctx]() mutable {
             storage.setItem("introCompleted", true);
             ctx->navigation->replaceView<VicinaeStoreViewHost>();
           }));
