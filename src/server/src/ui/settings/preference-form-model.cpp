@@ -98,16 +98,34 @@ static QString preferenceType(const Preference &p) {
       p.data());
 }
 
-static QVariantList dropdownOptions(const Preference &p) {
+static QVariantMap dropdownItem(const Preference::DropdownData::Option &opt) {
+  return qml::makeDropdownItem(opt.value, opt.title, opt.icon ? qml::imageSourceFor(*opt.icon) : QString());
+}
+
+static bool populateDropdown(CompletionModel *model, const Preference &p) {
   auto d = p.data();
-  if (auto *dd = std::get_if<Preference::DropdownData>(&d)) {
-    QVariantList items;
-    for (const auto &opt : dd->options) {
-      items.append(qml::makeDropdownItem(opt.value, opt.title));
+  auto *dd = std::get_if<Preference::DropdownData>(&d);
+  if (!dd) return false;
+
+  if (!dd->sections.empty()) {
+    QVariantList sections;
+    for (const auto &section : dd->sections) {
+      QVariantList items;
+      for (const auto &opt : section.options)
+        items.append(dropdownItem(opt));
+      sections.append(
+          QVariantMap{{QStringLiteral("title"), section.title}, {QStringLiteral("items"), items}});
     }
-    return items;
+    model->setSections(sections);
+    return true;
   }
-  return {};
+
+  if (dd->options.empty()) return false;
+  QVariantList items;
+  for (const auto &opt : dd->options)
+    items.append(dropdownItem(opt));
+  model->setItems(items);
+  return true;
 }
 
 static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChooseFiles,
@@ -170,9 +188,12 @@ PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pr
   f.placeholder = pref.placeholder();
   f.readOnly = pref.isReadOnly();
 
-  if (auto options = dropdownOptions(pref); !options.isEmpty()) {
+  if (std::holds_alternative<Preference::DropdownData>(pref.data())) {
     f.dropdownModel = new CompletionModel(this);
-    f.dropdownModel->setItems(options);
+    if (!populateDropdown(f.dropdownModel, pref)) {
+      f.dropdownModel->deleteLater();
+      f.dropdownModel = nullptr;
+    }
   }
 
   applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);

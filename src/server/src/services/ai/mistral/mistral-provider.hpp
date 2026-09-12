@@ -136,7 +136,7 @@ public:
   QFuture<TranscriptionResult> transcribe(QIODevice *device, const TranscriptionOptions &opts) override {
     auto formData = new http::FormData;
 
-    formData->addField("model", "voxtral-mini-2507");
+    formData->addField("model", QByteArray::fromStdString(opts.model.value_or("voxtral-mini-2507")));
     formData->addFile(device, opts.mime.c_str());
 
     return m_client.post<TranscriptionResponse>("/audio/transcriptions", formData)

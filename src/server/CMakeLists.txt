@@ -366,6 +366,10 @@ set(SRCS
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
 	src/builtins/dictation/dictation-models-view-host.hpp
+	src/builtins/dictation/dictation-extension.hpp
+	src/builtins/dictation/dictation-extension.cpp
+	src/builtins/dictation/transcribe-command.hpp
+	src/builtins/dictation/transcribe-command.cpp
 	src/builtins/dictation/transcribe-view-host.hpp
 	src/builtins/dictation/transcribe-view-host.cpp
 	src/builtins/system/system-run-model.hpp
@@ -703,8 +707,8 @@ set(SRCS
 	src/ui/quick/markdown-model.cpp
 	src/ui/quick/text-selection-controller.hpp
 	src/ui/quick/text-selection-controller.cpp
-	src/builtins/vicinae/store-intro-view-host.hpp
-	src/builtins/vicinae/store-intro-view-host.cpp
+	src/ui/views/intro-view-host.hpp
+	src/ui/views/intro-view-host.cpp
 	src/builtins/font/font-browser-view-host.hpp
 	src/builtins/font/font-grid-model.hpp
 	src/builtins/font/font-grid-model.cpp
@@ -1247,7 +1251,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/DetailListView.qml
 	src/ui/qml/views/StoreListingView.qml
 	src/ui/qml/views/StoreDetailView.qml
-	src/ui/qml/views/StoreIntroView.qml
+	src/ui/qml/views/IntroView.qml
 	src/ui/qml/detail/ImageViewer.qml
 	src/ui/qml/markdown/MarkdownView.qml
 	src/ui/qml/markdown/MarkdownText.qml
@@ -1485,7 +1489,7 @@ qt_add_translations(${TARGET}
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_zh_CN.ts
 	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
 	SOURCES ${VICINAE_I18N_SOURCES}
-	LUPDATE_OPTIONS -locations relative -no-obsolete
+	LUPDATE_OPTIONS -locations relative -no-obsolete -tr-function-alias QT_TRANSLATE_NOOP+=SPEECH_MODEL_TR
 	MERGE_QT_TRANSLATIONS
 	QT_TRANSLATION_CATALOGS qtbase qtdeclarative
 )
