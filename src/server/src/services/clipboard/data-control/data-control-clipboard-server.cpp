@@ -114,7 +114,7 @@ void DataControlClipboardServer::handleRead() {
             }
           }
           if (concealed) {
-            qInfo() << "data-control: dropping concealed selection";
+            emit selectionWritten();
           } else {
             ClipboardSelection cs;
             cs.offers.reserve(selection.offers.size());
@@ -156,7 +156,7 @@ void DataControlClipboardServer::handleRead() {
 }
 
 bool DataControlClipboardServer::writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) {
-  if (!QGuiApplication::focusWindow() && m_process.state() == QProcess::Running) {
+  if (m_process.state() == QProcess::Running) {
     clipboard_proto::Selection selection;
     for (const auto &format : data->formats()) {
       QByteArray raw = data->data(format);

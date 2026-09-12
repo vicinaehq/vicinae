@@ -1,10 +1,12 @@
 #include "transcribe-command.hpp"
 #include <algorithm>
+#include <QPointer>
 #include <optional>
 #include <string_view>
 #include <QJsonObject>
 #include "builtins/dictation/dictation-extension.hpp"
 #include "builtins/dictation/dictation-models-view-host.hpp"
+#include "builtins/dictation/dictation-session.hpp"
 #include "builtins/dictation/transcribe-view-host.hpp"
 #include "common/context.hpp"
 #include "common/entrypoint.hpp"
@@ -13,6 +15,7 @@
 #include "services/ai/ai-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/settings/settings-controller.hpp"
+#include "utils/environment.hpp"
 #include "ui/views/intro-view-host.hpp"
 
 namespace {
@@ -50,6 +53,25 @@ Status status(const ApplicationContext *ctx) {
   return {.readiness = Readiness::Ready, .model = std::move(*it)};
 }
 
+void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model) {
+  static QPointer<DictationSession> active;
+
+  if (Environment::isHudDisabled()) {
+    ctx->navigation->pushView(new TranscribeViewHost(model));
+    return;
+  }
+
+  ctx->navigation->closeWindow();
+
+  if (active && active->isActive()) {
+    active->accept();
+    return;
+  }
+
+  active = new DictationSession(ctx, model, ctx->navigation.get());
+  active->start();
+}
+
 } // namespace
 
 ImageURL TranscribeCommand::iconUrl() const { return Dictation::ICON; }
@@ -60,7 +82,7 @@ void TranscribeCommand::execute(CommandController &controller) const {
 
   switch (status.readiness) {
   case Readiness::Ready:
-    ctx->navigation->pushView(new TranscribeViewHost(status.model->ref));
+    startDictation(ctx, status.model->ref);
     return;
   case Readiness::NoModels:
     ctx->navigation->pushView(

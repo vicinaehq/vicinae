@@ -18,6 +18,7 @@ public:
   bool supportsPaste() const;
 
 private:
+  void beginPaste();
   void waitForFocusAndPaste();
   void executePaste();
 
@@ -27,6 +28,8 @@ private:
   std::unique_ptr<AbstractPasteService> m_platform;
 
   bool m_hasPendingPaste = false;
+  bool m_awaitingCopy = false;
   QTimer m_focusPollTimer;
+  QTimer m_copyWaitTimer;
   int m_focusPollCount = 0;
 };
