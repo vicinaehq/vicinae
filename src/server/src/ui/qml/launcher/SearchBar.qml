@@ -340,8 +340,8 @@ Item {
 
         Row {
             id: tabHint
-			visible: {
-				// disabled for now, we are focusing on dictation first
+            visible: {
+                // disabled for now, we are focusing on dictation first
                 return false && Launcher.atRoot && !Launcher.hasCompleter && searchInput.text.length > 5;
             }
 
