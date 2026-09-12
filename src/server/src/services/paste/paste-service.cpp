@@ -64,11 +64,6 @@ bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboa
 void PasteService::beginPaste() {
   if (!m_hasPendingPaste) return;
 
-  if (m_wm.focusedForeignWindow()) {
-    executePaste();
-    return;
-  }
-
   if (m_wm.provider()->supportsFocusHandoffDetection()) {
     m_focusPollCount = 0;
     m_focusPollTimer.start();
