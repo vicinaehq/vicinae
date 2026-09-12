@@ -772,7 +772,12 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, std::optio
   m_readDb = std::make_shared<ClipboardDatabase>(m_dbKey);
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
-          &ClipboardService::saveSelection);
+          [this](const ClipboardSelection &selection) {
+            emit selectionObserved();
+            saveSelection(selection);
+          });
+  connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionWritten, this,
+          &ClipboardService::selectionObserved);
   connect(m_clipboardServer.get(), &AbstractClipboardServer::primarySelectionChanged, this,
           &ClipboardService::primarySelectionChanged);
   m_historyEvictionTimer.setSingleShot(true);

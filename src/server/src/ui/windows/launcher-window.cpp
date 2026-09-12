@@ -242,7 +242,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(nav, &NavigationController::invalidCompletionFired, this,
           &LauncherWindow::completerValidationFailed);
 
-  if (m_hudBridge) { connect(nav, &NavigationController::showHudRequested, m_hudBridge, &HudBridge::show); }
+  if (m_hudBridge) {
+    connect(nav, &NavigationController::showHudRequested, m_hudBridge, &HudBridge::show);
+    connect(nav, &NavigationController::dictationHudRequested, m_hudBridge, &HudBridge::showDictation);
+  }
 
   auto *toast = m_ctx.services->toastService();
   connect(toast, &ToastService::toastActivated, this, [this](const Toast *t) {
