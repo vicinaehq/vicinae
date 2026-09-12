@@ -164,6 +164,11 @@ struct ChatCompletionPayload {
 struct TranscriptionOptions {
   std::optional<std::string> model;
 
+  // language to use. Some providers need the language in order
+  // to operate properly, others don't care and automatically
+  // detect it.
+  std::optional<std::string> language;
+
   // Use gpu backend if available.
   // Only applies to local transcription.
   bool useGpu = true;

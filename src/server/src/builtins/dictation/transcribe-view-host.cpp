@@ -14,7 +14,8 @@ QVariantMap TranscribeViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
-TranscribeViewHost::TranscribeViewHost(AI::ModelRef model) : m_model(std::move(model)) {}
+TranscribeViewHost::TranscribeViewHost(AI::ModelRef model, AI::TranscriptionOptions options)
+    : m_model(std::move(model)), m_options(std::move(options)) {}
 
 void TranscribeViewHost::initialize() {
   BaseView::initialize();
@@ -77,7 +78,7 @@ void TranscribeViewHost::stopAndTranscribe() {
   toast->dynamic("Transcribing...");
 
   auto ctx = context();
-  m_aiService->transcribe(m_model, m_recorder->finish())
+  m_aiService->transcribe(m_model, m_recorder->finish(), m_options)
       .then([this, ctx, toast](const AI::TranscriptionResult &result) {
         m_transcribing = false;
         emit transcribingChanged();

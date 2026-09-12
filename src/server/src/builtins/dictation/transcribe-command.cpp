@@ -30,7 +30,14 @@ enum class Readiness { NoModels, NotSelected, Ready };
 struct Status {
   Readiness readiness;
   std::optional<AI::ProviderModel> model;
+  AI::TranscriptionOptions options;
 };
+
+std::optional<std::string> configuredLanguage(const QJsonObject &values) {
+  const auto language = values.value(Dictation::qs(Dictation::LANGUAGE_PREFERENCE)).toString();
+  if (language.isEmpty() || language == Dictation::qs(Dictation::AUTO_LANGUAGE)) return std::nullopt;
+  return language.toStdString();
+}
 
 Status status(const ApplicationContext *ctx) {
   auto models = ctx->services->ai()->listModels(AI::Capability::Transcription);
@@ -50,14 +57,17 @@ Status status(const ApplicationContext *ctx) {
   });
   if (it == models.end()) return {.readiness = Readiness::NotSelected};
 
-  return {.readiness = Readiness::Ready, .model = std::move(*it)};
+  return {.readiness = Readiness::Ready,
+          .model = std::move(*it),
+          .options = {.language = configuredLanguage(values)}};
 }
 
-void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model) {
+void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
+                    const AI::TranscriptionOptions &options) {
   static QPointer<DictationSession> active;
 
   if (Environment::isHudDisabled()) {
-    ctx->navigation->pushView(new TranscribeViewHost(model));
+    ctx->navigation->pushView(new TranscribeViewHost(model, options));
     return;
   }
 
@@ -68,7 +78,7 @@ void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model) {
     return;
   }
 
-  active = new DictationSession(ctx, model, ctx->navigation.get());
+  active = new DictationSession(ctx, model, options, ctx->navigation.get());
   active->start();
 }
 
@@ -82,7 +92,7 @@ void TranscribeCommand::execute(CommandController &controller) const {
 
   switch (status.readiness) {
   case Readiness::Ready:
-    startDictation(ctx, status.model->ref);
+    startDictation(ctx, status.model->ref, status.options);
     return;
   case Readiness::NoModels:
     ctx->navigation->pushView(
