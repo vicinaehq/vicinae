@@ -368,6 +368,8 @@ set(SRCS
 	src/builtins/dictation/dictation-models-view-host.hpp
 	src/builtins/dictation/dictation-extension.hpp
 	src/builtins/dictation/dictation-extension.cpp
+	src/builtins/dictation/dictation-session.hpp
+	src/builtins/dictation/dictation-session.cpp
 	src/builtins/dictation/transcribe-command.hpp
 	src/builtins/dictation/transcribe-command.cpp
 	src/builtins/dictation/transcribe-view-host.hpp
@@ -1218,6 +1220,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/PulsingDots.qml
 	src/ui/qml/controls/ViciModal.qml
 	src/ui/qml/controls/AudioLevelMeter.qml
+	src/ui/qml/controls/AudioWaveform.qml
 	src/ui/qml/views/TranscribeView.qml
 	src/ui/qml/views/ExtensionGridView.qml
 	src/ui/qml/actions/ActionPanelPopover.qml

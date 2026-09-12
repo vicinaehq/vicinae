@@ -5,27 +5,69 @@ static constexpr int FOCUS_POLL_INTERVAL_MS = 5;
 static constexpr int FOCUS_POLL_MAX = 1000; // 5s max (1000 * FOCUS_POLL_INTERVAL_MS)
 static constexpr int POST_FOCUS_DELAY_MS = 30;
 static constexpr int BLIND_PASTE_DELAY_MS = 150;
+static constexpr int COPY_CONFIRM_TIMEOUT_MS = 400;
 
 PasteService::PasteService(ClipboardService &clipboard, WindowManager &wm, AppService &appDb,
                            std::unique_ptr<AbstractPasteService> platform)
     : m_clipboard(clipboard), m_wm(wm), m_appDb(appDb), m_platform(std::move(platform)) {
   m_focusPollTimer.setInterval(FOCUS_POLL_INTERVAL_MS);
   connect(&m_focusPollTimer, &QTimer::timeout, this, &PasteService::waitForFocusAndPaste);
+
+  m_copyWaitTimer.setSingleShot(true);
+  m_copyWaitTimer.setInterval(COPY_CONFIRM_TIMEOUT_MS);
+  connect(&m_copyWaitTimer, &QTimer::timeout, this, [this]() {
+    if (!m_awaitingCopy) return;
+    m_awaitingCopy = false;
+    qWarning() << "Paste: clipboard write was not confirmed in time, pasting anyway";
+    beginPaste();
+  });
+  connect(&m_clipboard, &ClipboardService::selectionObserved, this, [this]() {
+    if (!m_awaitingCopy) return;
+    m_awaitingCopy = false;
+    m_copyWaitTimer.stop();
+    beginPaste();
+  });
 }
 
 bool PasteService::supportsPaste() const { return m_platform->supportsPaste(); }
 
 bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
-  if (!m_clipboard.copyContent(content, options)) return false;
-
   if (!m_platform->supportsPaste()) {
     qWarning() << "pasteContent called but the current platform cannot paste, ignoring...";
     return false;
   }
 
-  // Cancel any in-flight paste
   m_focusPollTimer.stop();
+  m_copyWaitTimer.stop();
+  m_awaitingCopy = false;
+  m_hasPendingPaste = false;
+
+  const bool confirmable = m_clipboard.supportsMonitoring();
+
+  if (confirmable) {
+    m_awaitingCopy = true;
+    m_copyWaitTimer.start();
+  }
+
+  if (!m_clipboard.copyContent(content, options)) {
+    m_awaitingCopy = false;
+    m_copyWaitTimer.stop();
+    return false;
+  }
+
   m_hasPendingPaste = true;
+  if (!confirmable) beginPaste();
+
+  return true;
+}
+
+void PasteService::beginPaste() {
+  if (!m_hasPendingPaste) return;
+
+  if (m_wm.focusedForeignWindow()) {
+    executePaste();
+    return;
+  }
 
   if (m_wm.provider()->supportsFocusHandoffDetection()) {
     m_focusPollCount = 0;
@@ -33,8 +75,6 @@ bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboa
   } else {
     QTimer::singleShot(BLIND_PASTE_DELAY_MS, this, &PasteService::executePaste);
   }
-
-  return true;
 }
 
 void PasteService::waitForFocusAndPaste() {
