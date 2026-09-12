@@ -9,8 +9,7 @@ class MarkdownShowcaseView : public IntroViewHost {
 
 public:
   MarkdownShowcaseView()
-      : IntroViewHost(showcase(), ImageURL::builtin(BuiltinIcon::Text), tr("Close"),
-                           [this] { popSelf(); }) {}
+      : IntroViewHost(showcase(), ImageURL::builtin(BuiltinIcon::Text), tr("Close"), [this] { popSelf(); }) {}
 
 private:
   static QString showcase() {
