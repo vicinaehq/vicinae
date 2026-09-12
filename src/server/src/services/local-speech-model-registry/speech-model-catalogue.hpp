@@ -16,8 +16,8 @@ enum class SpeechModelVendor : std::uint8_t { OpenAI, Nvidia, Silero };
 struct SpeechModelInfo {
   std::string_view id;
   std::string_view name;
-  std::string_view description;
-  std::string_view languages;
+  const char *description;
+  const char *languages;
   SpeechEngine engine;
   SpeechModelVendor vendor;
   std::string_view repo;
@@ -33,6 +33,9 @@ namespace SpeechModelCatalogue {
 
 constexpr auto TRANSLATION_CONTEXT = "SpeechModelCatalogue";
 
+// Registered with lupdate as an alias of QT_TRANSLATE_NOOP in the translations target.
+#define SPEECH_MODEL_TR(text) QT_TRANSLATE_NOOP("SpeechModelCatalogue", text)
+
 constexpr auto WHISPER_REPO = std::string_view("ggerganov/whisper.cpp");
 constexpr auto WHISPER_REVISION = std::string_view("5359861c739e955e79d9a303bcbc70fb988958b1");
 constexpr auto PARAKEET_REPO = std::string_view("ggml-org/parakeet-GGUF");
@@ -45,8 +48,8 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "whisper-large-v3-turbo-q5_0",
     .name = "Whisper Large v3 Turbo (compact)",
-    .description = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "Recommended. Near large-v3 accuracy in every language, several times faster. Needs a GPU for comfortable dictation."),
-        .languages = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "About 100 languages"),
+    .description = SPEECH_MODEL_TR("Recommended. Near large-v3 accuracy in every language, several times faster. Needs a GPU for comfortable dictation."),
+        .languages = SPEECH_MODEL_TR("About 100 languages"),
     .engine = SpeechEngine::Whisper,
     .vendor = SpeechModelVendor::OpenAI,
     .repo = WHISPER_REPO,
@@ -60,8 +63,8 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "whisper-large-v3-turbo",
     .name = "Whisper Large v3 Turbo",
-    .description = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "Full precision turbo. Marginally better than the compact file at three times the size."),
-        .languages = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "About 100 languages"),
+    .description = SPEECH_MODEL_TR("Full precision turbo. Marginally better than the compact file at three times the size."),
+        .languages = SPEECH_MODEL_TR("About 100 languages"),
     .engine = SpeechEngine::Whisper,
     .vendor = SpeechModelVendor::OpenAI,
     .repo = WHISPER_REPO,
@@ -74,8 +77,8 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "whisper-large-v3-q5_0",
     .name = "Whisper Large v3",
-    .description = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "Best accuracy outside English. Slower than turbo, GPU strongly recommended."),
-        .languages = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "About 100 languages"),
+    .description = SPEECH_MODEL_TR("Best accuracy outside English. Slower than turbo, GPU strongly recommended."),
+        .languages = SPEECH_MODEL_TR("About 100 languages"),
     .engine = SpeechEngine::Whisper,
     .vendor = SpeechModelVendor::OpenAI,
     .repo = WHISPER_REPO,
@@ -88,8 +91,8 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "whisper-small-q5_1",
     .name = "Whisper Small",
-    .description = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "Lightweight multilingual model. Usable on CPU-only machines with a good microphone."),
-        .languages = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "About 100 languages"),
+    .description = SPEECH_MODEL_TR("Lightweight multilingual model. Usable on CPU-only machines with a good microphone."),
+        .languages = SPEECH_MODEL_TR("About 100 languages"),
     .engine = SpeechEngine::Whisper,
     .vendor = SpeechModelVendor::OpenAI,
     .repo = WHISPER_REPO,
@@ -102,8 +105,8 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "whisper-small.en-q5_1",
     .name = "Whisper Small (English)",
-    .description = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "Lightweight English-only model. Slightly more accurate than the multilingual small model for English."),
-        .languages = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "English"),
+    .description = SPEECH_MODEL_TR("Lightweight English-only model. Slightly more accurate than the multilingual small model for English."),
+        .languages = SPEECH_MODEL_TR("English"),
     .engine = SpeechEngine::Whisper,
     .vendor = SpeechModelVendor::OpenAI,
     .repo = WHISPER_REPO,
@@ -116,8 +119,8 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "parakeet-tdt-0.6b-v3-q8_0",
     .name = "Parakeet v3",
-    .description = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "Very fast, comfortable on CPU. English and 24 other European languages, detected automatically."),
-        .languages = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "English and 24 European languages"),
+    .description = SPEECH_MODEL_TR("Very fast, comfortable on CPU. English and 24 other European languages, detected automatically."),
+        .languages = SPEECH_MODEL_TR("English and 24 European languages"),
     .engine = SpeechEngine::Parakeet,
     .vendor = SpeechModelVendor::Nvidia,
     .repo = PARAKEET_REPO,
@@ -130,8 +133,8 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "parakeet-tdt-0.6b-v3-f16",
     .name = "Parakeet v3 (full precision)",
-    .description = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "Full precision Parakeet. Same languages, twice the size of the compact file."),
-        .languages = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "English and 24 European languages"),
+    .description = SPEECH_MODEL_TR("Full precision Parakeet. Same languages, twice the size of the compact file."),
+        .languages = SPEECH_MODEL_TR("English and 24 European languages"),
     .engine = SpeechEngine::Parakeet,
     .vendor = SpeechModelVendor::Nvidia,
     .repo = PARAKEET_REPO,
@@ -144,8 +147,8 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "silero-vad-v6.2.0",
     .name = "Silero VAD",
-    .description = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "Voice activity detector used to trim silence before transcription."),
-        .languages = QT_TRANSLATE_NOOP("SpeechModelCatalogue", "Any"),
+    .description = SPEECH_MODEL_TR("Voice activity detector used to trim silence before transcription."),
+        .languages = SPEECH_MODEL_TR("Any"),
     .engine = SpeechEngine::Vad,
     .vendor = SpeechModelVendor::Silero,
     .repo = VAD_REPO,
@@ -201,7 +204,7 @@ inline ImageURL vendorIcon(SpeechModelVendor vendor) {
 }
 
 inline QString translatedDescription(const SpeechModelInfo &model) {
-  return QCoreApplication::translate(TRANSLATION_CONTEXT, model.description.data());
+  return QCoreApplication::translate(TRANSLATION_CONTEXT, model.description);
 }
 
 } // namespace SpeechModelCatalogue

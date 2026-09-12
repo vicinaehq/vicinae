@@ -53,10 +53,10 @@ private:
   }
 
   QVariantMap qmlProperties() final {
-    return {
-        {QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(listModel()))},
-        {QStringLiteral("host"), QVariant::fromValue(static_cast<DetailListViewHost *>(this))},
-    };
+    if (hasDetailPane()) {
+      return {{QStringLiteral("host"), QVariant::fromValue(static_cast<DetailListViewHost *>(this))}};
+    }
+    return {{QStringLiteral("cmdModel"), QVariant::fromValue(static_cast<QObject *>(listModel()))}};
   }
 
   void initialize() final {

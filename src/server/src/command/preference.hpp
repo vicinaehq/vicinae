@@ -8,6 +8,7 @@
 #include <vector>
 #include <qnamespace.h>
 #include <qstring.h>
+#include "ui/image/url.hpp"
 
 using PreferenceValues = glz::generic::object_t;
 
@@ -53,9 +54,16 @@ public:
     struct Option {
       QString title;
       QString value;
+      std::optional<ImageURL> icon;
+    };
+
+    struct Section {
+      QString title;
+      std::vector<Option> options;
     };
 
     std::vector<Option> options;
+    std::vector<Section> sections;
   };
 
 private:
@@ -80,7 +88,10 @@ public:
   static Preference makePassword(const QString &id) { return {id, PasswordData{}}; }
   static Preference makeShortcut(const QString &id) { return {id, ShortcutData{}}; }
   static Preference makeDropdown(const QString &id, const std::vector<DropdownData::Option> &options = {}) {
-    return {id, DropdownData{options}};
+    return {id, DropdownData{.options = options}};
+  }
+  static Preference makeDropdown(const QString &id, const std::vector<DropdownData::Section> &sections) {
+    return {id, DropdownData{.sections = sections}};
   }
   static Preference file(const QString &id) { return {id, FilePickerData()}; }
   static Preference files(const QString &id) { return {id, FilePickerData{.multiple = true}}; }

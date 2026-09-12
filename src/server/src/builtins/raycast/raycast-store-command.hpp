@@ -1,5 +1,5 @@
 #include "builtins/raycast/raycast-store-view-host.hpp"
-#include "builtins/vicinae/store-intro-view-host.hpp"
+#include "ui/views/intro-view-host.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "builtins/vicinae/store-intro-preferences.hpp"
 #include "command/single-view-command-context.hpp"
@@ -47,7 +47,7 @@ Vicinae also has its own [extension store](vicinae://launch/core/store).
       auto icon = plainIcon();
       auto storage = ctrl.storage();
       ctx->navigation->pushView(
-          new StoreIntroViewHost(INTRO, icon, tr("Continue to store"), [storage, ctx]() mutable {
+          new IntroViewHost(INTRO, icon, tr("Continue to store"), [storage, ctx]() mutable {
             storage.setItem("introCompleted", true);
             ctx->navigation->replaceView<RaycastStoreViewHost>();
           }));
