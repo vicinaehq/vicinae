@@ -90,6 +90,8 @@ public:
 
 signals:
   void selectionAdded(const ClipboardSelection &selection);
+  // A concealed or transient write of ours is live on the clipboard. Never recorded.
+  void selectionWritten();
   void primarySelectionChanged(const QString &text);
 
 protected:
