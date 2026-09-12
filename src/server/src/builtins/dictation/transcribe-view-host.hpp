@@ -1,6 +1,7 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
+#include "services/ai/ai-provider.hpp"
 #include <QTimer>
 
 namespace Audio {
@@ -28,6 +29,8 @@ signals:
   void errorMessageChanged();
 
 public:
+  explicit TranscribeViewHost(AI::ModelRef model);
+
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
   void initialize() override;
@@ -47,6 +50,7 @@ private:
   void updateActions();
   void updateNavigationTitle();
 
+  AI::ModelRef m_model;
   Audio::Recorder *m_recorder = nullptr;
   AI::Service *m_aiService = nullptr;
   QTimer m_elapsedTimer;

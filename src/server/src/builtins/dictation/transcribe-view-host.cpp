@@ -14,6 +14,8 @@ QVariantMap TranscribeViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
+TranscribeViewHost::TranscribeViewHost(AI::ModelRef model) : m_model(std::move(model)) {}
+
 void TranscribeViewHost::initialize() {
   BaseView::initialize();
 
@@ -82,7 +84,7 @@ void TranscribeViewHost::stopAndTranscribe() {
   toast->dynamic("Transcribing...");
 
   auto ctx = context();
-  m_aiService->transcribe(new QFile(path.value()), "audio/wav")
+  m_aiService->transcribe(m_model, new QFile(path.value()), "audio/wav")
       .then([this, ctx, toast](const AI::TranscriptionResult &result) {
         m_transcribing = false;
         emit transcribingChanged();
