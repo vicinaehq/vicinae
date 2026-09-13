@@ -1,4 +1,4 @@
-#include "transcribe-command.hpp"
+#include "dictation-command.hpp"
 #include <algorithm>
 #include <QPointer>
 #include <optional>
