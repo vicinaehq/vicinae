@@ -216,6 +216,11 @@ void WindowsGlobalShortcutBackend::activate(const QString &id) {
       this, [this, id]() { emit shortcutActivated(id, GetTickCount64()); }, Qt::QueuedConnection);
 }
 
+void WindowsGlobalShortcutBackend::release(const QString &id) {
+  QMetaObject::invokeMethod(
+      this, [this, id]() { emit shortcutReleased(id, GetTickCount64()); }, Qt::QueuedConnection);
+}
+
 bool WindowsGlobalShortcutBackend::dispatchKey(unsigned int vk, unsigned int mods, bool down) {
   std::scoped_lock lock(m_targetsMutex);
 
@@ -238,7 +243,10 @@ bool WindowsGlobalShortcutBackend::dispatchKey(unsigned int vk, unsigned int mod
     if (!down) {
       // eat the key up of an eaten key down: some apps act on release (e.g. a
       // focused browser button activates on space key up)
-      if (target.down) { eaten = true; }
+      if (target.down) {
+        eaten = true;
+        release(target.id);
+      }
       target.down = false;
       continue;
     }
@@ -264,6 +272,7 @@ bool WindowsGlobalShortcutBackend::dispatchModifier(unsigned int mods, bool down
     if (!modBitForVk(target.vk) || target.mods != m_chord) continue;
     if (m_chord & MOD_WIN) { suppressStartMenu(); }
     activate(target.id);
+    release(target.id);
     m_chord = CHORD_BROKEN;
     break;
   }

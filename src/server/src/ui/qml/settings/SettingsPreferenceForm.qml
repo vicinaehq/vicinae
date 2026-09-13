@@ -50,6 +50,8 @@ ColumnLayout {
             case "filepicker":
             case "directorypicker":
                 return filepickerComp;
+            case "shortcut":
+                return Platform.supports("globalShortcuts") ? shortcutComp : null;
             default:
                 return null;
             }
@@ -136,6 +138,27 @@ ColumnLayout {
                 readOnly: field.host.readOnly
                 currentItem: field.host.currentDropdownItem
                 onActivated: item => root.prefModel.setFieldValue(field.host.index, item.id)
+            }
+        }
+    }
+
+    Component {
+        id: shortcutComp
+        SettingsRow {
+            id: field
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            description: field.host.description
+            controlWidth: root.fieldControlWidth
+            showSeparator: field.host.index < settingsRepeater.count - 1
+
+            ShortcutField {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                bordered: false
+                shortcut: field.host.value != null ? String(field.host.value) : ""
+                onAccepted: shortcut => root.prefModel.setFieldValue(field.host.index, shortcut)
+                onCleared: root.prefModel.setFieldValue(field.host.index, "")
             }
         }
     }

@@ -869,6 +869,8 @@ list(APPEND SRCS
 	src/services/global-shortcuts/global-shortcut-backend-factory.cpp
 	src/services/global-shortcuts/global-shortcut-service.hpp
 	src/services/global-shortcuts/global-shortcut-service.cpp
+	src/services/global-shortcuts/config-global-shortcuts.hpp
+	src/services/global-shortcuts/config-global-shortcuts.cpp
 )
 
 if (NOT WIN32)

@@ -90,6 +90,8 @@ static QString preferenceType(const Preference &p) {
           return QStringLiteral("filepicker");
         else if constexpr (std::is_same_v<T, Preference::DirectoryPickerData>)
           return QStringLiteral("directorypicker");
+        else if constexpr (std::is_same_v<T, Preference::ShortcutData>)
+          return QStringLiteral("shortcut");
         else
           return QStringLiteral("text");
       },

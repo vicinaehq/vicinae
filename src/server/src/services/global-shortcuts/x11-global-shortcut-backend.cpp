@@ -4,6 +4,12 @@
 #include <QSocketNotifier>
 #include <qlogging.h>
 #include <xcb/xproto.h>
+// NOLINTBEGIN(cppcoreguidelines-macro-usage)
+// xkb.h names a struct field `explicit`, which a C++ compiler rejects
+#define explicit explicit_
+#include <xcb/xkb.h>
+#undef explicit
+// NOLINTEND(cppcoreguidelines-macro-usage)
 #include <xkbcommon/xkbcommon-keysyms.h>
 
 namespace {
@@ -53,6 +59,7 @@ bool X11GlobalShortcutBackend::start() {
   m_root = m_screen->root;
   m_keysyms = xcb_key_symbols_alloc(m_connection);
   computeLockMasks();
+  enableDetectableAutoRepeat();
 
   int const fd = xcb_get_file_descriptor(m_connection);
   m_notifier = new QSocketNotifier(fd, QSocketNotifier::Read, this);
@@ -60,6 +67,24 @@ bool X11GlobalShortcutBackend::start() {
 
   emit ready();
   return true;
+}
+
+void X11GlobalShortcutBackend::enableDetectableAutoRepeat() {
+  CPtr<xcb_xkb_use_extension_reply_t> ext(xcb_xkb_use_extension_reply(
+      m_connection, xcb_xkb_use_extension(m_connection, XCB_XKB_MAJOR_VERSION, XCB_XKB_MINOR_VERSION),
+      nullptr));
+  if (!ext || !ext->supported) {
+    qWarning() << "X11GlobalShortcutBackend: XKB unavailable, hold shortcuts may misfire on auto-repeat";
+    return;
+  }
+
+  constexpr uint32_t FLAG = XCB_XKB_PER_CLIENT_FLAG_DETECTABLE_AUTO_REPEAT;
+  CPtr<xcb_xkb_per_client_flags_reply_t> reply(xcb_xkb_per_client_flags_reply(
+      m_connection, xcb_xkb_per_client_flags(m_connection, XCB_XKB_ID_USE_CORE_KBD, FLAG, FLAG, 0, 0, 0),
+      nullptr));
+  if (!reply || !(reply->value & FLAG)) {
+    qWarning() << "X11GlobalShortcutBackend: detectable auto-repeat refused, hold shortcuts may misfire";
+  }
 }
 
 void X11GlobalShortcutBackend::computeLockMasks() {
@@ -205,7 +230,10 @@ void X11GlobalShortcutBackend::drainEvents() {
       uint16_t const mods = key->state & MODIFIER_BITS;
       auto it =
           std::ranges::find_if(m_binds, [&](auto &&b) { return b.keycode == key->detail && b.mods == mods; });
-      if (it != m_binds.end()) { emit shortcutActivated(it->id, key->time); }
+      if (it != m_binds.end()) {
+        it->held = true;
+        emit shortcutActivated(it->id, key->time);
+      }
       break;
     }
     case XCB_KEY_RELEASE: {
@@ -213,6 +241,12 @@ void X11GlobalShortcutBackend::drainEvents() {
       m_lastReleaseCode = key->detail;
       m_lastReleaseTime = key->time;
       m_lastReleaseValid = true;
+
+      auto it = std::ranges::find_if(m_binds, [&](auto &&b) { return b.held && b.keycode == key->detail; });
+      if (it != m_binds.end()) {
+        it->held = false;
+        emit shortcutReleased(it->id, key->time);
+      }
       break;
     }
     case XCB_MAPPING_NOTIFY: {

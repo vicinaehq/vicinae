@@ -2,6 +2,7 @@
 #include "keyboard/keyboard-macos.hpp"
 
 #include <algorithm>
+#include <array>
 #include <QChar>
 #include <QDebug>
 
@@ -38,7 +39,8 @@ OSStatus hotKeyHandler(EventHandlerCallRef, EventRef event, void *userData) {
   if (hotKeyId.signature != HOT_KEY_SIGNATURE) { return eventNotHandledErr; }
 
   const auto timestamp = static_cast<quint64>(GetEventTime(event) * 1000.0);
-  static_cast<MacOSGlobalShortcutBackend *>(userData)->handleHotKey(hotKeyId.id, timestamp);
+  const bool released = GetEventKind(event) == kEventHotKeyReleased;
+  static_cast<MacOSGlobalShortcutBackend *>(userData)->handleHotKey(hotKeyId.id, timestamp, released);
   return noErr;
 }
 
@@ -106,9 +108,12 @@ void MacOSGlobalShortcutBackend::refreshLayout() {
 bool MacOSGlobalShortcutBackend::startCarbonHandler() {
   if (m_hotKeyHandler) { return true; }
 
-  const EventTypeSpec spec{.eventClass = kEventClassKeyboard, .eventKind = kEventHotKeyPressed};
+  const auto specs = std::to_array<EventTypeSpec>({
+      {.eventClass = kEventClassKeyboard, .eventKind = kEventHotKeyPressed},
+      {.eventClass = kEventClassKeyboard, .eventKind = kEventHotKeyReleased},
+  });
   EventHandlerRef handler = nullptr;
-  if (InstallApplicationEventHandler(&hotKeyHandler, 1, &spec, this, &handler) != noErr) {
+  if (InstallApplicationEventHandler(&hotKeyHandler, specs.size(), specs.data(), this, &handler) != noErr) {
     qWarning() << "MacOSGlobalShortcutBackend: failed to install Carbon hot key handler";
     return false;
   }
@@ -179,13 +184,17 @@ void MacOSGlobalShortcutBackend::unregisterCarbonHotKey(Binding &binding) {
   binding.hotKeyRef = nullptr;
 }
 
-void MacOSGlobalShortcutBackend::handleHotKey(uint32_t carbonId, quint64 timestamp) {
+void MacOSGlobalShortcutBackend::handleHotKey(uint32_t carbonId, quint64 timestamp, bool released) {
   const auto it = std::ranges::find_if(m_bindings, [&](const Binding &binding) {
     return binding.carbonId == carbonId && binding.hotKeyRef != nullptr;
   });
   if (it == m_bindings.end()) { return; }
 
-  emit shortcutActivated(it->id, timestamp);
+  if (released) {
+    emit shortcutReleased(it->id, timestamp);
+  } else {
+    emit shortcutActivated(it->id, timestamp);
+  }
 }
 
 std::expected<void, QString> MacOSGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request) {

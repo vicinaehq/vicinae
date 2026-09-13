@@ -64,6 +64,7 @@ private:
     void xx_hotkey_v1_denied(uint32_t reason, const QString &message) override;
     void xx_hotkey_v1_revoked(const QString &message) override;
     void xx_hotkey_v1_triggered(uint32_t serial, uint32_t time) override;
+    void xx_hotkey_v1_released(uint32_t serial, uint32_t time) override;
 
   private:
     XxHotkeyGlobalShortcutBackend *m_backend;
