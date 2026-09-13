@@ -4,7 +4,6 @@
 #include "service-registry.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "services/ai/ai-service.hpp"
-#include <absl/strings/str_format.h>
 #include <format>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
