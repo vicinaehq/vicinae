@@ -82,6 +82,10 @@ void XxHotkeyGlobalShortcutBackend::Hotkey::xx_hotkey_v1_triggered(uint32_t seri
   emit m_backend->shortcutActivated(m_id, time);
 }
 
+void XxHotkeyGlobalShortcutBackend::Hotkey::xx_hotkey_v1_released(uint32_t, uint32_t time) {
+  emit m_backend->shortcutReleased(m_id, time);
+}
+
 XxHotkeyGlobalShortcutBackend::XxHotkeyGlobalShortcutBackend() {
   if (m_manager.isActive()) m_manager.set_app_id(Omnicast::APP_ID);
 }

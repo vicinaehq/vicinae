@@ -29,6 +29,7 @@ public:
   virtual bool isFallback() const { return false; }
   virtual void preferenceValuesChanged(const QJsonObject &) const {}
   virtual bool isInternal() const { return false; }
+  virtual void shortcutReleased() const {}
 
   /**
    * Optional override of the navigation title that is to be shown when

@@ -69,6 +69,7 @@
 #include "services/wallpaper/wallpaper-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/snippet/snippet-service.hpp"
+#include "services/global-shortcuts/config-global-shortcuts.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "services/global-shortcuts/global-shortcut-backend-factory.hpp"
 #ifdef Q_OS_LINUX
@@ -304,8 +305,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
                                                        std::move(platformPaste));
     auto fontService = std::make_unique<FontService>();
     auto rootItemManager = std::make_unique<RootItemManager>(*configService, *localStorage);
-    auto globalShortcutService = std::make_unique<GlobalShortcutService>(
-        *configService, *rootItemManager, *appRuntime, createGlobalShortcutBackend());
+    auto globalShortcutService =
+        std::make_unique<GlobalShortcutService>(*configService, *appRuntime, createGlobalShortcutBackend());
     auto shortcutService =
         std::make_unique<ShortcutService>(Omnicast::dataDir() / "shortcuts" / "shortcuts.json", omniDb.get());
     auto toastService = std::make_unique<ToastService>();
@@ -624,11 +625,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   QObject::connect(cfgService, &config::Manager::configChanged, configChanged);
 
+  std::unique_ptr<ConfigGlobalShortcuts> configGlobalShortcuts;
+
   if (auto *globalShortcuts = ServiceRegistry::instance()->globalShortcuts()) {
-    QObject::connect(globalShortcuts, &GlobalShortcutService::toggleLauncherRequested,
-                     [&ctx](quint64) { ctx.navigation->toggleWindow(); });
-    QObject::connect(globalShortcuts, &GlobalShortcutService::commandActivated,
-                     [&ctx](const EntrypointId &id, quint64) { ctx.navigation->activateEntrypoint(id); });
+    configGlobalShortcuts = std::make_unique<ConfigGlobalShortcuts>(
+        *globalShortcuts, *cfgService, *ServiceRegistry::instance()->rootItemManager(), *ctx.navigation);
   }
 
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());

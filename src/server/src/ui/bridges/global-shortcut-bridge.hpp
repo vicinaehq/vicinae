@@ -3,6 +3,7 @@
 #include <QObject>
 #include "keyboard/keyboard.hpp"
 #include "service-registry.hpp"
+#include "services/global-shortcuts/config-global-shortcuts.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 #include "ui/settings/shortcut-conflict.hpp"
 
@@ -31,7 +32,7 @@ public:
     }
   }
 
-  QString toggleId() const { return QString::fromUtf8(GlobalShortcutService::TOGGLE_ID); }
+  QString toggleId() const { return QString::fromUtf8(ConfigGlobalShortcuts::TOGGLE_ID); }
 
   // Suspends global binds while a recorder captures so it doesn't hijack the keystroke; rebinds on
   // release.

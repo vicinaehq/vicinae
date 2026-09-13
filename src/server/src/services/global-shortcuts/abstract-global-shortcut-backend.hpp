@@ -18,6 +18,7 @@ class AbstractGlobalShortcutBackend : public QObject {
 
 signals:
   void shortcutActivated(const QString &id, quint64 timestamp);
+  void shortcutReleased(const QString &id, quint64 timestamp);
   void ready();
   void keyCaptured(int key, int modifiers, bool down);
 

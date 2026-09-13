@@ -1,32 +1,71 @@
 #include "services/global-shortcuts/global-shortcut-service.hpp"
-#include "common/types.hpp"
-#include "config/config.hpp"
-#include "services/app-runtime/app-runtime.hpp"
-#include "services/root-item-manager/root-item-manager.hpp"
 #include <algorithm>
 #include <utility>
+#include "config/config.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 
-GlobalShortcutService::GlobalShortcutService(config::Manager &config, RootItemManager &rootItemManager,
-                                             AppRuntime &appRuntime,
+GlobalShortcutHandle::GlobalShortcutHandle(GlobalShortcutService *service, QString id, std::uint64_t serial)
+    : m_service(service), m_id(std::move(id)), m_serial(serial) {}
+
+GlobalShortcutHandle::GlobalShortcutHandle(GlobalShortcutHandle &&other) noexcept
+    : m_service(std::exchange(other.m_service, nullptr)), m_id(std::exchange(other.m_id, {})),
+      m_serial(std::exchange(other.m_serial, 0)) {}
+
+GlobalShortcutHandle &GlobalShortcutHandle::operator=(GlobalShortcutHandle &&other) noexcept {
+  if (this != &other) {
+    reset();
+    m_service = std::exchange(other.m_service, nullptr);
+    m_id = std::exchange(other.m_id, {});
+    m_serial = std::exchange(other.m_serial, 0);
+  }
+  return *this;
+}
+
+GlobalShortcutHandle::~GlobalShortcutHandle() { reset(); }
+
+void GlobalShortcutHandle::reset() {
+  if (m_service) { m_service->release(m_id, m_serial); }
+  m_service = nullptr;
+  m_id.clear();
+  m_serial = 0;
+}
+
+GlobalShortcutService::GlobalShortcutService(config::Manager &config, AppRuntime &appRuntime,
                                              std::unique_ptr<AbstractGlobalShortcutBackend> backend)
-    : m_config(config), m_rootItemManager(rootItemManager), m_appRuntime(appRuntime),
-      m_backend(std::move(backend)) {
+    : m_config(config), m_appRuntime(appRuntime), m_backend(std::move(backend)) {
   connect(m_backend.get(), &AbstractGlobalShortcutBackend::shortcutActivated, this,
-          &GlobalShortcutService::onActivated);
+          [this](const QString &id, quint64) { onActivated(id); });
+  connect(m_backend.get(), &AbstractGlobalShortcutBackend::shortcutReleased, this,
+          [this](const QString &id, quint64) { onReleased(id); });
   // `ready` may be re-emitted after a backend reset, in which case every binding is replayed
   connect(m_backend.get(), &AbstractGlobalShortcutBackend::ready, this, [this] {
-    m_appliedTriggers.clear();
-    m_actions.clear();
+    m_applied.clear();
+    releaseHeld();
     reconcile();
   });
-  connect(&m_config, &config::Manager::configChanged, this, [this] {
-    updateInhibition();
-    reconcile();
-  });
+  connect(&m_config, &config::Manager::configChanged, this, &GlobalShortcutService::updateInhibition);
   connect(&m_appRuntime, &AppRuntime::frontmostAppChanged, this, &GlobalShortcutService::updateInhibition);
 
   m_inhibited = computeInhibited();
   m_backend->start();
+}
+
+GlobalShortcutHandle GlobalShortcutService::bind(const QString &id, Binding binding) {
+  if (!binding.trigger.isValid()) {
+    qWarning() << "Refusing to bind global shortcut" << id << "with an invalid trigger";
+    return {};
+  }
+
+  const auto serial = m_nextSerial++;
+  m_bindings.insert_or_assign(id, Entry{.binding = std::move(binding), .serial = serial});
+  reconcile();
+  return {this, id, serial};
+}
+
+void GlobalShortcutService::release(const QString &id, std::uint64_t serial) {
+  auto it = m_bindings.find(id);
+  if (it == m_bindings.end() || it->second.serial != serial) { return; }
+  m_bindings.erase(it);
   reconcile();
 }
 
@@ -36,11 +75,26 @@ void GlobalShortcutService::setCapturing(bool capturing) {
   m_backend->setCapturing(capturing);
 
   if (capturing) {
-    m_backend->unbindAll();
-    m_appliedTriggers.clear();
-    m_actions.clear();
+    unbindAll();
   } else {
     reconcile();
+  }
+}
+
+void GlobalShortcutService::unbindAll() {
+  m_backend->unbindAll();
+  m_applied.clear();
+  releaseHeld();
+}
+
+void GlobalShortcutService::releaseHeld() {
+  std::vector<QString> held;
+  held.reserve(m_bindings.size());
+  for (const auto &[id, entry] : m_bindings) {
+    if (entry.held) { held.emplace_back(id); }
+  }
+  for (const auto &id : held) {
+    onReleased(id);
   }
 }
 
@@ -48,57 +102,27 @@ void GlobalShortcutService::reconcile() {
   if (m_capturing || m_inhibited) { return; }
   if (!isSupported()) { return; }
 
-  const config::ConfigValue &cfg = m_config.value();
-
-  std::unordered_map<QString, Desired> desired;
-
-  if (cfg.globalShortcuts.toggle && !cfg.globalShortcuts.toggle->empty()) {
-    desired.emplace(QString::fromUtf8(TOGGLE_ID),
-                    Desired{.trigger = QString::fromStdString(*cfg.globalShortcuts.toggle),
-                            .description = tr("Toggle Vicinae"),
-                            .action = ToggleLauncherWindow{}});
-  }
-
-  for (const auto &[provider, providerData] : cfg.providers) {
-    for (const auto &[entrypoint, item] : providerData.entrypoints) {
-      if (!item.shortcut || item.shortcut->empty()) { continue; }
-      if (item.enabled.has_value() && !*item.enabled) { continue; }
-
-      EntrypointId eid{provider, entrypoint};
-      desired.emplace(QString::fromStdString(eid), Desired{.trigger = QString::fromStdString(*item.shortcut),
-                                                           .description = describeCommand(eid),
-                                                           .action = RunCommand{eid}});
-    }
-  }
-
-  for (auto it = m_appliedTriggers.begin(); it != m_appliedTriggers.end();) {
-    auto desiredIt = desired.find(it->first);
-    if (desiredIt == desired.end() || desiredIt->second.trigger != it->second) {
+  for (auto it = m_applied.begin(); it != m_applied.end();) {
+    auto desired = m_bindings.find(it->first);
+    if (desired == m_bindings.end() || desired->second.binding.trigger != it->second) {
       m_backend->unbindShortcut(it->first);
-      m_actions.erase(it->first);
-      it = m_appliedTriggers.erase(it);
+      it = m_applied.erase(it);
     } else {
       ++it;
     }
   }
 
-  for (const auto &[id, entry] : desired) {
-    if (auto it = m_appliedTriggers.find(id); it != m_appliedTriggers.end() && it->second == entry.trigger) {
-      continue;
-    }
+  for (const auto &[id, entry] : m_bindings) {
+    if (m_applied.contains(id)) { continue; }
 
-    auto shortcut = Keyboard::Shortcut::fromString(entry.trigger);
+    const auto &binding = entry.binding;
+    auto bound =
+        m_backend->bindShortcut({.id = id, .trigger = binding.trigger, .description = binding.description});
+    m_applied.emplace(id, binding.trigger);
 
-    if (!shortcut.isValid()) { continue; }
-
-    auto bound = m_backend->bindShortcut({.id = id, .trigger = shortcut, .description = entry.description});
-    m_appliedTriggers[id] = entry.trigger;
-
-    if (bound) {
-      m_actions[id] = entry.action;
-    } else {
-      m_actions.erase(id);
-      qWarning() << "Failed to bind global shortcut" << id << "(" << entry.trigger << "):" << bound.error();
+    if (!bound) {
+      qWarning() << "Failed to bind global shortcut" << id << "(" << binding.trigger.toString()
+                 << "):" << bound.error();
     }
   }
 }
@@ -115,11 +139,6 @@ std::optional<QString> GlobalShortcutService::probeBind(const Keyboard::Shortcut
   return std::nullopt;
 }
 
-QString GlobalShortcutService::describeCommand(const EntrypointId &id) const {
-  if (auto meta = m_rootItemManager.itemMetadata(id); meta.item) { return meta.item->title(); }
-  return QString::fromStdString(id);
-}
-
 void GlobalShortcutService::updateInhibition() {
   const bool inhibited = computeInhibited();
   if (inhibited == m_inhibited) { return; }
@@ -128,9 +147,7 @@ void GlobalShortcutService::updateInhibition() {
   if (m_capturing) { return; }
 
   if (inhibited) {
-    m_backend->unbindAll();
-    m_appliedTriggers.clear();
-    m_actions.clear();
+    unbindAll();
   } else {
     reconcile();
   }
@@ -147,38 +164,34 @@ bool GlobalShortcutService::computeInhibited() const {
   return std::ranges::contains(apps, id);
 }
 
-void GlobalShortcutService::onActivated(const QString &id, quint64 timestamp) {
-  if (auto it = m_actions.find(id); it != m_actions.end()) {
-    match(
-        it->second, [&](const RunCommand &cmd) { emit commandActivated(cmd.id, timestamp); },
-        [&](const ToggleLauncherWindow &launcher) { emit toggleLauncherRequested(timestamp); });
+void GlobalShortcutService::onActivated(const QString &id) {
+  auto it = m_bindings.find(id);
+  if (it == m_bindings.end()) { return; }
+
+  auto &entry = it->second;
+  if (entry.binding.onReleased) {
+    if (entry.held) { return; }
+    entry.held = true;
   }
+
+  if (auto handler = entry.binding.onActivated) { handler(); }
+}
+
+void GlobalShortcutService::onReleased(const QString &id) {
+  auto it = m_bindings.find(id);
+  if (it == m_bindings.end() || !it->second.held) { return; }
+
+  it->second.held = false;
+  if (auto handler = it->second.binding.onReleased) { handler(); }
 }
 
 std::optional<QString> GlobalShortcutService::findConflict(const Keyboard::Shortcut &shortcut,
                                                            const QString &excludeId) const {
   if (!isSupported()) { return std::nullopt; }
 
-  const config::ConfigValue &cfg = m_config.value();
-  const auto matches = [&](const std::string &trigger) {
-    return Keyboard::Shortcut::fromString(QString::fromStdString(trigger)) == shortcut;
-  };
-
-  if (excludeId != QString::fromUtf8(TOGGLE_ID) && cfg.globalShortcuts.toggle &&
-      !cfg.globalShortcuts.toggle->empty() && matches(*cfg.globalShortcuts.toggle)) {
-    return tr("the launcher hotkey");
-  }
-
-  for (const auto &[provider, providerData] : cfg.providers) {
-    for (const auto &[entrypoint, item] : providerData.entrypoints) {
-      if (!item.shortcut || item.shortcut->empty()) { continue; }
-
-      EntrypointId eid{provider, entrypoint};
-      if (QString::fromStdString(eid) == excludeId || !matches(*item.shortcut)) { continue; }
-
-      if (auto meta = m_rootItemManager.itemMetadata(eid); meta.item) { return meta.item->title(); }
-      return tr("another command");
-    }
+  for (const auto &[id, entry] : m_bindings) {
+    if (id == excludeId || entry.binding.trigger != shortcut) { continue; }
+    return entry.binding.description.isEmpty() ? id : entry.binding.description;
   }
 
   return std::nullopt;

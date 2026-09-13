@@ -35,6 +35,7 @@ private:
 
   bool dispatchModifier(unsigned int mods, bool down);
   void activate(const QString &id);
+  void release(const QString &id);
 
   std::mutex m_targetsMutex;
   std::vector<HookTarget> m_targets;

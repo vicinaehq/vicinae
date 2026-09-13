@@ -639,6 +639,11 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   return true;
 }
 
+void NavigationController::releaseEntrypoint(const EntrypointId &id) {
+  const auto *entrypoint = m_ctx.services->rootItemManager()->findItemById(id);
+  if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) { ext->command()->shortcutReleased(); }
+}
+
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
   launch(cmd, LaunchProps{.arguments = completionValues()});
 }
