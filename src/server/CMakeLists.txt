@@ -397,7 +397,7 @@ set(SRCS
 	src/builtins/vicinae/manage-fallback-view-host.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
-	src/builtins/dictation/dictation-models-view-host.hpp
+	src/builtins/ai/local-models-view-host.hpp
 	src/builtins/dictation/dictation-extension.hpp
 	src/builtins/dictation/dictation-extension.cpp
 	src/builtins/dictation/dictation-session.hpp
@@ -604,12 +604,14 @@ set(SRCS
 	src/services/ai/ai-config.hpp
 	src/services/ai/ai-service.cpp
 	src/services/ai/agentic-loop.hpp
-	src/services/ai/local-speech/local-speech-provider.hpp
-	src/services/local-speech-model-registry/speech-model-catalogue.hpp
-	src/services/local-speech-model-registry/model-download.hpp
-	src/services/local-speech-model-registry/model-download.cpp
-	src/services/local-speech-model-registry/local-speech-model-registry.hpp
-	src/services/local-speech-model-registry/local-speech-model-registry.cpp
+	src/services/ai/ai-capability.hpp
+	src/services/ai/speech-language-catalogue.hpp
+	src/services/ai/local/local-provider.hpp
+	src/services/local-model-registry/local-model-catalogue.hpp
+	src/services/local-model-registry/model-download.hpp
+	src/services/local-model-registry/model-download.cpp
+	src/services/local-model-registry/local-model-registry.hpp
+	src/services/local-model-registry/local-model-registry.cpp
 
 	# UI
 	src/ui/bridges/keybind-bridge.hpp
@@ -1521,7 +1523,7 @@ qt_add_translations(${TARGET}
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_zh_CN.ts
 	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
 	SOURCES ${VICINAE_I18N_SOURCES}
-	LUPDATE_OPTIONS -locations relative -no-obsolete -tr-function-alias QT_TRANSLATE_NOOP+=SPEECH_MODEL_TR
+	LUPDATE_OPTIONS -locations relative -no-obsolete -tr-function-alias QT_TRANSLATE_NOOP+=LOCAL_MODEL_TR,QT_TRANSLATE_NOOP+=SPEECH_LANGUAGE_TR
 	MERGE_QT_TRANSLATIONS
 	QT_TRANSLATION_CATALOGS qtbase qtdeclarative
 )
