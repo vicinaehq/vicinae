@@ -7,13 +7,17 @@ self: {
   cfg = config.programs.vicinae;
 
   inherit (pkgs.stdenv.hostPlatform) system;
-  soulverVicinaePkg = self.packages.${system}.with-soulver or null;
+  basePkg =
+    if cfg.enableLocalAI
+    then self.packages.${system}.default
+    else self.packages.${system}.default.override {localAI = false;};
+  soulverVicinaePkg = self.lib.${system}.withSoulver basePkg;
   vicinaePkg =
     if cfg.package != null
     then cfg.package
     else if cfg.enableSoulver && soulverVicinaePkg != null
     then soulverVicinaePkg
-    else self.packages.${system}.default;
+    else basePkg;
 
   jsonFormat = pkgs.formats.json {};
   tomlFormat = pkgs.formats.toml {};
@@ -76,6 +80,17 @@ in {
         SoulverCore is considered unfree software, therefore disabled by default.
         Uses the flake's `with-soulver` package.
         Ignored when `package` is set, wrap your own package if absolutely needed.
+      '';
+    };
+
+    enableLocalAI = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Whether to build with local AI inference (whisper.cpp and llama.cpp).
+        Disabling it drops those dependencies; AI features still work through
+        remote providers such as Ollama or cloud APIs.
+        Ignored when `package` is set.
       '';
     };
 

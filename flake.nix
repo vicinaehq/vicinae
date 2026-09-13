@@ -29,16 +29,14 @@
     inherit (nixpkgs) lib;
     forEachPkgs = f: lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
     numenFor = pkgs: numen.packages.${pkgs.stdenv.hostPlatform.system}.numen.override {withRepl = false;};
-  in {
-    packages = forEachPkgs (pkgs: let
-      vicinae = pkgs.callPackage ./nix/vicinae.nix {
-        gcc15Stdenv = pkgs.gcc15Stdenv;
-        numen = numenFor pkgs;
-      };
+    # Wraps a vicinae package with the SoulverCore runtime; null when soulver is unavailable.
+    withSoulver = pkgs: vicinae: let
       soulver = soulver-cpp.packages.${pkgs.stdenv.hostPlatform.system}.default or null;
     in
-      lib.optionalAttrs (soulver != null) {
-        with-soulver = pkgs.symlinkJoin {
+      if soulver == null
+      then null
+      else
+        pkgs.symlinkJoin {
           name = "${vicinae.name}-with-soulver";
           paths = [vicinae];
           nativeBuildInputs = [pkgs.makeWrapper];
@@ -51,6 +49,16 @@
           '';
           inherit (vicinae) meta;
         };
+  in {
+    packages = forEachPkgs (pkgs: let
+      vicinae = pkgs.callPackage ./nix/vicinae.nix {
+        gcc15Stdenv = pkgs.gcc15Stdenv;
+        numen = numenFor pkgs;
+      };
+      soulver = withSoulver pkgs vicinae;
+    in
+      lib.optionalAttrs (soulver != null) {
+        with-soulver = soulver;
       }
       // {
         default = vicinae;
@@ -72,6 +80,7 @@
     lib = forEachPkgs (pkgs: {
       mkVicinaeExtension = pkgs.callPackage ./nix/mkVicinaeExtension.nix {};
       mkRayCastExtension = pkgs.callPackage ./nix/mkRayCastExtension.nix {};
+      withSoulver = withSoulver pkgs;
     });
     devShells = forEachPkgs (
       pkgs: let
