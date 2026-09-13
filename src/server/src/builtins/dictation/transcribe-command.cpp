@@ -25,6 +25,10 @@ const auto NO_MODEL_ICON =
 const auto SELECT_MODEL_ICON =
     ImageURL::builtin(BuiltinIcon::Microphone).setBackgroundTint(Dictation::COLOR).setBadge(BuiltinIcon::Cog);
 
+constexpr qint64 HOLD_THRESHOLD_MS = 300;
+
+QPointer<DictationSession> active;
+
 enum class Readiness { NoModels, NotSelected, Ready };
 
 struct Status {
@@ -64,8 +68,6 @@ Status status(const ApplicationContext *ctx) {
 
 void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
                     const AI::TranscriptionOptions &options) {
-  static QPointer<DictationSession> active;
-
   if (Environment::isHudDisabled()) {
     ctx->navigation->pushView(new TranscribeViewHost(model, options));
     return;
@@ -85,6 +87,11 @@ void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
 } // namespace
 
 ImageURL TranscribeCommand::iconUrl() const { return Dictation::ICON; }
+
+void TranscribeCommand::shortcutReleased() const {
+  if (!active || !active->isRecording() || active->recordingMs() < HOLD_THRESHOLD_MS) return;
+  active->accept();
+}
 
 void TranscribeCommand::execute(CommandController &controller) const {
   auto *ctx = controller.context();
