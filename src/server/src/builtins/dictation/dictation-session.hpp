@@ -5,6 +5,7 @@
 #include <QtQml/qqmlregistration.h>
 #include <QSoundEffect>
 #include <memory>
+#include "dictation-extension.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "services/audio/audio-recorder.hpp"
 #include "services/media-control/media-control-service.hpp"
@@ -35,7 +36,9 @@ signals:
 
 public:
   DictationSession(const ApplicationContext *ctx, AI::ModelRef model, AI::TranscriptionOptions options = {},
-                   bool playSoundEffects = true, bool pauseMedia = true, QObject *parent = nullptr);
+                   bool playSoundEffects = true, bool pauseMedia = true,
+                   Dictation::DictationAction action = Dictation::DictationAction::PasteToActiveWindow,
+                   QObject *parent = nullptr);
 
   bool start();
   Q_INVOKABLE void accept();
@@ -63,6 +66,7 @@ private:
   QTimer m_elapsedTimer;
   bool m_transcribing = false;
   QString m_message;
+  Dictation::DictationAction m_action;
 
   // sound
   bool m_playSoundEffects = true;
