@@ -1,6 +1,6 @@
 #pragma once
 #include "builtins/dictation/dictation-models-view-host.hpp"
-#include "builtins/dictation/transcribe-command.hpp"
+#include "builtins/dictation/dictation-command.hpp"
 #include <string_view>
 #include "command/command-database.hpp"
 #include "command/single-view-command-context.hpp"
