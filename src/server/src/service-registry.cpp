@@ -39,7 +39,7 @@
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/news/news-service.hpp"
 #include "services/ai/ai-service.hpp"
-#include "services/local-speech-model-registry/local-speech-model-registry.hpp"
+#include "services/local-model-registry/local-model-registry.hpp"
 #include "config/config.hpp"
 
 ServiceRegistry::~ServiceRegistry() = default;
@@ -100,10 +100,10 @@ AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
 void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
 
 #ifdef HAS_LOCAL_AI
-LocalSpeechModelRegistry *ServiceRegistry::speechModels() const { return m_speechModels.get(); }
+LocalModelRegistry *ServiceRegistry::localModels() const { return m_localModels.get(); }
 
-void ServiceRegistry::setSpeechModels(std::unique_ptr<LocalSpeechModelRegistry> registry) {
-  m_speechModels = std::move(registry);
+void ServiceRegistry::setLocalModels(std::unique_ptr<LocalModelRegistry> registry) {
+  m_localModels = std::move(registry);
 }
 #endif
 

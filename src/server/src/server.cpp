@@ -3,8 +3,8 @@
 #include "services/ai/ai-tool.hpp"
 #include <QStyleHints>
 #include "services/ai/agentic-loop.hpp"
-#include "services/local-speech-model-registry/local-speech-model-registry.hpp"
-#include "services/ai/local-speech/local-speech-provider.hpp"
+#include "services/local-model-registry/local-model-registry.hpp"
+#include "services/ai/local/local-provider.hpp"
 #include "extension/extension.hpp"
 #include "root-search/browser-tabs/browser-tabs-provider.hpp"
 #include "root-search/scripts/script-root-provider.hpp"
@@ -403,9 +403,9 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
     auto ai = std::make_unique<AI::Service>();
 #ifdef HAS_LOCAL_AI
-    auto speechModels = std::make_unique<LocalSpeechModelRegistry>();
-    ai->addProvider(std::make_unique<AI::LocalSpeechProvider>(*speechModels));
-    registry->setSpeechModels(std::move(speechModels));
+    auto localModels = std::make_unique<LocalModelRegistry>();
+    ai->addProvider(std::make_unique<AI::LocalProvider>(*localModels));
+    registry->setLocalModels(std::move(localModels));
 #endif
     registry->setAI(std::move(ai));
 

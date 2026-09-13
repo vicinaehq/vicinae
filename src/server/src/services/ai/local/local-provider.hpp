@@ -10,8 +10,8 @@
 #include "services/ai/ai-provider.hpp"
 #include "services/audio/audio-recorder.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
-#include "services/local-speech-model-registry/local-speech-model-registry.hpp"
-#include "services/local-speech-model-registry/speech-model-catalogue.hpp"
+#include "services/local-model-registry/local-model-catalogue.hpp"
+#include "services/local-model-registry/local-model-registry.hpp"
 #include "ui/image/image-url.hpp"
 #include "ui/image/url.hpp"
 #include "whisper.h"
@@ -19,14 +19,13 @@
 namespace AI {
 
 /**
- * Exposes installed local speech models as transcription models.
- * Always present, no configuration. Transcription itself is not wired yet.
+ * Exposes installed local models. Always present, no configuration.
  */
-class LocalSpeechProvider : public AbstractProvider {
+class LocalProvider : public AbstractProvider {
 public:
-  static constexpr std::string_view ID = "local-speech";
+  static constexpr std::string_view ID = "local";
 
-  explicit LocalSpeechProvider(LocalSpeechModelRegistry &registry) : m_registry(registry) {}
+  explicit LocalProvider(LocalModelRegistry &registry) : m_registry(registry) {}
 
   std::string id() const override { return std::string(ID); }
 
@@ -34,21 +33,19 @@ public:
     return ImageUrl{ImageURL::builtin(BuiltinIcon::Microphone)};
   }
 
-  std::string_view description() const override { return "Speech models installed on this machine."; }
+  std::string_view description() const override { return "Models that run on this machine."; }
 
   void start() override {
-    connect(&m_registry, &LocalSpeechModelRegistry::modelsChanged, this, &AbstractProvider::modelsUpdated);
+    connect(&m_registry, &LocalModelRegistry::modelsChanged, this, &AbstractProvider::modelsUpdated);
   }
 
   ModelList listModels(const ListModelFilters &filters = {}) const override {
-    if (filters.caps && !(*filters.caps & Capability::Transcription)) return {};
-
     ModelList models;
-    const auto available = m_registry.models();
+    const auto available = m_registry.models(filters.caps);
     models.reserve(available.size());
 
     for (const auto &model : available) {
-      if (!model.installed || model.info.engine == SpeechEngine::Vad) continue;
+      if (!model.installed || model.info.caps == 0) continue;
       models.emplace_back(toModel(model.info));
     }
 
@@ -145,9 +142,9 @@ public:
     };
 
     switch (model->info.engine) {
-    case SpeechEngine::Parakeet:
+    case LocalEngine::Parakeet:
       return runParakeet();
-    case SpeechEngine::Whisper:
+    case LocalEngine::Whisper:
       return runWhisper();
     default:
       return QtFuture::makeReadyValueFuture<TranscriptionResult>(
@@ -156,17 +153,17 @@ public:
   }
 
 private:
-  static Model toModel(const SpeechModelInfo &info) {
+  static Model toModel(const LocalModelInfo &info) {
     return Model{
         .id = std::string(info.id),
         .name = std::string(info.name),
-        .description = SpeechModelCatalogue::translatedDescription(info).toStdString(),
-        .icon = ImageUrl{SpeechModelCatalogue::vendorIcon(info.vendor)},
-        .caps = Capability::Transcription,
+        .description = LocalModelCatalogue::translatedDescription(info).toStdString(),
+        .icon = ImageUrl{LocalModelCatalogue::vendorIcon(info.vendor)},
+        .caps = info.caps,
     };
   }
 
-  LocalSpeechModelRegistry &m_registry;
+  LocalModelRegistry &m_registry;
 };
 
 } // namespace AI
