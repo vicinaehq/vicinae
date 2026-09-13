@@ -53,6 +53,12 @@ RUN apt-get -y update &&	\
     pkg-config				\
 	wget
 
+# ggml's Vulkan backend needs glslc and recent Vulkan headers, neither of which 22.04 packages.
+RUN wget -qO /etc/apt/trusted.gpg.d/lunarg.asc https://packages.lunarg.com/lunarg-signing-key-pub.asc \
+    && wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list https://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list \
+    && apt-get -y update \
+    && apt-get -y install vulkan-sdk
+
 FROM base-builder AS gcc-builder
 
 RUN wget 'https://ftp.fu-berlin.de/unix/languages/gcc/releases/gcc-15.2.0/gcc-15.2.0.tar.gz' \

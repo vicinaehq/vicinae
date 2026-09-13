@@ -19,7 +19,6 @@
 #include <qtmetamacros.h>
 #include <ranges>
 #include <system_error>
-#include <x86_64-pc-linux-gnu/gmp.h>
 
 namespace AI {
 
