@@ -371,8 +371,8 @@ set(SRCS
 	src/builtins/dictation/dictation-extension.cpp
 	src/builtins/dictation/dictation-session.hpp
 	src/builtins/dictation/dictation-session.cpp
-	src/builtins/dictation/transcribe-command.hpp
-	src/builtins/dictation/transcribe-command.cpp
+	src/builtins/dictation/dictation-command.hpp
+	src/builtins/dictation/dictation-command.cpp
 	src/builtins/dictation/transcribe-view-host.hpp
 	src/builtins/dictation/transcribe-view-host.cpp
 	src/builtins/system/system-run-model.hpp
