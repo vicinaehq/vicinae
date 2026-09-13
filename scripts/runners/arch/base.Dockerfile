@@ -7,4 +7,5 @@ RUN pacman -Syu --needed --noconfirm \
     qtkeychain-qt6 layer-shell-qt syntax-highlighting extra-cmake-modules \
     libqalculate \
     catch2 wayland-protocols \
+    shaderc vulkan-headers vulkan-icd-loader \
   && pacman -Scc --noconfirm
