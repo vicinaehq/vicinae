@@ -67,6 +67,7 @@ option(WHISPER_VULKAN "Build the fetched whisper.cpp with the Vulkan GPU backend
 
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
+option(LOCAL_AI "Build support for local AI inference, allowing Vicinae to run inference with no third party. This does not disable AI features by themselves, as they can still be used with third party providers like cloud models, ollama, etc..." ON)
 option(VICINAE_DEV_MODE "Developer build: load QML from the source tree with live reload, use the local theme dir, keep debug output. Never enable for packaged builds." OFF)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
 option(AUTO_INSTALL_BROWSER_MANIFESTS "Install per-user browser native messaging host manifests at server startup" ON)
@@ -206,6 +207,10 @@ endif()
 add_subdirectory(${LIB_DIR}/figura)
 
 set(FIGURA_DIR ${CMAKE_SOURCE_DIR}/figura)
+
+if (LOCAL_AI)
+	add_compile_definitions(HAS_LOCAL_AI=1)
+endif()
 
 
 # End of Vicinae build configuration options

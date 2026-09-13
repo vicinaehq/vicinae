@@ -1,4 +1,5 @@
 #pragma once
+#ifdef HAS_LOCAL_AI
 #include <optional>
 #include <qlogging.h>
 #include <qtconcurrentrun.h>
@@ -169,3 +170,4 @@ private:
 };
 
 } // namespace AI
+#endif

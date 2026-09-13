@@ -11,9 +11,10 @@
 #include "ai-provider.hpp"
 #include "common/types.hpp"
 #include "services/ai/ai-config.hpp"
-#include "services/ai/local-speech/local-speech-provider.hpp"
 #include "services/audio/audio-recorder.hpp"
+#include "services/local-speech-model-registry/local-speech-model-registry.hpp"
 #include "vicinae.hpp"
+#include "services/ai/local-speech/local-speech-provider.hpp"
 
 namespace AI {
 class Service : public QObject, NonCopyable {
@@ -25,7 +26,11 @@ signals:
 public:
   explicit Service(LocalSpeechModelRegistry &speechModels)
       : m_registry(makeBuiltinRegistry()), m_configManager(Omnicast::configDir() / "ai.json") {
+
+#ifdef HAS_LOCAL_AI
     addBuiltinProvider(std::make_unique<LocalSpeechProvider>(speechModels));
+#endif
+
     connect(&m_configManager, &ConfigManager::configChanged, this, &Service::reconcileProviders);
     m_configManager.load();
   }
