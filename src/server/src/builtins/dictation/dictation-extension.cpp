@@ -4,8 +4,8 @@
 #include <vector>
 #include "builtins/ai/ai-model-selector-utils.hpp"
 #include "service-registry.hpp"
-#include "services/ai/ai-service.hpp"
 #include "services/local-speech-model-registry/speech-language-catalogue.hpp"
+#include "services/media-control/media-control-service.hpp"
 
 namespace {
 
@@ -17,6 +17,8 @@ Preference::DropdownData::Option languageOption(const SpeechLanguage &lang) {
 
 std::vector<Preference> DictationExtension::preferences() const {
   using namespace Dictation;
+
+  std::vector<Preference> preferences;
 
   auto sections =
       buildModelDropdownSections(ServiceRegistry::instance()->ai(), AI::Capability::Transcription);
@@ -30,7 +32,8 @@ std::vector<Preference> DictationExtension::preferences() const {
 
   auto model = Preference::makeDropdown(qs(MODEL_PREFERENCE), sections);
   model.setTitle(tr("Transcription model"));
-  model.setDescription(tr("Model used to turn your voice into text. Local models run offline."));
+  model.setDescription(tr("Model used to turn your voice into text. You can configure cloud options, or "
+                          "Vicinae can download and run local transcription models for you."));
   model.setDefaultValue(qs(NO_MODEL));
   model.setRequired(false);
 
@@ -53,8 +56,8 @@ std::vector<Preference> DictationExtension::preferences() const {
                                                {.title = tr("All languages"), .options = std::move(all)},
                                            });
   language.setTitle(tr("Language"));
-  language.setDescription(tr("Language you dictate in. Auto-detect works with multilingual models, picking a "
-                             "language is more accurate."));
+  language.setDescription(
+      tr("Language you dictate in. Some models can auto-detect it, others need it set explicitly."));
   language.setDefaultValue(qs(AUTO_LANGUAGE));
   language.setRequired(false);
 
@@ -64,5 +67,18 @@ std::vector<Preference> DictationExtension::preferences() const {
   soundEffects.setDescription(tr("Whether to play a sound effect when starting or stopping dictation."));
   soundEffects.setDefaultValue(true);
 
-  return {model, language, soundEffects};
+  preferences.emplace_back(model);
+  preferences.emplace_back(language);
+  preferences.emplace_back(soundEffects);
+
+  if (ServiceRegistry::instance()->mediaControl()->available()) {
+    auto pauseMedia = Preference::makeCheckbox("pauseMedia");
+
+    pauseMedia.setTitle(tr("Pause media"));
+    pauseMedia.setDescription("Pause all media players when recording and resume them after");
+    pauseMedia.setDefaultValue(true);
+    preferences.emplace_back(pauseMedia);
+  }
+
+  return preferences;
 }

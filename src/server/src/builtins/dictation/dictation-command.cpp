@@ -68,7 +68,7 @@ Status status(const ApplicationContext *ctx) {
 }
 
 void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
-                    const AI::TranscriptionOptions &options, bool playSoundEffects) {
+                    const AI::TranscriptionOptions &options, bool playSoundEffects, bool pauseMedia) {
   if (Environment::isHudDisabled()) {
     ctx->navigation->pushView(new TranscribeViewHost(model, options));
     return;
@@ -81,7 +81,7 @@ void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
     return;
   }
 
-  active = new DictationSession(ctx, model, options, playSoundEffects, ctx->navigation.get());
+  active = new DictationSession(ctx, model, options, playSoundEffects, pauseMedia, ctx->navigation.get());
   active->start();
 }
 
@@ -98,10 +98,11 @@ void TranscribeCommand::execute(CommandController &controller) const {
   auto *ctx = controller.context();
   const auto status = ::status(ctx);
   const bool playSoundEffects = controller.preferenceValues().value("sound").toBool(true);
+  const bool pauseMedia = controller.preferenceValues().value("pauseMedia").toBool(true);
 
   switch (status.readiness) {
   case Readiness::Ready:
-    startDictation(ctx, status.model->ref, status.options, playSoundEffects);
+    startDictation(ctx, status.model->ref, status.options, playSoundEffects, pauseMedia);
     return;
   case Readiness::NoModels:
     ctx->navigation->pushView(
