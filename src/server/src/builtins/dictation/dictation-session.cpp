@@ -7,6 +7,7 @@
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
+#include "services/media-control/media-control-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "ui/image/url.hpp"
 
@@ -15,9 +16,10 @@ constexpr int MESSAGE_DURATION_MS = 1500;
 }
 
 DictationSession::DictationSession(const ApplicationContext *ctx, AI::ModelRef model,
-                                   AI::TranscriptionOptions options, bool playSoundEffects, QObject *parent)
+                                   AI::TranscriptionOptions options, bool playSoundEffects, bool pauseMedia,
+                                   QObject *parent)
     : QObject(parent), m_ctx(ctx), m_model(std::move(model)), m_options(std::move(options)),
-      m_playSoundEffects(playSoundEffects) {
+      m_playSoundEffects(playSoundEffects), m_pauseMedia(pauseMedia) {
   m_elapsedTimer.setInterval(1000);
 
   if (m_playSoundEffects) {
@@ -43,6 +45,11 @@ bool DictationSession::start() {
                                ImageURL::builtin(BuiltinIcon::MicrophoneDisabled));
     finish();
     return false;
+  }
+
+  if (m_pauseMedia) {
+    m_pauseHandle = std::make_unique<MediaControlService::TransientPauseHandle>(
+        m_ctx->services->mediaControl()->transientPauseAll());
   }
 
   m_elapsedTimer.start();
@@ -71,6 +78,8 @@ void DictationSession::accept() {
     m_startSound.stop();
     m_stopSound.play();
   }
+
+  if (m_pauseHandle) { m_pauseHandle->resume(); }
 
   m_transcribing = true;
   emit stateChanged();

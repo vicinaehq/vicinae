@@ -4,8 +4,10 @@
 #include <QTimer>
 #include <QtQml/qqmlregistration.h>
 #include <QSoundEffect>
+#include <memory>
 #include "services/ai/ai-provider.hpp"
 #include "services/audio/audio-recorder.hpp"
+#include "services/media-control/media-control-service.hpp"
 
 class ApplicationContext;
 
@@ -33,7 +35,7 @@ signals:
 
 public:
   DictationSession(const ApplicationContext *ctx, AI::ModelRef model, AI::TranscriptionOptions options = {},
-                   bool playSoundEffects = true, QObject *parent = nullptr);
+                   bool playSoundEffects = true, bool pauseMedia = true, QObject *parent = nullptr);
 
   bool start();
   Q_INVOKABLE void accept();
@@ -64,6 +66,9 @@ private:
 
   // sound
   bool m_playSoundEffects = true;
+  bool m_pauseMedia = true;
+  std::unique_ptr<MediaControlService::TransientPauseHandle> m_pauseHandle;
+
   QSoundEffect m_startSound;
   QSoundEffect m_stopSound;
 };
