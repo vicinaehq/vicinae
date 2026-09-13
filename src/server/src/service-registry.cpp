@@ -97,11 +97,13 @@ AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
 
 void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
 
+#ifdef HAS_LOCAL_AI
 LocalSpeechModelRegistry *ServiceRegistry::speechModels() const { return m_speechModels.get(); }
 
 void ServiceRegistry::setSpeechModels(std::unique_ptr<LocalSpeechModelRegistry> registry) {
   m_speechModels = std::move(registry);
 }
+#endif
 
 UpdateService *ServiceRegistry::updateService() const { return m_updateService.get(); }
 

@@ -4,6 +4,7 @@
 #include <QStyleHints>
 #include "services/ai/agentic-loop.hpp"
 #include "services/local-speech-model-registry/local-speech-model-registry.hpp"
+#include "services/ai/local-speech/local-speech-provider.hpp"
 #include "extension/extension.hpp"
 #include "root-search/browser-tabs/browser-tabs-provider.hpp"
 #include "root-search/scripts/script-root-provider.hpp"
@@ -391,9 +392,13 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setUpdateService(
         std::make_unique<UpdateService>(*registry->toastService(), std::move(updateInstaller)));
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
+    auto ai = std::make_unique<AI::Service>();
+#ifdef HAS_LOCAL_AI
     auto speechModels = std::make_unique<LocalSpeechModelRegistry>();
-    registry->setAI(std::make_unique<AI::Service>(*speechModels));
+    ai->addProvider(std::make_unique<AI::LocalSpeechProvider>(*speechModels));
     registry->setSpeechModels(std::move(speechModels));
+#endif
+    registry->setAI(std::move(ai));
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>(*registry);
