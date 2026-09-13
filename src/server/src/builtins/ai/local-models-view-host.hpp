@@ -11,7 +11,8 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
-#include "services/local-speech-model-registry/local-speech-model-registry.hpp"
+#include "services/ai/ai-capability.hpp"
+#include "services/local-model-registry/local-model-registry.hpp"
 #include "services/toast/toast-service.hpp"
 #include "theme/colors.hpp"
 #include "ui/action-panel/action-panel-state.hpp"
@@ -20,18 +21,18 @@
 #include "ui/views/mono-list-view-host.hpp"
 #include "utils/utils.hpp"
 
-template <> struct fuzzy::FuzzySearchable<SpeechModel> {
-  static fuzzy::Match score(const SpeechModel &model, const fuzzy::Query &query) {
+template <> struct fuzzy::FuzzySearchable<LocalModel> {
+  static fuzzy::Match score(const LocalModel &model, const fuzzy::Query &query) {
     return fuzzy::scoreWeighted({{std::string(model.info.name), 1.0}, {std::string(model.info.id), 0.6}},
                                 query);
   }
 };
 
-class DictationModelsViewHost : public MonoListViewHost<SpeechModel> {
-  Q_DECLARE_TR_FUNCTIONS(DictationModelsViewHost)
+class LocalModelsViewHost : public MonoListViewHost<LocalModel> {
+  Q_DECLARE_TR_FUNCTIONS(LocalModelsViewHost)
 
 public:
-  DictationModelsViewHost() {
+  explicit LocalModelsViewHost(std::optional<AI::Capabilities> filter = std::nullopt) : m_filter(filter) {
     m_refreshTimer.setSingleShot(true);
     m_refreshTimer.setInterval(REFRESH_INTERVAL_MS);
     connect(&m_refreshTimer, &QTimer::timeout, this, [this]() {
@@ -41,14 +42,13 @@ public:
   }
 
   void onMount() override {
-    setNavigationTitle(tr("Dictation Models"));
+    setNavigationTitle(tr("Local Models"));
     setSearchPlaceholderText(tr("Search models..."));
 
     auto *registry = this->registry();
-    connect(registry, &LocalSpeechModelRegistry::modelsChanged, this, [this]() { reload(); });
-    connect(registry, &LocalSpeechModelRegistry::downloadProgress, this, [this]() { scheduleRefresh(); });
-    connect(registry, &LocalSpeechModelRegistry::downloadRetryScheduled, this,
-            [this]() { scheduleRefresh(); });
+    connect(registry, &LocalModelRegistry::modelsChanged, this, [this]() { reload(); });
+    connect(registry, &LocalModelRegistry::downloadProgress, this, [this]() { scheduleRefresh(); });
+    connect(registry, &LocalModelRegistry::downloadRetryScheduled, this, [this]() { scheduleRefresh(); });
 
     reload();
   }
@@ -60,7 +60,7 @@ public:
   QString displayId(const ItemType &model) const override { return QString::fromUtf8(model.info.id); }
 
   std::optional<ImageURL> displayIcon(const ItemType &model) const override {
-    return SpeechModelCatalogue::vendorIcon(model.info.vendor);
+    return LocalModelCatalogue::vendorIcon(model.info.vendor);
   }
 
   AccessoryList displayAccessories(const ItemType &model) const override {
@@ -82,7 +82,7 @@ public:
     if (registry()->activeDownload(id)) {
       section->addAction(new StaticAction(
           tr("Cancel Download"), ImageURL::builtin(BuiltinIcon::XMarkCircleFilled),
-          [id](ApplicationContext *ctx) { ctx->services->speechModels()->cancelDownload(id); }));
+          [id](ApplicationContext *ctx) { ctx->services->localModels()->cancelDownload(id); }));
       return panel;
     }
 
@@ -99,7 +99,7 @@ public:
           tr("Delete Model"), ImageURL::builtin(BuiltinIcon::Trash), [id, name](ApplicationContext *ctx) {
             ctx->navigation->confirmAlert(
                 tr("Delete %1?").arg(name), tr("The model file will be removed from disk."), [ctx, id]() {
-                  if (auto result = ctx->services->speechModels()->remove(id); !result) {
+                  if (auto result = ctx->services->localModels()->remove(id); !result) {
                     ctx->services->toastService()->failure(tr("Could not delete model"),
                                                            QString::fromStdString(result.error()));
                   }
@@ -130,17 +130,18 @@ protected:
     };
 
     row(tr("Status"), statusText(model));
-    row(tr("Engine"), engineName(info.engine));
     row(tr("Vendor"), vendorName(info.vendor));
-    row(tr("Languages"),
-        QCoreApplication::translate(SpeechModelCatalogue::TRANSLATION_CONTEXT, info.languages));
+    if (info.languages) {
+      row(tr("Languages"),
+          QCoreApplication::translate(LocalModelCatalogue::TRANSLATION_CONTEXT, info.languages));
+    }
     row(tr("Precision"), QString::fromUtf8(info.quantization));
     row(tr("Size"), formatSize(info.size));
     row(tr("File"), QString::fromUtf8(info.file));
     row(tr("Source"), QString::fromUtf8(info.repo));
 
     return ListItemDetail{.metadata = std::move(meta),
-                          .markdown = SpeechModelCatalogue::translatedDescription(info)};
+                          .markdown = LocalModelCatalogue::translatedDescription(info)};
   }
 
   void sortFiltered() override {
@@ -155,7 +156,7 @@ private:
 
   static void startDownload(ApplicationContext *ctx, const std::string &id, const QString &name) {
     auto *toast = ctx->services->toastService();
-    auto result = ctx->services->speechModels()->download(id);
+    auto result = ctx->services->localModels()->download(id);
 
     if (!result) {
       toast->failure(tr("Could not start download"), QString::fromStdString(result.error()));
@@ -180,40 +181,27 @@ private:
     connect(download, &ModelDownload::cancelled, toast, [toast]() { toast->clear(); });
   }
 
-  QString statusText(const SpeechModel &model) const {
+  QString statusText(const LocalModel &model) const {
     if (auto *download = registry()->activeDownload(model.info.id)) return downloadAccessory(*download).text;
     return model.installed ? tr("Installed") : tr("Not installed");
   }
 
-  static QString engineName(SpeechEngine engine) {
-    switch (engine) {
-    case SpeechEngine::Whisper:
-      return QStringLiteral("Whisper");
-    case SpeechEngine::Parakeet:
-      return QStringLiteral("Parakeet");
-    case SpeechEngine::Vad:
-      return QStringLiteral("Silero VAD");
-    }
-    return {};
-  }
-
-  static QString vendorName(SpeechModelVendor vendor) {
+  static QString vendorName(LocalModelVendor vendor) {
     switch (vendor) {
-    case SpeechModelVendor::OpenAI:
+    case LocalModelVendor::OpenAI:
       return QStringLiteral("OpenAI");
-    case SpeechModelVendor::Nvidia:
+    case LocalModelVendor::Nvidia:
       return QStringLiteral("NVIDIA");
-    case SpeechModelVendor::Silero:
+    case LocalModelVendor::Silero:
       return QStringLiteral("Silero");
     }
     return {};
   }
 
-  static int rank(const SpeechModel &model) {
+  static int rank(const LocalModel &model) {
     if (model.downloading) return 0;
     if (model.installed) return 1;
-    if (model.info.recommended) return 2;
-    return 3;
+    return 2;
   }
 
   ListAccessory downloadAccessory(const ModelDownload &download) const {
@@ -230,18 +218,19 @@ private:
     return {.text = tr("Downloading…"), .color = SemanticColor::Blue};
   }
 
-  LocalSpeechModelRegistry *registry() const { return context()->services->speechModels(); }
+  LocalModelRegistry *registry() const { return context()->services->localModels(); }
 
   void scheduleRefresh() {
     if (!m_refreshTimer.isActive()) m_refreshTimer.start();
   }
 
   void reload() {
-    auto models = registry()->models();
-    std::erase_if(models, [](const SpeechModel &model) { return model.info.engine == SpeechEngine::Vad; });
+    auto models = registry()->models(m_filter);
+    std::erase_if(models, [](const LocalModel &model) { return model.info.caps == 0; });
     setItems(std::move(models));
   }
 
+  std::optional<AI::Capabilities> m_filter;
   QTimer m_refreshTimer;
 };
 #endif

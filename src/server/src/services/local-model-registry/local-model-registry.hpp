@@ -13,23 +13,23 @@
 #include "common/qt.hpp"
 #include "common/types.hpp"
 #include "model-download.hpp"
-#include "speech-model-catalogue.hpp"
+#include "local-model-catalogue.hpp"
 
-struct SpeechModel {
-  SpeechModelInfo info;
+struct LocalModel {
+  LocalModelInfo info;
   bool installed = false;
   bool downloading = false;
 };
 
 /**
- * Local speech models: what the catalogue offers, what is on disk, and downloads in flight.
+ * Local models: what the catalogue offers, what is on disk, and downloads in flight.
  *
- * Files land in `<dataDir>/models/speech/` under their upstream name so hand-copied ggml files work too.
+ * Files land in `<dataDir>/models/` under their upstream name so hand-copied files work too.
  * Downloads come from Hugging Face; `HF_ENDPOINT` swaps the host for a mirror and `HF_TOKEN` is sent
  * when present. Progress is observable per download through the returned handle and, for anyone that
  * does not hold the handle, through the id-tagged signals on the registry.
  */
-class LocalSpeechModelRegistry : public QObject, NonCopyable {
+class LocalModelRegistry : public QObject, NonCopyable {
   Q_OBJECT
 
 signals:
@@ -42,15 +42,15 @@ signals:
   void downloadCancelled(const QString &id) const;
 
 public:
-  explicit LocalSpeechModelRegistry(QObject *parent = nullptr);
-  ~LocalSpeechModelRegistry() override;
+  explicit LocalModelRegistry(QObject *parent = nullptr);
+  ~LocalModelRegistry() override;
 
-  std::vector<SpeechModel> models(std::optional<SpeechEngine> engine = std::nullopt) const;
-  const SpeechModelInfo *vadModel() const;
-  std::optional<SpeechModel> model(std::string_view id) const;
+  std::vector<LocalModel> models(std::optional<AI::Capabilities> caps = std::nullopt) const;
+  const LocalModelInfo *vadModel() const;
+  std::optional<LocalModel> model(std::string_view id) const;
   bool isInstalled(std::string_view id) const;
   std::optional<std::filesystem::path> installedPath(std::string_view id) const;
-  std::filesystem::path pathFor(const SpeechModelInfo &info) const;
+  std::filesystem::path pathFor(const LocalModelInfo &info) const;
   const std::filesystem::path &modelsDir() const { return m_dir; }
 
   /**
@@ -63,13 +63,13 @@ public:
 
   std::expected<void, std::string> remove(std::string_view id);
 
-  QUrl downloadUrl(const SpeechModelInfo &info) const;
+  QUrl downloadUrl(const LocalModelInfo &info) const;
   const QString &baseUrl() const { return m_baseUrl; }
 
 private:
   static QString resolveBaseUrl();
   static std::optional<QString> resolveToken();
-  bool isInstalled(const SpeechModelInfo &info) const;
+  bool isInstalled(const LocalModelInfo &info) const;
   void settle(const std::string &id);
 
   std::filesystem::path m_dir;

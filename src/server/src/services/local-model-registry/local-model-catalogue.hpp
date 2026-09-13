@@ -7,34 +7,39 @@
 #include <QCoreApplication>
 #include <QString>
 #include <QColor>
+#include "services/ai/ai-capability.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "ui/image/url.hpp"
 
-enum class SpeechEngine : std::uint8_t { Whisper, Parakeet, Vad };
-enum class SpeechModelVendor : std::uint8_t { OpenAI, Nvidia, Silero };
+enum class LocalEngine : std::uint8_t { Whisper, Parakeet, Vad, Llama };
+enum class LocalModelVendor : std::uint8_t { OpenAI, Nvidia, Silero };
 
-struct SpeechModelInfo {
+/**
+ * A model Vicinae can download and run itself. Entries with no capability are auxiliary files
+ * (e.g. voice activity detection) pulled in by another model and never shown to the user.
+ */
+struct LocalModelInfo {
   std::string_view id;
   std::string_view name;
   const char *description;
-  const char *languages;
-  SpeechEngine engine;
-  SpeechModelVendor vendor;
+  const char *languages = nullptr;
+  LocalEngine engine;
+  LocalModelVendor vendor;
+  AI::Capabilities caps = 0;
   std::string_view repo;
   std::string_view revision;
   std::string_view file;
   std::string_view quantization;
   std::uint64_t size;
   std::string_view sha256;
-  bool recommended = false;
 };
 
-namespace SpeechModelCatalogue {
+namespace LocalModelCatalogue {
 
-constexpr auto TRANSLATION_CONTEXT = "SpeechModelCatalogue";
+constexpr auto TRANSLATION_CONTEXT = "LocalModelCatalogue";
 
 // Registered with lupdate as an alias of QT_TRANSLATE_NOOP in the translations target.
-#define SPEECH_MODEL_TR(text) QT_TRANSLATE_NOOP("SpeechModelCatalogue", text)
+#define LOCAL_MODEL_TR(text) QT_TRANSLATE_NOOP("LocalModelCatalogue", text)
 
 constexpr auto WHISPER_REPO = std::string_view("ggerganov/whisper.cpp");
 constexpr auto WHISPER_REVISION = std::string_view("5359861c739e955e79d9a303bcbc70fb988958b1");
@@ -44,29 +49,30 @@ constexpr auto VAD_REPO = std::string_view("ggml-org/whisper-vad");
 constexpr auto VAD_REVISION = std::string_view("9ffd54a1e1ee413ddf265af9913beaf518d1639b");
 
 // clang-format off
-constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
+constexpr auto ENTRIES = std::to_array<LocalModelInfo>({
   {
     .id = "whisper-large-v3-turbo-q5_0",
     .name = "Whisper Large v3 Turbo (compact)",
-    .description = SPEECH_MODEL_TR("Recommended. Near large-v3 accuracy in every language, several times faster. Needs a GPU for comfortable dictation."),
-        .languages = SPEECH_MODEL_TR("About 100 languages"),
-    .engine = SpeechEngine::Whisper,
-    .vendor = SpeechModelVendor::OpenAI,
+    .description = LOCAL_MODEL_TR("Recommended. Near large-v3 accuracy in every language, several times faster. Needs a GPU for comfortable dictation."),
+        .languages = LOCAL_MODEL_TR("About 100 languages"),
+    .engine = LocalEngine::Whisper,
+    .vendor = LocalModelVendor::OpenAI,
+    .caps = AI::Capability::Transcription,
     .repo = WHISPER_REPO,
     .revision = WHISPER_REVISION,
     .file = "ggml-large-v3-turbo-q5_0.bin",
         .quantization = "q5_0",
     .size = 574041195,
     .sha256 = "394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2",
-    .recommended = true,
   },
   {
     .id = "whisper-large-v3-turbo",
     .name = "Whisper Large v3 Turbo",
-    .description = SPEECH_MODEL_TR("Full precision turbo. Marginally better than the compact file at three times the size."),
-        .languages = SPEECH_MODEL_TR("About 100 languages"),
-    .engine = SpeechEngine::Whisper,
-    .vendor = SpeechModelVendor::OpenAI,
+    .description = LOCAL_MODEL_TR("Full precision turbo. Marginally better than the compact file at three times the size."),
+        .languages = LOCAL_MODEL_TR("About 100 languages"),
+    .engine = LocalEngine::Whisper,
+    .vendor = LocalModelVendor::OpenAI,
+    .caps = AI::Capability::Transcription,
     .repo = WHISPER_REPO,
     .revision = WHISPER_REVISION,
     .file = "ggml-large-v3-turbo.bin",
@@ -77,10 +83,11 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "whisper-large-v3-q5_0",
     .name = "Whisper Large v3",
-    .description = SPEECH_MODEL_TR("Best accuracy outside English. Slower than turbo, GPU strongly recommended."),
-        .languages = SPEECH_MODEL_TR("About 100 languages"),
-    .engine = SpeechEngine::Whisper,
-    .vendor = SpeechModelVendor::OpenAI,
+    .description = LOCAL_MODEL_TR("Best accuracy outside English. Slower than turbo, GPU strongly recommended."),
+        .languages = LOCAL_MODEL_TR("About 100 languages"),
+    .engine = LocalEngine::Whisper,
+    .vendor = LocalModelVendor::OpenAI,
+    .caps = AI::Capability::Transcription,
     .repo = WHISPER_REPO,
     .revision = WHISPER_REVISION,
     .file = "ggml-large-v3-q5_0.bin",
@@ -91,10 +98,11 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "whisper-small-q5_1",
     .name = "Whisper Small",
-    .description = SPEECH_MODEL_TR("Lightweight multilingual model. Usable on CPU-only machines with a good microphone."),
-        .languages = SPEECH_MODEL_TR("About 100 languages"),
-    .engine = SpeechEngine::Whisper,
-    .vendor = SpeechModelVendor::OpenAI,
+    .description = LOCAL_MODEL_TR("Lightweight multilingual model. Usable on CPU-only machines with a good microphone."),
+        .languages = LOCAL_MODEL_TR("About 100 languages"),
+    .engine = LocalEngine::Whisper,
+    .vendor = LocalModelVendor::OpenAI,
+    .caps = AI::Capability::Transcription,
     .repo = WHISPER_REPO,
     .revision = WHISPER_REVISION,
     .file = "ggml-small-q5_1.bin",
@@ -105,10 +113,11 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "whisper-small.en-q5_1",
     .name = "Whisper Small (English)",
-    .description = SPEECH_MODEL_TR("Lightweight English-only model. Slightly more accurate than the multilingual small model for English."),
-        .languages = SPEECH_MODEL_TR("English"),
-    .engine = SpeechEngine::Whisper,
-    .vendor = SpeechModelVendor::OpenAI,
+    .description = LOCAL_MODEL_TR("Lightweight English-only model. Slightly more accurate than the multilingual small model for English."),
+        .languages = LOCAL_MODEL_TR("English"),
+    .engine = LocalEngine::Whisper,
+    .vendor = LocalModelVendor::OpenAI,
+    .caps = AI::Capability::Transcription,
     .repo = WHISPER_REPO,
     .revision = WHISPER_REVISION,
     .file = "ggml-small.en-q5_1.bin",
@@ -119,10 +128,11 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "parakeet-tdt-0.6b-v3-q8_0",
     .name = "Parakeet v3",
-    .description = SPEECH_MODEL_TR("Very fast, comfortable on CPU. English and 24 other European languages, detected automatically."),
-        .languages = SPEECH_MODEL_TR("English and 24 European languages"),
-    .engine = SpeechEngine::Parakeet,
-    .vendor = SpeechModelVendor::Nvidia,
+    .description = LOCAL_MODEL_TR("Very fast, comfortable on CPU. English and 24 other European languages, detected automatically."),
+        .languages = LOCAL_MODEL_TR("English and 24 European languages"),
+    .engine = LocalEngine::Parakeet,
+    .vendor = LocalModelVendor::Nvidia,
+    .caps = AI::Capability::Transcription,
     .repo = PARAKEET_REPO,
     .revision = PARAKEET_REVISION,
     .file = "ggml-parakeet-tdt-0.6b-v3-q8_0.bin",
@@ -133,10 +143,11 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "parakeet-tdt-0.6b-v3-f16",
     .name = "Parakeet v3 (full precision)",
-    .description = SPEECH_MODEL_TR("Full precision Parakeet. Same languages, twice the size of the compact file."),
-        .languages = SPEECH_MODEL_TR("English and 24 European languages"),
-    .engine = SpeechEngine::Parakeet,
-    .vendor = SpeechModelVendor::Nvidia,
+    .description = LOCAL_MODEL_TR("Full precision Parakeet. Same languages, twice the size of the compact file."),
+        .languages = LOCAL_MODEL_TR("English and 24 European languages"),
+    .engine = LocalEngine::Parakeet,
+    .vendor = LocalModelVendor::Nvidia,
+    .caps = AI::Capability::Transcription,
     .repo = PARAKEET_REPO,
     .revision = PARAKEET_REVISION,
     .file = "ggml-parakeet-tdt-0.6b-v3-f16.bin",
@@ -147,10 +158,10 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
   {
     .id = "silero-vad-v6.2.0",
     .name = "Silero VAD",
-    .description = SPEECH_MODEL_TR("Voice activity detector used to trim silence before transcription."),
-        .languages = SPEECH_MODEL_TR("Any"),
-    .engine = SpeechEngine::Vad,
-    .vendor = SpeechModelVendor::Silero,
+    .description = LOCAL_MODEL_TR("Voice activity detector used to trim silence before transcription."),
+        .languages = LOCAL_MODEL_TR("Any"),
+    .engine = LocalEngine::Vad,
+    .vendor = LocalModelVendor::Silero,
     .repo = VAD_REPO,
     .revision = VAD_REVISION,
     .file = "ggml-silero-v6.2.0.bin",
@@ -161,10 +172,10 @@ constexpr auto ENTRIES = std::to_array<SpeechModelInfo>({
 });
 // clang-format on
 
-constexpr std::span<const SpeechModelInfo> entries() { return ENTRIES; }
+constexpr std::span<const LocalModelInfo> entries() { return ENTRIES; }
 
-constexpr const SpeechModelInfo *find(std::string_view id) {
-  auto it = std::ranges::find(ENTRIES, id, &SpeechModelInfo::id);
+constexpr const LocalModelInfo *find(std::string_view id) {
+  auto it = std::ranges::find(ENTRIES, id, &LocalModelInfo::id);
   return it == ENTRIES.end() ? nullptr : &*it;
 }
 
@@ -179,23 +190,23 @@ constexpr bool hasUniqueIds() {
 
 constexpr bool hasValidChecksums() {
   return std::ranges::all_of(ENTRIES,
-                             [](const SpeechModelInfo &m) { return m.sha256.size() == 64 && m.size > 0; });
+                             [](const LocalModelInfo &m) { return m.sha256.size() == 64 && m.size > 0; });
 }
 
-static_assert(hasUniqueIds(), "speech model catalogue ids and file names must be unique");
-static_assert(hasValidChecksums(), "speech model catalogue entries need a sha256 and a size");
+static_assert(hasUniqueIds(), "local model catalogue ids and file names must be unique");
+static_assert(hasValidChecksums(), "local model catalogue entries need a sha256 and a size");
 
-inline ImageURL vendorIcon(SpeechModelVendor vendor) {
+inline ImageURL vendorIcon(LocalModelVendor vendor) {
   switch (vendor) {
-  case SpeechModelVendor::OpenAI:
+  case LocalModelVendor::OpenAI:
     return ImageURL::builtin(BuiltinIcon::Openai)
         .setBackgroundTint(QColor(Qt::white))
         .setFill(QColor(Qt::black));
-  case SpeechModelVendor::Nvidia:
+  case LocalModelVendor::Nvidia:
     return ImageURL::builtin(BuiltinIcon::Microphone)
         .setBackgroundTint(QColor(0x76, 0xB9, 0x00))
         .setFill(QColor(Qt::white));
-  case SpeechModelVendor::Silero:
+  case LocalModelVendor::Silero:
     return ImageURL::builtin(BuiltinIcon::SpeakerOn)
         .setBackgroundTint(QColor(0x6B, 0x72, 0x80))
         .setFill(QColor(Qt::white));
@@ -203,8 +214,8 @@ inline ImageURL vendorIcon(SpeechModelVendor vendor) {
   return ImageURL::builtin(BuiltinIcon::Microphone);
 }
 
-inline QString translatedDescription(const SpeechModelInfo &model) {
+inline QString translatedDescription(const LocalModelInfo &model) {
   return QCoreApplication::translate(TRANSLATION_CONTEXT, model.description);
 }
 
-} // namespace SpeechModelCatalogue
+} // namespace LocalModelCatalogue
