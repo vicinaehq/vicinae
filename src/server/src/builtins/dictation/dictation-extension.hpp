@@ -1,5 +1,4 @@
 #pragma once
-#include "builtins/dictation/dictation-models-view-host.hpp"
 #include "builtins/dictation/dictation-command.hpp"
 #include <qtmetamacros.h>
 #include <string_view>
@@ -55,21 +54,6 @@ class UnimplementedCommand : public BuiltinCallbackCommand {
   }
 };
 
-#ifdef HAS_LOCAL_AI
-class ManageModelsCommand : public BuiltinViewCommand<DictationModelsViewHost> {
-  Q_DECLARE_TR_FUNCTIONS(ManageModelsCommand)
-
-  QString id() const override { return "models"; }
-  QString name() const override { return tr("Manage Dictation Models"); }
-  ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Microphone)
-        .setBackgroundTint(Dictation::COLOR)
-        .setBadge(BuiltinIcon::Download);
-  }
-  std::vector<QString> keywords() const override { return {"whisper", "parakeet", "speech"}; }
-};
-#endif
-
 class AddVocabCommand : public UnimplementedCommand {
   Q_DECLARE_TR_FUNCTIONS(AddVocabCommand)
 
@@ -120,9 +104,6 @@ class DictationExtension : public BuiltinCommandRepository {
 public:
   DictationExtension() {
     registerCommand<TranscribeCommand>();
-#ifdef HAS_LOCAL_AI
-    registerCommand<ManageModelsCommand>();
-#endif
     registerCommand<VocabularyCommand>();
     registerCommand<AddVocabCommand>();
     registerCommand<DictationHistoryCommand>();

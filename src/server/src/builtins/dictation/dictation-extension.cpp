@@ -4,7 +4,7 @@
 #include <vector>
 #include "builtins/ai/ai-model-selector-utils.hpp"
 #include "service-registry.hpp"
-#include "services/local-speech-model-registry/speech-language-catalogue.hpp"
+#include "services/ai/speech-language-catalogue.hpp"
 #include "services/media-control/media-control-service.hpp"
 #include "services/paste/paste-service.hpp"
 

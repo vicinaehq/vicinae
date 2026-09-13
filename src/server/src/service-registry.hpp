@@ -45,7 +45,7 @@ class MediaControlService;
 class AppRuntime;
 class GlobalShortcutService;
 #ifdef HAS_LOCAL_AI
-class LocalSpeechModelRegistry;
+class LocalModelRegistry;
 #endif
 
 namespace config {
@@ -103,7 +103,7 @@ public:
   GlobalShortcutService *globalShortcuts() const;
   AI::Service *ai() const;
 #ifdef HAS_LOCAL_AI
-  LocalSpeechModelRegistry *speechModels() const;
+  LocalModelRegistry *localModels() const;
 #endif
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
@@ -150,7 +150,7 @@ public:
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
   void setAI(std::unique_ptr<AI::Service>);
 #ifdef HAS_LOCAL_AI
-  void setSpeechModels(std::unique_ptr<LocalSpeechModelRegistry> registry);
+  void setLocalModels(std::unique_ptr<LocalModelRegistry> registry);
 #endif
 
 private:
@@ -196,7 +196,7 @@ private:
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
 #ifdef HAS_LOCAL_AI
-  std::unique_ptr<LocalSpeechModelRegistry> m_speechModels;
+  std::unique_ptr<LocalModelRegistry> m_localModels;
 #endif
   std::unique_ptr<AI::Service> m_ai;
 };
