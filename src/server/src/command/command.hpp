@@ -8,7 +8,6 @@
 #include "common/entrypoint.hpp"
 
 class View;
-struct ApplicationContext;
 struct LaunchProps;
 
 class AbstractCmd {
@@ -30,7 +29,7 @@ public:
   virtual bool isFallback() const { return false; }
   virtual void preferenceValuesChanged(const QJsonObject &) const {}
   virtual bool isInternal() const { return false; }
-  virtual void shortcutReleased(const ApplicationContext *) const {}
+  virtual void shortcutReleased() const {}
 
   /**
    * Optional override of the navigation title that is to be shown when
