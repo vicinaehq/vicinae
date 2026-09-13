@@ -44,7 +44,6 @@ inline QVariantList buildGroupedModelList(AI::Service *service, std::optional<AI
 }
 
 inline QString providerDisplayName(std::string_view providerId) {
-  if (providerId == AI::LocalSpeechProvider::ID) return QStringLiteral("Local");
   auto title = QString::fromUtf8(providerId.data(), static_cast<qsizetype>(providerId.size()));
   if (!title.isEmpty()) title[0] = title[0].toUpper();
   return title;
