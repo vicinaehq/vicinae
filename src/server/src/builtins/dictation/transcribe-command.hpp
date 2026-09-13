@@ -14,4 +14,5 @@ class TranscribeCommand : public BuiltinCallbackCommand {
   std::vector<QString> keywords() const override { return {"dictate"}; }
 
   void execute(CommandController &controller) const override;
+  void shortcutReleased() const override;
 };
