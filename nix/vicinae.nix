@@ -17,6 +17,8 @@
   glaze,
   numen,
   whisper-cpp,
+  llama-cpp,
+  localAI ? true,
   pulseaudio ? null,
   swift ? null,
   apple-sdk ? null,
@@ -40,11 +42,21 @@
   });
   syntax-highlighting = addDarwinPlatform kdeScope.syntax-highlighting;
 
-  whisper = whisper-cpp.override {
+  llama = llama-cpp.override {
     vulkanSupport = isLinux;
-    withSDL = false;
-    withFFmpegSupport = false;
   };
+
+  # nixpkgs whisper-cpp and llama-cpp each ship their own libggml. Build whisper
+  # against llama's copy so vicinae links exactly one ggml.
+  whisper =
+    (whisper-cpp.override {
+      vulkanSupport = false;
+      withSDL = false;
+      withFFmpegSupport = false;
+    }).overrideAttrs (old: {
+      cmakeFlags = old.cmakeFlags ++ [(lib.cmakeBool "WHISPER_USE_SYSTEM_GGML" true)];
+      buildInputs = old.buildInputs ++ [llama];
+    });
 
   manifestRaw = builtins.readFile ../manifest.yaml;
   manifestGet = key: let
@@ -78,7 +90,13 @@ in
       "USE_SYSTEM_CMARK_GFM" = "ON";
       "USE_SYSTEM_GLAZE" = "ON";
       "USE_SYSTEM_NUMEN" = "ON";
+      "LOCAL_AI" =
+        if localAI
+        then "ON"
+        else "OFF";
       "USE_SYSTEM_WHISPER" = "ON";
+      "USE_SYSTEM_LLAMA" = "ON";
+      "USE_SYSTEM_GGML" = "ON";
       "USE_SYSTEM_KF6" = "ON";
       "USE_SYSTEM_QT_KEYCHAIN" = "ON";
       "CMAKE_INSTALL_PREFIX" = placeholder "out";
@@ -125,7 +143,10 @@ in
         qt6.qtsvg
         glaze
         numen
+      ]
+      ++ lib.optionals localAI [
         whisper
+        llama
       ]
       ++ lib.optionals isLinux [
         kdePackages.layer-shell-qt
