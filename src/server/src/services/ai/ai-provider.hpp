@@ -1,4 +1,5 @@
 #pragma once
+#include "ai-capability.hpp"
 #include "ai-tool.hpp"
 #include <cstdint>
 #include <expected>
@@ -25,22 +26,6 @@ class AbstractTool;
 namespace AI {
 
 template <typename T> using Result = std::expected<T, std::string>;
-
-/**
- * What a model is capable of.
- * Some models can do many 2026-03-05T21things at once.
- */
-enum Capability : std::uint8_t {
-  Completion = 1 << 0,
-  Vision = 1 << 1,
-  Thinking = 1 << 2,
-  ToolCalling = 1 << 3,
-  Embedding = 1 << 4,
-  Transcription = 1 << 5,
-  OCR = 1 << 6
-};
-
-using Capabilities = std::uint32_t;
 
 struct Model {
   std::string id;

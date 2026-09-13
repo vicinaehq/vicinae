@@ -6,7 +6,7 @@
 #include <string_view>
 #include <QJsonObject>
 #include "builtins/dictation/dictation-extension.hpp"
-#include "builtins/dictation/dictation-models-view-host.hpp"
+#include "builtins/ai/local-models-view-host.hpp"
 #include "builtins/dictation/dictation-session.hpp"
 #include "builtins/dictation/transcribe-view-host.hpp"
 #include "common/context.hpp"
@@ -119,8 +119,9 @@ void TranscribeCommand::execute(CommandController &controller) const {
           ctx->navigation->closeWindow();
         });
 #ifdef HAS_LOCAL_AI
-    intro->addSecondaryAction(tr("Manage Dictation Models"), ImageURL::builtin(BuiltinIcon::Download),
-                              [ctx]() { ctx->navigation->replaceView(new DictationModelsViewHost); });
+    intro->addSecondaryAction(
+        tr("Manage Dictation Models"), ImageURL::builtin(BuiltinIcon::Download),
+        [ctx]() { ctx->navigation->replaceView(new LocalModelsViewHost(AI::Capability::Transcription)); });
 #endif
     ctx->navigation->pushView(intro);
     return;
@@ -135,8 +136,9 @@ void TranscribeCommand::execute(CommandController &controller) const {
                                       ctx->navigation->closeWindow();
                                     });
 #ifdef HAS_LOCAL_AI
-    intro->addSecondaryAction(tr("Manage Dictation Models"), ImageURL::builtin(BuiltinIcon::Download),
-                              [ctx]() { ctx->navigation->replaceView(new DictationModelsViewHost); });
+    intro->addSecondaryAction(
+        tr("Manage Dictation Models"), ImageURL::builtin(BuiltinIcon::Download),
+        [ctx]() { ctx->navigation->replaceView(new LocalModelsViewHost(AI::Capability::Transcription)); });
 #endif
     ctx->navigation->pushView(intro);
     return;
