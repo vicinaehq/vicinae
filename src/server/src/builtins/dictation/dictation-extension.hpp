@@ -55,6 +55,7 @@ class UnimplementedCommand : public BuiltinCallbackCommand {
   }
 };
 
+#ifdef HAS_LOCAL_AI
 class ManageModelsCommand : public BuiltinViewCommand<DictationModelsViewHost> {
   Q_DECLARE_TR_FUNCTIONS(ManageModelsCommand)
 
@@ -67,6 +68,7 @@ class ManageModelsCommand : public BuiltinViewCommand<DictationModelsViewHost> {
   }
   std::vector<QString> keywords() const override { return {"whisper", "parakeet", "speech"}; }
 };
+#endif
 
 class AddVocabCommand : public UnimplementedCommand {
   Q_DECLARE_TR_FUNCTIONS(AddVocabCommand)
@@ -118,7 +120,9 @@ class DictationExtension : public BuiltinCommandRepository {
 public:
   DictationExtension() {
     registerCommand<TranscribeCommand>();
+#ifdef HAS_LOCAL_AI
     registerCommand<ManageModelsCommand>();
+#endif
     registerCommand<VocabularyCommand>();
     registerCommand<AddVocabCommand>();
     registerCommand<DictationHistoryCommand>();

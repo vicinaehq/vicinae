@@ -1,3 +1,4 @@
+#ifdef HAS_LOCAL_AI
 #include "local-speech-model-registry.hpp"
 #include <algorithm>
 #include <format>
@@ -171,3 +172,4 @@ void LocalSpeechModelRegistry::settle(const std::string &id) {
     if (it != m_downloads.end() && !it->second->isActive()) m_downloads.erase(it);
   });
 }
+#endif

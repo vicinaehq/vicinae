@@ -591,8 +591,7 @@ set(SRCS
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
 	src/services/ai/ai-config.hpp
-	src/services/ai/ai-provider-registry.hpp
-	src/services/ai/ai-provider-registry.cpp
+	src/services/ai/ai-service.cpp
 	src/services/ai/agentic-loop.hpp
 	src/services/ai/local-speech/local-speech-provider.hpp
 	src/services/local-speech-model-registry/speech-model-catalogue.hpp
