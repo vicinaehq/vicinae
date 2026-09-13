@@ -3,6 +3,7 @@
 #include <qlogging.h>
 #include <QSoundEffect>
 #include "common/context.hpp"
+#include "dictation-extension.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
@@ -17,8 +18,8 @@ constexpr int MESSAGE_DURATION_MS = 1500;
 
 DictationSession::DictationSession(const ApplicationContext *ctx, AI::ModelRef model,
                                    AI::TranscriptionOptions options, bool playSoundEffects, bool pauseMedia,
-                                   QObject *parent)
-    : QObject(parent), m_ctx(ctx), m_model(std::move(model)), m_options(std::move(options)),
+                                   Dictation::DictationAction action, QObject *parent)
+    : QObject(parent), m_ctx(ctx), m_model(std::move(model)), m_options(std::move(options)), m_action(action),
       m_playSoundEffects(playSoundEffects), m_pauseMedia(pauseMedia) {
   m_elapsedTimer.setInterval(1000);
 
@@ -99,8 +100,18 @@ void DictationSession::accept() {
           return;
         }
 
-        m_ctx->services->pasteService()->pasteContent(Clipboard::Text(QString::fromStdString(result->text)),
-                                                      {.transient = true});
+        auto content = Clipboard::Text(QString::fromStdString(result->text));
+
+        switch (m_action) {
+        case Dictation::DictationAction::PasteToActiveWindow:
+          m_ctx->services->pasteService()->pasteContent(content, {.transient = true});
+          break;
+        case Dictation::DictationAction::CopyToClipboard:
+          m_ctx->services->clipman()->copyContent(
+              content, {.concealed = true}); // will already indexed by transcription history
+          break;
+        }
+
         finish();
       });
 }

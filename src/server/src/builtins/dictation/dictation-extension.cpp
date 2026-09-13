@@ -18,6 +18,7 @@ Preference::DropdownData::Option languageOption(const SpeechLanguage &lang) {
 std::vector<Preference> DictationExtension::preferences() const {
   using namespace Dictation;
 
+  auto registry = ServiceRegistry::instance();
   std::vector<Preference> preferences;
 
   auto sections =
@@ -71,7 +72,7 @@ std::vector<Preference> DictationExtension::preferences() const {
   preferences.emplace_back(language);
   preferences.emplace_back(soundEffects);
 
-  if (ServiceRegistry::instance()->mediaControl()->available()) {
+  if (registry->mediaControl()->available()) {
     auto pauseMedia = Preference::makeCheckbox("pauseMedia");
 
     pauseMedia.setTitle(tr("Pause media"));
@@ -79,6 +80,25 @@ std::vector<Preference> DictationExtension::preferences() const {
     pauseMedia.setDefaultValue(true);
     preferences.emplace_back(pauseMedia);
   }
+
+  std::vector<Preference::DropdownData::Option> defaultActionOptions;
+  QString dflt = "copy";
+
+  if (registry->pasteService()->supportsPaste()) {
+    defaultActionOptions.emplace_back(
+        Preference::DropdownData::Option{tr("Paste to active window"), Dictation::ACTION_PASTE});
+    dflt = "paste";
+  }
+  defaultActionOptions.emplace_back(
+      Preference::DropdownData::Option{tr("Copy to clipboard"), Dictation::ACTION_COPY});
+
+  auto defaultAction = Preference::makeDropdown("dictationAction", defaultActionOptions);
+
+  defaultAction.setDefaultValue(dflt);
+  defaultAction.setTitle(tr("Dictation Action"));
+  defaultAction.setDescription(tr("What to do after dictation"));
+
+  preferences.emplace_back(defaultAction);
 
   return preferences;
 }
