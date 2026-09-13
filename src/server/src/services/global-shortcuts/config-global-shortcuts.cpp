@@ -20,10 +20,10 @@ void ConfigGlobalShortcuts::apply() {
 
   if (cfg.globalShortcuts.toggle && !cfg.globalShortcuts.toggle->empty()) {
     const auto id = QString::fromUtf8(TOGGLE_ID);
-    next.emplace_back(m_service.bind(id, {.trigger = Keyboard::Shortcut::fromString(
-                                              QString::fromStdString(*cfg.globalShortcuts.toggle)),
-                                          .description = tr("Toggle Vicinae"),
-                                          .onActivated = [this] { m_navigation.toggleWindow(); }}));
+    next.emplace_back(m_service.bind(
+        id, {.trigger = Keyboard::Shortcut::fromString(QString::fromStdString(*cfg.globalShortcuts.toggle)),
+             .description = tr("Toggle Vicinae"),
+             .onActivated = [this] { m_navigation.toggleWindow(); }}));
   }
 
   for (const auto &[provider, providerData] : cfg.providers) {
