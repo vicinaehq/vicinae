@@ -58,5 +58,11 @@ std::vector<Preference> DictationExtension::preferences() const {
   language.setDefaultValue(qs(AUTO_LANGUAGE));
   language.setRequired(false);
 
-  return {model, language};
+  auto soundEffects = Preference::makeCheckbox("sound");
+
+  soundEffects.setTitle(tr("Sound Effects"));
+  soundEffects.setDescription(tr("Whether to play a sound effect when starting or stopping dictation."));
+  soundEffects.setDefaultValue(true);
+
+  return {model, language, soundEffects};
 }
