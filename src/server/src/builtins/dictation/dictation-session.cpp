@@ -1,6 +1,7 @@
 #include "dictation-session.hpp"
 #include <QFile>
 #include <qlogging.h>
+#include <QSoundEffect>
 #include "common/context.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -14,9 +15,22 @@ constexpr int MESSAGE_DURATION_MS = 1500;
 }
 
 DictationSession::DictationSession(const ApplicationContext *ctx, AI::ModelRef model,
-                                   AI::TranscriptionOptions options, QObject *parent)
-    : QObject(parent), m_ctx(ctx), m_model(std::move(model)), m_options(std::move(options)) {
+                                   AI::TranscriptionOptions options, bool playSoundEffects, QObject *parent)
+    : QObject(parent), m_ctx(ctx), m_model(std::move(model)), m_options(std::move(options)),
+      m_playSoundEffects(playSoundEffects) {
   m_elapsedTimer.setInterval(1000);
+
+  if (m_playSoundEffects) {
+    const auto prepareSoundEffect = [](QSoundEffect &effect, const QUrl &url) {
+      effect.setSource(url);
+      effect.setLoopCount(1);
+      effect.setVolume(0.3f);
+    };
+
+    prepareSoundEffect(m_startSound, QUrl(QStringLiteral("qrc:/sound/dictation-start.wav")));
+    prepareSoundEffect(m_stopSound, QUrl(QStringLiteral("qrc:/sound/dictation-stop.wav")));
+  }
+
   connect(&m_elapsedTimer, &QTimer::timeout, this, &DictationSession::elapsedTimeChanged);
   connect(&m_recorder, &Audio::Recorder::levelChanged, this, &DictationSession::audioLevelChanged);
   connect(&m_recorder, &Audio::Recorder::errorOccurred, this,
@@ -34,6 +48,9 @@ bool DictationSession::start() {
   m_elapsedTimer.start();
   emit elapsedTimeChanged();
   m_ctx->navigation->showDictationHud(this);
+
+  if (m_playSoundEffects) { m_startSound.play(); }
+
   return true;
 }
 
@@ -49,6 +66,11 @@ void DictationSession::accept() {
 
   m_elapsedTimer.stop();
   m_recorder.stop();
+
+  if (m_playSoundEffects) {
+    m_startSound.stop();
+    m_stopSound.play();
+  }
 
   m_transcribing = true;
   emit stateChanged();

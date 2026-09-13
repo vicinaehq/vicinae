@@ -3,6 +3,7 @@
 #include <QString>
 #include <QTimer>
 #include <QtQml/qqmlregistration.h>
+#include <QSoundEffect>
 #include "services/ai/ai-provider.hpp"
 #include "services/audio/audio-recorder.hpp"
 
@@ -32,7 +33,7 @@ signals:
 
 public:
   DictationSession(const ApplicationContext *ctx, AI::ModelRef model, AI::TranscriptionOptions options = {},
-                   QObject *parent = nullptr);
+                   bool playSoundEffects = true, QObject *parent = nullptr);
 
   bool start();
   Q_INVOKABLE void accept();
@@ -60,4 +61,9 @@ private:
   QTimer m_elapsedTimer;
   bool m_transcribing = false;
   QString m_message;
+
+  // sound
+  bool m_playSoundEffects = true;
+  QSoundEffect m_startSound;
+  QSoundEffect m_stopSound;
 };

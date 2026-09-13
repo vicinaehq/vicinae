@@ -232,6 +232,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #ifdef Q_OS_MACOS
   if (!qEnvironmentVariableIsSet("QT_MAC_SET_RAISE_PROCESS")) qputenv("QT_MAC_SET_RAISE_PROCESS", "0");
 #endif
+#ifdef Q_OS_LINUX
+  // Qt's native PipeWire backend (6.10+) deadlocks on first device enumeration; PipeWire serves
+  // PulseAudio clients natively so nothing is lost.
+  if (!qEnvironmentVariableIsSet("QT_AUDIO_BACKEND")) qputenv("QT_AUDIO_BACKEND", "pulseaudio");
+#endif
 
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};

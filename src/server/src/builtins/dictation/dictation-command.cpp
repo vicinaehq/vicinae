@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <QPointer>
 #include <optional>
+#include <qlogging.h>
 #include <string_view>
 #include <QJsonObject>
 #include "builtins/dictation/dictation-extension.hpp"
@@ -67,7 +68,7 @@ Status status(const ApplicationContext *ctx) {
 }
 
 void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
-                    const AI::TranscriptionOptions &options) {
+                    const AI::TranscriptionOptions &options, bool playSoundEffects) {
   if (Environment::isHudDisabled()) {
     ctx->navigation->pushView(new TranscribeViewHost(model, options));
     return;
@@ -80,7 +81,7 @@ void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
     return;
   }
 
-  active = new DictationSession(ctx, model, options, ctx->navigation.get());
+  active = new DictationSession(ctx, model, options, playSoundEffects, ctx->navigation.get());
   active->start();
 }
 
@@ -96,10 +97,11 @@ void TranscribeCommand::shortcutReleased() const {
 void TranscribeCommand::execute(CommandController &controller) const {
   auto *ctx = controller.context();
   const auto status = ::status(ctx);
+  const bool playSoundEffects = controller.preferenceValues().value("sound").toBool(true);
 
   switch (status.readiness) {
   case Readiness::Ready:
-    startDictation(ctx, status.model->ref, status.options);
+    startDictation(ctx, status.model->ref, status.options, playSoundEffects);
     return;
   case Readiness::NoModels:
     ctx->navigation->pushView(
