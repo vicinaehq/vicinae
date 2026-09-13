@@ -41,15 +41,16 @@ list(APPEND LIBS
 )
 
 if (LOCAL_AI)
-	function(vicinae_fetch_whisper)
+	# llama.cpp is fetched first so that its bundled ggml serves whisper.cpp as well.
+	# Both pins sync the same ggml commit; bump them together.
+	function(vicinae_fetch_inference_engines)
 		include(FetchContent)
 
 		set(BUILD_SHARED_LIBS OFF)
-		set(WHISPER_BUILD_TESTS OFF)
-		set(WHISPER_BUILD_EXAMPLES OFF)
 
 		set(GGML_NATIVE OFF)
-		set(GGML_VULKAN ${WHISPER_VULKAN})
+		set(GGML_VULKAN ${LOCAL_AI_VULKAN})
+		set(GGML_METAL_EMBED_LIBRARY ON)
 
 		if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
 			set(GGML_SSE42 ON)
@@ -61,28 +62,55 @@ if (LOCAL_AI)
 			set(GGML_AVX512 OFF)
 		endif()
 
+		set(LLAMA_USE_SYSTEM_GGML ${USE_SYSTEM_GGML})
+		set(WHISPER_USE_SYSTEM_GGML ${USE_SYSTEM_GGML})
+		set(WHISPER_BUILD_TESTS OFF)
+		set(WHISPER_BUILD_EXAMPLES OFF)
+
 		set(EXCLUDE_ARG)
 		if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
 			set(EXCLUDE_ARG EXCLUDE_FROM_ALL)
 		endif()
 
-		FetchContent_Declare(whisper
-		  GIT_REPOSITORY https://github.com/ggml-org/whisper.cpp
-		  GIT_TAG        v1.9.3
-		  ${EXCLUDE_ARG}
-		)
+		set(ENGINES)
 
-		FetchContent_MakeAvailable(whisper)
+		if (NOT USE_SYSTEM_LLAMA)
+			FetchContent_Declare(llama
+			  GIT_REPOSITORY https://github.com/ggml-org/llama.cpp
+			  GIT_TAG        v0.1.2
+			  GIT_SHALLOW    TRUE
+			  ${EXCLUDE_ARG}
+			)
+			list(APPEND ENGINES llama)
+		endif()
+
+		if (NOT USE_SYSTEM_WHISPER)
+			FetchContent_Declare(whisper
+			  GIT_REPOSITORY https://github.com/ggml-org/whisper.cpp
+			  GIT_TAG        v1.9.3
+			  GIT_SHALLOW    TRUE
+			  ${EXCLUDE_ARG}
+			)
+			list(APPEND ENGINES whisper)
+		endif()
+
+		if (ENGINES)
+			FetchContent_MakeAvailable(${ENGINES})
+		endif()
 	endfunction()
+
+	if (USE_SYSTEM_LLAMA)
+		find_package(llama REQUIRED)
+	endif()
 
 	if (USE_SYSTEM_WHISPER)
 		find_package(whisper REQUIRED)
 		find_package(parakeet REQUIRED)
-	else()
-		vicinae_fetch_whisper()
 	endif()
 
-	list(APPEND LIBS whisper parakeet)
+	vicinae_fetch_inference_engines()
+
+	list(APPEND LIBS whisper parakeet llama)
 endif()
 
 list(APPEND LIBS KF6::SyntaxHighlighting)
