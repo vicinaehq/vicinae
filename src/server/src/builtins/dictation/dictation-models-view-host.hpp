@@ -1,4 +1,5 @@
 #pragma once
+#ifdef HAS_LOCAL_AI
 #include <algorithm>
 #include <ranges>
 #include <QCoreApplication>
@@ -243,3 +244,4 @@ private:
 
   QTimer m_refreshTimer;
 };
+#endif

@@ -6,6 +6,7 @@
 #include "service-registry.hpp"
 #include "services/local-speech-model-registry/speech-language-catalogue.hpp"
 #include "services/media-control/media-control-service.hpp"
+#include "services/paste/paste-service.hpp"
 
 namespace {
 

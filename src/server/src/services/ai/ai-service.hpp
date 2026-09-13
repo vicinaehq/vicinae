@@ -7,14 +7,11 @@
 #include <qlogging.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
-#include "ai-provider-registry.hpp"
 #include "ai-provider.hpp"
 #include "common/types.hpp"
 #include "services/ai/ai-config.hpp"
 #include "services/audio/audio-recorder.hpp"
-#include "services/local-speech-model-registry/local-speech-model-registry.hpp"
 #include "vicinae.hpp"
-#include "services/ai/local-speech/local-speech-provider.hpp"
 
 namespace AI {
 class Service : public QObject, NonCopyable {
@@ -24,18 +21,20 @@ signals:
   void modelsChanged() const;
 
 public:
-  explicit Service(LocalSpeechModelRegistry &speechModels)
-      : m_registry(makeBuiltinRegistry()), m_configManager(Omnicast::configDir() / "ai.json") {
-
-#ifdef HAS_LOCAL_AI
-    addBuiltinProvider(std::make_unique<LocalSpeechProvider>(speechModels));
-#endif
-
+  Service() : m_configManager(Omnicast::configDir() / "ai.json") {
     connect(&m_configManager, &ConfigManager::configChanged, this, &Service::reconcileProviders);
     m_configManager.load();
   }
 
   ~Service() override = default;
+
+  void addProvider(std::unique_ptr<AbstractProvider> provider) {
+    auto id = provider->id();
+    connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
+    provider->start();
+    m_staticProviders.insert(id);
+    m_providers[std::move(id)] = std::move(provider);
+  }
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::optional<ModelRef> ref, const ChatCompletionPayload &payload) const {
@@ -131,13 +130,7 @@ private:
     return nullptr;
   }
 
-  void addBuiltinProvider(std::unique_ptr<AbstractProvider> provider) {
-    auto id = provider->id();
-    connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
-    provider->start();
-    m_builtinProviders.insert(id);
-    m_providers[std::move(id)] = std::move(provider);
-  }
+  static std::unique_ptr<AbstractProvider> createProvider(const ConfigValue::ProviderConfig &config);
 
   void reconcileProviders(const ConfigValue &current, const ConfigValue &previous) {
     auto const &newProviders = current.providers;
@@ -145,7 +138,7 @@ private:
 
     std::erase_if(m_providers, [&](const auto &entry) {
       auto const &[id, provider] = entry;
-      if (m_builtinProviders.contains(id)) return false;
+      if (m_staticProviders.contains(id)) return false;
       auto it = newProviders.find(id);
       if (it == newProviders.end()) return true;
       auto oldIt = oldProviders.find(id);
@@ -156,8 +149,7 @@ private:
     for (auto const &[id, config] : newProviders) {
       if (m_providers.contains(id)) continue;
 
-      auto provider = m_registry.create(config);
-      if (!provider) continue;
+      auto provider = createProvider(config);
       connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
       toStart.emplace_back(provider.get());
       m_providers[id] = std::move(provider);
@@ -168,9 +160,8 @@ private:
     }
   }
 
-  ProviderRegistry m_registry;
   std::unordered_map<std::string, std::unique_ptr<AI::AbstractProvider>> m_providers;
-  std::unordered_set<std::string> m_builtinProviders;
+  std::unordered_set<std::string> m_staticProviders;
   ConfigManager m_configManager;
 };
 }; // namespace AI

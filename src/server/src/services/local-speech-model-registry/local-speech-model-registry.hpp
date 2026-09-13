@@ -1,4 +1,5 @@
 #pragma once
+#ifdef HAS_LOCAL_AI
 #include <expected>
 #include <filesystem>
 #include <optional>
@@ -76,3 +77,4 @@ private:
   std::optional<QString> m_token;
   std::unordered_map<std::string, QObjectUniquePtr<ModelDownload>> m_downloads;
 };
+#endif
