@@ -39,6 +39,10 @@ public:
   Q_INVOKABLE void cancel();
 
   bool isActive() const { return m_recorder.state() != Audio::Recorder::State::Idle || m_transcribing; }
+  bool isRecording() const {
+    return m_recorder.state() == Audio::Recorder::State::Recording && !m_transcribing;
+  }
+  auto recordingMs() const { return m_recorder.elapsedMs(); }
   float audioLevel() const { return m_recorder.level(); }
   QString elapsedTime() const;
   bool transcribing() const { return m_transcribing; }
