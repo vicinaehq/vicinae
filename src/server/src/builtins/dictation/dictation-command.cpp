@@ -1,6 +1,7 @@
 #include "dictation-command.hpp"
 #include <algorithm>
 #include <QPointer>
+#include <functional>
 #include <optional>
 #include <qlogging.h>
 #include <string_view>
@@ -13,6 +14,7 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/permissions/macos-permission-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "utils/environment.hpp"
@@ -20,7 +22,7 @@
 
 namespace {
 
-const auto NO_MODEL_ICON =
+const auto MICROPHONE_OFF_ICON =
     ImageURL::builtin(BuiltinIcon::MicrophoneDisabled).setBackgroundTint(Dictation::COLOR);
 const auto SELECT_MODEL_ICON =
     ImageURL::builtin(BuiltinIcon::Microphone).setBackgroundTint(Dictation::COLOR).setBadge(BuiltinIcon::Cog);
@@ -86,6 +88,32 @@ void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
   active->start();
 }
 
+void withMicrophoneAccess(const ApplicationContext *ctx, std::function<void()> start) {
+  using vicinae::permissions::MicrophoneStatus;
+
+  switch (vicinae::permissions::microphoneStatus()) {
+  case MicrophoneStatus::Granted:
+    start();
+    return;
+  case MicrophoneStatus::NotDetermined:
+    ctx->navigation->closeWindow();
+    vicinae::permissions::requestMicrophone([start = std::move(start)](bool granted) {
+      if (granted) start();
+    });
+    return;
+  case MicrophoneStatus::Denied:
+    ctx->navigation->pushView(new IntroViewHost(
+        TranscribeCommand::tr("Allow microphone access"),
+        TranscribeCommand::tr("Dictation needs to hear you. Turn on the microphone for Vicinae in "
+                              "System Settings, then try again."),
+        MICROPHONE_OFF_ICON, TranscribeCommand::tr("Open System Settings"), [ctx]() {
+          vicinae::permissions::openMicrophoneSettings();
+          ctx->navigation->closeWindow();
+        }));
+    return;
+  }
+}
+
 } // namespace
 
 ImageURL TranscribeCommand::iconUrl() const { return Dictation::ICON; }
@@ -105,7 +133,10 @@ void TranscribeCommand::execute(CommandController &controller) const {
 
   switch (status.readiness) {
   case Readiness::Ready:
-    startDictation(ctx, status.model->ref, status.options, playSoundEffects, pauseMedia, action);
+    withMicrophoneAccess(ctx, [ctx, model = status.model->ref, options = status.options, playSoundEffects,
+                              pauseMedia, action]() {
+      startDictation(ctx, model, options, playSoundEffects, pauseMedia, action);
+    });
     return;
   case Readiness::NoModels:
     ctx->navigation->pushView(
@@ -113,7 +144,7 @@ void TranscribeCommand::execute(CommandController &controller) const {
                           tr("Dictation needs a speech model before it can turn your voice into text. "
                              "Install one that runs on this machine, or add an AI provider that offers "
                              "transcription."),
-                          NO_MODEL_ICON, tr("Open AI Settings"), [ctx]() {
+                          MICROPHONE_OFF_ICON, tr("Open AI Settings"), [ctx]() {
                             ctx->settings->openTab("ai");
                             ctx->navigation->closeWindow();
                           }));
