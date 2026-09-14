@@ -392,7 +392,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setUpdateService(
         std::make_unique<UpdateService>(*registry->toastService(), std::move(updateInstaller)));
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
-    auto ai = std::make_unique<AI::Service>();
+    auto ai = std::make_unique<AI::Service>(*registry->config(), *registry->localStorage());
 #ifdef HAS_LOCAL_AI
     auto localModels = std::make_unique<LocalModelRegistry>();
     ai->addProvider(std::make_unique<AI::LocalProvider>(*localModels));

@@ -86,30 +86,39 @@ void SettingsWindow::reloadRoot() {
   show();
 }
 
-void SettingsWindow::setCurrentPage(const QString &page) {
-  if (m_currentPage == page) return;
+void SettingsWindow::setCurrentPage(const QString &page) { navigate({.page = page}); }
+
+void SettingsWindow::setCurrentSubpage(const QString &subpage) {
+  navigate({.page = m_route.page, .subpage = subpage});
+}
+
+void SettingsWindow::navigate(const Route &route) {
+  if (m_route == route) return;
   if (!m_navigatingHistory) {
-    m_backStack.append(m_currentPage);
+    m_backStack.append(m_route);
     m_forwardStack.clear();
   }
-  m_currentPage = page;
-  emit currentPageChanged();
+  const bool pageChanged = m_route.page != route.page;
+  const bool subpageChanged = m_route.subpage != route.subpage;
+  m_route = route;
+  if (pageChanged) emit currentPageChanged();
+  if (subpageChanged) emit currentSubpageChanged();
   emit historyChanged();
 }
 
 void SettingsWindow::goBack() {
   if (m_backStack.isEmpty()) return;
-  m_forwardStack.append(m_currentPage);
+  m_forwardStack.append(m_route);
   m_navigatingHistory = true;
-  setCurrentPage(m_backStack.takeLast());
+  navigate(m_backStack.takeLast());
   m_navigatingHistory = false;
 }
 
 void SettingsWindow::goForward() {
   if (m_forwardStack.isEmpty()) return;
-  m_backStack.append(m_currentPage);
+  m_backStack.append(m_route);
   m_navigatingHistory = true;
-  setCurrentPage(m_forwardStack.takeLast());
+  navigate(m_forwardStack.takeLast());
   m_navigatingHistory = false;
 }
 

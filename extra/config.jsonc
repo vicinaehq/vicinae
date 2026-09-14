@@ -32,6 +32,17 @@
 		"enabled": true
 	},
 
+	// AI provider configuration.
+	// Configuring providers unlock their use in various parts of the app,
+	// such as dictation.
+	// Sensitive fields such as API keys, passwords, tokens, etc... are automatically
+	// stored in the internal encrypted database, and are not written here. Only public
+	// fields are.
+	// The recommended way to configure this is to use the relevant settings panel.
+	"ai": {
+		"providers": {}
+	},
+
 	// Whether root search should also search files directly.
 	// File search is performed asynchrounously: files may take an instant to appear after a query is entered.
 	// Turning this on results in an increase in CPU usage when searching.
@@ -253,5 +264,12 @@
 	// written to the "providers" object below (password preferences excluded).
 	//
 	// The exact list of available providers depends on what extensions have been installed.
-	"providers": {}
+	"providers": {},
+
+	// AI providers, keyed by instance id. Each entry has a "type" (e.g "ollama", "mistral") and the
+	// provider type's settings. Secrets such as API keys are never stored here: the settings window
+	// keeps them in encrypted local storage.
+	"ai": {
+		"providers": {}
+	}
 }
