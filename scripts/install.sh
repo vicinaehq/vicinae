@@ -11,12 +11,23 @@ SYSTEMD_SERVICE_NAME="vicinae.service"
 # Installation prefix - can be overridden via environment or --prefix flag
 PREFIX="${PREFIX:-/usr/local}"
 
+# systemd searches a fixed set of user unit directories. "$PREFIX/lib/systemd/user"
+# is one of them for /usr and /usr/local, but not for a prefix under $HOME, where
+# the XDG data directory is the one it looks at.
+resolve_systemd_user_dir() {
+	if [[ "$PREFIX" == "$HOME" || "$PREFIX" == "$HOME"/* ]]; then
+		echo "${XDG_DATA_HOME:-$HOME/.local/share}/systemd/user"
+	else
+		echo "$PREFIX/lib/systemd/user"
+	fi
+}
+
 # Derived paths based on PREFIX
 INSTALL_DIR="$PREFIX/lib/vicinae"
 BIN_DIR="$PREFIX/bin"
 THEMES_DIR="$PREFIX/share/vicinae/themes"
 APPLICATIONS_DIR="$PREFIX/share/applications"
-SYSTEMD_USER_DIR="$PREFIX/lib/systemd/user"
+SYSTEMD_USER_DIR="$(resolve_systemd_user_dir)"
 
 VICINAE_SCRIPT_PATH="$TEMP_DIR/vicinae-install-script.sh"
 SCRIPT_DOWNLOAD_URL="https://vicinae.com/install"
@@ -665,7 +676,7 @@ main() {
 			BIN_DIR="$PREFIX/bin"
 			THEMES_DIR="$PREFIX/share/vicinae/themes"
 			APPLICATIONS_DIR="$PREFIX/share/applications"
-			SYSTEMD_USER_DIR="$PREFIX/lib/systemd/user"
+			SYSTEMD_USER_DIR="$(resolve_systemd_user_dir)"
 			shift 2
 			;;
 		--token)
