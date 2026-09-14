@@ -134,9 +134,9 @@ std::expected<ModelDownload *, std::string> LocalModelRegistry::download(std::st
   });
 
   m_downloads.insert_or_assign(key, std::move(download));
+  handle->start();
   emit downloadStarted(qid);
   emit modelsChanged();
-  handle->start();
 
   return handle;
 }

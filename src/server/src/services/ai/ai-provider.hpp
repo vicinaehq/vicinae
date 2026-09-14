@@ -165,11 +165,30 @@ struct TranscriptionResponse {
 
 using TranscriptionResult = std::expected<TranscriptionResponse, std::string>;
 
+/**
+ * A model a provider can install on the user's behalf, with its current state.
+ */
+struct ManagedModel {
+  enum class State : std::uint8_t { Absent, Downloading, Installed };
+
+  std::string id;
+  std::string name;
+  std::string description;
+  std::optional<ImageUrl> icon;
+  Capabilities caps = 0;
+  std::uint64_t size = 0;
+  std::string precision;
+  std::string languages;
+  State state = State::Absent;
+  double progress = -1.0;
+};
+
 class AbstractProvider : public QObject {
   Q_OBJECT
 
 signals:
   void modelsUpdated() const;
+  void managedModelsChanged() const;
 
 public:
   AbstractProvider() = default;
@@ -179,6 +198,25 @@ public:
    * Unique identifier for this provider.
    */
   virtual std::string id() const = 0;
+
+  /**
+   * Name shown to the user. Defaults to the id.
+   */
+  virtual std::string displayName() const { return id(); }
+
+  /**
+   * Providers that download and store models themselves expose their catalogue here. The catalogue
+   * includes models that are not installed yet; `listModels` only ever returns usable ones.
+   */
+  virtual bool managesModels() const { return false; }
+  virtual std::vector<ManagedModel> managedModels() const { return {}; }
+  virtual std::expected<void, std::string> downloadModel(std::string_view) {
+    return std::unexpected("This provider does not manage models");
+  }
+  virtual void cancelDownload(std::string_view) {}
+  virtual std::expected<void, std::string> removeModel(std::string_view) {
+    return std::unexpected("This provider does not manage models");
+  }
 
   /**
    * An icon representing the provider, if applicable.

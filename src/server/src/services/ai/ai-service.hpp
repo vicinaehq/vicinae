@@ -1,6 +1,10 @@
 #pragma once
 #include <format>
+#include <map>
 #include <memory>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 #include <qfuture.h>
 #include <qimage.h>
@@ -9,32 +13,31 @@
 #include <qtmetamacros.h>
 #include "ai-provider.hpp"
 #include "common/types.hpp"
-#include "services/ai/ai-config.hpp"
+#include "config/config.hpp"
 #include "services/audio/audio-recorder.hpp"
-#include "vicinae.hpp"
+
+class LocalStorageService;
 
 namespace AI {
+
+using ProviderFields = std::map<std::string, std::string>;
+
 class Service : public QObject, NonCopyable {
   Q_OBJECT
 
 signals:
   void modelsChanged() const;
+  void managedModelsChanged() const;
 
 public:
-  Service() : m_configManager(Omnicast::configDir() / "ai.json") {
-    connect(&m_configManager, &ConfigManager::configChanged, this, &Service::reconcileProviders);
-    m_configManager.load();
-  }
-
+  Service(config::Manager &config, LocalStorageService &storage);
   ~Service() override = default;
 
-  void addProvider(std::unique_ptr<AbstractProvider> provider) {
-    auto id = provider->id();
-    connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
-    provider->start();
-    m_staticProviders.insert(id);
-    m_providers[std::move(id)] = std::move(provider);
-  }
+  static QString secretScope(std::string_view providerId);
+
+  void addProvider(std::unique_ptr<AbstractProvider> provider);
+  void reloadProvider(std::string_view id);
+  bool isStatic(std::string_view id) const { return m_staticProviders.contains(std::string(id)); }
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::optional<ModelRef> ref, const ChatCompletionPayload &payload) const {
@@ -44,14 +47,11 @@ public:
   }
 
   QFuture<AI::Result<TranscriptionResponse>> transcribe(Audio::Recording recording, const QString &mime) {
-
     for (const auto &[id, provider] : m_providers) {
       if (const auto model = provider->findBestModel(Capability::Transcription)) {
-        if (!isModelEnabled(ModelRef{id, model->id})) continue;
         return provider->transcribe(std::move(recording));
       }
     }
-
     return {};
   }
 
@@ -71,8 +71,6 @@ public:
     return nullptr;
   }
 
-  ConfigManager &configManager() { return m_configManager; }
-
   const auto &providers() const { return m_providers; }
 
   std::vector<AI::ProviderModel> listModels(std::optional<Capabilities> caps = std::nullopt) {
@@ -82,10 +80,7 @@ public:
     for (const auto &[id, provider] : m_providers) {
       for (auto &model : provider->listModels()) {
         if (caps && !(model.caps & *caps)) continue;
-        ProviderModel pmodel(id, std::move(model));
-        pmodel.enabled = isModelEnabled(pmodel.ref);
-        if (!pmodel.enabled) continue;
-        models.emplace_back(std::move(pmodel));
+        models.emplace_back(id, std::move(model));
       }
     }
 
@@ -98,16 +93,9 @@ public:
 
     std::vector<AI::ProviderModel> models;
     for (auto &model : it->second->listModels()) {
-      ProviderModel pmodel(std::string(providerId), std::move(model));
-      pmodel.enabled = isModelEnabled(pmodel.ref);
-      models.emplace_back(std::move(pmodel));
+      models.emplace_back(std::string(providerId), std::move(model));
     }
     return models;
-  }
-
-  bool isModelEnabled(const ModelRef &ref) const {
-    auto it = m_configManager.value().models.find(ref.toString());
-    return it == m_configManager.value().models.end() || it->second.enabled;
   }
 
 private:
@@ -122,7 +110,6 @@ private:
 
     for (const auto &[id, provider] : m_providers) {
       if (const auto model = provider->findBestModel(AI::Capability::Completion)) {
-        if (!isModelEnabled(ModelRef{id, model->id})) continue;
         return provider->createChatCompletion(model->id, payload);
       }
     }
@@ -130,38 +117,15 @@ private:
     return nullptr;
   }
 
-  static std::unique_ptr<AbstractProvider> createProvider(const ConfigValue::ProviderConfig &config);
+  static std::unique_ptr<AbstractProvider> createProvider(std::string_view type,
+                                                          const ProviderFields &fields);
+  ProviderFields resolveFields(std::string_view id, const glz::generic::object_t &object) const;
+  void instantiate(const std::string &id, const glz::generic::object_t &object);
+  void reconcile(const config::ConfigValue &current, const config::ConfigValue &previous);
 
-  void reconcileProviders(const ConfigValue &current, const ConfigValue &previous) {
-    auto const &newProviders = current.providers;
-    auto const &oldProviders = previous.providers;
-
-    std::erase_if(m_providers, [&](const auto &entry) {
-      auto const &[id, provider] = entry;
-      if (m_staticProviders.contains(id)) return false;
-      auto it = newProviders.find(id);
-      if (it == newProviders.end()) return true;
-      auto oldIt = oldProviders.find(id);
-      return oldIt == oldProviders.end() || oldIt->second != it->second;
-    });
-
-    std::vector<AbstractProvider *> toStart;
-    for (auto const &[id, config] : newProviders) {
-      if (m_providers.contains(id)) continue;
-
-      auto provider = createProvider(config);
-      connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
-      toStart.emplace_back(provider.get());
-      m_providers[id] = std::move(provider);
-    }
-
-    for (auto *provider : toStart) {
-      provider->start();
-    }
-  }
-
+  config::Manager &m_config;
+  LocalStorageService &m_storage;
   std::unordered_map<std::string, std::unique_ptr<AI::AbstractProvider>> m_providers;
   std::unordered_set<std::string> m_staticProviders;
-  ConfigManager m_configManager;
 };
 }; // namespace AI
