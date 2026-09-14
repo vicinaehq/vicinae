@@ -325,6 +325,11 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
 
     if (pvd.empty()) { user.providers.reset(); }
   }
+
+  if (user.ai) {
+    if (user.ai->providers && user.ai->providers->empty()) { user.ai->providers.reset(); }
+    if (!user.ai->providers) { user.ai.reset(); }
+  }
 }
 
 }; // namespace config

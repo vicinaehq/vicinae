@@ -6,7 +6,6 @@
 #include <string_view>
 #include <QJsonObject>
 #include "builtins/dictation/dictation-extension.hpp"
-#include "builtins/ai/local-models-view-host.hpp"
 #include "builtins/dictation/dictation-session.hpp"
 #include "builtins/dictation/transcribe-view-host.hpp"
 #include "common/context.hpp"
@@ -108,24 +107,17 @@ void TranscribeCommand::execute(CommandController &controller) const {
   case Readiness::Ready:
     startDictation(ctx, status.model->ref, status.options, playSoundEffects, pauseMedia, action);
     return;
-  case Readiness::NoModels: {
-    auto *intro = new IntroViewHost(
-        tr("Set up dictation"),
-        tr("Dictation needs a speech model before it can turn your voice into text. "
-           "Install one that runs on this machine, or add an AI provider that offers transcription."),
-        NO_MODEL_ICON, tr("Open Dictation Settings"), [ctx]() {
-          ctx->settings->openExtensionPreferences(
-              EntrypointId{std::string(Dictation::REPOSITORY_ID), "transcribe"});
-          ctx->navigation->closeWindow();
-        });
-#ifdef HAS_LOCAL_AI
-    intro->addSecondaryAction(
-        tr("Manage Dictation Models"), ImageURL::builtin(BuiltinIcon::Download),
-        [ctx]() { ctx->navigation->replaceView(new LocalModelsViewHost(AI::Capability::Transcription)); });
-#endif
-    ctx->navigation->pushView(intro);
+  case Readiness::NoModels:
+    ctx->navigation->pushView(
+        new IntroViewHost(tr("Set up dictation"),
+                          tr("Dictation needs a speech model before it can turn your voice into text. "
+                             "Install one that runs on this machine, or add an AI provider that offers "
+                             "transcription."),
+                          NO_MODEL_ICON, tr("Open AI Settings"), [ctx]() {
+                            ctx->settings->openTab("ai");
+                            ctx->navigation->closeWindow();
+                          }));
     return;
-  }
   case Readiness::NotSelected: {
     auto *intro = new IntroViewHost(tr("Choose a transcription model"),
                                     tr("Pick the model dictation should use from the dictation settings. "
@@ -135,11 +127,6 @@ void TranscribeCommand::execute(CommandController &controller) const {
                                           EntrypointId{std::string(Dictation::REPOSITORY_ID), "transcribe"});
                                       ctx->navigation->closeWindow();
                                     });
-#ifdef HAS_LOCAL_AI
-    intro->addSecondaryAction(
-        tr("Manage Dictation Models"), ImageURL::builtin(BuiltinIcon::Download),
-        [ctx]() { ctx->navigation->replaceView(new LocalModelsViewHost(AI::Capability::Transcription)); });
-#endif
     ctx->navigation->pushView(intro);
     return;
   }
