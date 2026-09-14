@@ -258,18 +258,19 @@ bool CalculatorService::unpinRecord(const QString &id) {
   auto currentPos = std::ranges::find_if(m_records, [&](auto &&rec) { return rec.id == id; });
   auto record = *currentPos;
 
+  m_records.erase(currentPos);
+  record.pinnedAt = std::nullopt;
+
   auto newPos = m_records.begin();
 
   while (newPos != m_records.end() && newPos->pinnedAt) {
     ++newPos;
   }
 
-  while (newPos != m_records.end() && newPos->createdAt > currentPos->createdAt) {
+  while (newPos != m_records.end() && newPos->createdAt > record.createdAt) {
     ++newPos;
   }
 
-  m_records.erase(currentPos);
-  record.pinnedAt = std::nullopt;
   m_records.insert(newPos, record);
 
   emit recordUnpinned(id);
