@@ -27,9 +27,7 @@ public:
   }
 
   std::optional<QString> unlocalizedName() const override {
-    return m_entry.unlocalizedName()
-        .or_else([&]() { return m_entry.genericName(); })
-        .transform([](auto &&str) { return QString::fromStdString(str); });
+    return m_entry.unlocalizedName().transform([](auto &&str) { return QString::fromStdString(str); });
   }
 
   bool matchesWindowClass(const QString &target) const override {

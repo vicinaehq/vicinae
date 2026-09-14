@@ -32,10 +32,10 @@ const std::unordered_set<std::string> &knownTerminalBundleIds() {
 
 MacApplication::MacApplication(std::filesystem::path bundlePath, QString id,
                                std::optional<QString> bundleIdentifier, QString displayName,
-                               QString executable)
+                               std::optional<QString> unlocalizedName, QString executable)
     : m_bundlePath(std::move(bundlePath)), m_id(std::move(id)),
       m_bundleIdentifier(std::move(bundleIdentifier)), m_displayName(std::move(displayName)),
-      m_executable(std::move(executable)) {}
+      m_unlocalizedName(std::move(unlocalizedName)), m_executable(std::move(executable)) {}
 
 std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem::path &bundlePath) {
   @autoreleasepool {
@@ -75,10 +75,18 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
     if (displayName.length == 0) displayName = info[@"CFBundleName"];
     if (displayName.length == 0) { displayName = [[nsPath lastPathComponent] stringByDeletingPathExtension]; }
 
+    NSString *unlocalizedName = info[@"CFBundleDisplayName"];
+    if (unlocalizedName.length == 0) unlocalizedName = info[@"CFBundleName"];
+    std::optional<QString> unlocalized;
+    if (unlocalizedName.length > 0 && ![unlocalizedName isEqualToString:displayName]) {
+      unlocalized = toQString(unlocalizedName);
+    }
+
     NSString *executable = info[@"CFBundleExecutable"];
 
     return std::make_shared<MacApplication>(bundlePath, std::move(id), std::move(bundleIdentifier),
-                                            toQString(displayName), toQString(executable));
+                                            toQString(displayName), std::move(unlocalized),
+                                            toQString(executable));
   }
 }
 

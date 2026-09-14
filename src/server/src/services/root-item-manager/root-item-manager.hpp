@@ -126,6 +126,12 @@ public:
    */
   virtual std::vector<QString> keywords() const { return {}; }
 
+  /**
+   * Untranslated version of the title, if it differs from the displayed one.
+   * Scored with the same weight as the title so that localized items stay searchable in English.
+   */
+  virtual std::optional<QString> unlocalizedTitle() const { return std::nullopt; }
+
   virtual void preferenceValuesChanged(const QJsonObject &values) const {}
 
   virtual QString settingsDescription() const { return {}; }
@@ -237,6 +243,7 @@ public:
   struct SearchableRootItem {
     std::shared_ptr<RootItem> item;
     std::string title;
+    std::string unlocalizedTitle;
     std::string subtitle;
     std::vector<std::string> keywords;
     RootItemMetadata *meta = nullptr;
