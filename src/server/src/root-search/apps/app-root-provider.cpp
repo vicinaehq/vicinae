@@ -18,13 +18,9 @@ QString AppRootItem::typeDisplayName() const {
   return category.isEmpty() ? tr("Application") : category;
 }
 
-std::vector<QString> AppRootItem::keywords() const {
-  auto keywords = m_app->keywords();
+std::vector<QString> AppRootItem::keywords() const { return m_app->keywords(); }
 
-  if (auto name = m_app->unlocalizedName()) { keywords.emplace_back(name.value()); }
-
-  return keywords;
-}
+std::optional<QString> AppRootItem::unlocalizedTitle() const { return m_app->unlocalizedName(); }
 
 QString AppRootItem::subtitle() const { return QString(); }
 

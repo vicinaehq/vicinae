@@ -22,6 +22,7 @@ class AppRootItem : public RootItem {
   QString settingsDescription() const override;
   std::vector<std::pair<QString, QString>> settingsMetadata() const override;
   std::vector<QString> keywords() const override;
+  std::optional<QString> unlocalizedTitle() const override;
   bool isActive() const override;
 
 public:

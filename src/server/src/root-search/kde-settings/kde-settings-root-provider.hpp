@@ -14,6 +14,7 @@ class KdeSettingsRootItem : public RootItem {
   EntrypointId uniqueId() const override;
   AccessoryList accessories() const override;
   std::vector<QString> keywords() const override;
+  std::optional<QString> unlocalizedTitle() const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) const override;
   std::vector<std::pair<QString, QString>> settingsMetadata() const override;

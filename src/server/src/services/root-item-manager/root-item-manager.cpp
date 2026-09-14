@@ -118,6 +118,9 @@ void RootItemManager::updateIndex() {
 
       sitem.item = item;
       sitem.title = item->title().toStdString();
+      if (auto unlocalized = item->unlocalizedTitle(); unlocalized && *unlocalized != item->title()) {
+        sitem.unlocalizedTitle = unlocalized->toStdString();
+      }
       sitem.subtitle = item->subtitle().toStdString();
       sitem.keywords = Utils::toStdStringVec(item->keywords());
       sitem.meta = &m_metadata[id];
@@ -145,7 +148,7 @@ double RootItemManager::SearchableRootItem::fuzzyScore(const fuzzy::Query &query
 
   using WS = fzf::WeightedString;
   std::string alias = meta->alias.value_or("");
-  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
+  std::initializer_list<WS> ss = {{title, 1.0f}, {unlocalizedTitle, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.6f}; });
   auto const score = fzf::threadLocalMatcher().score_query(ss, kws, query);
 
