@@ -2,146 +2,447 @@
 #include <algorithm>
 #include <format>
 #include <ranges>
-#include "ui/image/image-url.hpp"
+#include <qcoreapplication.h>
+#include <qjsonobject.h>
+#include <qlogging.h>
+#include "config/config.hpp"
+#include "internal/glaze-qt.hpp"
 #include "service-registry.hpp"
-#include "services/ai/ai-config.hpp"
+#include "services/ai/ai-provider-types.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/local-storage/local-storage-service.hpp"
+#include "ui/image/image-url.hpp"
+#include "utils/utils.hpp"
 
-AISettingsModel::AISettingsModel(QObject *parent) : QAbstractListModel(parent) {
-  m_aiService = ServiceRegistry::instance()->ai();
-  if (m_aiService) {
-    connect(&m_aiService->configManager(), &AI::ConfigManager::configChanged, this, [this]() { reload(); });
-    reload();
+namespace {
+
+QString qs(std::string_view view) {
+  return QString::fromUtf8(view.data(), static_cast<qsizetype>(view.size()));
+}
+
+QStringList capabilityNames(AI::Capabilities caps) {
+  QStringList names;
+  for (const auto &name : AI::stringifyCapabilities(caps)) {
+    auto text = QString::fromStdString(name);
+    if (!text.isEmpty()) text[0] = text[0].toUpper();
+    names << text;
   }
+  return names;
 }
 
-int AISettingsModel::rowCount(const QModelIndex &parent) const {
-  if (parent.isValid()) return 0;
-  return static_cast<int>(m_entries.size());
+QString joinMeta(const QStringList &parts) { return parts.join(QStringLiteral(" · ")); }
+
+QJsonObject providerObject(const config::Manager &config, const std::string &id) {
+  const auto &providers = config.value().ai.providers;
+  auto it = providers.find(id);
+  return it == providers.end() ? QJsonObject{} : glazeToQJsonObject(it->second);
 }
 
-QVariant AISettingsModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_entries.size())) return {};
+std::string providerType(const glz::generic::object_t &object) {
+  return glazeToQJsonObject(object).value(QStringLiteral("type")).toString().toStdString();
+}
 
-  const auto &entry = m_entries[static_cast<std::size_t>(index.row())];
-  const auto &config = m_aiService->configManager().value();
-  auto it = config.providers.find(entry.id);
-  if (it == config.providers.end()) return {};
+QVariant iconVariant(const std::optional<ImageUrl> &icon) {
+  return icon ? QVariant::fromValue(*icon) : QVariant();
+}
 
-  auto *typeInfo = AI::findProviderType(entry.type);
+QVariantMap instanceEntry(const QString &id, const QString &name, const QString &status) {
+  return {{QStringLiteral("id"), id}, {QStringLiteral("name"), name}, {QStringLiteral("statusText"), status}};
+}
 
+} // namespace
+
+// ── list models ──
+
+QVariant AIProviderTypesModel::data(const QModelIndex &index, int role) const {
+  const auto *row = rowAt(index);
+  if (!row) return {};
   switch (role) {
-  case ProviderIdRole:
-    return QString::fromStdString(entry.id);
   case TypeRole:
-    return QString::fromStdString(entry.type);
-  case TypeLabelRole:
-    if (typeInfo) return QString::fromUtf8(typeInfo->label.data(), typeInfo->label.size());
-    return QString::fromStdString(entry.type);
+    return row->key;
+  case LabelRole:
+    return row->label;
+  case DescriptionRole:
+    return row->description;
   case IconRole:
-    return QVariant::fromValue(
-        ImageUrl(ImageURL::builtin(typeInfo ? typeInfo->icon : BuiltinIcon::ComputerChip)));
-  case DescriptionRole: {
-    auto *provider = m_aiService->getProviderById(entry.id);
-    if (provider) {
-      auto desc = provider->description();
-      return QString::fromUtf8(desc.data(), desc.size());
-    }
-    if (typeInfo) return QString::fromUtf8(typeInfo->description.data(), typeInfo->description.size());
-    return {};
-  }
-  case UrlRole:
-    if (auto *cfg = std::get_if<AI::ConfigValue::OllamaConfig>(&it->second)) {
-      return QString::fromStdString(cfg->url);
-    }
-    return {};
-  case ApiKeyRole:
-    if (auto *cfg = std::get_if<AI::ConfigValue::MistralConfig>(&it->second)) {
-      return QString::fromStdString(cfg->apiKey);
-    }
-    return {};
+    return row->icon;
+  case BuiltinRole:
+    return row->builtin;
+  case AllowMultipleRole:
+    return row->allowMultiple;
+  case CanAddRole:
+    return row->canAdd;
+  case InstancesRole:
+    return row->instances;
   default:
     return {};
   }
 }
 
-QHash<int, QByteArray> AISettingsModel::roleNames() const {
+QHash<int, QByteArray> AIProviderTypesModel::roleNames() const {
   return {
-      {ProviderIdRole, "providerId"},   {TypeRole, "type"}, {TypeLabelRole, "typeLabel"}, {IconRole, "icon"},
-      {DescriptionRole, "description"}, {UrlRole, "url"},   {ApiKeyRole, "apiKey"},
+      {TypeRole, "type"},     {LabelRole, "label"},         {DescriptionRole, "description"},
+      {IconRole, "icon"},     {BuiltinRole, "builtin"},     {AllowMultipleRole, "allowMultiple"},
+      {CanAddRole, "canAdd"}, {InstancesRole, "instances"},
   };
 }
 
-bool AISettingsModel::hasProviders() const { return !m_entries.empty(); }
-
-QVariantList AISettingsModel::availableTypes() const {
-  QVariantList result;
-  for (const auto &info : AI::kProviderTypes) {
-    if (!canAddType(info.type)) continue;
-    QVariantMap entry;
-    entry[QStringLiteral("type")] = QString::fromUtf8(info.type.data(), info.type.size());
-    entry[QStringLiteral("label")] = QString::fromUtf8(info.label.data(), info.label.size());
-    entry[QStringLiteral("icon")] = QVariant::fromValue(ImageUrl(ImageURL::builtin(info.icon)));
-    result.append(entry);
+QVariant AIProviderFieldsModel::data(const QModelIndex &index, int role) const {
+  const auto *row = rowAt(index);
+  if (!row) return {};
+  switch (role) {
+  case KeyRole:
+    return row->key;
+  case LabelRole:
+    return row->label;
+  case DescriptionRole:
+    return row->description;
+  case PlaceholderRole:
+    return row->placeholder;
+  case SecretRole:
+    return row->secret;
+  case ValueRole:
+    return row->value;
+  default:
+    return {};
   }
-  return result;
+}
+
+QHash<int, QByteArray> AIProviderFieldsModel::roleNames() const {
+  return {
+      {KeyRole, "key"},
+      {LabelRole, "label"},
+      {DescriptionRole, "description"},
+      {PlaceholderRole, "placeholder"},
+      {SecretRole, "secret"},
+      {ValueRole, "value"},
+  };
+}
+
+QVariant AIProviderModelsModel::data(const QModelIndex &index, int role) const {
+  const auto *row = rowAt(index);
+  if (!row) return {};
+  switch (role) {
+  case IdRole:
+    return row->key;
+  case NameRole:
+    return row->name;
+  case DescriptionRole:
+    return row->description;
+  case MetaRole:
+    return row->meta;
+  case IconRole:
+    return row->icon;
+  case StatusRole:
+    return row->status;
+  case ProgressRole:
+    return row->progress;
+  default:
+    return {};
+  }
+}
+
+QHash<int, QByteArray> AIProviderModelsModel::roleNames() const {
+  return {
+      {IdRole, "modelId"}, {NameRole, "name"},     {DescriptionRole, "description"}, {MetaRole, "meta"},
+      {IconRole, "icon"},  {StatusRole, "status"}, {ProgressRole, "progress"},
+  };
+}
+
+// ── provider page ──
+
+AIProviderPage::AIProviderPage(AISettingsModel &owner) : QObject(&owner), m_owner(owner) {}
+
+void AIProviderPage::setField(const QString &key, const QString &value) {
+  if (m_valid) m_owner.setField(m_providerId.toStdString(), key, value);
+}
+
+void AIProviderPage::download(const QString &modelId) {
+  auto *provider =
+      m_owner.m_aiService ? m_owner.m_aiService->getProviderById(m_providerId.toStdString()) : nullptr;
+  if (!provider) return;
+  if (auto result = provider->downloadModel(modelId.toStdString()); !result) {
+    qWarning() << "Could not start model download:" << result.error();
+  }
+}
+
+void AIProviderPage::cancelDownload(const QString &modelId) {
+  auto *provider =
+      m_owner.m_aiService ? m_owner.m_aiService->getProviderById(m_providerId.toStdString()) : nullptr;
+  if (provider) provider->cancelDownload(modelId.toStdString());
+}
+
+void AIProviderPage::removeModel(const QString &modelId) {
+  auto *provider =
+      m_owner.m_aiService ? m_owner.m_aiService->getProviderById(m_providerId.toStdString()) : nullptr;
+  if (!provider) return;
+  if (auto result = provider->removeModel(modelId.toStdString()); !result) {
+    qWarning() << "Could not remove model:" << result.error();
+  }
+}
+
+void AIProviderPage::remove() {
+  if (m_valid && !m_builtin) m_owner.removeProvider(m_providerId.toStdString());
+}
+
+// ── settings model ──
+
+AISettingsModel::AISettingsModel(QObject *parent) : QObject(parent) {
+  auto *registry = ServiceRegistry::instance();
+  m_aiService = registry->ai();
+  m_config = registry->config();
+  m_storage = registry->localStorage();
+
+  if (m_config) {
+    connect(m_config, &config::Manager::configChanged, this, [this]() {
+      rebuildTypes();
+      rebuildPage();
+    });
+  }
+  if (m_aiService) {
+    connect(m_aiService, &AI::Service::modelsChanged, this, [this]() {
+      rebuildTypes();
+      rebuildPage();
+    });
+    connect(m_aiService, &AI::Service::managedModelsChanged, this, [this]() { rebuildPageModels(); });
+  }
+
+  rebuildTypes();
+  rebuildPage();
+}
+
+void AISettingsModel::setSelectedProviderId(const QString &id) {
+  if (m_selectedProviderId == id) return;
+  m_selectedProviderId = id;
+  rebuildPage();
+  emit selectedProviderIdChanged();
 }
 
 bool AISettingsModel::canAddType(std::string_view type) const {
-  auto *typeInfo = AI::findProviderType(type);
-  if (!typeInfo) return false;
-  if (typeInfo->allowMultiple) return true;
-  return std::ranges::none_of(m_entries, [type](const auto &e) { return e.type == type; });
+  auto *info = AI::findProviderType(type);
+  if (!info || !m_config) return false;
+  if (info->allowMultiple) return true;
+  const auto &providers = m_config->value().ai.providers;
+  return std::ranges::none_of(providers,
+                              [type](const auto &entry) { return providerType(entry.second) == type; });
 }
 
-void AISettingsModel::reload() {
-  beginResetModel();
-  m_entries.clear();
+QString AISettingsModel::statusText(AI::AbstractProvider &provider) const {
+  if (provider.managesModels()) {
+    const auto models = provider.managedModels();
+    const auto installed =
+        std::ranges::count(models, AI::ManagedModel::State::Installed, &AI::ManagedModel::state);
+    if (installed == 0) return tr("No models installed");
+    return tr("%n model(s) installed", nullptr, static_cast<int>(installed));
+  }
+  const auto count = provider.listModels().size();
+  if (count == 0) return tr("No models found");
+  return tr("%n model(s)", nullptr, static_cast<int>(count));
+}
+
+std::vector<AIProviderModelRow> AISettingsModel::modelRows(AI::AbstractProvider &provider) const {
+  std::vector<AIProviderModelRow> rows;
+
+  if (provider.managesModels()) {
+    const auto models = provider.managedModels();
+    rows.reserve(models.size());
+    for (const auto &model : models) {
+      QStringList meta = capabilityNames(model.caps);
+      if (model.size > 0) meta << formatSize(model.size);
+      if (!model.precision.empty()) meta << QString::fromStdString(model.precision);
+      if (!model.languages.empty()) meta << QString::fromStdString(model.languages);
+
+      QString status;
+      switch (model.state) {
+      case AI::ManagedModel::State::Absent:
+        status = QStringLiteral("absent");
+        break;
+      case AI::ManagedModel::State::Downloading:
+        status = QStringLiteral("downloading");
+        break;
+      case AI::ManagedModel::State::Installed:
+        status = QStringLiteral("installed");
+        break;
+      }
+
+      rows.emplace_back(AIProviderModelRow{
+          .key = QString::fromStdString(model.id),
+          .name = QString::fromStdString(model.name),
+          .description = QString::fromStdString(model.description),
+          .meta = joinMeta(meta),
+          .icon = iconVariant(model.icon),
+          .status = status,
+          .progress = model.progress,
+      });
+    }
+    return rows;
+  }
+
+  const auto providerIcon = provider.icon();
+  auto models = provider.listModels();
+  rows.reserve(models.size());
+  for (auto &model : models) {
+    rows.emplace_back(AIProviderModelRow{
+        .key = QString::fromStdString(model.id),
+        .name = QString::fromStdString(model.name),
+        .description = model.description ? QString::fromStdString(*model.description) : QString(),
+        .meta = joinMeta(capabilityNames(model.caps)),
+        .icon = iconVariant(model.icon ? model.icon : providerIcon),
+        .status = QStringLiteral("available"),
+    });
+  }
+  return rows;
+}
+
+std::vector<AIProviderFieldRow> AISettingsModel::fieldRows(const std::string &id, std::string_view type,
+                                                           bool withValues) const {
+  std::vector<AIProviderFieldRow> rows;
+  auto *info = AI::findProviderType(type);
+  if (!info) return rows;
+
+  const auto object = withValues && m_config ? providerObject(*m_config, id) : QJsonObject{};
+  const auto scope = AI::Service::secretScope(id);
+
+  rows.reserve(info->fields.size());
+  for (const auto &field : info->fields) {
+    const auto key = qs(field.key);
+    AIProviderFieldRow row{
+        .key = key,
+        .label = QCoreApplication::translate(AI::PROVIDER_TR_CONTEXT, field.label),
+        .description = QCoreApplication::translate(AI::PROVIDER_TR_CONTEXT, field.description),
+        .placeholder = qs(field.placeholder),
+        .secret = field.secret,
+    };
+    if (withValues) {
+      row.value = field.secret && m_storage ? m_storage->getItem(scope, key).toString()
+                                            : object.value(key).toString();
+    }
+    rows.emplace_back(std::move(row));
+  }
+  return rows;
+}
+
+void AISettingsModel::rebuildTypes() {
+  std::vector<AIProviderTypeRow> rows;
+
   if (m_aiService) {
-    const auto &config = m_aiService->configManager().value();
-    m_entries.reserve(config.providers.size());
-    for (const auto &[id, variant] : config.providers) {
-      auto type = std::visit([](const auto &cfg) { return cfg.type; }, variant);
-      m_entries.push_back({.id = id, .type = type});
+    std::vector<AI::AbstractProvider *> statics;
+    for (const auto &[id, provider] : m_aiService->providers()) {
+      if (m_aiService->isStatic(id)) statics.push_back(provider.get());
+    }
+    std::ranges::sort(statics, {}, &AI::AbstractProvider::id);
+
+    for (auto *provider : statics) {
+      const auto id = QString::fromStdString(provider->id());
+      const auto name = QString::fromStdString(provider->displayName());
+      rows.emplace_back(AIProviderTypeRow{
+          .key = id,
+          .label = name,
+          .description = qs(provider->description()),
+          .icon = iconVariant(provider->icon()),
+          .builtin = true,
+          .instances = {instanceEntry(id, name, statusText(*provider))},
+      });
     }
   }
-  endResetModel();
-  emit providersChanged();
+
+  for (const auto &info : AI::PROVIDER_TYPES) {
+    QVariantList instances;
+    if (m_config) {
+      for (const auto &[id, object] : m_config->value().ai.providers) {
+        if (providerType(object) != info.type) continue;
+        auto *provider = m_aiService ? m_aiService->getProviderById(id) : nullptr;
+        const auto qid = QString::fromStdString(id);
+        instances.append(instanceEntry(qid, qid, provider ? statusText(*provider) : tr("Not connected")));
+      }
+    }
+    rows.emplace_back(AIProviderTypeRow{
+        .key = qs(info.type),
+        .label = qs(info.label),
+        .description = qs(info.description),
+        .icon = QVariant::fromValue(ImageUrl(ImageURL::builtin(info.icon))),
+        .allowMultiple = info.allowMultiple,
+        .canAdd = canAddType(info.type),
+        .instances = std::move(instances),
+    });
+  }
+
+  m_types.setRows(std::move(rows));
+}
+
+void AISettingsModel::rebuildPage() {
+  auto &page = m_page;
+  const auto id = m_selectedProviderId.toStdString();
+  auto *provider = m_aiService && !id.empty() ? m_aiService->getProviderById(id) : nullptr;
+
+  page.m_valid = false;
+  page.m_providerId = m_selectedProviderId;
+  page.m_builtin = provider && m_aiService->isStatic(id);
+
+  if (page.m_builtin) {
+    page.m_valid = true;
+    page.m_name = QString::fromStdString(provider->displayName());
+    page.m_typeLabel = page.m_name;
+    page.m_description = qs(provider->description());
+    page.m_icon = iconVariant(provider->icon());
+    page.m_statusText = statusText(*provider);
+    page.m_fields.setRows({});
+  } else if (m_config && m_config->value().ai.providers.contains(id)) {
+    const auto type = providerType(m_config->value().ai.providers.at(id));
+    auto *info = AI::findProviderType(type);
+    page.m_valid = true;
+    page.m_name = m_selectedProviderId;
+    page.m_typeLabel = info ? qs(info->label) : QString::fromStdString(type);
+    page.m_description = provider ? qs(provider->description()) : (info ? qs(info->description) : QString());
+    page.m_icon = info ? QVariant::fromValue(ImageUrl(ImageURL::builtin(info->icon))) : QVariant();
+    page.m_statusText = provider ? statusText(*provider) : tr("Not connected");
+    page.m_fields.setRows(fieldRows(id, type, true));
+  } else {
+    page.m_name.clear();
+    page.m_typeLabel.clear();
+    page.m_description.clear();
+    page.m_icon = QVariant();
+    page.m_statusText.clear();
+    page.m_fields.setRows({});
+  }
+
+  rebuildPageModels();
+  emit page.changed();
+}
+
+void AISettingsModel::rebuildPageModels() {
+  const auto id = m_selectedProviderId.toStdString();
+  auto *provider = m_aiService && !id.empty() ? m_aiService->getProviderById(id) : nullptr;
+  m_page.m_models.setRows(provider ? modelRows(*provider) : std::vector<AIProviderModelRow>{});
+}
+
+QStringList AISettingsModel::prepareSetup(const QString &type) {
+  auto rows = fieldRows({}, type.toStdString(), false);
+  QStringList keys;
+  for (const auto &row : rows) {
+    keys << row.key;
+  }
+  m_setupFields.setRows(std::move(rows));
+  return keys;
 }
 
 QString AISettingsModel::nextProviderId(const QString &type) const {
   auto typeStd = type.toStdString();
-  const auto &config = m_aiService->configManager().value();
+  const auto &providers = m_config->value().ai.providers;
 
   int suffix = 1;
   std::string id;
   do {
     id = suffix == 1 ? typeStd : std::format("{}-{}", typeStd, suffix);
     ++suffix;
-  } while (config.providers.contains(id));
+  } while (providers.contains(id));
 
   return QString::fromStdString(id);
 }
 
 bool AISettingsModel::isProviderIdTaken(const QString &id) const {
-  auto const &config = m_aiService->configManager().value();
-  return config.providers.contains(id.toStdString());
-}
-
-QVariantMap AISettingsModel::providerDetails(int row) const {
-  QVariantMap result;
-  if (row < 0 || row >= static_cast<int>(m_entries.size())) return result;
-
-  auto idx = index(row);
-  result[QStringLiteral("providerId")] = data(idx, ProviderIdRole);
-  result[QStringLiteral("type")] = data(idx, TypeRole);
-  result[QStringLiteral("typeLabel")] = data(idx, TypeLabelRole);
-  result[QStringLiteral("icon")] = data(idx, IconRole);
-  result[QStringLiteral("description")] = data(idx, DescriptionRole);
-  result[QStringLiteral("url")] = data(idx, UrlRole);
-  result[QStringLiteral("apiKey")] = data(idx, ApiKeyRole);
-  return result;
+  return m_config->value().ai.providers.contains(id.toStdString());
 }
 
 void AISettingsModel::addProvider(const QString &type, const QVariantMap &fields) {
@@ -151,120 +452,64 @@ void AISettingsModel::addProvider(const QString &type, const QVariantMap &fields
   auto *typeInfo = AI::findProviderType(typeStd);
   if (!typeInfo) return;
 
-  auto &config = m_aiService->configManager().value();
-
   std::string id;
   if (fields.contains(QStringLiteral("id"))) { id = fields[QStringLiteral("id")].toString().toStdString(); }
-  if (id.empty() || config.providers.contains(id)) { id = nextProviderId(type).toStdString(); }
+  if (id.empty() || isProviderIdTaken(QString::fromStdString(id))) {
+    id = nextProviderId(type).toStdString();
+  }
 
-  auto providerConfig = typeInfo->makeDefault();
+  QJsonObject object;
+  object[QStringLiteral("type")] = type;
+  const auto scope = AI::Service::secretScope(id);
 
-  if (typeStd == "ollama") {
-    if (auto *cfg = std::get_if<AI::ConfigValue::OllamaConfig>(&providerConfig)) {
-      if (fields.contains(QStringLiteral("url")))
-        cfg->url = fields[QStringLiteral("url")].toString().toStdString();
-    }
-  } else if (typeStd == "mistral") {
-    if (auto *cfg = std::get_if<AI::ConfigValue::MistralConfig>(&providerConfig)) {
-      if (fields.contains(QStringLiteral("apiKey")))
-        cfg->apiKey = fields[QStringLiteral("apiKey")].toString().toStdString();
+  for (const auto &field : typeInfo->fields) {
+    const auto key = qs(field.key);
+    if (!fields.contains(key)) continue;
+    const auto value = fields[key].toString();
+    if (field.secret) {
+      m_storage->setItem(scope, key, value);
+    } else {
+      object[key] = value;
     }
   }
 
-  config.providers[id] = std::move(providerConfig);
-  save();
-}
-
-void AISettingsModel::removeProvider(int row) {
-  if (row < 0 || row >= static_cast<int>(m_entries.size())) return;
-
-  auto &config = m_aiService->configManager().value();
-  auto const &providerId = m_entries[static_cast<std::size_t>(row)].id;
-
-  // Remove associated model configs
-  std::erase_if(config.models, [&providerId](const auto &pair) {
-    auto ref = AI::ModelRef::fromString(pair.first);
-    return ref && ref->provider == providerId;
+  m_config->updateUser([&](config::Partial<config::ConfigValue> &user) {
+    if (!user.ai) user.ai.emplace();
+    if (!user.ai->providers) user.ai->providers.emplace();
+    (*user.ai->providers)[id] = qJsonObjectToGlazeGeneric(object);
   });
-
-  config.providers.erase(providerId);
-  save();
 }
 
-void AISettingsModel::setField(int row, const QString &field, const QString &value) {
-  if (row < 0 || row >= static_cast<int>(m_entries.size())) return;
+void AISettingsModel::removeProvider(const std::string &id) {
+  m_storage->clearNamespace(AI::Service::secretScope(id));
+  m_config->updateUser([&](config::Partial<config::ConfigValue> &user) {
+    if (user.ai && user.ai->providers) user.ai->providers->erase(id);
+  });
+}
 
-  auto &config = m_aiService->configManager().value();
-  auto it = config.providers.find(m_entries[static_cast<std::size_t>(row)].id);
-  if (it == config.providers.end()) return;
+void AISettingsModel::setField(const std::string &id, const QString &key, const QString &value) {
+  const auto &providers = m_config->value().ai.providers;
+  auto entry = providers.find(id);
+  if (entry == providers.end()) return;
 
-  auto fieldStd = field.toStdString();
-  auto valueStd = value.toStdString();
+  auto *typeInfo = AI::findProviderType(providerType(entry->second));
+  if (!typeInfo) return;
 
-  if (fieldStd == "url") {
-    if (auto *cfg = std::get_if<AI::ConfigValue::OllamaConfig>(&it->second)) { cfg->url = valueStd; }
-  } else if (fieldStd == "apiKey") {
-    if (auto *cfg = std::get_if<AI::ConfigValue::MistralConfig>(&it->second)) { cfg->apiKey = valueStd; }
-  } else {
+  const auto keyStd = key.toStdString();
+  auto it = std::ranges::find(typeInfo->fields, keyStd, &AI::ProviderField::key);
+  if (it == typeInfo->fields.end()) return;
+
+  if (it->secret) {
+    m_storage->setItem(AI::Service::secretScope(id), key, value);
+    m_aiService->reloadProvider(id);
     return;
   }
 
-  save();
+  auto object = providerObject(*m_config, id);
+  object[key] = value;
+  m_config->updateUser([&](config::Partial<config::ConfigValue> &user) {
+    if (!user.ai) user.ai.emplace();
+    if (!user.ai->providers) user.ai->providers.emplace();
+    (*user.ai->providers)[id] = qJsonObjectToGlazeGeneric(object);
+  });
 }
-
-QVariantList AISettingsModel::modelsForProvider(int row) const {
-  if (row < 0 || row >= static_cast<int>(m_entries.size())) return {};
-
-  auto const &providerId = m_entries[static_cast<std::size_t>(row)].id;
-  auto models = m_aiService->modelsForProvider(providerId);
-
-  auto *provider = m_aiService->getProviderById(providerId);
-  auto providerIcon = provider ? provider->icon() : std::nullopt;
-
-  QVariantList result;
-  result.reserve(static_cast<int>(models.size()));
-  for (const auto &model : models) {
-    QVariantMap m;
-    m[QStringLiteral("id")] = QString::fromStdString(model.id);
-    m[QStringLiteral("name")] = QString::fromStdString(model.name);
-
-    if (model.icon) {
-      m[QStringLiteral("icon")] = QVariant::fromValue(*model.icon);
-    } else if (providerIcon) {
-      m[QStringLiteral("icon")] = QVariant::fromValue(*providerIcon);
-    }
-
-    m[QStringLiteral("enabled")] = model.enabled;
-
-    auto caps = AI::stringifyCapabilities(model.caps);
-    QVariantList capList;
-    capList.reserve(static_cast<int>(caps.size()));
-    for (const auto &c : caps) {
-      capList.append(QString::fromStdString(c));
-    }
-    m[QStringLiteral("capabilities")] = capList;
-    result.append(m);
-  }
-  return result;
-}
-
-void AISettingsModel::setModelEnabled(int row, const QString &modelId, bool enabled) {
-  if (row < 0 || row >= static_cast<int>(m_entries.size())) return;
-
-  auto const &providerId = m_entries[static_cast<std::size_t>(row)].id;
-  auto ref = AI::ModelRef{providerId, modelId.toStdString()};
-  auto key = ref.toString();
-
-  auto &config = m_aiService->configManager().value();
-
-  if (enabled) {
-    config.models.erase(key);
-  } else {
-    config.models[key] = AI::ConfigValue::ModelConfig{.enabled = false};
-  }
-
-  save();
-  emit modelsConfigChanged();
-}
-
-void AISettingsModel::save() { m_aiService->configManager().save(); }

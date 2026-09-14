@@ -57,6 +57,20 @@ template <> struct Partial<ProviderData> {
   std::optional<std::map<std::string, ProviderItemData>> entrypoints;
 };
 
+/**
+ * AI provider instances keyed by id. Each object holds a `type` plus the provider type's non-secret fields.
+ * Secret fields, like password extension/command preferences, are stored in the encrypted internal database.
+ */
+using AiProviderMap = std::map<std::string, glz::generic::object_t>;
+
+struct AiConfig {
+  AiProviderMap providers;
+};
+
+template <> struct Partial<AiConfig> {
+  std::optional<AiProviderMap> providers;
+};
+
 struct LayerShellConfig {
   std::string keyboardInteractivity = "exclusive";
   std::string layer = "top";
@@ -351,6 +365,8 @@ struct ConfigValue {
 
   ProviderMap providers;
 
+  AiConfig ai;
+
   std::optional<glz::generic::object_t> providerPreferences(std::string_view id) const {
     if (auto it = providers.find(std::string{id}); it != providers.end()) { return it->second.preferences; }
     return std::nullopt;
@@ -405,6 +421,8 @@ template <> struct Partial<ConfigValue> {
   std::optional<std::vector<std::string>> fallbacks;
 
   std::optional<std::map<std::string, Partial<ProviderData>>> providers;
+
+  std::optional<Partial<AiConfig>> ai;
 };
 
 class Manager : public QObject {

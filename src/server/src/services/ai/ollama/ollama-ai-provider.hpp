@@ -3,7 +3,6 @@
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "common/qt.hpp"
 #include "ui/image/image-url.hpp"
-#include "services/ai/ai-config.hpp"
 #include "services/ai/ai-provider.hpp"
 #include <cstdint>
 #include <expected>
@@ -130,7 +129,7 @@ class OllamaProvider : public AbstractProvider {
   }
 
   QUrl makeUrl(const QString &path) {
-    QUrl url = QString::fromStdString(m_cfg.url);
+    QUrl url = QString::fromStdString(m_url);
     url.setPath(path);
     return url;
   }
@@ -197,7 +196,7 @@ class OllamaProvider : public AbstractProvider {
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) override {
     QNetworkRequest req;
-    QUrl url = QString::fromStdString(m_cfg.url);
+    QUrl url = QString::fromStdString(m_url);
 
     url.setPath("/api/chat");
     req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
@@ -264,10 +263,10 @@ class OllamaProvider : public AbstractProvider {
   QFuture<AI::Result<VersionResponse>> fetchVersion() { return m_client.get<VersionResponse>("/version"); }
 
 public:
-  OllamaProvider(AI::ConfigValue::OllamaConfig cfg) : m_cfg(std::move(cfg)) {
-    auto const apiUrl = std::format("{}/api", m_cfg.url);
+  OllamaProvider(std::string url) : m_url(std::move(url)) {
+    auto const apiUrl = std::format("{}/api", m_url);
 
-    qInfo() << "Initialized ollama provider with base url" << cfg.url;
+    qInfo() << "Initialized ollama provider with base url" << m_url;
     m_client.setBaseUrl(QString::fromStdString(apiUrl));
 
     connect(&m_handshakeWatcher, &decltype(m_handshakeWatcher)::finished, this, [this]() {
@@ -278,8 +277,7 @@ public:
         return;
       }
 
-      qInfo().nospace() << "Connected to ollama instance " << m_cfg.url << " (version=" << res->version
-                        << ")";
+      qInfo().nospace() << "Connected to ollama instance " << m_url << " (version=" << res->version << ")";
       m_listWatcher.setFuture(listModelsFull());
     });
 
@@ -303,7 +301,7 @@ private:
   http::Client m_client;
   http::Client::Watcher<AI::Result<VersionResponse>> m_handshakeWatcher;
   Watcher m_listWatcher;
-  ConfigValue::OllamaConfig m_cfg;
+  std::string m_url;
   std::vector<FullModelResponse> m_models;
 };
 

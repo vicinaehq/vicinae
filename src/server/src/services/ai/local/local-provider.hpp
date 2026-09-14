@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <qfuture.h>
+#include <QTimer>
 #include "parakeet.h"
 #include "services/ai/ai-provider.hpp"
 #include "services/audio/audio-recorder.hpp"
@@ -19,25 +20,87 @@
 namespace AI {
 
 /**
- * Exposes installed local models. Always present, no configuration.
+ * Exposes the models Vicinae downloads and runs itself. Always present, no configuration.
  */
 class LocalProvider : public AbstractProvider {
+  Q_OBJECT
+
 public:
   static constexpr std::string_view ID = "local";
+  static constexpr int PROGRESS_THROTTLE_MS = 150;
 
-  explicit LocalProvider(LocalModelRegistry &registry) : m_registry(registry) {}
+  explicit LocalProvider(LocalModelRegistry &registry)
+      : m_registry(registry),
+        m_description(
+            tr("Models Vicinae downloads and runs on this machine. Nothing to configure.").toStdString()) {
+    m_progressThrottle.setSingleShot(true);
+    m_progressThrottle.setInterval(PROGRESS_THROTTLE_MS);
+    connect(&m_progressThrottle, &QTimer::timeout, this, &AbstractProvider::managedModelsChanged);
+  }
 
   std::string id() const override { return std::string(ID); }
 
+  std::string displayName() const override { return tr("Built-in").toStdString(); }
+
   std::optional<ImageUrl> icon() const override {
-    return ImageUrl{ImageURL::builtin(BuiltinIcon::Microphone)};
+    return ImageUrl{ImageURL::local(QStringLiteral(":/icons/vicinae.png"))};
   }
 
-  std::string_view description() const override { return "Models that run on this machine."; }
+  std::string_view description() const override { return m_description; }
 
   void start() override {
     connect(&m_registry, &LocalModelRegistry::modelsChanged, this, &AbstractProvider::modelsUpdated);
+    connect(&m_registry, &LocalModelRegistry::modelsChanged, this, &AbstractProvider::managedModelsChanged);
+    connect(&m_registry, &LocalModelRegistry::downloadProgress, this, [this]() {
+      if (!m_progressThrottle.isActive()) m_progressThrottle.start();
+    });
   }
+
+  bool managesModels() const override { return true; }
+
+  std::vector<ManagedModel> managedModels() const override {
+    std::vector<ManagedModel> models;
+    const auto available = m_registry.models();
+    models.reserve(available.size());
+
+    for (const auto &model : available) {
+      const auto &info = model.info;
+      if (info.caps == 0) continue;
+
+      ManagedModel managed{
+          .id = std::string(info.id),
+          .name = std::string(info.name),
+          .description = LocalModelCatalogue::translatedDescription(info).toStdString(),
+          .icon = ImageUrl{LocalModelCatalogue::vendorIcon(info.vendor)},
+          .caps = info.caps,
+          .size = info.size,
+          .precision = std::string(info.quantization),
+          .state = model.installed ? ManagedModel::State::Installed : ManagedModel::State::Absent,
+      };
+      if (info.languages) {
+        managed.languages =
+            QCoreApplication::translate(LocalModelCatalogue::TRANSLATION_CONTEXT, info.languages)
+                .toStdString();
+      }
+      if (auto *download = m_registry.activeDownload(info.id)) {
+        managed.state = ManagedModel::State::Downloading;
+        if (download->bytesTotal() > 0) {
+          managed.progress =
+              static_cast<double>(download->bytesReceived()) / static_cast<double>(download->bytesTotal());
+        }
+      }
+      models.emplace_back(std::move(managed));
+    }
+    return models;
+  }
+
+  std::expected<void, std::string> downloadModel(std::string_view id) override {
+    return m_registry.download(id).transform([](auto *) {});
+  }
+
+  void cancelDownload(std::string_view id) override { m_registry.cancelDownload(id); }
+
+  std::expected<void, std::string> removeModel(std::string_view id) override { return m_registry.remove(id); }
 
   ModelList listModels(const ListModelFilters &filters = {}) const override {
     ModelList models;
@@ -164,6 +227,8 @@ private:
   }
 
   LocalModelRegistry &m_registry;
+  std::string m_description;
+  QTimer m_progressThrottle;
 };
 
 } // namespace AI

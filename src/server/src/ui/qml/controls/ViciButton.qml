@@ -14,6 +14,8 @@ Rectangle {
     property real iconSize: 16
     property real horizontalPadding: 12
     property bool showFocus: activeFocus
+    property bool busy: false
+    property int contentAlignment: Qt.AlignHCenter
 
     signal clicked
 
@@ -22,7 +24,7 @@ Rectangle {
     Accessible.onPressAction: root.clicked()
 
     readonly property bool hovered: mouseArea.containsMouse
-    readonly property bool _hasIcon: root.iconSource !== undefined
+    readonly property bool _hasIcon: root.busy || root.iconSource !== undefined
     readonly property bool _hasText: root.text !== ""
 
     implicitWidth: root._hasIcon && !root._hasText ? implicitHeight : contentRow.implicitWidth + 2 * root.horizontalPadding
@@ -63,11 +65,20 @@ Rectangle {
 
     Row {
         id: contentRow
-        anchors.centerIn: parent
+        x: root.contentAlignment === Qt.AlignLeft ? root.horizontalPadding : Math.round((root.width - width) / 2)
+        anchors.verticalCenter: parent.verticalCenter
         spacing: root._hasText && root._hasIcon ? 8 : 0
 
+        ViciSpinner {
+            visible: root.busy
+            color: root.foreground
+            width: root.iconSize
+            height: root.iconSize
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
         ViciImage {
-            visible: root._hasIcon
+            visible: root._hasIcon && !root.busy
             source: root.iconSource ?? ""
             width: root.iconSize
             height: root.iconSize
