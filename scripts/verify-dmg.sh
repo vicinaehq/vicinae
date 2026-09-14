@@ -75,14 +75,16 @@ echo "==> entitlements"
 ENTITLEMENTS="$(codesign -d --entitlements - --xml "$APP" 2>/dev/null)"
 for key in com.apple.security.automation.apple-events \
            com.apple.security.personal-information.calendars \
-           com.apple.security.personal-information.addressbook; do
+           com.apple.security.personal-information.addressbook \
+           com.apple.security.device.audio-input; do
   if ! grep -qF "<key>$key</key>" <<<"$ENTITLEMENTS"; then
     echo "verify-dmg.sh: app is missing entitlement $key" >&2
     exit 1
   fi
 done
 for key in NSAppleEventsUsageDescription NSCalendarsFullAccessUsageDescription \
-           NSRemindersFullAccessUsageDescription NSContactsUsageDescription; do
+           NSRemindersFullAccessUsageDescription NSContactsUsageDescription \
+           NSMicrophoneUsageDescription; do
   if ! /usr/libexec/PlistBuddy -c "Print :$key" "$APP/Contents/Info.plist" >/dev/null 2>&1; then
     echo "verify-dmg.sh: Info.plist is missing $key" >&2
     exit 1

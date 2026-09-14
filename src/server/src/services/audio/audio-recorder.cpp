@@ -3,12 +3,23 @@
 #include <QTemporaryFile>
 #include <algorithm>
 #include <cmath>
+#include <span>
 #include <qaudioformat.h>
 #include <qbuffer.h>
 #include <qlogging.h>
 #include <qstringview.h>
 
 namespace Audio {
+
+namespace {
+
+// Raw CoreAudio input is 20-30 dB quieter than software-boosted PulseAudio sources, so the meter
+// tracks a decaying running peak instead of a fixed range.
+constexpr double DYNAMIC_RANGE_DB = 30.0;
+constexpr double MIN_PEAK_DB = -30.0;
+constexpr double PEAK_DECAY_DB_PER_SEC = 6.0;
+
+} // namespace
 
 Recorder::Recorder(QObject *parent) : QObject(parent) {}
 
@@ -33,7 +44,7 @@ bool Recorder::start() {
 
   m_format = targetFormat();
   if (!device.isFormatSupported(m_format)) {
-    qDebug() << "Target format (16kHz/mono/16-bit) not supported, using preferred format";
+    qDebug() << "Target format (16kHz/mono/float) not supported, using preferred format";
     m_format = device.preferredFormat();
     m_format.setSampleFormat(QAudioFormat::Int16);
   }
@@ -51,6 +62,8 @@ bool Recorder::start() {
   m_pcmBuffer.clear();
   m_pcmBuffer.reserve(m_format.sampleRate() * m_format.channelCount() * 120);
   m_pausedElapsed = 0;
+  m_level = 0.0f;
+  m_peakDb = MIN_PEAK_DB;
   m_elapsed.start();
 
   connect(m_ioDevice, &QIODevice::readyRead, this, &Recorder::processAudioData);
@@ -111,23 +124,43 @@ void Recorder::processAudioData() {
   auto data = m_ioDevice->readAll();
   if (data.isEmpty()) return;
 
-  auto sampleCount = data.size() / static_cast<qsizetype>(sizeof(float));
-  auto *samples = reinterpret_cast<const float *>(data.constData());
+  const auto before = m_pcmBuffer.size();
+  appendSamples(data);
+  updateLevel(std::span(m_pcmBuffer).subspan(before));
+}
 
-  m_pcmBuffer.insert(m_pcmBuffer.end(), samples, samples + sampleCount);
-
-  // Compute RMS level
-  double sum = 0.0;
-
-  for (qsizetype i = 0; i < sampleCount; ++i) {
-    double s = samples[i];
-    sum += s * s;
+void Recorder::appendSamples(const QByteArray &data) {
+  if (m_format.sampleFormat() == QAudioFormat::Int16) {
+    auto count = data.size() / static_cast<qsizetype>(sizeof(std::int16_t));
+    auto *samples = reinterpret_cast<const std::int16_t *>(data.constData());
+    m_pcmBuffer.reserve(m_pcmBuffer.size() + count);
+    for (qsizetype i = 0; i < count; ++i) {
+      m_pcmBuffer.push_back(static_cast<float>(samples[i]) / 32768.0f);
+    }
+    return;
   }
 
-  auto rms = std::sqrt(sum / static_cast<double>(sampleCount));
-  // Convert to dB scale, map -40dB..0dB to 0.0..1.0
-  auto db = 20.0 * std::log10(std::max(rms, 1e-10));
-  m_level = static_cast<float>(std::clamp((db + 40.0) / 40.0, 0.0, 1.0));
+  auto count = data.size() / static_cast<qsizetype>(sizeof(float));
+  auto *samples = reinterpret_cast<const float *>(data.constData());
+  m_pcmBuffer.insert(m_pcmBuffer.end(), samples, samples + count);
+}
+
+void Recorder::updateLevel(std::span<const float> samples) {
+  if (samples.empty()) return;
+
+  double sum = 0.0;
+  for (float s : samples) {
+    sum += static_cast<double>(s) * s;
+  }
+
+  const auto rms = std::sqrt(sum / static_cast<double>(samples.size()));
+  const auto db = 20.0 * std::log10(std::max(rms, 1e-10));
+  const auto seconds = static_cast<double>(samples.size()) /
+                       static_cast<double>(m_format.sampleRate() * m_format.channelCount());
+
+  m_peakDb = std::max({db, m_peakDb - PEAK_DECAY_DB_PER_SEC * seconds, MIN_PEAK_DB});
+  const auto floorDb = m_peakDb - DYNAMIC_RANGE_DB;
+  m_level = static_cast<float>(std::clamp((db - floorDb) / DYNAMIC_RANGE_DB, 0.0, 1.0));
   emit levelChanged();
 }
 

@@ -8,6 +8,7 @@
 #include <memory>
 #include <qaudioformat.h>
 #include <qstringview.h>
+#include <span>
 #include <vector>
 
 namespace Audio {
@@ -59,6 +60,8 @@ public:
 
 private:
   void processAudioData();
+  void appendSamples(const QByteArray &data);
+  void updateLevel(std::span<const float> samples);
   QAudioFormat targetFormat() const;
 
   std::unique_ptr<QAudioSource> m_source;
@@ -69,6 +72,7 @@ private:
   std::vector<float> m_pcmBuffer;
   QAudioFormat m_format;
   float m_level = 0.0f;
+  double m_peakDb = 0.0;
   State m_state = State::Idle;
 };
 
