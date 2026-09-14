@@ -33,6 +33,7 @@ public:
 
 private:
   Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
+  Q_PROPERTY(QString currentSubpage READ currentSubpage WRITE setCurrentSubpage NOTIFY currentSubpageChanged)
   Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY historyChanged)
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY historyChanged)
   Q_PROPERTY(
@@ -50,8 +51,10 @@ private:
 public:
   explicit SettingsWindow(ApplicationContext &ctx, QObject *parent = nullptr);
 
-  QString currentPage() const { return m_currentPage; }
+  QString currentPage() const { return m_route.page; }
   void setCurrentPage(const QString &page);
+  QString currentSubpage() const { return m_route.subpage; }
+  void setCurrentSubpage(const QString &subpage);
 
   QString pendingCommandId() const { return m_pendingCommandId; }
   void setPendingCommandId(const QString &id);
@@ -86,6 +89,7 @@ public:
 
 signals:
   void currentPageChanged();
+  void currentSubpageChanged();
   void pendingCommandIdChanged();
   void defaultFocusRequested();
   void historyChanged();
@@ -104,10 +108,18 @@ private:
   SettingsSidebarModel *m_sidebarModel = nullptr;
   AISettingsModel *m_aiModel = nullptr;
   QQuickWindow *m_window = nullptr;
-  QString m_currentPage = QStringLiteral("general");
+  struct Route {
+    QString page;
+    QString subpage;
+    bool operator==(const Route &) const = default;
+  };
+
+  void navigate(const Route &route);
+
+  Route m_route{.page = QStringLiteral("general")};
   QString m_pendingCommandId;
-  QStringList m_backStack;
-  QStringList m_forwardStack;
+  QList<Route> m_backStack;
+  QList<Route> m_forwardStack;
   bool m_navigatingHistory = false;
   bool m_initialized = false;
 };

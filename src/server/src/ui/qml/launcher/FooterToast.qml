@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Shapes
 import Vicinae
 
 RowLayout {
@@ -32,37 +31,12 @@ RowLayout {
         }
     }
 
-    Shape {
-        id: spinner
+    ViciSpinner {
         visible: Launcher.toastStyle === 4
+        color: Config.withAlpha(Theme.textMuted, Config.windowOpacity)
         Layout.preferredWidth: 12
         Layout.preferredHeight: 12
         Layout.alignment: Qt.AlignVCenter
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-            strokeColor: Config.withAlpha(Theme.textMuted, Config.windowOpacity)
-            strokeWidth: 2
-            fillColor: "transparent"
-            capStyle: ShapePath.RoundCap
-
-            PathAngleArc {
-                centerX: 6
-                centerY: 6
-                radiusX: 5
-                radiusY: 5
-                startAngle: 0
-                sweepAngle: 270
-            }
-        }
-
-        RotationAnimation on rotation {
-            running: spinner.visible
-            from: 0
-            to: 360
-            duration: 1000
-            loops: Animation.Infinite
-        }
     }
 
     Text {

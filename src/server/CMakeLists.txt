@@ -410,7 +410,6 @@ set(SRCS
 	src/builtins/vicinae/manage-fallback-view-host.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
-	src/builtins/ai/local-models-view-host.hpp
 	src/builtins/dictation/dictation-extension.hpp
 	src/builtins/dictation/dictation-extension.cpp
 	src/builtins/dictation/dictation-session.hpp
@@ -618,7 +617,7 @@ set(SRCS
 
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
-	src/services/ai/ai-config.hpp
+	src/services/ai/ai-provider-types.hpp
 	src/services/ai/ai-service.cpp
 	src/services/ai/agentic-loop.hpp
 	src/services/ai/ai-capability.hpp
@@ -1280,6 +1279,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/EmptyView.qml
 	src/ui/qml/views/EmojiGridView.qml
 	src/ui/qml/controls/ViciButton.qml
+	src/ui/qml/controls/ViciSpinner.qml
+	src/ui/qml/controls/ViciIconButton.qml
 	src/ui/qml/controls/ViciScrollBar.qml
 	src/ui/qml/controls/ViciTextCursor.qml
 	src/ui/qml/controls/ViciDivider.qml
@@ -1377,6 +1378,13 @@ set(VICINAE_QML_FILES
 	src/ui/qml/settings/ExtensionSettingsPage.qml
 	src/ui/qml/settings/AboutSettingsPage.qml
 	src/ui/qml/settings/AISettingsPage.qml
+	src/ui/qml/settings/AIProvidersOverview.qml
+	src/ui/qml/settings/AIProviderCard.qml
+	src/ui/qml/settings/AIProviderView.qml
+	src/ui/qml/settings/AIModelRow.qml
+	src/ui/qml/settings/AIModelDeleteDialog.qml
+	src/ui/qml/settings/AIProviderSetupDialog.qml
+	src/ui/qml/settings/SettingsSectionTitle.qml
 	src/ui/qml/form/ShortcutRecorderField.qml
 	src/ui/qml/form/ShortcutRecorderCapture.qml
 	src/ui/qml/actions/ShortcutRecorderPanel.qml
@@ -1580,7 +1588,7 @@ qt_add_translations(${TARGET}
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_zh_TW.ts
 	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
 	SOURCES ${VICINAE_I18N_SOURCES}
-	LUPDATE_OPTIONS -locations relative -no-obsolete -tr-function-alias QT_TRANSLATE_NOOP+=LOCAL_MODEL_TR,QT_TRANSLATE_NOOP+=SPEECH_LANGUAGE_TR
+	LUPDATE_OPTIONS -locations relative -no-obsolete -tr-function-alias QT_TRANSLATE_NOOP+=LOCAL_MODEL_TR,QT_TRANSLATE_NOOP+=SPEECH_LANGUAGE_TR,QT_TRANSLATE_NOOP+=AI_PROVIDER_TR
 	MERGE_QT_TRANSLATIONS
 	QT_TRANSLATION_CATALOGS qtbase qtdeclarative
 )
