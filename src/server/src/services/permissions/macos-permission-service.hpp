@@ -2,6 +2,18 @@
 #include <QtQml/qqmlregistration.h>
 #include <QObject>
 #include <QTimer>
+#include <functional>
+
+namespace vicinae::permissions {
+
+enum class MicrophoneStatus { NotDetermined, Granted, Denied };
+
+MicrophoneStatus microphoneStatus();
+// Shows the system prompt. The callback runs on the main thread once the user answered.
+void requestMicrophone(std::function<void(bool granted)> done);
+void openMicrophoneSettings();
+
+} // namespace vicinae::permissions
 
 class MacosPermissionService : public QObject {
   Q_OBJECT

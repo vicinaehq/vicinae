@@ -8,3 +8,9 @@ void MacosPermissionService::requestFullDiskAccess() {}
 void MacosPermissionService::requestNotifications() {}
 void MacosPermissionService::refresh() {}
 void MacosPermissionService::refreshNotifications() {}
+
+namespace vicinae::permissions {
+MicrophoneStatus microphoneStatus() { return MicrophoneStatus::Granted; }
+void requestMicrophone(std::function<void(bool)> done) { done(true); }
+void openMicrophoneSettings() {}
+} // namespace vicinae::permissions
