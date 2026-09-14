@@ -1,5 +1,6 @@
 #include "macos-permission-service.hpp"
 #import <AppKit/AppKit.h>
+#import <AVFoundation/AVFoundation.h>
 #include <ApplicationServices/ApplicationServices.h>
 #import <UserNotifications/UserNotifications.h>
 #include <fcntl.h>
@@ -15,6 +16,9 @@ constexpr const char *ACCESSIBILITY_PANE_URL =
 
 constexpr const char *FULL_DISK_PANE_URL =
     "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles";
+
+constexpr const char *MICROPHONE_PANE_URL =
+    "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone";
 
 // FDA has no query API; readability of a TCC-protected file is the standard probe
 bool probeFullDiskAccess() {
@@ -37,6 +41,35 @@ bool probeFullDiskAccess() {
 void openPane(const char *url) { [NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@(url)]]; }
 
 } // namespace
+
+namespace vicinae::permissions {
+
+MicrophoneStatus microphoneStatus() {
+  switch ([AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeAudio]) {
+  case AVAuthorizationStatusAuthorized:
+    return MicrophoneStatus::Granted;
+  case AVAuthorizationStatusNotDetermined:
+    return MicrophoneStatus::NotDetermined;
+  case AVAuthorizationStatusDenied:
+  case AVAuthorizationStatusRestricted:
+    return MicrophoneStatus::Denied;
+  }
+  return MicrophoneStatus::Denied;
+}
+
+void requestMicrophone(std::function<void(bool)> done) {
+  auto shared = std::make_shared<std::function<void(bool)>>(std::move(done));
+  [AVCaptureDevice requestAccessForMediaType:AVMediaTypeAudio
+                           completionHandler:^(BOOL granted) {
+                             dispatch_async(dispatch_get_main_queue(), ^{
+                               (*shared)(granted);
+                             });
+                           }];
+}
+
+void openMicrophoneSettings() { openPane(MICROPHONE_PANE_URL); }
+
+} // namespace vicinae::permissions
 
 MacosPermissionService::MacosPermissionService(QObject *parent) : QObject(parent) {
   m_accessibilityGranted = AXIsProcessTrusted();
