@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <xdgpp/xdgpp.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <cstdlib>
@@ -50,4 +51,25 @@ TEST_CASE("commonDataDirs should start with XDG_DATA_HOME", XDGPP_GROUP) {
 TEST_CASE("should return nullopt if no XDG_RUNTIME_DIR is set", XDGPP_GROUP) {
   unsetenv("XDG_RUNTIME_DIR");
   REQUIRE_FALSE(xdgpp::runtimeDir().has_value());
+}
+
+static constexpr auto XDG_BASE_DIR_VARS =
+    std::to_array<const char *>({"XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME",
+                                 "XDG_DATA_DIRS", "XDG_CONFIG_DIRS"});
+
+TEST_CASE("empty XDG base directory variables should fall back to spec-compliant defaults", XDGPP_GROUP) {
+  for (const char *name : XDG_BASE_DIR_VARS) {
+    setenv(name, "", 1);
+  }
+
+  CHECK(xdgpp::dataHome() == homeDir() / ".local" / "share");
+  CHECK(xdgpp::configHome() == homeDir() / ".config");
+  CHECK(xdgpp::cacheHome() == homeDir() / ".cache");
+  CHECK(xdgpp::stateHome() == homeDir() / ".local" / "state");
+  CHECK(std::ranges::contains(xdgpp::dataDirs(), fs::path("/usr/share")));
+  CHECK(std::ranges::contains(xdgpp::configDirs(), fs::path("/etc/xdg")));
+
+  for (const char *name : XDG_BASE_DIR_VARS) {
+    unsetenv(name);
+  }
 }
