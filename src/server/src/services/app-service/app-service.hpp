@@ -73,6 +73,8 @@ public:
   std::shared_ptr<AbstractApplication> findDefaultOpener(const QString &target) const;
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const;
   bool openLocation(const AbstractApplication &app) const;
+  bool canUninstall(const AbstractApplication &app) const;
+  bool uninstall(const AbstractApplication &app);
 
   bool openTarget(const QString &target) const;
   bool openTarget(const QUrl &target) const;

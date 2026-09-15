@@ -117,6 +117,14 @@ bool AppService::showInFileBrowser(const std::filesystem::path &path, bool selec
 
 bool AppService::openLocation(const AbstractApplication &app) const { return m_provider->openLocation(app); }
 
+bool AppService::canUninstall(const AbstractApplication &app) const { return m_provider->canUninstall(app); }
+
+bool AppService::uninstall(const AbstractApplication &app) {
+  if (!m_provider->canUninstall(app) || !m_provider->uninstall(app)) return false;
+  scanSync();
+  return true;
+}
+
 void AppService::handleDirectoryChanged(const QString &path) {
   (void)path;
   m_rescanDebounce->start();

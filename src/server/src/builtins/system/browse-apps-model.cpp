@@ -56,5 +56,11 @@ std::unique_ptr<ActionPanelState> BrowseAppsSection::buildActionPanel(const AppP
       Clipboard::Text(QString::fromStdString(app->path().string())), tr("Copy App Location"));
   utils->addAction(copyLocation);
 
+  if (appDb->canUninstall(*app)) {
+    auto *uninstall = new UninstallAppAction(app);
+    uninstall->setShortcut(Keybind::DangerousRemoveAction);
+    panel->createSection()->addAction(uninstall);
+  }
+
   return panel;
 }

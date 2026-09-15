@@ -118,6 +118,12 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     lifecycleSection->addAction(new ForceQuitAppAction(m_app));
   }
 
+  if (appDb->canUninstall(*m_app)) {
+    auto uninstall = new UninstallAppAction(m_app);
+    uninstall->setShortcut(Keybind::DangerousRemoveAction);
+    lifecycleSection->addAction(uninstall);
+  }
+
   for (const auto &action :
        RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
