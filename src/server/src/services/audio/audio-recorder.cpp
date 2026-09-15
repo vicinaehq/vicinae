@@ -19,6 +19,8 @@ namespace {
 constexpr double DYNAMIC_RANGE_DB = 30.0;
 constexpr double MIN_PEAK_DB = -30.0;
 constexpr double PEAK_DECAY_DB_PER_SEC = 6.0;
+// Models drop the last word when speech runs straight into the end of the buffer.
+constexpr int TRAILING_SILENCE_MS = 300;
 
 } // namespace
 
@@ -95,6 +97,9 @@ void Recorder::resume() {
 void Recorder::stop() {
   if (m_state == State::Idle) return;
 
+  // audio delivered since the last readyRead is lost once the source stops
+  if (m_ioDevice) processAudioData();
+
   if (m_source) {
     m_source->stop();
     m_source.reset();
@@ -165,6 +170,11 @@ Recording Recorder::finish() {
   if (m_vad) {
     pcm = extractSpeech(pcm, m_vad->frameProbabilities());
     m_vad.reset();
+  }
+
+  if (!pcm.empty()) {
+    const auto silence = static_cast<std::size_t>(m_format.sampleRate()) * TRAILING_SILENCE_MS / 1000;
+    pcm.insert(pcm.end(), silence, 0.0f);
   }
 
   return Recording{std::move(pcm), m_format};
