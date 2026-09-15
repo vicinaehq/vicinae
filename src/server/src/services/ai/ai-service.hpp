@@ -46,6 +46,12 @@ public:
     return completion;
   }
 
+  void preloadModel(const ModelRef &ref) {
+    if (auto it = m_providers.find(ref.provider); it != m_providers.end()) {
+      it->second->preloadModel(ref.id);
+    }
+  }
+
   QFuture<std::string> runCompletion(std::optional<ModelRef> ref,
                                      const ChatCompletionPayload &payload) const {
     auto promise = std::make_shared<QPromise<std::string>>();

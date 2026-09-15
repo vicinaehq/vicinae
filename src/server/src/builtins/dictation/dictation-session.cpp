@@ -60,6 +60,8 @@ bool DictationSession::start() {
 
   if (m_playSoundEffects) { m_startSound.play(); }
 
+  m_ctx->services->ai()->preloadModel(m_model);
+
   return true;
 }
 
@@ -96,32 +98,39 @@ void DictationSession::accept() {
   m_ctx->services->ai()
       ->transcribe(m_model, std::move(recording), m_options)
       .then(this, [this](const AI::TranscriptionResult &result) {
-        m_transcribing = false;
-        emit stateChanged();
-
         if (!result) {
+          m_transcribing = false;
+          emit stateChanged();
           finishWithMessage(tr("Transcription failed"));
           return;
         }
         if (result->text.empty()) {
+          m_transcribing = false;
+          emit stateChanged();
           finishWithMessage(tr("Nothing to transcribe"));
           return;
         }
 
-        auto content = Clipboard::Text{QString::fromStdString(result->text).trimmed()};
-
-        switch (m_action) {
-        case Dictation::DictationAction::PasteToActiveWindow:
-          m_ctx->services->pasteService()->pasteContent(content, {.transient = true});
-          break;
-        case Dictation::DictationAction::CopyToClipboard:
-          m_ctx->services->clipman()->copyContent(
-              content, {.concealed = true}); // will already be indexed by transcription history
-          break;
-        }
-
-        finish();
+        m_transcribing = false;
+        emit stateChanged();
+        deliver(QString::fromStdString(result->text));
       });
+}
+
+void DictationSession::deliver(const QString &text) {
+  auto content = Clipboard::Text{text.trimmed()};
+
+  switch (m_action) {
+  case Dictation::DictationAction::PasteToActiveWindow:
+    m_ctx->services->pasteService()->pasteContent(content, {.transient = true});
+    break;
+  case Dictation::DictationAction::CopyToClipboard:
+    m_ctx->services->clipman()->copyContent(
+        content, {.concealed = true}); // will already be indexed by transcription history
+    break;
+  }
+
+  finish();
 }
 
 QString DictationSession::elapsedTime() const {
