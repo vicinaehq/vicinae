@@ -1,5 +1,5 @@
 #include "transcribe-view-host.hpp"
-#include "services/dictation-history/dictation-history.hpp"
+#include "services/dictation/dictation-service.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
@@ -90,7 +90,10 @@ void TranscribeViewHost::stopAndTranscribe() {
   toast->dynamic("Transcribing...");
 
   auto ctx = context();
-  m_aiService->transcribe(m_model, std::move(recording), m_options)
+  auto options = m_options;
+  options.vocabulary = ctx->services->dictation()->vocabulary()->words();
+
+  m_aiService->transcribe(m_model, std::move(recording), options)
       .then([this, ctx, toast](const AI::TranscriptionResult &result) {
         m_transcribing = false;
         emit transcribingChanged();
@@ -108,7 +111,7 @@ void TranscribeViewHost::stopAndTranscribe() {
         const auto text = QString::fromStdString(result->text).trimmed();
         ctx->services->pasteService()->pasteContent(Clipboard::Text(text));
         if (m_recordHistory) {
-          ctx->services->dictationHistory()->add({
+          ctx->services->dictation()->history()->add({
               .text = text.toStdString(),
               .durationMs = static_cast<std::uint64_t>(m_durationMs),
               .language = m_options.language ? m_options.language : result->language,

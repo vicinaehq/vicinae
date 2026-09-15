@@ -36,6 +36,7 @@ inline std::string_view dictationActionToString(DictationAction id) {
 }
 
 inline const auto ICON = ImageURL::builtin(BuiltinIcon::Microphone).setBackgroundTint(COLOR);
+inline const auto VOCABULARY_ICON = ImageURL::builtin(BuiltinIcon::BookAntique).setBackgroundTint(COLOR);
 
 inline QString qs(std::string_view view) {
   return QString::fromUtf8(view.data(), static_cast<qsizetype>(view.size()));

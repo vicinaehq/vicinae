@@ -8,7 +8,7 @@
 #include "service-registry.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "services/ai/ai-service.hpp"
-#include "services/dictation-history/dictation-history.hpp"
+#include "services/dictation/dictation-service.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "services/media-control/media-control-service.hpp"
 #include "services/paste/paste-service.hpp"
@@ -97,8 +97,11 @@ void DictationSession::accept() {
   m_transcribing = true;
   emit stateChanged();
 
+  auto options = m_options;
+  options.vocabulary = m_ctx->services->dictation()->vocabulary()->words();
+
   m_ctx->services->ai()
-      ->transcribe(m_model, std::move(recording), m_options)
+      ->transcribe(m_model, std::move(recording), options)
       .then(this, [this](const AI::TranscriptionResult &result) {
         if (!result) {
           m_transcribing = false;
@@ -134,7 +137,7 @@ void DictationSession::deliver(const AI::TranscriptionResponse &response) {
   }
 
   if (m_recordHistory) {
-    m_ctx->services->dictationHistory()->add({
+    m_ctx->services->dictation()->history()->add({
         .text = text.toStdString(),
         .durationMs = static_cast<std::uint64_t>(m_durationMs),
         .language = m_options.language ? m_options.language : response.language,

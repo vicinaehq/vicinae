@@ -8,10 +8,15 @@
 #include "builtins/dictation/dictation.hpp"
 #include "common/context.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
+#include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
-#include "services/dictation-history/dictation-history.hpp"
+#include "services/dictation/dictation-service.hpp"
+#include "services/toast/toast-service.hpp"
+#include "theme/colors.hpp"
 #include "ui/action-panel/action-panel-state.hpp"
+#include "ui/action-panel/action.hpp"
+#include "ui/alert/alert.hpp"
 #include "ui/views/mono-list-view-host.hpp"
 
 template <> struct fuzzy::FuzzySearchable<DictationHistory::Entry> {
@@ -30,7 +35,7 @@ public:
     m_emptyDescription = tr("Everything you dictate shows up here.");
     m_emptyIcon = ImageUrl{Dictation::ICON};
 
-    auto *history = context()->services->dictationHistory();
+    auto *history = context()->services->dictation()->history();
     connect(history, &DictationHistory::changed, this, [this]() { reload(); });
     reload();
   }
@@ -83,6 +88,32 @@ public:
     main->addAction(new CopyToClipboardAction(text, tr("Copy")));
     main->addAction(new PasteToFocusedWindowAction(text));
 
+    auto remove = new StaticAction(
+        tr("Remove Dictation"), ImageURL::builtin(BuiltinIcon::Trash), [e](ApplicationContext *ctx) {
+          if (!ctx->services->dictation()->history()->remove(e)) {
+            ctx->services->toastService()->failure(tr("Failed to remove dictation"));
+          }
+        });
+    remove->setStyle(AbstractAction::Style::Danger);
+    remove->setShortcut(Keybind::RemoveAction);
+    main->addAction(remove);
+
+    auto removeAll = new StaticAction(
+        tr("Remove All Dictations"), ImageURL::builtin(BuiltinIcon::Trash), [](ApplicationContext *ctx) {
+          auto alert = new CallbackAlertWidget();
+          alert->setTitle(tr("Remove all dictations?"));
+          alert->setMessage(tr("Your whole dictation history will be lost forever."));
+          alert->setConfirmText(tr("Remove all"), SemanticColor::Red);
+          alert->setConfirmCallback([ctx]() {
+            ctx->services->dictation()->history()->clear();
+            ctx->services->toastService()->success(tr("Dictation history cleared"));
+          });
+          ctx->navigation->setDialog(alert);
+        });
+    removeAll->setStyle(AbstractAction::Style::Danger);
+    removeAll->setShortcut(Keybind::DangerousRemoveAction);
+    main->addAction(removeAll);
+
     return panel;
   }
 
@@ -112,7 +143,7 @@ private:
   }
 
   void reload() {
-    const auto entries = context()->services->dictationHistory()->entries();
+    const auto entries = context()->services->dictation()->history()->entries();
     setItems({entries.begin(), entries.end()});
   }
 };
