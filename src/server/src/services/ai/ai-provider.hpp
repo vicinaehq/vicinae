@@ -13,7 +13,9 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <ranges>
+#include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 #include "common/context.hpp"
 #include "common/qt.hpp"
@@ -156,8 +158,8 @@ struct TranscriptionOptions {
 
   // list of words we should bias towards.
   // Some class of models (such as parakeet models) cannot be
-  // biased.
-  std::vector<std::string> vocabulary;
+  // biased. Non-owning: only valid for the duration of the call.
+  std::span<const std::string_view> vocabulary;
 
   // Use gpu backend if available.
   // Only applies to local transcription.
