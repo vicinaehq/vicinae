@@ -40,78 +40,55 @@ list(APPEND LIBS
 	numen::numen
 )
 
-if (LOCAL_AI)
-	# llama.cpp is fetched first so that its bundled ggml serves whisper.cpp as well.
-	# Both pins sync the same ggml commit; bump them together.
-	function(vicinae_fetch_inference_engines)
-		include(FetchContent)
+# llama.cpp is fetched first so that its bundled ggml serves whisper.cpp as well.
+# Both pins sync the same ggml commit; bump them together.
+function(vicinae_fetch_inference_engines)
+	include(FetchContent)
 
-		set(BUILD_SHARED_LIBS OFF)
+	set(BUILD_SHARED_LIBS OFF)
 
-		set(GGML_NATIVE OFF)
-		set(GGML_VULKAN ${LOCAL_AI_VULKAN})
-		set(GGML_METAL_EMBED_LIBRARY ON)
+	set(GGML_NATIVE OFF)
+	set(GGML_VULKAN ${LOCAL_AI_VULKAN})
+	set(GGML_METAL_EMBED_LIBRARY ON)
 
-		if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
-			set(GGML_SSE42 ON)
-			set(GGML_AVX ON)
-			set(GGML_AVX2 ON)
-			set(GGML_FMA ON)
-			set(GGML_F16C ON)
-			set(GGML_BMI2 ON)
-			set(GGML_AVX512 OFF)
-		endif()
-
-		set(LLAMA_USE_SYSTEM_GGML ${USE_SYSTEM_GGML})
-		set(WHISPER_USE_SYSTEM_GGML ${USE_SYSTEM_GGML})
-		set(WHISPER_BUILD_TESTS OFF)
-		set(WHISPER_BUILD_EXAMPLES OFF)
-
-		set(EXCLUDE_ARG)
-		if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
-			set(EXCLUDE_ARG EXCLUDE_FROM_ALL)
-		endif()
-
-		set(ENGINES)
-
-		if (NOT USE_SYSTEM_LLAMA)
-			FetchContent_Declare(llama
-			  GIT_REPOSITORY https://github.com/ggml-org/llama.cpp
-			  GIT_TAG        v0.1.2
-			  GIT_SHALLOW    TRUE
-			  ${EXCLUDE_ARG}
-			)
-			list(APPEND ENGINES llama)
-		endif()
-
-		if (NOT USE_SYSTEM_WHISPER)
-			FetchContent_Declare(whisper
-			  GIT_REPOSITORY https://github.com/ggml-org/whisper.cpp
-			  GIT_TAG        v1.9.3
-			  GIT_SHALLOW    TRUE
-			  ${EXCLUDE_ARG}
-			)
-			list(APPEND ENGINES whisper)
-		endif()
-
-		if (ENGINES)
-			FetchContent_MakeAvailable(${ENGINES})
-		endif()
-	endfunction()
-
-	if (USE_SYSTEM_LLAMA)
-		find_package(llama REQUIRED)
+	if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+		set(GGML_SSE42 ON)
+		set(GGML_AVX ON)
+		set(GGML_AVX2 ON)
+		set(GGML_FMA ON)
+		set(GGML_F16C ON)
+		set(GGML_BMI2 ON)
+		set(GGML_AVX512 OFF)
 	endif()
 
-	if (USE_SYSTEM_WHISPER)
-		find_package(whisper REQUIRED)
-		find_package(parakeet REQUIRED)
+	set(WHISPER_BUILD_TESTS OFF)
+	set(WHISPER_BUILD_EXAMPLES OFF)
+
+	set(EXCLUDE_ARG)
+	if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
+		set(EXCLUDE_ARG EXCLUDE_FROM_ALL)
 	endif()
 
+	FetchContent_Declare(llama
+	  GIT_REPOSITORY https://github.com/ggml-org/llama.cpp
+	  GIT_TAG        v0.1.2
+	  GIT_SHALLOW    TRUE
+	  ${EXCLUDE_ARG}
+	)
+	FetchContent_Declare(whisper
+	  GIT_REPOSITORY https://github.com/ggml-org/whisper.cpp
+	  GIT_TAG        v1.9.3
+	  GIT_SHALLOW    TRUE
+	  ${EXCLUDE_ARG}
+	)
+	FetchContent_MakeAvailable(llama whisper)
+endfunction()
+
+if (NOT SYSTEM_INFERENCE_ENGINES)
 	vicinae_fetch_inference_engines()
-
-	list(APPEND LIBS whisper parakeet llama)
 endif()
+
+list(APPEND LIBS whisper parakeet llama)
 
 list(APPEND LIBS KF6::SyntaxHighlighting)
 
@@ -608,6 +585,8 @@ set(SRCS
 
 	src/services/audio/audio-recorder.hpp
 	src/services/audio/audio-recorder.cpp
+	src/services/audio/voice-activity-detector.hpp
+	src/services/audio/voice-activity-detector.cpp
 
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
@@ -1010,6 +989,7 @@ if (NOT WIN32)
 endif()
 
 list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources-core.qrc)
+list(APPEND SRCS resources-local-ai.qrc)
 if (TYPESCRIPT_EXTENSIONS)
     list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources-extensions.qrc)
 endif()

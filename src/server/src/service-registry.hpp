@@ -44,9 +44,7 @@ class AudioControlService;
 class MediaControlService;
 class AppRuntime;
 class GlobalShortcutService;
-#ifdef HAS_LOCAL_AI
 class LocalModelRegistry;
-#endif
 
 namespace config {
 class Manager;
@@ -102,9 +100,7 @@ public:
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
   AI::Service *ai() const;
-#ifdef HAS_LOCAL_AI
   LocalModelRegistry *localModels() const;
-#endif
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setTrayHost(std::unique_ptr<AbstractTrayHost> service);
@@ -149,9 +145,7 @@ public:
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
   void setAI(std::unique_ptr<AI::Service>);
-#ifdef HAS_LOCAL_AI
   void setLocalModels(std::unique_ptr<LocalModelRegistry> registry);
-#endif
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
@@ -195,8 +189,6 @@ private:
   std::unique_ptr<MediaControlService> m_mediaControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
-#ifdef HAS_LOCAL_AI
   std::unique_ptr<LocalModelRegistry> m_localModels;
-#endif
   std::unique_ptr<AI::Service> m_ai;
 };

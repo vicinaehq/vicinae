@@ -6,10 +6,12 @@
 #include <QObject>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <qaudioformat.h>
 #include <qstringview.h>
 #include <span>
 #include <vector>
+#include "voice-activity-detector.hpp"
 
 namespace Audio {
 
@@ -55,8 +57,8 @@ public:
   float level() const { return m_level; }
   qint64 elapsedMs() const;
 
-  // mark the recording as finished and move the data out of the recorder
-  Recording finish() const;
+  // mark the recording as finished and move the data out of the recorder, keeping only the speech
+  Recording finish();
 
 private:
   void processAudioData();
@@ -70,6 +72,7 @@ private:
   qint64 m_pausedElapsed = 0;
 
   std::vector<float> m_pcmBuffer;
+  std::optional<VoiceActivityDetector> m_vad;
   QAudioFormat m_format;
   float m_level = 0.0f;
   double m_peakDb = 0.0;

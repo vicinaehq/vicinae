@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <span>
+#include <utility>
 #include <qaudioformat.h>
 #include <qbuffer.h>
 #include <qlogging.h>
@@ -44,9 +45,8 @@ bool Recorder::start() {
 
   m_format = targetFormat();
   if (!device.isFormatSupported(m_format)) {
-    qDebug() << "Target format (16kHz/mono/float) not supported, using preferred format";
-    m_format = device.preferredFormat();
-    m_format.setSampleFormat(QAudioFormat::Int16);
+    emit errorOccurred(tr("Audio input does not support 16 kHz mono recording"));
+    return false;
   }
 
   m_source = std::make_unique<QAudioSource>(device, m_format, this);
@@ -61,6 +61,7 @@ bool Recorder::start() {
   // Reserve for ~2 minutes of audio
   m_pcmBuffer.clear();
   m_pcmBuffer.reserve(m_format.sampleRate() * m_format.channelCount() * 120);
+  m_vad = VoiceActivityDetector::create();
   m_pausedElapsed = 0;
   m_level = 0.0f;
   m_peakDb = MIN_PEAK_DB;
@@ -110,6 +111,7 @@ void Recorder::discard() {
   }
   m_ioDevice = nullptr;
   m_pcmBuffer.clear();
+  m_vad.reset();
   m_level = 0.0f;
   m_state = State::Idle;
 }
@@ -126,20 +128,12 @@ void Recorder::processAudioData() {
 
   const auto before = m_pcmBuffer.size();
   appendSamples(data);
-  updateLevel(std::span(m_pcmBuffer).subspan(before));
+  const auto fresh = std::span(std::as_const(m_pcmBuffer)).subspan(before);
+  if (m_vad) m_vad->feed(fresh);
+  updateLevel(fresh);
 }
 
 void Recorder::appendSamples(const QByteArray &data) {
-  if (m_format.sampleFormat() == QAudioFormat::Int16) {
-    auto count = data.size() / static_cast<qsizetype>(sizeof(std::int16_t));
-    auto *samples = reinterpret_cast<const std::int16_t *>(data.constData());
-    m_pcmBuffer.reserve(m_pcmBuffer.size() + count);
-    for (qsizetype i = 0; i < count; ++i) {
-      m_pcmBuffer.push_back(static_cast<float>(samples[i]) / 32768.0f);
-    }
-    return;
-  }
-
   auto count = data.size() / static_cast<qsizetype>(sizeof(float));
   auto *samples = reinterpret_cast<const float *>(data.constData());
   m_pcmBuffer.insert(m_pcmBuffer.end(), samples, samples + count);
@@ -164,7 +158,17 @@ void Recorder::updateLevel(std::span<const float> samples) {
   emit levelChanged();
 }
 
-Recording Recorder::finish() const { return Recording{std::move(m_pcmBuffer), m_format}; }
+Recording Recorder::finish() {
+  auto pcm = std::move(m_pcmBuffer);
+  m_pcmBuffer.clear();
+
+  if (m_vad) {
+    pcm = extractSpeech(pcm, m_vad->frameProbabilities());
+    m_vad.reset();
+  }
+
+  return Recording{std::move(pcm), m_format};
+}
 
 // Audio Recording
 
