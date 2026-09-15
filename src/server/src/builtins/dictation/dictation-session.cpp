@@ -83,11 +83,18 @@ void DictationSession::accept() {
 
   if (m_pauseHandle) { m_pauseHandle->resume(); }
 
+  auto recording = m_recorder.finish();
+
+  if (recording.toF32().empty()) {
+    finishWithMessage(tr("Nothing to transcribe"));
+    return;
+  }
+
   m_transcribing = true;
   emit stateChanged();
 
   m_ctx->services->ai()
-      ->transcribe(m_model, m_recorder.finish(), m_options)
+      ->transcribe(m_model, std::move(recording), m_options)
       .then(this, [this](const AI::TranscriptionResult &result) {
         m_transcribing = false;
         emit stateChanged();

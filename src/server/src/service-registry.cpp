@@ -97,13 +97,11 @@ AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
 
 void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
 
-#ifdef HAS_LOCAL_AI
 LocalModelRegistry *ServiceRegistry::localModels() const { return m_localModels.get(); }
 
 void ServiceRegistry::setLocalModels(std::unique_ptr<LocalModelRegistry> registry) {
   m_localModels = std::move(registry);
 }
-#endif
 
 UpdateService *ServiceRegistry::updateService() const { return m_updateService.get(); }
 
