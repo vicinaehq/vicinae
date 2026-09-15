@@ -1,5 +1,5 @@
 #include "service-registry.hpp"
-#include "services/dictation-history/dictation-history.hpp"
+#include "services/dictation/dictation-service.hpp"
 #ifdef Q_OS_LINUX
 #include "services/input-server/linux-input-server.hpp"
 #endif
@@ -104,10 +104,10 @@ void ServiceRegistry::setLocalModels(std::unique_ptr<LocalModelRegistry> registr
   m_localModels = std::move(registry);
 }
 
-DictationHistory *ServiceRegistry::dictationHistory() const { return m_dictationHistory.get(); }
+DictationService *ServiceRegistry::dictation() const { return m_dictation.get(); }
 
-void ServiceRegistry::setDictationHistory(std::unique_ptr<DictationHistory> history) {
-  m_dictationHistory = std::move(history);
+void ServiceRegistry::setDictation(std::unique_ptr<DictationService> service) {
+  m_dictation = std::move(service);
 }
 
 UpdateService *ServiceRegistry::updateService() const { return m_updateService.get(); }

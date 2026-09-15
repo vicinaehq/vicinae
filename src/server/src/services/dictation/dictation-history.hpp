@@ -28,6 +28,8 @@ public:
   explicit DictationHistory(std::filesystem::path path, QObject *parent = nullptr);
 
   void add(Entry entry);
+  bool remove(const Entry &entry);
+  void clear();
   std::span<const Entry> entries() const { return m_file.data().entries; }
 
 private:
