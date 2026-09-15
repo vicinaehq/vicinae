@@ -1,159 +1,157 @@
 #pragma once
+#include <algorithm>
+#include <array>
+#include <atomic>
 #include <filesystem>
-#include <QtConcurrent>
 #include <format>
+#include <memory>
+#include <string>
+#include <vector>
+#include <QtConcurrent>
 #include <llama.h>
 #include <ggml-backend.h>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include "services/ai/ai-provider.hpp"
 
-// chat completion using llama.cpp
-// this is experimental, and we don't make use of this yet.
-// tool support would be a lot of work to add, so maybe we will only use this for the easy stuff.
+// Chat completion using llama.cpp. Loads the model per call; keeping it warm belongs to the helper
+// process. No tool support, this is meant for small fixed-purpose models.
 class LocalChatCompletion : public AI::AbstractChatCompletionStream {
 public:
-  LocalChatCompletion(const std::filesystem::path &model, AI::ChatCompletionPayload payload)
-      : m_model(model), m_payload(std::move(payload)) {}
+  LocalChatCompletion(std::filesystem::path model, AI::ChatCompletionPayload payload)
+      : m_model(std::move(model)), m_payload(std::move(payload)) {}
+
+  ~LocalChatCompletion() override {
+    m_aborted = true;
+    m_completion.waitForFinished();
+  }
 
   bool start() override {
-    m_completion.setFuture(
-        QtConcurrent::run([this, path = m_model, payload = m_payload]() { runCompletion(path, payload); }));
+    m_completion.setFuture(QtConcurrent::run([this]() { runCompletion(); }));
     return true;
   }
 
   bool abort() override {
-    // right now, does nothing
-    m_completion.cancel();
-    return false;
+    m_aborted = true;
+    return true;
   }
 
 private:
-  void runCompletion(std::filesystem::path path, AI::ChatCompletionPayload payload) {
+  // Qwen3 chat template output for enable_thinking=false. llama_chat_apply_template has no
+  // template kwargs, so the marker is appended by hand.
+  static constexpr auto NO_THINKING_MARKER = "<think>\n\n</think>\n\n";
+  static constexpr int MAX_PREDICT = 2048;
+
+  struct ModelDeleter {
+    void operator()(llama_model *model) const { llama_model_free(model); }
+  };
+  struct ContextDeleter {
+    void operator()(llama_context *ctx) const { llama_free(ctx); }
+  };
+  struct SamplerDeleter {
+    void operator()(llama_sampler *sampler) const { llama_sampler_free(sampler); }
+  };
+
+  void fail(std::string reason) {
+    QMetaObject::invokeMethod(this, [this, reason = std::move(reason)]() { emit errorOccured(reason); });
+  }
+
+  static const char *roleName(AI::ChatRole role) {
+    using R = AI::ChatRole;
+    switch (role) {
+    case R::System:
+      return "system";
+    case R::User:
+      return "user";
+    case R::Assistant:
+      return "assistant";
+    case R::Developer:
+      return "developer";
+    case R::Tool:
+      return "tool";
+    }
+    return "user";
+  }
+
+  void runCompletion() {
     ggml_backend_load_all();
+
     auto mparams = llama_model_default_params();
     mparams.n_gpu_layers = 99;
 
-    auto model = llama_model_load_from_file(path.c_str(), mparams);
+    std::unique_ptr<llama_model, ModelDeleter> model(llama_model_load_from_file(m_model.c_str(), mparams));
+    if (!model) return fail(std::format("Failed to load model from file: {}", m_model.string()));
+    if (m_aborted) return;
 
-    if (!model) {
-      qDebug() << "Failed to load model" << path.c_str();
-      emit errorOccured(std::format("Failed to load model from file: {}", path.c_str()));
-      return;
+    std::vector<llama_chat_message> msgs;
+    msgs.reserve(m_payload.messages.size());
+    for (const auto &msg : m_payload.messages) {
+      msgs.emplace_back(roleName(msg.role), msg.value.c_str());
     }
 
-    const char *tmpl = llama_model_chat_template(model, /*name=*/nullptr);
-
-    std::vector<llama_chat_message> msgs{};
-
-    msgs.reserve(payload.messages.size());
-
-    for (const auto &msg : payload.messages) {
-      constexpr auto getRole = [](AI::ChatRole role) {
-        using R = AI::ChatRole;
-        switch (role) {
-        case R::System:
-          return "system";
-        case R::User:
-          return "user";
-        case R::Assistant:
-          return "assistant";
-        case R::Developer:
-          return "developer";
-        case R::Tool:
-          return "tool";
-        }
-      };
-      msgs.push_back({getRole(msg.role), msg.value.c_str()});
-    }
-
+    const char *tmpl = llama_model_chat_template(model.get(), nullptr);
     std::vector<char> buf(4096);
-    int len = llama_chat_apply_template(tmpl, msgs.data(), msgs.size(), /*add_assistant=*/true, buf.data(),
-                                        buf.size());
-    if (len > (int)buf.size()) { // buffer too small: resize and retry
-      buf.resize(len);
+    int len = llama_chat_apply_template(tmpl, msgs.data(), msgs.size(), true, buf.data(), buf.size());
+    if (len > static_cast<int>(buf.size())) {
+      buf.resize(static_cast<std::size_t>(len));
       len = llama_chat_apply_template(tmpl, msgs.data(), msgs.size(), true, buf.data(), buf.size());
     }
-    std::string prompt(buf.data(), len);
+    if (len < 0) return fail("Failed to apply chat template");
 
-    prompt += "<think></think>";
+    std::string prompt(buf.data(), static_cast<std::size_t>(len));
+    prompt += NO_THINKING_MARKER;
 
-    auto vocab = llama_model_get_vocab(model);
+    const auto *vocab = llama_model_get_vocab(model.get());
+    const int n_prompt = -llama_tokenize(vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
+    if (n_prompt <= 0) return fail("Failed to tokenize prompt");
 
-    qDebug() << "get vocab";
-
-    const int n_prompt = -llama_tokenize(vocab, prompt.c_str(), prompt.size(), nullptr, 0,
-                                         /*add_special=*/true, /*parse_special=*/true);
-
-    qDebug() << "tokenizing";
-
-    std::vector<llama_token> tokens(n_prompt);
-
-    if (llama_tokenize(vocab, prompt.c_str(), prompt.size(), tokens.data(), tokens.size(), true, true) < 0) {
-      qDebug() << "failed to tokenize";
-      QMetaObject::invokeMethod(this, [this]() { emit errorOccured("Failed to tokenize prompt"); });
-      return;
+    std::vector<llama_token> tokens(static_cast<std::size_t>(n_prompt));
+    if (llama_tokenize(vocab, prompt.c_str(), prompt.size(), tokens.data(), n_prompt, true, true) < 0) {
+      return fail("Failed to tokenize prompt");
     }
 
-    qDebug() << "tokenized";
+    // output length tracks input length for rewriting tasks
+    const int n_predict = std::min(MAX_PREDICT, static_cast<int>(n_prompt * 1.3) + 32);
 
-    const int n_predict = 64;
+    auto cparams = llama_context_default_params();
+    cparams.n_ctx = static_cast<std::uint32_t>(n_prompt + n_predict);
+    cparams.n_batch = static_cast<std::uint32_t>(n_prompt);
 
-    llama_context_params cparams = llama_context_default_params();
-    cparams.n_ctx = n_prompt + n_predict;
-    cparams.n_batch = n_prompt;
-    llama_context *ctx = llama_init_from_model(model, cparams);
+    std::unique_ptr<llama_context, ContextDeleter> ctx(llama_init_from_model(model.get(), cparams));
+    if (!ctx) return fail("Failed to initialize llama context");
 
-    if (!ctx) { emit errorOccured("Failed to initialize llama context"); }
+    std::unique_ptr<llama_sampler, SamplerDeleter> sampler(
+        llama_sampler_chain_init(llama_sampler_chain_default_params()));
+    llama_sampler_chain_add(sampler.get(), llama_sampler_init_greedy());
 
-    qDebug() << "add sampler chain";
+    llama_batch batch = llama_batch_get_one(tokens.data(), static_cast<std::int32_t>(tokens.size()));
+    // the batch points at this token across iterations
+    llama_token tok = 0;
 
-    llama_sampler *smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
-    // llama_sampler_chain_add(smpl, llama_sampler_init_temp(0.8f));
-    llama_sampler_chain_add(smpl, llama_sampler_init_greedy());
+    for (int n = 0; n < n_predict && !m_aborted; ++n) {
+      if (llama_decode(ctx.get(), batch) != 0) return fail("Failed to decode");
 
-    qDebug() << "add batch";
+      tok = llama_sampler_sample(sampler.get(), ctx.get(), -1);
+      if (llama_vocab_is_eog(vocab, tok)) break;
 
-    llama_batch batch = llama_batch_get_one(tokens.data(), tokens.size());
+      std::array<char, 256> piece{};
+      const int pieceLen = llama_token_to_piece(vocab, tok, piece.data(), piece.size(), 0, true);
+      if (pieceLen < 0) return fail("Failed to detokenize");
 
-    for (int n = 0; n < n_predict;) {
-      if (llama_decode(ctx, batch)) { emit errorOccured("Failed to llama_decode"); }
+      QMetaObject::invokeMethod(
+          this, [this, text = std::string{piece.data(), static_cast<std::size_t>(pieceLen)}]() {
+            emit dataAdded(text);
+          });
 
-      // sample the next token from the last logits
-      llama_token tok = llama_sampler_sample(smpl, ctx, -1);
-
-      if (llama_vocab_is_eog(vocab, tok)) break; // end of generation
-
-      qDebug() << "GOT TOKEN";
-
-      // detokenize and print
-      std::array<char, 256> buf;
-      int len = llama_token_to_piece(vocab, tok, buf.data(), buf.size(), 0, true);
-
-      if (len < 0) {
-        emit errorOccured("Failed to detokenize");
-        return;
-      }
-
-      QMetaObject::invokeMethod(this, [this, token = std::string{buf.data(), static_cast<size_t>(len)}]() {
-        emit dataAdded(token);
-      });
-
-      // feed the sampled token back in
       batch = llama_batch_get_one(&tok, 1);
-      n++;
     }
 
-    qDebug() << "end of generation";
-
-    llama_sampler_free(smpl);
-    llama_free(ctx);
-    llama_model_free(model);
-
+    if (m_aborted) return;
     QMetaObject::invokeMethod(this, [this]() { emit finished(); });
   }
 
   std::filesystem::path m_model;
   AI::ChatCompletionPayload m_payload;
   QFutureWatcher<void> m_completion;
+  std::atomic<bool> m_aborted = false;
 };

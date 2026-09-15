@@ -58,6 +58,7 @@ public:
 private:
   void finish();
   void finishWithMessage(const QString &message);
+  void deliver(const QString &text);
 
   const ApplicationContext *m_ctx;
   AI::ModelRef m_model;

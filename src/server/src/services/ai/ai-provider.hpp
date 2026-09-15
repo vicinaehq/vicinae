@@ -166,6 +166,8 @@ struct TranscriptionOptions {
 
 struct TranscriptionResponse {
   std::string text;
+  // ISO 639-1 code when the engine knows or detected it
+  std::optional<std::string> language;
 };
 
 using TranscriptionResult = std::expected<TranscriptionResponse, std::string>;
@@ -234,6 +236,19 @@ public:
   virtual std::string_view description() const = 0;
 
   virtual void start() = 0;
+
+  /**
+   * A request to preload said model, if applicable.
+   *
+   * Typically used with dictation models: when the recorder starts,
+   * a preload request is sent so that the audio can be transcribed
+   * without suffering from cold start.
+   *
+   * This mostly applies to local inference, cloud models do not need this
+   * for obvious reasons.
+   *
+   */
+  virtual void preloadModel(std::string_view modelId) {}
 
   /**
    * List all models that match the filter's criterias.
