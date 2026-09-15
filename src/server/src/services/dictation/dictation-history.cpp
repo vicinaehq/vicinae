@@ -1,4 +1,5 @@
 #include "dictation-history.hpp"
+#include <algorithm>
 #include <utility>
 #include <QDateTime>
 
@@ -18,6 +19,23 @@ void DictationHistory::add(Entry entry) {
   entries.insert(entries.begin(), std::move(entry));
   if (entries.size() > MAX_HISTORY_SIZE) entries.resize(MAX_HISTORY_SIZE);
 
+  m_file.save();
+  emit changed();
+}
+
+bool DictationHistory::remove(const Entry &entry) {
+  const auto removed = std::erase_if(m_file.data().entries, [&](const Entry &e) {
+    return e.createdAt == entry.createdAt && e.text == entry.text;
+  });
+  if (removed == 0) return false;
+
+  m_file.save();
+  emit changed();
+  return true;
+}
+
+void DictationHistory::clear() {
+  m_file.data().entries.clear();
   m_file.save();
   emit changed();
 }

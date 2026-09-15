@@ -157,7 +157,7 @@ public:
 
     const auto runParakeet = [&]() {
       return QtConcurrent::run(
-          [recording = std::move(recording), opts, path = std::move(path)]() -> TranscriptionResult {
+          [recording = std::move(recording), path = std::move(path)]() -> TranscriptionResult {
             parakeet_full_params fparams =
                 parakeet_full_default_params(parakeet_sampling_strategy::PARAKEET_SAMPLING_GREEDY);
             auto ctx =
@@ -185,27 +185,24 @@ public:
     };
 
     const auto runWhisper = [&]() {
-      return QtConcurrent::run([recording = std::move(recording), opts = std::move(opts),
+      std::string initialPrompt;
+
+      for (const auto &word : opts.vocabulary) {
+        if (!initialPrompt.empty()) initialPrompt += ", ";
+        initialPrompt += word;
+      }
+
+      return QtConcurrent::run([recording = std::move(recording), language = opts.language,
+                                useGpu = opts.useGpu, initialPrompt = std::move(initialPrompt),
                                 path = std::move(path)]() -> TranscriptionResult {
-        constexpr auto WHISPER_TEXT_CTX = 448;
-        constexpr auto INITIAL_PROMPT_N = WHISPER_TEXT_CTX / 2;
-        std::string initialPrompt{};
-
-        initialPrompt.reserve(INITIAL_PROMPT_N);
-
-        for (const auto &word : opts.vocabulary) {
-          if (!initialPrompt.empty()) initialPrompt += ", ";
-          initialPrompt += word;
-        }
-
         whisper_context_params params = whisper_context_default_params();
 
-        params.use_gpu = opts.useGpu;
+        params.use_gpu = useGpu;
 
         whisper_context *ctx = whisper_init_from_file_with_params(path.string().c_str(), params);
         whisper_full_params fparams =
             whisper_full_default_params(whisper_sampling_strategy::WHISPER_SAMPLING_BEAM_SEARCH);
-        fparams.language = opts.language ? opts.language->c_str() : "auto";
+        fparams.language = language ? language->c_str() : "auto";
 
         qDebug() << "transcribing using whisper full, model" << path;
 
