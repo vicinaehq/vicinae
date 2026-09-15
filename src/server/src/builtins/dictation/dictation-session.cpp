@@ -8,6 +8,7 @@
 #include "service-registry.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/dictation-history/dictation-history.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "services/media-control/media-control-service.hpp"
 #include "services/paste/paste-service.hpp"
@@ -19,9 +20,9 @@ constexpr int MESSAGE_DURATION_MS = 1500;
 
 DictationSession::DictationSession(const ApplicationContext *ctx, AI::ModelRef model,
                                    AI::TranscriptionOptions options, bool playSoundEffects, bool pauseMedia,
-                                   Dictation::DictationAction action, QObject *parent)
+                                   Dictation::DictationAction action, bool recordHistory, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_model(std::move(model)), m_options(std::move(options)), m_action(action),
-      m_playSoundEffects(playSoundEffects), m_pauseMedia(pauseMedia) {
+      m_recordHistory(recordHistory), m_playSoundEffects(playSoundEffects), m_pauseMedia(pauseMedia) {
   m_elapsedTimer.setInterval(1000);
 
   if (m_playSoundEffects) {
@@ -76,6 +77,7 @@ void DictationSession::accept() {
   if (m_transcribing || m_recorder.state() == Audio::Recorder::State::Idle) return;
 
   m_elapsedTimer.stop();
+  m_durationMs = m_recorder.elapsedMs();
   m_recorder.stop();
 
   if (m_playSoundEffects) {
@@ -113,12 +115,13 @@ void DictationSession::accept() {
 
         m_transcribing = false;
         emit stateChanged();
-        deliver(QString::fromStdString(result->text));
+        deliver(*result);
       });
 }
 
-void DictationSession::deliver(const QString &text) {
-  auto content = Clipboard::Text{text.trimmed()};
+void DictationSession::deliver(const AI::TranscriptionResponse &response) {
+  const auto text = QString::fromStdString(response.text).trimmed();
+  auto content = Clipboard::Text{text};
 
   switch (m_action) {
   case Dictation::DictationAction::PasteToActiveWindow:
@@ -128,6 +131,14 @@ void DictationSession::deliver(const QString &text) {
     m_ctx->services->clipman()->copyContent(
         content, {.concealed = true}); // will already be indexed by transcription history
     break;
+  }
+
+  if (m_recordHistory) {
+    m_ctx->services->dictationHistory()->add({
+        .text = text.toStdString(),
+        .durationMs = static_cast<std::uint64_t>(m_durationMs),
+        .language = m_options.language ? m_options.language : response.language,
+    });
   }
 
   finish();

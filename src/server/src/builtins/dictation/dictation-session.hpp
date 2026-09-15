@@ -38,7 +38,7 @@ public:
   DictationSession(const ApplicationContext *ctx, AI::ModelRef model, AI::TranscriptionOptions options = {},
                    bool playSoundEffects = true, bool pauseMedia = true,
                    Dictation::DictationAction action = Dictation::DictationAction::PasteToActiveWindow,
-                   QObject *parent = nullptr);
+                   bool recordHistory = true, QObject *parent = nullptr);
 
   bool start();
   Q_INVOKABLE void accept();
@@ -58,7 +58,7 @@ public:
 private:
   void finish();
   void finishWithMessage(const QString &message);
-  void deliver(const QString &text);
+  void deliver(const AI::TranscriptionResponse &response);
 
   const ApplicationContext *m_ctx;
   AI::ModelRef m_model;
@@ -68,6 +68,8 @@ private:
   bool m_transcribing = false;
   QString m_message;
   Dictation::DictationAction m_action;
+  bool m_recordHistory = true;
+  qint64 m_durationMs = 0;
 
   // sound
   bool m_playSoundEffects = true;

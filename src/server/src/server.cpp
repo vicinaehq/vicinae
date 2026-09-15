@@ -4,6 +4,7 @@
 #include <QStyleHints>
 #include "services/ai/agentic-loop.hpp"
 #include "services/local-model-registry/local-model-registry.hpp"
+#include "services/dictation-history/dictation-history.hpp"
 #include "services/ai/local/local-provider.hpp"
 #include "extension/extension.hpp"
 #include "root-search/browser-tabs/browser-tabs-provider.hpp"
@@ -396,6 +397,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto localModels = std::make_unique<LocalModelRegistry>();
     ai->addProvider(std::make_unique<AI::LocalProvider>(*localModels));
     registry->setLocalModels(std::move(localModels));
+    registry->setDictationHistory(
+        std::make_unique<DictationHistory>(Omnicast::dataDir() / "dictation-history.json"));
     registry->setAI(std::move(ai));
 
     auto root = registry->rootItemManager();
