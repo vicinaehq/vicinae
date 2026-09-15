@@ -1,5 +1,4 @@
 #pragma once
-#ifdef HAS_LOCAL_AI
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
@@ -86,4 +85,3 @@ private:
   int m_attempt = 0;
   QString m_error;
 };
-#endif

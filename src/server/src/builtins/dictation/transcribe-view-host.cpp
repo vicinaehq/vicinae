@@ -68,6 +68,15 @@ QString TranscribeViewHost::elapsedTime() const {
 void TranscribeViewHost::stopAndTranscribe() {
   m_elapsedTimer.stop();
   m_recorder->stop();
+
+  auto recording = m_recorder->finish();
+
+  if (recording.toF32().empty()) {
+    context()->services->toastService()->failure("Nothing to transcribe");
+    updateActions();
+    return;
+  }
+
   m_transcribing = true;
 
   emit transcribingChanged();
@@ -78,7 +87,7 @@ void TranscribeViewHost::stopAndTranscribe() {
   toast->dynamic("Transcribing...");
 
   auto ctx = context();
-  m_aiService->transcribe(m_model, m_recorder->finish(), m_options)
+  m_aiService->transcribe(m_model, std::move(recording), m_options)
       .then([this, ctx, toast](const AI::TranscriptionResult &result) {
         m_transcribing = false;
         emit transcribingChanged();

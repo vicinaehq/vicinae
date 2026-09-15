@@ -1,4 +1,3 @@
-#ifdef HAS_LOCAL_AI
 #include "local-model-registry.hpp"
 #include <algorithm>
 #include <format>
@@ -56,12 +55,6 @@ std::optional<fs::path> LocalModelRegistry::installedPath(std::string_view id) c
   const auto *info = LocalModelCatalogue::find(id);
   if (!info || !isInstalled(*info)) return std::nullopt;
   return pathFor(*info);
-}
-
-const LocalModelInfo *LocalModelRegistry::vadModel() const {
-  const auto entries = LocalModelCatalogue::entries();
-  const auto it = std::ranges::find(entries, LocalEngine::Vad, &LocalModelInfo::engine);
-  return it == entries.end() ? nullptr : &*it;
 }
 
 std::vector<LocalModel> LocalModelRegistry::models(std::optional<AI::Capabilities> caps) const {
@@ -172,4 +165,3 @@ void LocalModelRegistry::settle(const std::string &id) {
     if (it != m_downloads.end() && !it->second->isActive()) m_downloads.erase(it);
   });
 }
-#endif

@@ -1,6 +1,5 @@
 #pragma once
 #include <ranges>
-#ifdef HAS_LOCAL_AI
 #include <optional>
 #include <qlogging.h>
 #include <qtconcurrentrun.h>
@@ -61,7 +60,6 @@ public:
 
     for (const auto &model : available) {
       const auto &info = model.info;
-      if (info.caps == 0) continue;
 
       ManagedModel managed{
           .id = std::string(info.id),
@@ -104,7 +102,7 @@ public:
     models.reserve(available.size());
 
     for (const auto &model : available) {
-      if (!model.installed || model.info.caps == 0) continue;
+      if (!model.installed) continue;
       models.emplace_back(toModel(model.info));
     }
 
@@ -195,7 +193,7 @@ return std::make_shared<LocalChatCompletion>(model, payload);
 
         whisper_context *ctx = whisper_init_from_file_with_params(path.string().c_str(), params);
         whisper_full_params fparams =
-            whisper_full_default_params(whisper_sampling_strategy::WHISPER_SAMPLING_GREEDY);
+            whisper_full_default_params(whisper_sampling_strategy::WHISPER_SAMPLING_BEAM_SEARCH);
         fparams.language = opts.language ? opts.language->c_str() : "auto";
 
         qDebug() << "transcribing using whisper full, model" << path;
@@ -251,4 +249,3 @@ private:
 };
 
 } // namespace AI
-#endif
