@@ -125,7 +125,7 @@ void TranscribeCommand::shortcutReleased() const {
 
 void TranscribeCommand::execute(CommandController &controller) const {
   auto *ctx = controller.context();
-  const auto status = ::status(ctx);
+  auto status = ::status(ctx);
   const bool playSoundEffects = controller.preferenceValues().value("sound").toBool(true);
   const bool pauseMedia = controller.preferenceValues().value("pauseMedia").toBool(true);
   auto action = Dictation::dictationActionFromString(
@@ -133,10 +133,9 @@ void TranscribeCommand::execute(CommandController &controller) const {
 
   switch (status.readiness) {
   case Readiness::Ready:
-    withMicrophoneAccess(ctx, [ctx, model = status.model->ref, options = status.options, playSoundEffects,
-                              pauseMedia, action]() {
-      startDictation(ctx, model, options, playSoundEffects, pauseMedia, action);
-    });
+    withMicrophoneAccess(
+        ctx, [ctx, model = status.model->ref, options = status.options, playSoundEffects, pauseMedia,
+              action]() { startDictation(ctx, model, options, playSoundEffects, pauseMedia, action); });
     return;
   case Readiness::NoModels:
     ctx->navigation->pushView(

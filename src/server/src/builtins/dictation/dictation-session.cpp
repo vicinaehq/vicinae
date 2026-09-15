@@ -6,6 +6,7 @@
 #include "dictation-extension.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include "services/ai/ai-provider.hpp"
 #include "services/ai/ai-service.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "services/media-control/media-control-service.hpp"
@@ -100,7 +101,7 @@ void DictationSession::accept() {
           return;
         }
 
-        auto content = Clipboard::Text(QString::fromStdString(result->text));
+        auto content = Clipboard::Text{QString::fromStdString(result->text).trimmed()};
 
         switch (m_action) {
         case Dictation::DictationAction::PasteToActiveWindow:
@@ -108,7 +109,7 @@ void DictationSession::accept() {
           break;
         case Dictation::DictationAction::CopyToClipboard:
           m_ctx->services->clipman()->copyContent(
-              content, {.concealed = true}); // will already indexed by transcription history
+              content, {.concealed = true}); // will already be indexed by transcription history
           break;
         }
 

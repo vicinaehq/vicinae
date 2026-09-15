@@ -154,6 +154,11 @@ struct TranscriptionOptions {
   // detect it.
   std::optional<std::string> language;
 
+  // list of words we should bias towards.
+  // Some class of models (such as parakeet models) cannot be
+  // biased.
+  std::vector<std::string> vocabulary;
+
   // Use gpu backend if available.
   // Only applies to local transcription.
   bool useGpu = true;
