@@ -387,8 +387,10 @@ set(SRCS
 	src/builtins/vicinae/manage-fallback-view-host.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
+	src/builtins/dictation/dictation.hpp
 	src/builtins/dictation/dictation-extension.hpp
 	src/builtins/dictation/dictation-extension.cpp
+	src/builtins/dictation/dictation-history-view-host.hpp
 	src/builtins/dictation/dictation-session.hpp
 	src/builtins/dictation/dictation-session.cpp
 	src/builtins/dictation/dictation-command.hpp
@@ -424,6 +426,9 @@ set(SRCS
 	src/services/root-item-manager/typed-root-provider.hpp
 	src/services/root-item-manager/root-item-manager.cpp
 	src/services/root-item-manager/search-history.cpp
+	src/utils/json-file.hpp
+	src/services/dictation-history/dictation-history.hpp
+	src/services/dictation-history/dictation-history.cpp
 	src/services/root-item-manager/visit-tracker.cpp
 	
 	src/services/app-service/app-service.hpp

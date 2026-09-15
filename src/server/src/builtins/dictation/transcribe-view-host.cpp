@@ -1,4 +1,5 @@
 #include "transcribe-view-host.hpp"
+#include "services/dictation-history/dictation-history.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
@@ -14,8 +15,9 @@ QVariantMap TranscribeViewHost::qmlProperties() {
   return {{QStringLiteral("host"), QVariant::fromValue(this)}};
 }
 
-TranscribeViewHost::TranscribeViewHost(AI::ModelRef model, AI::TranscriptionOptions options)
-    : m_model(std::move(model)), m_options(std::move(options)) {}
+TranscribeViewHost::TranscribeViewHost(AI::ModelRef model, AI::TranscriptionOptions options,
+                                       bool recordHistory)
+    : m_model(std::move(model)), m_options(std::move(options)), m_recordHistory(recordHistory) {}
 
 void TranscribeViewHost::initialize() {
   BaseView::initialize();
@@ -67,6 +69,7 @@ QString TranscribeViewHost::elapsedTime() const {
 
 void TranscribeViewHost::stopAndTranscribe() {
   m_elapsedTimer.stop();
+  m_durationMs = m_recorder->elapsedMs();
   m_recorder->stop();
 
   auto recording = m_recorder->finish();
@@ -102,7 +105,15 @@ void TranscribeViewHost::stopAndTranscribe() {
         }
 
         toast->success("Transcription complete");
-        ctx->services->pasteService()->pasteContent(Clipboard::Text(result->text.c_str()));
+        const auto text = QString::fromStdString(result->text).trimmed();
+        ctx->services->pasteService()->pasteContent(Clipboard::Text(text));
+        if (m_recordHistory) {
+          ctx->services->dictationHistory()->add({
+              .text = text.toStdString(),
+              .durationMs = static_cast<std::uint64_t>(m_durationMs),
+              .language = m_options.language ? m_options.language : result->language,
+          });
+        }
         ctx->navigation->closeWindow({.popToRootType = PopToRootType::Immediate});
       });
 }

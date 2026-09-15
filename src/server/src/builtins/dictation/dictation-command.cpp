@@ -70,9 +70,9 @@ Status status(const ApplicationContext *ctx) {
 
 void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
                     const AI::TranscriptionOptions &options, bool playSoundEffects, bool pauseMedia,
-                    Dictation::DictationAction action) {
+                    Dictation::DictationAction action, bool recordHistory) {
   if (Environment::isHudDisabled()) {
-    ctx->navigation->pushView(new TranscribeViewHost(model, options));
+    ctx->navigation->pushView(new TranscribeViewHost(model, options, recordHistory));
     return;
   }
 
@@ -83,8 +83,8 @@ void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
     return;
   }
 
-  active =
-      new DictationSession(ctx, model, options, playSoundEffects, pauseMedia, action, ctx->navigation.get());
+  active = new DictationSession(ctx, model, options, playSoundEffects, pauseMedia, action, recordHistory,
+                                ctx->navigation.get());
   active->start();
 }
 
@@ -128,14 +128,17 @@ void TranscribeCommand::execute(CommandController &controller) const {
   auto status = ::status(ctx);
   const bool playSoundEffects = controller.preferenceValues().value("sound").toBool(true);
   const bool pauseMedia = controller.preferenceValues().value("pauseMedia").toBool(true);
+  const bool recordHistory =
+      controller.preferenceValues().value(Dictation::qs(Dictation::HISTORY_PREFERENCE)).toBool(true);
   auto action = Dictation::dictationActionFromString(
       controller.preferenceValues().value("dictationAction").toString().toStdString());
 
   switch (status.readiness) {
   case Readiness::Ready:
-    withMicrophoneAccess(
-        ctx, [ctx, model = status.model->ref, options = status.options, playSoundEffects, pauseMedia,
-              action]() { startDictation(ctx, model, options, playSoundEffects, pauseMedia, action); });
+    withMicrophoneAccess(ctx, [ctx, model = status.model->ref, options = status.options, playSoundEffects,
+                               pauseMedia, action, recordHistory]() {
+      startDictation(ctx, model, options, playSoundEffects, pauseMedia, action, recordHistory);
+    });
     return;
   case Readiness::NoModels:
     ctx->navigation->pushView(

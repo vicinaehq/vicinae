@@ -29,7 +29,8 @@ signals:
   void errorMessageChanged();
 
 public:
-  explicit TranscribeViewHost(AI::ModelRef model, AI::TranscriptionOptions options = {});
+  explicit TranscribeViewHost(AI::ModelRef model, AI::TranscriptionOptions options = {},
+                              bool recordHistory = true);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
@@ -56,5 +57,7 @@ private:
   AI::Service *m_aiService = nullptr;
   QTimer m_elapsedTimer;
   bool m_transcribing = false;
+  bool m_recordHistory = true;
+  qint64 m_durationMs = 0;
   QString m_errorMessage;
 };

@@ -1,5 +1,7 @@
 #pragma once
+#include "builtins/dictation/dictation.hpp"
 #include "builtins/dictation/dictation-command.hpp"
+#include "builtins/dictation/dictation-history-view-host.hpp"
 #include <qtmetamacros.h>
 #include <string_view>
 #include <utility>
@@ -9,42 +11,6 @@
 #include "services/toast/toast-service.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
-
-namespace Dictation {
-enum class DictationAction { PasteToActiveWindow, CopyToClipboard };
-
-constexpr auto REPOSITORY_ID = std::string_view("dictation");
-constexpr auto MODEL_PREFERENCE = std::string_view("model");
-constexpr auto NO_MODEL = std::string_view("none");
-constexpr auto LANGUAGE_PREFERENCE = std::string_view("language");
-constexpr auto AUTO_LANGUAGE = std::string_view("auto");
-constexpr auto COLOR = SemanticColor::Blue;
-
-constexpr auto ACTION_PASTE = "paste";
-constexpr auto ACTION_COPY = "copy";
-
-inline DictationAction dictationActionFromString(std::string_view id) {
-  if (id == "copy") return DictationAction::CopyToClipboard;
-  if (id == "paste") return DictationAction::PasteToActiveWindow;
-  std::unreachable();
-}
-
-inline std::string_view dictationActionToString(DictationAction id) {
-  switch (id) {
-  case DictationAction::CopyToClipboard:
-    return ACTION_COPY;
-  case DictationAction::PasteToActiveWindow:
-    return ACTION_PASTE;
-  }
-}
-
-inline const auto ICON = ImageURL::builtin(BuiltinIcon::Microphone).setBackgroundTint(COLOR);
-
-inline QString qs(std::string_view view) {
-  return QString::fromUtf8(view.data(), static_cast<qsizetype>(view.size()));
-}
-
-} // namespace Dictation
 
 namespace {
 
@@ -67,7 +33,7 @@ class AddVocabCommand : public UnimplementedCommand {
   std::vector<QString> keywords() const override { return {}; }
 };
 
-class DictationHistoryCommand : public UnimplementedCommand {
+class DictationHistoryCommand : public BuiltinViewCommand<DictationHistoryViewHost> {
   Q_DECLARE_TR_FUNCTIONS(DictationHistoryCommand)
 
   QString id() const override { return "history"; }

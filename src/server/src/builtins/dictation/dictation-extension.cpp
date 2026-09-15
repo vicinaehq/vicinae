@@ -101,5 +101,13 @@ std::vector<Preference> DictationExtension::preferences() const {
 
   preferences.emplace_back(defaultAction);
 
+  auto history = Preference::makeCheckbox(Dictation::qs(Dictation::HISTORY_PREFERENCE));
+  history.setTitle(tr("Save dictation history"));
+  history.setDescription(
+      tr("Keep what you dictated so you can find and reuse it later. Stored as plain text."));
+  history.setDefaultValue(true);
+
+  preferences.emplace_back(history);
+
   return preferences;
 }
