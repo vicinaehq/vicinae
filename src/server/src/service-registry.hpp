@@ -45,6 +45,7 @@ class MediaControlService;
 class AppRuntime;
 class GlobalShortcutService;
 class LocalModelRegistry;
+class DictationHistory;
 
 namespace config {
 class Manager;
@@ -101,6 +102,7 @@ public:
   GlobalShortcutService *globalShortcuts() const;
   AI::Service *ai() const;
   LocalModelRegistry *localModels() const;
+  DictationHistory *dictationHistory() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setTrayHost(std::unique_ptr<AbstractTrayHost> service);
@@ -146,6 +148,7 @@ public:
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
   void setAI(std::unique_ptr<AI::Service>);
   void setLocalModels(std::unique_ptr<LocalModelRegistry> registry);
+  void setDictationHistory(std::unique_ptr<DictationHistory> history);
 
 private:
   std::unique_ptr<WindowManager> m_windowManager;
@@ -190,5 +193,6 @@ private:
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
   std::unique_ptr<LocalModelRegistry> m_localModels;
+  std::unique_ptr<DictationHistory> m_dictationHistory;
   std::unique_ptr<AI::Service> m_ai;
 };
