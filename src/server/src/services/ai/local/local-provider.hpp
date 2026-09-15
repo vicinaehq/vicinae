@@ -1,4 +1,5 @@
 #pragma once
+#include <ranges>
 #ifdef HAS_LOCAL_AI
 #include <optional>
 #include <qlogging.h>
@@ -10,7 +11,6 @@
 #include "parakeet.h"
 #include "services/ai/ai-provider.hpp"
 #include "services/audio/audio-recorder.hpp"
-#include "services/builtin-icon/builtin-icon.hpp"
 #include "services/local-model-registry/local-model-catalogue.hpp"
 #include "services/local-model-registry/local-model-registry.hpp"
 #include "ui/image/image-url.hpp"
@@ -19,9 +19,6 @@
 
 namespace AI {
 
-/**
- * Exposes the models Vicinae downloads and runs itself. Always present, no configuration.
- */
 class LocalProvider : public AbstractProvider {
   Q_OBJECT
 
@@ -31,8 +28,7 @@ public:
 
   explicit LocalProvider(LocalModelRegistry &registry)
       : m_registry(registry),
-        m_description(
-            tr("Models Vicinae downloads and runs on this machine. Nothing to configure.").toStdString()) {
+        m_description(tr("Vicinae-managed models, mostly for dictation purposes.").toStdString()) {
     m_progressThrottle.setSingleShot(true);
     m_progressThrottle.setInterval(PROGRESS_THROTTLE_MS);
     connect(&m_progressThrottle, &QTimer::timeout, this, &AbstractProvider::managedModelsChanged);
@@ -116,13 +112,20 @@ public:
   }
 
   // Deliberately never chosen as a fallback until local transcription is implemented.
-  std::optional<Model> findBestModel(Capabilities, Preference = Preference::None) const override {
+  std::optional<Model> findBestModel(Capabilities caps, Preference = Preference::None) const override {
+    if (auto models = m_registry.models(caps); !models.empty()) return toModel(models.front().info);
     return std::nullopt;
   }
 
-  std::shared_ptr<AbstractChatCompletionStream> createChatCompletion(std::string_view,
-                                                                     const ChatCompletionPayload &) override {
+  std::shared_ptr<AbstractChatCompletionStream>
+  createChatCompletion(std::string_view id, const ChatCompletionPayload &payload) override {
+    // maybe we will wire llama.cpp aT some point, for now we only offer transcription
     return nullptr;
+
+    /*
+auto model = m_registry.pathFor(m_registry.model(id)->info);
+return std::make_shared<LocalChatCompletion>(model, payload);
+  */
   }
 
   QFuture<TranscriptionResult> transcribe(Audio::Recording recording,
@@ -173,35 +176,51 @@ public:
     };
 
     const auto runWhisper = [&]() {
-      return QtConcurrent::run(
-          [recording = std::move(recording), opts, path = std::move(path)]() -> TranscriptionResult {
-            whisper_context_params params = whisper_context_default_params();
-            params.use_gpu = opts.useGpu;
+      return QtConcurrent::run([recording = std::move(recording), opts = std::move(opts),
+                                path = std::move(path)]() -> TranscriptionResult {
+        constexpr auto WHISPER_TEXT_CTX = 448;
+        constexpr auto INITIAL_PROMPT_N = WHISPER_TEXT_CTX / 2;
+        std::string initialPrompt{};
 
-            whisper_context *ctx = whisper_init_from_file_with_params(path.string().c_str(), params);
-            whisper_full_params fparams =
-                whisper_full_default_params(whisper_sampling_strategy::WHISPER_SAMPLING_GREEDY);
-            fparams.language = opts.language ? opts.language->c_str() : "auto";
+        initialPrompt.reserve(INITIAL_PROMPT_N);
 
-            qDebug() << "transcribing using whisper full, model" << path;
+        for (const auto &word : opts.vocabulary) {
+          if (!initialPrompt.empty()) initialPrompt += ", ";
+          initialPrompt += word;
+        }
 
-            if (whisper_full(ctx, fparams, recording.toF32().data(), recording.toF32().size()) != 0) {
-              return std::unexpected("Failed to transcribe");
-            }
+        whisper_context_params params = whisper_context_default_params();
 
-            qDebug() << "Transcription is done.";
+        params.use_gpu = opts.useGpu;
 
-            const int n_segments = whisper_full_n_segments(ctx);
-            std::string text{};
+        whisper_context *ctx = whisper_init_from_file_with_params(path.string().c_str(), params);
+        whisper_full_params fparams =
+            whisper_full_default_params(whisper_sampling_strategy::WHISPER_SAMPLING_GREEDY);
+        fparams.language = opts.language ? opts.language->c_str() : "auto";
 
-            for (int i = 0; i < n_segments; ++i) {
-              text += whisper_full_get_segment_text(ctx, i);
-            }
+        qDebug() << "transcribing using whisper full, model" << path;
 
-            whisper_free(ctx);
+        fparams.initial_prompt = initialPrompt.c_str();
 
-            return TranscriptionResult{text};
-          });
+        qDebug() << "initial prompt" << fparams.initial_prompt;
+
+        if (whisper_full(ctx, fparams, recording.toF32().data(), recording.toF32().size()) != 0) {
+          return std::unexpected("Failed to transcribe");
+        }
+
+        qDebug() << "Transcription is done.";
+
+        const int n_segments = whisper_full_n_segments(ctx);
+        std::string text{};
+
+        for (int i = 0; i < n_segments; ++i) {
+          text += whisper_full_get_segment_text(ctx, i);
+        }
+
+        whisper_free(ctx);
+
+        return TranscriptionResult{text};
+      });
     };
 
     switch (model->info.engine) {

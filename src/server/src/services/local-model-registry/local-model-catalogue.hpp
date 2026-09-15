@@ -9,10 +9,11 @@
 #include <QColor>
 #include "services/ai/ai-capability.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 
 enum class LocalEngine : std::uint8_t { Whisper, Parakeet, Vad, Llama };
-enum class LocalModelVendor : std::uint8_t { OpenAI, Nvidia, Silero };
+enum class LocalModelVendor : std::uint8_t { OpenAI, Nvidia, Alibaba, Silero };
 
 /**
  * A model Vicinae can download and run itself. Entries with no capability are auxiliary files
@@ -155,6 +156,8 @@ constexpr auto ENTRIES = std::to_array<LocalModelInfo>({
     .size = 1255897319,
     .sha256 = "833bffc9513b2cae867ee9e51633cfd11e4d51aaa5597c8ac02159385a2b426f",
   },
+
+  // not directly exposed, we will probably use Silero as a way to pre-process the input
   {
     .id = "silero-vad-v6.2.0",
     .name = "Silero VAD",
@@ -169,6 +172,29 @@ constexpr auto ENTRIES = std::to_array<LocalModelInfo>({
     .size = 885098,
     .sha256 = "2aa269b785eeb53a82983a20501ddf7c1d9c48e33ab63a41391ac6c9f7fb6987",
   },
+
+  // LLMs. 
+  // We are not trying to list frontier OSS models here, our local inference stack is mostly
+  // used to enhance existing AI features. Users that want frontier local AI are expected to connect
+  // their ollama/llama.cpp instance, etc...
+
+  /*
+  {
+    .id = "qwen3-1.7b",
+    .name = "Qwen3 1.7B",
+    .description = LOCAL_MODEL_TR("Tiny Qwen3 model, very good at simple tasks."),
+        .languages = LOCAL_MODEL_TR(""),
+    .engine = LocalEngine::Llama,
+    .vendor = LocalModelVendor::Alibaba,
+    .caps = AI::Capability::Completion | AI::Capability::ToolCalling | AI::Capability::Thinking,
+    .repo = "Qwen/Qwen3-1.7B-GGUF",
+    .revision = "90862c4b9d2787eaed51d12237eafdfe7c5f6077",
+    .file = "Qwen3-1.7B-Q8_0.gguf",
+        .quantization = "q8_0",
+    .size = 1834426016,
+    .sha256 = "061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a",
+  }
+  */
 });
 // clang-format on
 
@@ -206,11 +232,16 @@ inline ImageURL vendorIcon(LocalModelVendor vendor) {
     return ImageURL::builtin(BuiltinIcon::Microphone)
         .setBackgroundTint(QColor(0x76, 0xB9, 0x00))
         .setFill(QColor(Qt::white));
+  case LocalModelVendor::Alibaba:
+    return ImageURL::builtin(BuiltinIcon::Qwen)
+        .setBackgroundTint(SemanticColor::Orange)
+        .setFill(QColor(Qt::white));
   case LocalModelVendor::Silero:
     return ImageURL::builtin(BuiltinIcon::SpeakerOn)
         .setBackgroundTint(QColor(0x6B, 0x72, 0x80))
         .setFill(QColor(Qt::white));
   }
+
   return ImageURL::builtin(BuiltinIcon::Microphone);
 }
 
