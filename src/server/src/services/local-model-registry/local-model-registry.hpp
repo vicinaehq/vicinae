@@ -1,5 +1,4 @@
 #pragma once
-#ifdef HAS_LOCAL_AI
 #include <expected>
 #include <filesystem>
 #include <optional>
@@ -46,7 +45,6 @@ public:
   ~LocalModelRegistry() override;
 
   std::vector<LocalModel> models(std::optional<AI::Capabilities> caps = std::nullopt) const;
-  const LocalModelInfo *vadModel() const;
   std::optional<LocalModel> model(std::string_view id) const;
   bool isInstalled(std::string_view id) const;
   std::optional<std::filesystem::path> installedPath(std::string_view id) const;
@@ -77,4 +75,3 @@ private:
   std::optional<QString> m_token;
   std::unordered_map<std::string, QObjectUniquePtr<ModelDownload>> m_downloads;
 };
-#endif

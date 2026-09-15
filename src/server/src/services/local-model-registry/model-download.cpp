@@ -1,4 +1,3 @@
-#ifdef HAS_LOCAL_AI
 #include "model-download.hpp"
 #include <algorithm>
 #include <cmath>
@@ -314,4 +313,3 @@ std::optional<std::chrono::seconds> ModelDownload::retryAfter(const QNetworkRepl
 
   return std::nullopt;
 }
-#endif

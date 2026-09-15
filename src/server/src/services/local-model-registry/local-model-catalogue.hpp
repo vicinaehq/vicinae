@@ -12,12 +12,11 @@
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 
-enum class LocalEngine : std::uint8_t { Whisper, Parakeet, Vad, Llama };
-enum class LocalModelVendor : std::uint8_t { OpenAI, Nvidia, Alibaba, Silero };
+enum class LocalEngine : std::uint8_t { Whisper, Parakeet, Llama };
+enum class LocalModelVendor : std::uint8_t { OpenAI, Nvidia, Alibaba };
 
 /**
- * A model Vicinae can download and run itself. Entries with no capability are auxiliary files
- * (e.g. voice activity detection) pulled in by another model and never shown to the user.
+ * A model Vicinae can download and run itself.
  */
 struct LocalModelInfo {
   std::string_view id;
@@ -46,8 +45,6 @@ constexpr auto WHISPER_REPO = std::string_view("ggerganov/whisper.cpp");
 constexpr auto WHISPER_REVISION = std::string_view("5359861c739e955e79d9a303bcbc70fb988958b1");
 constexpr auto PARAKEET_REPO = std::string_view("ggml-org/parakeet-GGUF");
 constexpr auto PARAKEET_REVISION = std::string_view("35156454d1a39de06863303dd209fd2bed6ee079");
-constexpr auto VAD_REPO = std::string_view("ggml-org/whisper-vad");
-constexpr auto VAD_REVISION = std::string_view("9ffd54a1e1ee413ddf265af9913beaf518d1639b");
 
 // clang-format off
 constexpr auto ENTRIES = std::to_array<LocalModelInfo>({
@@ -157,22 +154,6 @@ constexpr auto ENTRIES = std::to_array<LocalModelInfo>({
     .sha256 = "833bffc9513b2cae867ee9e51633cfd11e4d51aaa5597c8ac02159385a2b426f",
   },
 
-  // not directly exposed, we will probably use Silero as a way to pre-process the input
-  {
-    .id = "silero-vad-v6.2.0",
-    .name = "Silero VAD",
-    .description = LOCAL_MODEL_TR("Voice activity detector used to trim silence before transcription."),
-        .languages = LOCAL_MODEL_TR("Any"),
-    .engine = LocalEngine::Vad,
-    .vendor = LocalModelVendor::Silero,
-    .repo = VAD_REPO,
-    .revision = VAD_REVISION,
-    .file = "ggml-silero-v6.2.0.bin",
-        .quantization = "f16",
-    .size = 885098,
-    .sha256 = "2aa269b785eeb53a82983a20501ddf7c1d9c48e33ab63a41391ac6c9f7fb6987",
-  },
-
   // LLMs. 
   // We are not trying to list frontier OSS models here, our local inference stack is mostly
   // used to enhance existing AI features. Users that want frontier local AI are expected to connect
@@ -235,10 +216,6 @@ inline ImageURL vendorIcon(LocalModelVendor vendor) {
   case LocalModelVendor::Alibaba:
     return ImageURL::builtin(BuiltinIcon::Qwen)
         .setBackgroundTint(SemanticColor::Orange)
-        .setFill(QColor(Qt::white));
-  case LocalModelVendor::Silero:
-    return ImageURL::builtin(BuiltinIcon::SpeakerOn)
-        .setBackgroundTint(QColor(0x6B, 0x72, 0x80))
         .setFill(QColor(Qt::white));
   }
 

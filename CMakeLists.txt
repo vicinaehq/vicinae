@@ -55,9 +55,11 @@ option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown c
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_NUMEN "Use system version of the numen calculator backend, instead of fetching it" OFF)
-option(USE_SYSTEM_WHISPER "Use system whisper.cpp instead of fetching and building it" ${USE_SYSTEM_DEFAULT})
-option(USE_SYSTEM_LLAMA "Use system llama.cpp instead of fetching and building it" ${USE_SYSTEM_DEFAULT})
-option(USE_SYSTEM_GGML "Build the fetched inference engines against the system ggml instead of the copy they bundle. Forced ON when any engine comes from the system, so that exactly one ggml is linked." ${USE_SYSTEM_DEFAULT})
+# whisper.cpp, parakeet and llama.cpp must share a single ggml, so they are always taken together:
+# either all from the system or all fetched and built in tree.
+set(USE_SYSTEM_INFERENCE_ENGINES AUTO CACHE STRING "Use the system whisper.cpp, parakeet and llama.cpp (ON), fetch and build them (OFF), or use the system copies when all three are found and fetch otherwise (AUTO)")
+set_property(CACHE USE_SYSTEM_INFERENCE_ENGINES PROPERTY STRINGS AUTO ON OFF)
+set(MIN_WHISPER_VERSION 1.9.2)
 
 set(LOCAL_AI_VULKAN_DEFAULT ON)
 
@@ -65,11 +67,10 @@ if (APPLE OR WIN32)
 	set(LOCAL_AI_VULKAN_DEFAULT OFF)
 endif()
 
-option(LOCAL_AI_VULKAN "Build the fetched ggml with the Vulkan GPU backend. Requires glslc and the Vulkan headers/loader at build time. Ignored with USE_SYSTEM_GGML." ${LOCAL_AI_VULKAN_DEFAULT})
+option(LOCAL_AI_VULKAN "Build the fetched ggml with the Vulkan GPU backend. Requires glslc and the Vulkan headers/loader at build time. Ignored when the inference engines come from the system." ${LOCAL_AI_VULKAN_DEFAULT})
 
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
-option(LOCAL_AI "Build support for local AI inference, allowing Vicinae to run inference with no third party. This does not disable AI features by themselves, as they can still be used with third party providers like cloud models, ollama, llama-server instances, etc..." ON)
 option(VICINAE_DEV_MODE "Developer build: load QML from the source tree with live reload, use the local theme dir, keep debug output. Never enable for packaged builds." OFF)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
 option(AUTO_INSTALL_BROWSER_MANIFESTS "Install per-user browser native messaging host manifests at server startup" ON)
@@ -210,13 +211,21 @@ add_subdirectory(${LIB_DIR}/figura)
 
 set(FIGURA_DIR ${CMAKE_SOURCE_DIR}/figura)
 
-if (LOCAL_AI)
-	add_compile_definitions(HAS_LOCAL_AI=1)
-
-	if ((USE_SYSTEM_WHISPER OR USE_SYSTEM_LLAMA) AND NOT USE_SYSTEM_GGML)
-		message(STATUS "A system inference engine is in use: forcing USE_SYSTEM_GGML=ON so a single ggml is linked")
-		set(USE_SYSTEM_GGML ON CACHE BOOL "" FORCE)
+if (USE_SYSTEM_INFERENCE_ENGINES STREQUAL "AUTO")
+	add_subdirectory(cmake/probes/inference-engines)
+	set(SYSTEM_INFERENCE_ENGINES ${SYSTEM_INFERENCE_ENGINES_FOUND})
+	if (NOT SYSTEM_INFERENCE_ENGINES)
+		message(STATUS "Inference engines: system whisper.cpp/parakeet/llama.cpp not all found, fetching and building them")
 	endif()
+else()
+	set(SYSTEM_INFERENCE_ENGINES ${USE_SYSTEM_INFERENCE_ENGINES})
+endif()
+
+if (SYSTEM_INFERENCE_ENGINES)
+	find_package(whisper ${MIN_WHISPER_VERSION} REQUIRED)
+	find_package(parakeet REQUIRED)
+	find_package(llama REQUIRED)
+	message(STATUS "Inference engines: using system whisper.cpp ${whisper_VERSION}, parakeet and llama.cpp")
 endif()
 
 

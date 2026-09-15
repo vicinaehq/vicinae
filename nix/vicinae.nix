@@ -18,7 +18,6 @@
   numen,
   whisper-cpp,
   llama-cpp,
-  localAI ? true,
   pulseaudio ? null,
   swift ? null,
   apple-sdk ? null,
@@ -90,13 +89,7 @@ in
       "USE_SYSTEM_CMARK_GFM" = "ON";
       "USE_SYSTEM_GLAZE" = "ON";
       "USE_SYSTEM_NUMEN" = "ON";
-      "LOCAL_AI" =
-        if localAI
-        then "ON"
-        else "OFF";
-      "USE_SYSTEM_WHISPER" = "ON";
-      "USE_SYSTEM_LLAMA" = "ON";
-      "USE_SYSTEM_GGML" = "ON";
+      "USE_SYSTEM_INFERENCE_ENGINES" = "ON";
       "USE_SYSTEM_KF6" = "ON";
       "USE_SYSTEM_QT_KEYCHAIN" = "ON";
       "CMAKE_INSTALL_PREFIX" = placeholder "out";
@@ -143,8 +136,6 @@ in
         qt6.qtsvg
         glaze
         numen
-      ]
-      ++ lib.optionals localAI [
         whisper
         llama
       ]
