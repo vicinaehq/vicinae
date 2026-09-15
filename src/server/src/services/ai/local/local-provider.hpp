@@ -12,6 +12,7 @@
 #include "services/audio/audio-recorder.hpp"
 #include "services/local-model-registry/local-model-catalogue.hpp"
 #include "services/local-model-registry/local-model-registry.hpp"
+#include "local-chat-completion.hpp"
 #include "ui/image/image-url.hpp"
 #include "ui/image/url.hpp"
 #include "whisper.h"
@@ -117,13 +118,23 @@ public:
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::string_view id, const ChatCompletionPayload &payload) override {
-    // maybe we will wire llama.cpp aT some point, for now we only offer transcription
-    return nullptr;
+    auto model = m_registry.model(id);
+    if (!model || !model->installed || model->info.engine != LocalEngine::Llama) return nullptr;
+    return std::make_shared<LocalChatCompletion>(m_registry.pathFor(model->info), payload);
+  }
 
-    /*
-auto model = m_registry.pathFor(m_registry.model(id)->info);
-return std::make_shared<LocalChatCompletion>(model, payload);
-  */
+  void preloadModel(std::string_view modelId) override {
+    auto model = m_registry.model(modelId);
+
+    if (!model) return;
+
+    constexpr auto isTranscriptionEngine = [](LocalEngine engine) {
+      return engine == LocalEngine::Parakeet || engine == LocalEngine::Whisper;
+    };
+
+    if (isTranscriptionEngine(model->info.engine)) {
+      // TODO: preload transcription context for this model
+    }
   }
 
   QFuture<TranscriptionResult> transcribe(Audio::Recording recording,
@@ -215,9 +226,12 @@ return std::make_shared<LocalChatCompletion>(model, payload);
           text += whisper_full_get_segment_text(ctx, i);
         }
 
+        TranscriptionResponse response{.text = std::move(text)};
+        if (const char *lang = whisper_lang_str(whisper_full_lang_id(ctx))) response.language = lang;
+
         whisper_free(ctx);
 
-        return TranscriptionResult{text};
+        return response;
       });
     };
 
