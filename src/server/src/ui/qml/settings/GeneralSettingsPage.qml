@@ -76,7 +76,7 @@ Flickable {
                 showSeparator: false
                 SettingsToggle {
                     checked: root.model.popToRootOnClose
-                    onToggled: root.model.popToRootOnClose = checked
+                    onToggled: checked => root.model.popToRootOnClose = checked
                 }
             }
         }
@@ -114,7 +114,7 @@ Flickable {
                 showSeparator: false
                 SettingsToggle {
                     checked: root.model.telemetrySystemInfo
-                    onToggled: root.model.telemetrySystemInfo = checked
+                    onToggled: checked => root.model.telemetrySystemInfo = checked
                 }
             }
         }

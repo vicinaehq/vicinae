@@ -128,7 +128,7 @@ Flickable {
                 description: qsTr("Show only the search bar at root; expand when a query is entered.")
                 SettingsToggle {
                     checked: root.model.compactMode
-                    onToggled: root.model.compactMode = checked
+                    onToggled: checked => root.model.compactMode = checked
                 }
             }
 

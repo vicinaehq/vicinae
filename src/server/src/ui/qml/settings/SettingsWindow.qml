@@ -277,7 +277,7 @@ Window {
                                 id: headerToggle
                                 visible: parent.visible
                                 checked: root.extModel.selectedEnabled
-                                onToggled: root.extModel.setEnabled(root.extModel.selectedRow, checked)
+                                onToggled: checked => root.extModel.setEnabled(root.extModel.selectedRow, checked)
                             }
                         }
                     }
