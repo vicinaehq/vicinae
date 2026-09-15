@@ -7,6 +7,7 @@
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/image/url.hpp"
+#include <QTimer>
 #include <iterator>
 #include <ranges>
 
@@ -105,6 +106,71 @@ void ForceQuitAppAction::execute(ApplicationContext *ctx) {
   }
 
   ctx->navigation->showHud(tr("Force quit %1").arg(m_app->displayName()));
+}
+
+UninstallAppAction::UninstallAppAction(const std::shared_ptr<AbstractApplication> &app)
+    : AbstractAction(tr("Uninstall Application"), BuiltinIcon::Trash), m_app(app) {
+  setStyle(Style::Danger);
+}
+
+namespace {
+
+void trashApp(ServiceRegistry *services, NavigationController *navigation,
+              const std::shared_ptr<AbstractApplication> &app) {
+  if (!services->appDb()->uninstall(*app)) {
+    services->toastService()->failure(
+        QCoreApplication::translate("UninstallAppAction", "Failed to uninstall %1").arg(app->displayName()));
+    return;
+  }
+
+  navigation->showHud(
+      QCoreApplication::translate("UninstallAppAction", "Uninstalled %1").arg(app->displayName()));
+}
+
+void quitThenTrashApp(ServiceRegistry *services, NavigationController *navigation,
+                      const std::shared_ptr<AbstractApplication> &app) {
+  auto *runtime = services->appRuntime();
+
+  if (!runtime->quit(*app)) {
+    services->toastService()->failure(
+        QCoreApplication::translate("UninstallAppAction", "Failed to quit %1").arg(app->displayName()));
+    return;
+  }
+
+  auto *guard = new QObject(runtime);
+
+  QObject::connect(runtime, &AppRuntime::runningAppsChanged, guard, [=]() {
+    if (runtime->isRunning(*app)) return;
+    guard->deleteLater();
+    trashApp(services, navigation, app);
+  });
+
+  QTimer::singleShot(std::chrono::seconds(15), guard, [=]() {
+    guard->deleteLater();
+    services->toastService()->failure(
+        QCoreApplication::translate("UninstallAppAction", "%1 did not quit, uninstall cancelled")
+            .arg(app->displayName()));
+  });
+}
+
+} // namespace
+
+void UninstallAppAction::execute(ApplicationContext *ctx) {
+  auto app = m_app;
+  auto *services = ctx->services;
+  auto *navigation = ctx->navigation.get();
+  bool const running = services->appRuntime()->isRunning(*app);
+  QString const message = running ? tr("%1 is running. It will be quit and moved to the trash.")
+                                  : tr("The application will be moved to the trash.");
+
+  navigation->confirmAlert(tr("Uninstall %1?").arg(app->displayName()), message.arg(app->displayName()),
+                           [=]() {
+                             if (services->appRuntime()->isRunning(*app)) {
+                               quitThenTrashApp(services, navigation, app);
+                             } else {
+                               trashApp(services, navigation, app);
+                             }
+                           });
 }
 
 void OpenInBrowserAction::execute(ApplicationContext *ctx) {
