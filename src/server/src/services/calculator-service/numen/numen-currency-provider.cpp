@@ -77,9 +77,9 @@ void NumenVicinaeCurrencyProvider::fetchRates() {
 
   watcher->setFuture(m_client.get<NumenVicinaeCurrencyData>("/currencies"));
 
-  QObject::connect(watcher, &QFutureWatcherBase::finished, [this, watcher]() {
+  QObject::connect(watcher, &QFutureWatcherBase::finished, [this, watcher, alive = m_alive]() {
     watcher->deleteLater();
-    if (watcher->isCanceled()) return;
+    if (!*alive || watcher->isCanceled()) return;
     if (auto r = watcher->result()) {
       if (loadRates(r.value())) {
         m_lastFetchedAt = std::chrono::system_clock::now();
