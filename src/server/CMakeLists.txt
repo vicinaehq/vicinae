@@ -1102,12 +1102,17 @@ endif()
 
 set(VICINAE_QML_FILES
 	src/ui/qml/launcher/LauncherWindow.qml
+	src/ui/qml/launcher/LauncherAppearance.qml
+	src/ui/qml/launcher/LauncherStatusBar.qml
 	src/ui/qml/controls/PopupMaterial.qml
+	src/ui/qml/controls/PopupItemBackground.qml
+	src/ui/qml/controls/PopupMaterialStyle.qml
 	src/ui/qml/controls/ViciPopover.qml
 	src/ui/qml/controls/PopoverBackground.qml
 	src/ui/qml/launcher/SearchBar.qml
 	src/ui/qml/views/GenericListView.qml
 	src/ui/qml/controls/StatusBarInset.qml
+	src/ui/qml/controls/SearchBarInset.qml
 	src/ui/qml/list/HoverResetOnModelChange.qml
 	src/ui/qml/list/HoverResetOnShow.qml
 	src/ui/qml/views/RootSearchList.qml
@@ -1137,6 +1142,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ViciScrollBar.qml
 	src/ui/qml/controls/ViciTextCursor.qml
 	src/ui/qml/controls/ViciDivider.qml
+	src/ui/qml/controls/ContentDivider.qml
 	src/ui/qml/controls/ViciToolTip.qml
 	src/ui/qml/views/ExtensionView.qml
 	src/ui/qml/views/MarkdownDetailView.qml
@@ -1239,12 +1245,23 @@ endif()
 if(APPLE)
 	list(APPEND VICINAE_QML_FILES
 		src/ui/qml/launcher/LauncherWindowMacOS.qml
+		src/ui/qml/launcher/LauncherAppearanceMacOS.qml
+		src/ui/qml/launcher/ScrollFadeMacOS.qml
+		src/ui/qml/controls/RoundedClipMacOS.qml
+		src/ui/qml/launcher/SearchBarMacOS.qml
+		src/ui/qml/launcher/LauncherStatusBarMacOS.qml
+		src/ui/qml/launcher/FloatingControlMacOS.qml
 		src/ui/qml/onboarding/OnboardingWindowMacOS.qml
 		src/ui/qml/hud/HudWindowMacOS.qml
 		src/ui/qml/controls/CompletionPanelMacOS.qml
 		src/ui/qml/controls/PopupMaterialMacOS.qml
+		src/ui/qml/controls/MaterialColorsMacOS.qml
+		src/ui/qml/controls/ContentDividerMacOS.qml
+		src/ui/qml/controls/PopupItemBackgroundMacOS.qml
+		src/ui/qml/controls/GlassSurfaceMacOS.qml
 		src/ui/qml/settings/SettingsWindowMacOS.qml
 	)
+	set_source_files_properties(src/ui/qml/controls/MaterialColorsMacOS.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 endif()
 
 if(WIN32)

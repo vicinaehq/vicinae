@@ -11,13 +11,21 @@ Flickable {
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     bottomMargin: root.padding + statusBarInset.value
-    topMargin: root.padding
+    topMargin: root.padding + searchBarInset.value
 
     default property alias contentData: layout.data
     property real padding: 16
     property real maxContentWidth: Infinity
 
-    Component.onCompleted: contentY = -topMargin
+    Component.onCompleted: {
+        contentY = -topMargin;
+        searchBarInset.initializePosition(root);
+    }
+
+    SearchBarInset {
+        id: searchBarInset
+        target: root
+    }
 
     StatusBarInset {
         id: statusBarInset
@@ -46,7 +54,7 @@ Flickable {
     }
 
     ScrollBar.vertical: ViciScrollBar {
-        policy: root.contentHeight > root.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        policy: root.contentHeight + searchBarInset.value > root.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
     }
 
     ColumnLayout {
@@ -79,14 +87,14 @@ Flickable {
         const mapped = item.mapToItem(root.contentItem, 0, 0);
         const itemTop = mapped.y;
         const itemBottom = itemTop + item.height;
-        const viewTop = root.contentY;
-        const viewBottom = viewTop + root.height - statusBarInset.value;
+        const viewTop = root.contentY + searchBarInset.value;
+        const viewBottom = root.contentY + root.height - statusBarInset.value;
         const minY = -root.topMargin;
         const maxY = Math.max(minY, root.contentHeight - root.height + root.bottomMargin);
         const gap = root.padding * 2;
 
         if (itemTop < viewTop) {
-            root.contentY = Math.max(minY, itemTop - gap);
+            root.contentY = Math.max(minY, itemTop - searchBarInset.value - gap);
         } else if (itemBottom > viewBottom) {
             root.contentY = Math.min(maxY, itemBottom - root.height + statusBarInset.value + gap);
         }

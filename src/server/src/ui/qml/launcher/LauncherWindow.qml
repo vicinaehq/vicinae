@@ -16,7 +16,20 @@ Window {
     property bool shadowEnabled: shadowPadding > 0
     property bool nativeChrome: false
     property bool autoPlaceOnShow: true
-    readonly property int statusBarOverlap: floatingStatusBar.visible && Config.floatingStatusBar ? floatingStatusBar.height - Config.borderWidth : 0
+    property LauncherAppearance appearance: LauncherAppearance {}
+    property Component contentEffect: null
+    property Component searchBarComponent: SearchBar {
+        commandStack: root.commandStack
+    }
+    property Component statusBarComponent: LauncherStatusBar {
+        backdrop: root.popupBackdrop
+        windowRadius: root.cornerRadius
+        windowHeight: root._h
+        windowWidth: root._w
+    }
+    readonly property alias commandStack: commandStack
+    readonly property int searchBarOverlap: Launcher.searchVisible && root.appearance.overlaySearchBar ? root.appearance.searchBarHeight : 0
+    readonly property int statusBarOverlap: floatingStatusBar.visible && root.appearance.floatingStatusBar ? floatingStatusBar.height - root.appearance.contentInset : 0
     readonly property real statusBarTop: shadowPadding + floatingStatusBar.y
     readonly property Item popupBackdrop: contentArea
     signal aboutToShow
@@ -24,7 +37,7 @@ Window {
 
     readonly property int _w: Launcher.overrideWidth || Config.windowWidth
     readonly property int _h: Launcher.overrideHeight || Config.windowHeight
-    readonly property int _contentH: Launcher.compacted ? 60 + 2 * Config.borderWidth : root._h
+    readonly property int _contentH: Launcher.compacted ? root.appearance.searchBarHeight + 2 * root.appearance.contentInset : root._h
 
     width: root._w + 2 * shadowPadding
     height: root._h + 2 * shadowPadding
@@ -91,15 +104,15 @@ Window {
         Rectangle {
             visible: Launcher.compacted
             width: root._w
-            height: 60 + 2 * Config.borderWidth
+            height: root.appearance.searchBarHeight + 2 * root.appearance.contentInset
             radius: root.cornerRadius
-            color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+            color: root.appearance.windowBackground
         }
 
         SourceBlendRect {
             visible: Launcher.compacted && !root.nativeChrome
             width: root._w
-            height: 60 + 2 * Config.borderWidth
+            height: root.appearance.searchBarHeight + 2 * root.appearance.contentInset
             radius: root.cornerRadius
             overlay: true
             borderColor: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
@@ -111,22 +124,19 @@ Window {
             width: root._w
             height: root._h
             radius: root.cornerRadius
-            color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+            color: root.appearance.windowBackground
         }
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: Config.borderWidth
+            anchors.margins: root.appearance.contentInset
             spacing: 0
             visible: !Launcher.hasOverlay
 
-            SearchBar {
-                id: searchBar
-                commandStack: commandStack
+            Item {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Launcher.searchVisible ? 60 : 0
+                Layout.preferredHeight: root.searchBarOverlap > 0 ? 0 : root.appearance.searchBarHeight
                 visible: Launcher.searchVisible
-                enabled: !Launcher.alertModel.visible
             }
 
             HorizontalLoadingBar {
@@ -134,6 +144,7 @@ Window {
                 implicitHeight: Launcher.searchVisible ? 1 : 0
                 visible: Launcher.searchVisible && !Launcher.compacted
                 loading: Launcher.isLoading
+                dividerVisible: root.appearance.searchDividerVisible
             }
 
             Item {
@@ -143,14 +154,16 @@ Window {
 
                 Item {
                     anchors.fill: parent
-                    anchors.bottomMargin: floatingStatusBar.visible ? floatingStatusBar.height - Config.borderWidth : 0
+                    anchors.bottomMargin: (root.contentEffect === null || !root.appearance.floatingStatusBar) && floatingStatusBar.visible ? floatingStatusBar.height - root.appearance.contentInset : 0
                     clip: true
 
                     Item {
                         id: contentArea
                         objectName: "contentArea"
                         width: contentViewport.width
-                        height: Config.floatingStatusBar ? contentViewport.height : parent.height
+                        height: root.appearance.floatingStatusBar ? contentViewport.height : parent.height
+                        layer.enabled: root.contentEffect !== null
+                        layer.effect: root.contentEffect
 
                         StackView {
                             id: commandStack
@@ -162,89 +175,29 @@ Window {
             }
         }
 
-        Item {
+        Loader {
+            id: searchBar
+            x: root.appearance.contentInset
+            y: root.appearance.contentInset
+            width: parent.width - 2 * root.appearance.contentInset
+            height: root.appearance.searchBarHeight
+            visible: Launcher.searchVisible && !Launcher.hasOverlay
+            enabled: !Launcher.alertModel.visible
+            sourceComponent: root.searchBarComponent
+
+            function focusInput() {
+                (item as SearchBar)?.focusInput();
+            }
+        }
+
+        Loader {
             id: floatingStatusBar
             visible: !Launcher.compacted && !Launcher.hasOverlay && Launcher.statusBarVisible
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            height: 41 + Config.borderWidth
-            clip: true
-
-            readonly property int backdropPad: 64
-
-            ShaderEffectSource {
-                id: statusBarBackdrop
-                visible: false
-                sourceItem: Config.floatingStatusBar ? contentArea : null
-                sourceRect: Qt.rect(-Config.borderWidth, contentArea.height - (floatingStatusBar.height - Config.borderWidth) - floatingStatusBar.backdropPad, floatingStatusBar.width, floatingStatusBar.height + floatingStatusBar.backdropPad)
-                textureSize: Qt.size(Math.max(1, Math.round(floatingStatusBar.width / 10)), Math.max(1, Math.round((floatingStatusBar.height + floatingStatusBar.backdropPad) / 10)))
-            }
-
-            MultiEffect {
-                visible: Config.floatingStatusBar
-                y: -floatingStatusBar.backdropPad
-                width: floatingStatusBar.width
-                height: floatingStatusBar.height + floatingStatusBar.backdropPad
-                source: statusBarBackdrop
-                autoPaddingEnabled: false
-                blurEnabled: true
-                blur: 1.0
-                blurMax: 64
-
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    autoPaddingEnabled: false
-                    blurEnabled: true
-                    blur: 1.0
-                    blurMax: 64
-                    maskEnabled: true
-                    maskSource: statusBarBlurMask
-                }
-            }
-
-            Rectangle {
-                width: root._w
-                height: root._h
-                anchors.bottom: parent.bottom
-                radius: root.cornerRadius
-                color: Config.withAlpha(Theme.statusBarBackground, (Config.floatingStatusBar ? 0.78 : 1.0) * Config.windowOpacity)
-            }
-
-            ViciDivider {
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: Config.borderWidth
-                anchors.rightMargin: Config.borderWidth
-            }
-
-            Footer {
-                id: footer
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.leftMargin: Config.borderWidth
-                anchors.rightMargin: Config.borderWidth
-                anchors.bottomMargin: Config.borderWidth
-                height: 40
-            }
-        }
-
-        Item {
-            id: statusBarBlurMask
-            width: floatingStatusBar.width
-            height: floatingStatusBar.height + floatingStatusBar.backdropPad
-            visible: false
-            layer.enabled: true
-
-            Rectangle {
-                width: root._w
-                height: root._h
-                anchors.bottom: parent.bottom
-                radius: root.cornerRadius
-                color: "white"
-            }
+            height: (item as Item)?.implicitHeight ?? 0
+            sourceComponent: root.statusBarComponent
         }
 
         SourceBlendRect {
@@ -259,7 +212,7 @@ Window {
         Loader {
             id: overlayLoader
             anchors.fill: parent
-            anchors.margins: Config.borderWidth
+            anchors.margins: root.appearance.contentInset
             visible: Launcher.hasOverlay
 
             onLoaded: (item as Item)?.forceActiveFocus()
@@ -267,14 +220,14 @@ Window {
 
         ActionPanelPopover {
             id: actionPanelPopover
-            parent: footer
+            parent: (floatingStatusBar.item as LauncherStatusBar)?.popupAnchor ?? floatingStatusBar
             controller: Launcher.actionPanel
             maxHeight: Math.round(root.height * 0.55)
         }
 
         ActionPanelPopover {
             id: footerMenuPopover
-            parent: footer
+            parent: (floatingStatusBar.item as LauncherStatusBar)?.popupAnchor ?? floatingStatusBar
             controller: Launcher.footerPanel
             alignLeft: true
             maxHeight: Math.round(root.height * 0.55)

@@ -6,7 +6,20 @@ import Vicinae
 Item {
     id: root
 
+    readonly property LauncherAppearance appearance: (root.Window.window as LauncherWindow)?.appearance ?? fallbackAppearance
+
+    LauncherAppearance {
+        id: fallbackAppearance
+    }
+
     readonly property real _bottomInset: statusBarInset.value
+    readonly property real _topInset: searchBarInset.value
+
+    SearchBarInset {
+        id: searchBarInset
+    }
+
+    Component.onCompleted: searchBarInset.initializePosition(listView)
 
     StatusBarInset {
         id: statusBarInset
@@ -52,7 +65,7 @@ Item {
             return;
         if (listView.contentHeight <= 0)
             return;
-        const underfilled = listView.contentHeight <= listView.height;
+        const underfilled = listView.contentHeight + root._topInset <= listView.height;
         if (!underfilled && listView.atYBeginning)
             return;
         if (listView.contentY + listView.height >= listView.contentHeight - root.endReachedThreshold) {
@@ -134,8 +147,8 @@ Item {
         if (!item)
             return false;
 
-        const viewportTop = listView.contentY;
-        const viewportBottom = viewportTop + listView.height - root._bottomInset;
+        const viewportTop = listView.contentY + root._topInset;
+        const viewportBottom = listView.contentY + listView.height - root._bottomInset;
         const itemTop = item.y;
         const itemBottom = item.y + item.height;
 
@@ -152,8 +165,16 @@ Item {
             return;
         const usable = listView.height - root._bottomInset;
         const itemBottom = item.y + item.height;
-        if (listView.contentHeight > usable && itemBottom > listView.contentY + usable)
+        if (listView.contentHeight + root._topInset > usable && itemBottom > listView.contentY + usable)
             listView.contentY = itemBottom - usable;
+    }
+
+    function _clearSearchBar(row) {
+        if (root._topInset <= 0)
+            return;
+        const item = listView.itemAtIndex(row);
+        if (item && item.y < listView.contentY + root._topInset)
+            listView.contentY = item.y - root._topInset - root.cellSpacing;
     }
 
     ListView {
@@ -164,7 +185,7 @@ Item {
         clip: true
         interactive: false
         boundsBehavior: Flickable.StopAtBounds
-        topMargin: root.cellSpacing
+        topMargin: root.cellSpacing + root._topInset
         bottomMargin: root.cellSpacing + root._bottomInset
         spacing: root.cellSpacing
         reuseItems: true
@@ -185,7 +206,7 @@ Item {
         }
 
         ScrollBar.vertical: ViciScrollBar {
-            policy: listView.contentHeight > listView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            policy: listView.contentHeight + root._topInset > listView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         }
 
         delegate: Loader {
@@ -274,14 +295,8 @@ Item {
                                     width: rowItem.cellWidth
                                     height: rowItem.cellHeight
                                     radius: 10
-                                    backgroundColor: {
-                                        var bg = Theme.background;
-                                        return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
-                                    }
-                                    color: {
-                                        var bg = Theme.gridItemBackground;
-                                        return Qt.rgba(bg.r, bg.g, bg.b, Config.surfaceOpacity);
-                                    }
+                                    backgroundColor: root.appearance.delegateBackdrop
+                                    color: cellWrapper.cellSelected ? root.appearance.gridSelectionFill : cellWrapper.cellHovered ? root.appearance.gridHoverFill : root.appearance.gridFill
                                 }
 
                                 GridCell {
@@ -290,6 +305,8 @@ Item {
                                     width: rowItem.cellWidth * (1 - 2 * rowItem.effectiveInset)
                                     height: rowItem.cellHeight * (1 - 2 * rowItem.effectiveInset)
                                     sourceComponent: root.cellDelegate
+                                    layer.enabled: rowItem.effectiveInset <= 0 && root.appearance.gridContentEffect !== null
+                                    layer.effect: root.appearance.gridContentEffect
                                     cellSection: cellWrapper.cellSection
                                     cellItem: cellWrapper.cellItem
                                     cellSelected: cellWrapper.cellSelected
@@ -302,14 +319,14 @@ Item {
                                 }
 
                                 SourceBlendRect {
-                                    visible: rowItem.effectiveInset <= 0
+                                    visible: rowItem.effectiveInset <= 0 && root.appearance.gridContentEffect === null
                                     width: rowItem.cellWidth
                                     height: rowItem.cellHeight
                                     radius: 10
                                     cornerMask: true
                                     backgroundColor: {
                                         var bg = Theme.background;
-                                        return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
+                                        return Config.withAlpha(bg, Config.windowOpacity);
                                     }
                                 }
 
@@ -318,8 +335,8 @@ Item {
                                     height: rowItem.cellHeight
                                     radius: 10
                                     overlay: true
-                                    borderWidth: (cellWrapper.cellSelected || cellWrapper.cellHovered) ? 2 : 0
-                                    borderColor: cellWrapper.cellSelected ? Theme.gridItemSelectionOutline : Theme.gridItemHoverOutline
+                                    borderWidth: cellWrapper.cellSelected ? root.appearance.gridSelectionBorderWidth : cellWrapper.cellHovered ? root.appearance.gridHoverBorderWidth : 0
+                                    borderColor: cellWrapper.cellSelected ? root.appearance.gridSelectionOutline : root.appearance.gridHoverOutline
                                 }
 
                                 Text {
@@ -403,6 +420,7 @@ Item {
                     mode = ListView.Beginning;
                 }
                 listView.positionViewAtIndex(row, mode);
+                root._clearSearchBar(row);
                 root._liftAboveInset(row);
             }
         }

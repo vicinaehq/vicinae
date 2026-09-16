@@ -10,7 +10,12 @@ Item {
 
     property bool selected: false
     property bool draggable: false
+    readonly property LauncherAppearance appearance: (root.Window.window as LauncherWindow)?.appearance ?? fallbackAppearance
     readonly property bool hovered: mouseArea.containsMouse && HoverActivation.active
+
+    LauncherAppearance {
+        id: fallbackAppearance
+    }
 
     default property alias contentData: contentItem.data
 
@@ -34,24 +39,16 @@ Item {
 
     SourceBlendRect {
         anchors.fill: parent
-        anchors.leftMargin: 6
-        anchors.rightMargin: 6
-        radius: 10
-        backgroundColor: {
-            var bg = Theme.background;
-            return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
-        }
+        anchors.leftMargin: root.appearance.rowInset
+        anchors.rightMargin: root.appearance.rowInset
+        radius: root.appearance.rowRadius
+        backgroundColor: root.appearance.delegateBackdrop
         color: {
-            if (root.selected) {
-                var c = Theme.listItemSelectionBg;
-                return Qt.rgba(c.r, c.g, c.b, Config.surfaceOpacity);
-            }
-            if (root.hovered) {
-                var h = Theme.listItemHoverBg;
-                return Qt.rgba(h.r, h.g, h.b, Config.surfaceOpacity);
-            }
-            var bg = Theme.background;
-            return Qt.rgba(bg.r, bg.g, bg.b, Config.windowOpacity);
+            if (root.selected)
+                return root.appearance.selectionFill;
+            if (root.hovered)
+                return root.appearance.hoverFill;
+            return root.appearance.delegateBackdrop;
         }
     }
 
