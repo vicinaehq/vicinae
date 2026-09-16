@@ -7,16 +7,14 @@ import QtQuick.Effects
 import QtQuick.Shapes
 import Vicinae
 
-Window {
+LauncherWindowBase {
     id: root
-    property int shadowPadding: 0
 
     property int cornerRadius: Config.borderRounding
     property bool blurEnabled: Config.blurEnabled
     property bool shadowEnabled: shadowPadding > 0
     property bool nativeChrome: false
     property bool autoPlaceOnShow: true
-    property LauncherAppearance appearance: LauncherAppearance {}
     property Component contentEffect: null
     property Component searchBarComponent: SearchBar {
         commandStack: root.commandStack
@@ -28,10 +26,9 @@ Window {
         windowWidth: root._w
     }
     readonly property alias commandStack: commandStack
-    readonly property int searchBarOverlap: Launcher.searchVisible && root.appearance.overlaySearchBar ? root.appearance.searchBarHeight : 0
-    readonly property int statusBarOverlap: floatingStatusBar.visible && root.appearance.floatingStatusBar ? floatingStatusBar.height - root.appearance.contentInset : 0
-    readonly property real statusBarTop: shadowPadding + floatingStatusBar.y
-    readonly property Item popupBackdrop: contentArea
+    statusBarOverlap: floatingStatusBar.visible && root.appearance.floatingStatusBar ? floatingStatusBar.height - root.appearance.contentInset : 0
+    statusBarTop: shadowPadding + floatingStatusBar.y
+    popupBackdrop: contentArea
     signal aboutToShow
     signal shown
 

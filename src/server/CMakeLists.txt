@@ -1102,6 +1102,7 @@ endif()
 
 set(VICINAE_QML_FILES
 	src/ui/qml/launcher/LauncherWindow.qml
+	src/ui/qml/launcher/LauncherWindowBase.qml
 	src/ui/qml/launcher/LauncherAppearance.qml
 	src/ui/qml/launcher/LauncherStatusBar.qml
 	src/ui/qml/controls/PopupMaterial.qml

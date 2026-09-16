@@ -5,8 +5,7 @@ import Vicinae
 Item {
     id: root
     property Item target: parent
-    // typed as Window to avoid import cycle
-    readonly property Window launcherWindow: root.Window.window as LauncherWindow
+    readonly property LauncherWindowBase launcherWindow: root.Window.window as LauncherWindowBase
     property real headerHeight: launcherWindow?.searchBarOverlap ?? 0
     visible: false
 
