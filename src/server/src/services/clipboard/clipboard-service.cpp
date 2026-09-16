@@ -178,21 +178,27 @@ void ClipboardService::runEvictionPass() {
 void ClipboardService::setMonitoring(bool value) {
   if (m_monitoring == value) return;
 
+  bool ok = true;
+
   if (value) {
     qInfo() << "Starting clipboard server" << m_clipboardServer->id();
-    if (m_clipboardServer->start()) {
+    ok = m_clipboardServer->start();
+    if (ok) {
       qInfo() << "Clipboard server" << m_clipboardServer->id() << "started successfully.";
     } else {
       qWarning() << "Failed to start clipboard server" << m_clipboardServer->id();
     }
   } else {
     qInfo() << "Stopping clipboard server" << m_clipboardServer->id();
-    if (m_clipboardServer->stop()) {
+    ok = m_clipboardServer->stop();
+    if (ok) {
       qInfo() << "Clipboard server" << m_clipboardServer->id() << "stopped successfully.";
     } else {
       qWarning() << "Failed to stop clipboard server" << m_clipboardServer->id();
     }
   }
+
+  if (!ok) return;
 
   m_monitoring = value;
   emit monitoringChanged(value);
