@@ -677,3 +677,17 @@ TEST_CASE("should stop at the end of data on an unterminated locale") {
   REQUIRE(file.isValid());
   REQUIRE(file.name() == "Firefox");
 }
+
+TEST_CASE("should accept spaces around the equals sign of a localized key") {
+  auto file = DesktopEntry::fromData(R"(
+[Desktop Entry]
+Type=Application
+Name=Firefox
+Exec=firefox
+Name[fr] = Renard de feu
+)",
+                                     {.locale = Locale("fr")});
+
+  REQUIRE(file.isValid());
+  REQUIRE(file.name() == "Renard de feu");
+}
