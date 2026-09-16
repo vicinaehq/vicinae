@@ -120,6 +120,7 @@ private:
   static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
   static QString getOfferTextPreview(const ClipboardDataOffer &offer);
   static QString getOfferImageSearchText(const ClipboardDataOffer &offer);
+  static QString getOfferFileSearchText(const ClipboardDataOffer &offer);
   static std::optional<QSize> readImageSize(const ClipboardDataOffer &offer);
 
   /**

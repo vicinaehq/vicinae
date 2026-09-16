@@ -408,6 +408,21 @@ QString ClipboardService::getOfferImageSearchText(const ClipboardDataOffer &offe
   return QStringLiteral("image");
 }
 
+QString ClipboardService::getOfferFileSearchText(const ClipboardDataOffer &offer) {
+  QString const text = offer.data;
+  auto const uris = text.split("\r\n", Qt::SkipEmptyParts);
+  QStringList paths;
+
+  paths.reserve(uris.size() + 1);
+  paths << QStringLiteral("file");
+  for (const QString &uri : uris) {
+    QUrl const url(uri);
+    paths << (url.isLocalFile() ? url.toLocalFile() : uri);
+  }
+
+  return paths.join('\n');
+}
+
 QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
   switch (getKind(offer)) {
   case ClipboardOfferKind::Text:
@@ -552,6 +567,13 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
               if (!db->indexSelectionContent(selectionId, textPreview) ||
                   !db->indexSelectionContent(selectionId, getOfferImageSearchText(offer))) {
                 qWarning() << "Failed to index image offer" << offer.mimeType;
+                return false;
+              }
+            }
+
+            if (kind == ClipboardOfferKind::File && offer.mimeType == preferredMimeType) {
+              if (!db->indexSelectionContent(selectionId, getOfferFileSearchText(offer))) {
+                qWarning() << "Failed to index file offer" << offer.mimeType;
                 return false;
               }
             }
