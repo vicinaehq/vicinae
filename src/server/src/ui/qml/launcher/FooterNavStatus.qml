@@ -7,10 +7,13 @@ Item {
 
     property bool clickable: false
     property real availableWidth: 0
+    property bool showIcon: true
+    property color textColor: Theme.textMuted
 
     signal clicked
 
     readonly property int buttonSize: 26
+    readonly property real naturalWidth: (navIcon.visible ? navIcon.width + row.spacing : 0) + navTitle.implicitWidth
 
     implicitWidth: clickable ? 20 : row.implicitWidth
     implicitHeight: Math.max(row.implicitHeight, clickable ? 26 : 0)
@@ -36,13 +39,14 @@ Item {
             width: 20
             height: 20
             source: root.clickable ? Img.icon(BuiltinIcon.Vicinae).withFillColor(Theme.textMuted) : Launcher.navigationIcon
-            visible: root.clickable || Launcher.navigationIcon.valid
+            visible: root.showIcon && (root.clickable || Launcher.navigationIcon.valid)
             anchors.verticalCenter: parent.verticalCenter
         }
 
         Text {
+            id: navTitle
             text: Launcher.navigationTitle
-            color: Theme.textMuted
+            color: root.textColor
             font.family: Theme.fontFamily
             font.pointSize: Theme.smallerFontSize
             elide: Text.ElideRight

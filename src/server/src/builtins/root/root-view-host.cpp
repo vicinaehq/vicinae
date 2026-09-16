@@ -38,7 +38,7 @@ void RootViewHost::scheduleNextClockTick() {
   ViewScope scope(context(), this);
 
   if (!cc.enabled) {
-    context()->navigation->setNavigationTitle("");
+    scope.setNavigationTitle("");
     m_clockTimer->stop();
     return;
   }

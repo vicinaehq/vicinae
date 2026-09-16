@@ -24,8 +24,8 @@ SelectableDelegate {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 12
-        anchors.rightMargin: 12
+        anchors.leftMargin: root.appearance.rowLeftPadding
+        anchors.rightMargin: root.appearance.rowRightPadding
         spacing: 10
 
         Item {
@@ -58,7 +58,7 @@ SelectableDelegate {
             Layout.minimumWidth: 100
             implicitHeight: titleText.implicitHeight
 
-            readonly property real spacing: 6
+            readonly property real spacing: root.appearance.rowTextSpacing
             readonly property real shortcutLeadingSpace: 8
             readonly property real aliasSpace: (aliasBadge.visible ? aliasBadge.width + spacing : 0) + (shortcutBadge.visible ? shortcutBadge.width + spacing + shortcutLeadingSpace : 0)
             readonly property real availableForText: width - aliasSpace
@@ -70,7 +70,7 @@ SelectableDelegate {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, textRow.availableForText - textRow.subtitleReserved)
                 text: root.itemTitle
-                color: root.selected ? Theme.listItemSelectionFg : root.hovered ? Theme.listItemHoverFg : Theme.foreground
+                color: root.selected ? root.appearance.selectedText : root.hovered ? root.appearance.hoveredText : Theme.foreground
                 font.pointSize: Theme.regularFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1
@@ -84,7 +84,7 @@ SelectableDelegate {
                 anchors.baseline: titleText.baseline
                 width: Math.min(implicitWidth, Math.max(0, textRow.availableForText - titleText.width - textRow.spacing))
                 text: root.itemSubtitle
-                color: root.selected ? Theme.listItemSecondarySelectionFg : root.hovered ? Theme.listItemSecondaryHoverFg : Theme.textMuted
+                color: root.selected ? root.appearance.selectedSecondaryText : root.hovered ? root.appearance.hoveredSecondaryText : Theme.textMuted
                 font.pointSize: Theme.regularFontSize
                 elide: Text.ElideRight
                 maximumLineCount: 1

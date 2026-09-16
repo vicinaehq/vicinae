@@ -19,6 +19,14 @@ Item {
         id: statusBarInset
     }
 
+    SearchBarInset {
+        id: searchBarInset
+    }
+
+    Component.onCompleted: searchBarInset.initializePosition(flickable)
+    onModelChanged: if (flickable.contentY <= 0)
+        searchBarInset.initializePosition(flickable)
+
     Flickable {
         id: flickable
         anchors.fill: parent
@@ -26,6 +34,7 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         bottomMargin: statusBarInset.value
+        topMargin: searchBarInset.value
 
         ViciWheelHandler {
             target: flickable
@@ -262,6 +271,6 @@ Item {
 
     Component {
         id: separatorComponent
-        ViciDivider {}
+        ContentDivider {}
     }
 }

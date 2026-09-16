@@ -133,6 +133,7 @@ Flickable {
             }
 
             SettingsRow {
+                visible: Style.configurableStatusBar
                 label: qsTr("Floating status bar")
                 description: qsTr("Let the status bar float over the content, which stays slightly visible under it. Disable to keep the content strictly above the status bar.")
                 SettingsToggle {

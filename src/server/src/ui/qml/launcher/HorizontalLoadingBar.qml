@@ -5,11 +5,13 @@ import Vicinae
 Item {
     id: root
     property bool loading: false
+    property bool dividerVisible: true
     clip: true
 
     property bool _active: false
 
     ViciDivider {
+        visible: root.dividerVisible
         anchors.fill: parent
     }
 
