@@ -695,6 +695,10 @@ if (APPLE)
 		src/services/clipboard/macos/macos-clipboard-server.mm
 		src/root-search/macos-settings/macos-settings-root-provider.hpp
 		src/root-search/macos-settings/macos-settings-root-provider.mm
+		src/root-search/apple-shortcuts/apple-shortcut-root-provider.hpp
+		src/root-search/apple-shortcuts/apple-shortcut-root-provider.cpp
+		src/services/apple-shortcuts/apple-shortcuts.hpp
+		src/services/apple-shortcuts/apple-shortcuts.mm
 		src/services/global-shortcuts/macos-global-shortcut-backend.hpp
 		src/services/global-shortcuts/macos-global-shortcut-backend.cpp
 		src/internal/keyboard/keyboard-macos.hpp
@@ -745,6 +749,7 @@ if (APPLE)
 		src/services/app-runtime/macos/mac-app-runtime.mm
 		src/services/clipboard/macos/macos-clipboard-server.mm
 		src/root-search/macos-settings/macos-settings-root-provider.mm
+		src/services/apple-shortcuts/apple-shortcuts.mm
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/files-service/macos/spotlight-recent-files-provider.mm
 		src/services/tray/macos/tray-service-macos.mm
@@ -762,7 +767,7 @@ if (APPLE)
 		src/services/menu-bar/macos-menu-bar.mm
 		src/app-platform-macos.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
-	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications")
+	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications" "-framework ScriptingBridge")
 
 	if (AUTO_ENABLE_AUTOSTART)
 		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
