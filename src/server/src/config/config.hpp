@@ -133,7 +133,7 @@ struct WindowConfig {
   static constexpr float OPAQUE_OPACITY = 1.0F;
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
 #ifdef Q_OS_MACOS
-  static constexpr float BLUR_OPACITY = 0.7F;
+  static constexpr float BLUR_OPACITY = 0.55F;
   static constexpr float GLASS_POPUP_OPACITY = 0.8F;
 #else
   static constexpr float BLUR_OPACITY = 0.9F;
