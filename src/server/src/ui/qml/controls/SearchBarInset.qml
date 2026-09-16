@@ -5,7 +5,8 @@ import Vicinae
 Item {
     id: root
     property Item target: parent
-    readonly property LauncherWindow launcherWindow: root.Window.window as LauncherWindow
+    // typed as Window to avoid import cycle
+    readonly property Window launcherWindow: root.Window.window as LauncherWindow
     property real headerHeight: launcherWindow?.searchBarOverlap ?? 0
     visible: false
 
@@ -16,7 +17,7 @@ Item {
         value: root.launcherWindow?.searchBarOverlap ?? 0
         when: root.target?.visible ?? false
         restoreMode: Binding.RestoreNone
-    }
+	}
 
     function initializePosition(flickable: Flickable) {
         if (headerHeight <= 0)

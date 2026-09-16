@@ -390,6 +390,7 @@ void LauncherWindow::loadRoot() {
     m_window = qobject_cast<QQuickWindow *>(rootObjects.first());
     if (m_window) { m_defaultWindowTitle = m_window->title(); }
   }
+  if (!m_window) { qWarning() << "launcher window did not load synchronously: no root window"; }
 
   applyWindowConfig();
 
