@@ -18,6 +18,14 @@ static const QString COMMAND_JSON_TEMPLATE = R"(    {
 
 static const QString COMMAND_LIST_JSON_TEMPLATE = "[\n%1\n  ]";
 
+static QString jsonEscape(QString s) {
+  return s.replace('\\', "\\\\")
+      .replace('"', "\\\"")
+      .replace('\n', "\\n")
+      .replace('\r', "\\r")
+      .replace('\t', "\\t");
+}
+
 const std::vector<CommandBoilerplate> &ExtensionBoilerplateGenerator::commandBoilerplates() const {
   static const std::vector<CommandBoilerplate> cmdTemplateList = {
       CommandBoilerplate{
@@ -85,11 +93,12 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
     }
 
     QString const mode = it->mode == CommandModeView ? "view" : "no-view";
-    QString const cmdString = QString(COMMAND_JSON_TEMPLATE)
-                                  .replace(PLACEHOLDER("NAME"), name.simplified())
-                                  .replace(PLACEHOLDER("TITLE"), cmd.title.simplified())
-                                  .replace(PLACEHOLDER("DESCRIPTION"), cmd.description.simplified())
-                                  .replace(PLACEHOLDER("MODE"), mode);
+    QString const cmdString =
+        QString(COMMAND_JSON_TEMPLATE)
+            .replace(PLACEHOLDER("NAME"), name.simplified())
+            .replace(PLACEHOLDER("TITLE"), jsonEscape(cmd.title.simplified()))
+            .replace(PLACEHOLDER("DESCRIPTION"), jsonEscape(cmd.description.simplified()))
+            .replace(PLACEHOLDER("MODE"), mode);
 
     QString const ext = it->mode == CommandModeView ? "tsx" : "ts";
     QString const filename = QString("%1.%2").arg(name).arg(ext);
@@ -109,9 +118,9 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
   // we don't use QJson because key order would not be preserved
   manifest.replace(PLACEHOLDER("NAME"), extName)
-      .replace(PLACEHOLDER("TITLE"), config.title.simplified())
-      .replace(PLACEHOLDER("DESCRIPTION"), config.description.simplified())
-      .replace(PLACEHOLDER("AUTHOR"), config.author.simplified())
+      .replace(PLACEHOLDER("TITLE"), jsonEscape(config.title.simplified()))
+      .replace(PLACEHOLDER("DESCRIPTION"), jsonEscape(config.description.simplified()))
+      .replace(PLACEHOLDER("AUTHOR"), jsonEscape(config.author.simplified()))
       .replace(PLACEHOLDER("VICINAE_VERSION"), version)
       .replace(PLACEHOLDER("COMMAND_LIST"), COMMAND_LIST_JSON_TEMPLATE.arg(cmdStrings.join(",\n    ")));
 
