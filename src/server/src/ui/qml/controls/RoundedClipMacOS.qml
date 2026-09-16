@@ -1,8 +1,24 @@
 import QtQuick
+import QtQuick.Effects
 
-ShaderEffect {
-    property variant source
+MultiEffect {
+    id: root
     property real cornerRadius: 10
-    readonly property vector2d itemSize: Qt.vector2d(width, height)
-    fragmentShader: "qrc:/shaders/roundedclip.frag.qsb"
+
+    autoPaddingEnabled: false
+    maskEnabled: true
+    maskThresholdMin: 0.5
+    maskSpreadAtMin: 1
+    maskSource: mask
+
+    Rectangle {
+        id: mask
+        width: root.width
+        height: root.height
+        radius: root.cornerRadius
+        color: "white"
+        antialiasing: true
+        visible: false
+        layer.enabled: true
+    }
 }

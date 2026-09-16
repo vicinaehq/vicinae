@@ -1341,16 +1341,6 @@ qt6_add_shaders(${TARGET} "sourceblend_shaders"
 		src/ui/quick/shaders/sourceblend.frag
 )
 
-if(APPLE)
-	qt6_add_shaders(${TARGET} "macos_material_shaders"
-		PREFIX "/shaders"
-		BASE "src/ui/quick/shaders"
-		FILES
-			src/ui/quick/shaders/scrollfade.frag
-			src/ui/quick/shaders/roundedclip.frag
-	)
-endif()
-
 if(Qt6_FOUND AND NOT WIN32)
 	qt_import_plugins(${TARGET}
         INCLUDE Qt6::QWaylandIntegrationPlugin
