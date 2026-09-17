@@ -16,6 +16,7 @@ target_include_directories(viewport-tests PRIVATE "${qml_root}/../.."
 set(qml_files
     "${qml_root}/launcher/LauncherPage.qml"
     "${qml_root}/controls/ScrollViewport.qml"
+    "${qml_root}/controls/ListScrollViewport.qml"
     "${qml_root}/controls/StatusBarInset.qml"
     "${qml_root}/controls/ViciScrollBar.qml"
     "${qml_root}/form/FormView.qml"

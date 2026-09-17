@@ -209,11 +209,11 @@ Item {
         spacing: 0
         visible: !root._empty
 
-        ScrollViewport {
+        ListScrollViewport {
             id: viewport
             Layout.fillWidth: true
             Layout.fillHeight: true
-            flickable: listView
+            list: listView
             topPadding: 4
             bottomPadding: 4
 

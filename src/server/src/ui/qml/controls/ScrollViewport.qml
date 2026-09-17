@@ -12,6 +12,7 @@ Item {
     default property alias content: surface.data
     property real topPadding: 0
     property real bottomPadding: 0
+    property bool resetOnInitialization: true
     property bool _positioned: false
     signal initialized
 
@@ -63,8 +64,7 @@ Item {
     }
 
     Component.onCompleted: Qt.callLater(() => {
-        // Without an overlay, preserve the ListView's native initial positioning.
-        if (!root._positioned && (root.topInset > 0 || !(root.flickable instanceof ListView)))
+        if (!root._positioned && root.resetOnInitialization)
             root.resetPosition();
         root.initialized();
     })
@@ -75,9 +75,6 @@ Item {
     }
 
     function resetPosition() {
-        const list = flickable as ListView;
-        if (list)
-            list.forceLayout();
         scrollTo(minimumY);
     }
 
@@ -86,24 +83,5 @@ Item {
             scrollTo(top - topInset - Math.max(topPadding, gap));
         if (bottom > flickable.contentY + flickable.height - bottomInset)
             scrollTo(bottom - flickable.height + bottomInset + Math.max(bottomPadding, gap));
-    }
-
-    function isIndexVisible(index: int): bool {
-        const list = flickable as ListView;
-        const item = list?.itemAtIndex(index);
-        return item !== null && item !== undefined && item.y + item.height > list.contentY + topInset && item.y < list.contentY + list.height - bottomInset;
-    }
-
-    // The model supplies the range (e.g. heading + first row); geometry stays here.
-    function revealIndex(index, mode = ListView.Contain, endIndex = index) {
-        const list = flickable as ListView;
-        if (!list || index < 0)
-            return;
-        _positioned = true;
-        list.positionViewAtIndex(index, mode);
-        const first = list.itemAtIndex(index);
-        const last = list.itemAtIndex(endIndex) ?? first;
-        if (first && last)
-            revealRect(first.y, last.y + last.height);
     }
 }

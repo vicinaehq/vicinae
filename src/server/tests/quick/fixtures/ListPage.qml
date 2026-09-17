@@ -2,9 +2,9 @@ import QtQuick
 import QtQuick.Controls
 import Vicinae
 
-ScrollViewport {
+ListScrollViewport {
     id: root
-    flickable: list
+    list: listView
     topPadding: 10
     bottomPadding: 10
     property int initialIndex: -1
@@ -13,7 +13,7 @@ ScrollViewport {
         revealIndex(initialIndex, ListView.Beginning)
 
     ListView {
-        id: list
+        id: listView
         anchors.fill: parent
         clip: true
         model: 200

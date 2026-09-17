@@ -126,11 +126,11 @@ Item {
         return true;
     }
 
-    ScrollViewport {
+    ListScrollViewport {
         id: viewport
         anchors.fill: parent
         visible: !root._empty
-        flickable: listView
+        list: listView
         topPadding: root.cellSpacing
         bottomPadding: root.cellSpacing
 
