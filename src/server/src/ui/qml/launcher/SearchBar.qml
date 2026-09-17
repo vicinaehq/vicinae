@@ -119,6 +119,13 @@ Item {
                     return i;
                 }
 
+                function _deleteToLineStart() {
+                    const pos = searchInput.cursorPosition;
+                    searchInput.text = searchInput.text.substring(pos);
+                    searchInput.cursorPosition = 0;
+                    _syncSearchText();
+                }
+
                 function _syncSearchText() {
                     const value = Config.considerPreedit ? searchInput.displayText : searchInput.text;
                     Launcher.forwardSearchText(value);
@@ -156,10 +163,7 @@ Item {
                             }
                         case Qt.Key_U:
                             {
-                                const pos = searchInput.cursorPosition;
-                                searchInput.text = searchInput.text.substring(pos);
-                                searchInput.cursorPosition = 0;
-                                _syncSearchText();
+                                _deleteToLineStart();
                                 return true;
                             }
                         }
@@ -199,6 +203,17 @@ Item {
                     }
 
                     return false;
+                }
+
+                function _handleMacDeleteToLineStart(event) {
+                    if (Qt.platform.os !== "osx")
+                        return false;
+                    if (event.key !== Qt.Key_Backspace || event.modifiers !== Qt.ControlModifier)
+                        return false;
+                    if (searchInput.cursorPosition === 0)
+                        return false;
+                    _deleteToLineStart();
+                    return true;
                 }
 
                 function _handleNavigation(event) {
@@ -305,6 +320,8 @@ Item {
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && Launcher.showBackButton && Launcher.popOnBackspace) {
                         Launcher.goBack();
+                        event.accepted = true;
+                    } else if (_handleMacDeleteToLineStart(event)) {
                         event.accepted = true;
                     } else if (Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode)) {
                         if (Launcher.compacted)
