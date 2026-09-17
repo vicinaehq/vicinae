@@ -392,6 +392,37 @@ bool ClipboardService::isClearSelection(const ClipboardSelection &selection) con
                          [](size_t acc, auto &&item) { return acc + item.data.size(); }) == 0;
 }
 
+std::optional<QSize> ClipboardService::readImageSize(const ClipboardDataOffer &offer) {
+  QBuffer buffer;
+  QImageReader const reader(&buffer);
+
+  buffer.setData(offer.data);
+  if (auto size = reader.size(); size.isValid()) { return size; }
+  return std::nullopt;
+}
+
+QString ClipboardService::getOfferImageSearchText(const ClipboardDataOffer &offer) {
+  if (auto size = readImageSize(offer)) {
+    return QStringLiteral("image %1x%2").arg(size->width()).arg(size->height());
+  }
+  return QStringLiteral("image");
+}
+
+QString ClipboardService::getOfferFileSearchText(const ClipboardDataOffer &offer) {
+  QString const text = offer.data;
+  auto const uris = text.split("\r\n", Qt::SkipEmptyParts);
+  QStringList paths;
+
+  paths.reserve(uris.size() + 1);
+  paths << QStringLiteral("file");
+  for (const QString &uri : uris) {
+    QUrl const url(uri);
+    paths << (url.isLocalFile() ? url.toLocalFile() : uri);
+  }
+
+  return paths.join('\n');
+}
+
 QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
   switch (getKind(offer)) {
   case ClipboardOfferKind::Text:
@@ -399,12 +430,8 @@ QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
   case ClipboardOfferKind::File:
     return offer.data.simplified().mid(0, 50);
   case ClipboardOfferKind::Image: {
-    QBuffer buffer;
-    QImageReader const reader(&buffer);
-
-    buffer.setData(offer.data);
-    if (auto size = reader.size(); size.isValid()) {
-      return tr("Image (%1x%2)").arg(size.width()).arg(size.height());
+    if (auto size = readImageSize(offer)) {
+      return tr("Image (%1x%2)").arg(size->width()).arg(size->height());
     }
     return tr("Image");
   }
@@ -531,6 +558,22 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
             if (isIndexableText && !offer.data.isEmpty()) {
               if (!db->indexSelectionContent(selectionId, offer.data)) {
                 qWarning() << "Failed to index selection content for offer" << offer.mimeType;
+                return false;
+              }
+            }
+
+            // Index both the localized preview (what the user sees) and a stable English form
+            if (kind == ClipboardOfferKind::Image && offer.mimeType == preferredMimeType) {
+              if (!db->indexSelectionContent(selectionId, textPreview) ||
+                  !db->indexSelectionContent(selectionId, getOfferImageSearchText(offer))) {
+                qWarning() << "Failed to index image offer" << offer.mimeType;
+                return false;
+              }
+            }
+
+            if (kind == ClipboardOfferKind::File && offer.mimeType == preferredMimeType) {
+              if (!db->indexSelectionContent(selectionId, getOfferFileSearchText(offer))) {
+                qWarning() << "Failed to index file offer" << offer.mimeType;
                 return false;
               }
             }

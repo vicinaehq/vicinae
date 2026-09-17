@@ -66,9 +66,6 @@ Popup {
             _highlightedIndex = -1;
     }
 
-    readonly property real _bgOpacity: popupType === Popup.Window ? Config.popupOpacity : 0
-    readonly property real _fillOpacity: Config.popupSurfaceOpacity
-
     signal itemAccepted(var itemData)
 
     property int _highlightedIndex: -1
@@ -153,6 +150,7 @@ Popup {
     }
 
     background: PopoverBackground {
+        surfaceComponent: materialImpl.style.backgroundComponent
         popup: root
 
         Loader {
@@ -160,7 +158,9 @@ Popup {
             source: "qrc:/qt/qml/Vicinae/CompletionPanelMacOS.qml"
         }
 
-        PopupMaterial {}
+        PopupMaterial {
+            id: materialImpl
+        }
     }
 
     contentItem: ColumnLayout {
@@ -299,24 +299,16 @@ Popup {
                     anchors.right: parent.right
                     height: visible ? root.itemRowHeight : 0
 
-                    SourceBlendRect {
+                    PopupItemBackground {
+                        id: itemBackground
+                        style: materialImpl.style
                         anchors.fill: parent
                         anchors.leftMargin: 2
                         anchors.rightMargin: 2
                         radius: 6
-                        backgroundColor: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, root._bgOpacity)
-                        color: {
-                            if (del._isHighlighted) {
-                                var c = Theme.listItemSelectionBg;
-                                return Qt.rgba(c.r, c.g, c.b, root._fillOpacity);
-                            }
-                            if (itemHover.hovered && HoverActivation.active) {
-                                var h = Theme.listItemHoverBg;
-                                return Qt.rgba(h.r, h.g, h.b, root._fillOpacity);
-                            }
-                            var bg = Theme.popoverBackground;
-                            return Qt.rgba(bg.r, bg.g, bg.b, root._bgOpacity);
-                        }
+                        nativeWindow: root.popupType === Popup.Window
+                        selected: del._isHighlighted
+                        hovered: itemHover.hovered && HoverActivation.active
                     }
 
                     RowLayout {
@@ -334,7 +326,7 @@ Popup {
 
                         Text {
                             text: del.title
-                            color: del._isHighlighted ? Theme.listItemSelectionFg : Theme.foreground
+                            color: del._isHighlighted ? itemBackground.selectedText : Theme.foreground
                             font.pointSize: Theme.smallerFontSize
                             elide: Text.ElideRight
                             Layout.fillWidth: true
@@ -343,7 +335,7 @@ Popup {
                         Text {
                             visible: del._isSelected
                             text: "✓"
-                            color: del._isHighlighted ? Theme.listItemSelectionFg : Theme.foreground
+                            color: del._isHighlighted ? itemBackground.selectedText : Theme.foreground
                             font.pointSize: Theme.smallerFontSize
                         }
                     }
