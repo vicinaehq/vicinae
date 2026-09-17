@@ -25,7 +25,7 @@ on:
         default: ""
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: build-windows-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -125,6 +125,10 @@ jobs:
             if ($s.Status -ne "Valid") { throw "$f is not validly signed" }
           }
 
+      - name: Package portable
+        if: inputs.tag != ''
+        run: Compress-Archive -Path build\stage\* -DestinationPath build\vicinae-x64-portable.zip
+
       - name: Upload portable build
         if: inputs.tag == ''
         uses: actions/upload-artifact@v4
@@ -136,7 +140,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vicinae-windows-x64-setup
-          path: build/vicinae-*-setup.exe
+          path: |
+            build/vicinae-*-setup.exe
+            build/vicinae-*-portable.zip
           if-no-files-found: error
 
       - name: sccache stats
