@@ -26,7 +26,8 @@ Item {
         flick.flick(0, -800);
     }
 
-    onFontFamilyChanged: flick.contentY = 0
+    onFontFamilyChanged: flick.contentY = -flick.topMargin
+    Component.onCompleted: searchBarInset.initializePosition(flick)
 
     Keys.onUpPressed: scrollUp()
     Keys.onDownPressed: scrollDown()
@@ -51,6 +52,10 @@ Item {
         id: statusBarInset
     }
 
+    SearchBarInset {
+        id: searchBarInset
+    }
+
     // Cursor-only MouseArea below Flickable — sets I-beam for non-interactive gaps.
     // Interactive children (copy button) override with their own cursor.
     MouseArea {
@@ -72,6 +77,7 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         bottomMargin: statusBarInset.value
+        topMargin: searchBarInset.value
 
         ViciWheelHandler {
             target: flick
@@ -80,7 +86,7 @@ Item {
         onContentHeightChanged: {
             if (root._autoScroll) {
                 root._autoScroll = false;
-                contentY = Math.max(0, contentHeight - height + bottomMargin);
+                contentY = Math.max(-topMargin, contentHeight - height + bottomMargin);
             }
         }
 
@@ -311,12 +317,12 @@ Item {
     Connections {
         target: root.model
         function onBlocksAppended() {
-            let atBottom = flick.contentHeight <= flick.height || flick.contentY + flick.height >= flick.contentHeight - 2;
+            let atBottom = flick.contentHeight + flick.topMargin <= flick.height || flick.contentY + flick.height >= flick.contentHeight - 2;
             root._autoScroll = atBottom;
         }
         function onModelReset() {
             root._controller.clearSelection();
-            flick.contentY = 0;
+            flick.contentY = -flick.topMargin;
             root._autoScroll = false;
         }
     }
