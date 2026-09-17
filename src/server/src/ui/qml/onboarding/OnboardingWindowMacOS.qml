@@ -3,7 +3,7 @@ import QtQuick
 import Vicinae
 
 OnboardingWindow {
-    backgroundColor: MaterialColorsMacOS.tint(Theme.background, Config.windowOpacity)
+    backgroundColor: MaterialColorsMacOS.tint(Theme.background, 0.9)
     MacOSWindow.enabled: true
     MacOSWindow.blurEnabled: true
     MacOSWindow.material: "hud"

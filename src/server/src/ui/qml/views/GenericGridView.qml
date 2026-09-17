@@ -413,14 +413,15 @@ Item {
             Qt.callLater(root._maybeFireEnd);
         }
         function onSelectionChanged() {
-            var row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1;
+            const row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1;
             if (row >= 0) {
+                const scrollTarget = root.cmdModel.flatRowForSelection(root._topInset > 0);
                 var mode = ListView.Contain;
-                if (root.cmdModel && typeof root.cmdModel.alignSelectionScrollToTop === "function" && root.cmdModel.alignSelectionScrollToTop() && !root._isRowVisible(row)) {
+                if (root.cmdModel.alignSelectionScrollToTop() && !root._isRowVisible(scrollTarget)) {
                     mode = ListView.Beginning;
                 }
-                listView.positionViewAtIndex(row, mode);
-                root._clearSearchBar(row);
+                listView.positionViewAtIndex(scrollTarget, mode);
+                root._clearSearchBar(scrollTarget);
                 root._liftAboveInset(row);
             }
         }

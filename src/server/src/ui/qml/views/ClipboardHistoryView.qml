@@ -238,15 +238,9 @@ Item {
                 anchors.fill: parent
                 active: !root.host.hasDetailError && root.host.detailImageSource !== ""
                 visible: active
-                sourceComponent: Item {
-                    ViciImage {
-                        anchors.fill: parent
-                        anchors.margins: 10
-                        source: root.host.detailImageSource
-                        fillMode: Image.PreserveAspectFit
-                        sourceSize: Qt.size(width, height)
-                        cache: false
-                    }
+                sourceComponent: ImagePreview {
+                    source: root.host.detailImageSource
+                    cache: false
                 }
             }
 

@@ -15,14 +15,29 @@ Window {
         window.y;
         window.width;
         window.height;
-        anchorItem.x;
-        anchorItem.y;
+        // mapToGlobal does not make the binding depend on ancestor geometry.
+        for (let item = anchorItem; item; item = item.parent) {
+            item.x;
+            item.y;
+        }
         return anchorItem.mapToGlobal(0, 0);
     }
 
+    function syncPosition() {
+        const position = anchorItem.mapToGlobal(0, 0);
+        x = Math.round(position.x);
+        y = Math.round(position.y);
+    }
+
+    onOriginChanged: Qt.callLater(syncPosition)
+    onVisibleChanged: {
+        if (visible) {
+            syncPosition();
+            Qt.callLater(syncPosition);
+        }
+    }
+
     transientParent: anchorItem.Window.window
-    x: origin.x
-    y: origin.y
     width: anchorItem.width
     height: anchorItem.height
     // Prevent native resize regions from swallowing clicks along the control's edges.

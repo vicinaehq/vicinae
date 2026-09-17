@@ -483,13 +483,13 @@ void SectionGridModel::navigateSectionDown() {
 
 bool SectionGridModel::alignSelectionScrollToTop() const { return m_alignSelectionScrollToTop; }
 
-int SectionGridModel::flatRowForSelection() const {
+int SectionGridModel::flatRowForSelection(bool includeSectionHeader) const {
   if (m_selSection < 0 || m_selItem < 0) return -1;
   for (int r = 0; std::cmp_less(r, m_rows.size()); ++r) {
     const auto &row = m_rows[r];
     if (row.kind == FlatRow::ItemRow && row.sectionIdx == m_selSection && m_selItem >= row.startItem &&
         m_selItem < row.startItem + row.itemCount) {
-      if (m_preferSectionHeaderForSelection && row.startItem == 0 && r > 0 &&
+      if ((m_preferSectionHeaderForSelection || includeSectionHeader) && row.startItem == 0 && r > 0 &&
           m_rows[r - 1].kind == FlatRow::SectionHeader && m_rows[r - 1].sectionIdx == m_selSection) {
         return r - 1;
       }

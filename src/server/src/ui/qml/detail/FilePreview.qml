@@ -13,15 +13,8 @@ Item {
         anchors.fill: parent
         active: root.imageSource !== ""
         visible: active
-        sourceComponent: Item {
-            ViciImage {
-                anchors.fill: parent
-                anchors.margins: 10
-                source: root.imageSource
-                fillMode: Image.PreserveAspectFit
-                sourceSize.width: width
-                sourceSize.height: height
-            }
+        sourceComponent: ImagePreview {
+            source: root.imageSource
         }
     }
 

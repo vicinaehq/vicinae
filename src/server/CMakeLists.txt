@@ -1214,6 +1214,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/SearchFilesView.qml
 	src/ui/qml/detail/TextViewer.qml
 	src/ui/qml/detail/FilePreview.qml
+	src/ui/qml/detail/ImagePreview.qml
 	src/ui/qml/views/DMenuView.qml
 	src/ui/qml/views/ScriptOutputText.qml
 	src/ui/qml/views/ScriptExecutorView.qml

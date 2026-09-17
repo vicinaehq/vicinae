@@ -95,7 +95,7 @@ public:
   Q_INVOKABLE void navigateRight();
   Q_INVOKABLE void navigateSectionUp();
   Q_INVOKABLE void navigateSectionDown();
-  Q_INVOKABLE int flatRowForSelection() const;
+  Q_INVOKABLE int flatRowForSelection(bool includeSectionHeader = false) const;
   Q_INVOKABLE bool alignSelectionScrollToTop() const;
 
   void refreshActionPanel();
