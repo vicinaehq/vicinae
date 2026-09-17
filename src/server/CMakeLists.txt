@@ -1120,7 +1120,9 @@ set(VICINAE_QML_FILES
 	src/ui/qml/launcher/SearchBar.qml
 	src/ui/qml/views/GenericListView.qml
 	src/ui/qml/controls/StatusBarInset.qml
-	src/ui/qml/controls/SearchBarInset.qml
+	src/ui/qml/controls/ScrollViewport.qml
+	src/ui/qml/controls/ListScrollViewport.qml
+	src/ui/qml/launcher/LauncherPage.qml
 	src/ui/qml/list/HoverResetOnModelChange.qml
 	src/ui/qml/list/HoverResetOnShow.qml
 	src/ui/qml/views/RootSearchList.qml
@@ -1214,6 +1216,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/SearchFilesView.qml
 	src/ui/qml/detail/TextViewer.qml
 	src/ui/qml/detail/FilePreview.qml
+	src/ui/qml/detail/ImagePreview.qml
 	src/ui/qml/views/DMenuView.qml
 	src/ui/qml/views/ScriptOutputText.qml
 	src/ui/qml/views/ScriptExecutorView.qml

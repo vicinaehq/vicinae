@@ -8,13 +8,7 @@ ScrollBar {
 
     property bool _recentlyScrolled: false
 
-    topPadding: control.orientation === Qt.Vertical ? searchBarInset.value : 0
     bottomPadding: control.orientation === Qt.Vertical ? statusBarInset.value : 0
-
-    SearchBarInset {
-        id: searchBarInset
-        target: control
-    }
 
     StatusBarInset {
         id: statusBarInset

@@ -52,414 +52,301 @@ Item {
         font.pointSize: Theme.smallerFontSize
     }
 
-    StatusBarInset {
-        id: statusBarInset
-    }
-
-    SearchBarInset {
-        id: searchBarInset
-    }
-
-    Component.onCompleted: searchBarInset.initializePosition(flickable)
-
-    Flickable {
-        id: flickable
+    ScrollViewport {
+        id: viewport
         anchors.fill: parent
-        contentWidth: width
-        contentHeight: content.implicitHeight
-        clip: true
-        flickableDirection: Flickable.VerticalFlick
-        boundsBehavior: Flickable.StopAtBounds
-        bottomMargin: statusBarInset.value
-        topMargin: searchBarInset.value
-        visible: root.host.isReady
+        flickable: flickable
 
-        ViciWheelHandler {
-            target: flickable
-        }
+        Flickable {
+            id: flickable
+            anchors.fill: parent
+            contentWidth: width
+            contentHeight: content.implicitHeight
+            clip: true
+            flickableDirection: Flickable.VerticalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            visible: root.host.isReady
 
-        ColumnLayout {
-            id: content
-            width: parent.width
-            spacing: 0
+            ViciWheelHandler {
+                target: flickable
+            }
 
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.margins: 25
-                spacing: 20
+            ColumnLayout {
+                id: content
+                width: parent.width
+                spacing: 0
 
-                ViciImage {
-                    Layout.preferredWidth: 64
-                    Layout.preferredHeight: 64
-                    Layout.alignment: Qt.AlignTop
-                    source: root.host.iconSource
-                }
-
-                ColumnLayout {
+                RowLayout {
                     Layout.fillWidth: true
-                    spacing: 4
+                    Layout.margins: 25
+                    spacing: 20
 
-                    Text {
-                        text: root.host.title
-                        color: Theme.foreground
-                        font.pointSize: Theme.regularFontSize + 4
-                        font.bold: true
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
+                    ViciImage {
+                        Layout.preferredWidth: 64
+                        Layout.preferredHeight: 64
+                        Layout.alignment: Qt.AlignTop
+                        source: root.host.iconSource
                     }
 
-                    RowLayout {
-                        spacing: 10
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Text {
+                            text: root.host.title
+                            color: Theme.foreground
+                            font.pointSize: Theme.regularFontSize + 4
+                            font.bold: true
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
 
                         RowLayout {
+                            spacing: 10
+
+                            RowLayout {
+                                spacing: 6
+
+                                ViciImage {
+                                    Layout.preferredWidth: 16
+                                    Layout.preferredHeight: 16
+                                    source: root.host.authorAvatar
+                                }
+
+                                Text {
+                                    text: root.host.authorName
+                                    color: Theme.textMuted
+                                    font.pointSize: Theme.smallerFontSize
+                                }
+                            }
+
+                            ContentDivider {
+                                Layout.preferredWidth: 1
+                                Layout.preferredHeight: 14
+                                vertical: true
+                                fallbackColor: Theme.divider
+                            }
+
+                            RowLayout {
+                                spacing: 4
+
+                                ViciImage {
+                                    Layout.preferredWidth: 14
+                                    Layout.preferredHeight: 14
+                                    source: Img.icon(BuiltinIcon.ArrowDownCircle).withFillColor(Theme.textMuted)
+                                }
+
+                                Text {
+                                    text: root.host.downloadCount
+                                    color: Theme.textMuted
+                                    font.pointSize: Theme.smallerFontSize
+                                }
+                            }
+
+                            Repeater {
+                                model: root.host.platforms
+
+                                Row {
+                                    id: platformRow
+                                    required property string modelData
+                                    required property int index
+                                    spacing: 0
+                                    visible: root.platformIcons[platformRow.modelData] !== undefined
+
+                                    ContentDivider {
+                                        visible: platformRow.index === 0
+                                        width: 1
+                                        height: 14
+                                        vertical: true
+                                        fallbackColor: Theme.divider
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Item {
+                                        width: platformRow.index === 0 ? 10 : 5
+                                        height: 1
+                                    }
+
+                                    ViciImage {
+                                        width: 14
+                                        height: 14
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        source: {
+                                            const icon = root.platformIcons[platformRow.modelData];
+                                            return icon === undefined ? null : Img.icon(icon).withFillColor(Theme.textMuted);
+                                        }
+                                    }
+                                }
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        visible: root.host.isInstalled
+                        Layout.alignment: Qt.AlignTop
+                        Layout.preferredHeight: 30
+                        implicitWidth: badgeLayout.implicitWidth + 16
+                        radius: 6
+                        color: Qt.rgba(Theme.toastSuccess.r, Theme.toastSuccess.g, Theme.toastSuccess.b, 0.15)
+
+                        RowLayout {
+                            id: badgeLayout
+                            anchors.centerIn: parent
                             spacing: 6
-
-                            ViciImage {
-                                Layout.preferredWidth: 16
-                                Layout.preferredHeight: 16
-                                source: root.host.authorAvatar
-                            }
-
-                            Text {
-                                text: root.host.authorName
-                                color: Theme.textMuted
-                                font.pointSize: Theme.smallerFontSize
-                            }
-                        }
-
-                        ContentDivider {
-                            Layout.preferredWidth: 1
-                            Layout.preferredHeight: 14
-                            vertical: true
-                            fallbackColor: Theme.divider
-                        }
-
-                        RowLayout {
-                            spacing: 4
 
                             ViciImage {
                                 Layout.preferredWidth: 14
                                 Layout.preferredHeight: 14
-                                source: Img.icon(BuiltinIcon.ArrowDownCircle).withFillColor(Theme.textMuted)
+                                source: Img.icon(BuiltinIcon.CheckCircle).withFillColor(Theme.toastSuccess)
                             }
 
                             Text {
-                                text: root.host.downloadCount
-                                color: Theme.textMuted
+                                text: qsTr("Installed")
+                                color: Theme.toastSuccess
                                 font.pointSize: Theme.smallerFontSize
+                                font.bold: true
                             }
-                        }
-
-                        Repeater {
-                            model: root.host.platforms
-
-                            Row {
-                                id: platformRow
-                                required property string modelData
-                                required property int index
-                                spacing: 0
-                                visible: root.platformIcons[platformRow.modelData] !== undefined
-
-                                ContentDivider {
-                                    visible: platformRow.index === 0
-                                    width: 1
-                                    height: 14
-                                    vertical: true
-                                    fallbackColor: Theme.divider
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-
-                                Item {
-                                    width: platformRow.index === 0 ? 10 : 5
-                                    height: 1
-                                }
-
-                                ViciImage {
-                                    width: 14
-                                    height: 14
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    source: {
-                                        const icon = root.platformIcons[platformRow.modelData];
-                                        return icon === undefined ? null : Img.icon(icon).withFillColor(Theme.textMuted);
-                                    }
-                                }
-                            }
-                        }
-
-                        Item {
-                            Layout.fillWidth: true
                         }
                     }
+                }
+
+                ContentDivider {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 1
+                    fallbackColor: Theme.divider
                 }
 
                 Rectangle {
-                    visible: root.host.isInstalled
-                    Layout.alignment: Qt.AlignTop
-                    Layout.preferredHeight: 30
-                    implicitWidth: badgeLayout.implicitWidth + 16
-                    radius: 6
-                    color: Qt.rgba(Theme.toastSuccess.r, Theme.toastSuccess.g, Theme.toastSuccess.b, 0.15)
+                    id: alertBox
+                    visible: root._hasAlert
+                    Layout.fillWidth: true
+                    Layout.margins: 20
+                    Layout.bottomMargin: 0
+                    implicitHeight: alertContent.implicitHeight + 20
+                    radius: 8
+                    color: Qt.rgba(_alertColor.r, _alertColor.g, _alertColor.b, 0.1)
+                    border.color: Qt.rgba(_alertColor.r, _alertColor.g, _alertColor.b, 0.3)
+                    border.width: 1
+
+                    readonly property color _alertColor: {
+                        const colors = {
+                            "success": Theme.toastSuccess,
+                            "warning": Theme.toastWarning,
+                            "danger": Theme.toastDanger,
+                            "muted": Theme.textMuted
+                        };
+                        return colors[root._alert.type] ?? Theme.textMuted;
+                    }
+
+                    readonly property int _alertIcon: {
+                        const icons = {
+                            "success": BuiltinIcon.CheckCircle,
+                            "warning": BuiltinIcon.Warning,
+                            "danger": BuiltinIcon.XMarkCircle,
+                            "muted": BuiltinIcon.QuestionMarkCircle
+                        };
+                        return icons[root._alert.type] ?? BuiltinIcon.QuestionMarkCircle;
+                    }
 
                     RowLayout {
-                        id: badgeLayout
-                        anchors.centerIn: parent
-                        spacing: 6
-
-                        ViciImage {
-                            Layout.preferredWidth: 14
-                            Layout.preferredHeight: 14
-                            source: Img.icon(BuiltinIcon.CheckCircle).withFillColor(Theme.toastSuccess)
-                        }
-
-                        Text {
-                            text: qsTr("Installed")
-                            color: Theme.toastSuccess
-                            font.pointSize: Theme.smallerFontSize
-                            font.bold: true
-                        }
-                    }
-                }
-            }
-
-            ContentDivider {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 1
-                fallbackColor: Theme.divider
-            }
-
-            Rectangle {
-                id: alertBox
-                visible: root._hasAlert
-                Layout.fillWidth: true
-                Layout.margins: 20
-                Layout.bottomMargin: 0
-                implicitHeight: alertContent.implicitHeight + 20
-                radius: 8
-                color: Qt.rgba(_alertColor.r, _alertColor.g, _alertColor.b, 0.1)
-                border.color: Qt.rgba(_alertColor.r, _alertColor.g, _alertColor.b, 0.3)
-                border.width: 1
-
-                readonly property color _alertColor: {
-                    const colors = {
-                        "success": Theme.toastSuccess,
-                        "warning": Theme.toastWarning,
-                        "danger": Theme.toastDanger,
-                        "muted": Theme.textMuted
-                    };
-                    return colors[root._alert.type] ?? Theme.textMuted;
-                }
-
-                readonly property int _alertIcon: {
-                    const icons = {
-                        "success": BuiltinIcon.CheckCircle,
-                        "warning": BuiltinIcon.Warning,
-                        "danger": BuiltinIcon.XMarkCircle,
-                        "muted": BuiltinIcon.QuestionMarkCircle
-                    };
-                    return icons[root._alert.type] ?? BuiltinIcon.QuestionMarkCircle;
-                }
-
-                RowLayout {
-                    id: alertContent
-                    anchors.fill: parent
-                    anchors.margins: 10
-                    spacing: 10
-
-                    ViciImage {
-                        Layout.preferredWidth: 18
-                        Layout.preferredHeight: 18
-                        Layout.alignment: Qt.AlignTop
-                        source: Img.icon(alertBox._alertIcon).withFillColor(alertBox._alertColor)
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        Text {
-                            text: root._alert.message ?? ""
-                            color: Theme.foreground
-                            font.pointSize: Theme.smallerFontSize
-                            wrapMode: Text.WordWrap
-                            Layout.fillWidth: true
-                        }
-
-                        Repeater {
-                            model: root._alert.notes ?? []
-
-                            RowLayout {
-                                id: noteRow
-                                required property string modelData
-                                Layout.fillWidth: true
-                                spacing: 6
-
-                                Text {
-                                    text: "•"
-                                    color: Theme.textMuted
-                                    font.pointSize: Theme.smallerFontSize
-                                }
-
-                                Text {
-                                    text: noteRow.modelData
-                                    color: Theme.textMuted
-                                    font.pointSize: Theme.smallerFontSize
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Flickable {
-                visible: root.host.hasScreenshots
-                Layout.fillWidth: true
-                Layout.preferredHeight: 160
-                Layout.margins: 20
-                contentWidth: screenshotRow.width
-                clip: true
-                flickableDirection: Flickable.HorizontalFlick
-                boundsBehavior: Flickable.StopAtBounds
-
-                Row {
-                    id: screenshotRow
-                    spacing: 12
-
-                    Repeater {
-                        model: root.host.screenshots
-
-                        Item {
-                            id: shotItem
-                            required property string modelData
-                            required property int index
-                            width: 240
-                            height: 150
-
-                            ViciImage {
-                                anchors.fill: parent
-                                source: shotItem.modelData
-                                fillMode: Image.PreserveAspectCrop
-                            }
-
-                            Rectangle {
-                                anchors.fill: parent
-                                color: "transparent"
-                                border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-                                border.width: 1
-                                radius: 4
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: imageViewer.showImage(shotItem.index, root.host.screenshots)
-                            }
-                        }
-                    }
-                }
-            }
-
-            ContentDivider {
-                visible: root.host.hasScreenshots
-                Layout.fillWidth: true
-                Layout.preferredHeight: 1
-                fallbackColor: Theme.divider
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 0
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 2
-                    Layout.alignment: Qt.AlignTop
-                    Layout.margins: 20
-                    spacing: 20
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
+                        id: alertContent
+                        anchors.fill: parent
+                        anchors.margins: 10
                         spacing: 10
 
-                        Text {
-                            text: qsTr("Description")
-                            color: Theme.foreground
-                            font.pointSize: Theme.regularFontSize
-                            font.bold: true
+                        ViciImage {
+                            Layout.preferredWidth: 18
+                            Layout.preferredHeight: 18
+                            Layout.alignment: Qt.AlignTop
+                            source: Img.icon(alertBox._alertIcon).withFillColor(alertBox._alertColor)
                         }
 
-                        Text {
-                            text: root.host.description
-                            color: Theme.textMuted
-                            font.pointSize: Theme.regularFontSize
-                            wrapMode: Text.WordWrap
+                        ColumnLayout {
                             Layout.fillWidth: true
-                        }
-                    }
+                            spacing: 6
 
-                    ContentDivider {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 1
-                        fallbackColor: Theme.divider
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 15
-
-                        Text {
-                            text: qsTr("Commands")
-                            color: Theme.textMuted
-                            font.pointSize: Theme.regularFontSize
-                        }
-
-                        Repeater {
-                            model: root.host.commands
-
-                            ColumnLayout {
-                                id: commandItem
-                                required property var modelData
-                                required property int index
+                            Text {
+                                text: root._alert.message ?? ""
+                                color: Theme.foreground
+                                font.pointSize: Theme.smallerFontSize
+                                wrapMode: Text.WordWrap
                                 Layout.fillWidth: true
-                                spacing: 0
+                            }
 
-                                ColumnLayout {
+                            Repeater {
+                                model: root._alert.notes ?? []
+
+                                RowLayout {
+                                    id: noteRow
+                                    required property string modelData
                                     Layout.fillWidth: true
-                                    spacing: 10
+                                    spacing: 6
 
-                                    RowLayout {
-                                        spacing: 10
-
-                                        ViciImage {
-                                            Layout.preferredWidth: 20
-                                            Layout.preferredHeight: 20
-                                            source: commandItem.modelData.iconSource
-                                        }
-
-                                        Text {
-                                            text: commandItem.modelData.title
-                                            color: Theme.foreground
-                                            font.pointSize: Theme.regularFontSize
-                                        }
+                                    Text {
+                                        text: "•"
+                                        color: Theme.textMuted
+                                        font.pointSize: Theme.smallerFontSize
                                     }
 
                                     Text {
-                                        text: commandItem.modelData.description
+                                        text: noteRow.modelData
                                         color: Theme.textMuted
                                         font.pointSize: Theme.smallerFontSize
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
-                                        visible: text !== ""
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
 
-                                ContentDivider {
-                                    visible: commandItem.index < root.host.commands.length - 1
-                                    Layout.fillWidth: true
-                                    Layout.topMargin: 15
-                                    Layout.preferredHeight: 1
-                                    fallbackColor: Theme.divider
+                Flickable {
+                    visible: root.host.hasScreenshots
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 160
+                    Layout.margins: 20
+                    contentWidth: screenshotRow.width
+                    clip: true
+                    flickableDirection: Flickable.HorizontalFlick
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    Row {
+                        id: screenshotRow
+                        spacing: 12
+
+                        Repeater {
+                            model: root.host.screenshots
+
+                            Item {
+                                id: shotItem
+                                required property string modelData
+                                required property int index
+                                width: 240
+                                height: 150
+
+                                ViciImage {
+                                    anchors.fill: parent
+                                    source: shotItem.modelData
+                                    fillMode: Image.PreserveAspectCrop
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: "transparent"
+                                    border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
+                                    border.width: 1
+                                    radius: 4
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: imageViewer.showImage(shotItem.index, root.host.screenshots)
                                 }
                             }
                         }
@@ -467,105 +354,212 @@ Item {
                 }
 
                 ContentDivider {
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: 1
-                    vertical: true
+                    visible: root.host.hasScreenshots
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 1
                     fallbackColor: Theme.divider
                 }
 
-                ColumnLayout {
-                    Layout.preferredWidth: 1
-                    Layout.alignment: Qt.AlignTop
-                    Layout.margins: 15
-                    spacing: 15
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
 
                     ColumnLayout {
-                        visible: (root.host.readmeUrl || "") !== ""
-                        spacing: 5
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 2
+                        Layout.alignment: Qt.AlignTop
+                        Layout.margins: 20
+                        spacing: 20
 
-                        SidebarLabel {
-                            text: "README"
-                        }
-                        TextLink {
-                            label: qsTr("Open README")
-                            url: root.host.readmeUrl || ""
-                        }
-                    }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
 
-                    ColumnLayout {
-                        spacing: 5
+                            Text {
+                                text: qsTr("Description")
+                                color: Theme.foreground
+                                font.pointSize: Theme.regularFontSize
+                                font.bold: true
+                            }
 
-                        SidebarLabel {
-                            text: qsTr("Last update")
-                        }
-                        Text {
-                            text: root.host.lastUpdate
-                            color: Theme.foreground
-                            font.pointSize: Theme.regularFontSize
-                        }
-                    }
-
-                    ColumnLayout {
-                        visible: root.host.contributors.length > 0
-                        spacing: 10
-
-                        SidebarLabel {
-                            text: qsTr("Contributors")
+                            Text {
+                                text: root.host.description
+                                color: Theme.textMuted
+                                font.pointSize: Theme.regularFontSize
+                                wrapMode: Text.WordWrap
+                                Layout.fillWidth: true
+                            }
                         }
 
-                        Repeater {
-                            model: root.host.contributors
+                        ContentDivider {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            fallbackColor: Theme.divider
+                        }
 
-                            RowLayout {
-                                id: contributorRow
-                                required property var modelData
-                                spacing: 8
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 15
 
-                                ViciImage {
-                                    Layout.preferredWidth: 16
-                                    Layout.preferredHeight: 16
-                                    source: contributorRow.modelData.avatar
-                                }
+                            Text {
+                                text: qsTr("Commands")
+                                color: Theme.textMuted
+                                font.pointSize: Theme.regularFontSize
+                            }
 
-                                Text {
-                                    text: contributorRow.modelData.name
-                                    color: Theme.foreground
-                                    font.pointSize: Theme.smallerFontSize
+                            Repeater {
+                                model: root.host.commands
+
+                                ColumnLayout {
+                                    id: commandItem
+                                    required property var modelData
+                                    required property int index
+                                    Layout.fillWidth: true
+                                    spacing: 0
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 10
+
+                                        RowLayout {
+                                            spacing: 10
+
+                                            ViciImage {
+                                                Layout.preferredWidth: 20
+                                                Layout.preferredHeight: 20
+                                                source: commandItem.modelData.iconSource
+                                            }
+
+                                            Text {
+                                                text: commandItem.modelData.title
+                                                color: Theme.foreground
+                                                font.pointSize: Theme.regularFontSize
+                                            }
+                                        }
+
+                                        Text {
+                                            text: commandItem.modelData.description
+                                            color: Theme.textMuted
+                                            font.pointSize: Theme.smallerFontSize
+                                            wrapMode: Text.WordWrap
+                                            Layout.fillWidth: true
+                                            visible: text !== ""
+                                        }
+                                    }
+
+                                    ContentDivider {
+                                        visible: commandItem.index < root.host.commands.length - 1
+                                        Layout.fillWidth: true
+                                        Layout.topMargin: 15
+                                        Layout.preferredHeight: 1
+                                        fallbackColor: Theme.divider
+                                    }
                                 }
                             }
                         }
                     }
 
-                    ColumnLayout {
-                        visible: root.host.categories.length > 0
-                        spacing: 5
+                    ContentDivider {
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 1
+                        vertical: true
+                        fallbackColor: Theme.divider
+                    }
 
-                        SidebarLabel {
-                            text: qsTr("Categories")
+                    ColumnLayout {
+                        Layout.preferredWidth: 1
+                        Layout.alignment: Qt.AlignTop
+                        Layout.margins: 15
+                        spacing: 15
+
+                        ColumnLayout {
+                            visible: (root.host.readmeUrl || "") !== ""
+                            spacing: 5
+
+                            SidebarLabel {
+                                text: "README"
+                            }
+                            TextLink {
+                                label: qsTr("Open README")
+                                url: root.host.readmeUrl || ""
+                            }
                         }
 
-                        Repeater {
-                            model: root.host.categories
+                        ColumnLayout {
+                            spacing: 5
 
+                            SidebarLabel {
+                                text: qsTr("Last update")
+                            }
                             Text {
-                                required property string modelData
-                                text: modelData
+                                text: root.host.lastUpdate
                                 color: Theme.foreground
                                 font.pointSize: Theme.regularFontSize
                             }
                         }
-                    }
 
-                    ColumnLayout {
-                        visible: (root.host.sourceUrl || "") !== ""
-                        spacing: 5
+                        ColumnLayout {
+                            visible: root.host.contributors.length > 0
+                            spacing: 10
 
-                        SidebarLabel {
-                            text: qsTr("Source Code")
+                            SidebarLabel {
+                                text: qsTr("Contributors")
+                            }
+
+                            Repeater {
+                                model: root.host.contributors
+
+                                RowLayout {
+                                    id: contributorRow
+                                    required property var modelData
+                                    spacing: 8
+
+                                    ViciImage {
+                                        Layout.preferredWidth: 16
+                                        Layout.preferredHeight: 16
+                                        source: contributorRow.modelData.avatar
+                                    }
+
+                                    Text {
+                                        text: contributorRow.modelData.name
+                                        color: Theme.foreground
+                                        font.pointSize: Theme.smallerFontSize
+                                    }
+                                }
+                            }
                         }
-                        TextLink {
-                            label: qsTr("View Code")
-                            url: root.host.sourceUrl || ""
+
+                        ColumnLayout {
+                            visible: root.host.categories.length > 0
+                            spacing: 5
+
+                            SidebarLabel {
+                                text: qsTr("Categories")
+                            }
+
+                            Repeater {
+                                model: root.host.categories
+
+                                Text {
+                                    required property string modelData
+                                    text: modelData
+                                    color: Theme.foreground
+                                    font.pointSize: Theme.regularFontSize
+                                }
+                            }
+                        }
+
+                        ColumnLayout {
+                            visible: (root.host.sourceUrl || "") !== ""
+                            spacing: 5
+
+                            SidebarLabel {
+                                text: qsTr("Source Code")
+                            }
+                            TextLink {
+                                label: qsTr("View Code")
+                                url: root.host.sourceUrl || ""
+                            }
                         }
                     }
                 }

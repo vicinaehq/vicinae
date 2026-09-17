@@ -1,13 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
 
 RowLayout {
     id: root
 
-    required property StackView commandStack
+    required property Item commandView
     required property var args
     required property string icon
 
@@ -140,10 +139,10 @@ RowLayout {
 
                         Keys.onUpPressed: {
                             // qmllint disable missing-property
-                            root.commandStack.currentItem.moveUp();
+                            root.commandView.moveUp();
                         }
                         Keys.onDownPressed: {
-                            root.commandStack.currentItem.moveDown();
+                            root.commandView.moveDown();
                             // qmllint enable missing-property
                         }
                         Keys.onTabPressed: event => {

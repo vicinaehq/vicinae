@@ -6,7 +6,7 @@ LauncherWindow {
     id: root
     appearance: LauncherAppearanceMacOS {}
     searchBarComponent: SearchBarMacOS {
-        commandStack: root.commandStack
+        commandView: root.commandView
     }
     statusBarComponent: LauncherStatusBarMacOS {}
     contentEffect: ScrollFadeMacOS {

@@ -7,18 +7,6 @@ import Vicinae
 Item {
     id: root
 
-    readonly property real _bottomInset: statusBarInset.value
-    readonly property real topInset: searchBarInset.value
-    Component.onCompleted: searchBarInset.initializePosition(listView)
-
-    SearchBarInset {
-        id: searchBarInset
-    }
-
-    StatusBarInset {
-        id: statusBarInset
-    }
-
     required property SectionListModel listModel
 
     property alias model: listView.model
@@ -80,7 +68,7 @@ Item {
             return;
         if (listView.contentHeight <= 0)
             return;
-        const underfilled = listView.contentHeight + root.topInset <= listView.height;
+        const underfilled = !viewport.scrollable;
         if (!underfilled && listView.atYBeginning)
             return;
         if (listView.contentY + listView.height >= listView.contentHeight - root.endReachedThreshold) {
@@ -104,36 +92,8 @@ Item {
             return false;
 
         const previousContentY = listView.contentY;
-        listView.positionViewAtIndex(scrollTarget, ListView.Contain);
-        root._clearSearchBar(scrollTarget);
+        viewport.revealIndex(scrollTarget);
         return Math.abs(listView.contentY - previousContentY) > 0.5;
-    }
-
-    // positionViewAtIndex ignores ListView margins, so Contain can leave the
-    // item within the band covered by the floating status bar.
-    function _liftAboveInset(index) {
-        if (root._bottomInset <= 0)
-            return;
-        const item = listView.itemAtIndex(index);
-        if (!item)
-            return;
-        const usable = listView.height - root._bottomInset;
-        const itemBottom = item.y + item.height;
-        if (listView.contentHeight + root.topInset > usable && itemBottom > listView.contentY + usable)
-            listView.contentY = itemBottom - usable;
-    }
-
-    function _resetScrollPosition() {
-        listView.forceLayout();
-        listView.contentY = listView.originY - listView.topMargin;
-    }
-
-    function _clearSearchBar(index) {
-        if (root.topInset <= 0)
-            return;
-        const item = listView.itemAtIndex(index);
-        if (item && item.y < listView.contentY + root.topInset)
-            listView.contentY = item.y - root.topInset - 4;
     }
 
     function moveDown() {
@@ -141,9 +101,7 @@ Item {
         if (next !== listView.currentIndex) {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
-            root._clearSearchBar(scrollTarget);
-            _liftAboveInset(next);
+            viewport.revealIndex(scrollTarget, ListView.Contain, next);
         }
         return true;
     }
@@ -156,9 +114,7 @@ Item {
         if (next !== listView.currentIndex) {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
-            root._clearSearchBar(scrollTarget);
-            _liftAboveInset(next);
+            viewport.revealIndex(scrollTarget, ListView.Contain, next);
         }
         return true;
     }
@@ -171,9 +127,7 @@ Item {
         if (next !== listView.currentIndex) {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
-            root._clearSearchBar(scrollTarget);
-            _liftAboveInset(next);
+            viewport.revealIndex(scrollTarget, ListView.Contain, next);
         }
         return true;
     }
@@ -189,9 +143,7 @@ Item {
         if (next !== listView.currentIndex) {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
-            listView.positionViewAtIndex(scrollTarget, ListView.Contain);
-            root._clearSearchBar(scrollTarget);
-            _liftAboveInset(next);
+            viewport.revealIndex(scrollTarget, ListView.Contain, next);
         }
         return true;
     }
@@ -213,8 +165,8 @@ Item {
         function onModelReset() {
             if (root.selectFirstOnReset || listView.currentIndex < 0 || listView.currentIndex >= listView.count) {
                 root.selectFirst();
-                if (root.topInset > 0)
-                    Qt.callLater(root._resetScrollPosition);
+                if (viewport.topInset > 0)
+                    Qt.callLater(viewport.resetPosition);
             }
             if (root.listModel)
                 root.listModel.setSelectedIndex(listView.currentIndex);
@@ -257,44 +209,50 @@ Item {
         spacing: 0
         visible: !root._empty
 
-        ListView {
-            id: listView
+        ListScrollViewport {
+            id: viewport
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
-            reuseItems: true
-            cacheBuffer: 200
-            interactive: false
-            boundsBehavior: Flickable.StopAtBounds
-            highlightMoveDuration: 0
-            currentIndex: -1
-            topMargin: 4 + root.topInset
-            bottomMargin: 4 + root._bottomInset
+            list: listView
+            topPadding: 4
+            bottomPadding: 4
 
-            property real _lastContentHeight: 0
+            ListView {
+                id: listView
+                anchors.fill: parent
+                clip: true
+                reuseItems: true
+                cacheBuffer: 200
+                interactive: false
+                boundsBehavior: Flickable.StopAtBounds
+                highlightMoveDuration: 0
+                currentIndex: -1
 
-            onContentYChanged: root._maybeFireEnd()
-            onContentHeightChanged: {
-                if (contentHeight > _lastContentHeight)
-                    root._endArmed = true;
-                _lastContentHeight = contentHeight;
-                root._maybeFireEnd();
-            }
+                property real _lastContentHeight: 0
 
-            ViciWheelHandler {
-                target: listView
-            }
-
-            onCurrentIndexChanged: root.itemSelected(currentIndex)
-            onCountChanged: {
-                if (root.autoWireModel && root.listModel && currentIndex < 0 && count > 0) {
-                    root.selectFirst();
-                    root.listModel.setSelectedIndex(currentIndex);
+                onContentYChanged: root._maybeFireEnd()
+                onContentHeightChanged: {
+                    if (contentHeight > _lastContentHeight)
+                        root._endArmed = true;
+                    _lastContentHeight = contentHeight;
+                    root._maybeFireEnd();
                 }
-            }
 
-            ScrollBar.vertical: ViciScrollBar {
-                policy: listView.contentHeight + root.topInset > listView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                ViciWheelHandler {
+                    target: listView
+                }
+
+                onCurrentIndexChanged: root.itemSelected(currentIndex)
+                onCountChanged: {
+                    if (root.autoWireModel && root.listModel && currentIndex < 0 && count > 0) {
+                        root.selectFirst();
+                        root.listModel.setSelectedIndex(currentIndex);
+                    }
+                }
+
+                ScrollBar.vertical: ViciScrollBar {
+                    policy: viewport.scrollable ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                }
             }
         }
 

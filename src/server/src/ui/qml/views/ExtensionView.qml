@@ -1,13 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import Vicinae
 
 Item {
     id: root
     required property ExtensionViewHost host
 
-    StackView.onActivated: {
+    function restoreFocus() {
         // qmllint disable missing-property
         if (contentLoader.item && typeof contentLoader.item.restoreFocus === "function")
             contentLoader.item.restoreFocus();

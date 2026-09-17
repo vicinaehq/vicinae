@@ -12,19 +12,6 @@ Item {
         id: fallbackAppearance
     }
 
-    readonly property real _bottomInset: statusBarInset.value
-    readonly property real _topInset: searchBarInset.value
-
-    SearchBarInset {
-        id: searchBarInset
-    }
-
-    Component.onCompleted: searchBarInset.initializePosition(listView)
-
-    StatusBarInset {
-        id: statusBarInset
-    }
-
     property SectionGridModel cmdModel: null
 
     // Cell delegate component, instantiated per cell inside a GridCell loader
@@ -65,7 +52,7 @@ Item {
             return;
         if (listView.contentHeight <= 0)
             return;
-        const underfilled = listView.contentHeight + root._topInset <= listView.height;
+        const underfilled = !viewport.scrollable;
         if (!underfilled && listView.atYBeginning)
             return;
         if (listView.contentY + listView.height >= listView.contentHeight - root.endReachedThreshold) {
@@ -139,263 +126,231 @@ Item {
         return true;
     }
 
-    function _isRowVisible(row) {
-        if (row < 0)
-            return false;
-
-        const item = listView.itemAtIndex(row);
-        if (!item)
-            return false;
-
-        const viewportTop = listView.contentY + root._topInset;
-        const viewportBottom = listView.contentY + listView.height - root._bottomInset;
-        const itemTop = item.y;
-        const itemBottom = item.y + item.height;
-
-        return itemBottom > viewportTop && itemTop < viewportBottom;
-    }
-
-    // positionViewAtIndex ignores ListView margins, so Contain can leave the
-    // row within the band covered by the floating status bar.
-    function _liftAboveInset(row) {
-        if (root._bottomInset <= 0)
-            return;
-        const item = listView.itemAtIndex(row);
-        if (!item)
-            return;
-        const usable = listView.height - root._bottomInset;
-        const itemBottom = item.y + item.height;
-        if (listView.contentHeight + root._topInset > usable && itemBottom > listView.contentY + usable)
-            listView.contentY = itemBottom - usable;
-    }
-
-    function _clearSearchBar(row) {
-        if (root._topInset <= 0)
-            return;
-        const item = listView.itemAtIndex(row);
-        if (item && item.y < listView.contentY + root._topInset)
-            listView.contentY = item.y - root._topInset - root.cellSpacing;
-    }
-
-    ListView {
-        id: listView
+    ListScrollViewport {
+        id: viewport
         anchors.fill: parent
         visible: !root._empty
-        model: root.cmdModel
-        clip: true
-        interactive: false
-        boundsBehavior: Flickable.StopAtBounds
-        topMargin: root.cellSpacing + root._topInset
-        bottomMargin: root.cellSpacing + root._bottomInset
-        spacing: root.cellSpacing
-        reuseItems: true
-        cacheBuffer: 200
+        list: listView
+        topPadding: root.cellSpacing
+        bottomPadding: root.cellSpacing
 
-        property real _lastContentHeight: 0
+        ListView {
+            id: listView
+            anchors.fill: parent
+            model: root.cmdModel
+            clip: true
+            interactive: false
+            boundsBehavior: Flickable.StopAtBounds
+            spacing: root.cellSpacing
+            reuseItems: true
+            cacheBuffer: 200
 
-        onContentYChanged: root._maybeFireEnd()
-        onContentHeightChanged: {
-            if (contentHeight > _lastContentHeight)
-                root._endArmed = true;
-            _lastContentHeight = contentHeight;
-            root._maybeFireEnd();
-        }
+            property real _lastContentHeight: 0
 
-        ViciWheelHandler {
-            target: listView
-        }
-
-        ScrollBar.vertical: ViciScrollBar {
-            policy: listView.contentHeight + root._topInset > listView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
-        }
-
-        delegate: Loader {
-            id: delegateLoader
-            width: ListView.view.width
-
-            required property int index
-            required property bool isSection
-            required property string sectionName
-            required property int rowSectionIdx
-            required property int rowStartItem
-            required property int rowItemCount
-            required property int rowColumns
-            required property double rowAspectRatio
-            required property double rowInset
-            required property var rowCells
-
-            sourceComponent: isSection ? sectionComponent : rowComponent
-
-            Component {
-                id: sectionComponent
-                SectionHeader {
-                    width: delegateLoader.width
-                    text: delegateLoader.sectionName
-                    leftPadding: root.horizontalPadding
-                }
+            onContentYChanged: root._maybeFireEnd()
+            onContentHeightChanged: {
+                if (contentHeight > _lastContentHeight)
+                    root._endArmed = true;
+                _lastContentHeight = contentHeight;
+                root._maybeFireEnd();
             }
 
-            Component {
-                id: rowComponent
-                Item {
-                    id: rowItem
-                    width: delegateLoader.width
+            ViciWheelHandler {
+                target: listView
+            }
 
-                    readonly property int effectiveCols: delegateLoader.rowColumns
-                    readonly property real effectiveAspectRatio: delegateLoader.rowAspectRatio
-                    readonly property real effectiveInset: delegateLoader.rowInset
-                    readonly property real cellWidth: Math.floor((root.width - root.horizontalPadding * 2 - root.cellSpacing * (effectiveCols - 1)) / effectiveCols)
-                    readonly property real cellHeight: Math.floor(cellWidth / effectiveAspectRatio)
+            ScrollBar.vertical: ViciScrollBar {
+                policy: viewport.scrollable ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            }
 
-                    readonly property bool rowHasTitle: root.showCellTitle && delegateLoader.rowCells.some(cell => cell.title !== "")
-                    readonly property bool rowHasSubtitle: root.showCellSubtitle && delegateLoader.rowCells.some(cell => cell.subtitle !== "")
+            delegate: Loader {
+                id: delegateLoader
+                width: ListView.view.width
 
-                    readonly property real cellTextHeight: {
-                        if (!rowHasTitle && !rowHasSubtitle)
-                            return 0;
-                        var h = root._textGap;
-                        if (rowHasTitle)
-                            h += titleMetrics.height;
-                        if (rowHasSubtitle)
-                            h += subtitleMetrics.height;
-                        return h;
+                required property int index
+                required property bool isSection
+                required property string sectionName
+                required property int rowSectionIdx
+                required property int rowStartItem
+                required property int rowItemCount
+                required property int rowColumns
+                required property double rowAspectRatio
+                required property double rowInset
+                required property var rowCells
+
+                sourceComponent: isSection ? sectionComponent : rowComponent
+
+                Component {
+                    id: sectionComponent
+                    SectionHeader {
+                        width: delegateLoader.width
+                        text: delegateLoader.sectionName
+                        leftPadding: root.horizontalPadding
                     }
+                }
 
-                    height: cellHeight + cellTextHeight
+                Component {
+                    id: rowComponent
+                    Item {
+                        id: rowItem
+                        width: delegateLoader.width
 
-                    Row {
-                        x: root.horizontalPadding
-                        spacing: root.cellSpacing
+                        readonly property int effectiveCols: delegateLoader.rowColumns
+                        readonly property real effectiveAspectRatio: delegateLoader.rowAspectRatio
+                        readonly property real effectiveInset: delegateLoader.rowInset
+                        readonly property real cellWidth: Math.floor((root.width - root.horizontalPadding * 2 - root.cellSpacing * (effectiveCols - 1)) / effectiveCols)
+                        readonly property real cellHeight: Math.floor(cellWidth / effectiveAspectRatio)
 
-                        Repeater {
-                            model: delegateLoader.rowItemCount
+                        readonly property bool rowHasTitle: root.showCellTitle && delegateLoader.rowCells.some(cell => cell.title !== "")
+                        readonly property bool rowHasSubtitle: root.showCellSubtitle && delegateLoader.rowCells.some(cell => cell.subtitle !== "")
 
-                            delegate: Item {
-                                id: cellWrapper
+                        readonly property real cellTextHeight: {
+                            if (!rowHasTitle && !rowHasSubtitle)
+                                return 0;
+                            var h = root._textGap;
+                            if (rowHasTitle)
+                                h += titleMetrics.height;
+                            if (rowHasSubtitle)
+                                h += subtitleMetrics.height;
+                            return h;
+                        }
 
-                                required property int index
+                        height: cellHeight + cellTextHeight
 
-                                readonly property int cellSection: delegateLoader.rowSectionIdx
-                                readonly property int cellItem: delegateLoader.rowStartItem + index
-                                readonly property var cell: delegateLoader.rowCells[index]
-                                readonly property bool cellSelected: root.cmdModel && root.cmdModel.selectedSection === cellSection && root.cmdModel.selectedItem === cellItem
-                                readonly property bool cellHovered: cellMouseArea.containsMouse && HoverActivation.active
+                        Row {
+                            x: root.horizontalPadding
+                            spacing: root.cellSpacing
 
-                                Accessible.role: Accessible.Cell
-                                Accessible.name: root.showCellTitle ? (cellWrapper.cell?.title ?? "") : ""
-                                Accessible.description: root.showCellSubtitle ? (cellWrapper.cell?.subtitle ?? "") : ""
-                                Accessible.selectable: true
-                                Accessible.selected: cellWrapper.cellSelected
+                            Repeater {
+                                model: delegateLoader.rowItemCount
 
-                                width: rowItem.cellWidth
-                                height: rowItem.cellHeight + rowItem.cellTextHeight
+                                delegate: Item {
+                                    id: cellWrapper
 
-                                SourceBlendRect {
-                                    id: cellBackground
+                                    required property int index
+
+                                    readonly property int cellSection: delegateLoader.rowSectionIdx
+                                    readonly property int cellItem: delegateLoader.rowStartItem + index
+                                    readonly property var cell: delegateLoader.rowCells[index]
+                                    readonly property bool cellSelected: root.cmdModel && root.cmdModel.selectedSection === cellSection && root.cmdModel.selectedItem === cellItem
+                                    readonly property bool cellHovered: cellMouseArea.containsMouse && HoverActivation.active
+
+                                    Accessible.role: Accessible.Cell
+                                    Accessible.name: root.showCellTitle ? (cellWrapper.cell?.title ?? "") : ""
+                                    Accessible.description: root.showCellSubtitle ? (cellWrapper.cell?.subtitle ?? "") : ""
+                                    Accessible.selectable: true
+                                    Accessible.selected: cellWrapper.cellSelected
+
                                     width: rowItem.cellWidth
-                                    height: rowItem.cellHeight
-                                    radius: 10
-                                    backgroundColor: root.appearance.delegateBackdrop
-                                    color: cellWrapper.cellSelected ? root.appearance.gridSelectionFill : cellWrapper.cellHovered ? root.appearance.gridHoverFill : root.appearance.gridFill
-                                }
+                                    height: rowItem.cellHeight + rowItem.cellTextHeight
 
-                                GridCell {
-                                    x: rowItem.cellWidth * rowItem.effectiveInset
-                                    y: rowItem.cellHeight * rowItem.effectiveInset
-                                    width: rowItem.cellWidth * (1 - 2 * rowItem.effectiveInset)
-                                    height: rowItem.cellHeight * (1 - 2 * rowItem.effectiveInset)
-                                    sourceComponent: root.cellDelegate
-                                    layer.enabled: rowItem.effectiveInset <= 0 && root.appearance.gridContentEffect !== null
-                                    layer.effect: root.appearance.gridContentEffect
-                                    cellSection: cellWrapper.cellSection
-                                    cellItem: cellWrapper.cellItem
-                                    cellSelected: cellWrapper.cellSelected
-                                    cellHovered: cellWrapper.cellHovered
-                                    cellSize: rowItem.cellWidth
-                                    cellWidth: rowItem.cellWidth
-                                    cellHeight: rowItem.cellHeight
-                                    cell: cellWrapper.cell
-                                    cmdModel: root.cmdModel
-                                }
-
-                                SourceBlendRect {
-                                    visible: rowItem.effectiveInset <= 0 && root.appearance.gridContentEffect === null
-                                    width: rowItem.cellWidth
-                                    height: rowItem.cellHeight
-                                    radius: 10
-                                    cornerMask: true
-                                    backgroundColor: {
-                                        var bg = Theme.background;
-                                        return Config.withAlpha(bg, Config.windowOpacity);
+                                    SourceBlendRect {
+                                        id: cellBackground
+                                        width: rowItem.cellWidth
+                                        height: rowItem.cellHeight
+                                        radius: 10
+                                        backgroundColor: root.appearance.delegateBackdrop
+                                        color: cellWrapper.cellSelected ? root.appearance.gridSelectionFill : cellWrapper.cellHovered ? root.appearance.gridHoverFill : root.appearance.gridFill
                                     }
-                                }
 
-                                SourceBlendRect {
-                                    width: rowItem.cellWidth
-                                    height: rowItem.cellHeight
-                                    radius: 10
-                                    overlay: true
-                                    borderWidth: cellWrapper.cellSelected ? root.appearance.gridSelectionBorderWidth : cellWrapper.cellHovered ? root.appearance.gridHoverBorderWidth : 0
-                                    borderColor: cellWrapper.cellSelected ? root.appearance.gridSelectionOutline : root.appearance.gridHoverOutline
-                                }
+                                    GridCell {
+                                        x: rowItem.cellWidth * rowItem.effectiveInset
+                                        y: rowItem.cellHeight * rowItem.effectiveInset
+                                        width: rowItem.cellWidth * (1 - 2 * rowItem.effectiveInset)
+                                        height: rowItem.cellHeight * (1 - 2 * rowItem.effectiveInset)
+                                        sourceComponent: root.cellDelegate
+                                        layer.enabled: rowItem.effectiveInset <= 0 && root.appearance.gridContentEffect !== null
+                                        layer.effect: root.appearance.gridContentEffect
+                                        cellSection: cellWrapper.cellSection
+                                        cellItem: cellWrapper.cellItem
+                                        cellSelected: cellWrapper.cellSelected
+                                        cellHovered: cellWrapper.cellHovered
+                                        cellSize: rowItem.cellWidth
+                                        cellWidth: rowItem.cellWidth
+                                        cellHeight: rowItem.cellHeight
+                                        cell: cellWrapper.cell
+                                        cmdModel: root.cmdModel
+                                    }
 
-                                Text {
-                                    visible: rowItem.rowHasTitle
-                                    y: rowItem.cellHeight + root._textGap
-                                    width: rowItem.cellWidth
-                                    height: titleMetrics.height
-                                    text: cellWrapper.cell?.title ?? ""
-                                    color: Theme.textMuted
-                                    font: titleMetrics.font
-                                    elide: Text.ElideRight
-                                    maximumLineCount: 1
-                                    horizontalAlignment: Text.AlignHCenter
-                                }
+                                    SourceBlendRect {
+                                        visible: rowItem.effectiveInset <= 0 && root.appearance.gridContentEffect === null
+                                        width: rowItem.cellWidth
+                                        height: rowItem.cellHeight
+                                        radius: 10
+                                        cornerMask: true
+                                        backgroundColor: {
+                                            var bg = Theme.background;
+                                            return Config.withAlpha(bg, Config.windowOpacity);
+                                        }
+                                    }
 
-                                Text {
-                                    visible: rowItem.rowHasSubtitle
-                                    y: rowItem.cellHeight + root._textGap + (rowItem.rowHasTitle ? titleMetrics.height + root._textGap : 0)
-                                    width: rowItem.cellWidth
-                                    height: subtitleMetrics.height
-                                    text: cellWrapper.cell?.subtitle ?? ""
-                                    color: Theme.textMuted
-                                    font: subtitleMetrics.font
-                                    elide: Text.ElideRight
-                                    maximumLineCount: 1
-                                    horizontalAlignment: Text.AlignHCenter
-                                    opacity: 0.7
-                                }
+                                    SourceBlendRect {
+                                        width: rowItem.cellWidth
+                                        height: rowItem.cellHeight
+                                        radius: 10
+                                        overlay: true
+                                        borderWidth: cellWrapper.cellSelected ? root.appearance.gridSelectionBorderWidth : cellWrapper.cellHovered ? root.appearance.gridHoverBorderWidth : 0
+                                        borderColor: cellWrapper.cellSelected ? root.appearance.gridSelectionOutline : root.appearance.gridHoverOutline
+                                    }
 
-                                DraggableMouseArea {
-                                    id: cellMouseArea
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    draggable: cellWrapper.cell?.draggable ?? false
-                                    onItemClicked: {
-                                        if (root.cmdModel) {
-                                            root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
-                                            if (Config.activateOnSingleClick)
+                                    Text {
+                                        visible: rowItem.rowHasTitle
+                                        y: rowItem.cellHeight + root._textGap
+                                        width: rowItem.cellWidth
+                                        height: titleMetrics.height
+                                        text: cellWrapper.cell?.title ?? ""
+                                        color: Theme.textMuted
+                                        font: titleMetrics.font
+                                        elide: Text.ElideRight
+                                        maximumLineCount: 1
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+
+                                    Text {
+                                        visible: rowItem.rowHasSubtitle
+                                        y: rowItem.cellHeight + root._textGap + (rowItem.rowHasTitle ? titleMetrics.height + root._textGap : 0)
+                                        width: rowItem.cellWidth
+                                        height: subtitleMetrics.height
+                                        text: cellWrapper.cell?.subtitle ?? ""
+                                        color: Theme.textMuted
+                                        font: subtitleMetrics.font
+                                        elide: Text.ElideRight
+                                        maximumLineCount: 1
+                                        horizontalAlignment: Text.AlignHCenter
+                                        opacity: 0.7
+                                    }
+
+                                    DraggableMouseArea {
+                                        id: cellMouseArea
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        draggable: cellWrapper.cell?.draggable ?? false
+                                        onItemClicked: {
+                                            if (root.cmdModel) {
+                                                root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
+                                                if (Config.activateOnSingleClick)
+                                                    root.cmdModel.activateSelected();
+                                            }
+                                        }
+                                        onItemActivated: {
+                                            if (root.cmdModel) {
+                                                root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
                                                 root.cmdModel.activateSelected();
+                                            }
+                                        }
+                                        onDragRequested: {
+                                            if (root.cmdModel) {
+                                                root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
+                                                root.cmdModel.startDrag(cellWrapper.cellSection, cellWrapper.cellItem, cellWrapper);
+                                            }
                                         }
                                     }
-                                    onItemActivated: {
-                                        if (root.cmdModel) {
-                                            root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
-                                            root.cmdModel.activateSelected();
-                                        }
-                                    }
-                                    onDragRequested: {
-                                        if (root.cmdModel) {
-                                            root.cmdModel.select(cellWrapper.cellSection, cellWrapper.cellItem);
-                                            root.cmdModel.startDrag(cellWrapper.cellSection, cellWrapper.cellItem, cellWrapper);
-                                        }
-                                    }
-                                }
 
-                                ViciToolTip {
-                                    readonly property string tooltipText: cellWrapper.cell?.tooltip ?? ""
-                                    visible: cellWrapper.cellHovered && tooltipText !== ""
-                                    text: tooltipText
+                                    ViciToolTip {
+                                        readonly property string tooltipText: cellWrapper.cell?.tooltip ?? ""
+                                        visible: cellWrapper.cellHovered && tooltipText !== ""
+                                        text: tooltipText
+                                    }
                                 }
                             }
                         }
@@ -403,25 +358,24 @@ Item {
                 }
             }
         }
-    }
 
-    Connections {
-        target: root.cmdModel
-        function onModelReset() {
-            root._endArmed = true;
-            listView._lastContentHeight = 0;
-            Qt.callLater(root._maybeFireEnd);
-        }
-        function onSelectionChanged() {
-            var row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1;
-            if (row >= 0) {
-                var mode = ListView.Contain;
-                if (root.cmdModel && typeof root.cmdModel.alignSelectionScrollToTop === "function" && root.cmdModel.alignSelectionScrollToTop() && !root._isRowVisible(row)) {
-                    mode = ListView.Beginning;
+        Connections {
+            target: root.cmdModel
+            function onModelReset() {
+                root._endArmed = true;
+                listView._lastContentHeight = 0;
+                Qt.callLater(root._maybeFireEnd);
+            }
+            function onSelectionChanged() {
+                const row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1;
+                if (row >= 0) {
+                    const scrollTarget = root.cmdModel.flatRowForSelection(viewport.topInset > 0);
+                    var mode = ListView.Contain;
+                    if (root.cmdModel.alignSelectionScrollToTop() && !viewport.isIndexVisible(scrollTarget)) {
+                        mode = ListView.Beginning;
+                    }
+                    viewport.revealIndex(scrollTarget, mode, row);
                 }
-                listView.positionViewAtIndex(row, mode);
-                root._clearSearchBar(row);
-                root._liftAboveInset(row);
             }
         }
     }
