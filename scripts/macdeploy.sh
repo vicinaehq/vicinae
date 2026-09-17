@@ -134,11 +134,15 @@ rm -rf "$BUNDLE/Contents/PlugIns/sqldrivers" \
        "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/iOS" \
        "$BUNDLE/Contents/Resources/qml/QtQuick/Controls/FluentWinUI3"
 
-# official Qt ships universal binaries; we only target Apple Silicon
-echo "==> thin to arm64"
+# official Qt ships universal binaries; thin them to the arch we actually built for
+THIN_ARCH="${THIN_ARCH:-$(uname -m)}"
+echo "==> thin to $THIN_ARCH"
 while IFS= read -r -d '' bin; do
-  lipo -archs "$bin" 2>/dev/null | grep -q x86_64 || continue
-  lipo -thin arm64 "$bin" -output "$bin.thin" && mv "$bin.thin" "$bin"
+  archs="$(lipo -archs "$bin" 2>/dev/null)" || continue
+  [ -z "$archs" ] && continue
+  [ "$archs" = "$THIN_ARCH" ] && continue
+  case " $archs " in *" $THIN_ARCH "*) ;; *) continue ;; esac
+  lipo -thin "$THIN_ARCH" "$bin" -output "$bin.thin" && mv "$bin.thin" "$bin"
 done < <(find "$BUNDLE/Contents" -type f -print0)
 
 echo "==> dylibbundler"
