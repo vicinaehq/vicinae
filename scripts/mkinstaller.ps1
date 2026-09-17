@@ -1,4 +1,6 @@
 # Usage: scripts/mkinstaller.ps1 [-BuildDir build-release] [-OutDir <BuildDir>] [-Version x.y.z]
+# Packages an existing build: build the tree first, the script never compiles
+# (a rebuild here would replace binaries that were signed after the build).
 param(
     [string]$BuildDir = "build-release",
     [string]$OutDir = "",
@@ -28,8 +30,9 @@ if (-not $Version) {
 if ($Version) { $Version = $Version -replace '^v', '' } else { $Version = "0.0.0" }
 if ($Version -notmatch '^\d+(\.\d+){0,3}$') { throw "version '$Version' is not numeric x.y.z" }
 
-cmake --build $BuildDir
-if ($LASTEXITCODE -ne 0) { throw "cmake --build failed" }
+if (-not (Test-Path (Join-Path $BuildDir "bin\vicinae-server.exe"))) {
+    throw "no vicinae-server.exe in $BuildDir\bin (build first)"
+}
 
 $stage = Join-Path $BuildDir "stage"
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
