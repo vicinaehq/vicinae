@@ -16,14 +16,13 @@ if (-not (Test-Path (Join-Path $BuildDir "CMakeCache.txt"))) {
     throw "no CMake build at $BuildDir (configure and build first)"
 }
 
-$iscc = Get-Command iscc -ErrorAction SilentlyContinue
-if ($iscc) { $iscc = $iscc.Source }
-else {
-    foreach ($p in "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
-                   "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") {
-        if (Test-Path $p) { $iscc = $p; break }
-    }
+# prefer the real compiler over whatever shim is on PATH
+$iscc = $null
+foreach ($p in "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
+               "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") {
+    if (Test-Path $p) { $iscc = $p; break }
 }
+if (-not $iscc) { $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source }
 if (-not $iscc) { throw "ISCC.exe not found (winget install JRSoftware.InnoSetup)" }
 
 if (-not $Version) {
@@ -55,6 +54,7 @@ if ($SignCommand) {
 }
 
 if ($OutDir) { $OutDir = Join-Path $root $OutDir } else { $OutDir = $BuildDir }
+Write-Host "iscc: $iscc $isccArgs /O$OutDir"
 & $iscc @isccArgs "/O$OutDir" (Join-Path $root "extra\windows\vicinae.iss")
 if ($LASTEXITCODE -ne 0) { throw "iscc failed" }
 
