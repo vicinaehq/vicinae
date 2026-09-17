@@ -9,7 +9,6 @@
 #ifndef Arch
   #define Arch "x64"
 #endif
-#pragma message "AppVersion=" + AppVersion + " Arch=" + Arch + " StageDir=" + StageDir
 
 [Setup]
 AppId={{C698C8E4-B6C9-4C86-A9AA-520A6D2E45A1}

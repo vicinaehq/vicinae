@@ -33,11 +33,14 @@ jobs:
     runs-on: depot-windows-2022-16
     name: Build (Windows / MSVC x64)
     env:
-      # tagged releases (and manual runs with sign checked) are signed through
-      # Azure Artifact Signing when the AZURE_* secrets are present
+      # tagged releases and manual runs with sign ticked, when the secrets exist
       SIGNING: ${{ (inputs.tag != '' || inputs.sign == true) && secrets.AZURE_CLIENT_SECRET != '' }}
 
     steps:
+      - name: Require signing for releases
+        if: inputs.tag != '' && env.SIGNING != 'true'
+        run: throw "release builds must be signed: AZURE_* secrets are missing"
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:

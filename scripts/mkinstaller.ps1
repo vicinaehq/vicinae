@@ -1,6 +1,5 @@
 # Usage: scripts/mkinstaller.ps1 [-BuildDir build-release] [-OutDir <BuildDir>] [-Version x.y.z]
-# Packages an existing build: build the tree first, the script never compiles
-# (a rebuild here would replace binaries that were signed after the build).
+# Stages and packages an existing build; build first.
 param(
     [string]$BuildDir = "build-release",
     [string]$OutDir = "",
@@ -15,13 +14,14 @@ if (-not (Test-Path (Join-Path $BuildDir "CMakeCache.txt"))) {
     throw "no CMake build at $BuildDir (configure and build first)"
 }
 
-# prefer the real compiler over whatever shim is on PATH
-$iscc = $null
-foreach ($p in "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
-               "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") {
-    if (Test-Path $p) { $iscc = $p; break }
+$iscc = Get-Command iscc -ErrorAction SilentlyContinue
+if ($iscc) { $iscc = $iscc.Source }
+else {
+    foreach ($p in "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
+                   "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") {
+        if (Test-Path $p) { $iscc = $p; break }
+    }
 }
-if (-not $iscc) { $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source }
 if (-not $iscc) { throw "ISCC.exe not found (winget install JRSoftware.InnoSetup)" }
 
 if (-not $Version) {
