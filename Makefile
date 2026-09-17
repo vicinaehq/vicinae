@@ -28,7 +28,7 @@ relwithdebinfo:
 .PHONY: relwithdebinfo
 
 dev-configure:
-	cmake --preset linux-dev -B $(BUILD_DIR)
+	cmake --preset $(PRESET_OS)-dev -B $(BUILD_DIR)
 .PHONY: dev-configure
 
 dev-build: dev-configure

@@ -14,6 +14,7 @@ Item {
     required property T.Popup popup
     property real backgroundOpacity: nativeWindow ? Config.popupOpacity : 1
     property real frostedOpacity: 0.85
+    property Component surfaceComponent: null
 
     readonly property bool nativeWindow: popup.popupType === T.Popup.Window
     readonly property bool csd: !nativeWindow || Platform.supports("clientSideDecorations")
@@ -95,10 +96,18 @@ Item {
         }
     }
 
+    Loader {
+        id: nativeSurface
+        anchors.fill: parent
+        active: bg.nativeWindow && bg.surfaceComponent !== null
+        sourceComponent: bg.surfaceComponent
+    }
+
     Rectangle {
+        visible: !nativeSurface.active
         anchors.fill: parent
         radius: bg.cornerRadius
-        color: Qt.rgba(Theme.popoverBackground.r, Theme.popoverBackground.g, Theme.popoverBackground.b, bg.frosted ? bg.frostedOpacity : bg.backgroundOpacity)
+        color: Config.withAlpha(Theme.popoverBackground, bg.frosted ? bg.frostedOpacity : bg.backgroundOpacity)
         border.color: Config.withAlpha(Theme.popoverBorder, bg.backgroundOpacity)
         border.width: bg.csd ? 1 : 0
     }

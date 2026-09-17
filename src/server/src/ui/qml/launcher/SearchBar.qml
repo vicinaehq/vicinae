@@ -7,6 +7,9 @@ import Vicinae
 Item {
     id: root
     required property StackView commandStack
+    property int horizontalPadding: 16
+    property real textSize: Theme.regularFontSize * 1.2
+    property bool flatAccessories: false
 
     function focusInput() {
         if (!Launcher.searchInteractive)
@@ -17,8 +20,8 @@ Item {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: root.horizontalPadding
+        anchors.rightMargin: root.horizontalPadding
         spacing: Launcher.hasCompleter ? 4 : 12
 
         ViciImage {
@@ -58,7 +61,7 @@ Item {
                 anchors.fill: parent
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Theme.fontFamily
-                font.pointSize: Theme.regularFontSize * 1.2
+                font.pointSize: root.textSize
                 color: Theme.foreground
                 selectionColor: Theme.textSelectionBg
                 selectedTextColor: Theme.textSelectionFg
@@ -334,7 +337,14 @@ Item {
             source: Launcher.searchAccessoryUrl
             visible: active
             Layout.alignment: Qt.AlignVCenter
-            Layout.preferredWidth: 200
+            Layout.preferredWidth: root.flatAccessories && item instanceof SearchableDropdown ? Math.min(200, (item as SearchableDropdown).preferredWidth) : 200
+        }
+
+        Binding {
+            target: accessoryLoader.item
+            property: "flat"
+            value: root.flatAccessories
+            when: accessoryLoader.item instanceof SearchableDropdown
         }
 
         Shortcut {
