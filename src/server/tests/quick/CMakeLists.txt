@@ -25,6 +25,16 @@ set(qml_files
     fixtures/LauncherWindow.qml
     fixtures/Theme.qml
 )
+if(APPLE)
+    enable_language(OBJCXX)
+    list(APPEND qml_files
+        "${qml_root}/launcher/FloatingControlMacOS.qml"
+        "${qml_root}/controls/GlassSurfaceMacOS.qml"
+        fixtures/Config.qml
+        fixtures/Launcher.qml)
+    set_source_files_properties(fixtures/Config.qml fixtures/Launcher.qml
+        PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+endif()
 foreach(file IN LISTS qml_files)
     get_filename_component(alias "${file}" NAME)
     set_source_files_properties("${file}" PROPERTIES QT_RESOURCE_ALIAS "${alias}")
@@ -39,6 +49,19 @@ qt_add_qml_module(viewport-tests URI Vicinae VERSION 1.0
         "${qml_root}/../quick/match-highlighter.cpp"
         "${repo_root}/vendor/kirigami-wheelhandler/wheelhandler.h"
         "${repo_root}/vendor/kirigami-wheelhandler/wheelhandler.cpp")
+if(APPLE)
+    target_include_directories(viewport-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/macos")
+    target_sources(viewport-tests PRIVATE
+        "${qml_root}/../quick/macos-chrome-attached.hpp"
+        "${qml_root}/../quick/macos-chrome-attached.mm"
+        macos/native-window-probe.hpp
+        macos/native-window-probe.mm)
+    target_compile_options(viewport-tests PRIVATE "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
+    target_link_libraries(viewport-tests PRIVATE "-framework AppKit" "-framework QuartzCore")
+endif()
 
 enable_testing()
-add_test(NAME viewport COMMAND viewport-tests)
+add_test(NAME viewport COMMAND viewport-tests -input "${CMAKE_CURRENT_SOURCE_DIR}/tst_viewport.qml")
+if(APPLE)
+    add_test(NAME floating-control COMMAND viewport-tests -input "${CMAKE_CURRENT_SOURCE_DIR}/macos")
+endif()

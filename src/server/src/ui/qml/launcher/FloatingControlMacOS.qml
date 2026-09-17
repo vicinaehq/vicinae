@@ -7,10 +7,10 @@ Window {
     id: root
     required property Item anchorItem
 
-    readonly property point origin: {
+    readonly property rect anchorGeometry: {
         const window = anchorItem.Window.window;
         if (!window)
-            return Qt.point(0, 0);
+            return Qt.rect(0, 0, 0, 0);
         window.x;
         window.y;
         window.width;
@@ -20,31 +20,37 @@ Window {
             item.x;
             item.y;
         }
-        return anchorItem.mapToGlobal(0, 0);
-    }
-
-    function syncPosition() {
         const position = anchorItem.mapToGlobal(0, 0);
-        x = Math.round(position.x);
-        y = Math.round(position.y);
+        return Qt.rect(Math.round(position.x), Math.round(position.y), Math.round(anchorItem.width), Math.round(anchorItem.height));
     }
 
-    onOriginChanged: Qt.callLater(syncPosition)
+    function syncGeometry() {
+        if (!anchorItem.Window.window)
+            return;
+        const position = anchorItem.mapToGlobal(0, 0);
+        const targetWidth = Math.round(anchorItem.width);
+        const targetHeight = Math.round(anchorItem.height);
+        // Size constraints can resize a QWindow themselves; admit both sizes before moving it.
+        minimumWidth = Math.min(width, targetWidth);
+        minimumHeight = Math.min(height, targetHeight);
+        maximumWidth = Math.max(width, targetWidth);
+        maximumHeight = Math.max(height, targetHeight);
+        // Apply size and position together so a right-aligned pill never resizes at its old origin.
+        setGeometry(Math.round(position.x), Math.round(position.y), targetWidth, targetHeight);
+        // Keep the native resize regions from swallowing clicks along the control's edges.
+        minimumWidth = maximumWidth = targetWidth;
+        minimumHeight = maximumHeight = targetHeight;
+    }
+
+    onAnchorGeometryChanged: Qt.callLater(syncGeometry)
     onVisibleChanged: {
         if (visible) {
-            syncPosition();
-            Qt.callLater(syncPosition);
+            syncGeometry();
+            Qt.callLater(syncGeometry);
         }
     }
 
     transientParent: anchorItem.Window.window
-    width: anchorItem.width
-    height: anchorItem.height
-    // Prevent native resize regions from swallowing clicks along the control's edges.
-    minimumWidth: anchorItem.width
-    maximumWidth: anchorItem.width
-    minimumHeight: anchorItem.height
-    maximumHeight: anchorItem.height
     visible: anchorItem.visible && (transientParent?.visible ?? false) && !Launcher.compacted && !Launcher.hasOverlay && !Launcher.alertModel.visible
     // The launcher stays transparent while AppKit finishes placing it.
     opacity: transientParent?.opacity ?? 0

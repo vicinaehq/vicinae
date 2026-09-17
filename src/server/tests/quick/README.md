@@ -16,3 +16,10 @@ ctest --test-dir build/viewport-tests --output-on-failure
 The tests cover both the overlay header and the zero-inset layout, independent
 panes, fixed toolbars, nested scrollers, selection bounds, navigation history,
 form focus, highlighted text, and script output. QML warnings fail the tests.
+
+On macOS, the `floating-control` test also loads the production floating pill
+and native glass/panel implementation. A small AppKit observer records every
+native move and resize, including intermediate frames that Qt's property signals
+coalesce. It checks right-edge stability, batched layout changes, parent moves,
+reshowing, and clicks at both edges. Config and launcher fixtures provide only
+the presentation state required to show the control.
