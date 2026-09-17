@@ -1,4 +1,4 @@
-; iscc /DStageDir=<staged tree> /DAppVersion=<x.y.z> [/DSign "/Ssign=<signtool command> $f"] vicinae.iss
+; iscc /DStageDir=<staged tree> /DAppVersion=<x.y.z> vicinae.iss
 
 #ifndef StageDir
   #error Pass /DStageDir=<path to a tree staged with cmake --install>
@@ -17,10 +17,6 @@ AppName=Vicinae
 AppVersion={#AppVersion}
 ; the self updater checks this against the version announced by the release feed
 VersionInfoVersion={#AppVersion}
-#ifdef Sign
-SignTool=sign
-SignedUninstaller=yes
-#endif
 AppPublisher=Vicinae
 AppPublisherURL=https://vicinae.com
 AppSupportURL=https://github.com/vicinaehq/vicinae

@@ -1,12 +1,9 @@
 # Usage: scripts/mkinstaller.ps1 [-BuildDir build-release] [-OutDir <BuildDir>] [-Version x.y.z]
-#        [-SignCommand 'signtool sign /fd SHA256 /tr <url> /td SHA256 ... $f']
-# -SignCommand is run on every staged exe and, through ISCC, on the installer and uninstaller.
 param(
     [string]$BuildDir = "build-release",
     [string]$OutDir = "",
     [string]$Arch = "x64",
-    [string]$Version = "",
-    [string]$SignCommand = ""
+    [string]$Version = ""
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot
@@ -45,13 +42,6 @@ foreach ($f in "bin\vicinae-server.exe", "bin\qt.conf", "plugins\platforms\qwind
 }
 
 $isccArgs = @("/DStageDir=$stage", "/DAppVersion=$Version", "/DArch=$Arch")
-if ($SignCommand) {
-    foreach ($exe in Get-ChildItem (Join-Path $stage "bin") -Filter "*.exe") {
-        Invoke-Expression ($SignCommand -replace '\$f', "`"$($exe.FullName)`"")
-        if ($LASTEXITCODE -ne 0) { throw "signing $($exe.Name) failed" }
-    }
-    $isccArgs += @("/DSign", "/Ssign=$SignCommand")
-}
 
 if ($OutDir) { $OutDir = Join-Path $root $OutDir } else { $OutDir = $BuildDir }
 Write-Host "iscc: $iscc $isccArgs /O$OutDir"

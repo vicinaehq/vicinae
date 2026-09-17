@@ -78,45 +78,48 @@ jobs:
       - name: Build
         run: cmake --build --preset windows-ci
 
-      - name: Set up Artifact Signing client
+      - name: Sign executables
         if: env.SIGNING == 'true'
-        run: |
-          $dir = Join-Path $env:RUNNER_TEMP "signing"
-          New-Item -ItemType Directory -Force $dir | Out-Null
-          foreach ($pkg in "Microsoft.ArtifactSigning.Client", "Microsoft.Windows.SDK.BuildTools") {
-            Invoke-WebRequest "https://www.nuget.org/api/v2/package/$pkg" -OutFile "$dir\$pkg.zip"
-            Expand-Archive "$dir\$pkg.zip" -DestinationPath "$dir\$pkg"
-          }
-          $signtool = (Get-ChildItem "$dir\Microsoft.Windows.SDK.BuildTools\bin\*\x64\signtool.exe" | Select-Object -Last 1).FullName
-          $dlib = "$dir\Microsoft.ArtifactSigning.Client\bin\x64\Azure.CodeSigning.Dlib.dll"
-          @{
-            Endpoint = "https://eus.codesigning.azure.net"
-            CodeSigningAccountName = "vicinae"
-            CertificateProfileName = "vicinae"
-            ExcludeCredentials = @(
-              "ManagedIdentityCredential", "WorkloadIdentityCredential", "SharedTokenCacheCredential",
-              "VisualStudioCredential", "VisualStudioCodeCredential", "AzureCliCredential",
-              "AzurePowerShellCredential", "AzureDeveloperCliCredential", "InteractiveBrowserCredential"
-            )
-          } | ConvertTo-Json | Set-Content "$dir\metadata.json"
-          "SIGNTOOL=$signtool" >> $env:GITHUB_ENV
-          "SIGN_COMMAND=$signtool sign /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $dlib /dmdf $dir\metadata.json `$f" >> $env:GITHUB_ENV
+        uses: azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: https://eus.codesigning.azure.net
+          signing-account-name: vicinae
+          certificate-profile-name: vicinae
+          files-folder: ${{ github.workspace }}\build\bin
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
 
       - name: Package (stage + installer)
-        env:
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        run: |
-          $sign = @()
-          if ($env:SIGN_COMMAND) { $sign = @("-SignCommand", $env:SIGN_COMMAND) }
-          ./scripts/mkinstaller.ps1 -BuildDir build -Version "${{ inputs.tag }}" @sign
+        run: ./scripts/mkinstaller.ps1 -BuildDir build -Version "${{ inputs.tag }}"
 
-      - name: Verify signature
+      - name: Sign installer
+        if: env.SIGNING == 'true'
+        uses: azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: https://eus.codesigning.azure.net
+          signing-account-name: vicinae
+          certificate-profile-name: vicinae
+          files: ${{ github.workspace }}\build\vicinae-x64-setup.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Verify signatures
         if: env.SIGNING == 'true'
         run: |
-          & $env:SIGNTOOL verify /pa /v build\vicinae-x64-setup.exe
-          & $env:SIGNTOOL verify /pa /v build\stage\bin\vicinae-server.exe
+          foreach ($f in "build\vicinae-x64-setup.exe", "build\stage\bin\vicinae-server.exe") {
+            $s = Get-AuthenticodeSignature $f
+            "{0}: {1} {2}" -f $f, $s.Status, $s.SignerCertificate.Subject
+            if ($s.Status -ne "Valid") { throw "$f is not validly signed" }
+          }
 
       - name: Upload portable build
         if: inputs.tag == ''
