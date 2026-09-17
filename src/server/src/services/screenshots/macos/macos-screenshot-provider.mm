@@ -1,14 +1,11 @@
+#include <CoreServices/CoreServices.h>
 #include <Foundation/Foundation.h>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QFileSystemWatcher>
-#include <QFutureWatcher>
 #include <QImageReader>
 #include <QMimeDatabase>
-#include <QPointer>
 #include <QStandardPaths>
-#include <QTimer>
 #include <QtConcurrent/QtConcurrentRun>
 #include <algorithm>
 #include <array>
@@ -111,129 +108,37 @@ ScreenshotResult MacosScreenshots::readFiles(std::vector<Screenshot> candidates,
   }
 }
 
-struct MacosScreenshotProvider::Impl {
-  NSMetadataQuery *query = [[NSMetadataQuery alloc] init];
-  id gathered = nil;
-  id updated = nil;
-  QFileSystemWatcher folders;
-  QTimer debounce;
-  QTimer settle;
-  QTimer timeout;
-  QFutureWatcher<ScreenshotResult> scan;
-  QString directory;
-  bool started = false;
-  bool ready = false;
-  bool queryFailed = false;
-  bool scanning = false;
-  bool pending = false;
-
-  ~Impl() {
-    [NSNotificationCenter.defaultCenter removeObserver:gathered];
-    [NSNotificationCenter.defaultCenter removeObserver:updated];
-    [query stopQuery];
-  }
-};
-
-MacosScreenshotProvider::MacosScreenshotProvider(QObject *parent)
-    : AbstractScreenshotProvider(parent), m_impl(std::make_unique<Impl>()) {
-  auto &state = *m_impl;
-  state.debounce.setSingleShot(true);
-  state.debounce.setInterval(300);
-  state.settle.setSingleShot(true);
-  state.settle.setInterval(1500);
-  state.timeout.setSingleShot(true);
-  state.timeout.setInterval(5000);
-  connect(&state.folders, &QFileSystemWatcher::directoryChanged, this, [this] {
-    m_impl->debounce.start();
-    // The directory notification can arrive before image data and metadata have finished writing.
-    m_impl->settle.start();
-  });
-  connect(&state.debounce, &QTimer::timeout, this, &MacosScreenshotProvider::refresh);
-  connect(&state.settle, &QTimer::timeout, this, &MacosScreenshotProvider::refresh);
-  connect(&state.timeout, &QTimer::timeout, this, [this] {
-    m_impl->queryFailed = true;
-    collect();
-  });
-  connect(&state.scan, &QFutureWatcher<ScreenshotResult>::finished, this, [this] {
-    m_impl->scanning = false;
-    if (std::exchange(m_impl->pending, false)) {
-      collect();
-      return;
-    }
-    emit refreshed(m_impl->scan.result());
-  });
-
-  state.query.predicate =
-      [NSPredicate predicateWithFormat:@"kMDItemIsScreenCapture == 1 OR kMDItemScreenCaptureType LIKE '*'"];
-  state.query.sortDescriptors = @[ [NSSortDescriptor sortDescriptorWithKey:@"kMDItemContentCreationDate"
-                                                                 ascending:NO] ];
-  const QPointer<MacosScreenshotProvider> guard(this);
-  state.gathered =
-      [NSNotificationCenter.defaultCenter addObserverForName:NSMetadataQueryDidFinishGatheringNotification
-                                                      object:state.query
-                                                       queue:NSOperationQueue.mainQueue
-                                                  usingBlock:^(NSNotification *) {
-                                                    if (!guard) return;
-                                                    guard->m_impl->ready = true;
-                                                    guard->m_impl->queryFailed = false;
-                                                    guard->m_impl->timeout.stop();
-                                                    guard->collect();
-                                                  }];
-  state.updated = [NSNotificationCenter.defaultCenter addObserverForName:NSMetadataQueryDidUpdateNotification
-                                                                  object:state.query
-                                                                   queue:NSOperationQueue.mainQueue
-                                                              usingBlock:^(NSNotification *) {
-                                                                if (guard) guard->m_impl->debounce.start();
-                                                              }];
-}
-
-MacosScreenshotProvider::~MacosScreenshotProvider() = default;
-
 void MacosScreenshotProvider::refresh() {
-  auto &state = *m_impl;
-  const auto directory = screenshotDirectory();
-  if (state.directory != directory) {
-    if (!state.folders.directories().isEmpty()) state.folders.removePaths(state.folders.directories());
-    state.directory = directory;
-    [state.query stopQuery];
-    state.query.searchScopes = @[ NSMetadataQueryUserHomeScope, directory.toNSString() ];
-    state.started = false;
-    state.ready = false;
-  }
-  if (!state.folders.directories().contains(directory) && QFileInfo(directory).isDir()) {
-    state.folders.addPath(directory);
-  }
-  if (!state.started) {
-    state.started = [state.query startQuery];
-    state.queryFailed = !state.started;
-    if (state.started) state.timeout.start();
-  }
-  if (state.ready || state.queryFailed) collect();
-}
+  QtConcurrent::run([] {
+    @autoreleasepool {
+      const auto directory = screenshotDirectory();
+      MDQueryRef query = MDQueryCreate(
+          kCFAllocatorDefault, CFSTR("kMDItemIsScreenCapture == 1 || kMDItemScreenCaptureType == '*'"),
+          nullptr, nullptr);
+      if (!query) return MacosScreenshots::readFiles({}, directory, true);
 
-void MacosScreenshotProvider::collect() {
-  auto &state = *m_impl;
-  if (state.scanning) {
-    state.pending = true;
-    return;
-  }
-  std::vector<Screenshot> candidates;
-  [state.query disableUpdates];
-  candidates.reserve(state.query.resultCount);
-  for (NSMetadataItem *item in state.query.results) {
-    NSString *path = [item valueForAttribute:NSMetadataItemPathKey];
-    if (![path isKindOfClass:NSString.class]) continue;
-    NSDate *date = [item valueForAttribute:@"kMDItemContentCreationDate"];
-    QDateTime createdAt;
-    if ([date isKindOfClass:NSDate.class]) {
-      createdAt = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(date.timeIntervalSince1970 * 1000));
+      NSArray *scopes = @[ (__bridge NSString *)kMDQueryScopeHome, directory.toNSString() ];
+      MDQuerySetSearchScope(query, (__bridge CFArrayRef)scopes, 0);
+      const bool succeeded = MDQueryExecute(query, kMDQuerySynchronous);
+      std::vector<Screenshot> candidates;
+      if (succeeded) {
+        const auto count = MDQueryGetResultCount(query);
+        candidates.reserve(count);
+        for (CFIndex i = 0; i < count; ++i) {
+          const auto item = (MDItemRef)MDQueryGetResultAtIndex(query, i);
+          NSString *path = CFBridgingRelease(MDItemCopyAttribute(item, kMDItemPath));
+          if (![path isKindOfClass:NSString.class]) continue;
+          NSDate *date = CFBridgingRelease(MDItemCopyAttribute(item, kMDItemContentCreationDate));
+          QDateTime createdAt;
+          if ([date isKindOfClass:NSDate.class]) {
+            createdAt =
+                QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(date.timeIntervalSince1970 * 1000));
+          }
+          candidates.emplace_back(Screenshot{.path = path.fileSystemRepresentation, .createdAt = createdAt});
+        }
+      }
+      CFRelease(query);
+      return MacosScreenshots::readFiles(std::move(candidates), directory, !succeeded);
     }
-    candidates.emplace_back(Screenshot{.path = path.fileSystemRepresentation, .createdAt = createdAt});
-  }
-  [state.query enableUpdates];
-  state.scanning = true;
-  state.scan.setFuture(QtConcurrent::run(
-      [items = std::move(candidates), directory = state.directory, failed = state.queryFailed]() mutable {
-        return MacosScreenshots::readFiles(std::move(items), directory, failed);
-      }));
+  }).then(this, [this](ScreenshotResult result) { emit refreshed(std::move(result)); });
 }

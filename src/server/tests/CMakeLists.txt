@@ -27,7 +27,7 @@ if (APPLE)
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 	target_link_libraries(vicinae-server-tests PRIVATE
 		Catch2::Catch2 vicinae::common vicinae::fuzzy Qt6::Gui Qt6::Concurrent
-		"-framework AppKit" "-framework Foundation" "-framework QuickLookThumbnailing" "-framework CoreGraphics")
+		"-framework AppKit" "-framework Foundation" "-framework CoreServices" "-framework QuickLookThumbnailing" "-framework CoreGraphics")
 	catch_discover_tests(vicinae-server-tests
 		TEST_PREFIX "server."
 		DISCOVERY_MODE PRE_TEST

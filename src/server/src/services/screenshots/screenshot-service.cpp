@@ -19,10 +19,8 @@ ScreenshotService::ScreenshotService(QObject *parent) : QObject(parent) {
 }
 
 void ScreenshotService::refresh() {
-  if (!m_provider) return;
-  if (!m_loading) {
-    m_loading = true;
-    emit loadingChanged();
-  }
+  if (!m_provider || m_loading) return;
+  m_loading = true;
+  emit loadingChanged();
   m_provider->refresh();
 }
