@@ -5,6 +5,9 @@ import QtQuick.Shapes
 import Vicinae
 
 RowLayout {
+    id: root
+    property bool constrained: false
+    readonly property real naturalWidth: 18 + title.implicitWidth + (message.visible ? spacing + message.implicitWidth : 0)
     spacing: 6
 
     Rectangle {
@@ -63,13 +66,17 @@ RowLayout {
     }
 
     Text {
+        id: title
         text: Launcher.toastTitle
         color: Theme.foreground
         font.family: Theme.fontFamily
         font.pointSize: Theme.smallerFontSize
+        elide: root.constrained ? Text.ElideRight : Text.ElideNone
+        Layout.maximumWidth: root.constrained ? Math.max(0, root.width - 18 - (message.visible ? 64 : 0)) : Infinity
     }
 
     Text {
+        id: message
         text: Launcher.toastMessage
         color: Theme.textMuted
         font.family: Theme.fontFamily

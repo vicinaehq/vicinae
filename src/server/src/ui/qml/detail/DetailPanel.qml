@@ -29,7 +29,7 @@ Item {
             Layout.fillHeight: true
         }
 
-        ViciDivider {
+        ContentDivider {
             visible: root._hasMetadata && root.hasContent
             Layout.fillWidth: true
         }

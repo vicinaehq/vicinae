@@ -16,6 +16,7 @@ public:
   static StyleBridge *create(QQmlEngine *, QJSEngine *) { return QmlEngineScope::global<StyleBridge>(); }
 
 private:
+  Q_PROPERTY(bool configurableStatusBar READ configurableStatusBar CONSTANT)
   // Space pages reserve for the overlaid window header.
   Q_PROPERTY(qreal contentTopInset READ contentTopInset CONSTANT)
   Q_PROPERTY(qreal switchKnobWidth READ switchKnobWidth CONSTANT)
@@ -27,6 +28,14 @@ private:
 
 public:
   explicit StyleBridge(QObject *parent) : QObject(parent) {}
+
+  bool configurableStatusBar() const {
+#ifdef Q_OS_MACOS
+    return false;
+#else
+    return true;
+#endif
+  }
 
   qreal contentTopInset() const { return 44; }
 

@@ -18,7 +18,10 @@ ToolTip {
     }
 
     background: PopoverBackground {
+        surfaceComponent: materialImpl.style.backgroundComponent
         popup: root
-        PopupMaterial {}
+        PopupMaterial {
+            id: materialImpl
+        }
     }
 }

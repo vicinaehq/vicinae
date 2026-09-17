@@ -55,6 +55,8 @@ Flickable {
 
             SettingsRow {
                 label: qsTr("Close on focus loss")
+                // on Windows we always do that.
+                visible: Qt.platform.os != "windows"
                 SettingsToggle {
                     checked: root.model.closeOnFocusLoss
                     onToggled: checked => root.model.closeOnFocusLoss = checked
