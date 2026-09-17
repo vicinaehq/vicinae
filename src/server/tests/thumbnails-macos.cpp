@@ -3,7 +3,7 @@
 #include <QTemporaryDir>
 #include <QTimer>
 #include <catch2/catch_test_macros.hpp>
-#include "fixtures.hpp"
+#include "macos-fixtures.hpp"
 #include "ui/image/mac-file-thumbnail-loader.hpp"
 
 TEST_CASE("Native recording thumbnails return a correctly oriented video frame") {

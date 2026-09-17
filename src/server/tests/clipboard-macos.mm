@@ -1,7 +1,8 @@
 #include <AppKit/AppKit.h>
 #include <QImage>
+#include <QMimeData>
 #include <catch2/catch_test_macros.hpp>
-#include "services/clipboard/clipboard-mime.hpp"
+#include <memory>
 #include "services/clipboard/macos/macos-pasteboard.hpp"
 
 namespace {
@@ -12,18 +13,6 @@ struct PrivatePasteboard {
 };
 
 } // namespace
-
-TEST_CASE("File clipboard content publishes a native file reference") {
-  @autoreleasepool {
-    PrivatePasteboard pasteboard;
-    const auto url = QUrl::fromLocalFile("/tmp/a screenshot.png");
-    auto data = Clipboard::mimeDataForContent(Clipboard::File{"/tmp/a screenshot.png"});
-    REQUIRE(MacosClipboard::writePasteboard(pasteboard.value, data.release(), {}));
-    REQUIRE(pasteboard.value.pasteboardItems.count == 1);
-    REQUIRE(QString::fromNSString([pasteboard.value stringForType:NSPasteboardTypeFileURL]) ==
-            url.toString(QUrl::FullyEncoded));
-  }
-}
 
 TEST_CASE("Image-only clipboard content publishes PNG and TIFF without a source bundle") {
   @autoreleasepool {

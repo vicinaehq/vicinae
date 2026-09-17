@@ -37,13 +37,11 @@ void ScreenshotActions::transfer(const Screenshot &item, bool paste, const Appli
   const Clipboard::File content{item.path};
   if (paste) {
     if (ctx->services->pasteService()->pasteContent(content)) {
-      toast->clear();
       ctx->navigation->closeWindow();
     } else {
       toast->failure(recording ? tr("Could not paste recording") : tr("Could not paste screenshot"));
     }
   } else if (ctx->services->clipman()->copyContent(content)) {
-    toast->clear();
     ctx->navigation->showHud(recording ? tr("Recording copied") : tr("Screenshot copied"),
                              BuiltinIcon::CopyClipboard);
   } else {
@@ -53,7 +51,6 @@ void ScreenshotActions::transfer(const Screenshot &item, bool paste, const Appli
 
 void ScreenshotActions::pasteLast(const ApplicationContext *ctx) {
   auto service = ctx->services->screenshots();
-  ctx->services->toastService()->dynamic(tr("Finding last screenshot..."));
   QObject::connect(
       service, &ScreenshotService::refreshed, ctx->navigation.get(),
       [ctx, service] {
