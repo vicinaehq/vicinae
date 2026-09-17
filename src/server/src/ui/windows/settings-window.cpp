@@ -27,6 +27,7 @@
 #include "vicinae.hpp"
 #include "generated/version.h"
 #include "fuzzy/fuzzy-searchable.hpp"
+#include <QDebug>
 #include <QQmlContext>
 #include <QQuickWindow>
 #ifdef Q_OS_MACOS
@@ -63,6 +64,7 @@ void SettingsWindow::loadRoot() {
 
   auto rootObjects = m_engine.rootObjects();
   if (!rootObjects.isEmpty()) { m_window = qobject_cast<QQuickWindow *>(rootObjects.first()); }
+  if (!m_window) { qWarning() << "settings window did not load synchronously: no root window"; }
 
   if (m_window) {
     connect(m_window, &QQuickWindow::closing, this,
