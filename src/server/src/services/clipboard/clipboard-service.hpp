@@ -1,14 +1,16 @@
 #pragma once
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "common/types.hpp"
 #include "services/clipboard/clipboard-content.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
+#include <QSize>
 #include <QString>
 #include <chrono>
 #include <expected>
 #include <filesystem>
+#include <optional>
 #include <QJsonObject>
 #include <qcontainerfwd.h>
 #include <qdir.h>
@@ -117,6 +119,9 @@ private:
 
   static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
   static QString getOfferTextPreview(const ClipboardDataOffer &offer);
+  static QString getOfferImageSearchText(const ClipboardDataOffer &offer);
+  static QString getOfferFileSearchText(const ClipboardDataOffer &offer);
+  static std::optional<QSize> readImageSize(const ClipboardDataOffer &offer);
 
   /**
    * Unique selection hash obtained by hashing all the data offer hashes together.

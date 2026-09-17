@@ -1,10 +1,10 @@
 #pragma once
 #include <QCoreApplication>
-#include "actions/app/app-actions.hpp"
-#include "actions/files/file-actions.hpp"
-#include "actions/shortcut/shortcut-actions.hpp"
-#include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/file-actions.hpp"
+#include "actions/shortcut-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"
 #include "keyboard/keybind.hpp"
 #include "keyboard/keyboard.hpp"
@@ -14,7 +14,7 @@
 #include "internal/keyboard/keyboard.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/wallpaper/wallpaper-manager.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <algorithm>
 #include <qmimedatabase.h>
 #include <filesystem>
@@ -35,7 +35,6 @@ public:
 
   void execute(ApplicationContext *ctx) override {
     auto const appDb = ctx->services->appDb();
-    auto const files = ctx->services->fileService();
     auto const toast = ctx->services->toastService();
 
     bool const success = appDb->showInFileBrowser(m_path, true);
@@ -45,7 +44,6 @@ public:
       return;
     }
 
-    files->saveAccess(m_path);
     ctx->navigation->closeWindow();
   }
 
@@ -111,7 +109,7 @@ public:
 
     if (ctx->services->appDb()->launchRaw({QString::fromStdString(m_path.string())})) {
       ctx->navigation->closeWindow();
-      files->saveAccess(m_path);
+      files->recordAccess(m_path);
     } else {
       ctx->services->toastService()->failure(tr("Failed to start executable"));
     }

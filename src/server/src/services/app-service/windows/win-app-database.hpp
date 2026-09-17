@@ -22,9 +22,11 @@ public:
   ~WindowsAppDatabase() override;
 
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
+  std::vector<std::filesystem::path> searchPaths() const override;
   bool scan() override;
 
   bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const override;
+  std::unique_ptr<QProcess> shellProcess(const QString &code) const override;
   bool launchTerminalCommand(const std::vector<QString> &cmdline,
                              const LaunchTerminalCommandOptions &opts = {}) const override;
 
@@ -34,6 +36,7 @@ public:
   std::vector<AppPtr> list() const override;
   AppPtr findByClass(const QString &name) const override;
   PreferenceList preferences() const override;
+  void applyPreferences(const QJsonObject &preferences) override;
 
   AppPtr fileBrowser() const override;
   AppPtr genericTextEditor() const override;
@@ -47,10 +50,12 @@ private:
   void scanWin32(const std::vector<std::filesystem::path> &paths); // recursive
   void scanDesktop();                                              // non-recursive
   void scanAppPaths();
+  void scanPortable(); // user directories, non-recursive
   void scanUwp();
   void refreshUwpCache();
   void installWatches();
   void addShortcut(const std::filesystem::path &file);
+  void addExecutable(const std::filesystem::path &exe, const QString &name, const QString &category = {});
   void addApp(std::shared_ptr<WindowsApplication> app);
   void indexAliases(const std::shared_ptr<WindowsApplication> &app);
 
@@ -69,6 +74,7 @@ private:
   std::vector<std::shared_ptr<WindowsApplication>> m_uwpCache;
   std::atomic<bool> m_uwpDirty = true; // set from WinRT event threads
   std::unordered_set<QString> m_watchDirs;
+  std::vector<std::filesystem::path> m_extraSearchPaths;
   QFileSystemWatcher m_watcher;
   QTimer m_rescanTimer;
 };

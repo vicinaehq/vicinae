@@ -1,0 +1,47 @@
+#pragma once
+#include "ui/views/section-source.hpp"
+#include "services/raycast/raycast-store.hpp"
+
+class ExtensionRegistry;
+
+class RaycastStoreSection : public SectionSource {
+public:
+  enum ExtraRole {
+    DownloadCount = 100,
+    AuthorAvatar,
+    IsInstalled,
+    CompatTierRole,
+  };
+
+  struct Entry {
+    Raycast::Extension extension;
+    bool installed = false;
+    std::optional<Raycast::CompatTier> compatTier;
+  };
+
+  void setEntries(const std::vector<Raycast::Extension> &extensions, ExtensionRegistry *registry,
+                  const Raycast::CompatMap &compat, const QString &sectionName);
+
+  QString sectionName() const override { return m_sectionName; }
+  int count() const override { return static_cast<int>(m_entries.size()); }
+
+  const Entry &entryAt(int i) const { return m_entries[i]; }
+
+  QVariant customData(int i, int role) const override;
+  QHash<int, QByteArray> customRoleNames() const override {
+    return {{DownloadCount, "downloadCount"},
+            {AuthorAvatar, "authorAvatar"},
+            {IsInstalled, "isInstalled"},
+            {CompatTierRole, "compatTier"}};
+  }
+
+protected:
+  QString itemTitle(int i) const override;
+  QString itemSubtitle(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
+
+private:
+  std::vector<Entry> m_entries;
+  QString m_sectionName;
+};

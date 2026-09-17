@@ -28,13 +28,23 @@ const generateSources = (files) => {
 	const serializedFileNames = files.map(file => `"${file.split('.')[0]}"`);
 	const enumNames = files.map(file => toEnumType(`${file.split('.')[0]}`));
 	const header = `#pragma once
+#include <QObject>
+#include <QtQml/qqmlregistration.h>
 #include <string>
 #include <format>
 #include <unordered_map>
 
-enum class BuiltinIcon: std::uint16_t {
+namespace BuiltinIcons {
+Q_NAMESPACE
+QML_NAMED_ELEMENT(BuiltinIcon)
+
+enum class BuiltinIcon : quint16 {
 	${enumNames.join(',\n\t')}
 };
+Q_ENUM_NS(BuiltinIcon)
+} // namespace BuiltinIcons
+
+using BuiltinIcons::BuiltinIcon;
 
 class BuiltinIconService {
 public:
@@ -47,7 +57,7 @@ public:
 };
 `;
 
-	const src = `#include "builtin_icon.hpp"
+	const src = `#include "services/builtin-icon/builtin-icon.hpp"
 
 
 
@@ -89,10 +99,10 @@ const writeFile = (path, data) => {
 const icons = fs.readdirSync(OMNI_ICON_DIR).filter((file) => file.endsWith('.svg'));
 const qrc = generateQrc(icons);
 const { cpp, ts } = generateSources(icons);
-const cppSrcDir = path.join(__dirname, "..", "src", "server", "src");
+const cppSrcDir = path.join(__dirname, "..", "src", "server", "src", "services", "builtin-icon");
 const apiIconSource = path.join(__dirname, "..", "src", "typescript", "api", "src", "api", "icon.ts");
 
 writeFile(path.join(__dirname, "..", "src", "server", "icons", "icons.qrc"), qrc);
-writeFile(path.join(cppSrcDir, "builtin_icon.cpp"), cpp.src);
-writeFile(path.join(cppSrcDir, "builtin_icon.hpp"), cpp.header);
+writeFile(path.join(cppSrcDir, "builtin-icon.cpp"), cpp.src);
+writeFile(path.join(cppSrcDir, "builtin-icon.hpp"), cpp.header);
 writeFile(apiIconSource, ts.iconEnum);

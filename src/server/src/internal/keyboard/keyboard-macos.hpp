@@ -6,6 +6,16 @@
 #include <QString>
 #include <optional>
 #include <qnamespace.h>
+#include "layout-resolver.hpp"
+
+namespace Keyboard {
+
+class MacosLayoutResolver : public LayoutResolver {
+public:
+  Qt::Key unshift(Qt::Key key, quint32 scanCode) override;
+};
+
+} // namespace Keyboard
 
 // Layout helpers shared by recorder normalization and the global shortcut backend, so both
 // sides translate identically.

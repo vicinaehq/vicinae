@@ -1,15 +1,15 @@
 #pragma once
 #include <QCoreApplication>
-#include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"
-#include "actions/shortcut/shortcut-actions.hpp"
+#include "actions/shortcut-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "theme/colors.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 struct BrowserTabActionGenerator {
   Q_DECLARE_TR_FUNCTIONS(BrowserTabActionGenerator)

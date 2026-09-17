@@ -1,0 +1,52 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls
+import Vicinae
+
+ScrollBar {
+    id: control
+
+    property bool _recentlyScrolled: false
+
+    topPadding: control.orientation === Qt.Vertical ? searchBarInset.value : 0
+    bottomPadding: control.orientation === Qt.Vertical ? statusBarInset.value : 0
+
+    SearchBarInset {
+        id: searchBarInset
+        target: control
+    }
+
+    StatusBarInset {
+        id: statusBarInset
+        target: control
+    }
+
+    function revealOnScroll() {
+        _recentlyScrolled = true;
+        scrollActivityTimer.restart();
+    }
+
+    onPositionChanged: revealOnScroll()
+
+    Timer {
+        id: scrollActivityTimer
+        interval: 400
+        onTriggered: control._recentlyScrolled = false
+    }
+
+    contentItem: Rectangle {
+        implicitWidth: 6
+        implicitHeight: 6
+        radius: 3
+        color: Theme.scrollBarBackground
+        opacity: control.active || control._recentlyScrolled ? 1.0 : 0.0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 200
+            }
+        }
+    }
+
+    background: Item {}
+}

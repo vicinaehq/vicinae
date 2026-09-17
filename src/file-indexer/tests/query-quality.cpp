@@ -336,6 +336,7 @@ TEST_CASE("skeleton: short skeleton tokens are kept in phrase matches") {
   CHECK(inTop("jai wndws", "jai/modules/windows.jai", 3));
 }
 
-TEST_CASE("exact path component substring outranks fuzzy filename subsequence") {
-  CHECK(rankOf("oled", "4k-oled/jellyfish-amoled.png") < rankOf("oled", "icons/SymbolEditor.svg"));
+TEST_CASE("exact path component substring wins, mid-word filename subsequence is dropped") {
+  CHECK(rankOf("oled", "4k-oled/jellyfish-amoled.png") == 1);
+  CHECK(rankOf("oled", "icons/SymbolEditor.svg") == -1);
 }

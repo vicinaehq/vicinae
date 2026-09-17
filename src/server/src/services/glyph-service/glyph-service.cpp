@@ -8,7 +8,7 @@
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "fuzzy/fzf.hpp"
 #include "glyph/glyph.hpp"
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include <qfuture.h>
 #include <qfuturesynchronizer.h>
 #include <qlogging.h>

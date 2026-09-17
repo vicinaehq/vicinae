@@ -1,13 +1,14 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "common/qt.hpp"
 #include "common/entrypoint.hpp"
-#include "argument.hpp"
-#include "command-controller.hpp"
-#include "command.hpp"
-#include "common.hpp"
-#include "ui/action-pannel/action.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
-#include "ui/dialog/dialog.hpp"
+#include "command/argument.hpp"
+#include "command/command-controller.hpp"
+#include "command/command.hpp"
+#include "command/command-types.hpp"
+#include "ui/action-panel/action.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
+#include "ui/alert/dialog.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
 #include <chrono>
@@ -56,6 +57,7 @@ struct GoBackOptions {
 
 class NavigationController : public QObject, NonCopyable {
   Q_OBJECT
+  QML_ANONYMOUS
 
 public:
   struct CommandFrame {
@@ -223,6 +225,7 @@ public:
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const LaunchProps &props);
   bool activateEntrypoint(const EntrypointId &id, const ActivateEntrypointOptions &options = {});
+  void releaseEntrypoint(const EntrypointId &id);
 
   const AbstractCmd *activeCommand() const;
   CommandFrame *activeFrame() const { return m_frames.back().get(); }
@@ -252,6 +255,7 @@ public:
   template <typename T> void replaceView() { replaceView(new T); }
 
   size_t viewStackSize() const;
+  const std::vector<std::unique_ptr<ViewState>> &viewStack() const { return m_views; }
   bool isRootSearch() const;
   const ViewState *topState() const;
   ViewState *topState();

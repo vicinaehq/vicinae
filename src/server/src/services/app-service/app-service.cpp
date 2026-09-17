@@ -1,5 +1,5 @@
 #include "app-service.hpp"
-#include "timer.hpp"
+#include "utils/timer.hpp"
 #include <chrono>
 #include <qlogging.h>
 #include <qnumeric.h>
@@ -10,7 +10,7 @@
 #else
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #endif
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include <QProcess>
 #include <filesystem>
 #include <qcontainerfwd.h>
@@ -38,6 +38,10 @@ std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #else
   return std::make_unique<XdgAppDatabase>();
 #endif
+}
+
+std::unique_ptr<QProcess> AppService::shellProcess(const QString &code) const {
+  return m_provider->shellProcess(code);
 }
 
 std::shared_ptr<AbstractApplication> AppService::terminalEmulator() const {
@@ -83,6 +87,7 @@ std::shared_ptr<AbstractApplication> AppService::textEditor() const {
 }
 
 std::shared_ptr<AbstractApplication> AppService::webBrowser() const { return m_provider->webBrowser(); }
+bool AppService::setWebBrowser(const AbstractApplication &app) { return m_provider->setWebBrowser(app); }
 std::shared_ptr<AbstractApplication> AppService::fileBrowser() const { return m_provider->fileBrowser(); }
 
 std::vector<std::shared_ptr<AbstractApplication>> AppService::list(const AppListOptions &opts) const {
@@ -111,6 +116,14 @@ bool AppService::showInFileBrowser(const std::filesystem::path &path, bool selec
 }
 
 bool AppService::openLocation(const AbstractApplication &app) const { return m_provider->openLocation(app); }
+
+bool AppService::canUninstall(const AbstractApplication &app) const { return m_provider->canUninstall(app); }
+
+bool AppService::uninstall(const AbstractApplication &app) {
+  if (!m_provider->canUninstall(app) || !m_provider->uninstall(app)) return false;
+  scanSync();
+  return true;
+}
 
 void AppService::handleDirectoryChanged(const QString &path) {
   (void)path;

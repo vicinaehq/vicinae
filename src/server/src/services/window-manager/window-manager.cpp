@@ -80,6 +80,12 @@ AbstractWindowManager::WindowPtr WindowManager::getFocusedWindow() {
   return QGuiApplication::focusWindow() ? rememberedWindow() : nullptr;
 }
 
+AbstractWindowManager::WindowPtr WindowManager::focusedForeignWindow() const {
+  auto win = m_provider->getFocusedWindowSync();
+  if (win && isOwnWindow(*win)) return nullptr;
+  return win;
+}
+
 AbstractWindowManager::WindowPtr WindowManager::rememberedWindow() {
   if (m_lastFocusedWindow && !isOnActiveWorkspace(*m_lastFocusedWindow)) m_lastFocusedWindow.reset();
   return m_lastFocusedWindow;

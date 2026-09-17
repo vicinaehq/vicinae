@@ -1,0 +1,73 @@
+#pragma once
+#include <QtQml/qqmlregistration.h>
+#include "services/font-service/font-service.hpp"
+#include "fuzzy-scorer.hpp"
+#include "fuzzy/scored.hpp"
+#include "ui/views/grid-source.hpp"
+#include "ui/views/section-grid-model.hpp"
+#include <QString>
+#include <QStringList>
+#include <optional>
+#include <span>
+#include <vector>
+
+class FontGridSource : public GridSource {
+public:
+  void setBucket(QString name, std::vector<const FontFamily *> families);
+  void setResults(QString name, std::span<Scored<const FontFamily *>> results);
+
+  QString sectionName() const override { return m_name; }
+  int count() const override {
+    return m_search ? static_cast<int>(m_results.size()) : static_cast<int>(m_families.size());
+  }
+
+  const FontFamily *familyAt(int i) const {
+    if (i < 0 || i >= count()) return nullptr;
+    return m_search ? m_results[i].data : m_families[i];
+  }
+
+  QString itemTitle(int i) const override;
+  QString itemTooltip(int i) const override;
+  std::optional<ImageURL> itemIcon(int i) const override;
+  std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
+
+private:
+  QString m_name;
+  bool m_search = false;
+  std::vector<const FontFamily *> m_families;
+  std::span<Scored<const FontFamily *>> m_results;
+};
+
+class FontGridModel : public SectionGridModel {
+  Q_OBJECT
+  QML_NAMED_ELEMENT(FontGridModel)
+  QML_UNCREATABLE("")
+
+public:
+  explicit FontGridModel(QObject *parent = nullptr);
+
+  void initialize();
+  void setFilter(const QString &text);
+  void setCategoryFilter(std::optional<int> index);
+  const QStringList &categoryNames() const { return m_categoryNames; }
+  QString searchPlaceholder() const { return tr("Search fonts..."); }
+
+private:
+  enum class Mode : std::uint8_t { Root, Search };
+
+  void buildFilterOptions();
+  void rebuildRoot();
+  void rebuildSections();
+  void applyReset();
+  void updateNavigationTitle();
+  const FontFamily *familyAt(int section, int item) const;
+
+  FontService *m_fontService = nullptr;
+  Mode m_mode = Mode::Root;
+  std::vector<FontCategory> m_filterCategories;
+  QStringList m_categoryNames;
+  std::optional<FontCategory> m_categoryFilter;
+  FontGridSource m_rootSource;
+  FontGridSource m_searchSource;
+  FuzzyScorer<FontFamily> m_scorer;
+};

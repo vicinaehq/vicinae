@@ -7,9 +7,10 @@
 class SnippetCopy {
 public:
   static Clipboard::Content content(const snippet::SerializedSnippet &snippet,
-                                    const std::vector<std::pair<QString, QString>> &args) {
+                                    const std::vector<std::pair<QString, QString>> &args,
+                                    const AppService &appService) {
     return std::visit(overloads{[&](const snippet::TextSnippet &text) -> Clipboard::Content {
-                                  SnippetExpander expander;
+                                  SnippetExpander expander(appService);
                                   return Clipboard::Text{expander.expandToString(text.text.c_str(), args)};
                                 },
                                 [&](const snippet::FileSnippet &file) -> Clipboard::Content {
@@ -20,7 +21,7 @@ public:
 
   static bool copyToClipboard(const snippet::SerializedSnippet &snippet,
                               const std::vector<std::pair<QString, QString>> &args,
-                              ClipboardService &clipman) {
-    return clipman.copyContent(content(snippet, args), {.transient = true});
+                              const AppService &appService, ClipboardService &clipman) {
+    return clipman.copyContent(content(snippet, args, appService), {.transient = true});
   }
 };

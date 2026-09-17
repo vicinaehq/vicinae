@@ -55,6 +55,10 @@ inline constexpr std::string_view ARCHIVE_EXTENSIONS[] = {"zip", "tar", "gz",  "
 inline constexpr std::string_view APPLICATION_EXTENSIONS[] = {"desktop", "appimage", "exe",
                                                               "msi",     "app",      "dmg"};
 
+inline constexpr FileCategory EXTENSION_CATEGORIES[] = {FileCategory::Image,   FileCategory::Video,
+                                                        FileCategory::Audio,   FileCategory::Document,
+                                                        FileCategory::Archive, FileCategory::Application};
+
 inline constexpr std::span<const std::string_view> extensionsForCategory(FileCategory category) {
   switch (category) {
   case FileCategory::Image:

@@ -1,0 +1,399 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Vicinae
+
+Item {
+    id: root
+    required property StackView commandStack
+    property int horizontalPadding: 16
+    property real textSize: Theme.regularFontSize * 1.2
+    property bool flatAccessories: false
+
+    function focusInput() {
+        if (!Launcher.searchInteractive)
+            return;
+        searchInput.forceActiveFocus();
+        searchInput.selectAll();
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        anchors.leftMargin: root.horizontalPadding
+        anchors.rightMargin: root.horizontalPadding
+        spacing: Launcher.hasCompleter ? 4 : 12
+
+        ViciImage {
+            id: backButton
+            visible: Launcher.showBackButton
+            Layout.preferredWidth: 22
+            Layout.preferredHeight: 22
+            Layout.alignment: Qt.AlignVCenter
+            source: Img.icon(BuiltinIcon.ChevronLeft).withFillColor(Theme.textMuted)
+            opacity: backHover.hovered ? 0.6 : 1.0
+
+            HoverHandler {
+                id: backHover
+            }
+
+            TapHandler {
+                onTapped: Launcher.goBack()
+            }
+        }
+
+        Item {
+            id: searchInputContainer
+            Layout.fillWidth: !Launcher.hasCompleter
+            Layout.preferredWidth: Launcher.hasCompleter ? searchInputMetrics.advanceWidth : -1
+            Layout.fillHeight: true
+
+            TextMetrics {
+                id: searchInputMetrics
+                font: searchInput.font
+                text: searchInput.text || " "
+            }
+
+            TextInput {
+                id: searchInput
+                Accessible.name: "search-input"
+                Accessible.description: Launcher.searchPlaceholder
+                anchors.fill: parent
+                verticalAlignment: TextInput.AlignVCenter
+                font.family: Theme.fontFamily
+                font.pointSize: root.textSize
+                color: Theme.foreground
+                selectionColor: Theme.textSelectionBg
+                selectedTextColor: Theme.textSelectionFg
+                clip: true
+                readOnly: !Launcher.searchInteractive
+
+                HoverHandler {
+                    cursorShape: Qt.IBeamCursor
+                }
+
+                Text {
+                    anchors.fill: parent
+                    verticalAlignment: Text.AlignVCenter
+                    text: Launcher.hasCompleter ? "..." : Launcher.searchPlaceholder
+                    color: Theme.textPlaceholder
+                    font: searchInput.font
+                    visible: !searchInput.displayText && Launcher.searchInteractive
+                }
+
+                Timer {
+                    id: searchDebounce
+                    interval: 16
+                    onTriggered: searchInput._syncSearchText()
+                }
+
+                onTextEdited: {
+                    if (Config.considerPreedit)
+                        return false;
+
+                    searchDebounce.restart();
+                }
+
+                onDisplayTextChanged: {
+                    if (!Config.considerPreedit)
+                        return false;
+
+                    searchDebounce.restart();
+                }
+
+                function _wordBoundaryBackward(text, pos) {
+                    let i = pos - 1;
+                    while (i > 0 && /\s/.test(text[i]))
+                        i--;
+                    while (i > 0 && !/\s/.test(text[i - 1]))
+                        i--;
+                    return Math.max(0, i);
+                }
+
+                function _wordBoundaryForward(text, pos) {
+                    let i = pos;
+                    while (i < text.length && !/\s/.test(text[i]))
+                        i++;
+                    while (i < text.length && /\s/.test(text[i]))
+                        i++;
+                    return i;
+                }
+
+                function _syncSearchText() {
+                    const value = Config.considerPreedit ? searchInput.displayText : searchInput.text;
+                    Launcher.forwardSearchText(value);
+                }
+
+                function _handleEmacsEditing(event) {
+                    if (!Config.emacsMode)
+                        return false;
+
+                    const ctrl = (event.modifiers & Keyboard.physicalCtrlModifier);
+                    const alt = (event.modifiers & Qt.AltModifier);
+                    const noOther = !(event.modifiers & ~(Keyboard.physicalCtrlModifier | Qt.AltModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier));
+
+                    if (ctrl && !alt && noOther) {
+                        switch (event.key) {
+                        case Qt.Key_A:
+                            searchInput.cursorPosition = 0;
+                            return true;
+                        case Qt.Key_E:
+                            searchInput.cursorPosition = searchInput.text.length;
+                            return true;
+                        case Qt.Key_B:
+                            if (searchInput.cursorPosition > 0)
+                                searchInput.cursorPosition--;
+                            return true;
+                        case Qt.Key_F:
+                            if (searchInput.cursorPosition < searchInput.text.length)
+                                searchInput.cursorPosition++;
+                            return true;
+                        case Qt.Key_K:
+                            {
+                                searchInput.text = searchInput.text.substring(0, searchInput.cursorPosition);
+                                _syncSearchText();
+                                return true;
+                            }
+                        case Qt.Key_U:
+                            {
+                                const pos = searchInput.cursorPosition;
+                                searchInput.text = searchInput.text.substring(pos);
+                                searchInput.cursorPosition = 0;
+                                _syncSearchText();
+                                return true;
+                            }
+                        }
+                    }
+
+                    if (alt && !ctrl && noOther) {
+                        switch (event.key) {
+                        case Qt.Key_B:
+                            {
+                                searchInput.cursorPosition = _wordBoundaryBackward(searchInput.text, searchInput.cursorPosition);
+                                return true;
+                            }
+                        case Qt.Key_F:
+                            {
+                                searchInput.cursorPosition = _wordBoundaryForward(searchInput.text, searchInput.cursorPosition);
+                                return true;
+                            }
+                        case Qt.Key_Backspace:
+                            {
+                                const pos = searchInput.cursorPosition;
+                                const boundary = _wordBoundaryBackward(searchInput.text, pos);
+                                searchInput.text = searchInput.text.substring(0, boundary) + searchInput.text.substring(pos);
+                                searchInput.cursorPosition = boundary;
+                                _syncSearchText();
+                                return true;
+                            }
+                        case Qt.Key_D:
+                            {
+                                const pos = searchInput.cursorPosition;
+                                const boundary = _wordBoundaryForward(searchInput.text, pos);
+                                searchInput.text = searchInput.text.substring(0, pos) + searchInput.text.substring(boundary);
+                                searchInput.cursorPosition = pos;
+                                _syncSearchText();
+                                return true;
+                            }
+                        }
+                    }
+
+                    return false;
+                }
+
+                function _handleNavigation(event) {
+                    const nav = Keyboard.matchNavigation(event.key, event.modifiers);
+                    if (nav === 0)
+                        return false;
+
+                    if (Launcher.compacted) {
+                        Launcher.expand();
+                        return true;
+                    }
+
+                    if (nav === 1) {
+                        // qmllint disable missing-property
+                        root.commandStack.currentItem.moveUp();
+                    } else if (nav === 2) {
+                        root.commandStack.currentItem.moveDown();
+                    } else if (nav === 3) {
+                        if (root.commandStack.currentItem && typeof root.commandStack.currentItem.moveLeft === "function")
+                            root.commandStack.currentItem.moveLeft();
+                    } else if (nav === 4) {
+                        if (root.commandStack.currentItem && typeof root.commandStack.currentItem.moveRight === "function")
+                            root.commandStack.currentItem.moveRight();
+                        // qmllint enable missing-property
+                    }
+                    return true;
+                }
+
+                Keys.onUpPressed: event => {
+                    if (Launcher.compacted) {
+                        Launcher.expand();
+                        return;
+                    }
+
+                    const ctrl = event.modifiers == Qt.ControlModifier;
+                    // qmllint disable missing-property
+                    const navigatable = typeof root.commandStack.currentItem.moveUp === "function";
+
+                    if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
+                        event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionUp === "function" && root.commandStack.currentItem.moveSectionUp()) : root.commandStack.currentItem.moveUp();
+                        // qmllint enable missing-property
+                    } else {
+                        event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                    }
+                }
+                Keys.onDownPressed: event => {
+                    if (Launcher.compacted) {
+                        Launcher.expand();
+                        return;
+                    }
+
+                    // qmllint disable missing-property
+                    const navigatable = typeof root.commandStack.currentItem.moveDown === "function";
+                    // qmllint enable missing-property
+                    const ctrl = event.modifiers == Qt.ControlModifier;
+
+                    if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
+                        // qmllint disable missing-property
+                        event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionDown === "function" && root.commandStack.currentItem.moveSectionDown()) : root.commandStack.currentItem.moveDown();
+                        // qmllint enable missing-property
+                    } else {
+                        event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                    }
+                }
+                Keys.onLeftPressed: event => {
+                    if (Launcher.compacted) {
+                        Launcher.expand();
+                        return;
+                    }
+
+                    // qmllint disable missing-property
+                    const navigatable = typeof root.commandStack.currentItem.moveLeft === "function";
+
+                    if (navigatable && event.modifiers == Qt.NoModifier) {
+                        event.accepted = root.commandStack.currentItem.moveLeft();
+                        // qmllint enable missing-property
+                    } else {
+                        event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                    }
+                }
+                Keys.onRightPressed: event => {
+                    if (Launcher.compacted) {
+                        Launcher.expand();
+                        return;
+                    }
+
+                    // qmllint disable missing-property
+                    const navigatable = typeof root.commandStack.currentItem.moveRight === "function";
+
+                    if (navigatable && event.modifiers == Qt.NoModifier) {
+                        event.accepted = root.commandStack.currentItem.moveRight();
+                        // qmllint enable missing-property
+                    } else {
+                        event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
+                    }
+                }
+                Keys.onBacktabPressed: event => {
+                    event.accepted = false;
+                }
+                Keys.onPressed: event => {
+                    if (_handleEmacsEditing(event)) {
+                        event.accepted = true;
+                    } else if (_handleNavigation(event)) {
+                        event.accepted = true;
+                    } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && Launcher.showBackButton && Launcher.popOnBackspace) {
+                        Launcher.goBack();
+                        event.accepted = true;
+                    } else if (Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode)) {
+                        if (Launcher.compacted)
+                            Launcher.expand();
+                        event.accepted = true;
+                    }
+                }
+            }
+        }
+
+        ArgCompleter {
+            id: argCompleter
+            commandStack: root.commandStack
+            visible: Launcher.hasCompleter
+            args: Launcher.completerArgs
+            icon: Launcher.completerIcon
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignVCenter
+
+            onValueChanged: (index, value) => {
+                Launcher.setCompleterValue(index, value);
+            }
+            onFocusSearchInput: searchInput.forceActiveFocus()
+        }
+
+        Loader {
+            id: accessoryLoader
+            active: Launcher.searchAccessoryUrl.toString() !== ""
+            source: Launcher.searchAccessoryUrl
+            visible: active
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: root.flatAccessories && item instanceof SearchableDropdown ? Math.min(200, (item as SearchableDropdown).preferredWidth) : 200
+        }
+
+        Binding {
+            target: accessoryLoader.item
+            property: "flat"
+            value: root.flatAccessories
+            when: accessoryLoader.item instanceof SearchableDropdown
+        }
+
+        Shortcut {
+            sequence: Keybinds.openSearchAccessorySequence
+            enabled: !!accessoryLoader.item
+            onActivated: (accessoryLoader.item as SearchableDropdown)?.open()
+        }
+
+        Connections {
+            target: accessoryLoader.item
+            ignoreUnknownSignals: true
+            function onPopupClosed() {
+                searchInput.forceActiveFocus();
+            }
+        }
+    }
+
+    Connections {
+        target: Launcher
+        function onSearchVisibleChanged() {
+            if (Launcher.searchVisible && Launcher.searchInteractive)
+                searchInput.forceActiveFocus();
+        }
+        function onSearchInteractiveChanged() {
+            if (Launcher.searchInteractive && Launcher.searchVisible)
+                searchInput.forceActiveFocus();
+        }
+        function onSearchTextUpdated(text) {
+            if (searchInput.text !== text)
+                searchInput.text = text;
+        }
+        function onViewNavigatedBack() {
+            root.focusInput();
+        }
+        function onCompleterChanged() {
+            if (!Launcher.hasCompleter && !searchInput.activeFocus) {
+                searchInput.forceActiveFocus();
+            }
+        }
+        function onCompleterFocusRequested() {
+            if (Launcher.hasCompleter)
+                argCompleter.focusFirst();
+        }
+        function onCompleterValidationFailed() {
+            argCompleter.validate();
+        }
+        function onCompleterValuesChanged() {
+            if (Launcher.hasCompleter)
+                argCompleter.setValues(Launcher.completerValues);
+        }
+    }
+}

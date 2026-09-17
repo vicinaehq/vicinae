@@ -1,6 +1,6 @@
 #include "extension/extension-command.hpp"
-#include "command.hpp"
-#include "common.hpp"
+#include "command/command.hpp"
+#include "command/command-types.hpp"
 #include "extension/extension-command-runtime.hpp"
 #include "../ui/image/url.hpp"
 #include <filesystem>

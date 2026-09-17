@@ -669,3 +669,11 @@ Comment[zh_CN]=微信桌面版
   REQUIRE(file.unlocalizedName().value() == "wechat");
   REQUIRE(file.name() == "微信");
 }
+
+TEST_CASE("should stop at the end of data on an unterminated locale") {
+  auto file =
+      DesktopEntry::fromData("[Desktop Entry]\nType=Application\nName=Firefox\nExec=firefox\nName[fr");
+
+  REQUIRE(file.isValid());
+  REQUIRE(file.name() == "Firefox");
+}

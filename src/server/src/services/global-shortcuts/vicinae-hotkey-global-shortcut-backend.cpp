@@ -61,6 +61,10 @@ void VicinaeHotkeyGlobalShortcutBackend::Hotkey::vicinae_hotkey_v1_pressed(uint3
   emit m_backend->shortcutActivated(m_id, time);
 }
 
+void VicinaeHotkeyGlobalShortcutBackend::Hotkey::vicinae_hotkey_v1_released(uint32_t, uint32_t time) {
+  emit m_backend->shortcutReleased(m_id, time);
+}
+
 VicinaeHotkeyGlobalShortcutBackend::~VicinaeHotkeyGlobalShortcutBackend() { unbindAll(); }
 
 QString VicinaeHotkeyGlobalShortcutBackend::id() const { return "vicinae-hotkey"; }

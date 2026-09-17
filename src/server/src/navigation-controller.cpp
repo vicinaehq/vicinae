@@ -1,14 +1,14 @@
 #include "navigation-controller.hpp"
 #include <QTimer>
-#include "command-controller.hpp"
+#include "command/command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
-#include "qml/missing-preference-view-host.hpp"
+#include "extension/views/missing-preference-view-host.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "ui/action-pannel/action-panel-view.hpp"
+#include "ui/action-panel/action-panel-view.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
@@ -637,6 +637,11 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   }
 
   return true;
+}
+
+void NavigationController::releaseEntrypoint(const EntrypointId &id) {
+  const auto *entrypoint = m_ctx.services->rootItemManager()->findItemById(id);
+  if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) { ext->command()->shortcutReleased(); }
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {

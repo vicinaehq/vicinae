@@ -123,6 +123,7 @@ std::optional<MediaPlayer> MprisMediaControl::queryPlayer(const QString &service
     if (auto identity = root->value("Identity").toString(); !identity.isEmpty()) {
       player.identity = std::move(identity);
     }
+    player.appId = root->value("DesktopEntry").toString();
   }
 
   return player;

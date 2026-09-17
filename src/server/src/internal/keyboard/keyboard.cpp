@@ -1,5 +1,8 @@
 #include <QKeySequence>
 #include <QVariantMap>
+#include <optional>
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "layout-resolver.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
 #include <ranges>
@@ -84,6 +87,11 @@ static const std::unordered_map<QString, Qt::Key> keyMap = [](){
 		{"enter", Qt::Key_Enter},
 		{"backspace", Qt::Key_Backspace},
 
+		{"super", Qt::Key_Meta},
+		{"control", Qt::Key_Control},
+		{"alt", Qt::Key_Alt},
+		{"shift", Qt::Key_Shift},
+
 		{"f1", Qt::Key_F1},
 		{"f2", Qt::Key_F2},
 		{"f3", Qt::Key_F3},
@@ -146,6 +154,17 @@ namespace Keyboard {
 Qt::Key normalizeToLatin(Qt::Key key) { return key; }
 #endif
 
+namespace {
+std::unique_ptr<LayoutResolver> g_layoutResolver;
+} // namespace
+
+void setLayoutResolver(std::unique_ptr<LayoutResolver> resolver) { g_layoutResolver = std::move(resolver); }
+
+Qt::Key resolveKey(Qt::Key key, quint32 scanCode) {
+  if (g_layoutResolver && printableCharForKey(key)) key = g_layoutResolver->unshift(key, scanCode);
+  return normalizeToLatin(key);
+}
+
 std::optional<QChar> printableCharForKey(Qt::Key key) {
   const auto code = static_cast<uint32_t>(key);
   if (code >= 0x10000) return {};
@@ -180,14 +199,6 @@ std::optional<Qt::KeyboardModifier> modifierFromString(QStringView modifier) {
   return {};
 }
 
-namespace {
-
-struct DisplayTokenSpec {
-  QString text;
-  QString icon;
-  QString label;
-};
-
 std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key) {
   switch (key) {
   case Qt::Key_Meta:
@@ -202,6 +213,29 @@ std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key) {
     return std::nullopt;
   }
 }
+
+namespace {
+
+Qt::Key keyForModifier(Qt::KeyboardModifier modifier) {
+  switch (modifier) {
+  case Qt::MetaModifier:
+    return Qt::Key_Meta;
+  case Qt::ControlModifier:
+    return Qt::Key_Control;
+  case Qt::AltModifier:
+    return Qt::Key_Alt;
+  case Qt::ShiftModifier:
+    return Qt::Key_Shift;
+  default:
+    return Qt::Key_unknown;
+  }
+}
+
+struct DisplayTokenSpec {
+  QString text;
+  std::optional<BuiltinIcon> icon;
+  QString label;
+};
 
 DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
 #ifdef Q_OS_MACOS
@@ -221,13 +255,17 @@ DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
 #else
   switch (modifier) {
   case Qt::MetaModifier:
+#ifdef Q_OS_WIN
+    return {.icon = BuiltinIcon::Windows11, .label = QStringLiteral("Win")};
+#else
     return {.text = QStringLiteral("◈"), .label = QStringLiteral("Super")};
+#endif
   case Qt::ControlModifier:
     return {.text = QStringLiteral("Ctrl"), .label = QStringLiteral("Ctrl")};
   case Qt::AltModifier:
     return {.text = QStringLiteral("Alt"), .label = QStringLiteral("Alt")};
   case Qt::ShiftModifier:
-    return {.icon = QStringLiteral("keyboard-shift"), .label = QStringLiteral("Shift")};
+    return {.icon = BuiltinIcon::KeyboardShift, .label = QStringLiteral("Shift")};
   default:
     return {};
   }
@@ -238,11 +276,11 @@ std::optional<DisplayTokenSpec> keyToken(Qt::Key key) {
   switch (key) {
   case Qt::Key_Return:
   case Qt::Key_Enter:
-    return DisplayTokenSpec{.icon = QStringLiteral("enter-key"), .label = QStringLiteral("Enter")};
+    return DisplayTokenSpec{.icon = BuiltinIcon::EnterKey, .label = QStringLiteral("Enter")};
   case Qt::Key_Tab:
-    return DisplayTokenSpec{.icon = QStringLiteral("tab-key"), .label = QStringLiteral("Tab")};
+    return DisplayTokenSpec{.icon = BuiltinIcon::TabKey, .label = QStringLiteral("Tab")};
   case Qt::Key_Space:
-    return DisplayTokenSpec{.icon = QStringLiteral("space-key"), .label = QStringLiteral("Space")};
+    return DisplayTokenSpec{.icon = BuiltinIcon::SpaceKey, .label = QStringLiteral("Space")};
   case Qt::Key_Backspace:
     return DisplayTokenSpec{.text = QStringLiteral("⌫"), .label = QStringLiteral("Backspace")};
   case Qt::Key_Delete:
@@ -308,8 +346,8 @@ std::vector<DisplayTokenSpec> buildDisplayTokenSpecs(const Shortcut &shortcut) {
 } // namespace
 
 Shortcut::Shortcut(const QKeyEvent *event)
-    : m_key(normalizeToLatin(static_cast<Qt::Key>(event->key()))), m_modifiers(event->modifiers()),
-      m_isValid(true) {}
+    : m_key(resolveKey(static_cast<Qt::Key>(event->key()), event->nativeScanCode())),
+      m_modifiers(event->modifiers()), m_isValid(true) {}
 
 Shortcut Shortcut::fromKeyPress(const QKeyEvent &event) { return Shortcut(&event); }
 
@@ -329,10 +367,12 @@ Shortcut::Shortcut(const QString &str) {
   }
 
   bool gotKey = false;
+  std::optional<Qt::KeyboardModifier> lastModifier;
 
   for (const auto &str : tokens) {
     if (auto modifier = modifierFromString(str)) {
       m_modifiers.setFlag(*modifier);
+      lastModifier = modifier;
     } else if (auto key = keyFromString(str)) {
       gotKey = true;
       m_key = *key;
@@ -340,6 +380,12 @@ Shortcut::Shortcut(const QString &str) {
       m_isValid = false;
       return;
     }
+  }
+
+  if (!gotKey && lastModifier) {
+    m_key = keyForModifier(*lastModifier);
+    m_modifiers.setFlag(*lastModifier, false);
+    gotKey = true;
   }
 
   m_isValid = gotKey;
@@ -391,7 +437,7 @@ QVariantList Shortcut::toDisplayTokens() const {
   for (const auto &token : buildDisplayTokenSpecs(*this)) {
     QVariantMap entry;
     entry.insert(QStringLiteral("text"), token.text);
-    entry.insert(QStringLiteral("icon"), token.icon);
+    if (token.icon) entry.insert(QStringLiteral("icon"), QVariant::fromValue(*token.icon));
     tokens.append(entry);
   }
 

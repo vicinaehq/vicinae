@@ -1,0 +1,329 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Effects
+import Vicinae
+
+Item {
+    id: root
+
+    required property MarkdownModel model
+    property int contentPadding: 12
+    property int topPadding: contentPadding
+    property string fontFamily: ""
+    property alias contentHeight: flick.contentHeight
+    property var selectionController: null
+    property bool _autoScroll: false
+    focus: true
+
+    readonly property var _controller: selectionController ?? internalController
+
+    function scrollUp() {
+        flick.flick(0, 800);
+    }
+    function scrollDown() {
+        flick.flick(0, -800);
+    }
+
+    onFontFamilyChanged: flick.contentY = -flick.topMargin
+    Component.onCompleted: searchBarInset.initializePosition(flick)
+
+    Keys.onUpPressed: scrollUp()
+    Keys.onDownPressed: scrollDown()
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_PageUp) {
+            flick.flick(0, 2400);
+            event.accepted = true;
+        } else if (event.key === Qt.Key_PageDown) {
+            flick.flick(0, -2400);
+            event.accepted = true;
+        }
+    }
+
+    TextSelectionController {
+        id: internalController
+        container: col
+        flickable: flick
+        mdModel: root.model
+    }
+
+    StatusBarInset {
+        id: statusBarInset
+    }
+
+    SearchBarInset {
+        id: searchBarInset
+    }
+
+    // Cursor-only MouseArea below Flickable — sets I-beam for non-interactive gaps.
+    // Interactive children (copy button) override with their own cursor.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
+        cursorShape: Qt.IBeamCursor
+    }
+
+    // The Flickable handles wheel scrolling natively (interactive: true).
+    // Press/move/release are intercepted by the TextSelectionController's
+    // event filter for text selection — they never reach the Flickable's
+    // own flick handling. Interactive children (e.g. copy button) receive
+    // events directly from the scene graph, bypassing the filter.
+    Flickable {
+        id: flick
+        anchors.fill: parent
+        contentWidth: width
+        contentHeight: col.implicitHeight + root.topPadding + root.contentPadding
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        bottomMargin: statusBarInset.value
+        topMargin: searchBarInset.value
+
+        ViciWheelHandler {
+            target: flick
+        }
+
+        onContentHeightChanged: {
+            if (root._autoScroll) {
+                root._autoScroll = false;
+                contentY = Math.max(-topMargin, contentHeight - height + bottomMargin);
+            }
+        }
+
+        ScrollBar.vertical: ViciScrollBar {
+            policy: ScrollBar.AsNeeded
+        }
+
+        ColumnLayout {
+            id: col
+            x: root.contentPadding
+            y: root.topPadding
+            width: flick.width - root.contentPadding * 2
+            spacing: 8
+
+            Repeater {
+                model: root.model
+
+                Loader {
+                    id: blockLoader
+                    Layout.fillWidth: true
+
+                    required property int index
+                    required property int blockType
+                    required property var blockData
+
+                    // MdBlockType enum values from C++
+                    readonly property int heading: 0
+                    readonly property int paragraph: 1
+                    readonly property int codeBlock: 2
+                    readonly property int bulletList: 3
+                    readonly property int orderedList: 4
+                    readonly property int table: 5
+                    readonly property int image: 6
+                    readonly property int horizontalRule: 7
+                    readonly property int htmlBlock: 8
+                    readonly property int blockquote: 9
+                    readonly property int callout: 10
+
+                    sourceComponent: {
+                        switch (blockType) {
+                        case heading:
+                            return headingComp;
+                        case paragraph:
+                            return paragraphComp;
+                        case codeBlock:
+                            return codeBlockComp;
+                        case bulletList:
+                            return listComp;
+                        case orderedList:
+                            return listComp;
+                        case table:
+                            return tableComp;
+                        case image:
+                            return imageComp;
+                        case horizontalRule:
+                            return hrComp;
+                        case htmlBlock:
+                            return htmlBlockComp;
+                        case blockquote:
+                            return blockquoteComp;
+                        case callout:
+                            return calloutComp;
+                        default:
+                            return null;
+                        }
+                    }
+
+                    onLoaded: {
+                        item.selectionController = root._controller;
+                        item.mdModel = root.model;
+                        item.blockIndex = index;
+                        if (blockType !== codeBlock && blockType !== image && blockType !== horizontalRule)
+                            item.fontFamily = Qt.binding(function () {
+                                return root.fontFamily;
+                            });
+                        if (blockType === orderedList)
+                            item.ordered = true;
+                        else if (blockType === bulletList)
+                            item.ordered = false;
+                        if (blockType === image)
+                            item.maxImageHeight = Qt.binding(function () {
+                                return root.height * 0.7;
+                            });
+                        // Set blockData last — it triggers Repeater creation in
+                        // multi-TextEdit blocks, and children need selectionController
+                        // to already be set for registration in Component.onCompleted
+                        item.blockData = blockData;
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: headingComp
+            MdHeading {}
+        }
+        Component {
+            id: paragraphComp
+            MdParagraph {}
+        }
+        Component {
+            id: codeBlockComp
+            MdCodeBlock {}
+        }
+        Component {
+            id: listComp
+            MdList {}
+        }
+        Component {
+            id: tableComp
+            MdTable {}
+        }
+        Component {
+            id: imageComp
+            MdImage {}
+        }
+        Component {
+            id: hrComp
+            MdHorizontalRule {}
+        }
+        Component {
+            id: htmlBlockComp
+            MdHtmlBlock {}
+        }
+        Component {
+            id: blockquoteComp
+            MdBlockquote {}
+        }
+        Component {
+            id: calloutComp
+            MdCallout {}
+        }
+    }
+
+    Shortcut {
+        sequences: [StandardKey.Copy]
+        enabled: root._controller.hasSelection
+        onActivated: root._controller.copy()
+    }
+
+    Shortcut {
+        sequences: [StandardKey.SelectAll]
+        onActivated: root._controller.selectAll()
+    }
+
+    Popup {
+        id: selectionMenu
+        width: 160
+        topPadding: 6
+        bottomPadding: 6
+        leftPadding: 1
+        rightPadding: 1
+
+        // Make it disappear nicely when clicking elsewhere
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Item {
+            Rectangle {
+                anchors.fill: parent
+                radius: Config.borderRounding
+                color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    autoPaddingEnabled: true
+                    shadowEnabled: true
+                    shadowBlur: 0.4
+                    shadowColor: Qt.rgba(0, 0, 0, 0.25)
+                    shadowVerticalOffset: 4
+                }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Config.borderRounding
+                color: Qt.rgba(Theme.statusBarBackground.r, Theme.statusBarBackground.g, Theme.statusBarBackground.b, 1)
+                border.color: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
+                border.width: 1
+            }
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 0
+
+            ActionItemDelegate {
+                Layout.fillWidth: true
+                title: qsTr("Copy")
+                iconSource: ""
+                shortcutTokens: []
+                isSubmenu: false
+                isDanger: false
+                opacity: root._controller.hasSelection ? 1.0 : 0.5
+                enabled: root._controller.hasSelection
+
+                onClicked: {
+                    root._controller.copy();
+                    selectionMenu.close();
+                }
+            }
+
+            ActionItemDelegate {
+                Layout.fillWidth: true
+                title: qsTr("Select All")
+                iconSource: ""
+                shortcutTokens: []
+                isSubmenu: false
+                isDanger: false
+
+                onClicked: {
+                    root._controller.selectAll();
+                    selectionMenu.close();
+                }
+            }
+        }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: eventPoint => {
+            root.forceActiveFocus();
+            selectionMenu.x = eventPoint.position.x;
+            selectionMenu.y = eventPoint.position.y;
+            selectionMenu.open();
+        }
+    }
+
+    Connections {
+        target: root.model
+        function onBlocksAppended() {
+            let atBottom = flick.contentHeight + flick.topMargin <= flick.height || flick.contentY + flick.height >= flick.contentHeight - 2;
+            root._autoScroll = atBottom;
+        }
+        function onModelReset() {
+            root._controller.clearSelection();
+            flick.contentY = -flick.topMargin;
+            root._autoScroll = false;
+        }
+    }
+}

@@ -1,6 +1,7 @@
 #include "file-indexer/file-indexer-query-engine.hpp"
 #include "file-indexer/log.hpp"
 #include "file-indexer/vocabulary.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "fuzzy/fzf.hpp"
 #include "fuzzy/scored.hpp"
 #include <algorithm>
@@ -28,7 +29,7 @@ using SC = FileIndexerDatabase::SearchCandidate;
 using Scorer = std::function<int(const SC &)>;
 
 constexpr const auto SCORING_BATCH_SIZE = 500;
-constexpr const auto FZF_CUTOFF = 0;
+constexpr const auto SKELETON_MIN_QUALITY = 40;
 constexpr const auto CANDIDATE_LIMIT = 10000;
 constexpr const auto SUGGESTION_FETCH_COUNT = 20;
 constexpr const auto MAX_CORRECTIONS_PER_WORD = 3;
@@ -45,7 +46,6 @@ struct SkeletonMergeDecision {
   std::string_view reason = "no-strict-candidates";
   fs::path bestPath;
   int bestScore = 0;
-  int idealScore = 0;
   double confidence = 0;
 };
 
@@ -130,17 +130,23 @@ double computeFileRelevanceMultiplier(const SC &candidate) {
   return 1.0;
 }
 
-int scoreCandidate(const SC &candidate, const fzf::Query &query) {
+int scoreCandidate(const SC &candidate, const fzf::Query &query, int minQuality) {
   const auto &ranker = fzf::threadLocalMatcher();
   auto pcstr = candidate.path.c_str();
   auto filename = file_indexer::vocab::basenameView(pcstr);
   auto dirname = file_indexer::vocab::dirnameView(pcstr);
   std::initializer_list<fzf::WeightedString> strs = {{filename, 1}, {dirname, 0.7}};
-  int score = ranker.score_query(strs, query).weighted;
+  auto const qs = ranker.score_query(strs, query);
 
-  return score * computeFileRelevanceMultiplier(candidate) *
-         computeSubstringMatchMultiplier(candidate, query.text);
+  if (qs.quality < minQuality) return 0;
+
+  double const bonus = computeSubstringMatchMultiplier(candidate, query.text) - 1.0;
+  double const boosted = qs.score + (100 - qs.score) * bonus;
+
+  return static_cast<int>(boosted * computeFileRelevanceMultiplier(candidate));
 }
+
+int selfScore(std::string_view word) { return fzf::threadLocalMatcher().match(word, word).score; }
 
 int scoreCandidate(const SC &candidate, const CorrectionPlan &plan) {
   const auto &ranker = fzf::threadLocalMatcher();
@@ -148,9 +154,11 @@ int scoreCandidate(const SC &candidate, const CorrectionPlan &plan) {
   std::string_view const fullPath{candidate.path.c_str()};
 
   auto wordScore = [&](std::string_view word) {
+    int const self = selfScore(word);
+    if (self <= 0) return 0;
     int const onFilename = ranker.match(filename, word).score;
     int const onPath = static_cast<int>(ranker.match(fullPath, word).score * 0.7);
-    return std::max(onFilename, onPath);
+    return std::min(100, std::max(onFilename, onPath) * 100 / self);
   };
 
   int total = 0;
@@ -213,7 +221,7 @@ std::vector<ScoredRef<SC>> scoreCandidatesParallel(std::span<const SC> candidate
         auto &candidate = candidates[i];
         auto score = scorer(candidate);
         ranked[i] = {&candidate, score};
-        if (score <= FZF_CUTOFF) z += 1;
+        if (score <= 0) z += 1;
       }
     }};
   }
@@ -238,7 +246,7 @@ std::vector<ScoredRef<SC>> scoreCandidates(std::span<const SC> candidates, const
 
     for (const auto &candidate : candidates) {
       const auto score = scorer(candidate);
-      if (score > FZF_CUTOFF) ranked.push_back({&candidate, score});
+      if (score > 0) ranked.push_back({&candidate, score});
     }
 
     sortCandidates(ranked);
@@ -271,30 +279,14 @@ std::vector<IndexerFileResult> resultsFromRankedCandidates(const std::vector<Sco
   return results;
 }
 
-std::vector<IndexerFileResult> rankCandidates(std::vector<SC> candidates, const Scorer &scorer, int limit) {
-  const auto ranked = scoreCandidates(std::span<const SC>{candidates}, scorer);
-
-  return resultsFromRankedCandidates(ranked, limit);
-}
-
-int idealScoreForQuery(std::string_view query) {
-  return fzf::threadLocalMatcher().score_query(query, fzf::Query{query}).weighted;
-}
-
 double idealScoreForCorrectionPlan(const CorrectionPlan &plan) {
   double total = 0;
-  int count = 0;
 
   for (const auto &choice : plan.choices) {
-    int const ideal = idealScoreForQuery(choice.term);
-
-    if (ideal <= 0) return 0;
-
-    total += static_cast<double>(ideal) * choice.weight;
-    ++count;
+    total += 100.0 * choice.weight;
   }
 
-  return count != 0 ? total / count : 0;
+  return plan.choices.empty() ? 0 : total / static_cast<double>(plan.choices.size());
 }
 
 double correctionConfidence(const std::vector<ScoredRef<SC>> &ranked, const CorrectionPlan &plan) {
@@ -323,14 +315,8 @@ SkeletonMergeDecision skeletonMergeDecision(const std::vector<ScoredRef<SC>> &ra
   SkeletonMergeDecision decision{.shouldMerge = false,
                                  .reason = "strict-confident",
                                  .bestPath = ranked.front().data->path,
-                                 .bestScore = ranked.front().score};
-
-  int const idealScore = idealScoreForQuery(query);
-  decision.idealScore = idealScore;
-
-  if (idealScore <= 0) return decision;
-
-  decision.confidence = static_cast<double>(decision.bestScore) / idealScore;
+                                 .bestScore = ranked.front().score,
+                                 .confidence = ranked.front().score / 100.0};
 
   if (decision.confidence < SKELETON_CONFIDENCE_THRESHOLD) {
     decision.shouldMerge = true;
@@ -441,12 +427,14 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
   }
 
   SkeletonMergeDecision skeletonDecision;
-
   fzf::Query const fuzzyQuery{q};
+  std::vector<ScoredRef<SC>> ranked;
 
   if (!candidates.empty()) {
-    auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, fuzzyQuery); };
-    auto ranked = scoreCandidates(std::span<const SC>{candidates}, scorer);
+    auto scorer = [&](const SC &candidate) {
+      return scoreCandidate(candidate, fuzzyQuery, fuzzy::MIN_QUALITY);
+    };
+    ranked = scoreCandidates(std::span<const SC>{candidates}, scorer);
     skeletonDecision = skeletonMergeDecision(ranked, q, limit);
 
     if (!skeletonDecision.shouldMerge) {
@@ -456,30 +444,34 @@ std::vector<IndexerFileResult> FileIndexerQueryEngine::query(std::string_view q,
     }
   }
 
+  std::vector<SC> skeletonCandidates;
+
   if (candidates.size() < static_cast<size_t>(CANDIDATE_LIMIT)) {
     auto seen = candidates |
                 std::views::transform([](const SC &candidate) { return candidate.path.native(); }) |
                 std::ranges::to<std::unordered_set>();
 
-    auto skeletonCandidates = db.searchSkeletonCandidates(dbQuery, CANDIDATE_LIMIT, options);
+    auto fetched = db.searchSkeletonCandidates(dbQuery, CANDIDATE_LIMIT, options);
 
     flog::debug() << "skeleton merge: '" << q << "' reason=" << skeletonDecision.reason << " best='"
                   << skeletonDecision.bestPath.c_str() << "' score=" << skeletonDecision.bestScore
-                  << " ideal=" << skeletonDecision.idealScore << " confidence=" << skeletonDecision.confidence
-                  << " -> " << skeletonCandidates.size() << " candidates\n";
+                  << " confidence=" << skeletonDecision.confidence << " -> " << fetched.size()
+                  << " candidates\n";
 
-    for (auto &candidate : skeletonCandidates) {
-      if (!seen.contains(candidate.path.native())) { candidates.emplace_back(std::move(candidate)); }
+    for (auto &candidate : fetched) {
+      if (!seen.contains(candidate.path.native())) { skeletonCandidates.emplace_back(std::move(candidate)); }
     }
+
+    auto scorer = [&](const SC &candidate) {
+      return scoreCandidate(candidate, fuzzyQuery, SKELETON_MIN_QUALITY);
+    };
+    auto skeletonRanked = scoreCandidates(std::span<const SC>{skeletonCandidates}, scorer);
+
+    ranked.insert(ranked.end(), skeletonRanked.begin(), skeletonRanked.end());
+    sortCandidates(ranked);
   }
 
-  if (!candidates.empty()) {
-    auto scorer = [&](const SC &candidate) { return scoreCandidate(candidate, fuzzyQuery); };
-
-    if (auto results = rankCandidates(std::move(candidates), scorer, limit); !results.empty()) {
-      return results;
-    }
-  }
+  if (auto results = resultsFromRankedCandidates(ranked, limit); !results.empty()) { return results; }
 
   if (triedCorrections) return {};
 

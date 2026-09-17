@@ -1,8 +1,8 @@
 #pragma once
-#include "argument.hpp"
-#include "command-controller.hpp"
-#include "common.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "command/argument.hpp"
+#include "command/command-controller.hpp"
+#include "command/command-types.hpp"
+#include "ui/action-panel/action.hpp"
 #include <QObject>
 #include <vector>
 
@@ -14,6 +14,7 @@ class ImageURL;
 class QKeyEvent;
 
 class BaseView : public QObject {
+  Q_OBJECT
 
 public:
   void createInitialize();

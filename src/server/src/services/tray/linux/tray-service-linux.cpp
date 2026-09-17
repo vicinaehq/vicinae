@@ -231,21 +231,21 @@ QString TrayServiceLinux::entryLabel(const MenuEntry &entry) const {
   using Kind = MenuEntry::Kind;
   switch (entry.kind) {
   case Kind::Toggle:
-    return tr("Toggle Vicinae");
+    return toggleLabel();
   case Kind::Version:
     return m_version.isEmpty() ? QStringLiteral("Vicinae") : QStringLiteral("Vicinae %1").arg(m_version);
   case Kind::About:
-    return tr("About Vicinae");
+    return aboutLabel();
   case Kind::Settings:
-    return tr("Settings…");
+    return settingsLabel();
   case Kind::Sponsor:
-    return tr("Sponsor Vicinae");
+    return sponsorLabel();
   case Kind::Discord:
-    return tr("Join the Discord");
+    return discordLabel();
   case Kind::Follow:
-    return tr("Follow on X");
+    return followLabel();
   case Kind::Quit:
-    return tr("Quit Vicinae");
+    return quitLabel();
   case Kind::Separator:
     return {};
   }

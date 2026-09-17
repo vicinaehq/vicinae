@@ -16,6 +16,7 @@
   wayland,
   glaze,
   numen,
+  pulseaudio ? null,
   swift ? null,
   apple-sdk ? null,
 }: let
@@ -187,6 +188,7 @@ in
         }"
       ]
       ++ lib.optionals isLinux [
+        "--prefix PATH : ${lib.getBin pulseaudio}/bin"
         "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
       ];
 

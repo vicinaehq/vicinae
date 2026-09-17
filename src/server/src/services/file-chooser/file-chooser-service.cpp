@@ -1,5 +1,8 @@
 #include "file-chooser-service.hpp"
+#include "service-registry.hpp"
+#include <QJSEngine>
 #include "file-chooser.hpp"
+#include <QDir>
 
 FileChooserService::FileChooserService(QObject *parent) : QObject(parent) {}
 
@@ -41,6 +44,12 @@ bool FileChooserService::openDialog(bool canChooseFiles, bool canChooseDirectori
   return true;
 }
 
+QString FileChooserService::toLocalPath(const QUrl &url) const {
+  QString path = url.toLocalFile();
+  if (path.length() > 1 && path.endsWith('/') && !path.endsWith(":/")) path.chop(1);
+  return QDir::toNativeSeparators(path);
+}
+
 void FileChooserService::notifyFallbackDone() {
   m_fallbackActive = false;
   emit activeChanged();
@@ -64,4 +73,10 @@ void FileChooserService::finish(const QStringList *paths) {
 
   emit activeChanged();
   emit dialogClosed();
+}
+
+FileChooserService *FileChooserService::create(QQmlEngine *, QJSEngine *) {
+  auto *service = ServiceRegistry::instance()->fileChooserService();
+  QJSEngine::setObjectOwnership(service, QJSEngine::CppOwnership);
+  return service;
 }

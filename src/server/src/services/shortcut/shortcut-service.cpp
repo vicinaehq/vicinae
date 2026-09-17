@@ -1,5 +1,5 @@
 #include "services/shortcut/shortcut-service.hpp"
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include "services/app-service/app-service.hpp"
 #include <qlogging.h>
 
