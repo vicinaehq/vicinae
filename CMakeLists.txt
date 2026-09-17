@@ -54,12 +54,15 @@ option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it 
 option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown code block highlight support" ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ${USE_SYSTEM_DEFAULT})
+option(USE_SYSTEM_NUMEN "Use system version of the numen calculator backend, instead of fetching it" OFF)
+
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
+option(VICINAE_DEV_MODE "Developer build: load QML from the source tree with live reload, use the local theme dir, keep debug output. Never enable for packaged builds." OFF)
 option(INSTALL_MODULES_LOAD_CONFIG "Install config files to auto load required kernel modules" ON)
 option(AUTO_INSTALL_BROWSER_MANIFESTS "Install per-user browser native messaging host manifests at server startup" ON)
 option(AUTO_ENABLE_AUTOSTART "Register the app to start at login on first launch (currently macOS only)" ON)
-option(ENABLE_ONBOARDING "Show the onboarding window on first launch (macOS only)" ON)
+option(ENABLE_ONBOARDING "Show the onboarding window on first launch" ON)
 
 set(BUNDLE_SOULVER_CORE_DEFAULT OFF)
 if (APPLE)
@@ -72,7 +75,7 @@ option(
 	${BUNDLE_SOULVER_CORE_DEFAULT}
 )
 
-set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "macOS app bundle identifier")
+set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "App identifier (macOS bundle id, Windows AppUserModelID)")
 
 set(NATIVE_MESSAGING_HOST "com.vicinae.vicinae")
 set(CHROME_EXTENSION_ID "kcmipingpfbohfjckomimmahknoddnke") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke
@@ -134,14 +137,24 @@ endif()
 # the Qt deploy API registers its support files on the first Qt6::Core scope seen
 find_package(Qt6 6.9 REQUIRED COMPONENTS Core Qml)
 
+set(QT_QML_GENERATE_QMLLS_INI ON)
+
 if (NOT USE_SYSTEM_GLAZE)
 	include(Glaze)
 	import_glaze()
 endif()
 
-if (NOT USE_SYSTEM_KF6 AND NOT WIN32)
+if (NOT USE_SYSTEM_KF6)
 	include(KF6)
 	import_kf6()
+endif()
+
+# The appimage bundles its own libraries (including the GCC runtime) in usr/lib.
+# linuxdeploy only patches a RUNPATH into the usr/bin copies it deploys, so install
+# every binary with a self-relative RUNPATH so the libexec helpers resolve the
+# bundled libraries too (#1841).
+if (VICINAE_PROVENANCE STREQUAL "appimage")
+	set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib" "$ORIGIN/../../lib")
 endif()
 
 set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
@@ -153,10 +166,19 @@ include_directories(
 
 find_package(glaze)
 
+add_subdirectory(${VENDOR_DIR}/sqlcipher)
+add_subdirectory(${VENDOR_DIR}/pugixml)
+add_subdirectory(${VENDOR_DIR}/zip)
+
+if (WIN32)
+	add_subdirectory(${VENDOR_DIR}/everything-sdk3)
+endif()
+
 add_subdirectory(src/browser-extension)
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/glyph)
+
 if (NOT WIN32)
 	add_subdirectory(${LIB_DIR}/xdgpp)
 endif()
@@ -166,12 +188,6 @@ add_subdirectory(${LIB_DIR}/crypto)
 if (APPLE AND BUNDLE_SOULVER_CORE)
 	add_subdirectory(${LIB_DIR}/soulver)
 endif()
-
-# statically linked vendored libs.
-# Most of the other vendored libs are header only so no need for a CMakeLists.txt
-add_subdirectory(${VENDOR_DIR}/sqlcipher)
-add_subdirectory(${VENDOR_DIR}/pugixml)
-add_subdirectory(${VENDOR_DIR}/zip)
 
 if (UNIX AND NOT APPLE)
 	add_subdirectory(${LIB_DIR}/linux-utils)
@@ -319,7 +335,7 @@ if (ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
 	add_compile_definitions(DEBUG=1)
 endif()
 
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release RelWithDebInfo ReleaseHost)
 
 if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
 	add_compile_definitions(DEBUG=1)

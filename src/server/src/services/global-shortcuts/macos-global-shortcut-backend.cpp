@@ -2,6 +2,7 @@
 #include "keyboard/keyboard-macos.hpp"
 
 #include <algorithm>
+#include <array>
 #include <QChar>
 #include <QDebug>
 
@@ -9,83 +10,6 @@ namespace {
 
 constexpr OSType HOT_KEY_SIGNATURE = 'vici';
 constexpr uint32_t MAX_LAYOUT_KEYCODE = 128;
-
-std::optional<uint32_t> staticKeycodeForQtKey(Qt::Key key) {
-  switch (key) {
-  case Qt::Key_Space:
-    return kVK_Space;
-  case Qt::Key_Return:
-    return kVK_Return;
-  case Qt::Key_Enter:
-    return kVK_ANSI_KeypadEnter;
-  case Qt::Key_Escape:
-    return kVK_Escape;
-  case Qt::Key_Tab:
-    return kVK_Tab;
-  case Qt::Key_Backspace:
-    return kVK_Delete;
-  case Qt::Key_Delete:
-    return kVK_ForwardDelete;
-  case Qt::Key_Home:
-    return kVK_Home;
-  case Qt::Key_End:
-    return kVK_End;
-  case Qt::Key_PageUp:
-    return kVK_PageUp;
-  case Qt::Key_PageDown:
-    return kVK_PageDown;
-  case Qt::Key_Left:
-    return kVK_LeftArrow;
-  case Qt::Key_Right:
-    return kVK_RightArrow;
-  case Qt::Key_Up:
-    return kVK_UpArrow;
-  case Qt::Key_Down:
-    return kVK_DownArrow;
-  case Qt::Key_F1:
-    return kVK_F1;
-  case Qt::Key_F2:
-    return kVK_F2;
-  case Qt::Key_F3:
-    return kVK_F3;
-  case Qt::Key_F4:
-    return kVK_F4;
-  case Qt::Key_F5:
-    return kVK_F5;
-  case Qt::Key_F6:
-    return kVK_F6;
-  case Qt::Key_F7:
-    return kVK_F7;
-  case Qt::Key_F8:
-    return kVK_F8;
-  case Qt::Key_F9:
-    return kVK_F9;
-  case Qt::Key_F10:
-    return kVK_F10;
-  case Qt::Key_F11:
-    return kVK_F11;
-  case Qt::Key_F12:
-    return kVK_F12;
-  case Qt::Key_F13:
-    return kVK_F13;
-  case Qt::Key_F14:
-    return kVK_F14;
-  case Qt::Key_F15:
-    return kVK_F15;
-  case Qt::Key_F16:
-    return kVK_F16;
-  case Qt::Key_F17:
-    return kVK_F17;
-  case Qt::Key_F18:
-    return kVK_F18;
-  case Qt::Key_F19:
-    return kVK_F19;
-  case Qt::Key_F20:
-    return kVK_F20;
-  default:
-    return std::nullopt;
-  }
-}
 
 // On macOS Qt swaps Ctrl/Meta: ControlModifier is the Cmd key, MetaModifier is the Control key.
 uint64_t cgFlagsForQtModifiers(Qt::KeyboardModifiers mods) {
@@ -115,7 +39,8 @@ OSStatus hotKeyHandler(EventHandlerCallRef, EventRef event, void *userData) {
   if (hotKeyId.signature != HOT_KEY_SIGNATURE) { return eventNotHandledErr; }
 
   const auto timestamp = static_cast<quint64>(GetEventTime(event) * 1000.0);
-  static_cast<MacOSGlobalShortcutBackend *>(userData)->handleHotKey(hotKeyId.id, timestamp);
+  const bool released = GetEventKind(event) == kEventHotKeyReleased;
+  static_cast<MacOSGlobalShortcutBackend *>(userData)->handleHotKey(hotKeyId.id, timestamp, released);
   return noErr;
 }
 
@@ -183,9 +108,12 @@ void MacOSGlobalShortcutBackend::refreshLayout() {
 bool MacOSGlobalShortcutBackend::startCarbonHandler() {
   if (m_hotKeyHandler) { return true; }
 
-  const EventTypeSpec spec{.eventClass = kEventClassKeyboard, .eventKind = kEventHotKeyPressed};
+  const auto specs = std::to_array<EventTypeSpec>({
+      {.eventClass = kEventClassKeyboard, .eventKind = kEventHotKeyPressed},
+      {.eventClass = kEventClassKeyboard, .eventKind = kEventHotKeyReleased},
+  });
   EventHandlerRef handler = nullptr;
-  if (InstallApplicationEventHandler(&hotKeyHandler, 1, &spec, this, &handler) != noErr) {
+  if (InstallApplicationEventHandler(&hotKeyHandler, specs.size(), specs.data(), this, &handler) != noErr) {
     qWarning() << "MacOSGlobalShortcutBackend: failed to install Carbon hot key handler";
     return false;
   }
@@ -256,13 +184,17 @@ void MacOSGlobalShortcutBackend::unregisterCarbonHotKey(Binding &binding) {
   binding.hotKeyRef = nullptr;
 }
 
-void MacOSGlobalShortcutBackend::handleHotKey(uint32_t carbonId, quint64 timestamp) {
+void MacOSGlobalShortcutBackend::handleHotKey(uint32_t carbonId, quint64 timestamp, bool released) {
   const auto it = std::ranges::find_if(m_bindings, [&](const Binding &binding) {
     return binding.carbonId == carbonId && binding.hotKeyRef != nullptr;
   });
   if (it == m_bindings.end()) { return; }
 
-  emit shortcutActivated(it->id, timestamp);
+  if (released) {
+    emit shortcutReleased(it->id, timestamp);
+  } else {
+    emit shortcutActivated(it->id, timestamp);
+  }
 }
 
 std::expected<void, QString> MacOSGlobalShortcutBackend::bindShortcut(const GlobalShortcutRequest &request) {
@@ -270,7 +202,7 @@ std::expected<void, QString> MacOSGlobalShortcutBackend::bindShortcut(const Glob
 
   Binding binding{.id = request.id, .flags = cgFlagsForQtModifiers(request.trigger.mods())};
 
-  if (const auto keycode = staticKeycodeForQtKey(request.trigger.key())) {
+  if (const auto keycode = Keyboard::macos::keycodeForNamedKey(request.trigger.key())) {
     binding.keycode = *keycode;
   } else if (const auto character = Keyboard::printableCharForKey(request.trigger.key())) {
     binding.character = QString(character->toLower());

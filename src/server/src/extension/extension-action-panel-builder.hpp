@@ -1,5 +1,5 @@
 #pragma once
-#include "extend/action-model.hpp"
+#include "extension/model/action-model.hpp"
 #include "navigation-controller.hpp"
 #include <QJsonArray>
 #include <QJsonObject>

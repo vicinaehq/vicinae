@@ -5,6 +5,7 @@
 #import <Foundation/Foundation.h>
 
 #include <QPointer>
+#include <unistd.h>
 
 @interface MacAppRuntimeObserver : NSObject
 - (instancetype)initWithTarget:(QPointer<MacAppRuntime>)target;
@@ -82,13 +83,16 @@ void MacAppRuntime::refreshRunningCache() {
 }
 
 bool MacAppRuntime::isRunning(const AbstractApplication &app) const {
-  return m_runningIds.contains(app.id());
+  auto const bundleId = app.windowClass();
+  return bundleId && m_runningIds.contains(*bundleId);
 }
 
 bool MacAppRuntime::activate(const AbstractApplication &app) const {
   @autoreleasepool {
-    NSString *bundleId = app.id().toNSString();
-    if (bundleId.length == 0) return false;
+    auto const bundleIdentifier = app.windowClass();
+    if (!bundleIdentifier || bundleIdentifier->isEmpty()) return false;
+
+    NSString *const bundleId = bundleIdentifier->toNSString();
     NSArray<NSRunningApplication *> *matches =
         [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleId];
     if (matches.count == 0) return false;
@@ -98,8 +102,10 @@ bool MacAppRuntime::activate(const AbstractApplication &app) const {
 
 bool MacAppRuntime::quit(const AbstractApplication &app) const {
   @autoreleasepool {
-    NSString *bundleId = app.id().toNSString();
-    if (bundleId.length == 0) return false;
+    auto const bundleIdentifier = app.windowClass();
+    if (!bundleIdentifier || bundleIdentifier->isEmpty()) return false;
+
+    NSString *const bundleId = bundleIdentifier->toNSString();
     NSArray<NSRunningApplication *> *matches =
         [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleId];
     bool requested = false;
@@ -112,8 +118,10 @@ bool MacAppRuntime::quit(const AbstractApplication &app) const {
 
 bool MacAppRuntime::forceQuit(const AbstractApplication &app) const {
   @autoreleasepool {
-    NSString *bundleId = app.id().toNSString();
-    if (bundleId.length == 0) return false;
+    auto const bundleIdentifier = app.windowClass();
+    if (!bundleIdentifier || bundleIdentifier->isEmpty()) return false;
+
+    NSString *const bundleId = bundleIdentifier->toNSString();
     NSArray<NSRunningApplication *> *matches =
         [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleId];
     bool killed = false;
@@ -128,9 +136,8 @@ std::shared_ptr<AbstractApplication> MacAppRuntime::frontmostApp() const {
   QString bundleId;
   @autoreleasepool {
     NSRunningApplication *front = [[NSWorkspace sharedWorkspace] frontmostApplication];
-    if (front && front.bundleIdentifier.length > 0) {
-      bundleId = QString::fromNSString(front.bundleIdentifier);
-    }
+    if (!front || front.processIdentifier == getpid()) return nullptr;
+    if (front.bundleIdentifier.length > 0) { bundleId = QString::fromNSString(front.bundleIdentifier); }
   }
   if (bundleId.isEmpty()) return nullptr;
   return m_appService.findById(bundleId);

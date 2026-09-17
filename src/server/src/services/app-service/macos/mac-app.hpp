@@ -3,6 +3,7 @@
 #include <QString>
 #include <filesystem>
 #include <memory>
+#include <optional>
 
 class MacApplication : public AbstractApplication {
 public:
@@ -16,15 +17,20 @@ public:
   ImageURL iconUrl() const override;
   std::filesystem::path path() const override { return m_bundlePath; }
   QString program() const override { return m_executable; }
-  std::optional<QString> windowClass() const override { return m_id; }
+  std::optional<QString> windowClass() const override { return m_bundleIdentifier; }
   bool matchesWindowClass(const QString &wmClass) const override;
   QString description() const override { return {}; }
+  std::optional<QString> unlocalizedName() const override { return m_unlocalizedName; }
 
-  MacApplication(std::filesystem::path bundlePath, QString id, QString displayName, QString executable);
+  MacApplication(std::filesystem::path bundlePath, QString id, std::optional<QString> bundleIdentifier,
+                 QString displayName, std::optional<QString> unlocalizedName, QString executable);
 
 private:
   std::filesystem::path m_bundlePath;
   QString m_id;
+  std::optional<QString> m_bundleIdentifier;
   QString m_displayName;
+  std::optional<QString> m_unlocalizedName;
   QString m_executable;
+  mutable std::optional<std::filesystem::path> m_iconPath;
 };

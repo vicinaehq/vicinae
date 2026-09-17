@@ -1,5 +1,5 @@
 #include "update-service.hpp"
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "environment.hpp"
 #include "generated/version.h"
 #include "service-registry.hpp"

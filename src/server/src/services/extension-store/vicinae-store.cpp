@@ -1,7 +1,7 @@
 #include "vicinae-store.hpp"
 #include "generated/version.h"
 #include "environment.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include "utils/capabilities.hpp"
 #include <algorithm>
@@ -68,7 +68,7 @@ QFuture<VicinaeStore::ListResult> VicinaeStoreService::fetchAll() {
 }
 
 QFuture<VicinaeStore::ListResult> VicinaeStoreService::search(const QString &query) {
-  auto url = QString("/store/search?q=%1").arg(query);
+  auto url = QString("/store/search?q=%1").arg(QString::fromLatin1(QUrl::toPercentEncoding(query)));
 
   return m_client.get<VicinaeStore::ListResponse>(url, s_requestOpts)
       .then([](http::Client::Result<VicinaeStore::ListResponse> result) -> VicinaeStore::ListResult {

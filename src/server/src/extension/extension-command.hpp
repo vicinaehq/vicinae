@@ -1,9 +1,9 @@
 #pragma once
-#include "argument.hpp"
-#include "command.hpp"
+#include "command/argument.hpp"
+#include "command/command.hpp"
 #include "ui/image/url.hpp"
-#include "common.hpp"
-#include "preference.hpp"
+#include "command/command-types.hpp"
+#include "command/preference.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "common/entrypoint.hpp"
 #include <qstring.h>

@@ -1,10 +1,10 @@
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
-#include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/root-search-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
 #include "ui/image/url.hpp"
 #include "vicinae.hpp"
 
@@ -165,7 +165,8 @@ MacSettingsRootItem::newActionPanel(ApplicationContext *ctx, const RootItemMetad
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(url), tr("Copy URL")));
   utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_pane.bundleId), tr("Copy Bundle ID")));
 
-  for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto &action :
+       RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 

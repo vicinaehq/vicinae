@@ -1,8 +1,8 @@
 #include "ui/views/base-view.hpp"
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "navigation-controller.hpp"
-#include "ui/action-pannel/action-list-view.hpp"
-#include "ui/action-pannel/action-panel-view.hpp"
+#include "ui/action-panel/action-list-view.hpp"
+#include "ui/action-panel/action-panel-view.hpp"
 #include <qlogging.h>
 #include <stdexcept>
 

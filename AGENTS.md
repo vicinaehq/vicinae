@@ -4,7 +4,7 @@ It uses QML for presentation and C++ for business logic.
 React/Typescript is used to power the extension API.
 
 For development: 
-- On UNIXes, use `make debug`.
+- On UNIXes, use `make dev`.
 - On Windows use `cmake --preset windows-relwithdebinfo` (full debug builds only when needed)
 
 ## Separation of concerns
@@ -60,11 +60,20 @@ All our code is also linted with `clang-tidy` in order to make detecting common 
 
 ## QML rules
 
+QML code should pass the linter, which you can run using `make qmllint`.
+
 When writing JavaScript inside QML files, use ES6 syntax to the largest extent possible.
 
 Try to keep the amount of logic in these files small. Logic in QML is only for presentation concerns: metrics computation, hover on signal, etc...
 
 Some configuration and theming options may need to be accessed directly in QML. We expose a global config and theme bridges for this use case.
+
+## Code generation
+
+There are two main families of code generation in the codebase:
+
+- IPC, used by the CLI, the input server, and the extension runtime. This uses our own generator `figura` which is directly compiled in tree and invoked when needed.
+- Generating of static datasets, such as emoji/symbol lists. We generally generate these using some typescript or python scripts, but do not make them part of the build system. We regenerate the lists from time to time, depending on the usecase. For example we have a `make genicon` and `make emoji` rules.
 
 ## Internationalization
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "ui/image/url.hpp"
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include <expected>
 #include "oauth-token-store.hpp"
 #include <qfuture.h>
@@ -50,13 +50,6 @@ struct OAuthRequestData {
 
     return data;
   }
-};
-
-struct OAuthClient {
-  std::optional<QString> id;
-  std::optional<QString> description;
-  QString name;
-  ImageURL icon;
 };
 
 struct OAuthResponseData {

@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <QCoreApplication>
 #include <qjsonobject.h>

@@ -1,12 +1,14 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
 #include <algorithm>
+#include <cstddef>
 #include <filesystem>
 #include <numeric>
 #include <QGuiApplication>
 #include <qfuturewatcher.h>
 #include <qstandardpaths.h>
 #include <qtconcurrentrun.h>
+#include <qthreadpool.h>
 #include "common/clipboard-formats.hpp"
 #include "common/types.hpp"
 #ifdef Q_OS_LINUX
@@ -24,6 +26,7 @@
 #include <QImage>
 #include "clipboard-server-factory.hpp"
 #include <quuid.h>
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/selection-mime-data.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
@@ -106,6 +109,72 @@ bool ClipboardService::isEncryptionReady() const { return m_encrypter.get(); }
 
 void ClipboardService::setIgnorePasswords(bool value) { m_ignorePasswords = value; }
 
+void ClipboardService::setHistoryEvictionThreshold(std::optional<std::chrono::seconds> threshold,
+                                                   bool preserveTaggedSelections) {
+  if (threshold == m_evictionThreshold && preserveTaggedSelections == m_preserveTaggedSelections) return;
+
+  m_evictionThreshold = threshold;
+  m_preserveTaggedSelections = preserveTaggedSelections;
+  constexpr auto MISCONFIGURATION_GRACE_DELAY = std::chrono::seconds(60);
+
+  m_historyEvictionTimer.stop();
+
+  if (m_evictionThreshold) m_historyEvictionTimer.start(MISCONFIGURATION_GRACE_DELAY);
+}
+
+void ClipboardService::armEvictionTimer(std::optional<int64_t> oldestTimestamp) {
+  using namespace std::chrono;
+  using namespace std::chrono_literals;
+
+  constexpr auto maxDelay = duration_cast<seconds>(6h);
+
+  if (!m_evictionThreshold || !oldestTimestamp) return;
+
+  const auto now = duration_cast<seconds>(system_clock::now().time_since_epoch());
+  const auto delay = std::clamp(seconds(*oldestTimestamp) + *m_evictionThreshold - now + 1s, 1s, maxDelay);
+
+  m_historyEvictionTimer.start(duration_cast<milliseconds>(delay));
+}
+
+void ClipboardService::pauseEviction() { m_evictionPaused = true; }
+
+void ClipboardService::resumeEviction() {
+  m_evictionPaused = false;
+  if (std::exchange(m_evictionDeferred, false)) runEvictionPass();
+}
+
+void ClipboardService::runEvictionPass() {
+  if (!m_evictionThreshold) return;
+
+  if (m_evictionPaused) {
+    m_evictionDeferred = true;
+    return;
+  }
+
+  // this can be expensive, so we run it in a separate thread
+  QThreadPool::globalInstance()->start(
+      [this, t = *m_evictionThreshold, preserve = m_preserveTaggedSelections]() {
+        auto db = openDatabase();
+        const auto evictedIds = db.evictOlderThan(t, preserve);
+        const auto oldest = db.oldestEvictableTimestamp(preserve);
+        std::error_code ec{};
+        std::size_t evictedCount = 0;
+
+        for (const auto &evicted : evictedIds) {
+          fs::path path = m_dataDir / evicted.toStdString();
+          if (fs::remove(path, ec)) {
+            ++evictedCount;
+          } else {
+            qWarning() << "failed to remove clipboard offer at" << path;
+          }
+        }
+
+        if (evictedCount > 0) qInfo() << "evicted" << evictedCount << "clipboard offers";
+
+        QMetaObject::invokeMethod(this, [this, oldest]() { armEvictionTimer(oldest); });
+      });
+}
+
 void ClipboardService::setMonitoring(bool value) {
   if (m_monitoring == value) return;
 
@@ -161,11 +230,33 @@ void ClipboardService::scheduleClipboardRestore(int delayMs) {
   m_restoreTimer.start();
 }
 
+static void rerankByPreviewMatch(std::vector<ClipboardHistoryEntry> &entries, const QString &queryText) {
+  auto const utf8 = queryText.toUtf8();
+  fuzzy::Query const query{std::string_view(utf8.constData(), static_cast<size_t>(utf8.size()))};
+
+  if (query.empty()) return;
+
+  std::vector<Scored<ClipboardHistoryEntry>> scored;
+  scored.reserve(entries.size());
+
+  for (auto &entry : entries) {
+    auto const preview = entry.textPreview.toUtf8();
+    auto const match = fuzzy::scoreWeighted(
+        {{std::string_view(preview.constData(), static_cast<size_t>(preview.size())), 1.0}}, query);
+    scored.push_back({.data = std::move(entry), .score = match.accepted() ? match.score : -1});
+  }
+
+  std::ranges::stable_sort(scored, std::greater{});
+  std::ranges::transform(scored, entries.begin(), [](auto &s) { return std::move(s.data); });
+}
+
 QFuture<PaginatedResponse<ClipboardHistoryEntry>>
 ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &opts) const {
-  auto key = m_dbKey;
-  return QtConcurrent::run(
-      [opts, limit, offset, key]() { return ClipboardDatabase(key).query(limit, offset, opts); });
+  return QtConcurrent::run([db = m_readDb, opts, limit, offset]() {
+    auto response = db->query(limit, offset, opts);
+    rerankByPreviewMatch(response.data, opts.query);
+    return response;
+  });
 }
 
 ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
@@ -301,6 +392,37 @@ bool ClipboardService::isClearSelection(const ClipboardSelection &selection) con
                          [](size_t acc, auto &&item) { return acc + item.data.size(); }) == 0;
 }
 
+std::optional<QSize> ClipboardService::readImageSize(const ClipboardDataOffer &offer) {
+  QBuffer buffer;
+  QImageReader const reader(&buffer);
+
+  buffer.setData(offer.data);
+  if (auto size = reader.size(); size.isValid()) { return size; }
+  return std::nullopt;
+}
+
+QString ClipboardService::getOfferImageSearchText(const ClipboardDataOffer &offer) {
+  if (auto size = readImageSize(offer)) {
+    return QStringLiteral("image %1x%2").arg(size->width()).arg(size->height());
+  }
+  return QStringLiteral("image");
+}
+
+QString ClipboardService::getOfferFileSearchText(const ClipboardDataOffer &offer) {
+  QString const text = offer.data;
+  auto const uris = text.split("\r\n", Qt::SkipEmptyParts);
+  QStringList paths;
+
+  paths.reserve(uris.size() + 1);
+  paths << QStringLiteral("file");
+  for (const QString &uri : uris) {
+    QUrl const url(uri);
+    paths << (url.isLocalFile() ? url.toLocalFile() : uri);
+  }
+
+  return paths.join('\n');
+}
+
 QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
   switch (getKind(offer)) {
   case ClipboardOfferKind::Text:
@@ -308,12 +430,8 @@ QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
   case ClipboardOfferKind::File:
     return offer.data.simplified().mid(0, 50);
   case ClipboardOfferKind::Image: {
-    QBuffer buffer;
-    QImageReader const reader(&buffer);
-
-    buffer.setData(offer.data);
-    if (auto size = reader.size(); size.isValid()) {
-      return tr("Image (%1x%2)").arg(size.width()).arg(size.height());
+    if (auto size = readImageSize(offer)) {
+      return tr("Image (%1x%2)").arg(size->width()).arg(size->height());
     }
     return tr("Image");
   }
@@ -327,7 +445,11 @@ std::optional<QString> ClipboardService::retrieveKeywords(const QString &id) {
 }
 
 bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
-  return openDatabase().setKeywords(id, keywords);
+  if (!openDatabase().setKeywords(id, keywords)) return false;
+
+  emit selectionKeywordsChanged(id, keywords);
+
+  return true;
 }
 
 ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &selection) {
@@ -436,6 +558,22 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
             if (isIndexableText && !offer.data.isEmpty()) {
               if (!db->indexSelectionContent(selectionId, offer.data)) {
                 qWarning() << "Failed to index selection content for offer" << offer.mimeType;
+                return false;
+              }
+            }
+
+            // Index both the localized preview (what the user sees) and a stable English form
+            if (kind == ClipboardOfferKind::Image && offer.mimeType == preferredMimeType) {
+              if (!db->indexSelectionContent(selectionId, textPreview) ||
+                  !db->indexSelectionContent(selectionId, getOfferImageSearchText(offer))) {
+                qWarning() << "Failed to index image offer" << offer.mimeType;
+                return false;
+              }
+            }
+
+            if (kind == ClipboardOfferKind::File && offer.mimeType == preferredMimeType) {
+              if (!db->indexSelectionContent(selectionId, getOfferFileSearchText(offer))) {
+                qWarning() << "Failed to index file offer" << offer.mimeType;
                 return false;
               }
             }
@@ -625,14 +763,23 @@ Clipboard::ReadContent ClipboardService::readContent() {
 
 bool ClipboardService::removeAllSelections() {
   auto db = openDatabase();
+  const auto removedIds = db.removeAll(m_preserveTaggedSelections);
 
-  if (!db.removeAll()) {
+  if (!removedIds) {
     qWarning() << "Failed to remove all clipboard selections";
     return false;
   }
 
-  fs::remove_all(m_dataDir);
-  fs::create_directories(m_dataDir);
+  if (m_preserveTaggedSelections) {
+    std::error_code ec{};
+
+    for (const auto &id : *removedIds) {
+      fs::remove(m_dataDir / id.toStdString(), ec);
+    }
+  } else {
+    fs::remove_all(m_dataDir);
+    fs::create_directories(m_dataDir);
+  }
 
   emit allSelectionsRemoved();
 
@@ -665,11 +812,23 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, std::optio
 
   fs::create_directories(m_dataDir);
   openDatabase().runMigrations();
+  m_readDb = std::make_shared<ClipboardDatabase>(m_dbKey);
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);
+  connect(m_clipboardServer.get(), &AbstractClipboardServer::primarySelectionChanged, this,
+          &ClipboardService::primarySelectionChanged);
+  m_historyEvictionTimer.setSingleShot(true);
+  m_historyEvictionTimer.setTimerType(Qt::VeryCoarseTimer);
+  connect(&m_historyEvictionTimer, &QTimer::timeout, this, &ClipboardService::runEvictionPass);
   connect(&m_indexingSelection, &decltype(m_indexingSelection)::finished, this, [this]() {
     if (m_indexingSelection.isCanceled()) return;
     if (auto result = m_indexingSelection.result()) { emit itemInserted(*result); }
+
+    if (m_evictionThreshold && !m_historyEvictionTimer.isActive()) {
+      const auto now = std::chrono::duration_cast<std::chrono::seconds>(
+          std::chrono::system_clock::now().time_since_epoch());
+      armEvictionTimer(now.count());
+    }
   });
 }

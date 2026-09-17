@@ -1,6 +1,14 @@
 import * as esbuild from "esbuild";
-import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import {
+	cpSync,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	renameSync,
+	rmSync,
+} from "node:fs";
+import { dirname, join } from "node:path";
 import type { CommandDef } from "../../cli.js";
 import ManifestSchema from "../../schemas/manifest.js";
 import { updateExtensionTypes } from "../../utils/extension-types.js";
@@ -125,8 +133,23 @@ const build: CommandDef = {
 			process.exit(1);
 		}
 
-		mkdirSync(outDir, { recursive: true });
-		await doBuild(outDir);
+		mkdirSync(dirname(outDir), { recursive: true });
+		const stagingDir = mkdtempSync(join(dirname(outDir), ".build-"));
+
+		try {
+			await doBuild(stagingDir);
+			rmSync(outDir, {
+				recursive: true,
+				force: true,
+				maxRetries: 5,
+				retryDelay: 100,
+			});
+			renameSync(stagingDir, outDir);
+		} catch (error) {
+			rmSync(stagingDir, { recursive: true, force: true });
+			throw error;
+		}
+
 		logger.logReady(`built extension successfully - output at ${outDir}`);
 	},
 };

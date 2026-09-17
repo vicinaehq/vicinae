@@ -1,15 +1,15 @@
 #pragma once
 #include <QCoreApplication>
-#include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"
-#include "qml/shortcut-form-view-host.hpp"
+#include "actions/shortcut-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "theme/colors.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 struct BrowserTabActionGenerator {
   Q_DECLARE_TR_FUNCTIONS(BrowserTabActionGenerator)
@@ -28,15 +28,9 @@ public:
 
     focusTab->setShortcut(Keyboard::Shortcut::enter());
 
-    auto convertToShortcut = new StaticAction(
-        tr("Convert to shortcut"), BuiltinIcon::ArrowsContract, [tab](ApplicationContext *ctx) {
-          auto view = new ShortcutFormViewHost;
-          view->setPrefilledValues(tab.url.c_str(), tab.title.c_str());
-          ctx->navigation->pushView(view);
-          ctx->navigation->setNavigationTitle(tr("Convert tab to shortcut"));
-          ctx->navigation->setNavigationIcon(
-              ImageURL(BuiltinIcon::ArrowsContract).setBackgroundTint(SemanticColor::Red));
-        });
+    auto convertToShortcut = new CreateShortcutAction(
+        {.link = tab.url.c_str(), .name = tab.title.c_str()}, tr("Convert to shortcut"),
+        ImageURL(BuiltinIcon::ArrowsContract).setBackgroundTint(SemanticColor::Red));
 
     auto closeTab = new StaticAction(tr("Close tab"), BuiltinIcon::Trash, [tab](ApplicationContext *ctx) {
       if (const auto result = ctx->services->browserExtension()->closeTab(tab); !result) {

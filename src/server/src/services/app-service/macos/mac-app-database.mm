@@ -10,6 +10,7 @@
 #include <QUrl>
 
 #include <fstream>
+#include <sys/stat.h>
 
 namespace fs = std::filesystem;
 
@@ -81,7 +82,9 @@ std::vector<fs::path> collectAppPaths(const std::vector<fs::path> &roots) {
     std::error_code ec;
     if (!fs::is_directory(root, ec)) continue;
 
-    fs::recursive_directory_iterator it(root, fs::directory_options::skip_permission_denied, ec);
+    fs::recursive_directory_iterator it(
+        root, fs::directory_options::skip_permission_denied | fs::directory_options::follow_directory_symlink,
+        ec);
     fs::recursive_directory_iterator const end;
     if (ec) continue;
 
@@ -442,4 +445,50 @@ bool MacAppDatabase::openLocation(const AbstractApplication &app) const {
 
 AbstractAppDatabase::AppPtr MacAppDatabase::locationOpener(const AbstractApplication &app) const {
   return fileBrowser();
+}
+
+bool MacAppDatabase::canUninstall(const AbstractApplication &app) const {
+  fs::path const bundlePath = app.path();
+  std::error_code ec;
+
+  if (bundlePath.extension() != ".app") return false;
+  if (fs::is_symlink(bundlePath, ec) || !fs::is_directory(bundlePath, ec)) return false;
+
+  fs::path const canonical = fs::canonical(bundlePath, ec);
+  if (ec) return false;
+
+  auto const isProtectedRoot = [&](const char *root) {
+    auto rel = canonical.lexically_relative(root);
+    return !rel.empty() && *rel.begin() != "..";
+  };
+  if (isProtectedRoot("/System") || isProtectedRoot("/Library/Apple")) return false;
+
+  for (auto parent = canonical.parent_path(); !parent.empty() && parent != parent.parent_path();
+       parent = parent.parent_path()) {
+    if (parent.extension() == ".app") return false;
+  }
+
+  struct stat st{};
+  if (lstat(canonical.c_str(), &st) != 0) return false;
+  if (st.st_flags & (SF_RESTRICTED | SF_IMMUTABLE | UF_IMMUTABLE)) return false;
+
+  @autoreleasepool {
+    return [[NSFileManager defaultManager] isDeletableFileAtPath:toNSString(canonical)];
+  }
+}
+
+bool MacAppDatabase::uninstall(const AbstractApplication &app) {
+  if (!canUninstall(app)) return false;
+
+  @autoreleasepool {
+    NSURL *url = [NSURL fileURLWithPath:toNSString(app.path())];
+    NSError *error = nil;
+    if (![[NSFileManager defaultManager] trashItemAtURL:url resultingItemURL:nil error:&error]) {
+      qWarning() << "Failed to trash" << app.path().c_str() << ":"
+                 << QString::fromNSString(error.localizedDescription);
+      return false;
+    }
+  }
+
+  return true;
 }

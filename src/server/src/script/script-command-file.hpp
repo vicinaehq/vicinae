@@ -1,6 +1,6 @@
 #pragma once
 #include <expected>
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "script-command.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
@@ -23,6 +23,8 @@ public:
   std::string_view id() const { return m_id; }
 
 private:
+  std::vector<QString> interpreter() const;
+
   std::filesystem::path m_path;
   std::string m_id;
   script_command::ScriptCommand m_data;

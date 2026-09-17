@@ -1,7 +1,7 @@
 #pragma once
-#include "actions/files/file-actions.hpp"
-#include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/file-actions.hpp"
+#include "actions/root-search-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "script-command.hpp"
 #include "script/script-actions.hpp"
 #include "script/script-command-file.hpp"
@@ -103,7 +103,8 @@ class ScriptRootItem : public RootItem {
 
     auto itemSection = panel->createSection();
 
-    for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+    for (const auto action :
+         RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
       itemSection->addAction(action);
     }
 

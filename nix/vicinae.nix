@@ -15,6 +15,8 @@
   gcc15Stdenv,
   wayland,
   glaze,
+  numen,
+  pulseaudio ? null,
   swift ? null,
   apple-sdk ? null,
 }: let
@@ -68,6 +70,7 @@ in
       "INSTALL_NODE_MODULES" = "OFF";
       "USE_SYSTEM_CMARK_GFM" = "ON";
       "USE_SYSTEM_GLAZE" = "ON";
+      "USE_SYSTEM_NUMEN" = "ON";
       "USE_SYSTEM_KF6" = "ON";
       "USE_SYSTEM_QT_KEYCHAIN" = "ON";
       "CMAKE_INSTALL_PREFIX" = placeholder "out";
@@ -76,6 +79,11 @@ in
       "CMAKE_INSTALL_LIBDIR" = "lib";
       "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
       "AUTO_ENABLE_AUTOSTART" = "OFF";
+      # nix users configure declaratively; keep onboarding on darwin for the permission prompts
+      "ENABLE_ONBOARDING" =
+        if isLinux
+        then "OFF"
+        else "ON";
       "BUNDLE_SOULVER_CORE" = "OFF";
     };
 
@@ -107,6 +115,7 @@ in
         qt6.qtimageformats
         qt6.qtsvg
         glaze
+        numen
       ]
       ++ lib.optionals isLinux [
         kdePackages.layer-shell-qt
@@ -179,6 +188,7 @@ in
         }"
       ]
       ++ lib.optionals isLinux [
+        "--prefix PATH : ${lib.getBin pulseaudio}/bin"
         "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
       ];
 

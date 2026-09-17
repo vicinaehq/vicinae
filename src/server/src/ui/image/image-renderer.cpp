@@ -1,9 +1,9 @@
 #include "image-renderer.hpp"
 #include "favicon/favicon-service.hpp"
-#include "font-service.hpp"
+#include "services/font-service/font-service.hpp"
 #include "image-stream.hpp"
 #include "service-registry.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include "ui/image/contrast-helper.hpp"
 #include "ui/image/url.hpp"
@@ -23,12 +23,14 @@
 #include <QMimeDatabase>
 #include <QPainter>
 #include <QPromise>
+#include <QRawFont>
 #include <QSvgRenderer>
 #include <QThread>
 #include <QThreadPool>
 #include <QtConcurrent>
 #include <QtMath>
 #include <algorithm>
+#include <cmath>
 #include <mutex>
 
 namespace ImageRendering {
@@ -76,10 +78,24 @@ static QImage renderGlyph(const QString &glyph, const QSize &size, QFont font, b
   return canvas;
 }
 
+static bool fontCoversEmoji(const QFont &font, const QString &emoji) {
+  const QRawFont raw = QRawFont::fromFont(font);
+  if (!raw.isValid()) return false;
+
+  for (const char32_t cp : emoji.toStdU32String()) {
+    // joiners, variation selectors and tags are not mapped by most fonts
+    const bool invisible = cp == 0x200D || cp == 0xFE0E || cp == 0xFE0F || (cp >= 0xE0020 && cp <= 0xE007F);
+    if (!invisible && !raw.supportsCharacter(static_cast<uint>(cp))) return false;
+  }
+  return true;
+}
+
 QImage renderEmoji(const QString &emoji, const QSize &size) {
   auto *fontService = ServiceRegistry::instance()->fontService();
   if (!fontService) return QImage(size, QImage::Format_ARGB32_Premultiplied);
-  return renderGlyph(emoji, size, fontService->emojiFont(), /*allowMerging=*/false);
+
+  const QFont &font = fontService->emojiFont();
+  return renderGlyph(emoji, size, font, /*allowMerging=*/!fontCoversEmoji(font, emoji));
 }
 
 QImage renderSymbol(const QString &symbol, const QSize &size) {
@@ -261,6 +277,62 @@ void applySafetyMargins(QImage &image) {
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
   painter.drawImage(dest, image);
   image = padded;
+}
+
+static qreal inkRadius(const QImage &image) {
+  QPointF const center(image.width() / 2.0, image.height() / 2.0);
+  qreal maxSq = 0;
+  for (int y = 0; y < image.height(); ++y) {
+    const auto *line = reinterpret_cast<const QRgb *>(image.constScanLine(y));
+    for (int x = 0; x < image.width(); ++x) {
+      if (qAlpha(line[x]) == 0) continue;
+      qreal const dx = x + 0.5 - center.x();
+      qreal const dy = y + 0.5 - center.y();
+      maxSq = std::max(maxSq, dx * dx + dy * dy);
+    }
+  }
+  return std::sqrt(maxSq);
+}
+
+// Small black disc with a white builtin glyph in the bottom-right corner. Glyphs are
+// normalized by how far their ink reaches from the center so that shapes hitting the
+// corners of their box (an X) read the same size as ones hitting the edges (a plus).
+void applyBadge(QImage &image, const QString &builtinName) {
+  if (image.isNull()) return;
+
+  constexpr qreal BADGE_SCALE = 0.44;
+  constexpr qreal BADGE_GLYPH_REACH = 0.56;
+  constexpr qreal BADGE_INSET_SCALE = 0.04;
+
+  qreal const diameter = image.height() * BADGE_SCALE;
+  qreal const inset = image.height() * BADGE_INSET_SCALE;
+  QRectF const badgeRect(image.width() - diameter - inset, image.height() - diameter - inset, diameter,
+                         diameter);
+
+  int const renderSide = std::max(1, qRound(diameter));
+  QImage glyph = renderBuiltinSvg(builtinName, QSize(renderSide, renderSide));
+  applyFillColor(glyph, Qt::white);
+  qreal const reach = inkRadius(glyph);
+  qreal const glyphScale = reach > 0 ? (diameter / 2.0) * BADGE_GLYPH_REACH / reach : 0;
+  QSizeF const glyphSize = QSizeF(glyph.size()) * glyphScale;
+
+  QImage canvas(image.size(), QImage::Format_ARGB32_Premultiplied);
+  canvas.fill(Qt::transparent);
+  QPainter painter(&canvas);
+  painter.setRenderHint(QPainter::Antialiasing, true);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+  painter.drawImage(0, 0, image);
+
+  painter.setPen(Qt::NoPen);
+  painter.setBrush(Qt::black);
+  painter.drawEllipse(badgeRect);
+
+  if (glyphScale > 0) {
+    QRectF const dest(badgeRect.center() - QPointF(glyphSize.width() / 2.0, glyphSize.height() / 2.0),
+                      glyphSize);
+    painter.drawImage(dest, glyph);
+  }
+  image = canvas;
 }
 
 static bool hasBackdrop(const QColor &bg) { return bg.isValid() && bg.alpha() > 0; }

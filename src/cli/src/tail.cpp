@@ -1,4 +1,5 @@
 #include "tail.hpp"
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <thread>
@@ -28,6 +29,46 @@ std::streamoff FileTailer::drain(std::ostream &out) {
   m_offset += written;
 
   return written;
+}
+
+std::streamoff FileTailer::findLastLines(std::size_t lines) {
+  std::error_code ec;
+  auto const size = static_cast<std::streamoff>(std::filesystem::file_size(m_path, ec));
+
+  if (ec || size == 0) return 0;
+  if (lines == 0) return size;
+
+  std::array<char, 8192> buf;
+  std::streamoff pos = size;
+  std::size_t found = 0;
+  bool atEnd = true;
+
+  while (pos > 0) {
+    auto const chunk = std::min<std::streamoff>(pos, buf.size());
+
+    pos -= chunk;
+    m_stream.seekg(pos);
+    m_stream.read(buf.data(), chunk);
+
+    auto end = chunk;
+    if (atEnd && buf[chunk - 1] == '\n') --end;
+    atEnd = false;
+
+    for (auto i = end; i-- > 0;) {
+      if (buf[i] == '\n' && ++found == lines) return pos + i + 1;
+    }
+  }
+
+  return 0;
+}
+
+void FileTailer::tail(std::size_t lines, std::ostream &out) {
+  if (!m_stream.is_open()) return;
+
+  m_offset = findLastLines(lines);
+  m_stream.clear();
+  m_stream.seekg(m_offset);
+  drain(out);
 }
 
 void FileTailer::reopen(std::ostream &out) {

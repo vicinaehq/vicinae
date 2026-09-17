@@ -12,7 +12,4 @@ public:
   bool isMuted() const override;
   bool setMuted(bool muted) override;
   bool toggleMute() override;
-
-  std::vector<AudioSink> listSinks() const override;
-  bool setDefaultSink(const QString &sinkName) override;
 };

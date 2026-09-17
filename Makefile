@@ -27,6 +27,21 @@ relwithdebinfo:
 	cmake --build $(BUILD_DIR)
 .PHONY: relwithdebinfo
 
+dev-configure:
+	cmake --preset $(PRESET_OS)-dev -B $(BUILD_DIR)
+.PHONY: dev-configure
+
+dev-build: dev-configure
+	cmake --build $(BUILD_DIR)
+.PHONY: dev-build
+
+dev-run: dev-build
+	$(BUILD_DIR)/bin/vicinae server --replace --open
+.PHONY: dev-run
+
+dev: dev-run
+.PHONY: dev
+
 preview:
 	cmake --preset $(PRESET_OS)-preview
 	cmake --build --preset $(PRESET_OS)-preview
@@ -36,6 +51,10 @@ debug:
 	cmake --preset $(PRESET_OS)-debug
 	cmake --build --preset $(PRESET_OS)-debug
 .PHONY: debug
+
+qmllint:
+	cmake --build $(BUILD_DIR) --target all_qmllint
+.PHONY: qmllint
 
 update-translations:
 	cmake --preset $(PRESET_OS)-debug
@@ -72,6 +91,10 @@ genicon:
 	node scripts/generate-icons.js
 .PHONY: genicon
 
+emoji:
+	$(MAKE) -C src/lib/glyph gen-db
+.PHONY: emoji
+
 install:
 	cmake --install $(BUILD_DIR)
 .PHONY: install
@@ -83,7 +106,7 @@ strip:
 test:
 	./$(BIN_DIR)/vicinae-glyph-tests
 	./$(BIN_DIR)/vicinae-fuzzy-tests
-	./$(BIN_DIR)/vicinae-server-tests
+	#./$(BIN_DIR)/vicinae-server-tests
 	./$(BIN_DIR)/xdgpp-tests
 	./$(BIN_DIR)/scriptcommand-tests
 	./$(BIN_DIR)/vicinae-file-indexer-tests

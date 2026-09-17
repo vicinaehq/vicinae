@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include <cstdint>
 #include <qdatetime.h>
 #include <qobject.h>

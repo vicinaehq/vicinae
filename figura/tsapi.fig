@@ -250,7 +250,24 @@ struct UpdateCommandMetadataPayload {
   subtitle?: string;
 };
 
+enum LaunchType {
+  User,
+  Background,
+  CommandLine
+};
+
+struct LaunchCommandOptions {
+  extensionName: string;
+  name: string;
+  ownerOrAuthorName: string;
+  type: LaunchType;
+  arguments?: any;
+  context?: any;
+  fallbackText?: string;
+};
+
 service Command {
+  fn launchCommand(options: LaunchCommandOptions) => void;
   fn updateCommandMetadata(payload: UpdateCommandMetadataPayload) => void;
   fn openExtensionPreferences() => void;
   fn openCommandPreferences() => void;

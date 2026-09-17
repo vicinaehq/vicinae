@@ -11,7 +11,7 @@
 #include "wayland/display.hpp"
 #include "common/clipboard-protocol.hpp"
 
-using SelectionWriter = void (*)(const clipboard_proto::Selection &);
+using SelectionWriter = void (*)(clipboard_proto::Command, const clipboard_proto::Selection &);
 
 class ExtClipman : public WaylandDisplay, public WaylandRegistry::Listener, public ExtDataDevice::Listener {
 
@@ -31,5 +31,5 @@ private:
 
   void global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) override;
   void selection(ExtDataDevice &device, ExtDataOffer &offer) override;
-  void primarySelection(ExtDataDevice &device, ExtDataOffer &offer) override;
+  void primarySelection(ExtDataDevice &device, ExtDataOffer *offer) override;
 };

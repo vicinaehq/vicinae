@@ -3,12 +3,22 @@ import type { EnvironmentType } from "./types";
 
 const injectJsxGlobals = () => {
 	const { jsx, jsxs, Fragment } = require("react/jsx-runtime");
+	const { createElement } = require("react");
 
-	// react/jsx-runtime always expect non-null props
+	const isKey = (v: unknown) =>
+		v === undefined || typeof v === "string" || typeof v === "number";
+
 	const safeJsx =
 		(original: typeof jsx) =>
-		(type: React.ElementType, props: unknown, key: React.Key) =>
-			original(type, props ?? {}, key);
+		(type: React.ElementType, props: any, ...rest: unknown[]) => {
+			props ??= {};
+			const classic =
+				rest.length > 1 ||
+				(rest.length === 1 && !isKey(rest[0])) ||
+				"key" in props;
+			if (classic) return createElement(type, props, ...rest);
+			return original(type, props, rest[0] as React.Key);
+		};
 
 	(globalThis as any)._jsx = safeJsx(jsx);
 	(globalThis as any)._jsxs = safeJsx(jsxs);

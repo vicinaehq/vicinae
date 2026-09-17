@@ -142,6 +142,61 @@ TEST_CASE("transliteration: matching across scripts") {
           matcher.match_ascii("Telegram", "teleg").score);
 }
 
+TEST_CASE("transliteration: normalized score and quality survive the gate (#1859)") {
+  const auto &m = fzf::threadLocalMatcher();
+
+  auto const tg = m.score_query("Telegram", fzf::Query{"телеграм"});
+  REQUIRE(tg.score == 100);
+  REQUIRE(tg.quality == 100);
+
+  for (std::string_view q : {"те", "тел", "теле", "телег", "телегр", "телегра", "телеграм"}) {
+    REQUIRE(fuzzy::scoreWeighted({{"Telegram", 1.0}}, fuzzy::Query{q}).accepted());
+  }
+
+  REQUIRE(fuzzy::scoreWeighted({{"Terminal", 1.0}}, fuzzy::Query{"τερμιναλ"}).accepted());
+  REQUIRE(fuzzy::scoreWeighted({{"Открыть Discord", 1.0}}, fuzzy::Query{"открыть дискорд"}).accepted());
+
+  auto const cyr = m.score_query("Телеграм", fzf::Query{"телеграм"});
+  REQUIRE(cyr.score == 100);
+  REQUIRE(cyr.quality == 100);
+
+  REQUIRE_FALSE(fuzzy::scoreWeighted({{"Telegram", 1.0}}, fuzzy::Query{"музыка"}).accepted());
+}
+
+TEST_CASE("transliteration: each variant is normalized against its own ceiling") {
+  const auto &m = fzf::threadLocalMatcher();
+
+  // "diskord" (primary) cannot match "Discord"; only the alternate scheme (к -> c) can
+  auto const alt = m.score_query("Discord", fzf::Query{"дискорд"});
+  REQUIRE(alt.score == 100);
+  REQUIRE(alt.quality == 100);
+
+  REQUIRE(fuzzy::scoreWeighted({{"Telegram", 1.0}}, fuzzy::Query{"телеgram"}).accepted());
+
+  auto const mixed = m.score_query("Открыть Discord", fzf::Query{"открыть дискорд"});
+  REQUIRE(mixed.score == 100);
+  REQUIRE(mixed.quality == 100);
+
+  auto const both = fuzzy::scoreWeighted({{"Telegram", 1.0}, {"Телеграм", 1.0}}, fuzzy::Query{"телеграм"});
+  REQUIRE(both.score == 100);
+  REQUIRE(both.quality == 100);
+
+  REQUIRE_FALSE(fuzzy::scoreWeighted({{"Telegram", 1.0}}, fuzzy::Query{"ьъ"}).accepted());
+}
+
+TEST_CASE("transliteration: direct match() still resolves cross-script patterns") {
+  const auto &m = fzf::threadLocalMatcher();
+
+  auto const r = m.match("Telegram", "телеграм", true);
+  REQUIRE(r.matched());
+  REQUIRE(r.start == 0);
+  REQUIRE(r.end == 8);
+  REQUIRE(r.positions == std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7});
+
+  REQUIRE(m.match("Discord", "дискорд").matched());
+  REQUIRE_FALSE(m.match("Telegram", "музыка").matched());
+}
+
 TEST_CASE("query score: quality is the worst per-word match, weighted respects field weights") {
   const auto &m = fzf::threadLocalMatcher();
   using WS = fzf::WeightedString;

@@ -9,12 +9,13 @@ test:
 	./$(BUILD_DIR)/vicinae-glyph-tests
 .PHONY: test
 
-# we run this from time to time only, it's not part of the build pipeline
+# Regenerate the glyph tables from the latest Unicode / Emoji / CLDR data.
+# Not part of the build pipeline: run it from time to time and commit the result.
+# Pin releases with UNICODE_VERSION=17.0.0 / CLDR_REF=48.2.0 (see scripts/fetch.ts).
 gen-db:
-	mkdir -p {include,src}/generated
-	cd ./scripts/emoji && npm install && tsc --outDir dist && node dist/main.js
-	cp ./scripts/emoji/dist/emoji.hpp include/generated/db.hpp
-	cp ./scripts/emoji/dist/emoji.cpp src/generated/db.cpp
+	node scripts/fetch.ts
+	node scripts/gen.ts
+	clang-format -i src/glyph.cpp src/emoji-properties.cpp include/glyph/glyph.hpp
 .PHONY: gen-db
 
 clean:

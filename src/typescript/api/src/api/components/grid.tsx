@@ -241,9 +241,11 @@ const GridItem: React.FC<Grid.Item.Props> = ({
 	dragContent,
 	content,
 	accessory,
+	id: propsId,
 	...props
 }) => {
-	const id = useRef(props.id ?? randomUUID());
+	const generatedId = useRef(randomUUID());
+	const id = propsId ?? generatedId.current;
 
 	// Remove value wrapper
 	const innerContent =
@@ -289,7 +291,7 @@ const GridItem: React.FC<Grid.Item.Props> = ({
 			}
 			tooltip={tooltip}
 			accessory={serializedAccessory}
-			id={id.current}
+			id={id}
 		>
 			{detail}
 			{actions}

@@ -1,5 +1,6 @@
 #pragma once
 #include <QtGlobal>
+#include <qguiapplication.h>
 #ifndef Q_OS_WIN
 #include "xdgpp/env/env.hpp"
 #endif
@@ -17,11 +18,14 @@
 #ifdef Q_OS_LINUX
 #include "internal/wayland/layer-shell.hpp"
 #endif
+#ifdef Q_OS_WIN
+#include "utils/win-chassis.hpp"
+#endif
 
 namespace Environment {
 
 #ifdef Q_OS_WIN
-inline std::vector<std::string> platformDesktopNames() { return {}; }
+inline std::vector<std::string> platformDesktopNames() { return {"explorer"}; }
 inline std::vector<std::filesystem::path> platformDataDirs() { return {}; }
 #else
 inline auto platformDesktopNames() { return xdgpp::currentDesktop(); }
@@ -34,7 +38,10 @@ inline bool isGnomeEnvironment() {
   return desktop.contains("GNOME", Qt::CaseInsensitive) || session.contains("gnome", Qt::CaseInsensitive);
 }
 
-inline bool isWaylandSession() { return QGuiApplication::platformName() == "wayland"; }
+inline bool isWaylandSession() {
+  const auto platform = QGuiApplication::platformName();
+  return platform == "wayland" || platform == "wayland-egl";
+}
 
 inline bool isX11() { return QGuiApplication::platformName() == "xcb"; }
 
@@ -105,7 +112,9 @@ inline std::optional<std::filesystem::path> nodeBinaryOverride() {
 
 inline QStringList fallbackIconSearchPaths() {
   QStringList list;
-  auto dirs = platformDataDirs();
+#ifndef Q_OS_WIN
+  // Includes XDG_DATA_HOME so unthemed icons like $XDG_DATA_HOME/icons/foo.png resolve.
+  auto dirs = xdgpp::commonDataDirs();
 
   list.reserve(dirs.size() * 2);
 
@@ -116,7 +125,7 @@ inline QStringList fallbackIconSearchPaths() {
   for (const auto &dir : dirs) {
     list << QString::fromStdString((dir / "icons").string());
   }
-
+#endif
   return list;
 }
 
@@ -136,11 +145,19 @@ inline std::optional<std::string> updateVersionOverride() {
 }
 
 /**
+ * Disables automatic exchange rate refreshes (on backend start and periodic).
+ * Rates can still be refreshed manually from the calculator extension.
+ */
+inline bool isAutoRateRefreshDisabled() { return getenv("VICINAE_DISABLE_AUTO_RATE_REFRESH"); }
+
+/**
  * Gets human-readable environment description
  */
 inline QString getEnvironmentDescription() {
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
   return QStringLiteral("Aqua");
+#elif defined(Q_OS_WIN)
+  return QStringLiteral("Explorer");
 #else
   QString desc;
   const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
@@ -164,6 +181,9 @@ inline QString getEnvironmentDescription() {
 }
 
 inline std::string chassisType() {
+#ifdef Q_OS_WIN
+  return vicinae::win::chassisType();
+#else
   std::ifstream file("/sys/class/dmi/id/chassis_type");
   if (!file.is_open()) return "unknown";
 
@@ -191,14 +211,22 @@ inline std::string chassisType() {
   default:
     return "other";
   }
+#endif
 }
 
 inline std::optional<QString> detectAppLauncher() {
-  QProcess proc;
-  proc.start("uwsm", {"check", "is-active"});
-  if (!proc.waitForFinished(1000) || proc.exitCode() != 0) return std::nullopt;
-  if (!QStandardPaths::findExecutable("uwsm-app").isEmpty()) return "uwsm-app --";
-  return "uwsm app --";
+#ifdef Q_OS_LINUX
+  static const std::optional<QString> detected = []() -> std::optional<QString> {
+    QProcess proc;
+    proc.start("uwsm", {"check", "is-active"});
+    if (!proc.waitForFinished(1000) || proc.exitCode() != 0) return std::nullopt;
+    if (!QStandardPaths::findExecutable("uwsm-app").isEmpty()) return "uwsm-app --";
+    return "uwsm app --";
+  }();
+  return detected;
+#else
+  return std::nullopt;
+#endif
 }
 
 } // namespace Environment

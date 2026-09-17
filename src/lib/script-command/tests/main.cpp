@@ -4,7 +4,7 @@
 
 namespace fs = std::filesystem;
 
-static const fs::path tmpDir = "/tmp";
+static const fs::path tmpDir = fs::temp_directory_path();
 
 TEST_CASE("Parse in-memory script with arguments") {
   const char *source = R"(#!/bin/bash -c hello

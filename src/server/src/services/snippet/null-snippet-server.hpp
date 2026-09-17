@@ -12,11 +12,11 @@ public:
   void setKeymap(snippet_gen::LayoutInfo) override {}
   void resetContext() override {}
 
-  void injectExpand(const std::string &, unsigned, unsigned, bool, unsigned) override {}
+  void injectExpand(const std::string &, unsigned, unsigned, bool, unsigned, bool) override {}
   void injectUndo(unsigned, const std::string &) override {}
   void setKeyDelay(int) override {}
   bool supportsKeyInjection() const override { return false; }
-  bool usesClipboard() const override { return true; }
+  bool usesClipboard(std::size_t) const override { return true; }
 
   bool isRunning() const override { return false; }
 };

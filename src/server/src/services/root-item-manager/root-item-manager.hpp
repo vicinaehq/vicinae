@@ -1,7 +1,7 @@
 #pragma once
-#include "argument.hpp"
+#include "command/argument.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "config/config.hpp"
 #include "common/entrypoint.hpp"
 #include "navigation-controller.hpp"
@@ -10,8 +10,8 @@
 #include "services/root-item-manager/search-history.hpp"
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
-#include "preference.hpp"
-#include "ui/list-accessory/list-accessory.hpp"
+#include "command/preference.hpp"
+#include "ui/views/list-accessory.hpp"
 #include <cstdint>
 #include <qdnslookup.h>
 #include <qjsonobject.h>
@@ -126,6 +126,12 @@ public:
    */
   virtual std::vector<QString> keywords() const { return {}; }
 
+  /**
+   * Untranslated version of the title, if it differs from the displayed one.
+   * Scored with the same weight as the title so that localized items stay searchable in English.
+   */
+  virtual std::optional<QString> unlocalizedTitle() const { return std::nullopt; }
+
   virtual void preferenceValuesChanged(const QJsonObject &values) const {}
 
   virtual QString settingsDescription() const { return {}; }
@@ -200,7 +206,7 @@ public:
 struct RootItemMetadata {
   int visitCount = 0;
   bool enabled = true;
-  bool favorite = false;
+  std::optional<std::size_t> favoriteIdx;
   bool fallback = false;
   std::optional<std::uint64_t> lastVisitedAt;
   std::optional<std::string> alias;
@@ -216,6 +222,7 @@ signals:
   void itemsChanged() const;
   void itemRankingReset(const EntrypointId &id) const;
   void itemFavoriteChanged(const EntrypointId &id, bool favorite) const;
+  void favoriteOrderChanged(const EntrypointId &id) const;
   void fallbackEnabled(const EntrypointId &id) const;
   void fallbackOrderChanged(const EntrypointId &id) const;
   void fallbackDisabled(const EntrypointId &id) const;
@@ -236,6 +243,7 @@ public:
   struct SearchableRootItem {
     std::shared_ptr<RootItem> item;
     std::string title;
+    std::string unlocalizedTitle;
     std::string subtitle;
     std::vector<std::string> keywords;
     RootItemMetadata *meta = nullptr;
@@ -295,14 +303,16 @@ public:
   bool moveFallbackUp(const EntrypointId &id);
   bool enableFallback(const EntrypointId &id);
   std::vector<std::shared_ptr<RootItem>> queryFavorites(std::optional<int> limit = {});
+  bool moveFavoriteDown(const EntrypointId &id);
+  bool moveFavoriteUp(const EntrypointId &id);
   bool resetRanking(const EntrypointId &id);
   bool registerVisit(const EntrypointId &id);
   SearchHistory &searchHistory() { return m_searchHistory; }
   bool setItemAsFavorite(const EntrypointId &item, bool value = true);
   bool setProviderEnabled(const QString &providerId, bool value);
   bool disableItem(const EntrypointId &id);
-
   bool enableItem(const EntrypointId &id);
+  std::size_t favoriteCount() const;
 
   std::vector<RootProvider *> providers() const;
   std::vector<ExtensionRootProvider *> extensions() const;

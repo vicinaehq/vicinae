@@ -1,6 +1,6 @@
 #include "news-service.hpp"
-#include "actions/app/app-actions.hpp"
-#include "builtin_icon.hpp"
+#include "actions/app-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "config/config.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"

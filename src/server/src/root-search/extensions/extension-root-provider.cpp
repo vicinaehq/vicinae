@@ -1,10 +1,10 @@
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "actions/extension/extension-actions.hpp"
+#include "actions/extension-actions.hpp"
 #include "actions/fallback-actions.hpp"
-#include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
-#include "command-actions.hpp"
-#include "common.hpp"
+#include "actions/root-search-actions.hpp"
+#include "actions/clipboard-actions.hpp"
+#include "actions/command-actions.hpp"
+#include "command/command-types.hpp"
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -38,7 +38,8 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
 
   mainSection->addAction(open);
 
-  for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto action :
+       RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 

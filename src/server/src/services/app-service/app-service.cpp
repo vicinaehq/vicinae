@@ -1,4 +1,8 @@
 #include "app-service.hpp"
+#include "utils/timer.hpp"
+#include <chrono>
+#include <qlogging.h>
+#include <qnumeric.h>
 #ifdef Q_OS_MACOS
 #include "services/app-service/macos/mac-app-database.hpp"
 #elif defined(Q_OS_WIN)
@@ -6,7 +10,7 @@
 #else
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #endif
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include <QProcess>
 #include <filesystem>
 #include <qcontainerfwd.h>
@@ -34,6 +38,10 @@ std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #else
   return std::make_unique<XdgAppDatabase>();
 #endif
+}
+
+std::unique_ptr<QProcess> AppService::shellProcess(const QString &code) const {
+  return m_provider->shellProcess(code);
 }
 
 std::shared_ptr<AbstractApplication> AppService::terminalEmulator() const {
@@ -79,6 +87,7 @@ std::shared_ptr<AbstractApplication> AppService::textEditor() const {
 }
 
 std::shared_ptr<AbstractApplication> AppService::webBrowser() const { return m_provider->webBrowser(); }
+bool AppService::setWebBrowser(const AbstractApplication &app) { return m_provider->setWebBrowser(app); }
 std::shared_ptr<AbstractApplication> AppService::fileBrowser() const { return m_provider->fileBrowser(); }
 
 std::vector<std::shared_ptr<AbstractApplication>> AppService::list(const AppListOptions &opts) const {
@@ -108,6 +117,14 @@ bool AppService::showInFileBrowser(const std::filesystem::path &path, bool selec
 
 bool AppService::openLocation(const AbstractApplication &app) const { return m_provider->openLocation(app); }
 
+bool AppService::canUninstall(const AbstractApplication &app) const { return m_provider->canUninstall(app); }
+
+bool AppService::uninstall(const AbstractApplication &app) {
+  if (!m_provider->canUninstall(app) || !m_provider->uninstall(app)) return false;
+  scanSync();
+  return true;
+}
+
 void AppService::handleDirectoryChanged(const QString &path) {
   (void)path;
   m_rescanDebounce->start();
@@ -135,15 +152,24 @@ AppService::findCuratedOpeners(const QString &target) const {
 }
 
 bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
-  for (const auto &path : m_watcher->directories()) {
-    m_watcher->removePath(path);
+  QStringList current = m_watcher->directories();
+  QStringList desired;
+  std::error_code ec{};
+
+  for (const auto &path : paths) {
+    if (fs::is_directory(path, ec)) { desired.append(QString::fromStdString(path.string())); }
   }
 
-  auto isDir = [](auto &&path) { return fs::is_directory(path); };
+  desired.sort();
+  desired.removeDuplicates();
+  current.sort();
 
-  for (const auto &path : paths | std::views::filter(isDir)) {
-    m_watcher->addPath(QString::fromStdWString(path.wstring()));
-  }
+  // It's important that we don't reinstall the watches if the directories haven't changed.
+  // On some systems it's a no-op, on others like macOS it can trigger a new flood
+  // of events, which can create some performance problems.
+  if (current == desired) return true;
+  if (!current.isEmpty()) m_watcher->removePaths(current);
+  if (!desired.isEmpty()) m_watcher->addPaths(desired);
 
   return true;
 }
@@ -158,7 +184,11 @@ bool AppService::scanSync() {
 AppService::AppService(OmniDatabase &db) : m_db(db), m_provider(createLocalProvider()) {
   m_rescanDebounce->setSingleShot(true);
   m_rescanDebounce->setInterval(500);
-  connect(m_rescanDebounce, &QTimer::timeout, this, [this] { scanSync(); });
+  connect(m_rescanDebounce, &QTimer::timeout, this, [this] {
+    qInfo() << "Scanning apps again, following a directory change...";
+    auto elapsed = timer::time([&]() { scanSync(); });
+    qInfo() << "Done scanning apps, took" << elapsed.count() / 1e6 << "ms";
+  });
 
   reinstallWatches(m_provider->searchPaths());
   connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, &AppService::handleDirectoryChanged);
