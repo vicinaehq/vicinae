@@ -23,6 +23,7 @@
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
 #ifdef Q_OS_MACOS
+#include "root-search/apple-shortcuts/apple-shortcut-root-provider.hpp"
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
 #endif
 #ifdef Q_OS_LINUX
@@ -59,8 +60,10 @@
 #include "services/news/news-service.hpp"
 #include "services/telemetry/telemetry-service.hpp"
 #include "services/update/update-service.hpp"
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
 #include "services/update/macos-update-installer.hpp"
+#elif defined(Q_OS_WIN)
+#include "services/update/windows-update-installer.hpp"
 #else
 #include "services/update/null-update-installer.hpp"
 #endif
@@ -372,8 +375,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setFileChooserService(std::make_unique<FileChooserService>(nullptr));
     registry->setNewsService(std::make_unique<NewsService>(*registry->config()));
     registry->setTelemetry(std::make_unique<TelemetryService>(*registry->config()));
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
     auto updateInstaller = std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<MacosUpdateInstaller>());
+#elif defined(Q_OS_WIN)
+    auto updateInstaller =
+        std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<WindowsUpdateInstaller>());
 #else
     auto updateInstaller = std::unique_ptr<AbstractUpdateInstaller>(std::make_unique<NullUpdateInstaller>());
 #endif
@@ -432,6 +438,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     root->loadProvider(std::make_unique<ScriptRootProvider>(*registry->scriptDb()));
     root->loadProvider(std::make_unique<BrowserTabProvider>(*registry->browserExtension()));
 #ifdef Q_OS_MACOS
+    root->loadProvider(std::make_unique<AppleShortcutRootProvider>(*registry->toastService()));
     root->loadProvider(std::make_unique<MacSettingsRootProvider>());
 #endif
 #ifdef Q_OS_LINUX
