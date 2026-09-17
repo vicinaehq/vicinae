@@ -77,6 +77,7 @@ Popup {
     }
 
     background: PopoverBackground {
+        surfaceComponent: materialImpl.style.backgroundComponent
         popup: root
         backgroundOpacity: root.backgroundOpacity
         frostedOpacity: root.frostedOpacity
