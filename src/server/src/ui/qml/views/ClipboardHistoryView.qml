@@ -23,8 +23,13 @@ Item {
         return listView.moveSectionDown();
     }
 
+    SearchBarInset {
+        id: searchBarInset
+    }
+
     ColumnLayout {
         anchors.fill: parent
+        anchors.topMargin: searchBarInset.value
         spacing: 0
 
         RowLayout {
@@ -74,7 +79,7 @@ Item {
             }
         }
 
-        ViciDivider {
+        ContentDivider {
             Layout.fillWidth: true
         }
 

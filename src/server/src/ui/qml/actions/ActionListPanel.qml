@@ -7,6 +7,7 @@ import Vicinae
 Item {
     id: root
 
+    property PopupMaterialStyle popupStyle: null
     required property ActionPanelModel model
     property var boundActions: root.model
     property ActionPanelController controller: Launcher.actionPanel
@@ -184,6 +185,7 @@ Item {
                 Component {
                     id: actionComponent
                     ActionItemDelegate {
+                        popupStyle: root.popupStyle
                         width: delegateLoader.width
                         title: delegateLoader.title
                         iconSource: delegateLoader.iconSource

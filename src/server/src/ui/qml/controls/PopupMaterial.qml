@@ -7,6 +7,11 @@ Item {
 
     readonly property int _radius: Math.min(Config.borderRounding, 15)
     readonly property alias macImpl: macLoader.item
+    readonly property PopupMaterialStyle style: (macLoader.item as PopupMaterialStyle) ?? defaultStyle
+
+    PopupMaterialStyle {
+        id: defaultStyle
+    }
 
     readonly property var _window: root.Window.window
     // Qt.Tool contains the Qt.Popup bit, so mask the full window type or the

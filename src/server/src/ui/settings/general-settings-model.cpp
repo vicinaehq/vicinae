@@ -198,6 +198,9 @@ static QVariantList wrapSection(const QString &title, const QVariantList &items)
 
 QVariantList GeneralSettingsModel::windowMaterialItems() const {
   QVariantList items;
+#ifdef Q_OS_MACOS
+  items.append(makeDropdownItem(QStringLiteral("auto"), tr("Automatic")));
+#endif
   items.append(makeDropdownItem(QStringLiteral("none"), tr("None")));
   items.append(makeDropdownItem(QStringLiteral("blur"), tr("Blurred")));
   if (platform::supports(platform::Capability::LiquidGlass))
@@ -206,6 +209,10 @@ QVariantList GeneralSettingsModel::windowMaterialItems() const {
 }
 
 QVariant GeneralSettingsModel::currentWindowMaterial() const {
+#ifdef Q_OS_MACOS
+  if (cfg().launcherWindow.material == "auto")
+    return makeDropdownItem(QStringLiteral("auto"), tr("Automatic"));
+#endif
   auto id = QString::fromStdString(
       cfg().launcherWindow.resolvedMaterial(platform::supports(platform::Capability::LiquidGlass),
                                             platform::supports(platform::Capability::WindowMaterial)));
