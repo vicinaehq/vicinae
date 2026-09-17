@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QImage>
 #include <QUrl>
 
 #include <filesystem>
@@ -16,10 +15,6 @@ using NoData = std::monostate;
 
 struct File {
   std::filesystem::path path;
-};
-
-struct Image {
-  QImage data;
 };
 
 struct Urls {
@@ -39,8 +34,7 @@ struct SelectionRecordHandle {
   QString id;
 };
 
-using Content =
-    std::variant<NoData, File, Image, Urls, Text, Html, SelectionRecordHandle, ClipboardSelection>;
+using Content = std::variant<NoData, File, Urls, Text, Html, SelectionRecordHandle, ClipboardSelection>;
 
 struct ReadContent {
   QString text;

@@ -67,10 +67,6 @@ bool ClipboardService::copyContent(Clipboard::Content content, const Clipboard::
   const auto visitor = overloads{
       [&](const Clipboard::Html &html) { return copyHtml(html, options); },
       [&](const Clipboard::File &file) { return copyFile(file.path, options); },
-      [&](const Clipboard::Image &image) {
-        auto data = Clipboard::mimeDataForContent(image);
-        return data && copyQMimeData(data.release(), options);
-      },
       [&](const Clipboard::Urls &urls) { return copyUrls(urls.values, options); },
       [&](const Clipboard::Text &text) { return copyText(text.text, options); },
       [&](ClipboardSelection &&selection) { return copySelection(std::move(selection), options); },

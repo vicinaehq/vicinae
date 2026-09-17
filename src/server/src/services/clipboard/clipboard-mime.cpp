@@ -26,9 +26,6 @@ std::unique_ptr<QMimeData> mimeDataForContent(const Content &content) {
           if (value.text) data->setText(*value.text);
         } else if constexpr (std::same_as<T, File>) {
           data->setUrls({QUrl::fromLocalFile(QString::fromStdString(value.path.string()))});
-        } else if constexpr (std::same_as<T, Image>) {
-          if (value.data.isNull()) return nullptr;
-          data->setImageData(value.data);
         } else if constexpr (std::same_as<T, Urls>) {
           data->setUrls(QList<QUrl>(value.values.begin(), value.values.end()));
         } else {

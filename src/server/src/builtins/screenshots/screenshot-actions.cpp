@@ -1,8 +1,6 @@
 #include <QDesktopServices>
 #include <QFile>
-#include <QImageReader>
 #include <QPointer>
-#include <QtConcurrent/QtConcurrentRun>
 #include "builtins/screenshots/screenshot-actions.hpp"
 #include "actions/app-actions.hpp"
 #include "actions/clipboard-actions.hpp"
@@ -24,59 +22,33 @@ void addRefresh(ActionPanelState &panel) {
 } // namespace
 
 void ScreenshotActions::transfer(const Screenshot &item, bool paste, const ApplicationContext *ctx) {
+  const bool recording = item.kind == Screenshot::Kind::Recording;
+  auto toast = ctx->services->toastService();
   if (paste && !ctx->services->pasteService()->supportsPaste()) {
-    ctx->services->toastService()->failure(tr("Cannot paste"),
-                                           tr("Allow Accessibility access to paste into other apps."));
+    toast->failure(tr("Cannot paste"), tr("Allow Accessibility access to paste into other apps."));
     return;
   }
-  if (item.kind == Screenshot::Kind::Recording) {
-    auto toast = ctx->services->toastService();
-    if (!QFile::exists(QString::fromStdString(item.path.string()))) {
-      toast->failure(tr("Could not read recording"), tr("The file may have been moved or deleted."));
-      ctx->services->screenshots()->refresh();
-      return;
-    }
-    const Clipboard::File content{item.path};
-    if (paste) {
-      if (ctx->services->pasteService()->pasteContent(content)) {
-        ctx->navigation->closeWindow();
-      } else {
-        toast->failure(tr("Could not paste recording"));
-      }
-    } else if (ctx->services->clipman()->copyContent(content)) {
-      ctx->navigation->showHud(tr("Recording copied"), BuiltinIcon::CopyClipboard);
-    } else {
-      toast->failure(tr("Could not copy recording"));
-    }
+  if (!QFile::exists(QString::fromStdString(item.path.string()))) {
+    toast->failure(recording ? tr("Could not read recording") : tr("Could not read screenshot"),
+                   tr("The file may have been moved or deleted."));
+    ctx->services->screenshots()->refresh();
     return;
   }
-  ctx->services->toastService()->dynamic(tr("Loading screenshot..."));
-  QtConcurrent::run([path = item.path] {
-    QImageReader reader(QString::fromStdString(path.string()));
-    reader.setAutoTransform(true);
-    return reader.read();
-  }).then(ctx->navigation.get(), [ctx, paste](const QImage &image) {
-    auto toast = ctx->services->toastService();
-    if (image.isNull()) {
-      toast->failure(tr("Could not read screenshot"), tr("The file may have been moved or deleted."));
-      ctx->services->screenshots()->refresh();
-      return;
-    }
-    const Clipboard::Image content{image};
-    if (paste) {
-      if (!ctx->services->pasteService()->pasteContent(content)) {
-        toast->failure(tr("Could not paste screenshot"));
-        return;
-      }
+  const Clipboard::File content{item.path};
+  if (paste) {
+    if (ctx->services->pasteService()->pasteContent(content)) {
       toast->clear();
       ctx->navigation->closeWindow();
-    } else if (ctx->services->clipman()->copyContent(content)) {
-      toast->clear();
-      ctx->navigation->showHud(tr("Screenshot copied"), BuiltinIcon::CopyClipboard);
     } else {
-      toast->failure(tr("Could not copy screenshot"));
+      toast->failure(recording ? tr("Could not paste recording") : tr("Could not paste screenshot"));
     }
-  });
+  } else if (ctx->services->clipman()->copyContent(content)) {
+    toast->clear();
+    ctx->navigation->showHud(recording ? tr("Recording copied") : tr("Screenshot copied"),
+                             BuiltinIcon::CopyClipboard);
+  } else {
+    toast->failure(recording ? tr("Could not copy recording") : tr("Could not copy screenshot"));
+  }
 }
 
 void ScreenshotActions::pasteLast(const ApplicationContext *ctx) {
@@ -160,7 +132,6 @@ std::unique_ptr<ActionPanelState> ScreenshotActions::panel(const Screenshot &ite
     }
   }));
   section = panel->createSection();
-  if (!recording) section->addAction(new CopyToClipboardAction(Clipboard::File{path}, tr("Copy File")));
   section->addAction(new CopyToClipboardAction(Clipboard::Text{filename}, tr("Copy File Path")));
   auto trash = new StaticAction(tr("Move to Trash"), BuiltinIcon::Trash, [filename](ApplicationContext *ctx) {
     if (QFile::moveToTrash(filename)) {
