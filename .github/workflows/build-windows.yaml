@@ -39,7 +39,8 @@ jobs:
     steps:
       - name: Require signing for releases
         if: inputs.tag != '' && env.SIGNING != 'true'
-        run: throw "release builds must be signed: AZURE_* secrets are missing"
+        run: |
+          throw "release builds must be signed (AZURE_* secrets are missing)"
 
       - name: Checkout code
         uses: actions/checkout@v4
