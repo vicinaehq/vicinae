@@ -16,7 +16,6 @@
 #include <sys/xattr.h>
 #include <utility>
 #include "services/screenshots/macos/macos-screenshot-provider.hpp"
-#include "services/screenshots/macos/screenshot-files.hpp"
 
 namespace {
 
@@ -49,10 +48,7 @@ bool hasCaptureAttribute(const QString &path) {
   return [type isKindOfClass:NSString.class] && [type length] > 0;
 }
 
-} // namespace
-
-ScreenshotResult MacosScreenshots::readFiles(std::vector<Screenshot> candidates, const QString &directory,
-                                             bool queryFailed) {
+ScreenshotResult readFiles(std::vector<Screenshot> candidates, const QString &directory, bool queryFailed) {
   @autoreleasepool {
     ScreenshotResult result;
     QDir folder(directory);
@@ -108,6 +104,8 @@ ScreenshotResult MacosScreenshots::readFiles(std::vector<Screenshot> candidates,
   }
 }
 
+} // namespace
+
 void MacosScreenshotProvider::refresh() {
   QtConcurrent::run([] {
     @autoreleasepool {
@@ -115,7 +113,7 @@ void MacosScreenshotProvider::refresh() {
       MDQueryRef query = MDQueryCreate(
           kCFAllocatorDefault, CFSTR("kMDItemIsScreenCapture == 1 || kMDItemScreenCaptureType == '*'"),
           nullptr, nullptr);
-      if (!query) return MacosScreenshots::readFiles({}, directory, true);
+      if (!query) return readFiles({}, directory, true);
 
       NSArray *scopes = @[ (__bridge NSString *)kMDQueryScopeHome, directory.toNSString() ];
       MDQuerySetSearchScope(query, (__bridge CFArrayRef)scopes, 0);
@@ -138,7 +136,7 @@ void MacosScreenshotProvider::refresh() {
         }
       }
       CFRelease(query);
-      return MacosScreenshots::readFiles(std::move(candidates), directory, !succeeded);
+      return readFiles(std::move(candidates), directory, !succeeded);
     }
   }).then(this, [this](ScreenshotResult result) { emit refreshed(std::move(result)); });
 }

@@ -26,9 +26,6 @@ include(Utils)
 # Vicinae build configuration options
 
 option(BUILD_TESTS "Build test suites for various vicinae components" OFF)
-if (BUILD_TESTS)
-	enable_testing()
-endif()
 option(IGNORE_CCACHE "Always ignore ccache/sccache even if installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)

@@ -13,7 +13,6 @@
 #include <QVariant>
 
 #include "services/clipboard/clipboard-mime.hpp"
-#include "services/clipboard/macos/macos-pasteboard.hpp"
 
 namespace {
 NSString *const CONCEALED_UTI = @"org.nspasteboard.ConcealedType";
@@ -211,11 +210,6 @@ void MacosClipboardServer::poll() {
 }
 
 bool MacosClipboardServer::writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) {
-  return MacosClipboard::writePasteboard([NSPasteboard generalPasteboard], data, options);
-}
-
-bool MacosClipboard::writePasteboard(NSPasteboard *pasteboard, QMimeData *data,
-                                     const Clipboard::CopyOptions &options) {
   @autoreleasepool {
     NSPasteboardItem *item = [[NSPasteboardItem alloc] init];
 
@@ -289,7 +283,8 @@ bool MacosClipboard::writePasteboard(NSPasteboard *pasteboard, QMimeData *data,
 
     if (objects.count == 0) { return false; }
 
-    [pasteboard clearContents];
-    return [pasteboard writeObjects:objects] == YES;
+    NSPasteboard *pb = [NSPasteboard generalPasteboard];
+    [pb clearContents];
+    return [pb writeObjects:objects] == YES;
   }
 }
