@@ -56,6 +56,12 @@ Item {
         id: statusBarInset
     }
 
+    SearchBarInset {
+        id: searchBarInset
+    }
+
+    Component.onCompleted: searchBarInset.initializePosition(flickable)
+
     Flickable {
         id: flickable
         anchors.fill: parent
@@ -65,6 +71,7 @@ Item {
         flickableDirection: Flickable.VerticalFlick
         boundsBehavior: Flickable.StopAtBounds
         bottomMargin: statusBarInset.value
+        topMargin: searchBarInset.value
         visible: root.host.isReady
 
         ViciWheelHandler {
@@ -120,10 +127,11 @@ Item {
                             }
                         }
 
-                        Rectangle {
+                        ContentDivider {
                             Layout.preferredWidth: 1
                             Layout.preferredHeight: 14
-                            color: Theme.divider
+                            vertical: true
+                            fallbackColor: Theme.divider
                         }
 
                         RowLayout {
@@ -152,11 +160,12 @@ Item {
                                 spacing: 0
                                 visible: root.platformIcons[platformRow.modelData] !== undefined
 
-                                Rectangle {
+                                ContentDivider {
                                     visible: platformRow.index === 0
                                     width: 1
                                     height: 14
-                                    color: Theme.divider
+                                    vertical: true
+                                    fallbackColor: Theme.divider
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
@@ -212,10 +221,10 @@ Item {
                 }
             }
 
-            Rectangle {
+            ContentDivider {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: Theme.divider
+                fallbackColor: Theme.divider
             }
 
             Rectangle {
@@ -351,11 +360,11 @@ Item {
                 }
             }
 
-            Rectangle {
+            ContentDivider {
                 visible: root.host.hasScreenshots
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: Theme.divider
+                fallbackColor: Theme.divider
             }
 
             RowLayout {
@@ -389,10 +398,10 @@ Item {
                         }
                     }
 
-                    Rectangle {
+                    ContentDivider {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
-                        color: Theme.divider
+                        fallbackColor: Theme.divider
                     }
 
                     ColumnLayout {
@@ -445,22 +454,23 @@ Item {
                                     }
                                 }
 
-                                Rectangle {
+                                ContentDivider {
                                     visible: commandItem.index < root.host.commands.length - 1
                                     Layout.fillWidth: true
                                     Layout.topMargin: 15
                                     Layout.preferredHeight: 1
-                                    color: Theme.divider
+                                    fallbackColor: Theme.divider
                                 }
                             }
                         }
                     }
                 }
 
-                Rectangle {
+                ContentDivider {
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    color: Theme.divider
+                    vertical: true
+                    fallbackColor: Theme.divider
                 }
 
                 ColumnLayout {

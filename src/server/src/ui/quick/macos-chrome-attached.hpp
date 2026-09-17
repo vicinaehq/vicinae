@@ -136,10 +136,13 @@ class MacOSPanelAttached : public QObject {
   Q_OBJECT
   Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
   Q_PROPERTY(int windowLevel READ windowLevel WRITE setWindowLevel NOTIFY windowLevelChanged)
+  Q_PROPERTY(
+      bool attachedToParent READ attachedToParent WRITE setAttachedToParent NOTIFY attachedToParentChanged)
 
 signals:
   void enabledChanged();
   void windowLevelChanged();
+  void attachedToParentChanged();
   void resignKey();
 
 public:
@@ -151,6 +154,9 @@ public:
 
   int windowLevel() const { return m_windowLevel; }
   void setWindowLevel(int value);
+
+  bool attachedToParent() const { return m_attachedToParent; }
+  void setAttachedToParent(bool value);
 
   Q_INVOKABLE void placeBottomCenter(qreal bottomMargin);
 
@@ -181,6 +187,8 @@ private:
   bool m_enabled = false;
   bool m_surfaceReady = false;
   int m_windowLevel = 0;
+  bool m_attachedToParent = false;
+  bool m_ownsParentAttachment = false;
   void *m_resignKeyObserver = nullptr;
   void *m_observedNSWindow = nullptr;
   Snapshot m_snapshot;

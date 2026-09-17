@@ -458,14 +458,26 @@ void MacOSPanelAttached::setWindowLevel(int value) {
   if (m_enabled) apply();
 }
 
+void MacOSPanelAttached::setAttachedToParent(bool value) {
+  if (m_attachedToParent == value) return;
+  m_attachedToParent = value;
+  emit attachedToParentChanged();
+  if (m_enabled) apply();
+}
+
 void MacOSPanelAttached::trackWindow(QWindow *window) {
   m_window = window;
   if (!m_window) return;
   m_window->installEventFilter(this);
+  connect(m_window, &QWindow::transientParentChanged, this, [this] {
+    if (m_enabled) apply();
+  });
 }
 
 void MacOSPanelAttached::onWindowChanged(QQuickWindow *window) {
   if (m_window) {
+    revert();
+    disconnect(m_window, nullptr, this, nullptr);
     m_window->removeEventFilter(this);
     m_window = nullptr;
     m_surfaceReady = false;
@@ -566,6 +578,20 @@ void MacOSPanelAttached::apply() {
   // Set after floatingPanel, whose setter resets the level to NSFloatingWindowLevel.
   nswin.level = m_windowLevel;
 
+  // Native child panels stay above their owner through raises and window moves,
+  // without the input grab of a Qt.Popup window.
+  if (m_attachedToParent && m_window->transientParent() && m_window->transientParent()->handle()) {
+    NSWindow *parent = nsViewFromWinId(m_window->transientParent()->winId()).window;
+    if (parent && nswin.parentWindow != parent) {
+      [nswin.parentWindow removeChildWindow:nswin];
+      [parent addChildWindow:nswin ordered:NSWindowAbove];
+      m_ownsParentAttachment = true;
+    }
+  } else if (m_ownsParentAttachment) {
+    [nswin.parentWindow removeChildWindow:nswin];
+    m_ownsParentAttachment = false;
+  }
+
   installResignKeyObserver((__bridge void *)nswin);
 }
 
@@ -575,6 +601,11 @@ void MacOSPanelAttached::revert() {
   if (!nsview) return;
   NSWindow *nswin = nsview.window;
   if (!nswin) return;
+
+  if (m_ownsParentAttachment) {
+    [nswin.parentWindow removeChildWindow:nswin];
+    m_ownsParentAttachment = false;
+  }
 
   [nswin setStyleMask:(NSWindowStyleMask)m_snapshot.styleMask];
 
@@ -600,6 +631,15 @@ void MacOSPanelAttached::revert() {
 }
 
 bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
+  if (obj == m_window && event->type() == QEvent::Show && m_attachedToParent) {
+    // Qt reorders native tool windows while showing them, clearing their child attachment.
+    QMetaObject::invokeMethod(
+        this,
+        [this] {
+          if (m_window && m_window->isVisible()) apply();
+        },
+        Qt::QueuedConnection);
+  }
   if (obj == m_window && event->type() == QEvent::PlatformSurface) {
     auto *se = static_cast<QPlatformSurfaceEvent *>(event); // NOLINT
     if (se->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated) {
