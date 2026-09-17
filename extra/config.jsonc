@@ -124,7 +124,8 @@
 		// customize the format used for the clock, displayed in the
 		// root search status bar when there is nothing better to show.
 		"clock": {
-			"enabled": true,
+			// Disabled by default on macOS, enabled on other platforms.
+			// "enabled": true,
 
 			// defaults to localized "hh:mm" if not specified
 			// the format follows https://doc.qt.io/qt-6/qdate.html#fromString

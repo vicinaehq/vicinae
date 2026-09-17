@@ -8,6 +8,12 @@ Item {
     id: root
 
     readonly property real _bottomInset: statusBarInset.value
+    readonly property real topInset: searchBarInset.value
+    Component.onCompleted: searchBarInset.initializePosition(listView)
+
+    SearchBarInset {
+        id: searchBarInset
+    }
 
     StatusBarInset {
         id: statusBarInset
@@ -74,7 +80,7 @@ Item {
             return;
         if (listView.contentHeight <= 0)
             return;
-        const underfilled = listView.contentHeight <= listView.height;
+        const underfilled = listView.contentHeight + root.topInset <= listView.height;
         if (!underfilled && listView.atYBeginning)
             return;
         if (listView.contentY + listView.height >= listView.contentHeight - root.endReachedThreshold) {
@@ -99,6 +105,7 @@ Item {
 
         const previousContentY = listView.contentY;
         listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+        root._clearSearchBar(scrollTarget);
         return Math.abs(listView.contentY - previousContentY) > 0.5;
     }
 
@@ -112,8 +119,21 @@ Item {
             return;
         const usable = listView.height - root._bottomInset;
         const itemBottom = item.y + item.height;
-        if (listView.contentHeight > usable && itemBottom > listView.contentY + usable)
+        if (listView.contentHeight + root.topInset > usable && itemBottom > listView.contentY + usable)
             listView.contentY = itemBottom - usable;
+    }
+
+    function _resetScrollPosition() {
+        listView.forceLayout();
+        listView.contentY = listView.originY - listView.topMargin;
+    }
+
+    function _clearSearchBar(index) {
+        if (root.topInset <= 0)
+            return;
+        const item = listView.itemAtIndex(index);
+        if (item && item.y < listView.contentY + root.topInset)
+            listView.contentY = item.y - root.topInset - 4;
     }
 
     function moveDown() {
@@ -122,6 +142,7 @@ Item {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            root._clearSearchBar(scrollTarget);
             _liftAboveInset(next);
         }
         return true;
@@ -136,6 +157,7 @@ Item {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            root._clearSearchBar(scrollTarget);
             _liftAboveInset(next);
         }
         return true;
@@ -150,6 +172,7 @@ Item {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            root._clearSearchBar(scrollTarget);
             _liftAboveInset(next);
         }
         return true;
@@ -167,6 +190,7 @@ Item {
             listView.currentIndex = next;
             const scrollTarget = sectionScrollTarget(next, -1);
             listView.positionViewAtIndex(scrollTarget, ListView.Contain);
+            root._clearSearchBar(scrollTarget);
             _liftAboveInset(next);
         }
         return true;
@@ -189,6 +213,8 @@ Item {
         function onModelReset() {
             if (root.selectFirstOnReset || listView.currentIndex < 0 || listView.currentIndex >= listView.count) {
                 root.selectFirst();
+                if (root.topInset > 0)
+                    Qt.callLater(root._resetScrollPosition);
             }
             if (root.listModel)
                 root.listModel.setSelectedIndex(listView.currentIndex);
@@ -242,7 +268,7 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
             highlightMoveDuration: 0
             currentIndex: -1
-            topMargin: 4
+            topMargin: 4 + root.topInset
             bottomMargin: 4 + root._bottomInset
 
             property real _lastContentHeight: 0
@@ -268,11 +294,11 @@ Item {
             }
 
             ScrollBar.vertical: ViciScrollBar {
-                policy: listView.contentHeight > listView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                policy: listView.contentHeight + root.topInset > listView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }
         }
 
-        ViciDivider {
+        ContentDivider {
             visible: root._showDetail
             vertical: true
             Layout.fillHeight: true

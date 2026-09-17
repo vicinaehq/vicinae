@@ -183,8 +183,16 @@ jobs:
       tag: ${{ needs.build-binary.outputs.tag }}
       commit: ${{ needs.build-binary.outputs.commit }}
 
+  build-windows:
+    needs: build-binary
+    uses: ./.github/workflows/build-windows.yaml
+    secrets: inherit
+    with:
+      tag: ${{ needs.build-binary.outputs.tag }}
+      commit: ${{ needs.build-binary.outputs.commit }}
+
   publish-npm:
-    needs: [build-binary, build-appimage, build-macos-dmg]
+    needs: [build-binary, build-appimage, build-macos-dmg, build-windows]
     permissions:
       id-token: write
       contents: read
@@ -193,7 +201,7 @@ jobs:
       tag: ${{ needs.build-binary.outputs.tag }}
 
   publish-release:
-    needs: [build-binary, build-appimage, build-macos-dmg, publish-npm]
+    needs: [build-binary, build-appimage, build-macos-dmg, build-windows, publish-npm]
     runs-on: ubuntu-latest
     permissions:
       contents: write

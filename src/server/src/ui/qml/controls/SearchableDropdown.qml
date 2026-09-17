@@ -17,14 +17,16 @@ Item {
     signal popupClosed
 
     property bool compact: false
+    property bool flat: false
     property real minimumWidth: 0
+    readonly property real preferredWidth: flat ? Math.ceil(triggerButton.implicitWidth) : Math.max(triggerButton.implicitWidth, minimumWidth)
 
     property string placeholder: ""
     property bool readOnly: false
     property bool hasError: false
     property bool filled: false
 
-    width: compact ? Math.max(triggerButton.implicitWidth, minimumWidth) : implicitWidth
+    width: compact ? preferredWidth : implicitWidth
 
     property real _closedTime: 0
 
@@ -56,7 +58,7 @@ Item {
     FormInputBackground {
         anchors.fill: triggerButton
         radius: triggerButton.radius
-        filled: root.filled || root.compact
+        filled: !root.flat && (root.filled || root.compact)
         opacity: root.readOnly ? 0.5 : 1.0
     }
 
@@ -68,9 +70,9 @@ Item {
         width: root.compact ? root.width : implicitWidth
         height: root.compact ? 28 : implicitHeight
         radius: root.compact ? 6 : 8
-        color: "transparent"
+        color: root.flat && !root.readOnly && (buttonMouseArea.containsMouse || completionPopup.visible) ? Config.withAlpha(Theme.foreground, 0.08) : "transparent"
         border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (root.compact ? Theme.divider : Theme.inputBorder)), Config.surfaceOpacity)
-        border.width: 1
+        border.width: !root.flat || root.hasError || root.activeFocus ? 1 : 0
 
         RowLayout {
             id: buttonRow

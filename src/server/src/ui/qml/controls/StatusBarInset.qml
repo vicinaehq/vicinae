@@ -4,8 +4,8 @@ import QtQuick.Window
 import Vicinae
 
 /// Measures how much of `target`'s bottom edge is covered by the window's
-/// floating status bar. Bind the result to a Flickable's bottomMargin so
-/// content can scroll clear of the glass. Yields 0 when the bar is hidden or
+/// floating status bar and its scroll fade. Bind the result to a Flickable's
+/// bottomMargin so content can scroll clear of the glass. Yields 0 when the bar is hidden or
 /// the target already ends above it.
 Item {
     property Item target: parent
@@ -16,6 +16,7 @@ Item {
         if (!win || !(win.statusBarOverlap > 0) || !target || target.height <= 0)
             return 0;
         const bottom = target.mapToItem(null, 0, target.height).y;
-        return Math.max(0, Math.min(win.statusBarOverlap, bottom - win.statusBarTop));
+        const fadeInset = win.appearance.contentBottomInset;
+        return Math.max(0, Math.min(win.statusBarOverlap + fadeInset, bottom - win.statusBarTop + fadeInset));
     }
 }

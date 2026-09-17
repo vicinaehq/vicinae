@@ -38,7 +38,7 @@ RowLayout {
         contentPadding: 20
     }
 
-    ViciDivider {
+    ContentDivider {
         visible: root._hasMarkdown && root._hasMetadata
         vertical: true
         Layout.fillHeight: true
