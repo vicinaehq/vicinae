@@ -78,8 +78,11 @@ Popup {
         close()
 
     background: PopoverBackground {
+        surfaceComponent: materialImpl.style.backgroundComponent
         popup: recorder
-        PopupMaterial {}
+        PopupMaterial {
+            id: materialImpl
+        }
     }
 
     contentItem: ShortcutRecorderCapture {

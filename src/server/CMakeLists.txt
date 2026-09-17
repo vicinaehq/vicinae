@@ -695,6 +695,10 @@ if (APPLE)
 		src/services/clipboard/macos/macos-clipboard-server.mm
 		src/root-search/macos-settings/macos-settings-root-provider.hpp
 		src/root-search/macos-settings/macos-settings-root-provider.mm
+		src/root-search/apple-shortcuts/apple-shortcut-root-provider.hpp
+		src/root-search/apple-shortcuts/apple-shortcut-root-provider.cpp
+		src/services/apple-shortcuts/apple-shortcuts.hpp
+		src/services/apple-shortcuts/apple-shortcuts.mm
 		src/services/global-shortcuts/macos-global-shortcut-backend.hpp
 		src/services/global-shortcuts/macos-global-shortcut-backend.cpp
 		src/internal/keyboard/keyboard-macos.hpp
@@ -745,6 +749,7 @@ if (APPLE)
 		src/services/app-runtime/macos/mac-app-runtime.mm
 		src/services/clipboard/macos/macos-clipboard-server.mm
 		src/root-search/macos-settings/macos-settings-root-provider.mm
+		src/services/apple-shortcuts/apple-shortcuts.mm
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/files-service/macos/spotlight-recent-files-provider.mm
 		src/services/tray/macos/tray-service-macos.mm
@@ -762,7 +767,7 @@ if (APPLE)
 		src/services/menu-bar/macos-menu-bar.mm
 		src/app-platform-macos.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
-	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications")
+	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications" "-framework ScriptingBridge")
 
 	if (AUTO_ENABLE_AUTOSTART)
 		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
@@ -832,8 +837,10 @@ elseif (WIN32)
 		src/services/power-manager/windows/windows-power-manager.cpp
 		src/utils/win-chassis.hpp
 		src/utils/win-chassis.cpp
+		src/services/update/windows-update-installer.hpp
+		src/services/update/windows-update-installer.cpp
 	)
-	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore powrprof everything-sdk3)
+	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore powrprof everything-sdk3 wintrust crypt32)
 	add_compile_definitions(VICINAE_BUNDLE_ID="${VICINAE_BUNDLE_ID}")
 else()
 	list(APPEND SRCS
@@ -1102,12 +1109,18 @@ endif()
 
 set(VICINAE_QML_FILES
 	src/ui/qml/launcher/LauncherWindow.qml
+	src/ui/qml/launcher/LauncherWindowBase.qml
+	src/ui/qml/launcher/LauncherAppearance.qml
+	src/ui/qml/launcher/LauncherStatusBar.qml
 	src/ui/qml/controls/PopupMaterial.qml
+	src/ui/qml/controls/PopupItemBackground.qml
+	src/ui/qml/controls/PopupMaterialStyle.qml
 	src/ui/qml/controls/ViciPopover.qml
 	src/ui/qml/controls/PopoverBackground.qml
 	src/ui/qml/launcher/SearchBar.qml
 	src/ui/qml/views/GenericListView.qml
 	src/ui/qml/controls/StatusBarInset.qml
+	src/ui/qml/controls/SearchBarInset.qml
 	src/ui/qml/list/HoverResetOnModelChange.qml
 	src/ui/qml/list/HoverResetOnShow.qml
 	src/ui/qml/views/RootSearchList.qml
@@ -1137,6 +1150,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ViciScrollBar.qml
 	src/ui/qml/controls/ViciTextCursor.qml
 	src/ui/qml/controls/ViciDivider.qml
+	src/ui/qml/controls/ContentDivider.qml
 	src/ui/qml/controls/ViciToolTip.qml
 	src/ui/qml/views/ExtensionView.qml
 	src/ui/qml/views/MarkdownDetailView.qml
@@ -1239,12 +1253,23 @@ endif()
 if(APPLE)
 	list(APPEND VICINAE_QML_FILES
 		src/ui/qml/launcher/LauncherWindowMacOS.qml
+		src/ui/qml/launcher/LauncherAppearanceMacOS.qml
+		src/ui/qml/launcher/ScrollFadeMacOS.qml
+		src/ui/qml/controls/RoundedClipMacOS.qml
+		src/ui/qml/launcher/SearchBarMacOS.qml
+		src/ui/qml/launcher/LauncherStatusBarMacOS.qml
+		src/ui/qml/launcher/FloatingControlMacOS.qml
 		src/ui/qml/onboarding/OnboardingWindowMacOS.qml
 		src/ui/qml/hud/HudWindowMacOS.qml
 		src/ui/qml/controls/CompletionPanelMacOS.qml
 		src/ui/qml/controls/PopupMaterialMacOS.qml
+		src/ui/qml/controls/MaterialColorsMacOS.qml
+		src/ui/qml/controls/ContentDividerMacOS.qml
+		src/ui/qml/controls/PopupItemBackgroundMacOS.qml
+		src/ui/qml/controls/GlassSurfaceMacOS.qml
 		src/ui/qml/settings/SettingsWindowMacOS.qml
 	)
+	set_source_files_properties(src/ui/qml/controls/MaterialColorsMacOS.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 endif()
 
 if(WIN32)

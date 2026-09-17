@@ -37,6 +37,7 @@ private:
   Q_PROPERTY(bool blurEnabled READ blurEnabled NOTIFY changed)
   Q_PROPERTY(bool floatingStatusBar READ floatingStatusBar NOTIFY changed)
   Q_PROPERTY(QString windowMaterial READ windowMaterial NOTIFY changed)
+  Q_PROPERTY(QString popupMaterial READ popupMaterial NOTIFY changed)
 
 signals:
   void changed();
@@ -115,6 +116,11 @@ public:
                                               platform::supports(platform::Capability::WindowMaterial)));
   }
   bool blurEnabled() const { return windowMaterial() != QStringLiteral("none"); }
+  QString popupMaterial() const {
+    return QString::fromStdString(
+        cfg().launcherWindow.resolvedPopupMaterial(platform::supports(platform::Capability::LiquidGlass),
+                                                   platform::supports(platform::Capability::WindowMaterial)));
+  }
   bool floatingStatusBar() const { return cfg().launcherWindow.floatingStatusBar; }
 
   Q_INVOKABLE static QColor withAlpha(const QColor &c, qreal alpha) {

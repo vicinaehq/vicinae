@@ -50,7 +50,7 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Vicinae uses Apple Events to perform system power actions such as restart, shut down, and log out.</string>
+	<string>Vicinae uses Apple Events to list and run your Apple Shortcuts and perform system power actions such as restart, shut down, and log out.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Vicinae extensions can read and manage your calendar events.</string>
 	<key>NSCalendarsUsageDescription</key>

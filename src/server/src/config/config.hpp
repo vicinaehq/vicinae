@@ -90,11 +90,12 @@ template <> struct Partial<Size> {
 struct WindowCSD {
   bool enabled = true;
 #ifdef Q_OS_MACOS
-  int rounding = 20;
+  int rounding = 26;
+  int borderWidth = 1;
 #else
   int rounding = 10;
-#endif
   int borderWidth = 3;
+#endif
   int shadowSize = 12;
 };
 
@@ -114,7 +115,11 @@ template <> struct Partial<WindowCompactMode> {
 };
 
 struct ClockConfig {
+#ifdef Q_OS_MACOS
+  bool enabled = false;
+#else
   bool enabled = true;
+#endif
   unsigned interval = 60;
   std::optional<std::string> format;
 };
@@ -127,8 +132,13 @@ template <> struct Partial<ClockConfig> {
 struct WindowConfig {
   static constexpr float OPAQUE_OPACITY = 1.0F;
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
+#ifdef Q_OS_MACOS
+  static constexpr float BLUR_OPACITY = 0.55F;
+  static constexpr float GLASS_POPUP_OPACITY = 0.8F;
+#else
   static constexpr float BLUR_OPACITY = 0.9F;
   static constexpr float GLASS_POPUP_OPACITY = 0.2F;
+#endif
   static constexpr float SURFACE_OPACITY_LIFT = 0.65F;
 
   std::optional<float> opacity;
@@ -151,8 +161,15 @@ struct WindowConfig {
   std::string resolvedMaterial(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
     if (material != "auto") return material;
     if (!blur.enabled) return "none";
+#ifndef Q_OS_MACOS
     if (liquidGlassAvailable) return "liquid_glass";
+#endif
     return windowMaterialAvailable ? "blur" : "none";
+  }
+
+  std::string resolvedPopupMaterial(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
+    if (material == "auto" && blur.enabled && liquidGlassAvailable) return "liquid_glass";
+    return resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable);
   }
 
   float resolvedOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
@@ -163,10 +180,9 @@ struct WindowConfig {
     return OPAQUE_OPACITY;
   }
 
-  // Popups draw their own material layer; on liquid glass a fixed low tint keeps the
-  // glass legible regardless of the configured window opacity.
+  // Text-heavy popups use their own tint so content behind the material stays subdued.
   float resolvedPopupOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
-    if (resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass") {
+    if (resolvedPopupMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass") {
       return GLASS_POPUP_OPACITY;
     }
     return resolvedOpacity(liquidGlassAvailable, windowMaterialAvailable);

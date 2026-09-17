@@ -7,16 +7,18 @@ Item {
 
     property var tokens: []
     property color contentColor: Theme.foreground
+    property bool keycaps: true
+    property int keycapSize: 20
 
-    readonly property color _surfaceColor: Qt.rgba(root.contentColor.r, root.contentColor.g, root.contentColor.b, 0.08)
-    readonly property color _borderColor: Qt.rgba(root.contentColor.r, root.contentColor.g, root.contentColor.b, 0.14)
+    property color surfaceColor: Qt.rgba(root.contentColor.r, root.contentColor.g, root.contentColor.b, 0.08)
+    property color borderColor: Qt.rgba(root.contentColor.r, root.contentColor.g, root.contentColor.b, 0.14)
 
     implicitWidth: tokenRow.implicitWidth
     implicitHeight: tokenRow.implicitHeight
 
     Row {
         id: tokenRow
-        spacing: 4
+        spacing: root.keycaps ? 4 : 3
 
         Repeater {
             model: root.tokens || []
@@ -30,15 +32,16 @@ Item {
                 readonly property int tokenIcon: token["icon"] ?? -1
                 readonly property bool compact: tokenIcon >= 0 || tokenText.length <= 2
 
-                implicitHeight: 20
-                implicitWidth: Math.max(compact ? implicitHeight : 0, tokenContent.implicitWidth + (compact ? 10 : 12))
+                implicitHeight: root.keycapSize
+                implicitWidth: root.keycaps ? Math.max(compact ? implicitHeight : 0, tokenContent.implicitWidth + (compact ? 10 : 12)) : tokenContent.implicitWidth
 
                 Rectangle {
+                    visible: root.keycaps
                     anchors.fill: parent
                     radius: 6
-                    color: root._surfaceColor
+                    color: root.surfaceColor
                     border.width: 1
-                    border.color: root._borderColor
+                    border.color: root.borderColor
                 }
 
                 Item {
