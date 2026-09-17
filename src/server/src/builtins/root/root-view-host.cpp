@@ -38,7 +38,7 @@ void RootViewHost::scheduleNextClockTick() {
   ViewScope scope(context(), this);
 
   if (!cc.enabled) {
-    context()->navigation->setNavigationTitle("");
+    scope.setNavigationTitle("");
     m_clockTimer->stop();
     return;
   }
@@ -114,7 +114,9 @@ bool RootViewHost::inputFilter(QKeyEvent *event) {
   auto &nav = context()->navigation;
   auto &cfg = context()->services->config()->value();
 
-  if (!event->modifiers() && event->key() == Qt::Key_Space) { return tryAliasFastTrack(); }
+  if (!(event->modifiers() & ~Qt::ShiftModifier) && event->key() == Qt::Key_Space) {
+    return tryAliasFastTrack();
+  }
 
   // wrapped navigation is incompatible with overriding key up, so we disable history in that case
   const bool activatableHistory =

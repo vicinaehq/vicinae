@@ -6,6 +6,7 @@ import Vicinae
 Window {
     id: root
 
+    property color backgroundColor: Config.withAlpha(Theme.background, Config.windowOpacity)
     property int step: 0
     readonly property bool permissionsAvailable: Onboarding.permissions.supported
     readonly property bool shortcutsAvailable: Platform.supports("globalShortcuts")
@@ -79,7 +80,7 @@ Window {
     Rectangle {
         id: background
         anchors.fill: parent
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Config.windowOpacity)
+        color: root.backgroundColor
         clip: true
         focus: true
 

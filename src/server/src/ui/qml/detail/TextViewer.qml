@@ -23,24 +23,39 @@ ScrollView {
         height: root.availableHeight
     }
 
-    Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
+    Component.onCompleted: {
+        contentItem.boundsBehavior = Flickable.StopAtBounds;
+        if (searchBarInset.headerHeight > 0)
+            Qt.callLater(root.scrollToFirstMatch);
+    }
 
     onTextChanged: Qt.callLater(scrollToFirstMatch)
 
     function scrollToFirstMatch() {
         const flickable = root.contentItem;
         if (matchHighlighter.firstMatchPosition < 0) {
-            flickable.contentY = 0;
+            flickable.contentY = -searchBarInset.value;
             return;
         }
         const rect = textEdit.positionToRectangle(matchHighlighter.firstMatchPosition);
-        const target = rect.y - (root.height - rect.height) / 3;
-        flickable.contentY = Math.max(0, Math.min(target, textEdit.height - root.height));
+        const target = rect.y - searchBarInset.value - (root.height - searchBarInset.value - rect.height) / 3;
+        flickable.contentY = Math.max(-searchBarInset.value, Math.min(target, textEdit.height - root.height));
     }
 
     StatusBarInset {
         id: statusBarInset
         target: root
+    }
+
+    SearchBarInset {
+        id: searchBarInset
+        target: root
+    }
+
+    Binding {
+        target: root.contentItem
+        property: "topMargin"
+        value: searchBarInset.value
     }
 
     Binding {
