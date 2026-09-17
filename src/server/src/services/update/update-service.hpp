@@ -38,6 +38,7 @@ public:
   const std::optional<AvailableUpdate> &available() const { return m_available; }
   Status status() const { return m_status; }
   QString currentVersionTag() const;
+  static std::filesystem::path downloadDir();
   bool checksSupported() const { return m_currentVersion.has_value() && m_installer->supported(); }
 
   void downloadAndInstall();

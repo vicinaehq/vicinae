@@ -20,11 +20,25 @@ ScrollView {
         height: root.availableHeight
     }
 
-    Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
+    Component.onCompleted: {
+        contentItem.boundsBehavior = Flickable.StopAtBounds;
+        searchBarInset.initializePosition(root.flick);
+    }
 
     StatusBarInset {
         id: statusBarInset
         target: root
+    }
+
+    SearchBarInset {
+        id: searchBarInset
+        target: root
+    }
+
+    Binding {
+        target: root.contentItem
+        property: "topMargin"
+        value: searchBarInset.value
     }
 
     Binding {
@@ -38,11 +52,12 @@ ScrollView {
     }
 
     function moveUp() {
-        root.flick.contentY = Math.max(0, root.flick.contentY - 40);
+        root.flick.contentY = Math.max(-searchBarInset.value, root.flick.contentY - 40);
         return true;
     }
     function moveDown() {
-        root.flick.contentY = Math.min(root.flick.contentHeight - height + root.flick.bottomMargin, root.flick.contentY + 40);
+        const nextY = Math.min(root.flick.contentHeight - height + root.flick.bottomMargin, root.flick.contentY + 40);
+        root.flick.contentY = searchBarInset.value > 0 ? Math.max(-searchBarInset.value, nextY) : nextY;
         return true;
     }
     function moveSectionUp() {
@@ -55,7 +70,7 @@ ScrollView {
         textArea.forceActiveFocus();
     }
     function scrollToBottom() {
-        root.flick.contentY = Math.max(0, root.flick.contentHeight - root.height + root.flick.bottomMargin);
+        root.flick.contentY = Math.max(-searchBarInset.value, root.flick.contentHeight - root.height + root.flick.bottomMargin);
     }
 
     TextArea {

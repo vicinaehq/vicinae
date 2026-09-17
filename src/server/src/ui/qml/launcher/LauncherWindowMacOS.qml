@@ -3,6 +3,16 @@ import QtQuick
 import Vicinae
 
 LauncherWindow {
+    id: root
+    appearance: LauncherAppearanceMacOS {}
+    searchBarComponent: SearchBarMacOS {
+        commandStack: root.commandStack
+    }
+    statusBarComponent: LauncherStatusBarMacOS {}
+    contentEffect: ScrollFadeMacOS {
+        topInset: root.searchBarOverlap
+        bottomInset: root.statusBarOverlap
+    }
     nativeChrome: true
     color: "transparent"
     shadowPadding: 0
@@ -19,9 +29,9 @@ LauncherWindow {
     MacOSWindow.enabled: true
     MacOSWindow.cornerRadius: cornerRadius
     MacOSWindow.blurEnabled: blurEnabled
-    MacOSWindow.material: Config.windowMaterial === "liquid_glass" ? "liquidGlass" : "hud"
+    MacOSWindow.material: Config.windowMaterial === "liquid_glass" ? "liquidGlass" : "underWindowBackground"
     MacOSWindow.appearance: Theme.isDark ? "dark" : "light"
-    MacOSWindow.borderColor: Theme.mainWindowBorder
+    MacOSWindow.borderColor: Config.withAlpha(Theme.foreground, Theme.isDark ? 0.16 : 0.12)
     MacOSWindow.borderWidth: Config.borderWidth
 
     MacOSPanel.enabled: true

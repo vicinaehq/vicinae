@@ -128,11 +128,12 @@ Flickable {
                 description: qsTr("Show only the search bar at root; expand when a query is entered.")
                 SettingsToggle {
                     checked: root.model.compactMode
-                    onToggled: root.model.compactMode = checked
+                    onToggled: checked => root.model.compactMode = checked
                 }
             }
 
             SettingsRow {
+                visible: Style.configurableStatusBar
                 label: qsTr("Floating status bar")
                 description: qsTr("Let the status bar float over the content, which stays slightly visible under it. Disable to keep the content strictly above the status bar.")
                 SettingsToggle {

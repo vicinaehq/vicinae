@@ -98,6 +98,18 @@ private:
   std::shared_ptr<AbstractApplication> m_app;
 };
 
+class UninstallAppAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(UninstallAppAction)
+
+public:
+  UninstallAppAction(const std::shared_ptr<AbstractApplication> &app);
+
+  void execute(ApplicationContext *ctx) override;
+
+private:
+  std::shared_ptr<AbstractApplication> m_app;
+};
+
 class OpenInBrowserAction : public AbstractAction {
   Q_DECLARE_TR_FUNCTIONS(OpenInBrowserAction)
 

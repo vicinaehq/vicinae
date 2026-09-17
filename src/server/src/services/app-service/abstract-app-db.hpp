@@ -242,6 +242,9 @@ public:
    */
   virtual AppPtr locationOpener(const AbstractApplication &app) const = 0;
 
+  virtual bool canUninstall(const AbstractApplication &app) const { return false; }
+  virtual bool uninstall(const AbstractApplication &app) { return false; }
+
   /**
    * Open the system file browser for the provided path.
    * If `select` is true, implementations should try to reveal/select the item and

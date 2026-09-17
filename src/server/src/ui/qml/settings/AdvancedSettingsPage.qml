@@ -43,7 +43,7 @@ Flickable {
                 description: qsTr("Pop back in navigation on backspace when no input is present.")
                 SettingsToggle {
                     checked: root.model.popOnBackspace
-                    onToggled: root.model.popOnBackspace = checked
+                    onToggled: checked => root.model.popOnBackspace = checked
                 }
             }
 
@@ -52,7 +52,7 @@ Flickable {
                 description: qsTr("Activate items with a single click instead of requiring a double click.")
                 SettingsToggle {
                     checked: root.model.activateOnSingleClick
-                    onToggled: root.model.activateOnSingleClick = checked
+                    onToggled: checked => root.model.activateOnSingleClick = checked
                 }
             }
 
@@ -61,7 +61,7 @@ Flickable {
                 description: qsTr("Wrap around to the opposite end when moving past the first or last item.")
                 SettingsToggle {
                     checked: root.model.wrapNavigation
-                    onToggled: root.model.wrapNavigation = checked
+                    onToggled: checked => root.model.wrapNavigation = checked
                 }
             }
 
@@ -70,7 +70,7 @@ Flickable {
                 description: qsTr("Include IME Preedit strings as part of search queries.")
                 SettingsToggle {
                     checked: root.model.considerPreedit
-                    onToggled: root.model.considerPreedit = checked
+                    onToggled: checked => root.model.considerPreedit = checked
                 }
             }
 
@@ -99,7 +99,7 @@ Flickable {
                 description: qsTr("Files are searched asynchronously, so if enabled you should expect a slight delay for file search results to show up.")
                 SettingsToggle {
                     checked: root.model.searchFilesInRoot
-                    onToggled: root.model.searchFilesInRoot = checked
+                    onToggled: checked => root.model.searchFilesInRoot = checked
                 }
             }
 
@@ -129,7 +129,7 @@ Flickable {
                 description: qsTr("Whether to spawn the input server at startup. This needs to be enabled in order to support snippets, paste to active window, and other features that require input monitoring or injection.")
                 SettingsToggle {
                     checked: root.model.inputServerEnabled
-                    onToggled: root.model.inputServerEnabled = checked
+                    onToggled: checked => root.model.inputServerEnabled = checked
                 }
             }
 
@@ -139,7 +139,7 @@ Flickable {
                 showSeparator: false
                 SettingsToggle {
                     checked: root.model.trayEnabled
-                    onToggled: root.model.trayEnabled = checked
+                    onToggled: checked => root.model.trayEnabled = checked
                 }
             }
         }

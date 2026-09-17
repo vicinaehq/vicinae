@@ -4,7 +4,12 @@ import Vicinae
 
 Item {
     id: root
-    height: 30
+    readonly property LauncherAppearance appearance: (root.Window.window as LauncherWindow)?.appearance ?? fallbackAppearance
+    height: appearance.sectionHeaderHeight
+
+    LauncherAppearance {
+        id: fallbackAppearance
+    }
 
     required property string text
     property real leftPadding: 16

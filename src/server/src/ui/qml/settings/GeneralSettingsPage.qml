@@ -55,6 +55,8 @@ Flickable {
 
             SettingsRow {
                 label: qsTr("Close on focus loss")
+                // on Windows we always do that.
+                visible: Qt.platform.os != "windows"
                 SettingsToggle {
                     checked: root.model.closeOnFocusLoss
                     onToggled: checked => root.model.closeOnFocusLoss = checked
@@ -76,7 +78,7 @@ Flickable {
                 showSeparator: false
                 SettingsToggle {
                     checked: root.model.popToRootOnClose
-                    onToggled: root.model.popToRootOnClose = checked
+                    onToggled: checked => root.model.popToRootOnClose = checked
                 }
             }
         }
@@ -114,7 +116,7 @@ Flickable {
                 showSeparator: false
                 SettingsToggle {
                     checked: root.model.telemetrySystemInfo
-                    onToggled: root.model.telemetrySystemInfo = checked
+                    onToggled: checked => root.model.telemetrySystemInfo = checked
                 }
             }
         }
