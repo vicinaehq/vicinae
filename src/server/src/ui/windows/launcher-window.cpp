@@ -27,6 +27,7 @@
 #include "builtins/vicinae/vicinae-store-view-host.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "services/toast/toast-service.hpp"
+#include "services/update/update-service.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -257,6 +258,9 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     m_toastActive = false;
     emit toastActiveChanged();
   });
+
+  connect(m_ctx.services->updateService(), &UpdateService::updateChanged, this,
+          &LauncherWindow::tryCompaction);
 
   connect(m_ctx.services->config(), &config::Manager::configChanged, this,
           [this](const auto &, const auto &) {
@@ -866,7 +870,8 @@ void LauncherWindow::setCompacted(bool value) {
 void LauncherWindow::tryCompaction() {
   auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
 
-  setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && cfg.enabled && !m_actionPanel->isOpen() &&
+  setCompacted(!m_ctx.services->newsService()->hasUnreadNews() &&
+               !m_ctx.services->updateService()->available() && cfg.enabled && !m_actionPanel->isOpen() &&
                m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1 &&
                !m_toastActive);
 }

@@ -35,13 +35,14 @@ LauncherWindowBase {
     readonly property int _w: Launcher.overrideWidth || Config.windowWidth
     readonly property int _h: Launcher.overrideHeight || Config.windowHeight
     readonly property int _contentH: Launcher.compacted ? root.appearance.searchBarHeight + 2 * root.appearance.contentInset : root._h
+    readonly property int expandedHeight: root._h + 2 * shadowPadding
 
     width: root._w + 2 * shadowPadding
-    height: root._h + 2 * shadowPadding
+    height: expandedHeight
     minimumWidth: root._w + 2 * shadowPadding
     maximumWidth: root._w + 2 * shadowPadding
-    minimumHeight: root._h + 2 * shadowPadding
-    maximumHeight: root._h + 2 * shadowPadding
+    minimumHeight: expandedHeight
+    maximumHeight: expandedHeight
     title: qsTr("Vicinae Launcher")
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
@@ -420,15 +421,16 @@ LauncherWindowBase {
         if (Launcher.canPositionWindow && root.autoPlaceOnShow)
             root.x = Screen.virtualX + (Screen.width - root.width) / 2;
     }
-    onHeightChanged: {
+    // platforms that shrink the window when compacted must keep the search bar in place
+    onExpandedHeightChanged: {
         if (Launcher.canPositionWindow && root.autoPlaceOnShow)
-            root.y = Screen.virtualY + (Screen.height - root.height) / 3;
+            root.y = Screen.virtualY + (Screen.height - root.expandedHeight) / 3;
     }
 
     Component.onCompleted: {
         if (Launcher.canPositionWindow && root.autoPlaceOnShow) {
             root.x = Screen.virtualX + (Screen.width - root.width) / 2;
-            root.y = Screen.virtualY + (Screen.height - root.height) / 3;
+            root.y = Screen.virtualY + (Screen.height - root.expandedHeight) / 3;
             Launcher.positionOnCursorScreen();
         }
     }
