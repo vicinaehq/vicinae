@@ -664,6 +664,7 @@ const BuiltinIconService::Mapping &BuiltinIconService::mapping() {
       {BuiltinIcon::Scala, "scala"},
       {BuiltinIcon::Scalingo, "scalingo"},
       {BuiltinIcon::Scikitlearn, "scikitlearn"},
+      {BuiltinIcon::Screenshot, "screenshot"},
       {BuiltinIcon::Sdl, "sdl"},
       {BuiltinIcon::Selenium, "selenium"},
       {BuiltinIcon::Sema, "sema"},

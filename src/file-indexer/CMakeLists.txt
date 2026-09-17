@@ -90,4 +90,6 @@ if (BUILD_TESTS)
 		tests/query-quality.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain ${FILE_INDEXER_CORE})
+	add_test(NAME ${TEST_TARGET} COMMAND ${TEST_TARGET})
+	set_tests_properties(${TEST_TARGET} PROPERTIES LABELS unit)
 endif()

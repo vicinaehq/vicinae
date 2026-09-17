@@ -26,7 +26,8 @@ enum ImageURLType : std::uint8_t {
   FileIcon,
   FontPreview,
   WinShellIcon,
-  WinStockIcon
+  WinStockIcon,
+  FileThumbnail
 };
 
 static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
@@ -41,6 +42,7 @@ static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
     {"win-shell", WinShellIcon},
     {"win-stock", WinStockIcon},
     {"file-icon", FileIcon},
+    {"file-thumbnail", FileThumbnail},
     {"emoji", Emoji},
     {"symbol", Symbol},
     {"datauri", DataURI},
@@ -156,6 +158,7 @@ public:
   static ImageURL fontPreview(const QString &family, const QString &glyph);
   static ImageURL rawData(const QByteArray &data, const QString &mimeType);
   static ImageURL fileIcon(const std::filesystem::path &path);
+  static ImageURL fileThumbnail(const std::filesystem::path &path);
 
 private:
   ImageURLType _type = ImageURLType::Invalid;

@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QSize>
 #include <atomic>
+#include <functional>
 #include <memory>
 
 class FetchReply;
@@ -61,5 +62,6 @@ private:
 
   QMovie *m_movie = nullptr;
   FetchReply *m_pendingReply = nullptr;
+  std::function<void()> m_cancelNativeRequest;
   std::shared_ptr<std::atomic<bool>> m_canceled = std::make_shared<std::atomic<bool>>(false);
 };

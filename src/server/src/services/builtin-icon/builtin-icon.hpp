@@ -672,6 +672,7 @@ enum class BuiltinIcon : quint16 {
   Scala,
   Scalingo,
   Scikitlearn,
+  Screenshot,
   Sdl,
   Selenium,
   Sema,

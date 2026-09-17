@@ -8,6 +8,8 @@
 #include "builtins/power-management/power-management-extension.hpp"
 #include "builtins/shortcut/shortcut-extension.hpp"
 #include "builtins/font/font-extension.hpp"
+#include "builtins/screenshots/screenshots-extension.hpp"
+#include "services/screenshots/screenshot-service.hpp"
 #include "builtins/snippet/snippet-extension.hpp"
 #include "builtins/theme/theme-extension.hpp"
 #include "builtins/developer/developer-extension.hpp"
@@ -47,6 +49,7 @@ CommandDatabase::CommandDatabase(const ServiceRegistry &services) {
 
   registerRepository<ThemeExtension>();
   registerRepository<FontExtension>();
+  if (services.screenshots()->isAvailable()) registerRepository<ScreenshotsExtension>();
   registerRepository<DeveloperExtension>();
 
   registerRepository<SnippetExtension>();

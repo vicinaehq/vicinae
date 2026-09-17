@@ -69,8 +69,4 @@ jobs:
         run: ccache --show-stats
 
       - name: Run tests
-        run: |
-          ./build/bin/vicinae-glyph-tests
-          ./build/bin/vicinae-fuzzy-tests
-          ./build/bin/xdgpp-tests
-          ./build/bin/scriptcommand-tests
+        run: make test

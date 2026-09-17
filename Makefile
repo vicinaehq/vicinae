@@ -104,13 +104,7 @@ strip:
 .PHONY: strip
 
 test:
-	./$(BIN_DIR)/vicinae-glyph-tests
-	./$(BIN_DIR)/vicinae-fuzzy-tests
-	#./$(BIN_DIR)/vicinae-server-tests
-	./$(BIN_DIR)/xdgpp-tests
-	./$(BIN_DIR)/scriptcommand-tests
-	./$(BIN_DIR)/vicinae-file-indexer-tests
-	./$(BIN_DIR)/vicinae-crypto-tests
+	ctest --test-dir $(BUILD_DIR) --output-on-failure --no-tests=error
 .PHONY: test
 
 static:
