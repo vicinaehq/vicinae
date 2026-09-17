@@ -101,6 +101,13 @@ ViciPopover {
         }
     }
 
+    Binding {
+        target: stack.currentItem
+        property: "popupStyle"
+        value: root.popupMaterial.style
+        when: stack.currentItem instanceof ActionListPanel
+    }
+
     Connections {
         target: root.controller
         function onOpenChanged() {
