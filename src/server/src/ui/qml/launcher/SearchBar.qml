@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
 
 Item {
     id: root
-    required property StackView commandStack
+    required property Item commandView
     property int horizontalPadding: 16
     property real textSize: Theme.regularFontSize * 1.2
     property bool flatAccessories: false
@@ -213,15 +212,15 @@ Item {
 
                     if (nav === 1) {
                         // qmllint disable missing-property
-                        root.commandStack.currentItem.moveUp();
+                        root.commandView.moveUp();
                     } else if (nav === 2) {
-                        root.commandStack.currentItem.moveDown();
+                        root.commandView.moveDown();
                     } else if (nav === 3) {
-                        if (root.commandStack.currentItem && typeof root.commandStack.currentItem.moveLeft === "function")
-                            root.commandStack.currentItem.moveLeft();
+                        if (root.commandView && typeof root.commandView.moveLeft === "function")
+                            root.commandView.moveLeft();
                     } else if (nav === 4) {
-                        if (root.commandStack.currentItem && typeof root.commandStack.currentItem.moveRight === "function")
-                            root.commandStack.currentItem.moveRight();
+                        if (root.commandView && typeof root.commandView.moveRight === "function")
+                            root.commandView.moveRight();
                         // qmllint enable missing-property
                     }
                     return true;
@@ -235,10 +234,10 @@ Item {
 
                     const ctrl = event.modifiers == Qt.ControlModifier;
                     // qmllint disable missing-property
-                    const navigatable = typeof root.commandStack.currentItem.moveUp === "function";
+                    const navigatable = typeof root.commandView.moveUp === "function";
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
-                        event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionUp === "function" && root.commandStack.currentItem.moveSectionUp()) : root.commandStack.currentItem.moveUp();
+                        event.accepted = ctrl ? (typeof root.commandView.moveSectionUp === "function" && root.commandView.moveSectionUp()) : root.commandView.moveUp();
                         // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
@@ -251,13 +250,13 @@ Item {
                     }
 
                     // qmllint disable missing-property
-                    const navigatable = typeof root.commandStack.currentItem.moveDown === "function";
+                    const navigatable = typeof root.commandView.moveDown === "function";
                     // qmllint enable missing-property
                     const ctrl = event.modifiers == Qt.ControlModifier;
 
                     if (navigatable && (ctrl || event.modifiers == Qt.NoModifier)) {
                         // qmllint disable missing-property
-                        event.accepted = ctrl ? (typeof root.commandStack.currentItem.moveSectionDown === "function" && root.commandStack.currentItem.moveSectionDown()) : root.commandStack.currentItem.moveDown();
+                        event.accepted = ctrl ? (typeof root.commandView.moveSectionDown === "function" && root.commandView.moveSectionDown()) : root.commandView.moveDown();
                         // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
@@ -270,10 +269,10 @@ Item {
                     }
 
                     // qmllint disable missing-property
-                    const navigatable = typeof root.commandStack.currentItem.moveLeft === "function";
+                    const navigatable = typeof root.commandView.moveLeft === "function";
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
-                        event.accepted = root.commandStack.currentItem.moveLeft();
+                        event.accepted = root.commandView.moveLeft();
                         // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
@@ -286,10 +285,10 @@ Item {
                     }
 
                     // qmllint disable missing-property
-                    const navigatable = typeof root.commandStack.currentItem.moveRight === "function";
+                    const navigatable = typeof root.commandView.moveRight === "function";
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
-                        event.accepted = root.commandStack.currentItem.moveRight();
+                        event.accepted = root.commandView.moveRight();
                         // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
@@ -317,7 +316,7 @@ Item {
 
         ArgCompleter {
             id: argCompleter
-            commandStack: root.commandStack
+            commandView: root.commandView
             visible: Launcher.hasCompleter
             args: Launcher.completerArgs
             icon: Launcher.completerIcon

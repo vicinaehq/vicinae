@@ -15,42 +15,34 @@ Item {
     property var model: []
     implicitHeight: column.implicitHeight + 20  // 2 * margins
 
-    StatusBarInset {
-        id: statusBarInset
-    }
-
-    SearchBarInset {
-        id: searchBarInset
-    }
-
-    Component.onCompleted: searchBarInset.initializePosition(flickable)
-    onModelChanged: if (flickable.contentY <= 0)
-        searchBarInset.initializePosition(flickable)
-
-    Flickable {
-        id: flickable
+    ScrollViewport {
+        id: viewport
         anchors.fill: parent
-        contentHeight: column.implicitHeight + 20
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-        bottomMargin: statusBarInset.value
-        topMargin: searchBarInset.value
+        flickable: flickable
 
-        ViciWheelHandler {
-            target: flickable
-        }
+        Flickable {
+            id: flickable
+            anchors.fill: parent
+            contentHeight: column.implicitHeight + 20
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
 
-        ColumnLayout {
-            id: column
-            x: 10
-            y: 10
-            width: parent.width - 20
-            spacing: 10
+            ViciWheelHandler {
+                target: flickable
+            }
 
-            Repeater {
-                model: root.model
+            ColumnLayout {
+                id: column
+                x: 10
+                y: 10
+                width: parent.width - 20
+                spacing: 10
 
-                delegate: EntryHost {}
+                Repeater {
+                    model: root.model
+
+                    delegate: EntryHost {}
+                }
             }
         }
     }

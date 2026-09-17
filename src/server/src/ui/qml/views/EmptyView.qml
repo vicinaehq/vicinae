@@ -10,13 +10,8 @@ Item {
     property string description: ""
     property var icon: Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
 
-    SearchBarInset {
-        id: searchBarInset
-    }
-
     ColumnLayout {
         anchors.centerIn: parent
-        anchors.verticalCenterOffset: searchBarInset.value / 2
         width: Math.min(400, parent.width)
         spacing: 10
 

@@ -11,7 +11,7 @@ ScriptOutputText {
     Component.onCompleted: Qt.callLater(focusText)
 
     onContentHeightChanged: {
-        if (root.flick.contentY >= root.flick.contentHeight - root.height - 60)
+        if (root.flick.contentY >= root.flick.contentHeight - root.flick.height - 60)
             scrollToBottom();
     }
 }

@@ -4,37 +4,15 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
 
-Flickable {
+ScrollViewport {
     id: root
-    contentWidth: width
-    contentHeight: layout.implicitHeight
-    clip: true
-    boundsBehavior: Flickable.StopAtBounds
-    bottomMargin: root.padding + statusBarInset.value
-    topMargin: root.padding + searchBarInset.value
+    flickable: flick
+    topPadding: padding
+    bottomPadding: padding
 
     default property alias contentData: layout.data
     property real padding: 16
     property real maxContentWidth: Infinity
-
-    Component.onCompleted: {
-        contentY = -topMargin;
-        searchBarInset.initializePosition(root);
-    }
-
-    SearchBarInset {
-        id: searchBarInset
-        target: root
-    }
-
-    StatusBarInset {
-        id: statusBarInset
-        target: root
-    }
-
-    ViciWheelHandler {
-        target: root
-    }
 
     function focusFirst() {
         _focusFirstIn(layout);
@@ -53,15 +31,28 @@ Flickable {
         return false;
     }
 
-    ScrollBar.vertical: ViciScrollBar {
-        policy: root.contentHeight + searchBarInset.value > root.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
-    }
+    Flickable {
+        id: flick
+        anchors.fill: parent
+        contentWidth: width
+        contentHeight: layout.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
 
-    ColumnLayout {
-        id: layout
-        width: Math.min(root.width - root.padding * 2, root.maxContentWidth)
-        x: (root.width - width) / 2
-        spacing: 12
+        ViciWheelHandler {
+            target: flick
+        }
+
+        ScrollBar.vertical: ViciScrollBar {
+            policy: root.scrollable ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        }
+
+        ColumnLayout {
+            id: layout
+            width: Math.min(root.width - root.padding * 2, root.maxContentWidth)
+            x: (root.width - width) / 2
+            spacing: 12
+        }
     }
 
     Connections {
@@ -82,21 +73,9 @@ Flickable {
     }
 
     function _ensureVisible(item) {
-        if (root.height <= 0 || !_isDescendantOf(item, root.contentItem))
+        if (root.height <= 0 || !_isDescendantOf(item, flick.contentItem))
             return;
-        const mapped = item.mapToItem(root.contentItem, 0, 0);
-        const itemTop = mapped.y;
-        const itemBottom = itemTop + item.height;
-        const viewTop = root.contentY + searchBarInset.value;
-        const viewBottom = root.contentY + root.height - statusBarInset.value;
-        const minY = -root.topMargin;
-        const maxY = Math.max(minY, root.contentHeight - root.height + root.bottomMargin);
-        const gap = root.padding * 2;
-
-        if (itemTop < viewTop) {
-            root.contentY = Math.max(minY, itemTop - searchBarInset.value - gap);
-        } else if (itemBottom > viewBottom) {
-            root.contentY = Math.min(maxY, itemBottom - root.height + statusBarInset.value + gap);
-        }
+        const mapped = item.mapToItem(flick.contentItem, 0, 0);
+        root.revealRect(mapped.y, mapped.y + item.height, root.padding * 2);
     }
 }

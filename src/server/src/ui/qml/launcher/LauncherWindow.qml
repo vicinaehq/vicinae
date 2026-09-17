@@ -17,7 +17,7 @@ LauncherWindowBase {
     property bool autoPlaceOnShow: true
     property Component contentEffect: null
     property Component searchBarComponent: SearchBar {
-        commandStack: root.commandStack
+        commandView: root.commandView
     }
     property Component statusBarComponent: LauncherStatusBar {
         backdrop: root.popupBackdrop
@@ -25,7 +25,7 @@ LauncherWindowBase {
         windowHeight: root._h
         windowWidth: root._w
     }
-    readonly property alias commandStack: commandStack
+    readonly property Item commandView: (commandStack.currentItem as LauncherPage)?.view ?? null
     statusBarOverlap: floatingStatusBar.visible && root.appearance.floatingStatusBar ? floatingStatusBar.height - root.appearance.contentInset : 0
     statusBarTop: shadowPadding + floatingStatusBar.y
     popupBackdrop: contentArea
@@ -353,13 +353,26 @@ LauncherWindowBase {
         }
     }
 
+    Component {
+        id: pageComponent
+        LauncherPage {
+            headerInset: root.searchBarOverlap
+        }
+    }
+
     Connections {
         target: Launcher
         function onCommandViewPushed(componentUrl, properties) {
-            commandStack.push(componentUrl, properties, StackView.Immediate);
+            commandStack.push(pageComponent, {
+                viewUrl: componentUrl,
+                viewProperties: properties
+            }, StackView.Immediate);
         }
         function onCommandViewReplaced(componentUrl, properties) {
-            commandStack.replace(commandStack.currentItem, componentUrl, properties, StackView.Immediate);
+            commandStack.replace(commandStack.currentItem, pageComponent, {
+                viewUrl: componentUrl,
+                viewProperties: properties
+            }, StackView.Immediate);
         }
         function onCommandViewPopped() {
             if (commandStack.depth > 1)
