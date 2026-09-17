@@ -6,12 +6,14 @@
 #include "theme/theme-file.hpp"
 #ifdef Q_OS_MACOS
 #include "ui/image/mac-file-icon-loader.hpp"
+#include "ui/image/mac-file-thumbnail-loader.hpp"
 #endif
 #ifdef Q_OS_WIN
 #include "ui/image/win-file-icon-loader.hpp"
 #endif
 #include <QBuffer>
 #include <QCache>
+#include <QFileInfo>
 #include <QFutureWatcher>
 #include <QIcon>
 #include <QImageReader>
@@ -58,14 +60,16 @@ static QString makeLatestCacheKey(const ImageURL &url) {
   auto key = url.toString();
   if (url.type() == ImageURLType::System || url.type() == ImageURLType::FileIcon)
     key += QStringLiteral("|it:") + QIcon::themeName();
+  if (url.type() == ImageURLType::FileThumbnail) {
+    const QFileInfo file(url.name());
+    key += QStringLiteral("|%1:%2").arg(file.size()).arg(file.lastModified().toMSecsSinceEpoch());
+  }
   return key;
 }
 
 static QString makeCacheKey(const ImageURL &url, const QSize &size, bool safetyMargins) {
-  auto key = QStringLiteral("%1|%2x%3").arg(url.toString()).arg(size.width()).arg(size.height());
+  auto key = QStringLiteral("%1|%2x%3").arg(makeLatestCacheKey(url)).arg(size.width()).arg(size.height());
   if (safetyMargins) key += QStringLiteral("|m");
-  if (url.type() == ImageURLType::System || url.type() == ImageURLType::FileIcon)
-    key += QStringLiteral("|it:") + QIcon::themeName();
   return key;
 }
 
@@ -111,6 +115,7 @@ ImageStream::ImageStream(const ImageURL &url, const QSize &size, ImageStreamOpti
 
 ImageStream::~ImageStream() {
   m_canceled->store(true, std::memory_order_relaxed);
+  if (m_cancelNativeRequest) m_cancelNativeRequest();
   if (m_movie) m_movie->deleteLater();
   if (m_pendingReply) {
     m_pendingReply->abort();
@@ -215,6 +220,16 @@ void ImageStream::startStatic() {
     runInPool([name, size = renderSize]() { return ImageRendering::renderSystemIcon(name, size); }, m_fg);
     break;
 #ifdef Q_OS_MACOS
+  case ImageURLType::FileThumbnail: {
+    auto request = renderMacFileThumbnail(name, renderSize);
+    m_cancelNativeRequest = std::move(request.cancel);
+    handleStaticFuture(request.future.then([bg = m_bg, size = m_size, mask = m_mask, canceled](QImage img) {
+      if (canceled->load(std::memory_order_relaxed)) return QImage{};
+      ImageRendering::applyPostTransforms(img, QColor(), bg, size, mask);
+      return img;
+    }));
+    break;
+  }
   case ImageURLType::MacBundle:
     runInPool([name, size = renderSize]() { return renderMacFileIcon(name, size); }, m_fg);
     break;

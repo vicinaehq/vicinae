@@ -7,6 +7,7 @@
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "services/font-service/font-service.hpp"
+#include "services/screenshots/screenshot-service.hpp"
 #ifdef Q_OS_LINUX
 #include "icon-theme-db/icon-theme-db.hpp"
 #endif
@@ -356,6 +357,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setWindowManager(std::move(windowManager));
     registry->setAppRuntime(std::move(appRuntime));
     registry->setFontService(std::move(fontService));
+    registry->setScreenshots(std::make_unique<ScreenshotService>());
     registry->setGlyphService(std::move(glyphService));
     registry->setRaycastStore(std::move(raycastStore));
     registry->setVicinaeStore(std::move(vicinaeStore));

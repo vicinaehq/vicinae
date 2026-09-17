@@ -366,3 +366,10 @@ ImageURL ImageURL::fileIcon(const fs::path &path) {
 
   return url;
 }
+
+ImageURL ImageURL::fileThumbnail(const fs::path &path) {
+  ImageURL url;
+  url.setType(ImageURLType::FileThumbnail);
+  url.setName(QString::fromStdString(path.string()));
+  return url;
+}

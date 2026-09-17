@@ -86,7 +86,9 @@ NSData *toNSData(const QByteArray &bytes) {
   return _imageBytesCache;
 }
 
-- (void)pasteboardItem:(NSPasteboardItem *)item provideDataForType:(NSPasteboardType)type {
+- (void)pasteboard:(NSPasteboard *)pasteboard
+                  item:(NSPasteboardItem *)item
+    provideDataForType:(NSPasteboardType)type {
   if ([type isEqualToString:NSPasteboardTypeRTF] && _mime->hasHtml()) {
     NSString *html = _mime->html().toNSString();
     NSAttributedString *rich =
@@ -253,7 +255,7 @@ bool MacosClipboardServer::writeClipboard(QMimeData *data, const Clipboard::Copy
     }
 
     NSMutableArray<NSPasteboardItem *> *objects = [NSMutableArray array];
-    if (item.types.count > 0) { [objects addObject:item]; }
+    if (item.types.count > 0 || lazyTypes.count > 0) { [objects addObject:item]; }
 
     // one pasteboard item per pasted "thing": the first URL rides on the primary item so a file
     // and its preview flavors don't paste as two separate entities

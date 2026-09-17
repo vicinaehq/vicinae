@@ -123,6 +123,17 @@ set(SRCS
 
 	src/services/font-service/font-service.hpp
 	src/services/font-service/font-service.cpp
+	src/services/screenshots/screenshot.hpp
+	src/services/screenshots/abstract-screenshot-provider.hpp
+	src/services/screenshots/screenshot-service.hpp
+	src/services/screenshots/screenshot-service.cpp
+	src/builtins/screenshots/screenshots-extension.hpp
+	src/builtins/screenshots/screenshot-actions.hpp
+	src/builtins/screenshots/screenshot-actions.cpp
+	src/builtins/screenshots/screenshot-grid-model.hpp
+	src/builtins/screenshots/screenshot-grid-model.cpp
+	src/builtins/screenshots/screenshots-view-host.hpp
+	src/builtins/screenshots/screenshots-view-host.cpp
 
 	src/internal/template-engine/template-engine.cpp
 	src/internal/glaze-qt.cpp
@@ -685,6 +696,8 @@ if (APPLE)
 	list(APPEND SRCS
 		src/ui/image/mac-file-icon-loader.hpp
 		src/ui/image/mac-file-icon-loader.mm
+		src/ui/image/mac-file-thumbnail-loader.hpp
+		src/ui/image/mac-file-thumbnail-loader.mm
 		src/services/app-service/macos/mac-app.hpp
 		src/services/app-service/macos/mac-app.mm
 		src/services/app-service/macos/mac-app-database.hpp
@@ -704,6 +717,8 @@ if (APPLE)
 		src/internal/keyboard/keyboard-macos.hpp
 		src/internal/keyboard/keyboard-macos.cpp
 		src/services/files-service/macos/spotlight-file-indexer.hpp
+		src/services/screenshots/macos/macos-screenshot-provider.hpp
+		src/services/screenshots/macos/macos-screenshot-provider.mm
 		src/services/files-service/macos/spotlight-file-indexer.mm
 		src/services/files-service/macos/spotlight-recent-files-provider.hpp
 		src/services/files-service/macos/spotlight-recent-files-provider.mm
@@ -742,7 +757,9 @@ if (APPLE)
 		src/builtins/vicinae/search-menu-bar-command.hpp
 	)
 	set_source_files_properties(
+		src/services/screenshots/macos/macos-screenshot-provider.mm
 		src/ui/image/mac-file-icon-loader.mm
+		src/ui/image/mac-file-thumbnail-loader.mm
 		src/services/wallpaper/macos/mac-wallpaper-backend.mm
 		src/services/app-service/macos/mac-app.mm
 		src/services/app-service/macos/mac-app-database.mm
@@ -768,6 +785,7 @@ if (APPLE)
 		src/app-platform-macos.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications" "-framework ScriptingBridge")
+	list(APPEND LIBS "-framework QuickLookThumbnailing" "-framework CoreGraphics")
 
 	if (AUTO_ENABLE_AUTOSTART)
 		add_compile_definitions(AUTO_ENABLE_AUTOSTART)
@@ -1203,6 +1221,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/markdown/MdBlockquote.qml
 	src/ui/qml/markdown/MdCallout.qml
 	src/ui/qml/views/BrowseFontsView.qml
+	src/ui/qml/views/ScreenshotsView.qml
 	src/ui/qml/views/FontDemoView.qml
 	src/ui/qml/accessories/CategoryFilterAccessory.qml
 	src/ui/qml/views/ExtensionFormView.qml

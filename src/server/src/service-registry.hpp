@@ -9,6 +9,7 @@ class LocalStorageService;
 class ExtensionManager;
 class ClipboardService;
 class FontService;
+class ScreenshotService;
 class RootItemManager;
 class ConfigService;
 class ShortcutService;
@@ -61,6 +62,7 @@ public:
   WallpaperManager *wallpaperManager() const;
   GlyphService *glyphService() const;
   FontService *fontService() const;
+  ScreenshotService *screenshots() const;
   LocalStorageService *localStorage() const;
   ExtensionManager *extensionManager() const;
   ClipboardService *clipman() const;
@@ -110,6 +112,7 @@ public:
   void setGlyphService(std::unique_ptr<GlyphService> service);
   void setToastService(std::unique_ptr<ToastService> service);
   void setFontService(std::unique_ptr<FontService> font);
+  void setScreenshots(std::unique_ptr<ScreenshotService> service);
   void setOmniDb(std::unique_ptr<OmniDatabase> service);
   void setWindowManager(std::unique_ptr<AbstractWindowManager> service);
   void setLocalStorage(std::unique_ptr<LocalStorageService> service);
@@ -144,6 +147,7 @@ private:
   std::unique_ptr<ExtensionManager> m_extensionManager;
   std::unique_ptr<ClipboardService> m_clipman;
   std::unique_ptr<FontService> m_fontService;
+  std::unique_ptr<ScreenshotService> m_screenshots;
   std::unique_ptr<RootItemManager> m_rootItemManager;
   std::unique_ptr<config::Manager> m_config;
   std::unique_ptr<ShortcutService> m_shortcutService;

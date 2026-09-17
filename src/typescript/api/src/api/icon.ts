@@ -661,6 +661,7 @@ export enum Icon {
 	Scala = "scala",
 	Scalingo = "scalingo",
 	Scikitlearn = "scikitlearn",
+	Screenshot = "screenshot",
 	Sdl = "sdl",
 	Selenium = "selenium",
 	Sema = "sema",
