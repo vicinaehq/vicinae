@@ -90,11 +90,12 @@ template <> struct Partial<Size> {
 struct WindowCSD {
   bool enabled = true;
 #ifdef Q_OS_MACOS
-  int rounding = 20;
+  int rounding = 26;
+  int borderWidth = 1;
 #else
   int rounding = 10;
-#endif
   int borderWidth = 3;
+#endif
   int shadowSize = 12;
 };
 
@@ -114,7 +115,11 @@ template <> struct Partial<WindowCompactMode> {
 };
 
 struct ClockConfig {
+#ifdef Q_OS_MACOS
+  bool enabled = false;
+#else
   bool enabled = true;
+#endif
   unsigned interval = 60;
   std::optional<std::string> format;
 };
@@ -127,8 +132,13 @@ template <> struct Partial<ClockConfig> {
 struct WindowConfig {
   static constexpr float OPAQUE_OPACITY = 1.0F;
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
-  static constexpr float ACRYLIC_OPACITY = 0.9F;
+#ifdef Q_OS_MACOS
+  static constexpr float BLUR_OPACITY = 0.55F;
+  static constexpr float GLASS_POPUP_OPACITY = 0.8F;
+#else
+  static constexpr float BLUR_OPACITY = 0.9F;
   static constexpr float GLASS_POPUP_OPACITY = 0.2F;
+#endif
   static constexpr float SURFACE_OPACITY_LIFT = 0.65F;
 
   std::optional<float> opacity;
@@ -138,6 +148,7 @@ struct WindowConfig {
   std::string screen;
   BlurConfig blur;
   WindowCompactMode compactMode;
+  bool floatingStatusBar = true;
   LayerShellConfig layerShell;
   ClockConfig clock;
 
@@ -150,24 +161,28 @@ struct WindowConfig {
   std::string resolvedMaterial(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
     if (material != "auto") return material;
     if (!blur.enabled) return "none";
+#ifndef Q_OS_MACOS
     if (liquidGlassAvailable) return "liquid_glass";
+#endif
     return windowMaterialAvailable ? "blur" : "none";
+  }
+
+  std::string resolvedPopupMaterial(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
+    if (material == "auto" && blur.enabled && liquidGlassAvailable) return "liquid_glass";
+    return resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable);
   }
 
   float resolvedOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
     if (opacity) return *opacity;
     const std::string material = resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable);
     if (material == "liquid_glass") return TRANSLUCENT_OPACITY;
-#ifdef Q_OS_WIN
-    if (material == "blur") return ACRYLIC_OPACITY;
-#endif
+    if (material == "blur") return BLUR_OPACITY;
     return OPAQUE_OPACITY;
   }
 
-  // Popups draw their own material layer; on liquid glass a fixed low tint keeps the
-  // glass legible regardless of the configured window opacity.
+  // Text-heavy popups use their own tint so content behind the material stays subdued.
   float resolvedPopupOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
-    if (resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass") {
+    if (resolvedPopupMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass") {
       return GLASS_POPUP_OPACITY;
     }
     return resolvedOpacity(liquidGlassAvailable, windowMaterialAvailable);
@@ -196,13 +211,14 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<Size>> size;
   std::optional<Partial<BlurConfig>> blur;
   std::optional<Partial<WindowCompactMode>> compactMode;
+  std::optional<bool> floatingStatusBar;
   std::optional<Partial<LayerShellConfig>> layerShell;
   std::optional<std::string> material;
   std::optional<ClockConfig> clock;
 };
 
 struct FontConfig {
-#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
+#ifdef Q_OS_MACOS
   std::string rendering = "native";
 #else
   std::string rendering = "qt";
@@ -276,12 +292,16 @@ template <> struct Partial<InputServer> {
   std::optional<bool> enabled;
 };
 
+struct Tray {
+  bool enabled = true;
+};
+
+template <> struct Partial<Tray> {
+  std::optional<bool> enabled;
+};
+
 struct GlobalShortcuts {
-#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
   std::optional<std::string> toggle = "alt+space";
-#else
-  std::optional<std::string> toggle = "super+control+space";
-#endif
   std::vector<std::string> inhibitApps;
 };
 
@@ -300,7 +320,7 @@ struct ConfigValue {
   bool popOnBackspace = true;
   bool activateOnSingleClick = false;
   bool wrapNavigation = false;
-#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
+#ifdef Q_OS_LINUX
   bool encryptSensitiveData = false;
 #else
   bool encryptSensitiveData = true;
@@ -312,6 +332,7 @@ struct ConfigValue {
   int pixmapCacheMb = 50;
 
   InputServer inputServer;
+  Tray tray;
   GlobalShortcuts globalShortcuts;
 
   FontConfig font;
@@ -367,6 +388,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
   std::optional<Partial<InputServer>> inputServer;
+  std::optional<Partial<Tray>> tray;
   std::optional<Partial<GlobalShortcuts>> globalShortcuts;
 
   std::optional<Partial<FontConfig>> font;

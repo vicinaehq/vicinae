@@ -16,7 +16,7 @@ public:
 
   bool isAvailable() const override;
   bool open(const FileChooserOptions &options) override;
-  void close();
+  void close() override;
 
 public slots:
   void handleResponse(uint response, const QVariantMap &results);

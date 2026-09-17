@@ -10,9 +10,6 @@ on:
       commit:
         type: string
         default: ""
-      upload-to-release:
-        type: boolean
-        default: false
 
 concurrency:
   group: macos-dmg-${{ github.ref }}
@@ -23,7 +20,7 @@ jobs:
     runs-on: depot-macos-26
     name: build-macos-dmg (arm64)
     permissions:
-      contents: write
+      contents: read
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
       QT_VERSION: 6.11.1
@@ -120,21 +117,13 @@ jobs:
         run: ./scripts/verify-dmg.sh build/Vicinae.dmg
 
       - name: Upload DMG as workflow artifact
-        if: ${{ !inputs.upload-to-release }}
         uses: actions/upload-artifact@v4
         with:
           name: Vicinae-dmg-${{ github.sha }}
           path: build/Vicinae.dmg
           retention-days: 7
-
-      - name: Upload DMG to GitHub Release
-        if: ${{ inputs.upload-to-release }}
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ inputs.tag }}
-          name: ${{ inputs.tag }}
-          files: |
-            build/Vicinae.dmg
+          if-no-files-found: error
+          overwrite: true
 
       - name: Delete signing keychain
         if: always()

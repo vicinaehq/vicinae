@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/omni-painter/omni-painter.hpp"
+#include "ui/image/omni-painter.hpp"
 #include <QFuture>
 #include <QImage>
 #include <QSize>
@@ -37,6 +37,7 @@ QSize backdropContentSize(const QSize &size);
 void applyPostTransforms(QImage &image, const QColor &fg, const QColor &bg, const QSize &size,
                          OmniPainter::ImageMaskType mask);
 void applySafetyMargins(QImage &image);
+void applyBadge(QImage &image, const QString &builtinName);
 
 QThreadPool &decodingPool();
 QThread &animationThread();

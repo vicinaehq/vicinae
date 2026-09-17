@@ -1,15 +1,15 @@
 #include "root-search/apps/app-root-provider.hpp"
-#include "actions/app/app-actions.hpp"
-#include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
-#include "common.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/root-search-actions.hpp"
+#include "actions/clipboard-actions.hpp"
+#include "command/command-types.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "vicinae.hpp"
-#include "actions/wm/window-actions.hpp"
+#include "actions/window-actions.hpp"
 
 double AppRootItem::baseScoreWeight() const { return 1; }
 
@@ -18,13 +18,9 @@ QString AppRootItem::typeDisplayName() const {
   return category.isEmpty() ? tr("Application") : category;
 }
 
-std::vector<QString> AppRootItem::keywords() const {
-  auto keywords = m_app->keywords();
+std::vector<QString> AppRootItem::keywords() const { return m_app->keywords(); }
 
-  if (auto name = m_app->unlocalizedName()) { keywords.emplace_back(name.value()); }
-
-  return keywords;
-}
+std::optional<QString> AppRootItem::unlocalizedTitle() const { return m_app->unlocalizedName(); }
 
 QString AppRootItem::subtitle() const { return QString(); }
 
@@ -120,6 +116,12 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     quit->setShortcut(QString("ctrl+q"));
     lifecycleSection->addAction(quit);
     lifecycleSection->addAction(new ForceQuitAppAction(m_app));
+  }
+
+  if (appDb->canUninstall(*m_app)) {
+    auto uninstall = new UninstallAppAction(m_app);
+    uninstall->setShortcut(Keybind::DangerousRemoveAction);
+    lifecycleSection->addAction(uninstall);
   }
 
   for (const auto &action :

@@ -128,6 +128,18 @@
 			"mode": "view"
 		},
 		{
+			"name": "launch-command",
+			"title": "Launch Command",
+			"description": "Test the launch command stuff",
+			"mode": "view"
+		},
+		{
+			"name": "context-echo",
+			"title": "Context Echo",
+			"description": "Echo the command launch context",
+			"mode": "view"
+		},
+		{
 			"name": "desktop-notif-interval",
 			"title": "Desktop Notification Interval",
 			"description": "Desktop Notification Interval",

@@ -64,7 +64,7 @@ ScriptScanner::scan(std::span<const std::filesystem::path> dirs) {
       auto script = ScriptCommandFile::fromFile(ent.path(), id);
 
       if (!script) {
-        qDebug() << "Failed to parse script at" << ent.path().c_str() << script.error().c_str();
+        qWarning() << "Failed to parse script at" << ent.path().c_str() << script.error().c_str();
         continue;
       }
 

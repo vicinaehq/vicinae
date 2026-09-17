@@ -24,11 +24,14 @@ void ExtClipman::global(WaylandRegistry &reg, uint32_t name, const char *interfa
   }
 }
 
-void ExtClipman::primarySelection(ExtDataDevice &, ExtDataOffer &offer) {
+void ExtClipman::primarySelection(ExtDataDevice &, ExtDataOffer *offer) {
   if (isatty(STDOUT_FILENO)) {
-    Selection::printPrimarySelectionDebug(offer);
+    if (offer) Selection::printPrimarySelectionDebug(*offer);
     return;
   }
+
+  m_writer(clipboard_proto::Command::PrimarySelectionNotification,
+           offer ? Selection::buildPrimarySelection(*offer) : clipboard_proto::Selection{});
 }
 
 void ExtClipman::selection(ExtDataDevice &, ExtDataOffer &offer) {
@@ -41,7 +44,7 @@ void ExtClipman::selection(ExtDataDevice &, ExtDataOffer &offer) {
   if (std::ranges::find(mimes, Clipboard::CONCEALED_MIME_TYPE) != mimes.end()) return;
 
   auto selection = Selection::buildSelection(Selection::filterMimes(mimes), offer);
-  m_writer(selection);
+  m_writer(clipboard_proto::Command::SelectionNotification, selection);
 }
 
 void ExtClipman::setClipboard(const clipboard_proto::Selection &selection) {

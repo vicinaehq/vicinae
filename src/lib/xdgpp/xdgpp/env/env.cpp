@@ -13,6 +13,11 @@ static fs::path homeDir() {
   return {};
 }
 
+static const char *getNonEmptyEnv(const char *name) {
+  const char *value = std::getenv(name);
+  return value && *value ? value : nullptr;
+}
+
 static std::string &toLowerCase(std::string &s) {
   std::ranges::transform(s, s.begin(), [](char c) { return std::tolower(c); });
   return s;
@@ -46,22 +51,22 @@ std::vector<std::string> xdgpp::currentDesktop() {
 }
 
 fs::path xdgpp::dataHome() {
-  if (auto v = getenv("XDG_DATA_HOME")) return v;
+  if (auto v = getNonEmptyEnv("XDG_DATA_HOME")) return v;
   return homeDir() / ".local" / "share";
 }
 
 fs::path xdgpp::cacheHome() {
-  if (auto v = getenv("XDG_CACHE_HOME")) return v;
+  if (auto v = getNonEmptyEnv("XDG_CACHE_HOME")) return v;
   return homeDir() / ".cache";
 }
 
 fs::path xdgpp::stateHome() {
-  if (auto v = getenv("XDG_STATE_HOME")) return v;
+  if (auto v = getNonEmptyEnv("XDG_STATE_HOME")) return v;
   return homeDir() / ".local" / "state";
 }
 
 std::vector<fs::path> xdgpp::dataDirs() {
-  const char *xdd = getenv("XDG_DATA_DIRS");
+  const char *xdd = getNonEmptyEnv("XDG_DATA_DIRS");
 
   // the spec doesn't require to add the local dir as a default but we do
   if (!xdd) { return {"/usr/local/share", "/usr/share"}; };
@@ -100,12 +105,12 @@ std::vector<fs::path> xdgpp::appDirs() {
 }
 
 fs::path xdgpp::configHome() {
-  if (auto v = getenv("XDG_CONFIG_HOME")) return v;
+  if (auto v = getNonEmptyEnv("XDG_CONFIG_HOME")) return v;
   return homeDir() / ".config";
 }
 
 std::vector<fs::path> xdgpp::configDirs() {
-  const char *xcd = getenv("XDG_CONFIG_DIRS");
+  const char *xcd = getNonEmptyEnv("XDG_CONFIG_DIRS");
 
   if (!xcd) { return {"/etc/xdg"}; };
 

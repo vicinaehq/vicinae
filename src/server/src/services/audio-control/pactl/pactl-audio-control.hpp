@@ -3,7 +3,17 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 #include "../abstract-audio-control.hpp"
+
+struct AudioSink {
+  QString name;
+  QString description;
+  std::optional<QString> activePort;
+  float volume = 0.0f;
+  bool muted = false;
+  bool isDefault = false;
+};
 
 class PactlAudioControl : public AbstractAudioControl {
 public:
@@ -19,10 +29,9 @@ public:
   bool setMuted(bool muted) override;
   bool toggleMute() override;
 
-  std::vector<AudioSink> listSinks() const override;
-  bool setDefaultSink(const QString &sinkName) override;
-
 private:
+  std::vector<AudioSink> listSinks() const;
+  bool setDefaultSink(const QString &sinkName);
   std::optional<AudioSink> getDefaultSink() const;
   std::optional<std::string> run(std::initializer_list<std::string_view> args) const;
 

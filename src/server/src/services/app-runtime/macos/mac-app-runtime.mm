@@ -5,6 +5,7 @@
 #import <Foundation/Foundation.h>
 
 #include <QPointer>
+#include <unistd.h>
 
 @interface MacAppRuntimeObserver : NSObject
 - (instancetype)initWithTarget:(QPointer<MacAppRuntime>)target;
@@ -135,9 +136,8 @@ std::shared_ptr<AbstractApplication> MacAppRuntime::frontmostApp() const {
   QString bundleId;
   @autoreleasepool {
     NSRunningApplication *front = [[NSWorkspace sharedWorkspace] frontmostApplication];
-    if (front && front.bundleIdentifier.length > 0) {
-      bundleId = QString::fromNSString(front.bundleIdentifier);
-    }
+    if (!front || front.processIdentifier == getpid()) return nullptr;
+    if (front.bundleIdentifier.length > 0) { bundleId = QString::fromNSString(front.bundleIdentifier); }
   }
   if (bundleId.isEmpty()) return nullptr;
   return m_appService.findById(bundleId);

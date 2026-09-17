@@ -1,4 +1,5 @@
 #include "x11-window-manager.hpp"
+#include "environment.hpp"
 #include "x11-event-listener.hpp"
 #include "x11-window.hpp"
 #include <QCoreApplication>
@@ -21,10 +22,7 @@ X11WindowManager::~X11WindowManager() {
   m_screen = nullptr;
 }
 
-bool X11WindowManager::isActivatable() const {
-  // Check if we're running on X11 (xcb platform)
-  return QGuiApplication::platformName() == "xcb";
-}
+bool X11WindowManager::isActivatable() const { return Environment::isX11(); }
 
 void X11WindowManager::start() {
   // Initialize connection

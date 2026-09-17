@@ -1,0 +1,50 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import Vicinae
+
+Item {
+    id: root
+
+    property string title: qsTr("No results")
+    property string description: ""
+    property var icon: Img.icon(BuiltinIcon.MagnifyingGlass).withFillColor(Theme.foreground)
+
+    SearchBarInset {
+        id: searchBarInset
+    }
+
+    ColumnLayout {
+        anchors.centerIn: parent
+        anchors.verticalCenterOffset: searchBarInset.value / 2
+        width: Math.min(400, parent.width)
+        spacing: 10
+
+        ViciImage {
+            visible: root.icon?.valid ?? false
+            source: root.icon
+            Layout.preferredWidth: 48
+            Layout.preferredHeight: 48
+            Layout.alignment: Qt.AlignHCenter
+        }
+
+        Text {
+            visible: root.title !== ""
+            text: root.title
+            color: Theme.foreground
+            font.pointSize: Theme.regularFontSize
+            horizontalAlignment: Text.AlignHCenter
+            Layout.fillWidth: true
+        }
+
+        Text {
+            visible: root.description !== ""
+            text: root.description
+            color: Theme.textMuted
+            font.pointSize: Theme.regularFontSize
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
+            Layout.fillWidth: true
+        }
+    }
+}

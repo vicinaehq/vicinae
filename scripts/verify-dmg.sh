@@ -71,6 +71,24 @@ if [[ "$fail" -ne 0 ]]; then
   exit 1
 fi
 
+echo "==> entitlements"
+ENTITLEMENTS="$(codesign -d --entitlements - --xml "$APP" 2>/dev/null)"
+for key in com.apple.security.automation.apple-events \
+           com.apple.security.personal-information.calendars \
+           com.apple.security.personal-information.addressbook; do
+  if ! grep -qF "<key>$key</key>" <<<"$ENTITLEMENTS"; then
+    echo "verify-dmg.sh: app is missing entitlement $key" >&2
+    exit 1
+  fi
+done
+for key in NSAppleEventsUsageDescription NSCalendarsFullAccessUsageDescription \
+           NSRemindersFullAccessUsageDescription NSContactsUsageDescription; do
+  if ! /usr/libexec/PlistBuddy -c "Print :$key" "$APP/Contents/Info.plist" >/dev/null 2>&1; then
+    echo "verify-dmg.sh: Info.plist is missing $key" >&2
+    exit 1
+  fi
+done
+
 echo "==> image format plugins"
 for plugin in qicns qwebp qtiff qmacheif qgif qico qjpeg qsvg; do
   if [[ ! -f "$APP/Contents/PlugIns/imageformats/lib$plugin.dylib" ]]; then

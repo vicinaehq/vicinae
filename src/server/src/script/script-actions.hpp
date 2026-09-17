@@ -1,6 +1,6 @@
 #pragma once
 #include "script/script-command-file.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 class ScriptExecutorAction : public AbstractAction {
 public:

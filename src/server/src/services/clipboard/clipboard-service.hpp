@@ -1,13 +1,16 @@
 #pragma once
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "common/types.hpp"
 #include "services/clipboard/clipboard-content.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
+#include <QSize>
 #include <QString>
+#include <chrono>
 #include <expected>
 #include <filesystem>
+#include <optional>
 #include <QJsonObject>
 #include <qcontainerfwd.h>
 #include <qdir.h>
@@ -29,6 +32,7 @@ signals:
   void itemCopied(const InsertClipboardHistoryLine &item) const;
   void itemInserted(const ClipboardHistoryEntry &entry) const;
   void selectionPinStatusChanged(const QString &id, bool pinned) const;
+  void selectionKeywordsChanged(const QString &id, const QString &keywords) const;
   void selectionRemoved(const QString &id) const;
   /**
    * When a selection is copied, its update time is modified which makes it appear on top
@@ -36,6 +40,7 @@ signals:
    */
   void selectionUpdated() const;
   void monitoringChanged(bool value) const;
+  void primarySelectionChanged(const QString &text) const;
 
 public:
   enum class OfferDecryptionError {
@@ -92,6 +97,15 @@ public:
   void setIgnorePasswords(bool value);
   bool isEncryptionReady() const;
 
+  /**
+   * std::nullopt to disable eviction
+   */
+  void setHistoryEvictionThreshold(std::optional<std::chrono::seconds> threshold,
+                                   bool preserveTaggedSelections = true);
+
+  void pauseEviction();
+  void resumeEviction();
+
 private:
   ClipboardDatabase openDatabase() const { return ClipboardDatabase(m_dbKey); }
 
@@ -100,10 +114,14 @@ private:
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;
   std::optional<db::EncryptionKey> m_dbKey;
+  std::shared_ptr<ClipboardDatabase> m_readDb;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
 
   static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
   static QString getOfferTextPreview(const ClipboardDataOffer &offer);
+  static QString getOfferImageSearchText(const ClipboardDataOffer &offer);
+  static QString getOfferFileSearchText(const ClipboardDataOffer &offer);
+  static std::optional<QSize> readImageSize(const ClipboardDataOffer &offer);
 
   /**
    * Unique selection hash obtained by hashing all the data offer hashes together.
@@ -123,6 +141,9 @@ private:
 
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
 
+  void runEvictionPass();
+  void armEvictionTimer(std::optional<int64_t> oldestTimestamp);
+
   void restoreClipboard();
 
   bool m_recordAllOffers = true;
@@ -131,4 +152,9 @@ private:
   std::optional<ClipboardSelection> m_lastSelection;
   QTimer m_restoreTimer;
   QFutureWatcher<std::expected<ClipboardHistoryEntry, QString>> m_indexingSelection;
+  std::optional<std::chrono::seconds> m_evictionThreshold;
+  bool m_preserveTaggedSelections = true;
+  bool m_evictionPaused = false;
+  bool m_evictionDeferred = false;
+  QTimer m_historyEvictionTimer;
 };

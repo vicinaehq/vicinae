@@ -1,0 +1,31 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import Vicinae
+
+Item {
+    id: root
+    required property EditKeywordsViewHost host
+
+    FormView {
+        id: formView
+        anchors.fill: parent
+        Component.onCompleted: {
+            Qt.callLater(() => {
+                formView.focusFirst();
+                textArea.selectAll();
+            });
+        }
+
+        FormField {
+            label: qsTr("Keywords")
+            info: root.host.infoText
+            topAlignLabel: true
+
+            FormTextArea {
+                id: textArea
+                text: root.host.keywords
+                onTextEdited: root.host.keywords = text
+            }
+        }
+    }
+}

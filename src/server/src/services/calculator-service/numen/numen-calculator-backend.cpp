@@ -1,9 +1,11 @@
 #include "services/calculator-service/numen/numen-calculator-backend.hpp"
 #include "numen/numen.hpp"
 #include "services/calculator-service/numen/numen-currency-provider.hpp"
+#include "utils/environment.hpp"
 #include <qfuture.h>
 #include <chrono>
 #include <format>
+#include <variant>
 
 namespace {
 std::string formatTimezone(const numen::Timezone &tz) {
@@ -26,6 +28,8 @@ std::string formatTimezone(const numen::Timezone &tz) {
 }; // namespace
 
 NumenCalculatorBackend::NumenCalculatorBackend() {
+  if (Environment::isAutoRateRefreshDisabled()) return;
+
   m_rateRefreshTimer.setInterval(std::chrono::hours{1});
   m_rateRefreshTimer.start();
   connect(&m_rateRefreshTimer, &QTimer::timeout, this, [this]() { m_numen.updateRates(); });
@@ -42,12 +46,15 @@ NumenCalculatorBackend::ComputeResult NumenCalculatorBackend::compute(const QStr
 
   numen::EvalOptions evalOpts{
       .parseOptions = {.strict = true},
-      .locale = QLocale::system().name().toStdString(),
   };
 
   return m_numen.compute(question.toStdString(), evalOpts)
       .transform([&](const numen::ComputedValue &res) -> ComputeResult {
         CalculatorResult result{};
+
+        if (std::holds_alternative<std::string>(res.value) && !res.conversion) {
+          return std::unexpected(CalculatorError{"Cannot display string without explicit conversion"});
+        }
 
         if (res.conversion) {
           result.type = CalculatorAnswerType::CONVERSION;
@@ -97,7 +104,8 @@ NumenCalculatorBackend::ComputeResult NumenCalculatorBackend::compute(const QStr
               }
             },
             [&](const numen::Boolean &b) { result.answer.text = b.value ? "true" : "false"; },
-            [&](const numen::Duration &b) { result.answer.text = QString::fromStdString(b.toString()); }};
+            [&](const numen::Duration &b) { result.answer.text = QString::fromStdString(b.toString()); },
+            [&](const std::string &str) { result.answer.text = QString::fromStdString(str); }};
 
         std::visit(visitor, res.value);
         return result;

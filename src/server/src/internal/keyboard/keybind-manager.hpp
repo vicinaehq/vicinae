@@ -1,4 +1,5 @@
 #pragma once
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "common/types.hpp"
 #include "keyboard/keyboard.hpp"
 #include <qjsonobject.h>
@@ -14,7 +15,7 @@ struct KeybindInfo {
   QString id;
   QString name;
   QString description;
-  QString icon;
+  BuiltinIcon icon;
   Keyboard::Shortcut dflt;
 };
 

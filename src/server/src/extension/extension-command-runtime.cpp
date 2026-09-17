@@ -1,30 +1,32 @@
 #include "extension-command-runtime.hpp"
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "common/context.hpp"
-#include "extension-error-view-host.hpp"
-#include "extension/services/application-service.hpp"
-#include "extension/services/ext-browser-extension-service.hpp"
-#include "extension/services/clipboard-service.hpp"
-#include "extension/services/command-service.hpp"
-#include "extension/services/event-core-service.hpp"
-#include "extension/services/file-search-service.hpp"
-#include "extension/services/oauth-service.hpp"
-#include "extension/services/storage-service.hpp"
-#include "extension/services/ui-service.hpp"
-#include "extension/services/wm-service.hpp"
-#include "extension/services/wallpaper-service.hpp"
+#include "extension/views/extension-error-view-host.hpp"
+#include "extension/api/application-service.hpp"
+#include "extension/api/ext-browser-extension-service.hpp"
+#include "extension/api/clipboard-service.hpp"
+#include "extension/api/command-service.hpp"
+#include "extension/api/event-core-service.hpp"
+#include "extension/api/file-search-service.hpp"
+#include "extension/api/oauth-service.hpp"
+#include "extension/api/storage-service.hpp"
+#include "extension/api/ui-service.hpp"
+#include "extension/api/wm-service.hpp"
+#include "extension/api/wallpaper-service.hpp"
 #include "generated/tsapi.hpp"
 #include "glaze-qt.hpp"
 #include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
 #include <glaze/json/generic.hpp>
+#include <glaze/json/prettify.hpp>
+#include <glaze/json/write.hpp>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <ranges>
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
-#include "ui/toast/toast.hpp"
+#include "services/toast/toast.hpp"
 #include "vicinae.hpp"
 #include "generated/manager.hpp"
 
@@ -53,7 +55,8 @@ void ExtensionCommandRuntime::initialize() {
   auto *clipboard = new ExtClipboardService(*m_transport, *services->clipman(), *services->pasteService());
   auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
-  auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings);
+  auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings,
+                                        *ctx.navigation);
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
   auto wallpaper = new ExtWallpaperService(*m_transport, *services->wallpaperManager());
   auto browserExtension = new ExtBrowserExtensionService(*m_transport, *services->browserExtension());
@@ -100,8 +103,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   opts.owner_or_author_name = m_command->author().toStdString();
   opts.is_raycast = m_command->isRaycast();
   opts.preferences = qJsonObjectToGlazeGeneric(preferenceValues);
-  opts.launch_context =
-      props.launchContext ? qJsonObjectToGlazeGeneric(*props.launchContext) : glz::generic{};
+  opts.launch_context = props.launchContext;
   opts.arguments = props.arguments |
                    std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {
                      return {pair.first.toStdString(), pair.second.toStdString()};

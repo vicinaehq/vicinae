@@ -7,7 +7,7 @@
 #include <QUuid>
 #include <QtCore>
 #include <cstdint>
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include <qdebug.h>
 #include <qdir.h>
 #include <qfuturewatcher.h>
@@ -46,10 +46,6 @@ public:
 
 signals:
   void messageReceived(const QByteArray &msg);
-};
-
-struct PendingManagerRequestInfo {
-  QString sessionId;
 };
 
 class ExtensionManager : public QObject {

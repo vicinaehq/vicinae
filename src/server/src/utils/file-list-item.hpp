@@ -1,8 +1,10 @@
 #pragma once
 #include <QCoreApplication>
-#include "actions/app/app-actions.hpp"
-#include "actions/files/file-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/file-actions.hpp"
+#include "actions/shortcut-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"
 #include "keyboard/keybind.hpp"
 #include "keyboard/keyboard.hpp"
@@ -12,9 +14,12 @@
 #include "internal/keyboard/keyboard.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/wallpaper/wallpaper-manager.hpp"
+#include "ui/action-panel/action.hpp"
+#include <algorithm>
 #include <qmimedatabase.h>
 #include <filesystem>
 #include <memory>
+#include <system_error>
 
 namespace FileActions {
 
@@ -30,7 +35,6 @@ public:
 
   void execute(ApplicationContext *ctx) override {
     auto const appDb = ctx->services->appDb();
-    auto const files = ctx->services->fileService();
     auto const toast = ctx->services->toastService();
 
     bool const success = appDb->showInFileBrowser(m_path, true);
@@ -40,7 +44,6 @@ public:
       return;
     }
 
-    files->saveAccess(m_path);
     ctx->navigation->closeWindow();
   }
 
@@ -76,8 +79,54 @@ private:
   std::filesystem::path m_path;
 };
 
+class RunExecutableAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(RunExecutableAction)
+
+public:
+  struct Options {
+    bool mkExec = false;
+  };
+
+  RunExecutableAction(std::filesystem::path path, const Options &opts)
+      : m_path(std::move(path)), m_opts(opts) {}
+
+  QString title() const override { return tr("Run executable"); }
+
+  std::optional<ImageURL> icon() const override { return BuiltinIcon::Terminal; }
+
+  void execute(ApplicationContext *ctx) override {
+    namespace fs = std::filesystem;
+    auto const files = ctx->services->fileService();
+
+    if (m_opts.mkExec) {
+      std::error_code ec{};
+      fs::permissions(m_path, fs::perms::owner_exec, fs::perm_options::add, ec);
+      if (ec) {
+        ctx->services->toastService()->failure(tr("Failed to give executable permission"));
+        return;
+      }
+    }
+
+    if (ctx->services->appDb()->launchRaw({QString::fromStdString(m_path.string())})) {
+      ctx->navigation->closeWindow();
+      files->recordAccess(m_path);
+    } else {
+      ctx->services->toastService()->failure(tr("Failed to start executable"));
+    }
+  }
+
+private:
+  std::filesystem::path m_path;
+  Options m_opts;
+};
+
 inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path &path,
                                                      const ApplicationContext *ctx) {
+  // extensions for which we allow granting executable permission on the fly
+  // most of the time we want to avoid doing that, but for e.g AppImages that's
+  // what a lot of users would expect.
+  const auto AUTO_EXECUTABLE_EXTENSIONS = {".AppImage"};
+
   QMimeDatabase mimeDb;
   auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
@@ -92,6 +141,20 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
     section->addAction(open);
   }
 
+  {
+    AbstractAction *action = nullptr;
+
+    if (std::ranges::any_of(AUTO_EXECUTABLE_EXTENSIONS,
+                            [&](auto &&ext) { return path.extension() == ext; })) {
+      action = new RunExecutableAction(path, {.mkExec = true});
+    }
+
+    if (action) {
+      if (openers.empty()) action->setPrimary(true);
+      section->addAction(action);
+    }
+  }
+
   if (fileBrowser) { section->addAction(new RevealFileInFolderAction(path)); }
 
   section->addAction(new OpenWithAction(QString::fromStdString(path.string())));
@@ -99,6 +162,11 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   if (mime.name().startsWith("image/") && ctx->services->wallpaperManager()->canSetWallpaper()) {
     section->addAction(new SetWallpaperAction(path));
   }
+
+  section->addAction(new CreateShortcutAction({
+      .link = QString::fromStdString(path.string()),
+      .name = QString::fromStdString(path.filename().string()),
+  }));
 
   auto utils = panel->createSection();
   auto copy = AbstractAction::make<CopyToClipboardAction>(

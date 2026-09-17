@@ -1,5 +1,6 @@
 #pragma once
 // We use our own shortcut stuff by design, instead of using QShortcut and the likes.
+#include <memory>
 #include <optional>
 #include <vector>
 #include <QChar>
@@ -15,12 +16,19 @@ namespace Keyboard {
 // so recorded shortcuts stay layout-independent. Identity for Latin keys and non-macOS platforms.
 Qt::Key normalizeToLatin(Qt::Key key);
 
+class LayoutResolver;
+void setLayoutResolver(std::unique_ptr<LayoutResolver> resolver);
+
+Qt::Key resolveKey(Qt::Key key, quint32 scanCode);
+
 // Typed character for keys whose Qt::Key value is its uppercase code point, nullopt for named keys.
 std::optional<QChar> printableCharForKey(Qt::Key key);
 
 std::optional<QString> stringForKey(Qt::Key key);
 std::optional<Qt::Key> keyFromString(QStringView key);
 std::optional<Qt::KeyboardModifier> modifierFromString(QStringView modifier);
+
+std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key);
 
 class Shortcut {
 public:
@@ -56,6 +64,7 @@ public:
 
   bool isValidKey() const { return stringForKey(m_key).has_value(); }
   bool isFunctionKey() const { return m_key >= Qt::Key_F1 && m_key <= Qt::Key_F24; }
+  bool isModifierOnly() const { return modifierForKey(m_key).has_value(); }
 
   // The keyboard shortcut as a string.
   // This form is used to serialize shortcut data in config files/database.

@@ -3,6 +3,7 @@
 #include <qfuture.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
+#include <chrono>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -18,13 +19,6 @@ struct IndexerFileResult {
 struct IndexerQueryParams {
   int limit = 100;
   std::optional<vicinae::FileCategory> category;
-};
-
-struct IndexerAsyncQuery : public QObject {
-  Q_OBJECT
-
-signals:
-  void finished(const std::vector<IndexerFileResult> &results) const;
 };
 
 class AbstractFileIndexer : public QObject {
@@ -54,6 +48,10 @@ public:
   virtual QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
                                                              const IndexerQueryParams &params = {}) = 0;
   virtual bool isAvailable() const = 0;
+  virtual std::chrono::milliseconds queryDebounce() const { return DEFAULT_QUERY_DEBOUNCE; }
 
   virtual ~AbstractFileIndexer() = default;
+
+private:
+  static constexpr std::chrono::milliseconds DEFAULT_QUERY_DEBOUNCE{100};
 };

@@ -90,6 +90,7 @@ public:
 
 signals:
   void selectionAdded(const ClipboardSelection &selection);
+  void primarySelectionChanged(const QString &text);
 
 protected:
   /**

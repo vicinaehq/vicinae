@@ -1,7 +1,7 @@
 #include "script-output-tokenizer.hpp"
 
 #include <utility>
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 
 ScriptOutputTokenizer::ScriptOutputTokenizer(QStringView str) : m_data(str) {}

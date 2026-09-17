@@ -1,19 +1,18 @@
 #include "calculator-service.hpp"
 #include <quuid.h>
 #include "fuzzy/fuzzy-searchable.hpp"
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/calculator-service/numen/numen-calculator-backend.hpp"
+#include "utils/environment.hpp"
 #include <ranges>
 #include <qdatetime.h>
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobjectdefs.h>
 
-#ifdef Q_OS_WIN
-#include "dummy-calculator-backend.hpp"
-#else
+#ifndef Q_OS_WIN
 #include "qalculate/qalculate-backend.hpp"
 #endif
 
@@ -32,6 +31,10 @@ bool CalculatorService::setBackend(AbstractCalculatorBackend *newBackend) {
   }
 
   qInfo() << "Started" << newBackend->displayName() << "calculator backend";
+
+  if (newBackend->supportsRefreshExchangeRates() && !Environment::isAutoRateRefreshDisabled()) {
+    newBackend->refreshExchangeRates();
+  }
 
   if (m_backend) { m_backend->stop(); }
 
@@ -255,18 +258,19 @@ bool CalculatorService::unpinRecord(const QString &id) {
   auto currentPos = std::ranges::find_if(m_records, [&](auto &&rec) { return rec.id == id; });
   auto record = *currentPos;
 
+  m_records.erase(currentPos);
+  record.pinnedAt = std::nullopt;
+
   auto newPos = m_records.begin();
 
   while (newPos != m_records.end() && newPos->pinnedAt) {
     ++newPos;
   }
 
-  while (newPos != m_records.end() && newPos->createdAt > currentPos->createdAt) {
+  while (newPos != m_records.end() && newPos->createdAt > record.createdAt) {
     ++newPos;
   }
 
-  m_records.erase(currentPos);
-  record.pinnedAt = std::nullopt;
   m_records.insert(newPos, record);
 
   emit recordUnpinned(id);
@@ -353,9 +357,7 @@ CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
 #if defined(Q_OS_MACOS) && defined(BUNDLE_SOULVER_CORE)
     candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
 #endif
-#ifdef Q_OS_WIN
-    candidates.emplace_back(std::make_unique<DummyCalculatorBackend>());
-#else
+#ifndef Q_OS_WIN
     candidates.emplace_back(std::make_unique<QalculateBackend>());
 #endif
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)

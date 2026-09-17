@@ -1,0 +1,126 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import Vicinae
+
+ColumnLayout {
+    id: root
+    Layout.fillWidth: true
+    spacing: 6
+
+    property var model: []
+    property CompletionModel appsModel: null
+    property bool filled: false
+
+    signal changed(var apps)
+
+    function _appInfo(wmClass) {
+        const info = appsModel ? appsModel.itemDataById(wmClass) : null;
+        if (info && info.id !== undefined)
+            return info;
+        return {
+            displayName: wmClass,
+            iconSource: ""
+        };
+    }
+
+    function add(wmClass) {
+        if (model.indexOf(wmClass) >= 0)
+            return;
+        let copy = model.slice();
+        copy.push(wmClass);
+        model = copy;
+        changed(model);
+    }
+
+    function remove(wmClass) {
+        let copy = [];
+        for (let i = 0; i < model.length; i++) {
+            if (model[i] !== wmClass)
+                copy.push(model[i]);
+        }
+        model = copy;
+        changed(model);
+    }
+
+    Text {
+        visible: root.model.length === 0
+        text: qsTr("All applications")
+        color: Theme.textMuted
+        font.pointSize: Theme.smallerFontSize
+        font.italic: true
+    }
+
+    Repeater {
+        model: root.model
+
+        Item {
+            id: appRow
+            required property int index
+            required property var modelData
+
+            readonly property var info: root._appInfo(modelData)
+
+            Layout.fillWidth: true
+            implicitHeight: 32
+
+            FormInputBackground {
+                anchors.fill: parent
+                radius: 6
+                filled: root.filled
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 6
+                color: "transparent"
+                border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
+                border.width: 1
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 6
+                spacing: 6
+
+                ViciImage {
+                    source: appRow.info.iconSource ?? ""
+                    visible: source !== ""
+                    Layout.preferredWidth: 16
+                    Layout.preferredHeight: 16
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    verticalAlignment: Text.AlignVCenter
+                    text: appRow.info.displayName ?? appRow.modelData
+                    color: Theme.foreground
+                    font.pointSize: Theme.regularFontSize
+                    elide: Text.ElideRight
+                }
+
+                ViciButton {
+                    Layout.preferredWidth: 20
+                    Layout.preferredHeight: 20
+                    Layout.alignment: Qt.AlignVCenter
+                    radius: 4
+                    iconSource: Img.icon(BuiltinIcon.Xmark)
+                    accessibleName: qsTr("Remove")
+                    iconSize: 10
+                    variant: "ghost"
+                    onClicked: root.remove(appRow.modelData)
+                }
+            }
+        }
+    }
+
+    SearchableDropdown {
+        placeholder: qsTr("+ Restrict to app…")
+        model: root.appsModel
+        currentItem: null
+        filled: root.filled
+        onActivated: item => root.add(item.id)
+    }
+}

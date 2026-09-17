@@ -13,7 +13,8 @@ class Shortcut {
    * unknown ID as a name. For instance, one can use `https://example.com/search?q={query}` instead of the
    * longer `https://example.com/search?q={argument name="query"}`.
    */
-  const std::vector<QString> m_reservedPlaceholderIds = {"clipboard", "selected", "uuid", "date"};
+  const std::vector<QString> m_reservedPlaceholderIds = {"clipboard", "selection", "selected", "uuid",
+                                                         "date"};
 
 public:
   struct ParsedPlaceholder {

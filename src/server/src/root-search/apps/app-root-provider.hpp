@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <QCoreApplication>
@@ -22,6 +22,7 @@ class AppRootItem : public RootItem {
   QString settingsDescription() const override;
   std::vector<std::pair<QString, QString>> settingsMetadata() const override;
   std::vector<QString> keywords() const override;
+  std::optional<QString> unlocalizedTitle() const override;
   bool isActive() const override;
 
 public:

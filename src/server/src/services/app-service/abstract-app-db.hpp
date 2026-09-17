@@ -1,7 +1,9 @@
 #pragma once
-#include "preference.hpp"
+#include "command/preference.hpp"
 #include "ui/image/url.hpp"
 #include <QJsonObject>
+#include <QProcess>
+#include <memory>
 #include <QString>
 #include <optional>
 #include <qmimetype.h>
@@ -154,6 +156,14 @@ public:
   virtual bool launchTerminalCommand(const std::vector<QString> &cmdline,
                                      const LaunchTerminalCommandOptions &opts = {}) const = 0;
 
+  // unstarted; create it on the thread that will run it
+  virtual std::unique_ptr<QProcess> shellProcess(const QString &code) const {
+    auto proc = std::make_unique<QProcess>();
+    proc->setProgram(qEnvironmentVariable("SHELL", QStringLiteral("/bin/sh")));
+    proc->setArguments({QStringLiteral("-c"), code});
+    return proc;
+  }
+
   /**
    * Preferences that are specific to this provider (e.g. launch prefix on XDG).
    * The root provider merges these with its own UI preferences when exposing them to the user.
@@ -177,6 +187,17 @@ public:
    * Find the default opener for the given target, or a null pointer if none could be found.
    */
   virtual AppPtr findDefaultOpener(const Target &target) const = 0;
+
+  /**
+   * Make `app` the default opener for the given mime type.
+   * Returns false if the platform does not support it or if the change could not be applied.
+   */
+  virtual bool setDefaultOpener(const QString &mime, const AbstractApplication &app) { return false; }
+
+  /**
+   * Make `app` the preferred web browser on this system.
+   */
+  virtual bool setWebBrowser(const AbstractApplication &app) { return false; }
 
   virtual AppPtr findById(const QString &id) const = 0;
 
@@ -220,6 +241,9 @@ public:
    * If this return null, it means that calling `openLocation` will likely return `false`.
    */
   virtual AppPtr locationOpener(const AbstractApplication &app) const = 0;
+
+  virtual bool canUninstall(const AbstractApplication &app) const { return false; }
+  virtual bool uninstall(const AbstractApplication &app) { return false; }
 
   /**
    * Open the system file browser for the provided path.

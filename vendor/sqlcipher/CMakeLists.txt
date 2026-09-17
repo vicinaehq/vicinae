@@ -8,8 +8,15 @@ target_compile_definitions(sqlcipher PRIVATE
 )
 
 # SQLCipher needs a crypto provider for the codec: OpenSSL on Linux, CommonCrypto
-# on macOS. Windows has none yet, so it builds as plain (unencrypted) SQLite.
+# on macOS, CNG (bcrypt.dll) on Windows through the custom provider hook.
 if (WIN32)
+    target_sources(sqlcipher PRIVATE crypto_cng.c)
+    target_compile_definitions(sqlcipher PRIVATE
+        SQLITE_HAS_CODEC
+        SQLITE_EXTRA_INIT=sqlcipher_extra_init
+        SQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown
+        SQLCIPHER_CRYPTO_CUSTOM=sqlcipher_cng_setup)
+    target_link_libraries(sqlcipher PRIVATE bcrypt version)
 elseif (APPLE)
     target_compile_definitions(sqlcipher PRIVATE
         SQLITE_HAS_CODEC

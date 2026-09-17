@@ -90,6 +90,8 @@ export type NotificationUrgency = 'Low' | 'Normal' | 'High';
 
 export type FileSearchCategory = 'Other' | 'Directory' | 'Image' | 'Video' | 'Audio' | 'Document' | 'Archive' | 'Application';
 
+export type LaunchType = 'User' | 'Background' | 'CommandLine';
+
 export type WallpaperFit = 'Cover' | 'Contain' | 'Stretch' | 'Center' | 'Tile';
 
 export type Application = {
@@ -224,6 +226,16 @@ export type FileSearchOptions = {
 
 export type UpdateCommandMetadataPayload = {
 	subtitle?: string;
+}
+
+export type LaunchCommandOptions = {
+	extensionName: string;
+	name: string;
+	ownerOrAuthorName: string;
+	type: LaunchType;
+	arguments?: any;
+	context?: any;
+	fallbackText?: string;
 }
 
 export type PKCEClientOptions = {
@@ -455,6 +467,10 @@ class FileSearchService {
 
 class CommandService {
 	constructor(private readonly transport: RpcTransport) {}
+
+	launchCommand(options: LaunchCommandOptions): Promise<void> {
+		return this.transport.request("Command/launchCommand", { options});	
+	}
 
 	updateCommandMetadata(payload: UpdateCommandMetadataPayload): Promise<void> {
 		return this.transport.request("Command/updateCommandMetadata", { payload});	

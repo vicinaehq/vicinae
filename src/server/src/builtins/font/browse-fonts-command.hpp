@@ -1,0 +1,13 @@
+#pragma once
+#include "builtins/font/font-browser-view-host.hpp"
+#include "command/single-view-command-context.hpp"
+#include <QCoreApplication>
+
+class BrowseFontsCommand : public BuiltinViewCommand<FontBrowserViewHost> {
+  QString id() const override { return "browse"; }
+  QString name() const override { return QCoreApplication::translate("BrowseFontsCommand", "Search Fonts"); };
+  std::vector<QString> keywords() const override { return {"browse fonts"}; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Text).setBackgroundTint(SemanticColor::Orange);
+  }
+};

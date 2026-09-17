@@ -75,7 +75,7 @@ std::string DesktopEntryReader::parseRawLocale() {
   std::string locale;
 
   consume('[');
-  while (!isPeek(']')) {
+  while (peek() && peek() != ']') {
     locale += consume();
   }
   consume(']');

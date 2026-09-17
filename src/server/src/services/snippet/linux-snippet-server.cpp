@@ -20,7 +20,7 @@ void LinuxSnippetServer::setKeymap(snippet_gen::LayoutInfo info) { m_inputServer
 void LinuxSnippetServer::resetContext() { m_inputServer.resetContext(); }
 
 void LinuxSnippetServer::injectExpand(const std::string &, unsigned charsToDelete, unsigned prePasteDelayUs,
-                                      bool terminal, unsigned cursorLeftMoves) {
+                                      bool terminal, unsigned cursorLeftMoves, bool) {
   m_inputServer.injectExpand(charsToDelete, prePasteDelayUs, terminal, cursorLeftMoves);
 }
 

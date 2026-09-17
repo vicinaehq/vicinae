@@ -1,6 +1,6 @@
 #pragma once
-#include "command.hpp"
-#include "common.hpp"
+#include "command/command.hpp"
+#include "command/command-types.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "generated/tsapi.hpp"
