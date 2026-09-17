@@ -11,6 +11,10 @@ on:
         description: "Sign the build with Azure Artifact Signing"
         type: boolean
         default: false
+      version:
+        description: "Installer version (x.y.z), defaults to the latest tag"
+        type: string
+        default: ""
   workflow_call:
     inputs:
       tag:
@@ -95,7 +99,7 @@ jobs:
           timestamp-digest: SHA256
 
       - name: Package (stage + installer)
-        run: ./scripts/mkinstaller.ps1 -BuildDir build -Version "${{ inputs.tag }}"
+        run: ./scripts/mkinstaller.ps1 -BuildDir build -Version "${{ inputs.tag || inputs.version }}"
 
       - name: Sign installer
         if: env.SIGNING == 'true'
