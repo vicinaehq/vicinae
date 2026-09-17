@@ -1438,16 +1438,34 @@ elseif(NOT APPLE)
 	)
 endif()
 
-if (BUILD_TESTS AND UNIX AND NOT APPLE)
-	set(TEST_TARGET ${TARGET}-tests)
+if (BUILD_TESTS)
 	find_package(Catch2 3 REQUIRED)
-	add_executable(${TEST_TARGET}
-		src/internal/keyboard/keyboard.cpp
-		src/internal/keyboard/keybind-manager.cpp
-		src/services/builtin-icon/builtin-icon.hpp
-		src/services/builtin-icon/builtin-icon.cpp
+
+	if (UNIX AND NOT APPLE)
+		set(TEST_TARGET ${TARGET}-tests)
+		add_executable(${TEST_TARGET}
+			src/internal/keyboard/keyboard.cpp
+			src/internal/keyboard/keybind-manager.cpp
+			src/services/builtin-icon/builtin-icon.hpp
+			src/services/builtin-icon/builtin-icon.cpp
+		)
+		target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent)
+		target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
+		target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
+	endif()
+
+	add_executable(snippet-db-tests
+		tests/snippet-db.cpp
+		src/services/snippet/snippet-db.cpp
+		src/utils/utils.cpp
 	)
-	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent)
-	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
-	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
+	target_include_directories(snippet-db-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/utils)
+	target_link_libraries(snippet-db-tests PRIVATE
+		Catch2::Catch2WithMain
+		Qt6::Core
+		Qt6::Gui
+		glaze::glaze
+		vicinae::common
+	)
+	target_compile_features(snippet-db-tests PUBLIC cxx_std_23)
 endif()
