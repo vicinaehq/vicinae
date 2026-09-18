@@ -92,13 +92,13 @@ void ExtensionFormModel::setFieldValue(int index, const QVariant &value) {
 void ExtensionFormModel::fieldFocused(int index) {
   if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   const auto &item = m_items[index];
-  if (item.onFocus) { m_notify(toQ(*item.onFocus), {}); }
+  if (item.onFocus) { m_notify(toQ(*item.onFocus), QJsonArray{item.effectiveValue()}); }
 }
 
 void ExtensionFormModel::fieldBlurred(int index) {
   if (index < 0 || std::cmp_greater_equal(index, m_items.size())) return;
   const auto &item = m_items[index];
-  if (item.onBlur) { m_notify(toQ(*item.onBlur), {}); }
+  if (item.onBlur) { m_notify(toQ(*item.onBlur), QJsonArray{item.effectiveValue()}); }
 }
 
 bool ExtensionFormModel::isExtensionControlled(int index) const {
