@@ -9,7 +9,7 @@ type InstanceProps = Record<string, any>;
 type Instance = { $t: string; children?: Instance[]; [key: string]: any };
 type Container = Instance;
 
-type TextInstance = any;
+type TextInstance = Instance;
 type SuspenseInstance = any;
 type HydratableInstance = any;
 type PublicInstance = Instance;
@@ -114,8 +114,10 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return instance;
 		},
 
-		createTextInstance() {
-			throw new Error(`createTextInstance is not supported`);
+		createTextInstance(text: string) {
+			const instance: TextInstance = { $t: "#text", text: String(text) };
+			initMeta(instance, true, new Set());
+			return instance;
 		},
 
 		appendInitialChild(parent, child) {
@@ -229,7 +231,14 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		},
 
 		resetTextContent() {},
-		commitTextUpdate() {},
+		commitTextUpdate(
+			textInstance: TextInstance,
+			_oldText: string,
+			newText: string,
+		) {
+			textInstance.text = String(newText);
+			emitDirty(textInstance);
+		},
 		commitMount() {},
 
 		commitUpdate(instance: Instance, type, prevProps, nextProps, handle) {
@@ -335,6 +344,25 @@ export type RendererConfig = {
 
 const MAX_RENDER_PER_SECOND = 60;
 
+const sanitizeInstance = (node: Instance): Instance | null => {
+	if (!node || typeof node !== "object") return null;
+	if ((node as Instance).$t === "#text") return null;
+
+	const { children, ...rest } = node as Instance;
+	const out: Instance = { ...(rest as Record<string, any>) } as Instance;
+
+	if (children) {
+		const cleaned: Instance[] = [];
+		for (const child of children) {
+			const sanitized = sanitizeInstance(child);
+			if (sanitized) cleaned.push(sanitized);
+		}
+		if (cleaned.length > 0) out.children = cleaned;
+	}
+
+	return out;
+};
+
 export const createRenderer = (config: RendererConfig) => {
 	const container: Container = { $t: "root", children: [] };
 	initMeta(container, true, new Set());
@@ -353,10 +381,13 @@ export const createRenderer = (config: RendererConfig) => {
 
 				const views = (container.children ?? []).map<ViewData>((viewSlot) => {
 					const viewRoot = viewSlot.children?.at(-1);
-					if (!viewRoot) return { dirty: true };
+					if (!viewRoot || viewRoot.$t === "#text") return { dirty: true };
 
 					const dirty = viewRoot._dirtyGen === frameGen;
-					return { dirty, root: dirty ? viewRoot : undefined };
+					return {
+						dirty,
+						root: dirty ? (sanitizeInstance(viewRoot) ?? undefined) : undefined,
+					};
 				});
 
 				config.onUpdate?.(views);
