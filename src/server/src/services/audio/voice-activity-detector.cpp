@@ -7,6 +7,7 @@
 #include <QString>
 #include "common/enumerate.hpp"
 #include "whisper.h"
+#include <ggml-backend.h>
 
 namespace Audio {
 
@@ -61,6 +62,8 @@ std::optional<VoiceActivityDetector> VoiceActivityDetector::create() {
       .eof = [](void *ctx) { return static_cast<QFile *>(ctx)->atEnd(); },
       .close = [](void *ctx) { static_cast<QFile *>(ctx)->close(); },
   };
+
+  ggml_backend_load_all();
 
   auto params = whisper_vad_default_context_params();
   params.n_threads = 1;
