@@ -294,6 +294,7 @@ set(SRCS
 	src/internal/keyboard/layout-resolver.hpp
 	src/internal/keyboard/layout-resolver.cpp
 
+	src/theme/theme-variant.hpp
 	src/theme/theme-file.hpp
 	src/theme/theme-file.cpp
 	src/theme/theme-parser.cpp
