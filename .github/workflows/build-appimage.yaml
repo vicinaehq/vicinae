@@ -59,6 +59,8 @@ jobs:
 
       - name: Make AppImage
         run: |
+          apt-get update
+          apt-get install -y zsync
           chmod +x ./scripts/mkappimage.sh
           ./scripts/mkappimage.sh "${INSTALL_DIR}" AppDir
 
@@ -66,6 +68,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Vicinae-${{ matrix.target.deploy_arch }}-${{ github.sha }}.AppImage
-          path: "*.AppImage"
+          path: |
+            *.AppImage
+            *.AppImage.zsync
           if-no-files-found: error
 
