@@ -6,7 +6,6 @@
 #include <qlogging.h>
 #include <string_view>
 #include <QJsonObject>
-#include "builtins/dictation/dictation-extension.hpp"
 #include "builtins/dictation/dictation-session.hpp"
 #include "builtins/dictation/transcribe-view-host.hpp"
 #include "common/context.hpp"
@@ -128,16 +127,14 @@ void TranscribeCommand::execute(CommandController &controller) const {
   auto status = ::status(ctx);
   const bool playSoundEffects = controller.preferenceValues().value("sound").toBool(true);
   const bool pauseMedia = controller.preferenceValues().value("pauseMedia").toBool(true);
-  const bool recordHistory =
-      controller.preferenceValues().value(Dictation::qs(Dictation::HISTORY_PREFERENCE)).toBool(true);
   auto action = Dictation::dictationActionFromString(
       controller.preferenceValues().value("dictationAction").toString().toStdString());
 
   switch (status.readiness) {
   case Readiness::Ready:
     withMicrophoneAccess(ctx, [ctx, model = status.model->ref, options = status.options, playSoundEffects,
-                               pauseMedia, action, recordHistory]() {
-      startDictation(ctx, model, options, playSoundEffects, pauseMedia, action, recordHistory);
+                               pauseMedia, action]() {
+      startDictation(ctx, model, options, playSoundEffects, pauseMedia, action, /*recordHistory*/ true);
     });
     return;
   case Readiness::NoModels:
