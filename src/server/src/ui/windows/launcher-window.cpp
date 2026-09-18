@@ -378,9 +378,14 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
 }
 
 void LauncherWindow::loadRoot() {
+#if defined(Q_OS_MACOS)
+  // macOS ships a dedicated native window; opt out with "use_standard_window" to
+  // get the standard cross-platform ("Linux-style") window everywhere.
+  const bool standardWindow = m_ctx.services->config()->value().launcherWindow.useStandardWindow;
+#endif
   m_engine.load(
 #if defined(Q_OS_MACOS)
-      qml::componentUrl(u"LauncherWindowMacOS")
+      standardWindow ? qml::componentUrl(u"LauncherWindow") : qml::componentUrl(u"LauncherWindowMacOS")
 #elif defined(Q_OS_WIN)
       qml::componentUrl(u"LauncherWindowWindows")
 #else
@@ -401,7 +406,7 @@ void LauncherWindow::loadRoot() {
   if (m_hudBridge) {
     m_engine.load(
 #if defined(Q_OS_MACOS)
-        qml::componentUrl(u"HudWindowMacOS")
+        standardWindow ? qml::componentUrl(u"HudWindow") : qml::componentUrl(u"HudWindowMacOS")
 #elif defined(Q_OS_WIN)
         qml::componentUrl(u"HudWindowWindows")
 #else
