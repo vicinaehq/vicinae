@@ -222,10 +222,14 @@ else()
 endif()
 
 if (SYSTEM_INFERENCE_ENGINES)
-	find_package(whisper ${MIN_WHISPER_VERSION} REQUIRED)
+	# whisper.cpp < 1.9.4 misnames its config-version file, so a versioned find_package() rejects it
+	find_package(whisper REQUIRED)
+	if (WHISPER_VERSION VERSION_LESS MIN_WHISPER_VERSION)
+		message(FATAL_ERROR "System whisper.cpp ${WHISPER_VERSION} is too old, ${MIN_WHISPER_VERSION} or newer is required")
+	endif()
 	find_package(parakeet REQUIRED)
 	find_package(llama REQUIRED)
-	message(STATUS "Inference engines: using system whisper.cpp ${whisper_VERSION}, parakeet and llama.cpp")
+	message(STATUS "Inference engines: using system whisper.cpp ${WHISPER_VERSION}, parakeet and llama.cpp")
 endif()
 
 
