@@ -20,7 +20,11 @@ type MyTimeoutHandle = number;
 type NoTimeout = number;
 
 const ctx: HostContext = {};
+const TEXT_TAG = "#text";
 let frameGen = 0;
+
+const isText = (node: unknown): boolean =>
+	(node as Instance | null | undefined)?.$t === TEXT_TAG;
 
 const initMeta = (
 	instance: Instance,
@@ -115,7 +119,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		},
 
 		createTextInstance(text: string) {
-			const instance: TextInstance = { $t: "#text", text: String(text) };
+			const instance: TextInstance = { $t: TEXT_TAG, text };
 			initMeta(instance, true, new Set());
 			return instance;
 		},
@@ -236,7 +240,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			_oldText: string,
 			newText: string,
 		) {
-			textInstance.text = String(newText);
+			textInstance.text = newText;
 			emitDirty(textInstance);
 		},
 		commitMount() {},
@@ -344,24 +348,13 @@ export type RendererConfig = {
 
 const MAX_RENDER_PER_SECOND = 60;
 
-const sanitizeInstance = (node: Instance): Instance | null => {
-	if (!node || typeof node !== "object") return null;
-	if ((node as Instance).$t === "#text") return null;
+const stripTextNodes = (key: string, value: unknown) =>
+	key === "children" && Array.isArray(value) && value.some(isText)
+		? value.filter((node) => !isText(node))
+		: value;
 
-	const { children, ...rest } = node as Instance;
-	const out: Instance = { ...(rest as Record<string, any>) } as Instance;
-
-	if (children) {
-		const cleaned: Instance[] = [];
-		for (const child of children) {
-			const sanitized = sanitizeInstance(child);
-			if (sanitized) cleaned.push(sanitized);
-		}
-		if (cleaned.length > 0) out.children = cleaned;
-	}
-
-	return out;
-};
+export const serializeViews = (views: ViewData[]) =>
+	JSON.stringify({ views }, stripTextNodes);
 
 export const createRenderer = (config: RendererConfig) => {
 	const container: Container = { $t: "root", children: [] };
@@ -381,13 +374,10 @@ export const createRenderer = (config: RendererConfig) => {
 
 				const views = (container.children ?? []).map<ViewData>((viewSlot) => {
 					const viewRoot = viewSlot.children?.at(-1);
-					if (!viewRoot || viewRoot.$t === "#text") return { dirty: true };
+					if (!viewRoot || isText(viewRoot)) return { dirty: true };
 
 					const dirty = viewRoot._dirtyGen === frameGen;
-					return {
-						dirty,
-						root: dirty ? (sanitizeInstance(viewRoot) ?? undefined) : undefined,
-					};
+					return { dirty, root: dirty ? viewRoot : undefined };
 				});
 
 				config.onUpdate?.(views);
