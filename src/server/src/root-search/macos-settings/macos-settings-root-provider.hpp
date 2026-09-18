@@ -6,6 +6,7 @@
 struct MacSettingsPane {
   std::filesystem::path bundlePath;
   QString displayName;
+  std::optional<QString> unlocalizedName;
   QString bundleId;
   QString legacyBundleId;
 };
@@ -16,6 +17,7 @@ class MacSettingsRootItem : public RootItem {
   MacSettingsPane m_pane;
 
   QString title() const override;
+  std::optional<QString> unlocalizedTitle() const override;
   QString typeDisplayName() const override;
   ImageURL iconUrl() const override;
   EntrypointId uniqueId() const override;

@@ -81,6 +81,12 @@ std::optional<MacSettingsPane> readPane(const fs::path &path, NSString *settings
     pane.displayName = fromNSString(displayName);
     pane.bundleId = fromNSString(info[@"CFBundleIdentifier"]);
 
+    NSString *unlocalizedName = info[@"CFBundleDisplayName"];
+    if (unlocalizedName.length == 0) unlocalizedName = info[@"CFBundleName"];
+    if (unlocalizedName.length > 0 && ![unlocalizedName isEqualToString:displayName]) {
+      pane.unlocalizedName = fromNSString(unlocalizedName);
+    }
+
     NSDictionary *settingsAttrs = attrs[@"SettingsExtensionAttributes"];
     id legacy = settingsAttrs[@"legacyBundleIdentifier"];
     if ([legacy isKindOfClass:[NSString class]]) {
@@ -128,6 +134,8 @@ QString paneUrl(const MacSettingsPane &pane) {
 } // namespace
 
 QString MacSettingsRootItem::title() const { return m_pane.displayName; }
+
+std::optional<QString> MacSettingsRootItem::unlocalizedTitle() const { return m_pane.unlocalizedName; }
 
 QString MacSettingsRootItem::typeDisplayName() const { return tr("System Settings"); }
 
