@@ -3,6 +3,7 @@
 #include "extension/model/grid-model.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "ui/views/edit-keywords-view-host.hpp"
+#include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "ui/action-panel/action.hpp"
@@ -163,7 +164,6 @@ std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const glyph::Item *data,
                                        ? emoji::applySkinTone(data->character, defaultTone).c_str()
                                        : QString::fromUtf8(data->character);
 
-  auto pasteService = scope.services()->pasteService();
   auto panel = std::make_unique<ListActionPanelState>();
   auto *copyEmoji = new CopyToClipboardAction(Clipboard::Text(copiedEmoji),
                                               QCoreApplication::translate("emoji-grid-model", "Copy"));
@@ -190,16 +190,14 @@ std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const glyph::Item *data,
       defaultAction = cmd->preferenceValues().value("defaultAction").toString();
   }
 
-  if (pasteService->supportsPaste()) {
-    auto *paste = new PasteToFocusedWindowAction(Clipboard::Text(copiedEmoji));
-    if (defaultAction == "paste") {
-      mainSection->addAction(new VisitEmojiActionWrapper(data->character, paste));
-      mainSection->addAction(new VisitEmojiActionWrapper(data->character, copyEmoji));
-    } else {
-      mainSection->addAction(new VisitEmojiActionWrapper(data->character, copyEmoji));
-      mainSection->addAction(new VisitEmojiActionWrapper(data->character, paste));
-    }
+  auto *paste = new PasteToFocusedWindowAction(Clipboard::Text(copiedEmoji));
+  paste->addShortcut(Keybind::PasteAction);
+  copyEmoji->addShortcut(Keybind::CopyAction);
+  if (defaultAction == "copy") {
+    mainSection->addAction(new VisitEmojiActionWrapper(data->character, copyEmoji));
+    mainSection->addAction(new VisitEmojiActionWrapper(data->character, paste));
   } else {
+    mainSection->addAction(new VisitEmojiActionWrapper(data->character, paste));
     mainSection->addAction(new VisitEmojiActionWrapper(data->character, copyEmoji));
   }
 

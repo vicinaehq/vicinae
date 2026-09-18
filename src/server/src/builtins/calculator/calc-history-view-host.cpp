@@ -70,8 +70,8 @@ std::unique_ptr<ActionPanelState> CalcLiveSection::actionPanel(int) const {
   auto panel = std::make_unique<ListActionPanelState>();
   auto *main = panel->createSection();
   auto *copyAnswer = new CopyCalculatorAnswerAction(*m_result);
-  copyAnswer->setPrimary(true);
-  main->addAction(copyAnswer);
+  auto *pasteAnswer = new PasteCalculatorAnswerAction(*m_result);
+  addCalculatorPasteCopyActions(main, pasteAnswer, copyAnswer);
   main->addAction(new CopyCalculatorQuestionAndAnswerAction(*m_result));
 
   if (auto s = m_result->answer.unformatted) {
