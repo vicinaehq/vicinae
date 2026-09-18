@@ -1,0 +1,15 @@
+{
+	"include": ["src"],
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"module": "nodenext",
+		"declaration": true,
+		"declarationMap": false,
+		"noEmit": false,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"types": ["node"],
+		"skipLibCheck": true
+	}
+}
