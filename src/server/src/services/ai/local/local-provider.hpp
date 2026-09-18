@@ -8,6 +8,7 @@
 #include <qfuture.h>
 #include <QTimer>
 #include "parakeet.h"
+#include <ggml-backend.h>
 #include "services/ai/ai-provider.hpp"
 #include "services/audio/audio-recorder.hpp"
 #include "services/local-model-registry/local-model-catalogue.hpp"
@@ -158,6 +159,7 @@ public:
     const auto runParakeet = [&]() {
       return QtConcurrent::run(
           [recording = std::move(recording), path = std::move(path)]() -> TranscriptionResult {
+            ggml_backend_load_all();
             parakeet_full_params fparams =
                 parakeet_full_default_params(parakeet_sampling_strategy::PARAKEET_SAMPLING_GREEDY);
             auto ctx =
@@ -195,6 +197,7 @@ public:
       return QtConcurrent::run([recording = std::move(recording), language = opts.language,
                                 useGpu = opts.useGpu, initialPrompt = std::move(initialPrompt),
                                 path = std::move(path)]() -> TranscriptionResult {
+        ggml_backend_load_all();
         whisper_context_params params = whisper_context_default_params();
 
         params.use_gpu = useGpu;

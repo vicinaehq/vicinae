@@ -41,9 +41,14 @@
   });
   syntax-highlighting = addDarwinPlatform kdeScope.syntax-highlighting;
 
-  llama = llama-cpp.override {
-    vulkanSupport = isLinux;
-  };
+  # nixpkgs installs the dynamic ggml backends in bin, where only llama's own executables
+  # find them. Move them to lib and compile that search path into ggml.
+  llama =
+    (llama-cpp.override {
+      vulkanSupport = isLinux;
+    }).overrideAttrs (old: {
+      cmakeFlags = old.cmakeFlags ++ [(lib.cmakeFeature "GGML_BACKEND_DIR" "${placeholder "out"}/lib")];
+    });
 
   # nixpkgs whisper-cpp and llama-cpp each ship their own libggml. Build whisper
   # against llama's copy so vicinae links exactly one ggml.
