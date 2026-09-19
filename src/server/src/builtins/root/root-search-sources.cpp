@@ -20,7 +20,6 @@ namespace root_search {
 
 const QHash<int, QByteArray> &customRoleNames() {
   static const QHash<int, QByteArray> roles = {
-      {ItemType, "itemType"},
       {Alias, "alias"},
       {IsActive, "isActive"},
       {AccessoryText, "accessoryText"},
@@ -37,7 +36,6 @@ const QHash<int, QByteArray> &customRoleNames() {
 
 const QHash<int, QVariant> &customRoleDefaults() {
   static const QHash<int, QVariant> defaults = {
-      {ItemType, QString()},
       {Alias, QString()},
       {IsActive, false},
       {AccessoryText, QString()},
@@ -103,10 +101,7 @@ std::optional<ImageURL> RootLinkSection::itemIcon(int) const {
   return m_link ? std::optional(m_link->app->iconUrl()) : std::nullopt;
 }
 
-QVariant RootLinkSection::customData(int, int role) const {
-  if (role == ItemType) return QStringLiteral("link");
-  return {};
-}
+QVariant RootLinkSection::customData(int, int role) const { return {}; }
 
 QHash<int, QByteArray> RootLinkSection::customRoleNames() const { return root_search::customRoleNames(); }
 QHash<int, QVariant> RootLinkSection::customRoleDefaults() const { return root_search::customRoleDefaults(); }
@@ -144,7 +139,6 @@ std::optional<ImageURL> RootCalculatorSection::itemIcon(int) const {
 }
 
 QVariant RootCalculatorSection::customData(int, int role) const {
-  if (role == ItemType) return QStringLiteral("calculator");
   if (role == IsCalculator) return true;
   if (!m_result) return {};
   switch (role) {
@@ -207,7 +201,6 @@ std::optional<ImageURL> RootUpdateSection::itemIcon(int) const {
 }
 
 QVariant RootUpdateSection::customData(int, int role) const {
-  if (role == ItemType) return QStringLiteral("update");
   if (role == AccessoryText) return tr("Update");
   return {};
 }
@@ -255,10 +248,7 @@ std::optional<ImageURL> RootNewsSection::itemIcon(int i) const {
   return m_items[i]->icon;
 }
 
-QVariant RootNewsSection::customData(int, int role) const {
-  if (role == ItemType) return QStringLiteral("news");
-  return {};
-}
+QVariant RootNewsSection::customData(int, int role) const { return {}; }
 
 QHash<int, QByteArray> RootNewsSection::customRoleNames() const { return root_search::customRoleNames(); }
 QHash<int, QVariant> RootNewsSection::customRoleDefaults() const { return root_search::customRoleDefaults(); }
@@ -295,7 +285,6 @@ std::optional<ImageURL> RootFavoritesSection::itemIcon(int i) const {
 }
 
 QVariant RootFavoritesSection::customData(int i, int role) const {
-  if (role == ItemType) return QStringLiteral("favorite");
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
   switch (role) {
   case Alias: {
@@ -360,7 +349,6 @@ std::optional<ImageURL> RootResultsSection::itemIcon(int i) const {
 }
 
 QVariant RootResultsSection::customData(int i, int role) const {
-  if (role == ItemType) return QStringLiteral("result");
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i].item) return {};
   switch (role) {
   case Alias:
@@ -416,7 +404,6 @@ std::optional<ImageURL> RootFilesSection::itemIcon(int i) const {
 }
 
 QVariant RootFilesSection::customData(int, int role) const {
-  if (role == ItemType) return QStringLiteral("file");
   if (role == IsFile) return true;
   return {};
 }
@@ -469,7 +456,6 @@ std::optional<ImageURL> RootFallbackSection::itemIcon(int i) const {
 }
 
 QVariant RootFallbackSection::customData(int i, int role) const {
-  if (role == ItemType) return QStringLiteral("fallback");
   if (std::cmp_greater_equal(i, m_items.size()) || !m_items[i]) return {};
   switch (role) {
   case IsActive:

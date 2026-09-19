@@ -21,6 +21,7 @@ GenericListView {
         required property int index
         required property bool isSection
         required property bool isSelectable
+        required property int quickAccessIndex
         required property string sectionName
         required property string title
         required property string subtitle
@@ -49,6 +50,7 @@ GenericListView {
                 itemAlias: ""
                 itemIsActive: false
                 itemAccessory: delegateLoader.itemAccessory
+                quickAccessIndex: delegateLoader.quickAccessIndex
                 itemShortcutTokens: delegateLoader.shortcutTokens
                 selected: commandListView.currentIndex === delegateLoader.index
                 draggable: delegateLoader.isDraggable

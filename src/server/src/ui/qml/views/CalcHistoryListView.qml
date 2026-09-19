@@ -21,6 +21,7 @@ GenericListView {
         required property int index
         required property bool isSection
         required property bool isSelectable
+        required property int quickAccessIndex
         required property string sectionName
         required property string title
         required property string subtitle
@@ -56,6 +57,7 @@ GenericListView {
                 calcQuestionUnit: delegateLoader.calcQuestionUnit
                 calcAnswer: delegateLoader.calcAnswer
                 calcAnswerUnit: delegateLoader.calcAnswerUnit
+                quickAccessIndex: delegateLoader.quickAccessIndex
                 selected: calcHistoryView.currentIndex === delegateLoader.index
                 onClicked: calcHistoryView.currentIndex = delegateLoader.index
                 onActivated: calcHistoryView.itemActivated(delegateLoader.index)
@@ -72,6 +74,7 @@ GenericListView {
                 itemAlias: ""
                 itemIsActive: false
                 itemAccessory: delegateLoader.itemAccessory
+                quickAccessIndex: delegateLoader.quickAccessIndex
                 selected: calcHistoryView.currentIndex === delegateLoader.index
                 onClicked: calcHistoryView.currentIndex = delegateLoader.index
                 onActivated: calcHistoryView.itemActivated(delegateLoader.index)

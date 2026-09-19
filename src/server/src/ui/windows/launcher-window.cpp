@@ -319,13 +319,15 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
     m_ctx.navigation->closeWindow();
   }
 
-  else if (event->type() == QEvent::KeyPress) {
+  else if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
     auto *ke = static_cast<QKeyEvent *>(event); // NOLINT
     // KeypadModifier marks key origin, not user intent; strip it so numpad
     // arrows compare equal to main-keyboard arrows downstream.
     if (ke->modifiers().testFlag(Qt::KeypadModifier)) {
       ke->setModifiers(ke->modifiers() & ~Qt::KeypadModifier);
     }
+    syncCommandHeld(ke);
+    if (event->type() == QEvent::KeyRelease) { return QObject::eventFilter(obj, event); }
     // the current view host gets first pick at any key press, unless a component
     // that owns the keyboard (overlay, alert, action panel) is up.
     const bool viewOwnsInput =
@@ -370,6 +372,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     if (!isLayerShellActive()) { Wayland::XdgActivation::activateWindow(m_window); }
 #endif
   } else {
+    setCommandHeld(false);
     LauncherWindowPlatform::suppressHeldKeyReleases();
     if (m_dragOverlayVisible) endWindowDrag();
     m_window->hide();
@@ -417,6 +420,7 @@ void LauncherWindow::loadRoot() {
       // unloadRoot() nulls m_window before deleting the underlying window, whose
       // teardown synchronously resigns key and re-enters here.
       if (!m_window) return;
+      if (!m_window->isActive()) setCommandHeld(false);
       // losing focus to our own file dialog or to a selection capture is not user focus loss
       if (m_pendingLauncherFileChoice || LauncherWindowPlatform::foregroundLent()) return;
       m_ctx.navigation->setWindowActivated(m_window->isActive());
@@ -621,6 +625,20 @@ bool LauncherWindow::forwardKey(int rawKey, int modifiers, int scanCode) {
   }
 
   return false;
+}
+
+void LauncherWindow::setCommandHeld(bool held) {
+  if (m_commandHeld == held) return;
+  m_commandHeld = held;
+  emit commandHeldChanged();
+}
+
+void LauncherWindow::syncCommandHeld(const QKeyEvent *event) {
+  auto modifiers = event->modifiers() & ~Qt::KeypadModifier;
+  if (auto modifier = Keyboard::modifierForKey(static_cast<Qt::Key>(event->key()))) {
+    modifiers.setFlag(*modifier, event->type() == QEvent::KeyPress);
+  }
+  setCommandHeld(modifiers == Qt::ControlModifier);
 }
 
 void LauncherWindow::goBack() {
