@@ -86,6 +86,18 @@ public:
     return res;
   }
 
+  auto moveSnippetUp(std::string_view id) {
+    auto res = m_db.moveSnippetUp(id);
+    if (res) { emit snippetsChanged(); }
+    return res;
+  }
+
+  auto moveSnippetDown(std::string_view id) {
+    auto res = m_db.moveSnippetDown(id);
+    if (res) { emit snippetsChanged(); }
+    return res;
+  }
+
   static constexpr int DEFAULT_PRE_PASTE_DELAY_MS = 0;
   static constexpr int DEFAULT_KEY_DELAY_US = 2000;
 

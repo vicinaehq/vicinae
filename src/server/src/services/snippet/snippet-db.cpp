@@ -120,3 +120,29 @@ std::expected<void, std::string> SnippetDatabase::setSnippets(std::span<Serializ
 
   return {};
 }
+
+std::expected<void, std::string> SnippetDatabase::moveSnippetUp(std::string_view id) {
+  return moveSnippet(id, -1);
+}
+
+std::expected<void, std::string> SnippetDatabase::moveSnippetDown(std::string_view id) {
+  return moveSnippet(id, 1);
+}
+
+std::expected<void, std::string> SnippetDatabase::moveSnippet(std::string_view id, int offset) {
+  auto it = std::ranges::find_if(m_snippets, [&](auto &&item) { return item.id == id; });
+
+  if (it == m_snippets.end()) { return std::unexpected(tr("No such snippet").toStdString()); }
+
+  const auto target = it + offset;
+  if (target < m_snippets.begin() || target >= m_snippets.end()) { return {}; }
+
+  std::iter_swap(it, target);
+
+  if (const auto result = setSnippets(m_snippets); !result) {
+    std::iter_swap(it, target);
+    return std::unexpected(result.error());
+  }
+
+  return {};
+}
