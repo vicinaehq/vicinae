@@ -3,6 +3,7 @@
 #include <clocale>
 #include <cstdlib>
 #include <filesystem>
+#include <string_view>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -35,11 +36,12 @@ void enableUtf8() {
 fs::path selfPath() {
   char buf[PATH_MAX];
   uint32_t size = sizeof(buf);
-  if (_NSGetExecutablePath(buf, &size) == 0) return fs::canonical(buf);
+  std::error_code ec;
+  if (_NSGetExecutablePath(buf, &size) == 0) return fs::weakly_canonical(buf, ec);
 
   std::string dyn(size, '\0');
   if (_NSGetExecutablePath(dyn.data(), &size) != 0) return {};
-  return fs::canonical(dyn.c_str());
+  return fs::weakly_canonical(dyn.c_str(), ec);
 }
 #elif defined(_WIN32)
 fs::path selfPath() {
@@ -49,7 +51,16 @@ fs::path selfPath() {
   return fs::path(std::wstring(buf, len));
 }
 #else
-fs::path selfPath() { return fs::canonical("/proc/self/exe"); }
+// The link keeps resolving after the binary is replaced on disk, but with a " (deleted)" suffix
+// that canonical() rejects. Strip it so helpers are still found next to the running executable.
+fs::path selfPath() {
+  std::error_code ec;
+  auto path = fs::read_symlink("/proc/self/exe", ec).string();
+  if (ec) return {};
+  constexpr std::string_view DELETED_SUFFIX = " (deleted)";
+  if (path.ends_with(DELETED_SUFFIX)) path.resize(path.size() - DELETED_SUFFIX.size());
+  return path;
+}
 #endif
 
 std::vector<fs::path> helperProgramCandidates(std::string_view program) {

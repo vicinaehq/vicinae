@@ -7,13 +7,8 @@
 
 struct whisper_vad_context;
 
-namespace Audio {
+namespace inference {
 
-/**
- * Streams 16 kHz mono PCM through Silero and yields one speech probability per 32 ms frame.
- * We run it with whisper.cpp on the CPU, as it is really fast.
- * Silero is bundled in the .qrc, we don't download it as it is very small.
- */
 class VoiceActivityDetector {
 public:
   static constexpr int SAMPLE_RATE = 16000;
@@ -26,8 +21,7 @@ public:
   VoiceActivityDetector &operator=(VoiceActivityDetector &&) noexcept = default;
   ~VoiceActivityDetector();
 
-  void feed(std::span<const float> samples);
-  std::span<const float> frameProbabilities() const { return m_probs; }
+  std::vector<float> frameProbabilities(std::span<const float> pcm);
 
 private:
   struct ContextDeleter {
@@ -37,8 +31,6 @@ private:
   explicit VoiceActivityDetector(std::unique_ptr<whisper_vad_context, ContextDeleter> ctx);
 
   std::unique_ptr<whisper_vad_context, ContextDeleter> m_ctx;
-  std::vector<float> m_pending;
-  std::vector<float> m_probs;
 };
 
 struct SpeechTrimParams {
@@ -59,4 +51,4 @@ struct SpeechTrimParams {
 std::vector<float> extractSpeech(std::span<const float> pcm, std::span<const float> frameProbabilities,
                                  const SpeechTrimParams &params = {});
 
-} // namespace Audio
+} // namespace inference

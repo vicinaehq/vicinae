@@ -63,7 +63,6 @@ bool Recorder::start() {
   // Reserve for ~2 minutes of audio
   m_pcmBuffer.clear();
   m_pcmBuffer.reserve(m_format.sampleRate() * m_format.channelCount() * 120);
-  m_vad = VoiceActivityDetector::create();
   m_pausedElapsed = 0;
   m_level = 0.0f;
   m_peakDb = MIN_PEAK_DB;
@@ -116,7 +115,6 @@ void Recorder::discard() {
   }
   m_ioDevice = nullptr;
   m_pcmBuffer.clear();
-  m_vad.reset();
   m_level = 0.0f;
   m_state = State::Idle;
 }
@@ -133,9 +131,7 @@ void Recorder::processAudioData() {
 
   const auto before = m_pcmBuffer.size();
   appendSamples(data);
-  const auto fresh = std::span(std::as_const(m_pcmBuffer)).subspan(before);
-  if (m_vad) m_vad->feed(fresh);
-  updateLevel(fresh);
+  updateLevel(std::span(std::as_const(m_pcmBuffer)).subspan(before));
 }
 
 void Recorder::appendSamples(const QByteArray &data) {
@@ -166,11 +162,6 @@ void Recorder::updateLevel(std::span<const float> samples) {
 Recording Recorder::finish() {
   auto pcm = std::move(m_pcmBuffer);
   m_pcmBuffer.clear();
-
-  if (m_vad) {
-    pcm = extractSpeech(pcm, m_vad->frameProbabilities());
-    m_vad.reset();
-  }
 
   if (!pcm.empty()) {
     const auto silence = static_cast<std::size_t>(m_format.sampleRate()) * TRAILING_SILENCE_MS / 1000;
