@@ -10,6 +10,24 @@
 
 namespace cli {
 
+constexpr bool isUnreservedUriChar(unsigned char c) {
+  return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_' ||
+         c == '.' || c == '~';
+}
+
+inline std::string percentEncodeUriComponent(std::string_view value) {
+  std::string encoded;
+  encoded.reserve(value.size());
+  for (unsigned char c : value) {
+    if (isUnreservedUriChar(c)) {
+      encoded.push_back(c);
+    } else {
+      encoded.append(std::format("%{:02X}", c));
+    }
+  }
+  return encoded;
+}
+
 class IpcClient {
 public:
   static std::expected<IpcClient, std::string> connect() {
@@ -39,7 +57,8 @@ public:
   sendDeeplink(std::string_view url, const std::vector<std::pair<std::string, std::string>> &query = {}) {
     std::string fullUrl{url};
     for (const auto &[idx, arg] : query | vicinae::enumerate) {
-      fullUrl.append(std::format("{}{}={}", idx == 0 ? "?" : "&", arg.first, arg.second));
+      fullUrl.append(std::format("{}{}={}", idx == 0 ? "?" : "&", percentEncodeUriComponent(arg.first),
+                                 percentEncodeUriComponent(arg.second)));
     }
     return connect().and_then([&](IpcClient client) { return client.deeplink({.url = std::move(fullUrl)}); });
   }
