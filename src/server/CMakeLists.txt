@@ -450,6 +450,7 @@ set(SRCS
 	src/internal/os-release.cpp
 
 	src/services/window-manager/window-manager.cpp
+	src/services/window-manager/window-layout.cpp
 
 	src/services/wallpaper/wallpaper-manager.cpp
 
@@ -1466,6 +1467,17 @@ elseif(NOT APPLE)
 	install(TARGETS ${TARGET}
 		RUNTIME DESTINATION ${VICINAE_LIBEXEC_DIR}
 	)
+endif()
+
+if (BUILD_TESTS)
+	find_package(Catch2 3 REQUIRED)
+	add_executable(vicinae-window-layout-tests
+		tests/window-layout.cpp
+		src/services/window-manager/window-layout.cpp
+		src/services/window-manager/abstract-window-manager.hpp
+	)
+	target_link_libraries(vicinae-window-layout-tests PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
+	target_compile_features(vicinae-window-layout-tests PRIVATE cxx_std_23)
 endif()
 
 if (BUILD_TESTS AND UNIX AND NOT APPLE)

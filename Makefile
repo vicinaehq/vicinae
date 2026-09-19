@@ -104,6 +104,7 @@ strip:
 .PHONY: strip
 
 test:
+	./$(BIN_DIR)/vicinae-window-layout-tests
 	./$(BIN_DIR)/vicinae-glyph-tests
 	./$(BIN_DIR)/vicinae-fuzzy-tests
 	#./$(BIN_DIR)/vicinae-server-tests

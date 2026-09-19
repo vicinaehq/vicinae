@@ -35,7 +35,9 @@ public:
     Minimize = 1 << 1,
     ToggleFloating = 1 << 2,
     ToggleOverview = 1 << 3,
-    SetSticky = 1 << 4
+    SetSticky = 1 << 4,
+    // Requires setWindowBounds, live window bounds/fullscreen state, and screen availableBounds.
+    WindowPlacement = 1 << 5
   };
 
   /**
@@ -57,6 +59,9 @@ public:
      * affected by display scaling: use `physicalResolution` to get the real pixel size of the screen.
      */
     QRect bounds;
+
+    // Usable area in the same coordinates as bounds, excluding system UI such as panels and the Dock.
+    QRect availableBounds;
 
     /**
      * The real pixel size of the screen, unaffected by any kind of scaling.
@@ -144,6 +149,7 @@ public:
     auto tr = [&](const QScreen *qtScreen) -> Screen {
       Screen sc{.name = qtScreen->name(),
                 .bounds = qtScreen->geometry(),
+                .availableBounds = qtScreen->availableGeometry(),
                 .physicalResolution = qtScreen->size() * qtScreen->devicePixelRatio(),
                 .manufacturer = qtScreen->manufacturer(),
                 .model = qtScreen->model()};

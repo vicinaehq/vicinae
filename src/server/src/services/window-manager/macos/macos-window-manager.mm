@@ -93,45 +93,12 @@ bool axHasAttribute(AXUIElementRef element, CFStringRef attribute) {
   return true;
 }
 
-bool axCopyBool(AXUIElementRef element, CFStringRef attribute) {
-  CFTypeRef value = nullptr;
-  if (AXUIElementCopyAttributeValue(element, attribute, &value) != kAXErrorSuccess || !value) return false;
-  bool result =
-      CFGetTypeID(value) == CFBooleanGetTypeID() && CFBooleanGetValue(static_cast<CFBooleanRef>(value));
-  CFRelease(value);
-  return result;
-}
-
 bool axIsSettable(AXUIElementRef element, CFStringRef attribute) {
   Boolean settable = false;
   return AXUIElementIsAttributeSettable(element, attribute, &settable) == kAXErrorSuccess && settable;
 }
 
 CFStringRef const kAXFullScreenAttributeName = CFSTR("AXFullScreen");
-
-std::optional<AbstractWindowManager::WindowBounds> axCopyBounds(AXUIElementRef element) {
-  CFTypeRef positionValue = nullptr;
-  CFTypeRef sizeValue = nullptr;
-  CGPoint position{};
-  CGSize size{};
-
-  bool hasPosition =
-      AXUIElementCopyAttributeValue(element, kAXPositionAttribute, &positionValue) == kAXErrorSuccess &&
-      positionValue &&
-      AXValueGetValue(static_cast<AXValueRef>(positionValue), kAXValueTypeCGPoint, &position);
-  bool hasSize = AXUIElementCopyAttributeValue(element, kAXSizeAttribute, &sizeValue) == kAXErrorSuccess &&
-                 sizeValue && AXValueGetValue(static_cast<AXValueRef>(sizeValue), kAXValueTypeCGSize, &size);
-
-  if (positionValue) CFRelease(positionValue);
-  if (sizeValue) CFRelease(sizeValue);
-
-  if (!hasPosition || !hasSize) return std::nullopt;
-
-  return AbstractWindowManager::WindowBounds{.x = static_cast<int32_t>(position.x),
-                                             .y = static_cast<int32_t>(position.y),
-                                             .width = static_cast<int32_t>(size.width),
-                                             .height = static_cast<int32_t>(size.height)};
-}
 
 bool isWindowLike(AXUIElementRef element) {
   QString subrole = axCopyString(element, kAXSubroleAttribute);
@@ -165,11 +132,10 @@ AbstractWindowManager::WindowPtr buildWindow(AXUIElementRef element, pid_t pid, 
   }
 
   bool canClose = axHasAttribute(element, kAXCloseButtonAttribute);
-  bool fullScreen = axCopyBool(element, kAXFullScreenAttributeName);
   bool canFullScreen = axIsSettable(element, kAXFullScreenAttributeName);
 
-  return std::make_shared<MacosWindow>(element, std::move(id), std::move(title), bundleId, pid,
-                                       axCopyBounds(element), canClose, fullScreen, canFullScreen);
+  return std::make_shared<MacosWindow>(element, std::move(id), std::move(title), bundleId, pid, canClose,
+                                       canFullScreen);
 }
 
 const MacosWindow *asMacosWindow(const AbstractWindowManager::AbstractWindow &window) {
@@ -409,8 +375,15 @@ std::vector<AbstractWindowManager::Screen> MacosWindowManager::listScreensSync(Q
       const CGRect bounds = CGDisplayBounds(display);
       const QSize logicalSize(qRound(bounds.size.width), qRound(bounds.size.height));
 
+      const NSRect frame = nsScreen.frame;
+      const NSRect visible = nsScreen.visibleFrame;
+      const QRect available(qRound(bounds.origin.x + NSMinX(visible) - NSMinX(frame)),
+                            qRound(bounds.origin.y + NSMaxY(frame) - NSMaxY(visible)),
+                            qRound(visible.size.width), qRound(visible.size.height));
+
       Screen screen{.name = QString::fromNSString(nsScreen.localizedName),
                     .bounds = QRect(QPoint(qRound(bounds.origin.x), qRound(bounds.origin.y)), logicalSize),
+                    .availableBounds = available,
                     .physicalResolution =
                         displayScanoutSize(display).value_or(logicalSize * nsScreen.backingScaleFactor)};
       screen.active = activeDisplay == display;
@@ -489,9 +462,14 @@ bool MacosWindowManager::closeWindow(const AbstractWindow &window) const {
 
 bool MacosWindowManager::setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const {
   const MacosWindow *macWindow = asMacosWindow(window);
-  if (!macWindow) return false;
+  if (!macWindow || bounds.width <= 0 || bounds.height <= 0 || macWindow->fullScreen()) return false;
 
   AXUIElementRef element = macWindow->element();
+  const auto current = macWindow->bounds();
+  if (!current) return false;
+  const bool resize = current->width != bounds.width || current->height != bounds.height;
+  if (!axIsSettable(element, kAXPositionAttribute) || (resize && !axIsSettable(element, kAXSizeAttribute)))
+    return false;
 
   CGPoint position{.x = static_cast<CGFloat>(bounds.x), .y = static_cast<CGFloat>(bounds.y)};
   CGSize size{.width = static_cast<CGFloat>(bounds.width), .height = static_cast<CGFloat>(bounds.height)};
@@ -504,8 +482,12 @@ bool MacosWindowManager::setWindowBounds(const AbstractWindow &window, const Win
     return false;
   }
 
-  bool posOk = AXUIElementSetAttributeValue(element, kAXPositionAttribute, positionValue) == kAXErrorSuccess;
-  bool sizeOk = AXUIElementSetAttributeValue(element, kAXSizeAttribute, sizeValue) == kAXErrorSuccess;
+  // Shrink before moving toward an edge, then retry the size after moving to another display.
+  bool sizeOk =
+      !resize || AXUIElementSetAttributeValue(element, kAXSizeAttribute, sizeValue) == kAXErrorSuccess;
+  const bool posOk =
+      AXUIElementSetAttributeValue(element, kAXPositionAttribute, positionValue) == kAXErrorSuccess;
+  if (resize) sizeOk = AXUIElementSetAttributeValue(element, kAXSizeAttribute, sizeValue) == kAXErrorSuccess;
 
   CFRelease(positionValue);
   CFRelease(sizeValue);
