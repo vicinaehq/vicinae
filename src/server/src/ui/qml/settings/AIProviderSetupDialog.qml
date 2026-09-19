@@ -42,7 +42,8 @@ ViciModal {
                 return false;
         }
         for (let i = 0; i < _keys.length; i++) {
-            if (((_values[_keys[i]] ?? "")).trim().length === 0)
+            const value = _values[_keys[i]];
+            if (typeof value === "string" && value.trim().length === 0)
                 return false;
         }
         return true;
@@ -132,47 +133,81 @@ ViciModal {
                 required property string label
                 required property string description
                 required property string placeholder
-                required property bool secret
+                required property string kind
+                required property var options
+                required property var value
+                required property var currentOption
                 Layout.fillWidth: true
                 spacing: 6
 
-                Text {
-                    text: field.label
-                    color: Theme.foreground
-                    font.pointSize: Theme.regularFontSize
-                }
+                Component.onCompleted: root._setValue(key, value)
 
-                Text {
-                    text: field.description
-                    color: Theme.textMuted
-                    font.pointSize: Theme.smallerFontSize
-                    wrapMode: Text.Wrap
+                RowLayout {
                     Layout.fillWidth: true
+                    spacing: 12
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Text {
+                            text: field.label
+                            color: Theme.foreground
+                            font.pointSize: Theme.regularFontSize
+                        }
+
+                        Text {
+                            text: field.description
+                            color: Theme.textMuted
+                            font.pointSize: Theme.smallerFontSize
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Item {
+                        visible: field.kind === "toggle"
+                        Layout.preferredWidth: toggle.implicitWidth
+                        Layout.preferredHeight: toggle.implicitHeight
+
+                        SettingsToggle {
+                            id: toggle
+                            checked: field.value === true
+                            accessibleLabel: field.label
+                            onToggled: checked => {
+                                toggle.checked = checked;
+                                root._setValue(field.key, checked);
+                            }
+                        }
+                    }
                 }
 
                 FormTextInput {
-                    visible: !field.secret
+                    visible: field.kind === "text"
                     Layout.fillWidth: true
                     placeholder: field.placeholder
-                    Component.onCompleted: {
-                        if (!field.secret) {
-                            text = field.placeholder;
-                            root._setValue(field.key, text);
-                        }
-                    }
+                    text: field.kind === "text" ? String(field.value) : ""
                     onTextChanged: root._setValue(field.key, text)
                     onAccepted: root._submit()
                 }
 
                 FormPasswordInput {
-                    visible: field.secret
+                    visible: field.kind === "secret"
                     placeholder: field.placeholder
                     Component.onCompleted: {
-                        if (field.secret)
+                        if (field.kind === "secret")
                             forceActiveFocus();
                     }
                     onTextChanged: root._setValue(field.key, text)
                     onAccepted: root._submit()
+                }
+
+                SearchableDropdown {
+                    visible: field.kind === "select"
+                    Layout.fillWidth: true
+                    items: field.options
+                    currentItem: field.currentOption
+                    onActivated: item => root._setValue(field.key, item.id)
                 }
             }
         }

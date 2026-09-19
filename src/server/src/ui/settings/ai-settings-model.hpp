@@ -12,6 +12,8 @@
 namespace AI {
 class Service;
 class AbstractProvider;
+struct ProviderTypeInfo;
+struct ProviderField;
 } // namespace AI
 namespace config {
 class Manager;
@@ -36,8 +38,10 @@ struct AIProviderFieldRow {
   QString label;
   QString description;
   QString placeholder;
-  bool secret = false;
-  QString value;
+  QString kind;
+  QVariantList options;
+  QVariant value;
+  QVariant currentOption;
   bool operator==(const AIProviderFieldRow &) const = default;
 };
 
@@ -123,8 +127,10 @@ public:
     LabelRole,
     DescriptionRole,
     PlaceholderRole,
-    SecretRole,
-    ValueRole
+    KindRole,
+    OptionsRole,
+    ValueRole,
+    CurrentOptionRole,
   };
 
   using DiffListModel::DiffListModel;
@@ -189,7 +195,7 @@ public:
   AIProviderFieldsModel *fields() { return &m_fields; }
   AIProviderModelsModel *models() { return &m_models; }
 
-  Q_INVOKABLE void setField(const QString &key, const QString &value);
+  Q_INVOKABLE void setField(const QString &key, const QVariant &value);
   Q_INVOKABLE void download(const QString &modelId);
   Q_INVOKABLE void cancelDownload(const QString &modelId);
   Q_INVOKABLE void removeModel(const QString &modelId);
@@ -243,12 +249,13 @@ private:
   friend class AIProviderPage;
 
   void removeProvider(const std::string &id);
-  void setField(const std::string &id, const QString &key, const QString &value);
+  void setField(const std::string &id, const QString &key, const QVariant &value);
 
-  bool canAddType(std::string_view type) const;
+  const AI::ProviderTypeInfo *typeInfoFor(const std::string &id) const;
+  bool canAddType(const AI::ProviderTypeInfo &info) const;
   QString statusText(AI::AbstractProvider &provider) const;
   std::vector<AIProviderModelRow> modelRows(AI::AbstractProvider &provider) const;
-  std::vector<AIProviderFieldRow> fieldRows(const std::string &id, std::string_view type,
+  std::vector<AIProviderFieldRow> fieldRows(const std::string &id, const AI::ProviderTypeInfo &info,
                                             bool withValues) const;
   void rebuildTypes();
   void rebuildPage();

@@ -14,6 +14,20 @@ namespace {
 QString qs(std::string_view view) {
   return QString::fromUtf8(view.data(), static_cast<qsizetype>(view.size()));
 }
+
+std::string typeOf(const glz::generic::object_t &object) {
+  return glazeToQJsonObject(object).value(QStringLiteral("type")).toString().toStdString();
+}
+
+bool isBuiltin(std::string_view type) {
+  const auto *info = findProviderType(type);
+  return info && info->cardinality == Cardinality::Builtin;
+}
+
+glz::generic defaultValue(const ProviderField &field) {
+  if (field.kind == FieldKind::Toggle) return field.defaultChecked;
+  return std::string(field.defaultValue);
+}
 } // namespace
 
 Service::Service(config::Manager &config, LocalStorageService &storage)
@@ -30,39 +44,37 @@ void Service::addProvider(std::unique_ptr<AbstractProvider> provider) {
   auto id = provider->id();
   connect(provider.get(), &AI::AbstractProvider::modelsUpdated, this, &Service::modelsChanged);
   connect(provider.get(), &AI::AbstractProvider::managedModelsChanged, this, &Service::managedModelsChanged);
+  provider->configure(resolveFields(id, *provider));
   provider->start();
-  m_staticProviders.insert(id);
   m_providers[std::move(id)] = std::move(provider);
 }
 
-void Service::reloadProvider(std::string_view id) {
-  const auto key = std::string(id);
-  if (m_staticProviders.contains(key)) return;
-  m_providers.erase(key);
-  const auto &providers = m_config.value().ai.providers;
-  if (auto it = providers.find(key); it != providers.end()) instantiate(key, it->second);
-  emit modelsChanged();
+void Service::reconfigure(std::string_view id) {
+  auto *provider = getProviderById(id);
+  if (provider) provider->configure(resolveFields(id, *provider));
 }
 
-ProviderFields Service::resolveFields(std::string_view id, const glz::generic::object_t &object) const {
-  const auto json = glazeToQJsonObject(object);
-  const auto type = json.value(QStringLiteral("type")).toString().toStdString();
-  const auto *info = findProviderType(type);
-  if (!info) return {};
-
+ProviderFields Service::resolveFields(std::string_view id, const AbstractProvider &provider) const {
   ProviderFields fields;
+  const auto *info = findProviderType(provider.type());
+  if (!info) return fields;
+
+  const auto &providers = m_config.value().ai.providers;
+  const auto entry = providers.find(std::string(id));
+  const auto json = entry != providers.end() ? glazeToQJsonObject(entry->second) : QJsonObject{};
+
   for (const auto &field : info->fields) {
     const auto key = qs(field.key);
-    const auto value = field.secret ? m_storage.getItem(secretScope(id), key) : json.value(key);
-    fields[std::string(field.key)] = value.toString().toStdString();
+    const auto value =
+        field.kind == FieldKind::Secret ? m_storage.getItem(secretScope(id), key) : json.value(key);
+    fields.values[std::string(field.key)] =
+        value.isUndefined() || value.isNull() ? defaultValue(field) : qJsonValueToGlazeGeneric(value);
   }
   return fields;
 }
 
-void Service::instantiate(const std::string &id, const glz::generic::object_t &object) {
-  const auto json = glazeToQJsonObject(object);
-  const auto type = json.value(QStringLiteral("type")).toString().toStdString();
-  auto provider = createProvider(type, resolveFields(id, object));
+void Service::instantiate(const std::string &id, std::string_view type) {
+  auto provider = createProvider(type);
   if (!provider) {
     qWarning() << "Unknown AI provider type" << type << "for provider" << id;
     return;
@@ -71,6 +83,7 @@ void Service::instantiate(const std::string &id, const glz::generic::object_t &o
   connect(provider.get(), &AI::AbstractProvider::managedModelsChanged, this, &Service::managedModelsChanged);
   auto *raw = provider.get();
   m_providers[id] = std::move(provider);
+  raw->configure(resolveFields(id, *raw));
   raw->start();
 }
 
@@ -80,28 +93,26 @@ void Service::reconcile(const config::ConfigValue &current, const config::Config
 
   std::erase_if(m_providers, [&](const auto &entry) {
     const auto &[id, provider] = entry;
-    if (m_staticProviders.contains(id)) return false;
-    auto it = next.find(id);
-    if (it == next.end()) return true;
-    auto oldIt = prev.find(id);
-    return oldIt == prev.end() || glazeToQJsonObject(oldIt->second) != glazeToQJsonObject(it->second);
+    return !isBuiltin(provider->type()) && !next.contains(id);
   });
 
   for (const auto &[id, object] : next) {
-    if (!m_providers.contains(id)) instantiate(id, object);
+    if (auto it = m_providers.find(id); it != m_providers.end()) {
+      auto oldIt = prev.find(id);
+      if (oldIt == prev.end() || glazeToQJsonObject(oldIt->second) != glazeToQJsonObject(object)) {
+        it->second->configure(resolveFields(id, *it->second));
+      }
+      continue;
+    }
+    if (const auto type = typeOf(object); !isBuiltin(type)) instantiate(id, type);
   }
 
   emit modelsChanged();
 }
 
-std::unique_ptr<AbstractProvider> Service::createProvider(std::string_view type,
-                                                          const ProviderFields &fields) {
-  auto get = [&](std::string_view key) -> std::string {
-    auto it = fields.find(std::string(key));
-    return it == fields.end() ? std::string() : it->second;
-  };
-  if (type == "ollama") return std::make_unique<OllamaProvider>(get("url"));
-  if (type == "mistral") return std::make_unique<MistralProvider>(QString::fromStdString(get("apiKey")));
+std::unique_ptr<AbstractProvider> Service::createProvider(std::string_view type) {
+  if (type == "ollama") return std::make_unique<OllamaProvider>();
+  if (type == "mistral") return std::make_unique<MistralProvider>();
   return nullptr;
 }
 
