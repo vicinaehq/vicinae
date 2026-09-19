@@ -164,7 +164,7 @@ struct TranscriptionOptions {
 
   // Use gpu backend if available.
   // Only applies to local transcription.
-  bool useGpu = true;
+  std::optional<bool> useGpu;
 };
 
 struct TranscriptionResponse {
@@ -203,6 +203,16 @@ struct ProviderFields {
   std::string string(std::string_view key) const {
     auto it = values.find(std::string(key));
     return it != values.end() && it->second.is_string() ? it->second.get_string() : std::string();
+  }
+
+  std::optional<int> number(std::string_view key) const {
+    try {
+      auto it = values.find(std::string(key));
+
+      if (it != values.end() && it->second.is_string()) return std::stoi(it->second.get_string());
+
+      return std::nullopt;
+    } catch (const std::exception &e) { return 0; }
   }
 
   bool boolean(std::string_view key, bool fallback = false) const {
