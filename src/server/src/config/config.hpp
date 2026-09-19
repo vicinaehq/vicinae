@@ -58,7 +58,9 @@ template <> struct Partial<ProviderData> {
 };
 
 /**
- * AI provider instances keyed by id. Each object holds a `type` plus the provider type's non-secret fields.
+ * AI provider instances keyed by id. Each object holds a `type` plus the provider type's non-secret fields,
+ * stored with their declared JSON type (booleans for toggles, strings otherwise). Builtin providers use their
+ * type as id and may be absent, in which case every field takes its default.
  * Secret fields, like password extension/command preferences, are stored in the encrypted internal database.
  */
 using AiProviderMap = std::map<std::string, glz::generic::object_t>;

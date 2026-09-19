@@ -5,7 +5,6 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <unordered_set>
 #include <qfuture.h>
 #include <qimage.h>
 #include <qlogging.h>
@@ -20,8 +19,6 @@ class LocalStorageService;
 
 namespace AI {
 
-using ProviderFields = std::map<std::string, std::string>;
-
 class Service : public QObject, NonCopyable {
   Q_OBJECT
 
@@ -35,9 +32,17 @@ public:
 
   static QString secretScope(std::string_view providerId);
 
+  /**
+   * Register a builtin provider. Its settings are read from config like any other provider's, but it
+   * is constructed by the application and outlives config changes.
+   */
   void addProvider(std::unique_ptr<AbstractProvider> provider);
-  void reloadProvider(std::string_view id);
-  bool isStatic(std::string_view id) const { return m_staticProviders.contains(std::string(id)); }
+
+  /**
+   * Push the current settings to a provider again. Config changes are picked up automatically; this
+   * exists for secret fields, which live outside the config file.
+   */
+  void reconfigure(std::string_view id);
 
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::optional<ModelRef> ref, const ChatCompletionPayload &payload) const {
@@ -157,16 +162,14 @@ private:
     return nullptr;
   }
 
-  static std::unique_ptr<AbstractProvider> createProvider(std::string_view type,
-                                                          const ProviderFields &fields);
-  ProviderFields resolveFields(std::string_view id, const glz::generic::object_t &object) const;
-  void instantiate(const std::string &id, const glz::generic::object_t &object);
+  static std::unique_ptr<AbstractProvider> createProvider(std::string_view type);
+  ProviderFields resolveFields(std::string_view id, const AbstractProvider &provider) const;
+  void instantiate(const std::string &id, std::string_view type);
   void reconcile(const config::ConfigValue &current, const config::ConfigValue &previous);
 
   config::Manager &m_config;
   LocalStorageService &m_storage;
   std::unordered_map<std::string, std::unique_ptr<AI::AbstractProvider>> m_providers;
-  std::unordered_set<std::string> m_staticProviders;
 
   mutable std::shared_ptr<AbstractChatCompletionStream> m_currentCompletion;
 };

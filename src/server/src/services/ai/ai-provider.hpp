@@ -5,6 +5,7 @@
 #include <expected>
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
+#include <glaze/json/generic.hpp>
 #include <glaze/json/prettify.hpp>
 #include <optional>
 #include <qdir.h>
@@ -192,6 +193,24 @@ struct ManagedModel {
   double progress = -1.0;
 };
 
+/**
+ * Resolved values for a provider's declared fields: config values with secrets merged in, and the
+ * field's default wherever nothing was set.
+ */
+struct ProviderFields {
+  glz::generic::object_t values;
+
+  std::string string(std::string_view key) const {
+    auto it = values.find(std::string(key));
+    return it != values.end() && it->second.is_string() ? it->second.get_string() : std::string();
+  }
+
+  bool boolean(std::string_view key, bool fallback = false) const {
+    auto it = values.find(std::string(key));
+    return it != values.end() && it->second.is_boolean() ? it->second.get_boolean() : fallback;
+  }
+};
+
 class AbstractProvider : public QObject {
   Q_OBJECT
 
@@ -207,6 +226,18 @@ public:
    * Unique identifier for this provider.
    */
   virtual std::string id() const = 0;
+
+  /**
+   * The provider type this instance was created from. Must match an entry in `PROVIDER_TYPES`.
+   */
+  virtual std::string_view type() const = 0;
+
+  /**
+   * Apply the user's settings for this provider. Called once before `start`, then again every time
+   * the settings change. Providers are never recreated because of a settings change, so this is where
+   * they must refresh whatever depends on those values and discard work started under the old ones.
+   */
+  virtual void configure(const ProviderFields &fields) = 0;
 
   /**
    * Name shown to the user. Defaults to the id.
