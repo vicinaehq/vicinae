@@ -88,7 +88,6 @@ if (NOT SYSTEM_INFERENCE_ENGINES)
 	vicinae_fetch_inference_engines()
 endif()
 
-list(APPEND LIBS whisper parakeet llama)
 
 list(APPEND LIBS KF6::SyntaxHighlighting)
 
@@ -603,8 +602,6 @@ set(SRCS
 
 	src/services/audio/audio-recorder.hpp
 	src/services/audio/audio-recorder.cpp
-	src/services/audio/voice-activity-detector.hpp
-	src/services/audio/voice-activity-detector.cpp
 
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
@@ -615,6 +612,8 @@ set(SRCS
 	src/services/ai/speech-language-catalogue.hpp
 	src/services/ai/local/local-provider.hpp
 	src/services/ai/local/local-provider.cpp
+	src/services/ai/local/inference-runtime.hpp
+	src/services/ai/local/inference-runtime.cpp
 	src/services/ai/ollama/ollama-ai-provider.hpp
 	src/services/ai/ollama/ollama-ai-provider.cpp
 	src/services/ai/mistral/mistral-provider.hpp
@@ -1014,7 +1013,6 @@ if (NOT WIN32)
 endif()
 
 list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources-core.qrc)
-list(APPEND SRCS resources-local-ai.qrc)
 if (TYPESCRIPT_EXTENSIONS)
     list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources-extensions.qrc)
 endif()
@@ -1178,6 +1176,14 @@ figura_compile(
 	LANG glaze-qt
 	NAMESPACE ipc_gen
 	OUTPUT ipc-server.hpp
+)
+
+figura_compile(
+	CLIENT
+	PROTO "${FIGURA_DIR}/inference.fig"
+	LANG glaze-qt
+	NAMESPACE inference_gen
+	OUTPUT inference-client.hpp
 )
 
 figura_compile(
