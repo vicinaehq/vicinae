@@ -70,6 +70,7 @@ void DictationSession::cancel() {
   if (m_transcribing) return;
   m_elapsedTimer.stop();
   m_recorder.discard();
+  m_ctx->services->ai()->cancelPreload(m_model);
   finish();
 }
 
@@ -90,6 +91,7 @@ void DictationSession::accept() {
   auto recording = m_recorder.finish();
 
   if (recording.toF32().empty()) {
+    m_ctx->services->ai()->cancelPreload(m_model);
     finishWithMessage(tr("Nothing to transcribe"));
     return;
   }

@@ -1,82 +1,19 @@
 #include "local-provider.hpp"
-#include <ranges>
-#include <qlogging.h>
-#include <qtconcurrentrun.h>
-#include <ggml-backend.h>
+#include <chrono>
 #include <string>
-#include "local-chat-completion.hpp"
-#include "parakeet.h"
+#include <qlogging.h>
 #include "ui/image/image-url.hpp"
 #include "ui/image/url.hpp"
 #include "utils.hpp"
-#include "whisper.h"
 
 namespace AI {
 
 namespace {
 
-TranscriptionResult runParakeet(const Audio::Recording &recording, const std::filesystem::path &path) {
-  ggml_backend_load_all();
-  parakeet_full_params fparams =
-      parakeet_full_default_params(parakeet_sampling_strategy::PARAKEET_SAMPLING_GREEDY);
-  auto ctx = parakeet_init_from_file_with_params(path.string().c_str(), parakeet_context_default_params());
+constexpr auto KEEP_LOADED_ALWAYS = "always";
 
-  qDebug() << "transcribing using parakeet full, model" << path;
-
-  if (parakeet_full(ctx, fparams, recording.toF32().data(), recording.toF32().size()) != 0) {
-    return std::unexpected("Failed to transcribe");
-  }
-
-  qDebug() << "Transcription is done.";
-
-  const int n_segments = parakeet_full_n_segments(ctx);
-  std::string text{};
-
-  for (int i = 0; i < n_segments; ++i) {
-    text += parakeet_full_get_segment_text(ctx, i);
-  }
-
-  parakeet_free(ctx);
-
-  return TranscriptionResponse{.text = std::move(text)};
-}
-
-TranscriptionResult runWhisper(const Audio::Recording &recording, const std::filesystem::path &path,
-                               const std::optional<std::string> &language, bool useGpu,
-                               const std::string &initialPrompt) {
-  ggml_backend_load_all();
-  whisper_context_params params = whisper_context_default_params();
-
-  params.use_gpu = useGpu;
-
-  whisper_context *ctx = whisper_init_from_file_with_params(path.string().c_str(), params);
-  whisper_full_params fparams =
-      whisper_full_default_params(whisper_sampling_strategy::WHISPER_SAMPLING_BEAM_SEARCH);
-  fparams.language = language ? language->c_str() : "auto";
-  fparams.initial_prompt = initialPrompt.c_str();
-
-  qDebug() << "transcribing using whisper full, model" << path;
-  qDebug() << "initial prompt" << fparams.initial_prompt;
-
-  if (whisper_full(ctx, fparams, recording.toF32().data(), recording.toF32().size()) != 0) {
-    return std::unexpected("Failed to transcribe");
-  }
-
-  qDebug() << "Transcription is done.";
-
-  const int n_segments = whisper_full_n_segments(ctx);
-  std::string text{};
-
-  for (int i = 0; i < n_segments; ++i) {
-    text += whisper_full_get_segment_text(ctx, i);
-  }
-
-  TranscriptionResponse response{.text = std::move(text)};
-  if (const char *lang = whisper_lang_str(whisper_full_lang_id(ctx))) response.language = lang;
-
-  whisper_free(ctx);
-
-  return response;
+bool isTranscriptionEngine(LocalEngine engine) {
+  return engine == LocalEngine::Whisper || engine == LocalEngine::Parakeet;
 }
 
 } // namespace
@@ -91,6 +28,15 @@ LocalProvider::LocalProvider(LocalModelRegistry &registry)
 
 std::optional<ImageUrl> LocalProvider::icon() const {
   return ImageUrl{ImageURL::local(QStringLiteral(":/icons/vicinae.png"))};
+}
+
+void LocalProvider::configure(const ProviderFields &fields) {
+  const auto keepLoaded = fields.string("keepLoaded");
+  if (keepLoaded == KEEP_LOADED_ALWAYS) {
+    m_inference.setIdleTimeout(std::nullopt);
+  } else {
+    m_inference.setIdleTimeout(std::chrono::seconds{qStringFromStdView(keepLoaded).toUInt()});
+  }
 }
 
 void LocalProvider::start() {
@@ -158,44 +104,24 @@ ModelList LocalProvider::listModels(const ListModelFilters &filters) const {
   return models;
 }
 
-// Deliberately never chosen as a fallback until local transcription is implemented.
 std::optional<Model> LocalProvider::findBestModel(Capabilities caps, Preference) const {
   if (auto models = m_registry.models(caps); !models.empty()) return toModel(models.front().info);
   return std::nullopt;
 }
 
 std::shared_ptr<AbstractChatCompletionStream>
-LocalProvider::createChatCompletion(std::string_view id, const ChatCompletionPayload &payload) {
-  auto model = m_registry.model(id);
-  if (!model || !model->installed || model->info.engine != LocalEngine::Llama) return nullptr;
-  return std::make_shared<LocalChatCompletion>(m_registry.pathFor(model->info), payload);
+LocalProvider::createChatCompletion(std::string_view, const ChatCompletionPayload &) {
+  return nullptr;
 }
 
 void LocalProvider::preloadModel(std::string_view modelId) {
   auto model = m_registry.model(modelId);
+  if (!model || !model->installed || !isTranscriptionEngine(model->info.engine)) return;
 
-  if (!model) return;
-
-  constexpr auto isTranscriptionEngine = [](LocalEngine engine) {
-    return engine == LocalEngine::Parakeet || engine == LocalEngine::Whisper;
-  };
-
-  if (isTranscriptionEngine(model->info.engine)) {
-    // TODO: preload transcription context for this model
-  }
+  m_inference.preload(model->info.engine, m_registry.pathFor(model->info));
 }
 
-void LocalProvider::configure(const ProviderFields &fields) {
-  const auto keepLoaded = fields.string("keepLoaded");
-
-  m_useGpu = fields.boolean("useGpu", true);
-
-  if (keepLoaded == "always") {
-    m_keepLoaded.reset();
-  } else {
-    m_keepLoaded = std::chrono::seconds{qStringFromStdView(fields.string("keepLoaded")).toUInt()};
-  }
-}
+void LocalProvider::cancelPreload(std::string_view) { m_inference.cancelPreload(); }
 
 QFuture<TranscriptionResult> LocalProvider::transcribe(Audio::Recording recording,
                                                        const TranscriptionOptions &opts) {
@@ -204,40 +130,26 @@ QFuture<TranscriptionResult> LocalProvider::transcribe(Audio::Recording recordin
 
   auto model = m_registry.model(*opts.model);
 
-  if (!model) {
+  if (!model || !model->installed) {
     return QtFuture::makeReadyValueFuture<TranscriptionResult>(std::unexpected("Model could not be found"));
   }
 
-  auto path = m_registry.pathFor(model->info);
+  InferenceRuntime::Transcription request{
+      .engine = model->info.engine,
+      .model = m_registry.pathFor(model->info),
+      .language = opts.language,
+  };
 
-  // TODO: move this in its own process in order to avoid crashing Vicinae if for some reason
-  // whisper crashes. Also, we need to keep the context alive in order to avoid cold starts every time
-  // like it is the case right now. But we don't want to keep it initialized at all times, as it can be
-  // withold a lot of resources.
-
-  switch (model->info.engine) {
-  case LocalEngine::Parakeet:
-    return QtConcurrent::run([recording = std::move(recording), path = std::move(path)]() {
-      return runParakeet(recording, path);
-    });
-  case LocalEngine::Whisper: {
-    std::string initialPrompt;
-
+  if (model->info.engine == LocalEngine::Whisper && !opts.vocabulary.empty()) {
+    std::string prompt;
     for (const auto &word : opts.vocabulary) {
-      if (!initialPrompt.empty()) initialPrompt += ", ";
-      initialPrompt += word;
+      if (!prompt.empty()) prompt += ", ";
+      prompt += word;
     }
+    request.initialPrompt = std::move(prompt);
+  }
 
-    return QtConcurrent::run([recording = std::move(recording), path = std::move(path),
-                              language = opts.language, useGpu = opts.useGpu.value_or(m_useGpu),
-                              initialPrompt = std::move(initialPrompt)]() {
-      return runWhisper(recording, path, language, useGpu, initialPrompt);
-    });
-  }
-  default:
-    return QtFuture::makeReadyValueFuture<TranscriptionResult>(
-        std::unexpected("Cannot run inference for this engine"));
-  }
+  return m_inference.transcribe(recording, request);
 }
 
 Model LocalProvider::toModel(const LocalModelInfo &info) {

@@ -1,69 +1,52 @@
-#include "voice-activity-detector.hpp"
+#include "vad.hpp"
 #include <algorithm>
-#include <mutex>
-#include <optional>
-#include <QDebug>
-#include <QFile>
-#include <QString>
-#include "common/enumerate.hpp"
+#include <cstring>
+#include <iostream>
 #include "whisper.h"
-#include <ggml-backend.h>
 
-namespace Audio {
+extern const unsigned char SILERO_MODEL[];
+extern const std::size_t SILERO_MODEL_SIZE;
 
-VoiceActivityDetector::VoiceActivityDetector(std::unique_ptr<whisper_vad_context, ContextDeleter> ctx)
-    : m_ctx(std::move(ctx)) {
-  constexpr std::size_t EXPECTED_SECONDS = 120;
-  m_pending.reserve(FRAME_SIZE * 4);
-  m_probs.reserve(EXPECTED_SECONDS * SAMPLE_RATE / FRAME_SIZE);
-}
-
-VoiceActivityDetector::~VoiceActivityDetector() = default;
+namespace inference {
 
 namespace {
 
-// whisper logs a few INFO lines on every detection call, which is far too chatty for a streaming use.
-void whisperLog(ggml_log_level level, const char *text, void *) {
-  switch (level) {
-  case GGML_LOG_LEVEL_WARN:
-    qWarning().noquote() << "whisper:" << QString::fromUtf8(text).trimmed();
-    break;
-  case GGML_LOG_LEVEL_ERROR:
-    qCritical().noquote() << "whisper:" << QString::fromUtf8(text).trimmed();
-    break;
-  default:
-    break;
-  }
-}
+struct MemoryReader {
+  const unsigned char *data;
+  std::size_t size;
+  std::size_t pos = 0;
+};
 
 } // namespace
+
+VoiceActivityDetector::VoiceActivityDetector(std::unique_ptr<whisper_vad_context, ContextDeleter> ctx)
+    : m_ctx(std::move(ctx)) {}
+
+VoiceActivityDetector::~VoiceActivityDetector() = default;
 
 void VoiceActivityDetector::ContextDeleter::operator()(whisper_vad_context *ctx) const {
   whisper_vad_free(ctx);
 }
 
 std::optional<VoiceActivityDetector> VoiceActivityDetector::create() {
-  static std::once_flag logFlag;
-  std::call_once(logFlag, [] { whisper_log_set(whisperLog, nullptr); });
-
-  QFile file(QStringLiteral(":/models/ggml-silero-v6.2.0.bin"));
-  if (!file.open(QIODevice::ReadOnly)) {
-    qWarning() << "Voice activity detection model is missing from resources";
-    return std::nullopt;
-  }
+  MemoryReader reader{.data = SILERO_MODEL, .size = SILERO_MODEL_SIZE};
 
   whisper_model_loader loader{
-      .context = &file,
+      .context = &reader,
       .read = [](void *ctx, void *out, std::size_t size) -> std::size_t {
-        const auto read =
-            static_cast<QFile *>(ctx)->read(static_cast<char *>(out), static_cast<qint64>(size));
-        return read < 0 ? 0 : static_cast<std::size_t>(read);
+        auto *r = static_cast<MemoryReader *>(ctx);
+        const auto count = std::min(size, r->size - r->pos);
+        std::memcpy(out, r->data + r->pos, count);
+        r->pos += count;
+        return count;
       },
-      .eof = [](void *ctx) { return static_cast<QFile *>(ctx)->atEnd(); },
-      .close = [](void *ctx) { static_cast<QFile *>(ctx)->close(); },
+      .eof =
+          [](void *ctx) {
+            auto *r = static_cast<MemoryReader *>(ctx);
+            return r->pos >= r->size;
+          },
+      .close = [](void *) {},
   };
-
-  ggml_backend_load_all();
 
   auto params = whisper_vad_default_context_params();
   params.n_threads = 1;
@@ -71,31 +54,25 @@ std::optional<VoiceActivityDetector> VoiceActivityDetector::create() {
 
   std::unique_ptr<whisper_vad_context, ContextDeleter> ctx(whisper_vad_init_with_params(&loader, params));
   if (!ctx) {
-    qWarning() << "Failed to load the voice activity detection model";
+    std::cerr << "Failed to load the voice activity detection model\n";
     return std::nullopt;
   }
 
-  whisper_vad_reset_state(ctx.get());
   return VoiceActivityDetector(std::move(ctx));
 }
 
-void VoiceActivityDetector::feed(std::span<const float> samples) {
-  m_pending.insert(m_pending.end(), samples.begin(), samples.end());
+std::vector<float> VoiceActivityDetector::frameProbabilities(std::span<const float> pcm) {
+  const auto frames = pcm.size() / FRAME_SIZE;
+  if (frames == 0) return {};
 
-  const auto frames = m_pending.size() / FRAME_SIZE;
-  if (frames == 0) return;
-  const auto count = frames * FRAME_SIZE;
-
-  if (whisper_vad_detect_speech_no_reset(m_ctx.get(), m_pending.data(), static_cast<int>(count))) {
-    const auto probs =
-        std::span(whisper_vad_probs(m_ctx.get()), static_cast<std::size_t>(whisper_vad_n_probs(m_ctx.get())));
-    m_probs.insert(m_probs.end(), probs.begin(), probs.end());
-  } else {
-    // keep frames and probabilities aligned, and never drop audio on a detector failure
-    m_probs.insert(m_probs.end(), frames, 1.0f);
+  if (!whisper_vad_detect_speech(m_ctx.get(), pcm.data(), static_cast<int>(frames * FRAME_SIZE))) {
+    // never drop audio on a detector failure
+    return std::vector<float>(frames, 1.0f);
   }
 
-  m_pending.erase(m_pending.begin(), m_pending.begin() + static_cast<std::ptrdiff_t>(count));
+  const auto probs =
+      std::span(whisper_vad_probs(m_ctx.get()), static_cast<std::size_t>(whisper_vad_n_probs(m_ctx.get())));
+  return {probs.begin(), probs.end()};
 }
 
 std::vector<float> extractSpeech(std::span<const float> pcm, std::span<const float> frameProbabilities,
@@ -126,7 +103,8 @@ std::vector<float> extractSpeech(std::span<const float> pcm, std::span<const flo
     silenceStart.reset();
   };
 
-  for (const auto [frame, prob] : vicinae::enumerate(frameProbabilities)) {
+  for (std::size_t frame = 0; frame < frameCount; ++frame) {
+    const float prob = frameProbabilities[frame];
 
     if (!speechStart) {
       if (prob >= params.threshold) speechStart = frame;
@@ -175,4 +153,4 @@ std::vector<float> extractSpeech(std::span<const float> pcm, std::span<const flo
   return speech;
 }
 
-} // namespace Audio
+} // namespace inference

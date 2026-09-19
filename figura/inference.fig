@@ -1,0 +1,27 @@
+// vicinae-inference (server) <-> main server (client)
+
+enum Engine { Whisper, Parakeet };
+
+struct LoadRequest {
+  engine: Engine;
+  path: string;
+};
+
+struct TranscribeRequest {
+  engine: Engine;
+  path: string;
+  // 16 kHz mono PCM
+  samples: double[];
+  language?: string;
+  initial_prompt?: string;
+};
+
+struct TranscribeResponse {
+  text: string;
+  language?: string;
+};
+
+service Inference {
+  async fn load(req: LoadRequest) => void;
+  async fn transcribe(req: TranscribeRequest) => TranscribeResponse;
+};

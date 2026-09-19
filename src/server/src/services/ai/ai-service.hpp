@@ -32,16 +32,9 @@ public:
 
   static QString secretScope(std::string_view providerId);
 
-  /**
-   * Register a builtin provider. Its settings are read from config like any other provider's, but it
-   * is constructed by the application and outlives config changes.
-   */
   void addProvider(std::unique_ptr<AbstractProvider> provider);
 
-  /**
-   * Push the current settings to a provider again. Config changes are picked up automatically; this
-   * exists for secret fields, which live outside the config file.
-   */
+  // secrets live outside the config file, so their edits are pushed explicitly
   void reconfigure(std::string_view id);
 
   std::shared_ptr<AbstractChatCompletionStream>
@@ -54,6 +47,12 @@ public:
   void preloadModel(const ModelRef &ref) {
     if (auto it = m_providers.find(ref.provider); it != m_providers.end()) {
       it->second->preloadModel(ref.id);
+    }
+  }
+
+  void cancelPreload(const ModelRef &ref) {
+    if (auto it = m_providers.find(ref.provider); it != m_providers.end()) {
+      it->second->cancelPreload(ref.id);
     }
   }
 
