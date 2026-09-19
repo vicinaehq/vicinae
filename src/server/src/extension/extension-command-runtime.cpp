@@ -56,7 +56,7 @@ void ExtensionCommandRuntime::initialize() {
   auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
   auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings,
-                                        *ctx.navigation);
+                                        *ctx.navigation, ctx);
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
   auto wallpaper = new ExtWallpaperService(*m_transport, *services->wallpaperManager());
   auto browserExtension = new ExtBrowserExtensionService(*m_transport, *services->browserExtension());
@@ -156,9 +156,11 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
       if (!res) {
         qWarning() << "Failed to load extension" << res.error();
+        emit loadFailed(QString::fromStdString(res.error()));
       } else {
         m_sessionId = res->session_id;
         m_bus->setSessionId(m_sessionId);
+        emit loaded(m_sessionId);
         manager->client().manager()->ready(res->session_id);
       }
     }
@@ -169,9 +171,11 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   watcher->setFuture(manager->client().manager()->load(opts));
 }
 
-void ExtensionCommandRuntime::unload() {
+void ExtensionCommandRuntime::complete() {
+  if (m_completed) return;
+  m_completed = true;
+
   RelativeAssetResolver::instance()->removePath(m_command->assetPath());
-  auto manager = context()->services->extensionManager();
   auto toast = context()->services->toastService();
 
   // make sure we are not carrying any loading state outside of the command
@@ -180,9 +184,12 @@ void ExtensionCommandRuntime::unload() {
     if (current->priority() == ToastStyle::Dynamic) toast->clear();
   }
 
-  manager->client().manager()->unload(m_sessionId);
-
   if (!m_headless) context()->navigation->setNavigationSuffixIcon(std::nullopt);
+}
+
+void ExtensionCommandRuntime::unload() {
+  complete();
+  if (!m_sessionId.empty()) context()->services->extensionManager()->client().manager()->unload(m_sessionId);
 }
 
 ExtensionCommandRuntime::ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command)

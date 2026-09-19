@@ -4,6 +4,7 @@
 #include "extension/extension-command.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "generated/tsapi.hpp"
+#include <QString>
 #include <qlogging.h>
 
 class ExtensionManagerBus : public tsapi::AbstractTransport {
@@ -30,11 +31,16 @@ class ExtensionLogger : public tsapi::AbstractLogger {
 };
 
 class ExtensionCommandRuntime : public CommandContext {
+  Q_OBJECT
+
   void initialize();
 
 public:
   void load(const LaunchProps &props) override;
   void unload() override;
+  void complete();
+
+  const std::string &sessionId() const { return m_sessionId; }
 
   ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command);
 
@@ -48,7 +54,12 @@ private:
   std::string m_sessionId;
   bool m_isDevMode = false;
   bool m_headless = false;
+  bool m_completed = false;
 
 public:
   void setHeadless(bool value) { m_headless = value; }
+
+signals:
+  void loaded(const std::string &sessionId);
+  void loadFailed(const QString &error);
 };
