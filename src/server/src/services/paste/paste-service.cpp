@@ -40,9 +40,12 @@ bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboa
   m_focusPollTimer.stop();
   m_copyWaitTimer.stop();
   m_awaitingCopy = false;
-  m_hasPendingPaste = false;
+  m_pasteTimer.start();
 
   const bool confirmable = m_clipboard.supportsMonitoring();
+
+  // a server that confirms writes synchronously begins the paste from inside copyContent
+  m_hasPendingPaste = true;
 
   if (confirmable) {
     m_awaitingCopy = true;
@@ -52,10 +55,10 @@ bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboa
   if (!m_clipboard.copyContent(content, options)) {
     m_awaitingCopy = false;
     m_copyWaitTimer.stop();
+    m_hasPendingPaste = false;
     return false;
   }
 
-  m_hasPendingPaste = true;
   if (!confirmable) beginPaste();
 
   return true;
@@ -103,9 +106,10 @@ void PasteService::executePaste() {
 
   if (window) {
     qInfo().nospace() << "Pasting to " << window->title() << " (class=" << window->wmClass()
-                      << ",app=" << (app ? app->id() : "<none>") << ")";
+                      << ",app=" << (app ? app->id() : "<none>") << ") " << m_pasteTimer.elapsed()
+                      << " ms after request";
   } else {
-    qInfo() << "Pasting to unknown window";
+    qInfo() << "Pasting to unknown window" << m_pasteTimer.elapsed() << "ms after request";
   }
 
   m_platform->pasteToApp(window.get(), app.get());
