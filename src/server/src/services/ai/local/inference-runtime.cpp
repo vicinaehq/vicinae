@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstring>
 #include <utility>
+#include <QElapsedTimer>
 #include <qlogging.h>
 #include "common/common.hpp"
 
@@ -108,6 +109,8 @@ QFuture<TranscriptionResult> InferenceRuntime::transcribe(const Audio::Recording
       .language = request.language,
       .initial_prompt = request.initialPrompt,
   };
+  QElapsedTimer timer;
+  timer.start();
   const auto samples = recording.toF32();
   req.samples.assign(samples.begin(), samples.end());
 
@@ -121,19 +124,24 @@ QFuture<TranscriptionResult> InferenceRuntime::transcribe(const Audio::Recording
   const auto timeout = TIMEOUT_BASE + std::chrono::seconds{audioSeconds * TIMEOUT_PER_AUDIO_SECOND};
   QTimer::singleShot(timeout, this, [this, pending]() { timeOut(pending); });
 
-  m_client.inference()->transcribe(req).then(
-      this, [this, pending](std::expected<inference_gen::TranscribeResponse, std::string> result) {
-        if (std::erase(m_pending, pending) == 0) return;
+  auto reply = m_client.inference()->transcribe(req);
+  const auto sentMs = timer.elapsed();
 
-        if (result) {
-          pending->addResult(TranscriptionResponse{.text = std::move(result->text),
-                                                   .language = std::move(result->language)});
-        } else {
-          pending->addResult(std::unexpected(std::move(result).error()));
-        }
-        pending->finish();
-        requestFinished();
-      });
+  reply.then(this, [this, pending, timer, sentMs, count = samples.size()](
+                       std::expected<inference_gen::TranscribeResponse, std::string> result) {
+    if (std::erase(m_pending, pending) == 0) return;
+    qInfo() << "Local inference:" << count << "samples sent in" << sentMs << "ms, answered after"
+            << timer.elapsed() << "ms";
+
+    if (result) {
+      pending->addResult(
+          TranscriptionResponse{.text = std::move(result->text), .language = std::move(result->language)});
+    } else {
+      pending->addResult(std::unexpected(std::move(result).error()));
+    }
+    pending->finish();
+    requestFinished();
+  });
 
   return future;
 }

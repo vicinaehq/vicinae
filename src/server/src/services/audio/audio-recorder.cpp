@@ -3,6 +3,7 @@
 #include <QTemporaryFile>
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <span>
 #include <utility>
 #include <qaudioformat.h>
@@ -21,6 +22,58 @@ constexpr double MIN_PEAK_DB = -30.0;
 constexpr double PEAK_DECAY_DB_PER_SEC = 6.0;
 // Models drop the last word when speech runs straight into the end of the buffer.
 constexpr int TRAILING_SILENCE_MS = 300;
+
+// Qt's own rate conversion on macOS (6.11) stretches the stream by ~18% and garbles it, so we capture
+// at the device rate and downsample here with a polyphase windowed sinc.
+std::vector<float> resample(std::span<const float> in, int inRate, int outRate) {
+  if (inRate == outRate || in.empty()) return {in.begin(), in.end()};
+
+  constexpr int PHASES = 64;
+  const double step = static_cast<double>(inRate) / outRate;
+  const double cutoff = std::min(1.0, 1.0 / step);
+  const int half = static_cast<int>(std::ceil(16.0 * std::max(1.0, step)));
+  const int taps = 2 * half;
+
+  std::vector<double> kernel(static_cast<std::size_t>(PHASES) * taps);
+  for (int phase = 0; phase < PHASES; ++phase) {
+    const auto weights = std::span(kernel).subspan(static_cast<std::size_t>(phase) * taps, taps);
+    const double frac = static_cast<double>(phase) / PHASES;
+    double norm = 0.0;
+    for (int j = 0; j < taps; ++j) {
+      const double x = frac + half - 1 - j;
+      const double window = 0.5 + 0.5 * std::cos(std::numbers::pi * x / half);
+      const double arg = std::numbers::pi * cutoff * x;
+      const double sinc = std::abs(arg) < 1e-9 ? 1.0 : std::sin(arg) / arg;
+      weights[j] = sinc * window;
+      norm += weights[j];
+    }
+    for (auto &weight : weights) {
+      weight /= norm;
+    }
+  }
+
+  const auto count = static_cast<std::size_t>(static_cast<double>(in.size()) / step);
+  const auto size = std::ssize(in);
+  std::vector<float> out;
+  out.reserve(count);
+
+  for (std::size_t n = 0; n < count; ++n) {
+    const double center = static_cast<double>(n) * step;
+    const auto i0 = static_cast<std::ptrdiff_t>(std::floor(center));
+    const int phase =
+        std::min(static_cast<int>((center - static_cast<double>(i0)) * PHASES + 0.5), PHASES - 1);
+    const auto weights = std::span(kernel).subspan(static_cast<std::size_t>(phase) * taps, taps);
+    const std::ptrdiff_t first = i0 - half + 1;
+    const std::ptrdiff_t last = std::min(size - 1, first + taps - 1);
+    double acc = 0.0;
+    for (std::ptrdiff_t i = std::max<std::ptrdiff_t>(0, first); i <= last; ++i) {
+      acc += weights[static_cast<std::size_t>(i - first)] * in[static_cast<std::size_t>(i)];
+    }
+    out.emplace_back(static_cast<float>(acc));
+  }
+
+  return out;
+}
 
 } // namespace
 
@@ -46,12 +99,20 @@ bool Recorder::start() {
   }
 
   m_format = targetFormat();
-  if (!device.isFormatSupported(m_format)) {
+  m_captureFormat = m_format;
+  if (const auto nativeRate = device.preferredFormat().sampleRate(); nativeRate > 0) {
+    m_captureFormat.setSampleRate(nativeRate);
+  }
+  if (!device.isFormatSupported(m_captureFormat)) m_captureFormat = m_format;
+  if (!device.isFormatSupported(m_captureFormat)) {
     emit errorOccurred(tr("Audio input does not support 16 kHz mono recording"));
     return false;
   }
 
-  m_source = std::make_unique<QAudioSource>(device, m_format, this);
+  qInfo() << "Recorder: capturing from" << device.description() << "at" << m_captureFormat.sampleRate()
+          << "Hz";
+
+  m_source = std::make_unique<QAudioSource>(device, m_captureFormat, this);
   m_ioDevice = m_source->start();
 
   if (!m_ioDevice) {
@@ -62,7 +123,7 @@ bool Recorder::start() {
 
   // Reserve for ~2 minutes of audio
   m_pcmBuffer.clear();
-  m_pcmBuffer.reserve(m_format.sampleRate() * m_format.channelCount() * 120);
+  m_pcmBuffer.reserve(m_captureFormat.sampleRate() * m_captureFormat.channelCount() * 120);
   m_pausedElapsed = 0;
   m_level = 0.0f;
   m_peakDb = MIN_PEAK_DB;
@@ -151,7 +212,7 @@ void Recorder::updateLevel(std::span<const float> samples) {
   const auto rms = std::sqrt(sum / static_cast<double>(samples.size()));
   const auto db = 20.0 * std::log10(std::max(rms, 1e-10));
   const auto seconds = static_cast<double>(samples.size()) /
-                       static_cast<double>(m_format.sampleRate() * m_format.channelCount());
+                       static_cast<double>(m_captureFormat.sampleRate() * m_captureFormat.channelCount());
 
   m_peakDb = std::max({db, m_peakDb - PEAK_DECAY_DB_PER_SEC * seconds, MIN_PEAK_DB});
   const auto floorDb = m_peakDb - DYNAMIC_RANGE_DB;
@@ -160,7 +221,7 @@ void Recorder::updateLevel(std::span<const float> samples) {
 }
 
 Recording Recorder::finish() {
-  auto pcm = std::move(m_pcmBuffer);
+  auto pcm = resample(m_pcmBuffer, m_captureFormat.sampleRate(), m_format.sampleRate());
   m_pcmBuffer.clear();
 
   if (!pcm.empty()) {
@@ -176,6 +237,8 @@ Recording Recorder::finish() {
 Recording::Recording(PCMF32 data, QAudioFormat fmt) : m_data(std::move(data)), m_format(fmt) {}
 
 std::span<const float> Recording::toF32() const { return m_data; }
+
+QAudioFormat Recording::format() const { return m_format; }
 
 std::vector<std::int16_t> Recording::toInt16() const {
   std::vector<std::int16_t> pcm16{};

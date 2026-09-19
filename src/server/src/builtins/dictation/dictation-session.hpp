@@ -2,6 +2,7 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <QtQml/qqmlregistration.h>
 #include <QSoundEffect>
 #include <memory>
@@ -70,6 +71,7 @@ private:
   Dictation::DictationAction m_action;
   bool m_recordHistory = true;
   qint64 m_durationMs = 0;
+  QElapsedTimer m_transcribeTimer;
 
   // sound
   bool m_playSoundEffects = true;
