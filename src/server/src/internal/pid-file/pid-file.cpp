@@ -38,9 +38,10 @@ std::optional<int> PidFile::pid() {
   std::string line;
   std::getline(ifs, line);
   std::istringstream iss(line);
-  int pid;
+  int pid = 0;
 
-  iss >> pid;
+  // a pid of 0 or below would target the caller's own process group, or every process
+  if (!(iss >> pid) || pid <= 0) return std::nullopt;
 
   return pid;
 }
