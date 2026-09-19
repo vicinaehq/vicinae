@@ -1,3 +1,6 @@
+#include <array>
+#include <QCoreApplication>
+#include <qcontainerfwd.h>
 #include "wm-extension.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "service-registry.hpp"
@@ -9,12 +12,134 @@
 #include "ui/image/url.hpp"
 #include "command/single-view-command-context.hpp"
 #include "theme/theme.hpp"
-#include <qcontainerfwd.h>
 #include "theme/colors.hpp"
-#include <QCoreApplication>
 
 namespace {
 const auto COLOR = SemanticColor::Blue;
+
+struct LayoutCommandInfo {
+  WindowLayout::Kind kind;
+  const char *id;
+  const char *name;
+  BuiltinIcon icon;
+};
+
+using Layout = WindowLayout::Kind;
+constexpr auto LAYOUT_COMMANDS = std::to_array<LayoutCommandInfo>({
+    {Layout::LeftHalf, "left-half", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Left Half"),
+     BuiltinIcon::AppWindowSidebarLeft},
+    {Layout::RightHalf, "right-half", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Right Half"),
+     BuiltinIcon::AppWindowSidebarRight},
+    {Layout::TopHalf, "top-half", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Top Half"), BuiltinIcon::ArrowUp},
+    {Layout::BottomHalf, "bottom-half", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Bottom Half"),
+     BuiltinIcon::ArrowDown},
+    {Layout::TopLeftQuarter, "top-left-quarter", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Top Left Quarter"),
+     BuiltinIcon::AppWindowGrid2x2},
+    {Layout::TopRightQuarter, "top-right-quarter",
+     QT_TRANSLATE_NOOP("WindowLayoutCommand", "Top Right Quarter"), BuiltinIcon::AppWindowGrid2x2},
+    {Layout::BottomLeftQuarter, "bottom-left-quarter",
+     QT_TRANSLATE_NOOP("WindowLayoutCommand", "Bottom Left Quarter"), BuiltinIcon::AppWindowGrid2x2},
+    {Layout::BottomRightQuarter, "bottom-right-quarter",
+     QT_TRANSLATE_NOOP("WindowLayoutCommand", "Bottom Right Quarter"), BuiltinIcon::AppWindowGrid2x2},
+    {Layout::FirstThird, "first-third", QT_TRANSLATE_NOOP("WindowLayoutCommand", "First Third"),
+     BuiltinIcon::AppWindowSidebarLeft},
+    {Layout::CenterThird, "center-third", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Center Third"),
+     BuiltinIcon::Center},
+    {Layout::LastThird, "last-third", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Last Third"),
+     BuiltinIcon::AppWindowSidebarRight},
+    {Layout::FirstTwoThirds, "first-two-thirds", QT_TRANSLATE_NOOP("WindowLayoutCommand", "First Two Thirds"),
+     BuiltinIcon::AppWindowSidebarLeft},
+    {Layout::LastTwoThirds, "last-two-thirds", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Last Two Thirds"),
+     BuiltinIcon::AppWindowSidebarRight},
+    {Layout::Center, "center", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Center"), BuiltinIcon::Center},
+    {Layout::Maximize, "maximize", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Maximize"),
+     BuiltinIcon::Maximize},
+    {Layout::AlmostMaximize, "almost-maximize", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Almost Maximize"),
+     BuiltinIcon::Maximize},
+    {Layout::MakeSmaller, "make-smaller", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Make Smaller"),
+     BuiltinIcon::Minimize},
+    {Layout::MakeLarger, "make-larger", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Make Larger"),
+     BuiltinIcon::Maximize},
+    {Layout::Restore, "restore", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Restore"), BuiltinIcon::Undo},
+});
+
+class WindowLayoutCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(WindowLayoutCommand)
+
+public:
+  explicit WindowLayoutCommand(LayoutCommandInfo info) : m_info(info) {}
+
+  QString id() const override { return QString::fromLatin1(m_info.id); }
+  QString name() const override { return tr(m_info.name); }
+  QString description() const override {
+    switch (m_info.kind) {
+    case Layout::Center:
+      return tr("Center the active window without resizing it.");
+    case Layout::AlmostMaximize:
+      return tr("Center the active window at 90% of the usable screen size.");
+    case Layout::MakeSmaller:
+      return tr("Shrink the active window by 10% of the usable screen size.");
+    case Layout::MakeLarger:
+      return tr("Enlarge the active window by 10% of the usable screen size.");
+    case Layout::Restore:
+      return tr("Restore the size and position before the last window management command.");
+    default:
+      return tr("Move and resize the active window on its current display.");
+    }
+  }
+  std::vector<QString> keywords() const override {
+    switch (m_info.kind) {
+    case Layout::FirstThird:
+    case Layout::FirstTwoThirds:
+      return {"window", "resize", "left"};
+    case Layout::LastThird:
+    case Layout::LastTwoThirds:
+      return {"window", "resize", "right"};
+    case Layout::CenterThird:
+      return {"window", "resize", "middle third"};
+    default:
+      return {"window", "resize", "move"};
+    }
+  }
+  ImageURL iconUrl() const override { return ImageURL::builtin(m_info.icon).setBackgroundTint(COLOR); }
+
+  void execute(CommandController &ctrl) const override {
+    auto wm = ctrl.context()->services->windowManager();
+    auto toast = ctrl.context()->services->toastService();
+    auto window = wm->getFocusedWindow();
+    if (!window) {
+      toast->failure(tr("No active window"));
+      return;
+    }
+    if (!wm->isOnActiveWorkspace(*window)) {
+      toast->failure(tr("Active window is not on the current workspace"));
+      return;
+    }
+    switch (wm->applyLayout(*window, m_info.kind)) {
+    case WindowLayout::Result::Success:
+      ctrl.context()->navigation->closeWindow();
+      break;
+    case WindowLayout::Result::NoBounds:
+      toast->failure(tr("Could not read the window's position and size"));
+      break;
+    case WindowLayout::Result::NoScreen:
+      toast->failure(tr("No available display"));
+      break;
+    case WindowLayout::Result::Fullscreen:
+      toast->failure(tr("Exit fullscreen before moving or resizing this window"));
+      break;
+    case WindowLayout::Result::NothingToRestore:
+      toast->failure(tr("No previous window size to restore"));
+      break;
+    case WindowLayout::Result::Failed:
+      toast->failure(tr("Could not move or resize this window"));
+      break;
+    }
+  }
+
+private:
+  LayoutCommandInfo m_info;
+};
 
 class ToggleFullscreenWindowCommand : public BuiltinCallbackCommand {
   QString id() const override { return "toggle-fullscreen"; }
@@ -116,6 +241,11 @@ WindowManagementExtension::WindowManagementExtension(const ServiceRegistry &serv
   auto wm = services.windowManager()->provider();
 
   registerCommand<SwitchWindowsCommand>();
+
+  if (wm->supports(Cap::WindowPlacement)) {
+    for (const auto &info : LAYOUT_COMMANDS)
+      registerCommand<WindowLayoutCommand>(info);
+  }
 
   if (wm->hasWorkspaces()) { registerCommand<SwitchWorkspacesCommand>(); }
   if (wm->supports(Cap::Fullscreen)) { registerCommand<ToggleFullscreenWindowCommand>(); }

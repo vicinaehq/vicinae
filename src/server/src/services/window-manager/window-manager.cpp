@@ -143,7 +143,13 @@ AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractAp
 
 void WindowManager::updateWindowCache() {
   m_windows = m_provider->listWindowsSync();
+  m_layouts.forgetClosedWindows(m_windows);
   m_workspaces.reset();
+}
+
+WindowLayout::Result WindowManager::applyLayout(const AbstractWindowManager::AbstractWindow &window,
+                                                WindowLayout::Kind kind) {
+  return m_layouts.apply(*m_provider, window, kind);
 }
 
 bool WindowManager::isCapable() const { return m_provider->id() != "dummy"; }

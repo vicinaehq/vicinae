@@ -1,5 +1,6 @@
 #pragma once
 #include "abstract-window-manager.hpp"
+#include "window-layout.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 
 class WindowManager : public QObject {
@@ -24,6 +25,8 @@ public:
   AbstractWindowManager::WorkspacePtr findWorkspaceById(const QString &id);
 
   bool isOnActiveWorkspace(const AbstractWindowManager::AbstractWindow &window) const;
+  WindowLayout::Result applyLayout(const AbstractWindowManager::AbstractWindow &window,
+                                   WindowLayout::Kind kind);
 
   WindowManager();
 
@@ -43,4 +46,5 @@ private:
   std::optional<AbstractWindowManager::WorkspaceList> m_workspaces;
 
   std::unique_ptr<AbstractWindowManager> m_provider;
+  WindowLayout::Manager m_layouts;
 };

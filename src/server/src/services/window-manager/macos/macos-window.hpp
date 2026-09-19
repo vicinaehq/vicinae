@@ -8,13 +8,12 @@
  * A window owned by a regular macOS application, backed by an Accessibility (AX) element.
  *
  * The window keeps a retained reference to its AXUIElement so that focus and close operations can be
- * performed on the exact window even after the list was fetched. All other properties are snapshotted at
- * construction time since the window list is refetched frequently.
+ * performed on the exact window even after the list was fetched. Geometry and fullscreen state are read
+ * live so repeated placement commands also work with the remembered window while the launcher has focus.
  */
 class MacosWindow : public AbstractWindowManager::AbstractWindow {
 public:
-  MacosWindow(AXUIElementRef element, QString id, QString title, QString wmClass, int pid,
-              std::optional<AbstractWindowManager::WindowBounds> bounds, bool canClose, bool fullScreen,
+  MacosWindow(AXUIElementRef element, QString id, QString title, QString wmClass, int pid, bool canClose,
               bool canFullScreen);
   ~MacosWindow() override;
 
@@ -25,9 +24,9 @@ public:
   QString title() const override { return m_title; }
   QString wmClass() const override { return m_wmClass; }
   std::optional<int> pid() const override { return m_pid; }
-  std::optional<AbstractWindowManager::WindowBounds> bounds() const override { return m_bounds; }
+  std::optional<AbstractWindowManager::WindowBounds> bounds() const override;
   bool canClose() const override { return m_canClose; }
-  bool fullScreen() const override { return m_fullScreen; }
+  bool fullScreen() const override;
   bool canFullScreen() const override { return m_canFullScreen; }
 
   AXUIElementRef element() const { return m_element; }
@@ -38,8 +37,6 @@ private:
   QString m_title;
   QString m_wmClass;
   int m_pid;
-  std::optional<AbstractWindowManager::WindowBounds> m_bounds;
   bool m_canClose;
-  bool m_fullScreen;
   bool m_canFullScreen;
 };

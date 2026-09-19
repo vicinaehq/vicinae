@@ -1,4 +1,5 @@
 #pragma once
+#include <utility>
 #include "command/argument.hpp"
 #include "command/command.hpp"
 #include "service-registry.hpp"
@@ -68,8 +69,8 @@ class BuiltinCommandRepository : public AbstractCommandRepository {
   QString author() const override final { return Omnicast::APP_ID; }
 
 protected:
-  template <DerivedFromCommand T> void registerCommand() {
-    auto cmd = std::make_shared<T>();
+  template <DerivedFromCommand T, typename... Args> void registerCommand(Args &&...args) {
+    auto cmd = std::make_shared<T>(std::forward<Args>(args)...);
     cmd->setRepositoryId(id());
     cmd->setRepositoryName(displayName());
     _commands.emplace_back(cmd);
