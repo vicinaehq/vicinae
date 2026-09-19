@@ -110,6 +110,8 @@ class OllamaProvider : public AbstractProvider {
 
   std::string id() const override { return "ollama"; }
 
+  std::string_view type() const override { return "ollama"; }
+
   std::optional<ImageUrl> icon() const override { return {}; }
 
   std::string_view description() const override { return "Connect to a local or remote Ollama instance."; }
@@ -258,17 +260,31 @@ class OllamaProvider : public AbstractProvider {
 
   using Watcher = QFutureWatcher<Result<std::vector<FullModelResponse>>>;
 
-  void start() override { m_handshakeWatcher.setFuture(fetchVersion()); }
+  void start() override {
+    m_started = true;
+    m_handshakeWatcher.setFuture(fetchVersion());
+  }
+
+  void configure(const ProviderFields &fields) override {
+    auto url = fields.string("url");
+    if (url == m_url) return;
+
+    m_url = std::move(url);
+    m_client.setBaseUrl(QString::fromStdString(std::format("{}/api", m_url)));
+    qInfo() << "Ollama provider now targets" << m_url;
+
+    if (!m_started) return;
+
+    m_listWatcher.cancel();
+    m_models.clear();
+    emit modelsUpdated();
+    start();
+  }
 
   QFuture<AI::Result<VersionResponse>> fetchVersion() { return m_client.get<VersionResponse>("/version"); }
 
 public:
-  OllamaProvider(std::string url) : m_url(std::move(url)) {
-    auto const apiUrl = std::format("{}/api", m_url);
-
-    qInfo() << "Initialized ollama provider with base url" << m_url;
-    m_client.setBaseUrl(QString::fromStdString(apiUrl));
-
+  OllamaProvider() {
     connect(&m_handshakeWatcher, &decltype(m_handshakeWatcher)::finished, this, [this]() {
       auto const res = m_handshakeWatcher.result();
 
@@ -303,6 +319,7 @@ private:
   Watcher m_listWatcher;
   std::string m_url;
   std::vector<FullModelResponse> m_models;
+  bool m_started = false;
 };
 
 }; // namespace AI

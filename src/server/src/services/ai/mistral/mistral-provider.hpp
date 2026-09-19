@@ -85,13 +85,33 @@ class MistralProvider : public AI::AbstractProvider {
 
   std::string id() const override { return "mistral"; }
 
+  std::string_view type() const override { return "mistral"; }
+
   std::optional<ImageUrl> icon() const override { return ImageUrl{BuiltinIcon::Mistral}; }
 
   std::string_view description() const override {
     return "Mistral AI cloud API. Provides transcription and language models.";
   }
 
-  void start() override { m_listWatcher.setFuture(fetchModels()); }
+  void start() override {
+    m_started = true;
+    m_listWatcher.setFuture(fetchModels());
+  }
+
+  void configure(const ProviderFields &fields) override {
+    auto apiKey = QString::fromStdString(fields.string("apiKey"));
+    if (apiKey == m_apiKey) return;
+
+    m_apiKey = apiKey;
+    m_client.setBearer(std::move(apiKey));
+
+    if (!m_started) return;
+
+    m_listWatcher.cancel();
+    m_models = {};
+    emit modelsUpdated();
+    start();
+  }
 
   QFuture<Result<ListModelsResponse>> fetchModels() { return m_client.get<ListModelsResponse>("/models"); }
 
@@ -148,10 +168,8 @@ public:
         });
   }
 
-  MistralProvider(QString apiKey) {
-    qDebug() << "mistral provider initialized with api key" << apiKey;
+  MistralProvider() {
     m_client.setBaseUrl("https://api.mistral.ai/v1/");
-    m_client.setBearer(std::move(apiKey));
     connect(&m_listWatcher, &decltype(m_listWatcher)::finished, this, &MistralProvider::handleListResult);
   }
 
@@ -166,10 +184,13 @@ private:
     }
 
     m_models = res.value();
+    emit modelsUpdated();
   }
 
   http::Client::Watcher<AI::Result<ListModelsResponse>> m_listWatcher;
   http::Client m_client;
   ListModelsResponse m_models;
+  QString m_apiKey;
+  bool m_started = false;
 };
 }; // namespace AI

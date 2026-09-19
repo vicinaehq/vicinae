@@ -37,6 +37,10 @@ public:
 
   std::string id() const override { return std::string(ID); }
 
+  std::string_view type() const override { return ID; }
+
+  void configure(const ProviderFields &) override {}
+
   std::string displayName() const override { return tr("Built-in").toStdString(); }
 
   std::optional<ImageUrl> icon() const override {
