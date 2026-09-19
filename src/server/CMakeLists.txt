@@ -614,6 +614,11 @@ set(SRCS
 	src/services/ai/ai-capability.hpp
 	src/services/ai/speech-language-catalogue.hpp
 	src/services/ai/local/local-provider.hpp
+	src/services/ai/local/local-provider.cpp
+	src/services/ai/ollama/ollama-ai-provider.hpp
+	src/services/ai/ollama/ollama-ai-provider.cpp
+	src/services/ai/mistral/mistral-provider.hpp
+	src/services/ai/mistral/mistral-provider.cpp
 	src/services/local-model-registry/local-model-catalogue.hpp
 	src/services/local-model-registry/model-download.hpp
 	src/services/local-model-registry/model-download.cpp

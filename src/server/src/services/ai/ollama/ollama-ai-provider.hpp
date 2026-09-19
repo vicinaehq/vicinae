@@ -1,325 +1,107 @@
 #pragma once
-#include "services/audio/audio-recorder.hpp"
-#include "services/builtin-icon/builtin-icon.hpp"
-#include "common/qt.hpp"
-#include "ui/image/image-url.hpp"
-#include "services/ai/ai-provider.hpp"
 #include <cstdint>
-#include <expected>
-#include <format>
-#include <glaze/core/opts.hpp>
-#include <glaze/core/reflect.hpp>
-#include <glaze/json/read.hpp>
-#include "services/ai/http-completion.hpp"
-#include "internal/http-client.hpp"
-#include <glaze/json/write.hpp>
-#include <memory>
-#include <qcontainerfwd.h>
-#include <qdir.h>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
-#include <qhttpmultipart.h>
-#include <qlogging.h>
-#include <qnetworkaccessmanager.h>
-#include <qnetworkreply.h>
-#include <qnetworkrequest.h>
-#include <qtimer.h>
-#include <ranges>
+#include "internal/http-client.hpp"
+#include "services/ai/ai-provider.hpp"
+#include "services/audio/audio-recorder.hpp"
+#include "ui/image/image-url.hpp"
 
 namespace AI {
 
-class OllamaProvider : public AbstractProvider {
-  struct ModelShowResponse {
-    std::vector<std::string> capabilities;
-  };
+namespace ollama {
 
-  struct FullModelResponse {
+struct ModelShowResponse {
+  std::vector<std::string> capabilities;
+};
+
+struct FullModelResponse {
+  std::string name;
+  std::string model;
+  Capabilities capabilities;
+  std::string family;
+};
+
+struct VersionResponse {
+  std::string version;
+};
+
+struct ListModelsResponse {
+  struct Model {
+    struct Details {
+      std::string family;
+    };
+
     std::string name;
     std::string model;
-    Capabilities capabilities;
-    std::string family;
+    std::uint64_t size = 0;
+    Details details;
   };
 
-  struct VersionResponse {
-    std::string version;
+  std::vector<Model> models;
+};
+
+struct ModelShowRequest {
+  std::string model;
+  bool verbose = false;
+};
+
+struct ChatMessage {
+  std::string role;
+  std::string content;
+};
+
+struct ChatPayload {
+  struct Options {
+    std::optional<float> temperature;
   };
+  std::string model;
+  std::vector<ChatMessage> messages;
+  bool stream = true;
+  Options options;
+};
 
-  struct ListModelsResponse {
-    struct Model {
-      struct Details {
-        std::string family;
-      };
+} // namespace ollama
 
-      std::string name;
-      std::string model;
-      std::uint64_t size = 0;
-      Details details;
-    };
-
-    std::vector<Model> models;
-  };
-
-  struct ModelShowRequest {
-    std::string model;
-    bool verbose = false;
-  };
-
-  struct ChatMessage {
-    std::string role;
-    std::string content;
-  };
-
-  struct ChatPayload {
-    struct Options {
-      std::optional<float> temperature;
-    };
-    std::string model;
-    std::vector<ChatMessage> messages;
-    bool stream = true;
-    Options options;
-  };
-
-  static std::optional<Capability> parseCapability(std::string_view str) {
-    if (str == "completion") { return Capability::Completion; }
-    if (str == "tools") { return Capability::ToolCalling; }
-    if (str == "vision") { return Capability::Vision; }
-    if (str == "thinking") { return Capability::Thinking; }
-    if (str == "embedding") { return Capability::Embedding; }
-    // ollama doesn't support transcription models
-    return std::nullopt;
-  }
-
-  static Capabilities parseCapabilities(std::span<const std::string> strs) {
-    Capabilities caps{};
-
-    for (const auto &str : strs) {
-      if (auto cap = parseCapability(str)) { caps |= cap.value(); }
-    }
-
-    return caps;
-  }
-
-  static AI::Model toModel(const FullModelResponse &model) {
-    return AI::Model{
-        .id = model.model,
-        .name = model.name,
-        .icon = getModelIcon(model),
-        .caps = model.capabilities,
-    };
-  }
+class OllamaProvider : public AbstractProvider {
+public:
+  OllamaProvider();
+  ~OllamaProvider() override;
 
   std::string id() const override { return "ollama"; }
-
   std::string_view type() const override { return "ollama"; }
-
   std::optional<ImageUrl> icon() const override { return {}; }
-
   std::string_view description() const override { return "Connect to a local or remote Ollama instance."; }
 
-  ModelList listModels(const ListModelFilters &filters = {}) const override {
-    return m_models | std::views::transform([](const FullModelResponse &model) { return toModel(model); }) |
-           std::ranges::to<std::vector>();
-  }
+  void configure(const ProviderFields &fields) override;
+  void start() override;
 
+  ModelList listModels(const ListModelFilters &filters = {}) const override;
   std::optional<Model> findBestModel(Capabilities caps,
-                                     Preference preference = Preference::None) const override {
-    for (const auto &model : m_models) {
-      if (model.capabilities & caps) { return toModel(model); }
-    }
-
-    return std::nullopt;
-  }
-
-  QUrl makeUrl(const QString &path) {
-    QUrl url = QString::fromStdString(m_url);
-    url.setPath(path);
-    return url;
-  }
-
-  static ImageUrl getModelIcon(const FullModelResponse &model) {
-    if (model.name.contains("mistral")) return ImageUrl{BuiltinIcon::Mistral};
-    if (model.name.contains("llava")) return ImageUrl{BuiltinIcon::Llava};
-    if (model.name.contains("deepseek")) return ImageUrl{BuiltinIcon::Deepseek};
-    if (model.name.contains("gemma")) return ImageUrl{BuiltinIcon::Google};
-    if (model.family.starts_with("qwen")) return ImageUrl{BuiltinIcon::Qwen};
-
-    return ImageUrl{BuiltinIcon::Ollama};
-  }
-
-  QFuture<Result<std::vector<FullModelResponse>>> listModelsFull() {
-    auto promise = std::make_shared<QPromise<Result<std::vector<FullModelResponse>>>>();
-
-    fetchModels().then([promise, client = m_client](Result<ListModelsResponse> result) mutable {
-      if (!result) {
-        promise->addResult(std::unexpected(result.error()));
-        promise->finish();
-        return;
-      }
-
-      auto modelList = std::move(*result);
-      std::vector<QFuture<Result<ModelShowResponse>>> futures;
-      futures.reserve(modelList.models.size());
-
-      for (const auto &model : modelList.models) {
-        auto future = client.post<ModelShowResponse, ModelShowRequest>("/show", {.model = model.model});
-        futures.emplace_back(future);
-      }
-
-      QtFuture::whenAll(futures.begin(), futures.end())
-          .then([modelList = std::move(modelList),
-                 promise](QList<QFuture<Result<ModelShowResponse>>> completed) mutable {
-            std::vector<FullModelResponse> models;
-            models.reserve(completed.size());
-
-            for (auto [model, future] : std::views::zip(modelList.models, completed)) {
-              if (future.isCanceled() || !future.isResultReadyAt(0)) continue;
-
-              auto const &showResult = future.result();
-              if (!showResult) {
-                qWarning() << "Failed to fetch model info for" << model.model << ":" << showResult.error();
-                continue;
-              }
-
-              Capabilities caps = parseCapabilities(showResult->capabilities);
-              models.emplace_back(FullModelResponse(std::move(model.name), std::move(model.model), caps,
-                                                    model.details.family));
-            }
-
-            promise->addResult(std::move(models));
-            promise->finish();
-          });
-    });
-
-    return promise->future();
-  }
-
-  QFuture<Result<ListModelsResponse>> fetchModels() { return m_client.get<ListModelsResponse>("/tags"); }
+                                     Preference preference = Preference::None) const override;
 
   std::shared_ptr<AbstractChatCompletionStream>
-  createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) override {
-    QNetworkRequest req;
-    QUrl url = QString::fromStdString(m_url);
-
-    url.setPath("/api/chat");
-    req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
-
-    auto serializeRole = [](AI::ChatRole role) {
-      switch (role) {
-      case AI::ChatRole::User:
-        return "user";
-      case AI::ChatRole::Assistant:
-        return "assistant";
-      case AI::ChatRole::System:
-        return "system";
-      case AI::ChatRole::Developer:
-        return "developer";
-      case AI::ChatRole::Tool:
-        return "tool";
-      }
-      return "none";
-    };
-
-    req.setUrl(url);
-
-    auto tr = [&](const AI::ChatMessage &msg) -> ChatMessage {
-      return ChatMessage(serializeRole(msg.role), msg.value);
-    };
-
-    ChatPayload data;
-
-    data.model = modelId;
-    data.messages = payload.messages | std::views::transform(tr) | std::ranges::to<std::vector>();
-    data.options.temperature = payload.temperature;
-
-    std::string serializedData;
-
-    if (const auto error = glz::write_json(data, serializedData)) {
-      qWarning() << "Failed to serialize ollama payload" << glz::format_error(error);
-      return nullptr;
-    }
-
-    AI::Model resolvedModel;
-
-    for (const auto &m : m_models) {
-      if (m.model == modelId) {
-        resolvedModel = toModel(m);
-        break;
-      }
-    }
-
-    return std::shared_ptr<HttpCompletion>(
-        new HttpCompletion(req, QByteArray::fromStdString(serializedData), std::move(resolvedModel)),
-        QObjectDeleter{});
-  }
-
+  createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) override;
   QFuture<TranscriptionResult> transcribe(Audio::Recording recording,
-                                          const TranscriptionOptions &opts = {}) override {
-    return QtFuture::makeReadyValueFuture<TranscriptionResult>(
-        std::unexpected("Transcription is not supported"));
-  }
-
-  using Watcher = QFutureWatcher<Result<std::vector<FullModelResponse>>>;
-
-  void start() override {
-    m_started = true;
-    m_handshakeWatcher.setFuture(fetchVersion());
-  }
-
-  void configure(const ProviderFields &fields) override {
-    auto url = fields.string("url");
-    if (url == m_url) return;
-
-    m_url = std::move(url);
-    m_client.setBaseUrl(QString::fromStdString(std::format("{}/api", m_url)));
-    qInfo() << "Ollama provider now targets" << m_url;
-
-    if (!m_started) return;
-
-    m_listWatcher.cancel();
-    m_models.clear();
-    emit modelsUpdated();
-    start();
-  }
-
-  QFuture<AI::Result<VersionResponse>> fetchVersion() { return m_client.get<VersionResponse>("/version"); }
-
-public:
-  OllamaProvider() {
-    connect(&m_handshakeWatcher, &decltype(m_handshakeWatcher)::finished, this, [this]() {
-      auto const res = m_handshakeWatcher.result();
-
-      if (!res) {
-        qWarning() << "handshake with ollama failed" << res.error();
-        return;
-      }
-
-      qInfo().nospace() << "Connected to ollama instance " << m_url << " (version=" << res->version << ")";
-      m_listWatcher.setFuture(listModelsFull());
-    });
-
-    connect(&m_listWatcher, &Watcher::finished, this, [this]() {
-      if (m_listWatcher.isCanceled() || !m_listWatcher.isFinished()) return;
-
-      auto result = m_listWatcher.result();
-      if (!result) {
-        qWarning() << "Failed to fetch Ollama models:" << result.error();
-        return;
-      }
-
-      m_models = std::move(*result);
-      emit modelsUpdated();
-    });
-  }
-
-  ~OllamaProvider() override { m_listWatcher.cancel(); }
+                                          const TranscriptionOptions &opts = {}) override;
 
 private:
+  using ModelsResult = Result<std::vector<ollama::FullModelResponse>>;
+
+  QFuture<Result<ollama::VersionResponse>> fetchVersion();
+  QFuture<Result<ollama::ListModelsResponse>> fetchModels();
+  QFuture<ModelsResult> listModelsFull();
+
   http::Client m_client;
-  http::Client::Watcher<AI::Result<VersionResponse>> m_handshakeWatcher;
-  Watcher m_listWatcher;
+  http::Client::Watcher<Result<ollama::VersionResponse>> m_handshakeWatcher;
+  http::Client::Watcher<ModelsResult> m_listWatcher;
   std::string m_url;
-  std::vector<FullModelResponse> m_models;
+  std::vector<ollama::FullModelResponse> m_models;
   bool m_started = false;
 };
 
-}; // namespace AI
+} // namespace AI
