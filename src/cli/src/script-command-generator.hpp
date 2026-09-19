@@ -168,16 +168,18 @@ public:
     std::string result(langInfo.templateStr);
     size_t pos = 0;
 
-    while ((pos = result.find("{title}", pos)) != std::string::npos) {
-      result.replace(pos, 7, title);
-      pos += title.length();
+    // {mode} first: modeStr comes from outputModeToString() and can never contain a
+    // placeholder, whereas a title holding the literal text "{mode}" would be rewritten.
+    while ((pos = result.find("{mode}", pos)) != std::string::npos) {
+      result.replace(pos, 6, modeStr);
+      pos += modeStr.length();
     }
 
     pos = 0;
 
-    while ((pos = result.find("{mode}", pos)) != std::string::npos) {
-      result.replace(pos, 6, modeStr);
-      pos += modeStr.length();
+    while ((pos = result.find("{title}", pos)) != std::string::npos) {
+      result.replace(pos, 7, title);
+      pos += title.length();
     }
 
     return result;
