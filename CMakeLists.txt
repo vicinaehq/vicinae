@@ -416,6 +416,7 @@ endif()
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
 add_subdirectory(src/cli)
 add_subdirectory(src/server)
+add_subdirectory(src/inference)
 
 if (UNIX AND NOT APPLE)
 	add_subdirectory(src/data-control-server)

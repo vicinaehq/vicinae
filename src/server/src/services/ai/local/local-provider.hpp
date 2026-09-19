@@ -1,10 +1,10 @@
 #pragma once
-#include <chrono>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <qfuture.h>
 #include <QTimer>
+#include "inference-runtime.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "services/audio/audio-recorder.hpp"
 #include "services/local-model-registry/local-model-catalogue.hpp"
@@ -42,6 +42,7 @@ public:
   std::shared_ptr<AbstractChatCompletionStream>
   createChatCompletion(std::string_view id, const ChatCompletionPayload &payload) override;
   void preloadModel(std::string_view modelId) override;
+  void cancelPreload(std::string_view modelId) override;
   QFuture<TranscriptionResult> transcribe(Audio::Recording recording,
                                           const TranscriptionOptions &opts = {}) override;
 
@@ -51,10 +52,7 @@ private:
   LocalModelRegistry &m_registry;
   std::string m_description;
   QTimer m_progressThrottle;
-  bool m_useGpu = true;
-
-  // std::nullopt if we want to keep it loaded at all times
-  std::optional<std::chrono::seconds> m_keepLoaded;
+  InferenceRuntime m_inference;
 };
 
 } // namespace AI

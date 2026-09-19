@@ -1,6 +1,0 @@
-<!DOCTYPE RCC>
-<RCC version="1.0">
-  <qresource prefix="/models">
-  	<file alias="ggml-silero-v6.2.0.bin">assets/models/ggml-silero-v6.2.0.bin</file>
-  </qresource>
-</RCC>

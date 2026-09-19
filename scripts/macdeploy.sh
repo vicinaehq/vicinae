@@ -25,9 +25,10 @@ SIGN_IDENTITY="${VICINAE_CODESIGN_IDENTITY:--}"
 SERVER_BIN="$BUILD_DIR/bin/vicinae-server"
 CLI_BIN="$BUILD_DIR/bin/vicinae"
 BROWSER_LINK_BIN="$BUILD_DIR/bin/vicinae-browser-link"
+INFERENCE_BIN="$BUILD_DIR/bin/vicinae-inference"
 INFO_PLIST="$BUILD_DIR/Info.plist"
 
-for f in "$SERVER_BIN" "$CLI_BIN" "$BROWSER_LINK_BIN" "$INFO_PLIST"; do
+for f in "$SERVER_BIN" "$CLI_BIN" "$BROWSER_LINK_BIN" "$INFERENCE_BIN" "$INFO_PLIST"; do
   if [[ ! -f "$f" ]]; then
     echo "macdeploy.sh: missing $f (build first)" >&2
     exit 1
@@ -55,8 +56,9 @@ cp -R "$SRC_DIR/extra/themes" "$BUNDLE/Contents/Resources/themes"
 cp "$SERVER_BIN" "$BUNDLE/Contents/MacOS/Vicinae"
 cp "$CLI_BIN" "$BUNDLE/Contents/MacOS/vicinae-cli"
 cp "$BROWSER_LINK_BIN" "$BUNDLE/Contents/MacOS/vicinae-browser-link"
+cp "$INFERENCE_BIN" "$BUNDLE/Contents/MacOS/vicinae-inference"
 chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli" \
-         "$BUNDLE/Contents/MacOS/vicinae-browser-link"
+         "$BUNDLE/Contents/MacOS/vicinae-browser-link" "$BUNDLE/Contents/MacOS/vicinae-inference"
 
 # must run before macdeployqt so the framework is treated as already deployed
 bundle_soulver_core() {
@@ -148,7 +150,8 @@ dyl_args=(-of -b -cd
   -s "$BUNDLE/Contents/Frameworks"
   -x "$BUNDLE/Contents/MacOS/Vicinae"
   -x "$BUNDLE/Contents/MacOS/vicinae-cli"
-  -x "$BUNDLE/Contents/MacOS/vicinae-browser-link")
+  -x "$BUNDLE/Contents/MacOS/vicinae-browser-link"
+  -x "$BUNDLE/Contents/MacOS/vicinae-inference")
 # loose Frameworks/ dylibs included so dylibbundler rewrites any absolute
 # LC_ID_DYLIB macdeployqt left in place
 while IFS= read -r -d '' p; do

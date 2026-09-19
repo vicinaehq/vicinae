@@ -10,10 +10,7 @@ namespace AI {
 
 enum class FieldKind : std::uint8_t { Text, Secret, Select, Toggle };
 
-/**
- * How many instances of a provider type can exist. Builtin providers are constructed by the
- * application rather than from config, and can neither be added nor removed by the user.
- */
+// Builtin providers are constructed by the application, never added or removed through config.
 enum class Cardinality : std::uint8_t { Builtin, Single, Multiple };
 
 struct FieldOption {
@@ -75,11 +72,6 @@ inline constexpr auto LOCAL_FIELDS = std::to_array<ProviderField>({
      .kind = FieldKind::Select,
      .defaultValue = "60",
      .options = LOCAL_KEEP_LOADED_OPTIONS},
-    {.key = "useGpu",
-     .label = AI_PROVIDER_TR("Use GPU"),
-     .description = AI_PROVIDER_TR("Run local models on the GPU when one is available."),
-     .kind = FieldKind::Toggle,
-     .defaultChecked = true},
 });
 
 inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({

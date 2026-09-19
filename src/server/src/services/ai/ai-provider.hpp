@@ -161,10 +161,6 @@ struct TranscriptionOptions {
   // Some class of models (such as parakeet models) cannot be
   // biased. Non-owning: only valid for the duration of the call.
   std::span<const std::string_view> vocabulary;
-
-  // Use gpu backend if available.
-  // Only applies to local transcription.
-  std::optional<bool> useGpu;
 };
 
 struct TranscriptionResponse {
@@ -194,8 +190,7 @@ struct ManagedModel {
 };
 
 /**
- * Resolved values for a provider's declared fields: config values with secrets merged in, and the
- * field's default wherever nothing was set.
+ * A provider's field values: config with secrets merged in, defaults where nothing is set.
  */
 struct ProviderFields {
   glz::generic::object_t values;
@@ -238,14 +233,13 @@ public:
   virtual std::string id() const = 0;
 
   /**
-   * The provider type this instance was created from. Must match an entry in `PROVIDER_TYPES`.
+   * Entry of `PROVIDER_TYPES` this instance was created from.
    */
   virtual std::string_view type() const = 0;
 
   /**
-   * Apply the user's settings for this provider. Called once before `start`, then again every time
-   * the settings change. Providers are never recreated because of a settings change, so this is where
-   * they must refresh whatever depends on those values and discard work started under the old ones.
+   * Called once before `start` and again on every settings change. Providers are never recreated
+   * for a settings change, so this is where they refresh and drop work started under old values.
    */
   virtual void configure(const ProviderFields &fields) = 0;
 
@@ -292,6 +286,11 @@ public:
    *
    */
   virtual void preloadModel(std::string_view modelId) {}
+
+  /**
+   * The use announced by `preloadModel` will not happen.
+   */
+  virtual void cancelPreload(std::string_view modelId) {}
 
   /**
    * List all models that match the filter's criterias.
