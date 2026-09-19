@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -26,7 +27,7 @@ public:
   std::optional<ImageUrl> icon() const override;
   std::string_view description() const override { return m_description; }
 
-  void configure(const ProviderFields &) override {}
+  void configure(const ProviderFields &) override;
   void start() override;
 
   bool managesModels() const override { return true; }
@@ -50,6 +51,10 @@ private:
   LocalModelRegistry &m_registry;
   std::string m_description;
   QTimer m_progressThrottle;
+  bool m_useGpu = true;
+
+  // std::nullopt if we want to keep it loaded at all times
+  std::optional<std::chrono::seconds> m_keepLoaded;
 };
 
 } // namespace AI

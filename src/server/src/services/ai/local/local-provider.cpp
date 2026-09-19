@@ -3,10 +3,12 @@
 #include <qlogging.h>
 #include <qtconcurrentrun.h>
 #include <ggml-backend.h>
+#include <string>
 #include "local-chat-completion.hpp"
 #include "parakeet.h"
 #include "ui/image/image-url.hpp"
 #include "ui/image/url.hpp"
+#include "utils.hpp"
 #include "whisper.h"
 
 namespace AI {
@@ -183,6 +185,18 @@ void LocalProvider::preloadModel(std::string_view modelId) {
   }
 }
 
+void LocalProvider::configure(const ProviderFields &fields) {
+  const auto keepLoaded = fields.string("keepLoaded");
+
+  m_useGpu = fields.boolean("useGpu", true);
+
+  if (keepLoaded == "always") {
+    m_keepLoaded.reset();
+  } else {
+    m_keepLoaded = std::chrono::seconds{qStringFromStdView(fields.string("keepLoaded")).toUInt()};
+  }
+}
+
 QFuture<TranscriptionResult> LocalProvider::transcribe(Audio::Recording recording,
                                                        const TranscriptionOptions &opts) {
   if (!opts.model)
@@ -215,7 +229,7 @@ QFuture<TranscriptionResult> LocalProvider::transcribe(Audio::Recording recordin
     }
 
     return QtConcurrent::run([recording = std::move(recording), path = std::move(path),
-                              language = opts.language, useGpu = opts.useGpu,
+                              language = opts.language, useGpu = opts.useGpu.value_or(m_useGpu),
                               initialPrompt = std::move(initialPrompt)]() {
       return runWhisper(recording, path, language, useGpu, initialPrompt);
     });
