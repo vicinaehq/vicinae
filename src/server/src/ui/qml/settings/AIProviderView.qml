@@ -29,6 +29,35 @@ Flickable {
         policy: root.contentHeight > root.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
     }
 
+    component FieldHost: Loader {
+        Layout.fillWidth: true
+
+        required property int index
+        required property string key
+        required property string label
+        required property string description
+        required property string placeholder
+        required property string kind
+        required property var options
+        required property var value
+        required property var currentOption
+
+        sourceComponent: {
+            switch (kind) {
+            case "text":
+                return textComp;
+            case "secret":
+                return secretComp;
+            case "toggle":
+                return toggleComp;
+            case "select":
+                return selectComp;
+            default:
+                return null;
+            }
+        }
+    }
+
     AIModelDeleteDialog {
         id: deleteDialog
         onConfirmed: modelId => root.page.removeModel(modelId)
@@ -198,53 +227,95 @@ Flickable {
             Layout.rightMargin: column.sideMargin
             Layout.bottomMargin: 24
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.margins: 16
-                spacing: 14
+            readonly property real controlWidth: 300
 
-                Repeater {
-                    id: fieldsRepeater
-                    model: root.page.fields
+            Repeater {
+                id: fieldsRepeater
+                model: root.page.fields
 
-                    delegate: ColumnLayout {
-                        id: field
-                        required property string key
-                        required property string label
-                        required property string placeholder
-                        required property bool secret
-                        required property string value
-                        Layout.fillWidth: true
-                        spacing: 4
+                delegate: FieldHost {}
+            }
 
-                        Text {
-                            text: field.label
-                            color: Theme.textMuted
-                            font.pointSize: Theme.smallerFontSize
+            Component {
+                id: textComp
+                SettingsRow {
+                    id: field
+                    readonly property FieldHost host: parent as FieldHost
+                    label: field.host.label
+                    description: field.host.description
+                    controlWidth: configGroup.controlWidth
+                    showSeparator: field.host.index < fieldsRepeater.count - 1
+
+                    FormTextInput {
+                        width: parent.width
+                        releaseFocusOnAccept: true
+                        text: String(field.host.value)
+                        placeholder: field.host.placeholder
+                        onAccepted: root.page.setField(field.host.key, text.trim())
+                        onEditingChanged: {
+                            if (!editing)
+                                root.page.setField(field.host.key, text.trim());
                         }
+                    }
+                }
+            }
 
-                        FormTextInput {
-                            visible: !field.secret
-                            Layout.fillWidth: true
-                            text: field.value
-                            placeholder: field.placeholder
-                            onAccepted: root.page.setField(field.key, text.trim())
-                            onEditingChanged: {
-                                if (!editing)
-                                    root.page.setField(field.key, text.trim());
-                            }
-                        }
+            Component {
+                id: secretComp
+                SettingsRow {
+                    id: field
+                    readonly property FieldHost host: parent as FieldHost
+                    label: field.host.label
+                    description: field.host.description
+                    controlWidth: configGroup.controlWidth
+                    showSeparator: field.host.index < fieldsRepeater.count - 1
 
-                        FormPasswordInput {
-                            visible: field.secret
-                            text: field.value
-                            placeholder: field.placeholder
-                            onAccepted: root.page.setField(field.key, text.trim())
-                            onEditingChanged: {
-                                if (!editing)
-                                    root.page.setField(field.key, text.trim());
-                            }
+                    FormPasswordInput {
+                        width: parent.width
+                        releaseFocusOnAccept: true
+                        text: String(field.host.value)
+                        placeholder: field.host.placeholder
+                        onAccepted: root.page.setField(field.host.key, text.trim())
+                        onEditingChanged: {
+                            if (!editing)
+                                root.page.setField(field.host.key, text.trim());
                         }
+                    }
+                }
+            }
+
+            Component {
+                id: toggleComp
+                SettingsRow {
+                    id: field
+                    readonly property FieldHost host: parent as FieldHost
+                    label: field.host.label
+                    description: field.host.description
+                    controlWidth: configGroup.controlWidth
+                    showSeparator: field.host.index < fieldsRepeater.count - 1
+
+                    SettingsToggle {
+                        checked: field.host.value === true
+                        onToggled: checked => root.page.setField(field.host.key, checked)
+                    }
+                }
+            }
+
+            Component {
+                id: selectComp
+                SettingsRow {
+                    id: field
+                    readonly property FieldHost host: parent as FieldHost
+                    label: field.host.label
+                    description: field.host.description
+                    controlWidth: configGroup.controlWidth
+                    showSeparator: field.host.index < fieldsRepeater.count - 1
+
+                    SearchableDropdown {
+                        width: parent.width
+                        items: field.host.options
+                        currentItem: field.host.currentOption
+                        onActivated: item => root.page.setField(field.host.key, item.id)
                     }
                 }
             }
