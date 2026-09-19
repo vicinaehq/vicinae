@@ -17,7 +17,7 @@ public:
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
 
-    if (clipman->copyContent(std::move(m_content), m_opts)) {
+    if (clipman->copyContent(m_content, m_opts)) {
       ctx->navigation->showHud(tr("Copied to clipboard"), ImageURL::builtin(BuiltinIcon::CopyClipboard));
       return;
     }
