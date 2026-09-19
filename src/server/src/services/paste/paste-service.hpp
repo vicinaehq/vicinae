@@ -2,6 +2,7 @@
 #include <memory>
 #include <QObject>
 #include <QTimer>
+#include <QElapsedTimer>
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/paste/abstract-paste-service.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -31,5 +32,6 @@ private:
   bool m_awaitingCopy = false;
   QTimer m_focusPollTimer;
   QTimer m_copyWaitTimer;
+  QElapsedTimer m_pasteTimer;
   int m_focusPollCount = 0;
 };
