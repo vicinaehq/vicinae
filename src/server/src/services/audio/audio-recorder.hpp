@@ -72,6 +72,7 @@ private:
 
   std::vector<float> m_pcmBuffer;
   QAudioFormat m_format;
+  QAudioFormat m_captureFormat;
   float m_level = 0.0f;
   double m_peakDb = 0.0;
   State m_state = State::Idle;

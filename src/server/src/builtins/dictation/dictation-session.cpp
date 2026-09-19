@@ -1,4 +1,6 @@
 #include "dictation-session.hpp"
+#include <QDateTime>
+#include <QDir>
 #include <QFile>
 #include <qlogging.h>
 #include <QSoundEffect>
@@ -79,6 +81,7 @@ void DictationSession::accept() {
 
   m_elapsedTimer.stop();
   m_durationMs = m_recorder.elapsedMs();
+  m_transcribeTimer.start();
   m_recorder.stop();
 
   if (m_playSoundEffects) {
@@ -89,6 +92,20 @@ void DictationSession::accept() {
   if (m_pauseHandle) { m_pauseHandle->resume(); }
 
   auto recording = m_recorder.finish();
+  const auto sampleCount = recording.toF32().size();
+  const auto sampleRate = recording.format().sampleRate();
+  qInfo() << "Dictation: recorded" << sampleCount << "samples at" << sampleRate << "Hz ("
+          << static_cast<double>(sampleCount) * 1000.0 / sampleRate << "ms of audio) over" << m_durationMs
+          << "ms";
+
+  if (const auto dir = qEnvironmentVariable("VICINAE_DICTATION_DUMP_DIR"); !dir.isEmpty()) {
+    const auto path = QDir(dir).filePath(
+        QStringLiteral("dictation-%1.wav").arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss")));
+    if (QFile file(path); file.open(QIODevice::WriteOnly)) {
+      file.write(recording.toWav());
+      qInfo() << "Dictation: dumped recording to" << path;
+    }
+  }
 
   if (recording.toF32().empty()) {
     m_ctx->services->ai()->cancelPreload(m_model);
@@ -105,6 +122,8 @@ void DictationSession::accept() {
   m_ctx->services->ai()
       ->transcribe(m_model, std::move(recording), options)
       .then(this, [this](const AI::TranscriptionResult &result) {
+        qInfo() << "Dictation: transcribed" << m_durationMs << "ms of audio in" << m_transcribeTimer.elapsed()
+                << "ms";
         if (!result) {
           m_transcribing = false;
           emit stateChanged();

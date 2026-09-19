@@ -1,4 +1,8 @@
 #include "inference-service.hpp"
+#include <algorithm>
+#include <chrono>
+#include <cstdint>
+#include <format>
 #include <iostream>
 #include <vector>
 #include <ggml-backend.h>
@@ -19,6 +23,19 @@ std::vector<float> toF32(const std::vector<double> &samples) {
 }
 
 void log(std::string_view message) { std::cerr << message << '\n' << std::flush; }
+
+class Stopwatch {
+public:
+  std::int64_t lapMs() {
+    const auto now = std::chrono::steady_clock::now();
+    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last).count();
+    m_last = now;
+    return ms;
+  }
+
+private:
+  std::chrono::steady_clock::time_point m_last = std::chrono::steady_clock::now();
+};
 
 } // namespace
 
@@ -70,10 +87,25 @@ void InferenceService::load(inference_gen::LoadRequest req,
 }
 
 void InferenceService::transcribe(inference_gen::TranscribeRequest req, std::function<void(Response)> reply) {
-  enqueue([this, req = std::move(req), reply = std::move(reply)]() {
+  const auto queued = std::chrono::steady_clock::now();
+  enqueue([this, req = std::move(req), reply = std::move(reply), queued]() {
+    Stopwatch watch;
+    const auto waitedMs =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - queued)
+            .count();
+    const auto inputSamples = req.samples.size();
     auto pcm = toF32(req.samples);
-    if (auto *detector = vad()) pcm = extractSpeech(pcm, detector->frameProbabilities(pcm));
+    std::string vadStats;
+    if (auto *detector = vad()) {
+      const auto probs = detector->frameProbabilities(pcm);
+      const auto maxProb = probs.empty() ? 0.0f : *std::ranges::max_element(probs);
+      const auto speechFrames = std::ranges::count_if(probs, [](float p) { return p >= 0.5f; });
+      vadStats = std::format("vad {}/{} speech frames, max prob {:.3f}", speechFrames, probs.size(), maxProb);
+      pcm = extractSpeech(pcm, probs);
+    }
+    const auto vadMs = watch.lapMs();
     if (pcm.empty()) {
+      log(std::format("transcribe: no speech detected ({})", vadStats));
       reply(inference_gen::TranscribeResponse{});
       return;
     }
@@ -82,15 +114,23 @@ void InferenceService::transcribe(inference_gen::TranscribeRequest req, std::fun
       reply(std::unexpected(loaded.error()));
       return;
     }
+    const auto loadMs = watch.lapMs();
 
+    Response response;
     switch (req.engine) {
     case inference_gen::Engine::Whisper:
-      reply(transcribeWhisper(req, pcm));
+      response = transcribeWhisper(req, pcm);
       break;
     case inference_gen::Engine::Parakeet:
-      reply(transcribeParakeet(pcm));
+      response = transcribeParakeet(pcm);
       break;
     }
+    const auto inferMs = watch.lapMs();
+
+    log(std::format(
+        "transcribe: {:.2f} s -> {:.2f} s, queued {} ms, vad {} ms, load {} ms, inference {} ms, {}",
+        inputSamples / 16000.0, pcm.size() / 16000.0, waitedMs, vadMs, loadMs, inferMs, vadStats));
+    reply(std::move(response));
   });
 }
 
@@ -117,10 +157,12 @@ std::expected<void, std::string> InferenceService::loadWhisper(const std::string
   if (m_whisper.holds(path)) return {};
   m_whisper = {};
 
-  log("loading whisper model " + path);
+  log(std::format("loading whisper model {}", path));
 
+  Stopwatch watch;
   auto *ctx = whisper_init_from_file_with_params(path.c_str(), whisper_context_default_params());
   if (!ctx) return std::unexpected("Failed to load whisper model " + path);
+  log(std::format("loaded whisper model in {} ms", watch.lapMs()));
 
   m_whisper = {.ctx = std::unique_ptr<whisper_context, WhisperDeleter>(ctx), .path = path};
   return {};
@@ -130,10 +172,12 @@ std::expected<void, std::string> InferenceService::loadParakeet(const std::strin
   if (m_parakeet.holds(path)) return {};
   m_parakeet = {};
 
-  log("loading parakeet model " + path);
+  log(std::format("loading parakeet model {}", path));
 
+  Stopwatch watch;
   auto *ctx = parakeet_init_from_file_with_params(path.c_str(), parakeet_context_default_params());
   if (!ctx) return std::unexpected("Failed to load parakeet model " + path);
+  log(std::format("loaded parakeet model in {} ms", watch.lapMs()));
 
   m_parakeet = {.ctx = std::unique_ptr<parakeet_context, ParakeetDeleter>(ctx), .path = path};
   return {};
