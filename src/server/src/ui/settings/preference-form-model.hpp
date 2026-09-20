@@ -6,6 +6,7 @@
 #include "common/entrypoint.hpp"
 #include <QAbstractListModel>
 #include <QTimer>
+#include <QUrl>
 #include <vector>
 
 class PreferenceFormModel : public QAbstractListModel {
@@ -28,7 +29,8 @@ public:
     MultipleRole,
     CanChooseFilesRole,
     CanChooseDirectoriesRole,
-    LockedPathsRole
+    LockedPathsRole,
+    ComponentRole
   };
 
   explicit PreferenceFormModel(QObject *parent = nullptr);
@@ -42,6 +44,7 @@ public:
   void loadProvider(const QString &providerId, const std::vector<Preference> &preferences);
 
   Q_INVOKABLE void setFieldValue(int row, const QVariant &value);
+  Q_INVOKABLE QUrl componentFor(const QString &fieldId) const;
 
 private:
   void save();
@@ -60,6 +63,7 @@ private:
     bool canChooseFiles = true;
     bool canChooseDirectories = false;
     QStringList lockedPaths;
+    QUrl component;
   };
 
   Field createField(const Preference &pref);

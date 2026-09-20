@@ -5,19 +5,18 @@
 #include <QString>
 #include <QVariant>
 #include <QVariantList>
+#include <map>
 #include <string>
 #include <string_view>
 #include <vector>
+#include "services/ai/ai-preferences.hpp"
 
 namespace AI {
 class Service;
 class AbstractProvider;
 struct ProviderTypeInfo;
-struct ProviderField;
 } // namespace AI
-namespace config {
-class Manager;
-}
+class RootItemManager;
 class LocalStorageService;
 class AISettingsModel;
 
@@ -253,6 +252,8 @@ private:
   void removeProvider(const std::string &id);
   void setField(const std::string &id, const QString &key, const QVariant &value);
 
+  std::map<std::string, AI::ProviderInstance> providers() const;
+  void saveProviders(const std::map<std::string, AI::ProviderInstance> &providers);
   const AI::ProviderTypeInfo *typeInfoFor(const std::string &id) const;
   bool canAddType(const AI::ProviderTypeInfo &info) const;
   QString statusText(AI::AbstractProvider &provider) const;
@@ -264,7 +265,7 @@ private:
   void rebuildPageModels();
 
   AI::Service *m_aiService = nullptr;
-  config::Manager *m_config = nullptr;
+  RootItemManager *m_rootItems = nullptr;
   LocalStorageService *m_storage = nullptr;
   QString m_selectedProviderId;
   AIProviderTypesModel m_configuredTypes{this};

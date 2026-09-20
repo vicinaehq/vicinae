@@ -10,6 +10,7 @@
 #include <qlogging.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
+#include "ai-preferences.hpp"
 #include "ai-provider.hpp"
 #include "common/types.hpp"
 #include "config/config.hpp"
@@ -162,7 +163,8 @@ private:
   }
 
   static std::unique_ptr<AbstractProvider> createProvider(const std::string &id, std::string_view type);
-  ProviderFields resolveFields(std::string_view id, const AbstractProvider &provider) const;
+  AiPreferences preferences(const config::ConfigValue &config) const;
+  PreferenceValues resolveFields(std::string_view id, const AbstractProvider &provider) const;
   void instantiate(const std::string &id, std::string_view type);
   void reconcile(const config::ConfigValue &current, const config::ConfigValue &previous);
 

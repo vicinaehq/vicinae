@@ -181,3 +181,9 @@ void SettingsWindow::selectExtension(const QString &entrypointId) {
   setCurrentPage(providerId);
   setPendingCommandId(entrypointId);
 }
+
+void SettingsWindow::openSubpage(const QString &providerId, const QString &subpage) {
+  ensureInitialized();
+  m_extensionModel->selectProviderById(providerId);
+  navigate({.page = providerId, .subpage = subpage});
+}

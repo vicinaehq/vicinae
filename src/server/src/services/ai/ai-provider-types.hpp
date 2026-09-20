@@ -1,32 +1,51 @@
 #pragma once
 #include <array>
 #include <cstdint>
-#include <span>
+#include <string>
 #include <string_view>
-#include <qcoreapplication.h>
+#include <vector>
+#include <glaze/core/common.hpp>
+#include <glaze/core/meta.hpp>
+#include <QCoreApplication>
+#include "command/preference-schema.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 
 namespace AI {
 
-enum class FieldKind : std::uint8_t { Text, Secret, Select, Toggle };
-
 // Builtin providers are constructed by the application, never added or removed through config.
 enum class Cardinality : std::uint8_t { Builtin, Single, Multiple };
 
-struct FieldOption {
-  std::string_view value;
-  const char *label;
+struct OllamaFields {
+  std::string name;
+  std::string url = "http://localhost:11434";
 };
 
-struct ProviderField {
-  std::string_view key;
-  const char *label;
-  const char *description;
-  FieldKind kind = FieldKind::Text;
-  std::string_view placeholder;
-  std::string_view defaultValue;
-  bool defaultChecked = false;
-  std::span<const FieldOption> options;
+struct OpenAIFields {
+  std::string apiKey;
+};
+
+struct GroqFields {
+  std::string apiKey;
+};
+
+struct OpenRouterFields {
+  std::string apiKey;
+};
+
+struct MistralFields {
+  std::string apiKey;
+};
+
+struct OpenAICompatibleFields {
+  std::string name;
+  std::string url;
+  std::string apiKey;
+};
+
+enum class KeepLoaded { Immediately, OneMinute, FiveMinutes, FifteenMinutes, Always };
+
+struct LocalFields {
+  KeepLoaded keepLoaded = KeepLoaded::OneMinute;
 };
 
 struct ProviderTypeInfo {
@@ -35,91 +54,113 @@ struct ProviderTypeInfo {
   BuiltinIcon icon;
   std::string_view description;
   Cardinality cardinality;
-  std::span<const ProviderField> fields;
+  std::vector<::Preference> (*fields)();
 };
 
-constexpr auto PROVIDER_TR_CONTEXT = "AIProviderTypes";
-#define AI_PROVIDER_TR(text) QT_TRANSLATE_NOOP("AIProviderTypes", text)
+} // namespace AI
 
-inline constexpr auto OLLAMA_FIELDS = std::to_array<ProviderField>({
-    {.key = "name",
-     .label = AI_PROVIDER_TR("Name"),
-     .description = AI_PROVIDER_TR("How this instance is shown in model lists."),
-     .placeholder = "Ollama"},
-    {.key = "url",
-     .label = AI_PROVIDER_TR("Server URL"),
-     .description = AI_PROVIDER_TR("The address of your Ollama instance."),
-     .placeholder = "http://localhost:11434",
-     .defaultValue = "http://localhost:11434"},
-});
+template <> struct glz::meta<AI::KeepLoaded> {
+  using enum AI::KeepLoaded;
+  static constexpr auto value = glz::enumerate("0", Immediately, "60", OneMinute, "300", FiveMinutes, "900",
+                                               FifteenMinutes, "always", Always);
+};
 
-inline constexpr auto MISTRAL_FIELDS = std::to_array<ProviderField>({
-    {.key = "apiKey",
-     .label = AI_PROVIDER_TR("API Key"),
-     .description = AI_PROVIDER_TR("Your Mistral AI API key. You can find it in your Mistral dashboard."),
-     .kind = FieldKind::Secret,
-     .placeholder = "sk-..."},
-});
+template <> struct PreferenceSchema<AI::OllamaFields> {
+  PreferenceMeta name{
+      .title = tr("Name"),
+      .description = tr("How this instance is shown in model lists."),
+      .placeholder = "Ollama",
+  };
+  PreferenceMeta url{
+      .title = tr("Server URL"),
+      .description = tr("The address of your Ollama instance."),
+      .placeholder = "http://localhost:11434",
+  };
+  Q_DECLARE_TR_FUNCTIONS(OllamaFields)
+};
 
-inline constexpr auto OPENAI_COMPATIBLE_FIELDS = std::to_array<ProviderField>({
-    {.key = "name",
-     .label = AI_PROVIDER_TR("Name"),
-     .description = AI_PROVIDER_TR("How this server is shown in model lists."),
-     .placeholder = "My server"},
-    {.key = "url",
-     .label = AI_PROVIDER_TR("Server URL"),
-     .description = AI_PROVIDER_TR(
-         "Base URL of the OpenAI-compatible API, including the version prefix if the server has one."),
-     .placeholder = "http://localhost:8080/v1"},
-    {.key = "apiKey",
-     .label = AI_PROVIDER_TR("API Key"),
-     .description = AI_PROVIDER_TR("Leave empty if the server does not require one."),
-     .kind = FieldKind::Secret,
-     .placeholder = "sk-..."},
-});
+template <> struct PreferenceSchema<AI::OpenAIFields> {
+  PreferenceMeta apiKey{
+      .title = tr("API Key"),
+      .description = tr("Your OpenAI API key. You can create one in the OpenAI platform dashboard."),
+      .placeholder = "sk-...",
+      .kind = PreferenceMeta::Kind::Password,
+  };
+  Q_DECLARE_TR_FUNCTIONS(OpenAIFields)
+};
 
-inline constexpr auto GROQ_FIELDS = std::to_array<ProviderField>({
-    {.key = "apiKey",
-     .label = AI_PROVIDER_TR("API Key"),
-     .description = AI_PROVIDER_TR("Your Groq API key. You can create one in the Groq console."),
-     .kind = FieldKind::Secret,
-     .placeholder = "gsk_..."},
-});
+template <> struct PreferenceSchema<AI::GroqFields> {
+  PreferenceMeta apiKey{
+      .title = tr("API Key"),
+      .description = tr("Your Groq API key. You can create one in the Groq console."),
+      .placeholder = "gsk_...",
+      .kind = PreferenceMeta::Kind::Password,
+  };
+  Q_DECLARE_TR_FUNCTIONS(GroqFields)
+};
 
-inline constexpr auto OPENROUTER_FIELDS = std::to_array<ProviderField>({
-    {.key = "apiKey",
-     .label = AI_PROVIDER_TR("API Key"),
-     .description =
-         AI_PROVIDER_TR("Your OpenRouter API key. You can create one in your OpenRouter settings."),
-     .kind = FieldKind::Secret,
-     .placeholder = "sk-or-..."},
-});
+template <> struct PreferenceSchema<AI::OpenRouterFields> {
+  PreferenceMeta apiKey{
+      .title = tr("API Key"),
+      .description = tr("Your OpenRouter API key. You can create one in your OpenRouter settings."),
+      .placeholder = "sk-or-...",
+      .kind = PreferenceMeta::Kind::Password,
+  };
+  Q_DECLARE_TR_FUNCTIONS(OpenRouterFields)
+};
 
-inline constexpr auto OPENAI_FIELDS = std::to_array<ProviderField>({
-    {.key = "apiKey",
-     .label = AI_PROVIDER_TR("API Key"),
-     .description =
-         AI_PROVIDER_TR("Your OpenAI API key. You can create one in the OpenAI platform dashboard."),
-     .kind = FieldKind::Secret,
-     .placeholder = "sk-..."},
-});
+template <> struct PreferenceSchema<AI::MistralFields> {
+  PreferenceMeta apiKey{
+      .title = tr("API Key"),
+      .description = tr("Your Mistral AI API key. You can find it in your Mistral dashboard."),
+      .placeholder = "sk-...",
+      .kind = PreferenceMeta::Kind::Password,
+  };
+  Q_DECLARE_TR_FUNCTIONS(MistralFields)
+};
 
-inline constexpr auto LOCAL_KEEP_LOADED_OPTIONS = std::to_array<FieldOption>({
-    {.value = "0", .label = AI_PROVIDER_TR("Unload immediately")},
-    {.value = "60", .label = AI_PROVIDER_TR("1 minute")},
-    {.value = "300", .label = AI_PROVIDER_TR("5 minutes")},
-    {.value = "900", .label = AI_PROVIDER_TR("15 minutes")},
-    {.value = "always", .label = AI_PROVIDER_TR("Until Vicinae quits")},
-});
+template <> struct PreferenceSchema<AI::OpenAICompatibleFields> {
+  PreferenceMeta name{
+      .title = tr("Name"),
+      .description = tr("How this server is shown in model lists."),
+      .placeholder = "My server",
+  };
+  PreferenceMeta url{
+      .title = tr("Server URL"),
+      .description =
+          tr("Base URL of the OpenAI-compatible API, including the version prefix if the server has one."),
+      .placeholder = "http://localhost:8080/v1",
+  };
+  PreferenceMeta apiKey{
+      .title = tr("API Key"),
+      .description = tr("Leave empty if the server does not require one."),
+      .placeholder = "sk-...",
+      .kind = PreferenceMeta::Kind::Password,
+      .required = false,
+  };
+  Q_DECLARE_TR_FUNCTIONS(OpenAICompatibleFields)
+};
 
-inline constexpr auto LOCAL_FIELDS = std::to_array<ProviderField>({
-    {.key = "keepLoaded",
-     .label = AI_PROVIDER_TR("Keep models loaded"),
-     .description = AI_PROVIDER_TR("How long a model stays in memory after its last use."),
-     .kind = FieldKind::Select,
-     .defaultValue = "60",
-     .options = LOCAL_KEEP_LOADED_OPTIONS},
-});
+template <> struct PreferenceSchema<AI::LocalFields> {
+  PreferenceMeta keepLoaded{
+      .title = tr("Keep models loaded"),
+      .description = tr("How long a model stays in memory after its last use."),
+      .options =
+          [] {
+            using AI::KeepLoaded;
+            return std::vector<Preference::DropdownData::Option>{
+                option(KeepLoaded::Immediately, tr("Unload immediately")),
+                option(KeepLoaded::OneMinute, tr("1 minute")),
+                option(KeepLoaded::FiveMinutes, tr("5 minutes")),
+                option(KeepLoaded::FifteenMinutes, tr("15 minutes")),
+                option(KeepLoaded::Always, tr("Until Vicinae quits")),
+            };
+          },
+  };
+  Q_DECLARE_TR_FUNCTIONS(LocalFields)
+};
+
+namespace AI {
 
 inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
     {
@@ -128,7 +169,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Vicinae,
         .description = "Vicinae-managed models, mostly for dictation purposes.",
         .cardinality = Cardinality::Builtin,
-        .fields = LOCAL_FIELDS,
+        .fields = +[] { return describePreferences<LocalFields>(); },
     },
     {
         .type = "ollama",
@@ -136,7 +177,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Ollama,
         .description = "Connect to a local or remote Ollama instance.",
         .cardinality = Cardinality::Multiple,
-        .fields = OLLAMA_FIELDS,
+        .fields = +[] { return describePreferences<OllamaFields>(); },
     },
     {
         .type = "openai",
@@ -144,7 +185,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Openai,
         .description = "OpenAI cloud API. Provides language and transcription models.",
         .cardinality = Cardinality::Single,
-        .fields = OPENAI_FIELDS,
+        .fields = +[] { return describePreferences<OpenAIFields>(); },
     },
     {
         .type = "groq",
@@ -152,7 +193,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Groq,
         .description = "Groq cloud API. Fast open-weight language models and Whisper transcription.",
         .cardinality = Cardinality::Single,
-        .fields = GROQ_FIELDS,
+        .fields = +[] { return describePreferences<GroqFields>(); },
     },
     {
         .type = "openrouter",
@@ -160,7 +201,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Openrouter,
         .description = "OpenRouter cloud API. One key for models from every major vendor.",
         .cardinality = Cardinality::Single,
-        .fields = OPENROUTER_FIELDS,
+        .fields = +[] { return describePreferences<OpenRouterFields>(); },
     },
     {
         .type = "mistral",
@@ -168,7 +209,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Mistral,
         .description = "Mistral AI cloud API. Provides transcription and language models.",
         .cardinality = Cardinality::Single,
-        .fields = MISTRAL_FIELDS,
+        .fields = +[] { return describePreferences<MistralFields>(); },
     },
     {
         .type = "openai-compatible",
@@ -177,7 +218,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .description =
             "Any server exposing the OpenAI chat completions API, such as LM Studio, vLLM or llama.cpp.",
         .cardinality = Cardinality::Multiple,
-        .fields = OPENAI_COMPATIBLE_FIELDS,
+        .fields = +[] { return describePreferences<OpenAICompatibleFields>(); },
     },
 });
 

@@ -1,6 +1,6 @@
 #include "ai-service.hpp"
 #include <memory>
-#include <qjsonobject.h>
+#include <glaze/json/write.hpp>
 #include <qstring.h>
 #include "internal/glaze-qt.hpp"
 #include "services/ai/ai-provider-types.hpp"
@@ -19,18 +19,15 @@ QString qs(std::string_view view) {
   return QString::fromUtf8(view.data(), static_cast<qsizetype>(view.size()));
 }
 
-std::string typeOf(const glz::generic::object_t &object) {
-  return glazeToQJsonObject(object).value(QStringLiteral("type")).toString().toStdString();
-}
-
 bool isBuiltin(std::string_view type) {
   const auto *info = findProviderType(type);
   return info && info->cardinality == Cardinality::Builtin;
 }
 
-glz::generic defaultValue(const ProviderField &field) {
-  if (field.kind == FieldKind::Toggle) return field.defaultChecked;
-  return std::string(field.defaultValue);
+std::string serialize(const ProviderInstance &instance) {
+  std::string json;
+  if (glz::write_json(instance, json)) return {};
+  return json;
 }
 } // namespace
 
@@ -58,23 +55,30 @@ void Service::reconfigure(std::string_view id) {
   if (provider) provider->configure(resolveFields(id, *provider));
 }
 
-ProviderFields Service::resolveFields(std::string_view id, const AbstractProvider &provider) const {
-  ProviderFields fields;
+AiPreferences Service::preferences(const config::ConfigValue &config) const {
+  return readPreferences<AiPreferences>(
+      config.providerPreferences(EXTENSION_ID).value_or(PreferenceValues{}));
+}
+
+PreferenceValues Service::resolveFields(std::string_view id, const AbstractProvider &provider) const {
   const auto *info = findProviderType(provider.type());
-  if (!info) return fields;
+  if (!info) return {};
 
-  const auto &providers = m_config.value().ai.providers;
-  const auto entry = providers.find(std::string(id));
-  const auto json = entry != providers.end() ? glazeToQJsonObject(entry->second) : QJsonObject{};
+  PreferenceValues values;
+  const auto prefs = preferences(m_config.value());
+  if (auto it = prefs.providers.find(std::string(id)); it != prefs.providers.end())
+    values = it->second.fields;
 
-  for (const auto &field : info->fields) {
-    const auto key = qs(field.key);
-    const auto value =
-        field.kind == FieldKind::Secret ? m_storage.getItem(secretScope(id), key) : json.value(key);
-    fields.values[std::string(field.key)] =
-        value.isUndefined() || value.isNull() ? defaultValue(field) : qJsonValueToGlazeGeneric(value);
+  for (const ::Preference &pref : info->fields()) {
+    const auto key = pref.name().toStdString();
+    if (pref.isSecret()) {
+      auto secret = qJsonValueToGlazeGeneric(m_storage.getItem(secretScope(id), pref.name()));
+      if (!secret.is_null()) values[key] = std::move(secret);
+    } else if (!values.contains(key)) {
+      values[key] = pref.defaultOrNull();
+    }
   }
-  return fields;
+  return values;
 }
 
 void Service::instantiate(const std::string &id, std::string_view type) {
@@ -92,23 +96,23 @@ void Service::instantiate(const std::string &id, std::string_view type) {
 }
 
 void Service::reconcile(const config::ConfigValue &current, const config::ConfigValue &previous) {
-  const auto &next = current.ai.providers;
-  const auto &prev = previous.ai.providers;
+  const auto next = preferences(current).providers;
+  const auto prev = preferences(previous).providers;
 
   std::erase_if(m_providers, [&](const auto &entry) {
     const auto &[id, provider] = entry;
     return !isBuiltin(provider->type()) && !next.contains(id);
   });
 
-  for (const auto &[id, object] : next) {
+  for (const auto &[id, instance] : next) {
     if (auto it = m_providers.find(id); it != m_providers.end()) {
       auto oldIt = prev.find(id);
-      if (oldIt == prev.end() || glazeToQJsonObject(oldIt->second) != glazeToQJsonObject(object)) {
+      if (oldIt == prev.end() || serialize(oldIt->second) != serialize(instance)) {
         it->second->configure(resolveFields(id, *it->second));
       }
       continue;
     }
-    if (const auto type = typeOf(object); !isBuiltin(type)) instantiate(id, type);
+    if (!isBuiltin(instance.type)) instantiate(id, instance.type);
   }
 
   emit modelsChanged();

@@ -86,6 +86,7 @@ public:
 
   void openTab(const QString &tabId);
   Q_INVOKABLE void selectExtension(const QString &entrypointId);
+  void openSubpage(const QString &providerId, const QString &subpage);
 
 signals:
   void currentPageChanged();
