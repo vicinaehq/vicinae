@@ -27,6 +27,8 @@ static QString preferenceType(const Preference &p) {
           return QStringLiteral("filepicker");
         else if constexpr (std::is_same_v<T, Preference::DirectoryPickerData>)
           return QStringLiteral("directorypicker");
+        else if constexpr (std::is_same_v<T, Preference::AppPickerData>)
+          return QStringLiteral("apppicker");
         else
           return QStringLiteral("text");
       },
@@ -48,6 +50,7 @@ static QVariantList dropdownOptions(const Preference &p) {
 static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChooseFiles,
                              bool &canChooseDirectories) {
   auto d = p.data();
+  if (auto *ap = std::get_if<Preference::AppPickerData>(&d)) { multiple = ap->multiple; }
   if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) {
     multiple = fp->multiple;
     canChooseFiles = true;
@@ -130,7 +133,7 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
                                       const QJsonObject &existingValues) {
   beginResetModel();
   for (const auto &f : m_fields) {
-    if (f.dropdownModel) f.dropdownModel->deleteLater();
+    if (f.dropdownModel && f.dropdownModel != appModel()) f.dropdownModel->deleteLater();
   }
   m_fields.clear();
   m_values = QJsonObject{};
@@ -153,6 +156,8 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
     if (auto options = dropdownOptions(pref); !options.isEmpty()) {
       f.dropdownModel = new CompletionModel(this);
       f.dropdownModel->setItems(options);
+    } else if (std::holds_alternative<Preference::AppPickerData>(pref.data())) {
+      f.dropdownModel = appModel();
     }
     applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories);
 
@@ -164,6 +169,11 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
     m_fields.push_back(std::move(f));
   }
   endResetModel();
+}
+
+CompletionModel *MissingPreferenceFormModel::appModel() {
+  if (!m_appModel) m_appModel = new AppSelectorModel(this);
+  return m_appModel->model();
 }
 
 void MissingPreferenceFormModel::setFieldValue(int row, const QVariant &value) {

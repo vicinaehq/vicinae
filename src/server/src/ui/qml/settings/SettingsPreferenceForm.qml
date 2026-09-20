@@ -50,6 +50,8 @@ ColumnLayout {
             case "filepicker":
             case "directorypicker":
                 return filepickerComp;
+            case "apppicker":
+                return multiple ? appsComp : appComp;
             case "shortcut":
                 return Platform.supports("globalShortcuts") ? shortcutComp : null;
             default:
@@ -138,6 +140,78 @@ ColumnLayout {
                 readOnly: field.host.readOnly
                 currentItem: field.host.currentDropdownItem
                 onActivated: item => root.prefModel.setFieldValue(field.host.index, item.id)
+            }
+        }
+    }
+
+    Component {
+        id: appComp
+        SettingsRow {
+            id: field
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            description: field.host.description
+            controlWidth: root.fieldControlWidth
+            showSeparator: field.host.index < settingsRepeater.count - 1
+
+            SearchableDropdown {
+                width: parent.width
+                model: field.host.dropdownModel
+                readOnly: field.host.readOnly
+                placeholder: qsTr("Select an app…")
+                currentItem: field.host.currentDropdownItem
+                onActivated: item => root.prefModel.setFieldValue(field.host.index, item.id)
+            }
+        }
+    }
+
+    Component {
+        id: appsComp
+        ColumnLayout {
+            id: field
+            readonly property FieldHost host: parent as FieldHost
+            Layout.fillWidth: true
+            spacing: 0
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
+                Layout.topMargin: 14
+                Layout.bottomMargin: 14
+                spacing: 8
+
+                Text {
+                    text: field.host.label
+                    color: Theme.foreground
+                    font.pointSize: Theme.regularFontSize
+                    Layout.fillWidth: true
+                }
+
+                Text {
+                    visible: field.host.description !== ""
+                    text: field.host.description
+                    color: Theme.textMuted
+                    font.pointSize: Theme.smallerFontSize
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+
+                FormAppSelector {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 2
+                    model: field.host.value ?? []
+                    appsModel: field.host.dropdownModel
+                    readOnly: field.host.readOnly
+                    onChanged: apps => root.prefModel.setFieldValue(field.host.index, apps)
+                }
+            }
+
+            ViciDivider {
+                visible: field.host.index < settingsRepeater.count - 1
+                Layout.fillWidth: true
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
             }
         }
     }

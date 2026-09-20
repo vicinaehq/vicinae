@@ -1,6 +1,7 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
 #include "ui/quick/completion-model.hpp"
+#include "ui/views/app-selector-model.hpp"
 #include "command/preference.hpp"
 #include "common/entrypoint.hpp"
 #include <QAbstractListModel>
@@ -64,9 +65,11 @@ private:
 
   Field createField(const Preference &pref);
   void clearFields();
+  CompletionModel *appModel();
   static QVariant currentDropdownItem(const Field &f);
 
   std::vector<Field> m_fields;
+  AppSelectorModel *m_appModel = nullptr;
   QJsonObject m_values;
   EntrypointId m_itemId;
   QString m_providerId;

@@ -16,7 +16,9 @@
 #include "generated/tsapi.hpp"
 #include "glaze-qt.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
+#include <QJsonArray>
 #include <QString>
 #include <glaze/json/generic.hpp>
 #include <glaze/json/prettify.hpp>
@@ -67,11 +69,46 @@ void ExtensionCommandRuntime::initialize() {
   m_server->setParent(this);
 }
 
+// stored as app ids, but extensions expect the `Application` shape of the applications API
+QJsonObject ExtensionCommandRuntime::resolveAppPreferences(QJsonObject values) const {
+  auto *appDb = context()->services->appDb();
+  auto *rootItemManager = context()->services->rootItemManager();
+
+  const auto resolve = [&](const QJsonValue &v) -> QJsonValue {
+    auto app = appDb->findById(v.toString());
+    if (!app) return QJsonValue::Null;
+    return QJsonObject{{QStringLiteral("id"), app->id()},
+                       {QStringLiteral("name"), app->displayName()},
+                       {QStringLiteral("icon"), app->iconUrl().toString()},
+                       {QStringLiteral("path"), QString::fromStdString(app->path().string())}};
+  };
+
+  for (const auto &pref : rootItemManager->getMergedItemPreferences(m_command->uniqueId())) {
+    auto data = pref.data();
+    auto *picker = std::get_if<Preference::AppPickerData>(&data);
+    if (!picker || !values.contains(pref.name())) continue;
+
+    const QJsonValue value = values.value(pref.name());
+
+    if (picker->multiple) {
+      QJsonArray apps;
+      for (const auto &id : value.toArray()) {
+        if (auto app = resolve(id); !app.isNull()) apps.append(app);
+      }
+      values[pref.name()] = apps;
+    } else {
+      values[pref.name()] = value.isString() ? resolve(value) : QJsonValue::Null;
+    }
+  }
+
+  return values;
+}
+
 void ExtensionCommandRuntime::load(const LaunchProps &props) {
   initialize();
 
   auto rootItemManager = context()->services->rootItemManager();
-  auto preferenceValues = rootItemManager->getPreferenceValues(m_command->uniqueId());
+  auto preferenceValues = resolveAppPreferences(rootItemManager->getPreferenceValues(m_command->uniqueId()));
   auto manager = context()->services->extensionManager();
   manager::LoadOptions opts;
 

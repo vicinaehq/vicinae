@@ -1,7 +1,7 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
 #include "ui/views/bridge-view.hpp"
-#include "ui/quick/completion-model.hpp"
+#include "ui/views/app-selector-model.hpp"
 #include "services/snippet/snippet-db.hpp"
 #include <optional>
 
@@ -17,7 +17,7 @@ class SnippetFormViewHost : public FormViewBase {
   Q_PROPERTY(QString keyword READ keyword WRITE setKeyword NOTIFY formChanged)
   Q_PROPERTY(bool expandAsWord READ expandAsWord WRITE setExpandAsWord NOTIFY formChanged)
   Q_PROPERTY(QStringList apps READ apps WRITE setApps NOTIFY formChanged)
-  Q_PROPERTY(CompletionModel *availableAppsModel READ availableAppsModel CONSTANT)
+  Q_PROPERTY(AppSelectorModel *appSelectorModel READ appSelectorModel CONSTANT)
 
   Q_PROPERTY(QVariantList contentCompletions READ contentCompletions CONSTANT)
 
@@ -43,7 +43,7 @@ public:
   QString keyword() const { return m_keyword; }
   bool expandAsWord() const { return m_expandAsWord; }
   QStringList apps() const { return m_apps; }
-  CompletionModel *availableAppsModel() { return &m_availableAppsModel; }
+  AppSelectorModel *appSelectorModel() const { return m_appSelectorModel; }
 
   QVariantList contentCompletions() const { return m_contentCompletions; }
 
@@ -105,5 +105,5 @@ private:
   QString m_keywordError;
 
   QVariantList m_contentCompletions;
-  CompletionModel m_availableAppsModel{this};
+  AppSelectorModel *m_appSelectorModel = nullptr;
 };

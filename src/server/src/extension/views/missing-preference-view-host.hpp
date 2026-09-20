@@ -2,6 +2,7 @@
 #include <QtQml/qqmlregistration.h>
 #include "common/entrypoint.hpp"
 #include "ui/quick/completion-model.hpp"
+#include "ui/views/app-selector-model.hpp"
 #include "command/preference.hpp"
 #include "ui/views/bridge-view.hpp"
 #include <QAbstractListModel>
@@ -68,7 +69,10 @@ private:
     bool canChooseDirectories = false;
   };
 
+  CompletionModel *appModel();
+
   std::vector<Field> m_fields;
+  AppSelectorModel *m_appModel = nullptr;
   QJsonObject m_values;
 };
 
