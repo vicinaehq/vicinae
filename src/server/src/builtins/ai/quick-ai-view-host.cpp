@@ -25,11 +25,10 @@ void QuickAIViewHost::initialize() {
   setSearchPlaceholderText("Ask a follow-up...");
   setNavigationTitle("Quick AI");
 
-  m_history.emplace_back(AI::ChatMessage{
-      .role = AI::ChatRole::System,
-      .value = "You are a concise assistant integrated into a desktop launcher. "
-               "Give direct, helpful answers. Prefer short responses unless detail is asked for.",
-  });
+  m_history.emplace_back(AI::ChatMessage::fromText(
+      AI::ChatRole::System,
+      "You are a concise assistant integrated into a desktop launcher. "
+      "Give direct, helpful answers. Prefer short responses unless detail is asked for."));
 
   connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::rebuildModelSelectorItems);
   rebuildModelSelectorItems();
@@ -48,7 +47,7 @@ void QuickAIViewHost::textChanged(const QString &text) {
 }
 
 void QuickAIViewHost::sendQuery(const std::string &query) {
-  m_history.emplace_back(AI::ChatMessage{.role = AI::ChatRole::User, .value = query});
+  m_history.emplace_back(AI::ChatMessage::fromText(AI::ChatRole::User, query));
 
   m_currentResponse.clear();
   m_streamingQuery = QString::fromStdString(query);
@@ -87,7 +86,7 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
     m_streaming = false;
     emit streamingChanged();
 
-    m_history.emplace_back(AI::ChatMessage{.role = AI::ChatRole::Assistant, .value = m_currentResponse});
+    m_history.emplace_back(AI::ChatMessage::fromText(AI::ChatRole::Assistant, m_currentResponse));
 
     m_exchanges.append(QVariantMap{
         {QStringLiteral("query"), m_streamingQuery},
@@ -160,7 +159,7 @@ void QuickAIViewHost::pasteLastResponse() {
   if (last.role != AI::ChatRole::Assistant) return;
 
   auto *paste = ServiceRegistry::instance()->pasteService();
-  paste->pasteContent(Clipboard::Text{QString::fromStdString(last.value)});
+  paste->pasteContent(Clipboard::Text{QString::fromStdString(last.text())});
   context()->navigation->closeWindow();
 }
 

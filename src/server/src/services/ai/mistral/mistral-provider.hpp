@@ -1,15 +1,10 @@
 #pragma once
 #include <cstdint>
-#include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 #include <qfuture.h>
-#include <QString>
-#include "internal/http-client.hpp"
 #include "services/ai/ai-provider.hpp"
-#include "services/audio/audio-recorder.hpp"
-#include "ui/image/image-url.hpp"
+#include "services/ai/openai/openai-compatible-provider.hpp"
 
 namespace AI {
 
@@ -42,54 +37,14 @@ struct ListModelsResponse {
   std::vector<ModelInfo> data;
 };
 
-struct TranscriptionResponse {
-  struct Usage {
-    int prompt_audio_seconds;
-    int prompt_tokens;
-    int total_tokens;
-    int completion_tokens;
-  };
-
-  std::string model;
-  std::string text;
-  std::optional<std::string> language;
-  std::vector<std::string> segments;
-};
-
 } // namespace mistral
 
-class MistralProvider : public AbstractProvider {
+class MistralProvider : public OpenAICompatibleProvider {
 public:
-  MistralProvider();
+  explicit MistralProvider(std::string id);
 
-  std::string id() const override { return "mistral"; }
-  std::string_view type() const override { return "mistral"; }
-  std::optional<ImageUrl> icon() const override;
-  std::string_view description() const override {
-    return "Mistral AI cloud API. Provides transcription and language models.";
-  }
-
-  void configure(const ProviderFields &fields) override;
-  void start() override;
-
-  ModelList listModels(const ListModelFilters &filters = {}) const override;
-  std::optional<Model> findBestModel(Capabilities caps,
-                                     Preference preference = Preference::None) const override;
-
-  std::shared_ptr<AbstractChatCompletionStream>
-  createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) override;
-  QFuture<TranscriptionResult> transcribe(Audio::Recording recording,
-                                          const TranscriptionOptions &opts) override;
-
-private:
-  QFuture<Result<mistral::ListModelsResponse>> fetchModels();
-  void handleListResult();
-
-  http::Client::Watcher<Result<mistral::ListModelsResponse>> m_listWatcher;
-  http::Client m_client;
-  mistral::ListModelsResponse m_models;
-  QString m_apiKey;
-  bool m_started = false;
+protected:
+  QFuture<Result<ModelList>> fetchModels() override;
 };
 
 } // namespace AI

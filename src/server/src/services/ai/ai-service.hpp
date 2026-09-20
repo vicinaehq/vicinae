@@ -161,7 +161,7 @@ private:
     return nullptr;
   }
 
-  static std::unique_ptr<AbstractProvider> createProvider(std::string_view type);
+  static std::unique_ptr<AbstractProvider> createProvider(const std::string &id, std::string_view type);
   ProviderFields resolveFields(std::string_view id, const AbstractProvider &provider) const;
   void instantiate(const std::string &id, std::string_view type);
   void reconcile(const config::ConfigValue &current, const config::ConfigValue &previous);

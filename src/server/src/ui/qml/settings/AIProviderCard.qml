@@ -29,6 +29,7 @@ SettingsGroup {
 
         RowLayout {
             Layout.fillWidth: true
+            Layout.preferredHeight: 26
             spacing: 10
 
             ViciImage {
@@ -69,25 +70,15 @@ SettingsGroup {
             Layout.preferredHeight: 4
         }
 
-        RowLayout {
+        ViciButton {
             visible: !root.configured
-            Layout.fillWidth: true
-            spacing: 8
-
-            Text {
-                text: qsTr("Not set up")
-                color: Theme.textPlaceholder
-                font.pointSize: Theme.smallerFontSize
-                Layout.fillWidth: true
-            }
-
-            ViciButton {
-                implicitHeight: 26
-                horizontalPadding: 10
-                variant: "accent"
-                text: qsTr("Set up")
-                onClicked: root.setUp()
-            }
+            Layout.alignment: Qt.AlignRight
+            implicitHeight: 26
+            horizontalPadding: 10
+            variant: "ghost"
+            bordered: true
+            text: qsTr("Set up")
+            onClicked: root.setUp()
         }
 
         RowLayout {

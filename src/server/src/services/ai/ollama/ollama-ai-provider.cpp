@@ -1,15 +1,11 @@
 #include "ollama-ai-provider.hpp"
-#include <format>
 #include <memory>
 #include <ranges>
 #include <span>
-#include <glaze/json/write.hpp>
 #include <qlogging.h>
-#include <qnetworkrequest.h>
-#include <qurl.h>
-#include "common/qt.hpp"
-#include "services/ai/http-completion.hpp"
+#include <qpromise.h>
 #include "services/builtin-icon/builtin-icon.hpp"
+#include "ui/image/image-url.hpp"
 
 namespace AI {
 
@@ -35,119 +31,22 @@ Capabilities parseCapabilities(std::span<const std::string> strs) {
   return caps;
 }
 
-ImageUrl modelIcon(const ollama::FullModelResponse &model) {
-  if (model.name.contains("mistral")) return ImageUrl{BuiltinIcon::Mistral};
-  if (model.name.contains("llava")) return ImageUrl{BuiltinIcon::Llava};
-  if (model.name.contains("deepseek")) return ImageUrl{BuiltinIcon::Deepseek};
-  if (model.name.contains("gemma")) return ImageUrl{BuiltinIcon::Google};
-  if (model.family.starts_with("qwen")) return ImageUrl{BuiltinIcon::Qwen};
+ImageUrl modelIcon(std::string_view name, std::string_view family) {
+  if (name.contains("mistral")) return ImageUrl{BuiltinIcon::Mistral};
+  if (name.contains("llava")) return ImageUrl{BuiltinIcon::Llava};
+  if (name.contains("deepseek")) return ImageUrl{BuiltinIcon::Deepseek};
+  if (name.contains("gemma")) return ImageUrl{BuiltinIcon::Google};
+  if (family.starts_with("qwen")) return ImageUrl{BuiltinIcon::Qwen};
 
   return ImageUrl{BuiltinIcon::Ollama};
 }
 
-Model toModel(const ollama::FullModelResponse &model) {
-  return Model{
-      .id = model.model,
-      .name = model.name,
-      .icon = modelIcon(model),
-      .caps = model.capabilities,
-  };
-}
-
-const char *serializeRole(ChatRole role) {
-  switch (role) {
-  case ChatRole::User:
-    return "user";
-  case ChatRole::Assistant:
-    return "assistant";
-  case ChatRole::System:
-    return "system";
-  case ChatRole::Developer:
-    return "developer";
-  case ChatRole::Tool:
-    return "tool";
-  }
-  return "none";
-}
-
-} // namespace
-
-OllamaProvider::OllamaProvider() {
-  connect(&m_handshakeWatcher, &decltype(m_handshakeWatcher)::finished, this, [this]() {
-    auto const res = m_handshakeWatcher.result();
-
-    if (!res) {
-      qWarning() << "handshake with ollama failed" << res.error();
-      return;
-    }
-
-    qInfo().nospace() << "Connected to ollama instance " << m_url << " (version=" << res->version << ")";
-    m_listWatcher.setFuture(listModelsFull());
-  });
-
-  connect(&m_listWatcher, &decltype(m_listWatcher)::finished, this, [this]() {
-    if (m_listWatcher.isCanceled() || !m_listWatcher.isFinished()) return;
-
-    auto result = m_listWatcher.result();
-    if (!result) {
-      qWarning() << "Failed to fetch Ollama models:" << result.error();
-      return;
-    }
-
-    m_models = std::move(*result);
-    emit modelsUpdated();
-  });
-}
-
-OllamaProvider::~OllamaProvider() { m_listWatcher.cancel(); }
-
-void OllamaProvider::configure(const ProviderFields &fields) {
-  auto url = fields.string("url");
-  if (url == m_url) return;
-
-  m_url = std::move(url);
-  m_client.setBaseUrl(QString::fromStdString(std::format("{}/api", m_url)));
-  qInfo() << "Ollama provider now targets" << m_url;
-
-  if (!m_started) return;
-
-  m_listWatcher.cancel();
-  m_models.clear();
-  emit modelsUpdated();
-  start();
-}
-
-void OllamaProvider::start() {
-  m_started = true;
-  m_handshakeWatcher.setFuture(fetchVersion());
-}
-
-ModelList OllamaProvider::listModels(const ListModelFilters &) const {
-  return m_models | std::views::transform(toModel) | std::ranges::to<std::vector>();
-}
-
-std::optional<Model> OllamaProvider::findBestModel(Capabilities caps, Preference) const {
-  for (const auto &model : m_models) {
-    if (model.capabilities & caps) { return toModel(model); }
-  }
-
-  return std::nullopt;
-}
-
-QFuture<Result<ollama::VersionResponse>> OllamaProvider::fetchVersion() {
-  return m_client.get<ollama::VersionResponse>("/version");
-}
-
-QFuture<Result<ollama::ListModelsResponse>> OllamaProvider::fetchModels() {
-  return m_client.get<ollama::ListModelsResponse>("/tags");
-}
-
-QFuture<OllamaProvider::ModelsResult> OllamaProvider::listModelsFull() {
+QFuture<Result<ModelList>> listModelsWithCapabilities(http::Client client) {
   using namespace ollama;
 
-  auto promise = std::make_shared<QPromise<ModelsResult>>();
+  auto promise = std::make_shared<QPromise<Result<ModelList>>>();
 
-  fetchModels().then([promise, client = m_client](Result<ListModelsResponse> result) mutable {
+  client.get<ListModelsResponse>("tags").then([promise, client](Result<ListModelsResponse> result) mutable {
     if (!result) {
       promise->addResult(std::unexpected(result.error()));
       promise->finish();
@@ -159,14 +58,13 @@ QFuture<OllamaProvider::ModelsResult> OllamaProvider::listModelsFull() {
     futures.reserve(modelList.models.size());
 
     for (const auto &model : modelList.models) {
-      auto future = client.post<ModelShowResponse, ModelShowRequest>("/show", {.model = model.model});
-      futures.emplace_back(future);
+      futures.emplace_back(client.post<ModelShowResponse, ModelShowRequest>("show", {.model = model.model}));
     }
 
     QtFuture::whenAll(futures.begin(), futures.end())
         .then([modelList = std::move(modelList),
                promise](QList<QFuture<Result<ModelShowResponse>>> completed) mutable {
-          std::vector<FullModelResponse> models;
+          ModelList models;
           models.reserve(completed.size());
 
           for (auto [model, future] : std::views::zip(modelList.models, completed)) {
@@ -178,9 +76,12 @@ QFuture<OllamaProvider::ModelsResult> OllamaProvider::listModelsFull() {
               continue;
             }
 
-            Capabilities caps = parseCapabilities(showResult->capabilities);
-            models.emplace_back(
-                FullModelResponse(std::move(model.name), std::move(model.model), caps, model.details.family));
+            models.emplace_back(Model{
+                .id = model.model,
+                .name = model.name,
+                .icon = modelIcon(model.name, model.details.family),
+                .caps = parseCapabilities(showResult->capabilities),
+            });
           }
 
           promise->addResult(std::move(models));
@@ -191,48 +92,26 @@ QFuture<OllamaProvider::ModelsResult> OllamaProvider::listModelsFull() {
   return promise->future();
 }
 
-std::shared_ptr<AbstractChatCompletionStream>
-OllamaProvider::createChatCompletion(std::string_view modelId, const ChatCompletionPayload &payload) {
-  QNetworkRequest req;
-  QUrl url = QString::fromStdString(m_url);
+} // namespace
 
-  url.setPath("/api/chat");
-  req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
-  req.setUrl(url);
+OllamaProvider::OllamaProvider(std::string id)
+    : OpenAICompatibleProvider(std::move(id), "ollama", "http://localhost:11434") {}
 
-  ollama::ChatPayload data;
+QFuture<Result<ModelList>> OllamaProvider::fetchModels() {
+  m_native.setBaseUrl(QString::fromStdString(url() + "/api/"));
 
-  data.model = modelId;
-  data.messages = payload.messages | std::views::transform([](const AI::ChatMessage &msg) {
-                    return ollama::ChatMessage(serializeRole(msg.role), msg.value);
-                  }) |
-                  std::ranges::to<std::vector>();
-  data.options.temperature = payload.temperature;
+  return m_native.get<ollama::VersionResponse>("version")
+      .then([client = m_native,
+             url = url()](Result<ollama::VersionResponse> res) -> QFuture<Result<ModelList>> {
+        if (!res) {
+          qWarning() << "handshake with ollama failed" << res.error();
+          return QtFuture::makeReadyValueFuture<Result<ModelList>>(std::unexpected(res.error()));
+        }
 
-  std::string serializedData;
-
-  if (const auto error = glz::write_json(data, serializedData)) {
-    qWarning() << "Failed to serialize ollama payload" << glz::format_error(error);
-    return nullptr;
-  }
-
-  Model resolvedModel;
-
-  for (const auto &m : m_models) {
-    if (m.model == modelId) {
-      resolvedModel = toModel(m);
-      break;
-    }
-  }
-
-  return std::shared_ptr<HttpCompletion>(
-      new HttpCompletion(req, QByteArray::fromStdString(serializedData), std::move(resolvedModel)),
-      QObjectDeleter{});
-}
-
-QFuture<TranscriptionResult> OllamaProvider::transcribe(Audio::Recording, const TranscriptionOptions &) {
-  return QtFuture::makeReadyValueFuture<TranscriptionResult>(
-      std::unexpected("Transcription is not supported"));
+        qInfo().nospace() << "Connected to ollama instance " << url << " (version=" << res->version << ")";
+        return listModelsWithCapabilities(client);
+      })
+      .unwrap();
 }
 
 } // namespace AI

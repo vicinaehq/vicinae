@@ -332,6 +332,7 @@
 		<file>grails.svg</file>
 		<file>graphql.svg</file>
 		<file>groovy.svg</file>
+		<file>groq.svg</file>
 		<file>grpc.svg</file>
 		<file>grunt.svg</file>
 		<file>gulp.svg</file>
@@ -526,6 +527,7 @@
 		<file>opencl.svg</file>
 		<file>opencv.svg</file>
 		<file>opengl.svg</file>
+		<file>openrouter.svg</file>
 		<file>openstack.svg</file>
 		<file>opensuse.svg</file>
 		<file>opentelemetry.svg</file>
@@ -802,8 +804,8 @@
 		<file>vault.svg</file>
 		<file>vercel.svg</file>
 		<file>vertx.svg</file>
-		<file>vicinae.svg</file>
 		<file>vicinae.png</file>
+		<file>vicinae.svg</file>
 		<file>video-disabled.svg</file>
 		<file>video.svg</file>
 		<file>vim.svg</file>
