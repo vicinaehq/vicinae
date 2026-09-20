@@ -18,7 +18,6 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
-#include <QJsonArray>
 #include <QString>
 #include <glaze/json/generic.hpp>
 #include <glaze/json/prettify.hpp>
@@ -70,34 +69,39 @@ void ExtensionCommandRuntime::initialize() {
 }
 
 // app pickers are stored as app ids, but extensions expect the `Application` shape of the applications API
-QJsonObject ExtensionCommandRuntime::resolvePreferenceValues(QJsonObject values) const {
+PreferenceValues ExtensionCommandRuntime::resolvePreferenceValues(PreferenceValues values) const {
   auto *appDb = context()->services->appDb();
   auto *rootItemManager = context()->services->rootItemManager();
 
-  const auto resolve = [&](const QJsonValue &v) -> QJsonValue {
-    auto app = appDb->findById(v.toString());
-    if (!app) return QJsonValue::Null;
-    return QJsonObject{{QStringLiteral("id"), app->id()},
-                       {QStringLiteral("name"), app->displayName()},
-                       {QStringLiteral("icon"), app->iconUrl().toString()},
-                       {QStringLiteral("path"), QString::fromStdString(app->path().string())}};
+  const auto resolve = [&](const glz::generic &v) -> glz::generic {
+    if (!v.is_string()) return {};
+    auto app = appDb->findById(QString::fromStdString(v.get_string()));
+    if (!app) return {};
+    return glz::generic::object_t{
+        {"id", app->id().toStdString()},
+        {"name", app->displayName().toStdString()},
+        {"icon", app->iconUrl().toString().toStdString()},
+        {"path", app->path().string()},
+    };
   };
 
   for (const auto &pref : rootItemManager->getMergedItemPreferences(m_command->uniqueId())) {
     auto data = pref.data();
     auto *picker = std::get_if<Preference::AppPickerData>(&data);
-    if (!picker || !values.contains(pref.name())) continue;
-
-    const QJsonValue value = values.value(pref.name());
+    if (!picker) continue;
+    auto it = values.find(pref.name().toStdString());
+    if (it == values.end()) continue;
 
     if (picker->multiple) {
-      QJsonArray apps;
-      for (const auto &id : value.toArray()) {
-        if (auto app = resolve(id); !app.isNull()) apps.append(app);
+      glz::generic::array_t apps;
+      if (it->second.is_array()) {
+        for (const auto &id : it->second.get_array()) {
+          if (auto app = resolve(id); !app.is_null()) apps.emplace_back(std::move(app));
+        }
       }
-      values[pref.name()] = apps;
+      it->second = std::move(apps);
     } else {
-      values[pref.name()] = value.isString() ? resolve(value) : QJsonValue::Null;
+      it->second = resolve(it->second);
     }
   }
 
@@ -140,7 +144,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   opts.extension_name = m_command->repositoryName().toStdString();
   opts.owner_or_author_name = m_command->author().toStdString();
   opts.is_raycast = m_command->isRaycast();
-  opts.preferences = qJsonObjectToGlazeGeneric(preferenceValues);
+  opts.preferences = std::move(preferenceValues);
   opts.launch_context = props.launchContext;
   opts.arguments = props.arguments |
                    std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {

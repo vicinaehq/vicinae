@@ -1,5 +1,6 @@
 #pragma once
 #include <common/file-category.hpp>
+#include "services/files-service/file-preferences.hpp"
 #include <qfuture.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
@@ -44,7 +45,7 @@ signals:
 public:
   virtual void start() = 0;
   virtual void rebuildIndex() = 0;
-  virtual void preferenceValuesChanged(const QJsonObject &preferences) = 0;
+  virtual void preferencesChanged(const FilePreferences &preferences) = 0;
   virtual QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
                                                              const IndexerQueryParams &params = {}) = 0;
   virtual bool isAvailable() const = 0;

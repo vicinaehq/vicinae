@@ -670,10 +670,9 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
     auto preferenceValues = manager->getPreferenceValues(itemId);
 
     for (const auto &preference : preferences) {
-      QJsonValue const value = preferenceValues.value(preference.name());
-      bool const hasValue = !(value.isUndefined() || value.isNull());
-      bool const hasDefault = !preference.defaultValue().isUndefined();
-      bool const isMissing = preference.required() && !hasValue && !hasDefault;
+      const auto *value = preferences::find(preferenceValues, preference.name().toStdString());
+      bool const hasValue = value && !value->is_null();
+      bool const isMissing = preference.required() && !hasValue && !preference.hasDefaultValue();
 
       if (!isMissing) continue;
 

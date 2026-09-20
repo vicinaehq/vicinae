@@ -1,8 +1,10 @@
 #pragma once
 #include "command/command-database.hpp"
 #include "common/context.hpp"
+#include "builtins/system/browse-apps-preferences.hpp"
 #include "builtins/system/browse-apps-view-host.hpp"
 #include "command/single-view-command-context.hpp"
+#include "command/typed-command.hpp"
 #include "builtins/system/system-run-model.hpp"
 #include "builtins/system/system-run-view-host.hpp"
 #include "theme/colors.hpp"
@@ -19,7 +21,7 @@
 
 namespace {
 
-class SystemRunCommand : public BuiltinCallbackCommand {
+class SystemRunCommand : public TypedCallbackCommand<SystemRunPreferences> {
   Q_DECLARE_TR_FUNCTIONS(SystemRunCommand)
 
   QString id() const override { return "run"; }
@@ -34,22 +36,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
     return {CommandArgument{.name = "command", .placeholder = tr("command"), .required = false}};
   }
 
-  virtual std::vector<Preference> preferences() const override {
-    std::vector<Preference::DropdownData::Option> defaultActions = {
-        {tr("Run in terminal"), "run-in-terminal"},
-        {tr("Run in terminal (hold)"), "run-in-terminal-hold"},
-        {tr("Run directly"), "run"},
-    };
-    Preference defaultAction = Preference::makeDropdown("default-action", defaultActions);
-
-    defaultAction.setTitle(tr("Default Action"));
-    defaultAction.setDescription(tr("The default action to run on pressing return"));
-    defaultAction.setDefaultValue("run-in-terminal");
-
-    return {defaultAction};
-  }
-
-  void execute(CommandController &ctrl) const override {
+  void execute(const Controller &ctrl) const override {
     auto ctx = ctrl.context();
     auto toast = ctx->services->toastService();
     auto args = ctrl.launchProps().arguments;
@@ -81,7 +68,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
 
     using DA = SystemRunDefaultAction;
 
-    switch (parseSystemRunDefaultAction(ctrl.preferenceValues().value("default-action").toString())) {
+    switch (ctrl.preferences().defaultAction) {
     case DA::Run:
       appDb->launchRaw(argv);
       break;
@@ -97,7 +84,7 @@ class SystemRunCommand : public BuiltinCallbackCommand {
   }
 };
 
-class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsViewHost> {
+class SystemBrowseApps : public TypedViewCommand<BrowseAppsViewHost, BrowseAppsPreferences> {
   Q_DECLARE_TR_FUNCTIONS(SystemBrowseApps)
 
   QString id() const override { return "browse-apps"; }
@@ -109,13 +96,6 @@ class SystemBrowseApps : public BuiltinViewCommand<BrowseAppsViewHost> {
   bool isDefaultDisabled() const override { return true; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::Box).setBackgroundTint(SemanticColor::Cyan);
-  }
-  std::vector<Preference> preferences() const override {
-    auto showHidden = Preference::makeCheckbox("showHidden", tr("Show hidden apps"));
-    auto sortAlphabetically = Preference::makeCheckbox("sortAlphabetically", tr("Sort alphabetically"));
-    showHidden.setDefaultValue(false);
-    sortAlphabetically.setDefaultValue(true);
-    return {sortAlphabetically, showHidden};
   }
 };
 
@@ -166,8 +146,4 @@ public:
     registerCommand<SetDefaultBrowser>();
 #endif
   }
-
-  std::vector<Preference> preferences() const override { return {}; }
-
-  void preferenceValuesChanged(const QJsonObject &preferences) const override {}
 };

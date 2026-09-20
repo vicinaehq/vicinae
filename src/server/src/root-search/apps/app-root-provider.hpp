@@ -1,9 +1,10 @@
 #pragma once
+#include "services/app-service/app-preferences.hpp"
+#include "services/root-item-manager/typed-root-provider.hpp"
 #include "command/command-types.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <QCoreApplication>
-#include <qjsonobject.h>
 
 class AppRootItem : public RootItem {
   Q_DECLARE_TR_FUNCTIONS(AppRootItem)
@@ -30,7 +31,7 @@ public:
   AppRootItem(const std::shared_ptr<AbstractApplication> &app) : m_app(app) {}
 };
 
-class AppRootProvider : public RootProvider {
+class AppRootProvider : public TypedRootProvider<AppPreferences> {
 public:
   AppService &m_appService;
 
@@ -41,7 +42,7 @@ public:
   QString displayName() const override;
   QString uniqueId() const override;
   PreferenceList preferences() const override;
-  void preferencesChanged(const QJsonObject &preferences) override;
+  void preferencesChanged(const AppPreferences &preferences) override;
 
 public:
   AppRootProvider(AppService &appService);

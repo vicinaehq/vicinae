@@ -9,7 +9,7 @@ class EverythingFileIndexer : public AbstractFileIndexer {
 public:
   void start() override {}
   void rebuildIndex() override {}
-  void preferenceValuesChanged(const QJsonObject &) override {}
+  void preferencesChanged(const FilePreferences &) override {}
   bool isAvailable() const override;
   std::chrono::milliseconds queryDebounce() const override { return std::chrono::milliseconds{0}; }
 

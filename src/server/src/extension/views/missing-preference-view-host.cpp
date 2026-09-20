@@ -1,6 +1,6 @@
 #include "extension/views/missing-preference-view-host.hpp"
 
-#include <QJsonArray>
+#include "internal/glaze-qt.hpp"
 #include <common/enumerate.hpp>
 #include <utility>
 #include "extension/extension-command.hpp"
@@ -130,19 +130,18 @@ QHash<int, QByteArray> MissingPreferenceFormModel::roleNames() const {
 }
 
 void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences,
-                                      const QJsonObject &existingValues) {
+                                      const PreferenceValues &existingValues) {
   beginResetModel();
   for (const auto &f : m_fields) {
     if (f.dropdownModel && f.dropdownModel != appModel()) f.dropdownModel->deleteLater();
   }
   m_fields.clear();
-  m_values = QJsonObject{};
+  m_values = {};
 
   for (const auto &pref : preferences) {
-    QJsonValue const value = existingValues.value(pref.name());
-    bool const hasValue = !(value.isUndefined() || value.isNull());
-    bool const hasDefault = !pref.defaultValue().isUndefined();
-    bool const isMissing = pref.required() && !hasValue && !hasDefault;
+    const auto *value = preferences::find(existingValues, pref.name().toStdString());
+    bool const hasValue = value && !value->is_null();
+    bool const isMissing = pref.required() && !hasValue && !pref.hasDefaultValue();
 
     if (!isMissing) continue;
 
@@ -163,7 +162,7 @@ void MissingPreferenceFormModel::load(const std::vector<Preference> &preferences
 
     if (f.type == QStringLiteral("checkbox")) {
       f.value = false;
-      m_values[f.id] = false;
+      m_values[f.id.toStdString()] = false;
     }
 
     m_fields.push_back(std::move(f));
@@ -179,28 +178,22 @@ CompletionModel *MissingPreferenceFormModel::appModel() {
 void MissingPreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   if (row < 0 || std::cmp_greater_equal(row, m_fields.size())) return;
   m_fields[row].value = value;
-  m_values[m_fields[row].id] = QJsonValue::fromVariant(value);
+  m_values[m_fields[row].id.toStdString()] = qVariantToGlazeGeneric(value);
   auto idx = index(row);
   emit dataChanged(idx, idx, {ValueRole, CurrentDropdownItemRole});
 }
 
-static bool isEmptyPreferenceValue(const QJsonValue &v) {
-  if (v.isNull() || v.isUndefined()) return true;
-  if (v.isString()) return v.toString().isEmpty();
-  if (v.isArray()) return v.toArray().isEmpty();
-  return false;
-}
-
 MissingPreferenceFormModel::ValidateResult MissingPreferenceFormModel::validate() const {
   for (const auto &[i, f] : m_fields | vicinae::enumerate) {
-    if (isEmptyPreferenceValue(m_values.value(f.id))) return {false, static_cast<int>(i)};
+    const auto *value = preferences::find(m_values, f.id.toStdString());
+    if (!value || preferences::isEmpty(*value)) return {false, static_cast<int>(i)};
   }
   return {true, -1};
 }
 
 MissingPreferenceViewHost::MissingPreferenceViewHost(std::shared_ptr<ExtensionCommand> command,
                                                      const std::vector<Preference> &preferences,
-                                                     const QJsonObject &preferenceValues)
+                                                     const PreferenceValues &preferenceValues)
     : m_command(std::move(command)), m_prefModel(new MissingPreferenceFormModel(this)) {
   m_commandIconSource = qml::imageSourceFor(m_command->iconUrl());
   m_prefModel->load(preferences, preferenceValues);

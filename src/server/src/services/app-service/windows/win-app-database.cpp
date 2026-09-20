@@ -28,7 +28,6 @@
 
 #include <QDebug>
 #include <QFileInfo>
-#include <QJsonArray>
 #include <array>
 #include <chrono>
 #include <string>
@@ -1063,33 +1062,13 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::findByClass(const QString &name) 
   return nullptr;
 }
 
-PreferenceList WindowsAppDatabase::preferences() const {
-  auto defaultAction = Preference::makeDropdown(
-      "defaultAction", {{tr("Focus window"), "focus"}, {tr("Launch app"), "launch"}});
-  defaultAction.setDefaultValue("focus");
-  defaultAction.setTitle(tr("Default action"));
-  defaultAction.setDescription(tr("Action to perform when the return key is pressed. Always default to "
-                                  "'launch' if the app has no open window."));
-
-  std::vector<QString> lockedPaths;
-  for (const auto &path : defaultSearchPaths())
-    lockedPaths.emplace_back(toQString(path));
-
-  auto paths = Preference::directories("paths", std::move(lockedPaths));
-  paths.setTitle(tr("Application directories"));
-  paths.setDescription(tr("Directories applications are sourced from."));
-
-  return {defaultAction, paths};
-}
-
-void WindowsAppDatabase::applyPreferences(const QJsonObject &preferences) {
+void WindowsAppDatabase::applyPreferences(const AppPreferences &preferences) {
   std::vector<fs::path> extra;
-  const auto arr = preferences.value("paths").toArray();
 
-  extra.reserve(arr.size());
-  for (const auto &entry : arr) {
-    if (auto path = entry.toString(); !path.isEmpty()) {
-      extra.emplace_back(fs::path(path.toStdWString()).lexically_normal());
+  extra.reserve(preferences.paths.size());
+  for (const auto &path : preferences.paths) {
+    if (!path.empty()) {
+      extra.emplace_back(fs::path(QString::fromStdString(path).toStdWString()).lexically_normal());
     }
   }
 

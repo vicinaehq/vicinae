@@ -1,11 +1,13 @@
 #include "builtins/raycast/raycast-store-view-host.hpp"
 #include "builtins/vicinae/store-intro-view-host.hpp"
 #include "services/raycast/raycast-store.hpp"
+#include "builtins/vicinae/store-intro-preferences.hpp"
 #include "command/single-view-command-context.hpp"
+#include "command/typed-command.hpp"
 #include "theme/theme.hpp"
 #include <QCoreApplication>
 
-class RaycastStoreCommand : public BuiltinCallbackCommand {
+class RaycastStoreCommand : public TypedCallbackCommand<StoreIntroPreferences> {
   Q_DECLARE_TR_FUNCTIONS(RaycastStoreCommand)
 
   QString id() const override { return "store"; }
@@ -18,15 +20,9 @@ class RaycastStoreCommand : public BuiltinCallbackCommand {
   }
 
   ImageURL iconUrl() const override { return plainIcon().setBadge(BuiltinIcon::ArrowDown); }
-  std::vector<Preference> preferences() const override {
-    auto alwaysShowIntro = Preference::makeCheckbox("alwaysShowIntro", tr("Always show intro"));
-    alwaysShowIntro.setDefaultValue(false);
-    return {alwaysShowIntro};
-  }
-
-  void execute(CommandController &ctrl) const override {
+  void execute(const Controller &ctrl) const override {
     auto ctx = ctrl.context();
-    auto alwaysShowIntro = ctrl.preferenceValues().value("alwaysShowIntro").toBool(false);
+    const bool alwaysShowIntro = ctrl.preferences().alwaysShowIntro;
 
     if (alwaysShowIntro || !ctrl.storage().getItem("introCompleted").toBool()) {
       static const QString INTRO = [] {

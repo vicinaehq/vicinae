@@ -16,8 +16,7 @@ public:
   std::vector<std::filesystem::path> searchPaths() const override;
   bool scan() override;
 
-  PreferenceList preferences() const override;
-  void applyPreferences(const QJsonObject &preferences) override;
+  void applyPreferences(const AppPreferences &preferences) override;
 
   bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const override;
   bool launchTerminalCommand(const std::vector<QString> &cmdline,

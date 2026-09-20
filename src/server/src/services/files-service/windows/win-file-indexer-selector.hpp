@@ -7,7 +7,7 @@ class WinFileIndexerSelector : public AbstractFileIndexer {
 public:
   void start() override {}
   void rebuildIndex() override {}
-  void preferenceValuesChanged(const QJsonObject &preferences) override;
+  void preferencesChanged(const FilePreferences &preferences) override;
   bool isAvailable() const override;
   std::chrono::milliseconds queryDebounce() const override;
 

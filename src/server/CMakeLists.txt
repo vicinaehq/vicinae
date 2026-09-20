@@ -219,6 +219,7 @@ set(SRCS
 
 	# begin app-database
 	src/services/app-service/abstract-app-db.hpp
+	src/services/app-service/app-preferences.hpp
 
 	# end app-database
 
@@ -300,7 +301,6 @@ set(SRCS
 	src/theme/theme-db.hpp
 	src/theme/theme-db.cpp
 
-	src/builtins/clipboard/clipboard-history-command.cpp
 	src/builtins/clipboard/history/clipboard-history-controller.hpp
 	src/builtins/clipboard/history/clipboard-history-controller.cpp
 	src/builtins/browser/browser-extension.cpp
@@ -308,6 +308,7 @@ set(SRCS
 	src/builtins/wm/wm-extension.hpp
 	src/builtins/wm/wm-extension.cpp
 
+	src/builtins/clipboard/clipboard-preferences.hpp
 	src/builtins/clipboard/clipboard-extension.hpp
 	src/builtins/clipboard/clipboard-extension.cpp
 
@@ -319,6 +320,7 @@ set(SRCS
 
 	src/builtins/system/browse-apps-model.hpp
 	src/builtins/system/browse-apps-model.cpp
+	src/builtins/system/browse-apps-preferences.hpp
 	src/builtins/system/browse-apps-view-host.hpp
 	src/builtins/system/browse-apps-view-host.cpp
 	src/builtins/browser/browser-tabs-model.hpp
@@ -359,6 +361,7 @@ set(SRCS
 	src/services/file-chooser/file-chooser-service.hpp
 	src/services/file-chooser/file-chooser-service.cpp
 	src/services/root-item-manager/root-item-manager.hpp
+	src/services/root-item-manager/typed-root-provider.hpp
 	src/services/root-item-manager/root-item-manager.cpp
 	src/services/root-item-manager/search-history.cpp
 	src/services/root-item-manager/visit-tracker.cpp
@@ -379,6 +382,7 @@ set(SRCS
 	src/services/calculator-service/numen/numen-calculator-backend.hpp
 	src/services/calculator-service/numen/numen-calculator-backend.cpp
 
+	src/services/files-service/file-preferences.hpp
 	src/services/files-service/abstract-file-indexer.hpp
 	src/services/files-service/dummy-file-indexer.hpp
 	src/services/files-service/abstract-recent-files-provider.hpp
@@ -407,6 +411,8 @@ set(SRCS
 
 	src/ui/views/base-view.cpp
 
+	src/command/preference-schema.hpp
+	src/command/typed-command.hpp
 	src/command/command-controller.hpp
 	src/command/command-controller.cpp
 
@@ -562,6 +568,7 @@ set(SRCS
 	src/ui/views/grid-source.hpp
 	src/ui/views/section-grid-model.hpp
 	src/ui/views/section-grid-model.cpp
+	src/builtins/vicinae/emoji-preferences.hpp
 	src/builtins/vicinae/emoji-grid-model.hpp
 	src/builtins/vicinae/emoji-grid-model.cpp
 	src/builtins/vicinae/emoji-grid-view-host.hpp

@@ -1,11 +1,13 @@
 #pragma once
 #include "builtins/vicinae/store-intro-view-host.hpp"
 #include "builtins/vicinae/vicinae-store-view-host.hpp"
+#include "builtins/vicinae/store-intro-preferences.hpp"
 #include "command/single-view-command-context.hpp"
+#include "command/typed-command.hpp"
 #include "vicinae.hpp"
 #include <QCoreApplication>
 
-class VicinaeStoreCommand : public BuiltinCallbackCommand {
+class VicinaeStoreCommand : public TypedCallbackCommand<StoreIntroPreferences> {
   Q_DECLARE_TR_FUNCTIONS(VicinaeStoreCommand)
 
   QString id() const override { return "store"; }
@@ -18,15 +20,9 @@ class VicinaeStoreCommand : public BuiltinCallbackCommand {
         .setBackgroundTint(Omnicast::ACCENT_COLOR)
         .setBadge(BuiltinIcon::ArrowDown);
   }
-  std::vector<Preference> preferences() const override {
-    auto alwaysShowIntro = Preference::makeCheckbox("alwaysShowIntro", tr("Always show intro"));
-    alwaysShowIntro.setDefaultValue(false);
-    return {alwaysShowIntro};
-  }
-
-  void execute(CommandController &ctrl) const override {
+  void execute(const Controller &ctrl) const override {
     auto ctx = ctrl.context();
-    auto alwaysShowIntro = ctrl.preferenceValues().value("alwaysShowIntro").toBool(false);
+    const bool alwaysShowIntro = ctrl.preferences().alwaysShowIntro;
 
     if (alwaysShowIntro || !ctrl.storage().getItem("introCompleted").toBool()) {
       static const QString INTRO = tr(R"(

@@ -1,6 +1,7 @@
 #pragma once
 #include "services/local-storage/scoped-local-storage.hpp"
 #include "command/command.hpp"
+#include "command/preference-schema.hpp"
 
 class CommandController {
 public:
@@ -9,8 +10,9 @@ public:
   const LaunchProps &launchProps() const;
   const AbstractCmd &info() const;
   ScopedLocalStorage storage() const;
-  QJsonObject preferenceValues() const;
-  void setPreferenceValues(const QJsonObject &value) const;
+  PreferenceValues preferenceValues() const;
+  template <TypedPreferences P> P preferences() const { return readPreferences<P>(preferenceValues()); }
+  void setPreferenceValues(const PreferenceValues &value) const;
 
   /**
    * Access the global application context.

@@ -1,28 +1,20 @@
-#include <qjsonobject.h>
 #include "win-file-indexer-selector.hpp"
 
-namespace {
-
-constexpr auto BACKEND_KEY = "searchBackend";
-constexpr auto EVERYTHING_INSTANCE_KEY = "everythingInstance";
-constexpr auto BACKEND_WINDOWS_SEARCH = "windows-search";
-constexpr auto BACKEND_EVERYTHING = "everything";
-
-} // namespace
-
-void WinFileIndexerSelector::preferenceValuesChanged(const QJsonObject &preferences) {
-  QString const backend = preferences.value(BACKEND_KEY).toString();
-
-  if (backend == BACKEND_WINDOWS_SEARCH) {
+void WinFileIndexerSelector::preferencesChanged(const FilePreferences &preferences) {
+  switch (preferences.searchBackend) {
+  case FileSearchBackend::WindowsSearch:
     m_backend = Backend::WindowsSearch;
-  } else if (backend == BACKEND_EVERYTHING) {
+    break;
+  case FileSearchBackend::Everything:
     m_backend = Backend::Everything;
-  } else {
+    break;
+  case FileSearchBackend::Auto:
     m_backend = Backend::Auto;
+    break;
   }
 
   m_everything.setInstanceName(
-      preferences.value(EVERYTHING_INSTANCE_KEY).toString().trimmed().toStdWString());
+      QString::fromStdString(preferences.everythingInstance).trimmed().toStdWString());
 }
 
 AbstractFileIndexer &WinFileIndexerSelector::active() {

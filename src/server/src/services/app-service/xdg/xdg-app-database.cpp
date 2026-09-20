@@ -606,43 +606,11 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
 
 std::vector<AppPtr> XdgAppDatabase::list() const { return {m_apps.begin(), m_apps.end()}; }
 
-PreferenceList XdgAppDatabase::preferences() const {
-  auto defaultAction = Preference::makeDropdown(
-      "defaultAction", {{tr("Focus window"), "focus"}, {tr("Launch app"), "launch"}});
-  defaultAction.setDefaultValue("focus");
-  defaultAction.setTitle(tr("Default action"));
-  defaultAction.setDescription(tr("Action to perform when the return key is pressed. Always default to "
-                                  "'launch' if the app has no open window."));
-
-  auto launchPrefix = Preference::makeText("launchPrefix");
-  launchPrefix.setTitle(tr("Launch Prefix"));
-  launchPrefix.setDescription(
-      tr("Custom app launcher to use. Affects applications as well as their sub-actions."));
-  launchPrefix.setPlaceholder("uwsm app --");
-
-  std::vector<QString> lockedPaths;
-  auto defaults = defaultSearchPaths();
-  lockedPaths.reserve(defaults.size());
-  for (const auto &searchPath : defaults) {
-    lockedPaths.emplace_back(QString::fromStdString(searchPath));
-  }
-
-  auto paths = Preference::directories("paths", std::move(lockedPaths));
-  paths.setTitle(tr("Application directories"));
-  paths.setDescription(
-      tr("Directories applications are sourced from. The list cannot be modified directly. In order to do "
-         "so, you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables."));
-  paths.setReadOnly(true);
-
-  return {defaultAction, launchPrefix, paths};
-}
-
-void XdgAppDatabase::applyPreferences(const QJsonObject &preferences) {
-  auto val = preferences.value("launchPrefix").toString();
-  if (val.isEmpty()) {
+void XdgAppDatabase::applyPreferences(const AppPreferences &preferences) {
+  if (preferences.launchPrefix.empty()) {
     m_launchPrefix = Environment::detectAppLauncher();
   } else {
-    m_launchPrefix = val;
+    m_launchPrefix = QString::fromStdString(preferences.launchPrefix);
   }
 }
 

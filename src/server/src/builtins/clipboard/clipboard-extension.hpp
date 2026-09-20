@@ -1,11 +1,11 @@
 #pragma once
 #include <QCoreApplication>
-#include "command/command-database.hpp"
+#include "builtins/clipboard/clipboard-preferences.hpp"
+#include "command/typed-command.hpp"
 #include "ui/image/url.hpp"
 #include "vicinae.hpp"
-#include <qlogging.h>
 
-class ClipboardExtension : public BuiltinCommandRepository {
+class ClipboardExtension : public TypedCommandRepository<ClipboardPreferences> {
   Q_DECLARE_TR_FUNCTIONS(ClipboardExtension)
 
 public:
@@ -16,9 +16,8 @@ public:
   }
   QString description() const override { return tr("System clipboard integration"); }
 
-  std::vector<Preference> preferences() const override;
-  virtual void initialized(const QJsonObject &preferences) const override;
-  void preferenceValuesChanged(const QJsonObject &value) const override;
+  void initialized(const ClipboardPreferences &preferences) const override;
+  void preferencesChanged(const ClipboardPreferences &preferences) const override;
 
   ClipboardExtension();
 };

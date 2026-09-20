@@ -1,4 +1,8 @@
 #pragma once
+#include <glaze/core/common.hpp>
+#include <glaze/core/meta.hpp>
+#include <QCoreApplication>
+#include "command/preference-schema.hpp"
 #include "fuzzy/scored.hpp"
 #include "ui/views/section-source.hpp"
 #include <QCoreApplication>
@@ -7,7 +11,32 @@
 
 enum class SystemRunDefaultAction { RunInTerminal, RunInTerminalHold, Run };
 
-SystemRunDefaultAction parseSystemRunDefaultAction(QStringView s);
+template <> struct glz::meta<SystemRunDefaultAction> {
+  using enum SystemRunDefaultAction;
+  static constexpr auto value =
+      glz::enumerate("run-in-terminal", RunInTerminal, "run-in-terminal-hold", RunInTerminalHold, "run", Run);
+};
+
+struct SystemRunPreferences {
+  SystemRunDefaultAction defaultAction = SystemRunDefaultAction::RunInTerminal;
+};
+
+template <> struct PreferenceSchema<SystemRunPreferences> {
+  PreferenceMeta defaultAction{
+      .key = "default-action",
+      .title = tr("Default Action"),
+      .description = tr("The default action to run on pressing return"),
+      .options =
+          [] {
+            return std::vector<Preference::DropdownData::Option>{
+                option(SystemRunDefaultAction::RunInTerminal, tr("Run in terminal")),
+                option(SystemRunDefaultAction::RunInTerminalHold, tr("Run in terminal (hold)")),
+                option(SystemRunDefaultAction::Run, tr("Run directly")),
+            };
+          },
+  };
+  Q_DECLARE_TR_FUNCTIONS(SystemRunPreferences)
+};
 
 class CommandLineSection : public SectionSource {
   Q_DECLARE_TR_FUNCTIONS(CommandLineSection)

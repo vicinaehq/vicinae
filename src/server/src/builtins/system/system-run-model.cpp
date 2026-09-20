@@ -4,12 +4,6 @@
 #include "service-registry.hpp"
 #include "utils/utils.hpp"
 
-SystemRunDefaultAction parseSystemRunDefaultAction(QStringView s) {
-  if (s == u"run-in-terminal") return SystemRunDefaultAction::RunInTerminal;
-  if (s == u"run-in-terminal-hold") return SystemRunDefaultAction::RunInTerminalHold;
-  return SystemRunDefaultAction::Run;
-}
-
 // --- CommandLineSection ---
 
 void CommandLineSection::setCommandLine(std::vector<std::string> cmdline, bool hasProgram) {

@@ -2,8 +2,6 @@
 #include <cstdint>
 #include <cstring>
 #include <QDateTime>
-#include <QJsonArray>
-#include <QJsonObject>
 #include <QProcessEnvironment>
 #include <QTimer>
 #include <common/file-category.hpp>
@@ -235,22 +233,10 @@ void FileIndexer::rebuildIndex() {
 
 bool FileIndexer::isAvailable() const { return isRunning(); }
 
-void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
-  auto arrayField = [&](const char *key) {
-    std::vector<std::string> out;
-    const auto paths = preferences.value(key).toArray();
-
-    out.reserve(paths.size());
-    for (const auto &path : paths) {
-      if (path.isString()) { out.emplace_back(path.toString().toStdString()); }
-    }
-
-    return out;
-  };
-
-  m_config.paths = arrayField("indexingPaths");
-  m_config.excluded_paths = arrayField("excludedIndexingPaths");
-  m_wantRunning = preferences.value("autoIndexing").toBool();
+void FileIndexer::preferencesChanged(const FilePreferences &preferences) {
+  m_config.paths = preferences.indexingPaths;
+  m_config.excluded_paths = preferences.excludedIndexingPaths;
+  m_wantRunning = preferences.autoIndexing;
 
   if (m_wantRunning) {
     if (isRunning()) {

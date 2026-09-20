@@ -1,8 +1,10 @@
 #include "builtins/clipboard/history/clipboard-history-view-host.hpp"
+#include "builtins/clipboard/clipboard-preferences.hpp"
 #include "builtins/clipboard/history/clipboard-history-controller.hpp"
 #include "ui/views/view-utils.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "services/paste/paste-service.hpp"
 #include "utils/utils.hpp"
 #include "vicinae.hpp"
 #include <QCoreApplication>
@@ -98,10 +100,10 @@ void ClipboardHistoryViewHost::initialize() {
 
   m_controller = new ClipboardHistoryController(m_clipman, this);
 
-  auto preferences = command()->preferenceValues();
-  auto defaultActionStr = preferences.value("defaultAction").toString();
-  m_section.setDefaultAction(defaultActionStr == "paste" ? ClipboardHistorySection::DefaultAction::Paste
-                                                         : ClipboardHistorySection::DefaultAction::Copy);
+  const auto defaultAction = command()->preferences<ClipboardHistoryPreferences>().defaultAction;
+  m_section.setDefaultAction(context()->services->pasteService()->supportsPaste()
+                                 ? defaultAction
+                                 : ClipboardHistorySection::DefaultAction::Copy);
 
   setSearchPlaceholderText(tr("Browse clipboard history..."));
 
@@ -158,13 +160,7 @@ void ClipboardHistoryViewHost::onReactivated() { m_model.refreshActionPanel(); }
 void ClipboardHistoryViewHost::beforePop() { m_model.beforePop(); }
 
 void ClipboardHistoryViewHost::toggleMonitoring() {
-  QJsonObject patch;
-  if (m_clipman->monitoring()) {
-    patch["monitoring"] = false;
-  } else {
-    patch["monitoring"] = true;
-  }
-  command()->setPreferenceValues(patch);
+  command()->setPreferenceValues({{"monitoring", !m_clipman->monitoring()}});
 }
 
 void ClipboardHistoryViewHost::setKindFilter(int kind) {

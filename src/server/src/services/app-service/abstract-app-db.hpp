@@ -1,7 +1,7 @@
 #pragma once
-#include "command/preference.hpp"
+#include "command/preference-schema.hpp"
+#include "services/app-service/app-preferences.hpp"
 #include "ui/image/url.hpp"
-#include <QJsonObject>
 #include <QProcess>
 #include <memory>
 #include <QString>
@@ -168,13 +168,29 @@ public:
    * Preferences that are specific to this provider (e.g. launch prefix on XDG).
    * The root provider merges these with its own UI preferences when exposing them to the user.
    */
-  virtual PreferenceList preferences() const { return {}; }
+  PreferenceList preferences() const {
+    auto list = describePreferences<AppPreferences>();
 
-  /**
-   * Apply the subset of preferences that this provider declared via preferences().
-   * The root provider forwards the full preferences blob; implementations look up the keys they own.
-   */
-  virtual void applyPreferences(const QJsonObject &preferences) { (void)preferences; }
+    for (auto &pref : list) {
+      if (pref.name() != QStringLiteral("paths")) continue;
+      auto data = pref.data();
+      auto *picker = std::get_if<Preference::DirectoryPickerData>(&data);
+      if (!picker) continue;
+      picker->lockedPaths.clear();
+      for (const auto &path : defaultSearchPaths()) {
+#ifdef Q_OS_WIN
+        picker->lockedPaths.emplace_back(QString::fromStdWString(path.wstring()));
+#else
+        picker->lockedPaths.emplace_back(QString::fromStdString(path.string()));
+#endif
+      }
+      pref.setData(*picker);
+    }
+
+    return list;
+  }
+
+  virtual void applyPreferences(const AppPreferences &preferences) { (void)preferences; }
 
   /**
    * Find all the possible openers for the given target, from most to least preferred.

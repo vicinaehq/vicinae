@@ -38,7 +38,7 @@ public:
   QString displayName() const override;
   ImageURL icon() const override;
   Type type() const override;
-  void initialized(const QJsonObject &preferences) override;
+  void initialized(const PreferenceValues &preferences) override;
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
 
 private:

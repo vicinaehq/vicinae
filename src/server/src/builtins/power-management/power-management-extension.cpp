@@ -1,56 +1,57 @@
 #include "power-management-extension.hpp"
 #include "command/command-controller.hpp"
+#include <optional>
+#include <string>
 #include <qcontainerfwd.h>
 #include <qprocess.h>
 #include "common/context.hpp"
-#include "command/preference.hpp"
+#include "command/preference-schema.hpp"
 #include "command/single-view-command-context.hpp"
+#include "command/typed-command.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include <QCoreApplication>
 
-class PowerManagementCommand : public BuiltinCallbackCommand {
+struct PowerCommandPreferences {
+  bool confirm = true;
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
+  std::string customProgram;
+#endif
+};
+
+template <> struct PreferenceSchema<PowerCommandPreferences> {
+  PreferenceMeta confirm{.label = tr("Ask for confirmation")};
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
+  PreferenceMeta customProgram{
+      .title = tr("Custom program"),
+      .description = tr("Custom shell command to run instead of the default implementation"),
+      .required = false,
+  };
+#endif
+  Q_DECLARE_TR_FUNCTIONS(PowerCommandPreferences)
+};
+
+class PowerManagementCommand : public TypedCallbackCommand<PowerCommandPreferences> {
   Q_DECLARE_TR_FUNCTIONS(PowerManagementCommand)
 
 public:
   virtual bool requiresDefaultConfirmation() const { return true; }
-  virtual bool supportsCustomProgram() const {
-#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
-    return false;
-#else
-    return true;
-#endif
+
+  PowerCommandPreferences defaultPreferences() const override {
+    return {.confirm = requiresDefaultConfirmation()};
   }
 
-  std::vector<Preference> preferences() const override {
-    std::vector<Preference> preferences;
-
-    preferences.reserve(2);
-
-    auto confirm = Preference::makeCheckbox("confirm", tr("Ask for confirmation"));
-    confirm.setDefaultValue(requiresDefaultConfirmation());
-    preferences.emplace_back(confirm);
-
-    if (supportsCustomProgram()) {
-      auto program = Preference::makeText("customProgram");
-      program.setRequired(false);
-      program.setTitle(tr("Custom program"));
-      program.setDescription(tr("Custom shell command to run instead of the default implementation"));
-      preferences.emplace_back(program);
-    }
-
-    return preferences;
-  }
-
-  void execute(CommandController &controller) const final {
+  void execute(const Controller &controller) const final {
     auto &nav = controller.context()->navigation;
-    auto prefs = controller.preferenceValues();
-    bool const shouldConfirm = prefs.value("confirm").toBool();
+    const auto &prefs = controller.preferences();
+    bool const shouldConfirm = prefs.confirm;
     std::optional<QString> customProgram;
 
-    if (auto prog = prefs.value("customProgram").toString(); !prog.isEmpty()) { customProgram = prog; }
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
+    if (!prefs.customProgram.empty()) customProgram = QString::fromStdString(prefs.customProgram);
+#endif
 
     auto handleConfirm = [this, ctx = controller.context(), customProgram]() {
       auto toast = ctx->services->toastService();

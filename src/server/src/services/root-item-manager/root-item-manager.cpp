@@ -262,59 +262,46 @@ bool RootItemManager::setItemEnabled(const EntrypointId &id, bool value) {
   return true;
 }
 
-bool RootItemManager::setProviderPreferenceValues(const QString &id, const QJsonObject &preferences) {
+bool RootItemManager::setProviderPreferenceValues(const QString &id, const PreferenceValues &preferences) {
   auto provider = findProviderById(id);
 
   if (!provider) return false;
 
-  QJsonObject filteredPreferences;
-  auto storage = getProviderSecretStorage(id);
+  PreferenceValues filtered;
 
   for (const Preference &pref : provider->preferences()) {
-    QJsonValue const v = preferences.value(pref.name());
-    if (!v.isUndefined()) {
-      if (pref.isSecret()) {
-        setProviderSecretPreference(id, pref.name(), v);
-      } else {
-        filteredPreferences[pref.name()] = v;
-      }
+    const auto *value = preferences::find(preferences, pref.name().toStdString());
+    if (!value) continue;
+    if (pref.isSecret()) {
+      setProviderSecretPreference(id, pref.name(), *value);
+    } else {
+      filtered[pref.name().toStdString()] = *value;
     }
   }
 
-  m_cfg.mergeProviderWithUser(id.toStdString(),
-                              {.preferences = transformPreferenceValues(filteredPreferences)});
+  m_cfg.mergeProviderWithUser(id.toStdString(), {.preferences = std::move(filtered)});
 
   return true;
 }
 
-QJsonObject RootItemManager::transformPreferenceValues(const glz::generic::object_t &preferences) {
-  return glazeToQJsonObject(preferences);
-}
-
-glz::generic::object_t RootItemManager::transformPreferenceValues(const QJsonObject &preferences) {
-  return qJsonObjectToGlazeGeneric(preferences);
-}
-
-bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {
+bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const PreferenceValues &preferences) {
   RootItem const *item = findItemById(id);
 
   if (!item) return false;
 
-  QJsonObject itemPreferences;
+  PreferenceValues filtered;
 
   for (const Preference &pref : item->preferences()) {
-    QJsonValue const v = preferences.value(pref.name());
-
-    if (!v.isUndefined()) {
-      if (pref.isSecret()) {
-        setEntrypointSecretPreference(id, pref.name(), v);
-      } else {
-        itemPreferences[pref.name()] = v;
-      }
+    const auto *value = preferences::find(preferences, pref.name().toStdString());
+    if (!value) continue;
+    if (pref.isSecret()) {
+      setEntrypointSecretPreference(id, pref.name(), *value);
+    } else {
+      filtered[pref.name().toStdString()] = *value;
     }
   }
 
-  m_cfg.mergeEntrypointWithUser(id, {.preferences = transformPreferenceValues(itemPreferences)});
+  m_cfg.mergeEntrypointWithUser(id, {.preferences = std::move(filtered)});
   item->preferenceValuesChanged(preferences);
 
   return true;
@@ -324,38 +311,35 @@ ScopedLocalStorage RootItemManager::getProviderSecretStorage(const QString &id) 
   return m_storage.scoped(id + ":preferences");
 }
 
-void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {
+void RootItemManager::setPreferenceValues(const EntrypointId &id, const PreferenceValues &preferences) {
   auto item = findItemById(id);
   auto prvd = provider(id.provider);
-
-  QJsonObject providerPreferenceValues;
-  QJsonObject entrypointPreferenceValues;
 
   if (!item) {
     qWarning() << "setPreferenceValues: no item with id" << std::string{id};
     return;
   }
 
+  PreferenceValues providerValues;
+  PreferenceValues entrypointValues;
+
   for (const auto &pref : prvd->preferences()) {
-    QJsonValue const val = preferences.value(pref.name());
-    if (!val.isUndefined()) {
-      if (pref.isSecret()) {
-        setProviderSecretPreference(id.provider.c_str(), pref.name(), val);
-      } else {
-        providerPreferenceValues[pref.name()] = val;
-      }
+    const auto *value = preferences::find(preferences, pref.name().toStdString());
+    if (!value) continue;
+    if (pref.isSecret()) {
+      setProviderSecretPreference(id.provider.c_str(), pref.name(), *value);
+    } else {
+      providerValues[pref.name().toStdString()] = *value;
     }
   }
 
   for (const auto &pref : item->preferences()) {
-    QJsonValue const val = preferences.value(pref.name());
-
-    if (!val.isUndefined()) {
-      if (pref.isSecret()) {
-        setEntrypointSecretPreference(id, pref.name(), val);
-      } else {
-        entrypointPreferenceValues[pref.name()] = val;
-      }
+    const auto *value = preferences::find(preferences, pref.name().toStdString());
+    if (!value) continue;
+    if (pref.isSecret()) {
+      setEntrypointSecretPreference(id, pref.name(), *value);
+    } else {
+      entrypointValues[pref.name().toStdString()] = *value;
     }
   }
 
@@ -363,9 +347,9 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
   m_cfg.mergeWithUser({
 		  .providers = std::map<std::string, config::Partial<config::ProviderData>>{
 		  	{id.provider, config::Partial<config::ProviderData>{
-				.preferences = transformPreferenceValues(providerPreferenceValues),
+				.preferences = std::move(providerValues),
 				.entrypoints = std::map<std::string, config::ProviderItemData>{
-					{id.entrypoint, {.preferences = transformPreferenceValues(entrypointPreferenceValues)}}
+					{id.entrypoint, {.preferences = std::move(entrypointValues)}}
 				}
 			}
 		  }
@@ -392,23 +376,22 @@ bool RootItemManager::setShortcut(const EntrypointId &id, std::string_view short
   return true;
 }
 
-QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) const {
+PreferenceValues RootItemManager::getProviderPreferenceValues(const QString &id) const {
   auto provider = findProviderById(id);
-  auto json = transformPreferenceValues(
-      m_cfg.value().providerPreferences(id.toStdString()).value_or(glz::generic::object_t{}));
+  auto values = m_cfg.value().providerPreferences(id.toStdString()).value_or(PreferenceValues{});
 
   for (const Preference &pref : provider->preferences()) {
-    if (!json.contains(pref.name())) {
-      if (pref.isSecret()) {
-        QJsonValue const value = getProviderSecretPreference(id, pref.name());
-        json[pref.name()] = value.isNull() ? pref.defaultValue() : value;
-      } else {
-        json[pref.name()] = pref.defaultValue();
-      }
+    const auto key = pref.name().toStdString();
+    if (values.contains(key)) continue;
+    if (pref.isSecret()) {
+      auto secret = getProviderSecretPreference(id, pref.name());
+      values[key] = secret.is_null() ? pref.defaultOrNull() : std::move(secret);
+    } else {
+      values[key] = pref.defaultOrNull();
     }
   }
 
-  return json;
+  return values;
 }
 
 bool RootItemManager::pruneProvider(const QString &id) {
@@ -422,26 +405,25 @@ bool RootItemManager::pruneProvider(const QString &id) {
   return true;
 }
 
-QJsonObject RootItemManager::getItemPreferenceValues(const EntrypointId &id) const {
+PreferenceValues RootItemManager::getItemPreferenceValues(const EntrypointId &id) const {
   auto item = findItemById(id);
 
   if (!item) return {};
 
-  QJsonObject json =
-      transformPreferenceValues(m_cfg.value().preferences(id).value_or(glz::generic::object_t{}));
+  auto values = m_cfg.value().preferences(id).value_or(PreferenceValues{});
 
   for (const auto &pref : item->preferences()) {
-    if (!json.contains(pref.name())) {
-      if (pref.isSecret()) {
-        QJsonValue const value = getEntrypointSecretPreference(id, pref.name());
-        json[pref.name()] = value.isNull() ? pref.defaultValue() : value;
-      } else {
-        json[pref.name()] = pref.defaultValue();
-      }
+    const auto key = pref.name().toStdString();
+    if (values.contains(key)) continue;
+    if (pref.isSecret()) {
+      auto secret = getEntrypointSecretPreference(id, pref.name());
+      values[key] = secret.is_null() ? pref.defaultOrNull() : std::move(secret);
+    } else {
+      values[key] = pref.defaultOrNull();
     }
   }
 
-  return json;
+  return values;
 }
 
 std::vector<Preference> RootItemManager::getMergedItemPreferences(const EntrypointId &id) const {
@@ -456,15 +438,14 @@ std::vector<Preference> RootItemManager::getMergedItemPreferences(const Entrypoi
   return result;
 }
 
-QJsonObject RootItemManager::getPreferenceValues(const EntrypointId &id) const {
-  QJsonObject providerValues = getProviderPreferenceValues(id.provider.c_str());
-  QJsonObject itemValues = getItemPreferenceValues(id);
+PreferenceValues RootItemManager::getPreferenceValues(const EntrypointId &id) const {
+  auto values = getProviderPreferenceValues(id.provider.c_str());
 
-  for (auto it = itemValues.begin(); it != itemValues.end(); ++it) {
-    providerValues[it.key()] = it.value();
+  for (auto &[key, value] : getItemPreferenceValues(id)) {
+    values.insert_or_assign(key, std::move(value));
   }
 
-  return providerValues;
+  return values;
 }
 
 RootItemMetadata RootItemManager::itemMetadata(const EntrypointId &id) const {
@@ -612,26 +593,26 @@ QString RootItemManager::getEntrypointSecretPreferenceKey(const EntrypointId &id
   return QString("%1.%2").arg(id.entrypoint.c_str()).arg(prefName);
 }
 
-QJsonValue RootItemManager::getEntrypointSecretPreference(const EntrypointId &id,
-                                                          const QString &prefName) const {
+glz::generic RootItemManager::getEntrypointSecretPreference(const EntrypointId &id,
+                                                            const QString &prefName) const {
   QString const key = getEntrypointSecretPreferenceKey(id, prefName);
-  return getProviderSecretStorage(id.provider.c_str()).getItem(key);
+  return qJsonValueToGlazeGeneric(getProviderSecretStorage(id.provider.c_str()).getItem(key));
 }
 
 void RootItemManager::setEntrypointSecretPreference(const EntrypointId &id, const QString &prefName,
-                                                    const QJsonValue &value) {
+                                                    const glz::generic &value) {
   QString const key = getEntrypointSecretPreferenceKey(id, prefName);
-  getProviderSecretStorage(id.provider.c_str()).setItem(key, value);
+  getProviderSecretStorage(id.provider.c_str()).setItem(key, glazeToQJsonValue(value));
 }
 
-QJsonValue RootItemManager::getProviderSecretPreference(const QString &providerId,
-                                                        const QString &prefName) const {
-  return getProviderSecretStorage(providerId).getItem(prefName);
+glz::generic RootItemManager::getProviderSecretPreference(const QString &providerId,
+                                                          const QString &prefName) const {
+  return qJsonValueToGlazeGeneric(getProviderSecretStorage(providerId).getItem(prefName));
 }
 
 void RootItemManager::setProviderSecretPreference(const QString &id, const QString &prefName,
-                                                  const QJsonValue &value) {
-  getProviderSecretStorage(id).setItem(prefName, value);
+                                                  const glz::generic &value) {
+  getProviderSecretStorage(id).setItem(prefName, glazeToQJsonValue(value));
 }
 
 std::vector<std::shared_ptr<RootItem>>

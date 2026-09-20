@@ -4,6 +4,8 @@
 #include "services/files-service/file-service.hpp"
 #include "builtins/file/search-files-view-host.hpp"
 #include "command/single-view-command-context.hpp"
+#include "command/typed-command.hpp"
+#include "services/files-service/file-preferences.hpp"
 #include "ui/alert/alert.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
@@ -20,8 +22,6 @@ class SearchFilesCommand : public BuiltinViewCommand<SearchFilesViewHost> {
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::MagnifyingGlass).setBackgroundTint(SemanticColor::Yellow);
   }
-  std::vector<Preference> preferences() const override { return {}; }
-  void preferenceValuesChanged(const QJsonObject &value) const override {}
 };
 
 class RebuildFileIndexCommand : public BuiltinCallbackCommand {
@@ -36,8 +36,6 @@ class RebuildFileIndexCommand : public BuiltinCallbackCommand {
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::Hammer).setBackgroundTint(SemanticColor::Yellow);
   }
-  std::vector<Preference> preferences() const override { return {}; }
-  void preferenceValuesChanged(const QJsonObject &value) const override {}
 
   void execute(CommandController &controller) const override {
     auto alert = new CallbackAlertWidget;
@@ -58,7 +56,49 @@ class RebuildFileIndexCommand : public BuiltinCallbackCommand {
   }
 };
 
-class FileExtension : public BuiltinCommandRepository {
+template <> struct PreferenceSchema<FilePreferences> {
+#if defined(Q_OS_LINUX)
+  PreferenceMeta autoIndexing{
+      .title = tr("Enabled"),
+      .description =
+          tr("Whether to run the file indexer in the background. When turned off, the indexer process is "
+             "stopped entirely and file search becomes unavailable until it is turned back on."),
+  };
+  PreferenceMeta indexingPaths{
+      .title = tr("Search paths"),
+      .description = tr("Directories that Vicinae will search"),
+      .kind = PreferenceMeta::Kind::Directories,
+  };
+  PreferenceMeta excludedIndexingPaths{
+      .title = tr("Excluded search paths"),
+      .description = tr("Directories to exclude from file indexing"),
+      .kind = PreferenceMeta::Kind::Directories,
+  };
+#elif defined(Q_OS_WIN)
+  PreferenceMeta searchBackend{
+      .title = tr("Search backend"),
+      .description =
+          tr("Automatic uses Everything when it is running and falls back to Windows Search otherwise."),
+      .options =
+          [] {
+            return std::vector<Preference::DropdownData::Option>{
+                option(FileSearchBackend::Auto, tr("Automatic")),
+                option(FileSearchBackend::WindowsSearch, tr("Windows Search")),
+                option(FileSearchBackend::Everything, tr("Everything")),
+            };
+          },
+  };
+  PreferenceMeta everythingInstance{
+      .title = tr("Everything instance"),
+      .description = tr("Name of the Everything instance to connect to. Leave empty for the default "
+                        "instance, the Everything 1.5 alpha runs as \"1.5a\"."),
+      .required = false,
+  };
+#endif
+  Q_DECLARE_TR_FUNCTIONS(FilePreferences)
+};
+
+class FileExtension : public TypedCommandRepository<FilePreferences> {
   Q_DECLARE_TR_FUNCTIONS(FileExtension)
 
   QString id() const override { return "files"; }
@@ -69,9 +109,9 @@ class FileExtension : public BuiltinCommandRepository {
   }
 
 public:
-  void initialized(const QJsonObject &preferences) const override {
+  void initialized(const FilePreferences &preferences) const override {
 #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
-    ServiceRegistry::instance()->fileService()->preferenceValuesChanged(preferences);
+    ServiceRegistry::instance()->fileService()->preferencesChanged(preferences);
 #endif
   }
 
@@ -83,54 +123,9 @@ public:
     // registerCommand<RebuildFileIndexCommand>();
   }
 
-  std::vector<Preference> preferences() const override {
-#ifdef Q_OS_LINUX
-    auto indexing = Preference::makeCheckbox("autoIndexing");
-
-    indexing.setTitle(tr("Enabled"));
-    indexing.setDescription(
-        tr("Whether to run the file indexer in the background. When turned off, the indexer process is "
-           "stopped entirely and file search becomes unavailable until it is turned back on."));
-    indexing.setDefaultValue(true);
-
-    auto paths = Preference::directories("indexingPaths");
-    paths.setTitle(tr("Search paths"));
-    paths.setDescription(tr("Directories that Vicinae will search"));
-    paths.setDefaultValue(QJsonArray{homeDir().c_str()});
-
-    auto excludedPaths = Preference::directories("excludedIndexingPaths");
-    excludedPaths.setTitle(tr("Excluded search paths"));
-    excludedPaths.setDescription(tr("Directories to exclude from file indexing"));
-    excludedPaths.setDefaultValue(QJsonArray{});
-
-    return {indexing, paths, excludedPaths};
-#elif defined(Q_OS_WIN)
-    auto backend = Preference::makeDropdown("searchBackend", {{tr("Automatic"), "auto"},
-                                                              {tr("Windows Search"), "windows-search"},
-                                                              {tr("Everything"), "everything"}});
-
-    backend.setTitle(tr("Search backend"));
-    backend.setDescription(
-        tr("Automatic uses Everything when it is running and falls back to Windows Search otherwise."));
-    backend.setDefaultValue("auto");
-
-    auto instance = Preference::makeText("everythingInstance");
-
-    instance.setTitle(tr("Everything instance"));
-    instance.setDescription(tr("Name of the Everything instance to connect to. Leave empty for the default "
-                               "instance, the Everything 1.5 alpha runs as \"1.5a\"."));
-    instance.setDefaultValue("");
-    instance.setRequired(false);
-
-    return {backend, instance};
-#else
-    return {};
-#endif
-  }
-
-  void preferenceValuesChanged(const QJsonObject &preferences) const override {
+  void preferencesChanged(const FilePreferences &preferences) const override {
 #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
-    ServiceRegistry::instance()->fileService()->preferenceValuesChanged(preferences);
+    ServiceRegistry::instance()->fileService()->preferencesChanged(preferences);
 #endif
   }
 };
