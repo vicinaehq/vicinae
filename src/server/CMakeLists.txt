@@ -1459,6 +1459,7 @@ qt_add_translations(${TARGET}
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_ru.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_uk.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_zh_CN.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_zh_TW.ts
 	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
 	SOURCES ${VICINAE_I18N_SOURCES}
 	LUPDATE_OPTIONS -locations relative -no-obsolete
