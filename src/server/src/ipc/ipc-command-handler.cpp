@@ -37,7 +37,9 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   qDebug() << "got deeplink" << url.toString();
 
-  QUrlQuery const query(url.query(QUrl::FullyDecoded));
+  // Keep the query percent-encoded here: QUrlQuery needs the raw '&'/'=' delimiters to split
+  // pairs correctly. Each value is fully decoded on retrieval instead.
+  QUrlQuery const query(url.query(QUrl::FullyEncoded));
 
   // Command may be in host (raycast://) or as first part of path (com.raycast:/)
   QString command = url.host();
@@ -62,7 +64,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   if (command == "toggle") {
     m_ctx.navigation->toggleWindow();
     if (query.hasQueryItem("fallbackText")) {
-      m_ctx.navigation->setSearchText(query.queryItemValue("fallbackText"));
+      m_ctx.navigation->setSearchText(query.queryItemValue("fallbackText", QUrl::FullyDecoded));
     }
     return {};
   }
@@ -71,7 +73,9 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     if (path == "/open") {
       m_ctx.settings->openWindow();
 
-      if (auto text = query.queryItemValue("tab"); !text.isEmpty()) { m_ctx.settings->openTab(text); }
+      if (auto text = query.queryItemValue("tab", QUrl::FullyDecoded); !text.isEmpty()) {
+        m_ctx.settings->openTab(text);
+      }
 
       return {};
     }
@@ -86,12 +90,12 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
     CloseWindowOptions opts;
 
-    if (auto text = query.queryItemValue("popToRootType"); !text.isEmpty()) {
+    if (auto text = query.queryItemValue("popToRootType", QUrl::FullyDecoded); !text.isEmpty()) {
       if (text == "immediate") { opts.popToRootType = PopToRootType::Immediate; }
       if (text == "suspended") { opts.popToRootType = PopToRootType::Suspended; }
     }
 
-    if (auto text = query.queryItemValue("clearRootSearch"); !text.isEmpty()) {
+    if (auto text = query.queryItemValue("clearRootSearch", QUrl::FullyDecoded); !text.isEmpty()) {
       opts.clearRootSearch = text == "true" || text == "1";
     }
 
@@ -101,21 +105,22 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command == "open") {
     if (m_ctx.navigation->isWindowOpened()) return std::unexpected("Already opened");
-    if (auto text = query.queryItemValue("popToRoot"); text == "true" || text == "1") {
+    if (auto text = query.queryItemValue("popToRoot", QUrl::FullyDecoded); text == "true" || text == "1") {
       m_ctx.navigation->popToRoot();
     }
 
     m_ctx.navigation->showWindow();
 
     if (query.hasQueryItem("fallbackText")) {
-      m_ctx.navigation->setSearchText(query.queryItemValue("fallbackText"));
+      m_ctx.navigation->setSearchText(query.queryItemValue("fallbackText", QUrl::FullyDecoded));
     }
 
     return {};
   }
 
   if (command == "launch") {
-    if (auto item = query.queryItemValue("toggle"); item == "true" && m_ctx.navigation->isWindowOpened()) {
+    if (auto item = query.queryItemValue("toggle", QUrl::FullyDecoded);
+        item == "true" && m_ctx.navigation->isWindowOpened()) {
       m_ctx.navigation->closeWindow();
       return {};
     }
@@ -133,7 +138,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       m_ctx.navigation->setInstantDismiss();
       m_ctx.navigation->pushView(new ProviderSearchViewHost(*provider));
 
-      if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
+      if (auto text = query.queryItemValue("fallbackText", QUrl::FullyDecoded); !text.isEmpty()) {
         m_ctx.navigation->setSearchText(text);
       }
 
@@ -159,7 +164,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
     ArgumentValues arguments;
     if (query.hasQueryItem("arguments")) {
-      QString const argsText = query.queryItemValue("arguments");
+      QString const argsText = query.queryItemValue("arguments", QUrl::FullyDecoded);
       QJsonParseError parseError;
       QJsonDocument const doc = QJsonDocument::fromJson(argsText.toUtf8(), &parseError);
       if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
@@ -173,7 +178,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     LaunchProps props{.arguments = std::move(arguments),
-                      .fallbackText = query.queryItemValue("fallbackText")};
+                      .fallbackText = query.queryItemValue("fallbackText", QUrl::FullyDecoded)};
 
     if (!m_ctx.navigation->activateEntrypoint(id, {.props = props})) {
       return std::unexpected("No primary action for this root item");
@@ -190,7 +195,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   if (command == "pop_to_root") {
     PopToRootOptions opts;
 
-    if (auto text = query.queryItemValue("clearSearch"); !text.isEmpty()) {
+    if (auto text = query.queryItemValue("clearSearch", QUrl::FullyDecoded); !text.isEmpty()) {
       opts.clearSearch = text == "true" || text == "1";
     }
 
@@ -242,7 +247,7 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
         cfg->mergeThemeConfig({.name = theme->id().toStdString()});
       }
 
-      if (auto text = query.queryItemValue("openWindow"); text == "true" || text == "1") {
+      if (auto text = query.queryItemValue("openWindow", QUrl::FullyDecoded); text == "true" || text == "1") {
         m_ctx.navigation->showWindow();
       }
 
@@ -252,15 +257,15 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command == "oauth") {
     auto oauth = m_ctx.services->oauthService();
-    QString const code = query.queryItemValue("code");
-    QString const state = query.queryItemValue("state");
+    QString const code = query.queryItemValue("code", QUrl::FullyDecoded);
+    QString const state = query.queryItemValue("state", QUrl::FullyDecoded);
     oauth->fullfillRequest(state, code);
     return {};
   }
 
   if (command == "api") {
     auto registry = m_ctx.services->extensionRegistry();
-    auto id = query.queryItemValue("id");
+    auto id = query.queryItemValue("id", QUrl::FullyDecoded);
 
     if (id.isEmpty()) {
       qWarning() << "Missing valid extension id from URI";
