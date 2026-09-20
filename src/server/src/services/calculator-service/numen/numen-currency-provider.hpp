@@ -2,7 +2,7 @@
 #include "environment.hpp"
 #include "http-client.hpp"
 #include "numen/abstract-currency-provider.hpp"
-#include <memory>
+#include <qobject.h>
 #include <unordered_map>
 
 struct NumenVicinaeFiatData {
@@ -21,13 +21,14 @@ struct NumenVicinaeCurrencyData {
   NumenVicinaeCryptoData crypto;
 };
 
-class NumenVicinaeCurrencyProvider : public numen::AbstractCurrencyProvider {
+class NumenVicinaeCurrencyProvider : public QObject, public numen::AbstractCurrencyProvider {
+  Q_OBJECT
+
 public:
   std::optional<numen::ExchangeRate> getRate(const std::string_view code) const override;
   void updateRates() override;
 
   NumenVicinaeCurrencyProvider() { m_client.setBaseUrl(Environment::vicinaeApiBaseUrl()); }
-  ~NumenVicinaeCurrencyProvider() override { *m_alive = false; }
 
 private:
   void fetchRates();
@@ -37,5 +38,4 @@ private:
   http::Client m_client;
   std::unordered_map<std::string, double> m_rates;
   std::optional<std::chrono::time_point<std::chrono::system_clock>> m_lastFetchedAt;
-  std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 };
