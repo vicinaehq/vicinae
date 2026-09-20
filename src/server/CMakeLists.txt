@@ -385,13 +385,14 @@ set(SRCS
 	src/builtins/vicinae/manage-fallback-view-host.hpp
 	src/builtins/vicinae/manage-fallback-view-host.cpp
 	src/builtins/ai/ai.hpp
+	src/builtins/ai/quick-ai-preferences.hpp
 	src/builtins/ai/ai-extension.hpp
 	src/builtins/ai/ai-extension.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
 	src/builtins/dictation/dictation.hpp
+	src/builtins/dictation/dictation-preferences.hpp
 	src/builtins/dictation/dictation-extension.hpp
-	src/builtins/dictation/dictation-extension.cpp
 	src/builtins/dictation/dictation-history-view-host.hpp
 	src/builtins/dictation/vocabulary-view-host.hpp
 	src/builtins/dictation/vocabulary-form-view-host.hpp

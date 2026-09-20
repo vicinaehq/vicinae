@@ -7,7 +7,9 @@
 #include <qtmetamacros.h>
 #include <string_view>
 #include <utility>
+#include "builtins/dictation/dictation-preferences.hpp"
 #include "command/command-database.hpp"
+#include "command/typed-command.hpp"
 #include "command/single-view-command-context.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "theme/colors.hpp"
@@ -50,13 +52,12 @@ class VocabularyCommand : public BuiltinViewCommand<VocabularyViewHost> {
 
 }; // namespace
 
-class DictationExtension : public BuiltinCommandRepository {
+class DictationExtension : public TypedCommandRepository<DictationPreferences> {
   Q_DECLARE_TR_FUNCTIONS(DictationExtension)
 
   QString id() const override { return Dictation::qs(Dictation::REPOSITORY_ID); }
   QString displayName() const override { return tr("Dictation"); }
   ImageURL iconUrl() const override { return Dictation::ICON; }
-  std::vector<Preference> preferences() const override;
 
 public:
   DictationExtension() {

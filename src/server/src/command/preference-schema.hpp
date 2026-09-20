@@ -20,6 +20,7 @@
 struct PreferenceMeta {
   enum class Kind : std::uint8_t { Auto, Text, Password, Shortcut, Files, Directories, App, Apps };
   using Options = std::function<std::vector<Preference::DropdownData::Option>()>;
+  using Sections = std::function<std::vector<Preference::DropdownData::Section>()>;
 
   QString key;
   QString title;
@@ -30,6 +31,8 @@ struct PreferenceMeta {
   bool required = true;
   bool readOnly = false;
   Options options;
+  Sections sections;
+  std::function<bool()> available;
   std::vector<QString> lockedPaths;
 };
 
@@ -76,8 +79,10 @@ template <typename M> Preference make(const QString &key, const M &value, const 
     pref.setDefaultValue(value);
   } else if constexpr (std::is_enum_v<M>) {
     static_assert(glz::glaze_enum_t<M>, "enum preferences need a glz::meta enumerating their names");
-    pref = Preference::makeDropdown(key, meta.options ? meta.options()
-                                                      : std::vector<Preference::DropdownData::Option>{});
+    pref = meta.sections
+               ? Preference::makeDropdown(key, meta.sections())
+               : Preference::makeDropdown(
+                     key, meta.options ? meta.options() : std::vector<Preference::DropdownData::Option>{});
     pref.setDefaultValue(enumName(value));
   } else if constexpr (std::is_same_v<M, std::string> || std::is_same_v<M, std::optional<std::string>>) {
     switch (meta.kind) {
@@ -91,7 +96,13 @@ template <typename M> Preference make(const QString &key, const M &value, const 
       pref = Preference::app(key);
       break;
     default:
-      pref = meta.options ? Preference::makeDropdown(key, meta.options()) : Preference::makeText(key);
+      if (meta.sections) {
+        pref = Preference::makeDropdown(key, meta.sections());
+      } else if (meta.options) {
+        pref = Preference::makeDropdown(key, meta.options());
+      } else {
+        pref = Preference::makeText(key);
+      }
       break;
     }
     if constexpr (std::is_same_v<M, std::string>) {
@@ -159,9 +170,14 @@ template <TypedPreferences T> std::vector<Preference> describePreferences(T defa
     preferences.reserve(N);
 
     [&]<std::size_t... I>(std::index_sequence<I...>) {
-      (preferences.emplace_back(preference_schema::make(preference_schema::keyOf<T, I>(glz::get<I>(entries)),
-                                                        glz::get<I>(values), glz::get<I>(entries))),
-       ...);
+      (
+          [&] {
+            const auto &meta = glz::get<I>(entries);
+            if (meta.available && !meta.available()) return;
+            preferences.emplace_back(
+                preference_schema::make(preference_schema::keyOf<T, I>(meta), glz::get<I>(values), meta));
+          }(),
+          ...);
     }(std::make_index_sequence<N>{});
 
     return preferences;

@@ -2,13 +2,16 @@
 #include <qcoreapplication.h>
 #include "builtins/ai/ai.hpp"
 #include "command/command-database.hpp"
+#include "builtins/ai/quick-ai-preferences.hpp"
 #include "command/single-view-command-context.hpp"
+#include "command/typed-command.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 #include "vicinae.hpp"
 
-class QuickAICommand : public GuardedBuiltinCallbackCommand {
+class QuickAICommand
+    : public TypedCallbackCommand<QuickAIPreferences, NoPreferences, GuardedBuiltinCallbackCommand> {
   Q_DECLARE_TR_FUNCTIONS(QuickAICommand)
 
   QString id() const override { return QuickAI::qs(QuickAI::COMMAND_ID); }
@@ -18,8 +21,7 @@ class QuickAICommand : public GuardedBuiltinCallbackCommand {
   }
   std::vector<QString> keywords() const override { return {"ask", "chat"}; }
   bool isFallback() const override { return true; }
-  std::vector<Preference> preferences() const override;
-  void execute(CommandController &controller) const override;
+  void execute(const Controller &controller) const override;
 };
 
 class AiExtension : public BuiltinCommandRepository {
