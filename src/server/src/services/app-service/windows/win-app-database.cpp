@@ -537,6 +537,27 @@ std::optional<fs::path> searchExecutable(const wchar_t *name) {
   return std::nullopt;
 }
 
+std::optional<fs::path> explorerPath() {
+  if (auto windir = envPath(L"WINDIR")) return *windir / L"explorer.exe";
+  return searchExecutable(L"explorer.exe");
+}
+
+bool isExplorer(const fs::path &exe) { return _wcsicmp(exe.filename().c_str(), L"explorer.exe") == 0; }
+
+struct DirectoryHandler {
+  fs::path exe;
+  std::wstring assoc;
+};
+
+// Replacement file managers register themselves as the default verb of the Directory class
+// (or of the broader Folder class). Windows has no dedicated "default file manager" setting.
+std::optional<DirectoryHandler> defaultDirectoryHandler() {
+  for (const auto *assoc : {L"Directory", L"Folder"}) {
+    if (auto exe = defaultHandlerExe(assoc)) return DirectoryHandler{std::move(*exe), assoc};
+  }
+  return std::nullopt;
+}
+
 } // namespace
 
 struct UwpPackageWatcher {
@@ -1100,15 +1121,12 @@ void WindowsAppDatabase::applyPreferences(const QJsonObject &preferences) {
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::fileBrowser() const {
   ScopedCom com;
-  fs::path explorer;
-  if (auto windir = envPath(L"WINDIR")) {
-    explorer = *windir / L"explorer.exe";
-  } else if (auto found = searchExecutable(L"explorer.exe")) {
-    explorer = *found;
-  } else {
-    return nullptr;
+  if (auto handler = defaultDirectoryHandler(); handler && !isExplorer(handler->exe)) {
+    return resolveExecutable(handler->exe, friendlyAppName(handler->assoc),
+                             QString::fromStdWString(handler->assoc));
   }
-  return appForExecutable(explorer, tr("File Explorer"));
+  if (auto explorer = explorerPath()) return appForExecutable(*explorer, tr("File Explorer"));
+  return nullptr;
 }
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::genericTextEditor() const {
@@ -1146,10 +1164,15 @@ bool WindowsAppDatabase::showInFileBrowser(const fs::path &path, bool select) co
   ScopedCom com;
 
   if (reveal) {
-    const std::wstring params = L"/select,\"" + target.wstring() + L"\"";
-    return shellExecuteOpen(L"explorer.exe", params.c_str());
+    if (auto handler = defaultDirectoryHandler(); !handler || isExplorer(handler->exe)) {
+      const std::wstring params = L"/select,\"" + target.wstring() + L"\"";
+      return shellExecuteOpen(L"explorer.exe", params.c_str());
+    }
+    // only Explorer understands /select: a replacement file manager gets the containing folder
+    if (const fs::path parent = target.parent_path(); !parent.empty()) target = parent;
   }
 
+  // the shell resolves the Directory association itself, so the user's file manager is honored
   return shellExecuteOpen(target.wstring());
 }
 
