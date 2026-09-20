@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <glaze/core/common.hpp>
 #include <glaze/core/meta.hpp>
 #include <QtGlobal>
 #include "utils.hpp"

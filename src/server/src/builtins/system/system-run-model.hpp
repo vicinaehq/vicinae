@@ -1,4 +1,5 @@
 #pragma once
+#include <glaze/core/common.hpp>
 #include <glaze/core/meta.hpp>
 #include <QCoreApplication>
 #include "command/preference-schema.hpp"

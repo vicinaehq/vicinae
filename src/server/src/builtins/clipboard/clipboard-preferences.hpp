@@ -2,6 +2,7 @@
 #include <chrono>
 #include <optional>
 #include <vector>
+#include <glaze/core/common.hpp>
 #include <glaze/core/meta.hpp>
 #include <QCoreApplication>
 #include "builtins/clipboard/history/clipboard-history-model.hpp"

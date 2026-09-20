@@ -197,9 +197,10 @@ template <TypedPreferences T> T readPreferences(const PreferenceValues &values, 
 
             std::string json;
             if (glz::write_json(*value, json)) return;
+            const M fallback = member;
             if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(member, json)) {
               qWarning() << "Ignoring preference" << key << ":" << glz::format_error(error, json);
-              member = M(glz::get<I>(glz::to_tie(defaults)));
+              member = fallback;
             }
           }(),
           ...);
