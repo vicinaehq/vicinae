@@ -40,6 +40,9 @@ public:
     bool multiple = false;
   };
   struct ShortcutData {};
+  struct CustomData {
+    QString component;
+  };
   struct FilePickerData {
     bool multiple = false;
     // Paths that are always part of the effective set but are not part of the stored
@@ -68,7 +71,7 @@ public:
 
 private:
   using Data = std::variant<UnknownData, TextData, PasswordData, CheckboxData, DropdownData, FilePickerData,
-                            DirectoryPickerData, AppPickerData, ShortcutData>;
+                            DirectoryPickerData, AppPickerData, ShortcutData, CustomData>;
   QString m_name;
   QString m_title;
   QString m_description;
@@ -87,6 +90,9 @@ public:
   static Preference makeText(const QString &id) { return {id, TextData{}}; }
   static Preference makePassword(const QString &id) { return {id, PasswordData{}}; }
   static Preference makeShortcut(const QString &id) { return {id, ShortcutData{}}; }
+  static Preference custom(const QString &id, const QString &component) {
+    return {id, CustomData{.component = component}};
+  }
   static Preference makeDropdown(const QString &id, const std::vector<DropdownData::Option> &options = {}) {
     return {id, DropdownData{.options = options}};
   }

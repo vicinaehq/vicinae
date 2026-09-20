@@ -21,10 +21,6 @@ Window {
                 "title": qsTr("Keybindings"),
                 "page": shortcutsPage
             },
-            "ai-providers": {
-                "title": qsTr("AI Providers"),
-                "page": aiPage
-            },
             "advanced": {
                 "title": qsTr("Advanced"),
                 "page": advancedPage
@@ -344,11 +340,6 @@ Window {
     Component {
         id: advancedPage
         AdvancedSettingsPage {}
-    }
-
-    Component {
-        id: aiPage
-        AISettingsPage {}
     }
 
     Component {

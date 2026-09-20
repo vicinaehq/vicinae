@@ -27,7 +27,7 @@ public:
   std::optional<ImageUrl> icon() const override;
   std::string_view description() const override { return m_description; }
 
-  void configure(const ProviderFields &) override;
+  void configure(const PreferenceValues &) override;
   void start() override;
 
   bool managesModels() const override { return true; }

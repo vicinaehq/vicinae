@@ -2,6 +2,7 @@
 
 #include "ui/views/view-utils.hpp"
 #include <QJSValue>
+#include <algorithm>
 #include "internal/glaze-qt.hpp"
 #include <utility>
 #include "service-registry.hpp"
@@ -53,6 +54,8 @@ QVariant PreferenceFormModel::data(const QModelIndex &index, int role) const {
     return f.canChooseDirectories;
   case LockedPathsRole:
     return f.lockedPaths;
+  case ComponentRole:
+    return f.component;
   default:
     return {};
   }
@@ -72,7 +75,8 @@ QHash<int, QByteArray> PreferenceFormModel::roleNames() const {
           {MultipleRole, "multiple"},
           {CanChooseFilesRole, "canChooseFiles"},
           {CanChooseDirectoriesRole, "canChooseDirectories"},
-          {LockedPathsRole, "lockedPaths"}};
+          {LockedPathsRole, "lockedPaths"},
+          {ComponentRole, "component"}};
 }
 
 static QString preferenceType(const Preference &p) {
@@ -95,6 +99,8 @@ static QString preferenceType(const Preference &p) {
           return QStringLiteral("apppicker");
         else if constexpr (std::is_same_v<T, Preference::ShortcutData>)
           return QStringLiteral("shortcut");
+        else if constexpr (std::is_same_v<T, Preference::CustomData>)
+          return QStringLiteral("custom");
         else
           return QStringLiteral("text");
       },
@@ -207,6 +213,9 @@ PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pr
   }
 
   applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);
+  if (auto data = pref.data(); auto *custom = std::get_if<Preference::CustomData>(&data)) {
+    f.component = qml::componentUrl(custom->component);
+  }
 
   const auto *stored = preferences::find(m_values, pref.name().toStdString());
   glz::generic raw = stored ? *stored : pref.defaultOrNull();
@@ -266,4 +275,9 @@ void PreferenceFormModel::save() {
     manager->setProviderPreferenceValues(m_providerId, m_values);
   else
     manager->setItemPreferenceValues(m_itemId, m_values);
+}
+
+QUrl PreferenceFormModel::componentFor(const QString &fieldId) const {
+  auto it = std::ranges::find(m_fields, fieldId, &Field::id);
+  return it == m_fields.end() ? QUrl() : it->component;
 }

@@ -1,4 +1,5 @@
 #include "local-provider.hpp"
+#include "services/ai/ai-provider-types.hpp"
 #include <chrono>
 #include <string>
 #include <qlogging.h>
@@ -9,8 +10,6 @@
 namespace AI {
 
 namespace {
-
-constexpr auto KEEP_LOADED_ALWAYS = "always";
 
 bool isTranscriptionEngine(LocalEngine engine) {
   return engine == LocalEngine::Whisper || engine == LocalEngine::Parakeet;
@@ -30,12 +29,24 @@ std::optional<ImageUrl> LocalProvider::icon() const {
   return ImageUrl{ImageURL::local(QStringLiteral(":/icons/vicinae.png"))};
 }
 
-void LocalProvider::configure(const ProviderFields &fields) {
-  const auto keepLoaded = fields.string("keepLoaded");
-  if (keepLoaded == KEEP_LOADED_ALWAYS) {
+void LocalProvider::configure(const PreferenceValues &values) {
+  using namespace std::chrono_literals;
+  switch (readPreferences<LocalFields>(values).keepLoaded) {
+  case KeepLoaded::Immediately:
+    m_inference.setIdleTimeout(0s);
+    break;
+  case KeepLoaded::OneMinute:
+    m_inference.setIdleTimeout(1min);
+    break;
+  case KeepLoaded::FiveMinutes:
+    m_inference.setIdleTimeout(5min);
+    break;
+  case KeepLoaded::FifteenMinutes:
+    m_inference.setIdleTimeout(15min);
+    break;
+  case KeepLoaded::Always:
     m_inference.setIdleTimeout(std::nullopt);
-  } else {
-    m_inference.setIdleTimeout(std::chrono::seconds{qStringFromStdView(keepLoaded).toUInt()});
+    break;
   }
 }
 

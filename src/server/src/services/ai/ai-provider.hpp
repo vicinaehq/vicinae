@@ -18,6 +18,7 @@
 #include <string_view>
 #include <variant>
 #include <vector>
+#include "command/preference.hpp"
 #include "common/context.hpp"
 #include "common/qt.hpp"
 #include "services/audio/audio-recorder.hpp"
@@ -234,33 +235,6 @@ struct ManagedModel {
   double progress = -1.0;
 };
 
-/**
- * A provider's field values: config with secrets merged in, defaults where nothing is set.
- */
-struct ProviderFields {
-  glz::generic::object_t values;
-
-  std::string string(std::string_view key) const {
-    auto it = values.find(std::string(key));
-    return it != values.end() && it->second.is_string() ? it->second.get_string() : std::string();
-  }
-
-  std::optional<int> number(std::string_view key) const {
-    try {
-      auto it = values.find(std::string(key));
-
-      if (it != values.end() && it->second.is_string()) return std::stoi(it->second.get_string());
-
-      return std::nullopt;
-    } catch (const std::exception &e) { return 0; }
-  }
-
-  bool boolean(std::string_view key, bool fallback = false) const {
-    auto it = values.find(std::string(key));
-    return it != values.end() && it->second.is_boolean() ? it->second.get_boolean() : fallback;
-  }
-};
-
 class AbstractProvider : public QObject {
   Q_OBJECT
 
@@ -286,7 +260,7 @@ public:
    * Called once before `start` and again on every settings change. Providers are never recreated
    * for a settings change, so this is where they refresh and drop work started under old values.
    */
-  virtual void configure(const ProviderFields &fields) = 0;
+  virtual void configure(const PreferenceValues &fields) = 0;
 
   /**
    * Name shown to the user. Defaults to the id.

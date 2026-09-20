@@ -18,7 +18,7 @@
 #include "command/preference.hpp"
 
 struct PreferenceMeta {
-  enum class Kind : std::uint8_t { Auto, Text, Password, Shortcut, Files, Directories, App, Apps };
+  enum class Kind : std::uint8_t { Auto, Text, Password, Shortcut, Files, Directories, App, Apps, Custom };
   using Options = std::function<std::vector<Preference::DropdownData::Option>()>;
   using Sections = std::function<std::vector<Preference::DropdownData::Section>()>;
 
@@ -27,6 +27,7 @@ struct PreferenceMeta {
   QString description;
   QString placeholder;
   QString label;
+  QString component;
   Kind kind = Kind::Auto;
   bool required = true;
   bool readOnly = false;
@@ -132,7 +133,14 @@ template <typename M> Preference make(const QString &key, const M &value, const 
     }
     pref.setDefaultValue(std::move(defaults));
   } else {
-    static_assert(!std::is_same_v<M, M>, "unsupported preference member type");
+    if (meta.kind != Kind::Custom || meta.component.isEmpty()) {
+      qWarning() << "Preference" << key << "needs a custom component to be edited";
+    }
+    pref = Preference::custom(key, meta.component);
+    std::string json;
+    glz::generic defaults;
+    if (!glz::write_json(value, json) && !glz::read_json(defaults, json))
+      pref.setDefaultValue(std::move(defaults));
   }
 
   if (!meta.title.isEmpty()) pref.setTitle(meta.title);

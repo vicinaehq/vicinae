@@ -12,6 +12,13 @@ Item {
     readonly property real sideMargin: (width - contentWidth) / 2
     property string expandedCommandId: ""
     property string _focusedCommandId: ""
+    readonly property string subpageRoot: {
+        const subpage = Settings.currentSubpage;
+        const slash = subpage.indexOf("/");
+        return slash < 0 ? subpage : subpage.slice(0, slash);
+    }
+    readonly property url subpageUrl: root.subpageRoot !== "" && root.providerId !== "" ? root.extModel.preferenceModel.componentFor(root.subpageRoot) : ""
+    readonly property bool showingSubpage: root.subpageUrl.toString() !== ""
 
     Timer {
         id: focusFlash
@@ -63,8 +70,16 @@ Item {
         }
     }
 
+    Loader {
+        anchors.fill: parent
+        active: root.showingSubpage
+        visible: active
+        source: root.subpageUrl
+    }
+
     Flickable {
         id: cmdFlickable
+        visible: !root.showingSubpage
         anchors.fill: parent
         clip: true
         boundsBehavior: Flickable.StopAtBounds

@@ -137,7 +137,7 @@ void TranscribeCommand::execute(const Controller &controller) const {
                              "Install one that runs on this machine, or add an AI provider that offers "
                              "transcription."),
                           MICROPHONE_OFF_ICON, tr("Open AI Settings"), [ctx]() {
-                            ctx->settings->openTab("ai-providers");
+                            ctx->settings->openSubpage(QStringLiteral("ai"), QStringLiteral("providers"));
                             ctx->navigation->closeWindow();
                           }));
     return;

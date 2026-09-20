@@ -38,6 +38,13 @@ void SettingsController::openExtensionPreferences(const EntrypointId &id) {
   });
 }
 
+void SettingsController::openSubpage(const QString &providerId, const QString &subpage) {
+  openWindow();
+  QTimer::singleShot(0, [this, providerId, subpage]() {
+    if (m_window) m_window->openSubpage(providerId, subpage);
+  });
+}
+
 void SettingsController::createSettingsWindow() {
   if (m_window) return;
   m_window = new SettingsWindow(m_ctx);
