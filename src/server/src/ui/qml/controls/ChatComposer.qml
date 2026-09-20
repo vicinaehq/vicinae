@@ -75,6 +75,7 @@ FocusScope {
         const current = editor.text;
         const needsSpace = current.length > 0 && !/\s$/.test(current);
         editor.text = current + (needsSpace ? " " : "") + text;
+        editor.cursorPosition = editor.text.length;
         editor.forceActiveFocus();
     }
 
