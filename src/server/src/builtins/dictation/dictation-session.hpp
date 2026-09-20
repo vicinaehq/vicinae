@@ -2,21 +2,14 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
-#include <QElapsedTimer>
 #include <QtQml/qqmlregistration.h>
-#include <QSoundEffect>
-#include <memory>
-#include "dictation-extension.hpp"
-#include "services/ai/ai-provider.hpp"
-#include "services/audio/audio-recorder.hpp"
-#include "services/media-control/media-control-service.hpp"
+#include "builtins/dictation/dictation.hpp"
+#include "services/dictation/transcription-session.hpp"
 
 class ApplicationContext;
 
 /**
- * One dictation from key press to pasted text, independent of any view.
- * Drives the recorder, then transcription through the selected model, then the paste.
- * Deletes itself once finished.
+ * One dictation from key press to pasted text, shown in the HUD. Deletes itself once finished.
  */
 class DictationSession : public QObject {
   Q_OBJECT
@@ -36,48 +29,31 @@ signals:
   void finished();
 
 public:
-  DictationSession(const ApplicationContext *ctx, AI::ModelRef model, AI::TranscriptionOptions options = {},
-                   bool playSoundEffects = true, bool pauseMedia = true,
-                   Dictation::DictationAction action = Dictation::DictationAction::PasteToActiveWindow,
-                   bool recordHistory = true, QObject *parent = nullptr);
+  DictationSession(const ApplicationContext *ctx, TranscriptionSetup setup, Dictation::DictationAction action,
+                   bool recordHistory, QObject *parent = nullptr);
 
   bool start();
-  Q_INVOKABLE void accept();
-  Q_INVOKABLE void cancel();
+  Q_INVOKABLE void accept() { m_session.accept(); }
+  Q_INVOKABLE void cancel() { m_session.cancel(); }
 
-  bool isActive() const { return m_recorder.state() != Audio::Recorder::State::Idle || m_transcribing; }
-  bool isRecording() const {
-    return m_recorder.state() == Audio::Recorder::State::Recording && !m_transcribing;
-  }
-  auto recordingMs() const { return m_recorder.elapsedMs(); }
-  float audioLevel() const { return m_recorder.level(); }
-  QString elapsedTime() const;
-  bool transcribing() const { return m_transcribing; }
-  bool showControls() const { return !m_transcribing && m_message.isEmpty(); }
+  bool isActive() const { return m_session.isActive(); }
+  bool isRecording() const { return m_session.isRecording(); }
+  auto recordingMs() const { return m_session.recordingMs(); }
+  float audioLevel() const { return m_session.audioLevel(); }
+  QString elapsedTime() const { return m_session.elapsedTime(); }
+  bool transcribing() const { return m_session.transcribing(); }
+  bool showControls() const { return !m_session.transcribing() && m_message.isEmpty(); }
   QString message() const { return m_message; }
 
 private:
   void finish();
   void finishWithMessage(const QString &message);
-  void deliver(const AI::TranscriptionResponse &response);
+  void deliver(const Transcript &transcript);
 
   const ApplicationContext *m_ctx;
-  AI::ModelRef m_model;
-  AI::TranscriptionOptions m_options;
-  Audio::Recorder m_recorder;
-  QTimer m_elapsedTimer;
-  bool m_transcribing = false;
-  QString m_message;
+  TranscriptionSetup m_setup;
+  TranscriptionSession m_session;
   Dictation::DictationAction m_action;
   bool m_recordHistory = true;
-  qint64 m_durationMs = 0;
-  QElapsedTimer m_transcribeTimer;
-
-  // sound
-  bool m_playSoundEffects = true;
-  bool m_pauseMedia = true;
-  std::unique_ptr<MediaControlService::TransientPauseHandle> m_pauseHandle;
-
-  QSoundEffect m_startSound;
-  QSoundEffect m_stopSound;
+  QString m_message;
 };

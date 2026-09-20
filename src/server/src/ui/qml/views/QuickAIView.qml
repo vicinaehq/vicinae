@@ -214,9 +214,16 @@ Item {
         busy: root.host.streaming
         modelItems: root.host.modelSelectorItems
         currentModel: root.host.modelSelectorCurrentItem
+        dictationAvailable: root.host.dictationAvailable
+        recording: root.host.recording
+        transcribing: root.host.transcribing
+        recordingTime: root.host.recordingTime
+        dictationMessage: root.host.dictationMessage
         onSubmitted: text => root.host.send(text)
         onCancelled: root.host.cancel()
         onModelActivated: item => root.host.selectModel(item.id)
+        onDictationToggled: root.host.toggleDictation()
+        onDictationCancelled: root.host.cancelDictation()
 
         onHeightChanged: {
             if (flickable.contentY >= viewport.maximumY - composer.lineHeight)
@@ -228,6 +235,9 @@ Item {
 
     Connections {
         target: root.host
+        function onDictated(text) {
+            composer.insertText(text);
+        }
         function onStreamingChanged() {
             Qt.callLater(viewport.scrollToBottom);
         }

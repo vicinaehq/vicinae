@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Effects
 import Vicinae
 
@@ -13,10 +14,17 @@ FocusScope {
     property bool busy: false
     property int maxRows: 6
     property Item backdrop: null
+    property bool dictationAvailable: false
+    property bool recording: false
+    property bool transcribing: false
+    property string recordingTime: ""
+    property string dictationMessage: ""
 
     signal submitted(string text)
     signal cancelled
     signal modelActivated(var item)
+    signal dictationToggled
+    signal dictationCancelled
 
     readonly property bool canSubmit: !busy && editor.text.trim().length > 0
     readonly property real lineHeight: Math.ceil(fontMetrics.height)
@@ -61,6 +69,21 @@ FocusScope {
         const text = editor.text.trim();
         editor.text = "";
         root.submitted(text);
+    }
+
+    function insertText(text) {
+        const current = editor.text;
+        const needsSpace = current.length > 0 && !/\s$/.test(current);
+        editor.text = current + (needsSpace ? " " : "") + text;
+        editor.forceActiveFocus();
+    }
+
+    Keys.onEscapePressed: event => {
+        if (!root.recording) {
+            event.accepted = false;
+            return;
+        }
+        root.dictationCancelled();
     }
 
     Shortcut {
@@ -167,6 +190,7 @@ FocusScope {
         SearchableDropdown {
             id: modelSelector
             anchors.verticalCenter: parent.verticalCenter
+            visible: !root.recording && !root.transcribing
             compact: true
             flat: true
             items: root.modelItems
@@ -175,14 +199,59 @@ FocusScope {
             onPopupClosed: editor.forceActiveFocus()
         }
 
-        ViciIconButton {
+        Text {
             anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: root._controlHeight
-            implicitHeight: root._controlHeight
-            enabled: false
-            opacity: 0.4
-            iconSource: Img.icon(BuiltinIcon.Microphone)
-            tooltip: qsTr("Dictation")
+            visible: root.recording || root.transcribing || root.dictationMessage !== ""
+            text: root.dictationMessage !== "" ? root.dictationMessage : (root.transcribing ? qsTr("Transcribing…") : root.recordingTime)
+            color: root.dictationMessage !== "" ? Theme.danger : Theme.textMuted
+            font.family: Theme.fontFamily
+            font.pointSize: Theme.smallerFontSize
+        }
+
+        Item {
+            anchors.verticalCenter: parent.verticalCenter
+            width: root._controlHeight
+            height: root._controlHeight
+            visible: root.transcribing
+
+            PulsingDots {
+                anchors.centerIn: parent
+                active: parent.visible
+            }
+        }
+
+        Rectangle {
+            id: micButton
+            anchors.verticalCenter: parent.verticalCenter
+            visible: !root.transcribing
+            width: root._controlHeight
+            height: root._controlHeight
+            radius: root._controlHeight / 2
+            enabled: root.dictationAvailable
+            opacity: enabled ? 1.0 : 0.4
+            color: root.recording ? Config.withAlpha(Theme.danger, micHover.hovered ? 0.25 : 0.15) : (micHover.hovered ? Theme.listItemHoverBg : "transparent")
+
+            ViciImage {
+                anchors.centerIn: parent
+                width: 14
+                height: 14
+                source: Img.icon(root.recording ? BuiltinIcon.Stop : BuiltinIcon.Microphone).withFillColor(root.recording ? Theme.danger : Theme.textMuted)
+            }
+
+            HoverHandler {
+                id: micHover
+                enabled: micButton.enabled
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            TapHandler {
+                enabled: micButton.enabled
+                onTapped: root.dictationToggled()
+            }
+
+            ToolTip.visible: micHover.hovered
+            ToolTip.text: root.recording ? qsTr("Stop and transcribe") : (root.dictationAvailable ? qsTr("Dictate") : qsTr("Set up dictation to talk to Quick AI"))
+            ToolTip.delay: 600
         }
 
         Rectangle {

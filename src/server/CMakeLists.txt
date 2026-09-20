@@ -435,6 +435,8 @@ set(SRCS
 	src/utils/json-file.hpp
 	src/services/dictation/dictation-service.hpp
 	src/services/dictation/dictation-service.cpp
+	src/services/dictation/transcription-session.hpp
+	src/services/dictation/transcription-session.cpp
 	src/services/dictation/dictation-history.hpp
 	src/services/dictation/dictation-history.cpp
 	src/services/dictation/dictation-vocabulary.hpp

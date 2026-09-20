@@ -11,7 +11,9 @@
 #include "command/command-database.hpp"
 #include "command/typed-command.hpp"
 #include "command/single-view-command-context.hpp"
+#include "service-registry.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
+#include "services/dictation/dictation-service.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 
@@ -58,6 +60,16 @@ class DictationExtension : public TypedCommandRepository<DictationPreferences> {
   QString id() const override { return Dictation::qs(Dictation::REPOSITORY_ID); }
   QString displayName() const override { return tr("Dictation"); }
   ImageURL iconUrl() const override { return Dictation::ICON; }
+
+  void preferencesChanged(const DictationPreferences &preferences) const override {
+    TranscriptionSettings settings{.playSoundEffects = preferences.sound,
+                                   .pauseMedia = preferences.pauseMedia};
+    if (preferences.model != Dictation::NO_MODEL) {
+      if (auto ref = AI::ModelRef::fromString(preferences.model)) settings.model = std::move(*ref);
+    }
+    if (preferences.language != Dictation::AUTO_LANGUAGE) settings.language = preferences.language;
+    ServiceRegistry::instance()->dictation()->setSettings(std::move(settings));
+  }
 
 public:
   DictationExtension() {
