@@ -29,6 +29,8 @@ static QString preferenceType(const Preference &p) {
           return QStringLiteral("directorypicker");
         else if constexpr (std::is_same_v<T, Preference::AppPickerData>)
           return QStringLiteral("apppicker");
+        else if constexpr (std::is_same_v<T, Preference::CustomData>)
+          return QStringLiteral("custom");
         else
           return QStringLiteral("text");
       },

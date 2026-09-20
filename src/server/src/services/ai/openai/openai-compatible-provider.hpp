@@ -42,7 +42,7 @@ public:
   std::optional<ImageUrl> icon() const override { return ImageUrl{m_info.icon}; }
   std::string_view description() const override { return m_info.description; }
 
-  void configure(const ProviderFields &fields) final;
+  void configure(const PreferenceValues &fields) final;
   void start() final;
 
   ModelList listModels(const ListModelFilters &filters = {}) const final;

@@ -5,6 +5,7 @@
 #include "builtins/ai/quick-ai-preferences.hpp"
 #include "command/single-view-command-context.hpp"
 #include "command/typed-command.hpp"
+#include "services/ai/ai-preferences.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
@@ -24,7 +25,7 @@ class QuickAICommand
   void execute(const Controller &controller) const override;
 };
 
-class AiExtension : public BuiltinCommandRepository {
+class AiExtension : public TypedCommandRepository<AiPreferences> {
   Q_DECLARE_TR_FUNCTIONS(AiExtension)
 
   QString id() const override { return QuickAI::qs(QuickAI::REPOSITORY_ID); }

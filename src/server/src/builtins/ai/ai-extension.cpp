@@ -26,7 +26,7 @@ void QuickAICommand::execute(const Controller &controller) const {
         tr("Set up an AI provider"),
         tr("Quick AI needs a language model before it can answer. Add an AI provider in the settings."),
         iconUrl(), tr("Open AI Settings"), [ctx]() {
-          ctx->settings->openTab("ai-providers");
+          ctx->settings->openSubpage(QStringLiteral("ai"), QStringLiteral("providers"));
           ctx->navigation->closeWindow();
         }));
     return;

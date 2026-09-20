@@ -13,16 +13,17 @@ OpenAICompatibleProvider::OpenAICompatibleProvider(std::string id, std::string_v
 
 OpenAICompatibleProvider::~OpenAICompatibleProvider() { m_listWatcher.cancel(); }
 
-void OpenAICompatibleProvider::configure(const ProviderFields &fields) {
-  m_name = fields.string("name");
+void OpenAICompatibleProvider::configure(const PreferenceValues &values) {
+  auto fields = readPreferences<OpenAICompatibleFields>(values);
+  m_name = std::move(fields.name);
 
-  auto url = fields.string("url");
+  auto url = std::move(fields.url);
   if (url.empty()) url = m_defaultUrl;
   while (url.ends_with('/')) {
     url.pop_back();
   }
 
-  auto apiKey = fields.string("apiKey");
+  auto apiKey = std::move(fields.apiKey);
   if (url == m_url && apiKey == m_apiKey) return;
 
   m_url = std::move(url);

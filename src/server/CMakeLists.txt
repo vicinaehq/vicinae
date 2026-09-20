@@ -609,6 +609,7 @@ set(SRCS
 
 	src/services/ai/ai-provider.hpp
 	src/services/ai/ai-service.hpp
+	src/services/ai/ai-preferences.hpp
 	src/services/ai/ai-provider-types.hpp
 	src/services/ai/ai-service.cpp
 	src/services/ai/agentic-loop.hpp

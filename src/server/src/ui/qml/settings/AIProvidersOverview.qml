@@ -8,7 +8,9 @@ Flickable {
     id: root
 
     required property AISettingsModel model
+    property string backLabel: ""
 
+    signal back
     signal openProvider(string id)
     signal setUp(string type, string label, var icon, bool allowMultiple)
 
@@ -61,10 +63,50 @@ Flickable {
             }
         }
 
+        Item {
+            implicitHeight: 16
+        }
+
+        Rectangle {
+            Layout.leftMargin: column.sideMargin
+            implicitWidth: backRow.implicitWidth + 12
+            implicitHeight: 28
+            radius: 6
+            color: backHover.hovered ? Theme.listItemHoverBg : "transparent"
+
+            RowLayout {
+                id: backRow
+                anchors.centerIn: parent
+                spacing: 4
+
+                ViciImage {
+                    source: Img.icon(BuiltinIcon.ChevronRightSmall).withFillColor(Theme.textMuted)
+                    Layout.preferredWidth: 14
+                    Layout.preferredHeight: 14
+                    rotation: 180
+                }
+
+                Text {
+                    text: root.backLabel
+                    color: Theme.textMuted
+                    font.pointSize: Theme.smallerFontSize
+                }
+            }
+
+            HoverHandler {
+                id: backHover
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            TapHandler {
+                onTapped: root.back()
+            }
+        }
+
         SettingsSectionLabel {
             text: qsTr("Your providers")
             Layout.leftMargin: column.sideMargin
-            Layout.topMargin: 24
+            Layout.topMargin: 16
             Layout.bottomMargin: 4
         }
 

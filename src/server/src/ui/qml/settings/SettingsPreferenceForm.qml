@@ -36,6 +36,7 @@ ColumnLayout {
         required property bool canChooseFiles
         required property bool canChooseDirectories
         required property list<string> lockedPaths
+        required property url component
 
         sourceComponent: {
             switch (type) {
@@ -54,6 +55,8 @@ ColumnLayout {
                 return multiple ? appsComp : appComp;
             case "shortcut":
                 return Platform.supports("globalShortcuts") ? shortcutComp : null;
+            case "custom":
+                return customComp;
             default:
                 return null;
             }
@@ -213,6 +216,29 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.leftMargin: 16
                 Layout.rightMargin: 16
+            }
+        }
+    }
+
+    Component {
+        id: customComp
+        SettingsRow {
+            id: field
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            description: field.host.description
+            controlWidth: root.fieldControlWidth
+            showSeparator: field.host.index < settingsRepeater.count - 1
+
+            ViciButton {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                implicitHeight: 26
+                horizontalPadding: 10
+                variant: "ghost"
+                bordered: true
+                text: qsTr("Manage")
+                onClicked: Settings.currentSubpage = field.host.fieldId
             }
         }
     }

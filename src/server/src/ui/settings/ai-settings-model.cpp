@@ -2,10 +2,13 @@
 #include <algorithm>
 #include <iterator>
 #include <format>
+#include <optional>
 #include <ranges>
+#include <glaze/json/read.hpp>
+#include <glaze/json/write.hpp>
 #include <qcoreapplication.h>
-#include <qjsonobject.h>
 #include <qlogging.h>
+#include "command/preference.hpp"
 #include "config/config.hpp"
 #include "internal/glaze-qt.hpp"
 #include "service-registry.hpp"
@@ -13,6 +16,7 @@
 #include "services/ai/ai-provider.hpp"
 #include "services/ai/ai-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/image/image-url.hpp"
 #include "ui/views/view-utils.hpp"
 #include "utils/utils.hpp"
@@ -35,16 +39,6 @@ QStringList capabilityNames(AI::Capabilities caps) {
 
 QString joinMeta(const QStringList &parts) { return parts.join(QStringLiteral(" · ")); }
 
-QJsonObject providerObject(const config::Manager &config, const std::string &id) {
-  const auto &providers = config.value().ai.providers;
-  auto it = providers.find(id);
-  return it == providers.end() ? QJsonObject{} : glazeToQJsonObject(it->second);
-}
-
-std::string providerType(const glz::generic::object_t &object) {
-  return glazeToQJsonObject(object).value(QStringLiteral("type")).toString().toStdString();
-}
-
 QVariant iconVariant(const std::optional<ImageUrl> &icon) {
   return icon ? QVariant::fromValue(*icon) : QVariant();
 }
@@ -53,49 +47,54 @@ QVariantMap instanceEntry(const QString &id, const QString &name, const QString 
   return {{QStringLiteral("id"), id}, {QStringLiteral("name"), name}, {QStringLiteral("statusText"), status}};
 }
 
-QString kindName(AI::FieldKind kind) {
-  switch (kind) {
-  case AI::FieldKind::Text:
-    return QStringLiteral("text");
-  case AI::FieldKind::Secret:
-    return QStringLiteral("secret");
-  case AI::FieldKind::Select:
-    return QStringLiteral("select");
-  case AI::FieldKind::Toggle:
-    return QStringLiteral("toggle");
-  }
-  return {};
+bool isToggle(const Preference &pref) {
+  return std::holds_alternative<Preference::CheckboxData>(pref.data());
 }
 
-QVariant defaultValue(const AI::ProviderField &field) {
-  if (field.kind == AI::FieldKind::Toggle) return field.defaultChecked;
-  return qs(field.defaultValue);
+std::optional<Preference::DropdownData> dropdownOf(const Preference &pref) {
+  const auto data = pref.data();
+  if (const auto *dropdown = std::get_if<Preference::DropdownData>(&data)) return *dropdown;
+  return std::nullopt;
 }
 
-QJsonValue toStoredValue(const AI::ProviderField &field, const QVariant &value) {
-  if (field.kind == AI::FieldKind::Toggle) return value.toBool();
-  return value.toString();
+QString kindName(const Preference &pref) {
+  if (pref.isSecret()) return QStringLiteral("secret");
+  if (isToggle(pref)) return QStringLiteral("toggle");
+  if (dropdownOf(pref)) return QStringLiteral("select");
+  return QStringLiteral("text");
+}
+
+glz::generic toStoredValue(const Preference &pref, const QVariant &value) {
+  if (isToggle(pref)) return value.toBool();
+  return value.toString().toStdString();
 }
 
 bool isBuiltin(const AI::ProviderTypeInfo &info) { return info.cardinality == AI::Cardinality::Builtin; }
 
-QVariantMap optionEntry(const AI::FieldOption &option) {
-  return qml::makeDropdownItem(qs(option.value),
-                               QCoreApplication::translate(AI::PROVIDER_TR_CONTEXT, option.label));
+QVariantMap optionEntry(const Preference::DropdownData::Option &option) {
+  return qml::makeDropdownItem(option.value, option.title);
 }
 
-QVariantList optionSections(const AI::ProviderField &field) {
-  if (field.kind != AI::FieldKind::Select) return {};
+QVariantList optionSections(const Preference &pref) {
+  const auto dropdown = dropdownOf(pref);
+  if (!dropdown) return {};
   QVariantList items;
-  for (const auto &option : field.options) {
+  for (const auto &option : dropdown->options) {
     items.append(optionEntry(option));
   }
   return {QVariantMap{{QStringLiteral("items"), items}}};
 }
 
-QVariant optionItem(const AI::ProviderField &field, const QString &value) {
-  auto it = std::ranges::find(field.options, value.toStdString(), &AI::FieldOption::value);
-  return it == field.options.end() ? QVariant{} : QVariant(optionEntry(*it));
+QVariant optionItem(const Preference &pref, const QString &value) {
+  const auto dropdown = dropdownOf(pref);
+  if (!dropdown) return {};
+  auto it = std::ranges::find(dropdown->options, value, &Preference::DropdownData::Option::value);
+  return it == dropdown->options.end() ? QVariant{} : QVariant(optionEntry(*it));
+}
+
+const Preference *findField(const std::vector<Preference> &fields, const QString &key) {
+  auto it = std::ranges::find(fields, key, &Preference::name);
+  return it == fields.end() ? nullptr : &*it;
 }
 
 } // namespace
@@ -244,11 +243,11 @@ void AIProviderPage::remove() {
 AISettingsModel::AISettingsModel(QObject *parent) : QObject(parent) {
   auto *registry = ServiceRegistry::instance();
   m_aiService = registry->ai();
-  m_config = registry->config();
+  m_rootItems = registry->rootItemManager();
   m_storage = registry->localStorage();
 
-  if (m_config) {
-    connect(m_config, &config::Manager::configChanged, this, [this]() {
+  if (auto *config = registry->config()) {
+    connect(config, &config::Manager::configChanged, this, [this]() {
       rebuildTypes();
       rebuildPage();
     });
@@ -272,18 +271,33 @@ void AISettingsModel::setSelectedProviderId(const QString &id) {
   emit selectedProviderIdChanged();
 }
 
-const AI::ProviderTypeInfo *AISettingsModel::typeInfoFor(const std::string &id) const {
-  if (m_config) {
-    const auto &providers = m_config->value().ai.providers;
-    if (auto it = providers.find(id); it != providers.end())
-      return AI::findProviderType(providerType(it->second));
+std::map<std::string, AI::ProviderInstance> AISettingsModel::providers() const {
+  if (!m_rootItems) return {};
+  return readPreferences<AiPreferences>(m_rootItems->getProviderPreferenceValues(qs(AI::EXTENSION_ID)))
+      .providers;
+}
+
+void AISettingsModel::saveProviders(const std::map<std::string, AI::ProviderInstance> &providers) {
+  if (!m_rootItems) return;
+  std::string json;
+  glz::generic value;
+  if (glz::write_json(providers, json) || glz::read_json(value, json)) {
+    qWarning() << "Could not serialize AI providers";
+    return;
   }
+  auto values = m_rootItems->getProviderPreferenceValues(qs(AI::EXTENSION_ID));
+  values[std::string(AI::PROVIDERS_PREFERENCE)] = std::move(value);
+  m_rootItems->setProviderPreferenceValues(qs(AI::EXTENSION_ID), values);
+}
+
+const AI::ProviderTypeInfo *AISettingsModel::typeInfoFor(const std::string &id) const {
+  const auto configured = providers();
+  if (auto it = configured.find(id); it != configured.end()) return AI::findProviderType(it->second.type);
   const auto *info = AI::findProviderType(id);
   return info && isBuiltin(*info) ? info : nullptr;
 }
 
 bool AISettingsModel::canAddType(const AI::ProviderTypeInfo &info) const {
-  if (!m_config) return false;
   switch (info.cardinality) {
   case AI::Cardinality::Builtin:
     return false;
@@ -292,9 +306,8 @@ bool AISettingsModel::canAddType(const AI::ProviderTypeInfo &info) const {
   case AI::Cardinality::Single:
     break;
   }
-  const auto &providers = m_config->value().ai.providers;
-  return std::ranges::none_of(
-      providers, [type = info.type](const auto &entry) { return providerType(entry.second) == type; });
+  return std::ranges::none_of(providers(),
+                              [type = info.type](const auto &entry) { return entry.second.type == type; });
 }
 
 QString AISettingsModel::statusText(AI::AbstractProvider &provider) const {
@@ -367,27 +380,36 @@ std::vector<AIProviderModelRow> AISettingsModel::modelRows(AI::AbstractProvider 
 std::vector<AIProviderFieldRow>
 AISettingsModel::fieldRows(const std::string &id, const AI::ProviderTypeInfo &info, bool withValues) const {
   std::vector<AIProviderFieldRow> rows;
-  const auto object = withValues && m_config ? providerObject(*m_config, id) : QJsonObject{};
+  PreferenceValues stored;
+  if (withValues) {
+    const auto configured = providers();
+    if (auto it = configured.find(id); it != configured.end()) stored = it->second.fields;
+  }
   const auto scope = AI::Service::secretScope(id);
+  const auto fields = info.fields();
 
-  rows.reserve(info.fields.size());
-  for (const auto &field : info.fields) {
-    const auto key = qs(field.key);
+  rows.reserve(fields.size());
+  for (const auto &pref : fields) {
     AIProviderFieldRow row{
-        .key = key,
-        .label = QCoreApplication::translate(AI::PROVIDER_TR_CONTEXT, field.label),
-        .description = QCoreApplication::translate(AI::PROVIDER_TR_CONTEXT, field.description),
-        .placeholder = qs(field.placeholder),
-        .kind = kindName(field.kind),
-        .options = optionSections(field),
-        .value = defaultValue(field),
+        .key = pref.name(),
+        .label = pref.title(),
+        .description = pref.description(),
+        .placeholder = pref.placeholder(),
+        .kind = kindName(pref),
+        .options = optionSections(pref),
+        .value = glazeToQVariant(pref.defaultOrNull()),
     };
     if (withValues) {
-      const auto stored = field.kind == AI::FieldKind::Secret && m_storage ? m_storage->getItem(scope, key)
-                                                                           : object.value(key);
-      if (!stored.isUndefined() && !stored.isNull()) row.value = stored.toVariant();
+      if (pref.isSecret()) {
+        if (m_storage) {
+          const auto secret = m_storage->getItem(scope, pref.name());
+          if (!secret.isUndefined() && !secret.isNull()) row.value = secret.toVariant();
+        }
+      } else if (const auto *value = preferences::find(stored, pref.name().toStdString())) {
+        row.value = glazeToQVariant(*value);
+      }
     }
-    if (field.kind == AI::FieldKind::Select) row.currentOption = optionItem(field, row.value.toString());
+    if (dropdownOf(pref)) row.currentOption = optionItem(pref, row.value.toString());
     rows.emplace_back(std::move(row));
   }
   return rows;
@@ -396,6 +418,7 @@ AISettingsModel::fieldRows(const std::string &id, const AI::ProviderTypeInfo &in
 void AISettingsModel::rebuildTypes() {
   std::vector<AIProviderTypeRow> rows;
   rows.reserve(AI::PROVIDER_TYPES.size());
+  const auto configured = providers();
 
   for (const auto &info : AI::PROVIDER_TYPES) {
     if (isBuiltin(info)) {
@@ -415,13 +438,11 @@ void AISettingsModel::rebuildTypes() {
     }
 
     QVariantList instances;
-    if (m_config) {
-      for (const auto &[id, object] : m_config->value().ai.providers) {
-        if (providerType(object) != info.type) continue;
-        auto *provider = m_aiService ? m_aiService->getProviderById(id) : nullptr;
-        const auto qid = QString::fromStdString(id);
-        instances.append(instanceEntry(qid, qid, provider ? statusText(*provider) : tr("Not connected")));
-      }
+    for (const auto &[id, instance] : configured) {
+      if (instance.type != info.type) continue;
+      auto *provider = m_aiService ? m_aiService->getProviderById(id) : nullptr;
+      const auto qid = QString::fromStdString(id);
+      instances.append(instanceEntry(qid, qid, provider ? statusText(*provider) : tr("Not connected")));
     }
     rows.emplace_back(AIProviderTypeRow{
         .key = qs(info.type),
@@ -502,25 +523,25 @@ QStringList AISettingsModel::prepareSetup(const QString &type) {
 
 QString AISettingsModel::nextProviderId(const QString &type) const {
   auto typeStd = type.toStdString();
-  const auto &providers = m_config->value().ai.providers;
+  const auto configured = providers();
 
   int suffix = 1;
   std::string id;
   do {
     id = suffix == 1 ? typeStd : std::format("{}-{}", typeStd, suffix);
     ++suffix;
-  } while (providers.contains(id));
+  } while (configured.contains(id));
 
   return QString::fromStdString(id);
 }
 
 bool AISettingsModel::isProviderIdTaken(const QString &id) const {
-  return m_config->value().ai.providers.contains(id.toStdString());
+  return providers().contains(id.toStdString());
 }
 
 void AISettingsModel::addProvider(const QString &type, const QVariantMap &fields) {
   auto typeStd = type.toStdString();
-  auto *typeInfo = AI::findProviderType(typeStd);
+  const auto *typeInfo = AI::findProviderType(typeStd);
   if (!typeInfo || !canAddType(*typeInfo)) return;
 
   std::string id;
@@ -529,58 +550,57 @@ void AISettingsModel::addProvider(const QString &type, const QVariantMap &fields
     id = nextProviderId(type).toStdString();
   }
 
-  QJsonObject object;
-  object[QStringLiteral("type")] = type;
+  AI::ProviderInstance instance{.type = std::move(typeStd)};
   const auto scope = AI::Service::secretScope(id);
 
-  for (const auto &field : typeInfo->fields) {
-    const auto key = qs(field.key);
+  for (const auto &pref : typeInfo->fields()) {
+    const auto key = pref.name();
     if (!fields.contains(key)) continue;
-    const auto value = toStoredValue(field, fields[key]);
-    if (field.kind == AI::FieldKind::Secret) {
-      m_storage->setItem(scope, key, value);
+    auto value = toStoredValue(pref, fields[key]);
+    if (pref.isSecret()) {
+      m_storage->setItem(scope, key, glazeToQJsonValue(value));
     } else {
-      object[key] = value;
+      instance.fields[key.toStdString()] = std::move(value);
     }
   }
 
-  m_config->updateUser([&](config::Partial<config::ConfigValue> &user) {
-    if (!user.ai) user.ai.emplace();
-    if (!user.ai->providers) user.ai->providers.emplace();
-    (*user.ai->providers)[id] = qJsonObjectToGlazeGeneric(object);
-  });
+  auto configured = providers();
+  configured[id] = std::move(instance);
+  saveProviders(configured);
 }
 
 void AISettingsModel::removeProvider(const std::string &id) {
   m_storage->clearNamespace(AI::Service::secretScope(id));
-  m_config->updateUser([&](config::Partial<config::ConfigValue> &user) {
-    if (user.ai && user.ai->providers) user.ai->providers->erase(id);
-  });
+  auto configured = providers();
+  configured.erase(id);
+  saveProviders(configured);
 }
 
 void AISettingsModel::setField(const std::string &id, const QString &key, const QVariant &value) {
   const auto *typeInfo = typeInfoFor(id);
   if (!typeInfo) return;
 
-  const auto keyStd = key.toStdString();
-  auto it = std::ranges::find(typeInfo->fields, keyStd, &AI::ProviderField::key);
-  if (it == typeInfo->fields.end()) return;
+  const auto fields = typeInfo->fields();
+  const auto *pref = findField(fields, key);
+  if (!pref) return;
 
-  const auto stored = toStoredValue(*it, value);
+  auto stored = toStoredValue(*pref, value);
 
-  if (it->kind == AI::FieldKind::Secret) {
-    m_storage->setItem(AI::Service::secretScope(id), key, stored);
+  if (pref->isSecret()) {
+    m_storage->setItem(AI::Service::secretScope(id), key, glazeToQJsonValue(stored));
     m_aiService->reconfigure(id);
     return;
   }
 
-  auto object = providerObject(*m_config, id);
-  if (object.value(key) == stored) return;
-  object[QStringLiteral("type")] = qs(typeInfo->type);
-  object[key] = stored;
-  m_config->updateUser([&](config::Partial<config::ConfigValue> &user) {
-    if (!user.ai) user.ai.emplace();
-    if (!user.ai->providers) user.ai->providers.emplace();
-    (*user.ai->providers)[id] = qJsonObjectToGlazeGeneric(object);
-  });
+  auto configured = providers();
+  auto &instance = configured[id];
+  instance.type = std::string(typeInfo->type);
+  const auto keyStd = key.toStdString();
+  std::string before;
+  std::string after;
+  if (const auto *current = preferences::find(instance.fields, keyStd)) {
+    if (!glz::write_json(*current, before) && !glz::write_json(stored, after) && before == after) return;
+  }
+  instance.fields[keyStd] = std::move(stored);
+  saveProviders(configured);
 }
