@@ -38,8 +38,31 @@ Flickable {
         readonly property real sideMargin: (width - contentWidth) / 2
         readonly property int columns: Math.max(1, Math.floor(contentWidth / 240))
 
+        component ProviderGrid: GridLayout {
+            id: grid
+            property alias model: repeater.model
+            readonly property int count: repeater.count
+
+            Layout.fillWidth: true
+            Layout.leftMargin: column.sideMargin
+            Layout.rightMargin: column.sideMargin
+            columns: column.columns
+            columnSpacing: 12
+            rowSpacing: 12
+
+            Repeater {
+                id: repeater
+
+                delegate: AIProviderCard {
+                    id: card
+                    onOpenProvider: id => root.openProvider(id)
+                    onSetUp: root.setUp(card.type, card.label, card.icon, card.allowMultiple)
+                }
+            }
+        }
+
         SettingsSectionLabel {
-            text: qsTr("Providers")
+            text: qsTr("Your providers")
             Layout.leftMargin: column.sideMargin
             Layout.topMargin: 24
             Layout.bottomMargin: 4
@@ -56,23 +79,22 @@ Flickable {
             Layout.bottomMargin: 14
         }
 
-        GridLayout {
-            Layout.fillWidth: true
+        ProviderGrid {
+            model: root.model.configuredTypes
+        }
+
+        SettingsSectionLabel {
+            visible: availableGrid.count > 0
+            text: qsTr("Available providers")
             Layout.leftMargin: column.sideMargin
-            Layout.rightMargin: column.sideMargin
-            columns: column.columns
-            columnSpacing: 12
-            rowSpacing: 12
+            Layout.topMargin: 28
+            Layout.bottomMargin: 14
+        }
 
-            Repeater {
-                model: root.model.providerTypes
-
-                delegate: AIProviderCard {
-                    id: card
-                    onOpenProvider: id => root.openProvider(id)
-                    onSetUp: root.setUp(card.type, card.label, card.icon, card.allowMultiple)
-                }
-            }
+        ProviderGrid {
+            id: availableGrid
+            visible: count > 0
+            model: root.model.availableTypes
         }
 
         Item {

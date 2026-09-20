@@ -74,7 +74,7 @@ public:
     connect(m_currentCompletion.get(), &AbstractChatCompletionStream::dataAdded, this,
             [str](auto token) { *str += token; });
 
-    connect(m_currentCompletion.get(), &AbstractChatCompletionStream::errorOccured, this,
+    connect(m_currentCompletion.get(), &AbstractChatCompletionStream::errorOccurred, this,
             [str, p = promise](const std::string &text) {
               qDebug() << "failed to run completion" << text;
               p->addResult(text);

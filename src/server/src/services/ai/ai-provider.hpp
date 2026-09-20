@@ -164,7 +164,7 @@ class AbstractChatCompletionStream : public QObject {
 signals:
   void toolCallRequested(const ToolCallPart &call) const;
   void dataAdded(const std::string &text) const;
-  void errorOccured(const std::string &reason) const;
+  void errorOccurred(const std::string &reason) const;
   void finished() const;
 
 public:

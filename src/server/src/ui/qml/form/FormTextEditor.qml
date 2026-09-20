@@ -13,6 +13,7 @@ Item {
     property string placeholder: ""
     property bool readOnly: false
     property bool multiline: false
+    property bool submitOnReturn: false
     property string accessibleLabel: ""
     property DocumentHighlighter highlighter: null
 
@@ -43,10 +44,10 @@ Item {
         edit.selectAll();
     }
 
-    function _accept() {
+    function _accept(modifiers) {
         if (root._completing)
             root._completer.accept();
-        else if (root.multiline)
+        else if (root.multiline && (!root.submitOnReturn || (modifiers & Qt.ShiftModifier)))
             edit.insert(edit.cursorPosition, "\n");
         else
             root.accepted();
@@ -139,11 +140,11 @@ Item {
             }
             Keys.onReturnPressed: event => {
                 event.accepted = true;
-                root._accept();
+                root._accept(event.modifiers);
             }
             Keys.onEnterPressed: event => {
                 event.accepted = true;
-                root._accept();
+                root._accept(event.modifiers);
             }
             Keys.onUpPressed: event => {
                 event.accepted = root._completing;

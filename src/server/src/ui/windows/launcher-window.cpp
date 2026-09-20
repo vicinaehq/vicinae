@@ -25,7 +25,7 @@
 #include "ui/windows/overlay-controller.hpp"
 #include "builtins/vicinae/bug-report-url.hpp"
 #include "builtins/vicinae/vicinae-store-view-host.hpp"
-#include "builtins/ai/quick-ai-view-host.hpp"
+#include "builtins/ai/ai.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/update/update-service.hpp"
@@ -598,10 +598,9 @@ void LauncherWindow::handleTab() {
   auto text = m_ctx.navigation->searchText();
   if (text.length() <= 5) return;
 
-  qDebug() << "handle Tab";
-
-  auto *view = new QuickAIViewHost(text);
-  m_ctx.navigation->pushView(view);
+  m_ctx.navigation->activateEntrypoint(
+      EntrypointId{std::string(QuickAI::REPOSITORY_ID), std::string(QuickAI::COMMAND_ID)},
+      {.props = {.fallbackText = text}});
 }
 
 bool LauncherWindow::forwardKey(int rawKey, int modifiers, int scanCode) {

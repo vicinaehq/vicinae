@@ -29,10 +29,12 @@ Item {
 
     Component.onCompleted: loader.setSource(viewUrl, viewProperties)
 
-    StackView.onActivated: {
+    function restoreFocus() {
         // qmllint disable missing-property
         if (loader.item && typeof loader.item.restoreFocus === "function")
             loader.item.restoreFocus();
         // qmllint enable missing-property
     }
+
+    StackView.onActivated: Qt.callLater(restoreFocus)
 }
