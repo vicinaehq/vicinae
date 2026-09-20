@@ -58,8 +58,8 @@ void NavigationController::broadcastSearchText(const QString &text, const BaseVi
 }
 
 void NavigationController::setSearchText(const QString &text, const BaseView *caller) {
-  broadcastSearchText(text, caller);
   if (caller == nullptr || caller == topView()) { emit searchTextTampered(text); }
+  broadcastSearchText(text, caller);
 }
 
 void NavigationController::setSearchPlaceholderText(const QString &text, const BaseView *caller) {

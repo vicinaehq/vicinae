@@ -384,6 +384,9 @@ set(SRCS
 	src/builtins/vicinae/manage-fallback-model.cpp
 	src/builtins/vicinae/manage-fallback-view-host.hpp
 	src/builtins/vicinae/manage-fallback-view-host.cpp
+	src/builtins/ai/ai.hpp
+	src/builtins/ai/ai-extension.hpp
+	src/builtins/ai/ai-extension.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
 	src/builtins/dictation/dictation.hpp
@@ -1293,6 +1296,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ViciButton.qml
 	src/ui/qml/controls/ViciSpinner.qml
 	src/ui/qml/controls/ViciIconButton.qml
+	src/ui/qml/controls/ChatComposer.qml
 	src/ui/qml/controls/ViciScrollBar.qml
 	src/ui/qml/controls/ViciTextCursor.qml
 	src/ui/qml/controls/ViciDivider.qml
@@ -1302,7 +1306,6 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/MarkdownDetailView.qml
 	src/ui/qml/views/MarkdownDetailContent.qml
 	src/ui/qml/views/QuickAIView.qml
-	src/ui/qml/accessories/QuickAIModelAccessory.qml
 	src/ui/qml/markdown/MarkdownInline.qml
 	src/ui/qml/controls/PulsingDots.qml
 	src/ui/qml/controls/ViciModal.qml

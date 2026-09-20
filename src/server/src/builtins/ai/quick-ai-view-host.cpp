@@ -1,19 +1,14 @@
 #include "quick-ai-view-host.hpp"
 #include "ai-model-selector-utils.hpp"
-#include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
-#include "services/paste/paste-service.hpp"
-#include "ui/action-panel/action-panel-state.hpp"
-#include "ui/action-panel/action.hpp"
 #include "ui/image/url.hpp"
 #include "view-utils.hpp"
 
-QuickAIViewHost::QuickAIViewHost(QString initialQuery) : m_initialQuery(std::move(initialQuery)) {}
+QuickAIViewHost::QuickAIViewHost(QString initialQuery, AI::ModelRef model)
+    : m_initialQuery(std::move(initialQuery)), m_selectedModel(std::move(model)) {}
 
 QUrl QuickAIViewHost::qmlComponentUrl() const { return qml::componentUrl(u"QuickAIView"); }
-
-QUrl QuickAIViewHost::qmlSearchAccessoryUrl() const { return qml::componentUrl(u"QuickAIModelAccessory"); }
 
 QVariantMap QuickAIViewHost::qmlProperties() { return {{QStringLiteral("host"), QVariant::fromValue(this)}}; }
 
@@ -22,8 +17,7 @@ void QuickAIViewHost::initialize() {
 
   m_aiService = ServiceRegistry::instance()->ai();
 
-  setSearchPlaceholderText("Ask a follow-up...");
-  setNavigationTitle("Quick AI");
+  setNavigationTitle(tr("Quick AI"));
 
   m_history.emplace_back(AI::ChatMessage::fromText(
       AI::ChatRole::System,
@@ -32,18 +26,19 @@ void QuickAIViewHost::initialize() {
 
   connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::rebuildModelSelectorItems);
   rebuildModelSelectorItems();
-
-  updateActions();
 }
 
-void QuickAIViewHost::loadInitialData() { sendQuery(m_initialQuery.toStdString()); }
+void QuickAIViewHost::loadInitialData() {
+  if (!m_initialQuery.isEmpty()) sendQuery(m_initialQuery.toStdString());
+}
 
-void QuickAIViewHost::textChanged(const QString &text) {
-  bool hadText = !m_followUpText.isEmpty();
-  m_followUpText = text;
-  bool hasText = !m_followUpText.isEmpty();
+void QuickAIViewHost::send(const QString &text) {
+  if (m_streaming || text.trimmed().isEmpty()) return;
+  sendQuery(text.trimmed().toStdString());
+}
 
-  if (hadText != hasText && !m_streaming) updateActions();
+void QuickAIViewHost::cancel() {
+  if (m_stream) m_stream->abort();
 }
 
 void QuickAIViewHost::sendQuery(const std::string &query) {
@@ -62,8 +57,7 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
   m_stream = m_aiService->createChatCompletion(m_selectedModel, payload);
 
   if (!m_stream) {
-    m_streaming = false;
-    emit streamingChanged();
+    failQuery(tr("This model is not available right now.").toStdString());
     return;
   }
 
@@ -75,7 +69,7 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
           });
 
   connect(m_stream.get(), &AI::AbstractChatCompletionStream::finished, this, [this]() {
-    // an error might have occured, yet finished is still emitted
+    // an error might have occurred, yet finished is still emitted
     if (!m_streaming) return;
 
     const auto &model = m_stream->model();
@@ -91,6 +85,7 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
     m_exchanges.append(QVariantMap{
         {QStringLiteral("query"), m_streamingQuery},
         {QStringLiteral("response"), m_streamingContent},
+        {QStringLiteral("error"), QString()},
     });
     emit exchangesChanged();
 
@@ -98,69 +93,30 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
     m_streamingQuery.clear();
     emit streamingContentChanged();
     m_stream.reset();
-
-    updateActions();
   });
 
-  connect(m_stream.get(), &AI::AbstractChatCompletionStream::errorOccured, this,
-          [this](const std::string &reason) {
-            m_streaming = false;
-            emit streamingChanged();
-            m_stream.reset();
-
-            updateActions();
-          });
+  connect(m_stream.get(), &AI::AbstractChatCompletionStream::errorOccurred, this,
+          [this](const std::string &reason) { failQuery(reason); });
 
   m_stream->start();
-  updateActions();
 }
 
-void QuickAIViewHost::updateActions() {
-  auto panel = std::make_unique<ListActionPanelState>();
-  auto *section = panel->createSection();
+void QuickAIViewHost::failQuery(const std::string &reason) {
+  if (!m_history.empty() && m_history.back().role == AI::ChatRole::User) m_history.pop_back();
 
-  if (m_streaming) {
-    auto *cancel =
-        new StaticAction(QStringLiteral("Cancel"), ImageURL::builtin(BuiltinIcon::XMarkCircle), [this]() {
-          if (m_stream) m_stream->abort();
-        });
-    cancel->setPrimary(true);
-    section->addAction(cancel);
-  } else if (!m_followUpText.isEmpty()) {
-    auto *followUp =
-        new StaticAction(QStringLiteral("Send Follow-up"), ImageURL::builtin(BuiltinIcon::ArrowUp), [this]() {
-          auto query = m_followUpText.toStdString();
-          m_followUpText.clear();
-          clearSearchText();
-          sendQuery(query);
-        });
-    followUp->setPrimary(true);
-    section->addAction(followUp);
+  m_exchanges.append(QVariantMap{
+      {QStringLiteral("query"), m_streamingQuery},
+      {QStringLiteral("response"), QString()},
+      {QStringLiteral("error"), QString::fromStdString(reason)},
+  });
+  emit exchangesChanged();
 
-    auto *paste =
-        new StaticAction(QStringLiteral("Paste to App"), ImageURL::builtin(BuiltinIcon::CopyClipboard),
-                         [this]() { pasteLastResponse(); });
-    section->addAction(paste);
-  } else {
-    auto *paste =
-        new StaticAction(QStringLiteral("Paste to App"), ImageURL::builtin(BuiltinIcon::CopyClipboard),
-                         [this]() { pasteLastResponse(); });
-    paste->setPrimary(true);
-    section->addAction(paste);
-  }
-
-  setActions(std::move(panel));
-}
-
-void QuickAIViewHost::pasteLastResponse() {
-  if (m_history.empty()) return;
-
-  auto &last = m_history.back();
-  if (last.role != AI::ChatRole::Assistant) return;
-
-  auto *paste = ServiceRegistry::instance()->pasteService();
-  paste->pasteContent(Clipboard::Text{QString::fromStdString(last.text())});
-  context()->navigation->closeWindow();
+  m_streaming = false;
+  emit streamingChanged();
+  m_streamingContent.clear();
+  m_streamingQuery.clear();
+  emit streamingContentChanged();
+  m_stream.reset();
 }
 
 void QuickAIViewHost::selectModel(const QString &compositeId) {

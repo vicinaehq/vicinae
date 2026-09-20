@@ -11,6 +11,11 @@ bool has(const std::vector<std::string> &values, std::string_view value) {
   return std::ranges::find(values, value) != values.end();
 }
 
+std::string displayName(std::string name) {
+  if (const auto pos = name.find(": "); pos != std::string::npos) name.erase(0, pos + 2);
+  return name;
+}
+
 std::optional<Model> toModel(openrouter::ListModelsResponse::Model &&info) {
   if (!has(info.architecture.output_modalities, "text")) return std::nullopt;
 
@@ -21,7 +26,7 @@ std::optional<Model> toModel(openrouter::ListModelsResponse::Model &&info) {
 
   return Model{
       .id = std::move(info.id),
-      .name = std::move(info.name),
+      .name = displayName(std::move(info.name)),
       .description = std::move(info.description),
       .caps = caps,
   };

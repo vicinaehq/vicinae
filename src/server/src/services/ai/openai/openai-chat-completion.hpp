@@ -1,6 +1,7 @@
 #pragma once
 #include <format>
 #include <glaze/core/opts.hpp>
+#include <glaze/json/generic.hpp>
 #include <glaze/json/read.hpp>
 #include <map>
 #include <memory>
@@ -153,8 +154,10 @@ public:
     m_eventSource->setParent(this);
     connect(m_eventSource, &http::EventSource::dataReceived, this, &ChatCompletionStream::handleData);
     connect(m_eventSource, &http::EventSource::finished, this, &ChatCompletionStream::finished);
-    connect(m_eventSource, &http::EventSource::errorOccured, this,
-            [this](const QString &reason) { emit errorOccured(reason.toStdString()); });
+    connect(m_eventSource, &http::EventSource::errorOccurred, this,
+            [this](const QString &reason, const QByteArray &body) {
+              emit errorOccurred(describeError(reason.toStdString(), body));
+            });
     return true;
   }
 
@@ -164,6 +167,27 @@ public:
   }
 
 private:
+  static std::string describeError(std::string reason, const QByteArray &body) {
+    glz::generic payload;
+    const std::string json(body.constData(), static_cast<std::size_t>(body.size()));
+
+    if (!glz::read_json(payload, json) && payload.is_object()) {
+      const auto &object = payload.get_object();
+      if (auto it = object.find("error"); it != object.end()) {
+        if (it->second.is_string()) return it->second.get_string();
+        if (it->second.is_object()) {
+          const auto &error = it->second.get_object();
+          if (auto message = error.find("message"); message != error.end() && message->second.is_string()) {
+            return message->second.get_string();
+          }
+        }
+      }
+    }
+
+    if (!body.trimmed().isEmpty()) reason.append(": ").append(body.trimmed().constData());
+    return reason;
+  }
+
   void handleData(const QString &, QByteArrayView data) {
     if (data.trimmed() == "[DONE]") return;
 
@@ -172,7 +196,7 @@ private:
 
     if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(chunk, json)) {
       qWarning() << "Failed to parse chat completion chunk" << glz::format_error(error, json);
-      emit errorOccured(glz::format_error(error));
+      emit errorOccurred(glz::format_error(error));
       return;
     }
 

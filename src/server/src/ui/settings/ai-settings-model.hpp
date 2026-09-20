@@ -222,7 +222,8 @@ class AISettingsModel : public QObject {
   QML_NAMED_ELEMENT(AISettingsModel)
   QML_UNCREATABLE("")
 
-  Q_PROPERTY(AIProviderTypesModel *providerTypes READ providerTypes CONSTANT)
+  Q_PROPERTY(AIProviderTypesModel *configuredTypes READ configuredTypes CONSTANT)
+  Q_PROPERTY(AIProviderTypesModel *availableTypes READ availableTypes CONSTANT)
   Q_PROPERTY(QString selectedProviderId READ selectedProviderId WRITE setSelectedProviderId NOTIFY
                  selectedProviderIdChanged)
   Q_PROPERTY(AIProviderPage *provider READ provider CONSTANT)
@@ -234,7 +235,8 @@ signals:
 public:
   explicit AISettingsModel(QObject *parent = nullptr);
 
-  AIProviderTypesModel *providerTypes() { return &m_types; }
+  AIProviderTypesModel *configuredTypes() { return &m_configuredTypes; }
+  AIProviderTypesModel *availableTypes() { return &m_availableTypes; }
   QString selectedProviderId() const { return m_selectedProviderId; }
   void setSelectedProviderId(const QString &id);
   AIProviderPage *provider() { return &m_page; }
@@ -265,7 +267,8 @@ private:
   config::Manager *m_config = nullptr;
   LocalStorageService *m_storage = nullptr;
   QString m_selectedProviderId;
-  AIProviderTypesModel m_types{this};
+  AIProviderTypesModel m_configuredTypes{this};
+  AIProviderTypesModel m_availableTypes{this};
   AIProviderPage m_page{*this};
   AIProviderFieldsModel m_setupFields{this};
 };
