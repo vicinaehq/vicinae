@@ -6,6 +6,10 @@
 #include "services/ai/ai-provider-types.hpp"
 #include "services/ai/mistral/mistral-provider.hpp"
 #include "services/ai/ollama/ollama-ai-provider.hpp"
+#include "services/ai/groq/groq-provider.hpp"
+#include "services/ai/openai/openai-compatible-provider.hpp"
+#include "services/ai/openai/openai-provider.hpp"
+#include "services/ai/openrouter/openrouter-provider.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 
 namespace AI {
@@ -74,7 +78,7 @@ ProviderFields Service::resolveFields(std::string_view id, const AbstractProvide
 }
 
 void Service::instantiate(const std::string &id, std::string_view type) {
-  auto provider = createProvider(type);
+  auto provider = createProvider(id, type);
   if (!provider) {
     qWarning() << "Unknown AI provider type" << type << "for provider" << id;
     return;
@@ -110,9 +114,13 @@ void Service::reconcile(const config::ConfigValue &current, const config::Config
   emit modelsChanged();
 }
 
-std::unique_ptr<AbstractProvider> Service::createProvider(std::string_view type) {
-  if (type == "ollama") return std::make_unique<OllamaProvider>();
-  if (type == "mistral") return std::make_unique<MistralProvider>();
+std::unique_ptr<AbstractProvider> Service::createProvider(const std::string &id, std::string_view type) {
+  if (type == "ollama") return std::make_unique<OllamaProvider>(id);
+  if (type == "mistral") return std::make_unique<MistralProvider>(id);
+  if (type == "openai") return std::make_unique<OpenAIProvider>(id);
+  if (type == "groq") return std::make_unique<GroqProvider>(id);
+  if (type == "openrouter") return std::make_unique<OpenRouterProvider>(id);
+  if (type == "openai-compatible") return std::make_unique<OpenAICompatibleProvider>(id, type, "");
   return nullptr;
 }
 

@@ -13,6 +13,15 @@ inline std::optional<ImageUrl> modelIcon(AI::Service *service, const AI::Provide
   return std::nullopt;
 }
 
+inline QString providerDisplayName(AI::Service *service, std::string_view providerId) {
+  if (auto *provider = service->getProviderById(providerId)) {
+    return QString::fromStdString(provider->displayName());
+  }
+  auto title = QString::fromUtf8(providerId.data(), static_cast<qsizetype>(providerId.size()));
+  if (!title.isEmpty()) title[0] = title[0].toUpper();
+  return title;
+}
+
 inline QVariantList buildGroupedModelList(AI::Service *service, std::optional<AI::Capabilities> caps) {
   auto models = service->listModels(caps);
 
@@ -33,20 +42,12 @@ inline QVariantList buildGroupedModelList(AI::Service *service, std::optional<AI
 
   for (auto &[providerId, items] : groups) {
     QVariantMap section;
-    auto title = QString::fromStdString(providerId);
-    title[0] = title[0].toUpper();
-    section[QStringLiteral("title")] = title;
+    section[QStringLiteral("title")] = providerDisplayName(service, providerId);
     section[QStringLiteral("items")] = std::move(items);
     result.append(section);
   }
 
   return result;
-}
-
-inline QString providerDisplayName(std::string_view providerId) {
-  auto title = QString::fromUtf8(providerId.data(), static_cast<qsizetype>(providerId.size()));
-  if (!title.isEmpty()) title[0] = title[0].toUpper();
-  return title;
 }
 
 inline std::vector<Preference::DropdownData::Section>
@@ -65,7 +66,7 @@ buildModelDropdownSections(AI::Service *service, std::optional<AI::Capabilities>
   sections.reserve(groups.size());
   for (auto &[providerId, options] : groups) {
     sections.emplace_back(Preference::DropdownData::Section{
-        .title = providerDisplayName(providerId),
+        .title = providerDisplayName(service, providerId),
         .options = std::move(options),
     });
   }

@@ -42,6 +42,10 @@ constexpr auto PROVIDER_TR_CONTEXT = "AIProviderTypes";
 #define AI_PROVIDER_TR(text) QT_TRANSLATE_NOOP("AIProviderTypes", text)
 
 inline constexpr auto OLLAMA_FIELDS = std::to_array<ProviderField>({
+    {.key = "name",
+     .label = AI_PROVIDER_TR("Name"),
+     .description = AI_PROVIDER_TR("How this instance is shown in model lists."),
+     .placeholder = "Ollama"},
     {.key = "url",
      .label = AI_PROVIDER_TR("Server URL"),
      .description = AI_PROVIDER_TR("The address of your Ollama instance."),
@@ -53,6 +57,49 @@ inline constexpr auto MISTRAL_FIELDS = std::to_array<ProviderField>({
     {.key = "apiKey",
      .label = AI_PROVIDER_TR("API Key"),
      .description = AI_PROVIDER_TR("Your Mistral AI API key. You can find it in your Mistral dashboard."),
+     .kind = FieldKind::Secret,
+     .placeholder = "sk-..."},
+});
+
+inline constexpr auto OPENAI_COMPATIBLE_FIELDS = std::to_array<ProviderField>({
+    {.key = "name",
+     .label = AI_PROVIDER_TR("Name"),
+     .description = AI_PROVIDER_TR("How this server is shown in model lists."),
+     .placeholder = "My server"},
+    {.key = "url",
+     .label = AI_PROVIDER_TR("Server URL"),
+     .description = AI_PROVIDER_TR(
+         "Base URL of the OpenAI-compatible API, including the version prefix if the server has one."),
+     .placeholder = "http://localhost:8080/v1"},
+    {.key = "apiKey",
+     .label = AI_PROVIDER_TR("API Key"),
+     .description = AI_PROVIDER_TR("Leave empty if the server does not require one."),
+     .kind = FieldKind::Secret,
+     .placeholder = "sk-..."},
+});
+
+inline constexpr auto GROQ_FIELDS = std::to_array<ProviderField>({
+    {.key = "apiKey",
+     .label = AI_PROVIDER_TR("API Key"),
+     .description = AI_PROVIDER_TR("Your Groq API key. You can create one in the Groq console."),
+     .kind = FieldKind::Secret,
+     .placeholder = "gsk_..."},
+});
+
+inline constexpr auto OPENROUTER_FIELDS = std::to_array<ProviderField>({
+    {.key = "apiKey",
+     .label = AI_PROVIDER_TR("API Key"),
+     .description =
+         AI_PROVIDER_TR("Your OpenRouter API key. You can create one in your OpenRouter settings."),
+     .kind = FieldKind::Secret,
+     .placeholder = "sk-or-..."},
+});
+
+inline constexpr auto OPENAI_FIELDS = std::to_array<ProviderField>({
+    {.key = "apiKey",
+     .label = AI_PROVIDER_TR("API Key"),
+     .description =
+         AI_PROVIDER_TR("Your OpenAI API key. You can create one in the OpenAI platform dashboard."),
      .kind = FieldKind::Secret,
      .placeholder = "sk-..."},
 });
@@ -92,12 +139,45 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .fields = OLLAMA_FIELDS,
     },
     {
+        .type = "openai",
+        .label = "OpenAI",
+        .icon = BuiltinIcon::Openai,
+        .description = "OpenAI cloud API. Provides language and transcription models.",
+        .cardinality = Cardinality::Single,
+        .fields = OPENAI_FIELDS,
+    },
+    {
+        .type = "groq",
+        .label = "Groq",
+        .icon = BuiltinIcon::Groq,
+        .description = "Groq cloud API. Fast open-weight language models and Whisper transcription.",
+        .cardinality = Cardinality::Single,
+        .fields = GROQ_FIELDS,
+    },
+    {
+        .type = "openrouter",
+        .label = "OpenRouter",
+        .icon = BuiltinIcon::Openrouter,
+        .description = "OpenRouter cloud API. One key for models from every major vendor.",
+        .cardinality = Cardinality::Single,
+        .fields = OPENROUTER_FIELDS,
+    },
+    {
         .type = "mistral",
         .label = "Mistral",
         .icon = BuiltinIcon::Mistral,
         .description = "Mistral AI cloud API. Provides transcription and language models.",
         .cardinality = Cardinality::Single,
         .fields = MISTRAL_FIELDS,
+    },
+    {
+        .type = "openai-compatible",
+        .label = "OpenAI-compatible",
+        .icon = BuiltinIcon::Network,
+        .description =
+            "Any server exposing the OpenAI chat completions API, such as LM Studio, vLLM or llama.cpp.",
+        .cardinality = Cardinality::Multiple,
+        .fields = OPENAI_COMPATIBLE_FIELDS,
     },
 });
 

@@ -96,8 +96,10 @@ const writeFile = (path, data) => {
 	console.log(`Wrote file at ${path}`);
 }
 
-const icons = fs.readdirSync(OMNI_ICON_DIR).filter((file) => file.endsWith('.svg'));
-const qrc = generateQrc(icons);
+const files = fs.readdirSync(OMNI_ICON_DIR);
+const icons = files.filter((file) => file.endsWith('.svg'));
+const assets = files.filter((file) => file.endsWith('.svg') || file.endsWith('.png'));
+const qrc = generateQrc(assets);
 const { cpp, ts } = generateSources(icons);
 const cppSrcDir = path.join(__dirname, "..", "src", "server", "src", "services", "builtin-icon");
 const apiIconSource = path.join(__dirname, "..", "src", "typescript", "api", "src", "api", "icon.ts");
