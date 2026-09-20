@@ -88,6 +88,8 @@ Item {
             case "filepicker":
             case "directorypicker":
                 return filepickerComp;
+            case "apppicker":
+                return multiple ? appsComp : appComp;
             default:
                 return null;
             }
@@ -150,6 +152,40 @@ Item {
                 model: field.host.dropdownModel
                 currentItem: field.host.currentDropdownItem
                 onActivated: item => root.host.prefModel.setFieldValue(field.host.index, item.id)
+            }
+        }
+    }
+
+    Component {
+        id: appComp
+        FormField {
+            id: field
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            info: field.host.description
+
+            SearchableDropdown {
+                model: field.host.dropdownModel
+                placeholder: qsTr("Select an app…")
+                currentItem: field.host.currentDropdownItem
+                onActivated: item => root.host.prefModel.setFieldValue(field.host.index, item.id)
+            }
+        }
+    }
+
+    Component {
+        id: appsComp
+        FormField {
+            id: field
+            readonly property FieldHost host: parent as FieldHost
+            label: field.host.label
+            info: field.host.description
+            topAlignLabel: true
+
+            FormAppSelector {
+                model: field.host.value ?? []
+                appsModel: field.host.dropdownModel
+                onChanged: apps => root.host.prefModel.setFieldValue(field.host.index, apps)
             }
         }
     }

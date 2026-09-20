@@ -90,7 +90,7 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
     auto checkbox = Preference::CheckboxData(obj["label"].toString());
     base.setData(checkbox);
   } else if (type == "appPicker") {
-    base.setData(Preference::AppPickerData());
+    base.setData(Preference::AppPickerData{.multiple = obj["multiple"].toBool()});
   } else if (type == "file") {
     base.setData(Preference::FilePickerData{.multiple = obj["multiple"].toBool()});
   } else if (type == "directory") {

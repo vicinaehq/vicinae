@@ -3,8 +3,8 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 
-AppSelectorModel::AppSelectorModel(QObject *parent)
-    : QObject(parent), m_appDb(ServiceRegistry::instance()->appDb()) {
+AppSelectorModel::AppSelectorModel(QObject *parent, const Options &options)
+    : QObject(parent), m_appDb(ServiceRegistry::instance()->appDb()), m_options(options) {
 
   buildItems();
 }
@@ -12,18 +12,23 @@ AppSelectorModel::AppSelectorModel(QObject *parent)
 void AppSelectorModel::buildItems() {
   QVariantList allApps;
 
-  if (auto browser = m_appDb->webBrowser()) {
-    m_defaultEntry = qml::makeDropdownItem(QStringLiteral("default"),
-                                           tr("%1 (Default)").arg(browser->fullyQualifiedName()),
-                                           qml::imageSourceFor(browser->iconUrl()));
-    allApps.append(m_defaultEntry);
+  if (m_options.includeDefaultBrowser) {
+    if (auto browser = m_appDb->webBrowser()) {
+      m_defaultEntry = qml::makeDropdownItem(QStringLiteral("default"),
+                                             tr("%1 (Default)").arg(browser->fullyQualifiedName()),
+                                             qml::imageSourceFor(browser->iconUrl()));
+      allApps.append(m_defaultEntry);
+    }
   }
 
   for (const auto &app : m_appDb->list()) {
-    if (!app->displayable() || !app->isOpener()) continue;
+    if (!app->displayable()) continue;
+    if (m_options.openersOnly && !app->isOpener()) continue;
 
     allApps.append(
         qml::makeDropdownItem(app->id(), app->fullyQualifiedName(), qml::imageSourceFor(app->iconUrl())));
+
+    if (!m_options.includeActions) continue;
 
     for (const auto &action : app->actions()) {
       if (!action->isOpener()) continue;

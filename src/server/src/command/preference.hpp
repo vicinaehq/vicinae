@@ -13,7 +13,9 @@ public:
   struct CheckboxData {
     std::optional<QString> label;
   };
-  struct AppPickerData {};
+  struct AppPickerData {
+    bool multiple = false;
+  };
   struct ShortcutData {};
   struct FilePickerData {
     bool multiple = false;
@@ -60,6 +62,12 @@ public:
   }
   static Preference file(const QString &id) { return {id, FilePickerData()}; }
   static Preference files(const QString &id) { return {id, FilePickerData{.multiple = true}}; }
+  static Preference app(const QString &id) { return {id, AppPickerData{}}; }
+  static Preference apps(const QString &id) {
+    Preference preference{id, AppPickerData{.multiple = true}};
+    preference.setDefaultValue(QJsonArray());
+    return preference;
+  }
   static Preference directory(const QString &id) { return {id, DirectoryPickerData{}}; }
   static Preference directories(const QString &id, std::vector<QString> lockedPaths = {}) {
     Preference preference{id, DirectoryPickerData{.multiple = true, .lockedPaths = std::move(lockedPaths)}};

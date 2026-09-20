@@ -11,6 +11,7 @@ ColumnLayout {
     property var model: []
     property CompletionModel appsModel: null
     property bool filled: false
+    property bool readOnly: false
 
     signal changed(var apps)
 
@@ -102,6 +103,7 @@ ColumnLayout {
                 }
 
                 ViciButton {
+                    visible: !root.readOnly
                     Layout.preferredWidth: 20
                     Layout.preferredHeight: 20
                     Layout.alignment: Qt.AlignVCenter
@@ -121,6 +123,7 @@ ColumnLayout {
         model: root.appsModel
         currentItem: null
         filled: root.filled
+        readOnly: root.readOnly
         onActivated: item => root.add(item.id)
     }
 }

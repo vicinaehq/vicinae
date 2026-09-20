@@ -2,7 +2,6 @@
 #include "navigation-controller.hpp"
 #include "utils/placeholder.hpp"
 #include "service-registry.hpp"
-#include "services/app-service/app-service.hpp"
 #include "services/snippet/snippet-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-panel/action.hpp"
@@ -26,13 +25,7 @@ void SnippetFormViewHost::initialize() {
   m_service = context()->services->snippetService();
   buildContentCompletions();
 
-  QVariantList allApps;
-  const auto *appDb = context()->services->appDb();
-  for (const auto &app : appDb->list({.sortAlphabetically = true})) {
-    if (!app->displayable()) continue;
-    allApps.append(qml::makeDropdownItem(app->id(), app->displayName(), qml::imageSourceFor(app->iconUrl())));
-  }
-  m_availableAppsModel.setItems(allApps);
+  m_appSelectorModel = new AppSelectorModel(this);
 
   auto panel = std::make_unique<FormActionPanelState>();
   auto section2 = panel->createSection();

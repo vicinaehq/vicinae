@@ -90,6 +90,8 @@ static QString preferenceType(const Preference &p) {
           return QStringLiteral("filepicker");
         else if constexpr (std::is_same_v<T, Preference::DirectoryPickerData>)
           return QStringLiteral("directorypicker");
+        else if constexpr (std::is_same_v<T, Preference::AppPickerData>)
+          return QStringLiteral("apppicker");
         else if constexpr (std::is_same_v<T, Preference::ShortcutData>)
           return QStringLiteral("shortcut");
         else
@@ -113,6 +115,7 @@ static QVariantList dropdownOptions(const Preference &p) {
 static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChooseFiles,
                              bool &canChooseDirectories, QStringList &lockedPaths) {
   auto d = p.data();
+  if (auto *ap = std::get_if<Preference::AppPickerData>(&d)) { multiple = ap->multiple; }
   if (auto *fp = std::get_if<Preference::FilePickerData>(&d)) {
     multiple = fp->multiple;
     canChooseFiles = true;
@@ -127,12 +130,14 @@ static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChoos
   }
 }
 
-static bool isFilePickerType(const Preference &p) {
-  return std::holds_alternative<Preference::FilePickerData>(p.data()) ||
-         std::holds_alternative<Preference::DirectoryPickerData>(p.data());
+static bool isMultiValueType(const Preference &p) {
+  auto d = p.data();
+  if (auto *ap = std::get_if<Preference::AppPickerData>(&d)) return ap->multiple;
+  return std::holds_alternative<Preference::FilePickerData>(d) ||
+         std::holds_alternative<Preference::DirectoryPickerData>(d);
 }
 
-static QJsonValue normalizeFilePickerValue(const QJsonValue &v) {
+static QJsonValue normalizeListValue(const QJsonValue &v) {
   if (v.isArray()) return v;
   if (v.isString()) {
     auto s = v.toString();
@@ -155,9 +160,14 @@ QVariant PreferenceFormModel::currentDropdownItem(const Field &f) {
 
 void PreferenceFormModel::clearFields() {
   for (const auto &f : m_fields) {
-    if (f.dropdownModel) f.dropdownModel->deleteLater();
+    if (f.dropdownModel && f.dropdownModel != appModel()) f.dropdownModel->deleteLater();
   }
   m_fields.clear();
+}
+
+CompletionModel *PreferenceFormModel::appModel() {
+  if (!m_appModel) m_appModel = new AppSelectorModel(this);
+  return m_appModel->model();
 }
 
 PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pref) {
@@ -173,12 +183,14 @@ PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pr
   if (auto options = dropdownOptions(pref); !options.isEmpty()) {
     f.dropdownModel = new CompletionModel(this);
     f.dropdownModel->setItems(options);
+  } else if (std::holds_alternative<Preference::AppPickerData>(pref.data())) {
+    f.dropdownModel = appModel();
   }
 
   applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);
 
   QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
-  if (isFilePickerType(pref)) raw = normalizeFilePickerValue(raw);
+  if (isMultiValueType(pref)) raw = normalizeListValue(raw);
   f.value = raw.toVariant();
 
   return f;

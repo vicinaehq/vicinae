@@ -9,6 +9,12 @@
 class AbstractApplication;
 class AppService;
 
+struct AppSelectorOptions {
+  bool openersOnly = false;
+  bool includeDefaultBrowser = false;
+  bool includeActions = false;
+};
+
 class AppSelectorModel : public QObject {
   Q_OBJECT
   QML_ANONYMOUS
@@ -16,7 +22,12 @@ class AppSelectorModel : public QObject {
   Q_PROPERTY(QVariantMap currentItem READ currentItem NOTIFY currentItemChanged)
 
 public:
-  explicit AppSelectorModel(QObject *parent = nullptr);
+  using Options = AppSelectorOptions;
+
+  static constexpr Options OPENER_OPTIONS{
+      .openersOnly = true, .includeDefaultBrowser = true, .includeActions = true};
+
+  explicit AppSelectorModel(QObject *parent = nullptr, const Options &options = {});
 
   CompletionModel *model() { return &m_model; }
   QVariantMap currentItem() const { return m_currentItem; }
@@ -33,6 +44,7 @@ private:
   void buildItems();
 
   AppService *m_appDb = nullptr;
+  Options m_options;
   CompletionModel m_model{this};
   QVariantMap m_currentItem;
   QVariantMap m_defaultEntry;

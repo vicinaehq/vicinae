@@ -35,7 +35,7 @@ void ShortcutFormViewHost::initialize() {
   BaseView::initialize();
 
   m_service = context()->services->shortcuts();
-  m_appSelectorModel = new AppSelectorModel(this);
+  m_appSelectorModel = new AppSelectorModel(this, AppSelectorModel::OPENER_OPTIONS);
 
   buildIconItems();
   buildLinkCompletions();
