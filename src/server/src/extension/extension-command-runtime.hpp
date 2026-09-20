@@ -32,7 +32,7 @@ class ExtensionLogger : public tsapi::AbstractLogger {
 
 class ExtensionCommandRuntime : public CommandContext {
   void initialize();
-  QJsonObject resolveAppPreferences(QJsonObject values) const;
+  QJsonObject resolvePreferenceValues(QJsonObject values) const;
 
 public:
   void load(const LaunchProps &props) override;

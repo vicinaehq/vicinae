@@ -69,8 +69,8 @@ void ExtensionCommandRuntime::initialize() {
   m_server->setParent(this);
 }
 
-// stored as app ids, but extensions expect the `Application` shape of the applications API
-QJsonObject ExtensionCommandRuntime::resolveAppPreferences(QJsonObject values) const {
+// app pickers are stored as app ids, but extensions expect the `Application` shape of the applications API
+QJsonObject ExtensionCommandRuntime::resolvePreferenceValues(QJsonObject values) const {
   auto *appDb = context()->services->appDb();
   auto *rootItemManager = context()->services->rootItemManager();
 
@@ -108,7 +108,8 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   initialize();
 
   auto rootItemManager = context()->services->rootItemManager();
-  auto preferenceValues = resolveAppPreferences(rootItemManager->getPreferenceValues(m_command->uniqueId()));
+  auto preferenceValues =
+      resolvePreferenceValues(rootItemManager->getPreferenceValues(m_command->uniqueId()));
   auto manager = context()->services->extensionManager();
   manager::LoadOptions opts;
 
