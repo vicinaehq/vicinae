@@ -1,6 +1,5 @@
 #include "ai-extension.hpp"
 #include <algorithm>
-#include "builtins/ai/ai-model-selector-utils.hpp"
 #include "builtins/ai/quick-ai-view-host.hpp"
 #include "command/command-controller.hpp"
 #include "common/context.hpp"
@@ -18,29 +17,7 @@ const auto SELECT_MODEL_ICON = ImageURL::builtin(BuiltinIcon::Stars)
 
 } // namespace
 
-std::vector<Preference> QuickAICommand::preferences() const {
-  using namespace QuickAI;
-
-  auto sections = buildModelDropdownSections(ServiceRegistry::instance()->ai(), AI::Capability::Completion);
-  sections.insert(sections.begin(),
-                  Preference::DropdownData::Section{.options = {Preference::DropdownData::Option{
-                                                        .title = tr("None"),
-                                                        .value = qs(NO_MODEL),
-                                                    }}});
-
-  auto model = Preference::makeDropdown(qs(MODEL_PREFERENCE), std::move(sections));
-  model.setTitle(tr("Model"));
-  model.setDescription(tr("Model used to answer your questions. Any provider set up in the AI settings can "
-                          "be used."));
-  model.setDefaultValue(qs(NO_MODEL));
-  model.setRequired(false);
-
-  return {model};
-}
-
-void QuickAICommand::execute(CommandController &controller) const {
-  using namespace QuickAI;
-
+void QuickAICommand::execute(const Controller &controller) const {
   auto *ctx = controller.context();
   const auto models = ctx->services->ai()->listModels(AI::Capability::Completion);
 
@@ -55,8 +32,7 @@ void QuickAICommand::execute(CommandController &controller) const {
     return;
   }
 
-  const auto selected = controller.preferenceValues().value(qs(MODEL_PREFERENCE)).toString();
-  const auto ref = AI::ModelRef::fromString(selected.toStdString());
+  const auto ref = AI::ModelRef::fromString(controller.preferences().model);
   const bool available = ref && std::ranges::any_of(models, [&](const AI::ProviderModel &model) {
                            return model.ref.provider == ref->provider && model.ref.id == ref->id;
                          });

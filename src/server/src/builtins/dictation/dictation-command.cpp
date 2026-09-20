@@ -5,7 +5,6 @@
 #include <optional>
 #include <qlogging.h>
 #include <string_view>
-#include <QJsonObject>
 #include "builtins/dictation/dictation-session.hpp"
 #include "builtins/dictation/transcribe-view-host.hpp"
 #include "common/context.hpp"
@@ -13,8 +12,8 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/paste/paste-service.hpp"
 #include "services/permissions/macos-permission-service.hpp"
-#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "utils/environment.hpp"
 #include "ui/views/intro-view-host.hpp"
@@ -38,23 +37,13 @@ struct Status {
   AI::TranscriptionOptions options;
 };
 
-std::optional<std::string> configuredLanguage(const QJsonObject &values) {
-  const auto language = values.value(Dictation::qs(Dictation::LANGUAGE_PREFERENCE)).toString();
-  if (language.isEmpty() || language == Dictation::qs(Dictation::AUTO_LANGUAGE)) return std::nullopt;
-  return language.toStdString();
-}
-
-Status status(const ApplicationContext *ctx) {
+Status status(const ApplicationContext *ctx, const DictationPreferences &preferences) {
   auto models = ctx->services->ai()->listModels(AI::Capability::Transcription);
   if (models.empty()) return {.readiness = Readiness::NoModels};
 
-  const auto values =
-      ctx->services->rootItemManager()->getProviderPreferenceValues(Dictation::qs(Dictation::REPOSITORY_ID));
-  const auto selected = values.value(Dictation::qs(Dictation::MODEL_PREFERENCE)).toString();
-  if (selected.isEmpty() || selected == Dictation::qs(Dictation::NO_MODEL))
-    return {.readiness = Readiness::NotSelected};
+  if (preferences.model == Dictation::NO_MODEL) return {.readiness = Readiness::NotSelected};
 
-  const auto ref = AI::ModelRef::fromString(selected.toStdString());
+  const auto ref = AI::ModelRef::fromString(preferences.model);
   if (!ref) return {.readiness = Readiness::NotSelected};
 
   auto it = std::ranges::find_if(models, [&](const AI::ProviderModel &model) {
@@ -62,9 +51,11 @@ Status status(const ApplicationContext *ctx) {
   });
   if (it == models.end()) return {.readiness = Readiness::NotSelected};
 
-  return {.readiness = Readiness::Ready,
-          .model = std::move(*it),
-          .options = {.language = configuredLanguage(values)}};
+  std::optional<std::string> language;
+  if (preferences.language != Dictation::AUTO_LANGUAGE) language = preferences.language;
+
+  return {
+      .readiness = Readiness::Ready, .model = std::move(*it), .options = {.language = std::move(language)}};
 }
 
 void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
@@ -122,13 +113,15 @@ void TranscribeCommand::shortcutReleased() const {
   active->accept();
 }
 
-void TranscribeCommand::execute(CommandController &controller) const {
+void TranscribeCommand::execute(const Controller &controller) const {
   auto *ctx = controller.context();
-  auto status = ::status(ctx);
-  const bool playSoundEffects = controller.preferenceValues().value("sound").toBool(true);
-  const bool pauseMedia = controller.preferenceValues().value("pauseMedia").toBool(true);
-  auto action = Dictation::dictationActionFromString(
-      controller.preferenceValues().value("dictationAction").toString().toStdString());
+  const auto &prefs = controller.repositoryPreferences();
+  auto status = ::status(ctx, prefs);
+  const bool playSoundEffects = prefs.sound;
+  const bool pauseMedia = prefs.pauseMedia;
+  const auto action = ctx->services->pasteService()->supportsPaste()
+                          ? prefs.dictationAction
+                          : Dictation::DictationAction::CopyToClipboard;
 
   switch (status.readiness) {
   case Readiness::Ready:
