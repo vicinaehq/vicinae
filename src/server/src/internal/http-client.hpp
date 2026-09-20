@@ -9,6 +9,7 @@
 #include <QNetworkDiskCache>
 #include <glaze/json/prettify.hpp>
 #include <iostream>
+#include <map>
 #include <qbitarray.h>
 #include <qbytearrayview.h>
 #include <qcontainerfwd.h>
@@ -196,9 +197,18 @@ public:
     return QUrl(m_baseUrl.value() + path);
   }
 
-  void setBearer(QString bearer) { m_bearer = std::move(bearer); }
+  void setBearer(QString bearer) {
+    if (bearer.isEmpty()) {
+      m_bearer.reset();
+    } else {
+      m_bearer = std::move(bearer);
+    }
+  }
   void setBaseUrl(QString url) { m_baseUrl = std::move(url); }
   void setUserAgent(QString agent) { m_userAgent = std::move(agent); }
+  void setHeader(QByteArray name, QByteArray value) {
+    m_headers.insert_or_assign(std::move(name), std::move(value));
+  }
 
   template <glz::has_reflect T> QFuture<Result<T>> get(const QString &url, const RequestOptions &opts = {}) {
     auto req = createRequest(url, opts);
@@ -304,6 +314,9 @@ private:
 
     req.setUrl(makeUrl(path));
     if (m_bearer) { req.setRawHeader("Authorization", QString("Bearer %1").arg(m_bearer.value()).toUtf8()); }
+    for (const auto &[name, value] : m_headers) {
+      req.setRawHeader(name, value);
+    }
 
     req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, opts.cachePolicy);
     req.setAttribute(QNetworkRequest::Http2AllowedAttribute, opts.allowHttp2);
@@ -350,6 +363,7 @@ private:
   std::optional<QString> m_baseUrl;
   std::optional<QString> m_bearer;
   std::optional<QString> m_userAgent;
+  std::map<QByteArray, QByteArray> m_headers;
 };
 
 } // namespace http

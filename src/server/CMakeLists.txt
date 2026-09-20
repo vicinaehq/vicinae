@@ -618,6 +618,15 @@ set(SRCS
 	src/services/ai/ollama/ollama-ai-provider.cpp
 	src/services/ai/mistral/mistral-provider.hpp
 	src/services/ai/mistral/mistral-provider.cpp
+	src/services/ai/openai/openai-chat-completion.hpp
+	src/services/ai/openai/openai-compatible-provider.hpp
+	src/services/ai/openai/openai-compatible-provider.cpp
+	src/services/ai/openai/openai-provider.hpp
+	src/services/ai/openai/openai-provider.cpp
+	src/services/ai/groq/groq-provider.hpp
+	src/services/ai/groq/groq-provider.cpp
+	src/services/ai/openrouter/openrouter-provider.hpp
+	src/services/ai/openrouter/openrouter-provider.cpp
 	src/services/local-model-registry/local-model-catalogue.hpp
 	src/services/local-model-registry/model-download.hpp
 	src/services/local-model-registry/model-download.cpp

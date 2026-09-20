@@ -6,7 +6,6 @@
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
 #include <glaze/json/generic.hpp>
-#include <glaze/json/prettify.hpp>
 #include <optional>
 #include <qdir.h>
 #include <qfuture.h>
@@ -17,10 +16,10 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 #include "common/context.hpp"
 #include "common/qt.hpp"
-#include "http-client.hpp"
 #include "services/audio/audio-recorder.hpp"
 #include "ui/image/image-url.hpp"
 
@@ -94,21 +93,76 @@ struct ListModelFilters {
   std::optional<int> limit;
 };
 
+enum class ChatRole { System, User, Assistant, Tool, Developer };
+
+constexpr std::string_view roleName(ChatRole role) {
+  switch (role) {
+  case ChatRole::System:
+    return "system";
+  case ChatRole::User:
+    return "user";
+  case ChatRole::Assistant:
+    return "assistant";
+  case ChatRole::Tool:
+    return "tool";
+  case ChatRole::Developer:
+    return "developer";
+  }
+  return "user";
+}
+
+struct TextPart {
+  std::string text;
+};
+
+struct ImagePart {
+  std::string mimeType;
+  std::string base64;
+};
+
+struct ToolCallPart {
+  std::string id;
+  std::string name;
+  std::string arguments;
+};
+
+struct ToolResultPart {
+  std::string callId;
+  std::string content;
+};
+
+using ChatPart = std::variant<TextPart, ImagePart, ToolCallPart, ToolResultPart>;
+
+/**
+ * Tool calls live on assistant messages and their results on tool messages, paired by call id, so a
+ * history can be replayed on any provider.
+ */
+struct ChatMessage {
+  ChatRole role;
+  std::vector<ChatPart> parts;
+
+  static ChatMessage fromText(ChatRole role, std::string text) {
+    ChatMessage message{.role = role};
+    message.parts.emplace_back(TextPart{std::move(text)});
+    return message;
+  }
+
+  std::string text() const {
+    std::string result;
+    for (const auto &part : parts) {
+      if (const auto *text = std::get_if<TextPart>(&part)) result += text->text;
+    }
+    return result;
+  }
+};
+
+using ChatHistory = std::vector<ChatMessage>;
+
 class AbstractChatCompletionStream : public QObject {
   Q_OBJECT
 
-public:
-  struct ToolCallRequest {
-    std::string id;
-    std::string type;
-    struct {
-      std::string name;
-      glz::raw_json arguments;
-    } function;
-  };
-
 signals:
-  void toolCallRequested(const ToolCallRequest &request) const;
+  void toolCallRequested(const ToolCallPart &call) const;
   void dataAdded(const std::string &text) const;
   void errorOccured(const std::string &reason) const;
   void finished() const;
@@ -126,15 +180,6 @@ protected:
 private:
   Model m_model;
 };
-
-enum class ChatRole { System, User, Assistant, Tool, Developer };
-
-struct ChatMessage {
-  ChatRole role;
-  std::string value;
-};
-
-using ChatHistory = std::vector<ChatMessage>;
 
 enum class ThinkingMode { None, Low, Medium, High };
 
@@ -315,145 +360,6 @@ public:
 
   virtual QFuture<TranscriptionResult> transcribe(Audio::Recording recording,
                                                   const TranscriptionOptions &opts = {}) = 0;
-};
-
-struct StandardChatCompletionPayload {
-  std::string model;
-  AI::ChatHistory messages;
-  std::vector<AbstractTool *> tools;
-};
-
-struct StandardChatCompletionRawPayload {
-  struct Message {
-    std::string role;
-    std::string content;
-
-    static std::string_view stringifyRole(AI::ChatRole role) {
-      switch (role) {
-      case AI::ChatRole::Assistant:
-        return "assistant";
-      case AI::ChatRole::System:
-        return "system";
-      case AI::ChatRole::User:
-        return "user";
-      case AI::ChatRole::Developer:
-        return "developer";
-      case AI::ChatRole::Tool:
-        return "tool";
-      }
-    }
-
-    static Message fromMessage(const AI::ChatMessage &message) {
-      return Message(std::string{stringifyRole(message.role)}, message.value);
-    }
-  };
-
-  static StandardChatCompletionRawPayload fromTypedPayload(const StandardChatCompletionPayload &payload) {
-    StandardChatCompletionRawPayload raw{};
-
-    raw.model = payload.model;
-    raw.messages.reserve(payload.messages.size());
-    raw.tools = payload.tools | std::views::transform([](AbstractTool *tool) { return tool->toolSchema(); }) |
-                std::ranges::to<std::vector>();
-
-    for (const auto &p : payload.messages) {
-      raw.messages.emplace_back(StandardChatCompletionRawPayload::Message::fromMessage(p));
-    }
-    return raw;
-  }
-
-  std::string model;
-  std::vector<Message> messages;
-  std::vector<AbstractTool::ToolSchema> tools;
-  bool stream = true;
-};
-
-struct StandardChatCompletionStreamChunk {
-  struct ToolCall {
-    std::string id;
-    struct {
-      std::string name;
-      std::string arguments;
-    } function;
-    int index;
-  };
-
-  struct Choice {
-    int index;
-    struct {
-      std::optional<std::string> role;
-      std::optional<std::string> content;
-      std::optional<std::vector<ToolCall>> tool_calls;
-    } delta;
-    std::optional<std::string> finish_reason;
-  };
-
-  std::string id;
-  std::string object;
-  std::int64_t created;
-  std::string model;
-  std::vector<Choice> choices;
-};
-
-class StandardChatCompletionStream : public AbstractChatCompletionStream {
-public:
-  static std::shared_ptr<StandardChatCompletionStream>
-  makeShared(http::Client client, const StandardChatCompletionPayload &payload) {
-    return std::shared_ptr<StandardChatCompletionStream>(
-        new StandardChatCompletionStream(std::move(client), payload), QObjectDeleter{});
-  }
-
-  StandardChatCompletionStream(http::Client client, const StandardChatCompletionPayload &payload)
-      : m_client(std::move(client)), m_payload(StandardChatCompletionRawPayload::fromTypedPayload(payload)) {}
-
-  bool start() override {
-    m_eventSource = m_client.postEventSource<StandardChatCompletionRawPayload>("chat/completions", m_payload);
-    m_eventSource->setParent(this);
-    connect(m_eventSource, &http::EventSource::dataReceived, this, &StandardChatCompletionStream::handleData);
-    connect(m_eventSource, &http::EventSource::finished, this, &StandardChatCompletionStream::finished);
-    connect(m_eventSource, &http::EventSource::errorOccured,
-            [this](const QString &reason) { emit errorOccured(reason.toStdString()); });
-    return true;
-  }
-
-  bool abort() override {
-    if (m_eventSource) m_eventSource->abort();
-    return true;
-  }
-
-private:
-  void handleData(const QString &event, QByteArrayView data) {
-    StandardChatCompletionStreamChunk chunk;
-
-    if (data == "[DONE]") return;
-
-    if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(chunk, data.constData())) {
-      qDebug() << "Failed to parse chat completion chunk" << glz::format_error(error);
-      emit errorOccured(glz::format_error(error));
-      return;
-    }
-
-    std::cout << glz::prettify_json(data.toByteArray().toStdString()) << std::endl;
-
-    if (!chunk.choices.empty()) {
-      auto &choice = chunk.choices.at(0);
-
-      if (choice.finish_reason == "tool_calls" && choice.delta.tool_calls &&
-          !choice.delta.tool_calls->empty()) {
-        auto &call = choice.delta.tool_calls->at(0);
-        emit toolCallRequested(
-            ToolCallRequest{.id = call.id,
-                            .type = "function",
-                            .function = {.name = call.function.name, .arguments = call.function.arguments}});
-      } else if (choice.delta.content) {
-        emit dataAdded(choice.delta.content.value());
-      }
-    }
-  }
-
-  http::Client m_client;
-  StandardChatCompletionRawPayload m_payload;
-  http::EventSource *m_eventSource = nullptr;
 };
 
 }; // namespace AI

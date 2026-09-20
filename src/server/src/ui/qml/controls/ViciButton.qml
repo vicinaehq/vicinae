@@ -10,7 +10,7 @@ Rectangle {
     property string accessibleName: ""
     property string variant: "ghost"
     property bool bordered: false
-    property color foreground: root.variant === "accent" ? Theme.listItemSelectionFg : Theme.foreground
+    property color foreground: root.variant === "accent" ? root._onAccent : Theme.foreground
     property real iconSize: 16
     property real horizontalPadding: 12
     property bool showFocus: activeFocus
@@ -32,6 +32,7 @@ Rectangle {
     radius: 6
 
     readonly property bool _raised: root.hovered || root.showFocus
+    readonly property color _onAccent: (0.299 * Theme.accent.r + 0.587 * Theme.accent.g + 0.114 * Theme.accent.b) > 0.6 ? "#111111" : "#ffffff"
 
     color: {
         switch (root.variant) {
@@ -54,7 +55,7 @@ Rectangle {
         if (root.showFocus) {
             if (root.variant === "tinted")
                 return Config.withAlpha(root.foreground, 0.6);
-            return Config.withAlpha(root.variant === "accent" ? Theme.listItemSelectionFg : Theme.buttonFocusOutline, Config.windowOpacity);
+            return Config.withAlpha(root.variant === "accent" ? root.foreground : Theme.buttonFocusOutline, Config.windowOpacity);
         }
         if (!root.bordered)
             return "transparent";
