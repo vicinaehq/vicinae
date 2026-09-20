@@ -1,5 +1,6 @@
 #include "ai-service.hpp"
 #include <memory>
+#include <utility>
 #include <glaze/json/write.hpp>
 #include <qstring.h>
 #include "internal/glaze-qt.hpp"
@@ -31,11 +32,7 @@ std::string serialize(const ProviderInstance &instance) {
 }
 } // namespace
 
-Service::Service(config::Manager &config, LocalStorageService &storage)
-    : m_config(config), m_storage(storage) {
-  connect(&m_config, &config::Manager::configChanged, this, &Service::reconcile);
-  reconcile(m_config.value(), {});
-}
+Service::Service(LocalStorageService &storage) : m_storage(storage) {}
 
 QString Service::secretScope(std::string_view providerId) {
   return QStringLiteral("ai:%1").arg(qs(providerId));
@@ -55,19 +52,12 @@ void Service::reconfigure(std::string_view id) {
   if (provider) provider->configure(resolveFields(id, *provider));
 }
 
-AiPreferences Service::preferences(const config::ConfigValue &config) const {
-  return readPreferences<AiPreferences>(
-      config.providerPreferences(EXTENSION_ID).value_or(PreferenceValues{}));
-}
-
 PreferenceValues Service::resolveFields(std::string_view id, const AbstractProvider &provider) const {
   const auto *info = findProviderType(provider.type());
   if (!info) return {};
 
   PreferenceValues values;
-  const auto prefs = preferences(m_config.value());
-  if (auto it = prefs.providers.find(std::string(id)); it != prefs.providers.end())
-    values = it->second.fields;
+  if (auto it = m_instances.find(std::string(id)); it != m_instances.end()) values = it->second.fields;
 
   for (const ::Preference &pref : info->fields()) {
     const auto key = pref.name().toStdString();
@@ -95,19 +85,18 @@ void Service::instantiate(const std::string &id, std::string_view type) {
   raw->start();
 }
 
-void Service::reconcile(const config::ConfigValue &current, const config::ConfigValue &previous) {
-  const auto next = preferences(current).providers;
-  const auto prev = preferences(previous).providers;
+void Service::setProviders(std::map<std::string, ProviderInstance> providers) {
+  const auto previous = std::exchange(m_instances, std::move(providers));
 
   std::erase_if(m_providers, [&](const auto &entry) {
     const auto &[id, provider] = entry;
-    return !isBuiltin(provider->type()) && !next.contains(id);
+    return !isBuiltin(provider->type()) && !m_instances.contains(id);
   });
 
-  for (const auto &[id, instance] : next) {
+  for (const auto &[id, instance] : m_instances) {
     if (auto it = m_providers.find(id); it != m_providers.end()) {
-      auto oldIt = prev.find(id);
-      if (oldIt == prev.end() || serialize(oldIt->second) != serialize(instance)) {
+      auto oldIt = previous.find(id);
+      if (oldIt == previous.end() || serialize(oldIt->second) != serialize(instance)) {
         it->second->configure(resolveFields(id, *it->second));
       }
       continue;

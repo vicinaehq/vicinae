@@ -51,3 +51,7 @@ void QuickAICommand::execute(const Controller &controller) const {
   const auto query = controller.launchProps().fallbackText.value_or(QString());
   ctx->navigation->pushView(new QuickAIViewHost(query, *ref));
 }
+
+void AiExtension::preferencesChanged(const AiPreferences &preferences) const {
+  ServiceRegistry::instance()->ai()->setProviders(preferences.providers);
+}
