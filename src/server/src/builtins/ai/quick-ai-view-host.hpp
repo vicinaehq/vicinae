@@ -5,6 +5,7 @@
 #include "services/ai/ai-provider.hpp"
 #include "ui/image/url.hpp"
 #include "vicinae.hpp"
+#include <QTimer>
 #include <QVariantList>
 #include <QVariantMap>
 #include <memory>
@@ -14,6 +15,8 @@
 namespace AI {
 class Service;
 };
+class DictationService;
+class TranscriptionSession;
 
 class QuickAIViewHost : public ViewHostBase {
   Q_OBJECT
@@ -29,9 +32,19 @@ class QuickAIViewHost : public ViewHostBase {
   Q_PROPERTY(QVariantList modelSelectorItems READ modelSelectorItems NOTIFY modelSelectorItemsChanged)
   Q_PROPERTY(QVariantMap modelSelectorCurrentItem READ modelSelectorCurrentItem NOTIFY
                  modelSelectorCurrentItemChanged)
+  Q_PROPERTY(bool dictationAvailable READ dictationAvailable NOTIFY dictationAvailableChanged)
+  Q_PROPERTY(bool recording READ recording NOTIFY dictationStateChanged)
+  Q_PROPERTY(bool transcribing READ transcribing NOTIFY dictationStateChanged)
+  Q_PROPERTY(QString recordingTime READ recordingTime NOTIFY recordingTimeChanged)
+  Q_PROPERTY(QString dictationMessage READ dictationMessage NOTIFY dictationMessageChanged)
 
 signals:
   void exchangesChanged();
+  void dictationAvailableChanged();
+  void dictationStateChanged();
+  void recordingTimeChanged();
+  void dictationMessageChanged();
+  void dictated(const QString &text);
   void streamingChanged();
   void streamingContentChanged();
   void modelChanged();
@@ -63,16 +76,32 @@ public:
   QVariantList modelSelectorItems() const { return m_modelSelectorItems; }
   QVariantMap modelSelectorCurrentItem() const { return m_modelSelectorCurrentItem; }
 
+  bool dictationAvailable() const { return m_dictationAvailable; }
+  bool recording() const;
+  bool transcribing() const;
+  QString recordingTime() const;
+  QString dictationMessage() const { return m_dictationMessage; }
+
   Q_INVOKABLE void send(const QString &text);
   Q_INVOKABLE void cancel();
   Q_INVOKABLE void selectModel(const QString &compositeId);
+  Q_INVOKABLE void toggleDictation();
+  Q_INVOKABLE void cancelDictation();
 
 private:
   void sendQuery(const std::string &query);
   void failQuery(const std::string &reason);
   void rebuildModelSelectorItems();
+  void updateDictationAvailable();
+  void startDictation();
+  void showDictationMessage(const QString &message);
 
   AI::Service *m_aiService = nullptr;
+  DictationService *m_dictationService = nullptr;
+  TranscriptionSession *m_dictation = nullptr;
+  QTimer m_dictationMessageTimer;
+  bool m_dictationAvailable = false;
+  QString m_dictationMessage;
   std::shared_ptr<AI::AbstractChatCompletionStream> m_stream;
   AI::ChatHistory m_history;
   QVariantList m_exchanges;

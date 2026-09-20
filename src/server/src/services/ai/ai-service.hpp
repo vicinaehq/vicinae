@@ -13,7 +13,6 @@
 #include "ai-preferences.hpp"
 #include "ai-provider.hpp"
 #include "common/types.hpp"
-#include "config/config.hpp"
 #include "services/audio/audio-recorder.hpp"
 
 class LocalStorageService;
@@ -28,12 +27,13 @@ signals:
   void managedModelsChanged() const;
 
 public:
-  Service(config::Manager &config, LocalStorageService &storage);
+  explicit Service(LocalStorageService &storage);
   ~Service() override = default;
 
   static QString secretScope(std::string_view providerId);
 
   void addProvider(std::unique_ptr<AbstractProvider> provider);
+  void setProviders(std::map<std::string, ProviderInstance> providers);
 
   // secrets live outside the config file, so their edits are pushed explicitly
   void reconfigure(std::string_view id);
@@ -163,13 +163,11 @@ private:
   }
 
   static std::unique_ptr<AbstractProvider> createProvider(const std::string &id, std::string_view type);
-  AiPreferences preferences(const config::ConfigValue &config) const;
   PreferenceValues resolveFields(std::string_view id, const AbstractProvider &provider) const;
   void instantiate(const std::string &id, std::string_view type);
-  void reconcile(const config::ConfigValue &current, const config::ConfigValue &previous);
 
-  config::Manager &m_config;
   LocalStorageService &m_storage;
+  std::map<std::string, ProviderInstance> m_instances;
   std::unordered_map<std::string, std::unique_ptr<AI::AbstractProvider>> m_providers;
 
   mutable std::shared_ptr<AbstractChatCompletionStream> m_currentCompletion;

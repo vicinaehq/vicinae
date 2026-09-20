@@ -402,11 +402,12 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setUpdateService(
         std::make_unique<UpdateService>(*registry->toastService(), std::move(updateInstaller)));
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
-    auto ai = std::make_unique<AI::Service>(*registry->config(), *registry->localStorage());
+    auto ai = std::make_unique<AI::Service>(*registry->localStorage());
     auto localModels = std::make_unique<LocalModelRegistry>();
     ai->addProvider(std::make_unique<AI::LocalProvider>(*localModels));
     registry->setLocalModels(std::move(localModels));
-    registry->setDictation(std::make_unique<DictationService>(Omnicast::dataDir()));
+    registry->setDictation(
+        std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl()));
     registry->setAI(std::move(ai));
 
     auto root = registry->rootItemManager();

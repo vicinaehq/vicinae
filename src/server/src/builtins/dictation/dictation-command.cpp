@@ -11,7 +11,7 @@
 #include "common/entrypoint.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
-#include "services/ai/ai-service.hpp"
+#include "services/dictation/dictation-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/permissions/macos-permission-service.hpp"
 #include "ui/settings/settings-controller.hpp"
@@ -29,40 +29,10 @@ constexpr qint64 HOLD_THRESHOLD_MS = 300;
 
 QPointer<DictationSession> active;
 
-enum class Readiness { NoModels, NotSelected, Ready };
-
-struct Status {
-  Readiness readiness;
-  std::optional<AI::ProviderModel> model;
-  AI::TranscriptionOptions options;
-};
-
-Status status(const ApplicationContext *ctx, const DictationPreferences &preferences) {
-  auto models = ctx->services->ai()->listModels(AI::Capability::Transcription);
-  if (models.empty()) return {.readiness = Readiness::NoModels};
-
-  if (preferences.model == Dictation::NO_MODEL) return {.readiness = Readiness::NotSelected};
-
-  const auto ref = AI::ModelRef::fromString(preferences.model);
-  if (!ref) return {.readiness = Readiness::NotSelected};
-
-  auto it = std::ranges::find_if(models, [&](const AI::ProviderModel &model) {
-    return model.ref.provider == ref->provider && model.ref.id == ref->id;
-  });
-  if (it == models.end()) return {.readiness = Readiness::NotSelected};
-
-  std::optional<std::string> language;
-  if (preferences.language != Dictation::AUTO_LANGUAGE) language = preferences.language;
-
-  return {
-      .readiness = Readiness::Ready, .model = std::move(*it), .options = {.language = std::move(language)}};
-}
-
-void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
-                    const AI::TranscriptionOptions &options, bool playSoundEffects, bool pauseMedia,
+void startDictation(const ApplicationContext *ctx, const TranscriptionSetup &setup,
                     Dictation::DictationAction action, bool recordHistory) {
   if (Environment::isHudDisabled()) {
-    ctx->navigation->pushView(new TranscribeViewHost(model, options, recordHistory));
+    ctx->navigation->pushView(new TranscribeViewHost(setup.model, setup.options, recordHistory));
     return;
   }
 
@@ -73,8 +43,7 @@ void startDictation(const ApplicationContext *ctx, const AI::ModelRef &model,
     return;
   }
 
-  active = new DictationSession(ctx, model, options, playSoundEffects, pauseMedia, action, recordHistory,
-                                ctx->navigation.get());
+  active = new DictationSession(ctx, setup, action, recordHistory, ctx->navigation.get());
   active->start();
 }
 
@@ -115,22 +84,18 @@ void TranscribeCommand::shortcutReleased() const {
 
 void TranscribeCommand::execute(const Controller &controller) const {
   auto *ctx = controller.context();
-  const auto &prefs = controller.repositoryPreferences();
-  auto status = ::status(ctx, prefs);
-  const bool playSoundEffects = prefs.sound;
-  const bool pauseMedia = prefs.pauseMedia;
+  auto *dictation = ctx->services->dictation();
   const auto action = ctx->services->pasteService()->supportsPaste()
-                          ? prefs.dictationAction
+                          ? controller.repositoryPreferences().dictationAction
                           : Dictation::DictationAction::CopyToClipboard;
 
-  switch (status.readiness) {
-  case Readiness::Ready:
-    withMicrophoneAccess(ctx, [ctx, model = status.model->ref, options = status.options, playSoundEffects,
-                               pauseMedia, action]() {
-      startDictation(ctx, model, options, playSoundEffects, pauseMedia, action, /*recordHistory*/ true);
+  switch (dictation->readiness()) {
+  case DictationService::Readiness::Ready:
+    withMicrophoneAccess(ctx, [ctx, setup = *dictation->setup(), action]() {
+      startDictation(ctx, setup, action, /*recordHistory*/ true);
     });
     return;
-  case Readiness::NoModels:
+  case DictationService::Readiness::NoModels:
     ctx->navigation->pushView(
         new IntroViewHost(tr("Set up dictation"),
                           tr("Dictation needs a speech model before it can turn your voice into text. "
@@ -141,7 +106,7 @@ void TranscribeCommand::execute(const Controller &controller) const {
                             ctx->navigation->closeWindow();
                           }));
     return;
-  case Readiness::NotSelected: {
+  case DictationService::Readiness::NotSelected: {
     auto *intro = new IntroViewHost(tr("Choose a transcription model"),
                                     tr("Pick the model dictation should use from the dictation settings. "
                                        "You can change it at any time."),

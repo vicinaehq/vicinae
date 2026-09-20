@@ -33,6 +33,7 @@ class AiExtension : public TypedCommandRepository<AiPreferences> {
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::Atom).setBackgroundTint(SemanticColor::Purple);
   }
+  void preferencesChanged(const AiPreferences &preferences) const override;
 
 public:
   AiExtension() { registerCommand<QuickAICommand>(); }

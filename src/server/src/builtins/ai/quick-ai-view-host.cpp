@@ -2,8 +2,15 @@
 #include "ai-model-selector-utils.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/dictation/dictation-service.hpp"
+#include "services/dictation/transcription-session.hpp"
+#include "services/permissions/macos-permission-service.hpp"
 #include "ui/image/url.hpp"
 #include "view-utils.hpp"
+
+namespace {
+constexpr int DICTATION_MESSAGE_MS = 2500;
+}
 
 QuickAIViewHost::QuickAIViewHost(QString initialQuery, AI::ModelRef model)
     : m_initialQuery(std::move(initialQuery)), m_selectedModel(std::move(model)) {}
@@ -26,6 +33,84 @@ void QuickAIViewHost::initialize() {
 
   connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::rebuildModelSelectorItems);
   rebuildModelSelectorItems();
+
+  m_dictationService = ServiceRegistry::instance()->dictation();
+  m_dictation = new TranscriptionSession(*m_dictationService, this);
+  connect(m_dictation, &TranscriptionSession::stateChanged, this, &QuickAIViewHost::dictationStateChanged);
+  connect(m_dictation, &TranscriptionSession::elapsedTimeChanged, this,
+          &QuickAIViewHost::recordingTimeChanged);
+  connect(m_dictation, &TranscriptionSession::transcribed, this,
+          [this](const Transcript &transcript) { emit dictated(transcript.text); });
+  connect(m_dictation, &TranscriptionSession::failed, this, &QuickAIViewHost::showDictationMessage);
+
+  m_dictationMessageTimer.setSingleShot(true);
+  m_dictationMessageTimer.setInterval(DICTATION_MESSAGE_MS);
+  connect(&m_dictationMessageTimer, &QTimer::timeout, this, [this]() {
+    m_dictationMessage.clear();
+    emit dictationMessageChanged();
+  });
+
+  connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::updateDictationAvailable);
+  connect(m_dictationService, &DictationService::settingsChanged, this,
+          &QuickAIViewHost::updateDictationAvailable);
+  updateDictationAvailable();
+}
+
+bool QuickAIViewHost::recording() const { return m_dictation && m_dictation->isRecording(); }
+
+bool QuickAIViewHost::transcribing() const { return m_dictation && m_dictation->transcribing(); }
+
+QString QuickAIViewHost::recordingTime() const {
+  return m_dictation ? m_dictation->elapsedTime() : QString();
+}
+
+void QuickAIViewHost::updateDictationAvailable() {
+  const bool available = m_dictationService->setup().has_value();
+  if (available == m_dictationAvailable) return;
+  m_dictationAvailable = available;
+  emit dictationAvailableChanged();
+}
+
+void QuickAIViewHost::toggleDictation() {
+  if (!m_dictation || m_dictation->transcribing()) return;
+  if (m_dictation->isRecording()) {
+    m_dictation->accept();
+    return;
+  }
+
+  using vicinae::permissions::MicrophoneStatus;
+  switch (vicinae::permissions::microphoneStatus()) {
+  case MicrophoneStatus::Granted:
+    startDictation();
+    return;
+  case MicrophoneStatus::NotDetermined:
+    vicinae::permissions::requestMicrophone([this](bool granted) {
+      if (granted) startDictation();
+    });
+    return;
+  case MicrophoneStatus::Denied:
+    showDictationMessage(tr("Microphone access is turned off for Vicinae"));
+    return;
+  }
+}
+
+void QuickAIViewHost::cancelDictation() {
+  if (m_dictation) m_dictation->cancel();
+}
+
+void QuickAIViewHost::startDictation() {
+  const auto setup = m_dictationService->setup();
+  if (!setup) {
+    showDictationMessage(tr("No transcription model selected"));
+    return;
+  }
+  m_dictation->start(*setup);
+}
+
+void QuickAIViewHost::showDictationMessage(const QString &message) {
+  m_dictationMessage = message;
+  emit dictationMessageChanged();
+  m_dictationMessageTimer.start();
 }
 
 void QuickAIViewHost::loadInitialData() {
