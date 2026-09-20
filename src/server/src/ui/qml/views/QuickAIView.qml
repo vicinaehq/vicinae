@@ -203,6 +203,14 @@ Item {
         }
     }
 
+    EmptyView {
+        anchors.fill: viewport
+        visible: root.host.exchanges.length === 0 && !root.host.streaming
+        icon: Launcher.navigationIcon
+        title: qsTr("Ask anything")
+        description: qsTr("Answers use the model selected in the composer.")
+    }
+
     ChatComposer {
         id: composer
         anchors.left: parent.left
