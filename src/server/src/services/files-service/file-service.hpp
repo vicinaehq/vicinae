@@ -22,7 +22,7 @@ public:
   QFuture<std::vector<std::filesystem::path>> recentFilesAsync(const RecentFilesParams &params = {});
   void recordAccess(const std::filesystem::path &path);
 
-  void preferenceValuesChanged(const QJsonObject &preferences);
+  void preferencesChanged(const FilePreferences &preferences);
 
   FileService();
 

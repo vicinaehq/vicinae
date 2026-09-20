@@ -149,30 +149,12 @@ std::vector<fs::path> MacAppDatabase::searchPaths() const {
   return paths;
 }
 
-PreferenceList MacAppDatabase::preferences() const {
-  std::vector<QString> lockedPaths;
-  auto defaults = defaultSearchPaths();
-
-  lockedPaths.reserve(defaults.size());
-  for (const auto &path : defaults) {
-    lockedPaths.emplace_back(QString::fromStdString(path.string()));
-  }
-
-  auto paths = Preference::directories("paths", std::move(lockedPaths));
-  paths.setTitle(tr("Application directories"));
-  paths.setDescription(tr("Directories applications are sourced from. System directories are always "
-                          "scanned and cannot be removed."));
-
-  return {paths};
-}
-
-void MacAppDatabase::applyPreferences(const QJsonObject &preferences) {
+void MacAppDatabase::applyPreferences(const AppPreferences &preferences) {
   std::vector<fs::path> extra;
-  const auto arr = preferences.value("paths").toArray();
 
-  extra.reserve(arr.size());
-  for (const auto &entry : arr) {
-    if (auto path = entry.toString(); !path.isEmpty()) { extra.emplace_back(path.toStdString()); }
+  extra.reserve(preferences.paths.size());
+  for (const auto &path : preferences.paths) {
+    if (!path.empty()) extra.emplace_back(path);
   }
 
   if (extra == m_extraSearchPaths) return;

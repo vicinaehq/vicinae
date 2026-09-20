@@ -1,5 +1,6 @@
 #include "builtins/system/browse-apps-view-host.hpp"
 #include "builtins/system/browse-apps-model.hpp"
+#include "builtins/system/browse-apps-preferences.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 
@@ -16,9 +17,9 @@ void BrowseAppsViewHost::loadInitialData() { reload(); }
 
 void BrowseAppsViewHost::reload() {
   auto appDb = context()->services->appDb();
-  auto preferences = command()->preferenceValues();
-  AppListOptions const opts{.sortAlphabetically = preferences.value("sortAlphabetically").toBool()};
-  bool const showHidden = preferences.value("showHidden").toBool();
+  const auto preferences = command()->preferences<BrowseAppsPreferences>();
+  AppListOptions const opts{.sortAlphabetically = preferences.sortAlphabetically};
+  bool const showHidden = preferences.showHidden;
 
   auto apps = appDb->list(opts);
   std::vector<AppPtr> filtered;

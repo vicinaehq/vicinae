@@ -3,7 +3,6 @@
 #include "service-registry.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include <qjsonobject.h>
 
 CommandController::CommandController(ApplicationContext &ctx, const AbstractCmd &cmd,
                                      const LaunchProps &props)
@@ -17,11 +16,11 @@ ScopedLocalStorage CommandController::storage() const {
 
 const AbstractCmd &CommandController::info() const { return m_cmd; }
 
-QJsonObject CommandController::preferenceValues() const {
+PreferenceValues CommandController::preferenceValues() const {
   return m_ctx.services->rootItemManager()->getPreferenceValues(m_cmd.uniqueId());
 }
 
-void CommandController::setPreferenceValues(const QJsonObject &value) const {
+void CommandController::setPreferenceValues(const PreferenceValues &value) const {
   m_ctx.services->rootItemManager()->setPreferenceValues(m_cmd.uniqueId(), value);
 }
 

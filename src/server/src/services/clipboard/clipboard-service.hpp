@@ -11,14 +11,12 @@
 #include <expected>
 #include <filesystem>
 #include <optional>
-#include <QJsonObject>
 #include <qcontainerfwd.h>
 #include <qdir.h>
 #include <qfileinfo.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
 #include <qimage.h>
-#include <qjsonobject.h>
 #include <qmimedata.h>
 #include <qmimedatabase.h>
 #include <qstringview.h>
@@ -74,7 +72,6 @@ public:
                 const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyUrls(const std::vector<QUrl> &urls, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyContent(Clipboard::Content content, const Clipboard::CopyOptions &options = {.concealed = false});
-  void setRecordAllOffers(bool value);
   bool clear();
   void saveSelection(ClipboardSelection selection);
   ClipboardSelection retrieveSelection(int offset = 0);
@@ -146,7 +143,6 @@ private:
 
   void restoreClipboard();
 
-  bool m_recordAllOffers = true;
   bool m_monitoring = false;
   bool m_ignorePasswords = true;
   std::optional<ClipboardSelection> m_lastSelection;

@@ -2,6 +2,7 @@
 
 #include "ui/views/view-utils.hpp"
 #include <QJSValue>
+#include "internal/glaze-qt.hpp"
 #include <utility>
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -137,13 +138,10 @@ static bool isMultiValueType(const Preference &p) {
          std::holds_alternative<Preference::DirectoryPickerData>(d);
 }
 
-static QJsonValue normalizeListValue(const QJsonValue &v) {
-  if (v.isArray()) return v;
-  if (v.isString()) {
-    auto s = v.toString();
-    return s.isEmpty() ? QJsonArray{} : QJsonArray{s};
-  }
-  return QJsonArray{};
+static glz::generic normalizeListValue(const glz::generic &v) {
+  if (v.is_array()) return v;
+  if (v.is_string() && !v.get_string().empty()) return glz::generic::array_t{v};
+  return glz::generic::array_t{};
 }
 
 static QString checkboxLabel(const Preference &p) {
@@ -189,9 +187,10 @@ PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pr
 
   applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);
 
-  QJsonValue raw = m_values.contains(pref.name()) ? m_values.value(pref.name()) : pref.defaultValue();
+  const auto *stored = preferences::find(m_values, pref.name().toStdString());
+  glz::generic raw = stored ? *stored : pref.defaultOrNull();
   if (isMultiValueType(pref)) raw = normalizeListValue(raw);
-  f.value = raw.toVariant();
+  f.value = glazeToQVariant(raw);
 
   return f;
 }
@@ -234,7 +233,7 @@ void PreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   auto resolved = value;
   if (resolved.canConvert<QJSValue>()) resolved = resolved.value<QJSValue>().toVariant();
   m_fields[row].value = resolved;
-  m_values[m_fields[row].id] = QJsonValue::fromVariant(resolved);
+  m_values[m_fields[row].id.toStdString()] = qVariantToGlazeGeneric(resolved);
   auto idx = index(row);
   emit dataChanged(idx, idx, {ValueRole, CurrentDropdownItemRole});
   m_saveTimer.start();

@@ -114,7 +114,7 @@ QString AppleShortcutRootProvider::displayName() const { return tr("Apple Shortc
 ImageURL AppleShortcutRootProvider::icon() const { return shortcutsIcon(); }
 RootProvider::Type AppleShortcutRootProvider::type() const { return GroupProvider; }
 
-void AppleShortcutRootProvider::initialized(const QJsonObject &) {
+void AppleShortcutRootProvider::initialized(const PreferenceValues &) {
   m_refreshTimer.start();
   refresh();
 }

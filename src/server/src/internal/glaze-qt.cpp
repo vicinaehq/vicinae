@@ -1,6 +1,9 @@
 #include "glaze-qt.hpp"
 #include <glaze/json/generic.hpp>
 #include <qjsonvalue.h>
+#include <QVariant>
+#include <QVariantList>
+#include <QVariantMap>
 
 QJsonValue glazeToQJsonValue(const glz::generic &v) {
   if (v.is_boolean()) return v.get_boolean();
@@ -43,4 +46,59 @@ glz::generic qJsonValueToGlazeGeneric(const QJsonValue &v) {
            std::ranges::to<glz::generic::array_t>();
   if (v.isObject()) return qJsonObjectToGlazeGeneric(v.toObject());
   return {};
+}
+
+QVariant glazeToQVariant(const glz::generic &v) {
+  if (v.is_boolean()) return v.get_boolean();
+  if (v.is_string()) return QString::fromStdString(v.get_string());
+  if (v.is_number()) return v.get_number();
+  if (v.is_array()) {
+    QVariantList list;
+    list.reserve(static_cast<qsizetype>(v.get_array().size()));
+    for (const auto &item : v.get_array()) {
+      list.append(glazeToQVariant(item));
+    }
+    return list;
+  }
+  if (v.is_object()) {
+    QVariantMap map;
+    for (const auto &[key, item] : v.get_object()) {
+      map.insert(QString::fromStdString(key), glazeToQVariant(item));
+    }
+    return map;
+  }
+  return {};
+}
+
+glz::generic qVariantToGlazeGeneric(const QVariant &v) {
+  switch (v.typeId()) {
+  case QMetaType::Bool:
+    return v.toBool();
+  case QMetaType::QString:
+    return v.toString().toStdString();
+  case QMetaType::Int:
+  case QMetaType::UInt:
+  case QMetaType::LongLong:
+  case QMetaType::ULongLong:
+  case QMetaType::Double:
+  case QMetaType::Float:
+    return v.toDouble();
+  case QMetaType::QStringList:
+  case QMetaType::QVariantList: {
+    glz::generic::array_t array;
+    for (const auto &item : v.toList()) {
+      array.emplace_back(qVariantToGlazeGeneric(item));
+    }
+    return array;
+  }
+  case QMetaType::QVariantMap: {
+    glz::generic::object_t object;
+    for (auto [key, item] : v.toMap().asKeyValueRange()) {
+      object[key.toStdString()] = qVariantToGlazeGeneric(item);
+    }
+    return object;
+  }
+  default:
+    return {};
+  }
 }

@@ -56,8 +56,13 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), tr("Copy App ID"));
   auto copyLocation = new CopyToClipboardAction(
       Clipboard::Text(QString::fromStdString(m_app->path().string())), tr("Copy App Location"));
-  auto preferences = ctx->services->rootItemManager()->getPreferenceValues(uniqueId());
-  QString const defaultAction = preferences.value("defaultAction").toString();
+#ifdef Q_OS_MACOS
+  const bool focusFirst = false;
+#else
+  const auto preferences =
+      readPreferences<AppPreferences>(ctx->services->rootItemManager()->getPreferenceValues(uniqueId()));
+  const bool focusFirst = preferences.defaultAction == AppDefaultAction::Focus;
+#endif
 
   auto mainSection = panel->createSection();
   auto utils = panel->createSection();
@@ -72,7 +77,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   if (!activeWindows.empty()) {
     auto focus = new FocusWindowAction(activeWindows.front());
-    if (defaultAction == "focus") {
+    if (focusFirst) {
       mainSection->addAction(focus);
       mainSection->addAction(open);
     } else {
@@ -160,6 +165,6 @@ AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appServi
 
 PreferenceList AppRootProvider::preferences() const { return m_appService.provider()->preferences(); }
 
-void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
+void AppRootProvider::preferencesChanged(const AppPreferences &preferences) {
   m_appService.provider()->applyPreferences(preferences);
 }

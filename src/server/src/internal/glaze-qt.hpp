@@ -57,6 +57,10 @@ template <> struct to<JSON, QDateTime> {
 
 } // namespace glz
 
+class QVariant;
+
+QVariant glazeToQVariant(const glz::generic &v);
+glz::generic qVariantToGlazeGeneric(const QVariant &v);
 QJsonValue glazeToQJsonValue(const glz::generic &v);
 QJsonObject glazeToQJsonObject(const glz::generic::object_t &v);
 glz::generic::object_t qJsonObjectToGlazeGeneric(const QJsonObject &v);

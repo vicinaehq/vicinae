@@ -27,7 +27,7 @@ public:
   virtual QString repositoryDisplayName() const { return ""; }
   virtual QString repositoryName() const { return ""; }
   virtual bool isFallback() const { return false; }
-  virtual void preferenceValuesChanged(const QJsonObject &) const {}
+  virtual void preferenceValuesChanged(const PreferenceValues &) const {}
   virtual bool isInternal() const { return false; }
   virtual void shortcutReleased() const {}
 
@@ -64,9 +64,9 @@ public:
   /**
    * Triggered the first time the provider is registered
    */
-  virtual void initialized(const QJsonObject &) const {}
+  virtual void initialized(const PreferenceValues &) const {}
 
-  virtual void preferenceValuesChanged(const QJsonObject &) const {}
+  virtual void preferenceValuesChanged(const PreferenceValues &) const {}
 
   virtual ~AbstractCommandRepository() = default;
 };

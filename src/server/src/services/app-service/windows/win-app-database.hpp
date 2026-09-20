@@ -35,8 +35,7 @@ public:
   AppPtr findById(const QString &id) const override;
   std::vector<AppPtr> list() const override;
   AppPtr findByClass(const QString &name) const override;
-  PreferenceList preferences() const override;
-  void applyPreferences(const QJsonObject &preferences) override;
+  void applyPreferences(const AppPreferences &preferences) override;
 
   AppPtr fileBrowser() const override;
   AppPtr genericTextEditor() const override;

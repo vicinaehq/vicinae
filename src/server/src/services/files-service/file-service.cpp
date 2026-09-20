@@ -32,8 +32,8 @@ QFuture<std::vector<fs::path>> FileService::recentFilesAsync(const RecentFilesPa
 
 void FileService::recordAccess(const fs::path &path) { m_recentFiles->recordAccess(path); }
 
-void FileService::preferenceValuesChanged(const QJsonObject &preferences) {
-  m_indexer->preferenceValuesChanged(preferences);
+void FileService::preferencesChanged(const FilePreferences &preferences) {
+  m_indexer->preferencesChanged(preferences);
 }
 
 bool FileService::isAvailable() const { return m_indexer->isAvailable(); }

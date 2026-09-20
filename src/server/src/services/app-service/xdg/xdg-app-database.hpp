@@ -29,8 +29,7 @@ public:
   bool launchTerminalCommand(const std::vector<QString> &cmdline,
                              const LaunchTerminalCommandOptions &opts = {}) const override;
 
-  PreferenceList preferences() const override;
-  void applyPreferences(const QJsonObject &preferences) override;
+  void applyPreferences(const AppPreferences &preferences) override;
 
   AppPtr terminalEmulator() const override;
   AppPtr fileBrowser() const override;

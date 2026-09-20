@@ -5,7 +5,6 @@
 #include "command/preference.hpp"
 #include "common/entrypoint.hpp"
 #include <QAbstractListModel>
-#include <QJsonObject>
 #include <QTimer>
 #include <vector>
 
@@ -70,7 +69,7 @@ private:
 
   std::vector<Field> m_fields;
   AppSelectorModel *m_appModel = nullptr;
-  QJsonObject m_values;
+  PreferenceValues m_values;
   EntrypointId m_itemId;
   QString m_providerId;
   bool m_isProvider = false;

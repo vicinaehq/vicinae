@@ -1,4 +1,5 @@
 #include "builtins/vicinae/emoji-grid-model.hpp"
+#include "builtins/vicinae/emoji-preferences.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "extension/model/grid-model.hpp"
 #include "actions/clipboard-actions.hpp"
@@ -184,15 +185,15 @@ std::unique_ptr<ActionPanelState> buildEmojiActionPanel(const glyph::Item *data,
 
   auto *mainSection = panel->createSection();
 
-  QString defaultAction;
+  auto defaultAction = EmojiDefaultAction::Copy;
   if (auto *state = scope.topState(); state && state->sender) {
     if (auto *cmd = state->sender->command())
-      defaultAction = cmd->preferenceValues().value("defaultAction").toString();
+      defaultAction = cmd->preferences<EmojiPreferences>().defaultAction;
   }
 
   if (pasteService->supportsPaste()) {
     auto *paste = new PasteToFocusedWindowAction(Clipboard::Text(copiedEmoji));
-    if (defaultAction == "paste") {
+    if (defaultAction == EmojiDefaultAction::Paste) {
       mainSection->addAction(new VisitEmojiActionWrapper(data->character, paste));
       mainSection->addAction(new VisitEmojiActionWrapper(data->character, copyEmoji));
     } else {
@@ -298,7 +299,7 @@ void EmojiGridModel::initialize() {
 
   if (auto *state = scope().topState(); state && state->sender) {
     if (auto *cmd = state->sender->command()) {
-      auto skinToneId = cmd->preferenceValues().value("skinTone").toString().toStdString();
+      const auto skinToneId = cmd->preferences<EmojiPreferences>().skinTone;
       if (auto it = std::ranges::find_if(
               emoji::skinTones(), [&](const emoji::SkinToneInfo &info) { return info.id == skinToneId; });
           it != emoji::skinTones().end()) {

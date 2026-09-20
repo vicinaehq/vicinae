@@ -94,8 +94,6 @@ bool ClipboardService::copyUrls(const std::vector<QUrl> &urls, const Clipboard::
   return copyQMimeData(data.release(), options);
 }
 
-void ClipboardService::setRecordAllOffers(bool value) { m_recordAllOffers = value; }
-
 void ClipboardService::setEncryptionKey(std::optional<db::EncryptionKey> key) {
   if (key) {
     m_encrypter = std::make_unique<ClipboardEncrypter>(

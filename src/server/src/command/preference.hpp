@@ -1,9 +1,31 @@
 #pragma once
-#include <qjsonarray.h>
-#include <qjsonvalue.h>
+#include <glaze/json/generic.hpp>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 #include <qnamespace.h>
 #include <qstring.h>
-#include <variant>
+
+using PreferenceValues = glz::generic::object_t;
+
+namespace preferences {
+
+inline const glz::generic *find(const PreferenceValues &values, std::string_view key) {
+  auto it = values.find(std::string(key));
+  return it != values.end() ? &it->second : nullptr;
+}
+
+inline bool isEmpty(const glz::generic &value) {
+  if (value.is_null()) return true;
+  if (value.is_string()) return value.get_string().empty();
+  if (value.is_array()) return value.get_array().empty();
+  return false;
+}
+
+} // namespace preferences
 
 class Preference {
 public:
@@ -43,7 +65,7 @@ private:
   QString m_title;
   QString m_description;
   QString m_placeholder;
-  QJsonValue m_value = QJsonValue::Null;
+  std::optional<glz::generic> m_default;
   bool m_readOnly = false;
   bool m_required = true;
   Data m_data = UnknownData();
@@ -65,13 +87,13 @@ public:
   static Preference app(const QString &id) { return {id, AppPickerData{}}; }
   static Preference apps(const QString &id) {
     Preference preference{id, AppPickerData{.multiple = true}};
-    preference.setDefaultValue(QJsonArray());
+    preference.setDefaultValue(glz::generic::array_t{});
     return preference;
   }
   static Preference directory(const QString &id) { return {id, DirectoryPickerData{}}; }
   static Preference directories(const QString &id, std::vector<QString> lockedPaths = {}) {
     Preference preference{id, DirectoryPickerData{.multiple = true, .lockedPaths = std::move(lockedPaths)}};
-    preference.setDefaultValue(QJsonArray());
+    preference.setDefaultValue(glz::generic::array_t{});
     return preference;
   }
 
@@ -82,8 +104,10 @@ public:
   void setRequired(bool required) { m_required = required; }
   void setReadOnly(bool value = true) { m_readOnly = value; }
   void setData(const Data &data) { m_data = data; }
-  void setDefaultValue(const QJsonValue &value) { m_value = value; }
-  bool hasDefaultValue() const { return !m_value.isUndefined(); }
+  void setDefaultValue(glz::generic value) { m_default = std::move(value); }
+  void setDefaultValue(const char *value) { m_default = std::string(value); }
+  void setDefaultValue(const QString &value) { m_default = value.toStdString(); }
+  bool hasDefaultValue() const { return m_default.has_value(); }
   bool isValid() const { return !std::holds_alternative<UnknownData>(m_data); }
   bool isReadOnly() const { return m_readOnly; }
 
@@ -91,7 +115,8 @@ public:
   QString title() const { return m_title; }
   QString description() const { return m_description; }
   QString placeholder() const { return m_placeholder; }
-  QJsonValue defaultValue() const { return m_value; }
+  const std::optional<glz::generic> &defaultValue() const { return m_default; }
+  glz::generic defaultOrNull() const { return m_default.value_or(glz::generic{}); }
   bool required() const { return m_required; }
   Data data() const { return m_data; }
   bool isSecret() const { return std::holds_alternative<PasswordData>(m_data); }

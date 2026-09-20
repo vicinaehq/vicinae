@@ -6,7 +6,6 @@
 #include "command/preference.hpp"
 #include "ui/views/bridge-view.hpp"
 #include <QAbstractListModel>
-#include <QJsonObject>
 #include <memory>
 #include <vector>
 
@@ -39,10 +38,10 @@ public:
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
 
-  void load(const std::vector<Preference> &preferences, const QJsonObject &existingValues);
+  void load(const std::vector<Preference> &preferences, const PreferenceValues &existingValues);
   Q_INVOKABLE void setFieldValue(int row, const QVariant &value);
 
-  QJsonObject values() const { return m_values; }
+  const PreferenceValues &values() const { return m_values; }
 
   struct ValidateResult {
     bool valid;
@@ -73,7 +72,7 @@ private:
 
   std::vector<Field> m_fields;
   AppSelectorModel *m_appModel = nullptr;
-  QJsonObject m_values;
+  PreferenceValues m_values;
 };
 
 class MissingPreferenceViewHost : public FormViewBase {
@@ -87,7 +86,8 @@ class MissingPreferenceViewHost : public FormViewBase {
 
 public:
   MissingPreferenceViewHost(std::shared_ptr<ExtensionCommand> command,
-                            const std::vector<Preference> &preferences, const QJsonObject &preferenceValues);
+                            const std::vector<Preference> &preferences,
+                            const PreferenceValues &preferenceValues);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;

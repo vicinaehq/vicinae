@@ -14,8 +14,6 @@
 #include "ui/views/list-accessory.hpp"
 #include <cstdint>
 #include <qdnslookup.h>
-#include <qjsonobject.h>
-#include <qjsonvalue.h>
 #include <qlogging.h>
 #include <qmimedata.h>
 #include <qnamespace.h>
@@ -132,7 +130,7 @@ public:
    */
   virtual std::optional<QString> unlocalizedTitle() const { return std::nullopt; }
 
-  virtual void preferenceValuesChanged(const QJsonObject &values) const {}
+  virtual void preferenceValuesChanged(const PreferenceValues &values) const {}
 
   virtual QString settingsDescription() const { return {}; }
   virtual std::vector<std::pair<QString, QString>> settingsMetadata() const { return {}; }
@@ -191,13 +189,13 @@ public:
   /**
    * Called when the provider preferences are changed.
    */
-  virtual void preferencesChanged(const QJsonObject &preferences) {}
+  virtual void preferencesChanged(const PreferenceValues &preferences) {}
 
-  virtual void itemPreferencesChanged(const QString &itemId, const QJsonObject &preferences) {}
+  virtual void itemPreferencesChanged(const QString &itemId, const PreferenceValues &preferences) {}
 
   // Called the first time the root provider is loaded by the root item manager, right after the first
   // `preferencesChanged` call.
-  virtual void initialized(const QJsonObject &preference) {}
+  virtual void initialized(const PreferenceValues &preference) {}
 
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
   virtual PreferenceList preferences() const { return {}; }
@@ -274,28 +272,25 @@ public:
 
   RootItemManager(config::Manager &config, LocalStorageService &storage);
 
-  static glz::generic::object_t transformPreferenceValues(const QJsonObject &preferences);
-  static QJsonObject transformPreferenceValues(const glz::generic::object_t &preferences);
-
   RootProvider *findProviderById(const QString &id) const;
-  bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences);
+  bool setProviderPreferenceValues(const QString &id, const PreferenceValues &preferences);
 
   bool setItemEnabled(const EntrypointId &id, bool value);
-  bool setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
+  bool setItemPreferenceValues(const EntrypointId &id, const PreferenceValues &preferences);
 
-  void setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
+  void setPreferenceValues(const EntrypointId &id, const PreferenceValues &preferences);
 
   bool setAlias(const EntrypointId &id, std::string_view alias);
   bool setShortcut(const EntrypointId &id, std::string_view shortcut);
 
-  QJsonObject getProviderPreferenceValues(const QString &id) const;
-  QJsonObject getItemPreferenceValues(const EntrypointId &id) const;
+  PreferenceValues getProviderPreferenceValues(const QString &id) const;
+  PreferenceValues getItemPreferenceValues(const EntrypointId &id) const;
 
   /**
    * Merge the item preferences with the provider preferences.
    */
   std::vector<Preference> getMergedItemPreferences(const EntrypointId &id) const;
-  QJsonObject getPreferenceValues(const EntrypointId &id) const;
+  PreferenceValues getPreferenceValues(const EntrypointId &id) const;
   RootItemMetadata itemMetadata(const EntrypointId &id) const;
   bool isFallback(const EntrypointId &id) const;
   bool disableFallback(const EntrypointId &id);
@@ -359,10 +354,10 @@ public:
 private:
   static QString getEntrypointSecretPreferenceKey(const EntrypointId &id, const QString &prefName);
   void setEntrypointSecretPreference(const EntrypointId &id, const QString &prefName,
-                                     const QJsonValue &value);
-  QJsonValue getEntrypointSecretPreference(const EntrypointId &entrypoint, const QString &prefName) const;
-  QJsonValue getProviderSecretPreference(const QString &providerId, const QString &prefName) const;
-  void setProviderSecretPreference(const QString &id, const QString &prefName, const QJsonValue &value);
+                                     const glz::generic &value);
+  glz::generic getEntrypointSecretPreference(const EntrypointId &entrypoint, const QString &prefName) const;
+  glz::generic getProviderSecretPreference(const QString &providerId, const QString &prefName) const;
+  void setProviderSecretPreference(const QString &id, const QString &prefName, const glz::generic &value);
 
   ScopedLocalStorage getProviderSecretStorage(const QString &providerId) const;
 

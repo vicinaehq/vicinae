@@ -5,7 +5,8 @@
 #include "services/calculator-service/calculator-service.hpp"
 #include "command/command-database.hpp"
 #include "ui/image/url.hpp"
-#include "command/preference.hpp"
+#include "command/preference-schema.hpp"
+#include "command/typed-command.hpp"
 #include "services/toast/toast-service.hpp"
 #include "service-registry.hpp"
 #include "command/single-view-command-context.hpp"
@@ -65,7 +66,27 @@ class CalculatorRefreshRatesCommand : public BuiltinCallbackCommand {
   }
 };
 
-class CalculatorExtension : public BuiltinCommandRepository {
+struct CalculatorPreferences {
+  std::string backend = "numen";
+};
+
+template <> struct PreferenceSchema<CalculatorPreferences> {
+  PreferenceMeta backend{
+      .title = tr("Calculator Backend"),
+      .description = tr("Which backend to use to perform calculations"),
+      .options =
+          [] {
+            std::vector<Preference::DropdownData::Option> options;
+            for (const auto &backend : ServiceRegistry::instance()->calculatorService()->backends()) {
+              options.emplace_back(Preference::DropdownData::Option{backend->displayName(), backend->id()});
+            }
+            return options;
+          },
+  };
+  Q_DECLARE_TR_FUNCTIONS(CalculatorPreferences)
+};
+
+class CalculatorExtension : public TypedCommandRepository<CalculatorPreferences> {
   Q_DECLARE_TR_FUNCTIONS(CalculatorExtension)
 
 public:
@@ -83,28 +104,12 @@ public:
     registerCommand<CalculatorRefreshRatesCommand>();
   }
 
-  std::vector<Preference> preferences() const override {
+  void preferencesChanged(const CalculatorPreferences &preferences) const override {
     auto calc = ServiceRegistry::instance()->calculatorService();
-    std::vector<Preference::DropdownData::Option> backendOptions;
-
-    for (const auto &backend : calc->backends()) {
-      backendOptions.emplace_back(Preference::DropdownData::Option{backend->displayName(), backend->id()});
-    }
-
-    auto backendPref = Preference::makeDropdown("backend", backendOptions);
-
-    backendPref.setDefaultValue("numen");
-    backendPref.setTitle(tr("Calculator Backend"));
-    backendPref.setDescription(tr("Which backend to use to perform calculations"));
-
-    return {backendPref};
-  }
-
-  void preferenceValuesChanged(const QJsonObject &value) const override {
-    auto calc = ServiceRegistry::instance()->calculatorService();
-    QString backendId = value.value("backend").toString();
 
     // make sure we always have a backend running
-    if (!calc->setBackend(backendId) && !calc->backend()) { calc->startFirstHealthy(); }
+    if (!calc->setBackend(QString::fromStdString(preferences.backend)) && !calc->backend()) {
+      calc->startFirstHealthy();
+    }
   }
 };

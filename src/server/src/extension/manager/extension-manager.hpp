@@ -69,12 +69,8 @@ public:
   bool start();
   bool stop();
 
-  void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {},
-                   const LaunchProps &launchProps = {});
-
   manager::Client &client() { return m_client; }
 
-  // void unloadCommand(const QString &sessionId);
   void handleManagerResponse(const QString &action, QJsonObject &data);
   void finished(int exitCode, QProcess::ExitStatus status);
   void readError();

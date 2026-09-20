@@ -9,8 +9,7 @@ void SystemRunViewHost::initialize() {
   BaseView::initialize();
   initModel();
 
-  auto defaultAction =
-      parseSystemRunDefaultAction(command()->preferenceValues().value("default-action").toString());
+  const auto defaultAction = command()->preferences<SystemRunPreferences>().defaultAction;
   m_cmdSection.setDefaultAction(defaultAction);
   m_progSection.setDefaultAction(defaultAction);
 
