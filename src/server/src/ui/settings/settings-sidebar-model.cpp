@@ -90,7 +90,7 @@ void SettingsSidebarModel::rebuildRows() {
       {QStringLiteral("general"), tr("General"), BuiltinIcon::Cog},
       {QStringLiteral("appearance"), tr("Appearance"), BuiltinIcon::Swatch},
       {QStringLiteral("keybindings"), tr("Keybindings"), BuiltinIcon::Keyboard},
-      {QStringLiteral("ai"), tr("AI"), BuiltinIcon::Stars},
+      {QStringLiteral("ai-providers"), tr("AI Providers"), BuiltinIcon::Stars},
       {QStringLiteral("advanced"), tr("Advanced"), BuiltinIcon::WrenchScrewdriver},
       {QStringLiteral("about"), tr("About"), BuiltinIcon::Vicinae},
   }};

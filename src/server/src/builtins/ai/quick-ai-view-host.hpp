@@ -10,7 +10,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <vector>
 
 namespace AI {
 class Service;
@@ -40,14 +39,15 @@ signals:
   void modelSelectorCurrentItemChanged();
 
 public:
-  explicit QuickAIViewHost(QString initialQuery);
+  QuickAIViewHost(QString initialQuery, AI::ModelRef model);
 
   QUrl qmlComponentUrl() const override;
-  QUrl qmlSearchAccessoryUrl() const override;
   QVariantMap qmlProperties() override;
   void initialize() override;
   void loadInitialData() override;
-  void textChanged(const QString &text) override;
+
+  bool supportsSearch() const override { return false; }
+  bool needsGlobalStatusBar() const override { return false; }
 
   QString initialNavigationTitle() const override { return QStringLiteral("Quick AI"); }
   ImageURL initialNavigationIcon() const override {
@@ -63,12 +63,13 @@ public:
   QVariantList modelSelectorItems() const { return m_modelSelectorItems; }
   QVariantMap modelSelectorCurrentItem() const { return m_modelSelectorCurrentItem; }
 
+  Q_INVOKABLE void send(const QString &text);
+  Q_INVOKABLE void cancel();
   Q_INVOKABLE void selectModel(const QString &compositeId);
 
 private:
   void sendQuery(const std::string &query);
-  void updateActions();
-  void pasteLastResponse();
+  void failQuery(const std::string &reason);
   void rebuildModelSelectorItems();
 
   AI::Service *m_aiService = nullptr;
@@ -77,7 +78,6 @@ private:
   QVariantList m_exchanges;
 
   QString m_initialQuery;
-  QString m_followUpText;
   QString m_streamingQuery;
   std::string m_currentResponse;
   QString m_streamingContent;

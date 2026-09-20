@@ -21,8 +21,8 @@ Window {
                 "title": qsTr("Keybindings"),
                 "page": shortcutsPage
             },
-            "ai": {
-                "title": qsTr("AI"),
+            "ai-providers": {
+                "title": qsTr("AI Providers"),
                 "page": aiPage
             },
             "advanced": {

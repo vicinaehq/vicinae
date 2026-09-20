@@ -187,7 +187,10 @@ LauncherWindowBase {
             sourceComponent: root.searchBarComponent
 
             function focusInput() {
-                (item as SearchBar)?.focusInput();
+                if (Launcher.searchVisible)
+                    (item as SearchBar)?.focusInput();
+                else
+                    (commandStack.currentItem as LauncherPage)?.restoreFocus();
             }
         }
 
@@ -369,6 +372,10 @@ LauncherWindowBase {
 
     Connections {
         target: Launcher
+        function onSearchVisibleChanged() {
+            if (!Launcher.searchVisible)
+                Qt.callLater(searchBar.focusInput);
+        }
         function onCommandViewPushed(componentUrl, properties) {
             commandStack.push(pageComponent, {
                 viewUrl: componentUrl,

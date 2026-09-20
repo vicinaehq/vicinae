@@ -116,7 +116,7 @@ class EventSource : public QObject, NonCopyable {
 signals:
   void dataReceived(const QString &event, QByteArrayView data) const;
   void lineReceived(QByteArrayView line) const;
-  void errorOccured(const QString &error) const;
+  void errorOccurred(const QString &error, const QByteArray &body) const;
   void finished() const;
 
 public:
@@ -125,11 +125,8 @@ public:
     m_reply->setParent(this);
     connect(reply, &QNetworkReply::readyRead, this, &EventSource::handleRead);
     connect(reply, &QNetworkReply::finished, this, &EventSource::handleFinished);
-    connect(reply, &QNetworkReply::errorOccurred, this, [this](QNetworkReply::NetworkError error) {
-      qDebug() << "completion error";
-      m_errored = true;
-      emit errorOccured(m_reply->errorString());
-    });
+    connect(reply, &QNetworkReply::errorOccurred, this,
+            [this](QNetworkReply::NetworkError) { m_errored = true; });
   }
 
   void abort() { m_reply->abort(); }
@@ -163,6 +160,8 @@ private:
       if (line.startsWith("event:")) {
         event = QString::fromUtf8(line.slice(7));
       } else if (line.startsWith("data:")) {
+        m_raw.clear();
+        m_streaming = true;
         emit dataReceived(event, line.slice(6));
       }
     }
@@ -171,19 +170,30 @@ private:
   }
 
   void handleFinished() {
-    if (!m_errored) processLines();
+    if (m_errored) {
+      m_raw.append(m_reply->readAll());
+      emit errorOccurred(m_reply->errorString(), m_raw);
+    } else {
+      processLines();
+    }
     emit finished();
   }
 
   void handleRead() {
     if (m_errored) return;
-    m_buf.append(m_reply->readAll());
+    const auto chunk = m_reply->readAll();
+    if (!m_streaming && m_raw.size() < MAX_RAW_BYTES) m_raw.append(chunk);
+    m_buf.append(chunk);
     processLines();
   }
 
+  static constexpr qsizetype MAX_RAW_BYTES = 64 * 1024;
+
   bool m_errored = false;
+  bool m_streaming = false;
   QString event;
   QByteArray m_buf;
+  QByteArray m_raw;
   QNetworkReply *m_reply = nullptr;
 };
 

@@ -1,5 +1,6 @@
 #include "ai-settings-model.hpp"
 #include <algorithm>
+#include <iterator>
 #include <format>
 #include <ranges>
 #include <qcoreapplication.h>
@@ -433,7 +434,14 @@ void AISettingsModel::rebuildTypes() {
     });
   }
 
-  m_types.setRows(std::move(rows));
+  auto available =
+      std::ranges::stable_partition(rows, [](const auto &row) { return !row.instances.isEmpty(); });
+  std::vector<AIProviderTypeRow> availableRows(std::make_move_iterator(available.begin()),
+                                               std::make_move_iterator(available.end()));
+  rows.erase(available.begin(), available.end());
+
+  m_configuredTypes.setRows(std::move(rows));
+  m_availableTypes.setRows(std::move(availableRows));
 }
 
 void AISettingsModel::rebuildPage() {
