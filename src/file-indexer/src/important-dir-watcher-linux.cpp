@@ -96,8 +96,18 @@ class LinuxImportantDirectoryWatcher : public ImportantDirectoryWatcher {
     }
 
     std::scoped_lock const l(m_watchesMtx);
-    m_watches.emplace(wd, WatchInfo{dir, depth});
-    m_watchByPath.emplace(dir, wd);
+
+    // inotify watches an inode, not a path: re-adding a directory we already watch under its
+    // former name returns the same descriptor, so refresh the stored path instead of keeping
+    // the old one, which no longer exists.
+    if (auto it = m_watches.find(wd); it != m_watches.end()) {
+      m_watchByPath.erase(it->second.path);
+      it->second = WatchInfo{dir, depth};
+    } else {
+      m_watches.emplace(wd, WatchInfo{dir, depth});
+    }
+
+    m_watchByPath.insert_or_assign(dir, wd);
     return true;
   }
 
