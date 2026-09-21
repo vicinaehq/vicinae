@@ -26,14 +26,17 @@ enum class Kind {
   AlmostMaximize,
   MakeSmaller,
   MakeLarger,
+  NextDisplay,
+  PreviousDisplay,
   Restore
 };
 
-enum class Result { Success, NoBounds, NoScreen, Fullscreen, NothingToRestore, Failed };
+enum class Result { Success, NoBounds, NoScreen, NoOtherDisplay, Fullscreen, NothingToRestore, Failed };
 
 const AbstractWindowManager::Screen *screenForWindow(const QRect &window,
                                                      std::span<const AbstractWindowManager::Screen> screens);
 QRect calculateBounds(Kind kind, const QRect &window, const QRect &available);
+QRect boundsOnDisplay(const QRect &window, const QRect &source, const QRect &destination);
 
 class Manager {
 public:

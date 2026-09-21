@@ -15,6 +15,7 @@
 #include <unordered_set>
 
 #include "macos-window.hpp"
+#include "macos-spaces.hpp"
 
 // Private but stable HIServices APIs used by virtually every macOS window switcher (AltTab,
 // HyperSwitch, ...). _AXUIElementGetWindow maps an AX window element to its CoreGraphics window id,
@@ -458,6 +459,49 @@ bool MacosWindowManager::closeWindow(const AbstractWindow &window) const {
   if (err == kAXErrorSuccess) scheduleRebuild();
 
   return err == kAXErrorSuccess;
+}
+
+QFlags<AbstractWindowManager::Capability> MacosWindowManager::capabilities() const {
+  QFlags<Capability> result{Capability::WindowPlacement, Capability::Minimize};
+  if (MacosSpaces::supportsWindowMove()) result.setFlag(Capability::MoveToAdjacentWorkspace);
+  if (MacosSpaces::supportsSpaceSwitch()) result.setFlag(Capability::SwitchToAdjacentWorkspace);
+  return result;
+}
+
+bool MacosWindowManager::minimizeWindow(const AbstractWindow &window) const {
+  const auto *macWindow = asMacosWindow(window);
+  if (!macWindow || macWindow->fullScreen() || !axIsSettable(macWindow->element(), kAXMinimizedAttribute))
+    return false;
+  const bool ok = AXUIElementSetAttributeValue(macWindow->element(), kAXMinimizedAttribute, kCFBooleanTrue) ==
+                  kAXErrorSuccess;
+  if (ok) scheduleRebuild();
+  return ok;
+}
+
+QFuture<AbstractWindowManager::WorkspaceChangeResult>
+MacosWindowManager::moveToAdjacentWorkspace(const AbstractWindow &window, Direction direction) {
+  if (m_changingWorkspace) return QtFuture::makeReadyValueFuture(WorkspaceChangeResult::Busy);
+  const auto *macWindow = asMacosWindow(window);
+  if (!macWindow || macWindow->fullScreen())
+    return QtFuture::makeReadyValueFuture(WorkspaceChangeResult::Unsupported);
+  m_changingWorkspace = true;
+  return MacosSpaces::moveWindow(macWindow->element(), direction, this)
+      .then(this, [this](WorkspaceChangeResult result) {
+        m_changingWorkspace = false;
+        if (result == WorkspaceChangeResult::Success || result == WorkspaceChangeResult::FollowFailed)
+          scheduleRebuild();
+        return result;
+      });
+}
+
+QFuture<AbstractWindowManager::WorkspaceChangeResult>
+MacosWindowManager::switchToAdjacentWorkspace(Direction direction) {
+  if (m_changingWorkspace) return QtFuture::makeReadyValueFuture(WorkspaceChangeResult::Busy);
+  m_changingWorkspace = true;
+  return MacosSpaces::switchSpace(direction, this).then(this, [this](WorkspaceChangeResult result) {
+    m_changingWorkspace = false;
+    return result;
+  });
 }
 
 bool MacosWindowManager::setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const {

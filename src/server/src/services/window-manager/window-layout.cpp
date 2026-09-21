@@ -116,8 +116,22 @@ QRect calculateBounds(Kind kind, const QRect &window, const QRect &available) {
   }
   case Kind::Restore:
     return fitToScreen(window, available);
+  case Kind::NextDisplay:
+  case Kind::PreviousDisplay:
+    return window;
   }
   std::unreachable();
+}
+
+QRect boundsOnDisplay(const QRect &window, const QRect &source, const QRect &destination) {
+  if (!window.isValid() || !source.isValid() || !destination.isValid()) return {};
+  const double horizontalScale = static_cast<double>(destination.width()) / source.width();
+  const double verticalScale = static_cast<double>(destination.height()) / source.height();
+  return fitToScreen({destination.x() + qRound((window.x() - source.x()) * horizontalScale),
+                      destination.y() + qRound((window.y() - source.y()) * verticalScale),
+                      std::max(1, qRound(window.width() * horizontalScale)),
+                      std::max(1, qRound(window.height() * verticalScale))},
+                     destination);
 }
 
 Result Manager::apply(AbstractWindowManager &provider, const AbstractWindowManager::AbstractWindow &window,
@@ -135,10 +149,28 @@ Result Manager::apply(AbstractWindowManager &provider, const AbstractWindowManag
     reference = previous->second;
   }
 
-  const auto screens = provider.listScreensSync();
+  auto screens = provider.listScreensSync();
+  std::erase_if(screens, [](const auto &screen) {
+    return !screen.bounds.isValid() || !screen.availableBounds.isValid();
+  });
+  // Use desktop arrangement order so cycling does not depend on which monitor is primary.
+  std::ranges::stable_sort(screens, [](const auto &left, const auto &right) {
+    return std::pair(left.bounds.x(), left.bounds.y()) < std::pair(right.bounds.x(), right.bounds.y());
+  });
   const auto *screen = screenForWindow(reference, screens);
   if (!screen) return Result::NoScreen;
-  const QRect target = calculateBounds(kind, reference, screen->availableBounds);
+  QRect target;
+  if (kind == Kind::NextDisplay || kind == Kind::PreviousDisplay) {
+    if (screens.size() < 2) return Result::NoOtherDisplay;
+    const auto index = static_cast<std::size_t>(screen - screens.data());
+    const auto next = kind == Kind::NextDisplay ? (index + 1) % screens.size()
+                                                : (index + screens.size() - 1) % screens.size();
+    const auto &destination = screens.at(next);
+    target = boundsOnDisplay(current, screen->availableBounds, destination.availableBounds);
+    screen = &destination;
+  } else {
+    target = calculateBounds(kind, reference, screen->availableBounds);
+  }
   if (target == current) {
     if (kind == Kind::Restore) m_previousBounds.erase(key);
     return Result::Success;

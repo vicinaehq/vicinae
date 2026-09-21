@@ -17,8 +17,8 @@ class MacosWindowObserver;
  * that lets us read window titles also lets us raise and close individual windows, so no Screen Recording
  * permission is required.
  *
- * macOS Spaces are intentionally not exposed as workspaces: there is no public API to enumerate them or
- * move windows across them reliably.
+ * macOS Spaces are not exposed as generic workspaces. Moving a window to an adjacent Space is offered
+ * separately when the native SkyLight bridge is available, with the result verified asynchronously.
  */
 class MacosWindowManager : public AbstractWindowManager {
 public:
@@ -34,8 +34,12 @@ public:
   bool supportsFocusTracking() const override { return true; }
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
+  bool minimizeWindow(const AbstractWindow &window) const override;
+  QFuture<WorkspaceChangeResult> moveToAdjacentWorkspace(const AbstractWindow &window,
+                                                         Direction direction) override;
+  QFuture<WorkspaceChangeResult> switchToAdjacentWorkspace(Direction direction) override;
   bool setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const override;
-  QFlags<Capability> capabilities() const override { return {Capability::WindowPlacement}; }
+  QFlags<Capability> capabilities() const override;
   void refresh() const override;
 
   bool ping() const override { return true; }
@@ -57,4 +61,5 @@ private:
   mutable WindowList m_cache;
   bool m_rebuilding = false;
   bool m_rebuildPending = false;
+  bool m_changingWorkspace = false;
 };

@@ -60,6 +60,10 @@ constexpr auto LAYOUT_COMMANDS = std::to_array<LayoutCommandInfo>({
      BuiltinIcon::Minimize},
     {Layout::MakeLarger, "make-larger", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Make Larger"),
      BuiltinIcon::Maximize},
+    {Layout::NextDisplay, "move-to-next-display",
+     QT_TRANSLATE_NOOP("WindowLayoutCommand", "Move to Next Display"), BuiltinIcon::ArrowRight},
+    {Layout::PreviousDisplay, "move-to-previous-display",
+     QT_TRANSLATE_NOOP("WindowLayoutCommand", "Move to Previous Display"), BuiltinIcon::ArrowLeft},
     {Layout::Restore, "restore", QT_TRANSLATE_NOOP("WindowLayoutCommand", "Restore"), BuiltinIcon::Undo},
 });
 
@@ -81,6 +85,10 @@ public:
       return tr("Shrink the active window by 10% of the usable screen size.");
     case Layout::MakeLarger:
       return tr("Enlarge the active window by 10% of the usable screen size.");
+    case Layout::NextDisplay:
+      return tr("Move the active window to the next display, keeping its relative size and position.");
+    case Layout::PreviousDisplay:
+      return tr("Move the active window to the previous display, keeping its relative size and position.");
     case Layout::Restore:
       return tr("Restore the size and position before the last window management command.");
     default:
@@ -97,6 +105,9 @@ public:
       return {"window", "resize", "right"};
     case Layout::CenterThird:
       return {"window", "resize", "middle third"};
+    case Layout::NextDisplay:
+    case Layout::PreviousDisplay:
+      return {"window", "move", "monitor", "screen"};
     default:
       return {"window", "resize", "move"};
     }
@@ -125,6 +136,9 @@ public:
     case WindowLayout::Result::NoScreen:
       toast->failure(tr("No available display"));
       break;
+    case WindowLayout::Result::NoOtherDisplay:
+      toast->failure(tr("No other display connected"));
+      break;
     case WindowLayout::Result::Fullscreen:
       toast->failure(tr("Exit fullscreen before moving or resizing this window"));
       break;
@@ -139,6 +153,150 @@ public:
 
 private:
   LayoutCommandInfo m_info;
+};
+
+class MinimizeWindowCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(MinimizeWindowCommand)
+
+public:
+  QString id() const override { return "minimize"; }
+  QString name() const override { return tr("Minimize Window"); }
+  QString description() const override { return tr("Minimize the active window."); }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Minimize).setBackgroundTint(COLOR);
+  }
+  void execute(CommandController &ctrl) const override {
+    auto wm = ctrl.context()->services->windowManager();
+    auto toast = ctrl.context()->services->toastService();
+    auto window = wm->getFocusedWindow();
+    if (!window) {
+      toast->failure(tr("No active window"));
+      return;
+    }
+    if (!wm->isOnActiveWorkspace(*window)) {
+      toast->failure(tr("Active window is not on the current workspace"));
+      return;
+    }
+    if (!wm->provider()->minimizeWindow(*window)) {
+      toast->failure(tr("Could not minimize this window"));
+      return;
+    }
+    ctrl.context()->navigation->closeWindow();
+  }
+};
+
+class AdjacentWorkspaceCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(AdjacentWorkspaceCommand)
+  using Direction = AbstractWindowManager::Direction;
+
+public:
+  enum class Operation { MoveWindow, Switch };
+
+  AdjacentWorkspaceCommand(Direction direction, Operation operation)
+      : m_direction(direction), m_operation(operation) {}
+  QString id() const override {
+    if (m_operation == Operation::Switch)
+      return m_direction == Direction::Next ? "switch-to-next-workspace" : "switch-to-previous-workspace";
+    return m_direction == Direction::Next ? "move-to-next-workspace" : "move-to-previous-workspace";
+  }
+  QString name() const override {
+#ifdef Q_OS_MACOS
+    if (m_operation == Operation::Switch)
+      return m_direction == Direction::Next ? tr("Switch to Next Space") : tr("Switch to Previous Space");
+    return m_direction == Direction::Next ? tr("Move to Next Space") : tr("Move to Previous Space");
+#else
+    if (m_operation == Operation::Switch)
+      return m_direction == Direction::Next ? tr("Switch to Next Workspace")
+                                            : tr("Switch to Previous Workspace");
+    return m_direction == Direction::Next ? tr("Move to Next Workspace") : tr("Move to Previous Workspace");
+#endif
+  }
+  QString description() const override {
+#ifdef Q_OS_MACOS
+    if (m_operation == Operation::Switch)
+      return tr("Switch to the adjacent Space without moving any windows.");
+    return tr("Move the active window to the adjacent desktop Space and follow it.");
+#else
+    if (m_operation == Operation::Switch)
+      return tr("Switch to the adjacent workspace without moving any windows.");
+    return tr("Move the active window to the adjacent workspace and follow it.");
+#endif
+  }
+  std::vector<QString> keywords() const override { return {"desktop", "workspace", "space"}; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(m_direction == Direction::Next ? BuiltinIcon::ArrowRight
+                                                            : BuiltinIcon::ArrowLeft)
+        .setBackgroundTint(COLOR);
+  }
+  void execute(CommandController &ctrl) const override {
+    auto wm = ctrl.context()->services->windowManager();
+    auto toast = ctrl.context()->services->toastService();
+    auto navigation = ctrl.context()->navigation.get();
+    const bool moveWindow = m_operation == Operation::MoveWindow;
+    auto window = moveWindow ? wm->getFocusedWindow() : nullptr;
+    if (moveWindow && !window) {
+      toast->failure(tr("No active window"));
+      return;
+    }
+    if (window && !wm->isOnActiveWorkspace(*window)) {
+      toast->failure(tr("Active window is not on the current workspace"));
+      return;
+    }
+    toast->dynamic(moveWindow ? tr("Moving window...") : tr("Switching..."));
+    auto future = moveWindow ? wm->provider()->moveToAdjacentWorkspace(*window, m_direction)
+                             : wm->provider()->switchToAdjacentWorkspace(m_direction);
+    future.then(navigation, [toast, navigation, wm, window, moveWindow,
+                             direction = m_direction](AbstractWindowManager::WorkspaceChangeResult result) {
+      using Result = AbstractWindowManager::WorkspaceChangeResult;
+      switch (result) {
+      case Result::Success:
+        toast->clear();
+        navigation->closeWindow();
+        if (window) wm->provider()->focusWindowSync(*window);
+        break;
+      case Result::NoAdjacentWorkspace:
+#ifdef Q_OS_MACOS
+        toast->failure(direction == Direction::Next ? tr("No next Space on this display")
+                                                    : tr("No previous Space on this display"));
+#else
+            toast->failure(direction == Direction::Next ? tr("No next workspace") : tr("No previous workspace"));
+#endif
+        break;
+      case Result::Unsupported:
+#ifdef Q_OS_MACOS
+        toast->failure(moveWindow ? tr("This window cannot be moved between Spaces")
+                                  : tr("Switching Spaces is unavailable"));
+#else
+            toast->failure(moveWindow ? tr("This window cannot be moved between workspaces")
+                                      : tr("Switching workspaces is unavailable"));
+#endif
+        break;
+      case Result::Failed:
+#ifdef Q_OS_MACOS
+        toast->failure(moveWindow ? tr("Could not move this window") : tr("Could not switch Spaces"));
+#else
+            toast->failure(moveWindow ? tr("Could not move this window") : tr("Could not switch workspaces"));
+#endif
+        break;
+      case Result::FollowFailed:
+#ifdef Q_OS_MACOS
+        toast->failure(tr("Window moved, but could not switch to its Space"));
+#else
+            toast->failure(tr("Window moved, but could not switch to its workspace"));
+#endif
+        break;
+      case Result::PermissionRequired:
+        toast->failure(tr("Enable Accessibility access for Vicinae in System Settings"));
+        break;
+      case Result::Busy:
+        break;
+      }
+    });
+  }
+
+private:
+  Direction m_direction;
+  Operation m_operation;
 };
 
 class ToggleFullscreenWindowCommand : public BuiltinCallbackCommand {
@@ -248,6 +406,19 @@ WindowManagementExtension::WindowManagementExtension(const ServiceRegistry &serv
   }
 
   if (wm->hasWorkspaces()) { registerCommand<SwitchWorkspacesCommand>(); }
+  if (wm->supports(Cap::Minimize)) { registerCommand<MinimizeWindowCommand>(); }
+  if (wm->supports(Cap::MoveToAdjacentWorkspace)) {
+    registerCommand<AdjacentWorkspaceCommand>(AbstractWindowManager::Direction::Next,
+                                              AdjacentWorkspaceCommand::Operation::MoveWindow);
+    registerCommand<AdjacentWorkspaceCommand>(AbstractWindowManager::Direction::Previous,
+                                              AdjacentWorkspaceCommand::Operation::MoveWindow);
+  }
+  if (wm->supports(Cap::SwitchToAdjacentWorkspace)) {
+    registerCommand<AdjacentWorkspaceCommand>(AbstractWindowManager::Direction::Next,
+                                              AdjacentWorkspaceCommand::Operation::Switch);
+    registerCommand<AdjacentWorkspaceCommand>(AbstractWindowManager::Direction::Previous,
+                                              AdjacentWorkspaceCommand::Operation::Switch);
+  }
   if (wm->supports(Cap::Fullscreen)) { registerCommand<ToggleFullscreenWindowCommand>(); }
   if (wm->supports(Cap::ToggleFloating)) { registerCommand<ToggleFloatingWindowCommand>(); }
   if (wm->supports(Cap::ToggleOverview)) { registerCommand<ToggleOverviewCommand>(); }

@@ -37,7 +37,20 @@ public:
     ToggleOverview = 1 << 3,
     SetSticky = 1 << 4,
     // Requires setWindowBounds, live window bounds/fullscreen state, and screen availableBounds.
-    WindowPlacement = 1 << 5
+    WindowPlacement = 1 << 5,
+    MoveToAdjacentWorkspace = 1 << 6,
+    SwitchToAdjacentWorkspace = 1 << 7
+  };
+
+  enum class Direction { Previous, Next };
+  enum class WorkspaceChangeResult {
+    Success,
+    NoAdjacentWorkspace,
+    Unsupported,
+    Failed,
+    FollowFailed,
+    PermissionRequired,
+    Busy
   };
 
   /**
@@ -244,6 +257,7 @@ public:
    * This is a common operation that should be supported by all window managers.
    */
   virtual bool closeWindow(const AbstractWindow &window) const { return false; }
+  virtual bool minimizeWindow(const AbstractWindow &window) const { return false; }
 
   virtual bool supportsSetSticky() const { return false; }
   virtual bool setSticky(const AbstractWindow &window, bool sticky) const { return false; }
@@ -255,6 +269,18 @@ public:
   virtual bool supportsMoveToWorkspace() const { return false; }
   virtual bool moveToWorkspace(const AbstractWindow &window, const QString &workspaceId) const {
     return false;
+  }
+
+  // Moves the window and follows it, completing after both changes are confirmed.
+  // Platforms may support this without exposing workspace lists.
+  virtual QFuture<WorkspaceChangeResult> moveToAdjacentWorkspace(const AbstractWindow &window,
+                                                                 Direction direction) {
+    return QtFuture::makeReadyValueFuture(WorkspaceChangeResult::Unsupported);
+  }
+
+  // Switches the active display's workspace without moving a window, then confirms the change.
+  virtual QFuture<WorkspaceChangeResult> switchToAdjacentWorkspace(Direction direction) {
+    return QtFuture::makeReadyValueFuture(WorkspaceChangeResult::Unsupported);
   }
 
   /**

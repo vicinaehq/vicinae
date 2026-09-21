@@ -138,6 +138,33 @@ TEST_CASE("Restore undoes the last change and repeated placement keeps the undo 
   CHECK(provider.window->rect() == smaller);
 }
 
+TEST_CASE("Display moves preserve relative layout across differently sized work areas") {
+  const QRect source(0, 30, 1200, 800);
+  const QRect destination(-1800, -170, 1800, 1000);
+  CHECK(boundsOnDisplay(QRect(600, 30, 600, 800), source, destination) == QRect(-900, -170, 900, 1000));
+  CHECK(boundsOnDisplay(QRect(300, 230, 600, 400), source, destination) == QRect(-1350, 80, 900, 500));
+  CHECK(boundsOnDisplay(source, source, destination) == destination);
+}
+
+TEST_CASE("Display cycling uses arrangement order and restore returns to the original display") {
+  TestProvider provider;
+  Manager manager;
+  provider.screens = {
+      {.bounds = QRect(1200, 0, 600, 900), .availableBounds = QRect(1200, 30, 600, 820)},
+      {.bounds = QRect(-1800, -200, 1800, 1200), .availableBounds = QRect(-1800, -170, 1800, 1000)},
+      {.bounds = QRect(0, 0, 1200, 900), .availableBounds = QRect(0, 30, 1200, 820)},
+  };
+  provider.window->geometry = Bounds{600, 30, 600, 820};
+  REQUIRE(manager.apply(provider, *provider.window, Kind::NextDisplay) == Result::Success);
+  CHECK(provider.window->rect() == QRect(1500, 30, 300, 820));
+  REQUIRE(manager.apply(provider, *provider.window, Kind::NextDisplay) == Result::Success);
+  CHECK(provider.window->rect() == QRect(-900, -170, 900, 1000));
+  REQUIRE(manager.apply(provider, *provider.window, Kind::PreviousDisplay) == Result::Success);
+  CHECK(provider.window->rect() == QRect(1500, 30, 300, 820));
+  REQUIRE(manager.apply(provider, *provider.window, Kind::Restore) == Result::Success);
+  CHECK(provider.window->rect() == QRect(-900, -170, 900, 1000));
+}
+
 TEST_CASE("Failures preserve existing restore history and partial changes can be undone") {
   TestProvider provider;
   Manager manager;
@@ -201,6 +228,10 @@ TEST_CASE("Unavailable windows and screens do not produce resize requests") {
   SECTION("missing display") {
     provider.screens.clear();
     CHECK(manager.apply(provider, *provider.window, Kind::LeftHalf) == Result::NoScreen);
+  }
+  SECTION("only one display") {
+    CHECK(manager.apply(provider, *provider.window, Kind::NextDisplay) == Result::NoOtherDisplay);
+    CHECK(manager.apply(provider, *provider.window, Kind::PreviousDisplay) == Result::NoOtherDisplay);
   }
   SECTION("unsupported backend") {
     provider.placementSupported = false;
