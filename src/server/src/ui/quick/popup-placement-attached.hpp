@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <QPointer>
+#include <QRectF>
 #include <QWindow>
 #include <qqmlregistration.h>
 
@@ -34,6 +35,8 @@ class PopupPlacementAttached : public QObject {
   Q_PROPERTY(Qt::Alignment alignment READ alignment WRITE setAlignment NOTIFY alignmentChanged)
 
 public:
+  Q_INVOKABLE QRectF availableGeometry(QQuickItem *anchor) const;
+
   explicit PopupPlacementAttached(QObject *parent);
 
   Qt::Alignment alignment() const { return m_alignment; }

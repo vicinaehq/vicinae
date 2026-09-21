@@ -6,6 +6,7 @@ SourceBlendRect {
     id: root
 
     property bool filled: false
+    property bool opaque: false
     readonly property bool _enabled: opacity >= 1
     readonly property LauncherAppearance appearance: (root.Window.window as LauncherWindow)?.appearance ?? fallbackAppearance
 
@@ -15,6 +16,6 @@ SourceBlendRect {
 
     visible: filled
     radius: 8
-    backgroundColor: _enabled ? appearance.delegateBackdrop : "transparent"
-    color: Config.withAlpha(Theme.inputBackground, Config.surfaceOpacity)
+    backgroundColor: !opaque && _enabled ? appearance.delegateBackdrop : "transparent"
+    color: opaque ? Qt.tint(Theme.background, Config.withAlpha(Theme.inputBackground, Config.surfaceOpacity)) : Config.withAlpha(Theme.inputBackground, Config.surfaceOpacity)
 }

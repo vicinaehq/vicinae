@@ -16,7 +16,6 @@ Item {
         property: "topInset"
         value: root.headerInset
         when: root.visible
-        delayed: true
         restoreMode: Binding.RestoreNone
     }
 
