@@ -185,6 +185,7 @@ Item {
             FormAppSelector {
                 model: field.host.value ?? []
                 appsModel: field.host.dropdownModel
+                placeholder: qsTr("Add app…")
                 onChanged: apps => root.host.prefModel.setFieldValue(field.host.index, apps)
             }
         }

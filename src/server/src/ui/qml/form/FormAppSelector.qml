@@ -12,6 +12,7 @@ ColumnLayout {
     property CompletionModel appsModel: null
     property bool filled: false
     property bool readOnly: false
+    property string placeholder: qsTr("+ Restrict to app…")
 
     signal changed(var apps)
 
@@ -119,7 +120,7 @@ ColumnLayout {
     }
 
     SearchableDropdown {
-        placeholder: qsTr("+ Restrict to app…")
+        placeholder: root.placeholder
         model: root.appsModel
         currentItem: null
         filled: root.filled

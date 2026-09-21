@@ -203,6 +203,7 @@ ColumnLayout {
                     model: field.host.value ?? []
                     appsModel: field.host.dropdownModel
                     readOnly: field.host.readOnly
+                    placeholder: qsTr("Add app…")
                     onChanged: apps => root.prefModel.setFieldValue(field.host.index, apps)
                 }
             }
