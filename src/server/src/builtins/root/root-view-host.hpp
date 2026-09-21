@@ -24,7 +24,6 @@ public:
 
 protected:
   bool inputFilter(QKeyEvent *) override;
-  SectionListModel *quickAccessModel() override;
   void beforeActionExecuted(const AbstractAction *action) override;
   bool tryAliasFastTrack();
   void scheduleNextClockTick();

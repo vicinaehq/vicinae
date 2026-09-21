@@ -1,14 +1,11 @@
 #pragma once
-#include <algorithm>
-#include <QKeyEvent>
 #include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
-
-#include "keyboard/keyboard.hpp"
-#include "section-list-model.hpp"
 #include "ui/views/base-view.hpp"
+
+class SectionListModel;
 
 class ViewHostBase : public BaseView {
   Q_OBJECT
@@ -28,26 +25,7 @@ public:
   virtual void onReactivated() {}
 
   void textChanged(const QString &) override {}
-  bool inputFilter(QKeyEvent *event) override {
-    if (event->type() != QEvent::KeyPress || event->isAutoRepeat() ||
-        (event->modifiers() & ~Qt::KeypadModifier) != Qt::ControlModifier) {
-      return false;
-    }
-
-    const Keyboard::KeyPress press(*event);
-    const auto candidates = press.candidates();
-    const auto digitKey = std::ranges::find_if(
-        candidates, [](const Keyboard::Shortcut &c) { return c.key() >= Qt::Key_0 && c.key() <= Qt::Key_9; });
-    if (digitKey == candidates.end()) return false;
-
-    const int digit = digitKey->key() - Qt::Key_0;
-    const int shortcutIndex = digit == 0 ? 9 : digit - 1;
-    auto *model = quickAccessModel();
-    return model && model->activateQuickAccess(shortcutIndex);
-  }
-
-protected:
-  virtual SectionListModel *quickAccessModel() { return listModel(); }
+  bool inputFilter(QKeyEvent *event) override;
 };
 
 class FormViewBase : public ViewHostBase {

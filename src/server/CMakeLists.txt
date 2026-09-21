@@ -557,6 +557,7 @@ set(SRCS
 	src/ui/alert/alert-model.hpp
 	src/ui/alert/alert-model.cpp
 	src/ui/views/bridge-view.hpp
+	src/ui/views/bridge-view.cpp
 	src/builtins/calculator/calc-history-model.hpp
 	src/builtins/calculator/calc-history-model.cpp
 	src/builtins/calculator/calc-history-view-host.hpp

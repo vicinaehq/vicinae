@@ -171,5 +171,3 @@ void RootViewHost::beforePop() {
 }
 
 SectionListModel *RootViewHost::listModel() const { return m_model; }
-
-SectionListModel *RootViewHost::quickAccessModel() { return m_model; }

@@ -23,7 +23,6 @@ public:
 
 protected:
   SectionListModel *model() { return &m_model; }
-  SectionListModel *quickAccessModel() override { return &m_model; }
 
   void initModel() {
     m_model.setScope(ViewScope(context(), this));

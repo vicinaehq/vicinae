@@ -94,7 +94,7 @@ Item {
 
     // Follow only instantiated rows, including delegates recycled by the list.
     Repeater {
-        model: root.list.contentItem.children
+        model: root.visible ? root.list.contentItem.children : []
 
         ShortcutBadge {
             required property Item modelData

@@ -28,7 +28,6 @@ protected:
   void beforePop() override { m_model.beforePop(); }
 
   SectionListModel m_model{this};
-  SectionListModel *quickAccessModel() override { return &m_model; }
 
 private:
   QUrl qmlComponentUrl() const final { return m_model.qmlComponentUrl(); }

@@ -25,9 +25,6 @@ public:
 
   SectionListModel *listModel() const override { return const_cast<SectionListModel *>(&m_model); }
 
-protected:
-  SectionListModel *quickAccessModel() override { return &m_model; }
-
 private:
   void fetchExtensions();
   void handleFinished();
