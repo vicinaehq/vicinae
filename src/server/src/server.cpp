@@ -277,7 +277,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto appRuntime = std::make_unique<AppRuntime>(*windowManager, *appService);
-    auto clipboardManager = std::make_unique<ClipboardService>(clipboardDbPath, keys.database);
+    auto clipboardManager =
+        std::make_unique<ClipboardService>(clipboardDbPath, *appService, *appRuntime, keys.database);
     clipboardManager->setEncryptionKey(keys.clipboard);
 #ifdef Q_OS_LINUX
     auto inputServer = std::make_unique<LinuxInputServer>();

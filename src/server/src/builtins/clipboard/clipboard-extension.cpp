@@ -72,6 +72,7 @@ void ClipboardExtension::preferencesChanged(const ClipboardPreferences &preferen
   auto clipman = ServiceRegistry::instance()->clipman();
 
   clipman->setMonitoring(preferences.monitoring);
+  clipman->setIgnoredApps(preferences.ignoredApps);
   clipman->setHistoryEvictionThreshold(evictionThreshold(preferences.evictionThreshold),
                                        preferences.preserveTagged);
 #ifndef Q_OS_MACOS

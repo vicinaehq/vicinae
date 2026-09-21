@@ -1,6 +1,7 @@
 #pragma once
 #include <chrono>
 #include <optional>
+#include <string>
 #include <vector>
 #include <glaze/core/common.hpp>
 #include <glaze/core/meta.hpp>
@@ -51,6 +52,7 @@ struct ClipboardPreferences {
   bool ignorePasswords = true;
 #endif
   bool preserveTagged = true;
+  std::vector<std::string> ignoredApps;
   ClipboardEviction evictionThreshold = ClipboardEviction::Never;
   bool eraseOnStartup = false;
 };
@@ -71,6 +73,12 @@ template <> struct PreferenceSchema<ClipboardPreferences> {
       .title = tr("Preserve tagged"),
       .description = tr("Never evict or mass delete selections that have been explicitly tagged (pinned, "
                         "custom keyword)"),
+  };
+  PreferenceMeta ignoredApps{
+      .title = tr("Excluded apps"),
+      .description = tr("Never add selections copied from these apps to the history"),
+      .kind = PreferenceMeta::Kind::Apps,
+      .required = false,
   };
   PreferenceMeta evictionThreshold{
       .title = tr("Eviction threshold"),

@@ -22,6 +22,9 @@
 #include <qstringview.h>
 #include <QTimer>
 
+class AppService;
+class AppRuntime;
+
 class ClipboardService : public QObject, public NonCopyable {
   Q_OBJECT
 
@@ -47,7 +50,8 @@ public:
     DataUnavailable,
   };
 
-  ClipboardService(const std::filesystem::path &path, std::optional<db::EncryptionKey> key = std::nullopt);
+  ClipboardService(const std::filesystem::path &path, AppService &appService, AppRuntime &appRuntime,
+                   std::optional<db::EncryptionKey> key = std::nullopt);
 
   static QString readText();
   static Clipboard::ReadContent readContent();
@@ -92,6 +96,7 @@ public:
   void setMonitoring(bool value);
   void setEncryptionKey(std::optional<db::EncryptionKey> key);
   void setIgnorePasswords(bool value);
+  void setIgnoredApps(std::vector<std::string> ids);
   bool isEncryptionReady() const;
 
   /**
@@ -110,6 +115,8 @@ private:
 
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;
+  AppService &m_appService;
+  AppRuntime &m_appRuntime;
   std::optional<db::EncryptionKey> m_dbKey;
   std::shared_ptr<ClipboardDatabase> m_readDb;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
@@ -126,6 +133,12 @@ private:
    */
   QByteArray computeSelectionHash(const ClipboardSelection &selection) const;
   bool isClearSelection(const ClipboardSelection &selection) const;
+
+  /**
+   * Canonical application id for the app that produced the selection. Servers that cannot know it
+   * fall back to the frontmost application.
+   */
+  std::optional<QString> resolveSourceApp(const std::optional<QString> &sourceApp) const;
 
   /**
    * Sanitize the passed selection by removing duplicate offers.
@@ -145,6 +158,7 @@ private:
 
   bool m_monitoring = false;
   bool m_ignorePasswords = true;
+  std::vector<std::string> m_ignoredApps;
   std::optional<ClipboardSelection> m_lastSelection;
   QTimer m_restoreTimer;
   QFutureWatcher<std::expected<ClipboardHistoryEntry, QString>> m_indexingSelection;

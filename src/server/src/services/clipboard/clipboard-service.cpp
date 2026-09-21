@@ -28,6 +28,8 @@
 #include <quuid.h>
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "services/app-service/app-service.hpp"
+#include "services/app-runtime/app-runtime.hpp"
 #include "services/clipboard/selection-mime-data.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-mime.hpp"
@@ -106,6 +108,17 @@ void ClipboardService::setEncryptionKey(std::optional<db::EncryptionKey> key) {
 bool ClipboardService::isEncryptionReady() const { return m_encrypter.get(); }
 
 void ClipboardService::setIgnorePasswords(bool value) { m_ignorePasswords = value; }
+
+void ClipboardService::setIgnoredApps(std::vector<std::string> ids) { m_ignoredApps = std::move(ids); }
+
+std::optional<QString> ClipboardService::resolveSourceApp(const std::optional<QString> &sourceApp) const {
+  if (sourceApp && !sourceApp->isEmpty()) {
+    if (auto app = m_appService.find(*sourceApp)) return app->id();
+    return sourceApp;
+  }
+  if (auto app = m_appRuntime.frontmostApp()) return app->id();
+  return std::nullopt;
+}
 
 void ClipboardService::setHistoryEvictionThreshold(std::optional<std::chrono::seconds> threshold,
                                                    bool preserveTaggedSelections) {
@@ -476,6 +489,7 @@ ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &sele
 void ClipboardService::saveSelection(ClipboardSelection selection) {
   if (!m_monitoring) return;
 
+  selection.sourceApp = resolveSourceApp(selection.sourceApp);
   m_lastSelection = selection;
 
   sanitizeSelection(selection);
@@ -489,6 +503,11 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
   if (m_ignorePasswords && selection.isPassword) {
     qInfo() << "Ignored password clipboard selection";
+    return;
+  }
+
+  if (selection.sourceApp && std::ranges::contains(m_ignoredApps, selection.sourceApp->toStdString())) {
+    qInfo() << "Ignored clipboard selection from excluded app" << *selection.sourceApp;
     return;
   }
 
@@ -786,8 +805,9 @@ bool ClipboardService::removeAllSelections() {
 
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
 
-ClipboardService::ClipboardService(const std::filesystem::path &path, std::optional<db::EncryptionKey> key)
-    : m_dbKey(key) {
+ClipboardService::ClipboardService(const std::filesystem::path &path, AppService &appService,
+                                   AppRuntime &appRuntime, std::optional<db::EncryptionKey> key)
+    : m_appService(appService), m_appRuntime(appRuntime), m_dbKey(key) {
   m_dataDir = path.parent_path() / "clipboard-data";
 
   {
