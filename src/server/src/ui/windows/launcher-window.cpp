@@ -89,6 +89,9 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   m_commandHoldTimer.setSingleShot(true);
   m_commandHoldTimer.setInterval(COMMAND_HOLD_DELAY);
   connect(&m_commandHoldTimer, &QTimer::timeout, this, [this]() { setCommandHeld(true); });
+  connect(qGuiApp, &QGuiApplication::focusWindowChanged, this, [this](QWindow *focus) {
+    if (focus != m_window) setCommandHeld(false);
+  });
 
   if (!Environment::isHudDisabled()) {
     m_hudBridge = new HudBridge(this);
@@ -322,6 +325,10 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
     m_ctx.navigation->showWindow();
   } else if (event->type() == QEvent::Hide) {
     m_ctx.navigation->closeWindow();
+  }
+
+  else if (event->type() == QEvent::ShortcutOverride) {
+    syncCommandHeld(static_cast<QKeyEvent *>(event)); // NOLINT
   }
 
   else if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
@@ -640,8 +647,6 @@ void LauncherWindow::setCommandHeld(bool held) {
   emit commandHeldChanged();
 }
 
-// The overlay only shows once Ctrl has been held alone for a moment: a chord such as Ctrl+K
-// must not flash it, and any key joining the chord dismisses it.
 void LauncherWindow::syncCommandHeld(const QKeyEvent *event) {
   const bool pressed = event->type() == QEvent::KeyPress;
   const auto modifier = Keyboard::modifierForKey(static_cast<Qt::Key>(event->key()));
