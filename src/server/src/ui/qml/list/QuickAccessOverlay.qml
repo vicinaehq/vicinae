@@ -6,6 +6,7 @@ import Vicinae
 Item {
     id: root
     required property ListView list
+    required property bool active
     property real topInset: 0
     property real bottomInset: 0
 
@@ -14,8 +15,6 @@ Item {
     clip: true
     visible: opacity > 0
     opacity: active ? 1 : 0
-
-    readonly property bool active: Launcher.commandHeld && !Launcher.alertModel.visible && !Launcher.actionPanel.open && !Launcher.footerPanel.open && !Launcher.hasOverlay
 
     Behavior on opacity {
         NumberAnimation {

@@ -257,6 +257,7 @@ Item {
 
             QuickAccessOverlay {
                 list: listView
+                active: Launcher.commandHeld && !Launcher.alertModel.visible && !Launcher.actionPanel.open && !Launcher.footerPanel.open && !Launcher.hasOverlay
                 topInset: viewport.topInset
                 bottomInset: viewport.bottomInset
             }
