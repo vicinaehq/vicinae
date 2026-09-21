@@ -20,7 +20,12 @@ components. A new scrolling primitive should wrap its Flickable in
 for a Qt `ListView`; it should not measure the launcher header.
 Fixed content needs no wrapper or inset helper.
 
-Covered pages retain their inset. Updates are deferred until navigation's header
-and page changes have settled, preventing temporary geometry changes from
-altering the saved scroll position. Page activation forwards `restoreFocus()`
-when the loaded view implements it.
+Views with their own navigation or input controls can inherit `LauncherView`
+and provide `header` and `footer` items with an `implicitHeight`. The launcher
+places them in its shared chrome slots, outside the content fade, and supplies
+the same scroll insets as the search and status bars. The chat composer uses the
+shared in-scene input frame so its surface and content resize together.
+
+Covered pages retain their inset and scroll position. Visible pages update their
+geometry synchronously. Page activation forwards `restoreFocus()` when the
+loaded view implements it.

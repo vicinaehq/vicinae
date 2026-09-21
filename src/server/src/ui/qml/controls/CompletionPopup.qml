@@ -21,10 +21,10 @@ Popup {
 
     popupType: nativePanel && Platform.supports("nativePanels") ? Popup.Window : Popup.Item
 
-    // In-scene popups can't extend past the window, so the popup opens below
-    // `anchorItem`, flips above it when that side has more room, and caps its
-    // list to whatever fits on the chosen side.
+    // Choose one side of the anchor and fit the list there, using the window
+    // bounds for item popups and the usable screen bounds for native popups.
     property Item anchorItem: parent
+    property int preferredEdge: Qt.BottomEdge
     property int anchorGap: 4
     property int maxListHeight: showFilter ? 300 : 200
 
@@ -33,29 +33,40 @@ Popup {
     readonly property int filterRowHeight: 28
     readonly property int filterRowMargin: 4
     readonly property int windowEdgeMargin: 8
-    readonly property int minListHeight: 60
 
     property bool _above: false
+    property real _anchorOffsetY: 0
     property real _listCap: maxListHeight
     readonly property real _chromeHeight: topPadding + bottomPadding + (showFilter ? filterRowHeight + filterRowMargin : 0)
 
-    y: _above ? -height - anchorGap : (anchorItem ? anchorItem.height + anchorGap : 0)
+    y: _anchorOffsetY + (_above ? -height - anchorGap : (anchorItem ? anchorItem.height + anchorGap : 0))
 
     function _updatePlacement() {
-        _above = false;
+        _above = preferredEdge === Qt.TopEdge;
         _listCap = maxListHeight;
-        const win = content.hostWindow;
-        if (popupType !== Popup.Item || !anchorItem || !win)
+        const win = anchorItem?.Window.window;
+        if (!anchorItem || !win)
             return;
-        const pad = (win.shadowPadding ?? 0) + windowEdgeMargin;
-        const anchorTop = anchorItem.mapToItem(null, 0, 0).y;
-        const below = win.height - pad - (anchorTop + anchorItem.height + anchorGap);
-        const above = anchorTop - anchorGap - pad;
+        _anchorOffsetY = anchorItem.mapToItem(parent, 0, 0).y;
+        let bounds;
+        let pad = windowEdgeMargin;
+        if (popupType === Popup.Item) {
+            const origin = anchorItem.mapFromItem(null, 0, 0);
+            bounds = Qt.rect(origin.x, origin.y, win.width, win.height);
+            pad += (win as LauncherWindow)?.shadowPadding ?? 0;
+        } else {
+            bounds = root.PopupPlacement.availableGeometry(anchorItem);
+        }
+        const below = bounds.y + bounds.height - pad - anchorItem.height - anchorGap;
+        const above = -bounds.y - anchorGap - pad;
         const sections = _model.sectionCount;
         const natural = sections * sectionRowHeight + (count - sections) * itemRowHeight;
         const wanted = Math.min(natural, maxListHeight) + _chromeHeight;
-        _above = wanted > below && above > below;
-        _listCap = Math.max(minListHeight, Math.min(maxListHeight, (_above ? above : below) - _chromeHeight));
+        const preferred = _above ? above : below;
+        const other = _above ? below : above;
+        if (wanted > preferred && other > preferred)
+            _above = !_above;
+        _listCap = Math.max(0, Math.min(maxListHeight, (_above ? above : below) - _chromeHeight));
     }
 
     readonly property int count: _model.count
@@ -166,8 +177,6 @@ Popup {
     contentItem: ColumnLayout {
         id: content
         spacing: 0
-
-        readonly property var hostWindow: Window.window
 
         Item {
             visible: root.showFilter

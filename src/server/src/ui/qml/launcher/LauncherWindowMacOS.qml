@@ -10,7 +10,7 @@ LauncherWindow {
     }
     statusBarComponent: LauncherStatusBarMacOS {}
     contentEffect: ScrollFadeMacOS {
-        topInset: root.searchBarOverlap
+        topInset: root.headerOverlap
         bottomInset: root.statusBarOverlap
     }
     nativeChrome: true

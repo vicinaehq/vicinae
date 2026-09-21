@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
 
-Item {
+LauncherView {
     id: root
     required property QuickAIViewHost host
 
@@ -12,51 +12,50 @@ Item {
         composer.forceActiveFocus();
     }
 
-    RowLayout {
-        id: header
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        height: 44
-        spacing: 12
+    header: Item {
+        implicitHeight: root.appearance.searchBarHeight
+        height: implicitHeight
 
-        ViciImage {
-            Layout.preferredWidth: 22
-            Layout.preferredHeight: 22
-            source: Img.icon(BuiltinIcon.ChevronLeft).withFillColor(Theme.textMuted)
-            opacity: backHover.hovered ? 0.6 : 1.0
+        RowLayout {
+            anchors.fill: parent
+            spacing: 12
 
-            HoverHandler {
-                id: backHover
-                cursorShape: Qt.PointingHandCursor
+            ViciImage {
+                Layout.leftMargin: 16
+                Layout.preferredWidth: 22
+                Layout.preferredHeight: 22
+                source: Img.icon(BuiltinIcon.ChevronLeft).withFillColor(Theme.textMuted)
+                opacity: backHover.hovered ? 0.6 : 1.0
+
+                HoverHandler {
+                    id: backHover
+                    cursorShape: Qt.PointingHandCursor
+                }
+
+                TapHandler {
+                    onTapped: Launcher.goBack()
+                }
             }
 
-            TapHandler {
-                onTapped: Launcher.goBack()
+            Text {
+                text: Launcher.navigationTitle
+                color: Theme.foreground
+                font.family: Theme.fontFamily
+                font.pointSize: Theme.regularFontSize
+                font.bold: true
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+                Layout.rightMargin: 16
             }
-        }
-
-        Text {
-            text: Launcher.navigationTitle
-            color: Theme.foreground
-            font.family: Theme.fontFamily
-            font.pointSize: Theme.regularFontSize
-            font.bold: true
-            elide: Text.ElideRight
-            Layout.fillWidth: true
         }
     }
 
     ScrollViewport {
         id: viewport
-        anchors.top: header.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
+        anchors.fill: parent
         flickable: flickable
-        bottomPadding: composer.height + 28
+        topPadding: 12
+        bottomPadding: 12
 
         function scrollToBottom() {
             viewport.scrollTo(viewport.maximumY);
@@ -204,38 +203,43 @@ Item {
     }
 
     EmptyView {
-        anchors.fill: viewport
+        width: viewport.width
+        height: viewport.height - viewport.bottomInset
         visible: root.host.exchanges.length === 0 && !root.host.streaming
         icon: Launcher.navigationIcon
         title: qsTr("Ask anything")
         description: qsTr("Answers use the model selected in the composer.")
     }
 
-    ChatComposer {
-        id: composer
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.margins: 10
-        backdrop: flickable
-        placeholder: root.host.exchanges.length === 0 && !root.host.streaming ? qsTr("Ask anything...") : qsTr("Ask a follow-up...")
-        busy: root.host.streaming
-        modelItems: root.host.modelSelectorItems
-        currentModel: root.host.modelSelectorCurrentItem
-        dictationAvailable: root.host.dictationAvailable
-        recording: root.host.recording
-        transcribing: root.host.transcribing
-        recordingTime: root.host.recordingTime
-        dictationMessage: root.host.dictationMessage
-        onSubmitted: text => root.host.send(text)
-        onCancelled: root.host.cancel()
-        onModelActivated: item => root.host.selectModel(item.id)
-        onDictationToggled: root.host.toggleDictation()
-        onDictationCancelled: root.host.cancelDictation()
+    footer: Item {
+        implicitHeight: composer.height + 20
+        height: implicitHeight
 
-        onHeightChanged: {
-            if (flickable.contentY >= viewport.maximumY - composer.lineHeight)
-                Qt.callLater(viewport.scrollToBottom);
+        ChatComposer {
+            id: composer
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: 10
+            placeholder: root.host.exchanges.length === 0 && !root.host.streaming ? qsTr("Ask anything...") : qsTr("Ask a follow-up...")
+            busy: root.host.streaming
+            modelItems: root.host.modelSelectorItems
+            currentModel: root.host.modelSelectorCurrentItem
+            dictationAvailable: root.host.dictationAvailable
+            recording: root.host.recording
+            transcribing: root.host.transcribing
+            recordingTime: root.host.recordingTime
+            dictationMessage: root.host.dictationMessage
+            onSubmitted: text => root.host.send(text)
+            onCancelled: root.host.cancel()
+            onModelActivated: item => root.host.selectModel(item.id)
+            onDictationToggled: root.host.toggleDictation()
+            onDictationCancelled: root.host.cancelDictation()
+
+            onHeightChanged: {
+                if (flickable.contentY >= viewport.maximumY - composer.lineHeight)
+                    Qt.callLater(viewport.scrollToBottom);
+            }
         }
     }
 

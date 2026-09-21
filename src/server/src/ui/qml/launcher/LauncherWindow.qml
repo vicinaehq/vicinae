@@ -26,6 +26,10 @@ LauncherWindowBase {
         windowWidth: root._w
     }
     readonly property Item commandView: (commandStack.currentItem as LauncherPage)?.view ?? null
+    readonly property Item pageHeader: (commandView as LauncherView)?.header ?? null
+    readonly property Item pageFooter: (commandView as LauncherView)?.footer ?? null
+    headerVisible: pageHeader !== null || Launcher.searchVisible
+    headerHeight: pageHeader?.implicitHeight ?? root.appearance.searchBarHeight
     statusBarOverlap: floatingStatusBar.visible && root.appearance.floatingStatusBar ? floatingStatusBar.height - root.appearance.contentInset : 0
     statusBarTop: shadowPadding + floatingStatusBar.y
     popupBackdrop: contentArea
@@ -133,8 +137,8 @@ LauncherWindowBase {
 
             Item {
                 Layout.fillWidth: true
-                Layout.preferredHeight: root.searchBarOverlap > 0 ? 0 : root.appearance.searchBarHeight
-                visible: Launcher.searchVisible
+                Layout.preferredHeight: root.headerOverlap > 0 ? 0 : root.headerHeight
+                visible: root.headerVisible
             }
 
             HorizontalLoadingBar {
@@ -178,10 +182,27 @@ LauncherWindowBase {
             x: root.appearance.contentInset
             y: root.appearance.contentInset
             width: parent.width - 2 * root.appearance.contentInset
-            height: root.appearance.searchBarHeight
-            visible: Launcher.searchVisible && !Launcher.hasOverlay
+            height: root.headerHeight
+            visible: root.headerVisible && !Launcher.hasOverlay
             enabled: !Launcher.alertModel.visible
+            active: root.pageHeader === null
             sourceComponent: root.searchBarComponent
+
+            Binding {
+                target: root.pageHeader
+                property: "parent"
+                value: searchBar
+                when: root.pageHeader !== null
+                restoreMode: Binding.RestoreBindingOrValue
+            }
+
+            Binding {
+                target: root.pageHeader
+                property: "width"
+                value: searchBar.width
+                when: root.pageHeader !== null
+                restoreMode: Binding.RestoreBindingOrValue
+            }
 
             function focusInput() {
                 if (Launcher.searchVisible)
@@ -193,12 +214,29 @@ LauncherWindowBase {
 
         Loader {
             id: floatingStatusBar
-            visible: !Launcher.compacted && !Launcher.hasOverlay && Launcher.statusBarVisible
+            visible: !Launcher.compacted && !Launcher.hasOverlay && (root.pageFooter !== null || Launcher.statusBarVisible)
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            height: (item as Item)?.implicitHeight ?? 0
+            height: root.pageFooter?.implicitHeight ?? (item as Item)?.implicitHeight ?? 0
+            active: Launcher.statusBarVisible && root.pageFooter === null
             sourceComponent: root.statusBarComponent
+
+            Binding {
+                target: root.pageFooter
+                property: "parent"
+                value: floatingStatusBar
+                when: root.pageFooter !== null
+                restoreMode: Binding.RestoreBindingOrValue
+            }
+
+            Binding {
+                target: root.pageFooter
+                property: "width"
+                value: floatingStatusBar.width
+                when: root.pageFooter !== null
+                restoreMode: Binding.RestoreBindingOrValue
+            }
         }
 
         SourceBlendRect {
@@ -359,7 +397,7 @@ LauncherWindowBase {
     Component {
         id: pageComponent
         LauncherPage {
-            headerInset: root.searchBarOverlap
+            headerInset: root.headerOverlap
         }
     }
 
