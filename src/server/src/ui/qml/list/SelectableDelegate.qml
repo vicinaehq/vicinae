@@ -58,33 +58,4 @@ Item {
         id: contentItem
         anchors.fill: parent
     }
-
-    ShortcutBadge {
-        id: quickAccessBadge
-        visible: opacity > 0
-        anchors.right: parent.right
-        anchors.rightMargin: 12
-        anchors.verticalCenter: parent.verticalCenter
-        z: 2
-        tokens: Keyboard.tokens(root.quickAccessIndex === 9 ? Qt.Key_0 : Qt.Key_1 + root.quickAccessIndex, Qt.ControlModifier)
-        surfaceColor: Qt.tint(Theme.background, Config.withAlpha(contentColor, 0.08))
-        opacity: root.quickAccessActive ? 1 : 0
-        transform: Translate {
-            x: root.quickAccessActive ? 0 : 8
-
-            Behavior on x {
-                NumberAnimation {
-                    duration: 120
-                    easing.type: Easing.OutCubic
-                }
-            }
-        }
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 120
-                easing.type: Easing.OutCubic
-            }
-        }
-    }
 }

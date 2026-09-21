@@ -254,6 +254,12 @@ Item {
                     policy: viewport.scrollable ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
                 }
             }
+
+            QuickAccessOverlay {
+                list: listView
+                topInset: viewport.topInset
+                bottomInset: viewport.bottomInset
+            }
         }
 
         ContentDivider {
