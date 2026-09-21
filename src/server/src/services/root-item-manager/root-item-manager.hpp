@@ -362,11 +362,18 @@ private:
   ScopedLocalStorage getProviderSecretStorage(const QString &providerId) const;
 
   void mergeConfigWithMetadata(const config::ConfigValue &cfg);
+  void syncPreferences();
+  void syncProviderPreferences(RootProvider &provider);
+  void syncItemPreferences(const RootItem &item);
+  PreferenceValues dispatchProviderPreferences(RootProvider &provider);
+  static bool samePreferences(const PreferenceValues &a, const PreferenceValues &b);
 
   std::vector<std::shared_ptr<RootItem>>
   getFromSerializedEntrypointIds(std::span<const std::string> ids) const;
 
   std::unordered_map<EntrypointId, RootItemMetadata> m_metadata;
+  std::unordered_map<std::string, PreferenceValues> m_dispatchedProviderPreferences;
+  std::unordered_map<EntrypointId, PreferenceValues> m_dispatchedItemPreferences;
   std::vector<std::unique_ptr<RootProvider>> m_providers;
   config::Manager &m_cfg;
   LocalStorageService &m_storage;

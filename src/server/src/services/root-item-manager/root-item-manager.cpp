@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <qlogging.h>
 #include "root-item-manager.hpp"
+#include <glaze/json/patch.hpp>
 #include "glaze-qt.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
@@ -19,7 +20,7 @@ RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &stor
       m_searchHistory(Omnicast::dataDir() / "search-history.json") {
   connect(&cfg, &config::Manager::configChanged, this, [this](const config::ConfigValue &next) {
     mergeConfigWithMetadata(next);
-    qDebug() << "configuration changed";
+    syncPreferences();
     emit metadataChanged();
   });
 }
@@ -135,6 +136,7 @@ void RootItemManager::updateIndex() {
   }
 
   mergeConfigWithMetadata(m_cfg.value());
+  syncPreferences();
   isReloading = false;
   emit itemsChanged();
 }
@@ -280,6 +282,7 @@ bool RootItemManager::setProviderPreferenceValues(const QString &id, const Prefe
   }
 
   m_cfg.mergeProviderWithUser(id.toStdString(), {.preferences = std::move(filtered)});
+  syncProviderPreferences(*provider);
 
   return true;
 }
@@ -302,7 +305,7 @@ bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const Pref
   }
 
   m_cfg.mergeEntrypointWithUser(id, {.preferences = std::move(filtered)});
-  item->preferenceValuesChanged(preferences);
+  syncItemPreferences(*item);
 
   return true;
 }
@@ -356,6 +359,8 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const Preferen
 		}
   });
   // clang-format on
+  syncProviderPreferences(*prvd);
+  syncItemPreferences(*item);
 }
 
 bool RootItemManager::setAlias(const EntrypointId &id, std::string_view alias) {
@@ -559,6 +564,7 @@ void RootItemManager::unloadProvider(const QString &id) {
 
   if (it == m_providers.end()) return;
 
+  m_dispatchedProviderPreferences.erase(id.toStdString());
   m_providers.erase(it);
 }
 
@@ -574,10 +580,7 @@ void RootItemManager::loadProvider(std::unique_ptr<RootProvider> provider) {
   auto ptr = provider.get();
 
   m_providers.emplace_back(std::move(provider));
-  auto preferenceValues = getProviderPreferenceValues(ptr->uniqueId());
-
-  ptr->preferencesChanged(preferenceValues);
-  ptr->initialized(preferenceValues);
+  ptr->initialized(dispatchProviderPreferences(*ptr));
   connect(ptr, &RootProvider::itemsChanged, this, [this]() { updateIndex(); });
 }
 
@@ -663,7 +666,6 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
     meta.fallback = fallbackSet.contains(entrypointId);
 
     if (itemConfig) {
-      item.item->preferenceValuesChanged(getItemPreferenceValues(entrypointId));
       if (auto enabled = itemConfig->enabled) { meta.enabled = enabled.value(); }
       if (auto alias = itemConfig->alias) { meta.alias = alias.value(); }
       if (auto shortcut = itemConfig->shortcut) { meta.shortcut = shortcut.value(); }
@@ -675,9 +677,58 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
       }
     }
   }
+}
 
-  // update provider preferences to make sure they are in sync
+bool RootItemManager::samePreferences(const PreferenceValues &a, const PreferenceValues &b) {
+  if (a.size() != b.size()) return false;
+
+  return std::ranges::all_of(a, [&](const auto &entry) {
+    auto it = b.find(entry.first);
+    return it != b.end() && glz::equal(entry.second, it->second);
+  });
+}
+
+PreferenceValues RootItemManager::dispatchProviderPreferences(RootProvider &provider) {
+  auto values = getProviderPreferenceValues(provider.uniqueId());
+
+  provider.preferencesChanged(values);
+  m_dispatchedProviderPreferences[provider.uniqueId().toStdString()] = values;
+
+  return values;
+}
+
+void RootItemManager::syncProviderPreferences(RootProvider &provider) {
+  auto values = getProviderPreferenceValues(provider.uniqueId());
+  auto [it, inserted] = m_dispatchedProviderPreferences.try_emplace(provider.uniqueId().toStdString());
+
+  if (!inserted && samePreferences(it->second, values)) return;
+
+  provider.preferencesChanged(values);
+  it->second = std::move(values);
+}
+
+void RootItemManager::syncItemPreferences(const RootItem &item) {
+  if (item.preferences().empty()) return;
+
+  auto id = item.uniqueId();
+  auto values = getItemPreferenceValues(id);
+  auto [it, inserted] = m_dispatchedItemPreferences.try_emplace(id);
+
+  if (!inserted && samePreferences(it->second, values)) return;
+
+  item.preferenceValuesChanged(values);
+  it->second = std::move(values);
+}
+
+void RootItemManager::syncPreferences() {
   for (const auto &provider : m_providers) {
-    provider->preferencesChanged(getProviderPreferenceValues(provider->uniqueId()));
+    syncProviderPreferences(*provider);
+  }
+
+  std::erase_if(m_dispatchedItemPreferences,
+                [&](const auto &entry) { return !m_metadata.contains(entry.first); });
+
+  for (const SearchableRootItem &item : m_items) {
+    syncItemPreferences(*item.item);
   }
 }
