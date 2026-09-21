@@ -1271,6 +1271,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ScrollViewport.qml
 	src/ui/qml/controls/ListScrollViewport.qml
 	src/ui/qml/launcher/LauncherPage.qml
+	src/ui/qml/launcher/LauncherView.qml
 	src/ui/qml/list/HoverResetOnModelChange.qml
 	src/ui/qml/list/HoverResetOnShow.qml
 	src/ui/qml/views/RootSearchList.qml

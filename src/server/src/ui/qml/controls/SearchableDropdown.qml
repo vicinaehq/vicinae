@@ -19,6 +19,8 @@ Item {
     property bool compact: false
     property bool flat: false
     property real minimumWidth: 0
+    property alias preferredPopupEdge: completionPopup.preferredEdge
+    property alias popupAnchor: completionPopup.anchorItem
     readonly property real preferredWidth: flat ? Math.ceil(triggerButton.implicitWidth) : Math.max(triggerButton.implicitWidth, minimumWidth)
 
     property string placeholder: ""
@@ -120,7 +122,7 @@ Item {
         popupType: Platform.preferItemPopup("dropdown") ? Popup.Item : Popup.Window
         // On Wayland the compositor places the native popup window from the
         // PopupPlacement anchor; x/y only apply on other platforms.
-        PopupPlacement.alignment: root.compact ? Qt.AlignRight : Qt.AlignLeft
+        PopupPlacement.alignment: (root.compact ? Qt.AlignRight : Qt.AlignLeft) | (completionPopup._above ? Qt.AlignTop : Qt.AlignBottom)
         x: root.popupX()
         width: Math.max(root.compact ? 200 : 250, root.width)
         focus: true

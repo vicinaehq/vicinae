@@ -1,7 +1,8 @@
-#include "ui/quick/popup-placement-attached.hpp"
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QVariant>
+#include "ui/quick/popup-placement-attached.hpp"
 
 namespace {
 // xdg_positioner.constraint_adjustment bits from the xdg-shell protocol
@@ -15,6 +16,12 @@ PopupPlacementAttached::PopupPlacementAttached(QObject *parent) : QObject(parent
   // yet when the attached object is created.
   connect(parent, SIGNAL(contentItemChanged()), this, SLOT(attachToContentItem()));
   attachToContentItem();
+}
+
+QRectF PopupPlacementAttached::availableGeometry(QQuickItem *anchor) const {
+  if (!anchor || !anchor->window() || !anchor->window()->screen()) return {};
+  const auto geometry = anchor->window()->screen()->availableGeometry();
+  return {anchor->mapFromGlobal(geometry.topLeft()), QSizeF(geometry.size())};
 }
 
 void PopupPlacementAttached::attachToContentItem() {
@@ -75,7 +82,13 @@ void PopupPlacementAttached::apply() {
   // Anchor to the trigger's real rect instead of letting QtWayland guess it
   // from the (possibly shifted/wider) popup window geometry.
   if (auto *trigger = parent()->property("parent").value<QQuickItem *>(); trigger && trigger->window()) {
-    const QRect rect = trigger->mapRectToScene(trigger->boundingRect()).toRect();
+    QRect rect = trigger->mapRectToScene(trigger->boundingRect()).toRect();
+    if (auto *anchor = parent()->property("anchorItem").value<QQuickItem *>();
+        anchor && anchor->window() == trigger->window()) {
+      const auto bounds = anchor->mapRectToScene(anchor->boundingRect()).toRect();
+      rect.setTop(bounds.top());
+      rect.setHeight(bounds.height());
+    }
     m_window->setProperty("_q_waylandPopupAnchorRect", rect);
   }
 }
