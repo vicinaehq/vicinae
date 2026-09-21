@@ -57,6 +57,7 @@ private:
   Q_PROPERTY(bool isLoading READ isLoading NOTIFY isLoadingChanged)
   Q_PROPERTY(bool searchVisible READ searchVisible NOTIFY searchVisibleChanged)
   Q_PROPERTY(bool searchInteractive READ searchInteractive NOTIFY searchInteractiveChanged)
+  Q_PROPERTY(bool searchRedacted READ searchRedacted NOTIFY searchRedactedChanged)
   Q_PROPERTY(bool statusBarVisible READ statusBarVisible NOTIFY statusBarVisibleChanged)
   Q_PROPERTY(bool compacted READ compacted NOTIFY compactedChanged)
   Q_PROPERTY(bool hasCompleter READ hasCompleter NOTIFY completerChanged)
@@ -103,6 +104,7 @@ public:
   bool isLoading() const { return m_isLoading; }
   bool searchVisible() const { return m_searchVisible; }
   bool searchInteractive() const { return m_searchInteractive; }
+  bool searchRedacted() const { return m_searchRedacted; }
   bool statusBarVisible() const { return m_statusBarVisible; }
   bool compacted() const { return m_compacted; }
   bool hasCompleter() const { return m_hasCompleter; }
@@ -164,6 +166,7 @@ signals:
   void isLoadingChanged();
   void searchVisibleChanged();
   void searchInteractiveChanged();
+  void searchRedactedChanged();
   void statusBarVisibleChanged();
   void completerChanged();
   void completerValuesChanged();
@@ -218,6 +221,7 @@ private:
   bool m_isLoading = false;
   bool m_searchVisible = true;
   bool m_searchInteractive = true;
+  bool m_searchRedacted = false;
   bool m_statusBarVisible = true;
   bool m_viewWasPopped = false;
   bool m_viewWasReplaced = false;

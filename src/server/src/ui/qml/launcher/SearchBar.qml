@@ -66,6 +66,7 @@ Item {
                 selectedTextColor: Theme.textSelectionFg
                 clip: true
                 readOnly: !Launcher.searchInteractive
+                echoMode: Launcher.searchRedacted ? TextInput.Password : TextInput.Normal
 
                 HoverHandler {
                     cursorShape: Qt.IBeamCursor

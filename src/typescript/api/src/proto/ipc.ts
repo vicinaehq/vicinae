@@ -143,6 +143,7 @@ export type DMenuRequest = {
 	width?: number;
 	height?: number;
 	noFooter: boolean;
+	password: boolean;
 }
 
 export type DMenuResponse = {
