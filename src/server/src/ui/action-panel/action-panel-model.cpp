@@ -4,7 +4,7 @@
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/navigation/list-navigation.hpp"
 #include "theme/theme.hpp"
-#include <QKeyEvent>
+#include "keyboard/keyboard.hpp"
 #include <utility>
 
 template <> struct fuzzy::FuzzySearchable<std::shared_ptr<AbstractAction>> {
@@ -311,17 +311,16 @@ void ActionPanelModel::buildFlatList(std::vector<FlatItem> &out) const {
 
 void ActionPanelModel::rebuildFlatList() { buildFlatList(m_flat); }
 
-bool ActionPanelModel::activateByShortcut(int key, int modifiers) {
-  auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
-  QKeyEvent const event(QEvent::KeyPress, key, mods);
-
-  for (int i = 0; std::cmp_less(i, m_flat.size()); ++i) {
-    const auto &item = m_flat[i];
-    if (item.kind != FlatItem::ActionItem) continue;
-    auto &action = m_sections[item.sectionIdx].actions[item.actionIdx];
-    if (action->isBoundTo(&event)) {
-      activate(i);
-      return true;
+bool ActionPanelModel::activateByShortcut(const Keyboard::KeyPress &press) {
+  for (const auto &shortcut : press.candidates()) {
+    for (int i = 0; std::cmp_less(i, m_flat.size()); ++i) {
+      const auto &item = m_flat[i];
+      if (item.kind != FlatItem::ActionItem) continue;
+      auto &action = m_sections[item.sectionIdx].actions[item.actionIdx];
+      if (action->isBoundTo(shortcut)) {
+        activate(i);
+        return true;
+      }
     }
   }
   return false;

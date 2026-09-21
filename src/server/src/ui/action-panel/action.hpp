@@ -53,15 +53,6 @@ public:
     return m_shortcuts.front();
   }
 
-  bool isBoundTo(const QKeyEvent *event) {
-    // numpad enter is uniformized with the regular return key
-    if (event->key() == Qt::Key_Enter) {
-      return isBoundTo(Keyboard::Shortcut(Qt::Key_Return, event->modifiers()));
-    }
-
-    return isBoundTo(Keyboard::Shortcut(event));
-  }
-
   bool isBoundTo(const Keyboard::Shortcut &shortcut) {
     return std::ranges::any_of(m_shortcuts, [&](auto &&model) { return model == shortcut; });
   }

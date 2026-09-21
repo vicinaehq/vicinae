@@ -2,8 +2,8 @@
 #include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
-#include "ui/views/base-view.hpp"
 #include <QtQml/qqmlregistration.h>
+#include "ui/views/base-view.hpp"
 
 class SectionListModel;
 
@@ -25,7 +25,7 @@ public:
   virtual void onReactivated() {}
 
   void textChanged(const QString &) override {}
-  bool inputFilter(QKeyEvent *) override { return false; }
+  bool inputFilter(QKeyEvent *event) override;
 };
 
 class FormViewBase : public ViewHostBase {

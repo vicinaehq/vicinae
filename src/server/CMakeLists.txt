@@ -557,6 +557,7 @@ set(SRCS
 	src/ui/alert/alert-model.hpp
 	src/ui/alert/alert-model.cpp
 	src/ui/views/bridge-view.hpp
+	src/ui/views/bridge-view.cpp
 	src/builtins/calculator/calc-history-model.hpp
 	src/builtins/calculator/calc-history-model.cpp
 	src/builtins/calculator/calc-history-view-host.hpp
@@ -1155,6 +1156,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/list/ListAccessory.qml
 	src/ui/qml/list/ListAccessoryRow.qml
 	src/ui/qml/list/SelectableDelegate.qml
+	src/ui/qml/list/QuickAccessOverlay.qml
 	src/ui/qml/list/DraggableMouseArea.qml
 	src/ui/qml/list/SectionHeader.qml
 	src/ui/qml/launcher/Footer.qml

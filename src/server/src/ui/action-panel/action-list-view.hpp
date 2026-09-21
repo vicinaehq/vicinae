@@ -17,7 +17,7 @@ public:
 
   QUrl componentUrl() const override;
   QVariantMap componentProps() override;
-  AbstractAction *findBoundAction(const QKeyEvent *event) const override;
+  AbstractAction *findBoundAction(const Keyboard::KeyPress &press) const override;
   AbstractAction *primaryAction() const override;
   std::shared_ptr<AbstractAction> retainAction(AbstractAction *action) const override;
   bool hasActions() const override;

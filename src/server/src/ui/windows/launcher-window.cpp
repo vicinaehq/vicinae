@@ -61,6 +61,7 @@ namespace {
 
 constexpr int DRAG_SNAP_DISTANCE = 32;
 constexpr int MIN_VISIBLE_ON_RESTORE = 40;
+constexpr int COMMAND_HOLD_DELAY = 250;
 
 std::filesystem::path windowPositionPath() { return Omnicast::stateDir() / "launcher-window.json"; }
 
@@ -84,6 +85,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   updateLayerShellProps();
   buildFooterMenu();
+
+  m_commandHoldTimer.setSingleShot(true);
+  m_commandHoldTimer.setInterval(COMMAND_HOLD_DELAY);
+  connect(&m_commandHoldTimer, &QTimer::timeout, this, [this]() { setCommandHeld(true); });
 
   if (!Environment::isHudDisabled()) {
     m_hudBridge = new HudBridge(this);
@@ -319,13 +324,15 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
     m_ctx.navigation->closeWindow();
   }
 
-  else if (event->type() == QEvent::KeyPress) {
+  else if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
     auto *ke = static_cast<QKeyEvent *>(event); // NOLINT
     // KeypadModifier marks key origin, not user intent; strip it so numpad
     // arrows compare equal to main-keyboard arrows downstream.
     if (ke->modifiers().testFlag(Qt::KeypadModifier)) {
       ke->setModifiers(ke->modifiers() & ~Qt::KeypadModifier);
     }
+    syncCommandHeld(ke);
+    if (event->type() == QEvent::KeyRelease) { return QObject::eventFilter(obj, event); }
     // the current view host gets first pick at any key press, unless a component
     // that owns the keyboard (overlay, alert, action panel) is up.
     const bool viewOwnsInput =
@@ -337,7 +344,8 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
     // unmodified keys (return included) belong to the focused component: forwarding
     // them globally would steal text input or returns meant for local widgets such as
     // text areas, overlays or the opened action panel.
-    if (ke->modifiers() != Qt::NoModifier && forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) {
+    if (ke->modifiers() != Qt::NoModifier &&
+        forwardKey(ke->key(), static_cast<int>(ke->modifiers()), static_cast<int>(ke->nativeScanCode()))) {
       return true;
     }
   }
@@ -370,6 +378,7 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
     if (!isLayerShellActive()) { Wayland::XdgActivation::activateWindow(m_window); }
 #endif
   } else {
+    setCommandHeld(false);
     LauncherWindowPlatform::suppressHeldKeyReleases();
     if (m_dragOverlayVisible) endWindowDrag();
     m_window->hide();
@@ -417,6 +426,7 @@ void LauncherWindow::loadRoot() {
       // unloadRoot() nulls m_window before deleting the underlying window, whose
       // teardown synchronously resigns key and re-enters here.
       if (!m_window) return;
+      if (!m_window->isActive()) setCommandHeld(false);
       // losing focus to our own file dialog or to a selection capture is not user focus loss
       if (m_pendingLauncherFileChoice || LauncherWindowPlatform::foregroundLent()) return;
       m_ctx.navigation->setWindowActivated(m_window->isActive());
@@ -573,9 +583,11 @@ void LauncherWindow::forwardSearchText(const QString &text) {
 bool LauncherWindow::forwardKey(int rawKey, int modifiers, int scanCode) {
   if (m_actionPanel->capturesAllKeys()) return false;
 
-  auto mods = static_cast<Qt::KeyboardModifiers>(modifiers);
-  const int key = Keyboard::resolveKey(static_cast<Qt::Key>(rawKey), static_cast<quint32>(scanCode));
-  const bool isReturn = key == Qt::Key_Return || key == Qt::Key_Enter;
+  const Keyboard::KeyPress press(static_cast<Qt::Key>(rawKey), static_cast<Qt::KeyboardModifiers>(modifiers),
+                                 static_cast<quint32>(scanCode));
+  const auto mods = press.mods();
+  const int key = press.key();
+  const bool isReturn = key == Qt::Key_Return;
   const bool unmodified = (mods & ~Qt::KeypadModifier) == Qt::NoModifier;
 
   // unmodified keys are regular text input, except return which the action panel
@@ -610,17 +622,39 @@ bool LauncherWindow::forwardKey(int rawKey, int modifiers, int scanCode) {
     }
   }
 
-  QKeyEvent const event(QEvent::KeyPress, key, mods);
+  if (m_actionPanel->activateBoundAction(press)) return true;
 
-  if (m_actionPanel->activateBoundAction(&event)) return true;
-
-  if (Keyboard::Shortcut(Keybind::OpenSettings) == &event) {
+  if (press.matches(Keyboard::Shortcut(Keybind::OpenSettings))) {
     m_ctx.navigation->closeWindow();
     m_ctx.settings->openWindow();
     return true;
   }
 
   return false;
+}
+
+void LauncherWindow::setCommandHeld(bool held) {
+  if (!held) m_commandHoldTimer.stop();
+  if (m_commandHeld == held) return;
+  m_commandHeld = held;
+  emit commandHeldChanged();
+}
+
+// The overlay only shows once Ctrl has been held alone for a moment: a chord such as Ctrl+K
+// must not flash it, and any key joining the chord dismisses it.
+void LauncherWindow::syncCommandHeld(const QKeyEvent *event) {
+  const bool pressed = event->type() == QEvent::KeyPress;
+  const auto modifier = Keyboard::modifierForKey(static_cast<Qt::Key>(event->key()));
+
+  auto modifiers = event->modifiers() & ~Qt::KeypadModifier;
+  if (modifier) modifiers.setFlag(*modifier, pressed);
+
+  if (modifiers != Qt::ControlModifier || (pressed && !modifier)) {
+    setCommandHeld(false);
+    return;
+  }
+
+  if (pressed && !m_commandHeld && !m_commandHoldTimer.isActive()) m_commandHoldTimer.start();
 }
 
 void LauncherWindow::goBack() {

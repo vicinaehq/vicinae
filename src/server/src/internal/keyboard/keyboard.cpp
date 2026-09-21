@@ -5,6 +5,7 @@
 #include "layout-resolver.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
+#include <algorithm>
 #include <ranges>
 #include "keybind-manager.hpp"
 #include "keyboard.hpp"
@@ -160,9 +161,39 @@ std::unique_ptr<LayoutResolver> g_layoutResolver;
 
 void setLayoutResolver(std::unique_ptr<LayoutResolver> resolver) { g_layoutResolver = std::move(resolver); }
 
+namespace {
+KeyLevels layoutLevels(Qt::Key key, quint32 scanCode) {
+  if (!g_layoutResolver || !printableCharForKey(key)) return {};
+  return g_layoutResolver->levels(key, scanCode);
+}
+} // namespace
+
 Qt::Key resolveKey(Qt::Key key, quint32 scanCode) {
-  if (g_layoutResolver && printableCharForKey(key)) key = g_layoutResolver->unshift(key, scanCode);
-  return normalizeToLatin(key);
+  return normalizeToLatin(layoutLevels(key, scanCode).base.value_or(key));
+}
+
+KeyPress::KeyPress(Qt::Key key, Qt::KeyboardModifiers mods, quint32 scanCode) {
+  // numpad enter is uniformized with the regular return key
+  if (key == Qt::Key_Enter) key = Qt::Key_Return;
+
+  const auto levels = layoutLevels(key, scanCode);
+  const Qt::Key primary = normalizeToLatin(levels.base.value_or(key));
+  m_candidates[0] = Shortcut(primary, mods);
+
+  if (!levels.shifted) return;
+
+  const Qt::Key shifted = normalizeToLatin(*levels.shifted);
+  if (shifted == primary) return;
+
+  m_candidates[1] = Shortcut(shifted, mods);
+  m_count = 2;
+}
+
+KeyPress::KeyPress(const QKeyEvent &event)
+    : KeyPress(static_cast<Qt::Key>(event.key()), event.modifiers(), event.nativeScanCode()) {}
+
+bool KeyPress::matches(const Shortcut &shortcut) const {
+  return std::ranges::any_of(candidates(), [&](const Shortcut &candidate) { return candidate == shortcut; });
 }
 
 std::optional<QChar> printableCharForKey(Qt::Key key) {

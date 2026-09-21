@@ -139,26 +139,33 @@ std::optional<uint16_t> keycodeForChar(CFDataRef layoutData, const QString &char
   return std::nullopt;
 }
 
+std::optional<Qt::Key> keyForTyped(const QString &typed) {
+  if (typed.size() != 1) { return std::nullopt; }
+
+  const QChar ch = typed.front().toUpper();
+  if (!ch.isPrint() || ch.isSpace()) { return std::nullopt; }
+
+  return static_cast<Qt::Key>(ch.unicode());
+}
+
 } // namespace
 
-Qt::Key Keyboard::MacosLayoutResolver::unshift(Qt::Key key, quint32) {
+Keyboard::KeyLevels Keyboard::MacosLayoutResolver::levels(Qt::Key key, quint32) {
   const auto ch = printableCharForKey(key);
-  if (!ch) { return key; }
+  if (!ch) { return {}; }
 
   const uint8_t kbdType = LMGetKbdType();
   CFDataRef current = macos::copyCurrentLayoutData();
-  if (!current) { return key; }
+  if (!current) { return {}; }
 
-  const auto keycode = keycodeForChar(current, QString(ch->toLower()), kbdType);
-  const QString base = keycode ? macos::translateKeycode(current, *keycode, false, kbdType) : QString();
+  KeyLevels levels;
+  if (const auto keycode = keycodeForChar(current, QString(ch->toLower()), kbdType)) {
+    levels.base = keyForTyped(macos::translateKeycode(current, *keycode, false, kbdType));
+    levels.shifted = keyForTyped(macos::translateKeycode(current, *keycode, true, kbdType));
+  }
   CFRelease(current);
 
-  if (base.size() != 1) { return key; }
-
-  const QChar baseChar = base.front().toUpper();
-  if (!baseChar.isPrint() || baseChar.isSpace()) { return key; }
-
-  return static_cast<Qt::Key>(baseChar.unicode());
+  return levels;
 }
 
 Qt::Key Keyboard::normalizeToLatin(Qt::Key key) {

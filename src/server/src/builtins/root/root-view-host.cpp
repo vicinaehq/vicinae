@@ -110,6 +110,8 @@ bool RootViewHost::tryAliasFastTrack() {
 }
 
 bool RootViewHost::inputFilter(QKeyEvent *event) {
+  if (ViewHostBase::inputFilter(event)) return true;
+
   auto manager = context()->services->rootItemManager();
   auto &nav = context()->navigation;
   auto &cfg = context()->services->config()->value();

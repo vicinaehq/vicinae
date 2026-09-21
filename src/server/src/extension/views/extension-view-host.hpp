@@ -50,6 +50,7 @@ public:
 
   QString viewType() const;
   ExtensionListModel *listContent() const { return activeModel<ExtensionListModel>(); }
+  SectionListModel *listModel() const override { return listContent(); }
   ExtensionGridModel *gridContent() const { return activeModel<ExtensionGridModel>(); }
   ExtensionFormModel *formContent() const { return activeModel<ExtensionFormModel>(); }
   bool isExtLoading() const;

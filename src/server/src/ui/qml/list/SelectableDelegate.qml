@@ -10,8 +10,10 @@ Item {
 
     property bool selected: false
     property bool draggable: false
+    property int quickAccessIndex: -1
     readonly property LauncherAppearance appearance: (root.Window.window as LauncherWindow)?.appearance ?? fallbackAppearance
     readonly property bool hovered: mouseArea.containsMouse && HoverActivation.active
+    readonly property bool quickAccessActive: Launcher.commandHeld && quickAccessIndex >= 0 && !Launcher.alertModel.visible && !Launcher.actionPanel.open && !Launcher.footerPanel.open && !Launcher.hasOverlay
 
     LauncherAppearance {
         id: fallbackAppearance
