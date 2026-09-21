@@ -282,7 +282,7 @@ bool RootItemManager::setProviderPreferenceValues(const QString &id, const Prefe
   }
 
   m_cfg.mergeProviderWithUser(id.toStdString(), {.preferences = std::move(filtered)});
-  syncPreferences();
+  syncProviderPreferences(*provider);
 
   return true;
 }
@@ -305,7 +305,7 @@ bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const Pref
   }
 
   m_cfg.mergeEntrypointWithUser(id, {.preferences = std::move(filtered)});
-  syncPreferences();
+  syncItemPreferences(*item);
 
   return true;
 }
@@ -359,7 +359,8 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const Preferen
 		}
   });
   // clang-format on
-  syncPreferences();
+  syncProviderPreferences(*prvd);
+  syncItemPreferences(*item);
 }
 
 bool RootItemManager::setAlias(const EntrypointId &id, std::string_view alias) {
@@ -696,30 +697,38 @@ PreferenceValues RootItemManager::dispatchProviderPreferences(RootProvider &prov
   return values;
 }
 
+void RootItemManager::syncProviderPreferences(RootProvider &provider) {
+  auto values = getProviderPreferenceValues(provider.uniqueId());
+  auto [it, inserted] = m_dispatchedProviderPreferences.try_emplace(provider.uniqueId().toStdString());
+
+  if (!inserted && samePreferences(it->second, values)) return;
+
+  provider.preferencesChanged(values);
+  it->second = std::move(values);
+}
+
+void RootItemManager::syncItemPreferences(const RootItem &item) {
+  if (item.preferences().empty()) return;
+
+  auto id = item.uniqueId();
+  auto values = getItemPreferenceValues(id);
+  auto [it, inserted] = m_dispatchedItemPreferences.try_emplace(id);
+
+  if (!inserted && samePreferences(it->second, values)) return;
+
+  item.preferenceValuesChanged(values);
+  it->second = std::move(values);
+}
+
 void RootItemManager::syncPreferences() {
   for (const auto &provider : m_providers) {
-    auto values = getProviderPreferenceValues(provider->uniqueId());
-    auto [it, inserted] = m_dispatchedProviderPreferences.try_emplace(provider->uniqueId().toStdString());
-
-    if (!inserted && samePreferences(it->second, values)) continue;
-
-    provider->preferencesChanged(values);
-    it->second = std::move(values);
+    syncProviderPreferences(*provider);
   }
 
   std::erase_if(m_dispatchedItemPreferences,
                 [&](const auto &entry) { return !m_metadata.contains(entry.first); });
 
   for (const SearchableRootItem &item : m_items) {
-    if (item.item->preferences().empty()) continue;
-
-    auto id = item.item->uniqueId();
-    auto values = getItemPreferenceValues(id);
-    auto [it, inserted] = m_dispatchedItemPreferences.try_emplace(id);
-
-    if (!inserted && samePreferences(it->second, values)) continue;
-
-    item.item->preferenceValuesChanged(values);
-    it->second = std::move(values);
+    syncItemPreferences(*item.item);
   }
 }

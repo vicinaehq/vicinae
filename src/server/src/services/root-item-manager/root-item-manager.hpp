@@ -363,6 +363,8 @@ private:
 
   void mergeConfigWithMetadata(const config::ConfigValue &cfg);
   void syncPreferences();
+  void syncProviderPreferences(RootProvider &provider);
+  void syncItemPreferences(const RootItem &item);
   PreferenceValues dispatchProviderPreferences(RootProvider &provider);
   static bool samePreferences(const PreferenceValues &a, const PreferenceValues &b);
 
