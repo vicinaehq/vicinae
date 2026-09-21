@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <QKeyEvent>
 #include <QUrl>
 #include <QVariantList>
@@ -33,16 +34,16 @@ public:
       return false;
     }
 
-    const auto key = Keyboard::resolveKey(static_cast<Qt::Key>(event->key()), event->nativeScanCode());
-    int shortcutIndex = -1;
-    if (key >= Qt::Key_1 && key <= Qt::Key_9) {
-      shortcutIndex = key - Qt::Key_1;
-    } else if (key == Qt::Key_0) {
-      shortcutIndex = 9;
-    }
+    const Keyboard::KeyPress press(*event);
+    const auto candidates = press.candidates();
+    const auto digitKey = std::ranges::find_if(
+        candidates, [](const Keyboard::Shortcut &c) { return c.key() >= Qt::Key_0 && c.key() <= Qt::Key_9; });
+    if (digitKey == candidates.end()) return false;
 
+    const int digit = digitKey->key() - Qt::Key_0;
+    const int shortcutIndex = digit == 0 ? 9 : digit - 1;
     auto *model = quickAccessModel();
-    return shortcutIndex >= 0 && model && model->activateQuickAccess(shortcutIndex);
+    return model && model->activateQuickAccess(shortcutIndex);
   }
 
 protected:

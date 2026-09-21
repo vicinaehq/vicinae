@@ -12,7 +12,7 @@ namespace Keyboard {
 
 class MacosLayoutResolver : public LayoutResolver {
 public:
-  Qt::Key unshift(Qt::Key key, quint32 scanCode) override;
+  KeyLevels levels(Qt::Key key, quint32 scanCode) override;
 };
 
 } // namespace Keyboard

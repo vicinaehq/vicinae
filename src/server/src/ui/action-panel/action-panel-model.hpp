@@ -10,6 +10,10 @@
 
 class SubmenuAction;
 
+namespace Keyboard {
+class KeyPress;
+}
+
 class ActionPanelModel : public QAbstractListModel {
   Q_OBJECT
   QML_NAMED_ELEMENT(ActionPanelModel)
@@ -46,7 +50,7 @@ public:
   Q_INVOKABLE int nextSectionIndex(int from, int direction) const;
   Q_INVOKABLE int scrollTargetIndex(int index, int direction) const;
 
-  bool activateByShortcut(int key, int modifiers);
+  bool activateByShortcut(const Keyboard::KeyPress &press);
 
 signals:
   void titleChanged();

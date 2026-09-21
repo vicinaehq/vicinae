@@ -3,7 +3,7 @@
 #include "ui/action-panel/action-panel-model.hpp"
 #include "ui/action-panel/action.hpp"
 #include "ui/action-panel/action-panel-state.hpp"
-#include <QKeyEvent>
+#include "keyboard/keyboard.hpp"
 
 ActionListView::ActionListView(QObject *parent)
     : ActionPanelView(parent), m_state(std::make_unique<ActionPanelState>()),
@@ -36,12 +36,14 @@ QVariantMap ActionListView::componentProps() {
   return props;
 }
 
-AbstractAction *ActionListView::findBoundAction(const QKeyEvent *event) const {
+AbstractAction *ActionListView::findBoundAction(const Keyboard::KeyPress &press) const {
   if (!m_state) return nullptr;
 
-  for (const auto &section : m_state->sections()) {
-    for (const auto &action : section->actions()) {
-      if (action->isBoundTo(event)) { return action.get(); }
+  for (const auto &shortcut : press.candidates()) {
+    for (const auto &section : m_state->sections()) {
+      for (const auto &action : section->actions()) {
+        if (action->isBoundTo(shortcut)) { return action.get(); }
+      }
     }
   }
   return nullptr;

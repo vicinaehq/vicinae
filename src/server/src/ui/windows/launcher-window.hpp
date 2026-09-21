@@ -259,6 +259,7 @@ private:
   int m_lsKeyboardInteractivity = 2; // LayerShellQt::Window::KeyboardInteractivityOnDemand
   bool m_hasCompleter = false;
   bool m_commandHeld = false;
+  QTimer m_commandHoldTimer;
   QVariantList m_completerArgs;
   QString m_completerIcon;
   QVariantList m_completerValues;

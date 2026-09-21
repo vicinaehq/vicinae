@@ -1,4 +1,5 @@
 #include "xkb-layout-resolver.hpp"
+#include <cstdint>
 #include <QChar>
 #include <xkbcommon/xkbcommon.h>
 
@@ -19,22 +20,26 @@ void XkbLayoutResolver::setKeymap(xkb_keymap *keymap, xkb_state *state) {
   m_state = state;
 }
 
-Qt::Key XkbLayoutResolver::unshift(Qt::Key key, quint32 scanCode) {
-  if (!m_keymap || !m_state || !scanCode) return key;
+KeyLevels XkbLayoutResolver::levels(Qt::Key, quint32 scanCode) {
+  if (!m_keymap || !m_state || !scanCode) return {};
 
   const xkb_layout_index_t layout = xkb_state_key_get_layout(m_state, scanCode);
-  if (layout == XKB_LAYOUT_INVALID) return key;
+  if (layout == XKB_LAYOUT_INVALID) return {};
 
-  const xkb_keysym_t *syms = nullptr;
-  if (xkb_keymap_key_get_syms_by_level(m_keymap, scanCode, layout, 0, &syms) != 1) return key;
+  auto keyAtLevel = [&](xkb_level_index_t level) -> std::optional<Qt::Key> {
+    const xkb_keysym_t *syms = nullptr;
+    if (xkb_keymap_key_get_syms_by_level(m_keymap, scanCode, layout, level, &syms) != 1) return std::nullopt;
 
-  const uint32_t codepoint = xkb_keysym_to_utf32(syms[0]);
-  if (codepoint == 0 || codepoint >= 0x10000) return key;
+    const std::uint32_t codepoint = xkb_keysym_to_utf32(syms[0]);
+    if (codepoint == 0 || codepoint >= 0x10000) return std::nullopt;
 
-  const QChar ch(static_cast<char16_t>(codepoint));
-  if (!ch.isPrint() || ch.isSpace()) return key;
+    const QChar ch(static_cast<char16_t>(codepoint));
+    if (!ch.isPrint() || ch.isSpace()) return std::nullopt;
 
-  return static_cast<Qt::Key>(ch.toUpper().unicode());
+    return static_cast<Qt::Key>(ch.toUpper().unicode());
+  };
+
+  return {.base = keyAtLevel(0), .shifted = keyAtLevel(1)};
 }
 
 } // namespace Keyboard

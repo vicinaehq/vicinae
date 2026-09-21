@@ -186,8 +186,9 @@ bool ActionPanelController::tryShortcut(int key, int modifiers, int scanCode) {
   auto *model = qobject_cast<ActionPanelModel *>(val.value<QObject *>());
   if (!model) return false;
 
-  const auto resolved = Keyboard::resolveKey(static_cast<Qt::Key>(key), static_cast<quint32>(scanCode));
-  return model->activateByShortcut(static_cast<int>(resolved), modifiers);
+  return model->activateByShortcut(Keyboard::KeyPress(static_cast<Qt::Key>(key),
+                                                      static_cast<Qt::KeyboardModifiers>(modifiers),
+                                                      static_cast<quint32>(scanCode)));
 }
 
 bool ActionPanelController::capturesAllKeys() const {
@@ -195,11 +196,11 @@ bool ActionPanelController::capturesAllKeys() const {
   return m_currentPanel->property("capturesAllKeys").toBool();
 }
 
-bool ActionPanelController::activateBoundAction(const QKeyEvent *event) {
+bool ActionPanelController::activateBoundAction(const Keyboard::KeyPress &press) {
   auto *root = activeRoot();
   if (!root) return false;
 
-  auto *action = root->findBoundAction(event);
+  auto *action = root->findBoundAction(press);
   if (!action) return false;
 
   if (auto *submenu = dynamic_cast<SubmenuAction *>(action)) {

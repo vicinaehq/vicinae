@@ -14,8 +14,11 @@ class ActionListView;
 class ActionPanelState;
 class ActionPanelView;
 class BaseView;
-class QKeyEvent;
 class SubmenuAction;
+
+namespace Keyboard {
+class KeyPress;
+}
 
 class ActionPanelController : public QObject {
   Q_OBJECT
@@ -75,7 +78,7 @@ public:
    * regular actions are executed. Enter/return uniformization is handled as part
    * of the shortcut matching.
    */
-  bool activateBoundAction(const QKeyEvent *event);
+  bool activateBoundAction(const Keyboard::KeyPress &press);
 
   Q_INVOKABLE bool executePrimaryAction();
   void executeAction(AbstractAction *action);

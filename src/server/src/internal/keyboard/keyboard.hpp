@@ -1,7 +1,10 @@
 #pragma once
 // We use our own shortcut stuff by design, instead of using QShortcut and the likes.
+#include <array>
+#include <cstddef>
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 #include <QChar>
 #include <QStringView>
@@ -87,6 +90,25 @@ private:
   Qt::Key m_key = Qt::Key_unknown;
   Qt::KeyboardModifiers m_modifiers;
   bool m_isValid = false;
+};
+
+// A key press and the shortcuts it can stand for, exact level first: the character the key types
+// unshifted, then the one it types shifted when that differs. This is how a "ctrl+1" binding fires
+// on layouts where 1 sits on the shifted level, such as AZERTY's & key.
+class KeyPress {
+public:
+  KeyPress(Qt::Key key, Qt::KeyboardModifiers mods, quint32 scanCode = 0);
+  explicit KeyPress(const QKeyEvent &event);
+
+  Qt::Key key() const { return m_candidates.front().key(); }
+  Qt::KeyboardModifiers mods() const { return m_candidates.front().mods(); }
+  std::span<const Shortcut> candidates() const { return {m_candidates.data(), m_count}; }
+
+  bool matches(const Shortcut &shortcut) const;
+
+private:
+  std::array<Shortcut, 2> m_candidates;
+  std::size_t m_count = 1;
 };
 
 }; // namespace Keyboard

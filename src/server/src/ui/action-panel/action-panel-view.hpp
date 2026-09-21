@@ -6,8 +6,11 @@
 #include <memory>
 
 class AbstractAction;
-class QKeyEvent;
 class SubmenuAction;
+
+namespace Keyboard {
+class KeyPress;
+}
 
 class ActionPanelView : public QObject {
   Q_OBJECT
@@ -27,7 +30,7 @@ public:
   virtual QUrl componentUrl() const = 0;
   virtual QVariantMap componentProps() = 0;
 
-  virtual AbstractAction *findBoundAction(const QKeyEvent *event) const { return nullptr; }
+  virtual AbstractAction *findBoundAction(const Keyboard::KeyPress &press) const { return nullptr; }
   virtual AbstractAction *primaryAction() const { return nullptr; }
   virtual std::shared_ptr<AbstractAction> retainAction(AbstractAction *action) const { return nullptr; }
   virtual bool hasActions() const { return false; }

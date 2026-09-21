@@ -12,7 +12,7 @@ public:
   XkbLayoutResolver();
   ~XkbLayoutResolver() override;
 
-  Qt::Key unshift(Qt::Key key, quint32 scanCode) override;
+  KeyLevels levels(Qt::Key key, quint32 scanCode) override;
 
 protected:
   void setKeymap(xkb_keymap *keymap, xkb_state *state);
