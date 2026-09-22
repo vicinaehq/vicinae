@@ -371,6 +371,7 @@ class DMenuCommand : public AbstractCommandLineCommand {
                   "Do not show quick look if available for a given entry");
     app->add_flag("--no-metadata", m_req.noMetadata, "Do not show metadata section in quick look");
     app->add_flag("--no-footer", m_req.noFooter, "Hide the status bar footer");
+    app->add_flag("--password", m_req.password, "Redact the search bar input");
   }
 
   bool run(CLI::App *) override {

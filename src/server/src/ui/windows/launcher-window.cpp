@@ -135,6 +135,13 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     }
   });
 
+  connect(nav, &NavigationController::searchRedactedChanged, this, [this](bool redacted) {
+    if (m_searchRedacted != redacted) {
+      m_searchRedacted = redacted;
+      emit searchRedactedChanged();
+    }
+  });
+
   // Window size override (e.g. dmenu --width/--height)
   connect(nav, &NavigationController::windowSizeRequested, this, [this](QSize size) {
     m_overrideWidth = size.width();

@@ -73,6 +73,7 @@ public:
   void setTopBarVisiblity(bool visible);
   void setSearchVisibility(bool visible);
   void setSearchInteractive(bool interactive);
+  void setSearchRedacted(bool redacted);
   void setStatusBarVisiblity(bool visible);
 
   void clearSearchText();

@@ -87,6 +87,7 @@ public:
     bool isLoading = false;
     bool supportsSearch = true;
     bool searchInteractive = true;
+    bool searchRedacted = false;
     bool needsTopBar = true;
     bool needsStatusBar = true;
     bool showBackButton = true;
@@ -125,6 +126,7 @@ signals:
   void headerVisiblityChanged(bool value);
   void searchVisibilityChanged(bool value);
   void searchInteractiveChanged(bool value);
+  void searchRedactedChanged(bool value);
   void statusBarVisiblityChanged(bool value);
   void backButtonVisibilityChanged(bool visible);
   void windowActivationChanged(bool value) const;
@@ -212,6 +214,7 @@ public:
   void setHeaderVisiblity(bool value, const BaseView *caller = nullptr);
   void setSearchVisibility(bool value, const BaseView *caller = nullptr);
   void setSearchInteractive(bool value, const BaseView *caller = nullptr);
+  void setSearchRedacted(bool value, const BaseView *caller = nullptr);
   void setStatusBarVisibility(bool value, const BaseView *caller = nullptr);
 
   /**

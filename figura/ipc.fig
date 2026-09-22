@@ -69,6 +69,7 @@ struct DMenuRequest {
   width?: int;
   height?: int;
   noFooter: bool;
+  password: bool;
 };
 
 struct DMenuResponse {

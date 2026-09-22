@@ -253,6 +253,7 @@ void NavigationController::popCurrentView() {
   emit headerVisiblityChanged(next->needsTopBar);
   emit searchVisibilityChanged(next->supportsSearch);
   emit searchInteractiveChanged(next->searchInteractive);
+  emit searchRedactedChanged(next->searchRedacted);
   emit statusBarVisiblityChanged(next->needsStatusBar);
   emit loadingChanged(next->isLoading);
   emit backButtonVisibilityChanged(next->showBackButton);
@@ -401,6 +402,13 @@ void NavigationController::setSearchInteractive(bool value, const BaseView *call
   }
 }
 
+void NavigationController::setSearchRedacted(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->searchRedacted = value;
+    if (state->sender == topView()) { emit searchRedactedChanged(value); }
+  }
+}
+
 void NavigationController::setStatusBarVisibility(bool value, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->needsStatusBar = value;
@@ -457,6 +465,7 @@ void NavigationController::activateView(const ViewState &state) {
   emit headerVisiblityChanged(state.needsTopBar);
   emit searchVisibilityChanged(state.supportsSearch);
   emit searchInteractiveChanged(state.searchInteractive);
+  emit searchRedactedChanged(state.searchRedacted);
   emit statusBarVisiblityChanged(state.needsStatusBar);
   emit backButtonVisibilityChanged(state.showBackButton);
   emit loadingChanged(state.isLoading);
