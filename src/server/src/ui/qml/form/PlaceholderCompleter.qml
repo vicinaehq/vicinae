@@ -83,6 +83,8 @@ Item {
                 endIdx++;
             if (endIdx < txt.length && txt.charAt(endIdx) === "}")
                 endIdx++;
+            else
+                endIdx = curPos;
 
             root.completionAccepted(triggerIdx, endIdx, template, triggerIdx + cursorOffset);
         }
