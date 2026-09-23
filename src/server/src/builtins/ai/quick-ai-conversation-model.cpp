@@ -32,16 +32,22 @@ QVariant QuickAIConversationModel::data(const QModelIndex &index, int role) cons
     return QString::fromStdString(exchange.error);
   case PendingRole:
     return exchange.pending;
+  case AttachmentsRole:
+    return exchange.attachments;
   default:
     return {};
   }
 }
 
 QHash<int, QByteArray> QuickAIConversationModel::roleNames() const {
-  return {{QueryRole, "query"}, {ResponseRole, "response"}, {ErrorRole, "error"}, {PendingRole, "pending"}};
+  return {{QueryRole, "query"},
+          {ResponseRole, "response"},
+          {ErrorRole, "error"},
+          {PendingRole, "pending"},
+          {AttachmentsRole, "attachments"}};
 }
 
-void QuickAIConversationModel::beginExchange(const std::string &query) {
+void QuickAIConversationModel::beginExchange(const std::string &query, QVariantList attachments) {
   flushResponse();
   m_streamClock.start();
   m_lastUpdate.reset();
@@ -50,7 +56,7 @@ void QuickAIConversationModel::beginExchange(const std::string &query) {
   beginInsertRows({}, row, row);
   if (m_exchanges.size() == m_exchanges.capacity())
     m_exchanges.reserve(std::max<std::size_t>(8, m_exchanges.size() * 2));
-  m_exchanges.emplace_back(Exchange{.query = query});
+  m_exchanges.emplace_back(Exchange{.query = query, .attachments = std::move(attachments)});
   endInsertRows();
 }
 

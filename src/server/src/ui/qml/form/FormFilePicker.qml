@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Vicinae
 
@@ -22,7 +21,6 @@ FocusScope {
     signal pathsChanged(var paths)
 
     readonly property bool _directoriesOnly: canChooseDirectories && !canChooseFiles
-    property bool _waitingForPortal: false
 
     Accessible.role: Accessible.Button
     Accessible.name: root.selectedPaths && root.selectedPaths.length > 0 ? root.selectedPaths.join(", ") : (root._directoriesOnly ? qsTr("No directory selected") : qsTr("No file selected"))
@@ -33,23 +31,16 @@ FocusScope {
     }
 
     function _openDialog() {
-        if (root.readOnly || FileChooser.active)
-            return;
-
-        if (FileChooser.openDialog(root.canChooseFiles, root.canChooseDirectories, root.multiple)) {
-            root._waitingForPortal = true;
-        } else {
-            _openFallbackDialog();
-        }
+        if (!root.readOnly)
+            picker.open();
     }
 
-    function _openFallbackDialog() {
-        if (root._directoriesOnly)
-            fallbackFolderDialog.open();
-        else {
-            fallbackFileDialog.fileMode = root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile;
-            fallbackFileDialog.open();
-        }
+    FilePickerDialog {
+        id: picker
+        multiple: root.multiple
+        canChooseFiles: root.canChooseFiles
+        canChooseDirectories: root.canChooseDirectories
+        onAccepted: paths => root._applyResult(paths)
     }
 
     function _applyResult(newPaths) {
@@ -64,46 +55,6 @@ FocusScope {
             newPaths = merged;
         }
         root.pathsChanged(newPaths);
-    }
-
-    function _handleFallbackResult(urls) {
-        let newPaths = [];
-        for (let i = 0; i < urls.length; i++)
-            newPaths.push(FileChooser.toLocalPath(urls[i]));
-        root._applyResult(newPaths);
-    }
-
-    Connections {
-        target: FileChooser
-        enabled: root._waitingForPortal
-
-        function onFilesSelected(paths) {
-            root._waitingForPortal = false;
-            let arr = [];
-            for (let i = 0; i < paths.length; i++)
-                arr.push(paths[i]);
-            root._applyResult(arr);
-        }
-    }
-
-    FileDialog {
-        id: fallbackFileDialog
-        title: root.multiple ? qsTr("Select files") : qsTr("Select a file")
-        onAccepted: {
-            root._handleFallbackResult(selectedFiles);
-            FileChooser.notifyFallbackDone();
-        }
-        onRejected: FileChooser.notifyFallbackDone()
-    }
-
-    FolderDialog {
-        id: fallbackFolderDialog
-        title: qsTr("Select a directory")
-        onAccepted: {
-            root._handleFallbackResult([selectedFolder]);
-            FileChooser.notifyFallbackDone();
-        }
-        onRejected: FileChooser.notifyFallbackDone()
     }
 
     // --- Single mode ---

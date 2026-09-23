@@ -55,6 +55,8 @@ QVariant QuickAIDocumentModel::data(const QModelIndex &index, int role) const {
     return exchange.pending && exchange.blocks == 0;
   case FailedRole:
     return !exchange.error.empty();
+  case AttachmentsRole:
+    return local == 0 ? exchange.attachments : QVariantList{};
   default:
     return {};
   }
@@ -68,7 +70,8 @@ QHash<int, QByteArray> QuickAIDocumentModel::roleNames() const {
           {BlockIndexRole, "blockIndex"},
           {MarkdownModelRole, "markdownModel"},
           {PendingRole, "pending"},
-          {FailedRole, "failed"}};
+          {FailedRole, "failed"},
+          {AttachmentsRole, "attachments"}};
 }
 
 std::span<const DocumentPart> QuickAIDocumentModel::documentParts(int row) const {
@@ -97,6 +100,9 @@ void QuickAIDocumentModel::addExchange(int row) {
       .markdown = markdown,
       .query = {{m_conversation->data(m_conversation->index(row), QuickAIConversationModel::QueryRole)
                      .toString()}},
+      .attachments =
+          m_conversation->data(m_conversation->index(row), QuickAIConversationModel::AttachmentsRole)
+              .toList(),
       .offset = offset});
   endInsertRows();
   connect(markdown, &QAbstractItemModel::rowsAboutToBeInserted, this,

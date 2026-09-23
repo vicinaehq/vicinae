@@ -1,6 +1,7 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
 #include "quick-ai-conversation-model.hpp"
+#include "ui/quick/attachment-model.hpp"
 #include "quick-ai-document-model.hpp"
 #include "ui/views/bridge-view.hpp"
 #include "ui/image/image-url.hpp"
@@ -27,6 +28,9 @@ class QuickAIViewHost : public ViewHostBase {
 
   Q_PROPERTY(DocumentModel *documentModel READ documentModel CONSTANT)
   Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
+  Q_PROPERTY(AttachmentModel *attachments READ attachments CONSTANT)
+  Q_PROPERTY(bool canSend READ canSend NOTIFY attachmentStateChanged)
+  Q_PROPERTY(QString attachmentMessage READ attachmentMessage NOTIFY attachmentStateChanged)
   Q_PROPERTY(QString modelLabel READ modelLabel NOTIFY modelChanged)
   Q_PROPERTY(ImageUrl modelIcon READ modelIcon NOTIFY modelChanged)
   Q_PROPERTY(QVariantList modelSelectorItems READ modelSelectorItems NOTIFY modelSelectorItemsChanged)
@@ -39,6 +43,7 @@ class QuickAIViewHost : public ViewHostBase {
   Q_PROPERTY(QString dictationMessage READ dictationMessage NOTIFY dictationMessageChanged)
 
 signals:
+  void attachmentStateChanged();
   void dictationAvailableChanged();
   void dictationStateChanged();
   void recordingTimeChanged();
@@ -67,6 +72,9 @@ public:
 
   DocumentModel *documentModel() { return &m_document; }
   bool streaming() const { return m_streaming; }
+  AttachmentModel *attachments() { return &m_attachments; }
+  bool canSend() const;
+  QString attachmentMessage() const;
   QString modelLabel() const { return m_modelLabel; }
   ImageUrl modelIcon() const { return m_modelIcon; }
   QVariantList modelSelectorItems() const { return m_modelSelectorItems; }
@@ -78,7 +86,7 @@ public:
   QString recordingTime() const;
   QString dictationMessage() const { return m_dictationMessage; }
 
-  Q_INVOKABLE void send(const QString &text);
+  Q_INVOKABLE bool send(const QString &text);
   Q_INVOKABLE void cancel();
   Q_INVOKABLE void selectModel(const QString &compositeId);
   Q_INVOKABLE void toggleDictation();
@@ -86,6 +94,8 @@ public:
 
 private:
   void sendQuery(const std::string &query);
+  bool needsVision() const;
+  bool modelAcceptsImages() const;
   void failQuery(const std::string &reason);
   void rebuildModelSelectorItems();
   void updateDictationAvailable();
@@ -100,6 +110,7 @@ private:
   QString m_dictationMessage;
   std::shared_ptr<AI::AbstractChatCompletionStream> m_stream;
   AI::ChatHistory m_history;
+  AttachmentModel m_attachments;
   QuickAIConversationModel m_exchanges;
   QuickAIDocumentModel m_document{&m_exchanges};
 

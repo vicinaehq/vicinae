@@ -100,18 +100,9 @@ Item {
             root.model.openLink(link);
         }
     }
-    DocumentSelectionMenu {
-        id: selectionMenu
+    ContextMenu.menu: DocumentSelectionMenu {
         controller: root.document
-    }
-    TapHandler {
-        acceptedButtons: Qt.RightButton
-        onTapped: eventPoint => {
-            view.forceActiveFocus();
-            selectionMenu.x = eventPoint.position.x;
-            selectionMenu.y = eventPoint.position.y;
-            selectionMenu.open();
-        }
+        onAboutToShow: view.forceActiveFocus()
     }
     Connections {
         target: root.model
