@@ -146,7 +146,8 @@ clicks themselves.
 its scrolling surface and exposes its controller as `document`. Markdown's model
 handles parsing and code-block actions; the document knows nothing about Markdown.
 Link clicks emit `DocumentController.linkActivated(link)` for the host to handle.
-`DocumentSelectionMenu` provides the shared Copy and Select All menu.
+`DocumentSelectionMenu` provides the shared native Copy and Select All menu.
+Attach it with `ContextMenu.menu` so embedded controls can provide their own menus.
 
 ## Virtual documents
 

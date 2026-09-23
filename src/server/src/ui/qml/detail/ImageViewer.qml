@@ -16,6 +16,7 @@ Popup {
 
     property var sources: []
     property int currentIndex: 0
+    property Menu contextMenu: null
 
     component CircleButton: Rectangle {
         property alias icon: btnIcon.source
@@ -82,6 +83,7 @@ Popup {
     contentItem: Item {
         id: focusItem
         focus: true
+        ContextMenu.menu: root.contextMenu
 
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Left && root.currentIndex > 0) {

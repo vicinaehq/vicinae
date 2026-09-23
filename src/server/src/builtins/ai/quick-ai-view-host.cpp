@@ -13,7 +13,12 @@ constexpr int DICTATION_MESSAGE_MS = 2500;
 }
 
 QuickAIViewHost::QuickAIViewHost(QString initialQuery, AI::ModelRef model)
-    : m_initialQuery(std::move(initialQuery)), m_selectedModel(std::move(model)) {}
+    : m_initialQuery(std::move(initialQuery)), m_selectedModel(std::move(model)) {
+  connect(&m_attachments, &AttachmentModel::changed, this, &QuickAIViewHost::attachmentStateChanged);
+  connect(this, &QuickAIViewHost::streamingChanged, this, &QuickAIViewHost::attachmentStateChanged);
+  connect(this, &QuickAIViewHost::modelSelectorCurrentItemChanged, this,
+          &QuickAIViewHost::attachmentStateChanged);
+}
 
 QUrl QuickAIViewHost::qmlComponentUrl() const { return qml::componentUrl(u"QuickAIView"); }
 
@@ -33,6 +38,7 @@ void QuickAIViewHost::initialize() {
 
   connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::rebuildModelSelectorItems);
   rebuildModelSelectorItems();
+  connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::attachmentStateChanged);
 
   m_dictationService = ServiceRegistry::instance()->dictation();
   m_dictation = new TranscriptionSession(*m_dictationService, this);
@@ -114,12 +120,41 @@ void QuickAIViewHost::showDictationMessage(const QString &message) {
 }
 
 void QuickAIViewHost::loadInitialData() {
-  if (!m_initialQuery.isEmpty()) sendQuery(m_initialQuery.toStdString());
+  if (!m_initialQuery.isEmpty()) send(m_initialQuery);
 }
 
-void QuickAIViewHost::send(const QString &text) {
-  if (m_streaming || text.trimmed().isEmpty()) return;
-  sendQuery(text.trimmed().toStdString());
+bool QuickAIViewHost::needsVision() const {
+  if (m_attachments.hasImages()) return true;
+  return std::ranges::any_of(m_history, [](const AI::ChatMessage &message) {
+    return std::ranges::any_of(
+        message.parts, [](const AI::ChatPart &part) { return std::holds_alternative<AI::ImagePart>(part); });
+  });
+}
+
+bool QuickAIViewHost::modelAcceptsImages() const {
+  if (!m_aiService || !m_selectedModel) return false;
+  auto *provider = m_aiService->getProviderById(m_selectedModel->provider);
+  if (!provider) return false;
+  const auto models = provider->listModels();
+  const auto model = std::ranges::find(models, m_selectedModel->id, &AI::Model::id);
+  return model != models.end() && (model->caps & AI::Capability::Vision);
+}
+
+bool QuickAIViewHost::canSend() const {
+  return !m_streaming && m_attachments.ready() && (!needsVision() || modelAcceptsImages());
+}
+
+QString QuickAIViewHost::attachmentMessage() const {
+  if (needsVision() && !modelAcceptsImages())
+    return tr("Choose a model that supports images for this conversation.");
+  return m_attachments.error();
+}
+
+bool QuickAIViewHost::send(const QString &text) {
+  const auto query = text.trimmed();
+  if (!canSend() || (query.isEmpty() && m_attachments.count() == 0)) return false;
+  sendQuery(query.toStdString());
+  return true;
 }
 
 void QuickAIViewHost::cancel() {
@@ -127,10 +162,25 @@ void QuickAIViewHost::cancel() {
 }
 
 void QuickAIViewHost::sendQuery(const std::string &query) {
-  m_history.emplace_back(AI::ChatMessage::fromText(AI::ChatRole::User, query));
+  const auto previews = m_attachments.items();
+  auto attachments = m_attachments.take();
+  AI::ChatMessage message{.role = AI::ChatRole::User};
+  message.parts.reserve(1 + attachments.size() * 2);
+  if (!query.empty()) message.parts.emplace_back(AI::TextPart{query});
+  for (const auto &content : attachments) {
+    const auto &attachment = content.data();
+    if (const auto *image = std::get_if<FileAttachment::Image>(&attachment.contents)) {
+      message.parts.emplace_back(AI::TextPart{std::format("Image: {}", attachment.name)});
+      message.parts.emplace_back(AI::ImagePart{image->mimeType, image->base64});
+    } else {
+      message.parts.emplace_back(AI::TextPart{std::format("Attached text file: {}\n\n{}", attachment.name,
+                                                          std::get<std::string>(attachment.contents))});
+    }
+  }
+  m_history.emplace_back(std::move(message));
 
   m_currentResponse.clear();
-  m_exchanges.beginExchange(query);
+  m_exchanges.beginExchange(query, previews);
   m_streaming = true;
   emit streamingChanged();
 

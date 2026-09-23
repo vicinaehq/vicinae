@@ -11,6 +11,9 @@ FocusScope {
     property alias placeholder: editor.placeholder
     property var modelItems: []
     property var currentModel: null
+    property AttachmentModel attachments: null
+    property bool submissionEnabled: true
+    property string message: ""
     property bool busy: false
     property int maxRows: 6
     property bool dictationAvailable: false
@@ -20,12 +23,13 @@ FocusScope {
     property string dictationMessage: ""
 
     signal submitted(string text)
+    signal previewRequested(var content)
     signal cancelled
     signal modelActivated(var item)
     signal dictationToggled
     signal dictationCancelled
 
-    readonly property bool canSubmit: !busy && editor.text.trim().length > 0
+    readonly property bool canSubmit: !busy && submissionEnabled && (attachments?.ready ?? true) && (editor.text.trim().length > 0 || (attachments?.count ?? 0) > 0)
     readonly property real lineHeight: Math.ceil(fontMetrics.height)
     readonly property real _verticalPadding: 9
     readonly property real _leftPadding: 18
@@ -35,7 +39,9 @@ FocusScope {
     readonly property real _editorHeight: Math.max(lineHeight, Math.min(editor.contentHeight, lineHeight * maxRows))
     readonly property real _inlineEditorWidth: width - _leftPadding - _rightPadding - controls.width - _spacing
     readonly property bool expanded: editor.text.length > 0 && (editor.text.includes("\n") || textMetrics.advanceWidth > _inlineEditorWidth)
-    implicitHeight: (expanded ? _editorHeight + _spacing + _controlHeight : Math.max(_editorHeight, _controlHeight)) + _verticalPadding * 2
+    readonly property real _attachmentHeight: attachmentList.visible ? attachmentList.implicitHeight + _spacing : 0
+    readonly property real _messageHeight: notice.visible ? notice.implicitHeight + _spacing : 0
+    implicitHeight: _attachmentHeight + _messageHeight + (expanded ? _editorHeight + _spacing + _controlHeight : Math.max(_editorHeight, _controlHeight)) + _verticalPadding * 2
 
     function forceActiveFocus() {
         editor.forceActiveFocus();
@@ -45,7 +51,6 @@ FocusScope {
         if (!root.canSubmit)
             return;
         const text = editor.text.trim();
-        editor.text = "";
         root.submitted(text);
     }
 
@@ -90,15 +95,61 @@ FocusScope {
         opaque: true
     }
 
+    AttachmentList {
+        id: attachmentList
+        x: root._leftPadding
+        y: root._verticalPadding
+        width: root.width - root._leftPadding * 2
+        visible: (root.attachments?.count ?? 0) > 0
+        attachments: root.attachments?.items ?? []
+        removable: true
+        onRemoveRequested: attachmentId => root.attachments.remove(attachmentId)
+        onPreviewRequested: content => root.previewRequested(content)
+    }
+
+    Text {
+        id: notice
+        x: root._leftPadding
+        y: root._verticalPadding + root._attachmentHeight
+        width: root.width - root._leftPadding * 2
+        visible: root.message.length > 0
+        text: root.message
+        textFormat: Text.PlainText
+        wrapMode: Text.Wrap
+        color: Theme.danger
+        font.family: Theme.fontFamily
+        font.pointSize: Theme.smallerFontSize
+    }
+
+    AttachmentPasteHandler {
+        model: root.attachments
+        target: editor.inputItem
+        enabled: !root.busy
+    }
+
+    FilePickerDialog {
+        id: picker
+        multiple: true
+        onAccepted: paths => root.attachments?.addFiles(paths)
+        onClosed: editor.forceActiveFocus()
+    }
+
     FormTextEditor {
         id: editor
         x: root._leftPadding
-        y: root._verticalPadding + (root.expanded ? 0 : (Math.max(root._editorHeight, root._controlHeight) - root._editorHeight) / 2)
+        y: root._verticalPadding + root._attachmentHeight + root._messageHeight + (root.expanded ? 0 : (Math.max(root._editorHeight, root._controlHeight) - root._editorHeight) / 2)
         width: root.expanded ? root.width - root._leftPadding * 2 : root._inlineEditorWidth
         height: root._editorHeight
         multiline: true
         submitOnReturn: true
         onAccepted: root.submit()
+    }
+
+    AttachmentDropArea {
+        anchors.fill: parent
+        attachmentModel: root.attachments
+        enabled: root.attachments !== null && !root.busy
+        z: 1
     }
 
     Row {
@@ -109,6 +160,22 @@ FocusScope {
         anchors.bottomMargin: root._verticalPadding
         height: root._controlHeight
         spacing: root._spacing
+
+        ViciButton {
+            id: attachButton
+            visible: root.attachments !== null
+            enabled: !root.busy
+            implicitWidth: root._controlHeight
+            implicitHeight: root._controlHeight
+            iconSize: 16
+            iconSource: Img.icon(BuiltinIcon.Paperclip).withFillColor(Theme.textMuted)
+            accessibleName: qsTr("Attach images or text files")
+            activeFocusOnTab: true
+            onClicked: picker.open()
+            ToolTip.visible: hovered
+            ToolTip.text: accessibleName
+            ToolTip.delay: 600
+        }
 
         SearchableDropdown {
             id: modelSelector
