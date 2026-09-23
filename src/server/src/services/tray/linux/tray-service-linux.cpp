@@ -194,10 +194,6 @@ TrayServiceLinux::TrayServiceLinux(QObject *parent)
   }
 
   m_serviceName = QString("org.kde.StatusNotifierItem-%1-1").arg(getpid());
-  if (!bus.registerService(m_serviceName)) {
-    qWarning() << "Failed to register tray item service name" << m_serviceName;
-    m_serviceName = bus.baseService();
-  }
 
   connect(&m_watcher, &QDBusServiceWatcher::serviceOwnerChanged, this,
           [this](const QString &, const QString &, const QString &newOwner) {
@@ -210,6 +206,24 @@ TrayServiceLinux::~TrayServiceLinux() {
   auto bus = QDBusConnection::sessionBus();
   bus.unregisterObject(ITEM_PATH);
   bus.unregisterObject(MENU_PATH);
+  unregisterService();
+}
+
+void TrayServiceLinux::registerService() {
+  if (m_serviceName.isEmpty()) return;
+
+  auto bus = QDBusConnection::sessionBus();
+  if (!bus.isConnected() || m_serviceName == bus.baseService()) return;
+  if (bus.interface() && bus.interface()->isServiceRegistered(m_serviceName)) return;
+
+  if (!bus.registerService(m_serviceName)) {
+    qWarning() << "Failed to register tray item service name" << m_serviceName;
+    m_serviceName = bus.baseService();
+  }
+}
+
+void TrayServiceLinux::unregisterService() {
+  auto bus = QDBusConnection::sessionBus();
   if (!m_serviceName.isEmpty() && m_serviceName != bus.baseService()) bus.unregisterService(m_serviceName);
 }
 
@@ -301,6 +315,7 @@ void TrayServiceLinux::setAvailableUpdate(const QString &) {}
 void TrayServiceLinux::show() {
   if (m_visible) return;
   m_visible = true;
+  registerService();
   registerWithWatcher();
   emit m_item.NewStatus(m_item.status());
 }
@@ -308,5 +323,6 @@ void TrayServiceLinux::show() {
 void TrayServiceLinux::hide() {
   if (!m_visible) return;
   m_visible = false;
-  emit m_item.NewStatus(m_item.status());
+  m_registered = false;
+  unregisterService();
 }
