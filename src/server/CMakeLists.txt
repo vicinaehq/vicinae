@@ -619,6 +619,9 @@ set(SRCS
 	src/services/ai/ai-provider-types.hpp
 	src/services/ai/ai-service.cpp
 	src/services/ai/agentic-loop.hpp
+	src/services/ai/agentic-loop.cpp
+	src/services/ai/bash-tool.hpp
+	src/services/ai/bash-tool.cpp
 	src/services/ai/ai-capability.hpp
 	src/services/ai/speech-language-catalogue.hpp
 	src/services/ai/local/local-provider.hpp
@@ -1324,6 +1327,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ViciSpinner.qml
 	src/ui/qml/controls/ViciIconButton.qml
 	src/ui/qml/controls/ChatComposer.qml
+	src/ui/qml/controls/ToolInvocation.qml
+	src/ui/qml/controls/ToolInvocationHeader.qml
 	src/ui/qml/controls/FilePickerDialog.qml
 	src/ui/qml/attachments/AttachmentCard.qml
 	src/ui/qml/attachments/AttachmentMenu.qml

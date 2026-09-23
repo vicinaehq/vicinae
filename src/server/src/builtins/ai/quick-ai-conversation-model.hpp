@@ -9,11 +9,36 @@
 #include <string_view>
 #include <string>
 #include <vector>
+#include <variant>
 
 class QuickAIConversationModel : public QAbstractListModel {
   Q_OBJECT
 
+signals:
+  void contentAdded(int exchange, int content);
+  void contentChanged(int exchange, int content);
+
 public:
+  struct Response {
+    std::string text;
+    std::size_t visibleBytes = 0;
+  };
+  struct Tool {
+    quint64 id;
+    QString name;
+    QString arguments;
+    std::optional<QString> summary;
+    QString status = QStringLiteral("queued");
+    std::optional<QString> output;
+    std::optional<qint64> durationMs;
+    std::optional<QString> statusText;
+    bool expanded = false;
+  };
+  struct ToolGroup {
+    std::vector<Tool> calls;
+    bool expanded = false;
+  };
+  using Content = std::variant<Response, ToolGroup>;
   enum Role { QueryRole = Qt::UserRole + 1, ResponseRole, ErrorRole, PendingRole, AttachmentsRole };
 
   explicit QuickAIConversationModel(QObject *parent = nullptr);
@@ -25,13 +50,18 @@ public:
   void beginExchange(const std::string &query, QVariantList attachments = {});
   void appendResponse(std::string_view text);
   void finishExchange(const std::string &error = {});
+  void addTool(quint64 id, QString name, QString arguments, std::optional<QString> summary = {});
+  void updateTool(quint64 id, QString status, std::optional<QString> output,
+                  std::optional<qint64> durationMs = {}, std::optional<QString> statusText = {});
+  void toggleTool(quint64 id);
+  void toggleToolGroup(quint64 id);
+  const std::vector<Content> &contents(int exchange) const { return m_exchanges[exchange].contents; }
 
 private:
   struct Exchange {
     std::string query;
-    std::string response;
+    std::vector<Content> contents;
     std::string error;
-    std::size_t visibleBytes = 0;
     bool pending = true;
     QVariantList attachments;
   };
@@ -44,6 +74,7 @@ private:
 
   void advanceResponse();
   void flushResponse();
+  void publishResponse();
 
   std::vector<Exchange> m_exchanges;
   QTimer m_responseUpdateTimer;

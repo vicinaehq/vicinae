@@ -1,7 +1,9 @@
 #include <QTextBoundaryFinder>
+#include <QJsonDocument>
 #include <algorithm>
 #include <cstddef>
 #include <chrono>
+#include <ranges>
 #include "quick-ai-conversation-model.hpp"
 
 namespace {
@@ -26,8 +28,14 @@ QVariant QuickAIConversationModel::data(const QModelIndex &index, int role) cons
   switch (role) {
   case QueryRole:
     return QString::fromStdString(exchange.query);
-  case ResponseRole:
-    return QString::fromUtf8(exchange.response.data(), exchange.visibleBytes);
+  case ResponseRole: {
+    QString response;
+    for (const auto &content : exchange.contents) {
+      if (const auto *text = std::get_if<Response>(&content))
+        response += QString::fromUtf8(text->text.data(), text->visibleBytes);
+    }
+    return response;
+  }
   case ErrorRole:
     return QString::fromStdString(exchange.error);
   case PendingRole:
@@ -62,8 +70,17 @@ void QuickAIConversationModel::beginExchange(const std::string &query, QVariantL
 
 void QuickAIConversationModel::appendResponse(std::string_view text) {
   if (m_exchanges.empty() || !m_exchanges.back().pending || text.empty()) return;
+  auto &contents = m_exchanges.back().contents;
+  if (contents.empty() || !std::holds_alternative<Response>(contents.back())) {
+    m_streamClock.start();
+    m_lastUpdate.reset();
+    m_receivedUnits = 0;
+    contents.reserve(contents.size() + 1);
+    contents.emplace_back(Response{});
+    emit contentAdded(rowCount() - 1, contents.size() - 1);
+  }
   const auto now = m_streamClock.elapsed();
-  m_exchanges.back().response.append(text);
+  std::get<Response>(contents.back()).text.append(text);
   const auto incoming = QString::fromUtf8(text.data(), text.size());
   m_pendingText += incoming;
   const auto begin = m_receivedUnits;
@@ -96,14 +113,14 @@ void QuickAIConversationModel::advanceResponse() {
     boundary.setPosition(count);
     if (!boundary.isAtBoundary()) count = boundary.toNextBoundary();
   }
-  m_exchanges.back().visibleBytes += QStringView(m_pendingText).first(count).toUtf8().size();
+  std::get<Response>(m_exchanges.back().contents.back()).visibleBytes +=
+      QStringView(m_pendingText).first(count).toUtf8().size();
   m_pendingText.remove(0, count);
   m_lastUpdate = now;
   while (!m_revealBatches.empty() && m_revealBatches.front().end <= visibleUnits + count)
     m_revealBatches.pop_front();
   if (!m_pendingText.isEmpty()) m_responseUpdateTimer.start(STREAM_UPDATE_INTERVAL);
-  const auto last = index(rowCount() - 1);
-  emit dataChanged(last, last, {ResponseRole});
+  publishResponse();
 }
 
 void QuickAIConversationModel::flushResponse() {
@@ -111,9 +128,87 @@ void QuickAIConversationModel::flushResponse() {
   if (m_pendingText.isEmpty()) return;
   m_pendingText.clear();
   m_revealBatches.clear();
-  m_exchanges.back().visibleBytes = m_exchanges.back().response.size();
+  auto &response = std::get<Response>(m_exchanges.back().contents.back());
+  response.visibleBytes = response.text.size();
+  publishResponse();
+}
+
+void QuickAIConversationModel::publishResponse() {
+  emit contentChanged(rowCount() - 1, m_exchanges.back().contents.size() - 1);
   const auto last = index(rowCount() - 1);
   emit dataChanged(last, last, {ResponseRole});
+}
+
+void QuickAIConversationModel::addTool(quint64 id, QString name, QString arguments,
+                                       std::optional<QString> summary) {
+  if (m_exchanges.empty()) return;
+  flushResponse();
+  auto &contents = m_exchanges.back().contents;
+  const bool newGroup = contents.empty() || !std::holds_alternative<ToolGroup>(contents.back());
+  if (newGroup) {
+    contents.reserve(contents.size() + 1);
+    contents.emplace_back(ToolGroup{});
+  }
+  auto &group = std::get<ToolGroup>(contents.back());
+  if (group.calls.size() == 1 && group.calls.front().expanded) group.expanded = true;
+  const auto json = QJsonDocument::fromJson(arguments.toUtf8());
+  if (!json.isNull()) arguments = QString::fromUtf8(json.toJson()).trimmed();
+  if (group.calls.size() == group.calls.capacity())
+    group.calls.reserve(std::max<std::size_t>(4, group.calls.size() * 2));
+  group.calls.emplace_back(Tool{
+      .id = id, .name = std::move(name), .arguments = std::move(arguments), .summary = std::move(summary)});
+  if (newGroup)
+    emit contentAdded(rowCount() - 1, contents.size() - 1);
+  else
+    emit contentChanged(rowCount() - 1, contents.size() - 1);
+}
+
+void QuickAIConversationModel::updateTool(quint64 id, QString status, std::optional<QString> output,
+                                          std::optional<qint64> durationMs,
+                                          std::optional<QString> statusText) {
+  for (int row = 0; row < rowCount(); ++row) {
+    auto &contents = m_exchanges[row].contents;
+    for (std::size_t part = 0; part < contents.size(); ++part) {
+      auto *group = std::get_if<ToolGroup>(&contents[part]);
+      if (!group) continue;
+      const auto tool = std::ranges::find(group->calls, id, &Tool::id);
+      if (tool == group->calls.end()) continue;
+      tool->status = std::move(status);
+      tool->output = std::move(output);
+      tool->durationMs = durationMs;
+      tool->statusText = std::move(statusText);
+      emit contentChanged(row, part);
+      return;
+    }
+  }
+}
+
+void QuickAIConversationModel::toggleTool(quint64 id) {
+  for (int row = 0; row < rowCount(); ++row) {
+    auto &contents = m_exchanges[row].contents;
+    for (std::size_t part = 0; part < contents.size(); ++part) {
+      auto *group = std::get_if<ToolGroup>(&contents[part]);
+      if (!group) continue;
+      const auto tool = std::ranges::find(group->calls, id, &Tool::id);
+      if (tool == group->calls.end()) continue;
+      tool->expanded = !tool->expanded;
+      emit contentChanged(row, part);
+      return;
+    }
+  }
+}
+
+void QuickAIConversationModel::toggleToolGroup(quint64 id) {
+  for (int row = 0; row < rowCount(); ++row) {
+    auto &contents = m_exchanges[row].contents;
+    for (std::size_t part = 0; part < contents.size(); ++part) {
+      auto *group = std::get_if<ToolGroup>(&contents[part]);
+      if (!group || group->calls.front().id != id) continue;
+      group->expanded = !group->expanded;
+      emit contentChanged(row, part);
+      return;
+    }
+  }
 }
 
 void QuickAIConversationModel::finishExchange(const std::string &error) {

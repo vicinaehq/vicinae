@@ -24,8 +24,6 @@
 #include "services/audio/audio-recorder.hpp"
 #include "ui/image/image-url.hpp"
 
-class AbstractTool;
-
 namespace AI {
 
 template <typename T> using Result = std::expected<T, std::string>;
