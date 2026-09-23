@@ -422,10 +422,12 @@ void WheelHandler::setKeyNavigationEnabled(bool enabled)
 
 void WheelHandler::setScrolling(bool scrolling)
 {
+    if (scrolling) {
+        m_wheelScrollingTimer.start();
+    } else {
+        m_wheelScrollingTimer.stop();
+    }
     if (m_wheelScrolling == scrolling) {
-        if (m_wheelScrolling) {
-            m_wheelScrollingTimer.start();
-        }
         return;
     }
     m_wheelScrolling = scrolling;

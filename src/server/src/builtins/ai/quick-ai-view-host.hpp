@@ -5,7 +5,7 @@
 #include "quick-ai-document-model.hpp"
 #include "ui/views/bridge-view.hpp"
 #include "ui/image/image-url.hpp"
-#include "services/ai/ai-provider.hpp"
+#include "services/ai/agentic-loop.hpp"
 #include "ui/image/url.hpp"
 #include "vicinae.hpp"
 #include <QTimer>
@@ -28,6 +28,8 @@ class QuickAIViewHost : public ViewHostBase {
 
   Q_PROPERTY(DocumentModel *documentModel READ documentModel CONSTANT)
   Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
+  Q_PROPERTY(bool toolsEnabled READ toolsEnabled NOTIFY toolsChanged)
+  Q_PROPERTY(bool toolsAvailable READ toolsAvailable NOTIFY toolsChanged)
   Q_PROPERTY(AttachmentModel *attachments READ attachments CONSTANT)
   Q_PROPERTY(bool canSend READ canSend NOTIFY attachmentStateChanged)
   Q_PROPERTY(QString attachmentMessage READ attachmentMessage NOTIFY attachmentStateChanged)
@@ -43,6 +45,7 @@ class QuickAIViewHost : public ViewHostBase {
   Q_PROPERTY(QString dictationMessage READ dictationMessage NOTIFY dictationMessageChanged)
 
 signals:
+  void toolsChanged();
   void attachmentStateChanged();
   void dictationAvailableChanged();
   void dictationStateChanged();
@@ -71,7 +74,9 @@ public:
   }
 
   DocumentModel *documentModel() { return &m_document; }
-  bool streaming() const { return m_streaming; }
+  bool streaming() const { return m_agent && m_agent->running(); }
+  bool toolsEnabled() const { return m_toolsEnabled; }
+  bool toolsAvailable() const;
   AttachmentModel *attachments() { return &m_attachments; }
   bool canSend() const;
   QString attachmentMessage() const;
@@ -88,6 +93,9 @@ public:
 
   Q_INVOKABLE bool send(const QString &text);
   Q_INVOKABLE void cancel();
+  Q_INVOKABLE void toggleTools();
+  Q_INVOKABLE void toggleTool(quint64 id) { m_exchanges.toggleTool(id); }
+  Q_INVOKABLE void toggleToolGroup(quint64 id) { m_exchanges.toggleToolGroup(id); }
   Q_INVOKABLE void selectModel(const QString &compositeId);
   Q_INVOKABLE void toggleDictation();
   Q_INVOKABLE void cancelDictation();
@@ -95,8 +103,7 @@ public:
 private:
   void sendQuery(const std::string &query);
   bool needsVision() const;
-  bool modelAcceptsImages() const;
-  void failQuery(const std::string &reason);
+  bool modelSupports(AI::Capability capability) const;
   void rebuildModelSelectorItems();
   void updateDictationAvailable();
   void startDictation();
@@ -108,17 +115,15 @@ private:
   QTimer m_dictationMessageTimer;
   bool m_dictationAvailable = false;
   QString m_dictationMessage;
-  std::shared_ptr<AI::AbstractChatCompletionStream> m_stream;
-  AI::ChatHistory m_history;
+  AI::Agent *m_agent = nullptr;
+  bool m_toolsEnabled = false;
   AttachmentModel m_attachments;
   QuickAIConversationModel m_exchanges;
   QuickAIDocumentModel m_document{&m_exchanges};
 
   QString m_initialQuery;
-  std::string m_currentResponse;
   QString m_modelLabel;
   ImageUrl m_modelIcon;
-  bool m_streaming = false;
 
   std::optional<AI::ModelRef> m_selectedModel;
   QVariantList m_modelSelectorItems;

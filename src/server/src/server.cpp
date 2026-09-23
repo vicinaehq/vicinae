@@ -1,8 +1,6 @@
 #include "config/config.hpp"
 #include "environment.hpp"
-#include "services/ai/ai-tool.hpp"
 #include <QStyleHints>
-#include "services/ai/agentic-loop.hpp"
 #include "services/local-model-registry/local-model-registry.hpp"
 #include "services/dictation/dictation-service.hpp"
 #include "services/ai/local/local-provider.hpp"
@@ -665,14 +663,6 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
   QGuiApplication::setFont(resolveAppFont(cfgService->value().font));
-
-  /*
-  QTimer::singleShot(2000, [&ctx]() {
-    auto agent = new AI::Agent(ctx);
-    qDebug() << "agent setup";
-    agent->addMessage("Tell me a fun fact about apples");
-  });
-  */
 
   configChanged(cfgService->value(), {});
 

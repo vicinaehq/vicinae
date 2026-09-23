@@ -18,7 +18,8 @@ public:
     MarkdownModelRole,
     PendingRole,
     FailedRole,
-    AttachmentsRole
+    AttachmentsRole,
+    ToolRole
   };
   explicit QuickAIDocumentModel(QuickAIConversationModel *conversation, QObject *parent = nullptr);
   int rowCount(const QModelIndex &parent = {}) const override;
@@ -27,18 +28,29 @@ public:
   std::span<const DocumentPart> documentParts(int row) const override;
 
 private:
-  struct Exchange {
+  struct Content {
     QPointer<MarkdownModel> markdown;
+    QVariantMap tool;
+    int sourcePart = 0;
+    int offset = 0;
+    int rows = 0;
+  };
+  struct Exchange {
+    std::vector<Content> contents;
     std::vector<DocumentPart> query;
     std::vector<DocumentPart> error;
     QVariantList attachments;
+    int sourceRow = 0;
     int offset = 0;
     int blocks = 0;
     bool pending = true;
   };
   const Exchange &exchangeAt(int row) const;
+  const Content *contentAt(const Exchange &exchange, int row) const;
   void addExchange(int index);
   void updateExchange(int index);
+  void addContent(int exchange, int part);
+  void updateContent(int exchange, int part);
   void updateOffsets();
   QuickAIConversationModel *m_conversation;
   std::vector<Exchange> m_exchanges;
