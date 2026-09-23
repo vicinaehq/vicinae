@@ -63,9 +63,8 @@ LauncherView {
         id: linkHandler
     }
 
-    DocumentSelectionMenu {
-        id: selectionMenu
-        controller: root.selection
+    AttachmentPreview {
+        id: attachmentPreview
     }
 
     ScrollViewport {
@@ -82,16 +81,9 @@ LauncherView {
             cursorShape: Qt.IBeamCursor
         }
 
-        TapHandler {
-            id: contextMenuHandler
-            acceptedButtons: Qt.RightButton
-            onTapped: eventPoint => {
-                chatFlick.forceActiveFocus();
-                const position = contextMenuHandler.parent.mapToItem(root, eventPoint.position);
-                selectionMenu.x = position.x;
-                selectionMenu.y = position.y;
-                selectionMenu.open();
-            }
+        ContextMenu.menu: DocumentSelectionMenu {
+            controller: root.selection
+            onAboutToShow: chatFlick.forceActiveFocus()
         }
 
         DocumentView {
@@ -131,6 +123,7 @@ LauncherView {
                 required property int index
                 DocumentScope.row: index
                 width: chatFlick.width
+                onPreviewRequested: content => attachmentPreview.show(content)
             }
 
             footer: Row {
@@ -172,6 +165,7 @@ LauncherView {
         accessibleName: qsTr("Jump to latest")
         iconSource: Img.icon(BuiltinIcon.ArrowDown).withFillColor(Theme.foreground)
         variant: "primary"
+        color: Config.withAlpha(Qt.tint(Theme.background, hovered || showFocus ? Theme.buttonPrimaryHoverBg : Theme.buttonPrimaryBg), 0.95)
         bordered: true
         radius: height / 2
         activeFocusOnTab: true
@@ -194,6 +188,13 @@ LauncherView {
         description: qsTr("Answers use the model selected in the composer.")
     }
 
+    AttachmentDropArea {
+        anchors.fill: parent
+        attachmentModel: root.host.attachments
+        enabled: !root.host.streaming
+        z: 1
+    }
+
     footer: Item {
         implicitHeight: composer.height + 10
         height: implicitHeight
@@ -206,6 +207,9 @@ LauncherView {
             anchors.margins: 10
             placeholder: chatFlick.count === 0 && !root.host.streaming ? qsTr("Ask anything...") : qsTr("Ask a follow-up...")
             busy: root.host.streaming
+            attachments: root.host.attachments
+            submissionEnabled: root.host.canSend
+            message: root.host.attachmentMessage
             modelItems: root.host.modelSelectorItems
             currentModel: root.host.modelSelectorCurrentItem
             dictationAvailable: root.host.dictationAvailable
@@ -214,11 +218,14 @@ LauncherView {
             recordingTime: root.host.recordingTime
             dictationMessage: root.host.dictationMessage
             onSubmitted: text => {
-                root.selection.clearSelection();
-                chatScroll.following = true;
-                root.host.send(text);
+                if (root.host.send(text)) {
+                    composer.text = "";
+                    root.selection.clearSelection();
+                    chatScroll.following = true;
+                }
             }
             onCancelled: root.host.cancel()
+            onPreviewRequested: content => attachmentPreview.show(content)
             onModelActivated: item => root.host.selectModel(item.id)
             onDictationToggled: root.host.toggleDictation()
             onDictationCancelled: root.host.cancelDictation()

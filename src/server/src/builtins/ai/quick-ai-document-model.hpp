@@ -17,7 +17,8 @@ public:
     BlockIndexRole,
     MarkdownModelRole,
     PendingRole,
-    FailedRole
+    FailedRole,
+    AttachmentsRole
   };
   explicit QuickAIDocumentModel(QuickAIConversationModel *conversation, QObject *parent = nullptr);
   int rowCount(const QModelIndex &parent = {}) const override;
@@ -30,6 +31,7 @@ private:
     QPointer<MarkdownModel> markdown;
     std::vector<DocumentPart> query;
     std::vector<DocumentPart> error;
+    QVariantList attachments;
     int offset = 0;
     int blocks = 0;
     bool pending = true;

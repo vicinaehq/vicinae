@@ -3,6 +3,7 @@
 #include <QAbstractListModel>
 #include <QElapsedTimer>
 #include <QTimer>
+#include <QVariantList>
 #include <deque>
 #include <optional>
 #include <string_view>
@@ -13,7 +14,7 @@ class QuickAIConversationModel : public QAbstractListModel {
   Q_OBJECT
 
 public:
-  enum Role { QueryRole = Qt::UserRole + 1, ResponseRole, ErrorRole, PendingRole };
+  enum Role { QueryRole = Qt::UserRole + 1, ResponseRole, ErrorRole, PendingRole, AttachmentsRole };
 
   explicit QuickAIConversationModel(QObject *parent = nullptr);
 
@@ -21,7 +22,7 @@ public:
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
 
-  void beginExchange(const std::string &query);
+  void beginExchange(const std::string &query, QVariantList attachments = {});
   void appendResponse(std::string_view text);
   void finishExchange(const std::string &error = {});
 
@@ -32,6 +33,7 @@ private:
     std::string error;
     std::size_t visibleBytes = 0;
     bool pending = true;
+    QVariantList attachments;
   };
 
   struct RevealBatch {

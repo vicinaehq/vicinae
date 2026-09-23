@@ -771,6 +771,10 @@ set(SRCS
 	src/builtins/vicinae/vicinae-store-detail-host.cpp
 	src/ui/quick/markdown-model.hpp
 	src/ui/quick/markdown-model.cpp
+	src/ui/quick/attachment-model.cpp
+	src/ui/quick/attachment-model.hpp
+	src/ui/quick/attachment-content.cpp
+	src/ui/quick/attachment-content.hpp
 	src/ui/quick/document-controller.cpp
 	src/ui/quick/document-controller.hpp
 	src/ui/quick/document-layout.cpp
@@ -1320,6 +1324,12 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ViciSpinner.qml
 	src/ui/qml/controls/ViciIconButton.qml
 	src/ui/qml/controls/ChatComposer.qml
+	src/ui/qml/controls/FilePickerDialog.qml
+	src/ui/qml/attachments/AttachmentCard.qml
+	src/ui/qml/attachments/AttachmentMenu.qml
+	src/ui/qml/attachments/AttachmentPreview.qml
+	src/ui/qml/attachments/AttachmentList.qml
+	src/ui/qml/attachments/AttachmentDropArea.qml
 	src/ui/qml/controls/ViciScrollBar.qml
 	src/ui/qml/controls/ViciTextCursor.qml
 	src/ui/qml/controls/ViciDivider.qml
@@ -1484,6 +1494,8 @@ foreach(qml_file IN LISTS VICINAE_QML_FILES)
 endforeach()
 
 set(VICINAE_QML_SOURCES
+	src/ui/quick/attachment-model.hpp
+	src/ui/quick/attachment-content.hpp
 	src/ui/quick/source-blend-rect.hpp
 	src/ui/quick/vici-image-item.hpp
 	src/ui/quick/hover-activation.hpp

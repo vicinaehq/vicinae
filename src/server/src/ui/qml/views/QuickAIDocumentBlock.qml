@@ -11,7 +11,9 @@ Item {
     required property int blockIndex
     required property var markdownModel
     required property bool pending
+    required property var attachments
     required property bool failed
+    signal previewRequested(var content)
     property int horizontalPadding: 16
     property int bottomSpacing: 8
     readonly property bool first: kind === "query"
@@ -43,9 +45,19 @@ Item {
     }
     Component {
         id: queryComponent
-        DocumentText {
-            text: root.text
-            color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.5)
+        Column {
+            spacing: 8
+            DocumentText {
+                width: parent.width
+                visible: root.text.length > 0
+                text: root.text
+                color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.5)
+            }
+            AttachmentList {
+                width: parent.width
+                attachments: root.attachments
+                onPreviewRequested: content => root.previewRequested(content)
+            }
         }
     }
     Component {
