@@ -6,6 +6,7 @@ import Vicinae
 Item {
     id: root
 
+    readonly property alias inputItem: edit
     property alias text: edit.text
     property alias cursorPosition: edit.cursorPosition
     property alias font: edit.font

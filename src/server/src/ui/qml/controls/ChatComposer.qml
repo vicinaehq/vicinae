@@ -6,6 +6,7 @@ import Vicinae
 FocusScope {
     id: root
 
+    readonly property alias inputItem: editor.inputItem
     property alias text: editor.text
     property alias placeholder: editor.placeholder
     property var modelItems: []
