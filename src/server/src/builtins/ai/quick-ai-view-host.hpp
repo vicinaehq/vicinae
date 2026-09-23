@@ -1,5 +1,7 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
+#include "quick-ai-conversation-model.hpp"
+#include "quick-ai-document-model.hpp"
 #include "ui/views/bridge-view.hpp"
 #include "ui/image/image-url.hpp"
 #include "services/ai/ai-provider.hpp"
@@ -23,10 +25,8 @@ class QuickAIViewHost : public ViewHostBase {
   QML_NAMED_ELEMENT(QuickAIViewHost)
   QML_UNCREATABLE("")
 
-  Q_PROPERTY(QVariantList exchanges READ exchanges NOTIFY exchangesChanged)
+  Q_PROPERTY(DocumentModel *documentModel READ documentModel CONSTANT)
   Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
-  Q_PROPERTY(QString streamingQuery READ streamingQuery NOTIFY streamingChanged)
-  Q_PROPERTY(QString streamingContent READ streamingContent NOTIFY streamingContentChanged)
   Q_PROPERTY(QString modelLabel READ modelLabel NOTIFY modelChanged)
   Q_PROPERTY(ImageUrl modelIcon READ modelIcon NOTIFY modelChanged)
   Q_PROPERTY(QVariantList modelSelectorItems READ modelSelectorItems NOTIFY modelSelectorItemsChanged)
@@ -39,14 +39,12 @@ class QuickAIViewHost : public ViewHostBase {
   Q_PROPERTY(QString dictationMessage READ dictationMessage NOTIFY dictationMessageChanged)
 
 signals:
-  void exchangesChanged();
   void dictationAvailableChanged();
   void dictationStateChanged();
   void recordingTimeChanged();
   void dictationMessageChanged();
   void dictated(const QString &text);
   void streamingChanged();
-  void streamingContentChanged();
   void modelChanged();
   void modelSelectorItemsChanged();
   void modelSelectorCurrentItemChanged();
@@ -67,10 +65,8 @@ public:
     return ImageURL::builtin(BuiltinIcon::Stars).setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  QVariantList exchanges() const { return m_exchanges; }
+  DocumentModel *documentModel() { return &m_document; }
   bool streaming() const { return m_streaming; }
-  QString streamingQuery() const { return m_streamingQuery; }
-  QString streamingContent() const { return m_streamingContent; }
   QString modelLabel() const { return m_modelLabel; }
   ImageUrl modelIcon() const { return m_modelIcon; }
   QVariantList modelSelectorItems() const { return m_modelSelectorItems; }
@@ -104,12 +100,11 @@ private:
   QString m_dictationMessage;
   std::shared_ptr<AI::AbstractChatCompletionStream> m_stream;
   AI::ChatHistory m_history;
-  QVariantList m_exchanges;
+  QuickAIConversationModel m_exchanges;
+  QuickAIDocumentModel m_document{&m_exchanges};
 
   QString m_initialQuery;
-  QString m_streamingQuery;
   std::string m_currentResponse;
-  QString m_streamingContent;
   QString m_modelLabel;
   ImageUrl m_modelIcon;
   bool m_streaming = false;

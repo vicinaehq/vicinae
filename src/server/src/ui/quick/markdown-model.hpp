@@ -1,28 +1,15 @@
 #pragma once
-#include "ui/quick/syntax-highlighter.hpp"
-#include "theme/theme.hpp"
 #include <QAbstractListModel>
 #include <QVariantList>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 #include <string>
 #include <vector>
+#include <optional>
+#include "markdown-document.hpp"
+#include "ui/quick/syntax-highlighter.hpp"
 
-enum class MdBlockType : int {
-  Heading,
-  Paragraph,
-  CodeBlock,
-  BulletList,
-  OrderedList,
-  Table,
-  Image,
-  HorizontalRule,
-  HtmlBlock,
-  Blockquote,
-  Callout,
-};
-
-class MarkdownModel : public QAbstractListModel {
+class MarkdownModel : public DocumentModel {
   Q_OBJECT
   QML_NAMED_ELEMENT(MarkdownModel)
 
@@ -37,9 +24,12 @@ public:
 
   explicit MarkdownModel(QObject *parent = nullptr);
 
+  const QString &markdown() const { return m_markdown; }
+
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
+  std::span<const DocumentPart> documentParts(int row) const override;
 
   Q_INVOKABLE void setMarkdown(const QString &markdown);
   Q_INVOKABLE void clear();
@@ -48,8 +38,9 @@ public:
 
 private:
   struct Block {
-    MdBlockType type;
+    Markdown::BlockType type;
     QVariantMap data;
+    mutable std::optional<std::vector<DocumentPart>> parts;
   };
 
   void rebuildInlineStyles();

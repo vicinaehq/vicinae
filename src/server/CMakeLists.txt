@@ -390,6 +390,10 @@ set(SRCS
 	src/builtins/ai/ai-extension.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
+	src/builtins/ai/quick-ai-document-model.cpp
+	src/builtins/ai/quick-ai-document-model.hpp
+	src/builtins/ai/quick-ai-conversation-model.hpp
+	src/builtins/ai/quick-ai-conversation-model.cpp
 	src/builtins/dictation/dictation.hpp
 	src/builtins/dictation/dictation-preferences.hpp
 	src/builtins/dictation/dictation-extension.hpp
@@ -767,8 +771,22 @@ set(SRCS
 	src/builtins/vicinae/vicinae-store-detail-host.cpp
 	src/ui/quick/markdown-model.hpp
 	src/ui/quick/markdown-model.cpp
-	src/ui/quick/text-selection-controller.hpp
-	src/ui/quick/text-selection-controller.cpp
+	src/ui/quick/document-controller.cpp
+	src/ui/quick/document-controller.hpp
+	src/ui/quick/document-layout.cpp
+	src/ui/quick/document-layout.hpp
+	src/ui/quick/document-model.hpp
+	src/ui/quick/document-scope.cpp
+	src/ui/quick/document-scope.hpp
+	src/ui/quick/document-selection.cpp
+	src/ui/quick/document-selection.hpp
+	src/ui/quick/document-table-model.cpp
+	src/ui/quick/document-table-model.hpp
+	src/ui/quick/document-text-images.cpp
+	src/ui/quick/document-text-images.hpp
+	src/ui/quick/index-model.hpp
+	src/ui/quick/markdown-document.cpp
+	src/ui/quick/markdown-document.hpp
 	src/ui/views/intro-view-host.hpp
 	src/ui/views/intro-view-host.cpp
 	src/builtins/font/font-browser-view-host.hpp
@@ -1311,7 +1329,13 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/MarkdownDetailView.qml
 	src/ui/qml/views/MarkdownDetailContent.qml
 	src/ui/qml/views/QuickAIView.qml
+	src/ui/qml/views/QuickAIDocumentBlock.qml
+	src/ui/qml/views/QuickAIChatScroll.qml
 	src/ui/qml/markdown/MarkdownInline.qml
+	src/ui/qml/document/DocumentText.qml
+	src/ui/qml/document/DocumentView.qml
+	src/ui/qml/markdown/MarkdownBlock.qml
+	src/ui/qml/document/DocumentSelectionMenu.qml
 	src/ui/qml/controls/PulsingDots.qml
 	src/ui/qml/controls/ViciModal.qml
 	src/ui/qml/controls/AudioLevelMeter.qml
@@ -1476,7 +1500,12 @@ set(VICINAE_QML_SOURCES
 	src/ui/views/detail-list-view-host.hpp
 	src/ui/views/store-detail-host.hpp
 	src/ui/quick/markdown-model.hpp
-	src/ui/quick/text-selection-controller.hpp
+	src/ui/quick/markdown-document.hpp
+	src/ui/quick/document-controller.hpp
+	src/ui/quick/document-selection.hpp
+	src/ui/quick/document-scope.hpp
+	src/ui/quick/document-model.hpp
+	src/ui/quick/index-model.hpp
 	src/ui/quick/window-material-attached.hpp
 	src/ui/quick/window-material-attached.cpp
 	src/ui/quick/popup-placement-attached.hpp
@@ -1635,4 +1664,17 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
+endif()
+
+if(BUILD_TESTS)
+	find_package(Qt6 REQUIRED COMPONENTS Test)
+	qt_add_executable(vicinae-document-tests
+		tests/document-invariants.cpp
+		src/builtins/ai/quick-ai-conversation-model.cpp
+		src/builtins/ai/quick-ai-conversation-model.hpp
+		src/ui/quick/document-text-images.cpp
+		src/ui/quick/document-text-images.hpp
+	)
+	target_link_libraries(vicinae-document-tests PRIVATE Qt6::Quick Qt6::Test)
+	target_compile_features(vicinae-document-tests PRIVATE cxx_std_23)
 endif()
