@@ -144,42 +144,13 @@ void VicinaeStoreDetailHost::createActions() {
   auto main = panel->createSection();
 
   if (!m_isInstalled) {
-    auto install = new StaticAction(
-        tr("Install extension"), m_ext.themedIcon(), [ext = m_ext](const ApplicationContext *ctx) {
-          using Watcher = QFutureWatcher<VicinaeStore::DownloadExtensionResult>;
-          auto store = ctx->services->vicinaeStore();
-          auto watcher = new Watcher;
-          auto toast = ctx->services->toastService();
-          auto registry = ctx->services->extensionRegistry();
-
-          toast->dynamic(tr("Downloading extension..."));
-
-          QObject::connect(watcher, &Watcher::finished, [ctx, registry, toast, ext, watcher]() {
-            auto result = watcher->result();
-            watcher->deleteLater();
-
-            if (!result) {
-              toast->failure(tr("Failed to download extension"));
-              return;
-            }
-
-            registry->installFromZip(QString("store.vicinae.%1").arg(ext.name), result->toStdString(),
-                                     [toast](bool ok) {
-                                       if (!ok) {
-                                         toast->failure(tr("Failed to extract extension archive"));
-                                         return;
-                                       }
-                                       toast->success(tr("Extension installed"));
-                                     });
-          });
-
-          auto downloadResult = store->downloadExtension(ext.downloadUrl);
-          watcher->setFuture(downloadResult);
-        });
-    main->addAction(install);
+    main->addAction(new InstallExtensionAction(QString("store.vicinae.%1").arg(m_ext.name),
+                                               m_ext.themedIcon(),
+                                               [url = m_ext.downloadUrl](const ApplicationContext *ctx) {
+                                                 return ctx->services->vicinaeStore()->downloadExtension(url);
+                                               }));
   } else {
-    auto uninstall = new UninstallExtensionAction(m_ext.id);
-    main->addAction(uninstall);
+    main->addAction(new UninstallExtensionAction(m_ext.id));
   }
 
   auto reportIssue = new StaticAction(
