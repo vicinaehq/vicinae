@@ -133,6 +133,17 @@ SniTrayHost::~SniTrayHost() {
 }
 
 SniTrayHost::ItemRef SniTrayHost::parseItemRef(const QString &ref) {
+  // GNOME's watcher joins the bus name and the object path with '@'
+  // (":1.42@/StatusNotifierItem"); others register the bus name on its own, or
+  // with the path appended straight to it. '@' is valid in neither a bus name
+  // nor an object path, so wherever it appears it is the separator.
+  const auto at = ref.indexOf('@');
+  if (at >= 0) {
+    const auto path = ref.mid(at + 1);
+    if (path.isEmpty()) return {ref.left(at), "/StatusNotifierItem"};
+    return {ref.left(at), path};
+  }
+
   const auto slash = ref.indexOf('/');
   if (slash < 0) return {ref, "/StatusNotifierItem"};
   return {ref.left(slash), ref.mid(slash)};
