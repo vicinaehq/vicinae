@@ -130,11 +130,9 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
   m_history.emplace_back(AI::ChatMessage::fromText(AI::ChatRole::User, query));
 
   m_currentResponse.clear();
-  m_streamingQuery = QString::fromStdString(query);
-  m_streamingContent.clear();
+  m_exchanges.beginExchange(query);
   m_streaming = true;
   emit streamingChanged();
-  emit streamingContentChanged();
 
   AI::ChatCompletionPayload payload;
   payload.messages = m_history;
@@ -149,8 +147,7 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
   connect(m_stream.get(), &AI::AbstractChatCompletionStream::dataAdded, this,
           [this](const std::string &text) {
             m_currentResponse += text;
-            m_streamingContent = QString::fromStdString(m_currentResponse);
-            emit streamingContentChanged();
+            m_exchanges.appendResponse(text);
           });
 
   connect(m_stream.get(), &AI::AbstractChatCompletionStream::finished, this, [this]() {
@@ -167,16 +164,8 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
 
     m_history.emplace_back(AI::ChatMessage::fromText(AI::ChatRole::Assistant, m_currentResponse));
 
-    m_exchanges.append(QVariantMap{
-        {QStringLiteral("query"), m_streamingQuery},
-        {QStringLiteral("response"), m_streamingContent},
-        {QStringLiteral("error"), QString()},
-    });
-    emit exchangesChanged();
+    m_exchanges.finishExchange();
 
-    m_streamingContent.clear();
-    m_streamingQuery.clear();
-    emit streamingContentChanged();
     m_stream.reset();
   });
 
@@ -189,18 +178,10 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
 void QuickAIViewHost::failQuery(const std::string &reason) {
   if (!m_history.empty() && m_history.back().role == AI::ChatRole::User) m_history.pop_back();
 
-  m_exchanges.append(QVariantMap{
-      {QStringLiteral("query"), m_streamingQuery},
-      {QStringLiteral("response"), QString()},
-      {QStringLiteral("error"), QString::fromStdString(reason)},
-  });
-  emit exchangesChanged();
+  m_exchanges.finishExchange(reason);
 
   m_streaming = false;
   emit streamingChanged();
-  m_streamingContent.clear();
-  m_streamingQuery.clear();
-  emit streamingContentChanged();
   m_stream.reset();
 }
 

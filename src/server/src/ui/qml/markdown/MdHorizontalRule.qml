@@ -6,10 +6,7 @@ Item {
     id: root
 
     property var blockData: ({})
-    property var mdModel: null
-    property int blockIndex: -1
-    property var selectionController: null
-    property bool selected: false
+    readonly property bool selected: selection.hasSelection
 
     width: parent?.width ?? 0
     implicitHeight: 17
@@ -29,8 +26,8 @@ Item {
         visible: root.selected
     }
 
-    onSelectionControllerChanged: if (selectionController)
-        selectionController.registerSelectable(root, blockIndex * 10000, false)
-    Component.onDestruction: if (selectionController)
-        selectionController.unregisterSelectable(root)
+    DocumentSelection {
+        id: selection
+        selectedText: "---"
+    }
 }

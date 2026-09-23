@@ -1,190 +1,96 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import Vicinae
 
 Rectangle {
     id: root
-
     property var blockData: ({})
-    property var mdModel: null
-    property int blockIndex: -1
-    property var selectionController: null
     property string fontFamily: ""
-
     readonly property int columnCount: blockData.columnCount ?? 0
     readonly property var alignments: blockData.alignments ?? []
-    readonly property var headers: blockData.headers ?? []
-    readonly property var rows: blockData.rows ?? []
+    readonly property real cellWidth: Math.max(40, width / Math.max(1, columnCount))
 
     width: parent?.width ?? 0
-    implicitHeight: tableCol.implicitHeight
+    implicitHeight: tableRows.contentHeight
     color: "transparent"
     border.width: 1
     border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
     radius: 4
     clip: true
 
-    function textAlignment(colIdx) {
-        var a = alignments[colIdx] ?? 0;
-        if (a === 1)
-            return Text.AlignHCenter;
-        if (a === 2)
-            return Text.AlignRight;
-        return Text.AlignLeft;
+    function textAlignment(column: int): int {
+        const alignment = alignments[column] ?? 0;
+        return alignment === 1 ? Text.AlignHCenter : alignment === 2 ? Text.AlignRight : Text.AlignLeft;
     }
 
-    ColumnLayout {
-        id: tableCol
-        anchors.fill: parent
+    DocumentTableModel {
+        id: metrics
+        headers: root.blockData.headers ?? []
+        rows: root.blockData.rows ?? []
+        cellWidth: root.cellWidth
+        font: Qt.font({
+            family: root.fontFamily || Theme.fontFamily,
+            pointSize: Theme.regularFontSize
+        })
+    }
+
+    DocumentLayout {
+        id: tableRows
+        width: root.width
+        height: contentHeight
+        model: metrics
+        heightRole: "rowHeight"
+        embedded: true
+        active: !root.DocumentScope.measuring
+        viewport: root.DocumentScope.document?.flickable ?? null
+        cacheBuffer: 64
         spacing: 0
+        delegate: Rectangle {
+            id: tableRow
+            required property int index
+            required property var cells
+            required property bool header
+            required property real rowHeight
+            required property int selectionOffset
+            width: root.width
+            height: rowHeight
+            color: header ? Theme.secondaryBackground : "transparent"
 
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: headerRow.implicitHeight
-            color: Theme.secondaryBackground
-            radius: root.radius
-            visible: root.headers.length > 0
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                height: parent.radius
-                color: parent.color
-            }
-
-            RowLayout {
-                id: headerRow
-                anchors.fill: parent
-                spacing: 0
-
-                Repeater {
-                    model: root.headers
-
+            Repeater {
+                model: IndexModel {
+                    count: tableRow.cells.length
+                }
+                Item {
+                    id: cell
+                    required property int index
+                    x: index * root.cellWidth
+                    width: root.cellWidth
+                    height: tableRow.height
                     Rectangle {
-                        id: headerCell
-                        required property var modelData
-                        required property int index
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumWidth: 40
-                        color: "transparent"
-                        implicitHeight: headerText.implicitHeight + 16
-
-                        Rectangle {
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            width: headerCell.index < root.columnCount - 1 ? 1 : 0
-                            color: Theme.divider
-                        }
-
-                        TextEdit {
-                            id: headerText
-                            anchors.fill: parent
-                            anchors.margins: 8
-                            readOnly: true
-                            selectionColor: Theme.textSelectionBg
-                            selectedTextColor: Theme.textSelectionFg
-                            textFormat: TextEdit.RichText
-                            wrapMode: TextEdit.Wrap
-                            color: Theme.foreground
-                            font.pointSize: Theme.regularFontSize
-                            font.bold: true
-                            Binding on font.family {
-                                value: root.fontFamily
-                                when: root.fontFamily !== ""
-                            }
-                            horizontalAlignment: root.textAlignment(headerCell.index)
-                            text: headerCell.modelData.html ?? ""
-
-                            Component.onCompleted: if (root.selectionController)
-                                root.selectionController.registerSelectable(headerText, root.blockIndex * 10000 + headerCell.index, true)
-                            Component.onDestruction: if (root.selectionController)
-                                root.selectionController.unregisterSelectable(headerText)
-                        }
+                        anchors.right: parent.right
+                        width: cell.index < root.columnCount - 1 ? 1 : 0
+                        height: parent.height
+                        color: Theme.divider
+                    }
+                    DocumentText {
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        textFormat: TextEdit.RichText
+                        wrapMode: TextEdit.Wrap
+                        font.family: root.fontFamily || Theme.fontFamily
+                        font.pointSize: Theme.regularFontSize
+                        font.bold: tableRow.header
+                        horizontalAlignment: root.textAlignment(cell.index)
+                        text: tableRow.cells[cell.index]?.html ?? ""
+                        selectionPart: tableRow.selectionOffset + cell.index
                     }
                 }
             }
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: Theme.divider
-            visible: root.headers.length > 0
-        }
-
-        Repeater {
-            model: root.rows
-
-            Column {
-                id: tableRow
-                Layout.fillWidth: true
-                required property var modelData
-                required property int index
-
-                readonly property int rowIdx: index
-
-                RowLayout {
-                    width: parent.width
-                    spacing: 0
-
-                    Repeater {
-                        model: tableRow.modelData
-
-                        Rectangle {
-                            id: cell
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            Layout.minimumWidth: 40
-                            color: "transparent"
-                            implicitHeight: cellText.implicitHeight + 16
-                            required property int index
-                            required property var modelData
-
-                            Rectangle {
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                                width: cell.index < root.columnCount - 1 ? 1 : 0
-                                color: Theme.divider
-                            }
-
-                            TextEdit {
-                                id: cellText
-                                anchors.fill: parent
-                                anchors.margins: 8
-                                readOnly: true
-                                selectionColor: Theme.textSelectionBg
-                                selectedTextColor: Theme.textSelectionFg
-                                textFormat: TextEdit.RichText
-                                wrapMode: TextEdit.Wrap
-                                color: Theme.foreground
-                                font.pointSize: Theme.regularFontSize
-                                Binding on font.family {
-                                    value: root.fontFamily
-                                    when: root.fontFamily !== ""
-                                }
-                                horizontalAlignment: root.textAlignment(cell.index)
-                                text: cell.modelData.html ?? ""
-
-                                Component.onCompleted: if (root.selectionController)
-                                    root.selectionController.registerSelectable(cellText, root.blockIndex * 10000 + 100 + tableRow.rowIdx * root.columnCount + cell.index, true)
-                                Component.onDestruction: if (root.selectionController)
-                                    root.selectionController.unregisterSelectable(cellText)
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    width: parent.width
-                    height: 1
-                    color: Theme.divider
-                    visible: tableRow.index < root.rows.length - 1
-                }
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: tableRow.index < tableRows.count - 1 ? 1 : 0
+                color: Theme.divider
             }
         }
     }

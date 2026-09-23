@@ -7,10 +7,7 @@ Item {
     id: root
 
     property var blockData: ({})
-    property var mdModel: null
-    property int blockIndex: -1
-    property var selectionController: null
-    property bool selected: false
+    readonly property bool selected: selection.hasSelection
     property real maxImageHeight: 0
 
     readonly property int requestedWidth: blockData.width ?? 0
@@ -51,7 +48,7 @@ Item {
             ViciImage {
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
-                source: root.blockData.src ?? ""
+                source: root.DocumentScope.measuring ? "" : root.blockData.src ?? ""
             }
 
             Rectangle {
@@ -72,8 +69,8 @@ Item {
         }
     }
 
-    onSelectionControllerChanged: if (selectionController)
-        selectionController.registerSelectable(root, blockIndex * 10000, false)
-    Component.onDestruction: if (selectionController)
-        selectionController.unregisterSelectable(root)
+    DocumentSelection {
+        id: selection
+        selectedText: root.alt || qsTr("Image")
+    }
 }
