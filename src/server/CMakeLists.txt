@@ -620,8 +620,6 @@ set(SRCS
 	src/services/ai/ai-service.cpp
 	src/services/ai/agentic-loop.hpp
 	src/services/ai/agentic-loop.cpp
-	src/services/ai/bash-tool.hpp
-	src/services/ai/bash-tool.cpp
 	src/services/ai/ai-capability.hpp
 	src/services/ai/speech-language-catalogue.hpp
 	src/services/ai/local/local-provider.hpp

@@ -11,7 +11,6 @@ FocusScope {
     property alias placeholder: editor.placeholder
     property var modelItems: []
     property var currentModel: null
-    property Component accessory
     property AttachmentModel attachments: null
     property bool submissionEnabled: true
     property string message: ""
@@ -176,11 +175,6 @@ FocusScope {
             ToolTip.visible: hovered
             ToolTip.text: accessibleName
             ToolTip.delay: 600
-        }
-
-        Loader {
-            anchors.verticalCenter: parent.verticalCenter
-            sourceComponent: root.accessory
         }
 
         SearchableDropdown {
