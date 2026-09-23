@@ -2,7 +2,6 @@
 #include "ai-model-selector-utils.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
-#include "services/ai/bash-tool.hpp"
 #include "services/dictation/dictation-service.hpp"
 #include "services/dictation/transcription-session.hpp"
 #include "services/permissions/macos-permission-service.hpp"
@@ -39,11 +38,8 @@ void QuickAIViewHost::initialize() {
       {AI::ChatMessage::fromText(
           AI::ChatRole::System,
           "You are a concise assistant integrated into a desktop launcher. "
-          "Give direct, helpful answers. Prefer short responses unless detail is asked for. "
-          "Recover from tool errors when appropriate without narrating routine failed attempts. "
-          "Clearly disclose unresolved failures and incomplete verification that affect your answer.")},
+          "Give direct, helpful answers. Prefer short responses unless detail is asked for.")},
       this);
-  m_agent->addTool(std::make_unique<AI::BashTool>());
   connect(m_agent, &AI::Agent::stateChanged, this, &QuickAIViewHost::streamingChanged);
   connect(m_agent, &AI::Agent::textAdded, this,
           [this](quint64, const std::string &text) { m_exchanges.appendResponse(text); });
@@ -89,10 +85,6 @@ void QuickAIViewHost::initialize() {
       emit modelChanged();
     }
   });
-  connect(this, &QuickAIViewHost::modelSelectorCurrentItemChanged, this, &QuickAIViewHost::toolsChanged);
-  connect(this, &QuickAIViewHost::toolsChanged, this, &QuickAIViewHost::attachmentStateChanged);
-  connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::toolsChanged);
-
   connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::rebuildModelSelectorItems);
   rebuildModelSelectorItems();
   connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::attachmentStateChanged);
@@ -201,13 +193,12 @@ bool QuickAIViewHost::modelSupports(AI::Capability capability) const {
 
 bool QuickAIViewHost::canSend() const {
   return m_agent && !streaming() && m_attachments.ready() &&
-         (!needsVision() || modelSupports(AI::Capability::Vision)) && (!m_toolsEnabled || toolsAvailable());
+         (!needsVision() || modelSupports(AI::Capability::Vision));
 }
 
 QString QuickAIViewHost::attachmentMessage() const {
   if (needsVision() && !modelSupports(AI::Capability::Vision))
     return tr("Choose a model that supports images for this conversation.");
-  if (m_toolsEnabled && !toolsAvailable()) return tr("Choose a model that supports tools, or turn off Bash.");
   return m_attachments.error();
 }
 
@@ -220,16 +211,6 @@ bool QuickAIViewHost::send(const QString &text) {
 
 void QuickAIViewHost::cancel() {
   if (m_agent) m_agent->cancel();
-}
-
-bool QuickAIViewHost::toolsAvailable() const {
-  return AI::BashTool::available() && modelSupports(AI::Capability::ToolCalling);
-}
-
-void QuickAIViewHost::toggleTools() {
-  if (streaming() || (!m_toolsEnabled && !toolsAvailable())) return;
-  m_toolsEnabled = !m_toolsEnabled;
-  emit toolsChanged();
 }
 
 void QuickAIViewHost::sendQuery(const std::string &query) {
@@ -249,9 +230,7 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
     }
   }
   m_exchanges.beginExchange(query, previews);
-  AI::Agent::Options options{.model = m_selectedModel};
-  if (m_toolsEnabled) options.tools.emplace_back("bash");
-  m_agent->send(std::move(message), std::move(options));
+  m_agent->send(std::move(message), {.model = m_selectedModel});
 }
 
 void QuickAIViewHost::selectModel(const QString &compositeId) {

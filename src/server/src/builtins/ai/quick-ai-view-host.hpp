@@ -28,8 +28,6 @@ class QuickAIViewHost : public ViewHostBase {
 
   Q_PROPERTY(DocumentModel *documentModel READ documentModel CONSTANT)
   Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
-  Q_PROPERTY(bool toolsEnabled READ toolsEnabled NOTIFY toolsChanged)
-  Q_PROPERTY(bool toolsAvailable READ toolsAvailable NOTIFY toolsChanged)
   Q_PROPERTY(AttachmentModel *attachments READ attachments CONSTANT)
   Q_PROPERTY(bool canSend READ canSend NOTIFY attachmentStateChanged)
   Q_PROPERTY(QString attachmentMessage READ attachmentMessage NOTIFY attachmentStateChanged)
@@ -45,7 +43,6 @@ class QuickAIViewHost : public ViewHostBase {
   Q_PROPERTY(QString dictationMessage READ dictationMessage NOTIFY dictationMessageChanged)
 
 signals:
-  void toolsChanged();
   void attachmentStateChanged();
   void dictationAvailableChanged();
   void dictationStateChanged();
@@ -75,8 +72,6 @@ public:
 
   DocumentModel *documentModel() { return &m_document; }
   bool streaming() const { return m_agent && m_agent->running(); }
-  bool toolsEnabled() const { return m_toolsEnabled; }
-  bool toolsAvailable() const;
   AttachmentModel *attachments() { return &m_attachments; }
   bool canSend() const;
   QString attachmentMessage() const;
@@ -93,7 +88,6 @@ public:
 
   Q_INVOKABLE bool send(const QString &text);
   Q_INVOKABLE void cancel();
-  Q_INVOKABLE void toggleTools();
   Q_INVOKABLE void toggleTool(quint64 id) { m_exchanges.toggleTool(id); }
   Q_INVOKABLE void toggleToolGroup(quint64 id) { m_exchanges.toggleToolGroup(id); }
   Q_INVOKABLE void selectModel(const QString &compositeId);
@@ -116,7 +110,6 @@ private:
   bool m_dictationAvailable = false;
   QString m_dictationMessage;
   AI::Agent *m_agent = nullptr;
-  bool m_toolsEnabled = false;
   AttachmentModel m_attachments;
   QuickAIConversationModel m_exchanges;
   QuickAIDocumentModel m_document{&m_exchanges};

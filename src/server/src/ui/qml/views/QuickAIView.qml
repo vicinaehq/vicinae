@@ -220,21 +220,6 @@ LauncherView {
             message: root.host.attachmentMessage
             modelItems: root.host.modelSelectorItems
             currentModel: root.host.modelSelectorCurrentItem
-            accessory: ViciButton {
-                implicitWidth: 28
-                implicitHeight: 28
-                iconSize: 16
-                iconSource: Img.icon(BuiltinIcon.Terminal).withFillColor(root.host.toolsEnabled ? Theme.accent : Theme.textMuted)
-                variant: root.host.toolsEnabled ? "secondary" : "ghost"
-                enabled: !root.host.streaming && (root.host.toolsEnabled || root.host.toolsAvailable)
-                opacity: enabled ? 1 : 0.4
-                accessibleName: root.host.toolsEnabled ? qsTr("Disable Bash") : qsTr("Enable Bash commands on this computer")
-                activeFocusOnTab: true
-                onClicked: root.host.toggleTools()
-                ToolTip.visible: hovered
-                ToolTip.text: accessibleName
-                ToolTip.delay: 600
-            }
             dictationAvailable: root.host.dictationAvailable
             recording: root.host.recording
             transcribing: root.host.transcribing
