@@ -2,6 +2,7 @@
 #include "ai-model-selector-utils.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/ai/bash-tool.hpp"
 #include "services/dictation/dictation-service.hpp"
 #include "services/dictation/transcription-session.hpp"
 #include "services/permissions/macos-permission-service.hpp"
@@ -31,10 +32,66 @@ void QuickAIViewHost::initialize() {
 
   setNavigationTitle(tr("Quick AI"));
 
-  m_history.emplace_back(AI::ChatMessage::fromText(
-      AI::ChatRole::System,
-      "You are a concise assistant integrated into a desktop launcher. "
-      "Give direct, helpful answers. Prefer short responses unless detail is asked for."));
+  m_agent = new AI::Agent(
+      [service = m_aiService](const auto &model, const auto &payload) {
+        return service->createChatCompletion(model, payload);
+      },
+      {AI::ChatMessage::fromText(
+          AI::ChatRole::System,
+          "You are a concise assistant integrated into a desktop launcher. "
+          "Give direct, helpful answers. Prefer short responses unless detail is asked for. "
+          "Recover from tool errors when appropriate without narrating routine failed attempts. "
+          "Clearly disclose unresolved failures and incomplete verification that affect your answer.")},
+      this);
+  m_agent->addTool(std::make_unique<AI::BashTool>());
+  connect(m_agent, &AI::Agent::stateChanged, this, &QuickAIViewHost::streamingChanged);
+  connect(m_agent, &AI::Agent::textAdded, this,
+          [this](quint64, const std::string &text) { m_exchanges.appendResponse(text); });
+  connect(m_agent, &AI::Agent::toolAdded, this, [this](quint64 id) {
+    const auto &call = *m_agent->toolCall(id);
+    m_exchanges.addTool(id, QString::fromStdString(call.call.name),
+                        QString::fromStdString(call.call.arguments),
+                        call.summary ? std::optional(QString::fromStdString(*call.summary)) : std::nullopt);
+  });
+  connect(m_agent, &AI::Agent::toolChanged, this, [this](quint64 id) {
+    const auto &call = *m_agent->toolCall(id);
+    const auto status = [&] {
+      switch (call.state) {
+      case AI::Agent::ToolState::Queued:
+        return QStringLiteral("queued");
+      case AI::Agent::ToolState::Running:
+        return QStringLiteral("running");
+      case AI::Agent::ToolState::Succeeded:
+        return QStringLiteral("succeeded");
+      case AI::Agent::ToolState::Failed:
+        return QStringLiteral("failed");
+      case AI::Agent::ToolState::Cancelled:
+        return QStringLiteral("cancelled");
+      }
+      return QString{};
+    }();
+    std::optional<QString> output;
+    std::optional<QString> statusText;
+    if (call.output) {
+      output =
+          QString::fromStdString(call.output->displayText ? *call.output->displayText : call.output->content);
+      if (call.output->statusText) statusText = QString::fromStdString(*call.output->statusText);
+    }
+    m_exchanges.updateTool(id, status, std::move(output),
+                           call.duration ? std::optional<qint64>(call.duration->count()) : std::nullopt,
+                           std::move(statusText));
+  });
+  connect(m_agent, &AI::Agent::finished, this, [this] {
+    m_exchanges.finishExchange(m_agent->error().value_or(std::string{}));
+    if (const auto &model = m_agent->model()) {
+      m_modelLabel = QString::fromStdString(model->name);
+      m_modelIcon = model->icon.value_or(ImageUrl{});
+      emit modelChanged();
+    }
+  });
+  connect(this, &QuickAIViewHost::modelSelectorCurrentItemChanged, this, &QuickAIViewHost::toolsChanged);
+  connect(this, &QuickAIViewHost::toolsChanged, this, &QuickAIViewHost::attachmentStateChanged);
+  connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::toolsChanged);
 
   connect(m_aiService, &AI::Service::modelsChanged, this, &QuickAIViewHost::rebuildModelSelectorItems);
   rebuildModelSelectorItems();
@@ -125,28 +182,32 @@ void QuickAIViewHost::loadInitialData() {
 
 bool QuickAIViewHost::needsVision() const {
   if (m_attachments.hasImages()) return true;
-  return std::ranges::any_of(m_history, [](const AI::ChatMessage &message) {
-    return std::ranges::any_of(
-        message.parts, [](const AI::ChatPart &part) { return std::holds_alternative<AI::ImagePart>(part); });
+  if (!m_agent) return false;
+  return std::ranges::any_of(m_agent->messages(), [](const AI::Agent::Message &message) {
+    return std::ranges::any_of(message.content.parts, [](const AI::ChatPart &part) {
+      return std::holds_alternative<AI::ImagePart>(part);
+    });
   });
 }
 
-bool QuickAIViewHost::modelAcceptsImages() const {
+bool QuickAIViewHost::modelSupports(AI::Capability capability) const {
   if (!m_aiService || !m_selectedModel) return false;
   auto *provider = m_aiService->getProviderById(m_selectedModel->provider);
   if (!provider) return false;
   const auto models = provider->listModels();
   const auto model = std::ranges::find(models, m_selectedModel->id, &AI::Model::id);
-  return model != models.end() && (model->caps & AI::Capability::Vision);
+  return model != models.end() && (model->caps & capability);
 }
 
 bool QuickAIViewHost::canSend() const {
-  return !m_streaming && m_attachments.ready() && (!needsVision() || modelAcceptsImages());
+  return m_agent && !streaming() && m_attachments.ready() &&
+         (!needsVision() || modelSupports(AI::Capability::Vision)) && (!m_toolsEnabled || toolsAvailable());
 }
 
 QString QuickAIViewHost::attachmentMessage() const {
-  if (needsVision() && !modelAcceptsImages())
+  if (needsVision() && !modelSupports(AI::Capability::Vision))
     return tr("Choose a model that supports images for this conversation.");
+  if (m_toolsEnabled && !toolsAvailable()) return tr("Choose a model that supports tools, or turn off Bash.");
   return m_attachments.error();
 }
 
@@ -158,7 +219,17 @@ bool QuickAIViewHost::send(const QString &text) {
 }
 
 void QuickAIViewHost::cancel() {
-  if (m_stream) m_stream->abort();
+  if (m_agent) m_agent->cancel();
+}
+
+bool QuickAIViewHost::toolsAvailable() const {
+  return AI::BashTool::available() && modelSupports(AI::Capability::ToolCalling);
+}
+
+void QuickAIViewHost::toggleTools() {
+  if (streaming() || (!m_toolsEnabled && !toolsAvailable())) return;
+  m_toolsEnabled = !m_toolsEnabled;
+  emit toolsChanged();
 }
 
 void QuickAIViewHost::sendQuery(const std::string &query) {
@@ -177,62 +248,10 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
                                                           std::get<std::string>(attachment.contents))});
     }
   }
-  m_history.emplace_back(std::move(message));
-
-  m_currentResponse.clear();
   m_exchanges.beginExchange(query, previews);
-  m_streaming = true;
-  emit streamingChanged();
-
-  AI::ChatCompletionPayload payload;
-  payload.messages = m_history;
-
-  m_stream = m_aiService->createChatCompletion(m_selectedModel, payload);
-
-  if (!m_stream) {
-    failQuery(tr("This model is not available right now.").toStdString());
-    return;
-  }
-
-  connect(m_stream.get(), &AI::AbstractChatCompletionStream::dataAdded, this,
-          [this](const std::string &text) {
-            m_currentResponse += text;
-            m_exchanges.appendResponse(text);
-          });
-
-  connect(m_stream.get(), &AI::AbstractChatCompletionStream::finished, this, [this]() {
-    // an error might have occurred, yet finished is still emitted
-    if (!m_streaming) return;
-
-    const auto &model = m_stream->model();
-    m_modelLabel = QString::fromStdString(model.name);
-    m_modelIcon = model.icon.value_or(ImageUrl{});
-    emit modelChanged();
-
-    m_streaming = false;
-    emit streamingChanged();
-
-    m_history.emplace_back(AI::ChatMessage::fromText(AI::ChatRole::Assistant, m_currentResponse));
-
-    m_exchanges.finishExchange();
-
-    m_stream.reset();
-  });
-
-  connect(m_stream.get(), &AI::AbstractChatCompletionStream::errorOccurred, this,
-          [this](const std::string &reason) { failQuery(reason); });
-
-  m_stream->start();
-}
-
-void QuickAIViewHost::failQuery(const std::string &reason) {
-  if (!m_history.empty() && m_history.back().role == AI::ChatRole::User) m_history.pop_back();
-
-  m_exchanges.finishExchange(reason);
-
-  m_streaming = false;
-  emit streamingChanged();
-  m_stream.reset();
+  AI::Agent::Options options{.model = m_selectedModel};
+  if (m_toolsEnabled) options.tools.emplace_back("bash");
+  m_agent->send(std::move(message), std::move(options));
 }
 
 void QuickAIViewHost::selectModel(const QString &compositeId) {
