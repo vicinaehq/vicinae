@@ -1,3 +1,4 @@
+#include "services/ai/conversation-store.hpp"
 #include "service-registry.hpp"
 #include "services/dictation/dictation-service.hpp"
 #ifdef Q_OS_LINUX
@@ -97,6 +98,12 @@ ShortcutInhibitManager *ServiceRegistry::shortcutInhibitManager() const {
 }
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
+AI::ConversationStore *ServiceRegistry::conversations() const { return m_conversations.get(); }
+
+void ServiceRegistry::setConversations(std::unique_ptr<AI::ConversationStore> store) {
+  m_conversations = std::move(store);
+}
+
 AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
 AI::ToolRegistry *ServiceRegistry::tools() const { return m_tools.get(); }
 void ServiceRegistry::setTools(std::unique_ptr<AI::ToolRegistry> registry) { m_tools = std::move(registry); }

@@ -58,9 +58,9 @@ struct Message {
         parts.emplace_back(ContentPart{.type = "text", .text = p->text});
         text += p->text;
       } else if (const auto *p = std::get_if<ImagePart>(&part)) {
-        parts.emplace_back(ContentPart{
-            .type = "image_url",
-            .image_url = ContentPart::ImageUrl{std::format("data:{};base64,{}", p->mimeType, p->base64)}});
+        parts.emplace_back(ContentPart{.type = "image_url",
+                                       .image_url = ContentPart::ImageUrl{std::format(
+                                           "data:{};base64,{}", p->mimeType, p->base64.toStdString())}});
         hasImage = true;
       } else if (const auto *p = std::get_if<ToolCallPart>(&part)) {
         if (!out.tool_calls) out.tool_calls.emplace();

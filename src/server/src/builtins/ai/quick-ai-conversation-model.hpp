@@ -22,6 +22,7 @@ public:
   struct Response {
     std::string text;
     std::size_t visibleBytes = 0;
+    bool restored = false;
   };
 
   struct Tool {
@@ -54,6 +55,7 @@ public:
 
   void beginExchange(const std::string &query, QVariantList attachments = {});
   void appendResponse(std::string_view text);
+  void appendSavedResponse(std::string text);
   void finishExchange(const std::string &error = {});
 
   void addTool(Tool tool);

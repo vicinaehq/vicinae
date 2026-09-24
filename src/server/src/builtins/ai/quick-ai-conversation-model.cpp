@@ -83,6 +83,15 @@ void QuickAIConversationModel::beginExchange(const std::string &query, QVariantL
   endInsertRows();
 }
 
+void QuickAIConversationModel::appendSavedResponse(std::string text) {
+  if (text.empty()) return;
+  auto &contents = m_exchanges.back().contents;
+  const auto size = text.size();
+  contents.reserve(contents.size() + 1);
+  contents.emplace_back(Response{std::move(text), size, true});
+  emit contentAdded(rowCount() - 1, contents.size() - 1);
+}
+
 void QuickAIConversationModel::appendResponse(std::string_view text) {
   if (m_exchanges.empty() || !m_exchanges.back().pending || text.empty()) return;
 

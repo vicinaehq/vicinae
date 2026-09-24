@@ -19,6 +19,18 @@ Agent::Agent(CompletionFactory factory, ChatHistory history, QObject *parent)
 
 Agent::~Agent() { stopWork(); }
 
+void Agent::restoreHistory(std::vector<Message> messages, std::vector<ToolCall> calls) {
+  Q_ASSERT(!running());
+  m_messages = std::move(messages);
+  m_calls = std::move(calls);
+  m_nextId = 1;
+
+  for (const auto &message : m_messages)
+    m_nextId = std::max(m_nextId, message.id + 1);
+  for (const auto &call : m_calls)
+    m_nextId = std::max(m_nextId, call.id + 1);
+}
+
 bool Agent::addTool(std::unique_ptr<AbstractTool> tool) {
   if (running() || !tool ||
       std::ranges::any_of(m_tools, [&](const auto &existing) { return existing->name() == tool->name(); }))

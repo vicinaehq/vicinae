@@ -1,6 +1,7 @@
 #pragma once
 #include <qcoreapplication.h>
 #include "builtins/ai/ai.hpp"
+#include "conversation-history-view-host.hpp"
 #include "command/command-database.hpp"
 #include "builtins/ai/quick-ai-preferences.hpp"
 #include "command/single-view-command-context.hpp"
@@ -25,6 +26,17 @@ class QuickAICommand
   void execute(const Controller &controller) const override;
 };
 
+class ConversationHistoryCommand : public BuiltinViewCommand<ConversationHistoryViewHost> {
+  Q_DECLARE_TR_FUNCTIONS(ConversationHistoryCommand)
+  QString id() const override { return QStringLiteral("conversations"); }
+  QString name() const override { return tr("Browse AI Conversations"); }
+  std::vector<QString> keywords() const override { return {"chat", "history"}; }
+  QString description() const override { return tr("Reopen and continue previous AI conversations."); }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Stars).setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+};
+
 class AiExtension : public TypedCommandRepository<AiPreferences> {
   Q_DECLARE_TR_FUNCTIONS(AiExtension)
 
@@ -42,5 +54,8 @@ class AiExtension : public TypedCommandRepository<AiPreferences> {
   void preferencesChanged(const AiPreferences &preferences) const override;
 
 public:
-  AiExtension() { registerCommand<QuickAICommand>(); }
+  AiExtension() {
+    registerCommand<QuickAICommand>();
+    registerCommand<ConversationHistoryCommand>();
+  }
 };

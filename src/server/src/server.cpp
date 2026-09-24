@@ -1,3 +1,4 @@
+#include "services/ai/conversation-store.hpp"
 #include "config/config.hpp"
 #include "environment.hpp"
 #include <QStyleHints>
@@ -408,6 +409,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setDictation(
         std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl()));
     registry->setAI(std::move(ai));
+    registry->setConversations(
+        std::make_unique<AI::ConversationStore>(Omnicast::dataDir() / "conversations"));
+    QObject::connect(registry->conversations(), &AI::ConversationStore::errorOccurred,
+                     registry->toastService(), [toast = registry->toastService()](const QString &error) {
+                       qWarning() << "Conversation storage:" << error;
+                       toast->failure(
+                           QCoreApplication::translate("ConversationStore", "Could not save conversation."));
+                     });
     registry->setTools(std::make_unique<AI::ToolRegistry>(*registry->config()));
 
     auto root = registry->rootItemManager();

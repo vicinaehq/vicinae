@@ -8,24 +8,7 @@
 #include <optional>
 #include <string>
 #include <variant>
-#include "ui/image/image-url.hpp"
-
-struct FileAttachment {
-  struct Image {
-    std::string mimeType;
-    std::string base64;
-    std::size_t byteSize;
-  };
-  std::string name;
-  std::variant<std::string, Image> contents;
-  ImageUrl preview;
-
-  bool isImage() const { return std::holds_alternative<Image>(contents); }
-  std::size_t byteSize() const {
-    if (const auto *image = std::get_if<Image>(&contents)) return image->byteSize;
-    return std::get<std::string>(contents).size();
-  }
-};
+#include "common/file-attachment.hpp"
 
 class AttachmentContent {
   Q_GADGET

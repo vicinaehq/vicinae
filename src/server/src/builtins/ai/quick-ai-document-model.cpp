@@ -169,6 +169,10 @@ void QuickAIDocumentModel::addContent(int row, int part) {
   updateOffsets();
   if (!response) endInsertRows();
   if (markdown) {
+    connect(markdown, &MarkdownModel::loadingChanged, this, [this, markdown] {
+      m_pendingParses += markdown->loading() ? 1 : -1;
+      emit loadingChanged();
+    });
     connect(markdown, &QAbstractItemModel::rowsAboutToBeInserted, this,
             [this, row, part](const QModelIndex &, int first, int last) {
               const auto base = m_exchanges[row].contents[part].offset;
@@ -224,7 +228,11 @@ void QuickAIDocumentModel::updateContent(int row, int part) {
   auto &content = m_exchanges[row].contents[part];
   const auto &source = m_conversation->contents(row)[part];
   if (const auto *response = std::get_if<QuickAIConversationModel::Response>(&source)) {
-    content.markdown->setMarkdown(QString::fromUtf8(response->text.data(), response->visibleBytes));
+    auto text = QString::fromUtf8(response->text.data(), response->visibleBytes);
+    if (response->restored)
+      content.markdown->setMarkdownAsync(std::move(text));
+    else
+      content.markdown->setMarkdown(text);
   } else {
     const auto &group = std::get<QuickAIConversationModel::ToolGroup>(source);
     const auto count = static_cast<int>(group.calls.size());
