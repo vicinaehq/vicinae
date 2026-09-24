@@ -15,6 +15,7 @@ class MarkdownModel : public DocumentModel {
 
 signals:
   void blocksAppended();
+  void loadingChanged();
 
 public:
   enum Role {
@@ -32,6 +33,8 @@ public:
   std::span<const DocumentPart> documentParts(int row) const override;
 
   Q_INVOKABLE void setMarkdown(const QString &markdown);
+  void setMarkdownAsync(QString markdown);
+  bool loading() const { return m_loading; }
   Q_INVOKABLE void clear();
   Q_INVOKABLE void openLink(const QString &url);
   Q_INVOKABLE QString copyCodeBlock(int blockIndex);
@@ -43,17 +46,25 @@ private:
     mutable std::optional<std::vector<DocumentPart>> parts;
   };
 
+  struct Styles {
+    QString inlineCodeFg;
+    QString inlineCodeBg;
+    QString linkColor;
+    QString textColor;
+    QString monoFamily;
+    syntax::StyleMap syntax;
+    bool dark = false;
+  };
+
   void rebuildInlineStyles();
-  std::vector<Block> parseBlocks(const QString &markdown) const;
+  void setLoading(bool loading);
+  static std::vector<Block> parseBlocks(const QString &markdown, const Styles &styles);
 
   std::vector<Block> m_blocks;
   QString m_markdown;
 
-  QString m_inlineCodeFg;
-  QString m_inlineCodeBg;
-  QString m_linkColor;
-  QString m_textColor;
-  QString m_monoFamily;
-
-  syntax::StyleMap m_syntaxStyles;
+  Styles m_styles;
+  quint64 m_parseGeneration = 0;
+  bool m_loading = false;
+  bool m_async = false;
 };

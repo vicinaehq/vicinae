@@ -116,7 +116,7 @@ struct TextPart {
 
 struct ImagePart {
   std::string mimeType;
-  std::string base64;
+  QByteArray base64;
 };
 
 struct ToolCallPart {

@@ -1,3 +1,5 @@
+#include <QtConcurrentRun>
+#include <mutex>
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QRegularExpression>
@@ -286,7 +288,12 @@ MarkdownModel::MarkdownModel(QObject *parent) : DocumentModel(parent) {
   rebuildInlineStyles();
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
     rebuildInlineStyles();
-    if (!m_markdown.isEmpty()) setMarkdown(m_markdown);
+    if (!m_markdown.isEmpty()) {
+      if (m_async)
+        setMarkdownAsync(m_markdown);
+      else
+        setMarkdown(m_markdown);
+    }
   });
 }
 
@@ -317,23 +324,25 @@ QHash<int, QByteArray> MarkdownModel::roleNames() const {
 
 void MarkdownModel::rebuildInlineStyles() {
   auto &theme = ThemeService::instance().theme();
-  m_inlineCodeFg = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
+  m_styles.inlineCodeFg = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
   auto inlineCodeBg = theme.resolve(SemanticColor::Foreground);
   inlineCodeBg.setAlphaF(0.08);
-  m_inlineCodeBg = inlineCodeBg.name(QColor::HexArgb);
-  m_linkColor = theme.resolve(SemanticColor::LinkDefault).name(QColor::HexRgb);
-  m_textColor = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
-  m_monoFamily = ServiceRegistry::instance()->fontService()->builtinMonoFontFamily();
-  m_syntaxStyles = syntax::buildStyleMap(theme);
+  m_styles.inlineCodeBg = inlineCodeBg.name(QColor::HexArgb);
+  m_styles.linkColor = theme.resolve(SemanticColor::LinkDefault).name(QColor::HexRgb);
+  m_styles.textColor = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
+  m_styles.monoFamily = ServiceRegistry::instance()->fontService()->builtinMonoFontFamily();
+  m_styles.syntax = syntax::buildStyleMap(theme);
+  m_styles.dark = theme.isDark();
 }
 
-std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &markdown) const {
+std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &markdown, const Styles &styles) {
   std::vector<Block> blocks;
-  blocks.reserve(m_blocks.size() + 4);
+  blocks.reserve(32);
 
   auto buf = markdown.toUtf8();
 
-  cmark_gfm_core_extensions_ensure_registered();
+  static std::once_flag extensions;
+  std::call_once(extensions, cmark_gfm_core_extensions_ensure_registered);
   cmark_parser *parser = cmark_parser_new(CMARK_OPT_DEFAULT);
 
   if (auto *tableExt = cmark_find_syntax_extension("table"))
@@ -345,7 +354,8 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
   cmark_node *root = cmark_parser_finish(parser);
   cmark_parser_free(parser);
 
-  InlineContext ctx{m_inlineCodeFg, m_inlineCodeBg, m_linkColor, m_textColor, m_monoFamily};
+  InlineContext ctx{styles.inlineCodeFg, styles.inlineCodeBg, styles.linkColor, styles.textColor,
+                    styles.monoFamily};
 
   for (auto *node = cmark_node_first_child(root); node; node = cmark_node_next(node)) {
     auto type = cmark_node_get_type(node);
@@ -430,9 +440,9 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       auto *lang = cmark_node_get_fence_info(node);
       QString const language = lang ? QString::fromUtf8(lang) : QString();
       data[QStringLiteral("language")] = language;
-      bool const isDark = ThemeService::instance().theme().isDark();
+      bool const isDark = styles.dark;
       data[QStringLiteral("highlightedHtml")] =
-          syntax::highlight(code, language, m_syntaxStyles, isDark, m_monoFamily);
+          syntax::highlight(code, language, styles.syntax, isDark, styles.monoFamily);
       blocks.push_back({Markdown::BlockType::CodeBlock, data});
       break;
     }
@@ -621,10 +631,13 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
 }
 
 void MarkdownModel::setMarkdown(const QString &markdown) {
+  ++m_parseGeneration;
+  m_async = false;
+  setLoading(false);
   if (!m_blocks.empty() && !m_markdown.isEmpty() && markdown.size() > m_markdown.size() &&
       markdown.startsWith(m_markdown)) {
     m_markdown = markdown;
-    auto newBlocks = parseBlocks(markdown);
+    auto newBlocks = parseBlocks(markdown, m_styles);
     const int oldCount = static_cast<int>(m_blocks.size());
     const int newCount = static_cast<int>(newBlocks.size());
     emit blocksAppended();
@@ -656,12 +669,37 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
   beginResetModel();
   m_blocks.clear();
 
-  if (!markdown.isEmpty()) m_blocks = parseBlocks(markdown);
+  if (!markdown.isEmpty()) m_blocks = parseBlocks(markdown, m_styles);
 
   endResetModel();
 }
 
+void MarkdownModel::setLoading(bool loading) {
+  if (m_loading == loading) return;
+  m_loading = loading;
+  emit loadingChanged();
+}
+
+void MarkdownModel::setMarkdownAsync(QString markdown) {
+  const auto generation = ++m_parseGeneration;
+  m_async = true;
+  m_markdown = markdown;
+  setLoading(true);
+
+  QtConcurrent::run([markdown = std::move(markdown), styles = m_styles] {
+    return parseBlocks(markdown, styles);
+  }).then(this, [this, generation](std::vector<Block> blocks) {
+    if (generation != m_parseGeneration) return;
+    beginResetModel();
+    m_blocks = std::move(blocks);
+    endResetModel();
+    setLoading(false);
+  });
+}
+
 void MarkdownModel::clear() {
+  ++m_parseGeneration;
+  setLoading(false);
   beginResetModel();
   m_blocks.clear();
   m_markdown.clear();
