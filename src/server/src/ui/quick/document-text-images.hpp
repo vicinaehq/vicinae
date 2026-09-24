@@ -37,10 +37,13 @@ class DocumentTextImages : public QObject, public QTextObjectInterface {
   Q_INTERFACES(QTextObjectInterface)
   Q_PROPERTY(QQuickTextDocument *document READ document WRITE setDocument NOTIFY documentChanged)
   Q_PROPERTY(bool measuring READ measuring WRITE setMeasuring NOTIFY measuringChanged)
+  Q_PROPERTY(
+      qreal devicePixelRatio READ devicePixelRatio WRITE setDevicePixelRatio NOTIFY devicePixelRatioChanged)
 
 signals:
   void documentChanged();
   void measuringChanged();
+  void devicePixelRatioChanged();
 
 public:
   explicit DocumentTextImages(QObject *parent = nullptr);
@@ -49,10 +52,12 @@ public:
   void setDocument(QQuickTextDocument *document);
   bool measuring() const { return m_measuring; }
   void setMeasuring(bool measuring);
+  qreal devicePixelRatio() const { return m_devicePixelRatio; }
+  void setDevicePixelRatio(qreal ratio);
   static void measure(QTextDocument *document, DocumentImageCache *cache);
   QSizeF intrinsicSize(QTextDocument *document, int position, const QTextFormat &format) override;
-  // Qt Quick draws rich-text images in its scene graph; this handler only supplies geometry.
-  void drawObject(QPainter *, const QRectF &, QTextDocument *, int, const QTextFormat &) override {}
+  void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *document, int position,
+                  const QTextFormat &format) override;
 
 private:
   void attach(QTextDocument *document);
@@ -60,4 +65,5 @@ private:
   QPointer<QTextDocument> m_textDocument;
   QPointer<DocumentImageCache> m_cache;
   bool m_measuring = false;
+  qreal m_devicePixelRatio = 1;
 };

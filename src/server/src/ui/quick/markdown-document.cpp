@@ -1,11 +1,31 @@
 #include <QTextDocumentFragment>
+#include <QTextDocument>
+#include <QTextBlock>
+#include <QTextImageFormat>
 #include <algorithm>
 #include "markdown-document.hpp"
 
 namespace {
 void appendHtml(std::vector<DocumentPart> &parts, const QString &html) {
   if (parts.size() == parts.capacity()) parts.reserve(std::max<std::size_t>(8, parts.size() * 2));
-  parts.emplace_back(DocumentPart{QTextDocumentFragment::fromHtml(html).toPlainText()});
+  if (!html.contains("<img", Qt::CaseInsensitive)) {
+    parts.emplace_back(DocumentPart{QTextDocumentFragment::fromHtml(html).toPlainText()});
+    return;
+  }
+  QTextDocument document;
+  document.setHtml(html);
+  DocumentPart part{document.toPlainText()};
+  part.inlineObjects.reserve(4);
+  for (auto block = document.begin(); block.isValid(); block = block.next())
+    for (auto it = block.begin(); !it.atEnd(); ++it) {
+      const auto fragment = it.fragment();
+      if (fragment.charFormat().isImageFormat()) {
+        const auto alt = fragment.charFormat().stringProperty(QTextFormat::ImageAltText);
+        for (int offset = 0; offset < fragment.length(); ++offset)
+          part.inlineObjects.emplace_back(DocumentPart::InlineObject{fragment.position() + offset, alt});
+      }
+    }
+  parts.emplace_back(std::move(part));
 }
 void appendList(std::vector<DocumentPart> &parts, const QVariantList &items) {
   for (const auto &value : items) {

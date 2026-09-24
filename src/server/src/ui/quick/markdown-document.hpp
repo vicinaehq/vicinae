@@ -20,6 +20,7 @@ enum class BlockType : int {
   HtmlBlock,
   Blockquote,
   Callout,
+  Math,
 };
 Q_ENUM_NS(BlockType)
 } // namespace Markdown
