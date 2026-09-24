@@ -14,6 +14,8 @@ Item {
     required property var attachments
     required property bool failed
     required property var tool
+    property bool awaitingResponse: false
+    property bool thinking: false
     signal previewRequested(var content)
     signal toolToggled(var toolId)
     signal toolGroupToggled(var toolId)
@@ -158,11 +160,34 @@ Item {
     Component {
         id: tailComponent
         Item {
-            implicitHeight: root.failed ? errorText.implicitHeight : root.pending ? 24 : 0
-            PulsingDots {
-                active: root.pending
-                visible: active
-                anchors.verticalCenter: parent.verticalCenter
+            id: tailContent
+            readonly property bool showActivity: root.pending && root.awaitingResponse
+            implicitHeight: root.failed ? errorText.implicitHeight : showActivity ? 24 : 0
+            Row {
+                width: parent.width
+                height: parent.height
+                visible: tailContent.showActivity && !root.failed
+                spacing: 8
+
+                Text {
+                    width: Math.min(implicitWidth, Math.max(0, parent.width - activityDots.width - parent.spacing))
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.thinking
+                    text: qsTr("Thinking")
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
+                    color: Theme.textMuted
+                    font.family: Theme.fontFamily
+                    font.pointSize: root.fontSize - 1
+                    Accessible.role: Accessible.StaticText
+                    Accessible.name: text
+                }
+
+                PulsingDots {
+                    id: activityDots
+                    anchors.verticalCenter: parent.verticalCenter
+                    active: visible
+                }
             }
             DocumentText {
                 id: errorText

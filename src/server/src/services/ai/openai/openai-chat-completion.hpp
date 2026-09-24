@@ -108,6 +108,10 @@ struct ChatRequest {
 };
 
 struct StreamChunk {
+  struct ReasoningDetail {
+    std::string type;
+  };
+
   struct ToolCallDelta {
     struct Function {
       std::optional<std::string> name;
@@ -123,6 +127,9 @@ struct StreamChunk {
     struct Delta {
       std::optional<std::string> role;
       std::optional<std::string> content;
+      std::optional<std::string> reasoning;
+      std::optional<std::string> reasoning_content;
+      std::optional<std::vector<ReasoningDetail>> reasoning_details;
       std::optional<std::vector<ToolCallDelta>> tool_calls;
     };
 
@@ -204,14 +211,22 @@ private:
 
     const auto &choice = chunk.choices.front();
 
-    if (choice.delta.content && !choice.delta.content->empty()) emit dataAdded(*choice.delta.content);
+    const auto &delta = choice.delta;
+    if ((delta.reasoning && !delta.reasoning->empty()) ||
+        (delta.reasoning_content && !delta.reasoning_content->empty()) ||
+        (delta.reasoning_details && !delta.reasoning_details->empty())) {
+      emit activityChanged(ResponseActivity::Thinking);
+    }
 
-    if (choice.delta.tool_calls) {
-      for (const auto &delta : *choice.delta.tool_calls) {
-        auto &call = m_toolCalls[delta.index];
-        if (delta.id) call.id = *delta.id;
-        if (delta.function.name) call.name += *delta.function.name;
-        if (delta.function.arguments) call.arguments += *delta.function.arguments;
+    if (delta.content && !delta.content->empty()) emit dataAdded(*delta.content);
+
+    if (delta.tool_calls && !delta.tool_calls->empty()) {
+      emit activityChanged(ResponseActivity::PreparingTool);
+      for (const auto &toolDelta : *delta.tool_calls) {
+        auto &call = m_toolCalls[toolDelta.index];
+        if (toolDelta.id) call.id = *toolDelta.id;
+        if (toolDelta.function.name) call.name += *toolDelta.function.name;
+        if (toolDelta.function.arguments) call.arguments += *toolDelta.function.arguments;
       }
     }
 

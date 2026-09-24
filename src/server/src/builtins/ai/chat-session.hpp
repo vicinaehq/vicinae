@@ -30,6 +30,8 @@ class ChatSession : public QObject {
   Q_PROPERTY(QString draft READ draft WRITE setDraft NOTIFY draftChanged)
   Q_PROPERTY(DocumentModel *documentModel READ documentModel CONSTANT)
   Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
+  Q_PROPERTY(bool awaitingResponse READ awaitingResponse NOTIFY activityChanged)
+  Q_PROPERTY(bool thinking READ thinking NOTIFY activityChanged)
   Q_PROPERTY(AttachmentModel *attachments READ attachments CONSTANT)
   Q_PROPERTY(bool canSend READ canSend NOTIFY attachmentStateChanged)
   Q_PROPERTY(QString attachmentMessage READ attachmentMessage NOTIFY attachmentStateChanged)
@@ -66,6 +68,7 @@ signals:
   void dictationMessageChanged();
   void dictated(const QString &text);
   void streamingChanged();
+  void activityChanged();
   void modelChanged();
   void modelSelectorItemsChanged();
   void modelSelectorCurrentItemChanged();
@@ -92,6 +95,8 @@ public:
 
   DocumentModel *documentModel() { return &m_document; }
   bool streaming() const { return m_agent && m_agent->running(); }
+  bool awaitingResponse() const;
+  bool thinking() const { return streaming() && m_agent->activity() == AI::ResponseActivity::Thinking; }
   AttachmentModel *attachments() { return &m_attachments; }
   bool canSend() const;
   QString attachmentMessage() const;
