@@ -329,6 +329,8 @@ if (NOT USE_SYSTEM_LAYER_SHELL)
 	checkout_layer_shell_qt()
 endif()
 
+include(MathText)
+
 if (NOT USE_SYSTEM_CMARK_GFM)
 	include(CMark)
 	setup_vendored_cmark()

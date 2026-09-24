@@ -25,5 +25,6 @@ TextEdit {
     DocumentTextImages {
         document: root.textDocument
         measuring: root.DocumentScope.measuring
+        devicePixelRatio: root.Screen.devicePixelRatio
     }
 }
