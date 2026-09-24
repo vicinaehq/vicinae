@@ -40,6 +40,7 @@
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/news/news-service.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/ai/tool-registry.hpp"
 #include "services/local-model-registry/local-model-registry.hpp"
 #include "config/config.hpp"
 
@@ -97,6 +98,8 @@ ShortcutInhibitManager *ServiceRegistry::shortcutInhibitManager() const {
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
 AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
+AI::ToolRegistry *ServiceRegistry::tools() const { return m_tools.get(); }
+void ServiceRegistry::setTools(std::unique_ptr<AI::ToolRegistry> registry) { m_tools = std::move(registry); }
 
 void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
 

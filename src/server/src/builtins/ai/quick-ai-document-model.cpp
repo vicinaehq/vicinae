@@ -84,6 +84,7 @@ QVariant QuickAIDocumentModel::data(const QModelIndex &index, int role) const {
     return QVariantMap{
         {QStringLiteral("id"), tool.id},
         {QStringLiteral("name"), tool.name},
+        {QStringLiteral("iconSource"), tool.iconSource},
         {QStringLiteral("summary"), tool.summary.value_or(QString{})},
         {QStringLiteral("status"), tool.status},
         {QStringLiteral("statusText"), tool.statusText ? QVariant(*tool.statusText) : QVariant{}},
@@ -268,7 +269,9 @@ void QuickAIDocumentModel::updateContent(int row, int part) {
                     {QStringLiteral("count"), count},
                     {QStringLiteral("expanded"), group.expanded},
                     {QStringLiteral("status"), status},
-                    {QStringLiteral("summary"), current.summary.value_or(current.name)},
+                    {QStringLiteral("name"), current.name},
+                    {QStringLiteral("iconSource"), current.iconSource},
+                    {QStringLiteral("summary"), current.summary.value_or(QString{})},
                     {QStringLiteral("durationMs"),
                      duration && !running && !queued ? QVariant::fromValue(*duration) : QVariant{}}};
     emit dataChanged(index(content.offset), index(content.offset + content.rows - 1), {KindRole, ToolRole});

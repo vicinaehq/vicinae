@@ -109,6 +109,7 @@
 #include "services/selection/windows-selection-service.hpp"
 #endif
 #include "services/ai/ai-service.hpp"
+#include "services/ai/tool-registry.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "ui/windows/launcher-window.hpp"
@@ -407,12 +408,14 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setDictation(
         std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl()));
     registry->setAI(std::move(ai));
+    registry->setTools(std::make_unique<AI::ToolRegistry>(*registry->config()));
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>(*registry);
 
     for (const auto &repo : builtinCommandDb->repositories()) {
       root->loadProvider(std::make_unique<ExtensionRootProvider>(repo));
+      registry->tools()->addProvider(repo->id().toStdString(), repo->tools());
     }
 
     auto reg = ServiceRegistry::instance()->extensionRegistry();

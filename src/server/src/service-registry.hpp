@@ -53,7 +53,8 @@ class Manager;
 
 namespace AI {
 class Service;
-};
+class ToolRegistry;
+}; // namespace AI
 
 class ServiceRegistry : public QObject {
 
@@ -101,6 +102,7 @@ public:
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
   AI::Service *ai() const;
+  AI::ToolRegistry *tools() const;
   LocalModelRegistry *localModels() const;
   DictationService *dictation() const;
 
@@ -147,6 +149,7 @@ public:
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
   void setAI(std::unique_ptr<AI::Service>);
+  void setTools(std::unique_ptr<AI::ToolRegistry> registry);
   void setLocalModels(std::unique_ptr<LocalModelRegistry> registry);
   void setDictation(std::unique_ptr<DictationService> service);
 
@@ -195,4 +198,5 @@ private:
   std::unique_ptr<LocalModelRegistry> m_localModels;
   std::unique_ptr<DictationService> m_dictation;
   std::unique_ptr<AI::Service> m_ai;
+  std::unique_ptr<AI::ToolRegistry> m_tools;
 };

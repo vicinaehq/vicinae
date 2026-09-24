@@ -26,6 +26,7 @@ public:
   struct Tool {
     quint64 id;
     QString name;
+    QString iconSource;
     QString arguments;
     std::optional<QString> summary;
     QString status = QStringLiteral("queued");
@@ -50,7 +51,7 @@ public:
   void beginExchange(const std::string &query, QVariantList attachments = {});
   void appendResponse(std::string_view text);
   void finishExchange(const std::string &error = {});
-  void addTool(quint64 id, QString name, QString arguments, std::optional<QString> summary = {});
+  void addTool(Tool tool);
   void updateTool(quint64 id, QString status, std::optional<QString> output,
                   std::optional<qint64> durationMs = {}, std::optional<QString> statusText = {});
   void toggleTool(quint64 id);

@@ -7,6 +7,7 @@
 #include "command/typed-command.hpp"
 #include "builtins/system/system-run-model.hpp"
 #include "builtins/system/system-run-view-host.hpp"
+#include "builtins/system/bash-tool.hpp"
 #include "theme/colors.hpp"
 #include "utils.hpp"
 #include "services/app-service/app-service.hpp"
@@ -139,6 +140,13 @@ public:
   SystemExtension() {
     registerCommand<SystemRunCommand>();
     registerCommand<SystemBrowseApps>();
+    if (const auto executable = BashTool::executablePath()) {
+      registerTool({.id = "bash",
+                    .title = tr("Bash"),
+                    .description = tr("Run shell commands on your computer."),
+                    .icon = ImageURL::builtin(BuiltinIcon::Terminal),
+                    .create = [path = *executable] { return std::make_unique<BashTool>(path); }});
+    }
 
 #ifdef Q_OS_LINUX
     // set default terminal using xdg-terminal-exec

@@ -409,6 +409,8 @@ set(SRCS
 	src/builtins/dictation/transcribe-view-host.cpp
 	src/builtins/system/system-run-model.hpp
 	src/builtins/system/system-run-model.cpp
+	src/builtins/system/bash-tool.hpp
+	src/builtins/system/bash-tool.cpp
 	src/builtins/system/system-run-view-host.hpp
 	src/builtins/system/system-run-view-host.cpp
 	src/builtins/developer/create-extension-success-view-host.hpp
@@ -493,6 +495,7 @@ set(SRCS
 	src/ui/views/base-view.cpp
 
 	src/command/preference-schema.hpp
+	src/command/settings-page.hpp
 	src/command/typed-command.hpp
 	src/command/command-controller.hpp
 	src/command/command-controller.cpp
@@ -620,6 +623,9 @@ set(SRCS
 	src/services/ai/ai-service.cpp
 	src/services/ai/agentic-loop.hpp
 	src/services/ai/agentic-loop.cpp
+	src/services/ai/tool-contribution.hpp
+	src/services/ai/tool-registry.hpp
+	src/services/ai/tool-registry.cpp
 	src/services/ai/ai-capability.hpp
 	src/services/ai/speech-language-catalogue.hpp
 	src/services/ai/local/local-provider.hpp
@@ -818,6 +824,8 @@ set(SRCS
 	src/ui/settings/extension-settings-model.cpp
 	src/ui/settings/ai-settings-model.hpp
 	src/ui/settings/ai-settings-model.cpp
+	src/ui/settings/tool-settings-model.hpp
+	src/ui/settings/tool-settings-model.cpp
 	src/ui/settings/preference-form-model.hpp
 	src/ui/settings/preference-form-model.cpp
 	src/ui/settings/provider-command-model.hpp
@@ -1436,6 +1444,9 @@ set(VICINAE_QML_FILES
 	src/ui/qml/settings/ExtensionSettingsPage.qml
 	src/ui/qml/settings/AboutSettingsPage.qml
 	src/ui/qml/settings/AISettingsPage.qml
+	src/ui/qml/settings/AIToolsSettingsPage.qml
+	src/ui/qml/settings/ToolSettingsRow.qml
+	src/ui/qml/settings/SettingsSubpageRow.qml
 	src/ui/qml/settings/AIProvidersOverview.qml
 	src/ui/qml/settings/AIProviderCard.qml
 	src/ui/qml/settings/AIProviderView.qml

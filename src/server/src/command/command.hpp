@@ -2,10 +2,12 @@
 #include "command/argument.hpp"
 #include "command/command-types.hpp"
 #include "command/preference.hpp"
+#include "command/settings-page.hpp"
 #include "ui/action-panel/action.hpp"
 #include <qobject.h>
 #include <qdebug.h>
 #include "common/entrypoint.hpp"
+#include "services/ai/tool-contribution.hpp"
 
 class View;
 struct LaunchProps;
@@ -58,8 +60,10 @@ public:
   virtual QString description() const { return ""; }
   virtual QString author() const = 0;
   virtual std::vector<std::shared_ptr<AbstractCmd>> commands() const = 0;
+  virtual std::vector<AI::ToolContribution> tools() const { return {}; }
   virtual ImageURL iconUrl() const = 0;
   virtual std::vector<Preference> preferences() const { return {}; }
+  virtual std::vector<SettingsPage> settingsPages() const { return {}; }
 
   /**
    * Triggered the first time the provider is registered

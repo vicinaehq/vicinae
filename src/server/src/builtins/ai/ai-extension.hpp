@@ -33,6 +33,12 @@ class AiExtension : public TypedCommandRepository<AiPreferences> {
   ImageURL iconUrl() const override {
     return ImageURL::builtin(BuiltinIcon::Atom).setBackgroundTint(SemanticColor::Purple);
   }
+  std::vector<SettingsPage> settingsPages() const override {
+    return {{.id = "tools",
+             .title = tr("Tools"),
+             .description = tr("Choose which tools AI models can use across your extensions."),
+             .component = QStringLiteral("AIToolsSettingsPage")}};
+  }
   void preferencesChanged(const AiPreferences &preferences) const override;
 
 public:

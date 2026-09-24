@@ -6,6 +6,7 @@ import Vicinae
 Item {
     id: root
     property string name: ""
+    property var iconSource
     property string summary: ""
     property string status: "queued"
     property var statusText: null
@@ -23,8 +24,9 @@ Item {
     ToolInvocationHeader {
         id: header
         width: parent.width
-        title: root.summary.length > 0 ? root.summary : root.name
-        monospace: root.summary.length > 0
+        title: root.name
+        subtitle: root.summary
+        iconSource: root.iconSource
         compactStatus: true
         status: root.status
         resultStatusText: root.statusText

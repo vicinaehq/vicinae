@@ -478,3 +478,19 @@ void ExtensionSettingsModel::loadCommandPreferences(const QString &entrypointId)
     }
   }
 }
+
+QVariantList ExtensionSettingsModel::settingsPages() const {
+  auto *provider =
+      ServiceRegistry::instance()->rootItemManager()->provider(selectedProviderId().toStdString());
+  if (!provider) return {};
+  const auto pages = provider->settingsPages();
+  QVariantList rows;
+  rows.reserve(pages.size());
+  for (const auto &page : pages) {
+    rows.emplace_back(QVariantMap{{QStringLiteral("id"), QString::fromStdString(page.id)},
+                                  {QStringLiteral("title"), page.title},
+                                  {QStringLiteral("description"), page.description},
+                                  {QStringLiteral("component"), qml::componentUrl(page.component)}});
+  }
+  return rows;
+}
