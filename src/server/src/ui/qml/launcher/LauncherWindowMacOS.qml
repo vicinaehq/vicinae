@@ -37,5 +37,5 @@ LauncherWindow {
     MacOSPanel.enabled: true
     MacOSPanel.windowLevel: Launcher.filePicking ? MacOSPanel.Floating : MacOSPanel.Status
     MacOSPanel.onResignKey: if (!Launcher.filePicking)
-        Launcher.nav.closeWindow()
+        Launcher.nav.closeWindowOnFocusLoss()
 }

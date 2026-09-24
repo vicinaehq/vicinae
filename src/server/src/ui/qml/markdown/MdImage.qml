@@ -9,6 +9,7 @@ Item {
     property var blockData: ({})
     readonly property bool selected: selection.hasSelection
     property real maxImageHeight: 0
+    property real fontSize: Theme.smallerFontSize
 
     readonly property int requestedWidth: blockData.width ?? 0
     readonly property int requestedHeight: blockData.height ?? 0
@@ -64,7 +65,7 @@ Item {
             visible: root.alt.length > 0
             text: root.alt
             color: Theme.textMuted
-            font.pointSize: Theme.smallerFontSize
+            font.pointSize: root.fontSize
             font.italic: true
         }
     }

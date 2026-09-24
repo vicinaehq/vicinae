@@ -12,7 +12,6 @@ DocumentText {
     textFormat: TextEdit.RichText
     wrapMode: TextEdit.Wrap
     color: Theme.foreground
-    font.pointSize: Theme.regularFontSize
 
     Binding on font.family {
         value: root.fontFamily

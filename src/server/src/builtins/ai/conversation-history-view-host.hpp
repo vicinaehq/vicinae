@@ -10,6 +10,7 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/action-panel/action-panel-state.hpp"
 #include "ui/views/mono-list-view-host.hpp"
+#include "ui/windows/chat-window.hpp"
 
 template <> struct fuzzy::FuzzySearchable<AI::ConversationInfo> {
   static fuzzy::Match score(const AI::ConversationInfo &conversation, const fuzzy::Query &query) {
@@ -22,6 +23,10 @@ class ConversationHistoryViewHost : public MonoListViewHost<AI::ConversationInfo
 
 public:
   void onMount() override {
+    const auto &launch = command()->launchProps().launchContext;
+    if (launch && launch->contains("openInWindow")) {
+      if (const auto *value = launch->at("openInWindow").get_if<bool>()) m_openInWindow = *value;
+    }
     setSearchPlaceholderText(tr("Filter conversations..."));
     reload();
   }
@@ -44,11 +49,17 @@ public:
   std::unique_ptr<ActionPanelState> buildActionPanel(const ItemType &item) const override {
     auto panel = std::make_unique<ListActionPanelState>();
     auto *section = panel->createSection();
-    section->addAction(new StaticAction(tr("Open Conversation"), ImageURL::builtin(BuiltinIcon::ArrowRight),
-                                        [id = item.id](ApplicationContext *ctx) {
-                                          QuickAIViewHost::openConversation(
-                                              ctx->navigation->topState()->sender, id);
-                                        }));
+    section->addAction(
+        new StaticAction(tr("Open Conversation"), ImageURL::builtin(BuiltinIcon::ArrowRight),
+                         [id = item.id, openInWindow = m_openInWindow](ApplicationContext *ctx) {
+                           if (openInWindow) {
+                             ctx->navigation->closeWindow();
+                             ctx->chat->show();
+                             ctx->chat->openConversation(QString::fromStdString(id));
+                           } else {
+                             QuickAIViewHost::openConversation(ctx->navigation->topState()->sender, id);
+                           }
+                         }));
 
     auto *remove = new StaticAction(
         tr("Delete Conversation"), ImageURL::builtin(BuiltinIcon::Trash),
@@ -87,5 +98,6 @@ private:
   }
 
   bool m_connected = false;
+  bool m_openInWindow = false;
   std::uint64_t m_generation = 0;
 };

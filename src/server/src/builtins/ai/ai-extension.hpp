@@ -26,6 +26,18 @@ class QuickAICommand
   void execute(const Controller &controller) const override;
 };
 
+class AIChatCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(AIChatCommand)
+  QString id() const override { return QStringLiteral("chat"); }
+  QString name() const override { return tr("AI Chat"); }
+  QString description() const override { return tr("Open your AI conversations in a dedicated window."); }
+  std::vector<QString> keywords() const override { return {"chat", "conversation", "window"}; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Stars).setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+  void execute(CommandController &controller) const override;
+};
+
 class ConversationHistoryCommand : public BuiltinViewCommand<ConversationHistoryViewHost> {
   Q_DECLARE_TR_FUNCTIONS(ConversationHistoryCommand)
   QString id() const override { return QStringLiteral("conversations"); }
@@ -56,6 +68,7 @@ class AiExtension : public TypedCommandRepository<AiPreferences> {
 public:
   AiExtension() {
     registerCommand<QuickAICommand>();
+    registerCommand<AIChatCommand>();
     registerCommand<ConversationHistoryCommand>();
   }
 };

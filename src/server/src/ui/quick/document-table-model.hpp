@@ -19,6 +19,7 @@ class DocumentTableModel : public QAbstractListModel, public QQmlParserStatus {
   Q_PROPERTY(QFont font READ font WRITE setFont NOTIFY fontChanged)
   Q_PROPERTY(qreal cellWidth READ cellWidth WRITE setCellWidth NOTIFY cellWidthChanged)
   Q_PROPERTY(qreal cellPadding READ cellPadding WRITE setCellPadding NOTIFY cellPaddingChanged)
+  Q_PROPERTY(qreal lineHeight READ lineHeight WRITE setLineHeight NOTIFY lineHeightChanged)
 
 signals:
   void headersChanged();
@@ -26,6 +27,7 @@ signals:
   void fontChanged();
   void cellWidthChanged();
   void cellPaddingChanged();
+  void lineHeightChanged();
 
 public:
   using QAbstractListModel::QAbstractListModel;
@@ -45,6 +47,8 @@ public:
   void setCellWidth(qreal width);
   qreal cellPadding() const { return m_cellPadding; }
   void setCellPadding(qreal padding);
+  qreal lineHeight() const { return m_lineHeight; }
+  void setLineHeight(qreal height);
 
 private:
   struct Row {
@@ -60,6 +64,7 @@ private:
   QFont m_font;
   qreal m_cellWidth = 40;
   qreal m_cellPadding = 8;
+  qreal m_lineHeight = 1;
   std::vector<Row> m_layout;
   bool m_complete = true;
   bool m_hasImages = false;

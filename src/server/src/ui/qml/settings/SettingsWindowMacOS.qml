@@ -10,6 +10,5 @@ SettingsWindow {
     MacOSWindow.material: "sidebar"
     MacOSWindow.transparentTitlebar: true
     MacOSWindow.followsWindowActiveState: true
-    MacOSWindow.moveToActiveSpace: true
     MacOSWindow.appearance: Theme.isDark ? "dark" : "light"
 }

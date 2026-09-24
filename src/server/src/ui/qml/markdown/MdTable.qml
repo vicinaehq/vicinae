@@ -6,6 +6,8 @@ Rectangle {
     id: root
     property var blockData: ({})
     property string fontFamily: ""
+    property real fontSize: Theme.regularFontSize
+    property real lineHeight: 1.0
     readonly property int columnCount: blockData.columnCount ?? 0
     readonly property var alignments: blockData.alignments ?? []
     readonly property real cellWidth: Math.max(40, width / Math.max(1, columnCount))
@@ -29,9 +31,10 @@ Rectangle {
         headers: root.blockData.headers ?? []
         rows: root.blockData.rows ?? []
         cellWidth: root.cellWidth
+        lineHeight: root.lineHeight
         font: Qt.font({
             family: root.fontFamily || Theme.fontFamily,
-            pointSize: Theme.regularFontSize
+            pointSize: root.fontSize
         })
     }
 
@@ -81,7 +84,8 @@ Rectangle {
                         textFormat: TextEdit.RichText
                         wrapMode: TextEdit.Wrap
                         font.family: root.fontFamily || Theme.fontFamily
-                        font.pointSize: Theme.regularFontSize
+                        fontSize: root.fontSize
+                        lineHeight: root.lineHeight
                         font.bold: tableRow.header
                         horizontalAlignment: root.textAlignment(cell.index)
                         text: tableRow.cells[cell.index]?.html ?? ""

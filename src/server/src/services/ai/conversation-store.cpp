@@ -584,9 +584,13 @@ void ConversationStore::setTitle(std::string id, std::string title) {
 }
 
 QFuture<Result<void>> ConversationStore::remove(std::string id) {
-  return submit(m_worker, [worker = m_worker, id = std::move(id)] { worker->remove(id); })
-      .then(this, [this](Result<void> result) {
-        if (result) emit changed();
+  emit aboutToRemove(QString::fromStdString(id));
+  return submit(m_worker, [worker = m_worker, id] { worker->remove(id); })
+      .then(this, [this, id = std::move(id)](Result<void> result) {
+        if (result) {
+          emit removed(QString::fromStdString(id));
+          emit changed();
+        }
         return result;
       });
 }

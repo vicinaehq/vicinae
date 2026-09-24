@@ -6,7 +6,7 @@
 #include <chrono>
 #include <ranges>
 
-#include "quick-ai-conversation-model.hpp"
+#include "chat-conversation-model.hpp"
 
 namespace {
 
@@ -18,18 +18,18 @@ constexpr auto FINISH_REVEAL_DELAY = std::chrono::milliseconds(160);
 
 } // namespace
 
-QuickAIConversationModel::QuickAIConversationModel(QObject *parent) : QAbstractListModel(parent) {
+ChatConversationModel::ChatConversationModel(QObject *parent) : QAbstractListModel(parent) {
   m_responseUpdateTimer.setSingleShot(true);
   m_responseUpdateTimer.setTimerType(Qt::PreciseTimer);
 
-  connect(&m_responseUpdateTimer, &QTimer::timeout, this, &QuickAIConversationModel::advanceResponse);
+  connect(&m_responseUpdateTimer, &QTimer::timeout, this, &ChatConversationModel::advanceResponse);
 }
 
-int QuickAIConversationModel::rowCount(const QModelIndex &parent) const {
+int ChatConversationModel::rowCount(const QModelIndex &parent) const {
   return parent.isValid() ? 0 : static_cast<int>(m_exchanges.size());
 }
 
-QVariant QuickAIConversationModel::data(const QModelIndex &index, int role) const {
+QVariant ChatConversationModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid() || index.row() < 0 || index.row() >= rowCount()) return {};
 
   const auto &exchange = m_exchanges[index.row()];
@@ -58,7 +58,7 @@ QVariant QuickAIConversationModel::data(const QModelIndex &index, int role) cons
   }
 }
 
-QHash<int, QByteArray> QuickAIConversationModel::roleNames() const {
+QHash<int, QByteArray> ChatConversationModel::roleNames() const {
   return {{QueryRole, "query"},
           {ResponseRole, "response"},
           {ErrorRole, "error"},
@@ -66,7 +66,7 @@ QHash<int, QByteArray> QuickAIConversationModel::roleNames() const {
           {AttachmentsRole, "attachments"}};
 }
 
-void QuickAIConversationModel::beginExchange(const std::string &query, QVariantList attachments) {
+void ChatConversationModel::beginExchange(const std::string &query, QVariantList attachments) {
   flushResponse();
 
   m_streamClock.start();
@@ -83,7 +83,7 @@ void QuickAIConversationModel::beginExchange(const std::string &query, QVariantL
   endInsertRows();
 }
 
-void QuickAIConversationModel::appendSavedResponse(std::string text) {
+void ChatConversationModel::appendSavedResponse(std::string text) {
   if (text.empty()) return;
   auto &contents = m_exchanges.back().contents;
   const auto size = text.size();
@@ -92,7 +92,7 @@ void QuickAIConversationModel::appendSavedResponse(std::string text) {
   emit contentAdded(rowCount() - 1, contents.size() - 1);
 }
 
-void QuickAIConversationModel::appendResponse(std::string_view text) {
+void ChatConversationModel::appendResponse(std::string_view text) {
   if (m_exchanges.empty() || !m_exchanges.back().pending || text.empty()) return;
 
   auto &contents = m_exchanges.back().contents;
@@ -142,7 +142,7 @@ void QuickAIConversationModel::appendResponse(std::string_view text) {
         std::chrono::milliseconds(STREAM_UPDATE_INTERVAL.count() - (now - *m_lastUpdate)));
 }
 
-void QuickAIConversationModel::advanceResponse() {
+void ChatConversationModel::advanceResponse() {
   if (m_pendingText.isEmpty()) return;
 
   const auto now = m_streamClock.elapsed();
@@ -182,7 +182,7 @@ void QuickAIConversationModel::advanceResponse() {
   publishResponse();
 }
 
-void QuickAIConversationModel::flushResponse() {
+void ChatConversationModel::flushResponse() {
   m_responseUpdateTimer.stop();
   if (m_pendingText.isEmpty()) return;
 
@@ -195,14 +195,14 @@ void QuickAIConversationModel::flushResponse() {
   publishResponse();
 }
 
-void QuickAIConversationModel::publishResponse() {
+void ChatConversationModel::publishResponse() {
   emit contentChanged(rowCount() - 1, m_exchanges.back().contents.size() - 1);
 
   const auto last = index(rowCount() - 1);
   emit dataChanged(last, last, {ResponseRole});
 }
 
-void QuickAIConversationModel::addTool(Tool tool) {
+void ChatConversationModel::addTool(Tool tool) {
   if (m_exchanges.empty()) return;
 
   flushResponse();
@@ -231,9 +231,8 @@ void QuickAIConversationModel::addTool(Tool tool) {
     emit contentChanged(rowCount() - 1, contents.size() - 1);
 }
 
-void QuickAIConversationModel::updateTool(quint64 id, QString status, std::optional<QString> output,
-                                          std::optional<qint64> durationMs,
-                                          std::optional<QString> statusText) {
+void ChatConversationModel::updateTool(quint64 id, QString status, std::optional<QString> output,
+                                       std::optional<qint64> durationMs, std::optional<QString> statusText) {
   for (int row = 0; row < rowCount(); ++row) {
     auto &contents = m_exchanges[row].contents;
 
@@ -255,7 +254,7 @@ void QuickAIConversationModel::updateTool(quint64 id, QString status, std::optio
   }
 }
 
-void QuickAIConversationModel::toggleTool(quint64 id) {
+void ChatConversationModel::toggleTool(quint64 id) {
   for (int row = 0; row < rowCount(); ++row) {
     auto &contents = m_exchanges[row].contents;
 
@@ -273,7 +272,7 @@ void QuickAIConversationModel::toggleTool(quint64 id) {
   }
 }
 
-void QuickAIConversationModel::toggleToolGroup(quint64 id) {
+void ChatConversationModel::toggleToolGroup(quint64 id) {
   for (int row = 0; row < rowCount(); ++row) {
     auto &contents = m_exchanges[row].contents;
 
@@ -288,7 +287,7 @@ void QuickAIConversationModel::toggleToolGroup(quint64 id) {
   }
 }
 
-void QuickAIConversationModel::finishExchange(const std::string &error) {
+void ChatConversationModel::finishExchange(const std::string &error) {
   if (m_exchanges.empty()) return;
 
   if (!error.empty()) {
