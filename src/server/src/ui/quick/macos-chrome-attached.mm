@@ -6,6 +6,7 @@
 #include <QPointer>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <algorithm>
 
 #import <AppKit/AppKit.h>
 #import <QuartzCore/QuartzCore.h>
@@ -169,6 +170,34 @@ MacOSWindowAttached::MacOSWindowAttached(QObject *parent) : QObject(parent) {
   }
 }
 
+MacOSWindowAttached::~MacOSWindowAttached() { removeTitlebarMonitor(); }
+
+QQmlListProperty<QQuickItem> MacOSWindowAttached::titlebarControls() {
+  return {this,
+          this,
+          [](QQmlListProperty<QQuickItem> *list, QQuickItem *item) {
+            auto *self = static_cast<MacOSWindowAttached *>(list->data);
+            self->m_titlebarControls.reserve(self->m_titlebarControls.size() + 1);
+            self->m_titlebarControls.emplace_back(item);
+            self->apply();
+          },
+          [](QQmlListProperty<QQuickItem> *list) -> qsizetype {
+            return static_cast<MacOSWindowAttached *>(list->data)->m_titlebarControls.size();
+          },
+          [](QQmlListProperty<QQuickItem> *list, qsizetype index) -> QQuickItem * {
+            return static_cast<MacOSWindowAttached *>(list->data)->m_titlebarControls[index];
+          },
+          [](QQmlListProperty<QQuickItem> *list) {
+            static_cast<MacOSWindowAttached *>(list->data)->m_titlebarControls.clear();
+          }};
+}
+
+void MacOSWindowAttached::removeTitlebarMonitor() {
+  if (!m_titlebarMonitor) return;
+  [NSEvent removeMonitor:CFBridgingRelease(m_titlebarMonitor)];
+  m_titlebarMonitor = nullptr;
+}
+
 void MacOSWindowAttached::setEnabled(bool value) {
   if (m_enabled == value) return;
   m_enabled = value;
@@ -229,17 +258,17 @@ void MacOSWindowAttached::setTransparentTitlebar(bool value) {
   apply();
 }
 
+void MacOSWindowAttached::setCompactToolbar(bool value) {
+  if (m_compactToolbar == value) return;
+  m_compactToolbar = value;
+  emit compactToolbarChanged();
+  apply();
+}
+
 void MacOSWindowAttached::setFollowsWindowActiveState(bool value) {
   if (m_followsWindowActiveState == value) return;
   m_followsWindowActiveState = value;
   emit followsWindowActiveStateChanged();
-  apply();
-}
-
-void MacOSWindowAttached::setMoveToActiveSpace(bool value) {
-  if (m_moveToActiveSpace == value) return;
-  m_moveToActiveSpace = value;
-  emit moveToActiveSpaceChanged();
   apply();
 }
 
@@ -283,6 +312,7 @@ void MacOSWindowAttached::apply() {
     m_snapshot.styleMask = (unsigned long)nswin.styleMask;
     m_snapshot.titleVisibility = (long)nswin.titleVisibility;
     m_snapshot.titlebarAppearsTransparent = nswin.titlebarAppearsTransparent;
+    m_snapshot.movable = nswin.movable;
   }
 
   nswin.opaque = NO;
@@ -290,17 +320,14 @@ void MacOSWindowAttached::apply() {
   nswin.hasShadow = YES;
   nswin.animationBehavior = NSWindowAnimationBehaviorNone;
 
-  if (m_moveToActiveSpace) nswin.collectionBehavior |= NSWindowCollectionBehaviorMoveToActiveSpace;
-
   int cornerRadius = m_cornerRadius;
   if (m_transparentTitlebar) {
     nswin.styleMask |= NSWindowStyleMaskFullSizeContentView;
     nswin.titlebarAppearsTransparent = YES;
     nswin.titleVisibility = NSWindowTitleHidden;
-    // An empty unified toolbar tells AppKit to lay the traffic lights out with the
-    // taller, inset metrics native full-content windows use (System Settings & co).
+    // Let AppKit position the traffic lights using the selected native toolbar metrics.
     if (!nswin.toolbar) { nswin.toolbar = [[NSToolbar alloc] initWithIdentifier:EMPTY_TOOLBAR_IDENTIFIER]; }
-    nswin.toolbarStyle = NSWindowToolbarStyleUnified;
+    nswin.toolbarStyle = m_compactToolbar ? NSWindowToolbarStyleUnifiedCompact : NSWindowToolbarStyleUnified;
     nswin.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
     // Qt's WindowMaximizeButtonHint doesn't reach the zoom button, which Cocoa
     // wires to fullscreen; enforce the declared flags here.
@@ -309,6 +336,26 @@ void MacOSWindowAttached::apply() {
       nswin.collectionBehavior |= NSWindowCollectionBehaviorFullScreenNone;
     }
     if (cornerRadius <= 0) cornerRadius = (int)nativeTitledCornerRadius(nswin);
+
+    if (!m_titlebarMonitor && !m_titlebarControls.empty()) {
+      QPointer<MacOSWindowAttached> self(this);
+      auto handler = ^NSEvent *(NSEvent *event) {
+        if (!self || !self->m_window || !self->m_window->handle()) return event;
+        NSView *view = nsViewFromWinId(self->m_window->winId());
+        if (event.window != view.window) return event;
+        const NSPoint point = [view convertPoint:event.locationInWindow fromView:nil];
+        const bool overControl = std::ranges::any_of(self->m_titlebarControls, [&](const auto &item) {
+          return item && item->isVisible() && item->window() == self->m_window &&
+                 item->contains(item->mapFromScene(QPointF(point.x, point.y)));
+        });
+        // AppKit otherwise treats QML controls under the titlebar as draggable background.
+        view.window.movable = self->m_snapshot.movable && !overControl;
+        return event;
+      };
+      m_titlebarMonitor = (void *)CFBridgingRetain([NSEvent
+          addLocalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDown | NSEventMaskMouseMoved
+                                       handler:handler]);
+    }
   }
 
   installEffectView(nswin, m_blurEnabled, m_material == QStringLiteral("liquidGlass"),
@@ -317,6 +364,7 @@ void MacOSWindowAttached::apply() {
 }
 
 void MacOSWindowAttached::revert() {
+  removeTitlebarMonitor();
   if (!m_window) return;
   NSView *nsview = nsViewFromWinId(m_window->winId());
   if (!nsview) return;
@@ -335,6 +383,7 @@ void MacOSWindowAttached::revert() {
                       (m_snapshot.styleMask & NSWindowStyleMaskFullSizeContentView);
     nswin.titleVisibility = (NSWindowTitleVisibility)m_snapshot.titleVisibility;
     nswin.titlebarAppearsTransparent = m_snapshot.titlebarAppearsTransparent;
+    nswin.movable = m_snapshot.movable;
     if ([nswin.toolbar.identifier isEqualToString:EMPTY_TOOLBAR_IDENTIFIER]) nswin.toolbar = nil;
     if (m_snapshot.backgroundColor) {
       NSColor *bg = (NSColor *)CFBridgingRelease(m_snapshot.backgroundColor);
@@ -357,6 +406,7 @@ bool MacOSWindowAttached::eventFilter(QObject *obj, QEvent *event) {
       }
     } else if (se->surfaceEventType() == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
       m_surfaceReady = false;
+      removeTitlebarMonitor();
     }
   }
   return QObject::eventFilter(obj, event);
@@ -656,6 +706,15 @@ bool MacOSPanelAttached::eventFilter(QObject *obj, QEvent *event) {
 bool macosLiquidGlassAvailable() { return liquidGlassClass() != nil; }
 
 void macosActivateApp() { [NSApp activateIgnoringOtherApps:YES]; }
+
+bool LauncherWindowPlatform::isPointerPressOn(QQuickItem *item) {
+  NSEvent *event = NSApp.currentEvent;
+  if (event.type != NSEventTypeLeftMouseDown || !item->window()) return false;
+  NSView *view = nsViewFromWinId(item->window()->winId());
+  if (!view || event.window != view.window) return false;
+  const NSPoint point = [view convertPoint:event.locationInWindow fromView:nil];
+  return item->contains(item->mapFromScene(QPointF(point.x, point.y)));
+}
 
 void LauncherWindowPlatform::prepareOverlayWindow(QWindow *window) {
   if (!window || !window->handle()) return;

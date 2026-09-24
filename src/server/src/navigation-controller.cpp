@@ -1,5 +1,13 @@
-#include "navigation-controller.hpp"
 #include <QTimer>
+#include <QGuiApplication>
+#include <QQuickItem>
+#include <chrono>
+#include <qlogging.h>
+#include <QProcessEnvironment>
+#include <ranges>
+#include <utility>
+#include "navigation-controller.hpp"
+#include "ui/windows/launcher-window-platform.hpp"
 #include "command/command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
@@ -12,13 +20,30 @@
 #include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
-#include <chrono>
-#include <qlogging.h>
-#include <QProcessEnvironment>
-#include <ranges>
-#include <utility>
 
-NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
+NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {
+  qApp->installEventFilter(this);
+}
+
+bool NavigationController::eventFilter(QObject *object, QEvent *event) {
+  if (m_toggleAnchor && event->type() == QEvent::MouseButtonRelease) {
+    QMetaObject::invokeMethod(
+        this,
+        [this] {
+          if (m_toggleAnchor && !m_windowActivated) closeWindow();
+        },
+        Qt::QueuedConnection);
+  }
+  return QObject::eventFilter(object, event);
+}
+
+void NavigationController::closeWindowOnFocusLoss() {
+  // Let the originating button finish its click before dismissing its command.
+  if (m_toggleAnchor && m_toggleAnchor->isVisible() && m_toggleAnchor->isEnabled() &&
+      LauncherWindowPlatform::isPointerPressOn(m_toggleAnchor))
+    return;
+  closeWindow();
+}
 
 void NavigationController::requestCompleterFocus() { emit completerFocusedRequested(); }
 
@@ -282,6 +307,7 @@ void NavigationController::popCurrentView() {
 }
 
 void NavigationController::popToRoot(const PopToRootOptions &opts) {
+  m_toggleAnchor = nullptr;
   m_pendingPopToRoot.reset();
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
 
@@ -325,6 +351,8 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings, std::
 void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   if (!m_windowOpened) return;
 
+  m_toggleAnchor = nullptr;
+
   PopToRootType type = settings.popToRootType;
 
   if (m_instantDismiss) {
@@ -345,7 +373,7 @@ void NavigationController::setCloseOnFocusLoss(bool value) { m_closeOnFocusLoss 
 void NavigationController::setWindowActivated(bool value) {
   if (m_windowActivated == value) return;
 
-  if (!value && m_closeOnFocusLoss) { closeWindow(); }
+  if (!value && m_closeOnFocusLoss) { closeWindowOnFocusLoss(); }
 
   m_windowActivated = value;
   emit windowActivationChanged(value);
@@ -633,6 +661,8 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   }
 
   if (auto fallback = options.props.fallbackText) { setSearchText(fallback.value()); }
+
+  m_toggleAnchor = options.toggleAnchor;
 
   if (!isRootSearch() && !initialOpenState) {
     setInstantDismiss();

@@ -11,6 +11,7 @@
 #include <qfuture.h>
 #include <string>
 #include <optional>
+#include "common/json.hpp"
 
 namespace AI {
 struct ToolOutput {
@@ -80,7 +81,7 @@ template <glz::has_reflect T, glz::has_reflect U> class AbstractTypedTool : publ
 
       std::string output;
 
-      if (auto const error = glz::write_json(res.value(), output)) {
+      if (auto const error = glz::write<JsonWriteOptions{}>(res.value(), output)) {
         return std::unexpected(glz::format_error(error));
       }
 

@@ -8,6 +8,8 @@ ColumnLayout {
 
     property var blockData: ({})
     property string fontFamily: ""
+    property real fontSize: Theme.regularFontSize
+    property real lineHeight: 1.0
     property bool ordered: false
     property int startNumber: blockData.startNumber ?? 1
     property int depth: 0
@@ -36,7 +38,7 @@ ColumnLayout {
                     Layout.topMargin: 2
                     text: root.ordered ? (root.startNumber + itemDelegate.index) + "." : "\u2022"
                     color: Theme.textMuted
-                    font.pointSize: Theme.regularFontSize
+                    font.pointSize: root.fontSize
                     Binding on font.family {
                         value: root.fontFamily
                         when: root.fontFamily !== ""
@@ -49,7 +51,8 @@ ColumnLayout {
                     textFormat: TextEdit.RichText
                     wrapMode: TextEdit.Wrap
                     color: Theme.foreground
-                    font.pointSize: Theme.regularFontSize
+                    fontSize: root.fontSize
+                    lineHeight: root.lineHeight
                     Binding on font.family {
                         value: root.fontFamily
                         when: root.fontFamily !== ""
@@ -72,6 +75,8 @@ ColumnLayout {
                         item.fontFamily = Qt.binding(function () {
                             return root.fontFamily;
                         });
+                        item.fontSize = Qt.binding(() => root.fontSize);
+                        item.lineHeight = Qt.binding(() => root.lineHeight);
                         item.ordered = nestedList.modelData.ordered ?? false;
                         item.startNumber = nestedList.modelData.startNumber ?? 1;
                         item.depth = root.depth + 1;

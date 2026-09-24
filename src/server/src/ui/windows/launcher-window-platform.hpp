@@ -1,8 +1,14 @@
 #pragma once
 #include <QtGlobal>
+#include <QGuiApplication>
+#ifndef Q_OS_MACOS
+#include <QCursor>
+#include <QQuickItem>
+#endif
 
 class QQuickWindow;
 class QWindow;
+class QQuickItem;
 
 // Native windowing quirks the launcher window needs handled per platform.
 namespace LauncherWindowPlatform {
@@ -10,8 +16,13 @@ namespace LauncherWindowPlatform {
 #ifdef Q_OS_MACOS
 // Raises the drag snap overlay above the menu bar and Dock.
 void prepareOverlayWindow(QWindow *window);
+bool isPointerPressOn(QQuickItem *item);
 #else
 inline void prepareOverlayWindow(QWindow *) {}
+inline bool isPointerPressOn(QQuickItem *item) {
+  return QGuiApplication::mouseButtons().testFlag(Qt::LeftButton) &&
+         item->contains(item->mapFromGlobal(QCursor::pos()));
+}
 #endif
 
 #ifdef Q_OS_WIN

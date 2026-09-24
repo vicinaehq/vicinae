@@ -11,6 +11,7 @@
 #include "ui/alert/dialog.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
+#include <QPointer>
 #include <chrono>
 #include <cstdint>
 #include <numeric>
@@ -21,6 +22,7 @@ class BaseView;
 class DialogContentWidget;
 class ActionPanelView;
 class QWindow;
+class QQuickItem;
 
 #define VALUE_OR(VALUE, FALLBACK) (VALUE ? VALUE : FALLBACK)
 
@@ -42,6 +44,7 @@ using ArgumentValues = std::vector<std::pair<QString, QString>>;
 struct ActivateEntrypointOptions {
   LaunchProps props;
   bool toggleIfAlreadyActive = true;
+  QQuickItem *toggleAnchor = nullptr;
 };
 
 struct CompleterState {
@@ -133,6 +136,7 @@ signals:
 
 public:
   Q_INVOKABLE void closeWindow(const CloseWindowOptions &settings = {});
+  Q_INVOKABLE void closeWindowOnFocusLoss();
   void closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay);
   Q_INVOKABLE void showWindow();
   Q_INVOKABLE void toggleWindow();
@@ -208,6 +212,7 @@ public:
   void executeAction(AbstractAction *action);
 
 private:
+  bool eventFilter(QObject *object, QEvent *event) override;
   void executeActionNow(AbstractAction *action);
 
 public:
@@ -270,6 +275,7 @@ private:
   void activateView(const ViewState &state);
 
   ApplicationContext &m_ctx;
+  QPointer<QQuickItem> m_toggleAnchor;
   std::vector<std::unique_ptr<CommandFrame>> m_frames;
 
   struct PendingPopToRoot {

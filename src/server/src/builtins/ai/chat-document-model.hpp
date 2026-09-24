@@ -2,10 +2,10 @@
 
 #include <QPointer>
 #include <vector>
-#include "quick-ai-conversation-model.hpp"
+#include "chat-conversation-model.hpp"
 #include "ui/quick/markdown-model.hpp"
 
-class QuickAIDocumentModel : public DocumentModel {
+class ChatDocumentModel : public DocumentModel {
   Q_OBJECT
 
 signals:
@@ -24,7 +24,7 @@ public:
     AttachmentsRole,
     ToolRole
   };
-  explicit QuickAIDocumentModel(QuickAIConversationModel *conversation, QObject *parent = nullptr);
+  explicit ChatDocumentModel(ChatConversationModel *conversation, QObject *parent = nullptr);
   bool loading() const { return m_pendingParses > 0; }
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
@@ -56,7 +56,7 @@ private:
   void addContent(int exchange, int part);
   void updateContent(int exchange, int part);
   void updateOffsets();
-  QuickAIConversationModel *m_conversation;
+  ChatConversationModel *m_conversation;
   std::vector<Exchange> m_exchanges;
   int m_pendingParses = 0;
 };

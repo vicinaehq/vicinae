@@ -1,9 +1,12 @@
 #pragma once
 #include <QColor>
 #include <QObject>
+#include <QPointer>
+#include <QQmlListProperty>
 #include <QString>
 #include <QWindow>
 #include <qqmlregistration.h>
+#include <vector>
 
 class QQuickItem;
 class QQuickWindow;
@@ -19,10 +22,10 @@ class MacOSWindowAttached : public QObject {
   Q_PROPERTY(int borderWidth READ borderWidth WRITE setBorderWidth NOTIFY borderWidthChanged)
   Q_PROPERTY(bool transparentTitlebar READ transparentTitlebar WRITE setTransparentTitlebar NOTIFY
                  transparentTitlebarChanged)
+  Q_PROPERTY(bool compactToolbar READ compactToolbar WRITE setCompactToolbar NOTIFY compactToolbarChanged)
+  Q_PROPERTY(QQmlListProperty<QQuickItem> titlebarControls READ titlebarControls CONSTANT)
   Q_PROPERTY(bool followsWindowActiveState READ followsWindowActiveState WRITE setFollowsWindowActiveState
                  NOTIFY followsWindowActiveStateChanged)
-  Q_PROPERTY(bool moveToActiveSpace READ moveToActiveSpace WRITE setMoveToActiveSpace NOTIFY
-                 moveToActiveSpaceChanged)
 
 signals:
   void enabledChanged();
@@ -33,11 +36,12 @@ signals:
   void borderColorChanged();
   void borderWidthChanged();
   void transparentTitlebarChanged();
+  void compactToolbarChanged();
   void followsWindowActiveStateChanged();
-  void moveToActiveSpaceChanged();
 
 public:
   explicit MacOSWindowAttached(QObject *parent);
+  ~MacOSWindowAttached() override;
 
   bool enabled() const { return m_enabled; }
   void setEnabled(bool value);
@@ -66,15 +70,15 @@ public:
   bool transparentTitlebar() const { return m_transparentTitlebar; }
   void setTransparentTitlebar(bool value);
 
+  bool compactToolbar() const { return m_compactToolbar; }
+  void setCompactToolbar(bool value);
+
+  QQmlListProperty<QQuickItem> titlebarControls();
+
   // Material goes flat when the window resigns key, like native sidebars. Leave off
   // for non-activating panels, which are never "active".
   bool followsWindowActiveState() const { return m_followsWindowActiveState; }
   void setFollowsWindowActiveState(bool value);
-
-  // Reshowing the window pulls it to the current space instead of switching
-  // to the space it was left on.
-  bool moveToActiveSpace() const { return m_moveToActiveSpace; }
-  void setMoveToActiveSpace(bool value);
 
   Q_INVOKABLE void animateIn(qreal anchorX = 0.5, qreal anchorY = 0.5);
   Q_INVOKABLE void animateOut(qreal anchorX = 0.5, qreal anchorY = 0.5);
@@ -90,10 +94,12 @@ private:
     unsigned long styleMask = 0;
     long titleVisibility = 0;
     bool titlebarAppearsTransparent = false;
+    bool movable = true;
   };
 
   void apply();
   void revert();
+  void removeTitlebarMonitor();
   void trackWindow(QWindow *window);
   void onWindowChanged(QQuickWindow *window);
   bool eventFilter(QObject *obj, QEvent *event) override;
@@ -108,8 +114,10 @@ private:
   QColor m_borderColor;
   int m_borderWidth = 0;
   bool m_transparentTitlebar = false;
+  bool m_compactToolbar = false;
+  std::vector<QPointer<QQuickItem>> m_titlebarControls;
+  void *m_titlebarMonitor = nullptr;
   bool m_followsWindowActiveState = false;
-  bool m_moveToActiveSpace = false;
   bool m_surfaceReady = false;
   bool m_pendingAnimateIn = false;
   qreal m_pendingAnchorX = 0.5;

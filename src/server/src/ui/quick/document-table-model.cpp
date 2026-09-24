@@ -7,23 +7,26 @@
 #include <cstddef>
 #include "document-table-model.hpp"
 #include "document-text-images.hpp"
+#include "text-document-edit.hpp"
 
 namespace {
 struct TextMetricsKey {
   QString html;
   QFont font;
   qreal width;
+  qreal lineHeight;
   bool operator==(const TextMetricsKey &) const = default;
   friend std::size_t qHash(const TextMetricsKey &key, std::size_t seed = 0) {
-    return qHashMulti(seed, key.html, key.font, key.width);
+    return qHashMulti(seed, key.html, key.font, key.width, key.lineHeight);
   }
 };
 
-qreal textHeight(const QString &html, const QFont &font, qreal width, DocumentImageCache *images) {
+qreal textHeight(const QString &html, const QFont &font, qreal width, qreal lineHeight,
+                 DocumentImageCache *images) {
   // Retain intrinsic text measurements when virtualized table delegates are recreated.
   constexpr int CACHE_TEXT_UNITS = 1024 * 1024;
   static QCache<TextMetricsKey, qreal> cache(CACHE_TEXT_UNITS);
-  const TextMetricsKey key{html, font, width};
+  const TextMetricsKey key{html, font, width, lineHeight};
   const bool hasImages = html.contains("<img", Qt::CaseInsensitive);
   if (!hasImages)
     if (const auto *height = cache.object(key)) return *height;
@@ -35,6 +38,7 @@ qreal textHeight(const QString &html, const QFont &font, qreal width, DocumentIm
   option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
   document.setDefaultTextOption(option);
   document.setHtml(html);
+  if (lineHeight != 1) TextDocumentEdit::applyLineHeight(document, lineHeight);
   document.setTextWidth(width);
   const auto height = std::ceil(document.size().height());
   if (!hasImages) cache.insert(key, new qreal(height), html.size() + 64);
@@ -115,6 +119,13 @@ void DocumentTableModel::setCellPadding(qreal padding) {
   emit cellPaddingChanged();
 }
 
+void DocumentTableModel::setLineHeight(qreal height) {
+  if (m_lineHeight == height) return;
+  m_lineHeight = height;
+  rebuild();
+  emit lineHeightChanged();
+}
+
 void DocumentTableModel::rebuild() {
   if (!m_complete) return;
   const int count = m_rows.size() + (m_headers.empty() ? 0 : 1);
@@ -137,8 +148,8 @@ void DocumentTableModel::rebuild() {
     for (const auto &cell : cells) {
       const auto html = cell.toMap().value("html").toString();
       m_hasImages |= html.contains("<img", Qt::CaseInsensitive);
-      height = std::max(
-          height, textHeight(html, font, std::max(qreal(1), m_cellWidth - 2 * m_cellPadding), m_imageCache));
+      height = std::max(height, textHeight(html, font, std::max(qreal(1), m_cellWidth - 2 * m_cellPadding),
+                                           m_lineHeight, m_imageCache));
     }
     Row entry{cells, height + 2 * m_cellPadding + (row + 1 < count ? 1 : 0), selectionOffset, header};
     selectionOffset += cells.size();

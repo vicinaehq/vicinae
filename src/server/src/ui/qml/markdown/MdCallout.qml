@@ -8,6 +8,8 @@ Rectangle {
 
     property var blockData: ({})
     property string fontFamily: ""
+    property real fontSize: Theme.regularFontSize
+    property real lineHeight: 1.0
 
     readonly property string calloutType: blockData.calloutType ?? "note"
     readonly property var paragraphs: blockData.paragraphs ?? []
@@ -80,7 +82,7 @@ Rectangle {
             Text {
                 text: root._label
                 color: root._alertColor
-                font.pointSize: Theme.regularFontSize
+                font.pointSize: root.fontSize
                 font.bold: true
                 Binding on font.family {
                     value: root.fontFamily
@@ -99,7 +101,8 @@ Rectangle {
                 textFormat: TextEdit.RichText
                 wrapMode: TextEdit.Wrap
                 color: Theme.foreground
-                font.pointSize: Theme.regularFontSize
+                fontSize: root.fontSize
+                lineHeight: root.lineHeight
                 Binding on font.family {
                     value: root.fontFamily
                     when: root.fontFamily !== ""

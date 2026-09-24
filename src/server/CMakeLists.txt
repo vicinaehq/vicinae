@@ -390,12 +390,16 @@ set(SRCS
 	src/builtins/ai/ai-extension.hpp
 	src/builtins/ai/conversation-history-view-host.hpp
 	src/builtins/ai/ai-extension.cpp
+	src/builtins/ai/chat-session.hpp
+	src/builtins/ai/chat-session.cpp
+	src/builtins/ai/conversation-list-model.hpp
+	src/builtins/ai/conversation-list-model.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
-	src/builtins/ai/quick-ai-document-model.cpp
-	src/builtins/ai/quick-ai-document-model.hpp
-	src/builtins/ai/quick-ai-conversation-model.hpp
-	src/builtins/ai/quick-ai-conversation-model.cpp
+	src/builtins/ai/chat-document-model.cpp
+	src/builtins/ai/chat-document-model.hpp
+	src/builtins/ai/chat-conversation-model.hpp
+	src/builtins/ai/chat-conversation-model.cpp
 	src/builtins/dictation/dictation.hpp
 	src/builtins/dictation/dictation-preferences.hpp
 	src/builtins/dictation/dictation-extension.hpp
@@ -815,6 +819,8 @@ set(SRCS
 	src/ui/windows/hud-bridge.hpp
 	src/ui/windows/hud-bridge.cpp
 
+	src/ui/windows/chat-window.hpp
+	src/ui/windows/chat-window.cpp
 	src/ui/windows/settings-window.hpp
 	src/ui/windows/settings-window.cpp
 	src/ui/windows/onboarding-window.hpp
@@ -1354,9 +1360,14 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/ExtensionView.qml
 	src/ui/qml/views/MarkdownDetailView.qml
 	src/ui/qml/views/MarkdownDetailContent.qml
+	src/ui/qml/views/ChatSessionComposer.qml
+	src/ui/qml/views/ChatTranscript.qml
+	src/ui/qml/chat/ChatWindow.qml
+	src/ui/qml/chat/ChatSidebar.qml
+	src/ui/qml/chat/ChatConversation.qml
 	src/ui/qml/views/QuickAIView.qml
-	src/ui/qml/views/QuickAIDocumentBlock.qml
-	src/ui/qml/views/QuickAIChatScroll.qml
+	src/ui/qml/views/ChatDocumentBlock.qml
+	src/ui/qml/views/ChatScrollController.qml
 	src/ui/qml/markdown/MarkdownInline.qml
 	src/ui/qml/document/DocumentText.qml
 	src/ui/qml/document/DocumentView.qml
@@ -1494,6 +1505,7 @@ if(APPLE)
 		src/ui/qml/controls/ContentDividerMacOS.qml
 		src/ui/qml/controls/PopupItemBackgroundMacOS.qml
 		src/ui/qml/controls/GlassSurfaceMacOS.qml
+		src/ui/qml/chat/ChatWindowMacOS.qml
 		src/ui/qml/settings/SettingsWindowMacOS.qml
 	)
 	set_source_files_properties(src/ui/qml/controls/MaterialColorsMacOS.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
@@ -1501,6 +1513,7 @@ endif()
 
 if(WIN32)
 	list(APPEND VICINAE_QML_FILES
+		src/ui/qml/chat/ChatWindowWindows.qml
 		src/ui/qml/launcher/LauncherWindowWindows.qml
 		src/ui/qml/hud/HudWindowWindows.qml
 	)
@@ -1701,8 +1714,8 @@ if(BUILD_TESTS)
 	find_package(Qt6 REQUIRED COMPONENTS Test)
 	qt_add_executable(vicinae-document-tests
 		tests/document-invariants.cpp
-		src/builtins/ai/quick-ai-conversation-model.cpp
-		src/builtins/ai/quick-ai-conversation-model.hpp
+		src/builtins/ai/chat-conversation-model.cpp
+		src/builtins/ai/chat-conversation-model.hpp
 		src/ui/quick/document-text-images.cpp
 		src/ui/quick/document-text-images.hpp
 	)
