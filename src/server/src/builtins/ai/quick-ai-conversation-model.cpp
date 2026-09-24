@@ -1,6 +1,7 @@
 #include <QTextBoundaryFinder>
 #include <QJsonDocument>
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <chrono>
 #include <ranges>
@@ -8,8 +9,10 @@
 
 namespace {
 constexpr auto STREAM_UPDATE_INTERVAL = std::chrono::milliseconds(16);
-constexpr auto MAX_REVEAL_DELAY = std::chrono::milliseconds(120);
-constexpr qsizetype MIN_REVEAL_UNITS = 8;
+constexpr auto MIN_REVEAL_DELAY = std::chrono::milliseconds(400);
+constexpr auto MAX_REVEAL_DELAY = std::chrono::milliseconds(1200);
+constexpr auto REVEAL_RECOVERY_TIME = std::chrono::seconds(4);
+constexpr auto FINISH_REVEAL_DELAY = std::chrono::milliseconds(160);
 } // namespace
 
 QuickAIConversationModel::QuickAIConversationModel(QObject *parent) : QAbstractListModel(parent) {
@@ -74,12 +77,22 @@ void QuickAIConversationModel::appendResponse(std::string_view text) {
   if (contents.empty() || !std::holds_alternative<Response>(contents.back())) {
     m_streamClock.start();
     m_lastUpdate.reset();
+    m_lastArrival.reset();
+    m_revealDelay = MIN_REVEAL_DELAY.count();
     m_receivedUnits = 0;
     contents.reserve(contents.size() + 1);
     contents.emplace_back(Response{});
     emit contentAdded(rowCount() - 1, contents.size() - 1);
   }
   const auto now = m_streamClock.elapsed();
+  if (m_lastArrival) {
+    const auto gap = now - *m_lastArrival;
+    // Widen quickly for delayed arrivals, then recover by elapsed time rather than chunk count.
+    const auto recovered = m_revealDelay * std::exp(-gap / (REVEAL_RECOVERY_TIME.count() * 1000.0));
+    m_revealDelay = std::clamp(std::max(gap * 1.5, recovered), static_cast<double>(MIN_REVEAL_DELAY.count()),
+                               static_cast<double>(MAX_REVEAL_DELAY.count()));
+  }
+  m_lastArrival = now;
   std::get<Response>(contents.back()).text.append(text);
   const auto incoming = QString::fromUtf8(text.data(), text.size());
   m_pendingText += incoming;
@@ -88,7 +101,7 @@ void QuickAIConversationModel::appendResponse(std::string_view text) {
   if (!m_revealBatches.empty() && m_revealBatches.back().receivedAt == now)
     m_revealBatches.back().end = m_receivedUnits;
   else
-    m_revealBatches.emplace_back(RevealBatch{begin, m_receivedUnits, now});
+    m_revealBatches.emplace_back(RevealBatch{begin, m_receivedUnits, now, qRound64(m_revealDelay)});
   if (m_responseUpdateTimer.isActive()) return;
   if (!m_lastUpdate || now - *m_lastUpdate >= STREAM_UPDATE_INTERVAL.count())
     advanceResponse();
@@ -100,14 +113,20 @@ void QuickAIConversationModel::appendResponse(std::string_view text) {
 void QuickAIConversationModel::advanceResponse() {
   if (m_pendingText.isEmpty()) return;
   const auto now = m_streamClock.elapsed();
-  // Each arrival contributes a short linear ramp. Overlapping bursts increase the reveal rate.
-  auto target = m_revealBatches.front().begin;
+  // Sum fractional progress before rounding so small chunks also reveal at a steady pace.
+  double target = m_revealBatches.front().begin;
   for (const auto &batch : m_revealBatches) {
-    const auto elapsed = std::min(now - batch.receivedAt, MAX_REVEAL_DELAY.count());
-    target += (batch.end - batch.begin) * elapsed / MAX_REVEAL_DELAY.count();
+    const auto elapsed = std::min(now - batch.receivedAt, batch.duration);
+    target += (batch.end - batch.begin) * static_cast<double>(elapsed) / batch.duration;
   }
   const auto visibleUnits = m_receivedUnits - m_pendingText.size();
-  qsizetype count = std::min(m_pendingText.size(), std::max(MIN_REVEAL_UNITS, target - visibleUnits));
+  qsizetype count = std::clamp(static_cast<qsizetype>(target) - visibleUnits,
+                               m_lastUpdate ? qsizetype{0} : qsizetype{1}, m_pendingText.size());
+  m_lastUpdate = now;
+  if (count == 0) {
+    m_responseUpdateTimer.start(STREAM_UPDATE_INTERVAL);
+    return;
+  }
   if (count < m_pendingText.size()) {
     QTextBoundaryFinder boundary(QTextBoundaryFinder::Grapheme, m_pendingText);
     boundary.setPosition(count);
@@ -116,7 +135,6 @@ void QuickAIConversationModel::advanceResponse() {
   std::get<Response>(m_exchanges.back().contents.back()).visibleBytes +=
       QStringView(m_pendingText).first(count).toUtf8().size();
   m_pendingText.remove(0, count);
-  m_lastUpdate = now;
   while (!m_revealBatches.empty() && m_revealBatches.front().end <= visibleUnits + count)
     m_revealBatches.pop_front();
   if (!m_pendingText.isEmpty()) m_responseUpdateTimer.start(STREAM_UPDATE_INTERVAL);
@@ -211,8 +229,16 @@ void QuickAIConversationModel::toggleToolGroup(quint64 id) {
 
 void QuickAIConversationModel::finishExchange(const std::string &error) {
   if (m_exchanges.empty()) return;
-  // Successful completion keeps draining the final burst; cancellation reveals received text immediately.
-  if (!error.empty()) flushResponse();
+  if (!error.empty()) {
+    flushResponse();
+  } else if (!m_pendingText.isEmpty()) {
+    const auto now = m_streamClock.elapsed();
+    m_revealBatches.clear();
+    m_revealBatches.emplace_back(RevealBatch{m_receivedUnits - m_pendingText.size(), m_receivedUnits, now,
+                                             FINISH_REVEAL_DELAY.count()});
+    m_lastUpdate = now;
+    m_responseUpdateTimer.start(STREAM_UPDATE_INTERVAL);
+  }
   auto &exchange = m_exchanges.back();
   exchange.pending = false;
   exchange.error = error;
