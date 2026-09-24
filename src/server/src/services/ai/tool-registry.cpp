@@ -1,10 +1,12 @@
 #include <algorithm>
 #include <QPointer>
+
 #include "tool-registry.hpp"
 #include "ai-preferences.hpp"
 #include "config/config.hpp"
 
 namespace AI {
+
 namespace {
 
 class RegisteredTool : public AbstractTool {
@@ -17,17 +19,21 @@ public:
   std::string name() const override { return m_name; }
   std::string description() const override { return m_tool->description(); }
   std::string generateInputSchema() const override { return m_tool->generateInputSchema(); }
+
   std::optional<std::string> invocationSummary(std::string_view arguments) const override {
     return m_tool->invocationSummary(arguments);
   }
+
   bool isEnabled() const override {
     return m_registry && m_registry->isEnabled(m_name) && m_tool->isEnabled();
   }
+
   RawToolTask runRaw(std::string_view arguments) override {
     if (!isEnabled())
       return {QtFuture::makeReadyValueFuture<RawToolResult>(
                   std::unexpected(tr("This tool is not enabled.").toStdString())),
               {}};
+
     return m_tool->runRaw(arguments);
   }
 
@@ -51,15 +57,19 @@ ToolRegistry::ToolRegistry(config::Manager &config) : m_config(config) {
 
 void ToolRegistry::addProvider(std::string_view providerId, std::span<const ToolContribution> tools) {
   m_entries.reserve(m_entries.size() + tools.size());
+
   for (const auto &tool : tools) {
     auto name = std::format("{}__{}", providerId, tool.id);
+
     if (!validId(providerId) || !validId(tool.id) || name.size() > 64 || !tool.create ||
         std::ranges::find(m_entries, name, &Entry::name) != m_entries.end()) {
       qWarning() << "Invalid or duplicate tool contribution:" << name;
       continue;
     }
+
     m_entries.emplace_back(Entry{std::string(providerId), std::move(name), tool});
   }
+
   emit changed();
 }
 
@@ -67,10 +77,12 @@ bool ToolRegistry::toolsEnabled() const {
   const auto &providers = m_config.value().providers;
   const auto it = providers.find(std::string(EXTENSION_ID));
   if (it == providers.end()) return true;
+
   if (const auto &prefs = it->second.preferences) {
     const auto *value = preferences::find(*prefs, "enableTools");
     if (value && value->is_boolean()) return value->get_boolean();
   }
+
   return AiPreferences{}.enableTools;
 }
 
@@ -84,6 +96,7 @@ bool ToolRegistry::toolEnabled(std::string_view providerId, std::string_view too
   const auto &providers = m_config.value().providers;
   const auto provider = providers.find(std::string(providerId));
   if (provider == providers.end()) return true;
+
   const auto &tools = provider->second.tools;
   const auto tool = tools.find(std::string(toolId));
   return tool == tools.end() || tool->second.enabled.value_or(true);
@@ -105,6 +118,7 @@ bool ToolRegistry::setToolEnabled(std::string_view providerId, std::string_view 
         return entry.providerId == providerId && entry.contribution.id == toolId;
       }))
     return false;
+
   return m_config.mergeProviderWithUser(providerId, {.tools = std::map<std::string, config::ProviderToolData>{
                                                          {std::string(toolId), {.enabled = enabled}}}});
 }
@@ -112,19 +126,23 @@ bool ToolRegistry::setToolEnabled(std::string_view providerId, std::string_view 
 std::vector<std::unique_ptr<AbstractTool>> ToolRegistry::createTools() const {
   std::vector<std::unique_ptr<AbstractTool>> tools;
   tools.reserve(m_entries.size());
+
   for (const auto &entry : m_entries) {
     if (auto tool = entry.contribution.create())
       tools.emplace_back(std::make_unique<RegisteredTool>(*this, entry.name, std::move(tool)));
   }
+
   return tools;
 }
 
 std::vector<std::string> ToolRegistry::enabledToolNames() const {
   std::vector<std::string> names;
   names.reserve(m_entries.size());
+
   for (const auto &entry : m_entries) {
     if (isEnabled(entry.name)) names.emplace_back(entry.name);
   }
+
   return names;
 }
 

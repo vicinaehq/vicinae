@@ -23,6 +23,7 @@ public:
     std::string text;
     std::size_t visibleBytes = 0;
   };
+
   struct Tool {
     quint64 id;
     QString name;
@@ -35,11 +36,14 @@ public:
     std::optional<QString> statusText;
     bool expanded = false;
   };
+
   struct ToolGroup {
     std::vector<Tool> calls;
     bool expanded = false;
   };
+
   using Content = std::variant<Response, ToolGroup>;
+
   enum Role { QueryRole = Qt::UserRole + 1, ResponseRole, ErrorRole, PendingRole, AttachmentsRole };
 
   explicit QuickAIConversationModel(QObject *parent = nullptr);
@@ -51,6 +55,7 @@ public:
   void beginExchange(const std::string &query, QVariantList attachments = {});
   void appendResponse(std::string_view text);
   void finishExchange(const std::string &error = {});
+
   void addTool(Tool tool);
   void updateTool(quint64 id, QString status, std::optional<QString> output,
                   std::optional<qint64> durationMs = {}, std::optional<QString> statusText = {});
@@ -79,6 +84,7 @@ private:
   void publishResponse();
 
   std::vector<Exchange> m_exchanges;
+
   QTimer m_responseUpdateTimer;
   QElapsedTimer m_streamClock;
   QString m_pendingText;
