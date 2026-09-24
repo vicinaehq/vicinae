@@ -44,7 +44,7 @@ Window {
         width: root.sidebarWidth
         height: parent.height
         visible: root.sidebarVisible
-        color: root.translucentSidebar ? Config.withAlpha(Theme.background, 0.72) : Config.withAlpha(Theme.foreground, 0.025)
+        color: root.translucentSidebar ? Config.withAlpha(Theme.background, Qt.platform.os === "linux" ? 0.96 : 0.72) : Config.withAlpha(Theme.foreground, 0.025)
     }
 
     ChatSidebar {

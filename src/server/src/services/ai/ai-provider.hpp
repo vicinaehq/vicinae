@@ -157,10 +157,13 @@ struct ChatMessage {
 
 using ChatHistory = std::vector<ChatMessage>;
 
+enum class ResponseActivity { Waiting, Thinking, Responding, PreparingTool, RunningTool };
+
 class AbstractChatCompletionStream : public QObject {
   Q_OBJECT
 
 signals:
+  void activityChanged(ResponseActivity activity) const;
   void toolCallRequested(const ToolCallPart &call) const;
   void dataAdded(const std::string &text) const;
   void errorOccurred(const std::string &reason) const;

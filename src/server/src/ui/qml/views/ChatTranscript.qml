@@ -87,6 +87,8 @@ Item {
             }
 
             delegate: ChatDocumentBlock {
+                awaitingResponse: root.session.awaitingResponse
+                thinking: root.session.thinking
                 compact: root.compact
                 fontSize: root.fontSize
                 lineHeight: root.lineHeight

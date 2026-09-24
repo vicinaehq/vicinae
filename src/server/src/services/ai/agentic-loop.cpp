@@ -68,6 +68,7 @@ bool Agent::send(ChatMessage message, Options options) {
   m_steps = 0;
   m_error.reset();
   m_model.reset();
+  m_activity = ResponseActivity::Waiting;
   m_state = State::Running;
   const auto generation = ++m_generation;
 
@@ -102,6 +103,10 @@ void Agent::complete() {
   m_pendingCalls.clear();
   m_nextCall = 0;
 
+  const auto generation = m_generation;
+  setActivity(ResponseActivity::Waiting);
+  if (!running() || generation != m_generation) return;
+
   ChatCompletionPayload payload{.thinking = m_options.thinking};
   payload.messages.reserve(m_messages.size());
   for (const auto &message : m_messages)
@@ -120,7 +125,11 @@ void Agent::complete() {
   }
 
   m_model = m_completion->model();
-  const auto generation = m_generation;
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::activityChanged, this,
+          [this, generation](ResponseActivity activity) {
+            if (running() && generation == m_generation) setActivity(activity);
+          });
 
   connect(m_completion.get(), &AbstractChatCompletionStream::dataAdded, this,
           [this, generation](const std::string &text) {
@@ -156,6 +165,8 @@ void Agent::receiveText(const std::string &text) {
   if (text.empty()) return;
 
   const auto generation = m_generation;
+  setActivity(ResponseActivity::Responding);
+  if (!running() || generation != m_generation) return;
   auto &message = assistantMessage();
   if (!running() || generation != m_generation) return;
 
@@ -179,6 +190,8 @@ void Agent::receiveToolCall(const ToolCallPart &call) {
   }
 
   const auto generation = m_generation;
+  setActivity(ResponseActivity::PreparingTool);
+  if (!running() || generation != m_generation) return;
   auto &message = assistantMessage();
   if (!running() || generation != m_generation) return;
 
@@ -226,6 +239,8 @@ void Agent::executeNextTool() {
 
   m_toolTimer.start();
   call.state = ToolState::Running;
+  setActivity(ResponseActivity::RunningTool);
+  if (!running() || generation != m_generation) return;
   emit toolChanged(id);
   if (!running() || generation != m_generation) return;
 
@@ -322,5 +337,11 @@ void Agent::finish(State state, std::optional<std::string> error) {
 }
 
 void Agent::cancel() { finish(State::Cancelled); }
+
+void Agent::setActivity(ResponseActivity activity) {
+  if (m_activity == activity) return;
+  m_activity = activity;
+  emit activityChanged();
+}
 
 } // namespace AI
