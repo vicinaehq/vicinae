@@ -17,7 +17,7 @@ DocumentText {
     wrapMode: TextEdit.Wrap
     color: Theme.foreground
 
-    font.pointSize: Theme.regularFontSize * scaleFactors[level - 1]
+    font.pointSize: fontSize * scaleFactors[level - 1]
 
     Binding on font.family {
         value: root.fontFamily

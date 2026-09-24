@@ -9,6 +9,8 @@ Loader {
     property int blockIndex: -1
     property var mdModel: null
     property string fontFamily: ""
+    property real fontSize: Theme.regularFontSize
+    property real lineHeight: 1.0
     property real maxImageHeight: 200
 
     sourceComponent: {
@@ -45,6 +47,8 @@ Loader {
         MdHeading {
             blockData: root.blockData
             fontFamily: root.fontFamily
+            fontSize: root.fontSize
+            lineHeight: root.lineHeight
             first: root.blockIndex === 0
         }
     }
@@ -53,11 +57,15 @@ Loader {
         MdParagraph {
             blockData: root.blockData
             fontFamily: root.fontFamily
+            fontSize: root.fontSize
+            lineHeight: root.lineHeight
         }
     }
     Component {
         id: codeBlockComp
         MdCodeBlock {
+            fontSize: root.fontSize * 0.9
+            lineHeight: root.lineHeight
             blockData: root.blockData
             blockIndex: root.blockIndex
             mdModel: root.mdModel
@@ -68,6 +76,8 @@ Loader {
         MdList {
             blockData: root.blockData
             fontFamily: root.fontFamily
+            fontSize: root.fontSize
+            lineHeight: root.lineHeight
             ordered: root.blockType === Markdown.OrderedList
         }
     }
@@ -76,11 +86,14 @@ Loader {
         MdTable {
             blockData: root.blockData
             fontFamily: root.fontFamily
+            fontSize: root.fontSize
+            lineHeight: root.lineHeight
         }
     }
     Component {
         id: imageComp
         MdImage {
+            fontSize: root.fontSize * 0.9
             blockData: root.blockData
             maxImageHeight: root.maxImageHeight
         }
@@ -96,6 +109,8 @@ Loader {
         MdHtmlBlock {
             blockData: root.blockData
             fontFamily: root.fontFamily
+            fontSize: root.fontSize
+            lineHeight: root.lineHeight
         }
     }
     Component {
@@ -103,6 +118,8 @@ Loader {
         MdBlockquote {
             blockData: root.blockData
             fontFamily: root.fontFamily
+            fontSize: root.fontSize
+            lineHeight: root.lineHeight
         }
     }
     Component {
@@ -110,6 +127,8 @@ Loader {
         MdCallout {
             blockData: root.blockData
             fontFamily: root.fontFamily
+            fontSize: root.fontSize
+            lineHeight: root.lineHeight
         }
     }
 }

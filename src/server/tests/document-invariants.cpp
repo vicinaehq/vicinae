@@ -5,7 +5,7 @@
 #include <QTest>
 #include <QTextBoundaryFinder>
 #include <QTextDocument>
-#include "builtins/ai/quick-ai-conversation-model.hpp"
+#include "builtins/ai/chat-conversation-model.hpp"
 #include "ui/quick/document-text-images.hpp"
 
 class DocumentInvariantsTest : public QObject {
@@ -13,7 +13,7 @@ class DocumentInvariantsTest : public QObject {
 
 private slots:
   void conversationPreservesModelIndexes() {
-    QuickAIConversationModel model;
+    ChatConversationModel model;
     QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
     QSignalSpy resets(&model, &QAbstractItemModel::modelReset);
     QSignalSpy removals(&model, &QAbstractItemModel::rowsRemoved);
@@ -25,30 +25,30 @@ private slots:
     model.appendResponse("Partial response");
     model.finishExchange("Connection interrupted");
     QVERIFY(first.isValid());
-    QCOMPARE(first.data(QuickAIConversationModel::ResponseRole).toString(), "Answer");
+    QCOMPARE(first.data(ChatConversationModel::ResponseRole).toString(), "Answer");
     QCOMPARE(model.rowCount(), 2);
-    QCOMPARE(model.index(1).data(QuickAIConversationModel::ResponseRole).toString(), "Partial response");
-    QCOMPARE(model.index(1).data(QuickAIConversationModel::ErrorRole).toString(), "Connection interrupted");
-    QVERIFY(!model.index(1).data(QuickAIConversationModel::PendingRole).toBool());
+    QCOMPARE(model.index(1).data(ChatConversationModel::ResponseRole).toString(), "Partial response");
+    QCOMPARE(model.index(1).data(ChatConversationModel::ErrorRole).toString(), "Connection interrupted");
+    QVERIFY(!model.index(1).data(ChatConversationModel::PendingRole).toBool());
     QVERIFY(resets.isEmpty());
     QVERIFY(removals.isEmpty());
   }
 
   void everyPublishedPrefixEndsAtAGraphemeBoundary() {
-    QuickAIConversationModel model;
+    ChatConversationModel model;
     model.beginExchange("Question");
     const auto response = QString::fromUtf8("Café 👩🏽‍🌾 🇫🇷 日本語 🌱 ").repeated(20);
     QStringList errors;
     connect(&model, &QAbstractItemModel::dataChanged, &model, [&] {
-      const auto visible = model.index(0).data(QuickAIConversationModel::ResponseRole).toString();
+      const auto visible = model.index(0).data(ChatConversationModel::ResponseRole).toString();
       QTextBoundaryFinder boundary(QTextBoundaryFinder::Grapheme, response);
       boundary.setPosition(visible.size());
       if (!response.startsWith(visible) || !boundary.isAtBoundary()) errors.append(visible);
     });
     model.appendResponse(response.toStdString());
     model.finishExchange();
-    QTRY_COMPARE_WITH_TIMEOUT(model.index(0).data(QuickAIConversationModel::ResponseRole).toString(),
-                              response, 5000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.index(0).data(ChatConversationModel::ResponseRole).toString(), response,
+                              5000);
     QVERIFY(errors.isEmpty());
   }
 

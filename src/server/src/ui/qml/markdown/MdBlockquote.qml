@@ -8,6 +8,8 @@ Item {
 
     property var blockData: ({})
     property string fontFamily: ""
+    property real fontSize: Theme.regularFontSize
+    property real lineHeight: 1.0
 
     readonly property var paragraphs: blockData.paragraphs ?? []
 
@@ -40,7 +42,8 @@ Item {
                     textFormat: TextEdit.RichText
                     wrapMode: TextEdit.Wrap
                     color: Theme.textMuted
-                    font.pointSize: Theme.regularFontSize
+                    fontSize: root.fontSize
+                    lineHeight: root.lineHeight
                     font.italic: true
                     Binding on font.family {
                         value: root.fontFamily

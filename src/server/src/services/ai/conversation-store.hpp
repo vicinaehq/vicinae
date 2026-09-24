@@ -48,6 +48,8 @@ class ConversationStore : public QObject {
 
 signals:
   void changed();
+  void aboutToRemove(const QString &id);
+  void removed(const QString &id);
   void titleChanged(const QString &id, const QString &title);
   void errorOccurred(const QString &error);
 

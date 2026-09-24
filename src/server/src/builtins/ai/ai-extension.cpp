@@ -7,6 +7,7 @@
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
 #include "ui/settings/settings-controller.hpp"
+#include "ui/windows/chat-window.hpp"
 #include "ui/views/intro-view-host.hpp"
 
 namespace {
@@ -54,4 +55,10 @@ void QuickAICommand::execute(const Controller &controller) const {
 
 void AiExtension::preferencesChanged(const AiPreferences &preferences) const {
   ServiceRegistry::instance()->ai()->setProviders(preferences.providers);
+}
+
+void AIChatCommand::execute(CommandController &controller) const {
+  auto *ctx = controller.context();
+  ctx->navigation->closeWindow();
+  ctx->chat->show();
 }

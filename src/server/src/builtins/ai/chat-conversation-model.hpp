@@ -11,7 +11,7 @@
 #include <vector>
 #include <variant>
 
-class QuickAIConversationModel : public QAbstractListModel {
+class ChatConversationModel : public QAbstractListModel {
   Q_OBJECT
 
 signals:
@@ -47,7 +47,7 @@ public:
 
   enum Role { QueryRole = Qt::UserRole + 1, ResponseRole, ErrorRole, PendingRole, AttachmentsRole };
 
-  explicit QuickAIConversationModel(QObject *parent = nullptr);
+  explicit ChatConversationModel(QObject *parent = nullptr);
 
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;

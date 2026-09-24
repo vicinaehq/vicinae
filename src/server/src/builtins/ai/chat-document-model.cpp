@@ -1,7 +1,7 @@
 #include <algorithm>
-#include "quick-ai-document-model.hpp"
+#include "chat-document-model.hpp"
 
-QuickAIDocumentModel::QuickAIDocumentModel(QuickAIConversationModel *conversation, QObject *parent)
+ChatDocumentModel::ChatDocumentModel(ChatConversationModel *conversation, QObject *parent)
     : DocumentModel(parent), m_conversation(conversation) {
   connect(conversation, &QAbstractItemModel::rowsInserted, this,
           [this](const QModelIndex &, int first, int last) {
@@ -10,34 +10,32 @@ QuickAIDocumentModel::QuickAIDocumentModel(QuickAIConversationModel *conversatio
           });
   connect(conversation, &QAbstractItemModel::dataChanged, this,
           [this](const QModelIndex &first, const QModelIndex &last, const QList<int> &roles) {
-            if (roles == QList<int>{QuickAIConversationModel::ResponseRole}) return;
+            if (roles == QList<int>{ChatConversationModel::ResponseRole}) return;
             for (int row = first.row(); row <= last.row(); ++row)
               updateExchange(row);
           });
-  connect(conversation, &QuickAIConversationModel::contentAdded, this, &QuickAIDocumentModel::addContent);
-  connect(conversation, &QuickAIConversationModel::contentChanged, this,
-          &QuickAIDocumentModel::updateContent);
+  connect(conversation, &ChatConversationModel::contentAdded, this, &ChatDocumentModel::addContent);
+  connect(conversation, &ChatConversationModel::contentChanged, this, &ChatDocumentModel::updateContent);
   for (int row = 0; row < conversation->rowCount(); ++row)
     addExchange(row);
 }
 
-int QuickAIDocumentModel::rowCount(const QModelIndex &parent) const {
+int ChatDocumentModel::rowCount(const QModelIndex &parent) const {
   if (parent.isValid() || m_exchanges.empty()) return 0;
   const auto &last = m_exchanges.back();
   return last.offset + last.blocks + 2;
 }
 
-const QuickAIDocumentModel::Exchange &QuickAIDocumentModel::exchangeAt(int row) const {
+const ChatDocumentModel::Exchange &ChatDocumentModel::exchangeAt(int row) const {
   return *std::prev(std::ranges::upper_bound(m_exchanges, row, {}, &Exchange::offset));
 }
 
-const QuickAIDocumentModel::Content *QuickAIDocumentModel::contentAt(const Exchange &exchange,
-                                                                     int row) const {
+const ChatDocumentModel::Content *ChatDocumentModel::contentAt(const Exchange &exchange, int row) const {
   if (row == exchange.offset || row == exchange.offset + exchange.blocks + 1) return nullptr;
   return &*std::prev(std::ranges::upper_bound(exchange.contents, row, {}, &Content::offset));
 }
 
-QVariant QuickAIDocumentModel::data(const QModelIndex &index, int role) const {
+QVariant ChatDocumentModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid() || index.row() < 0 || index.row() >= rowCount()) return {};
   const auto &exchange = exchangeAt(index.row());
   const auto *content = contentAt(exchange, index.row());
@@ -76,7 +74,7 @@ QVariant QuickAIDocumentModel::data(const QModelIndex &index, int role) const {
     return query ? exchange.attachments : QVariantList{};
   case ToolRole: {
     if (!content || markdown) return QVariantMap{};
-    const auto &group = std::get<QuickAIConversationModel::ToolGroup>(
+    const auto &group = std::get<ChatConversationModel::ToolGroup>(
         m_conversation->contents(exchange.sourceRow)[content->sourcePart]);
     const bool grouped = group.calls.size() > 1;
     if (grouped && local == 0) return content->tool;
@@ -100,7 +98,7 @@ QVariant QuickAIDocumentModel::data(const QModelIndex &index, int role) const {
   }
 }
 
-QHash<int, QByteArray> QuickAIDocumentModel::roleNames() const {
+QHash<int, QByteArray> ChatDocumentModel::roleNames() const {
   return {{KindRole, "kind"},
           {TextRole, "text"},
           {BlockTypeRole, "blockType"},
@@ -113,7 +111,7 @@ QHash<int, QByteArray> QuickAIDocumentModel::roleNames() const {
           {ToolRole, "tool"}};
 }
 
-std::span<const DocumentPart> QuickAIDocumentModel::documentParts(int row) const {
+std::span<const DocumentPart> ChatDocumentModel::documentParts(int row) const {
   const auto &exchange = exchangeAt(row);
   if (row == exchange.offset) return exchange.query;
   const auto *content = contentAt(exchange, row);
@@ -123,7 +121,7 @@ std::span<const DocumentPart> QuickAIDocumentModel::documentParts(int row) const
   return {};
 }
 
-void QuickAIDocumentModel::updateOffsets() {
+void ChatDocumentModel::updateOffsets() {
   int offset = 0;
   for (auto &exchange : m_exchanges) {
     exchange.offset = offset++;
@@ -136,17 +134,16 @@ void QuickAIDocumentModel::updateOffsets() {
   }
 }
 
-void QuickAIDocumentModel::addExchange(int row) {
+void ChatDocumentModel::addExchange(int row) {
   const int offset = rowCount();
   beginInsertRows({}, offset, offset + 1);
   if (m_exchanges.size() == m_exchanges.capacity())
     m_exchanges.reserve(std::max<std::size_t>(8, m_exchanges.size() * 2));
   m_exchanges.emplace_back(Exchange{
-      .query = {{m_conversation->data(m_conversation->index(row), QuickAIConversationModel::QueryRole)
-                     .toString()}},
+      .query =
+          {{m_conversation->data(m_conversation->index(row), ChatConversationModel::QueryRole).toString()}},
       .attachments =
-          m_conversation->data(m_conversation->index(row), QuickAIConversationModel::AttachmentsRole)
-              .toList(),
+          m_conversation->data(m_conversation->index(row), ChatConversationModel::AttachmentsRole).toList(),
       .sourceRow = row,
       .offset = offset});
   endInsertRows();
@@ -156,10 +153,10 @@ void QuickAIDocumentModel::addExchange(int row) {
   updateExchange(row);
 }
 
-void QuickAIDocumentModel::addContent(int row, int part) {
+void ChatDocumentModel::addContent(int row, int part) {
   auto &exchange = m_exchanges[row];
   const bool response =
-      std::holds_alternative<QuickAIConversationModel::Response>(m_conversation->contents(row)[part]);
+      std::holds_alternative<ChatConversationModel::Response>(m_conversation->contents(row)[part]);
   const int offset = exchange.offset + exchange.blocks + 1;
   if (!response) beginInsertRows({}, offset, offset);
   exchange.contents.reserve(exchange.contents.size() + 1);
@@ -224,17 +221,17 @@ void QuickAIDocumentModel::addContent(int row, int part) {
   updateContent(row, part);
 }
 
-void QuickAIDocumentModel::updateContent(int row, int part) {
+void ChatDocumentModel::updateContent(int row, int part) {
   auto &content = m_exchanges[row].contents[part];
   const auto &source = m_conversation->contents(row)[part];
-  if (const auto *response = std::get_if<QuickAIConversationModel::Response>(&source)) {
+  if (const auto *response = std::get_if<ChatConversationModel::Response>(&source)) {
     auto text = QString::fromUtf8(response->text.data(), response->visibleBytes);
     if (response->restored)
       content.markdown->setMarkdownAsync(std::move(text));
     else
       content.markdown->setMarkdown(text);
   } else {
-    const auto &group = std::get<QuickAIConversationModel::ToolGroup>(source);
+    const auto &group = std::get<ChatConversationModel::ToolGroup>(source);
     const auto count = static_cast<int>(group.calls.size());
     const int rows = count > 1 && group.expanded ? count + 1 : 1;
     if (count > 1 && group.expanded && content.tool.value(QStringLiteral("count")).toInt() == 1) {
@@ -257,7 +254,7 @@ void QuickAIDocumentModel::updateContent(int row, int part) {
     }
     bool cancelled = false;
     bool queued = false;
-    const QuickAIConversationModel::Tool *running = nullptr;
+    const ChatConversationModel::Tool *running = nullptr;
     std::optional<qint64> duration;
     for (const auto &tool : group.calls) {
       if (tool.durationMs) duration = duration.value_or(0) + *tool.durationMs;
@@ -289,11 +286,11 @@ void QuickAIDocumentModel::updateContent(int row, int part) {
   emit dataChanged(tail, tail, {PendingRole});
 }
 
-void QuickAIDocumentModel::updateExchange(int row) {
+void ChatDocumentModel::updateExchange(int row) {
   auto &exchange = m_exchanges[row];
   const auto source = m_conversation->index(row);
-  exchange.pending = m_conversation->data(source, QuickAIConversationModel::PendingRole).toBool();
-  const auto error = m_conversation->data(source, QuickAIConversationModel::ErrorRole).toString();
+  exchange.pending = m_conversation->data(source, ChatConversationModel::PendingRole).toBool();
+  const auto error = m_conversation->data(source, ChatConversationModel::ErrorRole).toString();
   exchange.error.clear();
   if (!error.isEmpty()) {
     exchange.error.reserve(1);

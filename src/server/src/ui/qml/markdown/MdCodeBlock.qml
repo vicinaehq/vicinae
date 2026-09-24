@@ -10,6 +10,8 @@ Rectangle {
     property var blockData: ({})
     property var mdModel: null
     property int blockIndex: -1
+    property real fontSize: Theme.smallerFontSize
+    property real lineHeight: 1.0
 
     readonly property string language: blockData.language ?? ""
     readonly property string code: blockData.code ?? ""
@@ -109,7 +111,8 @@ Rectangle {
                 wrapMode: TextEdit.NoWrap
                 color: Theme.foreground
                 font.family: Theme.monoFontFamily
-                font.pointSize: Theme.smallerFontSize
+                fontSize: root.fontSize
+                lineHeight: root.lineHeight
                 text: root.highlightedHtml
             }
         }

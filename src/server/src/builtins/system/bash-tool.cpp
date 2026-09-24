@@ -135,7 +135,7 @@ private:
     std::string content;
     const BashOutput result{QString::fromUtf8(m_output).toStdString(), exitCode, m_timedOut, m_truncated,
                             statusText};
-    if (const auto error = glz::write_json(result, content)) {
+    if (const auto error = glz::write<JsonWriteOptions{}>(result, content)) {
       m_promise.addResult(AI::AbstractTool::RawToolResult(std::unexpected(glz::format_error(error))));
     } else {
       m_promise.addResult(AI::AbstractTool::RawToolResult(AI::ToolOutput{.content = std::move(content),

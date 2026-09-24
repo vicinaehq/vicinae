@@ -3,6 +3,7 @@
 #include <expected>
 #include <filesystem>
 #include "common/types.hpp"
+#include "common/json.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/reflect.hpp>
 #include <QFile>
@@ -292,7 +293,7 @@ public:
     std::string payload;
     auto req = createRequest(url);
 
-    if (auto const error = glz::write_json(data, payload)) {
+    if (auto const error = glz::write<JsonWriteOptions{}>(data, payload)) {
       return QtFuture::makeReadyValueFuture<Result<T>>(
           std::unexpected(std::format("failed to serialize request: {}", glz::format_error(error))));
     }
@@ -300,7 +301,7 @@ public:
     req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
     qInfo() << "[POST]" << req.url();
 
-    return parseResponse<T>(waitForReply(networkManager()->post(req, payload.c_str())));
+    return parseResponse<T>(waitForReply(networkManager()->post(req, QByteArray::fromStdString(payload))));
   }
 
   template <glz::has_reflect U> EventSource *postEventSource(const QString &url, const U &payload) {
@@ -308,14 +309,15 @@ public:
     std::string buf;
     qInfo() << "[POST]" << req.url();
 
-    if (auto const error = glz::write_json(payload, buf)) {
+    if (auto const error = glz::write<JsonWriteOptions{}>(payload, buf)) {
       qWarning() << std::format("failed to serialize request: {}", glz::format_error(error));
       return nullptr;
     }
 
     std::cout << glz::prettify_json(buf) << std::endl;
 
-    return new EventSource{networkManager()->post(req, buf.c_str())};
+    req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
+    return new EventSource{networkManager()->post(req, QByteArray::fromStdString(buf))};
   }
 
 private:

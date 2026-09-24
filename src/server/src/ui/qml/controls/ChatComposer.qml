@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import Vicinae
 
 FocusScope {
@@ -9,13 +10,15 @@ FocusScope {
     readonly property alias inputItem: editor.inputItem
     property alias text: editor.text
     property alias placeholder: editor.placeholder
+    property alias font: editor.font
     property var modelItems: []
     property var currentModel: null
     property AttachmentModel attachments: null
     property bool submissionEnabled: true
     property string message: ""
     property bool busy: false
-    property int maxRows: 6
+    property bool compact: true
+    property int maxRows: compact ? 6 : 10
     property bool dictationAvailable: false
     property bool recording: false
     property bool transcribing: false
@@ -31,14 +34,14 @@ FocusScope {
 
     readonly property bool canSubmit: !busy && submissionEnabled && (attachments?.ready ?? true) && (editor.text.trim().length > 0 || (attachments?.count ?? 0) > 0)
     readonly property real lineHeight: Math.ceil(fontMetrics.height)
-    readonly property real _verticalPadding: 9
-    readonly property real _leftPadding: 18
+    readonly property real _verticalPadding: compact ? 9 : 10
+    readonly property real _leftPadding: compact ? 18 : 14
     readonly property real _rightPadding: 8
     readonly property real _controlHeight: 28
     readonly property real _spacing: 6
     readonly property real _editorHeight: Math.max(lineHeight, Math.min(editor.contentHeight, lineHeight * maxRows))
     readonly property real _inlineEditorWidth: width - _leftPadding - _rightPadding - controls.width - _spacing
-    readonly property bool expanded: editor.text.length > 0 && (editor.text.includes("\n") || textMetrics.advanceWidth > _inlineEditorWidth)
+    readonly property bool expanded: !compact || (editor.text.length > 0 && (editor.text.includes("\n") || textMetrics.advanceWidth > _inlineEditorWidth))
     readonly property real _attachmentHeight: attachmentList.visible ? attachmentList.implicitHeight + _spacing : 0
     readonly property real _messageHeight: notice.visible ? notice.implicitHeight + _spacing : 0
     implicitHeight: _attachmentHeight + _messageHeight + (expanded ? _editorHeight + _spacing + _controlHeight : Math.max(_editorHeight, _controlHeight)) + _verticalPadding * 2
@@ -91,7 +94,7 @@ FocusScope {
         anchors.fill: parent
         filled: true
         focused: editor.editing
-        radius: Math.min(height / 2, 24)
+        radius: root.compact ? Math.min(height / 2, 24) : 14
         opaque: true
     }
 
@@ -152,12 +155,13 @@ FocusScope {
         z: 1
     }
 
-    Row {
+    RowLayout {
         id: controls
         anchors.right: parent.right
         anchors.rightMargin: root._rightPadding
         anchors.bottom: parent.bottom
         anchors.bottomMargin: root._verticalPadding
+        width: root.compact ? implicitWidth : root.width - root._rightPadding * 2
         height: root._controlHeight
         spacing: root._spacing
 
@@ -179,7 +183,8 @@ FocusScope {
 
         SearchableDropdown {
             id: modelSelector
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.preferredWidth: Math.min(preferredWidth, root.width * 0.55)
+            Layout.alignment: Qt.AlignVCenter
             visible: !root.recording && !root.transcribing
             compact: true
             flat: true
@@ -191,8 +196,13 @@ FocusScope {
             onPopupClosed: editor.forceActiveFocus()
         }
 
+        Item {
+            visible: !root.compact
+            Layout.fillWidth: true
+        }
+
         Text {
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment: Qt.AlignVCenter
             visible: root.recording || root.transcribing || root.dictationMessage !== ""
             text: root.dictationMessage !== "" ? root.dictationMessage : (root.transcribing ? qsTr("Transcribing…") : root.recordingTime)
             color: root.dictationMessage !== "" ? Theme.danger : Theme.textMuted
@@ -201,9 +211,9 @@ FocusScope {
         }
 
         Item {
-            anchors.verticalCenter: parent.verticalCenter
-            width: root._controlHeight
-            height: root._controlHeight
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: root._controlHeight
+            implicitHeight: root._controlHeight
             visible: root.transcribing
 
             PulsingDots {
@@ -212,61 +222,40 @@ FocusScope {
             }
         }
 
-        Rectangle {
-            id: micButton
-            anchors.verticalCenter: parent.verticalCenter
+        ViciButton {
+            Layout.alignment: Qt.AlignVCenter
             visible: !root.transcribing
-            width: root._controlHeight
-            height: root._controlHeight
+            implicitWidth: root._controlHeight
+            implicitHeight: root._controlHeight
             radius: root._controlHeight / 2
             enabled: root.dictationAvailable
             opacity: enabled ? 1.0 : 0.4
-            color: root.recording ? Config.withAlpha(Theme.danger, micHover.hovered ? 0.25 : 0.15) : (micHover.hovered ? Theme.listItemHoverBg : "transparent")
-
-            ViciImage {
-                anchors.centerIn: parent
-                width: 14
-                height: 14
-                source: Img.icon(root.recording ? BuiltinIcon.Stop : BuiltinIcon.Microphone).withFillColor(root.recording ? Theme.danger : Theme.textMuted)
-            }
-
-            HoverHandler {
-                id: micHover
-                enabled: micButton.enabled
-                cursorShape: Qt.PointingHandCursor
-            }
-
-            TapHandler {
-                enabled: micButton.enabled
-                onTapped: root.dictationToggled()
-            }
-
-            ToolTip.visible: micHover.hovered
-            ToolTip.text: root.recording ? qsTr("Stop and transcribe") : (root.dictationAvailable ? qsTr("Dictate") : qsTr("Set up dictation to talk to Quick AI"))
+            color: root.recording ? Config.withAlpha(Theme.danger, hovered ? 0.25 : 0.15) : (hovered ? Theme.listItemHoverBg : "transparent")
+            iconSize: 14
+            iconSource: Img.icon(root.recording ? BuiltinIcon.Stop : BuiltinIcon.Microphone).withFillColor(root.recording ? Theme.danger : Theme.textMuted)
+            accessibleName: root.recording ? qsTr("Stop and transcribe") : qsTr("Dictate")
+            activeFocusOnTab: true
+            onClicked: root.dictationToggled()
+            ToolTip.visible: hovered
+            ToolTip.text: root.dictationAvailable ? accessibleName : qsTr("Set up dictation to talk to AI")
             ToolTip.delay: 600
         }
 
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: root._controlHeight
-            height: root._controlHeight
+        ViciButton {
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: root._controlHeight
+            implicitHeight: root._controlHeight
             radius: root._controlHeight / 2
-            color: root.busy || root.canSubmit ? Theme.foreground : Config.withAlpha(Theme.foreground, 0.25)
-
-            ViciImage {
-                anchors.centerIn: parent
-                width: 14
-                height: 14
-                source: Img.icon(root.busy ? BuiltinIcon.Stop : BuiltinIcon.ArrowUp).withFillColor(Theme.background)
-            }
-
-            HoverHandler {
-                cursorShape: root.busy || root.canSubmit ? Qt.PointingHandCursor : Qt.ArrowCursor
-            }
-
-            TapHandler {
-                onTapped: root.busy ? root.cancelled() : root.submit()
-            }
+            enabled: root.busy || root.canSubmit
+            color: enabled ? Theme.foreground : Config.withAlpha(Theme.foreground, 0.25)
+            iconSize: 14
+            iconSource: Img.icon(root.busy ? BuiltinIcon.Stop : BuiltinIcon.ArrowUp).withFillColor(Theme.background)
+            accessibleName: root.busy ? qsTr("Stop response") : qsTr("Send message")
+            activeFocusOnTab: true
+            onClicked: root.busy ? root.cancelled() : root.submit()
+            ToolTip.visible: hovered
+            ToolTip.text: accessibleName
+            ToolTip.delay: 600
         }
     }
 }

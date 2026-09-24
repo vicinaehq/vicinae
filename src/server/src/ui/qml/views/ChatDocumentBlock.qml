@@ -17,15 +17,19 @@ Item {
     signal previewRequested(var content)
     signal toolToggled(var toolId)
     signal toolGroupToggled(var toolId)
-    property int horizontalPadding: 16
-    property int bottomSpacing: 8
+    property bool compact: true
+    property real fontSize: Theme.regularFontSize
+    property real lineHeight: 1.0
+    property real horizontalPadding: 16
+    property int bottomSpacing: compact ? 8 : 24
     readonly property bool first: kind === "query"
     readonly property bool last: kind === "tail"
     readonly property bool groupedTool: kind === "tool" && (tool.grouped ?? false)
-    readonly property real topPadding: first ? 12 : last && content.height === 0 ? 0 : groupedTool ? 2 : 8
-    height: content.height + topPadding + (last ? 12 + bottomSpacing : 0)
+    readonly property real topPadding: first ? (compact ? 12 : 0) : last && content.height === 0 ? 0 : groupedTool ? 2 : 8
+    height: content.height + topPadding + (last ? (compact ? 12 : 0) + bottomSpacing : 0)
 
     Item {
+        visible: root.compact
         x: root.horizontalPadding
         width: parent.width - root.horizontalPadding * 2
         height: parent.height - (root.last ? root.bottomSpacing : 0)
@@ -42,16 +46,18 @@ Item {
     }
     Loader {
         id: content
-        x: root.horizontalPadding + 12 + (root.groupedTool ? 20 : 0)
+        x: root.horizontalPadding + (root.compact ? 12 : 0) + (root.groupedTool ? 20 : 0)
         y: root.topPadding
-        width: parent.width - (root.horizontalPadding + 12) * 2 - (root.groupedTool ? 20 : 0)
-        sourceComponent: root.first ? queryComponent : root.last ? tailComponent : root.kind === "tool" ? toolComponent : root.kind === "toolGroup" ? toolGroupComponent : markdownComponent
+        width: parent.width - (root.horizontalPadding + (root.compact ? 12 : 0)) * 2 - (root.groupedTool ? 20 : 0)
+        sourceComponent: root.first ? (root.compact ? queryComponent : messageComponent) : root.last ? tailComponent : root.kind === "tool" ? toolComponent : root.kind === "toolGroup" ? toolGroupComponent : markdownComponent
     }
     Component {
         id: queryComponent
         Column {
             spacing: 8
             DocumentText {
+                fontSize: root.fontSize
+                lineHeight: root.lineHeight
                 width: parent.width
                 visible: root.text.length > 0
                 text: root.text
@@ -61,6 +67,48 @@ Item {
                 width: parent.width
                 attachments: root.attachments
                 onPreviewRequested: content => root.previewRequested(content)
+            }
+        }
+    }
+    Component {
+        id: messageComponent
+        Item {
+            height: userMessage.height + 12
+
+            Rectangle {
+                id: userMessage
+                anchors.right: parent.right
+                width: Math.min(parent.width * 0.88, Math.max(48, queryMetrics.advanceWidth + 28, root.attachments.length > 0 ? 320 : 0))
+                height: queryContent.height + 20
+                radius: 14
+                color: Config.withAlpha(Theme.foreground, 0.065)
+
+                TextMetrics {
+                    id: queryMetrics
+                    font.family: Theme.fontFamily
+                    font.pointSize: root.fontSize
+                    text: root.text
+                }
+
+                Column {
+                    id: queryContent
+                    x: 14
+                    y: 10
+                    width: parent.width - 28
+                    spacing: 8
+                    DocumentText {
+                        fontSize: root.fontSize
+                        lineHeight: root.lineHeight
+                        width: parent.width
+                        visible: root.text.length > 0
+                        text: root.text
+                    }
+                    AttachmentList {
+                        width: parent.width
+                        attachments: root.attachments
+                        onPreviewRequested: content => root.previewRequested(content)
+                    }
+                }
             }
         }
     }
@@ -102,6 +150,9 @@ Item {
             blockIndex: root.blockIndex
             mdModel: root.markdownModel
             fontFamily: Theme.fontFamily
+            fontSize: root.fontSize
+            lineHeight: root.lineHeight
+            maxImageHeight: root.compact ? 200 : 360
         }
     }
     Component {
@@ -115,6 +166,8 @@ Item {
             }
             DocumentText {
                 id: errorText
+                fontSize: root.fontSize
+                lineHeight: root.lineHeight
                 width: parent.width
                 text: root.text
                 visible: root.failed
