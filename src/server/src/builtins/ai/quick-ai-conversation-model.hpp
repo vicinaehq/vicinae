@@ -71,6 +71,7 @@ private:
     qsizetype begin;
     qsizetype end;
     qint64 receivedAt;
+    qint64 duration;
   };
 
   void advanceResponse();
@@ -82,6 +83,8 @@ private:
   QElapsedTimer m_streamClock;
   QString m_pendingText;
   std::optional<qint64> m_lastUpdate;
+  std::optional<qint64> m_lastArrival;
+  double m_revealDelay = 0;
   std::deque<RevealBatch> m_revealBatches;
   qsizetype m_receivedUnits = 0;
 };
