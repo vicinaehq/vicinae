@@ -38,6 +38,14 @@ Item {
         spacing: 16
         visible: transcript.count === 0
 
+        ViciImage {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 64
+            height: 64
+            source: Img.local(":/icons/vicinae.png")
+            opacity: 0.25
+        }
+
         Text {
             width: parent.width
             text: qsTr("How can I help?")
