@@ -192,7 +192,8 @@ CompletionModel *PreferenceFormModel::appModel() {
   return m_appModel->model();
 }
 
-PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pref) {
+PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pref,
+                                                            const PreferenceValues &values) {
   Field f;
   f.type = preferenceType(pref);
   f.id = pref.name();
@@ -217,7 +218,7 @@ PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pr
     f.component = qml::componentUrl(custom->component);
   }
 
-  const auto *stored = preferences::find(m_values, pref.name().toStdString());
+  const auto *stored = preferences::find(values, pref.name().toStdString());
   glz::generic raw = stored ? *stored : pref.defaultOrNull();
   if (isMultiValueType(pref)) raw = normalizeListValue(raw);
   f.value = glazeToQVariant(raw);
@@ -233,10 +234,11 @@ void PreferenceFormModel::load(const EntrypointId &id, const std::vector<Prefere
   clearFields();
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
-  m_values = manager->getItemPreferenceValues(id);
+  const auto values = manager->getItemPreferenceValues(id);
 
+  m_fields.reserve(preferences.size());
   for (const auto &pref : preferences) {
-    m_fields.push_back(createField(pref));
+    m_fields.emplace_back(createField(pref, values));
   }
   endResetModel();
 }
@@ -250,10 +252,11 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
   clearFields();
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
-  m_values = manager->getProviderPreferenceValues(providerId);
+  const auto values = manager->getProviderPreferenceValues(providerId);
 
+  m_fields.reserve(preferences.size());
   for (const auto &pref : preferences) {
-    m_fields.push_back(createField(pref));
+    m_fields.emplace_back(createField(pref, values));
   }
   endResetModel();
 }
@@ -263,18 +266,24 @@ void PreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   auto resolved = value;
   if (resolved.canConvert<QJSValue>()) resolved = resolved.value<QJSValue>().toVariant();
   m_fields[row].value = resolved;
-  m_values[m_fields[row].id.toStdString()] = qVariantToGlazeGeneric(resolved);
+  m_pendingValues[m_fields[row].id.toStdString()] = qVariantToGlazeGeneric(resolved);
   auto idx = index(row);
   emit dataChanged(idx, idx, {ValueRole, CurrentDropdownItemRole});
   m_saveTimer.start();
 }
 
 void PreferenceFormModel::save() {
+  m_saveTimer.stop();
+  if (m_pendingValues.empty()) return;
   auto *manager = ServiceRegistry::instance()->rootItemManager();
+  auto values = m_isProvider ? manager->getProviderPreferenceValues(m_providerId)
+                             : manager->getItemPreferenceValues(m_itemId);
+  for (auto &[key, value] : std::exchange(m_pendingValues, {}))
+    values[key] = std::move(value);
   if (m_isProvider)
-    manager->setProviderPreferenceValues(m_providerId, m_values);
+    manager->setProviderPreferenceValues(m_providerId, values);
   else
-    manager->setItemPreferenceValues(m_itemId, m_values);
+    manager->setItemPreferenceValues(m_itemId, values);
 }
 
 QUrl PreferenceFormModel::componentFor(const QString &fieldId) const {

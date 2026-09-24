@@ -7,10 +7,10 @@ Rectangle {
     id: root
     property string title: ""
     property string subtitle: ""
+    property var iconSource
     property string status: "queued"
     property var durationMs: null
     property bool expanded: false
-    property bool monospace: false
     property bool compactStatus: false
     property var resultStatusText: null
     signal toggled
@@ -47,7 +47,7 @@ Rectangle {
     color: mouse.containsMouse || activeFocus ? Theme.listItemHoverBg : "transparent"
     activeFocusOnTab: true
     Accessible.role: Accessible.Button
-    Accessible.name: qsTr("%1 — %2").arg(root.title).arg(root.statusLabel)
+    Accessible.name: root.subtitle.length > 0 ? qsTr("%1 — %2 — %3").arg(root.title).arg(root.subtitle).arg(root.statusLabel) : qsTr("%1 — %2").arg(root.title).arg(root.statusLabel)
     Accessible.description: root.expanded ? qsTr("Collapse tool details") : qsTr("Expand tool details")
     Accessible.onPressAction: root.toggled()
     Keys.onReturnPressed: root.toggled()
@@ -63,18 +63,10 @@ Rectangle {
             Layout.preferredHeight: 12
             source: Img.icon(root.expanded ? BuiltinIcon.ChevronDown : BuiltinIcon.ChevronRight).withFillColor(Theme.textMuted)
         }
-        Item {
+        ViciImage {
             Layout.preferredWidth: 14
             Layout.preferredHeight: 14
-            ViciSpinner {
-                anchors.fill: parent
-                visible: root.running
-            }
-            ViciImage {
-                anchors.fill: parent
-                visible: !root.running
-                source: Img.icon(BuiltinIcon.WrenchScrewdriver).withFillColor(Theme.textMuted)
-            }
+            source: root.iconSource || Img.icon(BuiltinIcon.WrenchScrewdriver).withFillColor(Theme.textMuted)
         }
         ColumnLayout {
             Layout.fillWidth: true
@@ -84,7 +76,7 @@ Rectangle {
                 text: root.title.replace(/\s+/g, " ")
                 textFormat: Text.PlainText
                 elide: Text.ElideRight
-                font.family: root.monospace ? Theme.monoFontFamily : Theme.fontFamily
+                font.family: Theme.fontFamily
                 font.pointSize: Theme.smallerFontSize
                 color: Theme.foreground
             }
@@ -98,6 +90,11 @@ Rectangle {
                 font.pointSize: Theme.smallerFontSize
                 color: Theme.textMuted
             }
+        }
+        ViciSpinner {
+            Layout.preferredWidth: 14
+            Layout.preferredHeight: 14
+            visible: root.running
         }
         Text {
             Layout.maximumWidth: root.width * 0.45

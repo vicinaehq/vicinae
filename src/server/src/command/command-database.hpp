@@ -61,13 +61,20 @@ public:
 
 class BuiltinCommandRepository : public AbstractCommandRepository {
   std::vector<std::shared_ptr<AbstractCmd>> _commands;
+  std::vector<AI::ToolContribution> m_tools;
 
   virtual QString id() const override = 0;
   QString displayName() const override = 0;
   std::vector<std::shared_ptr<AbstractCmd>> commands() const override final { return _commands; }
+  std::vector<AI::ToolContribution> tools() const override final { return m_tools; }
   QString author() const override final { return Omnicast::APP_ID; }
 
 protected:
+  void registerTool(AI::ToolContribution tool) {
+    m_tools.reserve(m_tools.size() + 1);
+    m_tools.emplace_back(std::move(tool));
+  }
+
   template <DerivedFromCommand T> void registerCommand() {
     auto cmd = std::make_shared<T>();
     cmd->setRepositoryId(id());

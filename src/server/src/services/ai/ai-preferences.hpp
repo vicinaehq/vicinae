@@ -20,6 +20,7 @@ struct ProviderInstance {
 
 struct AiPreferences {
   std::map<std::string, AI::ProviderInstance> providers;
+  bool enableTools = true;
 };
 
 template <> struct PreferenceSchema<AiPreferences> {
@@ -28,6 +29,10 @@ template <> struct PreferenceSchema<AiPreferences> {
       .description = tr("Local and cloud AI providers. Their models power dictation and Quick AI."),
       .component = QStringLiteral("AISettingsPage"),
       .kind = PreferenceMeta::Kind::Custom,
+  };
+  PreferenceMeta enableTools{
+      .title = tr("Enable tools"),
+      .description = tr("Allow AI models to use tools from enabled extensions."),
   };
   Q_DECLARE_TR_FUNCTIONS(AiPreferences)
 };

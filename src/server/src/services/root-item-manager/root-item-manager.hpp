@@ -11,6 +11,7 @@
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
 #include "command/preference.hpp"
+#include "command/settings-page.hpp"
 #include "ui/views/list-accessory.hpp"
 #include <cstdint>
 #include <qdnslookup.h>
@@ -199,6 +200,7 @@ public:
 
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
   virtual PreferenceList preferences() const { return {}; }
+  virtual std::vector<SettingsPage> settingsPages() const { return {}; }
 };
 
 struct RootItemMetadata {

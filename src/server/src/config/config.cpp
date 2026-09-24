@@ -336,7 +336,24 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
         if (entrypoints.empty()) { v.entrypoints.reset(); }
       }
 
-      if (!v.enabled && v.preferences.value_or(glz::generic::object_t{}).empty() && !v.entrypoints) {
+      if (v.tools) {
+        auto &tools = *v.tools;
+        for (auto tool = tools.begin(); tool != tools.end();) {
+          auto &data = tool->second;
+          if (data.preferences) {
+            prunePreferences(*data.preferences);
+            if (data.preferences->empty()) data.preferences.reset();
+          }
+          if (!data.enabled && !data.preferences)
+            tool = tools.erase(tool);
+          else
+            ++tool;
+        }
+        if (tools.empty()) v.tools.reset();
+      }
+
+      if (!v.enabled && v.preferences.value_or(glz::generic::object_t{}).empty() && !v.entrypoints &&
+          !v.tools) {
         pvd.erase(currentIt);
       }
     }

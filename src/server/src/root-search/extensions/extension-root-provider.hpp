@@ -45,6 +45,7 @@ class ExtensionRootProvider : public RootProvider {
 public:
   const std::shared_ptr<AbstractCommandRepository> &repository() const { return m_repo; }
   PreferenceList preferences() const override { return m_repo->preferences(); }
+  std::vector<SettingsPage> settingsPages() const override { return m_repo->settingsPages(); }
   QString displayName() const override { return m_repo->displayName(); }
   QString description() const override { return m_repo->description(); }
   QString uniqueId() const override { return repositoryId(); }

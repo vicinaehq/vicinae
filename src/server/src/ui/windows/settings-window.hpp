@@ -19,6 +19,7 @@ class KeybindSettingsModel;
 class ExtensionSettingsModel;
 class SettingsSidebarModel;
 class AISettingsModel;
+class ToolSettingsModel;
 class QQuickWindow;
 
 class SettingsWindow : public QObject {
@@ -47,6 +48,7 @@ private:
   Q_PROPERTY(KeybindSettingsModel *keybindModel READ keybindModel CONSTANT)
   Q_PROPERTY(ExtensionSettingsModel *extensionModel READ extensionModel CONSTANT)
   Q_PROPERTY(AISettingsModel *aiModel READ aiModel CONSTANT)
+  Q_PROPERTY(ToolSettingsModel *toolModel READ toolModel CONSTANT)
 
 public:
   explicit SettingsWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -70,6 +72,7 @@ public:
   KeybindSettingsModel *keybindModel() const { return m_keybindModel; }
   ExtensionSettingsModel *extensionModel() const { return m_extensionModel; }
   AISettingsModel *aiModel() const { return m_aiModel; }
+  ToolSettingsModel *toolModel() const { return m_toolModel; }
 
   bool canGoBack() const { return !m_backStack.isEmpty(); }
   bool canGoForward() const { return !m_forwardStack.isEmpty(); }
@@ -108,6 +111,7 @@ private:
   ExtensionSettingsModel *m_extensionModel = nullptr;
   SettingsSidebarModel *m_sidebarModel = nullptr;
   AISettingsModel *m_aiModel = nullptr;
+  ToolSettingsModel *m_toolModel = nullptr;
   QQuickWindow *m_window = nullptr;
   struct Route {
     QString page;

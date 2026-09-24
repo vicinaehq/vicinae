@@ -29,6 +29,7 @@ class ExtensionSettingsModel : public QAbstractListModel {
   Q_PROPERTY(QString selectedProviderId READ selectedProviderId NOTIFY selectedChanged)
   Q_PROPERTY(QString selectedProvenance READ selectedProvenance NOTIFY selectedChanged)
   Q_PROPERTY(ProviderCommandModel *commandModel READ commandModel CONSTANT)
+  Q_PROPERTY(QVariantList settingsPages READ settingsPages NOTIFY selectedChanged)
 
 signals:
   void selectedChanged();
@@ -70,6 +71,7 @@ public:
   QString selectedProviderId() const;
   QString selectedProvenance() const;
   ProviderCommandModel *commandModel() const { return m_commandModel; }
+  QVariantList settingsPages() const;
 
   Q_INVOKABLE void setFilter(const QString &text);
   Q_INVOKABLE void select(int row);
