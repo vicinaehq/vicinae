@@ -1,11 +1,13 @@
 #include <QAbstractTextDocumentLayout>
 #include <QQmlEngine>
 #include <QTextImageFormat>
+#include <QFontInfo>
 #include <QTimer>
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include "document-text-images.hpp"
+#include "math-renderer.hpp"
 
 namespace {
 constexpr int IMAGE_CACHE_KIB = 64 * 1024;
@@ -96,9 +98,22 @@ void DocumentTextImages::measure(QTextDocument *document, DocumentImageCache *ca
   handler->attach(document);
 }
 
+void DocumentTextImages::setDevicePixelRatio(qreal ratio) {
+  if (qFuzzyCompare(m_devicePixelRatio, ratio)) return;
+  m_devicePixelRatio = ratio;
+  if (m_textDocument) m_textDocument->markContentsDirty(0, m_textDocument->characterCount());
+  emit devicePixelRatioChanged();
+}
+
 QSizeF DocumentTextImages::intrinsicSize(QTextDocument *document, int, const QTextFormat &format) {
   const auto imageFormat = format.toImageFormat();
   const auto url = document->baseUrl().resolved(QUrl(imageFormat.name()));
+  const auto font = imageFormat.font().resolve(document->defaultFont());
+  if (const auto size = math::size(url, QFontInfo(font).pixelSize())) {
+    // An empty image makes Qt Quick call drawObject at the window's device pixel ratio.
+    document->addResource(QTextDocument::ImageResource, url, QImage{});
+    return *size;
+  }
   auto naturalSize = m_cache ? m_cache->size(url) : std::optional<QSize>{};
   if (m_measuring) {
     // Qt may also request resources outside intrinsicSize while preparing text nodes.
@@ -126,4 +141,10 @@ QSizeF DocumentTextImages::intrinsicSize(QTextDocument *document, int, const QTe
     if (!hasHeight) height = std::round(width / ratio);
   }
   return {width, height};
+}
+
+void DocumentTextImages::drawObject(QPainter *painter, const QRectF &rect, QTextDocument *document, int,
+                                    const QTextFormat &format) {
+  const auto url = document->baseUrl().resolved(QUrl(format.toImageFormat().name()));
+  if (!m_measuring && url.scheme() == "vicinae-math") math::draw(painter, rect, url);
 }

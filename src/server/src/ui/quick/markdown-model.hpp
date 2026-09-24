@@ -58,13 +58,18 @@ private:
 
   void rebuildInlineStyles();
   void setLoading(bool loading);
+  void startParse();
+  void applyBlocks(const QString &markdown, std::vector<Block> blocks);
   static std::vector<Block> parseBlocks(const QString &markdown, const Styles &styles);
 
   std::vector<Block> m_blocks;
   QString m_markdown;
+  QString m_renderedMarkdown;
 
   Styles m_styles;
   quint64 m_parseGeneration = 0;
+  quint64 m_styleGeneration = 0;
+  bool m_parseRunning = false;
   bool m_loading = false;
   bool m_async = false;
 };

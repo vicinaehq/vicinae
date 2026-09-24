@@ -19,6 +19,8 @@ Loader {
             return headingComp;
         case Markdown.Paragraph:
             return paragraphComp;
+        case Markdown.Math:
+            return mathComp;
         case Markdown.CodeBlock:
             return codeBlockComp;
         case Markdown.BulletList:
@@ -59,6 +61,13 @@ Loader {
             fontFamily: root.fontFamily
             fontSize: root.fontSize
             lineHeight: root.lineHeight
+        }
+    }
+    Component {
+        id: mathComp
+        MdMath {
+            blockData: root.blockData
+            fontSize: root.fontSize
         }
     }
     Component {
