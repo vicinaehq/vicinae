@@ -86,7 +86,8 @@ void Agent::complete() {
     payload.messages.emplace_back(message.content);
   payload.tools.reserve(m_options.tools.size());
   for (const auto &tool : m_tools) {
-    if (std::ranges::contains(m_options.tools, tool->name())) payload.tools.emplace_back(tool.get());
+    if (tool->isEnabled() && std::ranges::contains(m_options.tools, tool->name()))
+      payload.tools.emplace_back(tool.get());
   }
   m_completion = m_factory(m_options.model, payload);
   if (!m_completion) {
@@ -170,7 +171,8 @@ void Agent::executeNextTool() {
   const auto id = m_pendingCalls[m_nextCall++];
   auto &call = *std::ranges::find(m_calls, id, &ToolCall::id);
   const auto tool = std::ranges::find_if(m_tools, [&](const auto &tool) {
-    return tool->name() == call.call.name && std::ranges::contains(m_options.tools, tool->name());
+    return tool->name() == call.call.name && tool->isEnabled() &&
+           std::ranges::contains(m_options.tools, tool->name());
   });
   if (tool == m_tools.end()) {
     recordToolResult(id, ToolState::Failed, {.content = tr("This tool is not enabled.").toStdString()});

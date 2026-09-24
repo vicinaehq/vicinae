@@ -2,6 +2,7 @@
 #include "ai-model-selector-utils.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/ai/tool-registry.hpp"
 #include "services/dictation/dictation-service.hpp"
 #include "services/dictation/transcription-session.hpp"
 #include "services/permissions/macos-permission-service.hpp"
@@ -40,14 +41,20 @@ void QuickAIViewHost::initialize() {
           "You are a concise assistant integrated into a desktop launcher. "
           "Give direct, helpful answers. Prefer short responses unless detail is asked for.")},
       this);
+  for (auto &tool : ServiceRegistry::instance()->tools()->createTools())
+    m_agent->addTool(std::move(tool));
   connect(m_agent, &AI::Agent::stateChanged, this, &QuickAIViewHost::streamingChanged);
   connect(m_agent, &AI::Agent::textAdded, this,
           [this](quint64, const std::string &text) { m_exchanges.appendResponse(text); });
   connect(m_agent, &AI::Agent::toolAdded, this, [this](quint64 id) {
     const auto &call = *m_agent->toolCall(id);
-    m_exchanges.addTool(id, QString::fromStdString(call.call.name),
-                        QString::fromStdString(call.call.arguments),
-                        call.summary ? std::optional(QString::fromStdString(*call.summary)) : std::nullopt);
+    const auto *tool = ServiceRegistry::instance()->tools()->find(call.call.name);
+    m_exchanges.addTool(
+        {.id = id,
+         .name = tool ? tool->contribution.title : QString::fromStdString(call.call.name),
+         .iconSource = tool ? qml::imageSourceFor(tool->contribution.icon) : QString{},
+         .arguments = QString::fromStdString(call.call.arguments),
+         .summary = call.summary ? std::optional(QString::fromStdString(*call.summary)) : std::nullopt});
   });
   connect(m_agent, &AI::Agent::toolChanged, this, [this](quint64 id) {
     const auto &call = *m_agent->toolCall(id);
@@ -230,7 +237,10 @@ void QuickAIViewHost::sendQuery(const std::string &query) {
     }
   }
   m_exchanges.beginExchange(query, previews);
-  m_agent->send(std::move(message), {.model = m_selectedModel});
+  auto tools = modelSupports(AI::Capability::ToolCalling)
+                   ? ServiceRegistry::instance()->tools()->enabledToolNames()
+                   : std::vector<std::string>{};
+  m_agent->send(std::move(message), {.model = m_selectedModel, .tools = std::move(tools)});
 }
 
 void QuickAIViewHost::selectModel(const QString &compositeId) {

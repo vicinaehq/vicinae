@@ -17,7 +17,12 @@ Item {
         const slash = subpage.indexOf("/");
         return slash < 0 ? subpage : subpage.slice(0, slash);
     }
-    readonly property url subpageUrl: root.subpageRoot !== "" && root.providerId !== "" ? root.extModel.preferenceModel.componentFor(root.subpageRoot) : ""
+    readonly property url subpageUrl: {
+        if (root.subpageRoot === "" || root.providerId === "")
+            return "";
+        const page = root.extModel.settingsPages.find(page => page.id === root.subpageRoot);
+        return page ? page.component : root.extModel.preferenceModel.componentFor(root.subpageRoot);
+    }
     readonly property bool showingSubpage: root.subpageUrl.toString() !== ""
 
     Timer {
@@ -158,6 +163,26 @@ Item {
                     SettingsPreferenceForm {
                         Layout.fillWidth: true
                         prefModel: root.extModel.preferenceModel
+                    }
+                }
+            }
+
+            SettingsGroup {
+                visible: root.extModel.settingsPages.length > 0
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
+                Layout.topMargin: 24
+
+                Repeater {
+                    model: root.extModel.settingsPages
+
+                    delegate: SettingsSubpageRow {
+                        required property var modelData
+                        required property int index
+                        label: modelData.title
+                        description: modelData.description
+                        subpage: modelData.id
+                        showSeparator: index < root.extModel.settingsPages.length - 1
                     }
                 }
             }
@@ -377,7 +402,7 @@ Item {
     ColumnLayout {
         anchors.centerIn: parent
         spacing: 4
-        visible: root.extModel.selectedDescription === "" && !root.extModel.hasPreferences && root.extModel.commandModel.totalCount === 0
+        visible: root.extModel.selectedDescription === "" && !root.extModel.hasPreferences && root.extModel.commandModel.totalCount === 0 && root.extModel.settingsPages.length === 0
 
         ViciImage {
             source: root.extModel.selectedIconSource

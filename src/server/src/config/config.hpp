@@ -23,10 +23,16 @@ struct ProviderItemData {
   std::optional<glz::generic::object_t> preferences;
 };
 
+struct ProviderToolData {
+  std::optional<bool> enabled;
+  std::optional<glz::generic::object_t> preferences;
+};
+
 struct ProviderData {
   std::optional<bool> enabled;
   std::optional<glz::generic::object_t> preferences;
   std::map<std::string, ProviderItemData> entrypoints;
+  std::map<std::string, ProviderToolData> tools;
 };
 
 template <typename T> struct Partial;
@@ -55,6 +61,7 @@ template <> struct Partial<ProviderData> {
   std::optional<bool> enabled;
   std::optional<glz::generic::object_t> preferences;
   std::optional<std::map<std::string, ProviderItemData>> entrypoints;
+  std::optional<std::map<std::string, ProviderToolData>> tools;
 };
 
 struct LayerShellConfig {

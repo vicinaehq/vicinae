@@ -66,14 +66,14 @@ private:
     QUrl component;
   };
 
-  Field createField(const Preference &pref);
+  Field createField(const Preference &pref, const PreferenceValues &values);
   void clearFields();
   CompletionModel *appModel();
   static QVariant currentDropdownItem(const Field &f);
 
   std::vector<Field> m_fields;
   AppSelectorModel *m_appModel = nullptr;
-  PreferenceValues m_values;
+  PreferenceValues m_pendingValues;
   EntrypointId m_itemId;
   QString m_providerId;
   bool m_isProvider = false;

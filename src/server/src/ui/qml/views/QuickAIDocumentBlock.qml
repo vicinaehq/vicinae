@@ -68,7 +68,8 @@ Item {
         id: toolGroupComponent
         ToolInvocationHeader {
             title: qsTr("%n tool calls", "", root.tool.count ?? 0)
-            subtitle: root.tool.summary ?? ""
+            subtitle: root.tool.summary ? qsTr("%1 · %2").arg(root.tool.name ?? "").arg(root.tool.summary) : root.tool.name ?? ""
+            iconSource: root.tool.iconSource ?? ""
             status: root.tool.status ?? "queued"
             durationMs: root.tool.durationMs ?? null
             expanded: root.tool.expanded ?? false
@@ -80,6 +81,7 @@ Item {
         id: toolComponent
         ToolInvocation {
             name: root.tool.name ?? ""
+            iconSource: root.tool.iconSource ?? ""
             summary: root.tool.summary ?? ""
             status: root.tool.status ?? "queued"
             statusText: root.tool.statusText ?? null

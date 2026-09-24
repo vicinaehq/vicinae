@@ -43,6 +43,7 @@ public:
   virtual std::string name() const = 0;
   virtual std::string description() const = 0;
   virtual RawToolTask runRaw(std::string_view object) = 0;
+  virtual bool isEnabled() const { return true; }
   virtual std::optional<std::string> invocationSummary(std::string_view arguments) const { return {}; }
 
   ToolSchema toolSchema() const {

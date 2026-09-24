@@ -139,8 +139,7 @@ void QuickAIConversationModel::publishResponse() {
   emit dataChanged(last, last, {ResponseRole});
 }
 
-void QuickAIConversationModel::addTool(quint64 id, QString name, QString arguments,
-                                       std::optional<QString> summary) {
+void QuickAIConversationModel::addTool(Tool tool) {
   if (m_exchanges.empty()) return;
   flushResponse();
   auto &contents = m_exchanges.back().contents;
@@ -151,12 +150,11 @@ void QuickAIConversationModel::addTool(quint64 id, QString name, QString argumen
   }
   auto &group = std::get<ToolGroup>(contents.back());
   if (group.calls.size() == 1 && group.calls.front().expanded) group.expanded = true;
-  const auto json = QJsonDocument::fromJson(arguments.toUtf8());
-  if (!json.isNull()) arguments = QString::fromUtf8(json.toJson()).trimmed();
+  const auto json = QJsonDocument::fromJson(tool.arguments.toUtf8());
+  if (!json.isNull()) tool.arguments = QString::fromUtf8(json.toJson()).trimmed();
   if (group.calls.size() == group.calls.capacity())
     group.calls.reserve(std::max<std::size_t>(4, group.calls.size() * 2));
-  group.calls.emplace_back(Tool{
-      .id = id, .name = std::move(name), .arguments = std::move(arguments), .summary = std::move(summary)});
+  group.calls.emplace_back(std::move(tool));
   if (newGroup)
     emit contentAdded(rowCount() - 1, contents.size() - 1);
   else
