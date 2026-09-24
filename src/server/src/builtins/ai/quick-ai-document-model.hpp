@@ -8,6 +8,9 @@
 class QuickAIDocumentModel : public DocumentModel {
   Q_OBJECT
 
+signals:
+  void loadingChanged();
+
 public:
   enum Role {
     KindRole = Qt::UserRole + 1,
@@ -22,6 +25,7 @@ public:
     ToolRole
   };
   explicit QuickAIDocumentModel(QuickAIConversationModel *conversation, QObject *parent = nullptr);
+  bool loading() const { return m_pendingParses > 0; }
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
@@ -54,4 +58,5 @@ private:
   void updateOffsets();
   QuickAIConversationModel *m_conversation;
   std::vector<Exchange> m_exchanges;
+  int m_pendingParses = 0;
 };

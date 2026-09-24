@@ -336,6 +336,7 @@ set(SRCS
 
 	./database/vicinae/migrations.qrc
 	./database/clipboard/migrations.qrc
+	./database/conversations/migrations.qrc
 
 
 	src/internal/keyboard/keybind-manager.hpp
@@ -387,6 +388,7 @@ set(SRCS
 	src/builtins/ai/ai.hpp
 	src/builtins/ai/quick-ai-preferences.hpp
 	src/builtins/ai/ai-extension.hpp
+	src/builtins/ai/conversation-history-view-host.hpp
 	src/builtins/ai/ai-extension.cpp
 	src/builtins/ai/quick-ai-view-host.hpp
 	src/builtins/ai/quick-ai-view-host.cpp
@@ -623,6 +625,9 @@ set(SRCS
 	src/services/ai/ai-service.cpp
 	src/services/ai/agentic-loop.hpp
 	src/services/ai/agentic-loop.cpp
+	src/services/ai/conversation-store.cpp
+	src/services/ai/conversation-store.hpp
+	src/common/file-attachment.hpp
 	src/services/ai/tool-contribution.hpp
 	src/services/ai/tool-registry.hpp
 	src/services/ai/tool-registry.cpp

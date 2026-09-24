@@ -163,10 +163,10 @@ AttachmentModel::Result AttachmentModel::prepareImage(QImage image, std::string 
   QBuffer thumbnail(&preview);
   image.scaled(PREVIEW_EDGE, PREVIEW_EDGE, Qt::KeepAspectRatio, Qt::SmoothTransformation)
       .save(&thumbnail, "PNG");
-  return FileAttachment{std::move(name),
-                        FileAttachment::Image{"image/png", data.toBase64().toStdString(),
-                                              static_cast<std::size_t>(data.size())},
-                        ImageUrl(ImageURL::rawData(preview, QStringLiteral("image/png")))};
+  return FileAttachment{
+      std::move(name),
+      FileAttachment::Image{"image/png", data.toBase64(), static_cast<std::size_t>(data.size())},
+      ImageUrl(ImageURL::rawData(preview, QStringLiteral("image/png"))), data, "image/png"};
 }
 
 AttachmentModel::Result AttachmentModel::readFile(const QString &path) {
@@ -180,9 +180,15 @@ AttachmentModel::Result AttachmentModel::readFile(const QString &path) {
   if (file.error() != QFileDevice::NoError) return std::unexpected(tr("This file could not be read."));
   if (data.size() > MAX_FILE_BYTES) return std::unexpected(tr("This file is too large."));
   const auto mime = QMimeDatabase().mimeTypeForFileNameAndData(info.fileName(), data);
-  if (mime.name().startsWith("image/"))
-    return prepareImage(ImageRendering::decodeImageData(data, {MAX_IMAGE_EDGE, MAX_IMAGE_EDGE}),
-                        info.fileName().toStdString());
+  if (mime.name().startsWith("image/")) {
+    auto result = prepareImage(ImageRendering::decodeImageData(data, {MAX_IMAGE_EDGE, MAX_IMAGE_EDGE}),
+                               info.fileName().toStdString());
+    if (result) {
+      result->originalBytes = data;
+      result->originalMimeType = mime.name().toStdString();
+    }
+    return result;
+  }
   if (!mime.inherits("text/plain") && !mime.inherits("application/json") &&
       !mime.inherits("application/xml") && mime.name() != "application/javascript" &&
       mime.name() != "application/x-empty" && mime.name() != "application/octet-stream")
@@ -195,7 +201,8 @@ AttachmentModel::Result AttachmentModel::readFile(const QString &path) {
         return ch.category() == QChar::Other_Control && ch != '\n' && ch != '\r' && ch != '\t';
       }))
     return std::unexpected(tr("Only images and UTF-8 text files are supported."));
-  return FileAttachment{info.fileName().toStdString(), text.toStdString(), {}};
+  return FileAttachment{
+      info.fileName().toStdString(), text.toStdString(), {}, data, mime.name().toStdString()};
 }
 
 void AttachmentPasteHandler::setTarget(QQuickItem *target) {

@@ -50,6 +50,8 @@ public:
   explicit Agent(CompletionFactory factory, ChatHistory history = {}, QObject *parent = nullptr);
   ~Agent() override;
 
+  void restoreHistory(std::vector<Message> messages, std::vector<ToolCall> calls);
+
   bool addTool(std::unique_ptr<AbstractTool> tool);
   bool send(ChatMessage message, Options options);
   void cancel();
