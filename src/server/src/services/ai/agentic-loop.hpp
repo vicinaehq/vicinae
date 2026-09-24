@@ -16,6 +16,7 @@ signals:
   void textAdded(quint64 messageId, const std::string &text);
   void toolAdded(quint64 id);
   void toolChanged(quint64 id);
+  void activityChanged();
   void stateChanged();
   void finished();
 
@@ -58,6 +59,7 @@ public:
 
   State state() const { return m_state; }
   bool running() const { return m_state == State::Running; }
+  ResponseActivity activity() const { return m_activity; }
   const std::optional<std::string> &error() const { return m_error; }
   const std::optional<Model> &model() const { return m_model; }
   const std::vector<Message> &messages() const { return m_messages; }
@@ -76,6 +78,7 @@ private:
   void finish(State state, std::optional<std::string> error = {});
   void stopWork();
   void schedule(std::function<void()> action);
+  void setActivity(ResponseActivity activity);
 
   CompletionFactory m_factory;
   std::vector<Message> m_messages;
@@ -90,6 +93,7 @@ private:
   std::optional<Id> m_assistantMessage;
   Options m_options;
   State m_state = State::Idle;
+  ResponseActivity m_activity = ResponseActivity::Waiting;
   std::optional<std::string> m_error;
   std::optional<Model> m_model;
   Id m_nextId = 1;

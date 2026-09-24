@@ -64,10 +64,7 @@ QVariant ChatDocumentModel::data(const QModelIndex &index, int role) const {
   case MarkdownModelRole:
     return QVariant::fromValue(markdown ? content->markdown.data() : nullptr);
   case PendingRole:
-    return exchange.pending &&
-           (exchange.blocks == 0 ||
-            (!exchange.contents.back().markdown &&
-             exchange.contents.back().tool.value(QStringLiteral("status")) != QStringLiteral("running")));
+    return exchange.pending;
   case FailedRole:
     return !exchange.error.empty();
   case AttachmentsRole:

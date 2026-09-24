@@ -81,6 +81,8 @@ void ChatSession::initialize() {
   for (auto &tool : ServiceRegistry::instance()->tools()->createTools())
     m_agent->addTool(std::move(tool));
   connect(m_agent, &AI::Agent::stateChanged, this, &ChatSession::streamingChanged);
+  connect(m_agent, &AI::Agent::stateChanged, this, &ChatSession::activityChanged);
+  connect(m_agent, &AI::Agent::activityChanged, this, &ChatSession::activityChanged);
   connect(m_agent, &AI::Agent::textAdded, this,
           [this](quint64, const std::string &text) { m_exchanges.appendResponse(text); });
   connect(m_agent, &AI::Agent::toolAdded, this, [this](quint64 id) {
@@ -207,6 +209,21 @@ bool ChatSession::modelSupports(AI::Capability capability) const {
   const auto models = provider->listModels();
   const auto model = std::ranges::find(models, m_selectedModel->id, &AI::Model::id);
   return model != models.end() && (model->caps & capability);
+}
+
+bool ChatSession::awaitingResponse() const {
+  if (!streaming()) return false;
+
+  switch (m_agent->activity()) {
+  case AI::ResponseActivity::Waiting:
+  case AI::ResponseActivity::Thinking:
+  case AI::ResponseActivity::PreparingTool:
+    return true;
+  case AI::ResponseActivity::Responding:
+  case AI::ResponseActivity::RunningTool:
+    return false;
+  }
+  return false;
 }
 
 bool ChatSession::canSend() const {
