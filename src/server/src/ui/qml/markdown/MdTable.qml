@@ -9,13 +9,14 @@ Rectangle {
     readonly property int columnCount: blockData.columnCount ?? 0
     readonly property var alignments: blockData.alignments ?? []
     readonly property real cellWidth: Math.max(40, width / Math.max(1, columnCount))
+    readonly property color lineColor: Config.withAlpha(Theme.foreground, 0.1)
 
     width: parent?.width ?? 0
     implicitHeight: tableRows.contentHeight
     color: "transparent"
     border.width: 1
-    border.color: Config.withAlpha(Theme.divider, Config.windowOpacity)
-    radius: 4
+    border.color: root.lineColor
+    radius: 6
     clip: true
 
     function textAlignment(column: int): int {
@@ -54,7 +55,9 @@ Rectangle {
             required property int selectionOffset
             width: root.width
             height: rowHeight
-            color: header ? Theme.secondaryBackground : "transparent"
+            color: header ? Config.withAlpha(Theme.foreground, 0.06) : "transparent"
+            topLeftRadius: header ? root.radius : 0
+            topRightRadius: header ? root.radius : 0
 
             Repeater {
                 model: IndexModel {
@@ -70,7 +73,7 @@ Rectangle {
                         anchors.right: parent.right
                         width: cell.index < root.columnCount - 1 ? 1 : 0
                         height: parent.height
-                        color: Theme.divider
+                        color: root.lineColor
                     }
                     DocumentText {
                         anchors.fill: parent
@@ -90,7 +93,7 @@ Rectangle {
                 anchors.bottom: parent.bottom
                 width: parent.width
                 height: tableRow.index < tableRows.count - 1 ? 1 : 0
-                color: Theme.divider
+                color: root.lineColor
             }
         }
     }

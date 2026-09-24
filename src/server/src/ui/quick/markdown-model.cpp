@@ -84,8 +84,7 @@ QString renderOneInline(cmark_node *cur, const InlineContext &ctx) {
     break;
 
   case CMARK_NODE_CODE:
-    result += QStringLiteral("<code style=\"color:%1;background:%2;"
-                             "padding:1px 4px;border-radius:3px;"
+    result += QStringLiteral("<code style=\"color:%1;background-color:%2;"
                              "font-family:'%3',monospace;\">")
                   .arg(ctx.inlineCodeFg, ctx.inlineCodeBg, ctx.monoFamily);
     result += QString::fromUtf8(cmark_node_get_literal(cur)).toHtmlEscaped();
@@ -319,7 +318,9 @@ QHash<int, QByteArray> MarkdownModel::roleNames() const {
 void MarkdownModel::rebuildInlineStyles() {
   auto &theme = ThemeService::instance().theme();
   m_inlineCodeFg = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
-  m_inlineCodeBg = theme.resolve(SemanticColor::SecondaryBackground).name(QColor::HexRgb);
+  auto inlineCodeBg = theme.resolve(SemanticColor::Foreground);
+  inlineCodeBg.setAlphaF(0.08);
+  m_inlineCodeBg = inlineCodeBg.name(QColor::HexArgb);
   m_linkColor = theme.resolve(SemanticColor::LinkDefault).name(QColor::HexRgb);
   m_textColor = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
   m_monoFamily = ServiceRegistry::instance()->fontService()->builtinMonoFontFamily();
