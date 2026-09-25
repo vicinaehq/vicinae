@@ -1,0 +1,27 @@
+diff --git a/lib/jkqtmathtext/jkqtmathtexttools.cpp b/lib/jkqtmathtext/jkqtmathtexttools.cpp
+--- a/lib/jkqtmathtext/jkqtmathtexttools.cpp
++++ b/lib/jkqtmathtext/jkqtmathtexttools.cpp
+@@ -241,9 +241,9 @@
+ 
+ #if (QT_VERSION<QT_VERSION_CHECK(6, 0, 0))
+     QFontDatabase fdb;
+-    const auto fontFamilies=fdb.families();
++    auto fontFamilies=fdb.families();
+ #else
+-    const auto fontFamilies=QFontDatabase::families();
++    auto fontFamilies=QFontDatabase::families();
+ #endif
+     if (!fontFamilies.contains("XITS")) {
+         if (QFile::exists(":/JKQTMathText/fonts/xits-bold.otf")) { QFontDatabase::addApplicationFont(":/JKQTMathText/fonts/xits-bold.otf"); }
+@@ -252,6 +252,11 @@
+         if (QFile::exists(":/JKQTMathText/fonts/xits-math.otf")) { QFontDatabase::addApplicationFont(":/JKQTMathText/fonts/xits-math.otf"); }
+         if (QFile::exists(":/JKQTMathText/fonts/xits-mathbold.otf")) { QFontDatabase::addApplicationFont(":/JKQTMathText/fonts/xits-mathbold.otf"); }
+         if (QFile::exists(":/JKQTMathText/fonts/xits-regular.otf")) { QFontDatabase::addApplicationFont(":/JKQTMathText/fonts/xits-regular.otf"); }
++#if (QT_VERSION<QT_VERSION_CHECK(6, 0, 0))
++        fontFamilies=fdb.families();
++#else
++        fontFamilies=QFontDatabase::families();
++#endif
+     }
+ 
+      static JKQTMathTextFontSpecifier fontSpec;
