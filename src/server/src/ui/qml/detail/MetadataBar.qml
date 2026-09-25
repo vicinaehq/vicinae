@@ -159,11 +159,19 @@ Item {
             }
 
             Flow {
+                readonly property real naturalWidth: {
+                    let total = Math.max(0, tagRepeater.count - 1) * spacing;
+                    for (let i = 0; i < tagRepeater.count; ++i)
+                        total += tagRepeater.itemAt(i)?.width ?? 0;
+                    return total;
+                }
+                Layout.preferredWidth: naturalWidth
                 Layout.maximumWidth: root.width * 0.65
                 Layout.alignment: Qt.AlignRight
                 spacing: 4
 
                 Repeater {
+                    id: tagRepeater
                     model: row.host.entry.tags || []
 
                     delegate: Rectangle {
