@@ -65,17 +65,29 @@ Window {
         height: parent.height
         color: Theme.background
 
-        Rectangle {
+        Item {
             id: toolbar
+            z: 1
             width: parent.width
             height: root.headerHeight
-            color: Qt.tint(Theme.background, Config.withAlpha(Theme.foreground, 0.025))
+
+            BackdropSurface {
+                anchors.fill: parent
+                sourceItem: (conversation.item as ChatConversation)?.backdrop ?? null
+                color: Qt.tint(Theme.background, Config.withAlpha(Theme.foreground, 0.025))
+            }
 
             Rectangle {
                 anchors.bottom: parent.bottom
                 width: parent.width
                 height: 1
                 color: Config.withAlpha(Theme.foreground, 0.09)
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onWheel: wheel => wheel.accepted = false
             }
 
             DragHandler {
@@ -175,7 +187,8 @@ Window {
                 active = false;
                 setSource(Qt.resolvedUrl("ChatConversation.qml"), {
                     session: Chat.session,
-                    horizontalPadding: Qt.binding(() => root.contentPadding)
+                    horizontalPadding: Qt.binding(() => root.contentPadding),
+                    topInset: Qt.binding(() => root.headerHeight)
                 });
                 active = true;
             }

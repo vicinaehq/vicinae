@@ -7,6 +7,8 @@ Flickable {
     required property DocumentModel documentModel
     readonly property alias document: controller
     property alias typingTarget: controller.typingTarget
+    property alias topInset: controller.topInset
+    property alias bottomInset: controller.bottomInset
     property alias delegate: geometry.delegate
     property alias spacing: geometry.spacing
     property alias cacheBuffer: geometry.cacheBuffer
