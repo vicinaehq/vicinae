@@ -144,6 +144,8 @@ public:
   void activateEntry(int id);
 
 private:
+  void registerService();
+  void unregisterService();
   void registerWithWatcher();
 
   QDBusServiceWatcher m_watcher;
