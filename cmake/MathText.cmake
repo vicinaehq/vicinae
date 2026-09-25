@@ -1,4 +1,8 @@
 function(import_mathtext)
+	if (POLICY CMP0135)
+		cmake_policy(SET CMP0135 NEW)
+	endif()
+
 	set(BUILD_SHARED_LIBS OFF)
 	set(CMAKE_SKIP_INSTALL_RULES ON)
 	set(JKQtPlotter_BUILD_LIB_JKQTMATH OFF)
