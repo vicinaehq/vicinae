@@ -16,7 +16,7 @@ Item {
     property bool _positioned: false
     signal initialized
 
-    readonly property real topInset: {
+    property real topInset: {
         let top = 0;
         for (let item = root; item; item = item.parent) {
             const page = item as LauncherPage;
@@ -28,7 +28,7 @@ Item {
         }
         return 0;
     }
-    readonly property real bottomInset: statusBarInset.value
+    property real bottomInset: statusBarInset.value
     readonly property real usableHeight: Math.max(0, flickable.height - topInset - bottomInset)
     readonly property real minimumY: flickable.originY - flickable.topMargin
     readonly property real maximumY: Math.max(minimumY, flickable.originY + flickable.contentHeight - flickable.height + flickable.bottomMargin)

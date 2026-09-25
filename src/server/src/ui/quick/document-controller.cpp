@@ -384,7 +384,7 @@ void DocumentController::handleMove(qreal x, qreal y) {
 
   if (m_flickable) {
     qreal const flickH = m_flickable->height();
-    if (y < AUTO_SCROLL_MARGIN || y > flickH - AUTO_SCROLL_MARGIN)
+    if (y < m_topInset + AUTO_SCROLL_MARGIN || y > flickH - m_bottomInset - AUTO_SCROLL_MARGIN)
       startAutoScroll();
     else
       stopAutoScroll();
@@ -564,11 +564,13 @@ void DocumentController::autoScrollTick() {
       std::max(minY, originY + contentH - flickH + m_flickable->property("bottomMargin").toReal());
 
   qreal delta = 0.0;
-  if (m_mouseY < AUTO_SCROLL_MARGIN) {
-    qreal const t = (AUTO_SCROLL_MARGIN - m_mouseY) / AUTO_SCROLL_MARGIN;
+  qreal const top = m_topInset + AUTO_SCROLL_MARGIN;
+  qreal const bottom = flickH - m_bottomInset - AUTO_SCROLL_MARGIN;
+  if (m_mouseY < top) {
+    qreal const t = std::min((top - m_mouseY) / AUTO_SCROLL_MARGIN, qreal(1));
     delta = -AUTO_SCROLL_MAX_SPEED * t * t;
-  } else if (m_mouseY > flickH - AUTO_SCROLL_MARGIN) {
-    qreal const t = (m_mouseY - (flickH - AUTO_SCROLL_MARGIN)) / AUTO_SCROLL_MARGIN;
+  } else if (m_mouseY > bottom) {
+    qreal const t = std::min((m_mouseY - bottom) / AUTO_SCROLL_MARGIN, qreal(1));
     delta = AUTO_SCROLL_MAX_SPEED * t * t;
   } else {
     stopAutoScroll();

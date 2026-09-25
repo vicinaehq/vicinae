@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import QtQuick.Layouts
 import Vicinae
 
@@ -18,6 +19,7 @@ FocusScope {
     property string message: ""
     property bool busy: false
     property bool compact: true
+    property bool floating: false
     property int maxRows: compact ? 6 : 10
     property bool dictationAvailable: false
     property bool recording: false
@@ -39,6 +41,7 @@ FocusScope {
     readonly property real _rightPadding: 8
     readonly property real _controlHeight: 28
     readonly property real _spacing: 6
+    readonly property real _radius: compact ? Math.min(height / 2, 24) : 14
     readonly property real _editorHeight: Math.max(lineHeight, Math.min(editor.contentHeight, lineHeight * maxRows))
     readonly property real _inlineEditorWidth: width - _leftPadding - _rightPadding - controls.width - _spacing
     readonly property bool expanded: !compact || (editor.text.length > 0 && (editor.text.includes("\n") || textMetrics.advanceWidth > _inlineEditorWidth))
@@ -90,12 +93,29 @@ FocusScope {
         text: editor.text
     }
 
+    RectangularShadow {
+        anchors.fill: parent
+        visible: root.floating
+        radius: root._radius
+        blur: 20
+        offset.y: 4
+        color: Qt.rgba(0, 0, 0, Theme.isDark ? 0.3 : 0.12)
+    }
+
     FormInputFrame {
         anchors.fill: parent
         filled: true
         focused: editor.editing
-        radius: root.compact ? Math.min(height / 2, 24) : 14
+        radius: root._radius
         opaque: true
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        enabled: root.floating
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onPressed: root.forceActiveFocus()
+        onWheel: wheel => wheel.accepted = false
     }
 
     AttachmentList {
