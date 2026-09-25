@@ -16,13 +16,12 @@ cmark_node *match(cmark_syntax_extension *extension, cmark_parser *, cmark_node 
   const int delimiter = display ? 2 : 1;
   const auto peek = [parser](int position) { return cmark_inline_parser_peek_at(parser, position); };
   const int begin = offset + delimiter;
-  if (!peek(begin) || (!display && std::isspace(peek(begin)))) return nullptr;
+  if (!display && (!peek(begin) || std::isspace(peek(begin)))) return nullptr;
 
   for (int end = begin; end - begin <= 8192 && peek(end); ++end) {
     if (!display && peek(end) == '\n') break;
     if (peek(end) == '$' && (!display || peek(end + 1) == '$')) {
-      if (end == begin || (!display && (std::isspace(peek(end - 1)) || std::isdigit(peek(end + 1)))))
-        return nullptr;
+      if (end == begin || (!display && (std::isspace(peek(end - 1)) || std::isdigit(peek(end + 1))))) break;
       std::string source;
       source.reserve(end + delimiter - offset);
       for (int i = offset; i < end + delimiter; ++i)
@@ -35,7 +34,12 @@ cmark_node *match(cmark_syntax_extension *extension, cmark_parser *, cmark_node 
     }
     if (peek(end) == '\\') ++end;
   }
-  return nullptr;
+  if (!display) return nullptr;
+  // Keep an unfinished display delimiter together while streaming.
+  auto *literal = cmark_node_new(CMARK_NODE_TEXT);
+  cmark_node_set_literal(literal, "$$");
+  cmark_inline_parser_set_offset(parser, offset + 2);
+  return literal;
 }
 } // namespace
 
@@ -128,18 +132,19 @@ bool markdown_math::isDisplay(cmark_node *node) {
   return source.startsWith("$$");
 }
 
-QString markdown_math::render(cmark_node *node, const QString &color) {
+QString markdown_math::render(cmark_node *node, const QString &color, math::Resources &resources) {
   const auto source = QString::fromUtf8(cmark_node_get_string_content(node));
   const bool display = source.startsWith("$$");
   const int delimiter = display ? 2 : 1;
-  return render(source.mid(delimiter, source.size() - delimiter * 2), source, display, color);
+  return render(source.mid(delimiter, source.size() - delimiter * 2), source, display, color, resources);
 }
 
-QString markdown_math::render(const QString &latex, const QString &source, bool display,
-                              const QString &color) {
+QString markdown_math::render(const QString &latex, const QString &source, bool display, const QString &color,
+                              math::Resources &resources) {
   const auto resource = math::render(latex, display, QColor(color));
   if (!resource) return source.toHtmlEscaped();
-  const auto image =
-      QStringLiteral("<img src=\"%1\" alt=\"%2\" align=\"middle\"/>").arg(*resource, source.toHtmlEscaped());
+  resources.emplace_back(resource);
+  const auto image = QStringLiteral("<img src=\"%1\" alt=\"%2\" align=\"middle\"/>")
+                         .arg(resource->url, source.toHtmlEscaped());
   return display ? QStringLiteral("<p align=\"center\">%1</p>").arg(image) : image;
 }

@@ -9,6 +9,7 @@
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 #include <optional>
+#include "math-renderer.hpp"
 
 class QQmlEngine;
 
@@ -64,6 +65,7 @@ private:
   QPointer<QQuickTextDocument> m_document;
   QPointer<QTextDocument> m_textDocument;
   QPointer<DocumentImageCache> m_cache;
+  QHash<QUrl, std::shared_ptr<const math::Resource>> m_mathResources;
   bool m_measuring = false;
   qreal m_devicePixelRatio = 1;
 };

@@ -87,13 +87,14 @@ struct InlineContext {
   const QString &linkColor;
   const QString &textColor;
   const QString &monoFamily;
+  math::Resources &resources;
 };
 
 QString renderInlineHtml(cmark_node *node, const InlineContext &ctx);
 QString imageAltText(cmark_node *imageNode);
 
 QString renderOneInline(cmark_node *cur, const InlineContext &ctx) {
-  if (markdown_math::isMath(cur)) return markdown_math::render(cur, ctx.textColor);
+  if (markdown_math::isMath(cur)) return markdown_math::render(cur, ctx.textColor, ctx.resources);
   QString result;
 
   switch (cmark_node_get_type(cur)) {
@@ -383,10 +384,12 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
   cmark_node *root = cmark_parser_finish(parser);
   cmark_parser_free(parser);
 
-  InlineContext ctx{styles.inlineCodeFg, styles.inlineCodeBg, styles.linkColor, styles.textColor,
-                    styles.monoFamily};
-
   for (auto *node = cmark_node_first_child(root); node; node = cmark_node_next(node)) {
+    const auto firstBlock = blocks.size();
+    math::Resources resources;
+    resources.reserve(8);
+    InlineContext ctx{styles.inlineCodeFg, styles.inlineCodeBg, styles.linkColor,
+                      styles.textColor,    styles.monoFamily,   resources};
     auto type = cmark_node_get_type(node);
 
     switch (type) {
@@ -431,8 +434,9 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
 
         if (markdown_math::isDisplay(c)) {
           flushRun(run);
-          blocks.emplace_back(Block{Markdown::BlockType::Math,
-                                    {{QStringLiteral("html"), markdown_math::render(c, ctx.textColor)}}});
+          blocks.emplace_back(
+              Block{Markdown::BlockType::Math,
+                    {{QStringLiteral("html"), markdown_math::render(c, ctx.textColor, ctx.resources)}}});
           continue;
         }
         if (ct == CMARK_NODE_IMAGE) {
@@ -476,7 +480,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
       QString const language = lang ? QString::fromUtf8(lang) : QString();
       if (language == "math" && isClosedFence(node, buf)) {
         data[QStringLiteral("html")] =
-            markdown_math::render(code, "$$\n" + code + "\n$$", true, styles.textColor);
+            markdown_math::render(code, "$$\n" + code + "\n$$", true, styles.textColor, ctx.resources);
         blocks.emplace_back(Block{Markdown::BlockType::Math, std::move(data)});
         break;
       }
@@ -664,6 +668,11 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
         blocks.push_back({Markdown::BlockType::Table, data});
       }
       break;
+    }
+    if (!resources.empty()) {
+      const auto retained = std::make_shared<const math::Resources>(std::move(resources));
+      for (auto row = firstBlock; row < blocks.size(); ++row)
+        blocks[row].resources = retained;
     }
   }
 
