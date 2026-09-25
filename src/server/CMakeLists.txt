@@ -1486,8 +1486,10 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/internal/keyboard/keybind-manager.cpp
 		src/services/builtin-icon/builtin-icon.hpp
 		src/services/builtin-icon/builtin-icon.cpp
+		src/services/audio-control/pactl/pactl-audio-control.cpp
+		tests/pactl-audio-control.cpp
 	)
-	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent)
+	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()
