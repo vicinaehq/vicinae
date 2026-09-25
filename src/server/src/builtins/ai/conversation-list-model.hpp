@@ -10,6 +10,7 @@ class ConversationListModel : public QAbstractListModel {
   QML_UNCREATABLE("")
 public:
   Q_INVOKABLE QString idAt(int row) const { return data(index(row), IdRole).toString(); }
+  Q_INVOKABLE int indexOf(const QString &id) const;
 
 signals:
   void errorOccurred(const QString &message);
