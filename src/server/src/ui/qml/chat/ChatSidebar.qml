@@ -14,6 +14,38 @@ Item {
     property alias searchButton: searchButton
     signal deleteRequested(string conversationId, string title)
 
+    readonly property string activeConversationId: Chat.session?.conversationId ?? ""
+
+    function revealConversation() {
+        if (!visible)
+            return;
+        history.forceLayout();
+        history.currentIndex = Chat.conversations.indexOf(activeConversationId);
+        if (history.currentIndex >= 0) {
+            history.cancelFlick();
+            history.positionViewAtIndex(history.currentIndex, ListView.Contain);
+        }
+    }
+
+    onActiveConversationIdChanged: Qt.callLater(root.revealConversation)
+    onVisibleChanged: if (visible)
+        Qt.callLater(root.revealConversation)
+    Component.onCompleted: Qt.callLater(root.revealConversation)
+
+    Connections {
+        target: Chat
+        function onFocusRequested() {
+            Qt.callLater(root.revealConversation);
+        }
+    }
+
+    Connections {
+        target: Chat.conversations
+        function onModelReset() {
+            Qt.callLater(root.revealConversation);
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.leftMargin: 12
@@ -88,6 +120,11 @@ Item {
             activeFocusOnTab: true
             keyNavigationEnabled: true
             highlightMoveDuration: 0
+            layer.enabled: contentHeight > height
+            layer.effect: ScrollFade {
+                topFade: Math.min(12, Math.max(0, history.contentY - history.originY))
+                bottomFade: Math.min(12, Math.max(0, history.originY + history.contentHeight - history.contentY - history.height))
+            }
             section.property: "dateGroup"
             section.delegate: Text {
                 required property string section
