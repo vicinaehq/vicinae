@@ -7,6 +7,7 @@
 #include <vector>
 #include <optional>
 #include "markdown-document.hpp"
+#include "math-renderer.hpp"
 #include "ui/quick/syntax-highlighter.hpp"
 
 class MarkdownModel : public DocumentModel {
@@ -44,6 +45,7 @@ private:
     Markdown::BlockType type;
     QVariantMap data;
     mutable std::optional<std::vector<DocumentPart>> parts;
+    std::shared_ptr<const math::Resources> resources;
   };
 
   struct Styles {

@@ -68,9 +68,14 @@ void DocumentTextImages::setDocument(QQuickTextDocument *document) {
 
 void DocumentTextImages::attach(QTextDocument *document) {
   if (m_textDocument == document) return;
-  if (m_textDocument) m_textDocument->documentLayout()->unregisterHandler(QTextFormat::ImageObject, this);
+  if (m_textDocument) {
+    disconnect(m_textDocument, nullptr, this, nullptr);
+    m_textDocument->documentLayout()->unregisterHandler(QTextFormat::ImageObject, this);
+  }
+  m_mathResources.clear();
   m_textDocument = document;
   if (document) {
+    connect(document, &QTextDocument::contentsChanged, this, [this] { m_mathResources.clear(); });
     document->documentLayout()->registerHandler(QTextFormat::ImageObject, this);
     document->markContentsDirty(0, document->characterCount());
   }
@@ -110,6 +115,9 @@ QSizeF DocumentTextImages::intrinsicSize(QTextDocument *document, int, const QTe
   const auto url = document->baseUrl().resolved(QUrl(imageFormat.name()));
   const auto font = imageFormat.font().resolve(document->defaultFont());
   if (const auto size = math::size(url, QFontInfo(font).pixelSize())) {
+    if (!m_mathResources.contains(url)) {
+      if (const auto resource = math::resource(url)) m_mathResources.insert(url, resource);
+    }
     // An empty image makes Qt Quick call drawObject at the window's device pixel ratio.
     document->addResource(QTextDocument::ImageResource, url, QImage{});
     return *size;
