@@ -1350,6 +1350,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ViciIconButton.qml
 	src/ui/qml/controls/ChatComposer.qml
 	src/ui/qml/controls/BackdropSurface.qml
+	src/ui/qml/controls/ScrollFade.qml
 	src/ui/qml/controls/ToolInvocation.qml
 	src/ui/qml/controls/ToolInvocationHeader.qml
 	src/ui/qml/controls/FilePickerDialog.qml

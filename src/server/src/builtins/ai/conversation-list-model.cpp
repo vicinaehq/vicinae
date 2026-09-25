@@ -11,6 +11,11 @@ int ConversationListModel::rowCount(const QModelIndex &parent) const {
   return parent.isValid() ? 0 : static_cast<int>(m_rows.size());
 }
 
+int ConversationListModel::indexOf(const QString &id) const {
+  const auto it = std::ranges::find(m_rows, id.toStdString(), &AI::ConversationInfo::id);
+  return it == m_rows.end() ? -1 : static_cast<int>(std::distance(m_rows.begin(), it));
+}
+
 QVariant ConversationListModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid() || index.row() < 0 || index.row() >= rowCount()) return {};
   const auto &row = m_rows[index.row()];
