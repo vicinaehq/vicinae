@@ -1,5 +1,7 @@
 #include <QBuffer>
 #include <QCache>
+#include <QCryptographicHash>
+#include <QHash>
 #include <QImage>
 #include <QPainter>
 #include <QSvgGenerator>
@@ -15,8 +17,10 @@ constexpr qreal FONT_SIZE = 32;
 constexpr int CACHE_BYTES = 16 * 1024 * 1024;
 constexpr int RASTER_CACHE_KIB = 32 * 1024;
 constexpr int MAX_IMAGE_PIXELS = 16 * 1024 * 1024;
+std::mutex resourceMutex;
+QHash<QUrl, std::weak_ptr<const math::Resource>> resources;
 std::mutex cacheMutex;
-QCache<QString, QString> cache(CACHE_BYTES);
+QCache<QString, std::shared_ptr<const math::Resource>> cache(CACHE_BYTES);
 
 struct RasterKey {
   QUrl url;
@@ -33,14 +37,30 @@ std::mutex rasterCacheMutex;
 QCache<RasterKey, QImage> rasterCache(RASTER_CACHE_KIB);
 } // namespace
 
-std::optional<QString> math::render(const QString &latex, bool display, const QColor &color) {
+math::Resource::~Resource() {
+  const std::lock_guard lock(resourceMutex);
+  const auto it = resources.find(QUrl(url));
+  if (it != resources.end() && it->expired()) resources.erase(it);
+}
+
+std::shared_ptr<const math::Resource> math::resource(const QUrl &url) {
+  const std::lock_guard lock(resourceMutex);
+  const auto it = resources.constFind(url);
+  return it != resources.cend() ? it->lock() : nullptr;
+}
+
+std::shared_ptr<const math::Resource> math::render(const QString &latex, bool display, const QColor &color) {
+  if (latex.size() > 8192) return {};
   const QString key = color.name(QColor::HexArgb) + (display ? "D" : "I") + latex;
   {
     const std::lock_guard lock(cacheMutex);
     if (const auto *value = cache.object(key)) return *value;
   }
 
-  if (latex.size() > 8192) return {};
+  const auto url = QStringLiteral("vicinae-math:/%1")
+                       .arg(QString::fromLatin1(
+                           QCryptographicHash::hash(key.toUtf8(), QCryptographicHash::Sha256).toHex()));
+  if (const auto existing = resource(QUrl(url))) return existing;
   JKQTMathText expression;
   expression.setFontSize(FONT_SIZE * 72 / 96);
   expression.setFontColor(color);
@@ -78,26 +98,27 @@ std::optional<QString> math::render(const QString &latex, bool display, const QC
   expression.draw(painter, 1, display ? ascent + 1 : halfHeight + strikeout);
   painter.end();
 
-  const auto url = QStringLiteral("vicinae-math:/%1/%2/%3")
-                       .arg(logicalSize.width() / FONT_SIZE, 0, 'g', 10)
-                       .arg(logicalSize.height() / FONT_SIZE, 0, 'g', 10)
-                       .arg(QString::fromLatin1(
-                           svg.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals)));
+  auto result = std::make_shared<Resource>(url, logicalSize / FONT_SIZE, std::move(svg));
+  std::shared_ptr<const Resource> retained = result;
+  {
+    const std::lock_guard lock(resourceMutex);
+    auto &entry = resources[QUrl(url)];
+    if (const auto existing = entry.lock())
+      retained = existing;
+    else
+      entry = retained;
+  }
   const std::lock_guard lock(cacheMutex);
-  cache.insert(key, new QString(url), (key.size() + url.size()) * sizeof(QChar));
-  return url;
+  const auto cost = (key.size() + url.size()) * sizeof(QChar) + retained->svg.size();
+  cache.insert(key, new std::shared_ptr<const Resource>(retained), cost);
+  return retained;
 }
 
 std::optional<QSizeF> math::size(const QUrl &url, qreal fontSize) {
   if (url.scheme() != "vicinae-math") return {};
-  const auto path = url.path();
-  if (!path.startsWith('/')) return {};
-  const auto dimensions = QStringView(path).sliced(1);
-  const auto widthEnd = dimensions.indexOf('/');
-  const auto heightEnd = dimensions.indexOf('/', widthEnd + 1);
-  if (widthEnd < 0 || heightEnd < 0) return {};
-  const QSizeF size(dimensions.first(widthEnd).toDouble() * fontSize,
-                    dimensions.sliced(widthEnd + 1, heightEnd - widthEnd - 1).toDouble() * fontSize);
+  const auto source = resource(url);
+  if (!source) return {};
+  const auto size = source->size * fontSize;
   if (size.isEmpty() || !std::isfinite(size.width()) || !std::isfinite(size.height()) ||
       size.width() > MAX_IMAGE_PIXELS || size.height() > MAX_IMAGE_PIXELS)
     return {};
@@ -117,13 +138,14 @@ void math::draw(QPainter *painter, const QRectF &rect, const QUrl &url) {
     image = QImage(pixels, QImage::Format_ARGB32_Premultiplied);
     image.setDevicePixelRatio(key.devicePixelRatio);
     image.fill(Qt::transparent);
-    const auto path = url.path();
-    QSvgRenderer drawing(QByteArray::fromBase64(path.mid(path.lastIndexOf('/') + 1).toLatin1(),
-                                                QByteArray::Base64UrlEncoding));
+    const auto source = resource(url);
+    if (!source) return;
+    QSvgRenderer drawing(source->svg);
     QPainter render(&image);
     drawing.render(&render, QRectF(QPointF{}, key.size));
     render.end();
-    const auto cost = (image.sizeInBytes() + path.size() * sizeof(QChar) + sizeof(RasterKey)) / 1024 + 1;
+    const auto cost =
+        (image.sizeInBytes() + source->url.size() * sizeof(QChar) + sizeof(RasterKey)) / 1024 + 1;
     const std::lock_guard lock(rasterCacheMutex);
     rasterCache.insert(key, new QImage(image), cost);
   }
