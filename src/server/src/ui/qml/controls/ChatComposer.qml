@@ -166,6 +166,7 @@ FocusScope {
         multiline: true
         submitOnReturn: true
         onAccepted: root.submit()
+        onEscaped: event => event.accepted = false
     }
 
     AttachmentDropArea {

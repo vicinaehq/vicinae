@@ -801,6 +801,10 @@ set(SRCS
 	src/ui/quick/document-layout.cpp
 	src/ui/quick/document-layout.hpp
 	src/ui/quick/document-model.hpp
+	src/ui/quick/document-search.hpp
+	src/ui/quick/document-search.cpp
+	src/ui/quick/document-search-highlighter.hpp
+	src/ui/quick/document-search-highlighter.cpp
 	src/ui/quick/document-scope.cpp
 	src/ui/quick/document-scope.hpp
 	src/ui/quick/document-selection.cpp
@@ -1378,6 +1382,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/markdown/MarkdownInline.qml
 	src/ui/qml/document/DocumentText.qml
 	src/ui/qml/document/DocumentView.qml
+	src/ui/qml/document/DocumentFindBar.qml
 	src/ui/qml/markdown/MarkdownBlock.qml
 	src/ui/qml/document/DocumentSelectionMenu.qml
 	src/ui/qml/controls/PulsingDots.qml

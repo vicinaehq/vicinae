@@ -14,6 +14,7 @@
 
 namespace {
 constexpr qreal FONT_SIZE = 32;
+constexpr qreal FONT_SCALE = 1.2;
 constexpr int CACHE_BYTES = 16 * 1024 * 1024;
 constexpr int RASTER_CACHE_KIB = 32 * 1024;
 constexpr int MAX_IMAGE_PIXELS = 16 * 1024 * 1024;
@@ -118,7 +119,7 @@ std::optional<QSizeF> math::size(const QUrl &url, qreal fontSize) {
   if (url.scheme() != "vicinae-math") return {};
   const auto source = resource(url);
   if (!source) return {};
-  const auto size = source->size * fontSize;
+  const auto size = source->size * (fontSize * FONT_SCALE);
   if (size.isEmpty() || !std::isfinite(size.width()) || !std::isfinite(size.height()) ||
       size.width() > MAX_IMAGE_PIXELS || size.height() > MAX_IMAGE_PIXELS)
     return {};

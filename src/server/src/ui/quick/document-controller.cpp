@@ -205,6 +205,36 @@ std::optional<DocumentController::ReadingAnchor> DocumentController::readingAnch
   return ReadingAnchor{m_model->index(row, 0), nearest->part(), position, y};
 }
 
+std::optional<QRectF> DocumentController::positionRectangle(int row, int part, int position) const {
+  if (!m_flickable) return {};
+  for (const auto &entry : m_entries) {
+    const auto *selection = entry.selection;
+    if (selection->row() == row && selection->part() == part && selection->target())
+      return selection->target()->mapRectToItem(m_flickable, selection->rectangleAt(position));
+  }
+  return {};
+}
+
+void DocumentController::revealHorizontalPosition(int row, int part, int position, int length) {
+  for (const auto &entry : m_entries) {
+    const auto *selection = entry.selection;
+    auto *target = selection->target();
+    if (!target || selection->row() != row || selection->part() != part) continue;
+    for (auto *parent = target->parentItem(); parent && parent != m_flickable;
+         parent = parent->parentItem()) {
+      const auto contentX = parent->property("contentX");
+      if (!contentX.isValid()) continue;
+      const auto rect = target->mapRectToItem(
+          parent, selection->rectangleAt(position).united(selection->rectangleAt(position + length)));
+      const auto offset =
+          rect.left() < 8 ? rect.left() - 8 : std::max(qreal(0), rect.right() - parent->width() + 8);
+      const auto maximum = std::max(qreal(0), parent->property("contentWidth").toReal() - parent->width());
+      parent->setProperty("contentX", std::clamp(contentX.toReal() + offset, qreal(0), maximum));
+    }
+    return;
+  }
+}
+
 std::optional<qreal> DocumentController::readingAnchorOffset(const ReadingAnchor &anchor) const {
   if (!anchor.index.isValid() || !m_flickable) return {};
   for (const auto &entry : m_entries) {
@@ -589,6 +619,7 @@ void DocumentController::setModel(DocumentModel *model) {
   clearSelection();
   if (m_model) disconnect(m_model, nullptr, this, nullptr);
   m_model = model;
+  m_search.setModel(model);
   if (model) {
     connect(model, &QAbstractItemModel::modelAboutToBeReset, this, &DocumentController::clearSelection);
     connect(model, &QAbstractItemModel::rowsRemoved, this, [this] {

@@ -44,6 +44,7 @@ Rectangle {
         height: contentHeight
         model: metrics
         heightRole: "rowHeight"
+        firstPartRole: "selectionOffset"
         embedded: true
         active: !root.DocumentScope.measuring
         viewport: root.DocumentScope.document?.flickable ?? null

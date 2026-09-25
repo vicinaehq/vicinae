@@ -27,4 +27,12 @@ TextEdit {
         measuring: root.DocumentScope.measuring
         devicePixelRatio: root.Screen.devicePixelRatio
     }
+    DocumentSearchHighlighter {
+        search: root.DocumentScope.document?.search ?? null
+        row: root.DocumentScope.row
+        part: root.selectionPart
+        textDocument: search && search.query.length > 0 ? root.textDocument : null
+        color: Config.withAlpha(Theme.accent, 0.25)
+        currentColor: Config.withAlpha(Theme.accent, 0.55)
+    }
 }

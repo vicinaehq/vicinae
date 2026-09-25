@@ -27,11 +27,13 @@ class DocumentLayout : public QQuickItem {
   Q_PROPERTY(bool embedded READ embedded WRITE setEmbedded NOTIFY embeddedChanged)
   Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
   Q_PROPERTY(QByteArray heightRole READ heightRole WRITE setHeightRole NOTIFY heightRoleChanged)
+  Q_PROPERTY(QByteArray firstPartRole MEMBER m_firstPartRole NOTIFY firstPartRoleChanged)
 
 public:
   Q_INVOKABLE void forceLayout();
   Q_INVOKABLE void invalidate();
   Q_INVOKABLE void positionAtEnd();
+  Q_INVOKABLE void positionAt(int row, int part, int position, int length);
 
 signals:
   void modelChanged();
@@ -47,6 +49,7 @@ signals:
   void embeddedChanged();
   void activeChanged();
   void heightRoleChanged();
+  void firstPartRoleChanged();
 
 public:
   explicit DocumentLayout(QQuickItem *parent = nullptr);
@@ -151,6 +154,7 @@ private:
   bool m_embedded = false;
   bool m_active = true;
   QByteArray m_heightRole;
+  QByteArray m_firstPartRole;
   std::optional<int> m_heightRoleId;
   std::vector<QMetaObject::Connection> m_ancestorConnections;
 };

@@ -6,15 +6,12 @@
 
 namespace AI {
 
-Agent::Agent(CompletionFactory factory, ChatHistory history, QObject *parent)
-    : QObject(parent), m_factory(std::move(factory)) {
-  m_messages.reserve(std::max<std::size_t>(16, history.size()));
+Agent::Agent(CompletionFactory factory, std::optional<std::string> systemPrompt, QObject *parent)
+    : QObject(parent), m_factory(std::move(factory)), m_systemPrompt(std::move(systemPrompt)) {
+  m_messages.reserve(16);
   m_calls.reserve(8);
   m_tools.reserve(4);
   m_pendingCalls.reserve(4);
-
-  for (auto &message : history)
-    appendMessage(std::move(message));
 }
 
 Agent::~Agent() { stopWork(); }
@@ -108,7 +105,8 @@ void Agent::complete() {
   if (!running() || generation != m_generation) return;
 
   ChatCompletionPayload payload{.thinking = m_options.thinking};
-  payload.messages.reserve(m_messages.size());
+  payload.messages.reserve(m_messages.size() + (m_systemPrompt ? 1 : 0));
+  if (m_systemPrompt) payload.messages.emplace_back(ChatMessage::fromText(ChatRole::System, *m_systemPrompt));
   for (const auto &message : m_messages)
     payload.messages.emplace_back(message.content);
 

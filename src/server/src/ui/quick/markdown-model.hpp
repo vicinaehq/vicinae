@@ -32,6 +32,7 @@ public:
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
   std::span<const DocumentPart> documentParts(int row) const override;
+  TextSnapshot textSnapshot(int row) const override;
 
   Q_INVOKABLE void setMarkdown(const QString &markdown);
   void setMarkdownAsync(QString markdown);
