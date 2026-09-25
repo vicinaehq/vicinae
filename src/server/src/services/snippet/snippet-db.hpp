@@ -75,6 +75,8 @@ public:
   std::expected<void, std::string> setSnippets(std::span<snippet::SerializedSnippet> snippets);
   std::expected<void, std::string> updateSnippet(std::string_view id, const snippet::SnippetPayload &payload);
   std::expected<snippet::SerializedSnippet, std::string> removeSnippet(std::string_view id);
+  std::expected<void, std::string> moveSnippetUp(std::string_view id);
+  std::expected<void, std::string> moveSnippetDown(std::string_view id);
 
   std::vector<snippet::SerializedSnippet> snippets() const;
 
@@ -85,6 +87,8 @@ protected:
   std::expected<std::vector<snippet::SerializedSnippet>, std::string> loadSnippets();
 
 private:
+  std::expected<void, std::string> moveSnippet(std::string_view id, int offset);
+
   std::string m_buf;
   std::filesystem::path m_path;
   std::vector<snippet::SerializedSnippet> m_snippets;

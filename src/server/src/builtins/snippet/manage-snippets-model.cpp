@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "builtins/snippet/manage-snippets-model.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "keyboard/keybind.hpp"
@@ -62,6 +63,34 @@ ManageSnippetsSection::buildActionPanel(const snippet::SerializedSnippet &item) 
   section->addAction(copy);
   section->addAction(edit);
   section->addAction(duplicate);
+
+  if (m_query.empty()) {
+    const auto pos = std::ranges::find_if(m_items, [&](const auto &entry) { return entry.id == item.id; });
+
+    if (pos != m_items.end()) {
+      if (pos != m_items.begin()) {
+        auto moveUp = new StaticAction(tr("Move up"), BuiltinIcon::ArrowUp, [item](ApplicationContext *ctx) {
+          if (const auto result = ctx->services->snippetService()->moveSnippetUp(item.id); !result) {
+            ctx->services->toastService()->failure(tr("Failed to move snippet"));
+          }
+        });
+        moveUp->setShortcut(Keybind::MoveUpAction);
+        section->addAction(moveUp);
+      }
+
+      if (std::next(pos) != m_items.end()) {
+        auto moveDown =
+            new StaticAction(tr("Move down"), BuiltinIcon::ArrowDown, [item](ApplicationContext *ctx) {
+              if (const auto result = ctx->services->snippetService()->moveSnippetDown(item.id); !result) {
+                ctx->services->toastService()->failure(tr("Failed to move snippet"));
+              }
+            });
+        moveDown->setShortcut(Keybind::MoveDownAction);
+        section->addAction(moveDown);
+      }
+    }
+  }
+
   section->addAction(remove);
 
   return panel;
