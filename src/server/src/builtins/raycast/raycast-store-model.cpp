@@ -3,6 +3,7 @@
 #include "builtins/raycast/raycast-store-detail-host.hpp"
 #include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
+#include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
 #include "ui/views/view-utils.hpp"
@@ -45,14 +46,24 @@ std::unique_ptr<ActionPanelState> RaycastStoreSection::actionPanel(int i) const 
       QCoreApplication::translate("RaycastStoreSection", "Show details"),
       ImageURL::builtin(BuiltinIcon::ComputerChip),
       [ext = entry.extension, scope = this->scope()]() { scope.pushView(new RaycastStoreDetailHost(ext)); });
-  auto uninstall = new UninstallExtensionAction(entry.extension.id);
 
   showDetails->setShortcut(Keyboard::Shortcut::enter());
-  uninstall->setShortcut(Keybind::RemoveAction);
 
   panel->setTitle(entry.extension.name);
   section->addAction(showDetails);
-  danger->addAction(uninstall);
+
+  if (entry.installed) {
+    auto uninstall = new UninstallExtensionAction(entry.extension.id);
+    uninstall->setShortcut(Keybind::RemoveAction);
+    danger->addAction(uninstall);
+  } else {
+    section->addAction(new InstallExtensionAction(
+        QString("store.raycast.%1").arg(entry.extension.name), entry.extension.themedIcon(),
+        [url = entry.extension.download_url](const ApplicationContext *ctx) {
+          return ctx->services->raycastStore()->downloadExtension(url);
+        }));
+  }
+
   showDetails->setPrimary(true);
 
   return panel;

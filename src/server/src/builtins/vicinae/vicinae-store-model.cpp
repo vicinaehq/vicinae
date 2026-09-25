@@ -3,6 +3,7 @@
 #include "builtins/vicinae/vicinae-store-detail-host.hpp"
 #include "internal/keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
+#include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
 #include "ui/views/view-utils.hpp"
@@ -43,14 +44,24 @@ VicinaeStoreSection::buildActionPanel(const VicinaeStoreEntry &entry) const {
       [author = entry.extension.author.handle, name = entry.extension.name, scope = this->scope()]() {
         scope.pushView(new VicinaeStoreDetailHost(author, name));
       });
-  auto uninstall = new UninstallExtensionAction(entry.extension.id);
 
   showDetails->setShortcut(Keyboard::Shortcut::enter());
-  uninstall->setShortcut(Keybind::RemoveAction);
 
   panel->setTitle(entry.extension.name);
   section->addAction(showDetails);
-  danger->addAction(uninstall);
+
+  if (entry.installed) {
+    auto uninstall = new UninstallExtensionAction(entry.extension.id);
+    uninstall->setShortcut(Keybind::RemoveAction);
+    danger->addAction(uninstall);
+  } else {
+    section->addAction(new InstallExtensionAction(
+        QString("store.vicinae.%1").arg(entry.extension.name), entry.extension.themedIcon(),
+        [url = entry.extension.downloadUrl](const ApplicationContext *ctx) {
+          return ctx->services->vicinaeStore()->downloadExtension(url);
+        }));
+  }
+
   showDetails->setPrimary(true);
 
   return panel;
