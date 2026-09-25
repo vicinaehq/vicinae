@@ -6,6 +6,8 @@ Item {
     id: root
     required property ChatSession session
     required property real horizontalPadding
+    property real topInset: 0
+    readonly property Item backdrop: transcript.backdrop
     readonly property real messageFontSize: Theme.regularFontSize + 1
 
     function focusComposer() {
@@ -18,10 +20,7 @@ Item {
 
     ChatTranscript {
         id: transcript
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: composerArea.top
+        anchors.fill: parent
         session: root.session
         compact: false
         fontSize: root.messageFontSize
@@ -29,11 +28,14 @@ Item {
         horizontalPadding: root.horizontalPadding
         typingTarget: composer.inputItem
         bottomPadding: 8
+        topInset: root.topInset
+        bottomInset: composerArea.height
         onPreviewRequested: content => preview.show(content)
     }
 
     Column {
         anchors.centerIn: transcript
+        anchors.verticalCenterOffset: -composerArea.height / 2
         width: Math.min(440, parent.width - 64)
         spacing: 16
         visible: transcript.count === 0
@@ -85,12 +87,34 @@ Item {
         anchors.bottom: parent.bottom
         height: composer.height + 24
 
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: parent.height + 8
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: Config.withAlpha(Theme.background, 0)
+                }
+                GradientStop {
+                    position: 0.45
+                    color: Config.withAlpha(Theme.background, 0.55)
+                }
+                GradientStop {
+                    position: 1
+                    color: Theme.background
+                }
+            }
+        }
+
         ChatSessionComposer {
             id: composer
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - root.horizontalPadding * 2
             y: 8
             compact: false
+            floating: true
             font.family: Theme.fontFamily
             font.pointSize: root.messageFontSize
             session: root.session

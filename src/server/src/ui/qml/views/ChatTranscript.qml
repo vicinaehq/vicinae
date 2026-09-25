@@ -12,6 +12,9 @@ Item {
     property real lineHeight: 1.0
     property real horizontalPadding: compact ? 16 : 24
     property real bottomPadding: 8
+    property alias topInset: viewport.topInset
+    property alias bottomInset: viewport.bottomInset
+    readonly property Item backdrop: chatFlick
     readonly property int count: chatFlick.count
     signal previewRequested(var content)
 
@@ -58,6 +61,8 @@ Item {
             layoutKey: [Theme.fontFamily, Theme.monoFontFamily, Theme.regularFontSize, Theme.smallerFontSize, root.compact, root.horizontalPadding, root.fontSize, root.lineHeight]
             followEnd: chatScroll.following && !chatScroll.paused
             typingTarget: root.typingTarget
+            topInset: viewport.topInset
+            bottomInset: viewport.bottomInset
             spacing: 0
             anchors.fill: parent
 
@@ -84,6 +89,7 @@ Item {
 
             ScrollBar.vertical: ViciScrollBar {
                 id: chatScrollBar
+                bottomPadding: viewport.bottomInset
             }
 
             delegate: ChatDocumentBlock {

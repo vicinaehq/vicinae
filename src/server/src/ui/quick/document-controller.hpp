@@ -18,6 +18,8 @@ class DocumentController : public QObject {
   Q_PROPERTY(DocumentModel *model READ model WRITE setModel NOTIFY modelChanged)
   Q_PROPERTY(QQuickItem *container MEMBER m_container)
   Q_PROPERTY(QQuickItem *flickable READ flickable WRITE setFlickable NOTIFY flickableChanged)
+  Q_PROPERTY(qreal topInset MEMBER m_topInset)
+  Q_PROPERTY(qreal bottomInset MEMBER m_bottomInset)
   Q_PROPERTY(QQuickItem *typingTarget READ typingTarget WRITE setTypingTarget NOTIFY typingTargetChanged)
   Q_PROPERTY(bool hasSelection READ hasSelection NOTIFY hasSelectionChanged)
   Q_PROPERTY(bool selecting READ selecting NOTIFY selectingChanged)
@@ -115,6 +117,8 @@ private:
   int m_selectedTo = -1;
   QPointer<QQuickItem> m_container;
   QPointer<QQuickItem> m_flickable;
+  qreal m_topInset = 0;
+  qreal m_bottomInset = 0;
 
   bool m_hasSelection = false;
   bool m_dragging = false;
