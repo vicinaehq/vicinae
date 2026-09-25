@@ -40,6 +40,8 @@
 #include "services/news/news-service.hpp"
 #include "config/config.hpp"
 
+ServiceRegistry::ServiceRegistry() { s_instance = this; }
+
 ServiceRegistry::~ServiceRegistry() = default;
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
@@ -239,7 +241,4 @@ void ServiceRegistry::setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> 
   m_globalShortcuts = std::move(service);
 }
 
-ServiceRegistry *ServiceRegistry::instance() {
-  static ServiceRegistry instance;
-  return &instance;
-}
+ServiceRegistry *ServiceRegistry::instance() { return s_instance; }

@@ -52,6 +52,7 @@ class Manager;
 class ServiceRegistry : public QObject {
 
 public:
+  ServiceRegistry();
   ~ServiceRegistry() override;
   static ServiceRegistry *instance();
   RootItemManager *rootItemManager() const;
@@ -139,6 +140,7 @@ public:
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
 
 private:
+  static inline ServiceRegistry *s_instance = nullptr;
   std::unique_ptr<WindowManager> m_windowManager;
   std::unique_ptr<WallpaperManager> m_wallpaperManager;
   std::unique_ptr<AppService> m_appDb;

@@ -259,6 +259,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   vicinae::macos::registerLoginItemOnce();
 #endif
 
+  ServiceRegistry serviceRegistry;
+
   {
     auto registry = ServiceRegistry::instance();
 
