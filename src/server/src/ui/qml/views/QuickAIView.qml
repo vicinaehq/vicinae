@@ -70,6 +70,8 @@ LauncherView {
         anchors.fill: parent
         session: root.host.session
         typingTarget: composer.inputItem
+        topInset: root.topInset
+        bottomInset: root.bottomInset
         bottomPadding: Math.max(0, 8 - root.appearance.contentBottomInset)
         onPreviewRequested: content => attachmentPreview.show(content)
     }

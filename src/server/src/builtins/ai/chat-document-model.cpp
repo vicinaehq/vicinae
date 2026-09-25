@@ -118,6 +118,13 @@ std::span<const DocumentPart> ChatDocumentModel::documentParts(int row) const {
   return {};
 }
 
+DocumentModel::TextSnapshot ChatDocumentModel::textSnapshot(int row) const {
+  const auto &exchange = exchangeAt(row);
+  const auto *content = row == exchange.offset ? nullptr : contentAt(exchange, row);
+  if (content && content->markdown) return content->markdown->textSnapshot(row - content->offset);
+  return DocumentModel::textSnapshot(row);
+}
+
 void ChatDocumentModel::updateOffsets() {
   int offset = 0;
   for (auto &exchange : m_exchanges) {

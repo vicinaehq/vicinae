@@ -30,6 +30,7 @@ public:
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
   std::span<const DocumentPart> documentParts(int row) const override;
+  TextSnapshot textSnapshot(int row) const override;
 
 private:
   struct Content {

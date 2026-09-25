@@ -13,6 +13,23 @@ Item {
     function focusComposer() {
         composer.forceActiveFocus();
     }
+    function openFind() {
+        findBar.open();
+    }
+
+    Keys.onShortcutOverride: event => event.accepted = findBar.visible && event.key === Qt.Key_Escape
+    Keys.onEscapePressed: event => {
+        event.accepted = findBar.visible;
+        if (findBar.visible)
+            findBar.close();
+    }
+
+    Connections {
+        target: transcript.selection.search
+        function onRevealRequested(row, part, position, length) {
+            transcript.revealPosition(row, part, position, length);
+        }
+    }
 
     AttachmentPreview {
         id: preview
@@ -30,7 +47,21 @@ Item {
         bottomPadding: 8
         topInset: root.topInset
         bottomInset: composerArea.height
+        topOverlayHeight: findBar.visible ? findBar.height + 12 : 0
         onPreviewRequested: content => preview.show(content)
+    }
+
+    DocumentFindBar {
+        id: findBar
+        anchors.top: parent.top
+        anchors.topMargin: 6
+        anchors.right: parent.right
+        anchors.rightMargin: Math.max(12, root.horizontalPadding)
+        width: Math.min(implicitWidth, parent.width - 24)
+        height: implicitHeight
+        search: transcript.selection.search
+        placeholder: qsTr("Find in conversation…")
+        onClosed: composer.forceActiveFocus()
     }
 
     Column {

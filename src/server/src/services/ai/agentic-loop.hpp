@@ -48,7 +48,8 @@ public:
     int maxSteps = 16;
   };
 
-  explicit Agent(CompletionFactory factory, ChatHistory history = {}, QObject *parent = nullptr);
+  explicit Agent(CompletionFactory factory, std::optional<std::string> systemPrompt = {},
+                 QObject *parent = nullptr);
   ~Agent() override;
 
   void restoreHistory(std::vector<Message> messages, std::vector<ToolCall> calls);
@@ -81,6 +82,7 @@ private:
   void setActivity(ResponseActivity activity);
 
   CompletionFactory m_factory;
+  std::optional<std::string> m_systemPrompt;
   std::vector<Message> m_messages;
   std::vector<ToolCall> m_calls;
   std::vector<std::unique_ptr<AbstractTool>> m_tools;

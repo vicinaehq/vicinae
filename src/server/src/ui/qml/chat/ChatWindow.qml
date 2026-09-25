@@ -32,6 +32,10 @@ Window {
     }
     Shortcut {
         sequences: [StandardKey.Find]
+        onActivated: (conversation.item as ChatConversation)?.openFind()
+    }
+    Shortcut {
+        sequence: "Ctrl+Shift+F"
         onActivated: Chat.searchConversations(sidebar.searchButton)
     }
 
@@ -163,6 +167,10 @@ Window {
                     Menu {
                         id: conversationMenu
                         popupType: Popup.Native
+                        MenuItem {
+                            text: qsTr("Find in conversation…")
+                            onTriggered: (conversation.item as ChatConversation)?.openFind()
+                        }
                         MenuItem {
                             text: qsTr("Rename…")
                             onTriggered: titleEditor.startEditing()

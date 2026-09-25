@@ -31,7 +31,7 @@ Item {
 
     signal textEdited
     signal accepted
-    signal escaped
+    signal escaped(var event)
 
     implicitHeight: edit.contentHeight
 
@@ -162,7 +162,7 @@ Item {
                     event.accepted = true;
                     root._completer.dismiss();
                 } else {
-                    root.escaped();
+                    root.escaped(event);
                 }
             }
         }

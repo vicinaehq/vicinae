@@ -2,6 +2,7 @@
 
 #include <QAbstractListModel>
 #include <QtQml/qqmlregistration.h>
+#include <functional>
 #include <span>
 #include <vector>
 
@@ -31,8 +32,14 @@ class DocumentModel : public QAbstractListModel {
   QML_UNCREATABLE("Use a document model supplied by a view host")
 
 public:
+  using TextSnapshot = std::function<std::vector<DocumentPart>()>;
   using QAbstractListModel::QAbstractListModel;
   virtual std::span<const DocumentPart> documentParts(int row) const = 0;
+  // The returned snapshot owns its data and may extract text on a worker thread.
+  virtual TextSnapshot textSnapshot(int row) const {
+    const auto parts = documentParts(row);
+    return [parts = std::vector<DocumentPart>(parts.begin(), parts.end())] { return parts; };
+  }
   virtual int partLength(int row, int part) const {
     const auto &value = documentParts(row)[part];
     return value.atomic ? 1 : value.text.size();

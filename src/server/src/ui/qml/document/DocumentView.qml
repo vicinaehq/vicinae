@@ -35,6 +35,9 @@ Flickable {
     function scrollToEnd() {
         geometry.positionAtEnd();
     }
+    function revealPosition(row: int, part: int, position: int, length: int) {
+        geometry.positionAt(row, part, position, length);
+    }
 
     onLayoutKeyChanged: geometry.invalidate()
 

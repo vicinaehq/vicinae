@@ -12,11 +12,17 @@ Item {
     property real lineHeight: 1.0
     property real horizontalPadding: compact ? 16 : 24
     property real bottomPadding: 8
-    property alias topInset: viewport.topInset
-    property alias bottomInset: viewport.bottomInset
+    property real topInset: 0
+    property real bottomInset: 0
+    property real topOverlayHeight: 0
     readonly property Item backdrop: chatFlick
     readonly property int count: chatFlick.count
     signal previewRequested(var content)
+
+    function revealPosition(row: int, part: int, position: int, length: int) {
+        chatScroll.pauseFollowing();
+        chatFlick.revealPosition(row, part, position, length);
+    }
 
     function followLatest() {
         selection.clearSelection();
@@ -40,7 +46,9 @@ Item {
         id: viewport
         anchors.fill: parent
         flickable: chatFlick
-        topPadding: root.compact ? 12 : 16
+        topInset: root.topInset
+        bottomInset: root.bottomInset
+        topPadding: (root.compact ? 12 : 16) + root.topOverlayHeight
         bottomPadding: root.bottomPadding
         resetOnInitialization: false
 
@@ -61,7 +69,7 @@ Item {
             layoutKey: [Theme.fontFamily, Theme.monoFontFamily, Theme.regularFontSize, Theme.smallerFontSize, root.compact, root.horizontalPadding, root.fontSize, root.lineHeight]
             followEnd: chatScroll.following && !chatScroll.paused
             typingTarget: root.typingTarget
-            topInset: viewport.topInset
+            topInset: viewport.topInset + root.topOverlayHeight
             bottomInset: viewport.bottomInset
             spacing: 0
             anchors.fill: parent
@@ -115,7 +123,7 @@ Item {
 
             footer: Row {
                 x: 16
-                height: visible ? childrenRect.height : 0
+                height: visible ? implicitHeight : 0
                 visible: root.compact && !root.session.streaming && root.session.modelLabel.length > 0
                 spacing: 6
 

@@ -57,11 +57,10 @@ Agent::ToolState readToolStatus(std::string_view state) {
 }
 
 ChatRole readRole(std::string_view role) {
-  if (role == "system") return ChatRole::System;
-  if (role == "developer") return ChatRole::Developer;
+  if (role == "user") return ChatRole::User;
   if (role == "assistant") return ChatRole::Assistant;
   if (role == "tool") return ChatRole::Tool;
-  return ChatRole::User;
+  throw std::runtime_error("Invalid conversation message role");
 }
 
 void writeFile(const std::filesystem::path &path, const QByteArray &bytes) {

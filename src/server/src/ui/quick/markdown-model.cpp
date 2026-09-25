@@ -792,3 +792,9 @@ std::span<const DocumentPart> MarkdownModel::documentParts(int row) const {
   if (!block.parts) block.parts = markdownDocumentParts(block.type, block.data);
   return *block.parts;
 }
+
+DocumentModel::TextSnapshot MarkdownModel::textSnapshot(int row) const {
+  const auto &block = m_blocks[row];
+  if (block.parts) return DocumentModel::textSnapshot(row);
+  return [type = block.type, data = block.data] { return markdownDocumentParts(type, data); };
+}
