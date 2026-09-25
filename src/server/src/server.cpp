@@ -12,6 +12,7 @@
 #include "icon-theme-db/icon-theme-db.hpp"
 #endif
 #include "extension/extension-interval-scheduler.hpp"
+#include "extension/extension-background-runner.hpp"
 #include "ipc/ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
@@ -505,6 +506,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   ExtensionIntervalScheduler intervalScheduler(ctx);
   intervalScheduler.rebuild();
+  ExtensionBackgroundRunner backgroundRunner(ctx);
+  ctx.backgroundRunner = &backgroundRunner;
 
   auto tray = createTrayService();
   if (tray) {

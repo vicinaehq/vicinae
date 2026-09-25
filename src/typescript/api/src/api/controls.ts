@@ -40,7 +40,7 @@ export const showHUD = async (
 	title: string,
 	options?: { clearRootSearch?: boolean; popToRootType?: PopToRootType },
 ) => {
-	getClient().UI.showHud(
+	await getClient().UI.showHud(
 		title,
 		options?.clearRootSearch ?? false,
 		popToRootProtoMap[options?.popToRootType ?? PopToRootType.Default],

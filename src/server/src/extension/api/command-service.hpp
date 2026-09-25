@@ -7,6 +7,8 @@
 #include "ui/settings/settings-controller.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "command/command.hpp"
+#include "extension/extension-background-runner.hpp"
+#include "common/context.hpp"
 #include <qlogging.h>
 
 namespace {
@@ -33,9 +35,10 @@ class ExtCommandService : public tsapi::AbstractCommand {
 
 public:
   ExtCommandService(tsapi::RpcTransport &transport, const std::shared_ptr<ExtensionCommand> &command,
-                    RootItemManager *rootManager, SettingsController &settings, NavigationController &nav)
+                    RootItemManager *rootManager, SettingsController &settings, NavigationController &nav,
+                    ApplicationContext &context)
       : AbstractCommand(transport), m_command(command), m_rootManager(rootManager), m_nav(nav),
-        m_settings(settings) {}
+        m_settings(settings), m_backgroundRunner(context.backgroundRunner) {}
 
   tsapi::Result<void>::Future launchCommand(tsapi::LaunchCommandOptions options) override {
     for (auto item : m_rootManager->extensions()) {
@@ -45,7 +48,16 @@ public:
           options.ownerOrAuthorName == item->repository()->author()) {
         for (const auto &cmd : repo->commands()) {
           if (cmd->commandId() == options.name) {
-            m_nav.activateEntrypoint(cmd->uniqueId(), {.props = transformApiLaunchProps(options)});
+            const auto props = transformApiLaunchProps(options);
+
+            if (options.type == tsapi::LaunchType::Background) {
+              auto extensionCommand = std::dynamic_pointer_cast<ExtensionCommand>(cmd);
+              if (!extensionCommand || !m_backgroundRunner || !m_backgroundRunner->launch(extensionCommand, props)) {
+                return Void::fail("Unable to launch command in the background");
+              }
+            } else {
+              m_nav.activateEntrypoint(cmd->uniqueId(), {.props = props});
+            }
             return Void::ok();
           }
         }
@@ -82,4 +94,5 @@ private:
   RootItemManager *m_rootManager;
   NavigationController &m_nav;
   SettingsController &m_settings;
+  ExtensionBackgroundRunner *m_backgroundRunner;
 };

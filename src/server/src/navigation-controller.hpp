@@ -222,7 +222,8 @@ public:
    * We need to rework the search accessory system anyways, as the ownership rules
    * are beyond confusing.
    */
-  void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt);
+  void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt,
+               const CloseWindowOptions &closeOptions = {});
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
