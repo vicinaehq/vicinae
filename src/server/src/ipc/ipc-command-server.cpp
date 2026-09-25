@@ -332,8 +332,8 @@ ipc_gen::Result<void>::Future IpcService::browserTabsChanged(std::vector<ipc_gen
 // IpcCommandServer
 
 IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
-    : QObject(parent), m_ctx(*ctx), m_rpc(m_transport), m_service(m_rpc, *ctx),
-      m_ipcServer(m_rpc, &m_service) {
+    : QObject(parent), m_ctx(*ctx), m_rpc(m_transport), m_service(new IpcService(m_rpc, *ctx)),
+      m_ipcServer(m_rpc, m_service) {
 
   connect(
       ctx->services->browserExtension(), &BrowserExtensionService::tabActionRequested, this,
@@ -350,10 +350,10 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
 
         switch (action) {
         case BrowserExtensionService::TabAction::Focus:
-          m_service.emitfocusTab({.tabId = tabId});
+          m_service->emitfocusTab({.tabId = tabId});
           break;
         case BrowserExtensionService::TabAction::Close:
-          m_service.emitcloseTab({.tabId = tabId});
+          m_service->emitcloseTab({.tabId = tabId});
           break;
         }
 
@@ -368,12 +368,12 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
   if (clientInfoIt == m_clients.end()) return;
 
   m_transport.conn = conn;
-  m_service.setCallerInfo(&(*clientInfoIt));
+  m_service->setCallerInfo(&(*clientInfoIt));
 
   // qDebug() << "IPC incoming:" << frame.toByteArray();
 
   m_ipcServer.route({frame.data(), static_cast<size_t>(frame.size())});
-  m_service.setCallerInfo(nullptr);
+  m_service->setCallerInfo(nullptr);
   m_transport.conn = nullptr;
 }
 
