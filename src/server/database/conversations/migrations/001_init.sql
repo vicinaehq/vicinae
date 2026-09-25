@@ -47,7 +47,7 @@ CREATE TABLE message (
     id INTEGER PRIMARY KEY,
     turn_id TEXT NOT NULL REFERENCES turn(id) ON DELETE CASCADE,
     position INTEGER NOT NULL,
-    role TEXT NOT NULL CHECK(role IN ('system', 'developer', 'user', 'assistant', 'tool')),
+    role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'tool')),
     UNIQUE(turn_id, position)
 );
 

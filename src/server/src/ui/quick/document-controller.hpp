@@ -8,6 +8,7 @@
 #include <vector>
 #include <optional>
 #include "document-model.hpp"
+#include "document-search.hpp"
 
 class DocumentSelection;
 
@@ -23,6 +24,7 @@ class DocumentController : public QObject {
   Q_PROPERTY(QQuickItem *typingTarget READ typingTarget WRITE setTypingTarget NOTIFY typingTargetChanged)
   Q_PROPERTY(bool hasSelection READ hasSelection NOTIFY hasSelectionChanged)
   Q_PROPERTY(bool selecting READ selecting NOTIFY selectingChanged)
+  Q_PROPERTY(DocumentSearch *search READ search CONSTANT)
 
 public:
   Q_INVOKABLE void selectAll();
@@ -51,6 +53,9 @@ public:
   QQuickItem *typingTarget() const { return m_typingTarget; }
   void setTypingTarget(QQuickItem *item);
   bool eventFilter(QObject *obj, QEvent *event) override;
+  DocumentSearch *search() { return &m_search; }
+  std::optional<QRectF> positionRectangle(int row, int part, int position) const;
+  void revealHorizontalPosition(int row, int part, int position, int length);
 
   struct ReadingAnchor {
     QPersistentModelIndex index;
@@ -90,6 +95,7 @@ private:
   void applyCurrentSelection(bool force = false);
   void scheduleRestore();
   QPointer<DocumentModel> m_model;
+  DocumentSearch m_search;
   bool m_restorePending = false;
   bool m_applyingSelection = false;
   void updateInputMethod();

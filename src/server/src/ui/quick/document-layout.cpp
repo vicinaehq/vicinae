@@ -557,3 +557,47 @@ void DocumentLayout::positionAtEnd() {
   m_positionAtEnd = true;
   forceLayout();
 }
+
+void DocumentLayout::positionAt(int row, int part, int position, int length) {
+  if (m_embedded || !m_viewport || !m_model || row < 0 || row >= count()) return;
+  m_positionAtEnd = false;
+  QMetaObject::invokeMethod(m_viewport, "cancelFlick");
+  const auto inset = m_viewport->property("topInset").toReal() + 12;
+  if (auto *controller = document()) {
+    if (const auto rect = controller->positionRectangle(row, part, position)) {
+      controller->revealHorizontalPosition(row, part, position, length);
+      const auto bottom = m_viewport->height() - m_viewport->property("bottomInset").toReal() - 12;
+      if (rect->top() < inset || rect->bottom() > bottom) {
+        setContentY(m_viewport->property("contentY").toReal() + rect->top() - inset);
+        forceLayout();
+      }
+      return;
+    }
+  }
+  layoutVisible(Anchor{m_model->index(row, 0), -inset, {}, {}});
+  auto *item = m_rows[row].item.data();
+  if (!item) return;
+  polishTree(item);
+  for (auto *nested : item->findChildren<DocumentLayout *>()) {
+    if (!nested->m_embedded || !nested->m_model || nested->m_firstPartRole.isEmpty()) continue;
+    const int role = nested->m_model->roleNames().key(nested->m_firstPartRole, -1);
+    if (role < 0) continue;
+    const auto rows = std::views::iota(0, nested->count());
+    const auto after = std::ranges::upper_bound(rows, part, {}, [nested, role](int index) {
+      return nested->m_model->data(nested->m_model->index(index, 0), role).toInt();
+    });
+    const int nestedRow = int(std::ranges::distance(rows.begin(), after)) - 1;
+    if (nestedRow < 0) continue;
+    nested->rebuildGeometry();
+    const auto top = nested->mapToItem(m_viewport, QPointF(0, nested->m_rows[nestedRow].y)).y();
+    setContentY(m_viewport->property("contentY").toReal() + top - inset);
+    nested->forceLayout();
+    polishTree(item);
+  }
+  if (auto *controller = document()) {
+    controller->revealHorizontalPosition(row, part, position, length);
+    if (const auto rect = controller->positionRectangle(row, part, position))
+      setContentY(m_viewport->property("contentY").toReal() + rect->top() - inset);
+  }
+  forceLayout();
+}
