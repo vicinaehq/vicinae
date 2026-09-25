@@ -1,0 +1,12 @@
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextsymbolnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextsymbolnode.cpp
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextsymbolnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextsymbolnode.cpp
+@@ -662,6 +662,8 @@
+         symbols["longleftrightarrow"]=UprightSymbolUnicode(QChar(0x27F7)).addUprightHtml("&longleftrightarrow;");
+         symbols["Longleftarrow"]=UprightSymbolUnicode(QChar(0x27F8)).addUprightHtml("&DoubleLongLeftArrow;");
+         symbols["Longrightarrow"]=UprightSymbolUnicode(QChar(0x27F9)).addUprightHtml("&DoubleLongRightArrow;");
++        symbols["impliedby"]=symbols["Longleftarrow"];
++        symbols["implies"]=symbols["Longrightarrow"];
+         symbols["Longleftrightarrow"]=UprightSymbolUnicode(QChar(0x27FA)).addUprightHtml("&Longleftrightarrow;");
+         symbols["leftharpoondown"]=UprightSymbolUnicode(QChar(0x21BD)).addUprightHtml("&leftharpoondown;");
+         symbols["leftharpoonup"]=UprightSymbolUnicode(QChar(0x21BC)).addUprightHtml("&LeftVector;");
