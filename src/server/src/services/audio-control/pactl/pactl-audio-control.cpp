@@ -19,7 +19,7 @@ struct PactlSink {
   bool mute = false;
   std::map<std::string, PactlVolume> volume;
   std::vector<PactlPort> ports;
-  std::string active_port;
+  std::optional<std::string> active_port;
 };
 
 template <> struct glz::meta<PactlVolume> : glz::snake_case {};
@@ -39,7 +39,7 @@ static AudioSink toAudioSink(const PactlSink &src, std::string_view defaultName)
   }
 
   for (const auto &port : src.ports) {
-    if (port.name == src.active_port) {
+    if (src.active_port && port.name == *src.active_port) {
       sink.activePort = QString::fromStdString(port.description);
       break;
     }
