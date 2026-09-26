@@ -80,6 +80,6 @@ private:
 
   IpcTransport m_transport;
   ipc_gen::RpcTransport m_rpc;
-  IpcService m_service;
+  IpcService *m_service;
   ipc_gen::Server m_ipcServer;
 };
