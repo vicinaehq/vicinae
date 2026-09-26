@@ -1,0 +1,121 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Vicinae.Documents
+
+Rectangle {
+    id: root
+    readonly property DocumentStyle style: root.DocumentScope.style
+
+    property var blockData: ({})
+    property MarkdownModel mdModel: null
+    property int blockIndex: -1
+    property real fontSize: root.style.smallerFontSize
+    property real lineHeight: 1.0
+
+    readonly property string language: blockData.language ?? ""
+    readonly property string code: blockData.code ?? ""
+    readonly property string highlightedHtml: blockData.highlightedHtml ?? ""
+
+    width: parent?.width ?? 0
+    implicitHeight: col.implicitHeight
+    radius: 6
+    color: root.style.codeBackground
+    border.width: 1
+    border.color: root.style.codeBorder
+
+    ColumnLayout {
+        id: col
+        anchors.fill: parent
+        spacing: 0
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: headerRow.implicitHeight + 16
+            color: "transparent"
+            visible: true
+
+            RowLayout {
+                id: headerRow
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                anchors.topMargin: 8
+                anchors.bottomMargin: 8
+                spacing: 5
+
+                Text {
+                    text: root.language
+                    color: root.style.textMuted
+                    font.pointSize: root.style.smallerFontSize * 0.9
+                    visible: root.language.length > 0
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                Text {
+                    id: copyBtn
+                    text: copyTimer.running ? qsTr("Copied!") : qsTr("Copy")
+                    color: copyMouse.containsMouse ? root.style.foreground : root.style.textMuted
+                    font.pointSize: root.style.smallerFontSize * 0.9
+
+                    MouseArea {
+                        id: copyMouse
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: {
+                            if (root.mdModel)
+                                root.mdModel.copyCodeBlock(root.blockIndex);
+                            copyTimer.restart();
+                        }
+                    }
+
+                    Timer {
+                        id: copyTimer
+                        interval: 2000
+                    }
+                }
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: root.style.divider
+            }
+        }
+
+        Flickable {
+            id: codeFlickable
+            Layout.fillWidth: true
+            Layout.margins: 10
+            implicitHeight: codeEdit.contentHeight
+            contentWidth: Math.max(width, codeEdit.contentWidth)
+            contentHeight: codeEdit.contentHeight
+            clip: true
+            interactive: false
+            boundsBehavior: Flickable.StopAtBounds
+
+            ScrollBar.horizontal: DocumentScrollBar {
+                policy: codeFlickable.contentWidth > codeFlickable.width ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            }
+
+            DocumentText {
+                id: codeEdit
+                width: Math.max(codeFlickable.width, contentWidth)
+                textFormat: TextEdit.RichText
+                wrapMode: TextEdit.NoWrap
+                color: root.style.foreground
+                font.family: root.style.monoFontFamily
+                fontSize: root.fontSize
+                lineHeight: root.lineHeight
+                text: root.highlightedHtml
+            }
+        }
+    }
+}

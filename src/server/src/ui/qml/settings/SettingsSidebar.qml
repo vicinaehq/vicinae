@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 Item {
     id: root
@@ -161,7 +162,7 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
             model: Settings.sidebarModel
 
-            ViciWheelHandler {
+            Scrolling.WheelHandler {
                 target: navList
             }
 

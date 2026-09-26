@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 Item {
     id: root
@@ -67,7 +68,7 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
             visible: root.host.isReady
 
-            ViciWheelHandler {
+            Scrolling.WheelHandler {
                 target: flickable
             }
 

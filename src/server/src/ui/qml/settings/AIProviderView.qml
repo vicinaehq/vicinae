@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 // One provider: details, configuration fields and models.
 Flickable {
@@ -19,7 +20,7 @@ Flickable {
     topMargin: Style.contentTopInset
     Component.onCompleted: contentY = -topMargin
 
-    ViciWheelHandler {
+    Scrolling.WheelHandler {
         target: root
     }
 

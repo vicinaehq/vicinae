@@ -1,11 +1,11 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
-import Vicinae
+import Vicinae.Documents as Documents
 
 QtObject {
     id: root
-    required property DocumentView view
+    required property Documents.DocumentView view
     property bool following: true
     property ScrollBar scrollbar: null
     readonly property bool scrollbarPressed: scrollbar?.pressed ?? false

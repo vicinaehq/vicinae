@@ -10,7 +10,7 @@
 
 class QQmlEngine;
 
-// VICINAE_DEV_MODE only: serves the Vicinae module from the source tree and reloads on change
+// VICINAE_DEV_MODE only: serves QML modules from source and reloads on change
 class QmlDevLoader : public QObject, public QQmlAbstractUrlInterceptor {
   Q_OBJECT
 
@@ -20,13 +20,13 @@ public:
   QUrl intercept(const QUrl &url, DataType type) override;
 
 private:
-  explicit QmlDevLoader(QString sourceDir);
+  explicit QmlDevLoader(QHash<QString, QString> sources);
   static QmlDevLoader *instance();
 
   void rescan();
   void reload();
 
-  QString m_sourceDir;
+  QHash<QString, QString> m_sources;
   QHash<QString, QString> m_files;
   QFileSystemWatcher m_watcher;
   QTimer m_debounce;

@@ -10,14 +10,17 @@
 #include <QGuiApplication>
 #include <QObject>
 #include <QPoint>
-#include <QPropertyAnimation>
 #include <QQueue>
 #include <QQuickItem>
 #include <QStyleHints>
 #include <QTimer>
+#include <QVariantAnimation>
 #include <QtQml/qqmlregistration.h>
 
 class QWheelEvent;
+
+namespace vicinae::scrolling {
+
 class WheelHandler;
 
 /*!
@@ -26,7 +29,7 @@ class WheelHandler;
 class KirigamiWheelEvent : public QObject
 {
     Q_OBJECT
-    QML_NAMED_ELEMENT(ViciWheelEvent)
+    QML_NAMED_ELEMENT(WheelEvent)
     QML_UNCREATABLE("")
 
     Q_PROPERTY(qreal x READ x CONSTANT FINAL)
@@ -44,7 +47,7 @@ class KirigamiWheelEvent : public QObject
      * // This handler handles automatically the scroll of
      * // flickableItem, unless Ctrl is pressed, in this case the
      * // app has custom code to handle Ctrl+wheel zooming
-     * ViciWheelHandler {
+     * Scrolling.WheelHandler {
      *   target: flickableItem
      *   blockTargetWheel: true
      *   scrollFlickableTarget: true
@@ -119,7 +122,7 @@ public:
 class WheelHandler : public QObject
 {
     Q_OBJECT
-    QML_NAMED_ELEMENT(ViciWheelHandler)
+    QML_NAMED_ELEMENT(WheelHandler)
 
     /*!
      * This property holds the Qt Quick Flickable that the WheelHandler will control.
@@ -275,7 +278,7 @@ Q_SIGNALS:
      * is handled. Accepting the wheel event in the onWheel signal handler prevents scrolling
      * from happening.
      */
-    void wheel(KirigamiWheelEvent *wheel);
+    void wheel(vicinae::scrolling::KirigamiWheelEvent *wheel);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -284,9 +287,15 @@ private Q_SLOTS:
     void _k_rebindScrollBars();
 
 private:
+    struct ScrollAnimation : QVariantAnimation
+    {
+        qreal previousValue = 0;
+    };
+
     void setScrolling(bool scrolling);
+    void startScrollAnimation(ScrollAnimation &animation, qreal distance, int duration);
     void startInertiaScrolling();
-    void clampInertiaAnimation(QPropertyAnimation &animation, bool vertical);
+    void clampScrollAnimation(ScrollAnimation &animation, bool vertical);
     bool scrollFlickable(QPointF pixelDelta, QPointF angleDelta = {}, Qt::KeyboardModifiers modifiers = Qt::NoModifier);
 
     QPointer<QQuickItem> m_flickable;
@@ -323,9 +332,11 @@ private:
     QQueue<uint64_t> m_timestamps;
 
     // Smooth scrolling
-    QPropertyAnimation m_xScrollAnimation{nullptr, "contentX"};
-    QPropertyAnimation m_yScrollAnimation{nullptr, "contentY"};
-    QPropertyAnimation m_xInertiaScrollAnimation{nullptr, "contentX"};
-    QPropertyAnimation m_yInertiaScrollAnimation{nullptr, "contentY"};
+    ScrollAnimation m_xScrollAnimation;
+    ScrollAnimation m_yScrollAnimation;
+    ScrollAnimation m_xInertiaScrollAnimation;
+    ScrollAnimation m_yInertiaScrollAnimation;
     bool m_wasTouched = false;
 };
+
+} // namespace vicinae::scrolling

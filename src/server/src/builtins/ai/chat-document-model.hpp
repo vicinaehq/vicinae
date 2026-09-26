@@ -3,9 +3,9 @@
 #include <QPointer>
 #include <vector>
 #include "chat-conversation-model.hpp"
-#include "ui/quick/markdown-model.hpp"
+#include <document/markdown-model.hpp>
 
-class ChatDocumentModel : public DocumentModel {
+class ChatDocumentModel : public vicinae::document::DocumentModel {
   Q_OBJECT
 
 signals:
@@ -29,12 +29,12 @@ public:
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
   QHash<int, QByteArray> roleNames() const override;
-  std::span<const DocumentPart> documentParts(int row) const override;
+  std::span<const vicinae::document::DocumentPart> documentParts(int row) const override;
   TextSnapshot textSnapshot(int row) const override;
 
 private:
   struct Content {
-    QPointer<MarkdownModel> markdown;
+    QPointer<vicinae::document::MarkdownModel> markdown;
     QVariantMap tool;
     int sourcePart = 0;
     int offset = 0;
@@ -42,8 +42,8 @@ private:
   };
   struct Exchange {
     std::vector<Content> contents;
-    std::vector<DocumentPart> query;
-    std::vector<DocumentPart> error;
+    std::vector<vicinae::document::DocumentPart> query;
+    std::vector<vicinae::document::DocumentPart> error;
     QVariantList attachments;
     int sourceRow = 0;
     int offset = 0;

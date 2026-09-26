@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Vicinae
+import Vicinae.Documents as Documents
 
 Rectangle {
     id: root
@@ -38,7 +39,7 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-        enabled: !root.DocumentScope.measuring
+        enabled: !root.Documents.DocumentScope.measuring
         acceptedButtons: Qt.LeftButton
         cursorShape: root.attachment.content.image ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: root.openPreview()
@@ -49,7 +50,7 @@ Rectangle {
         y: 8
         width: 48
         height: 48
-        source: root.DocumentScope.measuring || root.attachment.loading ? "" : root.attachment.preview
+        source: root.Documents.DocumentScope.measuring || root.attachment.loading ? "" : root.attachment.preview
         fillMode: ViciImage.PreserveAspectFit
         visible: !root.attachment.loading
     }

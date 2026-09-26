@@ -1,9 +1,9 @@
 #pragma once
 #include <QColor>
 #include <QtQml/qqmlregistration.h>
-#include "ui/quick/document-highlighter.hpp"
+#include <document/document-highlighter.hpp>
 
-class MatchHighlighter : public DocumentHighlighter {
+class MatchHighlighter : public vicinae::document::DocumentHighlighter {
   Q_OBJECT
   QML_ELEMENT
   Q_PROPERTY(QStringList terms READ terms WRITE setTerms NOTIFY termsChanged)

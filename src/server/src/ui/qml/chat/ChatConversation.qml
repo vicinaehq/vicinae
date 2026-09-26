@@ -53,6 +53,7 @@ Item {
 
     DocumentFindBar {
         id: findBar
+        z: 1
         anchors.top: parent.top
         anchors.topMargin: 6
         anchors.right: parent.right

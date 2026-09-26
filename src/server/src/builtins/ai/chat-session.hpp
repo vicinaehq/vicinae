@@ -28,7 +28,7 @@ class ChatSession : public QObject {
   Q_PROPERTY(QString title READ title NOTIFY conversationChanged)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_PROPERTY(QString draft READ draft WRITE setDraft NOTIFY draftChanged)
-  Q_PROPERTY(DocumentModel *documentModel READ documentModel CONSTANT)
+  Q_PROPERTY(vicinae::document::DocumentModel *documentModel READ documentModel CONSTANT)
   Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
   Q_PROPERTY(bool awaitingResponse READ awaitingResponse NOTIFY activityChanged)
   Q_PROPERTY(bool thinking READ thinking NOTIFY activityChanged)
@@ -93,7 +93,7 @@ public:
     emit draftChanged();
   }
 
-  DocumentModel *documentModel() { return &m_document; }
+  vicinae::document::DocumentModel *documentModel() { return &m_document; }
   bool streaming() const { return m_agent && m_agent->running(); }
   bool awaitingResponse() const;
   bool thinking() const { return streaming() && m_agent->activity() == AI::ResponseActivity::Thinking; }

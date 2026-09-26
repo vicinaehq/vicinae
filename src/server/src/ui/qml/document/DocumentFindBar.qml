@@ -3,10 +3,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Documents as Documents
 
 Rectangle {
     id: root
-    required property DocumentSearch search
+    required property Documents.DocumentSearch search
     property string placeholder: qsTr("Find in document…")
     signal closed
     visible: false

@@ -1,8 +1,10 @@
 #include <algorithm>
+#include <document/markdown-document.hpp>
 #include "chat-document-model.hpp"
+#include "ui/quick/document-integration.hpp"
 
 ChatDocumentModel::ChatDocumentModel(ChatConversationModel *conversation, QObject *parent)
-    : DocumentModel(parent), m_conversation(conversation) {
+    : vicinae::document::DocumentModel(parent), m_conversation(conversation) {
   connect(conversation, &QAbstractItemModel::rowsInserted, this,
           [this](const QModelIndex &, int first, int last) {
             for (int row = first; row <= last; ++row)
@@ -54,10 +56,12 @@ QVariant ChatDocumentModel::data(const QModelIndex &index, int role) const {
     if (content) return QString{};
     return exchange.error.empty() ? QString{} : exchange.error.front().text;
   case BlockTypeRole:
-    return markdown ? content->markdown->data(content->markdown->index(local), MarkdownModel::BlockTypeRole)
-                    : QVariant::fromValue(Markdown::BlockType::Paragraph);
+    return markdown ? content->markdown->data(content->markdown->index(local),
+                                              vicinae::document::MarkdownModel::BlockTypeRole)
+                    : QVariant::fromValue(vicinae::document::Markdown::BlockType::Paragraph);
   case BlockDataRole:
-    return markdown ? content->markdown->data(content->markdown->index(local), MarkdownModel::BlockDataRole)
+    return markdown ? content->markdown->data(content->markdown->index(local),
+                                              vicinae::document::MarkdownModel::BlockDataRole)
                     : QVariant(QVariantMap{});
   case BlockIndexRole:
     return local;
@@ -108,7 +112,7 @@ QHash<int, QByteArray> ChatDocumentModel::roleNames() const {
           {ToolRole, "tool"}};
 }
 
-std::span<const DocumentPart> ChatDocumentModel::documentParts(int row) const {
+std::span<const vicinae::document::DocumentPart> ChatDocumentModel::documentParts(int row) const {
   const auto &exchange = exchangeAt(row);
   if (row == exchange.offset) return exchange.query;
   const auto *content = contentAt(exchange, row);
@@ -118,11 +122,11 @@ std::span<const DocumentPart> ChatDocumentModel::documentParts(int row) const {
   return {};
 }
 
-DocumentModel::TextSnapshot ChatDocumentModel::textSnapshot(int row) const {
+vicinae::document::DocumentModel::TextSnapshot ChatDocumentModel::textSnapshot(int row) const {
   const auto &exchange = exchangeAt(row);
   const auto *content = row == exchange.offset ? nullptr : contentAt(exchange, row);
   if (content && content->markdown) return content->markdown->textSnapshot(row - content->offset);
-  return DocumentModel::textSnapshot(row);
+  return vicinae::document::DocumentModel::textSnapshot(row);
 }
 
 void ChatDocumentModel::updateOffsets() {
@@ -163,14 +167,16 @@ void ChatDocumentModel::addContent(int row, int part) {
       std::holds_alternative<ChatConversationModel::Response>(m_conversation->contents(row)[part]);
   const int offset = exchange.offset + exchange.blocks + 1;
   if (!response) beginInsertRows({}, offset, offset);
-  exchange.contents.reserve(exchange.contents.size() + 1);
-  auto *markdown = response ? new MarkdownModel(this) : nullptr;
+  if (exchange.contents.size() == exchange.contents.capacity())
+    exchange.contents.reserve(std::max<std::size_t>(4, exchange.contents.size() * 2));
+  auto *markdown = response ? new vicinae::document::MarkdownModel(this) : nullptr;
+  if (markdown) markdown->setStyle(QmlEngineScope::global<DocumentIntegration>()->style());
   exchange.contents.emplace_back(
       Content{.markdown = markdown, .sourcePart = part, .offset = offset, .rows = response ? 0 : 1});
   updateOffsets();
   if (!response) endInsertRows();
   if (markdown) {
-    connect(markdown, &MarkdownModel::loadingChanged, this, [this, markdown] {
+    connect(markdown, &vicinae::document::MarkdownModel::loadingChanged, this, [this, markdown] {
       m_pendingParses += markdown->loading() ? 1 : -1;
       emit loadingChanged();
     });
@@ -298,7 +304,7 @@ void ChatDocumentModel::updateExchange(int row) {
   exchange.error.clear();
   if (!error.isEmpty()) {
     exchange.error.reserve(1);
-    exchange.error.emplace_back(DocumentPart{error});
+    exchange.error.emplace_back(vicinae::document::DocumentPart{error});
   }
   emit dataChanged(index(exchange.offset), index(exchange.offset + exchange.blocks + 1),
                    {PendingRole, FailedRole, TextRole});

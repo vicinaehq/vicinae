@@ -157,11 +157,6 @@ if (NOT USE_SYSTEM_GLAZE)
 	import_glaze()
 endif()
 
-if (NOT USE_SYSTEM_KF6)
-	include(KF6)
-	import_kf6()
-endif()
-
 # The appimage bundles its own libraries (including the GCC runtime) in usr/lib.
 # linuxdeploy only patches a RUNPATH into the usr/bin copies it deploys, so install
 # every binary with a self-relative RUNPATH so the libexec helpers resolve the
@@ -182,6 +177,7 @@ find_package(glaze)
 add_subdirectory(${VENDOR_DIR}/sqlcipher)
 add_subdirectory(${VENDOR_DIR}/pugixml)
 add_subdirectory(${VENDOR_DIR}/zip)
+add_subdirectory(${VENDOR_DIR}/kirigami-wheelhandler)
 
 if (WIN32)
 	add_subdirectory(${VENDOR_DIR}/everything-sdk3)
@@ -316,9 +312,6 @@ configure_file(
 	@ONLY
 )
 
-set(CMARK_LIBRARY "cmark-gfm")
-set(CMARK_EXT_LIBRARY "cmark-gfm-extensions")
-
 if (NOT USE_SYSTEM_QT_KEYCHAIN)
 	include(QtKeychain)
 	checkout_qt_keychain()
@@ -329,14 +322,12 @@ if (NOT USE_SYSTEM_LAYER_SHELL)
 	checkout_layer_shell_qt()
 endif()
 
-include(MathText)
-
 if (NOT USE_SYSTEM_CMARK_GFM)
 	include(CMark)
 	setup_vendored_cmark()
-  set(CMARK_LIBRARY "libcmark-gfm_static")
-  set(CMARK_EXT_LIBRARY "libcmark-gfm-extensions_static")
 endif()
+
+add_subdirectory(src/lib/document)
 
 if (TYPESCRIPT_EXTENSIONS)
 	add_subdirectory(src/typescript)

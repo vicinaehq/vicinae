@@ -5,7 +5,8 @@
 // mirrors the grammar in utils/placeholder.cpp
 enum class State : std::uint8_t { Normal, Escape, Id, KeyStart, Key, ValueStart, Value, ValueQuoted };
 
-PlaceholderHighlighter::PlaceholderHighlighter(QObject *parent) : DocumentHighlighter(parent) {}
+PlaceholderHighlighter::PlaceholderHighlighter(QObject *parent)
+    : vicinae::document::DocumentHighlighter(parent) {}
 
 void PlaceholderHighlighter::setColor(QColor &slot, const QColor &color) {
   if (slot == color) return;

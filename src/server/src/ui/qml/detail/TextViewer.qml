@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 ScrollViewport {
     id: root
@@ -41,7 +42,7 @@ ScrollViewport {
 
         Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
 
-        ViciWheelHandler {
+        Scrolling.WheelHandler {
             target: root.flickable
         }
 

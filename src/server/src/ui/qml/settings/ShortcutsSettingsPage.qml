@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 Item {
     id: root
@@ -42,7 +43,7 @@ Item {
         contentHeight: contentColumn.implicitHeight
         contentWidth: width
 
-        ViciWheelHandler {
+        Scrolling.WheelHandler {
             target: flickable
         }
 

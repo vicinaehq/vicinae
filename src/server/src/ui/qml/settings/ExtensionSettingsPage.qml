@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 Item {
     id: root
@@ -99,7 +100,7 @@ Item {
                 Qt.callLater(() => scrollToIndex(pendingScrollRow));
         }
 
-        ViciWheelHandler {
+        Scrolling.WheelHandler {
             target: cmdFlickable
         }
 

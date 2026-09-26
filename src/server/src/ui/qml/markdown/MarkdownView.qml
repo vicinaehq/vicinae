@@ -1,117 +1,43 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import Vicinae
+import Vicinae.Documents as Documents
 
-Item {
+ScrollViewport {
     id: root
-    required property MarkdownModel model
+    required property Documents.MarkdownModel model
     property int contentPadding: 12
-    property int topPadding: contentPadding
     property string fontFamily: ""
-    property alias contentHeight: view.contentHeight
     readonly property alias document: view.document
-    property bool _autoScroll: false
-    focus: true
+    readonly property alias contentHeight: view.contentHeight
+    topPadding: contentPadding
+    bottomPadding: contentPadding
+    flickable: view.flickable
 
     function scrollUp() {
-        view.flick(0, 800);
+        view.scrollUp();
     }
     function scrollDown() {
-        view.flick(0, -800);
-    }
-    Keys.onUpPressed: scrollUp()
-    Keys.onDownPressed: scrollDown()
-    Keys.onPressed: event => {
-        if (event.key === Qt.Key_PageUp)
-            view.flick(0, 2400);
-        else if (event.key === Qt.Key_PageDown)
-            view.flick(0, -2400);
-        else
-            event.accepted = false;
+        view.scrollDown();
     }
 
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.NoButton
-        cursorShape: Qt.IBeamCursor
-    }
-
-    ScrollViewport {
-        anchors.fill: parent
-        flickable: view
-        topPadding: root.topPadding
-        bottomPadding: root.contentPadding
-        DocumentView {
-            id: view
-            anchors.fill: parent
-            documentModel: root.model
-            layoutKey: [Theme.fontFamily, Theme.monoFontFamily, Theme.regularFontSize, Theme.smallerFontSize, root.fontFamily, root.contentPadding]
-            topMargin: root.topPadding
-            bottomMargin: root.contentPadding
-            ViciWheelHandler {
-                target: view
-            }
-            ScrollBar.vertical: ViciScrollBar {
-                policy: ScrollBar.AsNeeded
-            }
-            delegate: Item {
-                id: blockDelegate
-                required property int index
-                required property int blockType
-                required property var blockData
-                DocumentScope.row: index
-                width: view.width
-                height: block.implicitHeight
-                MarkdownBlock {
-                    id: block
-                    x: root.contentPadding
-                    width: parent.width - root.contentPadding * 2
-                    blockType: blockDelegate.blockType
-                    blockData: blockDelegate.blockData
-                    blockIndex: blockDelegate.index
-                    mdModel: root.model
-                    fontFamily: root.fontFamily
-                    maxImageHeight: root.height * 0.7
-                }
-            }
-            onContentHeightChanged: {
-                if (root._autoScroll)
-                    Qt.callLater(() => {
-                        view.scrollToEnd();
-                        root._autoScroll = false;
-                    });
-            }
-        }
-    }
-    Shortcut {
-        sequences: [StandardKey.Copy]
-        enabled: (root.activeFocus || view.activeFocus) && root.document.hasSelection
-        onActivated: root.document.copy()
-    }
-    Shortcut {
-        sequences: [StandardKey.SelectAll]
-        enabled: root.activeFocus || view.activeFocus
-        onActivated: root.document.selectAll()
-    }
-    Connections {
-        target: view.document
-        function onLinkActivated(link) {
-            root.model.openLink(link);
-        }
-    }
-    ContextMenu.menu: DocumentSelectionMenu {
-        controller: root.document
-        onAboutToShow: view.forceActiveFocus()
-    }
-    Connections {
+    Binding {
         target: root.model
-        function onBlocksAppended() {
-            root._autoScroll = view.atYEnd && !view.document.hasSelection;
+        property: "style"
+        value: DocumentIntegration.style
+    }
+    Documents.MarkdownView {
+        id: view
+        anchors.fill: parent
+        model: root.model
+        contentPadding: root.contentPadding
+        topPadding: root.topPadding
+        topInset: root.topInset
+        bottomInset: root.bottomInset
+        fontFamily: root.fontFamily
+        imageDelegate: Component {
+            VicinaeDocumentImage {}
         }
-        function onModelReset() {
-            view.scrollToBeginning();
-            root._autoScroll = false;
-        }
+        onLinkActivated: link => DocumentIntegration.openLink(link)
     }
 }

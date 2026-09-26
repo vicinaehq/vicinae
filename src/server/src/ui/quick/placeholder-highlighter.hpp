@@ -1,9 +1,9 @@
 #pragma once
 #include <QColor>
 #include <QtQml/qqmlregistration.h>
-#include "ui/quick/document-highlighter.hpp"
+#include <document/document-highlighter.hpp>
 
-class PlaceholderHighlighter : public DocumentHighlighter {
+class PlaceholderHighlighter : public vicinae::document::DocumentHighlighter {
   Q_OBJECT
   QML_ELEMENT
   Q_PROPERTY(QColor braceColor READ braceColor WRITE setBraceColor NOTIFY colorsChanged)

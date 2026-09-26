@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 Item {
     id: root
@@ -16,7 +17,7 @@ Item {
         topMargin: Style.contentTopInset
         Component.onCompleted: contentY = -topMargin
 
-        ViciWheelHandler {
+        Scrolling.WheelHandler {
             target: flickable
         }
 

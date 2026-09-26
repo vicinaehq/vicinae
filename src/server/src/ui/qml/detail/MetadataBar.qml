@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 /// Displays key-value metadata rows with labels left-aligned and values right-aligned.
 /// Each entry in `model` is an object with a `type` field:
@@ -27,7 +28,7 @@ Item {
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
-            ViciWheelHandler {
+            Scrolling.WheelHandler {
                 target: flickable
             }
 

@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Vicinae
+import Vicinae.Documents as Documents
+import Vicinae.Scrolling as Scrolling
 
 Item {
     id: root
@@ -16,7 +18,7 @@ Item {
     property bool multiline: false
     property bool submitOnReturn: false
     property string accessibleLabel: ""
-    property DocumentHighlighter highlighter: null
+    property Documents.DocumentHighlighter highlighter: null
 
     // [{iconSource, title, value, template?, cursorOffset?}]
     property var completions: []
@@ -70,7 +72,7 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         interactive: root.multiline
 
-        ViciWheelHandler {
+        Scrolling.WheelHandler {
             target: root.multiline ? flickable : null
             blockTargetWheel: false
         }
@@ -110,7 +112,7 @@ Item {
                 if (root._suppressTextChanged)
                     return;
                 if (!root.multiline && text.includes("\n")) {
-                    TextDocumentEdit.replace(edit.textDocument, 0, edit.length, text.replace(/\n/g, " "));
+                    Documents.TextDocumentEdit.replace(edit.textDocument, 0, edit.length, text.replace(/\n/g, " "));
                     return;
                 }
                 root.textEdited();
@@ -180,7 +182,7 @@ Item {
             cursorPosition: edit.cursorPosition
             onCompletionAccepted: (start, end, replacement, newCursorPos) => {
                 root._suppressTextChanged = true;
-                TextDocumentEdit.replace(edit.textDocument, start, end, replacement);
+                Documents.TextDocumentEdit.replace(edit.textDocument, start, end, replacement);
                 edit.cursorPosition = newCursorPos;
                 root._suppressTextChanged = false;
                 root.textEdited();

@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 Popup {
     id: root
@@ -257,7 +258,7 @@ Popup {
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
-            ViciWheelHandler {
+            Scrolling.WheelHandler {
                 target: completionList
             }
 

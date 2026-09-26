@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 Flickable {
     id: root
@@ -15,7 +16,7 @@ Flickable {
 
     readonly property GeneralSettingsModel model: Settings.generalModel
 
-    ViciWheelHandler {
+    Scrolling.WheelHandler {
         target: root
     }
 

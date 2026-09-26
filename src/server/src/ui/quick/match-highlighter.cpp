@@ -18,7 +18,7 @@ static QString foldForMatch(QStringView text) {
   return out;
 }
 
-MatchHighlighter::MatchHighlighter(QObject *parent) : DocumentHighlighter(parent) {}
+MatchHighlighter::MatchHighlighter(QObject *parent) : vicinae::document::DocumentHighlighter(parent) {}
 
 void MatchHighlighter::documentChanged() {
   if (auto *doc = document()) {

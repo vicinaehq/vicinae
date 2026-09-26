@@ -5,10 +5,6 @@ set(TARGET vicinae-server)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools Multimedia)
 
-if (USE_SYSTEM_KF6)
-	find_package(KF6SyntaxHighlighting REQUIRED)
-endif()
-
 if (USE_SYSTEM_NUMEN)
 	find_package(numen REQUIRED)
 else()
@@ -26,8 +22,8 @@ list(APPEND LIBS
 	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
 	Qt6::QuickDialogs2 Qt6::QuickControls2 Qt6::Multimedia
-	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
-	JKQTMathText6
+	vicinae::document
+	vicinae::wheelhandler
 	zip
 	qt6keychain
 	pugixml
@@ -89,9 +85,6 @@ if (NOT SYSTEM_INFERENCE_ENGINES)
 	vicinae_fetch_inference_engines()
 endif()
 
-
-list(APPEND LIBS KF6::SyntaxHighlighting)
-
 if (NOT WIN32)
 	list(APPEND LIBS vicinae::xdgpp)
 endif()
@@ -124,7 +117,8 @@ if ((CMAKE_BUILD_TYPE MATCHES "Debug" OR VICINAE_DEV_MODE) AND NOT WIN32)
 endif()
 
 if (VICINAE_DEV_MODE)
-	add_compile_definitions(VICINAE_QML_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/ui/qml")
+	add_compile_definitions(VICINAE_QML_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/ui/qml"
+		VICINAE_DOCUMENT_QML_SOURCE_DIR="${CMAKE_SOURCE_DIR}/src/lib/document/qml")
 endif()
 
 if (WAYLAND_LAYER_SHELL)
@@ -786,36 +780,12 @@ set(SRCS
 	src/builtins/raycast/raycast-store-detail-host.cpp
 	src/builtins/vicinae/vicinae-store-detail-host.hpp
 	src/builtins/vicinae/vicinae-store-detail-host.cpp
-	src/ui/quick/math-renderer.hpp
-	src/ui/quick/math-renderer.cpp
-	src/ui/quick/markdown-math.hpp
-	src/ui/quick/markdown-math.cpp
-	src/ui/quick/markdown-model.hpp
-	src/ui/quick/markdown-model.cpp
-	src/ui/quick/attachment-model.cpp
+	src/ui/quick/document-integration.hpp
+	src/ui/quick/document-integration.cpp
 	src/ui/quick/attachment-model.hpp
+	src/ui/quick/attachment-model.cpp
 	src/ui/quick/attachment-content.cpp
 	src/ui/quick/attachment-content.hpp
-	src/ui/quick/document-controller.cpp
-	src/ui/quick/document-controller.hpp
-	src/ui/quick/document-layout.cpp
-	src/ui/quick/document-layout.hpp
-	src/ui/quick/document-model.hpp
-	src/ui/quick/document-search.hpp
-	src/ui/quick/document-search.cpp
-	src/ui/quick/document-search-highlighter.hpp
-	src/ui/quick/document-search-highlighter.cpp
-	src/ui/quick/document-scope.cpp
-	src/ui/quick/document-scope.hpp
-	src/ui/quick/document-selection.cpp
-	src/ui/quick/document-selection.hpp
-	src/ui/quick/document-table-model.cpp
-	src/ui/quick/document-table-model.hpp
-	src/ui/quick/document-text-images.cpp
-	src/ui/quick/document-text-images.hpp
-	src/ui/quick/index-model.hpp
-	src/ui/quick/markdown-document.cpp
-	src/ui/quick/markdown-document.hpp
 	src/ui/views/intro-view-host.hpp
 	src/ui/views/intro-view-host.cpp
 	src/builtins/font/font-browser-view-host.hpp
@@ -1370,7 +1340,6 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ViciToolTip.qml
 	src/ui/qml/views/ExtensionView.qml
 	src/ui/qml/views/MarkdownDetailView.qml
-	src/ui/qml/views/MarkdownDetailContent.qml
 	src/ui/qml/views/ChatSessionComposer.qml
 	src/ui/qml/views/ChatTranscript.qml
 	src/ui/qml/chat/ChatWindow.qml
@@ -1380,11 +1349,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/ChatDocumentBlock.qml
 	src/ui/qml/views/ChatScrollController.qml
 	src/ui/qml/markdown/MarkdownInline.qml
-	src/ui/qml/document/DocumentText.qml
-	src/ui/qml/document/DocumentView.qml
 	src/ui/qml/document/DocumentFindBar.qml
-	src/ui/qml/markdown/MarkdownBlock.qml
-	src/ui/qml/document/DocumentSelectionMenu.qml
 	src/ui/qml/controls/PulsingDots.qml
 	src/ui/qml/controls/ViciModal.qml
 	src/ui/qml/controls/AudioLevelMeter.qml
@@ -1425,19 +1390,9 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/StoreDetailView.qml
 	src/ui/qml/views/IntroView.qml
 	src/ui/qml/detail/ImageViewer.qml
+	src/ui/qml/markdown/VicinaeDocumentImage.qml
 	src/ui/qml/markdown/MarkdownView.qml
 	src/ui/qml/markdown/MarkdownText.qml
-	src/ui/qml/markdown/MdHeading.qml
-	src/ui/qml/markdown/MdMath.qml
-	src/ui/qml/markdown/MdParagraph.qml
-	src/ui/qml/markdown/MdCodeBlock.qml
-	src/ui/qml/markdown/MdList.qml
-	src/ui/qml/markdown/MdTable.qml
-	src/ui/qml/markdown/MdImage.qml
-	src/ui/qml/markdown/MdHorizontalRule.qml
-	src/ui/qml/markdown/MdHtmlBlock.qml
-	src/ui/qml/markdown/MdBlockquote.qml
-	src/ui/qml/markdown/MdCallout.qml
 	src/ui/qml/views/BrowseFontsView.qml
 	src/ui/qml/views/ScreenshotsView.qml
 	src/ui/qml/views/FontDemoView.qml
@@ -1545,32 +1500,19 @@ set(VICINAE_QML_SOURCES
 	src/ui/quick/vici-image-item.hpp
 	src/ui/quick/hover-activation.hpp
 	src/ui/quick/hover-activation.cpp
-	src/ui/quick/document-highlighter.hpp
-	src/ui/quick/document-highlighter.cpp
 	src/ui/quick/match-highlighter.hpp
 	src/ui/quick/match-highlighter.cpp
 	src/ui/quick/placeholder-highlighter.hpp
 	src/ui/quick/placeholder-highlighter.cpp
-	src/ui/quick/text-document-edit.hpp
-	src/ui/quick/text-document-edit.cpp
 	src/ui/quick/completion-model.hpp
 	src/ui/views/detail-list-view-host.hpp
 	src/ui/views/store-detail-host.hpp
-	src/ui/quick/markdown-model.hpp
-	src/ui/quick/markdown-document.hpp
-	src/ui/quick/document-controller.hpp
-	src/ui/quick/document-selection.hpp
-	src/ui/quick/document-scope.hpp
-	src/ui/quick/document-model.hpp
-	src/ui/quick/index-model.hpp
 	src/ui/quick/window-material-attached.hpp
 	src/ui/quick/window-material-attached.cpp
 	src/ui/quick/popup-placement-attached.hpp
 	src/ui/quick/popup-placement-attached.cpp
 	src/ui/quick/shortcut-inhibitor-attached.hpp
 	src/ui/quick/shortcut-inhibitor-attached.cpp
-	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler/wheelhandler.h
-	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler/wheelhandler.cpp
 )
 
 if(APPLE)
@@ -1588,13 +1530,14 @@ if(WIN32)
 	)
 endif()
 
+qt_policy(SET QTP0005 NEW)
 qt_add_qml_module(${TARGET}
 	URI Vicinae
 	VERSION 1.0
 	RESOURCE_PREFIX /qt/qml
 	QML_FILES ${VICINAE_QML_FILES}
 	SOURCES ${VICINAE_QML_SOURCES}
-	DEPENDENCIES QtQuick
+	DEPENDENCIES QtQuick TARGET vicinae-document TARGET vicinae-wheelhandler
 	NO_PLUGIN
 )
 
@@ -1642,16 +1585,7 @@ target_include_directories(${TARGET} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/root
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/ai
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/dictation
-	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler
 	${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
-FetchContent_GetProperties(jkqtmathtext SOURCE_DIR MATHTEXT_SOURCE_DIR)
-set_source_files_properties("${MATHTEXT_SOURCE_DIR}/LICENSE" PROPERTIES QT_RESOURCE_ALIAS "JKQTMathText.txt")
-set_source_files_properties("${MATHTEXT_SOURCE_DIR}/lib/jkqtmathtext/resources/xits/OFL.txt"
-	PROPERTIES QT_RESOURCE_ALIAS "XITS.txt")
-qt_add_resources(${TARGET} math_licenses
-	PREFIX "/licenses"
-	FILES "${MATHTEXT_SOURCE_DIR}/LICENSE" "${MATHTEXT_SOURCE_DIR}/lib/jkqtmathtext/resources/xits/OFL.txt"
-)
 
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
@@ -1738,11 +1672,7 @@ if(BUILD_TESTS)
 		tests/document-invariants.cpp
 		src/builtins/ai/chat-conversation-model.cpp
 		src/builtins/ai/chat-conversation-model.hpp
-		src/ui/quick/document-text-images.cpp
-		src/ui/quick/document-text-images.hpp
-		src/ui/quick/math-renderer.cpp
-		src/ui/quick/math-renderer.hpp
 	)
-	target_link_libraries(vicinae-document-tests PRIVATE JKQTMathText6 Qt6::Quick Qt6::Svg Qt6::Test)
+	target_link_libraries(vicinae-document-tests PRIVATE vicinae::document Qt6::Test)
 	target_compile_features(vicinae-document-tests PRIVATE cxx_std_23)
 endif()

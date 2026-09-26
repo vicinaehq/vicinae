@@ -6,7 +6,7 @@
 #include <QTextBoundaryFinder>
 #include <QTextDocument>
 #include "builtins/ai/chat-conversation-model.hpp"
-#include "ui/quick/document-text-images.hpp"
+#include <document/document-text-images.hpp>
 
 class DocumentInvariantsTest : public QObject {
   Q_OBJECT
@@ -53,7 +53,7 @@ private slots:
   }
 
   void imageDimensionsSurviveDecodedCacheEviction() {
-    DocumentImageCache cache(nullptr);
+    vicinae::document::DocumentImageCache cache(nullptr);
     const QUrl first("https://example.invalid/field-visit-0.png");
     QImage photograph(2048, 1536, QImage::Format_RGB32);
     photograph.fill(QColor("#467d91"));
@@ -63,7 +63,7 @@ private slots:
     QVERIFY(cache.image(first).isNull());
     QCOMPARE(cache.size(first), std::optional<QSize>(photograph.size()));
     QTextDocument document;
-    DocumentTextImages::measure(&document, &cache);
+    vicinae::document::DocumentTextImages::measure(&document, &cache);
     document.setHtml(QString("<img src=\"%1\" width=\"320\">").arg(first.toString()));
     document.setTextWidth(640);
     QVERIFY(document.size().height() >= 240);

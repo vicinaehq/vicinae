@@ -7,7 +7,9 @@
 
 #ifdef VICINAE_QML_SOURCE_DIR
 QmlDevLoader *QmlDevLoader::instance() {
-  static auto *loader = new QmlDevLoader(QStringLiteral(VICINAE_QML_SOURCE_DIR));
+  static auto *loader = new QmlDevLoader(
+      {{QStringLiteral("/qt/qml/Vicinae/"), QStringLiteral(VICINAE_QML_SOURCE_DIR)},
+       {QStringLiteral("/qt/qml/Vicinae/Documents/"), QStringLiteral(VICINAE_DOCUMENT_QML_SOURCE_DIR)}});
   return loader;
 }
 #endif
@@ -23,8 +25,8 @@ void QmlDevLoader::attach(QQmlEngine *engine, std::function<void()> reloadRoot) 
 #endif
 }
 
-QmlDevLoader::QmlDevLoader(QString sourceDir)
-    : QObject(QCoreApplication::instance()), m_sourceDir(std::move(sourceDir)) {
+QmlDevLoader::QmlDevLoader(QHash<QString, QString> sources)
+    : QObject(QCoreApplication::instance()), m_sources(std::move(sources)) {
   m_debounce.setSingleShot(true);
   m_debounce.setInterval(100);
   connect(&m_debounce, &QTimer::timeout, this, &QmlDevLoader::reload);
@@ -37,15 +39,14 @@ QmlDevLoader::QmlDevLoader(QString sourceDir)
   connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, schedule);
 
   rescan();
-  qInfo() << "QML dev mode: serving Vicinae module from" << m_sourceDir;
+  qInfo() << "QML dev mode: serving modules from" << m_sources;
 }
 
 QUrl QmlDevLoader::intercept(const QUrl &url, DataType type) {
   if (type != QmlFile && type != JavaScriptFile) return url;
-  if (url.scheme() != QLatin1String("qrc") || !url.path().startsWith(QLatin1String("/qt/qml/Vicinae/")))
-    return url;
+  if (url.scheme() != QLatin1String("qrc")) return url;
 
-  auto it = m_files.constFind(url.fileName());
+  auto it = m_files.constFind(url.path());
   if (it == m_files.constEnd()) return url;
   return QUrl::fromLocalFile(*it);
 }
@@ -53,19 +54,22 @@ QUrl QmlDevLoader::intercept(const QUrl &url, DataType type) {
 void QmlDevLoader::rescan() {
   m_files.clear();
 
-  QStringList paths{m_sourceDir};
-  QDirIterator it(m_sourceDir, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
-
-  while (it.hasNext()) {
-    const QFileInfo info = it.nextFileInfo();
-    if (info.isDir()) {
+  QStringList paths;
+  for (auto source = m_sources.cbegin(); source != m_sources.cend(); ++source) {
+    paths << source.value();
+    QDirIterator it(source.value(), QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot,
+                    QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+      const QFileInfo info = it.nextFileInfo();
+      if (info.isDir()) {
+        paths << info.filePath();
+        continue;
+      }
+      const QString suffix = info.suffix();
+      if (suffix != QLatin1String("qml") && suffix != QLatin1String("js")) continue;
+      m_files.insert(source.key() + info.fileName(), info.filePath());
       paths << info.filePath();
-      continue;
     }
-    const QString suffix = info.suffix();
-    if (suffix != QLatin1String("qml") && suffix != QLatin1String("js")) continue;
-    m_files.insert(info.fileName(), info.filePath());
-    paths << info.filePath();
   }
 
   const QStringList watched = m_watcher.files() + m_watcher.directories();

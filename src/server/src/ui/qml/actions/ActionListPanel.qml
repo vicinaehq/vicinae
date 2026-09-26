@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 Item {
     id: root
@@ -136,7 +137,7 @@ Item {
             highlightMoveDuration: 0
             model: root.model
 
-            ViciWheelHandler {
+            Scrolling.WheelHandler {
                 target: listView
             }
 

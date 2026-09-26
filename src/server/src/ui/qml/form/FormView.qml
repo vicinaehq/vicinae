@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 ScrollViewport {
     id: root
@@ -39,7 +40,7 @@ ScrollViewport {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
-        ViciWheelHandler {
+        Scrolling.WheelHandler {
             target: flick
         }
 

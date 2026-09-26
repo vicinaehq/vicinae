@@ -15,6 +15,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
+
+namespace vicinae::scrolling {
 
 KirigamiWheelEvent::KirigamiWheelEvent(QObject *parent)
     : QObject(parent)
@@ -109,17 +112,22 @@ WheelHandler::WheelHandler(QObject *parent)
     m_xInertiaScrollAnimation.setEasingCurve(QEasingCurve::OutQuad);
     m_yInertiaScrollAnimation.setEasingCurve(QEasingCurve::OutQuad);
 
-    // The inertia end value is bounded once in startInertiaScrolling(), but views that
-    // estimate their content geometry (ListView with mixed delegate heights) move those
-    // bounds while the animation runs, leaving the content stuck past the real edge
-    // (https://bugs.kde.org/show_bug.cgi?id=508229). Re-clamp against live bounds on
-    // every tick and stop at the edge instead.
-    connect(&m_xInertiaScrollAnimation, &QVariantAnimation::valueChanged, this, [this]() {
-        clampInertiaAnimation(m_xInertiaScrollAnimation, false);
-    });
-    connect(&m_yInertiaScrollAnimation, &QVariantAnimation::valueChanged, this, [this]() {
-        clampInertiaAnimation(m_yInertiaScrollAnimation, true);
-    });
+    const auto bindAnimation = [this](ScrollAnimation &animation, bool vertical) {
+        connect(&animation, &QVariantAnimation::valueChanged, this, [this, &animation, vertical](const QVariant &value) {
+            const qreal delta = value.toReal() - std::exchange(animation.previousValue, value.toReal());
+            if (!m_flickable || animation.state() != QAbstractAnimation::Running) {
+                return;
+            }
+            // Layout can move the viewport to preserve its reading anchor between animation ticks.
+            const char *property = vertical ? "contentY" : "contentX";
+            m_flickable->setProperty(property, m_flickable->property(property).toReal() + delta);
+            clampScrollAnimation(animation, vertical);
+        });
+    };
+    bindAnimation(m_xScrollAnimation, false);
+    bindAnimation(m_yScrollAnimation, true);
+    bindAnimation(m_xInertiaScrollAnimation, false);
+    bindAnimation(m_yInertiaScrollAnimation, true);
 
     connect(QGuiApplication::styleHints(), &QStyleHints::wheelScrollLinesChanged, this, [this](int scrollLines) {
         m_defaultPixelStepSize = 20 * scrollLines;
@@ -163,22 +171,10 @@ void WheelHandler::setTarget(QQuickItem *target)
 
     m_flickable = target;
     m_filterItem->setParentItem(target);
-    if (m_xScrollAnimation.targetObject()) {
-        m_xScrollAnimation.stop();
-    }
-    m_xScrollAnimation.setTargetObject(target);
-    if (m_yScrollAnimation.targetObject()) {
-        m_yScrollAnimation.stop();
-    }
-    m_yScrollAnimation.setTargetObject(target);
-    if (m_yInertiaScrollAnimation.targetObject()) {
-        m_yInertiaScrollAnimation.stop();
-    }
-    m_yInertiaScrollAnimation.setTargetObject(target);
-    if (m_xInertiaScrollAnimation.targetObject()) {
-        m_xInertiaScrollAnimation.stop();
-    }
-    m_xInertiaScrollAnimation.setTargetObject(target);
+    m_xScrollAnimation.stop();
+    m_yScrollAnimation.stop();
+    m_xInertiaScrollAnimation.stop();
+    m_yInertiaScrollAnimation.stop();
 
     if (target) {
         target->installEventFilter(this);
@@ -502,21 +498,27 @@ void WheelHandler::startInertiaScrolling()
 
     m_xScrollAnimation.stop();
     m_yScrollAnimation.stop();
+    m_xInertiaScrollAnimation.stop();
+    m_yInertiaScrollAnimation.stop();
     if (realTime.x() > 0) {
-        m_xInertiaScrollAnimation.setStartValue(startValue.x());
-        m_xInertiaScrollAnimation.setEndValue(boundedEndValue.x());
-        m_xInertiaScrollAnimation.setDuration(realTime.x());
-        m_xInertiaScrollAnimation.start(QAbstractAnimation::KeepWhenStopped);
+        startScrollAnimation(m_xInertiaScrollAnimation, boundedEndValue.x() - startValue.x(), realTime.x());
     }
     if (realTime.y() > 0) {
-        m_yInertiaScrollAnimation.setStartValue(startValue.y());
-        m_yInertiaScrollAnimation.setEndValue(boundedEndValue.y());
-        m_yInertiaScrollAnimation.setDuration(realTime.y());
-        m_yInertiaScrollAnimation.start(QAbstractAnimation::KeepWhenStopped);
+        startScrollAnimation(m_yInertiaScrollAnimation, boundedEndValue.y() - startValue.y(), realTime.y());
     }
 }
 
-void WheelHandler::clampInertiaAnimation(QPropertyAnimation &animation, bool vertical)
+void WheelHandler::startScrollAnimation(ScrollAnimation &animation, qreal distance, int duration)
+{
+    animation.stop();
+    animation.setStartValue(0.0);
+    animation.setEndValue(distance);
+    animation.setDuration(duration);
+    animation.previousValue = 0;
+    animation.start(QAbstractAnimation::KeepWhenStopped);
+}
+
+void WheelHandler::clampScrollAnimation(ScrollAnimation &animation, bool vertical)
 {
     if (!m_flickable || animation.state() != QAbstractAnimation::Running) {
         return;
@@ -545,6 +547,9 @@ bool WheelHandler::scrollFlickable(QPointF pixelDelta, QPointF angleDelta, Qt::K
     if (!m_flickable || (pixelDelta.isNull() && angleDelta.isNull())) {
         return false;
     }
+
+    m_xInertiaScrollAnimation.stop();
+    m_yInertiaScrollAnimation.stop();
 
     const qreal width = m_flickable->width();
     const qreal height = m_flickable->height();
@@ -594,7 +599,7 @@ bool WheelHandler::scrollFlickable(QPointF pixelDelta, QPointF angleDelta, Qt::K
                                           qreal leadingMargin,
                                           qreal trailingMargin,
                                           qreal change,
-                                          const QPropertyAnimation &animation) {
+                                          const ScrollAnimation &animation) {
         if (contentSize <= pageSize) {
             return contentPos;
         }
@@ -603,7 +608,9 @@ bool WheelHandler::scrollFlickable(QPointF pixelDelta, QPointF angleDelta, Qt::K
 
         qreal minExtent = leadingMargin - originPos;
         qreal maxExtent = size - (contentSize + trailingMargin + originPos);
-        qreal newContentPos = (animation.state() == QPropertyAnimation::Running ? animation.endValue().toReal() : contentPos) - change;
+        const qreal remaining =
+            animation.state() == QAbstractAnimation::Running ? animation.endValue().toReal() - animation.currentValue().toReal() : 0;
+        qreal newContentPos = contentPos + remaining - change;
         // bound the values without asserts
         newContentPos = std::max(-minExtent, std::min(newContentPos, -maxExtent));
 
@@ -615,7 +622,7 @@ bool WheelHandler::scrollFlickable(QPointF pixelDelta, QPointF angleDelta, Qt::K
         return std::round(newContentPos * devicePixelRatio) / devicePixelRatio;
     };
 
-    auto setPosition = [this, devicePixelRatio, refreshRate](qreal oldPos, qreal newPos, qreal stepSize, const char *property, QPropertyAnimation &animation) {
+    auto setPosition = [this, devicePixelRatio, refreshRate](qreal oldPos, qreal newPos, qreal stepSize, const char *property, ScrollAnimation &animation) {
         animation.stop();
         if (oldPos == newPos) {
             return false;
@@ -651,9 +658,7 @@ bool WheelHandler::scrollFlickable(QPointF pixelDelta, QPointF angleDelta, Qt::K
             : 0;
         animation.setDuration(duration <= qCeil(1000.0 / refreshRate * 2) ? 0 : duration);
         if (animation.duration() > 0) {
-            animation.setStartValue(oldPos);
-            animation.setEndValue(newPos);
-            animation.start(QAbstractAnimation::KeepWhenStopped);
+            startScrollAnimation(animation, newPos - oldPos, animation.duration());
         } else {
             m_flickable->setProperty(property, newPos);
         }
@@ -905,5 +910,7 @@ bool WheelHandler::eventFilter(QObject *watched, QEvent *event)
 
     return false;
 }
+
+} // namespace vicinae::scrolling
 
 #include "moc_wheelhandler.cpp"

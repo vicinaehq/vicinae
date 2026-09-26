@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Vicinae
+import Vicinae.Scrolling as Scrolling
 
 Item {
     id: root
@@ -155,7 +156,7 @@ Item {
                 root._maybeFireEnd();
             }
 
-            ViciWheelHandler {
+            Scrolling.WheelHandler {
                 target: listView
             }
 

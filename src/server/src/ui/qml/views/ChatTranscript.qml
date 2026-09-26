@@ -2,9 +2,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Vicinae
+import Vicinae.Documents as Documents
+import Vicinae.Scrolling as Scrolling
 
 Item {
     id: root
+    Documents.DocumentScope.style: DocumentIntegration.style
     required property ChatSession session
     property Item typingTarget: null
     property bool compact: true
@@ -29,17 +32,13 @@ Item {
         chatScroll.scrollToBottom();
     }
 
-    readonly property DocumentController selection: chatFlick.document
+    readonly property Documents.DocumentController selection: chatFlick.document
 
     Connections {
         target: chatFlick.document
         function onLinkActivated(link) {
-            linkHandler.openLink(link);
+            DocumentIntegration.openLink(link);
         }
-    }
-
-    MarkdownModel {
-        id: linkHandler
     }
 
     ScrollViewport {
@@ -48,7 +47,7 @@ Item {
         flickable: chatFlick
         topInset: root.topInset
         bottomInset: root.bottomInset
-        topPadding: (root.compact ? 12 : 16) + root.topOverlayHeight
+        topPadding: root.compact ? 12 : 16
         bottomPadding: root.bottomPadding
         resetOnInitialization: false
 
@@ -58,13 +57,14 @@ Item {
             cursorShape: Qt.IBeamCursor
         }
 
-        ContextMenu.menu: DocumentSelectionMenu {
+        ContextMenu.menu: Documents.DocumentSelectionMenu {
             controller: root.selection
             onAboutToShow: chatFlick.forceActiveFocus()
         }
 
-        DocumentView {
+        Documents.DocumentView {
             id: chatFlick
+            style: DocumentIntegration.style
             documentModel: root.session.documentModel
             layoutKey: [Theme.fontFamily, Theme.monoFontFamily, Theme.regularFontSize, Theme.smallerFontSize, root.compact, root.horizontalPadding, root.fontSize, root.lineHeight]
             followEnd: chatScroll.following && !chatScroll.paused
@@ -90,7 +90,7 @@ Item {
                     event.accepted = false;
             }
 
-            ViciWheelHandler {
+            Scrolling.WheelHandler {
                 target: chatFlick
                 onWheel: wheel => chatScroll.handleWheel(wheel)
             }
@@ -108,7 +108,7 @@ Item {
                 lineHeight: root.lineHeight
                 horizontalPadding: root.horizontalPadding
                 required property int index
-                DocumentScope.row: index
+                Documents.DocumentScope.row: index
                 width: chatFlick.width
                 onPreviewRequested: content => root.previewRequested(content)
                 onToolGroupToggled: toolId => {

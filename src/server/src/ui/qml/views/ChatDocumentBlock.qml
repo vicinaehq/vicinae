@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Vicinae
+import Vicinae.Documents as Documents
 
 Item {
     id: root
@@ -57,7 +58,7 @@ Item {
         id: queryComponent
         Column {
             spacing: 8
-            DocumentText {
+            Documents.DocumentText {
                 fontSize: root.fontSize
                 lineHeight: root.lineHeight
                 width: parent.width
@@ -98,7 +99,7 @@ Item {
                     y: 10
                     width: parent.width - 28
                     spacing: 8
-                    DocumentText {
+                    Documents.DocumentText {
                         fontSize: root.fontSize
                         lineHeight: root.lineHeight
                         width: parent.width
@@ -140,17 +141,20 @@ Item {
             arguments: root.tool.arguments ?? ""
             output: root.tool.output ?? ""
             hasOutput: root.tool.hasOutput ?? false
-            typingTarget: root.DocumentScope.document?.typingTarget ?? null
+            typingTarget: root.Documents.DocumentScope.document?.typingTarget ?? null
             onToggled: root.toolToggled(root.tool.id)
         }
     }
     Component {
         id: markdownComponent
-        MarkdownBlock {
+        Documents.MarkdownBlock {
             blockType: root.blockType
             blockData: root.blockData
             blockIndex: root.blockIndex
             mdModel: root.markdownModel
+            imageDelegate: Component {
+                VicinaeDocumentImage {}
+            }
             fontFamily: Theme.fontFamily
             fontSize: root.fontSize
             lineHeight: root.lineHeight
@@ -189,7 +193,7 @@ Item {
                     active: visible
                 }
             }
-            DocumentText {
+            Documents.DocumentText {
                 id: errorText
                 fontSize: root.fontSize
                 lineHeight: root.lineHeight

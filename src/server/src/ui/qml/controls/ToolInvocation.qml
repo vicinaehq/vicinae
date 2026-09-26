@@ -2,9 +2,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Vicinae
+import Vicinae.Documents as Documents
+import Vicinae.Scrolling as Scrolling
 
 Item {
     id: root
+    Documents.DocumentScope.style: DocumentIntegration.style
     property string name: ""
     property var iconSource
     property string summary: ""
@@ -47,9 +50,9 @@ Item {
             radius: 6
             color: Config.withAlpha(Theme.foreground, 0.025)
             border.color: Config.withAlpha(Theme.foreground, 0.1)
-            DocumentScope.document: selection
+            Documents.DocumentScope.document: selection
 
-            ContextMenu.menu: DocumentSelectionMenu {
+            ContextMenu.menu: Documents.DocumentSelectionMenu {
                 id: detailsMenu
                 controller: selection
                 onAboutToShow: scroll.forceActiveFocus()
@@ -66,7 +69,7 @@ Item {
                 }
             }
 
-            DocumentController {
+            Documents.DocumentController {
                 id: selection
                 container: scroll.contentItem
                 flickable: scroll
@@ -84,7 +87,7 @@ Item {
                 flickableDirection: Flickable.VerticalFlick
                 clip: true
 
-                ViciWheelHandler {
+                Scrolling.WheelHandler {
                     target: scroll.interactive ? scroll : null
                     blockTargetWheel: false
                     keyNavigationEnabled: true
@@ -100,7 +103,7 @@ Item {
                     width: scroll.width - 24
                     spacing: 6
 
-                    DocumentText {
+                    Documents.DocumentText {
                         width: parent.width
                         text: panel.showArguments || root.summary.length === 0 ? root.arguments : root.summary
                         font.family: Theme.monoFontFamily
@@ -113,7 +116,7 @@ Item {
                         visible: root.hasOutput
                         color: Config.withAlpha(Theme.foreground, 0.1)
                     }
-                    DocumentText {
+                    Documents.DocumentText {
                         width: parent.width
                         visible: root.hasOutput && root.output.length > 0
                         text: root.output.replace(/\r?\n$/, "")
