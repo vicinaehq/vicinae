@@ -167,7 +167,11 @@ Item {
                             // Set blockData last — it triggers Repeater creation in
                             // multi-TextEdit blocks, and children need selectionController
                             // to already be set for registration in Component.onCompleted
-                            item.blockData = blockData;
+                            // Images are updated in place by the model, so they track changes.
+                            if (blockType === image)
+                                item.blockData = Qt.binding(() => blockLoader.blockData);
+                            else
+                                item.blockData = blockData;
                         }
                     }
                 }
