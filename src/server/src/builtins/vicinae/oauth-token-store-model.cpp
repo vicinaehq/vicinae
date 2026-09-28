@@ -1,4 +1,5 @@
 #include "builtins/vicinae/oauth-token-store-model.hpp"
+#include "action-panel-state.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "keyboard/keybind.hpp"
 #include "navigation-controller.hpp"
@@ -22,7 +23,7 @@ AccessoryList OAuthTokenStoreSection::displayAccessories(const OAuth::TokenSet &
 }
 
 std::unique_ptr<ActionPanelState> OAuthTokenStoreSection::buildActionPanel(const OAuth::TokenSet &set) const {
-  auto panel = std::make_unique<ActionPanelState>();
+  auto panel = std::make_unique<ListActionPanelState>();
   panel->setTitle(set.extensionId);
 
   auto primary = panel->createSection();
