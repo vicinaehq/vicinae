@@ -246,6 +246,7 @@ void MacOSWindowAttached::setMoveToActiveSpace(bool value) {
 void MacOSWindowAttached::trackWindow(QWindow *window) {
   m_window = window;
   if (!m_window) return;
+  m_surfaceReady = m_window->handle() != nullptr;
   m_window->installEventFilter(this);
 }
 
