@@ -1,10 +1,10 @@
 #pragma once
+#include "generated/file-indexer-client.hpp"
 #include <QByteArray>
 #include <QObject>
 #include <QProcess>
 #include <qlogging.h>
 #include <unordered_map>
-#include "generated/file-indexer-client.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 
 class FileIndexerBus : public QObject, public file_indexer_gen::AbstractTransport {

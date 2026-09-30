@@ -6,9 +6,9 @@
 #include <iostream>
 #include <print>
 #include <thread>
+#include <glaze/glaze.hpp>
 #include <QCoreApplication>
 #include <QLocalSocket>
-#include <glaze/glaze.hpp>
 #include "common/common.hpp"
 #include "generated/browser-ipc-client.hpp"
 
