@@ -37,7 +37,7 @@ public:
         ctx->services->toastService()->failure(tr("Failed to close tab: %1").arg(result.error().c_str()));
         return;
       }
-      ctx->navigation->closeWindow({.clearRootSearch = true});
+      // Keep window open: root search refreshes via tabsChanged, built-in view reloads on the same signal.
     });
     closeTab->setShortcut(Keybind::RemoveAction);
 
