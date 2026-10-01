@@ -20,6 +20,8 @@ struct EntrypointId {
     return s;
   }
 
+  bool isValid() const { return !provider.empty() && !entrypoint.empty(); }
+
   static EntrypointId fromSerialized(std::string_view s) {
     auto pos = s.find(':');
     if (pos == std::string::npos) return {};

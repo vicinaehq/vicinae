@@ -205,8 +205,9 @@ function sendCurrentTabs() {
 			url: tab.url,
 			windowId: tab.windowId,
 			active: tab.active,
-			audible: tab.audible,
-			muted: tab.mutedInfo?.muted ?? false
+			audible: tab.audible ?? false,
+			muted: tab.mutedInfo?.muted ?? false,
+			lastAccessed: tab.lastAccessed ?? 0
 		})));
 	});
 }

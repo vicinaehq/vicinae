@@ -10,9 +10,13 @@
 bool macosLiquidGlassAvailable();
 #endif
 
+#ifdef Q_OS_WIN
+bool windowsAcrylicSupported();
+#endif
+
 namespace platform {
 
-static constexpr std::array<std::pair<std::string_view, Capability>, 8> CAPABILITY_NAMES{{
+static constexpr std::array<std::pair<std::string_view, Capability>, 9> CAPABILITY_NAMES{{
     {"layerShell", Capability::LayerShell},
     {"globalShortcuts", Capability::GlobalShortcuts},
     {"inputServer", Capability::InputServer},
@@ -21,6 +25,7 @@ static constexpr std::array<std::pair<std::string_view, Capability>, 8> CAPABILI
     {"liquidGlass", Capability::LiquidGlass},
     {"nativePanels", Capability::NativePanels},
     {"windowMaterial", Capability::WindowMaterial},
+    {"customWindowRounding", Capability::CustomWindowRounding},
 }};
 
 bool supports(Capability cap) {
@@ -39,7 +44,7 @@ bool supports(Capability cap) {
     return false;
 #endif
   case Capability::ClientSideDecorations:
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
     return false;
 #else
     return true;
@@ -57,13 +62,21 @@ bool supports(Capability cap) {
     return false;
 #endif
   case Capability::WindowMaterial: {
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
     return true;
+#elif defined(Q_OS_WIN)
+    return windowsAcrylicSupported();
 #else
     auto *mgr = ServiceRegistry::instance()->windowMaterialManager();
     return mgr && mgr->isSupported();
 #endif
   }
+  case Capability::CustomWindowRounding:
+#ifdef Q_OS_WIN
+    return !windowsAcrylicSupported();
+#else
+    return true;
+#endif
   }
 
   return false;
@@ -78,8 +91,12 @@ bool supports(std::string_view name) {
 }
 
 bool preferItemPopup(std::string_view surface) {
-#ifdef Q_OS_LINUX
-  return surface == "popover";
+#if defined(Q_OS_LINUX)
+  return surface == "popover" || surface == "dialog";
+#elif defined(Q_OS_WIN)
+  // native popup windows misplace and flicker on Windows (QTBUG-120051)
+  (void)surface;
+  return true;
 #else
   (void)surface;
   return false;

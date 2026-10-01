@@ -6,11 +6,10 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "tsc --outDir dist",
 		"pack": "npm run build && npm pack",
-		"docgen": "typedoc",
 		"format": "biome format --write"
 	},
 	"bin": {
-		"vici": "./dist/bin.js"
+		"vici": "dist/bin.js"
 	},
 	"files": [
 		"dist",
@@ -27,23 +26,22 @@
 	},
 	"main": "dist/index.js",
 	"dependencies": {
+		"@types/react": "19.1.17",
 		"chokidar": "^4.0.3",
 		"esbuild": "^0.25.2",
-		"react": "^19.0.0",
+		"react": "19.1.1",
+		"typescript": "5.9.2",
 		"zod": "^4.0.17"
 	},
 	"peerDependencies": {
-		"@types/node": ">=18",
-		"@types/react": "19.0.10"
+		"@types/node": ">=18"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.2",
-		"@types/node": "24.3.0",
-		"@types/react": "19.0.10",
-		"typedoc": "0.28.13",
-		"typedoc-github-theme": "0.3.1",
-		"typedoc-plugin-markdown": "4.8.1",
-		"typescript": "5.9.2"
+		"@types/node": "24.3.0"
 	},
-	"repository": "vicinaehq/vicinae"
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/vicinaehq/vicinae.git"
+	}
 }

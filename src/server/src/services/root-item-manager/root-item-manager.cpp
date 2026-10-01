@@ -1,12 +1,14 @@
+#include <iterator>
 #include <qjsonvalue.h>
 #include <ranges>
 #include <algorithm>
 #include <unordered_map>
 #include <qlogging.h>
 #include "root-item-manager.hpp"
-#include "common.hpp"
+#include <glaze/json/patch.hpp>
 #include "glaze-qt.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "fuzzy/fzf.hpp"
 #include "config/config.hpp"
 #include "services/local-storage/local-storage-service.hpp"
@@ -14,10 +16,11 @@
 #include "vicinae.hpp"
 
 RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &storage)
-    : m_cfg(cfg), m_storage(storage), m_visitTracker(Omnicast::dataDir() / "metadata.json") {
+    : m_cfg(cfg), m_storage(storage), m_visitTracker(Omnicast::dataDir() / "metadata.json"),
+      m_searchHistory(Omnicast::dataDir() / "search-history.json") {
   connect(&cfg, &config::Manager::configChanged, this, [this](const config::ConfigValue &next) {
     mergeConfigWithMetadata(next);
-    qDebug() << "configuration changed";
+    syncPreferences();
     emit metadataChanged();
   });
 }
@@ -25,6 +28,8 @@ RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &stor
 std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
   return getFromSerializedEntrypointIds(m_cfg.value().fallbacks);
 }
+
+std::size_t RootItemManager::favoriteCount() const { return m_cfg.value().favorites.size(); }
 
 bool RootItemManager::moveFallbackDown(const EntrypointId &id) {
   auto fbs = m_cfg.value().fallbacks;
@@ -65,9 +70,11 @@ bool RootItemManager::enableFallback(const EntrypointId &id) {
 
 bool RootItemManager::disableFallback(const EntrypointId &id) {
   auto fbs = m_cfg.value().fallbacks;
-  std::string const sid = id;
+  auto it = std::ranges::find(fbs, std::string{id});
 
-  fbs.erase(std::ranges::find(fbs, sid));
+  if (it == fbs.end()) return false;
+
+  fbs.erase(it);
   m_cfg.mergeWithUser({.fallbacks = fbs});
   emit fallbackDisabled(id);
   emit metadataChanged();
@@ -112,6 +119,9 @@ void RootItemManager::updateIndex() {
 
       sitem.item = item;
       sitem.title = item->title().toStdString();
+      if (auto unlocalized = item->unlocalizedTitle(); unlocalized && *unlocalized != item->title()) {
+        sitem.unlocalizedTitle = unlocalized->toStdString();
+      }
       sitem.subtitle = item->subtitle().toStdString();
       sitem.keywords = Utils::toStdStringVec(item->keywords());
       sitem.meta = &m_metadata[id];
@@ -126,40 +136,27 @@ void RootItemManager::updateIndex() {
   }
 
   mergeConfigWithMetadata(m_cfg.value());
+  syncPreferences();
   isReloading = false;
   emit itemsChanged();
 }
 
-float RootItemManager::SearchableRootItem::fuzzyScore(std::string_view pattern) const {
+double RootItemManager::SearchableRootItem::frecency() const {
+  return fuzzy::frecency(meta->visitCount, meta->lastVisitedAt, QDateTime::currentSecsSinceEpoch());
+}
+
+double RootItemManager::SearchableRootItem::fuzzyScore(const fuzzy::Query &query) const {
+  if (query.empty()) return 100.0 - fuzzy::FRECENCY_WEIGHT + fuzzy::FRECENCY_WEIGHT * frecency();
+
   using WS = fzf::WeightedString;
   std::string alias = meta->alias.value_or("");
-  std::initializer_list<WS> ss = {{title, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
-  auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.3f}; });
-  float const score =
-      pattern.empty() ? 1 : fzf::threadLocalMatcher().fuzzy_match_v2_score_query(ss, kws, pattern);
+  std::initializer_list<WS> ss = {{title, 1.0f}, {unlocalizedTitle, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
+  auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.6f}; });
+  auto const score = fzf::threadLocalMatcher().score_query(ss, kws, query);
 
-  if (score == 0) return 0;
+  if (score.quality < fuzzy::MIN_QUALITY) return 0;
 
-  constexpr double FRECENCY_BOOST_CAP = 25.0;
-  constexpr double FRECENCY_FREQ_SCALE = 5.0;
-  constexpr double FRECENCY_RECENCY_PEAK = 10.0;
-  constexpr double FRECENCY_RECENCY_HALF_LIFE_DAYS = 30.0;
-  constexpr double SECONDS_PER_DAY = 86400.0;
-
-  double const frequencyTerm = FRECENCY_FREQ_SCALE * std::log(1 + meta->visitCount * 0.1);
-
-  double recencyTerm = 0.0;
-  if (meta->lastVisitedAt) {
-    double const daysSince =
-        (QDateTime::currentSecsSinceEpoch() - static_cast<std::int64_t>(*meta->lastVisitedAt)) /
-        SECONDS_PER_DAY;
-    recencyTerm =
-        FRECENCY_RECENCY_PEAK * std::exp(-std::max(0.0, daysSince) / FRECENCY_RECENCY_HALF_LIFE_DAYS);
-  }
-
-  double const boost = std::min(FRECENCY_BOOST_CAP, frequencyTerm + recencyTerm);
-
-  return score + boost;
+  return score.score + fuzzy::FRECENCY_WEIGHT * frecency();
 }
 
 std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,
@@ -172,7 +169,7 @@ std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &
 void RootItemManager::search(const QString &query, std::vector<ScoredItem> &results,
                              const RootItemPrefixSearchOptions &opts) {
   std::string pattern = query.toStdString();
-  std::string_view const patternView = pattern;
+  fuzzy::Query const fuzzyQuery{pattern};
 
   results.clear();
   results.reserve(m_items.size());
@@ -180,8 +177,8 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
   for (auto &item : m_items) {
     if (!item.meta->enabled && !opts.includeDisabled) continue;
     if (opts.providerId && opts.providerId != item.meta->providerId) continue;
-    if (item.meta->favorite && !opts.includeFavorites) continue;
-    double const fuzzyScore = item.fuzzyScore(patternView);
+    if (item.meta->favoriteIdx.has_value() && !opts.includeFavorites) continue;
+    double const fuzzyScore = item.fuzzyScore(fuzzyQuery);
 
     if (!fuzzyScore) { continue; }
 
@@ -206,9 +203,7 @@ void RootItemManager::search(const QString &query, std::vector<ScoredItem> &resu
 
 std::vector<RootItemManager::ProviderSearchGroup>
 RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPrefixSearchOptions &opts) {
-  std::string const pattern = query.toStdString();
-  std::string_view const patternView = pattern;
-  const auto &matcher = fzf::threadLocalMatcher();
+  fuzzy::Query const fuzzyQuery{query.toStdString()};
 
   std::unordered_map<std::string, RootProvider *> providerById;
   std::unordered_map<std::string, double> providerNameScore;
@@ -216,8 +211,8 @@ RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPre
     if (provider->isTransient()) continue;
     auto id = provider->uniqueId().toStdString();
     providerById.emplace(id, provider);
-    int const score = matcher.fuzzy_match_v2_score_query(provider->displayName().toStdString(), patternView);
-    if (score > 0) providerNameScore.emplace(id, static_cast<double>(score));
+    auto const m = fuzzy::scoreWeighted({{provider->displayName().toStdString(), 1.0}}, fuzzyQuery);
+    if (m.accepted()) providerNameScore.emplace(id, static_cast<double>(m.score));
   }
 
   struct ScoredEntry {
@@ -233,12 +228,12 @@ RootItemManager::searchGroupedByProvider(const QString &query, const RootItemPre
 
   for (auto &item : m_items) {
     if (!item.meta->enabled && !opts.includeDisabled) continue;
-    if (item.meta->favorite && !opts.includeFavorites) continue;
+    if (item.meta->favoriteIdx.has_value() && !opts.includeFavorites) continue;
 
     const auto &providerId = item.meta->providerId;
     if (!providerById.contains(providerId)) continue;
 
-    double const titleScore = item.fuzzyScore(patternView);
+    double const titleScore = item.fuzzyScore(fuzzyQuery);
     auto nameIt = providerNameScore.find(providerId);
     bool const providerMatched = nameIt != providerNameScore.end();
     if (titleScore <= 0 && !providerMatched) continue;
@@ -269,60 +264,48 @@ bool RootItemManager::setItemEnabled(const EntrypointId &id, bool value) {
   return true;
 }
 
-bool RootItemManager::setProviderPreferenceValues(const QString &id, const QJsonObject &preferences) {
+bool RootItemManager::setProviderPreferenceValues(const QString &id, const PreferenceValues &preferences) {
   auto provider = findProviderById(id);
 
   if (!provider) return false;
 
-  QJsonObject filteredPreferences;
-  auto storage = getProviderSecretStorage(id);
+  PreferenceValues filtered;
 
   for (const Preference &pref : provider->preferences()) {
-    QJsonValue const v = preferences.value(pref.name());
-    if (!v.isUndefined()) {
-      if (pref.isSecret()) {
-        setProviderSecretPreference(id, pref.name(), v);
-      } else {
-        filteredPreferences[pref.name()] = v;
-      }
+    const auto *value = preferences::find(preferences, pref.name().toStdString());
+    if (!value) continue;
+    if (pref.isSecret()) {
+      setProviderSecretPreference(id, pref.name(), *value);
+    } else {
+      filtered[pref.name().toStdString()] = *value;
     }
   }
 
-  m_cfg.mergeProviderWithUser(id.toStdString(),
-                              {.preferences = transformPreferenceValues(filteredPreferences)});
+  m_cfg.mergeProviderWithUser(id.toStdString(), {.preferences = std::move(filtered)});
+  syncProviderPreferences(*provider);
 
   return true;
 }
 
-QJsonObject RootItemManager::transformPreferenceValues(const glz::generic::object_t &preferences) {
-  return glazeToQJsonObject(preferences);
-}
-
-glz::generic::object_t RootItemManager::transformPreferenceValues(const QJsonObject &preferences) {
-  return qJsonObjectToGlazeGeneric(preferences);
-}
-
-bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {
+bool RootItemManager::setItemPreferenceValues(const EntrypointId &id, const PreferenceValues &preferences) {
   RootItem const *item = findItemById(id);
 
   if (!item) return false;
 
-  QJsonObject itemPreferences;
+  PreferenceValues filtered;
 
   for (const Preference &pref : item->preferences()) {
-    QJsonValue const v = preferences.value(pref.name());
-
-    if (!v.isUndefined()) {
-      if (pref.isSecret()) {
-        setEntrypointSecretPreference(id, pref.name(), v);
-      } else {
-        itemPreferences[pref.name()] = v;
-      }
+    const auto *value = preferences::find(preferences, pref.name().toStdString());
+    if (!value) continue;
+    if (pref.isSecret()) {
+      setEntrypointSecretPreference(id, pref.name(), *value);
+    } else {
+      filtered[pref.name().toStdString()] = *value;
     }
   }
 
-  m_cfg.mergeEntrypointWithUser(id, {.preferences = transformPreferenceValues(itemPreferences)});
-  item->preferenceValuesChanged(preferences);
+  m_cfg.mergeEntrypointWithUser(id, {.preferences = std::move(filtered)});
+  syncItemPreferences(*item);
 
   return true;
 }
@@ -331,38 +314,35 @@ ScopedLocalStorage RootItemManager::getProviderSecretStorage(const QString &id) 
   return m_storage.scoped(id + ":preferences");
 }
 
-void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences) {
+void RootItemManager::setPreferenceValues(const EntrypointId &id, const PreferenceValues &preferences) {
   auto item = findItemById(id);
   auto prvd = provider(id.provider);
-
-  QJsonObject providerPreferenceValues;
-  QJsonObject entrypointPreferenceValues;
 
   if (!item) {
     qWarning() << "setPreferenceValues: no item with id" << std::string{id};
     return;
   }
 
+  PreferenceValues providerValues;
+  PreferenceValues entrypointValues;
+
   for (const auto &pref : prvd->preferences()) {
-    QJsonValue const val = preferences.value(pref.name());
-    if (!val.isUndefined()) {
-      if (pref.isSecret()) {
-        setProviderSecretPreference(id.provider.c_str(), pref.name(), val);
-      } else {
-        providerPreferenceValues[pref.name()] = val;
-      }
+    const auto *value = preferences::find(preferences, pref.name().toStdString());
+    if (!value) continue;
+    if (pref.isSecret()) {
+      setProviderSecretPreference(id.provider.c_str(), pref.name(), *value);
+    } else {
+      providerValues[pref.name().toStdString()] = *value;
     }
   }
 
   for (const auto &pref : item->preferences()) {
-    QJsonValue const val = preferences.value(pref.name());
-
-    if (!val.isUndefined()) {
-      if (pref.isSecret()) {
-        setEntrypointSecretPreference(id, pref.name(), val);
-      } else {
-        entrypointPreferenceValues[pref.name()] = val;
-      }
+    const auto *value = preferences::find(preferences, pref.name().toStdString());
+    if (!value) continue;
+    if (pref.isSecret()) {
+      setEntrypointSecretPreference(id, pref.name(), *value);
+    } else {
+      entrypointValues[pref.name().toStdString()] = *value;
     }
   }
 
@@ -370,15 +350,17 @@ void RootItemManager::setPreferenceValues(const EntrypointId &id, const QJsonObj
   m_cfg.mergeWithUser({
 		  .providers = std::map<std::string, config::Partial<config::ProviderData>>{
 		  	{id.provider, config::Partial<config::ProviderData>{
-				.preferences = transformPreferenceValues(providerPreferenceValues),
+				.preferences = std::move(providerValues),
 				.entrypoints = std::map<std::string, config::ProviderItemData>{
-					{id.entrypoint, {.preferences = transformPreferenceValues(entrypointPreferenceValues)}}
+					{id.entrypoint, {.preferences = std::move(entrypointValues)}}
 				}
 			}
 		  }
 		}
   });
   // clang-format on
+  syncProviderPreferences(*prvd);
+  syncItemPreferences(*item);
 }
 
 bool RootItemManager::setAlias(const EntrypointId &id, std::string_view alias) {
@@ -399,23 +381,22 @@ bool RootItemManager::setShortcut(const EntrypointId &id, std::string_view short
   return true;
 }
 
-QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) const {
+PreferenceValues RootItemManager::getProviderPreferenceValues(const QString &id) const {
   auto provider = findProviderById(id);
-  auto json = transformPreferenceValues(
-      m_cfg.value().providerPreferences(id.toStdString()).value_or(glz::generic::object_t{}));
+  auto values = m_cfg.value().providerPreferences(id.toStdString()).value_or(PreferenceValues{});
 
   for (const Preference &pref : provider->preferences()) {
-    if (!json.contains(pref.name())) {
-      if (pref.isSecret()) {
-        QJsonValue const value = getProviderSecretPreference(id, pref.name());
-        json[pref.name()] = value.isNull() ? pref.defaultValue() : value;
-      } else {
-        json[pref.name()] = pref.defaultValue();
-      }
+    const auto key = pref.name().toStdString();
+    if (values.contains(key)) continue;
+    if (pref.isSecret()) {
+      auto secret = getProviderSecretPreference(id, pref.name());
+      values[key] = secret.is_null() ? pref.defaultOrNull() : std::move(secret);
+    } else {
+      values[key] = pref.defaultOrNull();
     }
   }
 
-  return json;
+  return values;
 }
 
 bool RootItemManager::pruneProvider(const QString &id) {
@@ -429,26 +410,25 @@ bool RootItemManager::pruneProvider(const QString &id) {
   return true;
 }
 
-QJsonObject RootItemManager::getItemPreferenceValues(const EntrypointId &id) const {
+PreferenceValues RootItemManager::getItemPreferenceValues(const EntrypointId &id) const {
   auto item = findItemById(id);
 
   if (!item) return {};
 
-  QJsonObject json =
-      transformPreferenceValues(m_cfg.value().preferences(id).value_or(glz::generic::object_t{}));
+  auto values = m_cfg.value().preferences(id).value_or(PreferenceValues{});
 
   for (const auto &pref : item->preferences()) {
-    if (!json.contains(pref.name())) {
-      if (pref.isSecret()) {
-        QJsonValue const value = getEntrypointSecretPreference(id, pref.name());
-        json[pref.name()] = value.isNull() ? pref.defaultValue() : value;
-      } else {
-        json[pref.name()] = pref.defaultValue();
-      }
+    const auto key = pref.name().toStdString();
+    if (values.contains(key)) continue;
+    if (pref.isSecret()) {
+      auto secret = getEntrypointSecretPreference(id, pref.name());
+      values[key] = secret.is_null() ? pref.defaultOrNull() : std::move(secret);
+    } else {
+      values[key] = pref.defaultOrNull();
     }
   }
 
-  return json;
+  return values;
 }
 
 std::vector<Preference> RootItemManager::getMergedItemPreferences(const EntrypointId &id) const {
@@ -463,15 +443,14 @@ std::vector<Preference> RootItemManager::getMergedItemPreferences(const Entrypoi
   return result;
 }
 
-QJsonObject RootItemManager::getPreferenceValues(const EntrypointId &id) const {
-  QJsonObject providerValues = getProviderPreferenceValues(id.provider.c_str());
-  QJsonObject itemValues = getItemPreferenceValues(id);
+PreferenceValues RootItemManager::getPreferenceValues(const EntrypointId &id) const {
+  auto values = getProviderPreferenceValues(id.provider.c_str());
 
-  for (auto it = itemValues.begin(); it != itemValues.end(); ++it) {
-    providerValues[it.key()] = it.value();
+  for (auto &[key, value] : getItemPreferenceValues(id)) {
+    values.insert_or_assign(key, std::move(value));
   }
 
-  return providerValues;
+  return values;
 }
 
 RootItemMetadata RootItemManager::itemMetadata(const EntrypointId &id) const {
@@ -498,6 +477,32 @@ bool RootItemManager::setItemAsFavorite(const EntrypointId &itemId, bool value) 
   m_cfg.mergeWithUser({.favorites = favorites});
   emit itemFavoriteChanged(itemId, value);
   emit metadataChanged();
+
+  return true;
+}
+
+bool RootItemManager::moveFavoriteDown(const EntrypointId &id) {
+  auto favorites = m_cfg.value().favorites;
+  auto it = std::ranges::find(favorites, std::string{id});
+
+  if (it == favorites.end() || it + 1 == favorites.end()) return false;
+
+  std::iter_swap(it, it + 1);
+  m_cfg.mergeWithUser({.favorites = favorites});
+  emit favoriteOrderChanged(id);
+
+  return true;
+}
+
+bool RootItemManager::moveFavoriteUp(const EntrypointId &id) {
+  auto favorites = m_cfg.value().favorites;
+  auto it = std::ranges::find(favorites, std::string{id});
+
+  if (it == favorites.end() || it == favorites.begin()) return false;
+
+  std::iter_swap(it, it - 1);
+  m_cfg.mergeWithUser({.favorites = favorites});
+  emit favoriteOrderChanged(id);
 
   return true;
 }
@@ -559,6 +564,7 @@ void RootItemManager::unloadProvider(const QString &id) {
 
   if (it == m_providers.end()) return;
 
+  m_dispatchedProviderPreferences.erase(id.toStdString());
   m_providers.erase(it);
 }
 
@@ -574,10 +580,7 @@ void RootItemManager::loadProvider(std::unique_ptr<RootProvider> provider) {
   auto ptr = provider.get();
 
   m_providers.emplace_back(std::move(provider));
-  auto preferenceValues = getProviderPreferenceValues(ptr->uniqueId());
-
-  ptr->preferencesChanged(preferenceValues);
-  ptr->initialized(preferenceValues);
+  ptr->initialized(dispatchProviderPreferences(*ptr));
   connect(ptr, &RootProvider::itemsChanged, this, [this]() { updateIndex(); });
 }
 
@@ -593,26 +596,26 @@ QString RootItemManager::getEntrypointSecretPreferenceKey(const EntrypointId &id
   return QString("%1.%2").arg(id.entrypoint.c_str()).arg(prefName);
 }
 
-QJsonValue RootItemManager::getEntrypointSecretPreference(const EntrypointId &id,
-                                                          const QString &prefName) const {
+glz::generic RootItemManager::getEntrypointSecretPreference(const EntrypointId &id,
+                                                            const QString &prefName) const {
   QString const key = getEntrypointSecretPreferenceKey(id, prefName);
-  return getProviderSecretStorage(id.provider.c_str()).getItem(key);
+  return qJsonValueToGlazeGeneric(getProviderSecretStorage(id.provider.c_str()).getItem(key));
 }
 
 void RootItemManager::setEntrypointSecretPreference(const EntrypointId &id, const QString &prefName,
-                                                    const QJsonValue &value) {
+                                                    const glz::generic &value) {
   QString const key = getEntrypointSecretPreferenceKey(id, prefName);
-  getProviderSecretStorage(id.provider.c_str()).setItem(key, value);
+  getProviderSecretStorage(id.provider.c_str()).setItem(key, glazeToQJsonValue(value));
 }
 
-QJsonValue RootItemManager::getProviderSecretPreference(const QString &providerId,
-                                                        const QString &prefName) const {
-  return getProviderSecretStorage(providerId).getItem(prefName);
+glz::generic RootItemManager::getProviderSecretPreference(const QString &providerId,
+                                                          const QString &prefName) const {
+  return qJsonValueToGlazeGeneric(getProviderSecretStorage(providerId).getItem(prefName));
 }
 
 void RootItemManager::setProviderSecretPreference(const QString &id, const QString &prefName,
-                                                  const QJsonValue &value) {
-  getProviderSecretStorage(id).setItem(prefName, value);
+                                                  const glz::generic &value) {
+  getProviderSecretStorage(id).setItem(prefName, glazeToQJsonValue(value));
 }
 
 std::vector<std::shared_ptr<RootItem>>
@@ -633,7 +636,6 @@ RootItemManager::getFromSerializedEntrypointIds(std::span<const std::string> ids
 }
 
 void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
-  auto favoriteSet = cfg.favorites | std::ranges::to<std::unordered_set>();
   auto fallbackSet = cfg.fallbacks | std::ranges::to<std::unordered_set>();
 
   for (const SearchableRootItem &item : m_items) {
@@ -656,11 +658,14 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
 
     meta.providerId = entrypointId.provider;
     meta.enabled = !item.item->isDefaultDisabled();
-    meta.favorite = favoriteSet.contains(entrypointId);
+
+    if (auto it = std::ranges::find(cfg.favorites, std::string{entrypointId}); it != cfg.favorites.end()) {
+      meta.favoriteIdx = std::distance(cfg.favorites.begin(), it);
+    }
+
     meta.fallback = fallbackSet.contains(entrypointId);
 
     if (itemConfig) {
-      item.item->preferenceValuesChanged(getItemPreferenceValues(entrypointId));
       if (auto enabled = itemConfig->enabled) { meta.enabled = enabled.value(); }
       if (auto alias = itemConfig->alias) { meta.alias = alias.value(); }
       if (auto shortcut = itemConfig->shortcut) { meta.shortcut = shortcut.value(); }
@@ -672,9 +677,58 @@ void RootItemManager::mergeConfigWithMetadata(const config::ConfigValue &cfg) {
       }
     }
   }
+}
 
-  // update provider preferences to make sure they are in sync
+bool RootItemManager::samePreferences(const PreferenceValues &a, const PreferenceValues &b) {
+  if (a.size() != b.size()) return false;
+
+  return std::ranges::all_of(a, [&](const auto &entry) {
+    auto it = b.find(entry.first);
+    return it != b.end() && glz::equal(entry.second, it->second);
+  });
+}
+
+PreferenceValues RootItemManager::dispatchProviderPreferences(RootProvider &provider) {
+  auto values = getProviderPreferenceValues(provider.uniqueId());
+
+  provider.preferencesChanged(values);
+  m_dispatchedProviderPreferences[provider.uniqueId().toStdString()] = values;
+
+  return values;
+}
+
+void RootItemManager::syncProviderPreferences(RootProvider &provider) {
+  auto values = getProviderPreferenceValues(provider.uniqueId());
+  auto [it, inserted] = m_dispatchedProviderPreferences.try_emplace(provider.uniqueId().toStdString());
+
+  if (!inserted && samePreferences(it->second, values)) return;
+
+  provider.preferencesChanged(values);
+  it->second = std::move(values);
+}
+
+void RootItemManager::syncItemPreferences(const RootItem &item) {
+  if (item.preferences().empty()) return;
+
+  auto id = item.uniqueId();
+  auto values = getItemPreferenceValues(id);
+  auto [it, inserted] = m_dispatchedItemPreferences.try_emplace(id);
+
+  if (!inserted && samePreferences(it->second, values)) return;
+
+  item.preferenceValuesChanged(values);
+  it->second = std::move(values);
+}
+
+void RootItemManager::syncPreferences() {
   for (const auto &provider : m_providers) {
-    provider->preferencesChanged(getProviderPreferenceValues(provider->uniqueId()));
+    syncProviderPreferences(*provider);
+  }
+
+  std::erase_if(m_dispatchedItemPreferences,
+                [&](const auto &entry) { return !m_metadata.contains(entry.first); });
+
+  for (const SearchableRootItem &item : m_items) {
+    syncItemPreferences(*item.item);
   }
 }

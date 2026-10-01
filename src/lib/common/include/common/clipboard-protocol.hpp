@@ -8,6 +8,7 @@ namespace clipboard_proto {
 enum class Command : uint8_t {
   SelectionNotification = 0x01,
   SetClipboard = 0x02,
+  PrimarySelectionNotification = 0x03,
 };
 
 struct Offer {

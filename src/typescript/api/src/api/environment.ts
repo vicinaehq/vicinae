@@ -1,4 +1,9 @@
-import { Form } from "./components";
+import type { AI } from "./ai";
+import type { BrowserExtension } from "./browser";
+import type { Form } from "./components";
+import type { FileSearch } from "./file-search";
+import type { Wallpaper } from "./wallpaper";
+import type { WindowManagement } from "./window-management";
 
 export interface LaunchContext {
 	[item: string]: any;
@@ -40,6 +45,11 @@ export declare type LaunchProps<
 	 * When the command is launched as a fallback command, this string contains the text of the root search.
 	 */
 	fallbackText?: string;
+
+	/**
+	 * Set when the command is launched from the command line using `vicinae cmd launch`.
+	 */
+	cwd?: string;
 };
 
 export enum LaunchType {
@@ -47,11 +57,27 @@ export enum LaunchType {
 	 * A regular launch through user interaction
 	 */
 	UserInitiated = "userInitiated",
+
 	/**
 	 * Scheduled through an interval and launched from background
 	 */
 	Background = "background",
+
+	/**
+	 * The command was started from the command line, using e.g
+	 * `vicinae cmd launch`. `process.cwd()` can be called to get the
+	 * working directory in which the command was issued.
+	 */
+	CommandLine = "commandLine",
 }
+
+// every API we can check availability for using environment.canAccess
+type AccessCheckable =
+	| typeof FileSearch
+	| typeof BrowserExtension
+	| typeof Wallpaper
+	| typeof AI
+	| typeof WindowManagement;
 
 export interface Environment {
 	/**
@@ -111,20 +137,16 @@ export interface Environment {
 	 *
 	 *  @example
 	 * ```typescript
-	 * import { unstableAI, environment } from "@raycast/api";
+	 * import { BrowserExtension, environment } from "@vicinae/api";
 	 *
-	 * export default function Command() {
-	 *   if (environment.canAccess(unstableAI)) {
-	 *     // use unstableAI
+	 * export default async function Command() {
+	 *   if (environment.canAccess(BrowserExtension)) {
+	 *   	const tabs = await BrowserExtension.getTabs();
 	 *   }
 	 * }
 	 * ```
 	 */
-	canAccess(api: unknown): boolean;
-	/**
-	 * @deprecated Use the top-level prop `launchContext` instead.
-	 */
-	launchContext?: LaunchContext;
+	canAccess(api: AccessCheckable): boolean;
 
 	/**
 	 * The Vicinae version. Vicinae extensions should rely on this and ignore `raycastVersion`.

@@ -3,11 +3,11 @@
 #include <QJsonArray>
 #include <QString>
 #include "generated/manager.hpp"
+#include "extension/node-runtime/node-runtime.hpp"
 #include <QUuid>
 #include <QtCore>
 #include <cstdint>
-#include "common.hpp"
-#include <netinet/in.h>
+#include "command/command-types.hpp"
 #include <qdebug.h>
 #include <qdir.h>
 #include <qfuturewatcher.h>
@@ -25,8 +25,6 @@
 #include <qstringview.h>
 #include <qthread.h>
 #include <quuid.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
 class Bus : public QObject, public manager::AbstractTransport {
   Q_OBJECT
@@ -50,10 +48,6 @@ signals:
   void messageReceived(const QByteArray &msg);
 };
 
-struct PendingManagerRequestInfo {
-  QString sessionId;
-};
-
 class ExtensionManager : public QObject {
   Q_OBJECT
 
@@ -65,15 +59,6 @@ signals:
 public:
   ExtensionManager();
 
-  /**
-   * Return the node executable used to spawn the extension manager.
-   * We first look for the first `vicinae-node` binary in PATH and then do the same for `node`.
-   * `vicinae-node` is used by script installations and have a specific name to ensure we do not
-   * create conflict with existing node installations.
-   * If we are running from an appimage, the path to the internal distribution of node is returned.
-   */
-  std::optional<std::filesystem::path> nodeExecutable();
-
   void addDevelopmentSession(const QString &id);
   void removeDevelopmentSession(const QString &id);
   bool hasDevelopmentSession(const QString &id) const;
@@ -84,12 +69,8 @@ public:
   bool start();
   bool stop();
 
-  void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {},
-                   const LaunchProps &launchProps = {});
-
   manager::Client &client() { return m_client; }
 
-  // void unloadCommand(const QString &sessionId);
   void handleManagerResponse(const QString &action, QJsonObject &data);
   void finished(int exitCode, QProcess::ExitStatus status);
   void readError();
@@ -99,6 +80,7 @@ private:
   Bus m_bus;
   manager::RpcTransport m_rpc;
   manager::Client m_client;
+  NodeRuntime m_node;
+  bool m_stopping = false;
   std::unordered_set<QString> m_developmentSessions;
 };
-;

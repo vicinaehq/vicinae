@@ -26,6 +26,9 @@ yellow = "#E5C890"
 cyan = "#81C8BE"
 
 [colors.list.item.selection]
-background = "#3A3E51"
+background = "#535974"
 secondary_background = "#51576D"
 
+
+[colors.grid.item]
+background = "#4b516d"

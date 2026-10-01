@@ -7,7 +7,7 @@ class Workspace : public AbstractWindowManager::AbstractWorkspace {
 public:
   QString id() const override;
   QString name() const override;
-  QString monitor() const override;
+  std::optional<QString> monitor() const override;
   bool hasFullScreen() const override;
 
   Workspace(const QJsonObject &json);

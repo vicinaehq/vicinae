@@ -37,12 +37,14 @@ private:
     xcb_keysym_t keysym;
     xcb_keycode_t keycode;
     uint16_t mods;
+    bool held = false;
   };
 
   std::expected<void, QString> grab(xcb_keycode_t keycode, uint16_t mods);
   void ungrab(xcb_keycode_t keycode, uint16_t mods);
   void regrabAll();
   void computeLockMasks();
+  void enableDetectableAutoRepeat();
   uint16_t modMaskForKeysym(xcb_keysym_t keysym) const;
 
   xcb_connection_t *m_connection = nullptr;

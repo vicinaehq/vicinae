@@ -133,6 +133,12 @@ const preferenceSchema = z.discriminatedUnion("type", [
 		.object({
 			...preferenceBase,
 			type: z.literal("appPicker"),
+			multiple: z
+				.boolean()
+				.describe(
+					"Vicinae only: allow selecting several applications. The value is then an array of applications.",
+				)
+				.optional(),
 			default: z
 				.union([
 					z.string(),

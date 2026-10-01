@@ -1,5 +1,8 @@
 #include "file-chooser-service.hpp"
+#include "service-registry.hpp"
+#include <QJSEngine>
 #include "file-chooser.hpp"
+#include <QDir>
 
 FileChooserService::FileChooserService(QObject *parent) : QObject(parent) {}
 
@@ -11,21 +14,22 @@ bool FileChooserService::openDialog(bool canChooseFiles, bool canChooseDirectori
   opts.canChooseDirectories = canChooseDirectories;
   opts.allowMultipleSelection = multiple;
 
-  m_activeChooser = new FileChooser(this);
+  auto *chooser = createPlatformFileChooser(this);
 
-  if (!m_activeChooser->isAvailable()) {
-    delete m_activeChooser;
-    m_activeChooser = nullptr;
+  if (!chooser || !chooser->isAvailable()) {
+    if (chooser) chooser->deleteLater();
     m_fallbackActive = true;
     emit activeChanged();
     emit dialogOpened();
     return false;
   }
 
+  m_activeChooser = chooser;
+
   emit activeChanged();
   emit dialogOpened();
 
-  connect(m_activeChooser, &FileChooser::filesChosen, this,
+  connect(m_activeChooser, &AbstractFileChooser::filesChosen, this,
           [this](const std::vector<std::filesystem::path> &paths) {
             QStringList result;
             for (const auto &p : paths) {
@@ -34,10 +38,16 @@ bool FileChooserService::openDialog(bool canChooseFiles, bool canChooseDirectori
             finish(&result);
           });
 
-  connect(m_activeChooser, &FileChooser::rejected, this, [this]() { finish(nullptr); });
+  connect(m_activeChooser, &AbstractFileChooser::rejected, this, [this]() { finish(nullptr); });
 
   m_activeChooser->open(opts);
   return true;
+}
+
+QString FileChooserService::toLocalPath(const QUrl &url) const {
+  QString path = url.toLocalFile();
+  if (path.length() > 1 && path.endsWith('/') && !path.endsWith(":/")) path.chop(1);
+  return QDir::toNativeSeparators(path);
 }
 
 void FileChooserService::notifyFallbackDone() {
@@ -63,4 +73,10 @@ void FileChooserService::finish(const QStringList *paths) {
 
   emit activeChanged();
   emit dialogClosed();
+}
+
+FileChooserService *FileChooserService::create(QQmlEngine *, QJSEngine *) {
+  auto *service = ServiceRegistry::instance()->fileChooserService();
+  QJSEngine::setObjectOwnership(service, QJSEngine::CppOwnership);
+  return service;
 }

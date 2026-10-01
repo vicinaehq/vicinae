@@ -136,5 +136,4 @@ inline std::string toBase64(std::string_view data) {
 inline std::string fromBase64(std::string_view data) {
   return QByteArray::fromBase64(QByteArray(data.data(), data.size())).toStdString();
 }
-
 }; // namespace Utils

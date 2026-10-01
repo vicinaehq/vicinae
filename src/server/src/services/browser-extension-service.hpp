@@ -2,6 +2,7 @@
 #include <QObject>
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <glaze/core/reflect.hpp>
 #include <ranges>
 #include "ui/image/url.hpp"
@@ -51,8 +52,12 @@ public:
   BrowserExtensionService() = default;
 
   std::vector<BrowserTab> tabs() const {
-    return m_browsers | std::views::transform([](auto &&b) { return b.tabs; }) | std::views::join |
-           std::ranges::to<std::vector>();
+    auto tabs = m_browsers | std::views::transform([](auto &&b) { return b.tabs; }) | std::views::join |
+                std::ranges::to<std::vector>();
+
+    std::ranges::stable_sort(tabs, std::greater{}, &BrowserTab::lastAccessed);
+
+    return tabs;
   }
 
   auto findById(const std::string &id) {

@@ -1,0 +1,230 @@
+#include "ui/quick/completion-model.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
+#include "services/navigation/list-navigation.hpp"
+#include <algorithm>
+#include <utility>
+
+template <> struct fuzzy::FuzzySearchable<CompletionModel::Item> {
+  static fuzzy::Match score(const CompletionModel::Item &item, const fuzzy::Query &query) {
+    return fuzzy::scoreWeighted({{item.title, 1.0}}, query);
+  }
+};
+
+CompletionModel::CompletionModel(QObject *parent) : QAbstractListModel(parent) {}
+
+void CompletionModel::setItems(const QVariantList &items) {
+  beginResetModel();
+  m_sections.clear();
+  m_filterQuery.clear();
+
+  Section section;
+  section.items.reserve(items.size());
+  for (const auto &v : items) {
+    const auto m = v.toMap();
+    auto title = m.value(QStringLiteral("title")).toString();
+    if (title.isEmpty()) title = m.value(QStringLiteral("displayName")).toString();
+    section.items.push_back({
+        .title = title.toStdString(),
+        .iconSource = m.value(QStringLiteral("iconSource")).toString(),
+        .data = m,
+    });
+  }
+  m_sections.push_back(std::move(section));
+
+  rebuildFlatList();
+  endResetModel();
+  emit countChanged();
+}
+
+void CompletionModel::setSections(const QVariantList &sections) {
+  beginResetModel();
+  m_sections.clear();
+  m_filterQuery.clear();
+
+  m_sections.reserve(sections.size());
+  for (const auto &sv : sections) {
+    const auto sm = sv.toMap();
+    Section section;
+    section.name = sm.value(QStringLiteral("title")).toString();
+    const auto items = sm.value(QStringLiteral("items")).toList();
+    section.items.reserve(items.size());
+    for (const auto &v : items) {
+      const auto m = v.toMap();
+      auto title = m.value(QStringLiteral("title")).toString();
+      if (title.isEmpty()) title = m.value(QStringLiteral("displayName")).toString();
+      section.items.push_back({
+          .title = title.toStdString(),
+          .iconSource = m.value(QStringLiteral("iconSource")).toString(),
+          .data = m,
+      });
+    }
+    m_sections.push_back(std::move(section));
+  }
+
+  rebuildFlatList();
+  endResetModel();
+  emit countChanged();
+}
+
+void CompletionModel::updateItem(const QVariantMap &item) {
+  const auto id = item.value(QStringLiteral("id")).toString();
+  if (id.isEmpty()) return;
+
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
+    auto &items = m_sections[s].items;
+    for (int i = 0; std::cmp_less(i, items.size()); ++i) {
+      if (items[i].data.value(QStringLiteral("id")).toString() != id) continue;
+
+      auto title = item.value(QStringLiteral("title")).toString();
+      if (title.isEmpty()) title = item.value(QStringLiteral("displayName")).toString();
+      items[i] = {
+          .title = title.toStdString(),
+          .iconSource = item.value(QStringLiteral("iconSource")).toString(),
+          .data = item,
+      };
+
+      for (int f = 0; std::cmp_less(f, m_flat.size()); ++f) {
+        const auto &fi = m_flat[f];
+        if (fi.kind == FlatItem::Entry && fi.sectionIdx == s && fi.itemIdx == i) {
+          const auto idx = index(f);
+          emit dataChanged(idx, idx);
+          break;
+        }
+      }
+      return;
+    }
+  }
+}
+
+QVariantMap CompletionModel::itemDataById(const QString &id) const {
+  for (const auto &section : m_sections) {
+    for (const auto &item : section.items) {
+      if (item.data.value(QStringLiteral("id")).toString() == id) return item.data;
+    }
+  }
+  return {};
+}
+
+void CompletionModel::setStringOptions(const QStringList &options) {
+  QVariantList items;
+  for (qsizetype i = 0; i < options.size(); ++i) {
+    items.append(QVariantMap{
+        {QStringLiteral("id"), QString::number(i)},
+        {QStringLiteral("displayName"), options[i]},
+    });
+  }
+  setItems(items);
+}
+
+void CompletionModel::setFilter(const QString &query) {
+  auto q = query.toStdString();
+  if (m_filterQuery == q) return;
+  m_filterQuery = std::move(q);
+
+  beginResetModel();
+  rebuildFlatList();
+  endResetModel();
+  emit countChanged();
+}
+
+int CompletionModel::nextSelectableIndex(int from, int direction) const {
+  const auto count = static_cast<int>(m_flat.size());
+  if (count == 0) return -1;
+  return ListNavigation::nextIndex(from, direction, count,
+                                   [&](int idx) { return m_flat[idx].kind == FlatItem::Entry; });
+}
+
+int CompletionModel::indexOfItemId(const QString &id) const {
+  for (int i = 0; std::cmp_less(i, m_flat.size()); ++i) {
+    const auto &fi = m_flat[i];
+    if (fi.kind != FlatItem::Entry) continue;
+    const auto &item = m_sections[fi.sectionIdx].items[fi.itemIdx];
+    if (item.data.value(QStringLiteral("id")).toString() == id) return i;
+  }
+  return -1;
+}
+
+QVariantMap CompletionModel::itemDataAt(int index) const {
+  if (index < 0 || std::cmp_greater_equal(index, m_flat.size())) return {};
+  const auto &item = m_flat[index];
+  if (item.kind != FlatItem::Entry) return {};
+  return m_sections[item.sectionIdx].items[item.itemIdx].data;
+}
+
+int CompletionModel::rowCount(const QModelIndex &parent) const {
+  if (parent.isValid()) return 0;
+  return static_cast<int>(m_flat.size());
+}
+
+int CompletionModel::sectionCount() const {
+  return static_cast<int>(std::count_if(m_flat.begin(), m_flat.end(),
+                                        [](const auto &f) { return f.kind == FlatItem::SectionHeader; }));
+}
+
+QVariant CompletionModel::data(const QModelIndex &index, int role) const {
+  if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_flat.size())) return {};
+
+  const auto &item = m_flat[index.row()];
+
+  if (item.kind == FlatItem::SectionHeader) {
+    switch (role) {
+    case ItemType:
+      return QStringLiteral("section");
+    case Title:
+      return (item.sectionIdx >= 0 && std::cmp_less(item.sectionIdx, m_sections.size()))
+                 ? m_sections[item.sectionIdx].name
+                 : QString();
+    default:
+      return {};
+    }
+  }
+
+  if (item.sectionIdx < 0 || std::cmp_greater_equal(item.sectionIdx, m_sections.size())) return {};
+  const auto &section = m_sections[item.sectionIdx];
+  if (item.itemIdx < 0 || std::cmp_greater_equal(item.itemIdx, section.items.size())) return {};
+  const auto &entry = section.items[item.itemIdx];
+
+  switch (role) {
+  case ItemType:
+    return QStringLiteral("item");
+  case Title:
+    return QString::fromStdString(entry.title);
+  case IconSource:
+    return entry.iconSource;
+  case ItemData:
+    return entry.data;
+  default:
+    return {};
+  }
+}
+
+QHash<int, QByteArray> CompletionModel::roleNames() const {
+  return {
+      {ItemType, "itemType"},
+      {Title, "title"},
+      {IconSource, "iconSource"},
+      {ItemData, "itemData"},
+  };
+}
+
+void CompletionModel::rebuildFlatList() {
+  m_flat.clear();
+
+  const bool showHeaders = m_sections.size() > 1;
+  std::vector<Scored<int>> scored;
+
+  for (int s = 0; std::cmp_less(s, m_sections.size()); ++s) {
+    const auto &section = m_sections[s];
+    fuzzy::fuzzyFilter<Item>(section.items, m_filterQuery, scored);
+
+    if (scored.empty()) continue;
+
+    if (showHeaders && !section.name.isEmpty()) {
+      m_flat.push_back({.kind = FlatItem::SectionHeader, .sectionIdx = s});
+    }
+
+    for (const auto &entry : scored) {
+      m_flat.push_back({.kind = FlatItem::Entry, .sectionIdx = s, .itemIdx = entry.data});
+    }
+  }
+}

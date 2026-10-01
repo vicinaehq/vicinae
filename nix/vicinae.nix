@@ -15,6 +15,10 @@
   gcc15Stdenv,
   wayland,
   glaze,
+  numen,
+  pulseaudio ? null,
+  swift ? null,
+  apple-sdk ? null,
 }: let
   inherit (stdenv.hostPlatform) isLinux isDarwin;
 
@@ -51,12 +55,12 @@ in
 
     apiDeps = fetchNpmDeps {
       src = "${finalAttrs.src}/src/typescript/api";
-      hash = "sha256-Ki/l3PiBY3R0Bzd6leqx2OxA7c+jckjr+YD4GHHaSqI=";
+      hash = "sha256-4FEaBDJK9abcgz+vptuL4wQ8zhp+wpLbbR4Y79BVhEg=";
     };
 
     extensionManagerDeps = fetchNpmDeps {
       src = "${finalAttrs.src}/src/typescript/extension-manager";
-      hash = "sha256-6Kz7I8cGm1lnGPOI/gju3t5/imnbBFlDEKzWar5O770=";
+      hash = "sha256-pEgqFgvdz7Bcc+LznCI+KlD1XEfUuWFWjS24MJ7sx3k=";
     };
 
     cmakeFlags = lib.mapAttrsToList lib.cmakeFeature {
@@ -66,24 +70,37 @@ in
       "INSTALL_NODE_MODULES" = "OFF";
       "USE_SYSTEM_CMARK_GFM" = "ON";
       "USE_SYSTEM_GLAZE" = "ON";
+      "USE_SYSTEM_NUMEN" = "ON";
       "USE_SYSTEM_KF6" = "ON";
       "USE_SYSTEM_QT_KEYCHAIN" = "ON";
       "CMAKE_INSTALL_PREFIX" = placeholder "out";
       "CMAKE_INSTALL_DATAROOTDIR" = "share";
       "CMAKE_INSTALL_BINDIR" = "bin";
       "CMAKE_INSTALL_LIBDIR" = "lib";
-      "INSTALL_BROWSER_NATIVE_HOST" = "OFF";
+      "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
+      "AUTO_ENABLE_AUTOSTART" = "OFF";
+      # nix users configure declaratively; keep onboarding on darwin for the permission prompts
+      "ENABLE_ONBOARDING" =
+        if isLinux
+        then "OFF"
+        else "ON";
+      "BUNDLE_SOULVER_CORE" = "OFF";
     };
 
     strictDeps = true;
 
-    nativeBuildInputs = [
-      cmake
-      ninja
-      nodejs
-      pkg-config
-      qt6.wrapQtAppsHook
-    ];
+    nativeBuildInputs =
+      [
+        cmake
+        ninja
+        nodejs
+        pkg-config
+        qt6.qttools
+        qt6.wrapQtAppsHook
+      ]
+      ++ lib.optionals isDarwin [
+        swift
+      ];
 
     buildInputs =
       [
@@ -98,11 +115,15 @@ in
         qt6.qtimageformats
         qt6.qtsvg
         glaze
+        numen
       ]
       ++ lib.optionals isLinux [
         kdePackages.layer-shell-qt
         qt6.qtwayland
         wayland
+      ]
+      ++ lib.optionals isDarwin [
+        apple-sdk
       ];
 
     postPatch = ''
@@ -115,15 +136,41 @@ in
     # On macOS CMake installs only the CLI; assemble a thin .app bundle for the
     # GUI server. Both binaries go in the bundle so the CLI resolves the server
     # as a sibling (findServerBinary); $out/bin/vicinae is re-added in postFixup.
-    postInstall = lib.optionalString isDarwin ''
-      app=$out/Applications/Vicinae.app
-      install -Dm755 bin/vicinae-server "$app/Contents/MacOS/Vicinae"
-      install -Dm755 bin/vicinae "$app/Contents/MacOS/vicinae-cli"
-      install -Dm644 Info.plist "$app/Contents/Info.plist"
-      install -Dm644 ../extra/vicinae.icns "$app/Contents/Resources/vicinae.icns"
-      cp -r ../extra/themes "$app/Contents/Resources/themes"
-      rm -f "$out/bin/vicinae"
-    '';
+    postInstall =
+      lib.optionalString isDarwin ''
+        app=$out/Applications/Vicinae.app
+        install -Dm755 bin/vicinae-server "$app/Contents/MacOS/Vicinae"
+        install -Dm755 bin/vicinae "$app/Contents/MacOS/vicinae-cli"
+        install -Dm644 Info.plist "$app/Contents/Info.plist"
+        install -Dm644 ../extra/vicinae.icns "$app/Contents/Resources/vicinae.icns"
+        cp -r ../extra/themes "$app/Contents/Resources/themes"
+        rm -f "$out/bin/vicinae"
+      ''
+      # Generate native host manifests for Firefox and Chromium, so the browser
+      # extension can communicate with the browser link
+      + ''
+        install -d "$out/lib/mozilla/native-messaging-hosts"
+        cat > "$out/lib/mozilla/native-messaging-hosts/com.vicinae.vicinae.json" <<EOF
+        {
+          "name": "com.vicinae.vicinae",
+          "description": "Vicinae Native Messaging Host",
+          "path": "$out/libexec/vicinae/vicinae-browser-link",
+          "type": "stdio",
+          "allowed_extensions": ["firefox@vicinae.com"]
+        }
+        EOF
+
+        install -d "$out/etc/chromium/native-messaging-hosts"
+        cat > "$out/etc/chromium/native-messaging-hosts/com.vicinae.vicinae.json" <<EOF
+        {
+          "name": "com.vicinae.vicinae",
+          "description": "Vicinae Native Messaging Host",
+          "path": "$out/libexec/vicinae/vicinae-browser-link",
+          "type": "stdio",
+          "allowed_origins": ["chrome-extension://kcmipingpfbohfjckomimmahknoddnke/"]
+        }
+        EOF
+      '';
 
     # Symlink the CLI onto PATH after wrapQtAppsHook runs, so the hook doesn't
     # double-wrap it and the CLI still resolves from inside the bundle.
@@ -141,6 +188,7 @@ in
         }"
       ]
       ++ lib.optionals isLinux [
+        "--prefix PATH : ${lib.getBin pulseaudio}/bin"
         "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
       ];
 

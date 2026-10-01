@@ -68,10 +68,7 @@ type CacheIndex = {
  * For instance, you could store json using `JSON.stringify` and `JSON.parse` it back.
  * If you need to store binary data, you could encode it in base64.
  *
- * Unlike the local storage API, this API exclusively uses the extension's support directory to store its data.
- * No calls to internal Vicinae APIs are required, hence why all methods in this class are synchronous.
- * Another major difference is that cache data is not encrypted, so it's not suitable to store secrets.
- * (local storage currently isn't either, but that will change in the future)
+ * Also note that unlike `LocalStorage`, cache storage is never encrypted.
  *
  * @category Cache
  */

@@ -75,7 +75,7 @@ std::string DesktopEntryReader::parseRawLocale() {
   std::string locale;
 
   consume('[');
-  while (!isPeek(']')) {
+  while (peek() && peek() != ']') {
     locale += consume();
   }
   consume(']');
@@ -148,6 +148,7 @@ void DesktopEntryReader::parseEntry() {
 
   skipSpace();
   if (peek() == '[') { locale = Locale::parse(parseRawLocale()); }
+  skipSpace();
 
   // if we don't get expected '=' separator we just skip the current line.
   if (consume() != '=') {

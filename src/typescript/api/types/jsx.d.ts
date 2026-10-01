@@ -9,12 +9,20 @@ import type {
 	SerializedColorLike,
 	SerializedImageLike,
 } from "../src";
+import type { ClipboardContent } from "../src/api/proto/api";
 
 type BaseFormField = {
 	onBlur?: Function;
 	onFocus?: Function;
 	onChange?: Function;
 	value?: any;
+};
+
+type WithPagination = {
+	// flattened so that the handler is detected as one
+	// by the reconciler
+	paginationHasMore: boolean;
+	paginationOnLoadMore?: () => Promise<void> | void;
 };
 
 declare module "react" {
@@ -37,7 +45,8 @@ declare module "react" {
 				navigationTitle?: string;
 				onSearchTextChange?: (...args: any[]) => void;
 				onSelectionChange?: (selectedItemId: string) => void;
-			};
+				pagination?: Pagination;
+			} & WithPagination;
 			"list-section": {
 				title?: string;
 				subtitle?: string;
@@ -54,6 +63,7 @@ declare module "react" {
 							tooltip: string;
 					  };
 				keywords?: string[];
+				dragContent?: ClipboardContent;
 				accessories?: List.Item.SerializedAccessory[];
 				children?: React.ReactNode;
 			};
@@ -65,6 +75,7 @@ declare module "react" {
 				columns?: number;
 				fit: Grid.Fit;
 				aspectRatio: number;
+				throttle: boolean;
 
 				children?: React.ReactNode;
 				filtering?: boolean;
@@ -75,7 +86,8 @@ declare module "react" {
 				navigationTitle?: string;
 				onSearchTextChange?: (...args: any[]) => void;
 				onSelectionChange?: (selectedItemId: string) => void;
-			};
+				pagination?: Pagination;
+			} & WithPagination;
 			"grid-section": {
 				inset?: Grid.Inset;
 				columns?: number;
@@ -93,6 +105,7 @@ declare module "react" {
 				content?: SerializedImageLike | { color: SerializedColorLike };
 				tooltip?: string;
 				keywords?: string[];
+				dragContent?: ClipboardContent;
 				accessory?: {
 					icon?: SerializedImageLike;
 					tooltip?: string | null;

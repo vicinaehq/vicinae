@@ -5,23 +5,26 @@
 #include <wayland-client-core.h>
 #include "qt-wayland-utils.hpp"
 
-void ExtBackgroundEffectV1Manager::capabilities(void *data, ext_background_effect_manager_v1 *,
-                                                uint32_t flags) {
-  static_cast<ExtBackgroundEffectV1Manager *>(data) // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-      ->m_supportsBlur = flags & EXT_BACKGROUND_EFFECT_MANAGER_V1_CAPABILITY_BLUR;
+ExtBackgroundEffectV1::ExtBackgroundEffectV1() : QWaylandClientExtensionTemplate(1) {
+  initialize();
+
+  // roundtrip so the one-shot capabilities event is delivered before we report support
+  if (isActive()) {
+    auto *wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
+    wl_display_roundtrip(wayland->display());
+  }
 }
 
-ExtBackgroundEffectV1Manager::ExtBackgroundEffectV1Manager(ext_background_effect_manager_v1 *manager)
-    : m_manager(manager) {
-  auto *wayland = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
-  ext_background_effect_manager_v1_add_listener(manager, &s_listener, this);
-  wl_display_roundtrip(wayland->display());
+void ExtBackgroundEffectV1::ext_background_effect_manager_v1_capabilities(uint32_t flags) {
+  m_capabilities = flags;
 }
 
-bool ExtBackgroundEffectV1Manager::isSupported() const { return m_supportsBlur; }
+bool ExtBackgroundEffectV1Manager::isSupported() const {
+  return m_manager.isActive() && m_manager.supportsBlur();
+}
 
 bool ExtBackgroundEffectV1Manager::apply(QWindow *win, const Params &params) {
-  if (!m_supportsBlur) { return false; }
+  if (!isSupported()) { return false; }
 
   if (auto it = m_state.find(win); it != m_state.end()) {
     auto &state = it->second;
@@ -43,7 +46,7 @@ bool ExtBackgroundEffectV1Manager::apply(QWindow *win, const Params &params) {
     return false;
   }
 
-  auto effect = ext_background_effect_manager_v1_get_background_effect(m_manager, surface);
+  auto *effect = m_manager.get_background_effect(surface);
 
   if (!effect) {
     qWarning() << "Failed to create background effect object";
@@ -88,7 +91,7 @@ bool ExtBackgroundEffectV1Manager::eventFilter(QObject *sender, QEvent *event) {
   return QObject::eventFilter(sender, event);
 }
 
-void ExtBackgroundEffectV1Manager::applyBlur(QWindow *, const BlurState &state) {
+void ExtBackgroundEffectV1Manager::applyBlur(QWindow *, BlurState &state) {
   const auto region = QtWaylandUtils::createRoundedRegion(state.cfg.region, state.cfg.radius);
-  ext_background_effect_surface_v1_set_blur_region(state.effect, region);
+  state.effect.set_blur_region(region);
 }

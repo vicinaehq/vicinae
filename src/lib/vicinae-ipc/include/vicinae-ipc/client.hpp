@@ -1,4 +1,5 @@
 #pragma once
+#include <common/common.hpp>
 #include <common/enumerate.hpp>
 #include <cstring>
 #include <filesystem>
@@ -22,9 +23,7 @@ template <IsRpcSchema SchemaType = CliSchema> class Client {
   using Schema = SchemaType;
 
 public:
-  static std::filesystem::path vicinaeSocketPath() {
-    return std::filesystem::path(getenv("XDG_RUNTIME_DIR")) / "vicinae" / "vicinae.sock";
-  }
+  static std::filesystem::path vicinaeSocketPath() { return vicinae::serverSocketPath(); }
 
   static std::expected<Client, std::string> make() {
     const int fd = socket(AF_UNIX, SOCK_STREAM, 0);

@@ -18,7 +18,10 @@ const useScreens = () => {
 	const refreshScreens = () => {
 		setLoading(true);
 		wm.getScreens()
-			.then(setScreens)
+			.then((s) => {
+				setScreens(s);
+				console.log(JSON.stringify(s, null, 2));
+			})
 			.catch(setError)
 			.finally(() => setLoading(false));
 	};
@@ -38,7 +41,10 @@ const useWindowList = () => {
 	const refreshWindows = () => {
 		setLoading(true);
 		wm.getWindows()
-			.then(setWindows)
+			.then((w) => {
+				setWindows(w);
+				console.log(JSON.stringify(w, null, 2));
+			})
 			.catch(setError)
 			.finally(() => setLoading(false));
 	};

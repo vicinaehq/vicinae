@@ -14,11 +14,12 @@ public:
   void setKeymap(snippet_gen::LayoutInfo info) override;
   void resetContext() override;
 
-  void injectExpand(unsigned charsToDelete, unsigned prePasteDelayUs, bool terminal,
-                    unsigned cursorLeftMoves) override;
+  void injectExpand(const std::string &text, unsigned charsToDelete, unsigned prePasteDelayUs, bool terminal,
+                    unsigned cursorLeftMoves, bool viaClipboard) override;
   void injectUndo(unsigned backspaceCount, const std::string &trigger) override;
   void setKeyDelay(int us) override;
   bool supportsKeyInjection() const override;
+  bool usesClipboard(std::size_t) const override { return true; }
 
   bool isRunning() const override;
 

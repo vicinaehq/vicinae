@@ -23,6 +23,9 @@ static const QString HEADLINE = "A focused launcher for your desktop — native,
 static const QString APP_ID = "vicinae";
 static const QString APP_SCHEME = APP_ID;
 static const std::set<QString> APP_SCHEMES = {APP_SCHEME, "raycast", "com.raycast"};
+#ifdef Q_OS_WIN
+static const QString APP_USER_MODEL_ID = VICINAE_BUNDLE_ID;
+#endif
 static const QString DEFAULT_ICON_THEME_NAME = "vicinae";
 static const QString VICINAE_NPM_API_PACKAGE = "@vicinae/api";
 static const QString RAYCAST_NPM_API_PACKAGE = "@raycast/api";
@@ -33,15 +36,19 @@ static const QString RAYCAST_NPM_API_PACKAGE = "@raycast/api";
  */
 static const QString DISCORD_INVITE_LINK = "https://discord.gg/rP4ecD42p7";
 static const QString GH_SPONSOR_LINK = "https://github.com/sponsors/vicinaehq";
+static const QString X_PROFILE_LINK = "https://x.com/aurelienb42";
 
 static const SemanticColor ACCENT_COLOR = SemanticColor::Accent;
 
 std::filesystem::path runtimeDir();
-std::filesystem::path commandSocketPath();
+std::string commandSocketName();
 std::filesystem::path pidFile();
 std::filesystem::path dataDir();
 std::filesystem::path stateDir();
 std::filesystem::path configDir();
+std::filesystem::path cacheDir();
+
+std::filesystem::path dataHome();
 
 // Read-only resources shipped with the application. On macOS this is
 // Vicinae.app/Contents/Resources; on other platforms it is the install-prefix

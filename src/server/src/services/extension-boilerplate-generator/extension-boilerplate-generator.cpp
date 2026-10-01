@@ -1,5 +1,5 @@
 #include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "utils/utils.hpp"
 #include "generated/version.h"
 #include <filesystem>
@@ -12,26 +12,37 @@ namespace fs = std::filesystem;
 static const QString COMMAND_JSON_TEMPLATE = R"(    {
       "name": "%NAME%",
       "title": "%TITLE%",
-      "subtitle": "%SUBTITLE%",
       "description": "%DESCRIPTION%",
       "mode": "%MODE%"
     })";
 
 static const QString COMMAND_LIST_JSON_TEMPLATE = "[\n%1\n  ]";
 
-static const std::vector<CommandBoilerplate> CMD_TEMPLATE_LIST = {
-    CommandBoilerplate{.resource = ":boilerplate/tmpl-list", .name = "Simple List", .mode = CommandModeView},
-    CommandBoilerplate{
-        .resource = ":boilerplate/tmpl-list-detail", .name = "List with Detail", .mode = CommandModeView},
-    CommandBoilerplate{
-        .resource = ":boilerplate/tmpl-controlled-list", .name = "Controlled List", .mode = CommandModeView},
-    CommandBoilerplate{
-        .resource = ":boilerplate/tmpl-simple-detail", .name = "Simple Detail", .mode = CommandModeView},
-    CommandBoilerplate{.resource = ":boilerplate/tmpl-no-view", .name = "No View", .mode = CommandModeNoView},
-};
+static QString jsonEscape(QString s) {
+  return s.replace('\\', "\\\\")
+      .replace('"', "\\\"")
+      .replace('\n', "\\n")
+      .replace('\r', "\\r")
+      .replace('\t', "\\t");
+}
 
 const std::vector<CommandBoilerplate> &ExtensionBoilerplateGenerator::commandBoilerplates() const {
-  return CMD_TEMPLATE_LIST;
+  static const std::vector<CommandBoilerplate> cmdTemplateList = {
+      CommandBoilerplate{
+          .resource = ":boilerplate/tmpl-list", .name = tr("Simple List"), .mode = CommandModeView},
+      CommandBoilerplate{.resource = ":boilerplate/tmpl-list-detail",
+                         .name = tr("List with Detail"),
+                         .mode = CommandModeView},
+      CommandBoilerplate{.resource = ":boilerplate/tmpl-controlled-list",
+                         .name = tr("Controlled List"),
+                         .mode = CommandModeView},
+      CommandBoilerplate{.resource = ":boilerplate/tmpl-simple-detail",
+                         .name = tr("Simple Detail"),
+                         .mode = CommandModeView},
+      CommandBoilerplate{
+          .resource = ":boilerplate/tmpl-no-view", .name = tr("No View"), .mode = CommandModeNoView},
+  };
+  return cmdTemplateList;
 }
 
 std::expected<fs::path, QString>
@@ -75,24 +86,24 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
     QString const name = slugify(cmd.title);
 
     auto pred = [&](auto &&tmpl) { return tmpl.resource == cmd.templateId; };
-    auto it = std::ranges::find_if(CMD_TEMPLATE_LIST, pred);
+    auto it = std::ranges::find_if(commandBoilerplates(), pred);
 
-    if (it == CMD_TEMPLATE_LIST.end()) {
+    if (it == commandBoilerplates().end()) {
       return std::unexpected(QString("Unknown template with id %1").arg(cmd.templateId));
     }
 
     QString const mode = it->mode == CommandModeView ? "view" : "no-view";
-    QString const cmdString = QString(COMMAND_JSON_TEMPLATE)
-                                  .replace(PLACEHOLDER("NAME"), name.simplified())
-                                  .replace(PLACEHOLDER("TITLE"), cmd.title.simplified())
-                                  .replace(PLACEHOLDER("SUBTITLE"), cmd.subtitle.simplified())
-                                  .replace(PLACEHOLDER("DESCRIPTION"), cmd.description.simplified())
-                                  .replace(PLACEHOLDER("MODE"), mode);
+    QString const cmdString =
+        QString(COMMAND_JSON_TEMPLATE)
+            .replace(PLACEHOLDER("NAME"), name.simplified())
+            .replace(PLACEHOLDER("TITLE"), jsonEscape(cmd.title.simplified()))
+            .replace(PLACEHOLDER("DESCRIPTION"), jsonEscape(cmd.description.simplified()))
+            .replace(PLACEHOLDER("MODE"), mode);
 
     QString const ext = it->mode == CommandModeView ? "tsx" : "ts";
     QString const filename = QString("%1.%2").arg(name).arg(ext);
 
-    userCopy(it->resource, QString::fromStdString(srcDir / filename.toStdString()));
+    userCopy(it->resource, QString::fromStdString((srcDir / filename.toStdString()).string()));
     cmdStrings << cmdString;
   }
 
@@ -107,9 +118,9 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
   // we don't use QJson because key order would not be preserved
   manifest.replace(PLACEHOLDER("NAME"), extName)
-      .replace(PLACEHOLDER("TITLE"), config.title.simplified())
-      .replace(PLACEHOLDER("DESCRIPTION"), config.description.simplified())
-      .replace(PLACEHOLDER("AUTHOR"), config.author.simplified())
+      .replace(PLACEHOLDER("TITLE"), jsonEscape(config.title.simplified()))
+      .replace(PLACEHOLDER("DESCRIPTION"), jsonEscape(config.description.simplified()))
+      .replace(PLACEHOLDER("AUTHOR"), jsonEscape(config.author.simplified()))
       .replace(PLACEHOLDER("VICINAE_VERSION"), version)
       .replace(PLACEHOLDER("COMMAND_LIST"), COMMAND_LIST_JSON_TEMPLATE.arg(cmdStrings.join(",\n    ")));
 
@@ -126,9 +137,10 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
   if (!gitignore.open(QIODevice::WriteOnly)) { return std::unexpected(QString("Failed to write gitignore")); }
 
   gitignore.write("node_modules\nvicinae-env.d.ts\n");
-  userCopy(":boilerplate/tsconfig.json", QString::fromStdString(extDir / "tsconfig.json"));
-  userCopy(":boilerplate/extension_icon", QString::fromStdString(assetsDir / "extension_icon.png"));
-  userCopy(":boilerplate/README.md", QString::fromStdString(extDir / "README.md"));
+  userCopy(":boilerplate/tsconfig.json", QString::fromStdString((extDir / "tsconfig.json").string()));
+  userCopy(":boilerplate/extension_icon",
+           QString::fromStdString((assetsDir / "extension_icon.png").string()));
+  userCopy(":boilerplate/README.md", QString::fromStdString((extDir / "README.md").string()));
 
   return extDir;
 }

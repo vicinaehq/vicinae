@@ -10,7 +10,7 @@ class SetCliThemeCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("theme_id", m_path)->required(); }
 
   bool run(CLI::App *) override {
-    if (auto res = cli::IpcClient::sendDeeplink(std::format("vicinae://theme/set/{}", m_path.c_str()));
+    if (auto res = cli::IpcClient::sendDeeplink(std::format("vicinae://theme/set/{}", m_path.string()));
         !res) {
       throw std::runtime_error("Failed to set theme: " + res.error());
     }

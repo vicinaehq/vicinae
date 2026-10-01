@@ -1,4 +1,5 @@
 #include "extension-manifest.hpp"
+#include "internal/glaze-qt.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include <QJsonObject>
@@ -80,7 +81,7 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
   base.setName(obj["name"].toString());
   base.setPlaceholder(obj["placeholder"].toString());
   base.setRequired(obj["required"].toBool());
-  base.setDefaultValue(obj.value("default"));
+  if (obj.contains("default")) base.setDefaultValue(qJsonValueToGlazeGeneric(obj.value("default")));
 
   if (type == "textfield") {
     base.setData(Preference::TextData());
@@ -90,7 +91,7 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
     auto checkbox = Preference::CheckboxData(obj["label"].toString());
     base.setData(checkbox);
   } else if (type == "appPicker") {
-    base.setData(Preference::AppPickerData());
+    base.setData(Preference::AppPickerData{.multiple = obj["multiple"].toBool()});
   } else if (type == "file") {
     base.setData(Preference::FilePickerData{.multiple = obj["multiple"].toBool()});
   } else if (type == "directory") {
@@ -108,24 +109,7 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
     }
 
     base.setData(Preference::DropdownData{options});
-
-    // For dropdown, validate default value: use provided value if valid, otherwise use first option
-    if (!options.empty()) {
-      QJsonValue const providedDefault = obj.value("default");
-      QString defaultValue = options.front().value; // Default to first option
-
-      if (providedDefault.isString()) {
-        QString const providedValue = providedDefault.toString();
-        for (const auto &option : options) {
-          if (option.value == providedValue) {
-            defaultValue = providedValue;
-            break;
-          }
-        }
-      }
-
-      base.setDefaultValue(defaultValue);
-    }
+    if (obj.contains("default")) base.setDefaultValue(qJsonValueToGlazeGeneric(obj.value("default")));
   } else {
     qWarning() << "Unknown extension preference type" << type;
   }
@@ -226,6 +210,10 @@ ExtensionManifest::Command ExtensionManifest::parseCommandFromObject(const QJson
     } else {
       qWarning() << "Failed to parse interval for command" << command.name << "-" << interval.error();
     }
+  }
+
+  for (const auto &obj : obj.value("keywords").toArray()) {
+    command.keywords.emplace_back(obj.toString());
   }
 
   for (const auto &obj : obj.value("preferences").toArray()) {

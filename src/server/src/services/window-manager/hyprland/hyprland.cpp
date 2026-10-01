@@ -1,11 +1,28 @@
 #include <format>
+#include <glaze/glaze.hpp>
+#include <QCoreApplication>
+#include <qprocess.h>
+#include <string_view>
+#include <vector>
 #include "hyprland.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/hyprland/hypr-ipc.hpp"
 #include "services/window-manager/hyprland/hypr-workspace.hpp"
 #include "services/window-manager/hyprland/hyprctl.hpp"
 #include "vicinae.hpp"
 
 using Hyprctl = Hyprland::Controller;
+namespace ipc = Hyprland::ipc;
+
+namespace {
+
+bool dispatchLua(std::string_view expr) { return Hyprctl::oneshot(std::format("dispatch {}", expr)) == "ok"; }
+
+std::string windowTarget(const AbstractWindowManager::AbstractWindow &window) {
+  return std::format("address:{}", window.id().toStdString());
+}
+
+} // namespace
 
 HyprlandWindowManager::HyprlandWindowManager() {
   connect(&m_ev, &Hyprland::EventListener::openwindow, this, [this]() { emit windowsChanged(); });
@@ -17,40 +34,78 @@ QString HyprlandWindowManager::id() const { return "hyprland"; }
 QString HyprlandWindowManager::displayName() const { return "Hyprland"; }
 
 AbstractWindowManager::WindowList HyprlandWindowManager::listWindowsSync() const {
-  auto response = Hyprctl::oneshot("-j/clients");
-  auto json = QJsonDocument::fromJson(response);
-  WindowList windows;
+  auto clients = Hyprctl::oneshot<std::vector<ipc::Window>>("-j/clients");
+  if (!clients.has_value()) { return {}; }
 
-  for (const auto &item : json.array()) {
-    windows.emplace_back(std::make_shared<HyprlandWindow>(item.toObject()));
+  WindowList windows;
+  windows.reserve(clients->size());
+
+  for (const auto &client : *clients) {
+    windows.emplace_back(std::make_shared<HyprlandWindow>(client));
   }
 
   return windows;
 }
 
+AbstractWindowManager::WindowPtr HyprlandWindowManager::getFrontmostWindowSync() const {
+  auto clients = Hyprctl::oneshot<std::vector<ipc::Window>>("-j/clients");
+  auto activeWs = Hyprctl::oneshot<ipc::Workspace>("-j/activeworkspace");
+  if (!clients.has_value() || !activeWs.has_value()) { return nullptr; }
+
+  const auto ownPid = QCoreApplication::applicationPid();
+  const ipc::Window *frontmost = nullptr;
+
+  for (const auto &client : *clients) {
+    if (client.pid == ownPid || client.workspace.id != activeWs->id) continue;
+    if (client.focusHistoryId < 0) continue;
+    if (!frontmost || client.focusHistoryId < frontmost->focusHistoryId) frontmost = &client;
+  }
+
+  if (!frontmost) return nullptr;
+  return std::make_shared<HyprlandWindow>(*frontmost);
+}
+
 AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() const {
-  auto response = Hyprctl::oneshot("-j/activewindow");
-  auto json = QJsonDocument::fromJson(response);
+  auto active = Hyprctl::oneshot<ipc::Window>("-j/activewindow");
+  if (!active.has_value() || active->address.empty()) { return nullptr; }
 
-  if (json.isEmpty()) { return nullptr; }
-
-  return std::make_shared<HyprlandWindow>(json.object());
+  return std::make_shared<HyprlandWindow>(*active);
 }
 
 void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const {
-  auto addr = window.id().toStdString();
-  Hyprctl::oneshot(std::format("[[BATCH]]dispatch focuswindow address:{0}"
-                               ";eval hl.dispatch(hl.dsp.focus({{window=\"address:{0}\"}}))",
-                               addr));
+  dispatchLua(std::format(R"(hl.dsp.focus({{ window = "{}" }}))", windowTarget(window)));
+}
+
+void HyprlandWindowManager::focusWorkspaceSync(const AbstractWorkspace &workspace) const {
+  dispatchLua(std::format(R"(hl.dsp.focus({{ workspace = "{}" }}))", workspace.id().toStdString()));
 }
 
 bool HyprlandWindowManager::closeWindow(const AbstractWindow &window) const {
-  auto addr = window.id().toStdString();
-  Hyprctl::oneshot(std::format("[[BATCH]]dispatch closewindow address:{0}"
-                               ";eval hl.dispatch(hl.dsp.window.close({{window=\"address:{0}\"}}))",
-                               addr));
-  emit windowsChanged();
+  if (!dispatchLua(std::format(R"(hl.dsp.window.close({{ window = "{}" }}))", windowTarget(window)))) {
+    return false;
+  }
 
+  emit windowsChanged();
+  return true;
+}
+
+bool HyprlandWindowManager::toggleFullscreen(const AbstractWindow &window) {
+  if (!dispatchLua(std::format(R"(hl.dsp.window.fullscreen({{ action = "toggle", window = "{}" }}))",
+                               windowTarget(window)))) {
+    return false;
+  }
+
+  emit windowsChanged();
+  return true;
+}
+
+bool HyprlandWindowManager::toggleFloating(const AbstractWindow &window) {
+  if (!dispatchLua(std::format(R"(hl.dsp.window.float({{ action = "toggle", window = "{}" }}))",
+                               windowTarget(window)))) {
+    return false;
+  }
+
+  emit windowsChanged();
   return true;
 }
 
@@ -66,21 +121,21 @@ bool HyprlandWindowManager::ping() const {
 bool HyprlandWindowManager::hasWorkspaces() const { return true; }
 
 AbstractWindowManager::WorkspacePtr HyprlandWindowManager::getActiveWorkspace() const {
-  auto response = Hyprctl::oneshot("-j/activeworkspace");
-  auto json = QJsonDocument::fromJson(response);
+  auto active = Hyprctl::oneshot<ipc::Workspace>("-j/activeworkspace");
+  if (!active.has_value()) { return nullptr; }
 
-  if (json.isEmpty()) { return nullptr; }
-
-  return std::make_shared<Hyprland::Workspace>(json.object());
+  return std::make_shared<Hyprland::Workspace>(*active);
 }
 
 AbstractWindowManager::WorkspaceList HyprlandWindowManager::listWorkspaces() const {
-  auto response = Hyprctl::oneshot("-j/workspaces");
-  auto json = QJsonDocument::fromJson(response);
-  WorkspaceList workspaces;
+  auto parsed = Hyprctl::oneshot<std::vector<ipc::Workspace>>("-j/workspaces");
+  if (!parsed.has_value()) { return {}; }
 
-  for (const auto &item : json.array()) {
-    workspaces.emplace_back(std::make_shared<Hyprland::Workspace>(item.toObject()));
+  WorkspaceList workspaces;
+  workspaces.reserve(parsed->size());
+
+  for (const auto &workspace : *parsed) {
+    workspaces.emplace_back(std::make_shared<Hyprland::Workspace>(workspace));
   }
 
   return workspaces;

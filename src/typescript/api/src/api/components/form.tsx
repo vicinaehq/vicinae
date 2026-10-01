@@ -155,22 +155,25 @@ interface FormEvent<T extends Form.Value> {
 type FormEventType = "focus" | "blur";
 
 const wrapFormItemProps = <T extends Form.Value>(props: FormItemProps<T>) => {
+	const eventValue = (...args: unknown[]) =>
+		(args[0] ?? props.value ?? props.defaultValue) as T | undefined;
+
 	return {
 		...props,
-		onFocus: () =>
+		onFocus: (...args: unknown[]) =>
 			props.onFocus?.({
 				type: "focus",
 				target: {
 					id: props.id,
-					value: (props.value ?? props.defaultValue) as T | undefined,
+					value: eventValue(...args),
 				},
 			}),
-		onBlur: () =>
+		onBlur: (...args: unknown[]) =>
 			props.onBlur?.({
 				type: "blur",
 				target: {
 					id: props.id,
-					value: (props.value ?? props.defaultValue) as T | undefined,
+					value: eventValue(...args),
 				},
 			}),
 	};
@@ -227,7 +230,7 @@ const PasswordField: React.FC<Form.PasswordField.Props> = ({
 
 	return (
 		<password-field
-			{...props}
+			{...wrapFormItemProps(props)}
 			value={countedValue}
 			onChange={wrappedOnChange}
 		/>

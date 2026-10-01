@@ -18,7 +18,7 @@ class TelemetryService : public QObject, NonCopyable {
   };
 
   struct ScreenInfo {
-    struct {
+    struct Resolution {
       int width;
       int height;
     } resolution;

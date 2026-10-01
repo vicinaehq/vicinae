@@ -40,12 +40,12 @@ std::expected<MigrationManager::Migration, MigrationLoadingError>
 MigrationManager::loadMigrationFile(const std::filesystem::path &path) {
   Migration migration;
 
-  migration.id = path.filename().c_str();
+  migration.id = QString::fromStdString(path.filename().string());
 
   {
     std::regex const filenameRegex(R"((\d+)_.*\.sql)");
     std::smatch filenameMatch;
-    std::string const filename = path.filename();
+    std::string const filename = path.filename().string();
 
     if (!std::regex_search(filename, filenameMatch, filenameRegex)) {
       MigrationLoadingError error;
@@ -59,7 +59,7 @@ MigrationManager::loadMigrationFile(const std::filesystem::path &path) {
     migration.version = std::stoi(filenameMatch[1].str());
   }
 
-  QFile file(path.c_str());
+  QFile file(path);
 
   if (!file.open(QIODevice::ReadOnly)) { return migration; }
 

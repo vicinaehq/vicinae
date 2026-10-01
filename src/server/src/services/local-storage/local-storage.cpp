@@ -2,7 +2,7 @@
 #include <qjsonobject.h>
 #include "local-storage-service.hpp"
 #include "scoped-local-storage.hpp"
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 
 using ValueType = LocalStorageService::ValueType;
 

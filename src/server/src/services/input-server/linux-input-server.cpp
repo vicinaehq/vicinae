@@ -1,4 +1,5 @@
 #include "linux-input-server.hpp"
+#include "log/message-handler.hpp"
 #include <cstdint>
 #include <QTimer>
 #include <qtenvironmentvariables.h>
@@ -175,7 +176,7 @@ void LinuxInputServer::setKeyDelay(int us) {
 }
 
 void LinuxInputServer::handleError() {
-  for (const auto &line : m_process.readAllStandardError().split('\n')) {
-    qDebug() << "[INPUT-SERVER]" << line;
+  for (const auto &line : m_process.readAllStandardError().trimmed().split('\n')) {
+    vicinae::log::subprocessLine(vicinae::log::INPUT_SERVER, {}, QString::fromUtf8(line));
   }
 }

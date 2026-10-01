@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/toast/toast.hpp"
+#include "services/toast/toast.hpp"
 #include <qstring.h>
 #include <qtimer.h>
 #include "common/qt.hpp"
@@ -82,7 +82,7 @@ public:
     auto toast = std::shared_ptr<Toast>(new Toast(title, priority, message), QObjectDeleter());
 
     if (priority != ToastStyle::Dynamic) {
-      QTimer::singleShot(duration, toast.get(), [this, toast]() { toast->close(); });
+      QTimer::singleShot(duration, toast.get(), [toast]() { toast->close(); });
     }
     registerToast(toast);
   }

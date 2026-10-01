@@ -19,7 +19,7 @@ public:
 
     const auto cwd = script.data().currentDirectoryPath.value_or(script.path().parent_path());
 
-    setWorkingDirectory(cwd.c_str());
+    setWorkingDirectory(QString::fromStdString(cwd.string()));
     setArguments(argv);
   }
 };

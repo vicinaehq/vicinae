@@ -1,14 +1,14 @@
 #include "navigation-controller.hpp"
 #include <QTimer>
-#include "command-controller.hpp"
+#include "command/command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
-#include "qml/missing-preference-view-host.hpp"
+#include "extension/views/missing-preference-view-host.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "ui/action-pannel/action-panel-view.hpp"
+#include "ui/action-panel/action-panel-view.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
@@ -19,6 +19,8 @@
 #include <utility>
 
 NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
+
+void NavigationController::requestCompleterFocus() { emit completerFocusedRequested(); }
 
 void NavigationController::setNavigationTitle(const QString &navigationTitle, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
@@ -251,6 +253,7 @@ void NavigationController::popCurrentView() {
   emit headerVisiblityChanged(next->needsTopBar);
   emit searchVisibilityChanged(next->supportsSearch);
   emit searchInteractiveChanged(next->searchInteractive);
+  emit searchRedactedChanged(next->searchRedacted);
   emit statusBarVisiblityChanged(next->needsStatusBar);
   emit loadingChanged(next->isLoading);
   emit backButtonVisibilityChanged(next->showBackButton);
@@ -399,6 +402,13 @@ void NavigationController::setSearchInteractive(bool value, const BaseView *call
   }
 }
 
+void NavigationController::setSearchRedacted(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->searchRedacted = value;
+    if (state->sender == topView()) { emit searchRedactedChanged(value); }
+  }
+}
+
 void NavigationController::setStatusBarVisibility(bool value, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->needsStatusBar = value;
@@ -412,6 +422,22 @@ void NavigationController::executeAction(AbstractAction *action) {
 
   std::shared_ptr<AbstractAction> guard;
   if (auto *root = state->sender->actionPanelRoot()) { guard = root->retainAction(action); }
+
+  if (!guard) {
+    executeActionNow(action);
+    return;
+  }
+
+  // The action might tear down the window and the panel before the qml handler gets to run,
+  // so defer execution to next event loop turn
+  QMetaObject::invokeMethod(this, [this, action, guard] { executeActionNow(action); }, Qt::QueuedConnection);
+}
+
+void NavigationController::executeActionNow(AbstractAction *action) {
+  auto state = topState();
+  if (!state) return;
+
+  state->sender->beforeActionExecuted(action);
 
   if (action->isSubmenu()) {
     openActionPanel();
@@ -430,9 +456,8 @@ void NavigationController::executeAction(AbstractAction *action) {
     }
   }
 
-  if (action->autoClose()) { closeWindow({.clearRootSearch = true}); }
-
   action->execute(&m_ctx);
+  if (action->autoClose()) { closeWindow({.clearRootSearch = true}); }
   closeActionPanel();
 }
 
@@ -440,6 +465,7 @@ void NavigationController::activateView(const ViewState &state) {
   emit headerVisiblityChanged(state.needsTopBar);
   emit searchVisibilityChanged(state.supportsSearch);
   emit searchInteractiveChanged(state.searchInteractive);
+  emit searchRedactedChanged(state.searchRedacted);
   emit statusBarVisiblityChanged(state.needsStatusBar);
   emit backButtonVisibilityChanged(state.showBackButton);
   emit loadingChanged(state.isLoading);
@@ -581,7 +607,7 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   const bool isSameView = previouslyActive->uniqueId() == id && previouslyActive->isView();
 
   // toggle visibility if we are already showing
-  if (initialOpenState && isSameView) {
+  if (options.toggleIfAlreadyActive && initialOpenState && isSameView) {
     popToRoot({.clearSearch = false});
     m_ctx.navigation->closeWindow();
     return true;
@@ -589,10 +615,18 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
 
   popToRoot({.clearSearch = false});
 
+  // programmatic activation bypasses the action execution funnel, so the view hook
+  // never fires for it: register the visit explicitly.
+  m_ctx.services->rootItemManager()->registerVisit(id);
+
   // FIXME: we need a unified interface for this
   if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) {
-    launch(ext->command(), options.arguments);
+    launch(ext->command(), options.props);
   } else {
+    // FIXME: hacky, again we need a proper unified interface for this
+    createCompletion(entrypoint->arguments(), entrypoint->iconUrl());
+    setCompletionValues(options.props.arguments);
+
     auto panel = entrypoint->newActionPanel(&m_ctx, root->itemMetadata(id));
     panel->finalize();
     auto *action = panel->primaryAction();
@@ -603,9 +637,7 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
     action->execute(&m_ctx);
   }
 
-  if (!options.fallbackText.isEmpty()) { setSearchText(options.fallbackText); }
-
-  auto *active = activeCommand();
+  if (auto fallback = options.props.fallbackText) { setSearchText(fallback.value()); }
 
   if (!isRootSearch() && !initialOpenState) {
     setInstantDismiss();
@@ -616,23 +648,29 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   return true;
 }
 
+void NavigationController::releaseEntrypoint(const EntrypointId &id) {
+  const auto *entrypoint = m_ctx.services->rootItemManager()->findItemById(id);
+  if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) { ext->command()->shortcutReleased(); }
+}
+
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
-  launch(cmd, completionValues());
+  launch(cmd, LaunchProps{.arguments = completionValues()});
 }
 
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments) {
+  launch(cmd, LaunchProps{.arguments = arguments});
+}
+
+void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const LaunchProps &props) {
   // unload stalled no-view command
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
 
   if (cmd->type() == CommandType::CommandTypeExtension && !m_ctx.services->extensionManager()->isRunning()) {
-    m_ctx.services->toastService()->failure("Extension manager is not running");
+    m_ctx.services->toastService()->failure(tr("Extension manager is not running"));
     return;
   }
 
   bool const shouldCheckPreferences = cmd->type() == CommandType::CommandTypeExtension;
-  LaunchProps props;
-
-  props.arguments = arguments;
 
   if (shouldCheckPreferences) {
     auto itemId = cmd->uniqueId();
@@ -641,10 +679,9 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
     auto preferenceValues = manager->getPreferenceValues(itemId);
 
     for (const auto &preference : preferences) {
-      QJsonValue const value = preferenceValues.value(preference.name());
-      bool const hasValue = !(value.isUndefined() || value.isNull());
-      bool const hasDefault = !preference.defaultValue().isUndefined();
-      bool const isMissing = preference.required() && !hasValue && !hasDefault;
+      const auto *value = preferences::find(preferenceValues, preference.name().toStdString());
+      bool const hasValue = value && !value->is_null();
+      bool const isMissing = preference.required() && !hasValue && !preference.hasDefaultValue();
 
       if (!isMissing) continue;
 

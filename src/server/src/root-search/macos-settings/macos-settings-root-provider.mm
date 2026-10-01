@@ -1,10 +1,10 @@
 #include "root-search/macos-settings/macos-settings-root-provider.hpp"
-#include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/root-search-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
 #include "ui/image/url.hpp"
 #include "vicinae.hpp"
 
@@ -41,7 +41,8 @@ public:
     }
 
     if (!opened) {
-      ctx->services->toastService()->failure("Failed to open System Settings");
+      ctx->services->toastService()->failure(
+          QCoreApplication::translate("OpenSettingsPaneAction", "Failed to open System Settings"));
       return;
     }
 
@@ -79,6 +80,12 @@ std::optional<MacSettingsPane> readPane(const fs::path &path, NSString *settings
     pane.bundlePath = path;
     pane.displayName = fromNSString(displayName);
     pane.bundleId = fromNSString(info[@"CFBundleIdentifier"]);
+
+    NSString *unlocalizedName = info[@"CFBundleDisplayName"];
+    if (unlocalizedName.length == 0) unlocalizedName = info[@"CFBundleName"];
+    if (unlocalizedName.length > 0 && ![unlocalizedName isEqualToString:displayName]) {
+      pane.unlocalizedName = fromNSString(unlocalizedName);
+    }
 
     NSDictionary *settingsAttrs = attrs[@"SettingsExtensionAttributes"];
     id legacy = settingsAttrs[@"legacyBundleIdentifier"];
@@ -128,7 +135,9 @@ QString paneUrl(const MacSettingsPane &pane) {
 
 QString MacSettingsRootItem::title() const { return m_pane.displayName; }
 
-QString MacSettingsRootItem::typeDisplayName() const { return "System Settings"; }
+std::optional<QString> MacSettingsRootItem::unlocalizedTitle() const { return m_pane.unlocalizedName; }
+
+QString MacSettingsRootItem::typeDisplayName() const { return tr("System Settings"); }
 
 ImageURL MacSettingsRootItem::iconUrl() const { return ImageURL::macBundle(m_pane.bundlePath); }
 
@@ -137,16 +146,16 @@ EntrypointId MacSettingsRootItem::uniqueId() const {
 }
 
 AccessoryList MacSettingsRootItem::accessories() const {
-  return {{.text = "System Settings", .color = SemanticColor::TextMuted}};
+  return {{.text = tr("System Settings"), .color = SemanticColor::TextMuted}};
 }
 
 std::vector<std::pair<QString, QString>> MacSettingsRootItem::settingsMetadata() const {
   std::vector<std::pair<QString, QString>> meta;
   meta.reserve(4);
-  meta.emplace_back("Name", m_pane.displayName);
-  meta.emplace_back("Bundle ID", m_pane.bundleId);
-  if (!m_pane.legacyBundleId.isEmpty()) meta.emplace_back("Legacy ID", m_pane.legacyBundleId);
-  meta.emplace_back("Where", QString::fromStdString(m_pane.bundlePath.string()));
+  meta.emplace_back(tr("Name"), m_pane.displayName);
+  meta.emplace_back(tr("Bundle ID"), m_pane.bundleId);
+  if (!m_pane.legacyBundleId.isEmpty()) meta.emplace_back(tr("Legacy ID"), m_pane.legacyBundleId);
+  meta.emplace_back(tr("Where"), QString::fromStdString(m_pane.bundlePath.string()));
   return meta;
 }
 
@@ -158,14 +167,14 @@ MacSettingsRootItem::newActionPanel(ApplicationContext *ctx, const RootItemMetad
   auto itemSection = panel->createSection();
 
   const QString url = paneUrl(m_pane);
-  auto open =
-      new OpenSettingsPaneAction(QString("Open %1 Settings").arg(m_pane.displayName), iconUrl(), url);
-  mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  auto open = new OpenSettingsPaneAction(tr("Open %1 Settings").arg(m_pane.displayName), iconUrl(), url);
+  mainSection->addAction(open);
 
-  utils->addAction(new CopyToClipboardAction(Clipboard::Text(url), "Copy URL"));
-  utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_pane.bundleId), "Copy Bundle ID"));
+  utils->addAction(new CopyToClipboardAction(Clipboard::Text(url), tr("Copy URL")));
+  utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_pane.bundleId), tr("Copy Bundle ID")));
 
-  for (const auto &action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+  for (const auto &action :
+       RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
     itemSection->addAction(action);
   }
 
@@ -175,10 +184,12 @@ MacSettingsRootItem::newActionPanel(ApplicationContext *ctx, const RootItemMetad
 
 QString MacSettingsRootProvider::uniqueId() const { return "macos-settings"; }
 
-QString MacSettingsRootProvider::displayName() const { return "System Settings"; }
+QString MacSettingsRootProvider::displayName() const {
+  return QCoreApplication::translate("MacSettingsRootProvider", "System Settings");
+}
 
 ImageURL MacSettingsRootProvider::icon() const {
-  return ImageURL::builtin("cog").setBackgroundTint(Omnicast::ACCENT_COLOR);
+  return ImageURL::builtin(BuiltinIcon::Cog).setBackgroundTint(Omnicast::ACCENT_COLOR);
 }
 
 RootProvider::Type MacSettingsRootProvider::type() const { return RootProvider::Type::GroupProvider; }

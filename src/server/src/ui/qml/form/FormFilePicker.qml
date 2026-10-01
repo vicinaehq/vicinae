@@ -1,0 +1,338 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import Vicinae
+
+FocusScope {
+    id: root
+    implicitHeight: multiple ? multiLayout.implicitHeight : 36
+    Layout.fillWidth: true
+    activeFocusOnTab: !readOnly
+
+    property bool multiple: false
+    property bool canChooseDirectories: false
+    property bool canChooseFiles: true
+    property bool readOnly: false
+    property bool hasError: false
+    property bool filled: false
+    property var selectedPaths: []
+    property list<string> lockedPaths
+
+    signal pathsChanged(var paths)
+
+    readonly property bool _directoriesOnly: canChooseDirectories && !canChooseFiles
+    property bool _waitingForPortal: false
+
+    Accessible.role: Accessible.Button
+    Accessible.name: root.selectedPaths && root.selectedPaths.length > 0 ? root.selectedPaths.join(", ") : (root._directoriesOnly ? qsTr("No directory selected") : qsTr("No file selected"))
+    Accessible.onPressAction: root._openDialog()
+
+    function forceActiveFocus() {
+        focusItem.forceActiveFocus();
+    }
+
+    function _openDialog() {
+        if (root.readOnly || FileChooser.active)
+            return;
+
+        if (FileChooser.openDialog(root.canChooseFiles, root.canChooseDirectories, root.multiple)) {
+            root._waitingForPortal = true;
+        } else {
+            _openFallbackDialog();
+        }
+    }
+
+    function _openFallbackDialog() {
+        if (root._directoriesOnly)
+            fallbackFolderDialog.open();
+        else {
+            fallbackFileDialog.fileMode = root.multiple ? FileDialog.OpenFiles : FileDialog.OpenFile;
+            fallbackFileDialog.open();
+        }
+    }
+
+    function _applyResult(newPaths) {
+        if (root.multiple && root.selectedPaths) {
+            let merged = [];
+            for (let i = 0; i < root.selectedPaths.length; i++)
+                merged.push(root.selectedPaths[i]);
+            for (let i = 0; i < newPaths.length; i++) {
+                if (merged.indexOf(newPaths[i]) < 0)
+                    merged.push(newPaths[i]);
+            }
+            newPaths = merged;
+        }
+        root.pathsChanged(newPaths);
+    }
+
+    function _handleFallbackResult(urls) {
+        let newPaths = [];
+        for (let i = 0; i < urls.length; i++)
+            newPaths.push(FileChooser.toLocalPath(urls[i]));
+        root._applyResult(newPaths);
+    }
+
+    Connections {
+        target: FileChooser
+        enabled: root._waitingForPortal
+
+        function onFilesSelected(paths) {
+            root._waitingForPortal = false;
+            let arr = [];
+            for (let i = 0; i < paths.length; i++)
+                arr.push(paths[i]);
+            root._applyResult(arr);
+        }
+    }
+
+    FileDialog {
+        id: fallbackFileDialog
+        title: root.multiple ? qsTr("Select files") : qsTr("Select a file")
+        onAccepted: {
+            root._handleFallbackResult(selectedFiles);
+            FileChooser.notifyFallbackDone();
+        }
+        onRejected: FileChooser.notifyFallbackDone()
+    }
+
+    FolderDialog {
+        id: fallbackFolderDialog
+        title: qsTr("Select a directory")
+        onAccepted: {
+            root._handleFallbackResult([selectedFolder]);
+            FileChooser.notifyFallbackDone();
+        }
+        onRejected: FileChooser.notifyFallbackDone()
+    }
+
+    // --- Single mode ---
+
+    Item {
+        id: singleMode
+        visible: !root.multiple
+        anchors.fill: parent
+
+        readonly property string _displayText: {
+            if (!root.selectedPaths || root.selectedPaths.length === 0)
+                return "";
+            return root.selectedPaths[0] || "";
+        }
+
+        FormInputBackground {
+            anchors.fill: parent
+            radius: 8
+            filled: root.filled
+            opacity: root.readOnly ? 0.5 : 1.0
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 8
+            opacity: root.readOnly ? 0.5 : 1.0
+            color: "transparent"
+            border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : focusItem.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.surfaceOpacity)
+            border.width: 1
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 6
+
+                Text {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    verticalAlignment: Text.AlignVCenter
+                    text: singleMode._displayText || (root._directoriesOnly ? qsTr("No directory selected") : qsTr("No file selected"))
+                    color: singleMode._displayText ? Theme.foreground : Theme.textPlaceholder
+                    font.pointSize: Theme.regularFontSize
+                    elide: Text.ElideMiddle
+                }
+
+                ViciButton {
+                    visible: !root.readOnly && root.selectedPaths && root.selectedPaths.length > 0
+                    Layout.preferredWidth: 20
+                    Layout.preferredHeight: 20
+                    Layout.alignment: Qt.AlignVCenter
+                    radius: 4
+                    iconSource: Img.icon(BuiltinIcon.Xmark)
+                    accessibleName: qsTr("Remove")
+                    iconSize: 10
+                    variant: "ghost"
+                    onClicked: root.pathsChanged([])
+                }
+            }
+
+            TapHandler {
+                onTapped: {
+                    focusItem.forceActiveFocus();
+                    root._openDialog();
+                }
+            }
+        }
+    }
+
+    // --- Multi mode ---
+
+    ColumnLayout {
+        id: multiLayout
+        visible: root.multiple
+        anchors.left: parent.left
+        anchors.right: parent.right
+        spacing: 6
+        opacity: root.readOnly ? 0.5 : 1.0
+
+        Repeater {
+            model: root.multiple ? root.lockedPaths : []
+
+            Item {
+                id: lockedPath
+                required property string modelData
+
+                Layout.fillWidth: true
+                implicitHeight: 32
+
+                FormInputBackground {
+                    anchors.fill: parent
+                    radius: 6
+                    filled: root.filled
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 6
+                    color: "transparent"
+                    border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
+                    border.width: 1
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 6
+
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        verticalAlignment: Text.AlignVCenter
+                        text: lockedPath.modelData
+                        color: Theme.textMuted
+                        font.pointSize: Theme.regularFontSize
+                        elide: Text.ElideMiddle
+                    }
+
+                    ViciImage {
+                        Layout.preferredWidth: 12
+                        Layout.preferredHeight: 12
+                        Layout.alignment: Qt.AlignVCenter
+                        source: Img.icon(BuiltinIcon.Lock).withFillColor(Theme.textMuted)
+                    }
+                }
+            }
+        }
+
+        Repeater {
+            model: root.multiple ? root.selectedPaths : []
+
+            Item {
+                id: selectedPath
+                required property int index
+                required property string modelData
+
+                Layout.fillWidth: true
+                implicitHeight: 32
+
+                FormInputBackground {
+                    anchors.fill: parent
+                    radius: 6
+                    filled: root.filled
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 6
+                    color: "transparent"
+                    border.color: Config.withAlpha(Theme.inputBorder, Config.surfaceOpacity)
+                    border.width: 1
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 6
+                    spacing: 6
+
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        verticalAlignment: Text.AlignVCenter
+                        text: selectedPath.modelData
+                        color: Theme.foreground
+                        font.pointSize: Theme.regularFontSize
+                        elide: Text.ElideMiddle
+                    }
+
+                    ViciButton {
+                        visible: !root.readOnly
+                        Layout.preferredWidth: 20
+                        Layout.preferredHeight: 20
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: 4
+                        iconSource: Img.icon(BuiltinIcon.Xmark)
+                        accessibleName: qsTr("Remove")
+                        iconSize: 10
+                        variant: "ghost"
+                        onClicked: {
+                            const idx = selectedPath.index;
+                            let copy = [];
+                            for (let i = 0; i < root.selectedPaths.length; i++) {
+                                if (i !== idx)
+                                    copy.push(root.selectedPaths[i]);
+                            }
+                            root.pathsChanged(copy);
+                        }
+                    }
+                }
+            }
+        }
+
+        Item {
+            visible: !root.readOnly
+            Layout.fillWidth: true
+            implicitHeight: 32
+
+            FormInputBackground {
+                anchors.fill: parent
+                radius: 6
+                filled: root.filled
+            }
+
+            ViciButton {
+                anchors.fill: parent
+                radius: 6
+                text: root._directoriesOnly ? qsTr("+ Add folder…") : qsTr("+ Add file…")
+                foreground: Theme.textMuted
+                variant: "ghost"
+                bordered: true
+                activeFocusOnTab: !root.readOnly
+                onClicked: {
+                    forceActiveFocus();
+                    root._openDialog();
+                }
+            }
+        }
+    }
+
+    Item {
+        id: focusItem
+        width: 0
+        height: 0
+        focus: true
+        activeFocusOnTab: false
+
+        Keys.onReturnPressed: root._openDialog()
+        Keys.onSpacePressed: root._openDialog()
+    }
+}

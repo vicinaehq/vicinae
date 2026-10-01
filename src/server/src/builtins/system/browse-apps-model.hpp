@@ -1,0 +1,40 @@
+#pragma once
+#include "ui/views/fuzzy-section.hpp"
+#include "services/app-service/abstract-app-db.hpp"
+#include <QCoreApplication>
+
+using AppPtr = std::shared_ptr<AbstractApplication>;
+
+template <> struct fuzzy::FuzzySearchable<AppPtr> {
+  static fuzzy::Match score(const AppPtr &app, const fuzzy::Query &query) {
+    auto name = app->displayName().toStdString();
+    auto desc = app->description().toStdString();
+
+    std::vector<std::string> keywords;
+    keywords.reserve(app->keywords().size());
+    for (const auto &kw : app->keywords())
+      keywords.emplace_back(kw.toStdString());
+
+    std::vector<fuzzy::WeightedField> fields;
+    fields.reserve(2 + keywords.size());
+    fields.push_back({name, 1.0});
+    fields.push_back({desc, 0.5});
+    for (const auto &kw : keywords)
+      fields.push_back({kw, 0.3});
+
+    return fuzzy::scoreWeighted(fields, query);
+  }
+};
+
+class BrowseAppsSection : public FuzzySection<AppPtr> {
+  Q_DECLARE_TR_FUNCTIONS(BrowseAppsSection)
+public:
+  QString sectionName() const override { return tr("Applications ({count})"); }
+
+protected:
+  QString displayTitle(const AppPtr &app) const override;
+  QString displaySubtitle(const AppPtr &app) const override;
+  std::optional<ImageURL> displayIcon(const AppPtr &app) const override;
+  AccessoryList displayAccessories(const AppPtr &app) const override;
+  std::unique_ptr<ActionPanelState> buildActionPanel(const AppPtr &app) const override;
+};

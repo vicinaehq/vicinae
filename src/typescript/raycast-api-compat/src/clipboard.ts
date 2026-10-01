@@ -1,5 +1,5 @@
+import type * as raycast from "@raycast/api";
 import * as vicinae from "@vicinae/api";
-import * as raycast from "@raycast/api";
 
 export namespace Clipboard {
 	export const copy: typeof raycast.Clipboard.copy = (content, opts) => {

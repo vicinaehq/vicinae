@@ -25,7 +25,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.3.2",
 		"@types/node": "22.17.2",
-		"@types/react": "19.0.10",
+		"@types/react": "19.1.17",
 		"@types/react-reconciler": "0.32.1",
 		"esbuild": "0.25.9",
 		"nodemon": "3.1.10",

@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleAllowMixedLocalizations</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
@@ -22,6 +24,19 @@
 	<string>@VICINAE_BUNDLE_SHORT_VERSION@</string>
 	<key>CFBundleVersion</key>
 	<string>@VICINAE_BUNDLE_VERSION@</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>@VICINAE_BUNDLE_ID@.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>vicinae</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.4</string>
 	<key>LSApplicationCategoryType</key>
@@ -35,7 +50,17 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Vicinae uses Apple Events to perform system power actions such as restart, shut down, and log out.</string>
+	<string>Vicinae uses Apple Events to list and run your Apple Shortcuts and perform system power actions such as restart, shut down, and log out.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Vicinae extensions can read and manage your calendar events.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Vicinae extensions can read and manage your calendar events.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Vicinae extensions can read and manage your reminders.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Vicinae extensions can read and manage your reminders.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Vicinae extensions can read your contacts.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © Vicinae contributors. Licensed under GPL-3.0.</string>
 </dict>

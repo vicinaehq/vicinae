@@ -26,4 +26,7 @@ public:
 
   virtual bool isAvailable() const = 0;
   virtual bool open(const FileChooserOptions &options) = 0;
+
+  /// Dismiss any visible dialog without emitting a result.
+  virtual void close() {}
 };

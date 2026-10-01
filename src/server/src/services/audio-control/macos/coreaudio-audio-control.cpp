@@ -149,27 +149,6 @@ bool writeMute(AudioDeviceID device, bool muted) {
   return count > 0 && ok;
 }
 
-std::optional<QString> stringProperty(AudioObjectID object, AudioObjectPropertySelector selector) {
-  AudioObjectPropertyAddress addr{selector, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain};
-  CFStringRef ref = nullptr;
-  UInt32 size = sizeof(ref);
-
-  if (AudioObjectGetPropertyData(object, &addr, 0, nullptr, &size, &ref) != noErr || !ref) {
-    return std::nullopt;
-  }
-
-  QString value = QString::fromCFString(ref);
-  CFRelease(ref);
-  return value;
-}
-
-bool hasOutputStreams(AudioDeviceID device) {
-  AudioObjectPropertyAddress addr{kAudioDevicePropertyStreams, kAudioObjectPropertyScopeOutput,
-                                  kAudioObjectPropertyElementMain};
-  UInt32 size = 0;
-  return AudioObjectGetPropertyDataSize(device, &addr, 0, nullptr, &size) == noErr && size > 0;
-}
-
 } // namespace
 
 QString CoreAudioControl::id() const { return "coreaudio"; }
@@ -203,56 +182,3 @@ bool CoreAudioControl::setMuted(bool muted) {
 }
 
 bool CoreAudioControl::toggleMute() { return setMuted(!isMuted()); }
-
-std::vector<AudioSink> CoreAudioControl::listSinks() const {
-  AudioObjectPropertyAddress addr{kAudioHardwarePropertyDevices, kAudioObjectPropertyScopeGlobal,
-                                  kAudioObjectPropertyElementMain};
-  UInt32 size = 0;
-  if (AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &addr, 0, nullptr, &size) != noErr) return {};
-
-  std::vector<AudioDeviceID> devices(size / sizeof(AudioDeviceID));
-  if (AudioObjectGetPropertyData(kAudioObjectSystemObject, &addr, 0, nullptr, &size, devices.data()) !=
-      noErr) {
-    return {};
-  }
-
-  auto defaultDevice = defaultOutputDevice();
-
-  std::vector<AudioSink> sinks;
-  sinks.reserve(devices.size());
-
-  for (auto device : devices) {
-    if (!hasOutputStreams(device)) continue;
-
-    auto uid = stringProperty(device, kAudioDevicePropertyDeviceUID);
-    if (!uid) continue;
-
-    AudioSink sink;
-    sink.name = *uid;
-    sink.description = stringProperty(device, kAudioObjectPropertyName).value_or(*uid);
-    sink.volume = readVolume(device).value_or(0.0f);
-    sink.muted = readMute(device).value_or(false);
-    sink.isDefault = defaultDevice && *defaultDevice == device;
-    sinks.emplace_back(std::move(sink));
-  }
-
-  return sinks;
-}
-
-bool CoreAudioControl::setDefaultSink(const QString &sinkName) {
-  CFStringRef uid = sinkName.toCFString();
-  AudioObjectPropertyAddress translate{kAudioHardwarePropertyTranslateUIDToDevice,
-                                       kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain};
-  AudioDeviceID device = kAudioObjectUnknown;
-  UInt32 size = sizeof(device);
-
-  OSStatus status =
-      AudioObjectGetPropertyData(kAudioObjectSystemObject, &translate, sizeof(uid), &uid, &size, &device);
-  CFRelease(uid);
-  if (status != noErr || device == kAudioObjectUnknown) return false;
-
-  AudioObjectPropertyAddress addr{kAudioHardwarePropertyDefaultOutputDevice, kAudioObjectPropertyScopeGlobal,
-                                  kAudioObjectPropertyElementMain};
-  return AudioObjectSetPropertyData(kAudioObjectSystemObject, &addr, 0, nullptr, sizeof(device), &device) ==
-         noErr;
-}

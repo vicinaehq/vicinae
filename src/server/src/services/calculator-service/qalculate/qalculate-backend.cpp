@@ -148,19 +148,7 @@ std::pair<std::string, PrintOptions> QalculateBackend::handleToExpression(const 
 
 std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question,
                                                                            const ComputeOptions &opts) {
-
-  const auto fail = [](auto &&reason) { return std::unexpected(CalculatorError(reason)); };
-
-  if (opts.mode == ComputeMode::MixedSearch) {
-    const auto isAllowedLeadingChar = [](QChar c) {
-      return c == '-' || c == '(' || c == ')' || c.isLetterOrNumber() ||
-             c.category() == QChar::Symbol_Currency;
-    };
-    bool const isMixedSearchComputable =
-        question.size() > 1 && isAllowedLeadingChar(question.at(0)) && isExpression(question.toStdString());
-
-    if (!isMixedSearchComputable) { return fail("Not a valid expression"); }
-  }
+  std::scoped_lock const lock(m_calcMutex);
 
   QString expression = preprocessQuestion(question);
   expression = stripTrailingOperators(expression);
@@ -174,6 +162,7 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
 
   MathStructure in = CALCULATOR->parse(calcExpression);
   MathStructure result;
+
   CALCULATOR->calculate(&result, calcExpression, 10000, m_evalOpts, &in);
 
   if (CALCULATOR->aborted()) return std::unexpected(CalculatorError("Computation aborted"));
@@ -225,30 +214,6 @@ QString QalculateBackend::stripTrailingOperators(QString expr) {
     }
   }
   return expr.trimmed();
-}
-
-bool QalculateBackend::isExpression(const std::string &query) const {
-  QString expression = preprocessQuestion(QString::fromStdString(query));
-  expression = stripTrailingOperators(expression);
-  if (expression.isEmpty()) return false;
-
-  auto stdExpr = expression.toStdString();
-  std::string const localized = CALCULATOR->unlocalizeExpression(stdExpr);
-  MathStructure parsed = CALCULATOR->parse(localized, m_evalOpts.parse_options);
-
-  CALCULATOR->clearMessages();
-
-  bool hasDigit = std::ranges::any_of(stdExpr, [](unsigned char c) { return std::isdigit(c); });
-  if (hasDigit && parsed.containsType(STRUCT_UNIT) && parsed.containsType(STRUCT_NUMBER)) return true;
-
-  static constexpr std::string_view ARITHMETIC_OPS = "+-*/^%";
-  for (size_t i = 1; i < stdExpr.size(); ++i) {
-    if (ARITHMETIC_OPS.find(stdExpr[i]) != std::string_view::npos) return true;
-  }
-  if (stdExpr.find('(') != std::string::npos) return true;
-  if (stdExpr.find(" to ") != std::string::npos) return true;
-
-  return false;
 }
 
 QString QalculateBackend::preprocessQuestion(const QString &query) {
@@ -304,6 +269,8 @@ QFuture<AbstractCalculatorBackend::RefreshExchangeRatesResult> QalculateBackend:
   qInfo() << "Refreshing Qalculate exchange rates...";
 
   return QtConcurrent::run([this]() -> RefreshExchangeRatesResult {
+    std::scoped_lock const lock(m_calcMutex);
+
     if (!CALCULATOR->fetchExchangeRates()) {
       qWarning() << "Failed to fetch exchange rates";
       return std::unexpected("Failed to fetch exchange rates");
@@ -335,6 +302,7 @@ void QalculateBackend::initializeCalculator() {
   m_printOpts.short_multiplication = true;
   m_printOpts.show_ending_zeroes = true;
   m_printOpts.min_exp = EXP_PRECISION;
+  m_printOpts.digit_grouping = DIGIT_GROUPING_LOCALE;
 
   m_calc.reset();
   m_calc.loadExchangeRates();

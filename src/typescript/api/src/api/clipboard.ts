@@ -1,4 +1,5 @@
 import type { PathLike } from "node:fs";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import type { ClipboardContent } from "./proto/api";
 import { getClient } from "./client";
 
@@ -11,19 +12,21 @@ export namespace Clipboard {
 	export type Content =
 		| { text: string }
 		| { file: PathLike }
+		| { urls: Array<string | URL> }
 		| { html: string; text?: string };
 
 	export type ReadContent = {
 		text?: string;
 		file?: string;
 		html?: string;
+		urls?: string[];
 	};
 
 	export type CopyOptions = {
 		concealed?: boolean;
 	};
 
-	function mapContent(
+	export function serializeContent(
 		content: string | number | Clipboard.Content,
 	): ClipboardContent {
 		let ct: ClipboardContent = {};
@@ -32,7 +35,12 @@ export namespace Clipboard {
 			ct.text = `${content}`;
 		} else {
 			if (content["file"]) {
-				ct.path = content["file"];
+				const file = content["file"];
+				ct.urls = [
+					file instanceof URL ? file.href : pathToFileURL(file.toString()).href,
+				];
+			} else if (content["urls"]) {
+				ct.urls = content["urls"].map((url) => url.toString());
 			} else if (content["html"]) {
 				ct.html = content["html"];
 				ct.text = content["text"];
@@ -53,7 +61,7 @@ export namespace Clipboard {
 		text: string | number | Clipboard.Content,
 		options: Clipboard.CopyOptions = {},
 	) {
-		await getClient().Clipboard.copy(mapContent(text), {
+		await getClient().Clipboard.copy(serializeContent(text), {
 			concealed: options.concealed ?? false,
 		});
 	}
@@ -65,7 +73,7 @@ export namespace Clipboard {
 	 * clipboard copy.
 	 */
 	export async function paste(text: string | number | Clipboard.Content) {
-		await getClient().Clipboard.paste(mapContent(text));
+		await getClient().Clipboard.paste(serializeContent(text));
 	}
 
 	/**
@@ -77,7 +85,24 @@ export namespace Clipboard {
 	 * ```
 	 */
 	export async function read(): Promise<Clipboard.ReadContent> {
-		return getClient().Clipboard.readContent();
+		const content = await getClient().Clipboard.readContent();
+		const fileUrl = content.urls?.find((url) => url.startsWith("file:"));
+		let file: string | undefined;
+
+		if (fileUrl) {
+			try {
+				file = fileURLToPath(fileUrl);
+			} catch {
+				// Ignore malformed file URLs supplied by another application.
+			}
+		}
+
+		return {
+			text: content.text,
+			html: content.html,
+			urls: content.urls,
+			file,
+		};
 	}
 
 	/**

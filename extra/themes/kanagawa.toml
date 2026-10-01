@@ -26,5 +26,8 @@ yellow = "#DCA561"            # autumnYellow - golden yellow
 cyan = "#7FB4CA"              # springBlue - aqua blue
 
 [colors.list.item.selection]
-background = "#262631"
+background = "#434356"
 secondary_background = "#363646"
+
+[colors.grid.item]
+background = "#3c3c4d"

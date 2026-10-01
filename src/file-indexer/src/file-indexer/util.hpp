@@ -62,6 +62,23 @@ inline bool isCoveredByAny(const std::filesystem::path &path,
       roots, [&](const std::filesystem::path &root) { return isSameOrDescendantOf(path, root); });
 }
 
+inline std::vector<std::filesystem::path> compactSubtrees(std::vector<std::filesystem::path> paths) {
+  std::ranges::sort(paths, [](const std::filesystem::path &lhs, const std::filesystem::path &rhs) {
+    auto const lhsSize = std::ranges::distance(lhs);
+    auto const rhsSize = std::ranges::distance(rhs);
+    if (lhsSize != rhsSize) return lhsSize < rhsSize;
+    return lhs < rhs;
+  });
+
+  std::vector<std::filesystem::path> compacted;
+  compacted.reserve(paths.size());
+
+  for (const auto &path : paths) {
+    if (!isCoveredByAny(path, compacted)) { compacted.emplace_back(path); }
+  }
+
+  return compacted;
+}
 inline std::optional<int64_t> fileSizeBytesFor(const std::filesystem::path &path, bool isDirectory) {
   if (isDirectory) return std::nullopt;
 

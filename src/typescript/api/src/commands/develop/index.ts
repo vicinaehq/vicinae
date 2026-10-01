@@ -1,6 +1,5 @@
 import * as chokidar from "chokidar";
 import * as esbuild from "esbuild";
-import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
@@ -9,16 +8,12 @@ import ManifestSchema from "../../schemas/manifest.js";
 import { updateExtensionTypes } from "../../utils/extension-types.js";
 import { Logger } from "../../utils/logger.js";
 import { Tail } from "../../utils/tail.js";
+import { typeCheck } from "../../utils/typecheck.js";
 import {
 	extensionDataDir,
 	extensionInternalSupportDir,
 } from "../../utils/utils.js";
 import { VicinaeClient } from "../../utils/vicinae.js";
-
-type TypeCheckResult = {
-	error: string;
-	ok: boolean;
-};
 
 const develop: CommandDef = {
 	description: "Start an extension development session",
@@ -61,21 +56,6 @@ const develop: CommandDef = {
 		logger.logInfo("Generating extension types...");
 		updateExtensionTypes(manifest, target);
 
-		const typeCheck = async (): Promise<TypeCheckResult> => {
-			const spawned = spawn("npx", ["tsc", "--noEmit"]);
-			let stderr = Buffer.from("");
-
-			return new Promise<TypeCheckResult>((resolve) => {
-				spawned.stderr.on("data", (buf) => {
-					stderr = Buffer.concat([stderr, buf]);
-				});
-
-				spawned.on("exit", (status) =>
-					resolve({ error: stderr.toString(), ok: status === 0 }),
-				);
-			});
-		};
-
 		const build = async (outDir: string) => {
 			const entryPoints = manifest.commands
 				.map((cmd) => path.join("src", `${cmd.name}.tsx`))
@@ -108,8 +88,14 @@ const develop: CommandDef = {
 				return esbuild.build({
 					bundle: true,
 					entryPoints: [source],
-					external: ["react", "@vicinae/api", "@raycast/api"],
+					external: [
+						"react",
+						"react/jsx-runtime",
+						"@vicinae/api",
+						"@raycast/api",
+					],
 					format: "cjs",
+					jsx: "automatic",
 					outdir: outDir,
 					platform: "node",
 					loader: {
@@ -132,10 +118,13 @@ const develop: CommandDef = {
 			}
 		};
 
-		const pingError = vicinae.ping();
-
-		if (pingError) {
-			console.error(`Failed to ping vicinae\n`, pingError.message);
+		try {
+			await vicinae.ping();
+		} catch (error) {
+			console.error(
+				`Failed to ping vicinae\n`,
+				error instanceof Error ? error.message : error,
+			);
 			return;
 		}
 
@@ -145,7 +134,14 @@ const develop: CommandDef = {
 				await build(extensionDir);
 				const time = performance.now() - start;
 				logger.logReady(`Extension built in ${Math.round(time)}ms 🚀`);
-				vicinae.refreshDevSession(id);
+				await vicinae.refreshDevSession(id).catch((error: unknown) => {
+					logger.logError(
+						`Failed to refresh dev session: ${error instanceof Error ? error.message : error}`,
+					);
+				});
+
+				const check = typeCheck(target);
+				if (!check.ok) logger.logError(`Type errors:\n${check.output}`);
 			} catch (error: unknown) {
 				if (error instanceof Error) {
 					logger.logError(`Failed to build extension: ${error.message}`);
@@ -187,15 +183,15 @@ const develop: CommandDef = {
 
 		await safeBuild(extensionDir);
 
-		process.on("SIGINT", () => {
+		process.on("SIGINT", async () => {
 			logger.logInfo("Shutting down...");
-			vicinae.stopDevSession(id);
-			throw new Error(`Development session interrupted`);
+			await vicinae.stopDevSession(id).catch(() => {});
+			process.exit(0);
 		});
 
-		const error = vicinae.startDevSession(id);
-
-		if (error) {
+		try {
+			await vicinae.startDevSession(id);
+		} catch (error) {
 			console.error(`Failed to invoke vicinae`, error);
 			return;
 		}

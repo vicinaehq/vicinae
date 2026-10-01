@@ -10,7 +10,7 @@ public:
     virtual void dataOffer(ExtDataDevice &, ExtDataOffer &) {}
     virtual void selection(ExtDataDevice &, ExtDataOffer &) {}
     virtual void finished(ExtDataDevice &) {}
-    virtual void primarySelection(ExtDataDevice &, ExtDataOffer &) {}
+    virtual void primarySelection(ExtDataDevice &, ExtDataOffer *) {}
   };
 
   void registerListener(Listener *listener) { _listeners.push_back(listener); }

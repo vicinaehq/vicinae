@@ -1,0 +1,46 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import Vicinae
+
+/// Reusable detail panel with arbitrary content on top and optional metadata at the bottom.
+/// Place child items inside to fill the content area. Set `metadata` to show a MetadataBar.
+Item {
+    id: root
+    default property alias content: contentArea.data
+    property var metadata: []
+    property bool hasContent: true
+
+    readonly property bool _hasMetadata: root.metadata.length > 0
+
+    StatusBarInset {
+        id: statusBarInset
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.bottomMargin: root._hasMetadata ? statusBarInset.value : 0
+        spacing: 0
+
+        Item {
+            id: contentArea
+            visible: root.hasContent
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
+
+        ContentDivider {
+            visible: root._hasMetadata && root.hasContent
+            Layout.fillWidth: true
+        }
+
+        MetadataBar {
+            id: metadataBar
+            visible: root._hasMetadata
+            Layout.fillWidth: true
+            Layout.fillHeight: !root.hasContent
+            Layout.preferredHeight: root.hasContent ? Math.min(implicitHeight, root.height * 0.4) : -1
+            model: root.metadata
+        }
+    }
+}

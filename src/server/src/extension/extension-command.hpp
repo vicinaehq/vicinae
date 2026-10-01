@@ -1,9 +1,9 @@
 #pragma once
-#include "argument.hpp"
-#include "command.hpp"
+#include "command/argument.hpp"
+#include "command/command.hpp"
 #include "ui/image/url.hpp"
-#include "common.hpp"
-#include "preference.hpp"
+#include "command/command-types.hpp"
+#include "command/preference.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "common/entrypoint.hpp"
 #include <qstring.h>
@@ -67,6 +67,8 @@ public:
   QString name() const override;
   QString commandId() const override;
 
+  std::vector<QString> keywords() const override;
+
   ImageURL iconUrl() const override;
   QString repositoryDisplayName() const override;
   QString repositoryName() const override;
@@ -88,5 +90,5 @@ public:
 
   CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override;
 
-  ExtensionCommand() {}
+  ExtensionCommand() = default;
 };

@@ -66,7 +66,7 @@ function generateExtensionPreferences(manifest: Manifest): string {
 		if (prefText) {
 			prefText += "\n\t";
 		}
-		prefText += `"${pref.name}"${pref.required ? "?" : ""}: ${getPreferenceType(pref)};`;
+		prefText += `"${pref.name}"${pref.required ? "" : "?"}: ${getPreferenceType(pref)};`;
 		extPrefs.push(prefText);
 	}
 
@@ -129,7 +129,7 @@ function generateCommandPreferences(manifest: Manifest): string {
 			if (docComment) {
 				prefText = `\n\t\t${docComment.trim()}\n\t\t`;
 			}
-			prefText += `"${pref.name}"${pref.required ? "?" : ""}: ${getPreferenceType(pref)};`;
+			prefText += `"${pref.name}"${pref.required ? "" : "?"}: ${getPreferenceType(pref)};`;
 			prefs.push(prefText);
 		}
 
@@ -154,7 +154,7 @@ function generateCommandArguments(manifest: Manifest): string {
 		for (const arg of cmd.arguments ?? []) {
 			const docComment = generateDocComment(arg.placeholder);
 			let argText = `\n\t\t${docComment.trim()}\n\t\t`;
-			argText += `"${arg.name}"${arg.required ? "?" : ""}: ${getArgumentType(arg)}`;
+			argText += `"${arg.name}"${arg.required ? "" : "?"}: ${getArgumentType(arg)}`;
 			args.push(argText);
 		}
 

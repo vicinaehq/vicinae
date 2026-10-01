@@ -1,7 +1,12 @@
 #pragma once
 // We use our own shortcut stuff by design, instead of using QShortcut and the likes.
+#include <array>
+#include <cstddef>
+#include <memory>
 #include <optional>
+#include <span>
 #include <vector>
+#include <QChar>
 #include <QStringView>
 #include <QVariantList>
 #include <qnamespace.h>
@@ -10,16 +15,30 @@
 class QKeyEvent;
 
 namespace Keyboard {
+// Maps a non-Latin character key (e.g Cyrillic) to the Latin key at the same physical position,
+// so recorded shortcuts stay layout-independent. Identity for Latin keys and non-macOS platforms.
+Qt::Key normalizeToLatin(Qt::Key key);
+
+class LayoutResolver;
+void setLayoutResolver(std::unique_ptr<LayoutResolver> resolver);
+
+Qt::Key resolveKey(Qt::Key key, quint32 scanCode);
+
+// Typed character for keys whose Qt::Key value is its uppercase code point, nullopt for named keys.
+std::optional<QChar> printableCharForKey(Qt::Key key);
+
 std::optional<QString> stringForKey(Qt::Key key);
 std::optional<Qt::Key> keyFromString(QStringView key);
 std::optional<Qt::KeyboardModifier> modifierFromString(QStringView modifier);
+
+std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key);
 
 class Shortcut {
 public:
   static Shortcut osCopy() { return Shortcut(Qt::Key_C, Qt::ControlModifier); }
   static Shortcut osPaste() { return Shortcut(Qt::Key_V, Qt::ControlModifier); }
   static Shortcut enter() { return Qt::Key_Return; }
-  static Shortcut submit() { return enter().shifted(); }
+  static Shortcut submit() { return Shortcut(Qt::Key_Return, Qt::ControlModifier); }
 
   static Shortcut shiftPaste() { return osPaste().shifted(); }
   static Shortcut fromString(const QString &str) { return str; }
@@ -47,7 +66,8 @@ public:
   std::vector<Qt::KeyboardModifier> modList() const;
 
   bool isValidKey() const { return stringForKey(m_key).has_value(); }
-  bool isFunctionKey() const { return m_key >= Qt::Key_F1 && m_key <= Qt::Key_F12; }
+  bool isFunctionKey() const { return m_key >= Qt::Key_F1 && m_key <= Qt::Key_F24; }
+  bool isModifierOnly() const { return modifierForKey(m_key).has_value(); }
 
   // The keyboard shortcut as a string.
   // This form is used to serialize shortcut data in config files/database.
@@ -70,6 +90,25 @@ private:
   Qt::Key m_key = Qt::Key_unknown;
   Qt::KeyboardModifiers m_modifiers;
   bool m_isValid = false;
+};
+
+// A key press and the shortcuts it can stand for, exact level first: the character the key types
+// unshifted, then the one it types shifted when that differs. This is how a "ctrl+1" binding fires
+// on layouts where 1 sits on the shifted level, such as AZERTY's & key.
+class KeyPress {
+public:
+  KeyPress(Qt::Key key, Qt::KeyboardModifiers mods, quint32 scanCode = 0);
+  explicit KeyPress(const QKeyEvent &event);
+
+  Qt::Key key() const { return m_candidates.front().key(); }
+  Qt::KeyboardModifiers mods() const { return m_candidates.front().mods(); }
+  std::span<const Shortcut> candidates() const { return {m_candidates.data(), m_count}; }
+
+  bool matches(const Shortcut &shortcut) const;
+
+private:
+  std::array<Shortcut, 2> m_candidates;
+  std::size_t m_count = 1;
 };
 
 }; // namespace Keyboard

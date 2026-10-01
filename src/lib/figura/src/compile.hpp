@@ -51,7 +51,7 @@ public:
           CodegenOptions opts = m_opts;
           opts.file = m_proto;
 
-          std::ofstream{m_out} << gen->generateClient(tree, opts);
+          std::ofstream{m_out, std::ios::binary} << gen->generateClient(tree, opts);
           std::cout << "generated " << client << " client at " << m_out << std::endl;
           return true;
         }
@@ -63,7 +63,7 @@ public:
         if (gen->name() == server) {
           CodegenOptions opts = m_opts;
           opts.file = m_proto;
-          std::ofstream{m_out} << gen->generateServer(tree, opts);
+          std::ofstream{m_out, std::ios::binary} << gen->generateServer(tree, opts);
           std::cout << "generated " << server << " server at " << m_out << std::endl;
           return true;
         }

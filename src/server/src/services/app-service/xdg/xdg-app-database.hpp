@@ -1,4 +1,5 @@
 #pragma once
+#include <QCoreApplication>
 #include "services/app-service/abstract-app-db.hpp"
 #include <xdgpp/desktop-entry/file.hpp>
 #include "xdg-app.hpp"
@@ -8,11 +9,14 @@
 #include <qmimetype.h>
 #include <qobjectdefs.h>
 #include <qprocess.h>
+#include <span>
 #include <xdgpp/xdgpp.hpp>
 
 class XdgAppDatabase : public AbstractAppDatabase {
+  Q_DECLARE_TR_FUNCTIONS(XdgAppDatabase)
+
 public:
-  bool scan(const std::vector<std::filesystem::path> &paths) override;
+  bool scan() override;
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
   AppPtr findByClass(const QString &name) const override;
   AppPtr findDefaultOpener(const QString &target) const override;
@@ -25,13 +29,14 @@ public:
   bool launchTerminalCommand(const std::vector<QString> &cmdline,
                              const LaunchTerminalCommandOptions &opts = {}) const override;
 
-  PreferenceList preferences() const override;
-  void applyPreferences(const QJsonObject &preferences) override;
+  void applyPreferences(const AppPreferences &preferences) override;
 
   AppPtr terminalEmulator() const override;
   AppPtr fileBrowser() const override;
   AppPtr genericTextEditor() const override;
   AppPtr webBrowser() const override;
+  bool setDefaultOpener(const QString &mime, const AbstractApplication &app) override;
+  bool setWebBrowser(const AbstractApplication &app) override;
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const override;
   bool openLocation(const AbstractApplication &app) const override;
   AppPtr locationOpener(const AbstractApplication &app) const override;
@@ -40,7 +45,8 @@ public:
 
 private:
   bool launchProcess(const QString &prog, const QStringList &args,
-                     const std::optional<std::filesystem::path> &workingDirectory) const;
+                     const std::optional<std::filesystem::path> &workingDirectory,
+                     const QString &appId = {}) const;
 
   xdgpp::DesktopEntry::TerminalExec getTermExec(const XdgApplication &app) const;
   xdgpp::DesktopEntry::TerminalExec inferTermExec(const XdgApplication &app) const;
@@ -51,6 +57,7 @@ private:
   AppPtr findDefaultTerminalFromSpec() const;
 
   AppPtr defaultForMime(const QString &mime) const;
+  bool setDefaultForMimes(std::span<const std::string_view> mimes, const AbstractApplication &app);
   std::vector<AppPtr> findAssociations(const QString &mime) const;
   QString mimeNameForTarget(const QString &target) const;
   AppPtr findByCategory(const QString &category) const;

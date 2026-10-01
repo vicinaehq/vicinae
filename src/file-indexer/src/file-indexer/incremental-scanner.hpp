@@ -7,15 +7,13 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include <thread>
 #include <unordered_set>
 #include <vector>
 
 class IncrementalScanner : public AbstractScanner, file_indexer::NonCopyable {
   using EntryCallback = std::function<void(const std::filesystem::directory_entry &entry, bool isNew)>;
 
-  std::unique_ptr<FileIndexerDatabase> m_read_db;
-  std::thread m_scanThread;
+  FileIndexerDatabase &m_readDb;
   EntryFilter m_filter;
   file_indexer::IoPacer m_pacer;
   std::unordered_set<std::filesystem::path> m_currentEntries;
@@ -34,9 +32,10 @@ class IncrementalScanner : public AbstractScanner, file_indexer::NonCopyable {
   void prunedScan(const std::filesystem::path &path, const IncrementalScan &scan);
 
 public:
-  IncrementalScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, StatusCallback callback);
-  ~IncrementalScanner() = default;
+  IncrementalScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FileIndexerDatabase &readDb,
+                     StatusCallback callback);
+  ~IncrementalScanner() override = default;
 
+  void run() override;
   void interrupt() override;
-  void join() override;
 };

@@ -1,196 +1,149 @@
 #include <QKeySequence>
 #include <QVariantMap>
+#include <optional>
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "layout-resolver.hpp"
 #include <qevent.h>
+#include <qnamespace.h>
+#include <algorithm>
+#include <ranges>
 #include "keybind-manager.hpp"
 #include "keyboard.hpp"
 
 // clang-format off
-static const std::unordered_map<QString, Qt::Key> keyMap = {
-	{"a", Qt::Key_A},
-	{"b", Qt::Key_B},
-	{"c", Qt::Key_C},
-	{"d", Qt::Key_D},
-	{"e", Qt::Key_E},
-	{"f", Qt::Key_F},
-	{"g", Qt::Key_G},
-	{"h", Qt::Key_H},
-	{"i", Qt::Key_I},
-	{"j", Qt::Key_J},
-	{"k", Qt::Key_K},
-	{"l", Qt::Key_L},
-	{"m", Qt::Key_M},
-	{"n", Qt::Key_N},
-	{"o", Qt::Key_O},
-	{"p", Qt::Key_P},
-	{"q", Qt::Key_Q},
-	{"r", Qt::Key_R},
-	{"s", Qt::Key_S},
-	{"t", Qt::Key_T},
-	{"u", Qt::Key_U},
-	{"v", Qt::Key_V},
-	{"w", Qt::Key_W},
-	{"x", Qt::Key_X},
-	{"y", Qt::Key_Y},
-	{"z", Qt::Key_Z},
+static const std::unordered_map<QString, Qt::Key> keyMap = [](){ 
+	return std::unordered_map<QString, Qt::Key>{
+		{"a", Qt::Key_A},
+		{"b", Qt::Key_B},
+		{"c", Qt::Key_C},
+		{"d", Qt::Key_D},
+		{"e", Qt::Key_E},
+		{"f", Qt::Key_F},
+		{"g", Qt::Key_G},
+		{"h", Qt::Key_H},
+		{"i", Qt::Key_I},
+		{"j", Qt::Key_J},
+		{"k", Qt::Key_K},
+		{"l", Qt::Key_L},
+		{"m", Qt::Key_M},
+		{"n", Qt::Key_N},
+		{"o", Qt::Key_O},
+		{"p", Qt::Key_P},
+		{"q", Qt::Key_Q},
+		{"r", Qt::Key_R},
+		{"s", Qt::Key_S},
+		{"t", Qt::Key_T},
+		{"u", Qt::Key_U},
+		{"v", Qt::Key_V},
+		{"w", Qt::Key_W},
+		{"x", Qt::Key_X},
+		{"y", Qt::Key_Y},
+		{"z", Qt::Key_Z},
 
-	{"0", Qt::Key_0},
-	{"1", Qt::Key_1},
-	{"2", Qt::Key_2},
-	{"3", Qt::Key_3},
-	{"4", Qt::Key_4},
-	{"5", Qt::Key_5},
-	{"6", Qt::Key_6},
-	{"7", Qt::Key_7},
-	{"8", Qt::Key_8},
-	{"9", Qt::Key_9},
+		{"0", Qt::Key_0},
+		{"1", Qt::Key_1},
+		{"2", Qt::Key_2},
+		{"3", Qt::Key_3},
+		{"4", Qt::Key_4},
+		{"5", Qt::Key_5},
+		{"6", Qt::Key_6},
+		{"7", Qt::Key_7},
+		{"8", Qt::Key_8},
+		{"9", Qt::Key_9},
 
-	{".", Qt::Key_Period},
-	{",", Qt::Key_Comma},
-	{";", Qt::Key_Semicolon},
-	{"=", Qt::Key_Equal},
-	{"+", Qt::Key_Plus},
-	{"-", Qt::Key_Minus},
-	{"[", Qt::Key_BracketLeft},
-	{"]", Qt::Key_BracketRight},
-	{"{", Qt::Key_BraceLeft},
-	{"}", Qt::Key_BraceRight},
-	{"(", Qt::Key_ParenLeft},
-	{")", Qt::Key_ParenRight},
-	{"/", Qt::Key_Slash},
-	{"\\", Qt::Key_Backslash},
-	{"'", Qt::Key_Apostrophe},
-	{"`", Qt::Key_QuoteLeft},
-	{"^", Qt::Key_AsciiCircum},
-	{"@", Qt::Key_At},
-	{"$", Qt::Key_Dollar},
+		{".", Qt::Key_Period},
+		{",", Qt::Key_Comma},
+		{";", Qt::Key_Semicolon},
+		{"=", Qt::Key_Equal},
+		{"+", Qt::Key_Plus},
+		{"-", Qt::Key_Minus},
+		{"[", Qt::Key_BracketLeft},
+		{"]", Qt::Key_BracketRight},
+		{"{", Qt::Key_BraceLeft},
+		{"}", Qt::Key_BraceRight},
+		{"(", Qt::Key_ParenLeft},
+		{")", Qt::Key_ParenRight},
+		{"/", Qt::Key_Slash},
+		{"\\", Qt::Key_Backslash},
+		{"'", Qt::Key_Apostrophe},
+		{"`", Qt::Key_QuoteLeft},
+		{"^", Qt::Key_AsciiCircum},
+		{"@", Qt::Key_At},
+		{"$", Qt::Key_Dollar},
 
-	{"return", Qt::Key_Return},
-	{"delete", Qt::Key_Delete},
-	{"deleteForward", Qt::Key_Backspace},
-	{"tab", Qt::Key_Tab},
-	{"arrowup", Qt::Key_Up},
-	{"arrowdown", Qt::Key_Down},
-	{"arrowleft", Qt::Key_Left},
-	{"arrowright", Qt::Key_Right},
-	{"pageup", Qt::Key_PageUp},
-	{"pagedown", Qt::Key_PageDown},
-	{"home", Qt::Key_Home},
-	{"end", Qt::Key_End},
-	{"space", Qt::Key_Space},
-	{"escape", Qt::Key_Escape},
-	{"enter", Qt::Key_Enter},
-	{"backspace", Qt::Key_Backspace},
+		{"return", Qt::Key_Return},
+		{"delete", Qt::Key_Delete},
+		{"deleteForward", Qt::Key_Backspace},
+		{"tab", Qt::Key_Tab},
+		{"arrowup", Qt::Key_Up},
+		{"arrowdown", Qt::Key_Down},
+		{"arrowleft", Qt::Key_Left},
+		{"arrowright", Qt::Key_Right},
+		{"pageup", Qt::Key_PageUp},
+		{"pagedown", Qt::Key_PageDown},
+		{"home", Qt::Key_Home},
+		{"end", Qt::Key_End},
+		{"space", Qt::Key_Space},
+		{"escape", Qt::Key_Escape},
+		{"enter", Qt::Key_Enter},
+		{"backspace", Qt::Key_Backspace},
 
-	{"f1", Qt::Key_F1},
-	{"f2", Qt::Key_F2},
-	{"f3", Qt::Key_F3},
-	{"f4", Qt::Key_F4},
-	{"f5", Qt::Key_F5},
-	{"f6", Qt::Key_F6},
-	{"f7", Qt::Key_F7},
-	{"f8", Qt::Key_F8},
-	{"f9", Qt::Key_F9},
-	{"f10", Qt::Key_F10},
-	{"f11", Qt::Key_F11},
-	{"f12", Qt::Key_F12},
-};
+		{"super", Qt::Key_Meta},
+		{"control", Qt::Key_Control},
+		{"alt", Qt::Key_Alt},
+		{"shift", Qt::Key_Shift},
 
-static const std::unordered_map<Qt::Key, QString> keyMapReverse{
-	{Qt::Key_A, "a"},
-	{Qt::Key_B, "b"},
-	{Qt::Key_C, "c"},
-	{Qt::Key_D, "d"},
-	{Qt::Key_E, "e"},
-	{Qt::Key_F, "f"},
-	{Qt::Key_G, "g"},
-	{Qt::Key_H, "h"},
-	{Qt::Key_I, "i"},
-	{Qt::Key_J, "j"},
-	{Qt::Key_K, "k"},
-	{Qt::Key_L, "l"},
-	{Qt::Key_M, "m"},
-	{Qt::Key_N, "n"},
-	{Qt::Key_O, "o"},
-	{Qt::Key_P, "p"},
-	{Qt::Key_Q, "q"},
-	{Qt::Key_R, "r"},
-	{Qt::Key_S, "s"},
-	{Qt::Key_T, "t"},
-	{Qt::Key_U, "u"},
-	{Qt::Key_V, "v"},
-	{Qt::Key_W, "w"},
-	{Qt::Key_X, "x"},
-	{Qt::Key_Y, "y"},
-	{Qt::Key_Z, "z"},
-	{Qt::Key_0, "0"},
-	{Qt::Key_1, "1"},
-	{Qt::Key_2, "2"},
-	{Qt::Key_3, "3"},
-	{Qt::Key_4, "4"},
-	{Qt::Key_5, "5"},
-	{Qt::Key_6, "6"},
-	{Qt::Key_7, "7"},
-	{Qt::Key_8, "8"},
-	{Qt::Key_9, "9"},
-	{Qt::Key_Period, "."},
-	{Qt::Key_Comma, ","},
-	{Qt::Key_Semicolon, ";"},
-	{Qt::Key_Equal, "="},
-	{Qt::Key_Plus, "+"},
-	{Qt::Key_Minus, "-"},
-	{Qt::Key_BracketLeft, "["},
-	{Qt::Key_BracketRight, "]"},
-	{Qt::Key_BraceLeft, "{"},
-	{Qt::Key_BraceRight, "}"},
-	{Qt::Key_ParenLeft, "("},
-	{Qt::Key_ParenRight, ")"},
-	{Qt::Key_Slash, "/"},
-	{Qt::Key_Backslash, "\\"},
-	{Qt::Key_Apostrophe, "'"},
-	{Qt::Key_QuoteLeft, "`"},
-	{Qt::Key_AsciiCircum, "^"},
-	{Qt::Key_At, "@"},
-	{Qt::Key_Dollar, "$"},
-	{Qt::Key_Return, "return"},
-	{Qt::Key_Delete, "delete"},
-	{Qt::Key_Tab, "tab"},
-	{Qt::Key_Up, "arrowup"},
-	{Qt::Key_Down, "arrowdown"},
-	{Qt::Key_Left, "arrowleft"},
-	{Qt::Key_Right, "arrowright"},
-	{Qt::Key_PageUp, "pageup"},
-	{Qt::Key_PageDown, "pagedown"},
-	{Qt::Key_Home, "home"},
-	{Qt::Key_End, "end"},
-	{Qt::Key_Space, "space"},
-	{Qt::Key_Escape, "escape"},
-	{Qt::Key_Enter, "enter"},
-	{Qt::Key_Backspace, "backspace"},
+		{"f1", Qt::Key_F1},
+		{"f2", Qt::Key_F2},
+		{"f3", Qt::Key_F3},
+		{"f4", Qt::Key_F4},
+		{"f5", Qt::Key_F5},
+		{"f6", Qt::Key_F6},
+		{"f7", Qt::Key_F7},
+		{"f8", Qt::Key_F8},
+		{"f9", Qt::Key_F9},
+		{"f10", Qt::Key_F10},
+		{"f11", Qt::Key_F11},
+		{"f12", Qt::Key_F12},
+		{"f13", Qt::Key_F13},
+		{"f14", Qt::Key_F14},
+		{"f15", Qt::Key_F15},
+		{"f16", Qt::Key_F16},
+		{"f17", Qt::Key_F17},
+		{"f18", Qt::Key_F18},
+		{"f19", Qt::Key_F19},
+		{"f20", Qt::Key_F20},
+		{"f21", Qt::Key_F21},
+		{"f22", Qt::Key_F22},
+		{"f23", Qt::Key_F23},
+		{"f24", Qt::Key_F24},
+	};
+}();
 
-	{Qt::Key_F1, "F1"},
-	{Qt::Key_F2, "F2"},
-	{Qt::Key_F3, "F3"},
-	{Qt::Key_F4, "F4"},
-	{Qt::Key_F5, "F5"},
-	{Qt::Key_F6, "F6"},
-	{Qt::Key_F7, "F7"},
-	{Qt::Key_F8, "F8"},
-	{Qt::Key_F9, "F9"},
-	{Qt::Key_F10, "F10"},
-	{Qt::Key_F11, "F11"},
-	{Qt::Key_F12, "F12"},
-};
+
+static const std::unordered_map<Qt::Key, QString> keyMapReverse = [](){
+	using RP = std::pair<Qt::Key, QString>;
+	return keyMap | std::views::transform([](auto&& pair){ return RP{pair.second, pair.first}; }) | std::ranges::to<std::unordered_map>();
+}();
+
 
 static const std::unordered_map<QString, Qt::KeyboardModifier> modifierMap = {
-	{"cmd", Qt::MetaModifier},
-	{"command", Qt::MetaModifier},
+	// "command" traditionally maps to control on non-macOS systems. We map it to Qt::ControlModifier
+	// as QT automatically translates it to command by default on macOS.
+	{"cmd", Qt::ControlModifier},
+	{"command", Qt::ControlModifier},
+
 	{"super", Qt::MetaModifier},
 	{"meta", Qt::MetaModifier},
+	{"windows", Qt::MetaModifier},
+
 	{"ctrl", Qt::ControlModifier},
 	{"control", Qt::ControlModifier},
+
 	{"option", Qt::AltModifier},
 	{"opt", Qt::AltModifier},
 	{"alt", Qt::AltModifier},
+
 	{"shift", Qt::ShiftModifier},
 };
 
@@ -198,14 +151,76 @@ static const std::unordered_map<QString, Qt::KeyboardModifier> modifierMap = {
 
 namespace Keyboard {
 
+#ifndef Q_OS_MACOS
+Qt::Key normalizeToLatin(Qt::Key key) { return key; }
+#endif
+
+namespace {
+std::unique_ptr<LayoutResolver> g_layoutResolver;
+} // namespace
+
+void setLayoutResolver(std::unique_ptr<LayoutResolver> resolver) { g_layoutResolver = std::move(resolver); }
+
+namespace {
+KeyLevels layoutLevels(Qt::Key key, quint32 scanCode) {
+  if (!g_layoutResolver || !printableCharForKey(key)) return {};
+  return g_layoutResolver->levels(key, scanCode);
+}
+} // namespace
+
+Qt::Key resolveKey(Qt::Key key, quint32 scanCode) {
+  return normalizeToLatin(layoutLevels(key, scanCode).base.value_or(key));
+}
+
+KeyPress::KeyPress(Qt::Key key, Qt::KeyboardModifiers mods, quint32 scanCode) {
+  // numpad enter is uniformized with the regular return key
+  if (key == Qt::Key_Enter) key = Qt::Key_Return;
+
+  const auto levels = layoutLevels(key, scanCode);
+  const Qt::Key primary = normalizeToLatin(levels.base.value_or(key));
+  m_candidates[0] = Shortcut(primary, mods);
+
+  if (!levels.shifted) return;
+
+  const Qt::Key shifted = normalizeToLatin(*levels.shifted);
+  if (shifted == primary) return;
+
+  m_candidates[1] = Shortcut(shifted, mods);
+  m_count = 2;
+}
+
+KeyPress::KeyPress(const QKeyEvent &event)
+    : KeyPress(static_cast<Qt::Key>(event.key()), event.modifiers(), event.nativeScanCode()) {}
+
+bool KeyPress::matches(const Shortcut &shortcut) const {
+  return std::ranges::any_of(candidates(), [&](const Shortcut &candidate) { return candidate == shortcut; });
+}
+
+std::optional<QChar> printableCharForKey(Qt::Key key) {
+  const auto code = static_cast<uint32_t>(key);
+  if (code >= 0x10000) return {};
+
+  const QChar ch(static_cast<char16_t>(code));
+  if (!ch.isPrint() || ch.isSpace()) return {};
+
+  return ch;
+}
+
 std::optional<QString> stringForKey(Qt::Key key) {
   if (auto it = keyMapReverse.find(key); it != keyMapReverse.end()) return it->second;
+  if (auto ch = printableCharForKey(key)) return QString(ch->toLower());
   return {};
 }
 
 std::optional<Qt::Key> keyFromString(QStringView key) {
   auto keyString = key.toString().toLower();
   if (auto it = keyMap.find(keyString); it != keyMap.end()) return it->second;
+
+  if (keyString.size() == 1) {
+    const auto candidate = static_cast<Qt::Key>(keyString.front().toUpper().unicode());
+    if (printableCharForKey(candidate)) return candidate;
+  }
+
   return {};
 }
 
@@ -214,14 +229,6 @@ std::optional<Qt::KeyboardModifier> modifierFromString(QStringView modifier) {
   if (auto it = modifierMap.find(modifierString); it != modifierMap.end()) return it->second;
   return {};
 }
-
-namespace {
-
-struct DisplayTokenSpec {
-  QString text;
-  QString icon;
-  QString label;
-};
 
 std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key) {
   switch (key) {
@@ -237,6 +244,29 @@ std::optional<Qt::KeyboardModifier> modifierForKey(Qt::Key key) {
     return std::nullopt;
   }
 }
+
+namespace {
+
+Qt::Key keyForModifier(Qt::KeyboardModifier modifier) {
+  switch (modifier) {
+  case Qt::MetaModifier:
+    return Qt::Key_Meta;
+  case Qt::ControlModifier:
+    return Qt::Key_Control;
+  case Qt::AltModifier:
+    return Qt::Key_Alt;
+  case Qt::ShiftModifier:
+    return Qt::Key_Shift;
+  default:
+    return Qt::Key_unknown;
+  }
+}
+
+struct DisplayTokenSpec {
+  QString text;
+  std::optional<BuiltinIcon> icon;
+  QString label;
+};
 
 DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
 #ifdef Q_OS_MACOS
@@ -256,13 +286,17 @@ DisplayTokenSpec modifierToken(Qt::KeyboardModifier modifier) {
 #else
   switch (modifier) {
   case Qt::MetaModifier:
+#ifdef Q_OS_WIN
+    return {.icon = BuiltinIcon::Windows11, .label = QStringLiteral("Win")};
+#else
     return {.text = QStringLiteral("◈"), .label = QStringLiteral("Super")};
+#endif
   case Qt::ControlModifier:
     return {.text = QStringLiteral("Ctrl"), .label = QStringLiteral("Ctrl")};
   case Qt::AltModifier:
     return {.text = QStringLiteral("Alt"), .label = QStringLiteral("Alt")};
   case Qt::ShiftModifier:
-    return {.icon = QStringLiteral("keyboard-shift"), .label = QStringLiteral("Shift")};
+    return {.icon = BuiltinIcon::KeyboardShift, .label = QStringLiteral("Shift")};
   default:
     return {};
   }
@@ -273,11 +307,11 @@ std::optional<DisplayTokenSpec> keyToken(Qt::Key key) {
   switch (key) {
   case Qt::Key_Return:
   case Qt::Key_Enter:
-    return DisplayTokenSpec{.icon = QStringLiteral("enter-key"), .label = QStringLiteral("Enter")};
+    return DisplayTokenSpec{.icon = BuiltinIcon::EnterKey, .label = QStringLiteral("Enter")};
   case Qt::Key_Tab:
-    return DisplayTokenSpec{.icon = QStringLiteral("tab-key"), .label = QStringLiteral("Tab")};
+    return DisplayTokenSpec{.icon = BuiltinIcon::TabKey, .label = QStringLiteral("Tab")};
   case Qt::Key_Space:
-    return DisplayTokenSpec{.icon = QStringLiteral("space-key"), .label = QStringLiteral("Space")};
+    return DisplayTokenSpec{.icon = BuiltinIcon::SpaceKey, .label = QStringLiteral("Space")};
   case Qt::Key_Backspace:
     return DisplayTokenSpec{.text = QStringLiteral("⌫"), .label = QStringLiteral("Backspace")};
   case Qt::Key_Delete:
@@ -343,7 +377,8 @@ std::vector<DisplayTokenSpec> buildDisplayTokenSpecs(const Shortcut &shortcut) {
 } // namespace
 
 Shortcut::Shortcut(const QKeyEvent *event)
-    : m_key(static_cast<Qt::Key>(event->key())), m_modifiers(event->modifiers()), m_isValid(true) {}
+    : m_key(resolveKey(static_cast<Qt::Key>(event->key()), event->nativeScanCode())),
+      m_modifiers(event->modifiers()), m_isValid(true) {}
 
 Shortcut Shortcut::fromKeyPress(const QKeyEvent &event) { return Shortcut(&event); }
 
@@ -363,10 +398,12 @@ Shortcut::Shortcut(const QString &str) {
   }
 
   bool gotKey = false;
+  std::optional<Qt::KeyboardModifier> lastModifier;
 
   for (const auto &str : tokens) {
     if (auto modifier = modifierFromString(str)) {
       m_modifiers.setFlag(*modifier);
+      lastModifier = modifier;
     } else if (auto key = keyFromString(str)) {
       gotKey = true;
       m_key = *key;
@@ -374,6 +411,12 @@ Shortcut::Shortcut(const QString &str) {
       m_isValid = false;
       return;
     }
+  }
+
+  if (!gotKey && lastModifier) {
+    m_key = keyForModifier(*lastModifier);
+    m_modifiers.setFlag(*lastModifier, false);
+    gotKey = true;
   }
 
   m_isValid = gotKey;
@@ -425,7 +468,7 @@ QVariantList Shortcut::toDisplayTokens() const {
   for (const auto &token : buildDisplayTokenSpecs(*this)) {
     QVariantMap entry;
     entry.insert(QStringLiteral("text"), token.text);
-    entry.insert(QStringLiteral("icon"), token.icon);
+    if (token.icon) entry.insert(QStringLiteral("icon"), QVariant::fromValue(*token.icon));
     tokens.append(entry);
   }
 

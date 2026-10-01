@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include "ui/image/url.hpp"
 #include <filesystem>
 #include <functional>

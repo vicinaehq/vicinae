@@ -4,7 +4,7 @@
 #include "common/types.hpp"
 #include "services/shortcut-inhibit/abstract-shortcut-inhibit-manager.hpp"
 #ifdef Q_OS_LINUX
-#include "internal/wayland/globals.hpp"
+#include "environment.hpp"
 #include "services/shortcut-inhibit/wayland-shortcut-inhibit-manager.hpp"
 #endif
 
@@ -19,9 +19,7 @@ public:
 private:
   static std::unique_ptr<AbstractShortcutInhibitManager> createManager() {
 #ifdef Q_OS_LINUX
-    if (auto *manager = Wayland::Globals::shortcutInhibit()) {
-      return std::make_unique<WaylandShortcutInhibitManager>(manager);
-    }
+    if (Environment::isWaylandSession()) { return std::make_unique<WaylandShortcutInhibitManager>(); }
 #endif
     return std::make_unique<DummyShortcutInhibitManager>();
   }

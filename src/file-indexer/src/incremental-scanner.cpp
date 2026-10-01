@@ -1,5 +1,4 @@
 #include "file-indexer/incremental-scanner.hpp"
-#include "file-indexer/background-thread.hpp"
 #include "file-indexer/filesystem-walker.hpp"
 #include "file-indexer/log.hpp"
 #include <chrono>
@@ -13,7 +12,7 @@ namespace fs = std::filesystem;
 void IncrementalScanner::processDirectory(const fs::path &root, const EntryCallback &onEntry) {
   m_pacer.checkpoint();
 
-  auto indexedFiles = m_read_db->listIndexedDirectoryFiles(root);
+  auto indexedFiles = m_readDb.listIndexedDirectoryFiles(root);
   std::vector<fs::path> deletedFiles;
   std::vector<FileEvent> events;
   std::error_code ec;
@@ -53,7 +52,7 @@ IncrementalScanner::getScannableDirectories(const fs::path &path, std::optional<
   FileSystemWalker walker;
 
   scannableDirs.emplace_back(path);
-  auto lastSuccessfulScan = m_read_db->getLastSuccessfulScan(path);
+  auto lastSuccessfulScan = m_readDb.getLastSuccessfulScan(path);
 
   if (!lastSuccessfulScan.has_value()) {
     flog::error() << "No previous successful scan found for incremental scan at" << path.c_str();
@@ -81,7 +80,7 @@ bool IncrementalScanner::shouldProcessEntry(const fs::directory_entry &entry, in
     auto const lastModifiedSeconds =
         static_cast<int64_t>(duration_cast<seconds>(sctp.time_since_epoch()).count());
 
-    return lastModifiedSeconds >= cutOffSeconds || !m_read_db->tracksFile(entry.path());
+    return lastModifiedSeconds >= cutOffSeconds || !m_readDb.tracksFile(entry.path());
   }
 
   return true;
@@ -115,7 +114,7 @@ void IncrementalScanner::prunedScan(const fs::path &scanPath, const IncrementalS
   int64_t cutOffSeconds = 0;
 
   for (fs::path path = scanPath;; path = path.parent_path()) {
-    if (auto lastSuccessfulScan = m_read_db->getLastSuccessfulScan(path)) {
+    if (auto lastSuccessfulScan = m_readDb.getLastSuccessfulScan(path)) {
       cutOffSeconds = lastSuccessfulScan->createdAt;
       break;
     }
@@ -154,23 +153,19 @@ void IncrementalScanner::scan(const fs::path &path, const IncrementalScan &scan)
 }
 
 IncrementalScanner::IncrementalScanner(std::shared_ptr<DbWriter> writer, const Scan &sc,
-                                       StatusCallback callback)
-    : AbstractScanner(std::move(writer), sc, std::move(callback)) {
-  m_scanThread = std::thread([this, sc]() {
-    file_indexer::setBackgroundThreadPriority();
-    m_read_db = std::make_unique<FileIndexerDatabase>();
-    start(sc);
+                                       FileIndexerDatabase &readDb, StatusCallback callback)
+    : AbstractScanner(std::move(writer), sc, std::move(callback)), m_readDb(readDb) {}
 
-    try {
-      scan(sc.path, std::get<IncrementalScan>(sc.data));
-      finish();
-    } catch (const std::exception &error) {
-      flog::error() << "Caught exception during incremental scan" << error.what();
-      fail();
-    }
-  });
+void IncrementalScanner::run() {
+  start();
+
+  try {
+    scan(m_scan.path, std::get<IncrementalScan>(m_scan.data));
+    finish();
+  } catch (const std::exception &error) {
+    flog::error() << "Caught exception during incremental scan" << error.what();
+    fail();
+  }
 }
 
 void IncrementalScanner::interrupt() { setInterruptFlag(); }
-
-void IncrementalScanner::join() { m_scanThread.join(); }

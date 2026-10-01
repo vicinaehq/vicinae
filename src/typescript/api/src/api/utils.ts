@@ -1,11 +1,7 @@
 import type { PathLike } from "node:fs";
 import { rm } from "node:fs/promises";
 import { WindowManagement } from "./window-management";
-import type {
-	Application,
-	DesktopNotificationPayload,
-	NotificationUrgency,
-} from "./proto/api";
+import type { Application, NotificationUrgency } from "./proto/api";
 import { getClient } from "./client";
 import { ImageLike, serializeProtoImage } from "./image";
 
@@ -186,12 +182,7 @@ export type DesktopNotificationOptions = {
 /**
  * @category System
  */
-export const sendDesktopNotification = (payload: {
-	title: string;
-	body: string;
-	icon?: ImageLike;
-	urgency?: NotificationUrgency;
-}) =>
+export const sendDesktopNotification = (payload: DesktopNotificationOptions) =>
 	getClient().UI.sendDesktopNotification({
 		title: payload.title,
 		body: payload.body,

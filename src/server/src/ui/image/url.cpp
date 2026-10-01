@@ -1,9 +1,9 @@
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "glyph/emoji.hpp"
-#include "extend/image-model.hpp"
+#include "extension/model/image-model.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
-#include "theme.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "theme/theme.hpp"
+#include "ui/image/omni-painter.hpp"
 #include "theme/theme-file.hpp"
 #include <qdir.h>
 #include <qstringview.h>
@@ -30,11 +30,22 @@ ImageURL &ImageURL::setBackgroundTint(const ColorLike &tint) {
   return *this;
 }
 
+ImageURL &ImageURL::setBadge(BuiltinIcon icon) {
+  if (const auto *name = BuiltinIconService::nameForIcon(icon)) _badge = QString::fromLatin1(name);
+  return *this;
+}
+
+ImageURL &ImageURL::setBadge(const QString &builtinName) {
+  _badge = builtinName;
+  return *this;
+}
+
 ImageURLType ImageURL::type() const { return _type; }
 const QString &ImageURL::name() const { return _name; }
 std::optional<ColorLike> ImageURL::backgroundTint() const { return _bgTint; }
 const std::optional<ColorLike> &ImageURL::fillColor() const { return _fillColor; }
 OmniPainter::ImageMaskType ImageURL::mask() const { return _mask; }
+const std::optional<QString> &ImageURL::badge() const { return _badge; }
 
 ImageURL &ImageURL::withFallback(const ImageURL &fallback) {
   _fallback = fallback.toString();
@@ -56,10 +67,10 @@ static QString resolveThemedLocalPath(const QString &path) {
 ImageURL ImageURL::resolved() const {
   ImageURL out = *this;
   if (auto fill = fillColor())
-    out.setFill(OmniPainter::resolveColor(*fill));
+    out.setFill(ThemeService::instance().theme().resolve(*fill));
   else if (type() == ImageURLType::Builtin || type() == ImageURLType::Symbol)
     out.setFill(ThemeService::instance().theme().resolve(SemanticColor::Foreground));
-  if (auto bg = backgroundTint()) out.setBackgroundTint(OmniPainter::resolveColor(*bg));
+  if (auto bg = backgroundTint()) out.setBackgroundTint(ThemeService::instance().theme().resolve(*bg));
   if (out.type() == ImageURLType::Local) out.setName(resolveThemedLocalPath(out.name()));
   return out;
 }
@@ -76,6 +87,7 @@ QUrl ImageURL::url() const {
   if (_fallback) query.addQueryItem("fallback", *_fallback);
   if (_bgTint) query.addQueryItem("bg_tint", OmniPainter::serializeColor(*_bgTint));
   if (_fillColor) query.addQueryItem("fill", OmniPainter::serializeColor(_fillColor.value()));
+  if (_badge) query.addQueryItem("badge", *_badge);
   if (_mask == OmniPainter::CircleMask)
     query.addQueryItem("mask", "circle");
   else if (_mask == OmniPainter::RoundedRectangleMask)
@@ -117,6 +129,7 @@ ImageURL::ImageURL(const QUrl &url) {
       _fillColor = QColor(fill);
   }
   if (auto fallback = query.queryItemValue("fallback"); !fallback.isEmpty()) { _fallback = fallback; }
+  if (auto badge = query.queryItemValue("badge"); !badge.isEmpty()) { _badge = badge; }
   if (auto mask = query.queryItemValue("mask"); !mask.isEmpty()) {
     if (mask == "circle")
       _mask = OmniPainter::ImageMaskType::CircleMask;
@@ -149,6 +162,15 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) {
     if (auto mask = image->mask) { setMask(*mask); }
 
     if (url.isValid()) {
+      // some of our own APIs send icon:// urls as an opaque way to
+      // represent e.g internal app icons. They are not meant to be
+      // stable or anything, but they can be passed back to other extension
+      // APIs to display the icon.
+      if (url.scheme() == "icon") {
+        *this = url;
+        return;
+      }
+
       if (url.scheme() == "file") {
         setType(ImageURLType::Local);
         setName(url.host() + url.path());
@@ -195,7 +217,7 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) {
 
     if (auto resolved = RelativeAssetResolver::instance()->resolve(source.toStdString())) {
       setType(ImageURLType::Local);
-      setName(resolved->c_str());
+      setName(QString::fromStdString(resolved->string()));
       return;
     }
 
@@ -211,20 +233,22 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike) {
   }
 }
 
-ImageURL ImageURL::builtin(const QString &name) {
+ImageURL ImageURL::builtinByName(QStringView name) {
   ImageURL url;
 
   url.setType(ImageURLType::Builtin);
-  url.setName(name);
+  url.setName(name.toString());
   url.setFill(SemanticColor::Foreground);
 
   return url;
 }
 
 ImageURL ImageURL::builtin(BuiltinIcon icon) {
-  if (auto name = BuiltinIconService::nameForIcon(icon)) { return ImageURL::builtin(name); }
+  if (auto name = BuiltinIconService::nameForIcon(icon)) {
+    return ImageURL::builtinByName(QString::fromLatin1(name));
+  }
   if (auto name = BuiltinIconService::nameForIcon(BuiltinIconService::unknownIcon())) {
-    return ImageURL::builtin(name);
+    return ImageURL::builtinByName(QString::fromLatin1(name));
   }
   return {};
 }
@@ -266,6 +290,24 @@ ImageURL ImageURL::macBundle(const std::filesystem::path &bundlePath) {
 
   url.setType(ImageURLType::MacBundle);
   url.setName(name);
+
+  return url;
+}
+
+ImageURL ImageURL::winShellIcon(const QString &parsingName) {
+  ImageURL url;
+
+  url.setType(ImageURLType::WinShellIcon);
+  url.setName(parsingName);
+
+  return url;
+}
+
+ImageURL ImageURL::winStockIcon(int stockIconId) {
+  ImageURL url;
+
+  url.setType(ImageURLType::WinStockIcon);
+  url.setName(QString::number(stockIconId));
 
   return url;
 }
@@ -322,5 +364,12 @@ ImageURL ImageURL::fileIcon(const fs::path &path) {
   url.setType(ImageURLType::FileIcon);
   url.setName(QString::fromStdString(path.string()));
 
+  return url;
+}
+
+ImageURL ImageURL::fileThumbnail(const fs::path &path) {
+  ImageURL url;
+  url.setType(ImageURLType::FileThumbnail);
+  url.setName(QString::fromStdString(path.string()));
   return url;
 }

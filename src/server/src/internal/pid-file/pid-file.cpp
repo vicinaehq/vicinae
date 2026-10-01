@@ -8,10 +8,24 @@
 #include "pid-file.hpp"
 #include "vicinae.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace fs = std::filesystem;
 
 bool PidFile::kill() {
-  if (auto n = pid()) { return ::kill(*n, SIGINT) == 0; }
+  if (auto n = pid()) {
+#ifdef _WIN32
+    HANDLE const handle = OpenProcess(PROCESS_TERMINATE, FALSE, static_cast<DWORD>(*n));
+    if (!handle) return false;
+    bool const ok = TerminateProcess(handle, 1) != 0;
+    CloseHandle(handle);
+    return ok;
+#else
+    return ::kill(*n, SIGINT) == 0;
+#endif
+  }
 
   return false;
 }
@@ -24,9 +38,10 @@ std::optional<int> PidFile::pid() {
   std::string line;
   std::getline(ifs, line);
   std::istringstream iss(line);
-  int pid;
+  int pid = 0;
 
-  iss >> pid;
+  // a pid of 0 or below would target the caller's own process group, or every process
+  if (!(iss >> pid) || pid <= 0) return std::nullopt;
 
   return pid;
 }

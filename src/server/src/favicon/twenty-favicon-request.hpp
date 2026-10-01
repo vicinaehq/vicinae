@@ -1,6 +1,6 @@
 #pragma once
 #include "favicon-request.hpp"
-#include "image-fetcher.hpp"
+#include "services/image-fetcher/image-fetcher.hpp"
 #include <qstringview.h>
 
 class TwentyFaviconRequester : public AbstractFaviconRequest {

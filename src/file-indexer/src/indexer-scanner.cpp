@@ -1,7 +1,5 @@
 #include "file-indexer/indexer-scanner.hpp"
 #include "file-indexer/abstract-scanner.hpp"
-#include "file-indexer/background-thread.hpp"
-#include "file-indexer/filesystem-walker.hpp"
 #include "file-indexer/log.hpp"
 #include <utility>
 
@@ -39,27 +37,23 @@ void IndexerScanner::scan(const Scan &scan) {
 
 IndexerScanner::IndexerScanner(const std::shared_ptr<DbWriter> &writer, const Scan &sc,
                                StatusCallback callback)
-    : AbstractScanner(writer, sc, std::move(callback)) {
-  m_scanThread = std::thread([this, sc]() {
-    file_indexer::setBackgroundThreadPriority();
-    start(sc);
+    : AbstractScanner(writer, sc, std::move(callback)) {}
 
-    bool failed = false;
-    try {
-      scan(sc);
-    } catch (const std::exception &error) {
-      flog::error() << "Caught exception during fullscan" << error.what();
-      failed = true;
-    }
+void IndexerScanner::run() {
+  start();
 
-    failed ? fail() : finish();
-  });
+  bool failed = false;
+  try {
+    scan(m_scan);
+  } catch (const std::exception &error) {
+    flog::error() << "Caught exception during fullscan" << error.what();
+    failed = true;
+  }
+
+  failed ? fail() : finish();
 }
 
 void IndexerScanner::interrupt() {
   setInterruptFlag();
-  m_alive = false;
   m_walker.stop();
 }
-
-void IndexerScanner::join() { m_scanThread.join(); }

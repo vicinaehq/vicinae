@@ -1,0 +1,55 @@
+#pragma once
+#include "ui/qml-engine-scope.hpp"
+#include <QObject>
+#include "keyboard/keyboard.hpp"
+#include "service-registry.hpp"
+#include "services/global-shortcuts/config-global-shortcuts.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
+#include "ui/settings/shortcut-conflict.hpp"
+
+// Exposes global-shortcut control to QML. Registered as the "GlobalShortcuts" context property.
+class GlobalShortcutBridge : public QObject {
+  Q_OBJECT
+  QML_NAMED_ELEMENT(GlobalShortcuts)
+  QML_SINGLETON
+
+public:
+  static GlobalShortcutBridge *create(QQmlEngine *, QJSEngine *) {
+    return QmlEngineScope::global<GlobalShortcutBridge>();
+  }
+
+private:
+  Q_PROPERTY(QString toggleId READ toggleId CONSTANT)
+
+signals:
+  void keyCaptured(int key, int modifiers, bool down);
+
+public:
+  explicit GlobalShortcutBridge(QObject *parent) : QObject(parent) {
+    if (auto *service = ServiceRegistry::instance()->globalShortcuts()) {
+      connect(service->backend(), &AbstractGlobalShortcutBackend::keyCaptured, this,
+              &GlobalShortcutBridge::keyCaptured);
+    }
+  }
+
+  QString toggleId() const { return QString::fromUtf8(ConfigGlobalShortcuts::TOGGLE_ID); }
+
+  // Suspends global binds while a recorder captures so it doesn't hijack the keystroke; rebinds on
+  // release.
+  Q_INVOKABLE void setCapturing(bool capturing) {
+    if (auto *service = ServiceRegistry::instance()->globalShortcuts()) { service->setCapturing(capturing); }
+  }
+
+  Q_INVOKABLE QString validate(int key, int modifiers, const QString &excludeId) {
+    Keyboard::Shortcut const shortcut(static_cast<Qt::Key>(key),
+                                      static_cast<Qt::KeyboardModifiers>(modifiers));
+
+    if (auto error = shortcut_conflict::validate(shortcut, excludeId); !error.isEmpty()) { return error; }
+
+    if (auto *service = ServiceRegistry::instance()->globalShortcuts()) {
+      if (auto denied = service->probeBind(shortcut)) { return *denied; }
+    }
+
+    return {};
+  }
+};

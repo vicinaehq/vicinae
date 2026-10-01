@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a macOS .icns from a 512x512 source PNG.
+# Build a macOS .icns from a 1024x1024 source PNG.
 # Usage: mkicns.sh <input.png> <output.icns>
 set -euo pipefail
 
@@ -16,8 +16,6 @@ trap 'rm -rf "$WORKDIR"' EXIT
 ICONSET="$WORKDIR/icon.iconset"
 mkdir -p "$ICONSET"
 
-# Apple's iconset name convention.
-# Source is 512x512 — we skip icon_512x512@2x.png (would need 1024px source).
 declare -a SIZES=(
   "16:icon_16x16.png"
   "32:icon_16x16@2x.png"
@@ -28,6 +26,7 @@ declare -a SIZES=(
   "256:icon_256x256.png"
   "512:icon_256x256@2x.png"
   "512:icon_512x512.png"
+  "1024:icon_512x512@2x.png"
 )
 
 for entry in "${SIZES[@]}"; do

@@ -1,10 +1,14 @@
 #pragma once
-#include "common.hpp"
+#include "services/app-service/app-preferences.hpp"
+#include "services/root-item-manager/typed-root-provider.hpp"
+#include "command/command-types.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include <qjsonobject.h>
+#include <QCoreApplication>
 
 class AppRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(AppRootItem)
+
   std::shared_ptr<AbstractApplication> m_app;
 
   double baseScoreWeight() const override;
@@ -19,6 +23,7 @@ class AppRootItem : public RootItem {
   QString settingsDescription() const override;
   std::vector<std::pair<QString, QString>> settingsMetadata() const override;
   std::vector<QString> keywords() const override;
+  std::optional<QString> unlocalizedTitle() const override;
   bool isActive() const override;
 
 public:
@@ -26,7 +31,7 @@ public:
   AppRootItem(const std::shared_ptr<AbstractApplication> &app) : m_app(app) {}
 };
 
-class AppRootProvider : public RootProvider {
+class AppRootProvider : public TypedRootProvider<AppPreferences> {
 public:
   AppService &m_appService;
 
@@ -37,7 +42,7 @@ public:
   QString displayName() const override;
   QString uniqueId() const override;
   PreferenceList preferences() const override;
-  void preferencesChanged(const QJsonObject &preferences) override;
+  void preferencesChanged(const AppPreferences &preferences) override;
 
 public:
   AppRootProvider(AppService &appService);

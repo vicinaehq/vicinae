@@ -106,9 +106,6 @@ public:
 
   QFuture<VicinaeStore::DownloadExtensionResult> downloadExtension(const QUrl &url);
 
-  const std::vector<VicinaeStore::Extension> *cached() const;
-  void invalidateCache();
-
   void setBaseUrl(const QString &url);
   QString baseUrl() const;
 
@@ -116,5 +113,4 @@ private:
   static const http::RequestOptions s_requestOpts;
 
   http::Client m_client;
-  std::optional<std::vector<VicinaeStore::Extension>> m_cache;
 };

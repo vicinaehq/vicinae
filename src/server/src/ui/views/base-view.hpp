@@ -1,7 +1,8 @@
 #pragma once
-#include "argument.hpp"
-#include "command-controller.hpp"
-#include "common.hpp"
+#include "command/argument.hpp"
+#include "command/command-controller.hpp"
+#include "command/command-types.hpp"
+#include "ui/action-panel/action.hpp"
 #include <QObject>
 #include <vector>
 
@@ -13,6 +14,7 @@ class ImageURL;
 class QKeyEvent;
 
 class BaseView : public QObject {
+  Q_OBJECT
 
 public:
   void createInitialize();
@@ -44,6 +46,7 @@ public:
   virtual void argumentValuesChanged(const std::vector<std::pair<QString, QString>> &arguments) {}
 
   virtual void textChanged(const QString &text);
+  virtual void beforeActionExecuted(const AbstractAction *action) {}
 
   QString navigationTitle() const;
 
@@ -70,6 +73,7 @@ public:
   void setTopBarVisiblity(bool visible);
   void setSearchVisibility(bool visible);
   void setSearchInteractive(bool interactive);
+  void setSearchRedacted(bool redacted);
   void setStatusBarVisiblity(bool visible);
 
   void clearSearchText();

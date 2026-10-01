@@ -1,7 +1,7 @@
 #include "vicinae-store.hpp"
 #include "generated/version.h"
 #include "environment.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include "utils/capabilities.hpp"
 #include <algorithm>
@@ -20,7 +20,7 @@ std::optional<ImageURL> Command::themedIcon() const { return icons.themedIcon();
 
 ImageURL Extension::themedIcon() const {
   if (auto icon = icons.themedIcon()) return *icon;
-  return ImageURL::builtin("plug");
+  return ImageURL::builtin(BuiltinIcon::Plug);
 }
 
 } // namespace VicinaeStore
@@ -63,25 +63,12 @@ VicinaeStoreService::fetchExtensions(const VicinaeStore::ListPaginationOptions &
 }
 
 QFuture<VicinaeStore::ListResult> VicinaeStoreService::fetchAll() {
-  if (m_cache) {
-    return QtFuture::makeReadyValueFuture(VicinaeStore::ListResult{VicinaeStore::ListResponse{*m_cache, {}}});
-  }
-
   return fetchExtensions({.limit = 500})
-      .then(this, [this](VicinaeStore::ListResult result) -> VicinaeStore::ListResult {
-        if (result) { m_cache = result->extensions; }
-        return result;
-      });
+      .then(this, [](VicinaeStore::ListResult result) -> VicinaeStore::ListResult { return result; });
 }
-
-const std::vector<VicinaeStore::Extension> *VicinaeStoreService::cached() const {
-  return m_cache ? &*m_cache : nullptr;
-}
-
-void VicinaeStoreService::invalidateCache() { m_cache.reset(); }
 
 QFuture<VicinaeStore::ListResult> VicinaeStoreService::search(const QString &query) {
-  auto url = QString("/store/search?q=%1").arg(query);
+  auto url = QString("/store/search?q=%1").arg(QString::fromLatin1(QUrl::toPercentEncoding(query)));
 
   return m_client.get<VicinaeStore::ListResponse>(url, s_requestOpts)
       .then([](http::Client::Result<VicinaeStore::ListResponse> result) -> VicinaeStore::ListResult {

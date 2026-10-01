@@ -1,4 +1,3 @@
-Language:        Cpp
 BasedOnStyle:    LLVM
 ColumnLimit:     110
 AllowShortIfStatementsOnASingleLine: true

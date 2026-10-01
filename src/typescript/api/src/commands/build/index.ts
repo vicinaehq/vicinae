@@ -1,11 +1,19 @@
 import * as esbuild from "esbuild";
-import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import {
+	cpSync,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	renameSync,
+	rmSync,
+} from "node:fs";
+import { dirname, join } from "node:path";
 import type { CommandDef } from "../../cli.js";
 import ManifestSchema from "../../schemas/manifest.js";
 import { updateExtensionTypes } from "../../utils/extension-types.js";
 import { Logger } from "../../utils/logger.js";
+import { typeCheck } from "../../utils/typecheck.js";
 import { extensionDataDir } from "../../utils/utils.js";
 
 const build: CommandDef = {
@@ -81,8 +89,14 @@ const build: CommandDef = {
 				return esbuild.build({
 					bundle: true,
 					entryPoints: [source],
-					external: ["react", "@vicinae/api", "@raycast/api"],
+					external: [
+						"react",
+						"react/jsx-runtime",
+						"@vicinae/api",
+						"@raycast/api",
+					],
 					format: "cjs",
+					jsx: "automatic",
 					outdir: outDir,
 					platform: "node",
 					minify: true,
@@ -112,15 +126,30 @@ const build: CommandDef = {
 		updateExtensionTypes(manifest, src);
 
 		logger.logInfo("Checking types...");
-		const typeCheck = spawnSync("npx", ["tsc", "--noEmit"]);
+		const check = typeCheck(src);
 
-		if (typeCheck.error) {
-			logger.logError(`Type check failed: ${typeCheck.error}`);
+		if (!check.ok) {
+			logger.logError(`Type check failed:\n${check.output}`);
 			process.exit(1);
 		}
 
-		mkdirSync(outDir, { recursive: true });
-		await doBuild(outDir);
+		mkdirSync(dirname(outDir), { recursive: true });
+		const stagingDir = mkdtempSync(join(dirname(outDir), ".build-"));
+
+		try {
+			await doBuild(stagingDir);
+			rmSync(outDir, {
+				recursive: true,
+				force: true,
+				maxRetries: 5,
+				retryDelay: 100,
+			});
+			renameSync(stagingDir, outDir);
+		} catch (error) {
+			rmSync(stagingDir, { recursive: true, force: true });
+			throw error;
+		}
+
 		logger.logReady(`built extension successfully - output at ${outDir}`);
 	},
 };

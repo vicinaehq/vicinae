@@ -17,6 +17,8 @@ import {
 	serializeColorLike,
 } from "../color";
 import { Dropdown } from "./dropdown";
+import { usePagination } from "./pagination";
+import { Clipboard } from "../clipboard";
 
 /**
  * A List component that can be used to render a list of items sharing a similar representation.
@@ -113,6 +115,11 @@ export declare namespace List {
 		 * Note that this does *not* fire when transitioning from having a selected item to none at all.
 		 */
 		onSelectionChange?: (id: string) => void;
+
+		pagination?: {
+			onLoadMore: () => Promise<void> | void;
+			hasMore: boolean;
+		};
 	};
 
 	/**
@@ -194,6 +201,9 @@ export declare namespace List {
 			 */
 			actions?: ReactNode;
 
+			/** Content transferred when this item is dragged. */
+			dragContent?: Clipboard.Content;
+
 			accessories?: List.Item.Accessory[];
 
 			/**
@@ -235,10 +245,10 @@ export declare namespace List {
 
 		type Tag =
 			| AccessoryBase
-			| { color: ColorLike; value: string | Date | undefined | null };
+			| { color?: ColorLike; value: string | Date | undefined | null };
 		type Text =
 			| AccessoryBase
-			| { color: Color; value: string | Date | undefined | null };
+			| { color?: Color; value: string | Date | undefined | null };
 
 		export type Accessory = ({ tag?: Tag } | { text?: Text }) & {
 			icon?: Image.ImageLike;
@@ -250,10 +260,10 @@ export declare namespace List {
 // used in jsx.d.ts, not for public api
 export type SerializedTag =
 	| List.Item.AccessoryBase
-	| { color: SerializedColorLike; value: string | Date | undefined | null };
+	| { color?: SerializedColorLike; value: string | Date | undefined | null };
 export type SerializedText =
 	| List.Item.AccessoryBase
-	| { color: SerializedColorLike; value: string | Date | undefined | null };
+	| { color?: SerializedColorLike; value: string | Date | undefined | null };
 export type SerializedAccessory = (
 	| { tag?: SerializedTag }
 	| { text?: SerializedText }
@@ -281,24 +291,18 @@ function serializeAccessory(
 
 function serializeTag(tag: List.Item.Tag): SerializedTag {
 	if (tag == null) return tag; // null or undefined
-	if (typeof tag !== "object") return tag;
+	if (typeof tag !== "object" || tag instanceof Date) return tag;
 
-	if ("color" in tag) {
-		const color = serializeColorLike(tag.color);
-		const value = "value" in tag ? tag.value : undefined;
-		return { color, value };
-	}
+	const color = tag.color ? serializeColorLike(tag.color) : undefined;
+	return { color, value: tag.value };
 }
 
 function serializeText(text: List.Item.Text): SerializedText {
 	if (text == null) return text; // null or undefined
-	if (typeof text !== "object") return text;
+	if (typeof text !== "object" || text instanceof Date) return text;
 
-	if ("color" in text) {
-		const color = serializeColorLike(text.color);
-		const value = "value" in text ? text.value : undefined;
-		return { color, value };
-	}
+	const color = text.color ? serializeColorLike(text.color) : undefined;
+	return { color, value: text.value };
 }
 
 const ListRoot: React.FC<List.Props> = ({
@@ -321,11 +325,16 @@ const ListRoot: React.FC<List.Props> = ({
 		onSearchTextChange,
 	);
 
+	const pagination = usePagination(props.pagination);
+
 	return (
 		<list
 			{...props}
+			paginationHasMore={pagination?.hasMore ?? false}
+			paginationOnLoadMore={pagination?.onLoadMore}
 			searchText={countedSearchText}
 			onSearchTextChange={wrappedOnSearchTextChange}
+			pagination={pagination}
 		>
 			{searchBarAccessory}
 			{children}
@@ -337,11 +346,14 @@ const ListRoot: React.FC<List.Props> = ({
 const ListItem: React.FC<List.Item.Props> = ({
 	detail,
 	actions,
+	dragContent,
 	icon,
 	accessories,
+	id: propsId,
 	...props
 }) => {
-	const id = useRef(props.id ?? randomUUID());
+	const generatedId = useRef(randomUUID());
+	const id = propsId ?? generatedId.current;
 
 	// Icon
 	let serializedIcon: React.JSX.IntrinsicElements["list-item"]["icon"];
@@ -362,8 +374,11 @@ const ListItem: React.FC<List.Item.Props> = ({
 		<list-item
 			{...props}
 			icon={serializedIcon}
+			dragContent={
+				dragContent ? Clipboard.serializeContent(dragContent) : undefined
+			}
 			accessories={serializedAccessories}
-			id={id.current}
+			id={id}
 		>
 			{detail}
 			{actions}

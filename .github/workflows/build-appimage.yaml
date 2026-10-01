@@ -21,9 +21,11 @@ jobs:
       matrix:
         target:
           - arch: amd64
+            deploy_arch: x86_64
             runner: depot-ubuntu-24.04-16
             tag: appimage-amd64-latest
           - arch: arm64
+            deploy_arch: aarch64
             runner: depot-ubuntu-24.04-arm-16
             tag: appimage-arm64-latest
 
@@ -59,4 +61,11 @@ jobs:
         run: |
           chmod +x ./scripts/mkappimage.sh
           ./scripts/mkappimage.sh "${INSTALL_DIR}" AppDir
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vicinae-${{ matrix.target.deploy_arch }}-${{ github.sha }}.AppImage
+          path: "*.AppImage"
+          if-no-files-found: error
 

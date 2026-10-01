@@ -1,7 +1,9 @@
 #pragma once
-#include "preference.hpp"
+#include "command/preference-schema.hpp"
+#include "services/app-service/app-preferences.hpp"
 #include "ui/image/url.hpp"
-#include <QJsonObject>
+#include <QProcess>
+#include <memory>
 #include <QString>
 #include <optional>
 #include <qmimetype.h>
@@ -89,6 +91,9 @@ public:
    */
   virtual QString description() const = 0;
 
+  // Type label for the root search; empty means the default "Application".
+  virtual QString category() const { return {}; }
+
   // whether the executable can open url(s) or file(s)
   virtual bool isOpener() { return true; }
 };
@@ -103,6 +108,8 @@ struct LaunchTerminalCommandOptions {
 };
 
 class AbstractAppDatabase : public QObject {
+  Q_OBJECT
+
 public:
   using AppPtr = std::shared_ptr<AbstractApplication>;
 
@@ -119,14 +126,20 @@ public:
   virtual std::vector<std::filesystem::path> defaultSearchPaths() const = 0;
 
   /**
+   * The effective list of directories scanned for apps: the default system paths plus any
+   * provider-specific additions (such as user-configured directories coming from preferences).
+   */
+  virtual std::vector<std::filesystem::path> searchPaths() const { return defaultSearchPaths(); }
+
+  /**
    * This method is a request for the service to explicitly update the list of apps installed on the system.
-   * What it does is left to the implementer but it is expected that after calling this, we can query the
-   * service for the most up-to-date information.
+   * Implementations rebuild their database from their own searchPaths(). It is expected that after calling
+   * this, we can query the service for the most up-to-date information.
    * Usually, implementers install their own watching logic to detect changes and rebuild their app database
    * internally, but this is called when a higher level operation that could impact apps is performed (such as
    * changing app-related preferences).
    */
-  virtual bool scan(const std::vector<std::filesystem::path> &paths) = 0;
+  virtual bool scan() = 0;
 
   /**
    * Launch an instance of the application with the provided set of arguments.
@@ -143,17 +156,41 @@ public:
   virtual bool launchTerminalCommand(const std::vector<QString> &cmdline,
                                      const LaunchTerminalCommandOptions &opts = {}) const = 0;
 
+  // unstarted; create it on the thread that will run it
+  virtual std::unique_ptr<QProcess> shellProcess(const QString &code) const {
+    auto proc = std::make_unique<QProcess>();
+    proc->setProgram(qEnvironmentVariable("SHELL", QStringLiteral("/bin/sh")));
+    proc->setArguments({QStringLiteral("-c"), code});
+    return proc;
+  }
+
   /**
    * Preferences that are specific to this provider (e.g. launch prefix on XDG).
    * The root provider merges these with its own UI preferences when exposing them to the user.
    */
-  virtual PreferenceList preferences() const { return {}; }
+  PreferenceList preferences() const {
+    auto list = describePreferences<AppPreferences>();
 
-  /**
-   * Apply the subset of preferences that this provider declared via preferences().
-   * The root provider forwards the full preferences blob; implementations look up the keys they own.
-   */
-  virtual void applyPreferences(const QJsonObject &preferences) { (void)preferences; }
+    for (auto &pref : list) {
+      if (pref.name() != QStringLiteral("paths")) continue;
+      auto data = pref.data();
+      auto *picker = std::get_if<Preference::DirectoryPickerData>(&data);
+      if (!picker) continue;
+      picker->lockedPaths.clear();
+      for (const auto &path : defaultSearchPaths()) {
+#ifdef Q_OS_WIN
+        picker->lockedPaths.emplace_back(QString::fromStdWString(path.wstring()));
+#else
+        picker->lockedPaths.emplace_back(QString::fromStdString(path.string()));
+#endif
+      }
+      pref.setData(*picker);
+    }
+
+    return list;
+  }
+
+  virtual void applyPreferences(const AppPreferences &preferences) { (void)preferences; }
 
   /**
    * Find all the possible openers for the given target, from most to least preferred.
@@ -166,6 +203,17 @@ public:
    * Find the default opener for the given target, or a null pointer if none could be found.
    */
   virtual AppPtr findDefaultOpener(const Target &target) const = 0;
+
+  /**
+   * Make `app` the default opener for the given mime type.
+   * Returns false if the platform does not support it or if the change could not be applied.
+   */
+  virtual bool setDefaultOpener(const QString &mime, const AbstractApplication &app) { return false; }
+
+  /**
+   * Make `app` the preferred web browser on this system.
+   */
+  virtual bool setWebBrowser(const AbstractApplication &app) { return false; }
 
   virtual AppPtr findById(const QString &id) const = 0;
 
@@ -210,10 +258,17 @@ public:
    */
   virtual AppPtr locationOpener(const AbstractApplication &app) const = 0;
 
+  virtual bool canUninstall(const AbstractApplication &app) const { return false; }
+  virtual bool uninstall(const AbstractApplication &app) { return false; }
+
   /**
    * Open the system file browser for the provided path.
    * If `select` is true, implementations should try to reveal/select the item and
    * gracefully fall back to opening the containing folder when that is not supported.
    */
   virtual bool showInFileBrowser(const std::filesystem::path &path, bool select) const = 0;
+
+signals:
+  // The provider detected an out-of-band change to installed apps (e.g. a package install).
+  void changed();
 };

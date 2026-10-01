@@ -5,6 +5,8 @@
 #include "services/audio-control/pactl/pactl-audio-control.hpp"
 #elif defined(Q_OS_MACOS)
 #include "services/audio-control/macos/coreaudio-audio-control.hpp"
+#elif defined(Q_OS_WIN)
+#include "services/audio-control/windows/wasapi-audio-control.hpp"
 #else
 #include "services/audio-control/dummy-audio-control.hpp"
 #endif
@@ -17,6 +19,8 @@ public:
     m_backend = std::make_unique<PactlAudioControl>();
 #elif defined(Q_OS_MACOS)
     m_backend = std::make_unique<CoreAudioControl>();
+#elif defined(Q_OS_WIN)
+    m_backend = std::make_unique<WasapiAudioControl>();
 #else
     m_backend = std::make_unique<DummyAudioControl>();
 #endif

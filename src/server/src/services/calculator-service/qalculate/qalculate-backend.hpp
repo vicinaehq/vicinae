@@ -3,6 +3,7 @@
 #include <libqalculate/Calculator.h>
 #include <libqalculate/MathStructure.h>
 #include <libqalculate/includes.h>
+#include <mutex>
 
 class QalculateBackend : public AbstractCalculatorBackend {
 
@@ -20,7 +21,6 @@ public:
   bool supportsRefreshExchangeRates() const override;
 
   bool isActivatable() const override;
-  bool isExpression(const std::string &query) const override;
 
 private:
   static std::optional<std::string> getUnitDisplayName(const MathStructure &s, std::string_view prefix = "");
@@ -37,4 +37,8 @@ private:
   bool m_initialized = false;
   EvaluationOptions m_evalOpts;
   PrintOptions m_printOpts;
+  // Serializes access to m_calc/CALCULATOR between compute() and the
+  // background refreshExchangeRates() task, which both mutate the same
+  // libqalculate Calculator instance.
+  std::mutex m_calcMutex;
 };

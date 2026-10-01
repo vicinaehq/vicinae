@@ -1,6 +1,6 @@
 #include "extension/extension-command.hpp"
-#include "command.hpp"
-#include "common.hpp"
+#include "command/command.hpp"
+#include "command/command-types.hpp"
 #include "extension/extension-command-runtime.hpp"
 #include "../ui/image/url.hpp"
 #include <filesystem>
@@ -27,6 +27,8 @@ EntrypointId ExtensionCommand::uniqueId() const {
 
 QString ExtensionCommand::commandId() const { return m_command.name; }
 
+std::vector<QString> ExtensionCommand::keywords() const { return m_command.keywords; }
+
 QString ExtensionCommand::name() const { return m_command.title; }
 
 QString ExtensionCommand::repositoryDisplayName() const { return _extensionTitle; }
@@ -52,5 +54,5 @@ ImageURL ExtensionCommand::iconUrl() const {
 
   if (std::filesystem::exists(extensionIconUrl)) { return ImageURL::local(extensionIconUrl); }
 
-  return ImageURL::builtin("hammer").setBackgroundTint(SemanticColor::Cyan);
+  return ImageURL::builtin(BuiltinIcon::Hammer).setBackgroundTint(SemanticColor::Cyan);
 }

@@ -1,0 +1,92 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import Vicinae
+
+FocusScope {
+    id: root
+    implicitHeight: 36
+    Layout.fillWidth: true
+    activeFocusOnTab: true
+
+    property alias text: input.text
+    property bool includeTime: false
+    property string minDate: ""
+    property string maxDate: ""
+
+    property bool hasError: false
+    property bool filled: false
+
+    signal textEdited
+
+    function forceActiveFocus() {
+        input.forceActiveFocus();
+    }
+
+    readonly property string _format: includeTime ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD"
+
+    onActiveFocusChanged: {
+        if (activeFocus)
+            input.forceActiveFocus();
+    }
+
+    FormInputBackground {
+        anchors.fill: parent
+        radius: 8
+        filled: root.filled
+    }
+
+    Rectangle {
+        id: border
+        anchors.fill: parent
+        radius: 8
+        color: "transparent"
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : input.activeFocus ? Theme.inputBorderFocus : Theme.inputBorder, Config.surfaceOpacity)
+        border.width: 1
+
+        TextInput {
+            id: input
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
+            verticalAlignment: TextInput.AlignVCenter
+            font.pointSize: Theme.regularFontSize
+            color: Theme.foreground
+            selectionColor: Theme.textSelectionBg
+            selectedTextColor: Theme.textSelectionFg
+            clip: true
+            activeFocusOnTab: false
+
+            Text {
+                anchors.fill: parent
+                verticalAlignment: Text.AlignVCenter
+                text: root._format
+                color: Theme.textPlaceholder
+                font: input.font
+                visible: !input.text && !input.preeditText
+            }
+
+            onTextEdited: root.textEdited()
+
+            onActiveFocusChanged: {
+                if (!activeFocus)
+                    root._validate();
+            }
+        }
+    }
+
+    function _validate() {
+        if (input.text === "")
+            return;
+        var date = new Date(input.text);
+        if (isNaN(date.getTime()))
+            return;
+        if (root.includeTime) {
+            var pad = n => n < 10 ? "0" + n : "" + n;
+            input.text = date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + " " + pad(date.getHours()) + ":" + pad(date.getMinutes());
+        } else {
+            input.text = date.toISOString().substring(0, 10);
+        }
+        root.textEdited();
+    }
+}

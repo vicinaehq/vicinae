@@ -22,6 +22,9 @@ enum class IndexedFileCategory {
 };
 
 class FileIndexerDatabase {
+  static constexpr int64_t COMPACT_MIN_DB_BYTES = 32 * 1024 * 1024;
+  static constexpr int64_t COMPACT_MIN_FREE_PERCENT = 25;
+
   db::Database m_db;
   std::unordered_map<std::string, int64_t> m_mimeTypeIds;
 
@@ -65,6 +68,10 @@ public:
 
   bool setScanError(int scanId, const std::string &error);
 
+  // drops rows older than maxAgeSeconds, keeping the latest per (entrypoint, type, status)
+  // so cutoff and interrupted-scan lookups keep working
+  bool pruneScanHistory(int64_t maxAgeSeconds);
+
   std::optional<int64_t> retrieveIndexedLastModified(const std::filesystem::path &path) const;
   std::optional<int64_t> retrieveIndexedSizeBytes(const std::filesystem::path &path) const;
   std::optional<int64_t> retrieveIndexedAt(const std::filesystem::path &path) const;
@@ -82,6 +89,7 @@ public:
   };
 
   void deleteAllIndexedFiles();
+  bool needsCompaction() const;
   void compact();
   void rebuildSpellfixVocabulary();
   bool hasSpellfixVocabulary();

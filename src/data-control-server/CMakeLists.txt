@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(DATA_CONTROL_SERVER_BIN vicinae-data-control-server)
 
 include("${CMAKE_SOURCE_DIR}/cmake/Wayland.cmake")
-wayland_generate_protocol("ext-data-control-v1")
+wayland_system_protocol(EXT_DATA_CONTROL_XML "staging/ext-data-control/ext-data-control-v1.xml")
+wayland_generate_protocol(${EXT_DATA_CONTROL_XML})
 
 add_executable(${DATA_CONTROL_SERVER_BIN}
   src/main.cpp

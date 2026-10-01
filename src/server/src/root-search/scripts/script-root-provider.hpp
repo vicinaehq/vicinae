@@ -1,27 +1,30 @@
 #pragma once
-#include "actions/files/file-actions.hpp"
-#include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/file-actions.hpp"
+#include "actions/root-search-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "script-command.hpp"
 #include "script/script-actions.hpp"
 #include "script/script-command-file.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "services/root-item-manager/typed-root-provider.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "services/app-service/app-service.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "utils.hpp"
+#include <QCoreApplication>
 #include <QProcess>
 #include <common/enumerate.hpp>
-#include <qjsonobject.h>
 #include <ranges>
 
 class ScriptRootItem : public RootItem {
+  Q_DECLARE_TR_FUNCTIONS(ScriptRootItem)
+
   QString title() const override { return m_file->data().title.c_str(); }
 
   QString subtitle() const override { return m_file->packageName().c_str(); }
 
-  QString typeDisplayName() const override { return "Script"; }
+  QString typeDisplayName() const override { return tr("Script"); }
 
   ArgumentList arguments() const override {
     ArgumentList args;
@@ -64,9 +67,10 @@ class ScriptRootItem : public RootItem {
   std::vector<std::pair<QString, QString>> settingsMetadata() const override {
     std::vector<std::pair<QString, QString>> meta;
     meta.reserve(4);
-    meta.emplace_back("Mode", qStringFromStdView(script_command::outputModeToString(m_file->data().mode)));
-    meta.emplace_back("Path", compressPath(m_file->path()).c_str());
-    if (const auto author = m_file->data().author) meta.emplace_back("Author", author.value().c_str());
+    meta.emplace_back(tr("Mode"),
+                      qStringFromStdView(script_command::outputModeToString(m_file->data().mode)));
+    meta.emplace_back(tr("Path"), compressPath(m_file->path()).c_str());
+    if (const auto author = m_file->data().author) meta.emplace_back(tr("Author"), author.value().c_str());
     return meta;
   }
 
@@ -79,7 +83,7 @@ class ScriptRootItem : public RootItem {
     auto exec = new ScriptExecutorAction(m_file);
     auto extraSection = panel->createSection();
 
-    section->addAction(new DefaultActionWrapper(uniqueId(), exec));
+    section->addAction(exec);
 
     if (editor) {
       auto open = new OpenFileAction(m_file->path(), editor);
@@ -89,23 +93,25 @@ class ScriptRootItem : public RootItem {
 
     if (fileBrowser) {
       extraSection->addAction(
-          new OpenFileInAppAction(m_file->path().parent_path(), fileBrowser, "Open script directory"));
+          new OpenFileInAppAction(m_file->path().parent_path(), fileBrowser, tr("Open script directory")));
     }
 
-    auto copyPath = new CopyToClipboardAction(Clipboard::Text(m_file->path().c_str()), "Copy path to script");
+    auto copyPath = new CopyToClipboardAction(
+        Clipboard::Text(QString::fromStdString(m_file->path().string())), tr("Copy path to script"));
 
     extraSection->addAction(copyPath);
 
     auto itemSection = panel->createSection();
 
-    for (const auto action : RootSearchActionGenerator::generateActions(*this, metadata)) {
+    for (const auto action :
+         RootSearchActionGenerator::generateActions(*this, *ctx->services->rootItemManager())) {
       itemSection->addAction(action);
     }
 
     return panel;
   }
 
-  AccessoryList accessories() const override { return {{.text = "Script"}}; }
+  AccessoryList accessories() const override { return {{.text = tr("Script")}}; }
 
   EntrypointId uniqueId() const override { return EntrypointId("scripts", std::string{m_file->id()}); };
 
@@ -120,7 +126,24 @@ private:
   std::shared_ptr<ScriptCommandFile> m_file;
 };
 
-class ScriptRootProvider : public RootProvider {
+struct ScriptPreferences {
+  std::vector<std::string> customDirs;
+};
+
+template <> struct PreferenceSchema<ScriptPreferences> {
+  PreferenceMeta customDirs{
+      .title = tr("Custom directories"),
+      .description =
+          tr("Additional list of directories to source scripts from. These directories always take "
+             "precedence over the default system ones"),
+      .kind = PreferenceMeta::Kind::Directories,
+  };
+  Q_DECLARE_TR_FUNCTIONS(ScriptPreferences)
+};
+
+class ScriptRootProvider : public TypedRootProvider<ScriptPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(ScriptRootProvider)
+
 public:
   ScriptRootProvider(ScriptCommandService &service) : m_service(service) {
     connect(&m_service, &ScriptCommandService::scriptsChanged, this, [this]() { emit itemsChanged(); });
@@ -137,25 +160,13 @@ public:
 
   ImageURL icon() const override { return ScriptCommandFile::defaultIcon(); }
 
-  QString displayName() const override { return "Script Commands"; }
+  QString displayName() const override { return tr("Script Commands"); }
 
   QString uniqueId() const override { return "scripts"; }
 
-  PreferenceList preferences() const override {
-    Preference customDirs = Preference::directories("customDirs");
-
-    customDirs.setTitle("Custom directories");
-    customDirs.setDescription("Additional list of directories to source scripts from. These directories "
-                              "always take precedence over the default system ones");
-
-    return {customDirs};
-  }
-
-  void preferencesChanged(const QJsonObject &preferences) override {
-    auto files = preferences.value("customDirs").toArray() |
-                 std::views::transform([](const QJsonValue &obj) -> std::filesystem::path {
-                   return obj.toString().toStdString();
-                 }) |
+  void preferencesChanged(const ScriptPreferences &preferences) override {
+    auto files = preferences.customDirs |
+                 std::views::transform([](const std::string &dir) { return std::filesystem::path(dir); }) |
                  std::ranges::to<std::vector>();
 
     m_service.setCustomScriptPaths(files);

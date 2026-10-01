@@ -1,9 +1,12 @@
 #include "window-manager.hpp"
 #include <algorithm>
+#include <QCoreApplication>
+#include <QGuiApplication>
 #include <qnamespace.h>
 #include <ranges>
 #include "dummy-window-manager.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
+#include "vicinae.hpp"
 #ifdef Q_OS_LINUX
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
@@ -14,6 +17,9 @@
 #endif
 #ifdef Q_OS_MACOS
 #include "macos/macos-window-manager.hpp"
+#endif
+#ifdef Q_OS_WIN
+#include "windows/windows-window-manager.hpp"
 #endif
 
 std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandidates() {
@@ -35,6 +41,10 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
   candidates.emplace_back(std::make_unique<MacosWindowManager>());
 #endif
 
+#ifdef Q_OS_WIN
+  candidates.emplace_back(std::make_unique<Win::WindowManager>());
+#endif
+
   return candidates;
 }
 
@@ -53,8 +63,43 @@ AbstractWindowManager *WindowManager::provider() const { return m_provider.get()
 
 AbstractWindowManager::WindowList WindowManager::listWindowsSync() { return m_provider->listWindowsSync(); }
 
+namespace {
+
+bool isOwnWindow(const AbstractWindowManager::AbstractWindow &win) {
+  if (auto pid = win.pid()) return *pid == QCoreApplication::applicationPid();
+  return win.wmClass().compare(Omnicast::APP_ID, Qt::CaseInsensitive) == 0;
+}
+
+} // namespace
+
 AbstractWindowManager::WindowPtr WindowManager::getFocusedWindow() {
-  return m_provider->getFocusedWindowSync();
+  if (m_provider->supportsFrontmostWindow()) return m_provider->getFrontmostWindowSync();
+
+  auto win = m_provider->getFocusedWindowSync();
+  if (win) return isOwnWindow(*win) ? rememberedWindow() : win;
+  return QGuiApplication::focusWindow() ? rememberedWindow() : nullptr;
+}
+
+AbstractWindowManager::WindowPtr WindowManager::focusedForeignWindow() const {
+  auto win = m_provider->getFocusedWindowSync();
+  if (win && isOwnWindow(*win)) return nullptr;
+  return win;
+}
+
+AbstractWindowManager::WindowPtr WindowManager::rememberedWindow() {
+  if (m_lastFocusedWindow && !isOnActiveWorkspace(*m_lastFocusedWindow)) m_lastFocusedWindow.reset();
+  return m_lastFocusedWindow;
+}
+
+void WindowManager::updateFocusMemory() {
+  if (m_provider->supportsFrontmostWindow()) return;
+
+  auto win = m_provider->getFocusedWindowSync();
+  if (win) {
+    if (!isOwnWindow(*win)) m_lastFocusedWindow = win;
+    return;
+  }
+  if (!QGuiApplication::focusWindow()) m_lastFocusedWindow.reset();
 }
 
 const AbstractWindowManager::AbstractWindow *WindowManager::findWindowById(const QString &id) {
@@ -65,6 +110,29 @@ const AbstractWindowManager::AbstractWindow *WindowManager::findWindowById(const
 
 const AbstractWindowManager::WindowList &WindowManager::listWindows() const { return m_windows; }
 
+AbstractWindowManager::WorkspacePtr WindowManager::findWorkspaceById(const QString &id) {
+  if (!m_workspaces) {
+    m_workspaces =
+        m_provider->hasWorkspaces() ? m_provider->listWorkspaces() : AbstractWindowManager::WorkspaceList{};
+  }
+
+  auto pred = [&](auto &&ws) { return ws->id() == id; };
+  if (auto it = std::ranges::find_if(*m_workspaces, pred); it != m_workspaces->end()) { return *it; }
+  return nullptr;
+}
+
+bool WindowManager::isOnActiveWorkspace(const AbstractWindowManager::AbstractWindow &window) const {
+  if (!m_provider->hasWorkspaces()) { return true; }
+
+  auto workspaceId = window.workspace();
+  if (!workspaceId.has_value() || workspaceId->isEmpty()) { return true; }
+
+  auto active = m_provider->getActiveWorkspace();
+  if (!active) { return true; }
+
+  return active->id() == *workspaceId;
+}
+
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
   return m_windows | std::views::filter([&](auto &&win) {
            return app.matchesWindowClass(win->wmClass()) ||
@@ -73,16 +141,26 @@ AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractAp
          std::ranges::to<std::vector>();
 }
 
-void WindowManager::updateWindowCache() { m_windows = m_provider->listWindowsSync(); }
+void WindowManager::updateWindowCache() {
+  m_windows = m_provider->listWindowsSync();
+  m_workspaces.reset();
+}
+
+bool WindowManager::isCapable() const { return m_provider->id() != "dummy"; }
 
 WindowManager::WindowManager() {
   m_provider = createProvider();
   updateWindowCache();
+  updateFocusMemory();
 
   connect(m_provider.get(), &AbstractWindowManager::windowsChanged, this, [this]() {
     updateWindowCache();
+    if (m_lastFocusedWindow && !findWindowById(m_lastFocusedWindow->id())) m_lastFocusedWindow.reset();
     emit windowsChanged();
   });
 
-  connect(m_provider.get(), &AbstractWindowManager::focusChanged, this, &WindowManager::focusChanged);
+  connect(m_provider.get(), &AbstractWindowManager::focusChanged, this, [this]() {
+    updateFocusMemory();
+    emit focusChanged();
+  });
 }

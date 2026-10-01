@@ -1,5 +1,6 @@
 #pragma once
 #include "services/calculator-service/abstract-calculator-backend.hpp"
+#include <QtGlobal>
 #include <expected>
 #include <filesystem>
 
@@ -29,11 +30,13 @@ private:
     char *(*soulver_evaluate)(const char *) = nullptr;
   };
 
-  void loadABI();
-
   std::expected<SoulverResult, QString> calculate(const QString &expression) const;
-  std::vector<std::filesystem::path> availableResourcePaths() const;
   ABI m_abi;
 
+#ifndef Q_OS_MACOS
+  void loadABI();
+  std::vector<std::filesystem::path> availableResourcePaths() const;
+
   void *m_dlHandle = nullptr;
+#endif
 };

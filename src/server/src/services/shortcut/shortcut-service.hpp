@@ -8,6 +8,8 @@
 #include <vector>
 
 class OmniDatabase;
+class AppService;
+class AbstractApplication;
 
 class ShortcutService : public QObject {
   Q_OBJECT
@@ -28,6 +30,9 @@ public:
                       const QString &app);
   Shortcut *findById(const QString &id);
   bool registerVisit(const QString &id);
+
+  static std::shared_ptr<AbstractApplication> resolveApp(const AppService &appDb, const QString &appId,
+                                                         const QString &target);
 
   ShortcutService(const std::filesystem::path &path, OmniDatabase *db = nullptr);
 

@@ -15,8 +15,8 @@ bool sendSystemAppleEvent(AEEventID event) {
   }
 
   AppleEvent request = {typeNull, nullptr};
-  OSStatus status = AECreateAppleEvent(kCoreEventClass, event, &target, kAutoGenerateReturnID,
-                                       kAnyTransactionID, &request);
+  OSStatus status =
+      AECreateAppleEvent(kCoreEventClass, event, &target, kAutoGenerateReturnID, kAnyTransactionID, &request);
   AEDisposeDesc(&target);
   if (status != noErr) { return false; }
 

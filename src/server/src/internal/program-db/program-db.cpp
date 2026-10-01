@@ -1,5 +1,5 @@
 #include "program-db/program-db.hpp"
-#include "fuzzy/fzf.hpp"
+#include "fuzzy/fuzzy-searchable.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
 #include <qnamespace.h>
@@ -36,9 +36,10 @@ std::vector<Scored<fs::path>> ProgramDb::search(std::string_view query, int limi
 
   filtered.reserve(m_progs.size());
 
+  fuzzy::Query const fuzzyQuery{query};
   for (const auto &prog : m_progs) {
-    auto score = fzf::threadLocalMatcher().fuzzy_match_v2_score_query(prog.c_str(), query);
-    if (score || query.empty()) { filtered.push_back({prog, score}); }
+    auto const m = fuzzy::scoreWeighted({{prog.string(), 1.0}}, fuzzyQuery);
+    if (m.accepted() || query.empty()) { filtered.push_back({prog, m.score}); }
   }
 
   std::ranges::stable_sort(filtered, std::greater{});

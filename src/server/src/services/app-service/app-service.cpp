@@ -1,10 +1,16 @@
 #include "app-service.hpp"
+#include "utils/timer.hpp"
+#include <chrono>
+#include <qlogging.h>
+#include <qnumeric.h>
 #ifdef Q_OS_MACOS
 #include "services/app-service/macos/mac-app-database.hpp"
+#elif defined(Q_OS_WIN)
+#include "services/app-service/windows/win-app-database.hpp"
 #else
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #endif
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include <QProcess>
 #include <filesystem>
 #include <qcontainerfwd.h>
@@ -12,19 +18,6 @@
 #include <ranges>
 
 namespace fs = std::filesystem;
-
-std::vector<std::filesystem::path> AppService::mergedPaths() const {
-  std::vector<fs::path> paths;
-  auto defaultPaths = defaultSearchPaths();
-
-  paths.reserve(defaultPaths.size() + m_additionalSearchPaths.size());
-  // Manually added paths have highest priority, so they come first
-  paths.insert(paths.end(), m_additionalSearchPaths.begin(), m_additionalSearchPaths.end());
-  // Then add default system paths (XDG_DATA_HOME, XDG_DATA_DIRS)
-  paths.insert(paths.end(), defaultPaths.begin(), defaultPaths.end());
-
-  return paths;
-}
 
 AbstractAppDatabase *AppService::provider() const { return m_provider.get(); }
 
@@ -40,9 +33,15 @@ bool AppService::launchTerminalCommand(const std::vector<QString> &cmdLine,
 std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #ifdef Q_OS_MACOS
   return std::make_unique<MacAppDatabase>();
+#elif defined(Q_OS_WIN)
+  return std::make_unique<WindowsAppDatabase>();
 #else
   return std::make_unique<XdgAppDatabase>();
 #endif
+}
+
+std::unique_ptr<QProcess> AppService::shellProcess(const QString &code) const {
+  return m_provider->shellProcess(code);
 }
 
 std::shared_ptr<AbstractApplication> AppService::terminalEmulator() const {
@@ -83,13 +82,12 @@ bool AppService::openTarget(const QString &target) const {
 
 bool AppService::openTarget(const QUrl &target) const { return openTarget(target.toString()); }
 
-std::vector<fs::path> AppService::defaultSearchPaths() const { return m_provider->defaultSearchPaths(); }
-
 std::shared_ptr<AbstractApplication> AppService::textEditor() const {
   return m_provider->genericTextEditor();
 }
 
 std::shared_ptr<AbstractApplication> AppService::webBrowser() const { return m_provider->webBrowser(); }
+bool AppService::setWebBrowser(const AbstractApplication &app) { return m_provider->setWebBrowser(app); }
 std::shared_ptr<AbstractApplication> AppService::fileBrowser() const { return m_provider->fileBrowser(); }
 
 std::vector<std::shared_ptr<AbstractApplication>> AppService::list(const AppListOptions &opts) const {
@@ -119,14 +117,17 @@ bool AppService::showInFileBrowser(const std::filesystem::path &path, bool selec
 
 bool AppService::openLocation(const AbstractApplication &app) const { return m_provider->openLocation(app); }
 
+bool AppService::canUninstall(const AbstractApplication &app) const { return m_provider->canUninstall(app); }
+
+bool AppService::uninstall(const AbstractApplication &app) {
+  if (!m_provider->canUninstall(app) || !m_provider->uninstall(app)) return false;
+  scanSync();
+  return true;
+}
+
 void AppService::handleDirectoryChanged(const QString &path) {
   (void)path;
   m_rescanDebounce->start();
-}
-
-void AppService::setAdditionalSearchPaths(const std::vector<std::filesystem::path> &paths) {
-  m_additionalSearchPaths = paths;
-  reinstallWatches(mergedPaths());
 }
 
 std::vector<std::shared_ptr<AbstractApplication>> AppService::findOpeners(const QString &target) const {
@@ -151,21 +152,31 @@ AppService::findCuratedOpeners(const QString &target) const {
 }
 
 bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
-  for (const auto &path : m_watcher->directories()) {
-    m_watcher->removePath(path);
+  QStringList current = m_watcher->directories();
+  QStringList desired;
+  std::error_code ec{};
+
+  for (const auto &path : paths) {
+    if (fs::is_directory(path, ec)) { desired.append(QString::fromStdString(path.string())); }
   }
 
-  auto isDir = [](auto &&path) { return fs::is_directory(path); };
+  desired.sort();
+  desired.removeDuplicates();
+  current.sort();
 
-  for (const auto &path : paths | std::views::filter(isDir)) {
-    m_watcher->addPath(path.c_str());
-  }
+  // It's important that we don't reinstall the watches if the directories haven't changed.
+  // On some systems it's a no-op, on others like macOS it can trigger a new flood
+  // of events, which can create some performance problems.
+  if (current == desired) return true;
+  if (!current.isEmpty()) m_watcher->removePaths(current);
+  if (!desired.isEmpty()) m_watcher->addPaths(desired);
 
   return true;
 }
 
 bool AppService::scanSync() {
-  bool const result = m_provider->scan(mergedPaths());
+  reinstallWatches(m_provider->searchPaths());
+  bool const result = m_provider->scan();
   emit appsChanged();
   return result;
 }
@@ -173,8 +184,13 @@ bool AppService::scanSync() {
 AppService::AppService(OmniDatabase &db) : m_db(db), m_provider(createLocalProvider()) {
   m_rescanDebounce->setSingleShot(true);
   m_rescanDebounce->setInterval(500);
-  connect(m_rescanDebounce, &QTimer::timeout, this, [this] { scanSync(); });
+  connect(m_rescanDebounce, &QTimer::timeout, this, [this] {
+    qInfo() << "Scanning apps again, following a directory change...";
+    auto elapsed = timer::time([&]() { scanSync(); });
+    qInfo() << "Done scanning apps, took" << elapsed.count() / 1e6 << "ms";
+  });
 
-  reinstallWatches(mergedPaths());
+  reinstallWatches(m_provider->searchPaths());
   connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, &AppService::handleDirectoryChanged);
+  connect(m_provider.get(), &AbstractAppDatabase::changed, this, [this] { m_rescanDebounce->start(); });
 }

@@ -1,0 +1,38 @@
+#pragma once
+// Keep AssertMacros from defining bare check()/verify()/require(), which collide with Qt and the STL.
+#define __ASSERT_MACROS_DEFINE_VERSIONS_WITHOUT_UNDERSCORES 0
+#include <Carbon/Carbon.h>
+
+#include <QString>
+#include <optional>
+#include <qnamespace.h>
+#include "layout-resolver.hpp"
+
+namespace Keyboard {
+
+class MacosLayoutResolver : public LayoutResolver {
+public:
+  KeyLevels levels(Qt::Key key, quint32 scanCode) override;
+};
+
+} // namespace Keyboard
+
+// Layout helpers shared by recorder normalization and the global shortcut backend, so both
+// sides translate identically.
+namespace Keyboard::macos {
+
+// Named keys (function keys, arrows, editing keys) mapped to/from macOS virtual keycodes.
+// Character keys go through layout translation instead, not this table.
+std::optional<uint16_t> keycodeForNamedKey(Qt::Key key);
+Qt::Key namedKeyForKeycode(uint16_t keycode);
+
+// Lowercased character(s) the key types under `layoutData` (kTISPropertyUnicodeKeyLayoutData bytes).
+QString translateKeycode(CFDataRef layoutData, uint16_t keycode, bool shifted, uint8_t kbdType);
+
+// Caller releases.
+CFDataRef copyCurrentLayoutData();
+
+// US QWERTY, ABC when US is not installed. Caller releases.
+CFDataRef copyQwertyLayoutData();
+
+} // namespace Keyboard::macos

@@ -1,12 +1,16 @@
 #include "xdg-app-database.hpp"
 #include "environment.hpp"
+#include "internal/wayland/xdg-activation.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
 #include "utils.hpp"
 #include "xdgpp/desktop-entry/entry.hpp"
+#include "xdgpp/desktop-entry/exec.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <algorithm>
+#include <array>
+#include <span>
 #include <qstandardpaths.h>
 #include <qtenvironmentvariables.h>
 #include <ranges>
@@ -34,16 +38,23 @@ using AppPtr = XdgAppDatabase::AppPtr;
 
 // This is non standard, and isn't set correctly in most environments
 // This will be deprecated in favor of xdg-terminal-exec compliance
-static constexpr const auto FALLBACK_TERMINAL_MIME = "x-scheme-handler/terminal";
+static constexpr auto FALLBACK_TERMINAL_MIME = "x-scheme-handler/terminal";
+
+static constexpr auto WEB_BROWSER_MIMES = std::to_array<std::string_view>(
+    {"x-scheme-handler/http", "x-scheme-handler/https", "text/html", "application/xhtml+xml"});
 
 namespace {
 
 // TryExec check
-bool isExecutable(const xdgpp::DesktopEntry &entry) {
-  if (auto exec = entry.tryExec()) {
-    return !QStandardPaths::findExecutable(qStringFromStdView(*exec)).isEmpty();
-  }
-  return true;
+bool isExecutable(const AbstractApplication &entry) {
+  constexpr auto programExists = [](const QString &text) {
+    return !QStandardPaths::findExecutable(text).isEmpty();
+  };
+  auto &xdg = static_cast<const XdgApplication &>(entry);
+
+  if (auto exec = xdg.data().tryExec(); exec && !programExists(qStringFromStdView(*exec))) return false;
+
+  return programExists(entry.program());
 }
 
 bool revealInFileManager(const std::filesystem::path &path) {
@@ -79,7 +90,9 @@ std::optional<fs::path> containingFolderTarget(const fs::path &path) {
 std::shared_ptr<AbstractApplication> XdgAppDatabase::defaultForMime(const QString &mime) const {
   for (const auto &list : m_mimeAppsLists) {
     for (const auto &appId : list.defaultAssociations(mime.toStdString())) {
-      if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) { return appIt->second; }
+      if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end() && isExecutable(*appIt->second)) {
+        return appIt->second;
+      }
     }
   }
 
@@ -92,7 +105,7 @@ AppPtr XdgAppDatabase::findDefaultOpener(const QString &target) const {
   return defaultForMime(mimeNameForTarget(target));
 }
 
-bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
+bool XdgAppDatabase::scan() {
   appMap.clear();
   m_apps.clear();
   m_mimeAppsLists.clear();
@@ -101,7 +114,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
   std::set<std::string> seen;
 
-  for (const auto &dir : paths) {
+  for (const auto &dir : searchPaths()) {
     std::error_code ec;
 
     for (const auto &entry :
@@ -116,7 +129,9 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
       auto file = xdgpp::DesktopFile::fromFile(entry.path(), dir);
 
-      if (!isExecutable(file) || file.deleted()) continue;
+      // we no longer check TryExec here, we still want to track the app even if it's
+      // not executable at scan time, because it may become executable later.
+      if (file.deleted()) continue;
 
       if (file.errorMessage()) {
         qWarning() << "Desktop file" << file.path().c_str() << "is invalid" << *file.errorMessage();
@@ -243,6 +258,27 @@ AppPtr XdgAppDatabase::genericTextEditor() const {
   return nullptr;
 }
 
+bool XdgAppDatabase::setDefaultOpener(const QString &mime, const AbstractApplication &app) {
+  const std::string name = mime.toStdString();
+  return setDefaultForMimes(std::array{std::string_view(name)}, app);
+}
+
+bool XdgAppDatabase::setWebBrowser(const AbstractApplication &app) {
+  return setDefaultForMimes(WEB_BROWSER_MIMES, app);
+}
+
+bool XdgAppDatabase::setDefaultForMimes(std::span<const std::string_view> mimes,
+                                        const AbstractApplication &app) {
+  if (!xdgpp::setDefaultApplication(mimes, app.id().toStdString())) return false;
+
+  m_mimeAppsLists = xdgpp::getAllMimeAppsLists();
+
+  return std::ranges::all_of(mimes, [&](std::string_view mime) {
+    auto opener = defaultForMime(QString::fromUtf8(mime.data(), mime.size()));
+    return opener && opener->id() == app.id();
+  });
+}
+
 AppPtr XdgAppDatabase::webBrowser() const {
   if (auto browser = defaultForMime("x-scheme-handler/https")) { return browser; }
   if (auto browser = defaultForMime("x-scheme-handler/http")) { return browser; }
@@ -331,7 +367,7 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
     // perform a full file tour to find the default if there is one
     for (const auto &list : m_mimeAppsLists) {
       for (const auto &appId : list.defaultAssociations(mime.toStdString())) {
-        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) {
+        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end() && isExecutable(*appIt->second)) {
           seen.insert(appIt->second->id().toStdString());
           openers.emplace_back(appIt->second);
           break;
@@ -343,7 +379,7 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
       for (const auto &appId : list.addedAssociations(mime.toStdString())) {
         if (removed.contains(appId) || seen.contains(appId)) continue;
         seen.insert(appId);
-        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) {
+        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end() && isExecutable(*appIt->second)) {
           openers.emplace_back(appIt->second);
         }
       }
@@ -358,7 +394,7 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
         for (const auto &app : it->second) {
           std::string const appId = app->id().toStdString();
           if (removed.contains(appId) || seen.contains(appId)) continue;
-          if (app->data().supportsMime(mime.toStdString())) {
+          if (app->data().supportsMime(mime.toStdString()) && isExecutable(*app)) {
             seen.insert(appId);
             openers.emplace_back(app);
           }
@@ -438,9 +474,19 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
   std::ranges::for_each(exec | std::views::drop(1), [&](auto &&arg) { argv << arg; });
   auto texec = getTermExec(*xdgApp);
 
-  if (texec.appId && opts.appId) { argv << texec.appId->c_str() << opts.appId.value(); }
-  if (texec.title && opts.title) { argv << texec.title->c_str() << opts.title.value(); }
-  if (texec.dir && opts.workingDirectory) { argv << texec.dir->c_str() << opts.workingDirectory.value(); }
+  // per the xdg-terminal-exec spec, a flag ending with '=' takes its value appended
+  // to the same argument, without whitespace
+  auto addFlag = [&argv](const std::string &flag, const QString &value) {
+    if (flag.ends_with('=')) {
+      argv << QString::fromStdString(flag) + value;
+    } else {
+      argv << flag.c_str() << value;
+    }
+  };
+
+  if (texec.appId && opts.appId) { addFlag(*texec.appId, opts.appId.value()); }
+  if (texec.title && opts.title) { addFlag(*texec.title, opts.title.value()); }
+  if (texec.dir && opts.workingDirectory) { addFlag(*texec.dir, opts.workingDirectory.value()); }
   if (texec.hold && opts.hold) { argv << texec.hold->c_str(); }
   if (texec.exec) { argv << texec.exec->c_str(); }
 
@@ -448,11 +494,12 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
     argv << arg;
   }
 
-  return launchProcess(exec.front(), argv, xdgApp->data().workingDirectory());
+  return launchProcess(exec.front(), argv, xdgApp->data().workingDirectory(), opts.appId.value_or(QString()));
 }
 
 bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList &args,
-                                   const std::optional<std::filesystem::path> &workingDirectory) const {
+                                   const std::optional<std::filesystem::path> &workingDirectory,
+                                   const QString &appId) const {
   QProcess process;
   process.setProgram(prog);
   process.setArguments(args);
@@ -460,6 +507,15 @@ bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList &args,
   process.setStandardErrorFile(QProcess::nullDevice());
 
   if (workingDirectory) { process.setWorkingDirectory(workingDirectory->c_str()); }
+
+  if (auto token = Wayland::XdgActivation::requestLaunchToken(appId)) {
+    qDebug() << "Successfully minted xdg activation token for app" << appId;
+    auto env = QProcessEnvironment::systemEnvironment();
+    env.insert("XDG_ACTIVATION_TOKEN", *token);
+    process.setProcessEnvironment(env);
+  } else {
+    qWarning() << "Unable to mint xdg activation token to launch" << appId;
+  }
 
   QStringList cmdline;
   cmdline << prog << args;
@@ -510,7 +566,8 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
 
   auto argv = exec | std::views::drop(1) | std::ranges::to<QStringList>();
 
-  return launchProcess(exec.front(), argv, xdgApp.data().workingDirectory());
+  return launchProcess(exec.front(), argv, xdgApp.data().workingDirectory(),
+                       xdgApp.windowClass().value_or(xdgApp.id()));
 }
 
 QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {
@@ -549,42 +606,12 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
 
 std::vector<AppPtr> XdgAppDatabase::list() const { return {m_apps.begin(), m_apps.end()}; }
 
-PreferenceList XdgAppDatabase::preferences() const {
-  auto defaultAction =
-      Preference::makeDropdown("defaultAction", {{"Focus window", "focus"}, {"Launch app", "launch"}});
-  defaultAction.setDefaultValue("focus");
-  defaultAction.setTitle("Default action");
-  defaultAction.setDescription("Action to perform when the return key is pressed. Always default to 'launch' "
-                               "if the app has no open window.");
-
-  auto launchPrefix = Preference::makeText("launchPrefix");
-  launchPrefix.setTitle("Launch Prefix");
-  launchPrefix.setDescription(
-      "Custom app launcher to use. Affects applications as well as their sub-actions.");
-  launchPrefix.setPlaceholder("uwsm app --");
-
-  auto paths = Preference::directories("paths");
-  QJsonArray defaultPaths;
-  for (const auto &searchPath : defaultSearchPaths()) {
-    defaultPaths.push_back(QString::fromStdString(searchPath));
-  }
-  paths.setTitle("Application directories");
-  paths.setDescription(
-      "Directories applications are sourced from. The list cannot be modified directly. In order to do so, "
-      "you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables.");
-  paths.setReadOnly(true);
-  paths.setDefaultValue(defaultPaths);
-
-  return {defaultAction, launchPrefix, paths};
-}
-
-void XdgAppDatabase::applyPreferences(const QJsonObject &preferences) {
-  auto val = preferences.value("launchPrefix").toString();
-  if (val.isEmpty()) {
+void XdgAppDatabase::applyPreferences(const AppPreferences &preferences) {
+  if (preferences.launchPrefix.empty()) {
     m_launchPrefix = Environment::detectAppLauncher();
   } else {
-    m_launchPrefix = val;
+    m_launchPrefix = QString::fromStdString(preferences.launchPrefix);
   }
 }
 
-XdgAppDatabase::XdgAppDatabase() { scan(defaultSearchPaths()); }
+XdgAppDatabase::XdgAppDatabase() { scan(); }

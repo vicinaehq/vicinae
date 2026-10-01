@@ -29,13 +29,13 @@ Out of the box, Vicinae can be your:
 - [browser tab switcher](https://docs.vicinae.com/browser-extension)
 - [emoji picker](https://docs.vicinae.com/emoji)
 - [calculator](https://docs.vicinae.com/calculator)
-- [window switcher](https://docs.vicinae.com/window)
+- [window/workspace switcher](https://docs.vicinae.com/window)
 - font browser
 - volume controller
 
 When you need more, Vicinae can be extended in several ways:
 
-- [React/Typescript extensions](https://docs.vicinae.com/extensions), compatible with the Raycast ecosystem. In-app integration with the [Vicinae store](https://www.vicinae.com/extensions) and the [Raycast store](https://www.raycast.com/store).
+- [React/Typescript extensions](https://docs.vicinae.com/extensions/introduction), compatible with the Raycast ecosystem. In-app integration with the [Vicinae store](https://www.vicinae.com/extensions) and the [Raycast store](https://www.raycast.com/store).
 - [Script commands](https://docs.vicinae.com/scripts/getting-started), also compatible with the Raycast feature of the same name, with special Vicinae additions.
 - [dmenu style menu creation](https://docs.vicinae.com/dmenu), the linux minimalist way!
 
@@ -53,9 +53,9 @@ Everything you need to know to get started with Vicinae is at [vicinae.com](http
       <td align="center" valign="middle">
         <a href="https://depot.dev/?utm_source=vicinae&utm_medium=readme" target="_blank">
           <picture>
-            <source media="(prefers-color-scheme: light)" srcset="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-light@3x.png" />
-            <source media="(prefers-color-scheme: dark)" srcset="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-dark@3x.png" />
-            <img src="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-light@3x.png" width="450" alt="Depot logo" />
+            <source media="(prefers-color-scheme: light)" srcset="https://depot.dev/assets/brand/horizontal/v2/depot-logo-horizontal-on-light-x3.png" />
+            <source media="(prefers-color-scheme: dark)" srcset="https://depot.dev/assets/brand/horizontal/v2/depot-logo-horizontal-on-dark-x3.png" />
+            <img src="https://depot.dev/assets/brand/horizontal/v2/depot-logo-horizontal-on-light-x3.png" width="450" alt="Depot logo" />
           </picture>
         </a>
       </td>
@@ -90,3 +90,7 @@ Everything you need to know to get started with Vicinae is at [vicinae.com](http
 ---
 
 [And all our other amazing sponsors!](https://github.com/sponsors/vicinaehq#sponsors)
+
+## Acknowledgments
+
+Special thanks to the [Soulver](https://soulver.app?utm_source=vicinae&utm_medium=readme) team for allowing us to ship SoulverCore as a calculator backend option on macOS.

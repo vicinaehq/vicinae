@@ -1,7 +1,9 @@
 #pragma once
 #include <sqlcipher/sqlite3.h>
 
+#include "key.hpp"
 #include <QString>
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <filesystem>
@@ -218,8 +220,9 @@ public:
 
   static std::expected<Database, std::string> open(const std::filesystem::path &path) {
     sqlite3 *handle = nullptr;
-    int const rc = sqlite3_open_v2(
-        path.c_str(), &handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
+    int const rc =
+        sqlite3_open_v2(path.string().c_str(), &handle,
+                        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
     if (rc != SQLITE_OK) {
       std::string err = handle ? sqlite3_errmsg(handle) : "failed to allocate sqlite handle";
       if (handle) sqlite3_close_v2(handle);
@@ -227,6 +230,34 @@ public:
     }
     sqlite3_busy_timeout(handle, BUSY_TIMEOUT_MS);
     return Database(handle);
+  }
+
+  // Must be applied before any other statement on the connection (SQLCipher requirement).
+  std::expected<void, std::string> setKey(KeyView key) {
+    static constexpr char HEX_DIGITS[] = "0123456789abcdef";
+    std::string pragma = "PRAGMA key = \"x'";
+    pragma.reserve(pragma.size() + key.size() * 2 + 4);
+    for (std::byte b : key) {
+      auto v = std::to_integer<unsigned char>(b);
+      pragma.push_back(HEX_DIGITS[v >> 4]);
+      pragma.push_back(HEX_DIGITS[v & 0x0F]);
+    }
+    pragma += "'\";";
+
+    char *errmsg = nullptr;
+    if (sqlite3_exec(m_handle, pragma.c_str(), nullptr, nullptr, &errmsg) != SQLITE_OK) {
+      std::string err = errmsg ? errmsg : "failed to set database key";
+      sqlite3_free(errmsg);
+      return std::unexpected(std::move(err));
+    }
+    // Touch the schema so an invalid key surfaces here rather than on first query.
+    if (sqlite3_exec(m_handle, "SELECT count(*) FROM sqlite_master;", nullptr, nullptr, &errmsg) !=
+        SQLITE_OK) {
+      std::string err = errmsg ? errmsg : "invalid database key";
+      sqlite3_free(errmsg);
+      return std::unexpected(std::move(err));
+    }
+    return {};
   }
 
   Statement prepare(std::string_view sql) const {

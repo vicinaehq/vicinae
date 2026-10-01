@@ -33,7 +33,7 @@ file(MAKE_DIRECTORY ${EXT_PROTO_OUT})
 if (INSTALL_NODE_MODULES)
 	add_custom_command(
 		OUTPUT ${EXT_MGR_NODE_MODULES}
-		COMMAND npm install
+		COMMAND npm ci
 		WORKING_DIRECTORY ${EXT_MGR_SRC_DIR}
 		COMMENT "Installing extension manager node_modules"
 	)

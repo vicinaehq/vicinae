@@ -1,6 +1,6 @@
 #pragma once
-#include "command.hpp"
-#include "common.hpp"
+#include "command/command.hpp"
+#include "command/command-types.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "generated/tsapi.hpp"
@@ -31,6 +31,7 @@ class ExtensionLogger : public tsapi::AbstractLogger {
 
 class ExtensionCommandRuntime : public CommandContext {
   void initialize();
+  PreferenceValues resolvePreferenceValues(PreferenceValues values) const;
 
 public:
   void load(const LaunchProps &props) override;

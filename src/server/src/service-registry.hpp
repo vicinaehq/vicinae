@@ -9,6 +9,7 @@ class LocalStorageService;
 class ExtensionManager;
 class ClipboardService;
 class FontService;
+class ScreenshotService;
 class RootItemManager;
 class ConfigService;
 class ShortcutService;
@@ -21,7 +22,9 @@ class VicinaeStoreService;
 class ExtensionRegistry;
 class OAuthService;
 class WindowManager;
+class WallpaperManager;
 class PowerManager;
+class AbstractTrayHost;
 class ScriptCommandService;
 class AbstractSnippetServer;
 #ifdef Q_OS_LINUX
@@ -34,8 +37,11 @@ class ShortcutInhibitManager;
 class FileChooserService;
 class NewsService;
 class PasteService;
+class AbstractSelectionService;
 class TelemetryService;
+class UpdateService;
 class AudioControlService;
+class MediaControlService;
 class AppRuntime;
 class GlobalShortcutService;
 
@@ -46,6 +52,7 @@ class Manager;
 class ServiceRegistry : public QObject {
 
 public:
+  ServiceRegistry();
   ~ServiceRegistry() override;
   static ServiceRegistry *instance();
   RootItemManager *rootItemManager() const;
@@ -53,8 +60,10 @@ public:
   OmniDatabase *omniDb() const;
   CalculatorService *calculatorService() const;
   WindowManager *windowManager() const;
+  WallpaperManager *wallpaperManager() const;
   GlyphService *glyphService() const;
   FontService *fontService() const;
+  ScreenshotService *screenshots() const;
   LocalStorageService *localStorage() const;
   ExtensionManager *extensionManager() const;
   ClipboardService *clipman() const;
@@ -67,6 +76,7 @@ public:
   ExtensionRegistry *extensionRegistry() const;
   OAuthService *oauthService() const;
   PowerManager *powerManager() const;
+  AbstractTrayHost *trayHost() const;
   ScriptCommandService *scriptDb() const;
   BrowserExtensionService *browserExtension() const;
 #ifdef Q_OS_LINUX
@@ -74,17 +84,22 @@ public:
 #endif
   SnippetService *snippetService() const;
   PasteService *pasteService() const;
+  AbstractSelectionService *selectionService() const;
   FileChooserService *fileChooserService() const;
   NewsService *newsService() const;
   WindowMaterialManager *windowMaterialManager() const;
   ShortcutInhibitManager *shortcutInhibitManager() const;
   TelemetryService *telemetry() const;
+  UpdateService *updateService() const;
   AudioControlService *audioControl() const;
+  MediaControlService *mediaControl() const;
   AppRuntime *appRuntime() const;
   GlobalShortcutService *globalShortcuts() const;
 
   void setPowerManager(std::unique_ptr<PowerManager> manager);
+  void setTrayHost(std::unique_ptr<AbstractTrayHost> service);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
+  void setWallpaperManager(std::unique_ptr<WallpaperManager> manager);
   void setRootItemManager(std::unique_ptr<RootItemManager> manager);
   void setRaycastStore(std::unique_ptr<RaycastStoreService> service);
   void setScriptDb(std::unique_ptr<ScriptCommandService> service);
@@ -98,6 +113,7 @@ public:
   void setGlyphService(std::unique_ptr<GlyphService> service);
   void setToastService(std::unique_ptr<ToastService> service);
   void setFontService(std::unique_ptr<FontService> font);
+  void setScreenshots(std::unique_ptr<ScreenshotService> service);
   void setOmniDb(std::unique_ptr<OmniDatabase> service);
   void setWindowManager(std::unique_ptr<AbstractWindowManager> service);
   void setLocalStorage(std::unique_ptr<LocalStorageService> service);
@@ -111,23 +127,29 @@ public:
   void setSnippetServerBackend(std::unique_ptr<AbstractSnippetServer> backend);
   void setSnippetService(std::unique_ptr<SnippetService> service);
   void setPasteService(std::unique_ptr<PasteService> service);
+  void setSelectionService(std::unique_ptr<AbstractSelectionService> service);
   void setFileChooserService(std::unique_ptr<FileChooserService> service);
   void setNewsService(std::unique_ptr<NewsService> service);
   void setWindowMaterialManager(std::unique_ptr<WindowMaterialManager> manager);
   void setShortcutInhibitManager(std::unique_ptr<ShortcutInhibitManager> manager);
   void setTelemetry(std::unique_ptr<TelemetryService> telemetry);
+  void setUpdateService(std::unique_ptr<UpdateService> service);
   void setAudioControl(std::unique_ptr<AudioControlService> service);
+  void setMediaControl(std::unique_ptr<MediaControlService> service);
   void setAppRuntime(std::unique_ptr<AppRuntime> service);
   void setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> service);
 
 private:
+  static inline ServiceRegistry *s_instance = nullptr;
   std::unique_ptr<WindowManager> m_windowManager;
+  std::unique_ptr<WallpaperManager> m_wallpaperManager;
   std::unique_ptr<AppService> m_appDb;
   std::unique_ptr<OmniDatabase> m_omniDb;
   std::unique_ptr<LocalStorageService> m_localStorage;
   std::unique_ptr<ExtensionManager> m_extensionManager;
   std::unique_ptr<ClipboardService> m_clipman;
   std::unique_ptr<FontService> m_fontService;
+  std::unique_ptr<ScreenshotService> m_screenshots;
   std::unique_ptr<RootItemManager> m_rootItemManager;
   std::unique_ptr<config::Manager> m_config;
   std::unique_ptr<ShortcutService> m_shortcutService;
@@ -140,6 +162,7 @@ private:
   std::unique_ptr<ExtensionRegistry> m_extensionRegistry;
   std::unique_ptr<OAuthService> m_oauthService;
   std::unique_ptr<PowerManager> m_powerManager;
+  std::unique_ptr<AbstractTrayHost> m_trayHost;
   std::unique_ptr<ScriptCommandService> m_scriptCommandService;
   std::unique_ptr<BrowserExtensionService> m_browserExtensionService;
 #ifdef Q_OS_LINUX
@@ -148,12 +171,15 @@ private:
   std::unique_ptr<AbstractSnippetServer> m_snippetServerBackend;
   std::unique_ptr<SnippetService> m_snippetService;
   std::unique_ptr<PasteService> m_pasteService;
+  std::unique_ptr<AbstractSelectionService> m_selectionService;
   std::unique_ptr<FileChooserService> m_fileChooserService;
   std::unique_ptr<NewsService> m_newsService;
   std::unique_ptr<WindowMaterialManager> m_windowMaterialManager;
   std::unique_ptr<ShortcutInhibitManager> m_shortcutInhibitManager;
   std::unique_ptr<TelemetryService> m_telemetry;
+  std::unique_ptr<UpdateService> m_updateService;
   std::unique_ptr<AudioControlService> m_audioControl;
+  std::unique_ptr<MediaControlService> m_mediaControl;
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
 };

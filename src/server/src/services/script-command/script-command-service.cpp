@@ -60,7 +60,7 @@ void ScriptCommandService::updateWatchedPaths() {
     m_watcher->removePath(dir);
   }
   for (const auto &path : m_customScriptPaths)
-    m_watcher->addPath(path.c_str());
+    m_watcher->addPath(QString::fromStdString(path.string()));
   for (const auto &path : defaultScriptDirectories())
-    m_watcher->addPath(path.c_str());
+    m_watcher->addPath(QString::fromStdString(path.string()));
 }

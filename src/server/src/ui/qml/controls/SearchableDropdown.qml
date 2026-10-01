@@ -1,0 +1,141 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Vicinae
+
+Item {
+    id: root
+    implicitHeight: compact ? 28 : 36
+    Layout.fillWidth: !compact
+    activeFocusOnTab: !compact && !readOnly
+
+    property var items: []
+    property CompletionModel model: null
+    property var currentItem: null
+    signal activated(var item)
+    signal popupClosed
+
+    property bool compact: false
+    property bool flat: false
+    property real minimumWidth: 0
+    readonly property real preferredWidth: flat ? Math.ceil(triggerButton.implicitWidth) : Math.max(triggerButton.implicitWidth, minimumWidth)
+
+    property string placeholder: ""
+    property bool readOnly: false
+    property bool hasError: false
+    property bool filled: false
+
+    width: compact ? preferredWidth : implicitWidth
+
+    property real _closedTime: 0
+
+    Accessible.role: Accessible.ComboBox
+    Accessible.name: root.currentItem?.displayName ?? root.placeholder ?? ""
+    Accessible.onPressAction: root.open()
+
+    function open() {
+        if (root.readOnly || completionPopup.visible)
+            return;
+        if (Date.now() - root._closedTime < 300)
+            return;
+        completionPopup.open();
+    }
+
+    function popupX() {
+        return Math.min(0, triggerButton.width - completionPopup.width);
+    }
+
+    Keys.onReturnPressed: {
+        if (!completionPopup.visible)
+            open();
+    }
+    Keys.onSpacePressed: {
+        if (!completionPopup.visible)
+            open();
+    }
+
+    FormInputBackground {
+        anchors.fill: triggerButton
+        radius: triggerButton.radius
+        filled: !root.flat && (root.filled || root.compact)
+        opacity: root.readOnly ? 0.5 : 1.0
+    }
+
+    Rectangle {
+        id: triggerButton
+        opacity: root.readOnly ? 0.5 : 1.0
+        implicitWidth: buttonRow.implicitWidth + 20
+        anchors.fill: root.compact ? null : parent
+        width: root.compact ? root.width : implicitWidth
+        height: root.compact ? 28 : implicitHeight
+        radius: root.compact ? 6 : 8
+        color: root.flat && !root.readOnly && (buttonMouseArea.containsMouse || completionPopup.visible) ? Config.withAlpha(Theme.foreground, 0.08) : "transparent"
+        border.color: Config.withAlpha(root.hasError ? Theme.inputBorderError : (root.activeFocus || completionPopup.visible ? Theme.inputBorderFocus : (root.compact ? Theme.divider : Theme.inputBorder)), Config.surfaceOpacity)
+        border.width: !root.flat || root.hasError || root.activeFocus ? 1 : 0
+
+        RowLayout {
+            id: buttonRow
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
+            spacing: 6
+
+            ViciImage {
+                visible: root.currentItem && root.currentItem.iconSource ? true : false
+                source: visible ? root.currentItem.iconSource : ""
+                Layout.preferredWidth: 16
+                Layout.preferredHeight: 16
+                safetyMargins: true
+            }
+
+            Text {
+                text: root.currentItem?.displayName ?? root.placeholder ?? ""
+                color: !root.compact && !root.currentItem ? Theme.textPlaceholder : Theme.foreground
+                font.pointSize: root.compact ? Theme.smallerFontSize : Theme.regularFontSize
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+            }
+
+            ViciImage {
+                source: completionPopup.visible ? Img.icon(BuiltinIcon.ChevronUp) : Img.icon(BuiltinIcon.ChevronDown)
+                opacity: completionPopup.visible || (buttonMouseArea.containsMouse && !root.readOnly) ? 1.0 : 0.5
+                Layout.preferredWidth: 10
+                Layout.preferredHeight: 10
+            }
+        }
+
+        MouseArea {
+            id: buttonMouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: root.readOnly ? Qt.ArrowCursor : Qt.PointingHandCursor
+            onClicked: root.open()
+        }
+    }
+
+    CompletionPopup {
+        id: completionPopup
+        parent: triggerButton
+        popupType: Platform.preferItemPopup("dropdown") ? Popup.Item : Popup.Window
+        // On Wayland the compositor places the native popup window from the
+        // PopupPlacement anchor; x/y only apply on other platforms.
+        PopupPlacement.alignment: root.compact ? Qt.AlignRight : Qt.AlignLeft
+        x: root.popupX()
+        width: Math.max(root.compact ? 200 : 250, root.width)
+        focus: true
+        sections: root.items
+        model: root.model
+        showFilter: true
+        currentItemId: root.currentItem ? root.currentItem.id : ""
+
+        onClosed: {
+            root._closedTime = Date.now();
+            root.popupClosed();
+        }
+
+        onItemAccepted: itemData => {
+            root.activated(itemData);
+        }
+    }
+}

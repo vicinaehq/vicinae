@@ -1,0 +1,85 @@
+#pragma once
+#include "common/context.hpp"
+#include <QLocalSocket>
+#include <QFutureWatcher>
+#include <cstdint>
+#include <QDebug>
+#include <format>
+#include <qlocalserver.h>
+#include <string_view>
+#include <unordered_map>
+#include "generated/ipc-server.hpp"
+#include "common/qt.hpp"
+
+struct ClientInfo {
+  QLocalSocket *conn;
+  struct {
+    QByteArray data;
+    uint32_t length;
+  } frame;
+  std::optional<ipc_gen::BrowserInitRequest> browser;
+};
+
+class IpcService : public ipc_gen::AbstractIpc {
+public:
+  IpcService(ipc_gen::RpcTransport &transport, ApplicationContext &ctx);
+
+  ipc_gen::Result<ipc_gen::PingResponse>::Future ping() override;
+  ipc_gen::Result<ipc_gen::DeeplinkResponse>::Future deeplink(ipc_gen::DeeplinkRequest req) override;
+  ipc_gen::Result<ipc_gen::DescribeResponse>::Future describe() override;
+  ipc_gen::Result<ipc_gen::LaunchAppResponse>::Future launchApp(ipc_gen::LaunchAppRequest req) override;
+  ipc_gen::Result<ipc_gen::ListCommandsResponse>::Future listCommands() override;
+  ipc_gen::Result<ipc_gen::LaunchCommandResponse>::Future
+  launchCommand(ipc_gen::LaunchCommandRequest req) override;
+  ipc_gen::Result<ipc_gen::DMenuResponse>::Future dmenu(ipc_gen::DMenuRequest req) override;
+  ipc_gen::Result<void>::Future browserInit(ipc_gen::BrowserInitRequest req) override;
+  ipc_gen::Result<void>::Future browserTabsChanged(std::vector<ipc_gen::BrowserTabInfo> tabs) override;
+  ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future fsQuery(std::string q,
+                                                                    ipc_gen::FsQueryParams params) override;
+
+  void setCallerInfo(ClientInfo *info) { m_caller = info; }
+
+private:
+  ApplicationContext &m_ctx;
+  ClientInfo *m_caller = nullptr;
+};
+
+class IpcCommandServer : public QObject {
+public:
+  IpcCommandServer(ApplicationContext *ctx, QObject *parent = nullptr);
+  bool start(const std::string &name);
+
+private:
+  void processFrame(QLocalSocket *conn, QByteArrayView frame);
+  void handleRead(QLocalSocket *conn);
+  void handleDisconnection(QLocalSocket *conn);
+  void handleConnection();
+
+  QLocalServer m_server;
+  std::vector<ClientInfo> m_clients;
+
+  ApplicationContext &m_ctx;
+
+  struct IpcTransport : public ipc_gen::AbstractTransport {
+    // Current write target. Set by `processFrame` before dispatch (so
+    // synchronous replies land on the originating peer), by the event
+    // emission site before emitting a notification, and by `activateReply`
+    // when delivering an asynchronous reply.
+    QLocalSocket *conn = nullptr;
+    // Pending reply routing: filled by `bindReply` at dispatch time when a
+    // handler returns an unfinished future, drained by `activateReply` when
+    // the reply is finally produced. Lets async replies find their peer even
+    // after the dispatching frame has unwound.
+    std::unordered_map<int, QLocalSocket *> pendingReplies;
+
+    void send(std::string_view data) override;
+    void bindReply(int id) override;
+    void activateReply(int id) override;
+    void forgetConn(QLocalSocket *dead);
+  };
+
+  IpcTransport m_transport;
+  ipc_gen::RpcTransport m_rpc;
+  IpcService *m_service;
+  ipc_gen::Server m_ipcServer;
+};
