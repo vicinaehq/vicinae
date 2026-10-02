@@ -527,6 +527,10 @@ class BrowserExtensionService {
 		return this.transport.request("BrowserExtension/focusTab", { browserId, tabId});	
 	}
 
+	closeTab(browserId: string, tabId: number): Promise<void> {
+		return this.transport.request("BrowserExtension/closeTab", { browserId, tabId});	
+	}
+
 }
 
 class EventCoreService {

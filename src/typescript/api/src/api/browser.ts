@@ -9,7 +9,9 @@ export namespace BrowserExtension {
 		title?: string;
 		url: string;
 		active: boolean;
+		browserId: string;
 		focus: () => void;
+		close: () => void;
 	};
 
 	export async function getTabs(): Promise<Tab[]> {
@@ -20,7 +22,17 @@ export namespace BrowserExtension {
 				focus: () => {
 					getClient().BrowserExtension.focusTab(b.browserId, b.id);
 				},
+				close: () => {
+					getClient().BrowserExtension.closeTab(b.browserId, b.id);
+				},
 			})),
 		);
+	}
+
+	export async function closeTab(
+		browserId: string,
+		tabId: number,
+	): Promise<void> {
+		return getClient().BrowserExtension.closeTab(browserId, tabId);
 	}
 }
