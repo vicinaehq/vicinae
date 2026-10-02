@@ -5,9 +5,9 @@
 #include "services/tray-host/dummy-tray-host.hpp"
 #endif
 
-std::unique_ptr<AbstractTrayHost> createTrayHost() {
+std::unique_ptr<AbstractTrayHost> createTrayHost([[maybe_unused]] bool watcherEnabled) {
 #ifdef Q_OS_LINUX
-  return std::make_unique<SniTrayHost>();
+  return std::make_unique<SniTrayHost>(watcherEnabled);
 #else
   return std::make_unique<DummyTrayHost>();
 #endif
