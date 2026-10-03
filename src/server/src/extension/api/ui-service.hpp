@@ -63,11 +63,11 @@ public:
   }
 
   Void::Future showHud(std::string text, bool clear_root, tsapi::PopToRootType popToRoot) override {
-    m_navigation->closeWindow({
-        .popToRootType = mapPopToRoot(popToRoot),
-        .clearRootSearch = clear_root,
-    });
-    m_navigation->showHud(QString::fromStdString(text));
+    m_navigation->showHud(QString::fromStdString(text), std::nullopt,
+                          {
+                              .popToRootType = mapPopToRoot(popToRoot),
+                              .clearRootSearch = clear_root,
+                          });
     return Void::ok();
   }
 

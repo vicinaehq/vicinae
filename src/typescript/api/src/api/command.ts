@@ -43,8 +43,8 @@ export type LaunchOptions =
  * passing them.
  *
  * @returns Returns when the other command has been successfully launched. Note that control is fully transferred
- * to the other command and that the current command from which `launchCommand` has been called is effectively unloaded
- * if the call succeeds.
+ * to the other command, and the current command from which `launchCommand` has been called is effectively unloaded
+ * if the call succeeds, unless the LaunchType is set to "background".
  *
  * @throws If the command doesn't exist or couldn't be started, for any reason.
  */

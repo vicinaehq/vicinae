@@ -55,6 +55,7 @@ signals:
   void started() const;
   void extensionMessageReceived(const std::string &sessionId, std::string_view data) const;
   void extensionCrashed(const std::string &sessionId, const std::string &reason) const;
+  void extensionUnloaded(const std::string &sessionId) const;
 
 public:
   ExtensionManager();
