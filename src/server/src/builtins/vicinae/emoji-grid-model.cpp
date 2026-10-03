@@ -345,7 +345,7 @@ void EmojiGridModel::initialize() {
     rebuildSections();
     setSelectFirstOnReset(false);
 
-    if (section >= 0 && item >= 0) {
+    if (section >= 0 && item >= 0 && emojiAt(section, item)) {
       select(section, item);
     } else {
       selectFirst();
