@@ -15,7 +15,9 @@ Item {
 
     readonly property int requestedWidth: blockData.width ?? 0
     readonly property int requestedHeight: blockData.height ?? 0
-    readonly property string alt: blockData.alt ?? ""
+    readonly property int naturalWidth: blockData.naturalWidth ?? 0
+    readonly property int naturalHeight: blockData.naturalHeight ?? 0
+    readonly property real aspectRatio: naturalWidth > 0 && naturalHeight > 0 ? naturalWidth / naturalHeight : 0
     readonly property string link: blockData.link ?? ""
 
     width: parent?.width ?? 0
@@ -29,28 +31,44 @@ Item {
         Item {
             id: imgContainer
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: imgW
-            Layout.preferredHeight: imgH
+            Layout.preferredWidth: displaySize.width
+            Layout.preferredHeight: displaySize.height
 
-            readonly property int imgW: {
+            readonly property size displaySize: root.aspectRatio > 0 ? aspectSize : fallbackSize
+
+            readonly property size aspectSize: {
+                const aspect = root.aspectRatio;
+                let w = root.naturalWidth;
                 if (root.requestedWidth > 0)
-                    return root.requestedWidth;
-                if (root.requestedHeight > 0)
-                    return root.requestedHeight;
-                return root.width;
+                    w = root.requestedWidth;
+                else if (root.requestedHeight > 0)
+                    w = root.requestedHeight * aspect;
+                const h = root.requestedWidth > 0 && root.requestedHeight > 0 ? root.requestedHeight : w / aspect;
+                const maxH = root.maxImageHeight > 0 ? root.maxImageHeight : h;
+                const scale = Math.min(1, root.width / w, maxH / h);
+                return Qt.size(w * scale, h * scale);
             }
-            readonly property int _rawH: {
-                if (root.requestedHeight > 0)
-                    return root.requestedHeight;
+
+            // Without known aspect ratio, reserve a bounded box
+            readonly property size fallbackSize: {
+                let w = root.width;
                 if (root.requestedWidth > 0)
-                    return root.requestedWidth;
-                return 200;
+                    w = root.requestedWidth;
+                else if (root.requestedHeight > 0)
+                    w = root.requestedHeight;
+                let rawH = 200;
+                if (root.requestedHeight > 0)
+                    rawH = root.requestedHeight;
+                else if (root.requestedWidth > 0)
+                    rawH = root.requestedWidth;
+                const h = root.maxImageHeight > 0 ? Math.min(rawH, 200, root.maxImageHeight) : Math.min(rawH, 200);
+                return Qt.size(w, h);
             }
-            readonly property int imgH: root.maxImageHeight > 0 ? Math.min(_rawH, 200, root.maxImageHeight) : Math.min(_rawH, 200)
 
             ViciImage {
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
+                retainFrameWhileLoading: true
                 source: root.blockData.src ?? ""
             }
 
@@ -60,15 +78,6 @@ Item {
                 opacity: 0.4
                 visible: root.selected
             }
-        }
-
-        Text {
-            Layout.alignment: Qt.AlignHCenter
-            visible: root.alt.length > 0
-            text: root.alt
-            color: Theme.textMuted
-            font.pointSize: Theme.smallerFontSize
-            font.italic: true
         }
     }
 
