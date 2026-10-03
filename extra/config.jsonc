@@ -89,10 +89,10 @@
 		}
 	},
 
-	// The general vicinae theme as well as the system icon theme (used for applications and file icons) can be customized
-	// according to the system appearance.
-	// When editing the current theme through the vicinae GUI, it will modify the value that maps to the current system appearance.
+	// Light and dark themes are stored separately. "appearance" chooses which slot is active:
+	// "system" follows the OS color scheme, while "light" / "dark" pin that slot.
 	"theme": {
+		"appearance": "system",
 		"light": {
 			"name": "vicinae-light",
 			"icon_theme": "auto"
