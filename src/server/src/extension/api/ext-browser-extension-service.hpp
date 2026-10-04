@@ -33,6 +33,11 @@ public:
     return Void::ok();
   }
 
+  tsapi::Result<void>::Future closeTab(std::string browserId, int32_t tabId) override {
+    m_browser.closeTab(browserId, tabId);
+    return Void::ok();
+  }
+
 private:
   BrowserExtensionService &m_browser;
 };
