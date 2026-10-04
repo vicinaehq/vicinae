@@ -28,7 +28,12 @@
   }: let
     inherit (nixpkgs) lib;
     forEachPkgs = f: lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
-    numenFor = pkgs: numen.packages.${pkgs.stdenv.hostPlatform.system}.numen.override {withRepl = false;};
+    numenFor = pkgs:
+      (numen.packages.${pkgs.stdenv.hostPlatform.system}.numen.override {
+        withRepl = false;
+      }).override {
+        stdenv = pkgs.gcc15Stdenv;
+      };
   in {
     packages = forEachPkgs (pkgs: let
       vicinae = pkgs.callPackage ./nix/vicinae.nix {
