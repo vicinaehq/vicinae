@@ -10,6 +10,10 @@ export namespace BrowserExtension {
 		url: string;
 		active: boolean;
 		browserId: string;
+		/** epoch ms when the tab was last focused; 0 = unknown */
+		lastAccessed: number;
+		pinned: boolean;
+		audible: boolean;
 		focus: () => void;
 		close: () => void;
 	};

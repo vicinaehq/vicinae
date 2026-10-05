@@ -123,6 +123,8 @@ struct BrowserTabInfo {
   bool active;
   bool muted;
   bool audible;
+  double lastAccessed;
+  bool pinned;
 };
 
 struct BrowserTabsChanged {

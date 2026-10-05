@@ -287,6 +287,9 @@ export type BrowserTab = {
 	url: string;
 	active: boolean;
 	browserId: string;
+	lastAccessed: number;
+	pinned: boolean;
+	audible: boolean;
 }
 
 class ApplicationService {
