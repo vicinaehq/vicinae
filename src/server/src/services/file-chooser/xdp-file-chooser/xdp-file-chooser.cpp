@@ -34,9 +34,12 @@ bool XdpFileChooser::open(const FileChooserOptions &options) {
   payload["modal"] = true;
   payload["multiple"] = options.allowMultipleSelection;
   payload["directory"] = directoryMode;
+  payload["accept_label"] = tr("Select");
 
   QString const windowHandle;
-  QString const title = directoryMode ? tr("Open Directory") : tr("Open File");
+  QString const title = directoryMode
+                            ? tr("Select a directory")
+                            : (options.allowMultipleSelection ? tr("Select files") : tr("Select a file"));
 
   QDBusReply<QDBusObjectPath> const message = m_interface->call("OpenFile", windowHandle, title, payload);
 

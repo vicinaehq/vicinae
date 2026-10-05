@@ -91,6 +91,7 @@ struct BrowserTabInfo {
   muted: bool;
   audible: bool;
   lastAccessed: double;
+  pinned: bool;
 };
 
 struct FocusTabRequest {

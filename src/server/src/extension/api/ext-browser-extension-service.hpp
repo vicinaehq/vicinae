@@ -22,6 +22,9 @@ public:
           .url = std::move(tab.url),
           .active = tab.active,
           .browserId = std::move(tab.browserId),
+          .lastAccessed = tab.lastAccessed,
+          .pinned = tab.pinned,
+          .audible = tab.audible,
       });
     }
 
