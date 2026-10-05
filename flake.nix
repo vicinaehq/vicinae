@@ -36,10 +36,12 @@
       };
   in {
     packages = forEachPkgs (pkgs: let
-      vicinae = pkgs.callPackage ./nix/vicinae.nix {
-        gcc15Stdenv = pkgs.gcc15Stdenv;
-        numen = numenFor pkgs;
-      };
+      vicinae = pkgs.callPackage ./nix/vicinae.nix ({
+          numen = numenFor pkgs;
+        }
+        // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+          gcc15Stdenv = pkgs.gcc15Stdenv;
+        });
       soulver = soulver-cpp.packages.${pkgs.stdenv.hostPlatform.system}.default or null;
     in
       lib.optionalAttrs (soulver != null) {
