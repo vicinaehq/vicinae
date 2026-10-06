@@ -33,6 +33,16 @@ for lib in libstdc++.so.6 libgcc_s.so.1; do
 	esac
 done
 
+# Qt in this image is built against FreeType >= 2.13 so COLRv1 emoji paint.
+# linuxdeploy's excludelist drops libfreetype, and passing it via --library
+# would do the same, leaving the host's older FreeType. Copy the builder
+# library when the image provides it; published images without /opt/freetype
+# still package.
+FREETYPE_LIB=/opt/freetype/lib/libfreetype.so.6
+if [ -e "$FREETYPE_LIB" ]; then
+	cp -L "$FREETYPE_LIB" ${APPDIR}/usr/lib/
+fi
+
 # qtkeychain dlopens libsecret instead of linking it, so linuxdeploy can't see it in the
 # dependency tree and the host copy can't be loaded next to our bundled glib/openssl.
 # Without it qtkeychain silently falls back to kwallet or errors out (#1632).
