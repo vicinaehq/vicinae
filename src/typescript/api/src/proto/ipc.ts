@@ -165,6 +165,7 @@ export type BrowserTabInfo = {
 	muted: boolean;
 	audible: boolean;
 	lastAccessed: number;
+	pinned: boolean;
 }
 
 export type FocusTabRequest = {
