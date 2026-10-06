@@ -109,6 +109,16 @@ Flickable {
             }
 
             SettingsRow {
+                visible: Style.selectableWindowStyle
+                label: qsTr("Standard window")
+                description: qsTr("Use the standard cross-platform window instead of the redesigned window. Requires fully reopening Vicinae to apply.")
+                SettingsToggle {
+                    checked: root.model.useStandardWindow
+                    onToggled: checked => root.model.useStandardWindow = checked
+                }
+            }
+
+            SettingsRow {
                 label: qsTr("Window opacity")
                 FormTextInput {
                     width: parent.width

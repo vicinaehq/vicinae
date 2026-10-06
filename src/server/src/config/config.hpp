@@ -132,12 +132,16 @@ template <> struct Partial<ClockConfig> {
 struct WindowConfig {
   static constexpr float OPAQUE_OPACITY = 1.0F;
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
+  // Translucency used by the standard cross-platform window on platforms without
+  // a native material backend.
+  static constexpr float STANDARD_BLUR_OPACITY = 0.9F;
+  static constexpr float STANDARD_GLASS_POPUP_OPACITY = 0.2F;
 #ifdef Q_OS_MACOS
   static constexpr float BLUR_OPACITY = 0.55F;
   static constexpr float GLASS_POPUP_OPACITY = 0.8F;
 #else
-  static constexpr float BLUR_OPACITY = 0.9F;
-  static constexpr float GLASS_POPUP_OPACITY = 0.2F;
+  static constexpr float BLUR_OPACITY = STANDARD_BLUR_OPACITY;
+  static constexpr float GLASS_POPUP_OPACITY = STANDARD_GLASS_POPUP_OPACITY;
 #endif
   static constexpr float SURFACE_OPACITY_LIFT = 0.65F;
 
@@ -149,6 +153,12 @@ struct WindowConfig {
   BlurConfig blur;
   WindowCompactMode compactMode;
   bool floatingStatusBar = true;
+  // Use the standard cross-platform window instead of the platform redesign.
+#ifdef Q_OS_LINUX
+  bool useStandardWindow = true;
+#else
+  bool useStandardWindow = false;
+#endif
   LayerShellConfig layerShell;
   ClockConfig clock;
 
@@ -176,14 +186,14 @@ struct WindowConfig {
     if (opacity) return *opacity;
     const std::string material = resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable);
     if (material == "liquid_glass") return TRANSLUCENT_OPACITY;
-    if (material == "blur") return BLUR_OPACITY;
+    if (material == "blur") return useStandardWindow ? STANDARD_BLUR_OPACITY : BLUR_OPACITY;
     return OPAQUE_OPACITY;
   }
 
   // Text-heavy popups use their own tint so content behind the material stays subdued.
   float resolvedPopupOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
     if (resolvedPopupMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass") {
-      return GLASS_POPUP_OPACITY;
+      return useStandardWindow ? STANDARD_GLASS_POPUP_OPACITY : GLASS_POPUP_OPACITY;
     }
     return resolvedOpacity(liquidGlassAvailable, windowMaterialAvailable);
   }
@@ -212,6 +222,7 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<BlurConfig>> blur;
   std::optional<Partial<WindowCompactMode>> compactMode;
   std::optional<bool> floatingStatusBar;
+  std::optional<bool> useStandardWindow;
   std::optional<Partial<LayerShellConfig>> layerShell;
   std::optional<std::string> material;
   std::optional<ClockConfig> clock;

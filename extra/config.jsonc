@@ -118,6 +118,10 @@
 		// Needs window opacity < 1 to be visible.
 		"material": "auto",
 
+			   // Use the standard cross-platform launcher window instead of the redesigned window.
+			   // Requires fully reopening Vicinae to apply.
+			   // "use_standard_window": false,
+
 		// Corner radius of the launcher window, in pixels.
 		// "rounding": 10,
 
