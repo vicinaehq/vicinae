@@ -159,6 +159,7 @@ struct WindowConfig {
 #else
   bool useStandardWindow = false;
 #endif
+  std::optional<std::string> windowStyle;
   LayerShellConfig layerShell;
   ClockConfig clock;
 
@@ -167,6 +168,13 @@ struct WindowConfig {
   // Corner radius is a window-level property, but historically lived under client_side_decorations.
   // Fall back to that value when the flat key is unset to keep older configs working.
   int effectiveRounding() const { return rounding.value_or(clientSideDecorations.rounding); }
+
+  std::string resolvedWindowStyle() const {
+    if (windowStyle && (*windowStyle == "standard" || *windowStyle == "liquid_glass")) {
+      return *windowStyle;
+    }
+    return useStandardWindow ? "standard" : "liquid_glass";
+  }
 
   std::string resolvedMaterial(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
     if (material != "auto") return material;
@@ -223,6 +231,7 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<WindowCompactMode>> compactMode;
   std::optional<bool> floatingStatusBar;
   std::optional<bool> useStandardWindow;
+  std::optional<std::string> windowStyle;
   std::optional<Partial<LayerShellConfig>> layerShell;
   std::optional<std::string> material;
   std::optional<ClockConfig> clock;

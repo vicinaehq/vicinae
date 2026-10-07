@@ -7,13 +7,11 @@ LauncherWindow {
 
     appearance: LauncherAppearanceMacOS {}
     searchBarComponent: SearchBarMacOS {
-        commandView: root.commandStack
+        commandView: root.commandView
     }
+    statusBarComponent: LauncherStatusBarLinux {}
     contentEffect: ScrollFadeMacOS {
         topInset: root.searchBarOverlap
         bottomInset: root.statusBarOverlap
     }
-
-    onAboutToShow: Launcher.prepareShow()
-    onShown: Launcher.finalizeShow()
 }
