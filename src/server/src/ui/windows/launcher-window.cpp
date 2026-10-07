@@ -403,18 +403,19 @@ void LauncherWindow::handleVisibilityChanged(bool visible) {
 void LauncherWindow::loadRoot() {
   m_engine.load(
 #if defined(Q_OS_MACOS)
-        m_ctx.services->config()->value().launcherWindow.resolvedWindowStyle() == "standard"
+      m_ctx.services->config()->value().launcherWindow.resolvedWindowStyle() == "standard"
           ? qml::componentUrl(u"LauncherWindow")
           : qml::componentUrl(u"LauncherWindowMacOS")
 #elif defined(Q_OS_WIN)
       qml::componentUrl(u"LauncherWindowWindows")
 #elif defined(Q_OS_LINUX)
-            isLayerShellActive() ? (m_ctx.services->config()->value().launcherWindow.resolvedWindowStyle() == "standard"
-                                  ? qml::componentUrl(u"LauncherWindowLayerShell")
-                                  : qml::componentUrl(u"LauncherWindowLinuxLayerShell"))
-                  : (m_ctx.services->config()->value().launcherWindow.resolvedWindowStyle() == "standard"
-                                  ? qml::componentUrl(u"LauncherWindow")
-                                  : qml::componentUrl(u"LauncherWindowLinux"))
+      isLayerShellActive()
+          ? (m_ctx.services->config()->value().launcherWindow.resolvedWindowStyle() == "standard"
+                 ? qml::componentUrl(u"LauncherWindowLayerShell")
+                 : qml::componentUrl(u"LauncherWindowLinuxLayerShell"))
+          : (m_ctx.services->config()->value().launcherWindow.resolvedWindowStyle() == "standard"
+                 ? qml::componentUrl(u"LauncherWindow")
+                 : qml::componentUrl(u"LauncherWindowLinux"))
 #else
       isLayerShellActive() ? qml::componentUrl(u"LauncherWindowLayerShell")
                            : qml::componentUrl(u"LauncherWindow")

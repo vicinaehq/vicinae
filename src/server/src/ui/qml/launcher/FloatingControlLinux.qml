@@ -5,7 +5,6 @@ import Vicinae
 Item {
     id: root
     required property Item anchorItem
-    property string title
     default property alias content: content.data
     x: anchorItem.x
     y: anchorItem.y

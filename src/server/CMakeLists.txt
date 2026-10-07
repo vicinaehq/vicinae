@@ -1288,8 +1288,8 @@ if(UNIX AND NOT APPLE)
 	   src/ui/qml/launcher/LauncherAppearanceMacOS.qml
 	   src/ui/qml/launcher/ScrollFadeMacOS.qml
 	   src/ui/qml/launcher/SearchBarMacOS.qml
-		   src/ui/qml/launcher/LauncherStatusBarLinux.qml
-		   src/ui/qml/launcher/FloatingControlLinux.qml
+	    src/ui/qml/launcher/LauncherStatusBarLinux.qml
+	    src/ui/qml/launcher/FloatingControlLinux.qml
 	   src/ui/qml/controls/ContentDividerMacOS.qml
 	   src/ui/qml/controls/RoundedClipMacOS.qml
 	   src/ui/qml/controls/MaterialColorsMacOS.qml

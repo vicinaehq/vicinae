@@ -20,7 +20,6 @@ Item {
 
     FloatingControlLinux {
         anchorItem: menuAnchor
-        title: qsTr("Vicinae menu")
 
         AbstractButton {
             id: menuButton
@@ -53,7 +52,6 @@ Item {
 
     FloatingControlLinux {
         anchorItem: statusAnchor
-        title: Launcher.toastActive ? Launcher.toastTitle : Launcher.navigationTitle
 
         FooterNavStatus {
             id: navStatus
@@ -90,7 +88,6 @@ Item {
 
     FloatingControlLinux {
         anchorItem: actionAnchor
-        title: qsTr("Vicinae actions")
 
         RowLayout {
             id: actionRow

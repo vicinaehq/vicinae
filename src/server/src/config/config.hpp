@@ -194,14 +194,17 @@ struct WindowConfig {
     if (opacity) return *opacity;
     const std::string material = resolvedMaterial(liquidGlassAvailable, windowMaterialAvailable);
     if (material == "liquid_glass") return TRANSLUCENT_OPACITY;
-    if (material == "blur") return useStandardWindow ? STANDARD_BLUR_OPACITY : BLUR_OPACITY;
+    if (material == "blur") {
+      return resolvedWindowStyle() == "standard" ? STANDARD_BLUR_OPACITY : BLUR_OPACITY;
+    }
     return OPAQUE_OPACITY;
   }
 
   // Text-heavy popups use their own tint so content behind the material stays subdued.
   float resolvedPopupOpacity(bool liquidGlassAvailable, bool windowMaterialAvailable) const {
     if (resolvedPopupMaterial(liquidGlassAvailable, windowMaterialAvailable) == "liquid_glass") {
-      return useStandardWindow ? STANDARD_GLASS_POPUP_OPACITY : GLASS_POPUP_OPACITY;
+      return resolvedWindowStyle() == "standard" ? STANDARD_GLASS_POPUP_OPACITY
+                      : GLASS_POPUP_OPACITY;
     }
     return resolvedOpacity(liquidGlassAvailable, windowMaterialAvailable);
   }
