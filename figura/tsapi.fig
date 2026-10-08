@@ -343,6 +343,9 @@ struct BrowserTab {
   url: string;
   active: boolean;
   browserId: string;
+  lastAccessed: double;
+  pinned: boolean;
+  audible: boolean;
 };
 
 service BrowserExtension {
