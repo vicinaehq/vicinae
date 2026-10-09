@@ -18,7 +18,7 @@ struct ServerLaunchOptions {
 void CliServerCommand::setup(CLI::App *app) {
   app->add_flag("--open", m_open, "Open the main window once the server is started");
   app->add_flag("--replace", m_replace, "Replace the currently running instance if there is one");
-  app->add_option("--config", m_config, "Path to the main config file");
+  app->add_option("--config", m_config, "Path to the main config file")->envname(vicinae::CONFIG_PATH_ENV);
   app->add_flag("--no-extension-runtime", m_noExtensionRuntime,
                 "Do not start the extension runtime node process. Typescript extensions will not run.");
 }
