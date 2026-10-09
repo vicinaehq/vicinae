@@ -86,6 +86,28 @@ ENV CXX=/opt/gcc/bin/g++
 ARG QT_VERSION=6.10.1
 ARG INSTALL_DIR=/usr/local
 
+# Ubuntu 22.04's libfreetype6-dev is 2.11.1. Qt only compiles its COLRv1
+# painter (QFONTENGINE_FT_SUPPORT_COLRV1) when the FreeType headers are
+# >= 2.13. Build a shared 2.13.3 with the optional decompressors disabled so
+# this stage needs no extra dev packages. mkappimage.sh bundles the library;
+# linuxdeploy's excludelist would otherwise leave the host's 2.11.1.
+RUN git clone --depth 1 --branch VER-2-13-3 https://gitlab.freedesktop.org/freetype/freetype.git /freetype \
+	&& cmake -S /freetype -B /freetype/build \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_INSTALL_PREFIX=/opt/freetype \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DFT_DISABLE_HARFBUZZ=ON \
+		-DFT_DISABLE_PNG=ON \
+		-DFT_DISABLE_BROTLI=ON \
+		-DFT_DISABLE_BZIP2=ON \
+		-DFT_DISABLE_ZLIB=ON \
+	&& cmake --build /freetype/build --parallel "$(nproc)" \
+	&& cmake --install /freetype/build \
+	&& test -f /opt/freetype/lib/pkgconfig/freetype2.pc \
+	&& test -e /opt/freetype/lib/libfreetype.so.6 \
+	&& rm -rf /freetype
+
 RUN git clone --branch v${QT_VERSION} https://code.qt.io/qt/qt5.git /qt6
 WORKDIR /qt6
 
@@ -98,7 +120,12 @@ RUN perl init-repository --module-subset=qtbase,qtsvg,qtwayland,qtdeclarative,qt
 # locally and never interposes — the #1841 startup crash). The linker rejects
 # any violation at build time. x86_64 only: aarch64 GCC lacks the flag and
 # doesn't need it (-fPIE already uses GOT access for extern data there).
-RUN ./configure					\
+# Move the distro freetype2.pc aside for this configure only. pkg-config
+# would otherwise keep FreeType 2.11.1 even with Freetype_ROOT set.
+RUN distro_pc="$(pkg-config --variable=pcfiledir freetype2)/freetype2.pc" \
+	&& mv "$distro_pc" "${distro_pc}.aside" \
+	&& PKG_CONFIG_PATH=/opt/freetype/lib/pkgconfig \
+	./configure					\
     -release					\
     -ltcg						\
     -reduce-exports				\
@@ -113,12 +140,54 @@ RUN ./configure					\
     -no-sql-mysql				\
     -no-sql-psql				\
     -no-sql-odbc				\
-    -skip qtlanguageserver
+    -skip qtlanguageserver		\
+    -D Freetype_ROOT=/opt/freetype \
+	&& mv "${distro_pc}.aside" "$distro_pc"
 
 RUN cmake --build . --parallel $(nproc) \
     && cmake --install . \
     && cd / \
     && rm -rf /qt6
+
+# COLRv1 support is a compile-time FreeType version check. Refuse a libQt6Gui
+# that lacks it, and drop any /opt/freetype RPATH/RUNPATH entry: that prefix
+# exists only in this builder, not on user machines. Keep $ORIGIN entries.
+RUN set -eu; \
+	apt-get update && apt-get install -y patchelf; \
+	qtgui=$(find "${INSTALL_DIR}" -name 'libQt6Gui.so.6' | head -n 1); \
+	if [ -z "$qtgui" ]; then echo "libQt6Gui.so.6 not found under ${INSTALL_DIR}" >&2; exit 1; fi; \
+	qtgui=$(readlink -f "$qtgui"); \
+	if ! nm -D "$qtgui" | grep -F -q loadColrv1Glyph; then \
+		echo "libQt6Gui does not export loadColrv1Glyph" >&2; \
+		exit 1; \
+	fi; \
+	if ! strings "$qtgui" | grep -F -q 'qt.text.font.colrv1'; then \
+		echo "libQt6Gui is missing qt.text.font.colrv1" >&2; \
+		exit 1; \
+	fi; \
+	old_rpath=$(patchelf --print-rpath "$qtgui"); \
+	new_rpath=""; \
+	rest="$old_rpath"; \
+	while [ -n "$rest" ]; do \
+		case "$rest" in \
+			*:*) entry=${rest%%:*}; rest=${rest#*:} ;; \
+			*) entry=$rest; rest="" ;; \
+		esac; \
+		case "$entry" in \
+			*"/opt/freetype"*) ;; \
+			*) \
+				if [ -z "$new_rpath" ]; then new_rpath=$entry; else new_rpath=$new_rpath:$entry; fi ;; \
+		esac; \
+	done; \
+	if [ "$old_rpath" != "$new_rpath" ]; then \
+		if [ -z "$new_rpath" ]; then patchelf --remove-rpath "$qtgui"; \
+		else patchelf --set-rpath "$new_rpath" "$qtgui"; fi; \
+	fi; \
+	if readelf -d "$qtgui" | grep -E 'RPATH|RUNPATH' | grep -F -q '/opt/freetype'; then \
+		echo "libQt6Gui still has /opt/freetype in RPATH/RUNPATH" >&2; \
+		readelf -d "$qtgui" >&2; \
+		exit 1; \
+	fi
 
 # other dep builders
 FROM qt-builder AS deps-builder
@@ -321,6 +390,7 @@ RUN apt-get update \
 COPY --from=deps-builder /opt/gcc /opt/gcc
 COPY --from=deps-builder /usr/local /usr/local
 COPY --from=deps-builder /opt/node /opt/node
+COPY --from=deps-builder /opt/freetype /opt/freetype
 
 ARG TARGETARCH
 RUN case "${TARGETARCH}" in \
