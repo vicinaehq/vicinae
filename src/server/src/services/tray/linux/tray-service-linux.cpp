@@ -183,15 +183,7 @@ TrayServiceLinux::TrayServiceLinux(QObject *parent)
 
   registerSniMetaTypes();
 
-  auto bus = QDBusConnection::sessionBus();
-  if (!bus.isConnected()) return;
-
-  const auto flags = QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllProperties |
-                     QDBusConnection::ExportAllSignals;
-  if (!bus.registerObject(ITEM_PATH, &m_item, flags) || !bus.registerObject(MENU_PATH, &m_menu, flags)) {
-    qWarning() << "Failed to export tray item objects on the session bus";
-    return;
-  }
+  if (!QDBusConnection::sessionBus().isConnected()) return;
 
   m_serviceName = QString("org.kde.StatusNotifierItem-%1-1").arg(getpid());
 
@@ -313,7 +305,17 @@ void TrayServiceLinux::setCheckForUpdatesVisible(bool) {}
 void TrayServiceLinux::setAvailableUpdate(const QString &) {}
 
 void TrayServiceLinux::show() {
-  if (m_visible) return;
+  if (m_visible || m_serviceName.isEmpty()) return;
+
+  auto bus = QDBusConnection::sessionBus();
+  const auto flags = QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllProperties |
+                     QDBusConnection::ExportAllSignals;
+  if (!bus.registerObject(ITEM_PATH, &m_item, flags) || !bus.registerObject(MENU_PATH, &m_menu, flags)) {
+    qWarning() << "Failed to export tray item objects on the session bus";
+    bus.unregisterObject(ITEM_PATH);
+    return;
+  }
+
   m_visible = true;
   registerService();
   registerWithWatcher();
@@ -325,4 +327,9 @@ void TrayServiceLinux::hide() {
   m_visible = false;
   m_registered = false;
   unregisterService();
+
+  // Some hosts scan the bus for unregistered items and ignore the Passive status.
+  auto bus = QDBusConnection::sessionBus();
+  bus.unregisterObject(ITEM_PATH);
+  bus.unregisterObject(MENU_PATH);
 }
