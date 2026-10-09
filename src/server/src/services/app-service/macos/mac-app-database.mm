@@ -24,8 +24,9 @@ NSString *toNSString(const fs::path &p) { return [NSString stringWithUTF8String:
 
 QString bundleIdentifierAt(NSURL *url) {
   if (!url) return {};
-  NSBundle *b = [NSBundle bundleWithURL:url];
-  return (b && b.bundleIdentifier) ? QString::fromNSString(b.bundleIdentifier) : QString();
+  NSDictionary *info = CFBridgingRelease(CFBundleCopyInfoDictionaryInDirectory((__bridge CFURLRef)url));
+  NSString *bundleId = info[@"CFBundleIdentifier"];
+  return bundleId ? QString::fromNSString(bundleId) : QString();
 }
 
 enum class TargetKind { Unknown, Url, Path, Uti };
