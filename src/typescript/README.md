@@ -4,6 +4,7 @@ More information can be obtained on each project by navigating to their respecti
 - `extension-manager`: a node process meant to be spawned by the main vicinae executable, ready to load and unload extension workers on-demand.
 - `@vicinae/api`: the vicinae SDK used to build extensions, as published on npm
 - `@vicinae/raycast-api-compat`: a private package that provides a raycast-compatible way to use the `@vicinae/api` package. It is a mere wrapper around it.
+- `@vicinae/utils`: shared utilities for building extensions, published on npm.
 
 # Integration with the build system
 
