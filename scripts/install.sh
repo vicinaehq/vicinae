@@ -278,6 +278,12 @@ download_appimage() {
 	fi
 }
 
+# AppImages may ship directories without group/other access (#2039), which
+# breaks a root install for every regular user
+fix_permissions() {
+	chmod -R u=rwX,go=rX "$1"
+}
+
 extract_appimage() {
 	local appimage_path="$1"
 	local keep_appimage="${2:-}"
@@ -300,6 +306,7 @@ extract_appimage() {
 		if [[ -d "squashfs-root" ]]; then
 			mv squashfs-root/* squashfs-root/.[!.]* . 2>/dev/null || true
 			rmdir squashfs-root 2>/dev/null || rm -rf squashfs-root
+			fix_permissions "$extract_dir"
 			ok "Extraction completed"
 			echo "$extract_dir"
 			rm $extract_logs
@@ -740,6 +747,10 @@ main() {
 		echo
 
 		if ! compare_versions "$installed_version" "$latest_version"; then
+			if [[ -n "$(find "$INSTALL_DIR" -type d ! -perm -o=rx -print -quit 2>/dev/null)" ]]; then
+				fix_permissions "$INSTALL_DIR"
+				ok "Repaired permissions in $INSTALL_DIR"
+			fi
 			ok "Vicinae is already up to date"
 			return 0
 		fi

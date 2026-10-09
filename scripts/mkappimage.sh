@@ -12,11 +12,17 @@ function die() {
 
 APPDIR=$2
 
+# The build container may run with a restrictive umask, which would make every
+# directory 0700 and the extracted install unusable for non-root users (#2039).
+umask 022
+
 rm -rf $APPDIR
 mkdir -p $APPDIR/usr
 cp -r $1/* $APPDIR/usr
 
 cp extra/vicinae.png ${APPDIR}
+
+chmod -R u=rwX,go=rX "$APPDIR"
 
 # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57
 cp /usr/lib/$(uname -m)-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
