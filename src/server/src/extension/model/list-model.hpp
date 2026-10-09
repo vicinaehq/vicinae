@@ -11,6 +11,7 @@
 
 struct ListItemViewModel {
   bool changed = false;
+  bool active = false;
   std::string id;
   std::string title;
   std::string subtitle;
