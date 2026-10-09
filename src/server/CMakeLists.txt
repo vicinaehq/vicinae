@@ -423,6 +423,8 @@ set(SRCS
 
 	src/extension/extension-interval-scheduler.hpp
 	src/extension/extension-interval-scheduler.cpp
+	src/extension/extension-background-runner.hpp
+	src/extension/extension-background-runner.cpp
 
 	src/log/message-handler.cpp
 

@@ -137,7 +137,7 @@ export class Toast {
 	 * @returns A Promise that resolves when the toast is shown.
 	 */
 	async show(): Promise<void> {
-		this.update();
+		await this.update();
 	}
 
 	/**

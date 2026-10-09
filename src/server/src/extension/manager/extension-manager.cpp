@@ -71,6 +71,8 @@ ExtensionManager::ExtensionManager() : m_bus(&m_process), m_rpc(m_bus), m_client
           &ExtensionManager::extensionMessageReceived);
   connect(m_client.manager(), &manager::ManagerService::extensionCrash, this,
           &ExtensionManager::extensionCrashed);
+  connect(m_client.manager(), &manager::ManagerService::extensionUnloaded, this,
+          &ExtensionManager::extensionUnloaded);
 
   connect(&m_bus, &Bus::messageReceived, this, [this](const QByteArray &msg) {
     std::string_view view{msg.constData(), static_cast<size_t>(msg.size())};
