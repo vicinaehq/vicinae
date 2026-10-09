@@ -1281,6 +1281,23 @@ if(WAYLAND_LAYER_SHELL)
 	)
 endif()
 
+if(UNIX AND NOT APPLE)
+   list(APPEND VICINAE_QML_FILES
+	   src/ui/qml/launcher/LauncherWindowLinux.qml
+	   src/ui/qml/launcher/LauncherWindowLinuxLayerShell.qml
+	   src/ui/qml/launcher/LauncherAppearanceMacOS.qml
+	   src/ui/qml/launcher/ScrollFadeMacOS.qml
+	   src/ui/qml/launcher/SearchBarMacOS.qml
+	    src/ui/qml/launcher/LauncherStatusBarLinux.qml
+	    src/ui/qml/launcher/FloatingControlLinux.qml
+	   src/ui/qml/controls/ContentDividerMacOS.qml
+	   src/ui/qml/controls/RoundedClipMacOS.qml
+	   src/ui/qml/controls/MaterialColorsMacOS.qml
+	   src/ui/qml/controls/GlassSurfaceMacOS.qml
+   )
+   set_source_files_properties(src/ui/qml/controls/MaterialColorsMacOS.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+endif()
+
 if(APPLE)
 	list(APPEND VICINAE_QML_FILES
 		src/ui/qml/launcher/LauncherWindowMacOS.qml
