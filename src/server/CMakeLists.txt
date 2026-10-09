@@ -1489,8 +1489,11 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/builtin-icon/builtin-icon.cpp
 		src/services/audio-control/pactl/pactl-audio-control.cpp
 		tests/pactl-audio-control.cpp
+		src/services/tray-host/sni/sni-watcher.hpp
+		src/services/tray-host/sni/sni-watcher.cpp
+		tests/sni-watcher.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
-	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
+	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui Qt6::DBus)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()

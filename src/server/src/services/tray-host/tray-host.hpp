@@ -2,4 +2,4 @@
 #include <memory>
 #include "services/tray-host/abstract-tray-host.hpp"
 
-std::unique_ptr<AbstractTrayHost> createTrayHost();
+std::unique_ptr<AbstractTrayHost> createTrayHost(bool watcherEnabled);
