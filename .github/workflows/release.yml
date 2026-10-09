@@ -163,6 +163,8 @@ jobs:
 
       - name: Make AppImage
         run: |
+          apt-get update
+          apt-get install -y zsync
           chmod +x ./scripts/mkappimage.sh
           ./scripts/mkappimage.sh "${INSTALL_DIR}" "${APP_DIR}"
 
@@ -170,7 +172,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vicinae-appimage-${{ matrix.target.arch }}
-          path: "*.AppImage"
+          path: |
+            *.AppImage
+            *.AppImage.zsync
           retention-days: 7
           if-no-files-found: error
           overwrite: true

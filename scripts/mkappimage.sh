@@ -53,6 +53,19 @@ for bin in $APPDIR/usr/libexec/vicinae/*; do
 	EXECUTABLE_ARGS+=(--executable $bin)
 done
 
+# AppImage managers (AppManager, AppImageUpdate, Gear Lever) read this from
+# the .upd_info ELF section. Without it, users have to paste the GitHub URL
+# by hand. The glob must match linuxdeploy's output name, e.g.
+# Vicinae-x86_64.AppImage.zsync. Always point at vicinaehq/vicinae so a
+# rebuild from a fork still updates from official releases.
+ARCH=$(uname -m)
+export LDAI_UPDATE_INFORMATION="gh-releases-zsync|vicinaehq|vicinae|latest|*${ARCH}.AppImage.zsync"
+export UPDATE_INFORMATION="$LDAI_UPDATE_INFORMATION"
+
+if ! command -v zsyncmake >/dev/null 2>&1; then
+	echo "warning: zsyncmake not found; the AppImage will embed update info but no .zsync sidecar will be generated" >&2
+fi
+
 linuxdeploy --appdir $APPDIR "${EXECUTABLE_ARGS[@]}" \
 	--library "$LIBSECRET" \
 	--desktop-file $APPDIR/usr/share/applications/vicinae.desktop \
