@@ -29,6 +29,8 @@ struct AppPreferences {
 };
 
 template <> struct PreferenceSchema<AppPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(AppPreferences)
+public:
 #ifndef Q_OS_MACOS
   PreferenceMeta defaultAction{
       .title = tr("Default action"),
@@ -72,5 +74,4 @@ template <> struct PreferenceSchema<AppPreferences> {
       .kind = PreferenceMeta::Kind::Directories,
   };
 #endif
-  Q_DECLARE_TR_FUNCTIONS(AppPreferences)
 };

@@ -71,6 +71,8 @@ struct CalculatorPreferences {
 };
 
 template <> struct PreferenceSchema<CalculatorPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(CalculatorPreferences)
+public:
   PreferenceMeta backend{
       .title = tr("Calculator Backend"),
       .description = tr("Which backend to use to perform calculations"),
@@ -83,7 +85,6 @@ template <> struct PreferenceSchema<CalculatorPreferences> {
             return options;
           },
   };
-  Q_DECLARE_TR_FUNCTIONS(CalculatorPreferences)
 };
 
 class CalculatorExtension : public TypedCommandRepository<CalculatorPreferences> {
