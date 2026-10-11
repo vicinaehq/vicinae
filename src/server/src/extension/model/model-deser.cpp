@@ -310,6 +310,7 @@ struct ListItemViewModelWire {
   std::vector<AccessoryWire> accessories;
   std::vector<std::string> keywords;
   std::optional<ClipboardContentWire> dragContent;
+  std::optional<bool> active;
   std::vector<ListItemChild> children;
 };
 
@@ -800,6 +801,7 @@ static ListItemViewModel toListItemViewModel(ListItemViewModelWire w) {
   m.id = std::move(w.id);
   m.title = takeString(std::move(w.title));
   m.subtitle = takeString(std::move(w.subtitle));
+  m.active = w.active.value_or(false);
   m.icon = w.icon ? std::optional(toImageWrapped(std::move(*w.icon))) : std::nullopt;
   m.accessories.reserve(w.accessories.size());
   for (auto &a : w.accessories)

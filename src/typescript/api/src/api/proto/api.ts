@@ -287,6 +287,9 @@ export type BrowserTab = {
 	url: string;
 	active: boolean;
 	browserId: string;
+	lastAccessed: number;
+	pinned: boolean;
+	audible: boolean;
 }
 
 class ApplicationService {
@@ -525,6 +528,10 @@ class BrowserExtensionService {
 
 	focusTab(browserId: string, tabId: number): Promise<void> {
 		return this.transport.request("BrowserExtension/focusTab", { browserId, tabId});	
+	}
+
+	closeTab(browserId: string, tabId: number): Promise<void> {
+		return this.transport.request("BrowserExtension/closeTab", { browserId, tabId});	
 	}
 
 }

@@ -39,6 +39,10 @@ protected:
   bool isDraggable(int i) const override;
   std::unique_ptr<QMimeData> dragMimeData(int i) const override;
 
+  QVariant customData(int i, int role) const override;
+  QHash<int, QByteArray> customRoleNames() const override;
+  QHash<int, QVariant> customRoleDefaults() const override;
+
 private:
   std::string m_name;
   std::vector<ListItemViewModel> m_items;

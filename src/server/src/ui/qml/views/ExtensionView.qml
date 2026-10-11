@@ -132,6 +132,7 @@ Item {
                     required property string iconSource
                     required property var itemAccessory
                     required property bool isDraggable
+                    required property bool isActive
 
                     sourceComponent: isSection ? sectionComponent : itemComponent
 
@@ -151,7 +152,7 @@ Item {
                             itemSubtitle: delegateLoader.subtitle
                             itemIconSource: delegateLoader.iconSource
                             itemAlias: ""
-                            itemIsActive: false
+                            itemIsActive: delegateLoader.isActive
                             itemAccessory: delegateLoader.itemAccessory
                             quickAccessIndex: delegateLoader.quickAccessIndex
                             selected: listView.currentIndex === delegateLoader.index
