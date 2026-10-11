@@ -31,9 +31,11 @@
     numenFor = pkgs:
       (numen.packages.${pkgs.stdenv.hostPlatform.system}.numen.override {
         withRepl = false;
-      }).override {
-        stdenv = pkgs.gcc15Stdenv;
-      };
+      }).override (
+        pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+          stdenv = pkgs.gcc15Stdenv;
+        }
+      );
   in {
     packages = forEachPkgs (pkgs: let
       vicinae = pkgs.callPackage ./nix/vicinae.nix ({
