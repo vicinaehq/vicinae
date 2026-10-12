@@ -12,7 +12,6 @@ export const getPreferenceValues = <
  * Opens the extension preferences in the vicinae settings window.
  */
 export const openExtensionPreferences = async (): Promise<void> => {
-	console.error("openExtensionPreferences is not implemented");
 	await getClient().Command.openExtensionPreferences();
 	await closeMainWindow();
 };
