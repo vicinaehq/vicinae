@@ -28,6 +28,7 @@
 
 #include <QDebug>
 #include <QFileInfo>
+#include <QMimeDatabase>
 #include <array>
 #include <chrono>
 #include <string>
@@ -384,6 +385,13 @@ std::optional<Assoc> classifyTarget(const QString &target) {
   std::wstring ext = lowerExtension(path);
   if (ext.empty()) return std::nullopt;
   return Assoc{AssocKind::Extension, std::move(ext)};
+}
+
+// Windows associates handlers with extensions, not MIME types
+std::optional<QString> extensionTargetForMime(const QString &mime) {
+  const QString suffix = QMimeDatabase().mimeTypeForName(mime).preferredSuffix();
+  if (suffix.isEmpty()) return std::nullopt;
+  return QStringLiteral("content.") + suffix;
 }
 
 std::optional<std::wstring> assocQueryString(ASSOCSTR type, const std::wstring &assoc) {
@@ -1067,6 +1075,16 @@ WindowsAppDatabase::AppPtr WindowsAppDatabase::findDefaultOpener(const Target &t
   if (auto exe = defaultHandlerExe(assoc->value))
     return resolveExecutable(*exe, friendlyAppName(assoc->value));
   return makeShellOpenApp(target); // UWP handler: defer to the shell
+}
+
+std::vector<WindowsAppDatabase::AppPtr> WindowsAppDatabase::findOpenersForMime(const QString &mime) const {
+  const auto target = extensionTargetForMime(mime);
+  return target ? findOpeners(*target) : std::vector<AppPtr>{};
+}
+
+WindowsAppDatabase::AppPtr WindowsAppDatabase::findDefaultOpenerForMime(const QString &mime) const {
+  const auto target = extensionTargetForMime(mime);
+  return target ? findDefaultOpener(*target) : nullptr;
 }
 
 WindowsAppDatabase::AppPtr WindowsAppDatabase::findById(const QString &id) const {

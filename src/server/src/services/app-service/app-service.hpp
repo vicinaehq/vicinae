@@ -71,6 +71,7 @@ public:
    */
   std::shared_ptr<AbstractApplication> find(const QString &target) const;
   std::shared_ptr<AbstractApplication> findDefaultOpener(const QString &target) const;
+  std::shared_ptr<AbstractApplication> findDefaultOpenerForMime(const QString &mime) const;
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const;
   bool openLocation(const AbstractApplication &app) const;
   bool canUninstall(const AbstractApplication &app) const;
@@ -86,6 +87,7 @@ public:
   bool scanSync();
 
   std::vector<std::shared_ptr<AbstractApplication>> findOpeners(const QString &target) const;
+  std::vector<std::shared_ptr<AbstractApplication>> findOpenersForMime(const QString &mime) const;
 
   /**
    * Calls findOpeners and applies additonal dedupe logic to the list of results.

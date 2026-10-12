@@ -11,6 +11,10 @@
 #include <expected>
 #include <filesystem>
 #include <optional>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+#include <QFileSystemWatcher>
 #include <qcontainerfwd.h>
 #include <qdir.h>
 #include <qfileinfo.h>
@@ -35,6 +39,7 @@ signals:
   void selectionPinStatusChanged(const QString &id, bool pinned) const;
   void selectionKeywordsChanged(const QString &id, const QString &keywords) const;
   void selectionRemoved(const QString &id) const;
+  void selectionContentChanged(const QString &id) const;
   /**
    * When a selection is copied, its update time is modified which makes it appear on top
    * of the list.
@@ -62,12 +67,27 @@ public:
   bool setKeywords(const QString &id, const QString &keywords);
 
   std::expected<QByteArray, OfferDecryptionError> getMainOfferData(const QString &selectionId) const;
+
+  /**
+   * Writes the decrypted main offer to a file that can be handed to another application.
+   * The file lives in the runtime directory and does not outlive the selection or the session.
+   * Changes made to it are written back to the selection.
+   */
+  std::expected<std::filesystem::path, OfferDecryptionError> exportMainOffer(const QString &selectionId,
+                                                                             std::string_view fileName);
+
+  /**
+   * Replaces the content of the selection's main offer. The other offers are dropped, as they would no
+   * longer represent the same content.
+   */
+  bool replaceMainOfferData(const QString &selectionId, QByteArray data);
   AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(const QString &id);
   bool setPinned(const QString &id, bool pinned);
   QFuture<PaginatedResponse<ClipboardHistoryEntry>> listAll(int limit = 100, int offset = 0,
                                                             const ClipboardListSettings &opts = {}) const;
   static constexpr int CLIPBOARD_RESTORE_DELAY_MS = 800;
+  static constexpr std::chrono::milliseconds EXPORT_SYNC_DEBOUNCE{500};
 
   bool copyText(const QString &text, const Clipboard::CopyOptions &options = {.concealed = true});
   void scheduleClipboardRestore(int delayMs = CLIPBOARD_RESTORE_DELAY_MS);
@@ -115,6 +135,11 @@ private:
 
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;
+  std::filesystem::path m_exportDir;
+  std::unordered_map<QString, std::filesystem::path> m_exports;
+  std::vector<QString> m_changedExports;
+  QFileSystemWatcher m_exportWatcher;
+  QTimer m_exportDebounce;
   AppService &m_appService;
   AppRuntime &m_appRuntime;
   std::optional<db::EncryptionKey> m_dbKey;
@@ -148,6 +173,23 @@ private:
 
   std::expected<QByteArray, ClipboardService::OfferDecryptionError>
   decryptOffer(const QByteArray &data, ClipboardEncryptionType type) const;
+
+  struct StoredOffer {
+    QString md5sum;
+    QString textPreview;
+  };
+
+  /**
+   * Indexes the offer and writes its data to disk. Meant to be called from inside a transaction.
+   */
+  std::optional<StoredOffer> storeOffer(ClipboardDatabase &db, const QString &selectionId,
+                                        const ClipboardDataOffer &offer,
+                                        const QString &preferredMimeType) const;
+
+  void watchExport(const QString &selectionId, const std::filesystem::path &path);
+  void removeExport(const QString &selectionId);
+  void markExportChanged(const QString &selectionId);
+  void syncChangedExports();
 
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
 
