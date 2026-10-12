@@ -140,7 +140,7 @@ static const std::unordered_map<Keybind, KeybindInfo> &keybindInfos() {
 		.name = QCoreApplication::translate("keybind-manager", "Run as Administrator"),
 		.description = QCoreApplication::translate("keybind-manager", "Runs the application with elevated privileges"),
 		.icon = BuiltinIcon::Shield01,
-		.dflt = Keyboard::Shortcut(Qt::Key_Enter, Qt::ControlModifier | Qt::ShiftModifier)
+		.dflt = Keyboard::Shortcut(Qt::Key_Return, Qt::ControlModifier | Qt::ShiftModifier)
 	}}
 #endif
 	};
