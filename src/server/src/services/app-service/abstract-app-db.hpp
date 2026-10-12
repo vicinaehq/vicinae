@@ -1,5 +1,6 @@
 #pragma once
 #include "command/preference-schema.hpp"
+#include "keyboard/keyboard.hpp"
 #include "services/app-service/app-preferences.hpp"
 #include "ui/image/url.hpp"
 #include <QProcess>
@@ -64,6 +65,11 @@ public:
    * Currently, on the XdgApplicationDatabase supports this.
    */
   virtual std::vector<std::shared_ptr<AbstractApplication>> actions() const { return {}; }
+
+  /**
+   * Shortcut for the additional action or command.
+   */
+  virtual std::optional<Keyboard::Shortcut> shortcut() const { return std::nullopt; }
 
   /**
    * Additional keywords that can be used to index the application.
