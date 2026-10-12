@@ -1,5 +1,6 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
+#include <span>
 #include "builtins/clipboard/history/clipboard-history-model.hpp"
 #include "ui/views/bridge-view.hpp"
 #include "ui/quick/completion-model.hpp"
@@ -82,6 +83,7 @@ private:
   void handleDataRetrieved(int totalCount);
   void loadDetail(const ClipboardHistoryEntry &entry);
   void clearDetail();
+  void reloadStaleDetail(std::span<const ClipboardHistoryEntry> entries);
   void saveDropdownFilter(const QString &value);
   std::optional<QString> getSavedDropdownFilter();
 
@@ -106,6 +108,7 @@ private:
   QString m_detailSize;
   QString m_detailCopiedAt;
   QString m_detailMd5;
+  QString m_detailEntryId;
   QString m_detailEncryptionIcon;
   QString m_detailErrorTitle;
   QString m_detailErrorDescription;

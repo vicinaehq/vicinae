@@ -124,7 +124,10 @@ void ClipboardHistoryViewHost::initialize() {
             bool const incremental = !m_model.selectFirstOnReset();
             m_section.setEntries(page);
             m_model.setSelectFirstOnReset(false);
-            if (incremental) m_model.refreshActionPanel();
+            if (incremental) {
+              m_model.refreshActionPanel();
+              reloadStaleDetail(page.data);
+            }
             handleDataRetrieved(page.totalCount);
           });
 
@@ -206,6 +209,7 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   m_detailSize = formatSize(entry.size);
   m_detailCopiedAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt).toString();
   m_detailMd5 = entry.md5sum;
+  m_detailEntryId = entry.id;
 
   if (entry.encryption != ClipboardEncryptionType::None) {
     m_detailEncryptionIcon =
@@ -292,6 +296,14 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   emit detailChanged();
 }
 
+void ClipboardHistoryViewHost::reloadStaleDetail(std::span<const ClipboardHistoryEntry> entries) {
+  if (!m_hasDetail) return;
+
+  const auto it = std::ranges::find(entries, m_detailEntryId, &ClipboardHistoryEntry::id);
+
+  if (it != entries.end() && it->md5sum != m_detailMd5) loadDetail(*it);
+}
+
 void ClipboardHistoryViewHost::clearDetail() {
   if (!m_hasDetail) return;
   m_hasDetail = false;
@@ -302,6 +314,7 @@ void ClipboardHistoryViewHost::clearDetail() {
   m_detailSize.clear();
   m_detailCopiedAt.clear();
   m_detailMd5.clear();
+  m_detailEntryId.clear();
   m_detailEncryptionIcon.clear();
   m_detailErrorTitle.clear();
   m_detailErrorDescription.clear();

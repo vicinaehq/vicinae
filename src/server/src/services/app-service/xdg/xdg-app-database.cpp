@@ -346,6 +346,12 @@ std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &target) const {
   return findAssociations(mimeNameForTarget(target));
 }
 
+std::vector<AppPtr> XdgAppDatabase::findOpenersForMime(const QString &mime) const {
+  return findAssociations(mime);
+}
+
+AppPtr XdgAppDatabase::findDefaultOpenerForMime(const QString &mime) const { return defaultForMime(mime); }
+
 // https://specifications.freedesktop.org/mime-apps-spec/latest/associations.html
 std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) const {
   std::set<std::string> seen;

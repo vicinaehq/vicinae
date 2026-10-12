@@ -187,6 +187,22 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
         mainSection->addAction(openWith);
       }
     }
+
+    else if (isCopyable) {
+      const auto mime = Utils::normalizeMimeName(entry.mimeType);
+      auto fileName = suggestedFileName(entry);
+
+      if (auto app = appDb->findDefaultOpenerForMime(mime)) {
+        auto open = new OpenClipboardSelectionAction(
+            app, QCoreApplication::translate("ClipboardHistorySection", "Open"), entry.id, fileName);
+        open->setShortcut(Keybind::OpenAction);
+        mainSection->addAction(open);
+      }
+
+      auto openWith = new OpenClipboardSelectionWithAction(entry.id, mime, std::move(fileName));
+      openWith->setShortcut(Keyboard::Shortcut(Qt::Key_O, Qt::ControlModifier).shifted());
+      mainSection->addAction(openWith);
+    }
   }
 
   if (isCopyable && entry.kind != ClipboardOfferKind::File) {

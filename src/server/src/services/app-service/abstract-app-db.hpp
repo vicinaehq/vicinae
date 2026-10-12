@@ -205,6 +205,16 @@ public:
   virtual AppPtr findDefaultOpener(const Target &target) const = 0;
 
   /**
+   * Same as `findOpeners`, for content that is only known by its MIME type.
+   */
+  virtual std::vector<AppPtr> findOpenersForMime(const QString &mime) const = 0;
+
+  /**
+   * Same as `findDefaultOpener`, for content that is only known by its MIME type.
+   */
+  virtual AppPtr findDefaultOpenerForMime(const QString &mime) const = 0;
+
+  /**
    * Make `app` the default opener for the given mime type.
    * Returns false if the platform does not support it or if the change could not be applied.
    */
