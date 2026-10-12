@@ -18,17 +18,17 @@ Item {
     ScrollViewport {
         id: viewport
         anchors.fill: parent
-        flickable: flickable
+        flickable: metadataFlickable
 
         Flickable {
-            id: flickable
+            id: metadataFlickable
             anchors.fill: parent
             contentHeight: column.implicitHeight + 20
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
             ViciWheelHandler {
-                target: flickable
+                target: metadataFlickable
             }
 
             ColumnLayout {
