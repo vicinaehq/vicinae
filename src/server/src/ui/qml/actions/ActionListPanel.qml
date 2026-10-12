@@ -303,7 +303,7 @@ Item {
 
     Component.onCompleted: {
         if (root.model) {
-            var first = root.model.nextSelectableIndex(-1, 1);
+            const first = root.model.nextSelectableIndex(-1, 1);
             if (first >= 0)
                 listView.currentIndex = first;
         }

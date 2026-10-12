@@ -60,7 +60,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
             implicitHeight: children.length > 0 ? children[0].implicitHeight : 0
             onChildrenChanged: {
-                for (var i = 0; i < children.length; i++) {
+                for (let i = 0; i < children.length; i++) {
                     if (children[i].accessibleLabel !== undefined)
                         children[i].accessibleLabel = Qt.binding(function () {
                             return root.label;

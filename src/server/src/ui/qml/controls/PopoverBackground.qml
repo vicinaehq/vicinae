@@ -24,11 +24,7 @@ Item {
     readonly property int backdropPad: 96
 
     // bg's origin in backdrop coordinates.
-    readonly property point _origin: {
-        popup.x;
-        popup.y;
-        return backdrop ? bg.mapToItem(backdrop, 0, 0) : Qt.point(0, 0);
-    }
+    property point _origin: Qt.point(0, 0)
     // Padded capture area, clamped to the backdrop bounds so the blur never
     // samples transparent void (it darkens into a halo).
     readonly property rect _captureRect: {
@@ -39,6 +35,25 @@ Item {
         const x1 = Math.min(backdrop.width, _origin.x + bg.width + backdropPad);
         const y1 = Math.min(backdrop.height, _origin.y + bg.height + backdropPad);
         return Qt.rect(x0, y0, Math.max(1, x1 - x0), Math.max(1, y1 - y0));
+    }
+
+    function _updateOrigin() {
+        _origin = backdrop ? bg.mapToItem(backdrop, 0, 0) : Qt.point(0, 0);
+    }
+
+    onBackdropChanged: _updateOrigin()
+    Component.onCompleted: _updateOrigin()
+
+    Connections {
+        target: bg.popup
+
+        function onXChanged() {
+            bg._updateOrigin();
+        }
+
+        function onYChanged() {
+            bg._updateOrigin();
+        }
     }
 
     Rectangle {

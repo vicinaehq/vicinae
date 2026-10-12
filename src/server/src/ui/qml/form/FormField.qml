@@ -45,7 +45,7 @@ ColumnLayout {
             onChildrenChanged: _applyChildProps()
             onWidthChanged: _applyChildProps()
             function _applyChildProps() {
-                for (var i = 0; i < children.length; i++) {
+                for (let i = 0; i < children.length; i++) {
                     children[i].width = Qt.binding(function () {
                         return contentSlot.width;
                     });

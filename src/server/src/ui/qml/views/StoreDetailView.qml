@@ -55,10 +55,10 @@ Item {
     ScrollViewport {
         id: viewport
         anchors.fill: parent
-        flickable: flickable
+        flickable: detailFlickable
 
         Flickable {
-            id: flickable
+            id: detailFlickable
             anchors.fill: parent
             contentWidth: width
             contentHeight: content.implicitHeight
@@ -68,7 +68,7 @@ Item {
             visible: root.host.isReady
 
             ViciWheelHandler {
-                target: flickable
+                target: detailFlickable
             }
 
             ColumnLayout {
