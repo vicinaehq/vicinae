@@ -29,11 +29,11 @@ RowLayout {
 
     function validate() {
         var firstRequired = -1;
-        for (var i = 0; i < argRepeater.count; i++) {
-            var field = (argRepeater.itemAt(i) as Loader)?.item as ArgField;
+        for (let i = 0; i < argRepeater.count; i++) {
+            const field = (argRepeater.itemAt(i) as Loader)?.item as ArgField;
             if (!field)
                 continue;
-            var arg = root.visibleArgs[i];
+            const arg = root.visibleArgs[i];
             if (arg.required && field.currentValue === "") {
                 field.showError = true;
                 if (firstRequired === -1) {
@@ -45,11 +45,11 @@ RowLayout {
     }
 
     function setValues(values) {
-        for (var i = 0; i < argRepeater.count && i < values.length; i++) {
-            var field = (argRepeater.itemAt(i) as Loader)?.item as ArgField;
+        for (let i = 0; i < argRepeater.count && i < values.length; i++) {
+            const field = (argRepeater.itemAt(i) as Loader)?.item as ArgField;
             if (!field)
                 continue;
-            var val = values[i].value;
+            const val = values[i].value;
             if (field.currentValue !== val)
                 field.currentValue = val;
         }
@@ -180,7 +180,7 @@ RowLayout {
                     onCurrentValueChanged: {
                         if (!argLoader.modelData.data)
                             return;
-                        for (var i = 0; i < argLoader.modelData.data.length; i++) {
+                        for (let i = 0; i < argLoader.modelData.data.length; i++) {
                             if (argLoader.modelData.data[i].value === currentValue) {
                                 dropdown.currentItem = {
                                     id: argLoader.modelData.data[i].value,
@@ -208,8 +208,8 @@ RowLayout {
                             if (!argLoader.modelData.data)
                                 return [];
                             var entries = [];
-                            for (var i = 0; i < argLoader.modelData.data.length; i++) {
-                                var d = argLoader.modelData.data[i];
+                            for (let i = 0; i < argLoader.modelData.data.length; i++) {
+                                const d = argLoader.modelData.data[i];
                                 entries.push({
                                     id: d.value,
                                     displayName: d.title,

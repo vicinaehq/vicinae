@@ -3,6 +3,7 @@
 #include "ui/views/section-source.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include <functional>
+#include <span>
 
 class ClipboardHistorySection : public SectionSource {
 public:
@@ -16,6 +17,7 @@ public:
   int count() const override { return static_cast<int>(m_entries.size()); }
 
   const ClipboardHistoryEntry &entryAt(int i) const { return m_entries[i]; }
+  std::span<const ClipboardHistoryEntry> entries() const { return m_entries; }
 
   void setOnEntrySelected(std::function<void(const ClipboardHistoryEntry &)> cb) {
     m_onEntrySelected = std::move(cb);

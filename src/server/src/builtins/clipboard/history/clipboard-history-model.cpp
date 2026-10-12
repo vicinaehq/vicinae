@@ -1,5 +1,6 @@
 #include "builtins/clipboard/history/clipboard-history-model.hpp"
 #include "actions/app-actions.hpp"
+#include "actions/save-as-action.hpp"
 #include "common/context.hpp"
 #include "builtins/clipboard/history/clipboard-history-actions.hpp"
 #include "internal/keyboard/keybind.hpp"
@@ -13,8 +14,47 @@
 #include "utils/utils.hpp"
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QMimeDatabase>
+#include <filesystem>
 #include <qlogging.h>
 #include <qnamespace.h>
+
+static std::string suggestedFileName(const ClipboardHistoryEntry &entry) {
+  QMimeDatabase const db;
+  auto suffix = db.mimeTypeForName(Utils::normalizeMimeName(entry.mimeType)).preferredSuffix();
+
+  if (suffix.isEmpty() && entry.kind != ClipboardOfferKind::Image) suffix = QStringLiteral("txt");
+
+  auto name = QStringLiteral("clipboard-") +
+              QDateTime::fromSecsSinceEpoch(entry.updatedAt).toString(QStringLiteral("yyyyMMdd-HHmmss"));
+
+  if (!suffix.isEmpty()) name += u'.' + suffix;
+
+  return name.toStdString();
+}
+
+static SaveAsAction *saveSelectionAction(ClipboardService *clipman, const ClipboardHistoryEntry &entry) {
+  auto save =
+      new SaveAsAction([clipman, id = entry.id,
+                        name = suggestedFileName(entry)]() -> std::expected<SaveAsAction::Payload, QString> {
+        auto data = clipman->getMainOfferData(id);
+        if (!data) {
+          return std::unexpected(
+              QCoreApplication::translate("ClipboardHistorySection", "Failed to read clipboard data"));
+        }
+        return SaveAsAction::Payload{.suggestedName = name, .content = std::move(*data)};
+      });
+  save->setShortcut(Keybind::SaveAction);
+  return save;
+}
+
+static SaveAsAction *saveFileAction(std::filesystem::path path) {
+  auto save = new SaveAsAction([path = std::move(path)]() -> std::expected<SaveAsAction::Payload, QString> {
+    return SaveAsAction::Payload{.suggestedName = path.filename().string(), .content = path};
+  });
+  save->setShortcut(Keybind::SaveAction);
+  return save;
+}
 
 void ClipboardHistorySection::setEntries(const PaginatedResponse<ClipboardHistoryEntry> &page) {
   m_entries = page.data;
@@ -123,6 +163,12 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
             auto openWith = new OpenWithAction(url.path());
             openWith->setShortcut(Keyboard::Shortcut(Qt::Key_O, Qt::ControlModifier).shifted());
             mainSection->addAction(openWith);
+
+            std::error_code ec;
+            std::filesystem::path path = url.toLocalFile().toStdString();
+            if (std::filesystem::is_regular_file(path, ec)) {
+              mainSection->addAction(saveFileAction(std::move(path)));
+            }
           }
         }
       }
@@ -141,6 +187,26 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
         mainSection->addAction(openWith);
       }
     }
+
+    else if (isCopyable) {
+      const auto mime = Utils::normalizeMimeName(entry.mimeType);
+      auto fileName = suggestedFileName(entry);
+
+      if (auto app = appDb->findDefaultOpenerForMime(mime)) {
+        auto open = new OpenClipboardSelectionAction(
+            app, QCoreApplication::translate("ClipboardHistorySection", "Open"), entry.id, fileName);
+        open->setShortcut(Keybind::OpenAction);
+        mainSection->addAction(open);
+      }
+
+      auto openWith = new OpenClipboardSelectionWithAction(entry.id, mime, std::move(fileName));
+      openWith->setShortcut(Keyboard::Shortcut(Qt::Key_O, Qt::ControlModifier).shifted());
+      mainSection->addAction(openWith);
+    }
+  }
+
+  if (isCopyable && entry.kind != ClipboardOfferKind::File) {
+    mainSection->addAction(saveSelectionAction(clipman, entry));
   }
 
   auto toolsSection = panel->createSection();

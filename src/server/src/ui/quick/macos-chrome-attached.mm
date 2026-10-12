@@ -581,7 +581,9 @@ void MacOSPanelAttached::apply() {
 
   // Native child panels stay above their owner through raises and window moves,
   // without the input grab of a Qt.Popup window.
-  if (m_attachedToParent && m_window->transientParent() && m_window->transientParent()->handle()) {
+  // Adding a native child orders it on screen, even when its QWindow is hidden.
+  if (m_attachedToParent && m_window->isVisible() && m_window->transientParent() &&
+      m_window->transientParent()->handle()) {
     NSWindow *parent = nsViewFromWinId(m_window->transientParent()->winId()).window;
     if (parent && nswin.parentWindow != parent) {
       [nswin.parentWindow removeChildWindow:nswin];

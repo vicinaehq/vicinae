@@ -335,6 +335,12 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   emit windowVisiblityChanged(false);
 }
 
+void NavigationController::releaseSuspendedClose() {
+  if (m_pendingPopToRoot && m_pendingPopToRoot->type == PopToRootType::Suspended) {
+    m_pendingPopToRoot->type = PopToRootType::Default;
+  }
+}
+
 bool NavigationController::windowActivated() { return m_windowActivated; }
 
 void NavigationController::setCloseOnFocusLoss(bool value) { m_closeOnFocusLoss = value; }

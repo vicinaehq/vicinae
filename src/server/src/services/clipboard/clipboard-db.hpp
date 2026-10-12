@@ -15,6 +15,7 @@ enum class ClipboardEncryptionType : std::uint8_t {
 
 struct PreferredClipboardOfferRecord {
   QString id;
+  QString mimeType;
   ClipboardEncryptionType encryption;
 };
 
@@ -84,6 +85,17 @@ struct ClipboardSelectionRecord {
   std::optional<QString> source;
 };
 
+struct RemovedSelections {
+  std::vector<QString> selections;
+  // so that the clipboard service can remove them from disk
+  std::vector<QString> offers;
+
+  void add(const QString &selectionId, const QString &offerId) {
+    if (selections.empty() || selections.back() != selectionId) selections.emplace_back(selectionId);
+    offers.emplace_back(offerId);
+  }
+};
+
 class ClipboardDatabase {
 
 public:
@@ -98,7 +110,7 @@ public:
 
   static QStringList searchTerms(const QString &query);
 
-  std::optional<std::vector<QString>> removeAll(bool preserveTagged = false);
+  std::optional<RemovedSelections> removeAll(bool preserveTagged = false);
 
   bool setKeywords(const QString &id, const QString &keywords);
   std::optional<QString> retrieveKeywords(const QString &id);
@@ -110,10 +122,16 @@ public:
   bool indexSelectionContent(const QString &selectionId, const QString &content);
   std::vector<QString> removeSelection(const QString &selectionId);
 
+  /**
+   * Removes the offers and the indexed content of a selection, keeping the selection itself and its keywords.
+   * Returns the IDs of the removed offers. Meant to be called from inside a transaction.
+   */
+  std::optional<std::vector<QString>> clearSelectionOffers(const QString &selectionId);
+  bool setSelectionHash(const QString &selectionId, const QString &hash, int offerCount);
+
   std::optional<PreferredClipboardOfferRecord> findPreferredOffer(const QString &selectionId);
 
-  // return the IDs of the offers that were removed, so that the clipboard service can remove them from disk
-  std::vector<QString> evictOlderThan(std::chrono::seconds secs, bool preserveTagged = true);
+  RemovedSelections evictOlderThan(std::chrono::seconds secs, bool preserveTagged = true);
 
   std::optional<int64_t> oldestEvictableTimestamp(bool preserveTagged = true);
 

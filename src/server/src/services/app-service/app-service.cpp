@@ -134,6 +134,14 @@ std::vector<std::shared_ptr<AbstractApplication>> AppService::findOpeners(const 
   return m_provider->findOpeners(target);
 }
 
+std::vector<std::shared_ptr<AbstractApplication>> AppService::findOpenersForMime(const QString &mime) const {
+  return m_provider->findOpenersForMime(mime);
+}
+
+std::shared_ptr<AbstractApplication> AppService::findDefaultOpenerForMime(const QString &mime) const {
+  return m_provider->findDefaultOpenerForMime(mime);
+}
+
 std::vector<std::shared_ptr<AbstractApplication>>
 AppService::findCuratedOpeners(const QString &target) const {
   std::set<QString> seenNames;

@@ -186,6 +186,8 @@ set(SRCS
 
 	src/actions/app-actions.hpp
 	src/actions/app-actions.cpp
+	src/actions/save-as-action.hpp
+	src/actions/save-as-action.cpp
 	
 	src/service-registry.cpp
 
@@ -1194,6 +1196,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/detail/DetailPanel.qml
 	src/ui/qml/detail/MetadataBar.qml
 	src/ui/qml/launcher/AlertDialog.qml
+	src/ui/qml/launcher/SaveFileFallback.qml
 	src/ui/qml/form/FormView.qml
 	src/ui/qml/form/FormField.qml
 	src/ui/qml/form/FormInputBackground.qml

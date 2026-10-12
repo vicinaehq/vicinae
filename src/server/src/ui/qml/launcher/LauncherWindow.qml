@@ -283,6 +283,8 @@ LauncherWindowBase {
         }
     }
 
+    SaveFileFallback {}
+
     Window {
         id: anchorOverlay
         visible: Launcher.dragOverlayVisible
