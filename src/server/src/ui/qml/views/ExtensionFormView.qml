@@ -26,8 +26,8 @@ Item {
     function _tryAutoFocus() {
         if (_autoFocusDone)
             return;
-        for (var i = 0; i < repeater.count; i++) {
-            var item = repeater.itemAt(i);
+        for (let i = 0; i < repeater.count; i++) {
+            const item = repeater.itemAt(i);
             if (item && item.autoFocus) {
                 _autoFocusDone = true;
                 Qt.callLater(function () {
@@ -36,8 +36,8 @@ Item {
                 return;
             }
         }
-        for (var j = 0; j < repeater.count; j++) {
-            var item2 = repeater.itemAt(j);
+        for (let j = 0; j < repeater.count; j++) {
+            const item2 = repeater.itemAt(j);
             if (item2 && item2.isField) {
                 _autoFocusDone = true;
                 Qt.callLater(function () {
