@@ -27,6 +27,7 @@ export namespace Detail {
 		metadata?: ReactNode;
 		markdown: string;
 		actions?: ReactNode;
+		isLoading?: boolean;
 	};
 }
 

@@ -34,6 +34,7 @@ declare module "react" {
 			detail: {
 				navigationTitle?: string;
 				markdown: string;
+				isLoading?: boolean;
 			};
 			list: {
 				children?: React.ReactNode;
