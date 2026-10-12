@@ -14,6 +14,8 @@ class ViciImageItem : public QQuickItem {
   Q_PROPERTY(int fillMode READ fillMode WRITE setFillMode NOTIFY fillModeChanged)
   Q_PROPERTY(bool cache READ cache WRITE setCache NOTIFY cacheChanged)
   Q_PROPERTY(bool safetyMargins READ safetyMargins WRITE setSafetyMargins NOTIFY safetyMarginsChanged)
+  Q_PROPERTY(bool retainFrameWhileLoading READ retainFrameWhileLoading WRITE setRetainFrameWhileLoading NOTIFY
+                 retainFrameWhileLoadingChanged)
   Q_PROPERTY(int status READ status NOTIFY statusChanged)
 
 signals:
@@ -22,6 +24,7 @@ signals:
   void fillModeChanged();
   void cacheChanged();
   void safetyMarginsChanged();
+  void retainFrameWhileLoadingChanged();
   void statusChanged();
 
 public:
@@ -49,6 +52,9 @@ public:
   bool safetyMargins() const { return m_safetyMargins; }
   void setSafetyMargins(bool enabled);
 
+  bool retainFrameWhileLoading() const { return m_retainFrameWhileLoading; }
+  void setRetainFrameWhileLoading(bool enabled);
+
   int status() const { return m_status; }
 
 protected:
@@ -58,6 +64,7 @@ protected:
 
 private:
   void reload();
+  void clearFrame();
   void setStatus(Status s);
 
   QVariant m_source;
@@ -66,6 +73,7 @@ private:
   int m_fillMode = PreserveAspectFit;
   bool m_cache = true;
   bool m_safetyMargins = false;
+  bool m_retainFrameWhileLoading = false;
   Status m_status = Null;
 
   ImageStream *m_stream = nullptr;

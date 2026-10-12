@@ -62,6 +62,20 @@ void ViciImageItem::setSafetyMargins(bool enabled) {
   reload();
 }
 
+void ViciImageItem::setRetainFrameWhileLoading(bool enabled) {
+  if (m_retainFrameWhileLoading == enabled) return;
+  m_retainFrameWhileLoading = enabled;
+  emit retainFrameWhileLoadingChanged();
+}
+
+void ViciImageItem::clearFrame() {
+  delete m_pendingTexture;
+  m_pendingTexture = nullptr;
+  m_currentFrame = {};
+  m_currentFrameKey = 0;
+  m_frameDirty = true;
+}
+
 void ViciImageItem::setStatus(Status s) {
   if (m_status == s) return;
   m_status = s;
@@ -75,11 +89,7 @@ void ViciImageItem::reload() {
   m_stream = nullptr;
 
   if (!m_resolvedUrl.isValid()) {
-    delete m_pendingTexture;
-    m_pendingTexture = nullptr;
-    m_currentFrame = {};
-    m_currentFrameKey = 0;
-    m_frameDirty = true;
+    clearFrame();
     setImplicitSize(0, 0);
     setStatus(Null);
     update();
@@ -129,14 +139,16 @@ void ViciImageItem::reload() {
     update();
   });
 
-  connect(m_stream, &ImageStream::failed, this, [this]() { setStatus(Error); });
+  connect(m_stream, &ImageStream::failed, this, [this]() {
+    if (m_retainFrameWhileLoading && !m_currentFrame.isNull()) {
+      clearFrame();
+      update();
+    }
+    setStatus(Error);
+  });
 
   if (!m_stream->start()) {
-    delete m_pendingTexture;
-    m_pendingTexture = nullptr;
-    m_currentFrame = {};
-    m_currentFrameKey = 0;
-    m_frameDirty = true;
+    if (!m_retainFrameWhileLoading) clearFrame();
     setStatus(Loading);
     update();
   }

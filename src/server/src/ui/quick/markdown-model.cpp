@@ -5,15 +5,24 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "theme/theme-file.hpp"
+#include "data-uri/data-uri.hpp"
+#include <QBuffer>
 #include <QClipboard>
+#include <QDir>
 #include <QGuiApplication>
+#include <QImageReader>
 #include <QRegularExpression>
+#include <QSvgRenderer>
 #include <QUrlQuery>
 #include <cmark-gfm.h>
 #include <cmark-gfm-core-extensions.h>
 #include <cmark-gfm-extension_api.h>
 #include <pugixml/pugixml.hpp>
+#include <algorithm>
+#include <array>
 #include <cstring>
+#include <ranges>
+#include <span>
 #include <utility>
 
 namespace {
@@ -31,6 +40,54 @@ GfmNodeType getGfmNodeType(cmark_node *node) {
   return GfmNodeType::Unknown;
 }
 
+constexpr auto IMAGE_WIDTH_PARAMS = std::to_array<const char *>({"raycast-width", "omnicast-width"});
+constexpr auto IMAGE_HEIGHT_PARAMS = std::to_array<const char *>({"raycast-height", "omnicast-height"});
+
+// Size hints are appended as a query string, which for data URIs would otherwise end up in the payload.
+QString stripImageSizeParams(const QString &rawUrl, const QUrl &url) {
+  auto const queryIdx = rawUrl.indexOf('?');
+  if (queryIdx == -1) return rawUrl;
+
+  QUrlQuery query(url);
+  for (const auto *name : IMAGE_WIDTH_PARAMS) {
+    query.removeAllQueryItems(name);
+  }
+  for (const auto *name : IMAGE_HEIGHT_PARAMS) {
+    query.removeAllQueryItems(name);
+  }
+
+  QString stripped = rawUrl.left(queryIdx);
+  if (!query.isEmpty()) stripped += '?' + query.toString(QUrl::FullyEncoded);
+  return stripped;
+}
+
+// Lets QML size an image by its aspect ratio. Remote images are not measured to avoid blocking on the network.
+QSize intrinsicImageSize(const QString &rawUrl) {
+  QUrl const url(rawUrl);
+  auto const scheme = url.scheme();
+
+  if (scheme == "data") {
+    auto const stripped = stripImageSizeParams(rawUrl, url);
+    DataUri const uri(stripped);
+    QByteArray content = uri.decodeContent();
+    if (uri.mediaType().contains(QStringLiteral("svg"))) return QSvgRenderer(content).defaultSize();
+    QBuffer buffer(&content);
+    return QImageReader(&buffer).size();
+  }
+
+  if (scheme == "file") return QImageReader(url.toLocalFile()).size();
+  if (scheme.isEmpty() && QDir::isAbsolutePath(url.path())) return QImageReader(url.path()).size();
+
+  return {};
+}
+
+void setIntrinsicImageSize(QVariantMap &data, const QString &rawUrl) {
+  auto const size = intrinsicImageSize(rawUrl);
+  if (size.isEmpty()) return;
+  data[QStringLiteral("naturalWidth")] = size.width();
+  data[QStringLiteral("naturalHeight")] = size.height();
+}
+
 QString imageProviderUrl(const QString &rawUrl) {
   QUrl const url(rawUrl);
   auto const scheme = url.scheme();
@@ -41,7 +98,7 @@ QString imageProviderUrl(const QString &rawUrl) {
   if (scheme == "data") {
     ImageURL imgUrl;
     imgUrl.setType(ImageURLType::DataURI);
-    imgUrl.setName(rawUrl);
+    imgUrl.setName(stripImageSizeParams(rawUrl, url));
     return imgUrl.toString();
   }
 
@@ -202,16 +259,16 @@ QVariantMap parseImageSize(const QUrl &url) {
   QVariantMap data;
   QUrlQuery query(url);
 
-  auto tryParam = [&](const std::vector<const char *> &names) -> int {
-    for (auto *name : names) {
+  auto tryParam = [&](std::span<const char *const> names) -> int {
+    for (const auto *name : names) {
       auto val = query.queryItemValue(name);
       if (!val.isEmpty()) return val.toInt();
     }
     return 0;
   };
 
-  int const w = tryParam({"raycast-width", "omnicast-width"});
-  int const h = tryParam({"raycast-height", "omnicast-height"});
+  int const w = tryParam(IMAGE_WIDTH_PARAMS);
+  int const h = tryParam(IMAGE_HEIGHT_PARAMS);
   if (w > 0) data[QStringLiteral("width")] = w;
   if (h > 0) data[QStringLiteral("height")] = h;
   return data;
@@ -221,6 +278,7 @@ QVariantMap buildImageBlock(cmark_node *imageNode) {
   QUrl const imgUrl(QString::fromUtf8(cmark_node_get_url(imageNode)));
   QVariantMap data = parseImageSize(imgUrl);
   data[QStringLiteral("src")] = imageProviderUrl(imgUrl.toString());
+  setIntrinsicImageSize(data, imgUrl.toString());
   data[QStringLiteral("alt")] = imageAltText(imageNode);
   return data;
 }
@@ -263,6 +321,7 @@ void processHtmlNodes(pugi::xml_node node, HtmlBlockResult &result) {
         if (!src.isEmpty()) {
           QVariantMap img;
           img[QStringLiteral("src")] = imageProviderUrl(src);
+          setIntrinsicImageSize(img, src);
           img[QStringLiteral("alt")] = QString();
           if (w > 0) img[QStringLiteral("width")] = w;
           if (h > 0) img[QStringLiteral("height")] = h;
@@ -647,11 +706,29 @@ void MarkdownModel::setMarkdown(const QString &markdown) {
   }
 
   m_markdown = markdown;
+  auto newBlocks = markdown.isEmpty() ? std::vector<Block>{} : parseBlocks(markdown);
+
+  // Frequently refreshed images (live charts) must not tear down every delegate on each update.
+  bool const onlyImagesChanged =
+      !newBlocks.empty() && newBlocks.size() == m_blocks.size() &&
+      std::ranges::all_of(std::views::zip(m_blocks, newBlocks), [](const auto &pair) {
+        auto const &[oldBlock, newBlock] = pair;
+        if (oldBlock.type != newBlock.type) return false;
+        return oldBlock.type == MdBlockType::Image || oldBlock.data == newBlock.data;
+      });
+
+  if (onlyImagesChanged) {
+    for (auto &&[row, oldBlock, newBlock] : std::views::zip(std::views::iota(0), m_blocks, newBlocks)) {
+      if (oldBlock.data == newBlock.data) continue;
+      oldBlock.data = std::move(newBlock.data);
+      auto const idx = index(row);
+      emit dataChanged(idx, idx, {BlockDataRole});
+    }
+    return;
+  }
+
   beginResetModel();
-  m_blocks.clear();
-
-  if (!markdown.isEmpty()) m_blocks = parseBlocks(markdown);
-
+  m_blocks = std::move(newBlocks);
   endResetModel();
 }
 
