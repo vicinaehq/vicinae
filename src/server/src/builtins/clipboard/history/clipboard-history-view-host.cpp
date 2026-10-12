@@ -11,6 +11,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QUrl>
 
 static QString kindLabel(ClipboardOfferKind kind) {
@@ -124,14 +125,25 @@ void ClipboardHistoryViewHost::initialize() {
             bool const incremental = !m_model.selectFirstOnReset();
             m_section.setEntries(page);
             m_model.setSelectFirstOnReset(false);
-            if (incremental) {
-              m_model.refreshActionPanel();
-              reloadStaleDetail(page.data);
-            }
+            if (incremental) m_model.refreshActionPanel();
+            if (std::exchange(m_detailStale, false)) reloadDetail();
             handleDataRetrieved(page.totalCount);
           });
 
   connect(m_controller, &ClipboardHistoryController::dataLoadingChanged, this, &BaseView::setLoading);
+
+  // the detail is reloaded once the list has the updated entry
+  connect(m_clipman, &ClipboardService::selectionContentChanged, this, [this](const QString &id) {
+    if (m_hasDetail && id == m_detailEntryId) m_detailStale = true;
+  });
+
+  m_detailFileDebounce.setSingleShot(true);
+  m_detailFileDebounce.setInterval(DETAIL_FILE_DEBOUNCE);
+  connect(&m_detailFileDebounce, &QTimer::timeout, this, &ClipboardHistoryViewHost::reloadChangedDetailFile);
+  connect(&m_detailFileWatcher, &QFileSystemWatcher::fileChanged, &m_detailFileDebounce,
+          qOverload<>(&QTimer::start));
+  connect(&m_detailFileWatcher, &QFileSystemWatcher::directoryChanged, &m_detailFileDebounce,
+          qOverload<>(&QTimer::start));
 
   auto savedFilter = getSavedDropdownFilter().value_or("all");
   if (auto it = savedFilterToKind.find(savedFilter); it != savedFilterToKind.end()) {
@@ -199,6 +211,7 @@ void ClipboardHistoryViewHost::handleDataRetrieved(int totalCount) {
 }
 
 void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
+  unwatchDetailFile();
   m_detailTextContent.clear();
   m_detailImageSource.clear();
   m_hasDetailError = false;
@@ -259,6 +272,7 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
         std::filesystem::path const path = url.toLocalFile().toStdString();
         if (std::filesystem::is_regular_file(path, ec)) {
           auto preview = qml::resolveFilePreview(path, m_mimeDb);
+          watchDetailFile(path);
           m_detailImageSource = preview.imageSource;
           m_detailTextContent = preview.textContent;
           m_hasDetail = true;
@@ -296,15 +310,45 @@ void ClipboardHistoryViewHost::loadDetail(const ClipboardHistoryEntry &entry) {
   emit detailChanged();
 }
 
-void ClipboardHistoryViewHost::reloadStaleDetail(std::span<const ClipboardHistoryEntry> entries) {
-  if (!m_hasDetail) return;
-
+void ClipboardHistoryViewHost::reloadDetail() {
+  const auto entries = m_section.entries();
   const auto it = std::ranges::find(entries, m_detailEntryId, &ClipboardHistoryEntry::id);
 
-  if (it != entries.end() && it->md5sum != m_detailMd5) loadDetail(*it);
+  if (it == entries.end()) return;
+
+  // an image file keeps the same source, it has to change for the image to be loaded again
+  if (!m_detailImageSource.isEmpty()) {
+    m_detailImageSource.clear();
+    emit detailChanged();
+  }
+
+  loadDetail(*it);
+}
+
+void ClipboardHistoryViewHost::watchDetailFile(const std::filesystem::path &path) {
+  m_detailFile = QString::fromStdString(path.string());
+  m_detailFileModifiedAt = QFileInfo(m_detailFile).lastModified();
+  // the directory is watched as well, as saving by renaming a new file over the old one drops the file watch
+  m_detailFileWatcher.addPaths({m_detailFile, QString::fromStdString(path.parent_path().string())});
+}
+
+void ClipboardHistoryViewHost::unwatchDetailFile() {
+  m_detailFileDebounce.stop();
+  m_detailFile.clear();
+
+  if (const auto paths = m_detailFileWatcher.files() + m_detailFileWatcher.directories(); !paths.isEmpty()) {
+    m_detailFileWatcher.removePaths(paths);
+  }
+}
+
+void ClipboardHistoryViewHost::reloadChangedDetailFile() {
+  if (m_detailFile.isEmpty() || QFileInfo(m_detailFile).lastModified() == m_detailFileModifiedAt) return;
+
+  reloadDetail();
 }
 
 void ClipboardHistoryViewHost::clearDetail() {
+  unwatchDetailFile();
   if (!m_hasDetail) return;
   m_hasDetail = false;
   m_hasDetailError = false;

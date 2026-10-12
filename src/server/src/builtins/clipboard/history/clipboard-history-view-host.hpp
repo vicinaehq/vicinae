@@ -1,6 +1,10 @@
 #pragma once
 #include <QtQml/qqmlregistration.h>
-#include <span>
+#include <QDateTime>
+#include <QFileSystemWatcher>
+#include <QTimer>
+#include <chrono>
+#include <filesystem>
 #include "builtins/clipboard/history/clipboard-history-model.hpp"
 #include "ui/views/bridge-view.hpp"
 #include "ui/quick/completion-model.hpp"
@@ -78,12 +82,17 @@ signals:
   void searchTermsChanged();
 
 private:
+  static constexpr std::chrono::milliseconds DETAIL_FILE_DEBOUNCE{300};
+
   void handleMonitoringChanged(bool monitoring);
   void updateSearchTerms(const QString &text);
   void handleDataRetrieved(int totalCount);
   void loadDetail(const ClipboardHistoryEntry &entry);
   void clearDetail();
-  void reloadStaleDetail(std::span<const ClipboardHistoryEntry> entries);
+  void reloadDetail();
+  void watchDetailFile(const std::filesystem::path &path);
+  void unwatchDetailFile();
+  void reloadChangedDetailFile();
   void saveDropdownFilter(const QString &value);
   std::optional<QString> getSavedDropdownFilter();
 
@@ -109,6 +118,11 @@ private:
   QString m_detailCopiedAt;
   QString m_detailMd5;
   QString m_detailEntryId;
+  bool m_detailStale = false;
+  QString m_detailFile;
+  QDateTime m_detailFileModifiedAt;
+  QFileSystemWatcher m_detailFileWatcher;
+  QTimer m_detailFileDebounce;
   QString m_detailEncryptionIcon;
   QString m_detailErrorTitle;
   QString m_detailErrorDescription;

@@ -460,6 +460,7 @@ bool ClipboardService::replaceMainOfferData(const QString &selectionId, QByteArr
     fs::remove(m_dataDir / id.toStdString(), ec);
   }
 
+  emit selectionContentChanged(selectionId);
   emit selectionUpdated();
 
   return true;

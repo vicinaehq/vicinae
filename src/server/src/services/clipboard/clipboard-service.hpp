@@ -39,6 +39,7 @@ signals:
   void selectionPinStatusChanged(const QString &id, bool pinned) const;
   void selectionKeywordsChanged(const QString &id, const QString &keywords) const;
   void selectionRemoved(const QString &id) const;
+  void selectionContentChanged(const QString &id) const;
   /**
    * When a selection is copied, its update time is modified which makes it appear on top
    * of the list.
