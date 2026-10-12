@@ -211,6 +211,11 @@ export declare namespace List {
 			 * @see {@link List.Item.Detail}
 			 */
 			detail?: React.ReactNode;
+
+			/**
+			 * Marks the item as currently active. Renders a small dot below the icon.
+			 */
+			active?: boolean;
 		};
 
 		/**

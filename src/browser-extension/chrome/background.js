@@ -207,7 +207,8 @@ function sendCurrentTabs() {
 			active: tab.active,
 			audible: tab.audible ?? false,
 			muted: tab.mutedInfo?.muted ?? false,
-			lastAccessed: tab.lastAccessed ?? 0
+			lastAccessed: tab.lastAccessed ?? 0,
+			pinned: tab.pinned ?? false
 		})));
 	});
 }
