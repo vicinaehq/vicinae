@@ -7132,6 +7132,16 @@ Vicinae Store 收錄了由社群開發並經核心貢獻者批准的擴充套件
         <source>Can be used by actions that can edit a secondary characteristic of the currently selected item</source>
         <translation>供可編輯當前所選專案次要屬性的操作使用</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Run as Administrator</source>
+        <translation>以管理員身份執行</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Runs the application with elevated privileges</source>
+        <translation>以提升的權限執行應用程式</translation>
+    </message>
 </context>
 <context>
     <name>macos-update-installer</name>

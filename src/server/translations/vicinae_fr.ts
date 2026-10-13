@@ -7138,6 +7138,16 @@ Si vous souhaitez créer votre propre extension, consultez la [documentation](ht
         <source>Can be used by actions that can edit a secondary characteristic of the currently selected item</source>
         <translation>Peut être utilisé par les actions capables de modifier une caractéristique secondaire de l’élément actuellement sélectionné</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Run as Administrator</source>
+        <translation>Exécuter en tant qu’administrateur</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Runs the application with elevated privileges</source>
+        <translation>Exécute l’application avec des privilèges élevés</translation>
+    </message>
 </context>
 <context>
     <name>macos-update-installer</name>

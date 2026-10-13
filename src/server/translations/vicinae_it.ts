@@ -7133,6 +7133,16 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
         <source>Can be used by actions that can edit a secondary characteristic of the currently selected item</source>
         <translation>Può essere usata dalle azioni che possono modificare una caratteristica secondaria dell’elemento selezionato.</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Run as Administrator</source>
+        <translation>Esegui come Amministratore</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Runs the application with elevated privileges</source>
+        <translation>Esegue l’applicazione con privilegi elevati</translation>
+    </message>
 </context>
 <context>
     <name>macos-update-installer</name>

@@ -7132,6 +7132,16 @@ Vicinae Store 收录了由社区开发并经核心贡献者批准的扩展。
         <source>Can be used by actions that can edit a secondary characteristic of the currently selected item</source>
         <translation>供可编辑当前所选项目次要属性的操作使用</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Run as Administrator</source>
+        <translation>以管理员身份运行</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Runs the application with elevated privileges</source>
+        <translation>以提升的权限运行应用程序</translation>
+    </message>
 </context>
 <context>
     <name>macos-update-installer</name>
