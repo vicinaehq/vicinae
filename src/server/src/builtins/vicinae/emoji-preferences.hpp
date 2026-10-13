@@ -23,6 +23,8 @@ struct EmojiPreferences {
 };
 
 template <> struct PreferenceSchema<EmojiPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(EmojiPreferences)
+public:
   PreferenceMeta defaultAction{
       .title = tr("Default Action"),
       .description = tr("The default action to perform on pressing return. Paste is only available if your "
@@ -55,5 +57,4 @@ template <> struct PreferenceSchema<EmojiPreferences> {
             return options;
           },
   };
-  Q_DECLARE_TR_FUNCTIONS(EmojiPreferences)
 };

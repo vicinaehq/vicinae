@@ -77,6 +77,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     source: "MdList.qml"
                     onLoaded: {
+                        // qmllint disable missing-property
                         item.selectionController = root.selectionController;
                         item.mdModel = root.mdModel;
                         item.blockIndex = root.blockIndex;
@@ -89,6 +90,7 @@ ColumnLayout {
                         item.blockData = {
                             items: itemDelegate.modelData.items ?? []
                         };
+                        // qmllint enable missing-property
                     }
                 }
             }

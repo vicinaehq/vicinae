@@ -57,6 +57,8 @@ class RebuildFileIndexCommand : public BuiltinCallbackCommand {
 };
 
 template <> struct PreferenceSchema<FilePreferences> {
+  Q_DECLARE_TR_FUNCTIONS(FilePreferences)
+public:
 #if defined(Q_OS_LINUX)
   PreferenceMeta autoIndexing{
       .title = tr("Enabled"),
@@ -95,7 +97,6 @@ template <> struct PreferenceSchema<FilePreferences> {
       .required = false,
   };
 #endif
-  Q_DECLARE_TR_FUNCTIONS(FilePreferences)
 };
 
 class FileExtension : public TypedCommandRepository<FilePreferences> {

@@ -19,6 +19,8 @@ struct SnippetPreferences {
 };
 
 template <> struct PreferenceSchema<SnippetPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(SnippetPreferences)
+public:
   PreferenceMeta enabled{
       .title = tr("Expansion"),
       .description = tr("Enable automatic snippet expansion when triggers are typed"),
@@ -49,7 +51,6 @@ template <> struct PreferenceSchema<SnippetPreferences> {
       .required = false,
   };
 #endif
-  Q_DECLARE_TR_FUNCTIONS(SnippetPreferences)
 };
 
 class SnippetExtension : public TypedCommandRepository<SnippetPreferences> {

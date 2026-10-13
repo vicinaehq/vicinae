@@ -15,9 +15,9 @@ Item {
         const win = Window.window as LauncherWindow;
         if (!win || !(win.statusBarOverlap > 0) || !target || target.height <= 0)
             return 0;
+        let bottom = target.height;
         for (let item = target; item; item = item.parent)
-            item.y;
-        const bottom = target.mapToItem(null, 0, target.height).y;
+            bottom += item.y;
         const fadeInset = win.appearance.contentBottomInset;
         return Math.max(0, Math.min(win.statusBarOverlap + fadeInset, bottom - win.statusBarTop + fadeInset));
     }

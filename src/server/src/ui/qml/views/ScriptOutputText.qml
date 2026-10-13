@@ -46,7 +46,7 @@ ScrollViewport {
             height: scrollView.availableHeight
         }
 
-        Component.onCompleted: contentItem.boundsBehavior = Flickable.StopAtBounds
+        Component.onCompleted: (contentItem as Flickable).boundsBehavior = Flickable.StopAtBounds
 
         ViciWheelHandler {
             target: root.flick

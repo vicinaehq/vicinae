@@ -14,5 +14,5 @@ public:
   void close() override;
 
 private:
-  void *m_panel = nullptr; // retained NSOpenPanel
+  void *m_panel = nullptr; // retained NSSavePanel (NSOpenPanel in open mode)
 };

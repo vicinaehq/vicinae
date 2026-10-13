@@ -149,6 +149,7 @@ Item {
                         }
 
                         onLoaded: {
+                            // qmllint disable missing-property
                             item.selectionController = root._controller;
                             item.mdModel = root.model;
                             item.blockIndex = index;
@@ -168,6 +169,7 @@ Item {
                             // multi-TextEdit blocks, and children need selectionController
                             // to already be set for registration in Component.onCompleted
                             item.blockData = blockData;
+                            // qmllint enable missing-property
                         }
                     }
                 }
