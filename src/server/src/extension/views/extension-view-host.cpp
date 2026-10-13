@@ -230,6 +230,10 @@ void ExtensionViewHost::renderGrid(const GridModel &model) {
 void ExtensionViewHost::textChanged(const QString &text) {
   if (m_settingSearchText) return;
 
+  // counted per edit rather than per notification, so that a controlled search text rendered
+  // while a throttled notification is still pending is recognized as stale.
+  ++m_searchEventCount;
+
   bool const had = m_hasSearchText;
   m_hasSearchText = !text.isEmpty();
   if (had != m_hasSearchText) emit suppressEmptyViewChanged();
@@ -262,7 +266,6 @@ void ExtensionViewHost::handleDebouncedSearch() {
   }
 
   if (m_onSearchTextChange) {
-    ++m_searchEventCount;
     m_shouldResetSelection = !m_filtering;
     notifyExtension(m_onSearchTextChange->c_str(), {text, static_cast<int>(m_searchEventCount)});
   }
