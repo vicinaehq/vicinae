@@ -7,6 +7,7 @@
 #include "services/files-service/file-service.hpp"
 #include "services/news/news-service.hpp"
 #include "theme/theme.hpp"
+#include <QRegularExpression>
 #include <filesystem>
 #include <utility>
 
@@ -19,6 +20,16 @@ namespace {
 bool isAbsolutePathLike(const QString &text) {
   if (text.startsWith('/')) return true;
   return text.size() >= 3 && text[0].isLetter() && text[1] == ':' && (text[2] == '\\' || text[2] == '/');
+}
+
+std::optional<QString> bareDomainToUrl(const QString &text) {
+  // Matches a domain without a scheme, such as "brave.com" or "www.brave.com:8080/path?q=1"
+  static const QRegularExpression BARE_DOMAIN(
+      QStringLiteral(R"(^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}(?::\d{1,5})?(?:[/?#]\S*)?$)"),
+      QRegularExpression::CaseInsensitiveOption);
+
+  if (text.contains(QStringLiteral("://")) || !BARE_DOMAIN.match(text).hasMatch()) return std::nullopt;
+  return QStringLiteral("https://") + text;
 }
 
 } // namespace
@@ -123,7 +134,9 @@ bool RootSearchModel::rerunSearch() {
   // a link is shown on top of the regular results, it does not replace them
   std::optional<LinkItem> link;
 
-  if (auto url = QUrl(text); url.isValid() && url.scheme().size() >= MIN_SCHEME_LENGTH) {
+  if (auto bare = bareDomainToUrl(text)) {
+    if (auto app = m_appDb->findDefaultOpener(*bare)) { link = LinkItem{.app = app, .url = *bare}; }
+  } else if (auto url = QUrl(text); url.isValid() && url.scheme().size() >= MIN_SCHEME_LENGTH) {
     if (auto app = m_appDb->findDefaultOpener(text)) { link = LinkItem{.app = app, .url = text}; }
   }
 
