@@ -908,7 +908,7 @@ list(APPEND SRCS
 	src/services/global-shortcuts/config-global-shortcuts.cpp
 )
 
-if (NOT WIN32)
+if (NOT WIN32 AND NOT APPLE)
 	list(APPEND LIBS qalculate)
 	list(APPEND SRCS
 		src/services/calculator-service/qalculate/qalculate-backend.hpp

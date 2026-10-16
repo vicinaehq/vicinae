@@ -12,7 +12,7 @@
 #include <qnamespace.h>
 #include <qobjectdefs.h>
 
-#ifndef Q_OS_WIN
+#if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS)
 #include "qalculate/qalculate-backend.hpp"
 #endif
 
@@ -357,7 +357,7 @@ CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
 #if defined(Q_OS_MACOS) && defined(BUNDLE_SOULVER_CORE)
     candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
 #endif
-#ifndef Q_OS_WIN
+#if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS)
     candidates.emplace_back(std::make_unique<QalculateBackend>());
 #endif
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
