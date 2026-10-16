@@ -15,7 +15,6 @@ brew install \
   pkg-config \
   clang-format \
   pipx \
-  libqalculate \
   dylibbundler \
   ccache	\
   extra-cmake-modules \
