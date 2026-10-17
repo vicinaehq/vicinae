@@ -118,6 +118,8 @@
 		// Needs window opacity < 1 to be visible.
 		"material": "auto",
 
+			   // "window_style": "standard", // or "liquid_glass"; requires fully reopening Vicinae.
+
 		// Corner radius of the launcher window, in pixels.
 		// "rounding": 10,
 
