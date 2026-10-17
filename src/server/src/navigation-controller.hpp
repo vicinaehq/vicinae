@@ -135,6 +135,9 @@ public:
   Q_INVOKABLE void closeWindow(const CloseWindowOptions &settings = {});
   void closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay);
   Q_INVOKABLE void showWindow();
+
+  /// Turns a pending suspended close into a regular one, for callers that no longer intend to resume.
+  void releaseSuspendedClose();
   Q_INVOKABLE void toggleWindow();
   bool isWindowOpened() const;
   void requestWindowSize(QSize size);

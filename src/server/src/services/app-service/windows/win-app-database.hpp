@@ -32,6 +32,8 @@ public:
 
   std::vector<AppPtr> findOpeners(const Target &target) const override;
   AppPtr findDefaultOpener(const Target &target) const override;
+  std::vector<AppPtr> findOpenersForMime(const QString &mime) const override;
+  AppPtr findDefaultOpenerForMime(const QString &mime) const override;
   AppPtr findById(const QString &id) const override;
   std::vector<AppPtr> list() const override;
   AppPtr findByClass(const QString &name) const override;

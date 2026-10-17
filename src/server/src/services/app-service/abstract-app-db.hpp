@@ -1,5 +1,6 @@
 #pragma once
 #include "command/preference-schema.hpp"
+#include "keyboard/keyboard.hpp"
 #include "services/app-service/app-preferences.hpp"
 #include "ui/image/url.hpp"
 #include <QProcess>
@@ -64,6 +65,11 @@ public:
    * Currently, on the XdgApplicationDatabase supports this.
    */
   virtual std::vector<std::shared_ptr<AbstractApplication>> actions() const { return {}; }
+
+  /**
+   * Shortcut for the additional action or command.
+   */
+  virtual std::optional<Keyboard::Shortcut> shortcut() const { return std::nullopt; }
 
   /**
    * Additional keywords that can be used to index the application.
@@ -203,6 +209,16 @@ public:
    * Find the default opener for the given target, or a null pointer if none could be found.
    */
   virtual AppPtr findDefaultOpener(const Target &target) const = 0;
+
+  /**
+   * Same as `findOpeners`, for content that is only known by its MIME type.
+   */
+  virtual std::vector<AppPtr> findOpenersForMime(const QString &mime) const = 0;
+
+  /**
+   * Same as `findDefaultOpener`, for content that is only known by its MIME type.
+   */
+  virtual AppPtr findDefaultOpenerForMime(const QString &mime) const = 0;
 
   /**
    * Make `app` the default opener for the given mime type.

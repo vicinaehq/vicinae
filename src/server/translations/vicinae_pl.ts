@@ -8271,6 +8271,16 @@ Jeśli chcesz zbudować własne rozszerzenie, zajrzyj do [dokumentacji](https://
         <source>Can be used by actions that can edit a secondary characteristic of the currently selected item</source>
         <translation>Może być używana przez akcje edytujące dodatkową cechę aktualnie wybranego elementu</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Run as Administrator</source>
+        <translation>Uruchom jako administrator</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Runs the application with elevated privileges</source>
+        <translation>Uruchamia aplikację z podwyższonymi uprawnieniami</translation>
+    </message>
 </context>
 <context>
     <name>macos-update-installer</name>

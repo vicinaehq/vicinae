@@ -118,9 +118,9 @@ ViciPopover {
         }
         function onPanelPushRequested(componentUrl, properties) {
             stack.push(componentUrl, properties, StackView.Immediate);
+            // qmllint disable missing-property
             stack.currentItem.controller = root.controller;
             root.controller.onPanelPushed(stack.currentItem);
-            // qmllint disable missing-property
             if (typeof stack.currentItem.focusFilter === "function")
                 stack.currentItem.focusFilter();
             // qmllint enable missing-property
