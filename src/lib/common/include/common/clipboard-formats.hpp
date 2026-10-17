@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 
 namespace Clipboard {
 
@@ -6,6 +7,10 @@ inline constexpr const char *CONCEALED_MIME_TYPE = "vicinae/concealed";
 inline constexpr const char *PASSWORD_HINT_MIME_TYPE = "x-kde-passwordManagerHint";
 inline constexpr const char *URI_LIST = "text/uri-list";
 inline constexpr const char *QT_IMAGE_DATA = "application/x-qt-image";
+
+// Plain text targets, in order of preference
+inline constexpr auto PLAIN_TEXT_MIME_TYPES = std::to_array<const char *>(
+    {"text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"});
 
 // Qt wraps native Windows clipboard formats it has no mime mapping for
 inline constexpr const char *WIN_NATIVE_MIME_PREFIX = "application/x-qt-windows-mime";
