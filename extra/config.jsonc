@@ -118,6 +118,11 @@
 		// Needs window opacity < 1 to be visible.
 		"material": "auto",
 
+		// Use the standard cross-platform launcher window (the "Linux-style" window)
+		// instead of the native macOS window. This opts out of the macOS liquid glass
+		// redesign (vicinae#1969). Requires fully reopening Vicinae to apply.
+		// "use_standard_window": false,
+
 		// Corner radius of the launcher window, in pixels.
 		// "rounding": 10,
 

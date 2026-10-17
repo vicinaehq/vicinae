@@ -151,6 +151,12 @@ void GeneralSettingsModel::setFloatingStatusBar(bool v) {
       {.launcherWindow = config::Partial<config::WindowConfig>{.floatingStatusBar = v}});
 }
 
+bool GeneralSettingsModel::useStandardWindow() const { return cfg().launcherWindow.useStandardWindow; }
+void GeneralSettingsModel::setUseStandardWindow(bool v) {
+  cfgManager().mergeWithUser(
+      {.launcherWindow = config::Partial<config::WindowConfig>{.useStandardWindow = v}});
+}
+
 bool GeneralSettingsModel::inputServerEnabled() const { return cfg().inputServer.enabled; }
 
 void GeneralSettingsModel::setInputServerEnabled(bool v) {
