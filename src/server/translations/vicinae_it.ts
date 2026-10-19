@@ -49,7 +49,7 @@
     <message>
         <location line="+1"/>
         <source>Pop back in navigation on backspace when no input is present.</source>
-        <translation>Torna alla schermata precedente col tasto indeitro quando l’input è vuoto.</translation>
+        <translation>Torna alla schermata precedente col tasto indietro quando l’input è vuoto.</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -89,12 +89,12 @@
     <message>
         <location line="+1"/>
         <source>Default uses the standard macOS keys (arrows, Ctrl+N/P); Vim uses Ctrl+J/K and Ctrl+H/L; Emacs uses Ctrl+N/P and Ctrl+Opt+B/F for navigation, plus Emacs editing in the search bar.</source>
-        <translation>Di default usa i tasti standard di macOS (frecce, Ctrl+N/P) ; Vim usa Ctrl+J/K e Ctrl+H/L ; Emacs usa Ctrl+N/P e Ctrl+Opt+B/F per la navigazione, oltre alla modifica Emacs nella barra di ricerca.</translation>
+        <translation>Di default usa i tasti standard di macOS (frecce, Ctrl+N/P); Vim usa Ctrl+J/K e Ctrl+H/L; Emacs usa Ctrl+N/P e Ctrl+Opt+B/F per la navigazione, oltre alla modifica Emacs nella barra di ricerca.</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Default and Vim use Ctrl+J/K and Ctrl+H/L; Emacs uses Ctrl+N/P and Ctrl+Alt+B/F for navigation, plus Emacs editing in the search bar.</source>
-        <translation>Default e Vim usano Ctrl+J/K e Ctrl+H/L ; Emacs usa Ctrl+N/P e Ctrl+Alt+B/F per la navigazione, oltre alla modifica Emacs nella barra di ricerca.</translation>
+        <translation>Default e Vim usano Ctrl+J/K e Ctrl+H/L; Emacs usa Ctrl+N/P e Ctrl+Alt+B/F per la navigazione, oltre alla modifica Emacs nella barra di ricerca.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -109,7 +109,7 @@
     <message>
         <location line="+1"/>
         <source>Files are searched asynchronously, so if enabled you should expect a slight delay for file search results to show up.</source>
-        <translation>La ricerca di file avviene in modo asincrono : se la attivi, aspettati un leggero ritardo prima che i risultati appaiano.</translation>
+        <translation>La ricerca di file avviene in modo asincrono: se la attivi, aspettati un leggero ritardo prima che i risultati appaiano.</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -237,7 +237,7 @@
     <message>
         <location line="+0"/>
         <source>Yes</source>
-        <translation>Si</translation>
+        <translation>Sì</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -378,7 +378,7 @@
     <message>
         <location line="+1"/>
         <source>Radius of the launcher window corners, in pixels.</source>
-        <translation>Raggio degli ancoli del launcher, in pixel.</translation>
+        <translation>Raggio degli angoli del launcher, in pixel.</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -436,7 +436,7 @@
     <message>
         <location filename="../src/qml/manage-fallback-model.cpp" line="+50"/>
         <source>Enable fallback</source>
-        <translation>Abilità fallback</translation>
+        <translation>Abilita fallback</translation>
     </message>
 </context>
 <context>
@@ -462,7 +462,7 @@
     <message>
         <location line="+16"/>
         <source>Open Application</source>
-        <translation>Apri l’Applicazionie</translation>
+        <translation>Apri l’Applicazione</translation>
     </message>
     <message>
         <location line="+17"/>
@@ -764,12 +764,12 @@
     <message>
         <location line="+13"/>
         <source>This month</source>
-        <translation>Questo mesed</translation>
+        <translation>Questo mese</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>This year</source>
-        <translation>Quest anno</translation>
+        <translation>Quest’anno</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -874,7 +874,7 @@
     <message>
         <location line="+3"/>
         <source>Clipboard monitoring</source>
-        <translation>Monitoring Appunti</translation>
+        <translation>Monitoraggio Appunti</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -889,7 +889,7 @@
     <message>
         <location line="+2"/>
         <source>Ignore selections that can be identified as a password. This relies on the application providing an explicit hint that the selection is a password. While most password managers and private browser windows do, some might not implement this properly.</source>
-        <translation>ignora i frammenti di testo che vengono identificati come password. Richiede che l’applicazione suggerista esplicitamente che la selezione è una password. La maggior parte dei gestori di password e dei browser (in incognito) lo fanno, ma non necessariamente tutti.</translation>
+        <translation>Ignora i frammenti di testo che vengono identificati come password. Richiede che l’applicazione suggerisca esplicitamente che la selezione è una password. La maggior parte dei gestori di password e dei browser (in incognito) lo fanno, ma non necessariamente tutti.</translation>
     </message>
 </context>
 <context>
@@ -950,7 +950,7 @@
     <message>
         <location line="+2"/>
         <source>Browse your clipboard&apos;s history, pin, edit and remove entries.</source>
-        <translation>Naviga la cronologia dei tuoi appunti. Appenti, elimina e modifica singoli elementi.</translation>
+        <translation>Naviga la cronologia dei tuoi appunti. Appendi, elimina e modifica singoli elementi.</translation>
     </message>
 </context>
 <context>
@@ -976,12 +976,12 @@
     <message>
         <location line="+4"/>
         <source>Copied at</source>
-        <translation>Copiato in</translation>
+        <translation>Copiato alle</translation>
     </message>
     <message>
         <location line="+52"/>
         <source>Preview not available for this content type</source>
-        <translation>Anteprima non disponibible per questo contenuto</translation>
+        <translation>Anteprima non disponibile per questo contenuto</translation>
     </message>
 </context>
 <context>
@@ -989,7 +989,7 @@
     <message>
         <location filename="../src/qml/clipboard-history-view-host.hpp" line="+84"/>
         <source>Loading...</source>
-        <translation>In carica...</translation>
+        <translation>Caricamento...</translation>
     </message>
     <message>
         <location filename="../src/qml/clipboard-history-view-host.cpp" line="+101"/>
@@ -999,7 +999,7 @@
     <message>
         <location line="+4"/>
         <source>Clipboard monitoring unavailable</source>
-        <translation>Monitoring della cronologia non disponibile</translation>
+        <translation>Monitoraggio della cronologia non disponibile</translation>
     </message>
     <message>
         <location line="+67"/>
@@ -1145,7 +1145,7 @@
     <message>
         <location line="+2"/>
         <source>Failed to copy answer</source>
-        <translation>Impossibile copiare riposta</translation>
+        <translation>Impossibile copiare la risposta</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -1803,7 +1803,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location filename="../src/qml/qml/ExtensionView.qml" line="+99"/>
         <source>No results</source>
-        <translation>Nesssun risultato</translation>
+        <translation>Nessun risultato</translation>
     </message>
 </context>
 <context>
@@ -1945,7 +1945,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+4"/>
         <source>Past telemetry was successfully detached from your vicinae user ID.</source>
-        <translation>éa telemetria è stata correttamente scollegata dal tuo user ID Vicinae.</translation>
+        <translation>La telemetria è stata correttamente scollegata dal tuo user ID Vicinae.</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -1986,7 +1986,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+46"/>
         <source>No directory selected</source>
-        <translation>Nessuna cartella scleta</translation>
+        <translation>Nessuna cartella scelta</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -2064,7 +2064,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
         <location line="+48"/>
         <location line="+10"/>
         <source>System default</source>
-        <translation>Defult di sistema</translation>
+        <translation>Default di sistema</translation>
     </message>
     <message>
         <location line="-6"/>
@@ -2123,7 +2123,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+1"/>
         <source>Requires restarting Vicinae to take effect.</source>
-        <translation>Necessita un riavvio di Vicinae per prendere effetto.</translation>
+        <translation>Necessita di un riavvio di Vicinae per avere effetto.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -2283,7 +2283,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+4"/>
         <source>Copy Path</source>
-        <translation>Copiea Percorso</translation>
+        <translation>Copia Percorso</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -2394,7 +2394,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location filename="../src/qml/local-storage-view-host.cpp" line="-15"/>
         <source>Search namespaces...</source>
-        <translation>Carca namespace...</translation>
+        <translation>Cerca namespace...</translation>
     </message>
 </context>
 <context>
@@ -2430,7 +2430,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+2"/>
         <source>Terminate the current user session. If you simply want to lock your session you should use &apos;Lock Session&apos; instead.</source>
-        <translation>Termina la sessione utente attuale. Se vuoi solo bloccare la sesssione, usa ’Blocca Sessione’.</translation>
+        <translation>Termina la sessione utente attuale. Se vuoi solo bloccare la sessione, usa ’Blocca Sessione’.</translation>
     </message>
     <message>
         <location line="+15"/>
@@ -2538,7 +2538,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+12"/>
         <source>Failed to stage update: %1</source>
-        <translation>Impossibile preparere aggiornamento: %1</translation>
+        <translation>Impossibile preparare aggiornamento: %1</translation>
     </message>
     <message>
         <location line="+23"/>
@@ -2569,7 +2569,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+5"/>
         <source>Configure what commands are to be presented as fallback options when nothing matches the search in the root search.</source>
-        <translation>Cnfigura quali comandi vengono presentati come fallback se non ci sono risultati per la ricerca nella schermata principale.</translation>
+        <translation>Configura quali comandi vengono presentati come fallback se non ci sono risultati per la ricerca nella schermata principale.</translation>
     </message>
 </context>
 <context>
@@ -2626,7 +2626,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+3"/>
         <source>Never</source>
-        <translation>mai</translation>
+        <translation>Mai</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -2908,7 +2908,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location line="+2"/>
         <source>Manage OAuth token sets that have been saved by extensions providing OAuth integrations.</source>
-        <translation>Gestisci gli insiemi di token OAuth salvati dale estensioni con integrazioni OAuth.</translation>
+        <translation>Gestisci gli insiemi di token OAuth salvati dalle estensioni con integrazioni OAuth.</translation>
     </message>
 </context>
 <context>
@@ -3053,7 +3053,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location line="+11"/>
         <source>Accessibility is required: global shortcuts, paste, and snippet expansion cannot work without it.</source>
-        <translation>L’accessibilità è necessaria: scorciatoie globalThis, copia/incolla ed espansione di snippet non funzionano senza.</translation>
+        <translation>L’accessibilità è necessaria: scorciatoie globali, copia/incolla ed espansione di snippet non funzionano senza.</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -3093,7 +3093,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location line="+16"/>
         <source>Launch at login</source>
-        <translation>Lancer à l’ouverture de session</translation>
+        <translation>Apri all’accesso</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3108,7 +3108,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location line="+9"/>
         <source>Vicinae is running. Open the launcher with:</source>
-        <translation>Vicinae è in esercuzione. Apri il launcher con:</translation>
+        <translation>Vicinae è in esecuzione. Apri il launcher con:</translation>
     </message>
     <message>
         <location line="+17"/>
@@ -3207,7 +3207,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location filename="../src/root-search/control-panel/control-panel-root-provider.cpp" line="+45"/>
         <source>Failed to open settings</source>
-        <translation>Impossibible aprire le impostazioni</translation>
+        <translation>Impossibile aprire le impostazioni</translation>
     </message>
 </context>
 <context>
@@ -3324,7 +3324,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location line="+1"/>
         <source>Open the vicinae keybind settings window</source>
-        <translation>Apri la finestra delle impostazioni delle scrciatoie</translation>
+        <translation>Apri la finestra delle impostazioni delle scorciatoie</translation>
     </message>
 </context>
 <context>
@@ -3502,7 +3502,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location line="+1"/>
         <source>Custom POSIX shell command to run instead of the default implementation</source>
-        <translation>Comando shell POSIX da esedguire invece dell’implementazione predefinita</translation>
+        <translation>Comando shell POSIX da eseguire invece dell’implementazione predefinita</translation>
     </message>
     <message>
         <location line="+27"/>
@@ -3613,7 +3613,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location line="+2"/>
         <source>Try pruning vicinae&apos;s memory usage by clearing pixmap cache and calling malloc_trim(). Mostly provided for internal testing.</source>
-        <translation>Tenta di ridurre l’utilizzo di memoria pulendo la cache pimap e chiamando malloc_trim(). Principalmente per utilizzo interno.</translation>
+        <translation>Tenta di ridurre l’utilizzo di memoria pulendo la cache pixmap e chiamando malloc_trim(). Principalmente per utilizzo interno.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -3697,7 +3697,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location line="+4"/>
         <source>Quit %1</source>
-        <translation>%1 Chiusa</translation>
+        <translation>%1 chiusa</translation>
     </message>
 </context>
 <context>
@@ -3705,7 +3705,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location filename="../src/extensions/raycast/raycast-compat-extension.hpp" line="+15"/>
         <source>Raycast compatibility features</source>
-        <translation>>Funzionalità di compatibilità Raycast</translation>
+        <translation>Funzionalità di compatibilità Raycast</translation>
     </message>
 </context>
 <context>
@@ -3880,7 +3880,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+1"/>
         <source>Reboot the system</source>
-        <translation>Riavia il sistema</translation>
+        <translation>Riavvia il sistema</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -3908,7 +3908,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+13"/>
         <source>Are you sure?</source>
-        <translation>Êtes-vous sûr ?</translation>
+        <translation>Sei sicuro/a?</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -4126,7 +4126,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+6"/>
         <source>Reset ranking</source>
-        <translation>Ripristina l’odine</translation>
+        <translation>Ripristina l’ordine</translation>
     </message>
 </context>
 <context>
@@ -4139,7 +4139,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+12"/>
         <source>Failed to open folder</source>
-        <translation>Impossibible aprire la cartella</translation>
+        <translation>Impossibile aprire la cartella</translation>
     </message>
 </context>
 <context>
@@ -4267,7 +4267,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+10"/>
         <source>Running... (%1s ago)</source>
-        <translation>In corso... (il y a %1s)</translation>
+        <translation>In corso... (da %1s)</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -4782,7 +4782,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+3"/>
         <source>Shortcut updated</source>
-        <translation>Scorciatoioa aggiornata</translation>
+        <translation>Scorciatoia aggiornata</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -4878,7 +4878,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="-43"/>
         <source>No snippet with that ID</source>
-        <translation>Nessun snippet con quest ID</translation>
+        <translation>Nessun snippet con quest’ID</translation>
     </message>
     <message>
         <location line="+15"/>
@@ -4946,7 +4946,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+1"/>
         <source>Delay between injected key events. Increase if expansions produce missing or garbled characters on slow compositors.</source>
-        <translation>Delay tra l’inseriemnto di eventi di tastiera. Aumenta se l’espansione produce caratteri misti o alterati su compositor lenti.</translation>
+        <translation>Delay tra l’inserimento di eventi di tastiera. Aumenta se l’espansione produce caratteri misti o alterati su compositor lenti.</translation>
     </message>
     <message>
         <location filename="../src/extensions/snippet/snippet-extension.hpp" line="+11"/>
@@ -4969,7 +4969,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+5"/>
         <source>Euro symbol</source>
-        <translation>Symbolo euro</translation>
+        <translation>Simbolo euro</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -4994,7 +4994,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+0"/>
         <source>The snippet server is not running. Keyword expansion is unavailable. &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;Learn more&lt;/a&gt;.</source>
-        <translation>Il server snippet non è in esecuzione. L’espandione tramite parola chiave non è disponibile. &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;Scopri di più&lt;/a&gt;.</translation>
+        <translation>Il server snippet non è in esecuzione. L’espansione tramite parola chiave non è disponibile. &lt;a href=&quot;https://docs.vicinae.com/snippets&quot;&gt;Scopri di più&lt;/a&gt;.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -5004,7 +5004,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+1"/>
         <source>Restrict expansion to specific applications. By default, it works everywhere.</source>
-        <translation>Restringi l’espanzione ad applicazioni specifiche. Di default, funziona ovunque.</translation>
+        <translation>Restringi l’espansione ad applicazioni specifiche. Di default, funziona ovunque.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -5189,7 +5189,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+2"/>
         <source>Suspend the system to RAM. Unlike hibernation, this does not turn the computer off and will break on power loss.</source>
-        <translation>Spsnede il sistema nella RAM. Al contrario dell’ibernazoine, non spegne il computer e può risultare nella perdita di dati in mancanza di alimentazione.</translation>
+        <translation>Sospende il sistema nella RAM. Al contrario dell’ibernazione, non spegne il computer e può risultare nella perdita di dati in mancanza di alimentazione.</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -5402,7 +5402,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+4"/>
         <source>Failed to add to favorites</source>
-        <translation>Imposibile aggiungere ai preferiti</translation>
+        <translation>Impossibile aggiungere ai preferiti</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -5554,7 +5554,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location filename="../src/services/global-shortcuts/vicinae-hotkey-global-shortcut-backend.cpp" line="+48"/>
         <source>Unsupported trigger key</source>
-        <translation>Tasto d’avvio non suportato</translation>
+        <translation>Tasto d’avvio non supportato</translation>
     </message>
     <message>
         <location line="+20"/>
@@ -5605,7 +5605,7 @@ Il negozio di estensioni Vicinae contiene estensioni create dalla community appr
 
 Puoi trovare il codice sorgente di ogni estensione elencata qui su [vicinaehq/extensions](https://github.com/vicinaehq/extensions).
 
-Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentazione](https://docs.vicinae.com/extensions/introduction). Se pensi che la tua estensione sia adatta allo store, sentiti libero/a di propocela!
+Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentazione](https://docs.vicinae.com/extensions/introduction). Se pensi che la tua estensione sia adatta allo store, sentiti libero/a di proponerla!
 </translation>
     </message>
     <message>
@@ -5634,7 +5634,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+0"/>
         <source>The extension &quot;%1&quot; could not be found in the store.</source>
-        <translation>L’estensioone &quot;%1&quot; non è stata trovata nel negozio.</translation>
+        <translation>L’estensione &quot;%1&quot; non è stata trovata nel negozio.</translation>
     </message>
     <message>
         <location line="+20"/>
@@ -5866,7 +5866,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+1"/>
         <source>Volume Mixer</source>
-        <translation>Mixel Volume</translation>
+        <translation>Mixer Volume</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5955,7 +5955,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
         <location line="+1"/>
         <location line="+1"/>
         <source>Bluetooth &amp; Devices</source>
-        <translation>Bluetooth e Dispositiv</translation>
+        <translation>Bluetooth e Dispositivi</translation>
     </message>
     <message>
         <location line="-8"/>
@@ -6256,7 +6256,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="-9"/>
         <source>Visual Effects</source>
-        <translation>Effeti Visivi</translation>
+        <translation>Effetti Visivi</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6508,7 +6508,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location filename="../src/services/global-shortcuts/x11-global-shortcut-backend.cpp" line="+122"/>
         <source>This shortcut is already in use by another application</source>
-        <translation>Questa scorciatoia è già in uso da un’altra applcazione</translation>
+        <translation>Questa scorciatoia è già in uso da un’altra applicazione</translation>
     </message>
     <message>
         <location line="+17"/>
@@ -6569,7 +6569,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+2"/>
         <source>Directories applications are sourced from. The list cannot be modified directly. In order to do so, you need to append additonal paths to the &lt;b&gt;XDG_DATA_DIRS&lt;/b&gt; environment variables.</source>
-        <translation>Cartelle dove cercare le applicazioni. La lista non può essere direttamente modificata. Per farlo, devi aggiugnere percorsi aggiuntivi alla variabile d’ambiente &lt;b&gt;XDG_DATA_DIRS&lt;/b&gt;.</translation>
+        <translation>Cartelle dove cercare le applicazioni. La lista non può essere direttamente modificata. Per farlo, devi aggiungere percorsi aggiuntivi alla variabile d’ambiente &lt;b&gt;XDG_DATA_DIRS&lt;/b&gt;.</translation>
     </message>
 </context>
 <context>
@@ -6701,7 +6701,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+1"/>
         <source>Shapes</source>
-        <translation>Formes</translation>
+        <translation>Forme</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6767,7 +6767,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+3"/>
         <source>Copy file name</source>
-        <translation>Copai nome file</translation>
+        <translation>Copia nome file</translation>
     </message>
     <message>
         <location line="+20"/>
@@ -6961,7 +6961,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+1"/>
         <source>Toggle the action panel to access and filter through the list of available actions for the currently selected item</source>
-        <translation>Mostra/Nascondi il pannello delle azioni e filtra la lista delle azioni disponibili per l’elemento selezionaot</translation>
+        <translation>Mostra/Nascondi il pannello delle azioni e filtra la lista delle azioni disponibili per l’elemento selezionato</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -7065,8 +7065,8 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     </message>
     <message>
         <location line="+6"/>
-        <source>Azione Generica di Spostamento Verso il Basso</source>
-        <translation>Action générique de déplacement vers le bas</translation>
+        <source>Generic Move Down Action</source>
+        <translation>Azione Generica di Spostamento Verso il Basso</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -7076,7 +7076,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+6"/>
         <source>Generic Refresh Action</source>
-        <translation>Azzione Aggiorna Generica</translation>
+        <translation>Azione Aggiorna Generica</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -7086,7 +7086,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+6"/>
         <source>Generic Pin Action</source>
-        <translation>Action d’épinglage générique</translation>
+        <translation>Azione Generica Appendi</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -7111,7 +7111,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+1"/>
         <source>Can be used by actions that perform an impactful removal, generally accompanied by a confirmation dialog.</source>
-        <translation>Può essere usata dalle azioni che possono fare rimozioni importanti, genearalmente con una finestra di conferma.</translation>
+        <translation>Può essere usata dalle azioni che possono fare rimozioni importanti, generalmente con una finestra di conferma.</translation>
     </message>
     <message>
         <location line="+6"/>
