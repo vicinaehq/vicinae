@@ -27,9 +27,17 @@
 		"enabled": true
 	},
 
-	// Whether to show the Vicinae icon in the system tray.
+	// System tray integration.
 	"tray": {
-		"enabled": true
+		// Whether to show the Vicinae icon in the system tray.
+		"enabled": true,
+
+		// Linux only: register a fallback StatusNotifierWatcher when the session
+		// does not already have one. Applied on server restart.
+		// Set to false if that fallback interferes with the desktop tray.
+		// Search Tray still uses a watcher provided by the desktop.
+		// Vicinae's own icon is controlled separately by "enabled".
+		"watcher_enabled": true
 	},
 
 	// Whether root search should also search files directly.
