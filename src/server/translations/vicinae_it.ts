@@ -7095,8 +7095,8 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     </message>
     <message>
         <location line="+6"/>
-        <source>Azione Rimuovi</source>
-        <translation>Action de suppression</translation>
+        <source>Remove Action</source>
+        <translation>Azione Rimuovi</translation>
     </message>
     <message>
         <location line="+1"/>
