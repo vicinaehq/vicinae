@@ -9,8 +9,9 @@ Item {
     required property int windowRadius
     required property int windowHeight
     required property int windowWidth
+    required property int inset
     readonly property alias popupAnchor: footer
-    implicitHeight: 41 + Config.borderWidth
+    implicitHeight: 41 + root.inset
     clip: true
 
     readonly property int backdropPad: 64
@@ -19,7 +20,7 @@ Item {
         id: statusBarBackdrop
         visible: false
         sourceItem: Config.floatingStatusBar ? root.backdrop : null
-        sourceRect: Qt.rect(-Config.borderWidth, root.backdrop.height - (root.height - Config.borderWidth) - root.backdropPad, root.width, root.height + root.backdropPad)
+        sourceRect: Qt.rect(-root.inset, root.backdrop.height - (root.height - root.inset) - root.backdropPad, root.width, root.height + root.backdropPad)
         textureSize: Qt.size(Math.max(1, Math.round(root.width / 10)), Math.max(1, Math.round((root.height + root.backdropPad) / 10)))
     }
 
@@ -57,8 +58,8 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: Config.borderWidth
-        anchors.rightMargin: Config.borderWidth
+        anchors.leftMargin: root.inset
+        anchors.rightMargin: root.inset
     }
 
     Footer {
@@ -66,9 +67,9 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.leftMargin: Config.borderWidth
-        anchors.rightMargin: Config.borderWidth
-        anchors.bottomMargin: Config.borderWidth
+        anchors.leftMargin: root.inset
+        anchors.rightMargin: root.inset
+        anchors.bottomMargin: root.inset
         height: 40
     }
 

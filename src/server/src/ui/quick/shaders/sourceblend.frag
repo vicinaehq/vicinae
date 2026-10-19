@@ -15,6 +15,8 @@ layout(std140, binding = 0) uniform buf {
     float u_borderWidth;
     float u_secondaryHeight;
     int u_mode;
+    vec4 u_outerBorderColor;
+    float u_outerBorderWidth;
 };
 
 float roundedRectSDF(vec2 p, vec2 halfSize, float radius) {
@@ -35,15 +37,20 @@ void main() {
         vec4 bg = u_backgroundColor;
         fragColor = vec4(bg.rgb * bg.a, bg.a) * qt_Opacity;
     } else if (u_mode == 2) {
-        if (u_borderWidth <= 0.0 || u_borderColor.a <= 0.0) {
+        float ow = u_outerBorderColor.a > 0.0 ? u_outerBorderWidth : 0.0;
+        float bw = u_borderColor.a > 0.0 ? u_borderWidth : 0.0;
+        if (ow <= 0.0 && bw <= 0.0) {
             fragColor = vec4(0.0);
             return;
         }
-        float shrunk = roundedRectSDF(pixelPos - center, center - u_borderWidth, max(u_radius - u_borderWidth, 0.0));
-        float innerShape = 1.0 - smoothstep(-0.5, 0.5, shrunk);
-        float ring = shape - innerShape;
+        float outerShrunk = roundedRectSDF(pixelPos - center, center - ow, max(u_radius - ow, 0.0));
+        float afterOuter = 1.0 - smoothstep(-0.5, 0.5, outerShrunk);
+        float innerShrunk = roundedRectSDF(pixelPos - center, center - ow - bw, max(u_radius - ow - bw, 0.0));
+        float innerShape = 1.0 - smoothstep(-0.5, 0.5, innerShrunk);
+        vec4 oc = u_outerBorderColor;
         vec4 bc = u_borderColor;
-        fragColor = vec4(bc.rgb * bc.a, bc.a) * ring * qt_Opacity;
+        fragColor = (vec4(oc.rgb * oc.a, oc.a) * (shape - afterOuter)
+                   + vec4(bc.rgb * bc.a, bc.a) * (afterOuter - innerShape)) * qt_Opacity;
     } else {
         vec4 fill = u_color;
 
