@@ -7,6 +7,7 @@
 #include "theme/theme-file.hpp"
 #include "favicon/favicon-service.hpp"
 #include "services/font-service/font-service.hpp"
+#include "services/input-source/input-source-service.hpp"
 #ifdef Q_OS_LINUX
 #include "internal/icon-theme-db/icon-theme-db.hpp"
 #endif
@@ -21,6 +22,7 @@ GeneralSettingsModel::GeneralSettingsModel(QObject *parent) : QObject(parent) {
   m_faviconServiceModel.setSections(faviconServiceItems());
   m_keybindingSchemeModel.setSections(keybindingSchemeItems());
   m_languageModel.setSections(languageItems());
+  m_inputSourceModel.setSections(inputSourceItems());
   refreshDynamicModels();
 
   connect(ServiceRegistry::instance()->config(), &config::Manager::configChanged, this, [this]() {
@@ -37,6 +39,10 @@ void GeneralSettingsModel::refreshDynamicModels() {
   if (auto items = iconThemeItems(); items != m_iconThemeItems) {
     m_iconThemeItems = items;
     m_iconThemeModel.setSections(items);
+  }
+  if (auto items = inputSourceItems(); items != m_inputSourceItems) {
+    m_inputSourceItems = items;
+    m_inputSourceModel.setSections(items);
   }
 }
 
@@ -378,4 +384,66 @@ QString GeneralSettingsModel::toggleShortcut() const {
 void GeneralSettingsModel::setToggleShortcut(const QString &shortcut) {
   cfgManager().mergeWithUser(
       {.globalShortcuts = config::Partial<config::GlobalShortcuts>{.toggle = shortcut.toStdString()}});
+}
+
+bool GeneralSettingsModel::switchInputSourceOnOpen() const { return cfg().switchInputSourceOnOpen; }
+
+void GeneralSettingsModel::setSwitchInputSourceOnOpen(bool v) {
+  config::Partial<config::ConfigValue> patch;
+  patch.switchInputSourceOnOpen = v;
+  if (v && (!cfg().targetInputSource || cfg().targetInputSource->empty())) {
+    auto sources = InputSourceService::instance()->availableInputSources();
+    for (const auto &src : sources) {
+      if (src.id.contains("ABC", Qt::CaseInsensitive) || src.id.contains("US", Qt::CaseInsensitive) ||
+          src.name.contains("English", Qt::CaseInsensitive)) {
+        patch.targetInputSource = src.id.toStdString();
+        break;
+      }
+    }
+    if (!patch.targetInputSource && !sources.empty()) {
+      patch.targetInputSource = sources.front().id.toStdString();
+    }
+  }
+  cfgManager().mergeWithUser(patch);
+}
+
+bool GeneralSettingsModel::restoreInputSourceOnClose() const { return cfg().restoreInputSourceOnClose; }
+
+void GeneralSettingsModel::setRestoreInputSourceOnClose(bool v) {
+  cfgManager().mergeWithUser({.restoreInputSourceOnClose = v});
+}
+
+QVariantList GeneralSettingsModel::inputSourceItems() const {
+  QVariantList items;
+  auto sources = InputSourceService::instance()->availableInputSources();
+  for (const auto &src : sources) {
+    items.append(makeDropdownItem(src.id, src.name));
+  }
+  return wrapSection(tr("Keyboard Layouts"), items);
+}
+
+QVariant GeneralSettingsModel::currentInputSource() const {
+  const auto &target = cfg().targetInputSource;
+  auto sources = InputSourceService::instance()->availableInputSources();
+
+  if (target && !target->empty()) {
+    QString targetId = QString::fromStdString(*target);
+    for (const auto &src : sources) {
+      if (src.id == targetId) { return makeDropdownItem(src.id, src.name); }
+    }
+    return makeDropdownItem(targetId, targetId);
+  }
+
+  for (const auto &src : sources) {
+    if (src.id.contains("ABC", Qt::CaseInsensitive) || src.id.contains("US", Qt::CaseInsensitive) ||
+        src.name.contains("English", Qt::CaseInsensitive)) {
+      return makeDropdownItem(src.id, src.name);
+    }
+  }
+  if (!sources.empty()) { return makeDropdownItem(sources.front().id, sources.front().name); }
+  return makeDropdownItem(QStringLiteral(""), tr("Default"));
+}
+
+void GeneralSettingsModel::selectInputSource(const QString &id) {
+  cfgManager().mergeWithUser({.targetInputSource = id.toStdString()});
 }
