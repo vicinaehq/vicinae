@@ -227,7 +227,7 @@
     <message>
         <location line="+1"/>
         <source>Where</source>
-        <translation>Posizionamento</translation>
+        <translation>Dove</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -257,7 +257,7 @@
     <message>
         <location line="+2"/>
         <source>Copy App Location</source>
-        <translation>Copia la posizione dell’app</translation>
+        <translation>Copia la posizione dell’applicazione</translation>
     </message>
 </context>
 <context>
@@ -467,12 +467,12 @@
     <message>
         <location line="+17"/>
         <source>Copy App ID</source>
-        <translation>Copia l’ID dell’Applicazione</translation>
+        <translation>Copia l’ID dell’applicazione</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Copy App Location</source>
-        <translation>Copia la posizione dell’Applicazione</translation>
+        <translation>Copia la posizione dell’applicazione</translation>
     </message>
 </context>
 <context>
@@ -1524,7 +1524,7 @@ Puoi trovare di più sullo sviluppo di estensioni nella [documentazione Vicinae]
     <message>
         <location line="+8"/>
         <source>Disable item</source>
-        <translation>Disattiva elemento</translation>
+        <translation>Disattiva l’elemento</translation>
     </message>
 </context>
 <context>
@@ -2331,7 +2331,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+5"/>
         <source>Keyboard Shortcuts</source>
-        <translation>Scorciatoie Tastiera</translation>
+        <translation>Scorciatoie da tastiera</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -2347,7 +2347,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="-2"/>
         <source>Report a Bug</source>
-        <translation>Segnala un Bug</translation>
+        <translation>Segnala un bug</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -2457,7 +2457,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
         <location filename="../src/root-search/macos-settings/macos-settings-root-provider.mm" line="+132"/>
         <location line="+9"/>
         <source>System Settings</source>
-        <translation>Impostazioni Sistema</translation>
+        <translation>Impostazioni di Sistema</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -2500,7 +2500,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+13"/>
         <source>System Settings</source>
-        <translation>Impostazioni Sistema</translation>
+        <translation>Impostazioni di Sistema</translation>
     </message>
 </context>
 <context>
@@ -2533,7 +2533,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+8"/>
         <source>Installing update…</source>
-        <translation>Installazione aggiornamento…</translation>
+        <translation>Installazione dell’aggiornamento…</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -3199,7 +3199,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location line="+85"/>
         <source>Open with...</source>
-        <translation>Apri Con...</translation>
+        <translation>Apri con...</translation>
     </message>
 </context>
 <context>
@@ -3766,7 +3766,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location filename="../src/qml/raycast-store-detail-host.cpp" line="+43"/>
         <source>Failed to load extension</source>
-        <translation>Impossibile caricare estensione</translation>
+        <translation>Impossibile caricare l’estensione</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3811,7 +3811,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+7"/>
         <source>Downloading extension...</source>
-        <translation>Scarico l’estensione...</translation>
+        <translation>Download dell’estensione...</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -3826,7 +3826,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+3"/>
         <source>Extension installed</source>
-        <translation>Estensione Installata</translation>
+        <translation>Estensione installata</translation>
     </message>
     <message>
         <location line="+14"/>
@@ -3852,7 +3852,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+32"/>
         <source>Failed to fetch extensions</source>
-        <translation>Impossibile trovare le estensioni</translation>
+        <translation>Impossibile recuperare le estensioni</translation>
     </message>
     <message>
         <location line="+18"/>
@@ -4085,7 +4085,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location filename="../src/qml/emoji-grid-model.cpp" line="+21"/>
         <source>Reset ranking</source>
-        <translation>Ripristina ordine</translation>
+        <translation>Ripristina l’ordine</translation>
     </message>
 </context>
 <context>
@@ -4823,7 +4823,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location filename="../src/qml/qml/ShortcutsSettingsPage.qml" line="+55"/>
         <source>Keybindings</source>
-        <translation>Scorciatoie da Tastiera</translation>
+        <translation>Scorciatoie da tastiera</translation>
     </message>
     <message>
         <location line="+78"/>
@@ -4984,7 +4984,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+16"/>
         <source>Keyword</source>
-        <translation>Parola Chiave</translation>
+        <translation>Parola chiave</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -5611,7 +5611,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+13"/>
         <source>Continue to store</source>
-        <translation>Avanti nel negozio</translation>
+        <translation>Continua nel negozio</translation>
     </message>
 </context>
 <context>
@@ -5624,7 +5624,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+0"/>
         <source>Could not fetch extension data from the store.</source>
-        <translation>Impossibile ricevere i dati delle estensioni dal negozio.</translation>
+        <translation>Impossibile recuperare i dati delle estensioni dal negozio.</translation>
     </message>
     <message>
         <location line="+11"/>
@@ -5690,7 +5690,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+23"/>
         <source>Failed to fetch extensions</source>
-        <translation>Impossibile ricevere le estensioni</translation>
+        <translation>Impossibile recuperare le estensioni</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -6444,12 +6444,12 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location filename="../src/services/app-service/windows/win-app-database.cpp" line="+993"/>
         <source>Focus window</source>
-        <translation>Attiva Finestra</translation>
+        <translation>Attiva la finestra</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Launch app</source>
-        <translation>Apri Applicazione</translation>
+        <translation>Avvia app</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6534,7 +6534,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location filename="../src/services/app-service/xdg/xdg-app-database.cpp" line="+564"/>
         <source>Focus window</source>
-        <translation>Attiva Finestra</translation>
+        <translation>Attiva la finestra</translation>
     </message>
     <message>
         <location line="+0"/>
