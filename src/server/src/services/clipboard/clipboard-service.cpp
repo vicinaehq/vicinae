@@ -307,9 +307,6 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 }
 
 QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
-  static const std::vector<QString> plainTextMimeTypes = {
-      "text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"};
-
   auto uriIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
     return offer.mimeType == "text/uri-list" && !offer.data.isEmpty();
   });
@@ -326,12 +323,8 @@ QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection
     return url.scheme().length() > 1 && !url.isLocalFile();
   };
 
-  for (const auto &mime : plainTextMimeTypes) {
-    auto it = std::ranges::find_if(
-        selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
-    if (it == selection.offers.end()) continue;
-    if (imageIt != selection.offers.end() && isRemoteUrl(it->data)) break;
-    return it->mimeType;
+  if (auto it = Clipboard::findPlainTextOffer(selection); it != selection.offers.end()) {
+    if (imageIt == selection.offers.end() || !isRemoteUrl(it->data)) return it->mimeType;
   }
 
   if (imageIt != selection.offers.end()) return imageIt->mimeType;
@@ -829,29 +822,12 @@ bool ClipboardService::copyQMimeData(QMimeData *data, const Clipboard::CopyOptio
 void ClipboardService::restoreClipboard() {
   if (!m_lastSelection || m_lastSelection->offers.empty()) return;
 
-  auto *data = new QMimeData;
-  for (const auto &offer : m_lastSelection->offers) {
-    data->setData(offer.mimeType, offer.data);
-  }
+  auto data = Clipboard::mimeDataForSelection(*m_lastSelection);
 
   // Restore is transient so we don't re-index a selection that was already on the clipboard.
-  m_clipboardServer->setClipboardContent(data, {.transient = true, .sourceApp = m_lastSelection->sourceApp});
+  m_clipboardServer->setClipboardContent(data.release(),
+                                         {.transient = true, .sourceApp = m_lastSelection->sourceApp});
   m_lastSelection.reset();
-}
-
-std::unique_ptr<QMimeData>
-ClipboardService::mimeDataFromSelection(const ClipboardSelection &selection) const {
-  QMimeData *mimeData = new QMimeData;
-
-  for (auto &offer : selection.offers) {
-    if (offer.mimeType != Clipboard::URI_LIST && Utils::isTextMimeType(offer.mimeType)) {
-      mimeData->setText(QString::fromUtf8(offer.data));
-    } else {
-      mimeData->setData(offer.mimeType, offer.data);
-    }
-  }
-
-  return std::unique_ptr<QMimeData>{mimeData};
 }
 
 std::unique_ptr<QMimeData>
@@ -870,7 +846,7 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
 
   if (!enrichedOptions.sourceApp) enrichedOptions.sourceApp = selection.sourceApp;
 
-  auto mimeData = mimeDataFromSelection(std::move(selection));
+  auto mimeData = Clipboard::mimeDataForSelection(selection);
 
   return copyQMimeData(mimeData.release(), enrichedOptions);
 }

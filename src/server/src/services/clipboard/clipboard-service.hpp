@@ -101,7 +101,6 @@ public:
   ClipboardSelection retrieveSelection(int offset = 0);
   std::optional<ClipboardSelection> retrieveSelectionById(const QString &id);
   bool copySelectionRecord(const QString &id, const Clipboard::CopyOptions &options);
-  std::unique_ptr<QMimeData> mimeDataFromSelection(const ClipboardSelection &selection) const;
   std::unique_ptr<QMimeData> dragMimeDataForSelection(const ClipboardSelection &selection) const;
   bool copySelection(const ClipboardSelection &selection, const Clipboard::CopyOptions &options);
   bool copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options = {});

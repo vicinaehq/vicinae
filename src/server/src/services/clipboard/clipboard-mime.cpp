@@ -2,9 +2,12 @@
 #include "clipboard-mime.hpp"
 #include <QUrl>
 #include <QBuffer>
+#include <QTextDocumentFragment>
+#include <algorithm>
 #include <qlogging.h>
 #include <ranges>
 #include <concepts>
+#include "common/clipboard-formats.hpp"
 
 static bool isLegacyContentType(const QString &str) {
   if (str.startsWith("-x") || str.startsWith("-X")) return false;
@@ -35,6 +38,46 @@ std::unique_ptr<QMimeData> mimeDataForContent(const Content &content) {
         return data;
       },
       content);
+}
+
+static std::vector<ClipboardDataOffer>::const_iterator findOffer(const ClipboardSelection &selection,
+                                                                 QLatin1StringView mimeType) {
+  return std::ranges::find_if(selection.offers, [&](const ClipboardDataOffer &offer) {
+    return offer.mimeType == mimeType && !offer.data.isEmpty();
+  });
+}
+
+std::vector<ClipboardDataOffer>::const_iterator findPlainTextOffer(const ClipboardSelection &selection) {
+  for (const auto *mimeType : Clipboard::PLAIN_TEXT_MIME_TYPES) {
+    if (auto it = findOffer(selection, QLatin1StringView(mimeType)); it != selection.offers.end()) return it;
+  }
+
+  return selection.offers.end();
+}
+
+std::unique_ptr<QMimeData> mimeDataForSelection(const ClipboardSelection &selection) {
+  auto data = std::make_unique<QMimeData>();
+
+  for (const auto &offer : selection.offers) {
+    if (offer.data.isEmpty() || data->hasFormat(offer.mimeType)) continue;
+    data->setData(offer.mimeType, offer.data);
+  }
+
+  // Qt derives the X11 text targets (UTF8_STRING, STRING...) from text/plain
+  if (data->hasFormat("text/plain")) return data;
+
+  if (auto it = findPlainTextOffer(selection); it != selection.offers.end()) {
+    data->setText(QString::fromUtf8(it->data));
+    return data;
+  }
+
+  if (auto it = findOffer(selection, QLatin1StringView("text/html")); it != selection.offers.end()) {
+    auto text = QTextDocumentFragment::fromHtml(QString::fromUtf8(it->data)).toPlainText();
+    text.remove(QChar::ObjectReplacementCharacter);
+    if (text = text.trimmed(); !text.isEmpty()) data->setText(text);
+  }
+
+  return data;
 }
 
 std::optional<ClipboardSelection> selectionFromMimeData(const QMimeData *mimeData) {
