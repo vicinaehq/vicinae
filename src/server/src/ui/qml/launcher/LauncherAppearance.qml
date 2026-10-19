@@ -8,7 +8,8 @@ QtObject {
     property int searchBarHeight: 60
     property bool searchDividerVisible: true
     property bool overlaySearchBar: false
-    property int contentInset: Config.borderWidth
+    property int outerBorderWidth: Theme.mainWindowOuterBorder.a > 0 ? 1 : 0
+    property int contentInset: Config.borderWidth + outerBorderWidth
     property bool floatingStatusBar: Config.floatingStatusBar
     property int contentBottomInset: 0
 

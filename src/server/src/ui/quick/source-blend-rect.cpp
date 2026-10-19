@@ -60,6 +60,13 @@ public:
     int mode = mat->mode;
     memcpy(buf->data() + 164, &mode, 4);
 
+    float outerBorder[4];
+    colorToFloat4(mat->outerBorderColor, outerBorder);
+    memcpy(buf->data() + 176, outerBorder, 16);
+
+    float outerBorderWidth = mat->outerBorderWidth;
+    memcpy(buf->data() + 192, &outerBorderWidth, 4);
+
     return true;
   }
 
@@ -96,6 +103,9 @@ int SourceBlendMaterial::compare(const QSGMaterial *other) const {
     return backgroundColor.rgba() < o->backgroundColor.rgba() ? -1 : 1;
   if (radius != o->radius) return radius < o->radius ? -1 : 1;
   if (borderWidth != o->borderWidth) return borderWidth < o->borderWidth ? -1 : 1;
+  if (outerBorderColor != o->outerBorderColor)
+    return outerBorderColor.rgba() < o->outerBorderColor.rgba() ? -1 : 1;
+  if (outerBorderWidth != o->outerBorderWidth) return outerBorderWidth < o->outerBorderWidth ? -1 : 1;
   if (itemSize != o->itemSize) return itemSize.width() < o->itemSize.width() ? -1 : 1;
   return 0;
 }
@@ -130,6 +140,22 @@ void SourceBlendRect::setBorderWidth(int w) {
   if (m_borderWidth != w) {
     m_borderWidth = w;
     emit borderWidthChanged();
+    update();
+  }
+}
+
+void SourceBlendRect::setOuterBorderColor(const QColor &c) {
+  if (m_outerBorderColor != c) {
+    m_outerBorderColor = c;
+    emit outerBorderColorChanged();
+    update();
+  }
+}
+
+void SourceBlendRect::setOuterBorderWidth(int w) {
+  if (m_outerBorderWidth != w) {
+    m_outerBorderWidth = w;
+    emit outerBorderWidthChanged();
     update();
   }
 }
@@ -207,6 +233,8 @@ QSGNode *SourceBlendRect::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData 
   material->itemSize = QSizeF(width(), height());
   material->radius = static_cast<float>(m_radius);
   material->borderWidth = m_borderWidth;
+  material->outerBorderColor = m_outerBorderColor;
+  material->outerBorderWidth = static_cast<float>(m_outerBorderWidth);
   material->secondaryHeight = static_cast<float>(m_secondaryHeight);
 
   if (m_cornerMask)
