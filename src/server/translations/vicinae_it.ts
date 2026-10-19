@@ -2097,12 +2097,12 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+8"/>
         <source>Close on Escape</source>
-        <translation>Chiudi su Escpape</translation>
+        <translation>Chiudi su Escape</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Pressing Escape closes the launcher instead of navigating one view back.</source>
-        <translation>Premere il tasto esci chiude il launcher invece che tornare alla schermata precedente.</translation>
+        <translation>Premere Escape chiude il launcher invece di tornare alla schermata precedente.</translation>
     </message>
     <message>
         <location line="+8"/>
