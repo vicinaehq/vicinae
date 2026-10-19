@@ -1400,7 +1400,7 @@ Puoi trovare di più sullo sviluppo di estensioni nella [documentazione Vicinae]
     <message>
         <location line="+2"/>
         <source>Create a vicinae shortcut from the currently active browser tab. May yield unexpected results if many browsers are connected at once.</source>
-        <translation>Crea una scorciatoia Vicinae dalla scheda browser attiva. Potrebbe dare risultati inattesi se sono connesso più browser contemporaneamente.</translation>
+        <translation>Crea una scorciatoia Vicinae dalla scheda browser attiva. Potrebbe dare risultati inattesi se sono connessi più browser contemporaneamente.</translation>
     </message>
     <message>
         <location line="+15"/>
@@ -4733,7 +4733,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+67"/>
         <source>Edit &quot;%1&quot;</source>
-        <translation>Modifica ’%1’;</translation>
+        <translation>Modifica ’%1’</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -6459,7 +6459,7 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
     <message>
         <location line="+1"/>
         <source>Action to perform when the return key is pressed. Always default to &apos;launch&apos; if the app has no open window.</source>
-        <translation>L’azione da eseguire quando premi invio. Di Default è sempre ’Avvia’ se l’app non ha finestre aperte.</translation>
+        <translation>L’azione da eseguire quando premi invio. Di default è sempre ’Avvia’ se l’app non ha finestre aperte.</translation>
     </message>
     <message>
         <location line="+15"/>
