@@ -940,7 +940,7 @@
     <message>
         <location line="+1"/>
         <source>The default action to perform on pressing return. Paste is only available if your environment supports it.</source>
-        <translation>L’azione predefinita per quando premi invio. Incolla è supportato solo se supportato dal tuo ambiente.</translation>
+        <translation>L’azione predefinita per quando premi invio. Incolla è disponibile solo se supportato dal tuo ambiente.</translation>
     </message>
     <message>
         <location filename="../src/extensions/clipboard/clipboard-history-command.hpp" line="+11"/>
@@ -2107,7 +2107,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+8"/>
         <source>Pop to root on close</source>
-        <translation>Torna alla schermata dopo la chiusura</translation>
+        <translation>Torna alla schermata principale alla chiusura</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2342,7 +2342,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
         <location line="+2"/>
         <location line="+5"/>
         <source>Opened in browser</source>
-        <translation>Apri nel Browser</translation>
+        <translation>Aperto nel browser</translation>
     </message>
     <message>
         <location line="-2"/>
@@ -2867,7 +2867,7 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+7"/>
         <source>Learn more</source>
-        <translation>Di più a riguardo</translation>
+        <translation>Scopri di più</translation>
     </message>
 </context>
 <context>
@@ -3298,7 +3298,7 @@ Torniamo al comando tra un attimo...</translation>
     <message>
         <location filename="../src/actions/app/app-actions.hpp" line="-62"/>
         <source>Open in %1</source>
-        <translation>Aperto in %1</translation>
+        <translation>Apri in %1</translation>
     </message>
     <message>
         <location filename="../src/actions/app/app-actions.cpp" line="-85"/>
@@ -3913,7 +3913,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+2"/>
         <source>Rebuilding the entire index can be time consuming and CPU intensive, depending on the number of files present in your home directory.</source>
-        <translation>Ricostruire l’intero indice può richiedere tempo e occupare la CPU, a dipendenza del numero di file presenti nella tua cartella utente.</translation>
+        <translation>Ricostruire l’intero indice può richiedere tempo e occupare la CPU, a seconda del numero di file presenti nella tua cartella utente.</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -4391,7 +4391,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+1"/>
         <source>The default action to perform on pressing return. Paste is only available if your environment supports it.</source>
-        <translation>L’azione predefinita per quando premi invio. Incolla è disponibile solo se supportata dal tuo ambiente.</translation>
+        <translation>L’azione predefinita per quando premi invio. Incolla è disponibile solo se supportato dal tuo ambiente.</translation>
     </message>
     <message>
         <location line="+21"/>
@@ -4878,7 +4878,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="-43"/>
         <source>No snippet with that ID</source>
-        <translation>Nessun snippet con quest’ID</translation>
+        <translation>Nessuno snippet con quest’ID</translation>
     </message>
     <message>
         <location line="+15"/>
@@ -4989,7 +4989,7 @@ Vicinae ha anche il proprio [negozio d’estensioni](vicinae://launch/core/store
     <message>
         <location line="+2"/>
         <source>Typing this keyword anywhere will result in it being replaced by the content of the snippet.</source>
-        <translation>Scrivendo ovunque questa parola sarà rimpiazzata dal contenuto del tuo snippet.</translation>
+        <translation>Se digiti questa parola chiave in un punto qualsiasi, verrà sostituita dal contenuto dello snippet.</translation>
     </message>
     <message>
         <location line="+0"/>
