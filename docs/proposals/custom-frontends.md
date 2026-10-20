@@ -103,8 +103,14 @@ Use **CLI-mediated JSON** for the first Quickshell integration, backed by the ex
 implementation. No second listener, persistent stdio bridge, duplicated JavaScript fuzzy matcher,
 Quickshell-specific C++ ABI plugin, or private view-host object is needed.
 
-One-shot CLI processes are a deliberate simplicity tradeoff: each query pays process startup. Interactive
-latency has not been measured here, and nothing below should be read as a production-readiness claim.
+That recommendation is **conditional**: serialize queries — one in flight at a time — until reply routing is
+connection-qualified. Overlapping CLI processes share the same server-side routing state, and that is measured,
+not hypothesized: two concurrent queries left one process waiting indefinitely (*Concurrency and reply
+routing* below). A client that spawns a process per keystroke without serializing will lose replies.
+
+One-shot CLI processes are a deliberate simplicity tradeoff: each query pays process startup, and the
+serialization requirement caps how much of that cost can be hidden. Interactive latency has not been measured
+here, and nothing below should be read as a production-readiness claim.
 
 ## Proposed ranked root search
 
@@ -169,14 +175,23 @@ vicinae cmd query QUERY --limit 20 --json
 - Add no sessions, result subscriptions, favorites mutation API, argument-form schema, or extension-render
   protocol to this contract.
 
-### Before you write to this socket
+### Concurrency and reply routing
 
-A raw-IPC client is a different trust surface from the bounded CLI verbs above. Source-backed caveats:
+These caveats apply to **every** client of the socket, including a shell that merely shells out to the CLI —
+not only to a hand-rolled raw-IPC client. The bounded CLI verbs above stay convenient, but each invocation
+opens its own connection while the server-side routing state is shared.
 
-- `IpcTransport::pendingReplies` is keyed only by integer request ID
-  ([`ipc-command-server.hpp`](../../src/server/src/ipc/ipc-command-server.hpp)). **[INFERENCE]** two
-  overlapping asynchronous calls from different connections can collide; connection-qualified reply ownership
-  and disconnect behavior need proof before this is promoted to a general multi-client API.
+- Request IDs are per connection, not global: the generated client starts at 1 (`int m_id = 1` in
+  [`glaze-qt.hpp`](../../src/lib/figura/src/codegen/glaze-qt.hpp)), and `IpcTransport::bindReply` records
+  `pendingReplies[id] = conn` in one map keyed by that integer alone
+  ([`ipc-command-server.hpp`](../../src/server/src/ipc/ipc-command-server.hpp)). When two connections each have
+  an unfinished asynchronous request under the same id, the second bind overwrites the first: one reply can be
+  written to the wrong peer while the original caller waits for a reply that never arrives.
+- This is observed, not theoretical. Against the backend described under *Evidence*, two simultaneous
+  `fs query doc --json --limit 5` processes produced one result in ~0.1 s and one process that never returned;
+  ten simultaneous processes produced exactly one result and nine hangs, while the same query run sequentially
+  returned in ~0.1 s every time and the server stayed healthy afterwards. Cause attribution comes from the
+  source above, not from instrumentation, but the symptom matches it exactly: replies are lost, not delayed.
 - The generated router returns silently on a malformed outer message or an unknown method, and it ignores
   parameter-deserialization errors by dispatching with default-initialized values
   ([`glaze-qt.hpp`](../../src/lib/figura/src/codegen/glaze-qt.hpp)). Do not expect a "method not found"
@@ -229,6 +244,7 @@ Implementation criteria for a future PR — not test results for this one:
 - the Favorites, calculator, links, news, updates, file, and fallback sections of the native root screen;
 - raw fuzzy scores, ranking internals, icons, or any `icon://` asset;
 - sessions, result subscriptions, favorites/alias mutation, argument-form schemas, or extension rendering;
+- connection-qualified reply routing, so concurrent clients are not safe by default today;
 - a second transport (HTTP, WebSocket, or persistent stdio) and a GUI-free daemon.
 
 Each exclusion is explained above where it applies.
@@ -382,10 +398,11 @@ References (Quickshell v0.3.0, inspected):
 
 ### For a subsequent interactive client
 
-Once a query operation exists, a client should debounce on the presentation side (~100 ms), keep a
-monotonically increasing query generation, and ignore results whose generation is no longer current. Ending a
-one-shot CLI process or stopping a watcher cancels local work only; it does not cancel work inside Vicinae.
-That client is not implemented here.
+Once a query operation exists, keep **at most one query in flight** and debounce on the presentation side
+(~100 ms). A monotonically increasing query generation tells you which correctly routed reply is stale; it
+cannot detect a reply delivered to the wrong process, so generation bookkeeping is not a substitute for
+serializing calls. Ending a one-shot CLI process or stopping a watcher cancels local work only; it does not
+cancel work inside Vicinae. That client is not implemented here.
 
 ### Handoff checks on Linux
 
@@ -404,10 +421,14 @@ the installed `vicinae`.
 3. Pick an already trusted, installed view command without required arguments from `vicinae cmd list --json`
    and run `vicinae cmd launch 'COPIED_ID'`. Expect Vicinae to open or own the view, or its required-preference
    screen. This deliberately changes native UI state, so it stays a collaborator-run check.
-4. Record the Vicinae revision, Quickshell/Qt versions, session or compositor, commands, outputs, and whether
+4. Launch several `vicinae fs query BASENAME --json --limit 5` processes at once and require that every one
+   returns its own result set and exits, with none hanging. This already fails on the authoring host, so treat
+   it as confirmation of platform-specific behavior rather than a discovery; a single-process run proves
+   nothing here.
+5. Record the Vicinae revision, Quickshell/Qt versions, session or compositor, commands, outputs, and whether
    the native view handoff behaved as documented.
 
-Until they are run, all four are **not executed**.
+Until they are run, all five are **not executed**.
 
 ## Evidence and review questions
 
@@ -425,10 +446,14 @@ were actually run against the local backend:
 | `fs query vicinae-proposal-no-match-8b239c41 --json --limit 5` | exit 0, `[]` |
 | `fs query ab --json` | exit 1, `Query should be at least 3 characters long` plus the help hint |
 | `fs query --help` | positional query, `--limit`, `--category`, `--json` confirmed |
+| two simultaneous `fs query doc --json --limit 5` | one returned in ~0.1 s, one never returned |
+| ten simultaneous `fs query doc --json --limit 5` | exactly one returned, nine hung |
+| the same query run sequentially, three times | ~0.12 s, ~0.10 s, ~0.08 s; a later run ~0.09 s |
 
-The entry count is local evidence, not a contract constant. These probes cover catalog enumeration and the
-negative and argument-error paths only: no activation, no ranked query, and no positive index was run at this
-revision.
+The entry count is local evidence, not a contract constant. The single-process probes cover catalog
+enumeration and the negative and argument-error paths only: no activation, no ranked query, and no positive
+index was run at this revision. The concurrency rows are separate — see *Concurrency and reply routing* — and
+say nothing about single-client latency beyond the ~0.1 s above.
 
 ### Not executed
 
@@ -442,5 +467,5 @@ negative file query are not evidence for any of those, and macOS results do not 
    frontend, or does a real frontend need more than ranked roots and file matches?
 2. Do the proposed `id` / `name` / `subtitle` fields plus existing `cmd launch` activation suffice for a first
    custom launcher?
-3. Does the maintainer accept CLI-first access to this additive Figura operation, including the transport
-   caveats above as prerequisites for a public API?
+3. Does the maintainer accept CLI-first access to this additive Figura operation, with connection-qualified
+   reply routing treated as a prerequisite for any client that queries concurrently?
