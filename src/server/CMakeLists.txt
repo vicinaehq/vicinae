@@ -16,7 +16,7 @@ else()
 
 	FetchContent_Declare(numen
 	  GIT_REPOSITORY https://github.com/vicinaehq/numen
-	  GIT_TAG        v0.8.0
+	  GIT_TAG        v0.8.1
 	)
 
 	FetchContent_MakeAvailable(numen)
@@ -1491,7 +1491,9 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/builtin-icon/builtin-icon.hpp
 		src/services/builtin-icon/builtin-icon.cpp
 		src/services/audio-control/pactl/pactl-audio-control.cpp
+		src/services/clipboard/clipboard-mime.cpp
 		tests/pactl-audio-control.cpp
+		tests/clipboard-mime.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)

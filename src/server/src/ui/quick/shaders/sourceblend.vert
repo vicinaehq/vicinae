@@ -17,6 +17,8 @@ layout(std140, binding = 0) uniform buf {
     float u_borderWidth;
     float u_secondaryHeight;
     int u_mode;
+    vec4 u_outerBorderColor;
+    float u_outerBorderWidth;
 };
 
 void main() {

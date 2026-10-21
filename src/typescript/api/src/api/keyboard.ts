@@ -99,9 +99,9 @@ export namespace Keyboard {
 	export namespace Shortcut {
 		export const Common = {
 			Copy: "copy",
-			CopyDeeplink: "copy",
-			CopyName: "copy",
-			CopyPath: "copy",
+			CopyDeeplink: "copy-deeplink",
+			CopyName: "copy-name",
+			CopyPath: "copy-path",
 			Save: "save",
 			Duplicate: "duplicate",
 			Edit: "edit",
