@@ -136,10 +136,19 @@ Flickable {
             SettingsRow {
                 label: qsTr("Tray icon")
                 description: qsTr("Show the Vicinae icon in the system tray. You may need to restart Vicinae.")
-                showSeparator: false
                 SettingsToggle {
                     checked: root.model.trayEnabled
                     onToggled: checked => root.model.trayEnabled = checked
+                }
+            }
+
+            SettingsRow {
+                label: qsTr("Update notice")
+                description: qsTr("Show a notice in the launcher when an update is available.")
+                showSeparator: false
+                SettingsToggle {
+                    checked: root.model.showUpdateNotice
+                    onToggled: checked => root.model.showUpdateNotice = checked
                 }
             }
         }
