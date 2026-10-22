@@ -56,6 +56,14 @@ bool DataControlClipboardServer::start() {
   int const maxWaitForStart = 5000;
   std::error_code const ec;
 
+  // start() is called again every time monitoring is toggled back on, but stop() keeps the helper
+  // alive on purpose (it also serves clipboard writes for snippets). Without this guard a second
+  // start() would SIGINT our own child through the pid file and then call QProcess::start() on a
+  // QProcess that is still in the Running state: Qt refuses to start it, waitForStarted() returns
+  // true because a process is already running, and we end up reporting success while the helper is
+  // dead. Clipboard recording then silently stops until the daemon is restarted.
+  if (m_process.state() == QProcess::ProcessState::Running) return true;
+
   auto path = vicinae::findHelperProgram(HELPER_PROGRAM);
   if (!path) {
     qWarning() << "could not find" << HELPER_PROGRAM;
