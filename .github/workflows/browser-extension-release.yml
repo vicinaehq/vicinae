@@ -81,18 +81,18 @@ jobs:
           path: build
 
       - name: Authenticate to Google Cloud
-        id: gcp
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.CHROME_SERVICE_ACCOUNT_KEY }}
-          token_format: access_token
-          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
+
+      - uses: google-github-actions/setup-gcloud@v2
 
       - name: Upload and publish
         env:
-          TOKEN: ${{ steps.gcp.outputs.access_token }}
           ITEM: publishers/${{ vars.CHROME_PUBLISHER_ID }}/items/${{ vars.CHROME_EXTENSION_ID }}
         run: |
+          TOKEN=$(gcloud auth print-access-token --scopes=https://www.googleapis.com/auth/chromewebstore)
+          echo "::add-mask::$TOKEN"
           api="https://chromewebstore.googleapis.com"
           auth=(-H "Authorization: Bearer $TOKEN")
 
