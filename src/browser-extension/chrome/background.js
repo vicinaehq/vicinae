@@ -2,7 +2,7 @@ const HOST_NAME = "com.vicinae.vicinae";
 const RETRY_INITIAL_MS = 1000;
 const RETRY_MAX_MS = 60000;
 const TAB_DEBOUNCE_MS = 50;
-const OPTIONAL_PERMISSIONS = ["bookmarks"];
+const OPTIONAL_PERMISSIONS = ["bookmarks", "history"];
 const IGNORED_BOOKMARK_SCHEMES = ["place:", "javascript:"];
 const browserId = crypto.randomUUID();
 const requestMap = new Map();
@@ -109,6 +109,18 @@ function handleNotification(type, data) {
 	if (type === "browser/remove-bookmark") {
 		chrome.bookmarks?.remove(data.bookmarkId);
 	}
+
+	if (type === "browser/request-history") {
+		sendHistory(data.requestId, data.query, data.maxResults);
+	}
+
+	if (type === "browser/remove-history-url") {
+		removeHistoryUrl(data.url);
+	}
+
+	if (type === "browser/clear-history") {
+		clearHistory();
+	}
 }
 
 function processNativeMessage(message) {
@@ -143,6 +155,7 @@ function connectToNativeHost() {
 				engine: 'chromium',
 				version: chrome.runtime.getManifest().version,
 				permissions,
+				optionalPermissions: OPTIONAL_PERMISSIONS,
 			}, (data, error) => {
 				if (!error) {
 					retryDelay = RETRY_INITIAL_MS;
@@ -309,6 +322,47 @@ function sendBookmarks(requestId) {
 
 		notifyNative("browser/bookmarks", { requestId, bookmarks });
 	});
+}
+
+function hasPermission(permission) {
+	return new Promise((resolve) => chrome.permissions.contains({ permissions: [permission] }, resolve));
+}
+
+function sendHistory(requestId, query, maxResults) {
+	if (!chrome.history) {
+		notifyNative("browser/history", { requestId, items: [], error: "History permission not granted" });
+		return;
+	}
+
+	chrome.history.search({ text: query ?? "", startTime: 0, maxResults }, (results) => {
+		if (chrome.runtime.lastError) {
+			notifyNative("browser/history", { requestId, items: [], error: chrome.runtime.lastError.message });
+			return;
+		}
+
+		const items = results.filter((item) => item.url).map((item) => ({
+			id: item.id,
+			title: item.title ?? "",
+			url: item.url,
+			lastVisitTime: item.lastVisitTime ?? 0,
+			visitCount: item.visitCount ?? 0,
+		}));
+
+		notifyNative("browser/history", { requestId, items });
+	});
+}
+
+async function removeHistoryUrl(url) {
+	if (typeof url !== "string" || !url) return;
+	if (!(await hasPermission("history"))) return;
+
+	chrome.history.deleteUrl({ url });
+}
+
+async function clearHistory() {
+	if (!(await hasPermission("history"))) return;
+
+	chrome.history.deleteAll();
 }
 
 // Permission prompts need a user gesture, which vicinae cannot provide: open a page with a button instead.

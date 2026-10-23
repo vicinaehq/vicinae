@@ -18,19 +18,26 @@ class BrowserExtensionService : public QObject {
 
 public:
   enum class TabAction : std::uint8_t { Focus, Close };
+  enum class PermissionAccess : std::uint8_t { Granted, NeedsPermission, NeedsUpdate, NoBrowser };
 
 signals:
   void tabActionRequested(std::string browserId, int id, TabAction action) const;
   void bookmarksRequested(std::string browserId, int requestId) const;
   void permissionRequested(std::string browserId, std::string permission) const;
   void bookmarkRemovalRequested(std::string browserId, std::string bookmarkId) const;
+  void historyRequested(std::string browserId, int requestId, std::string query, int maxResults) const;
+  void historyUrlRemovalRequested(std::string browserId, std::string url) const;
+  void historyClearRequested(std::string browserId) const;
   void tabsChanged() const;
   void bookmarksChanged() const;
+  void historyChanged() const;
   void browsersChanged() const;
 
 public:
   static constexpr std::string_view BOOKMARKS_PERMISSION = "bookmarks";
   static constexpr std::chrono::seconds BOOKMARKS_CACHE_TTL{60};
+  static constexpr std::string_view HISTORY_PERMISSION = "history";
+  static constexpr int HISTORY_MAX_RESULTS = 200;
 
   static QString urlHost(const std::string &url) {
     QUrl qurl(url.c_str());
@@ -74,17 +81,32 @@ public:
     }
   };
 
+  struct BrowserHistoryItem : ipc_gen::BrowserHistoryItemInfo {
+    std::string browserId;
+
+    std::string uniqueId() const { return std::format("{}-{}", browserId, id); }
+    QString host() const { return urlHost(url); }
+    ImageURL icon() const { return urlIcon(url, BuiltinIcon::Clock); }
+  };
+
   struct BrowserInfo {
     std::string id;
     std::string name;
     std::string engine;
     std::optional<std::string> version;
     std::optional<std::vector<std::string>> permissions;
+    std::optional<std::vector<std::string>> optionalPermissions;
     std::vector<BrowserTab> tabs;
     std::optional<std::vector<BrowserBookmark>> bookmarks;
     std::optional<int> pendingBookmarksRequest;
+    std::vector<BrowserHistoryItem> history;
+    bool historyTruncated = false;
+    std::optional<int> pendingHistoryRequest;
 
-    bool supportsPermissions() const { return permissions.has_value(); }
+    bool canRequestPermission(std::string_view permission) const {
+      if (optionalPermissions) return std::ranges::contains(*optionalPermissions, permission);
+      return permissions.has_value() && permission == BOOKMARKS_PERMISSION;
+    }
     bool hasPermission(std::string_view permission) const {
       return permissions && std::ranges::contains(*permissions, permission);
     }
@@ -181,11 +203,26 @@ public:
       m_browsers.erase(it);
       emit tabsChanged();
       emit bookmarksChanged();
+      emit historyChanged();
       emit browsersChanged();
     }
   }
 
   std::span<const BrowserInfo> browsers() const { return m_browsers; }
+
+  const BrowserInfo *browser(std::string_view id) const {
+    auto it = std::ranges::find_if(m_browsers, [&](auto &&browser) { return browser.id == id; });
+    return it == m_browsers.end() ? nullptr : &*it;
+  }
+
+  PermissionAccess permissionAccess(std::string_view permission) const {
+    if (m_browsers.empty()) return PermissionAccess::NoBrowser;
+    if (std::ranges::any_of(m_browsers, [&](auto &&b) { return b.hasPermission(permission); }))
+      return PermissionAccess::Granted;
+    if (std::ranges::any_of(m_browsers, [&](auto &&b) { return b.canRequestPermission(permission); }))
+      return PermissionAccess::NeedsPermission;
+    return PermissionAccess::NeedsUpdate;
+  }
 
   std::vector<BrowserBookmark> bookmarks() const {
     return m_browsers | std::views::filter([](auto &&b) { return b.bookmarks.has_value(); }) |
@@ -202,7 +239,7 @@ public:
       if (!browser.hasPermission(BOOKMARKS_PERMISSION)) continue;
       if (browser.bookmarks || browser.pendingBookmarksRequest) continue;
 
-      const int requestId = m_nextBookmarksRequestId++;
+      const int requestId = m_nextRequestId++;
 
       browser.pendingBookmarksRequest = requestId;
       emit bookmarksRequested(browser.id, requestId);
@@ -271,12 +308,110 @@ public:
       emit bookmarksChanged();
     }
 
+    if (!it->hasPermission(HISTORY_PERMISSION)) {
+      it->history.clear();
+      it->historyTruncated = false;
+      it->pendingHistoryRequest.reset();
+      emit historyChanged();
+    }
+
     emit browsersChanged();
   }
 
   /**
    * Ask the browser to show its permission page. Granting it requires user interaction in the browser.
    */
+  std::vector<BrowserHistoryItem> history() const {
+    auto items = m_browsers | std::views::transform([](auto &&b) { return b.history; }) | std::views::join |
+                 std::ranges::to<std::vector>();
+
+    std::ranges::stable_sort(items, std::greater{}, &BrowserHistoryItem::lastVisitTime);
+
+    return items;
+  }
+
+  void searchHistory(const std::string &query) {
+    for (auto &browser : m_browsers) {
+      if (!browser.hasPermission(HISTORY_PERMISSION)) continue;
+
+      const int requestId = m_nextRequestId++;
+
+      browser.pendingHistoryRequest = requestId;
+      emit historyRequested(browser.id, requestId, query, HISTORY_MAX_RESULTS);
+    }
+  }
+
+  bool isHistoryTruncated() const {
+    return std::ranges::any_of(m_browsers, [](auto &&b) { return b.historyTruncated; });
+  }
+
+  bool isFetchingHistory() const {
+    return std::ranges::any_of(m_browsers, [](auto &&b) { return b.pendingHistoryRequest.has_value(); });
+  }
+
+  std::expected<void, std::string> setHistory(const std::string &browserId,
+                                              ipc_gen::HistoryResponse response) {
+    auto it = findById(browserId);
+
+    if (it == m_browsers.end()) return std::unexpected("No such browser");
+
+    if (it->pendingHistoryRequest != response.requestId) return {};
+
+    it->pendingHistoryRequest.reset();
+
+    if (response.error) {
+      emit historyChanged();
+      return std::unexpected(*response.error);
+    }
+
+    it->history = response.items | std::views::transform([&](ipc_gen::BrowserHistoryItemInfo &info) {
+                    auto item = BrowserHistoryItem(std::move(info));
+                    item.browserId = browserId;
+                    return item;
+                  }) |
+                  std::ranges::to<std::vector>();
+    it->historyTruncated = it->history.size() >= HISTORY_MAX_RESULTS;
+
+    emit historyChanged();
+
+    return {};
+  }
+
+  void clearHistoryResults() {
+    for (auto &browser : m_browsers) {
+      browser.history.clear();
+      browser.historyTruncated = false;
+      browser.pendingHistoryRequest.reset();
+    }
+  }
+
+  std::expected<void, std::string> removeHistoryUrl(const BrowserHistoryItem &item) {
+    auto it = findById(item.browserId);
+
+    if (it == m_browsers.end()) return std::unexpected("No such browser");
+    if (!it->hasPermission(HISTORY_PERMISSION)) return std::unexpected("History access not granted");
+
+    std::erase_if(it->history, [&](auto &&entry) { return entry.url == item.url; });
+    emit historyChanged();
+    emit historyUrlRemovalRequested(item.browserId, item.url);
+
+    return {};
+  }
+
+  std::expected<void, std::string> clearHistory(const std::string &browserId) {
+    auto it = findById(browserId);
+
+    if (it == m_browsers.end()) return std::unexpected("No such browser");
+    if (!it->hasPermission(HISTORY_PERMISSION)) return std::unexpected("History access not granted");
+
+    it->history.clear();
+    it->historyTruncated = false;
+    emit historyChanged();
+    emit historyClearRequested(browserId);
+
+    return {};
+  }
+
   void requestPermission(const std::string &browserId, std::string_view permission) {
     emit permissionRequested(browserId, std::string{permission});
   }
@@ -284,5 +419,5 @@ public:
 private:
   std::vector<BrowserInfo> m_browsers;
   QTimer m_bookmarksEviction;
-  int m_nextBookmarksRequestId = 0;
+  int m_nextRequestId = 0;
 };

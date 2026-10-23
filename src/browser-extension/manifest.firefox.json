@@ -18,7 +18,8 @@
     "tabs"
   ],
   "optional_permissions": [
-    "bookmarks"
+    "bookmarks",
+    "history"
   ],
   "background": {
     "scripts": ["background.js"]
