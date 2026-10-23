@@ -60,9 +60,21 @@ void ThemeDatabase::scan() {
     }
   }
 
+  // a theme whose inherit chain loops back on itself would make colour resolution recurse forever
+  auto inheritsCycle = [&](const ThemeFile &theme) {
+    auto it = mapping.find(theme.inherits());
+
+    for (std::size_t hops = 0; it != mapping.end(); ++hops) {
+      if (it->second->id() == theme.id() || hops > mapping.size()) return true;
+      it = mapping.find(it->second->inherits());
+    }
+
+    return false;
+  };
+
   for (const auto &theme : themes) {
     if (theme->id() == defaultDark->id() || theme->id() == defaultLight->id()) continue;
-    if (auto it = mapping.find(theme->inherits()); it != mapping.end()) {
+    if (auto it = mapping.find(theme->inherits()); it != mapping.end() && !inheritsCycle(*theme)) {
       theme->setParent(it->second);
     } else {
       qWarning() << "failed to find inherited theme" << theme->inherits() << "falling back to default";
