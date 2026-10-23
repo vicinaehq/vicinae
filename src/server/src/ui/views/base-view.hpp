@@ -6,7 +6,7 @@
 #include <QObject>
 #include <vector>
 
-class ApplicationContext;
+struct ApplicationContext;
 class ActionPanelState;
 class ActionPanelView;
 class Toast;
