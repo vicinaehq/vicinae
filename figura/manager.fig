@@ -64,4 +64,5 @@ service Manager {
 
   event extensionMessage(session_id: string, payload: string);
   event extensionCrash(session_id: string, reason: string);
+  event extensionUnloaded(session_id: string);
 }

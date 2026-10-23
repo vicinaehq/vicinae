@@ -83,8 +83,9 @@ void NavigationController::setBackButtonVisibility(bool value, const BaseView *c
   }
 }
 
-void NavigationController::showHud(const QString &title, const std::optional<ImageURL> &icon) {
-  closeWindow();
+void NavigationController::showHud(const QString &title, const std::optional<ImageURL> &icon,
+                                   const CloseWindowOptions &closeOptions) {
+  closeWindow(closeOptions);
 
   if (Environment::isHudDisabled()) return;
 
