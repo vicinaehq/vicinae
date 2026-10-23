@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <QDebug>
 #include <format>
+#include <functional>
 #include <qlocalserver.h>
 #include <string_view>
 #include <unordered_map>
@@ -34,6 +35,8 @@ public:
   ipc_gen::Result<ipc_gen::DMenuResponse>::Future dmenu(ipc_gen::DMenuRequest req) override;
   ipc_gen::Result<void>::Future browserInit(ipc_gen::BrowserInitRequest req) override;
   ipc_gen::Result<void>::Future browserTabsChanged(std::vector<ipc_gen::BrowserTabInfo> tabs) override;
+  ipc_gen::Result<void>::Future browserPermissionsChanged(std::vector<std::string> permissions) override;
+  ipc_gen::Result<void>::Future browserBookmarks(ipc_gen::BookmarksResponse res) override;
   ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future fsQuery(std::string q,
                                                                     ipc_gen::FsQueryParams params) override;
 
@@ -54,6 +57,7 @@ private:
   void handleRead(QLocalSocket *conn);
   void handleDisconnection(QLocalSocket *conn);
   void handleConnection();
+  void emitToBrowser(std::string_view browserId, const std::function<void()> &emitEvent);
 
   QLocalServer m_server;
   std::vector<ClientInfo> m_clients;

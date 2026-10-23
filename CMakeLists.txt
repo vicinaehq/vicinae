@@ -78,7 +78,12 @@ option(
 set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "App identifier (macOS bundle id, Windows AppUserModelID)")
 
 set(NATIVE_MESSAGING_HOST "com.vicinae.vicinae")
-set(CHROME_EXTENSION_ID "kcmipingpfbohfjckomimmahknoddnke") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke
+# set VICINAE_CHROME_EXTENSION_ID at configure time to use a local unpacked extension
+if (DEFINED ENV{VICINAE_CHROME_EXTENSION_ID})
+	set(CHROME_EXTENSION_ID "$ENV{VICINAE_CHROME_EXTENSION_ID}")
+else()
+	set(CHROME_EXTENSION_ID "kcmipingpfbohfjckomimmahknoddnke") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke
+endif()
 set(FIREFOX_EXTENSION_ID "firefox@vicinae.com")
 
 if (ENABLE_CLANG_TIDY)

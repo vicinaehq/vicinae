@@ -315,7 +315,11 @@ ipc_gen::Result<void>::Future IpcService::browserInit(ipc_gen::BrowserInitReques
   if (!m_caller) return ipc_gen::Result<void>::fail("No caller context");
 
   m_caller->browser = req;
-  m_ctx.services->browserExtension()->registerBrowser({.id = req.id, .name = req.name});
+  m_ctx.services->browserExtension()->registerBrowser({.id = req.id,
+                                                       .name = req.name,
+                                                       .engine = req.engine,
+                                                       .version = req.version,
+                                                       .permissions = req.permissions});
 
   return ipc_gen::Result<void>::ok();
 }
@@ -329,36 +333,80 @@ ipc_gen::Result<void>::Future IpcService::browserTabsChanged(std::vector<ipc_gen
   return ipc_gen::Result<void>::ok();
 }
 
+ipc_gen::Result<void>::Future IpcService::browserPermissionsChanged(std::vector<std::string> permissions) {
+  if (!m_caller || !m_caller->browser)
+    return ipc_gen::Result<void>::fail("Only browser extensions can do this");
+
+  m_ctx.services->browserExtension()->setPermissions(m_caller->browser->id, std::move(permissions));
+
+  return ipc_gen::Result<void>::ok();
+}
+
+ipc_gen::Result<void>::Future IpcService::browserBookmarks(ipc_gen::BookmarksResponse res) {
+  if (!m_caller || !m_caller->browser)
+    return ipc_gen::Result<void>::fail("Only browser extensions can do this");
+
+  if (auto result = m_ctx.services->browserExtension()->setBookmarks(m_caller->browser->id, std::move(res));
+      !result) {
+    qWarning() << "Failed to load bookmarks from browser" << m_caller->browser->name.c_str() << ":"
+               << result.error().c_str();
+    return ipc_gen::Result<void>::fail(result.error());
+  }
+
+  return ipc_gen::Result<void>::ok();
+}
+
 // IpcCommandServer
 
 IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
     : QObject(parent), m_ctx(*ctx), m_rpc(m_transport), m_service(new IpcService(m_rpc, *ctx)),
       m_ipcServer(m_rpc, m_service) {
 
-  connect(
-      ctx->services->browserExtension(), &BrowserExtensionService::tabActionRequested, this,
-      [this](std::string_view browserId, int tabId, BrowserExtensionService::TabAction action) {
-        auto it = std::ranges::find_if(
-            m_clients, [&](auto &&client) { return client.browser && client.browser->id == browserId; });
+  const auto browser = ctx->services->browserExtension();
 
-        if (it == m_clients.end()) {
-          qWarning() << "focus tab requested but there is no browser extension client currently connected";
-          return;
-        }
+  connect(browser, &BrowserExtensionService::tabActionRequested, this,
+          [this](std::string_view browserId, int tabId, BrowserExtensionService::TabAction action) {
+            emitToBrowser(browserId, [&]() {
+              switch (action) {
+              case BrowserExtensionService::TabAction::Focus:
+                m_service->emitfocusTab({.tabId = tabId});
+                break;
+              case BrowserExtensionService::TabAction::Close:
+                m_service->emitcloseTab({.tabId = tabId});
+                break;
+              }
+            });
+          });
 
-        m_transport.conn = it->conn;
+  connect(browser, &BrowserExtensionService::bookmarksRequested, this,
+          [this](std::string_view browserId, int requestId) {
+            emitToBrowser(browserId, [&]() { m_service->emitrequestBookmarks({.requestId = requestId}); });
+          });
 
-        switch (action) {
-        case BrowserExtensionService::TabAction::Focus:
-          m_service->emitfocusTab({.tabId = tabId});
-          break;
-        case BrowserExtensionService::TabAction::Close:
-          m_service->emitcloseTab({.tabId = tabId});
-          break;
-        }
+  connect(browser, &BrowserExtensionService::bookmarkRemovalRequested, this,
+          [this](std::string_view browserId, const std::string &bookmarkId) {
+            emitToBrowser(browserId, [&]() { m_service->emitremoveBookmark({.bookmarkId = bookmarkId}); });
+          });
 
-        m_transport.conn = nullptr;
-      });
+  connect(browser, &BrowserExtensionService::permissionRequested, this,
+          [this](std::string_view browserId, const std::string &permission) {
+            emitToBrowser(browserId, [&]() { m_service->emitrequestPermission({.permission = permission}); });
+          });
+}
+
+void IpcCommandServer::emitToBrowser(std::string_view browserId, const std::function<void()> &emitEvent) {
+  auto it = std::ranges::find_if(
+      m_clients, [&](auto &&client) { return client.browser && client.browser->id == browserId; });
+
+  if (it == m_clients.end()) {
+    qWarning() << "browser event requested but there is no matching browser extension client connected";
+    return;
+  }
+
+  // may run while another client's frame is being dispatched, whose reply still needs its conn
+  auto *const previousConn = std::exchange(m_transport.conn, it->conn);
+  emitEvent();
+  m_transport.conn = previousConn;
 }
 
 void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {

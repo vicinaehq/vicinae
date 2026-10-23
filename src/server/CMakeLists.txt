@@ -329,6 +329,10 @@ set(SRCS
 	src/builtins/browser/browser-tabs-model.cpp
 	src/builtins/browser/browser-tabs-view-host.hpp
 	src/builtins/browser/browser-tabs-view-host.cpp
+	src/builtins/browser/browser-bookmarks-model.hpp
+	src/builtins/browser/browser-bookmarks-model.cpp
+	src/builtins/browser/browser-bookmarks-view-host.hpp
+	src/builtins/browser/browser-bookmarks-view-host.cpp
 	src/builtins/vicinae/builtin-icons-model.hpp
 	src/builtins/vicinae/builtin-icons-model.cpp
 	src/builtins/vicinae/builtin-icons-view-host.hpp
@@ -1236,6 +1240,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/ScreenshotsView.qml
 	src/ui/qml/views/FontDemoView.qml
 	src/ui/qml/accessories/CategoryFilterAccessory.qml
+	src/ui/qml/accessories/BookmarkFolderFilterAccessory.qml
 	src/ui/qml/views/ExtensionFormView.qml
 	src/ui/qml/form/FormFilePicker.qml
 	src/ui/qml/form/FormAppSelector.qml
@@ -1245,6 +1250,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/EditKeywordsFormView.qml
 	src/ui/qml/launcher/HorizontalLoadingBar.qml
 	src/ui/qml/views/SearchFilesView.qml
+	src/ui/qml/views/BrowserBookmarksView.qml
 	src/ui/qml/detail/TextViewer.qml
 	src/ui/qml/detail/FilePreview.qml
 	src/ui/qml/detail/ImagePreview.qml
@@ -1409,6 +1415,7 @@ target_include_directories(${TARGET} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/shortcut
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/vicinae
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/clipboard/history
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/browser
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/file
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/font
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/developer
