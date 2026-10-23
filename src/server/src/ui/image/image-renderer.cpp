@@ -445,25 +445,18 @@ QFuture<QImage> renderFavicon(const QString &domain, const QSize &size, const QC
           promise->finish();
           return;
         }
-        auto faviconFuture = svc->makeRequest(domain);
-        auto *watcher = new QFutureWatcher<FaviconService::FaviconResponse>;
-        QObject::connect(
-            watcher, &QFutureWatcherBase::finished, qApp, [promise, watcher, size, fg, bg, mask]() {
-              auto result = watcher->result();
+        svc->makeRequest(domain).then(
+            &decodingPool(), [promise, size, fg, bg, mask](const FaviconService::FaviconResponse &result) {
               if (result) {
                 QSize const contentSize = hasBackdrop(bg) ? backdropContentSize(size) : size;
-                QImage img = result.value()
-                                 .scaled(contentSize, Qt::KeepAspectRatio, Qt::SmoothTransformation)
-                                 .toImage();
+                QImage img = result->scaled(contentSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
                 applyPostTransforms(img, fg, bg, size, mask);
                 promise->addResult(std::move(img));
               } else {
                 promise->addResult(QImage{});
               }
               promise->finish();
-              watcher->deleteLater();
             });
-        watcher->setFuture(faviconFuture);
       },
       Qt::QueuedConnection);
 

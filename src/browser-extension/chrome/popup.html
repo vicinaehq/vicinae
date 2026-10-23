@@ -95,6 +95,30 @@
     #toggleBtn.connect:hover {
       background: #16a34a;
     }
+
+    .permissions {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    .permissions-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #9ca3af;
+      margin: 0 0 6px 0;
+    }
+
+    .permission {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #1f2937;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -105,6 +129,14 @@
   <h1 class="title">Vicinae</h1>
   <p id="statusText" class="status-text">Connecting...</p>
   <button id="toggleBtn" class="connect">Connect</button>
+
+  <div class="permissions">
+    <p class="permissions-title">Permissions</p>
+    <label class="permission">
+      Bookmarks
+      <input type="checkbox" id="bookmarksToggle">
+    </label>
+  </div>
 
   <script src="popup.js"></script>
 </body>

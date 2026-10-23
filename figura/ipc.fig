@@ -80,6 +80,9 @@ struct BrowserInitRequest {
   id: string;
   name: string;
   engine: string;
+  version?: string;
+  // granted optional permissions, absent on extensions predating optional permissions
+  permissions?: string[];
 };
 
 struct BrowserTabInfo {
@@ -100,6 +103,32 @@ struct FocusTabRequest {
 
 struct CloseTabRequest {
   tabId: int;
+};
+
+struct BrowserBookmarkInfo {
+  id: string;
+  title: string;
+  url: string;
+  folder: string[];
+  dateAdded: double;
+};
+
+struct BookmarksRequest {
+  requestId: int;
+};
+
+struct BookmarksResponse {
+  requestId: int;
+  bookmarks: BrowserBookmarkInfo[];
+  error?: string;
+};
+
+struct RemoveBookmarkRequest {
+  bookmarkId: string;
+};
+
+struct PermissionRequest {
+  permission: string;
 };
 
 struct FileResult {
@@ -124,10 +153,15 @@ service Ipc {
   fn dmenu(req: DMenuRequest) => DMenuResponse;
   fn browserInit(req: BrowserInitRequest) => void;
   fn browserTabsChanged(tabs: BrowserTabInfo[]) => void;
+  fn browserPermissionsChanged(permissions: string[]) => void;
+  fn browserBookmarks(res: BookmarksResponse) => void;
 
   // filesystem
   fn fsQuery(q: string, params: FsQueryParams) => FileResult[];
 
   event focusTab(req: FocusTabRequest);
   event closeTab(req: CloseTabRequest);
+  event requestBookmarks(req: BookmarksRequest);
+  event requestPermission(req: PermissionRequest);
+  event removeBookmark(req: RemoveBookmarkRequest);
 }

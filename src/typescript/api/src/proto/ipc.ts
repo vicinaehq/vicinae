@@ -154,6 +154,8 @@ export type BrowserInitRequest = {
 	id: string;
 	name: string;
 	engine: string;
+	version?: string;
+	permissions?: string[];
 }
 
 export type BrowserTabInfo = {
@@ -174,6 +176,32 @@ export type FocusTabRequest = {
 
 export type CloseTabRequest = {
 	tabId: number;
+}
+
+export type BrowserBookmarkInfo = {
+	id: string;
+	title: string;
+	url: string;
+	folder: string[];
+	dateAdded: number;
+}
+
+export type BookmarksRequest = {
+	requestId: number;
+}
+
+export type BookmarksResponse = {
+	requestId: number;
+	bookmarks: BrowserBookmarkInfo[];
+	error?: string;
+}
+
+export type RemoveBookmarkRequest = {
+	bookmarkId: string;
+}
+
+export type PermissionRequest = {
+	permission: string;
 }
 
 export type FileResult = {
@@ -227,6 +255,14 @@ class IpcService {
 		return this.transport.request("Ipc/browserTabsChanged", { tabs});	
 	}
 
+	browserPermissionsChanged(permissions: string[]): Promise<void> {
+		return this.transport.request("Ipc/browserPermissionsChanged", { permissions});	
+	}
+
+	browserBookmarks(res: BookmarksResponse): Promise<void> {
+		return this.transport.request("Ipc/browserBookmarks", { res});	
+	}
+
 	fsQuery(q: string, params: FsQueryParams): Promise<FileResult[]> {
 		return this.transport.request("Ipc/fsQuery", { q, params});	
 	}
@@ -236,6 +272,15 @@ class IpcService {
 	}
 	closeTab(handler: (req: CloseTabRequest) => void): EventSubscription {
 		return this.transport.subscribe("Ipc/closeTab", (msg) => handler(msg.req))
+	}
+	requestBookmarks(handler: (req: BookmarksRequest) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/requestBookmarks", (msg) => handler(msg.req))
+	}
+	requestPermission(handler: (req: PermissionRequest) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/requestPermission", (msg) => handler(msg.req))
+	}
+	removeBookmark(handler: (req: RemoveBookmarkRequest) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/removeBookmark", (msg) => handler(msg.req))
 	}
 }
 

@@ -133,7 +133,7 @@ int main(int ac, char **av) {
   ipc::RpcTransport rpc(transport);
   ipc::Client client(rpc);
 
-  // Forward focusTab/closeTab events from vicinae to the browser extension
+  // Forward vicinae events to the browser extension
   auto forwardNotification = [](std::string_view method, const auto &data) {
     std::string dataJson;
     if (auto err = glz::write_json(data, dataJson)) {
@@ -155,6 +155,15 @@ int main(int ac, char **av) {
 
   client.ipc().onClosetab(
       [&](const ipc::CloseTabRequest &req) { forwardNotification("browser/close-tab", req); });
+
+  client.ipc().onRequestbookmarks(
+      [&](const ipc::BookmarksRequest &req) { forwardNotification("browser/request-bookmarks", req); });
+
+  client.ipc().onRequestpermission(
+      [&](const ipc::PermissionRequest &req) { forwardNotification("browser/request-permission", req); });
+
+  client.ipc().onRemovebookmark(
+      [&](const ipc::RemoveBookmarkRequest &req) { forwardNotification("browser/remove-bookmark", req); });
 
   // Handle messages from the browser extension (via stdin native messaging)
   auto handleExtensionMessage = [&](std::string_view message) {
@@ -197,6 +206,24 @@ int main(int ac, char **av) {
       }
       client.ipc().browserTabsChanged(tabs, [](auto res) {
         if (!res) std::println(std::cerr, "browserTabsChanged failed: {}", res.error());
+      });
+    } else if (msg.method == "browser/permissions-changed") {
+      std::vector<std::string> permissions;
+      if (auto err = glz::read_json(permissions, msg.data.str)) {
+        std::println(std::cerr, "Failed to parse permissions: {}", glz::format_error(err));
+        return;
+      }
+      client.ipc().browserPermissionsChanged(permissions, [](auto res) {
+        if (!res) std::println(std::cerr, "browserPermissionsChanged failed: {}", res.error());
+      });
+    } else if (msg.method == "browser/bookmarks") {
+      ipc::BookmarksResponse res;
+      if (auto err = glz::read_json(res, msg.data.str)) {
+        std::println(std::cerr, "Failed to parse bookmarks: {}", glz::format_error(err));
+        return;
+      }
+      client.ipc().browserBookmarks(res, [](auto res) {
+        if (!res) std::println(std::cerr, "browserBookmarks failed: {}", res.error());
       });
     }
   };

@@ -78,7 +78,8 @@ option(
 set(VICINAE_BUNDLE_ID "com.vicinaehq.Vicinae" CACHE STRING "App identifier (macOS bundle id, Windows AppUserModelID)")
 
 set(NATIVE_MESSAGING_HOST "com.vicinae.vicinae")
-set(CHROME_EXTENSION_ID "kcmipingpfbohfjckomimmahknoddnke") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke
+#set(CHROME_EXTENSION_ID "kcmipingpfbohfjckomimmahknoddnke") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke
+set(CHROME_EXTENSION_ID "mgcleiigggeaehpopjkmeanajceeepib") # https://chromewebstore.google.com/detail/vicinae-integration/kcmipingpfbohfjckomimmahknoddnke
 set(FIREFOX_EXTENSION_ID "firefox@vicinae.com")
 
 if (ENABLE_CLANG_TIDY)

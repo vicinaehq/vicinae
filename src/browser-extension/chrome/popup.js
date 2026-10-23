@@ -55,3 +55,22 @@ chrome.runtime.onMessage.addListener((message) => {
     updateFromState(message.state, message.manuallyDisconnected);
   }
 });
+
+const bookmarksToggle = document.getElementById('bookmarksToggle');
+const BOOKMARKS = { permissions: ['bookmarks'] };
+
+function refreshBookmarksToggle() {
+  chrome.permissions.contains(BOOKMARKS, (granted) => {
+    bookmarksToggle.checked = granted;
+  });
+}
+
+bookmarksToggle.addEventListener('change', () => {
+  if (bookmarksToggle.checked) {
+    chrome.permissions.request(BOOKMARKS, () => refreshBookmarksToggle());
+  } else {
+    chrome.permissions.remove(BOOKMARKS, () => refreshBookmarksToggle());
+  }
+});
+
+refreshBookmarksToggle();
