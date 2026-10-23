@@ -318,7 +318,9 @@ class OpenCommand : public AbstractCommandLineCommand {
     if (m_query) query = {{"fallbackText", m_query.value()}};
 
     if (auto res = cli::IpcClient::sendDeeplink("vicinae://open", query); !res) {
-      std::println(std::cerr, "Failed to open: {}", res.error());
+      std::println(std::cerr,
+          "Failed to open vicinae window try running vicinae server first"
+      );
       return false;
     }
     return true;
