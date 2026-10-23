@@ -64,7 +64,8 @@ public:
     ImageURL icon() const { return urlIcon(url, BuiltinIcon::Bookmark); }
 
     bool isInFolder(std::span<const std::string> prefix) const {
-      return std::ranges::starts_with(folder, prefix);
+      return folder.size() >= prefix.size() &&
+             std::ranges::equal(prefix, folder | std::views::take(prefix.size()));
     }
 
     QString folderPath() const {
