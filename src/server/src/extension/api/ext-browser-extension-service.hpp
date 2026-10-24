@@ -48,8 +48,10 @@ public:
     return m_browser.setMuted(browserId, tabId, muted);
   }
 
-  tsapi::Result<void>::Future bookmarkTab(std::string browserId, int32_t tabId) override {
-    return m_browser.bookmarkTab(browserId, tabId);
+  tsapi::Result<void>::Future bookmarkTab(std::string browserId, int32_t tabId,
+                                          std::optional<std::string> title,
+                                          std::optional<std::string> url) override {
+    return m_browser.bookmarkTab(browserId, tabId, std::move(title), std::move(url));
   }
 
   tsapi::Result<void>::Future duplicateTab(std::string browserId, int32_t tabId) override {

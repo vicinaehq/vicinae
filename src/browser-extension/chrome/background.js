@@ -85,7 +85,7 @@ const REQUEST_HANDLERS = {
     chromeCall((cb) => chrome.tabs.update(tabId, { muted }, cb)),
   "browser/duplicate-tab": ({ tabId }) =>
     chromeCall((cb) => chrome.tabs.duplicate(tabId, cb)).then(() => {}),
-  "browser/bookmark-tab": ({ tabId }) => bookmarkTab(tabId),
+  "browser/bookmark-tab": ({ title, url }) => bookmarkTab(title, url),
   "browser/get-bookmarks": () => getBookmarks(),
   "browser/remove-bookmark": ({ bookmarkId }) => removeBookmark(bookmarkId),
   "browser/search-history": ({ query, maxResults }) =>
@@ -362,16 +362,12 @@ async function closeTab(tabId) {
   await chromeCall((cb) => chrome.tabs.remove(tabId, cb));
 }
 
-async function bookmarkTab(tabId) {
+async function bookmarkTab(title, url) {
   if (!(await hasPermission("bookmarks"))) {
     await openPermissionPage("bookmarks");
     throw new Error("Bookmarks permission not granted");
   }
-  const tab = await chromeCall((cb) => chrome.tabs.get(tabId, cb));
-  if (!tab?.url) throw new Error("Tab has no URL to bookmark");
-  await chromeCall((cb) =>
-    chrome.bookmarks.create({ title: tab.title, url: tab.url }, cb),
-  );
+  await chromeCall((cb) => chrome.bookmarks.create({ title, url }, cb));
 }
 
 async function getBookmarks() {

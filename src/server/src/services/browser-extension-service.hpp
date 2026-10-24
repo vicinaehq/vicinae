@@ -10,11 +10,11 @@
 #include <glaze/core/reflect.hpp>
 #include <memory>
 #include <optional>
-#include <span>
 #include <ranges>
 #include <string>
 #include <string_view>
 #include <vector>
+#include <utility>
 #include "ui/image/url.hpp"
 #include "generated/ipc-server.hpp"
 
@@ -207,14 +207,23 @@ public:
 
   Future<void> closeTab(const BrowserTab &tab) { return closeTab(tab.browserId, tab.id); }
 
-  Future<void> requestTabAction(const std::string &browserId, int tabId, TabAction action) {
+  Future<void> requestTabAction(const std::string &browserId, int tabId, TabAction action,
+                                                    std::optional<std::string> title = {},
+                                                    std::optional<std::string> url = {}) {
     auto browser = findById(browserId);
     if (browser == m_browsers.end()) return Void::fail("No such browser");
     if (browser->isOutdated()) return Void::fail(OUTDATED_EXTENSION_ERROR);
     auto tab =
         std::ranges::find_if(browser->tabs, [tabId](const BrowserTab &item) { return item.id == tabId; });
     if (tab == browser->tabs.end()) return Void::fail("No such tab");
-    if (action == TabAction::Bookmark && tab->url.empty()) return Void::fail("Tab has no URL");
+    std::string bookmarkTitle;
+    std::string bookmarkUrl;
+    if (action == TabAction::Bookmark) {
+      bookmarkTitle = title.value_or(tab->title);
+      bookmarkUrl = url.value_or(tab->url);
+      const QUrl parsed(bookmarkUrl.c_str());
+      if (!parsed.isValid() || parsed.scheme().isEmpty()) return Void::fail("Invalid bookmark URL");
+    }
 
     switch (action) {
     case TabAction::Focus: return browser->peer->focusTab(tabId);
@@ -223,7 +232,7 @@ public:
     case TabAction::Unpin: return browser->peer->setPinned(tabId, action == TabAction::Pin);
     case TabAction::Mute:
     case TabAction::Unmute: return browser->peer->setMuted(tabId, action == TabAction::Mute);
-    case TabAction::Bookmark: return browser->peer->bookmarkTab({.tabId = tabId});
+    case TabAction::Bookmark: return browser->peer->bookmarkTab({.tabId = tabId, .title = std::move(bookmarkTitle), .url = std::move(bookmarkUrl)});
     case TabAction::Duplicate: return browser->peer->duplicateTab(tabId);
     }
     return Void::fail("Unknown tab action");
@@ -237,8 +246,9 @@ public:
     return requestTabAction(browserId, tabId, muted ? TabAction::Mute : TabAction::Unmute);
   }
 
-  auto bookmarkTab(const std::string &browserId, int tabId) {
-    return requestTabAction(browserId, tabId, TabAction::Bookmark);
+  auto bookmarkTab(const std::string &browserId, int tabId, std::optional<std::string> title = {},
+                   std::optional<std::string> url = {}) {
+    return requestTabAction(browserId, tabId, TabAction::Bookmark, std::move(title), std::move(url));
   }
 
   auto duplicateTab(const std::string &browserId, int tabId) {
