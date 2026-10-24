@@ -28,6 +28,7 @@
 #include "ui/settings/settings-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/update/update-service.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -276,6 +277,11 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   connect(m_ctx.services->updateService(), &UpdateService::updateChanged, this,
           &LauncherWindow::tryCompaction);
+
+  connect(m_ctx.services->windowManager()->provider(), &AbstractWindowManager::launcherDismissRequested, this,
+          [this] {
+            if (m_closeOnFocusLoss) m_ctx.navigation->closeWindow();
+          });
 
   connect(m_ctx.services->config(), &config::Manager::configChanged, this,
           [this](const auto &, const auto &) {
