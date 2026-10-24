@@ -42,11 +42,14 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
     NSString *nsPath = toNSString(bundlePath);
     if (!nsPath) return nullptr;
 
+    // NSBundle and CFBundleCreate cache bundles per path for the process lifetime, so an app
+    // scanned while still being copied would stay invisible until restart.
     NSURL *url = [NSURL fileURLWithPath:nsPath];
-    NSBundle *bundle = [NSBundle bundleWithURL:url];
-    if (!bundle) return nullptr;
+    NSDictionary *info = CFBridgingRelease(CFBundleCopyInfoDictionaryInDirectory((__bridge CFURLRef)url));
+    if (!info) return nullptr;
 
-    NSString *bundleId = bundle.bundleIdentifier;
+    NSString *bundleId = info[@"CFBundleIdentifier"];
+    NSString *executable = info[@"CFBundleExecutable"];
     std::optional<QString> bundleIdentifier;
     QString id;
 
@@ -54,10 +57,10 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
       bundleIdentifier = toQString(bundleId);
       id = *bundleIdentifier;
     } else {
-      NSURL *const executableURL = bundle.executableURL;
-      if (!executableURL || ![[NSFileManager defaultManager] isExecutableFileAtPath:executableURL.path]) {
-        return nullptr;
-      }
+      if (executable.length == 0) return nullptr;
+      NSString *executablePath = [nsPath
+          stringByAppendingPathComponent:[@"Contents/MacOS" stringByAppendingPathComponent:executable]];
+      if (![[NSFileManager defaultManager] isExecutableFileAtPath:executablePath]) return nullptr;
 
       std::error_code error;
       auto const canonicalPath = std::filesystem::canonical(bundlePath, error);
@@ -65,13 +68,8 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
       id = QStringLiteral("macos:path:") + QString::fromStdString(canonicalPath.string());
     }
 
-    NSDictionary *info = bundle.infoDictionary;
-    NSDictionary *localized = bundle.localizedInfoDictionary;
-
     NSString *displayName = finderDisplayName(nsPath);
-    if (displayName.length == 0) displayName = localized[@"CFBundleDisplayName"];
     if (displayName.length == 0) displayName = info[@"CFBundleDisplayName"];
-    if (displayName.length == 0) displayName = localized[@"CFBundleName"];
     if (displayName.length == 0) displayName = info[@"CFBundleName"];
     if (displayName.length == 0) { displayName = [[nsPath lastPathComponent] stringByDeletingPathExtension]; }
 
@@ -81,8 +79,6 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
     if (unlocalizedName.length > 0 && ![unlocalizedName isEqualToString:displayName]) {
       unlocalized = toQString(unlocalizedName);
     }
-
-    NSString *executable = info[@"CFBundleExecutable"];
 
     return std::make_shared<MacApplication>(bundlePath, std::move(id), std::move(bundleIdentifier),
                                             toQString(displayName), std::move(unlocalized),

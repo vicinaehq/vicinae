@@ -370,7 +370,7 @@ Item {
                 const row = root.cmdModel ? root.cmdModel.flatRowForSelection() : -1;
                 if (row >= 0) {
                     const scrollTarget = root.cmdModel.flatRowForSelection(viewport.topInset > 0);
-                    var mode = ListView.Contain;
+                    let mode = ListView.Contain;
                     if (root.cmdModel.alignSelectionScrollToTop() && !viewport.isIndexVisible(scrollTarget)) {
                         mode = ListView.Beginning;
                     }

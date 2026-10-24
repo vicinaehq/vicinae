@@ -131,6 +131,8 @@ struct ScriptPreferences {
 };
 
 template <> struct PreferenceSchema<ScriptPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(ScriptPreferences)
+public:
   PreferenceMeta customDirs{
       .title = tr("Custom directories"),
       .description =
@@ -138,7 +140,6 @@ template <> struct PreferenceSchema<ScriptPreferences> {
              "precedence over the default system ones"),
       .kind = PreferenceMeta::Kind::Directories,
   };
-  Q_DECLARE_TR_FUNCTIONS(ScriptPreferences)
 };
 
 class ScriptRootProvider : public TypedRootProvider<ScriptPreferences> {

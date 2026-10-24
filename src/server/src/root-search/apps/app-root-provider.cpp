@@ -103,7 +103,12 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     const auto &action = actions[i];
     auto openAction = new OpenAppAction(action, action->displayName(), {});
 
-    if (i < 9) { openAction->setShortcut(QString("ctrl+alt+%1").arg(i + 1)); }
+    if (action->shortcut().has_value()) {
+      openAction->setShortcut(action->shortcut().value());
+    } else if (i < 9) {
+      openAction->setShortcut(QString("ctrl+alt+%1").arg(i + 1));
+    }
+
     mainSection->addAction(openAction);
   }
 

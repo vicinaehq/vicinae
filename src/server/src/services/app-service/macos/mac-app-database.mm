@@ -24,8 +24,9 @@ NSString *toNSString(const fs::path &p) { return [NSString stringWithUTF8String:
 
 QString bundleIdentifierAt(NSURL *url) {
   if (!url) return {};
-  NSBundle *b = [NSBundle bundleWithURL:url];
-  return (b && b.bundleIdentifier) ? QString::fromNSString(b.bundleIdentifier) : QString();
+  NSDictionary *info = CFBridgingRelease(CFBundleCopyInfoDictionaryInDirectory((__bridge CFURLRef)url));
+  NSString *bundleId = info[@"CFBundleIdentifier"];
+  return bundleId ? QString::fromNSString(bundleId) : QString();
 }
 
 enum class TargetKind { Unknown, Url, Path, Uti };
@@ -352,6 +353,42 @@ MacAppDatabase::AppPtr MacAppDatabase::findDefaultOpener(const Target &target) c
 
   @autoreleasepool {
     NSURL *appURL = defaultAppURLForTarget([NSWorkspace sharedWorkspace], classified);
+    id = bundleIdentifierAt(appURL);
+  }
+
+  return id.isEmpty() ? nullptr : findById(id);
+}
+
+std::vector<MacAppDatabase::AppPtr> MacAppDatabase::findOpenersForMime(const QString &mime) const {
+  std::vector<QString> ids;
+
+  @autoreleasepool {
+    UTType *type = [UTType typeWithMIMEType:toNSString(mime)];
+    NSArray<NSURL *> *urls =
+        type ? [[NSWorkspace sharedWorkspace] URLsForApplicationsToOpenContentType:type] : nil;
+    if (urls) {
+      ids.reserve(urls.count);
+      for (NSURL *u in urls) {
+        auto id = bundleIdentifierAt(u);
+        if (!id.isEmpty()) ids.emplace_back(std::move(id));
+      }
+    }
+  }
+
+  std::vector<AppPtr> result;
+  result.reserve(ids.size());
+  for (const auto &id : ids) {
+    if (auto app = findById(id)) result.emplace_back(std::move(app));
+  }
+  return result;
+}
+
+MacAppDatabase::AppPtr MacAppDatabase::findDefaultOpenerForMime(const QString &mime) const {
+  QString id;
+
+  @autoreleasepool {
+    UTType *type = [UTType typeWithMIMEType:toNSString(mime)];
+    NSURL *appURL = type ? [[NSWorkspace sharedWorkspace] URLForApplicationToOpenContentType:type] : nil;
     id = bundleIdentifierAt(appURL);
   }
 

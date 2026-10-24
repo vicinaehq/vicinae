@@ -34,6 +34,7 @@ declare module "react" {
 			detail: {
 				navigationTitle?: string;
 				markdown: string;
+				isLoading?: boolean;
 			};
 			list: {
 				children?: React.ReactNode;
@@ -65,6 +66,7 @@ declare module "react" {
 				keywords?: string[];
 				dragContent?: ClipboardContent;
 				accessories?: List.Item.SerializedAccessory[];
+				active?: boolean;
 				children?: React.ReactNode;
 			};
 			"list-item-detail": List.Item.Detail.Props;

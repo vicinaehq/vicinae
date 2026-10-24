@@ -2097,12 +2097,12 @@ Qui sotto trovi tutto lo stacktrace. Puoi anche copiarlo direttamente dal menu a
     <message>
         <location line="+8"/>
         <source>Close on Escape</source>
-        <translation>Chiudi su Escpape</translation>
+        <translation>Chiudi su Escape</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Pressing Escape closes the launcher instead of navigating one view back.</source>
-        <translation>Premere il tasto esci chiude il launcher invece che tornare alla schermata precedente.</translation>
+        <translation>Premere Escape chiude il launcher invece di tornare alla schermata precedente.</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -7132,6 +7132,16 @@ Se stai cercando di creare la tua estensione, dai un’occhiata alla [documentaz
         <location line="+1"/>
         <source>Can be used by actions that can edit a secondary characteristic of the currently selected item</source>
         <translation>Può essere usata dalle azioni che possono modificare una caratteristica secondaria dell’elemento selezionato.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Run as Administrator</source>
+        <translation>Esegui come Amministratore</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Runs the application with elevated privileges</source>
+        <translation>Esegue l’applicazione con privilegi elevati</translation>
     </message>
 </context>
 <context>

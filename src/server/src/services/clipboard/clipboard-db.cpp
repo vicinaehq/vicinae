@@ -203,7 +203,7 @@ bool ClipboardDatabase::setKeywords(const QString &id, const QString &keywords) 
   });
 }
 
-std::optional<std::vector<QString>> ClipboardDatabase::removeAll(bool preserveTagged) {
+std::optional<RemovedSelections> ClipboardDatabase::removeAll(bool preserveTagged) {
   auto tx = m_db.transaction();
 
   if (!preserveTagged) {
@@ -214,20 +214,21 @@ std::optional<std::vector<QString>> ClipboardDatabase::removeAll(bool preserveTa
 
     tx.commit();
 
-    return std::vector<QString>{};
+    return RemovedSelections{};
   }
 
-  std::vector<QString> removed;
+  RemovedSelections removed;
 
   auto stmt = m_db.prepare(R"(
-    SELECT o.id
+    SELECT o.selection_id, o.id
     FROM data_offer o
     JOIN selection s ON s.id = o.selection_id
     WHERE s.pinned_at IS NULL AND s.keywords == ''
+    ORDER BY o.selection_id
   )");
 
   while (stmt.step()) {
-    removed.emplace_back(stmt.columnQString(0));
+    removed.add(stmt.columnQString(0), stmt.columnQString(1));
   }
 
   if (!m_db.exec("DELETE FROM selection WHERE pinned_at IS NULL AND keywords == ''")) return std::nullopt;
@@ -272,7 +273,7 @@ std::vector<QString> ClipboardDatabase::removeSelection(const QString &selection
 std::optional<PreferredClipboardOfferRecord>
 ClipboardDatabase::findPreferredOffer(const QString &selectionId) {
   auto stmt = m_db.prepare(R"(
-    SELECT o.id, o.encryption_type FROM data_offer o
+    SELECT o.id, o.encryption_type, o.mime_type FROM data_offer o
     JOIN selection s ON s.id = o.selection_id
     WHERE o.mime_type = s.preferred_mime_type
     AND selection_id = :selection
@@ -285,7 +286,44 @@ ClipboardDatabase::findPreferredOffer(const QString &selectionId) {
   }
 
   return PreferredClipboardOfferRecord{.id = stmt.columnQString(0),
+                                       .mimeType = stmt.columnQString(2),
                                        .encryption = static_cast<ClipboardEncryptionType>(stmt.columnInt(1))};
+}
+
+std::optional<std::vector<QString>> ClipboardDatabase::clearSelectionOffers(const QString &selectionId) {
+  auto offerStmt = m_db.prepare("DELETE FROM data_offer WHERE selection_id = :selection_id RETURNING id");
+  offerStmt.bind(":selection_id", selectionId);
+
+  std::vector<QString> deletedOffers;
+
+  while (offerStmt.step()) {
+    deletedOffers.emplace_back(offerStmt.columnQString(0));
+  }
+
+  auto ftsStmt = m_db.prepare(R"(
+    DELETE FROM selection_fts
+    WHERE selection_id = :selection_id
+    AND content != (SELECT keywords FROM selection WHERE id = :selection_id)
+  )");
+  ftsStmt.bind(":selection_id", selectionId);
+
+  if (!ftsStmt.exec()) {
+    qWarning() << "Failed to clear indexed content for selection" << selectionId
+               << ftsStmt.lastError().c_str();
+    return std::nullopt;
+  }
+
+  return deletedOffers;
+}
+
+bool ClipboardDatabase::setSelectionHash(const QString &selectionId, const QString &hash, int offerCount) {
+  auto stmt =
+      m_db.prepare("UPDATE selection SET hash_md5 = :hash, offer_count = :offer_count WHERE id = :id");
+  stmt.bind(":id", selectionId);
+  stmt.bind(":hash", hash);
+  stmt.bind(":offer_count", offerCount);
+
+  return stmt.exec();
 }
 
 bool ClipboardDatabase::setPinned(const QString &id, bool pinned) {
@@ -363,18 +401,18 @@ void ClipboardDatabase::runMigrations() {
   manager.runMigrations();
 }
 
-std::vector<QString> ClipboardDatabase::evictOlderThan(std::chrono::seconds secs, bool preserveTagged) {
+RemovedSelections ClipboardDatabase::evictOlderThan(std::chrono::seconds secs, bool preserveTagged) {
   constexpr auto PRESERVE_TAGGED_WHERE = " AND pinned_at IS NULL AND keywords == ''";
-  std::vector<QString> evicted{};
+  RemovedSelections evicted{};
 
-  evicted.reserve(0xF);
+  evicted.offers.reserve(0xF);
 
   auto tx = m_db.transaction();
 
   {
     std::ostringstream oss{};
     oss << R"(
-  	SELECT o.id 
+  	SELECT o.selection_id, o.id
 	FROM data_offer o
 	JOIN selection s ON s.id = o.selection_id
 	WHERE unixepoch() - s.updated_at > :threshold
@@ -382,16 +420,18 @@ std::vector<QString> ClipboardDatabase::evictOlderThan(std::chrono::seconds secs
 
     if (preserveTagged) { oss << PRESERVE_TAGGED_WHERE; }
 
+    oss << " ORDER BY o.selection_id";
+
     auto stmt = m_db.prepare(oss.str());
 
     stmt.bind(":threshold", secs.count());
 
     while (stmt.step()) {
-      evicted.emplace_back(stmt.columnQString(0));
+      evicted.add(stmt.columnQString(0), stmt.columnQString(1));
     }
   }
 
-  if (evicted.empty()) return evicted;
+  if (evicted.offers.empty()) return evicted;
 
   {
     std::ostringstream oss{};

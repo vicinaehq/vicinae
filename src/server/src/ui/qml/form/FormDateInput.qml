@@ -82,7 +82,7 @@ FocusScope {
         if (isNaN(date.getTime()))
             return;
         if (root.includeTime) {
-            var pad = n => n < 10 ? "0" + n : "" + n;
+            const pad = n => n < 10 ? "0" + n : "" + n;
             input.text = date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + " " + pad(date.getHours()) + ":" + pad(date.getMinutes());
         } else {
             input.text = date.toISOString().substring(0, 10);

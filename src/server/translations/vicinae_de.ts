@@ -7138,6 +7138,16 @@ Wenn Sie Ihre eigene Erweiterung erstellen möchten, werfen Sie einen Blick auf 
         <source>Can be used by actions that can edit a secondary characteristic of the currently selected item</source>
         <translation>Kann von Aktionen verwendet werden, die ein sekundäres Merkmal des aktuell ausgewählten Elements bearbeiten können</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Run as Administrator</source>
+        <translation>Als Administrator ausführen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Runs the application with elevated privileges</source>
+        <translation>Führt die Anwendung mit Administratorrechten aus</translation>
+    </message>
 </context>
 <context>
     <name>macos-update-installer</name>

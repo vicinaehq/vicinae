@@ -28,6 +28,7 @@
 #include <quuid.h>
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "vicinae.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/clipboard/selection-mime-data.hpp"
@@ -166,13 +167,13 @@ void ClipboardService::runEvictionPass() {
   QThreadPool::globalInstance()->start(
       [this, t = *m_evictionThreshold, preserve = m_preserveTaggedSelections]() {
         auto db = openDatabase();
-        const auto evictedIds = db.evictOlderThan(t, preserve);
+        auto evicted = db.evictOlderThan(t, preserve);
         const auto oldest = db.oldestEvictableTimestamp(preserve);
         std::error_code ec{};
         std::size_t evictedCount = 0;
 
-        for (const auto &evicted : evictedIds) {
-          fs::path path = m_dataDir / evicted.toStdString();
+        for (const auto &offer : evicted.offers) {
+          fs::path path = m_dataDir / offer.toStdString();
           if (fs::remove(path, ec)) {
             ++evictedCount;
           } else {
@@ -182,7 +183,12 @@ void ClipboardService::runEvictionPass() {
 
         if (evictedCount > 0) qInfo() << "evicted" << evictedCount << "clipboard offers";
 
-        QMetaObject::invokeMethod(this, [this, oldest]() { armEvictionTimer(oldest); });
+        QMetaObject::invokeMethod(this, [this, oldest, selections = std::move(evicted.selections)]() {
+          for (const auto &id : selections) {
+            removeExport(id);
+          }
+          armEvictionTimer(oldest);
+        });
       });
 }
 
@@ -301,9 +307,6 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 }
 
 QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
-  static const std::vector<QString> plainTextMimeTypes = {
-      "text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"};
-
   auto uriIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
     return offer.mimeType == "text/uri-list" && !offer.data.isEmpty();
   });
@@ -320,12 +323,8 @@ QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection
     return url.scheme().length() > 1 && !url.isLocalFile();
   };
 
-  for (const auto &mime : plainTextMimeTypes) {
-    auto it = std::ranges::find_if(
-        selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
-    if (it == selection.offers.end()) continue;
-    if (imageIt != selection.offers.end() && isRemoteUrl(it->data)) break;
-    return it->mimeType;
+  if (auto it = Clipboard::findPlainTextOffer(selection); it != selection.offers.end()) {
+    if (imageIt == selection.offers.end() || !isRemoteUrl(it->data)) return it->mimeType;
   }
 
   if (imageIt != selection.offers.end()) return imageIt->mimeType;
@@ -351,6 +350,8 @@ bool ClipboardService::removeSelection(const QString &selectionId) {
   for (const auto &offer : cdb.removeSelection(selectionId)) {
     fs::remove(m_dataDir / offer.toStdString());
   }
+
+  removeExport(selectionId);
 
   emit selectionRemoved(selectionId);
 
@@ -392,6 +393,119 @@ ClipboardService::getMainOfferData(const QString &selectionId) const {
   }
 
   return decryptOffer(file.readAll(), offer->encryption);
+}
+
+std::expected<fs::path, ClipboardService::OfferDecryptionError>
+ClipboardService::exportMainOffer(const QString &selectionId, std::string_view fileName) {
+  auto data = getMainOfferData(selectionId);
+
+  if (!data) return std::unexpected(data.error());
+
+  fs::path const dir = m_exportDir / selectionId.toStdString();
+  std::error_code ec;
+
+  fs::create_directories(dir, ec);
+  fs::permissions(m_exportDir, fs::perms::owner_all, ec);
+
+  fs::path path = dir / fileName;
+  QFile file(path);
+
+  if (!file.open(QIODevice::WriteOnly) ||
+      !file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner) ||
+      file.write(*data) != data->size()) {
+    qWarning() << "Failed to export clipboard offer to" << path << ":" << file.errorString();
+    return std::unexpected(OfferDecryptionError::DataUnavailable);
+  }
+
+  file.close();
+  watchExport(selectionId, path);
+
+  return path;
+}
+
+bool ClipboardService::replaceMainOfferData(const QString &selectionId, QByteArray data) {
+  auto cdb = openDatabase();
+  const auto preferred = cdb.findPreferredOffer(selectionId);
+
+  if (!preferred) return false;
+
+  ClipboardDataOffer const offer{.mimeType = preferred->mimeType, .data = std::move(data)};
+  std::vector<QString> staleOffers;
+
+  const bool ok = cdb.transaction([&](ClipboardDatabase *db) {
+    auto removed = db->clearSelectionOffers(selectionId);
+    if (!removed) return false;
+    staleOffers = std::move(*removed);
+
+    const auto stored = storeOffer(*db, selectionId, offer, offer.mimeType);
+
+    return stored && db->setSelectionHash(selectionId, stored->md5sum, 1);
+  });
+
+  if (!ok) {
+    qWarning() << "Failed to replace the content of selection" << selectionId;
+    return false;
+  }
+
+  std::error_code ec;
+
+  for (const auto &id : staleOffers) {
+    fs::remove(m_dataDir / id.toStdString(), ec);
+  }
+
+  emit selectionContentChanged(selectionId);
+  emit selectionUpdated();
+
+  return true;
+}
+
+void ClipboardService::watchExport(const QString &selectionId, const fs::path &path) {
+  m_exports.insert_or_assign(selectionId, path);
+  m_exportWatcher.addPath(QString::fromStdString(path.parent_path().string()));
+  m_exportWatcher.addPath(QString::fromStdString(path.string()));
+}
+
+void ClipboardService::removeExport(const QString &selectionId) {
+  const auto it = m_exports.find(selectionId);
+
+  if (it == m_exports.end()) return;
+
+  std::error_code ec;
+
+  m_exportWatcher.removePath(QString::fromStdString(it->second.string()));
+  m_exportWatcher.removePath(QString::fromStdString(it->second.parent_path().string()));
+  fs::remove_all(it->second.parent_path(), ec);
+  m_exports.erase(it);
+}
+
+void ClipboardService::markExportChanged(const QString &selectionId) {
+  if (!std::ranges::contains(m_changedExports, selectionId)) m_changedExports.emplace_back(selectionId);
+  m_exportDebounce.start();
+}
+
+void ClipboardService::syncChangedExports() {
+  for (const auto &selectionId : std::exchange(m_changedExports, {})) {
+    const auto it = m_exports.find(selectionId);
+
+    if (it == m_exports.end()) continue;
+
+    // editors that save by renaming a new file over the old one drop the file watch
+    m_exportWatcher.addPath(QString::fromStdString(it->second.string()));
+
+    QFile file(it->second);
+
+    if (!file.open(QIODevice::ReadOnly)) continue;
+
+    auto data = file.readAll();
+
+    if (data.trimmed().isEmpty()) continue;
+
+    const auto current = getMainOfferData(selectionId);
+
+    if (!current || *current == data) continue;
+
+    replaceMainOfferData(selectionId, std::move(data));
+  }
 }
 
 QByteArray ClipboardService::computeSelectionHash(const ClipboardSelection &selection) const {
@@ -492,6 +606,82 @@ ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &sele
   return selection;
 }
 
+std::optional<ClipboardService::StoredOffer>
+ClipboardService::storeOffer(ClipboardDatabase &db, const QString &selectionId,
+                             const ClipboardDataOffer &offer, const QString &preferredMimeType) const {
+  ClipboardOfferKind const kind = getKind(offer);
+  bool const isIndexableText = kind == ClipboardOfferKind::Text || kind == ClipboardOfferKind::Link;
+  QString const textPreview = getOfferTextPreview(offer);
+
+  if (isIndexableText && !offer.data.isEmpty()) {
+    if (!db.indexSelectionContent(selectionId, offer.data)) {
+      qWarning() << "Failed to index selection content for offer" << offer.mimeType;
+      return std::nullopt;
+    }
+  }
+
+  // Index both the localized preview (what the user sees) and a stable English form
+  if (kind == ClipboardOfferKind::Image && offer.mimeType == preferredMimeType) {
+    if (!db.indexSelectionContent(selectionId, textPreview) ||
+        !db.indexSelectionContent(selectionId, getOfferImageSearchText(offer))) {
+      qWarning() << "Failed to index image offer" << offer.mimeType;
+      return std::nullopt;
+    }
+  }
+
+  if (kind == ClipboardOfferKind::File && offer.mimeType == preferredMimeType) {
+    if (!db.indexSelectionContent(selectionId, getOfferFileSearchText(offer))) {
+      qWarning() << "Failed to index file offer" << offer.mimeType;
+      return std::nullopt;
+    }
+  }
+
+  auto md5sum = QCryptographicHash::hash(offer.data, QCryptographicHash::Md5).toHex();
+  auto offerId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+  ClipboardEncryptionType encryption = ClipboardEncryptionType::None;
+
+  if (m_encrypter) encryption = ClipboardEncryptionType::Local;
+
+  InsertClipboardOfferPayload dto{
+      .id = offerId,
+      .selectionId = selectionId,
+      .mimeType = offer.mimeType,
+      .textPreview = textPreview,
+      .md5sum = md5sum,
+      .encryption = encryption,
+      .size = static_cast<quint64>(offer.data.size()),
+  };
+
+  if (kind == ClipboardOfferKind::Link) {
+    auto url = QUrl::fromEncoded(offer.data, QUrl::StrictMode);
+    if (url.scheme().startsWith("http")) { dto.urlHost = url.host(); }
+  }
+
+  if (!db.insertOffer(dto)) {
+    qWarning() << "Failed to insert offer" << offer.mimeType;
+    return std::nullopt;
+  }
+
+  StoredOffer stored{.md5sum = md5sum, .textPreview = textPreview};
+  fs::path const targetPath = m_dataDir / offerId.toStdString();
+  QFile targetFile(targetPath);
+
+  if (!targetFile.open(QIODevice::WriteOnly)) { return stored; }
+
+  if (m_encrypter) {
+    if (auto encrypted = m_encrypter->encrypt(offer.data)) {
+      targetFile.write(encrypted.value());
+    } else {
+      qWarning() << "Failed to encrypt clipboard selection";
+      return std::nullopt;
+    }
+  } else {
+    targetFile.write(offer.data);
+  }
+
+  return stored;
+}
+
 void ClipboardService::saveSelection(ClipboardSelection selection) {
   if (!m_monitoring) return;
 
@@ -574,75 +764,9 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
           // Index all offers, including empty ones
           for (const auto &offer : selection.offers) {
-            ClipboardOfferKind const kind = getKind(offer);
-            bool const isIndexableText = kind == ClipboardOfferKind::Text || kind == ClipboardOfferKind::Link;
-            QString const textPreview = getOfferTextPreview(offer);
+            auto stored = storeOffer(*db, selectionId, offer, preferredMimeType);
 
-            if (isIndexableText && !offer.data.isEmpty()) {
-              if (!db->indexSelectionContent(selectionId, offer.data)) {
-                qWarning() << "Failed to index selection content for offer" << offer.mimeType;
-                return false;
-              }
-            }
-
-            // Index both the localized preview (what the user sees) and a stable English form
-            if (kind == ClipboardOfferKind::Image && offer.mimeType == preferredMimeType) {
-              if (!db->indexSelectionContent(selectionId, textPreview) ||
-                  !db->indexSelectionContent(selectionId, getOfferImageSearchText(offer))) {
-                qWarning() << "Failed to index image offer" << offer.mimeType;
-                return false;
-              }
-            }
-
-            if (kind == ClipboardOfferKind::File && offer.mimeType == preferredMimeType) {
-              if (!db->indexSelectionContent(selectionId, getOfferFileSearchText(offer))) {
-                qWarning() << "Failed to index file offer" << offer.mimeType;
-                return false;
-              }
-            }
-
-            auto md5sum = QCryptographicHash::hash(offer.data, QCryptographicHash::Md5).toHex();
-            auto offerId = QUuid::createUuid().toString(QUuid::WithoutBraces);
-            ClipboardEncryptionType encryption = ClipboardEncryptionType::None;
-
-            if (m_encrypter) encryption = ClipboardEncryptionType::Local;
-
-            InsertClipboardOfferPayload dto{
-                .id = offerId,
-                .selectionId = selectionId,
-                .mimeType = offer.mimeType,
-                .textPreview = textPreview,
-                .md5sum = md5sum,
-                .encryption = encryption,
-                .size = static_cast<quint64>(offer.data.size()),
-            };
-
-            if (kind == ClipboardOfferKind::Link) {
-              auto url = QUrl::fromEncoded(offer.data, QUrl::StrictMode);
-              if (url.scheme().startsWith("http")) { dto.urlHost = url.host(); }
-            }
-
-            if (!db->insertOffer(dto)) {
-              qWarning() << "Failed to insert offer" << offer.mimeType;
-              return false;
-            }
-
-            fs::path const targetPath = m_dataDir / offerId.toStdString();
-            QFile targetFile(targetPath);
-
-            if (!targetFile.open(QIODevice::WriteOnly)) { continue; }
-
-            if (m_encrypter) {
-              if (auto encrypted = m_encrypter->encrypt(offer.data)) {
-                targetFile.write(encrypted.value());
-                ClipboardHistoryEntry insertedEntry;
-              } else {
-                qWarning() << "Failed to encrypt clipboard selection";
-                return false;
-              }
-            } else {
-              targetFile.write(offer.data);
-            }
+            if (!stored) return false;
 
             // Set the insertedEntry for the preferred offer
             if (offer.mimeType == preferredMimeType) {
@@ -650,8 +774,8 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
               insertedEntry.pinnedAt = 0;
               insertedEntry.updatedAt = {};
               insertedEntry.mimeType = offer.mimeType;
-              insertedEntry.md5sum = md5sum;
-              insertedEntry.textPreview = textPreview;
+              insertedEntry.md5sum = stored->md5sum;
+              insertedEntry.textPreview = stored->textPreview;
             }
           }
 
@@ -698,29 +822,12 @@ bool ClipboardService::copyQMimeData(QMimeData *data, const Clipboard::CopyOptio
 void ClipboardService::restoreClipboard() {
   if (!m_lastSelection || m_lastSelection->offers.empty()) return;
 
-  auto *data = new QMimeData;
-  for (const auto &offer : m_lastSelection->offers) {
-    data->setData(offer.mimeType, offer.data);
-  }
+  auto data = Clipboard::mimeDataForSelection(*m_lastSelection);
 
   // Restore is transient so we don't re-index a selection that was already on the clipboard.
-  m_clipboardServer->setClipboardContent(data, {.transient = true, .sourceApp = m_lastSelection->sourceApp});
+  m_clipboardServer->setClipboardContent(data.release(),
+                                         {.transient = true, .sourceApp = m_lastSelection->sourceApp});
   m_lastSelection.reset();
-}
-
-std::unique_ptr<QMimeData>
-ClipboardService::mimeDataFromSelection(const ClipboardSelection &selection) const {
-  QMimeData *mimeData = new QMimeData;
-
-  for (auto &offer : selection.offers) {
-    if (offer.mimeType != Clipboard::URI_LIST && Utils::isTextMimeType(offer.mimeType)) {
-      mimeData->setText(QString::fromUtf8(offer.data));
-    } else {
-      mimeData->setData(offer.mimeType, offer.data);
-    }
-  }
-
-  return std::unique_ptr<QMimeData>{mimeData};
 }
 
 std::unique_ptr<QMimeData>
@@ -739,7 +846,7 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
 
   if (!enrichedOptions.sourceApp) enrichedOptions.sourceApp = selection.sourceApp;
 
-  auto mimeData = mimeDataFromSelection(std::move(selection));
+  auto mimeData = Clipboard::mimeDataForSelection(selection);
 
   return copyQMimeData(mimeData.release(), enrichedOptions);
 }
@@ -786,9 +893,9 @@ Clipboard::ReadContent ClipboardService::readContent() {
 
 bool ClipboardService::removeAllSelections() {
   auto db = openDatabase();
-  const auto removedIds = db.removeAll(m_preserveTaggedSelections);
+  const auto removed = db.removeAll(m_preserveTaggedSelections);
 
-  if (!removedIds) {
+  if (!removed) {
     qWarning() << "Failed to remove all clipboard selections";
     return false;
   }
@@ -796,12 +903,24 @@ bool ClipboardService::removeAllSelections() {
   if (m_preserveTaggedSelections) {
     std::error_code ec{};
 
-    for (const auto &id : *removedIds) {
+    for (const auto &id : removed->offers) {
       fs::remove(m_dataDir / id.toStdString(), ec);
     }
+
+    for (const auto &id : removed->selections) {
+      removeExport(id);
+    }
   } else {
+    std::error_code ec{};
+
     fs::remove_all(m_dataDir);
     fs::create_directories(m_dataDir);
+
+    if (const auto paths = m_exportWatcher.files() + m_exportWatcher.directories(); !paths.isEmpty()) {
+      m_exportWatcher.removePaths(paths);
+    }
+    m_exports.clear();
+    fs::remove_all(m_exportDir, ec);
   }
 
   emit allSelectionsRemoved();
@@ -815,6 +934,12 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, AppService
                                    AppRuntime &appRuntime, std::optional<db::EncryptionKey> key)
     : m_appService(appService), m_appRuntime(appRuntime), m_dbKey(key) {
   m_dataDir = path.parent_path() / "clipboard-data";
+  m_exportDir = Omnicast::runtimeDir() / "clipboard-open";
+
+  {
+    std::error_code ec;
+    fs::remove_all(m_exportDir, ec);
+  }
 
   {
     ClipboardServerFactory factory;
@@ -842,6 +967,13 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, AppService
           &ClipboardService::saveSelection);
   connect(m_clipboardServer.get(), &AbstractClipboardServer::primarySelectionChanged, this,
           &ClipboardService::primarySelectionChanged);
+  m_exportDebounce.setSingleShot(true);
+  m_exportDebounce.setInterval(EXPORT_SYNC_DEBOUNCE);
+  connect(&m_exportDebounce, &QTimer::timeout, this, &ClipboardService::syncChangedExports);
+  connect(&m_exportWatcher, &QFileSystemWatcher::fileChanged, this,
+          [this](const QString &path) { markExportChanged(QFileInfo(path).dir().dirName()); });
+  connect(&m_exportWatcher, &QFileSystemWatcher::directoryChanged, this,
+          [this](const QString &path) { markExportChanged(QFileInfo(path).fileName()); });
   m_historyEvictionTimer.setSingleShot(true);
   m_historyEvictionTimer.setTimerType(Qt::VeryCoarseTimer);
   connect(&m_historyEvictionTimer, &QTimer::timeout, this, &ClipboardService::runEvictionPass);

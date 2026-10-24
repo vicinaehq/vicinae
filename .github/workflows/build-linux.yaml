@@ -53,7 +53,9 @@ jobs:
         run: cmake --build build --parallel $(nproc)
 
       - name: Lint QML
-        run: cmake --build build --target all_qmllint
+        run: |
+          /usr/lib/qt6/bin/qmllint --version
+          cmake --build build --target all_qmllint
 
       - name: Run Tests
         run: make test

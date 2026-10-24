@@ -2,6 +2,7 @@
 #include "actions/app-actions.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "builtins/browser/browser-tabs-view-host.hpp"
+#include "builtins/browser/browser-bookmarks-view-host.hpp"
 #include "ui/views/empty-view-host.hpp"
 #include "builtins/shortcut/shortcut-form-view-host.hpp"
 #include "navigation-controller.hpp"
@@ -85,7 +86,24 @@ class SearchBrowserTabsCommand : public GuardedBuiltinCallbackCommand {
   }
 };
 
+class SearchBrowserBookmarksCommand : public GuardedBuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(SearchBrowserBookmarksCommand)
+
+  QString id() const override { return "browse-bookmarks"; }
+  QString name() const override { return tr("Search Browser Bookmarks"); }
+  QString description() const override { return tr("Search bookmarks from all connected browsers"); }
+  ImageURL iconUrl() const override {
+    return ImageURL(BuiltinIcon::Bookmark).setBackgroundTint(SemanticColor::Red);
+  }
+
+  void execute(CommandController &controller) const override {
+    if (guard(controller)) { return; }
+    controller.context()->navigation->pushView(new BrowserBookmarksViewHost);
+  }
+};
+
 BrowserExtension::BrowserExtension() {
   registerCommand<SearchBrowserTabsCommand>();
+  registerCommand<SearchBrowserBookmarksCommand>();
   registerCommand<CreateShortcutFromActiveBrowserTabCommand>();
 }
