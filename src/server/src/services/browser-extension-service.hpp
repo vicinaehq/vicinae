@@ -8,9 +8,10 @@
 #include <functional>
 #include <glaze/core/reflect.hpp>
 #include <optional>
-#include <span>
 #include <ranges>
+#include <span>
 #include <string_view>
+#include <utility>
 #include "ui/image/url.hpp"
 #include "generated/ipc-server.hpp"
 
@@ -21,7 +22,8 @@ public:
   enum class TabAction : std::uint8_t { Focus, Close, Pin, Unpin, Mute, Unmute, Bookmark, Duplicate };
 
 signals:
-  void tabActionRequested(std::string browserId, int id, TabAction action) const;
+  void tabActionRequested(std::string browserId, int id, TabAction action, std::string title = {},
+                          std::string url = {}) const;
   void bookmarksRequested(std::string browserId, int requestId) const;
   void permissionRequested(std::string browserId, std::string permission) const;
   void bookmarkRemovalRequested(std::string browserId, std::string bookmarkId) const;
@@ -154,16 +156,25 @@ public:
 
   auto closeTab(const BrowserTab &tab) { return closeTab(tab.browserId, tab.id); }
 
-  std::expected<void, std::string> requestTabAction(const std::string &browserId, int tabId,
-                                                    TabAction action) {
+  std::expected<void, std::string> requestTabAction(const std::string &browserId, int tabId, TabAction action,
+                                                    std::optional<std::string> title = {},
+                                                    std::optional<std::string> url = {}) {
     auto browser = findById(browserId);
     if (browser == m_browsers.end()) return std::unexpected("No such browser");
     auto tab =
         std::ranges::find_if(browser->tabs, [tabId](const BrowserTab &item) { return item.id == tabId; });
     if (tab == browser->tabs.end()) return std::unexpected("No such tab");
-    if (action == TabAction::Bookmark && tab->url.empty()) return std::unexpected("Tab has no URL");
 
-    emit tabActionRequested(browserId, tabId, action);
+    std::string bookmarkTitle;
+    std::string bookmarkUrl;
+    if (action == TabAction::Bookmark) {
+      bookmarkTitle = title.value_or(tab->title);
+      bookmarkUrl = url.value_or(tab->url);
+      const QUrl parsed(bookmarkUrl.c_str());
+      if (!parsed.isValid() || parsed.scheme().isEmpty()) return std::unexpected("Invalid bookmark URL");
+    }
+
+    emit tabActionRequested(browserId, tabId, action, std::move(bookmarkTitle), std::move(bookmarkUrl));
     return {};
   }
 
@@ -175,8 +186,9 @@ public:
     return requestTabAction(browserId, tabId, muted ? TabAction::Mute : TabAction::Unmute);
   }
 
-  auto bookmarkTab(const std::string &browserId, int tabId) {
-    return requestTabAction(browserId, tabId, TabAction::Bookmark);
+  auto bookmarkTab(const std::string &browserId, int tabId, std::optional<std::string> title = {},
+                   std::optional<std::string> url = {}) {
+    return requestTabAction(browserId, tabId, TabAction::Bookmark, std::move(title), std::move(url));
   }
 
   auto duplicateTab(const std::string &browserId, int tabId) {

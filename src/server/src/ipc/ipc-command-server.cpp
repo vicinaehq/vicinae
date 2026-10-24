@@ -365,7 +365,8 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
   const auto browser = ctx->services->browserExtension();
 
   connect(browser, &BrowserExtensionService::tabActionRequested, this,
-          [this](std::string_view browserId, int tabId, BrowserExtensionService::TabAction action) {
+          [this](std::string_view browserId, int tabId, BrowserExtensionService::TabAction action,
+                 std::string_view title, std::string_view url) {
             emitToBrowser(browserId, [&]() {
               switch (action) {
               case BrowserExtensionService::TabAction::Focus:
@@ -385,7 +386,7 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
                     {.tabId = tabId, .muted = action == BrowserExtensionService::TabAction::Mute});
                 break;
               case BrowserExtensionService::TabAction::Bookmark:
-                m_service->emitbookmarkTab({.tabId = tabId});
+                m_service->emitbookmarkTab({.tabId = tabId, .title = std::string(title), .url = std::string(url)});
                 break;
               case BrowserExtensionService::TabAction::Duplicate:
                 m_service->emitduplicateTab({.tabId = tabId});

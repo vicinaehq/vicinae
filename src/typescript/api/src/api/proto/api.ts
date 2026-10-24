@@ -543,8 +543,8 @@ class BrowserExtensionService {
 		return this.transport.request("BrowserExtension/setMuted", { browserId, tabId, muted});	
 	}
 
-	bookmarkTab(browserId: string, tabId: number): Promise<void> {
-		return this.transport.request("BrowserExtension/bookmarkTab", { browserId, tabId});	
+	bookmarkTab(browserId: string, tabId: number, title?: string, url?: string): Promise<void> {
+		return this.transport.request("BrowserExtension/bookmarkTab", { browserId, tabId, title, url});	
 	}
 
 	duplicateTab(browserId: string, tabId: number): Promise<void> {

@@ -129,14 +129,8 @@ function handleNotification(type, data) {
 			openPermissionPage("bookmarks");
 			return;
 		}
-		chrome.tabs.get(data.tabId, (tab) => {
-			if (chrome.runtime.lastError || !tab?.url) {
-				console.error(chrome.runtime.lastError ?? "Tab has no URL to bookmark");
-				return;
-			}
-			chrome.bookmarks.create({ title: tab.title, url: tab.url }, () => {
-				if (chrome.runtime.lastError) console.error(chrome.runtime.lastError);
-			});
+		chrome.bookmarks.create({ title: data.title, url: data.url }, () => {
+			if (chrome.runtime.lastError) console.error(chrome.runtime.lastError);
 		});
 	}
 }

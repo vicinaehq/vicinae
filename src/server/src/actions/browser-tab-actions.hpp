@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "actions/clipboard-actions.hpp"
+#include "builtins/browser/bookmark-tab-form-view-host.hpp"
 #include "common/context.hpp"
 #include "actions/shortcut-actions.hpp"
 #include "navigation-controller.hpp"
@@ -77,15 +78,10 @@ public:
             ctx->services->toastService()->failure(
                 tr("Failed to duplicate tab: %1").arg(result.error().c_str()));
         }));
-    if (!tab.url.empty()) {
-      section->addAction(
-          new StaticAction(tr("Bookmark tab"), BuiltinIcon::Bookmark, [tab](ApplicationContext *ctx) {
-            auto result = ctx->services->browserExtension()->bookmarkTab(tab.browserId, tab.id);
-            if (!result)
-              ctx->services->toastService()->failure(
-                  tr("Failed to bookmark tab: %1").arg(result.error().c_str()));
-          }));
-    }
+    section->addAction(
+        new StaticAction(tr("Bookmark tab"), BuiltinIcon::Bookmark, [tab](ApplicationContext *ctx) {
+          ctx->navigation->pushView(new BookmarkTabFormViewHost(tab));
+        }));
 
     auto utilsSection = panel->createSection();
 

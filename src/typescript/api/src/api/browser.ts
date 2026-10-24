@@ -4,6 +4,8 @@ import { getClient } from "./client";
  * Use browser extension features, provided that the user has it installed and active.
  */
 export namespace BrowserExtension {
+	export type BookmarkOptions = { title?: string; url?: string };
+
 	export type Tab = {
 		id: number;
 		title?: string;
@@ -19,7 +21,7 @@ export namespace BrowserExtension {
 		close: () => void;
 		setPinned: (pinned: boolean) => Promise<void>;
 		setMuted: (muted: boolean) => Promise<void>;
-		bookmark: () => Promise<void>;
+		bookmark: (options?: BookmarkOptions) => Promise<void>;
 		duplicate: () => Promise<void>;
 	};
 
@@ -36,7 +38,8 @@ export namespace BrowserExtension {
 				},
 				setPinned: (pinned) => browser.setPinned(b.browserId, b.id, pinned),
 				setMuted: (muted) => browser.setMuted(b.browserId, b.id, muted),
-				bookmark: () => browser.bookmarkTab(b.browserId, b.id),
+				bookmark: (options) =>
+					browser.bookmarkTab(b.browserId, b.id, options?.title, options?.url),
 				duplicate: () => browser.duplicateTab(b.browserId, b.id),
 			})),
 		);
@@ -65,8 +68,17 @@ export namespace BrowserExtension {
 		return getClient().BrowserExtension.setMuted(browserId, tabId, muted);
 	}
 
-	export function bookmarkTab(browserId: string, tabId: number): Promise<void> {
-		return getClient().BrowserExtension.bookmarkTab(browserId, tabId);
+	export function bookmarkTab(
+		browserId: string,
+		tabId: number,
+		options?: BookmarkOptions,
+	): Promise<void> {
+		return getClient().BrowserExtension.bookmarkTab(
+			browserId,
+			tabId,
+			options?.title,
+			options?.url,
+		);
 	}
 
 	export function duplicateTab(

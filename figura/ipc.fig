@@ -143,6 +143,8 @@ struct SetMutedRequest {
 
 struct BookmarkTabRequest {
   tabId: int;
+  title: string;
+  url: string;
 };
 
 struct DuplicateTabRequest {

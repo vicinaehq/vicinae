@@ -52,8 +52,10 @@ public:
     return result ? Void::ok() : Void::fail(result.error());
   }
 
-  tsapi::Result<void>::Future bookmarkTab(std::string browserId, int32_t tabId) override {
-    auto result = m_browser.bookmarkTab(browserId, tabId);
+  tsapi::Result<void>::Future bookmarkTab(std::string browserId, int32_t tabId,
+                                          std::optional<std::string> title,
+                                          std::optional<std::string> url) override {
+    auto result = m_browser.bookmarkTab(browserId, tabId, std::move(title), std::move(url));
     return result ? Void::ok() : Void::fail(result.error());
   }
 
