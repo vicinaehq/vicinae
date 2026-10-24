@@ -50,6 +50,6 @@ public:
   bool isActivatable() const override;
   int activationPriority() const override;
 
-private:
+protected:
   bool writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) override;
 };
