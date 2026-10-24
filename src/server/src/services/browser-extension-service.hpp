@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <glaze/core/reflect.hpp>
 #include <memory>
@@ -28,6 +29,10 @@ public:
 
   virtual Future<void> focusTab(int tabId) = 0;
   virtual Future<void> closeTab(int tabId) = 0;
+  virtual Future<void> setPinned(int tabId, bool pinned) = 0;
+  virtual Future<void> setMuted(int tabId, bool muted) = 0;
+  virtual Future<void> bookmarkTab(const ipc_gen::BookmarkTabRequest &req) = 0;
+  virtual Future<void> duplicateTab(int tabId) = 0;
   virtual Future<std::vector<ipc_gen::BrowserBookmarkInfo>> bookmarks() = 0;
   virtual Future<void> removeBookmark(const std::string &bookmarkId) = 0;
   virtual Future<std::vector<ipc_gen::BrowserHistoryItemInfo>> searchHistory(const std::string &query,
@@ -44,6 +49,7 @@ class BrowserExtensionService : public QObject {
 public:
   enum class PermissionAccess : std::uint8_t { Granted, NeedsPermission, NeedsUpdate, NoBrowser };
   template <typename T> using Future = ipc_gen::Result<T>::Future;
+  enum class TabAction : std::uint8_t { Focus, Close, Pin, Unpin, Mute, Unmute, Bookmark, Duplicate };
 
 signals:
   void tabsChanged() const;
@@ -200,6 +206,44 @@ public:
   }
 
   Future<void> closeTab(const BrowserTab &tab) { return closeTab(tab.browserId, tab.id); }
+
+  Future<void> requestTabAction(const std::string &browserId, int tabId, TabAction action) {
+    auto browser = findById(browserId);
+    if (browser == m_browsers.end()) return Void::fail("No such browser");
+    if (browser->isOutdated()) return Void::fail(OUTDATED_EXTENSION_ERROR);
+    auto tab =
+        std::ranges::find_if(browser->tabs, [tabId](const BrowserTab &item) { return item.id == tabId; });
+    if (tab == browser->tabs.end()) return Void::fail("No such tab");
+    if (action == TabAction::Bookmark && tab->url.empty()) return Void::fail("Tab has no URL");
+
+    switch (action) {
+    case TabAction::Focus: return browser->peer->focusTab(tabId);
+    case TabAction::Close: return closeTab(browserId, tabId);
+    case TabAction::Pin:
+    case TabAction::Unpin: return browser->peer->setPinned(tabId, action == TabAction::Pin);
+    case TabAction::Mute:
+    case TabAction::Unmute: return browser->peer->setMuted(tabId, action == TabAction::Mute);
+    case TabAction::Bookmark: return browser->peer->bookmarkTab({.tabId = tabId});
+    case TabAction::Duplicate: return browser->peer->duplicateTab(tabId);
+    }
+    return Void::fail("Unknown tab action");
+  }
+
+  auto setPinned(const std::string &browserId, int tabId, bool pinned) {
+    return requestTabAction(browserId, tabId, pinned ? TabAction::Pin : TabAction::Unpin);
+  }
+
+  auto setMuted(const std::string &browserId, int tabId, bool muted) {
+    return requestTabAction(browserId, tabId, muted ? TabAction::Mute : TabAction::Unmute);
+  }
+
+  auto bookmarkTab(const std::string &browserId, int tabId) {
+    return requestTabAction(browserId, tabId, TabAction::Bookmark);
+  }
+
+  auto duplicateTab(const std::string &browserId, int tabId) {
+    return requestTabAction(browserId, tabId, TabAction::Duplicate);
+  }
 
   /**
    * Find the first active tab. If many browsers are connected, the active tab from the first connected

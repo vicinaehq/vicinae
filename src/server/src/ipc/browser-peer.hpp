@@ -17,6 +17,10 @@ public:
 
   Future<void> focusTab(int tabId) override;
   Future<void> closeTab(int tabId) override;
+  Future<void> setPinned(int tabId, bool pinned) override;
+  Future<void> setMuted(int tabId, bool muted) override;
+  Future<void> bookmarkTab(const ipc_gen::BookmarkTabRequest &req) override;
+  Future<void> duplicateTab(int tabId) override;
   Future<std::vector<ipc_gen::BrowserBookmarkInfo>> bookmarks() override;
   Future<void> removeBookmark(const std::string &bookmarkId) override;
   Future<std::vector<ipc_gen::BrowserHistoryItemInfo>> searchHistory(const std::string &query,

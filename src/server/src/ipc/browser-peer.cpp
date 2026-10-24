@@ -9,6 +9,22 @@ AbstractBrowserPeer::Future<void> IpcBrowserPeer::closeTab(int tabId) {
   return m_ipc.callbrowserCloseTab(tabId);
 }
 
+AbstractBrowserPeer::Future<void> IpcBrowserPeer::setPinned(int tabId, bool pinned) {
+  return m_ipc.callbrowserSetPinned({.tabId = tabId, .pinned = pinned});
+}
+
+AbstractBrowserPeer::Future<void> IpcBrowserPeer::setMuted(int tabId, bool muted) {
+  return m_ipc.callbrowserSetMuted({.tabId = tabId, .muted = muted});
+}
+
+AbstractBrowserPeer::Future<void> IpcBrowserPeer::bookmarkTab(const ipc_gen::BookmarkTabRequest &req) {
+  return m_ipc.callbrowserBookmarkTab(req);
+}
+
+AbstractBrowserPeer::Future<void> IpcBrowserPeer::duplicateTab(int tabId) {
+  return m_ipc.callbrowserDuplicateTab({.tabId = tabId});
+}
+
 AbstractBrowserPeer::Future<std::vector<ipc_gen::BrowserBookmarkInfo>> IpcBrowserPeer::bookmarks() {
   return m_ipc.callbrowserGetBookmarks(FETCH_TIMEOUT);
 }

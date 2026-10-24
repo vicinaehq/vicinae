@@ -213,6 +213,22 @@ int main(int ac, char **av) {
                  ipc::Ipc_browserRequestPermission_Params{.permission = permission}, std::move(respond));
   });
 
+  client.ipc().onBrowserSetPinned([&](const ipc::SetPinnedRequest &req, ipc::Responder<void> respond) {
+    port.request("browser/set-pinned", req, std::move(respond));
+  });
+
+  client.ipc().onBrowserSetMuted([&](const ipc::SetMutedRequest &req, ipc::Responder<void> respond) {
+    port.request("browser/set-muted", req, std::move(respond));
+  });
+
+  client.ipc().onBrowserBookmarkTab([&](const ipc::BookmarkTabRequest &req, ipc::Responder<void> respond) {
+    port.request("browser/bookmark-tab", req, std::move(respond));
+  });
+
+  client.ipc().onBrowserDuplicateTab([&](const ipc::DuplicateTabRequest &req, ipc::Responder<void> respond) {
+    port.request("browser/duplicate-tab", req, std::move(respond));
+  });
+
   // Handle messages from the browser extension (via stdin native messaging)
   auto handleExtensionMessage = [&](std::string_view message) {
     std::println(std::cerr, "got message from extension: {}", message);

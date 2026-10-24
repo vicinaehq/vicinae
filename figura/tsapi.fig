@@ -346,12 +346,17 @@ struct BrowserTab {
   lastAccessed: double;
   pinned: boolean;
   audible: boolean;
+  muted: boolean;
 };
 
 service BrowserExtension {
   fn getTabs() => BrowserTab[];
   fn focusTab(browserId: string, tabId: int) => void;
   fn closeTab(browserId: string, tabId: int) => void;
+  fn setPinned(browserId: string, tabId: int, pinned: boolean) => void;
+  fn setMuted(browserId: string, tabId: int, muted: boolean) => void;
+  fn bookmarkTab(browserId: string, tabId: int) => void;
+  fn duplicateTab(browserId: string, tabId: int) => void;
 };
 
 // EventCore - used for loosely typed callbacks, required for component event handlers

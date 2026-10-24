@@ -117,6 +117,24 @@ struct BrowserHistoryItemInfo {
   visitCount: int;
 };
 
+struct SetPinnedRequest {
+  tabId: int;
+  pinned: bool;
+};
+
+struct SetMutedRequest {
+  tabId: int;
+  muted: bool;
+};
+
+struct BookmarkTabRequest {
+  tabId: int;
+};
+
+struct DuplicateTabRequest {
+  tabId: int;
+};
+
 struct FileResult {
   path: string;
   score: uint;
@@ -187,4 +205,8 @@ service Ipc {
   client fn browserRemoveHistoryUrl(url: string) => void;
   client fn browserClearHistory() => void;
   client fn browserRequestPermission(permission: string) => void;
+  client fn browserSetPinned(req: SetPinnedRequest) => void;
+  client fn browserSetMuted(req: SetMutedRequest) => void;
+  client fn browserBookmarkTab(req: BookmarkTabRequest) => void;
+  client fn browserDuplicateTab(req: DuplicateTabRequest) => void;
 }

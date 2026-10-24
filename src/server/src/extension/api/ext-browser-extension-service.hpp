@@ -25,6 +25,7 @@ public:
           .lastAccessed = tab.lastAccessed,
           .pinned = tab.pinned,
           .audible = tab.audible,
+          .muted = tab.muted,
       });
     }
 
@@ -37,6 +38,22 @@ public:
 
   tsapi::Result<void>::Future closeTab(std::string browserId, int32_t tabId) override {
     return m_browser.closeTab(browserId, tabId);
+  }
+
+  tsapi::Result<void>::Future setPinned(std::string browserId, int32_t tabId, bool pinned) override {
+    return m_browser.setPinned(browserId, tabId, pinned);
+  }
+
+  tsapi::Result<void>::Future setMuted(std::string browserId, int32_t tabId, bool muted) override {
+    return m_browser.setMuted(browserId, tabId, muted);
+  }
+
+  tsapi::Result<void>::Future bookmarkTab(std::string browserId, int32_t tabId) override {
+    return m_browser.bookmarkTab(browserId, tabId);
+  }
+
+  tsapi::Result<void>::Future duplicateTab(std::string browserId, int32_t tabId) override {
+    return m_browser.duplicateTab(browserId, tabId);
   }
 
 private:
