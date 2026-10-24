@@ -163,6 +163,12 @@ void GeneralSettingsModel::setTrayEnabled(bool v) {
   cfgManager().mergeWithUser({.tray = config::Partial<config::Tray>{.enabled = v}});
 }
 
+bool GeneralSettingsModel::showUpdateNotice() const { return cfg().updates.showNotice; }
+
+void GeneralSettingsModel::setShowUpdateNotice(bool v) {
+  cfgManager().mergeWithUser({.updates = config::Partial<config::Updates>{.showNotice = v}});
+}
+
 QString GeneralSettingsModel::windowOpacity() const {
   return QString::number(
       cfg().launcherWindow.resolvedOpacity(platform::supports(platform::Capability::LiquidGlass),

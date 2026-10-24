@@ -1,0 +1,155 @@
+name: Browser Extension Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Extension version (e.g. 1.2.0), must be higher than the published one"
+        required: true
+      chrome:
+        description: "Publish to the Chrome Web Store"
+        type: boolean
+        default: true
+      firefox:
+        description: "Publish to addons.mozilla.org"
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  EXT_DIR: src/browser-extension
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Validate version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
+            echo "Invalid version '$VERSION': expected 1 to 4 dot-separated integers (e.g. 1.2.0)." >&2
+            exit 1
+          fi
+
+      - name: Stamp version into manifests
+        working-directory: ${{ env.EXT_DIR }}
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          for manifest in chrome/manifest.json manifest.firefox.json; do
+            jq --arg v "$VERSION" '.version = $v' "$manifest" > "$manifest.tmp"
+            mv "$manifest.tmp" "$manifest"
+          done
+
+      - name: Build
+        working-directory: ${{ env.EXT_DIR }}
+        run: |
+          npm install -g web-ext@10
+          make chrome firefox
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: browser-extension-${{ inputs.version }}
+          path: |
+            ${{ env.EXT_DIR }}/build/vicinae.zip
+            ${{ env.EXT_DIR }}/build/firefox-vicinae.zip
+            ${{ env.EXT_DIR }}/build/firefox
+          if-no-files-found: error
+
+  chrome:
+    needs: build
+    if: inputs.chrome
+    runs-on: ubuntu-latest
+    environment: chrome-web-store
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: browser-extension-${{ inputs.version }}
+          path: build
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.CHROME_SERVICE_ACCOUNT_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Upload and publish
+        env:
+          PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
+          EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+        run: |
+          if [[ -z "$PUBLISHER_ID" || -z "$EXTENSION_ID" ]]; then
+            echo "CHROME_PUBLISHER_ID and CHROME_EXTENSION_ID must be set as variables of the chrome-web-store environment." >&2
+            exit 1
+          fi
+
+          TOKEN=$(gcloud auth print-access-token --scopes=https://www.googleapis.com/auth/chromewebstore)
+          echo "::add-mask::$TOKEN"
+          item="publishers/$PUBLISHER_ID/items/$EXTENSION_ID"
+          api="https://chromewebstore.googleapis.com"
+
+          cws() {
+            local out status
+            out=$(curl -sS -w '\n%{http_code}' -H "Authorization: Bearer $TOKEN" "$@")
+            status=${out##*$'\n'}
+            out=${out%$'\n'*}
+            echo "$out" >&2
+            if (( status >= 400 )); then
+              echo "HTTP $status from ${*: -1}" >&2
+              return 1
+            fi
+            echo "$out"
+          }
+
+          upload=$(cws -X POST -H "Content-Type: application/zip" \
+            --data-binary @build/vicinae.zip "$api/upload/v2/$item:upload")
+          state=$(jq -r .uploadState <<< "$upload")
+
+          for _ in $(seq 30); do
+            [[ "$state" == "IN_PROGRESS" ]] || break
+            sleep 10
+            state=$(cws "$api/v2/$item:fetchStatus" | jq -r .lastAsyncUploadState)
+          done
+
+          if [[ "$state" != "SUCCEEDED" ]]; then
+            echo "Upload did not succeed (state: $state)" >&2
+            exit 1
+          fi
+
+          cws -X POST -H "Content-Type: application/json" -d '{}' "$api/v2/$item:publish" > /dev/null
+
+  firefox:
+    needs: build
+    if: inputs.firefox
+    runs-on: ubuntu-latest
+    environment: firefox-addons
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: browser-extension-${{ inputs.version }}
+          path: build
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Submit to AMO
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: npx --yes web-ext@10 sign --source-dir build/firefox --channel listed --approval-timeout 0

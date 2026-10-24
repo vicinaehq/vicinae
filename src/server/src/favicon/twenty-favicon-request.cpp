@@ -1,5 +1,4 @@
 #include "favicon/twenty-favicon-request.hpp"
-#include <qpixmap.h>
 #include <qstringview.h>
 
 void TwentyFaviconRequester::loadingFailed() {
@@ -17,12 +16,9 @@ void TwentyFaviconRequester::loadingFailed() {
 }
 
 void TwentyFaviconRequester::imageLoaded(const QByteArray &data) {
-  QPixmap pixmap;
-
-  pixmap.loadFromData(data);
   _currentReply->deleteLater();
   _currentReply = nullptr;
-  emit finished(pixmap);
+  emit finished(data);
 }
 
 QString TwentyFaviconRequester::makeUrl(uint size) const { return placeholderUrl.arg(domain()).arg(size); }
