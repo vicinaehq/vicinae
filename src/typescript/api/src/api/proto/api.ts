@@ -290,6 +290,7 @@ export type BrowserTab = {
 	lastAccessed: number;
 	pinned: boolean;
 	audible: boolean;
+	muted: boolean;
 }
 
 class ApplicationService {
@@ -532,6 +533,22 @@ class BrowserExtensionService {
 
 	closeTab(browserId: string, tabId: number): Promise<void> {
 		return this.transport.request("BrowserExtension/closeTab", { browserId, tabId});	
+	}
+
+	setPinned(browserId: string, tabId: number, pinned: boolean): Promise<void> {
+		return this.transport.request("BrowserExtension/setPinned", { browserId, tabId, pinned});	
+	}
+
+	setMuted(browserId: string, tabId: number, muted: boolean): Promise<void> {
+		return this.transport.request("BrowserExtension/setMuted", { browserId, tabId, muted});	
+	}
+
+	bookmarkTab(browserId: string, tabId: number): Promise<void> {
+		return this.transport.request("BrowserExtension/bookmarkTab", { browserId, tabId});	
+	}
+
+	duplicateTab(browserId: string, tabId: number): Promise<void> {
+		return this.transport.request("BrowserExtension/duplicateTab", { browserId, tabId});	
 	}
 
 }

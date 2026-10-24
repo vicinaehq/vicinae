@@ -131,6 +131,24 @@ struct PermissionRequest {
   permission: string;
 };
 
+struct SetPinnedRequest {
+  tabId: int;
+  pinned: bool;
+};
+
+struct SetMutedRequest {
+  tabId: int;
+  muted: bool;
+};
+
+struct BookmarkTabRequest {
+  tabId: int;
+};
+
+struct DuplicateTabRequest {
+  tabId: int;
+};
+
 struct FileResult {
   path: string;
   score: uint;
@@ -164,4 +182,8 @@ service Ipc {
   event requestBookmarks(req: BookmarksRequest);
   event requestPermission(req: PermissionRequest);
   event removeBookmark(req: RemoveBookmarkRequest);
+  event setPinned(req: SetPinnedRequest);
+  event setMuted(req: SetMutedRequest);
+  event bookmarkTab(req: BookmarkTabRequest);
+  event duplicateTab(req: DuplicateTabRequest);
 }

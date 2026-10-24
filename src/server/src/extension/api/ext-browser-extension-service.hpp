@@ -25,6 +25,7 @@ public:
           .lastAccessed = tab.lastAccessed,
           .pinned = tab.pinned,
           .audible = tab.audible,
+          .muted = tab.muted,
       });
     }
 
@@ -37,8 +38,28 @@ public:
   }
 
   tsapi::Result<void>::Future closeTab(std::string browserId, int32_t tabId) override {
-    m_browser.closeTab(browserId, tabId);
-    return Void::ok();
+    auto result = m_browser.closeTab(browserId, tabId);
+    return result ? Void::ok() : Void::fail(result.error());
+  }
+
+  tsapi::Result<void>::Future setPinned(std::string browserId, int32_t tabId, bool pinned) override {
+    auto result = m_browser.setPinned(browserId, tabId, pinned);
+    return result ? Void::ok() : Void::fail(result.error());
+  }
+
+  tsapi::Result<void>::Future setMuted(std::string browserId, int32_t tabId, bool muted) override {
+    auto result = m_browser.setMuted(browserId, tabId, muted);
+    return result ? Void::ok() : Void::fail(result.error());
+  }
+
+  tsapi::Result<void>::Future bookmarkTab(std::string browserId, int32_t tabId) override {
+    auto result = m_browser.bookmarkTab(browserId, tabId);
+    return result ? Void::ok() : Void::fail(result.error());
+  }
+
+  tsapi::Result<void>::Future duplicateTab(std::string browserId, int32_t tabId) override {
+    auto result = m_browser.duplicateTab(browserId, tabId);
+    return result ? Void::ok() : Void::fail(result.error());
   }
 
 private:

@@ -133,7 +133,6 @@ int main(int ac, char **av) {
   ipc::RpcTransport rpc(transport);
   ipc::Client client(rpc);
 
-  // Forward vicinae events to the browser extension
   auto forwardNotification = [](std::string_view method, const auto &data) {
     std::string dataJson;
     if (auto err = glz::write_json(data, dataJson)) {
@@ -155,6 +154,14 @@ int main(int ac, char **av) {
 
   client.ipc().onClosetab(
       [&](const ipc::CloseTabRequest &req) { forwardNotification("browser/close-tab", req); });
+  client.ipc().onSetpinned(
+      [&](const ipc::SetPinnedRequest &req) { forwardNotification("browser/set-pinned", req); });
+  client.ipc().onSetmuted(
+      [&](const ipc::SetMutedRequest &req) { forwardNotification("browser/set-muted", req); });
+  client.ipc().onBookmarktab(
+      [&](const ipc::BookmarkTabRequest &req) { forwardNotification("browser/bookmark-tab", req); });
+  client.ipc().onDuplicatetab(
+      [&](const ipc::DuplicateTabRequest &req) { forwardNotification("browser/duplicate-tab", req); });
 
   client.ipc().onRequestbookmarks(
       [&](const ipc::BookmarksRequest &req) { forwardNotification("browser/request-bookmarks", req); });

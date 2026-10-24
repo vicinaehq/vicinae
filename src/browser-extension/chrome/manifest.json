@@ -6,7 +6,8 @@
   "homepage_url": "https://vicinae.com",
   "permissions": [
     "nativeMessaging",
-    "tabs"
+    "tabs",
+    "bookmarks"
   ],
   "optional_permissions": [
     "bookmarks"

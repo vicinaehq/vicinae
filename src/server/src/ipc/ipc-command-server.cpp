@@ -374,6 +374,22 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
               case BrowserExtensionService::TabAction::Close:
                 m_service->emitcloseTab({.tabId = tabId});
                 break;
+              case BrowserExtensionService::TabAction::Pin:
+              case BrowserExtensionService::TabAction::Unpin:
+                m_service->emitsetPinned(
+                    {.tabId = tabId, .pinned = action == BrowserExtensionService::TabAction::Pin});
+                break;
+              case BrowserExtensionService::TabAction::Mute:
+              case BrowserExtensionService::TabAction::Unmute:
+                m_service->emitsetMuted(
+                    {.tabId = tabId, .muted = action == BrowserExtensionService::TabAction::Mute});
+                break;
+              case BrowserExtensionService::TabAction::Bookmark:
+                m_service->emitbookmarkTab({.tabId = tabId});
+                break;
+              case BrowserExtensionService::TabAction::Duplicate:
+                m_service->emitduplicateTab({.tabId = tabId});
+                break;
               }
             });
           });

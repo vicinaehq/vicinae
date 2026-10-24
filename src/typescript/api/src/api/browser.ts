@@ -14,8 +14,13 @@ export namespace BrowserExtension {
 		lastAccessed: number;
 		pinned: boolean;
 		audible: boolean;
+		muted: boolean;
 		focus: () => void;
 		close: () => void;
+		setPinned: (pinned: boolean) => Promise<void>;
+		setMuted: (muted: boolean) => Promise<void>;
+		bookmark: () => Promise<void>;
+		duplicate: () => Promise<void>;
 	};
 
 	export async function getTabs(): Promise<Tab[]> {
@@ -29,6 +34,10 @@ export namespace BrowserExtension {
 				close: () => {
 					getClient().BrowserExtension.closeTab(b.browserId, b.id);
 				},
+				setPinned: (pinned) => browser.setPinned(b.browserId, b.id, pinned),
+				setMuted: (muted) => browser.setMuted(b.browserId, b.id, muted),
+				bookmark: () => browser.bookmarkTab(b.browserId, b.id),
+				duplicate: () => browser.duplicateTab(b.browserId, b.id),
 			})),
 		);
 	}
@@ -38,5 +47,32 @@ export namespace BrowserExtension {
 		tabId: number,
 	): Promise<void> {
 		return getClient().BrowserExtension.closeTab(browserId, tabId);
+	}
+
+	export function setPinned(
+		browserId: string,
+		tabId: number,
+		pinned: boolean,
+	): Promise<void> {
+		return getClient().BrowserExtension.setPinned(browserId, tabId, pinned);
+	}
+
+	export function setMuted(
+		browserId: string,
+		tabId: number,
+		muted: boolean,
+	): Promise<void> {
+		return getClient().BrowserExtension.setMuted(browserId, tabId, muted);
+	}
+
+	export function bookmarkTab(browserId: string, tabId: number): Promise<void> {
+		return getClient().BrowserExtension.bookmarkTab(browserId, tabId);
+	}
+
+	export function duplicateTab(
+		browserId: string,
+		tabId: number,
+	): Promise<void> {
+		return getClient().BrowserExtension.duplicateTab(browserId, tabId);
 	}
 }

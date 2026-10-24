@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <glaze/core/reflect.hpp>
 #include <optional>
@@ -17,7 +18,7 @@ class BrowserExtensionService : public QObject {
   Q_OBJECT
 
 public:
-  enum class TabAction : std::uint8_t { Focus, Close };
+  enum class TabAction : std::uint8_t { Focus, Close, Pin, Unpin, Mute, Unmute, Bookmark, Duplicate };
 
 signals:
   void tabActionRequested(std::string browserId, int id, TabAction action) const;
@@ -152,6 +153,35 @@ public:
   }
 
   auto closeTab(const BrowserTab &tab) { return closeTab(tab.browserId, tab.id); }
+
+  std::expected<void, std::string> requestTabAction(const std::string &browserId, int tabId,
+                                                    TabAction action) {
+    auto browser = findById(browserId);
+    if (browser == m_browsers.end()) return std::unexpected("No such browser");
+    auto tab =
+        std::ranges::find_if(browser->tabs, [tabId](const BrowserTab &item) { return item.id == tabId; });
+    if (tab == browser->tabs.end()) return std::unexpected("No such tab");
+    if (action == TabAction::Bookmark && tab->url.empty()) return std::unexpected("Tab has no URL");
+
+    emit tabActionRequested(browserId, tabId, action);
+    return {};
+  }
+
+  auto setPinned(const std::string &browserId, int tabId, bool pinned) {
+    return requestTabAction(browserId, tabId, pinned ? TabAction::Pin : TabAction::Unpin);
+  }
+
+  auto setMuted(const std::string &browserId, int tabId, bool muted) {
+    return requestTabAction(browserId, tabId, muted ? TabAction::Mute : TabAction::Unmute);
+  }
+
+  auto bookmarkTab(const std::string &browserId, int tabId) {
+    return requestTabAction(browserId, tabId, TabAction::Bookmark);
+  }
+
+  auto duplicateTab(const std::string &browserId, int tabId) {
+    return requestTabAction(browserId, tabId, TabAction::Duplicate);
+  }
 
   /**
    * Find the first active tab. If many browsers are connected, the active tab from the first connected

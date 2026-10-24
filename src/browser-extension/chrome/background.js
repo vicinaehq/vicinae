@@ -109,6 +109,36 @@ function handleNotification(type, data) {
 	if (type === "browser/remove-bookmark") {
 		chrome.bookmarks?.remove(data.bookmarkId);
 	}
+
+	if (type === "browser/set-pinned" || type === "browser/set-muted") {
+		const { tabId } = data;
+		const changes = type === "browser/set-pinned" ? { pinned: data.pinned } : { muted: data.muted };
+		chrome.tabs.update(tabId, changes, () => {
+			if (chrome.runtime.lastError) console.error(chrome.runtime.lastError);
+		});
+	}
+
+	if (type === "browser/duplicate-tab") {
+		chrome.tabs.duplicate(data.tabId, () => {
+			if (chrome.runtime.lastError) console.error(chrome.runtime.lastError);
+		});
+	}
+
+	if (type === "browser/bookmark-tab") {
+		if (!chrome.bookmarks) {
+			openPermissionPage("bookmarks");
+			return;
+		}
+		chrome.tabs.get(data.tabId, (tab) => {
+			if (chrome.runtime.lastError || !tab?.url) {
+				console.error(chrome.runtime.lastError ?? "Tab has no URL to bookmark");
+				return;
+			}
+			chrome.bookmarks.create({ title: tab.title, url: tab.url }, () => {
+				if (chrome.runtime.lastError) console.error(chrome.runtime.lastError);
+			});
+		});
+	}
 }
 
 function processNativeMessage(message) {
