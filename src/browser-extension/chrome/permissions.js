@@ -5,6 +5,10 @@ const PERMISSIONS = {
 		title: "Search your bookmarks from Vicinae",
 		description: "Vicinae needs access to your bookmarks to list and search them. They are only shared with Vicinae on this computer.",
 	},
+	history: {
+		title: "Search your history from Vicinae",
+		description: "Vicinae needs access to your browsing history to search it and delete entries you choose. It is only shared with Vicinae on this computer, and nothing is deleted without your confirmation in Vicinae.",
+	},
 };
 
 const titleEl = document.getElementById("title");

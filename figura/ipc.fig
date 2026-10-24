@@ -83,6 +83,8 @@ struct BrowserInitRequest {
   version?: string;
   // granted optional permissions, absent on extensions predating optional permissions
   permissions?: string[];
+  // permissions the extension can request, absent on extensions predating history support
+  optionalPermissions?: string[];
 };
 
 struct BrowserTabInfo {
@@ -127,6 +129,30 @@ struct RemoveBookmarkRequest {
   bookmarkId: string;
 };
 
+struct BrowserHistoryItemInfo {
+  id: string;
+  title: string;
+  url: string;
+  lastVisitTime: double;
+  visitCount: int;
+};
+
+struct HistoryRequest {
+  requestId: int;
+  query: string;
+  maxResults: int;
+};
+
+struct HistoryResponse {
+  requestId: int;
+  items: BrowserHistoryItemInfo[];
+  error?: string;
+};
+
+struct RemoveHistoryUrlRequest {
+  url: string;
+};
+
 struct PermissionRequest {
   permission: string;
 };
@@ -155,6 +181,7 @@ service Ipc {
   fn browserTabsChanged(tabs: BrowserTabInfo[]) => void;
   fn browserPermissionsChanged(permissions: string[]) => void;
   fn browserBookmarks(res: BookmarksResponse) => void;
+  fn browserHistory(res: HistoryResponse) => void;
 
   // filesystem
   fn fsQuery(q: string, params: FsQueryParams) => FileResult[];
@@ -164,4 +191,7 @@ service Ipc {
   event requestBookmarks(req: BookmarksRequest);
   event requestPermission(req: PermissionRequest);
   event removeBookmark(req: RemoveBookmarkRequest);
+  event requestHistory(req: HistoryRequest);
+  event removeHistoryUrl(req: RemoveHistoryUrlRequest);
+  event clearHistory();
 }

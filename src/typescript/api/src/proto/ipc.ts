@@ -156,6 +156,7 @@ export type BrowserInitRequest = {
 	engine: string;
 	version?: string;
 	permissions?: string[];
+	optionalPermissions?: string[];
 }
 
 export type BrowserTabInfo = {
@@ -198,6 +199,30 @@ export type BookmarksResponse = {
 
 export type RemoveBookmarkRequest = {
 	bookmarkId: string;
+}
+
+export type BrowserHistoryItemInfo = {
+	id: string;
+	title: string;
+	url: string;
+	lastVisitTime: number;
+	visitCount: number;
+}
+
+export type HistoryRequest = {
+	requestId: number;
+	query: string;
+	maxResults: number;
+}
+
+export type HistoryResponse = {
+	requestId: number;
+	items: BrowserHistoryItemInfo[];
+	error?: string;
+}
+
+export type RemoveHistoryUrlRequest = {
+	url: string;
 }
 
 export type PermissionRequest = {
@@ -263,6 +288,10 @@ class IpcService {
 		return this.transport.request("Ipc/browserBookmarks", { res});	
 	}
 
+	browserHistory(res: HistoryResponse): Promise<void> {
+		return this.transport.request("Ipc/browserHistory", { res});	
+	}
+
 	fsQuery(q: string, params: FsQueryParams): Promise<FileResult[]> {
 		return this.transport.request("Ipc/fsQuery", { q, params});	
 	}
@@ -281,6 +310,15 @@ class IpcService {
 	}
 	removeBookmark(handler: (req: RemoveBookmarkRequest) => void): EventSubscription {
 		return this.transport.subscribe("Ipc/removeBookmark", (msg) => handler(msg.req))
+	}
+	requestHistory(handler: (req: HistoryRequest) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/requestHistory", (msg) => handler(msg.req))
+	}
+	removeHistoryUrl(handler: (req: RemoveHistoryUrlRequest) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/removeHistoryUrl", (msg) => handler(msg.req))
+	}
+	clearHistory(handler: () => void): EventSubscription {
+		return this.transport.subscribe("Ipc/clearHistory", (msg) => handler())
 	}
 }
 

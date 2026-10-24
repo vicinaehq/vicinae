@@ -165,6 +165,16 @@ int main(int ac, char **av) {
   client.ipc().onRemovebookmark(
       [&](const ipc::RemoveBookmarkRequest &req) { forwardNotification("browser/remove-bookmark", req); });
 
+  client.ipc().onRequesthistory(
+      [&](const ipc::HistoryRequest &req) { forwardNotification("browser/request-history", req); });
+
+  client.ipc().onRemovehistoryurl([&](const ipc::RemoveHistoryUrlRequest &req) {
+    forwardNotification("browser/remove-history-url", req);
+  });
+
+  client.ipc().onClearhistory(
+      [&]() { forwardNotification("browser/clear-history", glz::generic::object_t{}); });
+
   // Handle messages from the browser extension (via stdin native messaging)
   auto handleExtensionMessage = [&](std::string_view message) {
     std::println(std::cerr, "got message from extension: {}", message);
@@ -224,6 +234,15 @@ int main(int ac, char **av) {
       }
       client.ipc().browserBookmarks(res, [](auto res) {
         if (!res) std::println(std::cerr, "browserBookmarks failed: {}", res.error());
+      });
+    } else if (msg.method == "browser/history") {
+      ipc::HistoryResponse res;
+      if (auto err = glz::read_json(res, msg.data.str)) {
+        std::println(std::cerr, "Failed to parse history: {}", glz::format_error(err));
+        return;
+      }
+      client.ipc().browserHistory(res, [](auto res) {
+        if (!res) std::println(std::cerr, "browserHistory failed: {}", res.error());
       });
     }
   };
