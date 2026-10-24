@@ -60,9 +60,11 @@ bool EventListener::setupDBusConnection() {
                                                 SLOT(onWorkspaceChangedSignal(QString)));
   bool const monitorConnected = m_bus.connect(m_service, m_path, m_interface, "monitorlayoutchanged", this,
                                               SLOT(onMonitorLayoutChangedSignal()));
+  bool const closeRequestConnected = m_bus.connect(m_service, m_path, m_interface, "closerequested", this,
+                                                   SLOT(onCloseRequestedSignal(QString)));
 
   if (!openConnected || !closeConnected || !focusConnected || !moveConnected || !stateConnected ||
-      !workspaceConnected || !monitorConnected) {
+      !workspaceConnected || !monitorConnected || !closeRequestConnected) {
     qWarning() << "GnomeEventListener: Failed to connect to one or more D-Bus signals";
     return false;
   }
@@ -89,6 +91,8 @@ void EventListener::cleanupDBusConnection() {
                      SLOT(onWorkspaceChangedSignal(QString)));
     m_bus.disconnect(m_service, m_path, m_interface, "monitorlayoutchanged", this,
                      SLOT(onMonitorLayoutChangedSignal()));
+    m_bus.disconnect(m_service, m_path, m_interface, "closerequested", this,
+                     SLOT(onCloseRequestedSignal(QString)));
   }
 
   m_isActive = false;
@@ -148,6 +152,11 @@ void EventListener::onWorkspaceChangedSignal(const QString &workspaceId) {
 void EventListener::onMonitorLayoutChangedSignal() {
   qDebug() << "GnomeEventListener: Monitor layout changed";
   emit monitorlayoutchanged();
+}
+
+void EventListener::onCloseRequestedSignal(const QString &windowAddress) {
+  qDebug() << "GnomeEventListener: Close requested for launcher window:" << windowAddress;
+  emit closerequested(windowAddress);
 }
 
 void EventListener::onReconnectTimer() {
