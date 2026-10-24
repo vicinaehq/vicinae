@@ -225,10 +225,13 @@ bool GnomeClipboardServer::writeClipboard(QMimeData *data, const Clipboard::Copy
     return false;
   }
 
+  // The extension reports every copy it sets, unless it is told the copy is concealed
+  bool const concealed = options.concealed || options.transient;
+
   // The extension offers exactly one type per copy, and file managers only paste files from a
   // uri-list, so local files go as text/uri-list. Web links stay text so text fields can paste them.
   if (data->hasUrls() && std::ranges::all_of(data->urls(), &QUrl::isLocalFile)) {
-    return setBinaryContent(data->data(Clipboard::URI_LIST), Clipboard::URI_LIST);
+    return setBinaryContent(data->data(Clipboard::URI_LIST), Clipboard::URI_LIST, concealed);
   }
 
   QStringList const formats = data->formats();
@@ -247,9 +250,6 @@ bool GnomeClipboardServer::writeClipboard(QMimeData *data, const Clipboard::Copy
 
   qDebug() << "GnomeClipboardServer: Setting clipboard content" << preferredFormat << contentData.size()
            << "bytes";
-
-  // The extension reports every copy it sets, unless it is told the copy is concealed
-  bool const concealed = options.concealed || options.transient;
 
   return preferredFormat.startsWith("text/") ? setTextContent(data->text(), concealed)
                                              : setBinaryContent(contentData, preferredFormat, concealed);
