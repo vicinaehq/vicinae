@@ -99,6 +99,25 @@ LauncherWindowBase {
         y: root.shadowPadding
         width: root._w
         height: root._h
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            autoPaddingEnabled: false
+            maskEnabled: true
+            maskSource: contentMask
+        }
+
+        Item {
+            id: contentMask
+            anchors.fill: parent
+            visible: false
+            layer.enabled: true
+
+            Rectangle {
+                anchors.fill: parent
+                radius: root.cornerRadius
+                color: "white"
+            }
+        }
 
         Rectangle {
             visible: Launcher.compacted
