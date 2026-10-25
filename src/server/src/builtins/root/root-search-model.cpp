@@ -90,7 +90,7 @@ void RootSearchModel::setFilter(const QString &text) {
   }
   m_fileSearchDebounce.stop();
 
-  bool const directMatch = rerunSearch();
+  rerunSearch();
 }
 
 void RootSearchModel::refresh() {

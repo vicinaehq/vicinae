@@ -6,6 +6,7 @@ void BrowserTabsViewHost::initialize() {
   BaseView::initialize();
   initModel();
 
+  model()->addSource(&m_pinnedSection);
   model()->addSource(&m_mediaSection);
   model()->addSource(&m_tabsSection);
 
@@ -19,19 +20,24 @@ void BrowserTabsViewHost::loadInitialData() { reload(); }
 
 void BrowserTabsViewHost::reload() {
   auto tabs = context()->services->browserExtension()->tabs();
+  std::vector<BrowserTab> pinnedTabs;
   std::vector<BrowserTab> mediaTabs;
   std::vector<BrowserTab> regularTabs;
 
+  pinnedTabs.reserve(tabs.size());
   mediaTabs.reserve(tabs.size());
   regularTabs.reserve(tabs.size());
 
   for (auto &tab : tabs) {
-    if (tab.audible)
+    if (tab.pinned)
+      pinnedTabs.emplace_back(std::move(tab));
+    else if (tab.audible)
       mediaTabs.emplace_back(std::move(tab));
     else
       regularTabs.emplace_back(std::move(tab));
   }
 
+  m_pinnedSection.setItems(std::move(pinnedTabs));
   m_mediaSection.setItems(std::move(mediaTabs));
   m_tabsSection.setItems(std::move(regularTabs));
 }
