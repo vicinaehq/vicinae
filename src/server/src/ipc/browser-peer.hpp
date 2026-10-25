@@ -22,6 +22,7 @@ public:
   Future<void> bookmarkTab(const ipc_gen::BookmarkTabRequest &req) override;
   Future<void> duplicateTab(int tabId) override;
   Future<std::vector<ipc_gen::BrowserBookmarkInfo>> bookmarks() override;
+  Future<std::vector<ipc_gen::BrowserBookmarkFolderInfo>> bookmarkFolders() override;
   Future<void> removeBookmark(const std::string &bookmarkId) override;
   Future<std::vector<ipc_gen::BrowserHistoryItemInfo>> searchHistory(const std::string &query,
                                                                      int maxResults) override;

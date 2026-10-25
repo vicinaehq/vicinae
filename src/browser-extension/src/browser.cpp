@@ -187,6 +187,10 @@ int main(int ac, char **av) {
     port.request("browser/get-bookmarks", ipc::Ipc_browserGetBookmarks_Params{}, std::move(respond));
   });
 
+  client.ipc().onBrowserGetBookmarkFolders([&](ipc::Responder<std::vector<ipc::BrowserBookmarkFolderInfo>> respond) {
+    port.request("browser/get-bookmark-folders", ipc::Ipc_browserGetBookmarkFolders_Params{}, std::move(respond));
+  });
+
   client.ipc().onBrowserRemoveBookmark([&](const std::string &bookmarkId, ipc::Responder<void> respond) {
     port.request("browser/remove-bookmark", ipc::Ipc_browserRemoveBookmark_Params{.bookmarkId = bookmarkId},
                  std::move(respond));

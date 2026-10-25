@@ -31,5 +31,15 @@ Item {
                 onTextEdited: root.host.url = text
             }
         }
+
+        FormField {
+            label: qsTr("Folder")
+
+            SearchableDropdown {
+                model: root.host.folderModel
+                currentItem: root.host.selectedFolder
+                onActivated: item => root.host.selectFolder(item)
+            }
+        }
     }
 }

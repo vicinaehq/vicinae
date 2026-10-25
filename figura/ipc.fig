@@ -117,6 +117,11 @@ struct BrowserHistoryItemInfo {
   visitCount: int;
 };
 
+struct BrowserBookmarkFolderInfo {
+  id: string;
+  path: string[];
+};
+
 struct SetPinnedRequest {
   tabId: int;
   pinned: bool;
@@ -131,6 +136,7 @@ struct BookmarkTabRequest {
   tabId: int;
   title: string;
   url: string;
+  folderId?: string;
 };
 
 struct DuplicateTabRequest {
@@ -202,6 +208,7 @@ service Ipc {
   client fn browserFocusTab(tabId: int) => void;
   client fn browserCloseTab(tabId: int) => void;
   client fn browserGetBookmarks() => BrowserBookmarkInfo[];
+  client fn browserGetBookmarkFolders() => BrowserBookmarkFolderInfo[];
   client fn browserRemoveBookmark(bookmarkId: string) => void;
   client fn browserSearchHistory(query: string, maxResults: int) => BrowserHistoryItemInfo[];
   client fn browserRemoveHistoryUrl(url: string) => void;

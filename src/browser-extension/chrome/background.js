@@ -89,8 +89,10 @@ const REQUEST_HANDLERS = {
     chromeCall((cb) => chrome.tabs.update(tabId, { muted }, cb)),
   "browser/duplicate-tab": ({ tabId }) =>
     chromeCall((cb) => chrome.tabs.duplicate(tabId, cb)).then(() => {}),
-  "browser/bookmark-tab": ({ title, url }) => bookmarkTab(title, url),
+  "browser/bookmark-tab": ({ title, url, folderId }) =>
+    bookmarkTab(title, url, folderId),
   "browser/get-bookmarks": () => getBookmarks(),
+  "browser/get-bookmark-folders": () => getBookmarkFolders(),
   "browser/remove-bookmark": ({ bookmarkId }) => removeBookmark(bookmarkId),
   "browser/search-history": ({ query, maxResults }) =>
     searchHistory(query, maxResults),
@@ -401,12 +403,17 @@ async function closeTab(tabId) {
   await chromeCall((cb) => chrome.tabs.remove(tabId, cb));
 }
 
-async function bookmarkTab(title, url) {
+async function bookmarkTab(title, url, folderId) {
   if (!(await hasPermission("bookmarks"))) {
     await openPermissionPage("bookmarks");
     throw new Error("Bookmarks permission not granted");
   }
-  await chromeCall((cb) => chrome.bookmarks.create({ title, url }, cb));
+  await chromeCall((cb) =>
+    chrome.bookmarks.create(
+      { title, url, ...(folderId && { parentId: folderId }) },
+      cb,
+    ),
+  );
 }
 
 async function getBookmarks() {
@@ -420,6 +427,25 @@ async function getBookmarks() {
     (out, container) => flattenBookmarks(container.children ?? [], [], out),
     [],
   );
+}
+
+async function getBookmarkFolders() {
+  await requirePermission("bookmarks", "Bookmarks");
+  const tree = await chromeCall((cb) => chrome.bookmarks.getTree(cb));
+  const folders = [];
+  function collectFolders(nodes, path) {
+    for (const node of nodes) {
+      if (node.url) continue;
+      const nextPath = [...path, node.title ?? ""];
+      folders.push({ id: node.id, path: nextPath });
+      collectFolders(node.children ?? [], nextPath);
+    }
+  }
+  collectFolders(
+    tree.flatMap((root) => root.children ?? []),
+    [],
+  );
+  return folders;
 }
 
 async function removeBookmark(bookmarkId) {
