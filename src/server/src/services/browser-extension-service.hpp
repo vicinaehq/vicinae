@@ -3,6 +3,7 @@
 #include <QTimer>
 #include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <functional>
@@ -53,6 +54,7 @@ public:
 
   struct BrowserTab : ipc_gen::BrowserTabInfo {
     std::string browserId;
+    std::string browserLabel;
 
     std::string uniqueId() const { return std::format("{}-{}", browserId, id); }
     QString host() const { return urlHost(url); }
@@ -104,8 +106,18 @@ public:
   }
 
   std::vector<BrowserTab> tabs() const {
-    auto tabs = m_browsers | std::views::transform([](auto &&b) { return b.tabs; }) | std::views::join |
-                std::ranges::to<std::vector>();
+    std::size_t count = 0;
+    for (const auto &browser : m_browsers)
+      count += browser.tabs.size();
+
+    std::vector<BrowserTab> tabs;
+    tabs.reserve(count);
+    for (const auto &browser : m_browsers) {
+      for (const auto &tab : browser.tabs) {
+        auto &copy = tabs.emplace_back(tab);
+        copy.browserLabel = browser.name;
+      }
+    }
 
     std::ranges::stable_sort(tabs, std::greater{}, &BrowserTab::lastAccessed);
 
@@ -209,13 +221,28 @@ public:
     return nullptr;
   }
 
-  void registerBrowser(const BrowserInfo &info) {
+  void registerBrowser(BrowserInfo info) {
+    // Older extensions identify themselves with a full user agent.
+    if (info.name.starts_with("Mozilla/")) {
+      if (info.name.find("Edg/") != std::string::npos)
+        info.name = "Microsoft Edge";
+      else if (info.name.find("OPR/") != std::string::npos)
+        info.name = "Opera";
+      else if (info.name.find("Firefox/") != std::string::npos)
+        info.name = "Firefox";
+      else if (info.name.find("Chrome/") != std::string::npos)
+        info.name = "Chromium";
+      else
+        info.name.clear();
+    }
     if (auto it = findById(info.id); it != m_browsers.end()) {
-      *it = info;
+      it->name = std::move(info.name);
+      it->engine = std::move(info.engine);
     } else {
-      m_browsers.emplace_back(info);
+      m_browsers.emplace_back(std::move(info));
     }
     emit browsersChanged();
+    emit tabsChanged();
   }
 
   void unregisterBrowser(std::string id) {

@@ -16,7 +16,8 @@
   "permissions": [
     "nativeMessaging",
     "tabs",
-    "bookmarks"
+    "bookmarks",
+    "storage"
   ],
   "optional_permissions": [
     "bookmarks"

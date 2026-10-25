@@ -67,10 +67,52 @@
       color: #ef4444;
     }
 
+    #profileForm {
+      margin-top: 16px;
+      text-align: left;
+      font-size: 12px;
+      color: #1f2937;
+    }
+
+    #profileForm label {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .profile-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    #profileName {
+      min-width: 0;
+      flex: 1;
+      padding: 6px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+    }
+
+    #profileForm button {
+      border: none;
+      border-radius: 6px;
+      background: #1f2937;
+      color: white;
+      cursor: pointer;
+    }
+
+    #profileStatus {
+      margin: 0;
+      color: #6b7280;
+    }
+
+    #profileStatus:not(:empty) {
+      margin-top: 6px;
+    }
+
     #toggleBtn {
       display: block;
       width: 100%;
-      margin-top: 12px;
+      margin-top: 8px;
       padding: 6px 0;
       border: none;
       border-radius: 6px;
@@ -128,6 +170,14 @@
   </div>
   <h1 class="title">Vicinae</h1>
   <p id="statusText" class="status-text">Connecting...</p>
+  <form id="profileForm">
+    <label for="profileName">Profile label</label>
+    <div class="profile-controls">
+      <input id="profileName" type="text" maxlength="60" placeholder="e.g. Work" autocomplete="off">
+      <button type="submit">Save</button>
+    </div>
+    <p id="profileStatus" role="status" aria-live="polite"></p>
+  </form>
   <button id="toggleBtn" class="connect">Connect</button>
 
   <div class="permissions">

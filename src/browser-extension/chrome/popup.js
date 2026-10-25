@@ -3,6 +3,38 @@
 const statusPin = document.getElementById('statusPin');
 const statusText = document.getElementById('statusText');
 const toggleBtn = document.getElementById('toggleBtn');
+const profileForm = document.getElementById('profileForm');
+const profileName = document.getElementById('profileName');
+const profileStatus = document.getElementById('profileStatus');
+
+const extensionApi = typeof browser === 'undefined' ? chrome : browser;
+
+extensionApi.storage.local.get('profileName').then(({ profileName: saved }) => {
+  profileName.value = saved ?? '';
+}).catch(() => {
+  profileStatus.textContent = 'Could not load profile label';
+});
+
+profileForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const name = profileName.value.trim();
+  try {
+    await extensionApi.storage.local.set({ profileName: name });
+    profileName.value = name;
+  } catch (error) {
+    profileStatus.textContent = 'Could not save profile label';
+    console.error(error);
+    return;
+  }
+
+  try {
+    const response = await extensionApi.runtime.sendMessage({ type: 'profile_name_changed', name });
+    profileStatus.textContent = response?.success ? 'Saved' : 'Saved; reconnect to update Vicinae';
+  } catch (error) {
+    profileStatus.textContent = 'Saved; reconnect to update Vicinae';
+    console.error(error);
+  }
+});
 
 let currentState = 'disconnected';
 

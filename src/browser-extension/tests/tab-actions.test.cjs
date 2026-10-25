@@ -10,6 +10,7 @@ const event = { addListener() {} };
 const chrome = {
   action: { setBadgeText() {}, setBadgeBackgroundColor() {} },
   runtime: {
+    getManifest: () => ({ version: "1.2.3" }),
     connectNative: () => ({ postMessage() {}, onMessage: event, onDisconnect: event }),
     sendMessage: () => Promise.resolve(),
     onMessage: event,
@@ -20,6 +21,8 @@ const chrome = {
     onCreated: event, onUpdated: event, onRemoved: event, onActivated: event, onMoved: event,
   },
   bookmarks: { create: (bookmark, cb) => { bookmarks.push(bookmark); cb(); } },
+  permissions: { getAll: (callback) => callback({ permissions: [] }), onAdded: event, onRemoved: event },
+  storage: { local: { get: async () => ({}), set: async () => {} } },
 };
 const context = vm.createContext({ chrome, crypto: { randomUUID: () => "test" },
   navigator: { userAgent: "test" }, console: { log() {}, error: (error) => errors.push(error) }, clearTimeout });

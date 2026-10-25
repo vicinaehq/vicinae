@@ -412,10 +412,11 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
 }
 
 void IpcCommandServer::emitToBrowser(std::string_view browserId, const std::function<void()> &emitEvent) {
-  auto it = std::ranges::find_if(
-      m_clients, [&](auto &&client) { return client.browser && client.browser->id == browserId; });
+  auto it = std::ranges::find_if(m_clients.rbegin(), m_clients.rend(), [&](auto &&client) {
+    return client.browser && client.browser->id == browserId;
+  });
 
-  if (it == m_clients.end()) {
+  if (it == m_clients.rend()) {
     qWarning() << "browser event requested but there is no matching browser extension client connected";
     return;
   }
@@ -472,12 +473,21 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
 void IpcCommandServer::handleDisconnection(QLocalSocket *conn) {
   auto it = std::ranges::find_if(m_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
 
-  if (it->browser) { m_ctx.services->browserExtension()->unregisterBrowser(it->browser->id); }
+  if (it == m_clients.end()) {
+    conn->deleteLater();
+    return;
+  }
 
+  auto browserId = it->browser ? it->browser->id : std::string{};
   m_transport.forgetConn(conn);
   if (m_transport.conn == conn) m_transport.conn = nullptr;
 
   m_clients.erase(it);
+  if (!browserId.empty() && std::ranges::none_of(m_clients, [&](const ClientInfo &client) {
+        return client.browser && client.browser->id == browserId;
+      })) {
+    m_ctx.services->browserExtension()->unregisterBrowser(std::move(browserId));
+  }
   conn->deleteLater();
 }
 
