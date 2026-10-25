@@ -1503,6 +1503,7 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/builtin-icon/builtin-icon.cpp
 		src/services/audio-control/pactl/pactl-audio-control.cpp
 		src/services/browser-extension-service.hpp
+		${GENOUT}/ipc-server.hpp
 		src/services/clipboard/clipboard-mime.cpp
 		tests/pactl-audio-control.cpp
 		tests/browser-extension-service.cpp
