@@ -84,6 +84,7 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
     case Accessory:
       return {};
     case IsDraggable:
+    case IsActive:
       return false;
     case QuickAccessIndex:
       return -1;
@@ -116,6 +117,8 @@ QVariant SectionListModel::data(const QModelIndex &index, int role) const {
     return qml::accessoriesToVariantList(source->itemAccessories(flat.itemIdx));
   case IsDraggable:
     return source->isDraggable(flat.itemIdx);
+  case IsActive:
+    return source->isActive(flat.itemIdx);
   case QuickAccessIndex:
     return quickAccessIndexForRow(index.row());
   case ShortcutTokens:
@@ -139,6 +142,7 @@ QHash<int, QByteArray> SectionListModel::roleNames() const {
       {IconSource, "iconSource"},
       {Accessory, "itemAccessory"},
       {IsDraggable, "isDraggable"},
+      {IsActive, "isActive"},
       {QuickAccessIndex, "quickAccessIndex"},
       {ShortcutTokens, "shortcutTokens"},
   };

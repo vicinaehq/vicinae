@@ -73,18 +73,7 @@ std::unique_ptr<QMimeData> ExtensionListSection::dragMimeData(int i) const {
   return content ? Clipboard::mimeDataForContent(*content) : nullptr;
 }
 
-namespace {
-constexpr int IsActiveRole = Qt::UserRole + 51;
-} // namespace
-
-QVariant ExtensionListSection::customData(int i, int role) const {
-  if (role == IsActiveRole) return itemAt(i).active;
-  return {};
-}
-
-QHash<int, QByteArray> ExtensionListSection::customRoleNames() const { return {{IsActiveRole, "isActive"}}; }
-
-QHash<int, QVariant> ExtensionListSection::customRoleDefaults() const { return {{IsActiveRole, false}}; }
+bool ExtensionListSection::isActive(int i) const { return itemAt(i).active; }
 
 std::unique_ptr<ActionPanelState> ExtensionListSection::actionPanel(int i) const {
   const auto &item = itemAt(i);

@@ -333,6 +333,8 @@ set(SRCS
 	src/builtins/browser/browser-bookmarks-model.cpp
 	src/builtins/browser/browser-bookmarks-view-host.hpp
 	src/builtins/browser/browser-bookmarks-view-host.cpp
+	src/builtins/browser/bookmark-tab-form-view-host.hpp
+	src/builtins/browser/bookmark-tab-form-view-host.cpp
 	src/builtins/vicinae/builtin-icons-model.hpp
 	src/builtins/vicinae/builtin-icons-model.cpp
 	src/builtins/vicinae/builtin-icons-view-host.hpp
@@ -1213,6 +1215,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/form/FormSeparator.qml
 	src/ui/qml/views/SnippetFormView.qml
 	src/ui/qml/views/AliasFormView.qml
+	src/ui/qml/views/BookmarkTabFormView.qml
 	src/ui/qml/views/ShortcutFormView.qml
 	src/ui/qml/form/PlaceholderCompleter.qml
 	src/ui/qml/form/PlaceholderHighlight.qml
@@ -1413,6 +1416,7 @@ target_include_directories(${TARGET} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src/script
 	${CMAKE_CURRENT_SOURCE_DIR}/src/extension/views
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/shortcut
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/browser
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/vicinae
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/clipboard/history
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/browser
@@ -1498,8 +1502,11 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/builtin-icon/builtin-icon.hpp
 		src/services/builtin-icon/builtin-icon.cpp
 		src/services/audio-control/pactl/pactl-audio-control.cpp
+		src/services/browser-extension-service.hpp
+		${GENOUT}/ipc-server.hpp
 		src/services/clipboard/clipboard-mime.cpp
 		tests/pactl-audio-control.cpp
+		tests/browser-extension-service.cpp
 		tests/clipboard-mime.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)

@@ -117,9 +117,15 @@ struct BookmarksRequest {
   requestId: int;
 };
 
+struct BrowserBookmarkFolderInfo {
+  id: string;
+  path: string[];
+};
+
 struct BookmarksResponse {
   requestId: int;
   bookmarks: BrowserBookmarkInfo[];
+  folders?: BrowserBookmarkFolderInfo[];
   error?: string;
 };
 
@@ -129,6 +135,27 @@ struct RemoveBookmarkRequest {
 
 struct PermissionRequest {
   permission: string;
+};
+
+struct SetPinnedRequest {
+  tabId: int;
+  pinned: bool;
+};
+
+struct SetMutedRequest {
+  tabId: int;
+  muted: bool;
+};
+
+struct BookmarkTabRequest {
+  tabId: int;
+  title: string;
+  url: string;
+  folderId?: string;
+};
+
+struct DuplicateTabRequest {
+  tabId: int;
 };
 
 struct FileResult {
@@ -164,4 +191,8 @@ service Ipc {
   event requestBookmarks(req: BookmarksRequest);
   event requestPermission(req: PermissionRequest);
   event removeBookmark(req: RemoveBookmarkRequest);
+  event setPinned(req: SetPinnedRequest);
+  event setMuted(req: SetMutedRequest);
+  event bookmarkTab(req: BookmarkTabRequest);
+  event duplicateTab(req: DuplicateTabRequest);
 }

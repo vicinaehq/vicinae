@@ -28,6 +28,7 @@ GenericListView {
         required property string iconSource
         required property var itemAccessory
         required property bool isDraggable
+        required property bool isActive
         required property var shortcutTokens
 
         sourceComponent: isSection ? sectionComponent : itemComponent
@@ -48,7 +49,7 @@ GenericListView {
                 itemSubtitle: delegateLoader.subtitle
                 itemIconSource: delegateLoader.iconSource
                 itemAlias: ""
-                itemIsActive: false
+                itemIsActive: delegateLoader.isActive
                 itemAccessory: delegateLoader.itemAccessory
                 quickAccessIndex: delegateLoader.quickAccessIndex
                 itemShortcutTokens: delegateLoader.shortcutTokens

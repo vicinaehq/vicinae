@@ -190,9 +190,15 @@ export type BookmarksRequest = {
 	requestId: number;
 }
 
+export type BrowserBookmarkFolderInfo = {
+	id: string;
+	path: string[];
+}
+
 export type BookmarksResponse = {
 	requestId: number;
 	bookmarks: BrowserBookmarkInfo[];
+	folders?: BrowserBookmarkFolderInfo[];
 	error?: string;
 }
 
@@ -202,6 +208,27 @@ export type RemoveBookmarkRequest = {
 
 export type PermissionRequest = {
 	permission: string;
+}
+
+export type SetPinnedRequest = {
+	tabId: number;
+	pinned: boolean;
+}
+
+export type SetMutedRequest = {
+	tabId: number;
+	muted: boolean;
+}
+
+export type BookmarkTabRequest = {
+	tabId: number;
+	title: string;
+	url: string;
+	folderId?: string;
+}
+
+export type DuplicateTabRequest = {
+	tabId: number;
 }
 
 export type FileResult = {
@@ -281,6 +308,18 @@ class IpcService {
 	}
 	removeBookmark(handler: (req: RemoveBookmarkRequest) => void): EventSubscription {
 		return this.transport.subscribe("Ipc/removeBookmark", (msg) => handler(msg.req))
+	}
+	setPinned(handler: (req: SetPinnedRequest) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/setPinned", (msg) => handler(msg.req))
+	}
+	setMuted(handler: (req: SetMutedRequest) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/setMuted", (msg) => handler(msg.req))
+	}
+	bookmarkTab(handler: (req: BookmarkTabRequest) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/bookmarkTab", (msg) => handler(msg.req))
+	}
+	duplicateTab(handler: (req: DuplicateTabRequest) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/duplicateTab", (msg) => handler(msg.req))
 	}
 }
 
