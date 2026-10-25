@@ -61,11 +61,11 @@ LauncherWindowBase {
         layer.enabled: true
 
         Rectangle {
-            x: root.shadowPadding
-            y: root.shadowPadding
-            width: root._w
-            height: root._contentH
-            radius: Config.borderRounding
+            x: root.shadowPadding + 1
+            y: root.shadowPadding + 1
+            width: root._w - 2
+            height: root._contentH - 2
+            radius: Math.max(0, root.cornerRadius - 1)
             color: "white"
         }
     }
