@@ -12,8 +12,7 @@ std::optional<ImageURL> BrowserTabsSection::displayIcon(const BrowserTab &tab) c
 AccessoryList BrowserTabsSection::displayAccessories(const BrowserTab &tab) const {
   AccessoryList accessories;
   accessories.reserve(2);
-  if (!tab.browserLabel.empty())
-    accessories.emplace_back(ListAccessory{.text = QString::fromStdString(tab.browserLabel)});
+  accessories.emplace_back(ListAccessory{.text = tab.displayBrowserLabel(tr("Browser"))});
   if (tab.audible) accessories.emplace_back(ListAccessory{.text = tab.muted ? tr("Muted") : tr("Playing")});
   return accessories;
 }

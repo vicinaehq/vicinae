@@ -29,8 +29,7 @@ class BrowserTabRootItem : public RootItem {
   }
 
   AccessoryList accessories() const override {
-    ListAccessory accessory{.text = m_tab.browserLabel.empty() ? tr("Tab")
-                                                               : QString::fromStdString(m_tab.browserLabel)};
+    ListAccessory accessory{.text = m_tab.displayBrowserLabel(tr("Tab"))};
 
     if (m_tab.audible) { accessory.icon = ImageURL::emoji(m_tab.muted ? "🔇" : "🔊"); }
 

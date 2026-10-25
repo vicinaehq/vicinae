@@ -12,6 +12,7 @@
 #include <ranges>
 #include <span>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include "ui/image/url.hpp"
 #include "generated/ipc-server.hpp"
@@ -55,10 +56,17 @@ public:
   struct BrowserTab : ipc_gen::BrowserTabInfo {
     std::string browserId;
     std::string browserLabel;
+    std::optional<std::string> browserShortId;
 
     std::string uniqueId() const { return std::format("{}-{}", browserId, id); }
     QString host() const { return urlHost(url); }
     ImageURL icon() const { return urlIcon(url, BuiltinIcon::AppWindowSidebarLeft); }
+
+    QString displayBrowserLabel(QString fallback) const {
+      if (!browserLabel.empty()) fallback = QString::fromStdString(browserLabel);
+      if (browserShortId) fallback += QStringLiteral(" (%1)").arg(QString::fromStdString(*browserShortId));
+      return fallback;
+    }
   };
 
   struct BrowserBookmark : ipc_gen::BrowserBookmarkInfo {
@@ -105,17 +113,23 @@ public:
     });
   }
 
-  std::vector<BrowserTab> tabs() const {
+  std::vector<BrowserTab> tabs(std::optional<std::string_view> browserId = std::nullopt) const {
     std::size_t count = 0;
-    for (const auto &browser : m_browsers)
-      count += browser.tabs.size();
+    std::unordered_map<std::string, int> labelCounts;
+    labelCounts.reserve(m_browsers.size());
+    for (const auto &browser : m_browsers) {
+      ++labelCounts[browser.name];
+      if (!browserId || browser.id == *browserId) count += browser.tabs.size();
+    }
 
     std::vector<BrowserTab> tabs;
     tabs.reserve(count);
     for (const auto &browser : m_browsers) {
+      if (browserId && browser.id != *browserId) continue;
       for (const auto &tab : browser.tabs) {
         auto &copy = tabs.emplace_back(tab);
         copy.browserLabel = browser.name;
+        if (labelCounts[browser.name] > 1) copy.browserShortId = browser.id.substr(0, 8);
       }
     }
 
