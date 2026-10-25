@@ -133,7 +133,7 @@ function handleNotification(type, data) {
 			openPermissionPage("bookmarks");
 			return;
 		}
-		chrome.bookmarks.create({ title: data.title, url: data.url }, () => {
+		chrome.bookmarks.create({ title: data.title, url: data.url, ...(data.folderId && { parentId: data.folderId }) }, () => {
 			if (chrome.runtime.lastError) console.error(chrome.runtime.lastError);
 		});
 	}
@@ -364,8 +364,18 @@ function sendBookmarks(requestId) {
 		// top-level nodes are the browser's built-in containers (bookmarks bar, other bookmarks...), not user folders
 		const containers = tree.flatMap((root) => root.children ?? []);
 		const bookmarks = containers.reduce((out, container) => flattenBookmarks(container.children ?? [], [], out), []);
+		const folders = [];
+		function collectFolders(nodes, path) {
+			for (const node of nodes) {
+				if (node.url) continue;
+				const nextPath = [...path, node.title ?? ""];
+				folders.push({ id: node.id, path: nextPath });
+				collectFolders(node.children ?? [], nextPath);
+			}
+		}
+		collectFolders(containers, []);
 
-		notifyNative("browser/bookmarks", { requestId, bookmarks });
+		notifyNative("browser/bookmarks", { requestId, bookmarks, folders });
 	});
 }
 

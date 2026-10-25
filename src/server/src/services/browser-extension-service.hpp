@@ -25,7 +25,7 @@ public:
 
 signals:
   void tabActionRequested(std::string browserId, int id, TabAction action, std::string title = {},
-                          std::string url = {}) const;
+                          std::string url = {}, std::optional<std::string> folderId = {}) const;
   void bookmarksRequested(std::string browserId, int requestId) const;
   void permissionRequested(std::string browserId, std::string permission) const;
   void bookmarkRemovalRequested(std::string browserId, std::string bookmarkId) const;
@@ -95,6 +95,7 @@ public:
     std::optional<std::vector<std::string>> permissions;
     std::vector<BrowserTab> tabs;
     std::optional<std::vector<BrowserBookmark>> bookmarks;
+    std::vector<ipc_gen::BrowserBookmarkFolderInfo> folders;
     std::optional<int> pendingBookmarksRequest;
 
     bool supportsPermissions() const { return permissions.has_value(); }
@@ -109,6 +110,7 @@ public:
     connect(&m_bookmarksEviction, &QTimer::timeout, this, [this]() {
       for (auto &browser : m_browsers) {
         browser.bookmarks.reset();
+        browser.folders.clear();
       }
     });
   }
@@ -184,7 +186,8 @@ public:
 
   std::expected<void, std::string> requestTabAction(const std::string &browserId, int tabId, TabAction action,
                                                     std::optional<std::string> title = {},
-                                                    std::optional<std::string> url = {}) {
+                                                    std::optional<std::string> url = {},
+                                                    std::optional<std::string> folderId = {}) {
     auto browser = findById(browserId);
     if (browser == m_browsers.end()) return std::unexpected("No such browser");
     auto tab =
@@ -200,7 +203,8 @@ public:
       if (!parsed.isValid() || parsed.scheme().isEmpty()) return std::unexpected("Invalid bookmark URL");
     }
 
-    emit tabActionRequested(browserId, tabId, action, std::move(bookmarkTitle), std::move(bookmarkUrl));
+    emit tabActionRequested(browserId, tabId, action, std::move(bookmarkTitle), std::move(bookmarkUrl),
+                            std::move(folderId));
     return {};
   }
 
@@ -213,8 +217,9 @@ public:
   }
 
   auto bookmarkTab(const std::string &browserId, int tabId, std::optional<std::string> title = {},
-                   std::optional<std::string> url = {}) {
-    return requestTabAction(browserId, tabId, TabAction::Bookmark, std::move(title), std::move(url));
+                   std::optional<std::string> url = {}, std::optional<std::string> folderId = {}) {
+    return requestTabAction(browserId, tabId, TabAction::Bookmark, std::move(title), std::move(url),
+                            std::move(folderId));
   }
 
   auto duplicateTab(const std::string &browserId, int tabId) {
@@ -252,6 +257,14 @@ public:
     if (auto it = findById(info.id); it != m_browsers.end()) {
       it->name = std::move(info.name);
       it->engine = std::move(info.engine);
+      it->version = std::move(info.version);
+      it->permissions = std::move(info.permissions);
+      if (!it->hasPermission(BOOKMARKS_PERMISSION) && (it->bookmarks || it->pendingBookmarksRequest)) {
+        it->bookmarks.reset();
+        it->folders.clear();
+        it->pendingBookmarksRequest.reset();
+        emit bookmarksChanged();
+      }
     } else {
       m_browsers.emplace_back(std::move(info));
     }
@@ -280,8 +293,9 @@ public:
    * Request bookmarks from every browser that granted access and has no cached copy.
    * bookmarksChanged is emitted as responses come in.
    */
-  void fetchBookmarks() {
+  void fetchBookmarks(std::optional<std::string_view> browserId = std::nullopt) {
     for (auto &browser : m_browsers) {
+      if (browserId && browser.id != *browserId) continue;
       if (!browser.hasPermission(BOOKMARKS_PERMISSION)) continue;
       if (browser.bookmarks || browser.pendingBookmarksRequest) continue;
 
@@ -317,6 +331,7 @@ public:
                       return bookmark;
                     }) |
                     std::ranges::to<std::vector>();
+    it->folders = std::move(response.folders).value_or(std::vector<ipc_gen::BrowserBookmarkFolderInfo>{});
 
     if (!m_bookmarksEviction.isActive()) m_bookmarksEviction.start();
 
@@ -350,6 +365,7 @@ public:
 
     if (!it->hasPermission(BOOKMARKS_PERMISSION)) {
       it->bookmarks.reset();
+      it->folders.clear();
       it->pendingBookmarksRequest.reset();
       emit bookmarksChanged();
     }

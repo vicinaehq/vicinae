@@ -117,9 +117,15 @@ struct BookmarksRequest {
   requestId: int;
 };
 
+struct BrowserBookmarkFolderInfo {
+  id: string;
+  path: string[];
+};
+
 struct BookmarksResponse {
   requestId: int;
   bookmarks: BrowserBookmarkInfo[];
+  folders?: BrowserBookmarkFolderInfo[];
   error?: string;
 };
 
@@ -145,6 +151,7 @@ struct BookmarkTabRequest {
   tabId: int;
   title: string;
   url: string;
+  folderId?: string;
 };
 
 struct DuplicateTabRequest {

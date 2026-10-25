@@ -536,19 +536,19 @@ class BrowserExtensionService {
 	}
 
 	setPinned(browserId: string, tabId: number, pinned: boolean): Promise<void> {
-		return this.transport.request("BrowserExtension/setPinned", { browserId, tabId, pinned});	
+		return this.transport.request("BrowserExtension/setPinned", { browserId, tabId, pinned});
 	}
 
 	setMuted(browserId: string, tabId: number, muted: boolean): Promise<void> {
-		return this.transport.request("BrowserExtension/setMuted", { browserId, tabId, muted});	
+		return this.transport.request("BrowserExtension/setMuted", { browserId, tabId, muted});
 	}
 
 	bookmarkTab(browserId: string, tabId: number, title?: string, url?: string): Promise<void> {
-		return this.transport.request("BrowserExtension/bookmarkTab", { browserId, tabId, title, url});	
+		return this.transport.request("BrowserExtension/bookmarkTab", { browserId, tabId, title, url});
 	}
 
 	duplicateTab(browserId: string, tabId: number): Promise<void> {
-		return this.transport.request("BrowserExtension/duplicateTab", { browserId, tabId});	
+		return this.transport.request("BrowserExtension/duplicateTab", { browserId, tabId});
 	}
 
 }
