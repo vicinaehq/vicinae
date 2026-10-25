@@ -1821,10 +1821,12 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/builtin-icon/builtin-icon.hpp
 		src/services/builtin-icon/builtin-icon.cpp
 		src/services/audio-control/pactl/pactl-audio-control.cpp
+		src/services/browser-extension-service.hpp
 		src/services/clipboard/clipboard-mime.cpp
 		src/services/extension-registry/extension-manifest.cpp
 		src/utils/utils.cpp
 		tests/pactl-audio-control.cpp
+		tests/browser-extension-service.cpp
 		tests/clipboard-mime.cpp
 		tests/extension-manifest.cpp
 	)

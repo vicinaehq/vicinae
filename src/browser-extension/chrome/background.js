@@ -6,8 +6,12 @@ const OPTIONAL_PERMISSIONS = ["bookmarks", "history"];
 const IGNORED_BOOKMARK_SCHEMES = ["place:", "javascript:"];
 // 2: vicinae calls into the extension through requests instead of notifications; required by vicinae
 const PROTOCOL_VERSION = 2;
-const browserId = crypto.randomUUID();
 const requestMap = new Map();
+
+let browserId;
+let browserName;
+let browserEngine;
+let profileName = "";
 
 let port = null;
 let connectionState = "disconnected"; // disconnected, connecting, connected, error
@@ -138,6 +142,68 @@ function processNativeMessage(message) {
   return handleResponse(message.id, message.result, message.error);
 }
 
+async function detectBrowser() {
+  if (typeof browser !== "undefined" && browser.runtime?.getBrowserInfo) {
+    try {
+      return {
+        name: (await browser.runtime.getBrowserInfo()).name,
+        engine: "gecko",
+      };
+    } catch (error) {
+      console.error("Could not identify browser:", error);
+    }
+  }
+
+  try {
+    if (await navigator.brave?.isBrave?.())
+      return { name: "Brave", engine: "chromium" };
+  } catch (error) {
+    console.error("Could not identify Brave:", error);
+  }
+  const brands =
+    navigator.userAgentData?.brands?.map(({ brand }) => brand) ?? [];
+  if (brands.includes("Microsoft Edge") || /Edg\//.test(navigator.userAgent))
+    return { name: "Microsoft Edge", engine: "chromium" };
+  if (/OPR\//.test(navigator.userAgent))
+    return { name: "Opera", engine: "chromium" };
+  if (/Vivaldi\//.test(navigator.userAgent))
+    return { name: "Vivaldi", engine: "chromium" };
+  if (brands.includes("Google Chrome"))
+    return { name: "Google Chrome", engine: "chromium" };
+  if (/Firefox\//.test(navigator.userAgent))
+    return { name: "Firefox", engine: "gecko" };
+  return { name: "Chromium", engine: "chromium" };
+}
+
+function sendBrowserInit(onConnected = false) {
+  getGrantedPermissions().then((permissions) => {
+    requestToNative(
+      "browser/init",
+      {
+        id: browserId,
+        name: profileName ? `${browserName} · ${profileName}` : browserName,
+        engine: browserEngine,
+        version: chrome.runtime.getManifest().version,
+        permissions,
+        optionalPermissions: OPTIONAL_PERMISSIONS,
+        protocolVersion: PROTOCOL_VERSION,
+      },
+      (_, error) => {
+        if (error) {
+          console.error("browserInit failed:", error);
+          if (onConnected) setConnectionState("error", String(error));
+          return;
+        }
+        if (onConnected) {
+          retryDelay = RETRY_INITIAL_MS;
+          setConnectionState("connected");
+        }
+        sendCurrentTabs();
+      },
+    );
+  });
+}
+
 // Connect to native host on startup
 function connectToNativeHost() {
   console.log("Connecting to native host:", HOST_NAME);
@@ -150,29 +216,7 @@ function connectToNativeHost() {
     requestMap.clear();
     serial = 0;
 
-    Promise.all([getBrowserName(), getGrantedPermissions()]).then(
-      ([name, permissions]) => {
-        requestToNative(
-          "browser/init",
-          {
-            id: browserId,
-            name,
-            engine: "chromium",
-            version: chrome.runtime.getManifest().version,
-            permissions,
-            optionalPermissions: OPTIONAL_PERMISSIONS,
-            protocolVersion: PROTOCOL_VERSION,
-          },
-          (data, error) => {
-            if (!error) {
-              retryDelay = RETRY_INITIAL_MS;
-              setConnectionState("connected");
-              sendCurrentTabs();
-            }
-          },
-        );
-      },
-    );
+    sendBrowserInit(true);
 
     // Handle messages from native host
     port.onMessage.addListener((message) => {
@@ -217,7 +261,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === "get_connection_state") {
     sendResponse({ state: connectionState, manuallyDisconnected });
   } else if (message.type === "retry_connection") {
-    if (connectionState !== "connected") {
+    if (connectionState !== "connected" && browserId) {
       manuallyDisconnected = false;
       retryDelay = RETRY_INITIAL_MS;
       connectToNativeHost();
@@ -230,6 +274,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       port = null;
     }
     setConnectionState("disconnected");
+  } else if (message.type === "profile_name_changed") {
+    if (typeof message.name !== "string") {
+      sendResponse({ success: false });
+    } else {
+      profileName = message.name.trim().slice(0, 60);
+      if (port) sendBrowserInit();
+      sendResponse({ success: true });
+    }
   } else if (message.type === "get_extension_id") {
     sendResponse({ extensionId: chrome.runtime.id });
   }
@@ -271,19 +323,6 @@ chrome.tabs.onActivated.addListener(() => sendCurrentTabsDebounced());
 chrome.tabs.onMoved.addListener((tabId, moveInfo) => {
   // TODO: maybe handle this one day
 });
-
-function getBrowserName() {
-  if (globalThis.browser?.runtime?.getBrowserInfo) {
-    return browser.runtime.getBrowserInfo().then((info) => info.name);
-  }
-
-  const brands = navigator.userAgentData?.brands ?? [];
-  const brand =
-    brands.find((b) => !/Not.?A.?Brand|Chromium/i.test(b.brand)) ??
-    brands.find((b) => b.brand === "Chromium");
-
-  return Promise.resolve(brand?.brand ?? navigator.userAgent);
-}
 
 function getGrantedPermissions() {
   return new Promise((resolve) => {
@@ -432,6 +471,22 @@ async function openPermissionPage(permission) {
   );
 }
 
+async function start() {
+  const storage =
+    typeof browser === "undefined"
+      ? chrome.storage.local
+      : browser.storage.local;
+  const saved = await storage.get(["browserId", "profileName"]);
+  browserId = saved.browserId || crypto.randomUUID();
+  profileName = typeof saved.profileName === "string" ? saved.profileName : "";
+  if (!saved.browserId) await storage.set({ browserId });
+  ({ name: browserName, engine: browserEngine } = await detectBrowser());
+  if (!manuallyDisconnected) connectToNativeHost();
+}
+
 console.log("background service loaded");
 setConnectionState("disconnected");
-connectToNativeHost();
+start().catch((error) => {
+  console.error("Could not initialize browser integration:", error);
+  setConnectionState("error", error.message);
+});
