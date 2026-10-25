@@ -38,10 +38,7 @@ protected:
   std::unique_ptr<ActionPanelState> actionPanel(int i) const override;
   bool isDraggable(int i) const override;
   std::unique_ptr<QMimeData> dragMimeData(int i) const override;
-
-  QVariant customData(int i, int role) const override;
-  QHash<int, QByteArray> customRoleNames() const override;
-  QHash<int, QVariant> customRoleDefaults() const override;
+  bool isActive(int i) const override;
 
 private:
   std::string m_name;

@@ -36,6 +36,7 @@ public:
     IsDraggable,
     ShortcutTokens,
     QuickAccessIndex,
+    IsActive,
   };
 
   explicit SectionListModel(QObject *parent = nullptr);

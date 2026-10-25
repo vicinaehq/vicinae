@@ -12,6 +12,7 @@ public:
 private:
   void reload();
 
+  BrowserTabsSection m_pinnedSection{BrowserTabsSection::Kind::Pinned};
   BrowserTabsSection m_mediaSection{BrowserTabsSection::Kind::PlayingMedia};
   BrowserTabsSection m_tabsSection{BrowserTabsSection::Kind::Tabs};
 };
