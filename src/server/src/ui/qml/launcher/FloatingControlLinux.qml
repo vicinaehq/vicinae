@@ -11,11 +11,15 @@ Item {
     width: anchorItem.width
     height: anchorItem.height
     z: 1
+    clip: true
     visible: anchorItem.visible && !Launcher.compacted && !Launcher.hasOverlay && !Launcher.alertModel.visible
 
-    GlassSurfaceMacOS {
+    Rectangle {
         anchors.fill: parent
         radius: root.height / 2
+        color: Config.withAlpha(Theme.statusBarBackground, 0.78 * Config.windowOpacity)
+        border.width: 1
+        border.color: Config.withAlpha(Theme.foreground, Theme.isDark ? 0.1 : 0.08)
     }
 
     Item {
