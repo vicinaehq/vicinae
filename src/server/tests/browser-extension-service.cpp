@@ -31,4 +31,25 @@ TEST_CASE("old extension user agents render short browser labels") {
   service.registerBrowser({.id = "chromium", .name = "Mozilla/5.0 Chrome/139.0 Safari/537.36"});
   service.setTabs("chromium", {{.id = 2}});
   CHECK(service.tabs().back().browserLabel == "Chromium");
+  REQUIRE(service.tabs("firefox").size() == 1);
+  CHECK(service.tabs("firefox").front().id == 1);
+  CHECK(service.tabs("chromium").front().id == 2);
+  CHECK(service.tabs("missing").empty());
+}
+
+TEST_CASE("same-named browsers show short IDs on tab rows") {
+  BrowserExtensionService service;
+  service.registerBrowser({.id = "abcdef01-first", .name = "Firefox"});
+  service.registerBrowser({.id = "12345678-second", .name = "Firefox"});
+  service.setTabs("abcdef01-first", {{.id = 1}});
+  service.setTabs("12345678-second", {{.id = 2}});
+
+  const auto filtered = service.tabs("abcdef01-first");
+  REQUIRE(filtered.size() == 1);
+  CHECK(filtered.front().displayBrowserLabel(QStringLiteral("Browser")) ==
+        QStringLiteral("Firefox (abcdef01)"));
+  CHECK(service.tabs("12345678-second").front().browserShortId == "12345678");
+
+  service.unregisterBrowser("12345678-second");
+  CHECK(service.tabs().front().displayBrowserLabel(QStringLiteral("Browser")) == QStringLiteral("Firefox"));
 }
