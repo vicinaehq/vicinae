@@ -319,7 +319,8 @@ ipc_gen::Result<void>::Future IpcService::browserInit(ipc_gen::BrowserInitReques
                                                        .name = req.name,
                                                        .engine = req.engine,
                                                        .version = req.version,
-                                                       .permissions = req.permissions});
+                                                       .permissions = req.permissions,
+                                                       .optionalPermissions = req.optionalPermissions});
 
   return ipc_gen::Result<void>::ok();
 }
@@ -349,6 +350,20 @@ ipc_gen::Result<void>::Future IpcService::browserBookmarks(ipc_gen::BookmarksRes
   if (auto result = m_ctx.services->browserExtension()->setBookmarks(m_caller->browser->id, std::move(res));
       !result) {
     qWarning() << "Failed to load bookmarks from browser" << m_caller->browser->name.c_str() << ":"
+               << result.error().c_str();
+    return ipc_gen::Result<void>::fail(result.error());
+  }
+
+  return ipc_gen::Result<void>::ok();
+}
+
+ipc_gen::Result<void>::Future IpcService::browserHistory(ipc_gen::HistoryResponse res) {
+  if (!m_caller || !m_caller->browser)
+    return ipc_gen::Result<void>::fail("Only browser extensions can do this");
+
+  if (auto result = m_ctx.services->browserExtension()->setHistory(m_caller->browser->id, std::move(res));
+      !result) {
+    qWarning() << "Failed to load history from browser" << m_caller->browser->name.c_str() << ":"
                << result.error().c_str();
     return ipc_gen::Result<void>::fail(result.error());
   }
@@ -387,6 +402,23 @@ IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
           [this](std::string_view browserId, const std::string &bookmarkId) {
             emitToBrowser(browserId, [&]() { m_service->emitremoveBookmark({.bookmarkId = bookmarkId}); });
           });
+
+  connect(browser, &BrowserExtensionService::historyRequested, this,
+          [this](std::string_view browserId, int requestId, const std::string &query, int maxResults) {
+            emitToBrowser(browserId, [&]() {
+              m_service->emitrequestHistory(
+                  {.requestId = requestId, .query = query, .maxResults = maxResults});
+            });
+          });
+
+  connect(browser, &BrowserExtensionService::historyUrlRemovalRequested, this,
+          [this](std::string_view browserId, const std::string &url) {
+            emitToBrowser(browserId, [&]() { m_service->emitremoveHistoryUrl({.url = url}); });
+          });
+
+  connect(browser, &BrowserExtensionService::historyClearRequested, this, [this](std::string_view browserId) {
+    emitToBrowser(browserId, [&]() { m_service->emitclearHistory(); });
+  });
 
   connect(browser, &BrowserExtensionService::permissionRequested, this,
           [this](std::string_view browserId, const std::string &permission) {

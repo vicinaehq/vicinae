@@ -37,6 +37,7 @@ public:
   ipc_gen::Result<void>::Future browserTabsChanged(std::vector<ipc_gen::BrowserTabInfo> tabs) override;
   ipc_gen::Result<void>::Future browserPermissionsChanged(std::vector<std::string> permissions) override;
   ipc_gen::Result<void>::Future browserBookmarks(ipc_gen::BookmarksResponse res) override;
+  ipc_gen::Result<void>::Future browserHistory(ipc_gen::HistoryResponse res) override;
   ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future fsQuery(std::string q,
                                                                     ipc_gen::FsQueryParams params) override;
 

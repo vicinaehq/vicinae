@@ -79,26 +79,10 @@ void BrowserBookmarksViewHost::initialize() {
 
 void BrowserBookmarksViewHost::loadInitialData() { handleBrowsersChanged(); }
 
-BrowserBookmarksViewHost::Access BrowserBookmarksViewHost::computeAccess() const {
-  const auto browsers = context()->services->browserExtension()->browsers();
-
-  if (browsers.empty()) return Access::NoBrowser;
-
-  if (std::ranges::any_of(browsers, [](auto &&b) {
-        return b.hasPermission(BrowserExtensionService::BOOKMARKS_PERMISSION);
-      })) {
-    return Access::Granted;
-  }
-
-  if (std::ranges::any_of(browsers, [](auto &&b) { return b.supportsPermissions(); })) {
-    return Access::NeedsPermission;
-  }
-
-  return Access::NeedsUpdate;
-}
-
 void BrowserBookmarksViewHost::handleBrowsersChanged() {
-  if (const auto access = computeAccess(); access != m_access) {
+  if (const auto access = context()->services->browserExtension()->permissionAccess(
+          BrowserExtensionService::BOOKMARKS_PERMISSION);
+      access != m_access) {
     m_access = access;
     emit accessChanged();
   }
@@ -288,7 +272,7 @@ std::unique_ptr<ActionPanelState> BrowserBookmarksViewHost::emptyActionPanel() {
     bool first = true;
 
     for (const auto &browser : browsers) {
-      if (!browser.supportsPermissions() ||
+      if (!browser.canRequestPermission(BrowserExtensionService::BOOKMARKS_PERMISSION) ||
           browser.hasPermission(BrowserExtensionService::BOOKMARKS_PERMISSION))
         continue;
 
