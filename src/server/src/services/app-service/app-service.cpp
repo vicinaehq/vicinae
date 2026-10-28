@@ -1,4 +1,7 @@
 #include "app-service.hpp"
+#ifdef Q_OS_LINUX
+#include "app-watch-paths.hpp"
+#endif
 #include "utils/timer.hpp"
 #include <chrono>
 #include <qlogging.h>
@@ -162,11 +165,16 @@ AppService::findCuratedOpeners(const QString &target) const {
 bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
   QStringList current = m_watcher->directories();
   QStringList desired;
+#ifdef Q_OS_LINUX
+  for (const auto &path : appWatchPaths::directories(paths)) {
+    desired.append(QString::fromStdString(path.string()));
+  }
+#else
   std::error_code ec{};
-
   for (const auto &path : paths) {
     if (fs::is_directory(path, ec)) { desired.append(QString::fromStdString(path.string())); }
   }
+#endif
 
   desired.sort();
   desired.removeDuplicates();
