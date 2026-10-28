@@ -24,6 +24,12 @@ export class RpcTransport {
 	dispatchMessage(data: string) {
 		const msg = JSON.parse(data) as JsonRpcMessage;
 
+		// client methods are not implemented by this client
+		if (msg.id !== undefined && msg.method) {
+			this.sendMessage({ jsonrpc: '2.0', id: msg.id, error: `Method not found: ${msg.method}` });
+			return;
+		}
+
 		if (msg.id !== undefined) {
 			const handler = this.requestMap.get(msg.id);
 

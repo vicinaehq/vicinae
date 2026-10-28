@@ -5,6 +5,7 @@
 #include "actions/app-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include "services/toast/toast-service.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "theme/colors.hpp"
 #include "ui/action-panel/action.hpp"
@@ -209,12 +210,20 @@ std::unique_ptr<ActionPanelState> BrowserHistoryViewHost::emptyActionPanel() {
           browser.hasPermission(BrowserExtensionService::HISTORY_PERMISSION))
         continue;
 
-      auto allow = new StaticAction(tr("Allow in %1").arg(QString::fromStdString(browser.name)),
-                                    BuiltinIcon::Lock, [id = browser.id](ApplicationContext *ctx) {
-                                      ctx->services->browserExtension()->requestPermission(
-                                          id, BrowserExtensionService::HISTORY_PERMISSION);
-                                      ctx->navigation->showHud(tr("Check your browser to allow access"));
-                                    });
+      auto allow = new StaticAction(
+          tr("Allow in %1").arg(QString::fromStdString(browser.name)), BuiltinIcon::Lock,
+          [id = browser.id](ApplicationContext *ctx) {
+            ctx->services->browserExtension()
+                ->requestPermission(id, BrowserExtensionService::HISTORY_PERMISSION)
+                .then(ctx->navigation.get(), [ctx](const std::expected<void, std::string> &result) {
+                  if (!result) {
+                    ctx->services->toastService()->failure(
+                        tr("Failed to request access: %1").arg(QString::fromStdString(result.error())));
+                    return;
+                  }
+                  ctx->navigation->showHud(tr("Check your browser to allow access"));
+                });
+          });
 
       if (std::exchange(first, false)) allow->setShortcut(Keyboard::Shortcut::enter());
       section->addAction(allow);

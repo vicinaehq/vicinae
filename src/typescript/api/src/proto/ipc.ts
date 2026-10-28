@@ -24,6 +24,12 @@ export class RpcTransport {
 	dispatchMessage(data: string) {
 		const msg = JSON.parse(data) as JsonRpcMessage;
 
+		// client methods are not implemented by this client
+		if (msg.id !== undefined && msg.method) {
+			this.sendMessage({ jsonrpc: '2.0', id: msg.id, error: `Method not found: ${msg.method}` });
+			return;
+		}
+
 		if (msg.id !== undefined) {
 			const handler = this.requestMap.get(msg.id);
 
@@ -157,6 +163,7 @@ export type BrowserInitRequest = {
 	version?: string;
 	permissions?: string[];
 	optionalPermissions?: string[];
+	protocolVersion?: number;
 }
 
 export type BrowserTabInfo = {
@@ -171,14 +178,6 @@ export type BrowserTabInfo = {
 	pinned: boolean;
 }
 
-export type FocusTabRequest = {
-	tabId: number;
-}
-
-export type CloseTabRequest = {
-	tabId: number;
-}
-
 export type BrowserBookmarkInfo = {
 	id: string;
 	title: string;
@@ -187,46 +186,12 @@ export type BrowserBookmarkInfo = {
 	dateAdded: number;
 }
 
-export type BookmarksRequest = {
-	requestId: number;
-}
-
-export type BookmarksResponse = {
-	requestId: number;
-	bookmarks: BrowserBookmarkInfo[];
-	error?: string;
-}
-
-export type RemoveBookmarkRequest = {
-	bookmarkId: string;
-}
-
 export type BrowserHistoryItemInfo = {
 	id: string;
 	title: string;
 	url: string;
 	lastVisitTime: number;
 	visitCount: number;
-}
-
-export type HistoryRequest = {
-	requestId: number;
-	query: string;
-	maxResults: number;
-}
-
-export type HistoryResponse = {
-	requestId: number;
-	items: BrowserHistoryItemInfo[];
-	error?: string;
-}
-
-export type RemoveHistoryUrlRequest = {
-	url: string;
-}
-
-export type PermissionRequest = {
-	permission: string;
 }
 
 export type FileResult = {
@@ -284,42 +249,10 @@ class IpcService {
 		return this.transport.request("Ipc/browserPermissionsChanged", { permissions});	
 	}
 
-	browserBookmarks(res: BookmarksResponse): Promise<void> {
-		return this.transport.request("Ipc/browserBookmarks", { res});	
-	}
-
-	browserHistory(res: HistoryResponse): Promise<void> {
-		return this.transport.request("Ipc/browserHistory", { res});	
-	}
-
 	fsQuery(q: string, params: FsQueryParams): Promise<FileResult[]> {
 		return this.transport.request("Ipc/fsQuery", { q, params});	
 	}
 
-	focusTab(handler: (req: FocusTabRequest) => void): EventSubscription {
-		return this.transport.subscribe("Ipc/focusTab", (msg) => handler(msg.req))
-	}
-	closeTab(handler: (req: CloseTabRequest) => void): EventSubscription {
-		return this.transport.subscribe("Ipc/closeTab", (msg) => handler(msg.req))
-	}
-	requestBookmarks(handler: (req: BookmarksRequest) => void): EventSubscription {
-		return this.transport.subscribe("Ipc/requestBookmarks", (msg) => handler(msg.req))
-	}
-	requestPermission(handler: (req: PermissionRequest) => void): EventSubscription {
-		return this.transport.subscribe("Ipc/requestPermission", (msg) => handler(msg.req))
-	}
-	removeBookmark(handler: (req: RemoveBookmarkRequest) => void): EventSubscription {
-		return this.transport.subscribe("Ipc/removeBookmark", (msg) => handler(msg.req))
-	}
-	requestHistory(handler: (req: HistoryRequest) => void): EventSubscription {
-		return this.transport.subscribe("Ipc/requestHistory", (msg) => handler(msg.req))
-	}
-	removeHistoryUrl(handler: (req: RemoveHistoryUrlRequest) => void): EventSubscription {
-		return this.transport.subscribe("Ipc/removeHistoryUrl", (msg) => handler(msg.req))
-	}
-	clearHistory(handler: () => void): EventSubscription {
-		return this.transport.subscribe("Ipc/clearHistory", (msg) => handler())
-	}
 }
 
 export class Client {

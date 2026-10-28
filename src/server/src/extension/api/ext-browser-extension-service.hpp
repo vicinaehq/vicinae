@@ -32,13 +32,11 @@ public:
   }
 
   tsapi::Result<void>::Future focusTab(std::string browserId, int32_t tabId) override {
-    m_browser.focusTab(browserId, tabId);
-    return Void::ok();
+    return m_browser.focusTab(browserId, tabId);
   }
 
   tsapi::Result<void>::Future closeTab(std::string browserId, int32_t tabId) override {
-    m_browser.closeTab(browserId, tabId);
-    return Void::ok();
+    return m_browser.closeTab(browserId, tabId);
   }
 
 private:

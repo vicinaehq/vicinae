@@ -1,11 +1,13 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <expected>
 #include <functional>
 #include <string>
 #include <iostream>
 #include <print>
 #include <thread>
+#include <unordered_map>
 #include <QCoreApplication>
 #include <QLocalSocket>
 #include <glaze/glaze.hpp>
@@ -76,7 +78,10 @@ private:
   QLocalSocket &m_socket;
 };
 
-struct NativeNotification {
+static constexpr glz::opts LENIENT_JSON{.error_on_unknown_keys = false};
+
+struct NativeRequest {
+  int id;
   std::string method;
   glz::raw_json data;
 };
@@ -85,6 +90,73 @@ struct ExtensionMessage {
   std::optional<int> id;
   std::string method;
   glz::raw_json data;
+  glz::raw_json result;
+  std::optional<std::string> error;
+};
+
+// Requests sent to the browser extension through native messaging
+class ExtensionPort {
+  using ResponseHandler = std::function<void(std::expected<std::string_view, std::string>)>;
+
+public:
+  template <typename T> void request(std::string_view method, const auto &data, ipc::Responder<T> respond) {
+    std::string dataJson;
+    if (auto err = glz::write_json(data, dataJson)) {
+      respond(std::unexpected(glz::format_error(err)));
+      return;
+    }
+
+    const int id = m_nextId++;
+    std::string buf;
+    if (auto err =
+            glz::write_json(NativeRequest{.id = id, .method = std::string{method}, .data = dataJson}, buf)) {
+      respond(std::unexpected(glz::format_error(err)));
+      return;
+    }
+
+    m_pending.insert({id, [respond = std::move(respond)](std::expected<std::string_view, std::string> data) {
+                        if (!data) {
+                          respond(std::unexpected(std::move(data).error()));
+                          return;
+                        }
+
+                        if constexpr (std::is_void_v<T>) {
+                          respond({});
+                        } else {
+                          T value;
+                          if (auto err = glz::read<LENIENT_JSON>(value, *data)) {
+                            respond(std::unexpected(glz::format_error(err)));
+                            return;
+                          }
+                          respond(std::move(value));
+                        }
+                      }});
+
+    sendToExtension(buf);
+  }
+
+  // Returns false if the message is not a response to one of our requests
+  bool handleResponse(const ExtensionMessage &msg) {
+    if (!msg.method.empty() || !msg.id) return false;
+
+    const auto it = m_pending.find(*msg.id);
+    if (it == m_pending.end()) return true;
+
+    const auto handler = std::move(it->second);
+    m_pending.erase(it);
+
+    if (msg.error) {
+      handler(std::unexpected(*msg.error));
+    } else {
+      handler(msg.result.str);
+    }
+
+    return true;
+  }
+
+private:
+  std::unordered_map<int, ResponseHandler> m_pending;
+  int m_nextId = 0;
 };
 
 static bool readExact(char *buf, size_t size) {
@@ -133,61 +205,62 @@ int main(int ac, char **av) {
   ipc::RpcTransport rpc(transport);
   ipc::Client client(rpc);
 
-  // Forward vicinae events to the browser extension
-  auto forwardNotification = [](std::string_view method, const auto &data) {
-    std::string dataJson;
-    if (auto err = glz::write_json(data, dataJson)) {
-      std::println(std::cerr, "Failed to serialize notification data: {}", glz::format_error(err));
-      return;
-    }
+  ExtensionPort port;
 
-    std::string buf;
-    if (auto err =
-            glz::write_json(NativeNotification{.method = std::string{method}, .data = dataJson}, buf)) {
-      std::println(std::cerr, "Failed to serialize notification: {}", glz::format_error(err));
-      return;
-    }
-    sendToExtension(buf);
-  };
-
-  client.ipc().onFocustab(
-      [&](const ipc::FocusTabRequest &req) { forwardNotification("browser/focus-tab", req); });
-
-  client.ipc().onClosetab(
-      [&](const ipc::CloseTabRequest &req) { forwardNotification("browser/close-tab", req); });
-
-  client.ipc().onRequestbookmarks(
-      [&](const ipc::BookmarksRequest &req) { forwardNotification("browser/request-bookmarks", req); });
-
-  client.ipc().onRequestpermission(
-      [&](const ipc::PermissionRequest &req) { forwardNotification("browser/request-permission", req); });
-
-  client.ipc().onRemovebookmark(
-      [&](const ipc::RemoveBookmarkRequest &req) { forwardNotification("browser/remove-bookmark", req); });
-
-  client.ipc().onRequesthistory(
-      [&](const ipc::HistoryRequest &req) { forwardNotification("browser/request-history", req); });
-
-  client.ipc().onRemovehistoryurl([&](const ipc::RemoveHistoryUrlRequest &req) {
-    forwardNotification("browser/remove-history-url", req);
+  client.ipc().onBrowserFocusTab([&](const int32_t &tabId, ipc::Responder<void> respond) {
+    port.request("browser/focus-tab", ipc::Ipc_browserFocusTab_Params{.tabId = tabId}, std::move(respond));
   });
 
-  client.ipc().onClearhistory(
-      [&]() { forwardNotification("browser/clear-history", glz::generic::object_t{}); });
+  client.ipc().onBrowserCloseTab([&](const int32_t &tabId, ipc::Responder<void> respond) {
+    port.request("browser/close-tab", ipc::Ipc_browserCloseTab_Params{.tabId = tabId}, std::move(respond));
+  });
+
+  client.ipc().onBrowserGetBookmarks([&](ipc::Responder<std::vector<ipc::BrowserBookmarkInfo>> respond) {
+    port.request("browser/get-bookmarks", ipc::Ipc_browserGetBookmarks_Params{}, std::move(respond));
+  });
+
+  client.ipc().onBrowserRemoveBookmark([&](const std::string &bookmarkId, ipc::Responder<void> respond) {
+    port.request("browser/remove-bookmark", ipc::Ipc_browserRemoveBookmark_Params{.bookmarkId = bookmarkId},
+                 std::move(respond));
+  });
+
+  client.ipc().onBrowserSearchHistory([&](const std::string &query, const int32_t &maxResults,
+                                          ipc::Responder<std::vector<ipc::BrowserHistoryItemInfo>> respond) {
+    port.request("browser/search-history",
+                 ipc::Ipc_browserSearchHistory_Params{.query = query, .maxResults = maxResults},
+                 std::move(respond));
+  });
+
+  client.ipc().onBrowserRemoveHistoryUrl([&](const std::string &url, ipc::Responder<void> respond) {
+    port.request("browser/remove-history-url", ipc::Ipc_browserRemoveHistoryUrl_Params{.url = url},
+                 std::move(respond));
+  });
+
+  client.ipc().onBrowserClearHistory([&](ipc::Responder<void> respond) {
+    port.request("browser/clear-history", ipc::Ipc_browserClearHistory_Params{}, std::move(respond));
+  });
+
+  client.ipc().onBrowserRequestPermission([&](const std::string &permission, ipc::Responder<void> respond) {
+    port.request("browser/request-permission",
+                 ipc::Ipc_browserRequestPermission_Params{.permission = permission}, std::move(respond));
+  });
 
   // Handle messages from the browser extension (via stdin native messaging)
   auto handleExtensionMessage = [&](std::string_view message) {
     std::println(std::cerr, "got message from extension: {}", message);
 
     ExtensionMessage msg;
-    if (auto err = glz::read_json(msg, message)) {
+    if (auto err = glz::read<LENIENT_JSON>(msg, message)) {
       std::println(std::cerr, "Failed to parse extension message: {}", glz::format_error(err));
       return;
     }
 
+    if (port.handleResponse(msg)) return;
+
     if (msg.method == "browser/init") {
       ipc::BrowserInitRequest req;
-      if (auto err = glz::read_json(req, msg.data.str)) {
+      // newer extensions may send fields this host does not know about yet
+      if (auto err = glz::read<LENIENT_JSON>(req, msg.data.str)) {
         std::println(std::cerr, "Failed to parse browserInit: {}", glz::format_error(err));
         return;
       }
@@ -225,24 +298,6 @@ int main(int ac, char **av) {
       }
       client.ipc().browserPermissionsChanged(permissions, [](auto res) {
         if (!res) std::println(std::cerr, "browserPermissionsChanged failed: {}", res.error());
-      });
-    } else if (msg.method == "browser/bookmarks") {
-      ipc::BookmarksResponse res;
-      if (auto err = glz::read_json(res, msg.data.str)) {
-        std::println(std::cerr, "Failed to parse bookmarks: {}", glz::format_error(err));
-        return;
-      }
-      client.ipc().browserBookmarks(res, [](auto res) {
-        if (!res) std::println(std::cerr, "browserBookmarks failed: {}", res.error());
-      });
-    } else if (msg.method == "browser/history") {
-      ipc::HistoryResponse res;
-      if (auto err = glz::read_json(res, msg.data.str)) {
-        std::println(std::cerr, "Failed to parse history: {}", glz::format_error(err));
-        return;
-      }
-      client.ipc().browserHistory(res, [](auto res) {
-        if (!res) std::println(std::cerr, "browserHistory failed: {}", res.error());
       });
     }
   };

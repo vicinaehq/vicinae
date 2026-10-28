@@ -1,4 +1,5 @@
 #pragma once
+#include <QDebug>
 #include <QObject>
 #include <QTimer>
 #include <algorithm>
@@ -6,28 +7,45 @@
 #include <cstdint>
 #include <functional>
 #include <glaze/core/reflect.hpp>
+#include <memory>
 #include <optional>
 #include <span>
 #include <ranges>
+#include <string>
 #include <string_view>
+#include <vector>
 #include "ui/image/url.hpp"
 #include "generated/ipc-server.hpp"
+
+/**
+ * Connection to a single browser extension, through which the browser is asked to do things.
+ */
+class AbstractBrowserPeer {
+public:
+  template <typename T> using Future = ipc_gen::Result<T>::Future;
+
+  virtual ~AbstractBrowserPeer() = default;
+
+  virtual Future<void> focusTab(int tabId) = 0;
+  virtual Future<void> closeTab(int tabId) = 0;
+  virtual Future<std::vector<ipc_gen::BrowserBookmarkInfo>> bookmarks() = 0;
+  virtual Future<void> removeBookmark(const std::string &bookmarkId) = 0;
+  virtual Future<std::vector<ipc_gen::BrowserHistoryItemInfo>> searchHistory(const std::string &query,
+                                                                             int maxResults) = 0;
+  virtual Future<void> removeHistoryUrl(const std::string &url) = 0;
+  virtual Future<void> clearHistory() = 0;
+  // Ask the browser to show its permission page. Granting it requires user interaction in the browser.
+  virtual Future<void> requestPermission(const std::string &permission) = 0;
+};
 
 class BrowserExtensionService : public QObject {
   Q_OBJECT
 
 public:
-  enum class TabAction : std::uint8_t { Focus, Close };
   enum class PermissionAccess : std::uint8_t { Granted, NeedsPermission, NeedsUpdate, NoBrowser };
+  template <typename T> using Future = ipc_gen::Result<T>::Future;
 
 signals:
-  void tabActionRequested(std::string browserId, int id, TabAction action) const;
-  void bookmarksRequested(std::string browserId, int requestId) const;
-  void permissionRequested(std::string browserId, std::string permission) const;
-  void bookmarkRemovalRequested(std::string browserId, std::string bookmarkId) const;
-  void historyRequested(std::string browserId, int requestId, std::string query, int maxResults) const;
-  void historyUrlRemovalRequested(std::string browserId, std::string url) const;
-  void historyClearRequested(std::string browserId) const;
   void tabsChanged() const;
   void bookmarksChanged() const;
   void historyChanged() const;
@@ -38,6 +56,7 @@ public:
   static constexpr std::chrono::seconds BOOKMARKS_CACHE_TTL{60};
   static constexpr std::string_view HISTORY_PERMISSION = "history";
   static constexpr int HISTORY_MAX_RESULTS = 200;
+  static constexpr auto OUTDATED_EXTENSION_ERROR = "The browser extension needs to be updated";
 
   static QString urlHost(const std::string &url) {
     QUrl qurl(url.c_str());
@@ -96,6 +115,8 @@ public:
     std::optional<std::string> version;
     std::optional<std::vector<std::string>> permissions;
     std::optional<std::vector<std::string>> optionalPermissions;
+    // null when the extension is too old to be talked to
+    std::shared_ptr<AbstractBrowserPeer> peer;
     std::vector<BrowserTab> tabs;
     std::optional<std::vector<BrowserBookmark>> bookmarks;
     std::optional<int> pendingBookmarksRequest;
@@ -103,12 +124,12 @@ public:
     bool historyTruncated = false;
     std::optional<int> pendingHistoryRequest;
 
+    bool isOutdated() const { return !peer; }
     bool canRequestPermission(std::string_view permission) const {
-      if (optionalPermissions) return std::ranges::contains(*optionalPermissions, permission);
-      return permissions.has_value() && permission == BOOKMARKS_PERMISSION;
+      return !isOutdated() && optionalPermissions && std::ranges::contains(*optionalPermissions, permission);
     }
     bool hasPermission(std::string_view permission) const {
-      return permissions && std::ranges::contains(*permissions, permission);
+      return !isOutdated() && permissions && std::ranges::contains(*permissions, permission);
     }
   };
 
@@ -147,33 +168,38 @@ public:
     }
   }
 
-  void focusTab(const std::string &browserId, int tabId) {
-    emit tabActionRequested(browserId, tabId, TabAction::Focus);
+  Future<void> focusTab(const std::string &browserId, int tabId) {
+    auto it = findById(browserId);
+
+    if (it == m_browsers.end()) return Void::fail("No such browser");
+    if (it->isOutdated()) return Void::fail(OUTDATED_EXTENSION_ERROR);
+
+    return it->peer->focusTab(tabId);
   }
 
-  void focusTab(const BrowserTab &tab) { focusTab(tab.browserId, tab.id); }
+  Future<void> focusTab(const BrowserTab &tab) { return focusTab(tab.browserId, tab.id); }
 
-  std::expected<void, std::string> closeTab(const std::string &browserId, int tabId) {
+  Future<void> closeTab(const std::string &browserId, int tabId) {
     // remove it immediately, don't wait for the next tab change event so that root search
     // is updated immediately.
 
-    auto browserIt = std::ranges::find_if(m_browsers, [&](auto &&info) { return info.id == browserId; });
+    auto browserIt = findById(browserId);
 
-    if (browserIt == m_browsers.end()) { return std::unexpected("No such browser"); }
+    if (browserIt == m_browsers.end()) return Void::fail("No such browser");
+    if (browserIt->isOutdated()) return Void::fail(OUTDATED_EXTENSION_ERROR);
 
     auto tabIt = std::ranges::find_if(browserIt->tabs, [&](auto &&tab) { return tab.id == tabId; });
 
-    if (tabIt == browserIt->tabs.end()) { return std::unexpected("No such tab"); }
+    if (tabIt == browserIt->tabs.end()) return Void::fail("No such tab");
 
     browserIt->tabs.erase(tabIt);
 
     emit tabsChanged();
-    emit tabActionRequested(browserId, tabId, TabAction::Close);
 
-    return {};
+    return browserIt->peer->closeTab(tabId);
   }
 
-  auto closeTab(const BrowserTab &tab) { return closeTab(tab.browserId, tab.id); }
+  Future<void> closeTab(const BrowserTab &tab) { return closeTab(tab.browserId, tab.id); }
 
   /**
    * Find the first active tab. If many browsers are connected, the active tab from the first connected
@@ -189,17 +215,20 @@ public:
     return nullptr;
   }
 
-  void registerBrowser(const BrowserInfo &info) {
+  void registerBrowser(BrowserInfo info) {
     if (auto it = findById(info.id); it != m_browsers.end()) {
-      *it = info;
+      // released after the swap: failing its pending calls must not observe a half-replaced entry
+      auto previousPeer = std::move(it->peer);
+      *it = std::move(info);
     } else {
-      m_browsers.emplace_back(info);
+      m_browsers.emplace_back(std::move(info));
     }
     emit browsersChanged();
   }
 
-  void unregisterBrowser(std::string id) {
+  void unregisterBrowser(const std::string &id) {
     if (auto it = findById(id); it != m_browsers.end()) {
+      auto peer = std::move(it->peer);
       m_browsers.erase(it);
       emit tabsChanged();
       emit bookmarksChanged();
@@ -242,7 +271,9 @@ public:
       const int requestId = m_nextRequestId++;
 
       browser.pendingBookmarksRequest = requestId;
-      emit bookmarksRequested(browser.id, requestId);
+      browser.peer->bookmarks().then(this, [this, browserId = browser.id, requestId](BookmarksResult result) {
+        setBookmarks(browserId, requestId, std::move(result));
+      });
     }
   }
 
@@ -250,39 +281,11 @@ public:
     return std::ranges::any_of(m_browsers, [](auto &&b) { return b.pendingBookmarksRequest.has_value(); });
   }
 
-  std::expected<void, std::string> setBookmarks(const std::string &browserId,
-                                                ipc_gen::BookmarksResponse response) {
-    auto it = findById(browserId);
-
-    if (it == m_browsers.end()) return std::unexpected("No such browser");
-    if (it->pendingBookmarksRequest != response.requestId)
-      return std::unexpected("Unexpected bookmarks response");
-
-    it->pendingBookmarksRequest.reset();
-
-    if (response.error) {
-      emit bookmarksChanged();
-      return std::unexpected(*response.error);
-    }
-
-    it->bookmarks = response.bookmarks | std::views::transform([&](ipc_gen::BrowserBookmarkInfo &info) {
-                      auto bookmark = BrowserBookmark(std::move(info));
-                      bookmark.browserId = browserId;
-                      return bookmark;
-                    }) |
-                    std::ranges::to<std::vector>();
-
-    if (!m_bookmarksEviction.isActive()) m_bookmarksEviction.start();
-
-    emit bookmarksChanged();
-
-    return {};
-  }
-
-  std::expected<void, std::string> removeBookmark(const BrowserBookmark &bookmark) {
+  Future<void> removeBookmark(const BrowserBookmark &bookmark) {
     auto it = findById(bookmark.browserId);
 
-    if (it == m_browsers.end()) return std::unexpected("No such browser");
+    if (it == m_browsers.end()) return Void::fail("No such browser");
+    if (it->isOutdated()) return Void::fail(OUTDATED_EXTENSION_ERROR);
 
     // drop it from the cache right away so the list updates without waiting for a refetch
     if (it->bookmarks) {
@@ -290,9 +293,11 @@ public:
       emit bookmarksChanged();
     }
 
-    emit bookmarkRemovalRequested(bookmark.browserId, bookmark.id);
-
-    return {};
+    return it->peer->removeBookmark(bookmark.id)
+        .then(this, [this, browserId = bookmark.browserId](Void::Type result) {
+          if (!result) refetchBookmarks(browserId);
+          return result;
+        });
   }
 
   void setPermissions(const std::string &browserId, std::vector<std::string> permissions) {
@@ -318,9 +323,6 @@ public:
     emit browsersChanged();
   }
 
-  /**
-   * Ask the browser to show its permission page. Granting it requires user interaction in the browser.
-   */
   std::vector<BrowserHistoryItem> history() const {
     auto items = m_browsers | std::views::transform([](auto &&b) { return b.history; }) | std::views::join |
                  std::ranges::to<std::vector>();
@@ -331,13 +333,18 @@ public:
   }
 
   void searchHistory(const std::string &query) {
+    m_historyQuery = query;
+
     for (auto &browser : m_browsers) {
       if (!browser.hasPermission(HISTORY_PERMISSION)) continue;
 
       const int requestId = m_nextRequestId++;
 
       browser.pendingHistoryRequest = requestId;
-      emit historyRequested(browser.id, requestId, query, HISTORY_MAX_RESULTS);
+      browser.peer->searchHistory(query, HISTORY_MAX_RESULTS)
+          .then(this, [this, browserId = browser.id, requestId](HistoryResult result) {
+            setHistory(browserId, requestId, std::move(result));
+          });
     }
   }
 
@@ -349,35 +356,9 @@ public:
     return std::ranges::any_of(m_browsers, [](auto &&b) { return b.pendingHistoryRequest.has_value(); });
   }
 
-  std::expected<void, std::string> setHistory(const std::string &browserId,
-                                              ipc_gen::HistoryResponse response) {
-    auto it = findById(browserId);
-
-    if (it == m_browsers.end()) return std::unexpected("No such browser");
-
-    if (it->pendingHistoryRequest != response.requestId) return {};
-
-    it->pendingHistoryRequest.reset();
-
-    if (response.error) {
-      emit historyChanged();
-      return std::unexpected(*response.error);
-    }
-
-    it->history = response.items | std::views::transform([&](ipc_gen::BrowserHistoryItemInfo &info) {
-                    auto item = BrowserHistoryItem(std::move(info));
-                    item.browserId = browserId;
-                    return item;
-                  }) |
-                  std::ranges::to<std::vector>();
-    it->historyTruncated = it->history.size() >= HISTORY_MAX_RESULTS;
-
-    emit historyChanged();
-
-    return {};
-  }
-
   void clearHistoryResults() {
+    m_historyQuery.reset();
+
     for (auto &browser : m_browsers) {
       browser.history.clear();
       browser.historyTruncated = false;
@@ -385,39 +366,119 @@ public:
     }
   }
 
-  std::expected<void, std::string> removeHistoryUrl(const BrowserHistoryItem &item) {
+  Future<void> removeHistoryUrl(const BrowserHistoryItem &item) {
     auto it = findById(item.browserId);
 
-    if (it == m_browsers.end()) return std::unexpected("No such browser");
-    if (!it->hasPermission(HISTORY_PERMISSION)) return std::unexpected("History access not granted");
+    if (it == m_browsers.end()) return Void::fail("No such browser");
+    if (it->isOutdated()) return Void::fail(OUTDATED_EXTENSION_ERROR);
+    if (!it->hasPermission(HISTORY_PERMISSION)) return Void::fail("History access not granted");
 
     std::erase_if(it->history, [&](auto &&entry) { return entry.url == item.url; });
     emit historyChanged();
-    emit historyUrlRemovalRequested(item.browserId, item.url);
 
-    return {};
+    return it->peer->removeHistoryUrl(item.url).then(this, [this](Void::Type result) {
+      if (!result) refreshHistory();
+      return result;
+    });
   }
 
-  std::expected<void, std::string> clearHistory(const std::string &browserId) {
+  Future<void> clearHistory(const std::string &browserId) {
     auto it = findById(browserId);
 
-    if (it == m_browsers.end()) return std::unexpected("No such browser");
-    if (!it->hasPermission(HISTORY_PERMISSION)) return std::unexpected("History access not granted");
+    if (it == m_browsers.end()) return Void::fail("No such browser");
+    if (it->isOutdated()) return Void::fail(OUTDATED_EXTENSION_ERROR);
+    if (!it->hasPermission(HISTORY_PERMISSION)) return Void::fail("History access not granted");
 
     it->history.clear();
     it->historyTruncated = false;
     emit historyChanged();
-    emit historyClearRequested(browserId);
 
-    return {};
+    return it->peer->clearHistory().then(this, [this](Void::Type result) {
+      if (!result) refreshHistory();
+      return result;
+    });
   }
 
-  void requestPermission(const std::string &browserId, std::string_view permission) {
-    emit permissionRequested(browserId, std::string{permission});
+  Future<void> requestPermission(const std::string &browserId, std::string_view permission) {
+    auto it = findById(browserId);
+
+    if (it == m_browsers.end()) return Void::fail("No such browser");
+    if (it->isOutdated()) return Void::fail(OUTDATED_EXTENSION_ERROR);
+
+    return it->peer->requestPermission(std::string{permission});
   }
 
 private:
+  using Void = ipc_gen::Result<void>;
+  using BookmarksResult = ipc_gen::Result<std::vector<ipc_gen::BrowserBookmarkInfo>>::Type;
+  using HistoryResult = ipc_gen::Result<std::vector<ipc_gen::BrowserHistoryItemInfo>>::Type;
+
+  void setBookmarks(const std::string &browserId, int requestId, BookmarksResult result) {
+    auto it = findById(browserId);
+
+    if (it == m_browsers.end() || it->pendingBookmarksRequest != requestId) return;
+
+    it->pendingBookmarksRequest.reset();
+
+    if (!result) {
+      qWarning() << "Failed to load bookmarks from browser" << it->name.c_str() << ":"
+                 << result.error().c_str();
+      emit bookmarksChanged();
+      return;
+    }
+
+    it->bookmarks = *result | std::views::transform([&](ipc_gen::BrowserBookmarkInfo &info) {
+      auto bookmark = BrowserBookmark(std::move(info));
+      bookmark.browserId = browserId;
+      return bookmark;
+    }) | std::ranges::to<std::vector>();
+
+    if (!m_bookmarksEviction.isActive()) m_bookmarksEviction.start();
+
+    emit bookmarksChanged();
+  }
+
+  void refetchBookmarks(const std::string &browserId) {
+    if (auto it = findById(browserId); it != m_browsers.end()) {
+      it->bookmarks.reset();
+      it->pendingBookmarksRequest.reset();
+    }
+
+    fetchBookmarks();
+    emit bookmarksChanged();
+  }
+
+  void setHistory(const std::string &browserId, int requestId, HistoryResult result) {
+    auto it = findById(browserId);
+
+    if (it == m_browsers.end() || it->pendingHistoryRequest != requestId) return;
+
+    it->pendingHistoryRequest.reset();
+
+    if (!result) {
+      qWarning() << "Failed to load history from browser" << it->name.c_str() << ":"
+                 << result.error().c_str();
+      emit historyChanged();
+      return;
+    }
+
+    it->history = *result | std::views::transform([&](ipc_gen::BrowserHistoryItemInfo &info) {
+      auto item = BrowserHistoryItem(std::move(info));
+      item.browserId = browserId;
+      return item;
+    }) | std::ranges::to<std::vector>();
+    it->historyTruncated = it->history.size() >= HISTORY_MAX_RESULTS;
+
+    emit historyChanged();
+  }
+
+  // restore what the browser actually has after an optimistic update failed
+  void refreshHistory() {
+    if (m_historyQuery) searchHistory(*m_historyQuery);
+  }
+
   std::vector<BrowserInfo> m_browsers;
   QTimer m_bookmarksEviction;
+  std::optional<std::string> m_historyQuery;
   int m_nextRequestId = 0;
 };

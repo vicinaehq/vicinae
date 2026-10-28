@@ -428,6 +428,8 @@ set(SRCS
 
 	src/ipc/ipc-command-server.hpp
 	src/ipc/ipc-command-server.cpp
+	src/ipc/browser-peer.hpp
+	src/ipc/browser-peer.cpp
 	src/ipc/ipc-command-handler.hpp
 	src/ipc/ipc-command-handler.cpp
 

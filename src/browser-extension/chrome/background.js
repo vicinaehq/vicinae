@@ -4,6 +4,8 @@ const RETRY_MAX_MS = 60000;
 const TAB_DEBOUNCE_MS = 50;
 const OPTIONAL_PERMISSIONS = ["bookmarks", "history"];
 const IGNORED_BOOKMARK_SCHEMES = ["place:", "javascript:"];
+// 2: vicinae calls into the extension through requests instead of notifications; required by vicinae
+const PROTOCOL_VERSION = 2;
 const browserId = crypto.randomUUID();
 const requestMap = new Map();
 
@@ -67,8 +69,35 @@ function notifyNative(type, data) {
 	});
 }
 
-// we handle no request, only notifications for now
-function handleRequest(type, data) {
+function replyToNative(id, result, error) {
+	sendToNativeHost(error === undefined ? { id, result: result ?? null } : { id, error });
+}
+
+const REQUEST_HANDLERS = {
+	"browser/focus-tab": ({ tabId }) => focusTab(tabId),
+	"browser/close-tab": ({ tabId }) => closeTab(tabId),
+	"browser/get-bookmarks": () => getBookmarks(),
+	"browser/remove-bookmark": ({ bookmarkId }) => removeBookmark(bookmarkId),
+	"browser/search-history": ({ query, maxResults }) => searchHistory(query, maxResults),
+	"browser/remove-history-url": ({ url }) => removeHistoryUrl(url),
+	"browser/clear-history": () => clearHistory(),
+	"browser/request-permission": ({ permission }) => openPermissionPage(permission),
+};
+
+function handleRequest(id, type, data) {
+	const handler = REQUEST_HANDLERS[type];
+
+	if (!handler) {
+		replyToNative(id, undefined, `Unknown method ${type}`);
+		return;
+	}
+
+	Promise.resolve()
+		.then(() => handler(data ?? {}))
+		.then(
+			(result) => replyToNative(id, result),
+			(error) => replyToNative(id, undefined, error?.message ?? String(error)),
+		);
 }
 
 function handleResponse(id, result, error) {
@@ -83,54 +112,15 @@ function handleResponse(id, result, error) {
 	handler(result, error);
 }
 
-function handleNotification(type, data) {
-	if (type === "browser/focus-tab") {
-		const { tabId } = data;
-
-		chrome.tabs.get(tabId, (tab) => {
-			chrome.tabs.update(tabId, { active: true });
-			chrome.windows.update(tab.windowId, { focused: true });
-		});
-	}
-
-	if (type === "browser/close-tab") {
-		const { tabId } = data;
-		chrome.tabs.remove(tabId);
-	}
-
-	if (type === "browser/request-bookmarks") {
-		sendBookmarks(data.requestId);
-	}
-
-	if (type === "browser/request-permission") {
-		openPermissionPage(data.permission);
-	}
-
-	if (type === "browser/remove-bookmark") {
-		chrome.bookmarks?.remove(data.bookmarkId);
-	}
-
-	if (type === "browser/request-history") {
-		sendHistory(data.requestId, data.query, data.maxResults);
-	}
-
-	if (type === "browser/remove-history-url") {
-		removeHistoryUrl(data.url);
-	}
-
-	if (type === "browser/clear-history") {
-		clearHistory();
-	}
-}
-
 function processNativeMessage(message) {
 	console.log('got message:', message);
 
 	if (message.method) {
-		if (message.id) {
-			return handleRequest(message.id, message.data);
+		if (message.id === undefined) {
+			console.error(`Unexpected notification ${message.method}`);
+			return;
 		}
-		return handleNotification(message.method, message.data);
+		return handleRequest(message.id, message.method, message.data);
 	}
 
 	return handleResponse(message.id, message.result, message.error);
@@ -156,6 +146,7 @@ function connectToNativeHost() {
 				version: chrome.runtime.getManifest().version,
 				permissions,
 				optionalPermissions: OPTIONAL_PERMISSIONS,
+				protocolVersion: PROTOCOL_VERSION,
 			}, (data, error) => {
 				if (!error) {
 					retryDelay = RETRY_INITIAL_MS;
@@ -305,75 +296,82 @@ function flattenBookmarks(nodes, folder, out) {
 	return out;
 }
 
-function sendBookmarks(requestId) {
-	if (!chrome.bookmarks) {
-		notifyNative("browser/bookmarks", { requestId, bookmarks: [], error: "Bookmarks permission not granted" });
-		return;
-	}
-
-	chrome.bookmarks.getTree((tree) => {
-		if (chrome.runtime.lastError) {
-			notifyNative("browser/bookmarks", { requestId, bookmarks: [], error: chrome.runtime.lastError.message });
-			return;
-		}
-		// top-level nodes are the browser's built-in containers (bookmarks bar, other bookmarks...), not user folders
-		const containers = tree.flatMap((root) => root.children ?? []);
-		const bookmarks = containers.reduce((out, container) => flattenBookmarks(container.children ?? [], [], out), []);
-
-		notifyNative("browser/bookmarks", { requestId, bookmarks });
+// Wrap a callback-style extension API call into a promise that rejects on chrome.runtime.lastError.
+function chromeCall(fn) {
+	return new Promise((resolve, reject) => {
+		fn((result) => {
+			const error = chrome.runtime.lastError;
+			if (error) reject(new Error(error.message));
+			else resolve(result);
+		});
 	});
 }
 
-function hasPermission(permission) {
-	return new Promise((resolve) => chrome.permissions.contains({ permissions: [permission] }, resolve));
+async function hasPermission(permission) {
+	return chromeCall((cb) => chrome.permissions.contains({ permissions: [permission] }, cb));
 }
 
-function sendHistory(requestId, query, maxResults) {
-	if (!chrome.history) {
-		notifyNative("browser/history", { requestId, items: [], error: "History permission not granted" });
-		return;
-	}
+async function requirePermission(permission, label) {
+	if (!(await hasPermission(permission))) throw new Error(`${label} permission not granted`);
+}
 
-	chrome.history.search({ text: query ?? "", startTime: 0, maxResults }, (results) => {
-		if (chrome.runtime.lastError) {
-			notifyNative("browser/history", { requestId, items: [], error: chrome.runtime.lastError.message });
-			return;
-		}
+async function focusTab(tabId) {
+	const tab = await chromeCall((cb) => chrome.tabs.update(tabId, { active: true }, cb));
+	await chromeCall((cb) => chrome.windows.update(tab.windowId, { focused: true }, cb));
+}
 
-		const items = results.filter((item) => item.url).map((item) => ({
-			id: item.id,
-			title: item.title ?? "",
-			url: item.url,
-			lastVisitTime: item.lastVisitTime ?? 0,
-			visitCount: item.visitCount ?? 0,
-		}));
+async function closeTab(tabId) {
+	await chromeCall((cb) => chrome.tabs.remove(tabId, cb));
+}
 
-		notifyNative("browser/history", { requestId, items });
-	});
+async function getBookmarks() {
+	await requirePermission("bookmarks", "Bookmarks");
+
+	const tree = await chromeCall((cb) => chrome.bookmarks.getTree(cb));
+	// top-level nodes are the browser's built-in containers (bookmarks bar, other bookmarks...), not user folders
+	const containers = tree.flatMap((root) => root.children ?? []);
+
+	return containers.reduce((out, container) => flattenBookmarks(container.children ?? [], [], out), []);
+}
+
+async function removeBookmark(bookmarkId) {
+	await requirePermission("bookmarks", "Bookmarks");
+	await chromeCall((cb) => chrome.bookmarks.remove(bookmarkId, cb));
+}
+
+async function searchHistory(query, maxResults) {
+	await requirePermission("history", "History");
+
+	const results = await chromeCall((cb) => chrome.history.search({ text: query ?? "", startTime: 0, maxResults }, cb));
+
+	return results.filter((item) => item.url).map((item) => ({
+		id: item.id,
+		title: item.title ?? "",
+		url: item.url,
+		lastVisitTime: item.lastVisitTime ?? 0,
+		visitCount: item.visitCount ?? 0,
+	}));
 }
 
 async function removeHistoryUrl(url) {
-	if (typeof url !== "string" || !url) return;
-	if (!(await hasPermission("history"))) return;
-
-	chrome.history.deleteUrl({ url });
+	if (typeof url !== "string" || !url) throw new Error("Invalid URL");
+	await requirePermission("history", "History");
+	await chromeCall((cb) => chrome.history.deleteUrl({ url }, cb));
 }
 
 async function clearHistory() {
-	if (!(await hasPermission("history"))) return;
-
-	chrome.history.deleteAll();
+	await requirePermission("history", "History");
+	await chromeCall((cb) => chrome.history.deleteAll(cb));
 }
 
 // Permission prompts need a user gesture, which vicinae cannot provide: open a page with a button instead.
-function openPermissionPage(permission) {
-	if (!OPTIONAL_PERMISSIONS.includes(permission)) return;
+async function openPermissionPage(permission) {
+	if (!OPTIONAL_PERMISSIONS.includes(permission)) throw new Error(`Unknown permission ${permission}`);
 
 	const url = chrome.runtime.getURL(`permissions.html?permission=${encodeURIComponent(permission)}`);
+	const tab = await chromeCall((cb) => chrome.tabs.create({ url }, cb));
 
-	chrome.tabs.create({ url }, (tab) => {
-		chrome.windows.update(tab.windowId, { focused: true });
-	});
+	await chromeCall((cb) => chrome.windows.update(tab.windowId, { focused: true }, cb));
 }
 
 console.log("background service loaded");

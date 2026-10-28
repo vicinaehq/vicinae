@@ -12,6 +12,8 @@
 #include "command/single-view-command-context.hpp"
 #include "theme/colors.hpp"
 #include <QCoreApplication>
+#include <QFuture>
+#include <vector>
 
 static bool guard(CommandController &ctrl) {
   const auto browserService = ctrl.context()->services->browserExtension();
@@ -160,13 +162,24 @@ class ClearBrowserHistoryCommand : public BuiltinCallbackCommand {
         tr("Your entire browsing history in %1 will be deleted. This cannot be undone.")
             .arg(names.join(", ")),
         [browserService, toast, ids = std::move(ids)]() {
+          std::vector<BrowserExtensionService::Future<void>> clears;
+          clears.reserve(ids.size());
+
           for (const auto &id : ids) {
-            if (auto result = browserService->clearHistory(id); !result) {
-              toast->failure(tr("Failed to clear history: %1").arg(QString::fromStdString(result.error())));
-              return;
-            }
+            clears.emplace_back(browserService->clearHistory(id));
           }
-          toast->success(tr("History cleared"));
+
+          QtFuture::whenAll(clears.begin(), clears.end())
+              .then(toast, [toast](const QList<BrowserExtensionService::Future<void>> &results) {
+                for (const auto &future : results) {
+                  if (const auto result = future.result(); !result) {
+                    toast->failure(
+                        tr("Failed to clear history: %1").arg(QString::fromStdString(result.error())));
+                    return;
+                  }
+                }
+                toast->success(tr("History cleared"));
+              });
         });
   }
 };
