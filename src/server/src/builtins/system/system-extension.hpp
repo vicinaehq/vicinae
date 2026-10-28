@@ -11,6 +11,7 @@
 #include "utils.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include "builtins/system/trash.hpp"
 #include <QCoreApplication>
 
 #ifndef Q_OS_WIN
@@ -19,9 +20,87 @@
 #include "builtins/system/set-default-terminal-view-host.hpp"
 #endif
 
+struct EmptyTrashPreferences {
+  bool confirm = true;
+};
+
+template <> struct PreferenceSchema<EmptyTrashPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(EmptyTrashPreferences)
+public:
+  PreferenceMeta confirm{.label = tr("Ask for confirmation")};
+};
+
 namespace {
 
+class EmptyTrashCommand : public TypedCallbackCommand<EmptyTrashPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(EmptyTrashCommand)
+
+  QString id() const override { return "empty-trash"; }
+  QString name() const override { return tr("Empty Trash"); }
+  QString description() const override { return tr("Permanently delete all items in the Trash"); }
+  std::vector<QString> keywords() const override {
+    return {"trash", "recycle bin", "bin", "wastebasket", "clear trash"};
+  }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Trash).setBackgroundTint(SemanticColor::Red);
+  }
+
+  void execute(const Controller &ctrl) const override {
+    auto ctx = ctrl.context();
+    auto &nav = ctx->navigation;
+    bool const shouldConfirm = ctrl.preferences().confirm;
+
+    auto doEmpty = [ctx]() {
+      auto toast = ctx->services->toastService();
+      std::string error;
+      if (SystemTrash::emptyTrash(error)) {
+        toast->success(tr("Trash emptied"));
+      } else {
+        toast->failure(error.empty() ? tr("Failed to empty trash") : QString::fromStdString(error));
+      }
+    };
+
+    if (shouldConfirm) {
+      nav->confirmAlert(tr("Empty Trash"),
+                        tr("Are you sure you want to permanently delete all items in the Trash?"),
+                        [&nav, doEmpty]() {
+                          nav->closeWindow({.clearRootSearch = true});
+                          doEmpty();
+                        });
+      return;
+    }
+
+    nav->closeWindow({.clearRootSearch = true});
+    doEmpty();
+  }
+};
+
+class OpenTrashCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(OpenTrashCommand)
+
+  QString id() const override { return "open-trash"; }
+  QString name() const override { return tr("Open Trash"); }
+  QString description() const override { return tr("Open the Trash in the default file manager"); }
+  std::vector<QString> keywords() const override { return {"trash", "recycle bin", "bin", "wastebasket"}; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::Trash).setBackgroundTint(SemanticColor::Yellow);
+  }
+
+  void execute(CommandController &ctrl) const override {
+    auto ctx = ctrl.context();
+    auto toast = ctx->services->toastService();
+    std::string error;
+
+    if (SystemTrash::openTrash(error)) {
+      ctx->navigation->closeWindow({.clearRootSearch = true});
+    } else {
+      toast->failure(error.empty() ? tr("Failed to open trash") : QString::fromStdString(error));
+    }
+  }
+};
+
 class SystemRunCommand : public TypedCallbackCommand<SystemRunPreferences> {
+
   Q_DECLARE_TR_FUNCTIONS(SystemRunCommand)
 
   QString id() const override { return "run"; }
@@ -139,6 +218,8 @@ public:
   SystemExtension() {
     registerCommand<SystemRunCommand>();
     registerCommand<SystemBrowseApps>();
+    registerCommand<EmptyTrashCommand>();
+    registerCommand<OpenTrashCommand>();
 
 #ifdef Q_OS_LINUX
     // set default terminal using xdg-terminal-exec

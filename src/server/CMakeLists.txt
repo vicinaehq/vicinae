@@ -325,6 +325,7 @@ set(SRCS
 	src/builtins/system/browse-apps-preferences.hpp
 	src/builtins/system/browse-apps-view-host.hpp
 	src/builtins/system/browse-apps-view-host.cpp
+	src/builtins/system/trash.hpp
 	src/builtins/browser/browser-tabs-model.hpp
 	src/builtins/browser/browser-tabs-model.cpp
 	src/builtins/browser/browser-tabs-view-host.hpp
@@ -775,6 +776,7 @@ if (APPLE)
 		src/app-platform-macos.mm
 		src/builtins/vicinae/menu-bar-search-view-host.hpp
 		src/builtins/vicinae/search-menu-bar-command.hpp
+		src/builtins/system/trash-macos.mm
 	)
 	set_source_files_properties(
 		src/services/screenshots/macos/macos-screenshot-provider.mm
@@ -803,6 +805,7 @@ if (APPLE)
 		src/services/file-chooser/macos/mac-file-chooser.mm
 		src/services/menu-bar/macos-menu-bar.mm
 		src/app-platform-macos.mm
+		src/builtins/system/trash-macos.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications" "-framework ScriptingBridge")
 	list(APPEND LIBS "-framework QuickLookThumbnailing" "-framework CoreGraphics")
@@ -877,6 +880,7 @@ elseif (WIN32)
 		src/utils/win-chassis.cpp
 		src/services/update/windows-update-installer.hpp
 		src/services/update/windows-update-installer.cpp
+		src/builtins/system/trash.cpp
 	)
 	list(APPEND LIBS shell32 ole32 shlwapi user32 gdi32 advapi32 version windowsapp dwmapi comctl32 uuid uiautomationcore powrprof everything-sdk3 wintrust crypt32)
 	add_compile_definitions(VICINAE_BUNDLE_ID="${VICINAE_BUNDLE_ID}")
@@ -885,6 +889,7 @@ else()
 		src/app-platform.cpp
 		src/services/app-runtime/linux/linux-app-runtime.hpp
 		src/services/app-runtime/linux/linux-app-runtime.cpp
+		src/builtins/system/trash.cpp
 	)
 endif()
 
