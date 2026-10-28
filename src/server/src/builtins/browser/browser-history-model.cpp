@@ -53,12 +53,17 @@ BrowserHistorySection::buildActionPanel(const BrowserHistoryItem &item) const {
             tr("Every visit to %1 will be removed from your browser history. This cannot be undone.")
                 .arg(QString::fromStdString(item.url)),
             [ctx, item]() {
-              if (auto result = ctx->services->browserExtension()->removeHistoryUrl(item); !result) {
-                ctx->services->toastService()->failure(
-                    tr("Failed to delete from history: %1").arg(QString::fromStdString(result.error())));
-                return;
-              }
-              ctx->services->toastService()->success(tr("Deleted from history"));
+              const auto toast = ctx->services->toastService();
+
+              ctx->services->browserExtension()->removeHistoryUrl(item).then(
+                  toast, [toast](const std::expected<void, std::string> &result) {
+                    if (!result) {
+                      toast->failure(tr("Failed to delete from history: %1")
+                                         .arg(QString::fromStdString(result.error())));
+                      return;
+                    }
+                    toast->success(tr("Deleted from history"));
+                  });
             });
       });
   remove->setShortcut(Keybind::DangerousRemoveAction);
@@ -78,12 +83,17 @@ BrowserHistorySection::buildActionPanel(const BrowserHistoryItem &item) const {
             tr("Clear all %1 history?").arg(name),
             tr("Your entire browsing history in %1 will be deleted. This cannot be undone.").arg(name),
             [ctx, browserId]() {
-              if (auto result = ctx->services->browserExtension()->clearHistory(browserId); !result) {
-                ctx->services->toastService()->failure(
-                    tr("Failed to clear history: %1").arg(QString::fromStdString(result.error())));
-                return;
-              }
-              ctx->services->toastService()->success(tr("History cleared"));
+              const auto toast = ctx->services->toastService();
+
+              ctx->services->browserExtension()->clearHistory(browserId).then(
+                  toast, [toast](const std::expected<void, std::string> &result) {
+                    if (!result) {
+                      toast->failure(
+                          tr("Failed to clear history: %1").arg(QString::fromStdString(result.error())));
+                      return;
+                    }
+                    toast->success(tr("History cleared"));
+                  });
             });
       });
 

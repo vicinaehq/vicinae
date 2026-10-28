@@ -55,12 +55,17 @@ BrowserBookmarksSection::buildActionPanel(const BrowserBookmark &bookmark) const
             tr("\"%1\" will be removed from your browser. This cannot be undone.")
                 .arg(QString::fromStdString(bookmark.title.empty() ? bookmark.url : bookmark.title)),
             [ctx, bookmark]() {
-              if (auto result = ctx->services->browserExtension()->removeBookmark(bookmark); !result) {
-                ctx->services->toastService()->failure(
-                    tr("Failed to delete bookmark: %1").arg(QString::fromStdString(result.error())));
-                return;
-              }
-              ctx->services->toastService()->success(tr("Bookmark deleted"));
+              const auto toast = ctx->services->toastService();
+
+              ctx->services->browserExtension()->removeBookmark(bookmark).then(
+                  toast, [toast](const std::expected<void, std::string> &result) {
+                    if (!result) {
+                      toast->failure(
+                          tr("Failed to delete bookmark: %1").arg(QString::fromStdString(result.error())));
+                      return;
+                    }
+                    toast->success(tr("Bookmark deleted"));
+                  });
             });
       });
   remove->setShortcut(Keybind::DangerousRemoveAction);

@@ -4,6 +4,7 @@
 #include <format>
 #include <iomanip>
 #include <sstream>
+#include <stdexcept>
 #include "../utils.hpp"
 #include <ranges>
 
@@ -46,6 +47,8 @@ public:
 )";
 
 constexpr const auto GLAZE_CLIENT_CODE = R"(
+template <typename T> using Responder = std::function<void(std::expected<T, std::string>)>;
+
 struct RpcIncomingMessage {
   std::optional<int> id;
   std::optional<std::string> method;
@@ -57,6 +60,7 @@ struct RpcIncomingMessage {
 class RpcTransport {
   template <typename T> using Result = std::expected<T, std::string>;
   using ResponseHandler = std::function<void(Result<std::string_view>)>;
+  using RequestHandler = std::function<void(int id, std::string_view params)>;
 
 public:
   RpcTransport(AbstractTransport &transport) : m_transport(transport) {}
@@ -66,7 +70,16 @@ public:
 
     if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(msg, data)) { return std::unexpected(glz::format_error(error)); }
 
-    if (msg.id) {
+    // error responses carry an empty method
+    const bool hasMethod = msg.method && !msg.method->empty();
+
+    if (hasMethod && msg.id) {
+      if (auto it = m_requestHandlers.find(*msg.method); it != m_requestHandlers.end()) {
+        it->second(*msg.id, msg.params.str);
+      } else {
+        replyError(*msg.id, "Method not found: " + *msg.method);
+      }
+    } else if (msg.id) {
       if (auto it = m_requestMap.find(*msg.id); it != m_requestMap.end()) {
         if (msg.error) {
           it->second(std::unexpected(*msg.error));
@@ -75,7 +88,7 @@ public:
         }
         m_requestMap.erase(it);
       }
-    } else if (msg.method) {
+    } else if (hasMethod) {
       if (auto it = m_handlers.find(*msg.method); it != m_handlers.end()) {
         for (const auto &handler : it->second) {
           handler(msg.params.str);
@@ -84,6 +97,30 @@ public:
     }
 
     return {};
+  }
+
+  template <typename T, typename U>
+  void handle(std::string_view method, std::function<void(U params, Responder<T> respond)> handler) {
+    m_requestHandlers[std::string{method}] = [this, handler = std::move(handler)](int id, std::string_view data) {
+      U params;
+      if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(params, data)) {
+        replyError(id, glz::format_error(error));
+        return;
+      }
+
+      handler(std::move(params), [this, id](Result<T> result) {
+        if (!result) {
+          replyError(id, result.error());
+          return;
+        }
+
+        if constexpr (std::is_void_v<T>) {
+          reply(id, nullptr);
+        } else {
+          reply(id, *result);
+        }
+      });
+    };
   }
 
   template <typename T, typename U>
@@ -148,8 +185,30 @@ public:
   }
 
 private:
+  template <typename T>
+  void reply(int id, const T &result) {
+    std::string resultBuf;
+    if (auto const error = glz::write_json(result, resultBuf)) {
+      replyError(id, glz::format_error(error));
+      return;
+    }
+
+    sendResponse(JsonRpcResponse{.id = id, .jsonrpc = "2.0", .result = std::move(resultBuf)});
+  }
+
+  void replyError(int id, std::string error) {
+    sendResponse(JsonRpcErrorResponse{.jsonrpc = "2.0", .id = id, .error = std::move(error)});
+  }
+
+  void sendResponse(const OutgoingJsonRpcMessage &msg) {
+    std::string buf;
+    if (glz::write_json(msg, buf)) return;
+    m_transport.send(buf);
+  }
+
   int m_id = 1;
   std::unordered_map<std::string, std::vector<ResponseHandler>> m_handlers;
+  std::unordered_map<std::string, RequestHandler> m_requestHandlers;
   std::unordered_map<int, ResponseHandler> m_requestMap;
   AbstractTransport &m_transport;
   std::string m_buf;
@@ -361,6 +420,10 @@ class GlazeGenerator : public AbstractCodeGenerator {
       for (const auto &m : s->methods) {
         oss << serializeMethodParams(s->name, m);
       }
+
+      for (const auto &m : s->clientMethods) {
+        oss << serializeMethodParams(s->name, m);
+      }
     }
   }
 
@@ -368,6 +431,22 @@ class GlazeGenerator : public AbstractCodeGenerator {
     auto const pos = path.find_last_of('.');
     if (pos != std::string_view::npos) return path.substr(0, pos);
     return path;
+  }
+
+  static std::string capitalize(std::string_view name) {
+    std::string s{name};
+    if (!s.empty()) s[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(s[0])));
+    return s;
+  }
+
+  static std::string clientMethodHandlerType(const Method &m) {
+    std::ostringstream oss;
+    oss << "std::function<void(";
+    for (const auto &param : m.params) {
+      oss << constRef(param.type) << ", ";
+    }
+    oss << "Responder<" << serializeTypename(m.returnType) << ">)>";
+    return oss.str();
   }
 
   static bool isVoid(const TypeValue &value) {
@@ -473,6 +552,24 @@ public:
         oss << "});\n";
       }
 
+      for (const auto &m : s->clientMethods) {
+        std::string methodId = std::format("{}/{}", s->name, m.name);
+        auto paramsName = getMethodParamName(s->name, m.name);
+        auto returnType = serializeTypename(m.returnType);
+
+        oss << "transport.handle<" << returnType << ", " << paramsName << ">(" << std::quoted(methodId)
+            << ", "
+            << "[this](" << paramsName << " payload, Responder<" << returnType << "> respond) {\n";
+        oss << "if (!m_" << m.name << "Handler) { respond(std::unexpected("
+            << std::quoted("Method not implemented: " + methodId) << ")); return; }\n";
+        oss << "m_" << m.name << "Handler(";
+        for (const auto &param : m.params) {
+          oss << "payload." << param.name << ", ";
+        }
+        oss << "std::move(respond));\n";
+        oss << "});\n";
+      }
+
       oss << "}\n";
 
       for (const auto &m : s->methods) {
@@ -511,8 +608,18 @@ public:
         oss << "\t}\n";
       }
 
+      for (const auto &m : s->clientMethods) {
+        oss << "\tvoid on" << capitalize(m.name) << "(" << clientMethodHandlerType(m) << " handler) {\n";
+        oss << "\t\tm_" << m.name << "Handler = std::move(handler);\n";
+        oss << "\t}\n";
+      }
+
       oss << "private:\n";
       oss << "RpcTransport& m_transport;\n";
+
+      for (const auto &m : s->clientMethods) {
+        oss << clientMethodHandlerType(m) << " m_" << m.name << "Handler;\n";
+      }
 
       for (const auto &event : s->events) {
         oss << "std::function<void(";
@@ -580,6 +687,12 @@ public:
 
     auto const ns =
         opts.generationNamespace.value_or(std::string{stripExtension(opts.file.filename().string())});
+
+    for (const auto &s : ast.services) {
+      if (!s->clientMethods.empty())
+        throw std::runtime_error(
+            std::format("{}: client methods are not supported by the glaze server generator", s->name));
+    }
 
     oss << "namespace " << ns << " {\n";
     oss << GLAZE_COMMON << GLAZE_SERVER_BASE;
