@@ -17,6 +17,7 @@
 
 GeneralSettingsModel::GeneralSettingsModel(QObject *parent) : QObject(parent) {
   m_windowMaterialModel.setSections(windowMaterialItems());
+  m_windowStyleModel.setSections(windowStyleItems());
   m_fontModel.setSections(fontItems());
   m_faviconServiceModel.setSections(faviconServiceItems());
   m_keybindingSchemeModel.setSections(keybindingSchemeItems());
@@ -149,6 +150,25 @@ bool GeneralSettingsModel::floatingStatusBar() const { return cfg().launcherWind
 void GeneralSettingsModel::setFloatingStatusBar(bool v) {
   cfgManager().mergeWithUser(
       {.launcherWindow = config::Partial<config::WindowConfig>{.floatingStatusBar = v}});
+}
+
+static QVariantList wrapSection(const QString &title, const QVariantList &items);
+
+QVariantList GeneralSettingsModel::windowStyleItems() const {
+  QVariantList items;
+  items.append(qml::makeDropdownItem(QStringLiteral("standard"), tr("Standard")));
+  items.append(qml::makeDropdownItem(QStringLiteral("liquid_glass"), tr("Liquid Glass")));
+  return wrapSection(tr("Window style"), items);
+}
+
+QVariant GeneralSettingsModel::currentWindowStyle() const {
+  const auto id = QString::fromStdString(cfg().launcherWindow.resolvedWindowStyle());
+  return qml::makeDropdownItem(id, id == QStringLiteral("standard") ? tr("Standard") : tr("Liquid Glass"));
+}
+
+void GeneralSettingsModel::selectWindowStyle(const QString &id) {
+  cfgManager().mergeWithUser(
+      {.launcherWindow = config::Partial<config::WindowConfig>{.windowStyle = id.toStdString()}});
 }
 
 bool GeneralSettingsModel::inputServerEnabled() const { return cfg().inputServer.enabled; }
