@@ -17,6 +17,9 @@ public:
 
 private:
   Q_PROPERTY(bool configurableStatusBar READ configurableStatusBar CONSTANT)
+  // macOS ships a dedicated native window (liquid glass redesign); expose the
+  // option to fall back to the standard cross-platform ("Linux-style") window.
+  Q_PROPERTY(bool selectableWindowStyle READ selectableWindowStyle CONSTANT)
   // Space pages reserve for the overlaid window header.
   Q_PROPERTY(qreal contentTopInset READ contentTopInset CONSTANT)
   Q_PROPERTY(qreal switchKnobWidth READ switchKnobWidth CONSTANT)
@@ -34,6 +37,14 @@ public:
     return false;
 #else
     return true;
+#endif
+  }
+
+  bool selectableWindowStyle() const {
+#ifdef Q_OS_MACOS
+    return true;
+#else
+    return false;
 #endif
   }
 
