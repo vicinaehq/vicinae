@@ -337,6 +337,9 @@ struct ConfigValue {
   std::string faviconService = "twenty";
   std::string keybinding = "default";
   std::optional<std::string> language;
+  bool switchInputSourceOnOpen = false;
+  std::optional<std::string> targetInputSource;
+  bool restoreInputSourceOnClose = false;
   int pixmapCacheMb = 50;
 
   InputServer inputServer;
@@ -394,6 +397,9 @@ template <> struct Partial<ConfigValue> {
   std::optional<std::string> faviconService;
   std::optional<std::string> keybinding;
   std::optional<std::string> language;
+  std::optional<bool> switchInputSourceOnOpen;
+  std::optional<std::string> targetInputSource;
+  std::optional<bool> restoreInputSourceOnClose;
   std::optional<int> pixmapCacheMb;
   std::optional<bool> searchFilesInRoot;
   std::optional<Partial<InputServer>> inputServer;

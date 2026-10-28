@@ -775,6 +775,7 @@ if (APPLE)
 		src/app-platform-macos.mm
 		src/builtins/vicinae/menu-bar-search-view-host.hpp
 		src/builtins/vicinae/search-menu-bar-command.hpp
+		src/services/input-source/input-source-macos.mm
 	)
 	set_source_files_properties(
 		src/services/screenshots/macos/macos-screenshot-provider.mm
@@ -803,6 +804,7 @@ if (APPLE)
 		src/services/file-chooser/macos/mac-file-chooser.mm
 		src/services/menu-bar/macos-menu-bar.mm
 		src/app-platform-macos.mm
+		src/services/input-source/input-source-macos.mm
 		PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 	list(APPEND LIBS "-framework ServiceManagement" "-framework UserNotifications" "-framework ScriptingBridge")
 	list(APPEND LIBS "-framework QuickLookThumbnailing" "-framework CoreGraphics")
@@ -916,6 +918,8 @@ list(APPEND SRCS
 	src/services/global-shortcuts/global-shortcut-service.cpp
 	src/services/global-shortcuts/config-global-shortcuts.hpp
 	src/services/global-shortcuts/config-global-shortcuts.cpp
+	src/services/input-source/input-source-service.hpp
+	src/services/input-source/input-source-service.cpp
 )
 
 if (NOT WIN32 AND NOT APPLE)
