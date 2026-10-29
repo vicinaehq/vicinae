@@ -6,8 +6,7 @@
 #include <qjsondocument.h>
 #include <unordered_map>
 #include "theme/colors.hpp"
-
-enum class ThemeVariant { Light, Dark };
+#include "theme/theme-variant.hpp"
 
 class ThemeFile {
 public:
