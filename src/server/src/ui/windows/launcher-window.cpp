@@ -608,8 +608,10 @@ bool LauncherWindow::forwardKey(int rawKey, int modifiers, int scanCode) {
   const bool unmodified = (mods & ~Qt::KeypadModifier) == Qt::NoModifier;
 
   // unmodified keys are regular text input, except return which the action panel
-  // knows how to handle
-  if (unmodified && !isReturn) return false;
+  // knows how to handle, and left/right when an action is bound to them
+  if (unmodified && !isReturn) {
+    return (key == Qt::Key_Left || key == Qt::Key_Right) && m_actionPanel->activateBoundAction(press);
+  }
 
   if (unmodified && m_compacted) {
     expand();
