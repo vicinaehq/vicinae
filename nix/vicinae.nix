@@ -1,7 +1,9 @@
 {
   cmake,
   cmark-gfm,
+  applyPatches,
   fetchNpmDeps,
+  fetchurl,
   kdePackages,
   lib,
   libqalculate,
@@ -17,7 +19,9 @@
   glaze,
   numen,
   whisper-cpp,
-  llama-cpp,
+  shaderc,
+  vulkan-headers,
+  vulkan-loader,
   pulseaudio ? null,
   swift ? null,
   apple-sdk ? null,
@@ -41,26 +45,41 @@
   });
   syntax-highlighting = addDarwinPlatform kdeScope.syntax-highlighting;
 
-  # nixpkgs installs the dynamic ggml backends in bin, where only llama's own executables
-  # find them. Move them to lib and compile that search path into ggml.
-  llama =
-    (llama-cpp.override {
-      vulkanSupport = isLinux;
-    }).overrideAttrs (old: {
-      cmakeFlags = old.cmakeFlags ++ [(lib.cmakeFeature "GGML_BACKEND_DIR" "${placeholder "out"}/lib")];
-    });
-
-  # nixpkgs whisper-cpp and llama-cpp each ship their own libggml. Build whisper
-  # against llama's copy so vicinae links exactly one ggml.
+  # nixpkgs whisper-cpp takes ggml from llama-cpp (for whisper-talk-llama). We only need the
+  # libraries, so build whisper with its bundled ggml instead and drop llama-cpp entirely.
   whisper =
     (whisper-cpp.override {
-      vulkanSupport = false;
       withSDL = false;
       withFFmpegSupport = false;
     }).overrideAttrs (old: {
-      cmakeFlags = old.cmakeFlags ++ [(lib.cmakeBool "WHISPER_USE_SYSTEM_GGML" true)];
-      buildInputs = old.buildInputs ++ [llama];
+      propagatedBuildInputs = [];
+      nativeBuildInputs = old.nativeBuildInputs ++ lib.optionals isLinux [shaderc];
+      buildInputs = old.buildInputs ++ lib.optionals isLinux [vulkan-headers vulkan-loader];
+      cmakeFlags =
+        (lib.filter (flag: !(lib.hasPrefix "-DWHISPER_USE_SYSTEM_LLAMA" flag || lib.hasPrefix "-DWHISPER_BUILD_EXAMPLES" flag)) old.cmakeFlags)
+        ++ [
+          (lib.cmakeBool "WHISPER_BUILD_EXAMPLES" false)
+          (lib.cmakeBool "WHISPER_BUILD_TESTS" false)
+          # -march=native would make builds non-deterministic
+          (lib.cmakeBool "GGML_NATIVE" false)
+          (lib.cmakeBool "GGML_VULKAN" isLinux)
+        ];
+      postInstall = "";
+      doInstallCheck = false;
     });
+
+  # Pinned and patched like cmake/MathText.cmake; FetchContent can't download inside the sandbox.
+  jkqtmathtext-src = applyPatches {
+    name = "jkqtmathtext-src";
+    src = fetchurl {
+      url = "https://github.com/jkriege2/JKQtPlotter/archive/d9b6f18eac22f5e9959a5415d7ba0d8780f24585.tar.gz";
+      hash = "sha256-5kcWkywuVulwQby026vnyQRep9YK3cTts47tQ0JShug=";
+    };
+    patches = [
+      ../cmake/patches/jkqtmathtext-implication.patch
+      ../cmake/patches/jkqtmathtext-font-discovery.patch
+    ];
+  };
 
   manifestRaw = builtins.readFile ../manifest.yaml;
   manifestGet = key: let
@@ -97,6 +116,7 @@ in
       "USE_SYSTEM_INFERENCE_ENGINES" = "ON";
       "USE_SYSTEM_KF6" = "ON";
       "USE_SYSTEM_QT_KEYCHAIN" = "ON";
+      "FETCHCONTENT_SOURCE_DIR_JKQTMATHTEXT" = "${jkqtmathtext-src}";
       "CMAKE_INSTALL_PREFIX" = placeholder "out";
       "CMAKE_INSTALL_DATAROOTDIR" = "share";
       "CMAKE_INSTALL_BINDIR" = "bin";
@@ -141,7 +161,6 @@ in
         glaze
         numen
         whisper
-        llama
       ]
       ++ lib.optionals isLinux [
         kdePackages.layer-shell-qt

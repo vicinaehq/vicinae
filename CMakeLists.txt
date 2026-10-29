@@ -55,9 +55,9 @@ option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown c
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_NUMEN "Use system version of the numen calculator backend, instead of fetching it" OFF)
-# whisper.cpp, parakeet and llama.cpp must share a single ggml, so they are always taken together:
-# either all from the system or all fetched and built in tree.
-set(USE_SYSTEM_INFERENCE_ENGINES AUTO CACHE STRING "Use the system whisper.cpp, parakeet and llama.cpp (ON), fetch and build them (OFF), or use the system copies when all three are found and fetch otherwise (AUTO)")
+# whisper.cpp and parakeet ship together and share a single ggml, so they are always taken together:
+# either both from the system or both fetched and built in tree.
+set(USE_SYSTEM_INFERENCE_ENGINES AUTO CACHE STRING "Use the system whisper.cpp and parakeet (ON), fetch and build them (OFF), or use the system copies when both are found and fetch otherwise (AUTO)")
 set_property(CACHE USE_SYSTEM_INFERENCE_ENGINES PROPERTY STRINGS AUTO ON OFF)
 set(MIN_WHISPER_VERSION 1.9.2)
 
@@ -220,7 +220,7 @@ if (USE_SYSTEM_INFERENCE_ENGINES STREQUAL "AUTO")
 	add_subdirectory(cmake/probes/inference-engines)
 	set(SYSTEM_INFERENCE_ENGINES ${SYSTEM_INFERENCE_ENGINES_FOUND})
 	if (NOT SYSTEM_INFERENCE_ENGINES)
-		message(STATUS "Inference engines: system whisper.cpp/parakeet/llama.cpp not all found, fetching and building them")
+		message(STATUS "Inference engines: system whisper.cpp/parakeet not found, fetching and building them")
 	endif()
 else()
 	set(SYSTEM_INFERENCE_ENGINES ${USE_SYSTEM_INFERENCE_ENGINES})
@@ -233,8 +233,7 @@ if (SYSTEM_INFERENCE_ENGINES)
 		message(FATAL_ERROR "System whisper.cpp ${WHISPER_VERSION} is too old, ${MIN_WHISPER_VERSION} or newer is required")
 	endif()
 	find_package(parakeet REQUIRED)
-	find_package(llama REQUIRED)
-	message(STATUS "Inference engines: using system whisper.cpp ${WHISPER_VERSION}, parakeet and llama.cpp")
+	message(STATUS "Inference engines: using system whisper.cpp ${WHISPER_VERSION} and parakeet")
 endif()
 
 

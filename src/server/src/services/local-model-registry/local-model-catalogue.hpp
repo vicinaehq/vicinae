@@ -12,7 +12,7 @@
 #include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 
-enum class LocalEngine : std::uint8_t { Whisper, Parakeet, Llama };
+enum class LocalEngine : std::uint8_t { Whisper, Parakeet };
 enum class LocalModelVendor : std::uint8_t { OpenAI, Nvidia, Alibaba };
 
 /**
@@ -153,29 +153,6 @@ constexpr auto ENTRIES = std::to_array<LocalModelInfo>({
     .size = 1255897319,
     .sha256 = "833bffc9513b2cae867ee9e51633cfd11e4d51aaa5597c8ac02159385a2b426f",
   },
-
-  // LLMs. 
-  // We are not trying to list frontier OSS models here, our local inference stack is mostly
-  // used to enhance existing AI features. Users that want frontier local AI are expected to connect
-  // their ollama/llama.cpp instance, etc...
-
-  /*
-  {
-    .id = "qwen3-1.7b",
-    .name = "Qwen3 1.7B",
-    .description = LOCAL_MODEL_TR("Tiny Qwen3 model, very good at simple tasks."),
-        .languages = LOCAL_MODEL_TR(""),
-    .engine = LocalEngine::Llama,
-    .vendor = LocalModelVendor::Alibaba,
-    .caps = AI::Capability::Completion | AI::Capability::ToolCalling | AI::Capability::Thinking,
-    .repo = "Qwen/Qwen3-1.7B-GGUF",
-    .revision = "90862c4b9d2787eaed51d12237eafdfe7c5f6077",
-    .file = "Qwen3-1.7B-Q8_0.gguf",
-        .quantization = "q8_0",
-    .size = 1834426016,
-    .sha256 = "061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a",
-  }
-  */
 });
 // clang-format on
 

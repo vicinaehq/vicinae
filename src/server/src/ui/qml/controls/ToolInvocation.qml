@@ -55,7 +55,7 @@ Item {
                 onAboutToShow: scroll.forceActiveFocus()
                 Instantiator {
                     model: root.summary.length > 0 ? 1 : 0
-                    delegate: MenuItem {
+                    delegate: ViciMenuItem {
                         text: qsTr("Show Arguments")
                         checkable: true
                         checked: panel.showArguments

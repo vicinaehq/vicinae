@@ -1,16 +1,14 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import Vicinae
 
-Menu {
+ViciMenu {
     id: root
     required property attachmentContent content
     property bool previewable: true
     property bool removable: false
     signal previewRequested
     signal removeRequested
-    popupType: Popup.Native
 
     Instantiator {
         model: [
@@ -35,7 +33,7 @@ Menu {
                 run: () => root.removeRequested()
             }
         ].filter(action => action.available)
-        delegate: MenuItem {
+        delegate: ViciMenuItem {
             required property var modelData
             text: modelData.text
             onTriggered: modelData.run()

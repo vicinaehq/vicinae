@@ -92,11 +92,11 @@ bool supports(std::string_view name) {
 
 bool preferItemPopup(std::string_view surface) {
 #if defined(Q_OS_LINUX)
-  return surface == "popover" || surface == "dialog";
+  // native menus need a platform theme providing them, otherwise Qt falls back to an unstyled popup window
+  return surface == "popover" || surface == "dialog" || surface == "menu";
 #elif defined(Q_OS_WIN)
   // native popup windows misplace and flicker on Windows (QTBUG-120051)
-  (void)surface;
-  return true;
+  return surface != "menu";
 #else
   (void)surface;
   return false;

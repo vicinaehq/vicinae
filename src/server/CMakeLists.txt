@@ -41,8 +41,6 @@ list(APPEND LIBS
 	numen::numen
 )
 
-# llama.cpp is fetched first so that its bundled ggml serves whisper.cpp as well.
-# Both pins sync the same ggml commit; bump them together.
 function(vicinae_fetch_inference_engines)
 	include(FetchContent)
 
@@ -70,19 +68,13 @@ function(vicinae_fetch_inference_engines)
 		set(EXCLUDE_ARG EXCLUDE_FROM_ALL)
 	endif()
 
-	FetchContent_Declare(llama
-	  GIT_REPOSITORY https://github.com/ggml-org/llama.cpp
-	  GIT_TAG        v0.1.2
-	  GIT_SHALLOW    TRUE
-	  ${EXCLUDE_ARG}
-	)
 	FetchContent_Declare(whisper
 	  GIT_REPOSITORY https://github.com/ggml-org/whisper.cpp
 	  GIT_TAG        v1.9.3
 	  GIT_SHALLOW    TRUE
 	  ${EXCLUDE_ARG}
 	)
-	FetchContent_MakeAvailable(llama whisper)
+	FetchContent_MakeAvailable(whisper)
 endfunction()
 
 if (NOT SYSTEM_INFERENCE_ENGINES)
@@ -1399,6 +1391,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/document/DocumentSelectionMenu.qml
 	src/ui/qml/controls/PulsingDots.qml
 	src/ui/qml/controls/ViciModal.qml
+	src/ui/qml/controls/ViciMenu.qml
+	src/ui/qml/controls/ViciMenuItem.qml
 	src/ui/qml/controls/AudioLevelMeter.qml
 	src/ui/qml/controls/AudioWaveform.qml
 	src/ui/qml/views/TranscribeView.qml

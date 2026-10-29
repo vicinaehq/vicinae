@@ -164,18 +164,17 @@ Window {
                     accessibleName: qsTr("Conversation actions")
                     activeFocusOnTab: true
                     onClicked: conversationMenu.popup(moreButton, 0, moreButton.height)
-                    Menu {
+                    ViciMenu {
                         id: conversationMenu
-                        popupType: Popup.Native
-                        MenuItem {
+                        ViciMenuItem {
                             text: qsTr("Find in conversation…")
                             onTriggered: (conversation.item as ChatConversation)?.openFind()
                         }
-                        MenuItem {
+                        ViciMenuItem {
                             text: qsTr("Rename…")
                             onTriggered: titleEditor.startEditing()
                         }
-                        MenuItem {
+                        ViciMenuItem {
                             text: qsTr("Delete…")
                             onTriggered: root.confirmDelete(Chat.session.conversationId, Chat.session.title)
                         }

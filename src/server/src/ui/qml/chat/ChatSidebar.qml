@@ -189,13 +189,12 @@ Item {
                     font.weight: row.selected ? Font.Medium : Font.Normal
                     onCommitted: value => Chat.renameConversation(row.conversationId, value)
                 }
-                ContextMenu.menu: Menu {
-                    popupType: Popup.Native
-                    MenuItem {
+                ContextMenu.menu: ViciMenu {
+                    ViciMenuItem {
                         text: qsTr("Rename…")
                         onTriggered: titleEditor.startEditing()
                     }
-                    MenuItem {
+                    ViciMenuItem {
                         text: qsTr("Delete…")
                         onTriggered: root.deleteRequested(row.conversationId, row.title)
                     }

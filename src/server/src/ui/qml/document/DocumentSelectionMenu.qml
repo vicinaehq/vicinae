@@ -1,19 +1,17 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import Vicinae
 
-Menu {
+ViciMenu {
     id: root
     required property DocumentController controller
-    popupType: Popup.Native
 
-    MenuItem {
+    ViciMenuItem {
         text: qsTr("Copy")
         enabled: root.controller.hasSelection
         onTriggered: root.controller.copy()
     }
-    MenuItem {
+    ViciMenuItem {
         text: qsTr("Select All")
         onTriggered: root.controller.selectAll()
     }
