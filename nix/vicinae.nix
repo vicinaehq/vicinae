@@ -78,6 +78,7 @@
     patches = [
       ../cmake/patches/jkqtmathtext-implication.patch
       ../cmake/patches/jkqtmathtext-font-discovery.patch
+      ../cmake/patches/jkqtmathtext-latex-braces.patch
     ];
   };
 

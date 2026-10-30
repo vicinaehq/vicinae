@@ -19,6 +19,7 @@ function(import_mathtext)
 		PATCH_COMMAND ${CMAKE_COMMAND} -E env "GIT_CEILING_DIRECTORIES=<SOURCE_DIR>/.."
 			git apply --ignore-whitespace "${CMAKE_CURRENT_LIST_DIR}/patches/jkqtmathtext-implication.patch"
 			"${CMAKE_CURRENT_LIST_DIR}/patches/jkqtmathtext-font-discovery.patch"
+			"${CMAKE_CURRENT_LIST_DIR}/patches/jkqtmathtext-latex-braces.patch"
 		EXCLUDE_FROM_ALL
 	)
 	FetchContent_MakeAvailable(jkqtmathtext)
