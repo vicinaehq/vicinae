@@ -193,7 +193,9 @@ std::expected<ThemeFile::ParseResult, std::string> ThemeFile::fromFile(const fs:
     data.path = path;
 
     if (meta.contains("inherits")) {
-      data.inherits = meta.get("inherits")->as_string()->value_or("");
+      auto inherits = meta["inherits"].as_string();
+      if (!inherits) return std::unexpected("meta.inherits must be a string");
+      data.inherits = QString::fromStdString(inherits->get());
     } else {
       data.inherits = data.variant == ThemeVariant::Dark ? "vicinae-dark" : "vicinae-light";
     }
