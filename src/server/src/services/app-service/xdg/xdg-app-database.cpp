@@ -456,8 +456,6 @@ xdgpp::DesktopEntry::TerminalExec XdgAppDatabase::getTermExec(const XdgApplicati
 
 bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
                                            const LaunchTerminalCommandOptions &opts) const {
-  if (cmdline.empty()) return false;
-
   auto terminal = opts.emulator;
 
   if (!terminal) {
@@ -494,13 +492,18 @@ bool XdgAppDatabase::launchTerminalCommand(const std::vector<QString> &cmdline,
   if (texec.title && opts.title) { addFlag(*texec.title, opts.title.value()); }
   if (texec.dir && opts.workingDirectory) { addFlag(*texec.dir, opts.workingDirectory.value()); }
   if (texec.hold && opts.hold) { argv << texec.hold->c_str(); }
-  if (texec.exec) { argv << texec.exec->c_str(); }
 
-  for (const auto &arg : cmdline) {
-    argv << arg;
+  if (!cmdline.empty()) {
+    if (texec.exec) { argv << texec.exec->c_str(); }
+    for (const auto &arg : cmdline) {
+      argv << arg;
+    }
   }
 
-  return launchProcess(exec.front(), argv, xdgApp->data().workingDirectory(), opts.appId.value_or(QString()));
+  auto workDir = opts.workingDirectory
+                     ? std::optional<std::filesystem::path>(opts.workingDirectory->toStdString())
+                     : xdgApp->data().workingDirectory();
+  return launchProcess(exec.front(), argv, workDir, opts.appId.value_or(QString()));
 }
 
 bool XdgAppDatabase::launchProcess(const QString &prog, const QStringList &args,
