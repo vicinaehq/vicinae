@@ -68,6 +68,23 @@ TEST_CASE("search_utils: non-math queries must not trigger intent") {
   CHECK(!search_utils::hasMathIntent(""));
 }
 
+TEST_CASE("search_utils: acronym extraction") {
+  CHECK(search_utils::extractAcronym("Google Chrome") == "gc");
+  CHECK(search_utils::extractAcronym("Visual Studio Code") == "vsc");
+  CHECK(search_utils::extractAcronym("Android Studio") == "as");
+  CHECK(search_utils::extractAcronym("VirtualBox") == "vb");
+  CHECK(search_utils::extractAcronym("sublime-text") == "st");
+}
+
+TEST_CASE("search_utils: acronym bonus calculation") {
+  CHECK(search_utils::calculateAcronymBonus("gc", "Google Chrome") == 35.0);
+  CHECK(search_utils::calculateAcronymBonus("vsc", "Visual Studio Code") == 35.0);
+  CHECK(search_utils::calculateAcronymBonus("vs", "Visual Studio Code") == 20.0);
+  CHECK(search_utils::calculateAcronymBonus("as", "Android Studio") == 35.0);
+  CHECK(search_utils::calculateAcronymBonus("fox", "Firefox") == 0.0);
+  CHECK(search_utils::calculateAcronymBonus("xyz", "Google Chrome") == 0.0);
+}
+
 #if !__has_include(<catch2/catch_test_macros.hpp>)
 int main(int argc, char **argv) {
   int passed = 0;

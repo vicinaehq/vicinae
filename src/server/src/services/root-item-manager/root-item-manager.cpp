@@ -13,6 +13,7 @@
 #include "config/config.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "utils.hpp"
+#include "utils/search-utils.hpp"
 #include "vicinae.hpp"
 
 RootItemManager::RootItemManager(config::Manager &cfg, LocalStorageService &storage)
@@ -154,9 +155,17 @@ double RootItemManager::SearchableRootItem::fuzzyScore(const fuzzy::Query &query
   auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.6f}; });
   auto const score = fzf::threadLocalMatcher().score_query(ss, kws, query);
 
-  if (score.quality < fuzzy::MIN_QUALITY) return 0;
+  double acronymBonus = search_utils::calculateAcronymBonus(query.text, title);
+  if (acronymBonus == 0.0 && !unlocalizedTitle.empty()) {
+    acronymBonus = search_utils::calculateAcronymBonus(query.text, unlocalizedTitle);
+  }
 
-  return score.score + fuzzy::FRECENCY_WEIGHT * frecency();
+  if (score.quality < fuzzy::MIN_QUALITY) {
+    if (acronymBonus > 0.0) { return 60.0 + acronymBonus + fuzzy::FRECENCY_WEIGHT * frecency(); }
+    return 0;
+  }
+
+  return score.score + acronymBonus + fuzzy::FRECENCY_WEIGHT * frecency();
 }
 
 std::vector<RootItemManager::ScoredItem> RootItemManager::search(const QString &query,

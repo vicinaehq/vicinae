@@ -55,4 +55,57 @@ bool hasMathIntent(std::string_view query) {
   return false;
 }
 
+std::string extractAcronym(std::string_view text) {
+  std::string acronym;
+  acronym.reserve(8);
+
+  bool atBoundary = true;
+  char prevChar = '\0';
+
+  for (char c : text) {
+    if (std::isspace(static_cast<unsigned char>(c)) || c == '-' || c == '_' || c == '.' || c == '/') {
+      atBoundary = true;
+      prevChar = c;
+      continue;
+    }
+
+    if (std::isalnum(static_cast<unsigned char>(c))) {
+      bool isCamel =
+          std::isupper(static_cast<unsigned char>(c)) && std::islower(static_cast<unsigned char>(prevChar));
+      if (atBoundary || isCamel) {
+        acronym.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+      }
+      atBoundary = false;
+    } else {
+      atBoundary = true;
+    }
+    prevChar = c;
+  }
+
+  return acronym;
+}
+
+double calculateAcronymBonus(std::string_view query, std::string_view title) {
+  if (query.size() < 2 || query.size() > 6 || title.empty()) return 0.0;
+
+  std::string qClean;
+  qClean.reserve(query.size());
+  for (char c : query) {
+    if (!std::isspace(static_cast<unsigned char>(c))) {
+      qClean.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+    }
+  }
+
+  if (qClean.size() < 2) return 0.0;
+
+  std::string acronym = extractAcronym(title);
+  if (acronym.empty()) return 0.0;
+
+  if (acronym == qClean) { return 35.0; }
+
+  if (acronym.size() > qClean.size() && acronym.starts_with(qClean)) { return 20.0; }
+
+  return 0.0;
+}
+
 } // namespace search_utils
