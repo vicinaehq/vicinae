@@ -8,6 +8,7 @@
 #include <glaze/json/read.hpp>
 #include <glaze/json/schema.hpp>
 #include <glaze/json/write.hpp>
+#include <QByteArrayView>
 #include <qfuture.h>
 #include <string>
 #include <optional>
@@ -20,6 +21,29 @@ struct ToolOutput {
   std::optional<std::string> statusText;
   bool failed = false;
 };
+
+struct TruncatedText {
+  std::string_view text;
+  bool truncated = false;
+};
+
+/**
+ * Cut text to at most `maxBytes` without splitting a UTF-8 sequence.
+ */
+constexpr TruncatedText truncateUtf8(std::string_view text, std::size_t maxBytes) {
+  if (text.size() <= maxBytes) return {.text = text};
+  auto end = maxBytes;
+  while (end > 0 && (static_cast<unsigned char>(text[end]) & 0xC0) == 0x80)
+    --end;
+  return {.text = text.substr(0, end), .truncated = true};
+}
+
+/**
+ * Whether the data is valid UTF-8 text a model can read, as opposed to binary content.
+ */
+inline bool isReadableText(std::string_view data) {
+  return QByteArrayView(data).isValidUtf8() && !data.contains('\0');
+}
 
 template <typename T> struct ToolTask {
   QFuture<std::expected<T, std::string>> future;

@@ -10,6 +10,9 @@
 #include "services/telemetry/telemetry-service.hpp"
 #include "navigation-controller.hpp"
 #include "config/config.hpp"
+#include "builtins/vicinae/config-tools.hpp"
+#include "builtins/vicinae/theme-tools.hpp"
+#include "service-registry.hpp"
 #include "builtins/vicinae/local-storage-view-host.hpp"
 #include "refresh-apps-command.hpp"
 #include "configure-fallback-command.hpp"
@@ -271,6 +274,43 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenDefaultVicinaeConfig>();
   registerCommand<ReloadScriptDirectoriesCommand>();
   registerCommand<ShowLogs>();
+
+  registerTool(
+      {.id = "read_config",
+       .title = QCoreApplication::translate("VicinaeExtension", "Read Configuration"),
+       .description = QCoreApplication::translate("VicinaeExtension",
+                                                  "Read the default and current Vicinae configuration."),
+       .icon = ImageURL::builtin(BuiltinIcon::Cog),
+       .defaultPolicy = AI::ToolPolicy::Allow,
+       .create = [] { return std::make_unique<ReadConfigTool>(*ServiceRegistry::instance()->config()); }});
+  registerTool(
+      {.id = "write_config",
+       .title = QCoreApplication::translate("VicinaeExtension", "Change Configuration"),
+       .description = QCoreApplication::translate("VicinaeExtension", "Change your Vicinae configuration."),
+       .icon = ImageURL::builtin(BuiltinIcon::Cog),
+       .create = [] { return std::make_unique<WriteConfigTool>(*ServiceRegistry::instance()->config()); }});
+  registerTool(
+      {.id = "read_themes",
+       .title = QCoreApplication::translate("VicinaeExtension", "Read Themes"),
+       .description = QCoreApplication::translate("VicinaeExtension",
+                                                  "List installed themes and read the theme file format."),
+       .icon = ImageURL::builtin(BuiltinIcon::Brush),
+       .defaultPolicy = AI::ToolPolicy::Allow,
+       .create = [] { return std::make_unique<ReadThemesTool>(*ServiceRegistry::instance()->config()); }});
+  registerTool({.id = "write_theme",
+                .title = QCoreApplication::translate("VicinaeExtension", "Write Theme"),
+                .description = QCoreApplication::translate(
+                    "VicinaeExtension", "Create your own themes. Asks before replacing an existing one."),
+                .icon = ImageURL::builtin(BuiltinIcon::Brush),
+                .defaultPolicy = AI::ToolPolicy::Allow,
+                .create = [] { return std::make_unique<WriteThemeTool>(); }});
+  registerTool(
+      {.id = "set_theme",
+       .title = QCoreApplication::translate("VicinaeExtension", "Set Theme"),
+       .description = QCoreApplication::translate("VicinaeExtension", "Switch the active theme."),
+       .icon = ImageURL::builtin(BuiltinIcon::Brush),
+       .defaultPolicy = AI::ToolPolicy::Allow,
+       .create = [] { return std::make_unique<SetThemeTool>(*ServiceRegistry::instance()->config()); }});
 
   // disabled by default
   registerCommand<ForgetTelemetryCommand>();

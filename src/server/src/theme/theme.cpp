@@ -1,4 +1,5 @@
 #include "theme/theme.hpp"
+#include "config/config.hpp"
 #include "theme/colors.hpp"
 #include "theme/theme-db.hpp"
 #include "theme/theme-file.hpp"
@@ -35,6 +36,21 @@ double ThemeService::pointSize(TextSize size) const {
 void ThemeService::setFontBasePointSize(double pointSize) { m_baseFontPointSize = pointSize; }
 
 void ThemeService::reloadCurrentTheme() { setTheme(m_theme->id()); }
+
+bool ThemeService::selectTheme(const QString &id, config::Manager &config) {
+  m_themeDb->scan();
+
+  const auto *theme = m_themeDb->theme(id);
+  if (!theme) return false;
+
+  if (theme->id() == config.value().systemTheme().name) {
+    reloadCurrentTheme();
+  } else {
+    config.mergeThemeConfig({.name = theme->id().toStdString()});
+  }
+
+  return true;
+}
 
 bool ThemeService::setTheme(const QString &name) {
   if (auto theme = m_themeDb->theme(name)) {

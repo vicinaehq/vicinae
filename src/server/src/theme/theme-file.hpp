@@ -37,6 +37,11 @@ public:
   struct ParseResult;
 
   static std::expected<ParseResult, std::string> fromFile(const std::filesystem::path &path);
+  /**
+   * Parse theme file content. The id is derived from the filename of `path`, which does not need to exist.
+   */
+  static std::expected<ParseResult, std::string> fromString(std::string_view content,
+                                                            const std::filesystem::path &path);
   explicit ThemeFile(const InitData &data) : m_data(data) {}
   ThemeFile(const ThemeFile &file) = default;
 

@@ -458,6 +458,11 @@ public:
 
   bool mergeWithUser(const Partial<ConfigValue> &patch);
 
+  /**
+   * Replace the user configuration file entirely.
+   */
+  bool replaceUser(const Partial<ConfigValue> &value) { return writeUser(value); }
+
   bool mergeThemeConfig(const config::Partial<config::SystemThemeConfig> &cfg);
 
   const SystemThemeConfig &theme() const;
@@ -506,6 +511,7 @@ SNAKE_CASIFY(config::TelemetryConfig);
 SNAKE_CASIFY(config::WindowCSD);
 SNAKE_CASIFY(config::ClockConfig);
 SNAKE_CASIFY(config::GlobalShortcuts);
+SNAKE_CASIFY(config::Updates);
 
 #undef SNAKE_CASIFY
 

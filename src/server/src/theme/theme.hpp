@@ -5,6 +5,10 @@
 class ThemeFile;
 class ThemeDatabase;
 
+namespace config {
+class Manager;
+}
+
 enum TextSize { TextRegular, TextTitle, TextSmaller };
 
 class ThemeService : public QObject {
@@ -36,6 +40,11 @@ public:
   void setFontBasePointSize(double pointSize);
 
   void reloadCurrentTheme();
+
+  /**
+   * Rescan theme files and use the theme with this id for the current system color scheme.
+   */
+  bool selectTheme(const QString &id, config::Manager &config);
   std::vector<std::shared_ptr<ThemeFile>> themes() const;
 
 private:

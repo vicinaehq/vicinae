@@ -8,6 +8,7 @@
 #include "builtins/system/system-run-model.hpp"
 #include "builtins/system/system-run-view-host.hpp"
 #include "builtins/system/bash-tool.hpp"
+#include "builtins/system/open-tool.hpp"
 #include "theme/colors.hpp"
 #include "utils.hpp"
 #include "services/app-service/app-service.hpp"
@@ -147,6 +148,12 @@ public:
                     .icon = ImageURL::builtin(BuiltinIcon::Terminal),
                     .create = [path = *executable] { return std::make_unique<BashTool>(path); }});
     }
+    registerTool(
+        {.id = "open",
+         .title = tr("Open"),
+         .description = tr("Open files, folders and links with their default application."),
+         .icon = ImageURL::builtin(BuiltinIcon::ArrowNe),
+         .create = [] { return std::make_unique<OpenTool>(*ServiceRegistry::instance()->appDb()); }});
 
 #ifdef Q_OS_LINUX
     // set default terminal using xdg-terminal-exec

@@ -527,6 +527,11 @@ set(SRCS
 	src/extension/api/ai-service.hpp
 
 	src/builtins/vicinae/vicinae-extension.cpp
+	src/builtins/vicinae/config-tools.cpp
+	src/builtins/vicinae/theme-tools.cpp
+	src/builtins/clipboard/clipboard-tools.cpp
+	src/builtins/file/file-tools.cpp
+	src/builtins/system/open-tool.cpp
 
 	src/builtins/file/search-files-model.hpp
 	src/builtins/file/search-files-model.cpp
@@ -1295,6 +1300,9 @@ if (UNIX AND NOT APPLE)
 endif()
 
 vicinae_enable_utf8(${TARGET})
+
+include(EmbedFile)
+embed_file(${TARGET} "${EXTRA_DIR}/theme-template.toml" THEME_TEMPLATE)
 
 if(APPLE)
 	set(VICINAE_BUNDLE_EXECUTABLE "Vicinae")

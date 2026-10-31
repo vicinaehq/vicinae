@@ -230,21 +230,9 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       }
 
       QString const &id = components.at(1);
-      auto &service = ThemeService::instance();
-      auto cfg = m_ctx.services->config();
 
-      service.db().scan();
-
-      auto theme = service.findTheme(id);
-
-      if (!theme) {
+      if (!ThemeService::instance().selectTheme(id, *m_ctx.services->config())) {
         return std::unexpected(std::string("theme with id ") + id.toStdString() + " does not exist");
-      }
-
-      if (theme->id() == cfg->value().systemTheme().name) {
-        service.reloadCurrentTheme();
-      } else {
-        cfg->mergeThemeConfig({.name = theme->id().toStdString()});
       }
 
       if (auto text = query.queryItemValue("openWindow", QUrl::FullyDecoded); text == "true" || text == "1") {

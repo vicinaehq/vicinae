@@ -2,6 +2,7 @@
 #include "command/command-database.hpp"
 #include "command/preference.hpp"
 #include "services/files-service/file-service.hpp"
+#include "builtins/file/file-tools.hpp"
 #include "builtins/file/search-files-view-host.hpp"
 #include "command/single-view-command-context.hpp"
 #include "command/typed-command.hpp"
@@ -118,6 +119,20 @@ public:
 
   FileExtension() {
     registerCommand<SearchFilesCommand>();
+
+    registerTool({.id = "search",
+                  .title = tr("Search Files"),
+                  .description = tr("Find files on your computer by name."),
+                  .icon = ImageURL::builtin(BuiltinIcon::MagnifyingGlass),
+                  .defaultPolicy = AI::ToolPolicy::Allow,
+                  .create = [] {
+                    return std::make_unique<SearchFilesTool>(*ServiceRegistry::instance()->fileService());
+                  }});
+    registerTool({.id = "read",
+                  .title = tr("Read File"),
+                  .description = tr("Read the content of a text file."),
+                  .icon = ImageURL::builtin(BuiltinIcon::BlankDocument),
+                  .create = [] { return std::make_unique<ReadFileTool>(); }});
 
     // XXX - we don't really need this anymore, as the indexer now executes full sweeps at a given interval
     // This behavior can be easily replicated by simply removing the `.cache/vicinae/file-indexer` directory.
