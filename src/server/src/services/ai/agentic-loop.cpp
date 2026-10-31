@@ -1,10 +1,99 @@
 #include <QTimer>
 #include <algorithm>
+#include <format>
 #include <utility>
 
 #include "agentic-loop.hpp"
 
 namespace AI {
+
+namespace {
+
+constexpr std::size_t MAX_SUMMARY_LENGTH = 160;
+
+struct LoadToolsInput {
+  std::vector<std::string> names;
+};
+
+std::string_view firstSentence(std::string_view text) {
+  if (const auto end = text.find(". "); end != std::string_view::npos) text = text.substr(0, end + 1);
+  return truncateUtf8(text, MAX_SUMMARY_LENGTH).text;
+}
+
+class LoadToolsTool : public AbstractTool {
+public:
+  explicit LoadToolsTool(const Agent &agent) : m_agent(agent) {}
+
+  std::string name() const override { return std::string(Agent::LOAD_TOOLS); }
+
+  std::string description() const override {
+    std::string out = "Load tools so that you can call them. The tools listed below are not available until "
+                      "they are loaded. Loaded tools stay available for the rest of the conversation. Load "
+                      "every tool you need in a single call.\n\nTools that can be loaded:";
+    for (const auto *tool : m_agent.availableTools()) {
+      if (tool->isDeferred())
+        out += std::format("\n- {}: {}", tool->name(), firstSentence(tool->description()));
+    }
+    return out;
+  }
+
+  std::string generateInputSchema() const override {
+    return R"({"type":"object","properties":{"names":{"type":"array","items":{"type":"string"},"minItems":1,"description":"Names of the tools to load."}},"required":["names"],"additionalProperties":false})";
+  }
+
+  std::optional<std::string> invocationSummary(std::string_view arguments) const override {
+    LoadToolsInput input;
+    if (glz::read_json(input, arguments)) return std::nullopt;
+    return join(input.names);
+  }
+
+  RawToolTask runRaw(std::string_view arguments) override {
+    LoadToolsInput input;
+    if (const auto error = glz::read_json(input, arguments))
+      return ready(std::unexpected(glz::format_error(error, arguments)));
+
+    const auto tools = m_agent.availableTools();
+    const auto loadable = [&](const std::string &name) {
+      return std::ranges::any_of(
+          tools, [&](const AbstractTool *tool) { return tool->isDeferred() && tool->name() == name; });
+    };
+
+    std::vector<std::string> loaded;
+    std::vector<std::string> unknown;
+    loaded.reserve(input.names.size());
+    unknown.reserve(input.names.size());
+    for (auto &name : input.names)
+      (loadable(name) ? loaded : unknown).emplace_back(std::move(name));
+
+    if (loaded.empty())
+      return ready(std::unexpected(
+          std::format("Unknown tools: {}. Only the tools listed in the load_tools description can be loaded.",
+                      join(unknown))));
+
+    auto out = std::format("Loaded {}. You can call them now.", join(loaded));
+    if (!unknown.empty())
+      out += std::format(" These tools do not exist and were not loaded: {}.", join(unknown));
+    return ready(ToolOutput{.content = std::move(out)});
+  }
+
+private:
+  static std::string join(const std::vector<std::string> &names) {
+    std::string out;
+    for (const auto &name : names) {
+      if (!out.empty()) out += ", ";
+      out += name;
+    }
+    return out;
+  }
+
+  static RawToolTask ready(RawToolResult result) {
+    return {QtFuture::makeReadyValueFuture(std::move(result)), {}};
+  }
+
+  const Agent &m_agent;
+};
+
+} // namespace
 
 Agent::Agent(CompletionFactory factory, std::optional<std::string> systemPrompt, QObject *parent)
     : QObject(parent), m_factory(std::move(factory)), m_systemPrompt(std::move(systemPrompt)) {
@@ -12,6 +101,7 @@ Agent::Agent(CompletionFactory factory, std::optional<std::string> systemPrompt,
   m_calls.reserve(8);
   m_tools.reserve(4);
   m_pendingCalls.reserve(4);
+  m_loadTools = std::make_unique<LoadToolsTool>(*this);
 }
 
 Agent::~Agent() { stopWork(); }
@@ -40,6 +130,29 @@ bool Agent::addTool(std::unique_ptr<AbstractTool> tool) {
 const Agent::Message *Agent::message(Id id) const {
   const auto it = std::ranges::lower_bound(m_messages, id, {}, &Message::id);
   return it != m_messages.end() && it->id == id ? &*it : nullptr;
+}
+
+std::vector<AbstractTool *> Agent::availableTools() const {
+  std::vector<AbstractTool *> tools;
+  tools.reserve(m_tools.size());
+  for (const auto &tool : m_tools) {
+    if (tool->isEnabled() && std::ranges::contains(m_options.tools, tool->name()))
+      tools.emplace_back(tool.get());
+  }
+  return tools;
+}
+
+std::vector<std::string> Agent::loadedTools() const {
+  std::vector<std::string> names;
+  names.reserve(m_calls.size());
+  for (const auto &call : m_calls) {
+    if (call.call.name != LOAD_TOOLS || call.state != ToolState::Succeeded) continue;
+    LoadToolsInput input;
+    if (glz::read_json(input, call.call.arguments)) continue;
+    for (auto &name : input.names)
+      names.emplace_back(std::move(name));
+  }
+  return names;
 }
 
 const Agent::ToolCall *Agent::toolCall(Id id) const {
@@ -110,11 +223,16 @@ void Agent::complete() {
   for (const auto &message : m_messages)
     payload.messages.emplace_back(message.content);
 
-  payload.tools.reserve(m_options.tools.size());
-  for (const auto &tool : m_tools) {
-    if (tool->isEnabled() && std::ranges::contains(m_options.tools, tool->name()))
-      payload.tools.emplace_back(tool.get());
+  const auto loaded = loadedTools();
+  bool hasDeferred = false;
+  payload.tools.reserve(m_options.tools.size() + 1);
+  for (auto *tool : availableTools()) {
+    if (!tool->isDeferred() || std::ranges::contains(loaded, tool->name()))
+      payload.tools.emplace_back(tool);
+    else
+      hasDeferred = true;
   }
+  if (hasDeferred) payload.tools.emplace_back(m_loadTools.get());
 
   m_completion = m_factory(m_options.model, payload);
   if (!m_completion) {
@@ -199,13 +317,16 @@ void Agent::receiveToolCall(const ToolCallPart &call) {
   const auto id = m_nextId++;
   if (m_calls.size() == m_calls.capacity()) m_calls.reserve(m_calls.size() * 2);
 
-  const auto tool =
-      std::ranges::find_if(m_tools, [&](const auto &tool) { return tool->name() == call.name; });
-  m_calls.emplace_back(
-      ToolCall{.id = id,
-               .messageId = message.id,
-               .call = call,
-               .summary = tool != m_tools.end() ? (*tool)->invocationSummary(call.arguments) : std::nullopt});
+  const AbstractTool *tool = call.name == LOAD_TOOLS ? m_loadTools.get() : nullptr;
+  if (!tool) {
+    const auto it =
+        std::ranges::find_if(m_tools, [&](const auto &tool) { return tool->name() == call.name; });
+    if (it != m_tools.end()) tool = it->get();
+  }
+  m_calls.emplace_back(ToolCall{.id = id,
+                                .messageId = message.id,
+                                .call = call,
+                                .summary = tool ? tool->invocationSummary(call.arguments) : std::nullopt});
   m_pendingCalls.emplace_back(id);
 
   emit toolAdded(id);
@@ -247,6 +368,7 @@ void Agent::executeNextTool() {
 }
 
 AbstractTool *Agent::findTool(std::string_view name) const {
+  if (name == LOAD_TOOLS) return m_loadTools.get();
   const auto tool = std::ranges::find_if(m_tools, [&](const auto &tool) {
     return tool->name() == name && tool->isEnabled() && std::ranges::contains(m_options.tools, tool->name());
   });

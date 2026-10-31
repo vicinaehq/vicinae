@@ -420,14 +420,13 @@ int startServer(const ServerLaunchOptions &launchOpts) {
                        toast->failure(
                            QCoreApplication::translate("ConversationStore", "Could not save conversation."));
                      });
-    registry->setTools(std::make_unique<AI::ToolRegistry>(*registry->config()));
+    registry->setTools(std::make_unique<AI::ToolRegistry>(*registry->config(), *registry->rootItemManager()));
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>(*registry);
 
     for (const auto &repo : builtinCommandDb->repositories()) {
       root->loadProvider(std::make_unique<ExtensionRootProvider>(repo));
-      registry->tools()->addProvider(repo->id().toStdString(), repo->tools());
     }
 
     auto reg = ServiceRegistry::instance()->extensionRegistry();

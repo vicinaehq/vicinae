@@ -1,10 +1,11 @@
 #pragma once
 
-#include <span>
 #include <vector>
 #include <QObject>
 #include "ai-tool.hpp"
 #include "tool-contribution.hpp"
+
+class RootItemManager;
 
 namespace config {
 class Manager;
@@ -25,9 +26,8 @@ public:
     ToolContribution contribution;
   };
 
-  explicit ToolRegistry(config::Manager &config);
+  ToolRegistry(config::Manager &config, RootItemManager &rootItems);
 
-  void addProvider(std::string_view providerId, std::span<const ToolContribution> tools);
   const std::vector<Entry> &entries() const { return m_entries; }
   const Entry *find(std::string_view name) const;
   const Entry *find(std::string_view providerId, std::string_view toolId) const;
@@ -42,7 +42,10 @@ public:
   bool toolsEnabled() const;
 
 private:
+  void rebuild();
+
   config::Manager &m_config;
+  RootItemManager &m_rootItems;
   std::vector<Entry> m_entries;
 };
 

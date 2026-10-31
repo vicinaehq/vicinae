@@ -12,6 +12,7 @@ Item {
     readonly property real sideMargin: (width - contentWidth) / 2
     property string expandedCommandId: ""
     property string _focusedCommandId: ""
+    property string _focusedToolKey: ""
     readonly property string subpageRoot: {
         const subpage = Settings.currentSubpage;
         const slash = subpage.indexOf("/");
@@ -28,20 +29,24 @@ Item {
     Timer {
         id: focusFlash
         interval: 2000
-        onTriggered: root._focusedCommandId = ""
+        onTriggered: {
+            root._focusedCommandId = "";
+            root._focusedToolKey = "";
+        }
     }
 
     // Content above the list lays out async after the initial scroll; re-anchor until settled.
     Timer {
         id: scrollSettle
         interval: 800
-        onTriggered: cmdFlickable.pendingScrollRow = -1
+        onTriggered: cmdFlickable.pendingScrollTarget = null
     }
 
     Component.onCompleted: {
         root.extModel.commandModel.setFilter("");
         root.extModel.selectProviderById(root.providerId);
         _handlePendingCommand();
+        _handlePendingTool();
     }
 
     HoverResetOnModelChange {
@@ -60,11 +65,28 @@ Item {
         root._focusedCommandId = pending;
         focusFlash.restart();
         root.extModel.loadCommandPreferences(pending);
-        cmdFlickable.pendingScrollRow = row;
+        _scrollTo(() => cmdRepeater.itemAt(row));
+    }
+
+    function _handlePendingTool() {
+        const pending = Settings.pendingToolKey;
+        if (!pending)
+            return;
+        const row = root.extModel.tools.findIndex(tool => tool.key === pending);
+        if (row < 0)
+            return;
+        Settings.pendingToolKey = "";
+        root._focusedToolKey = pending;
+        focusFlash.restart();
+        _scrollTo(() => toolRepeater.itemAt(row));
+    }
+
+    function _scrollTo(target) {
+        cmdFlickable.pendingScrollTarget = target;
         scrollSettle.restart();
         Qt.callLater(() => {
             if (cmdFlickable)
-                cmdFlickable.scrollToIndex(row);
+                cmdFlickable.scrollToItem(target());
         });
     }
 
@@ -72,6 +94,9 @@ Item {
         target: Settings
         function onPendingCommandIdChanged() {
             root._handlePendingCommand();
+        }
+        function onPendingToolKeyChanged() {
+            root._handlePendingTool();
         }
     }
 
@@ -93,18 +118,18 @@ Item {
         contentHeight: contentColumn.implicitHeight
         contentWidth: width
 
-        property int pendingScrollRow: -1
+        // Returns the item to keep in view while the content above it lays out.
+        property var pendingScrollTarget: null
         onContentHeightChanged: {
-            if (pendingScrollRow >= 0)
-                Qt.callLater(() => scrollToIndex(pendingScrollRow));
+            if (pendingScrollTarget)
+                Qt.callLater(() => scrollToItem(pendingScrollTarget?.()));
         }
 
         ViciWheelHandler {
             target: cmdFlickable
         }
 
-        function scrollToIndex(row) {
-            const item = cmdRepeater.itemAt(row);
+        function scrollToItem(item) {
             if (!item)
                 return;
             // Map into the Flickable content so the header above the list counts.
@@ -393,6 +418,73 @@ Item {
                 }
             }
 
+            SettingsSectionLabel {
+                visible: root.extModel.tools.length > 0
+                text: qsTr("Tools")
+                Layout.fillWidth: true
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
+                Layout.topMargin: 24
+                Layout.bottomMargin: root.extModel.toolsAvailable ? 10 : 4
+            }
+
+            Text {
+                visible: root.extModel.tools.length > 0 && !root.extModel.toolsAvailable
+                text: qsTr("AI tools are turned off in the AI extension settings. Your choices below are kept.")
+                color: Theme.textMuted
+                font.pointSize: Theme.smallerFontSize
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
+                Layout.bottomMargin: 10
+            }
+
+            SettingsGroup {
+                visible: root.extModel.tools.length > 0
+                Layout.leftMargin: root.sideMargin
+                Layout.rightMargin: root.sideMargin
+
+                Repeater {
+                    id: toolRepeater
+                    model: root.extModel.tools
+
+                    delegate: Item {
+                        id: toolDelegate
+                        required property var modelData
+                        required property int index
+                        Layout.fillWidth: true
+                        implicitHeight: toolRow.implicitHeight
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            anchors.topMargin: 2
+                            anchors.bottomMargin: 2
+                            radius: 8
+                            color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.1)
+                            opacity: toolDelegate.modelData.key === root._focusedToolKey ? 1 : 0
+                            visible: opacity > 0
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 150
+                                }
+                            }
+                        }
+
+                        ToolSettingsRow {
+                            id: toolRow
+                            width: parent.width
+                            tool: toolDelegate.modelData
+                            policyItems: root.extModel.toolPolicyItems
+                            showSeparator: toolDelegate.index < root.extModel.tools.length - 1
+                            onPolicySelected: policy => root.extModel.setToolPolicy(toolDelegate.modelData.id, policy)
+                        }
+                    }
+                }
+            }
+
             Item {
                 Layout.preferredHeight: 24
             }
@@ -402,7 +494,7 @@ Item {
     ColumnLayout {
         anchors.centerIn: parent
         spacing: 4
-        visible: root.extModel.selectedDescription === "" && !root.extModel.hasPreferences && root.extModel.commandModel.totalCount === 0 && root.extModel.settingsPages.length === 0
+        visible: root.extModel.selectedDescription === "" && !root.extModel.hasPreferences && root.extModel.commandModel.totalCount === 0 && root.extModel.settingsPages.length === 0 && root.extModel.tools.length === 0
 
         ViciImage {
             source: root.extModel.selectedIconSource

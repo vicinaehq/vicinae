@@ -19,7 +19,6 @@ class KeybindSettingsModel;
 class ExtensionSettingsModel;
 class SettingsSidebarModel;
 class AISettingsModel;
-class ToolSettingsModel;
 class QQuickWindow;
 
 class SettingsWindow : public QObject {
@@ -39,6 +38,7 @@ private:
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY historyChanged)
   Q_PROPERTY(
       QString pendingCommandId READ pendingCommandId WRITE setPendingCommandId NOTIFY pendingCommandIdChanged)
+  Q_PROPERTY(QString pendingToolKey READ pendingToolKey WRITE setPendingToolKey NOTIFY pendingToolKeyChanged)
   Q_PROPERTY(SettingsSidebarModel *sidebarModel READ sidebarModel CONSTANT)
   Q_PROPERTY(QString version READ version CONSTANT)
   Q_PROPERTY(QString commitHash READ commitHash CONSTANT)
@@ -48,7 +48,6 @@ private:
   Q_PROPERTY(KeybindSettingsModel *keybindModel READ keybindModel CONSTANT)
   Q_PROPERTY(ExtensionSettingsModel *extensionModel READ extensionModel CONSTANT)
   Q_PROPERTY(AISettingsModel *aiModel READ aiModel CONSTANT)
-  Q_PROPERTY(ToolSettingsModel *toolModel READ toolModel CONSTANT)
 
 public:
   explicit SettingsWindow(ApplicationContext &ctx, QObject *parent = nullptr);
@@ -60,6 +59,8 @@ public:
 
   QString pendingCommandId() const { return m_pendingCommandId; }
   void setPendingCommandId(const QString &id);
+  QString pendingToolKey() const { return m_pendingToolKey; }
+  void setPendingToolKey(const QString &key);
 
   SettingsSidebarModel *sidebarModel() const { return m_sidebarModel; }
 
@@ -72,7 +73,6 @@ public:
   KeybindSettingsModel *keybindModel() const { return m_keybindModel; }
   ExtensionSettingsModel *extensionModel() const { return m_extensionModel; }
   AISettingsModel *aiModel() const { return m_aiModel; }
-  ToolSettingsModel *toolModel() const { return m_toolModel; }
 
   bool canGoBack() const { return !m_backStack.isEmpty(); }
   bool canGoForward() const { return !m_forwardStack.isEmpty(); }
@@ -89,12 +89,14 @@ public:
 
   void openTab(const QString &tabId);
   Q_INVOKABLE void selectExtension(const QString &entrypointId);
+  Q_INVOKABLE void selectTool(const QString &providerId, const QString &toolKey);
   void openSubpage(const QString &providerId, const QString &subpage);
 
 signals:
   void currentPageChanged();
   void currentSubpageChanged();
   void pendingCommandIdChanged();
+  void pendingToolKeyChanged();
   void defaultFocusRequested();
   void historyChanged();
 
@@ -111,7 +113,6 @@ private:
   ExtensionSettingsModel *m_extensionModel = nullptr;
   SettingsSidebarModel *m_sidebarModel = nullptr;
   AISettingsModel *m_aiModel = nullptr;
-  ToolSettingsModel *m_toolModel = nullptr;
   QQuickWindow *m_window = nullptr;
   struct Route {
     QString page;
@@ -123,6 +124,7 @@ private:
 
   Route m_route{.page = QStringLiteral("general")};
   QString m_pendingCommandId;
+  QString m_pendingToolKey;
   QList<Route> m_backStack;
   QList<Route> m_forwardStack;
   bool m_navigatingHistory = false;

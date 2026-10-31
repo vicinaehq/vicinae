@@ -4,7 +4,6 @@
 #include "ui/qml-dev-loader.hpp"
 #include "ui/qml-engine-scope.hpp"
 #include "ui/settings/ai-settings-model.hpp"
-#include "ui/settings/tool-settings-model.hpp"
 #include "ui/settings/extension-settings-model.hpp"
 #include "ui/settings/general-settings-model.hpp"
 #include "ui/image/image-source.hpp"
@@ -48,7 +47,6 @@ void SettingsWindow::ensureInitialized() {
   m_extensionModel = new ExtensionSettingsModel(this);
   m_sidebarModel = new SettingsSidebarModel(m_extensionModel, this);
   m_aiModel = new AISettingsModel(this);
-  m_toolModel = new ToolSettingsModel(this);
 
   QmlDevLoader::attach(&m_engine, [this]() { reloadRoot(); });
   QmlEngineScope::set(&m_engine, this);
@@ -182,6 +180,19 @@ void SettingsWindow::selectExtension(const QString &entrypointId) {
   // Page first so the surviving (new) page handles the pending command.
   setCurrentPage(providerId);
   setPendingCommandId(entrypointId);
+}
+
+void SettingsWindow::setPendingToolKey(const QString &key) {
+  if (m_pendingToolKey == key) return;
+  m_pendingToolKey = key;
+  emit pendingToolKeyChanged();
+}
+
+void SettingsWindow::selectTool(const QString &providerId, const QString &toolKey) {
+  ensureInitialized();
+  m_extensionModel->selectProviderById(providerId);
+  setCurrentPage(providerId);
+  setPendingToolKey(toolKey);
 }
 
 void SettingsWindow::openSubpage(const QString &providerId, const QString &subpage) {

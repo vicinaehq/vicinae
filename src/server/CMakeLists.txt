@@ -854,8 +854,6 @@ set(SRCS
 	src/ui/settings/extension-settings-model.cpp
 	src/ui/settings/ai-settings-model.hpp
 	src/ui/settings/ai-settings-model.cpp
-	src/ui/settings/tool-settings-model.hpp
-	src/ui/settings/tool-settings-model.cpp
 	src/ui/settings/preference-form-model.hpp
 	src/ui/settings/preference-form-model.cpp
 	src/ui/settings/provider-command-model.hpp
@@ -1493,7 +1491,6 @@ set(VICINAE_QML_FILES
 	src/ui/qml/settings/ExtensionSettingsPage.qml
 	src/ui/qml/settings/AboutSettingsPage.qml
 	src/ui/qml/settings/AISettingsPage.qml
-	src/ui/qml/settings/AIToolsSettingsPage.qml
 	src/ui/qml/settings/ToolSettingsRow.qml
 	src/ui/qml/settings/SettingsSubpageRow.qml
 	src/ui/qml/settings/AIProvidersOverview.qml

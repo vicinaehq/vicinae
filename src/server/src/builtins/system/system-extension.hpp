@@ -146,6 +146,7 @@ public:
                     .title = tr("Bash"),
                     .description = tr("Run shell commands on your computer."),
                     .icon = ImageURL::builtin(BuiltinIcon::Terminal),
+                    .deferred = false,
                     .create = [path = *executable] { return std::make_unique<BashTool>(path); }});
     }
     registerTool(

@@ -1,9 +1,11 @@
 #include <algorithm>
+#include <format>
 #include <QPointer>
 
 #include "tool-registry.hpp"
 #include "ai-preferences.hpp"
 #include "config/config.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 
 namespace AI {
 
@@ -13,12 +15,14 @@ class RegisteredTool : public AbstractTool {
   Q_DECLARE_TR_FUNCTIONS(RegisteredTool)
 
 public:
-  RegisteredTool(const ToolRegistry &registry, std::string name, std::unique_ptr<AbstractTool> tool)
-      : m_registry(&registry), m_name(std::move(name)), m_tool(std::move(tool)) {}
+  RegisteredTool(const ToolRegistry &registry, std::string name, bool deferred,
+                 std::unique_ptr<AbstractTool> tool)
+      : m_registry(&registry), m_name(std::move(name)), m_deferred(deferred), m_tool(std::move(tool)) {}
 
   std::string name() const override { return m_name; }
   std::string description() const override { return m_tool->description(); }
   std::string generateInputSchema() const override { return m_tool->generateInputSchema(); }
+  bool isDeferred() const override { return m_deferred; }
 
   std::optional<std::string> invocationSummary(std::string_view arguments) const override {
     return m_tool->invocationSummary(arguments);
@@ -45,6 +49,7 @@ public:
 private:
   QPointer<const ToolRegistry> m_registry;
   std::string m_name;
+  bool m_deferred;
   std::unique_ptr<AbstractTool> m_tool;
 };
 
@@ -56,25 +61,41 @@ bool validId(std::string_view id) {
 
 } // namespace
 
-ToolRegistry::ToolRegistry(config::Manager &config) : m_config(config) {
+ToolRegistry::ToolRegistry(config::Manager &config, RootItemManager &rootItems)
+    : m_config(config), m_rootItems(rootItems) {
   connect(&config, &config::Manager::configChanged, this, &ToolRegistry::changed);
+  connect(&rootItems, &RootItemManager::itemsChanged, this, &ToolRegistry::rebuild);
+  rebuild();
 }
 
-void ToolRegistry::addProvider(std::string_view providerId, std::span<const ToolContribution> tools) {
-  m_entries.reserve(m_entries.size() + tools.size());
+void ToolRegistry::rebuild() {
+  std::vector<Entry> entries;
+  std::vector<std::string> invalid;
 
-  for (const auto &tool : tools) {
-    auto name = std::format("{}__{}", providerId, tool.id);
+  for (const auto *provider : m_rootItems.providers()) {
+    const auto providerId = provider->uniqueId().toStdString();
+    auto tools = provider->tools();
+    entries.reserve(entries.size() + tools.size());
 
-    if (!validId(providerId) || !validId(tool.id) || name.size() > 64 || !tool.create ||
-        std::ranges::find(m_entries, name, &Entry::name) != m_entries.end()) {
-      qWarning() << "Invalid or duplicate tool contribution:" << name;
-      continue;
+    for (auto &tool : tools) {
+      auto name = std::format("{}__{}", providerId, tool.id);
+
+      if (!validId(providerId) || !validId(tool.id) || name.size() > 64 || !tool.create ||
+          std::ranges::find(entries, name, &Entry::name) != entries.end()) {
+        invalid.emplace_back(std::move(name));
+        continue;
+      }
+
+      entries.emplace_back(Entry{providerId, std::move(name), std::move(tool)});
     }
-
-    m_entries.emplace_back(Entry{std::string(providerId), std::move(name), tool});
   }
 
+  const bool same = std::ranges::equal(entries, m_entries, {}, &Entry::name, &Entry::name);
+  m_entries = std::move(entries);
+  if (same) return;
+
+  for (const auto &name : invalid)
+    qWarning() << "Invalid or duplicate tool contribution:" << name;
   emit changed();
 }
 
@@ -143,7 +164,8 @@ std::vector<std::unique_ptr<AbstractTool>> ToolRegistry::createTools() const {
 
   for (const auto &entry : m_entries) {
     if (auto tool = entry.contribution.create())
-      tools.emplace_back(std::make_unique<RegisteredTool>(*this, entry.name, std::move(tool)));
+      tools.emplace_back(
+          std::make_unique<RegisteredTool>(*this, entry.name, entry.contribution.deferred, std::move(tool)));
   }
 
   return tools;

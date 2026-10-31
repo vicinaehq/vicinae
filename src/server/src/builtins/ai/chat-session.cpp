@@ -427,9 +427,12 @@ void ChatSession::generateTitle() {
 
 void ChatSession::addTool(const AI::Agent::ToolCall &call) {
   const auto *tool = ServiceRegistry::instance()->tools()->find(call.call.name);
+  const auto name = tool                                      ? tool->contribution.title
+                    : call.call.name == AI::Agent::LOAD_TOOLS ? tr("Load Tools")
+                                                              : QString::fromStdString(call.call.name);
   m_exchanges.addTool(
       {.id = call.id,
-       .name = tool ? tool->contribution.title : QString::fromStdString(call.call.name),
+       .name = name,
        .iconSource = tool ? qml::imageSourceFor(tool->contribution.icon) : QString{},
        .arguments = QString::fromStdString(call.call.arguments),
        .summary = call.summary ? std::optional(QString::fromStdString(*call.summary)) : std::nullopt});

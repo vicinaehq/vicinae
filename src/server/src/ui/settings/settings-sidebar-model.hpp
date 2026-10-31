@@ -8,8 +8,8 @@
 class ExtensionSettingsModel;
 
 // Flat list model backing the settings sidebar. Holds core pages, installed
-// extensions and (while searching) the matching commands nested under their
-// provider, plus divider rows. Filtering happens in C++ via setQuery().
+// extensions and (while searching) the matching commands and AI tools nested under
+// their provider, plus divider rows. Filtering happens in C++ via setQuery().
 class SettingsSidebarModel : public QAbstractListModel {
   Q_OBJECT
   QML_ANONYMOUS
@@ -36,6 +36,8 @@ public:
   Q_INVOKABLE int indexOfKey(const QString &key) const;
   Q_INVOKABLE QString keyAt(int row) const;
   Q_INVOKABLE QString kindAt(int row) const;
+  // Settings page a row opens: the row's own key, or the owning extension for tool rows.
+  Q_INVOKABLE QString pageAt(int row) const;
   Q_INVOKABLE int firstSelectableRow() const;
   Q_INVOKABLE int stepRow(int fromRow, int delta) const;
 
@@ -47,6 +49,7 @@ private:
     BuiltinIcon icon = BuiltinIcon::QuestionMarkCircle;
     QString iconSource;
     bool enabled = true;
+    QString page;
   };
 
   void rebuildRows();

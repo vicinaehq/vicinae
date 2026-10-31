@@ -3,17 +3,20 @@
 #include "ui/settings/extension-settings-model.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "service-registry.hpp"
+#include "services/ai/tool-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/views/view-utils.hpp"
 #include "config/config.hpp"
 #include <algorithm>
 #include <array>
+#include <map>
 
 namespace {
 const QString kCore = QStringLiteral("core");
 const QString kGroup = QStringLiteral("group");
 const QString kExt = QStringLiteral("ext");
 const QString kCommand = QStringLiteral("command");
+const QString kTool = QStringLiteral("tool");
 const QString kDivider = QStringLiteral("divider");
 } // namespace
 
@@ -148,9 +151,11 @@ void SettingsSidebarModel::rebuildRows() {
     if (m.accepted()) tops.push_back({static_cast<double>(m.score), coreRow(page), {}});
   }
 
+  std::map<QString, std::size_t> providerTops;
   RootItemPrefixSearchOptions opts;
   opts.includeDisabled = true;
   for (auto &group : manager->searchGroupedByProvider(QString::fromStdString(m_query), opts)) {
+    providerTops.emplace(group.provider->uniqueId(), tops.size());
     std::vector<Row> commands;
     commands.reserve(group.items.size());
     for (const auto &gi : group.items) {
@@ -162,6 +167,32 @@ void SettingsSidebarModel::rebuildRows() {
                           .enabled = gi.enabled});
     }
     tops.push_back({group.score, providerRow(group.provider), std::move(commands)});
+  }
+
+  for (const auto &entry : ServiceRegistry::instance()->tools()->entries()) {
+    const auto &tool = entry.contribution;
+    auto const m =
+        fuzzy::scoreWeighted({{tool.title.toStdString(), 1.0}, {tool.description.toStdString(), 0.5}}, query);
+    if (!m.accepted()) continue;
+
+    const auto providerId = QString::fromStdString(entry.providerId);
+    Row row{.key = QString::fromStdString(entry.name),
+            .kind = kTool,
+            .label = tool.title,
+            .iconSource = qml::imageSourceFor(tool.icon),
+            .page = providerId};
+
+    if (auto it = providerTops.find(providerId); it != providerTops.end()) {
+      auto &top = tops[it->second];
+      top.score = std::max(top.score, static_cast<double>(m.score));
+      top.commands.push_back(std::move(row));
+      continue;
+    }
+
+    auto *provider = manager->provider(entry.providerId);
+    if (!provider) continue;
+    providerTops.emplace(providerId, tops.size());
+    tops.push_back({static_cast<double>(m.score), providerRow(provider), {std::move(row)}});
   }
 
   std::stable_sort(tops.begin(), tops.end(), [](const auto &a, const auto &b) { return a.score > b.score; });
@@ -180,7 +211,7 @@ void SettingsSidebarModel::setProviderEnabled(const QString &providerId, bool en
   // reflect the change on the currently visible provider row.
   for (int i = 0; i < static_cast<int>(m_rows.size()); ++i) {
     auto &row = m_rows[i];
-    if (row.key == providerId && row.kind != kCommand && row.kind != kDivider) {
+    if (row.key == providerId && row.kind != kCommand && row.kind != kTool && row.kind != kDivider) {
       if (row.enabled != enabled) {
         row.enabled = enabled;
         auto idx = index(i);
@@ -204,6 +235,12 @@ QString SettingsSidebarModel::keyAt(int row) const {
 
 QString SettingsSidebarModel::kindAt(int row) const {
   return (row >= 0 && row < static_cast<int>(m_rows.size())) ? m_rows[row].kind : QString();
+}
+
+QString SettingsSidebarModel::pageAt(int row) const {
+  if (row < 0 || row >= static_cast<int>(m_rows.size())) return {};
+  const auto &r = m_rows[row];
+  return r.page.isEmpty() ? r.key : r.page;
 }
 
 int SettingsSidebarModel::firstSelectableRow() const {

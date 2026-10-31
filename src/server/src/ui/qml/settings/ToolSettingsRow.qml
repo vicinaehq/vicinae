@@ -12,8 +12,6 @@ SettingsRow {
     description: tool.description
     iconSource: tool.iconSource
     controlWidth: 160
-    enabled: tool.providerEnabled
-    opacity: enabled ? 1 : 0.5
 
     SearchableDropdown {
         width: parent.width

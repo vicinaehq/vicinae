@@ -23,6 +23,7 @@ signals:
 
 public:
   using Id = quint64;
+  static constexpr std::string_view LOAD_TOOLS = "load_tools";
   using CompletionFactory = std::function<std::shared_ptr<AbstractChatCompletionStream>(
       const std::optional<ModelRef> &, const ChatCompletionPayload &)>;
 
@@ -71,6 +72,15 @@ public:
   const Message *message(Id id) const;
   const ToolCall *toolCall(Id id) const;
 
+  /**
+   * Tools enabled for the current request, whether they are loaded or not.
+   */
+  std::vector<AbstractTool *> availableTools() const;
+  /**
+   * Names of the deferred tools the model loaded during this conversation.
+   */
+  std::vector<std::string> loadedTools() const;
+
 private:
   Id appendMessage(ChatMessage message);
   Message &assistantMessage();
@@ -91,6 +101,7 @@ private:
   std::vector<Message> m_messages;
   std::vector<ToolCall> m_calls;
   std::vector<std::unique_ptr<AbstractTool>> m_tools;
+  std::unique_ptr<AbstractTool> m_loadTools;
   std::shared_ptr<AbstractChatCompletionStream> m_completion;
   QFutureWatcher<AbstractTool::RawToolResult> *m_toolWatcher = nullptr;
   std::function<void()> m_cancelTool;
