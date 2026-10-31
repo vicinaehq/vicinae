@@ -1,7 +1,7 @@
 #pragma once
 #include "common/types.hpp"
 #include "ui/image/url.hpp"
-#include "theme.hpp"
+#include "theme/theme.hpp"
 #include "theme/theme-file.hpp"
 #include <QDateTime>
 #include <QObject>

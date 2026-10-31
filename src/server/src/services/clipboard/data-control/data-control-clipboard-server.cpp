@@ -133,6 +133,19 @@ void DataControlClipboardServer::handleRead() {
             emit selectionAdded(cs);
           }
         }
+      } else if (tag == clipboard_proto::Command::PrimarySelectionNotification) {
+        clipboard_proto::Selection selection;
+
+        if (auto err = glz::read_beve(selection, payload)) {
+          qWarning() << "Failed to parse primary selection";
+        } else {
+          QString text;
+          if (!selection.offers.empty()) {
+            const auto &data = selection.offers.front().data;
+            text = QString::fromUtf8(reinterpret_cast<const char *>(data.data()), data.size());
+          }
+          emit primarySelectionChanged(text);
+        }
       } else {
         qWarning() << "Unknown command tag from data-control-server:" << static_cast<int>(tag);
       }

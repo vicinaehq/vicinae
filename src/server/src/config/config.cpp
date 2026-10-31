@@ -163,9 +163,27 @@ bool Manager::writeUser(const Partial<ConfigValue> &cfg) {
     return false;
   }
 
+  std::error_code ec;
+  fs::path tmp = m_userPath;
+
+  tmp += ".tmp";
+
   {
-    std::ofstream ofs(m_userPath);
+    std::ofstream ofs(tmp);
     ofs << TOP_COMMENT << "\n\n" << glz::prettify_json(buf);
+    ofs.close();
+
+    if (!ofs) {
+      fs::remove(tmp, ec);
+      return false;
+    }
+  }
+
+  fs::rename(tmp, m_userPath, ec);
+
+  if (ec) {
+    fs::remove(tmp, ec);
+    return false;
   }
 
   reloadConfig();

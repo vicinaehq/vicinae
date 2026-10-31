@@ -1,6 +1,6 @@
 #pragma once
 #include <QCoreApplication>
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "services/note/note-db.hpp"
 #include "services/note/note-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"

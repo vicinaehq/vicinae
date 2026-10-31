@@ -328,6 +328,7 @@ export class PKCEClient {
 				flavor: "release",
 				id: randomUUID(),
 				providerName: this.providerName,
+				scheme: "vicinae",
 			}),
 		).toString("base64url");
 		const redirectURI = this.getRedirectURI();

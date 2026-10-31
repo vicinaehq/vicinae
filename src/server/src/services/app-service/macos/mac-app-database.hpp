@@ -16,8 +16,7 @@ public:
   std::vector<std::filesystem::path> searchPaths() const override;
   bool scan() override;
 
-  PreferenceList preferences() const override;
-  void applyPreferences(const QJsonObject &preferences) override;
+  void applyPreferences(const AppPreferences &preferences) override;
 
   bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const override;
   bool launchTerminalCommand(const std::vector<QString> &cmdline,
@@ -25,6 +24,8 @@ public:
 
   std::vector<AppPtr> findOpeners(const Target &target) const override;
   AppPtr findDefaultOpener(const Target &target) const override;
+  std::vector<AppPtr> findOpenersForMime(const QString &mime) const override;
+  AppPtr findDefaultOpenerForMime(const QString &mime) const override;
   AppPtr findById(const QString &id) const override;
   std::vector<AppPtr> list() const override;
   AppPtr findByClass(const QString &name) const override;
@@ -36,6 +37,8 @@ public:
   bool showInFileBrowser(const std::filesystem::path &path, bool select) const override;
   bool openLocation(const AbstractApplication &app) const override;
   AppPtr locationOpener(const AbstractApplication &app) const override;
+  bool canUninstall(const AbstractApplication &app) const override;
+  bool uninstall(const AbstractApplication &app) override;
 
 private:
   std::vector<std::shared_ptr<MacApplication>> m_apps;

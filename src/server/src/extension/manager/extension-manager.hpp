@@ -7,7 +7,7 @@
 #include <QUuid>
 #include <QtCore>
 #include <cstdint>
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include <qdebug.h>
 #include <qdir.h>
 #include <qfuturewatcher.h>
@@ -48,10 +48,6 @@ signals:
   void messageReceived(const QByteArray &msg);
 };
 
-struct PendingManagerRequestInfo {
-  QString sessionId;
-};
-
 class ExtensionManager : public QObject {
   Q_OBJECT
 
@@ -73,12 +69,8 @@ public:
   bool start();
   bool stop();
 
-  void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {},
-                   const LaunchProps &launchProps = {});
-
   manager::Client &client() { return m_client; }
 
-  // void unloadCommand(const QString &sessionId);
   void handleManagerResponse(const QString &action, QJsonObject &data);
   void finished(int exitCode, QProcess::ExitStatus status);
   void readError();

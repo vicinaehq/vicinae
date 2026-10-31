@@ -2,9 +2,9 @@
 #include <chrono>
 #include <expected>
 #include <filesystem>
-#include "argument.hpp"
-#include "common.hpp"
-#include "preference.hpp"
+#include "command/argument.hpp"
+#include "command/command-types.hpp"
+#include "command/preference.hpp"
 
 struct ManifestError {
   QString m_message;

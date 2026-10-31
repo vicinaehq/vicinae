@@ -26,7 +26,6 @@ void Bus::sendMessage(const QByteArray &data) {
   dataStream << data;
 
   device->write(message);
-  device->waitForBytesWritten(1000);
 }
 
 void Bus::readyRead() {

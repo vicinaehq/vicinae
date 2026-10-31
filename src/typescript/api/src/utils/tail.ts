@@ -115,9 +115,7 @@ export class Tail extends events.EventEmitter {
 		this.logger.info(`fromBeginning: ${fromBeginning}`);
 		if (fromBeginning) {
 			cursor = 0;
-		} else if (this.nLines <= 0) {
-			cursor = 0;
-		} else if (this.nLines !== undefined) {
+		} else if (this.nLines > 0) {
 			cursor = this.getPositionAtNthLine(this.nLines);
 		} else {
 			cursor = this.latestPosition();
@@ -125,7 +123,7 @@ export class Tail extends events.EventEmitter {
 
 		if (cursor === undefined) throw new Error("Tail can't initialize.");
 
-		const flush = fromBeginning || this.nLines !== undefined;
+		const flush = fromBeginning || this.nLines > 0;
 		try {
 			this.watch(cursor, flush);
 		} catch (err) {

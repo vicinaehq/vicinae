@@ -1,11 +1,12 @@
 #pragma once
-#include "actions/files/file-actions.hpp"
-#include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/file-actions.hpp"
+#include "actions/root-search-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "script-command.hpp"
 #include "script/script-actions.hpp"
 #include "script/script-command-file.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "services/root-item-manager/typed-root-provider.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "services/app-service/app-service.hpp"
 #include "navigation-controller.hpp"
@@ -14,7 +15,6 @@
 #include <QCoreApplication>
 #include <QProcess>
 #include <common/enumerate.hpp>
-#include <qjsonobject.h>
 #include <ranges>
 
 class ScriptRootItem : public RootItem {
@@ -126,7 +126,23 @@ private:
   std::shared_ptr<ScriptCommandFile> m_file;
 };
 
-class ScriptRootProvider : public RootProvider {
+struct ScriptPreferences {
+  std::vector<std::string> customDirs;
+};
+
+template <> struct PreferenceSchema<ScriptPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(ScriptPreferences)
+public:
+  PreferenceMeta customDirs{
+      .title = tr("Custom directories"),
+      .description =
+          tr("Additional list of directories to source scripts from. These directories always take "
+             "precedence over the default system ones"),
+      .kind = PreferenceMeta::Kind::Directories,
+  };
+};
+
+class ScriptRootProvider : public TypedRootProvider<ScriptPreferences> {
   Q_DECLARE_TR_FUNCTIONS(ScriptRootProvider)
 
 public:
@@ -149,21 +165,9 @@ public:
 
   QString uniqueId() const override { return "scripts"; }
 
-  PreferenceList preferences() const override {
-    Preference customDirs = Preference::directories("customDirs");
-
-    customDirs.setTitle(tr("Custom directories"));
-    customDirs.setDescription(tr("Additional list of directories to source scripts from. These directories "
-                                 "always take precedence over the default system ones"));
-
-    return {customDirs};
-  }
-
-  void preferencesChanged(const QJsonObject &preferences) override {
-    auto files = preferences.value("customDirs").toArray() |
-                 std::views::transform([](const QJsonValue &obj) -> std::filesystem::path {
-                   return obj.toString().toStdString();
-                 }) |
+  void preferencesChanged(const ScriptPreferences &preferences) override {
+    auto files = preferences.customDirs |
+                 std::views::transform([](const std::string &dir) { return std::filesystem::path(dir); }) |
                  std::ranges::to<std::vector>();
 
     m_service.setCustomScriptPaths(files);

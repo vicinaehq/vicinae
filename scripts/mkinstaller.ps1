@@ -1,8 +1,10 @@
-# Usage: scripts/mkinstaller.ps1 [-BuildDir build-release] [-OutDir <BuildDir>]
+# Usage: scripts/mkinstaller.ps1 [-BuildDir build-release] [-OutDir <BuildDir>] [-Version x.y.z]
+# Stages and packages an existing build; build first.
 param(
     [string]$BuildDir = "build-release",
     [string]$OutDir = "",
-    [string]$Arch = "x64"
+    [string]$Arch = "x64",
+    [string]$Version = ""
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot
@@ -22,11 +24,15 @@ else {
 }
 if (-not $iscc) { throw "ISCC.exe not found (winget install JRSoftware.InnoSetup)" }
 
-try { $version = git -C $root describe --tags --abbrev=0 2>$null } catch { $version = $null }
-if ($version) { $version = $version -replace '^v', '' } else { $version = "0.0.0" }
+if (-not $Version) {
+    try { $Version = git -C $root describe --tags --abbrev=0 2>$null } catch { $Version = $null }
+}
+if ($Version) { $Version = $Version -replace '^v', '' } else { $Version = "0.0.0" }
+if ($Version -notmatch '^\d+(\.\d+){0,3}$') { throw "version '$Version' is not numeric x.y.z" }
 
-cmake --build $BuildDir --target vicinae-server vicinae
-if ($LASTEXITCODE -ne 0) { throw "cmake --build failed" }
+if (-not (Test-Path (Join-Path $BuildDir "bin\vicinae-server.exe"))) {
+    throw "no vicinae-server.exe in $BuildDir\bin (build first)"
+}
 
 $stage = Join-Path $BuildDir "stage"
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
@@ -38,9 +44,11 @@ foreach ($f in "bin\vicinae-server.exe", "bin\qt.conf", "plugins\platforms\qwind
     }
 }
 
+$isccArgs = @("/DStageDir=$stage", "/DAppVersion=$Version", "/DArch=$Arch")
+
 if ($OutDir) { $OutDir = Join-Path $root $OutDir } else { $OutDir = $BuildDir }
-& $iscc "/DStageDir=$stage" "/DAppVersion=$version" "/DArch=$Arch" "/O$OutDir" `
-    (Join-Path $root "extra\windows\vicinae.iss")
+Write-Host "iscc: $iscc $isccArgs /O$OutDir"
+& $iscc @isccArgs "/O$OutDir" (Join-Path $root "extra\windows\vicinae.iss")
 if ($LASTEXITCODE -ne 0) { throw "iscc failed" }
 
 Get-ChildItem $OutDir -Filter "vicinae-$Arch-setup.exe" | ForEach-Object {

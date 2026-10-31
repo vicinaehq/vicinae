@@ -1,0 +1,106 @@
+#pragma once
+#include <QtQml/qqmlregistration.h>
+#include "common/entrypoint.hpp"
+#include "ui/quick/completion-model.hpp"
+#include "ui/views/app-selector-model.hpp"
+#include "command/preference.hpp"
+#include "ui/views/bridge-view.hpp"
+#include <QAbstractListModel>
+#include <memory>
+#include <vector>
+
+class ExtensionCommand;
+
+class MissingPreferenceFormModel : public QAbstractListModel {
+  Q_OBJECT
+  QML_ANONYMOUS
+
+public:
+  enum Role {
+    TypeRole = Qt::UserRole + 1,
+    FieldIdRole,
+    LabelRole,
+    CheckboxLabelRole,
+    DescriptionRole,
+    PlaceholderRole,
+    ValueRole,
+    DropdownModelRole,
+    CurrentDropdownItemRole,
+    ReadOnlyRole,
+    MultipleRole,
+    CanChooseFilesRole,
+    CanChooseDirectoriesRole
+  };
+
+  explicit MissingPreferenceFormModel(QObject *parent = nullptr);
+
+  int rowCount(const QModelIndex &parent = {}) const override;
+  QVariant data(const QModelIndex &index, int role) const override;
+  QHash<int, QByteArray> roleNames() const override;
+
+  void load(const std::vector<Preference> &preferences, const PreferenceValues &existingValues);
+  Q_INVOKABLE void setFieldValue(int row, const QVariant &value);
+
+  const PreferenceValues &values() const { return m_values; }
+
+  struct ValidateResult {
+    bool valid;
+    int firstInvalidRow;
+  };
+
+  ValidateResult validate() const;
+
+signals:
+  void validationChanged();
+
+private:
+  struct Field {
+    QString type;
+    QString id;
+    QString label;
+    QString checkboxLabel;
+    QString description;
+    QString placeholder;
+    QVariant value;
+    CompletionModel *dropdownModel = nullptr;
+    bool multiple = false;
+    bool canChooseFiles = true;
+    bool canChooseDirectories = false;
+  };
+
+  CompletionModel *appModel();
+
+  std::vector<Field> m_fields;
+  AppSelectorModel *m_appModel = nullptr;
+  PreferenceValues m_values;
+};
+
+class MissingPreferenceViewHost : public FormViewBase {
+  Q_OBJECT
+  QML_NAMED_ELEMENT(MissingPreferenceViewHost)
+  QML_UNCREATABLE("")
+
+  Q_PROPERTY(QString commandName READ commandName CONSTANT)
+  Q_PROPERTY(QString commandIconSource READ commandIconSource CONSTANT)
+  Q_PROPERTY(MissingPreferenceFormModel *prefModel READ prefModel CONSTANT)
+
+public:
+  MissingPreferenceViewHost(std::shared_ptr<ExtensionCommand> command,
+                            const std::vector<Preference> &preferences,
+                            const PreferenceValues &preferenceValues);
+
+  QUrl qmlComponentUrl() const override;
+  QVariantMap qmlProperties() override;
+  void initialize() override;
+
+  Q_INVOKABLE void submit();
+
+  QString commandName() const;
+  QString commandIconSource() const;
+  MissingPreferenceFormModel *prefModel() const { return m_prefModel; }
+
+private:
+  std::shared_ptr<ExtensionCommand> m_command;
+  MissingPreferenceFormModel *m_prefModel;
+  QString m_commandIconSource;
+};

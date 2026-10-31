@@ -322,3 +322,13 @@ TEST_CASE("needs inline output mode when refreshTime is present") {
   auto result = script_command::ScriptCommand::parse(source);
   REQUIRE(!result.has_value());
 }
+
+TEST_CASE("CRLF line endings are accepted") {
+  const char *source =
+      "# @vicinae.schemaVersion 1\r\n# @vicinae.title Windows Script\r\n# @vicinae.mode compact\r\n";
+  auto result = script_command::ScriptCommand::parse(source);
+  REQUIRE(result.has_value());
+  REQUIRE(result->schemaVersion == "1");
+  REQUIRE(result->title == "Windows Script");
+  REQUIRE(result->mode == script_command::OutputMode::Compact);
+}

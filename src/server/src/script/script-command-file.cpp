@@ -1,4 +1,6 @@
 #include <ranges>
+#include <QDebug>
+#include <QStandardPaths>
 #include "script/script-command-file.hpp"
 #include "glyph/emoji.hpp"
 #include "services/script-command/script-command-service.hpp"
@@ -46,6 +48,23 @@ std::string ScriptCommandFile::packageName() const {
   return m_data.packageName.value_or(m_path.parent_path().filename().string());
 }
 
+std::vector<QString> ScriptCommandFile::interpreter() const {
+  const auto lookup = [](std::string_view name) -> std::optional<std::string> {
+    const QString found = QStandardPaths::findExecutable(QString::fromUtf8(name.data(), name.size()));
+    if (found.isEmpty()) return std::nullopt;
+    return found.toStdString();
+  };
+
+  auto argv = script_command::resolveInterpreter(data(), path(), lookup);
+  if (!argv) {
+    qWarning() << argv.error().c_str();
+    return {};
+  }
+
+  return *argv | std::views::transform([](const std::string &s) { return QString::fromStdString(s); }) |
+         std::ranges::to<std::vector>();
+}
+
 std::vector<QString> ScriptCommandFile::createCommandLine(std::span<const QString> args) const {
   std::vector<QString> cmdline;
 
@@ -53,6 +72,8 @@ std::vector<QString> ScriptCommandFile::createCommandLine(std::span<const QStrin
     for (const auto &exec : data().exec) {
       cmdline.emplace_back(exec.c_str());
     }
+  } else {
+    cmdline = interpreter();
   }
 
   cmdline.emplace_back(path().c_str());

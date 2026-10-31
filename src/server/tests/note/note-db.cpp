@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <QTemporaryDir>
 #include <span>
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include "services/note/note-db.hpp"
 
 namespace {

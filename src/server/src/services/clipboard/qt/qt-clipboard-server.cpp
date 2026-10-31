@@ -8,7 +8,7 @@ bool AbstractQtClipboardServer::start() {
 }
 
 bool AbstractQtClipboardServer::stop() {
-  disconnect(QGuiApplication::clipboard());
+  disconnect(QGuiApplication::clipboard(), nullptr, this, nullptr);
   return true;
 }
 

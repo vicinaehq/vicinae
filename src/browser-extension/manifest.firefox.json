@@ -17,6 +17,10 @@
     "nativeMessaging",
     "tabs"
   ],
+  "optional_permissions": [
+    "bookmarks",
+    "history"
+  ],
   "background": {
     "scripts": ["background.js"]
   },

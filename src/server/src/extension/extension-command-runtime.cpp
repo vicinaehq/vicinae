@@ -1,21 +1,22 @@
 #include "extension-command-runtime.hpp"
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "common/context.hpp"
-#include "extension-error-view-host.hpp"
-#include "extension/services/application-service.hpp"
-#include "extension/services/ext-browser-extension-service.hpp"
-#include "extension/services/clipboard-service.hpp"
-#include "extension/services/command-service.hpp"
-#include "extension/services/event-core-service.hpp"
-#include "extension/services/file-search-service.hpp"
-#include "extension/services/oauth-service.hpp"
-#include "extension/services/storage-service.hpp"
-#include "extension/services/ui-service.hpp"
-#include "extension/services/wm-service.hpp"
-#include "extension/services/wallpaper-service.hpp"
+#include "extension/views/extension-error-view-host.hpp"
+#include "extension/api/application-service.hpp"
+#include "extension/api/ext-browser-extension-service.hpp"
+#include "extension/api/clipboard-service.hpp"
+#include "extension/api/command-service.hpp"
+#include "extension/api/event-core-service.hpp"
+#include "extension/api/file-search-service.hpp"
+#include "extension/api/oauth-service.hpp"
+#include "extension/api/storage-service.hpp"
+#include "extension/api/ui-service.hpp"
+#include "extension/api/wm-service.hpp"
+#include "extension/api/wallpaper-service.hpp"
 #include "generated/tsapi.hpp"
 #include "glaze-qt.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
 #include <glaze/json/generic.hpp>
@@ -26,7 +27,7 @@
 #include <ranges>
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
-#include "ui/toast/toast.hpp"
+#include "services/toast/toast.hpp"
 #include "vicinae.hpp"
 #include "generated/manager.hpp"
 
@@ -67,11 +68,52 @@ void ExtensionCommandRuntime::initialize() {
   m_server->setParent(this);
 }
 
+// app pickers are stored as app ids, but extensions expect the `Application` shape of the applications API
+PreferenceValues ExtensionCommandRuntime::resolvePreferenceValues(PreferenceValues values) const {
+  auto *appDb = context()->services->appDb();
+  auto *rootItemManager = context()->services->rootItemManager();
+
+  const auto resolve = [&](const glz::generic &v) -> glz::generic {
+    if (!v.is_string()) return {};
+    auto app = appDb->findById(QString::fromStdString(v.get_string()));
+    if (!app) return {};
+    return glz::generic::object_t{
+        {"id", app->id().toStdString()},
+        {"name", app->displayName().toStdString()},
+        {"icon", app->iconUrl().toString().toStdString()},
+        {"path", app->path().string()},
+    };
+  };
+
+  for (const auto &pref : rootItemManager->getMergedItemPreferences(m_command->uniqueId())) {
+    auto data = pref.data();
+    auto *picker = std::get_if<Preference::AppPickerData>(&data);
+    if (!picker) continue;
+    auto it = values.find(pref.name().toStdString());
+    if (it == values.end()) continue;
+
+    if (picker->multiple) {
+      glz::generic::array_t apps;
+      if (it->second.is_array()) {
+        for (const auto &id : it->second.get_array()) {
+          if (auto app = resolve(id); !app.is_null()) apps.emplace_back(std::move(app));
+        }
+      }
+      it->second = std::move(apps);
+    } else {
+      it->second = resolve(it->second);
+    }
+  }
+
+  return values;
+}
+
 void ExtensionCommandRuntime::load(const LaunchProps &props) {
   initialize();
 
   auto rootItemManager = context()->services->rootItemManager();
-  auto preferenceValues = rootItemManager->getPreferenceValues(m_command->uniqueId());
+  auto preferenceValues =
+      resolvePreferenceValues(rootItemManager->getPreferenceValues(m_command->uniqueId()));
   auto manager = context()->services->extensionManager();
   manager::LoadOptions opts;
 
@@ -102,7 +144,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   opts.extension_name = m_command->repositoryName().toStdString();
   opts.owner_or_author_name = m_command->author().toStdString();
   opts.is_raycast = m_command->isRaycast();
-  opts.preferences = qJsonObjectToGlazeGeneric(preferenceValues);
+  opts.preferences = std::move(preferenceValues);
   opts.launch_context = props.launchContext;
   opts.arguments = props.arguments |
                    std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {

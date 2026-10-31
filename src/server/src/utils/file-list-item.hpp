@@ -1,9 +1,10 @@
 #pragma once
 #include <QCoreApplication>
-#include "actions/app/app-actions.hpp"
-#include "actions/files/file-actions.hpp"
-#include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/file-actions.hpp"
+#include "actions/shortcut-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"
 #include "keyboard/keybind.hpp"
 #include "keyboard/keyboard.hpp"
@@ -13,7 +14,7 @@
 #include "internal/keyboard/keyboard.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/wallpaper/wallpaper-manager.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <algorithm>
 #include <qmimedatabase.h>
 #include <filesystem>
@@ -34,7 +35,6 @@ public:
 
   void execute(ApplicationContext *ctx) override {
     auto const appDb = ctx->services->appDb();
-    auto const files = ctx->services->fileService();
     auto const toast = ctx->services->toastService();
 
     bool const success = appDb->showInFileBrowser(m_path, true);
@@ -44,7 +44,6 @@ public:
       return;
     }
 
-    files->saveAccess(m_path);
     ctx->navigation->closeWindow();
   }
 
@@ -110,7 +109,7 @@ public:
 
     if (ctx->services->appDb()->launchRaw({QString::fromStdString(m_path.string())})) {
       ctx->navigation->closeWindow();
-      files->saveAccess(m_path);
+      files->recordAccess(m_path);
     } else {
       ctx->services->toastService()->failure(tr("Failed to start executable"));
     }
@@ -128,7 +127,6 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   // what a lot of users would expect.
   const auto AUTO_EXECUTABLE_EXTENSIONS = {".AppImage"};
 
-  namespace fs = std::filesystem;
   QMimeDatabase mimeDb;
   auto panel = std::make_unique<ListActionPanelState>();
   auto section = panel->createSection();
@@ -144,16 +142,10 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   }
 
   {
-    std::error_code ec{};
-    const auto pm = fs::status(path, ec).permissions();
-    const bool isExec =
-        (pm & (fs::perms::owner_exec | fs::perms::group_exec | fs::perms::others_exec)) != fs::perms::none;
     AbstractAction *action = nullptr;
 
-    if (isExec) {
-      action = new RunExecutableAction(path, {.mkExec = false});
-    } else if (std::ranges::any_of(AUTO_EXECUTABLE_EXTENSIONS,
-                                   [&](auto &&ext) { return path.extension() == ext; })) {
+    if (std::ranges::any_of(AUTO_EXECUTABLE_EXTENSIONS,
+                            [&](auto &&ext) { return path.extension() == ext; })) {
       action = new RunExecutableAction(path, {.mkExec = true});
     }
 
@@ -170,6 +162,11 @@ inline std::unique_ptr<ActionPanelState> actionPanel(const std::filesystem::path
   if (mime.name().startsWith("image/") && ctx->services->wallpaperManager()->canSetWallpaper()) {
     section->addAction(new SetWallpaperAction(path));
   }
+
+  section->addAction(new CreateShortcutAction({
+      .link = QString::fromStdString(path.string()),
+      .name = QString::fromStdString(path.filename().string()),
+  }));
 
   auto utils = panel->createSection();
   auto copy = AbstractAction::make<CopyToClipboardAction>(

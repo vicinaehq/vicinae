@@ -39,16 +39,17 @@ std::expected<std::optional<db::EncryptionKey>, QString> readKey() {
 }
 
 std::expected<db::EncryptionKey, QString> createKey() {
-  db::EncryptionKey key = Crypto::AES256GCM::generateKey();
+  auto key = Crypto::AES256GCM::generateKey();
+  if (!key) return std::unexpected("system random generator unavailable");
 
   QKeychain::WritePasswordJob job(Omnicast::APP_ID);
   job.setAutoDelete(false);
   job.setKey(KEY_NAME);
-  job.setBinaryData(QByteArray(reinterpret_cast<const char *>(key.data()), db::KEY_SIZE));
+  job.setBinaryData(QByteArray(reinterpret_cast<const char *>(key->data()), db::KEY_SIZE));
   runJob(job);
 
   if (job.error() != QKeychain::NoError) return std::unexpected(job.errorString());
-  return key;
+  return *key;
 }
 
 } // namespace

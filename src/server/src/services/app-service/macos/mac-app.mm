@@ -32,21 +32,24 @@ const std::unordered_set<std::string> &knownTerminalBundleIds() {
 
 MacApplication::MacApplication(std::filesystem::path bundlePath, QString id,
                                std::optional<QString> bundleIdentifier, QString displayName,
-                               QString executable)
+                               std::optional<QString> unlocalizedName, QString executable)
     : m_bundlePath(std::move(bundlePath)), m_id(std::move(id)),
       m_bundleIdentifier(std::move(bundleIdentifier)), m_displayName(std::move(displayName)),
-      m_executable(std::move(executable)) {}
+      m_unlocalizedName(std::move(unlocalizedName)), m_executable(std::move(executable)) {}
 
 std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem::path &bundlePath) {
   @autoreleasepool {
     NSString *nsPath = toNSString(bundlePath);
     if (!nsPath) return nullptr;
 
+    // NSBundle and CFBundleCreate cache bundles per path for the process lifetime, so an app
+    // scanned while still being copied would stay invisible until restart.
     NSURL *url = [NSURL fileURLWithPath:nsPath];
-    NSBundle *bundle = [NSBundle bundleWithURL:url];
-    if (!bundle) return nullptr;
+    NSDictionary *info = CFBridgingRelease(CFBundleCopyInfoDictionaryInDirectory((__bridge CFURLRef)url));
+    if (!info) return nullptr;
 
-    NSString *bundleId = bundle.bundleIdentifier;
+    NSString *bundleId = info[@"CFBundleIdentifier"];
+    NSString *executable = info[@"CFBundleExecutable"];
     std::optional<QString> bundleIdentifier;
     QString id;
 
@@ -54,10 +57,10 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
       bundleIdentifier = toQString(bundleId);
       id = *bundleIdentifier;
     } else {
-      NSURL *const executableURL = bundle.executableURL;
-      if (!executableURL || ![[NSFileManager defaultManager] isExecutableFileAtPath:executableURL.path]) {
-        return nullptr;
-      }
+      if (executable.length == 0) return nullptr;
+      NSString *executablePath = [nsPath
+          stringByAppendingPathComponent:[@"Contents/MacOS" stringByAppendingPathComponent:executable]];
+      if (![[NSFileManager defaultManager] isExecutableFileAtPath:executablePath]) return nullptr;
 
       std::error_code error;
       auto const canonicalPath = std::filesystem::canonical(bundlePath, error);
@@ -65,20 +68,21 @@ std::shared_ptr<MacApplication> MacApplication::fromBundle(const std::filesystem
       id = QStringLiteral("macos:path:") + QString::fromStdString(canonicalPath.string());
     }
 
-    NSDictionary *info = bundle.infoDictionary;
-    NSDictionary *localized = bundle.localizedInfoDictionary;
-
     NSString *displayName = finderDisplayName(nsPath);
-    if (displayName.length == 0) displayName = localized[@"CFBundleDisplayName"];
     if (displayName.length == 0) displayName = info[@"CFBundleDisplayName"];
-    if (displayName.length == 0) displayName = localized[@"CFBundleName"];
     if (displayName.length == 0) displayName = info[@"CFBundleName"];
     if (displayName.length == 0) { displayName = [[nsPath lastPathComponent] stringByDeletingPathExtension]; }
 
-    NSString *executable = info[@"CFBundleExecutable"];
+    NSString *unlocalizedName = info[@"CFBundleDisplayName"];
+    if (unlocalizedName.length == 0) unlocalizedName = info[@"CFBundleName"];
+    std::optional<QString> unlocalized;
+    if (unlocalizedName.length > 0 && ![unlocalizedName isEqualToString:displayName]) {
+      unlocalized = toQString(unlocalizedName);
+    }
 
     return std::make_shared<MacApplication>(bundlePath, std::move(id), std::move(bundleIdentifier),
-                                            toQString(displayName), toQString(executable));
+                                            toQString(displayName), std::move(unlocalized),
+                                            toQString(executable));
   }
 }
 
@@ -86,7 +90,14 @@ bool MacApplication::isTerminalEmulator() const {
   return knownTerminalBundleIds().contains(m_id.toStdString());
 }
 
-ImageURL MacApplication::iconUrl() const { return ImageURL::macBundle(m_bundlePath); }
+ImageURL MacApplication::iconUrl() const {
+  if (!m_iconPath) {
+    std::error_code error;
+    std::filesystem::path const resolvedPath = std::filesystem::canonical(m_bundlePath, error);
+    m_iconPath = error ? m_bundlePath : resolvedPath;
+  }
+  return ImageURL::macBundle(*m_iconPath);
+}
 
 bool MacApplication::matchesWindowClass(const QString &wmClass) const {
   return m_bundleIdentifier && m_bundleIdentifier->compare(wmClass, Qt::CaseInsensitive) == 0;

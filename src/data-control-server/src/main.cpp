@@ -7,14 +7,14 @@
 #include "ext/clipman.hpp"
 #include "common/clipboard-protocol.hpp"
 
-static void writeSelection(const clipboard_proto::Selection &selection) {
+static void writeSelection(clipboard_proto::Command command, const clipboard_proto::Selection &selection) {
   std::string buf;
   if (auto err = glz::write_beve(selection, buf)) {
     std::cerr << "Failed to serialize clipboard selection" << std::endl;
     return;
   }
 
-  uint8_t tag = static_cast<uint8_t>(clipboard_proto::Command::SelectionNotification);
+  uint8_t tag = static_cast<uint8_t>(command);
   uint32_t size = htonl(static_cast<uint32_t>(buf.size() + 1));
   std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
   std::cout.write(reinterpret_cast<const char *>(&tag), 1);

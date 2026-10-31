@@ -24,6 +24,12 @@ export class RpcTransport {
 	dispatchMessage(data: string) {
 		const msg = JSON.parse(data) as JsonRpcMessage;
 
+		// client methods are not implemented by this client
+		if (msg.id !== undefined && msg.method) {
+			this.sendMessage({ jsonrpc: '2.0', id: msg.id, error: `Method not found: ${msg.method}` });
+			return;
+		}
+
 		if (msg.id !== undefined) {
 			const handler = this.requestMap.get(msg.id);
 
@@ -143,6 +149,7 @@ export type DMenuRequest = {
 	width?: number;
 	height?: number;
 	noFooter: boolean;
+	password: boolean;
 }
 
 export type DMenuResponse = {
@@ -153,6 +160,10 @@ export type BrowserInitRequest = {
 	id: string;
 	name: string;
 	engine: string;
+	version?: string;
+	permissions?: string[];
+	optionalPermissions?: string[];
+	protocolVersion?: number;
 }
 
 export type BrowserTabInfo = {
@@ -164,14 +175,23 @@ export type BrowserTabInfo = {
 	muted: boolean;
 	audible: boolean;
 	lastAccessed: number;
+	pinned: boolean;
 }
 
-export type FocusTabRequest = {
-	tabId: number;
+export type BrowserBookmarkInfo = {
+	id: string;
+	title: string;
+	url: string;
+	folder: string[];
+	dateAdded: number;
 }
 
-export type CloseTabRequest = {
-	tabId: number;
+export type BrowserHistoryItemInfo = {
+	id: string;
+	title: string;
+	url: string;
+	lastVisitTime: number;
+	visitCount: number;
 }
 
 export type FileResult = {
@@ -225,16 +245,14 @@ class IpcService {
 		return this.transport.request("Ipc/browserTabsChanged", { tabs});	
 	}
 
+	browserPermissionsChanged(permissions: string[]): Promise<void> {
+		return this.transport.request("Ipc/browserPermissionsChanged", { permissions});	
+	}
+
 	fsQuery(q: string, params: FsQueryParams): Promise<FileResult[]> {
 		return this.transport.request("Ipc/fsQuery", { q, params});	
 	}
 
-	focusTab(handler: (req: FocusTabRequest) => void): EventSubscription {
-		return this.transport.subscribe("Ipc/focusTab", (msg) => handler(msg.req))
-	}
-	closeTab(handler: (req: CloseTabRequest) => void): EventSubscription {
-		return this.transport.subscribe("Ipc/closeTab", (msg) => handler(msg.req))
-	}
 }
 
 export class Client {

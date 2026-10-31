@@ -1,6 +1,6 @@
 #pragma once
 #include <qobject.h>
-#include <qpixmap.h>
+#include <QByteArray>
 
 class AbstractFaviconRequest : public QObject {
   Q_OBJECT
@@ -12,6 +12,6 @@ public:
   virtual void start() = 0;
 
 signals:
-  void finished(QPixmap favicon) const;
+  void finished(QByteArray data) const;
   void failed() const;
 };

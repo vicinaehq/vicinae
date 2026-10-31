@@ -1,13 +1,14 @@
 #pragma once
+#include <QtQml/qqmlregistration.h>
 #include "common/qt.hpp"
 #include "common/entrypoint.hpp"
-#include "argument.hpp"
-#include "command-controller.hpp"
-#include "command.hpp"
-#include "common.hpp"
-#include "ui/action-pannel/action.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
-#include "ui/dialog/dialog.hpp"
+#include "command/argument.hpp"
+#include "command/command-controller.hpp"
+#include "command/command.hpp"
+#include "command/command-types.hpp"
+#include "ui/action-panel/action.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
+#include "ui/alert/dialog.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
 #include <chrono>
@@ -56,6 +57,7 @@ struct GoBackOptions {
 
 class NavigationController : public QObject, NonCopyable {
   Q_OBJECT
+  QML_ANONYMOUS
 
 public:
   struct CommandFrame {
@@ -85,6 +87,7 @@ public:
     bool isLoading = false;
     bool supportsSearch = true;
     bool searchInteractive = true;
+    bool searchRedacted = false;
     bool needsTopBar = true;
     bool needsStatusBar = true;
     bool showBackButton = true;
@@ -123,6 +126,7 @@ signals:
   void headerVisiblityChanged(bool value);
   void searchVisibilityChanged(bool value);
   void searchInteractiveChanged(bool value);
+  void searchRedactedChanged(bool value);
   void statusBarVisiblityChanged(bool value);
   void backButtonVisibilityChanged(bool visible);
   void windowActivationChanged(bool value) const;
@@ -131,6 +135,9 @@ public:
   Q_INVOKABLE void closeWindow(const CloseWindowOptions &settings = {});
   void closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay);
   Q_INVOKABLE void showWindow();
+
+  /// Turns a pending suspended close into a regular one, for callers that no longer intend to resume.
+  void releaseSuspendedClose();
   Q_INVOKABLE void toggleWindow();
   bool isWindowOpened() const;
   void requestWindowSize(QSize size);
@@ -210,6 +217,7 @@ public:
   void setHeaderVisiblity(bool value, const BaseView *caller = nullptr);
   void setSearchVisibility(bool value, const BaseView *caller = nullptr);
   void setSearchInteractive(bool value, const BaseView *caller = nullptr);
+  void setSearchRedacted(bool value, const BaseView *caller = nullptr);
   void setStatusBarVisibility(bool value, const BaseView *caller = nullptr);
 
   /**
@@ -223,6 +231,7 @@ public:
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const ArgumentValues &arguments);
   void launch(const std::shared_ptr<AbstractCmd> &cmd, const LaunchProps &props);
   bool activateEntrypoint(const EntrypointId &id, const ActivateEntrypointOptions &options = {});
+  void releaseEntrypoint(const EntrypointId &id);
 
   const AbstractCmd *activeCommand() const;
   CommandFrame *activeFrame() const { return m_frames.back().get(); }
@@ -252,6 +261,7 @@ public:
   template <typename T> void replaceView() { replaceView(new T); }
 
   size_t viewStackSize() const;
+  const std::vector<std::unique_ptr<ViewState>> &viewStack() const { return m_views; }
   bool isRootSearch() const;
   const ViewState *topState() const;
   ViewState *topState();

@@ -148,6 +148,7 @@ std::pair<std::string, PrintOptions> QalculateBackend::handleToExpression(const 
 
 std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question,
                                                                            const ComputeOptions &opts) {
+  std::scoped_lock const lock(m_calcMutex);
 
   QString expression = preprocessQuestion(question);
   expression = stripTrailingOperators(expression);
@@ -268,6 +269,8 @@ QFuture<AbstractCalculatorBackend::RefreshExchangeRatesResult> QalculateBackend:
   qInfo() << "Refreshing Qalculate exchange rates...";
 
   return QtConcurrent::run([this]() -> RefreshExchangeRatesResult {
+    std::scoped_lock const lock(m_calcMutex);
+
     if (!CALCULATOR->fetchExchangeRates()) {
       qWarning() << "Failed to fetch exchange rates";
       return std::unexpected("Failed to fetch exchange rates");

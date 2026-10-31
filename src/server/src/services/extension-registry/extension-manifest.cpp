@@ -1,4 +1,5 @@
 #include "extension-manifest.hpp"
+#include "internal/glaze-qt.hpp"
 #include "utils.hpp"
 #include "vicinae.hpp"
 #include <QJsonObject>
@@ -80,7 +81,7 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
   base.setName(obj["name"].toString());
   base.setPlaceholder(obj["placeholder"].toString());
   base.setRequired(obj["required"].toBool());
-  base.setDefaultValue(obj.value("default"));
+  if (obj.contains("default")) base.setDefaultValue(qJsonValueToGlazeGeneric(obj.value("default")));
 
   if (type == "textfield") {
     base.setData(Preference::TextData());
@@ -90,7 +91,7 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
     auto checkbox = Preference::CheckboxData(obj["label"].toString());
     base.setData(checkbox);
   } else if (type == "appPicker") {
-    base.setData(Preference::AppPickerData());
+    base.setData(Preference::AppPickerData{.multiple = obj["multiple"].toBool()});
   } else if (type == "file") {
     base.setData(Preference::FilePickerData{.multiple = obj["multiple"].toBool()});
   } else if (type == "directory") {
@@ -108,7 +109,7 @@ Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) 
     }
 
     base.setData(Preference::DropdownData{options});
-    base.setDefaultValue(obj.value("default"));
+    if (obj.contains("default")) base.setDefaultValue(qJsonValueToGlazeGeneric(obj.value("default")));
   } else {
     qWarning() << "Unknown extension preference type" << type;
   }

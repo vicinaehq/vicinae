@@ -35,8 +35,10 @@ ExtensionRegistry::ExtensionRegistry(LocalStorageService &storage) : m_storage(s
 
 QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, const std::string &data,
                                                 const std::function<void(bool)> &cb) {
-  fs::path const extractDir = localExtensionDirectory() / id.toStdString();
-  auto future = QtConcurrent::run([id, data, extractDir]() {
+  fs::path const extensionsDir = localExtensionDirectory();
+  fs::path const extractDir = extensionsDir / id.toStdString();
+  fs::path const stagingDir = extensionsDir / (".staging-" + id.toStdString());
+  auto future = QtConcurrent::run([id, data, extractDir, stagingDir]() {
     Unzipper unzip = std::string_view(data);
 
     if (!unzip) {
@@ -44,7 +46,26 @@ QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, const std::st
       return false;
     }
 
-    unzip.extract(extractDir, {.stripComponents = 1});
+    std::error_code ec;
+
+    fs::remove_all(stagingDir, ec);
+    unzip.extract(stagingDir, {.stripComponents = 1});
+
+    if (!fs::is_regular_file(stagingDir / "package.json", ec)) {
+      qCritical() << "Extracted bundle for" << id << "has no package.json, discarding";
+      fs::remove_all(stagingDir, ec);
+      return false;
+    }
+
+    fs::remove_all(extractDir, ec);
+    fs::rename(stagingDir, extractDir, ec);
+
+    if (ec) {
+      qCritical() << "Failed to move extension bundle into" << extractDir.c_str() << ec.message();
+      fs::remove_all(stagingDir, ec);
+      return false;
+    }
+
     return true;
   });
 

@@ -38,7 +38,7 @@ public:
   void start() override;
   void rebuildIndex() override;
   bool isAvailable() const override;
-  void preferenceValuesChanged(const QJsonObject &preferences) override;
+  void preferencesChanged(const FilePreferences &preferences) override;
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
                                                      const IndexerQueryParams &params = {}) override;
 

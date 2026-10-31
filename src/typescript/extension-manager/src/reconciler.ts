@@ -9,7 +9,7 @@ type InstanceProps = Record<string, any>;
 type Instance = { $t: string; children?: Instance[]; [key: string]: any };
 type Container = Instance;
 
-type TextInstance = any;
+type TextInstance = Instance;
 type SuspenseInstance = any;
 type HydratableInstance = any;
 type PublicInstance = Instance;
@@ -20,7 +20,11 @@ type MyTimeoutHandle = number;
 type NoTimeout = number;
 
 const ctx: HostContext = {};
+const TEXT_TAG = "#text";
 let frameGen = 0;
+
+const isText = (node: unknown): boolean =>
+	(node as Instance | null | undefined)?.$t === TEXT_TAG;
 
 const initMeta = (
 	instance: Instance,
@@ -114,8 +118,10 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return instance;
 		},
 
-		createTextInstance() {
-			throw new Error(`createTextInstance is not supported`);
+		createTextInstance(text: string) {
+			const instance: TextInstance = { $t: TEXT_TAG, text };
+			initMeta(instance, true, new Set());
+			return instance;
 		},
 
 		appendInitialChild(parent, child) {
@@ -229,7 +235,14 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		},
 
 		resetTextContent() {},
-		commitTextUpdate() {},
+		commitTextUpdate(
+			textInstance: TextInstance,
+			_oldText: string,
+			newText: string,
+		) {
+			textInstance.text = newText;
+			emitDirty(textInstance);
+		},
 		commitMount() {},
 
 		commitUpdate(instance: Instance, type, prevProps, nextProps, handle) {
@@ -335,6 +348,14 @@ export type RendererConfig = {
 
 const MAX_RENDER_PER_SECOND = 60;
 
+const stripTextNodes = (key: string, value: unknown) =>
+	key === "children" && Array.isArray(value) && value.some(isText)
+		? value.filter((node) => !isText(node))
+		: value;
+
+export const serializeViews = (views: ViewData[]) =>
+	JSON.stringify({ views }, stripTextNodes);
+
 export const createRenderer = (config: RendererConfig) => {
 	const container: Container = { $t: "root", children: [] };
 	initMeta(container, true, new Set());
@@ -353,7 +374,7 @@ export const createRenderer = (config: RendererConfig) => {
 
 				const views = (container.children ?? []).map<ViewData>((viewSlot) => {
 					const viewRoot = viewSlot.children?.at(-1);
-					if (!viewRoot) return { dirty: true };
+					if (!viewRoot || isText(viewRoot)) return { dirty: true };
 
 					const dirty = viewRoot._dirtyGen === frameGen;
 					return { dirty, root: dirty ? viewRoot : undefined };

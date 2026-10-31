@@ -1,5 +1,4 @@
 #include "favicon/google-favicon-request.hpp"
-#include <qpixmap.h>
 #include <qstringview.h>
 
 void GoogleFaviconRequester::loadingFailed() {
@@ -17,12 +16,9 @@ void GoogleFaviconRequester::loadingFailed() {
 }
 
 void GoogleFaviconRequester::imageLoaded(const QByteArray &data) {
-  QPixmap pixmap;
-
-  pixmap.loadFromData(data);
   _currentReply->deleteLater();
   _currentReply = nullptr;
-  emit finished(pixmap);
+  emit finished(data);
 }
 
 QString GoogleFaviconRequester::makeUrl(uint size) const { return placeholderUrl.arg(domain()).arg(size); }

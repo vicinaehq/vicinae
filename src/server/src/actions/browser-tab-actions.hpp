@@ -1,15 +1,15 @@
 #pragma once
 #include <QCoreApplication>
-#include "builtin_icon.hpp"
-#include "clipboard-actions.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "common/context.hpp"
-#include "qml/shortcut-form-view-host.hpp"
+#include "actions/shortcut-actions.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "theme/colors.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 
 struct BrowserTabActionGenerator {
   Q_DECLARE_TR_FUNCTIONS(BrowserTabActionGenerator)
@@ -22,28 +22,29 @@ public:
 
     auto focusTab =
         new StaticAction(tr("Switch to tab"), BuiltinIcon::Switch, [tab](ApplicationContext *ctx) {
-          ctx->services->browserExtension()->focusTab(tab);
+          const auto toast = ctx->services->toastService();
+
+          ctx->services->browserExtension()->focusTab(tab).then(
+              toast, [toast](const std::expected<void, std::string> &result) {
+                if (!result) toast->failure(tr("Failed to switch to tab: %1").arg(result.error().c_str()));
+              });
           ctx->navigation->closeWindow({.clearRootSearch = true});
         });
 
     focusTab->setShortcut(Keyboard::Shortcut::enter());
 
-    auto convertToShortcut = new StaticAction(
-        tr("Convert to shortcut"), BuiltinIcon::ArrowsContract, [tab](ApplicationContext *ctx) {
-          auto view = new ShortcutFormViewHost;
-          view->setPrefilledValues(tab.url.c_str(), tab.title.c_str());
-          ctx->navigation->pushView(view);
-          ctx->navigation->setNavigationTitle(tr("Convert tab to shortcut"));
-          ctx->navigation->setNavigationIcon(
-              ImageURL(BuiltinIcon::ArrowsContract).setBackgroundTint(SemanticColor::Red));
-        });
+    auto convertToShortcut = new CreateShortcutAction(
+        {.link = tab.url.c_str(), .name = tab.title.c_str()}, tr("Convert to shortcut"),
+        ImageURL(BuiltinIcon::ArrowsContract).setBackgroundTint(SemanticColor::Red));
 
     auto closeTab = new StaticAction(tr("Close tab"), BuiltinIcon::Trash, [tab](ApplicationContext *ctx) {
-      if (const auto result = ctx->services->browserExtension()->closeTab(tab); !result) {
-        ctx->services->toastService()->failure(tr("Failed to close tab: %1").arg(result.error().c_str()));
-        return;
-      }
-      ctx->navigation->closeWindow({.clearRootSearch = true});
+      const auto toast = ctx->services->toastService();
+
+      // Keep window open: root search refreshes via tabsChanged, built-in view reloads on the same signal.
+      ctx->services->browserExtension()->closeTab(tab).then(
+          toast, [toast](const std::expected<void, std::string> &result) {
+            if (!result) toast->failure(tr("Failed to close tab: %1").arg(result.error().c_str()));
+          });
     });
     closeTab->setShortcut(Keybind::RemoveAction);
 

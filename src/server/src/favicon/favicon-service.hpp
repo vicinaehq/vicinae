@@ -3,22 +3,24 @@
 #include "ui/image/url.hpp"
 #include <cassert>
 #include <expected>
-#include <qbuffer.h>
+#include <QCache>
+#include <QPromise>
+#include <memory>
+#include <vector>
+#include <QThreadPool>
 #include <qdir.h>
 #include <qfileinfo.h>
 #include <qfuture.h>
 #include <qimage.h>
 #include <qobject.h>
-#include <qpixmap.h>
-#include <qpixmapcache.h>
 #include <qstringview.h>
 #include <unordered_map>
 
 class FaviconService : public QObject {
-  static constexpr size_t maxCacheCount = 50;
+  static constexpr int MEMORY_CACHE_SIZE = 256;
 
 public:
-  using FaviconResponse = std::expected<QPixmap, QString>;
+  using FaviconResponse = std::expected<QImage, QString>;
   enum RequesterType { None, Google, Twenty, DuckDuckGo };
 
   struct FaviconServiceData {
@@ -34,11 +36,15 @@ private:
   db::Database _db;
   RequesterType _requesterType;
   QDir _dataDir;
-  std::unordered_map<QString, QPixmap> _cache;
+  QCache<QString, QImage> _cache{MEMORY_CACHE_SIZE};
+  std::unordered_map<QString, std::vector<std::shared_ptr<QPromise<FaviconResponse>>>> _pending;
+  // single thread: every database access and disk write after construction goes through it
+  QThreadPool _ioPool;
 
-  void handleFetchedFavicon(const QString &domain, const QPixmap &favicon);
-  void insertCache(const QString &key, const QPixmap &favicon);
-  QPixmap retrieveFromCache(const QString &domain);
+  void fetch(const QString &domain, QObject *parent);
+  void resolve(const QString &domain, const FaviconResponse &response);
+  void store(const QString &domain, const QImage &favicon);
+  void touch(const QString &domain);
 
 public:
   static std::vector<FaviconServiceData> providers();
@@ -48,6 +54,9 @@ public:
   void setService(RequesterType type);
   void setService(const QString &id);
 
+  /**
+   * Must be called from the main thread.
+   */
   QFuture<FaviconResponse> makeRequest(const QString &domain, QObject *parent = nullptr);
   FaviconService(const std::filesystem::path &path, QObject *parent = nullptr);
 };

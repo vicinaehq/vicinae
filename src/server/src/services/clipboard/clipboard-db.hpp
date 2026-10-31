@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <QString>
+#include <QStringList>
 #include <optional>
 #include <functional>
 #include <vector>
@@ -14,6 +15,7 @@ enum class ClipboardEncryptionType : std::uint8_t {
 
 struct PreferredClipboardOfferRecord {
   QString id;
+  QString mimeType;
   ClipboardEncryptionType encryption;
 };
 
@@ -58,6 +60,7 @@ struct ClipboardHistoryEntry {
   QString mimeType;
   QString textPreview;
   uint64_t pinnedAt;
+  QString keywords;
   QString md5sum;
   uint64_t updatedAt;
   uint64_t size;
@@ -82,6 +85,17 @@ struct ClipboardSelectionRecord {
   std::optional<QString> source;
 };
 
+struct RemovedSelections {
+  std::vector<QString> selections;
+  // so that the clipboard service can remove them from disk
+  std::vector<QString> offers;
+
+  void add(const QString &selectionId, const QString &offerId) {
+    if (selections.empty() || selections.back() != selectionId) selections.emplace_back(selectionId);
+    offers.emplace_back(offerId);
+  }
+};
+
 class ClipboardDatabase {
 
 public:
@@ -94,7 +108,9 @@ public:
   PaginatedResponse<ClipboardHistoryEntry> query(int limit = 100, int offset = 0,
                                                  const ClipboardListSettings &opts = {}) const;
 
-  bool removeAll();
+  static QStringList searchTerms(const QString &query);
+
+  std::optional<RemovedSelections> removeAll(bool preserveTagged = false);
 
   bool setKeywords(const QString &id, const QString &keywords);
   std::optional<QString> retrieveKeywords(const QString &id);
@@ -105,7 +121,19 @@ public:
   bool insertOffer(const InsertClipboardOfferPayload &payload);
   bool indexSelectionContent(const QString &selectionId, const QString &content);
   std::vector<QString> removeSelection(const QString &selectionId);
+
+  /**
+   * Removes the offers and the indexed content of a selection, keeping the selection itself and its keywords.
+   * Returns the IDs of the removed offers. Meant to be called from inside a transaction.
+   */
+  std::optional<std::vector<QString>> clearSelectionOffers(const QString &selectionId);
+  bool setSelectionHash(const QString &selectionId, const QString &hash, int offerCount);
+
   std::optional<PreferredClipboardOfferRecord> findPreferredOffer(const QString &selectionId);
+
+  RemovedSelections evictOlderThan(std::chrono::seconds secs, bool preserveTagged = true);
+
+  std::optional<int64_t> oldestEvictableTimestamp(bool preserveTagged = true);
 
   void runMigrations();
 

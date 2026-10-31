@@ -2,6 +2,7 @@
 #include "environment.hpp"
 #include "http-client.hpp"
 #include "numen/abstract-currency-provider.hpp"
+#include <qobject.h>
 #include <unordered_map>
 
 struct NumenVicinaeFiatData {
@@ -20,7 +21,9 @@ struct NumenVicinaeCurrencyData {
   NumenVicinaeCryptoData crypto;
 };
 
-class NumenVicinaeCurrencyProvider : public numen::AbstractCurrencyProvider {
+class NumenVicinaeCurrencyProvider : public QObject, public numen::AbstractCurrencyProvider {
+  Q_OBJECT
+
 public:
   std::optional<numen::ExchangeRate> getRate(const std::string_view code) const override;
   void updateRates() override;

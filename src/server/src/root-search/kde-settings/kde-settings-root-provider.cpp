@@ -1,9 +1,9 @@
 #include "root-search/kde-settings/kde-settings-root-provider.hpp"
-#include "actions/app/app-actions.hpp"
-#include "actions/root-search/root-search-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "actions/app-actions.hpp"
+#include "actions/root-search-actions.hpp"
+#include "actions/clipboard-actions.hpp"
 #include "service-registry.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
 #include "ui/image/url.hpp"
 
 static const QString KCM_ID_PREFIX = QStringLiteral("kcm_");
@@ -22,13 +22,9 @@ AccessoryList KdeSettingsRootItem::accessories() const {
   return {{.text = tr("KDE Settings"), .color = SemanticColor::TextMuted}};
 }
 
-std::vector<QString> KdeSettingsRootItem::keywords() const {
-  auto keywords = m_app->keywords();
+std::vector<QString> KdeSettingsRootItem::keywords() const { return m_app->keywords(); }
 
-  if (auto name = m_app->unlocalizedName()) { keywords.emplace_back(name.value()); }
-
-  return keywords;
-}
+std::optional<QString> KdeSettingsRootItem::unlocalizedTitle() const { return m_app->unlocalizedName(); }
 
 std::vector<std::pair<QString, QString>> KdeSettingsRootItem::settingsMetadata() const {
   return {{QStringLiteral("ID"), m_app->id()},

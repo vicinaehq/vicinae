@@ -1,5 +1,6 @@
 #include "script-command.hpp"
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <common/enumerate.hpp>
 #include <format>
@@ -200,8 +201,18 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
 
   data.arguments.reserve(3);
 
+  if (str.starts_with("#!")) {
+    const auto firstLine = str.substr(2, str.find('\n') - 2);
+    for (const auto word : std::views::split(firstLine, ' ')) {
+      std::string_view s{word};
+      trim(s, '\r');
+      if (!s.empty()) data.shebang.emplace_back(s);
+    }
+  }
+
   for (const auto &line : std::views::split(str, std::string_view{"\n"})) {
     std::string_view s{line};
+    trim(s, '\r');
     trim(s);
 
     auto marker =
@@ -301,6 +312,80 @@ std::expected<ScriptCommand, std::string> ScriptCommand::parse(std::string_view 
   }
 
   return data;
+}
+
+std::vector<std::string> shebangInterpreter(std::span<const std::string> shebang) {
+  static constexpr std::string_view ENV_WRAPPER = "env";
+  static constexpr std::string_view ENV_SPLIT_FLAG = "-S";
+
+  auto it = shebang.begin();
+
+  if (it == shebang.end()) return {};
+  if (std::filesystem::path(*it).filename().string() == ENV_WRAPPER) {
+    ++it;
+    if (it != shebang.end() && *it == ENV_SPLIT_FLAG) ++it;
+    if (it == shebang.end()) return {};
+  }
+
+  std::vector<std::string> argv;
+  argv.reserve(static_cast<std::size_t>(shebang.end() - it));
+  argv.emplace_back(std::filesystem::path(*it).filename().string());
+  argv.insert(argv.end(), it + 1, shebang.end());
+
+  return argv;
+}
+
+std::vector<std::string> interpreterForExtension(std::string_view extension) {
+  static const auto INTERPRETERS = std::to_array<std::pair<std::string_view, std::vector<std::string>>>({
+      {".py", {"python"}},
+      {".js", {"node"}},
+      {".mjs", {"node"}},
+      {".cjs", {"node"}},
+      {".sh", {"bash"}},
+      {".bash", {"bash"}},
+      {".ps1", {"pwsh", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"}},
+      {".rb", {"ruby"}},
+      {".pl", {"perl"}},
+      {".lua", {"lua"}},
+      {".php", {"php"}},
+  });
+
+  const auto it = std::ranges::find(INTERPRETERS, extension,
+                                    &std::pair<std::string_view, std::vector<std::string>>::first);
+  if (it == INTERPRETERS.end()) return {};
+  return it->second;
+}
+
+std::expected<std::vector<std::string>, std::string> resolveInterpreter(const ScriptCommand &cmd,
+                                                                        const std::filesystem::path &script,
+                                                                        const ExecutableLookup &lookup) {
+  static constexpr auto ALIASES = std::to_array<std::pair<std::string_view, std::string_view>>({
+      {"python3", "python"},
+      {"pwsh", "powershell"},
+      {"sh", "bash"},
+  });
+
+  std::error_code ec;
+  if (!cmd.shebang.empty() && std::filesystem::is_regular_file(cmd.shebang.front(), ec)) {
+    return cmd.shebang | std::ranges::to<std::vector>();
+  }
+
+  auto argv = shebangInterpreter(cmd.shebang);
+  if (argv.empty()) argv = interpreterForExtension(script.extension().string());
+  if (argv.empty()) return argv;
+
+  const std::string_view name = argv.front();
+  auto program = lookup(name);
+  if (!program) {
+    const auto alias =
+        std::ranges::find(ALIASES, name, &std::pair<std::string_view, std::string_view>::first);
+    if (alias != ALIASES.end()) program = lookup(alias->second);
+  }
+  if (!program)
+    return std::unexpected(std::format("No interpreter found for {} (wanted {})", script.string(), name));
+
+  argv.front() = std::move(*program);
+  return argv;
 }
 
 std::expected<ScriptCommand, std::string> ScriptCommand::fromFile(const std::filesystem::path &path) {

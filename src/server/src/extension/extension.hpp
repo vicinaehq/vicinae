@@ -1,8 +1,8 @@
 #pragma once
-#include "command.hpp"
+#include "command/command.hpp"
 #include "services/extension-registry/extension-manifest.hpp"
 #include "ui/image/url.hpp"
-#include "preference.hpp"
+#include "command/preference.hpp"
 #include <filesystem>
 #include <qjsonobject.h>
 #include <qstring.h>

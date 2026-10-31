@@ -12,7 +12,8 @@ export namespace LocalStorage {
 	export async function getItem<T extends LocalStorage.Value>(
 		key: string,
 	): Promise<T | undefined> {
-		return getClient().Storage.get(key);
+		const value = await getClient().Storage.get(key);
+		return value ?? undefined;
 	}
 
 	export async function setItem(

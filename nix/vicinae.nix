@@ -16,6 +16,7 @@
   wayland,
   glaze,
   numen,
+  pulseaudio ? null,
   swift ? null,
   apple-sdk ? null,
 }: let
@@ -78,6 +79,11 @@ in
       "CMAKE_INSTALL_LIBDIR" = "lib";
       "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
       "AUTO_ENABLE_AUTOSTART" = "OFF";
+      # nix users configure declaratively; keep onboarding on darwin for the permission prompts
+      "ENABLE_ONBOARDING" =
+        if isLinux
+        then "OFF"
+        else "ON";
       "BUNDLE_SOULVER_CORE" = "OFF";
     };
 
@@ -102,7 +108,6 @@ in
         kdePackages.qtkeychain
         kdePackages.qtshadertools
         syntax-highlighting
-        libqalculate
         nodejs
         qt6.qtbase
         qt6.qtdeclarative
@@ -113,6 +118,7 @@ in
       ]
       ++ lib.optionals isLinux [
         kdePackages.layer-shell-qt
+        libqalculate
         qt6.qtwayland
         wayland
       ]
@@ -182,6 +188,7 @@ in
         }"
       ]
       ++ lib.optionals isLinux [
+        "--prefix PATH : ${lib.getBin pulseaudio}/bin"
         "--set VICINAE_INPUT_SERVER_BIN /run/wrappers/bin/vicinae-input-server"
       ];
 

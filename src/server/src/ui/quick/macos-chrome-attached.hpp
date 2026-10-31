@@ -1,0 +1,214 @@
+#pragma once
+#include <QColor>
+#include <QObject>
+#include <QString>
+#include <QWindow>
+#include <qqmlregistration.h>
+
+class QQuickItem;
+class QQuickWindow;
+
+class MacOSWindowAttached : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
+  Q_PROPERTY(int cornerRadius READ cornerRadius WRITE setCornerRadius NOTIFY cornerRadiusChanged)
+  Q_PROPERTY(bool blurEnabled READ blurEnabled WRITE setBlurEnabled NOTIFY blurEnabledChanged)
+  Q_PROPERTY(QString material READ material WRITE setMaterial NOTIFY materialChanged)
+  Q_PROPERTY(QString appearance READ appearance WRITE setAppearance NOTIFY appearanceChanged)
+  Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY borderColorChanged)
+  Q_PROPERTY(int borderWidth READ borderWidth WRITE setBorderWidth NOTIFY borderWidthChanged)
+  Q_PROPERTY(bool transparentTitlebar READ transparentTitlebar WRITE setTransparentTitlebar NOTIFY
+                 transparentTitlebarChanged)
+  Q_PROPERTY(bool followsWindowActiveState READ followsWindowActiveState WRITE setFollowsWindowActiveState
+                 NOTIFY followsWindowActiveStateChanged)
+  Q_PROPERTY(bool moveToActiveSpace READ moveToActiveSpace WRITE setMoveToActiveSpace NOTIFY
+                 moveToActiveSpaceChanged)
+
+signals:
+  void enabledChanged();
+  void cornerRadiusChanged();
+  void blurEnabledChanged();
+  void materialChanged();
+  void appearanceChanged();
+  void borderColorChanged();
+  void borderWidthChanged();
+  void transparentTitlebarChanged();
+  void followsWindowActiveStateChanged();
+  void moveToActiveSpaceChanged();
+
+public:
+  explicit MacOSWindowAttached(QObject *parent);
+
+  bool enabled() const { return m_enabled; }
+  void setEnabled(bool value);
+
+  int cornerRadius() const { return m_cornerRadius; }
+  void setCornerRadius(int value);
+
+  bool blurEnabled() const { return m_blurEnabled; }
+  void setBlurEnabled(bool value);
+
+  QString material() const { return m_material; }
+  void setMaterial(const QString &value);
+
+  // "dark" / "light" pin the effect view's NSAppearance; empty follows the system.
+  QString appearance() const { return m_appearance; }
+  void setAppearance(const QString &value);
+
+  QColor borderColor() const { return m_borderColor; }
+  void setBorderColor(const QColor &value);
+
+  int borderWidth() const { return m_borderWidth; }
+  void setBorderWidth(int value);
+
+  // Extends the content under a hidden titlebar (full-size content view), keeping
+  // the standard traffic lights. cornerRadius 0 then follows the native frame radius.
+  bool transparentTitlebar() const { return m_transparentTitlebar; }
+  void setTransparentTitlebar(bool value);
+
+  // Material goes flat when the window resigns key, like native sidebars. Leave off
+  // for non-activating panels, which are never "active".
+  bool followsWindowActiveState() const { return m_followsWindowActiveState; }
+  void setFollowsWindowActiveState(bool value);
+
+  // Reshowing the window pulls it to the current space instead of switching
+  // to the space it was left on.
+  bool moveToActiveSpace() const { return m_moveToActiveSpace; }
+  void setMoveToActiveSpace(bool value);
+
+  Q_INVOKABLE void animateIn(qreal anchorX = 0.5, qreal anchorY = 0.5);
+  Q_INVOKABLE void animateOut(qreal anchorX = 0.5, qreal anchorY = 0.5);
+
+private:
+  void runAnimate(bool appearing, qreal anchorX, qreal anchorY);
+  struct Snapshot {
+    bool valid = false;
+    bool opaque = true;
+    void *backgroundColor = nullptr;
+    bool hasShadow = true;
+    long animationBehavior = 0;
+    unsigned long styleMask = 0;
+    long titleVisibility = 0;
+    bool titlebarAppearsTransparent = false;
+  };
+
+  void apply();
+  void revert();
+  void trackWindow(QWindow *window);
+  void onWindowChanged(QQuickWindow *window);
+  bool eventFilter(QObject *obj, QEvent *event) override;
+
+  QQuickItem *m_item = nullptr;
+  QWindow *m_window = nullptr;
+  bool m_enabled = false;
+  int m_cornerRadius = 0;
+  bool m_blurEnabled = false;
+  QString m_material;
+  QString m_appearance;
+  QColor m_borderColor;
+  int m_borderWidth = 0;
+  bool m_transparentTitlebar = false;
+  bool m_followsWindowActiveState = false;
+  bool m_moveToActiveSpace = false;
+  bool m_surfaceReady = false;
+  bool m_pendingAnimateIn = false;
+  qreal m_pendingAnchorX = 0.5;
+  qreal m_pendingAnchorY = 0.5;
+  Snapshot m_snapshot;
+};
+
+class MacOSWindow : public QObject {
+  Q_OBJECT
+  QML_NAMED_ELEMENT(MacOSWindow)
+  QML_UNCREATABLE("")
+  QML_ATTACHED(MacOSWindowAttached)
+
+public:
+  static MacOSWindowAttached *qmlAttachedProperties(QObject *object) {
+    return new MacOSWindowAttached(object);
+  }
+};
+
+// The QML window must use Qt.Tool (or Qt.Popup / Qt.ToolTip / Qt.SplashScreen)
+// so Qt instantiates a QNSPanel. Qt.Dialog and Qt.Window produce a plain
+// QNSWindow, where the nonactivating styleMask is silently a no-op.
+class MacOSPanelAttached : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
+  Q_PROPERTY(int windowLevel READ windowLevel WRITE setWindowLevel NOTIFY windowLevelChanged)
+  Q_PROPERTY(
+      bool attachedToParent READ attachedToParent WRITE setAttachedToParent NOTIFY attachedToParentChanged)
+
+signals:
+  void enabledChanged();
+  void windowLevelChanged();
+  void attachedToParentChanged();
+  void resignKey();
+
+public:
+  explicit MacOSPanelAttached(QObject *parent);
+  ~MacOSPanelAttached() override;
+
+  bool enabled() const { return m_enabled; }
+  void setEnabled(bool value);
+
+  int windowLevel() const { return m_windowLevel; }
+  void setWindowLevel(int value);
+
+  bool attachedToParent() const { return m_attachedToParent; }
+  void setAttachedToParent(bool value);
+
+  Q_INVOKABLE void placeBottomCenter(qreal bottomMargin);
+
+private:
+  struct Snapshot {
+    bool valid = false;
+    unsigned long styleMask = 0;
+    int level = 0;
+    unsigned long collectionBehavior = 0;
+    bool hidesOnDeactivate = false;
+    bool movableByWindowBackground = false;
+    bool isPanel = false;
+    bool floatingPanel = false;
+    bool becomesKeyOnlyIfNeeded = false;
+    bool worksWhenModal = false;
+  };
+
+  void apply();
+  void revert();
+  void trackWindow(QWindow *window);
+  void onWindowChanged(QQuickWindow *window);
+  void installResignKeyObserver(void *nswin);
+  void removeResignKeyObserver();
+  bool eventFilter(QObject *obj, QEvent *event) override;
+
+  QQuickItem *m_item = nullptr;
+  QWindow *m_window = nullptr;
+  bool m_enabled = false;
+  bool m_surfaceReady = false;
+  int m_windowLevel = 0;
+  bool m_attachedToParent = false;
+  bool m_ownsParentAttachment = false;
+  void *m_resignKeyObserver = nullptr;
+  void *m_observedNSWindow = nullptr;
+  Snapshot m_snapshot;
+};
+
+class MacOSPanel : public QObject {
+  Q_OBJECT
+  QML_NAMED_ELEMENT(MacOSPanel)
+  QML_UNCREATABLE("")
+  QML_ATTACHED(MacOSPanelAttached)
+
+public:
+  // Mirrors AppKit's NSWindowLevel constants.
+  enum WindowLevel { Normal = 0, Floating = 3, Status = 25, PopUpMenu = 101 };
+  Q_ENUM(WindowLevel)
+
+  static MacOSPanelAttached *qmlAttachedProperties(QObject *object) { return new MacOSPanelAttached(object); }
+};
+
+void macosActivateApp();
+
+// True when NSGlassEffectView is available (macOS 26 Tahoe and later).
+bool macosLiquidGlassAvailable();

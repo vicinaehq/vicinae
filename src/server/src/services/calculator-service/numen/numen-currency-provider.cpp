@@ -73,11 +73,11 @@ void NumenVicinaeCurrencyProvider::fetchRates() {
 
   if (m_lastFetchedAt && std::chrono::system_clock::now() - *m_lastFetchedAt < CACHE_TTL) return;
 
-  auto watcher = new http::Client::Watcher<http::Client::Result<NumenVicinaeCurrencyData>>(nullptr);
+  auto watcher = new http::Client::Watcher<http::Client::Result<NumenVicinaeCurrencyData>>(this);
 
   watcher->setFuture(m_client.get<NumenVicinaeCurrencyData>("/currencies"));
 
-  QObject::connect(watcher, &QFutureWatcherBase::finished, [this, watcher]() {
+  connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
     watcher->deleteLater();
     if (watcher->isCanceled()) return;
     if (auto r = watcher->result()) {

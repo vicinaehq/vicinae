@@ -1,7 +1,7 @@
 #include "extension/extension.hpp"
 #include "extension/extension-command.hpp"
 #include "ui/image/url.hpp"
-#include "preference.hpp"
+#include "command/preference.hpp"
 #include <qjsonobject.h>
 #include <qjsonarray.h>
 #include <qlogging.h>

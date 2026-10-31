@@ -1,11 +1,12 @@
 #pragma once
 #include "ui/image/url.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "ui/image/omni-painter.hpp"
 #include <QFuture>
 #include <QImage>
 #include <QObject>
 #include <QSize>
 #include <atomic>
+#include <functional>
 #include <memory>
 
 class FetchReply;
@@ -42,6 +43,7 @@ private:
   void onDataReceived(const QByteArray &data);
   void decodeStatic(const QByteArray &data);
   void startAnimation(QByteArray data);
+  void applyOverlays(QImage &img) const;
   void emitStaticFrame(QImage img);
   void handleStaticFuture(QFuture<QImage> future);
 
@@ -50,6 +52,7 @@ private:
   QColor m_fg;
   QColor m_bg;
   OmniPainter::ImageMaskType m_mask = OmniPainter::NoMask;
+  std::optional<QString> m_badge;
   QString m_cacheKey;
   QString m_originalCacheKey;
   QString m_latestCacheKey;
@@ -59,5 +62,6 @@ private:
 
   QMovie *m_movie = nullptr;
   FetchReply *m_pendingReply = nullptr;
+  std::function<void()> m_cancelNativeRequest;
   std::shared_ptr<std::atomic<bool>> m_canceled = std::make_shared<std::atomic<bool>>(false);
 };

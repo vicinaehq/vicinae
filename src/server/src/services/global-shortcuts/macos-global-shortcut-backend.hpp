@@ -26,7 +26,7 @@ public:
   void unbindAll() override;
 
   // called on the main thread by the Carbon hot key handler
-  void handleHotKey(uint32_t carbonId, quint64 timestamp);
+  void handleHotKey(uint32_t carbonId, quint64 timestamp, bool released);
 
   // called on the main thread when the keyboard layout changes
   void refreshLayout();

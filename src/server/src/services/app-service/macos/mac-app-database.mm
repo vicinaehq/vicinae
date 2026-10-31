@@ -10,6 +10,7 @@
 #include <QUrl>
 
 #include <fstream>
+#include <sys/stat.h>
 
 namespace fs = std::filesystem;
 
@@ -23,8 +24,9 @@ NSString *toNSString(const fs::path &p) { return [NSString stringWithUTF8String:
 
 QString bundleIdentifierAt(NSURL *url) {
   if (!url) return {};
-  NSBundle *b = [NSBundle bundleWithURL:url];
-  return (b && b.bundleIdentifier) ? QString::fromNSString(b.bundleIdentifier) : QString();
+  NSDictionary *info = CFBridgingRelease(CFBundleCopyInfoDictionaryInDirectory((__bridge CFURLRef)url));
+  NSString *bundleId = info[@"CFBundleIdentifier"];
+  return bundleId ? QString::fromNSString(bundleId) : QString();
 }
 
 enum class TargetKind { Unknown, Url, Path, Uti };
@@ -81,7 +83,9 @@ std::vector<fs::path> collectAppPaths(const std::vector<fs::path> &roots) {
     std::error_code ec;
     if (!fs::is_directory(root, ec)) continue;
 
-    fs::recursive_directory_iterator it(root, fs::directory_options::skip_permission_denied, ec);
+    fs::recursive_directory_iterator it(
+        root, fs::directory_options::skip_permission_denied | fs::directory_options::follow_directory_symlink,
+        ec);
     fs::recursive_directory_iterator const end;
     if (ec) continue;
 
@@ -146,30 +150,12 @@ std::vector<fs::path> MacAppDatabase::searchPaths() const {
   return paths;
 }
 
-PreferenceList MacAppDatabase::preferences() const {
-  std::vector<QString> lockedPaths;
-  auto defaults = defaultSearchPaths();
-
-  lockedPaths.reserve(defaults.size());
-  for (const auto &path : defaults) {
-    lockedPaths.emplace_back(QString::fromStdString(path.string()));
-  }
-
-  auto paths = Preference::directories("paths", std::move(lockedPaths));
-  paths.setTitle(tr("Application directories"));
-  paths.setDescription(tr("Directories applications are sourced from. System directories are always "
-                          "scanned and cannot be removed."));
-
-  return {paths};
-}
-
-void MacAppDatabase::applyPreferences(const QJsonObject &preferences) {
+void MacAppDatabase::applyPreferences(const AppPreferences &preferences) {
   std::vector<fs::path> extra;
-  const auto arr = preferences.value("paths").toArray();
 
-  extra.reserve(arr.size());
-  for (const auto &entry : arr) {
-    if (auto path = entry.toString(); !path.isEmpty()) { extra.emplace_back(path.toStdString()); }
+  extra.reserve(preferences.paths.size());
+  for (const auto &path : preferences.paths) {
+    if (!path.empty()) extra.emplace_back(path);
   }
 
   if (extra == m_extraSearchPaths) return;
@@ -373,6 +359,42 @@ MacAppDatabase::AppPtr MacAppDatabase::findDefaultOpener(const Target &target) c
   return id.isEmpty() ? nullptr : findById(id);
 }
 
+std::vector<MacAppDatabase::AppPtr> MacAppDatabase::findOpenersForMime(const QString &mime) const {
+  std::vector<QString> ids;
+
+  @autoreleasepool {
+    UTType *type = [UTType typeWithMIMEType:toNSString(mime)];
+    NSArray<NSURL *> *urls =
+        type ? [[NSWorkspace sharedWorkspace] URLsForApplicationsToOpenContentType:type] : nil;
+    if (urls) {
+      ids.reserve(urls.count);
+      for (NSURL *u in urls) {
+        auto id = bundleIdentifierAt(u);
+        if (!id.isEmpty()) ids.emplace_back(std::move(id));
+      }
+    }
+  }
+
+  std::vector<AppPtr> result;
+  result.reserve(ids.size());
+  for (const auto &id : ids) {
+    if (auto app = findById(id)) result.emplace_back(std::move(app));
+  }
+  return result;
+}
+
+MacAppDatabase::AppPtr MacAppDatabase::findDefaultOpenerForMime(const QString &mime) const {
+  QString id;
+
+  @autoreleasepool {
+    UTType *type = [UTType typeWithMIMEType:toNSString(mime)];
+    NSURL *appURL = type ? [[NSWorkspace sharedWorkspace] URLForApplicationToOpenContentType:type] : nil;
+    id = bundleIdentifierAt(appURL);
+  }
+
+  return id.isEmpty() ? nullptr : findById(id);
+}
+
 MacAppDatabase::AppPtr MacAppDatabase::findById(const QString &id) const {
   if (auto it = m_appsById.find(id); it != m_appsById.end()) return it->second;
   return nullptr;
@@ -442,4 +464,50 @@ bool MacAppDatabase::openLocation(const AbstractApplication &app) const {
 
 AbstractAppDatabase::AppPtr MacAppDatabase::locationOpener(const AbstractApplication &app) const {
   return fileBrowser();
+}
+
+bool MacAppDatabase::canUninstall(const AbstractApplication &app) const {
+  fs::path const bundlePath = app.path();
+  std::error_code ec;
+
+  if (bundlePath.extension() != ".app") return false;
+  if (fs::is_symlink(bundlePath, ec) || !fs::is_directory(bundlePath, ec)) return false;
+
+  fs::path const canonical = fs::canonical(bundlePath, ec);
+  if (ec) return false;
+
+  auto const isProtectedRoot = [&](const char *root) {
+    auto rel = canonical.lexically_relative(root);
+    return !rel.empty() && *rel.begin() != "..";
+  };
+  if (isProtectedRoot("/System") || isProtectedRoot("/Library/Apple")) return false;
+
+  for (auto parent = canonical.parent_path(); !parent.empty() && parent != parent.parent_path();
+       parent = parent.parent_path()) {
+    if (parent.extension() == ".app") return false;
+  }
+
+  struct stat st{};
+  if (lstat(canonical.c_str(), &st) != 0) return false;
+  if (st.st_flags & (SF_RESTRICTED | SF_IMMUTABLE | UF_IMMUTABLE)) return false;
+
+  @autoreleasepool {
+    return [[NSFileManager defaultManager] isDeletableFileAtPath:toNSString(canonical)];
+  }
+}
+
+bool MacAppDatabase::uninstall(const AbstractApplication &app) {
+  if (!canUninstall(app)) return false;
+
+  @autoreleasepool {
+    NSURL *url = [NSURL fileURLWithPath:toNSString(app.path())];
+    NSError *error = nil;
+    if (![[NSFileManager defaultManager] trashItemAtURL:url resultingItemURL:nil error:&error]) {
+      qWarning() << "Failed to trash" << app.path().c_str() << ":"
+                 << QString::fromNSString(error.localizedDescription);
+      return false;
+    }
+  }
+
+  return true;
 }

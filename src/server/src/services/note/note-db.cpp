@@ -1,7 +1,7 @@
 #include <QDateTime>
 #include <QUuid>
 #include <algorithm>
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include "services/note/note-db.hpp"
 
 using namespace note;

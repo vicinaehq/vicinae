@@ -9,6 +9,9 @@ bool LinuxPasteService::supportsPaste() const {
 
 bool LinuxPasteService::pasteToApp(const AbstractWindowManager::AbstractWindow *window,
                                    const AbstractApplication *app) {
-  m_server.injectPaste(app && app->isTerminalEmulator());
+  const bool isTerminal = app && (app->isTerminalEmulator() || app->isTerminalApp());
+
+  m_server.injectPaste(isTerminal);
+
   return true;
 }

@@ -20,6 +20,9 @@ constexpr UINT COMMAND_ABOUT = 2;
 constexpr UINT COMMAND_CHECK_FOR_UPDATES = 3;
 constexpr UINT COMMAND_SETTINGS = 4;
 constexpr UINT COMMAND_QUIT = 5;
+constexpr UINT COMMAND_SPONSOR = 6;
+constexpr UINT COMMAND_DISCORD = 7;
+constexpr UINT COMMAND_FOLLOW = 8;
 
 constexpr GUID TRAY_ICON_GUID = {
     0x58c36f83, 0x24c6, 0x4ed9, {0x91, 0x7c, 0x6b, 0x1f, 0x89, 0xa4, 0xe6, 0x32}};
@@ -154,19 +157,23 @@ struct TrayServiceWindows::Impl {
       return;
     }
 
-    appendMenuItem(menu, MF_STRING, COMMAND_TOGGLE, owner.tr("Toggle Vicinae"));
+    appendMenuItem(menu, MF_STRING, COMMAND_TOGGLE, TrayService::toggleLabel());
     appendMenuItem(menu, MF_STRING | MF_DISABLED, 0,
                    version.isEmpty() ? QStringLiteral("Vicinae") : QStringLiteral("Vicinae %1").arg(version));
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
-    appendMenuItem(menu, MF_STRING, COMMAND_ABOUT, owner.tr("About Vicinae"));
+    appendMenuItem(menu, MF_STRING, COMMAND_ABOUT, TrayService::aboutLabel());
     if (checkForUpdatesVisible) {
       appendMenuItem(menu, MF_STRING, COMMAND_CHECK_FOR_UPDATES,
-                     availableUpdate.isEmpty() ? owner.tr("Check for Updates…")
-                                               : owner.tr("Update Available: %1").arg(availableUpdate));
+                     availableUpdate.isEmpty() ? TrayService::checkForUpdatesLabel()
+                                               : TrayService::updateAvailableLabel(availableUpdate));
     }
-    appendMenuItem(menu, MF_STRING, COMMAND_SETTINGS, owner.tr("Settings…"));
+    appendMenuItem(menu, MF_STRING, COMMAND_SETTINGS, TrayService::settingsLabel());
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
-    appendMenuItem(menu, MF_STRING, COMMAND_QUIT, owner.tr("Quit Vicinae"));
+    appendMenuItem(menu, MF_STRING, COMMAND_SPONSOR, TrayService::sponsorLabel());
+    appendMenuItem(menu, MF_STRING, COMMAND_DISCORD, TrayService::discordLabel());
+    appendMenuItem(menu, MF_STRING, COMMAND_FOLLOW, TrayService::followLabel());
+    AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+    appendMenuItem(menu, MF_STRING, COMMAND_QUIT, TrayService::quitLabel());
 
     POINT cursor{};
     GetCursorPos(&cursor);
@@ -188,6 +195,15 @@ struct TrayServiceWindows::Impl {
       break;
     case COMMAND_SETTINGS:
       emit owner.openSettingsRequested(QString());
+      break;
+    case COMMAND_SPONSOR:
+      emit owner.openLinkRequested(TrayService::Link::Sponsor);
+      break;
+    case COMMAND_DISCORD:
+      emit owner.openLinkRequested(TrayService::Link::Discord);
+      break;
+    case COMMAND_FOLLOW:
+      emit owner.openLinkRequested(TrayService::Link::Follow);
       break;
     case COMMAND_QUIT:
       emit owner.quitRequested();

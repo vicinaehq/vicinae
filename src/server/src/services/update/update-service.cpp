@@ -1,5 +1,5 @@
 #include "update-service.hpp"
-#include "builtin_icon.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
 #include "environment.hpp"
 #include "generated/version.h"
 #include "service-registry.hpp"
@@ -51,6 +51,8 @@ UpdateService::UpdateService(ToastService &toast, std::unique_ptr<AbstractUpdate
 }
 
 QString UpdateService::currentVersionTag() const { return VICINAE_GIT_TAG; }
+
+fs::path UpdateService::downloadDir() { return Omnicast::cacheDir() / "updates"; }
 
 void UpdateService::checkNow() { performCheck(); }
 
@@ -116,11 +118,11 @@ void UpdateService::downloadAndInstall() {
     return;
 
   std::error_code ec;
-  const fs::path downloadDir = Omnicast::cacheDir() / "updates";
+  const fs::path dir = downloadDir();
 
-  fs::create_directories(downloadDir, ec);
+  fs::create_directories(dir, ec);
 
-  const fs::path archivePath = downloadDir / m_installer->assetName().toStdString();
+  const fs::path archivePath = dir / m_installer->assetName().toStdString();
 
   setStatus(Status::Downloading);
 

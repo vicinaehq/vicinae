@@ -37,10 +37,10 @@ static std::vector<std::byte> fromHex(std::string_view h) {
   return v;
 }
 
-TEST_CASE("generateKey returns 32 bytes") { REQUIRE(generateKey().size() == 32); }
+TEST_CASE("generateKey returns 32 bytes") { REQUIRE(generateKey()->size() == 32); }
 
 TEST_CASE("round trip recovers plaintext") {
-  auto key = generateKey();
+  auto key = *generateKey();
   auto plain = bytes("the quick brown fox jumps over the lazy dog");
   auto enc = encrypt(plain, key);
   REQUIRE(enc.has_value());
@@ -50,7 +50,7 @@ TEST_CASE("round trip recovers plaintext") {
 }
 
 TEST_CASE("empty plaintext round trips") {
-  auto key = generateKey();
+  auto key = *generateKey();
   auto enc = encrypt({}, key);
   REQUIRE(enc.has_value());
   REQUIRE(enc->size() == 12 + 16); // iv + tag, no ciphertext
@@ -60,15 +60,15 @@ TEST_CASE("empty plaintext round trips") {
 }
 
 TEST_CASE("wrong key fails authentication") {
-  auto enc = encrypt(bytes("secret"), generateKey());
+  auto enc = encrypt(bytes("secret"), *generateKey());
   REQUIRE(enc.has_value());
-  auto dec = decrypt(*enc, generateKey());
+  auto dec = decrypt(*enc, *generateKey());
   REQUIRE_FALSE(dec.has_value());
   REQUIRE(dec.error() == DecryptError::AuthFailed);
 }
 
 TEST_CASE("tampered ciphertext is rejected") {
-  auto key = generateKey();
+  auto key = *generateKey();
   auto enc = encrypt(bytes("secret data here"), key);
   REQUIRE(enc.has_value());
   (*enc)[15] ^= std::byte{0x01};
@@ -76,7 +76,7 @@ TEST_CASE("tampered ciphertext is rejected") {
 }
 
 TEST_CASE("tampered tag is rejected") {
-  auto key = generateKey();
+  auto key = *generateKey();
   auto enc = encrypt(bytes("secret"), key);
   REQUIRE(enc.has_value());
   enc->back() ^= std::byte{0x01};
@@ -91,13 +91,13 @@ TEST_CASE("wrong key size reports InvalidKeySize") {
 }
 
 TEST_CASE("too-short input reports DataTooShort") {
-  auto r = decrypt(std::vector<std::byte>(10), generateKey());
+  auto r = decrypt(std::vector<std::byte>(10), *generateKey());
   REQUIRE_FALSE(r.has_value());
   REQUIRE(r.error() == DecryptError::DataTooShort);
 }
 
 TEST_CASE("random IV yields distinct ciphertexts") {
-  auto key = generateKey();
+  auto key = *generateKey();
   auto a = encrypt(bytes("same plaintext"), key);
   auto b = encrypt(bytes("same plaintext"), key);
   REQUIRE(a.has_value());
@@ -138,7 +138,7 @@ TEST_CASE("HKDF known answer vector") {
 }
 
 TEST_CASE("deriveKey is deterministic and domain-separated") {
-  auto master = generateKey();
+  auto master = *generateKey();
   auto db1 = Crypto::deriveKey(master, "vicinae-db");
   auto db2 = Crypto::deriveKey(master, "vicinae-db");
   auto clip = Crypto::deriveKey(master, "vicinae-clipboard");

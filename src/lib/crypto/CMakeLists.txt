@@ -1,6 +1,6 @@
 # native crypto primitives we can use when we need to encrypt something that is outside sqlcipher.
 # One example is the clipboard history data, stored as files on the filesystem.
-# This always uses the platform's native crypto backend (openssl on linux) so that we can benefit from system security updates to these critical libraries.
+# This always uses the platform's native crypto backend (openssl on linux, CryptoKit on macOS, CNG on Windows) so that we can benefit from system security updates to these critical libraries.
 
 cmake_minimum_required(VERSION 3.16)
 set(PROJECT_NAME vicinae-crypto)
@@ -16,7 +16,7 @@ if (APPLE)
 	enable_language(Swift)
 	set(CRYPTO_BACKEND src/gcm-cryptokit.swift src/gcm-apple.cpp)
 elseif (WIN32)
-	set(CRYPTO_BACKEND src/gcm-stub.cpp)
+	set(CRYPTO_BACKEND src/gcm-cng.cpp)
 else()
 	set(CRYPTO_BACKEND src/gcm-openssl.cpp)
 endif()
@@ -40,6 +40,7 @@ if (APPLE)
 	include(SwiftRuntime)
 	link_swift_runtime(${PROJECT_NAME})
 elseif (WIN32)
+	target_link_libraries(${PROJECT_NAME} PRIVATE bcrypt)
 else()
 	find_package(OpenSSL REQUIRED)
 	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto)

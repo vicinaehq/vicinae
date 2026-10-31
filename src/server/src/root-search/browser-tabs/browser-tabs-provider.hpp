@@ -1,13 +1,12 @@
 #pragma once
 #include "actions/browser-tab-actions.hpp"
-#include "builtin_icon.hpp"
-#include "common.hpp"
+#include "services/builtin-icon/builtin-icon.hpp"
+#include "command/command-types.hpp"
 #include "navigation-controller.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "ui/list-accessory/list-accessory.hpp"
+#include "ui/views/list-accessory.hpp"
 #include <QCoreApplication>
-#include <qjsonobject.h>
 #include <qstringliteral.h>
 #include <ranges>
 
@@ -73,10 +72,6 @@ public:
   bool isTransient() const override { return true; }
 
   QString uniqueId() const override { return "browser-tabs"; }
-
-  PreferenceList preferences() const override { return {}; }
-
-  void preferencesChanged(const QJsonObject &preferences) override {}
 
 public:
   BrowserTabProvider(BrowserExtensionService &service) : m_service(service) {

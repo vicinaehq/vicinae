@@ -1,7 +1,7 @@
 #pragma once
-#include "argument.hpp"
+#include "command/argument.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "config/config.hpp"
 #include "common/entrypoint.hpp"
 #include "navigation-controller.hpp"
@@ -10,12 +10,10 @@
 #include "services/root-item-manager/search-history.hpp"
 #include "services/root-item-manager/visit-tracker.hpp"
 #include "ui/image/url.hpp"
-#include "preference.hpp"
-#include "ui/list-accessory/list-accessory.hpp"
+#include "command/preference.hpp"
+#include "ui/views/list-accessory.hpp"
 #include <cstdint>
 #include <qdnslookup.h>
-#include <qjsonobject.h>
-#include <qjsonvalue.h>
 #include <qlogging.h>
 #include <qmimedata.h>
 #include <qnamespace.h>
@@ -126,7 +124,13 @@ public:
    */
   virtual std::vector<QString> keywords() const { return {}; }
 
-  virtual void preferenceValuesChanged(const QJsonObject &values) const {}
+  /**
+   * Untranslated version of the title, if it differs from the displayed one.
+   * Scored with the same weight as the title so that localized items stay searchable in English.
+   */
+  virtual std::optional<QString> unlocalizedTitle() const { return std::nullopt; }
+
+  virtual void preferenceValuesChanged(const PreferenceValues &values) const {}
 
   virtual QString settingsDescription() const { return {}; }
   virtual std::vector<std::pair<QString, QString>> settingsMetadata() const { return {}; }
@@ -185,13 +189,13 @@ public:
   /**
    * Called when the provider preferences are changed.
    */
-  virtual void preferencesChanged(const QJsonObject &preferences) {}
+  virtual void preferencesChanged(const PreferenceValues &preferences) {}
 
-  virtual void itemPreferencesChanged(const QString &itemId, const QJsonObject &preferences) {}
+  virtual void itemPreferencesChanged(const QString &itemId, const PreferenceValues &preferences) {}
 
   // Called the first time the root provider is loaded by the root item manager, right after the first
   // `preferencesChanged` call.
-  virtual void initialized(const QJsonObject &preference) {}
+  virtual void initialized(const PreferenceValues &preference) {}
 
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
   virtual PreferenceList preferences() const { return {}; }
@@ -237,6 +241,7 @@ public:
   struct SearchableRootItem {
     std::shared_ptr<RootItem> item;
     std::string title;
+    std::string unlocalizedTitle;
     std::string subtitle;
     std::vector<std::string> keywords;
     RootItemMetadata *meta = nullptr;
@@ -267,28 +272,25 @@ public:
 
   RootItemManager(config::Manager &config, LocalStorageService &storage);
 
-  static glz::generic::object_t transformPreferenceValues(const QJsonObject &preferences);
-  static QJsonObject transformPreferenceValues(const glz::generic::object_t &preferences);
-
   RootProvider *findProviderById(const QString &id) const;
-  bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences);
+  bool setProviderPreferenceValues(const QString &id, const PreferenceValues &preferences);
 
   bool setItemEnabled(const EntrypointId &id, bool value);
-  bool setItemPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
+  bool setItemPreferenceValues(const EntrypointId &id, const PreferenceValues &preferences);
 
-  void setPreferenceValues(const EntrypointId &id, const QJsonObject &preferences);
+  void setPreferenceValues(const EntrypointId &id, const PreferenceValues &preferences);
 
   bool setAlias(const EntrypointId &id, std::string_view alias);
   bool setShortcut(const EntrypointId &id, std::string_view shortcut);
 
-  QJsonObject getProviderPreferenceValues(const QString &id) const;
-  QJsonObject getItemPreferenceValues(const EntrypointId &id) const;
+  PreferenceValues getProviderPreferenceValues(const QString &id) const;
+  PreferenceValues getItemPreferenceValues(const EntrypointId &id) const;
 
   /**
    * Merge the item preferences with the provider preferences.
    */
   std::vector<Preference> getMergedItemPreferences(const EntrypointId &id) const;
-  QJsonObject getPreferenceValues(const EntrypointId &id) const;
+  PreferenceValues getPreferenceValues(const EntrypointId &id) const;
   RootItemMetadata itemMetadata(const EntrypointId &id) const;
   bool isFallback(const EntrypointId &id) const;
   bool disableFallback(const EntrypointId &id);
@@ -352,19 +354,26 @@ public:
 private:
   static QString getEntrypointSecretPreferenceKey(const EntrypointId &id, const QString &prefName);
   void setEntrypointSecretPreference(const EntrypointId &id, const QString &prefName,
-                                     const QJsonValue &value);
-  QJsonValue getEntrypointSecretPreference(const EntrypointId &entrypoint, const QString &prefName) const;
-  QJsonValue getProviderSecretPreference(const QString &providerId, const QString &prefName) const;
-  void setProviderSecretPreference(const QString &id, const QString &prefName, const QJsonValue &value);
+                                     const glz::generic &value);
+  glz::generic getEntrypointSecretPreference(const EntrypointId &entrypoint, const QString &prefName) const;
+  glz::generic getProviderSecretPreference(const QString &providerId, const QString &prefName) const;
+  void setProviderSecretPreference(const QString &id, const QString &prefName, const glz::generic &value);
 
   ScopedLocalStorage getProviderSecretStorage(const QString &providerId) const;
 
   void mergeConfigWithMetadata(const config::ConfigValue &cfg);
+  void syncPreferences();
+  void syncProviderPreferences(RootProvider &provider);
+  void syncItemPreferences(const RootItem &item);
+  PreferenceValues dispatchProviderPreferences(RootProvider &provider);
+  static bool samePreferences(const PreferenceValues &a, const PreferenceValues &b);
 
   std::vector<std::shared_ptr<RootItem>>
   getFromSerializedEntrypointIds(std::span<const std::string> ids) const;
 
   std::unordered_map<EntrypointId, RootItemMetadata> m_metadata;
+  std::unordered_map<std::string, PreferenceValues> m_dispatchedProviderPreferences;
+  std::unordered_map<EntrypointId, PreferenceValues> m_dispatchedItemPreferences;
   std::vector<std::unique_ptr<RootProvider>> m_providers;
   config::Manager &m_cfg;
   LocalStorageService &m_storage;

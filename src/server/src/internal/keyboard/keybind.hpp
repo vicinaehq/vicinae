@@ -18,6 +18,7 @@ enum class Keybind : uint8_t {
   PinAction,
   RemoveAction,
   DangerousRemoveAction,
+  RunAsAdministrator,
   EditAction,
   EditSecondaryAction,
   MoveUpAction,

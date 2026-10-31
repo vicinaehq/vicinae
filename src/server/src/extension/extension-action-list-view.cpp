@@ -1,6 +1,6 @@
 #include "extension-action-list-view.hpp"
-#include "action-panel-model.hpp"
-#include "ui/action-pannel/action-panel-state.hpp"
+#include "ui/action-panel/action-panel-model.hpp"
+#include "ui/action-panel/action-panel-state.hpp"
 #include <utility>
 
 ExtensionActionListView::ExtensionActionListView(ExtensionActionPanelBuilder::NotifyFn notify,

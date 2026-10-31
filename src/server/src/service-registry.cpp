@@ -3,14 +3,17 @@
 #include "services/input-server/linux-input-server.hpp"
 #endif
 #include "services/audio-control/audio-control-service.hpp"
+#include "services/media-control/media-control-service.hpp"
 #include "extension/manager/extension-manager.hpp"
-#include "font-service.hpp"
-#include "omni-database.hpp"
+#include "services/font-service/font-service.hpp"
+#include "services/screenshots/screenshot-service.hpp"
+#include "internal/db/omni-database.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/window-material/window-material-manager.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "services/browser-extension-service.hpp"
 #include "services/power-manager/power-manager.hpp"
+#include "services/tray-host/abstract-tray-host.hpp"
 #include "services/script-command/script-command-service.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -38,6 +41,8 @@
 #include "services/news/news-service.hpp"
 #include "config/config.hpp"
 
+ServiceRegistry::ServiceRegistry() { s_instance = this; }
+
 ServiceRegistry::~ServiceRegistry() = default;
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
@@ -48,6 +53,7 @@ WindowManager *ServiceRegistry::windowManager() const { return m_windowManager.g
 WallpaperManager *ServiceRegistry::wallpaperManager() const { return m_wallpaperManager.get(); }
 GlyphService *ServiceRegistry::glyphService() const { return m_glyphService.get(); }
 FontService *ServiceRegistry::fontService() const { return m_fontService.get(); }
+ScreenshotService *ServiceRegistry::screenshots() const { return m_screenshots.get(); }
 LocalStorageService *ServiceRegistry::localStorage() const { return m_localStorage.get(); }
 ExtensionManager *ServiceRegistry::extensionManager() const { return m_extensionManager.get(); }
 ClipboardService *ServiceRegistry::clipman() const { return m_clipman.get(); }
@@ -61,6 +67,8 @@ ExtensionRegistry *ServiceRegistry::extensionRegistry() const { return m_extensi
 OAuthService *ServiceRegistry::oauthService() const { return m_oauthService.get(); }
 
 PowerManager *ServiceRegistry::powerManager() const { return m_powerManager.get(); }
+
+AbstractTrayHost *ServiceRegistry::trayHost() const { return m_trayHost.get(); }
 
 ScriptCommandService *ServiceRegistry::scriptDb() const { return m_scriptCommandService.get(); }
 
@@ -95,10 +103,16 @@ UpdateService *ServiceRegistry::updateService() const { return m_updateService.g
 
 AudioControlService *ServiceRegistry::audioControl() const { return m_audioControl.get(); }
 
+MediaControlService *ServiceRegistry::mediaControl() const { return m_mediaControl.get(); }
+
 AppRuntime *ServiceRegistry::appRuntime() const { return m_appRuntime.get(); }
 
 void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
   m_powerManager = std::move(powman);
+}
+
+void ServiceRegistry::setTrayHost(std::unique_ptr<AbstractTrayHost> service) {
+  m_trayHost = std::move(service);
 }
 
 void ServiceRegistry::setWindowManager(std::unique_ptr<WindowManager> manager) {
@@ -142,6 +156,9 @@ void ServiceRegistry::setToastService(std::unique_ptr<ToastService> service) {
   m_toastService = std::move(service);
 }
 void ServiceRegistry::setFontService(std::unique_ptr<FontService> font) { m_fontService = std::move(font); }
+void ServiceRegistry::setScreenshots(std::unique_ptr<ScreenshotService> service) {
+  m_screenshots = std::move(service);
+}
 void ServiceRegistry::setOmniDb(std::unique_ptr<OmniDatabase> service) { m_omniDb = std::move(service); }
 
 void ServiceRegistry::setLocalStorage(std::unique_ptr<LocalStorageService> service) {
@@ -217,6 +234,10 @@ void ServiceRegistry::setAudioControl(std::unique_ptr<AudioControlService> servi
   m_audioControl = std::move(service);
 }
 
+void ServiceRegistry::setMediaControl(std::unique_ptr<MediaControlService> service) {
+  m_mediaControl = std::move(service);
+}
+
 void ServiceRegistry::setAppRuntime(std::unique_ptr<AppRuntime> service) {
   m_appRuntime = std::move(service);
 }
@@ -227,7 +248,4 @@ void ServiceRegistry::setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> 
   m_globalShortcuts = std::move(service);
 }
 
-ServiceRegistry *ServiceRegistry::instance() {
-  static ServiceRegistry instance;
-  return &instance;
-}
+ServiceRegistry *ServiceRegistry::instance() { return s_instance; }

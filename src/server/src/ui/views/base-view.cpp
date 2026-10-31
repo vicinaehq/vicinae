@@ -1,8 +1,8 @@
 #include "ui/views/base-view.hpp"
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "navigation-controller.hpp"
-#include "ui/action-pannel/action-list-view.hpp"
-#include "ui/action-pannel/action-panel-view.hpp"
+#include "ui/action-panel/action-list-view.hpp"
+#include "ui/action-panel/action-panel-view.hpp"
 #include <qlogging.h>
 #include <stdexcept>
 
@@ -118,6 +118,11 @@ void BaseView::setSearchVisibility(bool visible) {
 void BaseView::setSearchInteractive(bool interactive) {
   if (!m_ctx) return;
   m_ctx->navigation->setSearchInteractive(interactive, m_navProxy);
+}
+
+void BaseView::setSearchRedacted(bool redacted) {
+  if (!m_ctx) return;
+  m_ctx->navigation->setSearchRedacted(redacted, m_navProxy);
 }
 
 void BaseView::setStatusBarVisiblity(bool visible) {

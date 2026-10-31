@@ -11,6 +11,14 @@ std::optional<uint32_t> xkbKeysymForQtKey(Qt::Key key) {
   if (k >= Qt::Key_F1 && k <= Qt::Key_F35) { return static_cast<uint32_t>(XKB_KEY_F1 + (k - Qt::Key_F1)); }
 
   switch (key) {
+  case Qt::Key_Meta:
+    return XKB_KEY_Super_L;
+  case Qt::Key_Control:
+    return XKB_KEY_Control_L;
+  case Qt::Key_Alt:
+    return XKB_KEY_Alt_L;
+  case Qt::Key_Shift:
+    return XKB_KEY_Shift_L;
   case Qt::Key_Return:
     return XKB_KEY_Return;
   case Qt::Key_Enter:

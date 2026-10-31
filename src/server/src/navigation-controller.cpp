@@ -1,14 +1,14 @@
 #include "navigation-controller.hpp"
 #include <QTimer>
-#include "command-controller.hpp"
+#include "command/command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
-#include "qml/missing-preference-view-host.hpp"
+#include "extension/views/missing-preference-view-host.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include "ui/action-pannel/action-panel-view.hpp"
+#include "ui/action-panel/action-panel-view.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
@@ -253,6 +253,7 @@ void NavigationController::popCurrentView() {
   emit headerVisiblityChanged(next->needsTopBar);
   emit searchVisibilityChanged(next->supportsSearch);
   emit searchInteractiveChanged(next->searchInteractive);
+  emit searchRedactedChanged(next->searchRedacted);
   emit statusBarVisiblityChanged(next->needsStatusBar);
   emit loadingChanged(next->isLoading);
   emit backButtonVisibilityChanged(next->showBackButton);
@@ -334,6 +335,12 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   emit windowVisiblityChanged(false);
 }
 
+void NavigationController::releaseSuspendedClose() {
+  if (m_pendingPopToRoot && m_pendingPopToRoot->type == PopToRootType::Suspended) {
+    m_pendingPopToRoot->type = PopToRootType::Default;
+  }
+}
+
 bool NavigationController::windowActivated() { return m_windowActivated; }
 
 void NavigationController::setCloseOnFocusLoss(bool value) { m_closeOnFocusLoss = value; }
@@ -401,6 +408,13 @@ void NavigationController::setSearchInteractive(bool value, const BaseView *call
   }
 }
 
+void NavigationController::setSearchRedacted(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->searchRedacted = value;
+    if (state->sender == topView()) { emit searchRedactedChanged(value); }
+  }
+}
+
 void NavigationController::setStatusBarVisibility(bool value, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->needsStatusBar = value;
@@ -457,6 +471,7 @@ void NavigationController::activateView(const ViewState &state) {
   emit headerVisiblityChanged(state.needsTopBar);
   emit searchVisibilityChanged(state.supportsSearch);
   emit searchInteractiveChanged(state.searchInteractive);
+  emit searchRedactedChanged(state.searchRedacted);
   emit statusBarVisiblityChanged(state.needsStatusBar);
   emit backButtonVisibilityChanged(state.showBackButton);
   emit loadingChanged(state.isLoading);
@@ -639,6 +654,11 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
   return true;
 }
 
+void NavigationController::releaseEntrypoint(const EntrypointId &id) {
+  const auto *entrypoint = m_ctx.services->rootItemManager()->findItemById(id);
+  if (auto *ext = dynamic_cast<const CommandRootItem *>(entrypoint)) { ext->command()->shortcutReleased(); }
+}
+
 void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
   launch(cmd, LaunchProps{.arguments = completionValues()});
 }
@@ -665,10 +685,9 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd, const
     auto preferenceValues = manager->getPreferenceValues(itemId);
 
     for (const auto &preference : preferences) {
-      QJsonValue const value = preferenceValues.value(preference.name());
-      bool const hasValue = !(value.isUndefined() || value.isNull());
-      bool const hasDefault = !preference.defaultValue().isUndefined();
-      bool const isMissing = preference.required() && !hasValue && !hasDefault;
+      const auto *value = preferences::find(preferenceValues, preference.name().toStdString());
+      bool const hasValue = value && !value->is_null();
+      bool const isMissing = preference.required() && !hasValue && !preference.hasDefaultValue();
 
       if (!isMissing) continue;
 

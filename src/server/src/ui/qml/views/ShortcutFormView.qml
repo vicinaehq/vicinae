@@ -1,0 +1,75 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import Vicinae
+
+Item {
+    id: root
+    required property ShortcutFormViewHost host
+
+    FormView {
+        id: formView
+        anchors.fill: parent
+        Component.onCompleted: Qt.callLater(formView.focusFirst)
+
+        FormField {
+            label: qsTr("Name")
+
+            FormTextInput {
+                text: root.host.name
+                placeholder: qsTr("Shortcut Name")
+                onTextEdited: root.host.name = text
+            }
+        }
+
+        FormField {
+            id: urlField
+            label: "URL"
+            error: root.host.linkError
+            info: qsTr("The URL that will be opened by the specified app. You can make it dynamic by using placeholders such as {argument}.")
+
+            FormTextInput {
+                id: linkInput
+                text: root.host.link
+                placeholder: "https://google.com/search?q={argument}"
+                completions: root.host.linkCompletions
+                highlighter: PlaceholderHighlight {}
+                hasError: urlField.error !== ""
+
+                onTextEdited: root.host.link = text
+
+                onEditingChanged: {
+                    if (!editing)
+                        root.host.handleLinkBlurred();
+                }
+            }
+        }
+
+        FormSeparator {}
+
+        FormField {
+            id: appField
+            label: qsTr("Open with")
+            error: root.host.appError
+
+            SearchableDropdown {
+                model: root.host.appSelectorModel.model
+                currentItem: root.host.selectedApp
+                hasError: appField.error !== ""
+                onActivated: item => root.host.selectApp(item)
+            }
+        }
+
+        FormField {
+            id: iconField
+            label: qsTr("Icon")
+            error: root.host.iconError
+
+            SearchableDropdown {
+                model: root.host.iconModel
+                currentItem: root.host.selectedIcon
+                hasError: iconField.error !== ""
+                onActivated: item => root.host.selectIcon(item)
+            }
+        }
+    }
+}

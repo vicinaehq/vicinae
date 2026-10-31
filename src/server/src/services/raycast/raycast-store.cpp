@@ -52,7 +52,7 @@ QFuture<Raycast::ExtensionResult> RaycastStoreService::fetchExtension(const QStr
 }
 
 QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
-  auto url = QString("/store_listings/search?q=%1").arg(query);
+  auto url = QString("/store_listings/search?q=%1").arg(QString::fromLatin1(QUrl::toPercentEncoding(query)));
 
   return m_client.get<Raycast::ListApiResponse>(url, s_requestOpts)
       .then([](http::Client::Result<Raycast::ListApiResponse> result) -> Raycast::ListResult {

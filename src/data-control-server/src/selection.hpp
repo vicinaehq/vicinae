@@ -26,5 +26,6 @@ std::set<std::string> filterMimes(const std::vector<std::string> &offerMimes);
 clipboard_proto::Selection buildSelection(const std::set<std::string> &filteredMimes, OfferReceiver &offer);
 void printDebug(const std::set<std::string> &filteredMimes, OfferReceiver &offer, const char *label);
 void printPrimarySelectionDebug(OfferReceiver &offer);
+clipboard_proto::Selection buildPrimarySelection(OfferReceiver &offer);
 
 }; // namespace Selection

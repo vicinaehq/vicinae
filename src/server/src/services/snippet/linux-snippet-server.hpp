@@ -15,11 +15,11 @@ public:
   void resetContext() override;
 
   void injectExpand(const std::string &text, unsigned charsToDelete, unsigned prePasteDelayUs, bool terminal,
-                    unsigned cursorLeftMoves) override;
+                    unsigned cursorLeftMoves, bool viaClipboard) override;
   void injectUndo(unsigned backspaceCount, const std::string &trigger) override;
   void setKeyDelay(int us) override;
   bool supportsKeyInjection() const override;
-  bool usesClipboard() const override { return true; }
+  bool usesClipboard(std::size_t) const override { return true; }
 
   bool isRunning() const override;
 

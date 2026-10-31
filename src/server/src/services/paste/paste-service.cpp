@@ -1,6 +1,5 @@
 #include <QTimer>
 #include "paste-service.hpp"
-#include "vicinae.hpp"
 
 static constexpr int FOCUS_POLL_INTERVAL_MS = 5;
 static constexpr int FOCUS_POLL_MAX = 1000; // 5s max (1000 * FOCUS_POLL_INTERVAL_MS)
@@ -41,8 +40,8 @@ bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboa
 void PasteService::waitForFocusAndPaste() {
   ++m_focusPollCount;
 
-  auto window = m_wm.getFocusedWindow();
-  bool const focusLanded = window && window->wmClass() != Omnicast::APP_ID;
+  auto window = m_wm.focusedForeignWindow();
+  bool const focusLanded = window != nullptr;
 
   if (focusLanded || m_focusPollCount >= FOCUS_POLL_MAX) {
     m_focusPollTimer.stop();

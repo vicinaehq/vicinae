@@ -45,6 +45,7 @@ private:
     void vicinae_hotkey_v1_denied(uint32_t reason, const QString &message) override;
     void vicinae_hotkey_v1_revoked(uint32_t reason, const QString &message) override;
     void vicinae_hotkey_v1_pressed(uint32_t serial, uint32_t time) override;
+    void vicinae_hotkey_v1_released(uint32_t serial, uint32_t time) override;
 
   private:
     VicinaeHotkeyGlobalShortcutBackend *m_backend;

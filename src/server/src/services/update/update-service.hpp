@@ -4,7 +4,7 @@
 #include "github-release.hpp"
 #include "http-client.hpp"
 #include "semver.hpp"
-#include "ui/action-pannel/action.hpp"
+#include "ui/action-panel/action.hpp"
 #include <QCoreApplication>
 #include <QObject>
 #include <QTimer>
@@ -38,6 +38,7 @@ public:
   const std::optional<AvailableUpdate> &available() const { return m_available; }
   Status status() const { return m_status; }
   QString currentVersionTag() const;
+  static std::filesystem::path downloadDir();
   bool checksSupported() const { return m_currentVersion.has_value() && m_installer->supported(); }
 
   void downloadAndInstall();

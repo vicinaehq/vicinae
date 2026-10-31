@@ -12,11 +12,17 @@ function die() {
 
 APPDIR=$2
 
+# The build container may run with a restrictive umask, which would make every
+# directory 0700 and the extracted install unusable for non-root users (#2039).
+umask 022
+
 rm -rf $APPDIR
 mkdir -p $APPDIR/usr
 cp -r $1/* $APPDIR/usr
 
 cp extra/vicinae.png ${APPDIR}
+
+chmod -R u=rwX,go=rX "$APPDIR"
 
 # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57
 cp /usr/lib/$(uname -m)-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
@@ -39,7 +45,7 @@ done
 LIBSECRET=/usr/lib/$(uname -m)-linux-gnu/libsecret-1.so.0
 [ -e "$LIBSECRET" ] || die "$LIBSECRET not found: install libsecret-1-dev in the build image"
 
-export QML_SOURCES_PATHS=$PWD/src/server/src/qml/qml
+export QML_SOURCES_PATHS=$PWD/src/server/src/ui/qml
 export EXTRA_PLATFORM_PLUGINS=libqwayland.so
 export EXTRA_QT_PLUGINS=waylandcompositor
 

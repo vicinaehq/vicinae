@@ -338,6 +338,7 @@ void SnippetService::listen(snippet_gen::Server &rpcServer) {
     const int nfds = epoll_wait(m_epollFd, events.data(), events.size(), timeout);
 
     if (nfds == -1) {
+      if (errno == EINTR) continue;
       std::cerr << "Failed to epoll_wait: " << strerror(errno) << '\n';
       exit(1);
     }

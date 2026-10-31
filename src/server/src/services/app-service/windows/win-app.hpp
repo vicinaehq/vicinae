@@ -1,6 +1,7 @@
 #pragma once
 #include <QCoreApplication>
 #include "common/types.hpp"
+#include "keyboard/keyboard.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
@@ -48,6 +49,7 @@ public:
     QString category; // "Game", "Link", or empty
     bool elevated = false;
     WindowsAppKind kind;
+    std::optional<Keyboard::Shortcut> shortcut;
   };
 
   explicit WindowsApplication(Data data) : m_data(std::move(data)) {}
@@ -60,6 +62,8 @@ public:
   bool displayable() const override { return true; }
   bool isTerminalApp() const override { return false; }
   bool isAction() const override { return m_data.elevated; }
+  bool isOpener() override { return !m_data.elevated; }
+  std::optional<Keyboard::Shortcut> shortcut() const override { return m_data.shortcut; }
   QString description() const override { return {}; }
   QString category() const override { return m_data.category; }
 
@@ -70,6 +74,7 @@ public:
     data.fullyQualifiedName = tr("%1: Run as Administrator").arg(m_data.displayName);
     data.displayName = tr("Run as Administrator");
     data.elevated = true;
+    data.shortcut = Keybind::RunAsAdministrator;
     return {std::make_shared<WindowsApplication>(std::move(data))};
   }
 

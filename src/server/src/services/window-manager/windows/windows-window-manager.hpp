@@ -37,9 +37,15 @@ public:
   bool setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const override;
   void refresh() const override { scheduleRebuild(); }
 
+  QFlags<Capability> capabilities() const override { return {Capability::ToggleOverview}; }
+  bool toggleOverview() override;
+
   bool hasWorkspaces() const override { return m_desktops && m_desktops->available(); }
   WorkspaceList listWorkspaces() const override;
   WorkspacePtr getActiveWorkspace() const override;
+  void focusWorkspaceSync(const AbstractWorkspace &workspace) const override {
+    activateWorkspace(workspace.id());
+  }
   bool supportsWorkspaceActivation() const override { return true; }
   bool activateWorkspace(const QString &workspaceId) const override;
 

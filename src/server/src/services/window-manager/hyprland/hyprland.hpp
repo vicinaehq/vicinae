@@ -36,6 +36,8 @@ public:
 
   WindowList listWindowsSync() const override;
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
+  AbstractWindowManager::WindowPtr getFrontmostWindowSync() const override;
+  bool supportsFrontmostWindow() const override { return true; }
   bool supportsFocusTracking() const override { return true; }
 
   WorkspacePtr getActiveWorkspace() const override;

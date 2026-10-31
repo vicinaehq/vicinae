@@ -9,6 +9,8 @@
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <algorithm>
+#include <array>
+#include <span>
 #include <qstandardpaths.h>
 #include <qtenvironmentvariables.h>
 #include <ranges>
@@ -37,6 +39,9 @@ using AppPtr = XdgAppDatabase::AppPtr;
 // This is non standard, and isn't set correctly in most environments
 // This will be deprecated in favor of xdg-terminal-exec compliance
 static constexpr auto FALLBACK_TERMINAL_MIME = "x-scheme-handler/terminal";
+
+static constexpr auto WEB_BROWSER_MIMES = std::to_array<std::string_view>(
+    {"x-scheme-handler/http", "x-scheme-handler/https", "text/html", "application/xhtml+xml"});
 
 namespace {
 
@@ -253,6 +258,27 @@ AppPtr XdgAppDatabase::genericTextEditor() const {
   return nullptr;
 }
 
+bool XdgAppDatabase::setDefaultOpener(const QString &mime, const AbstractApplication &app) {
+  const std::string name = mime.toStdString();
+  return setDefaultForMimes(std::array{std::string_view(name)}, app);
+}
+
+bool XdgAppDatabase::setWebBrowser(const AbstractApplication &app) {
+  return setDefaultForMimes(WEB_BROWSER_MIMES, app);
+}
+
+bool XdgAppDatabase::setDefaultForMimes(std::span<const std::string_view> mimes,
+                                        const AbstractApplication &app) {
+  if (!xdgpp::setDefaultApplication(mimes, app.id().toStdString())) return false;
+
+  m_mimeAppsLists = xdgpp::getAllMimeAppsLists();
+
+  return std::ranges::all_of(mimes, [&](std::string_view mime) {
+    auto opener = defaultForMime(QString::fromUtf8(mime.data(), mime.size()));
+    return opener && opener->id() == app.id();
+  });
+}
+
 AppPtr XdgAppDatabase::webBrowser() const {
   if (auto browser = defaultForMime("x-scheme-handler/https")) { return browser; }
   if (auto browser = defaultForMime("x-scheme-handler/http")) { return browser; }
@@ -319,6 +345,12 @@ AppPtr XdgAppDatabase::findById(const QString &id) const {
 std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &target) const {
   return findAssociations(mimeNameForTarget(target));
 }
+
+std::vector<AppPtr> XdgAppDatabase::findOpenersForMime(const QString &mime) const {
+  return findAssociations(mime);
+}
+
+AppPtr XdgAppDatabase::findDefaultOpenerForMime(const QString &mime) const { return defaultForMime(mime); }
 
 // https://specifications.freedesktop.org/mime-apps-spec/latest/associations.html
 std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) const {
@@ -580,43 +612,11 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
 
 std::vector<AppPtr> XdgAppDatabase::list() const { return {m_apps.begin(), m_apps.end()}; }
 
-PreferenceList XdgAppDatabase::preferences() const {
-  auto defaultAction = Preference::makeDropdown(
-      "defaultAction", {{tr("Focus window"), "focus"}, {tr("Launch app"), "launch"}});
-  defaultAction.setDefaultValue("focus");
-  defaultAction.setTitle(tr("Default action"));
-  defaultAction.setDescription(tr("Action to perform when the return key is pressed. Always default to "
-                                  "'launch' if the app has no open window."));
-
-  auto launchPrefix = Preference::makeText("launchPrefix");
-  launchPrefix.setTitle(tr("Launch Prefix"));
-  launchPrefix.setDescription(
-      tr("Custom app launcher to use. Affects applications as well as their sub-actions."));
-  launchPrefix.setPlaceholder("uwsm app --");
-
-  std::vector<QString> lockedPaths;
-  auto defaults = defaultSearchPaths();
-  lockedPaths.reserve(defaults.size());
-  for (const auto &searchPath : defaults) {
-    lockedPaths.emplace_back(QString::fromStdString(searchPath));
-  }
-
-  auto paths = Preference::directories("paths", std::move(lockedPaths));
-  paths.setTitle(tr("Application directories"));
-  paths.setDescription(
-      tr("Directories applications are sourced from. The list cannot be modified directly. In order to do "
-         "so, you need to append additonal paths to the <b>XDG_DATA_DIRS</b> environment variables."));
-  paths.setReadOnly(true);
-
-  return {defaultAction, launchPrefix, paths};
-}
-
-void XdgAppDatabase::applyPreferences(const QJsonObject &preferences) {
-  auto val = preferences.value("launchPrefix").toString();
-  if (val.isEmpty()) {
+void XdgAppDatabase::applyPreferences(const AppPreferences &preferences) {
+  if (preferences.launchPrefix.empty()) {
     m_launchPrefix = Environment::detectAppLauncher();
   } else {
-    m_launchPrefix = val;
+    m_launchPrefix = QString::fromStdString(preferences.launchPrefix);
   }
 }
 

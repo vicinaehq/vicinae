@@ -1,25 +1,33 @@
 #pragma once
-#include "common.hpp"
+#include "command/command-types.hpp"
 #include "common/types.hpp"
 #include "services/clipboard/clipboard-content.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
+#include <QSize>
 #include <QString>
+#include <chrono>
 #include <expected>
 #include <filesystem>
-#include <QJsonObject>
+#include <optional>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+#include <QFileSystemWatcher>
 #include <qcontainerfwd.h>
 #include <qdir.h>
 #include <qfileinfo.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
 #include <qimage.h>
-#include <qjsonobject.h>
 #include <qmimedata.h>
 #include <qmimedatabase.h>
 #include <qstringview.h>
 #include <QTimer>
+
+class AppService;
+class AppRuntime;
 
 class ClipboardService : public QObject, public NonCopyable {
   Q_OBJECT
@@ -29,13 +37,16 @@ signals:
   void itemCopied(const InsertClipboardHistoryLine &item) const;
   void itemInserted(const ClipboardHistoryEntry &entry) const;
   void selectionPinStatusChanged(const QString &id, bool pinned) const;
+  void selectionKeywordsChanged(const QString &id, const QString &keywords) const;
   void selectionRemoved(const QString &id) const;
+  void selectionContentChanged(const QString &id) const;
   /**
    * When a selection is copied, its update time is modified which makes it appear on top
    * of the list.
    */
   void selectionUpdated() const;
   void monitoringChanged(bool value) const;
+  void primarySelectionChanged(const QString &text) const;
 
 public:
   enum class OfferDecryptionError {
@@ -44,7 +55,8 @@ public:
     DataUnavailable,
   };
 
-  ClipboardService(const std::filesystem::path &path, std::optional<db::EncryptionKey> key = std::nullopt);
+  ClipboardService(const std::filesystem::path &path, AppService &appService, AppRuntime &appRuntime,
+                   std::optional<db::EncryptionKey> key = std::nullopt);
 
   static QString readText();
   static Clipboard::ReadContent readContent();
@@ -55,12 +67,27 @@ public:
   bool setKeywords(const QString &id, const QString &keywords);
 
   std::expected<QByteArray, OfferDecryptionError> getMainOfferData(const QString &selectionId) const;
+
+  /**
+   * Writes the decrypted main offer to a file that can be handed to another application.
+   * The file lives in the runtime directory and does not outlive the selection or the session.
+   * Changes made to it are written back to the selection.
+   */
+  std::expected<std::filesystem::path, OfferDecryptionError> exportMainOffer(const QString &selectionId,
+                                                                             std::string_view fileName);
+
+  /**
+   * Replaces the content of the selection's main offer. The other offers are dropped, as they would no
+   * longer represent the same content.
+   */
+  bool replaceMainOfferData(const QString &selectionId, QByteArray data);
   AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(const QString &id);
   bool setPinned(const QString &id, bool pinned);
   QFuture<PaginatedResponse<ClipboardHistoryEntry>> listAll(int limit = 100, int offset = 0,
                                                             const ClipboardListSettings &opts = {}) const;
   static constexpr int CLIPBOARD_RESTORE_DELAY_MS = 800;
+  static constexpr std::chrono::milliseconds EXPORT_SYNC_DEBOUNCE{500};
 
   bool copyText(const QString &text, const Clipboard::CopyOptions &options = {.concealed = true});
   void scheduleClipboardRestore(int delayMs = CLIPBOARD_RESTORE_DELAY_MS);
@@ -69,13 +96,11 @@ public:
                 const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyUrls(const std::vector<QUrl> &urls, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyContent(Clipboard::Content content, const Clipboard::CopyOptions &options = {.concealed = false});
-  void setRecordAllOffers(bool value);
   bool clear();
   void saveSelection(ClipboardSelection selection);
   ClipboardSelection retrieveSelection(int offset = 0);
   std::optional<ClipboardSelection> retrieveSelectionById(const QString &id);
   bool copySelectionRecord(const QString &id, const Clipboard::CopyOptions &options);
-  std::unique_ptr<QMimeData> mimeDataFromSelection(const ClipboardSelection &selection) const;
   std::unique_ptr<QMimeData> dragMimeDataForSelection(const ClipboardSelection &selection) const;
   bool copySelection(const ClipboardSelection &selection, const Clipboard::CopyOptions &options);
   bool copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options = {});
@@ -90,7 +115,17 @@ public:
   void setMonitoring(bool value);
   void setEncryptionKey(std::optional<db::EncryptionKey> key);
   void setIgnorePasswords(bool value);
+  void setIgnoredApps(std::vector<std::string> ids);
   bool isEncryptionReady() const;
+
+  /**
+   * std::nullopt to disable eviction
+   */
+  void setHistoryEvictionThreshold(std::optional<std::chrono::seconds> threshold,
+                                   bool preserveTaggedSelections = true);
+
+  void pauseEviction();
+  void resumeEviction();
 
 private:
   ClipboardDatabase openDatabase() const { return ClipboardDatabase(m_dbKey); }
@@ -99,11 +134,22 @@ private:
 
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;
+  std::filesystem::path m_exportDir;
+  std::unordered_map<QString, std::filesystem::path> m_exports;
+  std::vector<QString> m_changedExports;
+  QFileSystemWatcher m_exportWatcher;
+  QTimer m_exportDebounce;
+  AppService &m_appService;
+  AppRuntime &m_appRuntime;
   std::optional<db::EncryptionKey> m_dbKey;
+  std::shared_ptr<ClipboardDatabase> m_readDb;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
 
   static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
   static QString getOfferTextPreview(const ClipboardDataOffer &offer);
+  static QString getOfferImageSearchText(const ClipboardDataOffer &offer);
+  static QString getOfferFileSearchText(const ClipboardDataOffer &offer);
+  static std::optional<QSize> readImageSize(const ClipboardDataOffer &offer);
 
   /**
    * Unique selection hash obtained by hashing all the data offer hashes together.
@@ -111,6 +157,12 @@ private:
    */
   QByteArray computeSelectionHash(const ClipboardSelection &selection) const;
   bool isClearSelection(const ClipboardSelection &selection) const;
+
+  /**
+   * Canonical application id for the app that produced the selection. Servers that cannot know it
+   * fall back to the frontmost application.
+   */
+  std::optional<QString> resolveSourceApp(const std::optional<QString> &sourceApp) const;
 
   /**
    * Sanitize the passed selection by removing duplicate offers.
@@ -121,14 +173,39 @@ private:
   std::expected<QByteArray, ClipboardService::OfferDecryptionError>
   decryptOffer(const QByteArray &data, ClipboardEncryptionType type) const;
 
+  struct StoredOffer {
+    QString md5sum;
+    QString textPreview;
+  };
+
+  /**
+   * Indexes the offer and writes its data to disk. Meant to be called from inside a transaction.
+   */
+  std::optional<StoredOffer> storeOffer(ClipboardDatabase &db, const QString &selectionId,
+                                        const ClipboardDataOffer &offer,
+                                        const QString &preferredMimeType) const;
+
+  void watchExport(const QString &selectionId, const std::filesystem::path &path);
+  void removeExport(const QString &selectionId);
+  void markExportChanged(const QString &selectionId);
+  void syncChangedExports();
+
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
+
+  void runEvictionPass();
+  void armEvictionTimer(std::optional<int64_t> oldestTimestamp);
 
   void restoreClipboard();
 
-  bool m_recordAllOffers = true;
   bool m_monitoring = false;
   bool m_ignorePasswords = true;
+  std::vector<std::string> m_ignoredApps;
   std::optional<ClipboardSelection> m_lastSelection;
   QTimer m_restoreTimer;
   QFutureWatcher<std::expected<ClipboardHistoryEntry, QString>> m_indexingSelection;
+  std::optional<std::chrono::seconds> m_evictionThreshold;
+  bool m_preserveTaggedSelections = true;
+  bool m_evictionPaused = false;
+  bool m_evictionDeferred = false;
+  QTimer m_historyEvictionTimer;
 };

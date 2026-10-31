@@ -1,5 +1,5 @@
 import { environment, type LaunchProps } from "@vicinae/api";
-import { createRenderer, type ViewData } from "../reconciler";
+import { createRenderer, serializeViews, type ViewData } from "../reconciler";
 import { type ComponentType, Suspense } from "react";
 import * as React from "react";
 import { NavigationProvider } from "../navigation-provider";
@@ -50,7 +50,7 @@ export default async function (data: extensionServer.LaunchEventData) {
 	const module = await import(pathToFileURL(data.entrypoint).href);
 	const Component = module.default.default;
 	const sendRender = (views: ViewData[]) => {
-		globalState.client.UI.render(JSON.stringify({ views }));
+		globalState.client.UI.render(serializeViews(views));
 	};
 	const renderer = createRenderer({
 		onInitialRender: sendRender,

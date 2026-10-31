@@ -1,7 +1,10 @@
 #pragma once
-#include "preference.hpp"
+#include "command/preference-schema.hpp"
+#include "keyboard/keyboard.hpp"
+#include "services/app-service/app-preferences.hpp"
 #include "ui/image/url.hpp"
-#include <QJsonObject>
+#include <QProcess>
+#include <memory>
 #include <QString>
 #include <optional>
 #include <qmimetype.h>
@@ -62,6 +65,11 @@ public:
    * Currently, on the XdgApplicationDatabase supports this.
    */
   virtual std::vector<std::shared_ptr<AbstractApplication>> actions() const { return {}; }
+
+  /**
+   * Shortcut for the additional action or command.
+   */
+  virtual std::optional<Keyboard::Shortcut> shortcut() const { return std::nullopt; }
 
   /**
    * Additional keywords that can be used to index the application.
@@ -154,17 +162,41 @@ public:
   virtual bool launchTerminalCommand(const std::vector<QString> &cmdline,
                                      const LaunchTerminalCommandOptions &opts = {}) const = 0;
 
+  // unstarted; create it on the thread that will run it
+  virtual std::unique_ptr<QProcess> shellProcess(const QString &code) const {
+    auto proc = std::make_unique<QProcess>();
+    proc->setProgram(qEnvironmentVariable("SHELL", QStringLiteral("/bin/sh")));
+    proc->setArguments({QStringLiteral("-c"), code});
+    return proc;
+  }
+
   /**
    * Preferences that are specific to this provider (e.g. launch prefix on XDG).
    * The root provider merges these with its own UI preferences when exposing them to the user.
    */
-  virtual PreferenceList preferences() const { return {}; }
+  PreferenceList preferences() const {
+    auto list = describePreferences<AppPreferences>();
 
-  /**
-   * Apply the subset of preferences that this provider declared via preferences().
-   * The root provider forwards the full preferences blob; implementations look up the keys they own.
-   */
-  virtual void applyPreferences(const QJsonObject &preferences) { (void)preferences; }
+    for (auto &pref : list) {
+      if (pref.name() != QStringLiteral("paths")) continue;
+      auto data = pref.data();
+      auto *picker = std::get_if<Preference::DirectoryPickerData>(&data);
+      if (!picker) continue;
+      picker->lockedPaths.clear();
+      for (const auto &path : defaultSearchPaths()) {
+#ifdef Q_OS_WIN
+        picker->lockedPaths.emplace_back(QString::fromStdWString(path.wstring()));
+#else
+        picker->lockedPaths.emplace_back(QString::fromStdString(path.string()));
+#endif
+      }
+      pref.setData(*picker);
+    }
+
+    return list;
+  }
+
+  virtual void applyPreferences(const AppPreferences &preferences) { (void)preferences; }
 
   /**
    * Find all the possible openers for the given target, from most to least preferred.
@@ -177,6 +209,27 @@ public:
    * Find the default opener for the given target, or a null pointer if none could be found.
    */
   virtual AppPtr findDefaultOpener(const Target &target) const = 0;
+
+  /**
+   * Same as `findOpeners`, for content that is only known by its MIME type.
+   */
+  virtual std::vector<AppPtr> findOpenersForMime(const QString &mime) const = 0;
+
+  /**
+   * Same as `findDefaultOpener`, for content that is only known by its MIME type.
+   */
+  virtual AppPtr findDefaultOpenerForMime(const QString &mime) const = 0;
+
+  /**
+   * Make `app` the default opener for the given mime type.
+   * Returns false if the platform does not support it or if the change could not be applied.
+   */
+  virtual bool setDefaultOpener(const QString &mime, const AbstractApplication &app) { return false; }
+
+  /**
+   * Make `app` the preferred web browser on this system.
+   */
+  virtual bool setWebBrowser(const AbstractApplication &app) { return false; }
 
   virtual AppPtr findById(const QString &id) const = 0;
 
@@ -220,6 +273,9 @@ public:
    * If this return null, it means that calling `openLocation` will likely return `false`.
    */
   virtual AppPtr locationOpener(const AbstractApplication &app) const = 0;
+
+  virtual bool canUninstall(const AbstractApplication &app) const { return false; }
+  virtual bool uninstall(const AbstractApplication &app) { return false; }
 
   /**
    * Open the system file browser for the provided path.

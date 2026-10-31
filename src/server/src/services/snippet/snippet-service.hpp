@@ -23,8 +23,9 @@ signals:
 
 public:
   SnippetService(const std::filesystem::path &path, AbstractSnippetServer &snippetServer, WindowManager &wm,
-                 AppRuntime &appRuntime, ClipboardService &clipboard)
-      : m_server(snippetServer), m_db(path), m_wm(wm), m_appRuntime(appRuntime), m_clipboard(clipboard) {
+                 AppRuntime &appRuntime, AppService &appService, ClipboardService &clipboard)
+      : m_server(snippetServer), m_db(path), m_wm(wm), m_appRuntime(appRuntime), m_appService(appService),
+        m_clipboard(clipboard) {
     connect(&m_server, &AbstractSnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
     connect(&m_server, &AbstractSnippetServer::undoTriggered, this, &SnippetService::handleUndo);
     connect(&m_server, &AbstractSnippetServer::ready, this, &SnippetService::syncServerState);
@@ -171,7 +172,7 @@ private:
     const auto *text = std::get_if<snippet::TextSnippet>(&snippet->data);
     if (!text) return;
 
-    SnippetExpander expander;
+    SnippetExpander expander(m_appService);
     const auto result = expander.expand(QString::fromStdString(text->text), {});
 
     auto expanded = result.parts | std::views::transform([](auto &&part) { return part.text; }) |
@@ -179,7 +180,7 @@ private:
 
     if (snippet->expansion->word) { expanded.append(' '); }
 
-    const bool usesClipboard = m_server.usesClipboard();
+    const bool usesClipboard = m_server.usesClipboard(expanded.size());
 
     if (usesClipboard) { m_clipboard.copyText(expanded, {.concealed = true}); }
 
@@ -196,7 +197,7 @@ private:
     }
 
     m_server.injectExpand(expanded.toStdString(), charsToDelete, m_prePasteDelay * 1000, terminal,
-                          cursorLeftMoves);
+                          cursorLeftMoves, usesClipboard);
 
     if (usesClipboard) {
       QTimer::singleShot(0, this, [this]() { m_clipboard.scheduleClipboardRestore(); });
@@ -207,6 +208,7 @@ private:
   SnippetDatabase m_db;
   WindowManager &m_wm;
   AppRuntime &m_appRuntime;
+  AppService &m_appService;
   ClipboardService &m_clipboard;
   bool m_enabled = true;
   bool m_undoEnabled = true;

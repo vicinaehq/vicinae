@@ -1,5 +1,5 @@
 #include "oauth-token-store.hpp"
-#include "omni-database.hpp"
+#include "internal/db/omni-database.hpp"
 #include <qlogging.h>
 
 namespace OAuth {
