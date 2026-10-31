@@ -55,3 +55,23 @@ chrome.runtime.onMessage.addListener((message) => {
     updateFromState(message.state, message.manuallyDisconnected);
   }
 });
+
+function bindPermissionToggle(toggle, permission) {
+  const request = { permissions: [permission] };
+  const refresh = () => chrome.permissions.contains(request, (granted) => {
+    toggle.checked = granted;
+  });
+
+  toggle.addEventListener('change', () => {
+    if (toggle.checked) {
+      chrome.permissions.request(request, refresh);
+    } else {
+      chrome.permissions.remove(request, refresh);
+    }
+  });
+
+  refresh();
+}
+
+bindPermissionToggle(document.getElementById('bookmarksToggle'), 'bookmarks');
+bindPermissionToggle(document.getElementById('historyToggle'), 'history');

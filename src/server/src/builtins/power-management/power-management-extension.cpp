@@ -22,6 +22,8 @@ struct PowerCommandPreferences {
 };
 
 template <> struct PreferenceSchema<PowerCommandPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(PowerCommandPreferences)
+public:
   PreferenceMeta confirm{.label = tr("Ask for confirmation")};
 #if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
   PreferenceMeta customProgram{
@@ -30,7 +32,6 @@ template <> struct PreferenceSchema<PowerCommandPreferences> {
       .required = false,
   };
 #endif
-  Q_DECLARE_TR_FUNCTIONS(PowerCommandPreferences)
 };
 
 class PowerManagementCommand : public TypedCallbackCommand<PowerCommandPreferences> {

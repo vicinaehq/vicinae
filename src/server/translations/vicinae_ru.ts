@@ -7256,6 +7256,16 @@ If you're looking to build your own extension, take a look at the [documentation
         <source>Can be used by actions that can edit a secondary characteristic of the currently selected item</source>
         <translation>Может использоваться действиями, которые могут изменить дополнительную характеристику выбранного элемента</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Run as Administrator</source>
+        <translation>Запуск от имени администратора</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Runs the application with elevated privileges</source>
+        <translation>Запускает приложение с повышенными привилегиями</translation>
+    </message>
 </context>
 <context>
     <name>macos-update-installer</name>

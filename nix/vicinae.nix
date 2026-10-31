@@ -108,7 +108,6 @@ in
         kdePackages.qtkeychain
         kdePackages.qtshadertools
         syntax-highlighting
-        libqalculate
         nodejs
         qt6.qtbase
         qt6.qtdeclarative
@@ -119,6 +118,7 @@ in
       ]
       ++ lib.optionals isLinux [
         kdePackages.layer-shell-qt
+        libqalculate
         qt6.qtwayland
         wayland
       ]

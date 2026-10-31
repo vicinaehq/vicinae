@@ -219,10 +219,19 @@ void GnomeClipboardServer::attemptReconnection() {
   }
 }
 
-bool GnomeClipboardServer::writeClipboard(QMimeData *data, const Clipboard::CopyOptions &) {
+bool GnomeClipboardServer::writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) {
   if (!m_interface || !m_interface->isValid()) {
     qWarning() << "GnomeClipboardServer: D-Bus interface not available";
     return false;
+  }
+
+  // The extension reports every copy it sets, unless it is told the copy is concealed
+  bool const concealed = options.concealed || options.transient;
+
+  // The extension offers exactly one type per copy, and file managers only paste files from a
+  // uri-list, so local files go as text/uri-list. Web links stay text so text fields can paste them.
+  if (data->hasUrls() && std::ranges::all_of(data->urls(), &QUrl::isLocalFile)) {
+    return setBinaryContent(data->data(Clipboard::URI_LIST), Clipboard::URI_LIST, concealed);
   }
 
   QStringList const formats = data->formats();
@@ -242,8 +251,8 @@ bool GnomeClipboardServer::writeClipboard(QMimeData *data, const Clipboard::Copy
   qDebug() << "GnomeClipboardServer: Setting clipboard content" << preferredFormat << contentData.size()
            << "bytes";
 
-  return preferredFormat.startsWith("text/") ? setTextContent(data->text())
-                                             : setBinaryContent(contentData, preferredFormat);
+  return preferredFormat.startsWith("text/") ? setTextContent(data->text(), concealed)
+                                             : setBinaryContent(contentData, preferredFormat, concealed);
 }
 
 QString GnomeClipboardServer::selectPreferredFormat(const QStringList &formats) {
@@ -254,22 +263,39 @@ QString GnomeClipboardServer::selectPreferredFormat(const QStringList &formats) 
     if (format.startsWith("image/")) return format;
   }
 
-  return formats.isEmpty() ? QString() : formats.first();
-}
-
-bool GnomeClipboardServer::setTextContent(const QString &text) {
-  QDBusReply<void> const reply = m_interface->call("SetContent", text);
-  if (!reply.isValid()) {
-    qWarning() << "GnomeClipboardServer: Failed to set text content:" << reply.error().message();
-    return false;
+  for (const QString &format : formats) {
+    if (format != Clipboard::CONCEALED_MIME_TYPE) return format;
   }
-  return true;
+
+  return {};
 }
 
-bool GnomeClipboardServer::setBinaryContent(const QByteArray &data, const QString &mimeType) {
-  QDBusReply<void> const reply = m_interface->call("SetContentBinary", data, mimeType);
-  if (!reply.isValid()) {
-    qWarning() << "GnomeClipboardServer: Failed to set binary content:" << reply.error().message();
+bool GnomeClipboardServer::setTextContent(const QString &text, bool concealed) {
+  return callSetter("SetContent", "SetConcealedContent", {text}, concealed);
+}
+
+bool GnomeClipboardServer::setBinaryContent(const QByteArray &data, const QString &mimeType, bool concealed) {
+  return callSetter("SetContentBinary", "SetConcealedContentBinary", {data, mimeType}, concealed);
+}
+
+bool GnomeClipboardServer::callSetter(const QString &method, const QString &concealedMethod,
+                                      const QVariantList &args, bool concealed) {
+  if (concealed) {
+    QDBusMessage const reply = m_interface->callWithArgumentList(QDBus::Block, concealedMethod, args);
+    if (reply.type() != QDBusMessage::ErrorMessage) return true;
+
+    // Extensions older than the concealed setters only have the reporting ones
+    if (reply.errorName() != "org.freedesktop.DBus.Error.UnknownMethod") {
+      qWarning() << "GnomeClipboardServer:" << concealedMethod << "failed:" << reply.errorMessage();
+      return false;
+    }
+    qWarning() << "GnomeClipboardServer: the GNOME extension cannot conceal copies, update it to keep"
+               << "this one out of the clipboard history";
+  }
+
+  QDBusMessage const reply = m_interface->callWithArgumentList(QDBus::Block, method, args);
+  if (reply.type() == QDBusMessage::ErrorMessage) {
+    qWarning() << "GnomeClipboardServer:" << method << "failed:" << reply.errorMessage();
     return false;
   }
   return true;

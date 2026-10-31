@@ -4,6 +4,9 @@ import Vicinae
 
 LauncherWindow {
     nativeChrome: true
+    appearance: LauncherAppearance {
+        outerBorderWidth: 0
+    }
     cornerRadius: WindowsWindow.nativeCornerRadius
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
 

@@ -89,6 +89,7 @@ FocusScope {
     FileDialog {
         id: fallbackFileDialog
         title: root.multiple ? qsTr("Select files") : qsTr("Select a file")
+        acceptLabel: qsTr("Select")
         onAccepted: {
             root._handleFallbackResult(selectedFiles);
             FileChooser.notifyFallbackDone();
@@ -99,6 +100,7 @@ FocusScope {
     FolderDialog {
         id: fallbackFolderDialog
         title: qsTr("Select a directory")
+        acceptLabel: qsTr("Select")
         onAccepted: {
             root._handleFallbackResult([selectedFolder]);
             FileChooser.notifyFallbackDone();

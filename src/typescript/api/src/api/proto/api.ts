@@ -24,6 +24,12 @@ export class RpcTransport {
 	dispatchMessage(data: string) {
 		const msg = JSON.parse(data) as JsonRpcMessage;
 
+		// client methods are not implemented by this client
+		if (msg.id !== undefined && msg.method) {
+			this.sendMessage({ jsonrpc: '2.0', id: msg.id, error: `Method not found: ${msg.method}` });
+			return;
+		}
+
 		if (msg.id !== undefined) {
 			const handler = this.requestMap.get(msg.id);
 
@@ -287,6 +293,9 @@ export type BrowserTab = {
 	url: string;
 	active: boolean;
 	browserId: string;
+	lastAccessed: number;
+	pinned: boolean;
+	audible: boolean;
 }
 
 class ApplicationService {
@@ -525,6 +534,10 @@ class BrowserExtensionService {
 
 	focusTab(browserId: string, tabId: number): Promise<void> {
 		return this.transport.request("BrowserExtension/focusTab", { browserId, tabId});	
+	}
+
+	closeTab(browserId: string, tabId: number): Promise<void> {
+		return this.transport.request("BrowserExtension/closeTab", { browserId, tabId});	
 	}
 
 }

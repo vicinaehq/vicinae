@@ -80,6 +80,13 @@ struct BrowserInitRequest {
   id: string;
   name: string;
   engine: string;
+  version?: string;
+  // granted optional permissions, absent on extensions predating optional permissions
+  permissions?: string[];
+  // permissions the extension can request, absent on extensions predating history support
+  optionalPermissions?: string[];
+  // absent on extensions predating the browser* client methods, which are no longer supported
+  protocolVersion?: int;
 };
 
 struct BrowserTabInfo {
@@ -91,14 +98,23 @@ struct BrowserTabInfo {
   muted: bool;
   audible: bool;
   lastAccessed: double;
+  pinned: bool;
 };
 
-struct FocusTabRequest {
-  tabId: int;
+struct BrowserBookmarkInfo {
+  id: string;
+  title: string;
+  url: string;
+  folder: string[];
+  dateAdded: double;
 };
 
-struct CloseTabRequest {
-  tabId: int;
+struct BrowserHistoryItemInfo {
+  id: string;
+  title: string;
+  url: string;
+  lastVisitTime: double;
+  visitCount: int;
 };
 
 struct FileResult {
@@ -123,10 +139,18 @@ service Ipc {
   fn dmenu(req: DMenuRequest) => DMenuResponse;
   fn browserInit(req: BrowserInitRequest) => void;
   fn browserTabsChanged(tabs: BrowserTabInfo[]) => void;
+  fn browserPermissionsChanged(permissions: string[]) => void;
 
   // filesystem
   fn fsQuery(q: string, params: FsQueryParams) => FileResult[];
 
-  event focusTab(req: FocusTabRequest);
-  event closeTab(req: CloseTabRequest);
+  // implemented by the browser extension
+  client fn browserFocusTab(tabId: int) => void;
+  client fn browserCloseTab(tabId: int) => void;
+  client fn browserGetBookmarks() => BrowserBookmarkInfo[];
+  client fn browserRemoveBookmark(bookmarkId: string) => void;
+  client fn browserSearchHistory(query: string, maxResults: int) => BrowserHistoryItemInfo[];
+  client fn browserRemoveHistoryUrl(url: string) => void;
+  client fn browserClearHistory() => void;
+  client fn browserRequestPermission(permission: string) => void;
 }

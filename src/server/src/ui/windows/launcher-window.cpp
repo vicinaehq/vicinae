@@ -292,12 +292,15 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     setExclusiveFocus(false);
     if (isLayerShellActive()) { m_ctx.navigation->closeWindow({.popToRootType = PopToRootType::Suspended}); }
   });
-  connect(fileChooser, &FileChooserService::dialogClosed, this, [this]() {
+  connect(fileChooser, &FileChooserService::dialogClosed, this, [this](bool resumeCaller) {
     if (m_pendingLauncherFileChoice) {
       m_pendingLauncherFileChoice = false;
       emit filePickingChanged();
       setExclusiveFocus(true);
-      if (isLayerShellActive()) {
+      if (!resumeCaller) {
+        m_ctx.navigation->closeWindow();
+        m_ctx.navigation->releaseSuspendedClose();
+      } else if (isLayerShellActive()) {
         m_ctx.navigation->showWindow();
       } else if (m_window) {
         m_window->requestActivate();
@@ -914,12 +917,13 @@ void LauncherWindow::setCompacted(bool value) {
 }
 
 void LauncherWindow::tryCompaction() {
-  auto &cfg = m_ctx.services->config()->value().launcherWindow.compactMode;
+  auto &value = m_ctx.services->config()->value();
+  auto &cfg = value.launcherWindow.compactMode;
+  bool const showsUpdate = value.updates.showNotice && m_ctx.services->updateService()->available();
 
-  setCompacted(!m_ctx.services->newsService()->hasUnreadNews() &&
-               !m_ctx.services->updateService()->available() && cfg.enabled && !m_actionPanel->isOpen() &&
-               m_ctx.navigation->searchText().isEmpty() && m_ctx.navigation->viewStackSize() == 1 &&
-               !m_toastActive);
+  setCompacted(!m_ctx.services->newsService()->hasUnreadNews() && !showsUpdate && cfg.enabled &&
+               !m_actionPanel->isOpen() && m_ctx.navigation->searchText().isEmpty() &&
+               m_ctx.navigation->viewStackSize() == 1 && !m_toastActive);
 }
 
 bool LauncherWindow::isLayerShellActive() const {

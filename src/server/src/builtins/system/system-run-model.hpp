@@ -22,6 +22,8 @@ struct SystemRunPreferences {
 };
 
 template <> struct PreferenceSchema<SystemRunPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(SystemRunPreferences)
+public:
   PreferenceMeta defaultAction{
       .key = "default-action",
       .title = tr("Default Action"),
@@ -35,7 +37,6 @@ template <> struct PreferenceSchema<SystemRunPreferences> {
             };
           },
   };
-  Q_DECLARE_TR_FUNCTIONS(SystemRunPreferences)
 };
 
 class CommandLineSection : public SectionSource {

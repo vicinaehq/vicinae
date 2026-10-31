@@ -58,6 +58,8 @@ struct ClipboardPreferences {
 };
 
 template <> struct PreferenceSchema<ClipboardPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(ClipboardPreferences)
+public:
   PreferenceMeta monitoring{
       .title = tr("Clipboard monitoring"),
       .description = tr("Whether new clipboard selections are appended to the history"),
@@ -100,7 +102,6 @@ template <> struct PreferenceSchema<ClipboardPreferences> {
       .title = tr("Erase on startup"),
       .description = tr("Erase clipboard history every time the vicinae server is started"),
   };
-  Q_DECLARE_TR_FUNCTIONS(ClipboardPreferences)
 };
 
 struct ClipboardHistoryPreferences {
@@ -108,6 +109,8 @@ struct ClipboardHistoryPreferences {
 };
 
 template <> struct PreferenceSchema<ClipboardHistoryPreferences> {
+  Q_DECLARE_TR_FUNCTIONS(ClipboardHistoryPreferences)
+public:
   PreferenceMeta defaultAction{
       .title = tr("Default Action"),
       .description = tr("The default action to perform on pressing return. Paste is only available if your "
@@ -123,5 +126,4 @@ template <> struct PreferenceSchema<ClipboardHistoryPreferences> {
             return options;
           },
   };
-  Q_DECLARE_TR_FUNCTIONS(ClipboardHistoryPreferences)
 };

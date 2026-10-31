@@ -1,4 +1,5 @@
 #include "ipc/ipc-command-server.hpp"
+#include "ipc/browser-peer.hpp"
 #include "command/argument.hpp"
 #include "command/command-types.hpp"
 #include "common/entrypoint.hpp"
@@ -26,33 +27,6 @@
 #include "services/window-manager/window-manager.hpp"
 #include "navigation-controller.hpp"
 #include "generated/version.h"
-
-// IpcTransport
-
-void IpcCommandServer::IpcTransport::send(std::string_view data) {
-  if (!conn) {
-    qWarning() << "IPC transport send called with null conn!";
-    return;
-  }
-  uint32_t size = data.size();
-  conn->write(reinterpret_cast<const char *>(&size), sizeof(size));
-  conn->write(data.data(), data.size());
-}
-
-void IpcCommandServer::IpcTransport::bindReply(int id) {
-  if (conn) pendingReplies[id] = conn;
-}
-
-void IpcCommandServer::IpcTransport::activateReply(int id) {
-  if (auto it = pendingReplies.find(id); it != pendingReplies.end()) {
-    conn = it->second;
-    pendingReplies.erase(it);
-  }
-}
-
-void IpcCommandServer::IpcTransport::forgetConn(QLocalSocket *dead) {
-  std::erase_if(pendingReplies, [dead](const auto &kv) { return kv.second == dead; });
-}
 
 // IpcService
 
@@ -312,118 +286,96 @@ ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenu
 }
 
 ipc_gen::Result<void>::Future IpcService::browserInit(ipc_gen::BrowserInitRequest req) {
-  if (!m_caller) return ipc_gen::Result<void>::fail("No caller context");
+  std::shared_ptr<AbstractBrowserPeer> peer;
 
-  m_caller->browser = req;
-  m_ctx.services->browserExtension()->registerBrowser({.id = req.id, .name = req.name});
+  if (req.protocolVersion.value_or(1) >= BROWSER_PROTOCOL_VERSION) {
+    peer = std::make_shared<IpcBrowserPeer>(*this);
+  } else {
+    qWarning() << "Browser extension in" << req.name.c_str() << "is too old, it needs to be updated";
+  }
+
+  m_ctx.services->browserExtension()->registerBrowser({.id = req.id,
+                                                       .name = req.name,
+                                                       .engine = req.engine,
+                                                       .version = req.version,
+                                                       .permissions = req.permissions,
+                                                       .optionalPermissions = req.optionalPermissions,
+                                                       .peer = std::move(peer)});
+  m_browser = std::move(req);
 
   return ipc_gen::Result<void>::ok();
 }
 
 ipc_gen::Result<void>::Future IpcService::browserTabsChanged(std::vector<ipc_gen::BrowserTabInfo> tabs) {
-  if (!m_caller || !m_caller->browser)
-    return ipc_gen::Result<void>::fail("Only browser extensions can do this");
+  if (!m_browser) return ipc_gen::Result<void>::fail("Only browser extensions can do this");
 
-  m_ctx.services->browserExtension()->setTabs(m_caller->browser->id, tabs);
+  m_ctx.services->browserExtension()->setTabs(m_browser->id, tabs);
 
   return ipc_gen::Result<void>::ok();
 }
 
-// IpcCommandServer
+ipc_gen::Result<void>::Future IpcService::browserPermissionsChanged(std::vector<std::string> permissions) {
+  if (!m_browser) return ipc_gen::Result<void>::fail("Only browser extensions can do this");
 
-IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent)
-    : QObject(parent), m_ctx(*ctx), m_rpc(m_transport), m_service(new IpcService(m_rpc, *ctx)),
-      m_ipcServer(m_rpc, m_service) {
+  m_ctx.services->browserExtension()->setPermissions(m_browser->id, std::move(permissions));
 
-  connect(
-      ctx->services->browserExtension(), &BrowserExtensionService::tabActionRequested, this,
-      [this](std::string_view browserId, int tabId, BrowserExtensionService::TabAction action) {
-        auto it = std::ranges::find_if(
-            m_clients, [&](auto &&client) { return client.browser && client.browser->id == browserId; });
-
-        if (it == m_clients.end()) {
-          qWarning() << "focus tab requested but there is no browser extension client currently connected";
-          return;
-        }
-
-        m_transport.conn = it->conn;
-
-        switch (action) {
-        case BrowserExtensionService::TabAction::Focus:
-          m_service->emitfocusTab({.tabId = tabId});
-          break;
-        case BrowserExtensionService::TabAction::Close:
-          m_service->emitcloseTab({.tabId = tabId});
-          break;
-        }
-
-        m_transport.conn = nullptr;
-      });
+  return ipc_gen::Result<void>::ok();
 }
 
-void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
-  auto clientInfoIt =
-      std::ranges::find_if(m_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
+// IpcConnection
 
-  if (clientInfoIt == m_clients.end()) return;
-
-  m_transport.conn = conn;
-  m_service->setCallerInfo(&(*clientInfoIt));
-
-  // qDebug() << "IPC incoming:" << frame.toByteArray();
-
-  m_ipcServer.route({frame.data(), static_cast<size_t>(frame.size())});
-  m_service->setCallerInfo(nullptr);
-  m_transport.conn = nullptr;
+void IpcConnection::SocketTransport::send(std::string_view data) {
+  const uint32_t size = data.size();
+  socket->write(reinterpret_cast<const char *>(&size), sizeof(size));
+  socket->write(data.data(), data.size());
 }
 
-void IpcCommandServer::handleRead(QLocalSocket *conn) {
-  auto it = std::ranges::find_if(m_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
+IpcConnection::IpcConnection(QLocalSocket *socket, ApplicationContext &ctx, QObject *parent)
+    : QObject(parent), m_socket(socket), m_transport(socket), m_rpc(m_transport),
+      m_service(new IpcService(m_rpc, ctx)), m_server(m_rpc, m_service) {
+  m_socket->setParent(this);
+  connect(m_socket, &QLocalSocket::readyRead, this, &IpcConnection::handleRead);
+}
 
-  if (it == m_clients.end()) {
-    qWarning() << "CommandServer::handleRead: could not find client info";
-    conn->disconnect();
-    return;
-  }
+void IpcConnection::handleRead() {
+  while (m_socket->bytesAvailable() > 0) {
+    m_frame.append(m_socket->readAll());
 
-  while (conn->bytesAvailable() > 0) {
-    it->frame.data.append(conn->readAll());
-
-    while (std::cmp_greater_equal(it->frame.data.size(), sizeof(uint32_t))) {
-      uint32_t const length = *reinterpret_cast<uint32_t *>(it->frame.data.data());
-      bool const isComplete = it->frame.data.size() - sizeof(uint32_t) >= length;
+    while (std::cmp_greater_equal(m_frame.size(), sizeof(uint32_t))) {
+      uint32_t const length = *reinterpret_cast<uint32_t *>(m_frame.data());
+      bool const isComplete = m_frame.size() - sizeof(uint32_t) >= length;
 
       if (!isComplete) break;
 
-      auto packet = QByteArrayView(it->frame.data).sliced(sizeof(uint32_t), length);
+      const auto packet = QByteArrayView(m_frame).sliced(sizeof(uint32_t), length);
 
-      processFrame(conn, packet);
+      m_server.route({packet.data(), static_cast<size_t>(packet.size())});
 
-      it->frame.data = it->frame.data.sliced(sizeof(uint32_t) + length);
+      m_frame = m_frame.sliced(sizeof(uint32_t) + length);
     }
   }
 }
 
-void IpcCommandServer::handleDisconnection(QLocalSocket *conn) {
-  auto it = std::ranges::find_if(m_clients, [conn](const ClientInfo &info) { return info.conn == conn; });
+// IpcCommandServer
 
-  if (it->browser) { m_ctx.services->browserExtension()->unregisterBrowser(it->browser->id); }
+IpcCommandServer::IpcCommandServer(ApplicationContext *ctx, QObject *parent) : QObject(parent), m_ctx(*ctx) {}
 
-  m_transport.forgetConn(conn);
-  if (m_transport.conn == conn) m_transport.conn = nullptr;
+void IpcCommandServer::handleDisconnection(IpcConnection *connection) {
+  // drop the browser first, so that nothing calls into the connection while it is torn down
+  if (const auto &browser = connection->service()->browser()) {
+    m_ctx.services->browserExtension()->unregisterBrowser(browser->id);
+  }
 
-  m_clients.erase(it);
-  conn->deleteLater();
+  connection->deleteLater();
 }
 
 void IpcCommandServer::handleConnection() {
-  QLocalSocket *conn = m_server.nextPendingConnection();
+  QLocalSocket *socket = m_server.nextPendingConnection();
 
   qDebug() << "ipc command server received new connection";
 
-  m_clients.push_back({.conn = conn});
-  connect(conn, &QLocalSocket::disconnected, this, [this, conn]() { handleDisconnection(conn); });
-  connect(conn, &QLocalSocket::readyRead, this, [this, conn]() { handleRead(conn); });
+  auto *connection = new IpcConnection(socket, m_ctx, this);
+  connect(socket, &QLocalSocket::disconnected, this, [this, connection] { handleDisconnection(connection); });
 }
 
 bool IpcCommandServer::start(const std::string &name) {

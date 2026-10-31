@@ -2,6 +2,8 @@
 #include "actions/app-actions.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "builtins/browser/browser-tabs-view-host.hpp"
+#include "builtins/browser/browser-bookmarks-view-host.hpp"
+#include "builtins/browser/browser-history-view-host.hpp"
 #include "ui/views/empty-view-host.hpp"
 #include "builtins/shortcut/shortcut-form-view-host.hpp"
 #include "navigation-controller.hpp"
@@ -10,6 +12,8 @@
 #include "command/single-view-command-context.hpp"
 #include "theme/colors.hpp"
 #include <QCoreApplication>
+#include <QFuture>
+#include <vector>
 
 static bool guard(CommandController &ctrl) {
   const auto browserService = ctrl.context()->services->browserExtension();
@@ -85,7 +89,105 @@ class SearchBrowserTabsCommand : public GuardedBuiltinCallbackCommand {
   }
 };
 
+class SearchBrowserBookmarksCommand : public GuardedBuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(SearchBrowserBookmarksCommand)
+
+  QString id() const override { return "browse-bookmarks"; }
+  QString name() const override { return tr("Search Browser Bookmarks"); }
+  QString description() const override { return tr("Search bookmarks from all connected browsers"); }
+  ImageURL iconUrl() const override {
+    return ImageURL(BuiltinIcon::Bookmark).setBackgroundTint(SemanticColor::Red);
+  }
+
+  void execute(CommandController &controller) const override {
+    if (guard(controller)) { return; }
+    controller.context()->navigation->pushView(new BrowserBookmarksViewHost);
+  }
+};
+
+class SearchBrowserHistoryCommand : public GuardedBuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(SearchBrowserHistoryCommand)
+
+  QString id() const override { return "browse-history"; }
+  QString name() const override { return tr("Search Browser History"); }
+  QString description() const override { return tr("Search browsing history from all connected browsers"); }
+  ImageURL iconUrl() const override {
+    return ImageURL(BuiltinIcon::Clock).setBackgroundTint(SemanticColor::Red);
+  }
+
+  void execute(CommandController &controller) const override {
+    if (guard(controller)) { return; }
+    controller.context()->navigation->pushView(new BrowserHistoryViewHost);
+  }
+};
+
+class ClearBrowserHistoryCommand : public BuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(ClearBrowserHistoryCommand)
+
+  QString id() const override { return "clear-history"; }
+  QString name() const override { return tr("Clear Browser History"); }
+  QString description() const override {
+    return tr("Clear the browsing history of all connected browsers that allowed history access");
+  }
+  ImageURL iconUrl() const override {
+    return ImageURL(BuiltinIcon::Clock).setBackgroundTint(SemanticColor::Red).setBadge(BuiltinIcon::Xmark);
+  }
+
+  void execute(CommandController &controller) const override {
+    const auto ctx = controller.context();
+    const auto browserService = ctx->services->browserExtension();
+    const auto toast = ctx->services->toastService();
+
+    if (browserService->browsers().empty()) {
+      toast->failure(tr("No browser connected"));
+      return;
+    }
+
+    std::vector<std::string> ids;
+    QStringList names;
+
+    for (const auto &browser : browserService->browsers()) {
+      if (!browser.hasPermission(BrowserExtensionService::HISTORY_PERMISSION)) continue;
+      ids.emplace_back(browser.id);
+      names.emplace_back(QString::fromStdString(browser.name));
+    }
+
+    if (ids.empty()) {
+      toast->failure(tr("No browser allowed history access"));
+      return;
+    }
+
+    ctx->navigation->confirmAlert(
+        tr("Clear browser history?"),
+        tr("Your entire browsing history in %1 will be deleted. This cannot be undone.")
+            .arg(names.join(", ")),
+        [browserService, toast, ids = std::move(ids)]() {
+          std::vector<BrowserExtensionService::Future<void>> clears;
+          clears.reserve(ids.size());
+
+          for (const auto &id : ids) {
+            clears.emplace_back(browserService->clearHistory(id));
+          }
+
+          QtFuture::whenAll(clears.begin(), clears.end())
+              .then(toast, [toast](const QList<BrowserExtensionService::Future<void>> &results) {
+                for (const auto &future : results) {
+                  if (const auto result = future.result(); !result) {
+                    toast->failure(
+                        tr("Failed to clear history: %1").arg(QString::fromStdString(result.error())));
+                    return;
+                  }
+                }
+                toast->success(tr("History cleared"));
+              });
+        });
+  }
+};
+
 BrowserExtension::BrowserExtension() {
   registerCommand<SearchBrowserTabsCommand>();
+  registerCommand<SearchBrowserBookmarksCommand>();
+  registerCommand<SearchBrowserHistoryCommand>();
+  registerCommand<ClearBrowserHistoryCommand>();
   registerCommand<CreateShortcutFromActiveBrowserTabCommand>();
 }

@@ -41,8 +41,9 @@ RootSearchModel::RootSearchModel(const ViewScope &scope, QObject *parent)
   connect(&m_fileWatcher, &FileSearchWatcher::finished, this, &RootSearchModel::handleFileSearchFinished);
 
   connect(m_config, &config::Manager::configChanged, this,
-          [this](const config::ConfigValue &next, const config::ConfigValue &) {
+          [this](const config::ConfigValue &next, const config::ConfigValue &prev) {
             m_fileSearchEnabled = next.searchFilesInRoot;
+            if (next.updates.showNotice != prev.updates.showNotice) refresh();
           });
 
   connect(m_manager, &RootItemManager::metadataChanged, this, &RootSearchModel::refresh);
@@ -134,7 +135,8 @@ bool RootSearchModel::rerunSearch() {
   std::vector<RootItemManager::ScoredItem> scored;
   if (m_query.empty()) {
     m_manager->search("", scored, {.includeFavorites = false, .prioritizeAliased = false});
-    m_updateSource->setUpdate(m_updateService->available());
+    m_updateSource->setUpdate(m_config->value().updates.showNotice ? m_updateService->available()
+                                                                   : std::nullopt);
     m_newsSource->setItems(m_newsService->activeItems());
     m_favoritesSource->setItems(m_manager->queryFavorites());
     m_fallbackSource->setItems({});

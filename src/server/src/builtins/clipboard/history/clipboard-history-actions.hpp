@@ -1,5 +1,9 @@
 #pragma once
 #include <QCoreApplication>
+#include <memory>
+#include <string>
+#include <utility>
+#include "services/app-service/app-service.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
 #include "actions/clipboard-actions.hpp"
 #include "ui/views/edit-keywords-view-host.hpp"
@@ -35,6 +39,62 @@ class CopyClipboardSelection : public AbstractAction {
 public:
   CopyClipboardSelection(const QString &id)
       : AbstractAction(tr("Copy to clipboard"), BuiltinIcon::CopyClipboard), m_id(id) {}
+};
+
+/**
+ * Opens the selection's main offer with the given application.
+ * The offer is only exported to a file when the action is executed.
+ * Edits made to the exported file will update the selection in real time.
+ */
+class OpenClipboardSelectionAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(OpenClipboardSelectionAction)
+  std::shared_ptr<AbstractApplication> m_app;
+  QString m_id;
+  std::string m_fileName;
+  void execute(ApplicationContext *ctx) override {
+    auto toast = ctx->services->toastService();
+    auto path = ctx->services->clipman()->exportMainOffer(m_id, m_fileName);
+
+    if (!path) {
+      toast->failure(tr("Failed to read clipboard data"));
+      return;
+    }
+
+    if (!ctx->services->appDb()->launch(*m_app, {QString::fromStdString(path->string())})) {
+      toast->failure(QCoreApplication::translate("OpenAppAction", "Failed to start app"));
+      return;
+    }
+
+    ctx->navigation->closeWindow();
+  }
+
+public:
+  OpenClipboardSelectionAction(const std::shared_ptr<AbstractApplication> &app, const QString &title,
+                               const QString &id, std::string fileName)
+      : AbstractAction(title, app->iconUrl()), m_app(app), m_id(id), m_fileName(std::move(fileName)) {}
+};
+
+class OpenClipboardSelectionWithAction : public ListSubmenuAction {
+  QString m_id;
+  QString m_mime;
+  std::string m_fileName;
+
+public:
+  std::unique_ptr<ActionPanelState> buildState(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto section = panel->createSection();
+
+    for (const auto &opener : ctx->services->appDb()->findOpenersForMime(m_mime)) {
+      section->addAction(new OpenClipboardSelectionAction(opener, opener->displayName(), m_id, m_fileName));
+    }
+
+    return panel;
+  }
+
+  OpenClipboardSelectionWithAction(const QString &id, const QString &mime, std::string fileName)
+      : ListSubmenuAction(QCoreApplication::translate("OpenWithAction", "Open with..."),
+                          BuiltinIcon::ArrowUp),
+        m_id(id), m_mime(mime), m_fileName(std::move(fileName)) {}
 };
 
 class RemoveSelectionAction : public AbstractAction {

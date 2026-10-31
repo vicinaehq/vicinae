@@ -15,9 +15,11 @@ public:
   QColor backgroundColor;
   QColor secondaryColor;
   QColor borderColor;
+  QColor outerBorderColor;
   QSizeF itemSize;
   float radius = 0;
   float borderWidth = 0;
+  float outerBorderWidth = 0;
   float secondaryHeight = 0;
   int mode = 0; // 0=normal, 1=cornerMask, 2=overlay
   bool sourceBlend = false;
@@ -31,6 +33,10 @@ class SourceBlendRect : public QQuickItem {
   Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY borderColorChanged)
   Q_PROPERTY(int borderWidth READ borderWidth WRITE setBorderWidth NOTIFY borderWidthChanged)
   Q_PROPERTY(
+      QColor outerBorderColor READ outerBorderColor WRITE setOuterBorderColor NOTIFY outerBorderColorChanged)
+  Q_PROPERTY(
+      int outerBorderWidth READ outerBorderWidth WRITE setOuterBorderWidth NOTIFY outerBorderWidthChanged)
+  Q_PROPERTY(
       QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY backgroundColorChanged)
   Q_PROPERTY(QColor secondaryColor READ secondaryColor WRITE setSecondaryColor NOTIFY secondaryColorChanged)
   Q_PROPERTY(
@@ -43,6 +49,8 @@ signals:
   void radiusChanged();
   void borderColorChanged();
   void borderWidthChanged();
+  void outerBorderColorChanged();
+  void outerBorderWidthChanged();
   void backgroundColorChanged();
   void secondaryColorChanged();
   void secondaryHeightChanged();
@@ -60,6 +68,10 @@ public:
   void setBorderColor(const QColor &c);
   int borderWidth() const { return m_borderWidth; }
   void setBorderWidth(int w);
+  QColor outerBorderColor() const { return m_outerBorderColor; }
+  void setOuterBorderColor(const QColor &c);
+  int outerBorderWidth() const { return m_outerBorderWidth; }
+  void setOuterBorderWidth(int w);
   QColor backgroundColor() const { return m_backgroundColor; }
   void setBackgroundColor(const QColor &c);
   QColor secondaryColor() const { return m_secondaryColor; }
@@ -79,6 +91,8 @@ private:
   qreal m_radius = 0;
   QColor m_borderColor = Qt::transparent;
   int m_borderWidth = 0;
+  QColor m_outerBorderColor = Qt::transparent;
+  int m_outerBorderWidth = 0;
   QColor m_backgroundColor = Qt::transparent;
   QColor m_secondaryColor = Qt::transparent;
   qreal m_secondaryHeight = 0;

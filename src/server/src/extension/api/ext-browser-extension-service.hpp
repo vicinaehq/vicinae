@@ -22,6 +22,9 @@ public:
           .url = std::move(tab.url),
           .active = tab.active,
           .browserId = std::move(tab.browserId),
+          .lastAccessed = tab.lastAccessed,
+          .pinned = tab.pinned,
+          .audible = tab.audible,
       });
     }
 
@@ -29,8 +32,11 @@ public:
   }
 
   tsapi::Result<void>::Future focusTab(std::string browserId, int32_t tabId) override {
-    m_browser.focusTab(browserId, tabId);
-    return Void::ok();
+    return m_browser.focusTab(browserId, tabId);
+  }
+
+  tsapi::Result<void>::Future closeTab(std::string browserId, int32_t tabId) override {
+    return m_browser.closeTab(browserId, tabId);
   }
 
 private:

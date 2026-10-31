@@ -1,4 +1,5 @@
 #include "xdp-file-chooser.hpp"
+#include <QFile>
 #include <qlogging.h>
 #include <qobject.h>
 
@@ -27,21 +28,39 @@ bool XdpFileChooser::open(const FileChooserOptions &options) {
     return false;
   }
 
-  bool const directoryMode = options.canChooseDirectories && !options.canChooseFiles;
+  bool const saveMode = options.mode == FileChooserMode::Save;
+  bool const directoryMode = !saveMode && options.canChooseDirectories && !options.canChooseFiles;
 
   QVariantMap payload;
   payload["token"] = generateToken();
   payload["modal"] = true;
-  payload["multiple"] = options.allowMultipleSelection;
-  payload["directory"] = directoryMode;
+
+  if (options.currentFolder) {
+    QByteArray folder = QFile::encodeName(QString::fromStdString(options.currentFolder->string()));
+    folder.append('\0');
+    payload["current_folder"] = folder;
+  }
 
   QString const windowHandle;
-  QString const title = directoryMode ? tr("Open Directory") : tr("Open File");
+  QString title;
 
-  QDBusReply<QDBusObjectPath> const message = m_interface->call("OpenFile", windowHandle, title, payload);
+  if (saveMode) {
+    payload["accept_label"] = tr("Save");
+    if (options.suggestedName) payload["current_name"] = QString::fromStdString(*options.suggestedName);
+    title = tr("Save as");
+  } else {
+    payload["multiple"] = options.allowMultipleSelection;
+    payload["directory"] = directoryMode;
+    payload["accept_label"] = tr("Select");
+    title = directoryMode ? tr("Select a directory")
+                          : (options.allowMultipleSelection ? tr("Select files") : tr("Select a file"));
+  }
+
+  QDBusReply<QDBusObjectPath> const message =
+      m_interface->call(saveMode ? "SaveFile" : "OpenFile", windowHandle, title, payload);
 
   if (message.error().isValid()) {
-    qCritical() << "Failed to OpenFile" << message.error();
+    qCritical() << "File chooser portal request failed" << message.error();
     return false;
   }
 

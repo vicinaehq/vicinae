@@ -8,6 +8,10 @@
     "nativeMessaging",
     "tabs"
   ],
+  "optional_permissions": [
+    "bookmarks",
+    "history"
+  ],
   "background": {
     "service_worker": "background.js"
   },
