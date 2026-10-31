@@ -16,7 +16,7 @@ class SniTrayHost : public AbstractTrayHost {
   Q_OBJECT
 
 public:
-  SniTrayHost();
+  explicit SniTrayHost(bool watcherEnabled);
   ~SniTrayHost() override;
 
   QString id() const override { return "sni"; }

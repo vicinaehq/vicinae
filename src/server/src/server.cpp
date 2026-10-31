@@ -367,7 +367,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::move(oauthService));
     registry->setPowerManager(std::make_unique<PowerManager>());
-    registry->setTrayHost(createTrayHost());
+    registry->setTrayHost(createTrayHost(currentConfig.tray.watcherEnabled));
     registry->setGlobalShortcuts(std::move(globalShortcutService));
     registry->setAudioControl(std::make_unique<AudioControlService>());
     registry->setMediaControl(std::make_unique<MediaControlService>());
