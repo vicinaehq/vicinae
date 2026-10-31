@@ -34,6 +34,7 @@ public:
   bool closeWindow(const AbstractWindow &window) const override;
   bool supportsSetSticky() const override { return true; }
   bool setSticky(const AbstractWindow &window, bool sticky) const override;
+  bool setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const override;
   bool supportsMoveToWorkspace() const override { return true; }
 
   bool moveToWorkspace(const AbstractWindow &window, const QString &workspaceId) const override;

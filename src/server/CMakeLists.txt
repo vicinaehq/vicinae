@@ -1519,6 +1519,7 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		tests/search-utils.cpp
 		tests/text-transforms.cpp
 		tests/file-actions.cpp
+		tests/snap-layouts.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
