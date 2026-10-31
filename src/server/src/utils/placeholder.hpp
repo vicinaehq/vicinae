@@ -1,7 +1,17 @@
 #pragma once
 #include <QString>
+#include <QDateTime>
 #include <map>
+#include <optional>
 #include <span>
+#include <vector>
+
+namespace placeholder_utils {
+QDateTime applyDateOffset(QDateTime dt, QStringView offset);
+QDateTime applyDateOffsets(QDateTime dt, QStringView offsetStr);
+QString normalizeDateFormat(QString fmt);
+QString applyModifier(QString val, QStringView mod);
+} // namespace placeholder_utils
 
 /**
  * A parsed placeholder string such as "Hi {first_name} {clipboard} {argument name="test"}
@@ -16,6 +26,8 @@ public:
   struct ParsedPlaceholder {
     QString id;
     std::map<QString, QString> args;
+    std::vector<QString> modifiers;
+    std::optional<QString> fallbackId;
   };
 
   using UrlPart = std::variant<QString, ParsedPlaceholder>;
