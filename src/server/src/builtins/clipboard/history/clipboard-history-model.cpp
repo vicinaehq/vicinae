@@ -81,6 +81,9 @@ ImageURL ClipboardHistorySection::iconForEntry(const ClipboardHistoryEntry &entr
       return ImageURL::favicon(*entry.urlHost).withFallback(ImageURL::builtin(BuiltinIcon::Link));
     return ImageURL::builtin(BuiltinIcon::Link);
   case ClipboardOfferKind::Text:
+    if (auto color = text_transforms::parseColor(entry.textPreview)) {
+      return ImageURL::builtin(BuiltinIcon::EyeDropper).setBackgroundTint(*color);
+    }
     return ImageURL::builtin(BuiltinIcon::Text);
   case ClipboardOfferKind::File:
     return ImageURL::builtin(BuiltinIcon::Folder);
@@ -143,8 +146,34 @@ std::unique_ptr<ActionPanelState> ClipboardHistorySection::actionPanel(int i) co
         mainSection->addAction(paste);
         mainSection->addAction(copy);
       }
+
+      if (entry.kind == ClipboardOfferKind::Text) {
+        auto pastePlain = new PasteClipboardSelectionAsPlainText(entry.id);
+        pastePlain->addShortcut(Keyboard::Shortcut(Qt::Key_V, Qt::ControlModifier).shifted());
+        mainSection->addAction(pastePlain);
+      }
     } else {
       mainSection->addAction(copy);
+    }
+
+    if (entry.kind == ClipboardOfferKind::Text) {
+      mainSection->addAction(new TextTransformSubmenuAction(entry.id));
+
+      if (auto color = text_transforms::parseColor(entry.textPreview)) {
+        auto colorSection = panel->createSection();
+        colorSection->addAction(
+            new CopyColorFormatAction(QCoreApplication::translate("ClipboardHistorySection", "Copy HEX (%1)")
+                                          .arg(text_transforms::formatHex(*color)),
+                                      text_transforms::formatHex(*color), *color));
+        colorSection->addAction(
+            new CopyColorFormatAction(QCoreApplication::translate("ClipboardHistorySection", "Copy RGB (%1)")
+                                          .arg(text_transforms::formatRgb(*color)),
+                                      text_transforms::formatRgb(*color), *color));
+        colorSection->addAction(
+            new CopyColorFormatAction(QCoreApplication::translate("ClipboardHistorySection", "Copy HSL (%1)")
+                                          .arg(text_transforms::formatHsl(*color)),
+                                      text_transforms::formatHsl(*color), *color));
+      }
     }
   }
 
