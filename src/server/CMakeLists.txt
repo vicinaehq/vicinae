@@ -119,6 +119,8 @@ set(SRCS
 	src/services/script-command/script-command-service.cpp
 
 	src/utils/placeholder.cpp
+	src/utils/search-utils.cpp
+	src/utils/text-transforms.cpp
 
 
 	src/services/font-service/font-service.hpp
@@ -1506,8 +1508,18 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/builtin-icon/builtin-icon.cpp
 		src/services/audio-control/pactl/pactl-audio-control.cpp
 		src/services/clipboard/clipboard-mime.cpp
+		src/services/shortcut/shortcut.cpp
+		src/utils/placeholder.cpp
+		src/utils/search-utils.cpp
+		src/utils/text-transforms.cpp
 		tests/pactl-audio-control.cpp
 		tests/clipboard-mime.cpp
+		tests/shortcut.cpp
+		tests/snippet.cpp
+		tests/search-utils.cpp
+		tests/text-transforms.cpp
+		tests/file-actions.cpp
+		tests/snap-layouts.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)

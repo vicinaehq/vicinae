@@ -110,25 +110,7 @@ void ManageShortcutsViewHost::updateExpandedUrl() {
     values.emplace_back(val.second);
   }
 
-  QString expanded;
-  size_t argumentIndex = 0;
-  for (const auto &part : m_currentShortcut->parts()) {
-    if (auto s = std::get_if<QString>(&part)) {
-      expanded += *s;
-    } else if (auto placeholder = std::get_if<Shortcut::ParsedPlaceholder>(&part)) {
-      if (placeholder->id == "clipboard") {
-        expanded += QGuiApplication::clipboard()->text();
-      } else if (placeholder->id == "selected") {
-        // TODO: selected text
-      } else if (placeholder->id == "uuid") {
-        expanded += QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
-      } else {
-        if (argumentIndex < values.size()) { expanded += values.at(argumentIndex++); }
-      }
-    }
-  }
-
-  m_detailContent = expanded;
+  m_detailContent = m_currentShortcut->expand(values);
   m_hasDetail = true;
   emit detailChanged();
 }
