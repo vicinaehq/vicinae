@@ -157,6 +157,8 @@ set(SRCS
 	src/root-search/extensions/extension-root-provider.cpp
 	src/root-search/shortcuts/shortcut-root-provider.hpp
 	src/root-search/shortcuts/shortcut-root-provider.cpp
+	src/root-search/notes/note-root-provider.hpp
+	src/root-search/notes/note-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
 
@@ -315,6 +317,8 @@ set(SRCS
 	src/builtins/clipboard/clipboard-extension.cpp
 
 	src/builtins/snippet/snippet-extension.cpp
+
+	src/builtins/note/note-extension.hpp
 
 	src/builtins/vicinae/refresh-apps-command.hpp
 	src/builtins/vicinae/refresh-apps-command.cpp
@@ -540,6 +544,11 @@ set(SRCS
 	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
 
+	src/services/note/note-service.hpp
+	src/services/note/note-db.hpp
+	src/services/note/note-db.cpp
+	src/actions/note-actions.hpp
+
 	# UI
 	src/ui/bridges/keybind-bridge.hpp
 	src/ui/windows/launcher-window.hpp
@@ -653,6 +662,12 @@ set(SRCS
 	src/builtins/snippet/manage-snippets-model.cpp
 	src/builtins/snippet/manage-snippets-view-host.hpp
 	src/builtins/snippet/manage-snippets-view-host.cpp
+	src/builtins/note/manage-notes-model.hpp
+	src/builtins/note/manage-notes-model.cpp
+	src/builtins/note/manage-notes-view-host.hpp
+	src/builtins/note/manage-notes-view-host.cpp
+	src/builtins/note/note-form-view-host.hpp
+	src/builtins/note/note-form-view-host.cpp
 	src/builtins/raycast/raycast-store-model.hpp
 	src/builtins/raycast/raycast-store-model.cpp
 	src/builtins/raycast/raycast-store-view-host.hpp
@@ -1218,6 +1233,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/form/FormCheckbox.qml
 	src/ui/qml/form/FormSeparator.qml
 	src/ui/qml/views/SnippetFormView.qml
+	src/ui/qml/views/NoteFormView.qml
 	src/ui/qml/views/AliasFormView.qml
 	src/ui/qml/views/ShortcutFormView.qml
 	src/ui/qml/form/PlaceholderCompleter.qml
@@ -1427,6 +1443,7 @@ target_include_directories(${TARGET} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/font
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/developer
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/snippet
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/note
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/root
 	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler
 	${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
@@ -1509,7 +1526,13 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		tests/pactl-audio-control.cpp
 		tests/clipboard-mime.cpp
 	)
-	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
+	target_sources(${TEST_TARGET} PRIVATE
+		./database/vicinae/migrations.qrc
+		src/utils/migration-manager/migration-manager.cpp
+		src/services/note/note-db.cpp
+		tests/note/note-db.cpp
+	)
+	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common vicinae::fuzzy sqlcipher Qt6::Concurrent glaze::glaze)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
 endif()

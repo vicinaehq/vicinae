@@ -1,0 +1,5 @@
+# Catch2 decomposes REQUIRE(a == b) into `Decomposer <= a == b`, which the chained
+# comparison check flags on every assertion.
+InheritParentConfig: true
+Checks: >
+  -bugprone-chained-comparison
