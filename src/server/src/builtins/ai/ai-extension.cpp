@@ -33,12 +33,9 @@ void QuickAICommand::execute(const Controller &controller) const {
     return;
   }
 
-  const auto ref = AI::ModelRef::fromString(controller.preferences().model);
-  const bool available = ref && std::ranges::any_of(models, [&](const AI::ProviderModel &model) {
-                           return model.ref.provider == ref->provider && model.ref.id == ref->id;
-                         });
+  const auto ref = QuickAI::availableModel(*ctx->services->ai(), controller.preferences().model);
 
-  if (!available) {
+  if (!ref) {
     ctx->navigation->pushView(new IntroViewHost(
         tr("Choose a model"),
         tr("Pick the model Quick AI should use from its settings. You can change it at any time."),

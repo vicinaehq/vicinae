@@ -26,6 +26,9 @@
 #include "builtins/vicinae/bug-report-url.hpp"
 #include "builtins/vicinae/vicinae-store-view-host.hpp"
 #include "builtins/ai/ai.hpp"
+#include "builtins/ai/quick-ai-preferences.hpp"
+#include "services/ai/ai-service.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/update/update-service.hpp"
@@ -86,6 +89,17 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   updateLayerShellProps();
   buildFooterMenu();
+
+  auto *services = m_ctx.services;
+  connect(services->ai(), &AI::Service::modelsChanged, this, &LauncherWindow::refreshQuickAIAvailability);
+  connect(services->config(), &config::Manager::configChanged, this,
+          &LauncherWindow::refreshQuickAIAvailability);
+  connect(services->rootItemManager(), &RootItemManager::itemsChanged, this,
+          &LauncherWindow::refreshQuickAIAvailability);
+  connect(m_ctx.navigation.get(), &NavigationController::searchTextTampered, this,
+          &LauncherWindow::updateCanAskAI);
+  connect(this, &LauncherWindow::atRootChanged, this, &LauncherWindow::updateCanAskAI);
+  refreshQuickAIAvailability();
 
   m_commandHoldTimer.setSingleShot(true);
   m_commandHoldTimer.setInterval(COMMAND_HOLD_DELAY);
@@ -599,18 +613,42 @@ void LauncherWindow::applyPendingWindowTitle(int framesRemaining) {
 
 void LauncherWindow::forwardSearchText(const QString &text) {
   m_ctx.navigation->broadcastSearchText(text);
+  updateCanAskAI();
   tryCompaction();
 }
 
 void LauncherWindow::handleTab() {
-  if (!m_ctx.navigation->isRootSearch()) return;
-
-  auto text = m_ctx.navigation->searchText();
-  if (text.length() <= 5) return;
+  if (!m_canAskAI || !m_ctx.navigation->isRootSearch()) return;
 
   m_ctx.navigation->activateEntrypoint(
       EntrypointId{std::string(QuickAI::REPOSITORY_ID), std::string(QuickAI::COMMAND_ID)},
-      {.props = {.fallbackText = text}});
+      {.props = {.fallbackText = m_ctx.navigation->searchText()}});
+}
+
+QVariantList LauncherWindow::askAITokens() const { return Keyboard::Shortcut(Qt::Key_Tab).toDisplayTokens(); }
+
+void LauncherWindow::refreshQuickAIAvailability() {
+  auto *services = m_ctx.services;
+  const EntrypointId id{std::string(QuickAI::REPOSITORY_ID), std::string(QuickAI::COMMAND_ID)};
+  const auto &providers = services->config()->value().providers;
+  const auto provider = providers.find(id.provider);
+  auto *root = services->rootItemManager();
+
+  const bool enabled = (provider == providers.end() || provider->second.enabled.value_or(true)) &&
+                       root->itemMetadata(id).enabled;
+  const auto values = root->getPreferenceValues(id);
+  const auto *model = preferences::find(values, "model");
+
+  m_quickAIAvailable = enabled && model && model->is_string() &&
+                       QuickAI::availableModel(*services->ai(), model->get_string()).has_value();
+  updateCanAskAI();
+}
+
+void LauncherWindow::updateCanAskAI() {
+  const bool value = m_quickAIAvailable && m_atRoot && !m_ctx.navigation->searchText().isEmpty();
+  if (value == m_canAskAI) return;
+  m_canAskAI = value;
+  emit canAskAIChanged();
 }
 
 bool LauncherWindow::forwardKey(int rawKey, int modifiers, int scanCode) {

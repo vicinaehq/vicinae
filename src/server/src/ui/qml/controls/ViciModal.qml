@@ -9,6 +9,13 @@ Popup {
     modal: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
+    // Focused editors handle Escape themselves, which would keep the built-in policy from closing the modal.
+    Shortcut {
+        sequences: [StandardKey.Cancel]
+        enabled: root.opened && (root.closePolicy & Popup.CloseOnEscape)
+        onActivated: root.close()
+    }
+
     enter: Transition {
         ParallelAnimation {
             NumberAnimation {

@@ -40,6 +40,8 @@ public:
 
 private:
   Q_PROPERTY(bool atRoot READ atRoot NOTIFY atRootChanged)
+  Q_PROPERTY(bool canAskAI READ canAskAI NOTIFY canAskAIChanged)
+  Q_PROPERTY(QVariantList askAITokens READ askAITokens CONSTANT)
   Q_PROPERTY(bool showBackButton READ showBackButton NOTIFY showBackButtonChanged)
   Q_PROPERTY(QString searchPlaceholder READ searchPlaceholder NOTIFY searchPlaceholderChanged)
   Q_PROPERTY(QUrl searchAccessoryUrl READ searchAccessoryUrl NOTIFY searchAccessoryChanged)
@@ -86,6 +88,8 @@ public:
   explicit LauncherWindow(ApplicationContext &ctx, QObject *parent = nullptr);
 
   bool atRoot() const { return m_atRoot; }
+  bool canAskAI() const { return m_canAskAI; }
+  QVariantList askAITokens() const;
   bool showBackButton() const { return m_showBackButton; }
   QString searchPlaceholder() const { return m_searchPlaceholder; }
   QUrl searchAccessoryUrl() const { return m_searchAccessoryUrl; }
@@ -152,6 +156,7 @@ public:
 signals:
   void compactedChanged();
   void atRootChanged();
+  void canAskAIChanged();
   void showBackButtonChanged();
   void searchPlaceholderChanged();
   void searchAccessoryChanged();
@@ -218,7 +223,12 @@ private:
   QString m_defaultWindowTitle;
   QString m_pendingWindowTitle;
   bool m_compacted = false;
+  void refreshQuickAIAvailability();
+  void updateCanAskAI();
+
   bool m_atRoot = true;
+  bool m_quickAIAvailable = false;
+  bool m_canAskAI = false;
   bool m_showBackButton = true;
   bool m_isLoading = false;
   bool m_searchVisible = true;

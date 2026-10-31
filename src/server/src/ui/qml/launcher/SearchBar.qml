@@ -314,7 +314,7 @@ Item {
                     event.accepted = false;
                 }
                 Keys.onTabPressed: event => {
-                    if (Launcher.atRoot && searchInput.text.length > 5) {
+                    if (Launcher.canAskAI) {
                         Launcher.handleTab();
                         event.accepted = true;
                     } else {
@@ -358,17 +358,14 @@ Item {
 
         Row {
             id: tabHint
-            visible: {
-                // disabled for now, we are focusing on dictation first
-                return false && Launcher.atRoot && !Launcher.hasCompleter && searchInput.text.length > 5;
-            }
+            visible: Launcher.canAskAI && !Launcher.hasCompleter
 
             spacing: 6
             Layout.alignment: Qt.AlignVCenter
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Ask AI"
+                text: qsTr("Ask AI")
                 font.family: Theme.fontFamily
                 font.pointSize: Theme.smallerFontSize
                 color: Theme.textMuted
@@ -376,11 +373,7 @@ Item {
 
             ShortcutBadge {
                 anchors.verticalCenter: parent.verticalCenter
-                tokens: [
-                    {
-                        text: "Tab"
-                    }
-                ]
+                tokens: Launcher.askAITokens
             }
         }
 
