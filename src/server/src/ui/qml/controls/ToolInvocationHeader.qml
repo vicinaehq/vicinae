@@ -22,6 +22,10 @@ Rectangle {
         switch (status) {
         case "running":
             return qsTr("Running…");
+        case "awaiting_approval":
+            return qsTr("Waiting for approval");
+        case "declined":
+            return qsTr("Declined");
         case "succeeded":
         case "completed":
             return qsTr("Completed");

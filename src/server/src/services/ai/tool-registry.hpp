@@ -30,13 +30,15 @@ public:
   void addProvider(std::string_view providerId, std::span<const ToolContribution> tools);
   const std::vector<Entry> &entries() const { return m_entries; }
   const Entry *find(std::string_view name) const;
+  const Entry *find(std::string_view providerId, std::string_view toolId) const;
   std::vector<std::unique_ptr<AbstractTool>> createTools() const;
   std::vector<std::string> enabledToolNames() const;
 
   bool providerEnabled(std::string_view providerId) const;
-  bool toolEnabled(std::string_view providerId, std::string_view toolId) const;
-  bool isEnabled(std::string_view name) const;
-  bool setToolEnabled(std::string_view providerId, std::string_view toolId, bool enabled);
+  ToolPolicy toolPolicy(std::string_view providerId, std::string_view toolId) const;
+  ToolPolicy policy(std::string_view name) const;
+  bool isEnabled(std::string_view name) const { return policy(name) != ToolPolicy::Disabled; }
+  bool setToolPolicy(std::string_view providerId, std::string_view toolId, ToolPolicy policy);
   bool toolsEnabled() const;
 
 private:

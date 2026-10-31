@@ -1,5 +1,6 @@
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QJsonDocument>
 #include <QLocale>
 #include <QUuid>
 #include <ranges>
@@ -84,6 +85,7 @@ void ChatSession::initialize() {
   connect(m_agent, &AI::Agent::stateChanged, this, &ChatSession::streamingChanged);
   connect(m_agent, &AI::Agent::stateChanged, this, &ChatSession::activityChanged);
   connect(m_agent, &AI::Agent::activityChanged, this, &ChatSession::activityChanged);
+  connect(m_agent, &AI::Agent::approvalChanged, this, &ChatSession::toolApprovalChanged);
   connect(m_agent, &AI::Agent::textAdded, this,
           [this](quint64, const std::string &text) { m_exchanges.appendResponse(text); });
   connect(m_agent, &AI::Agent::toolAdded, this, [this](quint64 id) {
@@ -221,6 +223,7 @@ bool ChatSession::awaitingResponse() const {
   case AI::ResponseActivity::PreparingTool:
     return true;
   case AI::ResponseActivity::Responding:
+  case AI::ResponseActivity::AwaitingApproval:
   case AI::ResponseActivity::RunningTool:
     return false;
   }
@@ -437,12 +440,16 @@ void ChatSession::updateTool(const AI::Agent::ToolCall &call) {
     switch (call.state) {
     case AI::Agent::ToolState::Queued:
       return QStringLiteral("queued");
+    case AI::Agent::ToolState::AwaitingApproval:
+      return QStringLiteral("awaiting_approval");
     case AI::Agent::ToolState::Running:
       return QStringLiteral("running");
     case AI::Agent::ToolState::Succeeded:
       return QStringLiteral("succeeded");
     case AI::Agent::ToolState::Failed:
       return QStringLiteral("failed");
+    case AI::Agent::ToolState::Declined:
+      return QStringLiteral("declined");
     case AI::Agent::ToolState::Cancelled:
       return QStringLiteral("cancelled");
     }
@@ -458,6 +465,40 @@ void ChatSession::updateTool(const AI::Agent::ToolCall &call) {
   m_exchanges.updateTool(call.id, status, std::move(output),
                          call.duration ? std::optional<qint64>(call.duration->count()) : std::nullopt,
                          std::move(statusText));
+}
+
+QVariant ChatSession::toolApproval() const {
+  if (!m_agent || !m_agent->pendingApproval()) return {};
+
+  const auto &call = *m_agent->toolCall(*m_agent->pendingApproval());
+  const auto *tool = ServiceRegistry::instance()->tools()->find(call.call.name);
+  const auto json = QJsonDocument::fromJson(QByteArray::fromStdString(call.call.arguments));
+
+  return QVariantMap{
+      {QStringLiteral("id"), call.id},
+      {QStringLiteral("name"), tool ? tool->contribution.title : QString::fromStdString(call.call.name)},
+      {QStringLiteral("iconSource"), tool ? qml::imageSourceFor(tool->contribution.icon) : QString{}},
+      {QStringLiteral("summary"), call.summary ? QString::fromStdString(*call.summary) : QString{}},
+      {QStringLiteral("arguments"), json.isNull() ? QString::fromStdString(call.call.arguments)
+                                                  : QString::fromUtf8(json.toJson()).trimmed()},
+  };
+}
+
+void ChatSession::approveTool(bool always) {
+  if (!m_agent || !m_agent->pendingApproval()) return;
+
+  const auto id = *m_agent->pendingApproval();
+  if (always) {
+    auto *registry = ServiceRegistry::instance()->tools();
+    if (const auto *tool = registry->find(m_agent->toolCall(id)->call.name))
+      registry->setToolPolicy(tool->providerId, tool->contribution.id, AI::ToolPolicy::Allow);
+  }
+  m_agent->resolveApproval(id, true);
+}
+
+void ChatSession::declineTool() {
+  if (!m_agent || !m_agent->pendingApproval()) return;
+  m_agent->resolveApproval(*m_agent->pendingApproval(), false);
 }
 
 QVariantList ChatSession::attachmentItems(const std::vector<AI::ConversationAttachment> &attachments) const {

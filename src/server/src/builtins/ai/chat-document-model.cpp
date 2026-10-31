@@ -259,18 +259,22 @@ void ChatDocumentModel::updateContent(int row, int part) {
     bool cancelled = false;
     bool queued = false;
     const ChatConversationModel::Tool *running = nullptr;
+    const ChatConversationModel::Tool *awaiting = nullptr;
     std::optional<qint64> duration;
     for (const auto &tool : group.calls) {
       if (tool.durationMs) duration = duration.value_or(0) + *tool.durationMs;
       if (tool.status == QLatin1String("running"))
         running = &tool;
+      else if (tool.status == QLatin1String("awaiting_approval"))
+        awaiting = &tool;
       else if (tool.status == QLatin1String("queued"))
         queued = true;
       else if (tool.status == QLatin1String("cancelled"))
         cancelled = true;
     }
-    const auto &current = running ? *running : group.calls.back();
+    const auto &current = running ? *running : awaiting ? *awaiting : group.calls.back();
     const QString status = running     ? QStringLiteral("running")
+                           : awaiting  ? QStringLiteral("awaiting_approval")
                            : queued    ? QStringLiteral("queued")
                            : cancelled ? QStringLiteral("cancelled")
                                        : QStringLiteral("completed");
@@ -281,8 +285,9 @@ void ChatDocumentModel::updateContent(int row, int part) {
                     {QStringLiteral("name"), current.name},
                     {QStringLiteral("iconSource"), current.iconSource},
                     {QStringLiteral("summary"), current.summary.value_or(QString{})},
-                    {QStringLiteral("durationMs"),
-                     duration && !running && !queued ? QVariant::fromValue(*duration) : QVariant{}}};
+                    {QStringLiteral("durationMs"), duration && !running && !awaiting && !queued
+                                                       ? QVariant::fromValue(*duration)
+                                                       : QVariant{}}};
     emit dataChanged(index(content.offset), index(content.offset + content.rows - 1), {KindRole, ToolRole});
   }
   const auto &exchange = m_exchanges[row];

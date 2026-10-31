@@ -2,6 +2,7 @@
 #include <expected>
 #include <filesystem>
 #include "common/entrypoint.hpp"
+#include "services/ai/tool-policy.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
@@ -24,7 +25,7 @@ struct ProviderItemData {
 };
 
 struct ProviderToolData {
-  std::optional<bool> enabled;
+  std::optional<AI::ToolPolicy> policy;
   std::optional<glz::generic::object_t> preferences;
 };
 

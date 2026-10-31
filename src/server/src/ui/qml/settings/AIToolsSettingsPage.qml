@@ -54,7 +54,7 @@ Flickable {
         Text {
             Layout.fillWidth: true
             Layout.topMargin: 6
-            text: qsTr("Choose which tools AI models can use from your extensions.")
+            text: qsTr("Choose which tools AI models can use from your extensions, and which ones need your approval before they run.")
             color: Theme.textMuted
             font.pointSize: Theme.smallerFontSize
             wrapMode: Text.Wrap
@@ -118,8 +118,9 @@ Flickable {
                             required property var modelData
                             required property int index
                             tool: modelData
+                            policyItems: root.model.policyItems
                             showSeparator: index < group.modelData.tools.length - 1
-                            onToggled: checked => root.model.setToolEnabled(toolRow.tool.providerId, toolRow.tool.id, checked)
+                            onPolicySelected: policy => root.model.setToolPolicy(toolRow.tool.providerId, toolRow.tool.id, policy)
                         }
                     }
                 }

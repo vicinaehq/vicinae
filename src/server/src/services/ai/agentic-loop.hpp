@@ -17,6 +17,7 @@ signals:
   void toolAdded(quint64 id);
   void toolChanged(quint64 id);
   void activityChanged();
+  void approvalChanged();
   void stateChanged();
   void finished();
 
@@ -26,7 +27,7 @@ public:
       const std::optional<ModelRef> &, const ChatCompletionPayload &)>;
 
   enum class State { Idle, Running, Completed, Failed, Cancelled };
-  enum class ToolState { Queued, Running, Succeeded, Failed, Cancelled };
+  enum class ToolState { Queued, AwaitingApproval, Running, Succeeded, Failed, Declined, Cancelled };
 
   struct Message {
     Id id;
@@ -56,11 +57,13 @@ public:
 
   bool addTool(std::unique_ptr<AbstractTool> tool);
   bool send(ChatMessage message, Options options);
+  bool resolveApproval(Id id, bool approved);
   void cancel();
 
   State state() const { return m_state; }
   bool running() const { return m_state == State::Running; }
   ResponseActivity activity() const { return m_activity; }
+  const std::optional<Id> &pendingApproval() const { return m_pendingApproval; }
   const std::optional<std::string> &error() const { return m_error; }
   const std::optional<Model> &model() const { return m_model; }
   const std::vector<Message> &messages() const { return m_messages; }
@@ -75,6 +78,8 @@ private:
   void receiveText(const std::string &text);
   void receiveToolCall(const ToolCallPart &call);
   void executeNextTool();
+  void runTool(Id id, AbstractTool &tool);
+  AbstractTool *findTool(std::string_view name) const;
   void recordToolResult(Id id, ToolState state, ToolOutput output);
   void finish(State state, std::optional<std::string> error = {});
   void stopWork();
@@ -92,6 +97,7 @@ private:
   QElapsedTimer m_toolTimer;
   std::vector<Id> m_pendingCalls;
   std::size_t m_nextCall = 0;
+  std::optional<Id> m_pendingApproval;
   std::optional<Id> m_assistantMessage;
   Options m_options;
   State m_state = State::Idle;

@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <QString>
+#include "tool-policy.hpp"
 #include "ui/image/url.hpp"
 
 namespace AI {
@@ -15,6 +16,7 @@ struct ToolContribution {
   QString title;
   QString description;
   ImageURL icon;
+  ToolPolicy defaultPolicy = ToolPolicy::Ask;
   std::function<std::unique_ptr<AbstractTool>()> create;
 };
 

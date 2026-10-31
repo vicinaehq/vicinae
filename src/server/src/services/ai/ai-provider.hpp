@@ -157,7 +157,7 @@ struct ChatMessage {
 
 using ChatHistory = std::vector<ChatMessage>;
 
-enum class ResponseActivity { Waiting, Thinking, Responding, PreparingTool, RunningTool };
+enum class ResponseActivity { Waiting, Thinking, Responding, PreparingTool, AwaitingApproval, RunningTool };
 
 class AbstractChatCompletionStream : public QObject {
   Q_OBJECT

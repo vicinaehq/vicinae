@@ -28,6 +28,11 @@ public:
     return m_registry && m_registry->isEnabled(m_name) && m_tool->isEnabled();
   }
 
+  bool requiresApproval(std::string_view arguments) const override {
+    return !m_registry || m_registry->policy(m_name) != ToolPolicy::Allow ||
+           m_tool->requiresApproval(arguments);
+  }
+
   RawToolTask runRaw(std::string_view arguments) override {
     if (!isEnabled())
       return {QtFuture::makeReadyValueFuture<RawToolResult>(
@@ -92,14 +97,18 @@ bool ToolRegistry::providerEnabled(std::string_view providerId) const {
   return it == providers.end() || it->second.enabled.value_or(true);
 }
 
-bool ToolRegistry::toolEnabled(std::string_view providerId, std::string_view toolId) const {
+ToolPolicy ToolRegistry::toolPolicy(std::string_view providerId, std::string_view toolId) const {
+  const auto *entry = find(providerId, toolId);
+  if (!entry) return ToolPolicy::Disabled;
+
   const auto &providers = m_config.value().providers;
   const auto provider = providers.find(std::string(providerId));
-  if (provider == providers.end()) return true;
+  if (provider == providers.end()) return entry->contribution.defaultPolicy;
 
   const auto &tools = provider->second.tools;
   const auto tool = tools.find(std::string(toolId));
-  return tool == tools.end() || tool->second.enabled.value_or(true);
+  if (tool == tools.end()) return entry->contribution.defaultPolicy;
+  return tool->second.policy.value_or(entry->contribution.defaultPolicy);
 }
 
 const ToolRegistry::Entry *ToolRegistry::find(std::string_view name) const {
@@ -107,20 +116,25 @@ const ToolRegistry::Entry *ToolRegistry::find(std::string_view name) const {
   return entry != m_entries.end() ? &*entry : nullptr;
 }
 
-bool ToolRegistry::isEnabled(std::string_view name) const {
-  const auto *entry = find(name);
-  return entry && toolsEnabled() && providerEnabled(EXTENSION_ID) && providerEnabled(entry->providerId) &&
-         toolEnabled(entry->providerId, entry->contribution.id);
+const ToolRegistry::Entry *ToolRegistry::find(std::string_view providerId, std::string_view toolId) const {
+  const auto entry = std::ranges::find_if(m_entries, [&](const Entry &entry) {
+    return entry.providerId == providerId && entry.contribution.id == toolId;
+  });
+  return entry != m_entries.end() ? &*entry : nullptr;
 }
 
-bool ToolRegistry::setToolEnabled(std::string_view providerId, std::string_view toolId, bool enabled) {
-  if (std::ranges::none_of(m_entries, [&](const Entry &entry) {
-        return entry.providerId == providerId && entry.contribution.id == toolId;
-      }))
-    return false;
+ToolPolicy ToolRegistry::policy(std::string_view name) const {
+  const auto *entry = find(name);
+  if (!entry || !toolsEnabled() || !providerEnabled(EXTENSION_ID) || !providerEnabled(entry->providerId))
+    return ToolPolicy::Disabled;
+  return toolPolicy(entry->providerId, entry->contribution.id);
+}
+
+bool ToolRegistry::setToolPolicy(std::string_view providerId, std::string_view toolId, ToolPolicy policy) {
+  if (!find(providerId, toolId)) return false;
 
   return m_config.mergeProviderWithUser(providerId, {.tools = std::map<std::string, config::ProviderToolData>{
-                                                         {std::string(toolId), {.enabled = enabled}}}});
+                                                         {std::string(toolId), {.policy = policy}}}});
 }
 
 std::vector<std::unique_ptr<AbstractTool>> ToolRegistry::createTools() const {

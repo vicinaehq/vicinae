@@ -1,10 +1,18 @@
 #include <algorithm>
+#include <array>
 #include <map>
 #include "tool-settings-model.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-preferences.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/views/view-utils.hpp"
+
+namespace {
+
+constexpr auto POLICIES =
+    std::to_array({AI::ToolPolicy::Ask, AI::ToolPolicy::Allow, AI::ToolPolicy::Disabled});
+
+} // namespace
 
 ToolSettingsModel::ToolSettingsModel(QObject *parent)
     : QObject(parent), m_registry(*ServiceRegistry::instance()->tools()),
@@ -20,8 +28,22 @@ ToolSettingsModel::ToolSettingsModel(QObject *parent)
 bool ToolSettingsModel::enabled() const { return m_registry.toolsEnabled(); }
 bool ToolSettingsModel::aiEnabled() const { return m_registry.providerEnabled(AI::EXTENSION_ID); }
 
-void ToolSettingsModel::setToolEnabled(const QString &providerId, const QString &toolId, bool enabled) {
-  m_registry.setToolEnabled(providerId.toStdString(), toolId.toStdString(), enabled);
+QVariantList ToolSettingsModel::policyItems() const {
+  const auto item = [](AI::ToolPolicy policy, const QString &name) {
+    return QVariantMap{{QStringLiteral("id"), enumName(policy)}, {QStringLiteral("displayName"), name}};
+  };
+  return {
+      QVariantMap{{QStringLiteral("items"), QVariantList{item(AI::ToolPolicy::Ask, tr("Ask every time")),
+                                                         item(AI::ToolPolicy::Allow, tr("Always allow")),
+                                                         item(AI::ToolPolicy::Disabled, tr("Disabled"))}}}};
+}
+
+void ToolSettingsModel::setToolPolicy(const QString &providerId, const QString &toolId,
+                                      const QString &policy) {
+  const auto value =
+      std::ranges::find(POLICIES, policy, [](AI::ToolPolicy value) { return enumName(value); });
+  if (value == POLICIES.end()) return;
+  m_registry.setToolPolicy(providerId.toStdString(), toolId.toStdString(), *value);
 }
 
 void ToolSettingsModel::rebuild() {
@@ -52,7 +74,7 @@ void ToolSettingsModel::rebuild() {
                     {QStringLiteral("name"), tool.title},
                     {QStringLiteral("description"), tool.description},
                     {QStringLiteral("iconSource"), qml::imageSourceFor(tool.icon)},
-                    {QStringLiteral("isEnabled"), m_registry.toolEnabled(entry.providerId, tool.id)},
+                    {QStringLiteral("policy"), enumName(m_registry.toolPolicy(entry.providerId, tool.id))},
                     {QStringLiteral("providerEnabled"), group.enabled}});
   }
   std::ranges::sort(

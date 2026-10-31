@@ -36,12 +36,16 @@ std::string_view toolStatus(Agent::ToolState state) {
   switch (state) {
   case Agent::ToolState::Queued:
     return "queued";
+  case Agent::ToolState::AwaitingApproval:
+    return "awaiting_approval";
   case Agent::ToolState::Running:
     return "running";
   case Agent::ToolState::Succeeded:
     return "succeeded";
   case Agent::ToolState::Failed:
     return "failed";
+  case Agent::ToolState::Declined:
+    return "declined";
   case Agent::ToolState::Cancelled:
     return "cancelled";
   }
@@ -53,6 +57,7 @@ Agent::ToolState readToolStatus(std::string_view state) {
   if (state == "running") return Agent::ToolState::Running;
   if (state == "succeeded") return Agent::ToolState::Succeeded;
   if (state == "failed") return Agent::ToolState::Failed;
+  if (state == "declined") return Agent::ToolState::Declined;
   return Agent::ToolState::Cancelled;
 }
 
@@ -128,7 +133,8 @@ public:
         prepare("UPDATE turn SET status='interrupted', finished_at=:now WHERE status='running'");
     interrupted.bind(":now", std::int64_t(QDateTime::currentMSecsSinceEpoch()));
     execute(interrupted);
-    if (!m_db.exec("UPDATE tool_call SET status='interrupted' WHERE status IN ('running', 'queued')"))
+    if (!m_db.exec("UPDATE tool_call SET status='interrupted' WHERE status IN ('running', 'queued', "
+                   "'awaiting_approval')"))
       throw std::runtime_error(m_db.lastError());
 
     removeOrphanedFiles();

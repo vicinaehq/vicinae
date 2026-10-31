@@ -638,6 +638,7 @@ set(SRCS
 	src/services/ai/conversation-store.hpp
 	src/common/file-attachment.hpp
 	src/services/ai/tool-contribution.hpp
+	src/services/ai/tool-policy.hpp
 	src/services/ai/tool-registry.hpp
 	src/services/ai/tool-registry.cpp
 	src/services/ai/ai-capability.hpp
@@ -1361,6 +1362,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ScrollFade.qml
 	src/ui/qml/controls/ToolInvocation.qml
 	src/ui/qml/controls/ToolInvocationHeader.qml
+	src/ui/qml/controls/ToolApprovalPanel.qml
 	src/ui/qml/controls/FilePickerDialog.qml
 	src/ui/qml/attachments/AttachmentCard.qml
 	src/ui/qml/attachments/AttachmentMenu.qml

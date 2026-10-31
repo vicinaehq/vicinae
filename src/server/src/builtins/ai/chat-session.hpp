@@ -45,6 +45,7 @@ class ChatSession : public QObject {
   Q_PROPERTY(bool transcribing READ transcribing NOTIFY dictationStateChanged)
   Q_PROPERTY(QString recordingTime READ recordingTime NOTIFY recordingTimeChanged)
   Q_PROPERTY(QString dictationMessage READ dictationMessage NOTIFY dictationMessageChanged)
+  Q_PROPERTY(QVariant toolApproval READ toolApproval NOTIFY toolApprovalChanged)
 
 public:
   Q_INVOKABLE bool send(const QString &text);
@@ -54,6 +55,8 @@ public:
   Q_INVOKABLE void selectModel(const QString &compositeId);
   Q_INVOKABLE void toggleDictation();
   Q_INVOKABLE void cancelDictation();
+  Q_INVOKABLE void approveTool(bool always);
+  Q_INVOKABLE void declineTool();
 
 signals:
   void conversationLoaded();
@@ -66,6 +69,7 @@ signals:
   void dictationStateChanged();
   void recordingTimeChanged();
   void dictationMessageChanged();
+  void toolApprovalChanged();
   void dictated(const QString &text);
   void streamingChanged();
   void activityChanged();
@@ -110,6 +114,7 @@ public:
   bool transcribing() const;
   QString recordingTime() const;
   QString dictationMessage() const { return m_dictationMessage; }
+  QVariant toolApproval() const;
 
 private:
   void initialize();

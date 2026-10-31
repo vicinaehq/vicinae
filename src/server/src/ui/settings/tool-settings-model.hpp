@@ -14,9 +14,10 @@ class ToolSettingsModel : public QObject {
   Q_PROPERTY(QVariantList groups READ groups NOTIFY groupsChanged)
   Q_PROPERTY(bool enabled READ enabled NOTIFY stateChanged)
   Q_PROPERTY(bool aiEnabled READ aiEnabled NOTIFY stateChanged)
+  Q_PROPERTY(QVariantList policyItems READ policyItems CONSTANT)
 
 public:
-  Q_INVOKABLE void setToolEnabled(const QString &providerId, const QString &toolId, bool enabled);
+  Q_INVOKABLE void setToolPolicy(const QString &providerId, const QString &toolId, const QString &policy);
 
 signals:
   void groupsChanged();
@@ -28,6 +29,7 @@ public:
   QVariantList groups() const { return m_groups; }
   bool enabled() const;
   bool aiEnabled() const;
+  QVariantList policyItems() const;
 
 private:
   void rebuild();

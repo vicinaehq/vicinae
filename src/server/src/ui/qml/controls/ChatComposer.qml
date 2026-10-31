@@ -26,6 +26,7 @@ FocusScope {
     property bool transcribing: false
     property string recordingTime: ""
     property string dictationMessage: ""
+    property var toolApproval: null
 
     signal submitted(string text)
     signal previewRequested(var content)
@@ -33,6 +34,8 @@ FocusScope {
     signal modelActivated(var item)
     signal dictationToggled
     signal dictationCancelled
+    signal toolApproved(bool always)
+    signal toolDeclined
 
     readonly property bool canSubmit: !busy && submissionEnabled && (attachments?.ready ?? true) && (editor.text.trim().length > 0 || (attachments?.count ?? 0) > 0)
     readonly property real lineHeight: Math.ceil(fontMetrics.height)
@@ -45,9 +48,10 @@ FocusScope {
     readonly property real _editorHeight: Math.max(lineHeight, Math.min(editor.contentHeight, lineHeight * maxRows))
     readonly property real _inlineEditorWidth: width - _leftPadding - _rightPadding - controls.width - _spacing
     readonly property bool expanded: !compact || (editor.text.length > 0 && (editor.text.includes("\n") || textMetrics.advanceWidth > _inlineEditorWidth))
+    readonly property real _approvalHeight: approvalPanel.visible ? approvalPanel.implicitHeight + _spacing * 2 : 0
     readonly property real _attachmentHeight: attachmentList.visible ? attachmentList.implicitHeight + _spacing : 0
     readonly property real _messageHeight: notice.visible ? notice.implicitHeight + _spacing : 0
-    implicitHeight: _attachmentHeight + _messageHeight + (expanded ? _editorHeight + _spacing + _controlHeight : Math.max(_editorHeight, _controlHeight)) + _verticalPadding * 2
+    implicitHeight: _approvalHeight + _attachmentHeight + _messageHeight + (expanded ? _editorHeight + _spacing + _controlHeight : Math.max(_editorHeight, _controlHeight)) + _verticalPadding * 2
 
     function forceActiveFocus() {
         editor.forceActiveFocus();
@@ -118,10 +122,21 @@ FocusScope {
         onWheel: wheel => wheel.accepted = false
     }
 
+    ToolApprovalPanel {
+        id: approvalPanel
+        x: root._leftPadding
+        y: root._verticalPadding
+        width: root.width - root._leftPadding - root._rightPadding - root._spacing
+        visible: root.toolApproval !== null && root.toolApproval !== undefined
+        approval: root.toolApproval ?? {}
+        onAccepted: always => root.toolApproved(always)
+        onDeclined: root.toolDeclined()
+    }
+
     AttachmentList {
         id: attachmentList
         x: root._leftPadding
-        y: root._verticalPadding
+        y: root._verticalPadding + root._approvalHeight
         width: root.width - root._leftPadding * 2
         visible: (root.attachments?.count ?? 0) > 0
         attachments: root.attachments?.items ?? []
@@ -133,7 +148,7 @@ FocusScope {
     Text {
         id: notice
         x: root._leftPadding
-        y: root._verticalPadding + root._attachmentHeight
+        y: root._verticalPadding + root._approvalHeight + root._attachmentHeight
         width: root.width - root._leftPadding * 2
         visible: root.message.length > 0
         text: root.message
@@ -160,7 +175,7 @@ FocusScope {
     FormTextEditor {
         id: editor
         x: root._leftPadding
-        y: root._verticalPadding + root._attachmentHeight + root._messageHeight + (root.expanded ? 0 : (Math.max(root._editorHeight, root._controlHeight) - root._editorHeight) / 2)
+        y: root._verticalPadding + root._approvalHeight + root._attachmentHeight + root._messageHeight + (root.expanded ? 0 : (Math.max(root._editorHeight, root._controlHeight) - root._editorHeight) / 2)
         width: root.expanded ? root.width - root._leftPadding * 2 : root._inlineEditorWidth
         height: root._editorHeight
         multiline: true

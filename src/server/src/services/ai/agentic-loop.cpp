@@ -224,16 +224,63 @@ void Agent::executeNextTool() {
 
   const auto id = m_pendingCalls[m_nextCall++];
   auto &call = *std::ranges::find(m_calls, id, &ToolCall::id);
-  const auto tool = std::ranges::find_if(m_tools, [&](const auto &tool) {
-    return tool->name() == call.call.name && tool->isEnabled() &&
-           std::ranges::contains(m_options.tools, tool->name());
-  });
+  auto *tool = findTool(call.call.name);
 
-  if (tool == m_tools.end()) {
+  if (!tool) {
     recordToolResult(id, ToolState::Failed, {.content = tr("This tool is not enabled.").toStdString()});
     if (running() && generation == m_generation) schedule([this] { executeNextTool(); });
     return;
   }
+
+  if (tool->requiresApproval(call.call.arguments)) {
+    call.state = ToolState::AwaitingApproval;
+    m_pendingApproval = id;
+    setActivity(ResponseActivity::AwaitingApproval);
+    if (!running() || generation != m_generation) return;
+    emit toolChanged(id);
+    if (!running() || generation != m_generation) return;
+    emit approvalChanged();
+    return;
+  }
+
+  runTool(id, *tool);
+}
+
+AbstractTool *Agent::findTool(std::string_view name) const {
+  const auto tool = std::ranges::find_if(m_tools, [&](const auto &tool) {
+    return tool->name() == name && tool->isEnabled() && std::ranges::contains(m_options.tools, tool->name());
+  });
+  return tool != m_tools.end() ? tool->get() : nullptr;
+}
+
+bool Agent::resolveApproval(Id id, bool approved) {
+  if (!running() || m_pendingApproval != id) return false;
+
+  const auto generation = m_generation;
+  m_pendingApproval.reset();
+  emit approvalChanged();
+  if (!running() || generation != m_generation) return true;
+
+  const auto &call = *toolCall(id);
+  auto *tool = approved ? findTool(call.call.name) : nullptr;
+
+  if (!tool) {
+    if (approved)
+      recordToolResult(id, ToolState::Failed, {.content = tr("This tool is not enabled.").toStdString()});
+    else
+      recordToolResult(id, ToolState::Declined,
+                       {.content = tr("The user declined to run this tool.").toStdString()});
+    if (running() && generation == m_generation) schedule([this] { executeNextTool(); });
+    return true;
+  }
+
+  runTool(id, *tool);
+  return true;
+}
+
+void Agent::runTool(Id id, AbstractTool &tool) {
+  const auto generation = m_generation;
+  auto &call = *std::ranges::find(m_calls, id, &ToolCall::id);
 
   m_toolTimer.start();
   call.state = ToolState::Running;
@@ -245,7 +292,7 @@ void Agent::executeNextTool() {
   AbstractTool::RawToolTask task;
 
   try {
-    task = (*tool)->runRaw(call.call.arguments);
+    task = tool.runRaw(call.call.arguments);
   } catch (const std::exception &error) {
     if (!running() || generation != m_generation) return;
 
@@ -326,9 +373,11 @@ void Agent::finish(State state, std::optional<std::string> error) {
   }
 
   m_pendingCalls.clear();
+  const bool hadApproval = std::exchange(m_pendingApproval, std::nullopt).has_value();
   m_state = state;
   m_error = std::move(error);
 
+  if (hadApproval) emit approvalChanged();
   emit stateChanged();
   m_finishing = false;
   emit finished();

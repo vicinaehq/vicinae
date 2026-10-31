@@ -5,17 +5,20 @@ import Vicinae
 SettingsRow {
     id: root
     required property var tool
-    signal toggled(bool checked)
+    required property var policyItems
+    signal policySelected(string policy)
 
     label: tool.name
     description: tool.description
     iconSource: tool.iconSource
-    controlWidth: 34
+    controlWidth: 160
     enabled: tool.providerEnabled
     opacity: enabled ? 1 : 0.5
 
-    SettingsToggle {
-        checked: root.tool.isEnabled
-        onToggled: checked => root.toggled(checked)
+    SearchableDropdown {
+        width: parent.width
+        items: root.policyItems
+        currentItem: root.policyItems[0].items.find(item => item.id === root.tool.policy) ?? null
+        onActivated: item => root.policySelected(item.id)
     }
 }

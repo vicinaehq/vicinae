@@ -344,7 +344,7 @@ void Manager::prunePartial(Partial<ConfigValue> &user) {
             prunePreferences(*data.preferences);
             if (data.preferences->empty()) data.preferences.reset();
           }
-          if (!data.enabled && !data.preferences)
+          if (!data.policy && !data.preferences)
             tool = tools.erase(tool);
           else
             ++tool;
