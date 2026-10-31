@@ -7,7 +7,7 @@
         <location filename="../src/qml/qml/AboutSettingsPage.qml" line="+57"/>
         <source>Version %1 - Commit %2
 (%3)</source>
-        <translation>Version %1 – Commit %2
+        <translation>Versión %1 – Commit %2
 (%3)</translation>
     </message>
     <message>
@@ -18,7 +18,7 @@
     <message>
         <location line="+10"/>
         <source>Report a Bug</source>
-        <translation>Reportar un error</translation>
+        <translation>Informar de un error</translation>
     </message>
 </context>
 <context>
@@ -39,7 +39,7 @@
     <message>
         <location filename="../src/qml/qml/AdvancedSettingsPage.qml" line="+29"/>
         <source>Input &amp; Navigation</source>
-        <translation>Eingabe &amp; Navigation</translation>
+        <translation>Entrada y navegación</translation>
     </message>
     <message>
         <location line="+7"/>
