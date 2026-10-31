@@ -18,7 +18,18 @@
 #include "command/preference.hpp"
 
 struct PreferenceMeta {
-  enum class Kind : std::uint8_t { Auto, Text, Password, Shortcut, Files, Directories, App, Apps, Custom };
+  enum class Kind : std::uint8_t {
+    Auto,
+    Text,
+    LongText,
+    Password,
+    Shortcut,
+    Files,
+    Directories,
+    App,
+    Apps,
+    Custom
+  };
   using Options = std::function<std::vector<Preference::DropdownData::Option>()>;
   using Sections = std::function<std::vector<Preference::DropdownData::Section>()>;
 
@@ -89,6 +100,9 @@ template <typename M> Preference make(const QString &key, const M &value, const 
     switch (meta.kind) {
     case Kind::Password:
       pref = Preference::makePassword(key);
+      break;
+    case Kind::LongText:
+      pref = Preference::makeLongText(key);
       break;
     case Kind::Shortcut:
       pref = Preference::makeShortcut(key);

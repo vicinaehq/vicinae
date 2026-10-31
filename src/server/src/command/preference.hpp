@@ -31,7 +31,10 @@ inline bool isEmpty(const glz::generic &value) {
 class Preference {
 public:
   struct UnknownData {};
-  struct TextData {};
+  struct TextData {
+    // Long, multi-line text edited in a dedicated dialog.
+    bool multiline = false;
+  };
   struct PasswordData {};
   struct CheckboxData {
     std::optional<QString> label;
@@ -88,6 +91,7 @@ public:
     return {id, CheckboxData{.label = label}};
   }
   static Preference makeText(const QString &id) { return {id, TextData{}}; }
+  static Preference makeLongText(const QString &id) { return {id, TextData{.multiline = true}}; }
   static Preference makePassword(const QString &id) { return {id, PasswordData{}}; }
   static Preference makeShortcut(const QString &id) { return {id, ShortcutData{}}; }
   static Preference custom(const QString &id, const QString &component) {

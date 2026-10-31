@@ -100,16 +100,8 @@ void ToolRegistry::rebuild() {
 }
 
 bool ToolRegistry::toolsEnabled() const {
-  const auto &providers = m_config.value().providers;
-  const auto it = providers.find(std::string(EXTENSION_ID));
-  if (it == providers.end()) return true;
-
-  if (const auto &prefs = it->second.preferences) {
-    const auto *value = preferences::find(*prefs, "enableTools");
-    if (value && value->is_boolean()) return value->get_boolean();
-  }
-
-  return AiPreferences{}.enableTools;
+  const auto *value = findPreference(m_config, "enableTools");
+  return value && value->is_boolean() ? value->get_boolean() : AiPreferences{}.enableTools;
 }
 
 bool ToolRegistry::providerEnabled(std::string_view providerId) const {

@@ -95,7 +95,7 @@ private:
 
 } // namespace
 
-Agent::Agent(CompletionFactory factory, std::optional<std::string> systemPrompt, QObject *parent)
+Agent::Agent(CompletionFactory factory, SystemPrompt systemPrompt, QObject *parent)
     : QObject(parent), m_factory(std::move(factory)), m_systemPrompt(std::move(systemPrompt)) {
   m_messages.reserve(16);
   m_calls.reserve(8);
@@ -218,8 +218,11 @@ void Agent::complete() {
   if (!running() || generation != m_generation) return;
 
   ChatCompletionPayload payload{.thinking = m_options.thinking};
-  payload.messages.reserve(m_messages.size() + (m_systemPrompt ? 1 : 0));
-  if (m_systemPrompt) payload.messages.emplace_back(ChatMessage::fromText(ChatRole::System, *m_systemPrompt));
+  payload.messages.reserve(m_messages.size() + 1);
+  if (m_systemPrompt) {
+    if (auto prompt = m_systemPrompt(); !prompt.empty())
+      payload.messages.emplace_back(ChatMessage::fromText(ChatRole::System, std::move(prompt)));
+  }
   for (const auto &message : m_messages)
     payload.messages.emplace_back(message.content);
 

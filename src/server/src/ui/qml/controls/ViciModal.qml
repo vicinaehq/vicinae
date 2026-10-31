@@ -9,11 +9,6 @@ Popup {
     modal: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
-    onActiveFocusChanged: {
-        if (!activeFocus && opened)
-            close();
-    }
-
     enter: Transition {
         ParallelAnimation {
             NumberAnimation {

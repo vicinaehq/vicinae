@@ -26,6 +26,8 @@ public:
   static constexpr std::string_view LOAD_TOOLS = "load_tools";
   using CompletionFactory = std::function<std::shared_ptr<AbstractChatCompletionStream>(
       const std::optional<ModelRef> &, const ChatCompletionPayload &)>;
+  // Evaluated before every request, so that changes apply to ongoing conversations.
+  using SystemPrompt = std::function<std::string()>;
 
   enum class State { Idle, Running, Completed, Failed, Cancelled };
   enum class ToolState { Queued, AwaitingApproval, Running, Succeeded, Failed, Declined, Cancelled };
@@ -50,8 +52,7 @@ public:
     int maxSteps = 16;
   };
 
-  explicit Agent(CompletionFactory factory, std::optional<std::string> systemPrompt = {},
-                 QObject *parent = nullptr);
+  explicit Agent(CompletionFactory factory, SystemPrompt systemPrompt = {}, QObject *parent = nullptr);
   ~Agent() override;
 
   void restoreHistory(std::vector<Message> messages, std::vector<ToolCall> calls);
@@ -97,7 +98,7 @@ private:
   void setActivity(ResponseActivity activity);
 
   CompletionFactory m_factory;
-  std::optional<std::string> m_systemPrompt;
+  SystemPrompt m_systemPrompt;
   std::vector<Message> m_messages;
   std::vector<ToolCall> m_calls;
   std::vector<std::unique_ptr<AbstractTool>> m_tools;

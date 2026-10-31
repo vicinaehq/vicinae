@@ -646,6 +646,7 @@ set(SRCS
 	src/services/ai/tool-policy.hpp
 	src/services/ai/tool-registry.hpp
 	src/services/ai/tool-registry.cpp
+	src/services/ai/ai-preferences.cpp
 	src/services/ai/ai-capability.hpp
 	src/services/ai/speech-language-catalogue.hpp
 	src/services/ai/local/local-provider.hpp
@@ -1505,6 +1506,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/actions/ShortcutRecorderPanel.qml
 	src/ui/qml/form/ShortcutField.qml
 	src/ui/qml/settings/SettingsPreferenceForm.qml
+	src/ui/qml/settings/LongTextPreferenceDialog.qml
 	src/ui/qml/views/MissingPreferenceView.qml
 	src/ui/qml/views/OAuthOverlayView.qml
 	src/ui/qml/hud/HudWindow.qml

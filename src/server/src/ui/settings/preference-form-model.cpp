@@ -84,7 +84,7 @@ static QString preferenceType(const Preference &p) {
       [](const auto &d) -> QString {
         using T = std::decay_t<decltype(d)>;
         if constexpr (std::is_same_v<T, Preference::TextData>)
-          return QStringLiteral("text");
+          return d.multiline ? QStringLiteral("longtext") : QStringLiteral("text");
         else if constexpr (std::is_same_v<T, Preference::PasswordData>)
           return QStringLiteral("password");
         else if constexpr (std::is_same_v<T, Preference::CheckboxData>)

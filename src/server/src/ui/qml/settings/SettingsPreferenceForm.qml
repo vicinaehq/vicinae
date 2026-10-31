@@ -42,6 +42,8 @@ ColumnLayout {
             switch (type) {
             case "text":
                 return textComp;
+            case "longtext":
+                return longTextComp;
             case "password":
                 return passwordComp;
             case "checkbox":
@@ -80,6 +82,38 @@ ColumnLayout {
                 placeholder: field.host.placeholder
                 readOnly: field.host.readOnly
                 onTextEdited: root.prefModel.setFieldValue(field.host.index, text)
+            }
+        }
+    }
+
+    Component {
+        id: longTextComp
+        SettingsRow {
+            id: field
+            readonly property FieldHost host: parent as FieldHost
+            readonly property string text: field.host.value != null ? String(field.host.value) : ""
+            label: field.host.label
+            description: field.host.description
+            controlWidth: root.fieldControlWidth
+            showSeparator: field.host.index < settingsRepeater.count - 1
+
+            ViciButton {
+                anchors.right: parent.right
+                implicitHeight: 28
+                variant: "ghost"
+                bordered: true
+                text: qsTr("Edit")
+                enabled: !field.host.readOnly
+                activeFocusOnTab: true
+                onClicked: dialog.openWith(field.text)
+            }
+
+            LongTextPreferenceDialog {
+                id: dialog
+                title: field.host.label
+                description: field.host.description
+                placeholder: field.host.placeholder
+                onSaved: text => root.prefModel.setFieldValue(field.host.index, text)
             }
         }
     }
