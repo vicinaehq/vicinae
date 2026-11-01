@@ -11,6 +11,9 @@ ColumnLayout {
     property string label: ""
     property string error: ""
     property string info: ""
+    // Label above the field instead of beside it, for forms laid out in columns.
+    property bool stacked: false
+    readonly property real stackedLabelHeight: stackedLabel.visible ? stackedLabel.height + spacing : 0
     property bool topAlignLabel: false
     property real topAlignLabelTopPadding: 8
     property bool filled: true
@@ -21,11 +24,21 @@ ColumnLayout {
     }
     default property alias contentData: contentSlot.data
 
+    Text {
+        id: stackedLabel
+        visible: root.stacked && root.label !== ""
+        Layout.fillWidth: true
+        text: root.label
+        color: Theme.textMuted
+        font.pointSize: Theme.smallerFontSize
+    }
+
     RowLayout {
         Layout.fillWidth: true
         spacing: 20
 
         Text {
+            visible: !root.stacked
             Layout.preferredWidth: 2
             Layout.fillWidth: true
             Layout.topMargin: root.topAlignLabel ? root.topAlignLabelTopPadding : 0
@@ -62,6 +75,7 @@ ColumnLayout {
         }
 
         Item {
+            visible: !root.stacked
             Layout.preferredWidth: 2
             Layout.fillWidth: true
         }
@@ -73,6 +87,7 @@ ColumnLayout {
         spacing: 20
 
         Item {
+            visible: !root.stacked
             Layout.preferredWidth: 2
             Layout.fillWidth: true
         }
@@ -87,6 +102,7 @@ ColumnLayout {
         }
 
         Item {
+            visible: !root.stacked
             Layout.preferredWidth: 2
             Layout.fillWidth: true
         }
@@ -98,6 +114,7 @@ ColumnLayout {
         spacing: 20
 
         Item {
+            visible: !root.stacked
             Layout.preferredWidth: 2
             Layout.fillWidth: true
         }
@@ -121,6 +138,7 @@ ColumnLayout {
         }
 
         Item {
+            visible: !root.stacked
             Layout.preferredWidth: 2
             Layout.fillWidth: true
         }

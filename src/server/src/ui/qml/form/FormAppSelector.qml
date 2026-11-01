@@ -47,7 +47,7 @@ ColumnLayout {
     }
 
     Text {
-        visible: root.model.length === 0
+        visible: root.model.length === 0 && root.emptyText !== ""
         text: root.emptyText
         color: Theme.textMuted
         font.pointSize: Theme.smallerFontSize
