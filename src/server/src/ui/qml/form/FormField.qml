@@ -13,7 +13,8 @@ ColumnLayout {
     property string info: ""
     // Label above the field instead of beside it, for forms laid out in columns.
     property bool stacked: false
-    readonly property real stackedLabelHeight: stackedLabel.visible ? stackedLabel.height + spacing : 0
+    // Height of everything around the input when stacked, for an input that sizes itself to the space left.
+    readonly property real stackedChromeHeight: (stackedLabel.visible ? stackedLabel.height + spacing : 0) + (errorRow.visible ? errorRow.height + spacing : 0) + (infoRow.visible ? infoRow.height + spacing : 0)
     property bool topAlignLabel: false
     property real topAlignLabelTopPadding: 8
     property bool filled: true
@@ -82,6 +83,7 @@ ColumnLayout {
     }
 
     RowLayout {
+        id: errorRow
         visible: root.error !== ""
         Layout.fillWidth: true
         spacing: 20
@@ -109,6 +111,7 @@ ColumnLayout {
     }
 
     RowLayout {
+        id: infoRow
         visible: root.info !== ""
         Layout.fillWidth: true
         spacing: 20

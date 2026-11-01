@@ -46,7 +46,7 @@ Item {
                     FormTextArea {
                         id: instructionsInput
                         // fills what the form has left, the text scrolls inside when it needs more
-                        readonly property int rows: Math.max(5, Math.floor((formView.usableHeight - formView.padding * 2 - nameField.height - leftColumn.spacing - instructionsField.stackedLabelHeight - _verticalPadding * 2) / _lineHeight))
+                        readonly property int rows: Math.max(5, Math.floor((formView.usableHeight - formView.padding * 2 - nameField.height - leftColumn.spacing - instructionsField.stackedChromeHeight - _verticalPadding * 2) / _lineHeight))
                         minRows: rows
                         maxRows: rows
                         text: root.host.instructions

@@ -45,6 +45,10 @@ Item {
         edit.selectAll();
     }
 
+    function _repositionCompleter() {
+        root._completer?.reposition();
+    }
+
     function _accept(modifiers) {
         if (root._completing)
             root._completer.accept();
@@ -95,6 +99,14 @@ Item {
             readOnly: root.readOnly
             activeFocusOnTab: false
 
+            Item {
+                id: cursorAnchor
+                x: edit.cursorRectangle.x
+                y: edit.cursorRectangle.y
+                width: 1
+                height: edit.cursorRectangle.height
+            }
+
             Text {
                 anchors.top: parent.top
                 width: parent.width
@@ -127,6 +139,7 @@ Item {
                     flickable.contentY = rect.y;
                 else if (rect.y + rect.height > flickable.contentY + flickable.height)
                     flickable.contentY = rect.y + rect.height - flickable.height;
+                Qt.callLater(root._repositionCompleter);
             }
 
             Keys.priority: Keys.BeforeItem
@@ -178,6 +191,7 @@ Item {
             triggerChar: root.triggerChar
             text: edit.text
             cursorPosition: edit.cursorPosition
+            anchorItem: cursorAnchor
             onCompletionAccepted: (start, end, replacement, newCursorPos) => {
                 root._suppressTextChanged = true;
                 TextDocumentEdit.replace(edit.textDocument, start, end, replacement);

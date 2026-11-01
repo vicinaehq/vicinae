@@ -83,6 +83,13 @@ public:
       });
     }
 
+    if (e.snippet) {
+      meta.append(QVariantMap{
+          {QStringLiteral("label"), tr("Snippet")},
+          {QStringLiteral("value"), QString::fromStdString(*e.snippet)},
+      });
+    }
+
     return ListItemDetail{.metadata = std::move(meta),
                           .markdown = Dictation::escapeMarkdown(QString::fromStdString(e.text))};
   }

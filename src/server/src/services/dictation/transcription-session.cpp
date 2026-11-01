@@ -96,7 +96,12 @@ void TranscriptionSession::accept() {
   emit stateChanged();
 
   auto options = m_setup.options;
-  options.vocabulary = m_dictation.vocabulary()->words();
+  const auto words = m_dictation.vocabulary()->words();
+  m_vocabulary.clear();
+  m_vocabulary.reserve(words.size() + m_setup.extraVocabulary.size());
+  m_vocabulary.insert(m_vocabulary.end(), words.begin(), words.end());
+  m_vocabulary.insert(m_vocabulary.end(), m_setup.extraVocabulary.begin(), m_setup.extraVocabulary.end());
+  options.vocabulary = m_vocabulary;
 
   m_dictation.ai()
       .transcribe(m_setup.model, std::move(recording), options)

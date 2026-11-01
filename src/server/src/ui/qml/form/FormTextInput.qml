@@ -18,6 +18,8 @@ FocusScope {
     property alias accessibleLabel: editor.accessibleLabel
     property alias completions: editor.completions
     property alias triggerChar: editor.triggerChar
+    // decorative, shown before the text
+    property var leadingIcon: null
     property bool hasError: false
     property bool filled: false
     // if set to true, pressing escape or enter/return will defocus the input field
@@ -48,12 +50,24 @@ FocusScope {
         dimmed: root.readOnly
     }
 
+    ViciImage {
+        id: leadingImage
+        visible: root.leadingIcon !== null
+        anchors.left: parent.left
+        anchors.leftMargin: 10
+        anchors.verticalCenter: parent.verticalCenter
+        width: 14
+        height: 14
+        source: root.leadingIcon
+        opacity: root.readOnly ? 0.5 : 1.0
+    }
+
     FormTextEditor {
         id: editor
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 10
+        anchors.leftMargin: leadingImage.visible ? leadingImage.width + 18 : 10
         anchors.rightMargin: 10
         height: implicitHeight
         opacity: root.readOnly ? 0.5 : 1.0

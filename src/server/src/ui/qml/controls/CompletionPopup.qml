@@ -69,6 +69,11 @@ Popup {
         _listCap = Math.max(0, Math.min(maxListHeight, (_above ? above : below) - _chromeHeight));
     }
 
+    function reposition() {
+        if (visible)
+            _updatePlacement();
+    }
+
     readonly property int count: _model.count
     readonly property bool hasSelection: _highlightedIndex >= 0
 

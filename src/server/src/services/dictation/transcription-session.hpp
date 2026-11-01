@@ -7,6 +7,8 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <vector>
 #include "services/ai/ai-provider.hpp"
 #include "services/audio/audio-recorder.hpp"
 #include "services/media-control/media-control-service.hpp"
@@ -16,6 +18,8 @@ class DictationService;
 struct TranscriptionSetup {
   AI::ModelRef model;
   AI::TranscriptionOptions options;
+  // Terms to recognize on top of the user's vocabulary.
+  std::vector<std::string> extraVocabulary;
   bool playSoundEffects = true;
   bool pauseMedia = true;
 };
@@ -62,6 +66,7 @@ private:
 
   DictationService &m_dictation;
   TranscriptionSetup m_setup;
+  std::vector<std::string_view> m_vocabulary;
   Audio::Recorder m_recorder;
   QTimer m_elapsedTimer;
   QElapsedTimer m_transcribeTimer;

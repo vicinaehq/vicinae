@@ -7,6 +7,7 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/dictation/dictation-service.hpp"
 #include "services/paste/paste-service.hpp"
+#include "services/snippet/snippet-service.hpp"
 #include "ui/image/url.hpp"
 
 namespace {
@@ -26,17 +27,18 @@ DictationSession::DictationSession(const ApplicationContext *ctx, TranscriptionS
   connect(&m_session, &TranscriptionSession::failed, this, &DictationSession::finishWithMessage);
   connect(&m_session, &TranscriptionSession::cancelled, this, &DictationSession::finish);
   connect(&m_rewrite, &DictationRewrite::finished, this, [this](const QString &text) {
-    deliver(text, /*rewritten*/ true);
+    deliver(text, {.style = m_styleName});
     finish();
   });
   connect(&m_rewrite, &DictationRewrite::failed, this, [this](const QString &reason) {
     qWarning() << "Dictation: rewrite failed:" << reason;
-    deliver(m_transcript.text, /*rewritten*/ false);
+    deliver(m_transcript.text);
     finishWithMessage(tr("Used original text"));
   });
 }
 
 bool DictationSession::start() {
+  m_setup.extraVocabulary = m_ctx->services->snippetService()->database()->voicePhrases();
   if (m_session.start(m_setup)) return true;
   finish();
   return false;
@@ -54,10 +56,18 @@ void DictationSession::handleTranscript(const Transcript &transcript) {
 
   const auto app = m_ctx->services->appRuntime()->focusTargetApp();
   const auto appId = app ? std::optional(app->id().toStdString()) : std::nullopt;
+
+  if (const auto snippet = m_ctx->services->snippetService()->expandVoicePhrase(transcript.text, appId)) {
+    qInfo() << "Dictation: voice phrase matched snippet" << snippet->name;
+    deliver(snippet->text, {.snippet = snippet->name});
+    finish();
+    return;
+  }
+
   const auto *style = m_ctx->services->dictation()->styles()->forApp(appId);
 
   if (!style) {
-    deliver(transcript.text, /*rewritten*/ false);
+    deliver(transcript.text);
     finish();
     return;
   }
@@ -69,7 +79,7 @@ void DictationSession::handleTranscript(const Transcript &transcript) {
   emit stateChanged();
 }
 
-void DictationSession::deliver(const QString &text, bool rewritten) {
+void DictationSession::deliver(const QString &text, const DeliverySource &source) {
   auto content = Clipboard::Text{text};
 
   emit delivering();
@@ -88,8 +98,10 @@ void DictationSession::deliver(const QString &text, bool rewritten) {
         .text = text.toStdString(),
         .durationMs = static_cast<std::uint64_t>(m_transcript.durationMs),
         .language = m_transcript.language,
-        .original = rewritten ? std::optional(m_transcript.text.toStdString()) : std::nullopt,
-        .style = rewritten ? std::optional(m_styleName) : std::nullopt,
+        .original =
+            source.style || source.snippet ? std::optional(m_transcript.text.toStdString()) : std::nullopt,
+        .style = source.style,
+        .snippet = source.snippet,
     });
   }
   emit stateChanged();

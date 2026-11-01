@@ -23,9 +23,10 @@ public:
     std::uint64_t createdAt = 0;
     std::uint64_t durationMs = 0;
     std::optional<std::string> language;
-    // What was transcribed, when `text` is a rewrite of it.
+    // What was transcribed, when `text` is a rewrite of it or the snippet it triggered.
     std::optional<std::string> original;
     std::optional<std::string> style;
+    std::optional<std::string> snippet;
   };
 
   explicit DictationHistory(std::filesystem::path path, QObject *parent = nullptr);

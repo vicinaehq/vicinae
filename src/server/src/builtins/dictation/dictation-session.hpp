@@ -60,7 +60,13 @@ private:
   void finish();
   void finishWithMessage(const QString &message);
   void handleTranscript(const Transcript &transcript);
-  void deliver(const QString &text, bool rewritten);
+  /** Where delivered text came from, when it isn't the transcript itself. */
+  struct DeliverySource {
+    std::optional<std::string> style;
+    std::optional<std::string> snippet;
+  };
+
+  void deliver(const QString &text, const DeliverySource &source = {});
 
   const ApplicationContext *m_ctx;
   TranscriptionSetup m_setup;

@@ -105,6 +105,32 @@ public:
 
   SnippetDatabase *database() { return &m_db; }
 
+  struct VoiceExpansion {
+    std::string name;
+    QString text;
+  };
+
+  /**
+   * The snippet to deliver when a whole dictation is its voice phrase. Dictation pastes the result rather
+   * than typing it, so a {cursor} placeholder has no effect.
+   */
+  std::optional<VoiceExpansion> expandVoicePhrase(const QString &transcript,
+                                                  const std::optional<std::string> &appId) {
+    const auto *snippet = m_db.findByVoicePhrase(transcript.toStdString());
+    if (!snippet) return std::nullopt;
+
+    const auto *text = std::get_if<snippet::TextSnippet>(&snippet->data);
+    if (!text) return std::nullopt;
+
+    if (!snippet->apps.empty() && (!appId || !std::ranges::contains(snippet->apps, *appId))) {
+      return std::nullopt;
+    }
+
+    const SnippetExpander expander(m_appService);
+    return VoiceExpansion{.name = snippet->name,
+                          .text = expander.expandToString(QString::fromStdString(text->text), {})};
+  }
+
 private:
   struct UndoRecord {
     std::string trigger;
@@ -144,7 +170,7 @@ private:
 
     if (frontmost) { terminal = frontmost->isTerminalEmulator() || frontmost->isTerminalApp(); }
 
-    const auto &apps = snippet->expansion->apps;
+    const auto &apps = snippet->apps;
 
     if (!apps.empty()) {
       if (!frontmost || !std::ranges::contains(apps, frontmost->id().toStdString())) return;

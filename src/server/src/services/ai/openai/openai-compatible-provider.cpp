@@ -83,6 +83,11 @@ QFuture<TranscriptionResult> OpenAICompatibleProvider::transcribe(Audio::Recordi
   auto *formData = new http::FormData;
   formData->addField("model", QByteArray::fromStdString(*model));
   if (opts.language) formData->addField("language", QByteArray::fromStdString(*opts.language));
+  if (!opts.vocabulary.empty()) {
+    const auto prompt =
+        opts.vocabulary | std::views::join_with(std::string_view(", ")) | std::ranges::to<std::string>();
+    formData->addField("prompt", QByteArray::fromStdString(prompt));
+  }
   formData->addFile(recording.toWav(), "audio/wav", "file", "audio.wav");
 
   return m_client.post<openai::TranscriptionResponse>("audio/transcriptions", formData)
