@@ -18,9 +18,7 @@ class QuickAICommand
 
   QString id() const override { return QuickAI::qs(QuickAI::COMMAND_ID); }
   QString name() const override { return tr("Quick AI"); }
-  ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Stars).setBackgroundTint(Omnicast::ACCENT_COLOR);
-  }
+  ImageURL iconUrl() const override { return QuickAI::ICON; }
   std::vector<QString> keywords() const override { return {"ask", "chat"}; }
   bool isFallback() const override { return true; }
   void execute(const Controller &controller) const override;
@@ -33,7 +31,21 @@ class AIChatCommand : public BuiltinCallbackCommand {
   QString description() const override { return tr("Open your AI conversations in a dedicated window."); }
   std::vector<QString> keywords() const override { return {"chat", "conversation", "window"}; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Stars).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::SpeechBubbleActive).setBackgroundTint(QuickAI::COLOR);
+  }
+  void execute(CommandController &controller) const override;
+};
+
+class OpenLastChatCommand : public GuardedBuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(OpenLastChatCommand)
+  QString id() const override { return QStringLiteral("last-chat"); }
+  QString name() const override { return tr("Open Last AI Chat"); }
+  QString description() const override { return tr("Pick up your most recent AI conversation."); }
+  std::vector<QString> keywords() const override { return {"resume", "continue", "recent", "conversation"}; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin(BuiltinIcon::SpeechBubbleActive)
+        .setBackgroundTint(QuickAI::COLOR)
+        .setBadge(BuiltinIcon::RotateAntiClockwise);
   }
   void execute(CommandController &controller) const override;
 };
@@ -45,7 +57,9 @@ class ConversationHistoryCommand : public BuiltinViewCommand<ConversationHistory
   std::vector<QString> keywords() const override { return {"chat", "history"}; }
   QString description() const override { return tr("Reopen and continue previous AI conversations."); }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Stars).setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin(BuiltinIcon::SpeechBubble)
+        .setBackgroundTint(QuickAI::COLOR)
+        .setBadge(BuiltinIcon::MagnifyingGlass);
   }
 };
 
@@ -54,15 +68,14 @@ class AiExtension : public TypedCommandRepository<AiPreferences> {
 
   QString id() const override { return QuickAI::qs(QuickAI::REPOSITORY_ID); }
   QString displayName() const override { return tr("AI"); }
-  ImageURL iconUrl() const override {
-    return ImageURL::builtin(BuiltinIcon::Atom).setBackgroundTint(SemanticColor::Purple);
-  }
+  ImageURL iconUrl() const override { return QuickAI::ICON; }
   void preferencesChanged(const AiPreferences &preferences) const override;
 
 public:
   AiExtension() {
     registerCommand<QuickAICommand>();
     registerCommand<AIChatCommand>();
+    registerCommand<OpenLastChatCommand>();
     registerCommand<ConversationHistoryCommand>();
   }
 };

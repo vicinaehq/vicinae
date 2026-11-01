@@ -42,7 +42,7 @@ public:
     return QLocale().toString(QDateTime::fromMSecsSinceEpoch(item.updatedAt), QLocale::ShortFormat);
   }
   std::optional<ImageURL> displayIcon(const ItemType &) const override {
-    return ImageURL::builtin(BuiltinIcon::Stars);
+    return ImageURL::builtin(BuiltinIcon::SpeechBubble);
   }
   AccessoryList displayAccessories(const ItemType &) const override { return {}; }
 

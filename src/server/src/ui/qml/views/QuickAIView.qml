@@ -79,7 +79,7 @@ LauncherView {
     EmptyView {
         width: parent.width
         height: parent.height
-        visible: transcript.count === 0 && !root.host.session.streaming
+        visible: transcript.count === 0 && !root.host.session.streaming && !root.host.opening && !root.host.session.loading
         icon: Launcher.navigationIcon
         title: qsTr("Ask anything")
         description: qsTr("Answers use the model selected in the composer.")

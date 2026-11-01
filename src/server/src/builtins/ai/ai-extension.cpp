@@ -12,9 +12,7 @@
 
 namespace {
 
-const auto SELECT_MODEL_ICON = ImageURL::builtin(BuiltinIcon::Stars)
-                                   .setBackgroundTint(Omnicast::ACCENT_COLOR)
-                                   .setBadge(BuiltinIcon::Cog);
+const auto SELECT_MODEL_ICON = ImageURL(QuickAI::ICON).setBadge(BuiltinIcon::Cog);
 
 } // namespace
 
@@ -58,4 +56,8 @@ void AIChatCommand::execute(CommandController &controller) const {
   auto *ctx = controller.context();
   ctx->navigation->closeWindow();
   ctx->chat->show();
+}
+
+void OpenLastChatCommand::execute(CommandController &controller) const {
+  controller.context()->navigation->pushView(QuickAIViewHost::forLastConversation());
 }
