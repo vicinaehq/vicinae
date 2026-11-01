@@ -97,8 +97,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(services->rootItemManager(), &RootItemManager::itemsChanged, this,
           &LauncherWindow::refreshQuickAIAvailability);
   connect(m_ctx.navigation.get(), &NavigationController::searchTextTampered, this,
-          &LauncherWindow::updateCanAskAI);
-  connect(this, &LauncherWindow::atRootChanged, this, &LauncherWindow::updateCanAskAI);
+          [this](const QString &text) { updateCanAskAI(text); });
+  connect(this, &LauncherWindow::atRootChanged, this, [this] { updateCanAskAI(); });
   refreshQuickAIAvailability();
 
   m_commandHoldTimer.setSingleShot(true);
@@ -644,8 +644,10 @@ void LauncherWindow::refreshQuickAIAvailability() {
   updateCanAskAI();
 }
 
-void LauncherWindow::updateCanAskAI() {
-  const bool value = m_quickAIAvailable && m_atRoot && !m_ctx.navigation->searchText().isEmpty();
+void LauncherWindow::updateCanAskAI() { updateCanAskAI(m_ctx.navigation->searchText()); }
+
+void LauncherWindow::updateCanAskAI(const QString &searchText) {
+  const bool value = m_quickAIAvailable && m_atRoot && !searchText.isEmpty();
   if (value == m_canAskAI) return;
   m_canAskAI = value;
   emit canAskAIChanged();

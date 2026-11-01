@@ -653,6 +653,12 @@ set(SRCS
 	src/services/ai/local/local-provider.cpp
 	src/services/ai/local/inference-runtime.hpp
 	src/services/ai/local/inference-runtime.cpp
+	src/services/ai/cli/cli-process.hpp
+	src/services/ai/cli/cli-process.cpp
+	src/services/ai/cli/claude-code-provider.hpp
+	src/services/ai/cli/claude-code-provider.cpp
+	src/services/ai/cli/codex-provider.hpp
+	src/services/ai/cli/codex-provider.cpp
 	src/services/ai/ollama/ollama-ai-provider.hpp
 	src/services/ai/ollama/ollama-ai-provider.cpp
 	src/services/ai/mistral/mistral-provider.hpp

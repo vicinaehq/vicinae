@@ -225,6 +225,7 @@ private:
   bool m_compacted = false;
   void refreshQuickAIAvailability();
   void updateCanAskAI();
+  void updateCanAskAI(const QString &searchText);
 
   bool m_atRoot = true;
   bool m_quickAIAvailable = false;

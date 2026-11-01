@@ -42,6 +42,14 @@ struct OpenAICompatibleFields {
   std::string apiKey;
 };
 
+struct ClaudeCodeFields {
+  std::string executable;
+};
+
+struct CodexFields {
+  std::string executable;
+};
+
 enum class KeepLoaded { Immediately, OneMinute, FiveMinutes, FifteenMinutes, Always };
 
 struct LocalFields {
@@ -141,6 +149,26 @@ template <> struct PreferenceSchema<AI::OpenAICompatibleFields> {
   Q_DECLARE_TR_FUNCTIONS(OpenAICompatibleFields)
 };
 
+template <> struct PreferenceSchema<AI::ClaudeCodeFields> {
+  PreferenceMeta executable{
+      .title = tr("Executable"),
+      .description = tr("Path to the claude executable. Leave empty to find it automatically."),
+      .placeholder = "claude",
+      .required = false,
+  };
+  Q_DECLARE_TR_FUNCTIONS(ClaudeCodeFields)
+};
+
+template <> struct PreferenceSchema<AI::CodexFields> {
+  PreferenceMeta executable{
+      .title = tr("Executable"),
+      .description = tr("Path to the codex executable. Leave empty to find it automatically."),
+      .placeholder = "codex",
+      .required = false,
+  };
+  Q_DECLARE_TR_FUNCTIONS(CodexFields)
+};
+
 template <> struct PreferenceSchema<AI::LocalFields> {
   PreferenceMeta keepLoaded{
       .title = tr("Keep models loaded"),
@@ -210,6 +238,22 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .description = "Mistral AI cloud API. Provides transcription and language models.",
         .cardinality = Cardinality::Single,
         .fields = +[] { return describePreferences<MistralFields>(); },
+    },
+    {
+        .type = "claude-code",
+        .label = "Claude Code",
+        .icon = BuiltinIcon::Claude,
+        .description = "Chat with Claude through your Claude Code sign-in. Requires the claude CLI.",
+        .cardinality = Cardinality::Single,
+        .fields = +[] { return describePreferences<ClaudeCodeFields>(); },
+    },
+    {
+        .type = "codex",
+        .label = "Codex",
+        .icon = BuiltinIcon::Openai,
+        .description = "Chat with OpenAI models through your Codex sign-in. Requires the codex CLI.",
+        .cardinality = Cardinality::Single,
+        .fields = +[] { return describePreferences<CodexFields>(); },
     },
     {
         .type = "openai-compatible",

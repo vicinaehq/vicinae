@@ -283,6 +283,11 @@ public:
   }
 
   /**
+   * Why the provider has no usable models, such as a missing sign-in, if it knows.
+   */
+  virtual std::optional<std::string> statusMessage() const { return std::nullopt; }
+
+  /**
    * An icon representing the provider, if applicable.
    */
   virtual std::optional<ImageUrl> icon() const = 0;

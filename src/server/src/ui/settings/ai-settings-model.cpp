@@ -319,7 +319,10 @@ QString AISettingsModel::statusText(AI::AbstractProvider &provider) const {
     return tr("%n model(s) installed", nullptr, static_cast<int>(installed));
   }
   const auto count = provider.listModels().size();
-  if (count == 0) return tr("No models found");
+  if (count == 0) {
+    if (auto status = provider.statusMessage()) return QString::fromStdString(*status);
+    return tr("No models found");
+  }
   return tr("%n model(s)", nullptr, static_cast<int>(count));
 }
 
