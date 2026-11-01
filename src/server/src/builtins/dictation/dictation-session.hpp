@@ -39,12 +39,10 @@ public:
 
   bool start();
   Q_INVOKABLE void accept() { m_session.accept(); }
-  Q_INVOKABLE void cancel() { m_session.cancel(); }
-
   /**
    * Stop everything and deliver nothing.
    */
-  void abandon();
+  Q_INVOKABLE void cancel();
 
   bool isActive() const { return m_session.isActive() || m_rewrite.running(); }
   bool isRecording() const { return m_session.isRecording(); }

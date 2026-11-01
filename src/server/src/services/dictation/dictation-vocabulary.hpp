@@ -9,7 +9,7 @@
 #include "utils/json-file.hpp"
 
 /**
- * Words the user wants transcription to recognize, oldest first, kept in one JSON file.
+ * Words the user wants dictation to recognize, oldest first, kept in one JSON file.
  * Whisper keeps the tail of its initial prompt when it overflows, so newest entries go last.
  */
 class DictationVocabulary : public QObject {

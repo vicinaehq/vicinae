@@ -11,6 +11,8 @@ namespace AI {
 class Service;
 }
 
+class DictationVocabulary;
+
 /**
  * Rewrites one transcript with a style. Emits exactly one of finished or failed per start, unless aborted.
  */
@@ -22,7 +24,7 @@ signals:
   void failed(const QString &reason);
 
 public:
-  explicit DictationRewrite(AI::Service &ai, QObject *parent = nullptr);
+  DictationRewrite(AI::Service &ai, const DictationVocabulary &vocabulary, QObject *parent = nullptr);
   ~DictationRewrite() override;
 
   void start(const DictationStyles::Style &style, const QString &transcript);
@@ -35,6 +37,7 @@ private:
   void release();
 
   AI::Service &m_ai;
+  const DictationVocabulary &m_vocabulary;
   std::shared_ptr<AI::AbstractChatCompletionStream> m_stream;
   std::string m_text;
   QTimer m_timeout;

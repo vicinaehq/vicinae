@@ -17,8 +17,8 @@ DictationSession::DictationSession(const ApplicationContext *ctx, TranscriptionS
                                    Dictation::DictationAction action, bool recordHistory,
                                    PasteService::Target pasteTarget, QObject *parent)
     : QObject(parent), m_ctx(ctx), m_setup(std::move(setup)), m_session(*ctx->services->dictation(), this),
-      m_rewrite(ctx->services->dictation()->ai(), this), m_action(action), m_pasteTarget(pasteTarget),
-      m_recordHistory(recordHistory) {
+      m_rewrite(ctx->services->dictation()->ai(), *ctx->services->dictation()->vocabulary(), this),
+      m_action(action), m_pasteTarget(pasteTarget), m_recordHistory(recordHistory) {
   connect(&m_session, &TranscriptionSession::audioLevelChanged, this, &DictationSession::audioLevelChanged);
   connect(&m_session, &TranscriptionSession::elapsedTimeChanged, this, &DictationSession::elapsedTimeChanged);
   connect(&m_session, &TranscriptionSession::stateChanged, this, &DictationSession::stateChanged);
@@ -42,7 +42,7 @@ bool DictationSession::start() {
   return false;
 }
 
-void DictationSession::abandon() {
+void DictationSession::cancel() {
   m_rewrite.abort();
   m_session.cancel();
   finish();

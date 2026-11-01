@@ -108,7 +108,8 @@ void DictationRewriteViewHost::beforePop() {
 void DictationRewriteViewHost::start(const ItemType &style) {
   auto &run = m_runs[style.id];
   if (!run.rewrite) {
-    run.rewrite = new DictationRewrite(context()->services->dictation()->ai(), this);
+    auto *dictation = context()->services->dictation();
+    run.rewrite = new DictationRewrite(dictation->ai(), *dictation->vocabulary(), this);
     connect(run.rewrite, &DictationRewrite::finished, this, [this, &run](const QString &text) {
       run.result = text;
       refresh();

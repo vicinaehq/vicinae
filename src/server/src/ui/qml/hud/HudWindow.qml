@@ -78,7 +78,7 @@ Window {
             HudButton {
                 id: cancelButton
                 visible: root.dictating && !root.dictationMessage
-                enabled: root.dictating && Hud.dictation.showControls
+                enabled: root.dictating && (Hud.dictation.showControls || Hud.dictation.rewriting)
                 opacity: enabled ? 1 : 0.3
                 icon: Img.icon(BuiltinIcon.Xmark).withFillColor(Theme.foreground)
                 onClicked: Hud.dictation.cancel()

@@ -42,7 +42,7 @@ void TranscribeViewHost::beforePop() {
   if (auto *session = m_session.data()) {
     m_session = nullptr;
     disconnect(session, nullptr, this, nullptr);
-    session->abandon();
+    session->cancel();
   }
 }
 
