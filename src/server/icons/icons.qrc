@@ -160,6 +160,7 @@
 		<file>circle.svg</file>
 		<file>circleci.svg</file>
 		<file>clarity.svg</file>
+		<file>claude-code.svg</file>
 		<file>claude.svg</file>
 		<file>clear-formatting.svg</file>
 		<file>clion.svg</file>
@@ -180,6 +181,7 @@
 		<file>codecov.svg</file>
 		<file>codeigniter.svg</file>
 		<file>codepen.svg</file>
+		<file>codex.svg</file>
 		<file>coffeescript.svg</file>
 		<file>cog.svg</file>
 		<file>coin.svg</file>

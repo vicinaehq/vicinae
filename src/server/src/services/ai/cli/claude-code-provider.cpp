@@ -347,7 +347,7 @@ ClaudeCodeProvider::~ClaudeCodeProvider() {
 
 std::string ClaudeCodeProvider::displayName() const { return std::string(findProviderType(TYPE)->label); }
 
-std::optional<ImageUrl> ClaudeCodeProvider::icon() const { return ImageUrl{BuiltinIcon::Claude}; }
+std::optional<ImageUrl> ClaudeCodeProvider::icon() const { return ImageUrl{BuiltinIcon::ClaudeCode}; }
 
 std::string_view ClaudeCodeProvider::description() const { return findProviderType(TYPE)->description; }
 

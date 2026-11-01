@@ -388,7 +388,7 @@ CodexProvider::~CodexProvider() {
 
 std::string CodexProvider::displayName() const { return std::string(findProviderType(TYPE)->label); }
 
-std::optional<ImageUrl> CodexProvider::icon() const { return ImageUrl{BuiltinIcon::Openai}; }
+std::optional<ImageUrl> CodexProvider::icon() const { return ImageUrl{BuiltinIcon::Codex}; }
 
 std::string_view CodexProvider::description() const { return findProviderType(TYPE)->description; }
 

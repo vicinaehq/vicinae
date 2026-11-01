@@ -242,7 +242,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
     {
         .type = "claude-code",
         .label = "Claude Code",
-        .icon = BuiltinIcon::Claude,
+        .icon = BuiltinIcon::ClaudeCode,
         .description = "Chat with Claude through your Claude Code sign-in. Requires the claude CLI.",
         .cardinality = Cardinality::Single,
         .fields = +[] { return describePreferences<ClaudeCodeFields>(); },
@@ -250,7 +250,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
     {
         .type = "codex",
         .label = "Codex",
-        .icon = BuiltinIcon::Openai,
+        .icon = BuiltinIcon::Codex,
         .description = "Chat with OpenAI models through your Codex sign-in. Requires the codex CLI.",
         .cardinality = Cardinality::Single,
         .fields = +[] { return describePreferences<CodexFields>(); },
