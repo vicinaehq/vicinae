@@ -6,6 +6,7 @@
 #include <QObject>
 #include "services/ai/ai-provider.hpp"
 #include "services/dictation/dictation-history.hpp"
+#include "services/dictation/dictation-styles.hpp"
 #include "services/dictation/dictation-vocabulary.hpp"
 #include "services/dictation/transcription-session.hpp"
 
@@ -41,6 +42,7 @@ public:
 
   DictationHistory *history() { return &m_history; }
   DictationVocabulary *vocabulary() { return &m_vocabulary; }
+  DictationStyles *styles() { return &m_styles; }
   AI::Service &ai() { return m_ai; }
   MediaControlService &mediaControl() { return m_mediaControl; }
 
@@ -57,5 +59,6 @@ private:
   MediaControlService &m_mediaControl;
   DictationHistory m_history;
   DictationVocabulary m_vocabulary;
+  DictationStyles m_styles;
   TranscriptionSettings m_settings;
 };

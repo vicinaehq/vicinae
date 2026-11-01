@@ -231,6 +231,7 @@ IpcService::launchCommand(ipc_gen::LaunchCommandRequest req) {
       .launchContext = makeLaunchContext(req),
       .fallbackText = req.query.transform(QString::fromStdString),
       .cwd = req.cwd.transform(QString::fromStdString),
+      .source = LaunchSource::External,
   };
 
   if (!m_ctx.navigation->activateEntrypoint(id, {.props = props, .toggleIfAlreadyActive = false})) {

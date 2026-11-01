@@ -6,6 +6,7 @@
 #include <memory>
 #include "actions/clipboard-actions.hpp"
 #include "builtins/dictation/dictation.hpp"
+#include "builtins/dictation/rewrite-view-host.hpp"
 #include "common/context.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
@@ -75,9 +76,15 @@ public:
         {QStringLiteral("label"), tr("Language")},
         {QStringLiteral("value"), e.language ? QString::fromStdString(*e.language) : tr("Auto-detected")},
     });
+    if (e.style) {
+      meta.append(QVariantMap{
+          {QStringLiteral("label"), tr("Style")},
+          {QStringLiteral("value"), QString::fromStdString(*e.style)},
+      });
+    }
 
     return ListItemDetail{.metadata = std::move(meta),
-                          .markdown = escapeMarkdown(QString::fromStdString(e.text))};
+                          .markdown = Dictation::escapeMarkdown(QString::fromStdString(e.text))};
   }
 
   std::unique_ptr<ActionPanelState> buildActionPanel(const ItemType &e) const override {
@@ -87,6 +94,17 @@ public:
 
     main->addAction(new CopyToClipboardAction(text, tr("Copy")));
     main->addAction(new PasteToFocusedWindowAction(text));
+
+    if (e.original) {
+      main->addAction(new CopyToClipboardAction(Clipboard::Text{QString::fromStdString(*e.original)},
+                                                tr("Copy Original")));
+    }
+
+    main->addAction(new StaticAction(
+        tr("Rewrite with Style…"), ImageURL::builtin(BuiltinIcon::Wand),
+        [source = QString::fromStdString(e.original.value_or(e.text))](ApplicationContext *ctx) {
+          ctx->navigation->pushView(new DictationRewriteViewHost(source));
+        }));
 
     auto remove = new StaticAction(
         tr("Remove Dictation"), ImageURL::builtin(BuiltinIcon::Trash), [e](ApplicationContext *ctx) {
@@ -128,18 +146,6 @@ private:
     return QStringLiteral("%1:%2")
         .arg(secs / 60, 2, 10, QLatin1Char('0'))
         .arg(secs % 60, 2, 10, QLatin1Char('0'));
-  }
-
-  // dictated text is shown verbatim, never interpreted as markup
-  static QString escapeMarkdown(QString text) {
-    static const auto SPECIAL = QStringLiteral("\\`*_{}[]()#+-.!<>|~");
-    QString out;
-    out.reserve(text.size() * 2);
-    for (const auto ch : text) {
-      if (SPECIAL.contains(ch)) out += QLatin1Char('\\');
-      out += ch;
-    }
-    return out;
   }
 
   void reload() {

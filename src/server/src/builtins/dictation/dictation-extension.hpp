@@ -2,6 +2,7 @@
 #include "builtins/dictation/dictation.hpp"
 #include "builtins/dictation/dictation-command.hpp"
 #include "builtins/dictation/dictation-history-view-host.hpp"
+#include "builtins/dictation/styles-view-host.hpp"
 #include "builtins/dictation/vocabulary-form-view-host.hpp"
 #include "builtins/dictation/vocabulary-view-host.hpp"
 #include <qtmetamacros.h>
@@ -52,6 +53,31 @@ class VocabularyCommand : public BuiltinViewCommand<VocabularyViewHost> {
   std::vector<QString> keywords() const override { return {}; }
 };
 
+class DictationStylesCommand : public GuardedBuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(DictationStylesCommand)
+
+  QString id() const override { return "styles"; }
+  QString name() const override { return tr("Manage Dictation Styles"); }
+  QString description() const override {
+    return tr("Have AI rewrite what you dictate, with a different style for each app.");
+  }
+  ImageURL iconUrl() const override { return Dictation::STYLE_ICON; }
+  std::vector<QString> keywords() const override { return {"rewrite", "tone", "prompt"}; }
+  void execute(CommandController &controller) const override { Dictation::openStyles(controller.context()); }
+};
+
+class CreateDictationStyleCommand : public GuardedBuiltinCallbackCommand {
+  Q_DECLARE_TR_FUNCTIONS(CreateDictationStyleCommand)
+
+  QString id() const override { return "create-style"; }
+  QString name() const override { return tr("Create Dictation Style"); }
+  ImageURL iconUrl() const override { return ImageURL(Dictation::STYLE_ICON).setBadge(BuiltinIcon::Plus); }
+  std::vector<QString> keywords() const override { return {"rewrite", "tone", "prompt"}; }
+  void execute(CommandController &controller) const override {
+    Dictation::openStyleForm(controller.context());
+  }
+};
+
 }; // namespace
 
 class DictationExtension : public TypedCommandRepository<DictationPreferences> {
@@ -77,5 +103,7 @@ public:
     registerCommand<VocabularyCommand>();
     registerCommand<AddVocabCommand>();
     registerCommand<DictationHistoryCommand>();
+    registerCommand<DictationStylesCommand>();
+    registerCommand<CreateDictationStyleCommand>();
   }
 };

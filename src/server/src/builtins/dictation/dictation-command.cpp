@@ -14,6 +14,7 @@
 #include "services/dictation/dictation-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/permissions/macos-permission-service.hpp"
+#include "services/toast/toast-service.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "utils/environment.hpp"
 #include "ui/views/intro-view-host.hpp"
@@ -30,21 +31,36 @@ constexpr qint64 HOLD_THRESHOLD_MS = 300;
 QPointer<DictationSession> active;
 
 void startDictation(const ApplicationContext *ctx, const TranscriptionSetup &setup,
-                    Dictation::DictationAction action, bool recordHistory) {
-  if (Environment::isHudDisabled()) {
-    ctx->navigation->pushView(new TranscribeViewHost(setup.model, setup.options, recordHistory));
-    return;
-  }
+                    Dictation::DictationAction action, bool recordHistory, bool closeLauncher) {
+  const bool hud = !Environment::isHudDisabled();
 
-  ctx->navigation->closeWindow();
+  if (hud && closeLauncher) ctx->navigation->closeWindow();
 
   if (active && active->isActive()) {
     active->accept();
     return;
   }
 
-  active = new DictationSession(ctx, setup, action, recordHistory, ctx->navigation.get());
-  active->start();
+  // Without the HUD the launcher presents the dictation, and closes to give focus back before pasting.
+  active = new DictationSession(ctx, setup, action, recordHistory,
+                                hud ? PasteService::Target::CurrentFocus : PasteService::Target::FocusHandoff,
+                                ctx->navigation.get());
+
+  if (!active->start()) {
+    const auto message = TranscribeCommand::tr("Could not start recording");
+    if (hud) {
+      ctx->navigation->showHud(message, ImageURL::builtin(BuiltinIcon::MicrophoneDisabled));
+    } else {
+      ctx->services->toastService()->failure(message);
+    }
+    return;
+  }
+
+  if (hud) {
+    ctx->navigation->showDictationHud(active);
+  } else {
+    ctx->navigation->pushView(new TranscribeViewHost(active));
+  }
 }
 
 void withMicrophoneAccess(const ApplicationContext *ctx, std::function<void()> start) {
@@ -91,8 +107,9 @@ void TranscribeCommand::execute(const Controller &controller) const {
 
   switch (dictation->readiness()) {
   case DictationService::Readiness::Ready:
-    withMicrophoneAccess(ctx, [ctx, setup = *dictation->setup(), action]() {
-      startDictation(ctx, setup, action, /*recordHistory*/ true);
+    withMicrophoneAccess(ctx, [ctx, setup = *dictation->setup(), action,
+                               closeLauncher = controller.launchProps().source == LaunchSource::Launcher]() {
+      startDictation(ctx, setup, action, /*recordHistory*/ true, closeLauncher);
     });
     return;
   case DictationService::Readiness::NoModels:

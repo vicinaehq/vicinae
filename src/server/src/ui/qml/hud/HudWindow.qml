@@ -105,7 +105,7 @@ Window {
 
             Item {
                 id: waveformSlot
-                visible: root.dictating && !root.dictationMessage
+                visible: root.dictating && !root.dictationMessage && !Hud.dictation.rewriting
                 Layout.preferredWidth: waveform.implicitWidth
                 Layout.preferredHeight: waveform.maxHeight
                 Layout.alignment: Qt.AlignVCenter
@@ -122,6 +122,26 @@ Window {
                     visible: root.dictating && Hud.dictation.transcribing
                     active: visible
                 }
+            }
+
+            Text {
+                visible: root.dictating && Hud.dictation.rewriting
+                text: qsTr("Rewriting")
+                color: Theme.foreground
+                font.family: Theme.fontFamily
+                font.pointSize: Theme.smallerFontSize
+                maximumLineCount: 1
+                elide: Text.ElideRight
+                verticalAlignment: Text.AlignVCenter
+                Layout.preferredWidth: waveform.implicitWidth - (rewriteDots.implicitWidth - cancelButton.implicitWidth)
+                Layout.preferredHeight: cancelButton.implicitHeight
+            }
+
+            PulsingDots {
+                id: rewriteDots
+                visible: root.dictating && Hud.dictation.rewriting
+                active: visible
+                Layout.alignment: Qt.AlignVCenter
             }
 
             Text {
@@ -148,7 +168,7 @@ Window {
             }
 
             HudButton {
-                visible: root.dictating && !root.dictationMessage
+                visible: root.dictating && !root.dictationMessage && !Hud.dictation.rewriting
                 enabled: root.dictating && Hud.dictation.showControls
                 opacity: enabled ? 1 : 0.3
                 icon: Img.icon(BuiltinIcon.Check).withFillColor(Theme.accent)

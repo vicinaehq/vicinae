@@ -1,4 +1,7 @@
 #include "app-runtime.hpp"
+#include <QGuiApplication>
+#include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/window-manager.hpp"
 
 #ifdef Q_OS_MACOS
 #include "services/app-runtime/macos/mac-app-runtime.hpp"
@@ -9,7 +12,7 @@
 #endif
 
 AppRuntime::AppRuntime(WindowManager &wm, AppService &appService)
-    : m_provider(createProvider(wm, appService)) {
+    : m_wm(wm), m_provider(createProvider(wm, appService)) {
   connect(m_provider.get(), &AbstractAppRuntime::runningAppsChanged, this, &AppRuntime::runningAppsChanged);
   connect(m_provider.get(), &AbstractAppRuntime::frontmostAppChanged, this, &AppRuntime::frontmostAppChanged);
 }
@@ -17,6 +20,21 @@ AppRuntime::AppRuntime(WindowManager &wm, AppService &appService)
 bool AppRuntime::isRunning(const AbstractApplication &app) const { return m_provider->isRunning(app); }
 
 std::shared_ptr<AbstractApplication> AppRuntime::frontmostApp() const { return m_provider->frontmostApp(); }
+
+std::shared_ptr<AbstractApplication> AppRuntime::focusTargetApp() const {
+  // we have focus, and we are a layer so it means that the current window might be:
+  // - the previously focused window, not invalidated by the layer grab (Hyprland does this)
+  // - nullptr as there is technically no window owning focus (a layer is not a window)
+  // this logic is here so that we don't mistakingly use stale data when vicinae itself has focus
+  // (e.g using ctrl+shift+v because the last window is a terminal, but we are really focusing the
+  // vicinae window)
+  // FIXME: currently this logic will, if not using layer shell, null the window even if the currently
+  // focused window is the vicinae one. The only problem with this is that app filtering won't work on the
+  // vicinae window itself. We probably can fix this by just checking whether we are a layer here, but
+  // requires pulling config...
+  if (QGuiApplication::focusWindow() && !m_wm.provider()->supportsFocusHandoffDetection()) return nullptr;
+  return frontmostApp();
+}
 
 bool AppRuntime::activate(const AbstractApplication &app) const { return m_provider->activate(app); }
 

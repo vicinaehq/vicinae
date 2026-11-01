@@ -651,6 +651,22 @@ bool NavigationController::activateEntrypoint(const EntrypointId &id,
     return true;
   }
 
+  // A builtin without a view runs and returns, so from outside the launcher it has no reason to reset it.
+  if (const auto *item = dynamic_cast<const CommandRootItem *>(entrypoint);
+      item && options.props.source != LaunchSource::Launcher && item->command()->isNoView() &&
+      item->command()->type() == CommandTypeBuiltin) {
+    const auto *previousTop = topView();
+    m_ctx.services->rootItemManager()->registerVisit(id);
+    launch(item->command(), options.props);
+    if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
+    if (topView() != previousTop && !initialOpenState) {
+      setInstantDismiss();
+      setBackButtonVisibility(false);
+      showWindow();
+    }
+    return true;
+  }
+
   popToRoot({.clearSearch = false});
 
   // programmatic activation bypasses the action execution funnel, so the view hook

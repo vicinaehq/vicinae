@@ -1,3 +1,4 @@
+#include <QGuiApplication>
 #include <QTimer>
 #include "paste-service.hpp"
 
@@ -31,7 +32,8 @@ PasteService::PasteService(ClipboardService &clipboard, WindowManager &wm, AppSe
 
 bool PasteService::supportsPaste() const { return m_platform->supportsPaste(); }
 
-bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
+bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options,
+                                Target target) {
   if (!m_platform->supportsPaste()) {
     qWarning() << "pasteContent called but the current platform cannot paste, ignoring...";
     return false;
@@ -40,6 +42,7 @@ bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboa
   m_focusPollTimer.stop();
   m_copyWaitTimer.stop();
   m_awaitingCopy = false;
+  m_target = target;
   m_pasteTimer.start();
 
   const bool confirmable = m_clipboard.supportsMonitoring();
@@ -67,7 +70,9 @@ bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboa
 void PasteService::beginPaste() {
   if (!m_hasPendingPaste) return;
 
-  if (m_wm.provider()->supportsFocusHandoffDetection()) {
+  if (m_target == Target::CurrentFocus) {
+    QTimer::singleShot(POST_FOCUS_DELAY_MS, this, &PasteService::executePaste);
+  } else if (m_wm.provider()->supportsFocusHandoffDetection()) {
     m_focusPollCount = 0;
     m_focusPollTimer.start();
   } else {
@@ -99,7 +104,9 @@ void PasteService::executePaste() {
   if (!m_hasPendingPaste) return;
   m_hasPendingPaste = false;
 
-  auto window = m_wm.getFocusedWindow();
+  // The window manager would report the window focused before ours, which is not what receives the paste.
+  const bool ownFocus = m_target == Target::CurrentFocus && QGuiApplication::focusWindow();
+  auto window = ownFocus ? nullptr : m_wm.getFocusedWindow();
   std::shared_ptr<AbstractApplication> app;
 
   if (window) { app = m_appDb.find(window->wmClass()); }

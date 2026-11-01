@@ -6,7 +6,8 @@ DictationService::DictationService(const std::filesystem::path &dataDir, AI::Ser
                                    MediaControlService &mediaControl, QObject *parent)
     : QObject(parent), m_ai(ai), m_mediaControl(mediaControl),
       m_history(dataDir / "dictation-history.json", this),
-      m_vocabulary(dataDir / "dictation-vocabulary.json", this) {}
+      m_vocabulary(dataDir / "dictation-vocabulary.json", this),
+      m_styles(dataDir / "dictation-styles.json", this) {}
 
 void DictationService::setSettings(TranscriptionSettings settings) {
   m_settings = std::move(settings);

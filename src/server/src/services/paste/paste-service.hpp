@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <QObject>
 #include <QTimer>
@@ -12,10 +13,18 @@ class PasteService : public QObject {
   Q_OBJECT
 
 public:
+  enum class Target : std::uint8_t {
+    // A Vicinae window is giving up focus, paste where it lands.
+    FocusHandoff,
+    // Paste into whatever has focus now, Vicinae windows included.
+    CurrentFocus,
+  };
+
   PasteService(ClipboardService &clipboard, WindowManager &wm, AppService &appDb,
                std::unique_ptr<AbstractPasteService> platform);
 
-  bool pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options = {});
+  bool pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options = {},
+                    Target target = Target::FocusHandoff);
   bool supportsPaste() const;
 
 private:
@@ -28,6 +37,7 @@ private:
   AppService &m_appDb;
   std::unique_ptr<AbstractPasteService> m_platform;
 
+  Target m_target = Target::FocusHandoff;
   bool m_hasPendingPaste = false;
   bool m_awaitingCopy = false;
   QTimer m_focusPollTimer;

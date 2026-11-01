@@ -410,6 +410,12 @@ set(SRCS
 	src/builtins/dictation/vocabulary-view-host.hpp
 	src/builtins/dictation/vocabulary-form-view-host.hpp
 	src/builtins/dictation/vocabulary-form-view-host.cpp
+	src/builtins/dictation/style-form-view-host.hpp
+	src/builtins/dictation/style-form-view-host.cpp
+	src/builtins/dictation/styles-view-host.hpp
+	src/builtins/dictation/styles-view-host.cpp
+	src/builtins/dictation/rewrite-view-host.hpp
+	src/builtins/dictation/rewrite-view-host.cpp
 	src/builtins/dictation/dictation-session.hpp
 	src/builtins/dictation/dictation-session.cpp
 	src/builtins/dictation/dictation-command.hpp
@@ -456,6 +462,10 @@ set(SRCS
 	src/services/dictation/dictation-history.cpp
 	src/services/dictation/dictation-vocabulary.hpp
 	src/services/dictation/dictation-vocabulary.cpp
+	src/services/dictation/dictation-styles.hpp
+	src/services/dictation/dictation-styles.cpp
+	src/services/dictation/dictation-rewrite.hpp
+	src/services/dictation/dictation-rewrite.cpp
 	src/services/root-item-manager/visit-tracker.cpp
 	
 	src/services/app-service/app-service.hpp
@@ -1436,6 +1446,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/SnippetFormView.qml
 	src/ui/qml/views/AliasFormView.qml
 	src/ui/qml/views/VocabularyFormView.qml
+	src/ui/qml/views/DictationStyleFormView.qml
 	src/ui/qml/views/ShortcutFormView.qml
 	src/ui/qml/form/PlaceholderCompleter.qml
 	src/ui/qml/form/PlaceholderHighlight.qml

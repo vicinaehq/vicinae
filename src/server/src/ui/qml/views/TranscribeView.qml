@@ -15,17 +15,18 @@ Item {
             width: parent.width
             height: 6
             level: root.host.audioLevel
-            visible: !root.host.transcribing
+            visible: !root.host.busy
         }
 
         PulsingDots {
             anchors.horizontalCenter: parent.horizontalCenter
-            active: root.host.transcribing
-            visible: root.host.transcribing
+            active: root.host.busy
+            visible: root.host.busy
         }
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
+            visible: !root.host.busy
             text: root.host.elapsedTime
             color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.5)
             font.family: Theme.fontFamily

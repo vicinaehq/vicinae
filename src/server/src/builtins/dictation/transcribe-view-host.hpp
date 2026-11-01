@@ -1,17 +1,12 @@
 #pragma once
+#include <QPointer>
 #include <QtQml/qqmlregistration.h>
+#include "builtins/dictation/dictation-session.hpp"
 #include "ui/views/bridge-view.hpp"
-#include "services/ai/ai-provider.hpp"
-#include <QTimer>
 
-namespace Audio {
-class Recorder;
-}
-
-namespace AI {
-class Service;
-}
-
+/**
+ * Presents a dictation in the launcher, where the HUD is not available.
+ */
 class TranscribeViewHost : public FormViewBase {
   Q_OBJECT
   QML_NAMED_ELEMENT(TranscribeViewHost)
@@ -19,45 +14,32 @@ class TranscribeViewHost : public FormViewBase {
 
   Q_PROPERTY(float audioLevel READ audioLevel NOTIFY audioLevelChanged)
   Q_PROPERTY(QString elapsedTime READ elapsedTime NOTIFY elapsedTimeChanged)
-  Q_PROPERTY(bool transcribing READ transcribing NOTIFY transcribingChanged)
-  Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
+  Q_PROPERTY(bool busy READ busy NOTIFY stateChanged)
+  Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY stateChanged)
 
 signals:
   void audioLevelChanged();
   void elapsedTimeChanged();
-  void transcribingChanged();
-  void errorMessageChanged();
+  void stateChanged();
 
 public:
-  explicit TranscribeViewHost(AI::ModelRef model, AI::TranscriptionOptions options = {},
-                              bool recordHistory = true);
+  explicit TranscribeViewHost(DictationSession *session);
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;
   void initialize() override;
-  void loadInitialData() override;
   void beforePop() override;
+  QString initialNavigationTitle() const override;
+  ImageURL initialNavigationIcon() const override;
 
-  QString initialNavigationTitle() const override { return QStringLiteral("Transcribe"); }
-
-  float audioLevel() const;
-  QString elapsedTime() const;
-  bool transcribing() const { return m_transcribing; }
-  QString errorMessage() const { return m_errorMessage; }
+  float audioLevel() const { return m_session ? m_session->audioLevel() : 0.0f; }
+  QString elapsedTime() const { return m_session ? m_session->elapsedTime() : QString(); }
+  bool busy() const { return !m_session || m_session->transcribing() || m_session->rewriting(); }
+  QString errorMessage() const { return m_session ? m_session->message() : QString(); }
 
 private:
-  void stopAndTranscribe();
-  void togglePause();
-  void updateActions();
-  void updateNavigationTitle();
+  void refresh();
+  void leave();
 
-  AI::ModelRef m_model;
-  AI::TranscriptionOptions m_options;
-  Audio::Recorder *m_recorder = nullptr;
-  AI::Service *m_aiService = nullptr;
-  QTimer m_elapsedTimer;
-  bool m_transcribing = false;
-  bool m_recordHistory = true;
-  qint64 m_durationMs = 0;
-  QString m_errorMessage;
+  QPointer<DictationSession> m_session;
 };

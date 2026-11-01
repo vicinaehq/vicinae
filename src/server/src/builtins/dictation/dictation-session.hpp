@@ -4,12 +4,14 @@
 #include <QTimer>
 #include <QtQml/qqmlregistration.h>
 #include "builtins/dictation/dictation.hpp"
+#include "services/dictation/dictation-rewrite.hpp"
+#include "services/paste/paste-service.hpp"
 #include "services/dictation/transcription-session.hpp"
 
 class ApplicationContext;
 
 /**
- * One dictation from key press to pasted text, shown in the HUD. Deletes itself once finished.
+ * One dictation from key press to pasted text, independent of what presents it. Deletes itself once finished.
  */
 class DictationSession : public QObject {
   Q_OBJECT
@@ -21,39 +23,56 @@ class DictationSession : public QObject {
   Q_PROPERTY(bool transcribing READ transcribing NOTIFY stateChanged)
   Q_PROPERTY(bool showControls READ showControls NOTIFY stateChanged)
   Q_PROPERTY(QString message READ message NOTIFY stateChanged)
+  Q_PROPERTY(bool rewriting READ rewriting NOTIFY stateChanged)
 
 signals:
   void audioLevelChanged();
   void elapsedTimeChanged();
   void stateChanged();
+  // The text is about to be pasted or copied.
+  void delivering();
   void finished();
 
 public:
   DictationSession(const ApplicationContext *ctx, TranscriptionSetup setup, Dictation::DictationAction action,
-                   bool recordHistory, QObject *parent = nullptr);
+                   bool recordHistory, PasteService::Target pasteTarget, QObject *parent = nullptr);
 
   bool start();
   Q_INVOKABLE void accept() { m_session.accept(); }
   Q_INVOKABLE void cancel() { m_session.cancel(); }
 
-  bool isActive() const { return m_session.isActive(); }
+  /**
+   * Stop everything and deliver nothing.
+   */
+  void abandon();
+
+  bool isActive() const { return m_session.isActive() || m_rewrite.running(); }
   bool isRecording() const { return m_session.isRecording(); }
   auto recordingMs() const { return m_session.recordingMs(); }
   float audioLevel() const { return m_session.audioLevel(); }
   QString elapsedTime() const { return m_session.elapsedTime(); }
   bool transcribing() const { return m_session.transcribing(); }
-  bool showControls() const { return !m_session.transcribing() && m_message.isEmpty(); }
+  bool showControls() const {
+    return !m_session.transcribing() && !m_rewrite.running() && m_message.isEmpty();
+  }
   QString message() const { return m_message; }
+  bool rewriting() const { return m_rewrite.running(); }
 
 private:
   void finish();
   void finishWithMessage(const QString &message);
-  void deliver(const Transcript &transcript);
+  void handleTranscript(const Transcript &transcript);
+  void deliver(const QString &text, bool rewritten);
 
   const ApplicationContext *m_ctx;
   TranscriptionSetup m_setup;
   TranscriptionSession m_session;
+  DictationRewrite m_rewrite;
+  Transcript m_transcript;
+  std::string m_styleName;
   Dictation::DictationAction m_action;
+  PasteService::Target m_pasteTarget;
+  bool m_finished = false;
   bool m_recordHistory = true;
   QString m_message;
 };
