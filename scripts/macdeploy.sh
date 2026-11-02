@@ -56,9 +56,13 @@ cp -R "$SRC_DIR/extra/themes" "$BUNDLE/Contents/Resources/themes"
 cp "$SERVER_BIN" "$BUNDLE/Contents/MacOS/Vicinae"
 cp "$CLI_BIN" "$BUNDLE/Contents/MacOS/vicinae-cli"
 cp "$BROWSER_LINK_BIN" "$BUNDLE/Contents/MacOS/vicinae-browser-link"
-cp "$INFERENCE_BIN" "$BUNDLE/Contents/MacOS/vicinae-inference"
-chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli" \
-         "$BUNDLE/Contents/MacOS/vicinae-browser-link" "$BUNDLE/Contents/MacOS/vicinae-inference"
+HELPERS=("$BUNDLE/Contents/MacOS/vicinae-cli" "$BUNDLE/Contents/MacOS/vicinae-browser-link")
+# only built with LOCAL_AI
+if [[ -f "$INFERENCE_BIN" ]]; then
+  cp "$INFERENCE_BIN" "$BUNDLE/Contents/MacOS/vicinae-inference"
+  HELPERS+=("$BUNDLE/Contents/MacOS/vicinae-inference")
+fi
+chmod +w "$BUNDLE/Contents/MacOS/Vicinae" "${HELPERS[@]}"
 
 # must run before macdeployqt so the framework is treated as already deployed
 bundle_soulver_core() {
@@ -148,10 +152,10 @@ dyl_args=(-of -b -cd
   -d "$BUNDLE/Contents/Frameworks"
   -p "@executable_path/../Frameworks/"
   -s "$BUNDLE/Contents/Frameworks"
-  -x "$BUNDLE/Contents/MacOS/Vicinae"
-  -x "$BUNDLE/Contents/MacOS/vicinae-cli"
-  -x "$BUNDLE/Contents/MacOS/vicinae-browser-link"
-  -x "$BUNDLE/Contents/MacOS/vicinae-inference")
+  -x "$BUNDLE/Contents/MacOS/Vicinae")
+for helper in "${HELPERS[@]}"; do
+  dyl_args+=(-x "$helper")
+done
 # loose Frameworks/ dylibs included so dylibbundler rewrites any absolute
 # LC_ID_DYLIB macdeployqt left in place
 while IFS= read -r -d '' p; do
@@ -210,8 +214,7 @@ done < <(find "$BUNDLE/Contents" -type f \( -name "*.dylib" -o -name "*.so" \) -
 while IFS= read -r -d '' item; do
   sign "$item"
 done < <(find "$BUNDLE/Contents/Frameworks" -maxdepth 1 -name "*.framework" -print0)
-sign "$BUNDLE/Contents/MacOS/vicinae-cli" "$BUNDLE/Contents/MacOS/vicinae-browser-link" \
-     "$BUNDLE/Contents/MacOS/vicinae-inference"
+sign "${HELPERS[@]}"
 sign --entitlements "$SRC_DIR/extra/Vicinae.entitlements" "$BUNDLE"
 
 echo "==> audit"

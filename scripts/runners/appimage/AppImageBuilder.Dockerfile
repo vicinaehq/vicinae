@@ -50,14 +50,9 @@ RUN apt-get -y update &&	\
     libxcb-render-util0-dev \
     libxcb-xinerama0-dev	\
     libxcb-xkb-dev			\
+    libpulse-dev			\
     pkg-config				\
 	wget
-
-# ggml's Vulkan backend needs glslc and recent Vulkan headers, neither of which 22.04 packages.
-RUN wget -qO /etc/apt/trusted.gpg.d/lunarg.asc https://packages.lunarg.com/lunarg-signing-key-pub.asc \
-    && wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list https://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list \
-    && apt-get -y update \
-    && apt-get -y install vulkan-sdk
 
 FROM base-builder AS gcc-builder
 
@@ -95,7 +90,7 @@ ARG INSTALL_DIR=/usr/local
 RUN git clone --branch v${QT_VERSION} https://code.qt.io/qt/qt5.git /qt6
 WORKDIR /qt6
 
-RUN perl init-repository --module-subset=qtbase,qtsvg,qtwayland,qtdeclarative,qttools
+RUN perl init-repository --module-subset=qtbase,qtsvg,qtwayland,qtdeclarative,qttools,qtmultimedia
 
 # -feature-glib is needed for qtkeychain libsecret backend to not timeout
 # no-direct-extern-access: Qt exports its data with protected visibility and
@@ -244,6 +239,48 @@ RUN cd fcitx5-qt && mkdir build && \
 RUN git clone --recursive https://github.com/KDE/syntax-highlighting --branch v6.18.0
 RUN cd syntax-highlighting && /usr/bin/cmake -B build -DKSYNTAXHIGHLIGHTING_USE_GUI=OFF && /usr/bin/cmake --build build --parallel $(nproc) && /usr/bin/cmake --install build
 
+# Prebuilt so AppImage builds don't compile ggml's Vulkan shaders. Same version and CPU baseline as
+# the fetch in src/server/CMakeLists.txt. ggml's Vulkan backend needs glslc and recent Vulkan headers,
+# which 22.04 doesn't package and LunarG only offers for amd64. They stay out of /usr/local so they
+# don't end up in the final image.
+RUN apt-get update && apt-get install -y libvulkan-dev
+
+RUN git clone --depth 1 --branch vulkan-sdk-1.4.363.0 https://github.com/KhronosGroup/Vulkan-Headers && \
+	cmake -S Vulkan-Headers -B Vulkan-Headers/build -DCMAKE_INSTALL_PREFIX=/opt/vulkan && \
+	cmake --install Vulkan-Headers/build && \
+	rm -rf Vulkan-Headers
+
+RUN git clone --depth 1 --branch v2026.4 https://github.com/google/shaderc && \
+	cd shaderc && \
+	./utils/git-sync-deps && \
+	cmake -B build -G Ninja					\
+	-DCMAKE_BUILD_TYPE=Release				\
+	-DCMAKE_INSTALL_PREFIX=/opt/vulkan		\
+	-DSHADERC_SKIP_TESTS=ON					\
+	-DSHADERC_SKIP_EXAMPLES=ON				\
+	-DSPIRV_SKIP_TESTS=ON					\
+	&& cmake --build build --parallel $(nproc) --target glslc_exe && \
+	install -Dm755 build/glslc/glslc /opt/vulkan/bin/glslc && \
+	cmake -S third_party/spirv-headers -B spirv-headers-build -DCMAKE_INSTALL_PREFIX=/opt/vulkan && \
+	cmake --install spirv-headers-build && \
+	cd / && rm -rf /shaderc
+
+RUN git clone --depth 1 --branch v1.9.3 https://github.com/ggml-org/whisper.cpp && \
+	cmake -S whisper.cpp -B whisper.cpp/build -G Ninja	\
+	-DCMAKE_BUILD_TYPE=Release							\
+	-DCMAKE_INSTALL_LIBDIR=lib							\
+	-DGGML_NATIVE=OFF									\
+	-DGGML_VULKAN=ON									\
+	-DCMAKE_PREFIX_PATH=/opt/vulkan						\
+	-DVulkan_INCLUDE_DIR=/opt/vulkan/include			\
+	-DVulkan_GLSLC_EXECUTABLE=/opt/vulkan/bin/glslc		\
+	-DWHISPER_BUILD_TESTS=OFF							\
+	-DWHISPER_BUILD_EXAMPLES=OFF						\
+	$([ "$(uname -m)" = "x86_64" ] && echo "-DGGML_SSE42=ON -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DGGML_BMI2=ON -DGGML_AVX512=OFF" || true) \
+	&& cmake --build whisper.cpp/build --parallel $(nproc) && \
+	cmake --install whisper.cpp/build && \
+	rm -rf whisper.cpp
+
 # install node 22 (used to build the main vicinae binary and bundled in the app image)
 ARG TARGETARCH
 RUN case "${TARGETARCH}" in \
@@ -321,6 +358,8 @@ RUN apt-get update \
 		libmpfr-dev			\
 		vim					\
 		libudev-dev			\
+		libvulkan1			\
+		libpulse0			\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

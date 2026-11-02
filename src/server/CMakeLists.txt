@@ -77,8 +77,11 @@ function(vicinae_fetch_inference_engines)
 	FetchContent_MakeAvailable(whisper)
 endfunction()
 
-if (NOT SYSTEM_INFERENCE_ENGINES)
-	vicinae_fetch_inference_engines()
+if (LOCAL_AI)
+	add_compile_definitions(LOCAL_AI)
+	if (NOT SYSTEM_INFERENCE_ENGINES)
+		vicinae_fetch_inference_engines()
+	endif()
 endif()
 
 
@@ -660,10 +663,6 @@ set(SRCS
 	src/services/ai/ai-preferences.cpp
 	src/services/ai/ai-capability.hpp
 	src/services/ai/speech-language-catalogue.hpp
-	src/services/ai/local/local-provider.hpp
-	src/services/ai/local/local-provider.cpp
-	src/services/ai/local/inference-runtime.hpp
-	src/services/ai/local/inference-runtime.cpp
 	src/services/ai/cli/cli-process.hpp
 	src/services/ai/cli/cli-process.cpp
 	src/services/ai/cli/claude-code-provider.hpp
@@ -1271,13 +1270,21 @@ figura_compile(
 	OUTPUT ipc-server.hpp
 )
 
-figura_compile(
-	CLIENT
-	PROTO "${FIGURA_DIR}/inference.fig"
-	LANG glaze-qt
-	NAMESPACE inference_gen
-	OUTPUT inference-client.hpp
-)
+if (LOCAL_AI)
+	figura_compile(
+		CLIENT
+		PROTO "${FIGURA_DIR}/inference.fig"
+		LANG glaze-qt
+		NAMESPACE inference_gen
+		OUTPUT inference-client.hpp
+	)
+	list(APPEND SRCS
+		src/services/ai/local/local-provider.hpp
+		src/services/ai/local/local-provider.cpp
+		src/services/ai/local/inference-runtime.hpp
+		src/services/ai/local/inference-runtime.cpp
+	)
+endif()
 
 figura_compile(
 	CLIENT

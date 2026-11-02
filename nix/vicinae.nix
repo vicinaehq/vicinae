@@ -25,6 +25,7 @@
   pulseaudio ? null,
   swift ? null,
   apple-sdk ? null,
+  withLocalAI ? false,
 }: let
   inherit (stdenv.hostPlatform) isLinux isDarwin;
 
@@ -114,6 +115,10 @@ in
       "USE_SYSTEM_CMARK_GFM" = "ON";
       "USE_SYSTEM_GLAZE" = "ON";
       "USE_SYSTEM_NUMEN" = "ON";
+      "LOCAL_AI" =
+        if withLocalAI
+        then "ON"
+        else "OFF";
       "USE_SYSTEM_INFERENCE_ENGINES" = "ON";
       "USE_SYSTEM_KF6" = "ON";
       "USE_SYSTEM_QT_KEYCHAIN" = "ON";
@@ -161,6 +166,8 @@ in
         qt6.qtsvg
         glaze
         numen
+      ]
+      ++ lib.optionals withLocalAI [
         whisper
       ]
       ++ lib.optionals isLinux [

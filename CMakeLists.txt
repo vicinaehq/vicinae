@@ -55,6 +55,7 @@ option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown c
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_NUMEN "Use system version of the numen calculator backend, instead of fetching it" OFF)
+option(LOCAL_AI "Build local transcription: whisper.cpp, parakeet and the vicinae-inference helper. Dictation with cloud models does not need it." OFF)
 # whisper.cpp and parakeet ship together and share a single ggml, so they are always taken together:
 # either both from the system or both fetched and built in tree.
 set(USE_SYSTEM_INFERENCE_ENGINES AUTO CACHE STRING "Use the system whisper.cpp and parakeet (ON), fetch and build them (OFF), or use the system copies when both are found and fetch otherwise (AUTO)")
@@ -216,7 +217,9 @@ add_subdirectory(${LIB_DIR}/figura)
 
 set(FIGURA_DIR ${CMAKE_SOURCE_DIR}/figura)
 
-if (USE_SYSTEM_INFERENCE_ENGINES STREQUAL "AUTO")
+if (NOT LOCAL_AI)
+	set(SYSTEM_INFERENCE_ENGINES OFF)
+elseif (USE_SYSTEM_INFERENCE_ENGINES STREQUAL "AUTO")
 	add_subdirectory(cmake/probes/inference-engines)
 	set(SYSTEM_INFERENCE_ENGINES ${SYSTEM_INFERENCE_ENGINES_FOUND})
 	if (NOT SYSTEM_INFERENCE_ENGINES)
@@ -422,7 +425,9 @@ endif()
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
 add_subdirectory(src/cli)
 add_subdirectory(src/server)
-add_subdirectory(src/inference)
+if (LOCAL_AI)
+	add_subdirectory(src/inference)
+endif()
 
 if (UNIX AND NOT APPLE)
 	add_subdirectory(src/data-control-server)

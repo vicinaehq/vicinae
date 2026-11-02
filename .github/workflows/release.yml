@@ -80,6 +80,8 @@ jobs:
             -DVICINAE_GIT_COMMIT_HASH="${{ steps.commit.outputs.commit }}" \
             -DLTO=ON \
             -DUSE_SYSTEM_CMARK_GFM=OFF \
+            -DLOCAL_AI=ON \
+            -DUSE_SYSTEM_INFERENCE_ENGINES=OFF \
             -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"
 
       - name: Build
@@ -149,6 +151,8 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5        \
             -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"   \
             -DVICINAE_PROVENANCE=appimage             \
+            -DLOCAL_AI=ON                             \
+            -DUSE_SYSTEM_INFERENCE_ENGINES=ON         \
             -DVICINAE_GIT_TAG="${{ needs.build-binary.outputs.tag }}" \
             -DVICINAE_GIT_COMMIT_HASH="${{ needs.build-binary.outputs.commit }}" \
             -DLTO=ON
@@ -165,6 +169,7 @@ jobs:
         run: |
           chmod +x ./scripts/mkappimage.sh
           ./scripts/mkappimage.sh "${INSTALL_DIR}" "${APP_DIR}"
+          test -x "${APP_DIR}/usr/libexec/vicinae/vicinae-inference"
 
       - name: Upload AppImage as workflow artifact
         uses: actions/upload-artifact@v4
