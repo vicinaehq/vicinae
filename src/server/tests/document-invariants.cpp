@@ -5,8 +5,10 @@
 #include <QTest>
 #include <QTextBoundaryFinder>
 #include <QTextDocument>
+#include <QTextImageFormat>
 #include "builtins/ai/chat-conversation-model.hpp"
 #include "ui/quick/document-text-images.hpp"
+#include "ui/quick/math-renderer.hpp"
 
 class DocumentInvariantsTest : public QObject {
   Q_OBJECT
@@ -68,6 +70,31 @@ private slots:
     document.setTextWidth(640);
     QVERIFY(document.size().height() >= 240);
     QVERIFY(document.size().height() < 270);
+  }
+
+  void mathIsRegisteredAsAVisibleImageAtTheDevicePixelRatio() {
+    const auto math = math::render(QStringLiteral("e^{i\\pi} + 1 = 0"), true, Qt::white);
+    QVERIFY(math);
+
+    QTextDocument document;
+    DocumentTextImages handler;
+    handler.setDevicePixelRatio(2);
+    QTextImageFormat format;
+    format.setName(math->url);
+    const auto size = handler.intrinsicSize(&document, 0, format);
+
+    const auto image = document.resource(QTextDocument::ImageResource, QUrl(math->url)).value<QImage>();
+    QVERIFY(!image.isNull());
+    QCOMPARE(image.devicePixelRatio(), 2.0);
+    QCOMPARE(image.size(), (size * 2).toSize());
+
+    bool hasInk = false;
+    for (int y = 0; y < image.height() && !hasInk; ++y) {
+      for (int x = 0; x < image.width() && !hasInk; ++x) {
+        hasInk = qAlpha(image.pixel(x, y)) > 0;
+      }
+    }
+    QVERIFY(hasInk);
   }
 };
 

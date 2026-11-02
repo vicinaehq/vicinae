@@ -1407,7 +1407,6 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ViciToolTip.qml
 	src/ui/qml/views/ExtensionView.qml
 	src/ui/qml/views/MarkdownDetailView.qml
-	src/ui/qml/views/MarkdownDetailContent.qml
 	src/ui/qml/views/ChatSessionComposer.qml
 	src/ui/qml/views/ChatTranscript.qml
 	src/ui/qml/chat/ChatWindow.qml

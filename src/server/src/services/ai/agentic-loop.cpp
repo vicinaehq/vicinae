@@ -7,13 +7,20 @@
 
 namespace AI {
 
-namespace {
-
-constexpr std::size_t MAX_SUMMARY_LENGTH = 160;
+// not anonymous: glaze can't reflect types with internal linkage
+namespace agentic_loop {
 
 struct LoadToolsInput {
   std::vector<std::string> names;
 };
+
+} // namespace agentic_loop
+
+namespace {
+
+constexpr std::size_t MAX_SUMMARY_LENGTH = 160;
+
+using agentic_loop::LoadToolsInput;
 
 std::string_view firstSentence(std::string_view text) {
   if (const auto end = text.find(". "); end != std::string_view::npos) text = text.substr(0, end + 1);

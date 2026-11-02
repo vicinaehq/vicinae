@@ -9,7 +9,8 @@ template <> struct glz::meta<ClipboardOfferKind> {
       glz::enumerate("unknown", Unknown, "text", Text, "link", Link, "image", Image, "file", File);
 };
 
-namespace {
+// not anonymous: glaze can't reflect types with internal linkage
+namespace clipboard_tools {
 
 constexpr int DEFAULT_LIMIT = 10;
 constexpr int MAX_LIMIT = 20;
@@ -38,7 +39,9 @@ AI::AbstractTool::RawToolTask ready(AI::AbstractTool::RawToolResult result) {
   return {QtFuture::makeReadyValueFuture(std::move(result)), {}};
 }
 
-} // namespace
+} // namespace clipboard_tools
+
+using namespace clipboard_tools;
 
 std::string SearchClipboardTool::description() const {
   return "Search the user's clipboard history, most recent first. Returns entry ids with a short preview. "

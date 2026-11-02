@@ -4,7 +4,8 @@
 #include "open-tool.hpp"
 #include "services/app-service/app-service.hpp"
 
-namespace {
+// not anonymous: glaze can't reflect types with internal linkage
+namespace open_tool {
 
 struct OpenInput {
   std::string target;
@@ -20,7 +21,9 @@ QString expandHome(const std::string &target) {
   return QString::fromStdString(target);
 }
 
-} // namespace
+} // namespace open_tool
+
+using namespace open_tool;
 
 std::string OpenTool::description() const {
   return "Open a file, directory or URL on the user's computer with its default application, as if the user "

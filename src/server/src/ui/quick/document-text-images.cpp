@@ -118,8 +118,7 @@ QSizeF DocumentTextImages::intrinsicSize(QTextDocument *document, int, const QTe
     if (!m_mathResources.contains(url)) {
       if (const auto resource = math::resource(url)) m_mathResources.insert(url, resource);
     }
-    // An empty image makes Qt Quick call drawObject at the window's device pixel ratio.
-    document->addResource(QTextDocument::ImageResource, url, QImage{});
+    document->addResource(QTextDocument::ImageResource, url, math::rasterize(url, *size, m_devicePixelRatio));
     return *size;
   }
   auto naturalSize = m_cache ? m_cache->size(url) : std::optional<QSize>{};
@@ -151,8 +150,5 @@ QSizeF DocumentTextImages::intrinsicSize(QTextDocument *document, int, const QTe
   return {width, height};
 }
 
-void DocumentTextImages::drawObject(QPainter *painter, const QRectF &rect, QTextDocument *document, int,
-                                    const QTextFormat &format) {
-  const auto url = document->baseUrl().resolved(QUrl(format.toImageFormat().name()));
-  if (!m_measuring && url.scheme() == "vicinae-math") math::draw(painter, rect, url);
-}
+// Qt Quick paints the images registered as document resources.
+void DocumentTextImages::drawObject(QPainter *, const QRectF &, QTextDocument *, int, const QTextFormat &) {}

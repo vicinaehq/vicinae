@@ -2,6 +2,7 @@
 
 #include <QByteArray>
 #include <QColor>
+#include <QImage>
 #include <QRectF>
 #include <QSizeF>
 #include <QString>
@@ -9,8 +10,6 @@
 #include <memory>
 #include <optional>
 #include <vector>
-
-class QPainter;
 
 namespace math {
 struct Resource {
@@ -27,5 +26,5 @@ using Resources = std::vector<std::shared_ptr<const Resource>>;
 std::shared_ptr<const Resource> render(const QString &latex, bool display, const QColor &color);
 std::shared_ptr<const Resource> resource(const QUrl &url);
 std::optional<QSizeF> size(const QUrl &url, qreal fontSize);
-void draw(QPainter *painter, const QRectF &rect, const QUrl &url);
+QImage rasterize(const QUrl &url, const QSizeF &size, qreal devicePixelRatio);
 } // namespace math

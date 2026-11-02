@@ -16,7 +16,8 @@ template <> struct glz::meta<vicinae::FileCategory> {
                      "document", Document, "archive", Archive, "application", Application);
 };
 
-namespace {
+// not anonymous: glaze can't reflect types with internal linkage
+namespace file_tools {
 
 constexpr int DEFAULT_LIMIT = 20;
 constexpr int MAX_LIMIT = 50;
@@ -91,7 +92,9 @@ AI::AbstractTool::RawToolResult readChunk(const fs::path &path, std::uint64_t of
   return AI::ToolOutput{.content = std::move(out)};
 }
 
-} // namespace
+} // namespace file_tools
+
+using namespace file_tools;
 
 std::string SearchFilesTool::description() const {
   return "Search files on the user's computer by name using the file index. An empty query returns recently "

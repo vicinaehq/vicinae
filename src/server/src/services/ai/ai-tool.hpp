@@ -55,11 +55,12 @@ class AbstractTool {
 public:
   struct ToolSchema {
     std::string type{"function"};
-    struct {
+    struct Function {
       std::string name;
       std::string description;
       glz::raw_json parameters;
-    } function;
+    };
+    Function function;
   };
   using RawToolResult = std::expected<ToolOutput, std::string>;
   using RawToolTask = ToolTask<ToolOutput>;

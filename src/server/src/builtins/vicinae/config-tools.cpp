@@ -5,7 +5,8 @@
 #include "config-tools.hpp"
 #include "config/config.hpp"
 
-namespace {
+// not anonymous: glaze can't reflect types with internal linkage
+namespace config_tools {
 
 struct WriteConfigInput {
   glz::raw_json patch;
@@ -15,7 +16,9 @@ AI::AbstractTool::RawToolTask ready(AI::AbstractTool::RawToolResult result) {
   return {QtFuture::makeReadyValueFuture(std::move(result)), {}};
 }
 
-} // namespace
+} // namespace config_tools
+
+using namespace config_tools;
 
 std::string ReadConfigTool::description() const {
   return "Read the Vicinae configuration. Returns the default configuration, whose comments document every "

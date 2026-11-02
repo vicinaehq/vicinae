@@ -18,7 +18,7 @@ struct ListModelsResponse {
     std::string description;
     std::uint32_t max_context_length;
 
-    struct {
+    struct Capabilities {
       bool completion_chat;
       bool function_calling;
       bool completion_fim;
@@ -31,7 +31,8 @@ struct ListModelsResponse {
       bool audio_transcription;
       bool audio_transcription_realtime;
       bool audio_speech;
-    } capabilities;
+    };
+    Capabilities capabilities;
   };
 
   std::vector<ModelInfo> data;

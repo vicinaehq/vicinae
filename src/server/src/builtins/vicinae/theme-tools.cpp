@@ -15,7 +15,8 @@
 
 namespace fs = std::filesystem;
 
-namespace {
+// not anonymous: glaze can't reflect types with internal linkage
+namespace theme_tools {
 
 constexpr std::size_t MAX_ID_LENGTH = 64;
 
@@ -53,7 +54,9 @@ const char *systemColorScheme() {
   return QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Light ? "light" : "dark";
 }
 
-} // namespace
+} // namespace theme_tools
+
+using namespace theme_tools;
 
 std::string ReadThemesTool::description() const {
   return "List the installed Vicinae themes and the active one, and return the theme file format: a "

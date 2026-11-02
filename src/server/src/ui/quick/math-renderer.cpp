@@ -126,8 +126,8 @@ std::optional<QSizeF> math::size(const QUrl &url, qreal fontSize) {
   return size;
 }
 
-void math::draw(QPainter *painter, const QRectF &rect, const QUrl &url) {
-  const RasterKey key{url, rect.size(), painter->device()->devicePixelRatioF()};
+QImage math::rasterize(const QUrl &url, const QSizeF &size, qreal devicePixelRatio) {
+  const RasterKey key{url, size, devicePixelRatio};
   QImage image;
   {
     const std::lock_guard lock(rasterCacheMutex);
@@ -135,12 +135,12 @@ void math::draw(QPainter *painter, const QRectF &rect, const QUrl &url) {
   }
   if (image.isNull()) {
     const auto pixels = (key.size * key.devicePixelRatio).toSize();
-    if (pixels.isEmpty() || qint64(pixels.width()) * pixels.height() > MAX_IMAGE_PIXELS) return;
+    if (pixels.isEmpty() || qint64(pixels.width()) * pixels.height() > MAX_IMAGE_PIXELS) return {};
     image = QImage(pixels, QImage::Format_ARGB32_Premultiplied);
     image.setDevicePixelRatio(key.devicePixelRatio);
     image.fill(Qt::transparent);
     const auto source = resource(url);
-    if (!source) return;
+    if (!source) return {};
     QSvgRenderer drawing(source->svg);
     QPainter render(&image);
     drawing.render(&render, QRectF(QPointF{}, key.size));
@@ -150,5 +150,5 @@ void math::draw(QPainter *painter, const QRectF &rect, const QUrl &url) {
     const std::lock_guard lock(rasterCacheMutex);
     rasterCache.insert(key, new QImage(image), cost);
   }
-  painter->drawImage(rect.topLeft(), image);
+  return image;
 }

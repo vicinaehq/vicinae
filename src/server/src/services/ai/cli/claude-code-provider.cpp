@@ -15,8 +15,7 @@
 
 namespace AI {
 
-namespace {
-
+// not anonymous: glaze can't reflect types with internal linkage
 namespace claude {
 
 struct ImageSource {
@@ -77,6 +76,8 @@ struct AuthStatus {
 };
 
 } // namespace claude
+
+namespace {
 
 constexpr glz::opts LENIENT{.error_on_unknown_keys = false};
 
