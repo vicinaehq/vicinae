@@ -31,13 +31,13 @@ TranscriptionSession::TranscriptionSession(DictationService &dictation, QObject 
   connect(&m_recordingLimit, &QTimer::timeout, this, &TranscriptionSession::accept);
   connect(&m_recorder, &Audio::Recorder::levelChanged, this, &TranscriptionSession::audioLevelChanged);
   connect(&m_recorder, &Audio::Recorder::stateChanged, this, &TranscriptionSession::stateChanged);
-  connect(&m_recorder, &Audio::Recorder::errorOccurred, this, [this](const QString &message) {
+  connect(&m_recorder, &Audio::Recorder::errorOccurred, this, [this]() {
     // what was said before the microphone went away is still worth transcribing
     if (m_recorder.state() == Audio::Recorder::State::Recording &&
         m_recorder.elapsedMs() >= MIN_SALVAGED_MS) {
       accept();
     } else {
-      fail(message);
+      fail(tr("Microphone stopped"));
     }
   });
 }

@@ -38,7 +38,7 @@ class Recorder : public QObject {
 signals:
   void levelChanged();
   void stateChanged();
-  void errorOccurred(const QString &message);
+  void errorOccurred();
 
 public:
   enum class State { Idle, Recording, Paused };

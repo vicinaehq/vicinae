@@ -94,7 +94,7 @@ bool Recorder::start() {
 
   auto device = QMediaDevices::defaultAudioInput();
   if (device.isNull()) {
-    emit errorOccurred("No audio input device found");
+    qWarning() << "Recorder: no audio input device found";
     return false;
   }
 
@@ -105,7 +105,7 @@ bool Recorder::start() {
   }
   if (!device.isFormatSupported(m_captureFormat)) m_captureFormat = m_format;
   if (!device.isFormatSupported(m_captureFormat)) {
-    emit errorOccurred(tr("Audio input does not support 16 kHz mono recording"));
+    qWarning() << "Recorder:" << device.description() << "does not support" << m_captureFormat;
     return false;
   }
 
@@ -115,13 +115,14 @@ bool Recorder::start() {
   m_source = std::make_unique<QAudioSource>(device, m_captureFormat, this);
   connect(m_source.get(), &QAudioSource::stateChanged, this, [this] {
     if (m_state == State::Recording && m_source && m_source->error() != QtAudio::NoError) {
-      emit errorOccurred(tr("The microphone stopped working"));
+      qWarning() << "Recorder: capture stopped with error" << m_source->error();
+      emit errorOccurred();
     }
   });
   m_ioDevice = m_source->start();
 
   if (!m_ioDevice || m_source->error() != QtAudio::NoError) {
-    emit errorOccurred(tr("Could not access the microphone"));
+    qWarning() << "Recorder: could not open" << device.description() << "error" << m_source->error();
     m_source.reset();
     return false;
   }
