@@ -4,6 +4,7 @@
 #include <ranges>
 #include <string>
 #include <vector>
+#include "common/enumerate.hpp"
 
 namespace AI {
 namespace {
@@ -42,7 +43,7 @@ std::size_t messageSize(const ChatMessage &message) {
 ChatHistory compactHistory(const ChatHistory &history) {
   std::vector<std::size_t> turns;
   turns.reserve(history.size());
-  for (const auto &[index, message] : std::views::enumerate(history)) {
+  for (const auto &[index, message] : vicinae::enumerate(history)) {
     if (message.role == ChatRole::User) turns.emplace_back(static_cast<std::size_t>(index));
   }
   if (turns.empty()) return history;

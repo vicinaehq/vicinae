@@ -7,6 +7,7 @@
 #include <QTextDocument>
 #include <QTextImageFormat>
 #include "builtins/ai/chat-conversation-model.hpp"
+#include "ui/quick/document-match-geometry.hpp"
 #include "ui/quick/document-text-images.hpp"
 #include "ui/quick/math-renderer.hpp"
 
@@ -70,6 +71,22 @@ private slots:
     document.setTextWidth(640);
     QVERIFY(document.size().height() >= 240);
     QVERIFY(document.size().height() < 270);
+  }
+
+  void matchRectsFollowTheLinesTheMatchSpans() {
+    QTextDocument document;
+    document.setPlainText(QStringLiteral("first line\nsecond line"));
+    document.setTextWidth(1000);
+
+    const auto single = document_match::rects(document, 6, 4);
+    QCOMPARE(single.size(), std::size_t(1));
+    QVERIFY(single[0].x() > 0);
+    QVERIFY(single[0].width() > 0);
+
+    const auto spanning = document_match::rects(document, 6, 10);
+    QCOMPARE(spanning.size(), std::size_t(2));
+    QVERIFY(spanning[1].y() > spanning[0].y());
+    QCOMPARE(spanning[0].x(), single[0].x());
   }
 
   void mathIsRegisteredAsAVisibleImageAtTheDevicePixelRatio() {

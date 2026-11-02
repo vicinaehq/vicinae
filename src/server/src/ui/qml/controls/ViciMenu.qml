@@ -8,7 +8,15 @@ Menu {
 
     popupType: Platform.preferItemPopup("menu") ? Popup.Item : Popup.Native
     padding: 4
-    implicitWidth: Math.max(160, contentWidth + leftPadding + rightPadding)
+    margins: 8
+    implicitWidth: Math.max(160, _widestItem + leftPadding + rightPadding)
+
+    readonly property real _widestItem: {
+        let widest = 0;
+        for (let i = 0; i < count; ++i)
+            widest = Math.max(widest, itemAt(i)?.implicitWidth ?? 0);
+        return widest;
+    }
 
     enter: Transition {
         NumberAnimation {

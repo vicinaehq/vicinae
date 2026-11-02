@@ -830,6 +830,7 @@ set(SRCS
 	src/ui/quick/document-model.hpp
 	src/ui/quick/document-search.hpp
 	src/ui/quick/document-search.cpp
+	src/ui/quick/document-match-geometry.hpp
 	src/ui/quick/document-search-highlighter.hpp
 	src/ui/quick/document-search-highlighter.cpp
 	src/ui/quick/document-scope.cpp

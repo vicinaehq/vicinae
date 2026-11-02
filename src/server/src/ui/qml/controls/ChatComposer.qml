@@ -226,6 +226,9 @@ FocusScope {
             flat: true
             preferredPopupEdge: Qt.TopEdge
             popupAnchor: root
+            popupSurface: "modelSelector"
+            popupFollowsTrigger: true
+            popupMinimumWidth: Math.min(320, root.width)
             items: root.modelItems
             currentItem: root.currentModel
             onActivated: item => root.modelActivated(item)

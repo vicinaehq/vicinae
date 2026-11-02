@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Vicinae
 
@@ -28,11 +29,24 @@ TextEdit {
         devicePixelRatio: root.Screen.devicePixelRatio
     }
     DocumentSearchHighlighter {
+        id: searchHighlighter
         search: root.DocumentScope.document?.search ?? null
         row: root.DocumentScope.row
         part: root.selectionPart
         textDocument: search && search.query.length > 0 ? root.textDocument : null
-        color: Config.withAlpha(Theme.accent, 0.25)
-        currentColor: Config.withAlpha(Theme.accent, 0.55)
+    }
+    Repeater {
+        model: searchHighlighter.rects
+        delegate: Rectangle {
+            id: highlight
+            required property var modelData
+            z: -1
+            x: root.leftPadding + highlight.modelData.rect.x
+            y: root.topPadding + highlight.modelData.rect.y
+            width: highlight.modelData.rect.width
+            height: highlight.modelData.rect.height
+            radius: 2
+            color: Config.withAlpha(Theme.accent, highlight.modelData.current ? 0.55 : 0.25)
+        }
     }
 }

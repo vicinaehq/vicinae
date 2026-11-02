@@ -190,13 +190,16 @@ Window {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             enabled: !Chat.loading
+            active: false
+            property ChatSession loadedSession: null
+            sourceComponent: ChatConversation {
+                session: conversation.loadedSession
+                horizontalPadding: root.contentPadding
+                topInset: root.headerHeight
+            }
             function loadSession() {
                 active = false;
-                setSource(Qt.resolvedUrl("ChatConversation.qml"), {
-                    session: Chat.session,
-                    horizontalPadding: Qt.binding(() => root.contentPadding),
-                    topInset: Qt.binding(() => root.headerHeight)
-                });
+                loadedSession = Chat.session;
                 active = true;
             }
             Component.onCompleted: loadSession()

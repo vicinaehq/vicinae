@@ -1,6 +1,8 @@
-#include <QTextBlock>
-#include <QTextDocument>
-#include <algorithm>
+#include <QAbstractTextDocumentLayout>
+#include <QTimer>
+#include <QVariantMap>
+#include <utility>
+#include "document-match-geometry.hpp"
 #include "document-search-highlighter.hpp"
 
 void DocumentSearchHighlighter::setSearch(DocumentSearch *search) {
@@ -8,76 +10,79 @@ void DocumentSearchHighlighter::setSearch(DocumentSearch *search) {
   if (m_search) disconnect(m_search, nullptr, this, nullptr);
   m_search = search;
   if (search) {
-    connect(search, &DocumentSearch::resultsChanged, this, &DocumentSearchHighlighter::refresh);
-    connect(search, &DocumentSearch::currentIndexChanged, this, &DocumentSearchHighlighter::refresh);
-    connect(search, &QObject::destroyed, this, &DocumentSearchHighlighter::refresh);
+    connect(search, &DocumentSearch::resultsChanged, this, &DocumentSearchHighlighter::scheduleRefresh);
+    connect(search, &DocumentSearch::currentIndexChanged, this, &DocumentSearchHighlighter::scheduleRefresh);
+    connect(search, &QObject::destroyed, this, &DocumentSearchHighlighter::scheduleRefresh);
   }
-  refresh();
+  scheduleRefresh();
   emit searchChanged();
+}
+
+void DocumentSearchHighlighter::setTextDocument(QQuickTextDocument *document) {
+  if (m_textDocument == document) return;
+  if (m_textDocument) disconnect(m_textDocument, nullptr, this, nullptr);
+  m_textDocument = document;
+  if (document) {
+    connect(document, &QQuickTextDocument::textDocumentChanged, this,
+            &DocumentSearchHighlighter::attachDocument);
+  }
+  attachDocument();
+  emit textDocumentChanged();
+}
+
+void DocumentSearchHighlighter::attachDocument() {
+  auto *document = m_textDocument ? m_textDocument->textDocument() : nullptr;
+  if (m_document == document) return;
+  if (m_document) {
+    disconnect(m_document, nullptr, this, nullptr);
+    disconnect(m_document->documentLayout(), nullptr, this, nullptr);
+  }
+  m_document = document;
+  if (document) {
+    connect(document, &QTextDocument::contentsChanged, this, &DocumentSearchHighlighter::scheduleRefresh);
+    // relayouts from a new width or a loaded image move the matches without changing the text
+    connect(document->documentLayout(), &QAbstractTextDocumentLayout::update, this,
+            &DocumentSearchHighlighter::scheduleRefresh);
+    connect(document->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
+            &DocumentSearchHighlighter::scheduleRefresh);
+  }
+  scheduleRefresh();
 }
 
 void DocumentSearchHighlighter::setRow(int row) {
   if (m_row == row) return;
   m_row = row;
-  refresh();
+  scheduleRefresh();
   emit locationChanged();
 }
 
 void DocumentSearchHighlighter::setPart(int part) {
   if (m_part == part) return;
   m_part = part;
-  refresh();
+  scheduleRefresh();
   emit locationChanged();
 }
 
-void DocumentSearchHighlighter::setColor(const QColor &color) {
-  if (m_color == color) return;
-  m_color = color;
-  rehighlight();
-  emit colorChanged();
-}
-
-void DocumentSearchHighlighter::setCurrentColor(const QColor &color) {
-  if (m_currentColor == color) return;
-  m_currentColor = color;
-  rehighlight();
-  emit colorChanged();
+void DocumentSearchHighlighter::scheduleRefresh() {
+  if (std::exchange(m_refreshScheduled, true)) return;
+  QTimer::singleShot(0, this, &DocumentSearchHighlighter::refresh);
 }
 
 void DocumentSearchHighlighter::refresh() {
-  const auto matches = m_search ? m_search->matches(m_row, m_part) : std::span<const DocumentSearch::Match>{};
-  const auto *active = m_search ? m_search->currentMatch() : nullptr;
-  const auto current =
-      active && active->row == m_row && active->part == m_part ? std::optional(*active) : std::nullopt;
-  const bool changed = !std::ranges::equal(m_matches, matches);
-  if (!changed && m_current == current) return;
-  const auto previous = m_current;
-  if (changed) m_matches.assign(matches.begin(), matches.end());
-  m_current = current;
-  if (changed) {
-    rehighlight();
-  } else if (document()) {
-    const auto highlight = [this](const auto &match) {
-      if (!match) return;
-      for (auto block = document()->findBlock(match->start);
-           block.isValid() && block.position() < match->start + match->length; block = block.next())
-        rehighlightBlock(block);
-    };
-    highlight(previous);
-    highlight(current);
-  }
-}
+  m_refreshScheduled = false;
 
-void DocumentSearchHighlighter::highlightBlock(const QString &text) {
-  const int start = currentBlock().position();
-  const int end = start + text.size();
-  auto match = std::ranges::lower_bound(m_matches, start, {},
-                                        [](const auto &value) { return value.start + value.length; });
-  for (; match != m_matches.end() && match->start < end; ++match) {
-    const int from = std::max(start, match->start);
-    const int to = std::min(end, match->start + match->length);
-    QTextCharFormat format;
-    format.setBackground(m_current && *m_current == *match ? m_currentColor : m_color);
-    setFormat(from - start, to - from, format);
+  QVariantList rects;
+  if (m_search && m_document) {
+    const auto *active = m_search->currentMatch();
+    for (const auto &match : m_search->matches(m_row, m_part)) {
+      const bool current = active && *active == match;
+      for (const auto &rect : document_match::rects(*m_document, match.start, match.length)) {
+        rects.append(QVariantMap{{QStringLiteral("rect"), rect}, {QStringLiteral("current"), current}});
+      }
+    }
   }
+
+  if (rects == m_rects) return;
+  m_rects = std::move(rects);
+  emit rectsChanged();
 }
