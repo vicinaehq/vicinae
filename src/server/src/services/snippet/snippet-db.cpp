@@ -35,7 +35,17 @@ SnippetDatabase::SnippetDatabase(const std::filesystem::path &path) : m_path(pat
     }
   }
 
-  m_snippets = loadSnippets().value_or(std::vector<SerializedSnippet>{});
+  auto loaded = loadSnippets();
+  if (!loaded) {
+    // the next save would replace the file with an empty list
+    auto backup = m_path;
+    backup += ".invalid";
+    std::error_code ec;
+    fs::copy_file(m_path, backup, fs::copy_options::overwrite_existing, ec);
+    qCritical() << "Could not read snippets, keeping a copy at" << backup.string() << ":"
+                << loaded.error().c_str();
+  }
+  m_snippets = std::move(loaded).value_or(std::vector<SerializedSnippet>{});
 
   for (auto &snippet : m_snippets) {
     if (!snippet.expansion || !snippet.expansion->apps) continue;
@@ -47,7 +57,9 @@ SnippetDatabase::SnippetDatabase(const std::filesystem::path &path) : m_path(pat
 std::expected<std::vector<SerializedSnippet>, std::string> SnippetDatabase::loadSnippets() {
   std::vector<SerializedSnippet> snippets;
 
-  if (const auto error = glz::read_file_json(snippets, m_path.string(), m_buf)) {
+  // Fields from a newer version are ignored rather than failing, which would make every snippet look gone.
+  if (const auto error =
+          glz::read_file_json<glz::opts{.error_on_unknown_keys = false}>(snippets, m_path.string(), m_buf)) {
     return std::unexpected(glz::format_error(error));
   }
 

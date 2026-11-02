@@ -217,7 +217,9 @@ void Agent::complete() {
   setActivity(ResponseActivity::Waiting);
   if (!running() || generation != m_generation) return;
 
-  ChatCompletionPayload payload{.thinking = m_options.thinking};
+  ChatCompletionPayload payload{.thinking = m_options.thinking,
+                                .maxOutputTokens = m_options.maxOutputTokens,
+                                .oneShot = m_options.oneShot};
   payload.messages.reserve(m_messages.size() + 1);
   if (m_systemPrompt) {
     if (auto prompt = m_systemPrompt(); !prompt.empty())

@@ -1,3 +1,4 @@
+#include "services/ai/history-compaction.hpp"
 #include "claude-code-provider.hpp"
 #include <algorithm>
 #include <format>
@@ -5,7 +6,9 @@
 #include <span>
 #include <glaze/json.hpp>
 #include <QCryptographicHash>
+#include <QDir>
 #include <QProcess>
+#include <QTemporaryFile>
 #include "cli-process.hpp"
 #include "services/ai/ai-provider-types.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
@@ -39,6 +42,13 @@ struct Input {
 };
 
 struct Event {
+  struct Usage {
+    std::optional<int> input_tokens;
+    std::optional<int> output_tokens;
+    std::optional<int> cache_read_input_tokens;
+    std::optional<int> cache_creation_input_tokens;
+  };
+
   struct Stream {
     struct Delta {
       std::optional<std::string> type;
@@ -56,6 +66,7 @@ struct Event {
   std::string type;
   std::optional<std::string> subtype;
   std::optional<Stream> event;
+  std::optional<Usage> usage;
   std::optional<bool> is_error;
   std::optional<std::string> result;
   std::optional<std::vector<std::string>> errors;
@@ -174,8 +185,10 @@ std::string makeInput(std::span<const ChatMessage> history, const ChatMessage &m
 
 class ClaudeChatStream : public AbstractChatCompletionStream {
 public:
-  ClaudeChatStream(ClaudeSession *session, std::string line, QByteArray fingerprint, Model model)
-      : m_session(session), m_line(std::move(line)), m_fingerprint(std::move(fingerprint)) {
+  ClaudeChatStream(ClaudeSession *session, std::string line, QByteArray fingerprint, Model model,
+                   bool oneShot)
+      : m_session(session), m_line(std::move(line)), m_fingerprint(std::move(fingerprint)),
+        m_oneShot(oneShot) {
     setModel(std::move(model));
   }
 
@@ -211,6 +224,7 @@ private:
   void complete(std::optional<std::string> error) {
     if (!std::exchange(m_active, false)) return;
     disconnect(m_session, nullptr, this, nullptr);
+    if (m_oneShot && m_session) m_session->close();
     if (error) {
       emit errorOccurred(*error);
     } else {
@@ -221,6 +235,7 @@ private:
   QPointer<ClaudeSession> m_session;
   std::string m_line;
   QByteArray m_fingerprint;
+  bool m_oneShot = false;
   bool m_active = false;
 };
 
@@ -248,7 +263,14 @@ ClaudeSession::ClaudeSession(const QString &executable, std::string model, std::
       "",
       "--no-session-persistence",
   };
-  if (!systemPrompt.empty()) args << "--system-prompt" << QString::fromStdString(systemPrompt);
+  // Without this the CLI uses its own prompt, which is large and about being a coding agent. It goes through
+  // a file since npm's .cmd shims on Windows can't pass an argument with line breaks.
+  auto *promptFile = new QTemporaryFile(QDir(cliWorkingDirectory()).filePath("prompt-XXXXXX.txt"), this);
+  if (promptFile->open()) {
+    promptFile->write(systemPrompt.empty() ? "You are a helpful assistant." : systemPrompt.c_str());
+    promptFile->close();
+    args << "--system-prompt-file" << promptFile->fileName();
+  }
 
   m_process = new JsonLineProcess(executable, args, this);
   connect(m_process, &JsonLineProcess::lineReceived, this, &ClaudeSession::handleLine);
@@ -276,6 +298,11 @@ void ClaudeSession::send(const std::string &line, QByteArray fingerprint) {
   m_pendingFingerprint = std::move(fingerprint);
   m_text.clear();
   m_lastUsed = std::chrono::steady_clock::now();
+  // starting the process can fail right away, in which case it's already gone
+  if (!m_process) {
+    emit turnFailed("Claude Code could not be started.");
+    return;
+  }
   m_process->write(line);
 }
 
@@ -322,6 +349,13 @@ void ClaudeSession::handleLine(const std::string &line) {
   }
 
   if (event.type != "result") return;
+
+  if (event.usage) {
+    qInfo().nospace() << "AI usage: model=" << m_model << " input=" << event.usage->input_tokens.value_or(0)
+                      << " cached=" << event.usage->cache_read_input_tokens.value_or(0)
+                      << " cacheWrite=" << event.usage->cache_creation_input_tokens.value_or(0)
+                      << " output=" << event.usage->output_tokens.value_or(0);
+  }
 
   if (event.is_error.value_or(false) || event.subtype != "success") {
     std::string reason = event.result.value_or("");
@@ -389,6 +423,7 @@ void ClaudeCodeProvider::detect() {
 
   m_detection = new QProcess(this);
   m_detection->setWorkingDirectory(cliWorkingDirectory());
+  m_detection->setProcessEnvironment(cliProcessEnvironment(*m_executable));
   connect(m_detection, &QProcess::finished, this, [this](int exitCode) { handleDetection(exitCode); });
   connect(m_detection, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
     if (error == QProcess::FailedToStart) handleDetection(-1);
@@ -458,8 +493,9 @@ ClaudeSession *ClaudeCodeProvider::findSession(std::string_view model, std::stri
 }
 
 ClaudeSession *ClaudeCodeProvider::createSession(std::string model, std::string effort,
-                                                 const std::string &systemPrompt) {
-  if (m_sessions.size() >= MAX_SESSIONS) {
+                                                 const std::string &systemPrompt, bool oneShot) {
+  // a one-shot closes as soon as it's done, it shouldn't cost a conversation its session
+  if (!oneShot && m_sessions.size() >= MAX_SESSIONS) {
     auto idle = m_sessions | std::views::filter([](const ClaudeSession *s) { return !s->busy(); });
     if (auto oldest = std::ranges::min_element(idle, {}, &ClaudeSession::lastUsed); oldest != idle.end()) {
       (*oldest)->close();
@@ -502,20 +538,22 @@ ClaudeCodeProvider::createChatCompletion(std::string_view modelId, const ChatCom
     fingerprint = chainFingerprint(fingerprint, message);
 
   const auto effort = effortFor(payload.thinking);
-  auto *session = findSession(modelId, effort, fingerprint);
+  auto *session = payload.oneShot ? nullptr : findSession(modelId, effort, fingerprint);
   std::string line;
 
   if (session) {
     line = makeInput({}, messages.back());
   } else {
-    session = createSession(std::string(modelId), effort, systemPrompt);
-    line = makeInput(history, messages.back());
+    session = createSession(std::string(modelId), effort, systemPrompt, payload.oneShot);
+    const auto compacted = compactHistory({history.begin(), history.end()});
+    line = makeInput(compacted, messages.back());
   }
 
   fingerprint = chainFingerprint(fingerprint, messages.back());
   return std::make_shared<ClaudeChatStream>(
       session, std::move(line), std::move(fingerprint),
-      Model{.id = std::string(model->id), .name = std::string(model->name), .caps = MODEL_CAPS});
+      Model{.id = std::string(model->id), .name = std::string(model->name), .caps = MODEL_CAPS},
+      payload.oneShot);
 }
 
 QFuture<TranscriptionResult> ClaudeCodeProvider::transcribe(Audio::Recording, const TranscriptionOptions &) {

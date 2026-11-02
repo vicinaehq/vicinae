@@ -1,3 +1,4 @@
+#include "services/ai/history-compaction.hpp"
 #include "codex-provider.hpp"
 #include <algorithm>
 #include <array>
@@ -590,7 +591,8 @@ ModelList CodexProvider::listModels(const ListModelFilters &filters) const {
          std::ranges::to<ModelList>();
 }
 
-std::optional<Model> CodexProvider::findBestModel(Capabilities caps, Preference) const {
+std::optional<Model> CodexProvider::findBestModel(Capabilities caps, Preference preference) const {
+  if (preference != Preference::None) return std::nullopt;
   const auto models = listModels({.caps = caps});
   if (models.empty()) return std::nullopt;
   return models.front();
@@ -606,10 +608,11 @@ CodexProvider::createChatCompletion(std::string_view modelId, const ChatCompleti
 
   codex::ThreadStartParams thread{.cwd = cliWorkingDirectory().toStdString()};
   std::vector<codex::ResponseItem> history;
-  history.reserve(payload.messages.size());
+  const auto messages = compactHistory(payload.messages);
+  history.reserve(messages.size());
   const ChatMessage *last = nullptr;
 
-  for (const auto &message : payload.messages) {
+  for (const auto &message : messages) {
     if (message.role == ChatRole::System || message.role == ChatRole::Developer) {
       if (!thread.baseInstructions.empty()) thread.baseInstructions += "\n\n";
       thread.baseInstructions += message.text();

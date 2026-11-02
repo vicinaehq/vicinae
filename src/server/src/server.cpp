@@ -283,6 +283,16 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
     installTranslators(currentConfig.language);
 
+#ifdef Q_OS_UNIX
+    // API keys, chats and dictations live in there, and aren't encrypted unless the user asked for it.
+    std::error_code permissionsError;
+    std::filesystem::create_directories(Omnicast::dataDir(), permissionsError);
+    std::filesystem::permissions(Omnicast::dataDir(), std::filesystem::perms::owner_all,
+                                 std::filesystem::perm_options::replace, permissionsError);
+    if (permissionsError)
+      qWarning() << "Failed to restrict the data directory:" << permissionsError.message();
+#endif
+
     const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
     const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
     auto keys = db::prepareEncryption(currentConfig.encryptSensitiveData, {vicinaeDbPath, clipboardDbPath});

@@ -227,13 +227,16 @@ class AISettingsModel : public QObject {
                  selectedProviderIdChanged)
   Q_PROPERTY(AIProviderPage *provider READ provider CONSTANT)
   Q_PROPERTY(AIProviderFieldsModel *setupFields READ setupFields CONSTANT)
+  Q_PROPERTY(bool secretsEncrypted READ secretsEncrypted NOTIFY secretsEncryptedChanged)
 
 signals:
   void selectedProviderIdChanged();
+  void secretsEncryptedChanged();
 
 public:
   explicit AISettingsModel(QObject *parent = nullptr);
 
+  bool secretsEncrypted() const;
   AIProviderTypesModel *configuredTypes() { return &m_configuredTypes; }
   AIProviderTypesModel *availableTypes() { return &m_availableTypes; }
   QString selectedProviderId() const { return m_selectedProviderId; }

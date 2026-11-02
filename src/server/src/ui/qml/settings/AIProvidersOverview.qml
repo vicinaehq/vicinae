@@ -121,6 +121,18 @@ Flickable {
             Layout.bottomMargin: 14
         }
 
+        Text {
+            visible: !root.model.secretsEncrypted
+            text: qsTr("API keys are stored unencrypted. To protect them, turn on Encrypt sensitive data in the Advanced settings.")
+            color: Theme.textMuted
+            font.pointSize: Theme.smallerFontSize
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+            Layout.leftMargin: column.sideMargin
+            Layout.rightMargin: column.sideMargin
+            Layout.bottomMargin: 14
+        }
+
         ProviderGrid {
             model: root.model.configuredTypes
         }

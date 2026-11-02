@@ -9,6 +9,52 @@
 
 namespace AI {
 
+namespace {
+
+QStringList toolDirectories() {
+  const auto home = QDir::homePath();
+  auto dirs = QStringList{
+      home + "/.local/bin",
+      home + "/.claude/local",
+      home + "/.npm-global/bin",
+      home + "/.bun/bin",
+      home + "/.volta/bin",
+      home + "/.asdf/shims",
+      home + "/.local/share/mise/shims",
+      home + "/.local/share/fnm/aliases/default/bin",
+#ifdef Q_OS_MACOS
+      home + "/Library/Application Support/fnm/aliases/default/bin",
+#endif
+#ifdef Q_OS_WIN
+      qEnvironmentVariable("APPDATA") + "/npm",
+#else
+      QStringLiteral("/opt/homebrew/bin"),
+      QStringLiteral("/usr/local/bin"),
+#endif
+  };
+
+  const QDir nvm(home + "/.nvm/versions/node");
+  const auto versions = nvm.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name | QDir::Reversed);
+  if (!versions.isEmpty()) dirs.emplace_back(nvm.filePath(versions.front() + "/bin"));
+
+  return dirs;
+}
+
+} // namespace
+
+QProcessEnvironment cliProcessEnvironment(const QString &executable) {
+  auto environment = QProcessEnvironment::systemEnvironment();
+  auto path = environment.value(QStringLiteral("PATH")).split(QDir::listSeparator(), Qt::SkipEmptyParts);
+
+  for (const auto &dir : toolDirectories()) {
+    if (!path.contains(dir) && QFileInfo(dir).isDir()) path.append(dir);
+  }
+  if (!executable.isEmpty()) path.prepend(QFileInfo(executable).absolutePath());
+
+  environment.insert(QStringLiteral("PATH"), path.join(QDir::listSeparator()));
+  return environment;
+}
+
 std::optional<QString> findCliExecutable(std::string_view configured, const QString &name) {
   if (!configured.empty()) {
     auto path = QString::fromUtf8(configured.data(), static_cast<qsizetype>(configured.size()));
@@ -19,17 +65,7 @@ std::optional<QString> findCliExecutable(std::string_view configured, const QStr
 
   if (auto path = QStandardPaths::findExecutable(name); !path.isEmpty()) return path;
 
-  const auto home = QDir::homePath();
-  const auto dirs = QStringList{
-      home + "/.local/bin",
-      home + "/.claude/local",
-      home + "/.npm-global/bin",
-      home + "/.bun/bin",
-      home + "/.volta/bin",
-      QStringLiteral("/opt/homebrew/bin"),
-      QStringLiteral("/usr/local/bin"),
-  };
-  if (auto path = QStandardPaths::findExecutable(name, dirs); !path.isEmpty()) return path;
+  if (auto path = QStandardPaths::findExecutable(name, toolDirectories()); !path.isEmpty()) return path;
 
   return std::nullopt;
 }
@@ -46,6 +82,7 @@ JsonLineProcess::JsonLineProcess(const QString &program, const QStringList &argu
   m_process.setProgram(program);
   m_process.setArguments(arguments);
   m_process.setWorkingDirectory(cliWorkingDirectory());
+  m_process.setProcessEnvironment(cliProcessEnvironment(program));
 
   connect(&m_process, &QProcess::readyReadStandardOutput, this, &JsonLineProcess::readOutput);
   connect(&m_process, &QProcess::readyReadStandardError, this, [this] {

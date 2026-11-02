@@ -7,6 +7,7 @@
 #include <QPromise>
 #include <QStandardPaths>
 #include <QTimer>
+#include "services/ai/cli/cli-process.hpp"
 #include "bash-tool.hpp"
 
 namespace {
@@ -76,6 +77,7 @@ public:
 
   AI::AbstractTool::RawToolTask start(const QString &executable, const BashInput &input) {
     auto future = m_promise.future();
+    m_process.setProcessEnvironment(AI::cliProcessEnvironment());
     m_process.setWorkingDirectory(input.workingDirectory ? QString::fromStdString(*input.workingDirectory)
                                                          : QDir::homePath());
     m_timeout.start(input.timeoutMs.value_or(DEFAULT_TIMEOUT_MS));

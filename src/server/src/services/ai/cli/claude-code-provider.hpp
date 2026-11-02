@@ -100,7 +100,8 @@ private:
   void closeSessions();
   ClaudeSession *findSession(std::string_view model, std::string_view effort,
                              const QByteArray &fingerprint) const;
-  ClaudeSession *createSession(std::string model, std::string effort, const std::string &systemPrompt);
+  ClaudeSession *createSession(std::string model, std::string effort, const std::string &systemPrompt,
+                               bool oneShot);
 
   std::string m_id;
   std::string m_executableSetting;

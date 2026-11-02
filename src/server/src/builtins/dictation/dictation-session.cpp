@@ -1,6 +1,7 @@
 #include "dictation-session.hpp"
 #include <utility>
 #include "common/context.hpp"
+#include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/app-runtime/app-runtime.hpp"
 #include "services/builtin-icon/builtin-icon.hpp"
@@ -86,7 +87,11 @@ void DictationSession::deliver(const QString &text, const DeliverySource &source
 
   switch (m_action) {
   case Dictation::DictationAction::PasteToActiveWindow:
-    m_ctx->services->pasteService()->pasteContent(content, {.transient = true}, m_pasteTarget);
+    if (!m_ctx->services->pasteService()->pasteContent(content, {.transient = true}, m_pasteTarget)) {
+      qWarning() << "Dictation: could not paste, copying instead";
+      m_ctx->services->clipman()->copyContent(content, {.concealed = true});
+      m_ctx->navigation->showHud(tr("Could not paste, copied to clipboard"));
+    }
     break;
   case Dictation::DictationAction::CopyToClipboard:
     m_ctx->services->clipman()->copyContent(content, {.concealed = true});

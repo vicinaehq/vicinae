@@ -579,6 +579,9 @@ class AIService {
 	dataReceived(handler: (completionId: string, data: string, done: boolean) => void): EventSubscription {
 		return this.transport.subscribe("AI/dataReceived", (msg) => handler(msg.completionId, msg.data, msg.done))
 	}
+	completionFailed(handler: (completionId: string, error: string) => void): EventSubscription {
+		return this.transport.subscribe("AI/completionFailed", (msg) => handler(msg.completionId, msg.error))
+	}
 }
 
 export class Client {

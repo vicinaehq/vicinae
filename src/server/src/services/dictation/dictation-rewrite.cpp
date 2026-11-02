@@ -12,6 +12,7 @@ namespace {
 
 constexpr auto REWRITE_TIMEOUT = std::chrono::seconds(30);
 constexpr std::size_t MAX_VOCABULARY_WORDS = 100;
+constexpr qsizetype MIN_OUTPUT_TOKENS = 1024;
 constexpr auto OPENING_TAG = QLatin1StringView("<dictation>");
 constexpr auto CLOSING_TAG = QLatin1StringView("</dictation>");
 
@@ -83,7 +84,9 @@ void DictationRewrite::start(const DictationStyles::Style &style, const QString 
     return;
   }
 
-  AI::ChatCompletionPayload payload{.thinking = AI::ThinkingMode::None};
+  AI::ChatCompletionPayload payload{.thinking = AI::ThinkingMode::None,
+                                    .maxOutputTokens = std::max(MIN_OUTPUT_TOKENS, 2 * transcript.size()),
+                                    .oneShot = true};
   payload.messages.reserve(2);
   payload.messages.emplace_back(AI::ChatMessage::fromText(
       AI::ChatRole::System, systemPrompt(style.instructions, m_vocabulary.words())));

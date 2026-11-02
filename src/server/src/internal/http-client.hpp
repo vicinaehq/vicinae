@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include "glaze/glaze.hpp"
 #include <expected>
 #include <filesystem>
@@ -9,7 +10,6 @@
 #include <QFile>
 #include <QNetworkDiskCache>
 #include <glaze/json/prettify.hpp>
-#include <iostream>
 #include <map>
 #include <qbitarray.h>
 #include <qbytearrayview.h>
@@ -142,8 +142,6 @@ private:
     int index = -1;
     int pos = 0;
 
-    qDebug() << "reading data" << m_buf.toStdString();
-
     while (pos < m_buf.size()) {
       index = m_buf.indexOf("\n", pos);
 
@@ -153,8 +151,6 @@ private:
       pos = index + 1;
 
       if (line.empty()) continue;
-
-      qDebug() << "[EVENT-STREAM]" << line;
 
       emit lineReceived(line);
 
@@ -314,17 +310,19 @@ public:
       return nullptr;
     }
 
-    std::cout << glz::prettify_json(buf) << std::endl;
-
     req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
     return new EventSource{networkManager()->post(req, QByteArray::fromStdString(buf))};
   }
 
 private:
+  static constexpr auto STALL_TIMEOUT = std::chrono::minutes(3);
+
   QNetworkRequest createRequest(const QString &path, const RequestOptions &opts = {}) {
     QNetworkRequest req;
 
     req.setUrl(makeUrl(path));
+    // Time without any data, not the total: long downloads and streams are fine as long as they progress.
+    req.setTransferTimeout(STALL_TIMEOUT);
     if (m_bearer) { req.setRawHeader("Authorization", QString("Bearer %1").arg(m_bearer.value()).toUtf8()); }
     for (const auto &[name, value] : m_headers) {
       req.setRawHeader(name, value);

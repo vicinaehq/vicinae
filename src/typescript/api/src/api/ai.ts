@@ -51,20 +51,25 @@ export namespace AI {
 				options?.signal?.addEventListener("abort", () => {
 					api.AI.abort(completionId);
 				});
-				return new Promise<string>((resolve, _) => {
+				return new Promise<string>((resolve, reject) => {
 					let data = "";
 
-					const { unsubscribe } = getClient().AI.dataReceived(
-						(id, chunk, done) => {
-							if (id !== completionId) return;
-							data += chunk;
-							for (const cb of subscribers) cb(chunk as string);
-							if (done) {
-								unsubscribe();
-								resolve(data);
-							}
-						},
-					);
+					const stopData = getClient().AI.dataReceived((id, chunk, done) => {
+						if (id !== completionId) return;
+						data += chunk;
+						for (const cb of subscribers) cb(chunk as string);
+						if (done) {
+							stopData.unsubscribe();
+							stopFailure.unsubscribe();
+							resolve(data);
+						}
+					});
+					const stopFailure = getClient().AI.completionFailed((id, error) => {
+						if (id !== completionId) return;
+						stopData.unsubscribe();
+						stopFailure.unsubscribe();
+						reject(new Error(error));
+					});
 				});
 			})
 			.catch((error) => {
@@ -98,7 +103,8 @@ export namespace AI {
 		 */
 		creativity?: Creativity;
 		/**
-		 * The AI model to use to answer to the prompt. If it is not specified, vicinae will pick the model best suited for the job.
+		 * The AI model to use to answer to the prompt, as returned by `AI.getModels`.
+		 * If it is not specified, the model selected for AI Chat is used, and the call throws if there is none.
 		 */
 		model?: string;
 		/**

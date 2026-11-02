@@ -378,4 +378,5 @@ service AI {
   fn ask(prompt: string, options: AskOptions) => string; // returns completion id
   fn abort(completionId: string) => bool; // returns whether a completion was aborted
   event dataReceived(completionId: string, data: string, done: bool);
+  event completionFailed(completionId: string, error: string);
 };

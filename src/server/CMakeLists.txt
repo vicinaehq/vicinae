@@ -649,6 +649,7 @@ set(SRCS
 	src/services/ai/ai-service.cpp
 	src/services/ai/agentic-loop.hpp
 	src/services/ai/agentic-loop.cpp
+	src/services/ai/history-compaction.cpp
 	src/services/ai/conversation-store.cpp
 	src/services/ai/conversation-store.hpp
 	src/common/file-attachment.hpp

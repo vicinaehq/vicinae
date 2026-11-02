@@ -163,7 +163,12 @@ private:
   QString m_modelLabel;
   ImageUrl m_modelIcon;
 
+  // A title doesn't need the conversation's model when its provider has a cheaper one to offer.
+  std::optional<AI::ModelRef> titleModel() const;
+
   std::optional<AI::ModelRef> m_selectedModel;
+  // Picking a model makes it the default for new chats, unless the session was given a specific one.
+  bool m_remembersModel = false;
   QVariantList m_modelSelectorItems;
   QVariantMap m_modelSelectorCurrentItem;
 };

@@ -194,6 +194,10 @@ struct ChatCompletionPayload {
   ChatHistory messages;
   std::optional<float> temperature;
   std::vector<AbstractTool *> tools;
+  // A guard rather than a target: models that think may spend part of it before answering.
+  std::optional<int> maxOutputTokens;
+  // Nothing will follow this request, so providers shouldn't keep anything alive for it.
+  bool oneShot = false;
 };
 
 struct TranscriptionOptions {

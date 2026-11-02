@@ -30,6 +30,7 @@ constexpr int DICTATION_MESSAGE_MS = 2500;
 constexpr int TITLE_TIMEOUT_MS = 30000;
 constexpr qsizetype TITLE_CONTEXT_LENGTH = 4000;
 constexpr qsizetype TITLE_MAX_LENGTH = 100;
+constexpr int TITLE_MAX_OUTPUT_TOKENS = 512;
 constexpr auto CHAT_SYSTEM_PROMPT =
     "You are the AI assistant built into Vicinae, an open source launcher for the desktop. Vicinae is used "
     "to search and open apps and files, browse clipboard history, run commands and extensions, and much "
@@ -67,7 +68,8 @@ std::string chatSystemPrompt() {
 } // namespace
 
 ChatSession::ChatSession(std::optional<AI::ModelRef> model, QObject *parent)
-    : QObject(parent), m_selectedModel(std::move(model)) {
+    : QObject(parent), m_selectedModel(std::move(model)), m_remembersModel(!m_selectedModel) {
+  if (m_remembersModel) m_selectedModel = AI::preferredChatModel(*ServiceRegistry::instance()->config());
   m_store = ServiceRegistry::instance()->conversations();
   connect(m_store, &AI::ConversationStore::titleChanged, this,
           [this](const QString &id, const QString &title) {
@@ -203,8 +205,8 @@ void ChatSession::toggleDictation() {
     startDictation();
     return;
   case MicrophoneStatus::NotDetermined:
-    vicinae::permissions::requestMicrophone([this](bool granted) {
-      if (granted) startDictation();
+    vicinae::permissions::requestMicrophone([self = QPointer(this)](bool granted) {
+      if (self && granted) self->startDictation();
     });
     return;
   case MicrophoneStatus::Denied:
@@ -274,6 +276,7 @@ bool ChatSession::canSend() const {
 
 QString ChatSession::attachmentMessage() const {
   if (m_removed) return tr("This conversation was deleted.");
+  if (!modelSupports(AI::Capability::Completion)) return tr("Choose a model to start chatting.");
   if (needsVision() && !modelSupports(AI::Capability::Vision))
     return tr("Choose a model that supports images for this conversation.");
   return m_attachments.error();
@@ -341,6 +344,7 @@ void ChatSession::selectModel(const QString &compositeId) {
   if (!ref) return;
 
   m_selectedModel = std::move(*ref);
+  if (m_remembersModel) AI::setPreferredChatModel(*ServiceRegistry::instance()->config(), *m_selectedModel);
   if (m_conversation) {
     m_conversation->model = m_selectedModel;
     m_store->setModel(m_conversation->id, m_selectedModel);
@@ -383,22 +387,9 @@ void ChatSession::rebuildModelSelectorItems() {
     }
   }
 
+  // The selection is kept, its provider may just not have listed its models yet.
   if (!selectionStillValid) {
-    m_selectedModel.reset();
     m_modelSelectorCurrentItem.clear();
-    for (const auto &[id, provider] : m_aiService->providers()) {
-      if (auto model = provider->findBestModel(AI::Capability::Completion)) {
-        m_selectedModel = AI::ModelRef{provider->id(), model->id};
-        auto compositeId = QString::fromStdString(m_selectedModel->toString());
-
-        QVariantMap item;
-        item[QStringLiteral("id")] = compositeId;
-        item[QStringLiteral("displayName")] = QString::fromStdString(model->name);
-        if (model->icon) { item[QStringLiteral("iconSource")] = model->icon->imageUrl().toString(); }
-        m_modelSelectorCurrentItem = item;
-        break;
-      }
-    }
     emit modelSelectorCurrentItemChanged();
   }
 }
@@ -462,7 +453,20 @@ void ChatSession::generateTitle() {
       AI::ChatMessage::fromText(AI::ChatRole::User, QStringLiteral("User: %1\n\nAssistant: %2")
                                                         .arg(query.left(TITLE_CONTEXT_LENGTH), response)
                                                         .toStdString()),
-      {.model = m_turn->options.model, .thinking = AI::ThinkingMode::None, .maxSteps = 1});
+      {.model = titleModel(),
+       .thinking = AI::ThinkingMode::None,
+       .maxSteps = 1,
+       .maxOutputTokens = TITLE_MAX_OUTPUT_TOKENS,
+       .oneShot = true});
+}
+
+std::optional<AI::ModelRef> ChatSession::titleModel() const {
+  const auto &model = m_turn->options.model;
+  if (!model) return model;
+  const auto *provider = m_aiService->getProviderById(model->provider);
+  const auto fast =
+      provider ? provider->findBestModel(AI::Capability::Completion, AI::Preference::Fast) : std::nullopt;
+  return fast ? std::optional(AI::ModelRef{model->provider, fast->id}) : model;
 }
 
 void ChatSession::addTool(const AI::Agent::ToolCall &call) {

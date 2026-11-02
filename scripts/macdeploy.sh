@@ -210,7 +210,8 @@ done < <(find "$BUNDLE/Contents" -type f \( -name "*.dylib" -o -name "*.so" \) -
 while IFS= read -r -d '' item; do
   sign "$item"
 done < <(find "$BUNDLE/Contents/Frameworks" -maxdepth 1 -name "*.framework" -print0)
-sign "$BUNDLE/Contents/MacOS/vicinae-cli" "$BUNDLE/Contents/MacOS/vicinae-browser-link"
+sign "$BUNDLE/Contents/MacOS/vicinae-cli" "$BUNDLE/Contents/MacOS/vicinae-browser-link" \
+     "$BUNDLE/Contents/MacOS/vicinae-inference"
 sign --entitlements "$SRC_DIR/extra/Vicinae.entitlements" "$BUNDLE"
 
 echo "==> audit"

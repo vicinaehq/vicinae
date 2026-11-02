@@ -1,14 +1,22 @@
 #include "openai-compatible-provider.hpp"
+#include "services/ai/history-compaction.hpp"
+#include <algorithm>
 #include <format>
 #include <ranges>
 #include <qlogging.h>
 
 namespace AI {
 
+namespace {
+constexpr std::size_t MAX_TRANSCRIPTION_PROMPT_BYTES = 600;
+}
+
 OpenAICompatibleProvider::OpenAICompatibleProvider(std::string id, std::string_view type,
                                                    std::string defaultUrl)
     : m_id(std::move(id)), m_info(*findProviderType(type)), m_defaultUrl(std::move(defaultUrl)) {
   connect(&m_listWatcher, &decltype(m_listWatcher)::finished, this, &OpenAICompatibleProvider::handleModels);
+  m_listRetry.setSingleShot(true);
+  connect(&m_listRetry, &QTimer::timeout, this, &OpenAICompatibleProvider::start);
 }
 
 OpenAICompatibleProvider::~OpenAICompatibleProvider() { m_listWatcher.cancel(); }
@@ -35,6 +43,8 @@ void OpenAICompatibleProvider::configure(const PreferenceValues &values) {
   if (!m_started) return;
 
   m_listWatcher.cancel();
+  m_listRetry.stop();
+  m_listRetryDelay = MIN_LIST_RETRY_DELAY;
   m_models.clear();
   emit modelsUpdated();
   start();
@@ -52,7 +62,9 @@ ModelList OpenAICompatibleProvider::listModels(const ListModelFilters &filters) 
          std::ranges::to<ModelList>();
 }
 
-std::optional<Model> OpenAICompatibleProvider::findBestModel(Capabilities caps, Preference) const {
+std::optional<Model> OpenAICompatibleProvider::findBestModel(Capabilities caps, Preference preference) const {
+  // the model list says nothing about which ones are fast or cheap
+  if (preference != Preference::None) return std::nullopt;
   for (const auto &model : m_models) {
     if (model.caps & caps) return model;
   }
@@ -65,8 +77,24 @@ OpenAICompatibleProvider::createChatCompletion(std::string_view modelId,
   Model model;
   if (auto it = std::ranges::find(m_models, modelId, &Model::id); it != m_models.end()) model = *it;
 
-  auto request = makeRequest(modelId, model, payload);
+  auto compacted = payload;
+  compacted.messages = compactHistory(payload.messages);
+
+  auto request = makeRequest(modelId, model, compacted);
   return openai::ChatCompletionStream::makeShared(m_client, std::move(request), std::move(model));
+}
+
+void OpenAICompatibleProvider::addTranscriptionFields(http::FormData &form, std::string_view,
+                                                      const TranscriptionOptions &options) const {
+  if (options.language) form.addField("language", QByteArray::fromStdString(*options.language));
+
+  // limited to 224 tokens, whatever the words: the newest entries go last, so those are the ones kept
+  std::string prompt;
+  for (const auto word : options.vocabulary | std::views::reverse) {
+    if (prompt.size() + word.size() + 2 > MAX_TRANSCRIPTION_PROMPT_BYTES) break;
+    prompt.insert(0, prompt.empty() ? std::string(word) : std::format("{}, ", word));
+  }
+  if (!prompt.empty()) form.addField("prompt", QByteArray::fromStdString(prompt));
 }
 
 QFuture<TranscriptionResult> OpenAICompatibleProvider::transcribe(Audio::Recording recording,
@@ -82,12 +110,7 @@ QFuture<TranscriptionResult> OpenAICompatibleProvider::transcribe(Audio::Recordi
 
   auto *formData = new http::FormData;
   formData->addField("model", QByteArray::fromStdString(*model));
-  if (opts.language) formData->addField("language", QByteArray::fromStdString(*opts.language));
-  if (!opts.vocabulary.empty()) {
-    const auto prompt =
-        opts.vocabulary | std::views::join_with(std::string_view(", ")) | std::ranges::to<std::string>();
-    formData->addField("prompt", QByteArray::fromStdString(prompt));
-  }
+  addTranscriptionFields(*formData, *model, opts);
   formData->addFile(recording.toWav(), "audio/wav", "file", "audio.wav");
 
   return m_client.post<openai::TranscriptionResponse>("audio/transcriptions", formData)
@@ -99,7 +122,7 @@ QFuture<TranscriptionResult> OpenAICompatibleProvider::transcribe(Audio::Recordi
 
 QFuture<Result<ModelList>> OpenAICompatibleProvider::fetchModels() {
   return m_client.get<openai::ModelListResponse>("models").then(
-      [this](Result<openai::ModelListResponse> res) -> Result<ModelList> {
+      this, [this](Result<openai::ModelListResponse> res) -> Result<ModelList> {
         if (!res) return std::unexpected(res.error());
 
         ModelList models;
@@ -119,9 +142,13 @@ void OpenAICompatibleProvider::handleModels() {
   auto res = m_listWatcher.result();
   if (!res) {
     qWarning() << "Failed to fetch models for AI provider" << m_id << ":" << res.error();
+    // the network or a local server may just not be up yet, as happens when logging in
+    m_listRetry.start(m_listRetryDelay);
+    m_listRetryDelay = std::min<std::chrono::seconds>(m_listRetryDelay * 2, MAX_LIST_RETRY_DELAY);
     return;
   }
 
+  m_listRetryDelay = MIN_LIST_RETRY_DELAY;
   m_models = std::move(*res);
   emit modelsUpdated();
 }

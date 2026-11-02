@@ -50,6 +50,8 @@ public:
     std::vector<std::string> tools;
     ThinkingMode thinking = ThinkingMode::Medium;
     int maxSteps = 16;
+    std::optional<int> maxOutputTokens;
+    bool oneShot = false;
   };
 
   explicit Agent(CompletionFactory factory, SystemPrompt systemPrompt = {}, QObject *parent = nullptr);

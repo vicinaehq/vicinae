@@ -45,6 +45,8 @@ public:
 
 protected:
   QFuture<Result<ModelList>> fetchModels() override;
+  void addTranscriptionFields(http::FormData &form, std::string_view modelId,
+                              const TranscriptionOptions &options) const override;
 };
 
 } // namespace AI

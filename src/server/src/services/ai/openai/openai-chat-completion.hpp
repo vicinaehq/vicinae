@@ -81,16 +81,25 @@ struct Message {
   }
 };
 
+struct StreamOptions {
+  bool include_usage = true;
+};
+
 struct ChatRequest {
   std::string model;
   std::vector<Message> messages;
   std::optional<std::vector<AbstractTool::ToolSchema>> tools;
   std::optional<float> temperature;
   std::optional<std::string> reasoning_effort;
+  std::optional<int> max_tokens;
+  std::optional<int> max_completion_tokens;
+  std::optional<StreamOptions> stream_options;
   bool stream = true;
 
   static ChatRequest make(std::string_view model, const ChatCompletionPayload &payload) {
-    ChatRequest request{.model = std::string{model}, .temperature = payload.temperature};
+    ChatRequest request{.model = std::string{model},
+                        .temperature = payload.temperature,
+                        .max_tokens = payload.maxOutputTokens};
 
     request.messages.reserve(payload.messages.size());
     for (const auto &message : payload.messages) {
@@ -108,6 +117,17 @@ struct ChatRequest {
 };
 
 struct StreamChunk {
+  struct Usage {
+    struct PromptDetails {
+      std::optional<int> cached_tokens;
+    };
+    std::optional<int> prompt_tokens;
+    std::optional<int> completion_tokens;
+    std::optional<PromptDetails> prompt_tokens_details;
+  };
+
+  std::optional<Usage> usage;
+
   struct ReasoningDetail {
     std::string type;
   };
@@ -205,6 +225,15 @@ private:
       qWarning() << "Failed to parse chat completion chunk" << glz::format_error(error, json);
       emit errorOccurred(glz::format_error(error));
       return;
+    }
+
+    if (chunk.usage) {
+      const auto &usage = *chunk.usage;
+      const auto cached =
+          usage.prompt_tokens_details ? usage.prompt_tokens_details->cached_tokens : std::nullopt;
+      qInfo().nospace() << "AI usage: model=" << m_request.model
+                        << " input=" << usage.prompt_tokens.value_or(0) << " cached=" << cached.value_or(0)
+                        << " output=" << usage.completion_tokens.value_or(0);
     }
 
     if (chunk.choices.empty()) return;

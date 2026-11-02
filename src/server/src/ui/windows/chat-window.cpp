@@ -132,7 +132,7 @@ void ChatWindow::newChat() {
       return;
     }
   }
-  activateSession(new ChatSession(m_session ? m_session->selectedModel() : std::nullopt, this));
+  activateSession(new ChatSession(std::nullopt, this));
 }
 
 void ChatWindow::releaseIdleSessions() {

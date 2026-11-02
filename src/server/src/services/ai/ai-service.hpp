@@ -57,40 +57,6 @@ public:
     }
   }
 
-  QFuture<std::string> runCompletion(std::optional<ModelRef> ref,
-                                     const ChatCompletionPayload &payload) const {
-    auto promise = std::make_shared<QPromise<std::string>>();
-    auto future = promise->future();
-    m_currentCompletion = createChatCompletionImpl(std::move(ref), payload);
-
-    if (!m_currentCompletion) {
-      qWarning() << "runCompletion: failed to create completion";
-      return QtFuture::makeReadyValueFuture<std::string>("Could not start completion");
-    }
-
-    auto str = new std::string{};
-
-    m_currentCompletion->start();
-
-    connect(m_currentCompletion.get(), &AbstractChatCompletionStream::dataAdded, this,
-            [str](auto token) { *str += token; });
-
-    connect(m_currentCompletion.get(), &AbstractChatCompletionStream::errorOccurred, this,
-            [str, p = promise](const std::string &text) {
-              qDebug() << "failed to run completion" << text;
-              p->addResult(text);
-              p->finish();
-              delete str;
-            });
-    connect(m_currentCompletion.get(), &AbstractChatCompletionStream::finished, this, [str, p = promise]() {
-      p->addResult(*str);
-      p->finish();
-      delete str;
-    });
-
-    return future;
-  }
-
   QFuture<AI::Result<TranscriptionResponse>> transcribe(Audio::Recording recording, const QString &mime) {
     for (const auto &[id, provider] : m_providers) {
       if (const auto model = provider->findBestModel(Capability::Transcription)) {
@@ -132,6 +98,13 @@ public:
     return models;
   }
 
+  bool isAvailable(const ModelRef &ref, Capabilities caps) {
+    const auto models = listModels(caps);
+    return std::ranges::any_of(models, [&](const ProviderModel &model) {
+      return model.ref.provider == ref.provider && model.ref.id == ref.id;
+    });
+  }
+
   std::vector<AI::ProviderModel> modelsForProvider(std::string_view providerId) {
     auto it = m_providers.find(std::string(providerId));
     if (it == m_providers.end()) return {};
@@ -150,15 +123,7 @@ private:
       if (auto it = m_providers.find(ref->provider); it != m_providers.end()) {
         return it->second->createChatCompletion(ref->id, payload);
       }
-      return nullptr;
     }
-
-    for (const auto &[id, provider] : m_providers) {
-      if (const auto model = provider->findBestModel(AI::Capability::Completion)) {
-        return provider->createChatCompletion(model->id, payload);
-      }
-    }
-
     return nullptr;
   }
 
@@ -169,7 +134,5 @@ private:
   LocalStorageService &m_storage;
   std::map<std::string, ProviderInstance> m_instances;
   std::unordered_map<std::string, std::unique_ptr<AI::AbstractProvider>> m_providers;
-
-  mutable std::shared_ptr<AbstractChatCompletionStream> m_currentCompletion;
 };
 }; // namespace AI

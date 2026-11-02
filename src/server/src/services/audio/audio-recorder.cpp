@@ -113,10 +113,15 @@ bool Recorder::start() {
           << "Hz";
 
   m_source = std::make_unique<QAudioSource>(device, m_captureFormat, this);
+  connect(m_source.get(), &QAudioSource::stateChanged, this, [this] {
+    if (m_state == State::Recording && m_source && m_source->error() != QtAudio::NoError) {
+      emit errorOccurred(tr("The microphone stopped working"));
+    }
+  });
   m_ioDevice = m_source->start();
 
-  if (!m_ioDevice) {
-    emit errorOccurred("Failed to start audio recording");
+  if (!m_ioDevice || m_source->error() != QtAudio::NoError) {
+    emit errorOccurred(tr("Could not access the microphone"));
     m_source.reset();
     return false;
   }

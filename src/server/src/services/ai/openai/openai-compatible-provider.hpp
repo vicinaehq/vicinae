@@ -1,4 +1,6 @@
 #pragma once
+#include <chrono>
+#include <QTimer>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -62,12 +64,22 @@ protected:
 
   virtual Capabilities capabilitiesFor(std::string_view) const { return Capability::Completion; }
 
+  /**
+   * Everything but the model and audio. This is what the original OpenAI API accepts, which providers
+   * that follow it extend with their own fields.
+   */
+  virtual void addTranscriptionFields(http::FormData &form, std::string_view modelId,
+                                      const TranscriptionOptions &options) const;
+
   virtual openai::ChatRequest makeRequest(std::string_view modelId, const Model &,
                                           const ChatCompletionPayload &payload) const {
     return openai::ChatRequest::make(modelId, payload);
   }
 
 private:
+  static constexpr auto MIN_LIST_RETRY_DELAY = std::chrono::seconds(15);
+  static constexpr auto MAX_LIST_RETRY_DELAY = std::chrono::minutes(5);
+
   void handleModels();
 
   std::string m_id;
@@ -79,6 +91,8 @@ private:
   std::string m_name;
   std::string m_url;
   std::string m_apiKey;
+  QTimer m_listRetry;
+  std::chrono::seconds m_listRetryDelay = MIN_LIST_RETRY_DELAY;
   bool m_started = false;
 };
 

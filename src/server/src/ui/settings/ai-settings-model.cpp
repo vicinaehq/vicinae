@@ -248,6 +248,7 @@ AISettingsModel::AISettingsModel(QObject *parent) : QObject(parent) {
 
   if (auto *config = registry->config()) {
     connect(config, &config::Manager::configChanged, this, [this]() {
+      emit secretsEncryptedChanged();
       rebuildTypes();
       rebuildPage();
     });
@@ -570,6 +571,11 @@ void AISettingsModel::addProvider(const QString &type, const QVariantMap &fields
   auto configured = providers();
   configured[id] = std::move(instance);
   saveProviders(configured);
+}
+
+bool AISettingsModel::secretsEncrypted() const {
+  const auto *config = ServiceRegistry::instance()->config();
+  return !config || config->value().encryptSensitiveData;
 }
 
 void AISettingsModel::removeProvider(const std::string &id) {

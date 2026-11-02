@@ -1,3 +1,4 @@
+#include <chrono>
 #include "transcription-session.hpp"
 #include <QDateTime>
 #include <QDir>
@@ -5,6 +6,12 @@
 #include <qlogging.h>
 #include "services/ai/ai-service.hpp"
 #include "services/dictation/dictation-service.hpp"
+
+namespace {
+// Cloud APIs take 25 MB, which is about 13 minutes of what we upload. Going over transcribes what's there.
+constexpr auto MAX_RECORDING_DURATION = std::chrono::minutes(12);
+constexpr qint64 MIN_SALVAGED_MS = 1000;
+} // namespace
 
 TranscriptionSession::TranscriptionSession(DictationService &dictation, QObject *parent)
     : QObject(parent), m_dictation(dictation) {
@@ -19,10 +26,20 @@ TranscriptionSession::TranscriptionSession(DictationService &dictation, QObject 
   prepareSoundEffect(m_stopSound, QUrl(QStringLiteral("qrc:/sound/dictation-stop.wav")));
 
   connect(&m_elapsedTimer, &QTimer::timeout, this, &TranscriptionSession::elapsedTimeChanged);
+  m_recordingLimit.setSingleShot(true);
+  m_recordingLimit.setInterval(MAX_RECORDING_DURATION);
+  connect(&m_recordingLimit, &QTimer::timeout, this, &TranscriptionSession::accept);
   connect(&m_recorder, &Audio::Recorder::levelChanged, this, &TranscriptionSession::audioLevelChanged);
   connect(&m_recorder, &Audio::Recorder::stateChanged, this, &TranscriptionSession::stateChanged);
-  connect(&m_recorder, &Audio::Recorder::errorOccurred, this,
-          [this](const QString &message) { fail(message); });
+  connect(&m_recorder, &Audio::Recorder::errorOccurred, this, [this](const QString &message) {
+    // what was said before the microphone went away is still worth transcribing
+    if (m_recorder.state() == Audio::Recorder::State::Recording &&
+        m_recorder.elapsedMs() >= MIN_SALVAGED_MS) {
+      accept();
+    } else {
+      fail(message);
+    }
+  });
 }
 
 bool TranscriptionSession::start(TranscriptionSetup setup) {
@@ -40,6 +57,7 @@ bool TranscriptionSession::start(TranscriptionSetup setup) {
   }
 
   m_elapsedTimer.start();
+  m_recordingLimit.start();
   emit elapsedTimeChanged();
   if (m_setup.playSoundEffects) m_startSound.play();
   m_dictation.ai().preloadModel(m_setup.model);
@@ -47,8 +65,16 @@ bool TranscriptionSession::start(TranscriptionSetup setup) {
 }
 
 void TranscriptionSession::cancel() {
-  if (m_transcribing || m_recorder.state() == Audio::Recorder::State::Idle) return;
+  if (m_transcribing) {
+    ++m_transcriptionId;
+    m_transcribing = false;
+    emit stateChanged();
+    emit cancelled();
+    return;
+  }
+  if (m_recorder.state() == Audio::Recorder::State::Idle) return;
   m_elapsedTimer.stop();
+  m_recordingLimit.stop();
   m_recorder.discard();
   m_pauseHandle.reset();
   m_dictation.ai().cancelPreload(m_setup.model);
@@ -60,6 +86,7 @@ void TranscriptionSession::accept() {
   if (m_transcribing || m_recorder.state() == Audio::Recorder::State::Idle) return;
 
   m_elapsedTimer.stop();
+  m_recordingLimit.stop();
   m_durationMs = m_recorder.elapsedMs();
   m_transcribeTimer.start();
   m_recorder.stop();
@@ -105,13 +132,15 @@ void TranscriptionSession::accept() {
 
   m_dictation.ai()
       .transcribe(m_setup.model, std::move(recording), options)
-      .then(this, [this](const AI::TranscriptionResult &result) {
+      .then(this, [this, id = ++m_transcriptionId](const AI::TranscriptionResult &result) {
+        if (id != m_transcriptionId) return;
         qInfo() << "Dictation: transcribed" << m_durationMs << "ms of audio in" << m_transcribeTimer.elapsed()
                 << "ms";
         m_transcribing = false;
         emit stateChanged();
 
         if (!result) {
+          qWarning() << "Dictation: transcription failed:" << result.error();
           fail(tr("Transcription failed"));
           return;
         }
@@ -137,6 +166,7 @@ QString TranscriptionSession::elapsedTime() const {
 
 void TranscriptionSession::fail(const QString &message) {
   m_elapsedTimer.stop();
+  m_recordingLimit.stop();
   if (m_recorder.state() != Audio::Recorder::State::Idle) m_recorder.discard();
   m_pauseHandle.reset();
   emit stateChanged();

@@ -34,6 +34,9 @@ target_include_directories(${INFERENCE_BIN} PRIVATE
 	${GENOUT}
 )
 
+# Model paths arrive as UTF-8, which whisper and parakeet open with the process code page.
+vicinae_enable_utf8(${INFERENCE_BIN})
+
 target_link_libraries(${INFERENCE_BIN} PRIVATE
 	glaze::glaze
 	whisper

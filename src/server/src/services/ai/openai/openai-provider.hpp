@@ -11,6 +11,8 @@ public:
 
 protected:
   Capabilities capabilitiesFor(std::string_view id) const override;
+  void addTranscriptionFields(http::FormData &form, std::string_view modelId,
+                              const TranscriptionOptions &options) const override;
   openai::ChatRequest makeRequest(std::string_view modelId, const Model &model,
                                   const ChatCompletionPayload &payload) const override;
 };

@@ -260,6 +260,23 @@ FocusScope {
 
         ViciButton {
             Layout.alignment: Qt.AlignVCenter
+            visible: root.transcribing
+            implicitWidth: root._controlHeight
+            implicitHeight: root._controlHeight
+            radius: root._controlHeight / 2
+            color: hovered ? Theme.listItemHoverBg : "transparent"
+            iconSize: 14
+            iconSource: Img.icon(BuiltinIcon.Xmark).withFillColor(Theme.textMuted)
+            accessibleName: qsTr("Cancel transcription")
+            activeFocusOnTab: true
+            onClicked: root.dictationCancelled()
+            ToolTip.visible: hovered
+            ToolTip.text: accessibleName
+            ToolTip.delay: 600
+        }
+
+        ViciButton {
+            Layout.alignment: Qt.AlignVCenter
             visible: !root.transcribing
             implicitWidth: root._controlHeight
             implicitHeight: root._controlHeight

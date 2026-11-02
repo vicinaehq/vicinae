@@ -69,6 +69,9 @@ private:
   std::vector<std::string_view> m_vocabulary;
   Audio::Recorder m_recorder;
   QTimer m_elapsedTimer;
+  QTimer m_recordingLimit;
+  // A cancelled transcription still answers at some point, this tells it apart from the current one.
+  int m_transcriptionId = 0;
   QElapsedTimer m_transcribeTimer;
   bool m_transcribing = false;
   qint64 m_durationMs = 0;

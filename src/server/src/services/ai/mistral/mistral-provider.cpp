@@ -1,9 +1,12 @@
 #include "mistral-provider.hpp"
+#include <algorithm>
 #include <ranges>
 
 namespace AI {
 
 namespace {
+
+constexpr std::size_t MAX_CONTEXT_BIAS_ENTRIES = 100;
 
 Model toModel(const mistral::ListModelsResponse::ModelInfo &info) {
   Model model;
@@ -24,6 +27,15 @@ Model toModel(const mistral::ListModelsResponse::ModelInfo &info) {
 
 MistralProvider::MistralProvider(std::string id)
     : OpenAICompatibleProvider(std::move(id), "mistral", "https://api.mistral.ai/v1") {}
+
+void MistralProvider::addTranscriptionFields(http::FormData &form, std::string_view,
+                                             const TranscriptionOptions &options) const {
+  if (options.language) form.addField("language", QByteArray::fromStdString(*options.language));
+
+  const auto words = options.vocabulary.last(std::min(options.vocabulary.size(), MAX_CONTEXT_BIAS_ENTRIES));
+  for (const auto word : words)
+    form.addField("context_bias", QByteArray(word.data(), static_cast<qsizetype>(word.size())));
+}
 
 QFuture<Result<ModelList>> MistralProvider::fetchModels() {
   return client().get<mistral::ListModelsResponse>("models").then(

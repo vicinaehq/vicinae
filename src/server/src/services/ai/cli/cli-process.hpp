@@ -4,6 +4,7 @@
 #include <string_view>
 #include <QByteArray>
 #include <QObject>
+#include <QProcessEnvironment>
 #include <QProcess>
 #include <QStringList>
 
@@ -19,6 +20,13 @@ std::optional<QString> findCliExecutable(std::string_view configured, const QStr
  * Directory the agent CLIs run from. It stays empty, so that nothing in it can leak into a conversation.
  */
 QString cliWorkingDirectory();
+
+/**
+ * The system environment, with the places tools usually get installed to at the end of PATH. Apps started by
+ * the desktop rather than a shell don't get what shell profiles add, such as nvm or Homebrew, and a CLI
+ * installed through npm needs to find node. The directory of `executable` goes first, if there's one.
+ */
+QProcessEnvironment cliProcessEnvironment(const QString &executable = {});
 
 /**
  * A child process speaking newline-delimited JSON over stdio.
