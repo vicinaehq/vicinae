@@ -3,6 +3,7 @@
 #include <cstring>
 #include <utility>
 #include <QElapsedTimer>
+#include <QProcessEnvironment>
 #include <qlogging.h>
 #include "common/common.hpp"
 
@@ -15,6 +16,17 @@ constexpr int SAMPLE_RATE = 16000;
 // Covers a cold model load plus inference well below real time; anything slower is a stalled helper.
 constexpr auto TIMEOUT_BASE = std::chrono::seconds{30};
 constexpr int TIMEOUT_PER_AUDIO_SECOND = 2;
+
+// Overlays such as MangoHud inject themselves through Vulkan layers and crash this windowless process.
+// The generic variable needs a recent Vulkan loader, so the AppImage's only honors the specific one.
+QProcessEnvironment helperEnvironment() {
+  auto environment = QProcessEnvironment::systemEnvironment();
+  if (!environment.contains("VK_LOADER_LAYERS_DISABLE")) {
+    environment.insert("VK_LOADER_LAYERS_DISABLE", "~implicit~");
+  }
+  if (!environment.contains("DISABLE_MANGOHUD")) environment.insert("DISABLE_MANGOHUD", "1");
+  return environment;
+}
 
 std::optional<inference_gen::Engine> toEngine(LocalEngine engine) {
   switch (engine) {
@@ -178,6 +190,7 @@ bool InferenceRuntime::ensureRunning() {
   }
 
   m_process.setProgram(QString::fromStdString(path->string()));
+  m_process.setProcessEnvironment(helperEnvironment());
   m_process.start();
 
   if (!m_process.waitForStarted()) {
