@@ -11,6 +11,7 @@ class DetailListViewHost : public ListViewHost {
   QML_UNCREATABLE("")
   Q_PROPERTY(bool hasDetail READ hasDetail NOTIFY detailChanged)
   Q_PROPERTY(QString detailContent READ detailContent NOTIFY detailChanged)
+  Q_PROPERTY(QString detailMarkdown READ detailMarkdown NOTIFY detailChanged)
   Q_PROPERTY(QUrl detailContentUrl READ detailContentUrl NOTIFY detailChanged)
   Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailChanged)
   Q_PROPERTY(QString emptyTitle READ emptyTitle CONSTANT)
@@ -23,6 +24,7 @@ signals:
 public:
   virtual bool hasDetail() const = 0;
   virtual QString detailContent() const = 0;
+  virtual QString detailMarkdown() const { return {}; }
   virtual QUrl detailContentUrl() const { return {}; }
   virtual QVariantList detailMetadata() const = 0;
 
