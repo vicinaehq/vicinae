@@ -55,6 +55,8 @@ struct Service {
   std::string_view name;
   std::vector<Method> methods;
   std::vector<Event> events;
+  // implemented by the client, called by the server
+  std::vector<Method> clientMethods;
 };
 
 struct StructField {
@@ -74,6 +76,7 @@ struct Tree {
 };
 
 class Parser {
+  static constexpr std::string_view CLIENT_KEYWORD = "client";
 
   static std::string highlightError(std::string_view data, int line, int col) {
     static int padding = 2;
@@ -195,8 +198,14 @@ public:
         service->methods.emplace_back(parseMethod());
       } else if (tok->type == TokenKind::Event) {
         service->events.emplace_back(parseEvent());
+      } else if (tok->type == TokenKind::Identifier && tok->data == CLIENT_KEYWORD) {
+        // contextual keyword, so that "client" remains usable as an identifier elsewhere
+        m_lexer.getNext();
+        auto method = parseMethod();
+        if (method.isAsync) throw std::runtime_error("client methods cannot be marked async");
+        service->clientMethods.emplace_back(std::move(method));
       } else {
-        throw std::runtime_error(R"(Expected "fn" or "event" keyword in service)");
+        throw std::runtime_error(R"(Expected "fn", "client fn" or "event" keyword in service)");
       }
     }
 

@@ -46,9 +46,8 @@ protected:
   std::unique_ptr<ActionPanelState> emptyActionPanel() override;
 
 private:
-  enum class Access : std::uint8_t { Granted, NeedsPermission, NeedsUpdate, NoBrowser };
+  using Access = BrowserExtensionService::PermissionAccess;
 
-  Access computeAccess() const;
   void handleBrowsersChanged();
   void reload();
   void rebuildFolderFilter();

@@ -44,19 +44,8 @@ using OutgoingJsonRpcMessage = std::variant<JsonRpcResponse, JsonRpcNotification
 
 class AbstractTransport {
 public:
-  // Emit raw bytes to the current target. The transport implementation is
-  // responsible for knowing which peer "current" refers to; the router only
-  // informs the transport of reply-routing transitions via the hooks below.
+  // Transports are bound to a single peer.
   virtual void send(std::string_view data) = 0;
-  // Called while a request is being dispatched, with its id. Implementations
-  // should snapshot the originating peer under this id so that a later
-  // `activateReply(id)` can restore it, even after other frames have been
-  // processed in between (the async reply case).
-  virtual void bindReply(int id) { (void)id; }
-  // Called immediately before writing a reply/error for `id`. Implementations
-  // should switch their "current target" to the peer previously bound under
-  // `id` and release the binding.
-  virtual void activateReply(int id) { (void)id; }
   virtual ~AbstractTransport() = default;
 };
 
@@ -212,75 +201,6 @@ private:
 
 constexpr const auto BASE = R"(
 
-
-class RpcTransport {
-	public:
-		RpcTransport(AbstractTransport& transport): m_transport(transport) {}
-
-		void bindReply(int id) { m_transport.bindReply(id); }
-
-		template <typename T>
-		void notify(std::string_view method, const T& params) {
-			std::string paramsBuf;
-			{
-			[[maybe_unused]] auto res = glz::write_json(params, paramsBuf);
-			}
-
-			send(JsonRpcNotification{
-				.jsonrpc = "2.0",
-				.method = std::string{method},
-				.params = paramsBuf
-			});
-		}
-
-		template <typename T>
-		void reply(int id, const T& result) {
-			std::string resultBuf;
-			{
-			[[maybe_unused]] auto res = glz::write_json(result, resultBuf);
-			}
-
-			m_transport.activateReply(id);
-			send(JsonRpcResponse{
-				.id = id,
-				.jsonrpc = "2.0",
-				.result = resultBuf
-			});
-		}
-
-		void replyError(int id, const std::string& error) {
-			m_transport.activateReply(id);
-			send(JsonRpcErrorResponse{.jsonrpc = "2.0", .id = id, .error = error});
-		}
-
-	private:
-		void send(const OutgoingJsonRpcMessage& msg) {
-			std::string buf;
-			[[maybe_unused]] auto res = glz::write_json(msg, buf);
-			m_transport.send(buf);
-		}
-
-		AbstractTransport& m_transport;
-};
-
-class EventEmitter: public QObject {
-	public:
-		EventEmitter(RpcTransport& transport): m_transport(transport) {
-		}
-
-		void setLogger(AbstractLogger* logger) { m_logger = logger; }
-
-		template <typename T>
-		void emitEvent(std::string_view name, const T& params) {
-			if (m_logger) m_logger->onEvent(name);
-			m_transport.notify(name, params);
-		}
-
-	private:
-		AbstractLogger* m_logger = nullptr;
-		RpcTransport& m_transport;
-};
-
 template <typename T>
 struct Result {
 	using Type = std::expected<T, std::string>;
@@ -307,6 +227,159 @@ struct Result<void> {
 	static Future fail(std::string error) {
 		return QtFuture::makeReadyValueFuture<Type>(std::unexpected(std::move(error)));
 	}
+};
+
+static constexpr std::chrono::milliseconds DEFAULT_CALL_TIMEOUT{5000};
+
+struct RpcIncomingMessage {
+  std::optional<int> id;
+  std::optional<std::string> method;
+  std::optional<std::string> error;
+  glz::raw_json result;
+  glz::raw_json params;
+};
+
+class RpcTransport {
+	using CallHandler = std::function<void(std::expected<std::string_view, std::string>)>;
+
+	public:
+		RpcTransport(AbstractTransport& transport): m_transport(transport) {}
+		RpcTransport(const RpcTransport&) = delete;
+		RpcTransport& operator=(const RpcTransport&) = delete;
+
+		~RpcTransport() {
+			for (auto& handler : std::exchange(m_pendingCalls, {}) | std::views::values) {
+				handler(std::unexpected("Connection closed"));
+			}
+		}
+
+		// Call a method implemented by the peer.
+		template <typename T, typename U>
+		typename Result<T>::Future call(std::string_view method, const U& params, std::chrono::milliseconds timeout) {
+			std::string paramsBuf;
+			if (auto const error = glz::write_json(params, paramsBuf)) {
+				return Result<T>::fail(glz::format_error(error));
+			}
+
+			const int id = m_callId++;
+			auto promise = std::make_shared<QPromise<typename Result<T>::Type>>();
+			auto future = promise->future();
+
+			promise->start();
+			m_pendingCalls.insert({id, [promise](std::expected<std::string_view, std::string> data) {
+				if constexpr (std::is_void_v<T>) {
+					if (data) promise->addResult({});
+					else promise->addResult(std::unexpected(std::move(data).error()));
+				} else {
+					promise->addResult(data.and_then([](std::string_view data) -> typename Result<T>::Type {
+						T payload;
+						if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(payload, data)) {
+							return std::unexpected(glz::format_error(error));
+						}
+						return payload;
+					}));
+				}
+				promise->finish();
+			}});
+
+			send(JsonRpcRequest{.jsonrpc = "2.0", .method = std::string{method}, .id = id, .params = std::move(paramsBuf)});
+
+			QTimer::singleShot(timeout, &m_timerContext, [this, id, method = std::string{method}]() {
+				failCall(id, std::format("{} timed out", method));
+			});
+
+			return future;
+		}
+
+		void resolveCall(int id, std::optional<std::string> error, std::string_view result) {
+			auto it = m_pendingCalls.find(id);
+
+			if (it == m_pendingCalls.end()) return;
+
+			auto handler = std::move(it->second);
+			m_pendingCalls.erase(it);
+
+			if (error) handler(std::unexpected(std::move(*error)));
+			else handler(result);
+		}
+
+		template <typename T>
+		void notify(std::string_view method, const T& params) {
+			std::string paramsBuf;
+			{
+			[[maybe_unused]] auto res = glz::write_json(params, paramsBuf);
+			}
+
+			send(JsonRpcNotification{
+				.jsonrpc = "2.0",
+				.method = std::string{method},
+				.params = paramsBuf
+			});
+		}
+
+		template <typename T>
+		void reply(int id, const T& result) {
+			std::string resultBuf;
+			{
+			[[maybe_unused]] auto res = glz::write_json(result, resultBuf);
+			}
+
+			send(JsonRpcResponse{
+				.id = id,
+				.jsonrpc = "2.0",
+				.result = resultBuf
+			});
+		}
+
+		void replyError(int id, const std::string& error) {
+			send(JsonRpcErrorResponse{.jsonrpc = "2.0", .id = id, .error = error});
+		}
+
+	private:
+		void failCall(int id, std::string error) {
+			auto it = m_pendingCalls.find(id);
+
+			if (it == m_pendingCalls.end()) return;
+
+			auto handler = std::move(it->second);
+			m_pendingCalls.erase(it);
+			handler(std::unexpected(std::move(error)));
+		}
+
+		template <typename M>
+		void send(const M& msg) {
+			std::string buf;
+			[[maybe_unused]] auto res = glz::write_json(msg, buf);
+			m_transport.send(buf);
+		}
+
+		AbstractTransport& m_transport;
+		QObject m_timerContext;
+		std::unordered_map<int, CallHandler> m_pendingCalls;
+		int m_callId = 1;
+};
+
+class EventEmitter: public QObject {
+	public:
+		EventEmitter(RpcTransport& transport): m_transport(transport) {
+		}
+
+		void setLogger(AbstractLogger* logger) { m_logger = logger; }
+
+		template <typename T>
+		void emitEvent(std::string_view name, const T& params) {
+			if (m_logger) m_logger->onEvent(name);
+			m_transport.notify(name, params);
+		}
+
+		template <typename T, typename U>
+		typename Result<T>::Future callMethod(std::string_view name, const U& params, std::chrono::milliseconds timeout) {
+			return m_transport.call<T>(name, params, timeout);
+		}
+
+	private:
+		AbstractLogger* m_logger = nullptr;
+		RpcTransport& m_transport;
 };
 
 template <typename T, typename U>
@@ -437,6 +510,28 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
       oss << "\n}\n";
     }
 
+    for (const auto &m : s.clientMethods) {
+      auto returnType = serializeTypename(m.returnType);
+
+      oss << "\t" << "Result<" << returnType << ">::Future call" << m.name << "(";
+      for (const auto &param : m.params) {
+        oss << constRef(param.type) << " " << param.name << ", ";
+      }
+      oss << "std::chrono::milliseconds timeout = DEFAULT_CALL_TIMEOUT) {\n";
+
+      std::string methodId = std::format("{}/{}", s.name, m.name);
+
+      oss << "\t\treturn callMethod<" << returnType << ">(" << std::quoted(methodId) << ", "
+          << getMethodParamName(s.name, m.name) << "{";
+      for (const auto &[idx, param] : m.params | vicinae::enumerate) {
+        if (idx > 0) oss << ", ";
+        oss << "." << param.name << " = " << param.name;
+      }
+      oss << "}, timeout);";
+
+      oss << "\n}\n";
+    }
+
     oss << "\n};\n";
 
     return oss.str();
@@ -501,6 +596,10 @@ class GlazeQtGenerator : public AbstractCodeGenerator {
       for (const auto &m : s->methods) {
         oss << serializeMethodParams(s->name, m);
       }
+
+      for (const auto &m : s->clientMethods) {
+        oss << serializeMethodParams(s->name, m);
+      }
     }
   }
 
@@ -543,6 +642,12 @@ public:
 
     auto const ns =
         opts.generationNamespace.value_or(std::string{stripExtension(opts.file.filename().string())});
+
+    for (const auto &s : ast.services) {
+      if (!s->clientMethods.empty())
+        throw std::runtime_error(
+            std::format("{}: client methods are not supported by the glaze-qt client generator", s->name));
+    }
 
     oss << "namespace " << ns << " {\n";
 
@@ -669,7 +774,15 @@ oss << serializeEventParams(s->name, e);
 #include <chrono>
 #include <QFuture>
 #include <QFutureWatcher>
+#include <QPromise>
+#include <QTimer>
 #include <expected>
+#include <format>
+#include <functional>
+#include <optional>
+#include <ranges>
+#include <unordered_map>
+#include <utility>
 #include <memory>
 #include <glaze/glaze.hpp>
 #include <glaze/json/read.hpp>
@@ -724,10 +837,16 @@ oss << serializeEventParams(s->name, e);
 	}
 
 	void route(std::string_view data) {
-		JsonRpcRequest msg;
+		RpcIncomingMessage msg;
 		if (auto const error = glz::read<glz::opts{.error_on_unknown_keys = false}>(msg, data)) { return; }
-		if (msg.method.empty()) return;
-		dispatch(msg);
+
+		// error responses carry an empty method
+		if (msg.method && !msg.method->empty()) {
+			dispatch(JsonRpcRequest{.jsonrpc = "2.0", .method = std::move(*msg.method), .id = msg.id.value_or(0), .params = std::move(msg.params)});
+			return;
+		}
+
+		if (msg.id) m_transport.resolveCall(*msg.id, std::move(msg.error), msg.result.str);
 	}
 	)";
 
@@ -762,11 +881,6 @@ oss << serializeEventParams(s->name, e);
 			replyWatcher(id, method, sentAt, future);
 			return;
 		}
-
-		// Snapshot the originating peer now, while we are still in the
-		// dispatch call stack, so the transport can route the reply correctly
-		// when the future resolves asynchronously.
-		m_transport.bindReply(id);
 
 		auto watcher = new QFutureWatcher<T>(this);
 		auto methodStr = std::string{method};
