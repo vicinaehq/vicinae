@@ -93,7 +93,11 @@ public:
           out << "  ";
         }
 
-        out << opt->get_description() << "\n";
+        out << opt->get_description();
+
+        if (const auto env = opt->get_envname(); !env.empty()) { out << " [env: " << env << "]"; }
+
+        out << "\n";
       }
       out << "\n";
     }
