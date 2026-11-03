@@ -48,7 +48,7 @@ Item {
         flickable: chatFlick
         topInset: root.topInset
         bottomInset: root.bottomInset
-        topPadding: (root.compact ? 12 : 16) + root.topOverlayHeight
+        topPadding: root.compact ? 12 : 16
         bottomPadding: root.bottomPadding
         resetOnInitialization: false
 

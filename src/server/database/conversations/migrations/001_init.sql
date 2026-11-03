@@ -75,7 +75,7 @@ CREATE TABLE tool_call (
     name TEXT NOT NULL,
     arguments TEXT NOT NULL,
     summary TEXT,
-    status TEXT NOT NULL CHECK(status IN ('queued', 'running', 'succeeded', 'failed', 'cancelled', 'interrupted')),
+    status TEXT NOT NULL,
     duration_ms INTEGER
 );
 

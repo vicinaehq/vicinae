@@ -97,7 +97,7 @@ const loadEnviron = (
 			if (api === BrowserExtension) return data.capabilities.browserExtension;
 			if (api === Wallpaper) return data.capabilities.wallpaper;
 			if (api === FileSearch) return data.capabilities.fileSearch;
-			if (api === AI) return false; // not supported yet
+			if (api === AI) return true;
 
 			return false;
 		},
