@@ -167,6 +167,9 @@ class ExtensionManager extends manager.ManagerService {
 			}
 
 			this.workerMap.delete(sessionId);
+			if (workerInfo.status === "unloading") {
+				this.emit_extensionUnloaded(sessionId);
+			}
 		});
 
 		logger.info(`Loaded extension ${workerInfo.displayId}`);
