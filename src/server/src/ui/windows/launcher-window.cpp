@@ -26,7 +26,9 @@
 #include "builtins/vicinae/bug-report-url.hpp"
 #include "builtins/vicinae/vicinae-store-view-host.hpp"
 #include "builtins/ai/ai.hpp"
-#include "builtins/ai/quick-ai-preferences.hpp"
+#include "builtins/ai/ai.hpp"
+#include "services/ai/ai-preferences.hpp"
+#include "services/ai/ai-service.hpp"
 #include "services/ai/ai-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/settings/settings-controller.hpp"
@@ -636,11 +638,9 @@ void LauncherWindow::refreshQuickAIAvailability() {
 
   const bool enabled = (provider == providers.end() || provider->second.enabled.value_or(true)) &&
                        root->itemMetadata(id).enabled;
-  const auto values = root->getPreferenceValues(id);
-  const auto *model = preferences::find(values, "model");
+  const auto model = AI::defaultModel(*services->config());
 
-  m_quickAIAvailable = enabled && model && model->is_string() &&
-                       QuickAI::availableModel(*services->ai(), model->get_string()).has_value();
+  m_quickAIAvailable = enabled && model && services->ai()->isAvailable(*model, AI::Capability::Completion);
   updateCanAskAI();
 }
 

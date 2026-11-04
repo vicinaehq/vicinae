@@ -67,9 +67,8 @@ std::string chatSystemPrompt() {
 }
 } // namespace
 
-ChatSession::ChatSession(std::optional<AI::ModelRef> model, QObject *parent)
-    : QObject(parent), m_selectedModel(std::move(model)), m_remembersModel(!m_selectedModel) {
-  if (m_remembersModel) m_selectedModel = AI::preferredChatModel(*ServiceRegistry::instance()->config());
+ChatSession::ChatSession(QObject *parent)
+    : QObject(parent), m_selectedModel(AI::defaultModel(*ServiceRegistry::instance()->config())) {
   m_store = ServiceRegistry::instance()->conversations();
   connect(m_store, &AI::ConversationStore::titleChanged, this,
           [this](const QString &id, const QString &title) {
@@ -274,9 +273,11 @@ bool ChatSession::canSend() const {
          m_attachments.ready() && (!needsVision() || modelSupports(AI::Capability::Vision));
 }
 
+bool ChatSession::needsModel() const { return !modelSupports(AI::Capability::Completion); }
+
 QString ChatSession::attachmentMessage() const {
   if (m_removed) return tr("This conversation was deleted.");
-  if (!modelSupports(AI::Capability::Completion)) return tr("Choose a model to start chatting.");
+  if (needsModel()) return {};
   if (needsVision() && !modelSupports(AI::Capability::Vision))
     return tr("Choose a model that supports images for this conversation.");
   return m_attachments.error();
@@ -344,7 +345,8 @@ void ChatSession::selectModel(const QString &compositeId) {
   if (!ref) return;
 
   m_selectedModel = std::move(*ref);
-  if (m_remembersModel) AI::setPreferredChatModel(*ServiceRegistry::instance()->config(), *m_selectedModel);
+  auto &config = *ServiceRegistry::instance()->config();
+  if (!AI::defaultModel(config)) AI::setDefaultModel(config, *m_selectedModel);
   if (m_conversation) {
     m_conversation->model = m_selectedModel;
     m_store->setModel(m_conversation->id, m_selectedModel);

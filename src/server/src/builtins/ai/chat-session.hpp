@@ -35,6 +35,7 @@ class ChatSession : public QObject {
   Q_PROPERTY(AttachmentModel *attachments READ attachments CONSTANT)
   Q_PROPERTY(bool canSend READ canSend NOTIFY attachmentStateChanged)
   Q_PROPERTY(QString attachmentMessage READ attachmentMessage NOTIFY attachmentStateChanged)
+  Q_PROPERTY(bool needsModel READ needsModel NOTIFY attachmentStateChanged)
   Q_PROPERTY(QString modelLabel READ modelLabel NOTIFY modelChanged)
   Q_PROPERTY(ImageUrl modelIcon READ modelIcon NOTIFY modelChanged)
   Q_PROPERTY(QVariantList modelSelectorItems READ modelSelectorItems NOTIFY modelSelectorItemsChanged)
@@ -78,7 +79,7 @@ signals:
   void modelSelectorCurrentItemChanged();
 
 public:
-  explicit ChatSession(std::optional<AI::ModelRef> model = std::nullopt, QObject *parent = nullptr);
+  explicit ChatSession(QObject *parent = nullptr);
   ~ChatSession() override;
   void load(std::string id);
   const std::optional<AI::ModelRef> &selectedModel() const { return m_selectedModel; }
@@ -104,6 +105,7 @@ public:
   AttachmentModel *attachments() { return &m_attachments; }
   bool canSend() const;
   QString attachmentMessage() const;
+  bool needsModel() const;
   QString modelLabel() const { return m_modelLabel; }
   ImageUrl modelIcon() const { return m_modelIcon; }
   QVariantList modelSelectorItems() const { return m_modelSelectorItems; }
@@ -168,7 +170,6 @@ private:
 
   std::optional<AI::ModelRef> m_selectedModel;
   // Picking a model makes it the default for new chats, unless the session was given a specific one.
-  bool m_remembersModel = false;
   QVariantList m_modelSelectorItems;
   QVariantMap m_modelSelectorCurrentItem;
 };

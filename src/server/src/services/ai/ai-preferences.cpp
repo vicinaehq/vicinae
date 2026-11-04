@@ -13,24 +13,24 @@ const glz::generic *findPreference(const config::Manager &config, std::string_vi
   return preferences::find(*it->second.preferences, key);
 }
 
-std::optional<ModelRef> preferredChatModel(const config::Manager &config) {
-  const auto *value = findPreference(config, CHAT_MODEL_PREFERENCE);
+std::optional<ModelRef> defaultModel(const config::Manager &config) {
+  const auto *value = findPreference(config, DEFAULT_MODEL_PREFERENCE);
   if (!value || !value->is_string()) return std::nullopt;
   auto ref = ModelRef::fromString(value->get_string());
   if (!ref) return std::nullopt;
   return std::move(*ref);
 }
 
-void setPreferredChatModel(config::Manager &config, const ModelRef &model) {
+void setDefaultModel(config::Manager &config, const ModelRef &model) {
   config.updateUser([&](config::Partial<config::ConfigValue> &user) {
     if (!user.providers) user.providers.emplace();
     auto &extension = (*user.providers)[std::string(EXTENSION_ID)];
     if (!extension.preferences) extension.preferences.emplace();
-    (*extension.preferences)[std::string(CHAT_MODEL_PREFERENCE)] = model.toString();
+    (*extension.preferences)[std::string(DEFAULT_MODEL_PREFERENCE)] = model.toString();
   });
 }
 
-std::vector<::Preference::DropdownData::Section> chatModelSections() {
+std::vector<::Preference::DropdownData::Section> defaultModelSections() {
   return buildModelDropdownSections(ServiceRegistry::instance()->ai(), Capability::Completion);
 }
 

@@ -229,6 +229,7 @@ FocusScope {
             popupSurface: "modelSelector"
             popupFollowsTrigger: true
             popupMinimumWidth: Math.min(320, root.width)
+            placeholder: qsTr("Choose a model")
             items: root.modelItems
             currentItem: root.currentModel
             onActivated: item => root.modelActivated(item)

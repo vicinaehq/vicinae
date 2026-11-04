@@ -17,7 +17,7 @@ namespace AI {
 
 constexpr auto EXTENSION_ID = std::string_view("ai");
 constexpr auto PROVIDERS_PREFERENCE = std::string_view("providers");
-constexpr auto CHAT_MODEL_PREFERENCE = std::string_view("chatModel");
+constexpr auto DEFAULT_MODEL_PREFERENCE = std::string_view("defaultModel");
 
 struct ProviderInstance {
   std::string type;
@@ -30,18 +30,18 @@ struct ProviderInstance {
 const glz::generic *findPreference(const config::Manager &config, std::string_view key);
 
 /**
- * The model new AI chats start with, which is also what extensions get when they don't ask for one.
- * Whether it can currently be used is up to the caller to check.
+ * The model new conversations start with in AI Chat and Quick AI, which is also what extensions get when
+ * they don't ask for one. Whether it can currently be used is up to the caller to check.
  */
-std::optional<ModelRef> preferredChatModel(const config::Manager &config);
-void setPreferredChatModel(config::Manager &config, const ModelRef &model);
-std::vector<::Preference::DropdownData::Section> chatModelSections();
+std::optional<ModelRef> defaultModel(const config::Manager &config);
+void setDefaultModel(config::Manager &config, const ModelRef &model);
+std::vector<::Preference::DropdownData::Section> defaultModelSections();
 
 } // namespace AI
 
 struct AiPreferences {
   std::map<std::string, AI::ProviderInstance> providers;
-  std::string chatModel;
+  std::string defaultModel;
   std::string instructions;
   bool enableTools = true;
 };
@@ -53,12 +53,12 @@ template <> struct PreferenceSchema<AiPreferences> {
       .component = QStringLiteral("AISettingsPage"),
       .kind = PreferenceMeta::Kind::Custom,
   };
-  PreferenceMeta chatModel{
-      .title = tr("AI Chat model"),
-      .description = tr("The model new AI chats start with, also used by extensions that don't ask for a "
-                        "specific one. Choosing a model in AI Chat updates it."),
+  PreferenceMeta defaultModel{
+      .title = tr("Default model"),
+      .description = tr("The model new conversations start with in AI Chat and Quick AI, also used by "
+                        "extensions that don't ask for a specific one."),
       .required = false,
-      .sections = AI::chatModelSections,
+      .sections = AI::defaultModelSections,
   };
   PreferenceMeta instructions{
       .title = tr("Custom instructions"),

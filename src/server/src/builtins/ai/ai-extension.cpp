@@ -10,13 +10,7 @@
 #include "ui/windows/chat-window.hpp"
 #include "ui/views/intro-view-host.hpp"
 
-namespace {
-
-const auto SELECT_MODEL_ICON = ImageURL(QuickAI::ICON).setBadge(BuiltinIcon::Cog);
-
-} // namespace
-
-void QuickAICommand::execute(const Controller &controller) const {
+void QuickAICommand::execute(CommandController &controller) const {
   auto *ctx = controller.context();
   const auto models = ctx->services->ai()->listModels(AI::Capability::Completion);
 
@@ -31,21 +25,8 @@ void QuickAICommand::execute(const Controller &controller) const {
     return;
   }
 
-  const auto ref = QuickAI::availableModel(*ctx->services->ai(), controller.preferences().model);
-
-  if (!ref) {
-    ctx->navigation->pushView(new IntroViewHost(
-        tr("Choose a model"),
-        tr("Pick the model Quick AI should use from its settings. You can change it at any time."),
-        SELECT_MODEL_ICON, tr("Open Quick AI Settings"), [ctx, id = uniqueId()]() {
-          ctx->settings->openExtensionPreferences(id);
-          ctx->navigation->closeWindow();
-        }));
-    return;
-  }
-
   const auto query = controller.launchProps().fallbackText.value_or(QString());
-  ctx->navigation->pushView(new QuickAIViewHost(query, *ref));
+  ctx->navigation->pushView(new QuickAIViewHost(query));
 }
 
 void AiExtension::preferencesChanged(const AiPreferences &preferences) const {

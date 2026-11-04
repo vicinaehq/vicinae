@@ -132,7 +132,7 @@ void ChatWindow::newChat() {
       return;
     }
   }
-  activateSession(new ChatSession(std::nullopt, this));
+  activateSession(new ChatSession(this));
 }
 
 void ChatWindow::releaseIdleSessions() {
@@ -156,7 +156,7 @@ void ChatWindow::openConversation(const QString &id) {
   }
   cancelPending();
   clearError();
-  auto *session = new ChatSession(std::nullopt, this);
+  auto *session = new ChatSession(this);
   m_pending = session;
   emit loadingChanged();
   connect(session, &ChatSession::conversationLoaded, this, [this, session] {

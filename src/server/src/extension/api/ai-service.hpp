@@ -44,11 +44,11 @@ public:
 
       model = std::move(*ref);
     } else {
-      model = AI::preferredChatModel(*ServiceRegistry::instance()->config());
+      model = AI::defaultModel(*ServiceRegistry::instance()->config());
 
       if (!model || !m_ai.isAvailable(*model, AI::Capability::Completion)) {
         return tsapi::Result<std::string>::fail(
-            "No AI model is selected. Pick one in the AI settings or AI Chat, or pass one explicitly.");
+            "No default AI model is selected. Pick one in the AI settings, or pass one explicitly.");
       }
     }
 

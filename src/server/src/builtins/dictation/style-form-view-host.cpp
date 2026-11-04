@@ -4,7 +4,7 @@
 #include <QUrl>
 #include "builtins/ai/ai-model-selector-utils.hpp"
 #include "builtins/ai/ai.hpp"
-#include "builtins/ai/quick-ai-preferences.hpp"
+#include "services/ai/ai-preferences.hpp"
 #include "builtins/dictation/dictation.hpp"
 #include "common/entrypoint.hpp"
 #include "service-registry.hpp"
@@ -58,13 +58,9 @@ void DictationStyleFormViewHost::initialize() {
     for (const auto &app : m_initial->apps)
       m_apps.append(QString::fromStdString(app));
   } else {
-    const EntrypointId quickAI{std::string(QuickAI::REPOSITORY_ID), std::string(QuickAI::COMMAND_ID)};
-    const auto values = services->rootItemManager()->getPreferenceValues(quickAI);
-    const auto *model = preferences::find(values, "model");
-    if (model && model->is_string()) {
-      if (const auto ref = QuickAI::availableModel(*services->ai(), model->get_string())) {
-        m_modelId = QString::fromStdString(ref->toString());
-      }
+    const auto model = AI::defaultModel(*services->config());
+    if (model && services->ai()->isAvailable(*model, AI::Capability::Completion)) {
+      m_modelId = QString::fromStdString(model->toString());
     }
   }
 

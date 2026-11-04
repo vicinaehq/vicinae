@@ -64,31 +64,12 @@ Item {
         onClosed: composer.forceActiveFocus()
     }
 
-    Column {
+    ChatGreeting {
+        session: root.session
         anchors.centerIn: transcript
         anchors.verticalCenterOffset: -composerArea.height / 2
         width: Math.min(440, parent.width - 64)
-        spacing: 16
         visible: transcript.count === 0
-
-        ViciImage {
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: 64
-            height: 64
-            source: Img.local(":/icons/vicinae.png")
-            opacity: 0.25
-        }
-
-        Text {
-            width: parent.width
-            text: qsTr("How can I help?")
-            color: Theme.foreground
-            font.family: Theme.fontFamily
-            font.pointSize: Theme.regularFontSize + 8
-            font.weight: Font.Normal
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.Wrap
-        }
 
         Text {
             width: parent.width

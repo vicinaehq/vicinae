@@ -18,7 +18,7 @@ signals:
   void openingChanged();
 
 public:
-  QuickAIViewHost(QString initialQuery, std::optional<AI::ModelRef> model);
+  explicit QuickAIViewHost(QString initialQuery = {});
   static QuickAIViewHost *forLastConversation();
   static void openConversation(BaseView *source, std::string id);
   ~QuickAIViewHost() override;

@@ -9,7 +9,6 @@ namespace QuickAI {
 
 constexpr auto REPOSITORY_ID = std::string_view("ai");
 constexpr auto COMMAND_ID = std::string_view("quick");
-constexpr auto NO_MODEL = std::string_view("none");
 constexpr auto COLOR = SemanticColor::Accent;
 
 inline const auto ICON = ImageURL::builtin(BuiltinIcon::Stars).setBackgroundTint(COLOR);

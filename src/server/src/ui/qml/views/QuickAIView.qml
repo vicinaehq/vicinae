@@ -76,13 +76,13 @@ LauncherView {
         onPreviewRequested: content => attachmentPreview.show(content)
     }
 
-    EmptyView {
-        width: parent.width
-        height: parent.height
+    ChatGreeting {
+        session: root.host.session
+        anchors.centerIn: parent
+        anchors.verticalCenterOffset: -root.footer.height / 2
+        width: Math.min(440, parent.width - 64)
+        compact: true
         visible: transcript.count === 0 && !root.host.session.streaming && !root.host.opening && !root.host.session.loading
-        icon: Launcher.navigationIcon
-        title: qsTr("Ask anything")
-        description: qsTr("Answers use the model selected in the composer.")
     }
 
     AttachmentDropArea {

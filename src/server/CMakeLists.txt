@@ -392,7 +392,6 @@ set(SRCS
 	src/builtins/vicinae/manage-fallback-view-host.hpp
 	src/builtins/vicinae/manage-fallback-view-host.cpp
 	src/builtins/ai/ai.hpp
-	src/builtins/ai/quick-ai-preferences.hpp
 	src/builtins/ai/ai-extension.hpp
 	src/builtins/ai/conversation-history-view-host.hpp
 	src/builtins/ai/ai-extension.cpp
@@ -1409,6 +1408,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/ExtensionView.qml
 	src/ui/qml/views/MarkdownDetailView.qml
 	src/ui/qml/views/ChatSessionComposer.qml
+	src/ui/qml/views/ChatGreeting.qml
 	src/ui/qml/views/ChatTranscript.qml
 	src/ui/qml/chat/ChatWindow.qml
 	src/ui/qml/chat/ChatSidebar.qml
