@@ -30,6 +30,11 @@ PasteService::PasteService(ClipboardService &clipboard, WindowManager &wm, AppSe
   });
 }
 
+static bool pasteTargetFocused() {
+  const auto *window = QGuiApplication::focusWindow();
+  return window && window->property(PasteService::PASTE_TARGET_PROPERTY).toBool();
+}
+
 bool PasteService::supportsPaste() const { return m_platform->supportsPaste(); }
 
 bool PasteService::pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options,
@@ -84,14 +89,14 @@ void PasteService::waitForFocusAndPaste() {
   ++m_focusPollCount;
 
   auto window = m_wm.focusedForeignWindow();
-  bool const focusLanded = window != nullptr;
+  bool const focusLanded = window != nullptr || pasteTargetFocused();
 
   if (focusLanded || m_focusPollCount >= FOCUS_POLL_MAX) {
     m_focusPollTimer.stop();
 
     if (focusLanded) {
-      qDebug() << "Paste: focus landed on" << window->wmClass() << "after"
-               << m_focusPollCount * FOCUS_POLL_INTERVAL_MS << "ms";
+      qDebug() << "Paste: focus landed on" << (window ? window->wmClass() : QStringLiteral("own window"))
+               << "after" << m_focusPollCount * FOCUS_POLL_INTERVAL_MS << "ms";
       QTimer::singleShot(POST_FOCUS_DELAY_MS, this, &PasteService::executePaste);
     } else {
       qWarning() << "Paste: timed out waiting for focus transfer, dropping paste";
@@ -105,7 +110,8 @@ void PasteService::executePaste() {
   m_hasPendingPaste = false;
 
   // The window manager would report the window focused before ours, which is not what receives the paste.
-  const bool ownFocus = m_target == Target::CurrentFocus && QGuiApplication::focusWindow();
+  const bool ownFocus =
+      (m_target == Target::CurrentFocus && QGuiApplication::focusWindow()) || pasteTargetFocused();
   auto window = ownFocus ? nullptr : m_wm.getFocusedWindow();
   std::shared_ptr<AbstractApplication> app;
 

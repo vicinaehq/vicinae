@@ -28,8 +28,8 @@ Column {
 
     Text {
         width: parent.width
-        visible: root.session.needsModel && root.session.modelSelectorItems.length > 0
-        text: qsTr("Choose a model to start chatting.")
+        visible: root.session.modelSelectorItems.length > 0
+        text: root.session.needsModel ? qsTr("Choose a model to start chatting.") : qsTr("Send a message to start a conversation.")
         color: Theme.textMuted
         font.family: Theme.fontFamily
         font.pointSize: Theme.regularFontSize

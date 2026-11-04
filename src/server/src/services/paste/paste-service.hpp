@@ -25,6 +25,9 @@ public:
 
   bool pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options = {},
                     Target target = Target::FocusHandoff);
+  // Set on our own windows that are valid paste targets, unlike the launcher.
+  static constexpr auto PASTE_TARGET_PROPERTY = "vicinaePasteTarget";
+
   bool supportsPaste() const;
 
 private:

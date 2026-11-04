@@ -3,6 +3,7 @@
 #include "chat-window.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include "services/paste/paste-service.hpp"
 #include "ui/bridges/config-bridge.hpp"
 #include "ui/qml-dev-loader.hpp"
 #include "ui/settings/settings-controller.hpp"
@@ -63,6 +64,7 @@ void ChatWindow::loadRoot() {
     if (!roots.contains(root)) m_window = qobject_cast<QQuickWindow *>(root);
   }
   if (!m_window) qWarning() << "Chat window did not load";
+  if (m_window) m_window->setProperty(PasteService::PASTE_TARGET_PROPERTY, true);
 }
 
 void ChatWindow::show(ChatSession *session) {
