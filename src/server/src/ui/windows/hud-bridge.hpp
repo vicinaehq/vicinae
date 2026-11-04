@@ -1,11 +1,11 @@
 #pragma once
-#include "ui/qml-engine-scope.hpp"
-#include "ui/image/image-url.hpp"
 #include <QObject>
 #include <QPointer>
 #include <QTimer>
 #include <optional>
 #include "builtins/dictation/dictation-session.hpp"
+#include "ui/image/image-url.hpp"
+#include "ui/qml-engine-scope.hpp"
 
 class QQuickWindow;
 
@@ -45,6 +45,11 @@ signals:
   void dictationChanged();
 
 private:
+  struct Message {
+    QString text;
+    std::optional<ImageURL> icon;
+  };
+
   void hide();
   void clearDictation();
 
@@ -54,4 +59,5 @@ private:
   QTimer m_timer;
   QPointer<QQuickWindow> m_window;
   QPointer<DictationSession> m_dictation;
+  std::optional<Message> m_pendingMessage;
 };

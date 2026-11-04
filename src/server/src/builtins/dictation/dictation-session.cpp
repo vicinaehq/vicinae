@@ -1,5 +1,5 @@
-#include "dictation-session.hpp"
 #include <utility>
+#include "dictation-session.hpp"
 #include "common/context.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -12,7 +12,7 @@
 #include "ui/image/url.hpp"
 
 namespace {
-constexpr int MESSAGE_DURATION_MS = 1500;
+constexpr int MESSAGE_DURATION_MS = 3000;
 }
 
 DictationSession::DictationSession(const ApplicationContext *ctx, TranscriptionSetup setup,
@@ -40,12 +40,24 @@ DictationSession::DictationSession(const ApplicationContext *ctx, TranscriptionS
 
 bool DictationSession::start() {
   m_setup.extraVocabulary = m_ctx->services->snippetService()->database()->voicePhrases();
-  if (m_session.start(m_setup)) return true;
+  if (m_session.start(m_setup)) {
+    if (auto *shortcuts = m_ctx->services->globalShortcuts(); shortcuts && shortcuts->isSupported()) {
+      const auto id = QStringLiteral("@dictation-cancel");
+      const Keyboard::Shortcut escape(Qt::Key_Escape);
+      if (!shortcuts->findConflict(escape, id)) {
+        m_cancelShortcut = shortcuts->bind(
+            id,
+            {.trigger = escape, .description = tr("Cancel dictation"), .onActivated = [this] { cancel(); }});
+      }
+    }
+    return true;
+  }
   finish();
   return false;
 }
 
 void DictationSession::cancel() {
+  if (m_finished) return;
   m_rewrite.abort();
   m_session.cancel();
   finish();
@@ -114,11 +126,13 @@ void DictationSession::deliver(const QString &text, const DeliverySource &source
 
 void DictationSession::finish() {
   if (std::exchange(m_finished, true)) return;
+  m_cancelShortcut.reset();
   emit finished();
   deleteLater();
 }
 
 void DictationSession::finishWithMessage(const QString &message) {
+  m_cancelShortcut.reset();
   m_message = message;
   emit stateChanged();
   QTimer::singleShot(MESSAGE_DURATION_MS, this, &DictationSession::finish);

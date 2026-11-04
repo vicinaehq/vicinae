@@ -7,6 +7,7 @@
 #include "services/dictation/dictation-rewrite.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/dictation/transcription-session.hpp"
+#include "services/global-shortcuts/global-shortcut-service.hpp"
 
 class ApplicationContext;
 
@@ -24,6 +25,13 @@ class DictationSession : public QObject {
   Q_PROPERTY(bool showControls READ showControls NOTIFY stateChanged)
   Q_PROPERTY(QString message READ message NOTIFY stateChanged)
   Q_PROPERTY(bool rewriting READ rewriting NOTIFY stateChanged)
+  Q_PROPERTY(bool captureReady READ captureReady NOTIFY stateChanged)
+
+public:
+  Q_INVOKABLE void accept() {
+    if (!m_finished) m_session.accept();
+  }
+  Q_INVOKABLE void cancel();
 
 signals:
   void audioLevelChanged();
@@ -38,11 +46,6 @@ public:
                    bool recordHistory, PasteService::Target pasteTarget, QObject *parent = nullptr);
 
   bool start();
-  Q_INVOKABLE void accept() { m_session.accept(); }
-  /**
-   * Stop everything and deliver nothing.
-   */
-  Q_INVOKABLE void cancel();
 
   bool isActive() const { return m_session.isActive() || m_rewrite.running(); }
   bool isRecording() const { return m_session.isRecording(); }
@@ -50,11 +53,10 @@ public:
   float audioLevel() const { return m_session.audioLevel(); }
   QString elapsedTime() const { return m_session.elapsedTime(); }
   bool transcribing() const { return m_session.transcribing(); }
-  bool showControls() const {
-    return !m_session.transcribing() && !m_rewrite.running() && m_message.isEmpty();
-  }
+  bool showControls() const { return !m_finished && m_session.isRecording() && m_message.isEmpty(); }
   QString message() const { return m_message; }
   bool rewriting() const { return m_rewrite.running(); }
+  bool captureReady() const { return m_session.captureReady(); }
 
 private:
   void finish();
@@ -79,4 +81,5 @@ private:
   bool m_finished = false;
   bool m_recordHistory = true;
   QString m_message;
+  GlobalShortcutHandle m_cancelShortcut;
 };

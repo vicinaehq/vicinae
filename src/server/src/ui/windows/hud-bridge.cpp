@@ -1,5 +1,6 @@
-#include "ui/windows/hud-bridge.hpp"
 #include <QQuickWindow>
+#include <utility>
+#include "ui/windows/hud-bridge.hpp"
 
 HudBridge::HudBridge(QObject *parent) : QObject(parent) {
   m_timer.setSingleShot(true);
@@ -8,6 +9,10 @@ HudBridge::HudBridge(QObject *parent) : QObject(parent) {
 }
 
 void HudBridge::show(const QString &title, const std::optional<ImageURL> &icon) {
+  if (m_dictation) {
+    m_pendingMessage = Message{title, icon};
+    return;
+  }
   clearDictation();
   m_text = title;
   m_icon = icon ? ImageUrl(*icon) : ImageUrl();
@@ -44,6 +49,7 @@ void HudBridge::showDictation(DictationSession *session) {
     if (m_dictation != session) return;
     clearDictation();
     hide();
+    if (auto message = std::exchange(m_pendingMessage, std::nullopt)) { show(message->text, message->icon); }
   });
 
   m_visible = true;

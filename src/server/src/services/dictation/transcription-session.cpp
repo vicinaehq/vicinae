@@ -1,9 +1,9 @@
-#include <chrono>
-#include "transcription-session.hpp"
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <chrono>
 #include <qlogging.h>
+#include "transcription-session.hpp"
 #include "services/ai/ai-service.hpp"
 #include "services/dictation/dictation-service.hpp"
 
@@ -29,7 +29,13 @@ TranscriptionSession::TranscriptionSession(DictationService &dictation, QObject 
   m_recordingLimit.setSingleShot(true);
   m_recordingLimit.setInterval(MAX_RECORDING_DURATION);
   connect(&m_recordingLimit, &QTimer::timeout, this, &TranscriptionSession::accept);
-  connect(&m_recorder, &Audio::Recorder::levelChanged, this, &TranscriptionSession::audioLevelChanged);
+  connect(&m_recorder, &Audio::Recorder::levelChanged, this, [this] {
+    if (!m_captureReady) {
+      m_captureReady = true;
+      emit stateChanged();
+    }
+    emit audioLevelChanged();
+  });
   connect(&m_recorder, &Audio::Recorder::stateChanged, this, &TranscriptionSession::stateChanged);
   connect(&m_recorder, &Audio::Recorder::errorOccurred, this, [this]() {
     // what was said before the microphone went away is still worth transcribing
@@ -45,6 +51,8 @@ TranscriptionSession::TranscriptionSession(DictationService &dictation, QObject 
 bool TranscriptionSession::start(TranscriptionSetup setup) {
   if (isActive()) return false;
   m_setup = std::move(setup);
+  m_captureReady = false;
+  m_durationMs = 0;
 
   if (!m_recorder.start()) {
     fail(tr("Could not start recording"));
@@ -158,7 +166,7 @@ void TranscriptionSession::accept() {
 }
 
 QString TranscriptionSession::elapsedTime() const {
-  const auto secs = m_recorder.elapsedMs() / 1000;
+  const auto secs = (isRecording() ? m_recorder.elapsedMs() : m_durationMs) / 1000;
   return QStringLiteral("%1:%2")
       .arg(secs / 60, 2, 10, QLatin1Char('0'))
       .arg(secs % 60, 2, 10, QLatin1Char('0'));

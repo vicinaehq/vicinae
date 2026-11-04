@@ -10,7 +10,7 @@ HudWindow {
     LayerShell.Window.layer: LayerShell.Window.LayerTop
     LayerShell.Window.scope: "vicinae-hud"
     LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
-    LayerShell.Window.margins.bottom: 96
+    LayerShell.Window.margins.bottom: dictating ? 16 : 96
     LayerShell.Window.wantsToBeOnActiveScreen: true
     LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
 }

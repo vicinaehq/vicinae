@@ -60,6 +60,7 @@ public:
   float audioLevel() const { return m_recorder.level(); }
   QString elapsedTime() const;
   bool transcribing() const { return m_transcribing; }
+  bool captureReady() const { return m_captureReady; }
 
 private:
   void fail(const QString &message);
@@ -74,6 +75,7 @@ private:
   int m_transcriptionId = 0;
   QElapsedTimer m_transcribeTimer;
   bool m_transcribing = false;
+  bool m_captureReady = false;
   qint64 m_durationMs = 0;
   std::unique_ptr<MediaControlService::TransientPauseHandle> m_pauseHandle;
   QSoundEffect m_startSound;
