@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -22,11 +23,14 @@ public:
   struct Entry {
     std::string word;
     std::uint64_t createdAt = 0;
+    // Background for rewriting, such as what a name refers to. Not used for transcription.
+    std::optional<std::string> hint;
   };
 
   explicit DictationVocabulary(std::filesystem::path path, QObject *parent = nullptr);
 
-  bool add(std::string word);
+  bool add(std::string word, std::optional<std::string> hint = std::nullopt);
+  bool update(std::string_view word, std::string newWord, std::optional<std::string> hint);
   bool remove(std::string_view word);
   void clear();
   bool contains(std::string_view word) const;

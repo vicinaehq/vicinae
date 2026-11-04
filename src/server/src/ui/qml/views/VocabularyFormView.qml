@@ -24,5 +24,21 @@ Item {
                 onTextEdited: root.host.word = text
             }
         }
+
+        FormField {
+            id: hintField
+            label: qsTr("Hint")
+            error: root.host.hintError
+            info: qsTr("Optional. Helps rewrite styles understand this word, such as who a name refers to. Not used for transcription.")
+
+            FormTextArea {
+                minRows: 3
+                maxRows: 3
+                text: root.host.hint
+                placeholder: qsTr("A launcher app, often misheard as \"Vicinity\"")
+                hasError: hintField.error !== ""
+                onTextEdited: root.host.hint = text
+            }
+        }
     }
 }

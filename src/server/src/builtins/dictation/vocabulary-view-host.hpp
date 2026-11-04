@@ -47,7 +47,9 @@ public:
   bool hasDetailPane() const override { return true; }
   QString sectionName() const override { return tr("Words ({count})"); }
   QString displayTitle(const ItemType &e) const override { return QString::fromStdString(e.word); }
-  QString displaySubtitle(const ItemType &) const override { return {}; }
+  QString displaySubtitle(const ItemType &e) const override {
+    return e.hint ? QString::fromStdString(*e.hint) : QString{};
+  }
   std::optional<ImageURL> displayIcon(const ItemType &) const override { return Dictation::VOCABULARY_ICON; }
   AccessoryList displayAccessories(const ItemType &e) const override {
     const auto added = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(e.createdAt));
@@ -62,6 +64,13 @@ public:
 
     main->addAction(new CopyToClipboardAction(Clipboard::Text{word}, tr("Copy")));
 
+    auto edit =
+        new StaticAction(tr("Edit Word"), ImageURL::builtin(BuiltinIcon::Pencil),
+                         [word, hint = QString::fromStdString(e.hint.value_or(""))](ApplicationContext *ctx) {
+                           ctx->navigation->pushView(new VocabularyFormViewHost(word, hint));
+                         });
+    edit->setShortcut(Keybind::EditAction);
+    main->addAction(edit);
     main->addAction(createAddAction());
 
     auto remove = new StaticAction(

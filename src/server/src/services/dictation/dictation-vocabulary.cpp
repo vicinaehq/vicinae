@@ -24,13 +24,30 @@ bool DictationVocabulary::contains(std::string_view word) const {
   return std::ranges::any_of(m_words, [&](std::string_view w) { return sameWord(w, word); });
 }
 
-bool DictationVocabulary::add(std::string word) {
+bool DictationVocabulary::add(std::string word, std::optional<std::string> hint) {
   if (word.empty() || contains(word)) return false;
 
   m_file.data().entries.emplace_back(Entry{
       .word = std::move(word),
       .createdAt = static_cast<std::uint64_t>(QDateTime::currentSecsSinceEpoch()),
+      .hint = std::move(hint),
   });
+  rebuildWords();
+  m_file.save();
+  emit changed();
+  return true;
+}
+
+bool DictationVocabulary::update(std::string_view word, std::string newWord,
+                                 std::optional<std::string> hint) {
+  if (newWord.empty() || (!sameWord(word, newWord) && contains(newWord))) return false;
+
+  auto &entries = m_file.data().entries;
+  const auto entry = std::ranges::find_if(entries, [&](const Entry &e) { return sameWord(e.word, word); });
+  if (entry == entries.end()) return false;
+
+  entry->word = std::move(newWord);
+  entry->hint = std::move(hint);
   rebuildWords();
   m_file.save();
   emit changed();
