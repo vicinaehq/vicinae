@@ -46,7 +46,7 @@ export default function ListIcons() {
 					title="Non-existent Asset image with fallback to icon enum"
 					icon={{
 						source: "non_existent_image.png",
-						fallback: Icon.QuestionMark,
+						fallback: Icon.QuestionMarkCircle,
 					}}
 				/>
 				<List.Item
