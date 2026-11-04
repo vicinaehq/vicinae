@@ -11,7 +11,6 @@ Flickable {
     property alias bottomInset: controller.bottomInset
     property alias delegate: geometry.delegate
     property alias spacing: geometry.spacing
-    property alias cacheBuffer: geometry.cacheBuffer
     readonly property alias count: geometry.count
     readonly property alias layoutChanging: geometry.updating
     readonly property real minimumY: originY - topMargin

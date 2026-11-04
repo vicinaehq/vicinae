@@ -37,7 +37,6 @@ public:
   Q_INVOKABLE void setMarkdown(const QString &markdown);
   void setMarkdownAsync(QString markdown);
   bool loading() const { return m_loading; }
-  Q_INVOKABLE void clear();
   Q_INVOKABLE void openLink(const QString &url);
   Q_INVOKABLE QString copyCodeBlock(int blockIndex);
 

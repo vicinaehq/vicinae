@@ -111,7 +111,6 @@ openai::ChatRequest OpenAIProvider::makeRequest(std::string_view modelId, const 
   request.stream_options = openai::StreamOptions{};
 
   if (model.caps & Capability::Thinking) {
-    request.temperature.reset();
     request.reasoning_effort = std::string(reasoningEffort(payload.thinking));
   }
 

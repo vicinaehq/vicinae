@@ -27,7 +27,6 @@ struct AIProviderTypeRow {
   QVariant icon;
   bool builtin = false;
   bool allowMultiple = false;
-  bool canAdd = false;
   QVariantList instances;
   bool operator==(const AIProviderTypeRow &) const = default;
 };
@@ -106,7 +105,6 @@ public:
     IconRole,
     BuiltinRole,
     AllowMultipleRole,
-    CanAddRole,
     InstancesRole,
   };
 

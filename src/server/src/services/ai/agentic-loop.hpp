@@ -12,7 +12,6 @@ class Agent : public QObject {
   Q_OBJECT
 
 signals:
-  void messageAdded(quint64 id);
   void textAdded(quint64 messageId, const std::string &text);
   void toolAdded(quint64 id);
   void toolChanged(quint64 id);
@@ -38,7 +37,6 @@ public:
   };
   struct ToolCall {
     Id id;
-    Id messageId;
     ToolCallPart call;
     std::optional<std::string> summary;
     ToolState state = ToolState::Queued;
@@ -72,7 +70,6 @@ public:
   const std::optional<Model> &model() const { return m_model; }
   const std::vector<Message> &messages() const { return m_messages; }
   const std::vector<ToolCall> &toolCalls() const { return m_calls; }
-  const Message *message(Id id) const;
   const ToolCall *toolCall(Id id) const;
 
   /**

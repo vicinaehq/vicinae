@@ -13,7 +13,6 @@ Window {
     readonly property bool recording: dictating && !dictationMessage && !working
     readonly property bool captureReady: recording && Hud.dictation.captureReady
     readonly property color mutedColor: Config.withAlpha(Theme.foreground, 0.6)
-    property bool showElapsedTime: false
 
     property color pillColor: Config.withAlpha(Theme.background, dictating ? 0.98 : 0.9)
     property color pillBorderColor: Config.withAlpha(Theme.foreground, Theme.isDark ? 0.12 : 0.18)
@@ -22,7 +21,7 @@ Window {
 
     signal shown
 
-    width: dictating ? (dictationMessage ? Math.max(216, Math.min(360, messageLabel.implicitWidth + 72)) : working ? Math.max(216, Math.min(360, workLabel.implicitWidth + 88)) : 172) + (showElapsedTime && recording ? 48 : 0) : noticeRow.width + 30
+    width: dictating ? (dictationMessage ? Math.max(216, Math.min(360, messageLabel.implicitWidth + 72)) : working ? Math.max(216, Math.min(360, workLabel.implicitWidth + 88)) : 172) : noticeRow.width + 30
     height: dictating ? 42 : noticeRow.height + 20
     title: dictating ? qsTr("Dictation") : Hud.text
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.ToolTip | Qt.WindowDoesNotAcceptFocus
@@ -229,7 +228,6 @@ Window {
 
             AudioWaveform {
                 anchors.centerIn: parent
-                anchors.horizontalCenterOffset: root.showElapsedTime ? -24 : 0
                 visible: root.recording
                 active: root.visible && root.recording
                 ready: root.captureReady
@@ -267,17 +265,6 @@ Window {
                 elide: Text.ElideRight
                 Accessible.role: Accessible.StaticText
                 Accessible.name: text
-            }
-
-            Text {
-                anchors.right: cancelButton.left
-                anchors.rightMargin: 5
-                anchors.verticalCenter: parent.verticalCenter
-                visible: root.recording && root.showElapsedTime
-                text: root.dictating ? Hud.dictation.elapsedTime : ""
-                color: root.mutedColor
-                font.family: Theme.fontFamily
-                font.pointSize: Theme.smallerFontSize
             }
 
             HudButton {

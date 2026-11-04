@@ -13,7 +13,7 @@
 #include "ui/image/url.hpp"
 
 enum class LocalEngine : std::uint8_t { Whisper, Parakeet };
-enum class LocalModelVendor : std::uint8_t { OpenAI, Nvidia, Alibaba };
+enum class LocalModelVendor : std::uint8_t { OpenAI, Nvidia };
 
 /**
  * A model Vicinae can download and run itself.
@@ -189,10 +189,6 @@ inline ImageURL vendorIcon(LocalModelVendor vendor) {
   case LocalModelVendor::Nvidia:
     return ImageURL::builtin(BuiltinIcon::Microphone)
         .setBackgroundTint(QColor(0x76, 0xB9, 0x00))
-        .setFill(QColor(Qt::white));
-  case LocalModelVendor::Alibaba:
-    return ImageURL::builtin(BuiltinIcon::Qwen)
-        .setBackgroundTint(SemanticColor::Orange)
         .setFill(QColor(Qt::white));
   }
 

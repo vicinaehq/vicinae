@@ -9,10 +9,7 @@ DictationService::DictationService(const std::filesystem::path &dataDir, AI::Ser
       m_vocabulary(dataDir / "dictation-vocabulary.json", this),
       m_styles(dataDir / "dictation-styles.json", this) {}
 
-void DictationService::setSettings(TranscriptionSettings settings) {
-  m_settings = std::move(settings);
-  emit settingsChanged();
-}
+void DictationService::setSettings(TranscriptionSettings settings) { m_settings = std::move(settings); }
 
 std::optional<AI::ProviderModel> DictationService::selectedModel() const {
   if (!m_settings.model) return std::nullopt;

@@ -46,17 +46,6 @@ bool LocalModelRegistry::isInstalled(const LocalModelInfo &info) const {
   return !ec && size == info.size;
 }
 
-bool LocalModelRegistry::isInstalled(std::string_view id) const {
-  const auto *info = LocalModelCatalogue::find(id);
-  return info && isInstalled(*info);
-}
-
-std::optional<fs::path> LocalModelRegistry::installedPath(std::string_view id) const {
-  const auto *info = LocalModelCatalogue::find(id);
-  if (!info || !isInstalled(*info)) return std::nullopt;
-  return pathFor(*info);
-}
-
 std::vector<LocalModel> LocalModelRegistry::models(std::optional<AI::Capabilities> caps) const {
   std::vector<LocalModel> models;
   models.reserve(LocalModelCatalogue::entries().size());
@@ -65,7 +54,6 @@ std::vector<LocalModel> LocalModelRegistry::models(std::optional<AI::Capabilitie
     models.emplace_back(LocalModel{
         .info = info,
         .installed = isInstalled(info),
-        .downloading = activeDownload(info.id) != nullptr,
     });
   }
   return models;
@@ -77,7 +65,6 @@ std::optional<LocalModel> LocalModelRegistry::model(std::string_view id) const {
   return LocalModel{
       .info = *info,
       .installed = isInstalled(*info),
-      .downloading = activeDownload(id) != nullptr,
   };
 }
 
@@ -106,29 +93,21 @@ std::expected<ModelDownload *, std::string> LocalModelRegistry::download(std::st
 
   connect(handle, &ModelDownload::progress, this,
           [this, qid](qint64 received, qint64 total) { emit downloadProgress(qid, received, total); });
-  connect(handle, &ModelDownload::retryScheduled, this,
-          [this, qid](int attempt, int delaySeconds, const QString &reason) {
-            emit downloadRetryScheduled(qid, attempt, delaySeconds, reason);
-          });
-  connect(handle, &ModelDownload::finished, this, [this, key, qid](const fs::path &) {
-    emit downloadFinished(qid);
+  connect(handle, &ModelDownload::finished, this, [this, key](const fs::path &) {
     emit modelsChanged();
     settle(key);
   });
-  connect(handle, &ModelDownload::failed, this, [this, key, qid](const QString &error) {
-    emit downloadFailed(qid, error);
+  connect(handle, &ModelDownload::failed, this, [this, key](const QString &) {
     emit modelsChanged();
     settle(key);
   });
-  connect(handle, &ModelDownload::cancelled, this, [this, key, qid]() {
-    emit downloadCancelled(qid);
+  connect(handle, &ModelDownload::cancelled, this, [this, key]() {
     emit modelsChanged();
     settle(key);
   });
 
   m_downloads.insert_or_assign(key, std::move(download));
   handle->start();
-  emit downloadStarted(qid);
   emit modelsChanged();
 
   return handle;

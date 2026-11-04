@@ -16,11 +16,11 @@ constexpr int MESSAGE_DURATION_MS = 3000;
 }
 
 DictationSession::DictationSession(const ApplicationContext *ctx, TranscriptionSetup setup,
-                                   Dictation::DictationAction action, bool recordHistory,
-                                   PasteService::Target pasteTarget, QObject *parent)
+                                   Dictation::DictationAction action, PasteService::Target pasteTarget,
+                                   QObject *parent)
     : QObject(parent), m_ctx(ctx), m_setup(std::move(setup)), m_session(*ctx->services->dictation(), this),
       m_rewrite(ctx->services->dictation()->ai(), *ctx->services->dictation()->vocabulary(), this),
-      m_action(action), m_pasteTarget(pasteTarget), m_recordHistory(recordHistory) {
+      m_action(action), m_pasteTarget(pasteTarget) {
   connect(&m_session, &TranscriptionSession::audioLevelChanged, this, &DictationSession::audioLevelChanged);
   connect(&m_session, &TranscriptionSession::elapsedTimeChanged, this, &DictationSession::elapsedTimeChanged);
   connect(&m_session, &TranscriptionSession::stateChanged, this, &DictationSession::stateChanged);
@@ -110,17 +110,15 @@ void DictationSession::deliver(const QString &text, const DeliverySource &source
     break;
   }
 
-  if (m_recordHistory) {
-    m_ctx->services->dictation()->history()->add({
-        .text = text.toStdString(),
-        .durationMs = static_cast<std::uint64_t>(m_transcript.durationMs),
-        .language = m_transcript.language,
-        .original =
-            source.style || source.snippet ? std::optional(m_transcript.text.toStdString()) : std::nullopt,
-        .style = source.style,
-        .snippet = source.snippet,
-    });
-  }
+  m_ctx->services->dictation()->history()->add({
+      .text = text.toStdString(),
+      .durationMs = static_cast<std::uint64_t>(m_transcript.durationMs),
+      .language = m_transcript.language,
+      .original =
+          source.style || source.snippet ? std::optional(m_transcript.text.toStdString()) : std::nullopt,
+      .style = source.style,
+      .snippet = source.snippet,
+  });
   emit stateChanged();
 }
 

@@ -59,7 +59,6 @@ struct ModelRef {
 
 struct ProviderModel : public Model {
   ModelRef ref;
-  bool enabled = true;
 
   ProviderModel(std::string providerId, Model &&model)
       : Model(std::move(model)), ref{std::move(providerId), this->id} {}
@@ -89,10 +88,9 @@ using ModelList = std::vector<Model>;
 
 struct ListModelFilters {
   std::optional<Capabilities> caps;
-  std::optional<int> limit;
 };
 
-enum class ChatRole { System, User, Assistant, Tool, Developer };
+enum class ChatRole { System, User, Assistant, Tool };
 
 constexpr std::string_view roleName(ChatRole role) {
   switch (role) {
@@ -104,8 +102,6 @@ constexpr std::string_view roleName(ChatRole role) {
     return "assistant";
   case ChatRole::Tool:
     return "tool";
-  case ChatRole::Developer:
-    return "developer";
   }
   return "user";
 }
@@ -192,7 +188,6 @@ struct ChatCompletionPayload {
    */
   ThinkingMode thinking = ThinkingMode::Medium;
   ChatHistory messages;
-  std::optional<float> temperature;
   std::vector<AbstractTool *> tools;
   // A guard rather than a target: models that think may spend part of it before answering.
   std::optional<int> maxOutputTokens;

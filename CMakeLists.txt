@@ -62,14 +62,6 @@ set(USE_SYSTEM_INFERENCE_ENGINES AUTO CACHE STRING "Use the system whisper.cpp a
 set_property(CACHE USE_SYSTEM_INFERENCE_ENGINES PROPERTY STRINGS AUTO ON OFF)
 set(MIN_WHISPER_VERSION 1.9.2)
 
-set(LOCAL_AI_VULKAN_DEFAULT ON)
-
-if (APPLE OR WIN32)
-	set(LOCAL_AI_VULKAN_DEFAULT OFF)
-endif()
-
-option(LOCAL_AI_VULKAN "Build the fetched ggml with the Vulkan GPU backend. Requires glslc and the Vulkan headers/loader at build time. Ignored when the inference engines come from the system." ${LOCAL_AI_VULKAN_DEFAULT})
-
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
 option(VICINAE_DEV_MODE "Developer build: load QML from the source tree with live reload, use the local theme dir, keep debug output. Never enable for packaged builds." OFF)

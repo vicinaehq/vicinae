@@ -613,7 +613,7 @@ CodexProvider::createChatCompletion(std::string_view modelId, const ChatCompleti
   const ChatMessage *last = nullptr;
 
   for (const auto &message : messages) {
-    if (message.role == ChatRole::System || message.role == ChatRole::Developer) {
+    if (message.role == ChatRole::System) {
       if (!thread.baseInstructions.empty()) thread.baseInstructions += "\n\n";
       thread.baseInstructions += message.text();
       continue;

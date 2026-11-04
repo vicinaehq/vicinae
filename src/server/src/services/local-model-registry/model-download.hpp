@@ -33,7 +33,6 @@ class ModelDownload : public QObject, NonCopyable {
 
 signals:
   void progress(qint64 received, qint64 total);
-  void retryScheduled(int attempt, int delaySeconds, const QString &reason);
   void finished(const std::filesystem::path &path);
   void failed(const QString &error);
   void cancelled();
@@ -47,12 +46,9 @@ public:
   void start();
   void cancel();
 
-  State state() const { return m_state; }
   bool isActive() const;
   qint64 bytesReceived() const { return m_received; }
   qint64 bytesTotal() const { return m_total; }
-  const QString &error() const { return m_error; }
-  const std::filesystem::path &destination() const { return m_request.destination; }
   std::filesystem::path partialPath() const;
 
 private:

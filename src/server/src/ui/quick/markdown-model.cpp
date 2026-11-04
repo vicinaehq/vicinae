@@ -762,17 +762,6 @@ void MarkdownModel::startParse() {
   });
 }
 
-void MarkdownModel::clear() {
-  ++m_parseGeneration;
-  m_async = false;
-  m_renderedMarkdown.clear();
-  setLoading(false);
-  beginResetModel();
-  m_blocks.clear();
-  m_markdown.clear();
-  endResetModel();
-}
-
 void MarkdownModel::openLink(const QString &url) {
   auto *appDb = ServiceRegistry::instance()->appDb();
   if (!appDb->openTarget(url)) qWarning() << "MarkdownModel: failed to open link" << url;

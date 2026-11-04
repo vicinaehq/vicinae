@@ -75,14 +75,6 @@ class FormData : public QObject, NonCopyable {
 public:
   explicit FormData() : m_mp(new QHttpMultiPart(QHttpMultiPart::FormDataType, this)) {}
 
-  void addFile(QIODevice *file, const QString &contentType, const QString &fieldName = "file",
-               const QString &fileName = "file") {
-    auto part = makeFilePart(contentType, fieldName, fileName);
-    part.setBodyDevice(file);
-    file->setParent(m_mp);
-    m_mp->append(part);
-  }
-
   void addFile(const QByteArray &data, const QString &contentType, const QString &fieldName = "file",
                const QString &fileName = "file") {
     auto part = makeFilePart(contentType, fieldName, fileName);
@@ -116,7 +108,6 @@ class EventSource : public QObject, NonCopyable {
 
 signals:
   void dataReceived(const QString &event, QByteArrayView data) const;
-  void lineReceived(QByteArrayView line) const;
   void errorOccurred(const QString &error, const QByteArray &body) const;
   void finished() const;
 
@@ -132,11 +123,6 @@ public:
 
   void abort() { m_reply->abort(); }
 
-  /**
-   * Underlying response. This class owns the reply.
-   */
-  QNetworkReply *reply() { return m_reply; }
-
 private:
   void processLines() {
     int index = -1;
@@ -151,8 +137,6 @@ private:
       pos = index + 1;
 
       if (line.empty()) continue;
-
-      emit lineReceived(line);
 
       if (line.startsWith("event:")) {
         event = QString::fromUtf8(line.slice(7));

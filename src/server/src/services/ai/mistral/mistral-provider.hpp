@@ -24,7 +24,6 @@ struct ListModelsResponse {
       bool completion_fim;
       bool fine_tuning;
       bool vision;
-      bool ocr;
       bool classification;
       bool moderation;
       bool audio;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QJSValue>
 #include <QObject>
 #include <QPointer>
 #include <QQmlParserStatus>
@@ -25,11 +24,6 @@ class DocumentSelection : public QObject, public QQmlParserStatus {
   Q_PROPERTY(int selectionEnd READ selectionEnd NOTIFY selectionChanged)
   Q_PROPERTY(bool hasSelection READ hasSelection NOTIFY selectionChanged)
   Q_PROPERTY(int part READ part WRITE setPart NOTIFY partChanged)
-  Q_PROPERTY(QJSValue hitTest READ hitTest WRITE setHitTest NOTIFY callbacksChanged)
-  Q_PROPERTY(
-      QJSValue positionRectangle READ positionRectangle WRITE setPositionRectangle NOTIFY callbacksChanged)
-  Q_PROPERTY(QJSValue wordRange READ wordRange WRITE setWordRange NOTIFY callbacksChanged)
-  Q_PROPERTY(QJSValue linkAt READ linkAt WRITE setLinkAt NOTIFY callbacksChanged)
 
 signals:
   void documentChanged();
@@ -38,7 +32,6 @@ signals:
   void lengthChanged();
   void selectedTextChanged();
   void selectionChanged();
-  void callbacksChanged();
   void partChanged();
 
 public:
@@ -56,28 +49,6 @@ public:
   int selectionStart() const { return m_start; }
   int selectionEnd() const { return m_end; }
   bool hasSelection() const { return m_start != m_end; }
-  QJSValue hitTest() const { return m_hitTest; }
-  QJSValue positionRectangle() const { return m_positionRectangle; }
-  void setPositionRectangle(QJSValue callback) {
-    m_positionRectangle = std::move(callback);
-    emit callbacksChanged();
-  }
-  QJSValue wordRange() const { return m_wordRange; }
-  QJSValue linkAt() const { return m_linkAt; }
-
-  void setHitTest(QJSValue callback) {
-    m_hitTest = std::move(callback);
-    emit callbacksChanged();
-  }
-  void setWordRange(QJSValue callback) {
-    m_wordRange = std::move(callback);
-    emit callbacksChanged();
-  }
-  void setLinkAt(QJSValue callback) {
-    m_linkAt = std::move(callback);
-    emit callbacksChanged();
-  }
-
   void setDocument(DocumentController *document);
   void resetDocument();
   void setTarget(QQuickItem *target);
@@ -111,10 +82,6 @@ private:
   QMetaObject::Connection m_scopeConnection;
   QMetaObject::Connection m_rowConnection;
   int m_part = 0;
-  QJSValue m_hitTest;
-  QJSValue m_positionRectangle;
-  QJSValue m_wordRange;
-  QJSValue m_linkAt;
   QString m_selectedText;
   int m_length = 1;
   int m_start = 0;

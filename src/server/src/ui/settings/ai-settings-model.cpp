@@ -117,8 +117,6 @@ QVariant AIProviderTypesModel::data(const QModelIndex &index, int role) const {
     return row->builtin;
   case AllowMultipleRole:
     return row->allowMultiple;
-  case CanAddRole:
-    return row->canAdd;
   case InstancesRole:
     return row->instances;
   default:
@@ -128,9 +126,9 @@ QVariant AIProviderTypesModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> AIProviderTypesModel::roleNames() const {
   return {
-      {TypeRole, "type"},     {LabelRole, "label"},         {DescriptionRole, "description"},
-      {IconRole, "icon"},     {BuiltinRole, "builtin"},     {AllowMultipleRole, "allowMultiple"},
-      {CanAddRole, "canAdd"}, {InstancesRole, "instances"},
+      {TypeRole, "type"},           {LabelRole, "label"},     {DescriptionRole, "description"},
+      {IconRole, "icon"},           {BuiltinRole, "builtin"}, {AllowMultipleRole, "allowMultiple"},
+      {InstancesRole, "instances"},
   };
 }
 
@@ -454,7 +452,6 @@ void AISettingsModel::rebuildTypes() {
         .description = qs(info.description),
         .icon = QVariant::fromValue(ImageUrl(ImageURL::builtin(info.icon))),
         .allowMultiple = info.cardinality == AI::Cardinality::Multiple,
-        .canAdd = canAddType(info),
         .instances = std::move(instances),
     });
   }

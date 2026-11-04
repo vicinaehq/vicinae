@@ -57,15 +57,6 @@ public:
     }
   }
 
-  QFuture<AI::Result<TranscriptionResponse>> transcribe(Audio::Recording recording, const QString &mime) {
-    for (const auto &[id, provider] : m_providers) {
-      if (const auto model = provider->findBestModel(Capability::Transcription)) {
-        return provider->transcribe(std::move(recording));
-      }
-    }
-    return {};
-  }
-
   QFuture<AI::Result<TranscriptionResponse>> transcribe(const ModelRef &ref, Audio::Recording recording,
                                                         TranscriptionOptions opts = {}) {
     auto *provider = getProviderById(ref.provider);
@@ -81,8 +72,6 @@ public:
     if (auto it = m_providers.find(std::string(id)); it != m_providers.end()) { return it->second.get(); }
     return nullptr;
   }
-
-  const auto &providers() const { return m_providers; }
 
   std::vector<AI::ProviderModel> listModels(std::optional<Capabilities> caps = std::nullopt) {
     std::vector<AI::ProviderModel> models;
@@ -103,17 +92,6 @@ public:
     return std::ranges::any_of(models, [&](const ProviderModel &model) {
       return model.ref.provider == ref.provider && model.ref.id == ref.id;
     });
-  }
-
-  std::vector<AI::ProviderModel> modelsForProvider(std::string_view providerId) {
-    auto it = m_providers.find(std::string(providerId));
-    if (it == m_providers.end()) return {};
-
-    std::vector<AI::ProviderModel> models;
-    for (auto &model : it->second->listModels()) {
-      models.emplace_back(std::string(providerId), std::move(model));
-    }
-    return models;
   }
 
 private:

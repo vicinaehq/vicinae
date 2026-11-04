@@ -43,7 +43,7 @@ signals:
 
 public:
   DictationSession(const ApplicationContext *ctx, TranscriptionSetup setup, Dictation::DictationAction action,
-                   bool recordHistory, PasteService::Target pasteTarget, QObject *parent = nullptr);
+                   PasteService::Target pasteTarget, QObject *parent = nullptr);
 
   bool start();
 
@@ -79,7 +79,6 @@ private:
   Dictation::DictationAction m_action;
   PasteService::Target m_pasteTarget;
   bool m_finished = false;
-  bool m_recordHistory = true;
   QString m_message;
   GlobalShortcutHandle m_cancelShortcut;
 };

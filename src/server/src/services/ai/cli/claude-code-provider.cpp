@@ -523,7 +523,7 @@ ClaudeCodeProvider::createChatCompletion(std::string_view modelId, const ChatCom
   std::vector<ChatMessage> messages;
   messages.reserve(payload.messages.size());
   for (const auto &message : payload.messages) {
-    if (message.role == ChatRole::System || message.role == ChatRole::Developer) {
+    if (message.role == ChatRole::System) {
       if (!systemPrompt.empty()) systemPrompt += "\n\n";
       systemPrompt += message.text();
     } else {

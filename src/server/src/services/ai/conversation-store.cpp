@@ -503,7 +503,6 @@ private:
           message.content.parts.emplace_back(ImagePart{image.mimeType, image.base64});
         } else if (kind == "tool_call") {
           Agent::ToolCall call{.id = nextId++,
-                               .messageId = message.id,
                                .call = {parts.columnText(3), parts.columnText(4), parts.columnText(5)},
                                .summary = readOptional(parts, 6),
                                .state = readToolStatus(parts.columnText(7))};

@@ -68,7 +68,6 @@ public:
   explicit ChatSession(QObject *parent = nullptr);
   ~ChatSession() override;
   void load(std::string id);
-  const std::optional<AI::ModelRef> &selectedModel() const { return m_selectedModel; }
 
   QString conversationId() const {
     return m_conversation ? QString::fromStdString(m_conversation->id) : QString{};

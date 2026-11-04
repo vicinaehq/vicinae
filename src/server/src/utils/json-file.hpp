@@ -18,7 +18,6 @@ public:
 
   T &data() { return m_data; }
   const T &data() const { return m_data; }
-  const std::filesystem::path &path() const { return m_path; }
 
   bool save() {
     namespace fs = std::filesystem;

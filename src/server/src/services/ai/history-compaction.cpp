@@ -73,8 +73,7 @@ ChatHistory compactHistory(const ChatHistory &history) {
   for (const auto turn : turns | std::views::drop(1)) {
     if (total <= MAX_HISTORY_SIZE) break;
     for (auto index = dropped; index < turn; ++index) {
-      if (compacted[index].role != ChatRole::System && compacted[index].role != ChatRole::Developer)
-        total -= messageSize(compacted[index]);
+      if (compacted[index].role != ChatRole::System) total -= messageSize(compacted[index]);
     }
     dropped = turn;
   }
@@ -82,7 +81,7 @@ ChatHistory compactHistory(const ChatHistory &history) {
   if (dropped > 0) {
     std::erase_if(compacted, [&, index = std::size_t{0}](const ChatMessage &message) mutable {
       const auto current = index++;
-      return current < dropped && message.role != ChatRole::System && message.role != ChatRole::Developer;
+      return current < dropped && message.role != ChatRole::System;
     });
   }
 

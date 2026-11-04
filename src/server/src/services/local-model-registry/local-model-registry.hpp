@@ -17,7 +17,6 @@
 struct LocalModel {
   LocalModelInfo info;
   bool installed = false;
-  bool downloading = false;
 };
 
 /**
@@ -33,12 +32,7 @@ class LocalModelRegistry : public QObject, NonCopyable {
 
 signals:
   void modelsChanged() const;
-  void downloadStarted(const QString &id) const;
   void downloadProgress(const QString &id, qint64 received, qint64 total) const;
-  void downloadRetryScheduled(const QString &id, int attempt, int delaySeconds, const QString &reason) const;
-  void downloadFinished(const QString &id) const;
-  void downloadFailed(const QString &id, const QString &error) const;
-  void downloadCancelled(const QString &id) const;
 
 public:
   explicit LocalModelRegistry(QObject *parent = nullptr);
@@ -46,10 +40,7 @@ public:
 
   std::vector<LocalModel> models(std::optional<AI::Capabilities> caps = std::nullopt) const;
   std::optional<LocalModel> model(std::string_view id) const;
-  bool isInstalled(std::string_view id) const;
-  std::optional<std::filesystem::path> installedPath(std::string_view id) const;
   std::filesystem::path pathFor(const LocalModelInfo &info) const;
-  const std::filesystem::path &modelsDir() const { return m_dir; }
 
   /**
    * Starts a download, or returns the one already in flight for this id.

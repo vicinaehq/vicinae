@@ -12,8 +12,7 @@ enum Capability : std::uint8_t {
   Thinking = 1 << 2,
   ToolCalling = 1 << 3,
   Embedding = 1 << 4,
-  Transcription = 1 << 5,
-  OCR = 1 << 6
+  Transcription = 1 << 5
 };
 
 using Capabilities = std::uint32_t;

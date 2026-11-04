@@ -47,7 +47,14 @@ function(vicinae_fetch_inference_engines)
 	set(BUILD_SHARED_LIBS OFF)
 
 	set(GGML_NATIVE OFF)
-	set(GGML_VULKAN ${LOCAL_AI_VULKAN})
+	if (APPLE)
+		set(GGML_METAL ON)
+		set(GGML_VULKAN OFF)
+	elseif (WIN32)
+		set(GGML_VULKAN OFF)
+	else()
+		set(GGML_VULKAN ON)
+	endif()
 	set(GGML_METAL_EMBED_LIBRARY ON)
 
 	if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
@@ -416,8 +423,6 @@ set(SRCS
 	src/builtins/dictation/style-form-view-host.cpp
 	src/builtins/dictation/styles-view-host.hpp
 	src/builtins/dictation/styles-view-host.cpp
-	src/builtins/dictation/rewrite-view-host.hpp
-	src/builtins/dictation/rewrite-view-host.cpp
 	src/builtins/dictation/dictation-session.hpp
 	src/builtins/dictation/dictation-session.cpp
 	src/builtins/dictation/dictation-command.hpp
@@ -1416,7 +1421,6 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/QuickAIView.qml
 	src/ui/qml/views/ChatDocumentBlock.qml
 	src/ui/qml/views/ChatScrollController.qml
-	src/ui/qml/markdown/MarkdownInline.qml
 	src/ui/qml/document/DocumentText.qml
 	src/ui/qml/document/DocumentView.qml
 	src/ui/qml/document/DocumentFindBar.qml

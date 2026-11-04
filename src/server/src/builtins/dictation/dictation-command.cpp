@@ -31,7 +31,7 @@ constexpr qint64 HOLD_THRESHOLD_MS = 300;
 QPointer<DictationSession> active;
 
 void startDictation(const ApplicationContext *ctx, const TranscriptionSetup &setup,
-                    Dictation::DictationAction action, bool recordHistory, bool closeLauncher) {
+                    Dictation::DictationAction action, bool closeLauncher) {
   const bool hud = !Environment::isHudDisabled();
 
   if (hud && closeLauncher) ctx->navigation->closeWindow();
@@ -42,7 +42,7 @@ void startDictation(const ApplicationContext *ctx, const TranscriptionSetup &set
   }
 
   // Without the HUD the launcher presents the dictation, and closes to give focus back before pasting.
-  active = new DictationSession(ctx, setup, action, recordHistory,
+  active = new DictationSession(ctx, setup, action,
                                 hud ? PasteService::Target::CurrentFocus : PasteService::Target::FocusHandoff,
                                 ctx->navigation.get());
 
@@ -109,7 +109,7 @@ void TranscribeCommand::execute(const Controller &controller) const {
   case DictationService::Readiness::Ready:
     withMicrophoneAccess(ctx, [ctx, setup = *dictation->setup(), action,
                                closeLauncher = controller.launchProps().source == LaunchSource::Launcher]() {
-      startDictation(ctx, setup, action, /*recordHistory*/ true, closeLauncher);
+      startDictation(ctx, setup, action, closeLauncher);
     });
     return;
   case DictationService::Readiness::NoModels:

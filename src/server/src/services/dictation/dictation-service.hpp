@@ -31,9 +31,6 @@ struct TranscriptionSettings {
 class DictationService : public QObject {
   Q_OBJECT
 
-signals:
-  void settingsChanged();
-
 public:
   enum class Readiness : std::uint8_t { NoModels, NotSelected, Ready };
 
@@ -47,7 +44,6 @@ public:
   MediaControlService &mediaControl() { return m_mediaControl; }
 
   void setSettings(TranscriptionSettings settings);
-  const TranscriptionSettings &settings() const { return m_settings; }
 
   Readiness readiness() const;
   std::optional<TranscriptionSetup> setup() const;

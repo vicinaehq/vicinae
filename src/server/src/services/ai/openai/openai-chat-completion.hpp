@@ -89,7 +89,6 @@ struct ChatRequest {
   std::string model;
   std::vector<Message> messages;
   std::optional<std::vector<AbstractTool::ToolSchema>> tools;
-  std::optional<float> temperature;
   std::optional<std::string> reasoning_effort;
   std::optional<int> max_tokens;
   std::optional<int> max_completion_tokens;
@@ -97,9 +96,7 @@ struct ChatRequest {
   bool stream = true;
 
   static ChatRequest make(std::string_view model, const ChatCompletionPayload &payload) {
-    ChatRequest request{.model = std::string{model},
-                        .temperature = payload.temperature,
-                        .max_tokens = payload.maxOutputTokens};
+    ChatRequest request{.model = std::string{model}, .max_tokens = payload.maxOutputTokens};
 
     request.messages.reserve(payload.messages.size());
     for (const auto &message : payload.messages) {

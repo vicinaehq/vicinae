@@ -134,11 +134,6 @@ bool Agent::addTool(std::unique_ptr<AbstractTool> tool) {
   return true;
 }
 
-const Agent::Message *Agent::message(Id id) const {
-  const auto it = std::ranges::lower_bound(m_messages, id, {}, &Message::id);
-  return it != m_messages.end() && it->id == id ? &*it : nullptr;
-}
-
 std::vector<AbstractTool *> Agent::availableTools() const {
   std::vector<AbstractTool *> tools;
   tools.reserve(m_tools.size());
@@ -172,7 +167,6 @@ Agent::Id Agent::appendMessage(ChatMessage message) {
   if (m_messages.size() == m_messages.capacity()) m_messages.reserve(m_messages.size() * 2);
   m_messages.emplace_back(Message{id, std::move(message)});
 
-  emit messageAdded(id);
   return id;
 }
 
@@ -335,10 +329,8 @@ void Agent::receiveToolCall(const ToolCallPart &call) {
         std::ranges::find_if(m_tools, [&](const auto &tool) { return tool->name() == call.name; });
     if (it != m_tools.end()) tool = it->get();
   }
-  m_calls.emplace_back(ToolCall{.id = id,
-                                .messageId = message.id,
-                                .call = call,
-                                .summary = tool ? tool->invocationSummary(call.arguments) : std::nullopt});
+  m_calls.emplace_back(ToolCall{
+      .id = id, .call = call, .summary = tool ? tool->invocationSummary(call.arguments) : std::nullopt});
   m_pendingCalls.emplace_back(id);
 
   emit toolAdded(id);

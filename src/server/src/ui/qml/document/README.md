@@ -27,11 +27,6 @@ Flickable {
             width: parent.width
             text: qsTr("A document can contain any QML component.")
         }
-        MarkdownInline {
-            width: parent.width
-            height: implicitHeight
-            markdown: "## Details\n\nMarkdown is one document renderer."
-        }
         AttachmentCard {
             width: parent.width
             filename: "report.pdf"
@@ -83,31 +78,8 @@ half of the target selects the boundary before or after it; double-click selects
 the entire unit. It is also suitable for images, attachments, and other widgets
 whose copy representation differs from their visible content.
 
-A more complex widget can define its own units and hit testing. For example,
-place this adapter inside a card whose rows have a fixed height:
-
-```qml
-DocumentSelection {
-    id: selection
-    length: card.rows.length
-    hitTest: (x, y) => Math.round(y / card.rowHeight)
-    positionRectangle: position => Qt.rect(0, position * card.rowHeight, card.width, card.rowHeight)
-    wordRange: position => ({
-        start: Math.min(position, length - 1),
-        end: Math.min(position + 1, length)
-    })
-    selectedText: card.rows.slice(selectionStart, selectionEnd).join("\n")
-}
-```
-
-Positions range from `0` to `length`. The selected range is half-open:
-`[selectionStart, selectionEnd)`. The widget draws its highlight from those
-properties or `hasSelection`. `hitTest` receives target-local coordinates;
-`wordRange` supplies double-click boundaries. Returned positions are clamped.
-An optional `linkAt(x, y)` callback returns a link or an empty string.
-`positionRectangle(position)` supplies the target-local rectangle for a logical
-position, allowing the viewport to keep that content in place during reflow.
-Atomic widgets default to their bounds; text adapters use native cursor geometry.
+A plain `DocumentSelection` treats its target as one atomic unit. `DocumentTextSelection`
+uses native cursor geometry.
 
 `selectedText` supplies the participant's plain-text copy representation. It can
 be bound to its selected range or remain constant for an atomic widget. The
@@ -142,7 +114,7 @@ surface should let pointer events reach the document's Flickable where document
 selection gestures are desired; interactive children can continue handling
 clicks themselves.
 
-`MarkdownInline` uses the surrounding scope. The standalone `MarkdownView` owns
+The standalone `MarkdownView` owns
 its scrolling surface and exposes its controller as `document`. Markdown's model
 handles parsing and code-block actions; the document knows nothing about Markdown.
 Link clicks emit `DocumentController.linkActivated(link)` for the host to handle.
@@ -188,8 +160,7 @@ selection. Appending text does not extend an existing selection automatically.
 
 `MarkdownView` and Quick Chat use this path. Quick Chat exposes each response
 block separately, so a single long reply is virtualized too. Bubble decoration
-is composed around these rows. `MarkdownBlock` is shared by both views and by
-`MarkdownInline`, which remains an eager renderer for small embedded fragments.
+is composed around these rows. `MarkdownBlock` is shared by both views.
 
 `DocumentLayout` caches row heights and measures unvisited rows in small idle
 batches. Reading anchors preserve logical text positions during image loading,
@@ -211,7 +182,7 @@ first load; otherwise the natural dimensions become available when it loads.
 ## Streaming and performance
 
 For the eager, component-based path, settle layout after content changes and
-call `document.restoreSelection()`. `MarkdownInline` already does this.
+call `document.restoreSelection()`.
 Model-backed documents restore from model notifications and participant mounts.
 
 Set `DocumentView.followEnd` while a streaming view should stay at the bottom.

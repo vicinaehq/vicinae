@@ -18,7 +18,6 @@ Model toModel(const mistral::ListModelsResponse::ModelInfo &info) {
   if (info.capabilities.vision) { model.caps |= Capability::Vision; }
   if (info.capabilities.function_calling) { model.caps |= Capability::ToolCalling; }
   if (info.capabilities.audio_transcription) { model.caps |= Capability::Transcription; }
-  if (info.capabilities.ocr) { model.caps |= Capability::OCR; }
 
   return model;
 }

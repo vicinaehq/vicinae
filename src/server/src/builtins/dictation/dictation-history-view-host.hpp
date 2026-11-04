@@ -6,7 +6,6 @@
 #include <memory>
 #include "actions/clipboard-actions.hpp"
 #include "builtins/dictation/dictation.hpp"
-#include "builtins/dictation/rewrite-view-host.hpp"
 #include "common/context.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "navigation-controller.hpp"
@@ -106,12 +105,6 @@ public:
       main->addAction(new CopyToClipboardAction(Clipboard::Text{QString::fromStdString(*e.original)},
                                                 tr("Copy Original")));
     }
-
-    main->addAction(new StaticAction(
-        tr("Rewrite with Style…"), ImageURL::builtin(BuiltinIcon::Wand),
-        [source = QString::fromStdString(e.original.value_or(e.text))](ApplicationContext *ctx) {
-          ctx->navigation->pushView(new DictationRewriteViewHost(source));
-        }));
 
     auto remove = new StaticAction(
         tr("Remove Dictation"), ImageURL::builtin(BuiltinIcon::Trash), [e](ApplicationContext *ctx) {

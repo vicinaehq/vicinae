@@ -41,14 +41,12 @@ signals:
   void errorOccurred();
 
 public:
-  enum class State { Idle, Recording, Paused };
+  enum class State { Idle, Recording };
 
   explicit Recorder(QObject *parent = nullptr);
   ~Recorder() override;
 
   bool start();
-  void pause();
-  void resume();
   void stop();
   void discard();
 
@@ -68,7 +66,6 @@ private:
   std::unique_ptr<QAudioSource> m_source;
   QIODevice *m_ioDevice = nullptr;
   QElapsedTimer m_elapsed;
-  qint64 m_pausedElapsed = 0;
 
   std::vector<float> m_pcmBuffer;
   QAudioFormat m_format;

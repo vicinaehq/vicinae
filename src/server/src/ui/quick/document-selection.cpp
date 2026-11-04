@@ -1,6 +1,5 @@
 #include <QMetaMethod>
 #include <QMetaProperty>
-#include <QQmlInfo>
 #include <algorithm>
 #include "document-selection.hpp"
 #include "document-scope.hpp"
@@ -122,44 +121,16 @@ void DocumentSelection::detach() {
 }
 
 int DocumentSelection::positionAt(const QPointF &position) const {
-  if (m_hitTest.isCallable()) {
-    const auto result = m_hitTest.call({position.x(), position.y()});
-    if (result.isNumber()) return std::clamp(result.toInt(), 0, length());
-    qmlWarning(this) << "hitTest must return a selection position:" << result.toString();
-  }
   return target() && position.x() >= target()->width() / 2 ? length() : 0;
 }
 
 QRectF DocumentSelection::rectangleAt(int position) const {
-  if (m_positionRectangle.isCallable()) {
-    const auto result = m_positionRectangle.call({position});
-    if (result.isObject() && result.property("x").isNumber() && result.property("y").isNumber() &&
-        result.property("width").isNumber() && result.property("height").isNumber())
-      return {result.property("x").toNumber(), result.property("y").toNumber(),
-              result.property("width").toNumber(), result.property("height").toNumber()};
-    qmlWarning(this) << "positionRectangle must return {x, y, width, height}:" << result.toString();
-  }
   return target() ? target()->boundingRect() : QRectF{};
 }
 
-std::pair<int, int> DocumentSelection::wordAt(int position) const {
-  if (m_wordRange.isCallable()) {
-    const auto result = m_wordRange.call({position});
-    if (result.isObject() && result.property("start").isNumber() && result.property("end").isNumber()) {
-      const int start = std::clamp(result.property("start").toInt(), 0, length());
-      const int end = std::clamp(result.property("end").toInt(), 0, length());
-      return {std::min(start, end), std::max(start, end)};
-    }
-    qmlWarning(this) << "wordRange must return {start, end}:" << result.toString();
-  }
-  return {0, length()};
-}
+std::pair<int, int> DocumentSelection::wordAt(int position) const { return {0, length()}; }
 
-QString DocumentSelection::linkAtPosition(const QPointF &position) const {
-  if (!m_linkAt.isCallable()) return {};
-  const auto result = m_linkAt.call({position.x(), position.y()});
-  return result.isString() ? result.toString() : QString{};
-}
+QString DocumentSelection::linkAtPosition(const QPointF &position) const { return {}; }
 
 void DocumentSelection::select(int start, int end, bool force) {
   start = std::clamp(start, 0, length());

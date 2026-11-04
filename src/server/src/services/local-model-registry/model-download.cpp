@@ -210,7 +210,6 @@ void ModelDownload::scheduleRetry(const QString &reason, std::optional<std::chro
 
   qWarning() << "[download] retrying in" << wait.count() << "s:" << reason;
   m_state = State::WaitingRetry;
-  emit retryScheduled(m_attempt, static_cast<int>(wait.count()), reason);
   m_retryTimer.start(wait);
 }
 

@@ -130,7 +130,6 @@ bool Recorder::start() {
   // Reserve for ~2 minutes of audio
   m_pcmBuffer.clear();
   m_pcmBuffer.reserve(m_captureFormat.sampleRate() * m_captureFormat.channelCount() * 120);
-  m_pausedElapsed = 0;
   m_level = 0.0f;
   m_peakDb = MIN_PEAK_DB;
   m_elapsed.start();
@@ -140,24 +139,6 @@ bool Recorder::start() {
   m_state = State::Recording;
   emit stateChanged();
   return true;
-}
-
-void Recorder::pause() {
-  if (m_state != State::Recording) return;
-
-  m_source->suspend();
-  m_pausedElapsed += m_elapsed.elapsed();
-  m_state = State::Paused;
-  emit stateChanged();
-}
-
-void Recorder::resume() {
-  if (m_state != State::Paused) return;
-
-  m_source->resume();
-  m_elapsed.start();
-  m_state = State::Recording;
-  emit stateChanged();
 }
 
 void Recorder::stop() {
@@ -186,11 +167,7 @@ void Recorder::discard() {
   m_state = State::Idle;
 }
 
-qint64 Recorder::elapsedMs() const {
-  if (m_state == State::Recording) return m_pausedElapsed + m_elapsed.elapsed();
-  if (m_state == State::Paused) return m_pausedElapsed;
-  return 0;
-}
+qint64 Recorder::elapsedMs() const { return m_state == State::Recording ? m_elapsed.elapsed() : 0; }
 
 void Recorder::processAudioData() {
   auto data = m_ioDevice->readAll();
