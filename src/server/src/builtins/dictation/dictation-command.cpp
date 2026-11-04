@@ -23,8 +23,6 @@ namespace {
 
 const auto MICROPHONE_OFF_ICON =
     ImageURL::builtin(BuiltinIcon::MicrophoneDisabled).setBackgroundTint(Dictation::COLOR);
-const auto SELECT_MODEL_ICON =
-    ImageURL::builtin(BuiltinIcon::Microphone).setBackgroundTint(Dictation::COLOR).setBadge(BuiltinIcon::Cog);
 
 constexpr qint64 HOLD_THRESHOLD_MS = 300;
 
@@ -118,7 +116,7 @@ void TranscribeCommand::execute(const Controller &controller) const {
                           tr("Dictation needs a speech model before it can turn your voice into text. "
                              "Install one that runs on this machine, or add an AI provider that offers "
                              "transcription."),
-                          MICROPHONE_OFF_ICON, tr("Open AI Settings"), [ctx]() {
+                          Dictation::ICON, tr("Open AI Settings"), [ctx]() {
                             ctx->settings->openSubpage(QStringLiteral("ai"), QStringLiteral("providers"));
                             ctx->navigation->closeWindow();
                           }));
@@ -127,7 +125,7 @@ void TranscribeCommand::execute(const Controller &controller) const {
     auto *intro = new IntroViewHost(tr("Choose a transcription model"),
                                     tr("Pick the model dictation should use from the dictation settings. "
                                        "You can change it at any time."),
-                                    SELECT_MODEL_ICON, tr("Open Dictation Settings"), [ctx]() {
+                                    Dictation::ICON, tr("Open Dictation Settings"), [ctx]() {
                                       ctx->settings->openExtensionPreferences(
                                           EntrypointId{std::string(Dictation::REPOSITORY_ID), "transcribe"});
                                       ctx->navigation->closeWindow();

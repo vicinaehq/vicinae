@@ -18,6 +18,7 @@ namespace AI {
 constexpr auto EXTENSION_ID = std::string_view("ai");
 constexpr auto PROVIDERS_PREFERENCE = std::string_view("providers");
 constexpr auto DEFAULT_MODEL_PREFERENCE = std::string_view("defaultModel");
+constexpr auto NO_MODEL = std::string_view("none");
 
 struct ProviderInstance {
   std::string type;
@@ -41,7 +42,7 @@ std::vector<::Preference::DropdownData::Section> defaultModelSections();
 
 struct AiPreferences {
   std::map<std::string, AI::ProviderInstance> providers;
-  std::string defaultModel;
+  std::string defaultModel = std::string(AI::NO_MODEL);
   std::string instructions;
   bool enableTools = true;
 };

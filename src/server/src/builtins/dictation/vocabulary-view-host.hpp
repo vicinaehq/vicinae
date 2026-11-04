@@ -43,6 +43,8 @@ public:
     reload();
   }
 
+  // Only this list layout shows the custom empty state.
+  bool hasDetailPane() const override { return true; }
   QString sectionName() const override { return tr("Words ({count})"); }
   QString displayTitle(const ItemType &e) const override { return QString::fromStdString(e.word); }
   QString displaySubtitle(const ItemType &) const override { return {}; }
@@ -60,12 +62,7 @@ public:
 
     main->addAction(new CopyToClipboardAction(Clipboard::Text{word}, tr("Copy")));
 
-    auto add =
-        new StaticAction(tr("Add Word"), ImageURL::builtin(BuiltinIcon::Plus), [](ApplicationContext *ctx) {
-          ctx->navigation->pushView(new VocabularyFormViewHost);
-        });
-    add->setShortcut(Keybind::NewAction);
-    main->addAction(add);
+    main->addAction(createAddAction());
 
     auto remove = new StaticAction(
         tr("Remove Word"), ImageURL::builtin(BuiltinIcon::Trash), [word](ApplicationContext *ctx) {
@@ -96,9 +93,26 @@ public:
     return panel;
   }
 
+protected:
+  std::unique_ptr<ActionPanelState> emptyActionPanel() override {
+    auto panel = std::make_unique<ListActionPanelState>();
+    panel->createSection()->addAction(createAddAction());
+    return panel;
+  }
+
 private:
   void reload() {
     const auto entries = context()->services->dictation()->vocabulary()->entries();
     setItems({entries.rbegin(), entries.rend()});
+    if (entries.empty()) setActions(emptyActionPanel());
+  }
+
+  static AbstractAction *createAddAction() {
+    auto add =
+        new StaticAction(tr("Add Word"), ImageURL::builtin(BuiltinIcon::Plus), [](ApplicationContext *ctx) {
+          ctx->navigation->pushView(new VocabularyFormViewHost);
+        });
+    add->setShortcut(Keybind::NewAction);
+    return add;
   }
 };

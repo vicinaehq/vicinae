@@ -31,7 +31,15 @@ void setDefaultModel(config::Manager &config, const ModelRef &model) {
 }
 
 std::vector<::Preference::DropdownData::Section> defaultModelSections() {
-  return buildModelDropdownSections(ServiceRegistry::instance()->ai(), Capability::Completion);
+  auto sections = buildModelDropdownSections(ServiceRegistry::instance()->ai(), Capability::Completion);
+  sections.insert(
+      sections.begin(),
+      ::Preference::DropdownData::Section{
+          .options = {::Preference::DropdownData::Option{
+              .title = QCoreApplication::translate("AiPreferences", "None"),
+              .value = QString::fromUtf8(NO_MODEL.data(), static_cast<qsizetype>(NO_MODEL.size())),
+          }}});
+  return sections;
 }
 
 } // namespace AI

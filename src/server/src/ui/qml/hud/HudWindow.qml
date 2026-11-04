@@ -18,18 +18,19 @@ Window {
     property color pillBorderColor: Config.withAlpha(Theme.foreground, Theme.isDark ? 0.12 : 0.18)
     property int pillBorderWidth: 1
     property real pillRadius: height / 2
+    property real pillWidth: dictating ? (dictationMessage ? Math.max(216, Math.min(360, messageLabel.implicitWidth + 72)) : working ? Math.max(216, Math.min(360, workLabel.implicitWidth + 88)) : 172) : noticeRow.width + 30
 
     signal shown
 
-    width: dictating ? (dictationMessage ? Math.max(216, Math.min(360, messageLabel.implicitWidth + 72)) : working ? Math.max(216, Math.min(360, workLabel.implicitWidth + 88)) : 172) : noticeRow.width + 30
+    width: pillWidth
     height: dictating ? 42 : noticeRow.height + 20
     title: dictating ? qsTr("Dictation") : Hud.text
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.ToolTip | Qt.WindowDoesNotAcceptFocus
     color: "transparent"
     visible: false
 
-    Behavior on width {
-        enabled: root.visible && root.dictating
+    Behavior on pillWidth {
+        enabled: root.visible && root.dictating && !root.dictationMessage
         NumberAnimation {
             duration: 320
             easing.type: Easing.OutCubic
@@ -121,7 +122,9 @@ Window {
 
     Rectangle {
         id: pill
-        anchors.fill: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: root.pillWidth
+        height: parent.height
         radius: root.pillRadius
         color: root.pillColor
         border.color: root.pillBorderColor
@@ -237,7 +240,7 @@ Window {
             Text {
                 id: workLabel
                 anchors.centerIn: parent
-                width: parent.width - 80
+                width: Math.min(implicitWidth, 272)
                 visible: root.working
                 text: root.dictating && Hud.dictation.rewriting ? qsTr("Rewriting") : qsTr("Transcribing")
                 color: root.mutedColor
