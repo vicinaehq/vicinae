@@ -142,8 +142,7 @@ void ChatWindow::releaseIdleSessions() {
     auto *session = entry.session.data();
     if (!session) return true;
     if (session == m_session || entry.presenter || session->parent() != this || session->streaming() ||
-        !session->draft().isEmpty() || session->attachments()->count() > 0 || session->recording() ||
-        session->transcribing())
+        !session->draft().isEmpty() || session->attachments()->count() > 0)
       return false;
     session->deleteLater();
     return true;

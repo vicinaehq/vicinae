@@ -17,12 +17,15 @@ std::string displayName(std::string name) {
 }
 
 std::optional<Model> toModel(openrouter::ListModelsResponse::Model &&info) {
-  if (!has(info.architecture.output_modalities, "text")) return std::nullopt;
-
-  Capabilities caps = Capability::Completion;
-  if (has(info.architecture.input_modalities, "image")) caps |= Capability::Vision;
-  if (has(info.supported_parameters, "tools")) caps |= Capability::ToolCalling;
-  if (has(info.supported_parameters, "reasoning")) caps |= Capability::Thinking;
+  Capabilities caps = 0;
+  if (has(info.architecture.output_modalities, "text")) {
+    caps |= Capability::Completion;
+    if (has(info.architecture.input_modalities, "image")) caps |= Capability::Vision;
+    if (has(info.supported_parameters, "tools")) caps |= Capability::ToolCalling;
+    if (has(info.supported_parameters, "reasoning")) caps |= Capability::Thinking;
+  }
+  if (has(info.architecture.output_modalities, "transcription")) caps |= Capability::Transcription;
+  if (!caps) return std::nullopt;
 
   return Model{
       .id = std::move(info.id),
@@ -41,8 +44,9 @@ OpenRouterProvider::OpenRouterProvider(std::string id)
 }
 
 QFuture<Result<ModelList>> OpenRouterProvider::fetchModels() {
-  return client().get<openrouter::ListModelsResponse>("models").then(
-      [](Result<openrouter::ListModelsResponse> res) -> Result<ModelList> {
+  return client()
+      .get<openrouter::ListModelsResponse>("models?output_modalities=all")
+      .then([](Result<openrouter::ListModelsResponse> res) -> Result<ModelList> {
         if (!res) return std::unexpected(res.error());
 
         ModelList models;

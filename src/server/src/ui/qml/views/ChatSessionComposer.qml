@@ -15,11 +15,6 @@ ChatComposer {
     message: session.attachmentMessage
     modelItems: session.modelSelectorItems
     currentModel: session.modelSelectorCurrentItem
-    dictationAvailable: session.dictationAvailable
-    recording: session.recording
-    transcribing: session.transcribing
-    recordingTime: session.recordingTime
-    dictationMessage: session.dictationMessage
     toolApproval: session.toolApproval
     onSubmitted: text => {
         if (session.send(text)) {
@@ -29,15 +24,6 @@ ChatComposer {
     }
     onCancelled: session.cancel()
     onModelActivated: item => session.selectModel(item.id)
-    onDictationToggled: session.toggleDictation()
-    onDictationCancelled: session.cancelDictation()
     onToolApproved: always => session.approveTool(always)
     onToolDeclined: session.declineTool()
-
-    Connections {
-        target: root.session
-        function onDictated(text) {
-            root.insertText(text);
-        }
-    }
 }

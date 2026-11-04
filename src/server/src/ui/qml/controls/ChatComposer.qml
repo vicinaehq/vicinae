@@ -21,11 +21,6 @@ FocusScope {
     property bool compact: true
     property bool floating: false
     property int maxRows: compact ? 6 : 10
-    property bool dictationAvailable: false
-    property bool recording: false
-    property bool transcribing: false
-    property string recordingTime: ""
-    property string dictationMessage: ""
     property var toolApproval: null
     readonly property bool _awaitingApproval: toolApproval !== null && toolApproval !== undefined
 
@@ -33,8 +28,6 @@ FocusScope {
     signal previewRequested(var content)
     signal cancelled
     signal modelActivated(var item)
-    signal dictationToggled
-    signal dictationCancelled
     signal toolApproved(bool always)
     signal toolDeclined
 
@@ -70,25 +63,11 @@ FocusScope {
         root.submitted(text);
     }
 
-    function insertText(text) {
-        const current = editor.text;
-        const needsSpace = current.length > 0 && !/\s$/.test(current);
-        editor.text = current + (needsSpace ? " " : "") + text;
-        editor.cursorPosition = editor.text.length;
-        editor.forceActiveFocus();
-    }
-
     Keys.onShortcutOverride: event => event.accepted = root._awaitingApproval && event.key === Qt.Key_Escape
     Keys.onEscapePressed: event => {
-        if (root._awaitingApproval) {
+        event.accepted = root._awaitingApproval;
+        if (root._awaitingApproval)
             root.toolDeclined();
-            return;
-        }
-        if (!root.recording) {
-            event.accepted = false;
-            return;
-        }
-        root.dictationCancelled();
     }
 
     Shortcut {
@@ -232,7 +211,6 @@ FocusScope {
             id: modelSelector
             Layout.preferredWidth: Math.min(preferredWidth, root.width * 0.55)
             Layout.alignment: Qt.AlignVCenter
-            visible: !root.recording && !root.transcribing
             compact: true
             flat: true
             preferredPopupEdge: Qt.TopEdge
@@ -250,63 +228,6 @@ FocusScope {
         Item {
             visible: !root.compact
             Layout.fillWidth: true
-        }
-
-        Text {
-            Layout.alignment: Qt.AlignVCenter
-            visible: root.recording || root.transcribing || root.dictationMessage !== ""
-            text: root.dictationMessage !== "" ? root.dictationMessage : (root.transcribing ? qsTr("Transcribing…") : root.recordingTime)
-            color: root.dictationMessage !== "" ? Theme.danger : Theme.textMuted
-            font.family: Theme.fontFamily
-            font.pointSize: Theme.smallerFontSize
-        }
-
-        Item {
-            Layout.alignment: Qt.AlignVCenter
-            implicitWidth: root._controlHeight
-            implicitHeight: root._controlHeight
-            visible: root.transcribing
-
-            PulsingDots {
-                anchors.centerIn: parent
-                active: parent.visible
-            }
-        }
-
-        ViciButton {
-            Layout.alignment: Qt.AlignVCenter
-            visible: root.transcribing
-            implicitWidth: root._controlHeight
-            implicitHeight: root._controlHeight
-            radius: root._controlHeight / 2
-            color: hovered ? Theme.listItemHoverBg : "transparent"
-            iconSize: 14
-            iconSource: Img.icon(BuiltinIcon.Xmark).withFillColor(Theme.textMuted)
-            accessibleName: qsTr("Cancel transcription")
-            activeFocusOnTab: true
-            onClicked: root.dictationCancelled()
-            ToolTip.visible: hovered
-            ToolTip.text: accessibleName
-            ToolTip.delay: 600
-        }
-
-        ViciButton {
-            Layout.alignment: Qt.AlignVCenter
-            visible: !root.transcribing
-            implicitWidth: root._controlHeight
-            implicitHeight: root._controlHeight
-            radius: root._controlHeight / 2
-            enabled: root.dictationAvailable
-            opacity: enabled ? 1.0 : 0.4
-            color: root.recording ? Config.withAlpha(Theme.danger, hovered ? 0.25 : 0.15) : (hovered ? Theme.listItemHoverBg : "transparent")
-            iconSize: 14
-            iconSource: Img.icon(root.recording ? BuiltinIcon.Stop : BuiltinIcon.Microphone).withFillColor(root.recording ? Theme.danger : Theme.textMuted)
-            accessibleName: root.recording ? qsTr("Stop and transcribe") : qsTr("Dictate")
-            activeFocusOnTab: true
-            onClicked: root.dictationToggled()
-            ToolTip.visible: hovered
-            ToolTip.text: root.dictationAvailable ? accessibleName : qsTr("Set up dictation to talk to AI")
-            ToolTip.delay: 600
         }
 
         ViciButton {

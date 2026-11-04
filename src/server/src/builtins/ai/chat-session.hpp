@@ -16,8 +16,6 @@
 namespace AI {
 class Service;
 };
-class DictationService;
-class TranscriptionSession;
 
 class ChatSession : public QObject {
   Q_OBJECT
@@ -41,11 +39,6 @@ class ChatSession : public QObject {
   Q_PROPERTY(QVariantList modelSelectorItems READ modelSelectorItems NOTIFY modelSelectorItemsChanged)
   Q_PROPERTY(QVariantMap modelSelectorCurrentItem READ modelSelectorCurrentItem NOTIFY
                  modelSelectorCurrentItemChanged)
-  Q_PROPERTY(bool dictationAvailable READ dictationAvailable NOTIFY dictationAvailableChanged)
-  Q_PROPERTY(bool recording READ recording NOTIFY dictationStateChanged)
-  Q_PROPERTY(bool transcribing READ transcribing NOTIFY dictationStateChanged)
-  Q_PROPERTY(QString recordingTime READ recordingTime NOTIFY recordingTimeChanged)
-  Q_PROPERTY(QString dictationMessage READ dictationMessage NOTIFY dictationMessageChanged)
   Q_PROPERTY(QVariant toolApproval READ toolApproval NOTIFY toolApprovalChanged)
 
 public:
@@ -54,8 +47,6 @@ public:
   Q_INVOKABLE void toggleTool(quint64 id) { m_exchanges.toggleTool(id); }
   Q_INVOKABLE void toggleToolGroup(quint64 id) { m_exchanges.toggleToolGroup(id); }
   Q_INVOKABLE void selectModel(const QString &compositeId);
-  Q_INVOKABLE void toggleDictation();
-  Q_INVOKABLE void cancelDictation();
   Q_INVOKABLE void approveTool(bool always);
   Q_INVOKABLE void declineTool();
 
@@ -66,12 +57,7 @@ signals:
   void loadingChanged();
   void draftChanged();
   void attachmentStateChanged();
-  void dictationAvailableChanged();
-  void dictationStateChanged();
-  void recordingTimeChanged();
-  void dictationMessageChanged();
   void toolApprovalChanged();
-  void dictated(const QString &text);
   void streamingChanged();
   void activityChanged();
   void modelChanged();
@@ -111,11 +97,6 @@ public:
   QVariantList modelSelectorItems() const { return m_modelSelectorItems; }
   QVariantMap modelSelectorCurrentItem() const { return m_modelSelectorCurrentItem; }
 
-  bool dictationAvailable() const { return m_dictationAvailable; }
-  bool recording() const;
-  bool transcribing() const;
-  QString recordingTime() const;
-  QString dictationMessage() const { return m_dictationMessage; }
   QVariant toolApproval() const;
 
 private:
@@ -146,16 +127,8 @@ private:
   bool needsVision() const;
   bool modelSupports(AI::Capability capability) const;
   void rebuildModelSelectorItems();
-  void updateDictationAvailable();
-  void startDictation();
-  void showDictationMessage(const QString &message);
 
   AI::Service *m_aiService = nullptr;
-  DictationService *m_dictationService = nullptr;
-  TranscriptionSession *m_dictation = nullptr;
-  QTimer m_dictationMessageTimer;
-  bool m_dictationAvailable = false;
-  QString m_dictationMessage;
   AI::Agent *m_agent = nullptr;
   AttachmentModel m_attachments;
   ChatConversationModel m_exchanges;

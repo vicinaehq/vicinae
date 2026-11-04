@@ -19,14 +19,10 @@
 #include "utils/environment.hpp"
 #include "vicinae.hpp"
 #include "services/ai/tool-registry.hpp"
-#include "services/dictation/dictation-service.hpp"
-#include "services/dictation/transcription-session.hpp"
-#include "services/permissions/macos-permission-service.hpp"
 #include "ui/image/url.hpp"
 #include "view-utils.hpp"
 
 namespace {
-constexpr int DICTATION_MESSAGE_MS = 2500;
 constexpr int TITLE_TIMEOUT_MS = 30000;
 constexpr qsizetype TITLE_CONTEXT_LENGTH = 4000;
 constexpr qsizetype TITLE_MAX_LENGTH = 100;
@@ -156,81 +152,6 @@ void ChatSession::initialize() {
   connect(m_aiService, &AI::Service::modelsChanged, this, &ChatSession::rebuildModelSelectorItems);
   rebuildModelSelectorItems();
   connect(m_aiService, &AI::Service::modelsChanged, this, &ChatSession::attachmentStateChanged);
-
-  m_dictationService = ServiceRegistry::instance()->dictation();
-  m_dictation = new TranscriptionSession(*m_dictationService, this);
-  connect(m_dictation, &TranscriptionSession::stateChanged, this, &ChatSession::dictationStateChanged);
-  connect(m_dictation, &TranscriptionSession::elapsedTimeChanged, this, &ChatSession::recordingTimeChanged);
-  connect(m_dictation, &TranscriptionSession::transcribed, this,
-          [this](const Transcript &transcript) { emit dictated(transcript.text); });
-  connect(m_dictation, &TranscriptionSession::failed, this, &ChatSession::showDictationMessage);
-
-  m_dictationMessageTimer.setSingleShot(true);
-  m_dictationMessageTimer.setInterval(DICTATION_MESSAGE_MS);
-  connect(&m_dictationMessageTimer, &QTimer::timeout, this, [this]() {
-    m_dictationMessage.clear();
-    emit dictationMessageChanged();
-  });
-
-  connect(m_aiService, &AI::Service::modelsChanged, this, &ChatSession::updateDictationAvailable);
-  connect(m_dictationService, &DictationService::settingsChanged, this,
-          &ChatSession::updateDictationAvailable);
-  updateDictationAvailable();
-}
-
-bool ChatSession::recording() const { return m_dictation && m_dictation->isRecording(); }
-
-bool ChatSession::transcribing() const { return m_dictation && m_dictation->transcribing(); }
-
-QString ChatSession::recordingTime() const { return m_dictation ? m_dictation->elapsedTime() : QString(); }
-
-void ChatSession::updateDictationAvailable() {
-  const bool available = m_dictationService->setup().has_value();
-  if (available == m_dictationAvailable) return;
-  m_dictationAvailable = available;
-  emit dictationAvailableChanged();
-}
-
-void ChatSession::toggleDictation() {
-  if (!m_dictation || m_dictation->transcribing()) return;
-  if (m_dictation->isRecording()) {
-    m_dictation->accept();
-    return;
-  }
-
-  using vicinae::permissions::MicrophoneStatus;
-  switch (vicinae::permissions::microphoneStatus()) {
-  case MicrophoneStatus::Granted:
-    startDictation();
-    return;
-  case MicrophoneStatus::NotDetermined:
-    vicinae::permissions::requestMicrophone([self = QPointer(this)](bool granted) {
-      if (self && granted) self->startDictation();
-    });
-    return;
-  case MicrophoneStatus::Denied:
-    showDictationMessage(tr("Microphone access is turned off for Vicinae"));
-    return;
-  }
-}
-
-void ChatSession::cancelDictation() {
-  if (m_dictation) m_dictation->cancel();
-}
-
-void ChatSession::startDictation() {
-  const auto setup = m_dictationService->setup();
-  if (!setup) {
-    showDictationMessage(tr("No transcription model selected"));
-    return;
-  }
-  m_dictation->start(*setup);
-}
-
-void ChatSession::showDictationMessage(const QString &message) {
-  m_dictationMessage = message;
-  emit dictationMessageChanged();
-  m_dictationMessageTimer.start();
 }
 
 bool ChatSession::needsVision() const {
