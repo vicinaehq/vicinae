@@ -16,6 +16,7 @@ Rectangle {
     property bool showFocus: activeFocus
     property bool busy: false
     property int contentAlignment: Qt.AlignHCenter
+    property var shortcutTokens: []
 
     signal clicked
 
@@ -68,7 +69,7 @@ Rectangle {
         id: contentRow
         x: root.contentAlignment === Qt.AlignLeft ? root.horizontalPadding : Math.round((root.width - width) / 2)
         anchors.verticalCenter: parent.verticalCenter
-        spacing: root._hasText && root._hasIcon ? 8 : 0
+        spacing: root._hasText && (root._hasIcon || root.shortcutTokens.length > 0) ? 8 : 0
 
         ViciSpinner {
             visible: root.busy
@@ -94,6 +95,14 @@ Rectangle {
             font.pointSize: Theme.regularFontSize
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        ShortcutBadge {
+            visible: root.shortcutTokens.length > 0
+            tokens: root.shortcutTokens
+            contentColor: root.foreground
+            keycapSize: 18
             anchors.verticalCenter: parent.verticalCenter
         }
     }

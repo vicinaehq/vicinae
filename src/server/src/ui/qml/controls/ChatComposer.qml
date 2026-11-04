@@ -27,6 +27,7 @@ FocusScope {
     property string recordingTime: ""
     property string dictationMessage: ""
     property var toolApproval: null
+    readonly property bool _awaitingApproval: toolApproval !== null && toolApproval !== undefined
 
     signal submitted(string text)
     signal previewRequested(var content)
@@ -58,6 +59,11 @@ FocusScope {
     }
 
     function submit() {
+        if (root._awaitingApproval) {
+            if (editor.text.trim() === "")
+                root.toolApproved(false);
+            return;
+        }
         if (!root.canSubmit)
             return;
         const text = editor.text.trim();
@@ -72,7 +78,12 @@ FocusScope {
         editor.forceActiveFocus();
     }
 
+    Keys.onShortcutOverride: event => event.accepted = root._awaitingApproval && event.key === Qt.Key_Escape
     Keys.onEscapePressed: event => {
+        if (root._awaitingApproval) {
+            root.toolDeclined();
+            return;
+        }
         if (!root.recording) {
             event.accepted = false;
             return;
@@ -127,7 +138,7 @@ FocusScope {
         x: root._leftPadding
         y: root._verticalPadding
         width: root.width - root._leftPadding - root._rightPadding - root._spacing
-        visible: root.toolApproval !== null && root.toolApproval !== undefined
+        visible: root._awaitingApproval
         approval: root.toolApproval ?? {}
         onAccepted: always => root.toolApproved(always)
         onDeclined: root.toolDeclined()

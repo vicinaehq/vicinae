@@ -89,6 +89,7 @@ ColumnLayout {
             variant: "ghost"
             bordered: true
             text: qsTr("Deny")
+            shortcutTokens: Keyboard.tokens(Qt.Key_Escape, 0)
             activeFocusOnTab: true
             onClicked: root.declined()
         }
@@ -106,6 +107,7 @@ ColumnLayout {
             implicitHeight: 28
             variant: "accent"
             text: qsTr("Allow Once")
+            shortcutTokens: Keyboard.tokens(Qt.Key_Return, 0)
             activeFocusOnTab: true
             onClicked: root.accepted(false)
         }
