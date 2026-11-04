@@ -1,27 +1,19 @@
 import { getClient } from "./client";
 
 export namespace AI {
-	const creativityToTemperature: Record<Creativity, number> = {
-		none: 0,
-		low: 0.3,
-		medium: 0.7,
-		high: 1.0,
-		maximum: 2.0,
-	};
-
 	type AIAskRes = Promise<string> & {
 		on(event: "data", listener: (chunk: string) => void): void;
 	};
 
 	/**
-	 * High level function to leverage vicinae AI capabilities to create a prompt completion.
+	 * Create a prompt completion using one of the models set up in Vicinae.
 	 *
 	 * @param prompt - The prompt to ask the AI
-	 * @param options - Options to further tweak model behavior or explicitly select what model to use
+	 * @param options - Optionally select which model to use or cancel the request
 	 *
 	 * @example
 	 * ```typescript
-	 * const completion = AI.ask('Give me a fun fact about bananas', { creativity: 'high' })
+	 * const completion = AI.ask('Give me a fun fact about bananas');
 	 *
 	 * // automatic streaming support
 	 * completion.on('data', (chunk) => {
@@ -33,48 +25,52 @@ export namespace AI {
 	 */
 	export function ask(prompt: string, options?: AskOptions): AIAskRes {
 		const subscribers = [] as Array<(chunk: string) => void>;
-
-		let temperature = creativityToTemperature[options?.creativity ?? "medium"];
-
-		if (typeof options?.creativity === "number") {
-			if (options.creativity < 0 || options.creativity > 2) {
-				throw new Error(
-					"Creativity should be a floating point number in the 0-2 range.",
-				);
-			}
-			temperature = options.creativity;
-		}
-
+		const signal = options?.signal;
 		const api = getClient();
-		const promise = api.AI.ask(prompt, { temperature, ...options })
-			.then((completionId) => {
-				options?.signal?.addEventListener("abort", () => {
-					api.AI.abort(completionId);
-				});
-				return new Promise<string>((resolve, reject) => {
-					let data = "";
 
-					const stopData = getClient().AI.dataReceived((id, chunk, done) => {
-						if (id !== completionId) return;
-						data += chunk;
-						for (const cb of subscribers) cb(chunk as string);
-						if (done) {
-							stopData.unsubscribe();
-							stopFailure.unsubscribe();
-							resolve(data);
-						}
-					});
-					const stopFailure = getClient().AI.completionFailed((id, error) => {
-						if (id !== completionId) return;
-						stopData.unsubscribe();
-						stopFailure.unsubscribe();
-						reject(new Error(error));
-					});
+		const promise = new Promise<string>((resolve, reject) => {
+			if (signal?.aborted) {
+				reject(signal.reason);
+				return;
+			}
+
+			api.AI.ask(prompt, { model: options?.model }).then((completionId) => {
+				if (signal?.aborted) {
+					api.AI.abort(completionId);
+					reject(signal.reason);
+					return;
+				}
+
+				let data = "";
+
+				const stop = () => {
+					stopData.unsubscribe();
+					stopFailure.unsubscribe();
+					signal?.removeEventListener("abort", onAbort);
+				};
+				const onAbort = () => {
+					stop();
+					api.AI.abort(completionId);
+					reject(signal?.reason);
+				};
+				const stopData = api.AI.dataReceived((id, chunk, done) => {
+					if (id !== completionId) return;
+					data += chunk;
+					for (const cb of subscribers) cb(chunk as string);
+					if (done) {
+						stop();
+						resolve(data);
+					}
 				});
-			})
-			.catch((error) => {
-				throw error;
-			});
+				const stopFailure = api.AI.completionFailed((id, error) => {
+					if (id !== completionId) return;
+					stop();
+					reject(new Error(error));
+				});
+
+				signal?.addEventListener("abort", onAbort, { once: true });
+			}, reject);
+		});
 
 		Object.assign(promise, {
 			on: (event: "data", listener: (chunk: string) => void) => {
@@ -97,14 +93,8 @@ export namespace AI {
 
 	export type AskOptions = {
 		/**
-		 * How creative you want the AI model to be. This internally maps to the `temperature` parameter.
-		 * Some models may not be affected by this option.
-		 * You can set
-		 */
-		creativity?: Creativity;
-		/**
 		 * The AI model to use to answer to the prompt, as returned by `AI.getModels`.
-		 * If it is not specified, the model selected for AI Chat is used, and the call throws if there is none.
+		 * If it is not specified, the default model from the AI settings is used, and the call throws if there is none.
 		 */
 		model?: string;
 		/**
@@ -112,17 +102,6 @@ export namespace AI {
 		 */
 		signal?: AbortSignal;
 	};
-	/**
-	 * Concrete tasks, such as fixing grammar, require less creativity while open-ended questions, such as generating ideas, require more.
-	 * If a number is passed, it needs to be in the range 0-2. For larger values, 2 will be used. For lower values, 0 will be used.
-	 */
-	export type Creativity =
-		| "none"
-		| "low"
-		| "medium"
-		| "high"
-		| "maximum"
-		| number;
 
 	//type Capability = "completion" | "tools" | "vision";
 

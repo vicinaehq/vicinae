@@ -30,7 +30,6 @@ public:
     std::optional<AI::ModelRef> model;
 
     payload.messages = {AI::ChatMessage::fromText(AI::ChatRole::User, std::move(prompt))};
-    payload.temperature = options.temperature.value_or(0.0);
 
     if (options.model) {
       auto ref = AI::ModelRef::fromString(*options.model);

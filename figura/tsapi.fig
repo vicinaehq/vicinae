@@ -363,7 +363,6 @@ service EventCore {
 // AI
 
 struct AskOptions {
-  temperature?: double;
   model?: string;
 };
 

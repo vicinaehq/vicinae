@@ -299,7 +299,6 @@ export type BrowserTab = {
 }
 
 export type AskOptions = {
-	temperature?: number;
 	model?: string;
 }
 

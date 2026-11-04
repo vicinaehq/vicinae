@@ -1,6 +1,8 @@
 import { AI, List, Action, ActionPanel, showToast, Toast } from "@vicinae/api";
 import { useEffect, useRef, useState } from "react";
 
+const DEFAULT_PROMPT = "Give me a fun fact about bananas";
+
 const SearchSelector = (props: { onModelChange: (s: string) => void }) => {
 	const [models, setModels] = useState<AI.Model[]>([]);
 
@@ -10,6 +12,7 @@ const SearchSelector = (props: { onModelChange: (s: string) => void }) => {
 
 	return (
 		<List.Dropdown onChange={props.onModelChange}>
+			<List.Dropdown.Item title="Default model" value="" />
 			{models.map((model) => (
 				<List.Dropdown.Item
 					key={model.id}
@@ -26,13 +29,12 @@ export default function AIPlayground() {
 	const [detail, setDetail] = useState("");
 	const selectedModel = useRef<string | undefined>(undefined);
 
-	const generating = useRef(false);
+	const abort = useRef<AbortController | null>(null);
 
 	const askAI = (prompt: string, options: AI.AskOptions) => {
 		return AI.ask(prompt, {
 			...options,
-			creativity: 2,
-			model: selectedModel.current,
+			model: selectedModel.current || undefined,
 		});
 	};
 
@@ -64,26 +66,36 @@ export default function AIPlayground() {
 						<Action
 							title="AI.ask"
 							onAction={async () => {
-								if (generating.current) {
+								if (abort.current) {
 									showToast(Toast.Style.Failure, "Already generating...");
 									return;
 								}
 
 								setText("");
-								generating.current = true;
 								setDetail("");
+								abort.current = new AbortController();
 								await showToast(Toast.Style.Animated, "Generating...");
-								const ask = askAI(text, {});
-								ask.on("data", (chunk) => {
-									setDetail((detail) => detail + chunk);
-								});
-								const answer = await ask;
-								console.log({ answer });
-								await showToast(Toast.Style.Success, "Generated");
-								generating.current = false;
+								try {
+									const ask = askAI(text || DEFAULT_PROMPT, {
+										signal: abort.current.signal,
+									});
+									ask.on("data", (chunk) => {
+										setDetail((detail) => detail + chunk);
+									});
+									console.log({ answer: await ask });
+									await showToast(Toast.Style.Success, "Generated");
+								} catch (error) {
+									await showToast(Toast.Style.Failure, "Failed", String(error));
+								} finally {
+									abort.current = null;
+								}
 							}}
 						/>
-						<Action title="Batch calls" onAction={() => batchCalls(text, 10)} />
+						<Action title="Cancel" onAction={() => abort.current?.abort()} />
+						<Action
+							title="Batch calls"
+							onAction={() => batchCalls(text || DEFAULT_PROMPT, 10)}
+						/>
 					</ActionPanel>
 				}
 			/>
