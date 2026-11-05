@@ -20,6 +20,7 @@ function(import_mathtext)
 			git apply --ignore-whitespace "${CMAKE_CURRENT_LIST_DIR}/patches/jkqtmathtext-implication.patch"
 			"${CMAKE_CURRENT_LIST_DIR}/patches/jkqtmathtext-font-discovery.patch"
 			"${CMAKE_CURRENT_LIST_DIR}/patches/jkqtmathtext-latex-braces.patch"
+			"${CMAKE_CURRENT_LIST_DIR}/patches/jkqtmathtext-no-widgets.patch"
 		EXCLUDE_FROM_ALL
 	)
 	FetchContent_MakeAvailable(jkqtmathtext)
