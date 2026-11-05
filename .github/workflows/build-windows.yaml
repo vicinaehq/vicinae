@@ -68,6 +68,18 @@ jobs:
           modules: qtshadertools qtimageformats qtmultimedia
           cache: true
 
+      - name: Install Vulkan SDK
+        if: inputs.tag != '' || inputs.local_ai == true
+        run: |
+          $version = "1.4.363.0"
+          $installer = "$env:RUNNER_TEMP\vulkansdk.exe"
+          Invoke-WebRequest "https://sdk.lunarg.com/sdk/download/$version/windows/vulkansdk-windows-X64-$version.exe" -OutFile $installer
+          Start-Process $installer -ArgumentList "--accept-licenses --default-answer --confirm-command install" -Wait
+          $sdk = "C:\VulkanSDK\$version"
+          if (-not (Test-Path "$sdk\Bin\glslc.exe")) { throw "Vulkan SDK did not install to $sdk" }
+          "VULKAN_SDK=$sdk" >> $env:GITHUB_ENV
+          "$sdk\Bin" >> $env:GITHUB_PATH
+
       - name: Set up sccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:

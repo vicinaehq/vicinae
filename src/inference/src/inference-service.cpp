@@ -43,8 +43,8 @@ void InferenceService::WhisperDeleter::operator()(whisper_context *ctx) const { 
 
 void InferenceService::ParakeetDeleter::operator()(parakeet_context *ctx) const { parakeet_free(ctx); }
 
-InferenceService::InferenceService(inference_gen::RpcTransport &transport)
-    : AbstractInference(transport), m_worker([this]() { run(); }) {}
+InferenceService::InferenceService(inference_gen::RpcTransport &transport, bool useGpu)
+    : AbstractInference(transport), m_useGpu(useGpu), m_worker([this]() { run(); }) {}
 
 InferenceService::~InferenceService() {
   {
@@ -160,7 +160,9 @@ std::expected<void, std::string> InferenceService::loadWhisper(const std::string
   log(std::format("loading whisper model {}", path));
 
   Stopwatch watch;
-  auto *ctx = whisper_init_from_file_with_params(path.c_str(), whisper_context_default_params());
+  auto params = whisper_context_default_params();
+  params.use_gpu = m_useGpu;
+  auto *ctx = whisper_init_from_file_with_params(path.c_str(), params);
   if (!ctx) return std::unexpected("Failed to load whisper model " + path);
   log(std::format("loaded whisper model in {} ms", watch.lapMs()));
 
@@ -175,7 +177,9 @@ std::expected<void, std::string> InferenceService::loadParakeet(const std::strin
   log(std::format("loading parakeet model {}", path));
 
   Stopwatch watch;
-  auto *ctx = parakeet_init_from_file_with_params(path.c_str(), parakeet_context_default_params());
+  auto params = parakeet_context_default_params();
+  params.use_gpu = m_useGpu;
+  auto *ctx = parakeet_init_from_file_with_params(path.c_str(), params);
   if (!ctx) return std::unexpected("Failed to load parakeet model " + path);
   log(std::format("loaded parakeet model in {} ms", watch.lapMs()));
 

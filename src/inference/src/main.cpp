@@ -70,16 +70,21 @@ void quietLog(ggml_log_level level, const char *text, void *) {
 
 } // namespace
 
-int main(int, char **) {
+int main(int argc, char **argv) {
   whisper_log_set(quietLog, nullptr);
 #ifdef _WIN32
   _setmode(_fileno(stdin), _O_BINARY);
   _setmode(_fileno(stdout), _O_BINARY);
 #endif
 
+  bool useGpu = true;
+  for (int i = 1; i < argc; ++i) {
+    if (std::string_view{argv[i]} == "--cpu") useGpu = false;
+  }
+
   StdoutTransport transport;
   inference_gen::RpcTransport rpc{transport};
-  inference::InferenceService service{rpc};
+  inference::InferenceService service{rpc, useGpu};
   inference_gen::Server server{rpc, service};
 
   serve(server);

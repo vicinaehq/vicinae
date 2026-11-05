@@ -55,6 +55,8 @@ public:
 
   // std::nullopt keeps models loaded until Vicinae quits, zero releases them after each request
   void setIdleTimeout(std::optional<std::chrono::seconds> timeout);
+  // Takes effect on the next helper start; a running helper is relaunched once idle.
+  void setUseGpu(bool useGpu);
 
   void preload(LocalEngine engine, const std::filesystem::path &model);
   void cancelPreload();
@@ -79,6 +81,8 @@ private:
   inference_gen::Client m_client;
   QTimer m_idleTimer;
   std::optional<std::chrono::seconds> m_idleTimeout = std::chrono::seconds{60};
+  bool m_useGpu = true;
+  bool m_relaunch = false;
   int m_inflight = 0;
   int m_holds = 0;
   bool m_releasing = false;

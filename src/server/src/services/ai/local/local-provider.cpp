@@ -31,7 +31,9 @@ std::optional<ImageUrl> LocalProvider::icon() const {
 
 void LocalProvider::configure(const PreferenceValues &values) {
   using namespace std::chrono_literals;
-  switch (readPreferences<LocalFields>(values).keepLoaded) {
+  const auto prefs = readPreferences<LocalFields>(values);
+  m_inference.setUseGpu(prefs.device == Device::Gpu);
+  switch (prefs.keepLoaded) {
   case KeepLoaded::Immediately:
     m_inference.setIdleTimeout(0s);
     break;

@@ -89,6 +89,17 @@ void InferenceRuntime::setIdleTimeout(std::optional<std::chrono::seconds> timeou
   if (idle()) rearmIdle();
 }
 
+void InferenceRuntime::setUseGpu(bool useGpu) {
+  if (m_useGpu == useGpu) return;
+  m_useGpu = useGpu;
+  if (m_process.state() == QProcess::NotRunning) return;
+  if (idle()) {
+    release();
+  } else {
+    m_relaunch = true;
+  }
+}
+
 void InferenceRuntime::preload(LocalEngine engine, const std::filesystem::path &model) {
   const auto wire = toEngine(engine);
   if (!wire || !ensureRunning()) return;
@@ -190,7 +201,9 @@ bool InferenceRuntime::ensureRunning() {
   }
 
   m_process.setProgram(QString::fromStdString(path->string()));
+  m_process.setArguments(m_useGpu ? QStringList{} : QStringList{QStringLiteral("--cpu")});
   m_process.setProcessEnvironment(helperEnvironment());
+  m_relaunch = false;
   m_process.start();
 
   if (!m_process.waitForStarted()) {
@@ -208,7 +221,12 @@ void InferenceRuntime::requestStarted() {
 
 void InferenceRuntime::requestFinished() {
   if (m_inflight > 0) --m_inflight;
-  if (idle()) rearmIdle();
+  if (!idle()) return;
+  if (m_relaunch) {
+    release();
+  } else {
+    rearmIdle();
+  }
 }
 
 void InferenceRuntime::rearmIdle() {

@@ -18,7 +18,7 @@ namespace inference {
 
 class InferenceService : public inference_gen::AbstractInference {
 public:
-  explicit InferenceService(inference_gen::RpcTransport &transport);
+  InferenceService(inference_gen::RpcTransport &transport, bool useGpu);
   ~InferenceService();
 
   void load(inference_gen::LoadRequest req,
@@ -59,6 +59,7 @@ private:
   Loaded<parakeet_context, ParakeetDeleter> m_parakeet;
   std::optional<VoiceActivityDetector> m_vad;
   bool m_vadTried = false;
+  bool m_useGpu = true;
 
   std::mutex m_mutex;
   std::condition_variable m_wake;

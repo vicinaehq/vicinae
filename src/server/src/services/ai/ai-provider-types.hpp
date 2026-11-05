@@ -51,9 +51,11 @@ struct CodexFields {
 };
 
 enum class KeepLoaded { Immediately, OneMinute, FiveMinutes, FifteenMinutes, Always };
+enum class Device { Gpu, Cpu };
 
 struct LocalFields {
   KeepLoaded keepLoaded = KeepLoaded::OneMinute;
+  Device device = Device::Gpu;
 };
 
 struct ProviderTypeInfo {
@@ -71,6 +73,11 @@ template <> struct glz::meta<AI::KeepLoaded> {
   using enum AI::KeepLoaded;
   static constexpr auto value = glz::enumerate("0", Immediately, "60", OneMinute, "300", FiveMinutes, "900",
                                                FifteenMinutes, "always", Always);
+};
+
+template <> struct glz::meta<AI::Device> {
+  using enum AI::Device;
+  static constexpr auto value = glz::enumerate("gpu", Gpu, "cpu", Cpu);
 };
 
 template <> struct PreferenceSchema<AI::OllamaFields> {
@@ -182,6 +189,18 @@ template <> struct PreferenceSchema<AI::LocalFields> {
                 option(KeepLoaded::FiveMinutes, tr("5 minutes")),
                 option(KeepLoaded::FifteenMinutes, tr("15 minutes")),
                 option(KeepLoaded::Always, tr("Until Vicinae quits")),
+            };
+          },
+  };
+  PreferenceMeta device{
+      .title = tr("Run models on"),
+      .description = tr("Falls back to the CPU when no compatible GPU is available."),
+      .options =
+          [] {
+            using AI::Device;
+            return std::vector<Preference::DropdownData::Option>{
+                option(Device::Gpu, tr("GPU")),
+                option(Device::Cpu, tr("CPU")),
             };
           },
   };
