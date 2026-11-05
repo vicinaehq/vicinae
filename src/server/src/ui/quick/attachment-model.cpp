@@ -121,9 +121,30 @@ bool AttachmentModel::paste() {
     addUrls(urls);
     return true;
   }
-  if (!mime->hasImage()) return false;
+  QString rawMime;
+  QByteArray raw;
+  for (const auto &format : mime->formats()) {
+    if (!format.startsWith(QLatin1String("image/"))) continue;
+    raw = mime->data(format);
+    if (raw.isEmpty()) continue;
+    rawMime = format;
+    if (format == QLatin1String("image/png")) break;
+  }
+  if (raw.isEmpty() && !mime->hasImage()) return false;
   if (!canAdd()) return true;
   const auto name = tr("Pasted image") + QStringLiteral(".png");
+  if (!raw.isEmpty()) {
+    load(Entry{.id = m_nextId++, .name = name}, QtConcurrent::run([raw, rawMime, name] {
+           auto result =
+               prepareImage(ImageRendering::decodeImageData(raw, {MAX_IMAGE_EDGE, MAX_IMAGE_EDGE}), name.toStdString());
+           if (result) {
+             result->originalBytes = raw;
+             result->originalMimeType = rawMime.toStdString();
+           }
+           return result;
+         }));
+    return true;
+  }
   const auto image = qvariant_cast<QImage>(mime->imageData());
   load(Entry{.id = m_nextId++, .name = name},
        QtConcurrent::run([image, name] { return prepareImage(image, name.toStdString()); }));
