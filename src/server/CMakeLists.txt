@@ -1576,6 +1576,7 @@ endif()
 if(WIN32)
 	list(APPEND VICINAE_QML_FILES
 		src/ui/qml/chat/ChatWindowWindows.qml
+		src/ui/qml/settings/SettingsWindowWindows.qml
 		src/ui/qml/launcher/LauncherWindowWindows.qml
 		src/ui/qml/hud/HudWindowWindows.qml
 	)

@@ -59,6 +59,8 @@ void SettingsWindow::loadRoot() {
   m_engine.load(
 #ifdef Q_OS_MACOS
       qml::componentUrl(u"SettingsWindowMacOS")
+#elif defined(Q_OS_WIN)
+      qml::componentUrl(u"SettingsWindowWindows")
 #else
       qml::componentUrl(u"SettingsWindow")
 #endif

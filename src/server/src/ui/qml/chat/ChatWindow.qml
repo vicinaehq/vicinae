@@ -9,9 +9,11 @@ Window {
     property bool nativeChrome: false
     property bool translucentSidebar: nativeChrome || Platform.supports("windowMaterial")
     property bool sidebarVisible: true
+    property real titlebarRightInset: 0
     readonly property int sidebarWidth: sidebarVisible ? 240 : 0
     readonly property list<Item> titlebarControls: [sidebar.titlebarControls, showSidebarButton, titleEditor, newChatButton, moreButton]
-    readonly property int headerHeight: 44
+    property real headerHeight: 44
+    property bool frostedHeader: true
     readonly property real contentPadding: Math.max(24, (width - sidebarWidth - 800) / 2)
     width: 1120
     height: 780
@@ -41,6 +43,13 @@ Window {
 
     Rectangle {
         anchors.fill: parent
+        anchors.topMargin: root.headerHeight
+        color: root.translucentSidebar ? "transparent" : Theme.background
+    }
+
+    Rectangle {
+        width: parent.width - root.titlebarRightInset
+        height: root.headerHeight
         color: root.translucentSidebar ? "transparent" : Theme.background
     }
 
@@ -63,11 +72,16 @@ Window {
         onDeleteRequested: (conversationId, title) => root.confirmDelete(conversationId, title)
     }
 
-    Rectangle {
+    Item {
         x: root.sidebarWidth
         width: parent.width - x
         height: parent.height
-        color: Theme.background
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.topMargin: root.titlebarRightInset > 0 ? root.headerHeight : 0
+            color: Theme.background
+        }
 
         Item {
             id: toolbar
@@ -77,7 +91,8 @@ Window {
 
             BackdropSurface {
                 anchors.fill: parent
-                sourceItem: (conversation.item as ChatConversation)?.backdrop ?? null
+                anchors.rightMargin: root.titlebarRightInset
+                sourceItem: root.frostedHeader ? (conversation.item as ChatConversation)?.backdrop ?? null : null
                 color: Qt.tint(Theme.background, Config.withAlpha(Theme.foreground, 0.025))
             }
 
@@ -105,7 +120,7 @@ Window {
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: root.nativeChrome && !root.sidebarVisible ? 84 : 16
-                anchors.rightMargin: 16
+                anchors.rightMargin: 16 + root.titlebarRightInset
                 spacing: 8
                 ViciButton {
                     id: showSidebarButton
@@ -138,11 +153,6 @@ Window {
                 }
                 Item {
                     Layout.fillWidth: true
-                }
-                ViciSpinner {
-                    Layout.preferredWidth: 16
-                    Layout.preferredHeight: 16
-                    visible: Chat.loading
                 }
                 ViciButton {
                     id: newChatButton
@@ -185,6 +195,7 @@ Window {
 
         Loader {
             id: conversation
+            clip: root.titlebarRightInset > 0
             anchors.top: toolbar.bottom
             anchors.left: parent.left
             anchors.right: parent.right
