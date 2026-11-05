@@ -76,6 +76,12 @@
       url = "https://github.com/jkriege2/JKQtPlotter/archive/d9b6f18eac22f5e9959a5415d7ba0d8780f24585.tar.gz";
       hash = "sha256-5kcWkywuVulwQby026vnyQRep9YK3cTts47tQ0JShug=";
     };
+    # Upstream mixes CRLF and LF files. Unlike the `git apply --ignore-whitespace` used by
+    # cmake/MathText.cmake, `patch` rejects our LF patches against CRLF files.
+    prePatch = ''
+      find cmake lib -type f \( -name '*.cmake' -o -name '*.txt' -o -name '*.h' -o -name '*.cpp' \) \
+        -exec sed -i 's/\r$//' {} +
+    '';
     patches = [
       ../cmake/patches/jkqtmathtext-implication.patch
       ../cmake/patches/jkqtmathtext-font-discovery.patch
