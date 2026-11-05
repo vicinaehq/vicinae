@@ -423,8 +423,6 @@ set(SRCS
 	src/builtins/dictation/style-form-view-host.cpp
 	src/builtins/dictation/styles-view-host.hpp
 	src/builtins/dictation/styles-view-host.cpp
-	src/builtins/dictation/dictation-session.hpp
-	src/builtins/dictation/dictation-session.cpp
 	src/builtins/dictation/dictation-command.hpp
 	src/builtins/dictation/dictation-command.cpp
 	src/builtins/dictation/transcribe-view-host.hpp
@@ -463,6 +461,9 @@ set(SRCS
 	src/utils/json-file.hpp
 	src/services/dictation/dictation-service.hpp
 	src/services/dictation/dictation-service.cpp
+	src/services/dictation/dictation-action.hpp
+	src/services/dictation/dictation-session.hpp
+	src/services/dictation/dictation-session.cpp
 	src/services/dictation/transcription-session.hpp
 	src/services/dictation/transcription-session.cpp
 	src/services/dictation/dictation-history.hpp

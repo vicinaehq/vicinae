@@ -424,7 +424,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setLocalModels(std::move(localModels));
 #endif
     registry->setDictation(
-        std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl()));
+        std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl(), *registry));
     registry->setAI(std::move(ai));
     registry->setConversations(
         std::make_unique<AI::ConversationStore>(Omnicast::dataDir() / "conversations"));

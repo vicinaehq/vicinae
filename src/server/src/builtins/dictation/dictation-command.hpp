@@ -16,14 +16,5 @@ class TranscribeCommand : public TypedCallbackCommand<NoPreferences, DictationPr
   std::vector<QString> keywords() const override { return {"transcribe"}; }
 
   void execute(const Controller &controller) const override;
-  void shortcutReleased() const override;
+  void shortcutReleased(const ApplicationContext &ctx) const override;
 };
-
-namespace Dictation {
-bool hasActiveSession();
-bool isRecording();
-// Finish the current recording and transcribe it. False when nothing is recording.
-bool acceptSession();
-// Discard the current dictation. False when there is none.
-bool cancelSession();
-} // namespace Dictation

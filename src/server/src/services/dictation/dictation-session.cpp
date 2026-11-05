@@ -1,26 +1,23 @@
 #include <utility>
 #include "dictation-session.hpp"
-#include "common/context.hpp"
-#include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/app-runtime/app-runtime.hpp"
-#include "services/builtin-icon/builtin-icon.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/dictation/dictation-service.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/snippet/snippet-service.hpp"
-#include "ui/image/url.hpp"
 
 namespace {
 constexpr int MESSAGE_DURATION_MS = 3000;
 }
 
-DictationSession::DictationSession(const ApplicationContext *ctx, TranscriptionSetup setup,
+DictationSession::DictationSession(ServiceRegistry &services, TranscriptionSetup setup,
                                    Dictation::DictationAction action, PasteService::Target pasteTarget,
                                    QObject *parent)
-    : QObject(parent), m_ctx(ctx), m_setup(std::move(setup)), m_session(*ctx->services->dictation(), this),
-      m_rewrite(ctx->services->dictation()->ai(), *ctx->services->dictation()->vocabulary(), this),
-      m_action(action), m_pasteTarget(pasteTarget) {
+    : QObject(parent), m_services(services), m_setup(std::move(setup)),
+      m_session(*services.dictation(), this),
+      m_rewrite(services.dictation()->ai(), *services.dictation()->vocabulary(), this), m_action(action),
+      m_pasteTarget(pasteTarget) {
   connect(&m_session, &TranscriptionSession::audioLevelChanged, this, &DictationSession::audioLevelChanged);
   connect(&m_session, &TranscriptionSession::elapsedTimeChanged, this, &DictationSession::elapsedTimeChanged);
   connect(&m_session, &TranscriptionSession::stateChanged, this, &DictationSession::stateChanged);
@@ -39,9 +36,9 @@ DictationSession::DictationSession(const ApplicationContext *ctx, TranscriptionS
 }
 
 bool DictationSession::start() {
-  m_setup.extraVocabulary = m_ctx->services->snippetService()->database()->voicePhrases();
+  m_setup.extraVocabulary = m_services.snippetService()->database()->voicePhrases();
   if (m_session.start(m_setup)) {
-    if (auto *shortcuts = m_ctx->services->globalShortcuts(); shortcuts && shortcuts->isSupported()) {
+    if (auto *shortcuts = m_services.globalShortcuts(); shortcuts && shortcuts->isSupported()) {
       const auto id = QStringLiteral("@dictation-cancel");
       const Keyboard::Shortcut escape(Qt::Key_Escape);
       if (!shortcuts->findConflict(escape, id)) {
@@ -67,17 +64,17 @@ void DictationSession::handleTranscript(const Transcript &transcript) {
   if (m_finished) return;
   m_transcript = transcript;
 
-  const auto app = m_ctx->services->appRuntime()->focusTargetApp();
+  const auto app = m_services.appRuntime()->focusTargetApp();
   const auto appId = app ? std::optional(app->id().toStdString()) : std::nullopt;
 
-  if (const auto snippet = m_ctx->services->snippetService()->expandVoicePhrase(transcript.text, appId)) {
+  if (const auto snippet = m_services.snippetService()->expandVoicePhrase(transcript.text, appId)) {
     qInfo() << "Dictation: voice phrase matched snippet" << snippet->name;
     deliver(snippet->text, {.snippet = snippet->name});
     finish();
     return;
   }
 
-  const auto *style = m_ctx->services->dictation()->styles()->forApp(appId);
+  const auto *style = m_services.dictation()->styles()->forApp(appId);
 
   if (!style) {
     deliver(transcript.text);
@@ -99,18 +96,18 @@ void DictationSession::deliver(const QString &text, const DeliverySource &source
 
   switch (m_action) {
   case Dictation::DictationAction::PasteToActiveWindow:
-    if (!m_ctx->services->pasteService()->pasteContent(content, {.transient = true}, m_pasteTarget)) {
+    if (!m_services.pasteService()->pasteContent(content, {.transient = true}, m_pasteTarget)) {
       qWarning() << "Dictation: could not paste, copying instead";
-      m_ctx->services->clipman()->copyContent(content, {.concealed = true});
-      m_ctx->navigation->showHud(tr("Could not paste, copied to clipboard"));
+      m_services.clipman()->copyContent(content, {.concealed = true});
+      emit pasteFailed();
     }
     break;
   case Dictation::DictationAction::CopyToClipboard:
-    m_ctx->services->clipman()->copyContent(content, {.concealed = true});
+    m_services.clipman()->copyContent(content, {.concealed = true});
     break;
   }
 
-  m_ctx->services->dictation()->history()->add({
+  m_services.dictation()->history()->add({
       .text = text.toStdString(),
       .durationMs = static_cast<std::uint64_t>(m_transcript.durationMs),
       .language = m_transcript.language,

@@ -24,11 +24,11 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "theme/theme.hpp"
-#include "builtins/dictation/dictation-command.hpp"
 #include "builtins/dictation/dictation.hpp"
 #include "builtins/root/provider-search-view-host.hpp"
 #include "builtins/raycast/raycast-store-detail-host.hpp"
 #include "builtins/vicinae/vicinae-store-detail-host.hpp"
+#include "services/dictation/dictation-service.hpp"
 #include "services/toast/toast.hpp"
 #include "vicinae.hpp"
 
@@ -192,8 +192,9 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (command == "dictation") {
     const auto verb = path.sliced(1);
-    const auto start = [this]() -> std::expected<void, std::string> {
-      if (Dictation::hasActiveSession()) return {};
+    auto *dictation = m_ctx.services->dictation();
+    const auto start = [this, dictation]() -> std::expected<void, std::string> {
+      if (dictation->hasActiveSession()) return {};
       const EntrypointId id{std::string(Dictation::REPOSITORY_ID), "dictate"};
       if (!m_ctx.navigation->activateEntrypoint(id, {.props = {.source = LaunchSource::External}})) {
         return std::unexpected("Could not start dictation");
@@ -203,15 +204,15 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
 
     if (verb == "start") return start();
     if (verb == "toggle") {
-      if (Dictation::acceptSession()) return {};
+      if (dictation->acceptSession()) return {};
       return start();
     }
     if (verb == "stop") {
-      if (!Dictation::acceptSession()) return std::unexpected("Not recording");
+      if (!dictation->acceptSession()) return std::unexpected("Not recording");
       return {};
     }
     if (verb == "cancel") {
-      if (!Dictation::cancelSession()) return std::unexpected("No active dictation");
+      if (!dictation->cancelSession()) return std::unexpected("No active dictation");
       return {};
     }
     return std::unexpected("Usage: vicinae://dictation/<start|stop|cancel|toggle>");

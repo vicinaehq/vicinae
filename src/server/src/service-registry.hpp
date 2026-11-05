@@ -201,8 +201,8 @@ private:
   std::unique_ptr<AppRuntime> m_appRuntime;
   std::unique_ptr<GlobalShortcutService> m_globalShortcuts;
   std::unique_ptr<LocalModelRegistry> m_localModels;
-  std::unique_ptr<DictationService> m_dictation;
   std::unique_ptr<AI::Service> m_ai;
+  std::unique_ptr<DictationService> m_dictation;
   std::unique_ptr<AI::ToolRegistry> m_tools;
   std::unique_ptr<AI::ConversationStore> m_conversations;
 };

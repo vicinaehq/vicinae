@@ -31,7 +31,7 @@ public:
   virtual bool isFallback() const { return false; }
   virtual void preferenceValuesChanged(const PreferenceValues &) const {}
   virtual bool isInternal() const { return false; }
-  virtual void shortcutReleased() const {}
+  virtual void shortcutReleased(const ApplicationContext &) const {}
 
   /**
    * Optional override of the navigation title that is to be shown when

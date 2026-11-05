@@ -1,11 +1,10 @@
 #include "dictation-command.hpp"
 #include <algorithm>
-#include <QPointer>
 #include <functional>
 #include <optional>
 #include <qlogging.h>
 #include <string_view>
-#include "builtins/dictation/dictation-session.hpp"
+#include "services/dictation/dictation-session.hpp"
 #include "builtins/dictation/transcribe-view-host.hpp"
 #include "common/context.hpp"
 #include "common/entrypoint.hpp"
@@ -26,25 +25,24 @@ const auto MICROPHONE_OFF_ICON =
 
 constexpr qint64 HOLD_THRESHOLD_MS = 300;
 
-QPointer<DictationSession> active;
-
 void startDictation(const ApplicationContext *ctx, const TranscriptionSetup &setup,
                     Dictation::DictationAction action, bool closeLauncher) {
   const bool hud = !Environment::isHudDisabled();
 
   if (hud && closeLauncher) ctx->navigation->closeWindow();
 
-  if (active && active->isActive()) {
-    active->accept();
+  auto *dictation = ctx->services->dictation();
+
+  if (dictation->hasActiveSession()) {
+    dictation->acceptSession();
     return;
   }
 
   // Without the HUD the launcher presents the dictation, and closes to give focus back before pasting.
-  active = new DictationSession(ctx, setup, action,
-                                hud ? PasteService::Target::CurrentFocus : PasteService::Target::FocusHandoff,
-                                ctx->navigation.get());
+  auto *session = dictation->startSession(
+      setup, action, hud ? PasteService::Target::CurrentFocus : PasteService::Target::FocusHandoff);
 
-  if (!active->start()) {
+  if (!session) {
     const auto message = TranscribeCommand::tr("Could not start recording");
     if (hud) {
       ctx->navigation->showHud(message, ImageURL::builtin(BuiltinIcon::MicrophoneDisabled));
@@ -54,10 +52,15 @@ void startDictation(const ApplicationContext *ctx, const TranscriptionSetup &set
     return;
   }
 
+  auto *navigation = ctx->navigation.get();
+  QObject::connect(session, &DictationSession::pasteFailed, navigation, [navigation] {
+    navigation->showHud(TranscribeCommand::tr("Could not paste, copied to clipboard"));
+  });
+
   if (hud) {
-    ctx->navigation->showDictationHud(active);
+    navigation->showDictationHud(session);
   } else {
-    ctx->navigation->pushView(new TranscribeViewHost(active));
+    navigation->pushView(new TranscribeViewHost(session));
   }
 }
 
@@ -89,27 +92,15 @@ void withMicrophoneAccess(const ApplicationContext *ctx, std::function<void()> s
 
 } // namespace
 
-bool Dictation::hasActiveSession() { return active && active->isActive(); }
-
-bool Dictation::isRecording() { return active && active->isRecording(); }
-
-bool Dictation::acceptSession() {
-  if (!isRecording()) return false;
-  active->accept();
-  return true;
-}
-
-bool Dictation::cancelSession() {
-  if (!hasActiveSession()) return false;
-  active->cancel();
-  return true;
-}
-
 ImageURL TranscribeCommand::iconUrl() const { return Dictation::ICON; }
 
-void TranscribeCommand::shortcutReleased() const {
-  if (!active || !active->isRecording() || active->recordingMs() < HOLD_THRESHOLD_MS) return;
-  active->accept();
+void TranscribeCommand::shortcutReleased(const ApplicationContext &ctx) const {
+  auto *dictation = ctx.services->dictation();
+  if (const auto *session = dictation->activeSession();
+      !session || session->recordingMs() < HOLD_THRESHOLD_MS) {
+    return;
+  }
+  dictation->acceptSession();
 }
 
 void TranscribeCommand::execute(const Controller &controller) const {

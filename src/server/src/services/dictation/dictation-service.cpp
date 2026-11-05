@@ -1,10 +1,12 @@
 #include "dictation-service.hpp"
 #include <algorithm>
 #include "services/ai/ai-service.hpp"
+#include "services/dictation/dictation-session.hpp"
 
 DictationService::DictationService(const std::filesystem::path &dataDir, AI::Service &ai,
-                                   MediaControlService &mediaControl, QObject *parent)
-    : QObject(parent), m_ai(ai), m_mediaControl(mediaControl),
+                                   MediaControlService &mediaControl, ServiceRegistry &services,
+                                   QObject *parent)
+    : QObject(parent), m_ai(ai), m_mediaControl(mediaControl), m_services(services),
       m_history(dataDir / "dictation-history.json", this),
       m_vocabulary(dataDir / "dictation-vocabulary.json", this),
       m_styles(dataDir / "dictation-styles.json", this) {}
@@ -35,4 +37,31 @@ std::optional<TranscriptionSetup> DictationService::setup() const {
       .playSoundEffects = m_settings.playSoundEffects,
       .pauseMedia = m_settings.pauseMedia,
   };
+}
+
+DictationSession *DictationService::startSession(TranscriptionSetup setup, Dictation::DictationAction action,
+                                                 PasteService::Target pasteTarget) {
+  if (hasActiveSession()) return nullptr;
+  auto *session = new DictationSession(m_services, std::move(setup), action, pasteTarget, this);
+  if (!session->start()) return nullptr;
+  m_activeSession = session;
+  return session;
+}
+
+DictationSession *DictationService::activeSession() const { return m_activeSession; }
+
+bool DictationService::hasActiveSession() const { return m_activeSession && m_activeSession->isActive(); }
+
+bool DictationService::isRecording() const { return m_activeSession && m_activeSession->isRecording(); }
+
+bool DictationService::acceptSession() {
+  if (!isRecording()) return false;
+  m_activeSession->accept();
+  return true;
+}
+
+bool DictationService::cancelSession() {
+  if (!hasActiveSession()) return false;
+  m_activeSession->cancel();
+  return true;
 }

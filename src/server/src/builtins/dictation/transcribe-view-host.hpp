@@ -1,7 +1,7 @@
 #pragma once
 #include <QPointer>
 #include <QtQml/qqmlregistration.h>
-#include "builtins/dictation/dictation-session.hpp"
+#include "services/dictation/dictation-session.hpp"
 #include "ui/views/bridge-view.hpp"
 
 /**

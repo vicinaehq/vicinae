@@ -3,7 +3,7 @@
 #include <QPointer>
 #include <QTimer>
 #include <optional>
-#include "builtins/dictation/dictation-session.hpp"
+#include "services/dictation/dictation-session.hpp"
 #include "ui/image/image-url.hpp"
 #include "ui/qml-engine-scope.hpp"
 

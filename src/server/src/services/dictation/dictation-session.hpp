@@ -3,13 +3,13 @@
 #include <QString>
 #include <QTimer>
 #include <QtQml/qqmlregistration.h>
-#include "builtins/dictation/dictation.hpp"
+#include "services/dictation/dictation-action.hpp"
 #include "services/dictation/dictation-rewrite.hpp"
 #include "services/paste/paste-service.hpp"
 #include "services/dictation/transcription-session.hpp"
 #include "services/global-shortcuts/global-shortcut-service.hpp"
 
-class ApplicationContext;
+class ServiceRegistry;
 
 /**
  * One dictation from key press to pasted text, independent of what presents it. Deletes itself once finished.
@@ -39,10 +39,12 @@ signals:
   void stateChanged();
   // The text is about to be pasted or copied.
   void delivering();
+  // Pasting wasn't possible, so the text was copied to the clipboard instead.
+  void pasteFailed();
   void finished();
 
 public:
-  DictationSession(const ApplicationContext *ctx, TranscriptionSetup setup, Dictation::DictationAction action,
+  DictationSession(ServiceRegistry &services, TranscriptionSetup setup, Dictation::DictationAction action,
                    PasteService::Target pasteTarget, QObject *parent = nullptr);
 
   bool start();
@@ -70,7 +72,7 @@ private:
 
   void deliver(const QString &text, const DeliverySource &source = {});
 
-  const ApplicationContext *m_ctx;
+  ServiceRegistry &m_services;
   TranscriptionSetup m_setup;
   TranscriptionSession m_session;
   DictationRewrite m_rewrite;
