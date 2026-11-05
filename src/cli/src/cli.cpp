@@ -271,6 +271,62 @@ public:
   }
 };
 
+class DictationVerbCommand : public AbstractCommandLineCommand {
+public:
+  DictationVerbCommand(std::string verb, std::string description)
+      : m_verb(std::move(verb)), m_description(std::move(description)) {}
+
+  std::string id() const override { return m_verb; }
+  std::string description() const override { return m_description; }
+
+  bool run(CLI::App *) override {
+    if (auto res = cli::IpcClient::sendDeeplink("vicinae://dictation/" + m_verb); !res) {
+      std::println(std::cerr, "Failed to {} dictation: {}", m_verb, res.error());
+      return false;
+    }
+    return true;
+  }
+
+private:
+  std::string m_verb;
+  std::string m_description;
+};
+
+class DictationStartCommand : public DictationVerbCommand {
+public:
+  DictationStartCommand()
+      : DictationVerbCommand("start", "Start recording, no-op if a dictation is active") {}
+};
+
+class DictationStopCommand : public DictationVerbCommand {
+public:
+  DictationStopCommand() : DictationVerbCommand("stop", "Stop recording and transcribe") {}
+};
+
+class DictationCancelCommand : public DictationVerbCommand {
+public:
+  DictationCancelCommand() : DictationVerbCommand("cancel", "Discard the current dictation") {}
+};
+
+class DictationToggleCommand : public DictationVerbCommand {
+public:
+  DictationToggleCommand()
+      : DictationVerbCommand("toggle", "Start recording, or stop and transcribe if recording") {}
+};
+
+class DictationCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "dictation"; }
+  std::string description() const override { return "Control dictation"; }
+
+public:
+  DictationCommand() {
+    registerCommand<DictationStartCommand>();
+    registerCommand<DictationStopCommand>();
+    registerCommand<DictationCancelCommand>();
+    registerCommand<DictationToggleCommand>();
+  }
+};
+
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
   std::string description() const override { return "Ping the vicinae server"; }
@@ -526,6 +582,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<ToggleCommand>();
   app.registerCommand<OpenCommand>();
   app.registerCommand<CloseCommand>();
+  app.registerCommand<DictationCommand>();
   app.registerCommand<CommandCommand>();
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();

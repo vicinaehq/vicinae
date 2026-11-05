@@ -89,6 +89,22 @@ void withMicrophoneAccess(const ApplicationContext *ctx, std::function<void()> s
 
 } // namespace
 
+bool Dictation::hasActiveSession() { return active && active->isActive(); }
+
+bool Dictation::isRecording() { return active && active->isRecording(); }
+
+bool Dictation::acceptSession() {
+  if (!isRecording()) return false;
+  active->accept();
+  return true;
+}
+
+bool Dictation::cancelSession() {
+  if (!hasActiveSession()) return false;
+  active->cancel();
+  return true;
+}
+
 ImageURL TranscribeCommand::iconUrl() const { return Dictation::ICON; }
 
 void TranscribeCommand::shortcutReleased() const {

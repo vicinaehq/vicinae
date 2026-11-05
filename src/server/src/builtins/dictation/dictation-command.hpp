@@ -18,3 +18,12 @@ class TranscribeCommand : public TypedCallbackCommand<NoPreferences, DictationPr
   void execute(const Controller &controller) const override;
   void shortcutReleased() const override;
 };
+
+namespace Dictation {
+bool hasActiveSession();
+bool isRecording();
+// Finish the current recording and transcribe it. False when nothing is recording.
+bool acceptSession();
+// Discard the current dictation. False when there is none.
+bool cancelSession();
+} // namespace Dictation
