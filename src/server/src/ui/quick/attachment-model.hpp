@@ -41,8 +41,11 @@ public:
   QString error() const { return m_error; }
   std::vector<AttachmentContent> take();
 
-private:
   using Result = std::expected<FileAttachment, QString>;
+  // Reads an image or UTF-8 text file into an attachment, safe to call off the main thread
+  static Result readFile(const QString &path);
+
+private:
   struct Entry {
     int id;
     QString name;
@@ -53,7 +56,6 @@ private:
   };
   bool canAdd();
   void load(Entry entry, QFuture<Result> future);
-  static Result readFile(const QString &path);
   static Result prepareImage(QImage image, std::string name);
   std::vector<Entry> m_entries;
   int m_nextId = 0;

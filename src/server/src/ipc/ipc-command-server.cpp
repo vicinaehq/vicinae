@@ -11,12 +11,20 @@
 #include "services/browser-extension-service.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/files-service/file-service.hpp"
+#include "services/ai/ai-preferences.hpp"
+#include "services/ai/ai-provider.hpp"
+#include "services/ai/ai-service.hpp"
+#include "ui/quick/attachment-model.hpp"
 #include "ui/views/dmenu-view-host.hpp"
 #include "utils.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <optional>
+#include <QFutureWatcher>
+#include <QPromise>
+#include <QTimer>
+#include <QtConcurrentRun>
 #include <qfuture.h>
 #include <qlogging.h>
 #include <ranges>
@@ -32,6 +40,158 @@
 
 IpcService::IpcService(ipc_gen::RpcTransport &transport, ApplicationContext &ctx)
     : ipc_gen::AbstractIpc(transport), m_ctx(ctx) {}
+
+namespace {
+
+using AttachmentResults = std::vector<AttachmentModel::Result>;
+
+std::expected<AI::ModelRef, std::string> resolveAskModel(AI::Service &ai,
+                                                         const std::optional<std::string> &requested) {
+  if (requested) {
+    auto ref = AI::ModelRef::fromString(*requested);
+    if (!ref)
+      return std::unexpected(
+          std::format("{} is not a valid model id, expected <provider>:<model>", *requested));
+    if (!ai.isAvailable(*ref, AI::Completion)) {
+      return std::unexpected(std::format(
+          "Model {} is not available, run `vicinae ai models` to list the usable ones", *requested));
+    }
+    return *ref;
+  }
+
+  auto ref = AI::defaultModel(*ServiceRegistry::instance()->config());
+  if (!ref || !ai.isAvailable(*ref, AI::Completion)) {
+    return std::unexpected("No default AI model is selected, pick one in the AI settings or pass --model");
+  }
+  return *ref;
+}
+
+std::expected<AI::ChatCompletionPayload, std::string> buildAskPayload(const ipc_gen::AiAskRequest &req,
+                                                                      AttachmentResults attachments) {
+  AI::ChatCompletionPayload payload{.thinking = AI::ThinkingMode::Low, .oneShot = true};
+  if (req.system) payload.messages.emplace_back(AI::ChatMessage::fromText(AI::ChatRole::System, *req.system));
+
+  AI::ChatMessage message{.role = AI::ChatRole::User};
+  message.parts.reserve(2 + attachments.size() * 2);
+  if (req.context) message.parts.emplace_back(AI::TextPart{*req.context});
+  message.parts.emplace_back(AI::TextPart{req.prompt});
+
+  for (auto &&[idx, result] : attachments | vicinae::enumerate) {
+    if (!result)
+      return std::unexpected(std::format("{}: {}", req.attachments[idx], result.error().toStdString()));
+    auto &attachment = *result;
+    if (auto *image = std::get_if<FileAttachment::Image>(&attachment.contents)) {
+      message.parts.emplace_back(AI::TextPart{std::format("Image: {}", attachment.name)});
+      message.parts.emplace_back(AI::ImagePart{std::move(image->mimeType), std::move(image->base64)});
+    } else {
+      message.parts.emplace_back(AI::TextPart{std::format("Attached text file: {}\n\n{}", attachment.name,
+                                                          std::get<std::string>(attachment.contents))});
+    }
+  }
+
+  payload.messages.emplace_back(std::move(message));
+  return payload;
+}
+
+bool hasImagePart(const AI::ChatCompletionPayload &payload) {
+  return std::ranges::any_of(payload.messages, [](const AI::ChatMessage &message) {
+    return std::ranges::any_of(
+        message.parts, [](const AI::ChatPart &part) { return std::holds_alternative<AI::ImagePart>(part); });
+  });
+}
+
+} // namespace
+
+ipc_gen::Result<ipc_gen::AiListModelsResponse>::Future IpcService::aiListModels() {
+  auto models = m_ctx.services->ai()->listModels(AI::Completion) |
+                std::views::transform([](const AI::ProviderModel &model) {
+                  return ipc_gen::AiModel{.id = model.ref.toString(),
+                                          .name = model.name,
+                                          .capabilities = AI::stringifyCapabilities(model.caps)};
+                }) |
+                std::ranges::to<std::vector>();
+
+  return ipc_gen::Result<ipc_gen::AiListModelsResponse>::ok({.models = std::move(models)});
+}
+
+ipc_gen::Result<ipc_gen::AiAskResponse>::Future IpcService::aiAsk(ipc_gen::AiAskRequest req) {
+  using Response = ipc_gen::Result<ipc_gen::AiAskResponse>;
+  auto &ai = *m_ctx.services->ai();
+
+  auto model = resolveAskModel(ai, req.model);
+  if (!model) return Response::fail(model.error());
+
+  QPromise<Response::Type> promise;
+  auto future = promise.future();
+
+  // Files are read off the main thread, the completion starts once they are all in
+  auto *watcher = new QFutureWatcher<AttachmentResults>(this);
+  watcher->setFuture(QtConcurrent::run([paths = req.attachments] {
+    AttachmentResults results;
+    results.reserve(paths.size());
+    for (const auto &path : paths) {
+      results.emplace_back(AttachmentModel::readFile(QString::fromStdString(path)));
+    }
+    return results;
+  }));
+
+  QObject::connect(
+      watcher, &QFutureWatcher<AttachmentResults>::finished, this,
+      [this, watcher, req = std::move(req), model = std::move(*model),
+       promise = std::move(promise)]() mutable {
+        watcher->deleteLater();
+        const auto finish = [&promise](Response::Type result) {
+          promise.addResult(std::move(result));
+          promise.finish();
+        };
+
+        auto payload = buildAskPayload(req, watcher->result());
+        if (!payload) return finish(std::unexpected(payload.error()));
+
+        auto &ai = *m_ctx.services->ai();
+        if (hasImagePart(*payload) && !ai.isAvailable(model, AI::Vision)) {
+          return finish(std::unexpected(std::format("Model {} does not support images", model.toString())));
+        }
+
+        auto completion = ai.createChatCompletion(model, *payload);
+        if (!completion) {
+          return finish(std::unexpected(std::format("Model {} is not available", model.toString())));
+        }
+
+        const auto id = std::format("completion-{}", m_completionIdx++);
+        QObject::connect(completion.get(), &AI::AbstractChatCompletionStream::dataAdded, this,
+                         [this, id](const std::string &data) { emitaiData(id, data, false); });
+        QObject::connect(completion.get(), &AI::AbstractChatCompletionStream::finished, this, [this, id]() {
+          emitaiData(id, "", true);
+          releaseCompletion(id);
+        });
+        QObject::connect(completion.get(), &AI::AbstractChatCompletionStream::errorOccurred, this,
+                         [this, id](const std::string &error) {
+                           emitaiFailed(id, error);
+                           releaseCompletion(id);
+                         });
+
+        m_completions.insert({id, completion});
+
+        // The id must reach the client before anything start() may emit synchronously
+        finish(ipc_gen::AiAskResponse{.completionId = id, .model = model.toString()});
+
+        if (!completion->start()) {
+          emitaiFailed(id, std::format("Could not start a completion with {}", model.toString()));
+          releaseCompletion(id);
+        }
+      });
+
+  return future;
+}
+
+// Runs from the stream's own signals, which can't destroy it before they return
+void IpcService::releaseCompletion(const std::string &id) {
+  const auto it = m_completions.find(id);
+  if (it == m_completions.end()) return;
+  QTimer::singleShot(0, this, [stream = std::move(it->second)] {});
+  m_completions.erase(it);
+}
 
 namespace {
 
