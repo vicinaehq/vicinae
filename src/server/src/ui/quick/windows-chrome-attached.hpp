@@ -25,6 +25,7 @@ class WindowsWindowAttached : public QObject {
   Q_PROPERTY(QColor captionColor READ captionColor WRITE setCaptionColor NOTIFY captionColorChanged)
   Q_PROPERTY(bool captionTitleVisible READ captionTitleVisible WRITE setCaptionTitleVisible NOTIFY captionTitleVisibleChanged)
   Q_PROPERTY(bool acrylicSupported READ acrylicSupported CONSTANT)
+  Q_PROPERTY(bool extendedTitlebarSupported READ extendedTitlebarSupported CONSTANT)
   Q_PROPERTY(int nativeCornerRadius READ nativeCornerRadius CONSTANT)
 
 signals:
@@ -74,6 +75,9 @@ public:
   // DWMWA_SYSTEMBACKDROP_TYPE requires Windows 11 22H2.
   static bool acrylicSupported();
 
+  // DWMWA_CAPTION_COLOR and corner preference require Windows 11.
+  static bool extendedTitlebarSupported();
+
   // DWM only rounds to fixed presets; DWMWCP_ROUND clips at 8dip.
   static int nativeCornerRadius();
 
@@ -88,7 +92,7 @@ private:
   void trackWindow(QWindow *window);
   void onWindowChanged(QQuickWindow *window);
   bool eventFilter(QObject *obj, QEvent *event) override;
-  bool extended() const { return m_decorated && m_titlebarHeight > 0; }
+  bool extended() const { return m_decorated && m_titlebarHeight > 0 && extendedTitlebarSupported(); }
 
   QQuickItem *m_item = nullptr;
   QWindow *m_window = nullptr;

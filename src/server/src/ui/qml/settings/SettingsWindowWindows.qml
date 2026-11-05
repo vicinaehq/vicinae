@@ -4,7 +4,7 @@ import Vicinae
 
 SettingsWindow {
     id: root
-    flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowMinimizeButtonHint
+    flags: WindowsWindow.extendedTitlebarSupported ? Qt.Window | Qt.FramelessWindowHint | Qt.WindowMinimizeButtonHint : Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint
     titlebarRightInset: WindowsWindow.captionButtonsRect.width
     WindowsWindow.enabled: true
     WindowsWindow.decorated: true

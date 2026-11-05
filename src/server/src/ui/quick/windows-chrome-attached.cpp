@@ -132,6 +132,11 @@ bool WindowsWindowAttached::acrylicSupported() {
   return supported;
 }
 
+bool WindowsWindowAttached::extendedTitlebarSupported() {
+  static const bool supported = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows11;
+  return supported;
+}
+
 bool windowsAcrylicSupported() { return WindowsWindowAttached::acrylicSupported(); }
 
 int WindowsWindowAttached::nativeCornerRadius() { return DWM_ROUND_CORNER_RADIUS; }
@@ -302,6 +307,7 @@ void WindowsWindowAttached::extendTitlebar() {
 
 void WindowsWindowAttached::apply() {
   if (!m_window || !m_enabled) return;
+  if (!m_decorated && !acrylicSupported()) return;
   if (!m_surfaceReady) {
     if (!m_window->handle()) return;
     m_surfaceReady = true;
@@ -377,6 +383,7 @@ void WindowsWindowAttached::apply() {
 
 void WindowsWindowAttached::revert() {
   if (!m_window || !m_window->handle()) return;
+  if (!m_decorated && !acrylicSupported()) return;
   HWND hwnd = hwndFromWindow(m_window);
   if (!hwnd) return;
 
