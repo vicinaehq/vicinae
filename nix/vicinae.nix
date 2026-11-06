@@ -90,6 +90,20 @@
     ];
   };
 
+  # Pinned like cmake/MediaRemoteAdapter.cmake. Upstream forces a universal build and ad-hoc
+  # signs in a post-build step; nix builds per system and signs during fixup.
+  mediaremote-adapter-src = applyPatches {
+    name = "mediaremote-adapter-src";
+    src = fetchurl {
+      url = "https://github.com/ungive/mediaremote-adapter/archive/0e82bf1c44ec39554fbfc402ec88a48c6ae2a0fd.tar.gz";
+      hash = "sha256-njGxVNx74gekK3uxuhsWG/3uVBoV1pLLocN3QPE7I+I=";
+    };
+    postPatch = ''
+      sed -i '/^set(CMAKE_OSX_ARCHITECTURES/d' CMakeLists.txt
+      sed -i '/^add_custom_command($/,/^$/d' CMakeLists.txt
+    '';
+  };
+
   manifestRaw = builtins.readFile ../manifest.yaml;
   manifestGet = key: let
     m = builtins.match ".*${key}:[[:space:]]*\"([^\"]+)\".*" manifestRaw;
@@ -114,7 +128,7 @@ in
       hash = "sha256-pEgqFgvdz7Bcc+LznCI+KlD1XEfUuWFWjS24MJ7sx3k=";
     };
 
-    cmakeFlags = lib.mapAttrsToList lib.cmakeFeature {
+    cmakeFlags = lib.mapAttrsToList lib.cmakeFeature ({
       "VICINAE_GIT_TAG" = "v${finalAttrs.version}";
       "VICINAE_GIT_COMMIT_HASH" = manifestGet "short_rev";
       "VICINAE_PROVENANCE" = "nix";
@@ -142,7 +156,10 @@ in
         then "OFF"
         else "ON";
       "BUNDLE_SOULVER_CORE" = "OFF";
-    };
+    }
+    // lib.optionalAttrs isDarwin {
+      "FETCHCONTENT_SOURCE_DIR_MEDIAREMOTEADAPTER" = "${mediaremote-adapter-src}";
+    });
 
     strictDeps = true;
 
@@ -205,6 +222,11 @@ in
         install -Dm644 Info.plist "$app/Contents/Info.plist"
         install -Dm644 ../extra/vicinae.icns "$app/Contents/Resources/vicinae.icns"
         cp -r ../extra/themes "$app/Contents/Resources/themes"
+        install -Dm755 ${mediaremote-adapter-src}/bin/mediaremote-adapter.pl "$app/Contents/Resources/mediaremote-adapter.pl"
+        install -d "$app/Contents/Frameworks"
+        cp -R _deps/mediaremoteadapter-build/MediaRemoteAdapter.framework "$app/Contents/Frameworks/"
+        rm -rf "$app/Contents/Frameworks/MediaRemoteAdapter.framework/Versions/A/Headers"
+        rm -f "$app/Contents/Frameworks/MediaRemoteAdapter.framework/Headers"
         rm -f "$out/bin/vicinae"
       ''
       # Generate native host manifests for Firefox and Chromium, so the browser
