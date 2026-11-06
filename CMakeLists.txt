@@ -61,6 +61,9 @@ option(LOCAL_AI "Build local transcription: whisper.cpp, parakeet and the vicina
 set(USE_SYSTEM_INFERENCE_ENGINES AUTO CACHE STRING "Use the system whisper.cpp and parakeet (ON), fetch and build them (OFF), or use the system copies when both are found and fetch otherwise (AUTO)")
 set_property(CACHE USE_SYSTEM_INFERENCE_ENGINES PROPERTY STRINGS AUTO ON OFF)
 set(MIN_WHISPER_VERSION 1.9.2)
+# Passed through to the fetched ggml. CPU inference is fast enough for dictation, so the Vulkan backend
+# (which needs Vulkan headers and glslc) is opt-in. Has no effect with system inference engines.
+option(GGML_VULKAN "Build the fetched ggml with the Vulkan GPU backend (LOCAL_AI only)" OFF)
 
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)

@@ -47,12 +47,6 @@ function(vicinae_fetch_inference_engines)
 	set(BUILD_SHARED_LIBS OFF)
 
 	set(GGML_NATIVE OFF)
-	if (APPLE)
-		set(GGML_METAL ON)
-		set(GGML_VULKAN OFF)
-	else()
-		set(GGML_VULKAN ON)
-	endif()
 	set(GGML_METAL_EMBED_LIBRARY ON)
 
 	if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")

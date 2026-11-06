@@ -82,6 +82,7 @@ jobs:
             -DUSE_SYSTEM_CMARK_GFM=OFF \
             -DLOCAL_AI=ON \
             -DUSE_SYSTEM_INFERENCE_ENGINES=OFF \
+            -DGGML_VULKAN=ON \
             -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"
 
       - name: Build

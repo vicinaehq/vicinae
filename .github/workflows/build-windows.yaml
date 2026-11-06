@@ -96,6 +96,7 @@ jobs:
           }
           if ("${{ inputs.tag }}" -or "${{ inputs.local_ai }}" -eq "true") {
             $flags += "-DLOCAL_AI=ON"
+            $flags += "-DGGML_VULKAN=ON"
           }
           cmake --preset windows-ci `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
