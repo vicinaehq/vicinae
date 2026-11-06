@@ -9,6 +9,8 @@ Popup {
     modal: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
+    onVisibleChanged: visible ? ModalGuard.block(root.Overlay.overlay) : ModalGuard.unblock(root.Overlay.overlay)
+
     // Focused editors handle Escape themselves, which would keep the built-in policy from closing the modal.
     Shortcut {
         sequences: [StandardKey.Cancel]
@@ -59,11 +61,6 @@ Popup {
         color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.98)
         border.color: Theme.divider
         border.width: 1
-
-        // Presses that TapHandlers leave unaccepted must not reach the page beneath.
-        MouseArea {
-            anchors.fill: parent
-        }
     }
 
     Overlay.modal: Rectangle {

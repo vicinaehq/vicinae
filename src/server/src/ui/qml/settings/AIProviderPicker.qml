@@ -44,7 +44,10 @@ ViciModal {
     readonly property var sections: filtered.sections
     readonly property var items: filtered.items
 
-    onQueryChanged: selectedIndex = 0
+    onQueryChanged: {
+        HoverActivation.reset();
+        selectedIndex = 0;
+    }
 
     function openPicker() {
         _items = root.model.pickerTypes();
@@ -67,6 +70,7 @@ ViciModal {
     function moveSelection(delta) {
         if (root.items.length === 0)
             return;
+        HoverActivation.reset();
         selectedIndex = Math.max(0, Math.min(root.items.length - 1, selectedIndex + delta));
     }
 
@@ -193,7 +197,7 @@ ViciModal {
 
                                 HoverHandler {
                                     cursorShape: Qt.PointingHandCursor
-                                    onHoveredChanged: if (hovered)
+                                    onHoveredChanged: if (hovered && HoverActivation.active)
                                         root.selectedIndex = row.modelData.index
                                 }
 

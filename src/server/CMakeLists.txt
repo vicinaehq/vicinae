@@ -1601,6 +1601,8 @@ set(VICINAE_QML_SOURCES
 	src/ui/quick/vici-image-item.hpp
 	src/ui/quick/hover-activation.hpp
 	src/ui/quick/hover-activation.cpp
+	src/ui/quick/modal-guard.hpp
+	src/ui/quick/modal-guard.cpp
 	src/ui/quick/document-highlighter.hpp
 	src/ui/quick/document-highlighter.cpp
 	src/ui/quick/match-highlighter.hpp
