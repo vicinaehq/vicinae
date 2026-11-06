@@ -683,6 +683,12 @@ set(SRCS
 	src/services/ai/openai/openai-provider.cpp
 	src/services/ai/groq/groq-provider.hpp
 	src/services/ai/groq/groq-provider.cpp
+	src/services/ai/llamacpp/llamacpp-provider.hpp
+	src/services/ai/llamacpp/llamacpp-provider.cpp
+	src/services/ai/lemonade/lemonade-provider.hpp
+	src/services/ai/lemonade/lemonade-provider.cpp
+	src/services/ai/audiocpp/audiocpp-provider.hpp
+	src/services/ai/audiocpp/audiocpp-provider.cpp
 	src/services/ai/openrouter/openrouter-provider.hpp
 	src/services/ai/openrouter/openrouter-provider.cpp
 	src/services/local-model-registry/local-model-catalogue.hpp

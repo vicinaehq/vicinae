@@ -10,6 +10,9 @@
 #include "services/ai/mistral/mistral-provider.hpp"
 #include "services/ai/ollama/ollama-ai-provider.hpp"
 #include "services/ai/groq/groq-provider.hpp"
+#include "services/ai/audiocpp/audiocpp-provider.hpp"
+#include "services/ai/lemonade/lemonade-provider.hpp"
+#include "services/ai/llamacpp/llamacpp-provider.hpp"
 #include "services/ai/openai/openai-compatible-provider.hpp"
 #include "services/ai/openai/openai-provider.hpp"
 #include "services/ai/openrouter/openrouter-provider.hpp"
@@ -111,6 +114,9 @@ void Service::setProviders(std::map<std::string, ProviderInstance> providers) {
 
 std::unique_ptr<AbstractProvider> Service::createProvider(const std::string &id, std::string_view type) {
   if (type == "ollama") return std::make_unique<OllamaProvider>(id);
+  if (type == "llama-cpp") return std::make_unique<LlamaCppProvider>(id);
+  if (type == "lemonade") return std::make_unique<LemonadeProvider>(id);
+  if (type == "audio-cpp") return std::make_unique<AudioCppProvider>(id);
   if (type == "mistral") return std::make_unique<MistralProvider>(id);
   if (type == "openai") return std::make_unique<OpenAIProvider>(id);
   if (type == "groq") return std::make_unique<GroqProvider>(id);

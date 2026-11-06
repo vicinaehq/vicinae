@@ -50,6 +50,22 @@ struct CodexFields {
   std::string executable;
 };
 
+struct LlamaCppFields {
+  std::string name;
+  std::string url = "http://localhost:8080";
+};
+
+struct LemonadeFields {
+  std::string name;
+  std::string url = "http://localhost:13305";
+  std::string apiKey;
+};
+
+struct AudioCppFields {
+  std::string name;
+  std::string url = "http://localhost:8080";
+};
+
 enum class KeepLoaded { Immediately, OneMinute, FiveMinutes, FifteenMinutes, Always };
 enum class Device { Gpu, Cpu };
 
@@ -179,6 +195,55 @@ template <> struct PreferenceSchema<AI::CodexFields> {
   Q_DECLARE_TR_FUNCTIONS(CodexFields)
 };
 
+template <> struct PreferenceSchema<AI::LlamaCppFields> {
+  PreferenceMeta name{
+      .title = tr("Name"),
+      .description = tr("How this server is shown in model lists."),
+      .placeholder = "llama.cpp",
+  };
+  PreferenceMeta url{
+      .title = tr("Server URL"),
+      .description = tr("The address of your llama-server instance."),
+      .placeholder = "http://localhost:8080",
+  };
+  Q_DECLARE_TR_FUNCTIONS(LlamaCppFields)
+};
+
+template <> struct PreferenceSchema<AI::LemonadeFields> {
+  PreferenceMeta name{
+      .title = tr("Name"),
+      .description = tr("How this server is shown in model lists."),
+      .placeholder = "Lemonade",
+  };
+  PreferenceMeta url{
+      .title = tr("Server URL"),
+      .description = tr("The address of your Lemonade server."),
+      .placeholder = "http://localhost:13305",
+  };
+  PreferenceMeta apiKey{
+      .title = tr("API Key"),
+      .description = tr("Only needed if the server was started with an API key."),
+      .placeholder = "",
+      .kind = PreferenceMeta::Kind::Password,
+      .required = false,
+  };
+  Q_DECLARE_TR_FUNCTIONS(LemonadeFields)
+};
+
+template <> struct PreferenceSchema<AI::AudioCppFields> {
+  PreferenceMeta name{
+      .title = tr("Name"),
+      .description = tr("How this server is shown in model lists."),
+      .placeholder = "audio.cpp",
+  };
+  PreferenceMeta url{
+      .title = tr("Server URL"),
+      .description = tr("The address of your audio.cpp server."),
+      .placeholder = "http://localhost:8080",
+  };
+  Q_DECLARE_TR_FUNCTIONS(AudioCppFields)
+};
+
 template <> struct PreferenceSchema<AI::LocalFields> {
   PreferenceMeta keepLoaded{
       .title = tr("Keep models loaded"),
@@ -284,6 +349,33 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .cardinality = Cardinality::Single,
         .category = Category::Cli,
         .fields = +[] { return describePreferences<CodexFields>(); },
+    },
+    {
+        .type = "llama-cpp",
+        .label = "llama.cpp",
+        .icon = BuiltinIcon::LlamaCpp,
+        .description = "A llama-server instance, local or remote. Lists the models it serves.",
+        .cardinality = Cardinality::Multiple,
+        .category = Category::SelfHosted,
+        .fields = +[] { return describePreferences<LlamaCppFields>(); },
+    },
+    {
+        .type = "lemonade",
+        .label = "Lemonade",
+        .icon = BuiltinIcon::Lemonade,
+        .description = "AMD's local server for language and speech models. Lists the models you have downloaded.",
+        .cardinality = Cardinality::Multiple,
+        .category = Category::SelfHosted,
+        .fields = +[] { return describePreferences<LemonadeFields>(); },
+    },
+    {
+        .type = "audio-cpp",
+        .label = "audio.cpp",
+        .icon = BuiltinIcon::Waveform,
+        .description = "Local speech server built on ggml. Provides transcription models.",
+        .cardinality = Cardinality::Multiple,
+        .category = Category::SelfHosted,
+        .fields = +[] { return describePreferences<AudioCppFields>(); },
     },
     {
         .type = "openai-compatible",
