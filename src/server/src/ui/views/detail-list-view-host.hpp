@@ -13,6 +13,7 @@ class DetailListViewHost : public ListViewHost {
   Q_PROPERTY(QString detailContent READ detailContent NOTIFY detailChanged)
   Q_PROPERTY(QUrl detailContentUrl READ detailContentUrl NOTIFY detailChanged)
   Q_PROPERTY(QVariantList detailMetadata READ detailMetadata NOTIFY detailChanged)
+  Q_PROPERTY(bool detailMarkdown READ detailMarkdown NOTIFY detailChanged)
   Q_PROPERTY(QString emptyTitle READ emptyTitle CONSTANT)
   Q_PROPERTY(QString emptyDescription READ emptyDescription CONSTANT)
   Q_PROPERTY(ImageUrl emptyIcon READ emptyIcon CONSTANT)
@@ -25,6 +26,7 @@ public:
   virtual QString detailContent() const = 0;
   virtual QUrl detailContentUrl() const { return {}; }
   virtual QVariantList detailMetadata() const = 0;
+  virtual bool detailMarkdown() const { return false; }
 
   QString emptyTitle() const { return m_emptyTitle; }
   QString emptyDescription() const { return m_emptyDescription; }

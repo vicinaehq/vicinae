@@ -99,7 +99,7 @@ inline bool isHudSupported() {
 #endif
 }
 
-inline bool isHudDisabled() { return !isHudSupported(); }
+inline bool isHudDisabled() { return std::getenv("VICINAE_DISABLE_HUD") || !isHudSupported(); }
 
 /**
  * Optional override of the `node` executable to use to spawn the

@@ -2,6 +2,7 @@
 
 #include "ui/views/view-utils.hpp"
 #include <QJSValue>
+#include <algorithm>
 #include "internal/glaze-qt.hpp"
 #include <utility>
 #include "service-registry.hpp"
@@ -53,6 +54,8 @@ QVariant PreferenceFormModel::data(const QModelIndex &index, int role) const {
     return f.canChooseDirectories;
   case LockedPathsRole:
     return f.lockedPaths;
+  case ComponentRole:
+    return f.component;
   default:
     return {};
   }
@@ -72,7 +75,8 @@ QHash<int, QByteArray> PreferenceFormModel::roleNames() const {
           {MultipleRole, "multiple"},
           {CanChooseFilesRole, "canChooseFiles"},
           {CanChooseDirectoriesRole, "canChooseDirectories"},
-          {LockedPathsRole, "lockedPaths"}};
+          {LockedPathsRole, "lockedPaths"},
+          {ComponentRole, "component"}};
 }
 
 static QString preferenceType(const Preference &p) {
@@ -80,7 +84,7 @@ static QString preferenceType(const Preference &p) {
       [](const auto &d) -> QString {
         using T = std::decay_t<decltype(d)>;
         if constexpr (std::is_same_v<T, Preference::TextData>)
-          return QStringLiteral("text");
+          return d.multiline ? QStringLiteral("longtext") : QStringLiteral("text");
         else if constexpr (std::is_same_v<T, Preference::PasswordData>)
           return QStringLiteral("password");
         else if constexpr (std::is_same_v<T, Preference::CheckboxData>)
@@ -95,22 +99,42 @@ static QString preferenceType(const Preference &p) {
           return QStringLiteral("apppicker");
         else if constexpr (std::is_same_v<T, Preference::ShortcutData>)
           return QStringLiteral("shortcut");
+        else if constexpr (std::is_same_v<T, Preference::CustomData>)
+          return QStringLiteral("custom");
         else
           return QStringLiteral("text");
       },
       p.data());
 }
 
-static QVariantList dropdownOptions(const Preference &p) {
+static QVariantMap dropdownItem(const Preference::DropdownData::Option &opt) {
+  return qml::makeDropdownItem(opt.value, opt.title, opt.icon ? qml::imageSourceFor(*opt.icon) : QString());
+}
+
+static bool populateDropdown(CompletionModel *model, const Preference &p) {
   auto d = p.data();
-  if (auto *dd = std::get_if<Preference::DropdownData>(&d)) {
-    QVariantList items;
-    for (const auto &opt : dd->options) {
-      items.append(qml::makeDropdownItem(opt.value, opt.title));
+  auto *dd = std::get_if<Preference::DropdownData>(&d);
+  if (!dd) return false;
+
+  if (!dd->sections.empty()) {
+    QVariantList sections;
+    for (const auto &section : dd->sections) {
+      QVariantList items;
+      for (const auto &opt : section.options)
+        items.append(dropdownItem(opt));
+      sections.append(
+          QVariantMap{{QStringLiteral("title"), section.title}, {QStringLiteral("items"), items}});
     }
-    return items;
+    model->setSections(sections);
+    return true;
   }
-  return {};
+
+  if (dd->options.empty()) return false;
+  QVariantList items;
+  for (const auto &opt : dd->options)
+    items.append(dropdownItem(opt));
+  model->setItems(items);
+  return true;
 }
 
 static void applyPickerFlags(const Preference &p, bool &multiple, bool &canChooseFiles,
@@ -168,7 +192,8 @@ CompletionModel *PreferenceFormModel::appModel() {
   return m_appModel->model();
 }
 
-PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pref) {
+PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pref,
+                                                            const PreferenceValues &values) {
   Field f;
   f.type = preferenceType(pref);
   f.id = pref.name();
@@ -178,16 +203,22 @@ PreferenceFormModel::Field PreferenceFormModel::createField(const Preference &pr
   f.placeholder = pref.placeholder();
   f.readOnly = pref.isReadOnly();
 
-  if (auto options = dropdownOptions(pref); !options.isEmpty()) {
+  if (std::holds_alternative<Preference::DropdownData>(pref.data())) {
     f.dropdownModel = new CompletionModel(this);
-    f.dropdownModel->setItems(options);
+    if (!populateDropdown(f.dropdownModel, pref)) {
+      f.dropdownModel->deleteLater();
+      f.dropdownModel = nullptr;
+    }
   } else if (std::holds_alternative<Preference::AppPickerData>(pref.data())) {
     f.dropdownModel = appModel();
   }
 
   applyPickerFlags(pref, f.multiple, f.canChooseFiles, f.canChooseDirectories, f.lockedPaths);
+  if (auto data = pref.data(); auto *custom = std::get_if<Preference::CustomData>(&data)) {
+    f.component = qml::componentUrl(custom->component);
+  }
 
-  const auto *stored = preferences::find(m_values, pref.name().toStdString());
+  const auto *stored = preferences::find(values, pref.name().toStdString());
   glz::generic raw = stored ? *stored : pref.defaultOrNull();
   if (isMultiValueType(pref)) raw = normalizeListValue(raw);
   f.value = glazeToQVariant(raw);
@@ -203,10 +234,11 @@ void PreferenceFormModel::load(const EntrypointId &id, const std::vector<Prefere
   clearFields();
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
-  m_values = manager->getItemPreferenceValues(id);
+  const auto values = manager->getItemPreferenceValues(id);
 
+  m_fields.reserve(preferences.size());
   for (const auto &pref : preferences) {
-    m_fields.push_back(createField(pref));
+    m_fields.emplace_back(createField(pref, values));
   }
   endResetModel();
 }
@@ -220,10 +252,11 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
   clearFields();
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
-  m_values = manager->getProviderPreferenceValues(providerId);
+  const auto values = manager->getProviderPreferenceValues(providerId);
 
+  m_fields.reserve(preferences.size());
   for (const auto &pref : preferences) {
-    m_fields.push_back(createField(pref));
+    m_fields.emplace_back(createField(pref, values));
   }
   endResetModel();
 }
@@ -233,16 +266,27 @@ void PreferenceFormModel::setFieldValue(int row, const QVariant &value) {
   auto resolved = value;
   if (resolved.canConvert<QJSValue>()) resolved = resolved.value<QJSValue>().toVariant();
   m_fields[row].value = resolved;
-  m_values[m_fields[row].id.toStdString()] = qVariantToGlazeGeneric(resolved);
+  m_pendingValues[m_fields[row].id.toStdString()] = qVariantToGlazeGeneric(resolved);
   auto idx = index(row);
   emit dataChanged(idx, idx, {ValueRole, CurrentDropdownItemRole});
   m_saveTimer.start();
 }
 
 void PreferenceFormModel::save() {
+  m_saveTimer.stop();
+  if (m_pendingValues.empty()) return;
   auto *manager = ServiceRegistry::instance()->rootItemManager();
+  auto values = m_isProvider ? manager->getProviderPreferenceValues(m_providerId)
+                             : manager->getItemPreferenceValues(m_itemId);
+  for (auto &[key, value] : std::exchange(m_pendingValues, {}))
+    values[key] = std::move(value);
   if (m_isProvider)
-    manager->setProviderPreferenceValues(m_providerId, m_values);
+    manager->setProviderPreferenceValues(m_providerId, values);
   else
-    manager->setItemPreferenceValues(m_itemId, m_values);
+    manager->setItemPreferenceValues(m_itemId, values);
+}
+
+QUrl PreferenceFormModel::componentFor(const QString &fieldId) const {
+  auto it = std::ranges::find(m_fields, fieldId, &Field::id);
+  return it == m_fields.end() ? QUrl() : it->component;
 }

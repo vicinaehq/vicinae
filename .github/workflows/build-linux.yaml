@@ -44,6 +44,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_TESTS=ON \
             -DUSE_SYSTEM_CMARK_GFM=OFF \
+            -DLOCAL_AI=ON \
+            -DUSE_SYSTEM_INFERENCE_ENGINES=ON \
             -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \

@@ -113,9 +113,36 @@ std::vector<MigrationManager::Migration> MigrationManager::loadMigrations() {
   return migrations;
 }
 
+bool MigrationManager::foreignKeysEnabled() const {
+  auto stmt = m_db.prepare("PRAGMA foreign_keys");
+  return stmt.step() && stmt.columnInt(0) != 0;
+}
+
+std::size_t MigrationManager::foreignKeyViolations() const {
+  auto stmt = m_db.prepare("PRAGMA foreign_key_check");
+  std::size_t count = 0;
+  while (stmt.step())
+    ++count;
+  return count;
+}
+
 void MigrationManager::runMigrations() {
   auto dbMigrations = loadDatabaseMigrations();
   auto fsMigrations = loadMigrations();
+
+  // Rebuilding a table means dropping it, and with foreign keys on, that deletes the rows of every child
+  // table through ON DELETE CASCADE. SQLite ignores this pragma inside a transaction, so it has to be
+  // confirmed here: running without it could silently destroy user data.
+  const bool pending = fsMigrations.size() > dbMigrations.size();
+  const bool restoreForeignKeys = pending && foreignKeysEnabled();
+  if (restoreForeignKeys) {
+    m_db.exec("PRAGMA foreign_keys = OFF");
+    if (foreignKeysEnabled()) {
+      qCritical() << "Failed to run migrations: could not disable foreign keys";
+      return;
+    }
+  }
+  const auto initialViolations = pending ? foreignKeyViolations() : 0;
 
   auto tx = m_db.transaction();
 
@@ -142,11 +169,17 @@ void MigrationManager::runMigrations() {
       insertMigration(migration);
     }
 
+    if (pending && foreignKeyViolations() > initialViolations) {
+      throw std::runtime_error("Migrations left rows pointing at missing parents");
+    }
+
     if (!tx.commit()) { throw std::runtime_error("Failed to commit transaction"); }
   } catch (const std::exception &exception) {
     qCritical() << "Failed to run migrations:" << exception.what();
     tx.rollback();
   }
+
+  if (restoreForeignKeys) m_db.exec("PRAGMA foreign_keys = ON");
 }
 
 MigrationManager::MigrationManager(db::Database &db, const QString &migrationNamespace)

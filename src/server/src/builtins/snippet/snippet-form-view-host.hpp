@@ -15,6 +15,7 @@ class SnippetFormViewHost : public FormViewBase {
   Q_PROPERTY(QString name READ name WRITE setName NOTIFY formChanged)
   Q_PROPERTY(QString content READ content WRITE setContent NOTIFY formChanged)
   Q_PROPERTY(QString keyword READ keyword WRITE setKeyword NOTIFY formChanged)
+  Q_PROPERTY(QString voicePhrase READ voicePhrase WRITE setVoicePhrase NOTIFY formChanged)
   Q_PROPERTY(bool expandAsWord READ expandAsWord WRITE setExpandAsWord NOTIFY formChanged)
   Q_PROPERTY(QStringList apps READ apps WRITE setApps NOTIFY formChanged)
   Q_PROPERTY(AppSelectorModel *appSelectorModel READ appSelectorModel CONSTANT)
@@ -24,6 +25,7 @@ class SnippetFormViewHost : public FormViewBase {
   Q_PROPERTY(QString nameError READ nameError NOTIFY errorsChanged)
   Q_PROPERTY(QString contentError READ contentError NOTIFY errorsChanged)
   Q_PROPERTY(QString keywordError READ keywordError NOTIFY errorsChanged)
+  Q_PROPERTY(QString voicePhraseError READ voicePhraseError NOTIFY errorsChanged)
   Q_PROPERTY(bool serverRunning READ serverRunning CONSTANT)
 
 public:
@@ -41,6 +43,7 @@ public:
   QString name() const { return m_name; }
   QString content() const { return m_content; }
   QString keyword() const { return m_keyword; }
+  QString voicePhrase() const { return m_voicePhrase; }
   bool expandAsWord() const { return m_expandAsWord; }
   QStringList apps() const { return m_apps; }
   AppSelectorModel *appSelectorModel() const { return m_appSelectorModel; }
@@ -50,6 +53,7 @@ public:
   QString nameError() const { return m_nameError; }
   QString contentError() const { return m_contentError; }
   QString keywordError() const { return m_keywordError; }
+  QString voicePhraseError() const { return m_voicePhraseError; }
   bool serverRunning() const;
 
   void setName(const QString &v) {
@@ -67,6 +71,12 @@ public:
   void setKeyword(const QString &v) {
     if (m_keyword != v) {
       m_keyword = v;
+      emit formChanged();
+    }
+  }
+  void setVoicePhrase(const QString &v) {
+    if (m_voicePhrase != v) {
+      m_voicePhrase = v;
       emit formChanged();
     }
   }
@@ -97,12 +107,14 @@ private:
   QString m_name;
   QString m_content;
   QString m_keyword;
+  QString m_voicePhrase;
   bool m_expandAsWord = true;
   QStringList m_apps;
 
   QString m_nameError;
   QString m_contentError;
   QString m_keywordError;
+  QString m_voicePhraseError;
 
   QVariantList m_contentCompletions;
   AppSelectorModel *m_appSelectorModel = nullptr;

@@ -13,9 +13,9 @@ public:
       auto sub = app->add_subcommand(cmd->id(), cmd->description());
       cmd->prepare(sub, result);
       cmd->setup(sub);
+      // a group's own callback runs after its subcommand's, so it must not clear a failure
       sub->callback([cmd = cmd.get(), sub, result]() {
-        const bool r = cmd->run(sub);
-        if (result) *result = r;
+        if (!cmd->run(sub) && result) *result = false;
       });
     }
 

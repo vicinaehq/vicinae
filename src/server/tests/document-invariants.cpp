@@ -1,0 +1,119 @@
+#include <QAbstractItemModelTester>
+#include <QImage>
+#include <QPersistentModelIndex>
+#include <QSignalSpy>
+#include <QTest>
+#include <QTextBoundaryFinder>
+#include <QTextDocument>
+#include <QTextImageFormat>
+#include "builtins/ai/chat-conversation-model.hpp"
+#include "ui/quick/document-match-geometry.hpp"
+#include "ui/quick/document-text-images.hpp"
+#include "ui/quick/math-renderer.hpp"
+
+class DocumentInvariantsTest : public QObject {
+  Q_OBJECT
+
+private slots:
+  void conversationPreservesModelIndexes() {
+    ChatConversationModel model;
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    QSignalSpy resets(&model, &QAbstractItemModel::modelReset);
+    QSignalSpy removals(&model, &QAbstractItemModel::rowsRemoved);
+    model.beginExchange("Question");
+    const QPersistentModelIndex first(model.index(0));
+    model.appendResponse("Answer");
+    model.finishExchange();
+    model.beginExchange("Follow-up");
+    model.appendResponse("Partial response");
+    model.finishExchange("Connection interrupted");
+    QVERIFY(first.isValid());
+    QCOMPARE(first.data(ChatConversationModel::ResponseRole).toString(), "Answer");
+    QCOMPARE(model.rowCount(), 2);
+    QCOMPARE(model.index(1).data(ChatConversationModel::ResponseRole).toString(), "Partial response");
+    QCOMPARE(model.index(1).data(ChatConversationModel::ErrorRole).toString(), "Connection interrupted");
+    QVERIFY(!model.index(1).data(ChatConversationModel::PendingRole).toBool());
+    QVERIFY(resets.isEmpty());
+    QVERIFY(removals.isEmpty());
+  }
+
+  void everyPublishedPrefixEndsAtAGraphemeBoundary() {
+    ChatConversationModel model;
+    model.beginExchange("Question");
+    const auto response = QString::fromUtf8("Café 👩🏽‍🌾 🇫🇷 日本語 🌱 ").repeated(20);
+    QStringList errors;
+    connect(&model, &QAbstractItemModel::dataChanged, &model, [&] {
+      const auto visible = model.index(0).data(ChatConversationModel::ResponseRole).toString();
+      QTextBoundaryFinder boundary(QTextBoundaryFinder::Grapheme, response);
+      boundary.setPosition(visible.size());
+      if (!response.startsWith(visible) || !boundary.isAtBoundary()) errors.append(visible);
+    });
+    model.appendResponse(response.toStdString());
+    model.finishExchange();
+    QTRY_COMPARE_WITH_TIMEOUT(model.index(0).data(ChatConversationModel::ResponseRole).toString(), response,
+                              5000);
+    QVERIFY(errors.isEmpty());
+  }
+
+  void imageDimensionsSurviveDecodedCacheEviction() {
+    DocumentImageCache cache(nullptr);
+    const QUrl first("https://example.invalid/field-visit-0.png");
+    QImage photograph(2048, 1536, QImage::Format_RGB32);
+    photograph.fill(QColor("#467d91"));
+    cache.remember(first, photograph);
+    for (int image = 1; image < 12; ++image)
+      cache.remember(QUrl(QString("https://example.invalid/field-visit-%1.png").arg(image)), photograph);
+    QVERIFY(cache.image(first).isNull());
+    QCOMPARE(cache.size(first), std::optional<QSize>(photograph.size()));
+    QTextDocument document;
+    DocumentTextImages::measure(&document, &cache);
+    document.setHtml(QString("<img src=\"%1\" width=\"320\">").arg(first.toString()));
+    document.setTextWidth(640);
+    QVERIFY(document.size().height() >= 240);
+    QVERIFY(document.size().height() < 270);
+  }
+
+  void matchRectsFollowTheLinesTheMatchSpans() {
+    QTextDocument document;
+    document.setPlainText(QStringLiteral("first line\nsecond line"));
+    document.setTextWidth(1000);
+
+    const auto single = document_match::rects(document, 6, 4);
+    QCOMPARE(single.size(), std::size_t(1));
+    QVERIFY(single[0].x() > 0);
+    QVERIFY(single[0].width() > 0);
+
+    const auto spanning = document_match::rects(document, 6, 10);
+    QCOMPARE(spanning.size(), std::size_t(2));
+    QVERIFY(spanning[1].y() > spanning[0].y());
+    QCOMPARE(spanning[0].x(), single[0].x());
+  }
+
+  void mathIsRegisteredAsAVisibleImageAtTheDevicePixelRatio() {
+    const auto math = math::render(QStringLiteral("e^{i\\pi} + 1 = 0"), true, Qt::white);
+    QVERIFY(math);
+
+    QTextDocument document;
+    DocumentTextImages handler;
+    handler.setDevicePixelRatio(2);
+    QTextImageFormat format;
+    format.setName(math->url);
+    const auto size = handler.intrinsicSize(&document, 0, format);
+
+    const auto image = document.resource(QTextDocument::ImageResource, QUrl(math->url)).value<QImage>();
+    QVERIFY(!image.isNull());
+    QCOMPARE(image.devicePixelRatio(), 2.0);
+    QCOMPARE(image.size(), (size * 2).toSize());
+
+    bool hasInk = false;
+    for (int y = 0; y < image.height() && !hasInk; ++y) {
+      for (int x = 0; x < image.width() && !hasInk; ++x) {
+        hasInk = qAlpha(image.pixel(x, y)) > 0;
+      }
+    }
+    QVERIFY(hasInk);
+  }
+};
+
+QTEST_MAIN(DocumentInvariantsTest)
+#include "document-invariants.moc"

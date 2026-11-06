@@ -9,7 +9,10 @@ void LocalStorageViewHost::initialize() {
 }
 
 void LocalStorageViewHost::loadInitialData() {
-  m_section.setItems(context()->services->localStorage()->namespaces());
+  auto namespaces = context()->services->localStorage()->namespaces();
+  // these hold API keys
+  std::erase_if(namespaces, [](const QString &ns) { return ns.startsWith(QStringLiteral("ai:")); });
+  m_section.setItems(std::move(namespaces));
 }
 
 LocalStorageItemViewHost::LocalStorageItemViewHost(const QString &ns, std::vector<QString> keys)
