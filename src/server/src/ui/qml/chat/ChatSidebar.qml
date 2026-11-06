@@ -126,17 +126,29 @@ Item {
                 bottomFade: Math.min(12, Math.max(0, history.originY + history.contentHeight - history.contentY - history.height))
             }
             section.property: "dateGroup"
-            section.delegate: Text {
+            section.delegate: Item {
+                id: sectionHeader
                 required property string section
+                readonly property bool leading: y <= history.originY
                 width: history.width
-                height: 28
-                leftPadding: 10
-                topPadding: 8
-                text: section
-                color: Theme.textMuted
-                font.family: Theme.fontFamily
-                font.pointSize: Theme.smallerFontSize
-                font.weight: Font.Medium
+                height: leading ? 26 : 42
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    anchors.bottomMargin: 6
+                    text: sectionHeader.section
+                    color: Config.withAlpha(Theme.foreground, 0.45)
+                    font.family: Theme.fontFamily
+                    font.pointSize: Theme.smallerFontSize * 0.85
+                    font.weight: Font.DemiBold
+                    font.capitalization: Font.AllUppercase
+                    font.letterSpacing: 0.4
+                    elide: Text.ElideRight
+                }
             }
 
             ScrollBar.vertical: ViciScrollBar {}
