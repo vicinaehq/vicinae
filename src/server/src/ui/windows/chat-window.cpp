@@ -1,5 +1,4 @@
 #include <QQuickWindow>
-#include <algorithm>
 #include "chat-window.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
@@ -12,28 +11,15 @@
 #include "ui/quick/macos-chrome-attached.hpp"
 #endif
 
-ChatWindow::ChatWindow(ApplicationContext &context)
-    : m_context(context), m_conversations(context.services->conversations()) {
+ChatWindow::ChatWindow(ApplicationContext &context, QObject *parent)
+    : QObject(parent), m_context(context), m_conversations(context.services->conversations()) {
   connect(&m_conversations, &ConversationListModel::errorOccurred, this, &ChatWindow::setError);
   connect(context.services->conversations(), &AI::ConversationStore::removed, this,
           [this](const QString &id) {
-            if (m_session && m_session->conversationId() == id) {
-              m_session = nullptr;
-              newChat();
-            }
-            releaseIdleSessions();
+            if (m_session && m_session->conversationId() == id) newChat();
           });
-}
 
-ChatWindow::~ChatWindow() {
-  for (const auto &[session, presenter] : m_sessions) {
-    if (session && session->parent() == this) session->cancel();
-  }
-}
-
-void ChatWindow::ensureInitialized() {
-  if (m_initialized) return;
-  m_initialized = true;
+  newChat();
   QmlEngineScope::set(&m_engine, this);
   QmlEngineScope::set(&m_engine, new ConfigBridge(ConfigBridge::OpaqueSurfaces, this));
   QmlDevLoader::attach(&m_engine, [this] {
@@ -43,10 +29,15 @@ void ChatWindow::ensureInitialized() {
     m_window = nullptr;
     loadRoot();
     if (m_window && geometry.isValid()) m_window->setGeometry(geometry);
-    if (visible) show();
+    if (visible) present();
   });
   loadRoot();
   m_conversations.reload();
+}
+
+ChatWindow::~ChatWindow() {
+  cancelPending();
+  if (m_session) m_session->cancel();
 }
 
 void ChatWindow::loadRoot() {
@@ -64,15 +55,12 @@ void ChatWindow::loadRoot() {
     if (!roots.contains(root)) m_window = qobject_cast<QQuickWindow *>(root);
   }
   if (!m_window) qWarning() << "Chat window did not load";
-  if (m_window) m_window->setProperty(PasteService::PASTE_TARGET_PROPERTY, true);
+  if (!m_window) return;
+  m_window->setProperty(PasteService::PASTE_TARGET_PROPERTY, true);
+  connect(m_window, &QQuickWindow::closing, this, &ChatWindow::closed);
 }
 
-void ChatWindow::show(ChatSession *session) {
-  if (session)
-    activateSession(session);
-  else if (!m_session)
-    newChat();
-  ensureInitialized();
+void ChatWindow::present() {
   if (!m_window) return;
   m_window->show();
   m_window->raise();
@@ -83,22 +71,18 @@ void ChatWindow::show(ChatSession *session) {
   emit focusRequested();
 }
 
-void ChatWindow::trackSession(ChatSession *session) {
-  std::erase_if(m_sessions, [](const auto &entry) { return entry.session.isNull(); });
-  if (std::ranges::find(m_sessions, session, [](const auto &entry) { return entry.session.data(); }) !=
-      m_sessions.end())
-    return;
-  m_sessions.reserve(m_sessions.size() + 1);
-  m_sessions.emplace_back(SessionEntry{session, session->parent() == this ? nullptr : session->parent()});
-  connect(session, &ChatSession::streamingChanged, this, &ChatWindow::releaseIdleSessions,
-          Qt::QueuedConnection);
+void ChatWindow::openMostRecent() {
+  m_context.services->conversations()->list().then(
+      this, [this](const AI::Result<std::vector<AI::ConversationInfo>> &result) {
+        if (!result || result->empty()) return;
+        // the user may have started a new chat while the list was loading
+        if (!m_session->conversationId().isEmpty() || !m_session->draft().isEmpty()) return;
+        openConversation(QString::fromStdString(result->front().id));
+      });
 }
 
-ChatSession *ChatWindow::findSession(std::string_view id) const {
-  for (const auto &[session, presenter] : m_sessions) {
-    if (session && session->conversationId().toStdString() == id) return session;
-  }
-  return nullptr;
+void ChatWindow::adopt(ChatSession *session) {
+  if (session) activateSession(session);
 }
 
 void ChatWindow::cancelPending() {
@@ -111,15 +95,17 @@ void ChatWindow::cancelPending() {
 void ChatWindow::activateSession(ChatSession *session) {
   cancelPending();
   clearError();
-  trackSession(session);
   session->setParent(this);
   if (m_session == session) {
     emit focusRequested();
     return;
   }
+  if (auto *previous = m_session.data()) {
+    previous->cancel();
+    previous->deleteLater();
+  }
   m_session = session;
   emit sessionChanged();
-  releaseIdleSessions();
 }
 
 void ChatWindow::newChat() {
@@ -128,31 +114,14 @@ void ChatWindow::newChat() {
     emit focusRequested();
     return;
   }
-  for (const auto &[session, presenter] : m_sessions) {
-    if (session && !presenter && session->conversationId().isEmpty()) {
-      activateSession(session);
-      return;
-    }
-  }
   activateSession(new ChatSession(*m_context.services, this));
-}
-
-void ChatWindow::releaseIdleSessions() {
-  std::erase_if(m_sessions, [this](const auto &entry) {
-    auto *session = entry.session.data();
-    if (!session) return true;
-    if (session == m_session || entry.presenter || session->parent() != this || session->streaming() ||
-        !session->draft().isEmpty() || session->attachments()->count() > 0)
-      return false;
-    session->deleteLater();
-    return true;
-  });
 }
 
 void ChatWindow::openConversation(const QString &id) {
   if (id.isEmpty()) return;
-  if (auto *session = findSession(id.toStdString())) {
-    activateSession(session);
+  if (m_session->conversationId() == id) {
+    cancelPending();
+    emit focusRequested();
     return;
   }
   cancelPending();

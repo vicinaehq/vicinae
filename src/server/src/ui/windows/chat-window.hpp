@@ -2,7 +2,6 @@
 
 #include <QPointer>
 #include <QQmlApplicationEngine>
-#include <vector>
 #include "builtins/ai/chat-session.hpp"
 #include "builtins/ai/conversation-list-model.hpp"
 #include "common/context.hpp"
@@ -33,39 +32,34 @@ signals:
   void loadingChanged();
   void errorChanged();
   void focusRequested();
+  void closed();
 
 public:
-  explicit ChatWindow(ApplicationContext &context);
+  ChatWindow(ApplicationContext &context, QObject *parent);
   ~ChatWindow() override;
   static ChatWindow *create(QQmlEngine *engine, QJSEngine *) {
     return QmlEngineScope::get<ChatWindow>(engine);
   }
-  void show(ChatSession *session = nullptr);
-  void trackSession(ChatSession *session);
-  ChatSession *findSession(std::string_view id) const;
+  void present();
+  void openMostRecent();
+  /** Takes over a session started elsewhere. */
+  void adopt(ChatSession *session);
   ChatSession *session() const { return m_session; }
   ConversationListModel *conversations() { return &m_conversations; }
   bool loading() const { return m_pending; }
   QString error() const { return m_error; }
 
 private:
-  void ensureInitialized();
   void loadRoot();
   void activateSession(ChatSession *session);
   void cancelPending();
-  void releaseIdleSessions();
   void setError(const QString &error);
   ApplicationContext &m_context;
-  QQmlApplicationEngine m_engine;
   ConversationListModel m_conversations;
   QPointer<QQuickWindow> m_window;
   QPointer<ChatSession> m_session;
   QPointer<ChatSession> m_pending;
-  struct SessionEntry {
-    QPointer<ChatSession> session;
-    QPointer<QObject> presenter;
-  };
-  std::vector<SessionEntry> m_sessions;
   QString m_error;
-  bool m_initialized = false;
+  // Declared last so the QML tree goes away before the state it binds to.
+  QQmlApplicationEngine m_engine;
 };

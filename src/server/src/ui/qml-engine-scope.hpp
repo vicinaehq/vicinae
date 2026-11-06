@@ -11,6 +11,9 @@
 class QmlEngineScope {
 public:
   template <typename T> static void set(QQmlEngine *engine, T *object) {
+    if (!map().contains(engine)) {
+      QObject::connect(engine, &QObject::destroyed, [engine] { map().remove(engine); });
+    }
     map()[engine][&T::staticMetaObject] = object;
   }
 

@@ -114,7 +114,7 @@
 #include "services/ai/ai-service.hpp"
 #include "services/ai/tool-registry.hpp"
 #include "ui/settings/settings-controller.hpp"
-#include "ui/windows/chat-window.hpp"
+#include "ui/windows/chat-window-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "ui/windows/launcher-window.hpp"
 #include "ui/windows/onboarding-window.hpp"
@@ -512,7 +512,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   ctx.overlay = std::make_unique<OverlayController>(&ctx);
   ctx.settings = std::make_unique<SettingsController>(ctx);
   ctx.services = ServiceRegistry::instance();
-  ctx.chat = std::make_unique<ChatWindow>(ctx);
+  ctx.chat = std::make_unique<ChatWindowController>(ctx);
 
   IpcCommandServer commandServer(&ctx);
 

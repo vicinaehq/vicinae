@@ -10,7 +10,7 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/action-panel/action-panel-state.hpp"
 #include "ui/views/mono-list-view-host.hpp"
-#include "ui/windows/chat-window.hpp"
+#include "ui/windows/chat-window-controller.hpp"
 
 template <> struct fuzzy::FuzzySearchable<AI::ConversationInfo> {
   static fuzzy::Match score(const AI::ConversationInfo &conversation, const fuzzy::Query &query) {
@@ -54,7 +54,6 @@ public:
                          [id = item.id, openInWindow = m_openInWindow](ApplicationContext *ctx) {
                            if (openInWindow) {
                              ctx->navigation->closeWindow();
-                             ctx->chat->show();
                              ctx->chat->openConversation(QString::fromStdString(id));
                            } else {
                              QuickAIViewHost::openConversation(ctx->navigation->topState()->sender, id);

@@ -7,7 +7,7 @@
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"
 #include "ui/settings/settings-controller.hpp"
-#include "ui/windows/chat-window.hpp"
+#include "ui/windows/chat-window-controller.hpp"
 #include "ui/views/intro-view-host.hpp"
 
 void QuickAICommand::execute(CommandController &controller) const {

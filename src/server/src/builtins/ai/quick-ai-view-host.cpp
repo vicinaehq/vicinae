@@ -5,7 +5,7 @@
 #include "service-registry.hpp"
 #include "services/ai/conversation-store.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/windows/chat-window.hpp"
+#include "ui/windows/chat-window-controller.hpp"
 #include "view-utils.hpp"
 #include "vicinae.hpp"
 
@@ -20,9 +20,9 @@ void QuickAIViewHost::beforePop() {
 
 void QuickAIViewHost::openConversation(BaseView *source, std::string id) {
   if (source->isLoading()) return;
-  auto *window = source->context()->chat.get();
-  if (auto *session = window->findSession(id)) {
-    window->show(session);
+  auto *chat = source->context()->chat.get();
+  if (const auto *session = chat->session(); session && session->conversationId().toStdString() == id) {
+    chat->show();
     source->context()->navigation->closeWindow();
     return;
   }
@@ -51,7 +51,6 @@ void QuickAIViewHost::openConversation(BaseView *source, std::string id) {
 
 void QuickAIViewHost::initialize() {
   BaseView::initialize();
-  context()->chat->trackSession(m_session);
   setNavigationTitle(initialNavigationTitle());
   connect(m_session, &ChatSession::conversationChanged, this,
           [this] { setNavigationTitle(initialNavigationTitle()); });
@@ -91,11 +90,11 @@ void QuickAIViewHost::openLastConversation() {
         }
 
         auto id = std::move(result->front().id);
-        auto *window = ctx->chat.get();
+        auto *chat = ctx->chat.get();
 
-        // A session owned by the chat window may be streaming, a second copy would diverge from it.
-        if (auto *session = window->findSession(id); session && session->parent() == window) {
-          window->show(session);
+        // The chat window may be streaming this conversation, a second copy would diverge from it.
+        if (const auto *session = chat->session(); session && session->conversationId().toStdString() == id) {
+          chat->show();
           ctx->navigation->popCurrentView();
           ctx->navigation->closeWindow();
           return;

@@ -867,6 +867,8 @@ set(SRCS
 
 	src/ui/windows/chat-window.hpp
 	src/ui/windows/chat-window.cpp
+	src/ui/windows/chat-window-controller.hpp
+	src/ui/windows/chat-window-controller.cpp
 	src/ui/windows/settings-window.hpp
 	src/ui/windows/settings-window.cpp
 	src/ui/windows/onboarding-window.hpp
