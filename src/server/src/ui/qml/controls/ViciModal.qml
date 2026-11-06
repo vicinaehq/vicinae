@@ -59,6 +59,11 @@ Popup {
         color: Qt.rgba(Theme.secondaryBackground.r, Theme.secondaryBackground.g, Theme.secondaryBackground.b, 0.98)
         border.color: Theme.divider
         border.width: 1
+
+        // Presses that TapHandlers leave unaccepted must not reach the page beneath.
+        MouseArea {
+            anchors.fill: parent
+        }
     }
 
     Overlay.modal: Rectangle {

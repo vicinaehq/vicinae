@@ -25,7 +25,13 @@ Item {
         backLabel: Settings.extensionModel.selectedTitle
         onBack: Settings.currentSubpage = ""
         onOpenProvider: id => Settings.currentSubpage = "providers/" + id
-        onSetUp: (type, label, icon, allowMultiple) => setupDialog.openFor(type, label, icon, allowMultiple)
+        onAddProvider: picker.openPicker()
+    }
+
+    AIProviderPicker {
+        id: picker
+        model: root.model
+        onChosen: (type, label, icon, allowMultiple) => setupDialog.openFor(type, label, icon, allowMultiple)
     }
 
     AIProviderView {

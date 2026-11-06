@@ -1523,7 +1523,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/settings/ToolSettingsRow.qml
 	src/ui/qml/settings/SettingsSubpageRow.qml
 	src/ui/qml/settings/AIProvidersOverview.qml
-	src/ui/qml/settings/AIProviderCard.qml
+	src/ui/qml/settings/AIProviderPicker.qml
 	src/ui/qml/settings/AIProviderView.qml
 	src/ui/qml/settings/AIModelRow.qml
 	src/ui/qml/settings/AIModelDeleteDialog.qml

@@ -58,12 +58,15 @@ struct LocalFields {
   Device device = Device::Gpu;
 };
 
+enum class Category : std::uint8_t { Builtin, Cloud, SelfHosted, Cli };
+
 struct ProviderTypeInfo {
   std::string_view type;
   std::string_view label;
   BuiltinIcon icon;
   std::string_view description;
   Cardinality cardinality;
+  Category category;
   std::vector<::Preference> (*fields)();
 };
 
@@ -216,6 +219,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Vicinae,
         .description = "Vicinae-managed models, mostly for dictation purposes.",
         .cardinality = Cardinality::Builtin,
+        .category = Category::Builtin,
         .fields = +[] { return describePreferences<LocalFields>(); },
     },
     {
@@ -224,6 +228,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Ollama,
         .description = "Connect to a local or remote Ollama instance.",
         .cardinality = Cardinality::Multiple,
+        .category = Category::SelfHosted,
         .fields = +[] { return describePreferences<OllamaFields>(); },
     },
     {
@@ -232,6 +237,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Openai,
         .description = "OpenAI cloud API. Provides language and transcription models.",
         .cardinality = Cardinality::Single,
+        .category = Category::Cloud,
         .fields = +[] { return describePreferences<OpenAIFields>(); },
     },
     {
@@ -240,6 +246,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Groq,
         .description = "Groq cloud API. Fast open-weight language models and Whisper transcription.",
         .cardinality = Cardinality::Single,
+        .category = Category::Cloud,
         .fields = +[] { return describePreferences<GroqFields>(); },
     },
     {
@@ -248,6 +255,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Openrouter,
         .description = "OpenRouter cloud API. One key for models from every major vendor.",
         .cardinality = Cardinality::Single,
+        .category = Category::Cloud,
         .fields = +[] { return describePreferences<OpenRouterFields>(); },
     },
     {
@@ -256,6 +264,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Mistral,
         .description = "Mistral AI cloud API. Provides transcription and language models.",
         .cardinality = Cardinality::Single,
+        .category = Category::Cloud,
         .fields = +[] { return describePreferences<MistralFields>(); },
     },
     {
@@ -264,6 +273,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::ClaudeCode,
         .description = "Chat with Claude through your Claude Code sign-in. Requires the claude CLI.",
         .cardinality = Cardinality::Single,
+        .category = Category::Cli,
         .fields = +[] { return describePreferences<ClaudeCodeFields>(); },
     },
     {
@@ -272,6 +282,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .icon = BuiltinIcon::Codex,
         .description = "Chat with OpenAI models through your Codex sign-in. Requires the codex CLI.",
         .cardinality = Cardinality::Single,
+        .category = Category::Cli,
         .fields = +[] { return describePreferences<CodexFields>(); },
     },
     {
@@ -281,6 +292,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .description =
             "Any server exposing the OpenAI chat completions API, such as LM Studio, vLLM or llama.cpp.",
         .cardinality = Cardinality::Multiple,
+        .category = Category::SelfHosted,
         .fields = +[] { return describePreferences<OpenAICompatibleFields>(); },
     },
 });

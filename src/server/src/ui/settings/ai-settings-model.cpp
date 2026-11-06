@@ -47,6 +47,20 @@ QVariantMap instanceEntry(const QString &id, const QString &name, const QString 
   return {{QStringLiteral("id"), id}, {QStringLiteral("name"), name}, {QStringLiteral("statusText"), status}};
 }
 
+QString categoryLabel(AI::Category category) {
+  switch (category) {
+  case AI::Category::Builtin:
+    return QCoreApplication::translate("AISettingsModel", "Built-in");
+  case AI::Category::Cloud:
+    return QCoreApplication::translate("AISettingsModel", "Cloud APIs");
+  case AI::Category::SelfHosted:
+    return QCoreApplication::translate("AISettingsModel", "Self-hosted");
+  case AI::Category::Cli:
+    return QCoreApplication::translate("AISettingsModel", "CLI sign-ins");
+  }
+  return {};
+}
+
 bool isToggle(const Preference &pref) {
   return std::holds_alternative<Preference::CheckboxData>(pref.data());
 }
@@ -113,6 +127,8 @@ QVariant AIProviderTypesModel::data(const QModelIndex &index, int role) const {
     return row->description;
   case IconRole:
     return row->icon;
+  case CategoryRole:
+    return row->category;
   case BuiltinRole:
     return row->builtin;
   case AllowMultipleRole:
@@ -127,8 +143,8 @@ QVariant AIProviderTypesModel::data(const QModelIndex &index, int role) const {
 QHash<int, QByteArray> AIProviderTypesModel::roleNames() const {
   return {
       {TypeRole, "type"},           {LabelRole, "label"},     {DescriptionRole, "description"},
-      {IconRole, "icon"},           {BuiltinRole, "builtin"}, {AllowMultipleRole, "allowMultiple"},
-      {InstancesRole, "instances"},
+      {IconRole, "icon"},           {CategoryRole, "category"}, {BuiltinRole, "builtin"},
+      {AllowMultipleRole, "allowMultiple"}, {InstancesRole, "instances"},
   };
 }
 
@@ -433,6 +449,7 @@ void AISettingsModel::rebuildTypes() {
           .label = name,
           .description = qs(provider->description()),
           .icon = iconVariant(provider->icon()),
+          .category = categoryLabel(info.category),
           .builtin = true,
           .instances = {instanceEntry(id, name, statusText(*provider))},
       });
@@ -451,6 +468,7 @@ void AISettingsModel::rebuildTypes() {
         .label = qs(info.label),
         .description = qs(info.description),
         .icon = QVariant::fromValue(ImageUrl(ImageURL::builtin(info.icon))),
+        .category = categoryLabel(info.category),
         .allowMultiple = info.cardinality == AI::Cardinality::Multiple,
         .instances = std::move(instances),
     });
@@ -464,6 +482,24 @@ void AISettingsModel::rebuildTypes() {
 
   m_configuredTypes.setRows(std::move(rows));
   m_availableTypes.setRows(std::move(availableRows));
+}
+
+QVariantList AISettingsModel::pickerTypes() const {
+  QVariantList items;
+  const auto append = [&](const AIProviderTypeRow &row) {
+    items.append(QVariantMap{{QStringLiteral("type"), row.key},
+                             {QStringLiteral("label"), row.label},
+                             {QStringLiteral("description"), row.description},
+                             {QStringLiteral("icon"), row.icon},
+                             {QStringLiteral("category"), row.category},
+                             {QStringLiteral("allowMultiple"), row.allowMultiple},
+                             {QStringLiteral("configured"), !row.instances.isEmpty()}});
+  };
+  for (const auto &row : m_availableTypes.rows())
+    append(row);
+  for (const auto &row : m_configuredTypes.rows())
+    if (row.allowMultiple) append(row);
+  return items;
 }
 
 void AISettingsModel::rebuildPage() {

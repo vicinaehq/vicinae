@@ -25,6 +25,7 @@ struct AIProviderTypeRow {
   QString label;
   QString description;
   QVariant icon;
+  QString category;
   bool builtin = false;
   bool allowMultiple = false;
   QVariantList instances;
@@ -66,6 +67,8 @@ public:
     return parent.isValid() ? 0 : static_cast<int>(m_rows.size());
   }
 
+  const std::vector<Row> &rows() const { return m_rows; }
+
   void setRows(std::vector<Row> rows) {
     const bool sameShape =
         rows.size() == m_rows.size() && std::ranges::equal(rows, m_rows, {}, &Row::key, &Row::key);
@@ -103,6 +106,7 @@ public:
     LabelRole,
     DescriptionRole,
     IconRole,
+    CategoryRole,
     BuiltinRole,
     AllowMultipleRole,
     InstancesRole,
@@ -242,6 +246,8 @@ public:
   AIProviderPage *provider() { return &m_page; }
   AIProviderFieldsModel *setupFields() { return &m_setupFields; }
 
+  // Types that can be set up right now: unconfigured ones plus those accepting more instances.
+  Q_INVOKABLE QVariantList pickerTypes() const;
   Q_INVOKABLE QStringList prepareSetup(const QString &type);
   Q_INVOKABLE void addProvider(const QString &type, const QVariantMap &fields);
   Q_INVOKABLE QString nextProviderId(const QString &type) const;
