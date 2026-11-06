@@ -77,7 +77,8 @@ LRESULT CALLBACK titlebarSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     }
     break;
   case WM_STYLECHANGING:
-    if (wParam == GWL_STYLE) reinterpret_cast<STYLESTRUCT *>(lParam)->styleNew |= self->extendedStyle(); // NOLINT
+    if (wParam == GWL_STYLE)
+      reinterpret_cast<STYLESTRUCT *>(lParam)->styleNew |= self->extendedStyle(); // NOLINT
     break;
   case WM_NCHITTEST: {
     POINT pt{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
@@ -261,9 +262,8 @@ long WindowsWindowAttached::hitTest(const QPoint &clientPx) const {
     const bool vertical = m_window->minimumHeight() != m_window->maximumHeight();
     const int col = !horizontal ? 0 : clientPx.x() < frame ? -1 : clientPx.x() >= rc.right - frame ? 1 : 0;
     const int row = !vertical ? 0 : clientPx.y() < frame ? -1 : clientPx.y() >= rc.bottom - frame ? 1 : 0;
-    static constexpr long HITS[3][3] = {{HTTOPLEFT, HTTOP, HTTOPRIGHT},
-                                        {HTLEFT, HTCLIENT, HTRIGHT},
-                                        {HTBOTTOMLEFT, HTBOTTOM, HTBOTTOMRIGHT}};
+    static constexpr long HITS[3][3] = {
+        {HTTOPLEFT, HTTOP, HTTOPRIGHT}, {HTLEFT, HTCLIENT, HTRIGHT}, {HTBOTTOMLEFT, HTBOTTOM, HTBOTTOMRIGHT}};
     if (row || col) return HITS[row + 1][col + 1];
   }
   const qreal dpr = m_window->devicePixelRatio();
@@ -334,7 +334,8 @@ void WindowsWindowAttached::apply() {
   } else {
     if (extended()) {
       if (!m_subclassed) {
-        SetWindowSubclass(hwnd, titlebarSubclassProc, TITLEBAR_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(this));
+        SetWindowSubclass(hwnd, titlebarSubclassProc, TITLEBAR_SUBCLASS_ID,
+                          reinterpret_cast<DWORD_PTR>(this));
         m_subclassed = true;
       }
       LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_STYLE);
@@ -353,7 +354,8 @@ void WindowsWindowAttached::apply() {
     DwmSetWindowAttribute(hwnd, DWMWA_TEXT_COLOR, &text, sizeof(text));
 
     exStyle = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
-    LONG_PTR iconless = m_captionTitleVisible ? exStyle & ~WS_EX_DLGMODALFRAME : exStyle | WS_EX_DLGMODALFRAME;
+    LONG_PTR iconless =
+        m_captionTitleVisible ? exStyle & ~WS_EX_DLGMODALFRAME : exStyle | WS_EX_DLGMODALFRAME;
     if (iconless != exStyle) {
       SetWindowLongPtrW(hwnd, GWL_EXSTYLE, iconless);
       SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
@@ -362,7 +364,8 @@ void WindowsWindowAttached::apply() {
   }
 
   DWM_SYSTEMBACKDROP_TYPE backdrop = DWMSBT_NONE;
-  if (m_blurEnabled && acrylicSupported()) backdrop = m_decorated ? DWMSBT_MAINWINDOW : DWMSBT_TRANSIENTWINDOW;
+  if (m_blurEnabled && acrylicSupported())
+    backdrop = m_decorated ? DWMSBT_MAINWINDOW : DWMSBT_TRANSIENTWINDOW;
 
   BOOL dark = m_appearance == QStringLiteral("dark");
   DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));

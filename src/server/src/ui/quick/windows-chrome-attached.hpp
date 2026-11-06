@@ -23,7 +23,8 @@ class WindowsWindowAttached : public QObject {
   Q_PROPERTY(QString appearance READ appearance WRITE setAppearance NOTIFY appearanceChanged)
   Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY borderColorChanged)
   Q_PROPERTY(QColor captionColor READ captionColor WRITE setCaptionColor NOTIFY captionColorChanged)
-  Q_PROPERTY(bool captionTitleVisible READ captionTitleVisible WRITE setCaptionTitleVisible NOTIFY captionTitleVisibleChanged)
+  Q_PROPERTY(bool captionTitleVisible READ captionTitleVisible WRITE setCaptionTitleVisible NOTIFY
+                 captionTitleVisibleChanged)
   Q_PROPERTY(bool acrylicSupported READ acrylicSupported CONSTANT)
   Q_PROPERTY(bool extendedTitlebarSupported READ extendedTitlebarSupported CONSTANT)
   Q_PROPERTY(int nativeCornerRadius READ nativeCornerRadius CONSTANT)

@@ -61,9 +61,7 @@ void requestMicrophone(std::function<void(bool)> done) {
   auto shared = std::make_shared<std::function<void(bool)>>(std::move(done));
   [AVCaptureDevice requestAccessForMediaType:AVMediaTypeAudio
                            completionHandler:^(BOOL granted) {
-                             dispatch_async(dispatch_get_main_queue(), ^{
-                               (*shared)(granted);
-                             });
+                             dispatch_async(dispatch_get_main_queue(), ^{ (*shared)(granted); });
                            }];
 }
 

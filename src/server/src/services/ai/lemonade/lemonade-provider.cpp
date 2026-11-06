@@ -37,8 +37,8 @@ QFuture<Result<ModelList>> LemonadeProvider::fetchModels() {
       [](Result<lemonade::ListModelsResponse> res) -> Result<ModelList> {
         if (!res) return std::unexpected(res.error());
         return res->data | std::views::filter([](const auto &entry) { return entry.downloaded; }) |
-               std::views::transform(toModel) | std::views::filter([](const Model &m) { return m.caps != 0; }) |
-               std::ranges::to<ModelList>();
+               std::views::transform(toModel) |
+               std::views::filter([](const Model &m) { return m.caps != 0; }) | std::ranges::to<ModelList>();
       });
 }
 

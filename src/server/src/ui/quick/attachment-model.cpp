@@ -135,8 +135,8 @@ bool AttachmentModel::paste() {
   const auto name = tr("Pasted image") + QStringLiteral(".png");
   if (!raw.isEmpty()) {
     load(Entry{.id = m_nextId++, .name = name}, QtConcurrent::run([raw, rawMime, name] {
-           auto result =
-               prepareImage(ImageRendering::decodeImageData(raw, {MAX_IMAGE_EDGE, MAX_IMAGE_EDGE}), name.toStdString());
+           auto result = prepareImage(ImageRendering::decodeImageData(raw, {MAX_IMAGE_EDGE, MAX_IMAGE_EDGE}),
+                                      name.toStdString());
            if (result) {
              result->originalBytes = raw;
              result->originalMimeType = rawMime.toStdString();

@@ -363,7 +363,8 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .type = "lemonade",
         .label = "Lemonade",
         .icon = BuiltinIcon::Lemonade,
-        .description = "AMD's local server for language and speech models. Lists the models you have downloaded.",
+        .description =
+            "AMD's local server for language and speech models. Lists the models you have downloaded.",
         .cardinality = Cardinality::Multiple,
         .category = Category::SelfHosted,
         .fields = +[] { return describePreferences<LemonadeFields>(); },
