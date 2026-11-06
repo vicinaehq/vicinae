@@ -2,7 +2,7 @@
 #include <memory>
 #include <ranges>
 #include <QUrl>
-#include "builtins/ai/ai-model-selector-utils.hpp"
+#include "services/ai/ai-model-selector-utils.hpp"
 #include "builtins/ai/ai.hpp"
 #include "services/ai/ai-preferences.hpp"
 #include "builtins/dictation/dictation.hpp"

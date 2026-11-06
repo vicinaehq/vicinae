@@ -1,5 +1,4 @@
 #include "generated/tsapi.hpp"
-#include "service-registry.hpp"
 #include "services/ai/ai-preferences.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "services/ai/ai-service.hpp"
@@ -9,7 +8,8 @@
 
 class ExtensionAIRouter : public tsapi::AbstractAI {
 public:
-  ExtensionAIRouter(tsapi::RpcTransport &transport, AI::Service &ai) : AbstractAI(transport), m_ai(ai) {}
+  ExtensionAIRouter(tsapi::RpcTransport &transport, AI::Service &ai, const config::Manager &config)
+      : AbstractAI(transport), m_ai(ai), m_config(config) {}
 
   ~ExtensionAIRouter() override = default;
 
@@ -43,7 +43,7 @@ public:
 
       model = std::move(*ref);
     } else {
-      model = AI::defaultModel(*ServiceRegistry::instance()->config());
+      model = AI::defaultModel(m_config);
 
       if (!model || !m_ai.isAvailable(*model, AI::Capability::Completion)) {
         return tsapi::Result<std::string>::fail(
@@ -105,5 +105,6 @@ private:
 
   int m_completionIdx = 0;
   AI::Service &m_ai;
+  const config::Manager &m_config;
   std::unordered_map<std::string, std::shared_ptr<AI::AbstractChatCompletionStream>> m_completions;
 };

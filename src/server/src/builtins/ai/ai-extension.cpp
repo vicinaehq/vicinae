@@ -26,7 +26,7 @@ void QuickAICommand::execute(CommandController &controller) const {
   }
 
   const auto query = controller.launchProps().fallbackText.value_or(QString());
-  ctx->navigation->pushView(new QuickAIViewHost(query));
+  ctx->navigation->pushView(new QuickAIViewHost(*ctx->services, query));
 }
 
 void AiExtension::preferencesChanged(const AiPreferences &preferences) const {
@@ -40,5 +40,6 @@ void AIChatCommand::execute(CommandController &controller) const {
 }
 
 void OpenLastChatCommand::execute(CommandController &controller) const {
-  controller.context()->navigation->pushView(QuickAIViewHost::forLastConversation());
+  auto *ctx = controller.context();
+  ctx->navigation->pushView(QuickAIViewHost::forLastConversation(*ctx->services));
 }

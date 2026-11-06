@@ -1,5 +1,5 @@
 #include "ai-preferences.hpp"
-#include "builtins/ai/ai-model-selector-utils.hpp"
+#include "services/ai/ai-model-selector-utils.hpp"
 #include "config/config.hpp"
 #include "service-registry.hpp"
 #include "services/ai/ai-service.hpp"

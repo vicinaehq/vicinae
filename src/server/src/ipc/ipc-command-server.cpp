@@ -45,7 +45,7 @@ namespace {
 
 using AttachmentResults = std::vector<AttachmentModel::Result>;
 
-std::expected<AI::ModelRef, std::string> resolveAskModel(AI::Service &ai,
+std::expected<AI::ModelRef, std::string> resolveAskModel(AI::Service &ai, const config::Manager &config,
                                                          const std::optional<std::string> &requested) {
   if (requested) {
     auto ref = AI::ModelRef::fromString(*requested);
@@ -59,7 +59,7 @@ std::expected<AI::ModelRef, std::string> resolveAskModel(AI::Service &ai,
     return *ref;
   }
 
-  auto ref = AI::defaultModel(*ServiceRegistry::instance()->config());
+  auto ref = AI::defaultModel(config);
   if (!ref || !ai.isAvailable(*ref, AI::Completion)) {
     return std::unexpected("No default AI model is selected, pick one in the AI settings or pass --model");
   }
@@ -118,7 +118,7 @@ ipc_gen::Result<ipc_gen::AiAskResponse>::Future IpcService::aiAsk(ipc_gen::AiAsk
   using Response = ipc_gen::Result<ipc_gen::AiAskResponse>;
   auto &ai = *m_ctx.services->ai();
 
-  auto model = resolveAskModel(ai, req.model);
+  auto model = resolveAskModel(ai, *m_ctx.services->config(), req.model);
   if (!model) return Response::fail(model.error());
 
   QPromise<Response::Type> promise;

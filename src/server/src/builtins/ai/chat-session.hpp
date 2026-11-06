@@ -13,6 +13,8 @@
 #include "services/ai/conversation-store.hpp"
 #include "ui/quick/attachment-model.hpp"
 
+class ServiceRegistry;
+
 namespace AI {
 class Service;
 };
@@ -65,7 +67,7 @@ signals:
   void modelSelectorCurrentItemChanged();
 
 public:
-  explicit ChatSession(QObject *parent = nullptr);
+  explicit ChatSession(ServiceRegistry &services, QObject *parent = nullptr);
   ~ChatSession() override;
   void load(std::string id);
 
@@ -109,6 +111,7 @@ private:
   void finishLoading();
   QVariantList attachmentItems(const std::vector<AI::ConversationAttachment> &attachments) const;
 
+  ServiceRegistry &m_services;
   AI::ConversationStore *m_store = nullptr;
   std::optional<AI::ConversationInfo> m_conversation;
   std::optional<AI::ConversationTurn> m_turn;

@@ -13,9 +13,9 @@
 #endif
 
 ChatWindow::ChatWindow(ApplicationContext &context)
-    : m_context(context), m_conversations(ServiceRegistry::instance()->conversations()) {
+    : m_context(context), m_conversations(context.services->conversations()) {
   connect(&m_conversations, &ConversationListModel::errorOccurred, this, &ChatWindow::setError);
-  connect(ServiceRegistry::instance()->conversations(), &AI::ConversationStore::removed, this,
+  connect(context.services->conversations(), &AI::ConversationStore::removed, this,
           [this](const QString &id) {
             if (m_session && m_session->conversationId() == id) {
               m_session = nullptr;
@@ -134,7 +134,7 @@ void ChatWindow::newChat() {
       return;
     }
   }
-  activateSession(new ChatSession(this));
+  activateSession(new ChatSession(*m_context.services, this));
 }
 
 void ChatWindow::releaseIdleSessions() {
@@ -157,7 +157,7 @@ void ChatWindow::openConversation(const QString &id) {
   }
   cancelPending();
   clearError();
-  auto *session = new ChatSession(this);
+  auto *session = new ChatSession(*m_context.services, this);
   m_pending = session;
   emit loadingChanged();
   connect(session, &ChatSession::conversationLoaded, this, [this, session] {

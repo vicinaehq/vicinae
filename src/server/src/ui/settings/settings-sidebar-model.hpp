@@ -6,6 +6,9 @@
 #include <QAbstractListModel>
 
 class ExtensionSettingsModel;
+namespace AI {
+class ToolRegistry;
+}
 
 // Flat list model backing the settings sidebar. Holds core pages, installed
 // extensions and (while searching) the matching commands and AI tools nested under
@@ -24,7 +27,8 @@ public:
     EnabledRole,
   };
 
-  explicit SettingsSidebarModel(ExtensionSettingsModel *extModel, QObject *parent = nullptr);
+  SettingsSidebarModel(ExtensionSettingsModel *extModel, const AI::ToolRegistry &tools,
+                       QObject *parent = nullptr);
 
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
@@ -57,5 +61,6 @@ private:
   int lastSelectableRow() const;
 
   std::vector<Row> m_rows;
+  const AI::ToolRegistry &m_tools;
   std::string m_query;
 };

@@ -62,7 +62,7 @@ void ExtensionCommandRuntime::initialize() {
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
   auto wallpaper = new ExtWallpaperService(*m_transport, *services->wallpaperManager());
   auto browserExtension = new ExtBrowserExtensionService(*m_transport, *services->browserExtension());
-  auto *ai = new ExtensionAIRouter(*m_transport, *services->ai());
+  auto *ai = new ExtensionAIRouter(*m_transport, *services->ai(), *services->config());
 
   m_server = new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth,
                                wallpaper, browserExtension, eventCore, ai);

@@ -18,8 +18,8 @@ signals:
   void openingChanged();
 
 public:
-  explicit QuickAIViewHost(QString initialQuery = {});
-  static QuickAIViewHost *forLastConversation();
+  explicit QuickAIViewHost(ServiceRegistry &services, QString initialQuery = {});
+  static QuickAIViewHost *forLastConversation(ServiceRegistry &services);
   static void openConversation(BaseView *source, std::string id);
   ~QuickAIViewHost() override;
   void beforePop() override;

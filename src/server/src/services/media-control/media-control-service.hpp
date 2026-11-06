@@ -2,7 +2,6 @@
 #include <memory>
 #include <unordered_set>
 #include <utility>
-#include "service-registry.hpp"
 #include "services/audio-control/audio-control-service.hpp"
 #include "services/media-control/abstract-media-control.hpp"
 #ifdef Q_OS_LINUX
@@ -44,7 +43,7 @@ public:
     // resume players immediately, do not wait for destructor to run
     void resume() {
       if (muted) {
-        ServiceRegistry::instance()->audioControl()->provider()->setMuted(false);
+        m_service.m_audio.provider()->setMuted(false);
         muted = false;
       }
       if (paused.empty()) return;
@@ -58,9 +57,9 @@ public:
 
   private:
     void muteOutput() {
-      auto *audio = ServiceRegistry::instance()->audioControl();
-      if (!audio->available() || audio->provider()->isMuted()) return;
-      muted = audio->provider()->setMuted(true);
+      auto &audio = m_service.m_audio;
+      if (!audio.available() || audio.provider()->isMuted()) return;
+      muted = audio.provider()->setMuted(true);
     }
 
     std::unordered_set<QString> paused;
@@ -70,7 +69,7 @@ public:
 
   AbstractMediaControl *provider() const { return m_backend.get(); }
 
-  MediaControlService() {
+  explicit MediaControlService(AudioControlService &audio) : m_audio(audio) {
 #ifdef Q_OS_LINUX
     m_backend = std::make_unique<MprisMediaControl>();
 #elifdef Q_OS_WIN
@@ -88,5 +87,6 @@ public:
   TransientPauseHandle transientPauseAll() { return TransientPauseHandle{*this}; }
 
 private:
+  AudioControlService &m_audio;
   std::unique_ptr<AbstractMediaControl> m_backend;
 };

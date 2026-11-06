@@ -44,9 +44,9 @@ void SettingsWindow::ensureInitialized() {
   m_configBridge = new ConfigBridge(ConfigBridge::OpaqueSurfaces, this);
   m_generalModel = new GeneralSettingsModel(this);
   m_keybindModel = new KeybindSettingsModel(this);
-  m_extensionModel = new ExtensionSettingsModel(this);
-  m_sidebarModel = new SettingsSidebarModel(m_extensionModel, this);
-  m_aiModel = new AISettingsModel(this);
+  m_extensionModel = new ExtensionSettingsModel(*m_ctx.services->tools(), this);
+  m_sidebarModel = new SettingsSidebarModel(m_extensionModel, *m_ctx.services->tools(), this);
+  m_aiModel = new AISettingsModel(*m_ctx.services, this);
 
   QmlDevLoader::attach(&m_engine, [this]() { reloadRoot(); });
   QmlEngineScope::set(&m_engine, this);

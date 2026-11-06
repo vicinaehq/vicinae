@@ -18,6 +18,10 @@ struct ProviderTypeInfo;
 } // namespace AI
 class RootItemManager;
 class LocalStorageService;
+class ServiceRegistry;
+namespace config {
+class Manager;
+}
 class AISettingsModel;
 
 struct AIProviderTypeRow {
@@ -236,7 +240,7 @@ signals:
   void secretsEncryptedChanged();
 
 public:
-  explicit AISettingsModel(QObject *parent = nullptr);
+  explicit AISettingsModel(ServiceRegistry &services, QObject *parent = nullptr);
 
   bool secretsEncrypted() const;
   AIProviderTypesModel *configuredTypes() { return &m_configuredTypes; }
@@ -274,6 +278,7 @@ private:
   AI::Service *m_aiService = nullptr;
   RootItemManager *m_rootItems = nullptr;
   LocalStorageService *m_storage = nullptr;
+  config::Manager *m_config = nullptr;
   QString m_selectedProviderId;
   AIProviderTypesModel m_configuredTypes{this};
   AIProviderTypesModel m_availableTypes{this};

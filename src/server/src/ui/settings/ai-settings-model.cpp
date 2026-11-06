@@ -142,9 +142,14 @@ QVariant AIProviderTypesModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> AIProviderTypesModel::roleNames() const {
   return {
-      {TypeRole, "type"},           {LabelRole, "label"},     {DescriptionRole, "description"},
-      {IconRole, "icon"},           {CategoryRole, "category"}, {BuiltinRole, "builtin"},
-      {AllowMultipleRole, "allowMultiple"}, {InstancesRole, "instances"},
+      {TypeRole, "type"},
+      {LabelRole, "label"},
+      {DescriptionRole, "description"},
+      {IconRole, "icon"},
+      {CategoryRole, "category"},
+      {BuiltinRole, "builtin"},
+      {AllowMultipleRole, "allowMultiple"},
+      {InstancesRole, "instances"},
   };
 }
 
@@ -254,13 +259,13 @@ void AIProviderPage::remove() {
 
 // ── settings model ──
 
-AISettingsModel::AISettingsModel(QObject *parent) : QObject(parent) {
-  auto *registry = ServiceRegistry::instance();
-  m_aiService = registry->ai();
-  m_rootItems = registry->rootItemManager();
-  m_storage = registry->localStorage();
+AISettingsModel::AISettingsModel(ServiceRegistry &services, QObject *parent) : QObject(parent) {
+  m_aiService = services.ai();
+  m_rootItems = services.rootItemManager();
+  m_storage = services.localStorage();
+  m_config = services.config();
 
-  if (auto *config = registry->config()) {
+  if (auto *config = m_config) {
     connect(config, &config::Manager::configChanged, this, [this]() {
       emit secretsEncryptedChanged();
       rebuildTypes();
@@ -607,7 +612,7 @@ void AISettingsModel::addProvider(const QString &type, const QVariantMap &fields
 }
 
 bool AISettingsModel::secretsEncrypted() const {
-  const auto *config = ServiceRegistry::instance()->config();
+  const auto *config = m_config;
   return !config || config->value().encryptSensitiveData;
 }
 

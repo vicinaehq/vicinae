@@ -9,8 +9,8 @@
 #include "view-utils.hpp"
 #include "vicinae.hpp"
 
-QuickAIViewHost::QuickAIViewHost(QString initialQuery)
-    : m_initialQuery(std::move(initialQuery)), m_session(new ChatSession(this)) {}
+QuickAIViewHost::QuickAIViewHost(ServiceRegistry &services, QString initialQuery)
+    : m_initialQuery(std::move(initialQuery)), m_session(new ChatSession(services, this)) {}
 
 QuickAIViewHost::~QuickAIViewHost() { beforePop(); }
 
@@ -27,7 +27,7 @@ void QuickAIViewHost::openConversation(BaseView *source, std::string id) {
     return;
   }
 
-  auto *view = new QuickAIViewHost;
+  auto *view = new QuickAIViewHost(*source->context()->services);
   view->setParent(source);
   source->setLoading(true);
   connect(view->session(), &ChatSession::conversationLoaded, source, [source, view] {
@@ -65,8 +65,8 @@ void QuickAIViewHost::loadInitialData() {
   if (!m_initialQuery.isEmpty() && !m_session->send(m_initialQuery)) m_session->setDraft(m_initialQuery);
 }
 
-QuickAIViewHost *QuickAIViewHost::forLastConversation() {
-  auto *view = new QuickAIViewHost;
+QuickAIViewHost *QuickAIViewHost::forLastConversation(ServiceRegistry &services) {
+  auto *view = new QuickAIViewHost(services);
   view->m_opening = true;
   return view;
 }

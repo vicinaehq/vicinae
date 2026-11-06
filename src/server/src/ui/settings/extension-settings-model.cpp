@@ -13,14 +13,14 @@
 #include <unordered_set>
 #include <utility>
 
-ExtensionSettingsModel::ExtensionSettingsModel(QObject *parent)
+ExtensionSettingsModel::ExtensionSettingsModel(AI::ToolRegistry &tools, QObject *parent)
     : QAbstractListModel(parent), m_prefModel(new PreferenceFormModel(this)),
-      m_cmdPrefModel(new PreferenceFormModel(this)), m_commandModel(new ProviderCommandModel(this)) {
+      m_cmdPrefModel(new PreferenceFormModel(this)), m_commandModel(new ProviderCommandModel(this)),
+      m_tools(tools) {
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   connect(manager, &RootItemManager::itemsChanged, this, [this]() { rebuild(m_filter); });
-  connect(ServiceRegistry::instance()->tools(), &AI::ToolRegistry::changed, this,
-          &ExtensionSettingsModel::toolsChanged);
+  connect(&m_tools, &AI::ToolRegistry::changed, this, &ExtensionSettingsModel::toolsChanged);
   connect(this, &ExtensionSettingsModel::selectedChanged, this, &ExtensionSettingsModel::toolsChanged);
   rebuild({});
 }
@@ -486,7 +486,7 @@ void ExtensionSettingsModel::loadCommandPreferences(const QString &entrypointId)
 }
 
 QVariantList ExtensionSettingsModel::tools() const {
-  const auto &registry = *ServiceRegistry::instance()->tools();
+  const auto &registry = m_tools;
   const auto providerId = selectedProviderId().toStdString();
   QVariantList rows;
 
@@ -510,7 +510,7 @@ QVariantList ExtensionSettingsModel::tools() const {
 }
 
 bool ExtensionSettingsModel::toolsAvailable() const {
-  const auto &registry = *ServiceRegistry::instance()->tools();
+  const auto &registry = m_tools;
   return registry.toolsEnabled() && registry.providerEnabled(AI::EXTENSION_ID);
 }
 
@@ -530,8 +530,7 @@ void ExtensionSettingsModel::setToolPolicy(const QString &toolId, const QString 
   const auto value =
       std::ranges::find(policies, policy, [](AI::ToolPolicy value) { return enumName(value); });
   if (value == policies.end()) return;
-  ServiceRegistry::instance()->tools()->setToolPolicy(selectedProviderId().toStdString(),
-                                                      toolId.toStdString(), *value);
+  m_tools.setToolPolicy(selectedProviderId().toStdString(), toolId.toStdString(), *value);
 }
 
 QVariantList ExtensionSettingsModel::settingsPages() const {

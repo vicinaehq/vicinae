@@ -10,7 +10,7 @@
 #include "common/enumerate.hpp"
 #include "services/toast/toast-service.hpp"
 #include "chat-session.hpp"
-#include "ai-model-selector-utils.hpp"
+#include "services/ai/ai-model-selector-utils.hpp"
 #include "service-registry.hpp"
 #include "generated/version.h"
 #include "internal/os-release.hpp"
@@ -34,7 +34,7 @@ constexpr auto CHAT_SYSTEM_PROMPT =
     "Responses support Markdown and LaTeX math. For rendered math, use $...$ inline and $$...$$ for display "
     "equations, outside code fences. Use braces around command arguments, for example \\frac{1}{2}.";
 
-std::string chatSystemPrompt() {
+std::string chatSystemPrompt(const config::Manager &config) {
   const auto locale = QLocale();
   const auto today = QDate::currentDate();
   const auto timeZone = QTimeZone::systemTimeZone();
@@ -53,7 +53,7 @@ std::string chatSystemPrompt() {
       QLocale::languageToString(locale.language()).toStdString(), locale.bcp47Name().toStdString(),
       VICINAE_GIT_TAG, Omnicast::DOC_URL.toStdString());
 
-  if (const auto *instructions = AI::findPreference(*ServiceRegistry::instance()->config(), "instructions");
+  if (const auto *instructions = AI::findPreference(config, "instructions");
       instructions && instructions->is_string() && !instructions->get_string().empty()) {
     prompt += std::format("\n\nThe user gave these instructions for how to respond:\n{}",
                           instructions->get_string());
@@ -63,9 +63,9 @@ std::string chatSystemPrompt() {
 }
 } // namespace
 
-ChatSession::ChatSession(QObject *parent)
-    : QObject(parent), m_selectedModel(AI::defaultModel(*ServiceRegistry::instance()->config())) {
-  m_store = ServiceRegistry::instance()->conversations();
+ChatSession::ChatSession(ServiceRegistry &services, QObject *parent)
+    : QObject(parent), m_services(services), m_store(services.conversations()),
+      m_selectedModel(AI::defaultModel(*services.config())) {
   connect(m_store, &AI::ConversationStore::titleChanged, this,
           [this](const QString &id, const QString &title) {
             if (!m_conversation || m_conversation->id != id.toStdString()) return;
@@ -106,15 +106,15 @@ void ChatSession::load(std::string id) {
 ChatSession::~ChatSession() { cancel(); }
 
 void ChatSession::initialize() {
-  m_aiService = ServiceRegistry::instance()->ai();
+  m_aiService = m_services.ai();
   connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, this, &ChatSession::cancel);
 
   m_agent = new AI::Agent(
       [service = m_aiService](const auto &model, const auto &payload) {
         return service->createChatCompletion(model, payload);
       },
-      chatSystemPrompt, this);
-  for (auto &tool : ServiceRegistry::instance()->tools()->createTools())
+      [config = m_services.config()] { return chatSystemPrompt(*config); }, this);
+  for (auto &tool : m_services.tools()->createTools())
     m_agent->addTool(std::move(tool));
   connect(m_agent, &AI::Agent::stateChanged, this, &ChatSession::streamingChanged);
   connect(m_agent, &AI::Agent::stateChanged, this, &ChatSession::activityChanged);
@@ -253,9 +253,8 @@ void ChatSession::sendQuery(const std::string &query) {
     }
   }
   m_exchanges.beginExchange(query, previews);
-  auto tools = modelSupports(AI::Capability::ToolCalling)
-                   ? ServiceRegistry::instance()->tools()->enabledToolNames()
-                   : std::vector<std::string>{};
+  auto tools = modelSupports(AI::Capability::ToolCalling) ? m_services.tools()->enabledToolNames()
+                                                          : std::vector<std::string>{};
   m_turn->options = {.model = m_selectedModel, .tools = std::move(tools)};
   m_agent->send(std::move(message), m_turn->options);
   saveTurn();
@@ -266,7 +265,7 @@ void ChatSession::selectModel(const QString &compositeId) {
   if (!ref) return;
 
   m_selectedModel = std::move(*ref);
-  auto &config = *ServiceRegistry::instance()->config();
+  auto &config = *m_services.config();
   if (!AI::defaultModel(config)) AI::setDefaultModel(config, *m_selectedModel);
   if (m_conversation) {
     m_conversation->model = m_selectedModel;
@@ -393,7 +392,7 @@ std::optional<AI::ModelRef> ChatSession::titleModel() const {
 }
 
 void ChatSession::addTool(const AI::Agent::ToolCall &call) {
-  const auto *tool = ServiceRegistry::instance()->tools()->find(call.call.name);
+  const auto *tool = m_services.tools()->find(call.call.name);
   const auto name = tool                                      ? tool->contribution.title
                     : call.call.name == AI::Agent::LOAD_TOOLS ? tr("Load Tools")
                                                               : QString::fromStdString(call.call.name);
@@ -441,7 +440,7 @@ QVariant ChatSession::toolApproval() const {
   if (!m_agent || !m_agent->pendingApproval()) return {};
 
   const auto &call = *m_agent->toolCall(*m_agent->pendingApproval());
-  const auto *tool = ServiceRegistry::instance()->tools()->find(call.call.name);
+  const auto *tool = m_services.tools()->find(call.call.name);
   const auto json = QJsonDocument::fromJson(QByteArray::fromStdString(call.call.arguments));
 
   return QVariantMap{
@@ -459,7 +458,7 @@ void ChatSession::approveTool(bool always) {
 
   const auto id = *m_agent->pendingApproval();
   if (always) {
-    auto *registry = ServiceRegistry::instance()->tools();
+    auto *registry = m_services.tools();
     if (const auto *tool = registry->find(m_agent->toolCall(id)->call.name))
       registry->setToolPolicy(tool->providerId, tool->contribution.id, AI::ToolPolicy::Allow);
   }

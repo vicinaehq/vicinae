@@ -20,8 +20,9 @@ const QString kTool = QStringLiteral("tool");
 const QString kDivider = QStringLiteral("divider");
 } // namespace
 
-SettingsSidebarModel::SettingsSidebarModel(ExtensionSettingsModel *extModel, QObject *parent)
-    : QAbstractListModel(parent) {
+SettingsSidebarModel::SettingsSidebarModel(ExtensionSettingsModel *extModel, const AI::ToolRegistry &tools,
+                                           QObject *parent)
+    : QAbstractListModel(parent), m_tools(tools) {
   // We deliberately don't watch RootItemManager::itemsChanged: rebuilding on it
   // would reset the model (and the sidebar's scroll position) out from under the
   // user. rebuildRows() reads the manager live, so each search is fresh and the
@@ -169,7 +170,7 @@ void SettingsSidebarModel::rebuildRows() {
     tops.push_back({group.score, providerRow(group.provider), std::move(commands)});
   }
 
-  for (const auto &entry : ServiceRegistry::instance()->tools()->entries()) {
+  for (const auto &entry : m_tools.entries()) {
     const auto &tool = entry.contribution;
     auto const m =
         fuzzy::scoreWeighted({{tool.title.toStdString(), 1.0}, {tool.description.toStdString(), 0.5}}, query);

@@ -10,6 +10,9 @@
 class RootProvider;
 
 class RootItemManager;
+namespace AI {
+class ToolRegistry;
+}
 
 class ExtensionSettingsModel : public QAbstractListModel {
   Q_OBJECT
@@ -55,7 +58,7 @@ public:
     ProvenanceRole
   };
 
-  explicit ExtensionSettingsModel(QObject *parent = nullptr);
+  explicit ExtensionSettingsModel(AI::ToolRegistry &tools, QObject *parent = nullptr);
 
   int rowCount(const QModelIndex &parent = {}) const override;
   QVariant data(const QModelIndex &index, int role) const override;
@@ -131,4 +134,5 @@ private:
   PreferenceFormModel *m_cmdPrefModel;
   ProviderCommandModel *m_commandModel;
   std::set<QString> m_expandedProviders;
+  AI::ToolRegistry &m_tools;
 };

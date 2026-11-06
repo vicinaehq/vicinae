@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <QCoreApplication>
-#include "builtins/ai/ai-model-selector-utils.hpp"
+#include "services/ai/ai-model-selector-utils.hpp"
 #include "builtins/dictation/dictation.hpp"
 #include "command/preference-schema.hpp"
 #include "service-registry.hpp"

@@ -396,7 +396,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setTrayHost(createTrayHost());
     registry->setGlobalShortcuts(std::move(globalShortcutService));
     registry->setAudioControl(std::make_unique<AudioControlService>());
-    registry->setMediaControl(std::make_unique<MediaControlService>());
+    registry->setMediaControl(std::make_unique<MediaControlService>(*registry->audioControl()));
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
     registry->setWindowMaterialManager(std::make_unique<WindowMaterialManager>());
