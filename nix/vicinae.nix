@@ -128,38 +128,39 @@ in
       hash = "sha256-pEgqFgvdz7Bcc+LznCI+KlD1XEfUuWFWjS24MJ7sx3k=";
     };
 
-    cmakeFlags = lib.mapAttrsToList lib.cmakeFeature ({
-      "VICINAE_GIT_TAG" = "v${finalAttrs.version}";
-      "VICINAE_GIT_COMMIT_HASH" = manifestGet "short_rev";
-      "VICINAE_PROVENANCE" = "nix";
-      "INSTALL_NODE_MODULES" = "OFF";
-      "USE_SYSTEM_CMARK_GFM" = "ON";
-      "USE_SYSTEM_GLAZE" = "ON";
-      "USE_SYSTEM_NUMEN" = "ON";
-      "LOCAL_AI" =
-        if withLocalAI
-        then "ON"
-        else "OFF";
-      "USE_SYSTEM_INFERENCE_ENGINES" = "ON";
-      "USE_SYSTEM_KF6" = "ON";
-      "USE_SYSTEM_QT_KEYCHAIN" = "ON";
-      "FETCHCONTENT_SOURCE_DIR_JKQTMATHTEXT" = "${jkqtmathtext-src}";
-      "CMAKE_INSTALL_PREFIX" = placeholder "out";
-      "CMAKE_INSTALL_DATAROOTDIR" = "share";
-      "CMAKE_INSTALL_BINDIR" = "bin";
-      "CMAKE_INSTALL_LIBDIR" = "lib";
-      "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
-      "AUTO_ENABLE_AUTOSTART" = "OFF";
-      # nix users configure declaratively; keep onboarding on darwin for the permission prompts
-      "ENABLE_ONBOARDING" =
-        if isLinux
-        then "OFF"
-        else "ON";
-      "BUNDLE_SOULVER_CORE" = "OFF";
-    }
-    // lib.optionalAttrs isDarwin {
-      "FETCHCONTENT_SOURCE_DIR_MEDIAREMOTEADAPTER" = "${mediaremote-adapter-src}";
-    });
+    cmakeFlags =
+      lib.mapAttrsToList lib.cmakeFeature {
+        "VICINAE_GIT_TAG" = "v${finalAttrs.version}";
+        "VICINAE_GIT_COMMIT_HASH" = manifestGet "short_rev";
+        "VICINAE_PROVENANCE" = "nix";
+        "INSTALL_NODE_MODULES" = "OFF";
+        "USE_SYSTEM_CMARK_GFM" = "ON";
+        "USE_SYSTEM_GLAZE" = "ON";
+        "USE_SYSTEM_NUMEN" = "ON";
+        "LOCAL_AI" =
+          if withLocalAI
+          then "ON"
+          else "OFF";
+        "USE_SYSTEM_INFERENCE_ENGINES" = "ON";
+        "USE_SYSTEM_KF6" = "ON";
+        "USE_SYSTEM_QT_KEYCHAIN" = "ON";
+        "FETCHCONTENT_SOURCE_DIR_JKQTMATHTEXT" = "${jkqtmathtext-src}";
+        "CMAKE_INSTALL_PREFIX" = placeholder "out";
+        "CMAKE_INSTALL_DATAROOTDIR" = "share";
+        "CMAKE_INSTALL_BINDIR" = "bin";
+        "CMAKE_INSTALL_LIBDIR" = "lib";
+        "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
+        "AUTO_ENABLE_AUTOSTART" = "OFF";
+        # nix users configure declaratively; keep onboarding on darwin for the permission prompts
+        "ENABLE_ONBOARDING" =
+          if isLinux
+          then "OFF"
+          else "ON";
+        "BUNDLE_SOULVER_CORE" = "OFF";
+      }
+      ++ lib.optionals isDarwin [
+        (lib.cmakeFeature "FETCHCONTENT_SOURCE_DIR_MEDIAREMOTEADAPTER" "${mediaremote-adapter-src}")
+      ];
 
     strictDeps = true;
 
