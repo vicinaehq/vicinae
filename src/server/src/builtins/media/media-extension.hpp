@@ -7,17 +7,13 @@
 #include "command/single-view-command-context.hpp"
 #include "theme/colors.hpp"
 
-#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
 #include "builtins/media/player-app.hpp"
 #include "builtins/media/now-playing-view-host.hpp"
 #include "services/media-control/media-control-service.hpp"
-#endif
 
 namespace {
 
 const QColor MEDIA_COMMAND_TINT = QColor(128, 132, 138);
-
-#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
 
 QString playerQuery(const CommandController &controller) {
   const auto &args = controller.launchProps().arguments;
@@ -185,8 +181,6 @@ class NowPlayingCommand : public BuiltinViewCommand<NowPlayingViewHost> {
   }
 };
 
-#endif
-
 ImageURL volumeIcon(float level) {
   if (level <= 0.0f) return ImageURL{BuiltinIcon::SpeakerOff};
   if (level <= 0.33f) return ImageURL{BuiltinIcon::SpeakerLow};
@@ -335,13 +329,10 @@ class MediaExtension : public BuiltinCommandRepository {
 
 public:
   MediaExtension() {
-    // only MPRIS is implemented for now, other platforms get the dummy backend
-#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
     registerCommand<NowPlayingCommand>();
     registerCommand<PlayPauseCommand>();
     registerCommand<NextTrackCommand>();
     registerCommand<PreviousTrackCommand>();
-#endif
     registerCommand<VolumeUpCommand>();
     registerCommand<VolumeDownCommand>();
     registerCommand<SetVolumeCommand<100, BuiltinIcon::SpeakerHigh>>();

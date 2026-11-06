@@ -1,11 +1,16 @@
 #pragma once
 #include <memory>
 #include <unordered_set>
+#include <utility>
+#include "service-registry.hpp"
+#include "services/audio-control/audio-control-service.hpp"
 #include "services/media-control/abstract-media-control.hpp"
 #ifdef Q_OS_LINUX
 #include "services/media-control/mpris/mpris-media-control.hpp"
 #elif defined(Q_OS_WIN)
 #include "services/media-control/windows/windows-media-control.hpp"
+#elif defined(Q_OS_MACOS)
+#include "services/media-control/macos/mediaremote-media-control.hpp"
 #else
 #include "services/media-control/dummy-media-control.hpp"
 #endif
@@ -14,6 +19,10 @@ class MediaControlService {
 public:
   struct TransientPauseHandle {
     explicit TransientPauseHandle(MediaControlService &service) : m_service(service) {
+      if (!service.available()) {
+        muteOutput();
+        return;
+      }
       for (const auto &player : service.m_backend->players()) {
         if (player.status == PlaybackStatus::Playing) {
           service.m_backend->playPause(player.id);
@@ -22,10 +31,22 @@ public:
       }
     }
 
+    // The moved-from handle must not resume anything when it goes away
+    TransientPauseHandle(TransientPauseHandle &&other) noexcept
+        : paused(std::exchange(other.paused, {})), muted(std::exchange(other.muted, false)),
+          m_service(other.m_service) {}
+    TransientPauseHandle(const TransientPauseHandle &) = delete;
+    TransientPauseHandle &operator=(const TransientPauseHandle &) = delete;
+    TransientPauseHandle &operator=(TransientPauseHandle &&) = delete;
+
     ~TransientPauseHandle() { resume(); }
 
     // resume players immediately, do not wait for destructor to run
     void resume() {
+      if (muted) {
+        ServiceRegistry::instance()->audioControl()->provider()->setMuted(false);
+        muted = false;
+      }
       if (paused.empty()) return;
       for (const auto &player : m_service.m_backend->players()) {
         if (paused.contains(player.id) && player.status != PlaybackStatus::Playing) {
@@ -36,7 +57,14 @@ public:
     }
 
   private:
+    void muteOutput() {
+      auto *audio = ServiceRegistry::instance()->audioControl();
+      if (!audio->available() || audio->provider()->isMuted()) return;
+      muted = audio->provider()->setMuted(true);
+    }
+
     std::unordered_set<QString> paused;
+    bool muted = false;
     MediaControlService &m_service;
   };
 
@@ -47,12 +75,14 @@ public:
     m_backend = std::make_unique<MprisMediaControl>();
 #elifdef Q_OS_WIN
     m_backend = std::make_unique<WindowsMediaControl>();
+#elifdef Q_OS_MACOS
+    m_backend = std::make_unique<MediaRemoteMediaControl>();
 #else
     m_backend = std::make_unique<DummyMediaControl>();
 #endif
   }
 
-  bool available() const { return m_backend->id() != "dummy"; }
+  bool available() const { return m_backend->id() != "dummy" && m_backend->operational(); }
 
   /// Pause all currently playing sources, and resume them when the handle goes out of scope.
   TransientPauseHandle transientPauseAll() { return TransientPauseHandle{*this}; }

@@ -14,6 +14,8 @@
 class AudioControlService {
 public:
   AbstractAudioControl *provider() const { return m_backend.get(); }
+  bool available() const { return m_backend->id() != "dummy"; }
+
   AudioControlService() {
 #ifdef Q_OS_LINUX
     m_backend = std::make_unique<PactlAudioControl>();

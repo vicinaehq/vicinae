@@ -85,6 +85,25 @@ bundle_soulver_core() {
 
 bundle_soulver_core
 
+bundle_mediaremote_adapter() {
+  local fw="$BUILD_DIR/_deps/mediaremoteadapter-build/MediaRemoteAdapter.framework"
+  local script="$BUILD_DIR/_deps/mediaremoteadapter-src/bin/mediaremote-adapter.pl"
+  if [[ ! -d "$fw" || ! -f "$script" ]]; then
+    echo "macdeploy.sh: MediaRemoteAdapter not found under $BUILD_DIR/_deps (build first)" >&2
+    exit 1
+  fi
+
+  echo "==> bundling MediaRemoteAdapter"
+  local dest="$BUNDLE/Contents/Frameworks/MediaRemoteAdapter.framework"
+  mkdir -p "$BUNDLE/Contents/Frameworks"
+  cp -R "$fw" "$BUNDLE/Contents/Frameworks/"
+  rm -rf "$dest/Versions/A/Headers"
+  rm -f "$dest/Headers"
+  cp "$script" "$BUNDLE/Contents/Resources/mediaremote-adapter.pl"
+}
+
+bundle_mediaremote_adapter
+
 echo "==> macdeployqt"
 macdeployqt "$BUNDLE" -qmldir="$SRC_DIR/src/server/src/ui/qml" -verbose=2
 

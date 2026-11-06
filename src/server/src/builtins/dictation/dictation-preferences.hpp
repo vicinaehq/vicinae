@@ -78,8 +78,13 @@ template <> struct PreferenceSchema<DictationPreferences> {
   };
   PreferenceMeta pauseMedia{
       .title = tr("Pause media"),
-      .description = tr("Pause all media players when recording and resume them after"),
-      .available = [] { return ServiceRegistry::instance()->mediaControl()->available(); },
+      .description = tr("Pause media players when recording and resume them after. The audio output is "
+                        "muted instead when players cannot be controlled."),
+      .available =
+          [] {
+            auto *registry = ServiceRegistry::instance();
+            return registry->mediaControl()->available() || registry->audioControl()->available();
+          },
   };
   PreferenceMeta dictationAction{
       .title = tr("Dictation Action"),

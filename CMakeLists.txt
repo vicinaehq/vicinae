@@ -330,6 +330,10 @@ endif()
 
 include(MathText)
 
+if (APPLE)
+	include(MediaRemoteAdapter)
+endif()
+
 if (NOT USE_SYSTEM_CMARK_GFM)
 	include(CMark)
 	setup_vendored_cmark()

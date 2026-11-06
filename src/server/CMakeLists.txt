@@ -902,6 +902,8 @@ endif()
 
 if (APPLE)
 	list(APPEND SRCS
+		src/services/media-control/macos/mediaremote-media-control.hpp
+		src/services/media-control/macos/mediaremote-media-control.mm
 		src/ui/image/mac-file-icon-loader.hpp
 		src/ui/image/mac-file-icon-loader.mm
 		src/ui/image/mac-file-thumbnail-loader.hpp
@@ -1707,6 +1709,22 @@ qt_add_resources(${TARGET} math_licenses
 	PREFIX "/licenses"
 	FILES "${MATHTEXT_SOURCE_DIR}/LICENSE" "${MATHTEXT_SOURCE_DIR}/lib/jkqtmathtext/resources/xits/OFL.txt"
 )
+
+if (APPLE)
+	add_dependencies(${TARGET} MediaRemoteAdapter)
+	FetchContent_GetProperties(mediaremoteadapter SOURCE_DIR MEDIAREMOTE_ADAPTER_SOURCE_DIR)
+	set_source_files_properties("${MEDIAREMOTE_ADAPTER_SOURCE_DIR}/LICENSE" PROPERTIES QT_RESOURCE_ALIAS "MediaRemoteAdapter.txt")
+	qt_add_resources(${TARGET} mediaremote_licenses
+		PREFIX "/licenses"
+		FILES "${MEDIAREMOTE_ADAPTER_SOURCE_DIR}/LICENSE"
+	)
+	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR VICINAE_DEV_MODE)
+		target_compile_definitions(${TARGET} PRIVATE
+			MEDIAREMOTE_ADAPTER_DEV_SCRIPT="${MEDIAREMOTE_ADAPTER_SOURCE_DIR}/bin/mediaremote-adapter.pl"
+			MEDIAREMOTE_ADAPTER_DEV_FRAMEWORK="$<TARGET_BUNDLE_DIR:MediaRemoteAdapter>"
+		)
+	endif()
+endif()
 
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
