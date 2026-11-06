@@ -18,23 +18,29 @@ ViciModal {
     readonly property var filtered: {
         const q = root.query.trim().toLowerCase();
         const sections = [];
-        const items = [];
         for (const source of root._items) {
             if (q.length > 0 && !source.label.toLowerCase().includes(q) && !source.description.toLowerCase().includes(q) && !source.category.toLowerCase().includes(q))
                 continue;
-            const item = Object.assign({
-                index: items.length
-            }, source);
-            items.push(item);
-            let section = sections.find(s => s.category === item.category);
+            let section = sections.find(s => s.category === source.category);
             if (!section) {
                 section = {
-                    category: item.category,
+                    category: source.category,
                     items: []
                 };
                 sections.push(section);
             }
-            section.items.push(item);
+            section.items.push(source);
+        }
+        // Keyboard navigation walks the items as they are displayed, section by section
+        const items = [];
+        for (const section of sections) {
+            section.items = section.items.map(source => {
+                const item = Object.assign({
+                    index: items.length
+                }, source);
+                items.push(item);
+                return item;
+            });
         }
         return {
             sections: sections,
@@ -185,20 +191,20 @@ ViciModal {
                                 id: row
                                 required property var modelData
                                 readonly property bool selected: root.selectedIndex === modelData.index
+                                readonly property bool hovered: rowHover.hovered && HoverActivation.active
                                 Layout.fillWidth: true
                                 Layout.leftMargin: 8
                                 Layout.rightMargin: 8
                                 implicitHeight: 50
                                 radius: 8
-                                color: selected ? Theme.listItemSelectionBg : "transparent"
+                                color: selected ? Theme.listItemSelectionBg : hovered ? Theme.listItemHoverBg : "transparent"
 
                                 onSelectedChanged: if (selected)
                                     list.ensureVisible(row)
 
                                 HoverHandler {
+                                    id: rowHover
                                     cursorShape: Qt.PointingHandCursor
-                                    onHoveredChanged: if (hovered && HoverActivation.active)
-                                        root.selectedIndex = row.modelData.index
                                 }
 
                                 TapHandler {
