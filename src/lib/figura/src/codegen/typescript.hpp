@@ -4,6 +4,7 @@
 #include "codegen.hpp"
 #include <iomanip>
 #include <sstream>
+#include <stdexcept>
 #include <ranges>
 
 namespace {
@@ -193,6 +194,12 @@ export class RpcTransport {
 	dispatchMessage(data: string) {
 		const msg = JSON.parse(data) as JsonRpcMessage;
 
+		// client methods are not implemented by this client
+		if (msg.id !== undefined && msg.method) {
+			this.sendMessage({ jsonrpc: '2.0', id: msg.id, error: `Method not found: ${msg.method}` });
+			return;
+		}
+
 		if (msg.id !== undefined) {
 			const handler = this.requestMap.get(msg.id);
 
@@ -343,6 +350,12 @@ class TypeScriptCodeGenerator : public AbstractCodeGenerator {
   }
 
   std::string generateServer(const Tree &ast, const CodegenOptions &opts) override {
+    for (const auto &s : ast.services) {
+      if (!s->clientMethods.empty())
+        throw std::runtime_error(
+            std::format("{}: client methods are not supported by the typescript server generator", s->name));
+    }
+
     std::ostringstream oss;
 
     oss << commonCode << serverBoilerplate;

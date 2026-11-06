@@ -22,7 +22,12 @@ public:
 
     auto focusTab =
         new StaticAction(tr("Switch to tab"), BuiltinIcon::Switch, [tab](ApplicationContext *ctx) {
-          ctx->services->browserExtension()->focusTab(tab);
+          const auto toast = ctx->services->toastService();
+
+          ctx->services->browserExtension()->focusTab(tab).then(
+              toast, [toast](const std::expected<void, std::string> &result) {
+                if (!result) toast->failure(tr("Failed to switch to tab: %1").arg(result.error().c_str()));
+              });
           ctx->navigation->closeWindow({.clearRootSearch = true});
         });
 
@@ -33,11 +38,13 @@ public:
         ImageURL(BuiltinIcon::ArrowsContract).setBackgroundTint(SemanticColor::Red));
 
     auto closeTab = new StaticAction(tr("Close tab"), BuiltinIcon::Trash, [tab](ApplicationContext *ctx) {
-      if (const auto result = ctx->services->browserExtension()->closeTab(tab); !result) {
-        ctx->services->toastService()->failure(tr("Failed to close tab: %1").arg(result.error().c_str()));
-        return;
-      }
+      const auto toast = ctx->services->toastService();
+
       // Keep window open: root search refreshes via tabsChanged, built-in view reloads on the same signal.
+      ctx->services->browserExtension()->closeTab(tab).then(
+          toast, [toast](const std::expected<void, std::string> &result) {
+            if (!result) toast->failure(tr("Failed to close tab: %1").arg(result.error().c_str()));
+          });
     });
     closeTab->setShortcut(Keybind::RemoveAction);
 

@@ -29,8 +29,10 @@ private:
 
   // Clipboard content helpers
   QString selectPreferredFormat(const QStringList &formats);
-  bool setTextContent(const QString &text);
-  bool setBinaryContent(const QByteArray &data, const QString &mimeType);
+  bool setTextContent(const QString &text, bool concealed);
+  bool setBinaryContent(const QByteArray &data, const QString &mimeType, bool concealed);
+  bool callSetter(const QString &method, const QString &concealedMethod, const QVariantList &args,
+                  bool concealed);
 
 private slots:
   void handleClipboardChanged(const QByteArray &content, const QString &mimeType, const QString &sourceApp);
@@ -48,6 +50,6 @@ public:
   bool isActivatable() const override;
   int activationPriority() const override;
 
-private:
+protected:
   bool writeClipboard(QMimeData *data, const Clipboard::CopyOptions &options) override;
 };

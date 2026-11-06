@@ -14,10 +14,10 @@ template <> struct fuzzy::FuzzySearchable<QString> {
 
 template <typename T> class FuzzySection : public SectionSource {
 public:
-  void setItems(std::vector<T> items) {
+  void setItems(std::vector<T> items, bool notify = true) {
     m_items = std::move(items);
     refilter();
-    notifyItemsRefreshed();
+    if (notify) notifyItemsRefreshed();
   }
 
   void setFilter(std::string_view query) override {

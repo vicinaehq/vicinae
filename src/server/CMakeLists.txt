@@ -333,6 +333,10 @@ set(SRCS
 	src/builtins/browser/browser-bookmarks-model.cpp
 	src/builtins/browser/browser-bookmarks-view-host.hpp
 	src/builtins/browser/browser-bookmarks-view-host.cpp
+	src/builtins/browser/browser-history-model.hpp
+	src/builtins/browser/browser-history-model.cpp
+	src/builtins/browser/browser-history-view-host.hpp
+	src/builtins/browser/browser-history-view-host.cpp
 	src/builtins/vicinae/builtin-icons-model.hpp
 	src/builtins/vicinae/builtin-icons-model.cpp
 	src/builtins/vicinae/builtin-icons-view-host.hpp
@@ -424,6 +428,8 @@ set(SRCS
 
 	src/ipc/ipc-command-server.hpp
 	src/ipc/ipc-command-server.cpp
+	src/ipc/browser-peer.hpp
+	src/ipc/browser-peer.cpp
 	src/ipc/ipc-command-handler.hpp
 	src/ipc/ipc-command-handler.cpp
 
@@ -1251,6 +1257,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/launcher/HorizontalLoadingBar.qml
 	src/ui/qml/views/SearchFilesView.qml
 	src/ui/qml/views/BrowserBookmarksView.qml
+	src/ui/qml/views/BrowserHistoryView.qml
 	src/ui/qml/detail/TextViewer.qml
 	src/ui/qml/detail/FilePreview.qml
 	src/ui/qml/detail/ImagePreview.qml

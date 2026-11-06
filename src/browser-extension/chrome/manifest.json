@@ -9,7 +9,8 @@
     "tabs"
   ],
   "optional_permissions": [
-    "bookmarks"
+    "bookmarks",
+    "history"
   ],
   "background": {
     "service_worker": "background.js"

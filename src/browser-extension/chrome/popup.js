@@ -56,21 +56,22 @@ chrome.runtime.onMessage.addListener((message) => {
   }
 });
 
-const bookmarksToggle = document.getElementById('bookmarksToggle');
-const BOOKMARKS = { permissions: ['bookmarks'] };
-
-function refreshBookmarksToggle() {
-  chrome.permissions.contains(BOOKMARKS, (granted) => {
-    bookmarksToggle.checked = granted;
+function bindPermissionToggle(toggle, permission) {
+  const request = { permissions: [permission] };
+  const refresh = () => chrome.permissions.contains(request, (granted) => {
+    toggle.checked = granted;
   });
+
+  toggle.addEventListener('change', () => {
+    if (toggle.checked) {
+      chrome.permissions.request(request, refresh);
+    } else {
+      chrome.permissions.remove(request, refresh);
+    }
+  });
+
+  refresh();
 }
 
-bookmarksToggle.addEventListener('change', () => {
-  if (bookmarksToggle.checked) {
-    chrome.permissions.request(BOOKMARKS, () => refreshBookmarksToggle());
-  } else {
-    chrome.permissions.remove(BOOKMARKS, () => refreshBookmarksToggle());
-  }
-});
-
-refreshBookmarksToggle();
+bindPermissionToggle(document.getElementById('bookmarksToggle'), 'bookmarks');
+bindPermissionToggle(document.getElementById('historyToggle'), 'history');
