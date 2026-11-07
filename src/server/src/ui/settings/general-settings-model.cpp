@@ -181,6 +181,26 @@ void GeneralSettingsModel::setWindowOpacity(const QString &v) {
     cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{.opacity = val}});
 }
 
+QString GeneralSettingsModel::windowWidth() const { return QString::number(cfg().launcherWindow.size.width); }
+void GeneralSettingsModel::setWindowWidth(const QString &v) {
+  bool ok = false;
+  int val = v.toInt(&ok);
+  if (ok && val > 0)
+    cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
+                                    .size = config::Partial<config::Size>{.width = val}}});
+}
+
+QString GeneralSettingsModel::windowHeight() const {
+  return QString::number(cfg().launcherWindow.size.height);
+}
+void GeneralSettingsModel::setWindowHeight(const QString &v) {
+  bool ok = false;
+  int val = v.toInt(&ok);
+  if (ok && val > 0)
+    cfgManager().mergeWithUser({.launcherWindow = config::Partial<config::WindowConfig>{
+                                    .size = config::Partial<config::Size>{.height = val}}});
+}
+
 bool GeneralSettingsModel::nativeTextRendering() const { return cfg().font.rendering != "qt"; }
 void GeneralSettingsModel::setNativeTextRendering(bool v) {
   cfgManager().mergeWithUser({.font = config::Partial<config::FontConfig>{.rendering = v ? "native" : "qt"}});

@@ -124,6 +124,38 @@ Flickable {
             }
 
             SettingsRow {
+                label: qsTr("Window width")
+                description: qsTr("Width of the launcher window, in pixels.")
+                FormTextInput {
+                    width: parent.width
+                    releaseFocusOnAccept: true
+                    text: root.model.windowWidth
+                    placeholder: qsTr("e.g. 770")
+                    onAccepted: root.model.windowWidth = text
+                    onEditingChanged: {
+                        if (!editing)
+                            root.model.windowWidth = text;
+                    }
+                }
+            }
+
+            SettingsRow {
+                label: qsTr("Window height")
+                description: qsTr("Height of the launcher window, in pixels.")
+                FormTextInput {
+                    width: parent.width
+                    releaseFocusOnAccept: true
+                    text: root.model.windowHeight
+                    placeholder: qsTr("e.g. 480")
+                    onAccepted: root.model.windowHeight = text
+                    onEditingChanged: {
+                        if (!editing)
+                            root.model.windowHeight = text;
+                    }
+                }
+            }
+
+            SettingsRow {
                 label: qsTr("Compact mode")
                 description: qsTr("Show only the search bar at root; expand when a query is entered.")
                 SettingsToggle {

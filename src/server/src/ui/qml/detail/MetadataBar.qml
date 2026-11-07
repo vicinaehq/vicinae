@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Vicinae
 
-/// Displays key-value metadata rows with labels left-aligned and values right-aligned.
+/// Displays key-value metadata rows with a fixed label column and compact values.
 /// Each entry in `model` is an object with a `type` field:
 ///   "label" (default): { label, value, icon?, valueColor? }
 ///   "link":  { label, value, url }
@@ -13,6 +13,7 @@ import Vicinae
 Item {
     id: root
     property var model: []
+    readonly property real labelColumnWidth: 130
     implicitHeight: column.implicitHeight + 20  // 2 * margins
 
     ScrollViewport {
@@ -79,10 +80,9 @@ Item {
                 text: row.host.entry.label || ""
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
-            }
-
-            Item {
-                Layout.fillWidth: true
+                elide: Text.ElideRight
+                Layout.preferredWidth: root.labelColumnWidth
+                Layout.maximumWidth: root.labelColumnWidth
             }
 
             ViciImage {
@@ -97,6 +97,7 @@ Item {
                 color: row.host.entry.valueColor || Theme.foreground
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideMiddle
+                Layout.fillWidth: true
                 Layout.maximumWidth: root.width * 0.65
             }
         }
@@ -113,10 +114,9 @@ Item {
                 text: row.host.entry.label || ""
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
-            }
-
-            Item {
-                Layout.fillWidth: true
+                elide: Text.ElideRight
+                Layout.preferredWidth: root.labelColumnWidth
+                Layout.maximumWidth: root.labelColumnWidth
             }
 
             Text {
@@ -126,6 +126,7 @@ Item {
                 font.pointSize: Theme.smallerFontSize
                 textFormat: Text.RichText
                 elide: Text.ElideMiddle
+                Layout.fillWidth: true
                 Layout.maximumWidth: root.width * 0.65
                 onLinkActivated: function (link) {
                     Qt.openUrlExternally(link);
@@ -152,10 +153,9 @@ Item {
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
                 Layout.alignment: Qt.AlignTop
-            }
-
-            Item {
-                Layout.fillWidth: true
+                elide: Text.ElideRight
+                Layout.preferredWidth: root.labelColumnWidth
+                Layout.maximumWidth: root.labelColumnWidth
             }
 
             Flow {
@@ -167,7 +167,6 @@ Item {
                 }
                 Layout.preferredWidth: naturalWidth
                 Layout.maximumWidth: root.width * 0.65
-                Layout.alignment: Qt.AlignRight
                 spacing: 4
 
                 Repeater {
@@ -217,16 +216,14 @@ Item {
                 text: row.host.entry.label || ""
                 color: Theme.textMuted
                 font.pointSize: Theme.smallerFontSize
-            }
-
-            Item {
-                Layout.fillWidth: true
+                elide: Text.ElideRight
+                Layout.preferredWidth: root.labelColumnWidth
+                Layout.maximumWidth: root.labelColumnWidth
             }
 
             Row {
                 id: iconsRow
                 spacing: 4
-                Layout.alignment: Qt.AlignRight
 
                 readonly property int maxVisible: 6
                 readonly property var icons: row.host.entry.icons || []
