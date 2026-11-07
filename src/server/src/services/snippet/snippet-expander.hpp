@@ -11,6 +11,8 @@
 #include "common/types.hpp"
 #include "utils/placeholder.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/selection/abstract-selection-service.hpp"
+#include "service-registry.hpp"
 
 class SnippetExpander {
 public:
@@ -31,8 +33,10 @@ public:
     bool executeShell = true;
   };
 
-  explicit SnippetExpander(const AppService &appService)
-      : m_appService(&appService), m_uuid(QUuid::createUuid().toString(QUuid::WithoutBraces)) {}
+  explicit SnippetExpander(const AppService *appService = nullptr)
+      : m_appService(appService), m_uuid(QUuid::createUuid().toString(QUuid::WithoutBraces)) {}
+
+  explicit SnippetExpander(const AppService &appService) : SnippetExpander(&appService) {}
 
   QString expandToString(const QString &text,
                          const std::vector<std::pair<QString, QString>> &arguments) const {
@@ -48,7 +52,7 @@ public:
 
   Result expand(const QString &text, const std::vector<std::pair<QString, QString>> &arguments,
                 const Options &opts) const {
-    const auto clip = QGuiApplication::clipboard();
+    auto *clip = QGuiApplication::clipboard();
     const auto parsed = PlaceholderString::parseSnippetText(text);
 
     const auto shellResults =
@@ -59,43 +63,98 @@ public:
     for (const auto &part : parsed.parts()) {
       match(
           part,
-          [&](const PlaceholderString::ParsedPlaceholder placeholder) {
+          [&](const PlaceholderString::ParsedPlaceholder &placeholder) {
             if (placeholder.id == "cursor") {
               result.cursorPos =
                   std::ranges::fold_left(result.parts, 0, [](int n, auto &&s) { return n + s.text.size(); });
-            } else if (placeholder.id == "clipboard") {
-              result.parts.emplace_back(clip->text(), true);
+              return;
+            }
+
+            QString val;
+
+            if (placeholder.id == "clipboard") {
+              if (clip) val = clip->text();
+            } else if (placeholder.id == "selection" || placeholder.id == "selected") {
+              if (auto *reg = ServiceRegistry::instance()) {
+                if (auto selService = reg->selectionService()) {
+                  if (auto selected = selService->selectedTextSync()) { val = *selected; }
+                }
+              }
             } else if (placeholder.id == "uuid") {
-              result.parts.emplace_back(ResultPart(m_uuid, true));
-            } else if (placeholder.id == "date") {
-              auto fmt = QStringLiteral("yyyy-MM-dd hh:mm");
-              if (auto it = placeholder.args.find("format"); it != placeholder.args.end()) fmt = it->second;
-              result.parts.emplace_back(ResultPart(QDateTime::currentDateTime().toString(fmt), true));
+              val = m_uuid;
+            } else if (placeholder.id == "date" || placeholder.id == "datetime" || placeholder.id == "time" ||
+                       placeholder.id == "day") {
+              QDateTime dt = QDateTime::currentDateTime();
+              if (auto it = placeholder.args.find("offset"); it != placeholder.args.end()) {
+                dt = placeholder_utils::applyDateOffsets(dt, it->second);
+              }
+              QString fmt;
+              if (auto it = placeholder.args.find("format"); it != placeholder.args.end()) {
+                fmt = placeholder_utils::normalizeDateFormat(it->second);
+              } else if (placeholder.id == "time") {
+                fmt = QStringLiteral("HH:mm");
+              } else if (placeholder.id == "day") {
+                fmt = QStringLiteral("dddd");
+              } else if (placeholder.id == "datetime") {
+                fmt = QStringLiteral("yyyy-MM-dd HH:mm:ss");
+              } else {
+                fmt = QStringLiteral("yyyy-MM-dd");
+              }
+              val = dt.toString(fmt);
             } else if (placeholder.id == "shell") {
               if (opts.executeShell && shellIdx < static_cast<int>(shellResults.size())) {
-                result.parts.emplace_back(ResultPart(shellResults[shellIdx], true));
+                val = shellResults[shellIdx];
               } else {
                 auto code = placeholder.args.contains("code") ? placeholder.args.at("code") : QString();
-                result.parts.emplace_back(ResultPart(QStringLiteral("$(%1)").arg(code), true));
+                val = QStringLiteral("$(%1)").arg(code);
               }
               ++shellIdx;
             } else if (placeholder.id == "argument") {
+              QString name;
               if (const auto it = placeholder.args.find("name"); it != placeholder.args.end()) {
-                if (const auto it2 = std::ranges::find_if(
-                        arguments, [&](auto &&pair) { return pair.first == it->second; });
-                    it2 != arguments.end()) {
-                  result.parts.emplace_back(it2->second);
-                }
-              } else {
-                qDebug() << "no name!";
+                name = it->second;
+              }
+              if (const auto it2 =
+                      std::ranges::find_if(arguments, [&](auto &&pair) { return pair.first == name; });
+                  it2 != arguments.end() && !it2->second.isEmpty()) {
+                val = it2->second;
+              } else if (auto itDef = placeholder.args.find("default"); itDef != placeholder.args.end()) {
+                val = itDef->second;
               }
             } else {
               if (const auto it2 = std::ranges::find_if(
                       arguments, [&](auto &&pair) { return pair.first == placeholder.id; });
-                  it2 != arguments.end()) {
-                result.parts.emplace_back(it2->second);
+                  it2 != arguments.end() && !it2->second.isEmpty()) {
+                val = it2->second;
+              } else if (auto itDef = placeholder.args.find("default"); itDef != placeholder.args.end()) {
+                val = itDef->second;
               }
             }
+
+            if (val.isEmpty() && placeholder.fallbackId.has_value()) {
+              const auto &fb = *placeholder.fallbackId;
+              if (fb == "clipboard") {
+                if (clip) val = clip->text();
+              } else if (fb == "selection" || fb == "selected") {
+                if (auto *reg = ServiceRegistry::instance()) {
+                  if (auto selService = reg->selectionService()) {
+                    if (auto selected = selService->selectedTextSync()) { val = *selected; }
+                  }
+                }
+              } else if (const auto it2 =
+                             std::ranges::find_if(arguments, [&](auto &&pair) { return pair.first == fb; });
+                         it2 != arguments.end() && !it2->second.isEmpty()) {
+                val = it2->second;
+              } else {
+                val = fb;
+              }
+            }
+
+            for (const auto &mod : placeholder.modifiers) {
+              val = placeholder_utils::applyModifier(val, mod);
+            }
+
+            result.parts.emplace_back(ResultPart(val, true));
           },
           [&](const QString &text) { result.parts.emplace_back(ResultPart(text, false)); });
     }
@@ -106,9 +165,7 @@ public:
 private:
   static constexpr int SHELL_TIMEOUT_MS = 2000;
 
-  // FIXME: maybe we should execute this in a fully asynchronous manner, meaning the expansion itself
-  // should be asynchronous. For most use cases it's fine to block, even if it timeouts it will only lock down
-  // the UI for a brief moment (2s by default).
+  // Shell placeholders run synchronously during expansion (or asynchronously when prefetching)
   std::vector<QString> executeShellPlaceholdersSync(const PlaceholderString &parsed,
                                                     int timeout = SHELL_TIMEOUT_MS) const {
     struct ShellCommand {
@@ -117,7 +174,6 @@ private:
     };
 
     std::vector<ShellCommand> commands;
-
     commands.reserve(4);
 
     for (const auto &part : parsed.parts()) {
@@ -135,7 +191,13 @@ private:
     const auto runCommand = [this, timeout](const ShellCommand &cmd) -> QString {
       std::unique_ptr<QProcess> proc;
       if (cmd.exec.isEmpty()) {
-        proc = m_appService->shellProcess(cmd.code);
+        if (m_appService) {
+          proc = m_appService->shellProcess(cmd.code);
+        } else {
+          proc = std::make_unique<QProcess>();
+          proc->setProgram(QStringLiteral("/bin/sh"));
+          proc->setArguments({QStringLiteral("-c"), cmd.code});
+        }
       } else {
         proc = std::make_unique<QProcess>();
         proc->setProgram(cmd.exec);
@@ -167,7 +229,6 @@ private:
     return results;
   }
 
-  const AppService *m_appService;
-  QString m_uuid; // we generate it once to keep it stable across expansions, useful when presenting in list
-                  // detail
+  const AppService *m_appService = nullptr;
+  QString m_uuid; // we generate it once to keep it stable across expansions
 };

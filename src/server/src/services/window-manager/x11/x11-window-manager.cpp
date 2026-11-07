@@ -527,6 +527,65 @@ bool X11WindowManager::moveToWorkspace(const AbstractWindow &window, const QStri
   return true;
 }
 
+bool X11WindowManager::setWindowBounds(const AbstractWindow &window, const WindowBounds &bounds) const {
+  auto *conn = getConnection();
+  auto root = getRootWindow();
+  if (!conn || root == XCB_WINDOW_NONE) return false;
+
+  const auto &x11_window =
+      static_cast<const X11Window &>(window); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+  xcb_window_t const win = x11_window.windowId();
+
+  // Remove maximized state if set
+  xcb_atom_t const net_wm_state = internAtom("_NET_WM_STATE");
+  xcb_atom_t const net_wm_state_max_v = internAtom("_NET_WM_STATE_MAXIMIZED_VERT");
+  xcb_atom_t const net_wm_state_max_h = internAtom("_NET_WM_STATE_MAXIMIZED_HORZ");
+  if (net_wm_state != XCB_ATOM_NONE && net_wm_state_max_v != XCB_ATOM_NONE &&
+      net_wm_state_max_h != XCB_ATOM_NONE) {
+    xcb_client_message_event_t event;
+    memset(&event, 0, sizeof(event));
+    event.response_type = XCB_CLIENT_MESSAGE;
+    event.window = win;
+    event.format = 32;
+    event.type = net_wm_state;
+    event.data.data32[0] = 0; // _NET_WM_STATE_REMOVE
+    event.data.data32[1] = net_wm_state_max_v;
+    event.data.data32[2] = net_wm_state_max_h;
+    event.data.data32[3] = 2; // normal window
+    xcb_send_event(conn, 0, root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+                   reinterpret_cast<const char *>(&event));
+  }
+
+  // Move and resize window via _NET_MOVERESIZE_WINDOW
+  xcb_atom_t const net_moveresize_window = internAtom("_NET_MOVERESIZE_WINDOW");
+  if (net_moveresize_window != XCB_ATOM_NONE) {
+    xcb_client_message_event_t event;
+    memset(&event, 0, sizeof(event));
+    event.response_type = XCB_CLIENT_MESSAGE;
+    event.window = win;
+    event.format = 32;
+    event.type = net_moveresize_window;
+    event.data.data32[0] = 0xF01; // Gravity NorthWest | x | y | width | height
+    event.data.data32[1] = bounds.x;
+    event.data.data32[2] = bounds.y;
+    event.data.data32[3] = bounds.width;
+    event.data.data32[4] = bounds.height;
+    xcb_send_event(conn, 0, root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+                   reinterpret_cast<const char *>(&event));
+  } else {
+    uint32_t values[4] = {static_cast<uint32_t>(bounds.x), static_cast<uint32_t>(bounds.y),
+                          static_cast<uint32_t>(bounds.width), static_cast<uint32_t>(bounds.height)};
+    xcb_configure_window(conn, win,
+                         XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH |
+                             XCB_CONFIG_WINDOW_HEIGHT,
+                         values);
+  }
+
+  xcb_flush(conn);
+  emit const_cast<X11WindowManager *>(this)->windowsChanged();
+  return true;
+}
+
 bool X11WindowManager::ping() const {
   auto *conn = getConnection();
   if (!conn) { return false; }
