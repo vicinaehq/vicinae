@@ -49,3 +49,7 @@ heaptrack*
 
 # Local translation tooling (stored, not part of translation PRs)
 BACKUP/
+
+.DS_Store
+**/.DS_Store
+aqtinstall.log

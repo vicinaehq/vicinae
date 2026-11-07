@@ -84,21 +84,54 @@ Flickable {
         }
 
         SettingsSectionLabel {
-            text: qsTr("Language")
+            text: qsTr("Language & Input")
             Layout.topMargin: 24
             Layout.bottomMargin: 10
         }
 
         SettingsGroup {
             SettingsRow {
-                label: qsTr("Language")
+                label: qsTr("Interface language")
                 description: qsTr("Requires restarting Vicinae to take effect.")
-                showSeparator: false
+                showSeparator: Platform.supports("inputSourceSwitching")
                 SearchableDropdown {
                     width: parent.width
                     model: root.model.languageModel
                     currentItem: root.model.currentLanguage
                     onActivated: item => root.model.selectLanguage(item.id)
+                }
+            }
+
+            SettingsRow {
+                visible: Platform.supports("inputSourceSwitching")
+                label: qsTr("Switch input source on open")
+                description: qsTr("Automatically switch keyboard input source when opening the launcher.")
+                SettingsToggle {
+                    checked: root.model.switchInputSourceOnOpen
+                    onToggled: checked => root.model.switchInputSourceOnOpen = checked
+                }
+            }
+
+            SettingsRow {
+                visible: Platform.supports("inputSourceSwitching") && root.model.switchInputSourceOnOpen
+                label: qsTr("Target input source")
+                description: qsTr("The keyboard layout to activate when the launcher opens.")
+                SearchableDropdown {
+                    width: parent.width
+                    model: root.model.inputSourceModel
+                    currentItem: root.model.currentInputSource
+                    onActivated: item => root.model.selectInputSource(item.id)
+                }
+            }
+
+            SettingsRow {
+                visible: Platform.supports("inputSourceSwitching") && root.model.switchInputSourceOnOpen
+                label: qsTr("Restore input source on close")
+                description: qsTr("Restore the previous keyboard input source when the launcher closes.")
+                showSeparator: false
+                SettingsToggle {
+                    checked: root.model.restoreInputSourceOnClose
+                    onToggled: checked => root.model.restoreInputSourceOnClose = checked
                 }
             }
         }

@@ -29,6 +29,7 @@ enum class Capability {
   NativePanels,
   WindowMaterial,
   CustomWindowRounding,
+  InputSourceSwitching,
 };
 
 bool supports(Capability cap);

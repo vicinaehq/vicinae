@@ -16,7 +16,7 @@ bool windowsAcrylicSupported();
 
 namespace platform {
 
-static constexpr std::array<std::pair<std::string_view, Capability>, 9> CAPABILITY_NAMES{{
+static constexpr std::array<std::pair<std::string_view, Capability>, 10> CAPABILITY_NAMES{{
     {"layerShell", Capability::LayerShell},
     {"globalShortcuts", Capability::GlobalShortcuts},
     {"inputServer", Capability::InputServer},
@@ -26,6 +26,7 @@ static constexpr std::array<std::pair<std::string_view, Capability>, 9> CAPABILI
     {"nativePanels", Capability::NativePanels},
     {"windowMaterial", Capability::WindowMaterial},
     {"customWindowRounding", Capability::CustomWindowRounding},
+    {"inputSourceSwitching", Capability::InputSourceSwitching},
 }};
 
 bool supports(Capability cap) {
@@ -76,6 +77,12 @@ bool supports(Capability cap) {
     return !windowsAcrylicSupported();
 #else
     return true;
+#endif
+  case Capability::InputSourceSwitching:
+#ifdef Q_OS_MACOS
+    return true;
+#else
+    return false;
 #endif
   }
 
