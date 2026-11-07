@@ -109,6 +109,18 @@ Flickable {
             }
 
             SettingsRow {
+                visible: Style.selectableWindowStyle
+                label: qsTr("Window style")
+                description: qsTr("Choose between the standard window and the Liquid Glass redesign. Requires fully reopening Vicinae to apply.")
+                SearchableDropdown {
+                    width: parent.width
+                    model: root.model.windowStyleModel
+                    currentItem: root.model.currentWindowStyle
+                    onActivated: item => root.model.selectWindowStyle(item.id)
+                }
+            }
+
+            SettingsRow {
                 label: qsTr("Window opacity")
                 FormTextInput {
                     width: parent.width
