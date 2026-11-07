@@ -11,7 +11,7 @@ ScrollViewport {
     required property string text
     property bool monospace: false
     property list<string> highlightTerms
-    property color highlightColor: Qt.alpha(Theme.accent, 0.35)
+    property color highlightColor: Theme.textSelectionBg
 
     onTextChanged: Qt.callLater(scrollToFirstMatch)
     onInitialized: scrollToFirstMatch()
@@ -58,6 +58,7 @@ ScrollViewport {
             readOnly: true
             selectByMouse: true
             selectionColor: Theme.textSelectionBg
+            selectedTextColor: Theme.textSelectionFg
 
             MatchHighlighter {
                 id: matchHighlighter

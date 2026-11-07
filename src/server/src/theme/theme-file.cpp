@@ -80,6 +80,8 @@ ThemeFile ThemeFile::vicinaeDark() {
       {SemanticColor::Accent, QColor("#b8944e")},
       {SemanticColor::AccentForeground, QColor("#0f1014")},
       {SemanticColor::LinkDefault, QColor("#c9a76e")},
+      {SemanticColor::TextSelectionBackground, QColor("#264f78")},
+      {SemanticColor::TextSelectionForeground, QColor("#e7e5e4")},
 
       {SemanticColor::Red, QColor("#B9543B")},
       {SemanticColor::Orange, QColor("#F0883E")},
@@ -110,6 +112,8 @@ ThemeFile ThemeFile::vicinaeLight() {
       {SemanticColor::Accent, QColor("#8a6d35")},
       {SemanticColor::AccentForeground, QColor("#faf8f4")},
       {SemanticColor::LinkDefault, QColor("#7a6132")},
+      {SemanticColor::TextSelectionBackground, QColor("#add6ff")},
+      {SemanticColor::TextSelectionForeground, QColor("#1c1917")},
 
       {SemanticColor::Red, QColor("#b9543b")},
       {SemanticColor::Orange, QColor("#c97a30")},
