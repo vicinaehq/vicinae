@@ -34,6 +34,12 @@ public:
   virtual ~AbstractMediaControl() = default;
   virtual QString id() const = 0;
 
+  /**
+   * Whether players can currently be queried and controlled. A backend that depends on something
+   * external, such as a helper process, reports false while that is missing.
+   */
+  virtual bool operational() const { return true; }
+
   virtual std::vector<MediaPlayer> players() const = 0;
 
   virtual bool playPause(const QString &playerId) = 0;

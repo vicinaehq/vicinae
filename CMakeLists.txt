@@ -55,6 +55,15 @@ option(USE_SYSTEM_KF6 "Use system KDE syntax highlighting library for markdown c
 option(USE_SYSTEM_GLAZE "Use system glaze instead of fetching it. This is a header only library so only required at build time" OFF)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ${USE_SYSTEM_DEFAULT})
 option(USE_SYSTEM_NUMEN "Use system version of the numen calculator backend, instead of fetching it" OFF)
+option(LOCAL_AI "Build local transcription: whisper.cpp, parakeet and the vicinae-inference helper. Dictation with cloud models does not need it." OFF)
+# whisper.cpp and parakeet ship together and share a single ggml, so they are always taken together:
+# either both from the system or both fetched and built in tree.
+set(USE_SYSTEM_INFERENCE_ENGINES AUTO CACHE STRING "Use the system whisper.cpp and parakeet (ON), fetch and build them (OFF), or use the system copies when both are found and fetch otherwise (AUTO)")
+set_property(CACHE USE_SYSTEM_INFERENCE_ENGINES PROPERTY STRINGS AUTO ON OFF)
+set(MIN_WHISPER_VERSION 1.9.2)
+# Passed through to the fetched ggml. CPU inference is fast enough for dictation, so the Vulkan backend
+# (which needs Vulkan headers and glslc) is opt-in. Has no effect with system inference engines.
+option(GGML_VULKAN "Build the fetched ggml with the Vulkan GPU backend (LOCAL_AI only)" OFF)
 
 option(ENABLE_SANITIZERS "Enable ASan + UBSan for debug builds" OFF)
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)
@@ -203,6 +212,28 @@ add_subdirectory(${LIB_DIR}/figura)
 
 set(FIGURA_DIR ${CMAKE_SOURCE_DIR}/figura)
 
+if (NOT LOCAL_AI)
+	set(SYSTEM_INFERENCE_ENGINES OFF)
+elseif (USE_SYSTEM_INFERENCE_ENGINES STREQUAL "AUTO")
+	add_subdirectory(cmake/probes/inference-engines)
+	set(SYSTEM_INFERENCE_ENGINES ${SYSTEM_INFERENCE_ENGINES_FOUND})
+	if (NOT SYSTEM_INFERENCE_ENGINES)
+		message(STATUS "Inference engines: system whisper.cpp/parakeet not found, fetching and building them")
+	endif()
+else()
+	set(SYSTEM_INFERENCE_ENGINES ${USE_SYSTEM_INFERENCE_ENGINES})
+endif()
+
+if (SYSTEM_INFERENCE_ENGINES)
+	# whisper.cpp < 1.9.4 misnames its config-version file, so a versioned find_package() rejects it
+	find_package(whisper REQUIRED)
+	if (WHISPER_VERSION VERSION_LESS MIN_WHISPER_VERSION)
+		message(FATAL_ERROR "System whisper.cpp ${WHISPER_VERSION} is too old, ${MIN_WHISPER_VERSION} or newer is required")
+	endif()
+	find_package(parakeet REQUIRED)
+	message(STATUS "Inference engines: using system whisper.cpp ${WHISPER_VERSION} and parakeet")
+endif()
+
 
 # End of Vicinae build configuration options
 
@@ -300,6 +331,12 @@ if (NOT USE_SYSTEM_LAYER_SHELL)
 	checkout_layer_shell_qt()
 endif()
 
+include(MathText)
+
+if (APPLE)
+	include(MediaRemoteAdapter)
+endif()
+
 if (NOT USE_SYSTEM_CMARK_GFM)
 	include(CMark)
 	setup_vendored_cmark()
@@ -387,6 +424,9 @@ endif()
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
 add_subdirectory(src/cli)
 add_subdirectory(src/server)
+if (LOCAL_AI)
+	add_subdirectory(src/inference)
+endif()
 
 if (UNIX AND NOT APPLE)
 	add_subdirectory(src/data-control-server)

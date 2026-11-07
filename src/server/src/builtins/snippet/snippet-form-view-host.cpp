@@ -51,10 +51,12 @@ void SnippetFormViewHost::initialize() {
     if (snippet.expansion) {
       m_keyword = QString::fromStdString(snippet.expansion->keyword);
       m_expandAsWord = snippet.expansion->word;
+    }
 
-      for (const auto &wmClass : snippet.expansion->apps) {
-        m_apps.append(QString::fromStdString(wmClass));
-      }
+    if (snippet.voicePhrase) m_voicePhrase = QString::fromStdString(*snippet.voicePhrase);
+
+    for (const auto &wmClass : snippet.apps) {
+      m_apps.append(QString::fromStdString(wmClass));
     }
 
     emit formChanged();
@@ -75,6 +77,7 @@ void SnippetFormViewHost::submit() {
   m_nameError.clear();
   m_contentError.clear();
   m_keywordError.clear();
+  m_voicePhraseError.clear();
 
   bool valid = true;
 
@@ -101,6 +104,19 @@ void SnippetFormViewHost::submit() {
     }
   }
 
+  const auto voicePhrase = m_voicePhrase.trimmed().toStdString();
+  if (!voicePhrase.empty()) {
+    const auto *existing = m_service->database()->findByVoicePhrase(voicePhrase);
+    if (snippet::normalizeVoicePhrase(voicePhrase).empty()) {
+      m_voicePhraseError = tr("Must contain a letter or a number");
+      valid = false;
+    } else if (existing &&
+               (m_mode != Mode::Edit || !m_initialSnippet || existing->id != m_initialSnippet->id)) {
+      m_voicePhraseError = tr("Already used by \"%1\"").arg(QString::fromStdString(existing->name));
+      valid = false;
+    }
+  }
+
   emit errorsChanged();
 
   if (!valid) {
@@ -116,12 +132,16 @@ void SnippetFormViewHost::submit() {
     snippet::Expansion expansion;
     expansion.keyword = m_keyword.toStdString();
     expansion.word = m_expandAsWord;
-
-    for (const auto &wmClass : m_apps) {
-      expansion.apps.emplace_back(wmClass.toStdString());
-    }
-
     payload.expansion = expansion;
+  }
+
+  if (!voicePhrase.empty()) payload.voicePhrase = voicePhrase;
+
+  if (payload.expansion || payload.voicePhrase) {
+    payload.apps.reserve(m_apps.size());
+    for (const auto &wmClass : m_apps) {
+      payload.apps.emplace_back(wmClass.toStdString());
+    }
   }
 
   if (m_mode == Mode::Edit && m_initialSnippet) {

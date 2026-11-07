@@ -78,18 +78,17 @@ Item {
 
     readonly property bool _hasCustomDetail: root.host.detailContentUrl !== undefined && root.host.detailContentUrl.toString() !== ""
 
-    // Hosts returning `detailMarkdown` get their detail rendered as markdown instead of plain text.
-    readonly property bool _hasMarkdownDetail: root.host.detailMarkdown !== ""
-
     Component {
         id: detailPanel
 
         DetailPanel {
+            id: panel
             metadata: root.host.detailMetadata
+            hasContent: root._hasCustomDetail || (root.host.detailContent !== undefined && root.host.detailContent !== "")
 
             Loader {
                 anchors.fill: parent
-                sourceComponent: root._hasCustomDetail ? null : (root._hasMarkdownDetail ? markdownContent : defaultTextContent)
+                sourceComponent: root._hasCustomDetail ? null : (panel.hasContent ? (root.host.detailMarkdown ? defaultMarkdownContent : defaultTextContent) : null)
                 source: root._hasCustomDetail ? root.host.detailContentUrl : ""
             }
         }
@@ -103,10 +102,10 @@ Item {
     }
 
     Component {
-        id: markdownContent
+        id: defaultMarkdownContent
         MarkdownText {
-            markdown: root.host.detailMarkdown
-            topPadding: 6
+            markdown: root.host.detailContent
+            contentPadding: 16
         }
     }
 }

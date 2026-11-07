@@ -3,8 +3,10 @@
 #include <common/enumerate.hpp>
 #include <expected>
 #include <format>
+#include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include "local-socket.hpp"
 #include "generated/ipc-client.hpp"
 
@@ -93,6 +95,41 @@ public:
 
   std::expected<ipc::DMenuResponse, std::string> dmenu(ipc::DMenuRequest req) {
     return call<ipc::DMenuResponse>([&](auto cb) { m_client.ipc().dmenu(req, std::move(cb)); });
+  }
+
+  std::expected<ipc::AiListModelsResponse, std::string> aiListModels() {
+    return call<ipc::AiListModelsResponse>([&](auto cb) { m_client.ipc().aiListModels(std::move(cb)); });
+  }
+
+  std::expected<ipc::AiAskResponse, std::string> aiAsk(ipc::AiAskRequest req) {
+    return call<ipc::AiAskResponse>([&](auto cb) { m_client.ipc().aiAsk(req, std::move(cb)); });
+  }
+
+  // Blocks until the completion ends, handing every chunk to onData as it arrives
+  std::expected<void, std::string> streamCompletion(const std::string &completionId,
+                                                    const std::function<void(std::string_view)> &onData) {
+    bool done = false;
+    std::optional<std::string> failure;
+
+    m_client.ipc().onAidata([&](const std::string &id, const std::string &data, const bool &isDone) {
+      if (id != completionId) return;
+      if (!data.empty()) onData(data);
+      if (isDone) done = true;
+    });
+    m_client.ipc().onAifailed([&](const std::string &id, const std::string &error) {
+      if (id != completionId) return;
+      failure = error;
+      done = true;
+    });
+
+    while (!done) {
+      auto data = recv();
+      if (!data) return std::unexpected("Connection to the server was lost");
+      if (auto res = m_client.route(*data); !res) return std::unexpected(res.error());
+    }
+
+    if (failure) return std::unexpected(*failure);
+    return {};
   }
 
 private:

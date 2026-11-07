@@ -211,6 +211,7 @@ QImage renderFileIcon(const QString &path, const QSize &size, const QColor &fg) 
 
 QImage decodeImageData(QIODevice *device, const QSize &size) {
   QImageReader reader(device);
+  reader.setAutoTransform(true);
   if (!reader.canRead()) return {};
 
   if (size.isValid()) {

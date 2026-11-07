@@ -5,6 +5,7 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "builtins/clipboard/clipboard-history-command.hpp"
+#include "builtins/clipboard/clipboard-tools.hpp"
 #include "service-registry.hpp"
 
 class ClipboardClearCommand : public BuiltinCallbackCommand {
@@ -62,6 +63,21 @@ ClipboardExtension::ClipboardExtension() {
   registerCommand<ClipboardHistoryCommand>();
   registerCommand<ClipboardClearCommand>();
   registerCommand<ClearClipboardHistoryCommand>();
+
+  registerTool({.id = "search_history",
+                .title = tr("Search Clipboard History"),
+                .description = tr("Find entries in your clipboard history."),
+                .icon = ImageURL::builtin(BuiltinIcon::CopyClipboard),
+                .create = [] {
+                  return std::make_unique<SearchClipboardTool>(*ServiceRegistry::instance()->clipman());
+                }});
+  registerTool({.id = "read_entry",
+                .title = tr("Read Clipboard Entry"),
+                .description = tr("Read the full text of a clipboard history entry."),
+                .icon = ImageURL::builtin(BuiltinIcon::CopyClipboard),
+                .create = [] {
+                  return std::make_unique<ReadClipboardEntryTool>(*ServiceRegistry::instance()->clipman());
+                }});
 }
 
 void ClipboardExtension::initialized(const ClipboardPreferences &preferences) const {

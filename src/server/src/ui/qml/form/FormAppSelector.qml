@@ -13,6 +13,7 @@ ColumnLayout {
     property bool filled: false
     property bool readOnly: false
     property string placeholder: qsTr("+ Restrict to app…")
+    property string emptyText: qsTr("All applications")
 
     signal changed(var apps)
 
@@ -46,8 +47,8 @@ ColumnLayout {
     }
 
     Text {
-        visible: root.model.length === 0
-        text: qsTr("All applications")
+        visible: root.model.length === 0 && root.emptyText !== ""
+        text: root.emptyText
         color: Theme.textMuted
         font.pointSize: Theme.smallerFontSize
         font.italic: true

@@ -20,8 +20,8 @@ brew install \
   extra-cmake-modules \
   catch2
 
-# keyed on the icns plugin so installs predating the qtimageformats module get upgraded
-if [[ ! -f "$QT_DIR/plugins/imageformats/libqicns.dylib" ]]; then
+# keyed on the newest module we need so older installs get upgraded
+if [[ ! -d "$QT_DIR/lib/QtMultimedia.framework" ]]; then
   echo "==> installing official Qt $QT_VERSION to ~/Qt"
-  pipx run --spec aqtinstall aqt install-qt mac desktop "$QT_VERSION" clang_64 -m qtshadertools qtimageformats -O "$HOME/Qt"
+  pipx run --spec aqtinstall aqt install-qt mac desktop "$QT_VERSION" clang_64 -m qtshadertools qtimageformats qtmultimedia -O "$HOME/Qt"
 fi

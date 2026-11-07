@@ -3,6 +3,10 @@
   <qresource>
   	<file alias="config.jsonc">@EXTRA_PATH@/config.jsonc</file>
   </qresource>
+  <qresource prefix="/sound">
+  	<file alias="dictation-start.wav">@ASSET_PATH@/sound/dictation-start.wav</file>
+  	<file alias="dictation-stop.wav">@ASSET_PATH@/sound/dictation-stop.wav</file>
+  </qresource>
   <qresource prefix="/fonts">
 @DEFAULT_FONT_RESOURCES@  	<file alias="NotoSansMath-Regular.ttf">@ASSET_PATH@/fonts/NotoSansMath-Regular.ttf</file>
   	<file alias="NotoSansSymbols2-Regular.ttf">@ASSET_PATH@/fonts/NotoSansSymbols2-Regular.ttf</file>

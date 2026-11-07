@@ -1,7 +1,9 @@
 {
   cmake,
   cmark-gfm,
+  applyPatches,
   fetchNpmDeps,
+  fetchurl,
   kdePackages,
   lib,
   libqalculate,
@@ -16,9 +18,14 @@
   wayland,
   glaze,
   numen,
+  whisper-cpp,
+  shaderc,
+  vulkan-headers,
+  vulkan-loader,
   pulseaudio ? null,
   swift ? null,
   apple-sdk ? null,
+  withLocalAI ? false,
 }: let
   inherit (stdenv.hostPlatform) isLinux isDarwin;
 
@@ -38,6 +45,64 @@
     extra-cmake-modules = addDarwinPlatform prev.extra-cmake-modules;
   });
   syntax-highlighting = addDarwinPlatform kdeScope.syntax-highlighting;
+
+  # nixpkgs whisper-cpp takes ggml from llama-cpp (for whisper-talk-llama). We only need the
+  # libraries, so build whisper with its bundled ggml instead and drop llama-cpp entirely.
+  whisper =
+    (whisper-cpp.override {
+      withSDL = false;
+      withFFmpegSupport = false;
+    }).overrideAttrs (old: {
+      propagatedBuildInputs = [];
+      nativeBuildInputs = old.nativeBuildInputs ++ lib.optionals isLinux [shaderc];
+      buildInputs = old.buildInputs ++ lib.optionals isLinux [vulkan-headers vulkan-loader];
+      cmakeFlags =
+        (lib.filter (flag: !(lib.hasPrefix "-DWHISPER_USE_SYSTEM_LLAMA" flag || lib.hasPrefix "-DWHISPER_BUILD_EXAMPLES" flag)) old.cmakeFlags)
+        ++ [
+          (lib.cmakeBool "WHISPER_BUILD_EXAMPLES" false)
+          (lib.cmakeBool "WHISPER_BUILD_TESTS" false)
+          # -march=native would make builds non-deterministic
+          (lib.cmakeBool "GGML_NATIVE" false)
+          (lib.cmakeBool "GGML_VULKAN" isLinux)
+        ];
+      postInstall = "";
+      doInstallCheck = false;
+    });
+
+  # Pinned and patched like cmake/MathText.cmake; FetchContent can't download inside the sandbox.
+  jkqtmathtext-src = applyPatches {
+    name = "jkqtmathtext-src";
+    src = fetchurl {
+      url = "https://github.com/jkriege2/JKQtPlotter/archive/d9b6f18eac22f5e9959a5415d7ba0d8780f24585.tar.gz";
+      hash = "sha256-5kcWkywuVulwQby026vnyQRep9YK3cTts47tQ0JShug=";
+    };
+    # Upstream mixes CRLF and LF files. Unlike the `git apply --ignore-whitespace` used by
+    # cmake/MathText.cmake, `patch` rejects our LF patches against CRLF files.
+    prePatch = ''
+      find cmake lib -type f \( -name '*.cmake' -o -name '*.txt' -o -name '*.h' -o -name '*.cpp' \) \
+        -exec sed -i 's/\r$//' {} +
+    '';
+    patches = [
+      ../cmake/patches/jkqtmathtext-implication.patch
+      ../cmake/patches/jkqtmathtext-font-discovery.patch
+      ../cmake/patches/jkqtmathtext-latex-braces.patch
+      ../cmake/patches/jkqtmathtext-no-widgets.patch
+    ];
+  };
+
+  # Pinned like cmake/MediaRemoteAdapter.cmake. Upstream forces a universal build and ad-hoc
+  # signs in a post-build step; nix builds per system and signs during fixup.
+  mediaremote-adapter-src = applyPatches {
+    name = "mediaremote-adapter-src";
+    src = fetchurl {
+      url = "https://github.com/ungive/mediaremote-adapter/archive/0e82bf1c44ec39554fbfc402ec88a48c6ae2a0fd.tar.gz";
+      hash = "sha256-njGxVNx74gekK3uxuhsWG/3uVBoV1pLLocN3QPE7I+I=";
+    };
+    postPatch = ''
+      sed -i '/^set(CMAKE_OSX_ARCHITECTURES/d' CMakeLists.txt
+      sed -i '/^add_custom_command($/,/^$/d' CMakeLists.txt
+    '';
+  };
 
   manifestRaw = builtins.readFile ../manifest.yaml;
   manifestGet = key: let
@@ -63,29 +128,39 @@ in
       hash = "sha256-pEgqFgvdz7Bcc+LznCI+KlD1XEfUuWFWjS24MJ7sx3k=";
     };
 
-    cmakeFlags = lib.mapAttrsToList lib.cmakeFeature {
-      "VICINAE_GIT_TAG" = "v${finalAttrs.version}";
-      "VICINAE_GIT_COMMIT_HASH" = manifestGet "short_rev";
-      "VICINAE_PROVENANCE" = "nix";
-      "INSTALL_NODE_MODULES" = "OFF";
-      "USE_SYSTEM_CMARK_GFM" = "ON";
-      "USE_SYSTEM_GLAZE" = "ON";
-      "USE_SYSTEM_NUMEN" = "ON";
-      "USE_SYSTEM_KF6" = "ON";
-      "USE_SYSTEM_QT_KEYCHAIN" = "ON";
-      "CMAKE_INSTALL_PREFIX" = placeholder "out";
-      "CMAKE_INSTALL_DATAROOTDIR" = "share";
-      "CMAKE_INSTALL_BINDIR" = "bin";
-      "CMAKE_INSTALL_LIBDIR" = "lib";
-      "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
-      "AUTO_ENABLE_AUTOSTART" = "OFF";
-      # nix users configure declaratively; keep onboarding on darwin for the permission prompts
-      "ENABLE_ONBOARDING" =
-        if isLinux
-        then "OFF"
-        else "ON";
-      "BUNDLE_SOULVER_CORE" = "OFF";
-    };
+    cmakeFlags =
+      lib.mapAttrsToList lib.cmakeFeature {
+        "VICINAE_GIT_TAG" = "v${finalAttrs.version}";
+        "VICINAE_GIT_COMMIT_HASH" = manifestGet "short_rev";
+        "VICINAE_PROVENANCE" = "nix";
+        "INSTALL_NODE_MODULES" = "OFF";
+        "USE_SYSTEM_CMARK_GFM" = "ON";
+        "USE_SYSTEM_GLAZE" = "ON";
+        "USE_SYSTEM_NUMEN" = "ON";
+        "LOCAL_AI" =
+          if withLocalAI
+          then "ON"
+          else "OFF";
+        "USE_SYSTEM_INFERENCE_ENGINES" = "ON";
+        "USE_SYSTEM_KF6" = "ON";
+        "USE_SYSTEM_QT_KEYCHAIN" = "ON";
+        "FETCHCONTENT_SOURCE_DIR_JKQTMATHTEXT" = "${jkqtmathtext-src}";
+        "CMAKE_INSTALL_PREFIX" = placeholder "out";
+        "CMAKE_INSTALL_DATAROOTDIR" = "share";
+        "CMAKE_INSTALL_BINDIR" = "bin";
+        "CMAKE_INSTALL_LIBDIR" = "lib";
+        "AUTO_INSTALL_BROWSER_MANIFESTS" = "OFF";
+        "AUTO_ENABLE_AUTOSTART" = "OFF";
+        # nix users configure declaratively; keep onboarding on darwin for the permission prompts
+        "ENABLE_ONBOARDING" =
+          if isLinux
+          then "OFF"
+          else "ON";
+        "BUNDLE_SOULVER_CORE" = "OFF";
+      }
+      ++ lib.optionals isDarwin [
+        (lib.cmakeFeature "FETCHCONTENT_SOURCE_DIR_MEDIAREMOTEADAPTER" "${mediaremote-adapter-src}")
+      ];
 
     strictDeps = true;
 
@@ -112,9 +187,13 @@ in
         qt6.qtbase
         qt6.qtdeclarative
         qt6.qtimageformats
+        qt6.qtmultimedia
         qt6.qtsvg
         glaze
         numen
+      ]
+      ++ lib.optionals withLocalAI [
+        whisper
       ]
       ++ lib.optionals isLinux [
         kdePackages.layer-shell-qt
@@ -144,6 +223,11 @@ in
         install -Dm644 Info.plist "$app/Contents/Info.plist"
         install -Dm644 ../extra/vicinae.icns "$app/Contents/Resources/vicinae.icns"
         cp -r ../extra/themes "$app/Contents/Resources/themes"
+        install -Dm755 ${mediaremote-adapter-src}/bin/mediaremote-adapter.pl "$app/Contents/Resources/mediaremote-adapter.pl"
+        install -d "$app/Contents/Frameworks"
+        cp -R _deps/mediaremoteadapter-build/MediaRemoteAdapter.framework "$app/Contents/Frameworks/"
+        rm -rf "$app/Contents/Frameworks/MediaRemoteAdapter.framework/Versions/A/Headers"
+        rm -f "$app/Contents/Frameworks/MediaRemoteAdapter.framework/Headers"
         rm -f "$out/bin/vicinae"
       ''
       # Generate native host manifests for Firefox and Chromium, so the browser

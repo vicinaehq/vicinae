@@ -285,6 +285,13 @@ bool MacosClipboardServer::writeClipboard(QMimeData *data, const Clipboard::Copy
 
     NSPasteboard *pb = [NSPasteboard generalPasteboard];
     [pb clearContents];
-    return [pb writeObjects:objects] == YES;
+    if ([pb writeObjects:objects] != YES) { return false; }
+
+    // The poll would only drop this write, so confirm it here and skip the next tick for it.
+    if (options.concealed || options.transient) {
+      m_lastChangeCount = currentChangeCount();
+      emit selectionWritten();
+    }
+    return true;
   }
 }

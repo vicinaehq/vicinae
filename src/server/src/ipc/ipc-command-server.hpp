@@ -6,9 +6,14 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 #include "generated/ipc-server.hpp"
 #include "common/qt.hpp"
+
+namespace AI {
+class AbstractChatCompletionStream;
+}
 
 class IpcService : public ipc_gen::AbstractIpc {
 public:
@@ -27,6 +32,8 @@ public:
   ipc_gen::Result<void>::Future browserPermissionsChanged(std::vector<std::string> permissions) override;
   ipc_gen::Result<std::vector<ipc_gen::FileResult>>::Future fsQuery(std::string q,
                                                                     ipc_gen::FsQueryParams params) override;
+  ipc_gen::Result<ipc_gen::AiListModelsResponse>::Future aiListModels() override;
+  ipc_gen::Result<ipc_gen::AiAskResponse>::Future aiAsk(ipc_gen::AiAskRequest req) override;
 
   // set once the client identified itself as a browser extension
   const std::optional<ipc_gen::BrowserInitRequest> &browser() const { return m_browser; }
@@ -34,8 +41,13 @@ public:
 private:
   static constexpr int BROWSER_PROTOCOL_VERSION = 2;
 
+  void releaseCompletion(const std::string &id);
+
   ApplicationContext &m_ctx;
   std::optional<ipc_gen::BrowserInitRequest> m_browser;
+  int m_completionIdx = 0;
+  // Dropped with the connection, which aborts whatever is still streaming
+  std::unordered_map<std::string, std::shared_ptr<AI::AbstractChatCompletionStream>> m_completions;
 };
 
 /**
@@ -63,6 +75,7 @@ private:
   QByteArray m_frame;
   SocketTransport m_transport;
   ipc_gen::RpcTransport m_rpc;
+  // owned by m_server through Qt parenting
   IpcService *m_service;
   ipc_gen::Server m_server;
 };

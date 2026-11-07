@@ -19,8 +19,8 @@ public:
   void beforePop() override;
 
   bool hasDetail() const override { return m_hasDetail; }
-  QString detailContent() const override { return {}; }
-  QString detailMarkdown() const override { return m_detailMarkdown; }
+  QString detailContent() const override { return m_detailMarkdown; }
+  bool detailMarkdown() const override { return true; }
   QVariantList detailMetadata() const override { return m_detailMetadata; }
 
 protected:

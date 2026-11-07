@@ -11,7 +11,7 @@ Item {
     property bool flatAccessories: false
 
     function focusInput() {
-        if (!Launcher.searchInteractive)
+        if (!Launcher.searchInteractive || !Launcher.searchVisible)
             return;
         searchInput.forceActiveFocus();
         searchInput.selectAll();
@@ -313,6 +313,14 @@ Item {
                 Keys.onBacktabPressed: event => {
                     event.accepted = false;
                 }
+                Keys.onTabPressed: event => {
+                    if (Launcher.canAskAI) {
+                        Launcher.handleTab();
+                        event.accepted = true;
+                    } else {
+                        event.accepted = false;
+                    }
+                }
                 Keys.onPressed: event => {
                     if (_handleEmacsEditing(event)) {
                         event.accepted = true;
@@ -346,6 +354,27 @@ Item {
                 Launcher.setCompleterValue(index, value);
             }
             onFocusSearchInput: searchInput.forceActiveFocus()
+        }
+
+        Row {
+            id: tabHint
+            visible: Launcher.canAskAI && !Launcher.hasCompleter
+
+            spacing: 6
+            Layout.alignment: Qt.AlignVCenter
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Ask AI")
+                font.family: Theme.fontFamily
+                font.pointSize: Theme.smallerFontSize
+                color: Theme.textMuted
+            }
+
+            ShortcutBadge {
+                anchors.verticalCenter: parent.verticalCenter
+                tokens: Launcher.askAITokens
+            }
         }
 
         Loader {
@@ -397,7 +426,7 @@ Item {
             root.focusInput();
         }
         function onCompleterChanged() {
-            if (!Launcher.hasCompleter && !searchInput.activeFocus) {
+            if (Launcher.searchVisible && !Launcher.hasCompleter && !searchInput.activeFocus) {
                 searchInput.forceActiveFocus();
             }
         }

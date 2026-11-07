@@ -206,6 +206,29 @@ export type FsQueryParams = {
 	category?: string;
 }
 
+export type AiModel = {
+	id: string;
+	name: string;
+	capabilities: string[];
+}
+
+export type AiListModelsResponse = {
+	models: AiModel[];
+}
+
+export type AiAskRequest = {
+	prompt: string;
+	context?: string;
+	model?: string;
+	system?: string;
+	attachments: string[];
+}
+
+export type AiAskResponse = {
+	completionId: string;
+	model: string;
+}
+
 class IpcService {
 	constructor(private readonly transport: RpcTransport) {}
 
@@ -253,6 +276,20 @@ class IpcService {
 		return this.transport.request("Ipc/fsQuery", { q, params});	
 	}
 
+	aiListModels(): Promise<AiListModelsResponse> {
+		return this.transport.request("Ipc/aiListModels", { });	
+	}
+
+	aiAsk(req: AiAskRequest): Promise<AiAskResponse> {
+		return this.transport.request("Ipc/aiAsk", { req});	
+	}
+
+	aiData(handler: (completionId: string, data: string, done: boolean) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/aiData", (msg) => handler(msg.completionId, msg.data, msg.done))
+	}
+	aiFailed(handler: (completionId: string, error: string) => void): EventSubscription {
+		return this.transport.subscribe("Ipc/aiFailed", (msg) => handler(msg.completionId, msg.error))
+	}
 }
 
 export class Client {

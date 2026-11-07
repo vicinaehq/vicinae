@@ -54,7 +54,7 @@ function ReconciliationTest() {
 								/>
 								<Action
 									title={`Secondary — render #${tick}`}
-									icon={Icon.Clipboard}
+									icon={Icon.CopyClipboard}
 									onAction={() =>
 										showToast(Toast.Style.Success, "Secondary action")
 									}
@@ -76,7 +76,7 @@ function ReconciliationTest() {
 								</ActionPanel.Section>
 								<ActionPanel.Submenu
 									title="Submenu (should survive re-render)"
-									icon={Icon.List}
+									icon={Icon.BulletPoints}
 									shortcut={{ key: "s", modifiers: ["cmd"] }}
 								>
 									<Action
@@ -156,7 +156,7 @@ function DeepSubmenuTest() {
 								/>
 							</ActionPanel.Section>
 						</ActionPanel.Submenu>
-						<ActionPanel.Submenu title="Sibling submenu" icon={Icon.Sidebar}>
+						<ActionPanel.Submenu title="Sibling submenu" icon={Icon.AppWindowSidebarLeft}>
 							<Action
 								title="Sibling action"
 								onAction={() => showToast(Toast.Style.Success, "Sibling")}
@@ -168,7 +168,7 @@ function DeepSubmenuTest() {
 			<List.Item
 				title="Second item (different panel)"
 				subtitle="Switching items should replace the panel"
-				icon={Icon.Document}
+				icon={Icon.BlankDocument}
 				actions={
 					<ActionPanel>
 						<Action
@@ -243,7 +243,7 @@ function DynamicSubmenuTest() {
 						</ActionPanel.Submenu>
 						<ActionPanel.Submenu
 							title="Static submenu (control)"
-							icon={Icon.List}
+							icon={Icon.BulletPoints}
 						>
 							<Action
 								title={`Static A — render #${tick}`}
@@ -390,7 +390,7 @@ function StressTest() {
 							)}
 							<ActionPanel.Submenu
 								title={`Submenu (phase ${phase})`}
-								icon={Icon.List}
+								icon={Icon.BulletPoints}
 							>
 								{actions.map((a) => (
 									<Action

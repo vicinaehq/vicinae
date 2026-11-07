@@ -1,4 +1,6 @@
+#include "services/ai/conversation-store.hpp"
 #include "service-registry.hpp"
+#include "services/dictation/dictation-service.hpp"
 #ifdef Q_OS_LINUX
 #include "services/input-server/linux-input-server.hpp"
 #endif
@@ -39,6 +41,9 @@
 #include "services/paste/paste-service.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
 #include "services/news/news-service.hpp"
+#include "services/ai/ai-service.hpp"
+#include "services/ai/tool-registry.hpp"
+#include "services/local-model-registry/local-model-registry.hpp"
 #include "config/config.hpp"
 
 ServiceRegistry::ServiceRegistry() { s_instance = this; }
@@ -98,6 +103,29 @@ ShortcutInhibitManager *ServiceRegistry::shortcutInhibitManager() const {
 }
 
 TelemetryService *ServiceRegistry::telemetry() const { return m_telemetry.get(); }
+AI::ConversationStore *ServiceRegistry::conversations() const { return m_conversations.get(); }
+
+void ServiceRegistry::setConversations(std::unique_ptr<AI::ConversationStore> store) {
+  m_conversations = std::move(store);
+}
+
+AI::Service *ServiceRegistry::ai() const { return m_ai.get(); }
+AI::ToolRegistry *ServiceRegistry::tools() const { return m_tools.get(); }
+void ServiceRegistry::setTools(std::unique_ptr<AI::ToolRegistry> registry) { m_tools = std::move(registry); }
+
+void ServiceRegistry::setAI(std::unique_ptr<AI::Service> service) { m_ai = std::move(service); }
+
+LocalModelRegistry *ServiceRegistry::localModels() const { return m_localModels.get(); }
+
+void ServiceRegistry::setLocalModels(std::unique_ptr<LocalModelRegistry> registry) {
+  m_localModels = std::move(registry);
+}
+
+DictationService *ServiceRegistry::dictation() const { return m_dictation.get(); }
+
+void ServiceRegistry::setDictation(std::unique_ptr<DictationService> service) {
+  m_dictation = std::move(service);
+}
 
 UpdateService *ServiceRegistry::updateService() const { return m_updateService.get(); }
 

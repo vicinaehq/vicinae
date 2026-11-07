@@ -80,23 +80,30 @@ void ManageSnippetsViewHost::loadDetail(const snippet::SerializedSnippet &snippe
         {QStringLiteral("label"), tr("Keyword")},
         {QStringLiteral("value"), QString::fromStdString(snippet.expansion->keyword)},
     });
+  }
 
-    if (!snippet.expansion->apps.empty()) {
-      const auto *appDb = context()->services->appDb();
-      QVariantList icons;
-      for (const auto &appId : snippet.expansion->apps) {
-        const auto app = appDb->findById(QString::fromStdString(appId));
-        QVariantMap entry;
-        entry[QStringLiteral("icon")] = app ? qml::imageSourceFor(app->iconUrl()) : QString();
-        entry[QStringLiteral("tooltip")] = app ? app->displayName() : QString::fromStdString(appId);
-        icons.append(entry);
-      }
-      meta.append(QVariantMap{
-          {QStringLiteral("type"), QStringLiteral("icons")},
-          {QStringLiteral("label"), tr("Apps")},
-          {QStringLiteral("icons"), icons},
-      });
+  if (snippet.voicePhrase) {
+    meta.append(QVariantMap{
+        {QStringLiteral("label"), tr("Voice phrase")},
+        {QStringLiteral("value"), QString::fromStdString(*snippet.voicePhrase)},
+    });
+  }
+
+  if (!snippet.apps.empty()) {
+    const auto *appDb = context()->services->appDb();
+    QVariantList icons;
+    for (const auto &appId : snippet.apps) {
+      const auto app = appDb->findById(QString::fromStdString(appId));
+      QVariantMap entry;
+      entry[QStringLiteral("icon")] = app ? qml::imageSourceFor(app->iconUrl()) : QString();
+      entry[QStringLiteral("tooltip")] = app ? app->displayName() : QString::fromStdString(appId);
+      icons.append(entry);
     }
+    meta.append(QVariantMap{
+        {QStringLiteral("type"), QStringLiteral("icons")},
+        {QStringLiteral("label"), tr("Apps")},
+        {QStringLiteral("icons"), icons},
+    });
   }
 
   m_detailMetadata = meta;

@@ -15,6 +15,10 @@ on:
         description: "Installer version (x.y.z), defaults to the latest tag"
         type: string
         default: ""
+      local_ai:
+        description: "Build local transcription (slower)"
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       tag:
@@ -61,8 +65,20 @@ jobs:
           host: windows
           target: desktop
           arch: win64_msvc2022_64
-          modules: qtshadertools qtimageformats
+          modules: qtshadertools qtimageformats qtmultimedia
           cache: true
+
+      - name: Install Vulkan SDK
+        if: inputs.tag != '' || inputs.local_ai == true
+        run: |
+          $version = "1.4.363.0"
+          $installer = "$env:RUNNER_TEMP\vulkansdk.exe"
+          Invoke-WebRequest "https://sdk.lunarg.com/sdk/download/$version/windows/vulkansdk-windows-X64-$version.exe" -OutFile $installer
+          Start-Process $installer -ArgumentList "--accept-licenses --default-answer --confirm-command install" -Wait
+          $sdk = "C:\VulkanSDK\$version"
+          if (-not (Test-Path "$sdk\Bin\glslc.exe")) { throw "Vulkan SDK did not install to $sdk" }
+          "VULKAN_SDK=$sdk" >> $env:GITHUB_ENV
+          "$sdk\Bin" >> $env:GITHUB_PATH
 
       - name: Set up sccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -78,6 +94,10 @@ jobs:
             $flags += "-DVICINAE_GIT_COMMIT_HASH=${{ inputs.commit }}"
             $flags += "-DVICINAE_PROVENANCE=inno"
           }
+          if ("${{ inputs.tag }}" -or "${{ inputs.local_ai }}" -eq "true") {
+            $flags += "-DLOCAL_AI=ON"
+            $flags += "-DGGML_VULKAN=ON"
+          }
           cmake --preset windows-ci `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
@@ -85,6 +105,10 @@ jobs:
 
       - name: Build
         run: cmake --build --preset windows-ci
+
+      - name: Check local transcription
+        if: inputs.tag != ''
+        run: if (-not (Test-Path build\bin\vicinae-inference.exe)) { throw "vicinae-inference.exe was not built" }
 
       - name: Sign executables
         if: env.SIGNING == 'true'

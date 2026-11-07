@@ -10,7 +10,7 @@ LauncherWindow {
     }
     statusBarComponent: LauncherStatusBarMacOS {}
     contentEffect: ScrollFadeMacOS {
-        topInset: root.searchBarOverlap
+        topInset: root.headerOverlap
         bottomInset: root.statusBarOverlap
     }
     nativeChrome: true
@@ -37,5 +37,5 @@ LauncherWindow {
     MacOSPanel.enabled: true
     MacOSPanel.windowLevel: Launcher.filePicking ? MacOSPanel.Floating : MacOSPanel.Status
     MacOSPanel.onResignKey: if (!Launcher.filePicking)
-        Launcher.nav.closeWindow()
+        Launcher.nav.closeWindowOnFocusLoss()
 }

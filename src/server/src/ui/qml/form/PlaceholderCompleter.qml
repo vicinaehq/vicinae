@@ -9,6 +9,7 @@ Item {
     property string triggerChar: "{"
     property string text: ""
     property int cursorPosition: 0
+    property Item anchorItem: null
 
     readonly property bool active: completionPopup.visible
 
@@ -59,9 +60,14 @@ Item {
         completionPopup.close();
     }
 
+    function reposition() {
+        completionPopup.reposition();
+    }
+
     CompletionPopup {
         id: completionPopup
         parent: root
+        anchorItem: root.anchorItem ?? root
         nativePanel: true
         focus: false
         x: 0
