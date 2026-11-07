@@ -203,16 +203,40 @@ Flickable {
             Layout.bottomMargin: 14
         }
 
-        Text {
+        Rectangle {
+            id: unencryptedWarning
             visible: !root.model.secretsEncrypted
-            text: qsTr("API keys are stored unencrypted. To protect them, turn on Encrypt sensitive data in the Advanced settings.")
-            color: Theme.textMuted
-            font.pointSize: Theme.smallerFontSize
-            wrapMode: Text.Wrap
             Layout.fillWidth: true
             Layout.leftMargin: column.sideMargin
             Layout.rightMargin: column.sideMargin
             Layout.bottomMargin: 14
+            implicitHeight: warningContent.implicitHeight + 20
+            radius: 8
+            color: Qt.rgba(Theme.toastWarning.r, Theme.toastWarning.g, Theme.toastWarning.b, 0.1)
+            border.color: Qt.rgba(Theme.toastWarning.r, Theme.toastWarning.g, Theme.toastWarning.b, 0.3)
+            border.width: 1
+
+            RowLayout {
+                id: warningContent
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 10
+
+                ViciImage {
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    Layout.alignment: Qt.AlignTop
+                    source: Img.icon(BuiltinIcon.Warning).withFillColor(Theme.toastWarning)
+                }
+
+                Text {
+                    text: qsTr("API keys are stored unencrypted. To protect them, turn on Encrypt sensitive data in the Advanced settings.")
+                    color: Theme.foreground
+                    font.pointSize: Theme.smallerFontSize
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+            }
         }
 
         SettingsGroup {
