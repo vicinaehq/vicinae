@@ -288,7 +288,7 @@ Item {
                     const navigatable = typeof root.commandView.moveLeft === "function";
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
-                        event.accepted = root.commandView.moveLeft();
+                        event.accepted = root.commandView.moveLeft() || Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                         // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
@@ -304,7 +304,7 @@ Item {
                     const navigatable = typeof root.commandView.moveRight === "function";
 
                     if (navigatable && event.modifiers == Qt.NoModifier) {
-                        event.accepted = root.commandView.moveRight();
+                        event.accepted = root.commandView.moveRight() || Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                         // qmllint enable missing-property
                     } else {
                         event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
