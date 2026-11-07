@@ -3,6 +3,7 @@
 #include "ui/bridges/config-bridge.hpp"
 #include "ui/qml-dev-loader.hpp"
 #include "ui/qml-engine-scope.hpp"
+#include "ui/settings/ai-settings-model.hpp"
 #include "ui/settings/extension-settings-model.hpp"
 #include "ui/settings/general-settings-model.hpp"
 #include "ui/image/image-source.hpp"
@@ -43,8 +44,9 @@ void SettingsWindow::ensureInitialized() {
   m_configBridge = new ConfigBridge(ConfigBridge::OpaqueSurfaces, this);
   m_generalModel = new GeneralSettingsModel(this);
   m_keybindModel = new KeybindSettingsModel(this);
-  m_extensionModel = new ExtensionSettingsModel(this);
-  m_sidebarModel = new SettingsSidebarModel(m_extensionModel, this);
+  m_extensionModel = new ExtensionSettingsModel(*m_ctx.services->tools(), this);
+  m_sidebarModel = new SettingsSidebarModel(m_extensionModel, *m_ctx.services->tools(), this);
+  m_aiModel = new AISettingsModel(*m_ctx.services, this);
 
   QmlDevLoader::attach(&m_engine, [this]() { reloadRoot(); });
   QmlEngineScope::set(&m_engine, this);
@@ -57,6 +59,8 @@ void SettingsWindow::loadRoot() {
   m_engine.load(
 #ifdef Q_OS_MACOS
       qml::componentUrl(u"SettingsWindowMacOS")
+#elif defined(Q_OS_WIN)
+      qml::componentUrl(u"SettingsWindowWindows")
 #else
       qml::componentUrl(u"SettingsWindow")
 #endif
@@ -86,30 +90,39 @@ void SettingsWindow::reloadRoot() {
   show();
 }
 
-void SettingsWindow::setCurrentPage(const QString &page) {
-  if (m_currentPage == page) return;
+void SettingsWindow::setCurrentPage(const QString &page) { navigate({.page = page}); }
+
+void SettingsWindow::setCurrentSubpage(const QString &subpage) {
+  navigate({.page = m_route.page, .subpage = subpage});
+}
+
+void SettingsWindow::navigate(const Route &route) {
+  if (m_route == route) return;
   if (!m_navigatingHistory) {
-    m_backStack.append(m_currentPage);
+    m_backStack.append(m_route);
     m_forwardStack.clear();
   }
-  m_currentPage = page;
-  emit currentPageChanged();
+  const bool pageChanged = m_route.page != route.page;
+  const bool subpageChanged = m_route.subpage != route.subpage;
+  m_route = route;
+  if (pageChanged) emit currentPageChanged();
+  if (subpageChanged) emit currentSubpageChanged();
   emit historyChanged();
 }
 
 void SettingsWindow::goBack() {
   if (m_backStack.isEmpty()) return;
-  m_forwardStack.append(m_currentPage);
+  m_forwardStack.append(m_route);
   m_navigatingHistory = true;
-  setCurrentPage(m_backStack.takeLast());
+  navigate(m_backStack.takeLast());
   m_navigatingHistory = false;
 }
 
 void SettingsWindow::goForward() {
   if (m_forwardStack.isEmpty()) return;
-  m_backStack.append(m_currentPage);
+  m_backStack.append(m_route);
   m_navigatingHistory = true;
-  setCurrentPage(m_forwardStack.takeLast());
+  navigate(m_forwardStack.takeLast());
   m_navigatingHistory = false;
 }
 
@@ -169,4 +182,23 @@ void SettingsWindow::selectExtension(const QString &entrypointId) {
   // Page first so the surviving (new) page handles the pending command.
   setCurrentPage(providerId);
   setPendingCommandId(entrypointId);
+}
+
+void SettingsWindow::setPendingToolKey(const QString &key) {
+  if (m_pendingToolKey == key) return;
+  m_pendingToolKey = key;
+  emit pendingToolKeyChanged();
+}
+
+void SettingsWindow::selectTool(const QString &providerId, const QString &toolKey) {
+  ensureInitialized();
+  m_extensionModel->selectProviderById(providerId);
+  setCurrentPage(providerId);
+  setPendingToolKey(toolKey);
+}
+
+void SettingsWindow::openSubpage(const QString &providerId, const QString &subpage) {
+  ensureInitialized();
+  m_extensionModel->selectProviderById(providerId);
+  navigate({.page = providerId, .subpage = subpage});
 }

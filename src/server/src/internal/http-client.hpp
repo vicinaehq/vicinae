@@ -1,21 +1,34 @@
 #pragma once
-#include <algorithm>
+#include <chrono>
+#include "glaze/glaze.hpp"
 #include <expected>
 #include <filesystem>
 #include "common/types.hpp"
+#include "common/json.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/reflect.hpp>
 #include <QFile>
 #include <QNetworkDiskCache>
+#include <glaze/json/prettify.hpp>
+#include <map>
+#include <qbitarray.h>
+#include <qbytearrayview.h>
+#include <qcontainerfwd.h>
 #include <qdir.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
 #include <QPromise>
+#include <QNetworkProxyFactory>
 #include <QNetworkReply>
+#include <qhashfunctions.h>
 #include <qhttpmultipart.h>
+#include <qimage.h>
+#include <qlogging.h>
+#include <qnetworkreply.h>
 #include <qnetworkrequest.h>
 #include <qobject.h>
 #include <qstringview.h>
+#include <qtmetamacros.h>
 #include <utility>
 #include "glaze/json/write.hpp"
 
@@ -23,6 +36,7 @@ namespace http {
 
 inline QNetworkAccessManager *networkManager() {
   static auto *mgr = [] {
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
     auto *m = new QNetworkAccessManager;
     auto *cache = new QNetworkDiskCache(m);
     const QString cacheDir = QString::fromStdString((Omnicast::cacheDir() / "http").string());
@@ -61,15 +75,10 @@ class FormData : public QObject, NonCopyable {
 public:
   explicit FormData() : m_mp(new QHttpMultiPart(QHttpMultiPart::FormDataType, this)) {}
 
-  void addFile(QFile *file, const QString &contentType, const QString &fieldName = "file") {
-    QHttpPart part;
-    part.setHeader(QNetworkRequest::ContentTypeHeader, contentType);
-    part.setHeader(QNetworkRequest::ContentDispositionHeader,
-                   QString("form-data; name=\"%1\"; filename=\"%2\"")
-                       .arg(fieldName)
-                       .arg(file->filesystemFileName().filename().c_str()));
-    part.setBodyDevice(file);
-    file->setParent(m_mp);
+  void addFile(const QByteArray &data, const QString &contentType, const QString &fieldName = "file",
+               const QString &fileName = "file") {
+    auto part = makeFilePart(contentType, fieldName, fileName);
+    part.setBody(data);
     m_mp->append(part);
   }
 
@@ -83,7 +92,90 @@ public:
   QHttpMultiPart *multipart() const { return m_mp; }
 
 private:
+  QHttpPart makeFilePart(const QString &contentType, const QString &fieldName, const QString &fileName) {
+    QHttpPart part;
+    part.setHeader(QNetworkRequest::ContentTypeHeader, contentType);
+    part.setHeader(QNetworkRequest::ContentDispositionHeader,
+                   QString("form-data; name=\"%1\"; filename=\"%2\"").arg(fieldName).arg(fileName));
+    return part;
+  }
+
   QHttpMultiPart *m_mp;
+};
+
+class EventSource : public QObject, NonCopyable {
+  Q_OBJECT
+
+signals:
+  void dataReceived(const QString &event, QByteArrayView data) const;
+  void errorOccurred(const QString &error, const QByteArray &body) const;
+  void finished() const;
+
+public:
+  explicit EventSource(QNetworkReply *reply) : m_reply(reply) {
+    m_buf.reserve(1024);
+    m_reply->setParent(this);
+    connect(reply, &QNetworkReply::readyRead, this, &EventSource::handleRead);
+    connect(reply, &QNetworkReply::finished, this, &EventSource::handleFinished);
+    connect(reply, &QNetworkReply::errorOccurred, this,
+            [this](QNetworkReply::NetworkError) { m_errored = true; });
+  }
+
+  void abort() { m_reply->abort(); }
+
+private:
+  void processLines() {
+    int index = -1;
+    int pos = 0;
+
+    while (pos < m_buf.size()) {
+      index = m_buf.indexOf("\n", pos);
+
+      if (index == -1) break;
+
+      auto line = QByteArrayView{m_buf}.slice(pos, index - pos).trimmed();
+      pos = index + 1;
+
+      if (line.empty()) continue;
+
+      if (line.startsWith("event:")) {
+        event = QString::fromUtf8(line.slice(7));
+      } else if (line.startsWith("data:")) {
+        m_raw.clear();
+        m_streaming = true;
+        emit dataReceived(event, line.slice(6));
+      }
+    }
+
+    m_buf.slice(pos);
+  }
+
+  void handleFinished() {
+    if (m_errored) {
+      m_raw.append(m_reply->readAll());
+      emit errorOccurred(m_reply->errorString(), m_raw);
+    } else {
+      processLines();
+    }
+    emit finished();
+  }
+
+  void handleRead() {
+    if (m_errored) return;
+    const auto chunk = m_reply->readAll();
+    if (!m_streaming && m_raw.size() < MAX_RAW_BYTES) m_raw.append(chunk);
+    m_buf.append(chunk);
+    processLines();
+  }
+
+  static constexpr qsizetype MAX_RAW_BYTES = 64 * 1024;
+
+  bool m_errored = false;
+  bool m_streaming = false;
+  QString event;
+  QByteArray m_buf;
+  QByteArray m_raw;
+  QNetworkReply *m_reply = nullptr;
 };
 
 class Client {
@@ -96,9 +188,18 @@ public:
     return QUrl(m_baseUrl.value() + path);
   }
 
-  void setBearer(QString bearer) { m_bearer = std::move(bearer); }
+  void setBearer(QString bearer) {
+    if (bearer.isEmpty()) {
+      m_bearer.reset();
+    } else {
+      m_bearer = std::move(bearer);
+    }
+  }
   void setBaseUrl(QString url) { m_baseUrl = std::move(url); }
   void setUserAgent(QString agent) { m_userAgent = std::move(agent); }
+  void setHeader(QByteArray name, QByteArray value) {
+    m_headers.insert_or_assign(std::move(name), std::move(value));
+  }
 
   template <glz::has_reflect T> QFuture<Result<T>> get(const QString &url, const RequestOptions &opts = {}) {
     auto req = createRequest(url, opts);
@@ -172,23 +273,44 @@ public:
     std::string payload;
     auto req = createRequest(url);
 
-    if (auto const error = glz::write_json(data, payload)) {
+    if (auto const error = glz::write<JsonWriteOptions{}>(data, payload)) {
       return QtFuture::makeReadyValueFuture<Result<T>>(
-          std::unexpected(std::format("Failed to serialize request: {}", glz::format_error(error))));
+          std::unexpected(std::format("failed to serialize request: {}", glz::format_error(error))));
     }
 
     req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
     qInfo() << "[POST]" << req.url();
 
-    return parseResponse<T>(waitForReply(networkManager()->post(req, payload.c_str())));
+    return parseResponse<T>(waitForReply(networkManager()->post(req, QByteArray::fromStdString(payload))));
+  }
+
+  template <glz::has_reflect U> EventSource *postEventSource(const QString &url, const U &payload) {
+    auto req = createRequest(url);
+    std::string buf;
+    qInfo() << "[POST]" << req.url();
+
+    if (auto const error = glz::write<JsonWriteOptions{}>(payload, buf)) {
+      qWarning() << std::format("failed to serialize request: {}", glz::format_error(error));
+      return nullptr;
+    }
+
+    req.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
+    return new EventSource{networkManager()->post(req, QByteArray::fromStdString(buf))};
   }
 
 private:
+  static constexpr auto STALL_TIMEOUT = std::chrono::minutes(3);
+
   QNetworkRequest createRequest(const QString &path, const RequestOptions &opts = {}) {
     QNetworkRequest req;
 
     req.setUrl(makeUrl(path));
+    // Time without any data, not the total: long downloads and streams are fine as long as they progress.
+    req.setTransferTimeout(STALL_TIMEOUT);
     if (m_bearer) { req.setRawHeader("Authorization", QString("Bearer %1").arg(m_bearer.value()).toUtf8()); }
+    for (const auto &[name, value] : m_headers) {
+      req.setRawHeader(name, value);
+    }
 
     req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, opts.cachePolicy);
     req.setAttribute(QNetworkRequest::Http2AllowedAttribute, opts.allowHttp2);
@@ -235,6 +357,7 @@ private:
   std::optional<QString> m_baseUrl;
   std::optional<QString> m_bearer;
   std::optional<QString> m_userAgent;
+  std::map<QByteArray, QByteArray> m_headers;
 };
 
 } // namespace http

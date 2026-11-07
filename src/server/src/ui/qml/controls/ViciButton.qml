@@ -10,10 +10,13 @@ Rectangle {
     property string accessibleName: ""
     property string variant: "ghost"
     property bool bordered: false
-    property color foreground: root.variant === "accent" ? Theme.listItemSelectionFg : Theme.foreground
+    property color foreground: root.variant === "accent" ? root._onAccent : Theme.foreground
     property real iconSize: 16
     property real horizontalPadding: 12
     property bool showFocus: activeFocus
+    property bool busy: false
+    property int contentAlignment: Qt.AlignHCenter
+    property var shortcutTokens: []
 
     signal clicked
 
@@ -22,7 +25,7 @@ Rectangle {
     Accessible.onPressAction: root.clicked()
 
     readonly property bool hovered: mouseArea.containsMouse
-    readonly property bool _hasIcon: root.iconSource !== undefined
+    readonly property bool _hasIcon: root.busy || root.iconSource !== undefined
     readonly property bool _hasText: root.text !== ""
 
     implicitWidth: root._hasIcon && !root._hasText ? implicitHeight : contentRow.implicitWidth + 2 * root.horizontalPadding
@@ -30,6 +33,7 @@ Rectangle {
     radius: 6
 
     readonly property bool _raised: root.hovered || root.showFocus
+    readonly property color _onAccent: (0.299 * Theme.accent.r + 0.587 * Theme.accent.g + 0.114 * Theme.accent.b) > 0.6 ? "#111111" : "#ffffff"
 
     color: {
         switch (root.variant) {
@@ -52,7 +56,7 @@ Rectangle {
         if (root.showFocus) {
             if (root.variant === "tinted")
                 return Config.withAlpha(root.foreground, 0.6);
-            return Config.withAlpha(root.variant === "accent" ? Theme.listItemSelectionFg : Theme.buttonFocusOutline, Config.windowOpacity);
+            return Config.withAlpha(root.variant === "accent" ? root.foreground : Theme.buttonFocusOutline, Config.windowOpacity);
         }
         if (!root.bordered)
             return "transparent";
@@ -63,11 +67,20 @@ Rectangle {
 
     Row {
         id: contentRow
-        anchors.centerIn: parent
-        spacing: root._hasText && root._hasIcon ? 8 : 0
+        x: root.contentAlignment === Qt.AlignLeft ? root.horizontalPadding : Math.round((root.width - width) / 2)
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: root._hasText && (root._hasIcon || root.shortcutTokens.length > 0) ? 8 : 0
+
+        ViciSpinner {
+            visible: root.busy
+            color: root.foreground
+            width: root.iconSize
+            height: root.iconSize
+            anchors.verticalCenter: parent.verticalCenter
+        }
 
         ViciImage {
-            visible: root._hasIcon
+            visible: root._hasIcon && !root.busy
             source: root.iconSource ?? ""
             width: root.iconSize
             height: root.iconSize
@@ -82,6 +95,14 @@ Rectangle {
             font.pointSize: Theme.regularFontSize
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        ShortcutBadge {
+            visible: root.shortcutTokens.length > 0
+            tokens: root.shortcutTokens
+            contentColor: root.foreground
+            keycapSize: 18
             anchors.verticalCenter: parent.verticalCenter
         }
     }

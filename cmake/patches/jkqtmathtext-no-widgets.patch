@@ -1,0 +1,503 @@
+diff --git a/cmake/jkqtplotter_common_qtsettings.cmake b/cmake/jkqtplotter_common_qtsettings.cmake
+index b58e529..877e593 100644
+--- a/cmake/jkqtplotter_common_qtsettings.cmake
++++ b/cmake/jkqtplotter_common_qtsettings.cmake
+@@ -14,7 +14,7 @@ if(QT_VERSION_MAJOR LESS 5)
+     message(FATAL_ERROR "Minimum supported Qt version is 5, but you are trying to compile against Qt${QT_VERSION_MAJOR}")
+ endif()
+ 
+-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets Svg Xml OpenGL REQUIRED)
++find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Svg Xml OpenGL REQUIRED)
+ if(${QT_VERSION_MAJOR} VERSION_GREATER_EQUAL "6")
+     find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS OpenGLWidgets)
+ endif()
+diff --git a/lib/jkqtcommon/CMakeLists.txt b/lib/jkqtcommon/CMakeLists.txt
+index 4efd608..ca217bf 100644
+--- a/lib/jkqtcommon/CMakeLists.txt
++++ b/lib/jkqtcommon/CMakeLists.txt
+@@ -12,7 +12,7 @@ jkqtplotter_add_library(${lib_name} )
+ jkqtplotter_setDefaultLibOptions(${lib_name} ${libBaseName} "${CMAKE_CURRENT_LIST_DIR}/private/jkqtcommon_precomp.h")
+ 
+ # DEPENDENCIES: Qt
+-target_link_libraries(${lib_name} PUBLIC Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::Widgets)
++target_link_libraries(${lib_name} PUBLIC Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Xml)
+ 
+ # add source files
+ target_sources(${lib_name} PRIVATE
+diff --git a/lib/jkqtcommon/jkqtpbasicimagetools.cpp b/lib/jkqtcommon/jkqtpbasicimagetools.cpp
+index d5a742f..d2aa6e6 100644
+--- a/lib/jkqtcommon/jkqtpbasicimagetools.cpp
++++ b/lib/jkqtcommon/jkqtpbasicimagetools.cpp
+@@ -19,7 +19,6 @@
+ 
+ #include "jkqtcommon/jkqtpbasicimagetools.h"
+ #include <QPainter>
+-#include <QApplication>
+ #include <QDir>
+ #include <QFileInfo>
+ #include <algorithm>
+diff --git a/lib/jkqtcommon/jkqtpdebuggingtools.cpp b/lib/jkqtcommon/jkqtpdebuggingtools.cpp
+index fea9345..29a0c2c 100644
+--- a/lib/jkqtcommon/jkqtpdebuggingtools.cpp
++++ b/lib/jkqtcommon/jkqtpdebuggingtools.cpp
+@@ -20,7 +20,6 @@
+ 
+ #include "jkqtcommon/jkqtpdebuggingtools.h"
+ #include <QDebug>
+-#include <QApplication>
+ #include <QThread>
+ 
+ namespace JKQTPAutoOutputTimer_private {
+diff --git a/lib/jkqtcommon/jkqtpicons.h b/lib/jkqtcommon/jkqtpicons.h
+index 28b8360..51ddefa 100644
+--- a/lib/jkqtcommon/jkqtpicons.h
++++ b/lib/jkqtcommon/jkqtpicons.h
+@@ -26,8 +26,6 @@
+ 
+ #include "jkqtcommon/jkqtcommon_imexport.h"
+ #include <QSettings>
+-#include <QWidget>
+-#include <QSplitter>
+ #include <QIcon>
+ #include "jkqtcommon/jkqtpdrawingtools.h"
+ 
+diff --git a/lib/jkqtcommon/jkqttools.cpp b/lib/jkqtcommon/jkqttools.cpp
+index 90a7864..91f9efb 100644
+--- a/lib/jkqtcommon/jkqttools.cpp
++++ b/lib/jkqtcommon/jkqttools.cpp
+@@ -22,67 +22,12 @@
+ #include "jkqttools.h"
+ 
+ #include <QList>
+-#include <QApplication>
+ #include <QLocale>
+ #include <QtCore>
+-#if (QT_VERSION>QT_VERSION_CHECK(5, 14, 0))
+-#  include <QScreen>
+-#  include <QGuiApplication>
+-#else
+-#  include <QDesktopWidget>
+-#endif
+ #if QT_VERSION>=QT_VERSION_CHECK(6,0,0)
+ #  include <QByteArrayView>
+ #endif
+ 
+-void jksaveWidgetGeometry(QSettings& settings, QWidget* widget, const QString& prefix) {
+-    settings.setValue(prefix+"pos", widget->pos());
+-    settings.setValue(prefix+"size", widget->size());
+-}
+-
+-void jkloadWidgetGeometry(QSettings& settings, QWidget* widget, QPoint defaultPosition, QSize defaultSize, const QString& prefix) {
+-    QPoint pos = settings.value(prefix+"pos", defaultPosition).toPoint();
+-    const QSize size = settings.value(prefix+"size", defaultSize).toSize();
+-#if (QT_VERSION>=QT_VERSION_CHECK(5, 14, 0))
+-    const auto widgeo = widget->screen()->geometry();
+-#else
+-    const auto widgeo = QApplication::desktop()->screenGeometry(widget);
+-#endif
+-    widget->resize(size.boundedTo(widgeo.size()));
+-    if (pos.x()<0 || pos.x()>widgeo.width()) pos.setX(0);
+-    if (pos.y()<0 || pos.y()>widgeo.height()) pos.setY(0);
+-    widget->move(pos);
+-}
+-
+-void jkloadWidgetGeometry(QSettings& settings, QWidget* widget, const QString& prefix) {
+-    jkloadWidgetGeometry(settings, widget, QPoint(10, 10), QSize(100, 100), prefix);
+-}
+-
+-void jksaveSplitter(QSettings& settings, QSplitter* splitter, const QString& prefix) {
+-    /*QList<int> sizes=splitter->sizes();
+-    QString data="";
+-    for (int i=0; i<sizes.size(); i++) {
+-        if (!data.isEmpty()) data=data+",";
+-        data=data+QLocale::system().toString(sizes[i]);
+-    }
+-    settings.setValue(prefix+"splitter_sizes", data);*/
+-    settings.setValue(prefix+"splitter_sizes", splitter->saveState());
+-}
+-
+-void jkloadSplitter(QSettings& settings, QSplitter* splitter, const QString& prefix) {
+-    /*QString data=settings.value(prefix+"splitter_sizes", "").toString();
+-    QList<int> sizes, s1;
+-    QStringList sl=data.split(",");
+-    for (int i=0; i<sl.size(); i++) {
+-        sizes.append(sl[i].toInt());
+-    }
+-    s1=splitter->sizes();
+-    for (int i=0; i<s1.size(); i++) {
+-        if (i<sizes.size()) s1[i]=sizes[i];
+-    }*/
+-    splitter->restoreState(settings.value(prefix+"splitter_sizes").toByteArray());
+-}
+-
+ quint16 jkqtp_checksum(const void *data, size_t len)
+ {
+ #if QT_VERSION>=QT_VERSION_CHECK(6,0,0)
+diff --git a/lib/jkqtcommon/jkqttools.h b/lib/jkqtcommon/jkqttools.h
+index e1d5dbb..84420d8 100644
+--- a/lib/jkqtcommon/jkqttools.h
++++ b/lib/jkqtcommon/jkqttools.h
+@@ -26,67 +26,6 @@
+ 
+ #include "jkqtcommon/jkqtcommon_imexport.h"
+ #include <QSettings>
+-#include <QWidget>
+-#include <QSplitter>
+-
+-/*! \brief store the geometry of a given widget to a QSettings
+-    \ingroup jkqtpjkqtptools_qt
+-
+-    This method stores the widget size and position.
+-
+-    \param settings the QSettings object to write to
+-    \param widget the widget to store
+-    \param prefix this prefix is prepended to the QSettings keys
+-*/
+-JKQTCOMMON_LIB_EXPORT void jksaveWidgetGeometry(QSettings& settings, QWidget* widget, const QString& prefix=QString(""));
+-
+-/*! \brief load the geometry of a given widget to a QSettings
+-    \ingroup jkqtpjkqtptools_qt
+-
+-    This method loads the widget size and position.
+-
+-    \param settings the QSettings object to write to
+-    \param[out] widget the widget to change
+-    \param prefix this prefix is prepended to the QSettings keys
+-*/
+-JKQTCOMMON_LIB_EXPORT void jkloadWidgetGeometry(QSettings& settings, QWidget* widget, const QString& prefix=QString(""));
+-
+-
+-/*! \brief load the geometry of a given widget to a QSettings
+-    \ingroup jkqtpjkqtptools_qt
+-
+-    This method loads the widget size and position.
+-
+-    \param settings the QSettings object to write to
+-    \param[out] widget the widget to change
+-    \param defaultPosition default position of the widget
+-    \param defaultSize default size of the widget
+-    \param prefix this prefix is prepended to the QSettings keys
+-*/
+-JKQTCOMMON_LIB_EXPORT void jkloadWidgetGeometry(QSettings& settings, QWidget* widget, QPoint defaultPosition, QSize defaultSize, const QString& prefix=QString(""));
+-
+-/*! \brief store the geometry of a given widget to a QSettings
+-    \ingroup jkqtpjkqtptools_qt
+-
+-    This method stores the widget size and position.
+-
+-    \param settings the QSettings object to write to
+-    \param widget the widget to store
+-    \param prefix this prefix is prepended to the QSettings keys
+-*/
+-JKQTCOMMON_LIB_EXPORT void jksaveSplitter(QSettings& settings, QSplitter* splitter, const QString& prefix=QString(""));
+-
+-/*! \brief load the geometry of a given widget to a QSettings
+-    \ingroup jkqtpjkqtptools_qt
+-
+-    This method loads the widget size and position.
+-
+-    \param settings the QSettings object to write to
+-    \param[out] plitter the plitter to change
+-    \param prefix this prefix is prepended to the QSettings keys
+-*/
+-JKQTCOMMON_LIB_EXPORT void jkloadSplitter(QSettings& settings, QSplitter* splitter, const QString& prefix=QString(""));
+-
+ 
+ /** \brief convert a <a href="http://doc.qt.io/qt-5/qstring.html">QString</a> (created by jkqtp_MouseButton2String() ) to <a href="http://doc.qt.io/qt-5/qt.html#MouseButton-enum">Qt::MouseButton</a>
+  *  \ingroup jkqtptools_general
+diff --git a/lib/jkqtcommon/private/jkqtcommon_precomp.h b/lib/jkqtcommon/private/jkqtcommon_precomp.h
+index f0abccf..8a574fd 100644
+--- a/lib/jkqtcommon/private/jkqtcommon_precomp.h
++++ b/lib/jkqtcommon/private/jkqtcommon_precomp.h
+@@ -47,11 +47,9 @@
+ #include <QRect>
+ #include <QRectF>
+ #include <QSettings>
+-#include <QSplitter>
+ #include <QString>
+ #include <QStringList>
+ #include <QVector>
+-#include <QWidget>
+ #include <QtGlobal>
+ #include <cfloat>
+ #include <chrono>
+diff --git a/lib/jkqtmathtext/CMakeLists.txt b/lib/jkqtmathtext/CMakeLists.txt
+index 070a080..759574d 100644
+--- a/lib/jkqtmathtext/CMakeLists.txt
++++ b/lib/jkqtmathtext/CMakeLists.txt
+@@ -12,21 +12,19 @@ jkqtplotter_add_library(${lib_name} )
+ jkqtplotter_setDefaultLibOptions(${lib_name} ${libBaseName} "${CMAKE_CURRENT_LIST_DIR}/private/jkqtmathtext_precomp.h")
+ 
+ # DEPENDENCIES: Qt
+-target_link_libraries(${lib_name} PUBLIC Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets)
++target_link_libraries(${lib_name} PUBLIC Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui)
+ target_link_libraries(${lib_name} PUBLIC ${jkqtplotter_namespace}JKQTCommon${jkqtplotter_LIBNAME_VERSION_PART})
+ 
+ # add source files
+ target_sources(${lib_name} PRIVATE
+     jkqtmathtext.cpp
+     jkqtmathtexttools.cpp
+-    jkqtmathtextlabel.cpp
+ )
+ # ... and add headers
+ target_sources(${lib_name} PUBLIC FILE_SET HEADERS TYPE HEADERS
+     FILES
+         jkqtmathtext.h
+         jkqtmathtexttools.h
+-        jkqtmathtextlabel.h
+         jkqtmathtext_imexport.h
+ )
+ 
+diff --git a/lib/jkqtmathtext/jkqtmathtexttools.cpp b/lib/jkqtmathtext/jkqtmathtexttools.cpp
+index efaa7fa..5d4f863 100644
+--- a/lib/jkqtmathtext/jkqtmathtexttools.cpp
++++ b/lib/jkqtmathtext/jkqtmathtexttools.cpp
+@@ -28,7 +28,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ #include <QReadWriteLock>
+ #include <QHashFunctions>
+diff --git a/lib/jkqtmathtext/jkqtmathtexttools.h b/lib/jkqtmathtext/jkqtmathtexttools.h
+index fc58ec2..2142076 100644
+--- a/lib/jkqtmathtext/jkqtmathtexttools.h
++++ b/lib/jkqtmathtext/jkqtmathtexttools.h
+@@ -37,8 +37,6 @@
+ #include <QSet>
+ #include <QFile>
+ #include "jkqtmathtext/jkqtmathtext_imexport.h"
+-#include <QWidget>
+-#include <QLabel>
+ #include <QHash>
+ #include <QPainterPath>
+ #include <QtMath>
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextboxinstructionnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextboxinstructionnode.cpp
+index 01d9889..1776565 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextboxinstructionnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextboxinstructionnode.cpp
+@@ -29,7 +29,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextbracenode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextbracenode.cpp
+index 8984837..f701a9e 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextbracenode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextbracenode.cpp
+@@ -30,7 +30,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ #include <QPainterPath>
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextdecoratednode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextdecoratednode.cpp
+index a39d1a2..28bc3a6 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextdecoratednode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextdecoratednode.cpp
+@@ -30,7 +30,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextfracnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextfracnode.cpp
+index dbdbf0a..804e88e 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextfracnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextfracnode.cpp
+@@ -31,7 +31,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtexthorizontallistnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtexthorizontallistnode.cpp
+index 4b44f4b..6f58421 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtexthorizontallistnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtexthorizontallistnode.cpp
+@@ -33,7 +33,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextinstructionnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextinstructionnode.cpp
+index 428610b..ed01aa9 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextinstructionnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextinstructionnode.cpp
+@@ -29,7 +29,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextmatrixnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextmatrixnode.cpp
+index 9a63dfd..6fdc724 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextmatrixnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextmatrixnode.cpp
+@@ -31,7 +31,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextmodifyenvironmentnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextmodifyenvironmentnode.cpp
+index 3b8c8ae..18d0e1b 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextmodifyenvironmentnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextmodifyenvironmentnode.cpp
+@@ -29,7 +29,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextnode.cpp
+index 27dfd48..20129f6 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextnode.cpp
+@@ -29,7 +29,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextsqrtnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextsqrtnode.cpp
+index 59cdfd3..7e58da4 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextsqrtnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextsqrtnode.cpp
+@@ -30,7 +30,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextsubsupernode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextsubsupernode.cpp
+index c90d917..5cbdae9 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextsubsupernode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextsubsupernode.cpp
+@@ -33,7 +33,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextsymbolnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextsymbolnode.cpp
+index 73c3030..c783282 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextsymbolnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextsymbolnode.cpp
+@@ -30,7 +30,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtexttextnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtexttextnode.cpp
+index 17d4584..8f88a5c 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtexttextnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtexttextnode.cpp
+@@ -31,7 +31,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextverbatimnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextverbatimnode.cpp
+index 00d57a7..d9ef42c 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextverbatimnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextverbatimnode.cpp
+@@ -31,7 +31,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextverticallistnode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextverticallistnode.cpp
+index 28358ac..c2ec07f 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextverticallistnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextverticallistnode.cpp
+@@ -33,7 +33,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/nodes/jkqtmathtextwhitespacenode.cpp b/lib/jkqtmathtext/nodes/jkqtmathtextwhitespacenode.cpp
+index d2b63f2..6d76a2a 100644
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextwhitespacenode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextwhitespacenode.cpp
+@@ -33,7 +33,6 @@
+ #include <QDebug>
+ #include <QFontDatabase>
+ #include <QFontInfo>
+-#include <QApplication>
+ #include <QFont>
+ 
+ 
+diff --git a/lib/jkqtmathtext/private/jkqtmathtext_precomp.h b/lib/jkqtmathtext/private/jkqtmathtext_precomp.h
+index dd560df..a4c3e09 100644
+--- a/lib/jkqtmathtext/private/jkqtmathtext_precomp.h
++++ b/lib/jkqtmathtext/private/jkqtmathtext_precomp.h
+@@ -34,7 +34,6 @@
+ #include "jkqtmathtext/jkqtmathtexttools.h"
+ #include "jkqtmathtext/nodes/jkqtmathtextnode.h"
+ #include "jkqtmathtext/nodes/jkqtmathtextnodetools.h"
+-#include <QApplication>
+ #include <QGuiApplication>
+ #include <QColor>
+ #include <QDebug>
+@@ -48,7 +47,6 @@
+ #include <QHashFunctions>
+ #include <QIcon>
+ #include <QImage>
+-#include <QLabel>
+ #include <QLine>
+ #include <QLineF>
+ #include <QLocale>
+@@ -68,7 +66,6 @@
+ #include <QString>
+ #include <QStringList>
+ #include <QVector>
+-#include <QWidget>
+ #include <QtGlobal>
+ #include <cfloat>
+ #include <chrono>
+@@ -90,7 +87,5 @@
+ #include <vector>
+ 
+ 
+-#include <QWidget>
+-#include <QLabel>
+ 
+ #endif // jkqtmathtext_precomp_h

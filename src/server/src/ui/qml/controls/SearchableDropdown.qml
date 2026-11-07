@@ -19,6 +19,12 @@ Item {
     property bool compact: false
     property bool flat: false
     property real minimumWidth: 0
+    property alias preferredPopupEdge: completionPopup.preferredEdge
+    property alias popupAnchor: completionPopup.anchorItem
+    property string popupSurface: "dropdown"
+    property real popupMinimumWidth: compact ? 200 : 250
+    // Open above the trigger, starting at its left edge, shifting back only to stay within popupAnchor.
+    property bool popupFollowsTrigger: false
     readonly property real preferredWidth: flat ? Math.ceil(triggerButton.implicitWidth) : Math.max(triggerButton.implicitWidth, minimumWidth)
 
     property string placeholder: ""
@@ -43,6 +49,11 @@ Item {
     }
 
     function popupX() {
+        if (popupFollowsTrigger) {
+            const anchorLeft = completionPopup.anchorItem.mapToItem(triggerButton, 0, 0).x;
+            const anchorRight = anchorLeft + completionPopup.anchorItem.width;
+            return Math.max(anchorLeft, Math.min(0, anchorRight - completionPopup.width));
+        }
         return Math.min(0, triggerButton.width - completionPopup.width);
     }
 
@@ -117,17 +128,20 @@ Item {
     CompletionPopup {
         id: completionPopup
         parent: triggerButton
-        popupType: Platform.preferItemPopup("dropdown") ? Popup.Item : Popup.Window
+        popupType: Platform.preferItemPopup(root.popupSurface) ? Popup.Item : Popup.Window
         // On Wayland the compositor places the native popup window from the
         // PopupPlacement anchor; x/y only apply on other platforms.
-        PopupPlacement.alignment: root.compact ? Qt.AlignRight : Qt.AlignLeft
+        PopupPlacement.alignment: (root.compact && !root.popupFollowsTrigger ? Qt.AlignRight : Qt.AlignLeft) | (completionPopup._above ? Qt.AlignTop : Qt.AlignBottom)
         x: root.popupX()
-        width: Math.max(root.compact ? 200 : 250, root.width)
+        width: Math.max(root.popupMinimumWidth, root.width)
         focus: true
         sections: root.items
         model: root.model
         showFilter: true
         currentItemId: root.currentItem ? root.currentItem.id : ""
+
+        // The anchor may have been laid out since the binding last ran.
+        onAboutToShow: x = root.popupX()
 
         onClosed: {
             root._closedTime = Date.now();

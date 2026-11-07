@@ -27,4 +27,6 @@ HudWindow {
 
     onShown: reposition()
     onWidthChanged: reposition()
+    onHeightChanged: reposition()
+    onBottomMarginChanged: reposition()
 }

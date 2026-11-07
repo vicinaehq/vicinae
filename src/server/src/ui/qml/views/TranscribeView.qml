@@ -1,0 +1,48 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import Vicinae
+
+Item {
+    id: root
+    required property TranscribeViewHost host
+
+    Column {
+        anchors.centerIn: parent
+        spacing: 16
+        width: Math.min(parent.width - 48, 280)
+
+        AudioLevelMeter {
+            width: parent.width
+            height: 6
+            level: root.host.audioLevel
+            visible: !root.host.busy
+        }
+
+        PulsingDots {
+            anchors.horizontalCenter: parent.horizontalCenter
+            active: root.host.busy
+            visible: root.host.busy
+        }
+
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: !root.host.busy
+            text: root.host.elapsedTime
+            color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.5)
+            font.family: Theme.fontFamily
+            font.pointSize: Theme.regularFontSize
+        }
+
+        Text {
+            visible: root.host.errorMessage.length > 0
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: root.host.errorMessage
+            color: Qt.rgba(1, 0.3, 0.3, 0.9)
+            font.family: Theme.fontFamily
+            font.pointSize: Theme.smallerFontSize
+            wrapMode: Text.Wrap
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+        }
+    }
+}

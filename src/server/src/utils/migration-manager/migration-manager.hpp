@@ -36,6 +36,8 @@ class MigrationManager {
   void executeMigration(const Migration &migration);
   QString computeContentHash(const QString &content);
   void insertMigration(const Migration &migration);
+  bool foreignKeysEnabled() const;
+  std::size_t foreignKeyViolations() const;
 
 public:
   std::vector<Migration> loadMigrations();

@@ -7,10 +7,9 @@ Item {
     id: root
 
     property var blockData: ({})
-    property var mdModel: null
-    property int blockIndex: -1
-    property var selectionController: null
     property string fontFamily: ""
+    property real fontSize: Theme.regularFontSize
+    property real lineHeight: 1.0
 
     readonly property var paragraphs: blockData.paragraphs ?? []
 
@@ -37,30 +36,24 @@ Item {
             Repeater {
                 model: root.paragraphs
 
-                TextEdit {
+                DocumentText {
                     id: bqText
                     Layout.fillWidth: true
-                    readOnly: true
-                    selectionColor: Theme.textSelectionBg
-                    selectedTextColor: Theme.textSelectionFg
                     textFormat: TextEdit.RichText
                     wrapMode: TextEdit.Wrap
                     color: Theme.textMuted
-                    font.pointSize: Theme.regularFontSize
+                    fontSize: root.fontSize
+                    lineHeight: root.lineHeight
                     font.italic: true
                     Binding on font.family {
                         value: root.fontFamily
                         when: root.fontFamily !== ""
                     }
                     text: modelData ?? ""
+                    selectionPart: index
 
                     required property var modelData
                     required property int index
-
-                    Component.onCompleted: if (root.selectionController)
-                        root.selectionController.registerSelectable(bqText, root.blockIndex * 10000 + index, true)
-                    Component.onDestruction: if (root.selectionController)
-                        root.selectionController.unregisterSelectable(bqText)
                 }
             }
         }

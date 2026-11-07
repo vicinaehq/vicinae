@@ -1,5 +1,6 @@
 #pragma once
 #include <QObject>
+#include <memory>
 
 struct QObjectDeleter {
   void operator()(QObject *obj) { obj->deleteLater(); }

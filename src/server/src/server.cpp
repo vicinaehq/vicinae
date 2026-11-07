@@ -1,6 +1,12 @@
+#include "services/ai/conversation-store.hpp"
 #include "config/config.hpp"
 #include "environment.hpp"
 #include <QStyleHints>
+#include "services/local-model-registry/local-model-registry.hpp"
+#include "services/dictation/dictation-service.hpp"
+#ifdef LOCAL_AI
+#include "services/ai/local/local-provider.hpp"
+#endif
 #include "extension/extension.hpp"
 #include "root-search/browser-tabs/browser-tabs-provider.hpp"
 #include "root-search/scripts/script-root-provider.hpp"
@@ -37,6 +43,7 @@
 #include "service-registry.hpp"
 #include "services/window-material/window-material-manager.hpp"
 #include "ui/quick/window-material-attached.hpp"
+#include "services/ai/ai-provider.hpp"
 #include "services/shortcut-inhibit/shortcut-inhibit-manager.hpp"
 #include "ui/quick/shortcut-inhibitor-attached.hpp"
 #include "services/file-chooser/file-chooser-service.hpp"
@@ -52,6 +59,7 @@
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
+#include "services/ai/ollama/ollama-ai-provider.hpp"
 #include "services/power-manager/power-manager.hpp"
 #include "services/tray-host/tray-host.hpp"
 #include "services/raycast/raycast-store.hpp"
@@ -103,7 +111,10 @@
 #include "services/paste/windows-paste-service.hpp"
 #include "services/selection/windows-selection-service.hpp"
 #endif
+#include "services/ai/ai-service.hpp"
+#include "services/ai/tool-registry.hpp"
 #include "ui/settings/settings-controller.hpp"
+#include "ui/windows/chat-window-controller.hpp"
 #include "services/tray/tray-service.hpp"
 #include "ui/windows/launcher-window.hpp"
 #include "ui/windows/onboarding-window.hpp"
@@ -226,6 +237,11 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 #ifdef Q_OS_MACOS
   if (!qEnvironmentVariableIsSet("QT_MAC_SET_RAISE_PROCESS")) qputenv("QT_MAC_SET_RAISE_PROCESS", "0");
 #endif
+#ifdef Q_OS_LINUX
+  // Qt's native PipeWire backend (6.10+) deadlocks on first device enumeration; PipeWire serves
+  // PulseAudio clients natively so nothing is lost.
+  if (!qEnvironmentVariableIsSet("QT_AUDIO_BACKEND")) qputenv("QT_AUDIO_BACKEND", "pulseaudio");
+#endif
 
   int argc = 1;
   static char *argv[] = {strdup("command"), nullptr};
@@ -268,6 +284,16 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     auto currentConfig = configService->value();
 
     installTranslators(currentConfig.language);
+
+#ifdef Q_OS_UNIX
+    // API keys, chats and dictations live in there, and aren't encrypted unless the user asked for it.
+    std::error_code permissionsError;
+    std::filesystem::create_directories(Omnicast::dataDir(), permissionsError);
+    std::filesystem::permissions(Omnicast::dataDir(), std::filesystem::perms::owner_all,
+                                 std::filesystem::perm_options::replace, permissionsError);
+    if (permissionsError)
+      qWarning() << "Failed to restrict the data directory:" << permissionsError.message();
+#endif
 
     const auto vicinaeDbPath = Omnicast::dataDir() / "vicinae.db";
     const auto clipboardDbPath = Omnicast::dataDir() / "clipboard.db";
@@ -370,7 +396,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setTrayHost(createTrayHost(currentConfig.tray.watcherEnabled));
     registry->setGlobalShortcuts(std::move(globalShortcutService));
     registry->setAudioControl(std::make_unique<AudioControlService>());
-    registry->setMediaControl(std::make_unique<MediaControlService>());
+    registry->setMediaControl(std::make_unique<MediaControlService>(*registry->audioControl()));
     registry->setScriptDb(std::make_unique<ScriptCommandService>());
     registry->setBrowserExtension(std::make_unique<BrowserExtensionService>());
     registry->setWindowMaterialManager(std::make_unique<WindowMaterialManager>());
@@ -391,6 +417,24 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     registry->setUpdateService(
         std::make_unique<UpdateService>(*registry->toastService(), std::move(updateInstaller)));
     registry->setWallpaperManager(std::make_unique<WallpaperManager>());
+    auto ai = std::make_unique<AI::Service>(*registry->localStorage());
+#ifdef LOCAL_AI
+    auto localModels = std::make_unique<LocalModelRegistry>();
+    ai->addProvider(std::make_unique<AI::LocalProvider>(*localModels));
+    registry->setLocalModels(std::move(localModels));
+#endif
+    registry->setDictation(
+        std::make_unique<DictationService>(Omnicast::dataDir(), *ai, *registry->mediaControl(), *registry));
+    registry->setAI(std::move(ai));
+    registry->setConversations(
+        std::make_unique<AI::ConversationStore>(Omnicast::dataDir() / "conversations"));
+    QObject::connect(registry->conversations(), &AI::ConversationStore::errorOccurred,
+                     registry->toastService(), [toast = registry->toastService()](const QString &error) {
+                       qWarning() << "Conversation storage:" << error;
+                       toast->failure(
+                           QCoreApplication::translate("ConversationStore", "Could not save conversation."));
+                     });
+    registry->setTools(std::make_unique<AI::ToolRegistry>(*registry->config(), *registry->rootItemManager()));
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>(*registry);
@@ -468,6 +512,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
   ctx.overlay = std::make_unique<OverlayController>(&ctx);
   ctx.settings = std::make_unique<SettingsController>(ctx);
   ctx.services = ServiceRegistry::instance();
+  ctx.chat = std::make_unique<ChatWindowController>(ctx);
 
   IpcCommandServer commandServer(&ctx);
 

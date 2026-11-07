@@ -36,6 +36,9 @@ Window {
     readonly property var topbarIconSource: root.isExtensionPage ? root.extModel.selectedIconSource : ""
 
     property bool nativeChrome: false
+    property real titlebarRightInset: 0
+    property real headerHeight: 44
+    readonly property list<Item> titlebarControls: [sidebar, headerAccessoryLoader, provenanceIcon, headerToggle]
     property Component headerAccessory: Component {
         SettingsNavButtons {}
     }
@@ -64,8 +67,22 @@ Window {
         id: background
         anchors.fill: parent
         Keys.onEscapePressed: Settings.close()
-        color: root.nativeChrome ? "transparent" : Theme.background
+        color: root.nativeChrome || root.titlebarRightInset > 0 ? "transparent" : Theme.background
         clip: true
+
+        Rectangle {
+            visible: root.titlebarRightInset > 0
+            anchors.fill: parent
+            anchors.topMargin: contentHeader.height
+            color: Theme.background
+        }
+
+        Rectangle {
+            visible: root.titlebarRightInset > 0
+            width: parent.width - root.titlebarRightInset
+            height: contentHeader.height
+            color: Theme.background
+        }
 
         Item {
             visible: root.nativeChrome
@@ -123,6 +140,7 @@ Window {
                 Layout.preferredWidth: root.paneInset + root.sidebarWidth
 
                 SettingsSidebar {
+                    id: sidebar
                     anchors.fill: parent
                     anchors.leftMargin: root.paneLeftInset
                     anchors.topMargin: root.paneInset
@@ -148,25 +166,27 @@ Window {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    height: 44
+                    height: root.headerHeight
 
                     ShaderEffectSource {
                         id: headerBackdrop
                         visible: false
                         live: true
-                        width: contentHeader.width
+                        width: contentHeader.width - root.titlebarRightInset
                         height: contentHeader.height
                         sourceItem: pageLoader
-                        sourceRect: Qt.rect(0, 0, contentHeader.width, contentHeader.height)
+                        sourceRect: Qt.rect(0, 0, width, height)
                     }
 
                     Rectangle {
                         anchors.fill: parent
+                        anchors.rightMargin: root.titlebarRightInset
                         color: Theme.background
                     }
 
                     MultiEffect {
                         anchors.fill: parent
+                        anchors.rightMargin: root.titlebarRightInset
                         source: headerBackdrop
                         blurEnabled: true
                         blur: 1.0
@@ -175,6 +195,7 @@ Window {
 
                     Rectangle {
                         anchors.fill: parent
+                        anchors.rightMargin: root.titlebarRightInset
                         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.4)
                     }
 
@@ -188,7 +209,7 @@ Window {
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: Math.max(16, (contentHeader.width - 720) / 2)
-                        anchors.rightMargin: Math.max(16, (contentHeader.width - 720) / 2)
+                        anchors.rightMargin: Math.max(16, (contentHeader.width - 720) / 2) + root.titlebarRightInset
                         anchors.topMargin: root.nativeChrome ? 9 : 0
                         opacity: !root.nativeChrome || root.active ? 1 : 0.55
                         Behavior on opacity {
@@ -199,6 +220,7 @@ Window {
                         spacing: 12
 
                         Loader {
+                            id: headerAccessoryLoader
                             active: root.headerAccessory !== null
                             visible: active
                             sourceComponent: root.headerAccessory
@@ -283,26 +305,33 @@ Window {
                     }
                 }
 
-                Loader {
-                    id: pageLoader
+                Item {
                     anchors.fill: parent
+                    anchors.topMargin: root.titlebarRightInset > 0 ? root.headerHeight : 0
+                    clip: root.titlebarRightInset > 0
 
-                    Component.onCompleted: _loadPage(Settings.currentPage)
+                    Loader {
+                        id: pageLoader
+                        anchors.fill: parent
+                        anchors.topMargin: -parent.anchors.topMargin
 
-                    function _loadPage(page) {
-                        active = false;
-                        const meta = root.corePages[page] ?? null;
-                        if (!meta)
-                            Settings.extensionModel.selectProviderById(page);
-                        sourceComponent = meta ? meta.page : extensionPage;
-                        active = true;
-                    }
+                        Component.onCompleted: _loadPage(Settings.currentPage)
 
-                    Connections {
-                        target: Settings
-                        function onCurrentPageChanged() {
-                            HoverActivation.reset();
-                            pageLoader._loadPage(Settings.currentPage);
+                        function _loadPage(page) {
+                            active = false;
+                            const meta = root.corePages[page] ?? null;
+                            if (!meta)
+                                Settings.extensionModel.selectProviderById(page);
+                            sourceComponent = meta ? meta.page : extensionPage;
+                            active = true;
+                        }
+
+                        Connections {
+                            target: Settings
+                            function onCurrentPageChanged() {
+                                HoverActivation.reset();
+                                pageLoader._loadPage(Settings.currentPage);
+                            }
                         }
                     }
                 }

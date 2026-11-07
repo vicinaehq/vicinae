@@ -6,6 +6,7 @@ import Vicinae
 Item {
     id: root
 
+    readonly property alias inputItem: edit
     property alias text: edit.text
     property alias cursorPosition: edit.cursorPosition
     property alias font: edit.font
@@ -13,6 +14,7 @@ Item {
     property string placeholder: ""
     property bool readOnly: false
     property bool multiline: false
+    property bool submitOnReturn: false
     property string accessibleLabel: ""
     property DocumentHighlighter highlighter: null
 
@@ -29,7 +31,7 @@ Item {
 
     signal textEdited
     signal accepted
-    signal escaped
+    signal escaped(var event)
 
     implicitHeight: edit.contentHeight
 
@@ -43,10 +45,14 @@ Item {
         edit.selectAll();
     }
 
-    function _accept() {
+    function _repositionCompleter() {
+        root._completer?.reposition();
+    }
+
+    function _accept(modifiers) {
         if (root._completing)
             root._completer.accept();
-        else if (root.multiline)
+        else if (root.multiline && (!root.submitOnReturn || (modifiers & Qt.ShiftModifier)))
             edit.insert(edit.cursorPosition, "\n");
         else
             root.accepted();
@@ -93,6 +99,14 @@ Item {
             readOnly: root.readOnly
             activeFocusOnTab: false
 
+            Item {
+                id: cursorAnchor
+                x: edit.cursorRectangle.x
+                y: edit.cursorRectangle.y
+                width: 1
+                height: edit.cursorRectangle.height
+            }
+
             Text {
                 anchors.top: parent.top
                 width: parent.width
@@ -125,6 +139,7 @@ Item {
                     flickable.contentY = rect.y;
                 else if (rect.y + rect.height > flickable.contentY + flickable.height)
                     flickable.contentY = rect.y + rect.height - flickable.height;
+                Qt.callLater(root._repositionCompleter);
             }
 
             Keys.priority: Keys.BeforeItem
@@ -139,11 +154,11 @@ Item {
             }
             Keys.onReturnPressed: event => {
                 event.accepted = true;
-                root._accept();
+                root._accept(event.modifiers);
             }
             Keys.onEnterPressed: event => {
                 event.accepted = true;
-                root._accept();
+                root._accept(event.modifiers);
             }
             Keys.onUpPressed: event => {
                 event.accepted = root._completing;
@@ -160,7 +175,7 @@ Item {
                     event.accepted = true;
                     root._completer.dismiss();
                 } else {
-                    root.escaped();
+                    root.escaped(event);
                 }
             }
         }
@@ -176,6 +191,7 @@ Item {
             triggerChar: root.triggerChar
             text: edit.text
             cursorPosition: edit.cursorPosition
+            anchorItem: cursorAnchor
             onCompletionAccepted: (start, end, replacement, newCursorPos) => {
                 root._suppressTextChanged = true;
                 TextDocumentEdit.replace(edit.textDocument, start, end, replacement);

@@ -281,7 +281,14 @@ bool RootItemManager::setProviderPreferenceValues(const QString &id, const Prefe
     }
   }
 
-  m_cfg.mergeProviderWithUser(id.toStdString(), {.preferences = std::move(filtered)});
+  // A merge would keep entries removed from object values, so each preference is replaced as a whole.
+  m_cfg.updateUser([&](config::PartialValue &v) {
+    if (!v.providers) v.providers.emplace();
+    auto &stored = (*v.providers)[id.toStdString()];
+    if (!stored.preferences) stored.preferences.emplace();
+    for (auto &[key, value] : filtered)
+      (*stored.preferences)[key] = std::move(value);
+  });
   syncProviderPreferences(*provider);
 
   return true;
