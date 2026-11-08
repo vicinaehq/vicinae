@@ -98,7 +98,6 @@ Item {
                 font.pointSize: Theme.smallerFontSize
                 elide: Text.ElideMiddle
                 Layout.fillWidth: true
-                Layout.maximumWidth: root.width * 0.65
             }
         }
     }
@@ -127,7 +126,6 @@ Item {
                 textFormat: Text.RichText
                 elide: Text.ElideMiddle
                 Layout.fillWidth: true
-                Layout.maximumWidth: root.width * 0.65
                 onLinkActivated: function (link) {
                     Qt.openUrlExternally(link);
                 }
