@@ -42,12 +42,13 @@ struct OpenAICompatibleFields {
   std::string apiKey;
 };
 
-struct ClaudeCodeFields {
-  std::string executable;
+struct AgentFields {
+  std::string command;
 };
 
-struct CodexFields {
-  std::string executable;
+struct CustomAgentFields {
+  std::string name;
+  std::string command;
 };
 
 struct LlamaCppFields {
@@ -74,7 +75,7 @@ struct LocalFields {
   Device device = Device::Gpu;
 };
 
-enum class Category : std::uint8_t { Builtin, Cloud, SelfHosted, Cli };
+enum class Category : std::uint8_t { Builtin, Cloud, SelfHosted, Agent };
 
 struct ProviderTypeInfo {
   std::string_view type;
@@ -175,24 +176,28 @@ template <> struct PreferenceSchema<AI::OpenAICompatibleFields> {
   Q_DECLARE_TR_FUNCTIONS(OpenAICompatibleFields)
 };
 
-template <> struct PreferenceSchema<AI::ClaudeCodeFields> {
-  PreferenceMeta executable{
-      .title = tr("Executable"),
-      .description = tr("Path to the claude executable. Leave empty to find it automatically."),
-      .placeholder = "claude",
+template <> struct PreferenceSchema<AI::AgentFields> {
+  PreferenceMeta command{
+      .title = tr("Command"),
+      .description = tr("Command that starts the agent in ACP mode. Leave empty to find it automatically."),
+      .placeholder = "",
       .required = false,
   };
-  Q_DECLARE_TR_FUNCTIONS(ClaudeCodeFields)
+  Q_DECLARE_TR_FUNCTIONS(AgentFields)
 };
 
-template <> struct PreferenceSchema<AI::CodexFields> {
-  PreferenceMeta executable{
-      .title = tr("Executable"),
-      .description = tr("Path to the codex executable. Leave empty to find it automatically."),
-      .placeholder = "codex",
-      .required = false,
+template <> struct PreferenceSchema<AI::CustomAgentFields> {
+  PreferenceMeta name{
+      .title = tr("Name"),
+      .description = tr("How this agent is shown in model lists."),
+      .placeholder = "My agent",
   };
-  Q_DECLARE_TR_FUNCTIONS(CodexFields)
+  PreferenceMeta command{
+      .title = tr("Command"),
+      .description = tr("Command that starts the agent in ACP mode, with its arguments."),
+      .placeholder = "my-agent --acp",
+  };
+  Q_DECLARE_TR_FUNCTIONS(CustomAgentFields)
 };
 
 template <> struct PreferenceSchema<AI::LlamaCppFields> {
@@ -336,19 +341,64 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .type = "claude-code",
         .label = "Claude Code",
         .icon = BuiltinIcon::ClaudeCode,
-        .description = "Chat with Claude through your Claude Code sign-in. Requires the claude CLI.",
+        .description = "Anthropic's coding agent, through your Claude Code sign-in.",
         .cardinality = Cardinality::Single,
-        .category = Category::Cli,
-        .fields = +[] { return describePreferences<ClaudeCodeFields>(); },
+        .category = Category::Agent,
+        .fields = +[] { return describePreferences<AgentFields>(); },
     },
     {
         .type = "codex",
         .label = "Codex",
         .icon = BuiltinIcon::Codex,
-        .description = "Chat with OpenAI models through your Codex sign-in. Requires the codex CLI.",
+        .description = "OpenAI's coding agent, through your Codex sign-in.",
         .cardinality = Cardinality::Single,
-        .category = Category::Cli,
-        .fields = +[] { return describePreferences<CodexFields>(); },
+        .category = Category::Agent,
+        .fields = +[] { return describePreferences<AgentFields>(); },
+    },
+    {
+        .type = "gemini",
+        .label = "Gemini CLI",
+        .icon = BuiltinIcon::Gemini,
+        .description = "Google's coding agent, through your Gemini CLI sign-in.",
+        .cardinality = Cardinality::Single,
+        .category = Category::Agent,
+        .fields = +[] { return describePreferences<AgentFields>(); },
+    },
+    {
+        .type = "opencode",
+        .label = "OpenCode",
+        .icon = BuiltinIcon::Opencode,
+        .description = "The open source coding agent.",
+        .cardinality = Cardinality::Single,
+        .category = Category::Agent,
+        .fields = +[] { return describePreferences<AgentFields>(); },
+    },
+    {
+        .type = "qwen-code",
+        .label = "Qwen Code",
+        .icon = BuiltinIcon::Qwen,
+        .description = "Alibaba's coding agent, through your Qwen Code sign-in.",
+        .cardinality = Cardinality::Single,
+        .category = Category::Agent,
+        .fields = +[] { return describePreferences<AgentFields>(); },
+    },
+    {
+        .type = "kilo",
+        .label = "Kilo Code",
+        .icon = BuiltinIcon::Kilo,
+        .description = "Kilo's open source coding agent.",
+        .cardinality = Cardinality::Single,
+        .category = Category::Agent,
+        .fields = +[] { return describePreferences<AgentFields>(); },
+    },
+    {
+        .type = "acp",
+        .label = "Custom agent",
+        .icon = BuiltinIcon::Terminal,
+        .description = "Any agent that supports the Agent Client Protocol (ACP).",
+        .cardinality = Cardinality::Multiple,
+        .category = Category::Agent,
+        .fields = +[] { return describePreferences<CustomAgentFields>(); },
     },
     {
         .type = "llama-cpp",

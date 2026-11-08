@@ -1,3 +1,5 @@
+#include <array>
+#include <utility>
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QJsonDocument>
@@ -60,6 +62,27 @@ std::string chatSystemPrompt(const config::Manager &config) {
   }
 
   return prompt;
+}
+
+// Agents that run their own tools report what kind of tool each one is.
+QString toolLabel(std::string_view name) {
+  constexpr auto KINDS = std::to_array<std::pair<std::string_view, const char *>>({
+      {"read", QT_TRANSLATE_NOOP("ChatSession", "Read")},
+      {"edit", QT_TRANSLATE_NOOP("ChatSession", "Edit")},
+      {"delete", QT_TRANSLATE_NOOP("ChatSession", "Delete")},
+      {"move", QT_TRANSLATE_NOOP("ChatSession", "Move")},
+      {"search", QT_TRANSLATE_NOOP("ChatSession", "Search")},
+      {"execute", QT_TRANSLATE_NOOP("ChatSession", "Run Command")},
+      {"think", QT_TRANSLATE_NOOP("ChatSession", "Think")},
+      {"fetch", QT_TRANSLATE_NOOP("ChatSession", "Fetch")},
+      {"switch_mode", QT_TRANSLATE_NOOP("ChatSession", "Switch Mode")},
+      {"other", QT_TRANSLATE_NOOP("ChatSession", "Tool")},
+  });
+  if (name == AI::Agent::LOAD_TOOLS) return QCoreApplication::translate("ChatSession", "Load Tools");
+  if (const auto kind = std::ranges::find(KINDS, name, &std::pair<std::string_view, const char *>::first);
+      kind != KINDS.end())
+    return QCoreApplication::translate("ChatSession", kind->second);
+  return QString::fromUtf8(name.data(), static_cast<qsizetype>(name.size()));
 }
 } // namespace
 
@@ -393,9 +416,7 @@ std::optional<AI::ModelRef> ChatSession::titleModel() const {
 
 void ChatSession::addTool(const AI::Agent::ToolCall &call) {
   const auto *tool = m_services.tools()->find(call.call.name);
-  const auto name = tool                                      ? tool->contribution.title
-                    : call.call.name == AI::Agent::LOAD_TOOLS ? tr("Load Tools")
-                                                              : QString::fromStdString(call.call.name);
+  const auto name = tool ? tool->contribution.title : toolLabel(call.call.name);
   m_exchanges.addTool(
       {.id = call.id,
        .name = name,
@@ -445,7 +466,7 @@ QVariant ChatSession::toolApproval() const {
 
   return QVariantMap{
       {QStringLiteral("id"), call.id},
-      {QStringLiteral("name"), tool ? tool->contribution.title : QString::fromStdString(call.call.name)},
+      {QStringLiteral("name"), tool ? tool->contribution.title : toolLabel(call.call.name)},
       {QStringLiteral("iconSource"), tool ? qml::imageSourceFor(tool->contribution.icon) : QString{}},
       {QStringLiteral("summary"), call.summary ? QString::fromStdString(*call.summary) : QString{}},
       {QStringLiteral("arguments"), json.isNull() ? QString::fromStdString(call.call.arguments)
@@ -462,7 +483,7 @@ void ChatSession::approveTool(bool always) {
     if (const auto *tool = registry->find(m_agent->toolCall(id)->call.name))
       registry->setToolPolicy(tool->providerId, tool->contribution.id, AI::ToolPolicy::Allow);
   }
-  m_agent->resolveApproval(id, true);
+  m_agent->resolveApproval(id, true, always);
 }
 
 void ChatSession::declineTool() {

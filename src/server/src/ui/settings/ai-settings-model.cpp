@@ -1,5 +1,7 @@
+#include "services/ai/acp/acp-provider.hpp"
 #include "ai-settings-model.hpp"
 #include <algorithm>
+#include <array>
 #include <iterator>
 #include <format>
 #include <optional>
@@ -55,8 +57,8 @@ QString categoryLabel(AI::Category category) {
     return QCoreApplication::translate("AISettingsModel", "Cloud APIs");
   case AI::Category::SelfHosted:
     return QCoreApplication::translate("AISettingsModel", "Self-hosted");
-  case AI::Category::Cli:
-    return QCoreApplication::translate("AISettingsModel", "CLI sign-ins");
+  case AI::Category::Agent:
+    return QCoreApplication::translate("AISettingsModel", "Agents");
   }
   return {};
 }
@@ -492,18 +494,37 @@ void AISettingsModel::rebuildTypes() {
 QVariantList AISettingsModel::pickerTypes() const {
   QVariantList items;
   const auto append = [&](const AIProviderTypeRow &row) {
-    items.append(QVariantMap{{QStringLiteral("type"), row.key},
-                             {QStringLiteral("label"), row.label},
-                             {QStringLiteral("description"), row.description},
-                             {QStringLiteral("icon"), row.icon},
-                             {QStringLiteral("category"), row.category},
-                             {QStringLiteral("allowMultiple"), row.allowMultiple},
-                             {QStringLiteral("configured"), !row.instances.isEmpty()}});
+    items.append(
+        QVariantMap{{QStringLiteral("type"), row.key},
+                    {QStringLiteral("label"), row.label},
+                    {QStringLiteral("description"), row.description},
+                    {QStringLiteral("icon"), row.icon},
+                    {QStringLiteral("category"), row.category},
+                    {QStringLiteral("allowMultiple"), row.allowMultiple},
+                    {QStringLiteral("configured"), !row.instances.isEmpty()},
+                    {QStringLiteral("missing"),
+                     AI::AcpProvider::missingRequirement(row.key.toStdString()).value_or(QString{})}});
   };
+  // sections follow the order of their first item: agents first, then by importance, then table order
+  constexpr auto CATEGORY_ORDER = std::to_array<AI::Category>(
+      {AI::Category::Agent, AI::Category::Cloud, AI::Category::SelfHosted, AI::Category::Builtin});
+  const auto rank = [&](const AIProviderTypeRow *row) {
+    const auto type = row->key.toStdString();
+    const auto info = std::ranges::find(AI::PROVIDER_TYPES, type, &AI::ProviderTypeInfo::type);
+    const auto category = std::ranges::find(CATEGORY_ORDER, info->category);
+    return std::pair(category - CATEGORY_ORDER.begin(), info - AI::PROVIDER_TYPES.begin());
+  };
+
+  std::vector<const AIProviderTypeRow *> rows;
+  rows.reserve(m_availableTypes.rows().size() + m_configuredTypes.rows().size());
   for (const auto &row : m_availableTypes.rows())
-    append(row);
+    rows.emplace_back(&row);
   for (const auto &row : m_configuredTypes.rows())
-    if (row.allowMultiple) append(row);
+    if (row.allowMultiple) rows.emplace_back(&row);
+  std::ranges::sort(rows, {}, rank);
+
+  for (const auto *row : rows)
+    append(*row);
   return items;
 }
 

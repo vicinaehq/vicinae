@@ -64,6 +64,8 @@ ViciModal {
     }
 
     function pick(item) {
+        if (item.missing)
+            return;
         close();
         root.chosen(item.type, item.label, item.icon, item.allowMultiple);
     }
@@ -192,6 +194,7 @@ ViciModal {
                                 required property var modelData
                                 readonly property bool selected: root.selectedIndex === modelData.index
                                 readonly property bool hovered: rowHover.hovered && HoverActivation.active
+                                readonly property bool missing: modelData.missing.length > 0
                                 Layout.fillWidth: true
                                 Layout.leftMargin: 8
                                 Layout.rightMargin: 8
@@ -204,7 +207,7 @@ ViciModal {
 
                                 HoverHandler {
                                     id: rowHover
-                                    cursorShape: Qt.PointingHandCursor
+                                    cursorShape: row.missing ? Qt.ArrowCursor : Qt.PointingHandCursor
                                 }
 
                                 TapHandler {
@@ -213,6 +216,7 @@ ViciModal {
 
                                 RowLayout {
                                     anchors.fill: parent
+                                    opacity: row.missing ? 0.5 : 1
                                     anchors.leftMargin: 12
                                     anchors.rightMargin: 12
                                     spacing: 12
@@ -256,13 +260,21 @@ ViciModal {
                                     }
 
                                     Text {
-                                        visible: row.modelData.configured
+                                        visible: row.missing
+                                        text: row.modelData.missing
+                                        color: row.selected ? Theme.listItemSelectionFg : Theme.textPlaceholder
+                                        font.pointSize: Theme.smallerFontSize
+                                    }
+
+                                    Text {
+                                        visible: row.modelData.configured && !row.missing
                                         text: qsTr("Add another")
                                         color: row.selected ? Theme.listItemSelectionFg : Theme.textPlaceholder
                                         font.pointSize: Theme.smallerFontSize
                                     }
 
                                     ViciImage {
+                                        visible: !row.missing
                                         source: Img.icon(BuiltinIcon.ChevronRightSmall).withFillColor(row.selected ? Theme.listItemSelectionFg : Theme.textMuted)
                                         Layout.preferredWidth: 14
                                         Layout.preferredHeight: 14

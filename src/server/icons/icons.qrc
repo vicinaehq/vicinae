@@ -405,6 +405,7 @@
 		<file>keyboard-shift.svg</file>
 		<file>keyboard.svg</file>
 		<file>kibana.svg</file>
+		<file>kilo.svg</file>
 		<file>knexjs.svg</file>
 		<file>knockout.svg</file>
 		<file>kotlin.svg</file>
@@ -529,6 +530,7 @@
 		<file>openal.svg</file>
 		<file>openapi.svg</file>
 		<file>opencl.svg</file>
+		<file>opencode.svg</file>
 		<file>opencv.svg</file>
 		<file>opengl.svg</file>
 		<file>openrouter.svg</file>

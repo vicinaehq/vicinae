@@ -155,12 +155,29 @@ using ChatHistory = std::vector<ChatMessage>;
 
 enum class ResponseActivity { Waiting, Thinking, Responding, PreparingTool, AwaitingApproval, RunningTool };
 
+/**
+ * A tool the model runs on its own, such as the built-in tools of an agent. The conversation only records
+ * it. `call.name` is the kind of tool and `title` describes what it does.
+ */
+struct ToolActivity {
+  enum class Status : std::uint8_t { Running, Succeeded, Failed };
+
+  ToolCallPart call;
+  std::optional<std::string> title;
+  Status status = Status::Running;
+  std::optional<std::string> output;
+};
+
 class AbstractChatCompletionStream : public QObject {
   Q_OBJECT
 
 signals:
   void activityChanged(ResponseActivity activity) const;
   void toolCallRequested(const ToolCallPart &call) const;
+  // The current state of a tool the model runs itself, emitted whenever it changes.
+  void toolActivityChanged(const ToolActivity &activity) const;
+  // The model waits for the user to allow a tool reported through `toolActivityChanged`.
+  void approvalRequested(const std::string &callId) const;
   void dataAdded(const std::string &text) const;
   void errorOccurred(const std::string &reason) const;
   void finished() const;
@@ -169,6 +186,7 @@ public:
   ~AbstractChatCompletionStream() override = default;
   virtual bool start() = 0;
   virtual bool abort() = 0;
+  virtual void resolveApproval(std::string_view callId, bool approved, bool always) {}
 
   const Model &model() const { return m_model; }
 
