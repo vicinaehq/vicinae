@@ -104,8 +104,7 @@ private:
   void initialize();
   void saveTurn();
   void generateTitle();
-  void addTool(const AI::Agent::ToolCall &call);
-  void updateTool(const AI::Agent::ToolCall &call);
+  ChatConversationModel::Tool toolItem(const AI::Agent::ToolCall &call) const;
   void restoreConversation(AI::Conversation conversation);
   void restoreNextTurn();
   void finishLoading();

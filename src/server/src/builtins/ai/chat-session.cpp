@@ -146,11 +146,11 @@ void ChatSession::initialize() {
   connect(m_agent, &AI::Agent::textAdded, this,
           [this](quint64, const std::string &text) { m_exchanges.appendResponse(text); });
   connect(m_agent, &AI::Agent::toolAdded, this, [this](quint64 id) {
-    addTool(*m_agent->toolCall(id));
+    m_exchanges.addTool(toolItem(*m_agent->toolCall(id)));
     saveTurn();
   });
   connect(m_agent, &AI::Agent::toolChanged, this, [this](quint64 id) {
-    updateTool(*m_agent->toolCall(id));
+    m_exchanges.updateTool(toolItem(*m_agent->toolCall(id)));
     saveTurn();
   });
   connect(m_agent, &AI::Agent::finished, this, [this] {
@@ -414,18 +414,7 @@ std::optional<AI::ModelRef> ChatSession::titleModel() const {
   return fast ? std::optional(AI::ModelRef{model->provider, fast->id}) : model;
 }
 
-void ChatSession::addTool(const AI::Agent::ToolCall &call) {
-  const auto *tool = m_services.tools()->find(call.call.name);
-  const auto name = tool ? tool->contribution.title : toolLabel(call.call.name);
-  m_exchanges.addTool(
-      {.id = call.id,
-       .name = name,
-       .iconSource = tool ? qml::imageSourceFor(tool->contribution.icon) : QString{},
-       .arguments = QString::fromStdString(call.call.arguments),
-       .summary = call.summary ? std::optional(QString::fromStdString(*call.summary)) : std::nullopt});
-}
-
-void ChatSession::updateTool(const AI::Agent::ToolCall &call) {
+ChatConversationModel::Tool ChatSession::toolItem(const AI::Agent::ToolCall &call) const {
   const auto status = [&] {
     switch (call.state) {
     case AI::Agent::ToolState::Queued:
@@ -445,16 +434,25 @@ void ChatSession::updateTool(const AI::Agent::ToolCall &call) {
     }
     return QString{};
   }();
-  std::optional<QString> output;
-  std::optional<QString> statusText;
-  if (call.output) {
-    output = QString::fromStdString(call.output->displayText.value_or(call.output->content));
-    if (call.output->statusText) statusText = QString::fromStdString(*call.output->statusText);
-  }
 
-  m_exchanges.updateTool(call.id, status, std::move(output),
-                         call.duration ? std::optional<qint64>(call.duration->count()) : std::nullopt,
-                         std::move(statusText));
+  const auto *tool = m_services.tools()->find(call.call.name);
+  ChatConversationModel::Tool item{
+      .id = call.id,
+      .name = tool ? tool->contribution.title : toolLabel(call.call.name),
+      .iconSource = tool ? qml::imageSourceFor(tool->contribution.icon) : QString{},
+      .arguments = QString::fromStdString(call.call.arguments),
+      .summary =
+          call.summary.transform([](const std::string &summary) { return QString::fromStdString(summary); }),
+      .status = status,
+      .durationMs = call.duration.transform(
+          [](std::chrono::milliseconds duration) { return qint64{duration.count()}; }),
+  };
+  if (call.output) {
+    item.output = QString::fromStdString(call.output->displayText.value_or(call.output->content));
+    item.statusText = call.output->statusText.transform(
+        [](const std::string &text) { return QString::fromStdString(text); });
+  }
+  return item;
 }
 
 QVariant ChatSession::toolApproval() const {
@@ -550,10 +548,7 @@ void ChatSession::restoreNextTurn() {
         m_exchanges.appendSavedResponse(std::exchange(response, {}));
         const auto call =
             std::ranges::find(turn.calls, invocation->id, [](const auto &tool) { return tool.call.id; });
-        if (call != turn.calls.end()) {
-          addTool(*call);
-          updateTool(*call);
-        }
+        if (call != turn.calls.end()) m_exchanges.addTool(toolItem(*call));
       }
     }
   }
