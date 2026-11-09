@@ -140,10 +140,16 @@ struct StreamChunk {
     Function function;
   };
 
+  // reasoning models such as mistral-large-4 stream typed parts instead of plain text
+  struct DeltaContentPart {
+    std::string type;
+    std::optional<std::string> text;
+  };
+
   struct Choice {
     struct Delta {
       std::optional<std::string> role;
-      std::optional<std::string> content;
+      std::optional<std::variant<std::string, std::vector<DeltaContentPart>>> content;
       std::optional<std::string> reasoning;
       std::optional<std::string> reasoning_content;
       std::optional<std::vector<ReasoningDetail>> reasoning_details;
@@ -244,7 +250,7 @@ private:
       emit activityChanged(ResponseActivity::Thinking);
     }
 
-    if (delta.content && !delta.content->empty()) emit dataAdded(*delta.content);
+    if (delta.content) handleContent(*delta.content);
 
     if (delta.tool_calls && !delta.tool_calls->empty()) {
       emit activityChanged(ResponseActivity::PreparingTool);
@@ -261,6 +267,26 @@ private:
         emit toolCallRequested(call);
       }
     }
+  }
+
+  void handleContent(const std::variant<std::string, std::vector<StreamChunk::DeltaContentPart>> &content) {
+    if (const auto *text = std::get_if<std::string>(&content)) {
+      if (!text->empty()) emit dataAdded(*text);
+      return;
+    }
+
+    std::string text;
+    bool thinking = false;
+    for (const auto &part : std::get<std::vector<StreamChunk::DeltaContentPart>>(content)) {
+      if (part.type == "thinking") {
+        thinking = true;
+      } else if (part.type == "text" && part.text) {
+        text += *part.text;
+      }
+    }
+
+    if (thinking) emit activityChanged(ResponseActivity::Thinking);
+    if (!text.empty()) emit dataAdded(text);
   }
 
   http::Client m_client;
