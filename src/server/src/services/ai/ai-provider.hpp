@@ -155,12 +155,28 @@ using ChatHistory = std::vector<ChatMessage>;
 
 enum class ResponseActivity { Waiting, Thinking, Responding, PreparingTool, AwaitingApproval, RunningTool };
 
+/**
+ * A tool the model runs on its own, such as the built-in tools of an agent. The conversation only records
+ * it. `call.name` is the kind of tool and `title` describes what it does.
+ */
+struct ToolActivity {
+  enum class Status : std::uint8_t { Running, Succeeded, Failed };
+
+  ToolCallPart call;
+  std::optional<std::string> title;
+  Status status = Status::Running;
+  std::optional<std::string> output;
+};
+
 class AbstractChatCompletionStream : public QObject {
   Q_OBJECT
 
 signals:
   void activityChanged(ResponseActivity activity) const;
   void toolCallRequested(const ToolCallPart &call) const;
+  void toolActivityChanged(const ToolActivity &activity) const;
+  // The model waits for the user to allow a tool reported through `toolActivityChanged`.
+  void approvalRequested(const std::string &callId) const;
   void dataAdded(const std::string &text) const;
   void errorOccurred(const std::string &reason) const;
   void finished() const;
@@ -169,6 +185,7 @@ public:
   ~AbstractChatCompletionStream() override = default;
   virtual bool start() = 0;
   virtual bool abort() = 0;
+  virtual void resolveApproval(std::string_view callId, bool approved, bool always) {}
 
   const Model &model() const { return m_model; }
 
@@ -235,6 +252,16 @@ struct ManagedModel {
   double progress = -1.0;
 };
 
+struct ProviderStatus {
+  enum class Kind : std::uint8_t { Busy, Error };
+
+  Kind kind = Kind::Error;
+  // one short sentence for the user
+  std::string message;
+  // raw output behind an error, such as what a process printed before it exited
+  std::optional<std::string> details;
+};
+
 class AbstractProvider : public QObject {
   Q_OBJECT
 
@@ -284,7 +311,7 @@ public:
   /**
    * Why the provider has no usable models, such as a missing sign-in, if it knows.
    */
-  virtual std::optional<std::string> statusMessage() const { return std::nullopt; }
+  virtual std::optional<ProviderStatus> status() const { return std::nullopt; }
 
   /**
    * An icon representing the provider, if applicable.

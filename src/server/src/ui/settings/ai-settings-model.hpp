@@ -179,6 +179,8 @@ class AIProviderPage : public QObject {
   Q_PROPERTY(QString description READ description NOTIFY changed)
   Q_PROPERTY(QVariant icon READ icon NOTIFY changed)
   Q_PROPERTY(QString statusText READ statusText NOTIFY changed)
+  Q_PROPERTY(QString error READ error NOTIFY changed)
+  Q_PROPERTY(QString errorDetails READ errorDetails NOTIFY changed)
   Q_PROPERTY(bool builtin READ builtin NOTIFY changed)
   Q_PROPERTY(AIProviderFieldsModel *fields READ fields CONSTANT)
   Q_PROPERTY(AIProviderModelsModel *models READ models CONSTANT)
@@ -196,6 +198,8 @@ public:
   QString description() const { return m_description; }
   QVariant icon() const { return m_icon; }
   QString statusText() const { return m_statusText; }
+  QString error() const { return m_error; }
+  QString errorDetails() const { return m_errorDetails; }
   bool builtin() const { return m_builtin; }
   AIProviderFieldsModel *fields() { return &m_fields; }
   AIProviderModelsModel *models() { return &m_models; }
@@ -205,6 +209,7 @@ public:
   Q_INVOKABLE void cancelDownload(const QString &modelId);
   Q_INVOKABLE void removeModel(const QString &modelId);
   Q_INVOKABLE void remove();
+  Q_INVOKABLE void copyErrorDetails() const;
 
 private:
   friend class AISettingsModel;
@@ -217,6 +222,8 @@ private:
   QString m_description;
   QVariant m_icon;
   QString m_statusText;
+  QString m_error;
+  QString m_errorDetails;
   bool m_builtin = false;
   AIProviderFieldsModel m_fields{this};
   AIProviderModelsModel m_models{this};

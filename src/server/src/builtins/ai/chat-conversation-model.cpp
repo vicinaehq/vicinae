@@ -202,6 +202,11 @@ void ChatConversationModel::publishResponse() {
   emit dataChanged(last, last, {ResponseRole});
 }
 
+void ChatConversationModel::formatArguments(Tool &tool) {
+  const auto json = QJsonDocument::fromJson(tool.arguments.toUtf8());
+  if (!json.isNull()) tool.arguments = QString::fromUtf8(json.toJson()).trimmed();
+}
+
 void ChatConversationModel::addTool(Tool tool) {
   if (m_exchanges.empty()) return;
 
@@ -218,8 +223,7 @@ void ChatConversationModel::addTool(Tool tool) {
   auto &group = std::get<ToolGroup>(contents.back());
   if (group.calls.size() == 1 && group.calls.front().expanded) group.expanded = true;
 
-  const auto json = QJsonDocument::fromJson(tool.arguments.toUtf8());
-  if (!json.isNull()) tool.arguments = QString::fromUtf8(json.toJson()).trimmed();
+  formatArguments(tool);
 
   if (group.calls.size() == group.calls.capacity())
     group.calls.reserve(std::max<std::size_t>(4, group.calls.size() * 2));
@@ -231,8 +235,9 @@ void ChatConversationModel::addTool(Tool tool) {
     emit contentChanged(rowCount() - 1, contents.size() - 1);
 }
 
-void ChatConversationModel::updateTool(quint64 id, QString status, std::optional<QString> output,
-                                       std::optional<qint64> durationMs, std::optional<QString> statusText) {
+void ChatConversationModel::updateTool(Tool tool) {
+  formatArguments(tool);
+
   for (int row = 0; row < rowCount(); ++row) {
     auto &contents = m_exchanges[row].contents;
 
@@ -240,13 +245,11 @@ void ChatConversationModel::updateTool(quint64 id, QString status, std::optional
       auto *group = std::get_if<ToolGroup>(&contents[part]);
       if (!group) continue;
 
-      const auto tool = std::ranges::find(group->calls, id, &Tool::id);
-      if (tool == group->calls.end()) continue;
+      const auto current = std::ranges::find(group->calls, tool.id, &Tool::id);
+      if (current == group->calls.end()) continue;
 
-      tool->status = std::move(status);
-      tool->output = std::move(output);
-      tool->durationMs = durationMs;
-      tool->statusText = std::move(statusText);
+      tool.expanded = current->expanded;
+      *current = std::move(tool);
 
       emit contentChanged(row, part);
       return;

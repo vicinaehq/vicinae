@@ -59,7 +59,8 @@ public:
 
   bool addTool(std::unique_ptr<AbstractTool> tool);
   bool send(ChatMessage message, Options options);
-  bool resolveApproval(Id id, bool approved);
+  // `always` is passed on to models that run their own tools, the others' policies belong to the caller.
+  bool resolveApproval(Id id, bool approved, bool always = false);
   void cancel();
 
   State state() const { return m_state; }
@@ -87,6 +88,9 @@ private:
   void complete();
   void receiveText(const std::string &text);
   void receiveToolCall(const ToolCallPart &call);
+  void receiveToolActivity(const ToolActivity &activity);
+  void requestApproval(const std::string &callId);
+  void endExternalCalls(ToolState state);
   void executeNextTool();
   void runTool(Id id, AbstractTool &tool);
   AbstractTool *findTool(std::string_view name) const;
@@ -107,6 +111,12 @@ private:
   std::function<void()> m_cancelTool;
   QElapsedTimer m_toolTimer;
   std::vector<Id> m_pendingCalls;
+  struct ExternalCall {
+    Id id;
+    std::chrono::steady_clock::time_point start;
+  };
+  // Calls the model runs itself, until they finish.
+  std::vector<ExternalCall> m_externalCalls;
   std::size_t m_nextCall = 0;
   std::optional<Id> m_pendingApproval;
   std::optional<Id> m_assistantMessage;

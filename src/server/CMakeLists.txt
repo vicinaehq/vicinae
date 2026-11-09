@@ -662,10 +662,8 @@ set(SRCS
 	src/services/ai/speech-language-catalogue.hpp
 	src/services/ai/cli/cli-process.hpp
 	src/services/ai/cli/cli-process.cpp
-	src/services/ai/cli/claude-code-provider.hpp
-	src/services/ai/cli/claude-code-provider.cpp
-	src/services/ai/cli/codex-provider.hpp
-	src/services/ai/cli/codex-provider.cpp
+	src/services/ai/acp/acp-provider.hpp
+	src/services/ai/acp/acp-provider.cpp
 	src/services/ai/ollama/ollama-ai-provider.hpp
 	src/services/ai/ollama/ollama-ai-provider.cpp
 	src/services/ai/mistral/mistral-provider.hpp
@@ -1531,6 +1529,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/settings/AIProviderView.qml
 	src/ui/qml/settings/AIModelRow.qml
 	src/ui/qml/settings/AIModelDeleteDialog.qml
+	src/ui/qml/settings/AIProviderErrorDialog.qml
 	src/ui/qml/settings/AIProviderSetupDialog.qml
 	src/ui/qml/settings/SettingsSectionTitle.qml
 	src/ui/qml/form/ShortcutRecorderField.qml

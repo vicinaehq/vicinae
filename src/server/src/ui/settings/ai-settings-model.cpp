@@ -1,12 +1,16 @@
+#include "services/ai/acp/acp-provider.hpp"
 #include "ai-settings-model.hpp"
 #include <algorithm>
+#include <array>
 #include <iterator>
 #include <format>
 #include <optional>
 #include <ranges>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
+#include <qclipboard.h>
 #include <qcoreapplication.h>
+#include <qguiapplication.h>
 #include <qlogging.h>
 #include "command/preference.hpp"
 #include "config/config.hpp"
@@ -43,8 +47,24 @@ QVariant iconVariant(const std::optional<ImageUrl> &icon) {
   return icon ? QVariant::fromValue(*icon) : QVariant();
 }
 
-QVariantMap instanceEntry(const QString &id, const QString &name, const QString &status) {
-  return {{QStringLiteral("id"), id}, {QStringLiteral("name"), name}, {QStringLiteral("statusText"), status}};
+QVariantMap instanceEntry(const QString &id, const QString &name, const QString &status,
+                          const QString &health) {
+  return {{QStringLiteral("id"), id},
+          {QStringLiteral("name"), name},
+          {QStringLiteral("statusText"), status},
+          {QStringLiteral("health"), health}};
+}
+
+/**
+ * "ready" when it has models to use, "pending" while that may still change on its own, "error" otherwise.
+ */
+QString statusHealth(AI::AbstractProvider &provider) {
+  if (provider.managesModels())
+    return provider.listModels().empty() ? QStringLiteral("pending") : QStringLiteral("ready");
+  if (!provider.listModels().empty()) return QStringLiteral("ready");
+  const auto status = provider.status();
+  return status && status->kind == AI::ProviderStatus::Kind::Busy ? QStringLiteral("pending")
+                                                                  : QStringLiteral("error");
 }
 
 QString categoryLabel(AI::Category category) {
@@ -55,8 +75,8 @@ QString categoryLabel(AI::Category category) {
     return QCoreApplication::translate("AISettingsModel", "Cloud APIs");
   case AI::Category::SelfHosted:
     return QCoreApplication::translate("AISettingsModel", "Self-hosted");
-  case AI::Category::Cli:
-    return QCoreApplication::translate("AISettingsModel", "CLI sign-ins");
+  case AI::Category::Agent:
+    return QCoreApplication::translate("AISettingsModel", "Agents");
   }
   return {};
 }
@@ -257,6 +277,10 @@ void AIProviderPage::remove() {
   if (m_valid && !m_builtin) m_owner.removeProvider(m_providerId.toStdString());
 }
 
+void AIProviderPage::copyErrorDetails() const {
+  QGuiApplication::clipboard()->setText(m_error + QStringLiteral("\n\n") + m_errorDetails);
+}
+
 // ── settings model ──
 
 AISettingsModel::AISettingsModel(ServiceRegistry &services, QObject *parent) : QObject(parent) {
@@ -340,7 +364,7 @@ QString AISettingsModel::statusText(AI::AbstractProvider &provider) const {
   }
   const auto count = provider.listModels().size();
   if (count == 0) {
-    if (auto status = provider.statusMessage()) return QString::fromStdString(*status);
+    if (auto status = provider.status()) return QString::fromStdString(status->message);
     return tr("No models found");
   }
   return tr("%n model(s)", nullptr, static_cast<int>(count));
@@ -456,7 +480,7 @@ void AISettingsModel::rebuildTypes() {
           .icon = iconVariant(provider->icon()),
           .category = categoryLabel(info.category),
           .builtin = true,
-          .instances = {instanceEntry(id, name, statusText(*provider))},
+          .instances = {instanceEntry(id, name, statusText(*provider), statusHealth(*provider))},
       });
       continue;
     }
@@ -466,7 +490,8 @@ void AISettingsModel::rebuildTypes() {
       if (instance.type != info.type) continue;
       auto *provider = m_aiService ? m_aiService->getProviderById(id) : nullptr;
       const auto qid = QString::fromStdString(id);
-      instances.append(instanceEntry(qid, qid, provider ? statusText(*provider) : tr("Not connected")));
+      instances.append(instanceEntry(qid, qid, provider ? statusText(*provider) : tr("Not connected"),
+                                     provider ? statusHealth(*provider) : QStringLiteral("error")));
     }
     rows.emplace_back(AIProviderTypeRow{
         .key = qs(info.type),
@@ -492,18 +517,42 @@ void AISettingsModel::rebuildTypes() {
 QVariantList AISettingsModel::pickerTypes() const {
   QVariantList items;
   const auto append = [&](const AIProviderTypeRow &row) {
-    items.append(QVariantMap{{QStringLiteral("type"), row.key},
-                             {QStringLiteral("label"), row.label},
-                             {QStringLiteral("description"), row.description},
-                             {QStringLiteral("icon"), row.icon},
-                             {QStringLiteral("category"), row.category},
-                             {QStringLiteral("allowMultiple"), row.allowMultiple},
-                             {QStringLiteral("configured"), !row.instances.isEmpty()}});
+    const auto *info = AI::findProviderType(row.key.toStdString());
+    // without anything to fill in, the provider is added right away
+    const bool needsSetup =
+        row.allowMultiple || (info && std::ranges::any_of(info->fields(), &Preference::required));
+    items.append(
+        QVariantMap{{QStringLiteral("type"), row.key},
+                    {QStringLiteral("label"), row.label},
+                    {QStringLiteral("description"), row.description},
+                    {QStringLiteral("icon"), row.icon},
+                    {QStringLiteral("category"), row.category},
+                    {QStringLiteral("allowMultiple"), row.allowMultiple},
+                    {QStringLiteral("needsSetup"), needsSetup},
+                    {QStringLiteral("configured"), !row.instances.isEmpty()},
+                    {QStringLiteral("missing"),
+                     AI::AcpProvider::missingRequirement(row.key.toStdString()).value_or(QString{})}});
   };
+  // sections follow the order of their first item: agents first, then by importance, then table order
+  constexpr auto CATEGORY_ORDER = std::to_array<AI::Category>(
+      {AI::Category::Agent, AI::Category::Cloud, AI::Category::SelfHosted, AI::Category::Builtin});
+  const auto rank = [&](const AIProviderTypeRow *row) {
+    const auto type = row->key.toStdString();
+    const auto info = std::ranges::find(AI::PROVIDER_TYPES, type, &AI::ProviderTypeInfo::type);
+    const auto category = std::ranges::find(CATEGORY_ORDER, info->category);
+    return std::pair(category - CATEGORY_ORDER.begin(), info - AI::PROVIDER_TYPES.begin());
+  };
+
+  std::vector<const AIProviderTypeRow *> rows;
+  rows.reserve(m_availableTypes.rows().size() + m_configuredTypes.rows().size());
   for (const auto &row : m_availableTypes.rows())
-    append(row);
+    rows.emplace_back(&row);
   for (const auto &row : m_configuredTypes.rows())
-    if (row.allowMultiple) append(row);
+    if (row.allowMultiple) rows.emplace_back(&row);
+  std::ranges::sort(rows, {}, rank);
+
+  for (const auto *row : rows)
+    append(*row);
   return items;
 }
 
@@ -541,6 +590,11 @@ void AISettingsModel::rebuildPage() {
     page.m_statusText.clear();
     page.m_fields.setRows({});
   }
+
+  const auto status = provider ? provider->status() : std::nullopt;
+  const bool failed = page.m_valid && status && status->kind == AI::ProviderStatus::Kind::Error;
+  page.m_error = failed ? QString::fromStdString(status->message) : QString{};
+  page.m_errorDetails = failed && status->details ? QString::fromStdString(*status->details) : QString{};
 
   rebuildPageModels();
   emit page.changed();
