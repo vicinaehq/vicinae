@@ -253,6 +253,19 @@ struct ManagedModel {
   double progress = -1.0;
 };
 
+/**
+ * Why a provider cannot be used right now.
+ */
+struct ProviderStatus {
+  enum class Kind : std::uint8_t { Busy, Error };
+
+  Kind kind = Kind::Error;
+  // one short sentence for the user
+  std::string message;
+  // raw output behind an error, such as what a process printed before it exited
+  std::optional<std::string> details;
+};
+
 class AbstractProvider : public QObject {
   Q_OBJECT
 
@@ -302,7 +315,7 @@ public:
   /**
    * Why the provider has no usable models, such as a missing sign-in, if it knows.
    */
-  virtual std::optional<std::string> statusMessage() const { return std::nullopt; }
+  virtual std::optional<ProviderStatus> status() const { return std::nullopt; }
 
   /**
    * An icon representing the provider, if applicable.

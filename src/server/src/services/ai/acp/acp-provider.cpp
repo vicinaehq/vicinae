@@ -181,6 +181,23 @@ QString qs(std::string_view view) {
   return QString::fromUtf8(view.data(), static_cast<qsizetype>(view.size()));
 }
 
+struct Command {
+  QString program;
+  QStringList arguments;
+};
+
+/**
+ * What runs the agent when the user set no command: its own executable, or its adapter through npx.
+ */
+std::optional<Command> defaultCommand(const AgentPreset &preset) {
+  if (auto program = findCliExecutable({}, qs(preset.executable)))
+    return Command{*program, qs(preset.arguments).split(QLatin1Char(' '), Qt::SkipEmptyParts)};
+  if (preset.package.empty()) return std::nullopt;
+  if (auto npx = findCliExecutable({}, QStringLiteral("npx")))
+    return Command{*npx, {QStringLiteral("-y"), qs(preset.package)}};
+  return std::nullopt;
+}
+
 template <typename T> std::string toJson(const T &value) {
   std::string out;
   if (glz::write_json(value, out)) return "{}";
@@ -502,10 +519,23 @@ std::string_view AcpProvider::description() const {
 
 std::optional<QString> AcpProvider::missingRequirement(std::string_view type) {
   const auto *preset = findPreset(type);
-  if (!preset || findCliExecutable({}, qs(preset->executable))) return std::nullopt;
-  if (preset->package.empty()) return tr("Not installed");
-  if (findCliExecutable({}, QStringLiteral("npx"))) return std::nullopt;
-  return tr("Requires Node.js");
+  if (!preset || defaultCommand(*preset)) return std::nullopt;
+  return preset->package.empty() ? tr("Not installed") : tr("Requires Node.js");
+}
+
+std::vector<::Preference> agentFields(std::string_view type) {
+  auto fields = describePreferences<AgentFields>();
+  const auto *preset = findPreset(type);
+  if (!preset) return fields;
+
+  // the command that runs when the field is left empty
+  const auto command = defaultCommand(*preset).value_or(
+      Command{qs(preset->executable), qs(preset->arguments).split(QLatin1Char(' '), Qt::SkipEmptyParts)});
+  for (auto &field : fields) {
+    if (field.name() == QStringLiteral("command"))
+      field.setPlaceholder((QStringList{command.program} + command.arguments).join(QLatin1Char(' ')));
+  }
+  return fields;
 }
 
 std::string AcpProvider::signInMessage() const {
@@ -542,12 +572,13 @@ void AcpProvider::start() {
 }
 
 void AcpProvider::discover() {
-  m_status = tr("Starting %1…").arg(qs(displayName())).toStdString();
+  m_status = ProviderStatus{.kind = ProviderStatus::Kind::Busy,
+                            .message = tr("Starting %1…").arg(qs(displayName())).toStdString()};
   emit modelsUpdated();
 
-  connectAgent([this](std::expected<void, std::string> ready) {
+  connectAgent([this](std::expected<void, ProviderStatus> ready) {
     if (!ready) {
-      m_status = ready.error();
+      m_status = std::move(ready.error());
       emit modelsUpdated();
       return;
     }
@@ -560,10 +591,11 @@ void AcpProvider::discover() {
       } else {
         qWarning() << "Could not start an ACP session with" << m_id << ":" << session.error().message;
         m_status = session.error().code == AUTH_REQUIRED
-                       ? signInMessage()
-                       : tr("Could not start %1: %2")
-                             .arg(qs(displayName()), qs(session.error().message))
-                             .toStdString();
+                       ? ProviderStatus{.message = signInMessage()}
+                       : ProviderStatus{
+                             .message = tr("Could not start %1.").arg(qs(displayName())).toStdString(),
+                             .details = session.error().message,
+                         };
         stop(session.error().message);
       }
       emit modelsUpdated();
@@ -582,11 +614,6 @@ void AcpProvider::connectAgent(ReadyHandler handler) {
 }
 
 void AcpProvider::launch() {
-  struct Command {
-    QString program;
-    QStringList arguments;
-  };
-
   const auto command = [&] -> std::expected<Command, std::string> {
     if (!m_command.empty()) {
       auto parts = QProcess::splitCommand(qs(m_command));
@@ -600,11 +627,8 @@ void AcpProvider::launch() {
 
     const auto *preset = findPreset(m_type);
     if (!preset) return std::unexpected(tr("No command is set.").toStdString());
-    if (auto program = findCliExecutable({}, qs(preset->executable)))
-      return Command{*program, qs(preset->arguments).split(QLatin1Char(' '), Qt::SkipEmptyParts)};
+    if (auto command = defaultCommand(*preset)) return *command;
     if (!preset->package.empty()) {
-      if (auto npx = findCliExecutable({}, QStringLiteral("npx")))
-        return Command{*npx, {QStringLiteral("-y"), qs(preset->package)}};
       return std::unexpected(tr("Requires Node.js to run %1, or %2 to be installed.")
                                  .arg(qs(displayName()), qs(preset->executable))
                                  .toStdString());
@@ -615,7 +639,7 @@ void AcpProvider::launch() {
 
   if (!command) {
     for (const auto &handler : std::exchange(m_waiting, {}))
-      handler(std::unexpected(command.error()));
+      handler(std::unexpected(ProviderStatus{.message = command.error()}));
     return;
   }
 
@@ -664,8 +688,12 @@ void AcpProvider::stop(const std::string &reason) {
   for (auto &[id, handler] : std::exchange(m_pending, {})) {
     if (handler) handler(std::unexpected(RpcError{.message = reason}));
   }
+  // only waits while the agent starts
   for (const auto &handler : std::exchange(m_waiting, {}))
-    handler(std::unexpected(reason));
+    handler(std::unexpected(ProviderStatus{
+        .message = tr("Could not start %1.").arg(qs(displayName())).toStdString(),
+        .details = reason,
+    }));
 
   m_sessions.clear();
 }
@@ -827,10 +855,12 @@ void AcpProvider::readModels(std::string_view json) {
 
 void AcpProvider::runTurn(AcpChatStream *stream) {
   m_idle.stop();
-  connectAgent([this, stream = QPointer(stream)](std::expected<void, std::string> ready) {
+  connectAgent([this, stream = QPointer(stream)](std::expected<void, ProviderStatus> ready) {
     if (!stream || !stream->active()) return;
     if (!ready) {
-      stream->complete(ready.error());
+      const auto &failure = ready.error();
+      stream->complete(failure.details ? std::format("{}\n\n{}", failure.message, *failure.details)
+                                       : failure.message);
       return;
     }
 

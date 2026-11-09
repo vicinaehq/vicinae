@@ -33,7 +33,7 @@ public:
   };
   using Response = std::expected<std::string, RpcError>;
   using ResponseHandler = std::function<void(Response)>;
-  using ReadyHandler = std::function<void(std::expected<void, std::string>)>;
+  using ReadyHandler = std::function<void(std::expected<void, ProviderStatus>)>;
 
   static constexpr int AUTH_REQUIRED = -32000;
 
@@ -50,7 +50,7 @@ public:
   std::string displayName() const override;
   std::optional<ImageUrl> icon() const override;
   std::string_view description() const override;
-  std::optional<std::string> statusMessage() const override { return m_status; }
+  std::optional<ProviderStatus> status() const override { return m_status; }
 
   void configure(const PreferenceValues &fields) override;
   void start() override;
@@ -107,7 +107,7 @@ private:
   std::string m_type;
   std::string m_name;
   std::string m_command;
-  std::optional<std::string> m_status;
+  std::optional<ProviderStatus> m_status;
   bool m_started = false;
   bool m_available = false;
   bool m_ready = false;

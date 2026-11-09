@@ -1529,6 +1529,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/settings/AIProviderView.qml
 	src/ui/qml/settings/AIModelRow.qml
 	src/ui/qml/settings/AIModelDeleteDialog.qml
+	src/ui/qml/settings/AIProviderErrorDialog.qml
 	src/ui/qml/settings/AIProviderSetupDialog.qml
 	src/ui/qml/settings/SettingsSectionTitle.qml
 	src/ui/qml/form/ShortcutRecorderField.qml

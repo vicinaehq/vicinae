@@ -9,7 +9,7 @@ ViciModal {
 
     required property AISettingsModel model
 
-    signal chosen(string type, string label, var icon, bool allowMultiple)
+    signal chosen(string type, string label, var icon, bool allowMultiple, bool needsSetup)
 
     property var _items: []
     property string query: ""
@@ -67,7 +67,7 @@ ViciModal {
         if (item.missing)
             return;
         close();
-        root.chosen(item.type, item.label, item.icon, item.allowMultiple);
+        root.chosen(item.type, item.label, item.icon, item.allowMultiple, item.needsSetup);
     }
 
     function pickSelected() {

@@ -176,11 +176,17 @@ template <> struct PreferenceSchema<AI::OpenAICompatibleFields> {
   Q_DECLARE_TR_FUNCTIONS(OpenAICompatibleFields)
 };
 
+namespace AI {
+/**
+ * The settings of an agent with a preset, showing the command that runs by default.
+ */
+std::vector<::Preference> agentFields(std::string_view type);
+} // namespace AI
+
 template <> struct PreferenceSchema<AI::AgentFields> {
   PreferenceMeta command{
       .title = tr("Command"),
       .description = tr("Command that starts the agent in ACP mode. Leave empty to find it automatically."),
-      .placeholder = "",
       .required = false,
   };
   Q_DECLARE_TR_FUNCTIONS(AgentFields)
@@ -344,7 +350,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .description = "Anthropic's coding agent, through your Claude Code sign-in.",
         .cardinality = Cardinality::Single,
         .category = Category::Agent,
-        .fields = +[] { return describePreferences<AgentFields>(); },
+        .fields = +[] { return agentFields("claude-code"); },
     },
     {
         .type = "codex",
@@ -353,7 +359,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .description = "OpenAI's coding agent, through your Codex sign-in.",
         .cardinality = Cardinality::Single,
         .category = Category::Agent,
-        .fields = +[] { return describePreferences<AgentFields>(); },
+        .fields = +[] { return agentFields("codex"); },
     },
     {
         .type = "gemini",
@@ -362,7 +368,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .description = "Google's coding agent, through your Gemini CLI sign-in.",
         .cardinality = Cardinality::Single,
         .category = Category::Agent,
-        .fields = +[] { return describePreferences<AgentFields>(); },
+        .fields = +[] { return agentFields("gemini"); },
     },
     {
         .type = "opencode",
@@ -371,7 +377,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .description = "The open source coding agent.",
         .cardinality = Cardinality::Single,
         .category = Category::Agent,
-        .fields = +[] { return describePreferences<AgentFields>(); },
+        .fields = +[] { return agentFields("opencode"); },
     },
     {
         .type = "qwen-code",
@@ -380,7 +386,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .description = "Alibaba's coding agent, through your Qwen Code sign-in.",
         .cardinality = Cardinality::Single,
         .category = Category::Agent,
-        .fields = +[] { return describePreferences<AgentFields>(); },
+        .fields = +[] { return agentFields("qwen-code"); },
     },
     {
         .type = "kilo",
@@ -389,7 +395,7 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .description = "Kilo's open source coding agent.",
         .cardinality = Cardinality::Single,
         .category = Category::Agent,
-        .fields = +[] { return describePreferences<AgentFields>(); },
+        .fields = +[] { return agentFields("kilo"); },
     },
     {
         .type = "acp",
