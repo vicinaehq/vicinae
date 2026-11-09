@@ -24,7 +24,8 @@ struct Expansion {
 
 public:
   std::string keyword;
-  std::vector<std::string> apps;
+  // Older files keep the apps here. Moved to the snippet on load, so this is never set afterwards.
+  std::optional<std::vector<std::string>> apps;
   bool word = true;
 
   static std::optional<std::string> validateKeyword(const std::string &keyword) {
@@ -41,10 +42,18 @@ public:
 
 using SnippetData = std::variant<FileSnippet, TextSnippet>;
 
+/**
+ * What two spoken phrases are compared on: speech recognition is inconsistent about case, accents,
+ * punctuation and word boundaries ("E-mail." and "email"), so only folded letters and numbers are kept.
+ */
+std::string normalizeVoicePhrase(std::string_view text);
+
 struct SnippetPayload {
   std::string name;
   SnippetData data;
   std::optional<Expansion> expansion;
+  std::vector<std::string> apps;
+  std::optional<std::string> voicePhrase;
 };
 
 struct SerializedSnippet {
@@ -57,6 +66,9 @@ struct SerializedSnippet {
   // snippet may not necessarily define an expansion trigger, just be used
   // for paste.
   std::optional<Expansion> expansion;
+  // Where the keyword and the voice phrase apply. Empty means everywhere.
+  std::vector<std::string> apps;
+  std::optional<std::string> voicePhrase;
 };
 
 } // namespace snippet
@@ -79,6 +91,9 @@ public:
   std::vector<snippet::SerializedSnippet> snippets() const;
 
   snippet::SerializedSnippet *findByKeyword(std::string_view keyword);
+  snippet::SerializedSnippet *findByVoicePhrase(std::string_view phrase);
+
+  std::vector<std::string> voicePhrases() const;
   snippet::SerializedSnippet *findById(std::string_view id);
 
 protected:

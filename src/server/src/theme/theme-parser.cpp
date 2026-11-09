@@ -1,4 +1,6 @@
+#include <fstream>
 #include <set>
+#include <sstream>
 #include <variant>
 #include "theme/colors.hpp"
 #include "theme/theme-file.hpp"
@@ -165,10 +167,19 @@ static std::expected<ThemeFile::MappedColor, std::string> parseColor(toml::node_
 }
 
 std::expected<ThemeFile::ParseResult, std::string> ThemeFile::fromFile(const fs::path &path) {
+  std::ifstream stream(path);
+  if (!stream) return std::unexpected("Failed to open " + path.string());
+  std::stringstream content;
+  content << stream.rdbuf();
+  return fromString(content.str(), path);
+}
+
+std::expected<ThemeFile::ParseResult, std::string> ThemeFile::fromString(std::string_view content,
+                                                                         const fs::path &path) {
   try {
     InitData data;
     DiagnosticList diagnostics;
-    auto file = toml::parse_file(path.string());
+    auto file = toml::parse(content, path.string());
     QString filename = QString::fromStdString(path.filename().string());
 
     data.id = filename.slice(0, filename.lastIndexOf('.'));

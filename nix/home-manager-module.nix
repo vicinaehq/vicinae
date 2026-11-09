@@ -7,13 +7,14 @@ self: {
   cfg = config.programs.vicinae;
 
   inherit (pkgs.stdenv.hostPlatform) system;
-  soulverVicinaePkg = self.packages.${system}.with-soulver or null;
+  basePkg = self.packages.${system}.default;
+  soulverVicinaePkg = self.lib.${system}.withSoulver basePkg;
   vicinaePkg =
     if cfg.package != null
     then cfg.package
     else if cfg.enableSoulver && soulverVicinaePkg != null
     then soulverVicinaePkg
-    else self.packages.${system}.default;
+    else basePkg;
 
   jsonFormat = pkgs.formats.json {};
   tomlFormat = pkgs.formats.toml {};

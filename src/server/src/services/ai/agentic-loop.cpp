@@ -1,0 +1,520 @@
+#include <QTimer>
+#include <algorithm>
+#include <format>
+#include <utility>
+
+#include "agentic-loop.hpp"
+
+namespace AI {
+
+// not anonymous: glaze can't reflect types with internal linkage
+namespace agentic_loop {
+
+struct LoadToolsInput {
+  std::vector<std::string> names;
+};
+
+} // namespace agentic_loop
+
+namespace {
+
+constexpr std::size_t MAX_SUMMARY_LENGTH = 160;
+
+using agentic_loop::LoadToolsInput;
+
+std::string_view firstSentence(std::string_view text) {
+  if (const auto end = text.find(". "); end != std::string_view::npos) text = text.substr(0, end + 1);
+  return truncateUtf8(text, MAX_SUMMARY_LENGTH).text;
+}
+
+class LoadToolsTool : public AbstractTool {
+public:
+  explicit LoadToolsTool(const Agent &agent) : m_agent(agent) {}
+
+  std::string name() const override { return std::string(Agent::LOAD_TOOLS); }
+
+  std::string description() const override {
+    std::string out = "Load tools so that you can call them. The tools listed below are not available until "
+                      "they are loaded. Loaded tools stay available for the rest of the conversation. Load "
+                      "every tool you need in a single call.\n\nTools that can be loaded:";
+    for (const auto *tool : m_agent.availableTools()) {
+      if (tool->isDeferred())
+        out += std::format("\n- {}: {}", tool->name(), firstSentence(tool->description()));
+    }
+    return out;
+  }
+
+  std::string generateInputSchema() const override {
+    return R"({"type":"object","properties":{"names":{"type":"array","items":{"type":"string"},"minItems":1,"description":"Names of the tools to load."}},"required":["names"],"additionalProperties":false})";
+  }
+
+  std::optional<std::string> invocationSummary(std::string_view arguments) const override {
+    LoadToolsInput input;
+    if (glz::read_json(input, arguments)) return std::nullopt;
+    return join(input.names);
+  }
+
+  RawToolTask runRaw(std::string_view arguments) override {
+    LoadToolsInput input;
+    if (const auto error = glz::read_json(input, arguments))
+      return ready(std::unexpected(glz::format_error(error, arguments)));
+
+    const auto tools = m_agent.availableTools();
+    const auto loadable = [&](const std::string &name) {
+      return std::ranges::any_of(
+          tools, [&](const AbstractTool *tool) { return tool->isDeferred() && tool->name() == name; });
+    };
+
+    std::vector<std::string> loaded;
+    std::vector<std::string> unknown;
+    loaded.reserve(input.names.size());
+    unknown.reserve(input.names.size());
+    for (auto &name : input.names)
+      (loadable(name) ? loaded : unknown).emplace_back(std::move(name));
+
+    if (loaded.empty())
+      return ready(std::unexpected(
+          std::format("Unknown tools: {}. Only the tools listed in the load_tools description can be loaded.",
+                      join(unknown))));
+
+    auto out = std::format("Loaded {}. You can call them now.", join(loaded));
+    if (!unknown.empty())
+      out += std::format(" These tools do not exist and were not loaded: {}.", join(unknown));
+    return ready(ToolOutput{.content = std::move(out)});
+  }
+
+private:
+  static std::string join(const std::vector<std::string> &names) {
+    std::string out;
+    for (const auto &name : names) {
+      if (!out.empty()) out += ", ";
+      out += name;
+    }
+    return out;
+  }
+
+  static RawToolTask ready(RawToolResult result) {
+    return {QtFuture::makeReadyValueFuture(std::move(result)), {}};
+  }
+
+  const Agent &m_agent;
+};
+
+} // namespace
+
+Agent::Agent(CompletionFactory factory, SystemPrompt systemPrompt, QObject *parent)
+    : QObject(parent), m_factory(std::move(factory)), m_systemPrompt(std::move(systemPrompt)) {
+  m_messages.reserve(16);
+  m_calls.reserve(8);
+  m_tools.reserve(4);
+  m_pendingCalls.reserve(4);
+  m_loadTools = std::make_unique<LoadToolsTool>(*this);
+}
+
+Agent::~Agent() { stopWork(); }
+
+void Agent::restoreHistory(std::vector<Message> messages, std::vector<ToolCall> calls) {
+  Q_ASSERT(!running());
+  m_messages = std::move(messages);
+  m_calls = std::move(calls);
+  m_nextId = 1;
+
+  for (const auto &message : m_messages)
+    m_nextId = std::max(m_nextId, message.id + 1);
+  for (const auto &call : m_calls)
+    m_nextId = std::max(m_nextId, call.id + 1);
+}
+
+bool Agent::addTool(std::unique_ptr<AbstractTool> tool) {
+  if (running() || !tool ||
+      std::ranges::any_of(m_tools, [&](const auto &existing) { return existing->name() == tool->name(); }))
+    return false;
+
+  m_tools.emplace_back(std::move(tool));
+  return true;
+}
+
+std::vector<AbstractTool *> Agent::availableTools() const {
+  std::vector<AbstractTool *> tools;
+  tools.reserve(m_tools.size());
+  for (const auto &tool : m_tools) {
+    if (tool->isEnabled() && std::ranges::contains(m_options.tools, tool->name()))
+      tools.emplace_back(tool.get());
+  }
+  return tools;
+}
+
+std::vector<std::string> Agent::loadedTools() const {
+  std::vector<std::string> names;
+  names.reserve(m_calls.size());
+  for (const auto &call : m_calls) {
+    if (call.call.name != LOAD_TOOLS || call.state != ToolState::Succeeded) continue;
+    LoadToolsInput input;
+    if (glz::read_json(input, call.call.arguments)) continue;
+    for (auto &name : input.names)
+      names.emplace_back(std::move(name));
+  }
+  return names;
+}
+
+const Agent::ToolCall *Agent::toolCall(Id id) const {
+  const auto it = std::ranges::lower_bound(m_calls, id, {}, &ToolCall::id);
+  return it != m_calls.end() && it->id == id ? &*it : nullptr;
+}
+
+Agent::Id Agent::appendMessage(ChatMessage message) {
+  const auto id = m_nextId++;
+  if (m_messages.size() == m_messages.capacity()) m_messages.reserve(m_messages.size() * 2);
+  m_messages.emplace_back(Message{id, std::move(message)});
+
+  return id;
+}
+
+bool Agent::send(ChatMessage message, Options options) {
+  if (running() || m_finishing || message.role != ChatRole::User || message.parts.empty() ||
+      options.maxSteps < 1)
+    return false;
+
+  m_options = std::move(options);
+  m_steps = 0;
+  m_error.reset();
+  m_model.reset();
+  m_activity = ResponseActivity::Waiting;
+  m_state = State::Running;
+  const auto generation = ++m_generation;
+
+  emit stateChanged();
+  if (!running() || generation != m_generation) return true;
+
+  appendMessage(std::move(message));
+  if (!running() || generation != m_generation) return true;
+
+  schedule([this] { complete(); });
+  return true;
+}
+
+void Agent::schedule(std::function<void()> action) {
+  QTimer::singleShot(0, this, [this, generation = m_generation, action = std::move(action)] {
+    if (running() && generation == m_generation) action();
+  });
+}
+
+Agent::Message &Agent::assistantMessage() {
+  if (!m_assistantMessage) m_assistantMessage = appendMessage(ChatMessage{.role = ChatRole::Assistant});
+  return *std::ranges::find(m_messages, *m_assistantMessage, &Message::id);
+}
+
+void Agent::complete() {
+  if (m_steps++ >= m_options.maxSteps) {
+    finish(State::Failed, tr("The agent reached its step limit.").toStdString());
+    return;
+  }
+
+  m_assistantMessage.reset();
+  m_pendingCalls.clear();
+  m_nextCall = 0;
+
+  const auto generation = m_generation;
+  setActivity(ResponseActivity::Waiting);
+  if (!running() || generation != m_generation) return;
+
+  ChatCompletionPayload payload{.thinking = m_options.thinking,
+                                .maxOutputTokens = m_options.maxOutputTokens,
+                                .oneShot = m_options.oneShot};
+  payload.messages.reserve(m_messages.size() + 1);
+  if (m_systemPrompt) {
+    if (auto prompt = m_systemPrompt(); !prompt.empty())
+      payload.messages.emplace_back(ChatMessage::fromText(ChatRole::System, std::move(prompt)));
+  }
+  for (const auto &message : m_messages)
+    payload.messages.emplace_back(message.content);
+
+  const auto loaded = loadedTools();
+  bool hasDeferred = false;
+  payload.tools.reserve(m_options.tools.size() + 1);
+  for (auto *tool : availableTools()) {
+    if (!tool->isDeferred() || std::ranges::contains(loaded, tool->name()))
+      payload.tools.emplace_back(tool);
+    else
+      hasDeferred = true;
+  }
+  if (hasDeferred) payload.tools.emplace_back(m_loadTools.get());
+
+  m_completion = m_factory(m_options.model, payload);
+  if (!m_completion) {
+    finish(State::Failed, tr("This model is not available right now.").toStdString());
+    return;
+  }
+
+  m_model = m_completion->model();
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::activityChanged, this,
+          [this, generation](ResponseActivity activity) {
+            if (running() && generation == m_generation) setActivity(activity);
+          });
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::dataAdded, this,
+          [this, generation](const std::string &text) {
+            if (running() && generation == m_generation) receiveText(text);
+          });
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::toolCallRequested, this,
+          [this, generation](const ToolCallPart &call) {
+            if (running() && generation == m_generation) receiveToolCall(call);
+          });
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::errorOccurred, this,
+          [this, generation](const std::string &reason) {
+            if (running() && generation == m_generation) finish(State::Failed, reason);
+          });
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::finished, this, [this, generation] {
+    if (!running() || generation != m_generation) return;
+
+    disconnect(m_completion.get(), nullptr, this, nullptr);
+    m_completion.reset();
+
+    // A provider may emit several calls in one response. Execute only after the response is complete.
+    schedule([this] { executeNextTool(); });
+  });
+
+  const auto completion = m_completion;
+  if (!completion->start() && running() && generation == m_generation)
+    finish(State::Failed, tr("Could not start the response.").toStdString());
+}
+
+void Agent::receiveText(const std::string &text) {
+  if (text.empty()) return;
+
+  const auto generation = m_generation;
+  setActivity(ResponseActivity::Responding);
+  if (!running() || generation != m_generation) return;
+  auto &message = assistantMessage();
+  if (!running() || generation != m_generation) return;
+
+  auto &parts = message.content.parts;
+
+  if (!parts.empty() && std::holds_alternative<TextPart>(parts.back()))
+    std::get<TextPart>(parts.back()).text += text;
+  else {
+    parts.reserve(parts.size() + 1);
+    parts.emplace_back(TextPart{text});
+  }
+
+  emit textAdded(message.id, text);
+}
+
+void Agent::receiveToolCall(const ToolCallPart &call) {
+  if (call.id.empty() || call.name.empty() ||
+      std::ranges::any_of(m_pendingCalls, [&](Id id) { return toolCall(id)->call.id == call.id; })) {
+    finish(State::Failed, tr("The model returned an invalid tool call.").toStdString());
+    return;
+  }
+
+  const auto generation = m_generation;
+  setActivity(ResponseActivity::PreparingTool);
+  if (!running() || generation != m_generation) return;
+  auto &message = assistantMessage();
+  if (!running() || generation != m_generation) return;
+
+  message.content.parts.reserve(message.content.parts.size() + 1);
+  message.content.parts.emplace_back(call);
+
+  const auto id = m_nextId++;
+  if (m_calls.size() == m_calls.capacity()) m_calls.reserve(m_calls.size() * 2);
+
+  const AbstractTool *tool = call.name == LOAD_TOOLS ? m_loadTools.get() : nullptr;
+  if (!tool) {
+    const auto it =
+        std::ranges::find_if(m_tools, [&](const auto &tool) { return tool->name() == call.name; });
+    if (it != m_tools.end()) tool = it->get();
+  }
+  m_calls.emplace_back(ToolCall{
+      .id = id, .call = call, .summary = tool ? tool->invocationSummary(call.arguments) : std::nullopt});
+  m_pendingCalls.emplace_back(id);
+
+  emit toolAdded(id);
+}
+
+void Agent::executeNextTool() {
+  const auto generation = m_generation;
+
+  if (m_nextCall == m_pendingCalls.size()) {
+    if (m_pendingCalls.empty())
+      finish(State::Completed);
+    else
+      schedule([this] { complete(); });
+    return;
+  }
+
+  const auto id = m_pendingCalls[m_nextCall++];
+  auto &call = *std::ranges::find(m_calls, id, &ToolCall::id);
+  auto *tool = findTool(call.call.name);
+
+  if (!tool) {
+    recordToolResult(id, ToolState::Failed, {.content = tr("This tool is not enabled.").toStdString()});
+    if (running() && generation == m_generation) schedule([this] { executeNextTool(); });
+    return;
+  }
+
+  if (tool->requiresApproval(call.call.arguments)) {
+    call.state = ToolState::AwaitingApproval;
+    m_pendingApproval = id;
+    setActivity(ResponseActivity::AwaitingApproval);
+    if (!running() || generation != m_generation) return;
+    emit toolChanged(id);
+    if (!running() || generation != m_generation) return;
+    emit approvalChanged();
+    return;
+  }
+
+  runTool(id, *tool);
+}
+
+AbstractTool *Agent::findTool(std::string_view name) const {
+  if (name == LOAD_TOOLS) return m_loadTools.get();
+  const auto tool = std::ranges::find_if(m_tools, [&](const auto &tool) {
+    return tool->name() == name && tool->isEnabled() && std::ranges::contains(m_options.tools, tool->name());
+  });
+  return tool != m_tools.end() ? tool->get() : nullptr;
+}
+
+bool Agent::resolveApproval(Id id, bool approved) {
+  if (!running() || m_pendingApproval != id) return false;
+
+  const auto generation = m_generation;
+  m_pendingApproval.reset();
+  emit approvalChanged();
+  if (!running() || generation != m_generation) return true;
+
+  const auto &call = *toolCall(id);
+  auto *tool = approved ? findTool(call.call.name) : nullptr;
+
+  if (!tool) {
+    if (approved)
+      recordToolResult(id, ToolState::Failed, {.content = tr("This tool is not enabled.").toStdString()});
+    else
+      recordToolResult(id, ToolState::Declined,
+                       {.content = tr("The user declined to run this tool.").toStdString()});
+    if (running() && generation == m_generation) schedule([this] { executeNextTool(); });
+    return true;
+  }
+
+  runTool(id, *tool);
+  return true;
+}
+
+void Agent::runTool(Id id, AbstractTool &tool) {
+  const auto generation = m_generation;
+  auto &call = *std::ranges::find(m_calls, id, &ToolCall::id);
+
+  m_toolTimer.start();
+  call.state = ToolState::Running;
+  setActivity(ResponseActivity::RunningTool);
+  if (!running() || generation != m_generation) return;
+  emit toolChanged(id);
+  if (!running() || generation != m_generation) return;
+
+  AbstractTool::RawToolTask task;
+
+  try {
+    task = tool.runRaw(call.call.arguments);
+  } catch (const std::exception &error) {
+    if (!running() || generation != m_generation) return;
+
+    recordToolResult(id, ToolState::Failed, {.content = error.what()});
+    if (running() && generation == m_generation) schedule([this] { executeNextTool(); });
+    return;
+  }
+
+  if (!running() || generation != m_generation) {
+    if (task.cancel) task.cancel();
+    return;
+  }
+
+  m_cancelTool = std::move(task.cancel);
+  auto *watcher = new QFutureWatcher<AbstractTool::RawToolResult>(this);
+  m_toolWatcher = watcher;
+
+  connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher, id, generation] {
+    if (!running() || generation != m_generation) return;
+
+    m_toolWatcher = nullptr;
+    m_cancelTool = {};
+    watcher->deleteLater();
+
+    AbstractTool::RawToolResult result =
+        std::unexpected(tr("The tool did not return a result.").toStdString());
+    try {
+      if (!watcher->isCanceled() && watcher->future().resultCount() > 0) result = watcher->result();
+    } catch (const std::exception &error) { result = std::unexpected(error.what()); }
+
+    const auto state = result && !result->failed ? ToolState::Succeeded : ToolState::Failed;
+    recordToolResult(id, state,
+                     result ? std::move(*result) : ToolOutput{.content = std::move(result.error())});
+    if (running() && generation == m_generation) schedule([this] { executeNextTool(); });
+  });
+
+  watcher->setFuture(task.future);
+}
+
+void Agent::recordToolResult(Id id, ToolState state, ToolOutput output) {
+  auto &call = *std::ranges::find(m_calls, id, &ToolCall::id);
+  if (call.state == ToolState::Running) call.duration = std::chrono::milliseconds(m_toolTimer.elapsed());
+  call.state = state;
+  output.failed = state == ToolState::Failed;
+  call.output = std::move(output);
+
+  appendMessage(
+      ChatMessage{.role = ChatRole::Tool, .parts = {ToolResultPart{call.call.id, call.output->content}}});
+  emit toolChanged(id);
+}
+
+void Agent::stopWork() {
+  ++m_generation;
+
+  if (auto completion = std::exchange(m_completion, {})) {
+    disconnect(completion.get(), nullptr, this, nullptr);
+    completion->abort();
+  }
+
+  if (auto *watcher = std::exchange(m_toolWatcher, nullptr)) {
+    disconnect(watcher, nullptr, this, nullptr);
+    watcher->deleteLater();
+  }
+
+  if (auto cancel = std::exchange(m_cancelTool, {})) cancel();
+}
+
+void Agent::finish(State state, std::optional<std::string> error) {
+  if (!running() || m_finishing) return;
+
+  m_finishing = true;
+  stopWork();
+
+  for (const auto id : m_pendingCalls) {
+    if (!toolCall(id)->output)
+      recordToolResult(id, ToolState::Cancelled,
+                       {.content = tr("Tool execution was cancelled.").toStdString()});
+  }
+
+  m_pendingCalls.clear();
+  const bool hadApproval = std::exchange(m_pendingApproval, std::nullopt).has_value();
+  m_state = state;
+  m_error = std::move(error);
+
+  if (hadApproval) emit approvalChanged();
+  emit stateChanged();
+  m_finishing = false;
+  emit finished();
+}
+
+void Agent::cancel() { finish(State::Cancelled); }
+
+void Agent::setActivity(ResponseActivity activity) {
+  if (m_activity == activity) return;
+  m_activity = activity;
+  emit activityChanged();
+}
+
+} // namespace AI

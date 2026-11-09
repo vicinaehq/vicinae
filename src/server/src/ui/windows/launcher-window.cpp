@@ -25,6 +25,12 @@
 #include "ui/windows/overlay-controller.hpp"
 #include "builtins/vicinae/bug-report-url.hpp"
 #include "builtins/vicinae/vicinae-store-view-host.hpp"
+#include "builtins/ai/ai.hpp"
+#include "builtins/ai/ai.hpp"
+#include "services/ai/ai-preferences.hpp"
+#include "services/ai/ai-service.hpp"
+#include "services/ai/ai-service.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/settings/settings-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/update/update-service.hpp"
@@ -85,6 +91,17 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
 
   updateLayerShellProps();
   buildFooterMenu();
+
+  auto *services = m_ctx.services;
+  connect(services->ai(), &AI::Service::modelsChanged, this, &LauncherWindow::refreshQuickAIAvailability);
+  connect(services->config(), &config::Manager::configChanged, this,
+          &LauncherWindow::refreshQuickAIAvailability);
+  connect(services->rootItemManager(), &RootItemManager::itemsChanged, this,
+          &LauncherWindow::refreshQuickAIAvailability);
+  connect(m_ctx.navigation.get(), &NavigationController::searchTextTampered, this,
+          [this](const QString &text) { updateCanAskAI(text); });
+  connect(this, &LauncherWindow::atRootChanged, this, [this] { updateCanAskAI(); });
+  refreshQuickAIAvailability();
 
   m_commandHoldTimer.setSingleShot(true);
   m_commandHoldTimer.setInterval(COMMAND_HOLD_DELAY);
@@ -257,7 +274,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
   connect(nav, &NavigationController::invalidCompletionFired, this,
           &LauncherWindow::completerValidationFailed);
 
-  if (m_hudBridge) { connect(nav, &NavigationController::showHudRequested, m_hudBridge, &HudBridge::show); }
+  if (m_hudBridge) {
+    connect(nav, &NavigationController::showHudRequested, m_hudBridge, &HudBridge::show);
+    connect(nav, &NavigationController::dictationHudRequested, m_hudBridge, &HudBridge::showDictation);
+  }
 
   auto *toast = m_ctx.services->toastService();
   connect(toast, &ToastService::toastActivated, this, [this](const Toast *t) {
@@ -516,6 +536,7 @@ void LauncherWindow::handleCurrentViewChanged() {
   updateWindowTitle();
 
   bool const isRoot = nav->viewStackSize() == 1;
+
   if (m_atRoot != isRoot) {
     m_atRoot = isRoot;
     emit atRootChanged();
@@ -606,7 +627,42 @@ void LauncherWindow::applyPendingWindowTitle(int framesRemaining) {
 
 void LauncherWindow::forwardSearchText(const QString &text) {
   m_ctx.navigation->broadcastSearchText(text);
+  updateCanAskAI();
   tryCompaction();
+}
+
+void LauncherWindow::handleTab() {
+  if (!m_canAskAI || !m_ctx.navigation->isRootSearch()) return;
+
+  m_ctx.navigation->activateEntrypoint(
+      EntrypointId{std::string(QuickAI::REPOSITORY_ID), std::string(QuickAI::COMMAND_ID)},
+      {.props = {.fallbackText = m_ctx.navigation->searchText()}});
+}
+
+QVariantList LauncherWindow::askAITokens() const { return Keyboard::Shortcut(Qt::Key_Tab).toDisplayTokens(); }
+
+void LauncherWindow::refreshQuickAIAvailability() {
+  auto *services = m_ctx.services;
+  const EntrypointId id{std::string(QuickAI::REPOSITORY_ID), std::string(QuickAI::COMMAND_ID)};
+  const auto &providers = services->config()->value().providers;
+  const auto provider = providers.find(id.provider);
+  auto *root = services->rootItemManager();
+
+  const bool enabled = (provider == providers.end() || provider->second.enabled.value_or(true)) &&
+                       root->itemMetadata(id).enabled;
+  const auto model = AI::defaultModel(*services->config());
+
+  m_quickAIAvailable = enabled && model && services->ai()->isAvailable(*model, AI::Capability::Completion);
+  updateCanAskAI();
+}
+
+void LauncherWindow::updateCanAskAI() { updateCanAskAI(m_ctx.navigation->searchText()); }
+
+void LauncherWindow::updateCanAskAI(const QString &searchText) {
+  const bool value = m_quickAIAvailable && m_atRoot && !searchText.isEmpty();
+  if (value == m_canAskAI) return;
+  m_canAskAI = value;
+  emit canAskAIChanged();
 }
 
 bool LauncherWindow::forwardKey(int rawKey, int modifiers, int scanCode) {

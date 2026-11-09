@@ -21,8 +21,10 @@ OsRelease::OsRelease() {
     QString const k = parts[0];
     QString v = parts[1];
 
-    if (v.startsWith('"')) { v = v.sliced(1); }
-    if (v.endsWith('"')) { v = v.sliced(0, v.size() - 1); }
+    // Values may be quoted with double or single quotes.
+    if (v.size() >= 2 && (v.front() == '"' || v.front() == '\'') && v.back() == v.front()) {
+      v = v.sliced(1, v.size() - 2);
+    }
 
     if (k == "PRETTY_NAME") {
       m_prettyName = v;

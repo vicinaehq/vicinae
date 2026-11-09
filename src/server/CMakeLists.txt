@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae-server)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Svg Concurrent Quick Qml GuiPrivate QuickDialogs2 QuickControls2 ShaderTools LinguistTools Multimedia)
 
 if (USE_SYSTEM_KF6)
 	find_package(KF6SyntaxHighlighting REQUIRED)
@@ -25,8 +25,9 @@ endif()
 list(APPEND LIBS
 	Qt6::Network Qt6::Svg Qt6::Concurrent Qt6::Quick Qt6::Qml
 	Qt6::GuiPrivate # for deeper integration with wayland protocols, we need wl_surface
-	Qt6::QuickDialogs2 Qt6::QuickControls2
+	Qt6::QuickDialogs2 Qt6::QuickControls2 Qt6::Multimedia
 	${CMARK_LIBRARY} ${CMARK_EXT_LIBRARY}
+	JKQTMathText6
 	zip
 	qt6keychain
 	pugixml
@@ -39,6 +40,49 @@ list(APPEND LIBS
 	sqlcipher
 	numen::numen
 )
+
+function(vicinae_fetch_inference_engines)
+	include(FetchContent)
+
+	set(BUILD_SHARED_LIBS OFF)
+
+	set(GGML_NATIVE OFF)
+	set(GGML_METAL_EMBED_LIBRARY ON)
+
+	if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+		set(GGML_SSE42 ON)
+		set(GGML_AVX ON)
+		set(GGML_AVX2 ON)
+		set(GGML_FMA ON)
+		set(GGML_F16C ON)
+		set(GGML_BMI2 ON)
+		set(GGML_AVX512 OFF)
+	endif()
+
+	set(WHISPER_BUILD_TESTS OFF)
+	set(WHISPER_BUILD_EXAMPLES OFF)
+
+	set(EXCLUDE_ARG)
+	if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
+		set(EXCLUDE_ARG EXCLUDE_FROM_ALL)
+	endif()
+
+	FetchContent_Declare(whisper
+	  GIT_REPOSITORY https://github.com/ggml-org/whisper.cpp
+	  GIT_TAG        v1.9.3
+	  GIT_SHALLOW    TRUE
+	  ${EXCLUDE_ARG}
+	)
+	FetchContent_MakeAvailable(whisper)
+endfunction()
+
+if (LOCAL_AI)
+	add_compile_definitions(LOCAL_AI)
+	if (NOT SYSTEM_INFERENCE_ENGINES)
+		vicinae_fetch_inference_engines()
+	endif()
+endif()
+
 
 list(APPEND LIBS KF6::SyntaxHighlighting)
 
@@ -289,6 +333,7 @@ set(SRCS
 
 	./database/vicinae/migrations.qrc
 	./database/clipboard/migrations.qrc
+	./database/conversations/migrations.qrc
 
 
 	src/internal/keyboard/keybind-manager.hpp
@@ -345,8 +390,39 @@ set(SRCS
 	src/builtins/vicinae/manage-fallback-model.cpp
 	src/builtins/vicinae/manage-fallback-view-host.hpp
 	src/builtins/vicinae/manage-fallback-view-host.cpp
+	src/builtins/ai/ai.hpp
+	src/builtins/ai/ai-extension.hpp
+	src/builtins/ai/conversation-history-view-host.hpp
+	src/builtins/ai/ai-extension.cpp
+	src/builtins/ai/chat-session.hpp
+	src/builtins/ai/chat-session.cpp
+	src/builtins/ai/conversation-list-model.hpp
+	src/builtins/ai/conversation-list-model.cpp
+	src/builtins/ai/quick-ai-view-host.hpp
+	src/builtins/ai/quick-ai-view-host.cpp
+	src/builtins/ai/chat-document-model.cpp
+	src/builtins/ai/chat-document-model.hpp
+	src/builtins/ai/chat-conversation-model.hpp
+	src/builtins/ai/chat-conversation-model.cpp
+	src/builtins/dictation/dictation.hpp
+	src/builtins/dictation/dictation-preferences.hpp
+	src/builtins/dictation/dictation-extension.hpp
+	src/builtins/dictation/dictation-history-view-host.hpp
+	src/builtins/dictation/vocabulary-view-host.hpp
+	src/builtins/dictation/vocabulary-form-view-host.hpp
+	src/builtins/dictation/vocabulary-form-view-host.cpp
+	src/builtins/dictation/style-form-view-host.hpp
+	src/builtins/dictation/style-form-view-host.cpp
+	src/builtins/dictation/styles-view-host.hpp
+	src/builtins/dictation/styles-view-host.cpp
+	src/builtins/dictation/dictation-command.hpp
+	src/builtins/dictation/dictation-command.cpp
+	src/builtins/dictation/transcribe-view-host.hpp
+	src/builtins/dictation/transcribe-view-host.cpp
 	src/builtins/system/system-run-model.hpp
 	src/builtins/system/system-run-model.cpp
+	src/builtins/system/bash-tool.hpp
+	src/builtins/system/bash-tool.cpp
 	src/builtins/system/system-run-view-host.hpp
 	src/builtins/system/system-run-view-host.cpp
 	src/builtins/developer/create-extension-success-view-host.hpp
@@ -374,6 +450,22 @@ set(SRCS
 	src/services/root-item-manager/typed-root-provider.hpp
 	src/services/root-item-manager/root-item-manager.cpp
 	src/services/root-item-manager/search-history.cpp
+	src/utils/json-file.hpp
+	src/services/dictation/dictation-service.hpp
+	src/services/dictation/dictation-service.cpp
+	src/services/dictation/dictation-action.hpp
+	src/services/dictation/dictation-session.hpp
+	src/services/dictation/dictation-session.cpp
+	src/services/dictation/transcription-session.hpp
+	src/services/dictation/transcription-session.cpp
+	src/services/dictation/dictation-history.hpp
+	src/services/dictation/dictation-history.cpp
+	src/services/dictation/dictation-vocabulary.hpp
+	src/services/dictation/dictation-vocabulary.cpp
+	src/services/dictation/dictation-styles.hpp
+	src/services/dictation/dictation-styles.cpp
+	src/services/dictation/dictation-rewrite.hpp
+	src/services/dictation/dictation-rewrite.cpp
 	src/services/root-item-manager/visit-tracker.cpp
 	
 	src/services/app-service/app-service.hpp
@@ -422,6 +514,7 @@ set(SRCS
 	src/ui/views/base-view.cpp
 
 	src/command/preference-schema.hpp
+	src/command/settings-page.hpp
 	src/command/typed-command.hpp
 	src/command/command-controller.hpp
 	src/command/command-controller.cpp
@@ -441,8 +534,14 @@ set(SRCS
 	src/extension/extension-command-runtime.cpp
 	src/extension/api/ui-service.hpp
 	src/extension/api/wallpaper-service.hpp
+	src/extension/api/ai-service.hpp
 
 	src/builtins/vicinae/vicinae-extension.cpp
+	src/builtins/vicinae/config-tools.cpp
+	src/builtins/vicinae/theme-tools.cpp
+	src/builtins/clipboard/clipboard-tools.cpp
+	src/builtins/file/file-tools.cpp
+	src/builtins/system/open-tool.cpp
 
 	src/builtins/file/search-files-model.hpp
 	src/builtins/file/search-files-model.cpp
@@ -539,6 +638,58 @@ set(SRCS
 	src/services/snippet/abstract-snippet-server.hpp
 	src/services/snippet/null-snippet-server.hpp
 	src/services/snippet/snippet-db.cpp
+
+	src/services/audio/audio-recorder.hpp
+	src/services/audio/audio-recorder.cpp
+
+	src/services/ai/ai-provider.hpp
+	src/services/ai/ai-service.hpp
+	src/services/ai/ai-preferences.hpp
+	src/services/ai/ai-provider-types.hpp
+	src/services/ai/ai-service.cpp
+	src/services/ai/agentic-loop.hpp
+	src/services/ai/agentic-loop.cpp
+	src/services/ai/history-compaction.cpp
+	src/services/ai/conversation-store.cpp
+	src/services/ai/conversation-store.hpp
+	src/common/file-attachment.hpp
+	src/services/ai/tool-contribution.hpp
+	src/services/ai/tool-policy.hpp
+	src/services/ai/tool-registry.hpp
+	src/services/ai/tool-registry.cpp
+	src/services/ai/ai-preferences.cpp
+	src/services/ai/ai-capability.hpp
+	src/services/ai/speech-language-catalogue.hpp
+	src/services/ai/cli/cli-process.hpp
+	src/services/ai/cli/cli-process.cpp
+	src/services/ai/cli/claude-code-provider.hpp
+	src/services/ai/cli/claude-code-provider.cpp
+	src/services/ai/cli/codex-provider.hpp
+	src/services/ai/cli/codex-provider.cpp
+	src/services/ai/ollama/ollama-ai-provider.hpp
+	src/services/ai/ollama/ollama-ai-provider.cpp
+	src/services/ai/mistral/mistral-provider.hpp
+	src/services/ai/mistral/mistral-provider.cpp
+	src/services/ai/openai/openai-chat-completion.hpp
+	src/services/ai/openai/openai-compatible-provider.hpp
+	src/services/ai/openai/openai-compatible-provider.cpp
+	src/services/ai/openai/openai-provider.hpp
+	src/services/ai/openai/openai-provider.cpp
+	src/services/ai/groq/groq-provider.hpp
+	src/services/ai/groq/groq-provider.cpp
+	src/services/ai/llamacpp/llamacpp-provider.hpp
+	src/services/ai/llamacpp/llamacpp-provider.cpp
+	src/services/ai/lemonade/lemonade-provider.hpp
+	src/services/ai/lemonade/lemonade-provider.cpp
+	src/services/ai/audiocpp/audiocpp-provider.hpp
+	src/services/ai/audiocpp/audiocpp-provider.cpp
+	src/services/ai/openrouter/openrouter-provider.hpp
+	src/services/ai/openrouter/openrouter-provider.cpp
+	src/services/local-model-registry/local-model-catalogue.hpp
+	src/services/local-model-registry/model-download.hpp
+	src/services/local-model-registry/model-download.cpp
+	src/services/local-model-registry/local-model-registry.hpp
+	src/services/local-model-registry/local-model-registry.cpp
 
 	# UI
 	src/ui/bridges/keybind-bridge.hpp
@@ -665,12 +816,39 @@ set(SRCS
 	src/builtins/raycast/raycast-store-detail-host.cpp
 	src/builtins/vicinae/vicinae-store-detail-host.hpp
 	src/builtins/vicinae/vicinae-store-detail-host.cpp
+	src/ui/quick/math-renderer.hpp
+	src/ui/quick/math-renderer.cpp
+	src/ui/quick/markdown-math.hpp
+	src/ui/quick/markdown-math.cpp
 	src/ui/quick/markdown-model.hpp
 	src/ui/quick/markdown-model.cpp
-	src/ui/quick/text-selection-controller.hpp
-	src/ui/quick/text-selection-controller.cpp
-	src/builtins/vicinae/store-intro-view-host.hpp
-	src/builtins/vicinae/store-intro-view-host.cpp
+	src/ui/quick/attachment-model.cpp
+	src/ui/quick/attachment-model.hpp
+	src/ui/quick/attachment-content.cpp
+	src/ui/quick/attachment-content.hpp
+	src/ui/quick/document-controller.cpp
+	src/ui/quick/document-controller.hpp
+	src/ui/quick/document-layout.cpp
+	src/ui/quick/document-layout.hpp
+	src/ui/quick/document-model.hpp
+	src/ui/quick/document-search.hpp
+	src/ui/quick/document-search.cpp
+	src/ui/quick/document-match-geometry.hpp
+	src/ui/quick/document-search-highlighter.hpp
+	src/ui/quick/document-search-highlighter.cpp
+	src/ui/quick/document-scope.cpp
+	src/ui/quick/document-scope.hpp
+	src/ui/quick/document-selection.cpp
+	src/ui/quick/document-selection.hpp
+	src/ui/quick/document-table-model.cpp
+	src/ui/quick/document-table-model.hpp
+	src/ui/quick/document-text-images.cpp
+	src/ui/quick/document-text-images.hpp
+	src/ui/quick/index-model.hpp
+	src/ui/quick/markdown-document.cpp
+	src/ui/quick/markdown-document.hpp
+	src/ui/views/intro-view-host.hpp
+	src/ui/views/intro-view-host.cpp
 	src/builtins/font/font-browser-view-host.hpp
 	src/builtins/font/font-grid-model.hpp
 	src/builtins/font/font-grid-model.cpp
@@ -681,6 +859,10 @@ set(SRCS
 	src/ui/windows/hud-bridge.hpp
 	src/ui/windows/hud-bridge.cpp
 
+	src/ui/windows/chat-window.hpp
+	src/ui/windows/chat-window.cpp
+	src/ui/windows/chat-window-controller.hpp
+	src/ui/windows/chat-window-controller.cpp
 	src/ui/windows/settings-window.hpp
 	src/ui/windows/settings-window.cpp
 	src/ui/windows/onboarding-window.hpp
@@ -693,6 +875,8 @@ set(SRCS
 	src/ui/settings/settings-sidebar-model.cpp
 	src/ui/settings/extension-settings-model.hpp
 	src/ui/settings/extension-settings-model.cpp
+	src/ui/settings/ai-settings-model.hpp
+	src/ui/settings/ai-settings-model.cpp
 	src/ui/settings/preference-form-model.hpp
 	src/ui/settings/preference-form-model.cpp
 	src/ui/settings/provider-command-model.hpp
@@ -714,6 +898,8 @@ endif()
 
 if (APPLE)
 	list(APPEND SRCS
+		src/services/media-control/macos/mediaremote-media-control.hpp
+		src/services/media-control/macos/mediaremote-media-control.mm
 		src/ui/image/mac-file-icon-loader.hpp
 		src/ui/image/mac-file-icon-loader.mm
 		src/ui/image/mac-file-thumbnail-loader.hpp
@@ -1092,6 +1278,22 @@ figura_compile(
 	OUTPUT ipc-server.hpp
 )
 
+if (LOCAL_AI)
+	figura_compile(
+		CLIENT
+		PROTO "${FIGURA_DIR}/inference.fig"
+		LANG glaze-qt
+		NAMESPACE inference_gen
+		OUTPUT inference-client.hpp
+	)
+	list(APPEND SRCS
+		src/services/ai/local/local-provider.hpp
+		src/services/ai/local/local-provider.cpp
+		src/services/ai/local/inference-runtime.hpp
+		src/services/ai/local/inference-runtime.cpp
+	)
+endif()
+
 figura_compile(
 	CLIENT
 	PROTO "${FIGURA_DIR}/snippet.fig"
@@ -1130,6 +1332,9 @@ endif()
 
 vicinae_enable_utf8(${TARGET})
 
+include(EmbedFile)
+embed_file(${TARGET} "${EXTRA_DIR}/theme-template.toml" THEME_TEMPLATE)
+
 if(APPLE)
 	set(VICINAE_BUNDLE_EXECUTABLE "Vicinae")
 	set(VICINAE_BUNDLE_SHORT_VERSION "${VICINAE_GIT_TAG}")
@@ -1161,6 +1366,7 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ScrollViewport.qml
 	src/ui/qml/controls/ListScrollViewport.qml
 	src/ui/qml/launcher/LauncherPage.qml
+	src/ui/qml/launcher/LauncherView.qml
 	src/ui/qml/list/HoverResetOnModelChange.qml
 	src/ui/qml/list/HoverResetOnShow.qml
 	src/ui/qml/views/RootSearchList.qml
@@ -1188,6 +1394,20 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/EmptyView.qml
 	src/ui/qml/views/EmojiGridView.qml
 	src/ui/qml/controls/ViciButton.qml
+	src/ui/qml/controls/ViciSpinner.qml
+	src/ui/qml/controls/ViciIconButton.qml
+	src/ui/qml/controls/ChatComposer.qml
+	src/ui/qml/controls/BackdropSurface.qml
+	src/ui/qml/controls/ScrollFade.qml
+	src/ui/qml/controls/ToolInvocation.qml
+	src/ui/qml/controls/ToolInvocationHeader.qml
+	src/ui/qml/controls/ToolApprovalPanel.qml
+	src/ui/qml/controls/FilePickerDialog.qml
+	src/ui/qml/attachments/AttachmentCard.qml
+	src/ui/qml/attachments/AttachmentMenu.qml
+	src/ui/qml/attachments/AttachmentPreview.qml
+	src/ui/qml/attachments/AttachmentList.qml
+	src/ui/qml/attachments/AttachmentDropArea.qml
 	src/ui/qml/controls/ViciScrollBar.qml
 	src/ui/qml/controls/ViciTextCursor.qml
 	src/ui/qml/controls/ViciDivider.qml
@@ -1195,6 +1415,27 @@ set(VICINAE_QML_FILES
 	src/ui/qml/controls/ViciToolTip.qml
 	src/ui/qml/views/ExtensionView.qml
 	src/ui/qml/views/MarkdownDetailView.qml
+	src/ui/qml/views/ChatSessionComposer.qml
+	src/ui/qml/views/ChatGreeting.qml
+	src/ui/qml/views/ChatTranscript.qml
+	src/ui/qml/chat/ChatWindow.qml
+	src/ui/qml/chat/ChatSidebar.qml
+	src/ui/qml/chat/ChatConversation.qml
+	src/ui/qml/views/QuickAIView.qml
+	src/ui/qml/views/ChatDocumentBlock.qml
+	src/ui/qml/views/ChatScrollController.qml
+	src/ui/qml/document/DocumentText.qml
+	src/ui/qml/document/DocumentView.qml
+	src/ui/qml/document/DocumentFindBar.qml
+	src/ui/qml/markdown/MarkdownBlock.qml
+	src/ui/qml/document/DocumentSelectionMenu.qml
+	src/ui/qml/controls/PulsingDots.qml
+	src/ui/qml/controls/ViciModal.qml
+	src/ui/qml/controls/ViciMenu.qml
+	src/ui/qml/controls/ViciMenuItem.qml
+	src/ui/qml/controls/AudioLevelMeter.qml
+	src/ui/qml/controls/AudioWaveform.qml
+	src/ui/qml/views/TranscribeView.qml
 	src/ui/qml/views/ExtensionGridView.qml
 	src/ui/qml/actions/ActionPanelPopover.qml
 	src/ui/qml/actions/ActionListPanel.qml
@@ -1219,6 +1460,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/form/FormSeparator.qml
 	src/ui/qml/views/SnippetFormView.qml
 	src/ui/qml/views/AliasFormView.qml
+	src/ui/qml/views/VocabularyFormView.qml
+	src/ui/qml/views/DictationStyleFormView.qml
 	src/ui/qml/views/ShortcutFormView.qml
 	src/ui/qml/form/PlaceholderCompleter.qml
 	src/ui/qml/form/PlaceholderHighlight.qml
@@ -1228,11 +1471,12 @@ set(VICINAE_QML_FILES
 	src/ui/qml/views/DetailListView.qml
 	src/ui/qml/views/StoreListingView.qml
 	src/ui/qml/views/StoreDetailView.qml
-	src/ui/qml/views/StoreIntroView.qml
+	src/ui/qml/views/IntroView.qml
 	src/ui/qml/detail/ImageViewer.qml
 	src/ui/qml/markdown/MarkdownView.qml
 	src/ui/qml/markdown/MarkdownText.qml
 	src/ui/qml/markdown/MdHeading.qml
+	src/ui/qml/markdown/MdMath.qml
 	src/ui/qml/markdown/MdParagraph.qml
 	src/ui/qml/markdown/MdCodeBlock.qml
 	src/ui/qml/markdown/MdList.qml
@@ -1279,11 +1523,22 @@ set(VICINAE_QML_FILES
 	src/ui/qml/settings/ShortcutsSettingsPage.qml
 	src/ui/qml/settings/ExtensionSettingsPage.qml
 	src/ui/qml/settings/AboutSettingsPage.qml
+	src/ui/qml/settings/AISettingsPage.qml
+	src/ui/qml/settings/ToolSettingsRow.qml
+	src/ui/qml/settings/SettingsSubpageRow.qml
+	src/ui/qml/settings/AIProvidersOverview.qml
+	src/ui/qml/settings/AIProviderPicker.qml
+	src/ui/qml/settings/AIProviderView.qml
+	src/ui/qml/settings/AIModelRow.qml
+	src/ui/qml/settings/AIModelDeleteDialog.qml
+	src/ui/qml/settings/AIProviderSetupDialog.qml
+	src/ui/qml/settings/SettingsSectionTitle.qml
 	src/ui/qml/form/ShortcutRecorderField.qml
 	src/ui/qml/form/ShortcutRecorderCapture.qml
 	src/ui/qml/actions/ShortcutRecorderPanel.qml
 	src/ui/qml/form/ShortcutField.qml
 	src/ui/qml/settings/SettingsPreferenceForm.qml
+	src/ui/qml/settings/LongTextPreferenceDialog.qml
 	src/ui/qml/views/MissingPreferenceView.qml
 	src/ui/qml/views/OAuthOverlayView.qml
 	src/ui/qml/hud/HudWindow.qml
@@ -1331,6 +1586,7 @@ if(APPLE)
 		src/ui/qml/controls/ContentDividerMacOS.qml
 		src/ui/qml/controls/PopupItemBackgroundMacOS.qml
 		src/ui/qml/controls/GlassSurfaceMacOS.qml
+		src/ui/qml/chat/ChatWindowMacOS.qml
 		src/ui/qml/settings/SettingsWindowMacOS.qml
 	)
 	set_source_files_properties(src/ui/qml/controls/MaterialColorsMacOS.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
@@ -1338,6 +1594,8 @@ endif()
 
 if(WIN32)
 	list(APPEND VICINAE_QML_FILES
+		src/ui/qml/chat/ChatWindowWindows.qml
+		src/ui/qml/settings/SettingsWindowWindows.qml
 		src/ui/qml/launcher/LauncherWindowWindows.qml
 		src/ui/qml/hud/HudWindowWindows.qml
 	)
@@ -1350,10 +1608,14 @@ foreach(qml_file IN LISTS VICINAE_QML_FILES)
 endforeach()
 
 set(VICINAE_QML_SOURCES
+	src/ui/quick/attachment-model.hpp
+	src/ui/quick/attachment-content.hpp
 	src/ui/quick/source-blend-rect.hpp
 	src/ui/quick/vici-image-item.hpp
 	src/ui/quick/hover-activation.hpp
 	src/ui/quick/hover-activation.cpp
+	src/ui/quick/modal-guard.hpp
+	src/ui/quick/modal-guard.cpp
 	src/ui/quick/document-highlighter.hpp
 	src/ui/quick/document-highlighter.cpp
 	src/ui/quick/match-highlighter.hpp
@@ -1366,7 +1628,12 @@ set(VICINAE_QML_SOURCES
 	src/ui/views/detail-list-view-host.hpp
 	src/ui/views/store-detail-host.hpp
 	src/ui/quick/markdown-model.hpp
-	src/ui/quick/text-selection-controller.hpp
+	src/ui/quick/markdown-document.hpp
+	src/ui/quick/document-controller.hpp
+	src/ui/quick/document-selection.hpp
+	src/ui/quick/document-scope.hpp
+	src/ui/quick/document-model.hpp
+	src/ui/quick/index-model.hpp
 	src/ui/quick/window-material-attached.hpp
 	src/ui/quick/window-material-attached.cpp
 	src/ui/quick/popup-placement-attached.hpp
@@ -1445,11 +1712,38 @@ target_include_directories(${TARGET} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/developer
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/snippet
 	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/root
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/ai
+	${CMAKE_CURRENT_SOURCE_DIR}/src/builtins/dictation
 	${CMAKE_SOURCE_DIR}/vendor/kirigami-wheelhandler
 	${CMAKE_SOURCE_DIR}/vendor/sqlcipher)
+FetchContent_GetProperties(jkqtmathtext SOURCE_DIR MATHTEXT_SOURCE_DIR)
+set_source_files_properties("${MATHTEXT_SOURCE_DIR}/LICENSE" PROPERTIES QT_RESOURCE_ALIAS "JKQTMathText.txt")
+set_source_files_properties("${MATHTEXT_SOURCE_DIR}/lib/jkqtmathtext/resources/xits/OFL.txt"
+	PROPERTIES QT_RESOURCE_ALIAS "XITS.txt")
+qt_add_resources(${TARGET} math_licenses
+	PREFIX "/licenses"
+	FILES "${MATHTEXT_SOURCE_DIR}/LICENSE" "${MATHTEXT_SOURCE_DIR}/lib/jkqtmathtext/resources/xits/OFL.txt"
+)
+
+if (APPLE)
+	add_dependencies(${TARGET} MediaRemoteAdapter)
+	FetchContent_GetProperties(mediaremoteadapter SOURCE_DIR MEDIAREMOTE_ADAPTER_SOURCE_DIR)
+	set_source_files_properties("${MEDIAREMOTE_ADAPTER_SOURCE_DIR}/LICENSE" PROPERTIES QT_RESOURCE_ALIAS "MediaRemoteAdapter.txt")
+	qt_add_resources(${TARGET} mediaremote_licenses
+		PREFIX "/licenses"
+		FILES "${MEDIAREMOTE_ADAPTER_SOURCE_DIR}/LICENSE"
+	)
+	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR VICINAE_DEV_MODE)
+		target_compile_definitions(${TARGET} PRIVATE
+			MEDIAREMOTE_ADAPTER_DEV_SCRIPT="${MEDIAREMOTE_ADAPTER_SOURCE_DIR}/bin/mediaremote-adapter.pl"
+			MEDIAREMOTE_ADAPTER_DEV_FRAMEWORK="$<TARGET_BUNDLE_DIR:MediaRemoteAdapter>"
+		)
+	endif()
+endif()
+
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 if(APPLE)
-	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-framework Security" "-F/System/Library/PrivateFrameworks" "-framework login")
+	target_link_libraries(${TARGET} PRIVATE "-framework AppKit" "-framework AVFoundation" "-framework QuartzCore" "-framework UniformTypeIdentifiers" "-framework Carbon" "-framework CoreServices" "-framework ApplicationServices" "-framework CoreAudio" "-framework CoreFoundation" "-framework Security" "-F/System/Library/PrivateFrameworks" "-framework login")
 endif()
 
 if(APPLE AND DEFINED ENV{VICINAE_CODESIGN_IDENTITY})
@@ -1499,7 +1793,7 @@ qt_add_translations(${TARGET}
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_zh_TW.ts
 	PLURALS_TS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_en.ts
 	SOURCES ${VICINAE_I18N_SOURCES}
-	LUPDATE_OPTIONS -locations relative -no-obsolete
+	LUPDATE_OPTIONS -locations relative -no-obsolete -tr-function-alias QT_TRANSLATE_NOOP+=LOCAL_MODEL_TR,QT_TRANSLATE_NOOP+=SPEECH_LANGUAGE_TR,QT_TRANSLATE_NOOP+=AI_PROVIDER_TR
 	MERGE_QT_TRANSLATIONS
 	QT_TRANSLATION_CATALOGS qtbase qtdeclarative
 )
@@ -1529,4 +1823,19 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)
 	target_compile_features(${TEST_TARGET} PUBLIC cxx_std_23)
+endif()
+
+if(BUILD_TESTS)
+	find_package(Qt6 REQUIRED COMPONENTS Test)
+	qt_add_executable(vicinae-document-tests
+		tests/document-invariants.cpp
+		src/builtins/ai/chat-conversation-model.cpp
+		src/builtins/ai/chat-conversation-model.hpp
+		src/ui/quick/document-text-images.cpp
+		src/ui/quick/document-text-images.hpp
+		src/ui/quick/math-renderer.cpp
+		src/ui/quick/math-renderer.hpp
+	)
+	target_link_libraries(vicinae-document-tests PRIVATE JKQTMathText6 Qt6::Quick Qt6::Svg Qt6::Test)
+	target_compile_features(vicinae-document-tests PRIVATE cxx_std_23)
 endif()

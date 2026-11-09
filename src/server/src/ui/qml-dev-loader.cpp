@@ -41,9 +41,15 @@ QmlDevLoader::QmlDevLoader(QString sourceDir)
 }
 
 QUrl QmlDevLoader::intercept(const QUrl &url, DataType type) {
-  if (type != QmlFile && type != JavaScriptFile) return url;
   if (url.scheme() != QLatin1String("qrc") || !url.path().startsWith(QLatin1String("/qt/qml/Vicinae/")))
     return url;
+  // Loader.source, StackView.push and setSource resolve through UrlString, not QmlFile
+  if (type == UrlString) {
+    const QString path = url.path();
+    if (!path.endsWith(QLatin1String(".qml")) && !path.endsWith(QLatin1String(".js"))) return url;
+  } else if (type != QmlFile && type != JavaScriptFile) {
+    return url;
+  }
 
   auto it = m_files.constFind(url.fileName());
   if (it == m_files.constEnd()) return url;

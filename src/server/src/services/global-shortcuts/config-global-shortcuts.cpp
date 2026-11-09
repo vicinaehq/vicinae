@@ -36,7 +36,10 @@ void ConfigGlobalShortcuts::apply() {
       next.emplace_back(m_service.bind(
           id, {.trigger = Keyboard::Shortcut::fromString(QString::fromStdString(*item.shortcut)),
                .description = describeCommand(eid),
-               .onActivated = [this, eid] { m_navigation.activateEntrypoint(eid); },
+               .onActivated =
+                   [this, eid] {
+                     m_navigation.activateEntrypoint(eid, {.props = {.source = LaunchSource::Shortcut}});
+                   },
                .onReleased = [this, eid] { m_navigation.releaseEntrypoint(eid); }}));
     }
   }

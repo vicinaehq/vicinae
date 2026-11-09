@@ -1,5 +1,6 @@
-#include "ui/windows/hud-bridge.hpp"
 #include <QQuickWindow>
+#include <utility>
+#include "ui/windows/hud-bridge.hpp"
 
 HudBridge::HudBridge(QObject *parent) : QObject(parent) {
   m_timer.setSingleShot(true);
@@ -8,6 +9,11 @@ HudBridge::HudBridge(QObject *parent) : QObject(parent) {
 }
 
 void HudBridge::show(const QString &title, const std::optional<ImageURL> &icon) {
+  if (m_dictation) {
+    m_pendingMessage = Message{title, icon};
+    return;
+  }
+  clearDictation();
   m_text = title;
   m_icon = icon ? ImageUrl(*icon) : ImageUrl();
   emit contentChanged();
@@ -32,3 +38,32 @@ void HudBridge::hide() {
 }
 
 void HudBridge::registerWindow(QQuickWindow *window) { m_window = window; }
+
+void HudBridge::showDictation(DictationSession *session) {
+  clearDictation();
+  m_timer.stop();
+  m_dictation = session;
+  emit dictationChanged();
+
+  connect(session, &DictationSession::finished, this, [this, session]() {
+    if (m_dictation != session) return;
+    clearDictation();
+    hide();
+    if (auto message = std::exchange(m_pendingMessage, std::nullopt)) { show(message->text, message->icon); }
+  });
+
+  m_visible = true;
+  emit visibleChanged();
+
+  if (m_window) {
+    m_window->show();
+    m_window->raise();
+  }
+}
+
+void HudBridge::clearDictation() {
+  if (!m_dictation) return;
+  m_dictation->disconnect(this);
+  m_dictation = nullptr;
+  emit dictationChanged();
+}

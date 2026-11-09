@@ -24,7 +24,7 @@ signals:
 public:
   SnippetService(const std::filesystem::path &path, AbstractSnippetServer &snippetServer, WindowManager &wm,
                  AppRuntime &appRuntime, AppService &appService, ClipboardService &clipboard)
-      : m_server(snippetServer), m_db(path), m_wm(wm), m_appRuntime(appRuntime), m_appService(appService),
+      : m_server(snippetServer), m_db(path), m_appRuntime(appRuntime), m_appService(appService),
         m_clipboard(clipboard) {
     connect(&m_server, &AbstractSnippetServer::keywordTriggered, this, &SnippetService::handleKeywordTrigger);
     connect(&m_server, &AbstractSnippetServer::undoTriggered, this, &SnippetService::handleUndo);
@@ -105,6 +105,32 @@ public:
 
   SnippetDatabase *database() { return &m_db; }
 
+  struct VoiceExpansion {
+    std::string name;
+    QString text;
+  };
+
+  /**
+   * The snippet to deliver when a whole dictation is its voice phrase. Dictation pastes the result rather
+   * than typing it, so a {cursor} placeholder has no effect.
+   */
+  std::optional<VoiceExpansion> expandVoicePhrase(const QString &transcript,
+                                                  const std::optional<std::string> &appId) {
+    const auto *snippet = m_db.findByVoicePhrase(transcript.toStdString());
+    if (!snippet) return std::nullopt;
+
+    const auto *text = std::get_if<snippet::TextSnippet>(&snippet->data);
+    if (!text) return std::nullopt;
+
+    if (!snippet->apps.empty() && (!appId || !std::ranges::contains(snippet->apps, *appId))) {
+      return std::nullopt;
+    }
+
+    const SnippetExpander expander(m_appService);
+    return VoiceExpansion{.name = snippet->name,
+                          .text = expander.expandToString(QString::fromStdString(text->text), {})};
+  }
+
 private:
   struct UndoRecord {
     std::string trigger;
@@ -140,25 +166,11 @@ private:
 
     bool terminal = false;
 
-    // we have focus, and we are a layer so it means that the current window might be:
-    // - the previously focused window, not invalidated by the layer grab (Hyprland does this)
-    // - nullptr as there is technically no window owning focus (a layer is not a window)
-    // this logic is here so that we don't mistakingly craft the shortcut from stale data when expanding in
-    // vicinae itself (e.g using ctrl+shift+v because the last window is a terminal, but we are really
-    // focusing the vicinae window)
-    // FIXME: currently this logic will, if not using layer shell, null the window even if the currently
-    // focused window is the vicinae one. The only problem with this is that app filtering won't work on the
-    // vicinae window itself. We probably can fix this by just checking whether we are a layer here, but
-    // requires pulling config...
-    std::shared_ptr<AbstractApplication> frontmost = nullptr;
-
-    if (!(QGuiApplication::focusWindow() && !m_wm.provider()->supportsFocusHandoffDetection())) {
-      frontmost = m_appRuntime.frontmostApp();
-    }
+    const auto frontmost = m_appRuntime.focusTargetApp();
 
     if (frontmost) { terminal = frontmost->isTerminalEmulator() || frontmost->isTerminalApp(); }
 
-    const auto &apps = snippet->expansion->apps;
+    const auto &apps = snippet->apps;
 
     if (!apps.empty()) {
       if (!frontmost || !std::ranges::contains(apps, frontmost->id().toStdString())) return;
@@ -206,7 +218,6 @@ private:
 
   AbstractSnippetServer &m_server;
   SnippetDatabase m_db;
-  WindowManager &m_wm;
   AppRuntime &m_appRuntime;
   AppService &m_appService;
   ClipboardService &m_clipboard;
