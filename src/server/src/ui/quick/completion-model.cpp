@@ -6,11 +6,22 @@
 
 template <> struct fuzzy::FuzzySearchable<CompletionModel::Item> {
   static fuzzy::Match score(const CompletionModel::Item &item, const fuzzy::Query &query) {
-    return fuzzy::scoreWeighted({{item.title, 1.0}}, query);
+    return fuzzy::scoreWeighted({{item.title, 1.0}, {item.section, 0.3}}, query);
   }
 };
 
 CompletionModel::CompletionModel(QObject *parent) : QAbstractListModel(parent) {}
+
+CompletionModel::Item CompletionModel::makeItem(const QVariantMap &data, std::string section) {
+  auto title = data.value(QStringLiteral("title")).toString();
+  if (title.isEmpty()) title = data.value(QStringLiteral("displayName")).toString();
+  return {
+      .title = title.toStdString(),
+      .section = std::move(section),
+      .iconSource = data.value(QStringLiteral("iconSource")).toString(),
+      .data = data,
+  };
+}
 
 void CompletionModel::setItems(const QVariantList &items) {
   beginResetModel();
@@ -20,14 +31,7 @@ void CompletionModel::setItems(const QVariantList &items) {
   Section section;
   section.items.reserve(items.size());
   for (const auto &v : items) {
-    const auto m = v.toMap();
-    auto title = m.value(QStringLiteral("title")).toString();
-    if (title.isEmpty()) title = m.value(QStringLiteral("displayName")).toString();
-    section.items.push_back({
-        .title = title.toStdString(),
-        .iconSource = m.value(QStringLiteral("iconSource")).toString(),
-        .data = m,
-    });
+    section.items.emplace_back(makeItem(v.toMap(), {}));
   }
   m_sections.push_back(std::move(section));
 
@@ -47,16 +51,10 @@ void CompletionModel::setSections(const QVariantList &sections) {
     Section section;
     section.name = sm.value(QStringLiteral("title")).toString();
     const auto items = sm.value(QStringLiteral("items")).toList();
+    const auto name = section.name.toStdString();
     section.items.reserve(items.size());
     for (const auto &v : items) {
-      const auto m = v.toMap();
-      auto title = m.value(QStringLiteral("title")).toString();
-      if (title.isEmpty()) title = m.value(QStringLiteral("displayName")).toString();
-      section.items.push_back({
-          .title = title.toStdString(),
-          .iconSource = m.value(QStringLiteral("iconSource")).toString(),
-          .data = m,
-      });
+      section.items.emplace_back(makeItem(v.toMap(), name));
     }
     m_sections.push_back(std::move(section));
   }
@@ -75,13 +73,7 @@ void CompletionModel::updateItem(const QVariantMap &item) {
     for (int i = 0; std::cmp_less(i, items.size()); ++i) {
       if (items[i].data.value(QStringLiteral("id")).toString() != id) continue;
 
-      auto title = item.value(QStringLiteral("title")).toString();
-      if (title.isEmpty()) title = item.value(QStringLiteral("displayName")).toString();
-      items[i] = {
-          .title = title.toStdString(),
-          .iconSource = item.value(QStringLiteral("iconSource")).toString(),
-          .data = item,
-      };
+      items[i] = makeItem(item, std::move(items[i].section));
 
       for (int f = 0; std::cmp_less(f, m_flat.size()); ++f) {
         const auto &fi = m_flat[f];
