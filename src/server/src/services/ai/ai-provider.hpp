@@ -174,7 +174,6 @@ class AbstractChatCompletionStream : public QObject {
 signals:
   void activityChanged(ResponseActivity activity) const;
   void toolCallRequested(const ToolCallPart &call) const;
-  // The current state of a tool the model runs itself, emitted whenever it changes.
   void toolActivityChanged(const ToolActivity &activity) const;
   // The model waits for the user to allow a tool reported through `toolActivityChanged`.
   void approvalRequested(const std::string &callId) const;
@@ -253,9 +252,6 @@ struct ManagedModel {
   double progress = -1.0;
 };
 
-/**
- * Why a provider cannot be used right now.
- */
 struct ProviderStatus {
   enum class Kind : std::uint8_t { Busy, Error };
 

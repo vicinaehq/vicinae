@@ -64,9 +64,6 @@ public:
   QFuture<TranscriptionResult> transcribe(Audio::Recording recording,
                                           const TranscriptionOptions &opts = {}) override;
 
-  /**
-   * Run a turn of `stream`, in the session it was given or a new one.
-   */
   void runTurn(AcpChatStream *stream);
   void cancelTurn(const std::string &sessionId);
   void respond(const std::string &requestId, std::string_view result);
@@ -85,12 +82,14 @@ private:
   };
 
   static constexpr std::size_t MAX_SESSIONS = 6;
+  static constexpr auto STARTUP_TIMEOUT = std::chrono::seconds(60);
   static constexpr auto IDLE_TIMEOUT = std::chrono::minutes(10);
 
   void connectAgent(ReadyHandler handler);
   void launch();
   void stop(const std::string &reason);
-  void request(std::string_view method, std::string params, ResponseHandler handler = {});
+  void request(std::string_view method, std::string params, ResponseHandler handler = {},
+               std::optional<std::chrono::milliseconds> timeout = std::nullopt);
   void handleLine(const std::string &line);
   void handleRequest(const std::string &id, std::string_view method, std::string_view params);
   void handleUpdate(std::string_view params);

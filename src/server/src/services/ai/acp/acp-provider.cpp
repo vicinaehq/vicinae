@@ -8,6 +8,7 @@
 #include <glaze/json.hpp>
 #include <QCryptographicHash>
 #include <QProcess>
+#include <QUuid>
 #include "generated/version.h"
 #include "services/ai/ai-provider-types.hpp"
 #include "services/ai/cli/cli-process.hpp"
@@ -186,9 +187,6 @@ struct Command {
   QStringList arguments;
 };
 
-/**
- * What runs the agent when the user set no command: its own executable, or its adapter through npx.
- */
 std::optional<Command> defaultCommand(const AgentPreset &preset) {
   if (auto program = findCliExecutable({}, qs(preset.executable)))
     return Command{*program, qs(preset.arguments).split(QLatin1Char(' '), Qt::SkipEmptyParts)};
@@ -422,7 +420,7 @@ public:
 
     auto callId = request.toolCall.toolCallId.value_or(std::format("permission-{}", requestId));
     request.toolCall.toolCallId = callId;
-    reportTool(request.toolCall);
+    callId = *reportTool(request.toolCall);
     if (!m_active) return;
 
     m_permissions.emplace_back(
@@ -450,14 +448,14 @@ private:
     std::vector<acp::PermissionOption> options;
   };
 
-  void reportTool(const acp::Update &update) {
-    if (!update.toolCallId) return;
+  std::optional<std::string> reportTool(const acp::Update &update) {
+    if (!update.toolCallId) return std::nullopt;
 
-    auto tool = std::ranges::find_if(
-        m_tools, [&](const ToolActivity &tool) { return tool.call.id == *update.toolCallId; });
-    if (tool == m_tools.end()) {
-      m_tools.emplace_back(ToolActivity{.call = {.id = *update.toolCallId, .name = "other"}});
-      tool = m_tools.end() - 1;
+    auto [entry, inserted] = m_tools.try_emplace(*update.toolCallId);
+    auto *tool = &entry->second;
+    if (inserted) {
+      tool->call.id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
+      tool->call.name = "other";
     }
 
     if (update.kind) tool->call.name = *update.kind;
@@ -473,7 +471,9 @@ private:
     }
     if (!tool->output && present(update.rawOutput)) tool->output = truncated(update.rawOutput->str);
 
+    auto id = tool->call.id;
     emit toolActivityChanged(*tool);
+    return id;
   }
 
   QPointer<AcpProvider> m_provider;
@@ -483,7 +483,7 @@ private:
   QByteArray m_history;
   ChatMessage m_message;
   std::string m_text;
-  std::vector<ToolActivity> m_tools;
+  std::unordered_map<std::string, ToolActivity> m_tools;
   std::vector<Permission> m_permissions;
   bool m_oneShot = false;
   bool m_active = false;
@@ -528,7 +528,6 @@ std::vector<::Preference> agentFields(std::string_view type) {
   const auto *preset = findPreset(type);
   if (!preset) return fields;
 
-  // the command that runs when the field is left empty
   const auto command = defaultCommand(*preset).value_or(
       Command{qs(preset->executable), qs(preset->arguments).split(QLatin1Char(' '), Qt::SkipEmptyParts)});
   for (auto &field : fields) {
@@ -653,26 +652,27 @@ void AcpProvider::launch() {
   });
   m_process->start();
 
-  request("initialize",
-          std::format(R"({{"protocolVersion":1,"clientCapabilities":{{"fs":{{"readTextFile":false,)"
-                      R"("writeTextFile":false}},"terminal":false}},"clientInfo":{{"name":"vicinae",)"
-                      R"("title":"Vicinae","version":"{}"}}}})",
-                      VICINAE_GIT_TAG),
-          [this](Response response) {
-            if (!response) {
-              stop(response.error().message);
-              return;
-            }
-            if (auto result = fromJson<acp::InitializeResult>(*response);
-                result && result->agentCapabilities) {
-              const auto &caps = *result->agentCapabilities;
-              m_supportsImages = caps.promptCapabilities && caps.promptCapabilities->image;
-              m_supportsClose = caps.sessionCapabilities && present(caps.sessionCapabilities->close);
-            }
-            m_ready = true;
-            for (const auto &handler : std::exchange(m_waiting, {}))
-              handler({});
-          });
+  request(
+      "initialize",
+      std::format(R"({{"protocolVersion":1,"clientCapabilities":{{"fs":{{"readTextFile":false,)"
+                  R"("writeTextFile":false}},"terminal":false}},"clientInfo":{{"name":"vicinae",)"
+                  R"("title":"Vicinae","version":"{}"}}}})",
+                  VICINAE_GIT_TAG),
+      [this](Response response) {
+        if (!response) {
+          stop(response.error().message);
+          return;
+        }
+        if (auto result = fromJson<acp::InitializeResult>(*response); result && result->agentCapabilities) {
+          const auto &caps = *result->agentCapabilities;
+          m_supportsImages = caps.promptCapabilities && caps.promptCapabilities->image;
+          m_supportsClose = caps.sessionCapabilities && present(caps.sessionCapabilities->close);
+        }
+        m_ready = true;
+        for (const auto &handler : std::exchange(m_waiting, {}))
+          handler({});
+      },
+      STARTUP_TIMEOUT);
 }
 
 void AcpProvider::stop(const std::string &reason) {
@@ -688,7 +688,6 @@ void AcpProvider::stop(const std::string &reason) {
   for (auto &[id, handler] : std::exchange(m_pending, {})) {
     if (handler) handler(std::unexpected(RpcError{.message = reason}));
   }
-  // only waits while the agent starts
   for (const auto &handler : std::exchange(m_waiting, {}))
     handler(std::unexpected(ProviderStatus{
         .message = tr("Could not start %1.").arg(qs(displayName())).toStdString(),
@@ -698,13 +697,27 @@ void AcpProvider::stop(const std::string &reason) {
   m_sessions.clear();
 }
 
-void AcpProvider::request(std::string_view method, std::string params, ResponseHandler handler) {
+void AcpProvider::request(std::string_view method, std::string params, ResponseHandler handler,
+                          std::optional<std::chrono::milliseconds> timeout) {
   if (!m_process) {
     if (handler) handler(std::unexpected(RpcError{.message = "The agent is not running."}));
     return;
   }
 
   const auto id = m_nextId++;
+  if (handler && timeout) {
+    auto *timer = new QTimer(this);
+    timer->setSingleShot(true);
+    connect(timer, &QTimer::timeout, this, [this] {
+      stop(tr("Timed out waiting for %1 to respond.").arg(qs(displayName())).toStdString());
+    });
+    timer->start(*timeout);
+    handler = [timer, handler = std::move(handler)](Response response) {
+      timer->stop();
+      timer->deleteLater();
+      handler(std::move(response));
+    };
+  }
   if (handler) m_pending[id] = std::move(handler);
   m_process->write(
       std::format(R"({{"jsonrpc":"2.0","id":{},"method":"{}","params":{}}})", id, method, params));
@@ -785,26 +798,28 @@ void AcpProvider::newSession(std::function<void(std::expected<std::string, RpcEr
       closeSession(oldest->id);
   }
 
-  request("session/new", toJson(acp::NewSessionParams{.cwd = cliWorkingDirectory().toStdString()}),
-          [this, handler = std::move(handler)](Response response) {
-            if (!response) {
-              handler(std::unexpected(std::move(response.error())));
-              return;
-            }
-            auto result = fromJson<acp::NewSessionResult>(*response);
-            if (!result) {
-              handler(std::unexpected(RpcError{.message = result.error()}));
-              return;
-            }
-            if (present(result->configOptions)) readModels(result->configOptions->str);
-            if (m_models.empty()) readModels("[]");
-            m_sessions.emplace_back(Session{
-                .id = result->sessionId,
-                .fingerprint = QByteArray{},
-                .model = m_defaultModel.value_or(std::string{}),
-            });
-            handler(std::move(result->sessionId));
-          });
+  request(
+      "session/new", toJson(acp::NewSessionParams{.cwd = cliWorkingDirectory().toStdString()}),
+      [this, handler = std::move(handler)](Response response) {
+        if (!response) {
+          handler(std::unexpected(std::move(response.error())));
+          return;
+        }
+        auto result = fromJson<acp::NewSessionResult>(*response);
+        if (!result) {
+          handler(std::unexpected(RpcError{.message = result.error()}));
+          return;
+        }
+        if (present(result->configOptions)) readModels(result->configOptions->str);
+        if (m_models.empty()) readModels("[]");
+        m_sessions.emplace_back(Session{
+            .id = result->sessionId,
+            .fingerprint = QByteArray{},
+            .model = m_defaultModel.value_or(std::string{}),
+        });
+        handler(std::move(result->sessionId));
+      },
+      STARTUP_TIMEOUT);
 }
 
 void AcpProvider::readModels(std::string_view json) {
@@ -1026,7 +1041,6 @@ AcpProvider::createChatCompletion(std::string_view modelId, const ChatCompletion
     auto candidates = m_sessions | std::views::filter([&](const Session &session) {
                         return !session.busy && session.fingerprint == fingerprint;
                       });
-    // switching models is cheap, but not switching is cheaper
     const auto preferred = std::ranges::find(candidates, model->id, &Session::model);
     if (preferred != candidates.end()) {
       session = &*preferred;
