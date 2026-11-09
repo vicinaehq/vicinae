@@ -189,6 +189,7 @@ if (WIN32)
 endif()
 
 add_subdirectory(src/browser-extension)
+add_subdirectory(src/mcp)
 add_subdirectory(${LIB_DIR}/common)
 add_subdirectory(${LIB_DIR}/script-command)
 add_subdirectory(${LIB_DIR}/glyph)

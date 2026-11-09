@@ -68,6 +68,7 @@ ClipboardExtension::ClipboardExtension() {
                 .title = tr("Search Clipboard History"),
                 .description = tr("Find entries in your clipboard history."),
                 .icon = ImageURL::builtin(BuiltinIcon::CopyClipboard),
+                .annotations = {.readOnly = true, .openWorld = false},
                 .create = [] {
                   return std::make_unique<SearchClipboardTool>(*ServiceRegistry::instance()->clipman());
                 }});
@@ -75,6 +76,7 @@ ClipboardExtension::ClipboardExtension() {
                 .title = tr("Read Clipboard Entry"),
                 .description = tr("Read the full text of a clipboard history entry."),
                 .icon = ImageURL::builtin(BuiltinIcon::CopyClipboard),
+                .annotations = {.readOnly = true, .openWorld = false},
                 .create = [] {
                   return std::make_unique<ReadClipboardEntryTool>(*ServiceRegistry::instance()->clipman());
                 }});

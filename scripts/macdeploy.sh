@@ -25,10 +25,11 @@ SIGN_IDENTITY="${VICINAE_CODESIGN_IDENTITY:--}"
 SERVER_BIN="$BUILD_DIR/bin/vicinae-server"
 CLI_BIN="$BUILD_DIR/bin/vicinae"
 BROWSER_LINK_BIN="$BUILD_DIR/bin/vicinae-browser-link"
+MCP_BIN="$BUILD_DIR/bin/vicinae-mcp"
 INFERENCE_BIN="$BUILD_DIR/bin/vicinae-inference"
 INFO_PLIST="$BUILD_DIR/Info.plist"
 
-for f in "$SERVER_BIN" "$CLI_BIN" "$BROWSER_LINK_BIN" "$INFERENCE_BIN" "$INFO_PLIST"; do
+for f in "$SERVER_BIN" "$CLI_BIN" "$BROWSER_LINK_BIN" "$MCP_BIN" "$INFERENCE_BIN" "$INFO_PLIST"; do
   if [[ ! -f "$f" ]]; then
     echo "macdeploy.sh: missing $f (build first)" >&2
     exit 1
@@ -56,7 +57,9 @@ cp -R "$SRC_DIR/extra/themes" "$BUNDLE/Contents/Resources/themes"
 cp "$SERVER_BIN" "$BUNDLE/Contents/MacOS/Vicinae"
 cp "$CLI_BIN" "$BUNDLE/Contents/MacOS/vicinae-cli"
 cp "$BROWSER_LINK_BIN" "$BUNDLE/Contents/MacOS/vicinae-browser-link"
-HELPERS=("$BUNDLE/Contents/MacOS/vicinae-cli" "$BUNDLE/Contents/MacOS/vicinae-browser-link")
+cp "$MCP_BIN" "$BUNDLE/Contents/MacOS/vicinae-mcp"
+HELPERS=("$BUNDLE/Contents/MacOS/vicinae-cli" "$BUNDLE/Contents/MacOS/vicinae-browser-link"
+         "$BUNDLE/Contents/MacOS/vicinae-mcp")
 # only built with LOCAL_AI
 if [[ -f "$INFERENCE_BIN" ]]; then
   cp "$INFERENCE_BIN" "$BUNDLE/Contents/MacOS/vicinae-inference"
@@ -207,7 +210,7 @@ done < <(find "$BUNDLE/Contents/MacOS" -type f -print0)
 
 echo "==> strip"
 strip -x "$BUNDLE/Contents/MacOS/Vicinae" "$BUNDLE/Contents/MacOS/vicinae-cli" \
-      "$BUNDLE/Contents/MacOS/vicinae-browser-link"
+      "$BUNDLE/Contents/MacOS/vicinae-browser-link" "$BUNDLE/Contents/MacOS/vicinae-mcp"
 
 echo "==> signing bundle"
 sign_args=(--force --sign "$SIGN_IDENTITY")

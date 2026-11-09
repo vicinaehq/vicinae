@@ -13,7 +13,8 @@
 
 namespace AI {
 class AbstractChatCompletionStream;
-}
+class McpServer;
+} // namespace AI
 
 class IpcService : public ipc_gen::AbstractIpc {
 public:
@@ -34,6 +35,7 @@ public:
                                                                     ipc_gen::FsQueryParams params) override;
   ipc_gen::Result<ipc_gen::AiListModelsResponse>::Future aiListModels() override;
   ipc_gen::Result<ipc_gen::AiAskResponse>::Future aiAsk(ipc_gen::AiAskRequest req) override;
+  ipc_gen::Result<void>::Future mcpSend(std::string message) override;
 
   // set once the client identified itself as a browser extension
   const std::optional<ipc_gen::BrowserInitRequest> &browser() const { return m_browser; }
@@ -48,6 +50,7 @@ private:
   int m_completionIdx = 0;
   // Dropped with the connection, which aborts whatever is still streaming
   std::unordered_map<std::string, std::shared_ptr<AI::AbstractChatCompletionStream>> m_completions;
+  AI::McpServer *m_mcp = nullptr;
 };
 
 /**

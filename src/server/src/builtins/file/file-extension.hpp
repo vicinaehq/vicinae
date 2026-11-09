@@ -125,6 +125,7 @@ public:
                   .description = tr("Find files on your computer by name."),
                   .icon = ImageURL::builtin(BuiltinIcon::MagnifyingGlass),
                   .defaultPolicy = AI::ToolPolicy::Allow,
+                  .annotations = {.readOnly = true, .openWorld = false},
                   .create = [] {
                     return std::make_unique<SearchFilesTool>(*ServiceRegistry::instance()->fileService());
                   }});
@@ -132,6 +133,7 @@ public:
                   .title = tr("Read File"),
                   .description = tr("Read the content of a text file."),
                   .icon = ImageURL::builtin(BuiltinIcon::BlankDocument),
+                  .mcp = false,
                   .create = [] { return std::make_unique<ReadFileTool>(); }});
 
     // XXX - we don't really need this anymore, as the indexer now executes full sweeps at a given interval
