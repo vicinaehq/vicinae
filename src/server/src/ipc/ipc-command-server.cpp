@@ -14,6 +14,7 @@
 #include "services/ai/ai-preferences.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/ai/mcp/mcp-server.hpp"
 #include "ui/quick/attachment-model.hpp"
 #include "ui/views/dmenu-view-host.hpp"
 #include "utils.hpp"
@@ -183,6 +184,17 @@ ipc_gen::Result<ipc_gen::AiAskResponse>::Future IpcService::aiAsk(ipc_gen::AiAsk
       });
 
   return future;
+}
+
+ipc_gen::Result<void>::Future IpcService::mcpSend(std::string message) {
+  if (!m_mcp) {
+    m_mcp = new AI::McpServer(*m_ctx.services->tools(), this);
+    QObject::connect(m_mcp, &AI::McpServer::messageReady, this,
+                     [this](const std::string &message) { emitmcpMessage(message); });
+  }
+
+  m_mcp->receive(message);
+  return ipc_gen::Result<void>::ok();
 }
 
 // Runs from the stream's own signals, which can't destroy it before they return

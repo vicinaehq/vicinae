@@ -175,6 +175,9 @@ service Ipc {
   event aiData(completionId: string, data: string, done: bool);
   event aiFailed(completionId: string, error: string);
 
+  fn mcpSend(message: string) => void;
+  event mcpMessage(message: string);
+
   // implemented by the browser extension
   client fn browserFocusTab(tabId: int) => void;
   client fn browserCloseTab(tabId: int) => void;

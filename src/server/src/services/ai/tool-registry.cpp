@@ -150,14 +150,18 @@ bool ToolRegistry::setToolPolicy(std::string_view providerId, std::string_view t
                                                          {std::string(toolId), {.policy = policy}}}});
 }
 
+std::unique_ptr<AbstractTool> ToolRegistry::createTool(const Entry &entry) const {
+  auto tool = entry.contribution.create();
+  if (!tool) return nullptr;
+  return std::make_unique<RegisteredTool>(*this, entry.name, entry.contribution.deferred, std::move(tool));
+}
+
 std::vector<std::unique_ptr<AbstractTool>> ToolRegistry::createTools() const {
   std::vector<std::unique_ptr<AbstractTool>> tools;
   tools.reserve(m_entries.size());
 
   for (const auto &entry : m_entries) {
-    if (auto tool = entry.contribution.create())
-      tools.emplace_back(
-          std::make_unique<RegisteredTool>(*this, entry.name, entry.contribution.deferred, std::move(tool)));
+    if (auto tool = createTool(entry)) tools.emplace_back(std::move(tool));
   }
 
   return tools;

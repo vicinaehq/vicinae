@@ -282,12 +282,14 @@ VicinaeExtension::VicinaeExtension() {
                                                   "Read the default and current Vicinae configuration."),
        .icon = ImageURL::builtin(BuiltinIcon::Cog),
        .defaultPolicy = AI::ToolPolicy::Allow,
+       .annotations = {.readOnly = true, .openWorld = false},
        .create = [] { return std::make_unique<ReadConfigTool>(*ServiceRegistry::instance()->config()); }});
   registerTool(
       {.id = "write_config",
        .title = QCoreApplication::translate("VicinaeExtension", "Change Configuration"),
        .description = QCoreApplication::translate("VicinaeExtension", "Change your Vicinae configuration."),
        .icon = ImageURL::builtin(BuiltinIcon::Cog),
+       .annotations = {.destructive = true, .openWorld = false},
        .create = [] { return std::make_unique<WriteConfigTool>(*ServiceRegistry::instance()->config()); }});
   registerTool(
       {.id = "read_themes",
@@ -296,6 +298,7 @@ VicinaeExtension::VicinaeExtension() {
                                                   "List installed themes and read the theme file format."),
        .icon = ImageURL::builtin(BuiltinIcon::Brush),
        .defaultPolicy = AI::ToolPolicy::Allow,
+       .annotations = {.readOnly = true, .openWorld = false},
        .create = [] { return std::make_unique<ReadThemesTool>(*ServiceRegistry::instance()->config()); }});
   registerTool({.id = "write_theme",
                 .title = QCoreApplication::translate("VicinaeExtension", "Write Theme"),
@@ -303,6 +306,7 @@ VicinaeExtension::VicinaeExtension() {
                     "VicinaeExtension", "Create your own themes. Asks before replacing an existing one."),
                 .icon = ImageURL::builtin(BuiltinIcon::Brush),
                 .defaultPolicy = AI::ToolPolicy::Allow,
+                .annotations = {.destructive = true, .openWorld = false},
                 .create = [] { return std::make_unique<WriteThemeTool>(); }});
   registerTool(
       {.id = "set_theme",
@@ -310,6 +314,7 @@ VicinaeExtension::VicinaeExtension() {
        .description = QCoreApplication::translate("VicinaeExtension", "Switch the active theme."),
        .icon = ImageURL::builtin(BuiltinIcon::Brush),
        .defaultPolicy = AI::ToolPolicy::Allow,
+       .annotations = {.destructive = false, .idempotent = true, .openWorld = false},
        .create = [] { return std::make_unique<SetThemeTool>(*ServiceRegistry::instance()->config()); }});
 
   // disabled by default

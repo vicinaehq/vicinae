@@ -664,6 +664,8 @@ set(SRCS
 	src/services/ai/cli/cli-process.cpp
 	src/services/ai/acp/acp-provider.hpp
 	src/services/ai/acp/acp-provider.cpp
+	src/services/ai/mcp/mcp-server.hpp
+	src/services/ai/mcp/mcp-server.cpp
 	src/services/ai/ollama/ollama-ai-provider.hpp
 	src/services/ai/ollama/ollama-ai-provider.cpp
 	src/services/ai/mistral/mistral-provider.hpp

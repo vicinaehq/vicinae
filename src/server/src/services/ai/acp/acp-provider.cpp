@@ -9,6 +9,7 @@
 #include <QCryptographicHash>
 #include <QProcess>
 #include <QUuid>
+#include "common/common.hpp"
 #include "generated/version.h"
 #include "services/ai/ai-provider-types.hpp"
 #include "services/ai/cli/cli-process.hpp"
@@ -122,9 +123,21 @@ struct PromptBlock {
   std::optional<std::string> mimeType;
 };
 
+struct EnvVariable {
+  std::string name;
+  std::string value;
+};
+
+struct McpServerStdio {
+  std::string name;
+  std::string command;
+  std::vector<std::string> args;
+  std::vector<EnvVariable> env;
+};
+
 struct NewSessionParams {
   std::string cwd;
-  std::vector<std::string> mcpServers;
+  std::vector<McpServerStdio> mcpServers;
 };
 
 struct PromptParams {
@@ -207,6 +220,12 @@ template <typename T> std::expected<T, std::string> fromJson(std::string_view js
   if (const auto error = glz::read<LENIENT>(value, json))
     return std::unexpected(glz::format_error(error, json));
   return value;
+}
+
+std::vector<acp::McpServerStdio> mcpServers() {
+  const auto helper = vicinae::findHelperProgram("vicinae-mcp");
+  if (!helper) return {};
+  return {{.name = "vicinae", .command = helper->string()}};
 }
 
 bool present(const std::optional<glz::raw_json> &json) { return json && json->str != "null"; }
@@ -799,7 +818,8 @@ void AcpProvider::newSession(std::function<void(std::expected<std::string, RpcEr
   }
 
   request(
-      "session/new", toJson(acp::NewSessionParams{.cwd = cliWorkingDirectory().toStdString()}),
+      "session/new",
+      toJson(acp::NewSessionParams{.cwd = cliWorkingDirectory().toStdString(), .mcpServers = mcpServers()}),
       [this, handler = std::move(handler)](Response response) {
         if (!response) {
           handler(std::unexpected(std::move(response.error())));

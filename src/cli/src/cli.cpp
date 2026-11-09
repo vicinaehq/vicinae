@@ -18,6 +18,7 @@
 #include "generated/version.h"
 #include "theme.hpp"
 #include "ipc-client.hpp"
+#include "mcp.hpp"
 #include "tty.hpp"
 #ifndef _WIN32
 #include "server.hpp"
@@ -475,6 +476,22 @@ public:
   }
 };
 
+class McpCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "mcp"; }
+  std::string description() const override {
+    return "Run an MCP server over stdio, exposing the tools of the running Vicinae instance";
+  }
+
+  bool run(CLI::App *) override {
+    const auto code = cli::runMcpServer();
+    if (!code) {
+      std::println(std::cerr, "{}", code.error());
+      return false;
+    }
+    return *code == 0;
+  }
+};
+
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
   std::string description() const override { return "Ping the vicinae server"; }
@@ -731,6 +748,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<CloseCommand>();
   app.registerCommand<DictationCommand>();
   app.registerCommand<AiCommand>();
+  app.registerCommand<McpCommand>();
   app.registerCommand<CommandCommand>();
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();
