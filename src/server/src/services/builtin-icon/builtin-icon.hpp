@@ -38,6 +38,7 @@ enum class BuiltinIcon : quint16 {
   Angularmaterial,
   Ansible,
   Antdesign,
+  Antigravity,
   Apache,
   Apacheairflow,
   Apachekafka,

@@ -30,6 +30,7 @@ const BuiltinIconService::Mapping &BuiltinIconService::mapping() {
       {BuiltinIcon::Angularmaterial, "angularmaterial"},
       {BuiltinIcon::Ansible, "ansible"},
       {BuiltinIcon::Antdesign, "antdesign"},
+      {BuiltinIcon::Antigravity, "antigravity"},
       {BuiltinIcon::Apache, "apache"},
       {BuiltinIcon::Apacheairflow, "apacheairflow"},
       {BuiltinIcon::Apachekafka, "apachekafka"},

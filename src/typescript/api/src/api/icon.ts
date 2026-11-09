@@ -27,6 +27,7 @@ export enum Icon {
 	Angularmaterial = "angularmaterial",
 	Ansible = "ansible",
 	Antdesign = "antdesign",
+	Antigravity = "antigravity",
 	Apache = "apache",
 	Apacheairflow = "apacheairflow",
 	Apachekafka = "apachekafka",

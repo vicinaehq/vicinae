@@ -362,13 +362,13 @@ inline constexpr auto PROVIDER_TYPES = std::to_array<ProviderTypeInfo>({
         .fields = +[] { return agentFields("codex"); },
     },
     {
-        .type = "gemini",
-        .label = "Gemini CLI",
-        .icon = BuiltinIcon::Gemini,
-        .description = "Google's coding agent, through your Gemini CLI sign-in.",
+        .type = "antigravity",
+        .label = "Antigravity",
+        .icon = BuiltinIcon::Antigravity,
+        .description = "Google's coding agent, through your Antigravity sign-in.",
         .cardinality = Cardinality::Single,
         .category = Category::Agent,
-        .fields = +[] { return agentFields("gemini"); },
+        .fields = +[] { return agentFields("antigravity"); },
     },
     {
         .type = "opencode",
