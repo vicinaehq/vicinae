@@ -180,7 +180,7 @@ constexpr auto PRESETS = std::to_array<AgentPreset>({
     {"claude-code", "claude-agent-acp", "", "@agentclientprotocol/claude-agent-acp@0.101.0", "claude",
      "ANTHROPIC_API_KEY"},
     {"codex", "codex-acp", "", "@agentclientprotocol/codex-acp@2.6.0", "codex login"},
-    {"gemini", "gemini", "--acp", "", "gemini"},
+    {"antigravity", "agy", "acp", "", "agy"},
     {"opencode", "opencode", "acp", "", "opencode auth login"},
     {"qwen-code", "qwen", "--acp", "", "qwen"},
     {"kilo", "kilo", "acp", "", "kilo auth login"},
