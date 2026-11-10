@@ -33,9 +33,10 @@ class ExtCommandService : public tsapi::AbstractCommand {
 
 public:
   ExtCommandService(tsapi::RpcTransport &transport, const std::shared_ptr<ExtensionCommand> &command,
-                    RootItemManager *rootManager, SettingsController &settings, NavigationController &nav)
+                    RootItemManager *rootManager, SettingsController &settings, NavigationController &nav,
+                    bool isTool = false)
       : AbstractCommand(transport), m_command(command), m_rootManager(rootManager), m_nav(nav),
-        m_settings(settings) {}
+        m_settings(settings), m_isTool(isTool) {}
 
   tsapi::Result<void>::Future launchCommand(tsapi::LaunchCommandOptions options) override {
     for (auto item : m_rootManager->extensions()) {
@@ -61,7 +62,10 @@ public:
   }
 
   tsapi::Result<void>::Future openCommandPreferences() override {
-    m_settings.openExtensionPreferences(m_command->uniqueId());
+    if (m_isTool)
+      m_settings.openToolPreferences(m_command->uniqueId());
+    else
+      m_settings.openExtensionPreferences(m_command->uniqueId());
     return Void::ok();
   }
 
@@ -82,4 +86,5 @@ private:
   RootItemManager *m_rootManager;
   NavigationController &m_nav;
   SettingsController &m_settings;
+  bool m_isTool = false;
 };

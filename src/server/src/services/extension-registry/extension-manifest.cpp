@@ -62,6 +62,7 @@ struct RawTool {
   std::optional<std::string> instructions;
   std::optional<std::string> icon;
   std::optional<glz::raw_json> input;
+  std::vector<RawPreference> preferences;
   bool confirmation = false;
   std::vector<std::string> functionalities;
 };
@@ -243,6 +244,10 @@ ExtensionManifest::Command parseCommand(RawCommand &raw) {
 }
 
 ExtensionManifest::Tool parseTool(RawTool &raw, const fs::path &root) {
+  std::vector<Preference> preferences;
+  preferences.reserve(raw.preferences.size());
+  for (auto &pref : raw.preferences)
+    preferences.emplace_back(parsePreference(pref));
   return ExtensionManifest::Tool{
       .name = raw.name,
       .title = qstr(raw.title),
@@ -250,6 +255,7 @@ ExtensionManifest::Tool parseTool(RawTool &raw, const fs::path &root) {
       .instructions = std::move(raw.instructions),
       .icon = raw.icon.transform(qstr),
       .inputSchema = raw.input.transform([](glz::raw_json &json) { return glz::minify_json(json.str); }),
+      .preferences = std::move(preferences),
       .confirmation = raw.confirmation,
       .entrypoint = root / "tools" / std::format("{}.js", raw.name),
   };

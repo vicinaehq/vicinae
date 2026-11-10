@@ -25,7 +25,8 @@ export function updateExtensionTypes(
  */
 export function createExtensionTypes(manifest: Manifest): string {
 	const extPrefs = generateExtensionPreferences(manifest);
-	const cmdPrefs = generateCommandPreferences(manifest);
+	const cmdPrefs = generateEntrypointPreferences(manifest.commands, "Command");
+	const toolPrefs = generateEntrypointPreferences(manifest.tools ?? [], "Tool");
 	const argTypes = generateCommandArguments(manifest);
 
 	return `
@@ -44,6 +45,10 @@ declare type Preferences = ExtensionPreferences
 
 declare namespace Preferences {
   ${cmdPrefs}
+}
+
+declare namespace ToolPreferences {
+  ${toolPrefs}
 }
 
 declare namespace Arguments {
@@ -89,6 +94,9 @@ function generateDocComment(title?: string, description?: string): string {
  * Generates a TypeScript type string for a preference value
  */
 function getPreferenceType(pref: Preference): string {
+	if (pref.type === "appPicker") {
+		return `import("@vicinae/api").Application${pref.multiple ? "[]" : ""}`;
+	}
 	if (pref.type === "checkbox") {
 		return "boolean";
 	}
@@ -111,16 +119,19 @@ function getPreferenceType(pref: Preference): string {
 	return "string";
 }
 
-/**
- * Generates TypeScript type definitions for command preferences
- */
-function generateCommandPreferences(manifest: Manifest): string {
+function generateEntrypointPreferences(
+	entries: { name: string; title: string; preferences?: Preference[] }[],
+	kind: "Command" | "Tool",
+): string {
 	const cmdPrefs: string[] = [];
 
-	for (const cmd of manifest.commands) {
+	for (const cmd of entries) {
+		const overridden =
+			cmd.preferences?.map((pref) => JSON.stringify(pref.name)).join(" | ") ||
+			"never";
 		const prefix =
-			generateDocComment(`Command: ${cmd.title}`) +
-			`\n\texport type ${toPascalCase(cmd.name)} = ExtensionPreferences & {`;
+			generateDocComment(`${kind}: ${cmd.title}`) +
+			`\n\texport type ${toPascalCase(cmd.name)} = Omit<ExtensionPreferences, ${overridden}> & {`;
 
 		const prefs: string[] = [];
 		for (const pref of cmd.preferences ?? []) {

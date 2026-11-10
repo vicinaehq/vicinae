@@ -7,9 +7,6 @@
 struct ApplicationContext;
 class ExtensionCommand;
 
-/**
- * Runs extension tools in a headless extension session, the same way background commands are run.
- */
 class ExtensionToolRunner {
   Q_DECLARE_TR_FUNCTIONS(ExtensionToolRunner)
 
@@ -17,7 +14,7 @@ public:
   explicit ExtensionToolRunner(ApplicationContext &ctx) : m_ctx(ctx) {}
 
   AI::AbstractTool::RawToolTask run(const std::shared_ptr<ExtensionCommand> &command,
-                                    std::string_view arguments);
+                                    std::string_view arguments, bool requiresApproval);
 
 private:
   ApplicationContext &m_ctx;
@@ -33,7 +30,7 @@ public:
   std::string name() const override { return m_tool.name; }
   std::string description() const override;
   std::string generateInputSchema() const override;
-  bool requiresApproval(std::string_view) const override { return m_tool.confirmation; }
+  bool handlesApproval() const override { return true; }
   RawToolTask runRaw(std::string_view arguments) override;
 
 private:

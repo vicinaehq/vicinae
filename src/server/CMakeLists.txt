@@ -289,6 +289,7 @@ set(SRCS
 	src/extension/extension.hpp
 	src/extension/extension.cpp
 	src/extension/extension-tool.hpp
+	src/extension/extension-preferences.hpp
 	src/extension/extension-tool.cpp
 
 	src/extension/extension-command.hpp

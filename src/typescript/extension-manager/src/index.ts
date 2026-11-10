@@ -90,6 +90,7 @@ class ExtensionManager extends manager.ManagerService {
 			status: "awaiting_handshake",
 			displayId: `${load.extension_id}:${load.command_name}`,
 			payload: {
+				tool_requires_approval: load.tool_requires_approval,
 				entrypoint: load.entrypoint,
 				argumentValues: load.arguments,
 				preferenceValues: load.preferences,

@@ -1,8 +1,6 @@
 #include "extension/extension-tool.hpp"
 #include <QPointer>
 #include <QPromise>
-#include <QTimer>
-#include <chrono>
 #include <format>
 #include <glaze/json/generic.hpp>
 #include <glaze/json/read.hpp>
@@ -11,11 +9,11 @@
 #include "extension/extension-command.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "service-registry.hpp"
+#include "services/ai/tool-registry.hpp"
 
 namespace {
 
 constexpr std::string_view EMPTY_INPUT_SCHEMA = R"({"type":"object","properties":{}})";
-constexpr auto TOOL_TIMEOUT = std::chrono::minutes(1);
 
 AI::AbstractTool::RawToolTask ready(AI::AbstractTool::RawToolResult result) {
   return {QtFuture::makeReadyValueFuture(std::move(result)), {}};
@@ -24,7 +22,7 @@ AI::AbstractTool::RawToolTask ready(AI::AbstractTool::RawToolResult result) {
 } // namespace
 
 AI::AbstractTool::RawToolTask ExtensionToolRunner::run(const std::shared_ptr<ExtensionCommand> &command,
-                                                       std::string_view arguments) {
+                                                       std::string_view arguments, bool requiresApproval) {
   glz::generic input;
   if (const auto error = glz::read_json(input, arguments)) {
     return ready(std::unexpected(glz::format_error(error, arguments)));
@@ -42,6 +40,7 @@ AI::AbstractTool::RawToolTask ExtensionToolRunner::run(const std::shared_ptr<Ext
   runtime->setHeadless(true);
   runtime->setToolInvocation({
       .input = std::move(input),
+      .requiresApproval = requiresApproval,
       .done =
           [promise, runtime](ExtensionCommandRuntime::ToolResult result) {
             promise->addResult(result.transform(
@@ -51,9 +50,6 @@ AI::AbstractTool::RawToolTask ExtensionToolRunner::run(const std::shared_ptr<Ext
             runtime->deleteLater();
           },
   });
-
-  QTimer::singleShot(TOOL_TIMEOUT, runtime,
-                     [runtime] { runtime->cancelTool(tr("The tool timed out.").toStdString()); });
 
   runtime->load({});
 
@@ -78,5 +74,7 @@ std::string ExtensionTool::generateInputSchema() const {
 AI::AbstractTool::RawToolTask ExtensionTool::runRaw(std::string_view arguments) {
   auto *runner = ServiceRegistry::instance()->extensionToolRunner();
   if (!runner) return ready(std::unexpected(tr("Extension tools are not available.").toStdString()));
-  return runner->run(m_command, arguments);
+  const auto id = m_command->uniqueId();
+  const auto policy = ServiceRegistry::instance()->tools()->toolPolicy(id.provider, m_tool.name);
+  return runner->run(m_command, arguments, policy != AI::ToolPolicy::Allow);
 }

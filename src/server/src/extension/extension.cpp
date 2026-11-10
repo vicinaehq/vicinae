@@ -61,13 +61,13 @@ Extension::Extension(const ExtensionManifest &manifest) : m_manifest(manifest) {
 
 QString Extension::toolNamespace() const { return m_manifest.name; }
 
-// tools run like no-view commands, under the extension's identity and preferences
 std::shared_ptr<ExtensionCommand> Extension::makeToolCommand(const ExtensionManifest::Tool &tool) const {
   return makeCommand(ExtensionManifest::Command{
       .name = QString::fromStdString(tool.name),
       .title = tool.title,
       .description = tool.description,
       .mode = CommandModeNoView,
+      .preferences = tool.preferences,
       .entrypoint = tool.entrypoint,
       .defaultDisabled = false,
       .provenance = m_manifest.provenance,
@@ -84,6 +84,7 @@ std::vector<AI::ToolContribution> Extension::tools() const {
         .title = tool.title,
         .description = tool.description,
         .icon = std::move(icon),
+        .preferences = tool.preferences,
         .annotations = tool.confirmation ? AI::ToolAnnotations{.readOnly = false, .destructive = true}
                                          : AI::ToolAnnotations{},
         .create = [tool, command = makeToolCommand(tool)] -> std::unique_ptr<AI::AbstractTool> {

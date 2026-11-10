@@ -1,4 +1,5 @@
 #pragma once
+#include <span>
 #include "command/argument.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "command/command-types.hpp"
@@ -204,9 +205,6 @@ public:
   virtual std::vector<SettingsPage> settingsPages() const { return {}; }
   virtual std::vector<AI::ToolContribution> tools() const { return {}; }
 
-  /**
-   * Prefix used to build the name of the tools exposed to models.
-   */
   virtual QString toolNamespace() const { return uniqueId(); }
 };
 
@@ -294,6 +292,10 @@ public:
 
   PreferenceValues getProviderPreferenceValues(const QString &id) const;
   PreferenceValues getItemPreferenceValues(const EntrypointId &id) const;
+  PreferenceValues getToolPreferenceValues(const EntrypointId &id,
+                                           std::span<const Preference> preferences) const;
+  bool setToolPreferenceValues(const EntrypointId &id, std::span<const Preference> preferences,
+                               const PreferenceValues &values);
 
   /**
    * Merge the item preferences with the provider preferences.

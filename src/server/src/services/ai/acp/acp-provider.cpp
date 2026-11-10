@@ -84,7 +84,6 @@ struct ToolContent {
   std::optional<std::string> newText;
 };
 
-// `content` is a content block for messages and a list of tool contents for tool calls
 struct ClaudeCodeMeta {
   std::optional<std::string> toolName;
 };
@@ -93,6 +92,7 @@ struct UpdateMeta {
   std::optional<ClaudeCodeMeta> claudeCode;
 };
 
+// `content` is a content block for messages and a list of tool contents for tool calls
 struct Update {
   std::optional<std::string> sessionUpdate;
   std::optional<glz::raw_json> content;
@@ -179,7 +179,6 @@ namespace {
 
 constexpr glz::opts LENIENT{.error_on_unknown_keys = false};
 constexpr std::string_view MCP_SERVER_NAME = "vicinae";
-// how agents spell a tool of the MCP server above, see vicinaeToolName
 constexpr auto MCP_TOOL_PREFIXES = std::to_array<std::string_view>({"mcp__vicinae__", "vicinae/"});
 constexpr std::size_t MAX_TOOL_OUTPUT = std::size_t{16} * 1024;
 constexpr std::string_view CANCELLED = R"({"outcome":{"outcome":"cancelled"}})";

@@ -1,5 +1,5 @@
 import { getClient } from "./client";
-import type { Image } from "./image";
+import { type Image, serializeProtoImage } from "./image";
 import type * as api from "./proto/api";
 
 /**
@@ -60,7 +60,7 @@ export const confirmAlert = async (
 			.UI.confirmAlert({
 				title: options.title,
 				description: options.message ?? "Are you sure?",
-				//icon: options.icon && serializeProtoImage(options.icon),
+				icon: options.icon ? serializeProtoImage(options.icon) : undefined,
 				rememberUserChoice: false,
 				primaryAction: {
 					title: options.primaryAction?.title ?? "Confirm",

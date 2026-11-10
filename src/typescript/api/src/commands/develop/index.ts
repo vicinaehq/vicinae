@@ -63,6 +63,13 @@ const develop: CommandDef = {
 		updateExtensionTypes(manifest, target);
 
 		const build = async (outDir: string) => {
+			const tools = manifest.tools ?? [];
+			const toolInfo = extractTools(process.cwd(), tools);
+			if (toolInfo.errors.length > 0) {
+				throw new Error(
+					`Failed to generate tool schemas:\n${toolInfo.errors.join("\n")}`,
+				);
+			}
 			const entryPoints = manifest.commands
 				.map((cmd) => path.join("src", `${cmd.name}.tsx`))
 				.filter(fs.existsSync);
@@ -98,7 +105,6 @@ const develop: CommandDef = {
 				});
 			});
 
-			const tools = manifest.tools ?? [];
 			if (tools.length > 0) {
 				promises.push(
 					esbuild.build({
@@ -111,9 +117,6 @@ const develop: CommandDef = {
 
 			await Promise.all(promises);
 
-			// a tool whose schema cannot be generated stays usable, it just won't take any input
-			const toolInfo = extractTools(process.cwd(), tools);
-			for (const error of toolInfo.errors) logger.logError(error);
 			writeBuiltManifest(process.cwd(), outDir, toolInfo);
 
 			const targetAssets = path.join(outDir, "assets");

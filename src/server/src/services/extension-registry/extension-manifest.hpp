@@ -33,10 +33,6 @@ struct ExtensionManifest {
     Provenance provenance;
   };
 
-  /**
-   * An AI tool, as emitted by the extension build step: the input schema is generated from the
-   * TypeScript signature of the tool's default export.
-   */
   struct Tool {
     std::string name;
     QString title;
@@ -44,6 +40,7 @@ struct ExtensionManifest {
     std::optional<std::string> instructions;
     std::optional<QString> icon;
     std::optional<std::string> inputSchema;
+    std::vector<Preference> preferences;
     bool confirmation = false;
     std::filesystem::path entrypoint;
   };

@@ -3,6 +3,7 @@ import type { ImageLike } from "./image";
 
 /**
  * Types for AI tools, exported from `src/tools/<name>.ts` and declared in the manifest's `tools` array.
+ * Tool preferences are available as generated `ToolPreferences.<ToolName>` types.
  * @category AI
  */
 export namespace Tool {
@@ -10,6 +11,7 @@ export namespace Tool {
 	 * Export a function of this type named `confirmation` from a tool to ask the user before the tool runs.
 	 *
 	 * Return `undefined` to skip the confirmation, for tools that are only destructive in some cases.
+	 * The user's "Ask every time" policy still requires approval.
 	 *
 	 * @example
 	 * ```typescript

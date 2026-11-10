@@ -412,6 +412,7 @@ bool RootItemManager::pruneProvider(const QString &id) {
   });
 
   m_storage.clearNamespace(id + ":preferences");
+  m_storage.clearNamespace(id + ":tool-preferences");
   m_storage.clearNamespace(id + ":data");
 
   return true;
@@ -436,6 +437,54 @@ PreferenceValues RootItemManager::getItemPreferenceValues(const EntrypointId &id
   }
 
   return values;
+}
+
+PreferenceValues RootItemManager::getToolPreferenceValues(const EntrypointId &id,
+                                                          std::span<const Preference> preferences) const {
+  PreferenceValues values;
+  const auto &providers = m_cfg.value().providers;
+  if (const auto provider = providers.find(id.provider); provider != providers.end()) {
+    if (const auto tool = provider->second.tools.find(id.entrypoint); tool != provider->second.tools.end())
+      values = tool->second.preferences.value_or(PreferenceValues{});
+  }
+
+  auto secrets = m_storage.scoped(QString::fromStdString(id.provider) + ":tool-preferences");
+  for (const auto &pref : preferences) {
+    const auto key = pref.name().toStdString();
+    if (values.contains(key)) continue;
+    auto value =
+        pref.isSecret()
+            ? qJsonValueToGlazeGeneric(secrets.getItem(getEntrypointSecretPreferenceKey(id, pref.name())))
+            : glz::generic{};
+    values[key] = value.is_null() ? pref.defaultOrNull() : std::move(value);
+  }
+  return values;
+}
+
+bool RootItemManager::setToolPreferenceValues(const EntrypointId &id, std::span<const Preference> preferences,
+                                              const PreferenceValues &values) {
+  if (!findProviderById(QString::fromStdString(id.provider))) return false;
+  auto secrets = m_storage.scoped(QString::fromStdString(id.provider) + ":tool-preferences");
+  PreferenceValues filtered;
+  for (const auto &pref : preferences) {
+    const auto *value = preferences::find(values, pref.name().toStdString());
+    if (!value) continue;
+    if (pref.isSecret()) {
+      secrets.setItem(getEntrypointSecretPreferenceKey(id, pref.name()), glazeToQJsonValue(*value));
+    } else {
+      filtered[pref.name().toStdString()] = *value;
+    }
+  }
+  m_cfg.updateUser([&](config::PartialValue &v) {
+    if (!v.providers) v.providers.emplace();
+    auto &provider = (*v.providers)[id.provider];
+    if (!provider.tools) provider.tools.emplace();
+    auto &stored = (*provider.tools)[id.entrypoint].preferences;
+    if (!stored) stored.emplace();
+    for (auto &[key, value] : filtered)
+      (*stored)[key] = std::move(value);
+  });
+  return true;
 }
 
 std::vector<Preference> RootItemManager::getMergedItemPreferences(const EntrypointId &id) const {

@@ -1,4 +1,6 @@
+#include <chrono>
 #include "extension-command-runtime.hpp"
+#include "extension/extension-preferences.hpp"
 #include "command/command-types.hpp"
 #include "common/context.hpp"
 #include "extension/views/extension-error-view-host.hpp"
@@ -50,21 +52,35 @@ void ExtensionCommandRuntime::initialize() {
 
   auto *eventCore = new ExtEventCoreService(*m_transport);
   auto *app = new ExtApplicationService(*m_transport, *services->appDb());
-  auto *ui = new ExtUIService(*m_transport, context()->navigation.get(), m_command, eventCore,
-                              *services->toastService(), *services->selectionService());
+  m_ui = new ExtUIService(*m_transport, context()->navigation.get(), m_command, eventCore,
+                          *services->toastService(), *services->selectionService());
+  if (m_tool) {
+    m_toolTimer.setSingleShot(true);
+    m_toolTimer.setInterval(std::chrono::minutes(1));
+    connect(&m_toolTimer, &QTimer::timeout, this, [this] {
+      cancelTool(QCoreApplication::translate("ExtensionToolRunner", "The tool timed out.").toStdString());
+    });
+    connect(m_ui, &ExtUIService::confirmationPendingChanged, this, [this](bool pending) {
+      if (pending)
+        m_toolTimer.stop();
+      else if (m_tool->done)
+        m_toolTimer.start();
+    });
+    m_toolTimer.start();
+  }
   auto *wm = new ExtWindowManagementService(*m_transport, *services->windowManager(), *services->appDb(),
                                             *services->appRuntime(), *ctx.navigation);
   auto *clipboard = new ExtClipboardService(*m_transport, *services->clipman(), *services->pasteService());
   auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
   auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings,
-                                        *ctx.navigation);
+                                        *ctx.navigation, m_tool.has_value());
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
   auto wallpaper = new ExtWallpaperService(*m_transport, *services->wallpaperManager());
   auto browserExtension = new ExtBrowserExtensionService(*m_transport, *services->browserExtension());
   auto *ai = new ExtensionAIRouter(*m_transport, *services->ai(), *services->config());
 
-  m_server = new tsapi::Server(*m_transport, app, ui, wm, clipboard, storage, fileSearch, command, oauth,
+  m_server = new tsapi::Server(*m_transport, app, m_ui, wm, clipboard, storage, fileSearch, command, oauth,
                                wallpaper, browserExtension, eventCore, ai);
   m_server->setLogger(m_logger.get());
   m_server->setParent(this);
@@ -73,11 +89,9 @@ void ExtensionCommandRuntime::initialize() {
 // app pickers are stored as app ids, but extensions expect the `Application` shape of the applications API
 PreferenceValues ExtensionCommandRuntime::resolvePreferenceValues(PreferenceValues values) const {
   auto *appDb = context()->services->appDb();
-  auto *rootItemManager = context()->services->rootItemManager();
 
-  const auto resolve = [&](const glz::generic &v) -> glz::generic {
-    if (!v.is_string()) return {};
-    auto app = appDb->findById(QString::fromStdString(v.get_string()));
+  const auto resolve = [&](const std::string &id) -> glz::generic {
+    auto app = appDb->findById(QString::fromStdString(id));
     if (!app) return {};
     return glz::generic::object_t{
         {"id", app->id().toStdString()},
@@ -87,35 +101,36 @@ PreferenceValues ExtensionCommandRuntime::resolvePreferenceValues(PreferenceValu
     };
   };
 
-  for (const auto &pref : rootItemManager->getMergedItemPreferences(m_command->uniqueId())) {
-    auto data = pref.data();
-    auto *picker = std::get_if<Preference::AppPickerData>(&data);
-    if (!picker) continue;
-    auto it = values.find(pref.name().toStdString());
-    if (it == values.end()) continue;
-
-    if (picker->multiple) {
-      glz::generic::array_t apps;
-      if (it->second.is_array()) {
-        for (const auto &id : it->second.get_array()) {
-          if (auto app = resolve(id); !app.is_null()) apps.emplace_back(std::move(app));
-        }
-      }
-      it->second = std::move(apps);
-    } else {
-      it->second = resolve(it->second);
-    }
-  }
-
-  return values;
+  return preferences::resolveApplications(std::move(values), m_command->mergedPreferences(), resolve);
 }
 
 void ExtensionCommandRuntime::load(const LaunchProps &props) {
   initialize();
 
   auto rootItemManager = context()->services->rootItemManager();
+  const auto id = m_command->uniqueId();
   auto preferenceValues =
-      resolvePreferenceValues(rootItemManager->getPreferenceValues(m_command->uniqueId()));
+      m_tool ? rootItemManager->getProviderPreferenceValues(QString::fromStdString(id.provider))
+             : rootItemManager->getPreferenceValues(id);
+  if (m_tool) {
+    for (auto &[key, value] : rootItemManager->getToolPreferenceValues(id, m_command->preferences()))
+      preferenceValues.insert_or_assign(key, std::move(value));
+  }
+  preferenceValues = resolvePreferenceValues(std::move(preferenceValues));
+  if (m_tool) {
+    for (const auto &pref : m_command->mergedPreferences()) {
+      const auto *value = preferences::find(preferenceValues, pref.name().toStdString());
+      if (pref.required() && (!value || preferences::isEmpty(*value))) {
+        finishTool(
+            std::unexpected(QCoreApplication::translate(
+                                "ExtensionToolRunner",
+                                "Set the \"%1\" preference in extension settings before running this tool.")
+                                .arg(pref.title())
+                                .toStdString()));
+        return;
+      }
+    }
+  }
   auto manager = context()->services->extensionManager();
   manager::LoadOptions opts;
 
@@ -138,6 +153,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
   if (m_tool) {
     opts.mode = manager::CommandMode::Tool;
+    opts.tool_requires_approval = m_tool->requiresApproval;
   } else if (m_command->mode() == CommandMode::CommandModeView) {
     opts.mode = manager::CommandMode::View;
   } else {
@@ -239,10 +255,12 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
 void ExtensionCommandRuntime::finishTool(ToolResult result) {
   if (!m_tool || !m_tool->done) return;
+  m_toolTimer.stop();
   std::exchange(m_tool->done, nullptr)(std::move(result));
 }
 
 void ExtensionCommandRuntime::unload() {
+  if (m_ui) m_ui->cancelPendingAlert();
   RelativeAssetResolver::instance()->removePath(m_command->assetPath());
   auto manager = context()->services->extensionManager();
   auto toast = context()->services->toastService();

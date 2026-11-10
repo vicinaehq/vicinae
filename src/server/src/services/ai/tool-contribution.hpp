@@ -6,6 +6,7 @@
 #include <string>
 #include <QString>
 #include "tool-policy.hpp"
+#include "command/preference.hpp"
 #include "ui/image/url.hpp"
 
 namespace AI {
@@ -24,6 +25,7 @@ struct ToolContribution {
   QString title;
   QString description;
   ImageURL icon;
+  PreferenceList preferences;
   ToolPolicy defaultPolicy = ToolPolicy::Ask;
   // Deferred tools are only sent to the model once it loads them with load_tools.
   bool deferred = true;

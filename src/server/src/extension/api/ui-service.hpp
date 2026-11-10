@@ -1,4 +1,6 @@
 #pragma once
+#include <QPointer>
+#include <utility>
 #include "extension/model/model-deser.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/api/tsapi-image.hpp"
@@ -22,6 +24,11 @@
 class ExtUIService : public tsapi::AbstractUI {
   Q_OBJECT
 
+signals:
+  void confirmationPendingChanged(bool pending);
+
+private:
+  QPointer<CallbackAlertWidget> m_alert;
   using Void = tsapi::Result<void>;
 
   struct ViewEntry {
@@ -30,6 +37,10 @@ class ExtUIService : public tsapi::AbstractUI {
   };
 
 public:
+  void cancelPendingAlert() {
+    if (const auto alert = std::exchange(m_alert, {})) alert->triggerCancel();
+  }
+
   ExtUIService(tsapi::RpcTransport &transport, NavigationController *navigation,
                const std::shared_ptr<ExtensionCommand> &command, tsapi::AbstractEventCore *eventCore,
                ToastService &toast, AbstractSelectionService &selection, QObject *parent = nullptr)
@@ -83,27 +94,41 @@ public:
   }
 
   tsapi::Result<bool>::Future confirmAlert(tsapi::ConfirmAlertPayload payload) override {
+    cancelPendingAlert();
     auto alert = new CallbackAlertWidget;
+    m_alert = alert;
     auto promise = std::make_shared<QPromise<tsapi::Result<bool>::Type>>();
     auto future = promise->future();
 
     promise->start();
-    alert->setTitle(QString::fromStdString(payload.title));
-    alert->setMessage(QString::fromStdString(payload.description));
-    alert->setConfirmText(QString::fromStdString(payload.primaryAction.title), SemanticColor::Red);
-    alert->setCancelText(QString::fromStdString(payload.dismissAction.title), SemanticColor::Foreground);
+    const bool destructive = payload.primaryAction.style == tsapi::ConfirmAlertActionStyle::Destructive;
+    alert->setTitle(payload.title.empty() ? m_command->name() : QString::fromStdString(payload.title));
+    alert->setMessage(payload.description.empty() ? tr("Allow this tool to run?")
+                                                  : QString::fromStdString(payload.description));
+    alert->setConfirmText(
+        payload.primaryAction.title.empty() ? tr("Run") : QString::fromStdString(payload.primaryAction.title),
+        destructive ? SemanticColor::Red : SemanticColor::Foreground);
+    alert->setCancelText(payload.dismissAction.title.empty()
+                             ? tr("Cancel")
+                             : QString::fromStdString(payload.dismissAction.title),
+                         SemanticColor::Foreground);
 
     if (payload.icon) {
       ImageURL url = TsapiImage::parse(*payload.icon);
-      if (url.isBuiltin()) { url.setFill(SemanticColor::Red); }
+      if (url.isBuiltin() && destructive) { url.setFill(SemanticColor::Red); }
       alert->setIcon(url);
     }
 
-    alert->setCallback([promise](bool value) mutable {
+    alert->setCallback([promise, self = QPointer(this)](bool value) mutable {
+      if (self) {
+        self->m_alert = nullptr;
+        emit self->confirmationPendingChanged(false);
+      }
       promise->addResult(tsapi::Result<bool>::Type{value});
       promise->finish();
     });
 
+    emit confirmationPendingChanged(true);
     m_navigation->setDialog(alert);
 
     return future;

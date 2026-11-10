@@ -230,7 +230,7 @@ void PreferenceFormModel::load(const EntrypointId &id, const std::vector<Prefere
   if (m_saveTimer.isActive()) save();
   beginResetModel();
   m_itemId = id;
-  m_isProvider = false;
+  m_scope = Scope::Item;
   clearFields();
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
@@ -248,7 +248,7 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
   if (m_saveTimer.isActive()) save();
   beginResetModel();
   m_providerId = providerId;
-  m_isProvider = true;
+  m_scope = Scope::Provider;
   clearFields();
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
@@ -258,6 +258,22 @@ void PreferenceFormModel::loadProvider(const QString &providerId,
   for (const auto &pref : preferences) {
     m_fields.emplace_back(createField(pref, values));
   }
+  endResetModel();
+}
+
+void PreferenceFormModel::loadTool(const EntrypointId &id, const PreferenceList &preferences) {
+  if (m_saveTimer.isActive()) save();
+  beginResetModel();
+  m_itemId = id;
+  m_scope = Scope::Tool;
+  m_toolPreferences = preferences;
+  clearFields();
+
+  const auto values =
+      ServiceRegistry::instance()->rootItemManager()->getToolPreferenceValues(id, preferences);
+  m_fields.reserve(preferences.size());
+  for (const auto &pref : preferences)
+    m_fields.emplace_back(createField(pref, values));
   endResetModel();
 }
 
@@ -276,11 +292,15 @@ void PreferenceFormModel::save() {
   m_saveTimer.stop();
   if (m_pendingValues.empty()) return;
   auto *manager = ServiceRegistry::instance()->rootItemManager();
-  auto values = m_isProvider ? manager->getProviderPreferenceValues(m_providerId)
-                             : manager->getItemPreferenceValues(m_itemId);
+  if (m_scope == Scope::Tool) {
+    manager->setToolPreferenceValues(m_itemId, m_toolPreferences, std::exchange(m_pendingValues, {}));
+    return;
+  }
+  auto values = m_scope == Scope::Provider ? manager->getProviderPreferenceValues(m_providerId)
+                                           : manager->getItemPreferenceValues(m_itemId);
   for (auto &[key, value] : std::exchange(m_pendingValues, {}))
     values[key] = std::move(value);
-  if (m_isProvider)
+  if (m_scope == Scope::Provider)
     manager->setProviderPreferenceValues(m_providerId, values);
   else
     manager->setItemPreferenceValues(m_itemId, values);

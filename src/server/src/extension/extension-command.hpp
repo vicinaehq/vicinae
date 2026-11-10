@@ -58,6 +58,9 @@ public:
 
   std::vector<CommandArgument> arguments() const override { return m_command.arguments; }
   std::vector<Preference> preferences() const override { return m_command.preferences; }
+  PreferenceList mergedPreferences() const {
+    return preferences::merge(_extensionPreferences, m_command.preferences);
+  }
 
   bool isRaycast() const { return m_command.provenance == ExtensionManifest::Provenance::Raycast; }
   bool isVicinae() const { return m_command.provenance == ExtensionManifest::Provenance::Vicinae; }

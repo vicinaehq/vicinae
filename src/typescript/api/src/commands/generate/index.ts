@@ -33,10 +33,6 @@ const titleFromName = (name: string) =>
 		.map((word) => word[0].toUpperCase() + word.slice(1))
 		.join(" ");
 
-/**
- * Asks for the values missing from the command line when running in a terminal. Outside of one
- * (scripts, CI), missing values fall back to their defaults, or are an error when there is none.
- */
 class Prompter {
 	private readonly rl = process.stdin.isTTY
 		? createInterface({ input: process.stdin, output: process.stdout })

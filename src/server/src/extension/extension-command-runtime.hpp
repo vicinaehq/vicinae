@@ -1,4 +1,5 @@
 #pragma once
+#include <QTimer>
 #include "command/command.hpp"
 #include "command/command-types.hpp"
 #include "extension/extension-command.hpp"
@@ -8,6 +9,8 @@
 #include <functional>
 #include <glaze/json/generic.hpp>
 #include <qlogging.h>
+
+class ExtUIService;
 
 class ExtensionManagerBus : public tsapi::AbstractTransport {
 public:
@@ -36,12 +39,9 @@ class ExtensionCommandRuntime : public CommandContext {
 public:
   using ToolResult = std::expected<std::string, std::string>;
 
-  /**
-   * Runs the entrypoint as an AI tool: `input` is passed as the tool argument and `done` is called
-   * exactly once with what the tool returned, or with the reason it failed.
-   */
   struct ToolInvocation {
     glz::generic input;
+    bool requiresApproval = false;
     std::function<void(ToolResult)> done;
   };
 
@@ -65,11 +65,13 @@ private:
   std::unique_ptr<tsapi::RpcTransport> m_transport;
   std::shared_ptr<ExtensionCommand> m_command;
   tsapi::Server *m_server = nullptr;
+  ExtUIService *m_ui = nullptr;
 
   std::string m_sessionId;
   bool m_isDevMode = false;
   bool m_headless = false;
   std::optional<ToolInvocation> m_tool;
+  QTimer m_toolTimer;
 
 public:
   void setHeadless(bool value) { m_headless = value; }

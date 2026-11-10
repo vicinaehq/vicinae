@@ -3,15 +3,6 @@ import { join } from "node:path";
 import * as ts from "typescript";
 import { parseConfig } from "./typecheck.js";
 
-/**
- * AI tools are declared in the manifest and implemented in `src/tools/<name>.ts`, with the tool
- * function as the default export. At build time we compile each of them to `tools/<name>.js` and
- * derive a JSON Schema from the function's parameter type, which ends up in the built manifest.
- *
- * The emitted format matches what `ray build` produces, so Vicinae reads Raycast store extensions
- * and our own the same way.
- */
-
 type JsonSchema = { [key: string]: unknown };
 
 type ToolInfo = {
@@ -32,9 +23,6 @@ export const toolSource = (root: string, name: string) =>
 		join(root, "src", "tools", `${name}${ext}`),
 	).find(existsSync);
 
-/**
- * esbuild entrypoints for the manifest's tools, emitted as `tools/<name>.js` in the output directory.
- */
 export const toolEntryPoints = (root: string, tools: ManifestTool[]) =>
 	tools.map((tool) => {
 		const source = toolSource(root, tool.name);
@@ -64,9 +52,23 @@ const documentation = (
 };
 
 class SchemaConverter {
+	private readonly visiting = new Set<ts.Type>();
+
 	constructor(private readonly checker: ts.TypeChecker) {}
 
 	convert(type: ts.Type, symbol?: ts.Symbol): JsonSchema {
+		if (this.visiting.has(type)) {
+			throw new SchemaError("Recursive types are not supported");
+		}
+		this.visiting.add(type);
+		try {
+			return this.convertType(type, symbol);
+		} finally {
+			this.visiting.delete(type);
+		}
+	}
+
+	private convertType(type: ts.Type, symbol?: ts.Symbol): JsonSchema {
 		const checker = this.checker;
 		const description = documentation(
 			checker,
@@ -253,15 +255,27 @@ export const extractTools = (
 	const result: ToolExtraction = { tools: new Map(), errors: [] };
 	const sources = tools.flatMap((tool) => {
 		const file = toolSource(root, tool.name);
+		if (!file) result.errors.push(`tool ${tool.name}: source file not found`);
 		return file ? [{ name: tool.name, file }] : [];
 	});
 
 	if (sources.length === 0) return result;
 
 	const parsed = parseConfig(root);
+	const envFile = join(root, "vicinae-env.d.ts");
 	const program = ts.createProgram(
-		sources.map((source) => source.file),
-		{ ...parsed.options, noEmit: true },
+		[
+			...parsed.fileNames,
+			...(existsSync(envFile) ? [envFile] : []),
+			...sources.map((source) => source.file),
+		],
+		{
+			...parsed.options,
+			noEmit: true,
+			allowJs: true,
+			jsx: ts.JsxEmit.ReactJSX,
+			esModuleInterop: true,
+		},
 	);
 
 	for (const { name, file } of sources) {
@@ -277,21 +291,24 @@ export const extractTools = (
 	return result;
 };
 
-/**
- * Writes the extension manifest to the output directory, with the generated tool metadata merged in.
- */
 export const writeBuiltManifest = (
 	root: string,
 	outDir: string,
 	extraction: ToolExtraction,
 ) => {
+	if (extraction.errors.length > 0) {
+		throw new Error(
+			`Failed to generate tool schemas:\n${extraction.errors.join("\n")}`,
+		);
+	}
 	const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 
 	if (Array.isArray(pkg.tools)) {
-		pkg.tools = pkg.tools.map((tool: ManifestTool) => ({
-			...tool,
-			...extraction.tools.get(tool.name),
-		}));
+		pkg.tools = pkg.tools.map((tool: ManifestTool) => {
+			const info = extraction.tools.get(tool.name);
+			if (!info) throw new Error(`Missing metadata for tool ${tool.name}`);
+			return { ...tool, ...info };
+		});
 	}
 
 	writeFileSync(join(outDir, "package.json"), JSON.stringify(pkg, null, 2));
