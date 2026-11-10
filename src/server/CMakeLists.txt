@@ -1768,6 +1768,7 @@ qt_add_translations(${TARGET}
 	TS_FILE_BASE vicinae
 	TS_FILES
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_de.ts
+		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_es_ES.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_fr.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_it.ts
 		${CMAKE_CURRENT_SOURCE_DIR}/translations/vicinae_pl.ts

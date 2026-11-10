@@ -1341,16 +1341,6 @@ Puede obtener más información sobre el desarrollo de extensiones en la [docume
 </translation>
     </message>
     <message>
-```bash
-cd %2
-npm install
-npm run dev
-```
-
-Puede obtener más información sobre el desarrollo de extensiones en la [documentación de Vicinae](https://docs.vicinae.com/).
-</translation>
-    </message>
-    <message>
         <location line="+37"/>
         <source>Open in %1</source>
         <translation>Abrir en %1</translation>
