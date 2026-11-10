@@ -1,161 +1,109 @@
 #include "extension-manifest.hpp"
-#include "internal/glaze-qt.hpp"
+#include <charconv>
+#include <glaze/json/read.hpp>
+#include <glaze/json/generic.hpp>
+#include <glaze/json/minify.hpp>
+#include <glaze/json/raw_string.hpp>
+#include <map>
 #include "utils.hpp"
 #include "vicinae.hpp"
-#include <QJsonObject>
-#include <QJsonDocument>
-#include <charconv>
 
 namespace fs = std::filesystem;
 
-std::expected<ExtensionManifest, ManifestError> ExtensionManifest::fromPackageJson(const fs::path &path) {
-  static const std::set<CommandMode> supportedModes{CommandMode::CommandModeView, CommandModeNoView};
-  fs::path const manifestPath = path / "package.json";
+// glaze reflection needs types with linkage, so these can't live in an anonymous namespace
+namespace manifest_json {
 
-  if (!fs::exists(manifestPath)) {
-    return std::unexpected<ManifestError>(
-        QString("Could not find package.json file at %1").arg(manifestPath.c_str()));
+constexpr auto MANIFEST_READ_OPTS = glz::opts{.error_on_unknown_keys = false};
+constexpr std::string_view AI_MENTION_SEARCH = "AI mention search";
+
+struct RawDropdownItem {
+  std::string title;
+  std::string value;
+};
+
+struct RawPreference {
+  std::string name;
+  std::string type;
+  std::string title;
+  std::string description;
+  std::string placeholder;
+  std::string label;
+  bool required = false;
+  bool multiple = false;
+  std::optional<glz::generic> defaultValue;
+  std::vector<RawDropdownItem> data;
+};
+
+struct RawArgument {
+  std::string name;
+  std::string type;
+  std::string placeholder;
+  bool required = false;
+  std::vector<RawDropdownItem> data;
+};
+
+struct RawCommand {
+  std::string name;
+  std::string title;
+  std::string description;
+  std::string mode;
+  std::optional<std::string> icon;
+  std::optional<std::string> interval;
+  bool disabledByDefault = false;
+  std::vector<std::string> keywords;
+  std::vector<RawPreference> preferences;
+  std::vector<RawArgument> arguments;
+};
+
+struct RawTool {
+  std::string name;
+  std::string title;
+  std::string description;
+  std::optional<std::string> instructions;
+  std::optional<std::string> icon;
+  std::optional<glz::raw_json> input;
+  bool confirmation = false;
+  std::vector<std::string> functionalities;
+};
+
+struct RawManifest {
+  std::string name;
+  std::string title;
+  std::string description;
+  std::string icon;
+  std::string author;
+  std::vector<std::string> categories;
+  std::vector<RawPreference> preferences;
+  std::vector<RawCommand> commands;
+  std::vector<RawTool> tools;
+  std::map<std::string, std::string> dependencies;
+};
+
+} // namespace manifest_json
+
+// NOLINTBEGIN(readability-identifier-naming)
+template <> struct glz::meta<manifest_json::RawPreference> {
+  static constexpr std::string_view rename_key(std::string_view key) {
+    return key == "defaultValue" ? "default" : key;
   }
+};
+// NOLINTEND(readability-identifier-naming)
 
-  QFile file(manifestPath);
+namespace {
 
-  if (!file.open(QIODevice::ReadOnly)) {
-    return std::unexpected<ManifestError>(QString("Failed to open %1 for read").arg(manifestPath.c_str()));
-  }
+using namespace manifest_json;
 
-  QJsonParseError jsonError;
-  auto json = QJsonDocument::fromJson(file.readAll(), &jsonError);
+QString qstr(const std::string &str) { return QString::fromStdString(str); }
 
-  if (jsonError.error) {
-    return std::unexpected<ManifestError>(
-        QString("Failed to parse package.json at %1").arg(manifestPath.c_str()));
-  }
-
-  ExtensionManifest manifest;
-  auto obj = json.object();
-  auto deps = obj.value("dependencies").toObject();
-
-  manifest.path = path;
-  manifest.id = QString::fromStdString(getLastPathComponent(path));
-  manifest.name = obj.value("name").toString();
-  manifest.title = obj.value("title").toString();
-  manifest.description = obj.value("description").toString();
-  manifest.icon = obj.value("icon").toString();
-  manifest.author = obj.value("author").toString();
-  manifest.needsRaycastApi = deps.contains(Omnicast::RAYCAST_NPM_API_PACKAGE);
-
-  if (manifest.id.startsWith("store.vicinae.")) {
-    manifest.provenance = ExtensionManifest::Provenance::Vicinae;
-  } else if (manifest.id.startsWith("store.raycast.")) {
-    manifest.provenance = ExtensionManifest::Provenance::Raycast;
-  } else {
-    manifest.provenance = ExtensionManifest::Provenance::Local;
-  }
-
-  for (const auto &obj : obj.value("categories").toArray()) {
-    manifest.categories.emplace_back(obj.toString());
-  }
-
-  for (const auto &obj : obj.value("commands").toArray()) {
-    auto command = parseCommandFromObject(obj.toObject());
-
-    command.provenance = manifest.provenance;
-    command.entrypoint = path / std::format("{}.js", command.name.toStdString());
-
-    if (supportedModes.contains(command.mode)) { manifest.commands.emplace_back(command); }
-  }
-
-  for (const auto &obj : obj.value("preferences").toArray()) {
-    manifest.preferences.emplace_back(parsePreferenceFromObject(obj.toObject()));
-  }
-
-  return manifest;
-}
-
-Preference ExtensionManifest::parsePreferenceFromObject(const QJsonObject &obj) {
-  auto type = obj["type"].toString();
-  Preference base;
-
-  base.setTitle(obj["title"].toString());
-  base.setDescription(obj["description"].toString());
-  base.setName(obj["name"].toString());
-  base.setPlaceholder(obj["placeholder"].toString());
-  base.setRequired(obj["required"].toBool());
-  if (obj.contains("default")) base.setDefaultValue(qJsonValueToGlazeGeneric(obj.value("default")));
-
-  if (type == "textfield") {
-    base.setData(Preference::TextData());
-  } else if (type == "password") {
-    base.setData(Preference::PasswordData());
-  } else if (type == "checkbox") {
-    auto checkbox = Preference::CheckboxData(obj["label"].toString());
-    base.setData(checkbox);
-  } else if (type == "appPicker") {
-    base.setData(Preference::AppPickerData{.multiple = obj["multiple"].toBool()});
-  } else if (type == "file") {
-    base.setData(Preference::FilePickerData{.multiple = obj["multiple"].toBool()});
-  } else if (type == "directory") {
-    base.setData(Preference::DirectoryPickerData{.multiple = obj["multiple"].toBool()});
-  } else if (type == "dropdown") {
-    auto data = obj["data"].toArray();
-    std::vector<Preference::DropdownData::Option> options;
-
-    options.reserve(data.size());
-
-    for (const auto &child : data) {
-      auto obj = child.toObject();
-
-      options.push_back({.title = obj["title"].toString(), .value = obj["value"].toString()});
-    }
-
-    base.setData(Preference::DropdownData{options});
-    if (obj.contains("default")) base.setDefaultValue(qJsonValueToGlazeGeneric(obj.value("default")));
-  } else {
-    qWarning() << "Unknown extension preference type" << type;
-  }
-
-  return base;
-}
-
-CommandArgument ExtensionManifest::parseArgumentFromObject(const QJsonObject &obj) {
-  CommandArgument arg;
-  QString const type = obj.value("type").toString();
-
-  if (type == "text") arg.type = CommandArgument::Text;
-  if (type == "password") arg.type = CommandArgument::Password;
-  if (type == "dropdown") arg.type = CommandArgument::Dropdown;
-
-  arg.name = obj.value("name").toString();
-  arg.placeholder = obj.value("placeholder").toString();
-  arg.required = obj.value("required").toBool(false);
-
-  if (type == "dropdown") {
-    auto data = obj.value("data").toArray();
-    std::vector<CommandArgument::DropdownData> options;
-
-    options.reserve(data.size());
-
-    for (const auto &child : data) {
-      auto obj = child.toObject();
-
-      options.push_back({.title = obj["title"].toString(), .value = obj["value"].toString()});
-    }
-
-    arg.data = options;
-  }
-
-  return arg;
-}
-
-static std::expected<std::chrono::seconds, QString> parseInterval(const std::string &str) {
+std::expected<std::chrono::seconds, QString> parseInterval(std::string_view str) {
   if (str.empty()) return std::unexpected(QString("interval is empty"));
 
-  char unit = str.back();
+  char const unit = str.back();
 
   std::int64_t value = 0;
   auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size() - 1, value);
   if (ec != std::errc{} || ptr != str.data() + str.size() - 1)
-    return std::unexpected(QString("invalid interval format: %1").arg(str.c_str()));
+    return std::unexpected(QString("invalid interval format: %1").arg(qstr(std::string{str})));
 
   using namespace std::chrono;
 
@@ -184,45 +132,187 @@ static std::expected<std::chrono::seconds, QString> parseInterval(const std::str
   return secs;
 }
 
-ExtensionManifest::Command ExtensionManifest::parseCommandFromObject(const QJsonObject &obj) {
+Preference parsePreference(RawPreference &raw) {
+  Preference base;
+
+  base.setTitle(qstr(raw.title));
+  base.setDescription(qstr(raw.description));
+  base.setName(qstr(raw.name));
+  base.setPlaceholder(qstr(raw.placeholder));
+  base.setRequired(raw.required);
+  if (raw.defaultValue) base.setDefaultValue(std::move(*raw.defaultValue));
+
+  const auto &type = raw.type;
+
+  if (type == "textfield") {
+    base.setData(Preference::TextData());
+  } else if (type == "password") {
+    base.setData(Preference::PasswordData());
+  } else if (type == "checkbox") {
+    base.setData(Preference::CheckboxData{.label = qstr(raw.label)});
+  } else if (type == "appPicker") {
+    base.setData(Preference::AppPickerData{.multiple = raw.multiple});
+  } else if (type == "file") {
+    base.setData(Preference::FilePickerData{.multiple = raw.multiple});
+  } else if (type == "directory") {
+    base.setData(Preference::DirectoryPickerData{.multiple = raw.multiple});
+  } else if (type == "dropdown") {
+    std::vector<Preference::DropdownData::Option> options;
+    options.reserve(raw.data.size());
+
+    for (const auto &item : raw.data) {
+      options.emplace_back(
+          Preference::DropdownData::Option{.title = qstr(item.title), .value = qstr(item.value)});
+    }
+
+    base.setData(Preference::DropdownData{options});
+  } else {
+    qWarning() << "Unknown extension preference type" << qstr(type);
+  }
+
+  return base;
+}
+
+CommandArgument parseArgument(const RawArgument &raw) {
+  CommandArgument arg{
+      .name = qstr(raw.name),
+      .type = CommandArgument::Text,
+      .placeholder = qstr(raw.placeholder),
+      .required = raw.required,
+  };
+
+  if (raw.type == "password") arg.type = CommandArgument::Password;
+
+  if (raw.type == "dropdown") {
+    std::vector<CommandArgument::DropdownData> options;
+    options.reserve(raw.data.size());
+
+    for (const auto &item : raw.data) {
+      options.emplace_back(
+          CommandArgument::DropdownData{.title = qstr(item.title), .value = qstr(item.value)});
+    }
+
+    arg.type = CommandArgument::Dropdown;
+    arg.data = std::move(options);
+  }
+
+  return arg;
+}
+
+ExtensionManifest::Command parseCommand(RawCommand &raw) {
   ExtensionManifest::Command command;
-  auto type = obj.value("mode");
 
-  command.name = obj.value("name").toString();
-  command.title = obj.value("title").toString();
-  command.description = obj.value("description").toString();
-  command.defaultDisabled = obj.value("disabledByDefault").toBool(false);
+  command.name = qstr(raw.name);
+  command.title = qstr(raw.title);
+  command.description = qstr(raw.description);
+  command.defaultDisabled = raw.disabledByDefault;
+  if (raw.icon) command.icon = qstr(*raw.icon);
 
-  if (obj.contains("icon")) { command.icon = obj.value("icon").toString(); }
-
-  if (type == "view") {
+  if (raw.mode == "view") {
     command.mode = CommandMode::CommandModeView;
-  } else if (type == "no-view") {
+  } else if (raw.mode == "no-view") {
     command.mode = CommandMode::CommandModeNoView;
   } else {
     command.mode = CommandMode::CommandModeInvalid;
   }
 
-  if (obj.contains("interval") && command.mode == CommandModeNoView) {
-    auto interval = parseInterval(obj.value("interval").toString().toStdString());
-    if (interval) {
+  if (raw.interval && command.mode == CommandModeNoView) {
+    if (auto interval = parseInterval(*raw.interval)) {
       command.interval = *interval;
     } else {
       qWarning() << "Failed to parse interval for command" << command.name << "-" << interval.error();
     }
   }
 
-  for (const auto &obj : obj.value("keywords").toArray()) {
-    command.keywords.emplace_back(obj.toString());
+  command.keywords.reserve(raw.keywords.size());
+  for (const auto &keyword : raw.keywords) {
+    command.keywords.emplace_back(qstr(keyword));
   }
 
-  for (const auto &obj : obj.value("preferences").toArray()) {
-    command.preferences.emplace_back(parsePreferenceFromObject(obj.toObject()));
+  command.preferences.reserve(raw.preferences.size());
+  for (auto &pref : raw.preferences) {
+    command.preferences.emplace_back(parsePreference(pref));
   }
 
-  for (const auto &obj : obj.value("arguments").toArray()) {
-    command.arguments.emplace_back(parseArgumentFromObject(obj.toObject()));
+  command.arguments.reserve(raw.arguments.size());
+  for (const auto &arg : raw.arguments) {
+    command.arguments.emplace_back(parseArgument(arg));
   }
 
   return command;
+}
+
+ExtensionManifest::Tool parseTool(RawTool &raw, const fs::path &root) {
+  return ExtensionManifest::Tool{
+      .name = raw.name,
+      .title = qstr(raw.title),
+      .description = qstr(raw.description),
+      .instructions = std::move(raw.instructions),
+      .icon = raw.icon.transform(qstr),
+      .inputSchema = raw.input.transform([](glz::raw_json &json) { return glz::minify_json(json.str); }),
+      .confirmation = raw.confirmation,
+      .entrypoint = root / "tools" / std::format("{}.js", raw.name),
+  };
+}
+
+} // namespace
+
+std::expected<ExtensionManifest, ManifestError> ExtensionManifest::fromPackageJson(const fs::path &path) {
+  fs::path const manifestPath = path / "package.json";
+  RawManifest raw;
+  std::string buf;
+
+  if (const auto error = glz::read_file_json<MANIFEST_READ_OPTS>(raw, manifestPath.string(), buf)) {
+    return std::unexpected<ManifestError>(QString("Failed to parse %1: %2")
+                                              .arg(qstr(manifestPath.string()))
+                                              .arg(qstr(glz::format_error(error, buf))));
+  }
+
+  ExtensionManifest manifest;
+
+  manifest.path = path;
+  manifest.id = qstr(getLastPathComponent(path));
+  manifest.name = qstr(raw.name);
+  manifest.title = qstr(raw.title);
+  manifest.description = qstr(raw.description);
+  manifest.icon = qstr(raw.icon);
+  manifest.author = qstr(raw.author);
+  manifest.needsRaycastApi = raw.dependencies.contains(Omnicast::RAYCAST_NPM_API_PACKAGE.toStdString());
+
+  if (manifest.id.startsWith("store.vicinae.")) {
+    manifest.provenance = ExtensionManifest::Provenance::Vicinae;
+  } else if (manifest.id.startsWith("store.raycast.")) {
+    manifest.provenance = ExtensionManifest::Provenance::Raycast;
+  } else {
+    manifest.provenance = ExtensionManifest::Provenance::Local;
+  }
+
+  manifest.categories.reserve(raw.categories.size());
+  for (const auto &category : raw.categories) {
+    manifest.categories.emplace_back(qstr(category));
+  }
+
+  manifest.commands.reserve(raw.commands.size());
+  for (auto &rawCommand : raw.commands) {
+    auto command = parseCommand(rawCommand);
+
+    if (command.mode != CommandModeView && command.mode != CommandModeNoView) continue;
+
+    command.provenance = manifest.provenance;
+    command.entrypoint = path / std::format("{}.js", rawCommand.name);
+    manifest.commands.emplace_back(std::move(command));
+  }
+
+  manifest.preferences.reserve(raw.preferences.size());
+  for (auto &pref : raw.preferences) {
+    manifest.preferences.emplace_back(parsePreference(pref));
+  }
+
+  manifest.tools.reserve(raw.tools.size());
+  for (auto &tool : raw.tools) {
+    if (std::ranges::contains(tool.functionalities, AI_MENTION_SEARCH)) continue;
+    manifest.tools.emplace_back(parseTool(tool, path));
+  }
+
+  return manifest;
 }

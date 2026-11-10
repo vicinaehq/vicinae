@@ -1,5 +1,6 @@
 import build from "./commands/build/index.js";
 import develop from "./commands/develop/index.js";
+import generate from "./commands/generate/index.js";
 import lint from "./commands/lint/index.js";
 
 interface FlagDef {
@@ -10,15 +11,22 @@ interface FlagDef {
 
 export interface CommandDef {
 	description: string;
+	aliases?: string[];
+	/** Positional arguments, as shown in the usage line, e.g. `<type> <name>` */
+	usage?: string;
 	flags: Record<string, FlagDef>;
-	run: (flags: Record<string, string | undefined>) => Promise<void>;
+	run: (
+		flags: Record<string, string | undefined>,
+		args: string[],
+	) => Promise<void>;
 }
 
-function parseFlags(
+function parseArgs(
 	argv: string[],
 	defs: Record<string, FlagDef>,
-): Record<string, string | undefined> {
+): { flags: Record<string, string | undefined>; args: string[] } {
 	const result: Record<string, string | undefined> = {};
+	const args: string[] = [];
 
 	for (const [name, def] of Object.entries(defs)) {
 		if (def.default !== undefined) result[name] = def.default;
@@ -42,10 +50,12 @@ function parseFlags(
 		} else if (arg.startsWith("-") && arg.length === 2) {
 			const long = shortToLong.get(arg[1]);
 			if (long) result[long] = argv[++i];
+		} else {
+			args.push(arg);
 		}
 	}
 
-	return result;
+	return { flags: result, args };
 }
 
 function printHelp(commands: Record<string, CommandDef>) {
@@ -54,7 +64,8 @@ function printHelp(commands: Record<string, CommandDef>) {
 	console.log("  $ vici <command> [flags]\n");
 	console.log("COMMANDS");
 	for (const [name, cmd] of Object.entries(commands)) {
-		console.log(`  ${name.padEnd(12)} ${cmd.description}`);
+		const label = [name, ...(cmd.aliases ?? [])].join(", ");
+		console.log(`  ${label.padEnd(12)} ${cmd.description}`);
 	}
 	console.log(
 		`\nRun "vici <command> --help" for more information about a command.`,
@@ -64,7 +75,7 @@ function printHelp(commands: Record<string, CommandDef>) {
 function printCommandHelp(name: string, cmd: CommandDef) {
 	console.log(`vici ${name} - ${cmd.description}\n`);
 	console.log("USAGE");
-	console.log(`  $ vici ${name} [flags]\n`);
+	console.log(`  $ vici ${name} ${cmd.usage ? `${cmd.usage} ` : ""}[flags]\n`);
 
 	const flagEntries = Object.entries(cmd.flags);
 	if (flagEntries.length === 0) return;
@@ -77,13 +88,18 @@ function printCommandHelp(name: string, cmd: CommandDef) {
 				? ` (default: ${def.default === process.cwd() ? "cwd" : def.default})`
 				: "";
 		console.log(
-			`  ${short}--${flagName.padEnd(10)} ${def.description}${defaultHint}`,
+			`  ${short}--${flagName.padEnd(12)} ${def.description}${defaultHint}`,
 		);
 	}
 }
 
 export async function main() {
-	const commands: Record<string, CommandDef> = { build, develop, lint };
+	const commands: Record<string, CommandDef> = {
+		build,
+		develop,
+		generate,
+		lint,
+	};
 	const [commandName, ...rest] = process.argv.slice(2);
 
 	if (!commandName || commandName === "--help" || commandName === "-h") {
@@ -91,18 +107,22 @@ export async function main() {
 		return;
 	}
 
-	const cmd = commands[commandName];
-	if (!cmd) {
+	const entry = Object.entries(commands).find(
+		([name, cmd]) => name === commandName || cmd.aliases?.includes(commandName),
+	);
+	if (!entry) {
 		console.error(`Unknown command: ${commandName}\n`);
 		printHelp(commands);
 		process.exit(1);
 	}
 
+	const [name, cmd] = entry;
+
 	if (rest.includes("--help") || rest.includes("-h")) {
-		printCommandHelp(commandName, cmd);
+		printCommandHelp(name, cmd);
 		return;
 	}
 
-	const flags = parseFlags(rest, cmd.flags);
-	await cmd.run(flags);
+	const { flags, args } = parseArgs(rest, cmd.flags);
+	await cmd.run(flags, args);
 }

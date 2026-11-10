@@ -4,6 +4,9 @@
 #include "extension/extension-command.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "generated/tsapi.hpp"
+#include <expected>
+#include <functional>
+#include <glaze/json/generic.hpp>
 #include <qlogging.h>
 
 class ExtensionManagerBus : public tsapi::AbstractTransport {
@@ -30,12 +33,29 @@ class ExtensionLogger : public tsapi::AbstractLogger {
 };
 
 class ExtensionCommandRuntime : public CommandContext {
+public:
+  using ToolResult = std::expected<std::string, std::string>;
+
+  /**
+   * Runs the entrypoint as an AI tool: `input` is passed as the tool argument and `done` is called
+   * exactly once with what the tool returned, or with the reason it failed.
+   */
+  struct ToolInvocation {
+    glz::generic input;
+    std::function<void(ToolResult)> done;
+  };
+
+private:
   void initialize();
   PreferenceValues resolvePreferenceValues(PreferenceValues values) const;
+  void finishTool(ToolResult result);
 
 public:
   void load(const LaunchProps &props) override;
   void unload() override;
+
+  void setToolInvocation(ToolInvocation invocation) { m_tool = std::move(invocation); }
+  void cancelTool(std::string reason) { finishTool(std::unexpected(std::move(reason))); }
 
   ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command);
 
@@ -49,6 +69,7 @@ private:
   std::string m_sessionId;
   bool m_isDevMode = false;
   bool m_headless = false;
+  std::optional<ToolInvocation> m_tool;
 
 public:
   void setHeadless(bool value) { m_headless = value; }

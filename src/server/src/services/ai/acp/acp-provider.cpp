@@ -1,10 +1,12 @@
 #include "acp-provider.hpp"
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <charconv>
 #include <format>
 #include <ranges>
 #include <span>
+#include <unordered_set>
 #include <glaze/json.hpp>
 #include <QCryptographicHash>
 #include <QProcess>
@@ -15,10 +17,8 @@
 #include "services/ai/cli/cli-process.hpp"
 #include "services/ai/history-compaction.hpp"
 
-namespace AI {
-
 // not anonymous: glaze can't reflect types with internal linkage
-namespace acp {
+namespace AI::acp {
 
 struct Incoming {
   std::optional<glz::raw_json> id;
@@ -85,6 +85,14 @@ struct ToolContent {
 };
 
 // `content` is a content block for messages and a list of tool contents for tool calls
+struct ClaudeCodeMeta {
+  std::optional<std::string> toolName;
+};
+
+struct UpdateMeta {
+  std::optional<ClaudeCodeMeta> claudeCode;
+};
+
 struct Update {
   std::optional<std::string> sessionUpdate;
   std::optional<glz::raw_json> content;
@@ -94,6 +102,8 @@ struct Update {
   std::optional<std::string> status;
   std::optional<glz::raw_json> rawInput;
   std::optional<glz::raw_json> rawOutput;
+  // agent specific, kept raw so that an unexpected shape doesn't drop the whole update
+  std::optional<glz::raw_json> meta;
 };
 
 struct SessionNotification {
@@ -155,11 +165,22 @@ struct SessionRef {
   std::string sessionId;
 };
 
-} // namespace acp
+} // namespace AI::acp
+
+// NOLINTBEGIN(readability-identifier-naming)
+template <> struct glz::meta<AI::acp::Update> {
+  static constexpr std::string_view rename_key(std::string_view key) { return key == "meta" ? "_meta" : key; }
+};
+// NOLINTEND(readability-identifier-naming)
+
+namespace AI {
 
 namespace {
 
 constexpr glz::opts LENIENT{.error_on_unknown_keys = false};
+constexpr std::string_view MCP_SERVER_NAME = "vicinae";
+// how agents spell a tool of the MCP server above, see vicinaeToolName
+constexpr auto MCP_TOOL_PREFIXES = std::to_array<std::string_view>({"mcp__vicinae__", "vicinae/"});
 constexpr std::size_t MAX_TOOL_OUTPUT = std::size_t{16} * 1024;
 constexpr std::string_view CANCELLED = R"({"outcome":{"outcome":"cancelled"}})";
 constexpr std::string_view DEFAULT_MODEL = "default";
@@ -230,11 +251,44 @@ template <typename T> std::expected<T, std::string> fromJson(std::string_view js
 std::vector<acp::McpServerStdio> mcpServers() {
   const auto helper = vicinae::findHelperProgram("vicinae-mcp");
   if (!helper) return {};
-  return {
-      {.name = "vicinae", .command = helper->string(), .args = {"--socket", vicinae::serverSocketName()}}};
+  return {{.name = std::string{MCP_SERVER_NAME},
+           .command = helper->string(),
+           .args = {"--socket", vicinae::serverSocketName()}}};
 }
 
 bool present(const std::optional<glz::raw_json> &json) { return json && json->str != "null"; }
+
+/**
+ * The name of the Vicinae tool an agent calls through our MCP server, if any. Agents don't report it the same
+ * way: claude-agent-acp names it `mcp__vicinae__<tool>` in `_meta.claudeCode.toolName`, codex-acp titles the
+ * call `Tool: vicinae/<tool>`.
+ */
+std::optional<std::string> vicinaeToolName(const acp::Update &update) {
+  const auto isNameChar = [](char c) {
+    return std::isalnum(static_cast<unsigned char>(c)) || c == '_' || c == '-';
+  };
+
+  const auto extract = [&](std::string_view text) -> std::optional<std::string> {
+    for (const auto prefix : MCP_TOOL_PREFIXES) {
+      for (auto pos = text.find(prefix); pos != std::string_view::npos; pos = text.find(prefix, pos + 1)) {
+        if (pos > 0 && isNameChar(text.at(pos - 1))) continue;
+        const auto rest = text.substr(pos + prefix.size());
+        const auto name = rest.substr(0, std::ranges::find_if_not(rest, isNameChar) - rest.begin());
+        if (!name.empty()) return std::string{name};
+      }
+    }
+    return std::nullopt;
+  };
+
+  if (update.meta) {
+    if (const auto meta = fromJson<acp::UpdateMeta>(update.meta->str);
+        meta && meta->claudeCode && meta->claudeCode->toolName) {
+      if (auto name = extract(*meta->claudeCode->toolName)) return name;
+    }
+  }
+
+  return update.title.and_then(extract);
+}
 
 std::string truncated(std::string_view text) { return std::string(truncateUtf8(text, MAX_TOOL_OUTPUT).text); }
 
@@ -476,14 +530,20 @@ private:
   std::optional<std::string> reportTool(const acp::Update &update) {
     if (!update.toolCallId) return std::nullopt;
 
-    auto [entry, inserted] = m_tools.try_emplace(*update.toolCallId);
+    const auto &callId = *update.toolCallId;
+    auto [entry, inserted] = m_tools.try_emplace(callId);
     auto *tool = &entry->second;
     if (inserted) {
       tool->call.id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
       tool->call.name = "other";
     }
 
-    if (update.kind) tool->call.name = *update.kind;
+    if (auto name = vicinaeToolName(update)) {
+      tool->call.name = std::move(*name);
+      m_vicinaeCalls.insert(callId);
+    } else if (update.kind && !m_vicinaeCalls.contains(callId)) {
+      tool->call.name = *update.kind;
+    }
     if (update.title) tool->title = *update.title;
     if (present(update.rawInput)) tool->call.arguments = update.rawInput->str;
     if (update.status) {
@@ -509,6 +569,7 @@ private:
   ChatMessage m_message;
   std::string m_text;
   std::unordered_map<std::string, ToolActivity> m_tools;
+  std::unordered_set<std::string> m_vicinaeCalls;
   std::vector<Permission> m_permissions;
   bool m_oneShot = false;
   bool m_active = false;

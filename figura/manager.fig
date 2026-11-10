@@ -6,7 +6,8 @@
 
 enum CommandMode {
   View,
-  NoView
+  NoView,
+  Tool
 };
 
 enum CommandEnv {
@@ -50,6 +51,12 @@ struct LoadResponse {
   session_id: string;
 };
 
+// Only meaningful for tools: the serialized value returned by the tool, or the error it threw.
+struct LaunchResult {
+  output?: string;
+  error?: string;
+};
+
 service Manager {
   fn load(opts: LoadOptions) => LoadResponse;
   fn unload(session_id: string) => bool;
@@ -58,7 +65,8 @@ service Manager {
   // Happens right after the C++ side gets the session id from `load` and stores it.
   // It is important to synchronize this way otherwise we can theoretically miss the first messages if the
   // extension loads too fast.
-  fn ready(session_id: string) => bool;
+  // Resolves once the command has been launched, or once the tool has returned for tools.
+  fn ready(session_id: string) => LaunchResult;
 
   fn messageExtension(session_id: string, payload: string) => bool;
 

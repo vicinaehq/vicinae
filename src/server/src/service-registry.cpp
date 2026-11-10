@@ -42,6 +42,7 @@
 #include "services/news/news-service.hpp"
 #include "services/ai/ai-service.hpp"
 #include "services/ai/tool-registry.hpp"
+#include "extension/extension-tool.hpp"
 #include "services/local-model-registry/local-model-registry.hpp"
 #include "config/config.hpp"
 
@@ -60,6 +61,7 @@ FontService *ServiceRegistry::fontService() const { return m_fontService.get(); 
 ScreenshotService *ServiceRegistry::screenshots() const { return m_screenshots.get(); }
 LocalStorageService *ServiceRegistry::localStorage() const { return m_localStorage.get(); }
 ExtensionManager *ServiceRegistry::extensionManager() const { return m_extensionManager.get(); }
+ExtensionToolRunner *ServiceRegistry::extensionToolRunner() const { return m_extensionToolRunner.get(); }
 ClipboardService *ServiceRegistry::clipman() const { return m_clipman.get(); }
 AppService *ServiceRegistry::appDb() const { return m_appDb.get(); }
 ToastService *ServiceRegistry::toastService() const { return m_toastService.get(); }
@@ -188,6 +190,9 @@ void ServiceRegistry::setOmniDb(std::unique_ptr<OmniDatabase> service) { m_omniD
 
 void ServiceRegistry::setLocalStorage(std::unique_ptr<LocalStorageService> service) {
   m_localStorage = std::move(service);
+}
+void ServiceRegistry::setExtensionToolRunner(std::unique_ptr<ExtensionToolRunner> runner) {
+  m_extensionToolRunner = std::move(runner);
 }
 void ServiceRegistry::setExtensionManager(std::unique_ptr<ExtensionManager> service) {
   m_extensionManager = std::move(service);

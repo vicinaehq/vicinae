@@ -13,8 +13,13 @@ import type { CommandDef } from "../../cli.js";
 import ManifestSchema from "../../schemas/manifest.js";
 import { updateExtensionTypes } from "../../utils/extension-types.js";
 import { Logger } from "../../utils/logger.js";
+import {
+	extractTools,
+	toolEntryPoints,
+	writeBuiltManifest,
+} from "../../utils/tools.js";
 import { typeCheck } from "../../utils/typecheck.js";
-import { extensionDataDir } from "../../utils/utils.js";
+import { BUILD_OPTIONS, extensionDataDir } from "../../utils/utils.js";
 
 const build: CommandDef = {
 	description: "Build an extension for distribution",
@@ -63,7 +68,7 @@ const build: CommandDef = {
 
 			logger.logInfo(`entrypoints [${entryPoints.join(", ")}]`);
 
-			const promises = manifest.commands.map((cmd) => {
+			const promises: Promise<unknown>[] = manifest.commands.map((cmd) => {
 				const base = join(process.cwd(), "src", `${cmd.name}`);
 				const tsxSource = `${base}.tsx`;
 				const tsSource = `${base}.ts`;
@@ -87,31 +92,31 @@ const build: CommandDef = {
 				}
 
 				return esbuild.build({
-					bundle: true,
+					...BUILD_OPTIONS,
 					entryPoints: [source],
-					external: [
-						"react",
-						"react/jsx-runtime",
-						"@vicinae/api",
-						"@raycast/api",
-					],
-					format: "cjs",
-					jsx: "automatic",
 					outdir: outDir,
-					platform: "node",
 					minify: true,
-					loader: {
-						".node": "file",
-					},
 				});
 			});
 
+			const tools = manifest.tools ?? [];
+			if (tools.length > 0) {
+				logger.logInfo(`tools [${tools.map((tool) => tool.name).join(", ")}]`);
+				promises.push(
+					esbuild.build({
+						...BUILD_OPTIONS,
+						entryPoints: toolEntryPoints(process.cwd(), tools),
+						outdir: outDir,
+						minify: true,
+					}),
+				);
+			}
+
 			await Promise.all(promises);
 
-			const targetPkg = join(outDir, "package.json");
 			const targetAssets = join(outDir, "assets");
 
-			cpSync("package.json", targetPkg, { force: true });
+			writeBuiltManifest(process.cwd(), outDir, toolInfo);
 
 			if (existsSync("assets")) {
 				cpSync("assets", targetAssets, { force: true, recursive: true });
@@ -130,6 +135,15 @@ const build: CommandDef = {
 
 		if (!check.ok) {
 			logger.logError(`Type check failed:\n${check.output}`);
+			process.exit(1);
+		}
+
+		const toolInfo = extractTools(src, manifest.tools ?? []);
+
+		if (toolInfo.errors.length > 0) {
+			logger.logError(
+				`Failed to generate tool schemas:\n${toolInfo.errors.join("\n")}`,
+			);
 			process.exit(1);
 		}
 

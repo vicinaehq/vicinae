@@ -18,6 +18,7 @@
 #include "icon-theme-db/icon-theme-db.hpp"
 #endif
 #include "extension/extension-interval-scheduler.hpp"
+#include "extension/extension-tool.hpp"
 #include "ipc/ipc-command-server.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
@@ -552,6 +553,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   ExtensionIntervalScheduler intervalScheduler(ctx);
   intervalScheduler.rebuild();
+  ctx.services->setExtensionToolRunner(std::make_unique<ExtensionToolRunner>(ctx));
 
   auto tray = createTrayService();
   if (tray) {

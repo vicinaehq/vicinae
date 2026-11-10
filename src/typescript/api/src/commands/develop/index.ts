@@ -8,8 +8,14 @@ import ManifestSchema from "../../schemas/manifest.js";
 import { updateExtensionTypes } from "../../utils/extension-types.js";
 import { Logger } from "../../utils/logger.js";
 import { Tail } from "../../utils/tail.js";
+import {
+	extractTools,
+	toolEntryPoints,
+	writeBuiltManifest,
+} from "../../utils/tools.js";
 import { typeCheck } from "../../utils/typecheck.js";
 import {
+	BUILD_OPTIONS,
 	extensionDataDir,
 	extensionInternalSupportDir,
 } from "../../utils/utils.js";
@@ -62,7 +68,7 @@ const develop: CommandDef = {
 				.filter(fs.existsSync);
 			logger.logInfo(`entrypoints [${entryPoints.join(", ")}]`);
 
-			const promises = manifest.commands.map((cmd) => {
+			const promises: Promise<unknown>[] = manifest.commands.map((cmd) => {
 				const base = path.join(process.cwd(), "src", `${cmd.name}`);
 				const tsxSource = `${base}.tsx`;
 				const tsSource = `${base}.ts`;
@@ -86,30 +92,31 @@ const develop: CommandDef = {
 				}
 
 				return esbuild.build({
-					bundle: true,
+					...BUILD_OPTIONS,
 					entryPoints: [source],
-					external: [
-						"react",
-						"react/jsx-runtime",
-						"@vicinae/api",
-						"@raycast/api",
-					],
-					format: "cjs",
-					jsx: "automatic",
 					outdir: outDir,
-					platform: "node",
-					loader: {
-						".node": "file",
-					},
 				});
 			});
 
+			const tools = manifest.tools ?? [];
+			if (tools.length > 0) {
+				promises.push(
+					esbuild.build({
+						...BUILD_OPTIONS,
+						entryPoints: toolEntryPoints(process.cwd(), tools),
+						outdir: outDir,
+					}),
+				);
+			}
+
 			await Promise.all(promises);
 
-			const targetPkg = path.join(outDir, "package.json");
-			const targetAssets = path.join(outDir, "assets");
+			// a tool whose schema cannot be generated stays usable, it just won't take any input
+			const toolInfo = extractTools(process.cwd(), tools);
+			for (const error of toolInfo.errors) logger.logError(error);
+			writeBuiltManifest(process.cwd(), outDir, toolInfo);
 
-			fs.cpSync("package.json", targetPkg, { force: true });
+			const targetAssets = path.join(outDir, "assets");
 
 			if (fs.existsSync("assets")) {
 				fs.cpSync("assets", targetAssets, { force: true, recursive: true });

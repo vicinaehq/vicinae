@@ -1,5 +1,7 @@
+#include <ranges>
 #include "extension/extension.hpp"
 #include "extension/extension-command.hpp"
+#include "extension/extension-tool.hpp"
 #include "ui/image/url.hpp"
 #include "command/preference.hpp"
 #include <qjsonobject.h>
@@ -36,18 +38,59 @@ QString Extension::description() const { return m_manifest.description; };
 
 const ExtensionManifest &Extension::manifest() const { return m_manifest; }
 
+std::shared_ptr<ExtensionCommand> Extension::makeCommand(const ExtensionManifest::Command &cmd) const {
+  auto command = std::make_shared<ExtensionCommand>(cmd);
+
+  command->setExtensionId(m_manifest.id);
+  command->setPath(m_manifest.path);
+  command->setExtensionTitle(m_manifest.title);
+  command->setExtensionIcon(m_manifest.icon);
+  command->setExtensionPreferences(m_manifest.preferences);
+  command->setExtensionName(m_manifest.name);
+  command->setAuthor(author());
+
+  return command;
+}
+
 Extension::Extension(const ExtensionManifest &manifest) : m_manifest(manifest) {
+  m_commands.reserve(m_manifest.commands.size());
   for (const auto &cmd : m_manifest.commands) {
-    auto command = std::make_shared<ExtensionCommand>(cmd);
-
-    command->setExtensionId(m_manifest.id);
-    command->setPath(m_manifest.path);
-    command->setExtensionTitle(m_manifest.title);
-    command->setExtensionIcon(m_manifest.icon);
-    command->setExtensionPreferences(m_manifest.preferences);
-    command->setExtensionName(m_manifest.name);
-    command->setAuthor(author());
-
-    m_commands.emplace_back(command);
+    m_commands.emplace_back(makeCommand(cmd));
   }
+}
+
+QString Extension::toolNamespace() const { return m_manifest.name; }
+
+// tools run like no-view commands, under the extension's identity and preferences
+std::shared_ptr<ExtensionCommand> Extension::makeToolCommand(const ExtensionManifest::Tool &tool) const {
+  return makeCommand(ExtensionManifest::Command{
+      .name = QString::fromStdString(tool.name),
+      .title = tool.title,
+      .description = tool.description,
+      .mode = CommandModeNoView,
+      .entrypoint = tool.entrypoint,
+      .defaultDisabled = false,
+      .provenance = m_manifest.provenance,
+  });
+}
+
+std::vector<AI::ToolContribution> Extension::tools() const {
+  const auto toContribution = [this](const ExtensionManifest::Tool &tool) {
+    auto icon = iconUrl();
+    if (tool.icon) icon = ImageURL::local(assetDirectory() / tool.icon->toStdString()).withFallback(icon);
+
+    return AI::ToolContribution{
+        .id = tool.name,
+        .title = tool.title,
+        .description = tool.description,
+        .icon = std::move(icon),
+        .annotations = tool.confirmation ? AI::ToolAnnotations{.readOnly = false, .destructive = true}
+                                         : AI::ToolAnnotations{},
+        .create = [tool, command = makeToolCommand(tool)] -> std::unique_ptr<AI::AbstractTool> {
+          return std::make_unique<ExtensionTool>(tool, command);
+        },
+    };
+  };
+
+  return m_manifest.tools | std::views::transform(toContribution) | std::ranges::to<std::vector>();
 }

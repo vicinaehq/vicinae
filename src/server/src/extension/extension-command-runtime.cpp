@@ -135,8 +135,14 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   }
 
   opts.entrypoint = m_command->manifest().entrypoint.string();
-  opts.mode = m_command->mode() == CommandMode::CommandModeView ? manager::CommandMode::View
-                                                                : manager::CommandMode::NoView;
+
+  if (m_tool) {
+    opts.mode = manager::CommandMode::Tool;
+  } else if (m_command->mode() == CommandMode::CommandModeView) {
+    opts.mode = manager::CommandMode::View;
+  } else {
+    opts.mode = manager::CommandMode::NoView;
+  }
 
   opts.cwd = props.cwd.transform([](const QString &s) { return s.toStdString(); });
   opts.fallbackText = props.fallbackText.transform([](const QString &s) { return s.toStdString(); });
@@ -148,11 +154,16 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   opts.is_raycast = m_command->isRaycast();
   opts.preferences = std::move(preferenceValues);
   opts.launch_context = props.launchContext;
-  opts.arguments = props.arguments |
-                   std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {
-                     return {pair.first.toStdString(), pair.second.toStdString()};
-                   }) |
-                   std::ranges::to<std::unordered_map<std::string, std::string>>();
+
+  if (m_tool) {
+    opts.arguments = m_tool->input;
+  } else {
+    opts.arguments = props.arguments |
+                     std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {
+                       return {pair.first.toStdString(), pair.second.toStdString()};
+                     }) |
+                     std::ranges::to<std::unordered_map<std::string, std::string>>();
+  }
 
   opts.capabilities.browserExtension = !context()->services->browserExtension()->browsers().empty();
   opts.capabilities.windowManagement = context()->services->windowManager()->isCapable();
@@ -184,6 +195,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
             qCritical() << "Got crash" << reason;
 
+            finishTool(std::unexpected(reason));
             if (m_headless) return;
 
             auto &nav = context()->navigation;
@@ -200,10 +212,22 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
       if (!res) {
         qWarning() << "Failed to load extension" << res.error();
+        finishTool(std::unexpected(res.error()));
       } else {
         m_sessionId = res->session_id;
         m_bus->setSessionId(m_sessionId);
-        manager->client().manager()->ready(res->session_id);
+        manager->client()
+            .manager()
+            ->ready(res->session_id)
+            .then(this, [this](const std::expected<manager::LaunchResult, std::string> &launch) {
+              if (!launch) {
+                finishTool(std::unexpected(launch.error()));
+              } else if (launch->error) {
+                finishTool(std::unexpected(*launch->error));
+              } else {
+                finishTool(launch->output.value_or(""));
+              }
+            });
       }
     }
 
@@ -211,6 +235,11 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   });
 
   watcher->setFuture(manager->client().manager()->load(opts));
+}
+
+void ExtensionCommandRuntime::finishTool(ToolResult result) {
+  if (!m_tool || !m_tool->done) return;
+  std::exchange(m_tool->done, nullptr)(std::move(result));
 }
 
 void ExtensionCommandRuntime::unload() {

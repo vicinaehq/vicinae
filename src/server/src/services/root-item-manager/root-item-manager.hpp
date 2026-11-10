@@ -203,6 +203,11 @@ public:
   virtual PreferenceList preferences() const { return {}; }
   virtual std::vector<SettingsPage> settingsPages() const { return {}; }
   virtual std::vector<AI::ToolContribution> tools() const { return {}; }
+
+  /**
+   * Prefix used to build the name of the tools exposed to models.
+   */
+  virtual QString toolNamespace() const { return uniqueId(); }
 };
 
 struct RootItemMetadata {

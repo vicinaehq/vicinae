@@ -288,6 +288,8 @@ set(SRCS
 
 	src/extension/extension.hpp
 	src/extension/extension.cpp
+	src/extension/extension-tool.hpp
+	src/extension/extension-tool.cpp
 
 	src/extension/extension-command.hpp
 	src/extension/extension-command.cpp
@@ -1801,8 +1803,11 @@ if (BUILD_TESTS AND UNIX AND NOT APPLE)
 		src/services/builtin-icon/builtin-icon.cpp
 		src/services/audio-control/pactl/pactl-audio-control.cpp
 		src/services/clipboard/clipboard-mime.cpp
+		src/services/extension-registry/extension-manifest.cpp
+		src/utils/utils.cpp
 		tests/pactl-audio-control.cpp
 		tests/clipboard-mime.cpp
+		tests/extension-manifest.cpp
 	)
 	target_link_libraries(${TEST_TARGET} PRIVATE vicinae::common Qt6::Concurrent glaze::glaze)
 	target_link_libraries(${TEST_TARGET} PRIVATE Catch2::Catch2WithMain Qt6::Core Qt6::Gui)

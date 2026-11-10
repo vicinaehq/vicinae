@@ -7,6 +7,7 @@ class AppService;
 class OmniDatabase;
 class LocalStorageService;
 class ExtensionManager;
+class ExtensionToolRunner;
 class ClipboardService;
 class FontService;
 class ScreenshotService;
@@ -74,6 +75,7 @@ public:
   ScreenshotService *screenshots() const;
   LocalStorageService *localStorage() const;
   ExtensionManager *extensionManager() const;
+  ExtensionToolRunner *extensionToolRunner() const;
   ClipboardService *clipman() const;
   AppService *appDb() const;
   ToastService *toastService() const;
@@ -122,6 +124,7 @@ public:
   void setShortcutService(std::unique_ptr<ShortcutService> service);
   void setCalculatorService(std::unique_ptr<CalculatorService> service);
   void setExtensionRegistry(std::unique_ptr<ExtensionRegistry> service);
+  void setExtensionToolRunner(std::unique_ptr<ExtensionToolRunner> runner);
   void setFileService(std::unique_ptr<FileService> service);
   void setGlyphService(std::unique_ptr<GlyphService> service);
   void setToastService(std::unique_ptr<ToastService> service);
@@ -165,6 +168,7 @@ private:
   std::unique_ptr<OmniDatabase> m_omniDb;
   std::unique_ptr<LocalStorageService> m_localStorage;
   std::unique_ptr<ExtensionManager> m_extensionManager;
+  std::unique_ptr<ExtensionToolRunner> m_extensionToolRunner;
   std::unique_ptr<ClipboardService> m_clipman;
   std::unique_ptr<FontService> m_fontService;
   std::unique_ptr<ScreenshotService> m_screenshots;
