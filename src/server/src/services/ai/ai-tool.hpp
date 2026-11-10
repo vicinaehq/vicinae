@@ -71,7 +71,6 @@ public:
   virtual RawToolTask runRaw(std::string_view object) = 0;
   virtual bool isEnabled() const { return true; }
   virtual bool requiresApproval(std::string_view arguments) const { return false; }
-  virtual bool handlesApproval() const { return false; }
   virtual bool isDeferred() const { return false; }
   virtual std::optional<std::string> invocationSummary(std::string_view arguments) const { return {}; }
 

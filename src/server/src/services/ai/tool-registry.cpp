@@ -33,7 +33,6 @@ public:
   }
 
   bool requiresApproval(std::string_view arguments) const override {
-    if (m_tool->handlesApproval()) return false;
     return !m_registry || m_registry->policy(m_name) != ToolPolicy::Allow ||
            m_tool->requiresApproval(arguments);
   }

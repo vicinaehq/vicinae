@@ -29,7 +29,6 @@ struct Capabilities {
 };
 
 struct LoadOptions {
-  tool_requires_approval?: bool;
   mode: CommandMode;
   env: CommandEnv;
   vicinae_path: string;

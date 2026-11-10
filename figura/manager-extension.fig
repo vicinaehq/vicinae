@@ -26,7 +26,6 @@ struct Capabilities {
 };
 
 struct LaunchEventData {
-  tool_requires_approval?: bool;
   extension_name: string;
   command_name: string;
   mode: CommandMode;

@@ -27,7 +27,7 @@ public:
   std::string name() const override { return m_tool.name; }
   std::string description() const override;
   std::string generateInputSchema() const override;
-  bool handlesApproval() const override { return true; }
+  bool requiresApproval(std::string_view) const override { return m_tool.confirmation; }
   RawToolTask runRaw(std::string_view arguments) override;
 
 private:

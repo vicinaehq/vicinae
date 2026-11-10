@@ -142,7 +142,6 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
   if (m_toolCall) {
     opts.mode = manager::CommandMode::Tool;
-    opts.tool_requires_approval = m_toolCall->requiresApproval;
   } else if (m_command->mode() == CommandMode::CommandModeView) {
     opts.mode = manager::CommandMode::View;
   } else {

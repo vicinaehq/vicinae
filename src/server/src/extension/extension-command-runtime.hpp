@@ -44,7 +44,6 @@ public:
 
   struct ToolCall {
     glz::generic input;
-    bool requiresApproval = false;
   };
 
   static constexpr std::chrono::minutes HEADLESS_TIMEOUT{1};

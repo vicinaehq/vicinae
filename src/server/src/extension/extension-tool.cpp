@@ -8,7 +8,6 @@
 #include "extension/extension-command.hpp"
 #include "extension/headless-command-runner.hpp"
 #include "service-registry.hpp"
-#include "services/ai/tool-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/settings/settings-controller.hpp"
 
@@ -54,8 +53,6 @@ AI::AbstractTool::RawToolTask ExtensionTool::runRaw(std::string_view arguments) 
     return ready(std::unexpected(glz::format_error(error, arguments)));
   }
 
-  const auto id = m_command->uniqueId();
-  const auto policy = ServiceRegistry::instance()->tools()->toolPolicy(id.provider, m_tool.name);
   const auto promise = std::make_shared<QPromise<RawToolResult>>();
   promise->start();
 
@@ -66,10 +63,7 @@ AI::AbstractTool::RawToolTask ExtensionTool::runRaw(std::string_view arguments) 
             [](std::string output) { return AI::ToolOutput{.content = std::move(output)}; }));
         promise->finish();
       },
-      ExtensionCommandRuntime::ToolCall{
-          .input = std::move(input),
-          .requiresApproval = policy != AI::ToolPolicy::Allow,
-      });
+      ExtensionCommandRuntime::ToolCall{.input = std::move(input)});
   if (!runtime) return ready(std::unexpected(runtime.error()));
 
   return {
