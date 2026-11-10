@@ -184,6 +184,11 @@ constexpr auto PRESETS = std::to_array<AgentPreset>({
     {"opencode", "opencode", "acp", "", "opencode auth login"},
     {"qwen-code", "qwen", "--acp", "", "qwen"},
     {"kilo", "kilo", "acp", "", "kilo auth login"},
+    {"mistral-vibe", "vibe-acp", "", "", "vibe --setup"},
+    {"github-copilot", "copilot", "--acp", "@github/copilot@1.0.108", "copilot"},
+    {"cursor", "cursor-agent", "acp", "", "cursor-agent login"},
+    {"grok-build", "grok", "agent stdio", "@xai-official/grok@1.0.79", "grok"},
+    {"goose", "goose", "acp", "", "goose configure"},
 });
 
 const AgentPreset *findPreset(std::string_view type) {
@@ -225,7 +230,8 @@ template <typename T> std::expected<T, std::string> fromJson(std::string_view js
 std::vector<acp::McpServerStdio> mcpServers() {
   const auto helper = vicinae::findHelperProgram("vicinae-mcp");
   if (!helper) return {};
-  return {{.name = "vicinae", .command = helper->string()}};
+  return {
+      {.name = "vicinae", .command = helper->string(), .args = {"--socket", vicinae::serverSocketName()}}};
 }
 
 bool present(const std::optional<glz::raw_json> &json) { return json && json->str != "null"; }

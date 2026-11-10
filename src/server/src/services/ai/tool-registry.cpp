@@ -54,7 +54,7 @@ private:
 };
 
 bool validId(std::string_view id) {
-  return !id.empty() && id.find("__") == std::string_view::npos && std::ranges::all_of(id, [](char c) {
+  return !id.empty() && std::ranges::all_of(id, [](char c) {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
   });
 }
@@ -78,7 +78,8 @@ void ToolRegistry::rebuild() {
     entries.reserve(entries.size() + tools.size());
 
     for (auto &tool : tools) {
-      auto name = std::format("{}__{}", providerId, tool.id);
+      // "__" is how MCP clients join server and tool names, some refuse tools that already contain it
+      auto name = std::format("{}_{}", providerId, tool.id);
 
       if (!validId(providerId) || !validId(tool.id) || name.size() > 64 || !tool.create ||
           std::ranges::find(entries, name, &Entry::name) != entries.end()) {

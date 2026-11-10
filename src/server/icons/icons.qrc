@@ -195,6 +195,7 @@
 		<file>consul.svg</file>
 		<file>contao.svg</file>
 		<file>contrast.svg</file>
+		<file>copilot.svg</file>
 		<file>copy-clipboard.svg</file>
 		<file>corejs.svg</file>
 		<file>cosmosdb.svg</file>
@@ -210,6 +211,7 @@
 		<file>csharp.svg</file>
 		<file>css3.svg</file>
 		<file>cucumber.svg</file>
+		<file>cursor.svg</file>
 		<file>cypressio.svg</file>
 		<file>d3js.svg</file>
 		<file>dart.svg</file>
@@ -330,10 +332,12 @@
 		<file>goland.svg</file>
 		<file>google.svg</file>
 		<file>googlecloud.svg</file>
+		<file>goose.svg</file>
 		<file>gradle.svg</file>
 		<file>grafana.svg</file>
 		<file>grails.svg</file>
 		<file>graphql.svg</file>
+		<file>grok.svg</file>
 		<file>groovy.svg</file>
 		<file>groq.svg</file>
 		<file>grpc.svg</file>
@@ -471,6 +475,7 @@
 		<file>minus-circle.svg</file>
 		<file>minus.svg</file>
 		<file>mistral.svg</file>
+		<file>mistral-vibe.svg</file>
 		<file>mithril.svg</file>
 		<file>mobile.svg</file>
 		<file>mobx.svg</file>
