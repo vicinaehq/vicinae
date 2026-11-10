@@ -9,8 +9,12 @@
 static constexpr const char *WATCHER_SERVICE = "org.kde.StatusNotifierWatcher";
 static constexpr const char *WATCHER_PATH = "/StatusNotifierWatcher";
 
-SniWatcher::SniWatcher(QObject *parent)
+SniWatcher::SniWatcher(bool watcherEnabled, QObject *parent)
     : QObject(parent), m_nameWatcher(WATCHER_SERVICE, QDBusConnection::sessionBus()) {
+  // Owner changes call back into m_claimTimer. Skip the whole lifecycle, not only the
+  // initial start, or a later disappearance of some other watcher would claim the name.
+  if (!watcherEnabled) return;
+
   connect(&m_nameWatcher, &QDBusServiceWatcher::serviceOwnerChanged, this, &SniWatcher::onNameOwnerChanged);
 
   m_serviceWatcher.setConnection(QDBusConnection::sessionBus());

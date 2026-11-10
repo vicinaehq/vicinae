@@ -112,7 +112,8 @@ TrayMenuItem toMenuItem(const DBusMenuLayout &layout) {
 
 } // namespace
 
-SniTrayHost::SniTrayHost() : m_watcher(WATCHER_SERVICE, QDBusConnection::sessionBus()) {
+SniTrayHost::SniTrayHost(bool watcherEnabled)
+    : m_watcher(WATCHER_SERVICE, QDBusConnection::sessionBus()), m_ownWatcher(watcherEnabled) {
   registerSniMetaTypes();
 
   connect(&m_watcher, &QDBusServiceWatcher::serviceOwnerChanged, this,
