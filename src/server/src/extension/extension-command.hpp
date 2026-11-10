@@ -17,6 +17,9 @@
 #include <qtmetamacros.h>
 #include <optional>
 
+class RootItemManager;
+class SettingsController;
+
 class ExtensionCommand : public AbstractCmd {
   QString _extensionId;
   QString m_extensionName;
@@ -30,6 +33,9 @@ class ExtensionCommand : public AbstractCmd {
 
 public:
   ExtensionCommand(const ExtensionManifest::Command &command) : m_command(command) {}
+
+  virtual PreferenceValues preferenceValues(const RootItemManager &rootItemManager) const;
+  virtual void openPreferences(SettingsController &settings) const;
 
   QString author() const override { return m_author; }
   QString authorSuffixed() const override {

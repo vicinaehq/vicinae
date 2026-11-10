@@ -1,23 +1,20 @@
 #pragma once
 #include <QCoreApplication>
 #include <memory>
+#include "extension/extension-command.hpp"
 #include "services/ai/ai-tool.hpp"
 #include "services/extension-registry/extension-manifest.hpp"
 
-struct ApplicationContext;
-class ExtensionCommand;
-
-class ExtensionToolRunner {
-  Q_DECLARE_TR_FUNCTIONS(ExtensionToolRunner)
-
+/**
+ * The command a tool runs as. Tools are not root items: their preferences are the extension's
+ * merged with the tool's own, which are stored separately from command preferences.
+ */
+class ExtensionToolCommand : public ExtensionCommand {
 public:
-  explicit ExtensionToolRunner(ApplicationContext &ctx) : m_ctx(ctx) {}
+  using ExtensionCommand::ExtensionCommand;
 
-  AI::AbstractTool::RawToolTask run(const std::shared_ptr<ExtensionCommand> &command,
-                                    std::string_view arguments, bool requiresApproval);
-
-private:
-  ApplicationContext &m_ctx;
+  PreferenceValues preferenceValues(const RootItemManager &rootItemManager) const override;
+  void openPreferences(SettingsController &settings) const override;
 };
 
 class ExtensionTool : public AI::AbstractTool {

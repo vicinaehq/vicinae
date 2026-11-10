@@ -54,19 +54,20 @@ void ExtensionCommandRuntime::initialize() {
   auto *app = new ExtApplicationService(*m_transport, *services->appDb());
   m_ui = new ExtUIService(*m_transport, context()->navigation.get(), m_command, eventCore,
                           *services->toastService(), *services->selectionService());
-  if (m_tool) {
-    m_toolTimer.setSingleShot(true);
-    m_toolTimer.setInterval(std::chrono::minutes(1));
-    connect(&m_toolTimer, &QTimer::timeout, this, [this] {
-      cancelTool(QCoreApplication::translate("ExtensionToolRunner", "The tool timed out.").toStdString());
+  if (m_headless) {
+    m_timeout.setSingleShot(true);
+    m_timeout.setInterval(HEADLESS_TIMEOUT);
+    connect(&m_timeout, &QTimer::timeout, this, [this] {
+      cancel(QCoreApplication::translate("ExtensionCommandRuntime", "The command timed out.").toStdString());
     });
+    // waiting on the user is not the command hanging
     connect(m_ui, &ExtUIService::confirmationPendingChanged, this, [this](bool pending) {
       if (pending)
-        m_toolTimer.stop();
-      else if (m_tool->done)
-        m_toolTimer.start();
+        m_timeout.stop();
+      else if (m_onFinished)
+        m_timeout.start();
     });
-    m_toolTimer.start();
+    m_timeout.start();
   }
   auto *wm = new ExtWindowManagementService(*m_transport, *services->windowManager(), *services->appDb(),
                                             *services->appRuntime(), *ctx.navigation);
@@ -74,7 +75,7 @@ void ExtensionCommandRuntime::initialize() {
   auto *storage = new ExtStorageService(*m_transport, *services->localStorage(), storageNamespace);
   auto *fileSearch = new ExtFileSearchService(*m_transport, *services->fileService());
   auto *command = new ExtCommandService(*m_transport, m_command, services->rootItemManager(), *ctx.settings,
-                                        *ctx.navigation, m_tool.has_value());
+                                        *ctx.navigation);
   auto *oauth = new ExtOAuthService(*m_transport, m_command->extensionId(), ctx);
   auto wallpaper = new ExtWallpaperService(*m_transport, *services->wallpaperManager());
   auto browserExtension = new ExtBrowserExtensionService(*m_transport, *services->browserExtension());
@@ -107,30 +108,18 @@ PreferenceValues ExtensionCommandRuntime::resolvePreferenceValues(PreferenceValu
 void ExtensionCommandRuntime::load(const LaunchProps &props) {
   initialize();
 
-  auto rootItemManager = context()->services->rootItemManager();
-  const auto id = m_command->uniqueId();
-  auto preferenceValues =
-      m_tool ? rootItemManager->getProviderPreferenceValues(QString::fromStdString(id.provider))
-             : rootItemManager->getPreferenceValues(id);
-  if (m_tool) {
-    for (auto &[key, value] : rootItemManager->getToolPreferenceValues(id, m_command->preferences()))
-      preferenceValues.insert_or_assign(key, std::move(value));
+  const auto preferenceValues =
+      resolvePreferenceValues(m_command->preferenceValues(*context()->services->rootItemManager()));
+
+  // with a UI, the user is asked for missing preferences before the command is launched
+  if (const auto missing = missingRequiredPreference(preferenceValues); m_headless && missing) {
+    cancel(QCoreApplication::translate("ExtensionCommandRuntime",
+                                       "Set the \"%1\" preference in extension settings first.")
+               .arg(QString::fromStdString(*missing))
+               .toStdString());
+    return;
   }
-  preferenceValues = resolvePreferenceValues(std::move(preferenceValues));
-  if (m_tool) {
-    for (const auto &pref : m_command->mergedPreferences()) {
-      const auto *value = preferences::find(preferenceValues, pref.name().toStdString());
-      if (pref.required() && (!value || preferences::isEmpty(*value))) {
-        finishTool(
-            std::unexpected(QCoreApplication::translate(
-                                "ExtensionToolRunner",
-                                "Set the \"%1\" preference in extension settings before running this tool.")
-                                .arg(pref.title())
-                                .toStdString()));
-        return;
-      }
-    }
-  }
+
   auto manager = context()->services->extensionManager();
   manager::LoadOptions opts;
 
@@ -151,9 +140,9 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
   opts.entrypoint = m_command->manifest().entrypoint.string();
 
-  if (m_tool) {
+  if (m_toolCall) {
     opts.mode = manager::CommandMode::Tool;
-    opts.tool_requires_approval = m_tool->requiresApproval;
+    opts.tool_requires_approval = m_toolCall->requiresApproval;
   } else if (m_command->mode() == CommandMode::CommandModeView) {
     opts.mode = manager::CommandMode::View;
   } else {
@@ -168,11 +157,11 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   opts.extension_name = m_command->repositoryName().toStdString();
   opts.owner_or_author_name = m_command->author().toStdString();
   opts.is_raycast = m_command->isRaycast();
-  opts.preferences = std::move(preferenceValues);
+  opts.preferences = preferenceValues;
   opts.launch_context = props.launchContext;
 
-  if (m_tool) {
-    opts.arguments = m_tool->input;
+  if (m_toolCall) {
+    opts.arguments = m_toolCall->input;
   } else {
     opts.arguments = props.arguments |
                      std::views::transform([](auto &&pair) -> std::pair<std::string, std::string> {
@@ -211,7 +200,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
             qCritical() << "Got crash" << reason;
 
-            finishTool(std::unexpected(reason));
+            finish(std::unexpected(reason));
             if (m_headless) return;
 
             auto &nav = context()->navigation;
@@ -228,7 +217,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
       if (!res) {
         qWarning() << "Failed to load extension" << res.error();
-        finishTool(std::unexpected(res.error()));
+        finish(std::unexpected(res.error()));
       } else {
         m_sessionId = res->session_id;
         m_bus->setSessionId(m_sessionId);
@@ -237,11 +226,11 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
             ->ready(res->session_id)
             .then(this, [this](const std::expected<manager::LaunchResult, std::string> &launch) {
               if (!launch) {
-                finishTool(std::unexpected(launch.error()));
+                finish(std::unexpected(launch.error()));
               } else if (launch->error) {
-                finishTool(std::unexpected(*launch->error));
+                finish(std::unexpected(*launch->error));
               } else {
-                finishTool(launch->output.value_or(""));
+                finish(launch->output.value_or(""));
               }
             });
       }
@@ -253,10 +242,22 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   watcher->setFuture(manager->client().manager()->load(opts));
 }
 
-void ExtensionCommandRuntime::finishTool(ToolResult result) {
-  if (!m_tool || !m_tool->done) return;
-  m_toolTimer.stop();
-  std::exchange(m_tool->done, nullptr)(std::move(result));
+std::optional<std::string>
+ExtensionCommandRuntime::missingRequiredPreference(const PreferenceValues &values) const {
+  for (const auto &pref : m_command->mergedPreferences()) {
+    if (!pref.required()) continue;
+    const auto *value = preferences::find(values, pref.name().toStdString());
+    if (!value || preferences::isEmpty(*value)) return pref.title().toStdString();
+  }
+  return std::nullopt;
+}
+
+void ExtensionCommandRuntime::finish(RunResult result) {
+  if (!m_onFinished) return;
+  m_timeout.stop();
+  std::exchange(m_onFinished, nullptr)(std::move(result));
+  unload();
+  deleteLater();
 }
 
 void ExtensionCommandRuntime::unload() {
@@ -271,7 +272,7 @@ void ExtensionCommandRuntime::unload() {
     if (current->priority() == ToastStyle::Dynamic) toast->clear();
   }
 
-  manager->client().manager()->unload(m_sessionId);
+  if (!m_sessionId.empty()) manager->client().manager()->unload(m_sessionId);
 
   if (!m_headless) context()->navigation->setNavigationSuffixIcon(std::nullopt);
 }

@@ -5,6 +5,8 @@
 #include "../ui/image/url.hpp"
 #include <filesystem>
 #include <format>
+#include "services/root-item-manager/root-item-manager.hpp"
+#include "ui/settings/settings-controller.hpp"
 
 QString ExtensionCommand::extensionId() const { return _extensionId; }
 void ExtensionCommand::setExtensionId(const QString &text) { _extensionId = text; }
@@ -14,6 +16,14 @@ void ExtensionCommand::setExtensionIcon(const QString &icon) { _extensionIcon = 
 
 CommandContext *ExtensionCommand::createContext(const std::shared_ptr<AbstractCmd> &command) const {
   return new ExtensionCommandRuntime(static_pointer_cast<ExtensionCommand>(command));
+}
+
+PreferenceValues ExtensionCommand::preferenceValues(const RootItemManager &rootItemManager) const {
+  return rootItemManager.getPreferenceValues(uniqueId());
+}
+
+void ExtensionCommand::openPreferences(SettingsController &settings) const {
+  settings.openExtensionPreferences(uniqueId());
 }
 
 CommandType ExtensionCommand::type() const { return CommandType::CommandTypeExtension; }

@@ -38,31 +38,29 @@ QString Extension::description() const { return m_manifest.description; };
 
 const ExtensionManifest &Extension::manifest() const { return m_manifest; }
 
-std::shared_ptr<ExtensionCommand> Extension::makeCommand(const ExtensionManifest::Command &cmd) const {
-  auto command = std::make_shared<ExtensionCommand>(cmd);
-
-  command->setExtensionId(m_manifest.id);
-  command->setPath(m_manifest.path);
-  command->setExtensionTitle(m_manifest.title);
-  command->setExtensionIcon(m_manifest.icon);
-  command->setExtensionPreferences(m_manifest.preferences);
-  command->setExtensionName(m_manifest.name);
-  command->setAuthor(author());
-
-  return command;
+void Extension::configureCommand(ExtensionCommand &command) const {
+  command.setExtensionId(m_manifest.id);
+  command.setPath(m_manifest.path);
+  command.setExtensionTitle(m_manifest.title);
+  command.setExtensionIcon(m_manifest.icon);
+  command.setExtensionPreferences(m_manifest.preferences);
+  command.setExtensionName(m_manifest.name);
+  command.setAuthor(author());
 }
 
 Extension::Extension(const ExtensionManifest &manifest) : m_manifest(manifest) {
   m_commands.reserve(m_manifest.commands.size());
   for (const auto &cmd : m_manifest.commands) {
-    m_commands.emplace_back(makeCommand(cmd));
+    auto command = std::make_shared<ExtensionCommand>(cmd);
+    configureCommand(*command);
+    m_commands.emplace_back(std::move(command));
   }
 }
 
 QString Extension::toolNamespace() const { return m_manifest.name; }
 
 std::shared_ptr<ExtensionCommand> Extension::makeToolCommand(const ExtensionManifest::Tool &tool) const {
-  return makeCommand(ExtensionManifest::Command{
+  auto command = std::make_shared<ExtensionToolCommand>(ExtensionManifest::Command{
       .name = QString::fromStdString(tool.name),
       .title = tool.title,
       .description = tool.description,
@@ -72,6 +70,8 @@ std::shared_ptr<ExtensionCommand> Extension::makeToolCommand(const ExtensionMani
       .defaultDisabled = false,
       .provenance = m_manifest.provenance,
   });
+  configureCommand(*command);
+  return command;
 }
 
 std::vector<AI::ToolContribution> Extension::tools() const {

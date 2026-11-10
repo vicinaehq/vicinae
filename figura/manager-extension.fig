@@ -44,7 +44,8 @@ struct LaunchEventData {
   cwd?: string;
 };
 
-// Only meaningful for tools: the serialized value returned by the tool, or the error it threw.
+// `output` is the serialized value returned by a tool, `error` what it threw.
+// Other modes return an empty result: errors they throw surface as a crash.
 struct LaunchResult {
   output?: string;
   error?: string;

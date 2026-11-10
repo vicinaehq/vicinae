@@ -291,6 +291,8 @@ set(SRCS
 	src/extension/extension-tool.hpp
 	src/extension/extension-preferences.hpp
 	src/extension/extension-tool.cpp
+	src/extension/headless-command-runner.hpp
+	src/extension/headless-command-runner.cpp
 
 	src/extension/extension-command.hpp
 	src/extension/extension-command.cpp

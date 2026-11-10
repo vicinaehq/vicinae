@@ -4,12 +4,13 @@
 #include <format>
 #include <glaze/json/generic.hpp>
 #include <glaze/json/read.hpp>
-#include "common/context.hpp"
 #include "extension/extension-command-runtime.hpp"
 #include "extension/extension-command.hpp"
-#include "extension/manager/extension-manager.hpp"
+#include "extension/headless-command-runner.hpp"
 #include "service-registry.hpp"
 #include "services/ai/tool-registry.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
+#include "ui/settings/settings-controller.hpp"
 
 namespace {
 
@@ -21,44 +22,17 @@ AI::AbstractTool::RawToolTask ready(AI::AbstractTool::RawToolResult result) {
 
 } // namespace
 
-AI::AbstractTool::RawToolTask ExtensionToolRunner::run(const std::shared_ptr<ExtensionCommand> &command,
-                                                       std::string_view arguments, bool requiresApproval) {
-  glz::generic input;
-  if (const auto error = glz::read_json(input, arguments)) {
-    return ready(std::unexpected(glz::format_error(error, arguments)));
+PreferenceValues ExtensionToolCommand::preferenceValues(const RootItemManager &rootItemManager) const {
+  const auto id = uniqueId();
+  auto values = rootItemManager.getProviderPreferenceValues(QString::fromStdString(id.provider));
+  for (auto &[key, value] : rootItemManager.getToolPreferenceValues(id, preferences())) {
+    values.insert_or_assign(key, std::move(value));
   }
+  return values;
+}
 
-  if (!m_ctx.services->extensionManager()->isRunning()) {
-    return ready(std::unexpected(tr("The extension runtime is not running.").toStdString()));
-  }
-
-  const auto promise = std::make_shared<QPromise<AI::AbstractTool::RawToolResult>>();
-  auto *runtime = new ExtensionCommandRuntime(command);
-
-  promise->start();
-  runtime->setContext(&m_ctx);
-  runtime->setHeadless(true);
-  runtime->setToolInvocation({
-      .input = std::move(input),
-      .requiresApproval = requiresApproval,
-      .done =
-          [promise, runtime](ExtensionCommandRuntime::ToolResult result) {
-            promise->addResult(result.transform(
-                [](std::string output) { return AI::ToolOutput{.content = std::move(output)}; }));
-            promise->finish();
-            runtime->unload();
-            runtime->deleteLater();
-          },
-  });
-
-  runtime->load({});
-
-  return {
-      promise->future(),
-      [runtime = QPointer(runtime)] {
-        if (runtime) runtime->cancelTool(tr("The tool was cancelled.").toStdString());
-      },
-  };
+void ExtensionToolCommand::openPreferences(SettingsController &settings) const {
+  settings.openToolPreferences(uniqueId());
 }
 
 std::string ExtensionTool::description() const {
@@ -72,9 +46,36 @@ std::string ExtensionTool::generateInputSchema() const {
 }
 
 AI::AbstractTool::RawToolTask ExtensionTool::runRaw(std::string_view arguments) {
-  auto *runner = ServiceRegistry::instance()->extensionToolRunner();
+  auto *runner = ServiceRegistry::instance()->headlessCommandRunner();
   if (!runner) return ready(std::unexpected(tr("Extension tools are not available.").toStdString()));
+
+  glz::generic input;
+  if (const auto error = glz::read_json(input, arguments)) {
+    return ready(std::unexpected(glz::format_error(error, arguments)));
+  }
+
   const auto id = m_command->uniqueId();
   const auto policy = ServiceRegistry::instance()->tools()->toolPolicy(id.provider, m_tool.name);
-  return runner->run(m_command, arguments, policy != AI::ToolPolicy::Allow);
+  const auto promise = std::make_shared<QPromise<RawToolResult>>();
+  promise->start();
+
+  const auto runtime = runner->run(
+      m_command,
+      [promise](ExtensionCommandRuntime::RunResult result) {
+        promise->addResult(result.transform(
+            [](std::string output) { return AI::ToolOutput{.content = std::move(output)}; }));
+        promise->finish();
+      },
+      ExtensionCommandRuntime::ToolCall{
+          .input = std::move(input),
+          .requiresApproval = policy != AI::ToolPolicy::Allow,
+      });
+  if (!runtime) return ready(std::unexpected(runtime.error()));
+
+  return {
+      promise->future(),
+      [runtime = *runtime] {
+        if (runtime) runtime->cancel(tr("The tool was cancelled.").toStdString());
+      },
+  };
 }

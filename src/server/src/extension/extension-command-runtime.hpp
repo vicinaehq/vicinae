@@ -1,5 +1,6 @@
 #pragma once
 #include <QTimer>
+#include <chrono>
 #include "command/command.hpp"
 #include "command/command-types.hpp"
 #include "extension/extension-command.hpp"
@@ -37,25 +38,39 @@ class ExtensionLogger : public tsapi::AbstractLogger {
 
 class ExtensionCommandRuntime : public CommandContext {
 public:
-  using ToolResult = std::expected<std::string, std::string>;
+  /** The command's output, or why it failed. */
+  using RunResult = std::expected<std::string, std::string>;
+  using RunCallback = std::function<void(RunResult)>;
 
-  struct ToolInvocation {
+  struct ToolCall {
     glz::generic input;
     bool requiresApproval = false;
-    std::function<void(ToolResult)> done;
   };
+
+  static constexpr std::chrono::minutes HEADLESS_TIMEOUT{1};
 
 private:
   void initialize();
   PreferenceValues resolvePreferenceValues(PreferenceValues values) const;
-  void finishTool(ToolResult result);
+  std::optional<std::string> missingRequiredPreference(const PreferenceValues &values) const;
+  void finish(RunResult result);
 
 public:
   void load(const LaunchProps &props) override;
   void unload() override;
 
-  void setToolInvocation(ToolInvocation invocation) { m_tool = std::move(invocation); }
-  void cancelTool(std::string reason) { finishTool(std::unexpected(std::move(reason))); }
+  /**
+   * Runs the command without UI. The runtime owns itself from then on: once the command finishes,
+   * fails, crashes or times out, `onFinished` is called and the runtime unloads and deletes itself.
+   */
+  void setHeadless(RunCallback onFinished) {
+    m_headless = true;
+    m_onFinished = std::move(onFinished);
+  }
+  void cancel(std::string reason) { finish(std::unexpected(std::move(reason))); }
+
+  /** Runs the command's entrypoint as an AI tool, with the given input. */
+  void setToolCall(ToolCall call) { m_toolCall = std::move(call); }
 
   ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command);
 
@@ -70,9 +85,7 @@ private:
   std::string m_sessionId;
   bool m_isDevMode = false;
   bool m_headless = false;
-  std::optional<ToolInvocation> m_tool;
-  QTimer m_toolTimer;
-
-public:
-  void setHeadless(bool value) { m_headless = value; }
+  RunCallback m_onFinished;
+  QTimer m_timeout;
+  std::optional<ToolCall> m_toolCall;
 };

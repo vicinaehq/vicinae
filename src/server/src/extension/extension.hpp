@@ -17,7 +17,7 @@ private:
   std::vector<std::shared_ptr<AbstractCmd>> m_commands;
   ExtensionManifest m_manifest;
 
-  std::shared_ptr<ExtensionCommand> makeCommand(const ExtensionManifest::Command &cmd) const;
+  void configureCommand(ExtensionCommand &command) const;
   std::shared_ptr<ExtensionCommand> makeToolCommand(const ExtensionManifest::Tool &tool) const;
 
 public:
