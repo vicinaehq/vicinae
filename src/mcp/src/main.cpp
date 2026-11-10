@@ -4,6 +4,7 @@
 #include <print>
 #include <string>
 #include <thread>
+#include <QCommandLineParser>
 #include <QCoreApplication>
 #include <QLocalSocket>
 #include "common/common.hpp"
@@ -39,8 +40,15 @@ int main(int ac, char **av) {
 
   QCoreApplication app(ac, av);
 
+  // agents may launch us with a stripped environment, so Vicinae passes its socket explicitly
+  QCommandLineParser parser;
+  const QCommandLineOption socketOption("socket", "Vicinae server socket to connect to.", "name");
+  parser.addOption(socketOption);
+  parser.process(app);
+
   QLocalSocket socket;
-  socket.connectToServer(QString::fromStdString(vicinae::serverSocketName()));
+  socket.connectToServer(parser.isSet(socketOption) ? parser.value(socketOption)
+                                                    : QString::fromStdString(vicinae::serverSocketName()));
 
   if (!socket.waitForConnected(CONNECT_TIMEOUT_MS)) {
     std::println(std::cerr, "Failed to connect to Vicinae, is it running? {}",
