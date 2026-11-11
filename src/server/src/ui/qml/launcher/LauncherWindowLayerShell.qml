@@ -35,7 +35,6 @@ LauncherWindow {
         LayerShell.Window.wantsToBeOnActiveScreen: true
         LayerShell.Window.layer: Launcher.lsLayer
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
-        // Covers panels and docks too, instead of stopping at the area they reserve.
         LayerShell.Window.exclusionZone: -1
 
         Rectangle {
