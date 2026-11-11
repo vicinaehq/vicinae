@@ -25,6 +25,7 @@ LauncherWindowBase {
         windowHeight: root._h
         windowWidth: root._w
         inset: root.appearance.contentInset
+        dividerVisible: root.appearance.statusBarDividerVisible
     }
     readonly property Item commandView: (commandStack.currentItem as LauncherPage)?.view ?? null
     readonly property Item pageHeader: (commandView as LauncherView)?.header ?? null

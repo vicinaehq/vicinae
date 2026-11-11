@@ -163,6 +163,28 @@
 			"enabled": false
 		},
 
+		// Layout metrics of the launcher window, in pixels. Unset values use the defaults of the platform.
+		"search_bar": {
+			// Whether to draw the divider between the search bar and the content below it.
+			// "divider": true
+		},
+
+		"status_bar": {
+			// Whether to draw the divider between the content and the status bar.
+			// "divider": true
+		},
+
+		"list": {
+			// Height of a regular list item.
+			// "item_height": 38,
+
+			// Corner radius of the hover/selection highlight of a list item.
+			// "item_rounding": 10,
+
+			// Horizontal gap between the highlight of a list item and the edges of the list.
+			// "item_inset": 6
+		},
+
 		// The vicinae UI is designed to work best at the default size. If you change this it is highly recommended
 		// that you preserve a similar aspect ratio.
 		"size": {

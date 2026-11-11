@@ -6,15 +6,17 @@ QtObject {
     property color windowBackground: Config.withAlpha(Theme.background, Config.windowOpacity)
     property Component dividerComponent: null
     property int searchBarHeight: 60
-    property bool searchDividerVisible: true
+    property bool searchDividerVisible: Config.searchBarDivider ?? true
+    property bool statusBarDividerVisible: Config.statusBarDivider ?? true
     property bool overlaySearchBar: false
     property int outerBorderWidth: Theme.mainWindowOuterBorder.a > 0 ? 1 : 0
     property int contentInset: Config.borderWidth + outerBorderWidth
     property bool floatingStatusBar: Config.floatingStatusBar
     property int contentBottomInset: 0
 
-    property int rowInset: 6
-    property int rowRadius: 10
+    property int rowHeight: Config.listItemHeight ?? 38
+    property int rowInset: Config.listItemInset ?? 6
+    property int rowRadius: Config.listItemRounding ?? 10
     property int rowLeftPadding: 12
     property int rowRightPadding: 12
     property int rowTextSpacing: 6

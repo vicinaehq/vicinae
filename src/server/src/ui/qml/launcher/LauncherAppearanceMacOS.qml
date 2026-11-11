@@ -5,13 +5,12 @@ import Vicinae
 LauncherAppearance {
     windowBackground: MaterialColorsMacOS.tint(Theme.background, Config.windowOpacity)
     dividerComponent: ContentDividerMacOS {}
-    searchDividerVisible: false
+    searchDividerVisible: Config.searchBarDivider ?? false
     overlaySearchBar: true
     contentInset: 0
     floatingStatusBar: true
     contentBottomInset: 24
-    rowInset: 8
-    rowRadius: 10
+    rowInset: Config.listItemInset ?? 8
     rowLeftPadding: 14
     rowRightPadding: 16
     rowTextSpacing: 10

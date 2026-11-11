@@ -5,7 +5,7 @@ import Vicinae
 
 SelectableDelegate {
     id: root
-    height: 38
+    height: root.appearance.rowHeight
 
     Accessible.role: Accessible.ListItem
     Accessible.name: itemTitle
