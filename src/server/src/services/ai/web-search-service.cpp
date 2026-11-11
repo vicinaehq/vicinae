@@ -193,7 +193,7 @@ QFuture<SearchResult> searchTavily(std::string query, std::string key, WebSearch
   return fetch<TavilyResponse>(
       "Tavily", send(makeRequest(QStringLiteral("https://api.tavily.com/search"), {}), std::move(body)),
       count, [](TavilyResponse response) {
-        return response.results | std::views::as_rvalue | std::views::transform([](auto &&item) {
+        return response.results | std::views::transform([](auto &item) {
                  return WebSearchResult{std::move(item.title), std::move(item.url), std::move(item.content)};
                }) |
                std::ranges::to<std::vector>();
@@ -235,8 +235,7 @@ QFuture<SearchResult> searchExa(std::string query, const std::string &key, WebSe
                                              {{"x-api-key", QByteArray::fromStdString(key)}}),
                                  std::move(body)),
                             count, [](ExaResponse response) {
-                              return response.results | std::views::as_rvalue |
-                                     std::views::transform([](auto &&item) {
+                              return response.results | std::views::transform([](auto &item) {
                                        return WebSearchResult{item.title.value_or(item.url),
                                                               std::move(item.url), item.text.value_or("")};
                                      }) |
@@ -269,8 +268,7 @@ QFuture<SearchResult> searchSerper(std::string query, const std::string &key, We
                                                 {{"X-API-KEY", QByteArray::fromStdString(key)}}),
                                     std::move(body)),
                                count, [](SerperResponse response) {
-                                 return response.organic | std::views::as_rvalue |
-                                        std::views::transform([](auto &&item) {
+                                 return response.organic | std::views::transform([](auto &item) {
                                           return WebSearchResult{std::move(item.title), std::move(item.link),
                                                                  item.snippet.value_or("")};
                                         }) |
@@ -337,8 +335,7 @@ QFuture<SearchResult> searchTinyFish(const std::string &query, const std::string
                                  send(makeRequest(QStringLiteral("https://api.search.tinyfish.ai"),
                                                   {{"X-API-Key", QByteArray::fromStdString(key)}}, params)),
                                  resultCount(depth), [](TinyFishResponse response) {
-                                   return response.results | std::views::as_rvalue |
-                                          std::views::transform([](auto &&item) {
+                                   return response.results | std::views::transform([](auto &item) {
                                             return WebSearchResult{std::move(item.title), std::move(item.url),
                                                                    item.snippet.value_or("")};
                                           }) |
@@ -365,8 +362,7 @@ QFuture<SearchResult> searchSerpApi(const std::string &query, const std::string 
   return fetch<SerpApiResponse>("SerpApi",
                                 send(makeRequest(QStringLiteral("https://serpapi.com/search"), {}, params)),
                                 resultCount(depth), [](SerpApiResponse response) {
-                                  return response.organic_results | std::views::as_rvalue |
-                                         std::views::transform([](auto &&item) {
+                                  return response.organic_results | std::views::transform([](auto &item) {
                                            return WebSearchResult{std::move(item.title), std::move(item.link),
                                                                   item.snippet.value_or("")};
                                          }) |
@@ -403,9 +399,8 @@ const WebSearchProviderInfo &WebSearchService::provider() {
 }
 
 WebSearchDepth WebSearchService::depth() {
-  return parseDepth(settings().depth)
-      .or_else([] { return parseDepth(WebSearchSettings{}.depth); })
-      .value_or(WebSearchDepth::Standard);
+  if (const auto depth = parseDepth(settings().depth)) return *depth;
+  return parseDepth(WebSearchSettings{}.depth).value_or(WebSearchDepth::Standard);
 }
 
 void WebSearchService::setApiKey(std::string_view key) {
