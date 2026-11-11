@@ -1,4 +1,5 @@
 #pragma once
+#include <QList>
 #include <QQuickItem>
 #include <QSGGeometryNode>
 #include <QSGMaterial>
@@ -7,6 +8,8 @@
 
 class SourceBlendMaterial : public QSGMaterial {
 public:
+  static constexpr qsizetype MAX_GRADIENT_STOPS = 8;
+
   QSGMaterialType *type() const override;
   QSGMaterialShader *createShader(QSGRendererInterface::RenderMode) const override;
   int compare(const QSGMaterial *other) const override;
@@ -16,10 +19,12 @@ public:
   QColor secondaryColor;
   QColor borderColor;
   QColor outerBorderColor;
+  QList<QColor> borderGradient;
   QSizeF itemSize;
   float radius = 0;
   float borderWidth = 0;
   float outerBorderWidth = 0;
+  float borderGradientAngle = 0;
   float secondaryHeight = 0;
   int mode = 0; // 0=normal, 1=cornerMask, 2=overlay
   bool sourceBlend = false;
@@ -32,6 +37,10 @@ class SourceBlendRect : public QQuickItem {
   Q_PROPERTY(qreal radius READ radius WRITE setRadius NOTIFY radiusChanged)
   Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY borderColorChanged)
   Q_PROPERTY(int borderWidth READ borderWidth WRITE setBorderWidth NOTIFY borderWidthChanged)
+  Q_PROPERTY(
+      QList<QColor> borderGradient READ borderGradient WRITE setBorderGradient NOTIFY borderGradientChanged)
+  Q_PROPERTY(qreal borderGradientAngle READ borderGradientAngle WRITE setBorderGradientAngle NOTIFY
+                 borderGradientAngleChanged)
   Q_PROPERTY(
       QColor outerBorderColor READ outerBorderColor WRITE setOuterBorderColor NOTIFY outerBorderColorChanged)
   Q_PROPERTY(
@@ -49,6 +58,8 @@ signals:
   void radiusChanged();
   void borderColorChanged();
   void borderWidthChanged();
+  void borderGradientChanged();
+  void borderGradientAngleChanged();
   void outerBorderColorChanged();
   void outerBorderWidthChanged();
   void backgroundColorChanged();
@@ -68,6 +79,12 @@ public:
   void setBorderColor(const QColor &c);
   int borderWidth() const { return m_borderWidth; }
   void setBorderWidth(int w);
+  // Replaces the border color when it has at least two stops. Stops are evenly spaced along the angle,
+  // expressed in degrees: 0 goes from left to right, 90 from top to bottom.
+  QList<QColor> borderGradient() const { return m_borderGradient; }
+  void setBorderGradient(const QList<QColor> &stops);
+  qreal borderGradientAngle() const { return m_borderGradientAngle; }
+  void setBorderGradientAngle(qreal angle);
   QColor outerBorderColor() const { return m_outerBorderColor; }
   void setOuterBorderColor(const QColor &c);
   int outerBorderWidth() const { return m_outerBorderWidth; }
@@ -91,6 +108,8 @@ private:
   qreal m_radius = 0;
   QColor m_borderColor = Qt::transparent;
   int m_borderWidth = 0;
+  QList<QColor> m_borderGradient;
+  qreal m_borderGradientAngle = 0;
   QColor m_outerBorderColor = Qt::transparent;
   int m_outerBorderWidth = 0;
   QColor m_backgroundColor = Qt::transparent;

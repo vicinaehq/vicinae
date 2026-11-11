@@ -1,4 +1,6 @@
+#include <format>
 #include <fstream>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <variant>
@@ -93,6 +95,10 @@ static std::string serializeVariant(ThemeVariant variant) {
   return "dark";
 }
 
+static std::string serializeColor(const QColor &color) {
+  return color.name(color.alpha() == 0xFF ? QColor::NameFormat::HexRgb : QColor::HexArgb).toStdString();
+}
+
 std::optional<std::string> ThemeFile::keyFromSemantic(SemanticColor color) {
   static std::unordered_map<SemanticColor, std::string> reverseMapping;
 
@@ -166,6 +172,27 @@ static std::expected<ThemeFile::MappedColor, std::string> parseColor(toml::node_
   return std::unexpected("Not a valid color");
 }
 
+static std::expected<ThemeFile::GradientDef, std::string> parseGradient(toml::table &table) {
+  auto stops = table["gradient"].as_array();
+
+  if (!stops) { return std::unexpected("gradient should be an array of colors"); }
+  if (stops->size() < 2 || stops->size() > ThemeFile::MAX_GRADIENT_STOPS) {
+    return std::unexpected(
+        std::format("gradient should have between 2 and {} colors", ThemeFile::MAX_GRADIENT_STOPS));
+  }
+
+  ThemeFile::GradientDef gradient{.angle = table["angle"].value<double>().value_or(0)};
+  gradient.stops.reserve(stops->size());
+
+  for (auto &stop : *stops) {
+    auto color = parseColor(toml::node_view(stop));
+    if (!color) return std::unexpected(color.error());
+    gradient.stops.emplace_back(*color);
+  }
+
+  return gradient;
+}
+
 std::expected<ThemeFile::ParseResult, std::string> ThemeFile::fromFile(const fs::path &path) {
   std::ifstream stream(path);
   if (!stream) return std::unexpected("Failed to open " + path.string());
@@ -232,6 +259,17 @@ std::expected<ThemeFile::ParseResult, std::string> ThemeFile::fromString(std::st
         if (nodePath.starts_with("colors.")) {
           std::string const colorPath = nodePath.substr(7);
           if (auto semantic = semanticFromKey(colorPath)) {
+            if (auto table = v.as_table(); table && table->contains("gradient")) {
+              auto gradient = parseGradient(*table);
+              if (!gradient) {
+                diagnostics.emplace_back(nodePath + " is not a valid gradient: " + gradient.error());
+                continue;
+              }
+              data.semantics[*semantic] = gradient->stops.front();
+              data.gradients[*semantic] = std::move(*gradient);
+              continue;
+            }
+
             auto color = parseColor(toml::node_view(v));
             if (!color) {
               diagnostics.emplace_back(nodePath + " is not a valid color: " + color.error());
@@ -305,10 +343,17 @@ std::string ThemeFile::toToml() const {
     doc << "\n";
     doc << "[colors." << tableName << "]\n";
     for (const auto &[k, v] : mapped[tableName]) {
-      QColor const color = resolve(v);
-      QString const colorName =
-          color.name(color.alpha() == 0xFF ? QColor::NameFormat::HexRgb : QColor::HexArgb);
-      doc << k << " = " << std::quoted(colorName.toStdString()) << "\n";
+      if (auto gradient = resolveGradient(v)) {
+        doc << k << " = { gradient = [";
+        for (const auto &[idx, stop] : gradient->stops | std::views::enumerate) {
+          if (idx > 0) doc << ", ";
+          doc << std::quoted(serializeColor(stop));
+        }
+        doc << "], angle = " << gradient->angle << " }\n";
+        continue;
+      }
+
+      doc << k << " = " << std::quoted(serializeColor(resolve(v))) << "\n";
     }
   }
 

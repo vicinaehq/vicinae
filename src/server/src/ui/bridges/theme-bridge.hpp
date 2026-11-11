@@ -7,6 +7,7 @@
 #include <QColor>
 #include <QEvent>
 #include <QGuiApplication>
+#include <QList>
 #include <QObject>
 
 class ThemeBridge : public QObject {
@@ -29,6 +30,8 @@ private:
   Q_PROPERTY(QColor statusBarBackground READ statusBarBackground NOTIFY changed)
   Q_PROPERTY(QColor mainWindowBorder READ mainWindowBorder NOTIFY changed)
   Q_PROPERTY(QColor mainWindowOuterBorder READ mainWindowOuterBorder NOTIFY changed)
+  Q_PROPERTY(QList<QColor> mainWindowBorderGradient READ mainWindowBorderGradient NOTIFY changed)
+  Q_PROPERTY(qreal mainWindowBorderGradientAngle READ mainWindowBorderGradientAngle NOTIFY changed)
   Q_PROPERTY(QColor inputBackground READ inputBackground NOTIFY changed)
   Q_PROPERTY(QColor inputBorder READ inputBorder NOTIFY changed)
   Q_PROPERTY(QColor inputBorderFocus READ inputBorderFocus NOTIFY changed)
@@ -90,6 +93,14 @@ public:
   QColor statusBarBackground() const { return resolve(SemanticColor::StatusBarBackground); }
   QColor mainWindowBorder() const { return resolve(SemanticColor::MainWindowBorder); }
   QColor mainWindowOuterBorder() const { return resolve(SemanticColor::MainWindowOuterBorder); }
+  QList<QColor> mainWindowBorderGradient() const {
+    auto gradient = ThemeService::instance().theme().resolveGradient(SemanticColor::MainWindowBorder);
+    return gradient ? QList<QColor>(gradient->stops.begin(), gradient->stops.end()) : QList<QColor>{};
+  }
+  qreal mainWindowBorderGradientAngle() const {
+    auto gradient = ThemeService::instance().theme().resolveGradient(SemanticColor::MainWindowBorder);
+    return gradient ? gradient->angle : 0;
+  }
   QColor inputBackground() const { return resolve(SemanticColor::InputBackground); }
   QColor inputBorder() const { return resolve(SemanticColor::InputBorder); }
   QColor inputBorderFocus() const { return resolve(SemanticColor::InputBorderFocus); }
