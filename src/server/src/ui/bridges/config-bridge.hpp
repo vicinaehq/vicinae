@@ -36,6 +36,7 @@ private:
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick NOTIFY changed)
   Q_PROPERTY(bool blurEnabled READ blurEnabled NOTIFY changed)
   Q_PROPERTY(bool floatingStatusBar READ floatingStatusBar NOTIFY changed)
+  Q_PROPERTY(bool layerShellBackdrop READ layerShellBackdrop NOTIFY changed)
   Q_PROPERTY(QString windowMaterial READ windowMaterial NOTIFY changed)
   Q_PROPERTY(QString popupMaterial READ popupMaterial NOTIFY changed)
 
@@ -122,6 +123,7 @@ public:
                                                    platform::supports(platform::Capability::WindowMaterial)));
   }
   bool floatingStatusBar() const { return cfg().launcherWindow.floatingStatusBar; }
+  bool layerShellBackdrop() const { return cfg().launcherWindow.layerShell.backdrop; }
 
   Q_INVOKABLE static QColor withAlpha(const QColor &c, qreal alpha) {
     return QColor::fromRgbF(c.redF(), c.greenF(), c.blueF(), alpha);

@@ -69,12 +69,14 @@ struct LayerShellConfig {
   std::string keyboardInteractivity = "exclusive";
   std::string layer = "top";
   bool enabled = true;
+  bool backdrop = false;
 };
 
 template <> struct Partial<LayerShellConfig> {
   std::optional<std::string> layer;
   std::optional<std::string> keyboardInteractivity;
   std::optional<bool> enabled;
+  std::optional<bool> backdrop;
 };
 
 struct BlurConfig {
