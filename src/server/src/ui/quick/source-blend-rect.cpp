@@ -7,6 +7,7 @@
 #include <cstring>
 #include <numbers>
 #include <ranges>
+#include "common/enumerate.hpp"
 
 static void colorToFloat4(const QColor &c, float out[4]) {
   out[0] = static_cast<float>(c.redF());
@@ -81,7 +82,7 @@ public:
     std::memcpy(buf->data() + 200, gradientDir.data(), 8);
 
     for (const auto &[idx, color] :
-         mat->borderGradient | std::views::take(gradientCount) | std::views::enumerate) {
+         mat->borderGradient | std::views::take(gradientCount) | vicinae::enumerate) {
       float stop[4];
       colorToFloat4(color, stop);
       std::memcpy(buf->data() + 208 + idx * 16, stop, 16);

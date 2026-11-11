@@ -1,11 +1,11 @@
 #include <format>
 #include <fstream>
-#include <ranges>
 #include <set>
 #include <sstream>
 #include <variant>
 #include "theme/colors.hpp"
 #include "theme/theme-file.hpp"
+#include "common/enumerate.hpp"
 #include "common/types.hpp"
 #include "tomlplusplus/toml.hpp"
 
@@ -346,7 +346,7 @@ std::string ThemeFile::toToml() const {
     for (const auto &[k, v] : mapped[tableName]) {
       if (auto gradient = resolveGradient(v)) {
         doc << k << " = { gradient = [";
-        for (const auto &[idx, stop] : gradient->stops | std::views::enumerate) {
+        for (const auto &[idx, stop] : gradient->stops | vicinae::enumerate) {
           if (idx > 0) doc << ", ";
           doc << std::quoted(serializeColor(stop));
         }
