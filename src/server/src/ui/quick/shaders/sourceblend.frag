@@ -27,7 +27,6 @@ float roundedRectSDF(vec2 p, vec2 halfSize, float radius) {
     return min(max(d.x, d.y), 0.0) + length(max(d, 0.0)) - radius;
 }
 
-// Evenly spaced stops along u_gradientDir, spanning the whole item.
 // The loop bound is constant so that the shader stays valid for GLSL ES 1.00.
 vec4 borderColorAt(vec2 pixelPos) {
     if (u_gradientCount < 2) return u_borderColor;

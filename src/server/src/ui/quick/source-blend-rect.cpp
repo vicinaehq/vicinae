@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstring>
 #include <numbers>
+#include <ranges>
 
 static void colorToFloat4(const QColor &c, float out[4]) {
   out[0] = static_cast<float>(c.redF());
@@ -73,16 +74,17 @@ public:
 
     const qsizetype stopCount = std::min(mat->borderGradient.size(), SourceBlendMaterial::MAX_GRADIENT_STOPS);
     int gradientCount = stopCount >= 2 ? static_cast<int>(stopCount) : 0;
-    memcpy(buf->data() + 196, &gradientCount, 4);
+    std::memcpy(buf->data() + 196, &gradientCount, 4);
 
     const float angle = mat->borderGradientAngle * std::numbers::pi_v<float> / 180.0F;
     std::array<float, 2> gradientDir = {std::cos(angle), std::sin(angle)};
-    memcpy(buf->data() + 200, gradientDir.data(), 8);
+    std::memcpy(buf->data() + 200, gradientDir.data(), 8);
 
-    for (qsizetype i = 0; i < gradientCount; ++i) {
+    for (const auto &[idx, color] :
+         mat->borderGradient | std::views::take(gradientCount) | std::views::enumerate) {
       float stop[4];
-      colorToFloat4(mat->borderGradient[i], stop);
-      memcpy(buf->data() + 208 + i * 16, stop, 16);
+      colorToFloat4(color, stop);
+      std::memcpy(buf->data() + 208 + idx * 16, stop, 16);
     }
 
     return true;

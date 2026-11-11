@@ -173,7 +173,7 @@ static std::expected<ThemeFile::MappedColor, std::string> parseColor(toml::node_
 }
 
 static std::expected<ThemeFile::GradientDef, std::string> parseGradient(toml::table &table) {
-  auto stops = table["gradient"].as_array();
+  auto *stops = table.get_as<toml::array>("gradient");
 
   if (!stops) { return std::unexpected("gradient should be an array of colors"); }
   if (stops->size() < 2 || stops->size() > ThemeFile::MAX_GRADIENT_STOPS) {
@@ -181,7 +181,8 @@ static std::expected<ThemeFile::GradientDef, std::string> parseGradient(toml::ta
         std::format("gradient should have between 2 and {} colors", ThemeFile::MAX_GRADIENT_STOPS));
   }
 
-  ThemeFile::GradientDef gradient{.angle = table["angle"].value<double>().value_or(0)};
+  const auto *angle = table.get("angle");
+  ThemeFile::GradientDef gradient{.angle = angle ? angle->value_or(0.0) : 0.0};
   gradient.stops.reserve(stops->size());
 
   for (auto &stop : *stops) {

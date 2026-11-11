@@ -28,10 +28,6 @@ public:
     double angle = 0;
   };
 
-  /**
-   * A linear gradient with evenly spaced stops.
-   * The angle is expressed in degrees: 0 goes from left to right, 90 from top to bottom.
-   */
   struct Gradient {
     std::vector<QColor> stops;
     double angle = 0;
@@ -86,10 +82,6 @@ public:
   QColor resolve(SemanticColor color) const;
   QColor resolve(const ColorLike &color) const;
 
-  /**
-   * The gradient this theme defines for the color, if any.
-   * `resolve` returns the first stop for such a color, so that it remains usable as a flat color.
-   */
   std::optional<Gradient> resolveGradient(SemanticColor color) const;
 
   /**

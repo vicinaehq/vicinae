@@ -79,8 +79,6 @@ public:
   void setBorderColor(const QColor &c);
   int borderWidth() const { return m_borderWidth; }
   void setBorderWidth(int w);
-  // Replaces the border color when it has at least two stops. Stops are evenly spaced along the angle,
-  // expressed in degrees: 0 goes from left to right, 90 from top to bottom.
   QList<QColor> borderGradient() const { return m_borderGradient; }
   void setBorderGradient(const QList<QColor> &stops);
   qreal borderGradientAngle() const { return m_borderGradientAngle; }
