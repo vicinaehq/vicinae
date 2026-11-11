@@ -137,7 +137,6 @@ template <> struct Partial<ClockConfig> {
   std::optional<unsigned> interval;
 };
 
-// Unset values fall back to the metrics of the platform appearance.
 struct SearchBarConfig {
   std::optional<bool> divider;
 };

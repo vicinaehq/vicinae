@@ -19,7 +19,7 @@ QtObject {
     property int rowRadius: Config.listItemRounding ?? 10
     property int rowLeftPadding: rowInset + (Config.listItemPadding ?? 6)
     property int rowRightPadding: rowInset + (Config.listItemPadding ?? 6)
-    // For rows that lay out their own content rather than starting with an icon, which brings a margin of its own.
+    // Rows without a leading icon, which carries a margin of its own.
     property int rowContentMargin: rowInset + (Config.listItemPadding ?? 6) + 4
     property int rowTextSpacing: 6
     property int sectionHeaderHeight: 30
