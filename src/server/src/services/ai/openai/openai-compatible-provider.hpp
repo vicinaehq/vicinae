@@ -95,7 +95,7 @@ private:
   std::string m_name;
   std::string m_url;
   std::string m_apiKey;
-  bool m_toolCalling = true;
+  bool m_toolCalling = false;
   QTimer m_listRetry;
   std::chrono::seconds m_listRetryDelay = MIN_LIST_RETRY_DELAY;
   bool m_started = false;

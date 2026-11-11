@@ -23,7 +23,6 @@
 #include "vicinae.hpp"
 #include "services/ai/tool-registry.hpp"
 #include "services/ai/web-search-service.hpp"
-#include "builtins/ai/web-search-tool.hpp"
 #include "ui/image/url.hpp"
 #include "view-utils.hpp"
 
@@ -270,7 +269,10 @@ bool ChatSession::send(const QString &text) {
 }
 
 bool ChatSession::needsSearchFallback(const std::string &query) const {
-  if (query.empty() || modelSupports(AI::Capability::ToolCalling)) return false;
+  if (query.empty() || !AI::WebSearchService::enabled() || !AI::WebSearchService::configured()) return false;
+  const auto *tools = m_services.tools();
+  // The model gets the tool itself when it can call tools and tools are on.
+  if (modelSupports(AI::Capability::ToolCalling) && tools && tools->toolsEnabled()) return false;
   // Agents run their own tools, web search included.
   if (const auto *provider = m_aiService && m_selectedModel
                                  ? m_aiService->getProviderById(m_selectedModel->provider)
@@ -278,10 +280,7 @@ bool ChatSession::needsSearchFallback(const std::string &query) const {
     const auto *info = AI::findProviderType(provider->type());
     if (info && info->category == AI::Category::Agent) return false;
   }
-  if (!AI::WebSearchService::enabled() || !AI::WebSearchService::configured()) return false;
-  const auto *tools = m_services.tools();
-  return tools && tools->toolsEnabled() &&
-         tools->isEnabled(AI::ToolRegistry::qualifiedName(AI::EXTENSION_ID, AI::WEB_SEARCH_TOOL_ID));
+  return true;
 }
 
 void ChatSession::setSearching(bool searching) {

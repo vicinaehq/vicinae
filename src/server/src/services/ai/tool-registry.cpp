@@ -78,7 +78,8 @@ void ToolRegistry::rebuild() {
     entries.reserve(entries.size() + tools.size());
 
     for (auto &tool : tools) {
-      auto name = qualifiedName(providerId, tool.id);
+      // "__" is how MCP clients join server and tool names, some refuse tools that already contain it
+      auto name = std::format("{}_{}", providerId, tool.id);
 
       if (!validId(providerId) || !validId(tool.id) || name.size() > 64 || !tool.create ||
           std::ranges::find(entries, name, &Entry::name) != entries.end()) {
