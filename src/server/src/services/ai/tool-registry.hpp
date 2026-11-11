@@ -1,8 +1,5 @@
 #pragma once
 
-#include <format>
-#include <string>
-#include <string_view>
 #include <vector>
 #include <QObject>
 #include "ai-tool.hpp"
@@ -30,12 +27,6 @@ public:
   };
 
   ToolRegistry(config::Manager &config, RootItemManager &rootItems);
-
-  // The name a contributed tool is exposed to models under. Not "__": that is how MCP clients join
-  // server and tool names, and some refuse tools that already contain it.
-  static std::string qualifiedName(std::string_view providerId, std::string_view toolId) {
-    return std::format("{}_{}", providerId, toolId);
-  }
 
   const std::vector<Entry> &entries() const { return m_entries; }
   const Entry *find(std::string_view name) const;

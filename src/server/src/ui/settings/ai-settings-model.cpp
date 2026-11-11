@@ -354,13 +354,16 @@ QVariantList AISettingsModel::webSearchProviders() const {
 }
 
 QVariantList AISettingsModel::webSearchDepths() const {
+  const auto levels = AI::WebSearchService::provider().depths;
   QVariantList depths;
-  depths.reserve(static_cast<qsizetype>(AI::WebSearchService::DEPTHS.size()));
-  for (const auto &depth : AI::WebSearchService::DEPTHS) {
+  depths.reserve(static_cast<qsizetype>(levels.size()));
+  for (const auto level : levels) {
+    const auto &info =
+        *std::ranges::find(AI::WebSearchService::DEPTHS, level, &AI::WebSearchDepthInfo::depth);
     depths.emplace_back(
-        QVariantMap{{QStringLiteral("id"), qs(depth.id)},
+        QVariantMap{{QStringLiteral("id"), qs(info.id)},
                     {QStringLiteral("label"),
-                     QCoreApplication::translate(AI::WebSearchService::TR_CONTEXT, depth.label)}});
+                     QCoreApplication::translate(AI::WebSearchService::TR_CONTEXT, info.label)}});
   }
   return depths;
 }

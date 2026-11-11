@@ -295,9 +295,7 @@ QFuture<SearchResult> searchBrave(const std::string &query, const std::string &k
   QUrlQuery params;
   params.addQueryItem(QStringLiteral("q"), QString::fromStdString(query));
   params.addQueryItem(QStringLiteral("count"), QString::number(count));
-  // More excerpts per page for the deeper levels.
-  if (depth != WebSearchDepth::Quick)
-    params.addQueryItem(QStringLiteral("extra_snippets"), QStringLiteral("true"));
+  params.addQueryItem(QStringLiteral("extra_snippets"), QStringLiteral("true"));
 
   return fetch<BraveResponse>(
       "Brave Search",
@@ -399,8 +397,13 @@ const WebSearchProviderInfo &WebSearchService::provider() {
 }
 
 WebSearchDepth WebSearchService::depth() {
-  if (const auto depth = parseDepth(settings().depth)) return *depth;
-  return parseDepth(WebSearchSettings{}.depth).value_or(WebSearchDepth::Standard);
+  const auto &levels = provider().depths;
+  if (levels.empty()) return WebSearchDepth::Standard;
+
+  const auto chosen = parseDepth(settings().depth);
+  if (chosen && std::ranges::contains(levels, *chosen)) return *chosen;
+  if (std::ranges::contains(levels, WebSearchDepth::Standard)) return WebSearchDepth::Standard;
+  return levels.front();
 }
 
 void WebSearchService::setApiKey(std::string_view key) {

@@ -11,6 +11,8 @@ Flickable {
     readonly property AISettingsModel model: Settings.aiModel
     readonly property var currentProvider: root.model.webSearchProviders.find(p => p.id === root.model.webSearchProvider) ?? null
     readonly property bool hasTestResult: root.model.webSearchTestStatus !== ""
+    // Services with no depth levels of their own, or just one, have nothing to choose.
+    readonly property bool showDepth: root.model.webSearchEnabled && root.model.webSearchDepths.length > 1
     readonly property bool keyGood: root.hasTestResult ? root.model.webSearchTestSucceeded : root.model.webSearchConfigured
 
     contentWidth: width
@@ -267,7 +269,7 @@ Flickable {
         }
 
         SettingsSectionLabel {
-            visible: root.model.webSearchEnabled
+            visible: root.showDepth
             text: qsTr("Results")
             Layout.leftMargin: column.sideMargin
             Layout.topMargin: 24
@@ -275,7 +277,7 @@ Flickable {
         }
 
         SettingsGroup {
-            visible: root.model.webSearchEnabled
+            visible: root.showDepth
             Layout.leftMargin: column.sideMargin
             Layout.rightMargin: column.sideMargin
 

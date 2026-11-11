@@ -249,7 +249,7 @@ class AISettingsModel : public QObject {
   Q_PROPERTY(QString webSearchTestStatus READ webSearchTestStatus NOTIFY webSearchChanged)
   Q_PROPERTY(bool webSearchTestSucceeded READ webSearchTestSucceeded NOTIFY webSearchChanged)
   Q_PROPERTY(QVariantList webSearchProviders READ webSearchProviders CONSTANT)
-  Q_PROPERTY(QVariantList webSearchDepths READ webSearchDepths CONSTANT)
+  Q_PROPERTY(QVariantList webSearchDepths READ webSearchDepths NOTIFY webSearchChanged)
 
 signals:
   void selectedProviderIdChanged();
