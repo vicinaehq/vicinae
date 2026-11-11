@@ -171,6 +171,7 @@ void SettingsSidebarModel::rebuildRows() {
   }
 
   for (const auto &entry : m_tools.entries()) {
+    if (!entry.contribution.listed) continue;
     const auto &tool = entry.contribution;
     auto const m =
         fuzzy::scoreWeighted({{tool.title.toStdString(), 1.0}, {tool.description.toStdString(), 0.5}}, query);

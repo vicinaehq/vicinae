@@ -32,8 +32,9 @@ void OpenAICompatibleProvider::configure(const PreferenceValues &values) {
   }
 
   auto apiKey = std::move(fields.apiKey);
-  if (url == m_url && apiKey == m_apiKey) return;
+  if (url == m_url && apiKey == m_apiKey && fields.toolCalling == m_toolCalling) return;
 
+  m_toolCalling = fields.toolCalling;
   m_url = std::move(url);
   m_apiKey = std::move(apiKey);
   m_client.setBaseUrl(QString::fromStdString(openAIRoot(m_url) + "/"));

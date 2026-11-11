@@ -18,6 +18,7 @@ namespace AI {
 constexpr auto EXTENSION_ID = std::string_view("ai");
 constexpr auto PROVIDERS_PREFERENCE = std::string_view("providers");
 constexpr auto DEFAULT_MODEL_PREFERENCE = std::string_view("defaultModel");
+constexpr auto WEB_SEARCH_PREFERENCE = std::string_view("webSearch");
 constexpr auto NO_MODEL = std::string_view("none");
 
 struct ProviderInstance {
@@ -38,6 +39,12 @@ std::optional<ModelRef> defaultModel(const config::Manager &config);
 void setDefaultModel(config::Manager &config, const ModelRef &model);
 std::vector<::Preference::DropdownData::Section> defaultModelSections();
 
+struct WebSearchSettings {
+  bool enabled = false;
+  std::string provider = "tavily";
+  std::string depth = "standard";
+};
+
 } // namespace AI
 
 struct AiPreferences {
@@ -45,6 +52,7 @@ struct AiPreferences {
   std::string defaultModel = std::string(AI::NO_MODEL);
   std::string instructions;
   bool enableTools = true;
+  AI::WebSearchSettings webSearch;
 };
 
 template <> struct PreferenceSchema<AiPreferences> {
@@ -72,6 +80,13 @@ template <> struct PreferenceSchema<AiPreferences> {
   PreferenceMeta enableTools{
       .title = tr("Enable tools"),
       .description = tr("Allow AI models to use tools from enabled extensions."),
+  };
+  PreferenceMeta webSearch{
+      .title = tr("Web search"),
+      .description = tr("Let AI Chat search the web for current information."),
+      .component = QStringLiteral("AIWebSearchPage"),
+      .kind = PreferenceMeta::Kind::Custom,
+      .required = false,
   };
   Q_DECLARE_TR_FUNCTIONS(AiPreferences)
 };

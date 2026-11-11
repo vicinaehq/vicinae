@@ -17,10 +17,13 @@
 #include "generated/version.h"
 #include "internal/os-release.hpp"
 #include "services/ai/ai-preferences.hpp"
+#include "services/ai/ai-provider-types.hpp"
 #include "services/ai/ai-service.hpp"
 #include "utils/environment.hpp"
 #include "vicinae.hpp"
 #include "services/ai/tool-registry.hpp"
+#include "services/ai/web-search-service.hpp"
+#include "builtins/ai/web-search-tool.hpp"
 #include "ui/image/url.hpp"
 #include "view-utils.hpp"
 
@@ -33,6 +36,9 @@ constexpr auto CHAT_SYSTEM_PROMPT =
     "You are the AI assistant built into Vicinae, an open source launcher for the desktop. Vicinae is used "
     "to search and open apps and files, browse clipboard history, run commands and extensions, and much "
     "more. Give direct, helpful answers. Prefer short responses unless detail is asked for. "
+    "When a web search tool is available, use it for questions about current events, recent information, "
+    "or anything the user asks you to search online. Do not claim that you cannot access the internet before "
+    "attempting to use that tool. "
     "Responses support Markdown and LaTeX math. For rendered math, use $...$ inline and $$...$$ for display "
     "equations, outside code fences. Use braces around command arguments, for example \\frac{1}{2}.";
 
@@ -213,8 +219,9 @@ bool ChatSession::awaitingResponse() const {
 }
 
 bool ChatSession::canSend() const {
-  return m_agent && !m_removed && !m_loading && !streaming() && modelSupports(AI::Capability::Completion) &&
-         m_attachments.ready() && (!needsVision() || modelSupports(AI::Capability::Vision));
+  return m_agent && !m_removed && !m_loading && !m_searching && !streaming() &&
+         modelSupports(AI::Capability::Completion) && m_attachments.ready() &&
+         (!needsVision() || modelSupports(AI::Capability::Vision));
 }
 
 bool ChatSession::needsModel() const { return !modelSupports(AI::Capability::Completion); }
@@ -230,15 +237,70 @@ QString ChatSession::attachmentMessage() const {
 bool ChatSession::send(const QString &text) {
   const auto query = text.trimmed();
   if (!canSend() || (query.isEmpty() && m_attachments.count() == 0)) return false;
-  sendQuery(query.toStdString());
+  auto stdQuery = query.toStdString();
+  if (!needsSearchFallback(stdQuery)) {
+    sendQuery(stdQuery);
+    return true;
+  }
+
+  // Models without tool calling (e.g. CLI providers) can't call web_search, so search up front instead.
+  setSearching(true);
+  constexpr qsizetype MAX_SEARCH_QUERY_LENGTH = 400;
+  auto searchQuery = query.left(MAX_SEARCH_QUERY_LENGTH).toStdString();
+  AI::WebSearchService::search(std::move(searchQuery))
+      .then(this, [this, stdQuery, id = ++m_searchId](AI::WebSearchService::SearchResult result) {
+        if (id != m_searchId || !m_searching) return;
+        setSearching(false);
+        if (m_removed) return;
+
+        std::optional<std::string> context;
+        if (result && !result->empty()) {
+          std::string text = "Web search results for the question above. Use them to answer and cite the "
+                             "source URLs where relevant:\n\n";
+          for (const auto &item : *result) {
+            text += std::format("Title: {}\nURL: {}\n{}\n\n", item.title, item.url, item.content);
+          }
+          context = std::move(text);
+        } else if (!result) {
+          qWarning() << "Web search failed:" << result.error().c_str();
+        }
+        sendQuery(stdQuery, std::move(context));
+      });
   return true;
 }
 
+bool ChatSession::needsSearchFallback(const std::string &query) const {
+  if (query.empty() || modelSupports(AI::Capability::ToolCalling)) return false;
+  // Agents run their own tools, web search included.
+  if (const auto *provider = m_aiService && m_selectedModel
+                                 ? m_aiService->getProviderById(m_selectedModel->provider)
+                                 : nullptr) {
+    const auto *info = AI::findProviderType(provider->type());
+    if (info && info->category == AI::Category::Agent) return false;
+  }
+  if (!AI::WebSearchService::enabled() || !AI::WebSearchService::configured()) return false;
+  const auto *tools = m_services.tools();
+  return tools && tools->toolsEnabled() &&
+         tools->isEnabled(AI::ToolRegistry::qualifiedName(AI::EXTENSION_ID, AI::WEB_SEARCH_TOOL_ID));
+}
+
+void ChatSession::setSearching(bool searching) {
+  if (m_searching == searching) return;
+  m_searching = searching;
+  emit searchingChanged();
+  emit attachmentStateChanged();
+}
+
 void ChatSession::cancel() {
+  if (m_searching) {
+    ++m_searchId;
+    setSearching(false);
+    return;
+  }
   if (m_agent) m_agent->cancel();
 }
 
-void ChatSession::sendQuery(const std::string &query) {
+void ChatSession::sendQuery(const std::string &query, std::optional<std::string> webContext) {
   auto attachments = m_attachments.take();
   const auto now = QDateTime::currentMSecsSinceEpoch();
   const auto uuid = [] { return QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString(); };
@@ -265,6 +327,7 @@ void ChatSession::sendQuery(const std::string &query) {
   AI::ChatMessage message{.role = AI::ChatRole::User};
   message.parts.reserve(1 + attachments.size() * 2);
   if (!query.empty()) message.parts.emplace_back(AI::TextPart{query});
+  if (webContext) message.parts.emplace_back(AI::TextPart{std::move(*webContext)});
   for (const auto &content : attachments) {
     const auto &attachment = content.data();
     if (const auto *image = std::get_if<FileAttachment::Image>(&attachment.contents)) {

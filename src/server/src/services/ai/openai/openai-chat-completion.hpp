@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <format>
 #include <glaze/core/opts.hpp>
 #include <glaze/json/generic.hpp>
@@ -13,6 +14,7 @@
 #include <variant>
 #include <vector>
 #include <qlogging.h>
+#include <QUuid>
 #include "common/qt.hpp"
 #include "internal/http-client.hpp"
 #include "services/ai/ai-provider.hpp"
@@ -30,6 +32,14 @@ struct ContentPart {
   std::optional<ImageUrl> image_url;
 };
 
+// Gemini's OpenAI-compatible endpoint carries its thought signatures here.
+struct ExtraContent {
+  struct Google {
+    std::optional<std::string> thought_signature;
+  };
+  std::optional<Google> google;
+};
+
 struct ToolCall {
   struct Function {
     std::string name;
@@ -39,6 +49,7 @@ struct ToolCall {
   std::string id;
   std::string type{"function"};
   Function function;
+  std::optional<ExtraContent> extra_content;
 };
 
 struct Message {
@@ -64,7 +75,11 @@ struct Message {
         hasImage = true;
       } else if (const auto *p = std::get_if<ToolCallPart>(&part)) {
         if (!out.tool_calls) out.tool_calls.emplace();
-        out.tool_calls->emplace_back(ToolCall{.id = p->id, .function = {p->name, p->arguments}});
+        ToolCall call{.id = p->id, .function = {p->name, p->arguments}};
+        if (p->thought_signature) {
+          call.extra_content = ExtraContent{ExtraContent::Google{.thought_signature = p->thought_signature}};
+        }
+        out.tool_calls->emplace_back(std::move(call));
       } else if (const auto *p = std::get_if<ToolResultPart>(&part)) {
         out.tool_call_id = p->callId;
         text += p->content;
@@ -135,8 +150,10 @@ struct StreamChunk {
       std::optional<std::string> arguments;
     };
 
-    int index = 0;
+    std::optional<int> index;
     std::optional<std::string> id;
+    std::optional<std::string> thought_signature;
+    std::optional<ExtraContent> extra_content;
     Function function;
   };
 
@@ -218,6 +235,22 @@ private:
     return reason;
   }
 
+  // Some servers (Gemini) omit the index and send every call whole, sometimes with an empty id.
+  // A delta carrying a function name then starts a new call.
+  int resolveToolIndex(const StreamChunk::ToolCallDelta &delta) const {
+    if (delta.index) return *delta.index;
+    if (m_toolCalls.empty()) return 0;
+    if (delta.id && !delta.id->empty()) {
+      const auto it =
+          std::ranges::find_if(m_toolCalls, [&](const auto &entry) { return entry.second.id == *delta.id; });
+      if (it != m_toolCalls.end()) return it->first;
+    }
+    const auto last = m_toolCalls.rbegin()->first;
+    const bool startsCall =
+        (delta.id && !delta.id->empty()) || (delta.function.name && !delta.function.name->empty());
+    return startsCall ? last + 1 : last;
+  }
+
   void handleData(const QString &, QByteArrayView data) {
     if (data.trimmed() == "[DONE]") return;
 
@@ -255,8 +288,13 @@ private:
     if (delta.tool_calls && !delta.tool_calls->empty()) {
       emit activityChanged(ResponseActivity::PreparingTool);
       for (const auto &toolDelta : *delta.tool_calls) {
-        auto &call = m_toolCalls[toolDelta.index];
-        if (toolDelta.id) call.id = *toolDelta.id;
+        auto &call = m_toolCalls[resolveToolIndex(toolDelta)];
+        if (toolDelta.id && !toolDelta.id->empty()) call.id = *toolDelta.id;
+        if (toolDelta.thought_signature) call.thought_signature = *toolDelta.thought_signature;
+        if (toolDelta.extra_content && toolDelta.extra_content->google &&
+            toolDelta.extra_content->google->thought_signature) {
+          call.thought_signature = *toolDelta.extra_content->google->thought_signature;
+        }
         if (toolDelta.function.name) call.name += *toolDelta.function.name;
         if (toolDelta.function.arguments) call.arguments += *toolDelta.function.arguments;
       }
@@ -264,6 +302,8 @@ private:
 
     if (choice.finish_reason && !m_toolCalls.empty()) {
       for (auto &[index, call] : std::exchange(m_toolCalls, {})) {
+        if (call.id.empty())
+          call.id = std::format("call_{}", QUuid::createUuid().toString(QUuid::Id128).toStdString());
         emit toolCallRequested(call);
       }
     }

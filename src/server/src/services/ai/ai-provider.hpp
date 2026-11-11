@@ -119,6 +119,7 @@ struct ToolCallPart {
   std::string id;
   std::string name;
   std::string arguments;
+  std::optional<std::string> thought_signature;
 };
 
 struct ToolResultPart {

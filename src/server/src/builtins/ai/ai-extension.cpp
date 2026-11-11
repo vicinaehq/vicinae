@@ -1,6 +1,7 @@
 #include "ai-extension.hpp"
 #include <algorithm>
 #include "builtins/ai/quick-ai-view-host.hpp"
+#include "builtins/ai/web-search-tool.hpp"
 #include "command/command-controller.hpp"
 #include "common/context.hpp"
 #include "navigation-controller.hpp"
@@ -31,6 +32,25 @@ void QuickAICommand::execute(CommandController &controller) const {
 
 void AiExtension::preferencesChanged(const AiPreferences &preferences) const {
   ServiceRegistry::instance()->ai()->setProviders(preferences.providers);
+}
+
+AiExtension::AiExtension() {
+  registerCommand<QuickAICommand>();
+  registerCommand<AIChatCommand>();
+  registerCommand<OpenLastChatCommand>();
+  registerCommand<ConversationHistoryCommand>();
+  registerTool(
+      {.id = std::string(AI::WEB_SEARCH_TOOL_ID),
+       .title = QCoreApplication::translate("AiExtension", "Web Search"),
+       .description = QCoreApplication::translate("AiExtension", "Search the web for current information."),
+       .icon = ImageURL::builtin(BuiltinIcon::Globe01),
+       .defaultPolicy = AI::ToolPolicy::Allow,
+       .deferred = false,
+       .listed = false,
+       // Runs on the user's own search key, so agents outside Vicinae don't get it.
+       .mcp = false,
+       .annotations = {.readOnly = true, .openWorld = true},
+       .create = [] { return std::make_unique<AI::WebSearchTool>(); }});
 }
 
 void AIChatCommand::execute(CommandController &controller) const {

@@ -27,6 +27,8 @@ struct ToolContribution {
   ToolPolicy defaultPolicy = ToolPolicy::Ask;
   // Deferred tools are only sent to the model once it loads them with load_tools.
   bool deferred = true;
+  // Shown in the extension's tool settings. Off for tools whose availability is managed elsewhere.
+  bool listed = true;
   bool mcp = true;
   ToolAnnotations annotations;
   std::function<std::unique_ptr<AbstractTool>()> create;

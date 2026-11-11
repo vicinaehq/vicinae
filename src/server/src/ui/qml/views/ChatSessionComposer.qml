@@ -9,7 +9,7 @@ ChatComposer {
 
     text: session.draft
     onTextChanged: session.draft = text
-    busy: session.streaming
+    busy: session.streaming || session.searching
     attachments: session.attachments
     submissionEnabled: session.canSend
     message: session.attachmentMessage

@@ -70,10 +70,5 @@ class AiExtension : public TypedCommandRepository<AiPreferences> {
   void preferencesChanged(const AiPreferences &preferences) const override;
 
 public:
-  AiExtension() {
-    registerCommand<QuickAICommand>();
-    registerCommand<AIChatCommand>();
-    registerCommand<OpenLastChatCommand>();
-    registerCommand<ConversationHistoryCommand>();
-  }
+  AiExtension();
 };

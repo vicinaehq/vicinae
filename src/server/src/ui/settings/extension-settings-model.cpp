@@ -491,7 +491,7 @@ QVariantList ExtensionSettingsModel::tools() const {
   QVariantList rows;
 
   for (const auto &entry : registry.entries()) {
-    if (entry.providerId != providerId) continue;
+    if (entry.providerId != providerId || !entry.contribution.listed) continue;
     const auto &tool = entry.contribution;
     rows.emplace_back(
         QVariantMap{{QStringLiteral("id"), QString::fromStdString(tool.id)},

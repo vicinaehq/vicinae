@@ -395,6 +395,7 @@ set(SRCS
 	src/builtins/ai/conversation-history-view-host.hpp
 	src/builtins/ai/ai-extension.cpp
 	src/builtins/ai/chat-session.hpp
+	src/builtins/ai/web-search-tool.cpp
 	src/builtins/ai/chat-session.cpp
 	src/builtins/ai/conversation-list-model.hpp
 	src/builtins/ai/conversation-list-model.cpp
@@ -404,6 +405,7 @@ set(SRCS
 	src/builtins/ai/chat-document-model.hpp
 	src/builtins/ai/chat-conversation-model.hpp
 	src/builtins/ai/chat-conversation-model.cpp
+	src/services/ai/web-search-service.cpp
 	src/builtins/dictation/dictation.hpp
 	src/builtins/dictation/dictation-preferences.hpp
 	src/builtins/dictation/dictation-extension.hpp
@@ -1527,6 +1529,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/settings/ToolSettingsRow.qml
 	src/ui/qml/settings/SettingsSubpageRow.qml
 	src/ui/qml/settings/AIProvidersOverview.qml
+	src/ui/qml/settings/AIWebSearchPage.qml
+	src/ui/qml/settings/SettingsSegmentedControl.qml
 	src/ui/qml/settings/AIProviderPicker.qml
 	src/ui/qml/settings/AIProviderView.qml
 	src/ui/qml/settings/AIModelRow.qml

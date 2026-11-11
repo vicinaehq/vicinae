@@ -19,6 +19,7 @@
 #include "services/ai/ai-provider-types.hpp"
 #include "services/ai/ai-provider.hpp"
 #include "services/ai/ai-service.hpp"
+#include "services/ai/web-search-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/image/image-url.hpp"
@@ -292,10 +293,12 @@ AISettingsModel::AISettingsModel(ServiceRegistry &services, QObject *parent) : Q
   if (auto *config = m_config) {
     connect(config, &config::Manager::configChanged, this, [this]() {
       emit secretsEncryptedChanged();
+      emit webSearchChanged();
       rebuildTypes();
       rebuildPage();
     });
   }
+
   if (m_aiService) {
     connect(m_aiService, &AI::Service::modelsChanged, this, [this]() {
       rebuildTypes();
@@ -306,6 +309,102 @@ AISettingsModel::AISettingsModel(ServiceRegistry &services, QObject *parent) : Q
 
   rebuildTypes();
   rebuildPage();
+}
+
+AI::WebSearchSettings AISettingsModel::webSearchSettings() const {
+  if (!m_rootItems) return {};
+  return readPreferences<AiPreferences>(m_rootItems->getProviderPreferenceValues(qs(AI::EXTENSION_ID)))
+      .webSearch;
+}
+
+void AISettingsModel::saveWebSearchSettings(const AI::WebSearchSettings &settings) {
+  if (!m_rootItems) return;
+  std::string json;
+  glz::generic value;
+  if (glz::write_json(settings, json) || glz::read_json(value, json)) return;
+
+  auto values = m_rootItems->getProviderPreferenceValues(qs(AI::EXTENSION_ID));
+  values[std::string(AI::WEB_SEARCH_PREFERENCE)] = std::move(value);
+  m_rootItems->setProviderPreferenceValues(qs(AI::EXTENSION_ID), values);
+  emit webSearchChanged();
+}
+
+bool AISettingsModel::webSearchEnabled() const { return webSearchSettings().enabled; }
+
+QString AISettingsModel::webSearchProvider() const { return qs(AI::WebSearchService::provider().id); }
+
+QString AISettingsModel::webSearchDepth() const {
+  return qs(AI::WebSearchService::depthId(AI::WebSearchService::depth()));
+}
+
+bool AISettingsModel::webSearchConfigured() const { return AI::WebSearchService::configured(); }
+
+QVariantList AISettingsModel::webSearchProviders() const {
+  QVariantList providers;
+  providers.reserve(static_cast<qsizetype>(AI::WebSearchService::PROVIDERS.size()));
+  for (const auto &provider : AI::WebSearchService::PROVIDERS) {
+    providers.emplace_back(
+        QVariantMap{{QStringLiteral("id"), qs(provider.id)},
+                    {QStringLiteral("displayName"), qs(provider.name)},
+                    {QStringLiteral("description"),
+                     QCoreApplication::translate(AI::WebSearchService::TR_CONTEXT, provider.description)},
+                    {QStringLiteral("keyUrl"), qs(provider.keyUrl)}});
+  }
+  return providers;
+}
+
+QVariantList AISettingsModel::webSearchDepths() const {
+  QVariantList depths;
+  depths.reserve(static_cast<qsizetype>(AI::WebSearchService::DEPTHS.size()));
+  for (const auto &depth : AI::WebSearchService::DEPTHS) {
+    depths.emplace_back(
+        QVariantMap{{QStringLiteral("id"), qs(depth.id)},
+                    {QStringLiteral("label"),
+                     QCoreApplication::translate(AI::WebSearchService::TR_CONTEXT, depth.label)}});
+  }
+  return depths;
+}
+
+void AISettingsModel::setWebSearchEnabled(bool enabled) {
+  auto settings = webSearchSettings();
+  settings.enabled = enabled;
+  saveWebSearchSettings(settings);
+}
+
+void AISettingsModel::setWebSearchProvider(const QString &provider) {
+  if (!AI::WebSearchService::findProvider(provider.toStdString())) return;
+  auto settings = webSearchSettings();
+  settings.provider = provider.toStdString();
+  m_webSearchTestStatus.clear();
+  saveWebSearchSettings(settings);
+}
+
+void AISettingsModel::setWebSearchDepth(const QString &depth) {
+  if (!AI::WebSearchService::parseDepth(depth.toStdString())) return;
+  auto settings = webSearchSettings();
+  settings.depth = depth.toStdString();
+  saveWebSearchSettings(settings);
+}
+
+void AISettingsModel::setWebSearchApiKey(const QString &key) {
+  AI::WebSearchService::setApiKey(key.trimmed().toStdString());
+  m_webSearchTestStatus.clear();
+  emit webSearchChanged();
+}
+
+void AISettingsModel::testWebSearch() {
+  if (m_webSearchTesting) return;
+  m_webSearchTesting = true;
+  m_webSearchTestSucceeded = false;
+  m_webSearchTestStatus.clear();
+  emit webSearchChanged();
+  AI::WebSearchService::test().then(this, [this](const AI::WebSearchService::SearchResult &result) {
+    m_webSearchTesting = false;
+    m_webSearchTestSucceeded = result.has_value();
+    m_webSearchTestStatus = result ? tr("Search test succeeded.")
+                                   : tr("Search test failed: %1").arg(QString::fromStdString(result.error()));
+    emit webSearchChanged();
+  });
 }
 
 void AISettingsModel::setSelectedProviderId(const QString &id) {

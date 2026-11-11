@@ -78,8 +78,7 @@ void ToolRegistry::rebuild() {
     entries.reserve(entries.size() + tools.size());
 
     for (auto &tool : tools) {
-      // "__" is how MCP clients join server and tool names, some refuse tools that already contain it
-      auto name = std::format("{}_{}", providerId, tool.id);
+      auto name = qualifiedName(providerId, tool.id);
 
       if (!validId(providerId) || !validId(tool.id) || name.size() > 64 || !tool.create ||
           std::ranges::find(entries, name, &Entry::name) != entries.end()) {
@@ -114,6 +113,8 @@ bool ToolRegistry::providerEnabled(std::string_view providerId) const {
 ToolPolicy ToolRegistry::toolPolicy(std::string_view providerId, std::string_view toolId) const {
   const auto *entry = find(providerId, toolId);
   if (!entry) return ToolPolicy::Disabled;
+  // Unlisted tools have no setting to change it, so a stored choice would be stuck.
+  if (!entry->contribution.listed) return entry->contribution.defaultPolicy;
 
   const auto &providers = m_config.value().providers;
   const auto provider = providers.find(std::string(providerId));

@@ -241,10 +241,20 @@ class AISettingsModel : public QObject {
   Q_PROPERTY(AIProviderPage *provider READ provider CONSTANT)
   Q_PROPERTY(AIProviderFieldsModel *setupFields READ setupFields CONSTANT)
   Q_PROPERTY(bool secretsEncrypted READ secretsEncrypted NOTIFY secretsEncryptedChanged)
+  Q_PROPERTY(bool webSearchEnabled READ webSearchEnabled NOTIFY webSearchChanged)
+  Q_PROPERTY(QString webSearchProvider READ webSearchProvider NOTIFY webSearchChanged)
+  Q_PROPERTY(QString webSearchDepth READ webSearchDepth NOTIFY webSearchChanged)
+  Q_PROPERTY(bool webSearchConfigured READ webSearchConfigured NOTIFY webSearchChanged)
+  Q_PROPERTY(bool webSearchTesting READ webSearchTesting NOTIFY webSearchChanged)
+  Q_PROPERTY(QString webSearchTestStatus READ webSearchTestStatus NOTIFY webSearchChanged)
+  Q_PROPERTY(bool webSearchTestSucceeded READ webSearchTestSucceeded NOTIFY webSearchChanged)
+  Q_PROPERTY(QVariantList webSearchProviders READ webSearchProviders CONSTANT)
+  Q_PROPERTY(QVariantList webSearchDepths READ webSearchDepths CONSTANT)
 
 signals:
   void selectedProviderIdChanged();
   void secretsEncryptedChanged();
+  void webSearchChanged();
 
 public:
   explicit AISettingsModel(ServiceRegistry &services, QObject *parent = nullptr);
@@ -256,6 +266,15 @@ public:
   void setSelectedProviderId(const QString &id);
   AIProviderPage *provider() { return &m_page; }
   AIProviderFieldsModel *setupFields() { return &m_setupFields; }
+  bool webSearchEnabled() const;
+  QString webSearchProvider() const;
+  QString webSearchDepth() const;
+  bool webSearchConfigured() const;
+  bool webSearchTesting() const { return m_webSearchTesting; }
+  QString webSearchTestStatus() const { return m_webSearchTestStatus; }
+  bool webSearchTestSucceeded() const { return m_webSearchTestSucceeded; }
+  QVariantList webSearchProviders() const;
+  QVariantList webSearchDepths() const;
 
   // Types that can be set up right now: unconfigured ones plus those accepting more instances.
   Q_INVOKABLE QVariantList pickerTypes() const;
@@ -263,6 +282,11 @@ public:
   Q_INVOKABLE void addProvider(const QString &type, const QVariantMap &fields);
   Q_INVOKABLE QString nextProviderId(const QString &type) const;
   Q_INVOKABLE bool isProviderIdTaken(const QString &id) const;
+  Q_INVOKABLE void setWebSearchEnabled(bool enabled);
+  Q_INVOKABLE void setWebSearchProvider(const QString &provider);
+  Q_INVOKABLE void setWebSearchDepth(const QString &depth);
+  Q_INVOKABLE void setWebSearchApiKey(const QString &key);
+  Q_INVOKABLE void testWebSearch();
 
 private:
   friend class AIProviderPage;
@@ -281,6 +305,8 @@ private:
   void rebuildTypes();
   void rebuildPage();
   void rebuildPageModels();
+  AI::WebSearchSettings webSearchSettings() const;
+  void saveWebSearchSettings(const AI::WebSearchSettings &settings);
 
   AI::Service *m_aiService = nullptr;
   RootItemManager *m_rootItems = nullptr;
@@ -291,4 +317,7 @@ private:
   AIProviderTypesModel m_availableTypes{this};
   AIProviderPage m_page{*this};
   AIProviderFieldsModel m_setupFields{this};
+  bool m_webSearchTesting = false;
+  bool m_webSearchTestSucceeded = false;
+  QString m_webSearchTestStatus;
 };

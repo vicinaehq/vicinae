@@ -40,6 +40,7 @@ struct OpenAICompatibleFields {
   std::string name;
   std::string url;
   std::string apiKey;
+  bool toolCalling = true;
 };
 
 struct AgentFields {
@@ -171,6 +172,13 @@ template <> struct PreferenceSchema<AI::OpenAICompatibleFields> {
       .description = tr("Leave empty if the server does not require one."),
       .placeholder = "sk-...",
       .kind = PreferenceMeta::Kind::Password,
+      .required = false,
+  };
+  PreferenceMeta toolCalling{
+      .title = tr("Tool calling"),
+      .description = tr("Let models call tools such as web search. Turn off if the server rejects requests "
+                        "that include tools."),
+      .label = tr("Models support tool calling"),
       .required = false,
   };
   Q_DECLARE_TR_FUNCTIONS(OpenAICompatibleFields)

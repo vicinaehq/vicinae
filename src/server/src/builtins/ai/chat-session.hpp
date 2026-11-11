@@ -5,6 +5,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include "chat-conversation-model.hpp"
@@ -30,6 +31,7 @@ class ChatSession : public QObject {
   Q_PROPERTY(QString draft READ draft WRITE setDraft NOTIFY draftChanged)
   Q_PROPERTY(DocumentModel *documentModel READ documentModel CONSTANT)
   Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
+  Q_PROPERTY(bool searching READ searching NOTIFY searchingChanged)
   Q_PROPERTY(bool awaitingResponse READ awaitingResponse NOTIFY activityChanged)
   Q_PROPERTY(bool thinking READ thinking NOTIFY activityChanged)
   Q_PROPERTY(AttachmentModel *attachments READ attachments CONSTANT)
@@ -61,6 +63,7 @@ signals:
   void attachmentStateChanged();
   void toolApprovalChanged();
   void streamingChanged();
+  void searchingChanged();
   void activityChanged();
   void modelChanged();
   void modelSelectorItemsChanged();
@@ -87,6 +90,7 @@ public:
 
   DocumentModel *documentModel() { return &m_document; }
   bool streaming() const { return m_agent && m_agent->running(); }
+  bool searching() const { return m_searching; }
   bool awaitingResponse() const;
   bool thinking() const { return streaming() && m_agent->activity() == AI::ResponseActivity::Thinking; }
   AttachmentModel *attachments() { return &m_attachments; }
@@ -123,8 +127,12 @@ private:
   int m_turnCount = 0;
   bool m_loading = false;
   bool m_removed = false;
+  bool m_searching = false;
+  std::uint64_t m_searchId = 0;
 
-  void sendQuery(const std::string &query);
+  void sendQuery(const std::string &query, std::optional<std::string> webContext = std::nullopt);
+  bool needsSearchFallback(const std::string &query) const;
+  void setSearching(bool searching);
   bool needsVision() const;
   bool modelSupports(AI::Capability capability) const;
   void rebuildModelSelectorItems();
