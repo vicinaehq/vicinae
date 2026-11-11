@@ -135,8 +135,8 @@ Item {
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 16
-                            anchors.rightMargin: 16
+                            anchors.leftMargin: itemDelegate.appearance.rowContentMargin
+                            anchors.rightMargin: itemDelegate.appearance.rowContentMargin
                             spacing: 10
 
                             ViciImage {

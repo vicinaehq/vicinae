@@ -150,6 +150,7 @@ struct ListConfig {
   std::optional<int> itemHeight;
   std::optional<int> itemRounding;
   std::optional<int> itemInset;
+  std::optional<int> itemPadding;
 };
 
 struct WindowConfig {

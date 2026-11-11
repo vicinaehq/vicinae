@@ -44,6 +44,7 @@ private:
   Q_PROPERTY(QVariant listItemHeight READ listItemHeight NOTIFY changed)
   Q_PROPERTY(QVariant listItemRounding READ listItemRounding NOTIFY changed)
   Q_PROPERTY(QVariant listItemInset READ listItemInset NOTIFY changed)
+  Q_PROPERTY(QVariant listItemPadding READ listItemPadding NOTIFY changed)
 
 signals:
   void changed();
@@ -135,6 +136,7 @@ public:
   QVariant listItemHeight() const { return optional(cfg().launcherWindow.list.itemHeight); }
   QVariant listItemRounding() const { return optional(cfg().launcherWindow.list.itemRounding); }
   QVariant listItemInset() const { return optional(cfg().launcherWindow.list.itemInset); }
+  QVariant listItemPadding() const { return optional(cfg().launcherWindow.list.itemPadding); }
 
   Q_INVOKABLE static QColor withAlpha(const QColor &c, qreal alpha) {
     return QColor::fromRgbF(c.redF(), c.greenF(), c.blueF(), alpha);

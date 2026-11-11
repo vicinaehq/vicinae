@@ -11,8 +11,9 @@ LauncherAppearance {
     floatingStatusBar: true
     contentBottomInset: 24
     rowInset: Config.listItemInset ?? 8
-    rowLeftPadding: 14
-    rowRightPadding: 16
+    rowLeftPadding: rowInset + (Config.listItemPadding ?? 6)
+    rowRightPadding: rowInset + (Config.listItemPadding ?? 8)
+    rowContentMargin: rowInset + (Config.listItemPadding ?? 4) + 4
     rowTextSpacing: 10
     sectionHeaderHeight: 24
     gridSelectionOutline: Config.withAlpha(Theme.foreground, Theme.isDark ? 0.72 : 0.5)

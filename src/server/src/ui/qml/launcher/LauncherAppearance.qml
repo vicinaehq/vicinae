@@ -17,8 +17,10 @@ QtObject {
     property int rowHeight: Config.listItemHeight ?? 38
     property int rowInset: Config.listItemInset ?? 6
     property int rowRadius: Config.listItemRounding ?? 10
-    property int rowLeftPadding: 12
-    property int rowRightPadding: 12
+    property int rowLeftPadding: rowInset + (Config.listItemPadding ?? 6)
+    property int rowRightPadding: rowInset + (Config.listItemPadding ?? 6)
+    // For rows that lay out their own content rather than starting with an icon, which brings a margin of its own.
+    property int rowContentMargin: rowInset + (Config.listItemPadding ?? 6) + 4
     property int rowTextSpacing: 6
     property int sectionHeaderHeight: 30
     property color selectedText: Theme.listItemSelectionFg

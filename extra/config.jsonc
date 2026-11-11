@@ -182,7 +182,10 @@
 			// "item_rounding": 10,
 
 			// Horizontal gap between the highlight of a list item and the edges of the list.
-			// "item_inset": 6
+			// "item_inset": 6,
+
+			// Horizontal gap between the highlight of a list item and its content.
+			// "item_padding": 6
 		},
 
 		// The vicinae UI is designed to work best at the default size. If you change this it is highly recommended
