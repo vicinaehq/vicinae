@@ -54,6 +54,7 @@ struct CustomAgentFields {
 struct LlamaCppFields {
   std::string name;
   std::string url = "http://localhost:8080";
+  std::string apiKey;
 };
 
 struct LemonadeFields {
@@ -216,6 +217,13 @@ template <> struct PreferenceSchema<AI::LlamaCppFields> {
       .title = tr("Server URL"),
       .description = tr("The address of your llama-server instance."),
       .placeholder = "http://localhost:8080",
+  };
+  PreferenceMeta apiKey{
+      .title = tr("API Key"),
+      .description = tr("Only needed if the llama-server was started with an API key."),
+      .placeholder = "",
+      .kind = PreferenceMeta::Kind::Password,
+      .required = false,
   };
   Q_DECLARE_TR_FUNCTIONS(LlamaCppFields)
 };
