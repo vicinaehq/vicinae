@@ -1,4 +1,3 @@
-import * as esbuild from "esbuild";
 import {
 	cpSync,
 	existsSync,
@@ -9,6 +8,7 @@ import {
 	rmSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
+import * as esbuild from "esbuild";
 import type { CommandDef } from "../../cli.js";
 import ManifestSchema from "../../schemas/manifest.js";
 import { updateExtensionTypes } from "../../utils/extension-types.js";

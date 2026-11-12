@@ -51,8 +51,7 @@ struct LoadResponse {
   session_id: string;
 };
 
-// `output` is the serialized value returned by a tool, `error` what it threw.
-// Other modes return an empty result: errors they throw surface as a crash.
+// only set for tools: `output` is what the tool returned, `error` what it threw
 struct LaunchResult {
   output?: string;
   error?: string;
@@ -66,8 +65,7 @@ service Manager {
   // Happens right after the C++ side gets the session id from `load` and stores it.
   // It is important to synchronize this way otherwise we can theoretically miss the first messages if the
   // extension loads too fast.
-  // Resolves once the command has run: right after launch for views, once the entrypoint has
-  // returned for no-view commands and tools. Headless runs use it as their completion signal.
+  // Resolves once the entrypoint has returned (right away for views).
   fn ready(session_id: string) => LaunchResult;
 
   fn messageExtension(session_id: string, payload: string) => bool;

@@ -38,7 +38,6 @@ class ExtensionLogger : public tsapi::AbstractLogger {
 
 class ExtensionCommandRuntime : public CommandContext {
 public:
-  /** The command's output, or why it failed. */
   using RunResult = std::expected<std::string, std::string>;
   using RunCallback = std::function<void(RunResult)>;
 
@@ -58,17 +57,13 @@ public:
   void load(const LaunchProps &props) override;
   void unload() override;
 
-  /**
-   * Runs the command without UI. The runtime owns itself from then on: once the command finishes,
-   * fails, crashes or times out, `onFinished` is called and the runtime unloads and deletes itself.
-   */
+  // the runtime deletes itself once the command finishes
   void setHeadless(RunCallback onFinished) {
     m_headless = true;
     m_onFinished = std::move(onFinished);
   }
   void cancel(std::string reason) { finish(std::unexpected(std::move(reason))); }
 
-  /** Runs the command's entrypoint as an AI tool, with the given input. */
   void setToolCall(ToolCall call) { m_toolCall = std::move(call); }
 
   ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command);

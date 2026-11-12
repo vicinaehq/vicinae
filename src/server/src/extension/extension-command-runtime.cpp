@@ -60,13 +60,6 @@ void ExtensionCommandRuntime::initialize() {
     connect(&m_timeout, &QTimer::timeout, this, [this] {
       cancel(QCoreApplication::translate("ExtensionCommandRuntime", "The command timed out.").toStdString());
     });
-    // waiting on the user is not the command hanging
-    connect(m_ui, &ExtUIService::confirmationPendingChanged, this, [this](bool pending) {
-      if (pending)
-        m_timeout.stop();
-      else if (m_onFinished)
-        m_timeout.start();
-    });
     m_timeout.start();
   }
   auto *wm = new ExtWindowManagementService(*m_transport, *services->windowManager(), *services->appDb(),
@@ -111,7 +104,6 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   const auto preferenceValues =
       resolvePreferenceValues(m_command->preferenceValues(*context()->services->rootItemManager()));
 
-  // with a UI, the user is asked for missing preferences before the command is launched
   if (const auto missing = missingRequiredPreference(preferenceValues); m_headless && missing) {
     cancel(QCoreApplication::translate("ExtensionCommandRuntime",
                                        "Set the \"%1\" preference in extension settings first.")
@@ -260,7 +252,6 @@ void ExtensionCommandRuntime::finish(RunResult result) {
 }
 
 void ExtensionCommandRuntime::unload() {
-  if (m_ui) m_ui->cancelPendingAlert();
   RelativeAssetResolver::instance()->removePath(m_command->assetPath());
   auto manager = context()->services->extensionManager();
   auto toast = context()->services->toastService();

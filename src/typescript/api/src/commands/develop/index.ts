@@ -1,8 +1,8 @@
-import * as chokidar from "chokidar";
-import * as esbuild from "esbuild";
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
+import * as chokidar from "chokidar";
+import * as esbuild from "esbuild";
 import type { CommandDef } from "../../cli.js";
 import ManifestSchema from "../../schemas/manifest.js";
 import { updateExtensionTypes } from "../../utils/extension-types.js";

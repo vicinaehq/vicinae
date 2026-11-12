@@ -12,7 +12,6 @@ interface FlagDef {
 export interface CommandDef {
 	description: string;
 	aliases?: string[];
-	/** Positional arguments, as shown in the usage line, e.g. `<type> <name>` */
 	usage?: string;
 	flags: Record<string, FlagDef>;
 	run: (

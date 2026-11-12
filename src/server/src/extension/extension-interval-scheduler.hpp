@@ -21,7 +21,6 @@ class ExtensionIntervalScheduler : public QObject {
     std::chrono::seconds interval;
     QTimer timer;
 
-    // set while a run is in progress, the runtime deletes itself once it finishes
     QPointer<ExtensionCommandRuntime> runtime;
   };
 

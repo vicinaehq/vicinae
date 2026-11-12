@@ -5,10 +5,7 @@
 #include "services/ai/ai-tool.hpp"
 #include "services/extension-registry/extension-manifest.hpp"
 
-/**
- * The command a tool runs as. Tools are not root items: their preferences are the extension's
- * merged with the tool's own, which are stored separately from command preferences.
- */
+// tools are not root items, their preferences are stored separately
 class ExtensionToolCommand : public ExtensionCommand {
 public:
   using ExtensionCommand::ExtensionCommand;

@@ -1,6 +1,6 @@
-import type { BuildOptions } from "esbuild";
 import * as os from "node:os";
 import * as path from "node:path";
+import type { BuildOptions } from "esbuild";
 
 export const dataDir = () => {
 	if (process.platform === "win32") {
