@@ -11,6 +11,9 @@
 namespace vicinae {
 inline constexpr std::array<std::string_view, 3> APP_SCHEMES{"vicinae", "raycast", "com.raycast"};
 
+// Alternative to the server's --config flag, for setups where injecting a flag is impractical.
+inline constexpr auto CONFIG_PATH_ENV = "VICINAE_CONFIG_PATH";
+
 // true for app deeplinks such as vicinae://toggle or com.raycast:/extensions/...
 bool isAppDeeplink(std::string_view url);
 

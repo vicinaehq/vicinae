@@ -129,6 +129,7 @@
 #include <QTranslator>
 #include <qlockfile.h>
 #include <qlogging.h>
+#include <qtenvironmentvariables.h>
 #include <QtQuickControls2/QQuickStyle>
 #include "server.hpp"
 #include "app-platform.hpp"
@@ -190,6 +191,16 @@ static void applyTextRenderingMode(const config::FontConfig &fontConfig) {
   } else {
     QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
   }
+}
+
+static std::filesystem::path resolveConfigPath(const std::string &explicitPath) {
+  if (!explicitPath.empty()) return explicitPath;
+
+  const QString fromEnv = qEnvironmentVariable(vicinae::CONFIG_PATH_ENV);
+
+  if (!fromEnv.isEmpty()) return std::filesystem::path{fromEnv.toStdU16String()};
+
+  return Omnicast::configDir() / "settings.json";
 }
 
 static constexpr QFont::Weight UI_FONT_WEIGHT = QFont::Normal;
@@ -256,8 +267,7 @@ int startServer(const ServerLaunchOptions &launchOpts) {
 
   AppPlatform::afterGuiApplication();
 
-  auto m_config = launchOpts.config.empty() ? Omnicast::configDir() / "settings.json"
-                                            : std::filesystem::path{launchOpts.config};
+  auto m_config = resolveConfigPath(launchOpts.config);
 
   if (const auto launcher = Environment::detectAppLauncher()) {
     qInfo() << "Detected launch prefix:" << *launcher;
