@@ -11,9 +11,14 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/image/image-renderer.hpp"
+#include "vicinae.hpp"
 #include <QClipboard>
 #include <QGuiApplication>
-#include <QTemporaryFile>
+#include <QBuffer>
+#include <QCryptographicHash>
+#include <QSaveFile>
+#include <filesystem>
+#include <system_error>
 #include <QtConcurrent/QtConcurrent>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
@@ -163,17 +168,7 @@ public:
     auto *watcher = new QFutureWatcher<QImage>(this);
     connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher, promise, title, body, urgency]() {
       QImage image = watcher->result();
-      std::optional<QString> iconPath;
-
-      if (!image.isNull()) {
-        auto *tmp = new QTemporaryFile(QDir::tempPath() + "/vicinae-notif-XXXXXX.png", this);
-        if (tmp->open()) {
-          image.save(tmp, "PNG");
-          tmp->close();
-          iconPath = tmp->fileName();
-        }
-      }
-
+      const auto iconPath = image.isNull() ? std::nullopt : cacheNotificationIcon(image);
       m_notificationClient.provider()->send({title, body, iconPath, urgency});
       promise->addResult(Void::Type{});
       promise->finish();
@@ -233,6 +228,29 @@ private:
     default:
       return PopToRootType::Default;
     }
+  }
+
+  // notification servers read the icon whenever they want, so it has to outlive the command
+  static std::optional<QString> cacheNotificationIcon(const QImage &image) {
+    QByteArray png;
+    QBuffer buffer(&png);
+    if (!buffer.open(QIODevice::WriteOnly) || !image.save(&buffer, "PNG")) return std::nullopt;
+
+    const auto hash = QCryptographicHash::hash(png, QCryptographicHash::Sha256).toHex().toStdString();
+    const auto dir = Omnicast::cacheDir() / "notification-icons";
+    const auto path = dir / (hash + ".png");
+    const auto qpath = QString::fromStdString(path.string());
+
+    std::error_code ec;
+    if (std::filesystem::exists(path, ec)) return qpath;
+    std::filesystem::create_directories(dir, ec);
+
+    QSaveFile file(qpath);
+    if (!file.open(QIODevice::WriteOnly) || file.write(png) != png.size() || !file.commit()) {
+      qWarning() << "Failed to write notification icon to" << qpath;
+      return std::nullopt;
+    }
+    return qpath;
   }
 
   static AbstractDesktopNotificationClient::Urgency

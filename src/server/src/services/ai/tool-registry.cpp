@@ -74,14 +74,15 @@ void ToolRegistry::rebuild() {
 
   for (const auto *provider : m_rootItems.providers()) {
     const auto providerId = provider->uniqueId().toStdString();
+    const auto toolNamespace = provider->toolNamespace().toStdString();
     auto tools = provider->tools();
     entries.reserve(entries.size() + tools.size());
 
     for (auto &tool : tools) {
       // "__" is how MCP clients join server and tool names, some refuse tools that already contain it
-      auto name = std::format("{}_{}", providerId, tool.id);
+      auto name = std::format("{}_{}", toolNamespace, tool.id);
 
-      if (!validId(providerId) || !validId(tool.id) || name.size() > 64 || !tool.create ||
+      if (!validId(toolNamespace) || !validId(tool.id) || name.size() > 64 || !tool.create ||
           std::ranges::find(entries, name, &Entry::name) != entries.end()) {
         invalid.emplace_back(std::move(name));
         continue;
@@ -91,9 +92,7 @@ void ToolRegistry::rebuild() {
     }
   }
 
-  const bool same = std::ranges::equal(entries, m_entries, {}, &Entry::name, &Entry::name);
   m_entries = std::move(entries);
-  if (same) return;
 
   for (const auto &name : invalid)
     qWarning() << "Invalid or duplicate tool contribution:" << name;

@@ -1,4 +1,5 @@
 #pragma once
+#include <span>
 #include "command/argument.hpp"
 #include "fuzzy/fuzzy-searchable.hpp"
 #include "command/command-types.hpp"
@@ -203,6 +204,8 @@ public:
   virtual PreferenceList preferences() const { return {}; }
   virtual std::vector<SettingsPage> settingsPages() const { return {}; }
   virtual std::vector<AI::ToolContribution> tools() const { return {}; }
+
+  virtual QString toolNamespace() const { return uniqueId(); }
 };
 
 struct RootItemMetadata {
@@ -289,6 +292,10 @@ public:
 
   PreferenceValues getProviderPreferenceValues(const QString &id) const;
   PreferenceValues getItemPreferenceValues(const EntrypointId &id) const;
+  PreferenceValues getToolPreferenceValues(const EntrypointId &id,
+                                           std::span<const Preference> preferences) const;
+  bool setToolPreferenceValues(const EntrypointId &id, std::span<const Preference> preferences,
+                               const PreferenceValues &values);
 
   /**
    * Merge the item preferences with the provider preferences.

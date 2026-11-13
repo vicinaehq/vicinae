@@ -2,6 +2,9 @@
 #include <chrono>
 #include <expected>
 #include <filesystem>
+#include <optional>
+#include <string>
+#include <vector>
 #include "command/argument.hpp"
 #include "command/command-types.hpp"
 #include "command/preference.hpp"
@@ -30,6 +33,18 @@ struct ExtensionManifest {
     Provenance provenance;
   };
 
+  struct Tool {
+    std::string name;
+    QString title;
+    QString description;
+    std::optional<std::string> instructions;
+    std::optional<QString> icon;
+    std::optional<std::string> inputSchema;
+    std::vector<Preference> preferences;
+    bool confirmation = false;
+    std::filesystem::path entrypoint;
+  };
+
   std::filesystem::path path;
   QString id;
   QString name;
@@ -40,6 +55,7 @@ struct ExtensionManifest {
   std::vector<QString> categories;
   std::vector<Preference> preferences;
   std::vector<Command> commands;
+  std::vector<Tool> tools;
   bool needsRaycastApi = false;
   Provenance provenance;
 
@@ -48,9 +64,4 @@ struct ExtensionManifest {
   bool isFromRaycastStore() const { return provenance == ExtensionManifest::Provenance::Raycast; }
   bool isFromVicinaeStore() const { return provenance == ExtensionManifest::Provenance::Vicinae; }
   bool isLocal() const { return provenance == ExtensionManifest::Provenance::Local; }
-
-private:
-  static CommandArgument parseArgumentFromObject(const QJsonObject &obj);
-  static Preference parsePreferenceFromObject(const QJsonObject &obj);
-  static Command parseCommandFromObject(const QJsonObject &obj);
 };

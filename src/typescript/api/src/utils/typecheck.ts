@@ -24,7 +24,7 @@ const DEFAULT_CONFIG = {
 	include: ["src"],
 };
 
-const parseConfig = (target: string): ts.ParsedCommandLine => {
+export const parseConfig = (target: string): ts.ParsedCommandLine => {
 	const configPath = ts.findConfigFile(target, ts.sys.fileExists);
 
 	if (configPath) {

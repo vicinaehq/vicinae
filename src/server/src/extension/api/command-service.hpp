@@ -61,7 +61,7 @@ public:
   }
 
   tsapi::Result<void>::Future openCommandPreferences() override {
-    m_settings.openExtensionPreferences(m_command->uniqueId());
+    m_command->openPreferences(m_settings);
     return Void::ok();
   }
 

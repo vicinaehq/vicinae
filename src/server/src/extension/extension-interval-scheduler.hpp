@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include <QObject>
+#include <QPointer>
 #include <QTimer>
 #include "common/context.hpp"
 
@@ -20,9 +21,7 @@ class ExtensionIntervalScheduler : public QObject {
     std::chrono::seconds interval;
     QTimer timer;
 
-    ExtensionCommandRuntime *runtime = nullptr;
-    QTimer timeoutTimer;
-    bool running = false;
+    QPointer<ExtensionCommandRuntime> runtime;
   };
 
 public:
@@ -35,7 +34,7 @@ private:
   ScheduledEntry *findEntry(const std::string &key);
 
   void tick(const std::string &key);
-  void forceUnload(ScheduledEntry &entry);
+  void cancelRun(ScheduledEntry &entry);
 
   void loadState();
   void saveState();

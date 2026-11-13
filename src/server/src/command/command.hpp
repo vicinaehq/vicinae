@@ -61,6 +61,8 @@ public:
   virtual QString author() const = 0;
   virtual std::vector<std::shared_ptr<AbstractCmd>> commands() const = 0;
   virtual std::vector<AI::ToolContribution> tools() const { return {}; }
+
+  virtual QString toolNamespace() const { return id(); }
   virtual ImageURL iconUrl() const = 0;
   virtual std::vector<Preference> preferences() const { return {}; }
   virtual std::vector<SettingsPage> settingsPages() const { return {}; }

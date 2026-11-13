@@ -3,12 +3,13 @@
 #include <format>
 #include <unordered_set>
 #include <QDateTime>
+#include <QPointer>
 #include <glaze/json/read.hpp>
 #include <glaze/json/write.hpp>
 #include <qlogging.h>
 #include "extension/extension-command.hpp"
 #include "extension/extension-command-runtime.hpp"
-#include "extension/manager/extension-manager.hpp"
+#include "extension/headless-command-runner.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/extension-registry/extension-registry.hpp"
@@ -27,7 +28,7 @@ ExtensionIntervalScheduler::ExtensionIntervalScheduler(ApplicationContext &ctx) 
 
 ExtensionIntervalScheduler::~ExtensionIntervalScheduler() {
   for (auto &entry : m_entries) {
-    if (entry->running) forceUnload(*entry);
+    cancelRun(*entry);
   }
 }
 
@@ -63,7 +64,6 @@ void ExtensionIntervalScheduler::rebuild() {
       entry->command = extCmd;
       entry->interval = *extCmd->interval();
       entry->timer.setSingleShot(true);
-      entry->timeoutTimer.setSingleShot(true);
 
       auto delay = computeInitialDelay(key, entry->interval);
 
@@ -71,9 +71,6 @@ void ExtensionIntervalScheduler::rebuild() {
               << "s | initial delay:" << delay.count() << "ms";
 
       connect(&entry->timer, &QTimer::timeout, this, [this, k = key]() { tick(k); });
-      connect(&entry->timeoutTimer, &QTimer::timeout, this, [this, k = key]() {
-        if (auto *e = findEntry(k); e && e->running) forceUnload(*e);
-      });
 
       entry->timer.setInterval(delay);
       entry->timer.start();
@@ -82,13 +79,15 @@ void ExtensionIntervalScheduler::rebuild() {
     }
   }
 
-  std::erase_if(m_entries, [&](const std::unique_ptr<ScheduledEntry> &entry) {
-    if (seen.contains(entry->key)) return false;
-
+  // cancelling calls back into findEntry, so it can't happen while erasing
+  for (auto &entry : m_entries) {
+    if (seen.contains(entry->key)) continue;
     qInfo() << "[ExtensionIntervalScheduler] Removing schedule for" << entry->key;
-    if (entry->running) forceUnload(*entry);
-    return true;
-  });
+    cancelRun(*entry);
+  }
+
+  std::erase_if(m_entries,
+                [&](const std::unique_ptr<ScheduledEntry> &entry) { return !seen.contains(entry->key); });
 }
 
 void ExtensionIntervalScheduler::tick(const std::string &key) {
@@ -103,44 +102,29 @@ void ExtensionIntervalScheduler::tick(const std::string &key) {
     return;
   }
 
-  if (entry->running) {
+  if (entry->runtime) {
     qInfo() << "[ExtensionIntervalScheduler] Skipping" << key << "- previous instance still running";
     entry->timer.setInterval(intervalMs);
     entry->timer.start();
     return;
   }
 
-  if (!m_ctx.services->extensionManager()->isRunning()) {
-    qWarning() << "[ExtensionIntervalScheduler] Extension manager not running, deferring" << key;
+  const auto onFinished = [self = QPointer(this), k = key](const ExtensionCommandRuntime::RunResult &result) {
+    if (!result) qWarning() << "[ExtensionIntervalScheduler]" << k << "failed:" << result.error();
+    if (!self) return;
+    if (auto *e = self->findEntry(k)) e->runtime = nullptr;
+  };
+
+  auto runtime = m_ctx.services->headlessCommandRunner()->run(entry->command, onFinished);
+  if (!runtime) {
+    qWarning() << "[ExtensionIntervalScheduler] Deferring" << key << "-" << runtime.error();
     entry->timer.setInterval(intervalMs);
     entry->timer.start();
     return;
   }
 
   qInfo() << "[ExtensionIntervalScheduler] Executing" << key;
-
-  entry->running = true;
-
-  auto *runtime = new ExtensionCommandRuntime(entry->command);
-  runtime->setHeadless(true);
-  runtime->setContext(&m_ctx);
-
-  entry->runtime = runtime;
-
-  entry->timeoutTimer.setInterval(intervalMs);
-  entry->timeoutTimer.start();
-
-  connect(m_ctx.services->extensionManager(), &ExtensionManager::extensionCrashed, entry->runtime,
-          [this, k = key](const std::string &sessionId, const std::string &reason) {
-            Q_UNUSED(sessionId);
-            auto *e = findEntry(k);
-            if (!e || !e->running) return;
-            qWarning() << "[ExtensionIntervalScheduler] Crash cleanup for" << k << "-" << reason;
-            forceUnload(*e);
-          });
-
-  LaunchProps props;
-  entry->runtime->load(props);
+  entry->runtime = *runtime;
 
   recordExecution(key);
 
@@ -148,16 +132,10 @@ void ExtensionIntervalScheduler::tick(const std::string &key) {
   entry->timer.start();
 }
 
-void ExtensionIntervalScheduler::forceUnload(ScheduledEntry &entry) {
-  if (!entry.running) return;
-
-  qInfo() << "[ExtensionIntervalScheduler] Unloading" << entry.key;
-
-  entry.runtime->unload();
-  entry.runtime->deleteLater();
-  entry.runtime = nullptr;
-  entry.timeoutTimer.stop();
-  entry.running = false;
+void ExtensionIntervalScheduler::cancelRun(ScheduledEntry &entry) {
+  if (!entry.runtime) return;
+  qInfo() << "[ExtensionIntervalScheduler] Cancelling" << entry.key;
+  entry.runtime->cancel("The schedule was removed.");
 }
 
 std::chrono::milliseconds
