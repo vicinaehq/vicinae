@@ -36,6 +36,8 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool compactMode READ compactMode WRITE setCompactMode NOTIFY configChanged)
   Q_PROPERTY(bool floatingStatusBar READ floatingStatusBar WRITE setFloatingStatusBar NOTIFY configChanged)
   Q_PROPERTY(QString windowOpacity READ windowOpacity WRITE setWindowOpacity NOTIFY configChanged)
+  Q_PROPERTY(QString windowWidth READ windowWidth WRITE setWindowWidth NOTIFY configChanged)
+  Q_PROPERTY(QString windowHeight READ windowHeight WRITE setWindowHeight NOTIFY configChanged)
   Q_PROPERTY(
       bool nativeTextRendering READ nativeTextRendering WRITE setNativeTextRendering NOTIFY configChanged)
   Q_PROPERTY(QString fontSize READ fontSize WRITE setFontSize NOTIFY configChanged)
@@ -97,6 +99,10 @@ public:
   void setFloatingStatusBar(bool v);
   QString windowOpacity() const;
   void setWindowOpacity(const QString &v);
+  QString windowWidth() const;
+  void setWindowWidth(const QString &v);
+  QString windowHeight() const;
+  void setWindowHeight(const QString &v);
   bool nativeTextRendering() const;
   void setNativeTextRendering(bool v);
   bool inputServerEnabled() const;
