@@ -8,6 +8,7 @@
 #include "builtins/power-management/power-management-extension.hpp"
 #include "builtins/shortcut/shortcut-extension.hpp"
 #include "builtins/font/font-extension.hpp"
+#include "builtins/note/note-extension.hpp"
 #include "builtins/screenshots/screenshots-extension.hpp"
 #include "services/screenshots/screenshot-service.hpp"
 #include "builtins/snippet/snippet-extension.hpp"
@@ -55,6 +56,7 @@ CommandDatabase::CommandDatabase(const ServiceRegistry &services) {
   registerRepository<DeveloperExtension>();
 
   registerRepository<SnippetExtension>();
+  registerRepository<NoteExtension>();
 
   registerRepository<DictationExtension>();
   registerRepository<AiExtension>();
