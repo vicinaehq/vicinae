@@ -24,10 +24,13 @@ Item {
         if (idx < 0)
             return;
         const wasSearching = _searching;
-        if (model.kindAt(idx) === "command")
+        const kind = model.kindAt(idx);
+        if (kind === "command")
             Settings.selectExtension(key);
+        else if (kind === "tool")
+            Settings.selectTool(model.pageAt(idx), key);
         else
-            Settings.currentPage = key;
+            Settings.currentPage = model.pageAt(idx);
         extSearchField.text = "";
         if (wasSearching)
             Qt.callLater(() => {
@@ -177,7 +180,7 @@ Item {
                 height: navItem.model.kind === "divider" ? 18 : 32
 
                 readonly property string _key: navItem.model.key
-                readonly property bool _isCommand: navItem.model.kind === "command"
+                readonly property bool _isCommand: navItem.model.kind === "command" || navItem.model.kind === "tool"
                 readonly property bool _selected: root._activeKey === navItem._key
                 readonly property bool _enabled: navItem.model.enabled !== false
 

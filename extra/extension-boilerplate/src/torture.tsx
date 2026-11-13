@@ -91,7 +91,7 @@ function ViewTypeSwapper() {
 						<List.Item
 							title="Current: List"
 							subtitle="Enter to cycle, Cmd+A to auto-cycle"
-							icon={Icon.List}
+							icon={Icon.BulletPoints}
 							accessories={[{ tag: { color: Color.Blue, value: "LIST" } }]}
 							actions={actions}
 						/>
@@ -296,7 +296,7 @@ function MutatingChild({ label, depth }: { label: string; depth: number }) {
 							/>
 							<Action
 								title="Toast from here"
-								icon={Icon.Bubble}
+								icon={Icon.SpeechBubble}
 								onAction={() =>
 									showToast(
 										Toast.Style.Success,

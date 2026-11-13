@@ -1,16 +1,15 @@
 #pragma once
-#include "builtins/vicinae/store-intro-view-host.hpp"
+#include "ui/views/intro-view-host.hpp"
 #include "command/single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <QCoreApplication>
 
-class MarkdownShowcaseView : public StoreIntroViewHost {
+class MarkdownShowcaseView : public IntroViewHost {
   Q_OBJECT
 
 public:
   MarkdownShowcaseView()
-      : StoreIntroViewHost(showcase(), ImageURL::builtin(BuiltinIcon::Text), tr("Close"),
-                           [this] { popSelf(); }) {}
+      : IntroViewHost(showcase(), ImageURL::builtin(BuiltinIcon::Text), tr("Close"), [this] { popSelf(); }) {}
 
 private:
   static QString showcase() {
@@ -33,6 +32,29 @@ Line before hard break\
 Line after hard break
 
 ---
+
+## Mathematics
+
+Inline equations such as $E = mc^2$, $a_n = a_0 r^n$, and \(e^{i\pi} + 1 = 0\) share a line with ordinary text. Prices like $5 and $10 stay unchanged, as does `\(literal code\)`.
+
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+
+\[
+\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
+\]
+
+```math
+\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}
+\begin{pmatrix} x \\ y \end{pmatrix}
+= \begin{pmatrix} x + 2y \\ 3x + 4y \end{pmatrix}
+```
+
+| Quantity | Formula |
+| --- | --- |
+| Mean | $\mu = \frac{1}{n}\sum_{i=1}^{n} x_i$ |
+| Variance | $\sigma^2 = \frac{1}{n}\sum_{i=1}^{n}(x_i-\mu)^2$ |
 
 ## Code Blocks
 

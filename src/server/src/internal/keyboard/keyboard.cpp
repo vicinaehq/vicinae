@@ -309,7 +309,7 @@ std::optional<DisplayTokenSpec> keyToken(Qt::Key key) {
   case Qt::Key_Enter:
     return DisplayTokenSpec{.icon = BuiltinIcon::EnterKey, .label = QStringLiteral("Enter")};
   case Qt::Key_Tab:
-    return DisplayTokenSpec{.icon = BuiltinIcon::TabKey, .label = QStringLiteral("Tab")};
+    return DisplayTokenSpec{.text = QStringLiteral("Tab"), .label = QStringLiteral("Tab")};
   case Qt::Key_Space:
     return DisplayTokenSpec{.icon = BuiltinIcon::SpaceKey, .label = QStringLiteral("Space")};
   case Qt::Key_Backspace:

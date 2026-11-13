@@ -129,6 +129,31 @@ struct FsQueryParams {
   category?: string;
 };
 
+struct AiModel {
+  id: string;
+  name: string;
+  capabilities: string[];
+};
+
+struct AiListModelsResponse {
+  models: AiModel[];
+};
+
+struct AiAskRequest {
+  prompt: string;
+  // text handed to the model before the prompt, typically piped stdin
+  context?: string;
+  model?: string;
+  system?: string;
+  // absolute paths of images or text files, read by the server
+  attachments: string[];
+};
+
+struct AiAskResponse {
+  completionId: string;
+  model: string;
+};
+
 service Ipc {
   fn ping() => PingResponse;
   fn deeplink(req: DeeplinkRequest) => DeeplinkResponse;
@@ -143,6 +168,15 @@ service Ipc {
 
   // filesystem
   fn fsQuery(q: string, params: FsQueryParams) => FileResult[];
+
+  // AI: aiAsk answers with the completion id, the text then arrives through aiData until done
+  fn aiListModels() => AiListModelsResponse;
+  fn aiAsk(req: AiAskRequest) => AiAskResponse;
+  event aiData(completionId: string, data: string, done: bool);
+  event aiFailed(completionId: string, error: string);
+
+  fn mcpSend(message: string) => void;
+  event mcpMessage(message: string);
 
   // implemented by the browser extension
   client fn browserFocusTab(tabId: int) => void;

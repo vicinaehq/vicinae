@@ -41,6 +41,8 @@ public:
 
   struct Item {
     std::string title;
+    // Matched as well, so that items can be found by the name of their group.
+    std::string section;
     QString iconSource;
     QVariantMap data;
   };
@@ -61,6 +63,7 @@ private:
   };
 
   void rebuildFlatList();
+  static Item makeItem(const QVariantMap &data, std::string section);
 
   std::string m_filterQuery;
   std::vector<Section> m_sections;

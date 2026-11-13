@@ -25,14 +25,14 @@
       "name": "windows-debug",
       "displayName": "Windows x64 (MSVC, Debug)",
       "inherits": "windows-base",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "LOCAL_AI": "ON" }
     },
     {
       "name": "windows-relwithdebinfo",
       "displayName": "Windows x64 (MSVC, RelWithDebInfo)",
       "inherits": "windows-base",
       "binaryDir": "${sourceDir}/build-relwithdebinfo",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "LTO": "OFF" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "LTO": "OFF", "LOCAL_AI": "ON" }
     },
     {
       "name": "windows-release",
@@ -74,7 +74,8 @@
         "VICINAE_NODE_RUNTIME_DOWNLOAD": "ON",
         "ENABLE_PREVIEW_FEATURES": "ON",
         "ENABLE_SANITIZERS": "ON",
-        "BUILD_TESTS": "ON"
+        "BUILD_TESTS": "ON",
+        "LOCAL_AI": "ON"
       }
     },
     {
@@ -93,7 +94,8 @@
         "LTO": "OFF",
         "VICINAE_DEV_MODE": "ON",
         "VICINAE_NODE_RUNTIME_DOWNLOAD": "ON",
-        "BUILD_TESTS": "ON"
+        "BUILD_TESTS": "ON",
+        "LOCAL_AI": "ON"
       }
     },
     {

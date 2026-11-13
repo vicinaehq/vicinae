@@ -2,6 +2,7 @@
 #include <expected>
 #include <filesystem>
 #include "common/entrypoint.hpp"
+#include "services/ai/tool-policy.hpp"
 #include "vicinae.hpp"
 #include <glaze/core/common.hpp>
 #include <glaze/core/reflect.hpp>
@@ -23,10 +24,16 @@ struct ProviderItemData {
   std::optional<glz::generic::object_t> preferences;
 };
 
+struct ProviderToolData {
+  std::optional<AI::ToolPolicy> policy;
+  std::optional<glz::generic::object_t> preferences;
+};
+
 struct ProviderData {
   std::optional<bool> enabled;
   std::optional<glz::generic::object_t> preferences;
   std::map<std::string, ProviderItemData> entrypoints;
+  std::map<std::string, ProviderToolData> tools;
 };
 
 template <typename T> struct Partial;
@@ -55,6 +62,7 @@ template <> struct Partial<ProviderData> {
   std::optional<bool> enabled;
   std::optional<glz::generic::object_t> preferences;
   std::optional<std::map<std::string, ProviderItemData>> entrypoints;
+  std::optional<std::map<std::string, ProviderToolData>> tools;
 };
 
 struct LayerShellConfig {
@@ -450,6 +458,11 @@ public:
 
   bool mergeWithUser(const Partial<ConfigValue> &patch);
 
+  /**
+   * Replace the user configuration file entirely.
+   */
+  bool replaceUser(const Partial<ConfigValue> &value) { return writeUser(value); }
+
   bool mergeThemeConfig(const config::Partial<config::SystemThemeConfig> &cfg);
 
   const SystemThemeConfig &theme() const;
@@ -498,6 +511,7 @@ SNAKE_CASIFY(config::TelemetryConfig);
 SNAKE_CASIFY(config::WindowCSD);
 SNAKE_CASIFY(config::ClockConfig);
 SNAKE_CASIFY(config::GlobalShortcuts);
+SNAKE_CASIFY(config::Updates);
 
 #undef SNAKE_CASIFY
 

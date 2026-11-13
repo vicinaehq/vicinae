@@ -1,10 +1,11 @@
 #pragma once
-#include "ui/qml-engine-scope.hpp"
-#include "ui/image/image-url.hpp"
 #include <QObject>
 #include <QPointer>
 #include <QTimer>
 #include <optional>
+#include "services/dictation/dictation-session.hpp"
+#include "ui/image/image-url.hpp"
+#include "ui/qml-engine-scope.hpp"
 
 class QQuickWindow;
 
@@ -21,6 +22,7 @@ private:
   Q_PROPERTY(QString text READ text NOTIFY contentChanged)
   Q_PROPERTY(ImageUrl icon READ icon NOTIFY contentChanged)
   Q_PROPERTY(bool hasIcon READ hasIcon NOTIFY contentChanged)
+  Q_PROPERTY(DictationSession *dictation READ dictation NOTIFY dictationChanged)
 
 public:
   explicit HudBridge(QObject *parent);
@@ -29,22 +31,33 @@ public:
   QString text() const { return m_text; }
   ImageUrl icon() const { return m_icon; }
   bool hasIcon() const { return m_icon.isValid(); }
+  DictationSession *dictation() const { return m_dictation; }
 
   Q_INVOKABLE void registerWindow(QQuickWindow *window);
 
 public slots:
   void show(const QString &title, const std::optional<ImageURL> &icon);
+  void showDictation(DictationSession *session);
 
 signals:
   void visibleChanged();
   void contentChanged();
+  void dictationChanged();
 
 private:
+  struct Message {
+    QString text;
+    std::optional<ImageURL> icon;
+  };
+
   void hide();
+  void clearDictation();
 
   bool m_visible = false;
   QString m_text;
   ImageUrl m_icon;
   QTimer m_timer;
   QPointer<QQuickWindow> m_window;
+  QPointer<DictationSession> m_dictation;
+  std::optional<Message> m_pendingMessage;
 };

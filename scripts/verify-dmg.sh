@@ -75,19 +75,34 @@ echo "==> entitlements"
 ENTITLEMENTS="$(codesign -d --entitlements - --xml "$APP" 2>/dev/null)"
 for key in com.apple.security.automation.apple-events \
            com.apple.security.personal-information.calendars \
-           com.apple.security.personal-information.addressbook; do
+           com.apple.security.personal-information.addressbook \
+           com.apple.security.device.audio-input; do
   if ! grep -qF "<key>$key</key>" <<<"$ENTITLEMENTS"; then
     echo "verify-dmg.sh: app is missing entitlement $key" >&2
     exit 1
   fi
 done
 for key in NSAppleEventsUsageDescription NSCalendarsFullAccessUsageDescription \
-           NSRemindersFullAccessUsageDescription NSContactsUsageDescription; do
+           NSRemindersFullAccessUsageDescription NSContactsUsageDescription \
+           NSMicrophoneUsageDescription; do
   if ! /usr/libexec/PlistBuddy -c "Print :$key" "$APP/Contents/Info.plist" >/dev/null 2>&1; then
     echo "verify-dmg.sh: Info.plist is missing $key" >&2
     exit 1
   fi
 done
+
+echo "==> local transcription"
+if [[ ! -x "$APP/Contents/MacOS/vicinae-inference" ]]; then
+  echo "verify-dmg.sh: missing vicinae-inference, was the app built with LOCAL_AI?" >&2
+  exit 1
+fi
+
+echo "==> mediaremote adapter"
+if [[ ! -f "$APP/Contents/Resources/mediaremote-adapter.pl" || \
+      ! -f "$APP/Contents/Frameworks/MediaRemoteAdapter.framework/Versions/A/MediaRemoteAdapter" ]]; then
+  echo "verify-dmg.sh: MediaRemoteAdapter is not bundled, media pausing will not work" >&2
+  exit 1
+fi
 
 echo "==> image format plugins"
 for plugin in qicns qwebp qtiff qmacheif qgif qico qjpeg qsvg; do

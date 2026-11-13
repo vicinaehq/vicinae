@@ -1,0 +1,77 @@
+--- a/lib/jkqtmathtext/parsers/jkqtmathtextlatexparser.cpp
++++ b/lib/jkqtmathtext/parsers/jkqtmathtextlatexparser.cpp
+@@ -1213,10 +1213,28 @@
+             addToErrorList(tr("error @ ch. %1: expected %3 arguments in '{...}' braces after '%2' command").arg(currentTokenID).arg(currentInstructionName).arg(1));
+         }
+     } else if (JKQTMathTextFracNode::supportsInstructionName(currentInstructionName)) {
++        const JKQTMathTextFracNode::FracType fracType=JKQTMathTextFracNode::InstructionName2FracType(currentInstructionName);
++        const bool isUnderBrace=(fracType==JKQTMathTextFracNode::MTFMunderbrace || fracType==JKQTMathTextFracNode::MTFMunderbracket);
++        const bool isOverBrace=(fracType==JKQTMathTextFracNode::MTFMoverbrace || fracType==JKQTMathTextFracNode::MTFMoverbracket);
+         if (getToken()==MTTopenbrace) {
+             JKQTMathTextNode* n1=parseLatexString(true);
+             JKQTMathTextNode* n2=nullptr;
+-            if (getToken()==MTTopenbrace) n2=parseLatexString(true);
++            if (getToken()==MTTopenbrace) {
++                n2=parseLatexString(true);
++            } else if ((isUnderBrace && currentToken==MTTunderscore) || (isOverBrace && currentToken==MTThat)) {
++                // standard LaTeX form: \underbrace{x}_{label} / \overbrace{x}^{label}
++                getToken();
++                if (currentToken==MTTopenbrace) {
++                    n2=parseLatexString(true);
++                } else if (currentToken==MTTtext && currentTokenName.size()>0) {
++                    n2=new JKQTMathTextTextNode(parentMathText, QString(currentTokenName[0]), false, parsingMathEnvironment);
++                    giveBackToTokenizer(currentTokenName.size()-1);
++                }
++            } else if (isUnderBrace || isOverBrace) {
++                // standard LaTeX form without a label: \underbrace{x}
++                n2=new JKQTMathTextTextNode(parentMathText, "", false, parsingMathEnvironment);
++                if (getNew) *getNew=false;
++            }
+             if (n1 && n2) child=new JKQTMathTextFracNode(parentMathText, n1, n2, JKQTMathTextFracNode::InstructionName2FracType(currentInstructionName));
+             else addToErrorList(tr("error @ ch. %1: expected two arguments in '{' braces after '%2' command").arg(currentTokenID).arg(currentInstructionName));
+ 
+--- a/lib/jkqtmathtext/nodes/jkqtmathtextfracnode.cpp
++++ b/lib/jkqtmathtext/nodes/jkqtmathtextfracnode.cpp
+@@ -344,7 +344,7 @@
+         const double ybrace=y+descent1+braceseparation+braceheight/2.0;
+         const double ybot=y+descent1+2.0*braceseparation+braceheight+ascent2;
+         {
+-            const QPainterPath path=JKQTMathTextMakeHBracePath(x+xwidth/2.0+(size1.width)/2.0, ybrace, maxWidth, braceheight, p.width());
++            const QPainterPath path=JKQTMathTextMakeHBracePath(x+xwidth/2.0+maxWidth/2.0, ybrace, size1.width, braceheight, p.width());
+             QPen plocal=p;
+             plocal.setWidthF(0.0001);
+             painter.fillPath(path, QBrush(ev1.color));
+@@ -359,8 +359,8 @@
+             QPainterPath path;
+             const double y1=ybrace-braceheight/2.0;
+             const double y2=ybrace+braceheight/2.0;
+-            const double x1=x+xwidth/2.0+p.width()/2.0;
+-            const double x2=x+xwidth/2.0+maxWidth-p.width()/2.0;
++            const double x1=x+xwidth/2.0+(maxWidth-size1.width)/2.0+p.width()/2.0;
++            const double x2=x+xwidth/2.0+(maxWidth+size1.width)/2.0-p.width()/2.0;
+             path.moveTo(x1, y1);
+             path.lineTo(x1, y2);
+             path.lineTo(x2, y2);
+@@ -379,9 +379,9 @@
+         const double ytop=y-ascent1-2.0*braceseparation-braceheight-descent2;
+         {
+             painter.save(); auto __finalpaintinner=JKQTPFinally([&painter]() {painter.restore();});
+-            painter.translate(x+xwidth/2.0+(size1.width)/2.0, ybrace);
++            painter.translate(x+xwidth/2.0+maxWidth/2.0, ybrace);
+             painter.rotate(180);
+-            const QPainterPath path=JKQTMathTextMakeHBracePath(0,0, maxWidth, braceheight, p.widthF());
++            const QPainterPath path=JKQTMathTextMakeHBracePath(0,0, size1.width, braceheight, p.widthF());
+             QPen plocal=p;
+             plocal.setWidthF(0.0001);
+             painter.fillPath(path, QBrush(ev1.color));
+@@ -397,8 +397,8 @@
+             QPainterPath path;
+             const double y1=ybrace+braceheight/2.0;
+             const double y2=ybrace-braceheight/2.0;
+-            const double x1=x+xwidth/2.0+p.width()/2.0;
+-            const double x2=x+xwidth/2.0+maxWidth-p.width()/2.0;
++            const double x1=x+xwidth/2.0+(maxWidth-size1.width)/2.0+p.width()/2.0;
++            const double x2=x+xwidth/2.0+(maxWidth+size1.width)/2.0-p.width()/2.0;
+             path.moveTo(x1, y1);
+             path.lineTo(x1, y2);
+             path.lineTo(x2, y2);

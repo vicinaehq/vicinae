@@ -82,11 +82,13 @@ Item {
         id: detailPanel
 
         DetailPanel {
+            id: panel
             metadata: root.host.detailMetadata
+            hasContent: root._hasCustomDetail || (root.host.detailContent !== undefined && root.host.detailContent !== "")
 
             Loader {
                 anchors.fill: parent
-                sourceComponent: root._hasCustomDetail ? null : defaultTextContent
+                sourceComponent: root._hasCustomDetail ? null : (panel.hasContent ? (root.host.detailMarkdown ? defaultMarkdownContent : defaultTextContent) : null)
                 source: root._hasCustomDetail ? root.host.detailContentUrl : ""
             }
         }
@@ -96,6 +98,14 @@ Item {
         id: defaultTextContent
         TextViewer {
             text: root.host.detailContent
+        }
+    }
+
+    Component {
+        id: defaultMarkdownContent
+        MarkdownText {
+            markdown: root.host.detailContent
+            contentPadding: 16
         }
     }
 }

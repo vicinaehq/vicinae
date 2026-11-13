@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      local_ai:
+        description: "Build local transcription (slower)"
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -49,6 +54,8 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja              \
           -DCMAKE_BUILD_TYPE=Release                \
+          -DLOCAL_AI=${{ inputs.local_ai && 'ON' || 'OFF' }}                             \
+          -DUSE_SYSTEM_INFERENCE_ENGINES=ON         \
           -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"
 
       - name: Build

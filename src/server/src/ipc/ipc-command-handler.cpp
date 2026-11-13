@@ -24,9 +24,11 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "theme/theme.hpp"
+#include "builtins/dictation/dictation.hpp"
 #include "builtins/root/provider-search-view-host.hpp"
 #include "builtins/raycast/raycast-store-detail-host.hpp"
 #include "builtins/vicinae/vicinae-store-detail-host.hpp"
+#include "services/dictation/dictation-service.hpp"
 #include "services/toast/toast.hpp"
 #include "vicinae.hpp"
 
@@ -178,13 +180,42 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     LaunchProps props{.arguments = std::move(arguments),
-                      .fallbackText = query.queryItemValue("fallbackText", QUrl::FullyDecoded)};
+                      .fallbackText = query.queryItemValue("fallbackText", QUrl::FullyDecoded),
+                      .source = LaunchSource::External};
 
     if (!m_ctx.navigation->activateEntrypoint(id, {.props = props})) {
       return std::unexpected("No primary action for this root item");
     }
 
     return {};
+  }
+
+  if (command == "dictation") {
+    const auto verb = path.sliced(1);
+    auto *dictation = m_ctx.services->dictation();
+    const auto start = [this, dictation]() -> std::expected<void, std::string> {
+      if (dictation->hasActiveSession()) return {};
+      const EntrypointId id{std::string(Dictation::REPOSITORY_ID), "dictate"};
+      if (!m_ctx.navigation->activateEntrypoint(id, {.props = {.source = LaunchSource::External}})) {
+        return std::unexpected("Could not start dictation");
+      }
+      return {};
+    };
+
+    if (verb == "start") return start();
+    if (verb == "toggle") {
+      if (dictation->acceptSession()) return {};
+      return start();
+    }
+    if (verb == "stop") {
+      if (!dictation->acceptSession()) return std::unexpected("Not recording");
+      return {};
+    }
+    if (verb == "cancel") {
+      if (!dictation->cancelSession()) return std::unexpected("No active dictation");
+      return {};
+    }
+    return std::unexpected("Usage: vicinae://dictation/<start|stop|cancel|toggle>");
   }
 
   if (command == "pop_current") {
@@ -230,21 +261,9 @@ std::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
       }
 
       QString const &id = components.at(1);
-      auto &service = ThemeService::instance();
-      auto cfg = m_ctx.services->config();
 
-      service.db().scan();
-
-      auto theme = service.findTheme(id);
-
-      if (!theme) {
+      if (!ThemeService::instance().selectTheme(id, *m_ctx.services->config())) {
         return std::unexpected(std::string("theme with id ") + id.toStdString() + " does not exist");
-      }
-
-      if (theme->id() == cfg->value().systemTheme().name) {
-        service.reloadCurrentTheme();
-      } else {
-        cfg->mergeThemeConfig({.name = theme->id().toStdString()});
       }
 
       if (auto text = query.queryItemValue("openWindow", QUrl::FullyDecoded); text == "true" || text == "1") {

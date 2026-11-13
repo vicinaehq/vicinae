@@ -15,7 +15,7 @@
 namespace syntax {
 
 inline KSyntaxHighlighting::Repository &repository() {
-  static KSyntaxHighlighting::Repository repo;
+  static thread_local KSyntaxHighlighting::Repository repo;
   return repo;
 }
 

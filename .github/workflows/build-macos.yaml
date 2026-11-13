@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      local_ai:
+        description: "Build local transcription (slower)"
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -59,6 +64,7 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_TESTS=ON \
+            -DLOCAL_AI=${{ inputs.local_ai && 'ON' || 'OFF' }} \
             -DQT_DIR=$HOME/Qt/$QT_VERSION/macos
 
       - name: Build

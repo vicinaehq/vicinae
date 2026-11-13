@@ -5,17 +5,23 @@
 #include "extension/extension.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "service-registry.hpp"
+#include "services/ai/ai-preferences.hpp"
+#include "services/ai/tool-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <algorithm>
+#include <array>
 #include <unordered_set>
 #include <utility>
 
-ExtensionSettingsModel::ExtensionSettingsModel(QObject *parent)
+ExtensionSettingsModel::ExtensionSettingsModel(AI::ToolRegistry &tools, QObject *parent)
     : QAbstractListModel(parent), m_prefModel(new PreferenceFormModel(this)),
-      m_cmdPrefModel(new PreferenceFormModel(this)), m_commandModel(new ProviderCommandModel(this)) {
+      m_cmdPrefModel(new PreferenceFormModel(this)), m_commandModel(new ProviderCommandModel(this)),
+      m_tools(tools) {
 
   auto *manager = ServiceRegistry::instance()->rootItemManager();
   connect(manager, &RootItemManager::itemsChanged, this, [this]() { rebuild(m_filter); });
+  connect(&m_tools, &AI::ToolRegistry::changed, this, &ExtensionSettingsModel::toolsChanged);
+  connect(this, &ExtensionSettingsModel::selectedChanged, this, &ExtensionSettingsModel::toolsChanged);
   rebuild({});
 }
 
@@ -477,4 +483,68 @@ void ExtensionSettingsModel::loadCommandPreferences(const QString &entrypointId)
       return;
     }
   }
+}
+
+QVariantList ExtensionSettingsModel::tools() const {
+  const auto &registry = m_tools;
+  const auto providerId = selectedProviderId().toStdString();
+  QVariantList rows;
+
+  for (const auto &entry : registry.entries()) {
+    if (entry.providerId != providerId) continue;
+    const auto &tool = entry.contribution;
+    rows.emplace_back(
+        QVariantMap{{QStringLiteral("id"), QString::fromStdString(tool.id)},
+                    {QStringLiteral("key"), QString::fromStdString(entry.name)},
+                    {QStringLiteral("name"), tool.title},
+                    {QStringLiteral("description"), tool.description},
+                    {QStringLiteral("iconSource"), qml::imageSourceFor(tool.icon)},
+                    {QStringLiteral("policy"), enumName(registry.toolPolicy(entry.providerId, tool.id))}});
+  }
+
+  std::ranges::sort(rows, [](const QVariant &a, const QVariant &b) {
+    return QString::localeAwareCompare(a.toMap().value(QStringLiteral("name")).toString(),
+                                       b.toMap().value(QStringLiteral("name")).toString()) < 0;
+  });
+  return rows;
+}
+
+bool ExtensionSettingsModel::toolsAvailable() const {
+  const auto &registry = m_tools;
+  return registry.toolsEnabled() && registry.providerEnabled(AI::EXTENSION_ID);
+}
+
+QVariantList ExtensionSettingsModel::toolPolicyItems() const {
+  const auto item = [](AI::ToolPolicy policy, const QString &name) {
+    return QVariantMap{{QStringLiteral("id"), enumName(policy)}, {QStringLiteral("displayName"), name}};
+  };
+  return {
+      QVariantMap{{QStringLiteral("items"), QVariantList{item(AI::ToolPolicy::Ask, tr("Ask every time")),
+                                                         item(AI::ToolPolicy::Allow, tr("Always allow")),
+                                                         item(AI::ToolPolicy::Disabled, tr("Disabled"))}}}};
+}
+
+void ExtensionSettingsModel::setToolPolicy(const QString &toolId, const QString &policy) {
+  constexpr auto policies =
+      std::to_array({AI::ToolPolicy::Ask, AI::ToolPolicy::Allow, AI::ToolPolicy::Disabled});
+  const auto value =
+      std::ranges::find(policies, policy, [](AI::ToolPolicy value) { return enumName(value); });
+  if (value == policies.end()) return;
+  m_tools.setToolPolicy(selectedProviderId().toStdString(), toolId.toStdString(), *value);
+}
+
+QVariantList ExtensionSettingsModel::settingsPages() const {
+  auto *provider =
+      ServiceRegistry::instance()->rootItemManager()->provider(selectedProviderId().toStdString());
+  if (!provider) return {};
+  const auto pages = provider->settingsPages();
+  QVariantList rows;
+  rows.reserve(pages.size());
+  for (const auto &page : pages) {
+    rows.emplace_back(QVariantMap{{QStringLiteral("id"), QString::fromStdString(page.id)},
+                                  {QStringLiteral("title"), page.title},
+                                  {QStringLiteral("description"), page.description},
+                                  {QStringLiteral("component"), qml::componentUrl(page.component)}});
+  }
+  return rows;
 }

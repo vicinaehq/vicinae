@@ -119,7 +119,7 @@ export default function WindowSwitcher() {
 						accessories={
 							win.workspaceId ? [{ text: `WS ${win.workspaceId}` }] : []
 						}
-						icon={win.application?.icon ?? Icon.Window}
+						icon={win.application?.icon ?? Icon.AppWindow}
 						actions={
 							<ActionPanel>
 								<Action title="Focus window" onAction={() => win.focus()} />

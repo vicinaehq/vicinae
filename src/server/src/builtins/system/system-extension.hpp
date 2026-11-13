@@ -7,6 +7,8 @@
 #include "command/typed-command.hpp"
 #include "builtins/system/system-run-model.hpp"
 #include "builtins/system/system-run-view-host.hpp"
+#include "builtins/system/bash-tool.hpp"
+#include "builtins/system/open-tool.hpp"
 #include "theme/colors.hpp"
 #include "utils.hpp"
 #include "services/app-service/app-service.hpp"
@@ -139,6 +141,22 @@ public:
   SystemExtension() {
     registerCommand<SystemRunCommand>();
     registerCommand<SystemBrowseApps>();
+    if (const auto executable = BashTool::executablePath()) {
+      registerTool({.id = "bash",
+                    .title = tr("Bash"),
+                    .description = tr("Run shell commands on your computer."),
+                    .icon = ImageURL::builtin(BuiltinIcon::Terminal),
+                    .deferred = false,
+                    .mcp = false,
+                    .create = [path = *executable] { return std::make_unique<BashTool>(path); }});
+    }
+    registerTool(
+        {.id = "open",
+         .title = tr("Open"),
+         .description = tr("Open files, folders and links with their default application."),
+         .icon = ImageURL::builtin(BuiltinIcon::ArrowNe),
+         .annotations = {.destructive = false, .openWorld = true},
+         .create = [] { return std::make_unique<OpenTool>(*ServiceRegistry::instance()->appDb()); }});
 
 #ifdef Q_OS_LINUX
     // set default terminal using xdg-terminal-exec

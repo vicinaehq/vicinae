@@ -1,0 +1,134 @@
+#pragma once
+
+#include <QElapsedTimer>
+#include <QFutureWatcher>
+#include <chrono>
+#include <functional>
+#include "ai-provider.hpp"
+
+namespace AI {
+
+class Agent : public QObject {
+  Q_OBJECT
+
+signals:
+  void textAdded(quint64 messageId, const std::string &text);
+  void toolAdded(quint64 id);
+  void toolChanged(quint64 id);
+  void activityChanged();
+  void approvalChanged();
+  void stateChanged();
+  void finished();
+
+public:
+  using Id = quint64;
+  static constexpr std::string_view LOAD_TOOLS = "load_tools";
+  using CompletionFactory = std::function<std::shared_ptr<AbstractChatCompletionStream>(
+      const std::optional<ModelRef> &, const ChatCompletionPayload &)>;
+  // Evaluated before every request, so that changes apply to ongoing conversations.
+  using SystemPrompt = std::function<std::string()>;
+
+  enum class State { Idle, Running, Completed, Failed, Cancelled };
+  enum class ToolState { Queued, AwaitingApproval, Running, Succeeded, Failed, Declined, Cancelled };
+
+  struct Message {
+    Id id;
+    ChatMessage content;
+  };
+  struct ToolCall {
+    Id id;
+    ToolCallPart call;
+    std::optional<std::string> summary;
+    ToolState state = ToolState::Queued;
+    std::optional<ToolOutput> output;
+    std::optional<std::chrono::milliseconds> duration;
+  };
+  struct Options {
+    std::optional<ModelRef> model;
+    std::vector<std::string> tools;
+    ThinkingMode thinking = ThinkingMode::Medium;
+    int maxSteps = 16;
+    std::optional<int> maxOutputTokens;
+    bool oneShot = false;
+  };
+
+  explicit Agent(CompletionFactory factory, SystemPrompt systemPrompt = {}, QObject *parent = nullptr);
+  ~Agent() override;
+
+  void restoreHistory(std::vector<Message> messages, std::vector<ToolCall> calls);
+
+  bool addTool(std::unique_ptr<AbstractTool> tool);
+  bool send(ChatMessage message, Options options);
+  // `always` is passed on to models that run their own tools, the others' policies belong to the caller.
+  bool resolveApproval(Id id, bool approved, bool always = false);
+  void cancel();
+
+  State state() const { return m_state; }
+  bool running() const { return m_state == State::Running; }
+  ResponseActivity activity() const { return m_activity; }
+  const std::optional<Id> &pendingApproval() const { return m_pendingApproval; }
+  const std::optional<std::string> &error() const { return m_error; }
+  const std::optional<Model> &model() const { return m_model; }
+  const std::vector<Message> &messages() const { return m_messages; }
+  const std::vector<ToolCall> &toolCalls() const { return m_calls; }
+  const ToolCall *toolCall(Id id) const;
+
+  /**
+   * Tools enabled for the current request, whether they are loaded or not.
+   */
+  std::vector<AbstractTool *> availableTools() const;
+  /**
+   * Names of the deferred tools the model loaded during this conversation.
+   */
+  std::vector<std::string> loadedTools() const;
+
+private:
+  Id appendMessage(ChatMessage message);
+  Message &assistantMessage();
+  void complete();
+  void receiveText(const std::string &text);
+  void receiveToolCall(const ToolCallPart &call);
+  void receiveToolActivity(const ToolActivity &activity);
+  void requestApproval(const std::string &callId);
+  void endExternalCalls(ToolState state);
+  void executeNextTool();
+  void runTool(Id id, AbstractTool &tool);
+  AbstractTool *findTool(std::string_view name) const;
+  void recordToolResult(Id id, ToolState state, ToolOutput output);
+  void finish(State state, std::optional<std::string> error = {});
+  void stopWork();
+  void schedule(std::function<void()> action);
+  void setActivity(ResponseActivity activity);
+
+  CompletionFactory m_factory;
+  SystemPrompt m_systemPrompt;
+  std::vector<Message> m_messages;
+  std::vector<ToolCall> m_calls;
+  std::vector<std::unique_ptr<AbstractTool>> m_tools;
+  std::unique_ptr<AbstractTool> m_loadTools;
+  std::shared_ptr<AbstractChatCompletionStream> m_completion;
+  QFutureWatcher<AbstractTool::RawToolResult> *m_toolWatcher = nullptr;
+  std::function<void()> m_cancelTool;
+  QElapsedTimer m_toolTimer;
+  std::vector<Id> m_pendingCalls;
+  struct ExternalCall {
+    Id id;
+    std::chrono::steady_clock::time_point start;
+  };
+  // Calls the model runs itself, until they finish.
+  std::vector<ExternalCall> m_externalCalls;
+  std::size_t m_nextCall = 0;
+  std::optional<Id> m_pendingApproval;
+  std::optional<Id> m_assistantMessage;
+  Options m_options;
+  State m_state = State::Idle;
+  ResponseActivity m_activity = ResponseActivity::Waiting;
+  std::optional<std::string> m_error;
+  std::optional<Model> m_model;
+  Id m_nextId = 1;
+  quint64 m_generation = 0;
+  int m_steps = 0;
+  bool m_finishing = false;
+};
+
+} // namespace AI

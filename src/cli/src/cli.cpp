@@ -1,6 +1,8 @@
 #include <filesystem>
 #include <glaze/core/opts.hpp>
 #include <glaze/core/reflect.hpp>
+#include <glaze/json/write.hpp>
+#include <print>
 #include <ranges>
 #include <system_error>
 #include <unordered_map>
@@ -16,6 +18,8 @@
 #include "generated/version.h"
 #include "theme.hpp"
 #include "ipc-client.hpp"
+#include "mcp.hpp"
+#include "tty.hpp"
 #ifndef _WIN32
 #include "server.hpp"
 #endif
@@ -271,6 +275,223 @@ public:
   }
 };
 
+class DictationVerbCommand : public AbstractCommandLineCommand {
+public:
+  DictationVerbCommand(std::string verb, std::string description)
+      : m_verb(std::move(verb)), m_description(std::move(description)) {}
+
+  std::string id() const override { return m_verb; }
+  std::string description() const override { return m_description; }
+
+  bool run(CLI::App *) override {
+    if (auto res = cli::IpcClient::sendDeeplink("vicinae://dictation/" + m_verb); !res) {
+      std::println(std::cerr, "Failed to {} dictation: {}", m_verb, res.error());
+      return false;
+    }
+    return true;
+  }
+
+private:
+  std::string m_verb;
+  std::string m_description;
+};
+
+class DictationStartCommand : public DictationVerbCommand {
+public:
+  DictationStartCommand()
+      : DictationVerbCommand("start", "Start recording, no-op if a dictation is active") {}
+};
+
+class DictationStopCommand : public DictationVerbCommand {
+public:
+  DictationStopCommand() : DictationVerbCommand("stop", "Stop recording and transcribe") {}
+};
+
+class DictationCancelCommand : public DictationVerbCommand {
+public:
+  DictationCancelCommand() : DictationVerbCommand("cancel", "Discard the current dictation") {}
+};
+
+class DictationToggleCommand : public DictationVerbCommand {
+public:
+  DictationToggleCommand()
+      : DictationVerbCommand("toggle", "Start recording, or stop and transcribe if recording") {}
+};
+
+class DictationCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "dictation"; }
+  std::string description() const override { return "Control dictation"; }
+
+public:
+  DictationCommand() {
+    registerCommand<DictationStartCommand>();
+    registerCommand<DictationStopCommand>();
+    registerCommand<DictationCancelCommand>();
+    registerCommand<DictationToggleCommand>();
+  }
+};
+
+class AiModelsCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "models"; }
+  std::string description() const override { return "List the models usable for ask"; }
+  void setup(CLI::App *app) override { app->add_flag("--json", m_json, "Print as JSON"); }
+
+  bool run(CLI::App *) override {
+    auto res =
+        cli::IpcClient::connect().and_then([](cli::IpcClient client) { return client.aiListModels(); });
+
+    if (!res) {
+      std::println(std::cerr, "Failed to list models: {}", res.error());
+      return false;
+    }
+
+    if (m_json) {
+      if (auto json = glz::write_json(res->models)) {
+        std::println("{}", *json);
+        return true;
+      }
+      std::println(std::cerr, "Failed to serialize models");
+      return false;
+    }
+
+    std::size_t idWidth = 0;
+    std::size_t nameWidth = 0;
+    for (const auto &model : res->models) {
+      idWidth = std::max(idWidth, model.id.size());
+      nameWidth = std::max(nameWidth, model.name.size());
+    }
+
+    for (const auto &model : res->models) {
+      std::string caps;
+      for (const auto &[idx, cap] : model.capabilities | vicinae::enumerate) {
+        if (idx > 0) caps += ",";
+        caps += cap;
+      }
+      std::println("{:<{}}  {:<{}}  {}", model.id, idWidth, model.name, nameWidth, caps);
+    }
+    return true;
+  }
+
+  bool m_json = false;
+};
+
+class AiAskCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "ask"; }
+  std::string description() const override {
+    return "Ask a model a one-off question, stdin is passed as context";
+  }
+
+  void setup(CLI::App *app) override {
+    app->add_option("prompt", m_prompt, "What to ask")->required();
+    app->add_option("-m,--model", m_model, "Model id, see `vicinae ai models` (default: the configured one)");
+    app->add_option("-s,--system", m_system, "System prompt");
+    app->add_option("-a,--attach", m_attachments, "Attach an image or text file, repeatable");
+    app->add_flag("--stream", m_stream, "Print the answer as it arrives (default when stdout is a terminal)");
+    app->add_flag("--no-stream", m_noStream, "Print the answer once complete (default otherwise)");
+  }
+
+  bool run(CLI::App *) override {
+    ipc::AiAskRequest req{.prompt = m_prompt, .model = m_model, .system = m_system};
+
+    if (!cli::isTerminal(stdin)) {
+      cli::setBinaryMode(stdin);
+      auto input = vicinae::slurp(std::cin);
+      if (input.size() > MAX_CONTEXT_BYTES) {
+        std::println(std::cerr, "Input is too large ({} KB), the limit is {} KB", input.size() / 1024,
+                     MAX_CONTEXT_BYTES / 1024);
+        return false;
+      }
+      if (!input.empty()) req.context = std::move(input);
+    }
+
+    req.attachments.reserve(m_attachments.size());
+    for (const auto &path : m_attachments) {
+      std::error_code ec;
+      const auto absolute = std::filesystem::absolute(path, ec);
+      if (ec || !std::filesystem::is_regular_file(absolute, ec)) {
+        std::println(std::cerr, "{}: no such file", path);
+        return false;
+      }
+      req.attachments.emplace_back(absolute.string());
+    }
+
+    const bool stream = m_stream || (!m_noStream && cli::isTerminal(stdout));
+
+    auto client = cli::IpcClient::connect();
+    if (!client) {
+      std::println(std::cerr, "Failed to connect: {}", client.error());
+      return false;
+    }
+
+    auto ask = client->aiAsk(req);
+    if (!ask) {
+      std::println(std::cerr, "{}", ask.error());
+      return false;
+    }
+
+    std::string answer;
+    const auto res = client->streamCompletion(ask->completionId, [&](std::string_view chunk) {
+      if (!stream) {
+        answer.append(chunk);
+        return;
+      }
+      std::cout << chunk << std::flush;
+      answer = chunk;
+    });
+
+    if (!res) {
+      // A streamed answer may already be on screen, keep the error on its own line
+      if (stream && !answer.empty() && !answer.ends_with('\n')) std::println();
+      std::println(std::cerr, "{}", res.error());
+      return false;
+    }
+
+    if (!stream) {
+      std::cout << answer;
+      if (!answer.ends_with('\n')) std::println();
+    } else if (cli::isTerminal(stdout) && !answer.ends_with('\n')) {
+      std::println();
+    }
+    return true;
+  }
+
+  static constexpr std::size_t MAX_CONTEXT_BYTES = 1024 * 1024;
+
+  std::string m_prompt;
+  std::optional<std::string> m_model;
+  std::optional<std::string> m_system;
+  std::vector<std::string> m_attachments;
+  bool m_stream = false;
+  bool m_noStream = false;
+};
+
+class AiCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "ai"; }
+  std::string description() const override { return "Use the AI models configured in Vicinae"; }
+
+public:
+  AiCommand() {
+    registerCommand<AiAskCommand>();
+    registerCommand<AiModelsCommand>();
+  }
+};
+
+class McpCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "mcp"; }
+  std::string description() const override {
+    return "Run an MCP server over stdio, exposing the tools of the running Vicinae instance";
+  }
+
+  bool run(CLI::App *) override {
+    const auto code = cli::runMcpServer();
+    if (!code) {
+      std::println(std::cerr, "{}", code.error());
+      return false;
+    }
+    return *code == 0;
+  }
+};
+
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
   std::string description() const override { return "Ping the vicinae server"; }
@@ -474,8 +695,7 @@ int CommandLineApp::run(int ac, char **av) {
     cmd->prepare(sub, &success);
     cmd->setup(sub);
     sub->callback([cmd = cmd.get(), sub, &success]() {
-      const bool r = cmd->run(sub);
-      success = r;
+      if (!cmd->run(sub)) success = false;
     });
   }
 
@@ -526,6 +746,9 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<ToggleCommand>();
   app.registerCommand<OpenCommand>();
   app.registerCommand<CloseCommand>();
+  app.registerCommand<DictationCommand>();
+  app.registerCommand<AiCommand>();
+  app.registerCommand<McpCommand>();
   app.registerCommand<CommandCommand>();
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();

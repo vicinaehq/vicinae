@@ -101,6 +101,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DLTO=ON \
             -DVICINAE_PROVENANCE=dmg \
+            -DLOCAL_AI=ON \
             -DQT_DIR=$HOME/Qt/$QT_VERSION/macos \
             "${VERSION_FLAGS[@]}"
 

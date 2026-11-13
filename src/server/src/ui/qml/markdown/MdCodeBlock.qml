@@ -10,7 +10,8 @@ Rectangle {
     property var blockData: ({})
     property var mdModel: null
     property int blockIndex: -1
-    property var selectionController: null
+    property real fontSize: Theme.smallerFontSize
+    property real lineHeight: 1.0
 
     readonly property string language: blockData.language ?? ""
     readonly property string code: blockData.code ?? ""
@@ -103,24 +104,17 @@ Rectangle {
                 policy: codeFlickable.contentWidth > codeFlickable.width ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }
 
-            TextEdit {
+            DocumentText {
                 id: codeEdit
                 width: Math.max(codeFlickable.width, contentWidth)
-                readOnly: true
-                selectionColor: Theme.textSelectionBg
-                selectedTextColor: Theme.textSelectionFg
                 textFormat: TextEdit.RichText
                 wrapMode: TextEdit.NoWrap
                 color: Theme.foreground
                 font.family: Theme.monoFontFamily
-                font.pointSize: Theme.regularFontSize * 0.95
+                fontSize: root.fontSize
+                lineHeight: root.lineHeight
                 text: root.highlightedHtml
             }
         }
     }
-
-    onSelectionControllerChanged: if (selectionController)
-        selectionController.registerSelectable(codeEdit, blockIndex * 10000, true)
-    Component.onDestruction: if (selectionController)
-        selectionController.unregisterSelectable(codeEdit)
 }

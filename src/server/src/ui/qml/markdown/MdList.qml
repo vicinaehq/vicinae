@@ -7,10 +7,9 @@ ColumnLayout {
     id: root
 
     property var blockData: ({})
-    property var mdModel: null
-    property int blockIndex: -1
-    property var selectionController: null
     property string fontFamily: ""
+    property real fontSize: Theme.regularFontSize
+    property real lineHeight: 1.0
     property bool ordered: false
     property int startNumber: blockData.startNumber ?? 1
     property int depth: 0
@@ -39,33 +38,27 @@ ColumnLayout {
                     Layout.topMargin: 2
                     text: root.ordered ? (root.startNumber + itemDelegate.index) + "." : "\u2022"
                     color: Theme.textMuted
-                    font.pointSize: Theme.regularFontSize
+                    font.pointSize: root.fontSize
                     Binding on font.family {
                         value: root.fontFamily
                         when: root.fontFamily !== ""
                     }
                 }
 
-                TextEdit {
+                DocumentText {
                     id: itemText
                     Layout.fillWidth: true
-                    readOnly: true
-                    selectionColor: Theme.textSelectionBg
-                    selectedTextColor: Theme.textSelectionFg
                     textFormat: TextEdit.RichText
                     wrapMode: TextEdit.Wrap
                     color: Theme.foreground
-                    font.pointSize: Theme.regularFontSize
+                    fontSize: root.fontSize
+                    lineHeight: root.lineHeight
                     Binding on font.family {
                         value: root.fontFamily
                         when: root.fontFamily !== ""
                     }
                     text: itemDelegate.modelData.html ?? ""
-
-                    Component.onCompleted: if (root.selectionController)
-                        root.selectionController.registerSelectable(itemText, root.blockIndex * 10000 + itemDelegate.index, true)
-                    Component.onDestruction: if (root.selectionController)
-                        root.selectionController.unregisterSelectable(itemText)
+                    selectionPart: itemDelegate.modelData.selectionPart ?? itemDelegate.index
                 }
             }
 
@@ -74,21 +67,22 @@ ColumnLayout {
                 model: itemDelegate.modelData.children ?? []
 
                 Loader {
+                    id: nestedList
+                    required property var modelData
                     Layout.fillWidth: true
                     source: "MdList.qml"
                     onLoaded: {
                         // qmllint disable missing-property
-                        item.selectionController = root.selectionController;
-                        item.mdModel = root.mdModel;
-                        item.blockIndex = root.blockIndex;
                         item.fontFamily = Qt.binding(function () {
                             return root.fontFamily;
                         });
-                        item.ordered = itemDelegate.modelData.ordered ?? false;
-                        item.startNumber = itemDelegate.modelData.startNumber ?? 1;
+                        item.fontSize = Qt.binding(() => root.fontSize);
+                        item.lineHeight = Qt.binding(() => root.lineHeight);
+                        item.ordered = nestedList.modelData.ordered ?? false;
+                        item.startNumber = nestedList.modelData.startNumber ?? 1;
                         item.depth = root.depth + 1;
                         item.blockData = {
-                            items: itemDelegate.modelData.items ?? []
+                            items: nestedList.modelData.items ?? []
                         };
                         // qmllint enable missing-property
                     }
