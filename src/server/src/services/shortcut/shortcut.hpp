@@ -6,6 +6,9 @@
 #include <qstring.h>
 #include <qtmetamacros.h>
 
+#include <span>
+#include "utils/placeholder.hpp"
+
 class Shortcut {
   /**
    * A list of reserved placeholder IDs. Each ID is meant to implement its own expansion rules.
@@ -14,20 +17,12 @@ class Shortcut {
    * longer `https://example.com/search?q={argument name="query"}`.
    */
   const std::vector<QString> m_reservedPlaceholderIds = {"clipboard", "selection", "selected", "uuid",
-                                                         "date"};
+                                                         "date",      "time",      "datetime", "day"};
 
 public:
-  struct ParsedPlaceholder {
-    QString id;
-    std::map<QString, QString> args;
-  };
-
-  using UrlPart = std::variant<QString, ParsedPlaceholder>;
-
-  struct Argument {
-    QString name;
-    QString defaultValue;
-  };
+  using ParsedPlaceholder = PlaceholderString::ParsedPlaceholder;
+  using UrlPart = PlaceholderString::UrlPart;
+  using Argument = PlaceholderString::Argument;
 
 private:
   std::vector<ParsedPlaceholder> m_placeholders;
@@ -42,8 +37,6 @@ private:
   QDateTime m_updatedAt;
   std::optional<QDateTime> m_lastOpenedAt;
   int m_openCount = 0;
-
-  void insertPlaceholder(const ParsedPlaceholder &placeholder);
 
 public:
   const std::vector<ParsedPlaceholder> &placeholders() const;
@@ -72,6 +65,7 @@ public:
   void setIcon(const QString &icon);
   void setId(const QString &id);
   void parseLink(const QString &link);
+  QString expand(std::span<const QString> args) const;
   void setCreatedAt(const QDateTime &date);
   void setUpdatedAt(const QDateTime &date);
   void setLastOpenedAt(const std::optional<QDateTime> &date);

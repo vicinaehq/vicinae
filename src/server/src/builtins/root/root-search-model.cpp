@@ -7,6 +7,7 @@
 #include "services/files-service/file-service.hpp"
 #include "services/news/news-service.hpp"
 #include "theme/theme.hpp"
+#include "utils/search-utils.hpp"
 #include <filesystem>
 #include <utility>
 
@@ -182,7 +183,9 @@ void RootSearchModel::refreshCalculator() {
     return;
   }
 
-  if (m_resultsSource->count() > 0 || m_query.size() < CALCULATOR_MIN_CHARS) return;
+  const bool isMath = search_utils::hasMathIntent(m_query);
+
+  if (!isMath && (m_resultsSource->count() > 0 || m_query.size() < CALCULATOR_MIN_CHARS)) return;
 
   if (auto res = m_calculator->backend()->compute(QString::fromStdString(m_query), {})) {
     m_calcSource->setResult(res.value());

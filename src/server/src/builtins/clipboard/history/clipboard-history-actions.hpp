@@ -11,6 +11,9 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/alert/alert.hpp"
 
+#include "utils/text-transforms.hpp"
+#include <functional>
+
 class PasteClipboardSelection : public PasteToFocusedWindowAction {
   QString m_id;
   void execute(ApplicationContext *ctx) override {
@@ -21,6 +24,96 @@ class PasteClipboardSelection : public PasteToFocusedWindowAction {
 
 public:
   PasteClipboardSelection(const QString &id) : PasteToFocusedWindowAction(), m_id(id) {}
+};
+
+class PasteClipboardSelectionAsPlainText : public PasteToFocusedWindowAction {
+  Q_DECLARE_TR_FUNCTIONS(PasteClipboardSelectionAsPlainText)
+  QString m_id;
+
+  void execute(ApplicationContext *ctx) override {
+    setConcealed();
+    auto clipman = ctx->services->clipman();
+    if (auto data = clipman->getMainOfferData(m_id); data.has_value()) {
+      loadClipboardData(Clipboard::Text{.text = QString::fromUtf8(*data)});
+    } else {
+      loadClipboardData(Clipboard::SelectionRecordHandle(m_id));
+    }
+    PasteToFocusedWindowAction::execute(ctx);
+  }
+
+public:
+  QString title() const override { return tr("Paste as Plain Text"); }
+  PasteClipboardSelectionAsPlainText(const QString &id) : PasteToFocusedWindowAction(), m_id(id) {}
+};
+
+class TransformTextAndCopyAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(TransformTextAndCopyAction)
+  QString m_id;
+  std::function<QString(const QString &)> m_transform;
+
+  void execute(ApplicationContext *ctx) override {
+    auto clipman = ctx->services->clipman();
+    auto toast = ctx->services->toastService();
+    if (auto data = clipman->getMainOfferData(m_id); data.has_value()) {
+      QString text = QString::fromUtf8(*data);
+      QString transformed = m_transform(text);
+      if (clipman->copyText(transformed, {.concealed = true})) {
+        ctx->navigation->showHud(tr("Transformed and copied"), ImageURL::builtin(BuiltinIcon::CopyClipboard));
+        return;
+      }
+    }
+    toast->failure(tr("Failed to transform text"));
+  }
+
+public:
+  TransformTextAndCopyAction(const QString &title, const QString &id,
+                             std::function<QString(const QString &)> transform)
+      : AbstractAction(title, BuiltinIcon::Text), m_id(id), m_transform(std::move(transform)) {}
+};
+
+class TextTransformSubmenuAction : public ListSubmenuAction {
+  Q_DECLARE_TR_FUNCTIONS(TextTransformSubmenuAction)
+  QString m_id;
+
+public:
+  std::unique_ptr<ActionPanelState> buildState(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto section = panel->createSection();
+
+    section->addAction(
+        new TransformTextAndCopyAction(tr("Copy UPPERCASE"), m_id, text_transforms::toUppercase));
+    section->addAction(
+        new TransformTextAndCopyAction(tr("Copy lowercase"), m_id, text_transforms::toLowercase));
+    section->addAction(
+        new TransformTextAndCopyAction(tr("Copy Title Case"), m_id, text_transforms::toTitleCase));
+    section->addAction(
+        new TransformTextAndCopyAction(tr("Copy Slug (kebab-case)"), m_id, text_transforms::toSlug));
+    section->addAction(new TransformTextAndCopyAction(tr("Copy Trimmed"), m_id, text_transforms::trim));
+
+    return panel;
+  }
+
+  TextTransformSubmenuAction(const QString &id)
+      : ListSubmenuAction(tr("Text Transformations..."), BuiltinIcon::Text), m_id(id) {}
+};
+
+class CopyColorFormatAction : public AbstractAction {
+  Q_DECLARE_TR_FUNCTIONS(CopyColorFormatAction)
+  QString m_formatted;
+
+  void execute(ApplicationContext *ctx) override {
+    auto clipman = ctx->services->clipman();
+    if (clipman->copyText(m_formatted, {.concealed = true})) {
+      ctx->navigation->showHud(tr("Copied: %1").arg(m_formatted), ImageURL::builtin(BuiltinIcon::EyeDropper));
+      return;
+    }
+    ctx->services->toastService()->failure(tr("Failed to copy color"));
+  }
+
+public:
+  CopyColorFormatAction(const QString &title, QString formatted, const QColor &color)
+      : AbstractAction(title, ImageURL::builtin(BuiltinIcon::EyeDropper).setBackgroundTint(color)),
+        m_formatted(std::move(formatted)) {}
 };
 
 class CopyClipboardSelection : public AbstractAction {
