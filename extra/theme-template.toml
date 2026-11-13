@@ -22,6 +22,8 @@ border = "#2a241c"
 [colors.main_window]
 border = "#2a241c"
 footer = { background = "colors.core.secondary_background" }
+# Shown behind the launcher when 'launcher_window.layer_shell.backdrop' is enabled.
+# backdrop = { name = "colors.core.background", opacity = 0.5 }
 
 [colors.settings_window]
 border = "#2a241c"

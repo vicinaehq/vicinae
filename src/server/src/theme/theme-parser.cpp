@@ -21,6 +21,7 @@ static const std::vector<std::pair<std::string, SemanticColor>> RECOGNIZED_KEYS 
 
     {"main_window.border", SemanticColor::MainWindowBorder},
     {"main_window.outer_border", SemanticColor::MainWindowOuterBorder},
+    {"main_window.backdrop", SemanticColor::MainWindowBackdrop},
     {"main_window.footer.background", SemanticColor::StatusBarBackground},
     {"settings_window.border", SemanticColor::SettingsWindowBorder},
 
