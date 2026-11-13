@@ -7,7 +7,9 @@
 #include "services/files-service/file-service.hpp"
 #include "services/news/news-service.hpp"
 #include "theme/theme.hpp"
+#include <algorithm>
 #include <filesystem>
+#include <optional>
 #include <utility>
 
 constexpr auto CALCULATOR_MIN_CHARS = 3;
@@ -19,6 +21,37 @@ namespace {
 bool isAbsolutePathLike(const QString &text) {
   if (text.startsWith('/')) return true;
   return text.size() >= 3 && text[0].isLetter() && text[1] == ':' && (text[2] == '\\' || text[2] == '/');
+}
+
+bool isValidHostLabel(QStringView label) {
+  if (label.isEmpty() || label.startsWith('-') || label.endsWith('-')) return false;
+  return std::ranges::all_of(label, [](QChar c) { return c.isLetterOrNumber() || c == '-'; });
+}
+
+bool isIpv4Octet(QStringView label) {
+  return !label.isEmpty() && label.size() <= 3 &&
+         std::ranges::all_of(label, [](QChar c) { return c.isDigit(); }) && label.toInt() <= 255;
+}
+
+std::optional<QString> bareHostToUrl(const QString &text) {
+  if (text.isEmpty() || std::ranges::any_of(text, [](QChar c) { return c.isSpace(); })) return std::nullopt;
+
+  QUrl const url(QStringLiteral("http://") + text, QUrl::StrictMode);
+  if (!url.isValid() || !url.userInfo().isEmpty()) return std::nullopt;
+
+  auto const host = url.host();
+  auto const labels = QStringView{host}.split('.');
+
+  if (labels.size() == 4 && std::ranges::all_of(labels, isIpv4Octet) && text.startsWith(host)) {
+    return QStringLiteral("http://") + text;
+  }
+
+  if (labels.size() < 2 || !std::ranges::all_of(labels, isValidHostLabel)) return std::nullopt;
+
+  auto const tld = labels.back();
+  if (tld.size() < 2 || !std::ranges::all_of(tld, [](QChar c) { return c.isLetter(); })) return std::nullopt;
+
+  return QStringLiteral("https://") + text;
 }
 
 } // namespace
@@ -128,7 +161,6 @@ bool RootSearchModel::rerunSearch() {
     if (auto app = m_appDb->findDefaultOpener(text)) { link = LinkItem{.app = app, .url = text}; }
   }
 
-  m_linkSource->setLink(std::move(link));
   m_resultsSource->setQueryEmpty(m_query.empty());
   m_fallbackSource->setQuery(m_query);
 
@@ -150,6 +182,19 @@ bool RootSearchModel::rerunSearch() {
     m_fallbackSource->setItems(awaitingFiles ? std::vector<std::shared_ptr<RootItem>>{}
                                              : m_manager->fallbackItems());
   }
+
+  auto const matchesItemTitle = std::ranges::any_of(
+      scored, [&](const auto &s) { return s.item.get()->title().compare(text, Qt::CaseInsensitive) == 0; });
+
+  if (!link && !matchesItemTitle) {
+    if (auto bare = bareHostToUrl(text)) {
+      if (auto app = m_appDb->findDefaultOpener(*bare)) {
+        link = LinkItem{.app = app, .url = std::move(*bare)};
+      }
+    }
+  }
+
+  m_linkSource->setLink(std::move(link));
 
   std::vector<OwnedResult> results;
   results.reserve(scored.size());
