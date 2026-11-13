@@ -109,7 +109,8 @@ bool ExtensionManager::start() {
     return false;
   }
 
-  fs::path const managerPath = Omnicast::runtimeDir() / "extension-manager.js";
+  // Persistent, same lifetime as the managed Node runtime. Workers load this file via __filename.
+  fs::path const managerPath = Omnicast::dataDir() / "extension-manager.js";
   QString const managerPathStr = QString::fromStdString(managerPath.string());
 
   // A live node process holds the bundle open on Windows, blocking the overwrite; kill it first.
