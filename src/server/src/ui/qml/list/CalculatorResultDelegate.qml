@@ -28,8 +28,8 @@ SelectableDelegate {
 
     Item {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: root.appearance.rowContentMargin
+        anchors.rightMargin: root.appearance.rowContentMargin
 
         Item {
             id: leftColumn

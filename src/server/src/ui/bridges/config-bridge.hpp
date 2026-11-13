@@ -6,6 +6,7 @@
 #include "services/keybinding/keybinding-service.hpp"
 #include <QColor>
 #include <QObject>
+#include <QVariant>
 
 #ifdef Q_OS_WIN
 #include "ui/quick/windows-chrome-attached.hpp"
@@ -38,6 +39,12 @@ private:
   Q_PROPERTY(bool floatingStatusBar READ floatingStatusBar NOTIFY changed)
   Q_PROPERTY(QString windowMaterial READ windowMaterial NOTIFY changed)
   Q_PROPERTY(QString popupMaterial READ popupMaterial NOTIFY changed)
+  Q_PROPERTY(QVariant searchBarDivider READ searchBarDivider NOTIFY changed)
+  Q_PROPERTY(QVariant statusBarDivider READ statusBarDivider NOTIFY changed)
+  Q_PROPERTY(QVariant listItemHeight READ listItemHeight NOTIFY changed)
+  Q_PROPERTY(QVariant listItemRounding READ listItemRounding NOTIFY changed)
+  Q_PROPERTY(QVariant listItemInset READ listItemInset NOTIFY changed)
+  Q_PROPERTY(QVariant listItemPadding READ listItemPadding NOTIFY changed)
 
 signals:
   void changed();
@@ -123,12 +130,24 @@ public:
   }
   bool floatingStatusBar() const { return cfg().launcherWindow.floatingStatusBar; }
 
+  // Layout overrides are undefined in QML when unset, so that the platform appearance keeps its own metrics.
+  QVariant searchBarDivider() const { return optional(cfg().launcherWindow.searchBar.divider); }
+  QVariant statusBarDivider() const { return optional(cfg().launcherWindow.statusBar.divider); }
+  QVariant listItemHeight() const { return optional(cfg().launcherWindow.list.itemHeight); }
+  QVariant listItemRounding() const { return optional(cfg().launcherWindow.list.itemRounding); }
+  QVariant listItemInset() const { return optional(cfg().launcherWindow.list.itemInset); }
+  QVariant listItemPadding() const { return optional(cfg().launcherWindow.list.itemPadding); }
+
   Q_INVOKABLE static QColor withAlpha(const QColor &c, qreal alpha) {
     return QColor::fromRgbF(c.redF(), c.greenF(), c.blueF(), alpha);
   }
 
 private:
   static const config::ConfigValue &cfg() { return ServiceRegistry::instance()->config()->value(); }
+
+  template <typename T> static QVariant optional(const std::optional<T> &value) {
+    return value ? QVariant::fromValue(*value) : QVariant{};
+  }
 
   const bool m_opaqueSurfaces;
 };

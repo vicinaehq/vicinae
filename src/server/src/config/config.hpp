@@ -137,6 +137,21 @@ template <> struct Partial<ClockConfig> {
   std::optional<unsigned> interval;
 };
 
+struct SearchBarConfig {
+  std::optional<bool> divider;
+};
+
+struct StatusBarConfig {
+  std::optional<bool> divider;
+};
+
+struct ListConfig {
+  std::optional<int> itemHeight;
+  std::optional<int> itemRounding;
+  std::optional<int> itemInset;
+  std::optional<int> itemPadding;
+};
+
 struct WindowConfig {
   static constexpr float OPAQUE_OPACITY = 1.0F;
   static constexpr float TRANSLUCENT_OPACITY = 0.6F;
@@ -159,6 +174,9 @@ struct WindowConfig {
   bool floatingStatusBar = true;
   LayerShellConfig layerShell;
   ClockConfig clock;
+  SearchBarConfig searchBar;
+  StatusBarConfig statusBar;
+  ListConfig list;
 
   std::string material = "auto";
 
@@ -223,6 +241,9 @@ template <> struct Partial<WindowConfig> {
   std::optional<Partial<LayerShellConfig>> layerShell;
   std::optional<std::string> material;
   std::optional<ClockConfig> clock;
+  std::optional<SearchBarConfig> searchBar;
+  std::optional<StatusBarConfig> statusBar;
+  std::optional<ListConfig> list;
 };
 
 struct FontConfig {
@@ -514,6 +535,8 @@ SNAKE_CASIFY(config::GlobalShortcuts);
 SNAKE_CASIFY(config::Updates);
 
 #undef SNAKE_CASIFY
+
+template <> struct glz::meta<config::ListConfig> : glz::snake_case {};
 
 struct ConfigTransformer : glz::snake_case {
   static constexpr std::string rename_key(const std::string_view key) {
