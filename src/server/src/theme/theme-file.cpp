@@ -38,28 +38,46 @@ QColor ThemeFile::resolve(const ColorLike &color) const {
       color);
 }
 
+QColor ThemeFile::resolveMapped(SemanticColor key, const MappedColor &mapped) const {
+  auto visitor = overloads{
+      [](const QColor &color) { return color; },
+      [&](const ColorRef &ref) {
+        if (ref.color == key) { return inherit(ref.color); }
+        auto color = resolve(ref.color);
+        if (ref.opacity) {
+          const auto bg = resolve(SemanticColor::Background);
+          float const a = std::clamp(static_cast<float>(*ref.opacity), 0.0f, 1.0f);
+          color = QColor(qRound(color.red() * a + bg.red() * (1.0f - a)),
+                         qRound(color.green() * a + bg.green() * (1.0f - a)),
+                         qRound(color.blue() * a + bg.blue() * (1.0f - a)));
+        }
+        if (ref.darker) color = color.darker(std::max(0, *ref.darker + 100));
+        if (ref.lighter) color = color.lighter(std::max(0, *ref.lighter + 100));
+        return color;
+      },
+  };
+
+  return std::visit(visitor, mapped);
+}
+
 QColor ThemeFile::resolve(SemanticColor color) const {
   if (auto it = m_data.semantics.find(color); it != m_data.semantics.end()) {
-    auto visitor = overloads{[](const QColor &color) { return color; },
-                             [&](const ColorRef &ref) {
-                               if (ref.color == color) { return inherit(ref.color); }
-                               auto color = resolve(ref.color);
-                               if (ref.opacity) {
-                                 auto bg = resolve(SemanticColor::Background);
-                                 float const a = std::clamp(static_cast<float>(*ref.opacity), 0.0f, 1.0f);
-                                 color = QColor(qRound(color.red() * a + bg.red() * (1.0f - a)),
-                                                qRound(color.green() * a + bg.green() * (1.0f - a)),
-                                                qRound(color.blue() * a + bg.blue() * (1.0f - a)));
-                               }
-                               if (ref.darker) color = color.darker(std::max(0, *ref.darker + 100));
-                               if (ref.lighter) color = color.lighter(std::max(0, *ref.lighter + 100));
-                               return color;
-                             }};
-
-    auto color = std::visit(visitor, it->second);
-    return color;
+    return resolveMapped(color, it->second);
   }
   return deriveSemantic(color);
+}
+
+std::optional<ThemeFile::Gradient> ThemeFile::resolveGradient(SemanticColor color) const {
+  const auto it = m_data.gradients.find(color);
+  if (it == m_data.gradients.end()) return std::nullopt;
+
+  Gradient gradient{.angle = it->second.angle};
+  gradient.stops.reserve(it->second.stops.size());
+  for (const auto &stop : it->second.stops) {
+    gradient.stops.emplace_back(resolveMapped(color, stop));
+  }
+
+  return gradient;
 }
 
 QString ThemeFile::resolveAsString(SemanticColor color) const { return Utils::rgbaFromColor(resolve(color)); }

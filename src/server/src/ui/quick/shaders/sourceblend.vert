@@ -19,6 +19,9 @@ layout(std140, binding = 0) uniform buf {
     int u_mode;
     vec4 u_outerBorderColor;
     float u_outerBorderWidth;
+    int u_gradientCount;
+    vec2 u_gradientDir;
+    vec4 u_gradientStops[8];
 };
 
 void main() {

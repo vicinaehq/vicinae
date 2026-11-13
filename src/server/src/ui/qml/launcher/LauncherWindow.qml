@@ -120,6 +120,8 @@ LauncherWindowBase {
             overlay: true
             borderColor: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
             borderWidth: Config.borderWidth
+            borderGradient: Config.gradientWithAlpha(Theme.mainWindowBorderGradient, Config.windowOpacity)
+            borderGradientAngle: Theme.mainWindowBorderGradientAngle
             outerBorderColor: Config.withAlpha(Theme.mainWindowOuterBorder, Theme.mainWindowOuterBorder.a * Config.windowOpacity)
             outerBorderWidth: root.appearance.outerBorderWidth
         }
@@ -249,6 +251,8 @@ LauncherWindowBase {
             overlay: true
             borderColor: Config.withAlpha(Theme.mainWindowBorder, Config.windowOpacity)
             borderWidth: Config.borderWidth
+            borderGradient: Config.gradientWithAlpha(Theme.mainWindowBorderGradient, Config.windowOpacity)
+            borderGradientAngle: Theme.mainWindowBorderGradientAngle
             outerBorderColor: Config.withAlpha(Theme.mainWindowOuterBorder, Theme.mainWindowOuterBorder.a * Config.windowOpacity)
             outerBorderWidth: root.appearance.outerBorderWidth
         }
