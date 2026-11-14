@@ -374,7 +374,7 @@ void GeneralSettingsModel::selectLanguage(const QString &id) {
   });
 }
 
-static constexpr auto POP_TO_ROOT_TIMEOUTS = std::to_array({5, 15, 30, 60, 90, 120, 180});
+static constexpr auto POP_TO_ROOT_TIMEOUTS = std::to_array({5, 15, 30, 60, 90});
 static constexpr QLatin1StringView POP_TO_ROOT_IMMEDIATE = QLatin1StringView("immediate");
 static constexpr QLatin1StringView POP_TO_ROOT_NEVER = QLatin1StringView("never");
 
