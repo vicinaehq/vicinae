@@ -102,7 +102,6 @@ Loader {
     Component {
         id: imageComp
         MdImage {
-            fontSize: root.fontSize * 0.9
             blockData: root.blockData
             maxImageHeight: root.maxImageHeight
         }

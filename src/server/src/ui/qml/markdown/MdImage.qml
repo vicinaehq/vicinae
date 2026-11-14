@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import Vicinae
 
 Item {
@@ -9,64 +8,64 @@ Item {
     property var blockData: ({})
     readonly property bool selected: selection.hasSelection
     property real maxImageHeight: 0
-    property real fontSize: Theme.smallerFontSize
 
     readonly property int requestedWidth: blockData.width ?? 0
     readonly property int requestedHeight: blockData.height ?? 0
+    readonly property bool hasSizeHint: requestedWidth > 0 || requestedHeight > 0
+    readonly property int naturalWidth: blockData.naturalWidth ?? 0
+    readonly property int naturalHeight: blockData.naturalHeight ?? 0
     readonly property string alt: blockData.alt ?? ""
     readonly property string link: blockData.link ?? ""
 
     width: parent?.width ?? 0
-    implicitHeight: col.implicitHeight
+    implicitHeight: imgContainer.height
 
-    ColumnLayout {
-        id: col
+    Item {
+        id: imgContainer
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 4
+        width: imgW
+        height: imgH
 
-        Item {
-            id: imgContainer
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: imgW
-            Layout.preferredHeight: imgH
-
-            readonly property int imgW: {
-                if (root.requestedWidth > 0)
-                    return root.requestedWidth;
-                if (root.requestedHeight > 0)
-                    return root.requestedHeight;
-                return root.width;
-            }
-            readonly property int _rawH: {
-                if (root.requestedHeight > 0)
-                    return root.requestedHeight;
-                if (root.requestedWidth > 0)
-                    return root.requestedWidth;
-                return 200;
-            }
-            readonly property int imgH: root.maxImageHeight > 0 ? Math.min(_rawH, 200, root.maxImageHeight) : Math.min(_rawH, 200)
-
-            ViciImage {
-                anchors.fill: parent
-                fillMode: Image.PreserveAspectFit
-                source: root.DocumentScope.measuring ? "" : root.blockData.src ?? ""
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: Theme.textSelectionBg
-                opacity: 0.4
-                visible: root.selected
-            }
+        readonly property real aspect: {
+            if (root.naturalWidth > 0 && root.naturalHeight > 0)
+                return root.naturalWidth / root.naturalHeight;
+            if (image.implicitWidth > 0 && image.implicitHeight > 0)
+                return image.implicitWidth / image.implicitHeight;
+            return 0;
         }
 
-        Text {
-            Layout.alignment: Qt.AlignHCenter
-            visible: root.alt.length > 0
-            text: root.alt
-            color: Theme.textMuted
-            font.pointSize: root.fontSize
-            font.italic: true
+        readonly property size hintedSize: {
+            let w = root.requestedWidth;
+            let h = root.requestedHeight;
+            if (w <= 0)
+                w = aspect > 0 ? h * aspect : h;
+            if (h <= 0)
+                h = aspect > 0 ? w / aspect : Math.min(w, 200);
+            const scale = Math.min(1, root.width / w);
+            return Qt.size(Math.round(w * scale), Math.round(h * scale));
+        }
+
+        readonly property int imgW: root.hasSizeHint ? hintedSize.width : root.width
+        readonly property int imgH: {
+            if (root.hasSizeHint)
+                return hintedSize.height;
+            return root.maxImageHeight > 0 ? Math.min(200, root.maxImageHeight) : 200;
+        }
+
+        ViciImage {
+            id: image
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectFit
+            retainWhileLoading: true
+            sourceSize: root.hasSizeHint ? Qt.size(imgContainer.imgW, imgContainer.imgH) : Qt.size(0, 0)
+            source: root.DocumentScope.measuring ? "" : root.blockData.src ?? ""
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.textSelectionBg
+            opacity: 0.4
+            visible: root.selected
         }
     }
 
