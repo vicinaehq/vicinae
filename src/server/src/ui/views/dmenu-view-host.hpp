@@ -18,10 +18,12 @@ class DMenuViewHost : public ListViewHost {
 
 signals:
   void detailChanged();
-  void selected(const QString &text);
+  void selected(const QString &text, std::optional<int> action);
 
 public:
-  explicit DMenuViewHost(ipc_gen::DMenuRequest data) : m_data(std::move(data)) {}
+  DMenuViewHost(ipc_gen::DMenuRequest data, std::vector<DMenuAction> actions) : m_data(std::move(data)) {
+    m_section.setActions(std::move(actions));
+  }
 
   QUrl qmlComponentUrl() const override;
   QVariantMap qmlProperties() override;

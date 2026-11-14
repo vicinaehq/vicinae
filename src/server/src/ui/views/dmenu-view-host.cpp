@@ -40,9 +40,9 @@ void DMenuViewHost::initialize() {
                  std::views::filter([](auto &&s) { return !s.empty(); }) | std::ranges::to<std::vector>();
   m_section.setRawEntries(std::move(entries));
 
-  auto onChosen = [this](const QString &text) {
+  auto onChosen = [this](const QString &text, std::optional<int> action) {
     m_selected = true;
-    emit selected(text);
+    emit selected(text, action);
   };
   m_section.setOnEntryChosen(onChosen);
 
@@ -67,7 +67,7 @@ void DMenuViewHost::textChanged(const QString &text) {
 }
 
 void DMenuViewHost::beforePop() {
-  if (!m_selected) { emit selected(""); }
+  if (!m_selected) { emit selected("", std::nullopt); }
 }
 
 void DMenuViewHost::loadDetail(std::string_view path) {
@@ -102,7 +102,7 @@ std::unique_ptr<ActionPanelState> DMenuViewHost::emptyActionPanel() {
 
   auto onChosen = [this](const QString &text, ApplicationContext *ctx) {
     m_selected = true;
-    emit selected(text);
+    emit selected(text, std::nullopt);
     ctx->navigation->closeWindow();
   };
 
@@ -119,6 +119,8 @@ std::unique_ptr<ActionPanelState> DMenuViewHost::emptyActionPanel() {
                                          });
   selectAndCopy->setShortcut(Keybind::CopyAction);
   section->addAction(selectAndCopy);
+
+  m_section.addCustomActions(*panel, {});
 
   return panel;
 }
