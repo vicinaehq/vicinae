@@ -867,4 +867,10 @@ export enum Icon {
 	Zend = "zend",
 	Zendesk = "zendesk",
 	Zig = "zig",
+	Globe = "globe-01",
+	Important = "important-01",
+	Info = "info-01",
+	Livestream = "livestream-01",
+	LivestreamDisabled = "livestream-disabled-01",
+	Shield = "shield-01",
 }
