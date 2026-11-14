@@ -12,6 +12,7 @@
 #include "ui/image/url.hpp"
 #include <QString>
 #include <QPointer>
+#include <QTimer>
 #include <chrono>
 #include <cstdint>
 #include <numeric>
@@ -292,6 +293,8 @@ private:
   };
 
   void applyPopToRoot(const PendingPopToRoot &popToRoot);
+  void schedulePopToRootWhileClosed();
+  void popToRootWhileClosed();
 
   ViewState *findViewState(const BaseView *view);
   const ViewState *findViewState(const BaseView *view) const;
@@ -302,6 +305,7 @@ private:
   bool m_isPanelOpened = false;
   bool m_popToRootOnClose = false;
   std::optional<std::chrono::seconds> m_popToRootTimeout;
+  QTimer m_popToRootTimer;
   bool m_instantDismiss = false;
   bool m_closeOnFocusLoss = false;
   QWindow *m_window = nullptr;
