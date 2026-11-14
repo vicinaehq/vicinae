@@ -122,9 +122,12 @@ void NavigationController::showDictationHud(DictationSession *session) {
 
 void NavigationController::applyPopToRoot(const PendingPopToRoot &settings) {
   auto resolveApplicablePopToRoot = [&]() {
-    if (settings.type == PopToRootType::Default)
-      return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;
-    return settings.type;
+    if (settings.type != PopToRootType::Default) return settings.type;
+    if (m_popToRootOnClose) return PopToRootType::Immediate;
+    if (m_popToRootTimeout && std::chrono::system_clock::now() - settings.closedAt >= *m_popToRootTimeout) {
+      return PopToRootType::Immediate;
+    }
+    return PopToRootType::Suspended;
   };
 
   PopToRootType const popToRootType = resolveApplicablePopToRoot();
@@ -345,6 +348,10 @@ QString NavigationController::navigationTitle(const BaseView *caller) const {
 
 void NavigationController::setPopToRootOnClose(bool value) { m_popToRootOnClose = value; }
 
+void NavigationController::setPopToRootTimeout(std::optional<std::chrono::seconds> timeout) {
+  m_popToRootTimeout = timeout;
+}
+
 void NavigationController::closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay) {
   QTimer::singleShot(delay, [this, settings]() { closeWindow(settings); });
 }
@@ -362,7 +369,8 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
     m_instantDismiss = false;
   }
 
-  m_pendingPopToRoot = PendingPopToRoot{.type = type, .clearSearch = settings.clearRootSearch};
+  m_pendingPopToRoot = PendingPopToRoot{
+      .type = type, .clearSearch = settings.clearRootSearch, .closedAt = std::chrono::system_clock::now()};
   m_windowOpened = false;
   emit windowVisiblityChanged(false);
 }

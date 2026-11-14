@@ -65,6 +65,10 @@
 	// Reset the navigation state every time the window is closed
 	"pop_to_root_on_close": false,
 
+	// If "pop_to_root_on_close" is false, reset the navigation state when the window is reopened
+	// after having been closed for at least this many seconds. Leave unset to never reset.
+	// "pop_to_root_timeout": 90,
+
 	// What favicon service to use when loading favicons is needed.
 	// Available values are: 'twenty' | 'google' | 'none'
 	// If this is set to 'none', favicon loading is disabled and a placeholder icon will be used when a favicon is expected.

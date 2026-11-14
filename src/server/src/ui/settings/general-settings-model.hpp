@@ -18,7 +18,8 @@ class GeneralSettingsModel : public QObject {
   Q_PROPERTY(bool closeOnFocusLoss READ closeOnFocusLoss WRITE setCloseOnFocusLoss NOTIFY configChanged)
   Q_PROPERTY(bool closeOnEscape READ closeOnEscape WRITE setCloseOnEscape NOTIFY configChanged)
   Q_PROPERTY(bool considerPreedit READ considerPreedit WRITE setConsiderPreedit NOTIFY configChanged)
-  Q_PROPERTY(bool popToRootOnClose READ popToRootOnClose WRITE setPopToRootOnClose NOTIFY configChanged)
+  Q_PROPERTY(CompletionModel *popToRootModel READ popToRootModel CONSTANT)
+  Q_PROPERTY(QVariant currentPopToRoot READ currentPopToRoot NOTIFY configChanged)
   Q_PROPERTY(bool popOnBackspace READ popOnBackspace WRITE setPopOnBackspace NOTIFY configChanged)
   Q_PROPERTY(bool activateOnSingleClick READ activateOnSingleClick WRITE setActivateOnSingleClick NOTIFY
                  configChanged)
@@ -69,8 +70,6 @@ public:
   void setCloseOnEscape(bool v);
   bool considerPreedit() const;
   void setConsiderPreedit(bool v);
-  bool popToRootOnClose() const;
-  void setPopToRootOnClose(bool v);
   bool popOnBackspace() const;
   void setPopOnBackspace(bool v);
   bool activateOnSingleClick() const;
@@ -115,6 +114,7 @@ public:
   CompletionModel *faviconServiceModel() { return &m_faviconServiceModel; }
   CompletionModel *keybindingSchemeModel() { return &m_keybindingSchemeModel; }
   CompletionModel *languageModel() { return &m_languageModel; }
+  CompletionModel *popToRootModel() { return &m_popToRootModel; }
 
   QVariant currentWindowMaterial() const;
   Q_INVOKABLE void selectWindowMaterial(const QString &id);
@@ -125,6 +125,7 @@ public:
   QVariant currentIconTheme() const;
   QVariant currentFaviconService() const;
   QVariant currentKeybindingScheme() const;
+  QVariant currentPopToRoot() const;
 
   Q_INVOKABLE void selectTheme(const QString &id);
   Q_INVOKABLE void selectFont(const QString &id);
@@ -132,6 +133,7 @@ public:
   Q_INVOKABLE void selectFaviconService(const QString &id);
   Q_INVOKABLE void selectKeybindingScheme(const QString &id);
   Q_INVOKABLE void selectLanguage(const QString &id);
+  Q_INVOKABLE void selectPopToRoot(const QString &id);
 
   QString toggleShortcut() const;
   void setToggleShortcut(const QString &shortcut);
@@ -147,6 +149,7 @@ private:
   QVariantList faviconServiceItems() const;
   QVariantList keybindingSchemeItems() const;
   QVariantList languageItems() const;
+  QVariantList popToRootItems() const;
   void refreshDynamicModels();
 
   CompletionModel m_windowMaterialModel{this};
@@ -156,6 +159,7 @@ private:
   CompletionModel m_faviconServiceModel{this};
   CompletionModel m_keybindingSchemeModel{this};
   CompletionModel m_languageModel{this};
+  CompletionModel m_popToRootModel{this};
   QVariantList m_themeItems;
   QVariantList m_iconThemeItems;
 };

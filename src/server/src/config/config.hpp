@@ -333,6 +333,7 @@ struct ConfigValue {
   bool closeOnFocusLoss = false;
   bool considerPreedit = false;
   bool popToRootOnClose = false;
+  std::optional<int> popToRootTimeout;
   bool popOnBackspace = true;
   bool activateOnSingleClick = false;
   bool wrapNavigation = false;
@@ -394,6 +395,7 @@ template <> struct Partial<ConfigValue> {
   std::optional<bool> closeOnFocusLoss;
   std::optional<bool> considerPreedit;
   std::optional<bool> popToRootOnClose;
+  std::optional<int> popToRootTimeout;
   std::optional<bool> popOnBackspace;
   std::optional<bool> activateOnSingleClick;
   std::optional<bool> wrapNavigation;

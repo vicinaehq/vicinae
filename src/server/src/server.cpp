@@ -620,6 +620,8 @@ int startServer(const ServerLaunchOptions &launchOpts) {
     }
 
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
+    ctx.navigation->setPopToRootTimeout(
+        next.popToRootTimeout.transform([](int secs) { return std::chrono::seconds{secs}; }));
     ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
 #ifdef Q_OS_LINUX
     ctx.services->inputServer()->setEnabled(next.inputServer.enabled);
