@@ -98,8 +98,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
           &LauncherWindow::refreshQuickAIAvailability);
   connect(services->rootItemManager(), &RootItemManager::itemsChanged, this,
           &LauncherWindow::refreshQuickAIAvailability);
-  connect(m_ctx.navigation.get(), &NavigationController::searchTextTampered, this,
-          [this](const QString &text) { updateCanAskAI(text); });
   connect(this, &LauncherWindow::atRootChanged, this, [this] { updateCanAskAI(); });
   refreshQuickAIAvailability();
 
@@ -252,6 +250,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     }
     emit completerChanged();
     emit completerValuesChanged();
+    updateCanAskAI();
   });
 
   connect(nav, &NavigationController::completionDestroyed, this, [this]() {
@@ -261,6 +260,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx, QObject *parent)
     m_completerValues.clear();
     emit completerChanged();
     emit completerValuesChanged();
+    updateCanAskAI();
   });
 
   connect(nav, &NavigationController::completionValuesChanged, this, [this](const ArgumentValues &values) {
@@ -615,7 +615,6 @@ void LauncherWindow::applyPendingWindowTitle(int framesRemaining) {
 
 void LauncherWindow::forwardSearchText(const QString &text) {
   m_ctx.navigation->broadcastSearchText(text);
-  updateCanAskAI();
   tryCompaction();
 }
 
@@ -644,10 +643,8 @@ void LauncherWindow::refreshQuickAIAvailability() {
   updateCanAskAI();
 }
 
-void LauncherWindow::updateCanAskAI() { updateCanAskAI(m_ctx.navigation->searchText()); }
-
-void LauncherWindow::updateCanAskAI(const QString &searchText) {
-  const bool value = m_quickAIAvailable && m_atRoot && !searchText.isEmpty();
+void LauncherWindow::updateCanAskAI() {
+  const bool value = m_quickAIAvailable && m_atRoot && !m_hasCompleter;
   if (value == m_canAskAI) return;
   m_canAskAI = value;
   emit canAskAIChanged();
