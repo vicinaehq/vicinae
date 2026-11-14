@@ -120,21 +120,17 @@ Item {
             }
 
             Text {
-                text: "<a href=\"" + (row.host.entry.url || "") + "\" style=\"color:" + Theme.linkColor + ";\">" + (row.host.entry.value || "") + "</a>"
+                text: row.host.entry.value || ""
                 color: Theme.linkColor
-                linkColor: Theme.linkColor
                 font.pointSize: Theme.smallerFontSize
-                textFormat: Text.RichText
-                elide: Text.ElideMiddle
+                textFormat: Text.PlainText
+                elide: Text.ElideRight
                 Layout.maximumWidth: root.width * 0.65
-                onLinkActivated: function (link) {
-                    Qt.openUrlExternally(link);
-                }
 
                 MouseArea {
                     anchors.fill: parent
-                    cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Qt.openUrlExternally(row.host.entry.url || "")
                 }
             }
         }
