@@ -62,6 +62,12 @@ void ViciImageItem::setSafetyMargins(bool enabled) {
   reload();
 }
 
+void ViciImageItem::setRetainWhileLoading(bool retain) {
+  if (m_retainWhileLoading == retain) return;
+  m_retainWhileLoading = retain;
+  emit retainWhileLoadingChanged();
+}
+
 void ViciImageItem::setStatus(Status s) {
   if (m_status == s) return;
   m_status = s;
@@ -132,6 +138,10 @@ void ViciImageItem::reload() {
   connect(m_stream, &ImageStream::failed, this, [this]() { setStatus(Error); });
 
   if (!m_stream->start()) {
+    if (m_retainWhileLoading && !m_currentFrame.isNull()) {
+      setStatus(Loading);
+      return;
+    }
     delete m_pendingTexture;
     m_pendingTexture = nullptr;
     m_currentFrame = {};
