@@ -88,7 +88,9 @@ void PasteService::beginPaste() {
 void PasteService::waitForFocusAndPaste() {
   ++m_focusPollCount;
 
-  auto window = m_wm.focusedForeignWindow();
+  // Some compositors (niri, Hyprland) keep reporting the previous window as focused while our layer surface
+  // holds the keyboard, so the handoff is only complete once none of our windows has focus.
+  auto window = QGuiApplication::focusWindow() ? nullptr : m_wm.focusedForeignWindow();
   bool const focusLanded = window != nullptr || pasteTargetFocused();
 
   if (focusLanded || m_focusPollCount >= FOCUS_POLL_MAX) {
