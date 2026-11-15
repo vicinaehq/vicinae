@@ -13,6 +13,8 @@ class Agent : public QObject {
 
 signals:
   void textAdded(quint64 messageId, const std::string &text);
+  void imageAdded(quint64 messageId, const ImagePart &image);
+  void resourceAdded(quint64 messageId, const ResourcePart &resource);
   void toolAdded(quint64 id);
   void toolChanged(quint64 id);
   void activityChanged();
@@ -47,6 +49,7 @@ public:
     std::optional<ModelRef> model;
     std::vector<std::string> tools;
     ThinkingMode thinking = ThinkingMode::Medium;
+    std::optional<std::string> reasoningEffort;
     int maxSteps = 16;
     std::optional<int> maxOutputTokens;
     bool oneShot = false;
@@ -87,6 +90,8 @@ private:
   Message &assistantMessage();
   void complete();
   void receiveText(const std::string &text);
+  void receiveImage(const ImagePart &image);
+  void receiveResource(ResourcePart resource);
   void receiveToolCall(const ToolCallPart &call);
   void receiveToolActivity(const ToolActivity &activity);
   void requestApproval(const std::string &callId);

@@ -3,6 +3,8 @@
 #include <mutex>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QBuffer>
+#include <QMimeData>
 #include <QRegularExpression>
 #include <QUrlQuery>
 #include <cmark-gfm.h>
@@ -15,6 +17,9 @@
 #include "markdown-math.hpp"
 #include "services/font-service/font-service.hpp"
 #include "ui/image/image-url.hpp"
+#include "ui/image/image-stream.hpp"
+#include "services/clipboard/clipboard-service.hpp"
+#include "services/toast/toast-service.hpp"
 #include "ui/quick/syntax-highlighter.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -83,7 +88,6 @@ QString imageProviderUrl(const QString &rawUrl) {
 
 struct InlineContext {
   const QString &inlineCodeFg;
-  const QString &inlineCodeBg;
   const QString &linkColor;
   const QString &textColor;
   const QString &monoFamily;
@@ -111,9 +115,8 @@ QString renderOneInline(cmark_node *cur, const InlineContext &ctx) {
     break;
 
   case CMARK_NODE_CODE:
-    result += QStringLiteral("<code style=\"color:%1;background-color:%2;"
-                             "font-family:'%3',monospace;\">")
-                  .arg(ctx.inlineCodeFg, ctx.inlineCodeBg, ctx.monoFamily);
+    result += QStringLiteral("<code style=\"color:%1;font-family:'%2',monospace;font-size:small;\">")
+                  .arg(ctx.inlineCodeFg, ctx.monoFamily);
     result += QString::fromUtf8(cmark_node_get_literal(cur)).toHtmlEscaped();
     result += QStringLiteral("</code>");
     break;
@@ -351,9 +354,6 @@ void MarkdownModel::rebuildInlineStyles() {
   ++m_styleGeneration;
   auto &theme = ThemeService::instance().theme();
   m_styles.inlineCodeFg = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
-  auto inlineCodeBg = theme.resolve(SemanticColor::Foreground);
-  inlineCodeBg.setAlphaF(0.08);
-  m_styles.inlineCodeBg = inlineCodeBg.name(QColor::HexArgb);
   m_styles.linkColor = theme.resolve(SemanticColor::LinkDefault).name(QColor::HexRgb);
   m_styles.textColor = theme.resolve(SemanticColor::Foreground).name(QColor::HexRgb);
   m_styles.monoFamily = ServiceRegistry::instance()->fontService()->builtinMonoFontFamily();
@@ -388,8 +388,7 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
     const auto firstBlock = blocks.size();
     math::Resources resources;
     resources.reserve(8);
-    InlineContext ctx{styles.inlineCodeFg, styles.inlineCodeBg, styles.linkColor,
-                      styles.textColor,    styles.monoFamily,   resources};
+    InlineContext ctx{styles.inlineCodeFg, styles.linkColor, styles.textColor, styles.monoFamily, resources};
     auto type = cmark_node_get_type(node);
 
     switch (type) {
@@ -765,6 +764,37 @@ void MarkdownModel::startParse() {
 void MarkdownModel::openLink(const QString &url) {
   auto *appDb = ServiceRegistry::instance()->appDb();
   if (!appDb->openTarget(url)) qWarning() << "MarkdownModel: failed to open link" << url;
+}
+
+void MarkdownModel::copyImage(const QString &source) {
+  const ImageURL url(source);
+  if (!url.isValid()) return;
+  if (m_copyStream) m_copyStream->deleteLater();
+  auto *stream = new ImageStream(url, {}, {.fallback = false}, this);
+  m_copyStream = stream;
+  const auto fail = [] {
+    ServiceRegistry::instance()->toastService()->failure(tr("Could not copy the image."));
+  };
+  connect(stream, &ImageStream::failed, this, [stream, fail] {
+    stream->deleteLater();
+    fail();
+  });
+  connect(stream, &ImageStream::frameReady, this, [this, stream, fail](const QImage &image) {
+    disconnect(stream, nullptr, this, nullptr);
+    stream->deleteLater();
+    QtConcurrent::run([image] {
+      QByteArray bytes;
+      QBuffer buffer(&bytes);
+      buffer.open(QIODevice::WriteOnly);
+      return image.save(&buffer, "PNG") ? std::optional(std::move(bytes)) : std::nullopt;
+    }).then(this, [fail](std::optional<QByteArray> bytes) {
+      if (!bytes) return fail();
+      auto *mime = new QMimeData;
+      mime->setData(QStringLiteral("image/png"), *bytes);
+      if (!ServiceRegistry::instance()->clipman()->copyQMimeData(mime, {.concealed = false})) fail();
+    });
+  });
+  stream->start();
 }
 
 QString MarkdownModel::copyCodeBlock(int blockIndex) {

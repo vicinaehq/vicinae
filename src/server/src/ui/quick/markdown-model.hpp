@@ -1,5 +1,6 @@
 #pragma once
 #include <QAbstractListModel>
+#include <QPointer>
 #include <QVariantList>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
@@ -10,9 +11,14 @@
 #include "math-renderer.hpp"
 #include "ui/quick/syntax-highlighter.hpp"
 
+class ImageStream;
+
 class MarkdownModel : public DocumentModel {
   Q_OBJECT
   QML_NAMED_ELEMENT(MarkdownModel)
+
+public:
+  Q_INVOKABLE void copyImage(const QString &source);
 
 signals:
   void blocksAppended();
@@ -50,7 +56,6 @@ private:
 
   struct Styles {
     QString inlineCodeFg;
-    QString inlineCodeBg;
     QString linkColor;
     QString textColor;
     QString monoFamily;
@@ -72,6 +77,7 @@ private:
   quint64 m_parseGeneration = 0;
   quint64 m_styleGeneration = 0;
   bool m_parseRunning = false;
+  QPointer<ImageStream> m_copyStream;
   bool m_loading = false;
   bool m_async = false;
 };

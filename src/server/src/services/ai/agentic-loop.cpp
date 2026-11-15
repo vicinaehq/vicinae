@@ -1,4 +1,5 @@
 #include <QTimer>
+#include <QUuid>
 #include <algorithm>
 #include <format>
 #include <ranges>
@@ -221,6 +222,7 @@ void Agent::complete() {
   if (!running() || generation != m_generation) return;
 
   ChatCompletionPayload payload{.thinking = m_options.thinking,
+                                .reasoningEffort = m_options.reasoningEffort,
                                 .maxOutputTokens = m_options.maxOutputTokens,
                                 .oneShot = m_options.oneShot};
   payload.messages.reserve(m_messages.size() + 1);
@@ -263,6 +265,16 @@ void Agent::complete() {
   connect(m_completion.get(), &AbstractChatCompletionStream::toolCallRequested, this,
           [this, generation](const ToolCallPart &call) {
             if (running() && generation == m_generation) receiveToolCall(call);
+          });
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::imageAdded, this,
+          [this, generation](const ImagePart &image) {
+            if (running() && generation == m_generation) receiveImage(image);
+          });
+
+  connect(m_completion.get(), &AbstractChatCompletionStream::resourceAdded, this,
+          [this, generation](const ResourcePart &resource) {
+            if (running() && generation == m_generation) receiveResource(resource);
           });
 
   connect(m_completion.get(), &AbstractChatCompletionStream::toolActivityChanged, this,
@@ -316,6 +328,29 @@ void Agent::receiveText(const std::string &text) {
   }
 
   emit textAdded(message.id, text);
+}
+
+void Agent::receiveImage(const ImagePart &image) {
+  const auto generation = m_generation;
+  setActivity(ResponseActivity::Responding);
+  if (!running() || generation != m_generation) return;
+  auto &message = assistantMessage();
+  if (!running() || generation != m_generation) return;
+  message.content.parts.reserve(message.content.parts.size() + 1);
+  message.content.parts.emplace_back(image);
+  emit imageAdded(message.id, image);
+}
+
+void Agent::receiveResource(ResourcePart resource) {
+  const auto generation = m_generation;
+  setActivity(ResponseActivity::Responding);
+  if (!running() || generation != m_generation) return;
+  auto &message = assistantMessage();
+  if (!running() || generation != m_generation) return;
+  resource.id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
+  message.content.parts.reserve(message.content.parts.size() + 1);
+  message.content.parts.emplace_back(std::move(resource));
+  emit resourceAdded(message.id, std::get<ResourcePart>(message.content.parts.back()));
 }
 
 void Agent::receiveToolCall(const ToolCallPart &call) {

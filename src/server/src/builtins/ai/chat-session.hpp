@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QFuture>
 #include <QObject>
 #include <QTimer>
 #include <QVariantList>
@@ -10,6 +11,7 @@
 #include "chat-conversation-model.hpp"
 #include "chat-document-model.hpp"
 #include "services/ai/agentic-loop.hpp"
+#include "services/ai/ai-provider.hpp"
 #include "services/ai/conversation-store.hpp"
 #include "ui/quick/attachment-model.hpp"
 
@@ -42,6 +44,8 @@ class ChatSession : public QObject {
   Q_PROPERTY(QVariantMap modelSelectorCurrentItem READ modelSelectorCurrentItem NOTIFY
                  modelSelectorCurrentItemChanged)
   Q_PROPERTY(QVariant toolApproval READ toolApproval NOTIFY toolApprovalChanged)
+  Q_PROPERTY(QVariantList reasoningItems READ reasoningItems NOTIFY reasoningChanged)
+  Q_PROPERTY(QVariantMap currentReasoning READ currentReasoning NOTIFY reasoningChanged)
 
 public:
   Q_INVOKABLE bool send(const QString &text);
@@ -49,6 +53,7 @@ public:
   Q_INVOKABLE void toggleTool(quint64 id) { m_exchanges.toggleTool(id); }
   Q_INVOKABLE void toggleToolGroup(quint64 id) { m_exchanges.toggleToolGroup(id); }
   Q_INVOKABLE void selectModel(const QString &compositeId);
+  Q_INVOKABLE void selectReasoning(const QString &value);
   Q_INVOKABLE void approveTool(bool always);
   Q_INVOKABLE void declineTool();
 
@@ -65,6 +70,7 @@ signals:
   void modelChanged();
   void modelSelectorItemsChanged();
   void modelSelectorCurrentItemChanged();
+  void reasoningChanged();
 
 public:
   explicit ChatSession(ServiceRegistry &services, QObject *parent = nullptr);
@@ -99,16 +105,19 @@ public:
   QVariantMap modelSelectorCurrentItem() const { return m_modelSelectorCurrentItem; }
 
   QVariant toolApproval() const;
+  QVariantList reasoningItems() const { return m_reasoningItems; }
+  QVariantMap currentReasoning() const { return m_currentReasoning; }
 
 private:
   void initialize();
-  void saveTurn();
+  std::optional<QFuture<AI::Result<void>>> saveTurn();
   void generateTitle();
   ChatConversationModel::Tool toolItem(const AI::Agent::ToolCall &call) const;
   void restoreConversation(AI::Conversation conversation);
   void restoreNextTurn();
   void finishLoading();
   QVariantList attachmentItems(const std::vector<AI::ConversationAttachment> &attachments) const;
+  QVariantMap resourceItem(const AI::ResourcePart &resource) const;
 
   ServiceRegistry &m_services;
   AI::ConversationStore *m_store = nullptr;
@@ -128,6 +137,7 @@ private:
   bool needsVision() const;
   bool modelSupports(AI::Capability capability) const;
   void rebuildModelSelectorItems();
+  void refreshReasoning();
 
   AI::Service *m_aiService = nullptr;
   AI::Agent *m_agent = nullptr;
@@ -146,4 +156,8 @@ private:
   // Picking a model makes it the default for new chats, unless the session was given a specific one.
   QVariantList m_modelSelectorItems;
   QVariantMap m_modelSelectorCurrentItem;
+  QVariantList m_reasoningItems;
+  QVariantMap m_currentReasoning;
+  std::optional<std::string> m_reasoningModel;
+  std::optional<std::string> m_reasoningEffort;
 };

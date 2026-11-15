@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="database/conversations">
         <file>migrations/001_init.sql</file>
+        <file>migrations/002_resources.sql</file>
     </qresource>
 </RCC>
