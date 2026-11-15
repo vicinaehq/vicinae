@@ -14,6 +14,9 @@ class MarkdownModel : public DocumentModel {
   Q_OBJECT
   QML_NAMED_ELEMENT(MarkdownModel)
 
+public:
+  Q_INVOKABLE void copyImage(const QString &source);
+
 signals:
   void blocksAppended();
   void loadingChanged();
@@ -50,7 +53,6 @@ private:
 
   struct Styles {
     QString inlineCodeFg;
-    QString inlineCodeBg;
     QString linkColor;
     QString textColor;
     QString monoFamily;

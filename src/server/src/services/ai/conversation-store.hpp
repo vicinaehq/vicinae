@@ -21,6 +21,7 @@ struct ConversationAttachment {
   std::string id;
   FileAttachment data;
   std::string path;
+  bool userProvided = true;
 };
 
 struct ConversationTurn {

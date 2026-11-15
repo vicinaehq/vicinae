@@ -2,8 +2,10 @@
 #include <utility>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QLocale>
+#include <QMimeDatabase>
 #include <QSysInfo>
 #include <QTimeZone>
 #include <format>
@@ -65,24 +67,45 @@ std::string chatSystemPrompt(const config::Manager &config) {
 }
 
 // Agents that run their own tools report what kind of tool each one is.
+struct ToolKind {
+  std::string_view name;
+  const char *label;
+  BuiltinIcon icon;
+};
+
+constexpr auto TOOL_KINDS = std::to_array<ToolKind>({
+    {"read", QT_TRANSLATE_NOOP("ChatSession", "Read"), BuiltinIcon::Eye},
+    {"edit", QT_TRANSLATE_NOOP("ChatSession", "Edit"), BuiltinIcon::Pencil},
+    {"delete", QT_TRANSLATE_NOOP("ChatSession", "Delete"), BuiltinIcon::Trash},
+    {"move", QT_TRANSLATE_NOOP("ChatSession", "Move"), BuiltinIcon::ArrowRight},
+    {"search", QT_TRANSLATE_NOOP("ChatSession", "Search"), BuiltinIcon::MagnifyingGlass},
+    {"execute", QT_TRANSLATE_NOOP("ChatSession", "Run Command"), BuiltinIcon::Terminal},
+    {"think", QT_TRANSLATE_NOOP("ChatSession", "Think"), BuiltinIcon::Stars},
+    {"fetch", QT_TRANSLATE_NOOP("ChatSession", "Fetch"), BuiltinIcon::Globe01},
+    {"switch_mode", QT_TRANSLATE_NOOP("ChatSession", "Switch Mode"), BuiltinIcon::Cog},
+    {"other", QT_TRANSLATE_NOOP("ChatSession", "Tool"), BuiltinIcon::WrenchScrewdriver},
+});
+
 QString toolLabel(std::string_view name) {
-  constexpr auto KINDS = std::to_array<std::pair<std::string_view, const char *>>({
-      {"read", QT_TRANSLATE_NOOP("ChatSession", "Read")},
-      {"edit", QT_TRANSLATE_NOOP("ChatSession", "Edit")},
-      {"delete", QT_TRANSLATE_NOOP("ChatSession", "Delete")},
-      {"move", QT_TRANSLATE_NOOP("ChatSession", "Move")},
-      {"search", QT_TRANSLATE_NOOP("ChatSession", "Search")},
-      {"execute", QT_TRANSLATE_NOOP("ChatSession", "Run Command")},
-      {"think", QT_TRANSLATE_NOOP("ChatSession", "Think")},
-      {"fetch", QT_TRANSLATE_NOOP("ChatSession", "Fetch")},
-      {"switch_mode", QT_TRANSLATE_NOOP("ChatSession", "Switch Mode")},
-      {"other", QT_TRANSLATE_NOOP("ChatSession", "Tool")},
-  });
   if (name == AI::Agent::LOAD_TOOLS) return QCoreApplication::translate("ChatSession", "Load Tools");
-  if (const auto kind = std::ranges::find(KINDS, name, &std::pair<std::string_view, const char *>::first);
-      kind != KINDS.end())
-    return QCoreApplication::translate("ChatSession", kind->second);
+  if (const auto kind = std::ranges::find(TOOL_KINDS, name, &ToolKind::name); kind != TOOL_KINDS.end())
+    return QCoreApplication::translate("ChatSession", kind->label);
   return QString::fromUtf8(name.data(), static_cast<qsizetype>(name.size()));
+}
+
+ImageURL toolIcon(std::string_view name) {
+  const auto kind = std::ranges::find(TOOL_KINDS, name, &ToolKind::name);
+  return ImageURL::builtin(kind != TOOL_KINDS.end() ? kind->icon : BuiltinIcon::WrenchScrewdriver)
+      .setFill(SemanticColor::TextMuted);
+}
+
+ImageURL imageSource(const AI::ImagePart &image) {
+  if (image.path) return ImageURL::local(QString::fromStdString(*image.path));
+  ImageURL source;
+  source.setType(ImageURLType::DataURI);
+  source.setName(QStringLiteral("data:%1;base64,%2")
+                     .arg(QString::fromStdString(image.mimeType), QString::fromLatin1(image.base64)));
+  return source;
 }
 } // namespace
 
@@ -107,6 +130,7 @@ ChatSession::ChatSession(ServiceRegistry &services, QObject *parent)
   connect(&m_attachments, &AttachmentModel::changed, this, &ChatSession::attachmentStateChanged);
   connect(this, &ChatSession::streamingChanged, this, &ChatSession::attachmentStateChanged);
   connect(this, &ChatSession::modelSelectorCurrentItemChanged, this, &ChatSession::attachmentStateChanged);
+  connect(this, &ChatSession::modelSelectorCurrentItemChanged, this, &ChatSession::refreshReasoning);
   connect(&m_document, &ChatDocumentModel::loadingChanged, this, &ChatSession::finishLoading);
   initialize();
 }
@@ -145,6 +169,30 @@ void ChatSession::initialize() {
   connect(m_agent, &AI::Agent::approvalChanged, this, &ChatSession::toolApprovalChanged);
   connect(m_agent, &AI::Agent::textAdded, this,
           [this](quint64, const std::string &text) { m_exchanges.appendResponse(text); });
+  connect(m_agent, &AI::Agent::imageAdded, this, [this](quint64, const AI::ImagePart &image) {
+    if (!m_turn || !m_conversation) return;
+    auto bytes = QByteArray::fromBase64(image.base64);
+    const auto suffix =
+        QMimeDatabase().mimeTypeForName(QString::fromStdString(image.mimeType)).preferredSuffix();
+    auto name = suffix.isEmpty() ? std::string("image") : std::format("image.{}", suffix.toStdString());
+    auto id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
+    auto path = m_store->attachmentPath(m_conversation->id, id, name);
+    FileAttachment attachment{
+        .name = std::move(name),
+        .contents = FileAttachment::Image{image.mimeType, image.base64, std::size_t(bytes.size())},
+        .originalBytes = std::move(bytes),
+        .originalMimeType = image.mimeType};
+    m_turn->attachments.reserve(m_turn->attachments.size() + 1);
+    m_turn->attachments.emplace_back(AI::ConversationAttachment{
+        .id = std::move(id), .data = std::move(attachment), .path = std::move(path), .userProvided = false});
+    m_exchanges.appendImage(imageSource(image).toString());
+    saveTurn();
+  });
+  connect(m_agent, &AI::Agent::resourceAdded, this, [this](quint64, const AI::ResourcePart &resource) {
+    if (!m_turn || !m_conversation) return;
+    m_exchanges.appendAttachment(resourceItem(resource));
+    saveTurn();
+  });
   connect(m_agent, &AI::Agent::toolAdded, this, [this](quint64 id) {
     m_exchanges.addTool(toolItem(*m_agent->toolCall(id)));
     saveTurn();
@@ -278,7 +326,9 @@ void ChatSession::sendQuery(const std::string &query) {
   m_exchanges.beginExchange(query, previews);
   auto tools = modelSupports(AI::Capability::ToolCalling) ? m_services.tools()->enabledToolNames()
                                                           : std::vector<std::string>{};
-  m_turn->options = {.model = m_selectedModel, .tools = std::move(tools)};
+  m_turn->options = {.model = m_selectedModel,
+                     .tools = std::move(tools),
+                     .reasoningEffort = m_currentReasoning.isEmpty() ? std::nullopt : m_reasoningEffort};
   m_agent->send(std::move(message), m_turn->options);
   saveTurn();
 }
@@ -337,6 +387,51 @@ void ChatSession::rebuildModelSelectorItems() {
     m_modelSelectorCurrentItem.clear();
     emit modelSelectorCurrentItemChanged();
   }
+}
+
+void ChatSession::refreshReasoning() {
+  m_reasoningItems.clear();
+  m_currentReasoning.clear();
+  const auto model = m_selectedModel ? std::optional(m_selectedModel->toString()) : std::nullopt;
+  if (model != m_reasoningModel) {
+    m_reasoningModel = model;
+    m_reasoningEffort.reset();
+  }
+  if (m_selectedModel) {
+    if (auto *provider = m_aiService->getProviderById(m_selectedModel->provider)) {
+      provider->prepareReasoning(m_selectedModel->id);
+      if (const auto options = provider->reasoningOptions(m_selectedModel->id)) {
+        if (!m_reasoningEffort ||
+            !std::ranges::contains(options->choices, *m_reasoningEffort, &AI::ReasoningChoice::id))
+          m_reasoningEffort = options->current;
+        QVariantList items;
+        items.reserve(options->choices.size());
+        for (const auto &choice : options->choices) {
+          QVariantMap item{{QStringLiteral("id"), QString::fromStdString(choice.id)},
+                           {QStringLiteral("displayName"), QString::fromStdString(choice.name)}};
+          if (choice.id == m_reasoningEffort) m_currentReasoning = item;
+          items.emplaceBack(item);
+        }
+        if (m_currentReasoning.isEmpty() && !items.isEmpty()) {
+          m_currentReasoning = items.front().toMap();
+          m_reasoningEffort = m_currentReasoning.value(QStringLiteral("id")).toString().toStdString();
+        }
+        m_reasoningItems = {
+            QVariantMap{{QStringLiteral("title"), tr("Reasoning effort")}, {QStringLiteral("items"), items}}};
+      }
+    }
+  }
+  emit reasoningChanged();
+}
+
+void ChatSession::selectReasoning(const QString &value) {
+  if (streaming() || !m_selectedModel) return;
+  const auto *provider = m_aiService->getProviderById(m_selectedModel->provider);
+  const auto options = provider ? provider->reasoningOptions(m_selectedModel->id) : std::nullopt;
+  if (!options || !std::ranges::contains(options->choices, value.toStdString(), &AI::ReasoningChoice::id))
+    return;
+  m_reasoningEffort = value.toStdString();
+  refreshReasoning();
 }
 
 void ChatSession::saveTurn() {
@@ -439,7 +534,7 @@ ChatConversationModel::Tool ChatSession::toolItem(const AI::Agent::ToolCall &cal
   ChatConversationModel::Tool item{
       .id = call.id,
       .name = tool ? tool->contribution.title : toolLabel(call.call.name),
-      .iconSource = tool ? qml::imageSourceFor(tool->contribution.icon) : QString{},
+      .iconSource = qml::imageSourceFor(tool ? tool->contribution.icon : toolIcon(call.call.name)),
       .arguments = QString::fromStdString(call.call.arguments),
       .summary =
           call.summary.transform([](const std::string &summary) { return QString::fromStdString(summary); }),
@@ -465,7 +560,8 @@ QVariant ChatSession::toolApproval() const {
   return QVariantMap{
       {QStringLiteral("id"), call.id},
       {QStringLiteral("name"), tool ? tool->contribution.title : toolLabel(call.call.name)},
-      {QStringLiteral("iconSource"), tool ? qml::imageSourceFor(tool->contribution.icon) : QString{}},
+      {QStringLiteral("iconSource"),
+       qml::imageSourceFor(tool ? tool->contribution.icon : toolIcon(call.call.name))},
       {QStringLiteral("summary"), call.summary ? QString::fromStdString(*call.summary) : QString{}},
       {QStringLiteral("arguments"), json.isNull() ? QString::fromStdString(call.call.arguments)
                                                   : QString::fromUtf8(json.toJson()).trimmed()},
@@ -494,6 +590,7 @@ QVariantList ChatSession::attachmentItems(const std::vector<AI::ConversationAtta
   items.reserve(attachments.size());
 
   for (const auto &[index, attachment] : vicinae::enumerate(attachments)) {
+    if (!attachment.userProvided) continue;
     auto data = attachment.data;
     data.originalBytes.clear();
     const auto preview = data.isImage() ? data.preview : ImageUrl(ImageURL::fileIcon(data.name));
@@ -511,9 +608,45 @@ QVariantList ChatSession::attachmentItems(const std::vector<AI::ConversationAtta
   return items;
 }
 
+QVariantMap ChatSession::resourceItem(const AI::ResourcePart &resource) const {
+  std::optional<QString> path;
+  if (resource.path)
+    path = QString::fromStdString(*resource.path);
+  else if (resource.data && m_conversation)
+    path = QString::fromStdString(
+        m_store->attachmentPath(m_conversation->id, resource.id, resource.name.value_or("attachment")));
+  AttachmentContent content(resource, path);
+  const auto name = resource.name ? QString::fromStdString(*resource.name) : tr("Attachment");
+  QString detail;
+  if (resource.status == AI::ResourcePart::Status::Unsupported)
+    detail = tr("Preview unavailable");
+  else if (!content.canOpen())
+    detail = tr("File unavailable");
+  else {
+    const auto mime = QMimeDatabase().mimeTypeForName(QString::fromStdString(resource.mimeType.value_or("")));
+    detail = QFileInfo(name).suffix().toUpper();
+    if (detail.isEmpty()) detail = mime.isValid() ? mime.comment() : tr("File");
+    std::optional<qint64> size;
+    if (resource.data)
+      size = resource.data->size();
+    else if (path && QFileInfo::exists(*path))
+      size = QFileInfo(*path).size();
+    if (size) detail = tr("%1 · %2").arg(detail, QLocale().formattedDataSize(*size));
+  }
+  const auto preview = ImageUrl(ImageURL::fileIcon(path.value_or(name).toStdString()));
+  return {{QStringLiteral("name"), name},
+          {QStringLiteral("detail"), detail},
+          {QStringLiteral("preview"), QVariant::fromValue(preview)},
+          {QStringLiteral("content"), QVariant::fromValue(content)}};
+}
+
 void ChatSession::restoreConversation(AI::Conversation conversation) {
   m_conversation = conversation.info;
   m_selectedModel = conversation.info.model;
+  m_reasoningModel = m_selectedModel ? std::optional(m_selectedModel->toString()) : std::nullopt;
+  if (!conversation.turns.empty() && conversation.turns.back().options.model &&
+      m_reasoningModel == conversation.turns.back().options.model->toString())
+    m_reasoningEffort = conversation.turns.back().options.reasoningEffort;
 
   std::size_t messages = 0;
   std::size_t calls = 0;
@@ -544,6 +677,12 @@ void ChatSession::restoreNextTurn() {
     for (const auto &part : message.content.parts) {
       if (const auto *text = std::get_if<AI::TextPart>(&part)) {
         response += text->text;
+      } else if (const auto *image = std::get_if<AI::ImagePart>(&part)) {
+        m_exchanges.appendSavedResponse(std::exchange(response, {}));
+        m_exchanges.appendImage(imageSource(*image).toString());
+      } else if (const auto *resource = std::get_if<AI::ResourcePart>(&part)) {
+        m_exchanges.appendSavedResponse(std::exchange(response, {}));
+        m_exchanges.appendAttachment(resourceItem(*resource));
       } else if (const auto *invocation = std::get_if<AI::ToolCallPart>(&part)) {
         m_exchanges.appendSavedResponse(std::exchange(response, {}));
         const auto call =

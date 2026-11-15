@@ -108,6 +108,7 @@ ImageStream::ImageStream(const ImageURL &url, const QSize &size, ImageStreamOpti
   m_mask = m_url.mask();
   m_badge = m_url.badge();
   m_cacheKey = makeCacheKey(m_url, size, m_opts.safetyMargins);
+  if (!m_opts.fallback) m_cacheKey += QStringLiteral("|no-fallback");
   m_originalCacheKey = m_cacheKey;
   m_latestCacheKey = makeLatestCacheKey(m_url);
   m_originalLatestCacheKey = m_latestCacheKey;
@@ -149,7 +150,7 @@ void ImageStream::dispatch() {
 }
 
 void ImageStream::tryFallback() {
-  if (m_fallbacksRemaining <= 0) {
+  if (!m_opts.fallback || m_fallbacksRemaining <= 0) {
     emit failed();
     return;
   }
@@ -430,7 +431,8 @@ void ImageStream::startAnimation(QByteArray data) {
   }
 
   QSize const native = movie->currentPixmap().size();
-  if (!native.isEmpty() && (native.width() > m_size.width() || native.height() > m_size.height()))
+  if (!native.isEmpty() && !m_size.isEmpty() &&
+      (native.width() > m_size.width() || native.height() > m_size.height()))
     movie->setScaledSize(native.scaled(m_size, Qt::KeepAspectRatio));
 
   auto *worker = new AnimFrameWorker(movie);

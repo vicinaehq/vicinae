@@ -9,6 +9,7 @@ Item {
     property real topInset: 0
     readonly property Item backdrop: transcript.backdrop
     readonly property real messageFontSize: Theme.regularFontSize + 1
+    readonly property bool emptyConversation: transcript.count === 0
 
     function focusComposer() {
         composer.forceActiveFocus();
@@ -41,12 +42,12 @@ Item {
         session: root.session
         compact: false
         fontSize: root.messageFontSize
-        lineHeight: 1.2
+        lineHeight: 1.3
         horizontalPadding: root.horizontalPadding
         typingTarget: composer.inputItem
         bottomPadding: 8
         topInset: root.topInset
-        bottomInset: composerArea.height
+        bottomInset: root.emptyConversation ? 0 : composerArea.height
         topOverlayHeight: findBar.visible ? findBar.height + 12 : 0
         onPreviewRequested: content => preview.show(content)
     }
@@ -65,11 +66,13 @@ Item {
     }
 
     ChatGreeting {
+        id: greeting
         session: root.session
-        anchors.centerIn: transcript
-        anchors.verticalCenterOffset: -composerArea.height / 2
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: composerArea.top
+        anchors.bottomMargin: 28
         width: Math.min(440, parent.width - 64)
-        visible: transcript.count === 0
+        visible: root.emptyConversation
 
         Text {
             width: parent.width
@@ -96,10 +99,11 @@ Item {
         id: composerArea
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        height: composer.height + 24
+        y: root.emptyConversation ? Math.max(greeting.height + 40, (parent.height - height + greeting.height + 28) / 2) : parent.height - height
+        height: composer.height + 28
 
         Rectangle {
+            visible: !root.emptyConversation
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
@@ -130,7 +134,7 @@ Item {
             font.family: Theme.fontFamily
             font.pointSize: root.messageFontSize
             session: root.session
-            placeholder: qsTr("Message…")
+            placeholder: root.emptyConversation ? qsTr("Ask anything…") : qsTr("Ask a follow-up…")
             onMessageSent: transcript.followLatest()
             onPreviewRequested: content => preview.show(content)
 

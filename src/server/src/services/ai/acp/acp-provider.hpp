@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <QByteArray>
 #include <QPointer>
@@ -56,6 +57,8 @@ public:
   void start() override;
 
   ModelList listModels(const ListModelFilters &filters = {}) const override;
+  void prepareReasoning(std::string_view modelId) override;
+  std::optional<ReasoningOptions> reasoningOptions(std::string_view modelId) const override;
   std::optional<Model> findBestModel(Capabilities caps,
                                      Preference preference = Preference::None) const override;
 
@@ -75,6 +78,7 @@ private:
     // Identifies the history the agent has seen, if it can be continued at all.
     std::optional<QByteArray> fingerprint;
     std::string model;
+    std::optional<ReasoningOptions> reasoning;
     bool fresh = true;
     bool busy = false;
     QPointer<AcpChatStream> stream;
@@ -100,6 +104,7 @@ private:
   void closeSession(const std::string &sessionId);
   void updateIdle();
   void readModels(std::string_view configOptions);
+  void readSessionConfig(const std::string &sessionId, std::string_view json);
   Session *findSession(std::string_view id);
 
   std::string m_id;
@@ -120,6 +125,8 @@ private:
   std::vector<Model> m_models;
   std::optional<std::string> m_modelOption;
   std::optional<std::string> m_defaultModel;
+  std::unordered_map<std::string, std::optional<ReasoningOptions>> m_reasoning;
+  std::unordered_set<std::string> m_preparingModels;
   QTimer m_idle;
 };
 

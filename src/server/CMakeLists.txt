@@ -668,6 +668,11 @@ set(SRCS
 	src/services/ai/cli/cli-process.hpp
 	src/services/ai/cli/cli-process.cpp
 	src/services/ai/acp/acp-provider.hpp
+	src/services/ai/acp/acp-content.hpp
+	src/services/ai/chat-image.hpp
+	src/services/ai/chat-resource.hpp
+	src/services/ai/ai-reasoning.hpp
+	src/services/ai/acp/acp-config.hpp
 	src/services/ai/acp/acp-provider.cpp
 	src/services/ai/mcp/mcp-server.hpp
 	src/services/ai/mcp/mcp-server.cpp
@@ -1487,6 +1492,8 @@ set(VICINAE_QML_FILES
 	src/ui/qml/markdown/MdList.qml
 	src/ui/qml/markdown/MdTable.qml
 	src/ui/qml/markdown/MdImage.qml
+	src/ui/qml/markdown/MarkdownImageMenu.qml
+	src/ui/qml/markdown/MarkdownImagePreview.qml
 	src/ui/qml/markdown/MdHorizontalRule.qml
 	src/ui/qml/markdown/MdHtmlBlock.qml
 	src/ui/qml/markdown/MdBlockquote.qml
@@ -1830,6 +1837,6 @@ if(BUILD_TESTS)
 		src/ui/quick/math-renderer.cpp
 		src/ui/quick/math-renderer.hpp
 	)
-	target_link_libraries(vicinae-document-tests PRIVATE JKQTMathText6 Qt6::Quick Qt6::Svg Qt6::Test)
+	target_link_libraries(vicinae-document-tests PRIVATE JKQTMathText6 Qt6::Quick Qt6::Svg Qt6::Test glaze::glaze)
 	target_compile_features(vicinae-document-tests PRIVATE cxx_std_23)
 endif()

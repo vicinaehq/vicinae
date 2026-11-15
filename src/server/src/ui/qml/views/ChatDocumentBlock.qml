@@ -14,20 +14,23 @@ Item {
     required property var attachments
     required property bool failed
     required property var tool
+    property MarkdownModel imageActions: null
     property bool awaitingResponse: false
     property bool thinking: false
     signal previewRequested(var content)
+    signal imagePreviewRequested(string source, string link)
     signal toolToggled(var toolId)
     signal toolGroupToggled(var toolId)
     property bool compact: true
     property real fontSize: Theme.regularFontSize
     property real lineHeight: 1.0
     property real horizontalPadding: 16
-    property int bottomSpacing: compact ? 8 : 24
+    property int bottomSpacing: compact ? 8 : 32
     readonly property bool first: kind === "query"
     readonly property bool last: kind === "tail"
     readonly property bool groupedTool: kind === "tool" && (tool.grouped ?? false)
-    readonly property real topPadding: first ? (compact ? 12 : 0) : last && content.height === 0 ? 0 : groupedTool ? 2 : 8
+    readonly property bool toolRow: kind === "tool" || kind === "toolGroup"
+    readonly property real topPadding: first ? (compact ? 12 : 0) : last && content.height === 0 ? 0 : toolRow ? (groupedTool ? 0 : 4) : 8
     height: content.height + topPadding + (last ? (compact ? 12 : 0) + bottomSpacing : 0)
 
     Item {
@@ -51,7 +54,14 @@ Item {
         x: root.horizontalPadding + (root.compact ? 12 : 0) + (root.groupedTool ? 20 : 0)
         y: root.topPadding
         width: parent.width - (root.horizontalPadding + (root.compact ? 12 : 0)) * 2 - (root.groupedTool ? 20 : 0)
-        sourceComponent: root.first ? (root.compact ? queryComponent : messageComponent) : root.last ? tailComponent : root.kind === "tool" ? toolComponent : root.kind === "toolGroup" ? toolGroupComponent : markdownComponent
+        sourceComponent: root.first ? (root.compact ? queryComponent : messageComponent) : root.last ? tailComponent : root.kind === "tool" ? toolComponent : root.kind === "toolGroup" ? toolGroupComponent : root.kind === "attachment" ? attachmentComponent : markdownComponent
+    }
+    Component {
+        id: attachmentComponent
+        AttachmentList {
+            attachments: root.attachments
+            onPreviewRequested: content => root.previewRequested(content)
+        }
     }
     Component {
         id: queryComponent
@@ -75,14 +85,14 @@ Item {
     Component {
         id: messageComponent
         Item {
-            height: userMessage.height + 12
+            height: userMessage.height + 20
 
             Rectangle {
                 id: userMessage
                 anchors.right: parent.right
-                width: Math.min(parent.width * 0.88, Math.max(48, queryMetrics.advanceWidth + 28, root.attachments.length > 0 ? 320 : 0))
-                height: queryContent.height + 20
-                radius: 14
+                width: Math.min(parent.width * 0.84, Math.max(48, queryMetrics.advanceWidth + 32, root.attachments.length > 0 ? 320 : 0))
+                height: queryContent.height + 24
+                radius: 16
                 color: Config.withAlpha(Theme.foreground, 0.065)
 
                 TextMetrics {
@@ -94,9 +104,9 @@ Item {
 
                 Column {
                     id: queryContent
-                    x: 14
-                    y: 10
-                    width: parent.width - 28
+                    x: 16
+                    y: 12
+                    width: parent.width - 32
                     spacing: 8
                     DocumentText {
                         fontSize: root.fontSize
@@ -118,12 +128,11 @@ Item {
         id: toolGroupComponent
         ToolInvocationHeader {
             title: qsTr("%n tool calls", "", root.tool.count ?? 0)
-            subtitle: root.tool.summary ? qsTr("%1 · %2").arg(root.tool.name ?? "").arg(root.tool.summary) : root.tool.name ?? ""
             iconSource: root.tool.iconSource ?? ""
+            subtitle: root.tool.summary ? qsTr("%1 · %2").arg(root.tool.name ?? "").arg(root.tool.summary) : root.tool.name ?? ""
             status: root.tool.status ?? "queued"
             durationMs: root.tool.durationMs ?? null
             expanded: root.tool.expanded ?? false
-            compactStatus: true
             onToggled: root.toolGroupToggled(root.tool.id)
         }
     }
@@ -150,11 +159,12 @@ Item {
             blockType: root.blockType
             blockData: root.blockData
             blockIndex: root.blockIndex
-            mdModel: root.markdownModel
+            mdModel: root.markdownModel ?? root.imageActions
             fontFamily: Theme.fontFamily
             fontSize: root.fontSize
             lineHeight: root.lineHeight
             maxImageHeight: root.compact ? 200 : 360
+            onImagePreviewRequested: (source, link) => root.imagePreviewRequested(source, link)
         }
     }
     Component {

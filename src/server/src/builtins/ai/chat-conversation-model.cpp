@@ -92,6 +92,31 @@ void ChatConversationModel::appendSavedResponse(std::string text) {
   emit contentAdded(rowCount() - 1, contents.size() - 1);
 }
 
+void ChatConversationModel::appendImage(QString source) {
+  if (m_exchanges.empty()) return;
+  flushResponse();
+  auto &contents = m_exchanges.back().contents;
+  contents.reserve(contents.size() + 1);
+  contents.emplace_back(Image{std::move(source)});
+  emit contentAdded(rowCount() - 1, contents.size() - 1);
+}
+
+void ChatConversationModel::appendAttachment(QVariantMap item) {
+  if (m_exchanges.empty()) return;
+  flushResponse();
+  auto &contents = m_exchanges.back().contents;
+  if (!contents.empty()) {
+    if (auto *attachments = std::get_if<Attachment>(&contents.back())) {
+      attachments->items.emplaceBack(std::move(item));
+      emit contentChanged(rowCount() - 1, contents.size() - 1);
+      return;
+    }
+  }
+  contents.reserve(contents.size() + 1);
+  contents.emplace_back(Attachment{{std::move(item)}});
+  emit contentAdded(rowCount() - 1, contents.size() - 1);
+}
+
 void ChatConversationModel::appendResponse(std::string_view text) {
   if (m_exchanges.empty() || !m_exchanges.back().pending || text.empty()) return;
 

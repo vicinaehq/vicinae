@@ -43,7 +43,15 @@ public:
     bool expanded = false;
   };
 
-  using Content = std::variant<Response, ToolGroup>;
+  struct Image {
+    QString source;
+  };
+
+  struct Attachment {
+    QVariantList items;
+  };
+
+  using Content = std::variant<Response, ToolGroup, Image, Attachment>;
 
   enum Role { QueryRole = Qt::UserRole + 1, ResponseRole, ErrorRole, PendingRole, AttachmentsRole };
 
@@ -56,6 +64,8 @@ public:
   void beginExchange(const std::string &query, QVariantList attachments = {});
   void appendResponse(std::string_view text);
   void appendSavedResponse(std::string text);
+  void appendImage(QString source);
+  void appendAttachment(QVariantMap item);
   void finishExchange(const std::string &error = {});
 
   void addTool(Tool tool);
