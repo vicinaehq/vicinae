@@ -769,26 +769,30 @@ void MarkdownModel::openLink(const QString &url) {
 void MarkdownModel::copyImage(const QString &source) {
   const ImageURL url(source);
   if (!url.isValid()) return;
+  if (m_copyStream) m_copyStream->deleteLater();
   auto *stream = new ImageStream(url, {}, {.fallback = false}, this);
-  connect(stream, &ImageStream::failed, this, [this, stream] {
-    stream->deleteLater();
+  m_copyStream = stream;
+  const auto fail = [] {
     ServiceRegistry::instance()->toastService()->failure(tr("Could not copy the image."));
+  };
+  connect(stream, &ImageStream::failed, this, [stream, fail] {
+    stream->deleteLater();
+    fail();
   });
-  connect(stream, &ImageStream::frameReady, this, [this, stream](const QImage &image) {
+  connect(stream, &ImageStream::frameReady, this, [this, stream, fail](const QImage &image) {
     disconnect(stream, nullptr, this, nullptr);
     stream->deleteLater();
-    auto *services = ServiceRegistry::instance();
-    QByteArray bytes;
-    QBuffer buffer(&bytes);
-    buffer.open(QIODevice::WriteOnly);
-    if (!image.save(&buffer, "PNG")) {
-      services->toastService()->failure(tr("Could not copy the image."));
-      return;
-    }
-    auto *mime = new QMimeData;
-    mime->setData(QStringLiteral("image/png"), bytes);
-    if (!services->clipman()->copyQMimeData(mime, {.concealed = false}))
-      services->toastService()->failure(tr("Could not copy the image."));
+    QtConcurrent::run([image] {
+      QByteArray bytes;
+      QBuffer buffer(&bytes);
+      buffer.open(QIODevice::WriteOnly);
+      return image.save(&buffer, "PNG") ? std::optional(std::move(bytes)) : std::nullopt;
+    }).then(this, [fail](std::optional<QByteArray> bytes) {
+      if (!bytes) return fail();
+      auto *mime = new QMimeData;
+      mime->setData(QStringLiteral("image/png"), *bytes);
+      if (!ServiceRegistry::instance()->clipman()->copyQMimeData(mime, {.concealed = false})) fail();
+    });
   });
   stream->start();
 }

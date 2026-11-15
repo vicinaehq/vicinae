@@ -58,14 +58,18 @@ struct Message {
         parts.emplace_back(ContentPart{.type = "text", .text = p->text});
         text += p->text;
       } else if (const auto *p = std::get_if<ImagePart>(&part)) {
-        parts.emplace_back(ContentPart{.type = "image_url",
-                                       .image_url = ContentPart::ImageUrl{std::format(
-                                           "data:{};base64,{}", p->mimeType, p->base64.toStdString())}});
-        hasImage = true;
+        if (message.role == ChatRole::User) {
+          parts.emplace_back(ContentPart{.type = "image_url",
+                                         .image_url = ContentPart::ImageUrl{std::format(
+                                             "data:{};base64,{}", p->mimeType, p->base64.toStdString())}});
+          hasImage = true;
+        } else {
+          auto description = std::format("\n(image: {})\n", p->path.value_or(p->mimeType));
+          text += description;
+          parts.emplace_back(ContentPart{.type = "text", .text = std::move(description)});
+        }
       } else if (const auto *p = std::get_if<ResourcePart>(&part)) {
-        const auto &location = p->path ? p->path : p->uri;
-        auto description = std::format("\n(attachment: {}{})\n", p->name.value_or("attachment"),
-                                       location ? std::format(" — {}", *location) : std::string{});
+        auto description = std::format("\n{}\n", p->describe());
         text += description;
         parts.emplace_back(ContentPart{.type = "text", .text = std::move(description)});
       } else if (const auto *p = std::get_if<ToolCallPart>(&part)) {

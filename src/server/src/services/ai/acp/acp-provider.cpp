@@ -330,9 +330,7 @@ void appendBlocks(std::vector<acp::PromptBlock> &blocks, const ChatMessage &mess
     } else if (const auto *result = std::get_if<ToolResultPart>(&part)) {
       text(std::format("(tool result: {})", result->content));
     } else if (const auto *resource = std::get_if<ResourcePart>(&part)) {
-      const auto &location = resource->path ? resource->path : resource->uri;
-      text(std::format("(attachment: {}{})", resource->name.value_or("attachment"),
-                       location ? std::format(" — {}", *location) : std::string{}));
+      text(resource->describe());
     }
   }
 }
@@ -975,6 +973,18 @@ void AcpProvider::readSessionConfig(const std::string &sessionId, std::string_vi
   emit modelsUpdated();
 }
 
+void AcpProvider::applyModelSwitch(const std::string &sessionId, const std::string &model,
+                                   std::string_view result) {
+  auto *session = findSession(sessionId);
+  if (!session) return;
+  session->model = model;
+  if (auto config = fromJson<acp::ConfigResult>(result); config && present(config->configOptions)) {
+    readSessionConfig(sessionId, config->configOptions->str);
+    return;
+  }
+  session->reasoning = reasoningOptions(model);
+}
+
 std::optional<ReasoningOptions> AcpProvider::reasoningOptions(std::string_view modelId) const {
   const auto entry = m_reasoning.find(std::string(modelId));
   return entry == m_reasoning.end() ? std::nullopt : entry->second;
@@ -995,6 +1005,7 @@ void AcpProvider::prepareReasoning(std::string_view modelId) {
       }
       auto *session = findSession(*id);
       if (!session || session->model == model || !m_modelOption) {
+        m_reasoning.try_emplace(model, std::nullopt);
         m_preparingModels.erase(model);
         updateIdle();
         return;
@@ -1003,16 +1014,9 @@ void AcpProvider::prepareReasoning(std::string_view modelId) {
       request(
           "session/set_config_option", toJson(acp::SetConfigOptionParams{*id, *m_modelOption, model}),
           [this, id = *id, model](Response response) {
-            if (auto *session = findSession(id)) {
-              if (response) {
-                session->model = model;
-                if (auto result = fromJson<acp::ConfigResult>(*response);
-                    result && present(result->configOptions))
-                  readSessionConfig(id, result->configOptions->str);
-              }
-              session = findSession(id);
-              if (session) session->busy = false;
-            }
+            if (response) applyModelSwitch(id, model, *response);
+            if (auto *session = findSession(id)) session->busy = false;
+            m_reasoning.try_emplace(model, std::nullopt);
             m_preparingModels.erase(model);
             updateIdle();
           },
@@ -1084,13 +1088,7 @@ void AcpProvider::prompt(Session &session, AcpChatStream *stream) {
     const auto &stream = session->stream;
     auto effort = stream->reasoningEffort();
     if (!session->reasoning) {
-      if (effort)
-        finishTurn(
-            id,
-            std::unexpected(RpcError{
-                .message = tr("This model no longer supports the selected reasoning level.").toStdString()}));
-      else
-        send();
+      send();
       return;
     }
     const auto &options = *session->reasoning;
@@ -1137,9 +1135,7 @@ void AcpProvider::prompt(Session &session, AcpChatStream *stream) {
       "session/set_config_option", toJson(acp::SetConfigOptionParams{session.id, *m_modelOption, model}),
       [this, id = session.id, model, configureReasoning](Response response) {
         if (response) {
-          if (auto *session = findSession(id)) session->model = model;
-          if (auto result = fromJson<acp::ConfigResult>(*response); result && present(result->configOptions))
-            readSessionConfig(id, result->configOptions->str);
+          applyModelSwitch(id, model, *response);
           configureReasoning();
         } else {
           finishTurn(id, std::move(response));

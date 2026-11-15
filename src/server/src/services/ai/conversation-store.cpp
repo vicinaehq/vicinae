@@ -594,15 +594,16 @@ QFuture<Result<Conversation>> ConversationStore::load(std::string id) {
   return submit(m_worker, [worker = m_worker, id = std::move(id)] { return worker->load(id); });
 }
 
-void ConversationStore::save(ConversationInfo info, ConversationTurn turn) {
-  submit(m_worker, [worker = m_worker, info = std::move(info), turn = std::move(turn)] {
-    worker->save(info, turn);
-  }).then(this, [this](const Result<void> &result) {
-    if (result)
-      emit changed();
-    else
-      emit errorOccurred(QString::fromStdString(result.error()));
-  });
+QFuture<Result<void>> ConversationStore::save(ConversationInfo info, ConversationTurn turn) {
+  return submit(m_worker, [worker = m_worker, info = std::move(info),
+                           turn = std::move(turn)] { worker->save(info, turn); })
+      .then(this, [this](Result<void> result) {
+        if (result)
+          emit changed();
+        else
+          emit errorOccurred(QString::fromStdString(result.error()));
+        return result;
+      });
 }
 
 void ConversationStore::setModel(std::string id, std::optional<ModelRef> model) {

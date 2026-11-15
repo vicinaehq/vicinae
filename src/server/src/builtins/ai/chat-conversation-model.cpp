@@ -1,3 +1,4 @@
+#include <utility>
 #include <QTextBoundaryFinder>
 #include <QJsonDocument>
 #include <algorithm>
@@ -92,13 +93,25 @@ void ChatConversationModel::appendSavedResponse(std::string text) {
   emit contentAdded(rowCount() - 1, contents.size() - 1);
 }
 
-void ChatConversationModel::appendImage(QString source) {
-  if (m_exchanges.empty()) return;
+std::optional<int> ChatConversationModel::appendImage(QString source) {
+  if (m_exchanges.empty()) return std::nullopt;
   flushResponse();
   auto &contents = m_exchanges.back().contents;
   contents.reserve(contents.size() + 1);
   contents.emplace_back(Image{std::move(source)});
-  emit contentAdded(rowCount() - 1, contents.size() - 1);
+  const int content = static_cast<int>(contents.size()) - 1;
+  emit contentAdded(rowCount() - 1, content);
+  return content;
+}
+
+void ChatConversationModel::setImageSource(int exchange, int content, QString source) {
+  if (exchange < 0 || std::cmp_greater_equal(exchange, m_exchanges.size())) return;
+  auto &contents = m_exchanges[exchange].contents;
+  if (content < 0 || std::cmp_greater_equal(content, contents.size())) return;
+  auto *image = std::get_if<Image>(&contents[content]);
+  if (!image) return;
+  image->source = std::move(source);
+  emit contentChanged(exchange, content);
 }
 
 void ChatConversationModel::appendAttachment(QVariantMap item) {

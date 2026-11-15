@@ -105,6 +105,7 @@ private:
   void updateIdle();
   void readModels(std::string_view configOptions);
   void readSessionConfig(const std::string &sessionId, std::string_view json);
+  void applyModelSwitch(const std::string &sessionId, const std::string &model, std::string_view result);
   Session *findSession(std::string_view id);
 
   std::string m_id;

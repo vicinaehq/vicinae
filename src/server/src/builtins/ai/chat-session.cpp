@@ -184,9 +184,15 @@ void ChatSession::initialize() {
         .originalMimeType = image.mimeType};
     m_turn->attachments.reserve(m_turn->attachments.size() + 1);
     m_turn->attachments.emplace_back(AI::ConversationAttachment{
-        .id = std::move(id), .data = std::move(attachment), .path = std::move(path), .userProvided = false});
-    m_exchanges.appendImage(imageSource(image).toString());
-    saveTurn();
+        .id = std::move(id), .data = std::move(attachment), .path = path, .userProvided = false});
+    const auto content = m_exchanges.appendImage({});
+    auto saved = saveTurn();
+    if (!content || !saved) return;
+    saved->then(this, [this, exchange = m_exchanges.rowCount() - 1, content = *content,
+                       conversation = m_conversation->id, path = std::move(path)](const AI::Result<void> &) {
+      if (!m_conversation || m_conversation->id != conversation) return;
+      m_exchanges.setImageSource(exchange, content, ImageURL::local(QString::fromStdString(path)).toString());
+    });
   });
   connect(m_agent, &AI::Agent::resourceAdded, this, [this](quint64, const AI::ResourcePart &resource) {
     if (!m_turn || !m_conversation) return;
@@ -434,8 +440,8 @@ void ChatSession::selectReasoning(const QString &value) {
   refreshReasoning();
 }
 
-void ChatSession::saveTurn() {
-  if (!m_turn || !m_conversation || m_removed) return;
+std::optional<QFuture<AI::Result<void>>> ChatSession::saveTurn() {
+  if (!m_turn || !m_conversation || m_removed) return std::nullopt;
 
   auto turn = *m_turn;
   const auto &messages = m_agent->messages();
@@ -444,7 +450,7 @@ void ChatSession::saveTurn() {
   turn.calls.assign(calls.begin() + m_callOffset, calls.end());
   m_conversation->updatedAt = QDateTime::currentMSecsSinceEpoch();
   m_conversation->model = m_selectedModel;
-  m_store->save(*m_conversation, std::move(turn));
+  return m_store->save(*m_conversation, std::move(turn));
 }
 
 void ChatSession::generateTitle() {

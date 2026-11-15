@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <format>
 #include <optional>
 #include <string>
 
@@ -16,6 +17,12 @@ struct ResourcePart {
   std::optional<QByteArray> data;
   std::optional<std::string> path;
   Status status = Status::Available;
+
+  std::string describe() const {
+    const auto &location = path ? path : uri;
+    return std::format("(attachment: {}{})", name.value_or("attachment"),
+                       location ? std::format(" — {}", *location) : std::string{});
+  }
 };
 
 } // namespace AI

@@ -60,7 +60,7 @@ public:
 
   QFuture<Result<std::vector<ConversationInfo>>> list();
   QFuture<Result<Conversation>> load(std::string id);
-  void save(ConversationInfo info, ConversationTurn turn);
+  QFuture<Result<void>> save(ConversationInfo info, ConversationTurn turn);
   void setTitle(std::string id, std::string title);
   void setModel(std::string id, std::optional<ModelRef> model);
   QFuture<Result<void>> remove(std::string id);

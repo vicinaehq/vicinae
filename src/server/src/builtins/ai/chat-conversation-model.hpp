@@ -64,7 +64,8 @@ public:
   void beginExchange(const std::string &query, QVariantList attachments = {});
   void appendResponse(std::string_view text);
   void appendSavedResponse(std::string text);
-  void appendImage(QString source);
+  std::optional<int> appendImage(QString source);
+  void setImageSource(int exchange, int content, QString source);
   void appendAttachment(QVariantMap item);
   void finishExchange(const std::string &error = {});
 

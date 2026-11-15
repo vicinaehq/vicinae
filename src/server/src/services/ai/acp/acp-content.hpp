@@ -41,12 +41,13 @@ struct ToolContent {
 };
 
 inline std::optional<ImagePart> imageContent(const ContentBlock &block) {
+  constexpr qint64 MAX_LINKED_IMAGE_BYTES = 20 * 1024 * 1024;
   if (block.type == "resource_link" && block.uri) {
     const auto uri = QString::fromStdString(*block.uri);
     const QUrl url(uri);
     const auto path = url.isLocalFile() ? url.toLocalFile() : uri;
     const QFileInfo info(path);
-    if (!info.isAbsolute() || !info.isFile()) return std::nullopt;
+    if (!info.isAbsolute() || !info.isFile() || info.size() > MAX_LINKED_IMAGE_BYTES) return std::nullopt;
     const auto mime = QMimeDatabase().mimeTypeForFile(path, QMimeDatabase::MatchContent).name();
     if (!mime.startsWith(QLatin1String("image/"))) return std::nullopt;
     QFile file(path);
@@ -98,20 +99,11 @@ inline ResourcePart resourceContent(const ContentBlock &block) {
     result.uri = url.toString().toStdString();
     if (!result.name && !url.fileName().isEmpty()) result.name = url.fileName().toStdString();
     if (url.isLocalFile() && !result.data) {
-      const QFileInfo info(url.toLocalFile());
-      QFile file(info.absoluteFilePath());
-      if (info.isFile() && file.open(QIODevice::ReadOnly)) {
-        if (!result.mimeType)
-          result.mimeType =
-              QMimeDatabase().mimeTypeForFile(info, QMimeDatabase::MatchContent).name().toStdString();
-        if (file.size() <= MAX_RESOURCE_BYTES) {
-          auto bytes = file.read(MAX_RESOURCE_BYTES + 1);
-          if (file.error() == QFileDevice::NoError && bytes.size() <= MAX_RESOURCE_BYTES)
-            result.data = std::move(bytes);
-        }
-      } else {
-        result.status = ResourcePart::Status::Unavailable;
-      }
+      if (!result.mimeType)
+        result.mimeType = QMimeDatabase()
+                              .mimeTypeForFile(url.toLocalFile(), QMimeDatabase::MatchExtension)
+                              .name()
+                              .toStdString();
     } else if (!url.isLocalFile() && url.scheme() != QLatin1String("https") &&
                url.scheme() != QLatin1String("http") && !result.data) {
       result.status = ResourcePart::Status::Unsupported;
@@ -149,47 +141,55 @@ inline Media mediaContent(const ContentBlock &block) {
   return resourceContent(block);
 }
 
-// Tool content updates replace the current snapshot and can resend earlier media.
 class ToolMedia {
 public:
   void replace(std::span<const ToolContent> contents) {
-    m_media.clear();
-    m_media.reserve(contents.size());
+    m_pending.clear();
+    m_pending.reserve(contents.size());
     for (const auto &item : contents) {
       if (item.type == "content" && item.content && item.content->type != "text")
-        m_media.emplace_back(mediaContent(*item.content));
+        m_pending.emplace_back(*item.content);
       else if (item.type != "content" && item.type != "diff")
-        m_media.emplace_back(ResourcePart{.status = ResourcePart::Status::Unsupported});
+        m_pending.emplace_back(std::nullopt);
     }
   }
 
   std::vector<Media> takeNew() {
     std::vector<Media> media;
-    media.reserve(m_media.size());
-    m_published.reserve(m_published.size() + m_media.size());
-    for (auto &item : m_media) {
-      QCryptographicHash hash(QCryptographicHash::Sha256);
-      if (const auto *image = std::get_if<ImagePart>(&item)) {
-        hash.addData(image->base64);
-      } else {
-        const auto &resource = std::get<ResourcePart>(item);
-        for (const auto &field : {resource.name, resource.mimeType, resource.uri}) {
-          hash.addData(QByteArray::fromStdString(field.value_or("")));
-          hash.addData(QByteArrayView("\0", 1));
-        }
-        if (resource.data) hash.addData(*resource.data);
-      }
-      const auto digest = hash.result();
+    media.reserve(m_pending.size());
+    m_published.reserve(m_published.size() + m_pending.size());
+    for (const auto &block : m_pending) {
+      auto digest = fingerprint(block);
       if (std::ranges::contains(m_published, digest)) continue;
-      m_published.emplace_back(digest);
-      media.emplace_back(std::move(item));
+      m_published.emplace_back(std::move(digest));
+      if (block)
+        media.emplace_back(mediaContent(*block));
+      else
+        media.emplace_back(ResourcePart{.status = ResourcePart::Status::Unsupported});
     }
-    m_media.clear();
+    m_pending.clear();
     return media;
   }
 
 private:
-  std::vector<Media> m_media;
+  static QByteArray fingerprint(const std::optional<ContentBlock> &block) {
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    const auto add = [&hash](const std::optional<std::string> &field) {
+      hash.addData(QByteArrayView(field.value_or("")));
+      hash.addData(QByteArrayView("\0", 1));
+    };
+    if (block) {
+      for (const auto *field :
+           {&block->type, &block->text, &block->data, &block->mimeType, &block->uri, &block->name})
+        add(*field);
+      if (const auto &resource = block->resource)
+        for (const auto *field : {&resource->mimeType, &resource->blob, &resource->text, &resource->uri})
+          add(*field);
+    }
+    return hash.result();
+  }
+
+  std::vector<std::optional<ContentBlock>> m_pending;
   std::vector<QByteArray> m_published;
 };
 

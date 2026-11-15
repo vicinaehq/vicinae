@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QFuture>
 #include <QObject>
 #include <QTimer>
 #include <QVariantList>
@@ -10,6 +11,7 @@
 #include "chat-conversation-model.hpp"
 #include "chat-document-model.hpp"
 #include "services/ai/agentic-loop.hpp"
+#include "services/ai/ai-provider.hpp"
 #include "services/ai/conversation-store.hpp"
 #include "ui/quick/attachment-model.hpp"
 
@@ -108,7 +110,7 @@ public:
 
 private:
   void initialize();
-  void saveTurn();
+  std::optional<QFuture<AI::Result<void>>> saveTurn();
   void generateTitle();
   ChatConversationModel::Tool toolItem(const AI::Agent::ToolCall &call) const;
   void restoreConversation(AI::Conversation conversation);
