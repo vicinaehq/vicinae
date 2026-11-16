@@ -7,8 +7,10 @@
 #include <QQuickItem>
 #include <QTextBlock>
 #include <QTextCursor>
+#include <algorithm>
 #include <limits>
 #include <unordered_set>
+#include <vector>
 #include "editor-document.hpp"
 
 namespace Vicinae::Editor {
@@ -234,6 +236,7 @@ bool EditorDocument::replace(const QVariantMap &snapshot, const QString &replace
 }
 
 void EditorDocument::wrap(int start, int end, const QString &marker) {
+  if (marker.isEmpty()) return;
   const auto selection = snapshot(start, end);
   if (selection.isEmpty()) return;
   const auto selected = selection.value("text").toString();
@@ -246,6 +249,188 @@ void EditorDocument::wrap(int start, int end, const QString &marker) {
   } else if (replace(selection, marker + selected + marker)) {
     emit selectionRequested(start + marker.size(), end + marker.size());
   }
+}
+
+void EditorDocument::format(int start, int end, Format format) {
+  if (!validRange(start, end)) return;
+  if (format >= Bold && format <= Link && start != end) {
+    // Native whole-line selections include the paragraph separator. Keep boundary
+    // whitespace outside inline markers so the following line stays untouched.
+    while (start < end && m_document->characterAt(start).isSpace())
+      ++start;
+    while (end > start && m_document->characterAt(end - 1).isSpace())
+      --end;
+    if (start == end) return;
+  }
+  switch (format) {
+  case Bold:
+    return wrap(start, end, QStringLiteral("**"));
+  case Italic:
+    return wrap(start, end, QStringLiteral("*"));
+  case StrikeThrough:
+    return wrap(start, end, QStringLiteral("~~"));
+  case InlineCode: {
+    const auto selection = snapshot(start, end);
+    const auto selected = selection.value("text").toString();
+    int opening = 0;
+    int closing = 0;
+    while (opening < selected.size() && selected.at(opening) == '`')
+      ++opening;
+    while (closing < selected.size() && selected.at(selected.size() - closing - 1) == '`')
+      ++closing;
+    if (opening > 0 && opening == closing && selected.size() > opening + closing) {
+      auto content = selected.mid(opening, selected.size() - opening - closing);
+      if (content.startsWith(' ') && content.endsWith(' ') && !content.trimmed().isEmpty())
+        content = content.mid(1, content.size() - 2);
+      replace(selection, content);
+      return;
+    }
+    // Use a longer delimiter when the selected source itself contains backticks.
+    static const QRegularExpression TICKS(QStringLiteral("`+"));
+    int length = 1;
+    for (const auto &match : TICKS.globalMatch(selected))
+      length = std::max(length, static_cast<int>(match.capturedLength()) + 1);
+    const bool surroundedByPadding =
+        start > 1 && end + 1 < m_document->characterCount() - 1 &&
+        m_document->characterAt(start - 1) == ' ' && m_document->characterAt(end) == ' ' &&
+        m_document->characterAt(start - 2) == '`' && m_document->characterAt(end + 1) == '`';
+    const auto contentStart = start - (surroundedByPadding ? 1 : 0);
+    const auto contentEnd = end + (surroundedByPadding ? 1 : 0);
+    if (contentStart > 0 && contentEnd < m_document->characterCount() - 1 &&
+        m_document->characterAt(contentStart - 1) == '`' && m_document->characterAt(contentEnd) == '`') {
+      int before = contentStart;
+      int after = contentEnd;
+      while (before > 0 && m_document->characterAt(before - 1) == '`')
+        --before;
+      while (after < m_document->characterCount() - 1 && m_document->characterAt(after) == '`')
+        ++after;
+      if (contentStart - before == after - contentEnd) {
+        replace(snapshot(before, after), selected);
+        return;
+      }
+    }
+    const auto marker = QString(length, '`');
+    const bool padded = selected.startsWith('`') || selected.endsWith('`');
+    const auto padding = padded ? QStringLiteral(" ") : QString{};
+    if (replace(selection, marker + padding + selected + padding + marker))
+      emit selectionRequested(start + length + padding.size(), end + length + padding.size());
+    return;
+  }
+  case Link: {
+    const auto selection = snapshot(start, end);
+    auto label = selection.value("text").toString();
+    label.replace('\\', QStringLiteral("\\\\"));
+    label.replace('[', QStringLiteral("\\["));
+    label.replace(']', QStringLiteral("\\]"));
+    const auto replacement = '[' + label + QStringLiteral("](https://)");
+    if (replace(selection, replacement))
+      emit selectionRequested(start + label.size() + 3, start + replacement.size() - 1);
+    return;
+  }
+  case CodeBlock:
+    return formatCodeBlock(start, end);
+  default:
+    return formatLines(start, end, format);
+  }
+}
+
+void EditorDocument::formatLines(int start, int end, Format format) {
+  const bool heading = format >= Heading1 && format <= Heading6;
+  if (!heading && format != BulletList && format != NumberedList && format != TaskList && format != Quote)
+    return;
+  static const QRegularExpression PREFIX(
+      R"(^([\t ]*)(?:(#{1,6})[\t ]+|([-+*]|\d+[.)])[\t ]+(\[[ xX]\][\t ]+)?|(>)[\t ]?)?)");
+  static const QRegularExpression QUOTE_PREFIX(R"(^([\t ]*)(>)[\t ]?)");
+  struct Line {
+    QTextBlock block;
+    int indent;
+    int prefix;
+    bool matches;
+  };
+  const auto first = m_document->findBlock(start);
+  const auto last = m_document->findBlock(end > start ? end - 1 : end);
+  std::vector<Line> lines;
+  lines.reserve(last.blockNumber() - first.blockNumber() + 1);
+  bool remove = true;
+  for (auto block = first; block.isValid(); block = block.next()) {
+    const auto text = block.text();
+    if (!text.trimmed().isEmpty()) {
+      const auto match = PREFIX.match(text);
+      const auto quote = QUOTE_PREFIX.match(text);
+      const auto marker = match.captured(3);
+      const bool numbered = !marker.isEmpty() && marker.front().isDigit();
+      const bool matches = heading              ? match.capturedLength(2) == format - Heading1 + 1
+                           : format == Quote    ? quote.hasMatch()
+                           : format == TaskList ? !match.captured(4).isEmpty()
+                           : format == NumberedList
+                               ? numbered && match.captured(4).isEmpty()
+                               : !marker.isEmpty() && !numbered && match.captured(4).isEmpty();
+      remove &= matches;
+      const auto prefixLength = format == Quote
+                                    ? (quote.hasMatch() ? quote.capturedLength() : match.capturedLength(1))
+                                    : match.capturedLength();
+      lines.emplace_back(block, match.capturedLength(1), prefixLength, matches);
+    }
+    if (block == last) break;
+  }
+  QTextCursor selection(m_document);
+  selection.setPosition(start);
+  selection.setPosition(end, QTextCursor::KeepAnchor);
+  QTextCursor cursor(m_document);
+  cursor.beginEditBlock();
+  int number = 1;
+  for (const auto &line : lines) {
+    QString marker;
+    if (!remove) {
+      if (heading)
+        marker = QString(format - Heading1 + 1, '#') + ' ';
+      else if (format == Quote)
+        marker = QStringLiteral("> ");
+      else if (format == TaskList)
+        marker = QStringLiteral("- [ ] ");
+      else if (format == NumberedList)
+        marker = QString::number(number++) + QStringLiteral(". ");
+      else
+        marker = QStringLiteral("- ");
+      if (line.matches && format != NumberedList) continue;
+    }
+    cursor.setPosition(line.block.position() + line.indent);
+    cursor.setPosition(line.block.position() + line.prefix, QTextCursor::KeepAnchor);
+    cursor.insertText(marker);
+  }
+  cursor.endEditBlock();
+  emit selectionRequested(selection.selectionStart(), selection.selectionEnd());
+}
+
+void EditorDocument::formatCodeBlock(int start, int end) {
+  auto first = m_document->findBlock(start);
+  auto last = m_document->findBlock(end > start ? end - 1 : end);
+  static const QRegularExpression FENCE(R"(^(`{3,}|~{3,})[^`~]*$)");
+  auto opening = FENCE.match(first.text());
+  if (!opening.hasMatch() && first.previous().isValid() && last.next().isValid()) {
+    opening = FENCE.match(first.previous().text());
+    if (opening.hasMatch() && last.next().text().trimmed() == opening.captured(1)) {
+      first = first.previous();
+      last = last.next();
+    } else {
+      opening = {};
+    }
+  }
+  const auto range = snapshot(first.position(), last.position() + last.text().size());
+  const auto selected = range.value("text").toString();
+  if (opening.hasMatch() && first != last && last.text().trimmed() == opening.captured(1)) {
+    replace(range, selected.mid(first.text().size() + 1,
+                                selected.size() - first.text().size() - last.text().size() - 2));
+    return;
+  }
+  static const QRegularExpression TICKS(QStringLiteral("`+"));
+  int length = 3;
+  for (const auto &match : TICKS.globalMatch(selected))
+    length = std::max(length, static_cast<int>(match.capturedLength()) + 1);
+  const auto fence = QString(length, '`');
+  const auto contentStart = first.position() + length + 1;
+  if (replace(range, fence + '\n' + selected + '\n' + fence))
+    emit selectionRequested(contentStart, contentStart + selected.size());
 }
 
 int EditorDocument::continueLine(int position) {

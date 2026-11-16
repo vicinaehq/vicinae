@@ -45,6 +45,22 @@ The component also provides native clipboard operations, formatting shortcuts,
 list continuation, and literal in-note find. Launcher search remains the host's
 responsibility and uses Vicinae's fuzzy search.
 
+Selecting text reveals a formatting toolbar after the pointer is released.
+Inline, code, list, and quote actions are directly accessible, with groups wrapping
+onto a second row in narrow panes. The heading button reveals H1–H6 inside the
+toolbar instead of opening a separate menu.
+It stays within the editor pane, preserves the selection when clicked, and hides
+while scrolling or composing text. Escape dismisses it without clearing the
+selection. The host supplies toolbar colors and optional icon URLs; the library
+has text fallbacks and no dependency on application icons.
+`format(start, end, Format)` applies inline formatting, links, headings, lists,
+quotes, or fenced code as one undoable edit. Block actions operate on the selected
+lines, excluding a following line when the selection ends at its start. Inline
+actions keep boundary whitespace outside their markers, including the trailing
+newline in a native whole-line selection. Whitespace-only selections are left alone. Link
+insertion selects the URL placeholder. External selection actions can use the
+snapshot/replace API above; no AI service is part of the editor.
+
 Run the editor and notes persistence checks from the repository root:
 
 ```sh
