@@ -1,5 +1,16 @@
 # Notes window
 
+The toolbar offers Edit, Side by side, and Preview. Side by side keeps the
+native editor on the left and a live preview on the right, with a draggable
+divider and independent scrolling. Find stays in the editor pane. Switching
+views retains the editor document, selection, and undo history.
+
+Live preview refreshes on the next event-loop turn, without waiting for a pause
+in typing. Parsing runs off the UI thread, with overlapping requests coalesced.
+Completed snapshots keep appearing during continuous typing. Updates preserve
+unchanged preview blocks so editing does not reset the reading position or
+relayout the whole note.
+
 Notes use a normal, resizable top-level window. The window manager decides
 whether it floats or tiles; it is not a dialog or an always-on-top utility.
 

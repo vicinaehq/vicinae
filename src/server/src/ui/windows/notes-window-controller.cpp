@@ -29,6 +29,12 @@ NotesWindowController::NotesWindowController(ApplicationContext &context, std::s
   m_idleSave.setInterval(500);
   m_maxSave.setSingleShot(true);
   m_maxSave.setInterval(3000);
+  m_previewUpdate.setSingleShot(true);
+  m_previewUpdate.setInterval(0);
+  connect(&m_previewUpdate, &QTimer::timeout, this, &NotesWindowController::refreshPreview);
+  connect(&m_document, &Vicinae::Editor::EditorDocument::textChanged, this, [this] {
+    if (m_viewMode == Split) m_previewUpdate.start();
+  });
   connect(&m_document, &Vicinae::Editor::EditorDocument::textChanged, this, &NotesWindowController::edited);
   connect(&m_idleSave, &QTimer::timeout, this, &NotesWindowController::save);
   connect(&m_maxSave, &QTimer::timeout, this, &NotesWindowController::save);
@@ -100,9 +106,10 @@ void NotesWindowController::activate(Notes::Note note, bool persisted) {
   m_loading = false;
   m_error.clear();
   m_document.load(QString::fromStdString(m_note.id), QString::fromStdString(m_note.markdown));
-  m_preview = false;
+  m_viewMode = Edit;
+  m_previewUpdate.stop();
   emit titleChanged();
-  emit previewChanged();
+  emit viewModeChanged();
   emit stateChanged();
 }
 
@@ -215,13 +222,20 @@ bool NotesWindowController::requestClose() {
   return true;
 }
 
-void NotesWindowController::setPreview(bool preview) {
-  if (m_preview == preview) return;
+void NotesWindowController::setViewMode(ViewMode mode) {
+  if (m_viewMode == mode) return;
   QGuiApplication::inputMethod()->commit();
-  m_preview = preview;
-  if (preview) m_previewModel.setMarkdownAsync(m_document.text());
-  emit previewChanged();
-  if (!preview) emit focusRequested();
+  m_viewMode = mode;
+  m_previewUpdate.stop();
+  if (mode != Edit) refreshPreview();
+  emit viewModeChanged();
+  if (mode != Preview) emit focusRequested();
+}
+
+void NotesWindowController::refreshPreview() {
+  if (m_closed || m_viewMode == Edit) return;
+  auto markdown = m_document.text();
+  if (markdown != m_previewModel.markdown()) m_previewModel.setMarkdownAsync(std::move(markdown), true);
 }
 
 void NotesWindowController::search(QQuickItem *anchor) {

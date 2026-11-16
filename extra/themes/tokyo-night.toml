@@ -25,6 +25,18 @@ red = "#F7768E"
 yellow = "#E0AF68"
 cyan = "#7DCFFF"
 
+[colors.syntax]
+keyword = "colors.accents.magenta"
+control_flow = "colors.accents.magenta"
+function = "colors.accents.blue"
+type = "colors.accents.cyan"
+constant = "colors.accents.orange"
+attribute = "colors.accents.cyan"
+preprocessor = "colors.accents.magenta"
+special = "colors.accents.cyan"
+heading = "colors.accents.blue"
+emphasis = "colors.accents.magenta"
+
 [colors.list.item.selection]
 background = "#393d59"
 secondary_background = "#3B4261"

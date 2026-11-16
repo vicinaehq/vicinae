@@ -23,7 +23,7 @@ class NotesWindowController : public QObject {
   Q_PROPERTY(QString status READ status NOTIFY stateChanged)
   Q_PROPERTY(QString error READ error NOTIFY stateChanged)
   Q_PROPERTY(bool loading READ loading NOTIFY stateChanged)
-  Q_PROPERTY(bool preview READ preview WRITE setPreview NOTIFY previewChanged)
+  Q_PROPERTY(ViewMode viewMode READ viewMode WRITE setViewMode NOTIFY viewModeChanged)
 
 public:
   Q_INVOKABLE void newNote();
@@ -35,11 +35,14 @@ public:
 signals:
   void titleChanged();
   void stateChanged();
-  void previewChanged();
+  void viewModeChanged();
   void focusRequested();
   void closed();
 
 public:
+  enum ViewMode { Edit, Split, Preview };
+  Q_ENUM(ViewMode)
+
   NotesWindowController(ApplicationContext &context, std::string id, QObject *parent);
   ~NotesWindowController() override;
   static NotesWindowController *create(QQmlEngine *engine, QJSEngine *) {
@@ -54,14 +57,15 @@ public:
   QString status() const;
   QString error() const { return m_error; }
   bool loading() const { return m_loading; }
-  bool preview() const { return m_preview; }
-  void setPreview(bool preview);
+  ViewMode viewMode() const { return m_viewMode; }
+  void setViewMode(ViewMode mode);
 
 private:
   bool eventFilter(QObject *object, QEvent *event) override;
   void ensureWindow();
   void activate(Notes::Note note, bool persisted);
   void edited();
+  void refreshPreview();
   void finishSave();
   bool flush();
   Notes::Note snapshot() const;
@@ -73,6 +77,7 @@ private:
   QFutureWatcher<Notes::Result<void>> m_save;
   QTimer m_idleSave;
   QTimer m_maxSave;
+  QTimer m_previewUpdate;
   QString m_error;
   std::uint64_t m_serial = 0;
   std::uint64_t m_savedSerial = 0;
@@ -81,7 +86,7 @@ private:
   bool m_saving = false;
   bool m_persisted = false;
   bool m_loading = false;
-  bool m_preview = false;
+  ViewMode m_viewMode = Edit;
   bool m_closed = false;
   QPointer<QQuickWindow> m_window;
   std::unique_ptr<QQmlApplicationEngine> m_engine;

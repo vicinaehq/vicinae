@@ -25,6 +25,23 @@ red = "#EB6F92"               # love
 yellow = "#F6C177"            # gold
 cyan = "#9CCFD8"              # foam
 
+[colors.syntax]
+keyword = "colors.accents.blue"
+control_flow = "colors.accents.blue"
+function = "colors.accents.orange"
+type = "colors.accents.yellow"
+string = "colors.accents.yellow"
+number = "colors.accents.orange"
+constant = "colors.accents.orange"
+attribute = "colors.accents.purple"
+preprocessor = "colors.accents.red"
+special = "colors.accents.cyan"
+heading = "colors.accents.orange"
+emphasis = "colors.accents.purple"
+link = "colors.accents.cyan"
+link_target = "colors.accents.purple"
+inline_code = "colors.accents.yellow"
+
 [colors.list.item.selection]
 background = "#3b3a53"
 secondary_background = "#403D52"
