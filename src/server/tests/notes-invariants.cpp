@@ -445,6 +445,265 @@ private slots:
     QCOMPARE(editor.text(), "**hello**");
   }
 
+  void selectionFormatting_data() {
+    using Editor = Vicinae::Editor::EditorDocument;
+    QTest::addColumn<QString>("source");
+    QTest::addColumn<int>("start");
+    QTest::addColumn<int>("end");
+    QTest::addColumn<int>("format");
+    QTest::addColumn<QString>("expected");
+    QTest::addColumn<QString>("selected");
+    QTest::newRow("bold-unicode") << QString("hello 👋") << 6 << 8 << int(Editor::Bold)
+                                  << QString("hello **👋**") << QString("👋");
+    QTest::newRow("italic") << QString("hello") << 0 << 5 << int(Editor::Italic) << QString("*hello*")
+                            << QString("hello");
+    QTest::newRow("strike") << QString("hello") << 0 << 5 << int(Editor::StrikeThrough)
+                            << QString("~~hello~~") << QString("hello");
+    QTest::newRow("bold-line-selection") << QString("hello\nnext line") << 0 << 6 << int(Editor::Bold)
+                                         << QString("**hello**\nnext line") << QString("hello");
+    QTest::newRow("italic-line-selection") << QString("hello\nnext line") << 0 << 6 << int(Editor::Italic)
+                                           << QString("*hello*\nnext line") << QString("hello");
+    QTest::newRow("strike-line-selection")
+        << QString("hello\nnext line") << 0 << 6 << int(Editor::StrikeThrough)
+        << QString("~~hello~~\nnext line") << QString("hello");
+    QTest::newRow("inline-line-selection") << QString("hello\nnext line") << 0 << 6 << int(Editor::InlineCode)
+                                           << QString("`hello`\nnext line") << QString("hello");
+    QTest::newRow("bold-boundary-whitespace")
+        << QString("  hello  \n\nnext line") << 0 << 11 << int(Editor::Bold)
+        << QString("  **hello**  \n\nnext line") << QString("hello");
+    QTest::newRow("bold-unicode-line-selection") << QString("👋\nnext line") << 0 << 3 << int(Editor::Bold)
+                                                 << QString("**👋**\nnext line") << QString("👋");
+    QTest::newRow("inline") << QString("hello") << 0 << 5 << int(Editor::InlineCode) << QString("`hello`")
+                            << QString("hello");
+    QTest::newRow("embedded-ticks") << QString("a `tick` here") << 0 << 13 << int(Editor::InlineCode)
+                                    << QString("``a `tick` here``") << QString("a `tick` here");
+    QTest::newRow("edge-ticks") << QString("`tick") << 0 << 5 << int(Editor::InlineCode)
+                                << QString("`` `tick ``") << QString("`tick");
+    QTest::newRow("selected-code-span")
+        << QString("`hello`") << 0 << 7 << int(Editor::InlineCode) << QString("hello") << QString("hello");
+    QTest::newRow("heading-partial") << QString("hello world\nnext") << 0 << 5 << int(Editor::Heading2)
+                                     << QString("## hello world\nnext") << QString("hello");
+    QTest::newRow("heading-six") << QString("title") << 0 << 5 << int(Editor::Heading6)
+                                 << QString("###### title") << QString("title");
+    QTest::newRow("bullets-exclusive-end")
+        << QString("one\ntwo\nuntouched") << 0 << 8 << int(Editor::BulletList)
+        << QString("- one\n- two\nuntouched") << QString("one\n- two\n");
+    QTest::newRow("numbered") << QString("one\ntwo") << 0 << 7 << int(Editor::NumberedList)
+                              << QString("1. one\n2. two") << QString("one\n2. two");
+    QTest::newRow("tasks") << QString("one\ntwo") << 0 << 7 << int(Editor::TaskList)
+                           << QString("- [ ] one\n- [ ] two") << QString("one\n- [ ] two");
+    QTest::newRow("indented-list") << QString("  one\n  two") << 2 << 11 << int(Editor::BulletList)
+                                   << QString("  - one\n  - two") << QString("one\n  - two");
+    QTest::newRow("quote-keeps-markdown") << QString("- one\n## two") << 0 << 12 << int(Editor::Quote)
+                                          << QString("> - one\n> ## two") << QString("- one\n> ## two");
+    QTest::newRow("code-block") << QString("one\ntwo\nnext") << 0 << 8 << int(Editor::CodeBlock)
+                                << QString("```\none\ntwo\n```\nnext") << QString("one\ntwo");
+    QTest::newRow("fence-in-code") << QString("```cpp\ncode\n```") << 0 << 15 << int(Editor::CodeBlock)
+                                   << QString("code") << QString("code");
+  }
+
+  void selectionFormatting() {
+    QFETCH(QString, source);
+    QFETCH(int, start);
+    QFETCH(int, end);
+    QFETCH(int, format);
+    QFETCH(QString, expected);
+    QFETCH(QString, selected);
+    using Editor = Vicinae::Editor::EditorDocument;
+    QTextDocument text;
+    Editor editor;
+    editor.attach(&text);
+    editor.load("format", source);
+    QSignalSpy selections(&editor, &Editor::selectionRequested);
+    editor.format(start, end, static_cast<Editor::Format>(format));
+    QCOMPARE(editor.text(), expected);
+    QVERIFY(!selections.isEmpty());
+    const auto range = selections.last();
+    QCOMPARE(editor.snapshot(range[0].toInt(), range[1].toInt()).value("text").toString(), selected);
+    text.undo();
+    QCOMPARE(editor.text(), source);
+    QVERIFY(!text.isUndoAvailable());
+    text.redo();
+    QCOMPARE(editor.text(), expected);
+    if (format != Editor::CodeBlock) {
+      editor.format(range[0].toInt(), range[1].toInt(), static_cast<Editor::Format>(format));
+      QCOMPARE(editor.text(), source);
+    }
+  }
+
+  void formattingLinksAndMixedBlocks() {
+    using Editor = Vicinae::Editor::EditorDocument;
+    QTextDocument text;
+    Editor editor;
+    editor.attach(&text);
+    QSignalSpy selections(&editor, &Editor::selectionRequested);
+    editor.load("link", "a [label]");
+    editor.format(0, 9, Editor::Link);
+    QCOMPARE(editor.text(), "[a \\[label\\]](https://)");
+    const auto range = selections.last();
+    QCOMPARE(editor.snapshot(range[0].toInt(), range[1].toInt()).value("text").toString(), "https://");
+    text.undo();
+    QCOMPARE(editor.text(), "a [label]");
+    editor.load("link-line", "label\nnext line");
+    editor.format(0, 6, Editor::Link);
+    QCOMPARE(editor.text(), "[label](https://)\nnext line");
+    text.undo();
+    QCOMPARE(editor.text(), "label\nnext line");
+    for (const auto format :
+         {Editor::Bold, Editor::Italic, Editor::StrikeThrough, Editor::InlineCode, Editor::Link}) {
+      editor.load("blank-line", " \t\n\nnext line");
+      editor.format(0, 4, format);
+      QCOMPARE(editor.text(), " \t\n\nnext line");
+      QVERIFY(!text.isUndoAvailable());
+    }
+
+    editor.load("mixed", "- [x] done\npending");
+    editor.format(0, 18, Editor::TaskList);
+    QCOMPARE(editor.text(), "- [x] done\n- [ ] pending");
+    editor.load("heading", "## old\nplain");
+    editor.format(0, 12, Editor::Heading1);
+    QCOMPARE(editor.text(), "# old\n# plain");
+    editor.load("fence", "some ``` ticks");
+    editor.format(0, 14, Editor::CodeBlock);
+    QCOMPARE(editor.text(), "````\nsome ``` ticks\n````");
+    const auto codeRange = selections.last();
+    editor.format(codeRange[0].toInt(), codeRange[1].toInt(), Editor::CodeBlock);
+    QCOMPARE(editor.text(), "some ``` ticks");
+    editor.format(-1, 5, Editor::Bold);
+    editor.format(0, 100, Editor::Quote);
+    QCOMPARE(editor.text(), "some ``` ticks");
+  }
+
+  void selectionToolbarPreservesFocusAndUndo() {
+    QQmlEngine engine;
+    Vicinae::Editor::EditorDocument editor;
+    QQuickWindow window;
+    window.resize(800, 600);
+    QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qt/qml/Vicinae/Editor/MarkdownEditor.qml")));
+    auto *item = qobject_cast<QQuickItem *>(
+        component.createWithInitialProperties({{"document", QVariant::fromValue(&editor)}}));
+    QVERIFY2(item, qPrintable(component.errorString()));
+    item->setParent(&window);
+    item->setParentItem(window.contentItem());
+    item->setSize(QSizeF(800, 600));
+    auto *edit = qobject_cast<QQuickItem *>(editor.textDocument()->parent());
+    auto *toolbar = item->findChild<QQuickItem *>("markdown-selection-toolbar");
+    QVERIFY(edit);
+    QVERIFY(toolbar);
+    const auto action = [toolbar](QStringView label) -> QQuickItem * {
+      const auto find = [label](auto &&self, QQuickItem *item) -> QQuickItem * {
+        if (item->property("label").toString() == label) return item;
+        for (auto *child : item->childItems())
+          if (auto *match = self(self, child)) return match;
+        return nullptr;
+      };
+      return find(find, toolbar);
+    };
+    auto *bold = action(u"Bold");
+    QVERIFY(bold);
+    editor.load("toolbar", "hello world\n\n" + QStringLiteral("Another line\n").repeated(1000));
+    window.show();
+    window.requestActivate();
+    QVERIFY(QTest::qWaitForWindowActive(&window));
+    edit->forceActiveFocus();
+    QMetaObject::invokeMethod(edit, "select", Q_ARG(int, 0), Q_ARG(int, 5));
+    QTRY_VERIFY(toolbar->isVisible());
+    QVERIFY(toolbar->x() >= 0 && toolbar->x() + toolbar->width() <= item->width());
+    QVERIFY(toolbar->y() >= 0 && toolbar->y() + toolbar->height() <= item->height());
+    QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier,
+                      bold->mapToScene(bold->boundingRect().center()).toPoint());
+    QTRY_VERIFY(editor.text().startsWith("**hello** world"));
+    QVERIFY(edit->hasActiveFocus());
+    QCOMPARE(edit->property("selectedText").toString(), "hello");
+    editor.textDocument()->textDocument()->undo();
+    QVERIFY(editor.text().startsWith("hello world"));
+    QMetaObject::invokeMethod(edit, "select", Q_ARG(int, 0), Q_ARG(int, 5));
+    QTRY_VERIFY(toolbar->isVisible());
+    QTest::keyClick(&window, Qt::Key_Escape);
+    QTRY_VERIFY(!toolbar->isVisible());
+    QCOMPARE(edit->property("selectedText").toString(), "hello");
+    QMetaObject::invokeMethod(edit, "select", Q_ARG(int, 6), Q_ARG(int, 11));
+    QTRY_VERIFY(toolbar->isVisible());
+    item->setWidth(220);
+    QTRY_VERIFY(toolbar->x() + toolbar->width() <= 220);
+    QTRY_VERIFY(toolbar->height() > 60);
+    for (const auto label : {u"Heading", u"Bold", u"Italic", u"Strikethrough", u"Link", u"Inline Code",
+                             u"Code Block", u"Bulleted List", u"Numbered List", u"Task List", u"Quote"}) {
+      auto *button = action(label);
+      QVERIFY(button);
+      QVERIFY(button->isVisible());
+      const auto rect = button->mapRectToItem(toolbar, button->boundingRect());
+      QVERIFY(toolbar->boundingRect().contains(rect));
+    }
+    auto *viewport = item->property("flickable").value<QQuickItem *>();
+    viewport->setProperty("contentY", 1600);
+    QTRY_VERIFY(!toolbar->isVisible());
+    viewport->setProperty("contentY", 0);
+    QTRY_VERIFY(toolbar->isVisible());
+    QTest::keyClick(&window, Qt::Key_X);
+    QTRY_VERIFY(!toolbar->isVisible());
+    QVERIFY(editor.text().startsWith("hello x"));
+
+    editor.load("toolbar", "selected text");
+    QMetaObject::invokeMethod(edit, "select", Q_ARG(int, 0), Q_ARG(int, 8));
+    QTRY_VERIFY(toolbar->isVisible());
+    auto *taskAction = action(u"Task List");
+    QVERIFY(taskAction);
+    QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier,
+                      taskAction->mapToScene(taskAction->boundingRect().center()).toPoint());
+    QTRY_COMPARE(editor.text(), "- [ ] selected text");
+    QTRY_VERIFY(edit->hasActiveFocus());
+    QCOMPARE(edit->property("selectedText").toString(), "selected");
+    editor.textDocument()->textDocument()->undo();
+    QCOMPARE(editor.text(), "selected text");
+
+    editor.load("line-selection", "selected line\nnext line");
+    QMetaObject::invokeMethod(edit, "select", Q_ARG(int, 0), Q_ARG(int, 14));
+    QTRY_VERIFY(toolbar->isVisible());
+    QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier,
+                      bold->mapToScene(bold->boundingRect().center()).toPoint());
+    QTRY_COMPARE(editor.text(), "**selected line**\nnext line");
+    QCOMPARE(edit->property("selectedText").toString(), "selected line");
+    QTest::keySequence(&window, QKeySequence::Undo);
+    QCOMPARE(editor.text(), "selected line\nnext line");
+
+    QMetaObject::invokeMethod(edit, "select", Q_ARG(int, 0), Q_ARG(int, 14));
+    auto *heading = action(u"Heading");
+    QVERIFY(heading);
+    QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier,
+                      heading->mapToScene(heading->boundingRect().center()).toPoint());
+    QTRY_VERIFY(toolbar->property("headingsVisible").toBool());
+    auto *heading2 = action(u"Heading 2");
+    QVERIFY(heading2);
+    QVERIFY(heading2->isVisible());
+    QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier,
+                      heading2->mapToScene(heading2->boundingRect().center()).toPoint());
+    QTRY_COMPARE(editor.text(), "## selected line\nnext line");
+    QVERIFY(!toolbar->property("headingsVisible").toBool());
+    QVERIFY(edit->hasActiveFocus());
+    editor.textDocument()->textDocument()->undo();
+    QCOMPARE(editor.text(), "selected line\nnext line");
+
+    item->setWidth(410);
+    editor.load("resize", "A native Markdown note\n\nSelect this line\nFollowing line");
+    QMetaObject::invokeMethod(edit, "select", Q_ARG(int, 24), Q_ARG(int, 40));
+    QTRY_VERIFY(toolbar->isVisible());
+    window.grabWindow();
+    item->setWidth(220);
+    QTRY_VERIFY(toolbar->height() > 60);
+    window.grabWindow();
+    const auto toolbarClearsSelection = [&] {
+      QRectF selectionStart;
+      QMetaObject::invokeMethod(edit, "positionToRectangle", Q_RETURN_ARG(QRectF, selectionStart),
+                                Q_ARG(int, 24));
+      const auto selectionEnd = edit->property("cursorRectangle").toRectF();
+      const auto offset = edit->y() - viewport->property("contentY").toReal();
+      return toolbar->y() + toolbar->height() <= selectionStart.top() + offset ||
+             toolbar->y() >= selectionEnd.bottom() + offset;
+    };
+    QTRY_VERIFY(toolbarClearsSelection());
+  }
+
   void storageRoundTripsAndDoesNotResurrectDeletedNotes() {
     QTemporaryDir directory;
     QVERIFY(directory.isValid());

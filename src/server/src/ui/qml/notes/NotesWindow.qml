@@ -260,6 +260,22 @@ Window {
                         mutedForeground: Theme.textPlaceholder
                         selectionColor: Theme.textSelectionBg
                         selectedTextColor: Theme.textSelectionFg
+                        toolbarBackground: Theme.popoverBackground
+                        toolbarBorder: Theme.popoverBorder
+                        toolbarHover: Theme.listItemHoverBg
+                        formattingIcons: ({
+                                bold: "qrc:/icons/bold.svg",
+                                italic: "qrc:/icons/italics.svg",
+                                strike: "qrc:/icons/strike-through.svg",
+                                code: "qrc:/icons/code.svg",
+                                link: "qrc:/icons/link.svg",
+                                heading: "qrc:/icons/heading.svg",
+                                codeBlock: "qrc:/icons/code-block.svg",
+                                bullets: "qrc:/icons/bullet-points.svg",
+                                numbered: "qrc:/icons/numbered-list.svg",
+                                tasks: "qrc:/icons/check-list.svg",
+                                quote: "qrc:/icons/quote-block.svg"
+                            })
                         fontFamily: Theme.monoFontFamily
                         fontSize: Theme.regularFontSize
                         contentPadding: root.splitView ? 24 : Math.max(32, (width - 760) / 2)

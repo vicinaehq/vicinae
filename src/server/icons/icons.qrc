@@ -474,8 +474,8 @@
 		<file>minus-circle-filled.svg</file>
 		<file>minus-circle.svg</file>
 		<file>minus.svg</file>
-		<file>mistral.svg</file>
 		<file>mistral-vibe.svg</file>
+		<file>mistral.svg</file>
 		<file>mithril.svg</file>
 		<file>mobile.svg</file>
 		<file>mobx.svg</file>
@@ -523,6 +523,7 @@
 		<file>notion.svg</file>
 		<file>npm.svg</file>
 		<file>nuget.svg</file>
+		<file>numbered-list.svg</file>
 		<file>numpy.svg</file>
 		<file>nuxtjs.svg</file>
 		<file>oauth.svg</file>

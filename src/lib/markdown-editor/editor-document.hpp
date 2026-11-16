@@ -22,11 +22,32 @@ class EditorDocument : public QObject {
   Q_PROPERTY(int revision READ revision NOTIFY textChanged)
 
 public:
+  enum Format {
+    Bold,
+    Italic,
+    StrikeThrough,
+    InlineCode,
+    Link,
+    CodeBlock,
+    Heading1,
+    Heading2,
+    Heading3,
+    Heading4,
+    Heading5,
+    Heading6,
+    BulletList,
+    NumberedList,
+    TaskList,
+    Quote
+  };
+  Q_ENUM(Format)
+
   Q_INVOKABLE void load(const QString &id, const QString &text);
   Q_INVOKABLE QString text() const;
   Q_INVOKABLE QVariantMap snapshot(int start, int end) const;
   Q_INVOKABLE bool replace(const QVariantMap &snapshot, const QString &replacement);
   Q_INVOKABLE void wrap(int start, int end, const QString &marker);
+  Q_INVOKABLE void format(int start, int end, Format format);
   Q_INVOKABLE int continueLine(int position);
   Q_INVOKABLE QVariantMap find(const QString &query, int from, bool backwards = false) const;
 
@@ -46,6 +67,8 @@ public:
   int revision() const { return m_revision; }
 
 private:
+  void formatLines(int start, int end, Format format);
+  void formatCodeBlock(int start, int end);
   bool validRange(int start, int end) const;
   QPointer<QQuickTextDocument> m_quickDocument;
   QPointer<QTextDocument> m_document;

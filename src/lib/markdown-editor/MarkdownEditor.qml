@@ -10,6 +10,10 @@ FocusScope {
     property color mutedForeground: "#888888"
     property color selectionColor: "#415672"
     property color selectedTextColor: foreground
+    property color toolbarBackground: "#242428"
+    property color toolbarBorder: "#45454b"
+    property color toolbarHover: "#35353b"
+    property var formattingIcons: ({})
     property string fontFamily: "monospace"
     property real fontSize: 14
     property real contentPadding: Math.max(32, (width - 760) / 2)
@@ -20,6 +24,12 @@ FocusScope {
     readonly property alias cursorPosition: edit.cursorPosition
     readonly property alias composing: edit.inputMethodComposing
     readonly property alias flickable: viewport
+    property bool _formattingDismissed: false
+
+    function applyFormat(format) {
+        root.document.format(edit.selectionStart, edit.selectionEnd, format);
+        edit.forceActiveFocus();
+    }
 
     function focusEditor() {
         edit.forceActiveFocus();
@@ -65,6 +75,10 @@ FocusScope {
             edit.cursorPosition = 0;
             viewport.contentY = 0;
         }
+        function onTextChanged() {
+            if (formatting.hasSelection)
+                Qt.callLater(formatting.refreshGeometry);
+        }
     }
 
     Flickable {
@@ -108,11 +122,33 @@ FocusScope {
             font.family: root.fontFamily
             font.pointSize: root.fontSize
             Accessible.name: qsTr("Markdown editor")
+            onSelectionStartChanged: {
+                root._formattingDismissed = false;
+                if (selectionStart !== selectionEnd)
+                    Qt.callLater(formatting.refreshGeometry);
+            }
+            onSelectionEndChanged: {
+                root._formattingDismissed = false;
+                if (selectionStart !== selectionEnd)
+                    Qt.callLater(formatting.refreshGeometry);
+            }
+            onWidthChanged: if (selectionStart !== selectionEnd)
+                Qt.callLater(formatting.refreshGeometry)
+            onFontChanged: if (selectionStart !== selectionEnd)
+                Qt.callLater(formatting.refreshGeometry)
+            onContentHeightChanged: if (selectionStart !== selectionEnd)
+                Qt.callLater(formatting.refreshGeometry)
             onCursorRectangleChanged: {
+                if (selectionStart !== selectionEnd)
+                    Qt.callLater(formatting.refreshGeometry);
                 if (activeFocus && !viewport.moving)
                     Qt.callLater(root.ensureCursorVisible);
             }
             Keys.priority: Keys.BeforeItem
+            Keys.onEscapePressed: event => {
+                event.accepted = formatting.visible;
+                root._formattingDismissed = true;
+            }
             Keys.onReturnPressed: event => {
                 if (inputMethodComposing || selectionStart !== selectionEnd || event.modifiers !== Qt.NoModifier) {
                     event.accepted = false;
@@ -131,15 +167,57 @@ FocusScope {
             }
         }
     }
+    PointHandler {
+        id: selectionPointer
+        parent: viewport
+        target: null
+        acceptedButtons: Qt.LeftButton
+    }
+    SelectionToolbar {
+        id: formatting
+        objectName: "markdown-selection-toolbar"
+        z: 2
+        foreground: root.foreground
+        backgroundColor: root.toolbarBackground
+        borderColor: root.toolbarBorder
+        hoverColor: root.toolbarHover
+        icons: root.formattingIcons
+
+        property rect startRect: Qt.rect(0, 0, 0, 0)
+        property rect endRect: Qt.rect(0, 0, 0, 0)
+        function refreshGeometry() {
+            // TextEdit finishes reflow after its geometry change notifications.
+            if (hasSelection) {
+                startRect = edit.positionToRectangle(edit.selectionStart);
+                endRect = edit.positionToRectangle(edit.selectionEnd);
+            }
+        }
+        readonly property bool hasSelection: edit.selectionStart !== edit.selectionEnd
+        readonly property real selectionTop: edit.y + startRect.y - viewport.contentY
+        readonly property real selectionBottom: edit.y + endRect.y + endRect.height - viewport.contentY
+        readonly property bool above: selectionTop >= height + 8 && selectionTop < root.height
+        readonly property real anchorX: edit.x + (startRect.y === endRect.y ? (startRect.x + endRect.x) / 2 : above ? startRect.x : endRect.x)
+
+        width: Math.min(implicitWidth, root.width - 12)
+        height: implicitHeight
+        x: Math.max(6, Math.min(root.width - width - 6, anchorX - width / 2))
+        y: above ? selectionTop - height - 8 : Math.min(root.height - height - 6, Math.max(6, selectionBottom + 8))
+        visible: hasSelection && root.Window.active && !root._formattingDismissed && !edit.inputMethodComposing && !selectionPointer.active && !viewport.moving && !editMenu.visible && root.activeFocus && (above || (selectionBottom > 0 && selectionBottom <= root.height))
+        onFormatRequested: format => root.applyFormat(format)
+        onDismissed: {
+            root._formattingDismissed = true;
+            edit.forceActiveFocus();
+        }
+    }
     Shortcut {
         sequence: StandardKey.Bold
         enabled: root.activeFocus && !edit.inputMethodComposing
-        onActivated: root.document.wrap(edit.selectionStart, edit.selectionEnd, "**")
+        onActivated: root.applyFormat(MarkdownEditorDocument.Bold)
     }
     Shortcut {
         sequence: StandardKey.Italic
         enabled: root.activeFocus && !edit.inputMethodComposing
-        onActivated: root.document.wrap(edit.selectionStart, edit.selectionEnd, "*")
+        onActivated: root.applyFormat(MarkdownEditorDocument.Italic)
     }
     Menu {
         id: editMenu
