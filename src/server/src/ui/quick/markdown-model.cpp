@@ -201,6 +201,8 @@ QVariantList buildListItems(cmark_node *listNode, const InlineContext &ctx) {
 QVariantMap buildListItem(cmark_node *itemNode, const InlineContext &ctx) {
   QVariantMap entry;
   QVariantList children;
+  if (std::strcmp(cmark_node_get_type_string(itemNode), "tasklist") == 0)
+    entry[QStringLiteral("checked")] = cmark_gfm_extensions_get_tasklist_item_checked(itemNode);
 
   for (auto *child = cmark_node_first_child(itemNode); child; child = cmark_node_next(child)) {
     auto type = cmark_node_get_type(child);
@@ -377,6 +379,8 @@ std::vector<MarkdownModel::Block> MarkdownModel::parseBlocks(const QString &mark
     cmark_parser_attach_syntax_extension(parser, tableExt);
   if (auto *strikethroughExt = cmark_find_syntax_extension("strikethrough"))
     cmark_parser_attach_syntax_extension(parser, strikethroughExt);
+  if (auto *tasklistExt = cmark_find_syntax_extension("tasklist"))
+    cmark_parser_attach_syntax_extension(parser, tasklistExt);
 
   cmark_parser_attach_syntax_extension(parser, markdown_math::extension());
 

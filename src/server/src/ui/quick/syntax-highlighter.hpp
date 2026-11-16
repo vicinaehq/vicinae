@@ -1,16 +1,16 @@
 #pragma once
 
-#include "theme/colors.hpp"
-#include "theme/theme-file.hpp"
 #include <QString>
 #include <QStringView>
-#include <array>
 #include <KSyntaxHighlighting/AbstractHighlighter>
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Format>
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/State>
 #include <KSyntaxHighlighting/Theme>
+#include "syntax-palette.hpp"
+#include "theme/colors.hpp"
+#include "theme/theme-file.hpp"
 
 namespace syntax {
 
@@ -19,57 +19,22 @@ inline KSyntaxHighlighting::Repository &repository() {
   return repo;
 }
 
-struct StyleInfo {
-  QString color;
-  bool bold = false;
-  bool italic = false;
-};
+using StyleMap = Vicinae::Syntax::StyleMap;
 
-using TextStyle = KSyntaxHighlighting::Theme::TextStyle;
-using StyleMap = std::array<StyleInfo, static_cast<int>(TextStyle::Others) + 1>;
-
-inline StyleMap buildStyleMap(const ThemeFile &theme) {
-  auto hex = [&](SemanticColor c) { return theme.resolve(c).name(QColor::HexRgb); };
-
-  StyleMap map{};
-
-  auto set = [&](TextStyle ts, SemanticColor c, bool bold = false, bool italic = false) {
-    auto i = static_cast<int>(ts);
-    map[i] = {hex(c), bold, italic};
-  };
-
-  set(TextStyle::Keyword, SemanticColor::Purple, true);
-  set(TextStyle::ControlFlow, SemanticColor::Purple, true);
-  set(TextStyle::Function, SemanticColor::Blue);
-  set(TextStyle::Variable, SemanticColor::Red);
-  set(TextStyle::Operator, SemanticColor::Foreground);
-  set(TextStyle::BuiltIn, SemanticColor::Cyan);
-  set(TextStyle::Extension, SemanticColor::Cyan);
-  set(TextStyle::Preprocessor, SemanticColor::Orange);
-  set(TextStyle::Attribute, SemanticColor::Purple);
-  set(TextStyle::Char, SemanticColor::Green);
-  set(TextStyle::SpecialChar, SemanticColor::Orange);
-  set(TextStyle::String, SemanticColor::Green);
-  set(TextStyle::VerbatimString, SemanticColor::Green);
-  set(TextStyle::SpecialString, SemanticColor::Green);
-  set(TextStyle::Import, SemanticColor::Purple);
-  set(TextStyle::DataType, SemanticColor::Cyan);
-  set(TextStyle::DecVal, SemanticColor::Orange);
-  set(TextStyle::BaseN, SemanticColor::Orange);
-  set(TextStyle::Float, SemanticColor::Orange);
-  set(TextStyle::Constant, SemanticColor::Orange);
-  set(TextStyle::Comment, SemanticColor::TextMuted, false, true);
-  set(TextStyle::Documentation, SemanticColor::TextMuted, false, true);
-  set(TextStyle::Annotation, SemanticColor::Green, false, true);
-  set(TextStyle::CommentVar, SemanticColor::TextMuted, false, true);
-  set(TextStyle::RegionMarker, SemanticColor::TextMuted);
-  set(TextStyle::Information, SemanticColor::Blue);
-  set(TextStyle::Warning, SemanticColor::Orange);
-  set(TextStyle::Alert, SemanticColor::Red);
-  set(TextStyle::Error, SemanticColor::Red);
-
-  return map;
+inline Vicinae::Syntax::Palette paletteForTheme(const ThemeFile &theme) {
+  return {.background = theme.resolve(SemanticColor::Background),
+          .foreground = theme.resolve(SemanticColor::Foreground),
+          .muted = theme.resolve(SemanticColor::TextMuted),
+          .accent = theme.resolve(SemanticColor::LinkDefault),
+          .blue = theme.resolve(SemanticColor::Blue),
+          .purple = theme.resolve(SemanticColor::Purple),
+          .cyan = theme.resolve(SemanticColor::Cyan),
+          .green = theme.resolve(SemanticColor::Green),
+          .orange = theme.resolve(SemanticColor::Orange),
+          .red = theme.resolve(SemanticColor::Red)};
 }
+
+inline StyleMap buildStyleMap(const ThemeFile &theme) { return paletteForTheme(theme).styles(); }
 
 class HtmlHighlighter : public KSyntaxHighlighting::AbstractHighlighter {
 public:
@@ -100,21 +65,15 @@ protected:
     if (!format.isValid() || !m_styles) {
       appendEscaped(text);
     } else {
-      auto idx = static_cast<int>(format.textStyle());
-      const auto &style = (*m_styles)[idx];
-      bool hasStyle = !style.color.isEmpty() || style.bold || style.italic;
-
-      if (hasStyle) {
-        m_lineResult += QStringLiteral("<span style=\"");
-        if (!style.color.isEmpty()) m_lineResult += QStringLiteral("color:") + style.color + u';';
-        if (style.bold) m_lineResult += QStringLiteral("font-weight:bold;");
-        if (style.italic) m_lineResult += QStringLiteral("font-style:italic;");
-        m_lineResult += QStringLiteral("\">");
-        appendEscaped(text);
-        m_lineResult += QStringLiteral("</span>");
-      } else {
-        appendEscaped(text);
-      }
+      const auto &color = (*m_styles)[format.textStyle()];
+      m_lineResult += QStringLiteral("<span style=\"color:") + color.name(QColor::HexRgb) + u';';
+      if (format.isBold({})) m_lineResult += QStringLiteral("font-weight:bold;");
+      if (format.isItalic({})) m_lineResult += QStringLiteral("font-style:italic;");
+      if (format.isUnderline({})) m_lineResult += QStringLiteral("text-decoration:underline;");
+      if (format.isStrikeThrough({})) m_lineResult += QStringLiteral("text-decoration:line-through;");
+      m_lineResult += QStringLiteral("\">");
+      appendEscaped(text);
+      m_lineResult += QStringLiteral("</span>");
     }
     m_lastOffset = offset + length;
   }

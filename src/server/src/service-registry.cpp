@@ -1,3 +1,4 @@
+#include "services/notes/notes-store.hpp"
 #include "services/ai/conversation-store.hpp"
 #include "service-registry.hpp"
 #include "services/dictation/dictation-service.hpp"
@@ -277,3 +278,6 @@ void ServiceRegistry::setGlobalShortcuts(std::unique_ptr<GlobalShortcutService> 
 }
 
 ServiceRegistry *ServiceRegistry::instance() { return s_instance; }
+
+Notes::Store *ServiceRegistry::notes() const { return m_notes.get(); }
+void ServiceRegistry::setNotes(std::unique_ptr<Notes::Store> store) { m_notes = std::move(store); }

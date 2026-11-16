@@ -58,6 +58,10 @@ class ToolRegistry;
 class ConversationStore;
 }; // namespace AI
 
+namespace Notes {
+class Store;
+}
+
 class ServiceRegistry : public QObject {
 
 public:
@@ -108,6 +112,8 @@ public:
   AI::Service *ai() const;
   AI::ToolRegistry *tools() const;
   AI::ConversationStore *conversations() const;
+  Notes::Store *notes() const;
+  void setNotes(std::unique_ptr<Notes::Store> store);
   LocalModelRegistry *localModels() const;
   DictationService *dictation() const;
 
@@ -209,4 +215,5 @@ private:
   std::unique_ptr<DictationService> m_dictation;
   std::unique_ptr<AI::ToolRegistry> m_tools;
   std::unique_ptr<AI::ConversationStore> m_conversations;
+  std::unique_ptr<Notes::Store> m_notes;
 };

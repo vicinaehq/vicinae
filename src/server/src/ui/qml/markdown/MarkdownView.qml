@@ -112,8 +112,8 @@ Item {
     }
     Connections {
         target: root.model
-        function onBlocksAppended() {
-            root._autoScroll = view.atYEnd && !view.document.hasSelection;
+        function onRowsAboutToBeInserted(parent, first, last) {
+            root._autoScroll = first > 0 && view.atYEnd && !view.document.hasSelection;
         }
         function onModelReset() {
             view.scrollToBeginning();
